@@ -8,14 +8,28 @@
 #include <zmq.hpp>
 #include <iostream>
 #include <sstream>
+#include <sys/time.h>
 
 const size_t size(1024);
 
 struct Chunk
 {
-	time_t timestamp;
+	timeval timestamp;
 	char payload[size];
 };
+
+
+std::string timeToStr(const timeval& timestamp)
+{
+	char tmbuf[64], buf[64];
+	struct tm *nowtm;
+	time_t nowtime;
+	nowtime = timestamp.tv_sec;
+	nowtm = localtime(&nowtime);
+	strftime(tmbuf, sizeof tmbuf, "%Y-%m-%d %H:%M:%S", nowtm);
+	snprintf(buf, sizeof buf, "%s.%06d", tmbuf, timestamp.tv_usec);
+	return buf;
+}
 
 
 int main (int argc, char *argv[])
@@ -46,6 +60,8 @@ int main (int argc, char *argv[])
 //        std::cout << "update\n";
         for (size_t n=0; n<size; ++n)
             std::cout << chunk->payload[n] << std::flush;
+		
+		std::cerr << timeToStr(chunk->timestamp) << "\n";
 		delete chunk;
 //        std::cout << std::flush;
 //        std::cerr << "flushed\n";

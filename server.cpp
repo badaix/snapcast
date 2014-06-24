@@ -12,6 +12,7 @@
 #include <iostream>
 #include <unistd.h>
 #include <fcntl.h>
+#include <sys/time.h>
 
 using namespace std;
 
@@ -19,7 +20,7 @@ const int size(1024);
 
 struct Chunk
 {
-	time_t timestamp;
+	timeval timestamp;
 	char payload[size];
 };
 
@@ -37,7 +38,7 @@ int main () {
     while (!cin.get(c).eof())
     {
 		if (idx == 0)
-			time(&chunk.timestamp);
+			gettimeofday(&chunk.timestamp, 0);
 
 //        read(fd, &msg[0], size);
         chunk.payload[idx++] = c;
