@@ -14,7 +14,8 @@ const size_t size(1024);
 
 struct Chunk
 {
-	timeval timestamp;
+	long tv_sec;
+	long tv_usec;
 	char payload[size];
 };
 
@@ -60,8 +61,12 @@ int main (int argc, char *argv[])
 //        std::cout << "update\n";
         for (size_t n=0; n<size; ++n)
             std::cout << chunk->payload[n] << std::flush;
-		
-		std::cerr << timeToStr(chunk->timestamp) << "\n";
+
+//		std::cerr << (chunk->timestamp).tv_sec << ":" << (chunk->timestamp).tv_usec << "\n";
+		timeval ts;
+		ts.tv_sec = chunk->tv_sec;
+		ts.tv_usec = chunk->tv_usec;
+		std::cerr << timeToStr(ts) << "\t" << chunk->tv_usec << "\n";
 		delete chunk;
 //        std::cout << std::flush;
 //        std::cerr << "flushed\n";
