@@ -20,10 +20,10 @@ const int size(1024);
 
 struct Chunk
 {
-	timeval timestamp;
+        long tv_sec;
+        long tv_usec;
 	char payload[size];
 };
-
 
 int main () {
     //  Prepare our context and publisher
@@ -37,14 +37,19 @@ int main () {
 	Chunk chunk;
     while (!cin.get(c).eof())
     {
+        timeval ts;
 		if (idx == 0)
-			gettimeofday(&chunk.timestamp, 0);
-
+		{
+			gettimeofday(&ts, NULL);
+			chunk.tv_sec = ts.tv_sec;
+			chunk.tv_usec = ts.tv_usec;
+                }        
 //        read(fd, &msg[0], size);
         chunk.payload[idx++] = c;
         if (idx == size)
         {
             zmq::message_t message(sizeof(Chunk));
+            chunk.tv_usec = 3;
             memcpy(message.data(), &chunk, sizeof(Chunk));
 //            snprintf ((char *) message.data(), size, "%05d %d", zipcode, c);
 //  	      message.data()[0] = c;
