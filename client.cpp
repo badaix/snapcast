@@ -9,6 +9,15 @@
 #include <iostream>
 #include <sstream>
 
+const size_t size(1024);
+
+struct Chunk
+{
+	time_t timestamp;
+	char payload[size];
+};
+
+
 int main (int argc, char *argv[])
 {
     zmq::context_t context (1);
@@ -24,9 +33,6 @@ int main (int argc, char *argv[])
     //  Process 100 updates
     int update_nbr;
     long total_temp = 0;
-    const size_t size(1024);
-    char msg[size];
-//    for (update_nbr = 0; update_nbr < 100; update_nbr++) {
     while (1)
     {
         zmq::message_t update;
@@ -34,10 +40,13 @@ int main (int argc, char *argv[])
 //        std::cerr << "received\n";
 //        std::istringstream iss(static_cast<char*>(update.data()));
 //        iss >> zipcode >> relhumidity;
-        memcpy(&msg[0], update.data(), size);
+		Chunk* chunk = new Chunk();
+        memcpy(chunk, update.data(), sizeof(Chunk));
+
 //        std::cout << "update\n";
         for (size_t n=0; n<size; ++n)
-            std::cout << msg[n] << std::flush;
+            std::cout << chunk->payload[n] << std::flush;
+		delete chunk;
 //        std::cout << std::flush;
 //        std::cerr << "flushed\n";
     }

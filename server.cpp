@@ -15,32 +15,36 @@
 
 using namespace std;
 
+const int size(1024);
+
+struct Chunk
+{
+	time_t timestamp;
+	char payload[size];
+};
+
 
 int main () {
     //  Prepare our context and publisher
     zmq::context_t context (1);
     zmq::socket_t publisher (context, ZMQ_PUB);
     publisher.bind("tcp://0.0.0.0:123458");
-//    publisher.bind("ipc://weather.ipc");
 
     //  Initialize random number generator
-    srandom ((unsigned) time (NULL));
     size_t idx(0);
-    const int size(1024);
-    char msg[size];
     char c;//[2];
-//    msg[0] = '0';
-
-//    int fd;
-//    fd = open("stdin", O_RDONLY|O_BINARY, 0);
+	Chunk chunk;
     while (!cin.get(c).eof())
     {
+		if (idx == 0)
+			time(&chunk.timestamp);
+
 //        read(fd, &msg[0], size);
-        msg[idx++] = c;
+        chunk.payload[idx++] = c;
         if (idx == size)
         {
             zmq::message_t message(size);
-            memcpy(message.data(), &msg[0], size);
+            memcpy(message.data(), &chunk, sizeof(Chunk));
 //            snprintf ((char *) message.data(), size, "%05d %d", zipcode, c);
 //  	      message.data()[0] = c;
             publisher.send(message);
