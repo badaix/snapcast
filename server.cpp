@@ -44,7 +44,7 @@ int main () {
         chunk.payload[idx++] = c;
         if (idx == size)
         {
-            zmq::message_t message(size);
+            zmq::message_t message(sizeof(Chunk));
             memcpy(message.data(), &chunk, sizeof(Chunk));
 //            snprintf ((char *) message.data(), size, "%05d %d", zipcode, c);
 //  	      message.data()[0] = c;
