@@ -9,6 +9,9 @@
 #include <iostream>
 #include <sstream>
 #include <sys/time.h>
+#include <deque>
+#include <vector>
+#include <algorithm>
 
 const size_t size(1764);
 
@@ -19,6 +22,9 @@ struct Chunk
 	char payload[size];
 };
 
+std::deque<Chunk*> chunks;
+std::deque<int> timeDiffs;
+
 
 std::string timeToStr(const timeval& timestamp)
 {
@@ -28,7 +34,7 @@ std::string timeToStr(const timeval& timestamp)
 	nowtime = timestamp.tv_sec;
 	nowtm = localtime(&nowtime);
 	strftime(tmbuf, sizeof tmbuf, "%Y-%m-%d %H:%M:%S", nowtm);
-	snprintf(buf, sizeof buf, "%s.%06d", tmbuf, timestamp.tv_usec);
+	snprintf(buf, sizeof buf, "%s.%06d", tmbuf, (int)timestamp.tv_usec);
 	return buf;
 }
 
@@ -56,6 +62,7 @@ int main (int argc, char *argv[])
     int update_nbr;
     long total_temp = 0;
 	int i = 0;
+	bool playing = false;
     while (1)
     {
         zmq::message_t update;
@@ -68,21 +75,38 @@ int main (int argc, char *argv[])
 		Chunk* chunk = new Chunk();
         memcpy(chunk, update.data(), sizeof(Chunk));
 
-		timeval ts;
-		ts.tv_sec = chunk->tv_sec;
-		ts.tv_usec = chunk->tv_usec;
-		if (i++ == 100)
+
+/*		timeDiffs.push_back(diff_ms(now, ts));
+		if (timeDiffs.size() > 100)
+			timeDiffs.pop_front();
+		std::vector<int> v(timeDiffs.begin(), timeDiffs.end());
+		std::sort(v.begin(), v.end());
+		std::cerr << "Median: " << v[v.size()/2] << "\n";
+*/
+
+/*		if (false && (i++ == 100))
 		{
 			std::cerr << diff_ms(now, ts) << "\n" << std::flush;//timeToStr(ts) << "\t" << chunk->tv_usec << "\n";
 			i = 0;
 		}
-
+*/
 //        std::cout << "update\n";
-//        for (size_t n=0; n<size; ++n)
-//            std::cout << chunk->payload[n] << std::flush;
+		chunks.push_back(chunk);
+		timeval ts;
+		ts.tv_sec = chunks.front()->tv_sec;
+		ts.tv_usec = chunks.front()->tv_usec;
+		playing = playing || (diff_ms(now, ts) > 200);
+
+		if (playing)
+		{
+//			std::cerr << "Chunk: " << diff_ms(now, ts) << "\n";
+	        for (size_t n=0; n<size; ++n)
+            	std::cout << chunks.front()->payload[n] << std::flush;
+			chunks.pop_front();
+		}
 
 //		std::cerr << (chunk->timestamp).tv_sec << ":" << (chunk->timestamp).tv_usec << "\n";
-		delete chunk;
+//		delete chunk;
 //        std::cout << std::flush;
 //        std::cerr << "flushed\n";
     }
