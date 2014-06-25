@@ -78,8 +78,8 @@ int main (int argc, char *argv[])
 		}
 
 //        std::cout << "update\n";
-        for (size_t n=0; n<size; ++n)
-            std::cout << chunk->payload[n] << std::flush;
+//        for (size_t n=0; n<size; ++n)
+//            std::cout << chunk->payload[n] << std::flush;
 
 //		std::cerr << (chunk->timestamp).tv_sec << ":" << (chunk->timestamp).tv_usec << "\n";
 		delete chunk;
