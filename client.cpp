@@ -46,6 +46,17 @@ int diff_ms(const timeval& t1, const timeval& t2)
 }
 
 
+int getAge(const Chunk& chunk)
+{
+	timeval now;
+	gettimeofday(&now, NULL);
+	timeval ts;
+	ts.tv_sec = chunks.front()->tv_sec;
+	ts.tv_usec = chunks.front()->tv_usec;
+	return diff_ms(now, ts);
+}
+
+
 int main (int argc, char *argv[])
 {
     zmq::context_t context (1);
@@ -67,8 +78,6 @@ int main (int argc, char *argv[])
     {
         zmq::message_t update;
         subscriber.recv(&update);
-		timeval now;
-		gettimeofday(&now, NULL);
 //        std::cerr << "received\n";
 //        std::istringstream iss(static_cast<char*>(update.data()));
 //        iss >> zipcode >> relhumidity;
@@ -92,14 +101,11 @@ int main (int argc, char *argv[])
 */
 //        std::cout << "update\n";
 		chunks.push_back(chunk);
-		timeval ts;
-		ts.tv_sec = chunks.front()->tv_sec;
-		ts.tv_usec = chunks.front()->tv_usec;
-		playing = playing || (diff_ms(now, ts) > 200);
+		playing = playing || (getAge(*chunks.front()) > 200);
 
 		if (playing)
 		{
-//			std::cerr << "Chunk: " << diff_ms(now, ts) << "\n";
+//			std::cerr << "Chunk: " << getAge(*chunks.front()) << "\n";
 	        for (size_t n=0; n<size; ++n)
             	std::cout << chunks.front()->payload[n] << std::flush;
 			chunks.pop_front();
