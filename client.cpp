@@ -109,6 +109,7 @@ int main (int argc, char *argv[])
         subscriber.recv(&update);
 		Chunk* chunk = new Chunk();
         memcpy(chunk, update.data(), sizeof(Chunk));
+		std::cerr << "New chunk: " << getAge(*chunk) << "\n";
 
 /*		timeDiffs.push_back(diff_ms(now, ts));
 		if (timeDiffs.size() > 100)
