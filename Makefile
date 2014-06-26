@@ -1,7 +1,7 @@
 VERSION = 0.01
 CC      = /usr/bin/g++
-CFLAGS  = -Wall -g -O3 -D_REENTRANT -DVERSION=\"$(VERSION)\"
-LDFLAGS = -lzmq
+CFLAGS  = -std=gnu++0x -Wall -g -O3 -D_REENTRANT -DVERSION=\"$(VERSION)\"
+LDFLAGS = -lzmq -lpthread 
 
 OBJ_SERVER = server.o
 BIN_SERVER = server
@@ -17,7 +17,7 @@ server: $(OBJ)
 client: $(OBJ)
 	$(CC) $(CFLAGS) -o $(BIN_CLIENT) $(OBJ_CLIENT) $(LDFLAGS)
 
-%.o: %.c
+%.o: %.cpp
 	$(CC) $(CFLAGS) -c $<
 
 clean:

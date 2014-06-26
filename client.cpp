@@ -12,8 +12,11 @@
 #include <deque>
 #include <vector>
 #include <algorithm>
+#include <thread> 
+#include <mutex>
 
-const size_t size(1764);
+//44100 / 20 = 2205
+const size_t size(4*2205);
 
 struct Chunk
 {
@@ -24,7 +27,9 @@ struct Chunk
 
 std::deque<Chunk*> chunks;
 std::deque<int> timeDiffs;
-
+std::mutex mtx;
+std::mutex mutex;
+std::condition_variable cv;
 
 std::string timeToStr(const timeval& timestamp)
 {
@@ -51,39 +56,58 @@ int getAge(const Chunk& chunk)
 	timeval now;
 	gettimeofday(&now, NULL);
 	timeval ts;
-	ts.tv_sec = chunks.front()->tv_sec;
-	ts.tv_usec = chunks.front()->tv_usec;
+	ts.tv_sec = chunk.tv_sec;
+	ts.tv_usec = chunk.tv_usec;
 	return diff_ms(now, ts);
+}
+
+
+void player() 
+{
+	std::unique_lock<std::mutex> lck(mtx);
+	bool playing = true;
+	while (1)
+	{
+		if (chunks.empty())
+			cv.wait(lck);
+		mutex.lock();
+		Chunk* chunk = chunks.front();
+		chunks.pop_front();
+		mutex.unlock();
+	
+//		playing = playing || (getAge(*chunks.front()) > 200);
+
+		std::cerr << "Chunk: " << getAge(*chunk) << "\n";
+		if (playing)
+		{
+	        for (size_t n=0; n<size; ++n)
+			{
+           		std::cout << chunk->payload[n] << std::flush;
+//				if (size % 100 == 0)
+//					std::cout << std::flush;
+			}
+		}
+		delete chunk;
+	}
 }
 
 
 int main (int argc, char *argv[])
 {
     zmq::context_t context (1);
-
-    //  Socket to talk to server
-//    std::cout << "Collecting updates from weather server…\n" << std::endl;
     zmq::socket_t subscriber (context, ZMQ_SUB);
     subscriber.connect("tcp://192.168.0.2:123458");
-    //  Subscribe to zipcode, default is NYC, 10001
+
     const char* filter = "";
     subscriber.setsockopt(ZMQ_SUBSCRIBE, filter, strlen(filter));
+	std::thread playerThread(player);
 
-    //  Process 100 updates
-    int update_nbr;
-    long total_temp = 0;
-	int i = 0;
-	bool playing = false;
     while (1)
     {
         zmq::message_t update;
         subscriber.recv(&update);
-//        std::cerr << "received\n";
-//        std::istringstream iss(static_cast<char*>(update.data()));
-//        iss >> zipcode >> relhumidity;
 		Chunk* chunk = new Chunk();
         memcpy(chunk, update.data(), sizeof(Chunk));
-
 
 /*		timeDiffs.push_back(diff_ms(now, ts));
 		if (timeDiffs.size() > 100)
@@ -93,28 +117,10 @@ int main (int argc, char *argv[])
 		std::cerr << "Median: " << v[v.size()/2] << "\n";
 */
 
-/*		if (false && (i++ == 100))
-		{
-			std::cerr << diff_ms(now, ts) << "\n" << std::flush;//timeToStr(ts) << "\t" << chunk->tv_usec << "\n";
-			i = 0;
-		}
-*/
-//        std::cout << "update\n";
+		mutex.lock();
 		chunks.push_back(chunk);
-		playing = playing || (getAge(*chunks.front()) > 200);
-
-		if (playing)
-		{
-//			std::cerr << "Chunk: " << getAge(*chunks.front()) << "\n";
-	        for (size_t n=0; n<size; ++n)
-            	std::cout << chunks.front()->payload[n] << std::flush;
-			chunks.pop_front();
-		}
-
-//		std::cerr << (chunk->timestamp).tv_sec << ":" << (chunk->timestamp).tv_usec << "\n";
-//		delete chunk;
-//        std::cout << std::flush;
-//        std::cerr << "flushed\n";
+		mutex.unlock();
+		cv.notify_all();
     }
     return 0;
 }
