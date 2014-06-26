@@ -14,6 +14,7 @@
 #include <algorithm>
 #include <thread> 
 #include <mutex>
+#include <condition_variable>
 
 //44100 / 20 = 2205
 const size_t size(4*2205);
