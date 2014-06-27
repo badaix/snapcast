@@ -95,20 +95,23 @@ void player()
 		if (playing)
 		{
 			int age = getAge(*chunk) - bufferMs;
-			while (age < 0)
+			if (age < 0)
 			{
-				usleep((-age) * 1000/ 2);
-				age = getAge(*chunk) - bufferMs;
-			}
-			std::cerr << "Playing: " << getAge(*chunk) << "\n";
+				while (age < 0)
+				{
+					usleep((-age) * 1000/ 2);
+					age = getAge(*chunk) - bufferMs;
+				}
+				std::cerr << "Playing: " << getAge(*chunk) << "\n";
 			
-	        for (size_t n=0; n<size; ++n)
-			{
-           		std::cout << chunk->payload[n];// << std::flush;
+		        for (size_t n=0; n<size; ++n)
+				{
+	           		std::cout << chunk->payload[n];// << std::flush;
 //				if (size % 100 == 0)
 //					std::cout << std::flush;
+				}
+				std::cout << std::flush;
 			}
-			std::cout << std::flush;
 		}
 		delete chunk;
 	}
