@@ -90,15 +90,23 @@ void player()
 	
 //		playing = playing || (getAge(*chunks.front()) > 200);
 
-		std::cerr << "Chunk: " << getAge(*chunk) << "\n";
 		if (playing)
 		{
+			int age = getAge(*chunk) - 300;
+			while (age < 0)
+			{
+				usleep((-age) * 1000/ 2);
+				age = getAge(*chunk) - 300;
+			}
+			std::cerr << "Playing: " << getAge(*chunk) << "\n";
+			
 	        for (size_t n=0; n<size; ++n)
 			{
-           		std::cout << chunk->payload[n] << std::flush;
+           		std::cout << chunk->payload[n];// << std::flush;
 //				if (size % 100 == 0)
 //					std::cout << std::flush;
 			}
+			std::cout << std::flush;
 		}
 		delete chunk;
 	}
