@@ -20,6 +20,7 @@
 const size_t ms(50);
 //44100 / 20 = 2205
 const size_t size(44100*4*ms/1000);  
+int bufferMs;
 
 
 struct Chunk
@@ -93,11 +94,11 @@ void player()
 
 		if (playing)
 		{
-			int age = getAge(*chunk) - 300;
+			int age = getAge(*chunk) - bufferMs;
 			while (age < 0)
 			{
 				usleep((-age) * 1000/ 2);
-				age = getAge(*chunk) - 300;
+				age = getAge(*chunk) - bufferMs;
 			}
 			std::cerr << "Playing: " << getAge(*chunk) << "\n";
 			
@@ -116,6 +117,9 @@ void player()
 
 int main (int argc, char *argv[])
 {
+	bufferMs = 300;	
+	if (argc > 1)
+		bufferMs = atoi(argv[1]);
     zmq::context_t context (1);
     zmq::socket_t subscriber (context, ZMQ_SUB);
     subscriber.connect("tcp://192.168.0.2:123458");
