@@ -16,8 +16,10 @@
 #include <mutex>
 #include <condition_variable>
 
+const size_t ms(50);
 //44100 / 20 = 2205
-const size_t size(4*2205);
+const size_t size(44100*4*ms/1000);  
+
 
 struct Chunk
 {
@@ -42,6 +44,15 @@ std::string timeToStr(const timeval& timestamp)
 	strftime(tmbuf, sizeof tmbuf, "%Y-%m-%d %H:%M:%S", nowtm);
 	snprintf(buf, sizeof buf, "%s.%06d", tmbuf, (int)timestamp.tv_usec);
 	return buf;
+}
+
+
+std::string chunkTime(const Chunk& chunk)
+{
+	timeval ts;
+	ts.tv_sec = chunk.tv_sec;
+	ts.tv_usec = chunk.tv_usec;
+	return timeToStr(ts);
 }
 
 
@@ -72,6 +83,7 @@ void player()
 		if (chunks.empty())
 			cv.wait(lck);
 		mutex.lock();
+		std::cerr << "Chunks: " << chunks.size() << "\n";
 		Chunk* chunk = chunks.front();
 		chunks.pop_front();
 		mutex.unlock();
@@ -109,7 +121,9 @@ int main (int argc, char *argv[])
         subscriber.recv(&update);
 		Chunk* chunk = new Chunk();
         memcpy(chunk, update.data(), sizeof(Chunk));
-		std::cerr << "New chunk: " << getAge(*chunk) << "\n";
+		timeval now;
+		gettimeofday(&now, NULL);
+		std::cerr << "New chunk: " << chunkTime(*chunk) << "\t" << timeToStr(now) << "\t" << getAge(*chunk) << "\n";
 
 /*		timeDiffs.push_back(diff_ms(now, ts));
 		if (timeDiffs.size() > 100)
