@@ -17,7 +17,7 @@
 #include <mutex>
 #include <condition_variable>
 
-const size_t ms(50);
+const size_t ms(20);
 //44100 / 20 = 2205
 const size_t size(44100*4*ms/1000);  
 int bufferMs;
@@ -85,7 +85,7 @@ void player()
 		if (chunks.empty())
 			cv.wait(lck);
 		mutex.lock();
-		std::cerr << "Chunks: " << chunks.size() << "\n";
+//		std::cerr << "Chunks: " << chunks.size() << "\n";
 		Chunk* chunk = chunks.front();
 		chunks.pop_front();
 		mutex.unlock();
@@ -95,14 +95,15 @@ void player()
 		if (playing)
 		{
 			int age = getAge(*chunk) - bufferMs;
-			if (age < 0)
+			if (age < 10)
 			{
-				while (age < 0)
+				if (age < 0)
 				{
-					usleep((-age) * 1000/ 2);
+					usleep((-age) * 1000 - 100);
 					age = getAge(*chunk) - bufferMs;
 				}
-				std::cerr << "Playing: " << getAge(*chunk) << "\n";
+				if (abs(age) > 10)
+					std::cerr << "Buffer out of sync: " << age << "\n";
 			
 		        for (size_t n=0; n<size; ++n)
 				{
@@ -112,6 +113,8 @@ void player()
 				}
 				std::cout << std::flush;
 			}
+			else
+				std::cerr << "Dropping Chunk, age: " << age << "\n";
 		}
 		delete chunk;
 	}
@@ -130,6 +133,11 @@ int main (int argc, char *argv[])
     const char* filter = "";
     subscriber.setsockopt(ZMQ_SUBSCRIBE, filter, strlen(filter));
 	std::thread playerThread(player);
+	struct sched_param params;
+	params.sched_priority = sched_get_priority_max(SCHED_FIFO);
+	int ret = pthread_setschedparam(playerThread.native_handle(), SCHED_FIFO, &params);
+	if (ret != 0) 
+	    std::cerr << "Unsuccessful in setting thread realtime prio" << std::endl;
 
     while (1)
     {
@@ -139,15 +147,7 @@ int main (int argc, char *argv[])
         memcpy(chunk, update.data(), sizeof(Chunk));
 		timeval now;
 		gettimeofday(&now, NULL);
-		std::cerr << "New chunk: " << chunkTime(*chunk) << "\t" << timeToStr(now) << "\t" << getAge(*chunk) << "\n";
-
-/*		timeDiffs.push_back(diff_ms(now, ts));
-		if (timeDiffs.size() > 100)
-			timeDiffs.pop_front();
-		std::vector<int> v(timeDiffs.begin(), timeDiffs.end());
-		std::sort(v.begin(), v.end());
-		std::cerr << "Median: " << v[v.size()/2] << "\n";
-*/
+//		std::cerr << "New chunk: " << chunkTime(*chunk) << "\t" << timeToStr(now) << "\t" << getAge(*chunk) << "\n";
 
 		mutex.lock();
 		chunks.push_back(chunk);
