@@ -9,6 +9,7 @@
 #include <iostream>
 #include <sstream>
 #include <sys/time.h>
+#include <unistd.h>
 #include <deque>
 #include <vector>
 #include <algorithm>
