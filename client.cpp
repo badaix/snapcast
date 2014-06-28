@@ -193,7 +193,7 @@ static int patestCallback( const void *inputBuffer, void *outputBuffer,
 		}
 		else if (age < bufferMs)
 		{
-			usleep(((bufferMs - age)) * 1000);
+			usleep(((bufferMs - age) + 10) * 1000);
 			break;
 		}
 		else			
