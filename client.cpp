@@ -163,7 +163,7 @@ static int patestCallback( const void *inputBuffer, void *outputBuffer,
                             PaStreamCallbackFlags statusFlags,
                             void *userData )
 {
-	std::cerr << "outputBufferDacTime: " << timeInfo->outputBufferDacTime*1000 << "\n";
+//	std::cerr << "outputBufferDacTime: " << timeInfo->outputBufferDacTime*1000 << "\n";
     std::deque<Chunk*>* chunks = (std::deque<Chunk*>*)userData;
     short* out = (short*)outputBuffer;
     unsigned long i;
@@ -181,23 +181,30 @@ static int patestCallback( const void *inputBuffer, void *outputBuffer,
 			cv.wait(lck);
 		mutex.lock();
 		chunk = chunks->front();
-		std::cerr << "Chunks: " << chunks->size() << "\n";
-		chunks->pop_front();
+//		std::cerr << "Chunks: " << chunks->size() << "\n";
 		mutex.unlock();
 		age = getAge(*chunk) + timeInfo->outputBufferDacTime*1000;
-		std::cerr << "age: " << getAge(*chunk) << "\t" << age << "\n";
-		if (age > bufferMs + 150)
+		std::cerr << "age: " << getAge(*chunk) << "\t" << age << "\t" << timeInfo->outputBufferDacTime*1000 << "\n";
+		if (age > bufferMs + 2*MS)
 		{
+			chunks->pop_front();
 			delete chunk;
+			std::cerr << "packe too old, dropping\n";
 			usleep(100);
 		}
-		else if (age < bufferMs)
+		else if (age < bufferMs - 2*MS)
 		{
-			usleep(((bufferMs - age) + 100) * 1000);
+			chunk = new Chunk();
+			memset(&(chunk->payload[0]), 0, SIZE);
+			std::cerr << "age < bufferMs (" << age << " < " << bufferMs << "), playing silence\n";
+			usleep(10 * 1000);
 			break;
 		}
-		else			
+		else
+		{
+			chunks->pop_front();
 			break;
+		}
 	}
 	
     for( i=0; i<framesPerBuffer; i++)
