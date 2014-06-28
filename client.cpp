@@ -85,7 +85,7 @@ void player()
 		if (chunks.empty())
 			cv.wait(lck);
 		mutex.lock();
-//		std::cerr << "Chunks: " << chunks.size() << "\n";
+		std::cerr << "Chunks: " << chunks.size() << "\n";
 		Chunk* chunk = chunks.front();
 		chunks.pop_front();
 		mutex.unlock();
@@ -94,7 +94,21 @@ void player()
 
 		if (playing)
 		{
+	        for (size_t n=0; n<size; ++n)
+           		std::cout << chunk->payload[n];// << std::flush;
+			std::cout << std::flush;
+
 			int age = getAge(*chunk) - bufferMs;
+			std::cerr << "Age: " << age << "\n";
+			if (age < 0)
+			{
+				std::cerr << "Sleeping, age: " << age / 2 << "\n";
+				usleep((-age / 2) * 1000 - 100);
+			}
+			else
+				std::cerr << "Dropping Chunk, age: " << age << "\n";
+
+/*			int age = getAge(*chunk) - bufferMs;
 			if (age < 10)
 			{
 				if (age < 0)
@@ -115,7 +129,7 @@ void player()
 			}
 			else
 				std::cerr << "Dropping Chunk, age: " << age << "\n";
-		}
+*/		}
 		delete chunk;
 	}
 }
