@@ -188,8 +188,11 @@ static int patestCallback( const void *inputBuffer, void *outputBuffer,
 		std::cerr << "age: " << getAge(*chunk) << "\t" << age << "\n";
 		if (age > bufferMs + 100)
 			delete chunk;
-		else if (age < bufferMs)
-			usleep(((bufferMs - age)) * 1000);
+		else if (age < bufferMs - 100)
+		{
+			usleep(((bufferMs - age) + 100) * 1000);
+			delete chunk;
+		}
 		else			
 			break;
 	}
