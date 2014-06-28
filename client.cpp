@@ -186,9 +186,11 @@ static int patestCallback( const void *inputBuffer, void *outputBuffer,
 		mutex.unlock();
 		age = getAge(*chunk) + timeInfo->outputBufferDacTime*1000;
 		std::cerr << "age: " << getAge(*chunk) << "\t" << age << "\n";
-		if (age > bufferMs)
+		if (age > bufferMs + 100)
 			delete chunk;
-		else
+		else if (age < bufferMs)
+			usleep(((bufferMs - age)) * 1000);
+		else			
 			break;
 	}
 	
