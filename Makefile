@@ -1,7 +1,7 @@
 VERSION = 0.01
 CC      = /usr/bin/g++
 CFLAGS  = -std=gnu++0x -Wall -g -O3 -D_REENTRANT -DVERSION=\"$(VERSION)\"
-LDFLAGS = -lzmq -lpthread 
+LDFLAGS = -lzmq -lpthread -lportaudio
 
 OBJ_SERVER = server.o
 BIN_SERVER = server
