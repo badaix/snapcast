@@ -209,6 +209,7 @@ static int patestCallback( const void *inputBuffer, void *outputBuffer,
 			std::cerr << "median > bufferMs + MS (" << median << " > " << bufferMs + MS << "), dropping chunk\n";
 			buffer.clear();
 			chunks->pop_front();
+			usleep((median - (bufferMs + MS)) * 1000);
 			delete chunk;
 		}
 		else if (buffer.full() && (median + MS < bufferMs))
@@ -217,7 +218,7 @@ static int patestCallback( const void *inputBuffer, void *outputBuffer,
 			buffer.clear();
 			chunk = new Chunk();
 			memset(&(chunk->payload[0]), 0, SIZE);
-			usleep(10 * 1000);
+			usleep((bufferMs - (median + MS)) * 1000);
 			break;
 		}
 		else
