@@ -18,8 +18,10 @@
 #include <condition_variable>
 #include <portaudio.h>
 #include "chunk.h"
+#include "doubleBuffer.h"
 
 
+DoubleBuffer<int> buffer(5000 / MS);
 std::deque<Chunk*> chunks;
 std::deque<int> timeDiffs;
 std::mutex mtx;
@@ -184,7 +186,9 @@ static int patestCallback( const void *inputBuffer, void *outputBuffer,
 //		std::cerr << "Chunks: " << chunks->size() << "\n";
 		mutex.unlock();
 		age = getAge(*chunk) + timeInfo->outputBufferDacTime*1000;
-		std::cerr << "age: " << getAge(*chunk) << "\t" << age << "\t" << timeInfo->outputBufferDacTime*1000 << "\n";
+		int median = buffer.median();
+		std::cerr << "age: " << getAge(*chunk) << "\t" << age << "\t" << median << "\t" << timeInfo->outputBufferDacTime*1000 << "\n";
+	
 		if (age > bufferMs + 2*MS)
 		{
 			chunks->pop_front();
@@ -202,6 +206,7 @@ static int patestCallback( const void *inputBuffer, void *outputBuffer,
 		}
 		else
 		{
+			buffer.add(age);
 			chunks->pop_front();
 			break;
 		}
