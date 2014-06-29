@@ -19,60 +19,16 @@
 #include <portaudio.h>
 #include "chunk.h"
 #include "doubleBuffer.h"
+#include "timeUtils.h"
 
 
-DoubleBuffer<int> buffer(30000 / MS);
+DoubleBuffer<int> buffer(30000 / CHUNK_MS);
 std::deque<Chunk*> chunks;
 std::deque<int> timeDiffs;
 std::mutex mtx;
 std::mutex mutex;
 std::condition_variable cv;
 
-std::string timeToStr(const timeval& timestamp)
-{
-	char tmbuf[64], buf[64];
-	struct tm *nowtm;
-	time_t nowtime;
-	nowtime = timestamp.tv_sec;
-	nowtm = localtime(&nowtime);
-	strftime(tmbuf, sizeof tmbuf, "%Y-%m-%d %H:%M:%S", nowtm);
-	snprintf(buf, sizeof buf, "%s.%06d", tmbuf, (int)timestamp.tv_usec);
-	return buf;
-}
-
-
-std::string chunkTime(const Chunk& chunk)
-{
-	timeval ts;
-	ts.tv_sec = chunk.tv_sec;
-	ts.tv_usec = chunk.tv_usec;
-	return timeToStr(ts);
-}
-
-
-int diff_ms(const timeval& t1, const timeval& t2)
-{
-    return (((t1.tv_sec - t2.tv_sec) * 1000000) + 
-            (t1.tv_usec - t2.tv_usec))/1000;
-}
-
-
-int getAge(const Chunk& chunk)
-{
-	timeval now;
-	gettimeofday(&now, NULL);
-	timeval ts;
-	ts.tv_sec = chunk.tv_sec;
-	ts.tv_usec = chunk.tv_usec;
-	return diff_ms(now, ts);
-}
- 
-long getTickCount()
-{
-	struct timespec now;
-	clock_gettime(CLOCK_MONOTONIC, &now);
-	return now.tv_sec*1000 + now.tv_nsec / 1000000;
-}
 
 void player() 
 {
@@ -109,12 +65,12 @@ void player()
 		{
 			long now = getTickCount();
 //			std::cerr << "Before: " << now << "\n";
-	        for (size_t n=0; n<SIZE; ++n)
+	        for (size_t n=0; n<CHUNK_SIZE; ++n)
            		std::cout << chunk->payload[n];// << std::flush;
 			std::cout << std::flush;
 			long after = getTickCount();
 //			std::cerr << "After: " << after << " (" << after - now << ")\n";
-			if (after - now > MS / 2)
+			if (after - now > CHUNK_MS / 2)
 				usleep(((after - now) / 2) * 1000);
 				
 //			int age = getAge(*chunk);
@@ -154,6 +110,12 @@ void player()
 }
 
 
+void sleepMs(int ms)
+{
+	if (ms > 0)
+		usleep(ms * 1000);
+}
+
 
 /* This routine will be called by the PortAudio engine when audio is needed.
 ** It may called at interrupt level on some machines so don't do anything
@@ -189,37 +151,46 @@ static int patestCallback( const void *inputBuffer, void *outputBuffer,
 		int median = buffer.median();
 		std::cerr << "age: " << getAge(*chunk) << "\t" << age << "\t" << median << "\t" << buffer.size() << "\t" << timeInfo->outputBufferDacTime*1000 << "\n";
 	
-		if (/*!buffer.full() &&*/ (age > bufferMs + std::max(100, 2*MS)))
+		int maxDiff = 10;
+		if (/*!buffer.full() &&*/ (age > bufferMs + std::max(100, 2*CHUNK_MS)))
 		{
 			chunks->pop_front();
 			delete chunk;
 			std::cerr << "packe too old, dropping\n";
 			usleep(100);
 		}
-		else if (/*!buffer.full() &&*/ (age < bufferMs - std::max(100, 2*MS)))
+		else if (/*!buffer.full() &&*/ (age < bufferMs - std::max(100, 2*CHUNK_MS)))
 		{
 			chunk = new Chunk();
-			memset(&(chunk->payload[0]), 0, SIZE);
+			memset(&(chunk->payload[0]), 0, CHUNK_SIZE);
 			std::cerr << "age < bufferMs (" << age << " < " << bufferMs << "), playing silence\n";
 			usleep(10 * 1000);
 			break;
 		}
-		else if (buffer.full() && (median > bufferMs + MS))
+		else if (buffer.full() && (median > bufferMs + maxDiff))
 		{
-			std::cerr << "median > bufferMs + MS (" << median << " > " << bufferMs + MS << "), dropping chunk\n";
+			std::cerr << "median > bufferMs + CHUNK_MS (" << median << " > " << bufferMs + maxDiff << "), dropping chunk\n";
 			buffer.clear();
 			chunks->pop_front();
-			usleep((median - (bufferMs + MS)) * 1000);
 			delete chunk;
+			sleepMs(median - bufferMs);
 		}
-		else if (buffer.full() && (median + MS < bufferMs))
+		else if (buffer.full() && (median + maxDiff < bufferMs))
 		{
-			std::cerr << "median + MS < bufferMs (" << median + MS << " < " << bufferMs << "), playing silence\n";
+			std::cerr << "median + CHUNK_MS < bufferMs (" << median + maxDiff << " < " << bufferMs << "), playing silence\n";
 			buffer.clear();
-			chunk = new Chunk();
-			memset(&(chunk->payload[0]), 0, SIZE);
-			usleep((bufferMs - (median + MS)) * 1000);
-			break;
+			if (bufferMs - median > CHUNK_MS)
+			{
+				chunk = new Chunk();
+				memset(&(chunk->payload[0]), 0, CHUNK_SIZE);
+				sleepMs(bufferMs - median - CHUNK_MS + 10);
+				break;
+			}
+			else
+			{
+				sleepMs(bufferMs - median + 10);
+			}
+//			delete chunk;
 		}
 		else
 		{

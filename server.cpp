@@ -15,23 +15,11 @@
 #include <sys/time.h>
 #include <stdint.h>
 #include "chunk.h"
+#include "timeUtils.h"
+
 
 using namespace std;
 
-
-void addMs(timeval& tv, int ms)
-{
-    tv.tv_usec += ms*1000;
-    tv.tv_sec += (tv.tv_usec / 1000000);
-    tv.tv_usec %= 1000000;
-}
-
-
-int diff_ms(const timeval& t1, const timeval& t2)
-{
-    return (((t1.tv_sec - t2.tv_sec) * 1000000) + 
-                (t1.tv_usec - t2.tv_usec))/1000;
-}
 
 
 int main () {
@@ -54,7 +42,7 @@ int main () {
     {
 //        read(fd, &msg[0], size);
         chunk.payload[idx++] = c;
-        if (idx == SIZE)
+        if (idx == CHUNK_SIZE)
         {
             timeval now;
             gettimeofday(&now, NULL);
@@ -74,7 +62,7 @@ int main () {
 //            snprintf ((char *) message.data(), size, "%05d %d", zipcode, c);
 //  	      message.data()[0] = c;
             publisher.send(message);
-            addMs(ts, MS);
+            addMs(ts, CHUNK_MS);
             idx = 0;
 //            msg[0] = '0';
         }
