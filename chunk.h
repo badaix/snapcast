@@ -1,7 +1,7 @@
 #ifndef CHUNK_H
 #define CHUNK_H
 
-#define MS (50)
+#define MS (25)
 //44100 / 20 = 2205
 #define SAMPLE_RATE (44100)
 #define SIZE (SAMPLE_RATE*4*MS/1000)
