@@ -22,7 +22,7 @@
 #include "timeUtils.h"
 
 
-DoubleBuffer<int> buffer(30000 / CHUNK_MS);
+DoubleBuffer<int> buffer(30000 / WIRE_CHUNK_MS);
 std::deque<Chunk*> chunks;
 std::deque<int> timeDiffs;
 std::mutex mtx;
@@ -65,12 +65,12 @@ void player()
 		{
 			long now = getTickCount();
 //			std::cerr << "Before: " << now << "\n";
-	        for (size_t n=0; n<CHUNK_SIZE; ++n)
+	        for (size_t n=0; n<WIRE_CHUNK_SIZE; ++n)
            		std::cout << chunk->payload[n];// << std::flush;
 			std::cout << std::flush;
 			long after = getTickCount();
 //			std::cerr << "After: " << after << " (" << after - now << ")\n";
-			if (after - now > CHUNK_MS / 2)
+			if (after - now > WIRE_CHUNK_MS / 2)
 				usleep(((after - now) / 2) * 1000);
 				
 //			int age = getAge(*chunk);
@@ -152,24 +152,24 @@ static int patestCallback( const void *inputBuffer, void *outputBuffer,
 		std::cerr << "age: " << getAge(*chunk) << "\t" << age << "\t" << median << "\t" << buffer.size() << "\t" << timeInfo->outputBufferDacTime*1000 << "\n";
 	
 		int maxDiff = 10;
-		if (/*!buffer.full() &&*/ (age > bufferMs + std::max(100, 2*CHUNK_MS)))
+		if (/*!buffer.full() &&*/ (age > bufferMs + std::max(100, 2*WIRE_CHUNK_MS)))
 		{
 			chunks->pop_front();
 			delete chunk;
 			std::cerr << "packe too old, dropping\n";
 			usleep(100);
 		}
-		else if (/*!buffer.full() &&*/ (age < bufferMs - std::max(100, 2*CHUNK_MS)))
+		else if (/*!buffer.full() &&*/ (age < bufferMs - std::max(100, 2*WIRE_CHUNK_MS)))
 		{
 			chunk = new Chunk();
-			memset(&(chunk->payload[0]), 0, CHUNK_SIZE);
+			memset(&(chunk->payload[0]), 0, WIRE_CHUNK_SIZE);
 			std::cerr << "age < bufferMs (" << age << " < " << bufferMs << "), playing silence\n";
 			usleep(10 * 1000);
 			break;
 		}
 		else if (buffer.full() && (median > bufferMs + maxDiff))
 		{
-			std::cerr << "median > bufferMs + CHUNK_MS (" << median << " > " << bufferMs + maxDiff << "), dropping chunk\n";
+			std::cerr << "median > bufferMs + WIRE_CHUNK_MS (" << median << " > " << bufferMs + maxDiff << "), dropping chunk\n";
 			buffer.clear();
 			chunks->pop_front();
 			delete chunk;
@@ -177,13 +177,13 @@ static int patestCallback( const void *inputBuffer, void *outputBuffer,
 		}
 		else if (buffer.full() && (median + maxDiff < bufferMs))
 		{
-			std::cerr << "median + CHUNK_MS < bufferMs (" << median + maxDiff << " < " << bufferMs << "), playing silence\n";
+			std::cerr << "median + WIRE_CHUNK_MS < bufferMs (" << median + maxDiff << " < " << bufferMs << "), playing silence\n";
 			buffer.clear();
-			if (bufferMs - median > CHUNK_MS)
+			if (bufferMs - median > WIRE_CHUNK_MS)
 			{
 				chunk = new Chunk();
-				memset(&(chunk->payload[0]), 0, CHUNK_SIZE);
-				sleepMs(bufferMs - median - CHUNK_MS + 10);
+				memset(&(chunk->payload[0]), 0, WIRE_CHUNK_SIZE);
+				sleepMs(bufferMs - median - WIRE_CHUNK_MS + 10);
 				break;
 			}
 			else

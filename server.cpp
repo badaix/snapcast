@@ -42,7 +42,7 @@ int main () {
     {
 //        read(fd, &msg[0], size);
         chunk.payload[idx++] = c;
-        if (idx == CHUNK_SIZE)
+        if (idx == WIRE_CHUNK_SIZE)
         {
             timeval now;
             gettimeofday(&now, NULL);
@@ -62,7 +62,7 @@ int main () {
 //            snprintf ((char *) message.data(), size, "%05d %d", zipcode, c);
 //  	      message.data()[0] = c;
             publisher.send(message);
-            addMs(ts, CHUNK_MS);
+            addMs(ts, WIRE_CHUNK_MS);
             idx = 0;
 //            msg[0] = '0';
         }
