@@ -23,7 +23,7 @@
 
 
 DoubleBuffer<int> buffer(30000 / WIRE_CHUNK_MS);
-std::deque<Chunk*> chunks;
+std::deque<PlayerChunk*> chunks;
 std::deque<int> timeDiffs;
 std::mutex mtx;
 std::mutex mutex;
@@ -54,7 +54,7 @@ void player()
 		if (chunks.empty())
 			cv.wait(lck);
 		mutex.lock();
-		Chunk* chunk = chunks.front();
+		PlayerChunk* chunk = chunks.front();
 //		std::cerr << "Chunks: " << chunks.size() << "\n";
 		chunks.pop_front();
 		mutex.unlock();
@@ -128,7 +128,7 @@ static int patestCallback( const void *inputBuffer, void *outputBuffer,
                             void *userData )
 {
 //	std::cerr << "outputBufferDacTime: " << timeInfo->outputBufferDacTime*1000 << "\n";
-    std::deque<Chunk*>* chunks = (std::deque<Chunk*>*)userData;
+    std::deque<PlayerChunk*>* chunks = (std::deque<PlayerChunk*>*)userData;
     short* out = (short*)outputBuffer;
     unsigned long i;
 
@@ -138,7 +138,7 @@ static int patestCallback( const void *inputBuffer, void *outputBuffer,
     
 	std::unique_lock<std::mutex> lck(mtx);
 	int age = 0;
-	Chunk* chunk = NULL;
+	PlayerChunk* chunk = NULL;
 	while (1)
 	{
 		if (chunks->empty())
@@ -161,7 +161,7 @@ static int patestCallback( const void *inputBuffer, void *outputBuffer,
 		}
 		else if (/*!buffer.full() &&*/ (age < bufferMs - std::max(100, 2*WIRE_CHUNK_MS)))
 		{
-			chunk = new Chunk();
+			chunk = new PlayerChunk();
 			memset(&(chunk->payload[0]), 0, WIRE_CHUNK_SIZE);
 			std::cerr << "age < bufferMs (" << age << " < " << bufferMs << "), playing silence\n";
 			usleep(10 * 1000);
@@ -181,7 +181,7 @@ static int patestCallback( const void *inputBuffer, void *outputBuffer,
 			buffer.clear();
 			if (bufferMs - median > WIRE_CHUNK_MS)
 			{
-				chunk = new Chunk();
+				chunk = new PlayerChunk();
 				memset(&(chunk->payload[0]), 0, WIRE_CHUNK_SIZE);
 				sleepMs(bufferMs - median - WIRE_CHUNK_MS + 10);
 				break;
@@ -238,7 +238,7 @@ int initAudio()
       fprintf(stderr,"Error: No default output device.\n");
       goto error;
     }
-    outputParameters.channelCount = 2;       /* stereo output */
+    outputParameters.channelCount = CHANNELS;       /* stereo output */
     outputParameters.sampleFormat = paInt16; /* 32 bit floating point output */
     outputParameters.suggestedLatency = Pa_GetDeviceInfo( outputParameters.device )->defaultLowOutputLatency;
     outputParameters.hostApiSpecificStreamInfo = NULL;
@@ -307,14 +307,21 @@ int main (int argc, char *argv[])
         subscriber.recv(&update);
 		Chunk* chunk = new Chunk();
         memcpy(chunk, update.data(), sizeof(Chunk));
-		timeval now;
-		gettimeofday(&now, NULL);
+		for (size_t n=0; n<WIRE_CHUNK_MS/PLAYER_CHUNK_MS; ++n)
+		{
+			PlayerChunk* playerChunk = new PlayerChunk();
+//			for (size_t m=0; m<PLAYER_CHUNK_SIZE; ++m)
+			memcpy(&(playerChunk->payload[0]), &chunk->payload[n*PLAYER_CHUNK_SIZE], PLAYER_CHUNK_SIZE);
+			mutex.lock();
+			chunks.push_back(playerChunk);
+			mutex.unlock();
+			cv.notify_all();
+		}
+
+//		timeval now;
+//		gettimeofday(&now, NULL);
 //		std::cerr << "New chunk: " << chunkTime(*chunk) << "\t" << timeToStr(now) << "\t" << getAge(*chunk) << "\n";
 
-		mutex.lock();
-		chunks.push_back(chunk);
-		mutex.unlock();
-		cv.notify_all();
     }
     return 0;
 }

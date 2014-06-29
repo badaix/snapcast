@@ -16,7 +16,8 @@ std::string timeToStr(const timeval& timestamp)
 }
 
 
-std::string chunkTime(const Chunk& chunk)
+template <typename T>
+std::string chunkTime(const T& chunk)
 {
 	timeval ts;
 	ts.tv_sec = chunk.tv_sec;
@@ -32,7 +33,8 @@ int diff_ms(const timeval& t1, const timeval& t2)
 }
 
 
-int getAge(const Chunk& chunk)
+template <typename T>
+int getAge(const T& chunk)
 {
 	timeval now;
 	gettimeofday(&now, NULL);
