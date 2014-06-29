@@ -152,24 +152,24 @@ static int patestCallback( const void *inputBuffer, void *outputBuffer,
 		std::cerr << "age: " << getAge(*chunk) << "\t" << age << "\t" << median << "\t" << buffer.size() << "\t" << timeInfo->outputBufferDacTime*1000 << "\n";
 	
 		int maxDiff = 10;
-		if (/*!buffer.full() &&*/ (age > bufferMs + std::max(100, 2*WIRE_CHUNK_MS)))
+		if (/*!buffer.full() &&*/ (age > bufferMs + std::max(100, 2*PLAYER_CHUNK_MS)))
 		{
 			chunks->pop_front();
 			delete chunk;
 			std::cerr << "packe too old, dropping\n";
 			usleep(100);
 		}
-		else if (/*!buffer.full() &&*/ (age < bufferMs - std::max(100, 2*WIRE_CHUNK_MS)))
+		else if (/*!buffer.full() &&*/ (age < bufferMs - std::max(100, 2*PLAYER_CHUNK_MS)))
 		{
 			chunk = new PlayerChunk();
-			memset(&(chunk->payload[0]), 0, WIRE_CHUNK_SIZE);
+			memset(&(chunk->payload[0]), 0, PLAYER_CHUNK_SIZE);
 			std::cerr << "age < bufferMs (" << age << " < " << bufferMs << "), playing silence\n";
 			usleep(10 * 1000);
 			break;
 		}
 		else if (buffer.full() && (median > bufferMs + maxDiff))
 		{
-			std::cerr << "median > bufferMs + WIRE_CHUNK_MS (" << median << " > " << bufferMs + maxDiff << "), dropping chunk\n";
+			std::cerr << "median > bufferMs + PLAYER_CHUNK_MS (" << median << " > " << bufferMs + maxDiff << "), dropping chunk\n";
 			buffer.clear();
 			chunks->pop_front();
 			delete chunk;
@@ -177,13 +177,13 @@ static int patestCallback( const void *inputBuffer, void *outputBuffer,
 		}
 		else if (buffer.full() && (median + maxDiff < bufferMs))
 		{
-			std::cerr << "median + WIRE_CHUNK_MS < bufferMs (" << median + maxDiff << " < " << bufferMs << "), playing silence\n";
+			std::cerr << "median + PLAYER_CHUNK_MS < bufferMs (" << median + maxDiff << " < " << bufferMs << "), playing silence\n";
 			buffer.clear();
-			if (bufferMs - median > WIRE_CHUNK_MS)
+			if (bufferMs - median > PLAYER_CHUNK_MS)
 			{
 				chunk = new PlayerChunk();
-				memset(&(chunk->payload[0]), 0, WIRE_CHUNK_SIZE);
-				sleepMs(bufferMs - median - WIRE_CHUNK_MS + 10);
+				memset(&(chunk->payload[0]), 0, PLAYER_CHUNK_SIZE);
+				sleepMs(bufferMs - median - PLAYER_CHUNK_MS + 10);
 				break;
 			}
 			else
