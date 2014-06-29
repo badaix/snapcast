@@ -21,7 +21,7 @@
 #include "doubleBuffer.h"
 
 
-DoubleBuffer<int> buffer(5000 / MS);
+DoubleBuffer<int> buffer(60000 / MS);
 std::deque<Chunk*> chunks;
 std::deque<int> timeDiffs;
 std::mutex mtx;
@@ -187,7 +187,7 @@ static int patestCallback( const void *inputBuffer, void *outputBuffer,
 		mutex.unlock();
 		age = getAge(*chunk) + timeInfo->outputBufferDacTime*1000;
 		int median = buffer.median();
-		std::cerr << "age: " << getAge(*chunk) << "\t" << age << "\t" << median << "\t" << timeInfo->outputBufferDacTime*1000 << "\n";
+		std::cerr << "age: " << getAge(*chunk) << "\t" << age << "\t" << median << "\t" << buffer.size() << "\t" << timeInfo->outputBufferDacTime*1000 << "\n";
 	
 		if (age > bufferMs + 2*MS)
 		{
@@ -201,6 +201,22 @@ static int patestCallback( const void *inputBuffer, void *outputBuffer,
 			chunk = new Chunk();
 			memset(&(chunk->payload[0]), 0, SIZE);
 			std::cerr << "age < bufferMs (" << age << " < " << bufferMs << "), playing silence\n";
+			usleep(10 * 1000);
+			break;
+		}
+		else if (buffer.full() && (median > bufferMs + MS))
+		{
+			std::cerr << "median > bufferMs + MS (" << median << " > " << bufferMs + MS << "), dropping chunk\n";
+			buffer.clear();
+			chunks->pop_front();
+			delete chunk;
+		}
+		else if (buffer.full() && (median + MS < bufferMs))
+		{
+			std::cerr << "median + MS < bufferMs (" << median + MS << " < " << bufferMs << "), playing silence\n";
+			buffer.clear();
+			chunk = new Chunk();
+			memset(&(chunk->payload[0]), 0, SIZE);
 			usleep(10 * 1000);
 			break;
 		}

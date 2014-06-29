@@ -8,18 +8,18 @@ template <class T>
 class DoubleBuffer
 {
 public:
-	DoubleBuffer(size_t bufferSize) : size(bufferSize)
+	DoubleBuffer(size_t size) : bufferSize(size)
 	{		
 	}
 
 	void add(const T& element)
 	{
 		buffer.push_back(element);
-		if (buffer.size() > size)
+		if (buffer.size() > bufferSize)
 			buffer.pop_front();
 	}
 
-	T median()
+	T median() const
 	{
 		if (buffer.empty())
 			return 0;
@@ -28,8 +28,23 @@ public:
 		return tmpBuffer[tmpBuffer.size() / 2];
 	}
 
+	bool full() const
+	{
+		return (buffer.size() == bufferSize);
+	}
+
+	void clear()
+	{
+		buffer.clear();
+	}
+
+	size_t size() const
+	{
+		return buffer.size();
+	}
+
 private:
-	size_t size;	
+	size_t bufferSize;	
 	std::deque<T> buffer;
 	
 };
