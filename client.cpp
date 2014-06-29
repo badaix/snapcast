@@ -189,14 +189,14 @@ static int patestCallback( const void *inputBuffer, void *outputBuffer,
 		int median = buffer.median();
 		std::cerr << "age: " << getAge(*chunk) << "\t" << age << "\t" << median << "\t" << buffer.size() << "\t" << timeInfo->outputBufferDacTime*1000 << "\n";
 	
-		if (/*!buffer.full() &&*/ (age > bufferMs + 2*MS))
+		if (/*!buffer.full() &&*/ (age > bufferMs + std::max(100, 2*MS)))
 		{
 			chunks->pop_front();
 			delete chunk;
 			std::cerr << "packe too old, dropping\n";
 			usleep(100);
 		}
-		else if (/*!buffer.full() &&*/ (age < bufferMs - 2*MS))
+		else if (/*!buffer.full() &&*/ (age < bufferMs - std::max(100, 2*MS)))
 		{
 			chunk = new Chunk();
 			memset(&(chunk->payload[0]), 0, SIZE);
