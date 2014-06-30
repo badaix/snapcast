@@ -118,6 +118,9 @@ void sleepMs(int ms)
 }
 
 
+int skip(0);
+
+
 /* This routine will be called by the PortAudio engine when audio is needed.
 ** It may called at interrupt level on some machines so don't do anything
 ** that could mess up the system like calling malloc() or free().
@@ -155,10 +158,19 @@ static int patestCallback( const void *inputBuffer, void *outputBuffer,
 		int shortMedian = shortBuffer.median();
 		std::cerr << "age: " << getAge(*chunk) << "\t" << age << "\t" << shortMedian << "\t" << median << "\t" << buffer.size() << "\t" << timeInfo->outputBufferDacTime*1000 << "\n";
 	
-		bool skip = (age > 500) || (shortBuffer.full() && (shortMedian > 100)) || (buffer.full() && (median > 20));
-		bool silence = (age < -500) || (shortBuffer.full() && (shortMedian < -100)) || (buffer.full() && (median < -20));
-		if (skip)
+		if (skip == 0)
 		{
+			if ((age > 500) || (age < -500))
+				skip = age / PLAYER_CHUNK_MS;
+			else if (shortBuffer.full() && ((shortMedian > 100) || (shortMedian < -100)))
+				skip = shortMedian / PLAYER_CHUNK_MS;
+			else if (buffer.full() && ((median > 15) || (median < -15)))
+				skip = median / PLAYER_CHUNK_MS;
+		}
+//		bool silence = (age < -500) || (shortBuffer.full() && (shortMedian < -100)) || (buffer.full() && (median < -15));
+		if (skip > 0)
+		{
+			skip--;
 			chunks->pop_front();
 			delete chunk;
 			std::cerr << "packe too old, dropping\n";
@@ -166,8 +178,9 @@ static int patestCallback( const void *inputBuffer, void *outputBuffer,
 			shortBuffer.clear();
 			usleep(100);
 		}
-		else if (silence)
+		else if (skip < 0)
 		{
+			skip++;
 			chunk = new PlayerChunk();
 			memset(&(chunk->payload[0]), 0, PLAYER_CHUNK_SIZE);
 //			std::cerr << "age < bufferMs (" << age << " < " << bufferMs << "), playing silence\n";
