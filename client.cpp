@@ -22,7 +22,8 @@
 #include "timeUtils.h"
 
 
-DoubleBuffer<int> buffer(30000 / WIRE_CHUNK_MS);
+DoubleBuffer<int> buffer(20000 / PLAYER_CHUNK_MS);
+DoubleBuffer<int> shortBuffer(500 / PLAYER_CHUNK_MS);
 std::deque<PlayerChunk*> chunks;
 std::deque<int> timeDiffs;
 std::mutex mtx;
@@ -147,19 +148,44 @@ static int patestCallback( const void *inputBuffer, void *outputBuffer,
 		chunk = chunks->front();
 //		std::cerr << "Chunks: " << chunks->size() << "\n";
 		mutex.unlock();
-		age = getAge(*chunk) + timeInfo->outputBufferDacTime*1000;
+		age = getAge(*chunk) + timeInfo->outputBufferDacTime*1000 - bufferMs;
+		buffer.add(age);
+		shortBuffer.add(age);
 		int median = buffer.median();
-		std::cerr << "age: " << getAge(*chunk) << "\t" << age << "\t" << median << "\t" << buffer.size() << "\t" << timeInfo->outputBufferDacTime*1000 << "\n";
+		int shortMedian = shortBuffer.median();
+		std::cerr << "age: " << getAge(*chunk) << "\t" << age << "\t" << shortMedian << "\t" << median << "\t" << buffer.size() << "\t" << timeInfo->outputBufferDacTime*1000 << "\n";
 	
-		int maxDiff = 10;
-		if (/*!buffer.full() &&*/ (age > bufferMs + std::max(100, 2*PLAYER_CHUNK_MS)))
+		bool skip = (age > 500) || (shortBuffer.full() && (shortMedian > 100)) || (buffer.full() && (median > 20));
+		bool silence = (age < -500) || (shortBuffer.full() && (shortMedian < -100)) || (buffer.full() && (median < -20));
+		if (skip)
+		{
+			chunks->pop_front();
+			delete chunk;
+			std::cerr << "packe too old, dropping\n";
+			buffer.clear();
+			shortBuffer.clear();
+			usleep(100);
+		}
+		else if (silence)
+		{
+			chunk = new PlayerChunk();
+			memset(&(chunk->payload[0]), 0, PLAYER_CHUNK_SIZE);
+//			std::cerr << "age < bufferMs (" << age << " < " << bufferMs << "), playing silence\n";
+			buffer.clear();
+			shortBuffer.clear();
+			usleep(100);
+			break;
+		}
+		
+/*		int maxDiff = 10;
+		if ((shortMedian > bufferMs + std::max(100, 3*WIRE_CHUNK_MS)))
 		{
 			chunks->pop_front();
 			delete chunk;
 			std::cerr << "packe too old, dropping\n";
 			usleep(100);
 		}
-		else if (/*!buffer.full() &&*/ (age < bufferMs - std::max(100, 2*PLAYER_CHUNK_MS)))
+		else if ((shortMedian < bufferMs - std::max(100, 3*WIRE_CHUNK_MS)))
 		{
 			chunk = new PlayerChunk();
 			memset(&(chunk->payload[0]), 0, PLAYER_CHUNK_SIZE);
@@ -170,7 +196,7 @@ static int patestCallback( const void *inputBuffer, void *outputBuffer,
 		else if (buffer.full() && (median > bufferMs + maxDiff))
 		{
 			std::cerr << "median > bufferMs + PLAYER_CHUNK_MS (" << median << " > " << bufferMs + maxDiff << "), dropping chunk\n";
-			buffer.clear();
+//			buffer.clear();
 			chunks->pop_front();
 			delete chunk;
 			sleepMs(median - bufferMs);
@@ -178,7 +204,7 @@ static int patestCallback( const void *inputBuffer, void *outputBuffer,
 		else if (buffer.full() && (median + maxDiff < bufferMs))
 		{
 			std::cerr << "median + PLAYER_CHUNK_MS < bufferMs (" << median + maxDiff << " < " << bufferMs << "), playing silence\n";
-			buffer.clear();
+//			buffer.clear();
 			if (bufferMs - median > PLAYER_CHUNK_MS)
 			{
 				chunk = new PlayerChunk();
@@ -192,9 +218,9 @@ static int patestCallback( const void *inputBuffer, void *outputBuffer,
 			}
 //			delete chunk;
 		}
+*/
 		else
 		{
-			buffer.add(age);
 			chunks->pop_front();
 			break;
 		}
@@ -204,7 +230,7 @@ static int patestCallback( const void *inputBuffer, void *outputBuffer,
     {
 //std::cerr << (int)chunk->payload[i] << "\t" << (int)chunk->payload[i+1] << "\t" << (int)chunk->payload[i+2] << "\t" << (int)chunk->payload[i+3] << "\n";
 //std::cerr << i << "\t" << 4*i+1 << "\t" << 4*i << "\n";
-        *out++ = (int)chunk->payload[4*i+1]*256 + (int)chunk->payload[4*i];
+        *out++ = (int)chunk->payload[4*i+1]*256 + (int)chunk->payload[4*i+0];
         *out++ = (int)chunk->payload[4*i+3]*256 + (int)chunk->payload[4*i+2];
     }
 	delete chunk;
@@ -311,12 +337,16 @@ int main (int argc, char *argv[])
 		{
 			PlayerChunk* playerChunk = new PlayerChunk();
 //			for (size_t m=0; m<PLAYER_CHUNK_SIZE; ++m)
+			playerChunk->tv_sec = chunk->tv_sec;
+			playerChunk->tv_usec = chunk->tv_usec;
+			addMs(*playerChunk, n*PLAYER_CHUNK_MS);
 			memcpy(&(playerChunk->payload[0]), &chunk->payload[n*PLAYER_CHUNK_SIZE], PLAYER_CHUNK_SIZE);
 			mutex.lock();
 			chunks.push_back(playerChunk);
 			mutex.unlock();
 			cv.notify_all();
 		}
+		delete chunk;
 
 //		timeval now;
 //		gettimeofday(&now, NULL);

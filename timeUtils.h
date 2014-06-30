@@ -60,6 +60,17 @@ void addMs(timeval& tv, int ms)
     tv.tv_usec %= 1000000;
 }
 
+template <typename T>
+void addMs(T& chunk, int ms)
+{
+	timeval tv;
+	tv.tv_sec = chunk.tv_sec;
+	tv.tv_usec = chunk.tv_usec;
+	addMs(tv, ms);
+	chunk.tv_sec = tv.tv_sec;
+	chunk.tv_usec = tv.tv_usec;
+}
+
 
 
 #endif
