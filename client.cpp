@@ -119,6 +119,7 @@ void sleepMs(int ms)
 
 
 int skip(0);
+time_t lastUpdate(0);
 
 
 /* This routine will be called by the PortAudio engine when audio is needed.
@@ -142,6 +143,8 @@ static int patestCallback( const void *inputBuffer, void *outputBuffer,
     
 	std::unique_lock<std::mutex> lck(mtx);
 	int age = 0;
+	int median = 0;
+	int shortMedian = 0;
 	PlayerChunk* chunk = NULL;
 	while (1)
 	{
@@ -154,11 +157,16 @@ static int patestCallback( const void *inputBuffer, void *outputBuffer,
 		age = getAge(*chunk) + timeInfo->outputBufferDacTime*1000 - bufferMs;
 		buffer.add(age);
 		shortBuffer.add(age);
-		int median = buffer.median();
-		int shortMedian = shortBuffer.median();
+		time_t now = time(NULL);
 	
 		if (skip == 0)
 		{
+			if (now != lastUpdate)
+			{
+				lastUpdate = now;
+				median = buffer.median();
+				shortMedian = shortBuffer.median();
+			}
 			if ((age > 500) || (age < -500))
 				skip = age / PLAYER_CHUNK_MS;
 			else if (shortBuffer.full() && ((shortMedian > 100) || (shortMedian < -100)))
@@ -194,49 +202,6 @@ static int patestCallback( const void *inputBuffer, void *outputBuffer,
 			usleep(100);
 			break;
 		}
-		
-/*		int maxDiff = 10;
-		if ((shortMedian > bufferMs + std::max(100, 3*WIRE_CHUNK_MS)))
-		{
-			chunks->pop_front();
-			delete chunk;
-			std::cerr << "packe too old, dropping\n";
-			usleep(100);
-		}
-		else if ((shortMedian < bufferMs - std::max(100, 3*WIRE_CHUNK_MS)))
-		{
-			chunk = new PlayerChunk();
-			memset(&(chunk->payload[0]), 0, PLAYER_CHUNK_SIZE);
-			std::cerr << "age < bufferMs (" << age << " < " << bufferMs << "), playing silence\n";
-			usleep(10 * 1000);
-			break;
-		}
-		else if (buffer.full() && (median > bufferMs + maxDiff))
-		{
-			std::cerr << "median > bufferMs + PLAYER_CHUNK_MS (" << median << " > " << bufferMs + maxDiff << "), dropping chunk\n";
-//			buffer.clear();
-			chunks->pop_front();
-			delete chunk;
-			sleepMs(median - bufferMs);
-		}
-		else if (buffer.full() && (median + maxDiff < bufferMs))
-		{
-			std::cerr << "median + PLAYER_CHUNK_MS < bufferMs (" << median + maxDiff << " < " << bufferMs << "), playing silence\n";
-//			buffer.clear();
-			if (bufferMs - median > PLAYER_CHUNK_MS)
-			{
-				chunk = new PlayerChunk();
-				memset(&(chunk->payload[0]), 0, PLAYER_CHUNK_SIZE);
-				sleepMs(bufferMs - median - PLAYER_CHUNK_MS + 10);
-				break;
-			}
-			else
-			{
-				sleepMs(bufferMs - median + 10);
-			}
-//			delete chunk;
-		}
-*/
 		else
 		{
 			chunks->pop_front();
@@ -246,10 +211,8 @@ static int patestCallback( const void *inputBuffer, void *outputBuffer,
 	
     for( i=0; i<framesPerBuffer; i++)
     {
-//std::cerr << (int)chunk->payload[i] << "\t" << (int)chunk->payload[i+1] << "\t" << (int)chunk->payload[i+2] << "\t" << (int)chunk->payload[i+3] << "\n";
-//std::cerr << i << "\t" << 4*i+1 << "\t" << 4*i << "\n";
-        *out++ = (int)chunk->payload[4*i+1]*256 + (int)chunk->payload[4*i+0];
-        *out++ = (int)chunk->payload[4*i+3]*256 + (int)chunk->payload[4*i+2];
+        *out++ = (chunk->payload[4*i+1]*256) + chunk->payload[4*i+0];
+        *out++ = (chunk->payload[4*i+3]*256) + chunk->payload[4*i+2];
     }
 	delete chunk;
     
@@ -345,16 +308,15 @@ int main (int argc, char *argv[])
 	    std::cerr << "Unsuccessful in setting thread realtime prio" << std::endl;
 */
 	initAudio();
+	Chunk* chunk = new Chunk();
     while (1)
     {
         zmq::message_t update;
         subscriber.recv(&update);
-		Chunk* chunk = new Chunk();
         memcpy(chunk, update.data(), sizeof(Chunk));
 		for (size_t n=0; n<WIRE_CHUNK_MS/PLAYER_CHUNK_MS; ++n)
 		{
 			PlayerChunk* playerChunk = new PlayerChunk();
-//			for (size_t m=0; m<PLAYER_CHUNK_SIZE; ++m)
 			playerChunk->tv_sec = chunk->tv_sec;
 			playerChunk->tv_usec = chunk->tv_usec;
 			addMs(*playerChunk, n*PLAYER_CHUNK_MS);
@@ -364,13 +326,13 @@ int main (int argc, char *argv[])
 			mutex.unlock();
 			cv.notify_all();
 		}
-		delete chunk;
 
 //		timeval now;
 //		gettimeofday(&now, NULL);
 //		std::cerr << "New chunk: " << chunkTime(*chunk) << "\t" << timeToStr(now) << "\t" << getAge(*chunk) << "\n";
 
     }
+	delete chunk;
     return 0;
 }
 

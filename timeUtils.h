@@ -45,7 +45,7 @@ int getAge(const T& chunk)
 }
  
 
-long getTickCount()
+inline long getTickCount()
 {
 	struct timespec now;
 	clock_gettime(CLOCK_MONOTONIC, &now);
@@ -53,7 +53,7 @@ long getTickCount()
 }
 
 
-void addMs(timeval& tv, int ms)
+inline void addMs(timeval& tv, int ms)
 {
     tv.tv_usec += ms*1000;
     tv.tv_sec += (tv.tv_usec / 1000000);
