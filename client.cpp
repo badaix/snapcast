@@ -211,8 +211,8 @@ static int patestCallback( const void *inputBuffer, void *outputBuffer,
 	
     for( i=0; i<framesPerBuffer; i++)
     {
-        *out++ = (chunk->payload[4*i+1]*256) + chunk->payload[4*i+0];
-        *out++ = (chunk->payload[4*i+3]*256) + chunk->payload[4*i+2];
+        *out++ = (chunk->payload[4*i+1] << 8) + chunk->payload[4*i+0];
+        *out++ = (chunk->payload[4*i+3] << 8) + chunk->payload[4*i+2];
     }
 	delete chunk;
     

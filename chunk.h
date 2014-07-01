@@ -1,7 +1,7 @@
 #ifndef CHUNK_H
 #define CHUNK_H
 
-#define SAMPLE_RATE (44100)
+#define SAMPLE_RATE (48000)
 #define SAMPLE_BIT (16)
 #define CHANNELS (2)
 
