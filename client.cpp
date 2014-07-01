@@ -156,7 +156,6 @@ static int patestCallback( const void *inputBuffer, void *outputBuffer,
 		shortBuffer.add(age);
 		int median = buffer.median();
 		int shortMedian = shortBuffer.median();
-		std::cerr << "age: " << getAge(*chunk) << "\t" << age << "\t" << shortMedian << "\t" << median << "\t" << buffer.size() << "\t" << timeInfo->outputBufferDacTime*1000 << "\n";
 	
 		if (skip == 0)
 		{
@@ -167,6 +166,12 @@ static int patestCallback( const void *inputBuffer, void *outputBuffer,
 			else if (buffer.full() && ((median > 15) || (median < -15)))
 				skip = median / PLAYER_CHUNK_MS;
 		}
+		
+		if (skip != 0)
+		{
+			std::cerr << "age: " << getAge(*chunk) << "\t" << age << "\t" << shortMedian << "\t" << median << "\t" << buffer.size() << "\t" << timeInfo->outputBufferDacTime*1000 << "\n";
+		}
+
 //		bool silence = (age < -500) || (shortBuffer.full() && (shortMedian < -100)) || (buffer.full() && (median < -15));
 		if (skip > 0)
 		{
