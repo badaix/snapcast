@@ -31,7 +31,7 @@ int main () {
     //  Initialize random number generator
     size_t idx(0);
     char c[2];
-    Chunk chunk;
+    Chunk* chunk = new Chunk();
     timeval ts;
     ts.tv_sec = 0;
     ts.tv_usec = 0;
@@ -42,7 +42,7 @@ int main () {
     {
 		c[0] = cin.get();
 		c[1] = cin.get();
-        chunk.payload[idx++] = (int)c[0] + ((int)c[1] * 256);
+        chunk->payload[idx++] = (int)c[0] + ((int)c[1] * 256);
         if (idx == WIRE_CHUNK_SIZE)
         {
             timeval now;
@@ -56,10 +56,10 @@ int main () {
 //            else if (diff_ms(now, ts) > 1000)
 //                ts = now;
 
-            chunk.tv_sec = now.tv_sec;
-            chunk.tv_usec = 0;//now.tv_usec;
+            chunk->tv_sec = (int16_t)now.tv_sec;
+            chunk->tv_usec = 0;//now.tv_usec;
             zmq::message_t message(sizeof(Chunk));
-            memcpy(message.data(), &chunk, sizeof(Chunk));
+            memcpy(message.data(), chunk, sizeof(Chunk));
 //            snprintf ((char *) message.data(), size, "%05d %d", zipcode, c);
 //  	      message.data()[0] = c;
             publisher.send(message);
@@ -68,6 +68,7 @@ int main () {
 //            msg[0] = '0';
         }
     }
+	delete chunk;
     return 0;
 }
 
