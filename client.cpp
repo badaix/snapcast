@@ -22,7 +22,7 @@
 #include "timeUtils.h"
 
 
-DoubleBuffer<int> buffer(20000 / PLAYER_CHUNK_MS);
+DoubleBuffer<int> buffer(30000 / PLAYER_CHUNK_MS);
 DoubleBuffer<int> shortBuffer(500 / PLAYER_CHUNK_MS);
 std::deque<PlayerChunk*> chunks;
 std::deque<int> timeDiffs;
@@ -34,81 +34,6 @@ int bufferMs;
 
 void player() 
 {
-	std::unique_lock<std::mutex> lck(mtx);
-	bool playing = true;
-//	struct timespec last;
-	while (1)
-	{
-		if (chunks.empty())
-			cv.wait(lck);
-		mutex.lock();
-		std::cerr << "Chunks: " << chunks.size() << "\t" << getAge(*(chunks.front())) << "\n";
-		if (getAge(*(chunks.front())) > bufferMs)
-		{
-			mutex.unlock();
-			break;
-		}
-		mutex.unlock();
-	}
-
-	while (1)
-	{
-		if (chunks.empty())
-			cv.wait(lck);
-		mutex.lock();
-		PlayerChunk* chunk = chunks.front();
-//		std::cerr << "Chunks: " << chunks.size() << "\n";
-		chunks.pop_front();
-		mutex.unlock();
-	
-//		playing = playing || (getAge(*chunks.front()) > 200);
-
-		if (playing)
-		{
-			long now = getTickCount();
-//			std::cerr << "Before: " << now << "\n";
-	        for (size_t n=0; n<WIRE_CHUNK_SIZE; ++n)
-           		std::cout << chunk->payload[n];// << std::flush;
-			std::cout << std::flush;
-			long after = getTickCount();
-//			std::cerr << "After: " << after << " (" << after - now << ")\n";
-			if (after - now > WIRE_CHUNK_MS / 2)
-				usleep(((after - now) / 2) * 1000);
-				
-//			int age = getAge(*chunk);
-//			std::cerr << "Age: " << age << "\n";
-/*			if (age < 0)
-			{
-				std::cerr << "Sleeping, age: " << age / 2 << "\n";
-				usleep((-age / 2) * 1000 - 100);
-			}
-			else
-				std::cerr << "Dropping Chunk, age: " << age << "\n";
-*/
-/*			int age = getAge(*chunk) - bufferMs;
-			if (age < 10)
-			{
-				if (age < 0)
-				{
-					usleep((-age) * 1000 - 100);
-					age = getAge(*chunk) - bufferMs;
-				}
-				if (abs(age) > 10)
-					std::cerr << "Buffer out of sync: " << age << "\n";
-			
-		        for (size_t n=0; n<size; ++n)
-				{
-	           		std::cout << chunk->payload[n];// << std::flush;
-//				if (size % 100 == 0)
-//					std::cout << std::flush;
-				}
-				std::cout << std::flush;
-			}
-			else
-				std::cerr << "Dropping Chunk, age: " << age << "\n";
-*/		}
-		delete chunk;
-	}
 }
 
 
@@ -173,7 +98,7 @@ static int patestCallback( const void *inputBuffer, void *outputBuffer,
 				skip = age / PLAYER_CHUNK_MS;
 			else if (shortBuffer.full() && ((shortMedian > 100) || (shortMedian < -100)))
 				skip = shortMedian / PLAYER_CHUNK_MS;
-			else if (buffer.full() && ((median > 15) || (median < -15)))
+			else if (buffer.full() && ((median > 10) || (median < -10)))
 				skip = median / PLAYER_CHUNK_MS;
 		}
 		
@@ -327,12 +252,13 @@ int main (int argc, char *argv[])
 	    std::cerr << "Unsuccessful in setting thread realtime prio" << std::endl;
 */
 	initAudio();
-	Chunk* chunk = new Chunk();
+	Chunk* chunk;// = new Chunk();
     while (1)
     {
         zmq::message_t update;
         subscriber.recv(&update);
-        memcpy(chunk, update.data(), sizeof(Chunk));
+//        memcpy(chunk, update.data(), sizeof(Chunk));
+		chunk = (Chunk*)(update.data());
 //		timeval now;
 //		gettimeofday(&now, NULL);
 //		std::cerr << "New chunk: " << chunkTime(*chunk) << "\t" << timeToStr(now) << "\t" << getAge(*chunk) << "\n";
@@ -350,7 +276,7 @@ int main (int argc, char *argv[])
 			cv.notify_all();
 		}
     }
-	delete chunk;
     return 0;
 }
+
 
