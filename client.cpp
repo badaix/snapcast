@@ -334,7 +334,8 @@ int main (int argc, char *argv[])
         memcpy(chunk, update.data(), sizeof(Chunk));
 		timeval now;
 		gettimeofday(&now, NULL);
-		std::cerr << "New chunk: " << chunkTime(*chunk) << "\t" << timeToStr(now) << "\t" << getAge(*chunk) << "\n";
+//		std::cerr << "New chunk: " << chunkTime(*chunk) << "\t" << timeToStr(now) << "\t" << getAge(*chunk) << "\n";
+		std::cerr << chunk->tv_sec << "\t" << now.tv_sec << "\n";
 /*		for (size_t n=0; n<WIRE_CHUNK_MS/PLAYER_CHUNK_MS; ++n)
 		{
 			PlayerChunk* playerChunk = new PlayerChunk();
