@@ -13,7 +13,6 @@
 
 #define FRAMES_PER_BUFFER  (PLAYER_CHUNK_SIZE/CHANNELS)
 
-int bufferMs;
 
 template <size_t T>
 struct ChunkT

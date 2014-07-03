@@ -29,6 +29,7 @@ std::deque<int> timeDiffs;
 std::mutex mtx;
 std::mutex mutex;
 std::condition_variable cv;
+int bufferMs;
 
 
 void player() 
@@ -334,7 +335,7 @@ int main (int argc, char *argv[])
 		timeval now;
 		gettimeofday(&now, NULL);
 		std::cerr << "New chunk: " << chunkTime(*chunk) << "\t" << timeToStr(now) << "\t" << getAge(*chunk) << "\n";
-		for (size_t n=0; n<WIRE_CHUNK_MS/PLAYER_CHUNK_MS; ++n)
+/*		for (size_t n=0; n<WIRE_CHUNK_MS/PLAYER_CHUNK_MS; ++n)
 		{
 			PlayerChunk* playerChunk = new PlayerChunk();
 			playerChunk->tv_sec = chunk->tv_sec;
@@ -346,7 +347,7 @@ int main (int argc, char *argv[])
 			mutex.unlock();
 			cv.notify_all();
 		}
-    }
+*/    }
 	delete chunk;
     return 0;
 }
