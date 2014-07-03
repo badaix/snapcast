@@ -56,7 +56,7 @@ int main () {
 //            else if (diff_ms(now, ts) > 1000)
 //                ts = now;
 
-            chunk->tv_sec = (int16_t)now.tv_sec;
+            chunk->tv_sec = 1234;//(int16_t)now.tv_sec;
             chunk->tv_usec = 0;//now.tv_usec;
             zmq::message_t message(8*2*WIRE_CHUNK_SIZE);//sizeof(Chunk));
             memcpy(message.data(), chunk, 8+2*WIRE_CHUNK_SIZE);//sizeof(Chunk));
