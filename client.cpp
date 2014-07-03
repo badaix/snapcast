@@ -212,8 +212,8 @@ static int patestCallback( const void *inputBuffer, void *outputBuffer,
 	
     for( i=0; i<framesPerBuffer; i++)
     {
-        *out++ = (chunk->payload[4*i+1] << 8) + chunk->payload[4*i+0];
-        *out++ = (chunk->payload[4*i+3] << 8) + chunk->payload[4*i+2];
+        *out++ = chunk->payload[2*i];
+        *out++ = chunk->payload[2*i+1];
     }
 	delete chunk;
     
@@ -331,23 +331,21 @@ int main (int argc, char *argv[])
         zmq::message_t update;
         subscriber.recv(&update);
         memcpy(chunk, update.data(), sizeof(Chunk));
+		timeval now;
+		gettimeofday(&now, NULL);
+		std::cerr << "New chunk: " << chunkTime(*chunk) << "\t" << timeToStr(now) << "\t" << getAge(*chunk) << "\n";
 		for (size_t n=0; n<WIRE_CHUNK_MS/PLAYER_CHUNK_MS; ++n)
 		{
 			PlayerChunk* playerChunk = new PlayerChunk();
 			playerChunk->tv_sec = chunk->tv_sec;
 			playerChunk->tv_usec = chunk->tv_usec;
 			addMs(*playerChunk, n*PLAYER_CHUNK_MS);
-			memcpy(&(playerChunk->payload[0]), &chunk->payload[n*PLAYER_CHUNK_SIZE], PLAYER_CHUNK_SIZE);
+			memcpy(&(playerChunk->payload[0]), &chunk->payload[n*PLAYER_CHUNK_SIZE], sizeof(int16_t)*PLAYER_CHUNK_SIZE);
 			mutex.lock();
 			chunks.push_back(playerChunk);
 			mutex.unlock();
 			cv.notify_all();
 		}
-
-//		timeval now;
-//		gettimeofday(&now, NULL);
-//		std::cerr << "New chunk: " << chunkTime(*chunk) << "\t" << timeToStr(now) << "\t" << getAge(*chunk) << "\n";
-
     }
 	delete chunk;
     return 0;
