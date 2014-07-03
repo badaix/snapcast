@@ -30,7 +30,7 @@ int main () {
 
     //  Initialize random number generator
     size_t idx(0);
-    char c;//[2];
+    char c[2];
     Chunk chunk;
     timeval ts;
     ts.tv_sec = 0;
@@ -38,10 +38,11 @@ int main () {
     timeval last;
     gettimeofday(&last, NULL);
     last.tv_sec -= 1000;
-    while (!cin.get(c).eof())
+    while (true)
     {
-//        read(fd, &msg[0], size);
-        chunk.payload[idx++] = c;
+		c[0] = cin.get();
+		c[1] = cin.get();
+        chunk.payload[idx++] = c[0] + (c[1] << 8);
         if (idx == WIRE_CHUNK_SIZE)
         {
             timeval now;

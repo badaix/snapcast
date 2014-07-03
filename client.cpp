@@ -152,7 +152,7 @@ static int patestCallback( const void *inputBuffer, void *outputBuffer,
 			cv.wait(lck);
 		mutex.lock();
 		chunk = chunks->front();
-//		std::cerr << "Chunks: " << chunks->size() << "\n";
+		int chunkCount = chunks->size();
 		mutex.unlock();
 		age = getAge(*chunk) + timeInfo->outputBufferDacTime*1000 - bufferMs;
 		buffer.add(age);
@@ -166,6 +166,7 @@ static int patestCallback( const void *inputBuffer, void *outputBuffer,
 				lastUpdate = now;
 				median = buffer.median();
 				shortMedian = shortBuffer.median();
+				std::cerr << "age: " << getAge(*chunk) << "\t" << age << "\t" << shortMedian << "\t" << median << "\t" << buffer.size() << "\t" << chunkCount << "\t" << timeInfo->outputBufferDacTime*1000 << "\n";
 			}
 			if ((age > 500) || (age < -500))
 				skip = age / PLAYER_CHUNK_MS;
@@ -240,8 +241,24 @@ int initAudio()
     err = Pa_Initialize();
     if( err != paNoError ) goto error;
 
+	int numDevices;
+	numDevices = Pa_GetDeviceCount();
+	if( numDevices < 0 )
+	{
+		printf( "ERROR: Pa_CountDevices returned 0x%x\n", numDevices );
+		err = numDevices;
+		goto error;
+	}
+	const PaDeviceInfo *deviceInfo;
+	for(int i=0; i<numDevices; i++)
+	{
+	    deviceInfo = Pa_GetDeviceInfo(i);
+		std::cerr << "Device " << i << ": " << deviceInfo->name << "\n";
+	}
+
     outputParameters.device = Pa_GetDefaultOutputDevice(); /* default output device */
-    if (outputParameters.device == paNoDevice) {
+    if (outputParameters.device == paNoDevice) 
+	{
       fprintf(stderr,"Error: No default output device.\n");
       goto error;
     }
