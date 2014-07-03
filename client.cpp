@@ -197,7 +197,7 @@ static int patestCallback( const void *inputBuffer, void *outputBuffer,
 		{
 			skip++;
 			chunk = new PlayerChunk();
-			memset(&(chunk->payload[0]), 0, PLAYER_CHUNK_SIZE);
+			memset(&(chunk->payload[0]), 0, sizeof(int16_t)*PLAYER_CHUNK_SIZE);
 //			std::cerr << "age < bufferMs (" << age << " < " << bufferMs << "), playing silence\n";
 			buffer.clear();
 			shortBuffer.clear();
@@ -326,18 +326,18 @@ int main (int argc, char *argv[])
 	if (ret != 0) 
 	    std::cerr << "Unsuccessful in setting thread realtime prio" << std::endl;
 */
-//	initAudio();
+	initAudio();
 	Chunk* chunk = new Chunk();
     while (1)
     {
         zmq::message_t update;
         subscriber.recv(&update);
         memcpy(chunk, update.data(), sizeof(Chunk));
-		timeval now;
-		gettimeofday(&now, NULL);
+//		timeval now;
+//		gettimeofday(&now, NULL);
 //		std::cerr << "New chunk: " << chunkTime(*chunk) << "\t" << timeToStr(now) << "\t" << getAge(*chunk) << "\n";
-		std::cerr << chunk->tv_sec << "\t" << now.tv_sec << "\n";
-/*		for (size_t n=0; n<WIRE_CHUNK_MS/PLAYER_CHUNK_MS; ++n)
+//		std::cerr << chunk->tv_sec << "\t" << now.tv_sec << "\n";
+		for (size_t n=0; n<WIRE_CHUNK_MS/PLAYER_CHUNK_MS; ++n)
 		{
 			PlayerChunk* playerChunk = new PlayerChunk();
 			playerChunk->tv_sec = chunk->tv_sec;
@@ -349,7 +349,7 @@ int main (int argc, char *argv[])
 			mutex.unlock();
 			cv.notify_all();
 		}
-*/    }
+    }
 	delete chunk;
     return 0;
 }
