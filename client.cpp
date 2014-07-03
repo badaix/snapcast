@@ -314,8 +314,8 @@ int main (int argc, char *argv[])
 		bufferMs = atoi(argv[1]);
     zmq::context_t context (1);
     zmq::socket_t subscriber (context, ZMQ_SUB);
-    subscriber.connect("tcp://127.0.0.1:123458");
-//    subscriber.connect("tcp://192.168.0.2:123458");
+//    subscriber.connect("tcp://127.0.0.1:123458");
+    subscriber.connect("tcp://192.168.0.2:123458");
 
     const char* filter = "";
     subscriber.setsockopt(ZMQ_SUBSCRIBE, filter, strlen(filter));

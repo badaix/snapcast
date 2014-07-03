@@ -42,7 +42,7 @@ int main () {
     {
 		c[0] = cin.get();
 		c[1] = cin.get();
-        chunk->payload[idx++] = 0;//(int)c[0] + ((int)c[1] * 256);
+        chunk->payload[idx++] = (int)c[0] + ((int)c[1] * 256);
         if (idx == WIRE_CHUNK_SIZE)
         {
             timeval now;
@@ -63,7 +63,7 @@ int main () {
 //            snprintf ((char *) message.data(), size, "%05d %d", zipcode, c);
 //  	      message.data()[0] = c;
             publisher.send(message);
-///            addMs(ts, WIRE_CHUNK_MS);
+            addMs(ts, WIRE_CHUNK_MS);
             idx = 0;
 //            msg[0] = '0';
         }
