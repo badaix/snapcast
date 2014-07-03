@@ -42,7 +42,7 @@ int main () {
     {
 		c[0] = cin.get();
 		c[1] = cin.get();
-        chunk.payload[idx++] = c[0] + (c[1] << 8);
+        chunk.payload[idx++] = (int)c[0] + ((int)c[1] << 8);
         if (idx == WIRE_CHUNK_SIZE)
         {
             timeval now;
