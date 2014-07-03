@@ -56,8 +56,8 @@ int main () {
 //            else if (diff_ms(now, ts) > 1000)
 //                ts = now;
 
-            chunk.tv_sec = ts.tv_sec;
-            chunk.tv_usec = ts.tv_usec;
+            chunk.tv_sec = now.tv_sec;
+            chunk.tv_usec = now.tv_usec;
             zmq::message_t message(sizeof(Chunk));
             memcpy(message.data(), &chunk, sizeof(Chunk));
 //            snprintf ((char *) message.data(), size, "%05d %d", zipcode, c);
