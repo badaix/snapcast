@@ -55,6 +55,14 @@ inline long getTickCount()
 
 inline void addMs(timeval& tv, int ms)
 {
+	if (ms < 0)
+	{
+		timeval t;
+		t.tv_sec = -ms / 1000;
+		t.tv_usec = (-ms % 1000) * 1000;
+		timersub(&tv, &t, &tv);
+		return;
+	}
     tv.tv_usec += ms*1000;
     tv.tv_sec += (tv.tv_usec / 1000000);
     tv.tv_usec %= 1000000;

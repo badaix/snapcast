@@ -181,11 +181,11 @@ int main (int argc, char *argv[])
         zmq::message_t update;
         subscriber.recv(&update);
 
-		timeval now;
-		gettimeofday(&now, NULL);
-		std::cerr << "New chunk: " << chunkTime(*chunk) << "\t" << timeToStr(now) << "\t" << getAge(*chunk) << "\n";
+//		timeval now;
+//		gettimeofday(&now, NULL);
 //        memcpy(chunk, update.data(), sizeof(Chunk));
 		chunk = (Chunk*)(update.data());
+//		std::cerr << "New chunk: " << chunkTime(*chunk) << "\t" << timeToStr(now) << "\t" << getAge(*chunk) << "\n";
 		stream->addChunk(chunk);
     }
     return 0;

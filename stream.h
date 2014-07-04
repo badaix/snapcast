@@ -15,7 +15,7 @@
 class Stream
 {
 public:
-	Stream() : lastUpdate(0), skip(0), idx(0)
+	Stream() : median(0), shortMedian(0), lastUpdate(0), skip(0), idx(0)
 	{
 		pBuffer = new DoubleBuffer<int>(30000 / PLAYER_CHUNK_MS);
 		pShortBuffer = new DoubleBuffer<int>(5000 / PLAYER_CHUNK_MS);
@@ -34,29 +34,35 @@ public:
 
 	std::vector<short> getChunk(double outputBufferDacTime, unsigned long framesPerBuffer)
 	{
-		Chunk* chunk = NULL;
 		while (1)
 		{
+			Chunk* chunk = NULL;
 			if (chunks.empty())
 				cv.wait(*pLock);
 
 			int age(0);
 			int chunkCount(0);
 			mutex.lock();
-			do
+			while (!chunks.empty())
 			{
 				chunk = chunks.front();
-				chunkCount = chunks.size();
-				int age = getAge(*chunk) + outputBufferDacTime*1000 - bufferMs;
-				if (age > WIRE_CHUNK_MS)
+				age = getAge(*chunk) + outputBufferDacTime*1000 - bufferMs;
+				if ((age > 500) || (shortMedian > 100) || (median > WIRE_CHUNK_MS))
 				{
-					std::cerr << "age > WIRE_CHUNK_MS\n";
-					chunks.pop_front();
+					std::cerr << "age > WIRE_CHUNK_MS (" << age << " ms)\n";
 					delete chunk;
 					chunk = NULL;
+					chunks.pop_front();
+					pBuffer->clear();
+					pShortBuffer->clear();
+					usleep(10);
+					shortMedian -= WIRE_CHUNK_MS;
+					median -= WIRE_CHUNK_MS;
 				}
+				else
+					break;
 			} 
-			while (chunk == NULL);
+			chunkCount = chunks.size();
 			mutex.unlock();
 			
 			if (chunk == NULL)
@@ -65,11 +71,51 @@ public:
 				continue;
 			}
 
+			pBuffer->add(age);
+			pShortBuffer->add(age);
+
+			time_t now = time(NULL);
+
+			if (now != lastUpdate)
+			{
+				lastUpdate = now;
+				if (pBuffer->full())
+					median = pBuffer->median();
+				else
+					median = 0;
+
+				if (pShortBuffer->full())
+					shortMedian = pShortBuffer->median();
+				else
+					shortMedian = 0;
+				std::cerr << "Chunk: " << age << /*" \tidx: " << chunk->idx <<*/ "\t" << shortMedian << "\t" << median << "\t" << pBuffer->size() << "\t" << chunkCount << "\t" << outputBufferDacTime*1000 << "\n";
+			}
+
+			
+			std::vector<short> v;
+			for (size_t n=chunk->idx; n<chunk->idx + PLAYER_CHUNK_SIZE; ++n)
+			{
+				v.push_back(chunk->payload[n]);
+			}
+//std::cerr << "before: " << chunkTime(*chunk) << ", after: ";
+			addMs(*chunk, -PLAYER_CHUNK_MS);
+//std::cerr << chunkTime(*chunk) << "\n";
+			chunk->idx += PLAYER_CHUNK_SIZE;
+			if (chunk->idx >= WIRE_CHUNK_SIZE)
+			{
+//std::cerr << "Chunk played out, deleting\n";
+				chunks.pop_front();
+				delete chunk;
+			}
+			return v;
+		}
+	}
+/*
 			std::cerr << "age: " << getAge(*chunk) << "\t" << age << "\t" << pBuffer->size() << "\t" << chunkCount << "\n";
 			pBuffer->add(age);
 			pShortBuffer->add(age);
 			time_t now = time(NULL);
-	
+
 			if (skip == 0)
 			{
 				int age = 0;
@@ -134,7 +180,7 @@ public:
 		return v;
 //		return chunk;
 	}
-
+*/
 
 private:
 	std::deque<Chunk*> chunks;
@@ -145,6 +191,8 @@ private:
 	DoubleBuffer<int>* pBuffer;
 	DoubleBuffer<int>* pShortBuffer;
 
+	int median;
+	int shortMedian;
 	time_t lastUpdate;
 	int bufferMs;
 	int skip;
