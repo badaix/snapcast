@@ -14,21 +14,13 @@
 #include <vector>
 #include <algorithm>
 #include <thread> 
-#include <mutex>
-#include <condition_variable>
 #include <portaudio.h>
 #include "chunk.h"
-#include "doubleBuffer.h"
 #include "timeUtils.h"
+#include "stream.h"
 
 
-DoubleBuffer<int> buffer(30000 / PLAYER_CHUNK_MS);
-DoubleBuffer<int> shortBuffer(500 / PLAYER_CHUNK_MS);
-std::deque<PlayerChunk*> chunks;
 std::deque<int> timeDiffs;
-std::mutex mtx;
-std::mutex mutex;
-std::condition_variable cv;
 int bufferMs;
 
 
@@ -44,9 +36,7 @@ void sleepMs(int ms)
 }
 
 
-int skip(0);
-time_t lastUpdate(0);
-
+Stream* stream;
 
 /* This routine will be called by the PortAudio engine when audio is needed.
 ** It may called at interrupt level on some machines so don't do anything
@@ -59,89 +49,21 @@ static int patestCallback( const void *inputBuffer, void *outputBuffer,
                             void *userData )
 {
 //	std::cerr << "outputBufferDacTime: " << timeInfo->outputBufferDacTime*1000 << "\n";
-    std::deque<PlayerChunk*>* chunks = (std::deque<PlayerChunk*>*)userData;
+    Stream* stream = (Stream*)userData;
     short* out = (short*)outputBuffer;
-    unsigned long i;
 
     (void) timeInfo; /* Prevent unused variable warnings. */
     (void) statusFlags;
     (void) inputBuffer;
     
-	std::unique_lock<std::mutex> lck(mtx);
-	int age = 0;
-	int median = 0;
-	int shortMedian = 0;
-	PlayerChunk* chunk = NULL;
-	while (1)
+	std::vector<short> s = stream->getChunk(timeInfo->outputBufferDacTime, framesPerBuffer);
+	
+	for (size_t n=0; n<framesPerBuffer; n++)
 	{
-		if (chunks->empty())
-			cv.wait(lck);
-		mutex.lock();
-		chunk = chunks->front();
-		int chunkCount = chunks->size();
-		mutex.unlock();
-		age = getAge(*chunk) + timeInfo->outputBufferDacTime*1000 - bufferMs;
-		buffer.add(age);
-		shortBuffer.add(age);
-		time_t now = time(NULL);
-	
-		if (skip == 0)
-		{
-			if (now != lastUpdate)
-			{
-				lastUpdate = now;
-				median = buffer.median();
-				shortMedian = shortBuffer.median();
-				std::cerr << "age: " << getAge(*chunk) << "\t" << age << "\t" << shortMedian << "\t" << median << "\t" << buffer.size() << "\t" << chunkCount << "\t" << timeInfo->outputBufferDacTime*1000 << "\n";
-			}
-			if ((age > 500) || (age < -500))
-				skip = age / PLAYER_CHUNK_MS;
-			else if (shortBuffer.full() && ((shortMedian > 100) || (shortMedian < -100)))
-				skip = shortMedian / PLAYER_CHUNK_MS;
-			else if (buffer.full() && ((median > 10) || (median < -10)))
-				skip = median / PLAYER_CHUNK_MS;
-		}
-		
-		if (skip != 0)
-		{
-			std::cerr << "age: " << getAge(*chunk) << "\t" << age << "\t" << shortMedian << "\t" << median << "\t" << buffer.size() << "\t" << timeInfo->outputBufferDacTime*1000 << "\n";
-		}
-
-//		bool silence = (age < -500) || (shortBuffer.full() && (shortMedian < -100)) || (buffer.full() && (median < -15));
-		if (skip > 0)
-		{
-			skip--;
-			chunks->pop_front();
-			delete chunk;
-			std::cerr << "packe too old, dropping\n";
-			buffer.clear();
-			shortBuffer.clear();
-			usleep(100);
-		}
-		else if (skip < 0)
-		{
-			skip++;
-			chunk = new PlayerChunk();
-			memset(&(chunk->payload[0]), 0, sizeof(int16_t)*PLAYER_CHUNK_SIZE);
-//			std::cerr << "age < bufferMs (" << age << " < " << bufferMs << "), playing silence\n";
-			buffer.clear();
-			shortBuffer.clear();
-			usleep(100);
-			break;
-		}
-		else
-		{
-			chunks->pop_front();
-			break;
-		}
+	    *out++ = s[2*n];
+	    *out++ = s[2*n+1];
 	}
-	
-    for( i=0; i<framesPerBuffer; i++)
-    {
-        *out++ = chunk->payload[2*i];
-        *out++ = chunk->payload[2*i+1];
-    }
-	delete chunk;
+//	delete chunk;
     
     return paContinue;
 }
@@ -159,7 +81,7 @@ static void StreamFinished( void* userData )
 int initAudio()
 {
     PaStreamParameters outputParameters;
-    PaStream *stream;
+    PaStream *paStream;
     PaError err;
     
     printf("PortAudio Test: output sine wave. SR = %d, BufSize = %d\n", SAMPLE_RATE, FRAMES_PER_BUFFER);
@@ -194,29 +116,29 @@ int initAudio()
     outputParameters.hostApiSpecificStreamInfo = NULL;
 
     err = Pa_OpenStream(
-              &stream,
+              &paStream,
               NULL, /* no input */
               &outputParameters,
               SAMPLE_RATE,
               FRAMES_PER_BUFFER,
               paClipOff,      /* we won't output out of range samples so don't bother clipping them */
               patestCallback,
-              &chunks );
+              stream );
     if( err != paNoError ) goto error;
 
-    err = Pa_SetStreamFinishedCallback( stream, &StreamFinished );
+    err = Pa_SetStreamFinishedCallback( paStream, &StreamFinished );
     if( err != paNoError ) goto error;
 
-    err = Pa_StartStream( stream );
+    err = Pa_StartStream( paStream );
     if( err != paNoError ) goto error;
 
 //    printf("Play for %d seconds.\n", NUM_SECONDS );
 //    Pa_Sleep( NUM_SECONDS * 1000 );
 
-//    err = Pa_StopStream( stream );
+//    err = Pa_StopStream( paStream );
 //    if( err != paNoError ) goto error;
 
-//    err = Pa_CloseStream( stream );
+//    err = Pa_CloseStream( paStream );
 //    if( err != paNoError ) goto error;
 
 //    Pa_Terminate();
@@ -251,30 +173,20 @@ int main (int argc, char *argv[])
 	if (ret != 0) 
 	    std::cerr << "Unsuccessful in setting thread realtime prio" << std::endl;
 */
+	stream = new Stream();
 	initAudio();
 	Chunk* chunk;// = new Chunk();
     while (1)
     {
         zmq::message_t update;
         subscriber.recv(&update);
+
+		timeval now;
+		gettimeofday(&now, NULL);
+		std::cerr << "New chunk: " << chunkTime(*chunk) << "\t" << timeToStr(now) << "\t" << getAge(*chunk) << "\n";
 //        memcpy(chunk, update.data(), sizeof(Chunk));
 		chunk = (Chunk*)(update.data());
-//		timeval now;
-//		gettimeofday(&now, NULL);
-//		std::cerr << "New chunk: " << chunkTime(*chunk) << "\t" << timeToStr(now) << "\t" << getAge(*chunk) << "\n";
-//		std::cerr << chunk->tv_sec << "\t" << now.tv_sec << "\n";
-		for (size_t n=0; n<WIRE_CHUNK_MS/PLAYER_CHUNK_MS; ++n)
-		{
-			PlayerChunk* playerChunk = new PlayerChunk();
-			playerChunk->tv_sec = chunk->tv_sec;
-			playerChunk->tv_usec = chunk->tv_usec;
-			addMs(*playerChunk, n*PLAYER_CHUNK_MS);
-			memcpy(&(playerChunk->payload[0]), &chunk->payload[n*PLAYER_CHUNK_SIZE], sizeof(int16_t)*PLAYER_CHUNK_SIZE);
-			mutex.lock();
-			chunks.push_back(playerChunk);
-			mutex.unlock();
-			cv.notify_all();
-		}
+		stream->addChunk(chunk);
     }
     return 0;
 }

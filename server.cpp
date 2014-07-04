@@ -58,6 +58,7 @@ int main () {
 
             chunk->tv_sec = ts.tv_sec;
             chunk->tv_usec = ts.tv_usec;
+			chunk->idx = 0;
             zmq::message_t message(sizeof(Chunk));
             memcpy(message.data(), chunk, sizeof(Chunk));
 //            snprintf ((char *) message.data(), size, "%05d %d", zipcode, c);

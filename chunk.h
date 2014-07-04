@@ -18,6 +18,7 @@ struct ChunkT
 {
 	int32_t tv_sec;
 	int32_t tv_usec;
+	int32_t idx;
 	int16_t payload[T];
 };
 
