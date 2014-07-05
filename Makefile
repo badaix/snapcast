@@ -5,7 +5,7 @@ LDFLAGS = -lzmq -lpthread -lportaudio
 
 OBJ_SERVER = server.o
 BIN_SERVER = server
-OBJ_CLIENT = client.o
+OBJ_CLIENT = client.o stream.o
 BIN_CLIENT = client
 OBJ = $(OBJ_SERVER) $(OBJ_CLIENT)
 

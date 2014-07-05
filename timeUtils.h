@@ -2,6 +2,7 @@
 #define TIME_UTILS_H
 
 #include "chunk.h"
+#include <sys/time.h>
 
 std::string timeToStr(const timeval& timestamp)
 {
