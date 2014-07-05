@@ -34,13 +34,13 @@ long diff_ms(const timeval& t1, const timeval& t2)
 
 
 template <typename T>
-long getAge(const T& chunk)
+long getAge(const T* chunk)
 {
 	timeval now;
 	gettimeofday(&now, NULL);
 	timeval ts;
-	ts.tv_sec = chunk.tv_sec;
-	ts.tv_usec = chunk.tv_usec;
+	ts.tv_sec = chunk->tv_sec;
+	ts.tv_usec = chunk->tv_usec;
 	return diff_ms(now, ts);
 }
  
@@ -69,14 +69,14 @@ inline void addMs(timeval& tv, int ms)
 }
 
 template <typename T>
-void addMs(T& chunk, int ms)
+void addMs(T* chunk, int ms)
 {
 	timeval tv;
-	tv.tv_sec = chunk.tv_sec;
-	tv.tv_usec = chunk.tv_usec;
+	tv.tv_sec = chunk->tv_sec;
+	tv.tv_usec = chunk->tv_usec;
 	addMs(tv, ms);
-	chunk.tv_sec = tv.tv_sec;
-	chunk.tv_usec = tv.tv_usec;
+	chunk->tv_sec = tv.tv_sec;
+	chunk->tv_usec = tv.tv_usec;
 }
 
 

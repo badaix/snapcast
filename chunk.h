@@ -16,6 +16,10 @@
 template <size_t T>
 struct ChunkT
 {
+//	ChunkT()
+//	{
+//		memset(&payload[0], 0, T);
+//	}
 	int32_t tv_sec;
 	int32_t tv_usec;
 	int32_t idx;

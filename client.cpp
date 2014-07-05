@@ -50,14 +50,14 @@ static int patestCallback( const void *inputBuffer, void *outputBuffer,
     (void) statusFlags;
     (void) inputBuffer;
     
-	std::vector<short> s = stream->getChunk(timeInfo->outputBufferDacTime, framesPerBuffer);
-	
+	PlayerChunk* playerChunk = stream->getChunk(timeInfo->outputBufferDacTime, framesPerBuffer);
+
 	for (size_t n=0; n<framesPerBuffer; n++)
 	{
-	    *out++ = s[2*n];
-	    *out++ = s[2*n+1];
+	    *out++ = playerChunk->payload[2*n];
+	    *out++ = playerChunk->payload[2*n+1];
 	}
-//	delete chunk;
+	delete playerChunk;
     
     return paContinue;
 }
