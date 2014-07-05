@@ -29,12 +29,6 @@ void player()
 }
 
 
-void sleepMs(int ms)
-{
-	if (ms > 0)
-		usleep(ms * 1000);
-}
-
 
 Stream* stream;
 

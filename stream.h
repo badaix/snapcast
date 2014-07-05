@@ -32,68 +32,70 @@ public:
 		cv.notify_all();
 	}
 
+
+
+
+
 	std::vector<short> getChunk(double outputBufferDacTime, unsigned long framesPerBuffer)
 	{
-		while (1)
+		Chunk* chunk = NULL;
+		if (chunks.empty())
+			cv.wait(*pLock);
+
+		int age(0);
+		int chunkCount(0);
+		mutex.lock();
+		chunk = chunks.front();
+		mutex.unlock();
+
+		
+		age = getAge(*chunk) + outputBufferDacTime*1000 - bufferMs;
+		if (age < -500)
 		{
-			Chunk* chunk = NULL;
-			if (chunks.empty())
-				cv.wait(*pLock);
-
-			int age(0);
-			int chunkCount(0);
-			mutex.lock();
-			while (!chunks.empty())
+			std::vector<short> v;
+			if (skip < 0)
 			{
-				chunk = chunks.front();
-				age = getAge(*chunk) + outputBufferDacTime*1000 - bufferMs;
-				if ((age > 500) || (shortMedian > 100) || (median > WIRE_CHUNK_MS))
+				++skip;
+				std::cerr << "chunk too new, sleeping\n";//age > WIRE_CHUNK_MS (" << age << " ms)\n";
+				for (size_t n=0; n<(size_t)PLAYER_CHUNK_SIZE; ++n)
+					v.push_back(chunk->payload[n]);
+				return v;
+			}
+		}
+
+		pBuffer->add(age);
+		pShortBuffer->add(age);
+
+		time_t now = time(NULL);
+
+			if (skip == 0)
+			{
+				if (now != lastUpdate)
 				{
-					std::cerr << "age > WIRE_CHUNK_MS (" << age << " ms)\n";
-					delete chunk;
-					chunk = NULL;
-					chunks.pop_front();
-					pBuffer->clear();
-					pShortBuffer->clear();
-					usleep(10);
-					shortMedian -= WIRE_CHUNK_MS;
-					median -= WIRE_CHUNK_MS;
-				}
-				else
-					break;
-			} 
-			chunkCount = chunks.size();
-			mutex.unlock();
-			
-			if (chunk == NULL)
-			{
-				std::cerr << "no chunks available\n";
-				continue;
-			}
-
-			pBuffer->add(age);
-			pShortBuffer->add(age);
-
-			time_t now = time(NULL);
-
-			if (now != lastUpdate)
-			{
-				lastUpdate = now;
-				if (pBuffer->full())
+					lastUpdate = now;
 					median = pBuffer->median();
-				else
-					median = 0;
-
-				if (pShortBuffer->full())
 					shortMedian = pShortBuffer->median();
-				else
-					shortMedian = 0;
-				std::cerr << "Chunk: " << age << /*" \tidx: " << chunk->idx <<*/ "\t" << shortMedian << "\t" << median << "\t" << pBuffer->size() << "\t" << chunkCount << "\t" << outputBufferDacTime*1000 << "\n";
+					if (abs(age) > 500)
+						skip = age / PLAYER_CHUNK_SIZE;
+					if (pShortBuffer->full() && (abs(shortMedian) > WIRE_CHUNK_MS))
+						skip = shortMedian / PLAYER_CHUNK_SIZE;
+					if (pBuffer->full() && (abs(median) > WIRE_CHUNK_MS))
+						skip = median / PLAYER_CHUNK_SIZE;
+				}
+					std::cerr << "Chunk: " << age << /*" \tidx: " << chunk->idx <<*/ "\t" << shortMedian << "\t" << median << "\t" << pBuffer->size() << "\t" << chunkCount << "\t" << outputBufferDacTime*1000 << "\n";
 			}
-
 			
 			std::vector<short> v;
-			for (size_t n=chunk->idx; n<chunk->idx + PLAYER_CHUNK_SIZE; ++n)
+			if (skip < 0)
+			{
+				++skip;
+				std::cerr << "chunk too new, sleeping\n";//age > WIRE_CHUNK_MS (" << age << " ms)\n";
+				for (size_t n=0; n<(size_t)PLAYER_CHUNK_SIZE; ++n)
+					v.push_back(chunk->payload[n]);
+				return v;
+			}
+
+			for (size_t n=chunk->idx; n<chunk->idx + (size_t)PLAYER_CHUNK_SIZE; ++n)
 			{
 				v.push_back(chunk->payload[n]);
 			}
@@ -110,6 +112,110 @@ public:
 			return v;
 		}
 	}
+
+
+
+
+
+
+
+/*
+	std::vector<short> getChunk(double outputBufferDacTime, unsigned long framesPerBuffer)
+	{
+		while (1)
+		{
+			Chunk* chunk = NULL;
+			if (chunks.empty())
+				cv.wait(*pLock);
+
+			int age(0);
+			int chunkCount(0);
+			mutex.lock();
+			chunk = chunks.front();
+
+			while (!chunks.empty())
+			{
+				chunk = chunks.front();
+				if (skip != 0)
+				{
+					pBuffer->clear();
+					pShortBuffer->clear();
+					shortMedian = 0;
+					median = 0;
+				}
+				if (skip > 0)
+				{
+					--skip;
+					std::cerr << "chunk too old, skipping\n";//age > WIRE_CHUNK_MS (" << age << " ms)\n";
+					delete chunk;
+					chunk = NULL;
+					chunks.pop_front();
+				}
+				else
+					break;
+			} 
+			chunkCount = chunks.size();
+			mutex.unlock();
+			
+			if (chunk == NULL)
+			{
+				std::cerr << "no chunks available\n";
+				continue;
+			}
+
+			age = getAge(*chunk) + outputBufferDacTime*1000 - bufferMs;
+			pBuffer->add(age);
+			pShortBuffer->add(age);
+
+			time_t now = time(NULL);
+
+			if (skip == 0)
+			{
+				if (now != lastUpdate)
+				{
+					lastUpdate = now;
+					median = pBuffer->median();
+					shortMedian = pShortBuffer->median();
+					if (abs(age) > 500)
+						skip = age / PLAYER_CHUNK_SIZE;
+					if (pShortBuffer->full() && (abs(shortMedian) > WIRE_CHUNK_MS))
+						skip = shortMedian / PLAYER_CHUNK_SIZE;
+					if (pBuffer->full() && (abs(median) > WIRE_CHUNK_MS))
+						skip = median / PLAYER_CHUNK_SIZE;
+				}
+					std::cerr << "Chunk: " << age << "\t" << shortMedian << "\t" << median << "\t" << pBuffer->size() << "\t" << chunkCount << "\t" << outputBufferDacTime*1000 << "\n";
+			}
+			
+			std::vector<short> v;
+			if (skip < 0)
+			{
+				++skip;
+				std::cerr << "chunk too new, sleeping\n";//age > WIRE_CHUNK_MS (" << age << " ms)\n";
+				for (size_t n=0; n<(size_t)PLAYER_CHUNK_SIZE; ++n)
+					v.push_back(chunk->payload[n]);
+				return v;
+			}
+
+			for (size_t n=chunk->idx; n<chunk->idx + (size_t)PLAYER_CHUNK_SIZE; ++n)
+			{
+				v.push_back(chunk->payload[n]);
+			}
+//std::cerr << "before: " << chunkTime(*chunk) << ", after: ";
+			addMs(*chunk, -PLAYER_CHUNK_MS);
+//std::cerr << chunkTime(*chunk) << "\n";
+			chunk->idx += PLAYER_CHUNK_SIZE;
+			if (chunk->idx >= WIRE_CHUNK_SIZE)
+			{
+//std::cerr << "Chunk played out, deleting\n";
+				chunks.pop_front();
+				delete chunk;
+			}
+			return v;
+		}
+	}
+*/
+
+
 /*
 			std::cerr << "age: " << getAge(*chunk) << "\t" << age << "\t" << pBuffer->size() << "\t" << chunkCount << "\n";
 			pBuffer->add(age);
@@ -183,6 +289,13 @@ public:
 */
 
 private:
+	void sleepMs(int ms)
+	{
+		if (ms > 0)
+			usleep(ms * 1000);
+	}
+
+
 	std::deque<Chunk*> chunks;
 	std::mutex mtx;
 	std::mutex mutex;
