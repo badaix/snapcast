@@ -2,6 +2,7 @@
 #include "timeUtils.h"
 #include <iostream>
 #include <string.h>
+#include <unistd.h>
 
 Stream::Stream() : sleep(0), lastPlayerChunk(NULL), median(0), shortMedian(0), lastUpdate(0), skip(0), idx(0)
 {
