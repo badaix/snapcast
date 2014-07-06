@@ -40,7 +40,7 @@ int main () {
     last.tv_sec -= 1000;
     while (cin.good())
     {
-		c[0] = cin.get(c);
+		c[0] = cin.get();
 		c[1] = cin.get();
         chunk->payload[idx++] = (int)c[0] + ((int)c[1] * 256);
         if (idx == WIRE_CHUNK_SIZE)
