@@ -16,15 +16,17 @@ public:
 	Stream();
 	void addChunk(Chunk* chunk);
 	Chunk* getNextChunk();
-	PlayerChunk* getNextPlayerChunk(int correction = 0);
-	PlayerChunk* getChunk(double outputBufferDacTime, unsigned long framesPerBuffer);
+	timeval getNextPlayerChunk(short* outputBuffer, int correction = 0);
+	void getSilentPlayerChunk(short* outputBuffer);
+	void getChunk(short* outputBuffer, double outputBufferDacTime, unsigned long framesPerBuffer);
 
 private:
 	void sleepMs(int ms);
 
-
+	int sleep;
 	std::deque<Chunk*> chunks;
 	std::mutex mtx;
+	std::mutex mutex;
 	std::unique_lock<std::mutex>* pLock;
 	std::condition_variable cv;
 	DoubleBuffer<int>* pBuffer;
@@ -32,6 +34,7 @@ private:
 
 	PlayerChunk* lastPlayerChunk;
 	PlayerChunk* silentPlayerChunk;
+	short* playerChunk;
 
 	int median;
 	int shortMedian;

@@ -46,6 +46,14 @@ long getAge(const T* chunk)
 }
  
 
+long getAge(const timeval& tv)
+{
+	timeval now;
+	gettimeofday(&now, NULL);
+	return diff_ms(now, tv);
+}
+ 
+
 inline long getTickCount()
 {
 	struct timespec now;

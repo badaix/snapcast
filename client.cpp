@@ -21,7 +21,6 @@
 
 std::deque<int> timeDiffs;
 int bufferMs;
-std::mutex mutex;
 
 
 
@@ -51,17 +50,15 @@ static int patestCallback( const void *inputBuffer, void *outputBuffer,
     (void) statusFlags;
     (void) inputBuffer;
     
-	mutex.lock();
-	PlayerChunk* playerChunk = stream->getChunk(timeInfo->outputBufferDacTime, framesPerBuffer);
-	mutex.unlock();
+	stream->getChunk(out, timeInfo->outputBufferDacTime, framesPerBuffer);
 
-	for (size_t n=0; n<framesPerBuffer; n++)
+/*	for (size_t n=0; n<framesPerBuffer; n++)
 	{
 	    *out++ = playerChunk->payload[2*n];
 	    *out++ = playerChunk->payload[2*n+1];
 	}
 	delete playerChunk;
-    
+*/   
     return paContinue;
 }
 
@@ -183,9 +180,7 @@ int main (int argc, char *argv[])
 //        memcpy(chunk, update.data(), sizeof(Chunk));
 		chunk = (Chunk*)(update.data());
 //		std::cerr << "New chunk: " << chunkTime(*chunk) << "\t" << timeToStr(now) << "\t" << getAge(*chunk) << "\n";
-		mutex.lock();
 		stream->addChunk(chunk);
-		mutex.unlock();
     }
     return 0;
 }
