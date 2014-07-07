@@ -19,6 +19,7 @@ public:
 	timeval getNextPlayerChunk(short* outputBuffer, int correction = 0);
 	void getSilentPlayerChunk(short* outputBuffer);
 	void getChunk(short* outputBuffer, double outputBufferDacTime, unsigned long framesPerBuffer);
+	void setBufferLen(size_t bufferLenMs);
 
 private:
 	void sleepMs(int ms);

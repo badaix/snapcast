@@ -15,6 +15,12 @@ Stream::Stream() : sleep(0), lastPlayerChunk(NULL), median(0), shortMedian(0), l
 }
 
 
+void Stream::setBufferLen(size_t bufferLenMs)
+{
+	bufferMs = bufferLenMs;
+}
+
+
 void Stream::addChunk(Chunk* chunk)
 {
 	Chunk* c = new Chunk(*chunk);
@@ -213,7 +219,7 @@ void Stream::getChunk(short* outputBuffer, double outputBufferDacTime, unsigned 
 		lastUpdate = now;
 		median = pBuffer->median();
 		shortMedian = pShortBuffer->median();
-		if (abs(age) > 300)
+		if (abs(age) > 700)
 			sleep = age;
 		else if (pShortBuffer->full() && (abs(shortMedian) > WIRE_CHUNK_MS))
 			sleep = shortMedian;

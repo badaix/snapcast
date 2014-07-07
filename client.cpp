@@ -168,6 +168,8 @@ int main (int argc, char *argv[])
 	    std::cerr << "Unsuccessful in setting thread realtime prio" << std::endl;
 */
 	stream = new Stream();
+	stream->setBufferLen(bufferMs);
+
 	initAudio();
 	Chunk* chunk;// = new Chunk();
     while (1)
