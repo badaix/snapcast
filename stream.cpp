@@ -94,36 +94,33 @@ timeval Stream::getNextPlayerChunk(short* outputBuffer, int correction)
 	}
 */
 
-	if (correction != 0)
+	if (correction > 0)
 	{
 		std::cerr << "Correction: " << correction << "\n";
 		size_t idxCorrection(0);
-		size_t idx(0);
+		size_t idx(chunk->idx);
 		for (size_t n=0; n<PLAYER_CHUNK_SIZE/2; ++n)
 		{
-			idx = n;
 			if (correction > 0)
-				idx = 2*n;
-			else if (correction < 0)
-				idx = 0.5*n;
+				idx += 4;
+			else if ((correction < 0) && (n % 4 == 0))
+				idx += 2;
 
-//			idx -= idxCorrection;
-			if (chunk->idx + idx + 1 - idxCorrection >= WIRE_CHUNK_SIZE)
+			if (idx >= WIRE_CHUNK_SIZE)
 			{
-				idxCorrection = idx;
 				chunks.pop_front();
 				delete chunk;
 				chunk = getNextChunk();
+				idx = 0;
 			}
-
-			*(outputBuffer + 2*n) = chunk->payload[chunk->idx + idx - idxCorrection];
-			*(outputBuffer + 2*n+1) = chunk->payload[chunk->idx + idx+1 - idxCorrection];
+			*(outputBuffer + 2*n) = chunk->payload[idx];
+			*(outputBuffer + 2*n+1) = chunk->payload[idx + 1];
 		}
-		if (correction > 0)
-			addMs(chunk, -PLAYER_CHUNK_MS*2);
-		else if (correction < 0)
-			addMs(chunk, -PLAYER_CHUNK_MS*0.5);
-		chunk->idx = chunk->idx + idx+2 - idxCorrection;
+//		if (correction > 0)
+//			addMs(chunk, -PLAYER_CHUNK_MS*2);
+//		else if (correction < 0)
+//			addMs(chunk, -PLAYER_CHUNK_MS*0.5);
+		chunk->idx = idx+2;
 		if (chunk->idx >= WIRE_CHUNK_SIZE)
 		{
 	//		mutex.lock();
