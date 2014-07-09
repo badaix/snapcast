@@ -28,46 +28,34 @@ int main () {
     zmq::socket_t publisher (context, ZMQ_PUB);
     publisher.bind("tcp://0.0.0.0:123458");
 
-    //  Initialize random number generator
-    size_t idx(0);
     char c[2];
     Chunk* chunk = new Chunk();
-    timeval ts;
-    ts.tv_sec = 0;
-    ts.tv_usec = 0;
-    timeval last;
-    gettimeofday(&last, NULL);
-    last.tv_sec -= 1000;
+    timeval now;
+    gettimeofday(&now, NULL);
+	long nextTick = getTickCount();
     while (cin.good())
     {
-		c[0] = cin.get();
-		c[1] = cin.get();
-        chunk->payload[idx++] = (int)c[0] + ((int)c[1] * 256);
-        if (idx == WIRE_CHUNK_SIZE)
-        {
-            timeval now;
-            gettimeofday(&now, NULL);
-            if (diff_ms(now, last) > 200)
-                ts = now;
-            last = now;
-                
-//            if (ts.tv_sec == 0)
-//                ts = now;
-//            else if (diff_ms(now, ts) > 1000)
-//                ts = now;
+		long currentTick = getTickCount();
+		nextTick += WIRE_CHUNK_MS;
+		for (size_t n=0; (n<WIRE_CHUNK_SIZE) && cin.good(); ++n)
+		{
+			c[0] = cin.get();
+			c[1] = cin.get();
+	        chunk->payload[n] = (int)c[0] + ((int)c[1] * 256);
+		}
 
-            chunk->tv_sec = ts.tv_sec;
-            chunk->tv_usec = ts.tv_usec;
-			chunk->idx = 0;
-            zmq::message_t message(sizeof(Chunk));
-            memcpy(message.data(), chunk, sizeof(Chunk));
-//            snprintf ((char *) message.data(), size, "%05d %d", zipcode, c);
-//  	      message.data()[0] = c;
-            publisher.send(message);
-            addMs(ts, WIRE_CHUNK_MS);
-            idx = 0;
-//            msg[0] = '0';
-        }
+        chunk->tv_sec = now.tv_sec;
+        chunk->tv_usec = now.tv_usec;
+		chunk->idx = 0;
+        zmq::message_t message(sizeof(Chunk));
+        memcpy(message.data(), chunk, sizeof(Chunk));
+        publisher.send(message);
+        addMs(now, WIRE_CHUNK_MS);
+
+		if (nextTick - currentTick > 0)
+		{
+			usleep((nextTick - currentTick) * 1000);
+		}
     }
 	delete chunk;
     return 0;
