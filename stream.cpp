@@ -53,18 +53,12 @@ void Stream::getSilentPlayerChunk(short* outputBuffer)
 timeval Stream::getNextPlayerChunk(short* outputBuffer, int correction)
 {
 	Chunk* chunk = getNextChunk();
-	if (correction > PLAYER_CHUNK_MS / 2)
-		correction = PLAYER_CHUNK_MS/2;
-	else if (correction < -PLAYER_CHUNK_MS/2)
-		correction = -PLAYER_CHUNK_MS/2;
+	timeval tv = getTimeval(chunk);
 
 //std::cerr << "GetNextPlayerChunk: " << correction << "\n";		
 //		int age(0);
 //		age = getAge(*chunk) + outputBufferDacTime*1000 - bufferMs;
 //		std::cerr << "age: " << age << " \tidx: " << chunk->idx << "\n"; 
-	timeval tv;
-	tv.tv_sec = chunk->tv_sec;
-	tv.tv_usec = chunk->tv_usec;
 
 	size_t missing = PLAYER_CHUNK_SIZE;// + correction*PLAYER_CHUNK_MS_SIZE;
 /*		double factor = (double)PLAYER_CHUNK_MS / (double)(PLAYER_CHUNK_MS + correction);
@@ -96,18 +90,30 @@ timeval Stream::getNextPlayerChunk(short* outputBuffer, int correction)
 
 	if (correction != 0)
 	{
-		std::cerr << "Correction: " << correction << "\n";
+		timeval nextTv = tv;
+		if (correction > 0)
+		{
+			addMs(nextTv, -PLAYER_CHUNK_MS * 1.5);
+		}
+		else if (correction < 0)
+		{
+			addMs(nextTv, -PLAYER_CHUNK_MS / 2);
+		}
+//		std::cerr << "Correction: " << correction << "\n";
 //		size_t idxCorrection(0);
 		size_t idx(chunk->idx);
 		for (size_t n=0; n<PLAYER_CHUNK_SIZE/2; ++n)
 		{
 			if (correction > 0)
 				idx += 4;
-			else if ((correction < 0) && (n % 4 == 0))
-				idx += 2;
-
+			else if (correction < 0)
+			{
+				if (n % 3 != 0)
+					idx += 2;
+			}
 			if (idx >= WIRE_CHUNK_SIZE)
 			{
+//std::cerr << "idx >= WIRE_CHUNK_SIZE: " << idx << "\t" << WIRE_CHUNK_SIZE << "\n";
 				chunks.pop_front();
 				delete chunk;
 				chunk = getNextChunk();
@@ -115,16 +121,21 @@ timeval Stream::getNextPlayerChunk(short* outputBuffer, int correction)
 			}
 			*(outputBuffer + 2*n) = chunk->payload[idx];
 			*(outputBuffer + 2*n+1) = chunk->payload[idx + 1];
+//std::cerr << 2*n << "\t" << idx << "\n";
 		}
+//std::cerr << "Idx: " << chunk->idx << " => " << idx+2 << "\t" << WIRE_CHUNK_SIZE << "\t" << PLAYER_CHUNK_SIZE/2 << "\n";
 		chunk->idx = idx+2;
-		addMs(chunk, -chunk->idx / PLAYER_CHUNK_MS_SIZE);
+		setTimeval(chunk, nextTv);
+//timeval tvLater = getTimeval(chunk);
 		if (chunk->idx >= WIRE_CHUNK_SIZE)
 		{
+//std::cerr << "Pop" << "\n";
 	//		mutex.lock();
 			chunks.pop_front();
 	//		mutex.unlock();
 			delete chunk;
 		}
+//std::cerr << "Diff: " << diff_ms(tv, tvLater) << "\n";
 		return tv;
 	}
 
@@ -220,6 +231,7 @@ void Stream::getChunk(short* outputBuffer, double outputBufferDacTime, unsigned 
 			sleep = median;
 //		else if (pBuffer->full() && (median+1 < -floor(PLAYER_CHUNK_MS / 2)))
 //			sleep = median;
+//sleep = 0;
 		if (sleep != 0)
 			std::cerr << "Sleep: " << sleep << "\n";
 		std::cerr << "Chunk: " << age << "\t" << shortMedian << "\t" << median << "\t" << pBuffer->size() << "\t" << outputBufferDacTime*1000 << "\n";

@@ -20,10 +20,25 @@ std::string timeToStr(const timeval& timestamp)
 template <typename T>
 std::string chunkTime(const T& chunk)
 {
+	return timeToStr(getTimeval(chunk));
+}
+
+
+template <typename T>
+timeval getTimeval(const T* chunk)
+{
 	timeval ts;
-	ts.tv_sec = chunk.tv_sec;
-	ts.tv_usec = chunk.tv_usec;
-	return timeToStr(ts);
+	ts.tv_sec = chunk->tv_sec;
+	ts.tv_usec = chunk->tv_usec;
+	return ts;
+}
+
+
+template <typename T>
+void setTimeval(T* chunk, timeval tv)
+{
+	chunk->tv_sec = tv.tv_sec;
+	chunk->tv_usec = tv.tv_usec;
 }
 
 
@@ -39,10 +54,7 @@ long getAge(const T* chunk)
 {
 	timeval now;
 	gettimeofday(&now, NULL);
-	timeval ts;
-	ts.tv_sec = chunk->tv_sec;
-	ts.tv_usec = chunk->tv_usec;
-	return diff_ms(now, ts);
+	return diff_ms(now, chunkTime(chunk));
 }
  
 
@@ -80,9 +92,7 @@ inline void addMs(timeval& tv, int ms)
 template <typename T>
 void addMs(T* chunk, int ms)
 {
-	timeval tv;
-	tv.tv_sec = chunk->tv_sec;
-	tv.tv_usec = chunk->tv_usec;
+	timeval tv = getTimeval(chunk);
 	addMs(tv, ms);
 	chunk->tv_sec = tv.tv_sec;
 	chunk->tv_usec = tv.tv_usec;
