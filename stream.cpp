@@ -176,7 +176,7 @@ void Stream::getChunk(short* outputBuffer, double outputBufferDacTime, unsigned 
 		}
 		else
 		{
-			for (int i=0; i<(sleep / (ceil(PLAYER_CHUNK_MS / 2) + 1)); ++i)
+			for (int i=0; i<(sleep / PLAYER_CHUNK_MS) + 1; ++i)
 			{
 //				std::cerr << "Sleep: " << sleep << "\n";
 				getNextPlayerChunk(outputBuffer);
