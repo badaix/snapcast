@@ -35,8 +35,6 @@ int main () {
 	long nextTick = getTickCount();
     while (cin.good())
     {
-		long currentTick = getTickCount();
-		nextTick += WIRE_CHUNK_MS;
 		for (size_t n=0; (n<WIRE_CHUNK_SIZE) && cin.good(); ++n)
 		{
 			c[0] = cin.get();
@@ -52,10 +50,12 @@ int main () {
         publisher.send(message);
         addMs(now, WIRE_CHUNK_MS);
 
+		long currentTick = getTickCount();
 		if (nextTick - currentTick > 0)
 		{
 			usleep((nextTick - currentTick) * 1000);
 		}
+		nextTick += WIRE_CHUNK_MS;
     }
 	delete chunk;
     return 0;
