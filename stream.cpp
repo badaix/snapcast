@@ -187,7 +187,7 @@ void Stream::getChunk(short* outputBuffer, double outputBufferDacTime, unsigned 
 	}
 	
 	int correction(0);
-/*	if (pBuffer->full() && (abs(median) <= PLAYER_CHUNK_MS))
+	if (pBuffer->full() && (abs(median) <= PLAYER_CHUNK_MS))
 	{
 		if (median >= PLAYER_CHUNK_MS / 2)
 			correction = 1;
@@ -199,7 +199,7 @@ void Stream::getChunk(short* outputBuffer, double outputBufferDacTime, unsigned 
 			pShortBuffer->clear();
 		}
 	}		
-*/
+
 	timeval tv = getNextPlayerChunk(outputBuffer, correction);
 	int age = getAge(tv) - bufferMs + outputBufferDacTime*1000;
 	pBuffer->add(age);
@@ -216,7 +216,7 @@ void Stream::getChunk(short* outputBuffer, double outputBufferDacTime, unsigned 
 			sleep = age;
 		else if (pShortBuffer->full() && (abs(shortMedian) > WIRE_CHUNK_MS))
 			sleep = shortMedian;
-		else if (pBuffer->full() && (abs(median) > ceil(PLAYER_CHUNK_MS / 2) + 1))//; || (median+1 < -ceil(PLAYER_CHUNK_MS / 2))))
+		else if (pBuffer->full() && (abs(median) > PLAYER_CHUNK_MS))//ceil(PLAYER_CHUNK_MS / 2) + 1))//; || (median+1 < -ceil(PLAYER_CHUNK_MS / 2))))
 			sleep = median;
 //		else if (pBuffer->full() && (median+1 < -floor(PLAYER_CHUNK_MS / 2)))
 //			sleep = median;
