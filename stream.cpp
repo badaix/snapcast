@@ -150,7 +150,7 @@ timeval Stream::getNextPlayerChunk(short* outputBuffer, int correction)
 		addMs(nextTv, samples / PLAYER_CHUNK_MS_SIZE);
 		setTimeval(chunk, nextTv);
 //timeval tvLater = getTimeval(chunk);
-//std::cerr << "Diff: " << diff_ms(tv, nextTv) << "\t" << chunk->idx / PLAYER_CHUNK_MS_SIZE << "\n";
+std::cerr << "Diff: " << diff_ms(nextTv, tv) << "\t" << chunk->idx / PLAYER_CHUNK_MS_SIZE << "\n";
 //std::cerr << timeToStr(tv) << "\n" << timeToStr(chunkTv) << "\n" << timeToStr(tvLater) << "\n";
 		return tv;
 	}
@@ -216,20 +216,17 @@ void Stream::getChunk(short* outputBuffer, double outputBufferDacTime, unsigned 
 		return;
 	}
 	
-	int correction(1);
-/*	if (pBuffer->full() && (abs(median) <= PLAYER_CHUNK_MS))
+	int correction(0);
+	if (pBuffer->full() && (abs(median) <= PLAYER_CHUNK_MS))
 	{
-		if (median >= PLAYER_CHUNK_MS / 2)
-			correction = 1;
-		else if (median <= -PLAYER_CHUNK_MS / 2)
-			correction = -1;
-		if (correction != 0)
+		if (abs(median) > 1)
 		{
+			correction = -median;
 			pBuffer->clear();
 			pShortBuffer->clear();
 		}
 	}		
-*/
+
 	timeval tv = getNextPlayerChunk(outputBuffer, correction);
 	int age = getAge(tv) - bufferMs + outputBufferDacTime*1000;
 	pBuffer->add(age);
@@ -253,7 +250,7 @@ void Stream::getChunk(short* outputBuffer, double outputBufferDacTime, unsigned 
 //sleep = 0;
 		if (sleep != 0)
 			std::cerr << "Sleep: " << sleep << "\n";
-sleep = 0;
+//sleep = 0;
 		std::cerr << "Chunk: " << age << "\t" << shortMedian << "\t" << median << "\t" << pBuffer->size() << "\t" << outputBufferDacTime*1000 << "\n";
 	}
 }
