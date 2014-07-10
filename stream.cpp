@@ -89,7 +89,8 @@ timeval Stream::getNextPlayerChunk(short* outputBuffer, int correction)
 
 	if (correction != 0)
 	{
-		std::cerr << "Correction: " << correction << "\n";
+		int factor = ceil((float)PLAYER_CHUNK_MS / (float)abs(correction));
+		std::cerr << "Correction: " << correction << ", factor: " << factor << "\n";
 		size_t idx(chunk->idx);
 		size_t samples(0);
 		for (size_t n=0; n<PLAYER_CHUNK_SIZE/2; ++n)
@@ -97,7 +98,20 @@ timeval Stream::getNextPlayerChunk(short* outputBuffer, int correction)
 			*(outputBuffer + 2*n) = chunk->payload[idx];
 			*(outputBuffer + 2*n+1) = chunk->payload[idx + 1];
 //std::cerr << 2*n << "\t" << idx << "\n";
-			if (correction > 0)
+			if (n % factor == 0)
+			{
+				if (correction < 0)
+				{
+					samples += 4;
+					idx += 4;
+				}
+			}
+			else
+			{
+				samples += 2;
+				idx += 2;
+			}
+/*			if (correction > 0)
 			{
 				if (n % 2 != 0)
 				{
@@ -118,7 +132,7 @@ timeval Stream::getNextPlayerChunk(short* outputBuffer, int correction)
 					idx += 2;
 				}
 			}
-
+*/
 			if (idx >= WIRE_CHUNK_SIZE)
 			{
 //std::cerr << "idx >= WIRE_CHUNK_SIZE: " << idx << "\t" << WIRE_CHUNK_SIZE << "\n";
@@ -202,8 +216,8 @@ void Stream::getChunk(short* outputBuffer, double outputBufferDacTime, unsigned 
 		return;
 	}
 	
-	int correction(0);
-	if (pBuffer->full() && (abs(median) <= PLAYER_CHUNK_MS))
+	int correction(1);
+/*	if (pBuffer->full() && (abs(median) <= PLAYER_CHUNK_MS))
 	{
 		if (median >= PLAYER_CHUNK_MS / 2)
 			correction = 1;
@@ -215,7 +229,7 @@ void Stream::getChunk(short* outputBuffer, double outputBufferDacTime, unsigned 
 			pShortBuffer->clear();
 		}
 	}		
-
+*/
 	timeval tv = getNextPlayerChunk(outputBuffer, correction);
 	int age = getAge(tv) - bufferMs + outputBufferDacTime*1000;
 	pBuffer->add(age);
@@ -239,7 +253,7 @@ void Stream::getChunk(short* outputBuffer, double outputBufferDacTime, unsigned 
 //sleep = 0;
 		if (sleep != 0)
 			std::cerr << "Sleep: " << sleep << "\n";
-//sleep = 0;
+sleep = 0;
 		std::cerr << "Chunk: " << age << "\t" << shortMedian << "\t" << median << "\t" << pBuffer->size() << "\t" << outputBufferDacTime*1000 << "\n";
 	}
 }
