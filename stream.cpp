@@ -99,7 +99,7 @@ timeval Stream::getNextPlayerChunk(short* outputBuffer, int correction)
 		{
 			addMs(nextTv, -PLAYER_CHUNK_MS / 2);
 		}
-//		std::cerr << "Correction: " << correction << "\n";
+		std::cerr << "Correction: " << correction << "\n";
 //		size_t idxCorrection(0);
 		size_t idx(chunk->idx);
 		for (size_t n=0; n<PLAYER_CHUNK_SIZE/2; ++n)
@@ -126,7 +126,7 @@ timeval Stream::getNextPlayerChunk(short* outputBuffer, int correction)
 //std::cerr << "Idx: " << chunk->idx << " => " << idx+2 << "\t" << WIRE_CHUNK_SIZE << "\t" << PLAYER_CHUNK_SIZE/2 << "\n";
 		chunk->idx = idx+2;
 		setTimeval(chunk, nextTv);
-//timeval tvLater = getTimeval(chunk);
+timeval tvLater = getTimeval(chunk);
 		if (chunk->idx >= WIRE_CHUNK_SIZE)
 		{
 //std::cerr << "Pop" << "\n";
@@ -135,7 +135,7 @@ timeval Stream::getNextPlayerChunk(short* outputBuffer, int correction)
 	//		mutex.unlock();
 			delete chunk;
 		}
-//std::cerr << "Diff: " << diff_ms(tv, tvLater) << "\n";
+std::cerr << "Diff: " << diff_ms(tv, tvLater) << "\n";
 		return tv;
 	}
 
