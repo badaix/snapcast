@@ -230,7 +230,7 @@ void Stream::getChunk(short* outputBuffer, double outputBufferDacTime, unsigned 
 			sleep = age;
 		else if (pShortBuffer->full() && (abs(shortMedian) > WIRE_CHUNK_MS))
 			sleep = shortMedian;
-		else if (pBuffer->full() && (abs(median) > PLAYER_CHUNK_MS))//ceil(PLAYER_CHUNK_MS / 2) + 1))//; || (median+1 < -ceil(PLAYER_CHUNK_MS / 2))))
+		else if (pBuffer->full() && (abs(median) >= PLAYER_CHUNK_MS))//ceil(PLAYER_CHUNK_MS / 2) + 1))//; || (median+1 < -ceil(PLAYER_CHUNK_MS / 2))))
 			sleep = median;
 //		else if (pBuffer->full() && (median+1 < -floor(PLAYER_CHUNK_MS / 2)))
 //			sleep = median;
