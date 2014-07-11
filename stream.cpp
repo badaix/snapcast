@@ -4,10 +4,8 @@
 #include <string.h>
 #include <unistd.h>
 
-Stream::Stream() : sleep(0), lastPlayerChunk(NULL), median(0), shortMedian(0), lastUpdate(0), skip(0), idx(0)
+Stream::Stream() : sleep(0), median(0), shortMedian(0), lastUpdate(0)
 {
-	silentPlayerChunk = new PlayerChunk();
-	playerChunk = (short*)malloc(sizeof(short)*PLAYER_CHUNK_SIZE);
 	pBuffer = new DoubleBuffer<int>(30000 / PLAYER_CHUNK_MS);
 	pShortBuffer = new DoubleBuffer<int>(5000 / PLAYER_CHUNK_MS);
 	pLock = new std::unique_lock<std::mutex>(mtx);
@@ -55,38 +53,6 @@ timeval Stream::getNextPlayerChunk(short* outputBuffer, int correction)
 	Chunk* chunk = getNextChunk();
 	timeval tv = getTimeval(chunk);
 
-//std::cerr << "GetNextPlayerChunk: " << correction << "\n";		
-//		int age(0);
-//		age = getAge(*chunk) + outputBufferDacTime*1000 - bufferMs;
-//		std::cerr << "age: " << age << " \tidx: " << chunk->idx << "\n"; 
-
-/*		double factor = (double)PLAYER_CHUNK_MS / (double)(PLAYER_CHUNK_MS + correction);
-	size_t idx(0);
-	size_t idxCorrection(0);
-	for (size_t n=0; n<PLAYER_CHUNK_SIZE/2; ++n)
-	{
-		idx = chunk->idx + 2*floor(n*factor) - idxCorrection;
-//std::cerr << factor << "\t" << n << "\t" << idx << "\n";
-		if (idx >= WIRE_CHUNK_SIZE)
-		{
-			idxCorrection = 2*floor(n*factor);
-			idx = 0;
-			chunks.pop_front();
-			delete chunk;
-			chunk = getNextChunk();
-		}
-		playerChunk->payload[2*n] = chunk->payload[idx];
-		playerChunk->payload[2*n+1] = chunk->payload[idx + 1];
-	}
-	addMs(chunk, -PLAYER_CHUNK_MS - correction);
-	chunk->idx = idx;
-	if (idx >= WIRE_CHUNK_SIZE)
-	{
-		chunks.pop_front();
-		delete chunk;
-	}
-*/
-
 	if (correction != 0)
 	{
 		int factor = ceil((float)PLAYER_CHUNK_MS / (float)abs(correction));
@@ -97,7 +63,6 @@ timeval Stream::getNextPlayerChunk(short* outputBuffer, int correction)
 		{
 			*(outputBuffer + 2*n) = chunk->payload[idx];
 			*(outputBuffer + 2*n+1) = chunk->payload[idx + 1];
-//std::cerr << 2*n << "\t" << idx << "\n";
 			if (n % factor == 0)
 			{
 				if (correction < 0)
@@ -111,28 +76,6 @@ timeval Stream::getNextPlayerChunk(short* outputBuffer, int correction)
 				samples += 2;
 				idx += 2;
 			}
-/*			if (correction > 0)
-			{
-				if (n % 2 != 0)
-				{
-					samples += 4;
-					idx += 4;
-				}
-				else
-				{
-					samples += 2;
-					idx += 2;
-				}
-			}
-			else if (correction < 0)
-			{
-				if (n % 3 != 0)
-				{
-					samples += 2;
-					idx += 2;
-				}
-			}
-*/
 			if (idx >= WIRE_CHUNK_SIZE)
 			{
 //std::cerr << "idx >= WIRE_CHUNK_SIZE: " << idx << "\t" << WIRE_CHUNK_SIZE << "\n";

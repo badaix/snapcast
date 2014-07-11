@@ -33,16 +33,10 @@ private:
 	DoubleBuffer<int>* pBuffer;
 	DoubleBuffer<int>* pShortBuffer;
 
-	PlayerChunk* lastPlayerChunk;
-	PlayerChunk* silentPlayerChunk;
-	short* playerChunk;
-
 	int median;
 	int shortMedian;
 	time_t lastUpdate;
 	int bufferMs;
-	int skip;
-	size_t idx;
 };
 
 

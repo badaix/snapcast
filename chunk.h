@@ -29,7 +29,7 @@ struct ChunkT
 
 
 typedef ChunkT<WIRE_CHUNK_SIZE> Chunk;
-typedef ChunkT<PLAYER_CHUNK_SIZE> PlayerChunk;
+//typedef ChunkT<PLAYER_CHUNK_SIZE> PlayerChunk;
 
 #endif
 

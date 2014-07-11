@@ -19,18 +19,29 @@
 #include "stream.h"
 
 
-std::deque<int> timeDiffs;
 int bufferMs;
+Stream* stream;
 
 
 
 void player() 
 {
+    zmq::context_t context (1);
+    zmq::socket_t subscriber (context, ZMQ_SUB);
+    subscriber.connect("tcp://192.168.0.2:123458");
+
+    const char* filter = "";
+    subscriber.setsockopt(ZMQ_SUBSCRIBE, filter, strlen(filter));
+    zmq::message_t update;
+    while (1)
+    {
+        subscriber.recv(&update);
+		stream->addChunk((Chunk*)(update.data()));
+    }
 }
 
 
 
-Stream* stream;
 
 /* This routine will be called by the PortAudio engine when audio is needed.
 ** It may called at interrupt level on some machines so don't do anything
@@ -42,7 +53,6 @@ static int patestCallback( const void *inputBuffer, void *outputBuffer,
                             PaStreamCallbackFlags statusFlags,
                             void *userData )
 {
-//	std::cerr << "outputBufferDacTime: " << timeInfo->outputBufferDacTime*1000 << "\n";
     Stream* stream = (Stream*)userData;
     short* out = (short*)outputBuffer;
 
@@ -51,25 +61,9 @@ static int patestCallback( const void *inputBuffer, void *outputBuffer,
     (void) inputBuffer;
     
 	stream->getChunk(out, timeInfo->outputBufferDacTime, framesPerBuffer);
-
-/*	for (size_t n=0; n<framesPerBuffer; n++)
-	{
-	    *out++ = playerChunk->payload[2*n];
-	    *out++ = playerChunk->payload[2*n+1];
-	}
-	delete playerChunk;
-*/   
     return paContinue;
 }
 
-/*
- * This routine is called by portaudio when playback is done.
- */
-static void StreamFinished( void* userData )
-{
-//   paTestData *data = (paTestData *) userData;
-//   printf( "Stream Completed: %s\n", data->message );
-}
 
 
 int initAudio()
@@ -120,14 +114,8 @@ int initAudio()
               stream );
     if( err != paNoError ) goto error;
 
-    err = Pa_SetStreamFinishedCallback( paStream, &StreamFinished );
-    if( err != paNoError ) goto error;
-
     err = Pa_StartStream( paStream );
     if( err != paNoError ) goto error;
-
-//    printf("Play for %d seconds.\n", NUM_SECONDS );
-//    Pa_Sleep( NUM_SECONDS * 1000 );
 
 //    err = Pa_StopStream( paStream );
 //    if( err != paNoError ) goto error;
@@ -148,42 +136,20 @@ error:
 }
 
 
+
+
 int main (int argc, char *argv[])
 {
 	bufferMs = 300;	
 	if (argc > 1)
 		bufferMs = atoi(argv[1]);
-    zmq::context_t context (1);
-    zmq::socket_t subscriber (context, ZMQ_SUB);
-//    subscriber.connect("tcp://127.0.0.1:123458");
-    subscriber.connect("tcp://192.168.0.2:123458");
 
-    const char* filter = "";
-    subscriber.setsockopt(ZMQ_SUBSCRIBE, filter, strlen(filter));
-/*	std::thread playerThread(player);
-	struct sched_param params;
-	params.sched_priority = sched_get_priority_max(SCHED_FIFO);
-	int ret = pthread_setschedparam(playerThread.native_handle(), SCHED_FIFO, &params);
-	if (ret != 0) 
-	    std::cerr << "Unsuccessful in setting thread realtime prio" << std::endl;
-*/
 	stream = new Stream();
 	stream->setBufferLen(bufferMs);
-
 	initAudio();
-	Chunk* chunk;// = new Chunk();
-    while (1)
-    {
-        zmq::message_t update;
-        subscriber.recv(&update);
+	std::thread playerThread(player);
+	playerThread.join();
 
-//		timeval now;
-//		gettimeofday(&now, NULL);
-//        memcpy(chunk, update.data(), sizeof(Chunk));
-		chunk = (Chunk*)(update.data());
-//		std::cerr << "New chunk: " << chunkTime(*chunk) << "\t" << timeToStr(now) << "\t" << getAge(*chunk) << "\n";
-		stream->addChunk(chunk);
-    }
     return 0;
 }
 
