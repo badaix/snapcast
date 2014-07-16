@@ -143,13 +143,13 @@ void Stream::getChunk(short* outputBuffer, double outputBufferDacTime, unsigned 
 		{
 //			std::cerr << "Sleep: " << sleep << "\n";
 			sleep += PLAYER_CHUNK_MS;
-			if (sleep > 0)
+			if (sleep > -PLAYER_CHUNK_MS/2)
 				sleep = 0;
 			getSilentPlayerChunk(outputBuffer);
 		}
 		else
 		{
-			for (int i=0; i<(sleep / PLAYER_CHUNK_MS) + 1; ++i)
+			for (int i=0; i<(int)(round((float)sleep / (float)PLAYER_CHUNK_MS)) + 1; ++i)
 			{
 //				std::cerr << "Sleep: " << sleep << "\n";
 				getNextPlayerChunk(outputBuffer);
@@ -182,12 +182,12 @@ void Stream::getChunk(short* outputBuffer, double outputBufferDacTime, unsigned 
 		lastUpdate = now;
 		median = pBuffer->median();
 		shortMedian = pShortBuffer->median();
-		if (abs(age) > 700)
+		if (abs(age) > 100)
 			sleep = age;
-		else if (pShortBuffer->full() && (abs(shortMedian) > WIRE_CHUNK_MS))
+		else if (pShortBuffer->full() && (abs(shortMedian) > PLAYER_CHUNK_MS))
 			sleep = shortMedian;
-		else if (pBuffer->full() && (abs(median) >= PLAYER_CHUNK_MS))//ceil(PLAYER_CHUNK_MS / 2) + 1))//; || (median+1 < -ceil(PLAYER_CHUNK_MS / 2))))
-			sleep = median;
+//		else if (pBuffer->full() && (abs(median) >= PLAYER_CHUNK_MS))//ceil(PLAYER_CHUNK_MS / 2) + 1))//; || (median+1 < -ceil(PLAYER_CHUNK_MS / 2))))
+//			sleep = median;
 //		else if (pBuffer->full() && (median+1 < -floor(PLAYER_CHUNK_MS / 2)))
 //			sleep = median;
 //sleep = 0;

@@ -56,9 +56,9 @@ int main () {
 		{
 			usleep((nextTick - currentTick) * 1000);
 		}
-	    gettimeofday(&now, NULL);
-		if (abs(diff_ms(now, start)) > 200)
-			start = now;
+		else
+		    gettimeofday(&start, NULL);
+
 		nextTick += WIRE_CHUNK_MS;
     }
 	delete chunk;
