@@ -4,7 +4,7 @@
 #include "chunk.h"
 #include <sys/time.h>
 
-std::string timeToStr(const timeval& timestamp)
+static std::string timeToStr(const timeval& timestamp)
 {
 	char tmbuf[64], buf[64];
 	struct tm *nowtm;
@@ -17,15 +17,7 @@ std::string timeToStr(const timeval& timestamp)
 }
 
 
-template <typename T>
-std::string chunkTime(const T& chunk)
-{
-	return timeToStr(getTimeval(chunk));
-}
-
-
-template <typename T>
-timeval getTimeval(const T* chunk)
+static timeval getTimeval(const Chunk* chunk)
 {
 	timeval ts;
 	ts.tv_sec = chunk->tv_sec;
@@ -34,31 +26,35 @@ timeval getTimeval(const T* chunk)
 }
 
 
-template <typename T>
-void setTimeval(T* chunk, timeval tv)
+static void setTimeval(Chunk* chunk, timeval tv)
 {
 	chunk->tv_sec = tv.tv_sec;
 	chunk->tv_usec = tv.tv_usec;
 }
 
 
-long diff_ms(const timeval& t1, const timeval& t2)
+static std::string chunkTime(const Chunk* chunk)
+{
+	return timeToStr(getTimeval(chunk));
+}
+
+
+static long diff_ms(const timeval& t1, const timeval& t2)
 {
     return (((t1.tv_sec - t2.tv_sec) * 1000000) + 
             (t1.tv_usec - t2.tv_usec))/1000;
 }
 
 
-template <typename T>
-long getAge(const T* chunk)
+static long getAge(const Chunk* chunk)
 {
 	timeval now;
 	gettimeofday(&now, NULL);
-	return diff_ms(now, chunkTime(chunk));
+	return diff_ms(now, getTimeval(chunk));
 }
  
 
-long getAge(const timeval& tv)
+static long getAge(const timeval& tv)
 {
 	timeval now;
 	gettimeofday(&now, NULL);
@@ -66,7 +62,7 @@ long getAge(const timeval& tv)
 }
  
 
-inline long getTickCount()
+static long getTickCount()
 {
 	struct timespec now;
 	clock_gettime(CLOCK_MONOTONIC, &now);
@@ -74,7 +70,7 @@ inline long getTickCount()
 }
 
 
-inline void addMs(timeval& tv, int ms)
+static void addMs(timeval& tv, int ms)
 {
 	if (ms < 0)
 	{
@@ -89,8 +85,8 @@ inline void addMs(timeval& tv, int ms)
     tv.tv_usec %= 1000000;
 }
 
-template <typename T>
-void addMs(T* chunk, int ms)
+
+static void addMs(Chunk* chunk, int ms)
 {
 	timeval tv = getTimeval(chunk);
 	addMs(tv, ms);

@@ -30,8 +30,9 @@ int main () {
 
     char c[2];
     Chunk* chunk = new Chunk();
+    timeval start;
     timeval now;
-    gettimeofday(&now, NULL);
+    gettimeofday(&start, NULL);
 	long nextTick = getTickCount();
     while (cin.good())
     {
@@ -42,19 +43,22 @@ int main () {
 	        chunk->payload[n] = (int)c[0] + ((int)c[1] * 256);
 		}
 
-        chunk->tv_sec = now.tv_sec;
-        chunk->tv_usec = now.tv_usec;
+        chunk->tv_sec = start.tv_sec;
+        chunk->tv_usec = start.tv_usec;
 		chunk->idx = 0;
         zmq::message_t message(sizeof(Chunk));
         memcpy(message.data(), chunk, sizeof(Chunk));
         publisher.send(message);
-        addMs(now, WIRE_CHUNK_MS);
+        addMs(start, WIRE_CHUNK_MS);
 
 		long currentTick = getTickCount();
 		if (nextTick - currentTick > 0)
 		{
 			usleep((nextTick - currentTick) * 1000);
 		}
+	    gettimeofday(&now, NULL);
+		if (abs(diff_ms(now, start)) > 200)
+			start = now;
 		nextTick += WIRE_CHUNK_MS;
     }
 	delete chunk;

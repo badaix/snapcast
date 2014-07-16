@@ -14,22 +14,15 @@
 #define FRAMES_PER_BUFFER  ((SAMPLE_RATE*PLAYER_CHUNK_MS)/1000)
 
 
-template <size_t T>
-struct ChunkT
+struct Chunk
 {
-//	ChunkT()
-//	{
-//		memset(&payload[0], 0, T);
-//	}
 	int32_t tv_sec;
 	int32_t tv_usec;
 	int32_t idx;
-	int16_t payload[T];
+	int16_t payload[WIRE_CHUNK_SIZE];
 };
 
 
-typedef ChunkT<WIRE_CHUNK_SIZE> Chunk;
-//typedef ChunkT<PLAYER_CHUNK_SIZE> PlayerChunk;
 
 #endif
 
