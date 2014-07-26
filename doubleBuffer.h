@@ -12,7 +12,7 @@ public:
 	{		
 	}
 
-	void add(const T& element)
+	inline void add(const T& element)
 	{
 		buffer.push_back(element);
 		if (buffer.size() > bufferSize)
@@ -28,17 +28,17 @@ public:
 		return tmpBuffer[tmpBuffer.size() / 2];
 	}
 
-	bool full() const
+	inline bool full() const
 	{
 		return (buffer.size() == bufferSize);
 	}
 
-	void clear()
+	inline void clear()
 	{
 		buffer.clear();
 	}
 
-	size_t size() const
+	inline size_t size() const
 	{
 		return buffer.size();
 	}
