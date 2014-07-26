@@ -171,7 +171,7 @@ void Stream::getChunk(short* outputBuffer, double outputBufferDacTime, unsigned 
 	}		
 
 	timeval tv = getNextPlayerChunk(outputBuffer, correction);
-	int age = getAge(tv) - bufferMs + outputBufferDacTime*1000;
+	int age = getAge(tv) - bufferMs;// + outputBufferDacTime*1000;
 	pBuffer->add(age);
 	pShortBuffer->add(age);
 //	std::cerr << "Chunk: " << age << "\t" << outputBufferDacTime*1000 << "\n";

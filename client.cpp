@@ -20,6 +20,7 @@
 
 
 int bufferMs;
+int deviceIdx;  
 Stream* stream;
 
 
@@ -92,7 +93,8 @@ int initAudio()
 		std::cerr << "Device " << i << ": " << deviceInfo->name << "\n";
 	}
 
-    outputParameters.device = Pa_GetDefaultOutputDevice(); /* default output device */
+    outputParameters.device = deviceIdx==-1?Pa_GetDefaultOutputDevice():deviceIdx; /* default output device */
+    std::cerr << "Using Device: " << outputParameters.device << "\n";
     if (outputParameters.device == paNoDevice) 
 	{
       fprintf(stderr,"Error: No default output device.\n");
@@ -100,7 +102,7 @@ int initAudio()
     }
     outputParameters.channelCount = CHANNELS;       /* stereo output */
     outputParameters.sampleFormat = paInt16; /* 32 bit floating point output */
-    outputParameters.suggestedLatency = Pa_GetDeviceInfo( outputParameters.device )->defaultLowOutputLatency;
+    outputParameters.suggestedLatency = Pa_GetDeviceInfo( outputParameters.device )->defaultHighOutputLatency;
     outputParameters.hostApiSpecificStreamInfo = NULL;
 
     err = Pa_OpenStream(
@@ -140,9 +142,12 @@ error:
 
 int main (int argc, char *argv[])
 {
+        deviceIdx = -1;
 	bufferMs = 300;	
 	if (argc > 1)
 		bufferMs = atoi(argv[1]);
+	if (argc > 2)
+		deviceIdx = atoi(argv[2]);
 
 	stream = new Stream();
 	stream->setBufferLen(bufferMs);
