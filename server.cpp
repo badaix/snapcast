@@ -52,7 +52,7 @@ int main () {
 
 		nextTick += WIRE_CHUNK_MS;
 		long currentTick = getTickCount();
-		if (nextTick - currentTick > 0)
+		if (nextTick > currentTick)
 		{
 			usleep((nextTick - currentTick) * 1000);
 		}
