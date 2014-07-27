@@ -153,6 +153,25 @@ int main (int argc, char *argv[])
 	stream->setBufferLen(bufferMs);
 	initAudio();
 	std::thread playerThread(player);
+	
+	std::string cmd;
+	while (true)
+	{
+		std::cout << "> ";
+		std::getline(std::cin, cmd);
+//		line = fgets( str, 256, stdin );
+//		if (line == NULL)
+//			continue;
+//		std::string cmd(line);
+		std::cerr << "CMD: " << cmd << "\n";
+		if (cmd == "quit")
+			break;
+		else
+		{
+			stream->setBufferLen(atoi(cmd.c_str()));
+		}
+	}
+
 	playerThread.join();
 
     return 0;
