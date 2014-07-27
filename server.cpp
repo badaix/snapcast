@@ -42,19 +42,18 @@ int main () {
 	        chunk->payload[n] = (int)c[0] + ((int)c[1] * 256);
 		}
 
-        chunk->tv_sec = tvChunk.tv_sec;
-        chunk->tv_usec = tvChunk.tv_usec;
-		chunk->idx = 0;
-        zmq::message_t message(sizeof(Chunk));
-        memcpy(message.data(), chunk, sizeof(Chunk));
-        publisher.send(message);
-
         addMs(tvChunk, WIRE_CHUNK_MS);
 		nextTick += WIRE_CHUNK_MS;
 		long currentTick = getTickCount();
 		if (nextTick > currentTick)
 		{
 			usleep((nextTick - currentTick) * 1000);
+		    chunk->tv_sec = tvChunk.tv_sec;
+		    chunk->tv_usec = tvChunk.tv_usec;
+			chunk->idx = 0;
+		    zmq::message_t message(sizeof(Chunk));
+		    memcpy(message.data(), chunk, sizeof(Chunk));
+		    publisher.send(message);
 		}
 		else
 		{
