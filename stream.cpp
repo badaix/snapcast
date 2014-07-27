@@ -6,7 +6,7 @@
 
 Stream::Stream() : sleep(0), median(0), shortMedian(0), lastUpdate(0)
 {
-	pBuffer = new DoubleBuffer<int>(30000 / PLAYER_CHUNK_MS);
+	pBuffer = new DoubleBuffer<int>(15000 / PLAYER_CHUNK_MS);
 	pShortBuffer = new DoubleBuffer<int>(5000 / PLAYER_CHUNK_MS);
 	pLock = new std::unique_lock<std::mutex>(mtx);
 	bufferMs = 500;
@@ -164,7 +164,7 @@ void Stream::getChunk(short* outputBuffer, double outputBufferDacTime, unsigned 
 	{
 		if (abs(median) > 1)
 		{
-			correction = -median;
+			correction = -shortMedian;
 			pBuffer->clear();
 			pShortBuffer->clear();
 		}
