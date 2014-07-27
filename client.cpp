@@ -155,7 +155,7 @@ int main (int argc, char *argv[])
 	std::thread playerThread(player);
 	
 	std::string cmd;
-	while (true)
+	while (true && (argc > 3))
 	{
 		std::cout << "> ";
 		std::getline(std::cin, cmd);
