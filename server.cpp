@@ -33,9 +33,9 @@ int main () {
     timeval tvChunk;
     gettimeofday(&tvChunk, NULL);
 	long nextTick = getTickCount();
-    while (cin.good())
+    while (!cin.bad())
     {
-		for (size_t n=0; (n<WIRE_CHUNK_SIZE) && cin.good(); ++n)
+		for (size_t n=0; (n<WIRE_CHUNK_SIZE) && !cin.bad(); ++n)
 		{
 			c[0] = cin.get();
 			c[1] = cin.get();
@@ -48,8 +48,8 @@ int main () {
         zmq::message_t message(sizeof(Chunk));
         memcpy(message.data(), chunk, sizeof(Chunk));
         publisher.send(message);
-        addMs(tvChunk, WIRE_CHUNK_MS);
 
+        addMs(tvChunk, WIRE_CHUNK_MS);
 		nextTick += WIRE_CHUNK_MS;
 		long currentTick = getTickCount();
 		if (nextTick > currentTick)
