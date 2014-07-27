@@ -168,7 +168,16 @@ void Stream::getChunk(short* outputBuffer, double outputBufferDacTime, unsigned 
 			pBuffer->clear();
 			pShortBuffer->clear();
 		}
-	}		
+	} 
+	else if (pShortBuffer->full() && (abs(shortMedian) <= PLAYER_CHUNK_MS))
+	{
+		if (abs(shortMedian) > 3)
+		{
+			correction = -shortMedian;
+			pBuffer->clear();
+			pShortBuffer->clear();
+		}
+	}	
 
 	timeval tv = getNextPlayerChunk(outputBuffer, correction);
 	int age = getAge(tv) - bufferMs;// + outputBufferDacTime*1000;
