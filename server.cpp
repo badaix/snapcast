@@ -58,6 +58,7 @@ int main () {
 		}
 		else
 		{
+			usleep(1000);
 		    gettimeofday(&tvChunk, NULL);
 			nextTick = getTickCount();
 		}
@@ -65,4 +66,5 @@ int main () {
 	delete chunk;
     return 0;
 }
+
 
