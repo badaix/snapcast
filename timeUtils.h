@@ -17,11 +17,28 @@ static std::string timeToStr(const timeval& timestamp)
 }
 
 
+static void addMs(timeval& tv, int ms)
+{
+	if (ms < 0)
+	{
+		timeval t;
+		t.tv_sec = -ms / 1000;
+		t.tv_usec = (-ms % 1000) * 1000;
+		timersub(&tv, &t, &tv);
+		return;
+	}
+    tv.tv_usec += ms*1000;
+    tv.tv_sec += (tv.tv_usec / 1000000);
+    tv.tv_usec %= 1000000;
+}
+
+
 static timeval getTimeval(const Chunk* chunk)
 {
 	timeval ts;
 	ts.tv_sec = chunk->tv_sec;
 	ts.tv_usec = chunk->tv_usec;
+	addMs(ts, chunk->idx / WIRE_CHUNK_MS_SIZE);
 	return ts;
 }
 
@@ -70,22 +87,8 @@ static long getTickCount()
 }
 
 
-static void addMs(timeval& tv, int ms)
-{
-	if (ms < 0)
-	{
-		timeval t;
-		t.tv_sec = -ms / 1000;
-		t.tv_usec = (-ms % 1000) * 1000;
-		timersub(&tv, &t, &tv);
-		return;
-	}
-    tv.tv_usec += ms*1000;
-    tv.tv_sec += (tv.tv_usec / 1000000);
-    tv.tv_usec %= 1000000;
-}
 
-
+/*
 static void addMs(Chunk* chunk, int ms)
 {
 	timeval tv = getTimeval(chunk);
@@ -93,7 +96,7 @@ static void addMs(Chunk* chunk, int ms)
 	chunk->tv_sec = tv.tv_sec;
 	chunk->tv_usec = tv.tv_usec;
 }
-
+*/
 
 
 #endif
