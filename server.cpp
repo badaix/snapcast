@@ -64,8 +64,8 @@ int main () {
 		}
 		else
 		{
-			usleep(1000);
-		    gettimeofday(&tvChunk, NULL);
+		        cin.sync();
+    		    gettimeofday(&tvChunk, NULL);
 			nextTick = getTickCount();
 		}
     }
