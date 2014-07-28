@@ -34,9 +34,7 @@ int main () {
     gettimeofday(&tvChunk, NULL);
 	long nextTick = getTickCount();
 
-    while (cin.good())
-		cin.get();
-	cin.clear();
+    cin.sync();
 
     while (cin.good())
     {
