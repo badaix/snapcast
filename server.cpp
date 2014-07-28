@@ -33,6 +33,11 @@ int main () {
     timeval tvChunk;
     gettimeofday(&tvChunk, NULL);
 	long nextTick = getTickCount();
+
+    while (cin.good())
+		cin.get();
+	cin.clear();
+
     while (cin.good())
     {
 		for (size_t n=0; (n<WIRE_CHUNK_SIZE) && cin.good(); ++n)
@@ -42,8 +47,8 @@ int main () {
 	        chunk->payload[n] = (int)c[0] + ((int)c[1] * 256);
 		}
 
-		if (!cin.good())
-			cin.clear();
+//		if (!cin.good())
+//			cin.clear();
 
         chunk->tv_sec = tvChunk.tv_sec;
         chunk->tv_usec = tvChunk.tv_usec;
