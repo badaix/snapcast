@@ -1,6 +1,6 @@
 VERSION = 0.01
 CC      = /usr/bin/g++
-CFLAGS  = -std=gnu++0x -Wall -g -O3 -D_REENTRANT -DVERSION=\"$(VERSION)\"
+CFLAGS  = -std=gnu++0x -Wall -Wno-unused-function -g -O3 -D_REENTRANT -DVERSION=\"$(VERSION)\"
 LDFLAGS = -lrt -lzmq -lpthread -lportaudio
 
 OBJ_SERVER = server.o

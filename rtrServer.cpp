@@ -6,8 +6,9 @@
 #include <thread> 
 #include <istream>
 #include "zhelpers.hpp"
+#include "utils.h"
 
-
+zmq::socket_t* client;
 
 void receiver(zmq::socket_t* client)
 {
@@ -24,13 +25,20 @@ void receiver(zmq::socket_t* client)
 }
 
 
+void send(const std::string& address, const std::string& cmd)
+{
+	s_sendmore (*client, address);
+	s_sendmore (*client, "");
+	s_send (*client, cmd);
+}
+
 
 int main () {
     zmq::context_t context(2);
-    zmq::socket_t client (context, ZMQ_ROUTER);
-    client.bind("tcp://0.0.0.0:123459");
+    client = new zmq::socket_t(context, ZMQ_ROUTER);
+    client->bind("tcp://0.0.0.0:123459");
 
-	std::thread receiveThread(receiver, &client);
+	std::thread receiveThread(receiver, client);
 
 	while (true)
 	{
@@ -39,9 +47,7 @@ int main () {
 
 		std::getline(std::cin, address);
 		std::getline(std::cin, cmd);
-        s_sendmore (client, address);
-        s_sendmore (client, "");
-        s_send (client, cmd);
+		send(trim(address), trim(cmd));
     }
     return 0;
 }
