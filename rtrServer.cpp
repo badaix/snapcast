@@ -15,12 +15,11 @@ void receiver(zmq::socket_t* client)
 	while (true)
 	{
 		std::string address = s_recv (*client);
-		std::cout << "Address: " << address << "\n";
 	    // receiving and discarding'empty' message
 	    s_recv (*client);
 	    // receiving and discarding 'ready' message
 	    std::string msg = s_recv (*client);
-		std::cout << "msg: " << msg << "\n";
+		std::cout << "msg from " << address << ": " << msg << "\n";
 	}
 }
 
