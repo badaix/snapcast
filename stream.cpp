@@ -4,7 +4,7 @@
 #include <string.h>
 #include <unistd.h>
 
-Stream::Stream() : sleep(0), median(0), shortMedian(0), lastUpdate(0)
+Stream::Stream() : sleep(0), median(0), shortMedian(0), lastUpdate(0), currentSample(0), everyN(40000)
 {
 	pBuffer = new DoubleBuffer<int>(15000 / PLAYER_CHUNK_MS);
 	pShortBuffer = new DoubleBuffer<int>(5000 / PLAYER_CHUNK_MS);
@@ -77,7 +77,28 @@ timeval Stream::getNextPlayerChunk(short* outputBuffer, int correction)
 	}
 	else
 	{
-		size_t missing = PLAYER_CHUNK_SIZE;// + correction*PLAYER_CHUNK_MS_SIZE;
+		int idx(chunk->idx);
+		for (size_t n=0; n<PLAYER_CHUNK_SIZE; n+=2)
+		{
+			*(outputBuffer + n) = chunk->payload[idx];
+			*(outputBuffer + n+1) = chunk->payload[idx + 1];
+			idx += 2;
+			if (++currentSample > everyN)
+			{
+				idx += 2;
+				currentSample = 0;
+			}
+			if (idx >= WIRE_CHUNK_SIZE)
+			{
+				chunks.pop_front();
+				delete chunk;
+				chunk = getNextChunk();
+				idx -= WIRE_CHUNK_SIZE;
+			}
+		}
+		chunk->idx = idx;
+
+/*		size_t missing = PLAYER_CHUNK_SIZE;// + correction*PLAYER_CHUNK_MS_SIZE;
 		if (chunk->idx + PLAYER_CHUNK_SIZE > WIRE_CHUNK_SIZE)
 		{
 			if (outputBuffer != NULL)
@@ -97,6 +118,7 @@ timeval Stream::getNextPlayerChunk(short* outputBuffer, int correction)
 			chunks.pop_front();
 			delete chunk;
 		}
+*/
 	}
 
 	return tv;
