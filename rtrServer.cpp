@@ -48,6 +48,7 @@ int main () {
 		std::getline(std::cin, address);
 		std::cout << "command: ";
 		std::getline(std::cin, cmd);
+		std::newl;
 		send(trim(address), trim(cmd));
     }
     return 0;
