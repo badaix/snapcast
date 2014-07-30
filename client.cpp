@@ -66,7 +66,8 @@ void control(Stream* stream)
     zmq::socket_t worker (context, ZMQ_REQ);
     srand (time(NULL));
     //  We use a string identity for ease here
-    s_set_id (worker);
+	string macAddress = getMacAddress();
+    worker.setsockopt(ZMQ_IDENTITY, macAddress.c_str(), macAddress.length());
     worker.connect("tcp://192.168.0.2:123459");
 
     //  Tell the router we're ready for work
@@ -81,7 +82,7 @@ void control(Stream* stream)
 		if (splitCmd.size() > 1)
 		{
 			if (splitCmd[0] == "buffer")
-				stream->setBufferLen(atoi(cmd.c_str()));
+				stream->setBufferLen(atoi(splitCmd[1].c_str()));
 		}
 		s_send(worker, "ACK " + cmd);
     }
