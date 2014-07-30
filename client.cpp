@@ -8,6 +8,7 @@
 #include <zmq.hpp>
 #include <iostream>
 #include <sstream>
+#include <fstream>
 #include <sys/time.h>
 #include <unistd.h>
 #include <deque>
@@ -15,8 +16,13 @@
 #include <algorithm>
 #include <thread> 
 #include <portaudio.h>
+#include <iterator>
+
 #include "chunk.h"
 #include "stream.h"
+#include "zhelpers.hpp"
+
+using namespace std;
 
 
 int bufferMs;
@@ -42,6 +48,44 @@ void player()
 }
 
 
+
+std::string getMacAddress()
+{
+	std::ifstream t("/sys/class/net/eth0/address");
+	std::string str((std::istreambuf_iterator<char>(t)),
+                 std::istreambuf_iterator<char>());
+	str.erase(std::find_if(str.rbegin(), str.rend(), std::not1(std::ptr_fun<int, int>(std::isspace))).base(), str.end());
+	return str;
+}
+
+
+
+void control(Stream* stream)
+{
+    zmq::context_t context(1);
+    zmq::socket_t worker (context, ZMQ_REQ);
+    srand (time(NULL));
+    //  We use a string identity for ease here
+    s_set_id (worker);
+    worker.connect("tcp://192.168.0.2:123459");
+
+    //  Tell the router we're ready for work
+    s_send (worker, "ready");
+    while (1) {
+        std::string cmd = s_recv (worker);
+		istringstream iss(cmd);
+		vector<std::string> splitCmd;
+		copy(istream_iterator<string>(iss), istream_iterator<string>(), back_inserter<vector<string> >(splitCmd));
+		for (size_t n=0; n<splitCmd.size(); ++n)
+			std::cout << "cmd: " << splitCmd[n] << "\n";
+		if (splitCmd.size() > 1)
+		{
+			if (splitCmd[0] == "buffer")
+				stream->setBufferLen(atoi(cmd.c_str()));
+		}
+		s_send(worker, "ACK " + cmd);
+    }
+}
 
 
 /* This routine will be called by the PortAudio engine when audio is needed.
@@ -154,7 +198,7 @@ int main (int argc, char *argv[])
 	initAudio();
 	std::thread playerThread(player);
 	
-	std::string cmd;
+/*	std::string cmd;
 	while (true && (argc > 3))
 	{
 		std::cout << "> ";
@@ -171,7 +215,9 @@ int main (int argc, char *argv[])
 			stream->setBufferLen(atoi(cmd.c_str()));
 		}
 	}
-
+*/
+	std::thread controlThread(control, stream);
+//	controlThread.join();
 	playerThread.join();
 
     return 0;

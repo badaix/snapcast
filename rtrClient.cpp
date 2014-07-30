@@ -3,39 +3,62 @@
 //
 // Olivier Chamoux <olivier.chamoux@fr.thalesgroup.com>
 
+
+#include <thread> 
+#include <vector>
+#include <string>
+#include <fstream>
+#include <iterator>
 #include "zhelpers.hpp"
+#include <netinet/in.h>
+#include <sys/ioctl.h>
+#include <net/if.h> 
 
-#define NBR_WORKERS 10
+using namespace std;
 
 
-int main () {
+std::string getMacAddress()
+{
+	std::ifstream t("/sys/class/net/eth0/address");
+	std::string str((std::istreambuf_iterator<char>(t)),
+                 std::istreambuf_iterator<char>());
+	str.erase(std::find_if(str.rbegin(), str.rend(), std::not1(std::ptr_fun<int, int>(std::isspace))).base(), str.end());
+	return str;
+}
+
+
+
+void control()
+{
     zmq::context_t context(1);
     zmq::socket_t worker (context, ZMQ_REQ);
     srand (time(NULL));
     //  We use a string identity for ease here
-    s_set_id (worker);
+	string macAddress = getMacAddress();
+    worker.setsockopt(ZMQ_IDENTITY, macAddress.c_str(), macAddress.length());
     worker.connect("tcp://127.0.0.1:10000");
 
-    int total = 0;
+    //  Tell the router we're ready for work
+    s_send (worker, "ready");
     while (1) {
-        //  Tell the router we're ready for work
-        s_send (worker, "ready");
-
-        //  Get workload from router, until finished
-        std::string workload = s_recv (worker);
-std::cout << "workload: " << workload << "\n";
-        int finished = (workload.compare("END") == 0);
-        
-        if (finished) {
-            std::cout << "Processed: " << total << " tasks" << std::endl;
-            break;
-        }
-        total++;
-
-        //  Do some random work
-        s_sleep(within (100) + 1);
+        std::string cmd = s_recv (worker);
+		istringstream iss(cmd);
+		vector<std::string> splitCmd;
+		copy(istream_iterator<string>(iss), istream_iterator<string>(), back_inserter<vector<string> >(splitCmd));
+		for (size_t n=0; n<splitCmd.size(); ++n)
+			std::cout << "cmd: " << splitCmd[n] << "\n";
+		s_send(worker, "ACK " + cmd);
     }
+}
+
+
+int main () {
+	cout << getMacAddress() << "\n";
+	std::thread controlThread(control);
+	controlThread.join();
     return 0;
 }
+
+
 
 
