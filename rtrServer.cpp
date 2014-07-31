@@ -16,7 +16,7 @@ void receiver(zmq::socket_t* client)
 	{
 		std::string address = s_recv (*client);
 	    // receiving and discarding'empty' message
-	    s_recv (*client);
+//	    s_recv (*client);
 	    // receiving and discarding 'ready' message
 	    std::string msg = s_recv (*client);
 		std::cout << "msg from " << address << ": " << msg << "\n";
@@ -27,7 +27,7 @@ void receiver(zmq::socket_t* client)
 void send(const std::string& address, const std::string& cmd)
 {
 	s_sendmore (*client, address);
-	s_sendmore (*client, "");
+//	s_sendmore (*client, "");
 	s_send (*client, cmd);
 }
 
@@ -48,7 +48,7 @@ int main () {
 		std::getline(std::cin, address);
 		std::cout << "command: ";
 		std::getline(std::cin, cmd);
-		std::newl;
+		std::cout << std::endl;
 		send(trim(address), trim(cmd));
     }
     return 0;
