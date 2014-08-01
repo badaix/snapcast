@@ -77,7 +77,7 @@ timeval Stream::getNextPlayerChunk(short* outputBuffer, int correction)
 	}
 	else
 	{
-		int idx(chunk->idx);
+/*		int idx(chunk->idx);
 		for (size_t n=0; n<PLAYER_CHUNK_SIZE; n+=2)
 		{
 			*(outputBuffer + n) = chunk->payload[idx];
@@ -97,8 +97,8 @@ timeval Stream::getNextPlayerChunk(short* outputBuffer, int correction)
 			}
 		}
 		chunk->idx = idx;
-
-/*		size_t missing = PLAYER_CHUNK_SIZE;// + correction*PLAYER_CHUNK_MS_SIZE;
+*/
+		size_t missing = PLAYER_CHUNK_SIZE;// + correction*PLAYER_CHUNK_MS_SIZE;
 		if (chunk->idx + PLAYER_CHUNK_SIZE > WIRE_CHUNK_SIZE)
 		{
 			if (outputBuffer != NULL)
@@ -118,7 +118,7 @@ timeval Stream::getNextPlayerChunk(short* outputBuffer, int correction)
 			chunks.pop_front();
 			delete chunk;
 		}
-*/
+
 	}
 
 	return tv;
