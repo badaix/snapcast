@@ -24,16 +24,20 @@ void alive(zmq::socket_t* worker)
     //  Tell the router we're ready for work
     zmq::message_t message;
     while (1) {
-	    s_send (*worker, "ping");
-		int res = worker->recv(&message);
+	string s = "ping";
+    zmq::message_t message(s.size());
+    memcpy (message.data(), s.data(), s.size());
+	cout << "Send: " << worker->send(message);
+/*		int res = worker->recv(&message);
 	    if (res == 0)
 		{
 		    std::string recvMsg = std::string(static_cast<char*>(message.data()), message.size());
 		}
 		else
 			cout << "Error: " << res << "\n";
-		sleep(1);
-    }
+*/		sleep(1);
+//    
+	}
 }
 
 
@@ -54,7 +58,7 @@ void control(zmq::socket_t* worker)
 int main () {
 	cout << getMacAddress() << "\n";
     zmq::context_t context(1);
-    zmq::socket_t worker (context, ZMQ_REQ);
+    zmq::socket_t worker (context, ZMQ_PAIR);
     srand (time(NULL));
     //  We use a string identity for ease here
 	string macAddress = getMacAddress();
@@ -65,7 +69,8 @@ int main () {
 
 //	std::thread controlThread(control, &worker);
 	std::thread aliveThread(alive, &worker);
-	controlThread.join();
+	aliveThread.join();
+//	controlThread.join();
     return 0;
 }
 

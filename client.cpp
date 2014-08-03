@@ -183,7 +183,7 @@ int main (int argc, char *argv[])
 	initAudio();
 	std::thread playerThread(player);
 	
-/*	std::string cmd;
+	std::string cmd;
 	while (true && (argc > 3))
 	{
 		std::cout << "> ";
@@ -200,7 +200,7 @@ int main (int argc, char *argv[])
 			stream->setBufferLen(atoi(cmd.c_str()));
 		}
 	}
-*/
+
 	std::thread controlThread(control, stream);
 //	controlThread.join();
 	playerThread.join();

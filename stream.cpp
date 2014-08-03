@@ -13,10 +13,12 @@ Stream::Stream() : sleep(0), median(0), shortMedian(0), lastUpdate(0), currentSa
 }
 
 
+
 void Stream::setBufferLen(size_t bufferLenMs)
 {
 	bufferMs = bufferLenMs;
 }
+
 
 
 void Stream::addChunk(Chunk* chunk)
@@ -27,6 +29,7 @@ void Stream::addChunk(Chunk* chunk)
 //	mutex.unlock();
 	cv.notify_all();
 }
+
 
 
 Chunk* Stream::getNextChunk()
@@ -42,10 +45,12 @@ Chunk* Stream::getNextChunk()
 }
 
 
+
 void Stream::getSilentPlayerChunk(short* outputBuffer)
 {
 	memset(outputBuffer, 0, sizeof(short)*PLAYER_CHUNK_SIZE);
 }
+
 
 
 timeval Stream::getNextPlayerChunk(short* outputBuffer, int correction)
@@ -125,80 +130,6 @@ timeval Stream::getNextPlayerChunk(short* outputBuffer, int correction)
 }
 
 
-
-/*
-timeval Stream::getNextPlayerChunk(short* outputBuffer, int correction)
-{
-	Chunk* chunk = getNextChunk();
-	timeval tv = getTimeval(chunk);
-
-	if (correction != 0)
-	{
-		int factor = ceil((float)PLAYER_CHUNK_MS / (float)abs(correction));
-		std::cerr << "Correction: " << correction << ", factor: " << factor << "\n";
-		size_t idx(chunk->idx);
-		for (size_t n=0; n<PLAYER_CHUNK_SIZE/2; ++n)
-		{
-			*(outputBuffer + 2*n) = chunk->payload[idx];
-			*(outputBuffer + 2*n+1) = chunk->payload[idx + 1];
-			if (n % factor == 0)
-			{
-				if (correction < 0)
-					idx += 4;
-			}
-			else
-			{
-				idx += 2;
-			}
-			if (idx >= WIRE_CHUNK_SIZE)
-			{
-//std::cerr << "idx >= WIRE_CHUNK_SIZE: " << idx << "\t" << WIRE_CHUNK_SIZE << "\n";
-				chunks.pop_front();
-				delete chunk;
-				chunk = getNextChunk();
-				idx -= WIRE_CHUNK_SIZE;
-			}
-		}
-//std::cerr << "Idx: " << chunk->idx << " => " << idx+2 << "\t" << WIRE_CHUNK_SIZE << "\t" << PLAYER_CHUNK_SIZE/2 << "\n";
-		chunk->idx = idx;
-		std::cerr << "Diff: " << diff_ms(getTimeval(chunk), tv) << "\t" << chunk->idx / PLAYER_CHUNK_MS_SIZE << "\n";
-		return tv;
-	}
-
-
-	size_t missing = PLAYER_CHUNK_SIZE;// + correction*PLAYER_CHUNK_MS_SIZE;
-	if (chunk->idx + PLAYER_CHUNK_SIZE > WIRE_CHUNK_SIZE)
-	{
-//std::cerr << "chunk->idx + PLAYER_CHUNK_SIZE >= WIRE_CHUNK_SIZE: " << chunk->idx + PLAYER_CHUNK_SIZE << " >= " << WIRE_CHUNK_SIZE << "\n";
-		if (outputBuffer != NULL)
-			memcpy(outputBuffer, &chunk->payload[chunk->idx], sizeof(int16_t)*(WIRE_CHUNK_SIZE - chunk->idx));
-		missing = chunk->idx + PLAYER_CHUNK_SIZE - WIRE_CHUNK_SIZE;
-//		mutex.lock();
-		chunks.pop_front();
-//		mutex.unlock();
-		delete chunk;
-		
-		chunk = getNextChunk();
-	}
-
-	if (outputBuffer != NULL)
-		memcpy((outputBuffer + PLAYER_CHUNK_SIZE - missing), &chunk->payload[chunk->idx], sizeof(int16_t)*missing);
-
-	timeval nextTv = tv;
-	addMs(nextTv, PLAYER_CHUNK_MS);
-//	setTimeval(chunk, nextTv);
-	chunk->idx += missing;
-	if (chunk->idx >= WIRE_CHUNK_SIZE)
-	{
-//		mutex.lock();
-		chunks.pop_front();
-//		mutex.unlock();
-		delete chunk;
-	}
-
-	return tv;
-}
-*/
 
 void Stream::getChunk(short* outputBuffer, double outputBufferDacTime, unsigned long framesPerBuffer)
 {
