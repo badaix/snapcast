@@ -151,12 +151,9 @@ void Stream::getChunk(short* outputBuffer, double outputBufferDacTime, unsigned 
 			while (true)// (int i=0; i<(int)(round((float)sleep / (float)PLAYER_CHUNK_MS)) + 1; ++i)
 			{
 //				std::cerr << "Sleep: " << sleep << "\n";
-				int age = getAge(getNextPlayerChunk(NULL)) - bufferMs;
-				if (age < PLAYER_CHUNK_MS)
-				{
-					getNextPlayerChunk(outputBuffer);
+				int age = getAge(getNextPlayerChunk(outputBuffer)) - bufferMs;
+				if (age < PLAYER_CHUNK_MS / 2)
 					break;
-				}
 //				std::cerr << getAge(getNextPlayerChunk(outputBuffer)) - bufferMs << "\t";
 //				usleep(10);
 			}
