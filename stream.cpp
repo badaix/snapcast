@@ -1,5 +1,4 @@
 #include "stream.h"
-#include "timeUtils.h"
 #include <iostream>
 #include <string.h>
 #include <unistd.h>
@@ -53,10 +52,10 @@ void Stream::getSilentPlayerChunk(short* outputBuffer)
 
 
 
-timeval Stream::getNextPlayerChunk(short* outputBuffer, int correction)
+time_point_ms Stream::getNextPlayerChunk(short* outputBuffer, int correction)
 {
 	Chunk* chunk = getNextChunk();
-	timeval tv = getTimeval(chunk);
+	time_point_ms tp = timePoint(chunk);
 
 	if (correction != 0)
 	{
@@ -77,8 +76,8 @@ timeval Stream::getNextPlayerChunk(short* outputBuffer, int correction)
 			}
 		}
 		chunk->idx = idx;
-		if (correction != 0)
-			std::cerr << "Diff: " << diff_ms(getTimeval(chunk), tv) << "\t" << chunk->idx / PLAYER_CHUNK_MS_SIZE << "\n";
+//		if (correction != 0)
+//			std::cerr << "Diff: " << diff_ms(getTimeval(chunk), tv) << "\t" << chunk->idx / PLAYER_CHUNK_MS_SIZE << "\n";
 	}
 	else
 	{
@@ -126,7 +125,7 @@ timeval Stream::getNextPlayerChunk(short* outputBuffer, int correction)
 
 	}
 
-	return tv;
+	return tp;
 }
 
 
@@ -180,8 +179,7 @@ void Stream::getChunk(short* outputBuffer, double outputBufferDacTime, unsigned 
 		}
 	}	
 
-	timeval tv = getNextPlayerChunk(outputBuffer, correction);
-	int age = getAge(tv) - bufferMs;// + outputBufferDacTime*1000;
+	int age = getAge(getNextPlayerChunk(outputBuffer, correction)) - bufferMs;// + outputBufferDacTime*1000;
 	if (outputBufferDacTime < 1)
 		age += outputBufferDacTime*1000;
 	pBuffer->add(age);

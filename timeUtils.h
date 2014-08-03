@@ -3,18 +3,48 @@
 
 #include "chunk.h"
 #include <sys/time.h>
+#include <chrono>
 
-static std::string timeToStr(const timeval& timestamp)
+
+typedef std::chrono::time_point<std::chrono::high_resolution_clock, std::chrono::milliseconds> time_point_ms;
+
+
+static inline time_point_ms timePoint(const Chunk* chunk)
 {
-	char tmbuf[64], buf[64];
-	struct tm *nowtm;
-	time_t nowtime;
-	nowtime = timestamp.tv_sec;
-	nowtm = localtime(&nowtime);
-	strftime(tmbuf, sizeof tmbuf, "%Y-%m-%d %H:%M:%S", nowtm);
-	snprintf(buf, sizeof buf, "%s.%06d", tmbuf, (int)timestamp.tv_usec);
-	return buf;
+	time_point_ms tp;
+	return tp + std::chrono::seconds(chunk->tv_sec) + std::chrono::milliseconds(chunk->tv_usec / 1000) + std::chrono::milliseconds(chunk->idx / WIRE_CHUNK_MS_SIZE);
 }
+
+
+
+template<typename T, typename U>
+static inline T getAge(const std::chrono::time_point<U>& time_point)
+{
+	return std::chrono::duration_cast<T>(std::chrono::high_resolution_clock::now() - time_point);
+}
+
+
+
+template<typename T>
+static inline T getAge(const Chunk* chunk)
+{
+	return getAge<T>(timePoint(chunk));
+}
+
+
+
+inline static long getAge(const Chunk* chunk)
+{
+	return getAge<std::chrono::milliseconds>(chunk).count();
+}
+
+
+
+inline static long getAge(const time_point_ms& time_point)
+{
+	return getAge<std::chrono::milliseconds>(time_point).count();
+}
+ 
 
 
 static void addMs(timeval& tv, int ms)
@@ -33,51 +63,6 @@ static void addMs(timeval& tv, int ms)
 }
 
 
-static timeval getTimeval(const Chunk* chunk)
-{
-	timeval ts;
-	ts.tv_sec = chunk->tv_sec;
-	ts.tv_usec = chunk->tv_usec;
-	addMs(ts, chunk->idx / WIRE_CHUNK_MS_SIZE);
-	return ts;
-}
-
-
-static void setTimeval(Chunk* chunk, timeval tv)
-{
-	chunk->tv_sec = tv.tv_sec;
-	chunk->tv_usec = tv.tv_usec;
-}
-
-
-static std::string chunkTime(const Chunk* chunk)
-{
-	return timeToStr(getTimeval(chunk));
-}
-
-
-static long diff_ms(const timeval& t1, const timeval& t2)
-{
-    return (((t1.tv_sec - t2.tv_sec) * 1000000) + 
-            (t1.tv_usec - t2.tv_usec))/1000;
-}
-
-
-static long getAge(const Chunk* chunk)
-{
-	timeval now;
-	gettimeofday(&now, NULL);
-	return diff_ms(now, getTimeval(chunk));
-}
- 
-
-static long getAge(const timeval& tv)
-{
-	timeval now;
-	gettimeofday(&now, NULL);
-	return diff_ms(now, tv);
-}
- 
 
 static long getTickCount()
 {
@@ -87,16 +72,6 @@ static long getTickCount()
 }
 
 
-
-/*
-static void addMs(Chunk* chunk, int ms)
-{
-	timeval tv = getTimeval(chunk);
-	addMs(tv, ms);
-	chunk->tv_sec = tv.tv_sec;
-	chunk->tv_usec = tv.tv_usec;
-}
-*/
 
 
 #endif
