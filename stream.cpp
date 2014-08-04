@@ -3,7 +3,7 @@
 #include <string.h>
 #include <unistd.h>
 
-Stream::Stream() : sleep(0), median(0), shortMedian(0), lastUpdate(0), currentSample(0), everyN(40000)
+Stream::Stream() : sleep(0), median(0), shortMedian(0), lastUpdate(0)
 {
 	pBuffer = new DoubleBuffer<int>(15000 / PLAYER_CHUNK_MS);
 	pShortBuffer = new DoubleBuffer<int>(5000 / PLAYER_CHUNK_MS);
@@ -102,7 +102,7 @@ void Stream::getChunk(short* outputBuffer, double outputBufferDacTime, unsigned 
 		pShortBuffer->clear();
 		if (sleep < 0)
 		{
-			std::cerr << "Sleep: " << sleep << "\n";
+//			std::cerr << "Sleep: " << sleep << "\n";
 			sleep += PLAYER_CHUNK_MS;
 			if (sleep > -PLAYER_CHUNK_MS/2)
 				sleep = 0;
@@ -114,12 +114,9 @@ void Stream::getChunk(short* outputBuffer, double outputBufferDacTime, unsigned 
 				std::cerr << "Chunk " << i << ": " << chunks[i]->getAge() - bufferMs << "\n";
 			while (true)// (int i=0; i<(int)(round((float)sleep / (float)PLAYER_CHUNK_MS)) + 1; ++i)
 			{
-//				std::cerr << "Sleep: " << sleep << "\n";
 				int age = Chunk::getAge(getNextPlayerChunk(outputBuffer)) - bufferMs;
 				if (age < PLAYER_CHUNK_MS / 2)
 					break;
-//				std::cerr << getAge(getNextPlayerChunk(outputBuffer)) - bufferMs << "\t";
-//				usleep(10);
 			}
 			sleep = 0;
 		}
@@ -127,48 +124,44 @@ void Stream::getChunk(short* outputBuffer, double outputBufferDacTime, unsigned 
 	}
 	
 	int correction(0);
-	if (pBuffer->full() && (abs(median) <= PLAYER_CHUNK_MS))
+	if (pBuffer->full() && (abs(median) <= PLAYER_CHUNK_MS) && (abs(median) > 1))
 	{
-		if (abs(median) > 1)
-		{
-			correction = shortMedian;
-			pBuffer->clear();
-			pShortBuffer->clear();
-		}
+		correction = shortMedian;
+		pBuffer->clear();
+		pShortBuffer->clear();
 	} 
-	else if (pShortBuffer->full() && (abs(shortMedian) <= PLAYER_CHUNK_MS))
+	else if (pShortBuffer->full() && (abs(shortMedian) <= PLAYER_CHUNK_MS) && (abs(shortMedian) > 3))
 	{
-		if (abs(shortMedian) > 3)
-		{
-			correction = shortMedian;
-			pBuffer->clear();
-			pShortBuffer->clear();
-		}
+		correction = shortMedian;
+		pBuffer->clear();
+		pShortBuffer->clear();
 	}
 
 	int age = Chunk::getAge(getNextPlayerChunk(outputBuffer, correction)) - bufferMs;// + outputBufferDacTime*1000;
 	if (outputBufferDacTime < 1)
 		age += outputBufferDacTime*1000;
+
+	if (pShortBuffer->full() && (abs(shortMedian) > PLAYER_CHUNK_MS))
+	{
+		sleep = shortMedian;
+		std::cerr << "Sleep: " << sleep << "\n";
+	}
+	else if (abs(age) > 100)
+	{
+		sleep = age;
+		std::cerr << "Sleep: " << sleep << "\n";
+	}
+
+
 //	std::cerr << "Chunk: " << age << "\t" << outputBufferDacTime*1000 << "\n";
 	pBuffer->add(age);
 	pShortBuffer->add(age);
-
 	time_t now = time(NULL);
 	if (now != lastUpdate)
 	{
 		lastUpdate = now;
 		median = pBuffer->median();
 		shortMedian = pShortBuffer->median();
-		if (abs(age) > 100)
-			sleep = age;
-		else if (pShortBuffer->full() && (abs(shortMedian) > PLAYER_CHUNK_MS))
-			sleep = shortMedian;
-
-		if (sleep != 0)
-		{
-			std::cerr << "Sleep: " << sleep << "\n";
-		}
-//sleep = 0;
 		std::cerr << "Chunk: " << age << "\t" << shortMedian << "\t" << median << "\t" << pBuffer->size() << "\t" << outputBufferDacTime*1000 << "\n";
 	}
 }

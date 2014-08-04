@@ -25,8 +25,6 @@ public:
 private:
 	void sleepMs(int ms);
 
-	size_t currentSample;
-	int everyN;
 	int sleep;
 	std::deque<Chunk*> chunks;
 	std::mutex mtx;
