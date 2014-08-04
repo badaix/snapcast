@@ -26,7 +26,7 @@ bool Chunk::getNext(int16_t& _result)
 	if (isEndOfChunk())
 		return false;
 	_result = wireChunk->payload[idx++];
-	result = true;
+	return true;
 }
 
 
