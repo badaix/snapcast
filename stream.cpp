@@ -103,15 +103,38 @@ time_point_ms Stream::getNextPlayerChunk(short* outputBuffer, int correction)
 		chunk->idx = idx;
 */
 		int read = 0;
-		while (read < PLAYER_CHUNK_SIZE)
+		int toRead = PLAYER_CHUNK_SIZE + correction*PLAYER_CHUNK_MS_SIZE;
+//std::cout << "toRead: " << toRead << ", correction: " << correction << "\n";
+		short* buffer;
+		if (correction == 0)
+			buffer = outputBuffer;
+		else
+			buffer = (short*)malloc(toRead * sizeof(short));
+
+		while (read < toRead)
 		{
-			read += chunk->read(outputBuffer + read, PLAYER_CHUNK_SIZE - read);
+			read += chunk->read(buffer + read, toRead - read);
 			if (chunk->isEndOfChunk())
 			{
 				chunks.pop_front();
 				delete chunk;
 				chunk = getNextChunk();
 			}
+		}
+
+		if (correction != 0)
+		{
+			float factor = (float)toRead / (float)PLAYER_CHUNK_SIZE;
+std::cout << "correction: " << correction << ", factor: " << factor << "\n";
+			for (size_t n=0; n<PLAYER_CHUNK_SIZE/2; ++n)
+			{
+				size_t index = (int)(floor(n*factor));
+//std::cout << "2*n: " << 2*n << ", 2*index: " << 2*index << "\n";
+				*(outputBuffer + 2*n) = *(buffer + 2*index);
+				*(outputBuffer + 2*n+1) = *(buffer + 2*index + 1);
+			}
+//std::cout << "free\n";
+			free(buffer);
 		}
 	}
 
@@ -122,6 +145,10 @@ time_point_ms Stream::getNextPlayerChunk(short* outputBuffer, int correction)
 
 void Stream::getChunk(short* outputBuffer, double outputBufferDacTime, unsigned long framesPerBuffer)
 {
+//std::cout << "getChunk\n";
+//std::cout << Chunk::getAge(getNextPlayerChunk(outputBuffer, 1)) - bufferMs << "\n";// + outputBufferDacTime*1000;
+//return;
+
 	if (sleep != 0)
 	{
 		pBuffer->clear();
@@ -157,7 +184,7 @@ void Stream::getChunk(short* outputBuffer, double outputBufferDacTime, unsigned 
 	{
 		if (abs(median) > 1)
 		{
-			correction = -shortMedian;
+			correction = shortMedian;
 			pBuffer->clear();
 			pShortBuffer->clear();
 		}
@@ -166,18 +193,19 @@ void Stream::getChunk(short* outputBuffer, double outputBufferDacTime, unsigned 
 	{
 		if (abs(shortMedian) > 3)
 		{
-			correction = -shortMedian;
+			correction = shortMedian;
 			pBuffer->clear();
 			pShortBuffer->clear();
 		}
-	}	
+	}
 
+//correction = 2;
 	int age = Chunk::getAge(getNextPlayerChunk(outputBuffer, correction)) - bufferMs;// + outputBufferDacTime*1000;
 	if (outputBufferDacTime < 1)
 		age += outputBufferDacTime*1000;
+//	std::cerr << "Chunk: " << age << "\t" << outputBufferDacTime*1000 << "\n";
 	pBuffer->add(age);
 	pShortBuffer->add(age);
-//	std::cerr << "Chunk: " << age << "\t" << outputBufferDacTime*1000 << "\n";
 
 	time_t now = time(NULL);
 	if (now != lastUpdate)
