@@ -39,6 +39,8 @@ public:
 	int read(short* _outputBuffer, int _count);
 	bool isEndOfChunk();
 
+	bool getNext(int16_t& _result);
+
 	inline time_point_ms timePoint()
 	{
 		time_point_ms tp;

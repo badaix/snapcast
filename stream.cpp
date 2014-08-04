@@ -22,9 +22,9 @@ void Stream::setBufferLen(size_t bufferLenMs)
 
 void Stream::addChunk(Chunk* chunk)
 {
-	Chunk* c = new Chunk(*chunk);
+//	Chunk* c = new Chunk(*chunk);
 //	mutex.lock();
-	chunks.push_back(c);
+	chunks.push_back(chunk);
 //	mutex.unlock();
 	cv.notify_all();
 }
@@ -56,7 +56,7 @@ time_point_ms Stream::getNextPlayerChunk(short* outputBuffer, int correction)
 {
 	Chunk* chunk = getNextChunk();
 	time_point_ms tp = chunk->timePoint();
-/*
+
 	if (correction != 0)
 	{
 		float idx(chunk->idx);

@@ -1,9 +1,11 @@
 #include "chunk.h"
 #include <string.h>
+#include <iostream>
 
 
-Chunk::Chunk(WireChunk* _wireChunk) : idx(0), wireChunk(_wireChunk)
+Chunk::Chunk(WireChunk* _wireChunk) : idx(0)
 {
+	wireChunk = new WireChunk(*_wireChunk);
 }
 
 
@@ -16,6 +18,15 @@ Chunk::~Chunk()
 bool Chunk::isEndOfChunk()
 {
 	return idx >= WIRE_CHUNK_SIZE;
+}
+
+
+bool Chunk::getNext(int16_t& _result)
+{
+	if (isEndOfChunk())
+		return false;
+	_result = wireChunk->payload[idx++];
+	result = true;
 }
 
 
