@@ -5,7 +5,7 @@
 #include <sys/time.h>
 #include <chrono>
 
-
+/*
 typedef std::chrono::time_point<std::chrono::high_resolution_clock, std::chrono::milliseconds> time_point_ms;
 
 
@@ -44,7 +44,7 @@ inline static long getAge(const time_point_ms& time_point)
 {
 	return getAge<std::chrono::milliseconds>(time_point).count();
 }
- 
+*/ 
 
 
 static void addMs(timeval& tv, int ms)

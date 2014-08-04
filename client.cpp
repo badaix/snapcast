@@ -42,7 +42,7 @@ void player()
     while (1)
     {
         subscriber.recv(&update);
-		stream->addChunk((Chunk*)(update.data()));
+		stream->addChunk(new Chunk((WireChunk*)(update.data())));
     }
 }
 

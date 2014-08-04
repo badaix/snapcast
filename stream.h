@@ -23,7 +23,6 @@ public:
 	void setBufferLen(size_t bufferLenMs);
 
 private:
-	void updateChunkTime(Chunk* chunk);
 	void sleepMs(int ms);
 
 	size_t currentSample;

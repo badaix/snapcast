@@ -29,7 +29,7 @@ int main () {
     publisher.bind("tcp://0.0.0.0:123458");
 
     char c[2];
-    Chunk* chunk = new Chunk();
+    WireChunk* chunk = new WireChunk();
     timeval tvChunk;
     gettimeofday(&tvChunk, NULL);
 	long nextTick = getTickCount();
@@ -50,9 +50,8 @@ int main () {
 
         chunk->tv_sec = tvChunk.tv_sec;
         chunk->tv_usec = tvChunk.tv_usec;
-		chunk->idx = 0;
-        zmq::message_t message(sizeof(Chunk));
-        memcpy(message.data(), chunk, sizeof(Chunk));
+        zmq::message_t message(sizeof(WireChunk));
+        memcpy(message.data(), chunk, sizeof(WireChunk));
         publisher.send(message);
 
         addMs(tvChunk, WIRE_CHUNK_MS);
@@ -64,8 +63,8 @@ int main () {
 		}
 		else
 		{
-		        cin.sync();
-    		    gettimeofday(&tvChunk, NULL);
+			cin.sync();
+			gettimeofday(&tvChunk, NULL);
 			nextTick = getTickCount();
 		}
     }
