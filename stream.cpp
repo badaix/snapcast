@@ -56,7 +56,7 @@ time_point_ms Stream::getNextPlayerChunk(short* outputBuffer, int correction)
 {
 	Chunk* chunk = getNextChunk();
 	time_point_ms tp = chunk->timePoint();
-
+/*
 	if (correction != 0)
 	{
 		float idx(chunk->idx);
