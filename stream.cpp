@@ -56,86 +56,37 @@ time_point_ms Stream::getNextPlayerChunk(short* outputBuffer, int correction)
 {
 	Chunk* chunk = getNextChunk();
 	time_point_ms tp = chunk->timePoint();
-/*
+	int read = 0;
+	int toRead = PLAYER_CHUNK_SIZE + correction*PLAYER_CHUNK_MS_SIZE;
+	short* buffer;
+
+	if (correction != 0)
+		buffer = (short*)malloc(toRead * sizeof(short));
+	else
+		buffer = outputBuffer;
+
+	while (read < toRead)
+	{
+		read += chunk->read(buffer + read, toRead - read);
+		if (chunk->isEndOfChunk())
+		{
+			chunks.pop_front();
+			delete chunk;
+			chunk = getNextChunk();
+		}
+	}
+
 	if (correction != 0)
 	{
-		float idx(chunk->idx);
-		float factor = 2*(1.f - (float)(correction) / (float)(PLAYER_CHUNK_MS));
-		for (size_t n=0; n<PLAYER_CHUNK_SIZE; n+=2)
+		float factor = (float)toRead / (float)PLAYER_CHUNK_SIZE;
+		std::cout << "correction: " << correction << ", factor: " << factor << "\n";
+		for (size_t n=0; n<PLAYER_CHUNK_SIZE/2; ++n)
 		{
-			size_t index = (int)(floor(idx));
-			*(outputBuffer + n) = chunk->payload[index];
-			*(outputBuffer + n+1) = chunk->payload[index + 1];
-			idx += factor;
-			if (idx >= WIRE_CHUNK_SIZE)
-			{
-				chunks.pop_front();
-				delete chunk;
-				chunk = getNextChunk();
-				idx -= WIRE_CHUNK_SIZE;
-			}
+			size_t index = (int)(floor(n*factor));
+			*(outputBuffer + 2*n) = *(buffer + 2*index);
+			*(outputBuffer + 2*n+1) = *(buffer + 2*index + 1);
 		}
-		chunk->idx = idx;
-//		if (correction != 0)
-//			std::cerr << "Diff: " << diff_ms(getTimeval(chunk), tv) << "\t" << chunk->idx / PLAYER_CHUNK_MS_SIZE << "\n";
-	}
-	else
-*/	{
-/*		int idx(chunk->idx);
-		for (size_t n=0; n<PLAYER_CHUNK_SIZE; n+=2)
-		{
-			*(outputBuffer + n) = chunk->payload[idx];
-			*(outputBuffer + n+1) = chunk->payload[idx + 1];
-			idx += 2;
-			if (++currentSample > everyN)
-			{
-				idx += 2;
-				currentSample = 0;
-			}
-			if (idx >= WIRE_CHUNK_SIZE)
-			{
-				chunks.pop_front();
-				delete chunk;
-				chunk = getNextChunk();
-				idx -= WIRE_CHUNK_SIZE;
-			}
-		}
-		chunk->idx = idx;
-*/
-		int read = 0;
-		int toRead = PLAYER_CHUNK_SIZE + correction*PLAYER_CHUNK_MS_SIZE;
-//std::cout << "toRead: " << toRead << ", correction: " << correction << "\n";
-		short* buffer;
-		if (correction == 0)
-			buffer = outputBuffer;
-		else
-			buffer = (short*)malloc(toRead * sizeof(short));
-
-		while (read < toRead)
-		{
-			read += chunk->read(buffer + read, toRead - read);
-			if (chunk->isEndOfChunk())
-			{
-				chunks.pop_front();
-				delete chunk;
-				chunk = getNextChunk();
-			}
-		}
-
-		if (correction != 0)
-		{
-			float factor = (float)toRead / (float)PLAYER_CHUNK_SIZE;
-std::cout << "correction: " << correction << ", factor: " << factor << "\n";
-			for (size_t n=0; n<PLAYER_CHUNK_SIZE/2; ++n)
-			{
-				size_t index = (int)(floor(n*factor));
-//std::cout << "2*n: " << 2*n << ", 2*index: " << 2*index << "\n";
-				*(outputBuffer + 2*n) = *(buffer + 2*index);
-				*(outputBuffer + 2*n+1) = *(buffer + 2*index + 1);
-			}
-//std::cout << "free\n";
-			free(buffer);
-		}
+		free(buffer);
 	}
 
 	return tp;
@@ -145,17 +96,13 @@ std::cout << "correction: " << correction << ", factor: " << factor << "\n";
 
 void Stream::getChunk(short* outputBuffer, double outputBufferDacTime, unsigned long framesPerBuffer)
 {
-//std::cout << "getChunk\n";
-//std::cout << Chunk::getAge(getNextPlayerChunk(outputBuffer, 1)) - bufferMs << "\n";// + outputBufferDacTime*1000;
-//return;
-
 	if (sleep != 0)
 	{
 		pBuffer->clear();
 		pShortBuffer->clear();
 		if (sleep < 0)
 		{
-//			std::cerr << "Sleep: " << sleep << "\n";
+			std::cerr << "Sleep: " << sleep << "\n";
 			sleep += PLAYER_CHUNK_MS;
 			if (sleep > -PLAYER_CHUNK_MS/2)
 				sleep = 0;
@@ -199,7 +146,6 @@ void Stream::getChunk(short* outputBuffer, double outputBufferDacTime, unsigned 
 		}
 	}
 
-//correction = 2;
 	int age = Chunk::getAge(getNextPlayerChunk(outputBuffer, correction)) - bufferMs;// + outputBufferDacTime*1000;
 	if (outputBufferDacTime < 1)
 		age += outputBufferDacTime*1000;
