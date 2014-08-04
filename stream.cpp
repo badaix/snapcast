@@ -7,6 +7,7 @@ Stream::Stream() : sleep(0), median(0), shortMedian(0), lastUpdate(0)
 {
 	pBuffer = new DoubleBuffer<int>(15000 / PLAYER_CHUNK_MS);
 	pShortBuffer = new DoubleBuffer<int>(5000 / PLAYER_CHUNK_MS);
+	pMiniBuffer = new DoubleBuffer<int>(10);
 	pLock = new std::unique_lock<std::mutex>(mtx);
 	bufferMs = 500;
 }
@@ -99,6 +100,7 @@ void Stream::getChunk(short* outputBuffer, double outputBufferDacTime, unsigned 
 	if (sleep != 0)
 	{
 		pBuffer->clear();
+		pMiniBuffer->clear();
 		pShortBuffer->clear();
 		if (sleep < 0)
 		{
@@ -127,12 +129,14 @@ void Stream::getChunk(short* outputBuffer, double outputBufferDacTime, unsigned 
 	if (pBuffer->full() && (abs(median) <= PLAYER_CHUNK_MS) && (abs(median) > 1))
 	{
 		correction = shortMedian;
+		pMiniBuffer->clear();		
 		pBuffer->clear();
 		pShortBuffer->clear();
 	} 
 	else if (pShortBuffer->full() && (abs(shortMedian) <= PLAYER_CHUNK_MS) && (abs(shortMedian) > 3))
 	{
 		correction = shortMedian;
+		pMiniBuffer->clear();		
 		pBuffer->clear();
 		pShortBuffer->clear();
 	}
@@ -146,15 +150,16 @@ void Stream::getChunk(short* outputBuffer, double outputBufferDacTime, unsigned 
 		sleep = shortMedian;
 		std::cerr << "Sleep: " << sleep << "\n";
 	}
-	else if (abs(age) > 100)
+	else if (pMiniBuffer->full() && (abs(age) > 50) && (abs(pMiniBuffer->median()) > 50))
 	{
-		sleep = age;
+		sleep = pMiniBuffer->median();
 		std::cerr << "Sleep: " << sleep << "\n";
 	}
 
 
 //	std::cerr << "Chunk: " << age << "\t" << outputBufferDacTime*1000 << "\n";
 	pBuffer->add(age);
+	pMiniBuffer->add(age);
 	pShortBuffer->add(age);
 	time_t now = time(NULL);
 	if (now != lastUpdate)

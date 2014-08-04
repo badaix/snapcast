@@ -31,6 +31,7 @@ private:
 	std::mutex mutex;
 	std::unique_lock<std::mutex>* pLock;
 	std::condition_variable cv;
+	DoubleBuffer<int>* pMiniBuffer;
 	DoubleBuffer<int>* pBuffer;
 	DoubleBuffer<int>* pShortBuffer;
 
