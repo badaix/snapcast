@@ -3,12 +3,13 @@
 #include <string.h>
 #include <unistd.h>
 
+using namespace std;
+
 Stream::Stream() : sleep(0), median(0), shortMedian(0), lastUpdate(0)
 {
 	pBuffer = new DoubleBuffer<int>(15000 / PLAYER_CHUNK_MS);
 	pShortBuffer = new DoubleBuffer<int>(5000 / PLAYER_CHUNK_MS);
 	pMiniBuffer = new DoubleBuffer<int>(10);
-	pLock = new std::unique_lock<std::mutex>(mtx);
 	bufferMs = 500;
 }
 
@@ -25,22 +26,16 @@ void Stream::addChunk(Chunk* chunk)
 {
 //	Chunk* c = new Chunk(*chunk);
 //	mutex.lock();
-	chunks.push_back(chunk);
+	chunks.push(shared_ptr<Chunk>(chunk));
 //	mutex.unlock();
-	cv.notify_all();
 }
 
 
 
-Chunk* Stream::getNextChunk()
+shared_ptr<Chunk> Stream::getNextChunk()
 {
-	Chunk* chunk = NULL;
-	if (chunks.empty())
-		cv.wait(*pLock);
-
-//	mutex.lock();
-	chunk = chunks.front();
-//	mutex.unlock();
+	if (!chunk)
+		chunk = chunks.pop();
 	return chunk;
 }
 
@@ -55,7 +50,7 @@ void Stream::getSilentPlayerChunk(short* outputBuffer)
 
 time_point_ms Stream::getNextPlayerChunk(short* outputBuffer, int correction)
 {
-	Chunk* chunk = getNextChunk();
+	chunk = getNextChunk();
 	time_point_ms tp = chunk->timePoint();
 	int read = 0;
 	int toRead = PLAYER_CHUNK_SIZE + correction*PLAYER_CHUNK_MS_SIZE;
@@ -71,8 +66,7 @@ time_point_ms Stream::getNextPlayerChunk(short* outputBuffer, int correction)
 		read += chunk->read(buffer + read, toRead - read);
 		if (chunk->isEndOfChunk())
 		{
-			chunks.pop_front();
-			delete chunk;
+			chunk = NULL;
 			chunk = getNextChunk();
 		}
 	}
@@ -112,8 +106,8 @@ void Stream::getChunk(short* outputBuffer, double outputBufferDacTime, unsigned 
 		}
 		else
 		{
-			for (size_t i=0; i<chunks.size(); ++i)
-				std::cerr << "Chunk " << i << ": " << chunks[i]->getAge() - bufferMs << "\n";
+//			for (size_t i=0; i<chunks.size(); ++i)
+//				std::cerr << "Chunk " << i << ": " << chunks[i]->getAge() - bufferMs << "\n";
 			while (true)// (int i=0; i<(int)(round((float)sleep / (float)PLAYER_CHUNK_MS)) + 1; ++i)
 			{
 				int age = Chunk::getAge(getNextPlayerChunk(outputBuffer)) - bufferMs;

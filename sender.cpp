@@ -16,7 +16,7 @@
 #include "boost/date_time/posix_time/posix_time_types.hpp"
 
 const short multicast_port = 30001;
-const int max_message_count = 10;
+const int max_message_count = 100;
 
 class sender
 {
@@ -40,16 +40,28 @@ public:
 
   void handle_send_to(const boost::system::error_code& error)
   {
-    if (!error && message_count_ < max_message_count)
+    if (!error)
+    {
+      std::ostringstream os;
+      os << "Message " << message_count_++;
+      message_ = os.str();
+
+      socket_.async_send_to(
+          boost::asio::buffer(message_), endpoint_,
+          boost::bind(&sender::handle_send_to, this,
+            boost::asio::placeholders::error));
+		sleep
+    }
+/*    if (!error && message_count_ < max_message_count)
     {
       timer_.expires_from_now(boost::posix_time::seconds(1));
       timer_.async_wait(
           boost::bind(&sender::handle_timeout, this,
             boost::asio::placeholders::error));
     }
-  }
+*/  }
 
-  void handle_timeout(const boost::system::error_code& error)
+/*  void handle_timeout(const boost::system::error_code& error)
   {
     if (!error)
     {
@@ -63,7 +75,7 @@ public:
             boost::asio::placeholders::error));
     }
   }
-
+*/
 private:
   boost::asio::ip::udp::endpoint endpoint_;
   boost::asio::ip::udp::socket socket_;
