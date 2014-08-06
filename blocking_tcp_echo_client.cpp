@@ -68,6 +68,7 @@ int main(int argc, char* argv[])
 						break;
 
 					std::cout.write(buf.data(), len);
+					std::cout.flush();
 				}
 			}
 			catch (std::exception& e)
