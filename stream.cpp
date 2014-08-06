@@ -24,19 +24,7 @@ void Stream::setBufferLen(size_t bufferLenMs)
 
 void Stream::addChunk(Chunk* chunk)
 {
-//	Chunk* c = new Chunk(*chunk);
-//	mutex.lock();
 	chunks.push(shared_ptr<Chunk>(chunk));
-//	mutex.unlock();
-}
-
-
-
-shared_ptr<Chunk> Stream::getNextChunk()
-{
-	if (!chunk)
-		chunk = chunks.pop();
-	return chunk;
 }
 
 
@@ -50,7 +38,9 @@ void Stream::getSilentPlayerChunk(short* outputBuffer)
 
 time_point_ms Stream::getNextPlayerChunk(short* outputBuffer, int correction)
 {
-	chunk = getNextChunk();
+	if (!chunk)
+		chunk = chunks.pop();
+
 	time_point_ms tp = chunk->timePoint();
 	int read = 0;
 	int toRead = PLAYER_CHUNK_SIZE + correction*PLAYER_CHUNK_MS_SIZE;
@@ -65,10 +55,7 @@ time_point_ms Stream::getNextPlayerChunk(short* outputBuffer, int correction)
 	{
 		read += chunk->read(buffer + read, toRead - read);
 		if (chunk->isEndOfChunk())
-		{
-			chunk = NULL;
-			chunk = getNextChunk();
-		}
+			chunk = chunks.pop();
 	}
 
 	if (correction != 0)

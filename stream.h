@@ -18,13 +18,12 @@ class Stream
 public:
 	Stream();
 	void addChunk(Chunk* chunk);
-	std::shared_ptr<Chunk> getNextChunk();
-	time_point_ms getNextPlayerChunk(short* outputBuffer, int correction = 0);
-	void getSilentPlayerChunk(short* outputBuffer);
 	void getChunk(short* outputBuffer, double outputBufferDacTime, unsigned long framesPerBuffer);
 	void setBufferLen(size_t bufferLenMs);
 
 private:
+	time_point_ms getNextPlayerChunk(short* outputBuffer, int correction = 0);
+	void getSilentPlayerChunk(short* outputBuffer);
 	void sleepMs(int ms);
 
 	int sleep;
