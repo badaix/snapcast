@@ -133,7 +133,7 @@ int initAudio()
     outputParameters.sampleFormat = paInt16; /* 32 bit floating point output */
     outputParameters.suggestedLatency = Pa_GetDeviceInfo( outputParameters.device )->defaultHighOutputLatency;
     outputParameters.hostApiSpecificStreamInfo = NULL;
-
+std::cerr << "HighLatency: " << outputParameters.suggestedLatency << "\t LowLatency: " << Pa_GetDeviceInfo( outputParameters.device )->defaultLowOutputLatency << "\n";
     err = Pa_OpenStream(
               &paStream,
               NULL, /* no input */
