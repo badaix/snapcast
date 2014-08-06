@@ -75,14 +75,27 @@ time_point_ms Stream::getNextPlayerChunk(short* outputBuffer, int correction)
 }
 
 
+void Stream::updateBuffers(int age)
+{
+	pBuffer->add(age);
+	pMiniBuffer->add(age);
+	pShortBuffer->add(age);
+}
 
-void Stream::getChunk(short* outputBuffer, double outputBufferDacTime, unsigned long framesPerBuffer)
+
+void Stream::resetBuffers()
+{
+	pBuffer->clear();
+	pMiniBuffer->clear();
+	pShortBuffer->clear();
+}
+
+
+void Stream::getPlayerChunk(short* outputBuffer, double outputBufferDacTime, unsigned long framesPerBuffer)
 {
 	if (sleep != 0)
 	{
-		pBuffer->clear();
-		pMiniBuffer->clear();
-		pShortBuffer->clear();
+		resetBuffers();
 		if (sleep < 0)
 		{
 //			std::cerr << "Sleep: " << sleep << "\n";
@@ -107,20 +120,15 @@ void Stream::getChunk(short* outputBuffer, double outputBufferDacTime, unsigned 
 	}
 	
 	int correction(0);
-	if (pBuffer->full() && (abs(median) <= PLAYER_CHUNK_MS) && (abs(median) > 1))
+	if ((pBuffer->full() && (abs(median) <= PLAYER_CHUNK_MS) && (abs(median) > 1)) ||
+		(pShortBuffer->full() && (abs(shortMedian) <= PLAYER_CHUNK_MS) && (abs(shortMedian) > 3)))
 	{
 		correction = shortMedian;
-		pMiniBuffer->clear();		
-		pBuffer->clear();
-		pShortBuffer->clear();
+		resetBuffers();
 	} 
-	else if (pShortBuffer->full() && (abs(shortMedian) <= PLAYER_CHUNK_MS) && (abs(shortMedian) > 3))
-	{
-		correction = shortMedian;
-		pMiniBuffer->clear();		
-		pBuffer->clear();
-		pShortBuffer->clear();
-	}
+
+//if (time(NULL) != lastUpdate)
+//	correction = 2;
 
 	int age = Chunk::getAge(getNextPlayerChunk(outputBuffer, correction)) - bufferMs;// + outputBufferDacTime*1000;
 	if (outputBufferDacTime < 1)
@@ -139,9 +147,7 @@ void Stream::getChunk(short* outputBuffer, double outputBufferDacTime, unsigned 
 
 
 //	std::cerr << "Chunk: " << age << "\t" << outputBufferDacTime*1000 << "\n";
-	pBuffer->add(age);
-	pMiniBuffer->add(age);
-	pShortBuffer->add(age);
+	updateBuffers(age);
 	time_t now = time(NULL);
 	if (now != lastUpdate)
 	{
@@ -152,11 +158,5 @@ void Stream::getChunk(short* outputBuffer, double outputBufferDacTime, unsigned 
 	}
 }
 
-
-void Stream::sleepMs(int ms)
-{
-	if (ms > 0)
-		usleep(ms * 1000);
-}
 
 

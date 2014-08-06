@@ -90,7 +90,7 @@ static int patestCallback( const void *inputBuffer, void *outputBuffer,
     (void) statusFlags;
     (void) inputBuffer;
     
-	stream->getChunk(out, timeInfo->outputBufferDacTime, framesPerBuffer);
+	stream->getPlayerChunk(out, timeInfo->outputBufferDacTime, framesPerBuffer);
     return paContinue;
 }
 

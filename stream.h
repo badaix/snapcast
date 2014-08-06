@@ -18,20 +18,16 @@ class Stream
 public:
 	Stream();
 	void addChunk(Chunk* chunk);
-	void getChunk(short* outputBuffer, double outputBufferDacTime, unsigned long framesPerBuffer);
+	void getPlayerChunk(short* outputBuffer, double outputBufferDacTime, unsigned long framesPerBuffer);
 	void setBufferLen(size_t bufferLenMs);
 
 private:
 	time_point_ms getNextPlayerChunk(short* outputBuffer, int correction = 0);
 	void getSilentPlayerChunk(short* outputBuffer);
-	void sleepMs(int ms);
+	void updateBuffers(int age);
+	void resetBuffers();
 
 	int sleep;
-//	std::deque<Chunk*> chunks;
-//	std::mutex mtx;
-//	std::mutex mutex;
-//	std::unique_lock<std::mutex>* pLock;
-//	std::condition_variable cv;
 	Queue<std::shared_ptr<Chunk>> chunks;
 	DoubleBuffer<int>* pMiniBuffer;
 	DoubleBuffer<int>* pBuffer;
