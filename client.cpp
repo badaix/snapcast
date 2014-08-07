@@ -48,31 +48,25 @@ void player()
 cout << "connect\n";
 				tcp::socket s(io_service);
 				s.connect(*iterator);
-				boost::system::error_code error;
-
-					WireChunk* wireChunk = new WireChunk();
+				void* wireChunk = (void*)malloc(sizeof(WireChunk));
 				while (true)
 				{
 					size_t toRead = sizeof(WireChunk);
 					size_t len = 0;
 					do 
 					{
-						len += s.read_some(boost::asio::buffer(wireChunk + len, toRead), error);
+						len += s.read_some(boost::asio::buffer((char*)wireChunk + len, toRead));
 						toRead = sizeof(WireChunk) - len;
-						cout << "len: " << len << "\ttoRead: " << toRead << "\n";
-						if (error == boost::asio::error::eof)
-							break;
+//						cout << "len: " << len << "\ttoRead: " << toRead << "\n";
 					}
 					while (toRead > 0);
-
-					cout << "new chunk\n";
-					stream->addChunk(new Chunk(wireChunk));
+					stream->addChunk(new Chunk((WireChunk*)wireChunk));
 				}
 			}
 			catch (std::exception& e)
 			{
 				std::cerr << "Exception: " << e.what() << "\n";
-				usleep(100*1000);
+				usleep(500*1000);
 			}
 		}
 	}

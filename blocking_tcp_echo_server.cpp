@@ -65,7 +65,7 @@ public:
 				size_t written = 0;
 				do
 				{
-					written += boost::asio::write(*socket_, boost::asio::buffer(chunk.get() + written, sizeof(WireChunk) - written), error);
+					written += boost::asio::write(*socket_, boost::asio::buffer(chunk.get() + written, sizeof(WireChunk) - written));//, error);
 				}
 				while (written < sizeof(WireChunk));
 
