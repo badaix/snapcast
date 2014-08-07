@@ -42,7 +42,7 @@ int main () {
 		{
 			c[0] = cin.get();
 			c[1] = cin.get();
-	        chunk->payload[n] = (int)c[0] + ((int)c[1] * 256);
+	        chunk->payload[n] = (int)c[0] + ((int)c[1] << 8);
 		}
 
 //		if (!cin.good())
