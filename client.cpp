@@ -47,7 +47,6 @@ void player()
 			{
 				tcp::socket s(io_service);
 				s.connect(*iterator);
-				boost::array<char, 128> buf;
 				boost::system::error_code error;
 
 				while (true)
