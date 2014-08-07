@@ -45,17 +45,27 @@ void player()
 		{
 			try
 			{
+cout << "connect\n";
 				tcp::socket s(io_service);
 				s.connect(*iterator);
 				boost::system::error_code error;
 
+					WireChunk* wireChunk = new WireChunk();
 				while (true)
 				{
-					WireChunk* wireChunk = new WireChunk();
-					size_t len = s.read_some(boost::asio::buffer(wireChunk, sizeof(WireChunk)));
-					if (error == boost::asio::error::eof)
-						break;
+					size_t toRead = sizeof(WireChunk);
+					size_t len = 0;
+					do 
+					{
+						len += s.read_some(boost::asio::buffer(wireChunk + len, toRead), error);
+						toRead = sizeof(WireChunk) - len;
+						cout << "len: " << len << "\ttoRead: " << toRead << "\n";
+						if (error == boost::asio::error::eof)
+							break;
+					}
+					while (toRead > 0);
 
+					cout << "new chunk\n";
 					stream->addChunk(new Chunk(wireChunk));
 				}
 			}

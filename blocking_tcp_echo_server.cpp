@@ -62,7 +62,13 @@ public:
 			{
 				shared_ptr<WireChunk> chunk(chunks.pop());
 				boost::system::error_code error;
-				boost::asio::write(*socket_, boost::asio::buffer(chunk.get(), sizeof(WireChunk)), boost::asio::transfer_all(), error);
+				size_t written = 0;
+				do
+				{
+					written += boost::asio::write_some(*socket_, boost::asio::buffer(chunk.get() + written, sizeof(WireChunk) - written), error);
+				}
+				while (written < sizeof(WireChunk));
+
 				if (error == boost::asio::error::eof)
 					break; // Connection closed cleanly by peer.
 				else if (error)
