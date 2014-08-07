@@ -15,12 +15,14 @@
 #include <algorithm>
 #include <thread> 
 #include <portaudio.h>
+#include <boost/asio.hpp>
 
 #include "chunk.h"
 #include "utils.h"
 #include "stream.h"
 #include "zhelpers.hpp"
 
+using boost::asio::ip::tcp;
 using namespace std;
 
 
@@ -32,18 +34,43 @@ Stream* stream;
 
 void player() 
 {
-    zmq::context_t context (1);
-    zmq::socket_t subscriber (context, ZMQ_SUB);
-    subscriber.connect("tcp://192.168.0.2:123458");
+	try
+	{
+		boost::asio::io_service io_service;
+		tcp::resolver resolver(io_service);
+		tcp::resolver::query query(tcp::v4(), "192.168.0.2", "98765");
+		tcp::resolver::iterator iterator = resolver.resolve(query);
 
-    const char* filter = "";
-    subscriber.setsockopt(ZMQ_SUBSCRIBE, filter, strlen(filter));
-    zmq::message_t update;
-    while (1)
-    {
-        subscriber.recv(&update);
-		stream->addChunk(new Chunk((WireChunk*)(update.data())));
-    }
+		while (true)
+		{
+			try
+			{
+				tcp::socket s(io_service);
+				s.connect(*iterator);
+				boost::array<char, 128> buf;
+				boost::system::error_code error;
+
+				while (true)
+				{
+					WireChunk* wireChunk = new WireChunk();
+					size_t len = s.read_some(boost::asio::buffer(wireChunk, sizeof(WireChunk)));
+					if (error == boost::asio::error::eof)
+						break;
+
+					stream->addChunk(new Chunk(wireChunk));
+				}
+			}
+			catch (std::exception& e)
+			{
+				std::cerr << "Exception: " << e.what() << "\n";
+				usleep(100*1000);
+			}
+		}
+	}
+	catch (std::exception& e)
+	{
+		std::cerr << "Exception: " << e.what() << "\n";
+	}
 }
 
 

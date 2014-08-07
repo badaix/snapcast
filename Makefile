@@ -1,9 +1,9 @@
 VERSION = 0.01
 CC      = /usr/bin/g++
 CFLAGS  = -std=gnu++0x -Wall -Wno-unused-function -g -O3 -D_REENTRANT -DVERSION=\"$(VERSION)\"
-LDFLAGS = -lrt -lzmq -lpthread -lportaudio
+LDFLAGS = -lrt -lzmq -lpthread -lportaudio -lboost_system
 
-OBJ_SERVER = server.o
+OBJ_SERVER = blocking_tcp_echo_server.o
 BIN_SERVER = server
 OBJ_CLIENT = client.o stream.o chunk.o
 BIN_CLIENT = client
