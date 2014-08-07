@@ -5,7 +5,6 @@
 //
 //  Olivier Chamoux <olivier.chamoux@fr.thalesgroup.com>
 //
-#include <zmq.hpp>
 #include <iostream>
 #include <sstream>
 #include <sys/time.h>
@@ -20,7 +19,6 @@
 #include "chunk.h"
 #include "utils.h"
 #include "stream.h"
-#include "zhelpers.hpp"
 
 using boost::asio::ip::tcp;
 using namespace std;
@@ -78,36 +76,12 @@ cout << "connect\n";
 
 
 
-void control(Stream* stream)
-{
-    zmq::context_t context(1);
-    zmq::socket_t worker (context, ZMQ_REQ);
-    srand (time(NULL));
-    //  We use a string identity for ease here
-	string macAddress = getMacAddress();
-    worker.setsockopt(ZMQ_IDENTITY, macAddress.c_str(), macAddress.length());
-    worker.connect("tcp://192.168.0.2:123459");
-
-    //  Tell the router we're ready for work
-    s_send (worker, "ready");
-    while (1) {
-        std::string cmd = s_recv (worker);
-		vector<std::string> splitCmd = split(cmd);
-		if (splitCmd.size() > 1)
-		{
-			if (splitCmd[0] == "buffer")
-				stream->setBufferLen(atoi(splitCmd[1].c_str()));
-		}
-		s_send(worker, "ACK " + cmd);
-    }
-}
-
 
 /* This routine will be called by the PortAudio engine when audio is needed.
 ** It may called at interrupt level on some machines so don't do anything
 ** that could mess up the system like calling malloc() or free().
 */
-static int patestCallback( const void *inputBuffer, void *outputBuffer,
+static int paStreamCallback( const void *inputBuffer, void *outputBuffer,
                             unsigned long framesPerBuffer,
                             const PaStreamCallbackTimeInfo* timeInfo,
                             PaStreamCallbackFlags statusFlags,
@@ -171,7 +145,7 @@ std::cerr << "HighLatency: " << outputParameters.suggestedLatency << "\t LowLate
               SAMPLE_RATE,
               FRAMES_PER_BUFFER,
               paClipOff,      /* we won't output out of range samples so don't bother clipping them */
-              patestCallback,
+              paStreamCallback,
               stream );
     if( err != paNoError ) goto error;
 
@@ -231,8 +205,6 @@ int main (int argc, char *argv[])
 		}
 	}
 
-	std::thread controlThread(control, stream);
-//	controlThread.join();
 	playerThread.join();
 
     return 0;
