@@ -15,6 +15,7 @@
 #include <boost/asio.hpp>
 #include <boost/thread/thread.hpp>
 #include <chrono>
+#include <vector>
 #include <ctime>   // localtime
 #include <sstream> // stringstream
 #include <iomanip>
@@ -61,18 +62,12 @@ public:
 			for (;;)
 			{
 				shared_ptr<WireChunk> chunk(chunks.pop());
-				boost::system::error_code error;
 				size_t written = 0;
 				do
 				{
 					written += boost::asio::write(*socket_, boost::asio::buffer(chunk.get() + written, sizeof(WireChunk) - written));//, error);
 				}
 				while (written < sizeof(WireChunk));
-
-				if (error == boost::asio::error::eof)
-					break; // Connection closed cleanly by peer.
-				else if (error)
-					throw boost::system::system_error(error); // Some other error.
 			}
 		}
 		catch (std::exception& e)
@@ -102,7 +97,7 @@ private:
 class Server
 {
 public:
-	Server(unsigned short port) : session(NULL), port_(port)
+	Server(unsigned short port) : port_(port)
 	{
 	}
 
@@ -114,15 +109,19 @@ public:
 			socket_ptr sock(new tcp::socket(io_service_));
 			a.accept(*sock);
 			cout << "New connection: " << sock->remote_endpoint().address().to_string() << "\n";
-			session = new Session(sock);
+			Session* session = new Session(sock);
 			session->start();
+			sessions.push_back(session);
 		}
 	}
 	
 	void send(shared_ptr<WireChunk> chunk)
-	{
-		if (session != 0)
-			session->send(chunk);
+	{	
+		for (size_t n=0; n<sessions.size(); ++n)
+		{
+			if (sessions[n] != 0)
+				sessions[n]->send(chunk);
+		}
 	}
 
 	void start()
@@ -136,7 +135,7 @@ public:
 	}
 
 private:
-	Session* session;
+	vector<Session*> sessions;
 	boost::asio::io_service io_service_;
 	unsigned short port_;
 	thread* acceptThread;
