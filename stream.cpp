@@ -154,7 +154,7 @@ void Stream::getPlayerChunk(short* outputBuffer, double outputBufferDacTime, uns
 		lastUpdate = now;
 		median = pBuffer->median();
 		shortMedian = pShortBuffer->median();
-		std::cerr << "Chunk: " << age << "\t" << shortMedian << "\t" << median << "\t" << pBuffer->size() << "\t" << outputBufferDacTime*1000 << "\n";
+		std::cerr << "Chunk: " << age << "\t" << pMiniBuffer->median() << "\t" << shortMedian << "\t" << median << "\t" << pBuffer->size() << "\t" << outputBufferDacTime*1000 << "\n";
 	}
 }
 
