@@ -22,8 +22,8 @@ public:
 	void setBufferLen(size_t bufferLenMs);
 
 private:
-	time_point_ms getNextPlayerChunk(short* outputBuffer, int correction = 0);
-	void getSilentPlayerChunk(short* outputBuffer);
+	time_point_ms getNextPlayerChunk(short* outputBuffer, unsigned long framesPerBuffer, int correction = 0);
+	void getSilentPlayerChunk(short* outputBuffer, unsigned long framesPerBuffer);
 	void updateBuffers(int age);
 	void resetBuffers();
 

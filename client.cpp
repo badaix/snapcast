@@ -143,7 +143,7 @@ std::cerr << "HighLatency: " << outputParameters.suggestedLatency << "\t LowLate
               NULL, /* no input */
               &outputParameters,
               SAMPLE_RATE,
-              FRAMES_PER_BUFFER,
+              paFramesPerBufferUnspecified, //FRAMES_PER_BUFFER,
               paClipOff,      /* we won't output out of range samples so don't bother clipping them */
               paStreamCallback,
               stream );

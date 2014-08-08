@@ -29,21 +29,21 @@ void Stream::addChunk(Chunk* chunk)
 
 
 
-void Stream::getSilentPlayerChunk(short* outputBuffer)
+void Stream::getSilentPlayerChunk(short* outputBuffer, unsigned long framesPerBuffer)
 {
-	memset(outputBuffer, 0, sizeof(short)*PLAYER_CHUNK_SIZE);
+	memset(outputBuffer, 0, sizeof(short)*framesPerBuffer * CHANNELS);
 }
 
 
 
-time_point_ms Stream::getNextPlayerChunk(short* outputBuffer, int correction)
+time_point_ms Stream::getNextPlayerChunk(short* outputBuffer, unsigned long framesPerBuffer, int correction)
 {
 	if (!chunk)
 		chunk = chunks.pop();
 
 	time_point_ms tp = chunk->timePoint();
 	int read = 0;
-	int toRead = PLAYER_CHUNK_SIZE + correction*PLAYER_CHUNK_MS_SIZE;
+	int toRead = framesPerBuffer*CHANNELS + correction*PLAYER_CHUNK_MS_SIZE;
 	short* buffer;
 
 	if (correction != 0)
@@ -60,9 +60,9 @@ time_point_ms Stream::getNextPlayerChunk(short* outputBuffer, int correction)
 
 	if (correction != 0)
 	{
-		float factor = (float)toRead / (float)PLAYER_CHUNK_SIZE;
+		float factor = (float)toRead / (float)(framesPerBuffer*CHANNELS);
 		std::cout << "correction: " << correction << ", factor: " << factor << "\n";
-		for (size_t n=0; n<PLAYER_CHUNK_SIZE/2; ++n)
+		for (size_t n=0; n<framesPerBuffer; ++n)
 		{
 			size_t index = (int)(floor(n*factor));
 			*(outputBuffer + 2*n) = *(buffer + 2*index);
@@ -93,6 +93,7 @@ void Stream::resetBuffers()
 
 void Stream::getPlayerChunk(short* outputBuffer, double outputBufferDacTime, unsigned long framesPerBuffer)
 {
+//cout << "framesPerBuffer: " << framesPerBuffer << "\t";
 	if (sleep != 0)
 	{
 		resetBuffers();
@@ -102,7 +103,7 @@ void Stream::getPlayerChunk(short* outputBuffer, double outputBufferDacTime, uns
 			sleep += PLAYER_CHUNK_MS;
 			if (sleep > -PLAYER_CHUNK_MS/2)
 				sleep = 0;
-			getSilentPlayerChunk(outputBuffer);
+			getSilentPlayerChunk(outputBuffer, framesPerBuffer);
 		}
 		else
 		{
@@ -110,7 +111,7 @@ void Stream::getPlayerChunk(short* outputBuffer, double outputBufferDacTime, uns
 //				std::cerr << "Chunk " << i << ": " << chunks[i]->getAge() - bufferMs << "\n";
 			while (true)// (int i=0; i<(int)(round((float)sleep / (float)PLAYER_CHUNK_MS)) + 1; ++i)
 			{
-				int age = Chunk::getAge(getNextPlayerChunk(outputBuffer)) - bufferMs;
+				int age = Chunk::getAge(getNextPlayerChunk(outputBuffer, framesPerBuffer)) - bufferMs;
 				if (age < PLAYER_CHUNK_MS / 2)
 					break;
 			}
@@ -121,18 +122,20 @@ void Stream::getPlayerChunk(short* outputBuffer, double outputBufferDacTime, uns
 	
 	int correction(0);
 	if ((pBuffer->full() && (abs(median) <= PLAYER_CHUNK_MS) && (abs(median) > 1)) ||
-		(pShortBuffer->full() && (abs(shortMedian) <= PLAYER_CHUNK_MS) && (abs(shortMedian) > 3)))
+		(pShortBuffer->full() && (abs(shortMedian) <= PLAYER_CHUNK_MS) && (abs(shortMedian) > 10)))
 	{
 		correction = shortMedian;
 		resetBuffers();
 	} 
-
+correction = 0;
 //if (time(NULL) != lastUpdate)
 //	correction = 2;
 
-	int age = Chunk::getAge(getNextPlayerChunk(outputBuffer, correction)) - bufferMs;// + outputBufferDacTime*1000;
+	int age = Chunk::getAge(getNextPlayerChunk(outputBuffer, framesPerBuffer, correction)) - bufferMs;// + outputBufferDacTime*1000;
+//	cout << age << "\t";
 	if (outputBufferDacTime < 1)
 		age += outputBufferDacTime*1000;
+//	cout << age << "\t" << outputBufferDacTime*1000 << "\n";
 
 	if (pShortBuffer->full() && (abs(shortMedian) > PLAYER_CHUNK_MS))
 	{
