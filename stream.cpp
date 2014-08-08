@@ -7,7 +7,7 @@ using namespace std;
 
 Stream::Stream() : sleep(0), median(0), shortMedian(0), lastUpdate(0)
 {
-	pBuffer = new DoubleBuffer<int>(15000 / PLAYER_CHUNK_MS);
+	pBuffer = new DoubleBuffer<int>(30000 / PLAYER_CHUNK_MS);
 	pShortBuffer = new DoubleBuffer<int>(5000 / PLAYER_CHUNK_MS);
 	pMiniBuffer = new DoubleBuffer<int>(10);
 	bufferMs = 500;
@@ -128,9 +128,9 @@ void Stream::getPlayerChunk(short* outputBuffer, double outputBufferDacTime, uns
 	
 	int correction(0);
 	if ((pBuffer->full() && (abs(median) <= msBuffer) && (abs(median) > 1)) ||
-		(pShortBuffer->full() && (abs(shortMedian) <= msBuffer) && (abs(shortMedian) > max(7, msBuffer))))
+		(pShortBuffer->full() && (abs(shortMedian) <= msBuffer) && (abs(shortMedian) > max(5, msBuffer))))
 	{
-		correction = shortMedian;
+		correction = median;
 		resetBuffers();
 	} 
 //correction = 0;
@@ -143,7 +143,7 @@ void Stream::getPlayerChunk(short* outputBuffer, double outputBufferDacTime, uns
 		age += outputBufferDacTime*1000;
 //	cout << age << "\t" << outputBufferDacTime*1000 << "\n";
 
-	if (pShortBuffer->full() && (abs(shortMedian) > max(15, msBuffer)))
+	if (pShortBuffer->full() && (abs(shortMedian) > max(10, msBuffer)))
 	{
 		sleep = shortMedian;
 		std::cerr << "Sleep: " << sleep << "\n";
