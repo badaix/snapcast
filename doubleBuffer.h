@@ -28,6 +28,16 @@ public:
 		return tmpBuffer[tmpBuffer.size() / 2];
 	}
 
+	T mean() const
+	{
+		if (buffer.empty())
+			return 0;
+		double mean = 0.;
+		for (size_t n=0; n<buffer.size(); ++n)
+			mean += (float)buffer[n] / (float)buffer.size();
+		return (T)mean;
+	}
+
 	inline bool full() const
 	{
 		return (buffer.size() == bufferSize);
