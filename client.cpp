@@ -87,7 +87,6 @@ static int paStreamCallback( const void *inputBuffer, void *outputBuffer,
                             PaStreamCallbackFlags statusFlags,
                             void *userData )
 {
-cout << "paStreamCallback: " << timeInfo->currentTime << "\n";
     Stream* stream = (Stream*)userData;
     short* out = (short*)outputBuffer;
 
