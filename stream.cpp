@@ -161,8 +161,8 @@ void Stream::getPlayerChunk(short* outputBuffer, double outputBufferDacTime, uns
 	if (outputBufferDacTime < 1)
 		age += outputBufferDacTime*1000;
 
-	if (pCardBuffer->full())
-		age += pCardBuffer->percentil(90);
+//	if (pCardBuffer->full())
+		age += cardBuffer;
 
 	cout << age << "\t" << msBuffer << "\t" << ticks << "\tcardBuffer: " << cardBuffer << "\n";
 //	cout << age << "\t" << outputBufferDacTime*1000 << "\n";

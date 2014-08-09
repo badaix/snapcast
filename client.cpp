@@ -87,6 +87,7 @@ static int paStreamCallback( const void *inputBuffer, void *outputBuffer,
                             PaStreamCallbackFlags statusFlags,
                             void *userData )
 {
+cout << "paStreamCallback: " << timeInfo->currentTime << "\n";
     Stream* stream = (Stream*)userData;
     short* out = (short*)outputBuffer;
 
@@ -149,7 +150,9 @@ std::cerr << "HighLatency: " << outputParameters.suggestedLatency << "\t LowLate
               stream );
     if( err != paNoError ) goto error;
 
+
     err = Pa_StartStream( paStream );
+	cout << "Latency: " << Pa_GetStreamInfo(paStream)->outputLatency << "\n";
     if( err != paNoError ) goto error;
 
 //    err = Pa_StopStream( paStream );
