@@ -101,6 +101,20 @@ void Stream::getPlayerChunk(short* outputBuffer, double outputBufferDacTime, uns
 {
 //cout << "framesPerBuffer: " << framesPerBuffer << "\tms: " << framesPerBuffer*2 / PLAYER_CHUNK_MS_SIZE << "\t" << PLAYER_CHUNK_SIZE << "\n";
 	int msBuffer = floor(framesPerBuffer*2 / PLAYER_CHUNK_MS_SIZE);
+
+	int ticks = 0;
+	long currentTick = getTickCount();
+	if (lastTick == 0)
+		lastTick = currentTick;
+	ticks = currentTick - lastTick;
+	lastTick = currentTick;
+
+	int cardBuffer = 0;
+	if (ticks > 1)
+		pCardBuffer->add(ticks);
+	if (pCardBuffer->full())
+		cardBuffer = pCardBuffer->percentil(90);
+		
 	int correction = 0;
 	if (sleep != 0)
 	{
@@ -143,20 +157,14 @@ void Stream::getPlayerChunk(short* outputBuffer, double outputBufferDacTime, uns
 
 	int age = Chunk::getAge(getNextPlayerChunk(outputBuffer, framesPerBuffer, correction)) - bufferMs;// + outputBufferDacTime*1000;
 
-	long currentTick = getTickCount();
-	if (lastTick == 0)
-		lastTick = currentTick;
-
-	if (currentTick - lastTick > 1)
-		pCardBuffer->add(currentTick - lastTick);
-	cout << age << "\t" << msBuffer << "\t" << currentTick - lastTick << "\tcardBuffer: " << pCardBuffer->percentil(90) << "\n";
-	lastTick = currentTick;
 
 	if (outputBufferDacTime < 1)
 		age += outputBufferDacTime*1000;
 
 	if (pCardBuffer->full())
 		age += pCardBuffer->percentil(90);
+
+	cout << age << "\t" << msBuffer << "\t" << ticks << "\tcardBuffer: " << cardBuffer << "\n";
 //	cout << age << "\t" << outputBufferDacTime*1000 << "\n";
 
 
