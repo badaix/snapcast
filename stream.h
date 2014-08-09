@@ -27,7 +27,8 @@ private:
 	void updateBuffers(int age);
 	void resetBuffers();
 
-	int sleep;
+	float sleep;
+//	int correction;
 	Queue<std::shared_ptr<Chunk>> chunks;
 	DoubleBuffer<int>* pMiniBuffer;
 	DoubleBuffer<int>* pBuffer;
