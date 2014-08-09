@@ -27,6 +27,7 @@ private:
 	void updateBuffers(int age);
 	void resetBuffers();
 
+	long lastTick;
 	float sleep;
 //	int correction;
 	Queue<std::shared_ptr<Chunk>> chunks;

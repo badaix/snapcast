@@ -141,9 +141,11 @@ void Stream::getPlayerChunk(short* outputBuffer, double outputBufferDacTime, uns
 
 
 	int age = Chunk::getAge(getNextPlayerChunk(outputBuffer, framesPerBuffer, correction)) - bufferMs;// + outputBufferDacTime*1000;
-//	cout << age << "\t";
+	long currentTick = getTickCount();
+	cout << age << "\t" << msBuffer << "\t" << currentTick - lastTick << "\n";
 	if (outputBufferDacTime < 1)
 		age += outputBufferDacTime*1000;
+	lastTick = currentTick;
 //	cout << age << "\t" << outputBufferDacTime*1000 << "\n";
 
 
