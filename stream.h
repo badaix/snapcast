@@ -29,8 +29,10 @@ private:
 
 	long lastTick;
 	float sleep;
+	
 //	int correction;
 	Queue<std::shared_ptr<Chunk>> chunks;
+	DoubleBuffer<int>* pCardBuffer;
 	DoubleBuffer<int>* pMiniBuffer;
 	DoubleBuffer<int>* pBuffer;
 	DoubleBuffer<int>* pShortBuffer;

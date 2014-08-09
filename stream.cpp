@@ -10,6 +10,7 @@ Stream::Stream() : sleep(0), median(0), shortMedian(0), lastUpdate(0)
 	pBuffer = new DoubleBuffer<int>(1000);
 	pShortBuffer = new DoubleBuffer<int>(200);
 	pMiniBuffer = new DoubleBuffer<int>(10);
+	pCardBuffer = new DoubleBuffer<int>(50);
 	bufferMs = 500;
 }
 
@@ -141,11 +142,21 @@ void Stream::getPlayerChunk(short* outputBuffer, double outputBufferDacTime, uns
 
 
 	int age = Chunk::getAge(getNextPlayerChunk(outputBuffer, framesPerBuffer, correction)) - bufferMs;// + outputBufferDacTime*1000;
+
 	long currentTick = getTickCount();
-	cout << age << "\t" << msBuffer << "\t" << currentTick - lastTick << "\n";
+	if (lastTick == 0)
+		lastTick = currentTick;
+
+	if (currentTick - lastTick > 1)
+		pCardBuffer->add(currentTick - lastTick);
+	cout << age << "\t" << msBuffer << "\t" << currentTick - lastTick << "\tcardBuffer: " << pCardBuffer->percentil(90) << "\n";
+	lastTick = currentTick;
+
 	if (outputBufferDacTime < 1)
 		age += outputBufferDacTime*1000;
-	lastTick = currentTick;
+
+	if (pCardBuffer->full())
+		age += pCardBuffer->percentil(90);
 //	cout << age << "\t" << outputBufferDacTime*1000 << "\n";
 
 

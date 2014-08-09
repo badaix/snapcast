@@ -38,6 +38,15 @@ public:
 		return (T)mean;
 	}
 
+	T percentil(unsigned int percentil) const
+	{
+		if (buffer.empty())
+			return 0;
+		std::deque<T> tmpBuffer(buffer.begin(), buffer.end());
+		std::sort(tmpBuffer.begin(), tmpBuffer.end());
+		return tmpBuffer[(size_t)(tmpBuffer.size() * ((float)percentil / (float)100))];
+	}
+
 	inline bool full() const
 	{
 		return (buffer.size() == bufferSize);
