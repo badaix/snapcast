@@ -101,11 +101,11 @@ static int paStreamCallback( const void *inputBuffer, void *outputBuffer,
 
 
 
-int initAudio()
+PaStream* initAudio(PaError& err)
 {
     PaStreamParameters outputParameters;
-    PaStream *paStream;
-    PaError err;
+    PaStream *paStream = NULL;
+//    PaError err;
     
     printf("PortAudio Test: output sine wave. SR = %d, BufSize = %d\n", SAMPLE_RATE, FRAMES_PER_BUFFER);
     
@@ -163,14 +163,14 @@ int initAudio()
 
 //    Pa_Terminate();
 //    printf("Test finished.\n");
-    
-    return err;
+	    
+    return paStream;
 error:
     Pa_Terminate();
     fprintf( stderr, "An error occured while using the portaudio stream\n" );
     fprintf( stderr, "Error number: %d\n", err );
     fprintf( stderr, "Error message: %s\n", Pa_GetErrorText( err ) );
-    return err;
+    return paStream;
 }
 
 
@@ -187,7 +187,10 @@ int main (int argc, char *argv[])
 
 	stream = new Stream();
 	stream->setBufferLen(bufferMs);
-	initAudio();
+	PaError paError;
+	PaStream* paStream = initAudio(paError);
+	stream->setLatency(1000*Pa_GetStreamInfo(paStream)->outputLatency);
+
 	std::thread playerThread(player);
 	
 	std::string cmd;

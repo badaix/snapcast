@@ -5,7 +5,7 @@
 
 using namespace std;
 
-Stream::Stream() : sleep(0), median(0), shortMedian(0), lastUpdate(0)
+Stream::Stream() : sleep(0), median(0), shortMedian(0), lastUpdate(0), latencyMs(0)
 {
 	pBuffer = new DoubleBuffer<int>(1000);
 	pShortBuffer = new DoubleBuffer<int>(200);
@@ -35,6 +35,11 @@ void Stream::getSilentPlayerChunk(short* outputBuffer, unsigned long framesPerBu
 	memset(outputBuffer, 0, sizeof(short)*framesPerBuffer * CHANNELS);
 }
 
+
+void Stream::setLatency(size_t latency)
+{
+	latencyMs = latency;
+}
 
 
 time_point_ms Stream::getNextPlayerChunk(short* outputBuffer, unsigned long framesPerBuffer, int correction)
@@ -134,7 +139,7 @@ void Stream::getPlayerChunk(short* outputBuffer, double outputBufferDacTime, uns
 //				std::cerr << "Chunk " << i << ": " << chunks[i]->getAge() - bufferMs << "\n";
 			while (true)// (int i=0; i<(int)(round((float)sleep / (float)PLAYER_CHUNK_MS)) + 1; ++i)
 			{
-				int age = Chunk::getAge(getNextPlayerChunk(outputBuffer, framesPerBuffer)) - bufferMs;
+				int age = Chunk::getAge(getNextPlayerChunk(outputBuffer, framesPerBuffer)) - bufferMs + latencyMs;
 		age += 4*cardBuffer;
 				if (age < msBuffer / 2)
 					break;
@@ -156,7 +161,7 @@ void Stream::getPlayerChunk(short* outputBuffer, double outputBufferDacTime, uns
 	
 
 
-	int age = Chunk::getAge(getNextPlayerChunk(outputBuffer, framesPerBuffer, correction)) - bufferMs;// + outputBufferDacTime*1000;
+	int age = Chunk::getAge(getNextPlayerChunk(outputBuffer, framesPerBuffer, correction)) - bufferMs - latencyMs;// + outputBufferDacTime*1000;
 
 
 	if (outputBufferDacTime < 1)
@@ -165,7 +170,7 @@ void Stream::getPlayerChunk(short* outputBuffer, double outputBufferDacTime, uns
 //	if (pCardBuffer->full())
 //		age += 4*cardBuffer;
 
-	cout << age << "\t" << framesPerBuffer << "\t" << msBuffer << "\t" << ticks << "\t" << cardBuffer << "\t" << outputBufferDacTime*1000 << "\n";
+//	cout << age << "\t" << framesPerBuffer << "\t" << msBuffer << "\t" << ticks << "\t" << cardBuffer << "\t" << outputBufferDacTime*1000 << "\n";
 
 
 	if (sleep == 0)

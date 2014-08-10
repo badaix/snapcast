@@ -20,6 +20,7 @@ public:
 	void addChunk(Chunk* chunk);
 	void getPlayerChunk(short* outputBuffer, double outputBufferDacTime, unsigned long framesPerBuffer);
 	void setBufferLen(size_t bufferLenMs);
+	void setLatency(size_t latency);
 
 private:
 	time_point_ms getNextPlayerChunk(short* outputBuffer, unsigned long framesPerBuffer, int correction = 0);
@@ -42,6 +43,7 @@ private:
 	int shortMedian;
 	time_t lastUpdate;
 	int bufferMs;
+	int latencyMs;
 };
 
 
