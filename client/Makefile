@@ -4,7 +4,7 @@ CFLAGS  = -std=gnu++0x -Wall -Wno-unused-function -g -O3 -D_REENTRANT -DVERSION=
 LDFLAGS = -lrt -lpthread -lportaudio -lboost_system
 
 OBJ = snapClient.o stream.o ../common/chunk.o
-BIN = SnapClient
+BIN = snapclient
 
 all:	client
 
