@@ -8,9 +8,9 @@
 #include <vector>
 #include <memory>
 #include "doubleBuffer.h"
-#include "chunk.h"
-#include "timeUtils.h"
-#include "queue.h"
+#include "common/chunk.h"
+#include "common/timeUtils.h"
+#include "common/queue.h"
 
 
 class Stream

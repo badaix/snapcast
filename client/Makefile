@@ -1,25 +1,18 @@
 VERSION = 0.01
 CC      = /usr/bin/g++
-CFLAGS  = -std=gnu++0x -Wall -Wno-unused-function -g -O3 -D_REENTRANT -DVERSION=\"$(VERSION)\"
+CFLAGS  = -std=gnu++0x -Wall -Wno-unused-function -g -O3 -D_REENTRANT -DVERSION=\"$(VERSION)\" -I..
 LDFLAGS = -lrt -lpthread -lportaudio -lboost_system
 
-OBJ_SERVER = blocking_tcp_echo_server.o
-BIN_SERVER = server
-OBJ_CLIENT = client.o stream.o chunk.o
-BIN_CLIENT = client
-OBJ = $(OBJ_SERVER) $(OBJ_CLIENT)
+OBJ = snapClient.o stream.o ../common/chunk.o
+BIN = SnapClient
 
-all:	server client
-
-server: $(OBJ)
-	$(CC) $(CFLAGS) -o $(BIN_SERVER) $(OBJ_SERVER) $(LDFLAGS)
+all:	client
 
 client: $(OBJ)
-	$(CC) $(CFLAGS) -o $(BIN_CLIENT) $(OBJ_CLIENT) $(LDFLAGS)
+	$(CC) $(CFLAGS) -o $(BIN) $(OBJ) $(LDFLAGS)
 
 %.o: %.cpp
-	$(CC) $(CFLAGS) -c $<
+	$(CC) $(CFLAGS) -c $< -o $@
 
 clean:
-	rm -rf $(BIN_SERVER) $(BIN_CLIENT) $(OBJ) $(OBJ_SERVER) $(OBJ_CLIENT)
-
+	rm -rf $(BIN) $(OBJ)

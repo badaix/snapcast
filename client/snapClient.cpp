@@ -16,8 +16,8 @@
 #include <portaudio.h>
 #include <boost/asio.hpp>
 
-#include "chunk.h"
-#include "utils.h"
+#include "common/chunk.h"
+#include "common/utils.h"
 #include "stream.h"
 
 using boost::asio::ip::tcp;
