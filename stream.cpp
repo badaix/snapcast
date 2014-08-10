@@ -163,9 +163,9 @@ void Stream::getPlayerChunk(short* outputBuffer, double outputBufferDacTime, uns
 		age += outputBufferDacTime*1000;
 
 //	if (pCardBuffer->full())
-		age += 4*cardBuffer;
+//		age += 4*cardBuffer;
 
-//	cout << age << "\t" << outputBufferDacTime*1000 << "\n";
+	cout << age << "\t" << framesPerBuffer << "\t" << msBuffer << "\t" << ticks << "\t" << cardBuffer << "\t" << outputBufferDacTime*1000 << "\n";
 
 
 	if (sleep == 0)
@@ -193,14 +193,18 @@ void Stream::getPlayerChunk(short* outputBuffer, double outputBufferDacTime, uns
 	
 
 //	std::cerr << "Chunk: " << age << "\t" << outputBufferDacTime*1000 << "\n";
-	updateBuffers(age);
+	if (ticks > 2)
+	{
+//		cout << age << "\n";
+		updateBuffers(age);
+	}
 	time_t now = time(NULL);
 	if (now != lastUpdate)
 	{
 		lastUpdate = now;
-		median = pBuffer->mean();
-		shortMedian = pShortBuffer->mean();
-		std::cerr << "Chunk: " << age << "\t" << pMiniBuffer->mean() << "\t" << shortMedian << "\t" << median << "\t" << pBuffer->size() << "\t" << cardBuffer << "\t" << outputBufferDacTime*1000 << "\n";
+		median = pBuffer->median();
+		shortMedian = pShortBuffer->median();
+		std::cerr << "Chunk: " << age << "\t" << pMiniBuffer->mean() << "\t" << shortMedian << "\t" << median << /*"\tmean: " << pBuffer->mean() <<*/ "\t" << pBuffer->size() << "\t" << cardBuffer << "\t" << outputBufferDacTime*1000 << "\n";
 	}
 }
 

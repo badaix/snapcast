@@ -87,6 +87,7 @@ static int paStreamCallback( const void *inputBuffer, void *outputBuffer,
                             PaStreamCallbackFlags statusFlags,
                             void *userData )
 {
+//cout << "paStreamCallback: " << statusFlags << ", currentTime: " << timeInfo->currentTime << ", out: " << timeInfo->outputBufferDacTime << "\n";
     Stream* stream = (Stream*)userData;
     short* out = (short*)outputBuffer;
 
@@ -137,7 +138,7 @@ int initAudio()
     outputParameters.sampleFormat = paInt16; /* 32 bit floating point output */
     outputParameters.suggestedLatency = Pa_GetDeviceInfo( outputParameters.device )->defaultHighOutputLatency;
     outputParameters.hostApiSpecificStreamInfo = NULL;
-std::cerr << "HighLatency: " << outputParameters.suggestedLatency << "\t LowLatency: " << Pa_GetDeviceInfo( outputParameters.device )->defaultLowOutputLatency << "\n";
+	std::cerr << "HighLatency: " << outputParameters.suggestedLatency << "\t LowLatency: " << Pa_GetDeviceInfo( outputParameters.device )->defaultLowOutputLatency << "\n";
     err = Pa_OpenStream(
               &paStream,
               NULL, /* no input */
