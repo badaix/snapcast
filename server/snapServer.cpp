@@ -10,10 +10,8 @@
 
 #include <cstdlib>
 #include <iostream>
-#include <boost/bind.hpp>
-#include <boost/smart_ptr.hpp>
 #include <boost/asio.hpp>
-#include <boost/thread/thread.hpp>
+#include <boost/program_options.hpp>
 #include <chrono>
 #include <vector>
 #include <ctime>   // localtime
@@ -27,6 +25,7 @@
 
 
 using boost::asio::ip::tcp;
+namespace po = boost::program_options;
 
 const int max_length = 1024;
 
@@ -114,9 +113,9 @@ public:
 			sessions.push_back(session);
 		}
 	}
-	
+
 	void send(shared_ptr<WireChunk> chunk)
-	{	
+	{
 		for (size_t n=0; n<sessions.size(); ++n)
 		{
 			if (sessions[n] != 0)
@@ -146,55 +145,102 @@ int main(int argc, char* argv[])
 {
 	try
 	{
-		if (argc != 2)
+        size_t port;
+        string fifoName;
+        po::options_description desc("Allowed options");
+        desc.add_options()
+            ("help,h", "produce help message")
+            ("port,p", po::value<size_t>(&port)->default_value(98765), "port to listen on")
+            ("fifo,f", po::value<string>(&fifoName)->default_value("/tmp/snapfifo"), "name of fifo file")
+        ;
+
+        po::variables_map vm;
+        po::store(po::parse_command_line(argc, argv, desc), vm);
+        po::notify(vm);
+
+        if (vm.count("help"))
+        {
+            cout << desc << "\n";
+            return 1;
+        }
+
+/*        if (vm.count("port") == 0)
+        {
+            cout << "Please specify server port\n";
+            return 1;
+        }
+
+//        cout << "Compression level was set to " << vm["compression"].as<int>() << ".\n";
+
+		if (argc == 1)
 		{
-			std::cerr << "Usage: blocking_tcp_echo_server <port>\n";
+			std::cerr << desc << "\n";
 			return 1;
 		}
-
+*/
 
 		using namespace std; // For atoi.
-		Server* server = new Server(atoi(argv[1]));
+		Server* server = new Server(port);
 		server->start();
 
-		char c[2];
 		timeval tvChunk;
 		gettimeofday(&tvChunk, NULL);
 		long nextTick = getTickCount();
 
-		while (cin.good())
-		{
-			shared_ptr<WireChunk> chunk(new WireChunk());
-			for (size_t n=0; (n<WIRE_CHUNK_SIZE) && cin.good(); ++n)
-			{
-				c[0] = cin.get();
-				c[1] = cin.get();
-			    chunk->payload[n] = (int)c[0] + ((int)c[1] << 8);
-			}
 
-	//		if (!cin.good())
-	//			cin.clear();
+        /* open, read, and display the message from the FIFO */
+        mkfifo(fifoName.c_str(), 0777);
+        while (true)
+        {
+            int fd = open(fifoName.c_str(), O_RDONLY);
+            try
+            {
+                shared_ptr<WireChunk> chunk;//(new WireChunk());
+                while (true)//cin.good())
+                {
+                    chunk.reset(new WireChunk());
+                    int toRead = sizeof(WireChunk::payload);
+//                    cout << "tr: " << toRead << ", size: " << WIRE_CHUNK_SIZE << "\t";
+                    char* payload = (char*)(&chunk->payload[0]);
+                    int len = 0;
+                    do
+                    {
+                        int count = read(fd, payload + len, toRead - len);
+                        cout.flush();
+                        if (count <= 0)
+                            throw new std::exception();
+                        len += count;
+                    }
+                    while (len < toRead);
 
-		    chunk->tv_sec = tvChunk.tv_sec;
-		    chunk->tv_usec = tvChunk.tv_usec;
-			server->send(chunk);
+                    chunk->tv_sec = tvChunk.tv_sec;
+                    chunk->tv_usec = tvChunk.tv_usec;
+                    server->send(chunk);
 
-		    addMs(tvChunk, WIRE_CHUNK_MS);
-			nextTick += WIRE_CHUNK_MS;
-			long currentTick = getTickCount();
-			if (nextTick > currentTick)
-			{
-				usleep((nextTick - currentTick) * 1000);
-			}
-			else
-			{
-				cin.sync();
-				gettimeofday(&tvChunk, NULL);
-				nextTick = getTickCount();
-			}
-		}
+                    addMs(tvChunk, WIRE_CHUNK_MS);
+                    nextTick += WIRE_CHUNK_MS;
+                    long currentTick = getTickCount();
+                    if (nextTick > currentTick)
+                    {
+                        usleep((nextTick - currentTick) * 1000);
+                    }
+                    else
+                    {
+                        cin.sync();
+                        gettimeofday(&tvChunk, NULL);
+                        nextTick = getTickCount();
+                    }
+                }
+            }
+            catch(const std::exception&)
+            {
+                cout << "Exception\n";
+            }
+            close(fd);
+        }
+
 		return 0;
-		server->stop();	
+		server->stop();
 	}
 	catch (std::exception& e)
 	{
