@@ -53,7 +53,7 @@ public:
 		queue_.pop();
 	}
 
-	void push(const T item)
+	void push(const T& item)
 	{
 		std::unique_lock<std::mutex> mlock(mutex_);
 		queue_.push(item);
