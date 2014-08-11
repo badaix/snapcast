@@ -46,9 +46,9 @@ void player()
 cout << "connect\n";
 				tcp::socket s(io_service);
 				s.connect(*iterator);
-				void* wireChunk = (void*)malloc(sizeof(WireChunk));
 				while (true)
 				{
+					void* wireChunk = (void*)malloc(sizeof(WireChunk));
 					size_t toRead = sizeof(WireChunk);
 					size_t len = 0;
 					do 

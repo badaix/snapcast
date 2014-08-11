@@ -29,7 +29,7 @@ private:
 	void resetBuffers();
 
 	long lastTick;
-	float sleep;
+	int sleep;
 	
 //	int correction;
 	Queue<std::shared_ptr<Chunk>> chunks;

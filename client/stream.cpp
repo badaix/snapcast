@@ -9,7 +9,7 @@ Stream::Stream() : sleep(0), median(0), shortMedian(0), lastUpdate(0), latencyMs
 {
 	pBuffer = new DoubleBuffer<int>(1000);
 	pShortBuffer = new DoubleBuffer<int>(200);
-	pMiniBuffer = new DoubleBuffer<int>(10);
+	pMiniBuffer = new DoubleBuffer<int>(20);
 	pCardBuffer = new DoubleBuffer<int>(50);
 	bufferMs = 500;
 }
@@ -175,24 +175,19 @@ void Stream::getPlayerChunk(short* outputBuffer, double outputBufferDacTime, uns
 
 	if (sleep == 0)
 	{
-		if (pBuffer->full() && (abs(median) <= 10) && (abs(median) > 1))
+		if (pBuffer->full() && (abs(median) > 1))
 		{
-			cout << "pBuffer->full() && (abs(median) <= 10) && (abs(median) > 1): " << abs(median) << "\n";
+			cout << "pBuffer->full() && (abs(median) > 1): " << median << "\n";
 			sleep = median;
 		} 
-		else if (pShortBuffer->full() && (abs(shortMedian) <= 10) && (abs(shortMedian) > 5))
+		else if (pShortBuffer->full() && (abs(shortMedian) > 5))
 		{
-			cout << "pShortBuffer->full() && (abs(shortMedian) <= 10) && (abs(shortMedian) > 5): " << abs(shortMedian) << "\n";
+			cout << "pShortBuffer->full() && (abs(shortMedian) > 5): " << shortMedian << "\n";
 			sleep = shortMedian;
 		} 
-		if (pShortBuffer->full() && (abs(shortMedian) > 10))
+		else if (pMiniBuffer->full() && (abs(pMiniBuffer->median()) > 50))
 		{
-			cout << "pShortBuffer->full() && (abs(shortMedian) > 10): " << abs(shortMedian) << "\n";
-			sleep = shortMedian;
-		}
-		else if (pMiniBuffer->full() && (abs(age) > 50) && (abs(pMiniBuffer->mean()) > 50))
-		{
-			cout << "pMiniBuffer->full() && (abs(age) > 50) && (abs(pMiniBuffer->mean()) > 50): " << abs(age) << "\n";
+			cout << "pMiniBuffer->full() && (abs(pMiniBuffer->mean()) > 50): " << pMiniBuffer->median() << "\n";
 			sleep = pMiniBuffer->mean();
 		}
 	}
@@ -212,8 +207,8 @@ void Stream::getPlayerChunk(short* outputBuffer, double outputBufferDacTime, uns
 	{
 		lastUpdate = now;
 		median = pBuffer->median();
-		shortMedian = pShortBuffer->mean();
-		std::cerr << "Chunk: " << age << "\t" << pMiniBuffer->mean() << "\t" << shortMedian << "\t" << median << /*"\tmean: " << pBuffer->mean() <<*/ "\t" << pBuffer->size() << "\t" << cardBuffer << "\t" << outputBufferDacTime*1000 << "\n";
+		shortMedian = pShortBuffer->median();
+		std::cerr << "Chunk: " << age << "\t" << pMiniBuffer->median() << "\t" << shortMedian << "\t" << median << "\t" << pBuffer->size() << "\t" << cardBuffer << "\t" << outputBufferDacTime*1000 << "\n";
 	}
 }
 

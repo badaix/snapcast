@@ -72,6 +72,14 @@ static long getTickCount()
 }
 
 
+static long getuTickCount()
+{
+	struct timespec now;
+	clock_gettime(CLOCK_MONOTONIC, &now);
+	return now.tv_sec*1000000 + now.tv_nsec / 1000;
+}
+
+
 
 
 #endif

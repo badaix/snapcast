@@ -3,9 +3,8 @@
 #include <iostream>
 
 
-Chunk::Chunk(WireChunk* _wireChunk) : idx(0)
+Chunk::Chunk(WireChunk* _wireChunk) : idx(0), wireChunk(_wireChunk)
 {
-	wireChunk = new WireChunk(*_wireChunk);
 }
 
 
