@@ -69,13 +69,19 @@ public:
 		cond_.notify_one();
 	}
 
+	size_t size() const
+	{
+		std::unique_lock<std::mutex> mlock(mutex_);
+		return queue_.size();
+	}
+
 	Queue()=default;
 	Queue(const Queue&) = delete;            // disable copying
 	Queue& operator=(const Queue&) = delete; // disable assignment
 
 	private:
 	std::queue<T> queue_;
-	std::mutex mutex_;
+	mutable std::mutex mutex_;
 	std::condition_variable cond_;
 };
 
