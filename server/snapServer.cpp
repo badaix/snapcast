@@ -130,7 +130,10 @@ public:
 		for (std::set<shared_ptr<Session>>::iterator it = sessions.begin(); it != sessions.end(); ) 
 		{
     		if (!(*it)->isActive())
+			{
+				cout << "Session inactive. Removing\n";
 		        sessions.erase(it++);
+			}
 		    else
 		        ++it;
 	    }
