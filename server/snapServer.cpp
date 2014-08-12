@@ -206,8 +206,31 @@ int main(int argc, char* argv[])
 		gettimeofday(&tvChunk, NULL);
 		long nextTick = getTickCount();
 
+/*        pid_t pid, sid;
+        
+        pid = fork();
+        if (pid < 0) {
+                exit(EXIT_FAILURE);
+        }
+        if (pid > 0) {
+                exit(EXIT_SUCCESS);
+        }
 
-        /* open, read, and display the message from the FIFO */
+        umask(0);
+                
+        sid = setsid();
+        if (sid < 0) {
+                exit(EXIT_FAILURE);
+        }
+        
+        if ((chdir("/")) < 0) {
+                exit(EXIT_FAILURE);
+        }
+
+        close(STDIN_FILENO);
+        close(STDOUT_FILENO);
+        close(STDERR_FILENO);
+ */       
         mkfifo(fifoName.c_str(), 0777);
         while (true)
         {
