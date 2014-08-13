@@ -161,7 +161,7 @@ void Stream::getPlayerChunk(short* outputBuffer, double outputBufferDacTime, uns
 	
 
 
-	int age = Chunk::getAge(getNextPlayerChunk(outputBuffer, framesPerBuffer, correction)) - bufferMs - latencyMs;// + outputBufferDacTime*1000;
+	int age = Chunk::getAge(getNextPlayerChunk(outputBuffer, framesPerBuffer, correction)) - bufferMs + latencyMs;// + outputBufferDacTime*1000;
 
 
 	if (outputBufferDacTime < 1)
