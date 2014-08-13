@@ -140,11 +140,13 @@ void Stream::getPlayerChunk(short* outputBuffer, double outputBufferDacTime, uns
 			while (true)// (int i=0; i<(int)(round((float)sleep / (float)PLAYER_CHUNK_MS)) + 1; ++i)
 			{
 				int age = Chunk::getAge(getNextPlayerChunk(outputBuffer, framesPerBuffer)) - bufferMs + latencyMs;
+				sleep -= msBuffer;
 //		age += 4*cardBuffer;
-				if (age < msBuffer / 2)
+//				cout << "age: " << age << ", msBuffer: " << msBuffer << "\n";
+				if (sleep < msBuffer / 2)
 					break;
 			}
-			sleep = 0;
+//			sleep = 0;
 			return;
 		}
 		else if (sleep < 0)
