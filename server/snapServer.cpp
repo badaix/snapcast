@@ -23,6 +23,8 @@
 #include "common/chunk.h"
 #include "common/timeUtils.h"
 #include "common/queue.h"
+#include "common/signalHandler.h"
+#include <syslog.h>
 
 
 using boost::asio::ip::tcp;
@@ -33,6 +35,9 @@ const int max_length = 1024;
 typedef boost::shared_ptr<tcp::socket> socket_ptr;
 using namespace std;
 using namespace std::chrono;
+
+
+bool g_terminated = false;
 
 
 std::string return_current_time_and_date()
@@ -149,7 +154,7 @@ public:
 
 	void stop()
 	{
-		acceptThread->join();
+//		acceptThread->join();
 	}
 
 private:
@@ -160,17 +165,62 @@ private:
 };
 
 
+void daemonize()
+{
+	/* Our process ID and Session ID */
+	pid_t pid, sid;
+
+	/* Fork off the parent process */
+	pid = fork();
+	if (pid < 0) 
+	    exit(EXIT_FAILURE);
+
+	/* If we got a good PID, then
+	   we can exit the parent process. */
+	if (pid > 0) 
+	    exit(EXIT_SUCCESS);
+
+	/* Change the file mode mask */
+	umask(0);
+		    
+	/* Open any logs here */        
+		    
+	/* Create a new SID for the child process */
+	sid = setsid();
+	if (sid < 0) 
+	{
+		/* Log the failure */
+		exit(EXIT_FAILURE);
+	}
+
+	/* Change the current working directory */
+	if ((chdir("/")) < 0) 
+	{
+		/* Log the failure */
+		exit(EXIT_FAILURE);
+	}
+
+	/* Close out the standard file descriptors */
+	close(STDIN_FILENO);
+	close(STDOUT_FILENO);
+	close(STDERR_FILENO);
+}
+
+
 int main(int argc, char* argv[])
 {
 	try
 	{
         size_t port;
         string fifoName;
+		bool runAsDaemon;
+
         po::options_description desc("Allowed options");
         desc.add_options()
             ("help,h", "produce help message")
             ("port,p", po::value<size_t>(&port)->default_value(98765), "port to listen on")
             ("fifo,f", po::value<string>(&fifoName)->default_value("/tmp/snapfifo"), "name of fifo file")
+            ("daemon,d", po::bool_switch(&runAsDaemon)->default_value(false), "daemonize")
         ;
 
         po::variables_map vm;
@@ -198,6 +248,11 @@ int main(int argc, char* argv[])
 		}
 */
 
+		if (runAsDaemon)
+			daemonize();
+
+		openlog ("firstdaemon", LOG_PID, LOG_DAEMON);
+
 		using namespace std; // For atoi.
 		Server* server = new Server(port);
 		server->start();
@@ -206,34 +261,11 @@ int main(int argc, char* argv[])
 		gettimeofday(&tvChunk, NULL);
 		long nextTick = getTickCount();
 
-/*        pid_t pid, sid;
-        
-        pid = fork();
-        if (pid < 0) {
-                exit(EXIT_FAILURE);
-        }
-        if (pid > 0) {
-                exit(EXIT_SUCCESS);
-        }
-
-        umask(0);
-                
-        sid = setsid();
-        if (sid < 0) {
-                exit(EXIT_FAILURE);
-        }
-        
-        if ((chdir("/")) < 0) {
-                exit(EXIT_FAILURE);
-        }
-
-        close(STDIN_FILENO);
-        close(STDOUT_FILENO);
-        close(STDERR_FILENO);
- */       
         mkfifo(fifoName.c_str(), 0777);
-        while (true)
+
+        while (!g_terminated)
         {
+syslog (LOG_NOTICE, "First daemon started.");
             int fd = open(fifoName.c_str(), O_RDONLY);
             try
             {
@@ -281,7 +313,6 @@ int main(int argc, char* argv[])
             close(fd);
         }
 
-		return 0;
 		server->stop();
 	}
 	catch (std::exception& e)
@@ -289,7 +320,8 @@ int main(int argc, char* argv[])
 		std::cerr << "Exception: " << e.what() << "\n";
 	}
 
-	return 0;
+	syslog (LOG_NOTICE, "First daemon terminated.");
+    closelog();
 }
 
 

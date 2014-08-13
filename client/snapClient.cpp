@@ -15,6 +15,8 @@
 #include <thread> 
 #include <portaudio.h>
 #include <boost/asio.hpp>
+#include <boost/lexical_cast.hpp>
+#include <boost/program_options.hpp>
 
 #include "common/chunk.h"
 #include "common/utils.h"
@@ -22,21 +24,21 @@
 
 using boost::asio::ip::tcp;
 using namespace std;
+namespace po = boost::program_options;
 
 
-int bufferMs;
 int deviceIdx;  
 Stream* stream;
 
 
 
-void player() 
+void player(const std::string& ip, int port) 
 {
 	try
 	{
 		boost::asio::io_service io_service;
 		tcp::resolver resolver(io_service);
-		tcp::resolver::query query(tcp::v4(), "192.168.0.2", "98765");
+		tcp::resolver::query query(tcp::v4(), ip, boost::lexical_cast<string>(port));
 		tcp::resolver::iterator iterator = resolver.resolve(query);
 
 		while (true)
@@ -178,12 +180,27 @@ error:
 
 int main (int argc, char *argv[])
 {
-        deviceIdx = -1;
-	bufferMs = 300;	
-	if (argc > 1)
-		bufferMs = atoi(argv[1]);
-	if (argc > 2)
-		deviceIdx = atoi(argv[2]);
+	string ip;	
+	int bufferMs;
+	size_t port;	
+    po::options_description desc("Allowed options");
+    desc.add_options()
+        ("help,h", "produce help message")
+        ("port,p", po::value<size_t>(&port)->default_value(98765), "port where the server listens on")
+        ("ip,i", po::value<string>(&ip)->default_value("192.168.0.2"), "server IP")
+        ("device,d", po::value<int>(&deviceIdx)->default_value(-1), "index of the soundcard")
+        ("buffer,b", po::value<int>(&bufferMs)->default_value(300), "buffer size [ms]")
+    ;
+
+    po::variables_map vm;
+    po::store(po::parse_command_line(argc, argv, desc), vm);
+    po::notify(vm);
+
+    if (vm.count("help"))
+    {
+        cout << desc << "\n";
+        return 1;
+    }
 
 	stream = new Stream();
 	stream->setBufferLen(bufferMs);
@@ -191,10 +208,10 @@ int main (int argc, char *argv[])
 	PaStream* paStream = initAudio(paError);
 	stream->setLatency(1000*Pa_GetStreamInfo(paStream)->outputLatency);
 
-	std::thread playerThread(player);
+	std::thread playerThread(player, ip, port);
 	
 	std::string cmd;
-	while (true && (argc > 3))
+/*	while (true && (argc > 3))
 	{
 		std::cout << "> ";
 		std::getline(std::cin, cmd);
@@ -210,7 +227,7 @@ int main (int argc, char *argv[])
 			stream->setBufferLen(atoi(cmd.c_str()));
 		}
 	}
-
+*/
 	playerThread.join();
 
     return 0;
