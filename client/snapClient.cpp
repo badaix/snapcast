@@ -20,6 +20,7 @@
 
 #include "common/chunk.h"
 #include "common/utils.h"
+#include "common/log.h"
 #include "stream.h"
 
 using boost::asio::ip::tcp;
@@ -183,13 +184,15 @@ int main (int argc, char *argv[])
 	string ip;	
 	int bufferMs;
 	size_t port;	
+	bool runAsDaemon;
     po::options_description desc("Allowed options");
     desc.add_options()
         ("help,h", "produce help message")
         ("port,p", po::value<size_t>(&port)->default_value(98765), "port where the server listens on")
         ("ip,i", po::value<string>(&ip)->default_value("192.168.0.2"), "server IP")
-        ("device,d", po::value<int>(&deviceIdx)->default_value(-1), "index of the soundcard")
+        ("soundcard,s", po::value<int>(&deviceIdx)->default_value(-1), "index of the soundcard")
         ("buffer,b", po::value<int>(&bufferMs)->default_value(300), "buffer size [ms]")
+        ("daemon,d", po::bool_switch(&runAsDaemon)->default_value(false), "daemonize")
     ;
 
     po::variables_map vm;
@@ -201,6 +204,13 @@ int main (int argc, char *argv[])
         cout << desc << "\n";
         return 1;
     }
+
+	if (runAsDaemon)
+	{
+		daemonize();
+		std::clog.rdbuf(new Log("snapserver", LOG_DAEMON));
+		std::clog << kLogNotice << "daemon started" << std::endl;
+	}
 
 	stream = new Stream();
 	stream->setBufferLen(bufferMs);
