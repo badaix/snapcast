@@ -25,6 +25,8 @@ void Stream::setBufferLen(size_t bufferLenMs)
 
 void Stream::addChunk(Chunk* chunk)
 {
+	while (chunks.size() * WIRE_CHUNK_MS > 10000)
+		chunks.pop();
 	chunks.push(shared_ptr<Chunk>(chunk));
 }
 
