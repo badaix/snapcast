@@ -52,7 +52,7 @@ time_point_ms Stream::getNextPlayerChunk(void* outputBuffer, unsigned long frame
 
 	time_point_ms tp = chunk->timePoint();
 	int read = 0;
-	int toRead = framesPerBuffer*channels_ + correction*(hz_*channels_/1000);
+	int toRead = framesPerBuffer + correction*(hz_*chunk->frameSize_/1000);
 	char* buffer;
 
 	if (correction != 0)
@@ -60,7 +60,7 @@ time_point_ms Stream::getNextPlayerChunk(void* outputBuffer, unsigned long frame
 		int msBuffer = floor(framesPerBuffer*2 / (hz_*channels_/1000));
 		if (abs(correction) > msBuffer / 2)
 			correction = copysign(msBuffer / 2, correction);
-		buffer = (char*)malloc(toRead * bytesPerSample_);
+		buffer = (char*)malloc(toRead * chunk->frameSize_);
 	}
 	else
 		buffer = (char*)outputBuffer;
@@ -87,6 +87,7 @@ time_point_ms Stream::getNextPlayerChunk(void* outputBuffer, unsigned long frame
 //			memcpy((char*)outputBuffer + n*bytesPerSample_*channels_, (char*)(chunk->wireChunk->payload) + index*bytesPerSample_*channels_, bytesPerSample_*channels_);
 		}
 		free(buffer);
+
 /*		float factor = (float)toRead / (float)(framesPerBuffer*channels_);
 		std::cout << "correction: " << correction << ", factor: " << factor << "\n";
 		for (size_t n=0; n<framesPerBuffer; ++n)
@@ -96,10 +97,13 @@ time_point_ms Stream::getNextPlayerChunk(void* outputBuffer, unsigned long frame
 //			memcpy((char*)outputBuffer + n*bytesPerSample_*channels_, (char*)(chunk->wireChunk->payload) + index*bytesPerSample_*channels_, bytesPerSample_*channels_);
 		}
 		free(buffer);
-*/	}
+*/
+	}
 
 	return tp;
 }
+
+
 
 /*
 time_point_ms Stream::getNextPlayerChunk(void* outputBuffer, unsigned long framesPerBuffer, int correction)
@@ -141,6 +145,7 @@ correction = 0;
 }
 */
 
+
 void Stream::updateBuffers(int age)
 {
 	pBuffer->add(age);
@@ -160,7 +165,6 @@ void Stream::resetBuffers()
 void Stream::getPlayerChunk(void* outputBuffer, double outputBufferDacTime, unsigned long framesPerBuffer)
 {
 //cout << "framesPerBuffer: " << framesPerBuffer << "\tms: " << framesPerBuffer*2 / PLAYER_CHUNK_MS_SIZE << "\t" << PLAYER_CHUNK_SIZE << "\n";
-sleep = 0;
 	int msBuffer = floor(framesPerBuffer*2 / (hz_*channels_/1000));
 
 	int ticks = 0;
