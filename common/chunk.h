@@ -2,20 +2,8 @@
 #define CHUNK_H
 
 #include <chrono>
+#include <cstdlib>
 
-#define SAMPLE_RATE (48000)
-//#define SAMPLE_BIT (16)
-#define CHANNELS (2)
-
-#define WIRE_CHUNK_MS (50)
-#define WIRE_CHUNK_SIZE ((SAMPLE_RATE*CHANNELS*WIRE_CHUNK_MS)/1000)
-#define WIRE_CHUNK_MS_SIZE ((SAMPLE_RATE*CHANNELS)/1000)
-#define SAMPLE_SIZE (CHANNELS)
-
-#define PLAYER_CHUNK_MS (20)
-#define PLAYER_CHUNK_SIZE ((SAMPLE_RATE*CHANNELS*PLAYER_CHUNK_MS)/1000)
-#define PLAYER_CHUNK_MS_SIZE ((SAMPLE_RATE*CHANNELS)/1000)
-#define FRAMES_PER_BUFFER  ((SAMPLE_RATE*PLAYER_CHUNK_MS)/1000)
 
 
 typedef std::chrono::time_point<std::chrono::high_resolution_clock, std::chrono::milliseconds> time_point_ms;
@@ -25,7 +13,8 @@ struct WireChunk
 {
 	int32_t tv_sec;
 	int32_t tv_usec;
-	int16_t payload[WIRE_CHUNK_SIZE];
+	uint32_t length;
+	char* payload;
 };
 
 
@@ -33,27 +22,39 @@ struct WireChunk
 class Chunk
 {
 public:
-	Chunk(WireChunk* _wireChunk);
+	Chunk(size_t hz, size_t channels, size_t bitPerSample, WireChunk* _wireChunk);
+	Chunk(size_t hz, size_t channels, size_t bitPerSample, size_t ms);
 	~Chunk();
 
-	int read(short* _outputBuffer, int _count);
-	bool isEndOfChunk();
+/*	static WireChunk* make_chunk(size_t size, size_t bytesPerSample)
+	{
+		WireChunk* wireChunk = new WireChunk(bytesPerSample*size);
+		wireChunk->length = bytesPerSample*size;
+		wireChunk->payload = (char*)malloc(wireChunk->length);
+		return wireChunk;
+	}
+*/
+	static size_t getHeaderSize()
+	{
+		return sizeof(WireChunk::tv_sec) + sizeof(WireChunk::tv_usec) + sizeof(WireChunk::length);
+	}
 
-	bool getNext(int16_t& _result);
+	int read(void* outputBuffer, size_t frameCount);
+	bool isEndOfChunk() const;
 
-	inline time_point_ms timePoint()
+	inline time_point_ms timePoint() const
 	{
 		time_point_ms tp;
-		return tp + std::chrono::seconds(wireChunk->tv_sec) + std::chrono::milliseconds(wireChunk->tv_usec / 1000) + std::chrono::milliseconds(idx / WIRE_CHUNK_MS_SIZE);
+		return tp + std::chrono::seconds(wireChunk->tv_sec) + std::chrono::milliseconds(wireChunk->tv_usec / 1000) + std::chrono::milliseconds(idx / (hz_*channels_/1000));
 	}
 
 	template<typename T>
-	inline T getAge()
+	inline T getAge() const
 	{
 		return getAge<T>(timePoint());
 	}
 
-	inline long getAge()
+	inline long getAge() const
 	{
 		return getAge<std::chrono::milliseconds>().count();
 	}
@@ -69,9 +70,17 @@ public:
 		return std::chrono::duration_cast<T>(std::chrono::high_resolution_clock::now() - time_point);
 	}
 
-private:
-	int32_t idx;
+	double getDuration() const;
+
 	WireChunk* wireChunk;
+	size_t hz_;
+	size_t channels_;
+	size_t bytesPerSample_;
+	size_t frameSize_;
+
+private:
+
+	int32_t idx;
 };
 
 

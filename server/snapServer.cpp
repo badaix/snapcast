@@ -66,13 +66,23 @@ public:
 		{
 			for (;;)
 			{
-				shared_ptr<WireChunk> chunk(chunks.pop());
+				shared_ptr<Chunk> chunk(chunks.pop());
 				size_t written = 0;
+				size_t toWrite = Chunk::getHeaderSize();// + chunk->length;
+				WireChunk* wireChunk = chunk->wireChunk;				
 				do
 				{
-					written += boost::asio::write(*socket_, boost::asio::buffer(chunk.get() + written, sizeof(WireChunk) - written));//, error);
+					written += boost::asio::write(*socket_, boost::asio::buffer(wireChunk + written, toWrite - written));//, error);
 				}
-				while (written < sizeof(WireChunk));
+				while (written < toWrite);
+
+				written = 0;
+				toWrite = wireChunk->length;
+				do
+				{
+					written += boost::asio::write(*socket_, boost::asio::buffer(wireChunk->payload + written, toWrite - written));//, error);
+				}
+				while (written < toWrite);
 			}
 		}
 		catch (std::exception& e)
@@ -89,9 +99,9 @@ public:
 //		readerThread.join();
 	}
 
-	void send(shared_ptr<WireChunk> chunk)
+	void send(shared_ptr<Chunk> chunk)
 	{
-		while (chunks.size() * WIRE_CHUNK_MS > 10000)
+		while (chunks.size() * chunk->getDuration() > 10000)
 			chunks.pop();
 		chunks.push(chunk);
 	}
@@ -105,7 +115,7 @@ private:
 	bool active_;
 	socket_ptr socket_;
 	thread* senderThread;
-	Queue<shared_ptr<WireChunk>> chunks;
+	Queue<shared_ptr<Chunk>> chunks;
 };
 
 
@@ -130,7 +140,7 @@ public:
 		}
 	}
 
-	void send(shared_ptr<WireChunk> chunk)
+	void send(shared_ptr<Chunk> chunk)
 	{
 		for (std::set<shared_ptr<Session>>::iterator it = sessions.begin(); it != sessions.end(); ) 
 		{
@@ -165,11 +175,35 @@ private:
 };
 
 
+class ServerException : public std::exception
+{
+public:
+	ServerException(const std::string& what) : what_(what)
+	{
+	}
+
+	virtual ~ServerException() throw()
+	{
+	}
+
+	virtual const char* what() const throw()
+	{
+		return what_.c_str();
+	}
+
+private:
+	std::string what_;
+};
+
 
 int main(int argc, char* argv[])
 {
 	try
 	{
+		uint16_t sampleRate;
+		short channels;
+		uint16_t bps;
+
         size_t port;
         string fifoName;
 		bool runAsDaemon;
@@ -178,6 +212,9 @@ int main(int argc, char* argv[])
         desc.add_options()
             ("help,h", "produce help message")
             ("port,p", po::value<size_t>(&port)->default_value(98765), "port to listen on")
+	        ("channels,c", po::value<short>(&channels)->default_value(2), "number of channels")
+	       	("samplerate,r", po::value<uint16_t>(&sampleRate)->default_value(48000), "sample rate")
+    	    ("bps,b", po::value<uint16_t>(&bps)->default_value(16), "bit per sample")
             ("fifo,f", po::value<string>(&fifoName)->default_value("/tmp/snapfifo"), "name of fifo file")
             ("daemon,d", po::bool_switch(&runAsDaemon)->default_value(false), "daemonize")
         ;
@@ -207,8 +244,11 @@ int main(int argc, char* argv[])
 		}
 */
 
-		if (runAsDaemon)
-			daemonize();
+//		if (runAsDaemon)
+		{
+//			daemonize();
+//			syslog (LOG_NOTICE, "First daemon started.");
+		}
 
 		openlog ("firstdaemon", LOG_PID, LOG_DAEMON);
 
@@ -221,37 +261,38 @@ int main(int argc, char* argv[])
 		long nextTick = getTickCount();
 
         mkfifo(fifoName.c_str(), 0777);
+size_t duration = 50;
 
         while (!g_terminated)
         {
-syslog (LOG_NOTICE, "First daemon started.");
             int fd = open(fifoName.c_str(), O_RDONLY);
             try
             {
-                shared_ptr<WireChunk> chunk;//(new WireChunk());
+                shared_ptr<Chunk> chunk;//(new WireChunk());
                 while (true)//cin.good())
                 {
-                    chunk.reset(new WireChunk());
-                    int toRead = sizeof(WireChunk::payload);
+                    chunk.reset(new Chunk(sampleRate, channels, bps, duration));//2*WIRE_CHUNK_SIZE));
+					WireChunk* wireChunk = chunk->wireChunk;
+                    int toRead = wireChunk->length;
 //                    cout << "tr: " << toRead << ", size: " << WIRE_CHUNK_SIZE << "\t";
-                    char* payload = (char*)(&chunk->payload[0]);
+//                    char* payload = (char*)(&chunk->payload[0]);
                     int len = 0;
                     do
                     {
-                        int count = read(fd, payload + len, toRead - len);
-                        cout.flush();
+                        int count = read(fd, wireChunk->payload + len, toRead - len);
                         if (count <= 0)
-                            throw new std::exception();
+                            throw ServerException("count = " + boost::lexical_cast<string>(count));
+
                         len += count;
                     }
                     while (len < toRead);
 
-                    chunk->tv_sec = tvChunk.tv_sec;
-                    chunk->tv_usec = tvChunk.tv_usec;
+                    wireChunk->tv_sec = tvChunk.tv_sec;
+                    wireChunk->tv_usec = tvChunk.tv_usec;
                     server->send(chunk);
 
-                    addMs(tvChunk, WIRE_CHUNK_MS);
-                    nextTick += WIRE_CHUNK_MS;
+                    addMs(tvChunk, duration);
+                    nextTick += duration;
                     long currentTick = getTickCount();
                     if (nextTick > currentTick)
                     {
@@ -265,18 +306,18 @@ syslog (LOG_NOTICE, "First daemon started.");
                     }
                 }
             }
-            catch(const std::exception&)
+            catch(const std::exception& e)
             {
-                cout << "Exception\n";
+				std::cerr << "Exception: " << e.what() << std::endl;
             }
             close(fd);
         }
 
 		server->stop();
 	}
-	catch (std::exception& e)
+	catch (const std::exception& e)
 	{
-		std::cerr << "Exception: " << e.what() << "\n";
+		std::cerr << "Exception: " << e.what() << std::endl;
 	}
 
 	syslog (LOG_NOTICE, "First daemon terminated.");

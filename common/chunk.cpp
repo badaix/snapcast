@@ -3,40 +3,50 @@
 #include <iostream>
 
 
-Chunk::Chunk(WireChunk* _wireChunk) : idx(0), wireChunk(_wireChunk)
+Chunk::Chunk(size_t hz, size_t channels, size_t bitPerSample, WireChunk* _wireChunk) : wireChunk(_wireChunk), hz_(hz), channels_(channels), bytesPerSample_(bitPerSample/8), frameSize_(bytesPerSample_*channels_), idx(0)
 {
+}
+
+
+Chunk::Chunk(size_t hz, size_t channels, size_t bitPerSample, size_t ms) : hz_(hz), channels_(channels), bytesPerSample_(bitPerSample/8), frameSize_(bytesPerSample_*channels_), idx(0)
+{
+	wireChunk = new WireChunk;
+	wireChunk->length = hz*channels*bytesPerSample_*ms / 1000;
+	wireChunk->payload = (char*)malloc(wireChunk->length);
 }
 
 
 Chunk::~Chunk()
 {
+	free(wireChunk->payload);
 	delete wireChunk;
 }
 
 
-bool Chunk::isEndOfChunk()
+bool Chunk::isEndOfChunk() const
 {
-	return idx >= WIRE_CHUNK_SIZE;
+	return idx >= (wireChunk->length / frameSize_);
 }
 
 
-bool Chunk::getNext(int16_t& _result)
+
+double Chunk::getDuration() const
 {
-	if (isEndOfChunk())
-		return false;
-	_result = wireChunk->payload[idx++];
-	return true;
+//	std::cout << "len: " << wireChunk->length << ", channels: " << channels_ << ", bytesPerSample: " << bytesPerSample_ << ", hz: " << hz_ << "\n";
+	return wireChunk->length / (channels_ * bytesPerSample_ * hz_ / 1000.);
 }
 
 
-int Chunk::read(short* _outputBuffer, int _count)
-{
-	int result = _count;
-	if (idx + _count > WIRE_CHUNK_SIZE)
-		result = WIRE_CHUNK_SIZE - idx;
 
-	if (_outputBuffer != NULL)
-		memcpy(_outputBuffer, &wireChunk->payload[idx], sizeof(int16_t)*result);
+int Chunk::read(void* outputBuffer, size_t frameCount) 
+{
+//std::cout << "read: " << frameCount << std::endl;
+	int result = frameCount;
+	if (idx + frameCount > wireChunk->length / frameSize_)
+		result = (wireChunk->length / frameSize_) - idx;
+
+	if (outputBuffer != NULL)
+		memcpy(outputBuffer, wireChunk->payload + frameSize_*idx, frameSize_*result);
 
 	idx += result;
 	return result;
