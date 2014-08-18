@@ -24,6 +24,7 @@
 #include "common/timeUtils.h"
 #include "common/queue.h"
 #include "common/signalHandler.h"
+#include "common/utils.h"
 #include <syslog.h>
 
 
@@ -244,10 +245,10 @@ int main(int argc, char* argv[])
 		}
 */
 
-//		if (runAsDaemon)
+		if (runAsDaemon)
 		{
-//			daemonize();
-//			syslog (LOG_NOTICE, "First daemon started.");
+			daemonize();
+			syslog (LOG_NOTICE, "First daemon started.");
 		}
 
 		openlog ("firstdaemon", LOG_PID, LOG_DAEMON);
