@@ -45,7 +45,7 @@ public:
 	inline time_point_ms timePoint() const
 	{
 		time_point_ms tp;
-		return tp + std::chrono::seconds(wireChunk->tv_sec) + std::chrono::milliseconds(wireChunk->tv_usec / 1000) + std::chrono::milliseconds(idx / (hz_*channels_/1000));
+		return tp + std::chrono::seconds(wireChunk->tv_sec) + std::chrono::milliseconds(wireChunk->tv_usec / 1000) + std::chrono::milliseconds(idx / (hz_/1000));
 	}
 
 	template<typename T>
