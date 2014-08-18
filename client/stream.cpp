@@ -7,6 +7,7 @@ using namespace std;
 
 Stream::Stream(size_t hz, size_t channels, size_t bps) : hz_(hz), channels_(channels), bytesPerSample_(bps/8), sleep(0), median(0), shortMedian(0), lastUpdate(0), latencyMs(0)
 {
+	frameSize_ = bytesPerSample_*channels_;
 	pBuffer = new DoubleBuffer<int>(1000);
 	pShortBuffer = new DoubleBuffer<int>(200);
 	pMiniBuffer = new DoubleBuffer<int>(20);
@@ -25,9 +26,9 @@ void Stream::setBufferLen(size_t bufferLenMs)
 
 void Stream::addChunk(Chunk* chunk)
 {
-//	cout << "new chunk: " << chunk->getDuration() << "\n";
 	while (chunks.size() * chunk->getDuration() > 10000)
 		chunks.pop();
+//	cout << "new chunk: " << chunk->getDuration() << ", Chunks: " << chunks.size() << "\n";
 	chunks.push(shared_ptr<Chunk>(chunk));
 }
 
@@ -52,22 +53,22 @@ time_point_ms Stream::getNextPlayerChunk(void* outputBuffer, unsigned long frame
 
 	time_point_ms tp = chunk->timePoint();
 	int read = 0;
-	int toRead = framesPerBuffer + correction*(hz_*chunk->frameSize_/1000);
+	int toRead = framesPerBuffer + correction*(hz_/1000);
 	char* buffer;
 
 	if (correction != 0)
 	{
-		int msBuffer = floor(framesPerBuffer*2 / (hz_*channels_/1000));
+		int msBuffer = floor(framesPerBuffer / (hz_/1000));
 		if (abs(correction) > msBuffer / 2)
 			correction = copysign(msBuffer / 2, correction);
-		buffer = (char*)malloc(toRead * chunk->frameSize_);
+		buffer = (char*)malloc(toRead * frameSize_);
 	}
 	else
 		buffer = (char*)outputBuffer;
 
 	while (read < toRead)
 	{
-		read += chunk->read(buffer + read, toRead - read);
+		read += chunk->read(buffer + read*frameSize_, toRead - read);
 		if (chunk->isEndOfChunk())
 			chunk = chunks.pop();
 	}
@@ -75,29 +76,15 @@ time_point_ms Stream::getNextPlayerChunk(void* outputBuffer, unsigned long frame
 	if (correction != 0)
 	{
 		float factor = (float)toRead / framesPerBuffer;//(float)(framesPerBuffer*channels_);
-//float factor = 0.9;
-//		std::cout << "correction: " << correction << ", factor: " << factor << "\n";
+		std::cout << "correction: " << correction << ", factor: " << factor << "\n";
 		float idx = 0;
 		for (size_t n=0; n<framesPerBuffer; ++n)
 		{
 			size_t index(floor(idx));// = (int)(ceil(n*factor));
-//cout << "toRead: " << toRead << ", n: " << n << ", idx: " << index << "\n";
-			memcpy((char*)outputBuffer + n*chunk->frameSize_, buffer + index*chunk->frameSize_, chunk->frameSize_);
+			memcpy((char*)outputBuffer + n*frameSize_, buffer + index*frameSize_, frameSize_);
 			idx += factor;
-//			memcpy((char*)outputBuffer + n*bytesPerSample_*channels_, (char*)(chunk->wireChunk->payload) + index*bytesPerSample_*channels_, bytesPerSample_*channels_);
 		}
 		free(buffer);
-
-/*		float factor = (float)toRead / (float)(framesPerBuffer*channels_);
-		std::cout << "correction: " << correction << ", factor: " << factor << "\n";
-		for (size_t n=0; n<framesPerBuffer; ++n)
-		{
-			size_t index = n;//(int)(floor(n*factor));
-			memcpy((char*)outputBuffer + n*bytesPerSample_*channels_, (char*)(chunk->wireChunk->payload) + index*bytesPerSample_*channels_, bytesPerSample_*channels_);
-//			memcpy((char*)outputBuffer + n*bytesPerSample_*channels_, (char*)(chunk->wireChunk->payload) + index*bytesPerSample_*channels_, bytesPerSample_*channels_);
-		}
-		free(buffer);
-*/
 	}
 
 	return tp;
@@ -114,21 +101,20 @@ correction = 0;
 
 	time_point_ms tp = chunk->timePoint();
 	int read = 0;
-	int toRead = framesPerBuffer / 1.5;
+	int toRead = framesPerBuffer;
 	char* buffer;
 //cout << "Framesize: " << chunk->frameSize_ << "\n";
-	buffer = (char*)malloc(toRead * chunk->frameSize_);
+	buffer = (char*)outputBuffer;//malloc(toRead * chunk->frameSize_);
 
-	do
+	while (read < toRead)
 	{
-		read += chunk->read(buffer + read, toRead - read);
+		read += chunk->read(outputBuffer + frameSize_*read, toRead - read);
 		if (chunk->isEndOfChunk())
 			chunk = chunks.pop();
 	}
-	while (read < toRead);
 
-		float factor = (float)toRead / framesPerBuffer;//(float)(framesPerBuffer*channels_);
-//float factor = 0.9;
+//		float factor = (float)toRead / framesPerBuffer;//(float)(framesPerBuffer*channels_);
+float factor = 1.0;
 //		std::cout << "correction: " << correction << ", factor: " << factor << "\n";
 		float idx = 0;
 		for (size_t n=0; n<framesPerBuffer; ++n)

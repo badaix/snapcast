@@ -31,6 +31,7 @@ private:
 	size_t hz_;
 	size_t channels_;
 	size_t bytesPerSample_;
+	size_t frameSize_;
 
 	long lastTick;
 	int sleep;
