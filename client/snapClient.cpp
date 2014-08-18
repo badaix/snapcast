@@ -29,7 +29,24 @@ namespace po = boost::program_options;
 
 
 int deviceIdx;  
+uint16_t sampleRate;
+short channels;
+uint16_t bps;
 Stream* stream;
+
+
+
+void socketRead(tcp::socket* socket, void* to, size_t bytes)
+{
+	size_t toRead = bytes;
+	size_t len = 0;
+	do 
+	{
+		len += socket->read_some(boost::asio::buffer((char*)to + len, toRead));
+		toRead = bytes - len;
+	}
+	while (toRead > 0);
+}
 
 
 
@@ -51,17 +68,25 @@ cout << "connect\n";
 				s.connect(*iterator);
 				while (true)
 				{
-					void* wireChunk = (void*)malloc(sizeof(WireChunk));
+					WireChunk* wireChunk = new WireChunk();
+					socketRead(&s, wireChunk, Chunk::getHeaderSize());
+//					cout << "WireChunk length: " << wireChunk->length << ", sec: " << wireChunk->tv_sec << ", usec: " << wireChunk->tv_usec << "\n";
+
+					wireChunk->payload = (char*)malloc(wireChunk->length);
+					socketRead(&s, wireChunk->payload, wireChunk->length);
+
+/*					void* wireChunk = (void*)malloc(sizeof(WireChunk));
 					size_t toRead = sizeof(WireChunk);
 					size_t len = 0;
 					do 
 					{
 						len += s.read_some(boost::asio::buffer((char*)wireChunk + len, toRead));
 						toRead = sizeof(WireChunk) - len;
-//						cout << "len: " << len << "\ttoRead: " << toRead << "\n";
+						cout << "len: " << len << "\ttoRead: " << toRead << "\n";
 					}
 					while (toRead > 0);
-					stream->addChunk(new Chunk((WireChunk*)wireChunk));
+*/					
+					stream->addChunk(new Chunk(sampleRate, channels, bps, wireChunk));
 				}
 			}
 			catch (std::exception& e)
@@ -104,13 +129,11 @@ static int paStreamCallback( const void *inputBuffer, void *outputBuffer,
 
 
 
-PaStream* initAudio(PaError& err)
+PaStream* initAudio(PaError& err, uint16_t sampleRate, short channels, uint16_t bps)
 {
     PaStreamParameters outputParameters;
     PaStream *paStream = NULL;
-//    PaError err;
-    
-    printf("PortAudio Test: output sine wave. SR = %d, BufSize = %d\n", SAMPLE_RATE, FRAMES_PER_BUFFER);
+//    printf("PortAudio Test: output sine wave. SR = %d, BufSize = %d\n", SAMPLE_RATE, FRAMES_PER_BUFFER);
     
     err = Pa_Initialize();
     if( err != paNoError ) goto error;
@@ -137,8 +160,16 @@ PaStream* initAudio(PaError& err)
       fprintf(stderr,"Error: No default output device.\n");
       goto error;
     }
-    outputParameters.channelCount = CHANNELS;       /* stereo output */
-    outputParameters.sampleFormat = paInt16; /* 32 bit floating point output */
+    outputParameters.channelCount = channels;       /* stereo output */
+	if (bps == 16)
+	    outputParameters.sampleFormat = paInt16; /* 32 bit floating point output */
+	else if (bps == 8)
+	    outputParameters.sampleFormat = paUInt8; /* 32 bit floating point output */
+	else if (bps == 32)
+	    outputParameters.sampleFormat = paInt32; /* 32 bit floating point output */
+	else if (bps == 24)
+	    outputParameters.sampleFormat = paInt24; /* 32 bit floating point output */
+
     outputParameters.suggestedLatency = Pa_GetDeviceInfo( outputParameters.device )->defaultHighOutputLatency;
     outputParameters.hostApiSpecificStreamInfo = NULL;
 	std::cerr << "HighLatency: " << outputParameters.suggestedLatency << "\t LowLatency: " << Pa_GetDeviceInfo( outputParameters.device )->defaultLowOutputLatency << "\n";
@@ -146,7 +177,7 @@ PaStream* initAudio(PaError& err)
               &paStream,
               NULL, /* no input */
               &outputParameters,
-              SAMPLE_RATE,
+              sampleRate,
               paFramesPerBufferUnspecified, //FRAMES_PER_BUFFER,
               paClipOff,      /* we won't output out of range samples so don't bother clipping them */
               paStreamCallback,
@@ -191,6 +222,9 @@ int main (int argc, char *argv[])
         ("port,p", po::value<size_t>(&port)->default_value(98765), "port where the server listens on")
         ("ip,i", po::value<string>(&ip)->default_value("192.168.0.2"), "server IP")
         ("soundcard,s", po::value<int>(&deviceIdx)->default_value(-1), "index of the soundcard")
+        ("channels,c", po::value<short>(&channels)->default_value(2), "number of channels")
+        ("samplerate,r", po::value<uint16_t>(&sampleRate)->default_value(48000), "sample rate")
+        ("bps", po::value<uint16_t>(&bps)->default_value(16), "bit per sample")
         ("buffer,b", po::value<int>(&bufferMs)->default_value(300), "buffer size [ms]")
         ("daemon,d", po::bool_switch(&runAsDaemon)->default_value(false), "daemonize")
     ;
@@ -212,10 +246,10 @@ int main (int argc, char *argv[])
 		std::clog << kLogNotice << "daemon started" << std::endl;
 	}
 
-	stream = new Stream();
+	stream = new Stream(sampleRate, channels, bps);
 	stream->setBufferLen(bufferMs);
 	PaError paError;
-	PaStream* paStream = initAudio(paError);
+	PaStream* paStream = initAudio(paError, sampleRate, channels, bps);
 	stream->setLatency(1000*Pa_GetStreamInfo(paStream)->outputLatency);
 
 	std::thread playerThread(player, ip, port);

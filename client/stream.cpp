@@ -5,7 +5,7 @@
 
 using namespace std;
 
-Stream::Stream() : sleep(0), median(0), shortMedian(0), lastUpdate(0), latencyMs(0)
+Stream::Stream(size_t hz, size_t channels, size_t bps) : hz_(hz), channels_(channels), bytesPerSample_(bps/8), sleep(0), median(0), shortMedian(0), lastUpdate(0), latencyMs(0)
 {
 	pBuffer = new DoubleBuffer<int>(1000);
 	pShortBuffer = new DoubleBuffer<int>(200);
@@ -25,16 +25,17 @@ void Stream::setBufferLen(size_t bufferLenMs)
 
 void Stream::addChunk(Chunk* chunk)
 {
-	while (chunks.size() * WIRE_CHUNK_MS > 10000)
+//	cout << "new chunk: " << chunk->getDuration() << "\n";
+	while (chunks.size() * chunk->getDuration() > 10000)
 		chunks.pop();
 	chunks.push(shared_ptr<Chunk>(chunk));
 }
 
 
 
-void Stream::getSilentPlayerChunk(short* outputBuffer, unsigned long framesPerBuffer)
+void Stream::getSilentPlayerChunk(void* outputBuffer, unsigned long framesPerBuffer)
 {
-	memset(outputBuffer, 0, sizeof(short)*framesPerBuffer * CHANNELS);
+	memset(outputBuffer, 0, framesPerBuffer * channels_ * bytesPerSample_);//CHANNELS);
 }
 
 
@@ -44,25 +45,25 @@ void Stream::setLatency(size_t latency)
 }
 
 
-time_point_ms Stream::getNextPlayerChunk(short* outputBuffer, unsigned long framesPerBuffer, int correction)
+time_point_ms Stream::getNextPlayerChunk(void* outputBuffer, unsigned long framesPerBuffer, int correction)
 {
 	if (!chunk)
 		chunk = chunks.pop();
 
 	time_point_ms tp = chunk->timePoint();
 	int read = 0;
-	int toRead = framesPerBuffer*CHANNELS + correction*PLAYER_CHUNK_MS_SIZE;
-	short* buffer;
+	int toRead = framesPerBuffer*channels_ + correction*(hz_*channels_/1000);
+	char* buffer;
 
 	if (correction != 0)
 	{
-		int msBuffer = floor(framesPerBuffer*2 / PLAYER_CHUNK_MS_SIZE);
+		int msBuffer = floor(framesPerBuffer*2 / (hz_*channels_/1000));
 		if (abs(correction) > msBuffer / 2)
 			correction = copysign(msBuffer / 2, correction);
-		buffer = (short*)malloc(toRead * sizeof(short));
+		buffer = (char*)malloc(toRead * bytesPerSample_);
 	}
 	else
-		buffer = outputBuffer;
+		buffer = (char*)outputBuffer;
 
 	while (read < toRead)
 	{
@@ -73,20 +74,72 @@ time_point_ms Stream::getNextPlayerChunk(short* outputBuffer, unsigned long fram
 
 	if (correction != 0)
 	{
-		float factor = (float)toRead / (float)(framesPerBuffer*CHANNELS);
+		float factor = (float)toRead / framesPerBuffer;//(float)(framesPerBuffer*channels_);
+//float factor = 0.9;
+//		std::cout << "correction: " << correction << ", factor: " << factor << "\n";
+		float idx = 0;
+		for (size_t n=0; n<framesPerBuffer; ++n)
+		{
+			size_t index(floor(idx));// = (int)(ceil(n*factor));
+//cout << "toRead: " << toRead << ", n: " << n << ", idx: " << index << "\n";
+			memcpy((char*)outputBuffer + n*chunk->frameSize_, buffer + index*chunk->frameSize_, chunk->frameSize_);
+			idx += factor;
+//			memcpy((char*)outputBuffer + n*bytesPerSample_*channels_, (char*)(chunk->wireChunk->payload) + index*bytesPerSample_*channels_, bytesPerSample_*channels_);
+		}
+		free(buffer);
+/*		float factor = (float)toRead / (float)(framesPerBuffer*channels_);
 		std::cout << "correction: " << correction << ", factor: " << factor << "\n";
 		for (size_t n=0; n<framesPerBuffer; ++n)
 		{
-			size_t index = (int)(floor(n*factor));
-			*(outputBuffer + 2*n) = *(buffer + 2*index);
-			*(outputBuffer + 2*n+1) = *(buffer + 2*index + 1);
+			size_t index = n;//(int)(floor(n*factor));
+			memcpy((char*)outputBuffer + n*bytesPerSample_*channels_, (char*)(chunk->wireChunk->payload) + index*bytesPerSample_*channels_, bytesPerSample_*channels_);
+//			memcpy((char*)outputBuffer + n*bytesPerSample_*channels_, (char*)(chunk->wireChunk->payload) + index*bytesPerSample_*channels_, bytesPerSample_*channels_);
 		}
 		free(buffer);
-	}
+*/	}
 
 	return tp;
 }
 
+/*
+time_point_ms Stream::getNextPlayerChunk(void* outputBuffer, unsigned long framesPerBuffer, int correction)
+{
+correction = 0;
+	if (!chunk)
+		chunk = chunks.pop();
+
+	time_point_ms tp = chunk->timePoint();
+	int read = 0;
+	int toRead = framesPerBuffer / 1.5;
+	char* buffer;
+//cout << "Framesize: " << chunk->frameSize_ << "\n";
+	buffer = (char*)malloc(toRead * chunk->frameSize_);
+
+	do
+	{
+		read += chunk->read(buffer + read, toRead - read);
+		if (chunk->isEndOfChunk())
+			chunk = chunks.pop();
+	}
+	while (read < toRead);
+
+		float factor = (float)toRead / framesPerBuffer;//(float)(framesPerBuffer*channels_);
+//float factor = 0.9;
+//		std::cout << "correction: " << correction << ", factor: " << factor << "\n";
+		float idx = 0;
+		for (size_t n=0; n<framesPerBuffer; ++n)
+		{
+			size_t index(floor(idx));// = (int)(ceil(n*factor));
+//cout << "toRead: " << toRead << ", n: " << n << ", idx: " << index << "\n";
+			memcpy((char*)outputBuffer + n*chunk->frameSize_, buffer + index*chunk->frameSize_, chunk->frameSize_);
+			idx += factor;
+//			memcpy((char*)outputBuffer + n*bytesPerSample_*channels_, (char*)(chunk->wireChunk->payload) + index*bytesPerSample_*channels_, bytesPerSample_*channels_);
+		}
+		free(buffer);
+
+	return tp;
+}
+*/
 
 void Stream::updateBuffers(int age)
 {
@@ -104,10 +157,11 @@ void Stream::resetBuffers()
 }
 
 
-void Stream::getPlayerChunk(short* outputBuffer, double outputBufferDacTime, unsigned long framesPerBuffer)
+void Stream::getPlayerChunk(void* outputBuffer, double outputBufferDacTime, unsigned long framesPerBuffer)
 {
 //cout << "framesPerBuffer: " << framesPerBuffer << "\tms: " << framesPerBuffer*2 / PLAYER_CHUNK_MS_SIZE << "\t" << PLAYER_CHUNK_SIZE << "\n";
-	int msBuffer = floor(framesPerBuffer*2 / PLAYER_CHUNK_MS_SIZE);
+sleep = 0;
+	int msBuffer = floor(framesPerBuffer*2 / (hz_*channels_/1000));
 
 	int ticks = 0;
 	long currentTick = getTickCount();
@@ -191,7 +245,7 @@ void Stream::getPlayerChunk(short* outputBuffer, double outputBufferDacTime, uns
 		} 
 		else if (pMiniBuffer->full() && (abs(pMiniBuffer->median()) > 50))
 		{
-			cout << "pMiniBuffer->full() && (abs(pMiniBuffer->mean()) > 50): " << pMiniBuffer->median() << "\n";
+//			cout << "pMiniBuffer->full() && (abs(pMiniBuffer->mean()) > 50): " << pMiniBuffer->median() << "\n";
 			sleep = pMiniBuffer->mean();
 		}
 	}
