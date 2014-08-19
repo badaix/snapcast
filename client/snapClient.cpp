@@ -239,12 +239,14 @@ int main (int argc, char *argv[])
         return 1;
     }
 
+	std::clog.rdbuf(new Log("snapclient", LOG_DAEMON));
 	if (runAsDaemon)
 	{
 		daemonize();
-		std::clog.rdbuf(new Log("snapserver", LOG_DAEMON));
 		std::clog << kLogNotice << "daemon started" << std::endl;
 	}
+
+	std::clog << kLogNotice << "test" << std::endl;
 
 	stream = new Stream(sampleRate, channels, bps);
 	stream->setBufferLen(bufferMs);

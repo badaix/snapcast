@@ -2,6 +2,7 @@
 #include <iostream>
 #include <string.h>
 #include <unistd.h>
+#include "common/log.h"
 
 using namespace std;
 
@@ -129,6 +130,7 @@ void Stream::getPlayerChunk(void* outputBuffer, double outputBufferDacTime, unsi
 	int correction = 0;
 	if (sleep != 0)
 	{
+	std::clog << kLogNotice << "sleep: " << sleep << std::endl;
 		resetBuffers();
 		if (sleep < -10)
 		{
