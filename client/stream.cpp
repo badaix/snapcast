@@ -154,7 +154,7 @@ void Stream::getPlayerChunk(void* outputBuffer, double outputBufferDacTime, unsi
 //				if (sleep < msBuffer / 2)
 //					break;
 			}
-//			sleep = 0;
+			sleep = 0;
 			return;
 		}
 		else if (sleep < 0)
