@@ -92,46 +92,6 @@ time_point_ms Stream::getNextPlayerChunk(void* outputBuffer, unsigned long frame
 
 
 
-/*
-time_point_ms Stream::getNextPlayerChunk(void* outputBuffer, unsigned long framesPerBuffer, int correction)
-{
-correction = 0;
-	if (!chunk)
-		chunk = chunks.pop();
-
-	time_point_ms tp = chunk->timePoint();
-	int read = 0;
-	int toRead = framesPerBuffer;
-	char* buffer;
-//cout << "Framesize: " << chunk->frameSize_ << "\n";
-	buffer = (char*)outputBuffer;//malloc(toRead * chunk->frameSize_);
-
-	while (read < toRead)
-	{
-		read += chunk->read(outputBuffer + frameSize_*read, toRead - read);
-		if (chunk->isEndOfChunk())
-			chunk = chunks.pop();
-	}
-
-//		float factor = (float)toRead / framesPerBuffer;//(float)(framesPerBuffer*channels_);
-float factor = 1.0;
-//		std::cout << "correction: " << correction << ", factor: " << factor << "\n";
-		float idx = 0;
-		for (size_t n=0; n<framesPerBuffer; ++n)
-		{
-			size_t index(floor(idx));// = (int)(ceil(n*factor));
-//cout << "toRead: " << toRead << ", n: " << n << ", idx: " << index << "\n";
-			memcpy((char*)outputBuffer + n*chunk->frameSize_, buffer + index*chunk->frameSize_, chunk->frameSize_);
-			idx += factor;
-//			memcpy((char*)outputBuffer + n*bytesPerSample_*channels_, (char*)(chunk->wireChunk->payload) + index*bytesPerSample_*channels_, bytesPerSample_*channels_);
-		}
-		free(buffer);
-
-	return tp;
-}
-*/
-
-
 void Stream::updateBuffers(int age)
 {
 	pBuffer->add(age);
@@ -186,11 +146,13 @@ void Stream::getPlayerChunk(void* outputBuffer, double outputBufferDacTime, unsi
 			while (true)// (int i=0; i<(int)(round((float)sleep / (float)PLAYER_CHUNK_MS)) + 1; ++i)
 			{
 				int age = Chunk::getAge(getNextPlayerChunk(outputBuffer, framesPerBuffer)) - bufferMs + latencyMs;
-				sleep -= msBuffer;
+				if (age < 0)
+					break;
+//				sleep -= msBuffer;
 //		age += 4*cardBuffer;
 //				cout << "age: " << age << ", msBuffer: " << msBuffer << "\n";
-				if (sleep < msBuffer / 2)
-					break;
+//				if (sleep < msBuffer / 2)
+//					break;
 			}
 //			sleep = 0;
 			return;
