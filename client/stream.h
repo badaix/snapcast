@@ -18,13 +18,14 @@ class Stream
 public:
 	Stream(size_t hz, size_t channels, size_t bps);
 	void addChunk(Chunk* chunk);
+	void clearChunks();
 	void getPlayerChunk(void* outputBuffer, double outputBufferDacTime, unsigned long framesPerBuffer);
 	void setBufferLen(size_t bufferLenMs);
 	void setLatency(size_t latency);
 
 private:
 	time_point_ms getNextPlayerChunk(void* outputBuffer, unsigned long framesPerBuffer, int correction = 0);
-	void getSilentPlayerChunk(void* outputBuffer, unsigned long framesPerBuffer);
+	time_point_ms getSilentPlayerChunk(void* outputBuffer, unsigned long framesPerBuffer);
 	void updateBuffers(int age);
 	void resetBuffers();
 

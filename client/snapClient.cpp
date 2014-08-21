@@ -63,9 +63,14 @@ void player(const std::string& ip, int port)
 		{
 			try
 			{
-cout << "connect\n";
 				tcp::socket s(io_service);
 				s.connect(*iterator);
+				struct timeval tv;
+				tv.tv_sec  = 5; 
+				tv.tv_usec = 0;         
+				setsockopt(s.native(), SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
+
+				std::clog << kLogNotice << "connected to " << ip << ":" << port << std::endl;
 				while (true)
 				{
 					WireChunk* wireChunk = new WireChunk();
@@ -89,16 +94,17 @@ cout << "connect\n";
 					stream->addChunk(new Chunk(sampleRate, channels, bps, wireChunk));
 				}
 			}
-			catch (std::exception& e)
+			catch (const std::exception& e)
 			{
-				std::cerr << "Exception: " << e.what() << "\n";
+				std::clog << kLogNotice << "Exception: " << e.what() << ", trying to reconnect" << std::endl;
+				stream->clearChunks();
 				usleep(500*1000);
 			}
 		}
 	}
-	catch (std::exception& e)
+	catch (const std::exception& e)
 	{
-		std::cerr << "Exception: " << e.what() << "\n";
+		std::clog << kLogNotice << "Exception: " << e.what() << std::endl;
 	}
 }
 
@@ -257,7 +263,7 @@ int main (int argc, char *argv[])
 	std::thread playerThread(player, ip, port);
 	
 	std::string cmd;
-/*	while (true && (argc > 3))
+	while (true && (argc > 3))
 	{
 		std::cout << "> ";
 		std::getline(std::cin, cmd);
@@ -273,7 +279,7 @@ int main (int argc, char *argv[])
 			stream->setBufferLen(atoi(cmd.c_str()));
 		}
 	}
-*/
+
 	playerThread.join();
 
     return 0;
