@@ -122,9 +122,14 @@ void Stream::resetBuffers()
 
 void Stream::getPlayerChunk(void* outputBuffer, double outputBufferDacTime, unsigned long framesPerBuffer)
 {
+	if (outputBufferDacTime > 1)
+		outputBufferDacTime = 0;
+	else
+		outputBufferDacTime *= 1000;
+
 //cout << "framesPerBuffer: " << framesPerBuffer << "\tms: " << framesPerBuffer*2 / PLAYER_CHUNK_MS_SIZE << "\t" << PLAYER_CHUNK_SIZE << "\n";
-//	int msBuffer = floor(framesPerBuffer / (hz_/1000));
-//cout << msBuffer << " ms, " << framesPerBuffer << "\n";
+int msBuffer = framesPerBuffer / (hz_/1000);
+//cout << msBuffer << " ms, " << framesPerBuffer << "\t" << hz_/1000 << "\n";
 	int ticks = 0;
 	long currentTick = getTickCount();
 	if (lastTick == 0)
@@ -144,7 +149,7 @@ void Stream::getPlayerChunk(void* outputBuffer, double outputBufferDacTime, unsi
 		resetBuffers();
 		if (sleep < -10)
 		{
-			sleep = Chunk::getAge(getSilentPlayerChunk(outputBuffer, framesPerBuffer)) - bufferMs + latencyMs;
+			sleep = Chunk::getAge(getSilentPlayerChunk(outputBuffer, framesPerBuffer)) - bufferMs + latencyMs + outputBufferDacTime;
 			std::cerr << "Sleep: " << sleep << ", chunks: " << chunks.size() << "\n";
 //	std::clog << kLogNotice << "sleep: " << sleep << std::endl;
 //			if (sleep > -msBuffer/2)
@@ -156,7 +161,7 @@ void Stream::getPlayerChunk(void* outputBuffer, double outputBufferDacTime, unsi
 //			std::clog << kLogNotice << "sleep: " << sleep << std::endl;
 			while (true)
 			{
-				sleep = Chunk::getAge(getNextPlayerChunk(outputBuffer, framesPerBuffer)) - bufferMs + latencyMs;
+				sleep = Chunk::getAge(getNextPlayerChunk(outputBuffer, framesPerBuffer)) - bufferMs + latencyMs + outputBufferDacTime;
 				usleep(100);
 //				std::clog << kLogNotice << "age: " << age << std::endl;
 				if (sleep < 0)
@@ -179,11 +184,8 @@ void Stream::getPlayerChunk(void* outputBuffer, double outputBufferDacTime, unsi
 	
 
 
-	int age = Chunk::getAge(getNextPlayerChunk(outputBuffer, framesPerBuffer, correction)) - bufferMs + latencyMs;// + outputBufferDacTime*1000;
+	int age = Chunk::getAge(getNextPlayerChunk(outputBuffer, framesPerBuffer, correction)) - bufferMs + latencyMs + outputBufferDacTime;// + outputBufferDacTime*1000;
 
-
-	if (outputBufferDacTime < 1)
-		age += outputBufferDacTime*1000;
 
 //	if (pCardBuffer->full())
 //		age += 4*cardBuffer;
@@ -226,7 +228,7 @@ void Stream::getPlayerChunk(void* outputBuffer, double outputBufferDacTime, unsi
 		lastUpdate = now;
 		median = pBuffer->median();
 		shortMedian = pShortBuffer->median();
-		std::cerr << "Chunk: " << age << "\t" << pMiniBuffer->median() << "\t" << shortMedian << "\t" << median << "\t" << pBuffer->size() << "\t" << cardBuffer << "\t" << outputBufferDacTime*1000 << "\n";
+		std::cerr << "Chunk: " << age << "\t" << pMiniBuffer->median() << "\t" << shortMedian << "\t" << median << "\t" << pBuffer->size() << "\t" << cardBuffer << "\t" << outputBufferDacTime << "\n";
 	}
 }
 

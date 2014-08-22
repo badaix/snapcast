@@ -22,6 +22,14 @@ public:
 	void getPlayerChunk(void* outputBuffer, double outputBufferDacTime, unsigned long framesPerBuffer);
 	void setBufferLen(size_t bufferLenMs);
 	void setLatency(size_t latency);
+	size_t getSampleRate() const
+	{
+		return hz_;
+	}
+	size_t getChannels() const
+	{
+		return channels_;
+	}
 
 private:
 	time_point_ms getNextPlayerChunk(void* outputBuffer, unsigned long framesPerBuffer, int correction = 0);
