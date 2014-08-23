@@ -3,7 +3,7 @@
 
 #include <chrono>
 #include <cstdlib>
-
+#include "common/sampleFormat.h"
 
 
 typedef std::chrono::time_point<std::chrono::high_resolution_clock, std::chrono::milliseconds> time_point_ms;
@@ -22,19 +22,11 @@ struct WireChunk
 class Chunk
 {
 public:
-	Chunk(size_t hz, size_t channels, size_t bitPerSample, WireChunk* _wireChunk);
-	Chunk(size_t hz, size_t channels, size_t bitPerSample, size_t ms);
+	Chunk(const SampleFormat& sampleFormat, WireChunk* _wireChunk);
+	Chunk(const SampleFormat& sampleFormat, size_t ms);
 	~Chunk();
 
-/*	static WireChunk* make_chunk(size_t size, size_t bytesPerSample)
-	{
-		WireChunk* wireChunk = new WireChunk(bytesPerSample*size);
-		wireChunk->length = bytesPerSample*size;
-		wireChunk->payload = (char*)malloc(wireChunk->length);
-		return wireChunk;
-	}
-*/
-	static size_t getHeaderSize()
+	static inline size_t getHeaderSize()
 	{
 		return sizeof(WireChunk::tv_sec) + sizeof(WireChunk::tv_usec) + sizeof(WireChunk::length);
 	}
@@ -45,7 +37,12 @@ public:
 	inline time_point_ms timePoint() const
 	{
 		time_point_ms tp;
-		return tp + std::chrono::seconds(wireChunk->tv_sec) + std::chrono::milliseconds(wireChunk->tv_usec / 1000) + std::chrono::milliseconds(idx / (hz_/1000));
+		std::chrono::milliseconds::rep relativeIdxTp = ((double)idx / ((double)format.rate/1000.));
+		return 
+			tp + 
+			std::chrono::seconds(wireChunk->tv_sec) + 
+			std::chrono::milliseconds(wireChunk->tv_usec / 1000) + 
+			std::chrono::milliseconds(relativeIdxTp);
 	}
 
 	template<typename T>
@@ -73,14 +70,11 @@ public:
 	double getDuration() const;
 
 	WireChunk* wireChunk;
-	size_t hz_;
-	size_t channels_;
-	size_t bytesPerSample_;
-	size_t frameSize_;
+	const SampleFormat& format;
 
 private:
-
-	int32_t idx;
+	SampleFormat format_;
+	uint32_t idx;
 };
 
 

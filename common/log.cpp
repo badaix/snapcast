@@ -11,7 +11,10 @@ Log::Log(std::string ident, int facility) {
 
 int Log::sync() {
     if (buffer_.length()) {
-        syslog(priority_, buffer_.c_str());
+		if (priority_ == dbg)
+			std::cout << buffer_.c_str();
+		else
+	        syslog(priority_, "%s", buffer_.c_str());
         buffer_.erase();
         priority_ = LOG_DEBUG; // default to debug for each message
     }
@@ -29,6 +32,8 @@ int Log::overflow(int c) {
 
 std::ostream& operator<< (std::ostream& os, const LogPriority& log_priority) {
     static_cast<Log *>(os.rdbuf())->priority_ = (int)log_priority;
+	if (log_priority == dbg)
+		os.flush();
     return os;
 }
 

@@ -19,6 +19,7 @@
 #include <boost/program_options.hpp>
 #include <alsa/asoundlib.h>
 
+#include "common/sampleFormat.h"
 #include "common/chunk.h"
 #include "common/utils.h"
 #include "common/log.h"
@@ -30,9 +31,6 @@ namespace po = boost::program_options;
 
 
 int deviceIdx;  
-uint16_t sampleRate;
-short channels;
-uint16_t bps;
 Stream* stream;
 
 #define PCM_DEVICE "default"
@@ -52,7 +50,7 @@ void socketRead(tcp::socket* socket, void* to, size_t bytes)
 
 
 
-void receiver(const std::string& ip, int port) 
+void receiver(const SampleFormat& format, const std::string& ip, int port) 
 {
 	try
 	{
@@ -78,22 +76,10 @@ void receiver(const std::string& ip, int port)
 					WireChunk* wireChunk = new WireChunk();
 					socketRead(&s, wireChunk, Chunk::getHeaderSize());
 //					cout << "WireChunk length: " << wireChunk->length << ", sec: " << wireChunk->tv_sec << ", usec: " << wireChunk->tv_usec << "\n";
-
 					wireChunk->payload = (char*)malloc(wireChunk->length);
 					socketRead(&s, wireChunk->payload, wireChunk->length);
 
-/*					void* wireChunk = (void*)malloc(sizeof(WireChunk));
-					size_t toRead = sizeof(WireChunk);
-					size_t len = 0;
-					do 
-					{
-						len += s.read_some(boost::asio::buffer((char*)wireChunk + len, toRead));
-						toRead = sizeof(WireChunk) - len;
-						cout << "len: " << len << "\ttoRead: " << toRead << "\n";
-					}
-					while (toRead > 0);
-*/					
-					stream->addChunk(new Chunk(sampleRate, channels, bps, wireChunk));
+					stream->addChunk(new Chunk(format, wireChunk));
 				}
 			}
 			catch (const std::exception& e)
@@ -113,58 +99,60 @@ void receiver(const std::string& ip, int port)
 
 void player(Stream* stream)
 {
-	unsigned int pcm, tmp, dir, rate;
-	int channels, seconds;
+	unsigned int pcm, tmp, rate;
+	int channels;
 	snd_pcm_t *pcm_handle;
 	snd_pcm_hw_params_t *params;
 	snd_pcm_uframes_t frames;
 	char *buff;
 	int buff_size;
 
-	rate 	 = stream->getSampleRate();
-	channels = stream->getChannels();
+	rate 	 = stream->format.rate;
+	channels = stream->format.channels;
+
 
 	/* Open the PCM device in playback mode */
-	if (pcm = snd_pcm_open(&pcm_handle, PCM_DEVICE,
-					SND_PCM_STREAM_PLAYBACK, 0) < 0) 
-		printf("ERROR: Can't open \"%s\" PCM device. %s\n",
-					PCM_DEVICE, snd_strerror(pcm));
+	if ((pcm = snd_pcm_open(&pcm_handle, PCM_DEVICE, SND_PCM_STREAM_PLAYBACK, 0)) < 0) 
+		cout << "ERROR: Can't open " << PCM_DEVICE << " PCM device. " << snd_strerror(pcm) << "\n";
 
+/*	struct snd_pcm_playback_info_t pinfo;
+	if ( (pcm = snd_pcm_playback_info( pcm_handle, &pinfo )) < 0 )
+		fprintf( stderr, "Error: playback info error: %s\n", snd_strerror( err ) );
+	printf("buffer: '%d'\n", pinfo.buffer_size);
+*/
 	/* Allocate parameters object and fill it with default values*/
 	snd_pcm_hw_params_alloca(&params);
 
 	snd_pcm_hw_params_any(pcm_handle, params);
 
 	/* Set parameters */
-	if (pcm = snd_pcm_hw_params_set_access(pcm_handle, params,
-					SND_PCM_ACCESS_RW_INTERLEAVED) < 0) 
-		printf("ERROR: Can't set interleaved mode. %s\n", snd_strerror(pcm));
+	if ((pcm = snd_pcm_hw_params_set_access(pcm_handle, params,	SND_PCM_ACCESS_RW_INTERLEAVED)) < 0)
+		cout << "ERROR: Can't set interleaved mode. " << snd_strerror(pcm) << "\n";
 
-	if (pcm = snd_pcm_hw_params_set_format(pcm_handle, params,
-						SND_PCM_FORMAT_S16_LE) < 0) 
-		printf("ERROR: Can't set format. %s\n", snd_strerror(pcm));
+	if ((pcm = snd_pcm_hw_params_set_format(pcm_handle, params, SND_PCM_FORMAT_S16_LE)) < 0) 
+		cout << "ERROR: Can't set format. " << snd_strerror(pcm) << "\n";
 
-	if (pcm = snd_pcm_hw_params_set_channels(pcm_handle, params, channels) < 0) 
-		printf("ERROR: Can't set channels number. %s\n", snd_strerror(pcm));
+	if ((pcm = snd_pcm_hw_params_set_channels(pcm_handle, params, channels)) < 0)
+		cout << "ERROR: Can't set channels number. " << snd_strerror(pcm) << "\n";
 
-	if (pcm = snd_pcm_hw_params_set_rate_near(pcm_handle, params, &rate, 0) < 0) 
-		printf("ERROR: Can't set rate. %s\n", snd_strerror(pcm));
+	if ((pcm = snd_pcm_hw_params_set_rate_near(pcm_handle, params, &rate, 0)) < 0) 
+		cout << "ERROR: Can't set rate. " << snd_strerror(pcm) << "\n";
 
-	long unsigned int periodsize = 2*rate / 50;
-	if (pcm = snd_pcm_hw_params_set_buffer_size_near(pcm_handle, params, &periodsize) < 0)
-                printf("Unable to set buffer size %li: %s\n", (long int)periodsize, snd_strerror(pcm));
+	long unsigned int periodsize = 2*rate / 100;
+	if ((pcm = snd_pcm_hw_params_set_buffer_size_near(pcm_handle, params, &periodsize)) < 0)
+		cout << "Unable to set buffer size " << (long int)periodsize << ": " <<  snd_strerror(pcm) << "\n";
 
 	/* Write parameters */
-	if (pcm = snd_pcm_hw_params(pcm_handle, params) < 0)
-		printf("ERROR: Can't set harware parameters. %s\n", snd_strerror(pcm));
+	if ((pcm = snd_pcm_hw_params(pcm_handle, params)) < 0)
+		cout << "ERROR: Can't set harware parameters. " << snd_strerror(pcm) << "\n";
 
 	/* Resume information */
-	printf("PCM name: '%s'\n", snd_pcm_name(pcm_handle));
+	cout << "PCM name: " << snd_pcm_name(pcm_handle) << "\n";
 
-	printf("PCM state: %s\n", snd_pcm_state_name(snd_pcm_state(pcm_handle)));
+	cout << "PCM state: " << snd_pcm_state_name(snd_pcm_state(pcm_handle)) << "\n";
 
 	snd_pcm_hw_params_get_channels(params, &tmp);
-	printf("channels: %i ", tmp);
+	cout << "channels: " << tmp << "\n";
 
 	if (tmp == 1)
 		printf("(mono)\n");
@@ -172,19 +160,17 @@ void player(Stream* stream)
 		printf("(stereo)\n");
 
 	snd_pcm_hw_params_get_rate(params, &tmp, 0);
-	printf("rate: %d bps\n", tmp);
-
-	printf("seconds: %d\n", seconds);	
+	cout << "rate: " << tmp << " bps\n";
 
 	/* Allocate buffer to hold single period */
 	snd_pcm_hw_params_get_period_size(params, &frames, 0);
-	printf("frames: %d\n", frames);
+	cout << "frames: " << frames << "\n";
 
 	buff_size = frames * channels * 2 /* 2 -> sample size */;
 	buff = (char *) malloc(buff_size);
 
 	snd_pcm_hw_params_get_period_time(params, &tmp, NULL);
-	printf("period time: %d\n", tmp);
+	cout << "period time: " << tmp << "\n";
 
 	while (true)
 	{
@@ -197,9 +183,9 @@ void player(Stream* stream)
 		snd_pcm_sframes_t delay; 
 		snd_pcm_avail_delay(pcm_handle, &avail, &delay);
 
-		stream->getPlayerChunk(buff, (float)delay / 48000.f, frames);
+		stream->getPlayerChunk(buff, (float)delay / stream->format.msRate(), frames);
 
-		if (pcm = snd_pcm_writei(pcm_handle, buff, frames) == -EPIPE) {
+		if ((pcm = snd_pcm_writei(pcm_handle, buff, frames)) == -EPIPE) {
 			printf("XRUN.\n");
 			snd_pcm_prepare(pcm_handle);
 		} else if (pcm < 0) {
@@ -324,15 +310,14 @@ int main (int argc, char *argv[])
 	int bufferMs;
 	size_t port;	
 	bool runAsDaemon;
+	string sampleFormat;
     po::options_description desc("Allowed options");
     desc.add_options()
         ("help,h", "produce help message")
         ("port,p", po::value<size_t>(&port)->default_value(98765), "port where the server listens on")
         ("ip,i", po::value<string>(&ip)->default_value("192.168.0.2"), "server IP")
         ("soundcard,s", po::value<int>(&deviceIdx)->default_value(-1), "index of the soundcard")
-        ("channels,c", po::value<short>(&channels)->default_value(2), "number of channels")
-        ("samplerate,r", po::value<uint16_t>(&sampleRate)->default_value(48000), "sample rate")
-        ("bps", po::value<uint16_t>(&bps)->default_value(16), "bit per sample")
+        ("sampleformat,f", po::value<string>(&sampleFormat)->default_value("48000:16:2"), "sample format")
         ("buffer,b", po::value<int>(&bufferMs)->default_value(300), "buffer size [ms]")
         ("daemon,d", po::bool_switch(&runAsDaemon)->default_value(false), "daemonize")
     ;
@@ -354,35 +339,15 @@ int main (int argc, char *argv[])
 		std::clog << kLogNotice << "daemon started" << std::endl;
 	}
 
-	std::clog << kLogNotice << "test" << std::endl;
-
-	stream = new Stream(sampleRate, channels, bps);
+	stream = new Stream(SampleFormat(sampleFormat));
 	stream->setBufferLen(bufferMs);
 //	PaError paError;
 //	PaStream* paStream = initAudio(paError, sampleRate, channels, bps);
 //	stream->setLatency(1000*Pa_GetStreamInfo(paStream)->outputLatency);
 
-	std::thread receiverThread(receiver, ip, port);
+	std::thread receiverThread(receiver, stream->format, ip, port);
 	std::thread playerThread(player, stream);
 	
-	std::string cmd;
-	while (true && (argc > 3))
-	{
-		std::cout << "> ";
-		std::getline(std::cin, cmd);
-//		line = fgets( str, 256, stdin );
-//		if (line == NULL)
-//			continue;
-//		std::string cmd(line);
-		std::cerr << "CMD: " << cmd << "\n";
-		if (cmd == "quit")
-			break;
-		else
-		{
-			stream->setBufferLen(atoi(cmd.c_str()));
-		}
-	}
-
 	playerThread.join();
 
     return 0;

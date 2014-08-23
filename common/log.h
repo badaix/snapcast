@@ -5,6 +5,7 @@
 #include <iostream>
 #include <cstring>
 
+#define logd std::clog << dbg
 
 enum LogPriority {
     kLogEmerg   = LOG_EMERG,   // system is unusable
@@ -14,7 +15,8 @@ enum LogPriority {
     kLogWarning = LOG_WARNING, // warning conditions
     kLogNotice  = LOG_NOTICE,  // normal, but significant, condition
     kLogInfo    = LOG_INFO,    // informational message
-    kLogDebug   = LOG_DEBUG    // debug-level message
+    kLogDebug   = LOG_DEBUG,    // debug-level message
+    dbg
 };
 
 std::ostream& operator<< (std::ostream& os, const LogPriority& log_priority);

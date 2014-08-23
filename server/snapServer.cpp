@@ -25,6 +25,7 @@
 #include "common/queue.h"
 #include "common/signalHandler.h"
 #include "common/utils.h"
+#include "common/sampleFormat.h"
 #include <syslog.h>
 
 
@@ -201,9 +202,7 @@ int main(int argc, char* argv[])
 {
 	try
 	{
-		uint16_t sampleRate;
-		short channels;
-		uint16_t bps;
+		string sampleFormat;
 
         size_t port;
         string fifoName;
@@ -213,9 +212,7 @@ int main(int argc, char* argv[])
         desc.add_options()
             ("help,h", "produce help message")
             ("port,p", po::value<size_t>(&port)->default_value(98765), "port to listen on")
-	        ("channels,c", po::value<short>(&channels)->default_value(2), "number of channels")
-	       	("samplerate,r", po::value<uint16_t>(&sampleRate)->default_value(48000), "sample rate")
-    	    ("bps,b", po::value<uint16_t>(&bps)->default_value(16), "bit per sample")
+	        ("sampleformat,f", po::value<string>(&sampleFormat)->default_value("48000:16:2"), "sample format")
             ("fifo,f", po::value<string>(&fifoName)->default_value("/tmp/snapfifo"), "name of fifo file")
             ("daemon,d", po::bool_switch(&runAsDaemon)->default_value(false), "daemonize")
         ;
@@ -264,6 +261,7 @@ int main(int argc, char* argv[])
         mkfifo(fifoName.c_str(), 0777);
 size_t duration = 50;
 
+		SampleFormat format(sampleFormat);
         while (!g_terminated)
         {
             int fd = open(fifoName.c_str(), O_RDONLY);
@@ -272,7 +270,7 @@ size_t duration = 50;
                 shared_ptr<Chunk> chunk;//(new WireChunk());
                 while (true)//cin.good())
                 {
-                    chunk.reset(new Chunk(sampleRate, channels, bps, duration));//2*WIRE_CHUNK_SIZE));
+                    chunk.reset(new Chunk(format, duration));//2*WIRE_CHUNK_SIZE));
 					WireChunk* wireChunk = chunk->wireChunk;
                     int toRead = wireChunk->length;
 //                    cout << "tr: " << toRead << ", size: " << WIRE_CHUNK_SIZE << "\t";

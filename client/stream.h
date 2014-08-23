@@ -11,25 +11,18 @@
 #include "common/chunk.h"
 #include "common/timeUtils.h"
 #include "common/queue.h"
+#include "common/sampleFormat.h"
 
 
 class Stream
 {
 public:
-	Stream(size_t hz, size_t channels, size_t bps);
+	Stream(const SampleFormat& format);
 	void addChunk(Chunk* chunk);
 	void clearChunks();
 	void getPlayerChunk(void* outputBuffer, double outputBufferDacTime, unsigned long framesPerBuffer);
 	void setBufferLen(size_t bufferLenMs);
-	void setLatency(size_t latency);
-	size_t getSampleRate() const
-	{
-		return hz_;
-	}
-	size_t getChannels() const
-	{
-		return channels_;
-	}
+	const SampleFormat& format;
 
 private:
 	time_point_ms getNextPlayerChunk(void* outputBuffer, unsigned long framesPerBuffer, int correction = 0);
@@ -37,15 +30,11 @@ private:
 	void updateBuffers(int age);
 	void resetBuffers();
 
-	size_t hz_;
-	size_t channels_;
-	size_t bytesPerSample_;
-	size_t frameSize_;
+	SampleFormat format_;
 
 	long lastTick;
 	int sleep;
 	
-//	int correction;
 	Queue<std::shared_ptr<Chunk>> chunks;
 	DoubleBuffer<int>* pCardBuffer;
 	DoubleBuffer<int>* pMiniBuffer;
@@ -57,7 +46,6 @@ private:
 	int shortMedian;
 	time_t lastUpdate;
 	int bufferMs;
-	int latencyMs;
 };
 
 
