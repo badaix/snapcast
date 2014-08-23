@@ -138,7 +138,7 @@ void player(Stream* stream)
 	if ((pcm = snd_pcm_hw_params_set_rate_near(pcm_handle, params, &rate, 0)) < 0) 
 		cout << "ERROR: Can't set rate. " << snd_strerror(pcm) << "\n";
 
-	long unsigned int periodsize = 2*rate / 100;
+	long unsigned int periodsize = 2*rate / 50;
 	if ((pcm = snd_pcm_hw_params_set_buffer_size_near(pcm_handle, params, &periodsize)) < 0)
 		cout << "Unable to set buffer size " << (long int)periodsize << ": " <<  snd_strerror(pcm) << "\n";
 
