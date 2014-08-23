@@ -70,10 +70,10 @@ public:
 	double getDuration() const;
 
 	WireChunk* wireChunk;
-	const SampleFormat& format;
+	SampleFormat format;
 
 private:
-	SampleFormat format_;
+//	SampleFormat format_;
 	uint32_t idx;
 };
 

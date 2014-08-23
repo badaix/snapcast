@@ -5,13 +5,13 @@
 #include <iostream>
 
 
-SampleFormat::SampleFormat(const std::string& format) : rate(rate_), bits(bits_), channels(channels_), sampleSize(bytes_), frameSize(frameSize_)
+SampleFormat::SampleFormat(const std::string& format) //: rate(rate_), bits(bits_), channels(channels_), sampleSize(bytes_), frameSize(frameSize_)
 {
 	setFormat(format);
 }
 
 
-SampleFormat::SampleFormat(uint16_t sampleRate, uint16_t bitsPerSample, uint16_t channelCount) : rate(rate_), bits(bits_), channels(channels_), sampleSize(bytes_), frameSize(frameSize_)
+SampleFormat::SampleFormat(uint16_t sampleRate, uint16_t bitsPerSample, uint16_t channelCount) //: rate(rate_), bits(bits_), channels(channels_), sampleSize(bytes_), frameSize(frameSize_)
 {
 	setFormat(sampleRate, bitsPerSample, channelCount);
 }
@@ -31,13 +31,13 @@ void SampleFormat::setFormat(const std::string& format)
 
 void SampleFormat::setFormat(uint16_t rate, uint16_t bits, uint16_t channels)
 {
-	rate_ = rate;	
-	bits_ = bits;
-	bytes_ = bits / 8;
-	channels_ = channels;
-	if (bits_ == 24)
-		bytes_ = 4;
-	frameSize_ = channels_*bytes_;
+	this->rate = rate;	
+	this->bits = bits;
+	this->channels = channels;
+	sampleSize = bits / 8;
+	if (bits == 24)
+		sampleSize = 4;
+	frameSize = channels*sampleSize;
 }
 
 

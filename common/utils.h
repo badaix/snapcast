@@ -9,6 +9,7 @@
 #include <vector>
 #include <fstream>
 #include <iterator>
+#include <sys/stat.h>
 
 
 // trim from start

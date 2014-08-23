@@ -4,13 +4,14 @@
 #include "common/log.h"
 
 
-Chunk::Chunk(const SampleFormat& sampleFormat, WireChunk* _wireChunk) : wireChunk(_wireChunk), format(format_), format_(sampleFormat), idx(0)
+Chunk::Chunk(const SampleFormat& sampleFormat, WireChunk* _wireChunk) : wireChunk(_wireChunk), format(sampleFormat), idx(0)
 {
 }
 
 
-Chunk::Chunk(const SampleFormat& sampleFormat, size_t ms) : format(format_), format_(sampleFormat), idx(0)
+Chunk::Chunk(const SampleFormat& sampleFormat, size_t ms) : format(sampleFormat), idx(0)
 {
+//	format = sampleFormat;
 	wireChunk = new WireChunk;
 	wireChunk->length = format.rate*format.frameSize*ms / 1000;
 	wireChunk->payload = (char*)malloc(wireChunk->length);
@@ -33,6 +34,7 @@ bool Chunk::isEndOfChunk() const
 
 double Chunk::getDuration() const
 {
+//	std::cout << wireChunk->length << "\t" << format.frameSize << "\t" << (wireChunk->length / format.frameSize) << "\t" << ((double)format.rate / 1000.) << "\n";
 	return (wireChunk->length / format.frameSize) / ((double)format.rate / 1000.);
 }
 

@@ -35,8 +35,8 @@ void Stream::addChunk(Chunk* chunk)
 {
 	while (chunks.size() * chunk->getDuration() > 10000)
 		chunks.pop();
-//	cout << "new chunk: " << chunk->getDuration() << ", Chunks: " << chunks.size() << "\n";
 	chunks.push(shared_ptr<Chunk>(chunk));
+//	cout << "new chunk: " << chunk->getDuration() << ", Chunks: " << chunks.size() << "\n";
 }
 
 
@@ -118,7 +118,7 @@ void Stream::getPlayerChunk(void* outputBuffer, double outputBufferDacTime, unsi
 {
 //cout << "framesPerBuffer: " << framesPerBuffer << "\tms: " << framesPerBuffer*2 / PLAYER_CHUNK_MS_SIZE << "\t" << PLAYER_CHUNK_SIZE << "\n";
 //int msBuffer = framesPerBuffer / (format_.rate/1000);
-//cout << msBuffer << " ms, " << framesPerBuffer << "\t" << hz_/1000 << "\n";
+//cout << msBuffer << " ms, " << framesPerBuffer << "\t" << format_.rate/1000 << "\n";
 	int ticks = 0;
 	long currentTick = getTickCount();
 	if (lastTick == 0)
