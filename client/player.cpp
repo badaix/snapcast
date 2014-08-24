@@ -22,6 +22,9 @@ void Player::start()
 	rate 	 = stream_->format.rate;
 	channels = stream_->format.channels;
 
+	unsigned int buffer_time = 100 * 1000;
+	unsigned int period_time = buffer_time / 8;
+
 
 	/* Open the PCM device in playback mode */
 	if ((pcm = snd_pcm_open(&pcm_handle, PCM_DEVICE, SND_PCM_STREAM_PLAYBACK, 0)) < 0) 
@@ -50,9 +53,12 @@ void Player::start()
 	if ((pcm = snd_pcm_hw_params_set_rate_near(pcm_handle, params, &rate, 0)) < 0) 
 		cout << "ERROR: Can't set rate. " << snd_strerror(pcm) << "\n";
 
-	long unsigned int periodsize = 2*rate/50;
-	if ((pcm = snd_pcm_hw_params_set_buffer_size_near(pcm_handle, params, &periodsize)) < 0)
-		cout << "Unable to set buffer size " << (long int)periodsize << ": " <<  snd_strerror(pcm) << "\n";
+	snd_pcm_hw_params_set_period_time_near(pcm_handle, params, &period_time, 0);
+	snd_pcm_hw_params_set_buffer_time_near(pcm_handle, params, &buffer_time, 0);
+
+//	long unsigned int periodsize = stream_->format.msRate() * 50;//2*rate/50;
+//	if ((pcm = snd_pcm_hw_params_set_buffer_size_near(pcm_handle, params, &periodsize)) < 0)
+//		cout << "Unable to set buffer size " << (long int)periodsize << ": " <<  snd_strerror(pcm) << "\n";
 
 	/* Write parameters */
 	if ((pcm = snd_pcm_hw_params(pcm_handle, params)) < 0)

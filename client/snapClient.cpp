@@ -6,13 +6,6 @@
 //  Olivier Chamoux <olivier.chamoux@fr.thalesgroup.com>
 //
 #include <iostream>
-#include <sstream>
-#include <sys/time.h>
-#include <unistd.h>
-#include <deque>
-#include <vector>
-#include <algorithm>
-#include <thread> 
 #include <boost/lexical_cast.hpp>
 #include <boost/program_options.hpp>
 

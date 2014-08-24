@@ -67,7 +67,9 @@ public:
 		return std::chrono::duration_cast<T>(std::chrono::high_resolution_clock::now() - time_point);
 	}
 
+	int seek(int frames);
 	double getDuration() const;
+	double getFrameCount() const;
 
 	WireChunk* wireChunk;
 	SampleFormat format;

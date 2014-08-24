@@ -27,17 +27,32 @@ Chunk::~Chunk()
 
 bool Chunk::isEndOfChunk() const
 {
-	return idx >= (wireChunk->length / format.frameSize);
+	return idx >= getFrameCount();
+}
+
+
+double Chunk::getFrameCount() const
+{
+	return (wireChunk->length / format.frameSize);
 }
 
 
 
 double Chunk::getDuration() const
 {
-//	std::cout << wireChunk->length << "\t" << format.frameSize << "\t" << (wireChunk->length / format.frameSize) << "\t" << ((double)format.rate / 1000.) << "\n";
-	return (wireChunk->length / format.frameSize) / ((double)format.rate / 1000.);
+	return getFrameCount() / format.msRate();
 }
 
+
+int Chunk::seek(int frames)
+{
+	idx += frames;
+	if (idx > getFrameCount())
+		idx = getFrameCount();
+	if (idx < 0)
+		idx = 0;
+	return idx;
+}
 
 
 int Chunk::read(void* outputBuffer, size_t frameCount) 
