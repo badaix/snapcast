@@ -51,15 +51,37 @@ time_point_ms Stream::getSilentPlayerChunk(void* outputBuffer, unsigned long fra
 }
 
 
-time_point_ms Stream::seek(unsigned long ms)
+
+time_point_ms Stream::seekTo(const time_point_ms& to)
 {
 	if (!chunk)
 		chunk = chunks.pop();
 //	time_point_ms tp = chunk->timePoint();
-	while (ms > chunk->getDuration())
+	while (to > chunk->timePoint())// + std::chrono::milliseconds((long int)chunk->getDuration()))//
 	{
 		chunk = chunks.pop();
-		ms -= min(ms, (unsigned long)chunk->getDuration());
+		cout << "\nto: " << Chunk::getAge(to) << "\t chunk: " << Chunk::getAge(chunk->timePoint()) << "\n";
+		cout << "diff: " << std::chrono::duration_cast<std::chrono::milliseconds>((to - chunk->timePoint())).count() << "\n";
+	}
+	chunk->seek(std::chrono::duration_cast<std::chrono::milliseconds>(to - chunk->timePoint()).count() * format.msRate());
+	return chunk->timePoint();
+}
+
+
+
+time_point_ms Stream::seek(long ms)
+{
+	if (!chunk)
+		chunk = chunks.pop();
+
+	if (ms <= 0)
+		return chunk->timePoint();
+		
+//	time_point_ms tp = chunk->timePoint();
+	while (ms > chunk->getTimeLeft())
+	{
+		chunk = chunks.pop();
+		ms -= min(ms, (long)chunk->getTimeLeft());
 	}
 	chunk->seek(ms * format.msRate());
 	return chunk->timePoint();
@@ -163,30 +185,24 @@ int msBuffer = framesPerBuffer / format_.msRate();
 		}
 		else if (sleep > msBuffer/2)
 		{
-			cout << "Sleep " << sleep;
-			sleep = Chunk::getAge(seek(sleep)) - bufferMs + outputBufferDacTime;
+/*			cout << "Sleep " << sleep;
+			time_point_ms ms(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()));
+			ms -= std::chrono::milliseconds((long int)(bufferMs - outputBufferDacTime));
+cout << "\nms: " << Chunk::getAge(ms) << "\t chunk: " << chunk->getAge() << "\n";
+			sleep = Chunk::getAge(seekTo(ms)) - bufferMs + outputBufferDacTime;
 			cout << " after: " << sleep << "\n";
-//			std::clog << kLogNotice << "sleep: " << sleep << std::endl;
-//			while (true)
-//			{
-//				if (!chunk)
-//					chunk = chunks.pop();
-/*				while (chunk->getAge() - bufferMs + outputBufferDacTime > chunk->getDuration())
-				{
-					cout << "chunk->getAge() > chunk->getDuration(): " << chunk->getAge() - bufferMs + outputBufferDacTime << " > " << chunk->getDuration() << ", chunks: " << chunks.size() << ", out: " << outputBufferDacTime << ", needed: " << msBuffer << "\n";
-usleep(10);
-					chunk = chunks.pop();
-				}
 */
-//				while
-//				sleep = Chunk::getAge(getNextPlayerChunk(outputBuffer, framesPerBuffer)) - bufferMs + outputBufferDacTime;
-//				usleep(100);
-//				cout << "age: " << sleep << "\t out: " << outputBufferDacTime << "\t frames: " << framesPerBuffer << ", chunks: " << chunks.size() << "\n";
-//				if (sleep < 0)
-//					break;
-//			}
-//			sleep = 0;
-//			return;
+			if (!chunk)
+				chunk = chunks.pop();
+			while (sleep > chunk->getDuration())
+			{
+				chunk = chunks.pop();
+				sleep = chunk->getAge() - bufferMs + outputBufferDacTime;
+//				cout << "chunk->getAge() > chunk->getDuration(): " << chunk->getAge() - bufferMs + outputBufferDacTime << " > " << chunk->getDuration() << ", chunks: " << chunks.size() << ", out: " << outputBufferDacTime << ", needed: " << msBuffer << ", sleep: " << sleep << "\n";
+				usleep(1000);
+			}
+			cout << "seek: " << Chunk::getAge(seek(sleep)) - bufferMs + outputBufferDacTime << "\n";
+			sleep = 0;
 		}
 		else if (sleep < 0)
 		{	
@@ -230,7 +246,7 @@ usleep(10);
 		}
 		else if (abs(age) > 50)
 		{
-			cout << "age > 50): " << age << "\n";
+			cout << "age > 50: " << age << "\n";
 			sleep = age;
 		}
 	}
