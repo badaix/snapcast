@@ -69,6 +69,7 @@ public:
 
 	int seek(int frames);
 	double getDuration() const;
+	double getTimeLeft() const;
 	double getFrameCount() const;
 
 	WireChunk* wireChunk;

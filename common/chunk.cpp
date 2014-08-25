@@ -44,6 +44,14 @@ double Chunk::getDuration() const
 }
 
 
+
+double Chunk::getTimeLeft() const
+{
+	return (getFrameCount() - idx) / format.msRate();
+}
+
+
+
 int Chunk::seek(int frames)
 {
 	idx += frames;
