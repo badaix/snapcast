@@ -8,8 +8,8 @@ using namespace std;
 
 Stream::Stream(const SampleFormat& sampleFormat) : format(format_), format_(sampleFormat), sleep(0), median(0), shortMedian(0), lastUpdate(0)
 {
-	pBuffer = new DoubleBuffer<int>(1000);
-	pShortBuffer = new DoubleBuffer<int>(200);
+	pBuffer = new DoubleBuffer<int>(500);
+	pShortBuffer = new DoubleBuffer<int>(100);
 	pMiniBuffer = new DoubleBuffer<int>(20);
 	pCardBuffer = new DoubleBuffer<int>(50);
 	bufferMs = 500;
@@ -51,7 +51,7 @@ time_point_ms Stream::getSilentPlayerChunk(void* outputBuffer, unsigned long fra
 }
 
 
-
+/*
 time_point_ms Stream::seekTo(const time_point_ms& to)
 {
 	if (!chunk)
@@ -66,7 +66,7 @@ time_point_ms Stream::seekTo(const time_point_ms& to)
 	chunk->seek(std::chrono::duration_cast<std::chrono::milliseconds>(to - chunk->timePoint()).count() * format.msRate());
 	return chunk->timePoint();
 }
-
+*/
 
 
 time_point_ms Stream::seek(long ms)
@@ -244,7 +244,7 @@ cout << "\nms: " << Chunk::getAge(ms) << "\t chunk: " << chunk->getAge() << "\n"
 			cout << "pMiniBuffer->full() && (abs(pMiniBuffer->mean()) > 50): " << pMiniBuffer->median() << "\n";
 			sleep = pMiniBuffer->mean();
 		}
-		else if (abs(age) > 50)
+		else if (abs(age) > 200)
 		{
 			cout << "age > 50: " << age << "\n";
 			sleep = age;

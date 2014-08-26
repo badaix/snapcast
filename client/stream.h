@@ -28,7 +28,7 @@ private:
 	time_point_ms getNextPlayerChunk(void* outputBuffer, unsigned long framesPerBuffer, int correction = 0);
 	time_point_ms getSilentPlayerChunk(void* outputBuffer, unsigned long framesPerBuffer);
 	time_point_ms seek(long ms);
-	time_point_ms seekTo(const time_point_ms& to);
+//	time_point_ms seekTo(const time_point_ms& to);
 	void updateBuffers(int age);
 	void resetBuffers();
 
