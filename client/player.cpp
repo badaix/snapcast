@@ -102,10 +102,8 @@ void Player::start()
 	snd_pcm_sw_params_current(pcm_handle, swparams);
 	
 	snd_pcm_sw_params_set_avail_min(pcm_handle, swparams, frames);
- 
-    /* round up to closest transfer boundary */
-    snd_pcm_sw_params_set_start_threshold(pcm_handle, swparams, frames);
-	snd_pcm_sw_params_set_stop_threshold(pcm_handle, swparams, frames);
+        snd_pcm_sw_params_set_start_threshold(pcm_handle, swparams, frames);
+//	snd_pcm_sw_params_set_stop_threshold(pcm_handle, swparams, frames);
 	snd_pcm_sw_params(pcm_handle, swparams);
 
 
