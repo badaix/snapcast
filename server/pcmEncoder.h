@@ -1,13 +1,13 @@
 #ifndef PCM_ENCODER_H
 #define PCM_ENCODER_H
-#include "common/chunk.h"
+#include "encoder.h"
 
 
 class PcmEncoder
 {
 public:
 	PcmEncoder();
-	void encode(Chunk* chunk);
+	virtual void encode(Chunk* chunk);
 };
 
 
