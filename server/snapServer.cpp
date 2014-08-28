@@ -26,6 +26,7 @@
 #include "common/signalHandler.h"
 #include "common/utils.h"
 #include "common/sampleFormat.h"
+#include "pcmEncoder.h"
 #include <syslog.h>
 
 
@@ -260,7 +261,8 @@ int main(int argc, char* argv[])
 
         mkfifo(fifoName.c_str(), 0777);
 size_t duration = 50;
-
+	
+		PcmEncoder pcmEncoder;
 		SampleFormat format(sampleFormat);
         while (!g_terminated)
         {
@@ -288,6 +290,7 @@ size_t duration = 50;
 
                     wireChunk->tv_sec = tvChunk.tv_sec;
                     wireChunk->tv_usec = tvChunk.tv_usec;
+					pcmEncoder.encode(chunk.get());
                     server->send(chunk);
 
                     addMs(tvChunk, duration);
