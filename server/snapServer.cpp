@@ -27,6 +27,7 @@
 #include "common/utils.h"
 #include "common/sampleFormat.h"
 #include "pcmEncoder.h"
+#include "oggEncoder.h"
 #include <syslog.h>
 
 
@@ -136,7 +137,7 @@ public:
 		{
 			socket_ptr sock(new tcp::socket(io_service_));
 			a.accept(*sock);
-			cout << "New connection: " << sock->remote_endpoint().address().to_string() << "\n";
+//			cout << "New connection: " << sock->remote_endpoint().address().to_string() << "\n";
 			Session* session = new Session(sock);
 			session->start();
 			sessions.insert(shared_ptr<Session>(session));
@@ -145,6 +146,8 @@ public:
 
 	void send(shared_ptr<Chunk> chunk)
 	{
+//		fwrite(chunk->wireChunk->payload, 1, chunk->wireChunk->length, stdout);
+		
 		for (std::set<shared_ptr<Session>>::iterator it = sessions.begin(); it != sessions.end(); ) 
 		{
     		if (!(*it)->isActive())
@@ -262,7 +265,7 @@ int main(int argc, char* argv[])
         mkfifo(fifoName.c_str(), 0777);
 size_t duration = 50;
 	
-		PcmEncoder pcmEncoder;
+		OggEncoder pcmEncoder;
 		SampleFormat format(sampleFormat);
         while (!g_terminated)
         {
@@ -290,8 +293,8 @@ size_t duration = 50;
 
                     wireChunk->tv_sec = tvChunk.tv_sec;
                     wireChunk->tv_usec = tvChunk.tv_usec;
-					pcmEncoder.encode(chunk.get());
-                    server->send(chunk);
+					if (pcmEncoder.encode(chunk.get()))
+	                    server->send(chunk);
 
                     addMs(tvChunk, duration);
                     nextTick += duration;
