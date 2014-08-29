@@ -2,6 +2,8 @@
 #include <boost/lexical_cast.hpp>
 #include <iostream>
 #include "common/log.h"
+#include "oggDecoder.h"
+#include "pcmDecoder.h"
 
 
 #define PCM_DEVICE "default"
@@ -45,6 +47,7 @@ void Receiver::stop()
 void Receiver::worker() 
 {
 	active_ = true;
+	PcmDecoder decoder;
 	while (active_)
 	{
 		try
@@ -64,8 +67,9 @@ void Receiver::worker()
 //cout << "WireChunk length: " << wireChunk->length << ", sec: " << wireChunk->tv_sec << ", usec: " << wireChunk->tv_usec << "\n";
 				wireChunk->payload = (char*)malloc(wireChunk->length);
 				socketRead(&s, wireChunk->payload, wireChunk->length);
-
-				stream_->addChunk(new Chunk(stream_->format, wireChunk));
+				Chunk* chunk = new Chunk(stream_->format, wireChunk);
+				if (decoder.decode(chunk))
+					stream_->addChunk(chunk);
 			}
 		}
 		catch (const std::exception& e)
