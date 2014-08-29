@@ -265,7 +265,7 @@ int main(int argc, char* argv[])
         mkfifo(fifoName.c_str(), 0777);
 size_t duration = 50;
 	
-		OggEncoder pcmEncoder;
+		PcmEncoder encoder;
 		SampleFormat format(sampleFormat);
         while (!g_terminated)
         {
@@ -293,7 +293,7 @@ size_t duration = 50;
 
                     wireChunk->tv_sec = tvChunk.tv_sec;
                     wireChunk->tv_usec = tvChunk.tv_usec;
-					if (pcmEncoder.encode(chunk.get()))
+					if (encoder.encode(chunk.get()))
 	                    server->send(chunk);
 
                     addMs(tvChunk, duration);
