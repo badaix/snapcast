@@ -9,6 +9,7 @@ class OggEncoder
 public:
 	OggEncoder();
 	virtual bool encode(Chunk* chunk);
+	virtual bool getHeader(Chunk* chunk);
 
 private:
 	void init();
@@ -31,6 +32,8 @@ private:
 
 	int eos=0,ret;
 	int i, founddata;
+	char* oggHeader;
+	int oggHeaderLen;
 
 	int32_t tv_sec;
 	int32_t tv_usec;

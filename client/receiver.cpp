@@ -47,7 +47,7 @@ void Receiver::stop()
 void Receiver::worker() 
 {
 	active_ = true;
-	PcmDecoder decoder;
+	OggDecoder decoder;
 	while (active_)
 	{
 		try
@@ -64,12 +64,15 @@ void Receiver::worker()
 			{
 				WireChunk* wireChunk = new WireChunk();
 				socketRead(&s, wireChunk, Chunk::getHeaderSize());
-//cout << "WireChunk length: " << wireChunk->length << ", sec: " << wireChunk->tv_sec << ", usec: " << wireChunk->tv_usec << "\n";
 				wireChunk->payload = (char*)malloc(wireChunk->length);
 				socketRead(&s, wireChunk->payload, wireChunk->length);
 				Chunk* chunk = new Chunk(stream_->format, wireChunk);
+//cout << "WireChunk length: " << wireChunk->length << ", Duration: " << chunk->getDuration() << ", sec: " << wireChunk->tv_sec << ", usec: " << wireChunk->tv_usec/1000 << ", type: " << wireChunk->type << "\n";
 				if (decoder.decode(chunk))
+				{
+//cout << "Duration: " << chunk->getDuration() << "\n";
 					stream_->addChunk(chunk);
+				}
 			}
 		}
 		catch (const std::exception& e)

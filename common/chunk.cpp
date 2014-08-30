@@ -11,10 +11,7 @@ Chunk::Chunk(const SampleFormat& sampleFormat, WireChunk* _wireChunk) : wireChun
 
 Chunk::Chunk(const SampleFormat& sampleFormat, size_t ms) : format(sampleFormat), idx(0)
 {
-//	format = sampleFormat;
-	wireChunk = new WireChunk;
-	wireChunk->length = format.rate*format.frameSize*ms / 1000;
-	wireChunk->payload = (char*)malloc(wireChunk->length);
+	wireChunk = makeChunk(payload, format.rate*format.frameSize*ms / 1000);
 }
 
 

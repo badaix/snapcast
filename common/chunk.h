@@ -11,13 +11,18 @@ typedef std::chrono::time_point<std::chrono::high_resolution_clock, std::chrono:
 
 struct WireChunk
 {
+	uint16_t type;
 	int32_t tv_sec;
 	int32_t tv_usec;
 	uint32_t length;
 	char* payload;
 };
 
-
+enum chunk_type
+{
+	header = 0,
+	payload = 1
+};
 
 class Chunk
 {
@@ -28,7 +33,16 @@ public:
 
 	static inline size_t getHeaderSize()
 	{
-		return sizeof(WireChunk::tv_sec) + sizeof(WireChunk::tv_usec) + sizeof(WireChunk::length);
+		return sizeof(WireChunk::type) + sizeof(WireChunk::tv_sec) + sizeof(WireChunk::tv_usec) + sizeof(WireChunk::length);
+	}
+
+	static WireChunk* makeChunk(chunk_type type, size_t size)
+	{
+		WireChunk* wireChunk = new WireChunk;
+		wireChunk->type = type;
+		wireChunk->length = size;
+		wireChunk->payload = (char*)malloc(wireChunk->length);
+		return wireChunk;
 	}
 
 	int read(void* outputBuffer, size_t frameCount);
@@ -43,6 +57,11 @@ public:
 			std::chrono::seconds(wireChunk->tv_sec) + 
 			std::chrono::milliseconds(wireChunk->tv_usec / 1000) + 
 			std::chrono::milliseconds(relativeIdxTp);
+	}
+
+	inline chunk_type getType()
+	{
+		return (chunk_type)wireChunk->type;
 	}
 
 	template<typename T>
@@ -69,6 +88,7 @@ public:
 
 	int seek(int frames);
 	double getDuration() const;
+	double getDurationUs() const;
 	double getTimeLeft() const;
 	double getFrameCount() const;
 

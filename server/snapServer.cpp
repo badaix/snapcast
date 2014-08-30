@@ -34,7 +34,6 @@
 using boost::asio::ip::tcp;
 namespace po = boost::program_options;
 
-const int max_length = 1024;
 
 typedef boost::shared_ptr<tcp::socket> socket_ptr;
 using namespace std;
@@ -105,6 +104,9 @@ public:
 
 	void send(shared_ptr<Chunk> chunk)
 	{
+		if (!chunk)
+			return;
+
 		while (chunks.size() * chunk->getDuration() > 10000)
 			chunks.pop();
 		chunks.push(chunk);
@@ -126,7 +128,7 @@ private:
 class Server
 {
 public:
-	Server(unsigned short port) : port_(port)
+	Server(unsigned short port) : port_(port), headerChunk(NULL)
 	{
 	}
 
@@ -139,9 +141,16 @@ public:
 			a.accept(*sock);
 //			cout << "New connection: " << sock->remote_endpoint().address().to_string() << "\n";
 			Session* session = new Session(sock);
+cout << "Sending header: " << headerChunk->wireChunk->length << "\n";
+			session->send(headerChunk);
 			session->start();
 			sessions.insert(shared_ptr<Session>(session));
 		}
+	}
+
+	void setHeader(shared_ptr<Chunk> chunk)
+	{
+		headerChunk = chunk;
 	}
 
 	void send(shared_ptr<Chunk> chunk)
@@ -177,6 +186,7 @@ private:
 	set<shared_ptr<Session>> sessions;
 	boost::asio::io_service io_service_;
 	unsigned short port_;
+	shared_ptr<Chunk> headerChunk;
 	thread* acceptThread;
 };
 
@@ -264,9 +274,13 @@ int main(int argc, char* argv[])
 
         mkfifo(fifoName.c_str(), 0777);
 size_t duration = 50;
-	
-		PcmEncoder encoder;
+
 		SampleFormat format(sampleFormat);
+		OggEncoder encoder;
+		shared_ptr<Chunk> header(new Chunk(format, Chunk::makeChunk(chunk_type::header, 0)));
+		encoder.getHeader(header.get());
+		server->setHeader(header);
+
         while (!g_terminated)
         {
             int fd = open(fifoName.c_str(), O_RDONLY);
@@ -295,7 +309,8 @@ size_t duration = 50;
                     wireChunk->tv_usec = tvChunk.tv_usec;
 					if (encoder.encode(chunk.get()))
 	                    server->send(chunk);
-
+//cout << wireChunk->tv_sec << ", " << wireChunk->tv_usec / 1000 << "\n";
+//                    addUs(tvChunk, 1000*chunk->getDuration());
                     addMs(tvChunk, duration);
                     nextTick += duration;
                     long currentTick = getTickCount();

@@ -11,6 +11,17 @@ OggEncoder::OggEncoder()
 }
 
 
+bool OggEncoder::getHeader(Chunk* chunk)
+{
+	WireChunk* wireChunk = chunk->wireChunk;
+	wireChunk->type = chunk_type::header;
+	wireChunk->payload = (char*)realloc(wireChunk->payload, oggHeaderLen);
+	memcpy(wireChunk->payload, oggHeader, oggHeaderLen);
+	wireChunk->length = oggHeaderLen;
+	return true;
+}
+
+
 bool OggEncoder::encode(Chunk* chunk)
 {
 	bool res = false;
@@ -20,14 +31,12 @@ bool OggEncoder::encode(Chunk* chunk)
 		tv_sec = wireChunk->tv_sec;
 		tv_usec = wireChunk->tv_usec;
 	}
-//cout << "pcm: " << wireChunk->length << endl;
-
+//cout << "-> pcm: " << wireChunk->length << endl;
 	int bytes = wireChunk->length / 4;
 	float **buffer=vorbis_analysis_buffer(&vd, bytes);
 
-	int i;
 	/* uninterleave samples */
-	for(i=0;i<bytes;i++)
+	for(int i=0;i<bytes;i++)
 	{
 		buffer[0][i]=((wireChunk->payload[i*4+1]<<8)|
 				  (0x00ff&(int)wireChunk->payload[i*4]))/32768.f;
@@ -36,7 +45,7 @@ bool OggEncoder::encode(Chunk* chunk)
 	}
 
 	/* tell the library how much we actually submitted */
-	vorbis_analysis_wrote(&vd,i);
+	vorbis_analysis_wrote(&vd, bytes);
 
 	/* vorbis does some data preanalysis, then divvies up blocks for
 	more involved (potentially parallel) processing.  Get a single
@@ -44,7 +53,6 @@ bool OggEncoder::encode(Chunk* chunk)
 	size_t pos = 0;
 	while(vorbis_analysis_blockout(&vd,&vb)==1)
 	{
-
 		/* analysis, assume we want to use bitrate management */
 		vorbis_analysis(&vb,NULL);
 		vorbis_bitrate_addblock(&vb);
@@ -59,22 +67,19 @@ bool OggEncoder::encode(Chunk* chunk)
 			{
 //				int result = ogg_stream_pageout(&os,&og);
 				int result = ogg_stream_flush(&os,&og);
-//cout << "result: " << result << "\n";
 				if (result == 0)
-				{
 					break;
-				}
-				else
-				{
-					res = true;
-					cout << "pcm: " << wireChunk->length << ", header len: " << og.header_len << ", body len: " << og.body_len << endl;
-//					fwrite(og.header,1,og.header_len,stdout);
-//					fwrite(og.body,1,og.body_len,stdout);
-					memcpy(wireChunk->payload + pos, og.header, og.header_len);
-					pos += og.header_len;
-					memcpy(wireChunk->payload + pos, og.body, og.body_len);
-					pos += og.body_len;
-				}
+				res = true;
+//					cout << "pcm: " << wireChunk->length << ", header len: " << og.header_len << ", body len: " << og.body_len << endl;
+
+				size_t nextLen = pos + og.header_len + og.body_len;
+				if (wireChunk->length < nextLen)
+					wireChunk->payload = (char*)realloc(wireChunk->payload, nextLen);
+
+				memcpy(wireChunk->payload + pos, og.header, og.header_len);
+				pos += og.header_len;
+				memcpy(wireChunk->payload + pos, og.body, og.body_len);
+				pos += og.body_len;
 			}
 		}
 	}
@@ -82,8 +87,8 @@ bool OggEncoder::encode(Chunk* chunk)
 	{
 		wireChunk->payload = (char*)realloc(wireChunk->payload, pos);
 		wireChunk->length = pos;
-		wireChunk->tv_sec = tv_sec;
-		wireChunk->tv_usec = tv_usec;
+//		wireChunk->tv_sec = tv_sec;
+//		wireChunk->tv_usec = tv_usec;
 		tv_sec = 0;
 		tv_usec = 0;
 	}
@@ -128,7 +133,7 @@ void OggEncoder::init()
 
 	*********************************************************************/
 
-	ret=vorbis_encode_init_vbr(&vi,2,48000,0.4);
+	ret=vorbis_encode_init_vbr(&vi,2,48000,0.7);
 
 	/* do not continue if setup failed; this can happen if we ask for a
 	 mode that libVorbis does not support (eg, too low a bitrate, etc,
@@ -138,7 +143,7 @@ void OggEncoder::init()
 
 	/* add a comment */
 	vorbis_comment_init(&vc);
-	vorbis_comment_add_tag(&vc,"ENCODER","encoder_example.c");
+	vorbis_comment_add_tag(&vc,"ENCODER","snapstream");
 
 	/* set up the analysis state and auxiliary encoding storage */
 	vorbis_analysis_init(&vd,&vi);
@@ -165,13 +170,26 @@ void OggEncoder::init()
 	/* This ensures the actual
 	 * audio data will start on a new page, as per spec
 	 */
-	/*    while(!eos){
-	  int result=ogg_stream_flush(&os,&og);
-	  if(result==0)break;
-	  fwrite(og.header,1,og.header_len,stdout);
-	  fwrite(og.body,1,og.body_len,stdout);
+//	  while(!eos){
+	size_t pos(0);
+	oggHeader = (char*)malloc(0);
+	oggHeaderLen = 0;
+	while (true)
+	{
+		int result=ogg_stream_flush(&os,&og);
+		if (result == 0)
+			break;
+		oggHeaderLen += og.header_len + og.body_len;
+		oggHeader = (char*)realloc(oggHeader, oggHeaderLen);
+		cout << "HeadLen: " << og.header_len << ", bodyLen: " << og.body_len << ", result: " << result << "\n";
+		memcpy(oggHeader + pos, og.header, og.header_len);	
+		pos += og.header_len;
+		memcpy(oggHeader + pos, og.body, og.body_len);
+		pos += og.body_len;
 	}
-	*/
+//	  fwrite(og.header,1,og.header_len,stdout);
+//	  fwrite(og.body,1,og.body_len,stdout);
+//	}
 }
 
 

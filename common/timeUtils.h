@@ -62,6 +62,21 @@ static void addMs(timeval& tv, int ms)
     tv.tv_usec %= 1000000;
 }
 
+static void addUs(timeval& tv, int us)
+{
+	if (us < 0)
+	{
+		timeval t;
+		t.tv_sec = -us / 1000000;
+		t.tv_usec = (-us % 1000000);
+		timersub(&tv, &t, &tv);
+		return;
+	}
+    tv.tv_usec += us;
+    tv.tv_sec += (tv.tv_usec / 1000000);
+    tv.tv_usec %= 1000000;
+}
+
 
 
 static long getTickCount()
