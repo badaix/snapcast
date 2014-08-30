@@ -307,11 +307,12 @@ size_t duration = 50;
 
                     wireChunk->tv_sec = tvChunk.tv_sec;
                     wireChunk->tv_usec = tvChunk.tv_usec;
-					if (encoder.encode(chunk.get()))
+					double chunkDuration = encoder.encode(chunk.get());
+					if (chunkDuration > 0)
 	                    server->send(chunk);
 //cout << wireChunk->tv_sec << ", " << wireChunk->tv_usec / 1000 << "\n";
 //                    addUs(tvChunk, 1000*chunk->getDuration());
-                    addMs(tvChunk, duration);
+                    addUs(tvChunk, chunkDuration * 1000);
                     nextTick += duration;
                     long currentTick = getTickCount();
                     if (nextTick > currentTick)

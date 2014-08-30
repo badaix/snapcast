@@ -7,7 +7,7 @@ class Encoder
 {
 public:
 	Encoder();
-	virtual bool encode(Chunk* chunk) = 0;
+	virtual double encode(Chunk* chunk) = 0;
 };
 
 

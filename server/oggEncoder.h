@@ -8,7 +8,7 @@ class OggEncoder
 {
 public:
 	OggEncoder();
-	virtual bool encode(Chunk* chunk);
+	virtual double encode(Chunk* chunk);
 	virtual bool getHeader(Chunk* chunk);
 
 private:
@@ -29,6 +29,8 @@ private:
 	ogg_packet header;
 	ogg_packet header_comm;
 	ogg_packet header_code;
+
+	ogg_int64_t   lastGranulepos;
 
 	int eos=0,ret;
 	int i, founddata;

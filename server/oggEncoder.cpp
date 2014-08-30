@@ -8,6 +8,7 @@ using namespace std;
 OggEncoder::OggEncoder()
 {
 	init();
+	lastGranulepos = -1;
 }
 
 
@@ -22,9 +23,9 @@ bool OggEncoder::getHeader(Chunk* chunk)
 }
 
 
-bool OggEncoder::encode(Chunk* chunk)
+double OggEncoder::encode(Chunk* chunk)
 {
-	bool res = false;
+	double res = 0;
 	WireChunk* wireChunk = chunk->wireChunk;
 	if (tv_sec == 0)
 	{
@@ -70,7 +71,6 @@ bool OggEncoder::encode(Chunk* chunk)
 				if (result == 0)
 					break;
 				res = true;
-//					cout << "pcm: " << wireChunk->length << ", header len: " << og.header_len << ", body len: " << og.body_len << endl;
 
 				size_t nextLen = pos + og.header_len + og.body_len;
 				if (wireChunk->length < nextLen)
@@ -85,10 +85,14 @@ bool OggEncoder::encode(Chunk* chunk)
 	}
 	if (res)
 	{
+		if (lastGranulepos == -1)
+			res = os.granulepos;
+		else
+			res = os.granulepos - lastGranulepos;
+		res /= 48.;
+		lastGranulepos = os.granulepos;
 		wireChunk->payload = (char*)realloc(wireChunk->payload, pos);
 		wireChunk->length = pos;
-//		wireChunk->tv_sec = tv_sec;
-//		wireChunk->tv_usec = tv_usec;
 		tv_sec = 0;
 		tv_usec = 0;
 	}

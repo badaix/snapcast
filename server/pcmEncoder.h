@@ -7,7 +7,7 @@ class PcmEncoder
 {
 public:
 	PcmEncoder();
-	virtual bool encode(Chunk* chunk);
+	virtual double encode(Chunk* chunk);
 };
 
 
