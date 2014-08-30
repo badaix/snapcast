@@ -11,6 +11,7 @@ using namespace std;
 OggDecoder::OggDecoder()
 {
 	ogg_sync_init(&oy); /* Now we can read pages */
+	convsize = 4096;
 	convbuffer = (ogg_int16_t*)malloc(convsize * sizeof(ogg_int16_t));
 }
 

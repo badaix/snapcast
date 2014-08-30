@@ -28,7 +28,7 @@ private:
 	vorbis_block     vb; /* local working space for packet->PCM decode */
 
 	ogg_int16_t* convbuffer; /* take 8k out of the data segment, not the stack */
-	int convsize=4096;
+	int convsize;
 
 	char *buffer;
 	int  bytes;
