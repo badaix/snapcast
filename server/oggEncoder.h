@@ -4,12 +4,12 @@
 #include <vorbis/vorbisenc.h>
 
 
-class OggEncoder
+class OggEncoder : public Encoder
 {
 public:
-	OggEncoder();
+	OggEncoder(const SampleFormat& format);
 	virtual double encode(Chunk* chunk);
-	virtual bool getHeader(Chunk* chunk);
+	virtual WireChunk* getHeader();
 
 private:
 	void init();
@@ -31,11 +31,10 @@ private:
 	ogg_packet header_code;
 
 	ogg_int64_t   lastGranulepos;
+	WireChunk* headerChunk;
 
 	int eos=0,ret;
 	int i, founddata;
-	char* oggHeader;
-	int oggHeaderLen;
 
 	int32_t tv_sec;
 	int32_t tv_usec;

@@ -3,10 +3,10 @@
 #include "encoder.h"
 
 
-class PcmEncoder
+class PcmEncoder : public Encoder
 {
 public:
-	PcmEncoder();
+	PcmEncoder(const SampleFormat& format);
 	virtual double encode(Chunk* chunk);
 };
 

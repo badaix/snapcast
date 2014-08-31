@@ -1,6 +1,6 @@
 #include "pcmEncoder.h"
 
-PcmEncoder::PcmEncoder()
+PcmEncoder::PcmEncoder(const SampleFormat& format) : Encoder(format)
 {
 }
 

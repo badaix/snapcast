@@ -2,7 +2,6 @@
 #define DECODER_H
 #include "common/chunk.h"
 
-
 class Decoder
 {
 public:

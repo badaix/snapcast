@@ -5,21 +5,16 @@
 using namespace std;
 
 
-OggEncoder::OggEncoder()
+OggEncoder::OggEncoder(const SampleFormat& format) : Encoder(format), headerChunk(NULL)
 {
 	init();
 	lastGranulepos = -1;
 }
 
 
-bool OggEncoder::getHeader(Chunk* chunk)
+WireChunk* OggEncoder::getHeader()
 {
-	WireChunk* wireChunk = chunk->wireChunk;
-	wireChunk->type = chunk_type::header;
-	wireChunk->payload = (char*)realloc(wireChunk->payload, oggHeaderLen);
-	memcpy(wireChunk->payload, oggHeader, oggHeaderLen);
-	wireChunk->length = oggHeaderLen;
-	return true;
+	return headerChunk;
 }
 
 
@@ -137,7 +132,7 @@ void OggEncoder::init()
 
 	*********************************************************************/
 
-	ret=vorbis_encode_init_vbr(&vi,2,48000,0.7);
+	ret=vorbis_encode_init_vbr(&vi, sampleFormat.channels, sampleFormat.rate, 0.9);
 
 	/* do not continue if setup failed; this can happen if we ask for a
 	 mode that libVorbis does not support (eg, too low a bitrate, etc,
@@ -176,21 +171,22 @@ void OggEncoder::init()
 	 */
 //	  while(!eos){
 	size_t pos(0);
-	oggHeader = (char*)malloc(0);
-	oggHeaderLen = 0;
+	headerChunk = Chunk::makeChunk(chunk_type::header, 0);
 	while (true)
 	{
 		int result=ogg_stream_flush(&os,&og);
 		if (result == 0)
 			break;
-		oggHeaderLen += og.header_len + og.body_len;
-		oggHeader = (char*)realloc(oggHeader, oggHeaderLen);
+		headerChunk->length += og.header_len + og.body_len;
+		headerChunk->payload = (char*)realloc(headerChunk->payload, headerChunk->length);
 		cout << "HeadLen: " << og.header_len << ", bodyLen: " << og.body_len << ", result: " << result << "\n";
-		memcpy(oggHeader + pos, og.header, og.header_len);	
+		memcpy(headerChunk->payload + pos, og.header, og.header_len);	
 		pos += og.header_len;
-		memcpy(oggHeader + pos, og.body, og.body_len);
+		memcpy(headerChunk->payload + pos, og.body, og.body_len);
 		pos += og.body_len;
 	}
+
+
 //	  fwrite(og.header,1,og.header_len,stdout);
 //	  fwrite(og.body,1,og.body_len,stdout);
 //	}

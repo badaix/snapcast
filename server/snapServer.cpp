@@ -150,7 +150,8 @@ cout << "Sending header: " << headerChunk->wireChunk->length << "\n";
 
 	void setHeader(shared_ptr<Chunk> chunk)
 	{
-		headerChunk = chunk;
+		if (chunk && (chunk->wireChunk != NULL))
+			headerChunk = shared_ptr<Chunk>(chunk);
 	}
 
 	void send(shared_ptr<Chunk> chunk)
@@ -220,13 +221,15 @@ int main(int argc, char* argv[])
 
         size_t port;
         string fifoName;
+		string codec;
 		bool runAsDaemon;
 
         po::options_description desc("Allowed options");
         desc.add_options()
             ("help,h", "produce help message")
             ("port,p", po::value<size_t>(&port)->default_value(98765), "port to listen on")
-	        ("sampleformat,f", po::value<string>(&sampleFormat)->default_value("48000:16:2"), "sample format")
+	        ("sampleformat,s", po::value<string>(&sampleFormat)->default_value("48000:16:2"), "sample format")
+	        ("codec,c", po::value<string>(&codec)->default_value("ogg"), "transport codec [ogg|pcm]")
             ("fifo,f", po::value<string>(&fifoName)->default_value("/tmp/snapfifo"), "name of fifo file")
             ("daemon,d", po::bool_switch(&runAsDaemon)->default_value(false), "daemonize")
         ;
@@ -276,9 +279,18 @@ int main(int argc, char* argv[])
 size_t duration = 50;
 
 		SampleFormat format(sampleFormat);
-		OggEncoder encoder;
-		shared_ptr<Chunk> header(new Chunk(format, Chunk::makeChunk(chunk_type::header, 0)));
-		encoder.getHeader(header.get());
+		std::auto_ptr<Encoder> encoder;
+		if (codec == "ogg")
+			encoder.reset(new OggEncoder(sampleFormat));
+		else if (codec == "pcm")
+			encoder.reset(new PcmEncoder(sampleFormat));
+		else
+		{
+			cout << "unknown codec: " << codec << "\n";
+			return 1;
+		}
+
+		shared_ptr<Chunk> header(new Chunk(format, encoder->getHeader()));
 		server->setHeader(header);
 
         while (!g_terminated)
@@ -307,7 +319,7 @@ size_t duration = 50;
 
                     wireChunk->tv_sec = tvChunk.tv_sec;
                     wireChunk->tv_usec = tvChunk.tv_usec;
-					double chunkDuration = encoder.encode(chunk.get());
+					double chunkDuration = encoder->encode(chunk.get());
 					if (chunkDuration > 0)
 	                    server->send(chunk);
 //cout << wireChunk->tv_sec << ", " << wireChunk->tv_usec / 1000 << "\n";
