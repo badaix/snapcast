@@ -21,11 +21,6 @@
 #include <memory>
 #include <set>
 #include "common/chunk.h"
-#include "common/timeUtils.h"
-#include "common/queue.h"
-#include "common/signalHandler.h"
-#include "common/utils.h"
-#include "common/sampleFormat.h"
 #include "pcmEncoder.h"
 #include "oggEncoder.h"
 #include <syslog.h>
@@ -44,7 +39,15 @@
 #include <memory>
 #include <set>
 #include <sstream>
+#include "common/timeUtils.h"
+#include "common/queue.h"
+#include "common/signalHandler.h"
+#include "common/utils.h"
+#include "common/sampleFormat.h"
+//#include "../server/pcmEncoder.h"
+//#include "../server/oggEncoder.h"
 #include "message.h"
+
 
 using boost::asio::ip::tcp;
 namespace po = boost::program_options;
@@ -57,7 +60,7 @@ using namespace std::chrono;
 
 bool g_terminated = false;
 
-
+/*
 int main(int argc, char* argv[])
 {
 	TestMessage* chunk = new TestMessage(1, (char*)"Hallo");
@@ -76,7 +79,7 @@ int main(int argc, char* argv[])
 	cout << "Header: " << chunk->type << ", " << chunk->size << ", " << (int)chunk->logLevel << ", " << chunk->text << "\n";
 
 	
-/*	chunk->tv_sec = 21;
+	chunk->tv_sec = 21;
 	chunk->tv_usec = 2;
 	chunk->payloadSize = 5;
 	chunk->payload = (char*)malloc(5);
@@ -92,23 +95,10 @@ cout << "4\n";
 	chunk->deserialize(stream);
 cout << "5\n";
 	cout << chunk->tv_sec << ", " << chunk->tv_usec << ", " << chunk->payloadSize << ", " << chunk->payload << "\n"; 	
-*/
+
 return 0;
 }
-
-
-/*
-std::string return_current_time_and_date()
-{
-    auto now = system_clock::now();
-    auto in_time_t = system_clock::to_time_t(now);
-	system_clock::duration ms = now.time_since_epoch();
-	char buff[20];
-	strftime(buff, 20, "%Y-%m-%d %H:%M:%S", localtime(&in_time_t));
-	stringstream ss;
-	ss << buff << "." << std::setw(3) << std::setfill('0') << ((ms / milliseconds(1)) % 1000);
-    return ss.str();
-}
+*/
 
 
 class Session
@@ -125,7 +115,7 @@ public:
 			for (;;)
 			{
 				shared_ptr<Chunk> chunk(chunks.pop());
-				char* stream = chunk->serialize();
+/*				char* stream = chunk->serialize();
 				size_t written(0);
 				size_t toWrite = sizeof(stream);
 				do
@@ -133,7 +123,7 @@ public:
 					written += boost::asio::write(*socket_, boost::asio::buffer(stream + written, toWrite - written));//, error);
 				}
 				while (written < toWrite);
-			}
+*/			}
 		}
 		catch (std::exception& e)
 		{
@@ -188,7 +178,7 @@ public:
 			a.accept(*sock);
 //			cout << "New connection: " << sock->remote_endpoint().address().to_string() << "\n";
 			Session* session = new Session(sock);
-cout << "Sending header: " << headerChunk->wireChunk->length << "\n";
+cout << "Sending header: " << headerChunk->payloadSize << "\n";
 			session->send(headerChunk);
 			session->start();
 			sessions.insert(shared_ptr<Session>(session));
@@ -197,7 +187,7 @@ cout << "Sending header: " << headerChunk->wireChunk->length << "\n";
 
 	void setHeader(shared_ptr<Chunk> chunk)
 	{
-		if (chunk && (chunk->wireChunk != NULL))
+		if (chunk)
 			headerChunk = shared_ptr<Chunk>(chunk);
 	}
 
@@ -262,25 +252,6 @@ private:
 
 int main(int argc, char* argv[])
 {
-	WireChunk* chunk = new WireChunk();
-	chunk->tv_sec = 21;
-	chunk->tv_usec = 2;
-	chunk->payloadSize = 5;
-	chunk->payload = (char*)malloc(5);
-chunk->payload[0] = 99;
-	char* stream = chunk->serialize();
-cout << "1\n";
-for (size_t n=0; n<24; ++n)
-	cout << (int)stream[n] << " ";
-	delete chunk;
-cout << "\n3\n";
-	chunk = new WireChunk();
-cout << "4\n";
-	chunk->deserialize(stream);
-cout << "5\n";
-	cout << chunk->tv_sec << ", " << chunk->tv_usec << ", " << chunk->payloadSize << ", " << chunk->payload << "\n"; 	
-return 0;
-
 	try
 	{
 		string sampleFormat;
@@ -331,7 +302,7 @@ return 0;
 size_t duration = 50;
 
 		SampleFormat format(sampleFormat);
-		std::auto_ptr<Encoder> encoder;
+/*		std::auto_ptr<Encoder> encoder;
 		if (codec == "ogg")
 			encoder.reset(new OggEncoder(sampleFormat));
 		else if (codec == "pcm")
@@ -341,9 +312,9 @@ size_t duration = 50;
 			cout << "unknown codec: " << codec << "\n";
 			return 1;
 		}
-
-		shared_ptr<Chunk> header(new Chunk(format, encoder->getHeader()));
-		server->setHeader(header);
+*/
+//		shared_ptr<Chunk> header(new Chunk(format, encoder->getHeader()));
+//		server->setHeader(header);
 
         while (!g_terminated)
         {
@@ -354,14 +325,11 @@ size_t duration = 50;
                 while (true)//cin.good())
                 {
                     chunk.reset(new Chunk(format, duration));//2*WIRE_CHUNK_SIZE));
-					WireChunk* wireChunk = chunk->wireChunk;
-                    int toRead = wireChunk->length;
-//                    cout << "tr: " << toRead << ", size: " << WIRE_CHUNK_SIZE << "\t";
-//                    char* payload = (char*)(&chunk->payload[0]);
+                    int toRead = chunk->payloadSize;
                     int len = 0;
                     do
                     {
-                        int count = read(fd, wireChunk->payload + len, toRead - len);
+                        int count = read(fd, chunk->payload + len, toRead - len);
                         if (count <= 0)
                             throw ServerException("count = " + boost::lexical_cast<string>(count));
 
@@ -369,12 +337,12 @@ size_t duration = 50;
                     }
                     while (len < toRead);
 
-                    wireChunk->tv_sec = tvChunk.tv_sec;
-                    wireChunk->tv_usec = tvChunk.tv_usec;
-					double chunkDuration = encoder->encode(chunk.get());
+                    chunk->tv_sec = tvChunk.tv_sec;
+                    chunk->tv_usec = tvChunk.tv_usec;
+					double chunkDuration = 50;//encoder->encode(chunk.get());
 					if (chunkDuration > 0)
 	                    server->send(chunk);
-//cout << wireChunk->tv_sec << ", " << wireChunk->tv_usec / 1000 << "\n";
+cout << chunk->tv_sec << ", " << chunk->tv_usec / 1000 << "\n";
 //                    addUs(tvChunk, 1000*chunk->getDuration());
                     addUs(tvChunk, chunkDuration * 1000);
                     nextTick += duration;
@@ -385,7 +353,6 @@ size_t duration = 50;
                     }
                     else
                     {
-                        cin.sync();
                         gettimeofday(&tvChunk, NULL);
                         nextTick = getTickCount();
                     }
@@ -410,6 +377,6 @@ size_t duration = 50;
 }
 
 
-*/
+
 
 

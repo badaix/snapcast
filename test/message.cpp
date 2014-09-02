@@ -4,7 +4,7 @@
 #include "common/log.h"
 
 
-Chunk::Chunk(const SampleFormat& sampleFormat, size_t ms) : format(sampleFormat), idx(0)
+Chunk::Chunk(const SampleFormat& sampleFormat, size_t ms) : WireChunk(), format(sampleFormat), idx(0)
 {
 	payloadSize = format.rate*format.frameSize*ms / 1000;
 	payload = (char*)malloc(payloadSize);
