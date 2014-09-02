@@ -1,0 +1,19 @@
+VERSION = 0.01
+CC      = /usr/bin/g++
+CFLAGS  = -std=gnu++0x -Wall -Wno-unused-function -D_REENTRANT -DVERSION=\"$(VERSION)\" -I..
+LDFLAGS = -lrt -lpthread -lboost_system -lboost_program_options -lvorbis -lvorbisenc -logg
+
+OBJ = test.o message.o
+BIN = test
+
+all:	server
+
+server: $(OBJ)
+	$(CC) $(CFLAGS) -o $(BIN) $(OBJ) $(LDFLAGS)
+
+%.o: %.cpp
+	$(CC) $(CFLAGS) -c $< -o $@
+
+clean:
+	rm -rf $(BIN) $(OBJ)
+
