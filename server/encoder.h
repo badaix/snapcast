@@ -1,6 +1,6 @@
 #ifndef ENCODER_H
 #define ENCODER_H
-#include "common/chunk.h"
+#include "common/message.h"
 #include "common/sampleFormat.h"
 
 
@@ -11,8 +11,8 @@ public:
 	{
 	}
 
-	virtual double encode(Chunk* chunk) = 0;
-	virtual WireChunk* getHeader()
+	virtual double encode(PcmChunk* chunk) = 0;
+	virtual HeaderMessage* getHeader()
 	{
 		return NULL;
 	}

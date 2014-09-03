@@ -150,6 +150,43 @@ protected:
 
 
 
+class HeaderMessage : public BaseMessage 
+{
+public:
+	HeaderMessage(size_t size = 0) : BaseMessage(message_type::payload), payloadSize(size)
+	{
+		payload = (char*)malloc(size);
+	}
+
+	virtual ~HeaderMessage()
+	{
+	}
+
+	virtual void read(istream& stream)
+	{
+		stream.read(reinterpret_cast<char *>(&payloadSize), sizeof(uint32_t));
+		payload = (char*)malloc(payloadSize);
+		stream.read(payload, payloadSize);
+	}
+
+	virtual uint32_t getSize()
+	{
+		return sizeof(uint32_t) + payloadSize;
+	}
+
+	uint32_t payloadSize;
+	char* payload;
+
+protected:
+	virtual void doserialize(ostream& stream)
+	{
+		stream.write(reinterpret_cast<char *>(&payloadSize), sizeof(uint32_t));
+		stream.write(payload, payloadSize);
+	}
+};
+
+
+
 
 /*
 
@@ -249,11 +286,11 @@ protected:
 };
 */
 
-class Chunk : public WireChunk
+class PcmChunk : public WireChunk
 {
 public:
-	Chunk(const SampleFormat& sampleFormat, size_t ms);
-	~Chunk();
+	PcmChunk(const SampleFormat& sampleFormat, size_t ms);
+	~PcmChunk();
 
 	int read(void* outputBuffer, size_t frameCount);
 	bool isEndOfChunk() const;

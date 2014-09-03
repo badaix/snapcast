@@ -4,46 +4,46 @@
 #include "common/log.h"
 
 
-Chunk::Chunk(const SampleFormat& sampleFormat, size_t ms) : WireChunk(), format(sampleFormat), idx(0)
+PcmChunk::PcmChunk(const SampleFormat& sampleFormat, size_t ms) : WireChunk(), format(sampleFormat), idx(0)
 {
 	payloadSize = format.rate*format.frameSize*ms / 1000;
 	payload = (char*)malloc(payloadSize);
 }
 
 
-Chunk::~Chunk()
+PcmChunk::~PcmChunk()
 {
 }
 
 
-bool Chunk::isEndOfChunk() const
+bool PcmChunk::isEndOfChunk() const
 {
 	return idx >= getFrameCount();
 }
 
 
-double Chunk::getFrameCount() const
+double PcmChunk::getFrameCount() const
 {
 	return (payloadSize / format.frameSize);
 }
 
 
 
-double Chunk::getDuration() const
+double PcmChunk::getDuration() const
 {
 	return getFrameCount() / format.msRate();
 }
 
 
 
-double Chunk::getTimeLeft() const
+double PcmChunk::getTimeLeft() const
 {
 	return (getFrameCount() - idx) / format.msRate();
 }
 
 
 
-int Chunk::seek(int frames)
+int PcmChunk::seek(int frames)
 {
 	idx += frames;
 	if (idx > getFrameCount())
@@ -54,7 +54,7 @@ int Chunk::seek(int frames)
 }
 
 
-int Chunk::read(void* outputBuffer, size_t frameCount) 
+int PcmChunk::read(void* outputBuffer, size_t frameCount) 
 {
 //logd << "read: " << frameCount << ", total: " << (wireChunk->length / format.frameSize) << ", idx: " << idx;// << std::endl;
 	int result = frameCount;

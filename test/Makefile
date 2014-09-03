@@ -3,7 +3,7 @@ CC      = /usr/bin/g++
 CFLAGS  = -std=gnu++0x -Wall -Wno-unused-function -D_REENTRANT -DVERSION=\"$(VERSION)\" -I..
 LDFLAGS = -lrt -lpthread -lboost_system -lboost_program_options -lvorbis -lvorbisenc -logg
 
-OBJ = test.o message.o ../common/sampleFormat.o ../server/oggEncoder.o ../server/pcmEncoder.o
+OBJ = test.o ../common/message.o ../common/sampleFormat.o ../server/oggEncoder.o ../server/pcmEncoder.o
 BIN = test
 
 all:	server

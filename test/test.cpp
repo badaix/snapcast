@@ -44,9 +44,9 @@
 #include "common/signalHandler.h"
 #include "common/utils.h"
 #include "common/sampleFormat.h"
-//#include "../server/pcmEncoder.h"
-//#include "../server/oggEncoder.h"
-#include "message.h"
+#include "../server/pcmEncoder.h"
+#include "../server/oggEncoder.h"
+#include "common/message.h"
 
 
 using boost::asio::ip::tcp;
@@ -114,7 +114,7 @@ public:
 		{
 			for (;;)
 			{
-				shared_ptr<Chunk> chunk(chunks.pop());
+				shared_ptr<BaseMessage> message(messages.pop());
 /*				char* stream = chunk->serialize();
 				size_t written(0);
 				size_t toWrite = sizeof(stream);
@@ -139,14 +139,14 @@ public:
 //		readerThread.join();
 	}
 
-	void send(shared_ptr<Chunk> chunk)
+	void send(shared_ptr<BaseMessage> message)
 	{
-		if (!chunk)
+		if (!message)
 			return;
 
-		while (chunks.size() * chunk->getDuration() > 10000)
-			chunks.pop();
-		chunks.push(chunk);
+		while (messages.size() > 100)//* chunk->getDuration() > 10000)
+			messages.pop();
+		messages.push(message);
 	}
 
 	bool isActive() const
@@ -158,7 +158,7 @@ private:
 	bool active_;
 	socket_ptr socket_;
 	thread* senderThread;
-	Queue<shared_ptr<Chunk>> chunks;
+	Queue<shared_ptr<BaseMessage>> messages;
 };
 
 
@@ -185,16 +185,14 @@ cout << "Sending header: " << headerChunk->payloadSize << "\n";
 		}
 	}
 
-	void setHeader(shared_ptr<Chunk> chunk)
+	void setHeader(shared_ptr<HeaderMessage> header)
 	{
-		if (chunk)
-			headerChunk = shared_ptr<Chunk>(chunk);
+		if (header)
+			headerChunk = shared_ptr<HeaderMessage>(header);
 	}
 
-	void send(shared_ptr<Chunk> chunk)
+	void send(shared_ptr<BaseMessage> message)
 	{
-//		fwrite(chunk->wireChunk->payload, 1, chunk->wireChunk->length, stdout);
-		
 		for (std::set<shared_ptr<Session>>::iterator it = sessions.begin(); it != sessions.end(); ) 
 		{
     		if (!(*it)->isActive())
@@ -207,7 +205,7 @@ cout << "Sending header: " << headerChunk->payloadSize << "\n";
 	    }
 
 		for (auto s : sessions)
-			s->send(chunk);
+			s->send(message);
 	}
 
 	void start()
@@ -224,7 +222,7 @@ private:
 	set<shared_ptr<Session>> sessions;
 	boost::asio::io_service io_service_;
 	unsigned short port_;
-	shared_ptr<Chunk> headerChunk;
+	shared_ptr<HeaderMessage> headerChunk;
 	thread* acceptThread;
 };
 
@@ -302,7 +300,7 @@ int main(int argc, char* argv[])
 size_t duration = 50;
 
 		SampleFormat format(sampleFormat);
-/*		std::auto_ptr<Encoder> encoder;
+		std::auto_ptr<Encoder> encoder;
 		if (codec == "ogg")
 			encoder.reset(new OggEncoder(sampleFormat));
 		else if (codec == "pcm")
@@ -312,8 +310,8 @@ size_t duration = 50;
 			cout << "unknown codec: " << codec << "\n";
 			return 1;
 		}
-*/
-//		shared_ptr<Chunk> header(new Chunk(format, encoder->getHeader()));
+
+///		shared_ptr<HeaderMessage> header(encoder->getHeader());
 //		server->setHeader(header);
 
         while (!g_terminated)
@@ -321,10 +319,10 @@ size_t duration = 50;
             int fd = open(fifoName.c_str(), O_RDONLY);
             try
             {
-                shared_ptr<Chunk> chunk;//(new WireChunk());
+                shared_ptr<PcmChunk> chunk;//(new WireChunk());
                 while (true)//cin.good())
                 {
-                    chunk.reset(new Chunk(format, duration));//2*WIRE_CHUNK_SIZE));
+                    chunk.reset(new PcmChunk(format, duration));//2*WIRE_CHUNK_SIZE));
                     int toRead = chunk->payloadSize;
                     int len = 0;
                     do

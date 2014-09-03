@@ -12,32 +12,31 @@ OggEncoder::OggEncoder(const SampleFormat& format) : Encoder(format), headerChun
 }
 
 
-WireChunk* OggEncoder::getHeader()
+HeaderMessage* OggEncoder::getHeader()
 {
 	return headerChunk;
 }
 
 
-double OggEncoder::encode(Chunk* chunk)
+double OggEncoder::encode(PcmChunk* chunk)
 {
 	double res = 0;
-	WireChunk* wireChunk = chunk->wireChunk;
 	if (tv_sec == 0)
 	{
-		tv_sec = wireChunk->tv_sec;
-		tv_usec = wireChunk->tv_usec;
+		tv_sec = chunk->tv_sec;
+		tv_usec = chunk->tv_usec;
 	}
 //cout << "-> pcm: " << wireChunk->length << endl;
-	int bytes = wireChunk->length / 4;
+	int bytes = chunk->payloadSize / 4;
 	float **buffer=vorbis_analysis_buffer(&vd, bytes);
 
 	/* uninterleave samples */
 	for(int i=0;i<bytes;i++)
 	{
-		buffer[0][i]=((wireChunk->payload[i*4+1]<<8)|
-				  (0x00ff&(int)wireChunk->payload[i*4]))/32768.f;
-		buffer[1][i]=((wireChunk->payload[i*4+3]<<8)|
-				  (0x00ff&(int)wireChunk->payload[i*4+2]))/32768.f;
+		buffer[0][i]=((chunk->payload[i*4+1]<<8)|
+				  (0x00ff&(int)chunk->payload[i*4]))/32768.f;
+		buffer[1][i]=((chunk->payload[i*4+3]<<8)|
+				  (0x00ff&(int)chunk->payload[i*4+2]))/32768.f;
 	}
 
 	/* tell the library how much we actually submitted */
@@ -68,12 +67,12 @@ double OggEncoder::encode(Chunk* chunk)
 				res = true;
 
 				size_t nextLen = pos + og.header_len + og.body_len;
-				if (wireChunk->length < nextLen)
-					wireChunk->payload = (char*)realloc(wireChunk->payload, nextLen);
+				if (chunk->payloadSize < nextLen)
+					chunk->payload = (char*)realloc(chunk->payload, nextLen);
 
-				memcpy(wireChunk->payload + pos, og.header, og.header_len);
+				memcpy(chunk->payload + pos, og.header, og.header_len);
 				pos += og.header_len;
-				memcpy(wireChunk->payload + pos, og.body, og.body_len);
+				memcpy(chunk->payload + pos, og.body, og.body_len);
 				pos += og.body_len;
 			}
 		}
@@ -86,8 +85,8 @@ double OggEncoder::encode(Chunk* chunk)
 			res = os.granulepos - lastGranulepos;
 		res /= 48.;
 		lastGranulepos = os.granulepos;
-		wireChunk->payload = (char*)realloc(wireChunk->payload, pos);
-		wireChunk->length = pos;
+		chunk->payload = (char*)realloc(chunk->payload, pos);
+		chunk->payloadSize = pos;
 		tv_sec = 0;
 		tv_usec = 0;
 	}
@@ -171,14 +170,14 @@ void OggEncoder::init()
 	 */
 //	  while(!eos){
 	size_t pos(0);
-	headerChunk = Chunk::makeChunk(chunk_type::header, 0);
+	headerChunk = new HeaderMessage();
 	while (true)
 	{
 		int result=ogg_stream_flush(&os,&og);
 		if (result == 0)
 			break;
-		headerChunk->length += og.header_len + og.body_len;
-		headerChunk->payload = (char*)realloc(headerChunk->payload, headerChunk->length);
+		headerChunk->payloadSize += og.header_len + og.body_len;
+		headerChunk->payload = (char*)realloc(headerChunk->payload, headerChunk->payloadSize);
 		cout << "HeadLen: " << og.header_len << ", bodyLen: " << og.body_len << ", result: " << result << "\n";
 		memcpy(headerChunk->payload + pos, og.header, og.header_len);	
 		pos += og.header_len;

@@ -8,8 +8,8 @@ class OggEncoder : public Encoder
 {
 public:
 	OggEncoder(const SampleFormat& format);
-	virtual double encode(Chunk* chunk);
-	virtual WireChunk* getHeader();
+	virtual double encode(PcmChunk* chunk);
+	virtual HeaderMessage* getHeader();
 
 private:
 	void init();
@@ -31,7 +31,7 @@ private:
 	ogg_packet header_code;
 
 	ogg_int64_t   lastGranulepos;
-	WireChunk* headerChunk;
+	HeaderMessage* headerChunk;
 
 	int eos=0,ret;
 	int i, founddata;
