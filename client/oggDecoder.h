@@ -9,11 +9,11 @@ class OggDecoder
 public:
 	OggDecoder();
 	virtual ~OggDecoder();
-	virtual bool decode(BaseMessage* chunk);
+	virtual bool decode(PcmChunk* chunk);
+	virtual bool setHeader(HeaderMessage* chunk);
 
 private:
 	bool decodePayload(PcmChunk* chunk);
-	bool decodeHeader(HeaderMessage* chunk);
 
 	ogg_sync_state   oy; /* sync and verify incoming physical bitstream */
 	ogg_stream_state os; /* take physical pages, weld into a logical

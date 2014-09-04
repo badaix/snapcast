@@ -2,8 +2,8 @@
 #include <boost/lexical_cast.hpp>
 #include <iostream>
 #include "common/log.h"
-//#include "oggDecoder.h"
-//#include "pcmDecoder.h"
+#include "oggDecoder.h"
+#include "pcmDecoder.h"
 
 
 #define PCM_DEVICE "default"
@@ -58,7 +58,7 @@ void Receiver::worker()
 			tv.tv_sec  = 5; 
 			tv.tv_usec = 0;         
 			setsockopt(s.native(), SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
-
+			OggDecoder decoder;
 //			std::clog << kLogNotice << "connected to " << ip << ":" << port << std::endl;
 			while (true)
 			{
@@ -88,17 +88,18 @@ void Receiver::worker()
 				{
 					PcmChunk* chunk = new PcmChunk(stream_->format, 0);
 					chunk->read(is);
-//cout << "WireChunk length: " << chunk->payloadSize << ", Duration: " << chunk->getDuration() << ", sec: " << chunk->tv_sec << ", usec: " << chunk->tv_usec/1000 << ", type: " << chunk->type << "\n";
-					stream_->addChunk(chunk);
+//cout << "WireChunk length: " << chunk->payloadSize;
+					if (decoder.decode(chunk))
+						stream_->addChunk(chunk);
+//cout << ", decoded: " << chunk->payloadSize << ", Duration: " << chunk->getDuration() << ", sec: " << chunk->tv_sec << ", usec: " << chunk->tv_usec/1000 << ", type: " << chunk->type << "\n";				
 				}
-
-//cout << "WireChunk length: " << wireChunk->length << ", Duration: " << chunk->getDuration() << ", sec: " << wireChunk->tv_sec << ", usec: " << wireChunk->tv_usec/1000 << ", type: " << wireChunk->type << "\n";
-/*				if (decoder.decode(chunk))
+				else if (baseMessage.type == message_type::header)
 				{
-//cout << "Duration: " << chunk->getDuration() << "\n";
-					stream_->addChunk(chunk);
+					HeaderMessage* chunk = new HeaderMessage();
+					chunk->read(is);
+					decoder.setHeader(chunk);
 				}
-*/			}
+			}
 		}
 		catch (const std::exception& e)
 		{

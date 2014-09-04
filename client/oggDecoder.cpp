@@ -23,7 +23,7 @@ OggDecoder::~OggDecoder()
 }
 
 
-bool OggDecoder::decodePayload(PcmChunk* chunk)
+bool OggDecoder::decode(PcmChunk* chunk)
 {
 
 	/* grab some data at the head of the stream. We want the first page
@@ -116,14 +116,13 @@ bool OggDecoder::decodePayload(PcmChunk* chunk)
 }
 
 
-bool OggDecoder::decodeHeader(HeaderMessage* chunk)
+bool OggDecoder::setHeader(HeaderMessage* chunk)
 {
 	bytes = chunk->payloadSize;
     buffer=ogg_sync_buffer(&oy, bytes);
     memcpy(buffer, chunk->payload, bytes);
     ogg_sync_wrote(&oy,bytes);
 
-	cout << "Decode header\n";
     if(ogg_sync_pageout(&oy,&og)!=1)
 	{
 		fprintf(stderr,"Input does not appear to be an Ogg bitstream.\n");
@@ -131,7 +130,6 @@ bool OggDecoder::decodeHeader(HeaderMessage* chunk)
     }
   
     ogg_stream_init(&os,ogg_page_serialno(&og));
-cout << "2" << endl;
         
 	vorbis_info_init(&vi);
 	vorbis_comment_init(&vc);
@@ -152,7 +150,6 @@ cout << "2" << endl;
 		fprintf(stderr,"This Ogg bitstream does not contain Vorbis audio data.\n");
 		return false;
     }
-cout << "3" << endl;
     
     
     int i(0);
@@ -161,51 +158,39 @@ cout << "3" << endl;
 		while(i<2)
 		{
 			int result=ogg_sync_pageout(&oy,&og);
-cout << result << endl;
 		    if(result==0)
 				break; /* Need more data */
 		    /* Don't complain about missing or corrupt data yet. We'll
 		       catch it at the packet output phase */
 			if(result==1)
 			{
-	cout << "a" << endl;                  
 				ogg_stream_pagein(&os,&og); /* we can ignore any errors here as they'll also become apparent at packetout */
 				while(i<2)
 				{
-	cout << "b" << endl;
-		        result=ogg_stream_packetout(&os,&op);
-		        if(result==0)
-					break;
-				if(result<0)
-				{
-					/* Uh oh; data at some point was corrupted or missing!
-					 We can't tolerate that in a header.  Die. */
-					fprintf(stderr,"Corrupt secondary header.  Exiting.\n");
-					return false;
+				    result=ogg_stream_packetout(&os,&op);
+				    if(result==0)
+						break;
+					if(result<0)
+					{
+						/* Uh oh; data at some point was corrupted or missing!
+						 We can't tolerate that in a header.  Die. */
+						fprintf(stderr,"Corrupt secondary header.  Exiting.\n");
+						return false;
+					}
+					result=vorbis_synthesis_headerin(&vi,&vc,&op);
+					if(result<0)
+					{
+						fprintf(stderr,"Corrupt secondary header.  Exiting.\n");
+						return false;
+					}
+					i++;
 				}
-				result=vorbis_synthesis_headerin(&vi,&vc,&op);
-				if(result<0)
-				{
-					fprintf(stderr,"Corrupt secondary header.  Exiting.\n");
-					return false;
-				}
-				i++;
 			}
 		}
-	}
-      /* no harm in not checking before adding more */
-//      buffer=ogg_sync_buffer(&oy,wireChunk->length);
-//      bytes=fread(buffer,1,4096,stdin);
-//      if(bytes==0 && i<2){
-//        fprintf(stderr,"End of file before finding all Vorbis headers!\n");
-//        exit(1);
-//      }
-//      ogg_sync_wrote(&oy,bytes);
     }
     
     /* Throw the comments plus a few lines about the bitstream we're decoding */
-cout << "5" << endl;                  
-      char **ptr=vc.user_comments;
+    char **ptr=vc.user_comments;
 	while(*ptr)
 	{
 		fprintf(stderr,"%s\n",*ptr);
@@ -213,8 +198,6 @@ cout << "5" << endl;
 	}
 	fprintf(stderr,"\nBitstream is %d channel, %ldHz\n",vi.channels,vi.rate);
 	fprintf(stderr,"Encoded by: %s\n\n",vc.vendor);
-    
-cout << "6" << endl;                  
 
     /* OK, got and parsed all three headers. Initialize the Vorbis
        packet->PCM decoder. */
@@ -224,16 +207,6 @@ cout << "6" << endl;
                                               proceed in parallel. We could init
                                               multiple vorbis_block structures
                                               for vd here */
-	return false;
-}
-
-
-bool OggDecoder::decode(BaseMessage* chunk)
-{
-	if (chunk->getType() == chunk_type::payload)
-		return decodePayload(chunk);
-	else if (chunk->getType() == chunk_type::header)
-		return decodeHeader(chunk);
 	return false;
 }
 
