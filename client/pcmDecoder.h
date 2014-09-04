@@ -7,7 +7,7 @@ class PcmDecoder
 {
 public:
 	PcmDecoder();
-	virtual bool decode(Chunk* chunk);
+	virtual bool decode(BaseMessage* chunk);
 };
 
 

@@ -23,17 +23,20 @@ OggDecoder::~OggDecoder()
 }
 
 
-bool OggDecoder::decodePayload(Chunk* chunk)
+bool OggDecoder::decodePayload(PcmChunk* chunk)
 {
-	WireChunk* wireChunk = chunk->wireChunk;
 
 	/* grab some data at the head of the stream. We want the first page
 	(which is guaranteed to be small and only contain the Vorbis
 	stream initial header) We need the first page to get the stream
 	serialno. */
+	bytes = chunk->payloadSize;
+    buffer=ogg_sync_buffer(&oy, bytes);
+    memcpy(buffer, chunk->payload, bytes);
+    ogg_sync_wrote(&oy,bytes);
 
 
-	wireChunk->length = 0;
+	chunk->payloadSize = 0;
 	convsize=4096;//bytes/vi.channels;
 	/* The rest is just a straight decode loop until end of stream */
 	//      while(!eos){
@@ -95,11 +98,11 @@ bool OggDecoder::decodePayload(Chunk* chunk)
 					}
 				}
 
-				size_t oldSize = wireChunk->length;
+				size_t oldSize = chunk->payloadSize;
 				size_t size = 2*vi.channels * bout;
-				wireChunk->length += size;
-				wireChunk->payload = (char*)realloc(wireChunk->payload, wireChunk->length);
-				memcpy(wireChunk->payload + oldSize, convbuffer, size);
+				chunk->payloadSize += size;
+				chunk->payload = (char*)realloc(chunk->payload, chunk->payloadSize);
+				memcpy(chunk->payload + oldSize, convbuffer, size);
 				/* tell libvorbis how many samples we actually consumed */
 				vorbis_synthesis_read(&vd,bout); 
 			}            
@@ -113,8 +116,13 @@ bool OggDecoder::decodePayload(Chunk* chunk)
 }
 
 
-bool OggDecoder::decodeHeader(Chunk* chunk)
+bool OggDecoder::decodeHeader(HeaderMessage* chunk)
 {
+	bytes = chunk->payloadSize;
+    buffer=ogg_sync_buffer(&oy, bytes);
+    memcpy(buffer, chunk->payload, bytes);
+    ogg_sync_wrote(&oy,bytes);
+
 	cout << "Decode header\n";
     if(ogg_sync_pageout(&oy,&og)!=1)
 	{
@@ -220,13 +228,8 @@ cout << "6" << endl;
 }
 
 
-bool OggDecoder::decode(Chunk* chunk)
+bool OggDecoder::decode(BaseMessage* chunk)
 {
-	WireChunk* wireChunk = chunk->wireChunk;
-	bytes = wireChunk->length;
-    buffer=ogg_sync_buffer(&oy, bytes);
-    memcpy(buffer, wireChunk->payload, bytes);
-    ogg_sync_wrote(&oy,bytes);
 	if (chunk->getType() == chunk_type::payload)
 		return decodePayload(chunk);
 	else if (chunk->getType() == chunk_type::header)

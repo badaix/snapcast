@@ -28,15 +28,23 @@ struct BaseMessage
 
 	BaseMessage(message_type type_)
 	{
-		type = type;
+		type = type_;
 	};
 
 	virtual void read(istream& stream)
 	{
 		stream.read(reinterpret_cast<char*>(&type), sizeof(uint16_t));
-		cout << type << "\n";
+//		cout << type << "\n";
 		stream.read(reinterpret_cast<char*>(&size), sizeof(uint32_t));
-		cout << size << "\n";
+//		cout << size << "\n";
+	}
+
+	void read(char* stream)
+	{
+		memcpy(reinterpret_cast<char*>(&type), stream, sizeof(uint16_t));
+//		cout << "type: " << type << "\n";
+		memcpy(reinterpret_cast<char*>(&size), stream + sizeof(uint16_t), sizeof(uint32_t));
+//		cout << "size: " << size << "\n";
 	}
 
 	virtual void serialize(ostream& stream)
@@ -107,8 +115,9 @@ protected:
 class WireChunk : public BaseMessage 
 {
 public:
-	WireChunk() : BaseMessage(message_type::payload)
+	WireChunk(size_t size = 0) : BaseMessage(message_type::payload), payloadSize(size)
 	{
+		payload = (char*)malloc(size);
 	}
 
 //	WireChunk(int8_t logLevel_, char* text_) : BaseMessage(message_type::payload), logLevel(logLevel_), length(sizeof(text_)), text(text_)
@@ -117,6 +126,7 @@ public:
 
 	virtual ~WireChunk()
 	{
+		free(payload);
 	}
 
 	virtual void read(istream& stream)
@@ -124,7 +134,7 @@ public:
 		stream.read(reinterpret_cast<char *>(&tv_sec), sizeof(int32_t));
 		stream.read(reinterpret_cast<char *>(&tv_usec), sizeof(int32_t));
 		stream.read(reinterpret_cast<char *>(&payloadSize), sizeof(uint32_t));
-		payload = (char*)malloc(payloadSize);
+		payload = (char*)realloc(payload, payloadSize);
 		stream.read(payload, payloadSize);
 	}
 
@@ -153,19 +163,20 @@ protected:
 class HeaderMessage : public BaseMessage 
 {
 public:
-	HeaderMessage(size_t size = 0) : BaseMessage(message_type::payload), payloadSize(size)
+	HeaderMessage(size_t size = 0) : BaseMessage(message_type::header), payloadSize(size)
 	{
 		payload = (char*)malloc(size);
 	}
 
 	virtual ~HeaderMessage()
 	{
+		free(payload);
 	}
 
 	virtual void read(istream& stream)
 	{
 		stream.read(reinterpret_cast<char *>(&payloadSize), sizeof(uint32_t));
-		payload = (char*)malloc(payloadSize);
+		payload = (char*)realloc(payload, payloadSize);
 		stream.read(payload, payloadSize);
 	}
 
@@ -292,7 +303,7 @@ public:
 	PcmChunk(const SampleFormat& sampleFormat, size_t ms);
 	~PcmChunk();
 
-	int read(void* outputBuffer, size_t frameCount);
+	int readFrames(void* outputBuffer, size_t frameCount);
 	bool isEndOfChunk() const;
 
 	inline time_point_ms timePoint() const

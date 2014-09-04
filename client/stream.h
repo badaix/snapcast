@@ -8,7 +8,7 @@
 #include <vector>
 #include <memory>
 #include "doubleBuffer.h"
-#include "common/chunk.h"
+#include "common/message.h"
 #include "common/timeUtils.h"
 #include "common/queue.h"
 #include "common/sampleFormat.h"
@@ -18,7 +18,7 @@ class Stream
 {
 public:
 	Stream(const SampleFormat& format);
-	void addChunk(Chunk* chunk);
+	void addChunk(PcmChunk* chunk);
 	void clearChunks();
 	void getPlayerChunk(void* outputBuffer, double outputBufferDacTime, unsigned long framesPerBuffer);
 	void setBufferLen(size_t bufferLenMs);
@@ -37,12 +37,12 @@ private:
 	long lastTick;
 	int sleep;
 	
-	Queue<std::shared_ptr<Chunk>> chunks;
+	Queue<std::shared_ptr<PcmChunk>> chunks;
 	DoubleBuffer<int>* pCardBuffer;
 	DoubleBuffer<int>* pMiniBuffer;
 	DoubleBuffer<int>* pBuffer;
 	DoubleBuffer<int>* pShortBuffer;
-	std::shared_ptr<Chunk> chunk;
+	std::shared_ptr<PcmChunk> chunk;
 
 	int median;
 	int shortMedian;

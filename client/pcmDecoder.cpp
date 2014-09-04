@@ -5,7 +5,7 @@ PcmDecoder::PcmDecoder()
 }
 
 
-bool PcmDecoder::decode(Chunk* chunk)
+bool PcmDecoder::decode(BaseMessage* chunk)
 {
 /*	WireChunk* wireChunk = chunk->wireChunk;
 	for (size_t n=0; n<wireChunk->length; ++n)

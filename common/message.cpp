@@ -54,7 +54,7 @@ int PcmChunk::seek(int frames)
 }
 
 
-int PcmChunk::read(void* outputBuffer, size_t frameCount) 
+int PcmChunk::readFrames(void* outputBuffer, size_t frameCount) 
 {
 //logd << "read: " << frameCount << ", total: " << (wireChunk->length / format.frameSize) << ", idx: " << idx;// << std::endl;
 	int result = frameCount;

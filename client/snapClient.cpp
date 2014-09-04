@@ -10,7 +10,6 @@
 #include <boost/program_options.hpp>
 
 #include "common/sampleFormat.h"
-#include "common/chunk.h"
 #include "common/utils.h"
 #include "common/log.h"
 #include "stream.h"

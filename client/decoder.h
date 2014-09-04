@@ -1,12 +1,12 @@
 #ifndef DECODER_H
 #define DECODER_H
-#include "common/chunk.h"
+#include "common/message.h"
 
 class Decoder
 {
 public:
 	Decoder();
-	virtual bool decode(Chunk* chunk) = 0;
+	virtual bool decode(PcmChunk* chunk) = 0;
 };
 
 

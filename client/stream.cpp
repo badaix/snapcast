@@ -31,11 +31,11 @@ void Stream::clearChunks()
 }
 
 
-void Stream::addChunk(Chunk* chunk)
+void Stream::addChunk(PcmChunk* chunk)
 {
 	while (chunks.size() * chunk->getDuration() > 10000)
 		chunks.pop();
-	chunks.push(shared_ptr<Chunk>(chunk));
+	chunks.push(shared_ptr<PcmChunk>(chunk));
 //	cout << "new chunk: " << chunk->getDuration() << ", Chunks: " << chunks.size() << "\n";
 }
 
@@ -110,7 +110,7 @@ time_point_ms Stream::getNextPlayerChunk(void* outputBuffer, unsigned long frame
 
 	while (read < toRead)
 	{
-		read += chunk->read(buffer + read*format.frameSize, toRead - read);
+		read += chunk->readFrames(buffer + read*format.frameSize, toRead - read);
 		if (chunk->isEndOfChunk())
 			chunk = chunks.pop();
 	}
@@ -175,7 +175,7 @@ int msBuffer = framesPerBuffer / format_.msRate();
 		if (sleep < -msBuffer/2)
 		{
 			cout << "Sleep " << sleep;
-			sleep = Chunk::getAge(getSilentPlayerChunk(outputBuffer, framesPerBuffer)) - bufferMs + outputBufferDacTime;
+			sleep = PcmChunk::getAge(getSilentPlayerChunk(outputBuffer, framesPerBuffer)) - bufferMs + outputBufferDacTime;
 			std::cerr << " after: " << sleep << ", chunks: " << chunks.size() << "\n";
 //	std::clog << kLogNotice << "sleep: " << sleep << std::endl;
 //			if (sleep > -msBuffer/2)
@@ -201,7 +201,7 @@ cout << "\nms: " << Chunk::getAge(ms) << "\t chunk: " << chunk->getAge() << "\n"
 //				cout << "chunk->getAge() > chunk->getDuration(): " << chunk->getAge() - bufferMs + outputBufferDacTime << " > " << chunk->getDuration() << ", chunks: " << chunks.size() << ", out: " << outputBufferDacTime << ", needed: " << msBuffer << ", sleep: " << sleep << "\n";
 				usleep(1000);
 			}
-			cout << "seek: " << Chunk::getAge(seek(sleep)) - bufferMs + outputBufferDacTime << "\n";
+			cout << "seek: " << PcmChunk::getAge(seek(sleep)) - bufferMs + outputBufferDacTime << "\n";
 			sleep = 0;
 		}
 		else if (sleep < 0)
@@ -218,7 +218,7 @@ cout << "\nms: " << Chunk::getAge(ms) << "\t chunk: " << chunk->getAge() << "\n"
 	
 
 
-	int age = Chunk::getAge(getNextPlayerChunk(outputBuffer, framesPerBuffer, correction)) - bufferMs + outputBufferDacTime;
+	int age = PcmChunk::getAge(getNextPlayerChunk(outputBuffer, framesPerBuffer, correction)) - bufferMs + outputBufferDacTime;
 
 
 //	if (pCardBuffer->full())

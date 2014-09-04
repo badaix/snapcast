@@ -60,45 +60,6 @@ using namespace std::chrono;
 
 bool g_terminated = false;
 
-/*
-int main(int argc, char* argv[])
-{
-	TestMessage* chunk = new TestMessage(1, (char*)"Hallo");
-	stringstream ss;
-	chunk->serialize(ss);
-
-	BaseMessage header;
-	ss.seekg(0, ss.beg);
-	header.read(ss);
-//	cout << ss.str() << "\n";
-//	ss.read(reinterpret_cast<char*>(&header), sizeof(MessageHeader));
-	cout << "Header: " << header.type << ", " << header.size << "\n";
-	delete chunk;
-	chunk = new TestMessage();
-	chunk->read(ss);
-	cout << "Header: " << chunk->type << ", " << chunk->size << ", " << (int)chunk->logLevel << ", " << chunk->text << "\n";
-
-	
-	chunk->tv_sec = 21;
-	chunk->tv_usec = 2;
-	chunk->payloadSize = 5;
-	chunk->payload = (char*)malloc(5);
-chunk->payload[0] = 99;
-	char* stream = chunk->serialize();
-cout << "1\n";
-for (size_t n=0; n<24; ++n)
-	cout << (int)stream[n] << " ";
-	delete chunk;
-cout << "\n3\n";
-	chunk = new WireChunk();
-cout << "4\n";
-	chunk->deserialize(stream);
-cout << "5\n";
-	cout << chunk->tv_sec << ", " << chunk->tv_usec << ", " << chunk->payloadSize << ", " << chunk->payload << "\n"; 	
-
-return 0;
-}
-*/
 
 
 class Session
@@ -112,15 +73,18 @@ public:
 	{
 		try
 		{
+			boost::asio::streambuf streambuf;
+			std::ostream stream(&streambuf);
 			for (;;)
 			{
 				shared_ptr<BaseMessage> message(messages.pop());
-/*				char* stream = chunk->serialize();
-				size_t written(0);
-				size_t toWrite = sizeof(stream);
+				message->serialize(stream);
+				boost::asio::write(*socket_, streambuf);
+/*				size_t written(0);
+				size_t toWrite = message->getSize();
 				do
 				{
-					written += boost::asio::write(*socket_, boost::asio::buffer(stream + written, toWrite - written));//, error);
+					written += boost::asio::write(*socket_, streambuf);//, error);
 				}
 				while (written < toWrite);
 */			}
@@ -176,9 +140,10 @@ public:
 		{
 			socket_ptr sock(new tcp::socket(io_service_));
 			a.accept(*sock);
-//			cout << "New connection: " << sock->remote_endpoint().address().to_string() << "\n";
+			cout << "New connection: " << sock->remote_endpoint().address().to_string() << "\n";
 			Session* session = new Session(sock);
-cout << "Sending header: " << headerChunk->payloadSize << "\n";
+		if (headerChunk)
+cout << "Sending header: " << headerChunk->payloadSize << endl;
 			session->send(headerChunk);
 			session->start();
 			sessions.insert(shared_ptr<Session>(session));
@@ -297,9 +262,9 @@ int main(int argc, char* argv[])
 		long nextTick = getTickCount();
 
         mkfifo(fifoName.c_str(), 0777);
-size_t duration = 50;
-
 		SampleFormat format(sampleFormat);
+size_t duration = 50;
+//size_t chunkSize = duration*format.rate*format.frameSize / 1000;
 		std::auto_ptr<Encoder> encoder;
 		if (codec == "ogg")
 			encoder.reset(new OggEncoder(sampleFormat));
@@ -311,8 +276,8 @@ size_t duration = 50;
 			return 1;
 		}
 
-///		shared_ptr<HeaderMessage> header(encoder->getHeader());
-//		server->setHeader(header);
+		shared_ptr<HeaderMessage> header(encoder->getHeader());
+		server->setHeader(header);
 
         while (!g_terminated)
         {
@@ -322,7 +287,7 @@ size_t duration = 50;
                 shared_ptr<PcmChunk> chunk;//(new WireChunk());
                 while (true)//cin.good())
                 {
-                    chunk.reset(new PcmChunk(format, duration));//2*WIRE_CHUNK_SIZE));
+                    chunk.reset(new PcmChunk(sampleFormat, duration));//2*WIRE_CHUNK_SIZE));
                     int toRead = chunk->payloadSize;
                     int len = 0;
                     do
@@ -337,10 +302,10 @@ size_t duration = 50;
 
                     chunk->tv_sec = tvChunk.tv_sec;
                     chunk->tv_usec = tvChunk.tv_usec;
-					double chunkDuration = 50;//encoder->encode(chunk.get());
+					double chunkDuration = encoder->encode(chunk.get());
 					if (chunkDuration > 0)
 	                    server->send(chunk);
-cout << chunk->tv_sec << ", " << chunk->tv_usec / 1000 << "\n";
+//cout << chunk->tv_sec << ", " << chunk->tv_usec / 1000 << "\n";
 //                    addUs(tvChunk, 1000*chunk->getDuration());
                     addUs(tvChunk, chunkDuration * 1000);
                     nextTick += duration;
