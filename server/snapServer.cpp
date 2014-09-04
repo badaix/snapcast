@@ -1,13 +1,3 @@
-//
-// blocking_tcp_echo_server.cpp
-// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-//
-// Copyright (c) 2003-2013 Christopher M. Kohlhoff (chris at kohlhoff dot com)
-//
-// Distributed under the Boost Software License, Version 1.0. (See accompanying
-// file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
-//
-
 #include <cstdlib>
 #include <iostream>
 #include <boost/asio.hpp>
@@ -20,15 +10,15 @@
 #include <thread>
 #include <memory>
 #include <set>
-#include "common/chunk.h"
+#include <sstream>
 #include "common/timeUtils.h"
 #include "common/queue.h"
 #include "common/signalHandler.h"
 #include "common/utils.h"
 #include "common/sampleFormat.h"
-#include "pcmEncoder.h"
-#include "oggEncoder.h"
-#include <syslog.h>
+#include "../server/pcmEncoder.h"
+#include "../server/oggEncoder.h"
+#include "common/message.h"
 
 
 using boost::asio::ip::tcp;
@@ -43,18 +33,6 @@ using namespace std::chrono;
 bool g_terminated = false;
 
 
-std::string return_current_time_and_date()
-{
-    auto now = system_clock::now();
-    auto in_time_t = system_clock::to_time_t(now);
-	system_clock::duration ms = now.time_since_epoch();
-	char buff[20];
-	strftime(buff, 20, "%Y-%m-%d %H:%M:%S", localtime(&in_time_t));
-	stringstream ss;
-	ss << buff << "." << std::setw(3) << std::setfill('0') << ((ms / milliseconds(1)) % 1000);
-    return ss.str();
-}
-
 
 class Session
 {
@@ -67,25 +45,13 @@ public:
 	{
 		try
 		{
+			boost::asio::streambuf streambuf;
+			std::ostream stream(&streambuf);
 			for (;;)
 			{
-				shared_ptr<Chunk> chunk(chunks.pop());
-				size_t written = 0;
-				size_t toWrite = Chunk::getHeaderSize();// + chunk->length;
-				WireChunk* wireChunk = chunk->wireChunk;				
-				do
-				{
-					written += boost::asio::write(*socket_, boost::asio::buffer(wireChunk + written, toWrite - written));//, error);
-				}
-				while (written < toWrite);
-
-				written = 0;
-				toWrite = wireChunk->length;
-				do
-				{
-					written += boost::asio::write(*socket_, boost::asio::buffer(wireChunk->payload + written, toWrite - written));//, error);
-				}
-				while (written < toWrite);
+				shared_ptr<BaseMessage> message(messages.pop());
+				message->serialize(stream);
+				boost::asio::write(*socket_, streambuf);
 			}
 		}
 		catch (std::exception& e)
@@ -102,14 +68,14 @@ public:
 //		readerThread.join();
 	}
 
-	void send(shared_ptr<Chunk> chunk)
+	void send(shared_ptr<BaseMessage> message)
 	{
-		if (!chunk)
+		if (!message)
 			return;
 
-		while (chunks.size() * chunk->getDuration() > 10000)
-			chunks.pop();
-		chunks.push(chunk);
+		while (messages.size() > 100)//* chunk->getDuration() > 10000)
+			messages.pop();
+		messages.push(message);
 	}
 
 	bool isActive() const
@@ -121,7 +87,7 @@ private:
 	bool active_;
 	socket_ptr socket_;
 	thread* senderThread;
-	Queue<shared_ptr<Chunk>> chunks;
+	Queue<shared_ptr<BaseMessage>> messages;
 };
 
 
@@ -139,25 +105,22 @@ public:
 		{
 			socket_ptr sock(new tcp::socket(io_service_));
 			a.accept(*sock);
-//			cout << "New connection: " << sock->remote_endpoint().address().to_string() << "\n";
+			cout << "New connection: " << sock->remote_endpoint().address().to_string() << "\n";
 			Session* session = new Session(sock);
-cout << "Sending header: " << headerChunk->wireChunk->length << "\n";
 			session->send(headerChunk);
 			session->start();
 			sessions.insert(shared_ptr<Session>(session));
 		}
 	}
 
-	void setHeader(shared_ptr<Chunk> chunk)
+	void setHeader(shared_ptr<HeaderMessage> header)
 	{
-		if (chunk && (chunk->wireChunk != NULL))
-			headerChunk = shared_ptr<Chunk>(chunk);
+		if (header)
+			headerChunk = shared_ptr<HeaderMessage>(header);
 	}
 
-	void send(shared_ptr<Chunk> chunk)
+	void send(shared_ptr<BaseMessage> message)
 	{
-//		fwrite(chunk->wireChunk->payload, 1, chunk->wireChunk->length, stdout);
-		
 		for (std::set<shared_ptr<Session>>::iterator it = sessions.begin(); it != sessions.end(); ) 
 		{
     		if (!(*it)->isActive())
@@ -170,7 +133,7 @@ cout << "Sending header: " << headerChunk->wireChunk->length << "\n";
 	    }
 
 		for (auto s : sessions)
-			s->send(chunk);
+			s->send(message);
 	}
 
 	void start()
@@ -187,7 +150,7 @@ private:
 	set<shared_ptr<Session>> sessions;
 	boost::asio::io_service io_service_;
 	unsigned short port_;
-	shared_ptr<Chunk> headerChunk;
+	shared_ptr<HeaderMessage> headerChunk;
 	thread* acceptThread;
 };
 
@@ -244,20 +207,6 @@ int main(int argc, char* argv[])
             return 1;
         }
 
-/*        if (vm.count("port") == 0)
-        {
-            cout << "Please specify server port\n";
-            return 1;
-        }
-
-//        cout << "Compression level was set to " << vm["compression"].as<int>() << ".\n";
-
-		if (argc == 1)
-		{
-			std::cerr << desc << "\n";
-			return 1;
-		}
-*/
 
 		if (runAsDaemon)
 		{
@@ -276,9 +225,9 @@ int main(int argc, char* argv[])
 		long nextTick = getTickCount();
 
         mkfifo(fifoName.c_str(), 0777);
-size_t duration = 50;
-
 		SampleFormat format(sampleFormat);
+size_t duration = 50;
+//size_t chunkSize = duration*format.rate*format.frameSize / 1000;
 		std::auto_ptr<Encoder> encoder;
 		if (codec == "ogg")
 			encoder.reset(new OggEncoder(sampleFormat));
@@ -290,7 +239,7 @@ size_t duration = 50;
 			return 1;
 		}
 
-		shared_ptr<Chunk> header(new Chunk(format, encoder->getHeader()));
+		shared_ptr<HeaderMessage> header(encoder->getHeader());
 		server->setHeader(header);
 
         while (!g_terminated)
@@ -298,18 +247,15 @@ size_t duration = 50;
             int fd = open(fifoName.c_str(), O_RDONLY);
             try
             {
-                shared_ptr<Chunk> chunk;//(new WireChunk());
+                shared_ptr<PcmChunk> chunk;//(new WireChunk());
                 while (true)//cin.good())
                 {
-                    chunk.reset(new Chunk(format, duration));//2*WIRE_CHUNK_SIZE));
-					WireChunk* wireChunk = chunk->wireChunk;
-                    int toRead = wireChunk->length;
-//                    cout << "tr: " << toRead << ", size: " << WIRE_CHUNK_SIZE << "\t";
-//                    char* payload = (char*)(&chunk->payload[0]);
+                    chunk.reset(new PcmChunk(sampleFormat, duration));//2*WIRE_CHUNK_SIZE));
+                    int toRead = chunk->payloadSize;
                     int len = 0;
                     do
                     {
-                        int count = read(fd, wireChunk->payload + len, toRead - len);
+                        int count = read(fd, chunk->payload + len, toRead - len);
                         if (count <= 0)
                             throw ServerException("count = " + boost::lexical_cast<string>(count));
 
@@ -317,12 +263,12 @@ size_t duration = 50;
                     }
                     while (len < toRead);
 
-                    wireChunk->tv_sec = tvChunk.tv_sec;
-                    wireChunk->tv_usec = tvChunk.tv_usec;
+                    chunk->tv_sec = tvChunk.tv_sec;
+                    chunk->tv_usec = tvChunk.tv_usec;
 					double chunkDuration = encoder->encode(chunk.get());
 					if (chunkDuration > 0)
 	                    server->send(chunk);
-//cout << wireChunk->tv_sec << ", " << wireChunk->tv_usec / 1000 << "\n";
+//cout << chunk->tv_sec << ", " << chunk->tv_usec / 1000 << "\n";
 //                    addUs(tvChunk, 1000*chunk->getDuration());
                     addUs(tvChunk, chunkDuration * 1000);
                     nextTick += duration;
@@ -333,7 +279,6 @@ size_t duration = 50;
                     }
                     else
                     {
-                        cin.sync();
                         gettimeofday(&tvChunk, NULL);
                         nextTick = getTickCount();
                     }
@@ -356,6 +301,8 @@ size_t duration = 50;
 	syslog (LOG_NOTICE, "First daemon terminated.");
     closelog();
 }
+
+
 
 
 

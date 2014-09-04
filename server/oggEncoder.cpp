@@ -131,7 +131,7 @@ void OggEncoder::init()
 
 	*********************************************************************/
 
-	ret=vorbis_encode_init_vbr(&vi, sampleFormat.channels, sampleFormat.rate, 0.9);
+	ret=vorbis_encode_init_vbr(&vi, sampleFormat.channels, sampleFormat.rate, 0.7);
 
 	/* do not continue if setup failed; this can happen if we ask for a
 	 mode that libVorbis does not support (eg, too low a bitrate, etc,

@@ -1,31 +1,3 @@
-//
-// blocking_tcp_echo_server.cpp
-// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-//
-// Copyright (c) 2003-2013 Christopher M. Kohlhoff (chris at kohlhoff dot com)
-//
-// Distributed under the Boost Software License, Version 1.0. (See accompanying
-// file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
-//
-/*
-#include <cstdlib>
-#include <iostream>
-#include <boost/asio.hpp>
-#include <boost/program_options.hpp>
-#include <chrono>
-#include <vector>
-#include <ctime>   // localtime
-#include <sstream> // stringstream
-#include <iomanip>
-#include <thread>
-#include <memory>
-#include <set>
-#include "common/chunk.h"
-#include "pcmEncoder.h"
-#include "oggEncoder.h"
-#include <syslog.h>
-*/
-
 #include <cstdlib>
 #include <iostream>
 #include <boost/asio.hpp>
@@ -80,14 +52,7 @@ public:
 				shared_ptr<BaseMessage> message(messages.pop());
 				message->serialize(stream);
 				boost::asio::write(*socket_, streambuf);
-/*				size_t written(0);
-				size_t toWrite = message->getSize();
-				do
-				{
-					written += boost::asio::write(*socket_, streambuf);//, error);
-				}
-				while (written < toWrite);
-*/			}
+			}
 		}
 		catch (std::exception& e)
 		{
@@ -142,8 +107,6 @@ public:
 			a.accept(*sock);
 			cout << "New connection: " << sock->remote_endpoint().address().to_string() << "\n";
 			Session* session = new Session(sock);
-		if (headerChunk)
-cout << "Sending header: " << headerChunk->payloadSize << endl;
 			session->send(headerChunk);
 			session->start();
 			sessions.insert(shared_ptr<Session>(session));

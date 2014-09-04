@@ -3,7 +3,7 @@ CC      = /usr/bin/g++
 CFLAGS  = -std=gnu++0x -Wall -Wno-unused-function -D_REENTRANT -DVERSION=\"$(VERSION)\" -I..
 LDFLAGS = -lrt -lpthread -lboost_system -lboost_program_options -lvorbis -lvorbisenc -logg
 
-OBJ = snapServer.o pcmEncoder.o oggEncoder.o ../common/chunk.o ../common/sampleFormat.o
+OBJ = snapServer.o pcmEncoder.o oggEncoder.o ../common/message.o ../common/sampleFormat.o
 BIN = snapserver
 
 all:	server
