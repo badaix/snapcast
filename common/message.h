@@ -43,6 +43,10 @@ struct BaseMessage
 		type = type_;
 	};
 
+	virtual ~BaseMessage()
+	{
+	}
+
 	virtual void read(istream& stream)
 	{
 		stream.read(reinterpret_cast<char*>(&type), sizeof(uint16_t));
@@ -86,10 +90,6 @@ public:
 	{
 		payload = (char*)malloc(size);
 	}
-
-//	WireChunk(int8_t logLevel_, char* text_) : BaseMessage(message_type::payload), logLevel(logLevel_), length(sizeof(text_)), text(text_)
-//	{		
-//	}
 
 	virtual ~WireChunk()
 	{
@@ -164,105 +164,6 @@ protected:
 };
 
 
-
-
-/*
-
-	virtual ~BaseMessage(){};
-	virtual message_type getType() = 0;
-
-	virtual char* serialize()
-	{
-		char* outStream = (char*)malloc(getSize());
-		size_t pos = 0;
-		pos = add(outStream, pos, getType());
-		pos = add(outStream, pos, getSize());
-		doSerialize(outStream + pos);
-		return outStream;
-	}
-	
-	virtual void deserialize(istream& stream)
-	{
-		stream.read(reinterpret_cast<char *>(&drvId), sizeof(int));
-		stream.read(reinterpret_cast<char *>(&frameSize), sizeof(int));
-		msg = (byte*)malloc((sizeof(byte)) * frameSize);
-		stream.read(reinterpret_cast<char *>(&msg[0]), frameSize);		
-		stream.read(reinterpret_cast<char *>(&offset), sizeof(unsigned int));
-		stream.read(reinterpret_cast<char *>(&isLive), sizeof(bool));
-
-		size_t pos = 0;
-		memcpy((char*)&type, inStream, sizeof(uint16_t));
-		pos += sizeof(uint16_t);
-		memcpy(&length, inStream + pos, sizeof(uint32_t));
-		pos += sizeof(uint32_t);
-		doDeserialize(inStream + pos);
-	}
-
-	virtual size_t getSize() 
-	{
-		return sizeof(int16_t) + sizeof(int32_t) + doGetSize();
-	}
-
-protected:
-	template <typename T>
-	size_t add(char* stream, size_t pos, T* t)
-	{
-		memcpy(stream + pos, reinterpret_cast<char*>(t), sizeof(T));
-		return pos + sizeof(T);
-	}
-
-	virtual size_t doGetSize() = 0;
-	virtual void doSerialize(char* outStream) = 0;
-	virtual void doDeserialize(const char* inStream) = 0;
-};
-
-
-struct WireChunk : public BaseMessage
-{
-	int32_t tv_sec;
-	int32_t tv_usec;
-	uint32_t payloadSize;
-	char* payload;
-
-	virtual ~WireChunk()
-	{
-		free(payload);
-	}
-
-	virtual message_type getType()
-	{
-		return message_type::payload;
-	}
-
-protected:
-	virtual size_t doGetSize()
-	{
-		return sizeof(int32_t) + sizeof(int32_t) + sizeof(uint32_t) + payloadSize;
-	}
-
-	virtual void doSerialize(char* outStream)
-	{
-		size_t pos = 0;
-		pos = add(outStream, pos, tv_sec);
-		pos = add(outStream, pos, tv_usec);
-		pos = add(outStream, pos, payloadSize);
-		memcpy(outStream + pos, payload, payloadSize);
-	}
-
-	virtual void doDeserialize(const char* inStream)
-	{
-		size_t pos = 0;
-		memcpy(&tv_sec, inStream + pos, sizeof(int32_t));
-		pos += sizeof(int32_t);
-		memcpy(&tv_usec, inStream + pos, sizeof(int32_t));
-		pos += sizeof(int32_t);
-		memcpy(&payloadSize, inStream + pos, sizeof(uint32_t));
-		pos += sizeof(uint32_t);
-		payload = (char*)malloc(payloadSize);
-		memcpy(payload, inStream + pos, payloadSize);
-	}
-};
-*/
 
 class PcmChunk : public WireChunk
 {

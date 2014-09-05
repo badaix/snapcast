@@ -44,6 +44,29 @@ void Receiver::stop()
 }
 
 
+BaseMessage* Receiver::getNextMessage(tcp::socket* socket)
+{
+	BaseMessage baseMessage;
+	size_t baseMsgSize = baseMessage.getSize();
+	vector<char> buffer(baseMsgSize);
+
+	socketRead(socket, &buffer[0], baseMsgSize);
+	baseMessage.readVec(buffer);
+//cout << "type: " << baseMessage.type << ", size: " << baseMessage.size << "\n";
+	if (baseMessage.size > buffer.size())
+		buffer.resize(baseMessage.size);
+	socketRead(socket, &buffer[0], baseMessage.size);
+	BaseMessage* message = NULL;
+	if (baseMessage.type == message_type::payload)
+		message = new PcmChunk(stream_->format, 0);
+	else if (baseMessage.type == message_type::header)
+		message = new HeaderMessage();
+	if (message != NULL)
+		message->readVec(buffer);
+	return message;
+}
+
+
 void Receiver::worker() 
 {
 	active_ = true;
@@ -59,31 +82,24 @@ void Receiver::worker()
 			tv.tv_usec = 0;         
 			setsockopt(s.native(), SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
 //			std::clog << kLogNotice << "connected to " << ip << ":" << port << std::endl;
-			BaseMessage baseMessage;
-			size_t baseMsgSize = baseMessage.getSize();
-			vector<char> buffer(baseMsgSize);
-			while (true)
+
+			while(active_)
 			{
-				socketRead(&s, &buffer[0], baseMsgSize);
-				baseMessage.readVec(buffer);
-//cout << "type: " << baseMessage.type << ", size: " << baseMessage.size << "\n";
-				if (baseMessage.size > buffer.size())
-					buffer.resize(baseMessage.size);
-				socketRead(&s, &buffer[0], baseMessage.size);
-				if (baseMessage.type == message_type::payload)
+				BaseMessage* message = getNextMessage(&s);
+				if (message == NULL)
+					continue;
+
+				if (message->type == message_type::payload)
 				{
-					PcmChunk* chunk = new PcmChunk(stream_->format, 0);
-					chunk->readVec(buffer);
-//cout << "WireChunk length: " << chunk->payloadSize;
-					if (decoder.decode(chunk))
-						stream_->addChunk(chunk);
+					if (decoder.decode((PcmChunk*)message))
+						stream_->addChunk((PcmChunk*)message);
+					else
+						delete message;
 //cout << ", decoded: " << chunk->payloadSize << ", Duration: " << chunk->getDuration() << ", sec: " << chunk->tv_sec << ", usec: " << chunk->tv_usec/1000 << ", type: " << chunk->type << "\n";
 				}
-				else if (baseMessage.type == message_type::header)
+				else if (message->type == message_type::header)
 				{
-					HeaderMessage* chunk = new HeaderMessage();
-					chunk->readVec(buffer);
-					decoder.setHeader(chunk);
+					decoder.setHeader((HeaderMessage*)message);
 				}
 			}
 		}

@@ -18,6 +18,7 @@ public:
 	void stop();
 
 private:
+	BaseMessage* getNextMessage(tcp::socket* socket);
 	void socketRead(tcp::socket* socket, void* to, size_t bytes);
 	void worker();
 	boost::asio::io_service io_service;
