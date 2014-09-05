@@ -5,11 +5,23 @@
 #include <cstdlib>
 #include <cstring>
 #include <iostream>
+#include <streambuf>
+#include <vector>
 #include "common/sampleFormat.h"
 
 
 typedef std::chrono::time_point<std::chrono::high_resolution_clock, std::chrono::milliseconds> time_point_ms;
 using namespace std;
+
+
+template<typename CharT, typename TraitsT = std::char_traits<CharT> >
+class vectorwrapbuf : public std::basic_streambuf<CharT, TraitsT> {
+public:
+    vectorwrapbuf(std::vector<CharT> &vec) {
+        this->setg(vec.data(), vec.data(), vec.data() + vec.size());
+    }
+};
+
 
 
 enum message_type
@@ -34,17 +46,14 @@ struct BaseMessage
 	virtual void read(istream& stream)
 	{
 		stream.read(reinterpret_cast<char*>(&type), sizeof(uint16_t));
-//		cout << type << "\n";
 		stream.read(reinterpret_cast<char*>(&size), sizeof(uint32_t));
-//		cout << size << "\n";
 	}
 
-	void read(char* stream)
+	virtual void readVec(std::vector<char>& stream)
 	{
-		memcpy(reinterpret_cast<char*>(&type), stream, sizeof(uint16_t));
-//		cout << "type: " << type << "\n";
-		memcpy(reinterpret_cast<char*>(&size), stream + sizeof(uint16_t), sizeof(uint32_t));
-//		cout << "size: " << size << "\n";
+		vectorwrapbuf<char> databuf(stream);
+		std::istream is(&databuf);
+		read(is);
 	}
 
 	virtual void serialize(ostream& stream)
@@ -68,48 +77,6 @@ protected:
 	};
 };
 
-
-
-class TestMessage : public BaseMessage 
-{
-public:
-	TestMessage() : BaseMessage(message_type::header)
-	{
-	}
-
-	TestMessage(int8_t logLevel_, char* text_) : BaseMessage(message_type::header), logLevel(logLevel_), length(sizeof(text_)), text(text_)
-	{		
-	}
-
-	virtual ~TestMessage()
-	{
-	}
-
-	virtual void read(istream& stream)
-	{
-		stream.read(reinterpret_cast<char *>(&logLevel), sizeof(int8_t));
-		stream.read(reinterpret_cast<char *>(&length), sizeof(int16_t));
-		text = (char*)malloc(length);
-		stream.read(text, length);
-	}
-
-	virtual uint32_t getSize()
-	{
-		return sizeof(int8_t) + sizeof(int16_t) + length;
-	}
-
-	int8_t logLevel;
-	int16_t length;
-	char* text;
-
-protected:
-	virtual void doserialize(ostream& stream)
-	{
-		stream.write(reinterpret_cast<char*>(&logLevel), sizeof(int8_t));
-		stream.write(reinterpret_cast<char*>(&length), sizeof(int16_t));
-		stream.write(text, length);
-	}
-};
 
 
 class WireChunk : public BaseMessage 

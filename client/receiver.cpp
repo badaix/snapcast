@@ -47,7 +47,7 @@ void Receiver::stop()
 void Receiver::worker() 
 {
 	active_ = true;
-//	OggDecoder decoder;
+	OggDecoder decoder;
 	while (active_)
 	{
 		try
@@ -58,45 +58,31 @@ void Receiver::worker()
 			tv.tv_sec  = 5; 
 			tv.tv_usec = 0;         
 			setsockopt(s.native(), SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
-			OggDecoder decoder;
 //			std::clog << kLogNotice << "connected to " << ip << ":" << port << std::endl;
+			BaseMessage baseMessage;
+			size_t baseMsgSize = baseMessage.getSize();
+			vector<char> buffer(baseMsgSize);
 			while (true)
 			{
-				BaseMessage baseMessage;
-				boost::asio::streambuf b;
-				// reserve 512 bytes in output sequence
-				boost::asio::streambuf::mutable_buffers_type bufs = b.prepare(baseMessage.getSize());
-				size_t read = s.receive(bufs);
-//cout << "read: " << read << "\n";
-				// received data is "committed" from output sequence to input sequence
-				b.commit(baseMessage.getSize());
-				std::istream is(&b);
-				baseMessage.read(is);
-//				cout << "type: " << baseMessage.type << ", size: " << baseMessage.size << "\n";
-
-				read = 0;
-				bufs = b.prepare(baseMessage.size);
-				while (read < baseMessage.size)
-				{
-					size_t n = s.receive(bufs);
-					b.commit(n);
-					read += n;
-				}
-				// received data is "committed" from output sequence to input sequence
-//				std::istream is(&b);
+				socketRead(&s, &buffer[0], baseMsgSize);
+				baseMessage.readVec(buffer);
+//cout << "type: " << baseMessage.type << ", size: " << baseMessage.size << "\n";
+				if (baseMessage.size > buffer.size())
+					buffer.resize(baseMessage.size);
+				socketRead(&s, &buffer[0], baseMessage.size);
 				if (baseMessage.type == message_type::payload)
 				{
 					PcmChunk* chunk = new PcmChunk(stream_->format, 0);
-					chunk->read(is);
+					chunk->readVec(buffer);
 //cout << "WireChunk length: " << chunk->payloadSize;
 					if (decoder.decode(chunk))
 						stream_->addChunk(chunk);
-//cout << ", decoded: " << chunk->payloadSize << ", Duration: " << chunk->getDuration() << ", sec: " << chunk->tv_sec << ", usec: " << chunk->tv_usec/1000 << ", type: " << chunk->type << "\n";				
+//cout << ", decoded: " << chunk->payloadSize << ", Duration: " << chunk->getDuration() << ", sec: " << chunk->tv_sec << ", usec: " << chunk->tv_usec/1000 << ", type: " << chunk->type << "\n";
 				}
 				else if (baseMessage.type == message_type::header)
 				{
 					HeaderMessage* chunk = new HeaderMessage();
-					chunk->read(is);
+					chunk->readVec(buffer);
 					decoder.setHeader(chunk);
 				}
 			}
