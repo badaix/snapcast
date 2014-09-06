@@ -1,9 +1,7 @@
-#include "receiver.h"
+#include "serverConnection.h"
 #include <boost/lexical_cast.hpp>
 #include <iostream>
 #include "common/log.h"
-#include "oggDecoder.h"
-#include "pcmDecoder.h"
 
 
 #define PCM_DEVICE "default"
@@ -11,12 +9,12 @@
 using namespace std;
 
 
-Receiver::Receiver(Stream* stream) : active_(false), stream_(stream)
+ServerConnection::ServerConnection(Stream* stream) : active_(false), stream_(stream)
 {
 }
 
 
-void Receiver::socketRead(tcp::socket* socket, void* to, size_t bytes)
+void ServerConnection::socketRead(tcp::socket* socket, void* to, size_t bytes)
 {
 	size_t toRead = bytes;
 	size_t len = 0;
@@ -29,22 +27,23 @@ void Receiver::socketRead(tcp::socket* socket, void* to, size_t bytes)
 }
 
 
-void Receiver::start(const std::string& ip, int port)
+void ServerConnection::start(MessageReceiver* receiver, const std::string& ip, int port)
 {
+	messageReceiver = receiver;
 	tcp::resolver resolver(io_service);
 	tcp::resolver::query query(tcp::v4(), ip, boost::lexical_cast<string>(port));
 	iterator = resolver.resolve(query);
-	receiverThread = new thread(&Receiver::worker, this);
+	receiverThread = new thread(&ServerConnection::worker, this);
 }
 
 
-void Receiver::stop()
+void ServerConnection::stop()
 {
 	active_ = false;
 }
 
 
-BaseMessage* Receiver::getNextMessage(tcp::socket* socket)
+BaseMessage* ServerConnection::getNextMessage(tcp::socket* socket)
 {
 	BaseMessage baseMessage;
 	size_t baseMsgSize = baseMessage.getSize();
@@ -67,10 +66,26 @@ BaseMessage* Receiver::getNextMessage(tcp::socket* socket)
 }
 
 
-void Receiver::worker() 
+void ServerConnection::onMessageReceived(BaseMessage* message)
+{
+	if (message->type == message_type::payload)
+	{
+		if (decoder.decode((PcmChunk*)message))
+			stream_->addChunk((PcmChunk*)message);
+		else
+			delete message;
+//cout << ", decoded: " << chunk->payloadSize << ", Duration: " << chunk->getDuration() << ", sec: " << chunk->tv_sec << ", usec: " << chunk->tv_usec/1000 << ", type: " << chunk->type << "\n";
+	}
+	else if (message->type == message_type::header)
+	{
+		decoder.setHeader((HeaderMessage*)message);
+	}
+}
+
+
+void ServerConnection::worker() 
 {
 	active_ = true;
-	OggDecoder decoder;
 	while (active_)
 	{
 		try
@@ -89,18 +104,10 @@ void Receiver::worker()
 				if (message == NULL)
 					continue;
 
-				if (message->type == message_type::payload)
-				{
-					if (decoder.decode((PcmChunk*)message))
-						stream_->addChunk((PcmChunk*)message);
-					else
-						delete message;
-//cout << ", decoded: " << chunk->payloadSize << ", Duration: " << chunk->getDuration() << ", sec: " << chunk->tv_sec << ", usec: " << chunk->tv_usec/1000 << ", type: " << chunk->type << "\n";
-				}
-				else if (message->type == message_type::header)
-				{
-					decoder.setHeader((HeaderMessage*)message);
-				}
+				if (messageReceiver != NULL)
+					messageReceiver->onMessageReceived(message);
+				else
+					delete message;
 			}
 		}
 		catch (const std::exception& e)

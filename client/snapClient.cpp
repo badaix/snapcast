@@ -14,7 +14,7 @@
 #include "common/log.h"
 #include "stream.h"
 #include "player.h"
-#include "receiver.h"
+#include "serverConnection.h"
 
 
 
@@ -65,8 +65,8 @@ int main (int argc, char *argv[])
 
 	Player player(stream);
 	player.start();
-	Receiver receiver(stream);
-	receiver.start(ip, port);
+	ServerConnection serverConnection(stream);
+	serverConnection.start(&serverConnection, ip, port);
 
 	while(true)
 		usleep(1000);
