@@ -60,6 +60,8 @@ BaseMessage* ServerConnection::getNextMessage(tcp::socket* socket)
 		message = new PcmChunk(stream_->format, 0);
 	else if (baseMessage.type == message_type::header)
 		message = new HeaderMessage();
+	else if (baseMessage.type == message_type::sampleformat)
+		message = new SampleFormat();
 	if (message != NULL)
 		message->readVec(buffer);
 	return message;
@@ -79,6 +81,12 @@ void ServerConnection::onMessageReceived(BaseMessage* message)
 	else if (message->type == message_type::header)
 	{
 		decoder.setHeader((HeaderMessage*)message);
+	}
+	else if (message->type == message_type::sampleformat)
+	{
+		SampleFormat* sampleFormat = (SampleFormat*)message;
+		cout << "SampleFormat rate: " << sampleFormat->rate << ", bits: " << sampleFormat->bits << ", channels: " << sampleFormat->channels << "\n";
+		delete sampleFormat;
 	}
 }
 

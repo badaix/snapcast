@@ -107,6 +107,7 @@ public:
 			a.accept(*sock);
 			cout << "New connection: " << sock->remote_endpoint().address().to_string() << "\n";
 			Session* session = new Session(sock);
+			session->send(sampleFormat);
 			session->send(headerChunk);
 			session->start();
 			sessions.insert(shared_ptr<Session>(session));
@@ -116,7 +117,12 @@ public:
 	void setHeader(shared_ptr<HeaderMessage> header)
 	{
 		if (header)
-			headerChunk = shared_ptr<HeaderMessage>(header);
+			headerChunk = header;
+	}
+
+	void setFormat(SampleFormat& format)
+	{
+		sampleFormat = shared_ptr<SampleFormat>(new SampleFormat(format));
 	}
 
 	void send(shared_ptr<BaseMessage> message)
@@ -151,6 +157,7 @@ private:
 	boost::asio::io_service io_service_;
 	unsigned short port_;
 	shared_ptr<HeaderMessage> headerChunk;
+	shared_ptr<SampleFormat> sampleFormat;
 	thread* acceptThread;
 };
 
@@ -239,6 +246,7 @@ size_t duration = 50;
 			return 1;
 		}
 
+		server->setFormat(format);
 		shared_ptr<HeaderMessage> header(encoder->getHeader());
 		server->setHeader(header);
 

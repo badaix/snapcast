@@ -21,7 +21,8 @@ public:
 enum message_type
 {
 	header = 0,
-	payload = 1
+	payload = 1,
+	sampleformat = 2
 };
 
 
