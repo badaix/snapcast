@@ -24,15 +24,17 @@ class ServerConnection : public MessageReceiver
 {
 public:
 	ServerConnection(Stream* stream);
-	void start(MessageReceiver* receiver, const std::string& ip, int port);
+	void start(MessageReceiver* receiver, const std::string& ip, size_t port);
 	void stop();
 	virtual void onMessageReceived(BaseMessage* message);
 
 private:
-	MessageReceiver* messageReceiver;
-	BaseMessage* getNextMessage(tcp::socket* socket);
 	void socketRead(tcp::socket* socket, void* to, size_t bytes);
 	void worker();
+
+	boost::asio::ip::tcp::endpoint endpt;
+	MessageReceiver* messageReceiver;
+	BaseMessage* getNextMessage(tcp::socket* socket);
 	boost::asio::io_service io_service;
 	tcp::resolver::iterator iterator;
 	std::atomic<bool> active_;

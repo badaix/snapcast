@@ -15,6 +15,7 @@
 #include "stream.h"
 #include "player.h"
 #include "serverConnection.h"
+#include "controller.h"
 
 
 
@@ -69,7 +70,7 @@ int main (int argc, char *argv[])
 	serverConnection.start(&serverConnection, ip, port);
 
 	while(true)
-		usleep(1000);
+		usleep(10000);
 	
     return 0;
 }
