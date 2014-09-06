@@ -1,6 +1,7 @@
 #ifndef DECODER_H
 #define DECODER_H
-#include "common/message.h"
+#include "common/pcmChunk.h"
+#include "common/headerMessage.h"
 
 class Decoder
 {

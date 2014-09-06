@@ -1,6 +1,7 @@
 #ifndef ENCODER_H
 #define ENCODER_H
-#include "common/message.h"
+#include "common/pcmChunk.h"
+#include "common/headerMessage.h"
 #include "common/sampleFormat.h"
 
 

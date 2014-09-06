@@ -2,9 +2,10 @@
 #define SAMPLE_FORMAT_H
 
 #include <string>
+#include "message.h"
 
 
-class SampleFormat
+class SampleFormat : public BaseMessage
 {
 public:
 	SampleFormat();
@@ -22,6 +23,30 @@ public:
 	uint16_t frameSize;
 
 	float msRate() const { return (float)rate/1000.f; }
+
+	virtual void read(std::istream& stream)
+	{
+		stream.read(reinterpret_cast<char *>(&rate), sizeof(uint16_t));
+		stream.read(reinterpret_cast<char *>(&bits), sizeof(uint16_t));
+		stream.read(reinterpret_cast<char *>(&channels), sizeof(uint16_t));
+		stream.read(reinterpret_cast<char *>(&sampleSize), sizeof(uint16_t));
+		stream.read(reinterpret_cast<char *>(&frameSize), sizeof(uint16_t));
+	}
+
+	virtual uint32_t getSize()
+	{
+		return 5*sizeof(int16_t);
+	}
+
+protected:
+	virtual void doserialize(std::ostream& stream)
+	{
+		stream.write(reinterpret_cast<char *>(&rate), sizeof(uint16_t));
+		stream.write(reinterpret_cast<char *>(&bits), sizeof(uint16_t));
+		stream.write(reinterpret_cast<char *>(&channels), sizeof(uint16_t));
+		stream.write(reinterpret_cast<char *>(&sampleSize), sizeof(uint16_t));
+		stream.write(reinterpret_cast<char *>(&frameSize), sizeof(uint16_t));
+	}
 
 /*private:
 	uint16_t rate_;

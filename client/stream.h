@@ -9,6 +9,7 @@
 #include <memory>
 #include "doubleBuffer.h"
 #include "common/message.h"
+#include "common/pcmChunk.h"
 #include "common/timeUtils.h"
 #include "common/queue.h"
 #include "common/sampleFormat.h"

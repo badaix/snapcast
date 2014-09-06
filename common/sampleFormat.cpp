@@ -5,13 +5,18 @@
 #include <iostream>
 
 
-SampleFormat::SampleFormat(const std::string& format) //: rate(rate_), bits(bits_), channels(channels_), sampleSize(bytes_), frameSize(frameSize_)
+SampleFormat::SampleFormat() : BaseMessage(message_type::payload)
+{
+}
+
+
+SampleFormat::SampleFormat(const std::string& format) : BaseMessage(message_type::payload)
 {
 	setFormat(format);
 }
 
 
-SampleFormat::SampleFormat(uint16_t sampleRate, uint16_t bitsPerSample, uint16_t channelCount) //: rate(rate_), bits(bits_), channels(channels_), sampleSize(bytes_), frameSize(frameSize_)
+SampleFormat::SampleFormat(uint16_t sampleRate, uint16_t bitsPerSample, uint16_t channelCount) : BaseMessage(message_type::payload)
 {
 	setFormat(sampleRate, bitsPerSample, channelCount);
 }
