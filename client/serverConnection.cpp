@@ -34,8 +34,8 @@ void ServerConnection::start(MessageReceiver* receiver, const std::string& ip, s
 	messageReceiver = receiver;
 //	endpt.address(boost::asio::ip::address::from_string(ip));
 //	endpt.port((port));
-    std::cout << "Endpoint IP:   " << endpt.address().to_string() << std::endl;
-    std::cout << "Endpoint Port: " << endpt.port() << std::endl;
+//    std::cout << "Endpoint IP:   " << endpt.address().to_string() << std::endl;
+//    std::cout << "Endpoint Port: " << endpt.port() << std::endl;
 	tcp::resolver resolver(io_service);
 	tcp::resolver::query query(tcp::v4(), ip, boost::lexical_cast<string>(port));
 	iterator = resolver.resolve(query);
