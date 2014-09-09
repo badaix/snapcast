@@ -16,5 +16,5 @@ server: $(OBJ)
 	$(CC) $(CFLAGS) -c $< -o $@
 
 clean:
-	rm -rf $(BIN) $(OBJ)
+	rm -rf $(BIN) $(OBJ) *~
 
