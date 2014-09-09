@@ -1,6 +1,6 @@
 #include "pcmDecoder.h"
 
-PcmDecoder::PcmDecoder()
+PcmDecoder::PcmDecoder() : Decoder()
 {
 }
 

@@ -7,10 +7,13 @@
 using namespace std;
 
 
-PcmChunk::PcmChunk(const SampleFormat& sampleFormat, size_t ms) : WireChunk(), format(sampleFormat), idx(0)
+PcmChunk::PcmChunk(const SampleFormat& sampleFormat, size_t ms) : WireChunk(sampleFormat.rate*sampleFormat.frameSize*ms / 1000), format(sampleFormat), idx(0)
 {
-	payloadSize = format.rate*format.frameSize*ms / 1000;
-	payload = (char*)malloc(payloadSize);
+}
+
+
+PcmChunk::PcmChunk() : WireChunk(), idx(0)
+{
 }
 
 

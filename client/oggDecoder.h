@@ -4,7 +4,7 @@
 #include <vorbis/codec.h>
 
 
-class OggDecoder
+class OggDecoder : public Decoder
 {
 public:
 	OggDecoder();

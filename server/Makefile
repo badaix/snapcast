@@ -10,7 +10,8 @@ all:	server
 
 server: $(OBJ)
 	$(CC) $(CFLAGS) -o $(BIN) $(OBJ) $(LDFLAGS)
-
+	strip $(BIN)
+	
 %.o: %.cpp
 	$(CC) $(CFLAGS) -c $< -o $@
 

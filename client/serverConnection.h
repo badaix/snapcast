@@ -6,8 +6,6 @@
 #include <atomic>
 #include <boost/asio.hpp>
 #include "stream.h"
-#include "oggDecoder.h"
-#include "pcmDecoder.h"
 
 
 using boost::asio::ip::tcp;
@@ -16,17 +14,16 @@ using boost::asio::ip::tcp;
 class MessageReceiver
 {
 public:
-	virtual void onMessageReceived(BaseMessage* message) = 0;
+	virtual void onMessageReceived(tcp::socket* socket, const BaseMessage& baseMessage, char* buffer) = 0;
 };
 
 
-class ServerConnection : public MessageReceiver
+class ServerConnection
 {
 public:
-	ServerConnection(Stream* stream);
+	ServerConnection();
 	void start(MessageReceiver* receiver, const std::string& ip, size_t port);
 	void stop();
-	virtual void onMessageReceived(BaseMessage* message);
 
 private:
 	void socketRead(tcp::socket* socket, void* to, size_t bytes);
@@ -34,13 +31,11 @@ private:
 
 	boost::asio::ip::tcp::endpoint endpt;
 	MessageReceiver* messageReceiver;
-	BaseMessage* getNextMessage(tcp::socket* socket);
+	void getNextMessage(tcp::socket* socket);
 	boost::asio::io_service io_service;
 	tcp::resolver::iterator iterator;
 	std::atomic<bool> active_;
-	Stream* stream_;
 	std::thread* receiverThread;
-	OggDecoder decoder;
 };
 
 

@@ -3,7 +3,7 @@
 #include "decoder.h"
 
 
-class PcmDecoder
+class PcmDecoder : public Decoder
 {
 public:
 	PcmDecoder();

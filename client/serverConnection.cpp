@@ -2,6 +2,8 @@
 #include <boost/lexical_cast.hpp>
 #include <iostream>
 #include "common/log.h"
+#include "common/message.h"
+#include "common/headerMessage.h"
 
 
 #define PCM_DEVICE "default"
@@ -9,7 +11,7 @@
 using namespace std;
 
 
-ServerConnection::ServerConnection(Stream* stream) : active_(false), stream_(stream)
+ServerConnection::ServerConnection() : active_(false)
 {
 }
 
@@ -47,51 +49,21 @@ void ServerConnection::stop()
 }
 
 
-BaseMessage* ServerConnection::getNextMessage(tcp::socket* socket)
+void ServerConnection::getNextMessage(tcp::socket* socket)
 {
 	BaseMessage baseMessage;
 	size_t baseMsgSize = baseMessage.getSize();
 	vector<char> buffer(baseMsgSize);
 
 	socketRead(socket, &buffer[0], baseMsgSize);
-	baseMessage.readVec(buffer);
+	baseMessage.deserialize(&buffer[0]);
 //cout << "type: " << baseMessage.type << ", size: " << baseMessage.size << "\n";
 	if (baseMessage.size > buffer.size())
 		buffer.resize(baseMessage.size);
 	socketRead(socket, &buffer[0], baseMessage.size);
-	BaseMessage* message = NULL;
-	if (baseMessage.type == message_type::payload)
-		message = new PcmChunk(stream_->format, 0);
-	else if (baseMessage.type == message_type::header)
-		message = new HeaderMessage();
-	else if (baseMessage.type == message_type::sampleformat)
-		message = new SampleFormat();
-	if (message != NULL)
-		message->readVec(buffer);
-	return message;
-}
-
-
-void ServerConnection::onMessageReceived(BaseMessage* message)
-{
-	if (message->type == message_type::payload)
-	{
-		if (decoder.decode((PcmChunk*)message))
-			stream_->addChunk((PcmChunk*)message);
-		else
-			delete message;
-//cout << ", decoded: " << chunk->payloadSize << ", Duration: " << chunk->getDuration() << ", sec: " << chunk->tv_sec << ", usec: " << chunk->tv_usec/1000 << ", type: " << chunk->type << "\n";
-	}
-	else if (message->type == message_type::header)
-	{
-		decoder.setHeader((HeaderMessage*)message);
-	}
-	else if (message->type == message_type::sampleformat)
-	{
-		SampleFormat* sampleFormat = (SampleFormat*)message;
-		cout << "SampleFormat rate: " << sampleFormat->rate << ", bits: " << sampleFormat->bits << ", channels: " << sampleFormat->channels << "\n";
-		delete sampleFormat;
-	}
+	
+	if (messageReceiver != NULL)
+		messageReceiver->onMessageReceived(socket, baseMessage, &buffer[0]);
 }
 
 
@@ -112,20 +84,12 @@ void ServerConnection::worker()
 
 			while(active_)
 			{
-				BaseMessage* message = getNextMessage(&s);
-				if (message == NULL)
-					continue;
-
-				if (messageReceiver != NULL)
-					messageReceiver->onMessageReceived(message);
-				else
-					delete message;
+				getNextMessage(&s);
 			}
 		}
 		catch (const std::exception& e)
 		{
 			cout << kLogNotice << "Exception: " << e.what() << ", trying to reconnect" << std::endl;
-			stream_->clearChunks();
 			usleep(500*1000);
 		}
 	}

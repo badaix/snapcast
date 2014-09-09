@@ -17,6 +17,13 @@ public:
 };
 
 
+struct membuf : public std::basic_streambuf<char>
+{
+    membuf(char* begin, char* end) {
+        this->setg(begin, begin, end);
+    }
+};
+
 
 enum message_type
 {
@@ -48,9 +55,18 @@ struct BaseMessage
 		stream.read(reinterpret_cast<char*>(&size), sizeof(uint32_t));
 	}
 
-	virtual void readVec(std::vector<char>& stream)
+	void deserialize(char* payload)
 	{
-		vectorwrapbuf<char> databuf(stream);
+		membuf databuf(payload, payload + sizeof(size));
+		std::istream is(&databuf);
+		read(is);
+	}
+
+	void deserialize(const BaseMessage& baseMessage, char* payload)
+	{
+		type = baseMessage.type;
+		size = baseMessage.size;
+		membuf databuf(payload, payload + size);
 		std::istream is(&databuf);
 		read(is);
 	}

@@ -14,6 +14,7 @@ class PcmChunk : public WireChunk
 {
 public:
 	PcmChunk(const SampleFormat& sampleFormat, size_t ms);
+	PcmChunk();
 	~PcmChunk();
 
 	int readFrames(void* outputBuffer, size_t frameCount);
