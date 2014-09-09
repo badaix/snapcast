@@ -53,13 +53,10 @@ void ServerConnection::getNextMessage(tcp::socket* socket)
 {
 	BaseMessage baseMessage;
 	size_t baseMsgSize = baseMessage.getSize();
-cout << "1" << baseMsgSize << "\n";
 	vector<char> buffer(baseMsgSize);
-cout << "2\n";
 	socketRead(socket, &buffer[0], baseMsgSize);
-cout << "3\n";
 	baseMessage.deserialize(&buffer[0]);
-cout << "type: " << baseMessage.type << ", size: " << baseMessage.size << "\n";
+//cout << "type: " << baseMessage.type << ", size: " << baseMessage.size << "\n";
 	if (baseMessage.size > buffer.size())
 		buffer.resize(baseMessage.size);
 	socketRead(socket, &buffer[0], baseMessage.size);
