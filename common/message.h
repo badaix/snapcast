@@ -57,7 +57,7 @@ struct BaseMessage
 
 	void deserialize(char* payload)
 	{
-		membuf databuf(payload, payload + sizeof(size));
+		membuf databuf(payload, payload + BaseMessage::getSize());
 		std::istream is(&databuf);
 		read(is);
 	}
