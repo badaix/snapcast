@@ -29,7 +29,7 @@ private:
 	void socketRead(tcp::socket* socket, void* to, size_t bytes);
 	void worker();
 
-	boost::asio::ip::tcp::endpoint endpt;
+//	boost::asio::ip::tcp::endpoint endpt;
 	MessageReceiver* messageReceiver;
 	void getNextMessage(tcp::socket* socket);
 	boost::asio::io_service io_service;

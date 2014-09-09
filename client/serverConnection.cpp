@@ -32,14 +32,14 @@ void ServerConnection::socketRead(tcp::socket* socket, void* to, size_t bytes)
 void ServerConnection::start(MessageReceiver* receiver, const std::string& ip, size_t port)
 {
 	messageReceiver = receiver;
-	endpt.address(boost::asio::ip::address::from_string(ip));
-	endpt.port((port));
+//	endpt.address(boost::asio::ip::address::from_string(ip));
+//	endpt.port((port));
     std::cout << "Endpoint IP:   " << endpt.address().to_string() << std::endl;
     std::cout << "Endpoint Port: " << endpt.port() << std::endl;
-/*	tcp::resolver resolver(io_service);
+	tcp::resolver resolver(io_service);
 	tcp::resolver::query query(tcp::v4(), ip, boost::lexical_cast<string>(port));
 	iterator = resolver.resolve(query);
-*/	receiverThread = new thread(&ServerConnection::worker, this);
+	receiverThread = new thread(&ServerConnection::worker, this);
 }
 
 
@@ -75,7 +75,7 @@ void ServerConnection::worker()
 		try
 		{
 			tcp::socket s(io_service);
-			s.connect(endpt);//address, port);//*iterator);
+			s.connect(*iterator);
 			struct timeval tv;
 			tv.tv_sec  = 5; 
 			tv.tv_usec = 0;         
