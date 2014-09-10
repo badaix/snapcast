@@ -1,57 +1,15 @@
 #include "controlServer.h"
-
-
-ControlSession::ControlSession(socket_ptr sock) : active_(false), socket_(sock)
-{
-}
-
-
-void ControlSession::sender()
-{
-	try
-	{
-		boost::asio::streambuf streambuf;
-		std::ostream stream(&streambuf);
-		for (;;)
-		{
-			shared_ptr<BaseMessage> message(messages.pop());
-			message->serialize(stream);
-			boost::asio::write(*socket_, streambuf);
-		}
-	}
-	catch (std::exception& e)
-	{
-		std::cerr << "Exception in thread: " << e.what() << "\n";
-		active_ = false;
-	}
-}
-
-void ControlSession::start()
-{
-	active_ = true;
-	senderThread = new thread(&ControlSession::sender, this);
-//		readerThread.join();
-}
-
-void ControlSession::send(BaseMessage* message)
-{
-	boost::asio::streambuf streambuf;
-	std::ostream stream(&streambuf);
-	message->serialize(stream);
-	boost::asio::write(*socket_, streambuf);
-}
-
-
-bool ControlSession::isActive() const
-{
-	return active_;
-}
-
-
+#include <iostream>
 
 
 ControlServer::ControlServer(unsigned short port) : port_(port), headerChunk(NULL)
 {
+}
+
+
+void ControlServer::onMessageReceived(SocketConnection* connection, const BaseMessage& baseMessage, char* buffer)
+{
+	cout << "onMessageReceived: " << baseMessage.type << ", " << baseMessage.size << "\n";
 }
 
 
@@ -63,8 +21,8 @@ void ControlServer::acceptor()
 		socket_ptr sock(new tcp::socket(io_service_));
 		a.accept(*sock);
 		cout << "New connection: " << sock->remote_endpoint().address().to_string() << "\n";
-		ControlSession* session = new ControlSession(sock);
-		sessions.insert(shared_ptr<ControlSession>(session));
+		ServerConnection* session = new ServerConnection(this, sock);
+		sessions.insert(shared_ptr<ServerConnection>(session));
 		session->start();
 	}
 }

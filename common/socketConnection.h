@@ -4,9 +4,9 @@
 #include <string>
 #include <thread>
 #include <atomic>
+#include <mutex>
 #include <boost/asio.hpp>
-#include "stream.h"
-#include "common/message.h"
+#include "message.h"
 
 
 using boost::asio::ip::tcp;

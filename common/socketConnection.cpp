@@ -2,7 +2,7 @@
 #include <boost/lexical_cast.hpp>
 #include <iostream>
 #include <mutex>
-#include "common/log.h"
+#include "log.h"
 
 
 #define PCM_DEVICE "default"
@@ -23,7 +23,7 @@ SocketConnection::~SocketConnection()
 
 void SocketConnection::socketRead(void* _to, size_t _bytes)
 {
-	std::unique_lock<std::mutex> mlock(mutex_);
+//	std::unique_lock<std::mutex> mlock(mutex_);
 	size_t toRead = _bytes;
 	size_t len = 0;
 	do 
@@ -52,11 +52,8 @@ void SocketConnection::send(BaseMessage* message)
 	std::unique_lock<std::mutex> mlock(mutex_);
 	boost::asio::streambuf streambuf;
 	std::ostream stream(&streambuf);
-	for (;;)
-	{
-		message->serialize(stream);
-		boost::asio::write(*socket.get(), streambuf);
-	}
+	message->serialize(stream);
+	boost::asio::write(*socket.get(), streambuf);
 }
 
 
@@ -94,19 +91,21 @@ void ClientConnection::worker()
 	while (active_)
 	{
 		try
-		{
-			tcp::resolver resolver(io_service);
-			tcp::resolver::query query(tcp::v4(), ip, boost::lexical_cast<string>(port));
-			iterator = resolver.resolve(query);
+		{	
+			{
+				std::unique_lock<std::mutex> mlock(mutex_);
+				tcp::resolver resolver(io_service);
+				tcp::resolver::query query(tcp::v4(), ip, boost::lexical_cast<string>(port));
+				iterator = resolver.resolve(query);
 
-			socket.reset(new tcp::socket(io_service));
-			struct timeval tv;
-			tv.tv_sec  = 5; 
-			tv.tv_usec = 0;         
-			setsockopt(socket->native(), SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
-			socket->connect(*iterator);
-			std::clog << kLogNotice << "connected\n";// to " << ip << ":" << port << std::endl;
-
+				socket.reset(new tcp::socket(io_service));
+				struct timeval tv;
+				tv.tv_sec  = 5; 
+				tv.tv_usec = 0;         
+				setsockopt(socket->native(), SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
+				socket->connect(*iterator);
+				std::clog << kLogNotice << "connected\n";// to " << ip << ":" << port << std::endl;
+			}
 			while(active_)
 			{
 				getNextMessage();

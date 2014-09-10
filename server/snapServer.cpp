@@ -64,6 +64,9 @@ int main(int argc, char* argv[])
 		StreamServer* server = new StreamServer(port);
 		server->start();
 
+		ControlServer* controlServer = new ControlServer(port + 1);
+		controlServer->start();
+
 		timeval tvChunk;
 		gettimeofday(&tvChunk, NULL);
 		long nextTick = getTickCount();

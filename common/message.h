@@ -27,23 +27,23 @@ struct membuf : public std::basic_streambuf<char>
 
 enum message_type
 {
-	header = 0,
-	payload = 1,
-	sampleformat = 2
+	base = 0,
+	header = 1,
+	payload = 2,
+	sampleformat = 3
 };
 
 
 
 struct BaseMessage
 {
-	BaseMessage()
+	BaseMessage() : type(base)
 	{
 	}
 
-	BaseMessage(message_type type_)
+	BaseMessage(message_type type_) : type(type_) 
 	{
-		type = type_;
-	};
+	}
 
 	virtual ~BaseMessage()
 	{

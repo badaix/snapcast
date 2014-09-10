@@ -59,6 +59,9 @@ void Controller::start(std::string& _ip, size_t _port, int _bufferMs)
 	connection = new ClientConnection(this, _ip, _port);
 	connection->start();
 
+//	controlConnection = new ClientConnection(this, _ip, _port + 1);
+//	controlConnection->start();
+
 	controllerThread = new thread(&Controller::worker, this);
 }
 
@@ -75,7 +78,9 @@ void Controller::worker()
 	active_ = true;	
 
 	while (sampleFormat == NULL)
+	{
 		usleep(10000);
+	}
 	stream = new Stream(SampleFormat(*sampleFormat));
 	stream->setBufferLen(bufferMs);
 
@@ -84,7 +89,9 @@ void Controller::worker()
 
 	while (active_)
 	{
-		usleep(10000);
+		usleep(100000);
+//		BaseMessage msg;
+//		controlConnection->send(&msg);
 	}
 }
 

@@ -12,6 +12,7 @@
 #include "common/message.h"
 #include "common/headerMessage.h"
 #include "common/sampleFormat.h"
+#include "common/socketConnection.h"
 
 
 using boost::asio::ip::tcp;
@@ -19,37 +20,18 @@ typedef std::shared_ptr<tcp::socket> socket_ptr;
 using namespace std;
 
 
-
-class ControlSession
-{
-public:
-	ControlSession(socket_ptr sock);
-
-	void start();
-	void send(BaseMessage* message);
-	bool isActive() const;
-
-private:
-	void sender();
-	bool active_;
-	socket_ptr socket_;
-	thread* senderThread;
-	Queue<shared_ptr<BaseMessage>> messages;
-};
-
-
-
-class ControlServer
+class ControlServer : public MessageReceiver
 {
 public:
 	ControlServer(unsigned short port);
 
 	void start();
 	void stop();
+	virtual void onMessageReceived(SocketConnection* connection, const BaseMessage& baseMessage, char* buffer);
 
 private:
 	void acceptor();
-	set<shared_ptr<ControlSession>> sessions;
+	set<shared_ptr<ServerConnection>> sessions;
 	boost::asio::io_service io_service_;
 	unsigned short port_;
 	shared_ptr<HeaderMessage> headerChunk;

@@ -4,8 +4,9 @@
 #include <thread>
 #include <atomic>
 #include "common/message.h"
+#include "common/socketConnection.h"
 #include "decoder.h"
-#include "socketConnection.h"
+#include "stream.h"
 
 
 class Controller : public MessageReceiver
@@ -21,6 +22,7 @@ private:
 	std::atomic<bool> active_;
 	std::thread* controllerThread;
 	ClientConnection* connection;
+	ClientConnection* controlConnection;
 	SampleFormat* sampleFormat;
 	Decoder* decoder;
 	Stream* stream;
