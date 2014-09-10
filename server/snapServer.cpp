@@ -1,186 +1,23 @@
-#include <cstdlib>
-#include <iostream>
-#include <boost/asio.hpp>
 #include <boost/program_options.hpp>
 #include <chrono>
-#include <vector>
-#include <ctime>   // localtime
-#include <sstream> // stringstream
-#include <iomanip>
-#include <thread>
 #include <memory>
-#include <set>
-#include <sstream>
 #include "common/timeUtils.h"
-#include "common/queue.h"
 #include "common/signalHandler.h"
 #include "common/utils.h"
 #include "common/sampleFormat.h"
 #include "../server/pcmEncoder.h"
 #include "../server/oggEncoder.h"
 #include "common/message.h"
-
-
-using boost::asio::ip::tcp;
-namespace po = boost::program_options;
-
-
-typedef boost::shared_ptr<tcp::socket> socket_ptr;
-using namespace std;
-using namespace std::chrono;
+#include "streamServer.h"
+#include "controlServer.h"
 
 
 bool g_terminated = false;
 
+namespace po = boost::program_options;
 
+using namespace std;
 
-class Session
-{
-public:
-	Session(socket_ptr sock) : active_(false), socket_(sock)
-	{
-	}
-
-	void sender()
-	{
-		try
-		{
-			boost::asio::streambuf streambuf;
-			std::ostream stream(&streambuf);
-			for (;;)
-			{
-				shared_ptr<BaseMessage> message(messages.pop());
-				message->serialize(stream);
-				boost::asio::write(*socket_, streambuf);
-			}
-		}
-		catch (std::exception& e)
-		{
-			std::cerr << "Exception in thread: " << e.what() << "\n";
-			active_ = false;
-		}
-	}
-
-	void start()
-	{
-		active_ = true;
-		senderThread = new thread(&Session::sender, this);
-//		readerThread.join();
-	}
-
-	void send(shared_ptr<BaseMessage> message)
-	{
-		if (!message)
-			return;
-
-		while (messages.size() > 100)//* chunk->getDuration() > 10000)
-			messages.pop();
-		messages.push(message);
-	}
-
-	bool isActive() const
-	{
-		return active_;
-	}
-
-private:
-	bool active_;
-	socket_ptr socket_;
-	thread* senderThread;
-	Queue<shared_ptr<BaseMessage>> messages;
-};
-
-
-class Server
-{
-public:
-	Server(unsigned short port) : port_(port), headerChunk(NULL)
-	{
-	}
-
-	void acceptor()
-	{
-		tcp::acceptor a(io_service_, tcp::endpoint(tcp::v4(), port_));
-		for (;;)
-		{
-			socket_ptr sock(new tcp::socket(io_service_));
-			a.accept(*sock);
-			cout << "New connection: " << sock->remote_endpoint().address().to_string() << "\n";
-			Session* session = new Session(sock);
-			session->send(sampleFormat);
-			session->send(headerChunk);
-			session->start();
-			sessions.insert(shared_ptr<Session>(session));
-		}
-	}
-
-	void setHeader(shared_ptr<HeaderMessage> header)
-	{
-		if (header)
-			headerChunk = header;
-	}
-
-	void setFormat(SampleFormat& format)
-	{
-		sampleFormat = shared_ptr<SampleFormat>(new SampleFormat(format));
-	}
-
-	void send(shared_ptr<BaseMessage> message)
-	{
-		for (std::set<shared_ptr<Session>>::iterator it = sessions.begin(); it != sessions.end(); ) 
-		{
-    		if (!(*it)->isActive())
-			{
-				cout << "Session inactive. Removing\n";
-		        sessions.erase(it++);
-			}
-		    else
-		        ++it;
-	    }
-
-		for (auto s : sessions)
-			s->send(message);
-	}
-
-	void start()
-	{
-		acceptThread = new thread(&Server::acceptor, this);
-	}
-
-	void stop()
-	{
-//		acceptThread->join();
-	}
-
-private:
-	set<shared_ptr<Session>> sessions;
-	boost::asio::io_service io_service_;
-	unsigned short port_;
-	shared_ptr<HeaderMessage> headerChunk;
-	shared_ptr<SampleFormat> sampleFormat;
-	thread* acceptThread;
-};
-
-
-class ServerException : public std::exception
-{
-public:
-	ServerException(const std::string& what) : what_(what)
-	{
-	}
-
-	virtual ~ServerException() throw()
-	{
-	}
-
-	virtual const char* what() const throw()
-	{
-		return what_.c_str();
-	}
-
-private:
-	std::string what_;
-};
 
 
 int main(int argc, char* argv[])
@@ -224,7 +61,7 @@ int main(int argc, char* argv[])
 		openlog ("firstdaemon", LOG_PID, LOG_DAEMON);
 
 		using namespace std; // For atoi.
-		Server* server = new Server(port);
+		StreamServer* server = new StreamServer(port);
 		server->start();
 
 		timeval tvChunk;
