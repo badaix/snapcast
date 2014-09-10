@@ -1,3 +1,6 @@
+#ifndef QUEUE_H
+#define QUEUE_H
+
 #include <queue>
 #include <thread>
 #include <mutex>
@@ -85,5 +88,7 @@ public:
 	std::condition_variable cond_;
 };
 
+
+#endif
 
 

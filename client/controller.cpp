@@ -16,7 +16,7 @@ Controller::Controller() : MessageReceiver(), active_(false), sampleFormat(NULL)
 }
 
 
-void Controller::onMessageReceived(tcp::socket* socket, const BaseMessage& baseMessage, char* buffer)
+void Controller::onMessageReceived(SocketConnection* connection, const BaseMessage& baseMessage, char* buffer)
 {
 	if (baseMessage.type == message_type::payload)
 	{
@@ -56,8 +56,8 @@ void Controller::start(std::string& _ip, size_t _port, int _bufferMs)
 {
 	bufferMs = _bufferMs;
 
-	connection = new ServerConnection();
-	connection->start(this, _ip, _port);
+	connection = new ClientConnection(this, _ip, _port);
+	connection->start();
 
 	controllerThread = new thread(&Controller::worker, this);
 }
