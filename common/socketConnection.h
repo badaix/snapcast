@@ -30,6 +30,10 @@ public:
 	virtual void start();
 	virtual void stop();
 	virtual void send(BaseMessage* _message);
+	virtual bool isActive() 
+	{
+		return active_;
+	}
 
 protected:
 	virtual void worker() = 0;

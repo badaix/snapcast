@@ -12,6 +12,7 @@
 #include "common/message.h"
 #include "common/headerMessage.h"
 #include "common/sampleFormat.h"
+#include "common/socketConnection.h"
 
 
 using boost::asio::ip::tcp;
@@ -20,19 +21,14 @@ using namespace std;
 
 
 
-class StreamSession
+class StreamSession : public ServerConnection
 {
 public:
 	StreamSession(socket_ptr sock);
-
-	void start();
 	void send(shared_ptr<BaseMessage> message);
-	bool isActive() const;
 
-private:
-	void sender();
-	bool active_;
-	socket_ptr socket_;
+protected:
+	virtual void worker();
 	thread* senderThread;
 	Queue<shared_ptr<BaseMessage>> messages;
 };

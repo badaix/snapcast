@@ -2,13 +2,14 @@
 
 
 
-StreamSession::StreamSession(socket_ptr sock) : active_(false), socket_(sock)
+StreamSession::StreamSession(std::shared_ptr<tcp::socket> _socket) : ServerConnection(NULL, _socket)
 {
 }
 
 
-void StreamSession::sender()
+void StreamSession::worker()
 {
+	active_ = true;
 	try
 	{
 		boost::asio::streambuf streambuf;
@@ -16,8 +17,7 @@ void StreamSession::sender()
 		for (;;)
 		{
 			shared_ptr<BaseMessage> message(messages.pop());
-			message->serialize(stream);
-			boost::asio::write(*socket_, streambuf);
+			ServerConnection::send(message.get());
 		}
 	}
 	catch (std::exception& e)
@@ -25,29 +25,21 @@ void StreamSession::sender()
 		std::cerr << "Exception in thread: " << e.what() << "\n";
 		active_ = false;
 	}
+	active_ = false;
 }
 
-void StreamSession::start()
-{
-	active_ = true;
-	senderThread = new thread(&StreamSession::sender, this);
-//		readerThread.join();
-}
 
 void StreamSession::send(shared_ptr<BaseMessage> message)
 {
 	if (!message)
 		return;
 
-	while (messages.size() > 100)//* chunk->getDuration() > 10000)
+	while (messages.size() > 100)// chunk->getDuration() > 10000)
 		messages.pop();
 	messages.push(message);
 }
 
-bool StreamSession::isActive() const
-{
-	return active_;
-}
+
 
 
 

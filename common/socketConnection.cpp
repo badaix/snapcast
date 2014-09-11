@@ -93,7 +93,7 @@ void ClientConnection::worker()
 		try
 		{	
 			{
-				std::unique_lock<std::mutex> mlock(mutex_);
+//				std::unique_lock<std::mutex> mlock(mutex_);
 				tcp::resolver resolver(io_service);
 				tcp::resolver::query query(tcp::v4(), ip, boost::lexical_cast<string>(port));
 				iterator = resolver.resolve(query);

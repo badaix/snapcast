@@ -36,13 +36,13 @@ private:
 	SampleFormat format_;
 
 	long lastTick;
-	int sleep;
+	long sleep;
 	
 	Queue<std::shared_ptr<PcmChunk>> chunks;
-	DoubleBuffer<int>* pCardBuffer;
-	DoubleBuffer<int>* pMiniBuffer;
-	DoubleBuffer<int>* pBuffer;
-	DoubleBuffer<int>* pShortBuffer;
+	DoubleBuffer<long>* pCardBuffer;
+	DoubleBuffer<long>* pMiniBuffer;
+	DoubleBuffer<long>* pBuffer;
+	DoubleBuffer<long>* pShortBuffer;
 	std::shared_ptr<PcmChunk> chunk;
 
 	int median;

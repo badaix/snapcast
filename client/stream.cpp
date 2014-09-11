@@ -8,10 +8,10 @@ using namespace std;
 
 Stream::Stream(const SampleFormat& sampleFormat) : format(format_), format_(sampleFormat), sleep(0), median(0), shortMedian(0), lastUpdate(0)
 {
-	pBuffer = new DoubleBuffer<int>(500);
-	pShortBuffer = new DoubleBuffer<int>(100);
-	pMiniBuffer = new DoubleBuffer<int>(20);
-	pCardBuffer = new DoubleBuffer<int>(50);
+	pBuffer = new DoubleBuffer<long>(500);
+	pShortBuffer = new DoubleBuffer<long>(100);
+	pMiniBuffer = new DoubleBuffer<long>(20);
+	pCardBuffer = new DoubleBuffer<long>(50);
 	bufferMs = 500;
 }
 
@@ -218,7 +218,7 @@ cout << "\nms: " << Chunk::getAge(ms) << "\t chunk: " << chunk->getAge() << "\n"
 	
 
 
-	int age = PcmChunk::getAge(getNextPlayerChunk(outputBuffer, framesPerBuffer, correction)) - bufferMs + outputBufferDacTime;
+	long age = PcmChunk::getAge(getNextPlayerChunk(outputBuffer, framesPerBuffer, correction)) - bufferMs + outputBufferDacTime;
 
 
 //	if (pCardBuffer->full())
