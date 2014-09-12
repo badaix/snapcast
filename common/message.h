@@ -30,7 +30,8 @@ enum message_type
 	base = 0,
 	header = 1,
 	payload = 2,
-	sampleformat = 3
+	sampleformat = 3,
+	serversettings = 4
 };
 
 

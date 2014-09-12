@@ -57,24 +57,9 @@ void StreamServer::acceptor()
 		a.accept(*sock);
 		cout << "New connection: " << sock->remote_endpoint().address().to_string() << "\n";
 		StreamSession* session = new StreamSession(sock);
-		session->send(sampleFormat);
-		session->send(headerChunk);
-		session->start();
 		sessions.insert(shared_ptr<StreamSession>(session));
+		session->start();
 	}
-}
-
-
-void StreamServer::setHeader(shared_ptr<HeaderMessage> header)
-{
-	if (header)
-		headerChunk = header;
-}
-
-
-void StreamServer::setFormat(SampleFormat& format)
-{
-	sampleFormat = shared_ptr<SampleFormat>(new SampleFormat(format));
 }
 
 
@@ -82,7 +67,7 @@ void StreamServer::send(shared_ptr<BaseMessage> message)
 {
 	for (std::set<shared_ptr<StreamSession>>::iterator it = sessions.begin(); it != sessions.end(); ) 
 	{
-		if (!(*it)->isActive())
+		if (!(*it)->active())
 		{
 			cout << "Session inactive. Removing\n";
 	        sessions.erase(it++);

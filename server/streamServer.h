@@ -39,9 +39,6 @@ class StreamServer
 {
 public:
 	StreamServer(unsigned short port);
-
-	void setHeader(shared_ptr<HeaderMessage> header);
-	void setFormat(SampleFormat& format);
 	void send(shared_ptr<BaseMessage> message);
 
 	void start();

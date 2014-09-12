@@ -5,12 +5,12 @@
 #include "oggDecoder.h"
 #include "pcmDecoder.h"
 #include "player.h"
-
+#include "common/serverSettings.h"
 
 using namespace std;
 
 
-Controller::Controller() : MessageReceiver(), active_(false), sampleFormat(NULL)
+Controller::Controller() : MessageReceiver(), active_(false), streamClient(NULL), sampleFormat(NULL)
 {
 	decoder = new OggDecoder();
 }
@@ -18,6 +18,7 @@ Controller::Controller() : MessageReceiver(), active_(false), sampleFormat(NULL)
 
 void Controller::onMessageReceived(SocketConnection* connection, const BaseMessage& baseMessage, char* buffer)
 {
+//cout << "onMessageReceived: " << baseMessage.type << ", size: " << baseMessage.size << "\n"; 
 	if (baseMessage.type == message_type::payload)
 	{
 		if ((stream != NULL) && (decoder != NULL))
@@ -49,18 +50,23 @@ void Controller::onMessageReceived(SocketConnection* connection, const BaseMessa
 		sampleFormat->deserialize(baseMessage, buffer);
 		cout << "SampleFormat rate: " << sampleFormat->rate << ", bits: " << sampleFormat->bits << ", channels: " << sampleFormat->channels << "\n";
 	}
+	else if (baseMessage.type == message_type::serversettings)
+	{
+		ServerSettings* serverSettings = new ServerSettings();
+		serverSettings->deserialize(baseMessage, buffer);
+		cout << "ServerSettings port: " << serverSettings->port << "\n";
+		streamClient = new StreamClient(this, ip, serverSettings->port);
+	}
 }
 
 
-void Controller::start(std::string& _ip, size_t _port, int _bufferMs)
+void Controller::start(const std::string& _ip, size_t _port, int _bufferMs)
 {
 	bufferMs = _bufferMs;
+	ip = _ip;
 
-	connection = new ClientConnection(this, _ip, _port);
-	connection->start();
-
-//	controlConnection = new ClientConnection(this, _ip, _port + 1);
-//	controlConnection->start();
+	controlConnection = new ClientConnection(this, ip, _port);
+	controlConnection->start();
 
 	controllerThread = new thread(&Controller::worker, this);
 }
@@ -77,10 +83,13 @@ void Controller::worker()
 //	Decoder* decoder;
 	active_ = true;	
 
-	while (sampleFormat == NULL)
+	while ((sampleFormat == NULL) && (streamClient == NULL))
 	{
 		usleep(10000);
 	}
+	
+	streamClient->start();
+
 	stream = new Stream(SampleFormat(*sampleFormat));
 	stream->setBufferLen(bufferMs);
 

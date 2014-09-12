@@ -12,6 +12,7 @@
 #include "common/message.h"
 #include "common/headerMessage.h"
 #include "common/sampleFormat.h"
+#include "common/serverSettings.h"
 #include "common/socketConnection.h"
 
 
@@ -28,14 +29,18 @@ public:
 	void start();
 	void stop();
 	virtual void onMessageReceived(SocketConnection* connection, const BaseMessage& baseMessage, char* buffer);
+	void setHeader(HeaderMessage* header);
+	void setFormat(SampleFormat* format);
+	void setServerSettings(ServerSettings* settings);
 
 private:
 	void acceptor();
 	set<shared_ptr<ServerConnection>> sessions;
 	boost::asio::io_service io_service_;
 	unsigned short port_;
-	shared_ptr<HeaderMessage> headerChunk;
-	shared_ptr<SampleFormat> sampleFormat;
+	HeaderMessage* headerChunk;
+	SampleFormat* sampleFormat;
+	ServerSettings* serverSettings;
 	thread* acceptThread;
 };
 

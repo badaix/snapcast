@@ -50,8 +50,10 @@ void SocketConnection::stop()
 void SocketConnection::send(BaseMessage* message)
 {
 	std::unique_lock<std::mutex> mlock(mutex_);
+//cout << "send: " << message->type << ", size: " << message->getSize() << "\n";
 	if (!connected())
 		return;
+//cout << "send: " << message->type << ", size: " << message->getSize() << "\n";
 	boost::asio::streambuf streambuf;
 	std::ostream stream(&streambuf);
 	message->serialize(stream);
@@ -61,12 +63,13 @@ void SocketConnection::send(BaseMessage* message)
 
 void SocketConnection::getNextMessage()
 {
+//cout << "getNextMessage\n";
 	BaseMessage baseMessage;
 	size_t baseMsgSize = baseMessage.getSize();
 	vector<char> buffer(baseMsgSize);
 	socketRead(&buffer[0], baseMsgSize);
 	baseMessage.deserialize(&buffer[0]);
-//cout << "type: " << baseMessage.type << ", size: " << baseMessage.size << "\n";
+//cout << "getNextMessage: " << baseMessage.type << ", size: " << baseMessage.size << "\n";
 	if (baseMessage.size > buffer.size())
 		buffer.resize(baseMessage.size);
 	socketRead(&buffer[0], baseMessage.size);
@@ -102,7 +105,7 @@ void ClientConnection::worker()
 		{	
 			{
 //				std::unique_lock<std::mutex> mlock(mutex_);
-cout << "connecting\n";
+//cout << "connecting\n";
 				socket.reset(new tcp::socket(io_service));
 				struct timeval tv;
 				tv.tv_sec  = 5; 
@@ -110,7 +113,7 @@ cout << "connecting\n";
 				setsockopt(socket->native(), SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
 				socket->connect(*iterator);
 				connected_ = true;
-cout << "connected\n";
+//cout << "connected\n";
 				std::clog << kLogNotice << "connected\n";// to " << ip << ":" << port << std::endl;
 			}
 			while(active_)

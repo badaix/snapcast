@@ -61,11 +61,6 @@ int main(int argc, char* argv[])
 		openlog ("firstdaemon", LOG_PID, LOG_DAEMON);
 
 		using namespace std; // For atoi.
-		StreamServer* server = new StreamServer(port);
-		server->start();
-
-		ControlServer* controlServer = new ControlServer(port + 1);
-		controlServer->start();
 
 		timeval tvChunk;
 		gettimeofday(&tvChunk, NULL);
@@ -86,9 +81,15 @@ size_t duration = 50;
 			return 1;
 		}
 
-		server->setFormat(format);
-		shared_ptr<HeaderMessage> header(encoder->getHeader());
-		server->setHeader(header);
+		std::auto_ptr<ServerSettings> serverSettings(new ServerSettings(port + 1));
+		ControlServer* controlServer = new ControlServer(port);
+		controlServer->setServerSettings(serverSettings.get());
+		controlServer->setFormat(&format);
+		controlServer->setHeader(encoder->getHeader());
+		controlServer->start();
+
+		StreamServer* server = new StreamServer(port + 1);
+		server->start();
 
         while (!g_terminated)
         {

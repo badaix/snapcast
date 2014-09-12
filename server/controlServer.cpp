@@ -2,7 +2,7 @@
 #include <iostream>
 
 
-ControlServer::ControlServer(unsigned short port) : port_(port), headerChunk(NULL)
+ControlServer::ControlServer(unsigned short port) : port_(port), headerChunk(NULL), sampleFormat(NULL)
 {
 }
 
@@ -20,10 +20,13 @@ void ControlServer::acceptor()
 	{
 		socket_ptr sock(new tcp::socket(io_service_));
 		a.accept(*sock);
-		cout << "New connection: " << sock->remote_endpoint().address().to_string() << "\n";
+		cout << "ControlServer::NewConnection: " << sock->remote_endpoint().address().to_string() << "\n";
 		ServerConnection* session = new ServerConnection(this, sock);
 		sessions.insert(shared_ptr<ServerConnection>(session));
 		session->start();
+		session->send(serverSettings);
+		session->send(sampleFormat);
+		session->send(headerChunk);
 	}
 }
 
@@ -38,6 +41,30 @@ void ControlServer::stop()
 {
 //		acceptThread->join();
 }
+
+
+void ControlServer::setHeader(HeaderMessage* header)
+{
+	if (header)
+		headerChunk = header;
+}
+
+
+void ControlServer::setFormat(SampleFormat* format)
+{
+	if (format)
+		sampleFormat = format;
+}
+
+
+
+void ControlServer::setServerSettings(ServerSettings* settings)
+{
+	if (settings)
+		serverSettings = settings;
+}
+
+
 
 
 

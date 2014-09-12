@@ -38,7 +38,8 @@ public:
 
 	virtual bool connected() 
 	{
-		return (connected_ && socket);
+		return (socket != 0);
+//		return (connected_ && socket);
 	}
 
 protected:
