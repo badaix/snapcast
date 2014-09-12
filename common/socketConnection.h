@@ -30,9 +30,15 @@ public:
 	virtual void start();
 	virtual void stop();
 	virtual void send(BaseMessage* _message);
-	virtual bool isActive() 
+
+	virtual bool active() 
 	{
 		return active_;
+	}
+
+	virtual bool connected() 
+	{
+		return (connected_ && socket);
 	}
 
 protected:
@@ -43,6 +49,7 @@ protected:
 
 //	boost::asio::ip::tcp::endpoint endpt;
 	std::atomic<bool> active_;
+	std::atomic<bool> connected_;
 	MessageReceiver* messageReceiver;
 	void getNextMessage();
 	boost::asio::io_service io_service;
@@ -56,6 +63,7 @@ class ClientConnection : public SocketConnection
 {
 public:
 	ClientConnection(MessageReceiver* _receiver, const std::string& _ip, size_t _port);
+	virtual void start();
 
 protected:
 	virtual void worker();
