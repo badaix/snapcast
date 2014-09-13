@@ -34,7 +34,8 @@ enum message_type
 	header = 1,
 	payload = 2,
 	sampleformat = 3,
-	serversettings = 4
+	serversettings = 4,
+	timemsg = 5
 };
 
 

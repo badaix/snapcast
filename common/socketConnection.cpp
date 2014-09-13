@@ -69,27 +69,32 @@ BaseMessage* SocketConnection::sendRequest(BaseMessage* message, size_t timeout)
 	BaseMessage* response(NULL);
 	if (++reqId == 0)
 		++reqId;
+	message->id = reqId;
 	shared_ptr<PendingRequest> pendingRequest(new PendingRequest(reqId));
 	pendingRequests.insert(pendingRequest);
 	std::mutex mtx;
 	std::unique_lock<std::mutex> lck(mtx);
 	send(message);
 	if (pendingRequest->cv.wait_for(lck,std::chrono::milliseconds(timeout)) == std::cv_status::no_timeout)
+	{
+cout << "response received\n";
 		response = pendingRequest->response;
+	}
 	pendingRequests.erase(pendingRequest);
+cout << "response != NULL: " << (response != NULL) << "\n";
 	return response;
 }
 
 
 void SocketConnection::getNextMessage()
 {
-//cout << "getNextMessage\n";
+cout << "getNextMessage\n";
 	BaseMessage baseMessage;
 	size_t baseMsgSize = baseMessage.getSize();
 	vector<char> buffer(baseMsgSize);
 	socketRead(&buffer[0], baseMsgSize);
 	baseMessage.deserialize(&buffer[0]);
-//cout << "getNextMessage: " << baseMessage.type << ", size: " << baseMessage.size << "\n";
+cout << "getNextMessage: " << baseMessage.type << ", size: " << baseMessage.size << ", id: " << baseMessage.id << ", refers: " << baseMessage.refersTo << "\n";
 	if (baseMessage.size > buffer.size())
 		buffer.resize(baseMessage.size);
 	socketRead(&buffer[0], baseMessage.size);
@@ -100,6 +105,10 @@ void SocketConnection::getNextMessage()
 	{
 		if (req->id == baseMessage.refersTo)
 		{
+cout << "getNextMessage response: " << baseMessage.type << ", size: " << baseMessage.size << "\n";
+long latency = (baseMessage.received.sec - baseMessage.sent.sec) * 1000000 + (baseMessage.received.usec - baseMessage.sent.usec);
+cout << "latency: " << latency << "\n";
+			req->response = new BaseMessage(baseMessage);
 			req->cv.notify_one();
 			return;
 		}

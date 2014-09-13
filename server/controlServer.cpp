@@ -1,4 +1,5 @@
 #include "controlServer.h"
+#include "common/timeMsg.h"
 #include <iostream>
 
 
@@ -9,7 +10,16 @@ ControlServer::ControlServer(unsigned short port) : port_(port), headerChunk(NUL
 
 void ControlServer::onMessageReceived(SocketConnection* connection, const BaseMessage& baseMessage, char* buffer)
 {
-	cout << "onMessageReceived: " << baseMessage.type << ", " << baseMessage.size << "\n";
+	cout << "onMessageReceived: " << baseMessage.type << ", size: " << baseMessage.size << ", sent: " << baseMessage.sent.sec << "," << baseMessage.sent.usec << ", recv: " << baseMessage.received.sec << "," << baseMessage.received.usec << "\n"; 
+	if (baseMessage.type == message_type::timemsg)
+	{	
+		TimeMsg* timeMsg = new TimeMsg();
+		timeMsg->deserialize(baseMessage, buffer);
+		timeMsg->latency = (timeMsg->received.sec - timeMsg->sent.sec) * 1000000 + (timeMsg->received.usec - timeMsg->sent.usec);
+		cout << "Latency: " << timeMsg->latency << "\n";
+		timeMsg->refersTo = timeMsg->id;
+		connection->send(timeMsg);
+	}
 }
 
 

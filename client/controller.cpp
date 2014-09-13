@@ -6,6 +6,7 @@
 #include "pcmDecoder.h"
 #include "player.h"
 #include "common/serverSettings.h"
+#include "common/timeMsg.h"
 
 using namespace std;
 
@@ -18,7 +19,6 @@ Controller::Controller() : MessageReceiver(), active_(false), streamClient(NULL)
 
 void Controller::onMessageReceived(SocketConnection* connection, const BaseMessage& baseMessage, char* buffer)
 {
-//cout << "onMessageReceived: " << baseMessage.type << ", size: " << baseMessage.size << ", sent: " << baseMessage.sent.sec << "," << baseMessage.sent.usec << ", recv: " << baseMessage.received.sec << "," << baseMessage.received.usec << "\n"; 
 	if (baseMessage.type == message_type::payload)
 	{
 		if ((stream != NULL) && (decoder != NULL))
@@ -98,9 +98,19 @@ void Controller::worker()
 
 	while (active_)
 	{
-		usleep(100000);
-//		BaseMessage msg;
-//		controlConnection->send(&msg);
+		usleep(1000000);
+		TimeMsg timeMsg;
+		BaseMessage* reply = controlConnection->sendRequest(&timeMsg, 2000);
+		if (reply != NULL)
+		{
+cout << "Reply: " << reply->type << ", size: " << reply->size << ", sent: " << reply->sent.sec << "," << reply->sent.usec << ", recv: " << reply->received.sec << "," << reply->received.usec << "\n"; 
+			if (reply->type == message_type::timemsg)
+			{
+				TimeMsg* timeMsg = (TimeMsg*)(reply);
+				long latency = (timeMsg->received.sec - timeMsg->sent.sec) * 1000000 + (timeMsg->received.usec - timeMsg->sent.usec);
+				cout << "C2S: " << timeMsg->latency << ", S2C: " << latency << "\n";
+			}
+		}
 	}
 }
 

@@ -77,6 +77,12 @@ static void addUs(timeval& tv, int us)
 }
 
 
+/*static long diffMs(const timeval& t1, const timeval& t2)
+{
+    return (((t1.tv_sec - t2.tv_sec) * 1000000) + 
+            (t1.tv_usec - t2.tv_usec))/1000;
+}*/
+
 
 static long getTickCount()
 {
