@@ -26,8 +26,8 @@ public:
 		std::chrono::milliseconds::rep relativeIdxTp = ((double)idx / ((double)format.rate/1000.));
 		return 
 			tp + 
-			std::chrono::seconds(tv_sec) + 
-			std::chrono::milliseconds(tv_usec / 1000) + 
+			std::chrono::seconds(timestamp.sec) + 
+			std::chrono::milliseconds(timestamp.usec / 1000) + 
 			std::chrono::milliseconds(relativeIdxTp);
 	}
 

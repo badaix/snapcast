@@ -18,7 +18,7 @@ Controller::Controller() : MessageReceiver(), active_(false), streamClient(NULL)
 
 void Controller::onMessageReceived(SocketConnection* connection, const BaseMessage& baseMessage, char* buffer)
 {
-//cout << "onMessageReceived: " << baseMessage.type << ", size: " << baseMessage.size << "\n"; 
+//cout << "onMessageReceived: " << baseMessage.type << ", size: " << baseMessage.size << ", sent: " << baseMessage.sent.sec << "," << baseMessage.sent.usec << ", recv: " << baseMessage.received.sec << "," << baseMessage.received.usec << "\n"; 
 	if (baseMessage.type == message_type::payload)
 	{
 		if ((stream != NULL) && (decoder != NULL))

@@ -6,6 +6,8 @@
 #include <atomic>
 #include <mutex>
 #include <boost/asio.hpp>
+#include <condition_variable>
+#include <set>
 #include "message.h"
 
 
@@ -13,6 +15,16 @@ using boost::asio::ip::tcp;
 
 
 class SocketConnection;
+
+
+struct PendingRequest
+{
+	PendingRequest(uint16_t reqId) : id(reqId), response(NULL) {};
+
+	uint16_t id;
+	BaseMessage* response;
+	std::condition_variable cv;
+};
 
 
 class MessageReceiver
@@ -29,7 +41,8 @@ public:
 	virtual ~SocketConnection();
 	virtual void start();
 	virtual void stop();
-	virtual void send(BaseMessage* _message);
+	virtual bool send(BaseMessage* _message);
+	virtual BaseMessage* sendRequest(BaseMessage* message, size_t timeout);
 
 	virtual bool active() 
 	{
@@ -57,6 +70,8 @@ protected:
 	tcp::resolver::iterator iterator;
 	std::thread* receiverThread;
 	mutable std::mutex mutex_;
+	std::set<std::shared_ptr<PendingRequest>> pendingRequests;
+	uint16_t reqId;
 };
 
 

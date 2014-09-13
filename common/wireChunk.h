@@ -10,7 +10,6 @@
 #include "message.h"
 
 
-
 class WireChunk : public BaseMessage
 {
 public:
@@ -26,8 +25,8 @@ public:
 
 	virtual void read(std::istream& stream)
 	{
-		stream.read(reinterpret_cast<char *>(&tv_sec), sizeof(int32_t));
-		stream.read(reinterpret_cast<char *>(&tv_usec), sizeof(int32_t));
+		stream.read(reinterpret_cast<char *>(&timestamp.sec), sizeof(int32_t));
+		stream.read(reinterpret_cast<char *>(&timestamp.usec), sizeof(int32_t));
 		stream.read(reinterpret_cast<char *>(&payloadSize), sizeof(uint32_t));
 		payload = (char*)realloc(payload, payloadSize);
 		stream.read(payload, payloadSize);
@@ -38,16 +37,15 @@ public:
 		return sizeof(int32_t) + sizeof(int32_t) + sizeof(uint32_t) + payloadSize;
 	}
 
-	int32_t tv_sec;
-	int32_t tv_usec;
+	tv timestamp;
 	uint32_t payloadSize;
 	char* payload;
 
 protected:
 	virtual void doserialize(std::ostream& stream)
 	{
-		stream.write(reinterpret_cast<char *>(&tv_sec), sizeof(int32_t));
-		stream.write(reinterpret_cast<char *>(&tv_usec), sizeof(int32_t));
+		stream.write(reinterpret_cast<char *>(&timestamp.sec), sizeof(int32_t));
+		stream.write(reinterpret_cast<char *>(&timestamp.usec), sizeof(int32_t));
 		stream.write(reinterpret_cast<char *>(&payloadSize), sizeof(uint32_t));
 		stream.write(payload, payloadSize);
 	}

@@ -10,7 +10,7 @@
 using namespace std;
 
 
-SocketConnection::SocketConnection(MessageReceiver* _receiver) : active_(false), connected_(false), messageReceiver(_receiver)
+SocketConnection::SocketConnection(MessageReceiver* _receiver) : active_(false), connected_(false), messageReceiver(_receiver), reqId(0)
 {
 }
 
@@ -47,17 +47,37 @@ void SocketConnection::stop()
 }
 
 
-void SocketConnection::send(BaseMessage* message)
+bool SocketConnection::send(BaseMessage* message)
 {
 	std::unique_lock<std::mutex> mlock(mutex_);
 //cout << "send: " << message->type << ", size: " << message->getSize() << "\n";
 	if (!connected())
-		return;
+		return false;
 //cout << "send: " << message->type << ", size: " << message->getSize() << "\n";
 	boost::asio::streambuf streambuf;
 	std::ostream stream(&streambuf);
+	tv t;
+	message->sent = t;
 	message->serialize(stream);
 	boost::asio::write(*socket.get(), streambuf);
+	return true;
+}
+
+
+BaseMessage* SocketConnection::sendRequest(BaseMessage* message, size_t timeout)
+{
+	BaseMessage* response(NULL);
+	if (++reqId == 0)
+		++reqId;
+	shared_ptr<PendingRequest> pendingRequest(new PendingRequest(reqId));
+	pendingRequests.insert(pendingRequest);
+	std::mutex mtx;
+	std::unique_lock<std::mutex> lck(mtx);
+	send(message);
+	if (pendingRequest->cv.wait_for(lck,std::chrono::milliseconds(timeout)) == std::cv_status::no_timeout)
+		response = pendingRequest->response;
+	pendingRequests.erase(pendingRequest);
+	return response;
 }
 
 
@@ -73,7 +93,18 @@ void SocketConnection::getNextMessage()
 	if (baseMessage.size > buffer.size())
 		buffer.resize(baseMessage.size);
 	socketRead(&buffer[0], baseMessage.size);
+	tv t;
+	baseMessage.received = t;
 	
+	for (auto req: pendingRequests)
+	{
+		if (req->id == baseMessage.refersTo)
+		{
+			req->cv.notify_one();
+			return;
+		}
+	}
+
 	if (messageReceiver != NULL)
 		messageReceiver->onMessageReceived(this, baseMessage, &buffer[0]);
 }

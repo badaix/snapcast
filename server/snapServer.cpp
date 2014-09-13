@@ -112,8 +112,8 @@ size_t duration = 50;
                     }
                     while (len < toRead);
 
-                    chunk->tv_sec = tvChunk.tv_sec;
-                    chunk->tv_usec = tvChunk.tv_usec;
+                    chunk->timestamp.sec = tvChunk.tv_sec;
+                    chunk->timestamp.usec = tvChunk.tv_usec;
 					double chunkDuration = encoder->encode(chunk.get());
 					if (chunkDuration > 0)
 	                    server->send(chunk);

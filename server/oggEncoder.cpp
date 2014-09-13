@@ -23,8 +23,8 @@ double OggEncoder::encode(PcmChunk* chunk)
 	double res = 0;
 	if (tv_sec == 0)
 	{
-		tv_sec = chunk->tv_sec;
-		tv_usec = chunk->tv_usec;
+		tv_sec = chunk->timestamp.sec;
+		tv_usec = chunk->timestamp.usec;
 	}
 //cout << "-> pcm: " << wireChunk->length << endl;
 	int bytes = chunk->payloadSize / 4;
