@@ -1,6 +1,7 @@
 #include "controller.h"
 #include <iostream>
 #include <string>
+#include <memory>
 #include <unistd.h>
 #include "oggDecoder.h"
 #include "pcmDecoder.h"
@@ -98,18 +99,26 @@ void Controller::worker()
 
 	while (active_)
 	{
-		usleep(1000000);
+		usleep(1000000);//1000000);
 		TimeMsg timeMsg;
-		BaseMessage* reply = controlConnection->sendRequest(&timeMsg, 2000);
-		if (reply != NULL)
-		{
-cout << "Reply: " << reply->type << ", size: " << reply->size << ", sent: " << reply->sent.sec << "," << reply->sent.usec << ", recv: " << reply->received.sec << "," << reply->received.usec << "\n"; 
-			if (reply->type == message_type::timemsg)
+
+		try
+		{		
+			shared_ptr<PendingRequest> reply = controlConnection->sendRequest(&timeMsg, 2000);
+			if (reply)
 			{
-				TimeMsg* timeMsg = (TimeMsg*)(reply);
-				long latency = (timeMsg->received.sec - timeMsg->sent.sec) * 1000000 + (timeMsg->received.usec - timeMsg->sent.usec);
-				cout << "C2S: " << timeMsg->latency << ", S2C: " << latency << "\n";
+				if (reply->response->type == message_type::timemsg)
+				{
+	//cout << "Reply: " << reply->response->type << ", size: " << reply->response->size << ", sent: " << reply->response->sent.sec << "," << reply->response->sent.usec << ", recv: " << reply->response->received.sec << "," << reply->response->received.usec << "\n"; 
+					TimeMsg timeMsg;
+					timeMsg.deserialize(*reply->response, reply->buffer);
+					long latency = (timeMsg.received.sec - timeMsg.sent.sec) * 1000000 + (timeMsg.received.usec - timeMsg.sent.usec);
+					cout << "C2S: " << timeMsg.latency << ", S2C: " << latency << ", diff: " << (timeMsg.latency - latency) / 2 << endl;
+				}
 			}
+		}
+		catch (const std::exception& e)
+		{
 		}
 	}
 }

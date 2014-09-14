@@ -64,9 +64,9 @@ bool SocketConnection::send(BaseMessage* message)
 }
 
 
-BaseMessage* SocketConnection::sendRequest(BaseMessage* message, size_t timeout)
+shared_ptr<PendingRequest> SocketConnection::sendRequest(BaseMessage* message, size_t timeout)
 {
-	BaseMessage* response(NULL);
+	shared_ptr<PendingRequest> response(NULL);
 	if (++reqId == 0)
 		++reqId;
 	message->id = reqId;
@@ -77,24 +77,26 @@ BaseMessage* SocketConnection::sendRequest(BaseMessage* message, size_t timeout)
 	send(message);
 	if (pendingRequest->cv.wait_for(lck,std::chrono::milliseconds(timeout)) == std::cv_status::no_timeout)
 	{
-cout << "response received\n";
-		response = pendingRequest->response;
+		response = pendingRequest;
+	} 
+	else
+	{
+		cout << "timeout while waiting for response to: " << reqId << "\n";
 	}
 	pendingRequests.erase(pendingRequest);
-cout << "response != NULL: " << (response != NULL) << "\n";
 	return response;
 }
 
 
 void SocketConnection::getNextMessage()
 {
-cout << "getNextMessage\n";
+//cout << "getNextMessage\n";
 	BaseMessage baseMessage;
 	size_t baseMsgSize = baseMessage.getSize();
 	vector<char> buffer(baseMsgSize);
 	socketRead(&buffer[0], baseMsgSize);
 	baseMessage.deserialize(&buffer[0]);
-cout << "getNextMessage: " << baseMessage.type << ", size: " << baseMessage.size << ", id: " << baseMessage.id << ", refers: " << baseMessage.refersTo << "\n";
+//cout << "getNextMessage: " << baseMessage.type << ", size: " << baseMessage.size << ", id: " << baseMessage.id << ", refers: " << baseMessage.refersTo << "\n";
 	if (baseMessage.size > buffer.size())
 		buffer.resize(baseMessage.size);
 	socketRead(&buffer[0], baseMessage.size);
@@ -105,10 +107,12 @@ cout << "getNextMessage: " << baseMessage.type << ", size: " << baseMessage.size
 	{
 		if (req->id == baseMessage.refersTo)
 		{
-cout << "getNextMessage response: " << baseMessage.type << ", size: " << baseMessage.size << "\n";
-long latency = (baseMessage.received.sec - baseMessage.sent.sec) * 1000000 + (baseMessage.received.usec - baseMessage.sent.usec);
-cout << "latency: " << latency << "\n";
+//cout << "getNextMessage response: " << baseMessage.type << ", size: " << baseMessage.size << "\n";
+//long latency = (baseMessage.received.sec - baseMessage.sent.sec) * 1000000 + (baseMessage.received.usec - baseMessage.sent.usec);
+//cout << "latency: " << latency << "\n";
 			req->response = new BaseMessage(baseMessage);
+			req->buffer = (char*)malloc(baseMessage.size);
+			memcpy(req->buffer, &buffer[0], baseMessage.size);
 			req->cv.notify_one();
 			return;
 		}

@@ -5,6 +5,7 @@
 #include <thread>
 #include <atomic>
 #include <mutex>
+#include <memory>
 #include <boost/asio.hpp>
 #include <condition_variable>
 #include <set>
@@ -19,10 +20,18 @@ class SocketConnection;
 
 struct PendingRequest
 {
-	PendingRequest(uint16_t reqId) : id(reqId), response(NULL) {};
+	PendingRequest(uint16_t reqId) : id(reqId), response(NULL), buffer(NULL) {};
+	~PendingRequest()
+	{
+		if (response != NULL);
+			delete response;
+		if (buffer != NULL)
+			free(buffer);
+	}
 
 	uint16_t id;
 	BaseMessage* response;
+	char* buffer;
 	std::condition_variable cv;
 };
 
@@ -42,7 +51,7 @@ public:
 	virtual void start();
 	virtual void stop();
 	virtual bool send(BaseMessage* _message);
-	virtual BaseMessage* sendRequest(BaseMessage* message, size_t timeout);
+	virtual std::shared_ptr<PendingRequest> sendRequest(BaseMessage* message, size_t timeout);
 
 	virtual bool active() 
 	{
