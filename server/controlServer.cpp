@@ -15,9 +15,10 @@ void ControlServer::onMessageReceived(SocketConnection* connection, const BaseMe
 	{	
 		TimeMsg timeMsg;
 		timeMsg.deserialize(baseMessage, buffer);
-		timeMsg.latency = (timeMsg.received.sec - timeMsg.sent.sec) * 1000000 + (timeMsg.received.usec - timeMsg.sent.usec);
-		tv diff = timeMsg.received - timeMsg.sent;
-		cout << "Latency: " << diff.sec << "." << diff.usec << "\n";
+//		timeMsg.latency = (timeMsg.received.sec - timeMsg.sent.sec) * 1000000 + (timeMsg.received.usec - timeMsg.sent.usec);
+		timeMsg.latency = (timeMsg.received.sec - timeMsg.sent.sec) + (timeMsg.received.usec - timeMsg.sent.usec) / 1000000.;
+//		tv diff = timeMsg.received - timeMsg.sent;
+//		cout << "Latency: " << diff.sec << "." << diff.usec << "\n";
 		timeMsg.refersTo = timeMsg.id;
 		connection->send(&timeMsg);
 	}
