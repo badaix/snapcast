@@ -22,7 +22,7 @@ public:
 
 	virtual uint32_t getSize()
 	{
-		return sizeof(int32_t);
+		return sizeof(double);
 	}
 
 	double latency;
