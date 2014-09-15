@@ -97,6 +97,7 @@ void Controller::worker()
 	Player player(stream);
 	player.start();
 
+	DoubleBuffer<long> timeBuffer(100);
 	while (active_)
 	{
 		usleep(1000000);//1000000);
@@ -114,6 +115,8 @@ void Controller::worker()
 					timeMsg.deserialize(*reply->response, reply->buffer);
 					long latency = (timeMsg.received.sec - timeMsg.sent.sec) * 1000000 + (timeMsg.received.usec - timeMsg.sent.usec);
 					cout << "C2S: " << timeMsg.latency << ", S2C: " << latency << ", diff: " << (timeMsg.latency - latency) / 2 << endl;
+					timeBuffer.add((timeMsg.latency - latency) / 2);
+					cout << timeBuffer.median() << "\n";
 				}
 			}
 		}

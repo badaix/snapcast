@@ -25,7 +25,7 @@ public:
 		return sizeof(int32_t);
 	}
 
-	uint32_t latency;
+	int32_t latency;
 
 protected:
 	virtual void doserialize(std::ostream& stream)

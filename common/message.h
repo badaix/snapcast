@@ -54,6 +54,24 @@ struct tv
 
 	int32_t sec;
 	int32_t usec;
+
+	tv operator-(const tv& other)
+	{
+		tv result(*this);
+		result.sec -= other.sec;
+		result.usec -= other.usec;
+		if (result.usec < 0)
+		{
+			result.usec += 1000000;
+			result.sec -= 1;
+		}
+		else if (result.usec >= 1000000)
+		{
+			result.usec -= 1000000;
+			result.sec += 1;
+		}
+		return result;
+	}
 };
 
 
