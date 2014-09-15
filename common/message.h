@@ -63,6 +63,7 @@ struct tv
 -1
 -0.1
 */
+//(timeMsg.received.sec - timeMsg.sent.sec) * 1000000 + (timeMsg.received.usec - timeMsg.sent.usec)
 	tv operator-(const tv& other)
 	{
 		tv result(*this);
@@ -72,6 +73,10 @@ struct tv
 		{
 			result.sec += 1;
 			result.usec = 1000000 - result.usec;
+		}
+		else if (result.usec < 0)
+		{
+			result.usec *= -1;
 		}
 /*		else if (result.usec >= 1000000)
 		{
