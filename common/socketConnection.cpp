@@ -49,7 +49,7 @@ void SocketConnection::stop()
 
 bool SocketConnection::send(BaseMessage* message)
 {
-	std::unique_lock<std::mutex> mlock(mutex_);
+//	std::unique_lock<std::mutex> mlock(mutex_);
 //cout << "send: " << message->type << ", size: " << message->getSize() << "\n";
 	if (!connected())
 		return false;
@@ -64,26 +64,33 @@ bool SocketConnection::send(BaseMessage* message)
 }
 
 
-shared_ptr<PendingRequest> SocketConnection::sendRequest(BaseMessage* message, size_t timeout)
+shared_ptr<SerializedMessage> SocketConnection::sendRequest(BaseMessage* message, size_t timeout)
 {
-	shared_ptr<PendingRequest> response(NULL);
+	shared_ptr<SerializedMessage> response(NULL);
 	if (++reqId == 0)
 		++reqId;
 	message->id = reqId;
 	shared_ptr<PendingRequest> pendingRequest(new PendingRequest(reqId));
-	pendingRequests.insert(pendingRequest);
-	std::mutex mtx;
-	std::unique_lock<std::mutex> lck(mtx);
+
+	{
+		std::unique_lock<std::mutex> mlock(mutex_);
+		pendingRequests.insert(pendingRequest);
+	}
+//	std::mutex mtx;
+	std::unique_lock<std::mutex> lck(m);
 	send(message);
 	if (pendingRequest->cv.wait_for(lck,std::chrono::milliseconds(timeout)) == std::cv_status::no_timeout)
 	{
-		response = pendingRequest;
+		response = pendingRequest->response;
 	} 
 	else
 	{
 		cout << "timeout while waiting for response to: " << reqId << "\n";
 	}
-	pendingRequests.erase(pendingRequest);
+	{
+		std::unique_lock<std::mutex> mlock(mutex_);
+		pendingRequests.erase(pendingRequest);
+	}
 	return response;
 }
 
@@ -103,18 +110,23 @@ void SocketConnection::getNextMessage()
 	tv t;
 	baseMessage.received = t;
 	
-	for (auto req: pendingRequests)
 	{
-		if (req->id == baseMessage.refersTo)
+		std::unique_lock<std::mutex> mlock(mutex_);
+		for (auto req: pendingRequests)
 		{
+			if (req->id == baseMessage.refersTo)
+			{
 //cout << "getNextMessage response: " << baseMessage.type << ", size: " << baseMessage.size << "\n";
 //long latency = (baseMessage.received.sec - baseMessage.sent.sec) * 1000000 + (baseMessage.received.usec - baseMessage.sent.usec);
 //cout << "latency: " << latency << "\n";
-			req->response = new BaseMessage(baseMessage);
-			req->buffer = (char*)malloc(baseMessage.size);
-			memcpy(req->buffer, &buffer[0], baseMessage.size);
-			req->cv.notify_one();
-			return;
+				req->response.reset(new SerializedMessage());
+				req->response->message = baseMessage;
+				req->response->buffer = (char*)malloc(baseMessage.size);
+				memcpy(req->response->buffer, &buffer[0], baseMessage.size);
+	std::unique_lock<std::mutex> lck(m);
+				req->cv.notify_one();
+				return;
+			}
 		}
 	}
 

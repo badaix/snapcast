@@ -8,6 +8,7 @@
 #include "player.h"
 #include "common/serverSettings.h"
 #include "common/timeMsg.h"
+#include "common/requestMsg.h"
 
 using namespace std;
 
@@ -36,7 +37,7 @@ void Controller::onMessageReceived(SocketConnection* connection, const BaseMessa
 				delete pcmChunk;
 		}
 	}
-	else if (baseMessage.type == message_type::header)
+/*	else if (baseMessage.type == message_type::header)
 	{
 		if (decoder != NULL)
 		{
@@ -58,6 +59,7 @@ void Controller::onMessageReceived(SocketConnection* connection, const BaseMessa
 		cout << "ServerSettings port: " << serverSettings->port << "\n";
 		streamClient = new StreamClient(this, ip, serverSettings->port);
 	}
+*/
 }
 
 
@@ -84,14 +86,27 @@ void Controller::worker()
 //	Decoder* decoder;
 	active_ = true;	
 
-	while ((sampleFormat == NULL) && (streamClient == NULL))
-	{
-		usleep(10000);
-	}
-	
-	streamClient->start();
+	RequestMsg requestMsg("serverSettings");
+	shared_ptr<ServerSettings> serverSettings(NULL);
+	while (!(serverSettings = controlConnection->sendReq<ServerSettings>(&requestMsg, 2000)));
+	cout << "ServerSettings port: " << serverSettings->port << "\n";
+	streamClient = new StreamClient(this, ip, serverSettings->port);
 
-	stream = new Stream(SampleFormat(*sampleFormat));
+	requestMsg.request = "sampleFormat";
+	while (!(sampleFormat = controlConnection->sendReq<SampleFormat>(&requestMsg, 2000)));
+	cout << "SampleFormat rate: " << sampleFormat->rate << ", bits: " << sampleFormat->bits << ", channels: " << sampleFormat->channels << "\n";
+
+	if (decoder != NULL)
+	{
+		requestMsg.request = "headerChunk";
+		shared_ptr<HeaderMessage> headerChunk(NULL);
+		while (!(headerChunk = controlConnection->sendReq<HeaderMessage>(&requestMsg, 2000)));
+		decoder->setHeader(headerChunk.get());
+	}
+
+
+	streamClient->start();
+	stream = new Stream(*sampleFormat);
 	stream->setBufferLen(bufferMs);
 
 	Player player(stream);
@@ -101,23 +116,17 @@ void Controller::worker()
 	while (active_)
 	{
 		usleep(1000000);//1000000);
-		TimeMsg timeMsg;
-
 		try
 		{		
-			shared_ptr<PendingRequest> reply = controlConnection->sendRequest(&timeMsg, 2000);
+			RequestMsg requestMsg("time");
+			shared_ptr<TimeMsg> reply = controlConnection->sendReq<TimeMsg>(&requestMsg, 2000);
 			if (reply)
 			{
-				if (reply->response->type == message_type::timemsg)
-				{
-	//cout << "Reply: " << reply->response->type << ", size: " << reply->response->size << ", sent: " << reply->response->sent.sec << "," << reply->response->sent.usec << ", recv: " << reply->response->received.sec << "," << reply->response->received.usec << "\n"; 
-					TimeMsg timeMsg;
-					timeMsg.deserialize(*reply->response, reply->buffer);
-					double latency = (timeMsg.received.sec - timeMsg.sent.sec) + (timeMsg.received.usec - timeMsg.sent.usec) / 1000000.;
-					cout << "C2S: " << timeMsg.latency << ", S2C: " << latency << ", diff: " << (timeMsg.latency - latency) / 2 << endl;
-					timeBuffer.add((timeMsg.latency - latency) / 2);
-					cout << timeBuffer.median() << "\n";
-				}
+//cout << "Reply: " << reply->message.type << ", size: " << reply->message.size << ", sent: " << reply->message.sent.sec << "," << reply->message.sent.usec << ", recv: " << reply->message.received.sec << "," << reply->message.received.usec << "\n"; 
+				double latency = (reply->received.sec - reply->sent.sec) + (reply->received.usec - reply->sent.usec) / 1000000.;
+//					cout << "C2S: " << timeMsg.latency << ", S2C: " << latency << ", diff: " << (timeMsg.latency - latency) / 2 << endl;
+				timeBuffer.add((reply->latency - latency) * 10000 / 2);
+				cout << timeBuffer.median() << "\n";
 			}
 		}
 		catch (const std::exception& e)

@@ -1,5 +1,6 @@
 #include "controlServer.h"
 #include "common/timeMsg.h"
+#include "common/requestMsg.h"
 #include <iostream>
 
 
@@ -11,16 +12,36 @@ ControlServer::ControlServer(unsigned short port) : port_(port), headerChunk(NUL
 void ControlServer::onMessageReceived(SocketConnection* connection, const BaseMessage& baseMessage, char* buffer)
 {
 //	cout << "onMessageReceived: " << baseMessage.type << ", size: " << baseMessage.size << ", sent: " << baseMessage.sent.sec << "," << baseMessage.sent.usec << ", recv: " << baseMessage.received.sec << "," << baseMessage.received.usec << "\n"; 
-	if (baseMessage.type == message_type::timemsg)
+	if (baseMessage.type == message_type::requestmsg)
 	{	
-		TimeMsg timeMsg;
-		timeMsg.deserialize(baseMessage, buffer);
+		RequestMsg requestMsg;
+		requestMsg.deserialize(baseMessage, buffer);
+		cout << "request: " << requestMsg.request << "\n";
+		if (requestMsg.request == "time")
+		{
 //		timeMsg.latency = (timeMsg.received.sec - timeMsg.sent.sec) * 1000000 + (timeMsg.received.usec - timeMsg.sent.usec);
-		timeMsg.latency = (timeMsg.received.sec - timeMsg.sent.sec) + (timeMsg.received.usec - timeMsg.sent.usec) / 1000000.;
+			TimeMsg timeMsg;
+			timeMsg.refersTo = requestMsg.id;
+			timeMsg.latency = (requestMsg.received.sec - requestMsg.sent.sec) + (requestMsg.received.usec - requestMsg.sent.usec) / 1000000.;
 //		tv diff = timeMsg.received - timeMsg.sent;
 //		cout << "Latency: " << diff.sec << "." << diff.usec << "\n";
-		timeMsg.refersTo = timeMsg.id;
-		connection->send(&timeMsg);
+			connection->send(&timeMsg);
+		}
+		else if (requestMsg.request == "serverSettings")
+		{
+			serverSettings->refersTo = requestMsg.id;
+			connection->send(serverSettings);
+		}
+		else if (requestMsg.request == "sampleFormat")
+		{
+			sampleFormat->refersTo = requestMsg.id;
+			connection->send(sampleFormat);
+		}
+		else if (requestMsg.request == "headerChunk")
+		{
+			headerChunk->refersTo = requestMsg.id;
+			connection->send(headerChunk);
+		}
 	}
 }
 
@@ -36,9 +57,9 @@ void ControlServer::acceptor()
 		ServerConnection* session = new ServerConnection(this, sock);
 		sessions.insert(shared_ptr<ServerConnection>(session));
 		session->start();
-		session->send(serverSettings);
-		session->send(sampleFormat);
-		session->send(headerChunk);
+//		session->send(serverSettings);
+//		session->send(sampleFormat);
+//		session->send(headerChunk);
 	}
 }
 

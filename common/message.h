@@ -35,7 +35,8 @@ enum message_type
 	payload = 2,
 	sampleformat = 3,
 	serversettings = 4,
-	timemsg = 5
+	timemsg = 5,
+	requestmsg = 6
 };
 
 
@@ -86,7 +87,6 @@ struct tv
 */		return result;
 	}
 };
-
 
 
 struct BaseMessage
@@ -165,6 +165,18 @@ protected:
 	virtual void doserialize(std::ostream& stream)
 	{
 	};
+};
+
+
+struct SerializedMessage
+{
+	~SerializedMessage()
+	{
+		free(buffer);
+	}
+
+	BaseMessage message;
+	char* buffer;
 };
 
 
