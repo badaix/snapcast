@@ -54,6 +54,7 @@ struct tv
 
 	int32_t sec;
 	int32_t usec;
+/*
 5.3 - 6.2 = -0.9
 -1
 0.1
@@ -61,7 +62,7 @@ struct tv
 5.3 - 6.4 = -1.1
 -1
 -0.1
-
+*/
 	tv operator-(const tv& other)
 	{
 		tv result(*this);
