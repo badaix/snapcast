@@ -6,6 +6,7 @@
 #include "oggDecoder.h"
 #include "pcmDecoder.h"
 #include "player.h"
+#include "timeProvider.h"
 #include "common/serverSettings.h"
 #include "common/timeMsg.h"
 #include "common/requestMsg.h"
@@ -104,6 +105,17 @@ void Controller::worker()
 		decoder->setHeader(headerChunk.get());
 	}
 
+	RequestMsg timeReq("time");
+	for (size_t n=0; n<10; ++n)
+	{
+		shared_ptr<TimeMsg> reply = controlConnection->sendReq<TimeMsg>(&timeReq, 2000);
+		if (reply)
+		{
+			double latency = (reply->received.sec - reply->sent.sec) + (reply->received.usec - reply->sent.usec) / 1000000.;
+			TimeProvider::getInstance().setDiffToServer((reply->latency - latency) * 1000 / 2);
+			usleep(1000);
+		}
+	}
 
 	streamClient->start();
 	stream = new Stream(*sampleFormat);
@@ -112,21 +124,18 @@ void Controller::worker()
 	Player player(stream);
 	player.start();
 
-	DoubleBuffer<long> timeBuffer(100);
 	while (active_)
 	{
-		usleep(1000000);//1000000);
+		usleep(1000000);
 		try
 		{		
-			RequestMsg requestMsg("time");
-			shared_ptr<TimeMsg> reply = controlConnection->sendReq<TimeMsg>(&requestMsg, 2000);
+			shared_ptr<TimeMsg> reply = controlConnection->sendReq<TimeMsg>(&timeReq, 2000);
 			if (reply)
 			{
-//cout << "Reply: " << reply->message.type << ", size: " << reply->message.size << ", sent: " << reply->message.sent.sec << "," << reply->message.sent.usec << ", recv: " << reply->message.received.sec << "," << reply->message.received.usec << "\n"; 
 				double latency = (reply->received.sec - reply->sent.sec) + (reply->received.usec - reply->sent.usec) / 1000000.;
 //					cout << "C2S: " << timeMsg.latency << ", S2C: " << latency << ", diff: " << (timeMsg.latency - latency) / 2 << endl;
-				timeBuffer.add((reply->latency - latency) * 10000 / 2);
-				cout << timeBuffer.median() << "\n";
+				TimeProvider::getInstance().setDiffToServer((reply->latency - latency) * 1000 / 2);
+				cout << TimeProvider::getInstance().getDiffToServer() << "\n";
 			}
 		}
 		catch (const std::exception& e)

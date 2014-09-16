@@ -3,6 +3,7 @@
 #include <string.h>
 #include <unistd.h>
 #include "common/log.h"
+#include "timeProvider.h"
 
 using namespace std;
 
@@ -175,7 +176,7 @@ int msBuffer = framesPerBuffer / format_.msRate();
 		if (sleep < -msBuffer/2)
 		{
 			cout << "Sleep " << sleep;
-			sleep = PcmChunk::getAge(getSilentPlayerChunk(outputBuffer, framesPerBuffer)) - bufferMs + outputBufferDacTime;
+			sleep = PcmChunk::getAge(getSilentPlayerChunk(outputBuffer, framesPerBuffer)) - bufferMs + outputBufferDacTime + TimeProvider::getInstance().getDiffToServerMs();
 			std::cerr << " after: " << sleep << ", chunks: " << chunks.size() << "\n";
 //	std::clog << kLogNotice << "sleep: " << sleep << std::endl;
 //			if (sleep > -msBuffer/2)
@@ -197,7 +198,7 @@ cout << "\nms: " << Chunk::getAge(ms) << "\t chunk: " << chunk->getAge() << "\n"
 			while (sleep > chunk->getDuration())
 			{
 				chunk = chunks.pop();
-				sleep = chunk->getAge() - bufferMs + outputBufferDacTime;
+				sleep = chunk->getAge() - bufferMs + outputBufferDacTime + TimeProvider::getInstance().getDiffToServerMs();
 //				cout << "chunk->getAge() > chunk->getDuration(): " << chunk->getAge() - bufferMs + outputBufferDacTime << " > " << chunk->getDuration() << ", chunks: " << chunks.size() << ", out: " << outputBufferDacTime << ", needed: " << msBuffer << ", sleep: " << sleep << "\n";
 				usleep(1000);
 			}
@@ -218,7 +219,7 @@ cout << "\nms: " << Chunk::getAge(ms) << "\t chunk: " << chunk->getAge() << "\n"
 	
 
 
-	long age = PcmChunk::getAge(getNextPlayerChunk(outputBuffer, framesPerBuffer, correction)) - bufferMs + outputBufferDacTime;
+	long age = PcmChunk::getAge(getNextPlayerChunk(outputBuffer, framesPerBuffer, correction)) - bufferMs + outputBufferDacTime + TimeProvider::getInstance().getDiffToServerMs();
 
 
 //	if (pCardBuffer->full())

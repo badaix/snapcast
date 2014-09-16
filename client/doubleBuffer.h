@@ -8,7 +8,7 @@ template <class T>
 class DoubleBuffer
 {
 public:
-	DoubleBuffer(size_t size) : bufferSize(size)
+	DoubleBuffer(size_t size = 10) : bufferSize(size)
 	{		
 	}
 
@@ -62,6 +62,12 @@ public:
 		return buffer.size();
 	}
 
+	void setSize(size_t size)
+	{
+		bufferSize = size;
+	}
+
+
 private:
 	size_t bufferSize;	
 	std::deque<T> buffer;
@@ -71,3 +77,5 @@ private:
 
 
 #endif
+
+
