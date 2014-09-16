@@ -55,7 +55,7 @@ void StreamServer::acceptor()
 	{
 		socket_ptr sock(new tcp::socket(io_service_));
 		a.accept(*sock);
-		cout << "New connection: " << sock->remote_endpoint().address().to_string() << "\n";
+		cout << "StreamServer::New connection: " << sock->remote_endpoint().address().to_string() << "\n";
 		StreamSession* session = new StreamSession(sock);
 		sessions.insert(shared_ptr<StreamSession>(session));
 		session->start();

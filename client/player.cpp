@@ -114,26 +114,29 @@ void Player::start()
 void Player::stop()
 {
 	active_ = false;
+	playerThread->join();
+	delete playerThread;
 }
 
 
 void Player::worker()
 {
 	unsigned int pcm;
+	snd_pcm_sframes_t avail;
+	snd_pcm_sframes_t delay; 
 	active_ = true;	
 	while (active_)
 	{
-		snd_pcm_sframes_t avail;
-		snd_pcm_sframes_t delay; 
 		snd_pcm_avail_delay(pcm_handle, &avail, &delay);
 
-		stream_->getPlayerChunk(buff, (float)delay / stream_->format.msRate(), frames);
-
-		if ((pcm = snd_pcm_writei(pcm_handle, buff, frames)) == -EPIPE) {
-			printf("XRUN.\n");
-			snd_pcm_prepare(pcm_handle);
-		} else if (pcm < 0) {
-			printf("ERROR. Can't write to PCM device. %s\n", snd_strerror(pcm));
+		if (stream_->getPlayerChunk(buff, (float)delay / stream_->format.msRate(), frames, 500))
+		{
+			if ((pcm = snd_pcm_writei(pcm_handle, buff, frames)) == -EPIPE) {
+				printf("XRUN.\n");
+				snd_pcm_prepare(pcm_handle);
+			} else if (pcm < 0) {
+				printf("ERROR. Can't write to PCM device. %s\n", snd_strerror(pcm));
+			}
 		}
 	}
 

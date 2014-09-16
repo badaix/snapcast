@@ -9,10 +9,10 @@ using namespace std;
 
 Stream::Stream(const SampleFormat& sampleFormat) : format(format_), format_(sampleFormat), sleep(0), median(0), shortMedian(0), lastUpdate(0)
 {
-	pBuffer = new DoubleBuffer<long>(500);
-	pShortBuffer = new DoubleBuffer<long>(100);
-	pMiniBuffer = new DoubleBuffer<long>(20);
-	pCardBuffer = new DoubleBuffer<long>(50);
+	buffer.setSize(500);
+	shortBuffer.setSize(100);
+	miniBuffer.setSize(20);
+	cardBuffer.setSize(50);
 	bufferMs = 500;
 }
 
@@ -89,10 +89,11 @@ time_point_ms Stream::seek(long ms)
 }
 
 
-time_point_ms Stream::getNextPlayerChunk(void* outputBuffer, unsigned long framesPerBuffer, int correction)
+time_point_ms Stream::getNextPlayerChunk(void* outputBuffer, unsigned long framesPerBuffer, size_t timeout, int correction)
 {
 	if (!chunk)
-		chunk = chunks.pop();
+		if (!chunks.try_pop(chunk, std::chrono::milliseconds(timeout)))
+			throw 0;
 
 	time_point_ms tp = chunk->timePoint();
 	int read = 0;
@@ -113,7 +114,8 @@ time_point_ms Stream::getNextPlayerChunk(void* outputBuffer, unsigned long frame
 	{
 		read += chunk->readFrames(buffer + read*format.frameSize, toRead - read);
 		if (chunk->isEndOfChunk())
-			chunk = chunks.pop();
+			if (!chunks.try_pop(chunk, std::chrono::milliseconds(timeout)))
+				throw 0;
 	}
 
 	if (correction != 0)
@@ -137,21 +139,21 @@ time_point_ms Stream::getNextPlayerChunk(void* outputBuffer, unsigned long frame
 
 void Stream::updateBuffers(int age)
 {
-	pBuffer->add(age);
-	pMiniBuffer->add(age);
-	pShortBuffer->add(age);
+	buffer.add(age);
+	miniBuffer.add(age);
+	shortBuffer.add(age);
 }
 
 
 void Stream::resetBuffers()
 {
-	pBuffer->clear();
-	pMiniBuffer->clear();
-	pShortBuffer->clear();
+	buffer.clear();
+	miniBuffer.clear();
+	shortBuffer.clear();
 }
 
 
-void Stream::getPlayerChunk(void* outputBuffer, double outputBufferDacTime, unsigned long framesPerBuffer)
+bool Stream::getPlayerChunk(void* outputBuffer, double outputBufferDacTime, unsigned long framesPerBuffer, size_t timeout)
 {
 //cout << "framesPerBuffer: " << framesPerBuffer << "\tms: " << framesPerBuffer*2 / PLAYER_CHUNK_MS_SIZE << "\t" << PLAYER_CHUNK_SIZE << "\n";
 int msBuffer = framesPerBuffer / format_.msRate();
@@ -162,12 +164,6 @@ int msBuffer = framesPerBuffer / format_.msRate();
 		lastTick = currentTick;
 	ticks = currentTick - lastTick;
 	lastTick = currentTick;
-
-	int cardBuffer = 0;
-	if (ticks > 1)
-		pCardBuffer->add(ticks);
-	if (pCardBuffer->full())
-		cardBuffer = pCardBuffer->percentil(90);
 
 	int correction = 0;
 	if (sleep != 0)
@@ -182,7 +178,7 @@ int msBuffer = framesPerBuffer / format_.msRate();
 //			if (sleep > -msBuffer/2)
 //				sleep = 0;
 			if (sleep < -msBuffer/2)
-				return;
+				return true;
 		}
 		else if (sleep > msBuffer/2)
 		{
@@ -219,31 +215,34 @@ cout << "\nms: " << Chunk::getAge(ms) << "\t chunk: " << chunk->getAge() << "\n"
 	
 
 
-	long age = PcmChunk::getAge(getNextPlayerChunk(outputBuffer, framesPerBuffer, correction)) - bufferMs + outputBufferDacTime + TimeProvider::getInstance().getDiffToServerMs();
+	long age(0);
+	try
+	{
+		age = PcmChunk::getAge(getNextPlayerChunk(outputBuffer, framesPerBuffer, timeout, correction)) - bufferMs + outputBufferDacTime + TimeProvider::getInstance().getDiffToServerMs();
+	}
+	catch(int e)
+	{
+		return false;
+	}
 
-
-//	if (pCardBuffer->full())
-//		age += 4*cardBuffer;
-
-//	cout << age << "\t" << outputBufferDacTime << "\t";// << framesPerBuffer << "\t" << msBuffer << "\t" << ticks << "\t" << cardBuffer << "\t" << outputBufferDacTime << "\n";
 
 
 	if (sleep == 0)
 	{
-		if (pBuffer->full() && (abs(median) > 1))
+		if (buffer.full() && (abs(median) > 1))
 		{
 			cout << "pBuffer->full() && (abs(median) > 1): " << median << "\n";
 			sleep = median;
 		} 
-		else if (pShortBuffer->full() && (abs(shortMedian) > 5))
+		else if (shortBuffer.full() && (abs(shortMedian) > 5))
 		{
 			cout << "pShortBuffer->full() && (abs(shortMedian) > 5): " << shortMedian << "\n";
 			sleep = shortMedian;
 		} 
-		else if (pMiniBuffer->full() && (abs(pMiniBuffer->median()) > 50))
+		else if (miniBuffer.full() && (abs(miniBuffer.median()) > 50))
 		{
-			cout << "pMiniBuffer->full() && (abs(pMiniBuffer->mean()) > 50): " << pMiniBuffer->median() << "\n";
-			sleep = pMiniBuffer->mean();
+			cout << "pMiniBuffer->full() && (abs(pMiniBuffer->mean()) > 50): " << miniBuffer.median() << "\n";
+			sleep = miniBuffer.mean();
 		}
 		else if (abs(age) > 200)
 		{
@@ -266,10 +265,11 @@ cout << "\nms: " << Chunk::getAge(ms) << "\t chunk: " << chunk->getAge() << "\n"
 	if (now != lastUpdate)
 	{
 		lastUpdate = now;
-		median = pBuffer->median();
-		shortMedian = pShortBuffer->median();
-		std::cerr << "Chunk: " << age << "\t" << pMiniBuffer->median() << "\t" << shortMedian << "\t" << median << "\t" << pBuffer->size() << "\t" << cardBuffer << "\t" << outputBufferDacTime << "\n";
+		median = buffer.median();
+		shortMedian = shortBuffer.median();
+		std::cerr << "Chunk: " << age << "\t" << miniBuffer.median() << "\t" << shortMedian << "\t" << median << "\t" << buffer.size() << "\t" << /*cardBuffer << "\t" <<*/ outputBufferDacTime << "\n";
 	}
+	return true;
 }
 
 

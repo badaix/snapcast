@@ -18,7 +18,7 @@ OggDecoder::OggDecoder() : Decoder()
 
 OggDecoder::~OggDecoder()
 {
-	ogg_sync_init(&oy); /* Now we can read pages */
+//	ogg_sync_init(&oy); /* Now we can read pages */
 	delete convbuffer;
 }
 

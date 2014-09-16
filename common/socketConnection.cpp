@@ -44,6 +44,7 @@ void SocketConnection::start()
 void SocketConnection::stop()
 {
 	active_ = false;
+	receiverThread->join();
 }
 
 
@@ -161,7 +162,7 @@ void ClientConnection::worker()
 		{	
 			{
 //				std::unique_lock<std::mutex> mlock(mutex_);
-//cout << "connecting\n";
+cout << "connecting\n";
 				socket.reset(new tcp::socket(io_service));
 				struct timeval tv;
 				tv.tv_sec  = 5; 
@@ -169,7 +170,7 @@ void ClientConnection::worker()
 				setsockopt(socket->native(), SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
 				socket->connect(*iterator);
 				connected_ = true;
-//cout << "connected\n";
+cout << "connected\n";
 				std::clog << kLogNotice << "connected\n";// to " << ip << ":" << port << std::endl;
 			}
 			while(active_)
@@ -181,7 +182,7 @@ void ClientConnection::worker()
 		{
 			connected_ = false;
 			cout << kLogNotice << "Exception: " << e.what() << ", trying to reconnect" << std::endl;
-			usleep(500*1000);
+			usleep(1000*1000);
 		}
 	}
 }
