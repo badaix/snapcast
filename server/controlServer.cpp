@@ -52,14 +52,16 @@ void ControlServer::acceptor()
 	for (;;)
 	{
 		socket_ptr sock(new tcp::socket(io_service_));
+		struct timeval tv;
+		tv.tv_sec  = 5; 
+		tv.tv_usec = 0;         
+		setsockopt(sock->native(), SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
+		setsockopt(sock->native(), SOL_SOCKET, SO_SNDTIMEO, &tv, sizeof(tv));
 		a.accept(*sock);
 		cout << "ControlServer::NewConnection: " << sock->remote_endpoint().address().to_string() << "\n";
 		ServerConnection* session = new ServerConnection(this, sock);
 		sessions.insert(shared_ptr<ServerConnection>(session));
 		session->start();
-//		session->send(serverSettings);
-//		session->send(sampleFormat);
-//		session->send(headerChunk);
 	}
 }
 

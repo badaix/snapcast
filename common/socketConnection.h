@@ -88,33 +88,6 @@ protected:
 };
 
 
-class ClientConnection : public SocketConnection
-{
-public:
-	ClientConnection(MessageReceiver* _receiver, const std::string& _ip, size_t _port);
-	virtual void start();
-
-protected:
-	virtual void worker();
-
-private:
-	std::string ip;
-	size_t port;
-};
-
-
-
-class ServerConnection : public SocketConnection
-{
-public:
-	ServerConnection(MessageReceiver* _receiver, std::shared_ptr<tcp::socket> _socket);
-
-protected:
-	virtual void worker();
-};
-
-
-
 
 #endif
 

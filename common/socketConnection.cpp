@@ -5,7 +5,6 @@
 #include "log.h"
 
 
-#define PCM_DEVICE "default"
 
 using namespace std;
 
@@ -134,90 +133,6 @@ void SocketConnection::getNextMessage()
 	if (messageReceiver != NULL)
 		messageReceiver->onMessageReceived(this, baseMessage, &buffer[0]);
 }
-
-
-
-
-ClientConnection::ClientConnection(MessageReceiver* _receiver, const std::string& _ip, size_t _port) : SocketConnection(_receiver), ip(_ip), port(_port)
-{
-}
-
-
-void ClientConnection::start()
-{
-	tcp::resolver resolver(io_service);
-	tcp::resolver::query query(tcp::v4(), ip, boost::lexical_cast<string>(port));
-	iterator = resolver.resolve(query);
-	SocketConnection::start();
-}
-
-
-void ClientConnection::worker() 
-{
-	active_ = true;
-	while (active_)
-	{
-		connected_ = false;
-		try
-		{	
-			{
-//				std::unique_lock<std::mutex> mlock(mutex_);
-cout << "connecting\n";
-				socket.reset(new tcp::socket(io_service));
-				struct timeval tv;
-				tv.tv_sec  = 5; 
-				tv.tv_usec = 0;         
-				setsockopt(socket->native(), SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
-				socket->connect(*iterator);
-				connected_ = true;
-cout << "connected\n";
-				std::clog << kLogNotice << "connected\n";// to " << ip << ":" << port << std::endl;
-			}
-			while(active_)
-			{
-				getNextMessage();
-			}
-		}
-		catch (const std::exception& e)
-		{
-			connected_ = false;
-			cout << kLogNotice << "Exception: " << e.what() << ", trying to reconnect" << std::endl;
-			usleep(1000*1000);
-		}
-	}
-}
-
-
-
-
-
-ServerConnection::ServerConnection(MessageReceiver* _receiver, std::shared_ptr<tcp::socket> _socket) : SocketConnection(_receiver)
-{
-	socket = _socket;
-}
-
-
-void ServerConnection::worker()
-{
-	active_ = true;
-	try
-	{
-		while (active_)
-		{
-			getNextMessage();
-		}
-	}
-	catch (const std::exception& e)
-	{
-		cout << kLogNotice << "Exception: " << e.what() << ", trying to reconnect" << std::endl;
-	}
-	active_ = false;
-}
-
-
-
-
-
 
 
 

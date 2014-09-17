@@ -1,7 +1,7 @@
 #ifndef STREAM_CLIENT_H
 #define STREAM_CLIENT_H
 
-#include "common/socketConnection.h"
+#include "clientConnection.h"
 
 
 using boost::asio::ip::tcp;

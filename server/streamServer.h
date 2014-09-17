@@ -7,12 +7,13 @@
 #include <memory>
 #include <set>
 #include <sstream>
+
+#include "serverConnection.h"
 #include "common/timeUtils.h"
 #include "common/queue.h"
 #include "common/message.h"
 #include "common/headerMessage.h"
 #include "common/sampleFormat.h"
-#include "common/socketConnection.h"
 
 
 using boost::asio::ip::tcp;

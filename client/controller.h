@@ -24,11 +24,11 @@ private:
 	std::thread* controllerThread;
 	StreamClient* streamClient;
 	ClientConnection* controlConnection;
-	Decoder* decoder;
 	Stream* stream;
 	int bufferMs;
 	std::string ip;
 	std::shared_ptr<SampleFormat> sampleFormat;
+	Decoder* decoder;
 };
 
 
