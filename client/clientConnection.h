@@ -11,15 +11,15 @@ using boost::asio::ip::tcp;
 class ClientConnection : public SocketConnection
 {
 public:
-    ClientConnection(MessageReceiver* _receiver, const std::string& _ip, size_t _port);
-    virtual void start();
+	ClientConnection(MessageReceiver* _receiver, const std::string& _ip, size_t _port);
+	virtual void start();
 
 protected:
-    virtual void worker();
+	virtual void worker();
 
 private:
-    std::string ip;
-    size_t port;
+	std::string ip;
+	size_t port;
 };
 
 

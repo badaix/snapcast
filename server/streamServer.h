@@ -25,13 +25,13 @@ using namespace std;
 class StreamSession : public ServerConnection
 {
 public:
-    StreamSession(socket_ptr sock);
-    void send(shared_ptr<BaseMessage> message);
+	StreamSession(socket_ptr sock);
+	void send(shared_ptr<BaseMessage> message);
 
 protected:
-    virtual void worker();
-    thread* senderThread;
-    Queue<shared_ptr<BaseMessage>> messages;
+	virtual void worker();
+	thread* senderThread;
+	Queue<shared_ptr<BaseMessage>> messages;
 };
 
 
@@ -39,41 +39,41 @@ protected:
 class StreamServer
 {
 public:
-    StreamServer(unsigned short port);
-    void send(shared_ptr<BaseMessage> message);
+	StreamServer(unsigned short port);
+	void send(shared_ptr<BaseMessage> message);
 
-    void start();
-    void stop();
+	void start();
+	void stop();
 
 private:
-    void acceptor();
-    set<shared_ptr<StreamSession>> sessions;
-    boost::asio::io_service io_service_;
-    unsigned short port_;
-    shared_ptr<HeaderMessage> headerChunk;
-    shared_ptr<SampleFormat> sampleFormat;
-    thread* acceptThread;
+	void acceptor();
+	set<shared_ptr<StreamSession>> sessions;
+	boost::asio::io_service io_service_;
+	unsigned short port_;
+	shared_ptr<HeaderMessage> headerChunk;
+	shared_ptr<SampleFormat> sampleFormat;
+	thread* acceptThread;
 };
 
 
 class ServerException : public std::exception
 {
 public:
-    ServerException(const std::string& what) : what_(what)
-    {
-    }
+	ServerException(const std::string& what) : what_(what)
+	{
+	}
 
-    virtual ~ServerException() throw()
-    {
-    }
+	virtual ~ServerException() throw()
+	{
+	}
 
-    virtual const char* what() const throw()
-    {
-        return what_.c_str();
-    }
+	virtual const char* what() const throw()
+	{
+		return what_.c_str();
+	}
 
 private:
-    std::string what_;
+	std::string what_;
 };
 
 

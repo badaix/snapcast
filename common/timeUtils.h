@@ -48,32 +48,32 @@ inline static long getAge(const time_point_ms& time_point)
 
 static void addMs(timeval& tv, int ms)
 {
-    if (ms < 0)
-    {
-        timeval t;
-        t.tv_sec = -ms / 1000;
-        t.tv_usec = (-ms % 1000) * 1000;
-        timersub(&tv, &t, &tv);
-        return;
-    }
-    tv.tv_usec += ms*1000;
-    tv.tv_sec += (tv.tv_usec / 1000000);
-    tv.tv_usec %= 1000000;
+	if (ms < 0)
+	{
+		timeval t;
+		t.tv_sec = -ms / 1000;
+		t.tv_usec = (-ms % 1000) * 1000;
+		timersub(&tv, &t, &tv);
+		return;
+	}
+	tv.tv_usec += ms*1000;
+	tv.tv_sec += (tv.tv_usec / 1000000);
+	tv.tv_usec %= 1000000;
 }
 
 static void addUs(timeval& tv, int us)
 {
-    if (us < 0)
-    {
-        timeval t;
-        t.tv_sec = -us / 1000000;
-        t.tv_usec = (-us % 1000000);
-        timersub(&tv, &t, &tv);
-        return;
-    }
-    tv.tv_usec += us;
-    tv.tv_sec += (tv.tv_usec / 1000000);
-    tv.tv_usec %= 1000000;
+	if (us < 0)
+	{
+		timeval t;
+		t.tv_sec = -us / 1000000;
+		t.tv_usec = (-us % 1000000);
+		timersub(&tv, &t, &tv);
+		return;
+	}
+	tv.tv_usec += us;
+	tv.tv_sec += (tv.tv_usec / 1000000);
+	tv.tv_usec %= 1000000;
 }
 
 
@@ -86,17 +86,17 @@ static void addUs(timeval& tv, int us)
 
 static long getTickCount()
 {
-    struct timespec now;
-    clock_gettime(CLOCK_MONOTONIC, &now);
-    return now.tv_sec*1000 + now.tv_nsec / 1000000;
+	struct timespec now;
+	clock_gettime(CLOCK_MONOTONIC, &now);
+	return now.tv_sec*1000 + now.tv_nsec / 1000000;
 }
 
 
 static long getuTickCount()
 {
-    struct timespec now;
-    clock_gettime(CLOCK_MONOTONIC, &now);
-    return now.tv_sec*1000000 + now.tv_nsec / 1000;
+	struct timespec now;
+	clock_gettime(CLOCK_MONOTONIC, &now);
+	return now.tv_sec*1000000 + now.tv_nsec / 1000;
 }
 
 

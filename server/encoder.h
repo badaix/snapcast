@@ -8,18 +8,18 @@
 class Encoder
 {
 public:
-    Encoder(const SampleFormat& format) : sampleFormat(format)
-    {
-    }
+	Encoder(const SampleFormat& format) : sampleFormat(format)
+	{
+	}
 
-    virtual double encode(PcmChunk* chunk) = 0;
-    virtual HeaderMessage* getHeader()
-    {
-        return NULL;
-    }
+	virtual double encode(PcmChunk* chunk) = 0;
+	virtual HeaderMessage* getHeader()
+	{
+		return NULL;
+	}
 
 protected:
-    SampleFormat sampleFormat;
+	SampleFormat sampleFormat;
 };
 
 

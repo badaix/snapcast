@@ -6,8 +6,8 @@
 class PcmEncoder : public Encoder
 {
 public:
-    PcmEncoder(const SampleFormat& format);
-    virtual double encode(PcmChunk* chunk);
+	PcmEncoder(const SampleFormat& format);
+	virtual double encode(PcmChunk* chunk);
 };
 
 

@@ -7,31 +7,31 @@
 class OggDecoder : public Decoder
 {
 public:
-    OggDecoder();
-    virtual ~OggDecoder();
-    virtual bool decode(PcmChunk* chunk);
-    virtual bool setHeader(HeaderMessage* chunk);
+	OggDecoder();
+	virtual ~OggDecoder();
+	virtual bool decode(PcmChunk* chunk);
+	virtual bool setHeader(HeaderMessage* chunk);
 
 private:
-    bool decodePayload(PcmChunk* chunk);
+	bool decodePayload(PcmChunk* chunk);
 
-    ogg_sync_state   oy; /* sync and verify incoming physical bitstream */
-    ogg_stream_state os; /* take physical pages, weld into a logical
+	ogg_sync_state   oy; /* sync and verify incoming physical bitstream */
+	ogg_stream_state os; /* take physical pages, weld into a logical
 		                  stream of packets */
-    ogg_page         og; /* one Ogg bitstream page. Vorbis packets are inside */
-    ogg_packet       op; /* one raw packet of data for decode */
+	ogg_page         og; /* one Ogg bitstream page. Vorbis packets are inside */
+	ogg_packet       op; /* one raw packet of data for decode */
 
-    vorbis_info      vi; /* struct that stores all the static vorbis bitstream
+	vorbis_info      vi; /* struct that stores all the static vorbis bitstream
 		                  settings */
-    vorbis_comment   vc; /* struct that stores all the bitstream user comments */
-    vorbis_dsp_state vd; /* central working state for the packet->PCM decoder */
-    vorbis_block     vb; /* local working space for packet->PCM decode */
+	vorbis_comment   vc; /* struct that stores all the bitstream user comments */
+	vorbis_dsp_state vd; /* central working state for the packet->PCM decoder */
+	vorbis_block     vb; /* local working space for packet->PCM decode */
 
-    ogg_int16_t* convbuffer; /* take 8k out of the data segment, not the stack */
-    int convsize;
+	ogg_int16_t* convbuffer; /* take 8k out of the data segment, not the stack */
+	int convsize;
 
-    char *buffer;
-    int  bytes;
+	char *buffer;
+	int  bytes;
 };
 
 

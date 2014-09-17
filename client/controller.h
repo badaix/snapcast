@@ -13,22 +13,22 @@
 class Controller : public MessageReceiver
 {
 public:
-    Controller();
-    void start(const std::string& _ip, size_t _port, int _bufferMs);
-    void stop();
-    virtual void onMessageReceived(SocketConnection* connection, const BaseMessage& baseMessage, char* buffer);
+	Controller();
+	void start(const std::string& _ip, size_t _port, int _bufferMs);
+	void stop();
+	virtual void onMessageReceived(SocketConnection* connection, const BaseMessage& baseMessage, char* buffer);
 
 private:
-    void worker();
-    std::atomic<bool> active_;
-    std::thread* controllerThread;
-    StreamClient* streamClient;
-    ClientConnection* controlConnection;
-    Stream* stream;
-    int bufferMs;
-    std::string ip;
-    std::shared_ptr<SampleFormat> sampleFormat;
-    Decoder* decoder;
+	void worker();
+	std::atomic<bool> active_;
+	std::thread* controllerThread;
+	StreamClient* streamClient;
+	ClientConnection* controlConnection;
+	Stream* stream;
+	int bufferMs;
+	std::string ip;
+	std::shared_ptr<SampleFormat> sampleFormat;
+	Decoder* decoder;
 };
 
 

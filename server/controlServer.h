@@ -25,24 +25,24 @@ using namespace std;
 class ControlServer : public MessageReceiver
 {
 public:
-    ControlServer(unsigned short port);
+	ControlServer(unsigned short port);
 
-    void start();
-    void stop();
-    virtual void onMessageReceived(SocketConnection* connection, const BaseMessage& baseMessage, char* buffer);
-    void setHeader(HeaderMessage* header);
-    void setFormat(SampleFormat* format);
-    void setServerSettings(ServerSettings* settings);
+	void start();
+	void stop();
+	virtual void onMessageReceived(SocketConnection* connection, const BaseMessage& baseMessage, char* buffer);
+	void setHeader(HeaderMessage* header);
+	void setFormat(SampleFormat* format);
+	void setServerSettings(ServerSettings* settings);
 
 private:
-    void acceptor();
-    set<shared_ptr<ServerConnection>> sessions;
-    boost::asio::io_service io_service_;
-    unsigned short port_;
-    HeaderMessage* headerChunk;
-    SampleFormat* sampleFormat;
-    ServerSettings* serverSettings;
-    thread* acceptThread;
+	void acceptor();
+	set<shared_ptr<ServerConnection>> sessions;
+	boost::asio::io_service io_service_;
+	unsigned short port_;
+	HeaderMessage* headerChunk;
+	SampleFormat* sampleFormat;
+	ServerSettings* serverSettings;
+	thread* acceptThread;
 };
 
 
