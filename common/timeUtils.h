@@ -43,19 +43,19 @@ inline static long getAge(const time_point_ms& time_point)
 {
 	return getAge<std::chrono::milliseconds>(time_point).count();
 }
-*/ 
+*/
 
 
 static void addMs(timeval& tv, int ms)
 {
-	if (ms < 0)
-	{
-		timeval t;
-		t.tv_sec = -ms / 1000;
-		t.tv_usec = (-ms % 1000) * 1000;
-		timersub(&tv, &t, &tv);
-		return;
-	}
+    if (ms < 0)
+    {
+        timeval t;
+        t.tv_sec = -ms / 1000;
+        t.tv_usec = (-ms % 1000) * 1000;
+        timersub(&tv, &t, &tv);
+        return;
+    }
     tv.tv_usec += ms*1000;
     tv.tv_sec += (tv.tv_usec / 1000000);
     tv.tv_usec %= 1000000;
@@ -63,14 +63,14 @@ static void addMs(timeval& tv, int ms)
 
 static void addUs(timeval& tv, int us)
 {
-	if (us < 0)
-	{
-		timeval t;
-		t.tv_sec = -us / 1000000;
-		t.tv_usec = (-us % 1000000);
-		timersub(&tv, &t, &tv);
-		return;
-	}
+    if (us < 0)
+    {
+        timeval t;
+        t.tv_sec = -us / 1000000;
+        t.tv_usec = (-us % 1000000);
+        timersub(&tv, &t, &tv);
+        return;
+    }
     tv.tv_usec += us;
     tv.tv_sec += (tv.tv_usec / 1000000);
     tv.tv_usec %= 1000000;
@@ -79,24 +79,24 @@ static void addUs(timeval& tv, int us)
 
 /*static long diffMs(const timeval& t1, const timeval& t2)
 {
-    return (((t1.tv_sec - t2.tv_sec) * 1000000) + 
+    return (((t1.tv_sec - t2.tv_sec) * 1000000) +
             (t1.tv_usec - t2.tv_usec))/1000;
 }*/
 
 
 static long getTickCount()
 {
-	struct timespec now;
-	clock_gettime(CLOCK_MONOTONIC, &now);
-	return now.tv_sec*1000 + now.tv_nsec / 1000000;
+    struct timespec now;
+    clock_gettime(CLOCK_MONOTONIC, &now);
+    return now.tv_sec*1000 + now.tv_nsec / 1000000;
 }
 
 
 static long getuTickCount()
 {
-	struct timespec now;
-	clock_gettime(CLOCK_MONOTONIC, &now);
-	return now.tv_sec*1000000 + now.tv_nsec / 1000;
+    struct timespec now;
+    clock_gettime(CLOCK_MONOTONIC, &now);
+    return now.tv_sec*1000000 + now.tv_nsec / 1000;
 }
 
 

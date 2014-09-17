@@ -7,31 +7,31 @@
 class TimeMsg : public BaseMessage
 {
 public:
-	TimeMsg() : BaseMessage(message_type::timemsg)
-	{
-	}
+    TimeMsg() : BaseMessage(message_type::timemsg)
+    {
+    }
 
-	virtual ~TimeMsg()
-	{
-	}
+    virtual ~TimeMsg()
+    {
+    }
 
-	virtual void read(std::istream& stream)
-	{
-		stream.read(reinterpret_cast<char *>(&latency), sizeof(double));
-	}
+    virtual void read(std::istream& stream)
+    {
+        stream.read(reinterpret_cast<char *>(&latency), sizeof(double));
+    }
 
-	virtual uint32_t getSize()
-	{
-		return sizeof(double);
-	}
+    virtual uint32_t getSize()
+    {
+        return sizeof(double);
+    }
 
-	double latency;
+    double latency;
 
 protected:
-	virtual void doserialize(std::ostream& stream)
-	{
-		stream.write(reinterpret_cast<char *>(&latency), sizeof(double));
-	}
+    virtual void doserialize(std::ostream& stream)
+    {
+        stream.write(reinterpret_cast<char *>(&latency), sizeof(double));
+    }
 };
 
 

@@ -11,81 +11,81 @@ class Queue
 {
 public:
 
-	T pop()
-	{
-		std::unique_lock<std::mutex> mlock(mutex_);
-		while (queue_.empty())
-		{
-		  cond_.wait(mlock);
-		}
-		auto val = queue_.front();
-		queue_.pop();
-		return val;
-	}
+    T pop()
+    {
+        std::unique_lock<std::mutex> mlock(mutex_);
+        while (queue_.empty())
+        {
+            cond_.wait(mlock);
+        }
+        auto val = queue_.front();
+        queue_.pop();
+        return val;
+    }
 
-	T front()
-	{
-		std::unique_lock<std::mutex> mlock(mutex_);
-		while (queue_.empty())
-		  cond_.wait(mlock);
+    T front()
+    {
+        std::unique_lock<std::mutex> mlock(mutex_);
+        while (queue_.empty())
+            cond_.wait(mlock);
 
-		return queue_.front();
-	}
+        return queue_.front();
+    }
 
-	bool try_pop(T& item, std::chrono::milliseconds timeout)
-	{
-		std::unique_lock<std::mutex> mlock(mutex_);
+    bool try_pop(T& item, std::chrono::milliseconds timeout)
+    {
+        std::unique_lock<std::mutex> mlock(mutex_);
 
-		if(!cond_.wait_for(mlock, timeout, [this] { return !queue_.empty(); }))
-		    return false;
+        if(!cond_.wait_for(mlock, timeout, [this] { return !queue_.empty(); }))
+            return false;
 
-		item = std::move(queue_.front());
-		queue_.pop();
+        item = std::move(queue_.front());
+        queue_.pop();
 
-		return true;    
-	}
+        return true;
+    }
 
-	void pop(T& item)
-	{
-		std::unique_lock<std::mutex> mlock(mutex_);
-		while (queue_.empty())
-		{
-			cond_.wait(mlock);
-		}
-		item = queue_.front();
-		queue_.pop();
-	}
+    void pop(T& item)
+    {
+        std::unique_lock<std::mutex> mlock(mutex_);
+        while (queue_.empty())
+        {
+            cond_.wait(mlock);
+        }
+        item = queue_.front();
+        queue_.pop();
+    }
 
-	void push(const T& item)
-	{
-		std::unique_lock<std::mutex> mlock(mutex_);
-		queue_.push(item);
-		mlock.unlock();
-		cond_.notify_one();
-	}
+    void push(const T& item)
+    {
+        std::unique_lock<std::mutex> mlock(mutex_);
+        queue_.push(item);
+        mlock.unlock();
+        cond_.notify_one();
+    }
 
-	void push(T&& item)
-	{
-		std::unique_lock<std::mutex> mlock(mutex_);
-		queue_.push(std::move(item));
-		mlock.unlock();
-		cond_.notify_one();
-	}
+    void push(T&& item)
+    {
+        std::unique_lock<std::mutex> mlock(mutex_);
+        queue_.push(std::move(item));
+        mlock.unlock();
+        cond_.notify_one();
+    }
 
-	size_t size() const
-	{
-		std::unique_lock<std::mutex> mlock(mutex_);
-		return queue_.size();
-	}
+    size_t size() const
+    {
+        std::unique_lock<std::mutex> mlock(mutex_);
+        return queue_.size();
+    }
 
-	Queue()=default;
-	Queue(const Queue&) = delete;            // disable copying
-	Queue& operator=(const Queue&) = delete; // disable assignment
+    Queue()=default;
+    Queue(const Queue&) = delete;            // disable copying
+    Queue& operator=(const Queue&) = delete; // disable assignment
 
-	private:
-	std::queue<T> queue_;
-	mutable std::mutex mutex_;
-	std::condition_variable cond_;
+private:
+    std::queue<T> queue_;
+    mutable std::mutex mutex_;
+    std::condition_variable cond_;
 };
 
 

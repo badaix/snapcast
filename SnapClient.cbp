@@ -32,13 +32,47 @@
 			<Add option="-std=c++11" />
 			<Add option="-Wall" />
 			<Add option="-fexceptions" />
+			<Add option="-Wno-unused-function" />
 			<Add directory="." />
 		</Compiler>
 		<Linker>
+			<Add library="pthread" />
 			<Add library="boost_system" />
 			<Add library="boost_program_options" />
+			<Add library="vorbis" />
+			<Add library="vorbisenc" />
+			<Add library="ogg" />
 		</Linker>
+		<Unit filename="common/headerMessage.h" />
+		<Unit filename="common/log.cpp" />
+		<Unit filename="common/log.h" />
+		<Unit filename="common/message.h" />
+		<Unit filename="common/pcmChunk.cpp" />
+		<Unit filename="common/pcmChunk.h" />
+		<Unit filename="common/queue.h" />
+		<Unit filename="common/requestMsg.h" />
+		<Unit filename="common/sampleFormat.cpp" />
+		<Unit filename="common/sampleFormat.h" />
+		<Unit filename="common/serverSettings.h" />
+		<Unit filename="common/signalHandler.h" />
+		<Unit filename="common/socketConnection.cpp" />
+		<Unit filename="common/socketConnection.h" />
+		<Unit filename="common/timeMsg.h" />
+		<Unit filename="common/timeUtils.h" />
+		<Unit filename="common/utils.h" />
+		<Unit filename="common/wireChunk.h" />
+		<Unit filename="server/controlServer.cpp" />
+		<Unit filename="server/controlServer.h" />
+		<Unit filename="server/encoder.h" />
+		<Unit filename="server/oggEncoder.cpp" />
+		<Unit filename="server/oggEncoder.h" />
+		<Unit filename="server/pcmEncoder.cpp" />
+		<Unit filename="server/pcmEncoder.h" />
+		<Unit filename="server/serverConnection.cpp" />
+		<Unit filename="server/serverConnection.h" />
 		<Unit filename="server/snapServer.cpp" />
+		<Unit filename="server/streamServer.cpp" />
+		<Unit filename="server/streamServer.h" />
 		<Extensions>
 			<code_completion />
 			<debugger />

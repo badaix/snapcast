@@ -32,19 +32,55 @@
 			<Add option="-std=c++11" />
 			<Add option="-Wall" />
 			<Add option="-fexceptions" />
+			<Add option="-Wno-unused-function" />
 			<Add directory="." />
 		</Compiler>
 		<Linker>
-			<Add library="pthread" />
-			<Add library="portaudio" />
+			<Add library="vorbisenc" />
+			<Add library="vorbis" />
+			<Add library="ogg" />
+			<Add library="asound" />
+			<Add library="boost_program_options" />
 			<Add library="boost_system" />
+			<Add library="pthread" />
 		</Linker>
+		<Unit filename="client/clientConnection.cpp" />
+		<Unit filename="client/clientConnection.h" />
+		<Unit filename="client/controller.cpp" />
+		<Unit filename="client/controller.h" />
+		<Unit filename="client/decoder.h" />
 		<Unit filename="client/doubleBuffer.h" />
+		<Unit filename="client/oggDecoder.cpp" />
+		<Unit filename="client/oggDecoder.h" />
+		<Unit filename="client/pcmDecoder.cpp" />
+		<Unit filename="client/pcmDecoder.h" />
+		<Unit filename="client/player.cpp" />
+		<Unit filename="client/player.h" />
 		<Unit filename="client/snapClient.cpp" />
 		<Unit filename="client/stream.cpp" />
 		<Unit filename="client/stream.h" />
-		<Unit filename="common/chunk.cpp" />
-		<Unit filename="common/chunk.h" />
+		<Unit filename="client/streamClient.cpp" />
+		<Unit filename="client/streamClient.h" />
+		<Unit filename="client/timeProvider.cpp" />
+		<Unit filename="client/timeProvider.h" />
+		<Unit filename="common/headerMessage.h" />
+		<Unit filename="common/log.cpp" />
+		<Unit filename="common/log.h" />
+		<Unit filename="common/message.h" />
+		<Unit filename="common/pcmChunk.cpp" />
+		<Unit filename="common/pcmChunk.h" />
+		<Unit filename="common/queue.h" />
+		<Unit filename="common/requestMsg.h" />
+		<Unit filename="common/sampleFormat.cpp" />
+		<Unit filename="common/sampleFormat.h" />
+		<Unit filename="common/serverSettings.h" />
+		<Unit filename="common/signalHandler.h" />
+		<Unit filename="common/socketConnection.cpp" />
+		<Unit filename="common/socketConnection.h" />
+		<Unit filename="common/timeMsg.h" />
+		<Unit filename="common/timeUtils.h" />
+		<Unit filename="common/utils.h" />
+		<Unit filename="common/wireChunk.h" />
 		<Extensions>
 			<code_completion />
 			<debugger />

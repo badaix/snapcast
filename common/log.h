@@ -7,7 +7,8 @@
 
 #define logd std::clog << dbg
 
-enum LogPriority {
+enum LogPriority
+{
     kLogEmerg   = LOG_EMERG,   // system is unusable
     kLogAlert   = LOG_ALERT,   // action must be taken immediately
     kLogCrit    = LOG_CRIT,    // critical conditions
@@ -21,7 +22,8 @@ enum LogPriority {
 
 std::ostream& operator<< (std::ostream& os, const LogPriority& log_priority);
 
-class Log : public std::basic_streambuf<char, std::char_traits<char> > {
+class Log : public std::basic_streambuf<char, std::char_traits<char> >
+{
 public:
     explicit Log(std::string ident, int facility);
 
