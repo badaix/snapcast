@@ -8,7 +8,6 @@
 #include "../server/pcmEncoder.h"
 #include "../server/oggEncoder.h"
 #include "common/message.h"
-#include "streamServer.h"
 #include "controlServer.h"
 
 
@@ -88,8 +87,8 @@ int main(int argc, char* argv[])
 		controlServer->setHeader(encoder->getHeader());
 		controlServer->start();
 
-		StreamServer* server = new StreamServer(port + 1);
-		server->start();
+//		StreamServer* server = new StreamServer(port + 1);
+//		server->start();
 
 		while (!g_terminated)
 		{
@@ -116,7 +115,7 @@ int main(int argc, char* argv[])
 					chunk->timestamp.usec = tvChunk.tv_usec;
 					double chunkDuration = encoder->encode(chunk.get());
 					if (chunkDuration > 0)
-						server->send(chunk);
+						controlServer->send(chunk);
 //cout << chunk->tv_sec << ", " << chunk->tv_usec / 1000 << "\n";
 //                    addUs(tvChunk, 1000*chunk->getDuration());
 					addUs(tvChunk, chunkDuration * 1000);
@@ -140,7 +139,7 @@ int main(int argc, char* argv[])
 			close(fd);
 		}
 
-		server->stop();
+//		server->stop();
 	}
 	catch (const std::exception& e)
 	{

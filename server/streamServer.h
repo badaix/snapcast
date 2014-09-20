@@ -22,20 +22,6 @@ using namespace std;
 
 
 
-class StreamSession : public ServerConnection
-{
-public:
-	StreamSession(socket_ptr sock);
-	void send(shared_ptr<BaseMessage> message);
-
-protected:
-	virtual void worker();
-	thread* senderThread;
-	Queue<shared_ptr<BaseMessage>> messages;
-};
-
-
-
 class StreamServer
 {
 public:
@@ -47,7 +33,7 @@ public:
 
 private:
 	void acceptor();
-	set<shared_ptr<StreamSession>> sessions;
+	set<shared_ptr<ServerSession>> sessions;
 	boost::asio::io_service io_service_;
 	unsigned short port_;
 	shared_ptr<HeaderMessage> headerChunk;

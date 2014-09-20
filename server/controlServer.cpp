@@ -9,7 +9,28 @@ ControlServer::ControlServer(unsigned short port) : port_(port), headerChunk(NUL
 }
 
 
-void ControlServer::onMessageReceived(SocketConnection* connection, const BaseMessage& baseMessage, char* buffer)
+
+
+void ControlServer::send(shared_ptr<BaseMessage> message)
+{
+	for (std::set<shared_ptr<ServerSession>>::iterator it = sessions.begin(); it != sessions.end(); )
+	{
+		if (!(*it)->active())
+		{
+			cout << "Session inactive. Removing\n";
+			sessions.erase(it++);
+		}
+		else
+			++it;
+	}
+
+	for (auto s : sessions)
+		s->add(message);
+}
+
+
+
+void ControlServer::onMessageReceived(ServerSession* connection, const BaseMessage& baseMessage, char* buffer)
 {
 //	cout << "onMessageReceived: " << baseMessage.type << ", size: " << baseMessage.size << ", sent: " << baseMessage.sent.sec << "," << baseMessage.sent.usec << ", recv: " << baseMessage.received.sec << "," << baseMessage.received.usec << "\n";
 	if (baseMessage.type == message_type::requestmsg)
@@ -59,8 +80,8 @@ void ControlServer::acceptor()
 		setsockopt(sock->native(), SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
 		setsockopt(sock->native(), SOL_SOCKET, SO_SNDTIMEO, &tv, sizeof(tv));
 		cout << "ControlServer::NewConnection: " << sock->remote_endpoint().address().to_string() << "\n";
-		ServerConnection* session = new ServerConnection(this, sock);
-		sessions.insert(shared_ptr<ServerConnection>(session));
+		ServerSession* session = new ServerSession(this, sock);
+		sessions.insert(shared_ptr<ServerSession>(session));
 		session->start();
 	}
 }

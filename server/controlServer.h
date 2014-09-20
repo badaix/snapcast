@@ -8,7 +8,7 @@
 #include <set>
 #include <sstream>
 
-#include "serverConnection.h"
+#include "serverSession.h"
 #include "common/timeUtils.h"
 #include "common/queue.h"
 #include "common/message.h"
@@ -29,20 +29,43 @@ public:
 
 	void start();
 	void stop();
-	virtual void onMessageReceived(SocketConnection* connection, const BaseMessage& baseMessage, char* buffer);
+	void send(shared_ptr<BaseMessage> message);
+	virtual void onMessageReceived(ServerSession* connection, const BaseMessage& baseMessage, char* buffer);
 	void setHeader(HeaderMessage* header);
 	void setFormat(SampleFormat* format);
 	void setServerSettings(ServerSettings* settings);
 
 private:
 	void acceptor();
-	set<shared_ptr<ServerConnection>> sessions;
+	set<shared_ptr<ServerSession>> sessions;
 	boost::asio::io_service io_service_;
 	unsigned short port_;
 	HeaderMessage* headerChunk;
 	SampleFormat* sampleFormat;
 	ServerSettings* serverSettings;
 	thread* acceptThread;
+	Queue<shared_ptr<BaseMessage>> messages;
+};
+
+
+class ServerException : public std::exception
+{
+public:
+	ServerException(const std::string& what) : what_(what)
+	{
+	}
+
+	virtual ~ServerException() throw()
+	{
+	}
+
+	virtual const char* what() const throw()
+	{
+		return what_.c_str();
+	}
+
+private:
+	std::string what_;
 };
 
 
