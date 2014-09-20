@@ -51,6 +51,7 @@ protected:
 	void writer();
 
 	std::atomic<bool> active_;
+	mutable std::mutex mutex_;
 	std::thread* readerThread;
 	std::thread* writerThread;
 	std::shared_ptr<tcp::socket> socket;

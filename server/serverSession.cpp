@@ -48,7 +48,7 @@ void ServerSession::add(shared_ptr<BaseMessage> message)
 
 bool ServerSession::send(BaseMessage* message)
 {
-//	std::unique_lock<std::mutex> mlock(mutex_);
+	std::unique_lock<std::mutex> mlock(mutex_);
 //cout << "send: " << message->type << ", size: " << message->getSize() << "\n";
 	if (!connected())
 		return false;
@@ -110,17 +110,18 @@ void ServerSession::writer()
 	{
 		boost::asio::streambuf streambuf;
 		std::ostream stream(&streambuf);
-		for (;;)
+		shared_ptr<BaseMessage> message;
+		while (active_)
 		{
-			shared_ptr<BaseMessage> message(messages.pop());
-			send(message.get());
+			if (messages.try_pop(message, std::chrono::milliseconds(500)))
+				send(message.get());
 		}
 	}
 	catch (std::exception& e)
 	{
 		std::cerr << "Exception in thread: " << e.what() << "\n";
-		active_ = false;
 	}
+	active_ = false;
 }
 
 
