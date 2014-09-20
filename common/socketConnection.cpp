@@ -9,18 +9,18 @@
 using namespace std;
 
 
-SocketConnection::SocketConnection(MessageReceiver* _receiver) : active_(false), connected_(false), messageReceiver(_receiver), reqId(0)
+ClientConnection::ClientConnection(MessageReceiver* _receiver) : active_(false), connected_(false), messageReceiver(_receiver), reqId(0)
 {
 }
 
 
-SocketConnection::~SocketConnection()
+ClientConnection::~ClientConnection()
 {
 }
 
 
 
-void SocketConnection::socketRead(void* _to, size_t _bytes)
+void ClientConnection::socketRead(void* _to, size_t _bytes)
 {
 //	std::unique_lock<std::mutex> mlock(mutex_);
 	size_t toRead = _bytes;
@@ -40,13 +40,16 @@ void SocketConnection::socketRead(void* _to, size_t _bytes)
 }
 
 
-void SocketConnection::start()
+void ClientConnection::start()
 {
-	receiverThread = new thread(&SocketConnection::worker, this);
+	tcp::resolver resolver(io_service);
+	tcp::resolver::query query(tcp::v4(), ip, boost::lexical_cast<string>(port));
+	iterator = resolver.resolve(query);
+	receiverThread = new thread(&ClientConnection::worker, this);
 }
 
 
-void SocketConnection::stop()
+void ClientConnection::stop()
 {
 	active_ = false;
 	socket->shutdown(boost::asio::ip::tcp::socket::shutdown_both);
@@ -55,7 +58,7 @@ void SocketConnection::stop()
 }
 
 
-bool SocketConnection::send(BaseMessage* message)
+bool ClientConnection::send(BaseMessage* message)
 {
 //	std::unique_lock<std::mutex> mlock(mutex_);
 //cout << "send: " << message->type << ", size: " << message->getSize() << "\n";
@@ -72,7 +75,7 @@ bool SocketConnection::send(BaseMessage* message)
 }
 
 
-shared_ptr<SerializedMessage> SocketConnection::sendRequest(BaseMessage* message, size_t timeout)
+shared_ptr<SerializedMessage> ClientConnection::sendRequest(BaseMessage* message, size_t timeout)
 {
 	shared_ptr<SerializedMessage> response(NULL);
 	if (++reqId == 0)
@@ -103,7 +106,7 @@ shared_ptr<SerializedMessage> SocketConnection::sendRequest(BaseMessage* message
 }
 
 
-void SocketConnection::getNextMessage()
+void ClientConnection::getNextMessage()
 {
 //cout << "getNextMessage\n";
 	BaseMessage baseMessage;
@@ -142,6 +145,48 @@ void SocketConnection::getNextMessage()
 		messageReceiver->onMessageReceived(this, baseMessage, &buffer[0]);
 }
 
+
+
+void ClientConnection::worker()
+{
+	active_ = true;
+	while (active_)
+	{
+		connected_ = false;
+		try
+		{
+			{
+//				std::unique_lock<std::mutex> mlock(mutex_);
+				cout << "connecting\n";
+				socket.reset(new tcp::socket(io_service));
+				struct timeval tv;
+				tv.tv_sec  = 5;
+				tv.tv_usec = 0;
+				cout << "socket: " << socket->native() << "\n";
+				setsockopt(socket->native(), SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
+				setsockopt(socket->native(), SOL_SOCKET, SO_SNDTIMEO, &tv, sizeof(tv));
+				socket->connect(*iterator);
+				connected_ = true;
+				cout << "connected\n";
+				std::clog << kLogNotice << "connected\n";// to " << ip << ":" << port << std::endl;
+			}
+			while(active_)
+			{
+//				cout << ".";
+//				cout.flush();
+				getNextMessage();
+//				cout << "|";
+//				cout.flush();
+			}
+		}
+		catch (const std::exception& e)
+		{
+			connected_ = false;
+			cout << kLogNotice << "Exception: " << e.what() << ", trying to reconnect" << std::endl;
+			usleep(1000*1000);
+		}
+	}
+}
 
 
 

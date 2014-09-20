@@ -4,8 +4,7 @@
 #include <thread>
 #include <atomic>
 #include "common/message.h"
-#include "common/socketConnection.h"
-#include "streamClient.h"
+#include "clientConnection.h"
 #include "decoder.h"
 #include "stream.h"
 

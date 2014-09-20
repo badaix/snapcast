@@ -25,21 +25,13 @@ void ServerSession::start()
 
 void ServerSession::socketRead(void* _to, size_t _bytes)
 {
-//	std::unique_lock<std::mutex> mlock(mutex_);
-	size_t toRead = _bytes;
-	size_t len = 0;
+	size_t read = 0;
 	do
 	{
-//		cout << "/";
-//		cout.flush();
 		boost::system::error_code error;
-		len += socket->read_some(boost::asio::buffer((char*)_to + len, toRead), error);
-//cout << "len: " << len << ", error: " << error << endl;
-		toRead = _bytes - len;
-//		cout << "\\";
-//		cout.flush();
+		read += socket->read_some(boost::asio::buffer((char*)_to + read, _bytes - read), error);
 	}
-	while (toRead > 0);
+	while (read < _bytes);
 }
 
 

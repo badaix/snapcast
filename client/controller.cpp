@@ -27,11 +27,11 @@ void Controller::onMessageReceived(SocketConnection* connection, const BaseMessa
 		{
 			PcmChunk* pcmChunk = new PcmChunk(*sampleFormat, 0);
 			pcmChunk->deserialize(baseMessage, buffer);
-cout << "chunk: " << pcmChunk->payloadSize;
+//cout << "chunk: " << pcmChunk->payloadSize;
 			if (decoder->decode(pcmChunk))
 			{
 				stream->addChunk(pcmChunk);
-cout << ", decoded: " << pcmChunk->payloadSize << ", Duration: " << pcmChunk->getDuration() << ", sec: " << pcmChunk->timestamp.sec << ", usec: " << pcmChunk->timestamp.usec/1000 << ", type: " << pcmChunk->type << "\n";
+//cout << ", decoded: " << pcmChunk->payloadSize << ", Duration: " << pcmChunk->getDuration() << ", sec: " << pcmChunk->timestamp.sec << ", usec: " << pcmChunk->timestamp.usec/1000 << ", type: " << pcmChunk->type << "\n";
 			}
 			else
 				delete pcmChunk;

@@ -15,7 +15,7 @@
 using boost::asio::ip::tcp;
 
 
-class SocketConnection;
+class ClientConnection;
 
 
 struct PendingRequest
@@ -31,15 +31,15 @@ struct PendingRequest
 class MessageReceiver
 {
 public:
-	virtual void onMessageReceived(SocketConnection* connection, const BaseMessage& baseMessage, char* buffer) = 0;
+	virtual void onMessageReceived(ClientConnection* connection, const BaseMessage& baseMessage, char* buffer) = 0;
 };
 
 
-class SocketConnection
+class ClientConnection
 {
 public:
-	SocketConnection(MessageReceiver* _receiver);
-	virtual ~SocketConnection();
+	ClientConnection(MessageReceiver* _receiver);
+	virtual ~ClientConnection();
 	virtual void start();
 	virtual void stop();
 	virtual bool send(BaseMessage* _message);
@@ -68,7 +68,7 @@ public:
 	}
 
 protected:
-	virtual void worker() = 0;
+	virtual void worker();
 
 	void socketRead(void* _to, size_t _bytes);
 	std::shared_ptr<tcp::socket> socket;
@@ -85,6 +85,8 @@ protected:
 	std::mutex m;
 	std::set<std::shared_ptr<PendingRequest>> pendingRequests;
 	uint16_t reqId;
+	std::string ip;
+	size_t port;
 };
 
 
