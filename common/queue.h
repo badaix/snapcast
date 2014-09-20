@@ -60,7 +60,7 @@ public:
 	{
 		std::unique_lock<std::mutex> mlock(mutex_);
 		queue_.push(item);
-		mlock.unlock();
+//		mlock.unlock();
 		cond_.notify_one();
 	}
 
@@ -68,7 +68,7 @@ public:
 	{
 		std::unique_lock<std::mutex> mlock(mutex_);
 		queue_.push(std::move(item));
-		mlock.unlock();
+//		mlock.unlock();
 		cond_.notify_one();
 	}
 
