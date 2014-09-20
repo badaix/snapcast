@@ -21,7 +21,7 @@ private:
 	void worker();
 	std::atomic<bool> active_;
 	std::thread* controllerThread;
-	ClientConnection* controlConnection;
+	ClientConnection* clientConnection;
 	Stream* stream;
 	int bufferMs;
 	std::string ip;

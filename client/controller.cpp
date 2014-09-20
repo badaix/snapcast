@@ -44,9 +44,7 @@ void Controller::start(const std::string& _ip, size_t _port, int _bufferMs)
 {
 	bufferMs = _bufferMs;
 	ip = _ip;
-
-	controlConnection = new ClientConnection(this, ip, _port);
-	controlConnection->start();
+	clientConnection = new ClientConnection(this, ip, _port);
 
 	controllerThread = new thread(&Controller::worker, this);
 }
@@ -66,15 +64,16 @@ void Controller::worker()
 
 	while (active_)
 	{
+		clientConnection->start();
 		try
 		{
 			RequestMsg requestMsg("serverSettings");
 			shared_ptr<ServerSettings> serverSettings(NULL);
-			while (!(serverSettings = controlConnection->sendReq<ServerSettings>(&requestMsg, 1000)));
+			while (!(serverSettings = clientConnection->sendReq<ServerSettings>(&requestMsg, 1000)));
 			cout << "ServerSettings port: " << serverSettings->port << "\n";
 
 			requestMsg.request = "sampleFormat";
-			while (!(sampleFormat = controlConnection->sendReq<SampleFormat>(&requestMsg, 1000)));
+			while (!(sampleFormat = clientConnection->sendReq<SampleFormat>(&requestMsg, 1000)));
 			cout << "SampleFormat rate: " << sampleFormat->rate << ", bits: " << sampleFormat->bits << ", channels: " << sampleFormat->channels << "\n";
 
 			decoder = new OggDecoder();
@@ -82,14 +81,14 @@ void Controller::worker()
 			{
 				requestMsg.request = "headerChunk";
 				shared_ptr<HeaderMessage> headerChunk(NULL);
-				while (!(headerChunk = controlConnection->sendReq<HeaderMessage>(&requestMsg, 1000)));
+				while (!(headerChunk = clientConnection->sendReq<HeaderMessage>(&requestMsg, 1000)));
 				decoder->setHeader(headerChunk.get());
 			}
 
 			RequestMsg timeReq("time");
 			for (size_t n=0; n<10; ++n)
 			{
-				shared_ptr<TimeMsg> reply = controlConnection->sendReq<TimeMsg>(&timeReq, 2000);
+				shared_ptr<TimeMsg> reply = clientConnection->sendReq<TimeMsg>(&timeReq, 2000);
 				if (reply)
 				{
 					double latency = (reply->received.sec - reply->sent.sec) + (reply->received.usec - reply->sent.usec) / 1000000.;
@@ -109,7 +108,7 @@ void Controller::worker()
 				while (active_)
 				{
 					usleep(1000000);
-                    shared_ptr<TimeMsg> reply = controlConnection->sendReq<TimeMsg>(&timeReq, 1000);
+                    shared_ptr<TimeMsg> reply = clientConnection->sendReq<TimeMsg>(&timeReq, 1000);
                     if (reply)
                     {
                         double latency = (reply->received.sec - reply->sent.sec) + (reply->received.usec - reply->sent.usec) / 1000000.;
