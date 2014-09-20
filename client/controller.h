@@ -15,7 +15,7 @@ public:
 	Controller();
 	void start(const std::string& _ip, size_t _port, int _bufferMs);
 	void stop();
-	virtual void onMessageReceived(SocketConnection* connection, const BaseMessage& baseMessage, char* buffer);
+	virtual void onMessageReceived(ClientConnection* connection, const BaseMessage& baseMessage, char* buffer);
 
 private:
 	void worker();

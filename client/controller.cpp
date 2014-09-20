@@ -19,7 +19,7 @@ Controller::Controller() : MessageReceiver(), active_(false), sampleFormat(NULL)
 }
 
 
-void Controller::onMessageReceived(SocketConnection* connection, const BaseMessage& baseMessage, char* buffer)
+void Controller::onMessageReceived(ClientConnection* connection, const BaseMessage& baseMessage, char* buffer)
 {
 	if (baseMessage.type == message_type::payload)
 	{
