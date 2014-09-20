@@ -31,7 +31,6 @@ void Controller::onMessageReceived(ClientConnection* connection, const BaseMessa
 	{
 		if ((stream != NULL) && (decoder != NULL))
 		{
-cout << ".";
 			PcmChunk* pcmChunk = new PcmChunk(*sampleFormat, 0);
 			pcmChunk->deserialize(baseMessage, buffer);
 //cout << "chunk: " << pcmChunk->payloadSize;
