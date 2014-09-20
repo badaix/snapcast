@@ -8,7 +8,7 @@
 using namespace std;
 
 
-OggDecoder::OggDecoder() : Decoder()
+OggDecoder::OggDecoder() : Decoder(), buffer(NULL)
 {
 	ogg_sync_init(&oy); /* Now we can read pages */
 	convsize = 4096;
@@ -19,7 +19,22 @@ OggDecoder::OggDecoder() : Decoder()
 OggDecoder::~OggDecoder()
 {
 //	ogg_sync_init(&oy); /* Now we can read pages */
-	delete convbuffer;
+	free(convbuffer);
+//	if (buffer != NULL)
+//		free(buffer);
+cout << "1\n" << flush;
+    vorbis_block_clear(&vb);
+cout << "2\n" << flush;
+    vorbis_dsp_clear(&vd);
+cout << "3\n" << flush;
+	ogg_stream_clear(&os);
+cout << "4\n" << flush;
+	vorbis_comment_clear(&vc);
+cout << "5\n" << flush;
+	vorbis_info_clear(&vi);  /* must be called last */
+cout << "6\n" << flush;
+	ogg_sync_clear(&oy);
+cout << "7\n" << flush;
 }
 
 

@@ -16,6 +16,7 @@ public:
 	void start(const std::string& _ip, size_t _port, int _bufferMs);
 	void stop();
 	virtual void onMessageReceived(ClientConnection* connection, const BaseMessage& baseMessage, char* buffer);
+	virtual void onException(ClientConnection* connection, const std::exception& exception);
 
 private:
 	void worker();

@@ -9,7 +9,7 @@
 using namespace std;
 
 
-ClientConnection::ClientConnection(MessageReceiver* _receiver, const std::string& _ip, size_t _port) : active_(false), connected_(false), messageReceiver(_receiver), reqId(0), ip(_ip), port(_port)
+ClientConnection::ClientConnection(MessageReceiver* _receiver, const std::string& _ip, size_t _port) : active_(false), connected_(false), messageReceiver(_receiver), reqId(0), ip(_ip), port(_port), readerThread(NULL)
 {
 }
 
@@ -29,8 +29,8 @@ void ClientConnection::socketRead(void* _to, size_t _bytes)
 	{
 //		cout << "/";
 //		cout.flush();
-		boost::system::error_code error;
-		len += socket->read_some(boost::asio::buffer((char*)_to + len, toRead), error);
+//		boost::system::error_code error;
+		len += socket->read_some(boost::asio::buffer((char*)_to + len, toRead));
 //cout << "len: " << len << ", error: " << error << endl;
 		toRead = _bytes - len;
 //		cout << "\\";
@@ -45,16 +45,49 @@ void ClientConnection::start()
 	tcp::resolver resolver(io_service);
 	tcp::resolver::query query(tcp::v4(), ip, boost::lexical_cast<string>(port));
 	iterator = resolver.resolve(query);
-	receiverThread = new thread(&ClientConnection::worker, this);
+	cout << "connecting\n";
+	socket.reset(new tcp::socket(io_service));
+//				struct timeval tv;
+//				tv.tv_sec  = 5;
+//				tv.tv_usec = 0;
+//				cout << "socket: " << socket->native() << "\n";
+//				setsockopt(socket->native(), SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
+//				setsockopt(socket->native(), SOL_SOCKET, SO_SNDTIMEO, &tv, sizeof(tv));
+	socket->connect(*iterator);
+	connected_ = true;
+	cout << "connected\n";
+	std::clog << kLogNotice << "connected\n";// to " << ip << ":" << port << std::endl;
+	active_ = true;
+	readerThread = new thread(&ClientConnection::reader, this);
 }
 
 
 void ClientConnection::stop()
 {
+	connected_ = false;
 	active_ = false;
-	socket->shutdown(boost::asio::ip::tcp::socket::shutdown_both);
-	socket->close();
-	receiverThread->join();
+	try
+	{
+		boost::system::error_code ec;
+		if (socket)
+		{
+			socket->shutdown(boost::asio::ip::tcp::socket::shutdown_both, ec);
+			if (ec) cout << "Error in socket shutdown: " << ec << "\n";
+			socket->close(ec);
+			if (ec) cout << "Error in socket close: " << ec << "\n";
+		}
+		if (readerThread)
+		{
+			cout << "joining readerThread\n";
+			readerThread->join();
+			delete readerThread;
+		}
+	}
+	catch(...)
+	{
+	}
+	readerThread = NULL;
+	cout << "readerThread terminated\n";
 }
 
 
@@ -127,9 +160,6 @@ void ClientConnection::getNextMessage()
 		{
 			if (req->id == baseMessage.refersTo)
 			{
-//cout << "getNextMessage response: " << baseMessage.type << ", size: " << baseMessage.size << "\n";
-//long latency = (baseMessage.received.sec - baseMessage.sent.sec) * 1000000 + (baseMessage.received.usec - baseMessage.sent.usec);
-//cout << "latency: " << latency << "\n";
 				req->response.reset(new SerializedMessage());
 				req->response->message = baseMessage;
 				req->response->buffer = (char*)malloc(baseMessage.size);
@@ -147,45 +177,25 @@ void ClientConnection::getNextMessage()
 
 
 
-void ClientConnection::worker()
+void ClientConnection::reader()
 {
-	active_ = true;
-	while (active_)
+	try
 	{
-		connected_ = false;
-		try
+		while(active_)
 		{
-			{
-//				std::unique_lock<std::mutex> mlock(mutex_);
-				cout << "connecting\n";
-				socket.reset(new tcp::socket(io_service));
-				struct timeval tv;
-				tv.tv_sec  = 5;
-				tv.tv_usec = 0;
-				cout << "socket: " << socket->native() << "\n";
-				setsockopt(socket->native(), SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
-				setsockopt(socket->native(), SOL_SOCKET, SO_SNDTIMEO, &tv, sizeof(tv));
-				socket->connect(*iterator);
-				connected_ = true;
-				cout << "connected\n";
-				std::clog << kLogNotice << "connected\n";// to " << ip << ":" << port << std::endl;
-			}
-			while(active_)
-			{
-//				cout << ".";
-//				cout.flush();
-				getNextMessage();
-//				cout << "|";
-//				cout.flush();
-			}
-		}
-		catch (const std::exception& e)
-		{
-			connected_ = false;
-			cout << kLogNotice << "Exception: " << e.what() << ", trying to reconnect" << std::endl;
-			usleep(1000*1000);
+			getNextMessage();
 		}
 	}
+	catch (const std::exception& e)
+	{
+		if (messageReceiver != NULL)
+			messageReceiver->onException(this, e);			
+	}
+	catch (...)
+	{
+	}
+	connected_ = false;
+	active_ = false;
 }
 
 

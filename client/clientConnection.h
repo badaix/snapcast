@@ -32,6 +32,7 @@ class MessageReceiver
 {
 public:
 	virtual void onMessageReceived(ClientConnection* connection, const BaseMessage& baseMessage, char* buffer) = 0;
+	virtual void onException(ClientConnection* connection, const std::exception& exception) = 0;
 };
 
 
@@ -68,7 +69,7 @@ public:
 	}
 
 protected:
-	virtual void worker();
+	virtual void reader();
 
 	void socketRead(void* _to, size_t _bytes);
 	std::shared_ptr<tcp::socket> socket;
@@ -80,13 +81,13 @@ protected:
 	void getNextMessage();
 	boost::asio::io_service io_service;
 	tcp::resolver::iterator iterator;
-	std::thread* receiverThread;
 	mutable std::mutex mutex_;
 	std::mutex m;
 	std::set<std::shared_ptr<PendingRequest>> pendingRequests;
 	uint16_t reqId;
 	std::string ip;
 	size_t port;
+	std::thread* readerThread;
 };
 
 

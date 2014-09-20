@@ -19,12 +19,19 @@ Controller::Controller() : MessageReceiver(), active_(false), sampleFormat(NULL)
 }
 
 
+void Controller::onException(ClientConnection* connection, const std::exception& exception)
+{
+	cout << "onException: " << exception.what() << "\n";
+}
+
+
 void Controller::onMessageReceived(ClientConnection* connection, const BaseMessage& baseMessage, char* buffer)
 {
 	if (baseMessage.type == message_type::payload)
 	{
 		if ((stream != NULL) && (decoder != NULL))
 		{
+cout << ".";
 			PcmChunk* pcmChunk = new PcmChunk(*sampleFormat, 0);
 			pcmChunk->deserialize(baseMessage, buffer);
 //cout << "chunk: " << pcmChunk->payloadSize;
@@ -64,9 +71,9 @@ void Controller::worker()
 
 	while (active_)
 	{
-		clientConnection->start();
 		try
 		{
+			clientConnection->start();
 			RequestMsg requestMsg("serverSettings");
 			shared_ptr<ServerSettings> serverSettings(NULL);
 			while (!(serverSettings = clientConnection->sendReq<ServerSettings>(&requestMsg, 1000)));
@@ -119,13 +126,14 @@ void Controller::worker()
 			}
 			catch (const std::exception& e)
 			{
+				cout << "Exception in Controller::worker(): " << e.what() << "\n";
 				cout << "Stopping player\n";
 				player.stop();
 				cout << "Deleting stream\n";
 				delete stream;
 				stream = NULL;
 				cout << "done\n";
-				throw e;
+				throw;
 			}
 		}
 		catch (const std::exception& e)
@@ -134,6 +142,9 @@ void Controller::worker()
 			if (decoder != NULL)
 				delete decoder;
 			decoder = NULL;
+			cout << "Stopping clientConnection\n";
+			clientConnection->stop();
+			cout << "done\n";
 			usleep(1000000);
 		}
 	}
