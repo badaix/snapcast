@@ -14,7 +14,7 @@
 using namespace std;
 
 
-Controller::Controller() : MessageReceiver(), active_(false), streamClient(NULL), sampleFormat(NULL), decoder(NULL)
+Controller::Controller() : MessageReceiver(), active_(false), sampleFormat(NULL), decoder(NULL)
 {
 }
 
@@ -27,11 +27,11 @@ void Controller::onMessageReceived(SocketConnection* connection, const BaseMessa
 		{
 			PcmChunk* pcmChunk = new PcmChunk(*sampleFormat, 0);
 			pcmChunk->deserialize(baseMessage, buffer);
-//cout << "chunk: " << pcmChunk->payloadSize;
+cout << "chunk: " << pcmChunk->payloadSize;
 			if (decoder->decode(pcmChunk))
 			{
 				stream->addChunk(pcmChunk);
-//cout << ", decoded: " << pcmChunk->payloadSize << ", Duration: " << pcmChunk->getDuration() << ", sec: " << pcmChunk->timestamp.sec << ", usec: " << pcmChunk->timestamp.usec/1000 << ", type: " << pcmChunk->type << "\n";
+cout << ", decoded: " << pcmChunk->payloadSize << ", Duration: " << pcmChunk->getDuration() << ", sec: " << pcmChunk->timestamp.sec << ", usec: " << pcmChunk->timestamp.usec/1000 << ", type: " << pcmChunk->type << "\n";
 			}
 			else
 				delete pcmChunk;
@@ -72,7 +72,6 @@ void Controller::worker()
 			shared_ptr<ServerSettings> serverSettings(NULL);
 			while (!(serverSettings = controlConnection->sendReq<ServerSettings>(&requestMsg, 1000)));
 			cout << "ServerSettings port: " << serverSettings->port << "\n";
-			streamClient = new StreamClient(this, ip, serverSettings->port);
 
 			requestMsg.request = "sampleFormat";
 			while (!(sampleFormat = controlConnection->sendReq<SampleFormat>(&requestMsg, 1000)));
@@ -99,7 +98,6 @@ void Controller::worker()
 				}
 			}
 
-			streamClient->start();
 			stream = new Stream(*sampleFormat);
 			stream->setBufferLen(bufferMs);
 
@@ -115,7 +113,6 @@ void Controller::worker()
                     if (reply)
                     {
                         double latency = (reply->received.sec - reply->sent.sec) + (reply->received.usec - reply->sent.usec) / 1000000.;
-                        //					cout << "C2S: " << timeMsg.latency << ", S2C: " << latency << ", diff: " << (timeMsg.latency - latency) / 2 << endl;
                         TimeProvider::getInstance().setDiffToServer((reply->latency - latency) * 1000 / 2);
                         cout << TimeProvider::getInstance().getDiffToServer() << "\n";
                     }
@@ -125,10 +122,6 @@ void Controller::worker()
 			{
 				cout << "Stopping player\n";
 				player.stop();
-				cout << "Stopping streamClient\n";
-				streamClient->stop();
-				delete streamClient;
-				streamClient = NULL;
 				cout << "Deleting stream\n";
 				delete stream;
 				stream = NULL;

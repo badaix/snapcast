@@ -22,7 +22,6 @@ private:
 	void worker();
 	std::atomic<bool> active_;
 	std::thread* controllerThread;
-	StreamClient* streamClient;
 	ClientConnection* controlConnection;
 	Stream* stream;
 	int bufferMs;
