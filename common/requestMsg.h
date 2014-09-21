@@ -8,7 +8,7 @@
 class RequestMsg : public BaseMessage
 {
 public:
-	RequestMsg() : BaseMessage(message_type::requestmsg)
+	RequestMsg() : BaseMessage(message_type::requestmsg), request("")
 	{
 	}
 

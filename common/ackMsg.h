@@ -7,7 +7,11 @@
 class AckMsg : public BaseMessage
 {
 public:
-	AckMsg() : BaseMessage(message_type::ackMsg)
+	AckMsg() : BaseMessage(message_type::ackMsg), message("")
+	{
+	}
+
+	AckMsg(const std::string& _message) : BaseMessage(message_type::requestmsg), message(_message)
 	{
 	}
 
@@ -17,20 +21,25 @@ public:
 
 	virtual void read(std::istream& stream)
 	{
-//		stream.read(reinterpret_cast<char *>(&latency), sizeof(double));
+		int16_t size;
+		stream.read(reinterpret_cast<char *>(&size), sizeof(int16_t));
+		message.resize(size);
+		stream.read(&message[0], size);
 	}
 
 	virtual uint32_t getSize()
 	{
-		return 0;//sizeof(double);
+		return sizeof(int16_t) + message.size();
 	}
 
-//	double latency;
+	std::string message;
 
 protected:
 	virtual void doserialize(std::ostream& stream)
 	{
-//		stream.write(reinterpret_cast<char *>(&latency), sizeof(double));
+		int16_t size(message.size());
+		stream.write(reinterpret_cast<char *>(&size), sizeof(int16_t));
+		stream.write(message.c_str(), size);
 	}
 };
 
