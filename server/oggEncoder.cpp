@@ -78,7 +78,7 @@ double OggEncoder::encode(PcmChunk* chunk)
 			res = os.granulepos;
 		else
 			res = os.granulepos - lastGranulepos;
-		res /= 48.;
+		res /= (sampleFormat.rate / 1000.);
 		lastGranulepos = os.granulepos;
 		chunk->payload = (char*)realloc(chunk->payload, pos);
 		chunk->payloadSize = pos;
