@@ -14,6 +14,7 @@ public:
 
 	void setDiffToServer(double ms);
 	long getDiffToServer();
+	long getPercentileDiffToServer(size_t percentile);
 	long getDiffToServerMs();
 
 private:

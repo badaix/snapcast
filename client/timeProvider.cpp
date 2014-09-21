@@ -3,7 +3,7 @@
 
 TimeProvider::TimeProvider() : diffToServer(0)
 {
-	diffBuffer.setSize(60);
+	diffBuffer.setSize(120);
 }
 
 
@@ -25,5 +25,10 @@ long TimeProvider::getDiffToServerMs()
 	return diffToServer / 1000;
 }
 
+
+long TimeProvider::getPercentileDiffToServer(size_t percentile)
+{
+	return diffBuffer.percentile(percentile);
+}
 
 

@@ -118,13 +118,13 @@ void Controller::worker()
 			{
 				while (active_)
 				{
-					usleep(1000000);
+					usleep(500*1000);
                     shared_ptr<TimeMsg> reply = clientConnection->sendReq<TimeMsg>(&timeReq, 1000);
                     if (reply)
                     {
                         double latency = (reply->received.sec - reply->sent.sec) + (reply->received.usec - reply->sent.usec) / 1000000.;
                         TimeProvider::getInstance().setDiffToServer((reply->latency - latency) * 1000 / 2);
-                        cout << TimeProvider::getInstance().getDiffToServer() << "\n";
+                        cout << "Median: " << TimeProvider::getInstance().getDiffToServer() << "\n";
                     }
 				}
 			}
