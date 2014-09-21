@@ -29,7 +29,9 @@ class ServerSession
 {
 public:
 	ServerSession(MessageReceiver* _receiver, std::shared_ptr<tcp::socket> _socket);
+	~ServerSession();
 	void start();
+	void stop();
 	bool send(BaseMessage* message);
 	void add(std::shared_ptr<BaseMessage> message);
 	virtual bool connected()

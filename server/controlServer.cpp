@@ -20,6 +20,7 @@ void ControlServer::send(shared_ptr<BaseMessage> message)
 		if (!(*it)->active())
 		{
 			cout << "Session inactive. Removing\n";
+			(*it)->stop();
 			sessions.erase(it++);
 		}
 		else
@@ -92,8 +93,8 @@ void ControlServer::acceptor()
 		ServerSession* session = new ServerSession(this, sock);
 		{
 			std::unique_lock<std::mutex> mlock(mutex);
-			sessions.insert(shared_ptr<ServerSession>(session));
 			session->start();
+			sessions.insert(shared_ptr<ServerSession>(session));
 		}
 	}
 }

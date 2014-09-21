@@ -15,6 +15,12 @@ ServerSession::ServerSession(MessageReceiver* _receiver, std::shared_ptr<tcp::so
 }
 
 
+ServerSession::~ServerSession()
+{
+	stop();
+}
+
+
 void ServerSession::start()
 {
 	active_ = true;
@@ -24,13 +30,49 @@ void ServerSession::start()
 }
 
 
+void ServerSession::stop()
+{
+	active_ = false;
+	try
+	{
+		boost::system::error_code ec;
+		if (socket)
+		{
+			socket->shutdown(boost::asio::ip::tcp::socket::shutdown_both, ec);
+			if (ec) cout << "Error in socket shutdown: " << ec << "\n";
+			socket->close(ec);
+			if (ec) cout << "Error in socket close: " << ec << "\n";
+		}
+		if (readerThread)
+		{
+			cout << "joining readerThread\n";
+			readerThread->join();
+			delete readerThread;
+		}
+		if (writerThread)
+		{
+			cout << "joining readerThread\n";
+			writerThread->join();
+			delete writerThread;
+		}
+	}
+	catch(...)
+	{
+	}
+	readerThread = NULL;
+	writerThread = NULL;
+	cout << "ServerSession stopped\n";
+}
+
+
+
 void ServerSession::socketRead(void* _to, size_t _bytes)
 {
 	size_t read = 0;
 	do
 	{
 		boost::system::error_code error;
-		read += socket->read_some(boost::asio::buffer((char*)_to + read, _bytes - read), error);
+		read += socket->read_some(boost::asio::buffer((char*)_to + read, _bytes - read));
 	}
 	while (read < _bytes);
 }
