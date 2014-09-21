@@ -34,11 +34,6 @@ public:
 	void stop();
 	bool send(BaseMessage* message);
 	void add(std::shared_ptr<BaseMessage> message);
-	virtual bool connected()
-	{
-		return (socket != 0);
-//		return (connected_ && socket);
-	}
 
 	virtual bool active()
 	{

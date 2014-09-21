@@ -83,14 +83,15 @@ void Controller::worker()
 			while (!(sampleFormat = clientConnection->sendReq<SampleFormat>(&requestMsg, 1000)));
 			cout << "SampleFormat rate: " << sampleFormat->rate << ", bits: " << sampleFormat->bits << ", channels: " << sampleFormat->channels << "\n";
 
-			decoder = new OggDecoder();
-			if (decoder != NULL)
-			{
-				requestMsg.request = "headerChunk";
-				shared_ptr<HeaderMessage> headerChunk(NULL);
-				while (!(headerChunk = clientConnection->sendReq<HeaderMessage>(&requestMsg, 1000)));
-				decoder->setHeader(headerChunk.get());
-			}
+			requestMsg.request = "headerChunk";
+			shared_ptr<HeaderMessage> headerChunk(NULL);
+			while (!(headerChunk = clientConnection->sendReq<HeaderMessage>(&requestMsg, 1000)));
+			cout << "Codec: " << headerChunk->codec << "\n";
+			if (headerChunk->codec == "ogg")
+				decoder = new OggDecoder();
+			else if (headerChunk->codec == "pcm")
+				decoder = new PcmDecoder();
+			decoder->setHeader(headerChunk.get());
 
 			RequestMsg timeReq("time");
 			for (size_t n=0; n<10; ++n)
@@ -124,7 +125,7 @@ void Controller::worker()
                     {
                         double latency = (reply->received.sec - reply->sent.sec) + (reply->received.usec - reply->sent.usec) / 1000000.;
                         TimeProvider::getInstance().setDiffToServer((reply->latency - latency) * 1000 / 2);
-                        cout << "Median: " << TimeProvider::getInstance().getDiffToServer() << "\n";
+//                        cout << "Median: " << TimeProvider::getInstance().getDiffToServer() << "\n";
                     }
 				}
 			}

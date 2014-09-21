@@ -40,7 +40,7 @@ void ControlServer::onMessageReceived(ServerSession* connection, const BaseMessa
 	{
 		RequestMsg requestMsg;
 		requestMsg.deserialize(baseMessage, buffer);
-		cout << "request: " << requestMsg.request << "\n";
+//		cout << "request: " << requestMsg.request << "\n";
 		if (requestMsg.request == "time")
 		{
 //		timeMsg.latency = (timeMsg.received.sec - timeMsg.sent.sec) * 1000000 + (timeMsg.received.usec - timeMsg.sent.usec);

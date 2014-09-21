@@ -92,10 +92,8 @@ void ServerSession::add(shared_ptr<BaseMessage> message)
 bool ServerSession::send(BaseMessage* message)
 {
 	std::unique_lock<std::mutex> mlock(mutex_);
-//cout << "send: " << message->type << ", size: " << message->getSize() << "\n";
-	if (!connected())
+	if (!socket)
 		return false;
-//cout << "send: " << message->type << ", size: " << message->getSize() << "\n";
 	boost::asio::streambuf streambuf;
 	std::ostream stream(&streambuf);
 	tv t;

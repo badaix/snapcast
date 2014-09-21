@@ -5,17 +5,12 @@
 using namespace std;
 
 
-OggEncoder::OggEncoder(const SampleFormat& format) : Encoder(format), headerChunk(NULL)
+OggEncoder::OggEncoder(const SampleFormat& format) : Encoder(format)
 {
 	init();
 	lastGranulepos = -1;
 }
 
-
-HeaderMessage* OggEncoder::getHeader()
-{
-	return headerChunk;
-}
 
 
 double OggEncoder::encode(PcmChunk* chunk)
@@ -170,7 +165,7 @@ void OggEncoder::init()
 	 */
 //	  while(!eos){
 	size_t pos(0);
-	headerChunk = new HeaderMessage();
+	headerChunk = new HeaderMessage("ogg");
 	while (true)
 	{
 		int result=ogg_stream_flush(&os,&og);

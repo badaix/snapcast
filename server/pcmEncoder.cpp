@@ -2,6 +2,7 @@
 
 PcmEncoder::PcmEncoder(const SampleFormat& format) : Encoder(format)
 {
+	headerChunk = new HeaderMessage("pcm");
 }
 
 
