@@ -7,6 +7,7 @@
 #include <memory>
 #include <set>
 #include <sstream>
+#include <mutex>
 
 #include "serverSession.h"
 #include "common/timeUtils.h"
@@ -37,6 +38,7 @@ public:
 
 private:
 	void acceptor();
+	mutable std::mutex mutex;
 	set<shared_ptr<ServerSession>> sessions;
 	boost::asio::io_service io_service_;
 	unsigned short port_;

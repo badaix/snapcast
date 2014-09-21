@@ -43,6 +43,11 @@ public:
 		return active_;
 	}
 
+	virtual void setStreamActive(bool active)
+	{
+		streamActive = active;
+	}
+
 
 protected:
 	void socketRead(void* _to, size_t _bytes);
@@ -51,6 +56,7 @@ protected:
 	void writer();
 
 	std::atomic<bool> active_;
+	std::atomic<bool> streamActive;
 	mutable std::mutex mutex_;
 	std::thread* readerThread;
 	std::thread* writerThread;

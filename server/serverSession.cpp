@@ -18,6 +18,7 @@ ServerSession::ServerSession(MessageReceiver* _receiver, std::shared_ptr<tcp::so
 void ServerSession::start()
 {
 	active_ = true;
+	streamActive = false;
 	readerThread = new thread(&ServerSession::reader, this);
 	writerThread = new thread(&ServerSession::writer, this);
 }
@@ -37,7 +38,7 @@ void ServerSession::socketRead(void* _to, size_t _bytes)
 
 void ServerSession::add(shared_ptr<BaseMessage> message)
 {
-	if (!message)
+	if (!message || !streamActive)
 		return;
 
 	while (messages.size() > 100)// chunk->getDuration() > 10000)

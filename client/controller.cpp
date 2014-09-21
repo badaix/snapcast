@@ -10,6 +10,7 @@
 #include "common/serverSettings.h"
 #include "common/timeMsg.h"
 #include "common/requestMsg.h"
+#include "common/ackMsg.h"
 
 using namespace std;
 
@@ -108,6 +109,10 @@ void Controller::worker()
 
 			Player player(stream);
 			player.start();
+
+			RequestMsg startStream("startStream");
+			shared_ptr<AckMsg> ackMsg(NULL);
+			while (!(ackMsg = clientConnection->sendReq<AckMsg>(&startStream, 1000)));
 
 			try
 			{

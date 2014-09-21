@@ -36,7 +36,8 @@ enum message_type
 	sampleformat = 3,
 	serversettings = 4,
 	timemsg = 5,
-	requestmsg = 6
+	requestmsg = 6,
+	ackMsg = 7
 };
 
 

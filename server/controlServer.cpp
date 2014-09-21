@@ -1,5 +1,6 @@
 #include "controlServer.h"
 #include "common/timeMsg.h"
+#include "common/ackMsg.h"
 #include "common/requestMsg.h"
 #include <iostream>
 
@@ -13,6 +14,7 @@ ControlServer::ControlServer(unsigned short port) : port_(port), headerChunk(NUL
 
 void ControlServer::send(shared_ptr<BaseMessage> message)
 {
+	std::unique_lock<std::mutex> mlock(mutex);
 	for (std::set<shared_ptr<ServerSession>>::iterator it = sessions.begin(); it != sessions.end(); )
 	{
 		if (!(*it)->active())
@@ -63,6 +65,13 @@ void ControlServer::onMessageReceived(ServerSession* connection, const BaseMessa
 			headerChunk->refersTo = requestMsg.id;
 			connection->send(headerChunk);
 		}
+		else if (requestMsg.request == "startStream")
+		{
+			AckMsg ackMsg;
+			ackMsg.refersTo = requestMsg.id;
+			connection->send(&ackMsg);
+			connection->setStreamActive(true);
+		}
 	}
 }
 
@@ -81,8 +90,11 @@ void ControlServer::acceptor()
 		setsockopt(sock->native(), SOL_SOCKET, SO_SNDTIMEO, &tv, sizeof(tv));
 		cout << "ControlServer::NewConnection: " << sock->remote_endpoint().address().to_string() << "\n";
 		ServerSession* session = new ServerSession(this, sock);
-		sessions.insert(shared_ptr<ServerSession>(session));
-		session->start();
+		{
+			std::unique_lock<std::mutex> mlock(mutex);
+			sessions.insert(shared_ptr<ServerSession>(session));
+			session->start();
+		}
 	}
 }
 
