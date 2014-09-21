@@ -4,10 +4,10 @@
 #include "common/timeUtils.h"
 #include "common/signalHandler.h"
 #include "common/utils.h"
-#include "common/sampleFormat.h"
-#include "../server/pcmEncoder.h"
-#include "../server/oggEncoder.h"
-#include "common/message.h"
+#include "message/sampleFormat.h"
+#include "message/message.h"
+#include "pcmEncoder.h"
+#include "oggEncoder.h"
 #include "controlServer.h"
 
 

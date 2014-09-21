@@ -3,7 +3,7 @@
 
 #include <thread>
 #include <atomic>
-#include "common/message.h"
+#include "message/message.h"
 #include "clientConnection.h"
 #include "decoder.h"
 #include "stream.h"

@@ -7,10 +7,10 @@
 #include "pcmDecoder.h"
 #include "player.h"
 #include "timeProvider.h"
-#include "common/serverSettings.h"
-#include "common/timeMsg.h"
-#include "common/requestMsg.h"
-#include "common/ackMsg.h"
+#include "message/serverSettings.h"
+#include "message/timeMsg.h"
+#include "message/requestMsg.h"
+#include "message/ackMsg.h"
 
 using namespace std;
 

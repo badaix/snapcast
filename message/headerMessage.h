@@ -1,7 +1,7 @@
 #ifndef HEADER_MESSAGE_H
 #define HEADER_MESSAGE_H
 
-#include "common/message.h"
+#include "message.h"
 
 
 

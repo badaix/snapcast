@@ -8,11 +8,11 @@
 #include <vector>
 #include <memory>
 #include "doubleBuffer.h"
-#include "common/message.h"
-#include "common/pcmChunk.h"
+#include "message/message.h"
+#include "message/pcmChunk.h"
+#include "message/sampleFormat.h"
 #include "common/timeUtils.h"
 #include "common/queue.h"
-#include "common/sampleFormat.h"
 
 
 class Stream

@@ -12,10 +12,10 @@
 #include "serverSession.h"
 #include "common/timeUtils.h"
 #include "common/queue.h"
-#include "common/message.h"
-#include "common/headerMessage.h"
-#include "common/sampleFormat.h"
-#include "common/serverSettings.h"
+#include "message/message.h"
+#include "message/headerMessage.h"
+#include "message/sampleFormat.h"
+#include "message/serverSettings.h"
 
 
 using boost::asio::ip::tcp;

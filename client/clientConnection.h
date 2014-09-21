@@ -9,7 +9,7 @@
 #include <boost/asio.hpp>
 #include <condition_variable>
 #include <set>
-#include "common/message.h"
+#include "message/message.h"
 
 
 using boost::asio::ip::tcp;

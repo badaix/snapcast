@@ -1,7 +1,7 @@
 #include "controlServer.h"
-#include "common/timeMsg.h"
-#include "common/ackMsg.h"
-#include "common/requestMsg.h"
+#include "message/timeMsg.h"
+#include "message/ackMsg.h"
+#include "message/requestMsg.h"
 #include <iostream>
 
 

@@ -9,7 +9,7 @@
 #include <boost/asio.hpp>
 #include <condition_variable>
 #include <set>
-#include "common/message.h"
+#include "message/message.h"
 #include "common/queue.h"
 
 

@@ -1,8 +1,8 @@
 #ifndef ENCODER_H
 #define ENCODER_H
-#include "common/pcmChunk.h"
-#include "common/headerMessage.h"
-#include "common/sampleFormat.h"
+#include "message/pcmChunk.h"
+#include "message/headerMessage.h"
+#include "message/sampleFormat.h"
 
 
 class Encoder

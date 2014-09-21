@@ -1,7 +1,7 @@
 #ifndef SERVER_SETTINGS_H
 #define SERVER_SETTINGS_H
 
-#include "message.h"
+#include "message/message.h"
 
 
 
