@@ -94,7 +94,7 @@ void Controller::worker()
 			decoder->setHeader(headerChunk.get());
 
 			RequestMsg timeReq("time");
-			for (size_t n=0; n<10; ++n)
+			for (size_t n=0; n<30; ++n)
 			{
 				shared_ptr<TimeMsg> reply = clientConnection->sendReq<TimeMsg>(&timeReq, 2000);
 				if (reply)
