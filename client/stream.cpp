@@ -273,6 +273,7 @@ bool Stream::getPlayerChunk(void* outputBuffer, chronos::usec outputBufferDacTim
 	}
 	catch(int e)
 	{
+		sleep = 0;
 		return false;
 	}
 }
