@@ -7,6 +7,7 @@
 #include <condition_variable>
 #include <vector>
 #include <memory>
+#include <chrono>
 #include "doubleBuffer.h"
 #include "message/message.h"
 #include "message/pcmChunk.h"
@@ -21,14 +22,14 @@ public:
 	Stream(const SampleFormat& format);
 	void addChunk(PcmChunk* chunk);
 	void clearChunks();
-	bool getPlayerChunk(void* outputBuffer, double outputBufferDacTime, unsigned long framesPerBuffer, size_t timeout);
+	bool getPlayerChunk(void* outputBuffer, chronos::usec outputBufferDacTime, unsigned long framesPerBuffer, size_t timeout);
 	void setBufferLen(size_t bufferLenMs);
 	const SampleFormat& format;
 
 private:
-	time_point_ms getNextPlayerChunk(void* outputBuffer, unsigned long framesPerBuffer, size_t timeout, int correction = 0);
-	time_point_ms getSilentPlayerChunk(void* outputBuffer, unsigned long framesPerBuffer);
-	time_point_ms seek(long ms);
+	chronos::time_point_hrc getNextPlayerChunk(void* outputBuffer, unsigned long framesPerBuffer, size_t timeout, int correction = 0);
+	chronos::time_point_hrc getSilentPlayerChunk(void* outputBuffer, unsigned long framesPerBuffer);
+	chronos::time_point_hrc seek(long ms);
 //	time_point_ms seekTo(const time_point_ms& to);
 	void updateBuffers(int age);
 	void resetBuffers();
@@ -48,7 +49,7 @@ private:
 	int median;
 	int shortMedian;
 	time_t lastUpdate;
-	int bufferMs;
+	chronos::msec bufferMs;
 };
 
 

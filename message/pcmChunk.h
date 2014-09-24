@@ -1,12 +1,11 @@
 #ifndef PCM_CHUNK_H
 #define PCM_CHUNK_H
 
+#include <chrono>
 #include "message.h"
 #include "wireChunk.h"
 #include "sampleFormat.h"
-
-
-typedef std::chrono::time_point<std::chrono::high_resolution_clock, std::chrono::milliseconds> time_point_ms;
+#include "common/timeDefs.h"
 
 
 
@@ -20,6 +19,15 @@ public:
 	int readFrames(void* outputBuffer, size_t frameCount);
 	bool isEndOfChunk() const;
 
+	inline chronos::time_point_hrc timePoint() const
+	{
+		return chronos::time_point_hrc(
+				chronos::sec(timestamp.sec) + 
+				chronos::usec(timestamp.usec) + 
+				chronos::usec((chronos::usec::rep)(1000000. * ((double)idx / (double)format.rate)))
+				);
+	}
+/*
 	inline time_point_ms timePoint() const
 	{
 		time_point_ms tp;
@@ -52,7 +60,7 @@ public:
 	{
 		return std::chrono::duration_cast<T>(std::chrono::high_resolution_clock::now() - time_point);
 	}
-
+*/
 	int seek(int frames);
 	double getDuration() const;
 	double getDurationUs() const;

@@ -22,9 +22,9 @@ public:
 	uint16_t sampleSize;
 	uint16_t frameSize;
 
-	float msRate() const
+	double msRate() const
 	{
-		return (float)rate/1000.f;
+		return (double)rate/1000.f;
 	}
 
 	virtual void read(std::istream& stream)
