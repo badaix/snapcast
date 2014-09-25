@@ -1,4 +1,4 @@
-#include "player.h"
+#include "alsaPlayer.h"
 #include <alsa/asoundlib.h>
 #include <iostream>
 

@@ -5,7 +5,7 @@
 #include <unistd.h>
 #include "oggDecoder.h"
 #include "pcmDecoder.h"
-#include "player.h"
+#include "alsaPlayer.h"
 #include "timeProvider.h"
 #include "message/serverSettings.h"
 #include "message/timeMsg.h"
@@ -101,11 +101,11 @@ void Controller::worker()
 				{
 					double latency = (reply->received.sec - reply->sent.sec) + (reply->received.usec - reply->sent.usec) / 1000000.;
 					TimeProvider::getInstance().setDiffToServer((reply->latency - latency) * 1000 / 2);
-cout << TimeProvider::sinceEpoche<chronos::usec>(chronos::hrc::now()).count() << "\n";
+/*cout << TimeProvider::sinceEpoche<chronos::usec>(chronos::hrc::now()).count() << "\n";
 cout << TimeProvider::sinceEpoche<chronos::msec>(TimeProvider::now()).count() << "\n";
 cout << TimeProvider::sinceEpoche<chronos::msec>(TimeProvider::serverNow()).count() << "\n";
 cout << "Received: " << TimeProvider::sinceEpoche<chronos::msec>(TimeProvider::toTimePoint(reply->received)).count() << "\n\n";
-					usleep(1000);
+*/					usleep(1000);
 				}
 			}
 
