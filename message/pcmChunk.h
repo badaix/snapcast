@@ -17,7 +17,6 @@ public:
 	~PcmChunk();
 
 	int readFrames(void* outputBuffer, size_t frameCount);
-	bool isEndOfChunk() const;
 
 	inline chronos::time_point_hrc timePoint() const
 	{
@@ -27,45 +26,30 @@ public:
 				chronos::usec((chronos::usec::rep)(1000000. * ((double)idx / (double)format.rate)))
 				);
 	}
-/*
-	inline time_point_ms timePoint() const
+
+	int seek(int frames);
+	
+	template<typename T>
+	inline T duration() const
 	{
-		time_point_ms tp;
-		std::chrono::milliseconds::rep relativeIdxTp = ((double)idx / ((double)format.rate/1000.));
-		return
-		    tp +
-		    std::chrono::seconds(timestamp.sec) +
-		    std::chrono::milliseconds(timestamp.usec / 1000) +
-		    std::chrono::milliseconds(relativeIdxTp);
+		return std::chrono::duration_cast<T>(chronos::nsec((chronos::nsec::rep)(1000000 * getFrameCount() / format.msRate())));
 	}
 
 	template<typename T>
-	inline T getAge() const
+	inline T durationLeft() const
 	{
-		return getAge<T>(timePoint());
+		return std::chrono::duration_cast<T>(chronos::nsec((chronos::nsec::rep)(1000000 * (getFrameCount() - idx) / format.msRate())));
 	}
 
-	inline long getAge() const
+	inline bool isEndOfChunk() const
 	{
-		return getAge<std::chrono::milliseconds>().count();
+		return idx >= getFrameCount();
 	}
 
-	inline static long getAge(const time_point_ms& time_point)
+	inline size_t getFrameCount() const
 	{
-		return getAge<std::chrono::milliseconds>(time_point).count();
+		return (payloadSize / format.frameSize);
 	}
-
-	template<typename T, typename U>
-	static inline T getAge(const std::chrono::time_point<U>& time_point)
-	{
-		return std::chrono::duration_cast<T>(std::chrono::high_resolution_clock::now() - time_point);
-	}
-*/
-	int seek(int frames);
-	double getDuration() const;
-	double getDurationUs() const;
-	double getTimeLeft() const;
-	double getFrameCount() const;
 
 	SampleFormat format;
 

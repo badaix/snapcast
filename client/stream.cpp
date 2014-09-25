@@ -36,7 +36,7 @@ void Stream::clearChunks()
 
 void Stream::addChunk(PcmChunk* chunk)
 {
-	while (chunks.size() * chunk->getDuration() > 10000)
+	while (chunks.size() * chunk->duration<chronos::msec>().count() > 10000)
 		chunks.pop();
 	chunks.push(shared_ptr<PcmChunk>(chunk));
 //	cout << "new chunk: " << chunk->getDuration() << ", Chunks: " << chunks.size() << "\n";
@@ -81,10 +81,10 @@ time_point_hrc Stream::seek(long ms)
 		return chunk->timePoint();
 
 //	time_point_ms tp = chunk->timePoint();
-	while (ms > chunk->getTimeLeft())
+	while (ms > chunk->duration<chronos::msec>().count())
 	{
 		chunk = chunks.pop();
-		ms -= min(ms, (long)chunk->getTimeLeft());
+		ms -= min(ms, (long)chunk->durationLeft<chronos::msec>().count());
 	}
 	chunk->seek(ms * format.msRate());
 	return chunk->timePoint();
@@ -97,6 +97,7 @@ time_point_hrc Stream::getNextPlayerChunk(void* outputBuffer, unsigned long fram
 		if (!chunks.try_pop(chunk, chronos::msec(timeout)))
 			throw 0;
 
+//cout << "duration: " << chunk->duration<chronos::msec>().count() << ", " << chunk->duration<chronos::usec>().count() << ", " << chunk->duration<chronos::nsec>().count() << "\n";
 	time_point_hrc tp = chunk->timePoint();
 	int read = 0;
 	int toRead = framesPerBuffer + correction*format.msRate();
@@ -168,7 +169,18 @@ bool Stream::getPlayerChunk(void* outputBuffer, chronos::usec outputBufferDacTim
 			lastTick = currentTick;
 		ticks = currentTick - lastTick;
 		lastTick = currentTick;
-
+/*
+pShortBuffer->full() && (abs(shortMedian) > 5): 25
+Sleep: 25
+Chunk: 25	25	25	25	23	105941
+Chunk: 25	25	25	25	55	107210
+Chunk: 25	25	25	25	88	104671
+pShortBuffer->full() && (abs(shortMedian) > 5): 25
+Sleep: 25
+Chunk: 25	25	25	25	20	99614
+Chunk: 25	25	25	25	53	96802
+Chunk: 25	25	25	25	86	117732
+*/
 		int correction = 0;
 		if (sleep != 0)
 		{
@@ -188,23 +200,16 @@ bool Stream::getPlayerChunk(void* outputBuffer, chronos::usec outputBufferDacTim
 			}
 			else if (sleep > msBuffer/2)
 			{
-				/*			cout << "Sleep " << sleep;
-							time_point_ms ms(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()));
-							ms -= std::chrono::milliseconds((long int)(bufferMs - outputBufferDacTime));
-				cout << "\nms: " << Chunk::getAge(ms) << "\t chunk: " << chunk->getAge() << "\n";
-							sleep = Chunk::getAge(seekTo(ms)) - bufferMs + outputBufferDacTime;
-							cout << " after: " << sleep << "\n";
-				*/
 				if (!chunk)
 					if (!chunks.try_pop(chunk, chronos::msec(timeout)))
 						throw 0;
-				while (sleep > chunk->getDuration())
+				while (sleep > chunk->duration<chronos::msec>().count())
 				{
+					cout << "sleep > chunk->getDuration(): " << sleep << " > " << chunk->duration<chronos::msec>().count() << ", chunks: " << chunks.size() << ", out: " << outputBufferDacTime.count() << ", needed: " << msBuffer << "\n";
 					if (!chunks.try_pop(chunk, chronos::msec(timeout)))
 						throw 0;
 					msec age = std::chrono::duration_cast<msec>(TimeProvider::serverNow() - chunk->timePoint() - bufferMs + outputBufferDacTime);
 					sleep = age.count();
-//					cout << "chunk->getAge() > chunk->getDuration(): " << chunk->getAge() - bufferMs + outputBufferDacTime << " > " << chunk->getDuration() << ", chunks: " << chunks.size() << ", out: " << outputBufferDacTime << ", needed: " << msBuffer << ", sleep: " << sleep << "\n";
 					usleep(1000);
 				}
 //				cout << "seek: " << PcmChunk::getAge(seek(sleep)) - bufferMs + outputBufferDacTime << "\n";
@@ -221,7 +226,6 @@ bool Stream::getPlayerChunk(void* outputBuffer, chronos::usec outputBufferDacTim
 				correction = 1;
 			}
 		}
-
 
 		long age(0);
 		age = std::chrono::duration_cast<msec>(TimeProvider::serverNow() - getNextPlayerChunk(outputBuffer, framesPerBuffer, timeout, correction) - bufferMs + outputBufferDacTime).count();

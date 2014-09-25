@@ -10,6 +10,7 @@ namespace chronos
 	typedef std::chrono::seconds sec;
 	typedef std::chrono::milliseconds msec;
 	typedef std::chrono::microseconds usec;
+	typedef std::chrono::nanoseconds nsec;
 }
 
 

@@ -22,32 +22,6 @@ PcmChunk::~PcmChunk()
 }
 
 
-bool PcmChunk::isEndOfChunk() const
-{
-	return idx >= getFrameCount();
-}
-
-
-double PcmChunk::getFrameCount() const
-{
-	return (payloadSize / format.frameSize);
-}
-
-
-
-double PcmChunk::getDuration() const
-{
-	return getFrameCount() / format.msRate();
-}
-
-
-
-double PcmChunk::getTimeLeft() const
-{
-	return (getFrameCount() - idx) / format.msRate();
-}
-
-
 
 int PcmChunk::seek(int frames)
 {
@@ -75,5 +49,6 @@ int PcmChunk::readFrames(void* outputBuffer, size_t frameCount)
 //logd << ", new idx: " << idx << ", result: " << result << ", wireChunk->length: " << wireChunk->length << ", format.frameSize: " << format.frameSize << "\n";//std::endl;
 	return result;
 }
+
 
 
