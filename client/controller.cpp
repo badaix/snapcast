@@ -47,12 +47,10 @@ void Controller::onMessageReceived(ClientConnection* connection, const BaseMessa
 }
 
 
-void Controller::start(const std::string& _ip, size_t _port, int _bufferMs)
+void Controller::start(const std::string& _ip, size_t _port)
 {
-	bufferMs = _bufferMs;
 	ip = _ip;
 	clientConnection = new ClientConnection(this, ip, _port);
-
 	controllerThread = new thread(&Controller::worker, this);
 }
 
@@ -77,7 +75,7 @@ void Controller::worker()
 			RequestMsg requestMsg("serverSettings");
 			shared_ptr<ServerSettings> serverSettings(NULL);
 			while (!(serverSettings = clientConnection->sendReq<ServerSettings>(&requestMsg, 1000)));
-			cout << "ServerSettings port: " << serverSettings->port << "\n";
+			cout << "ServerSettings buffer: " << serverSettings->bufferMs << "\n";
 
 			requestMsg.request = "sampleFormat";
 			while (!(sampleFormat = clientConnection->sendReq<SampleFormat>(&requestMsg, 1000)));
@@ -110,7 +108,7 @@ cout << "Received: " << TimeProvider::sinceEpoche<chronos::msec>(TimeProvider::t
 			}
 
 			stream = new Stream(*sampleFormat);
-			stream->setBufferLen(bufferMs);
+			stream->setBufferLen(serverSettings->bufferMs);
 
 			Player player(stream);
 			player.start();

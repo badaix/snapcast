@@ -24,7 +24,7 @@ int main (int argc, char *argv[])
 {
 	int deviceIdx;
 	string ip;
-	int bufferMs;
+//	int bufferMs;
 	size_t port;
 	bool runAsDaemon;
 //	string sampleFormat;
@@ -35,7 +35,7 @@ int main (int argc, char *argv[])
 	("ip,i", po::value<string>(&ip)->default_value("192.168.0.2"), "server IP")
 	("soundcard,s", po::value<int>(&deviceIdx)->default_value(-1), "index of the soundcard")
 //		("sampleformat,f", po::value<string>(&sampleFormat)->default_value("48000:16:2"), "sample format")
-	("buffer,b", po::value<int>(&bufferMs)->default_value(300), "buffer size [ms]")
+//	("buffer,b", po::value<int>(&bufferMs)->default_value(300), "buffer size [ms]")
 	("daemon,d", po::bool_switch(&runAsDaemon)->default_value(false), "daemonize")
 	;
 
@@ -57,7 +57,7 @@ int main (int argc, char *argv[])
 	}
 
 	Controller controller;
-	controller.start(ip, port, bufferMs);
+	controller.start(ip, port);
 
 	while(true)
 		usleep(10000);

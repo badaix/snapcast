@@ -8,7 +8,7 @@
 class ServerSettings : public BaseMessage
 {
 public:
-	ServerSettings(size_t _port = 0) : BaseMessage(message_type::serversettings), port(_port)
+	ServerSettings() : BaseMessage(message_type::serversettings)
 	{
 	}
 
@@ -18,7 +18,7 @@ public:
 
 	virtual void read(std::istream& stream)
 	{
-		stream.read(reinterpret_cast<char *>(&port), sizeof(int32_t));
+		stream.read(reinterpret_cast<char *>(&bufferMs), sizeof(int32_t));
 	}
 
 	virtual uint32_t getSize()
@@ -26,12 +26,12 @@ public:
 		return sizeof(int32_t);
 	}
 
-	int32_t port;
+	int32_t bufferMs;
 
 protected:
 	virtual void doserialize(std::ostream& stream)
 	{
-		stream.write(reinterpret_cast<char *>(&port), sizeof(int32_t));
+		stream.write(reinterpret_cast<char *>(&bufferMs), sizeof(int32_t));
 	}
 };
 

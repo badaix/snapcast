@@ -29,6 +29,7 @@ int main(int argc, char* argv[])
 		string fifoName;
 		string codec;
 		bool runAsDaemon;
+		int32_t bufferMs;
 
 		po::options_description desc("Allowed options");
 		desc.add_options()
@@ -38,6 +39,7 @@ int main(int argc, char* argv[])
 		("codec,c", po::value<string>(&codec)->default_value("ogg"), "transport codec [ogg|pcm]")
 		("fifo,f", po::value<string>(&fifoName)->default_value("/tmp/snapfifo"), "name of fifo file")
 		("daemon,d", po::bool_switch(&runAsDaemon)->default_value(false), "daemonize")
+		("buffer,b", po::value<int32_t>(&bufferMs)->default_value(500), "buffer [ms]")
 		;
 
 		po::variables_map vm;
@@ -80,9 +82,11 @@ int main(int argc, char* argv[])
 			return 1;
 		}
 
-		std::auto_ptr<ServerSettings> serverSettings(new ServerSettings(port + 1));
+		ServerSettings serverSettings;
+		serverSettings.bufferMs = bufferMs;
+
 		ControlServer* controlServer = new ControlServer(port);
-		controlServer->setServerSettings(serverSettings.get());
+		controlServer->setServerSettings(&serverSettings);
 		controlServer->setFormat(&format);
 		controlServer->setHeader(encoder->getHeader());
 		controlServer->start();
