@@ -86,20 +86,18 @@ int main (int argc, char *argv[])
 		return 1;
 	}
 
-	PcmDevice pcmDevice = getPcmDevice(soundcard);
-	if (pcmDevice.idx != -1)
-		cout << pcmDevice.idx << ": " << pcmDevice.name << "\n";
-	else
-	{
-		cout << "soundcard \"" << soundcard << "\" not found\n";
-		return 1;
-	}
-
 	std::clog.rdbuf(new Log("snapclient", LOG_DAEMON));
 	if (runAsDaemon)
 	{
 		daemonize();
 		std::clog << kLogNotice << "daemon started" << std::endl;
+	}
+
+	PcmDevice pcmDevice = getPcmDevice(soundcard);
+	if (pcmDevice.idx == -1)
+	{
+		cout << "soundcard \"" << soundcard << "\" not found\n";
+		return 1;
 	}
 
 
