@@ -128,7 +128,7 @@ void Player::worker()
 	{
 		snd_pcm_avail_delay(pcm_handle, &avail, &delay);
 
-		if (stream_->getPlayerChunk(buff, chronos::usec((chronos::usec::rep)(1000 * (double)delay / stream_->format.msRate())), frames, 500))
+		if (stream_->getPlayerChunk(buff, chronos::usec((chronos::usec::rep)(1000 * (double)delay / stream_->format.msRate())), frames))
 		{
 			if ((pcm = snd_pcm_writei(pcm_handle, buff, frames)) == -EPIPE)
 			{

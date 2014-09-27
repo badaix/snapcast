@@ -32,7 +32,7 @@ public:
 		return queue_.front();
 	}
 
-	bool try_pop(T& item, std::chrono::milliseconds timeout)
+	bool try_pop(T& item, std::chrono::microseconds timeout)
 	{
 		std::unique_lock<std::mutex> mlock(mutex_);
 
@@ -43,6 +43,11 @@ public:
 		queue_.pop();
 
 		return true;
+	}
+
+	bool try_pop(T& item, std::chrono::milliseconds timeout)
+	{
+		return try_pop(item, std::chrono::duration_cast<std::chrono::microseconds>(timeout));
 	}
 
 	void pop(T& item)

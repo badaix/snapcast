@@ -12,7 +12,7 @@ double PcmEncoder::encode(PcmChunk* chunk)
 		for (size_t n=0; n<wireChunk->length; ++n)
 			wireChunk->payload[n] *= 1;
 	*/
-	return chunk->getDuration();
+	return chunk->duration<chronos::msec>().count();
 }
 
 

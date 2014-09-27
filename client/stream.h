@@ -22,12 +22,12 @@ public:
 	Stream(const SampleFormat& format);
 	void addChunk(PcmChunk* chunk);
 	void clearChunks();
-	bool getPlayerChunk(void* outputBuffer, chronos::usec outputBufferDacTime, unsigned long framesPerBuffer, size_t timeout);
+	bool getPlayerChunk(void* outputBuffer, const chronos::usec& outputBufferDacTime, unsigned long framesPerBuffer);
 	void setBufferLen(size_t bufferLenMs);
 	const SampleFormat& format;
 
 private:
-	chronos::time_point_hrc getNextPlayerChunk(void* outputBuffer, unsigned long framesPerBuffer, size_t timeout, const chronos::usec& correction = chronos::usec(0));
+	chronos::time_point_hrc getNextPlayerChunk(void* outputBuffer, const chronos::usec& timeout, unsigned long framesPerBuffer, const chronos::usec& correction = chronos::usec(0));
 	chronos::time_point_hrc getSilentPlayerChunk(void* outputBuffer, unsigned long framesPerBuffer);
 	chronos::time_point_hrc seek(long ms);
 //	time_point_ms seekTo(const time_point_ms& to);
