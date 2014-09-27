@@ -7,13 +7,14 @@
 #include "clientConnection.h"
 #include "decoder.h"
 #include "stream.h"
+#include "pcmDevice.h"
 
 
 class Controller : public MessageReceiver
 {
 public:
 	Controller();
-	void start(const std::string& _ip, size_t _port);
+	void start(const PcmDevice& pcmDevice, const std::string& _ip, size_t _port);
 	void stop();
 	virtual void onMessageReceived(ClientConnection* connection, const BaseMessage& baseMessage, char* buffer);
 	virtual void onException(ClientConnection* connection, const std::exception& exception);
@@ -27,6 +28,7 @@ private:
 	std::string ip;
 	std::shared_ptr<SampleFormat> sampleFormat;
 	Decoder* decoder;
+	PcmDevice pcmDevice_;
 };
 
 

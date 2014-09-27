@@ -47,9 +47,10 @@ void Controller::onMessageReceived(ClientConnection* connection, const BaseMessa
 }
 
 
-void Controller::start(const std::string& _ip, size_t _port)
+void Controller::start(const PcmDevice& pcmDevice, const std::string& _ip, size_t _port)
 {
 	ip = _ip;
+	pcmDevice_ = pcmDevice;
 	clientConnection = new ClientConnection(this, ip, _port);
 	controllerThread = new thread(&Controller::worker, this);
 }
@@ -92,25 +93,22 @@ void Controller::worker()
 			decoder->setHeader(headerChunk.get());
 
 			RequestMsg timeReq("time");
-			for (size_t n=0; n<30; ++n)
+			for (size_t n=0; n<50; ++n)
 			{
 				shared_ptr<TimeMsg> reply = clientConnection->sendReq<TimeMsg>(&timeReq, 2000);
 				if (reply)
 				{
 					double latency = (reply->received.sec - reply->sent.sec) + (reply->received.usec - reply->sent.usec) / 1000000.;
 					TimeProvider::getInstance().setDiffToServer((reply->latency - latency) * 1000 / 2);
-/*cout << TimeProvider::sinceEpoche<chronos::usec>(chronos::hrc::now()).count() << "\n";
-cout << TimeProvider::sinceEpoche<chronos::msec>(TimeProvider::now()).count() << "\n";
-cout << TimeProvider::sinceEpoche<chronos::msec>(TimeProvider::serverNow()).count() << "\n";
-cout << "Received: " << TimeProvider::sinceEpoche<chronos::msec>(TimeProvider::toTimePoint(reply->received)).count() << "\n\n";
-*/					usleep(1000);
+					usleep(1000);
 				}
 			}
+			cout << "diff to server [ms]: " << TimeProvider::getInstance().getDiffToServer<chronos::msec>().count() << "\n";
 
 			stream = new Stream(*sampleFormat);
 			stream->setBufferLen(serverSettings->bufferMs);
 
-			Player player(stream);
+			Player player(pcmDevice_, stream);
 			player.start();
 
 			RequestMsg startStream("startStream");

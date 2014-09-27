@@ -22,9 +22,19 @@ public:
 	uint16_t sampleSize;
 	uint16_t frameSize;
 
-	double msRate() const
+	inline double msRate() const
 	{
-		return (double)rate/1000.f;
+		return (double)rate/1000.;
+	}
+
+	inline double usRate() const
+	{
+		return (double)rate/1000000.;
+	}
+
+	inline double nsRate() const
+	{
+		return (double)rate/1000000000.;
 	}
 
 	virtual void read(std::istream& stream)

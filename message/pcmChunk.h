@@ -17,8 +17,9 @@ public:
 	~PcmChunk();
 
 	int readFrames(void* outputBuffer, size_t frameCount);
+	int seek(int frames);
 
-	inline chronos::time_point_hrc timePoint() const
+	inline chronos::time_point_hrc start() const
 	{
 		return chronos::time_point_hrc(
 				chronos::sec(timestamp.sec) + 
@@ -27,7 +28,10 @@ public:
 				);
 	}
 
-	int seek(int frames);
+	inline chronos::time_point_hrc end() const
+	{
+		return start() + durationLeft<chronos::usec>();
+	}
 	
 	template<typename T>
 	inline T duration() const

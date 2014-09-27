@@ -2,13 +2,12 @@
 #include <alsa/asoundlib.h>
 #include <iostream>
 
-#define PCM_DEVICE "default"
 #define BUFFER_TIME 100000
 
 using namespace std;
 
 
-Player::Player(Stream* stream) : active_(false), stream_(stream)
+Player::Player(const PcmDevice& pcmDevice, Stream* stream) : active_(false), stream_(stream), pcmDevice_(pcmDevice)
 {
 }
 
@@ -25,8 +24,8 @@ void Player::start()
 
 
 	/* Open the PCM device in playback mode */
-	if ((pcm = snd_pcm_open(&pcm_handle, PCM_DEVICE, SND_PCM_STREAM_PLAYBACK, 0)) < 0)
-		cout << "ERROR: Can't open " << PCM_DEVICE << " PCM device. " << snd_strerror(pcm) << "\n";
+	if ((pcm = snd_pcm_open(&pcm_handle, pcmDevice_.name.c_str(), SND_PCM_STREAM_PLAYBACK, 0)) < 0)
+		cout << "ERROR: Can't open " << pcmDevice_.name << " PCM device. " << snd_strerror(pcm) << "\n";
 
 	/*	struct snd_pcm_playback_info_t pinfo;
 		if ( (pcm = snd_pcm_playback_info( pcm_handle, &pinfo )) < 0 )
@@ -146,6 +145,58 @@ void Player::worker()
 	snd_pcm_drain(pcm_handle);
 	snd_pcm_close(pcm_handle);
 	free(buff);
+}
+
+
+
+vector<PcmDevice> Player::pcm_list(void)
+{
+	void **hints, **n;
+	char *name, *descr, *io;
+	vector<PcmDevice> result;
+	PcmDevice pcmDevice;
+
+	if (snd_device_name_hint(-1, "pcm", &hints) < 0)
+		return result;
+	n = hints;
+	size_t idx(0);
+	while (*n != NULL) {
+		name = snd_device_name_get_hint(*n, "NAME");
+		descr = snd_device_name_get_hint(*n, "DESC");
+		io = snd_device_name_get_hint(*n, "IOID");
+		if (io != NULL && strcmp(io, "Output") != 0)
+			goto __end;
+		pcmDevice.name = name;
+		pcmDevice.description = descr;
+		pcmDevice.idx = idx++;
+		result.push_back(pcmDevice);
+//		printf("%s\n", name);
+//cout << "Name: " << name << "\n";
+//cout << "Desc: " << descr << "\n";
+/*
+		if ((descr1 = descr) != NULL) {
+			printf("    ");
+			while (*descr1) {
+				if (*descr1 == '\n')
+					printf("\n    ");
+				else
+					putchar(*descr1);
+				descr1++;
+			}
+			putchar('\n');
+		}
+*/
+    __end:
+     	if (name != NULL)
+      		free(name);
+		if (descr != NULL)
+			free(descr);
+		if (io != NULL)
+			free(io);
+		n++;
+	}
+	snd_device_name_free_hint(hints);
+	return result;
 }
 
 

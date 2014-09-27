@@ -3,7 +3,7 @@
 
 TimeProvider::TimeProvider() : diffToServer(0)
 {
-	diffBuffer.setSize(120);
+	diffBuffer.setSize(100);
 }
 
 
@@ -13,22 +13,10 @@ void TimeProvider::setDiffToServer(double ms)
 	diffToServer = diffBuffer.median();
 }
 
-
-long TimeProvider::getDiffToServer()
-{
-	return diffToServer;
-}
-
-
-long TimeProvider::getDiffToServerMs()
-{
-	return diffToServer / 1000;
-}
-
-
+/*
 long TimeProvider::getPercentileDiffToServer(size_t percentile)
 {
 	return diffBuffer.percentile(percentile);
 }
-
+*/
 

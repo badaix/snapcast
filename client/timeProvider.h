@@ -18,10 +18,17 @@ public:
 	}
 
 	void setDiffToServer(double ms);
-	long getDiffToServer();
-	long getPercentileDiffToServer(size_t percentile);
-	long getDiffToServerMs();
 
+	template<typename T>
+	inline T getDiffToServer() const
+	{
+		return std::chrono::duration_cast<T>(chronos::usec(diffToServer));
+	}
+
+/*	chronos::usec::rep getDiffToServer();
+	chronos::usec::rep getPercentileDiffToServer(size_t percentile);
+	long getDiffToServerMs();
+*/
 
 	template<typename T>
 	static T sinceEpoche(const chronos::time_point_hrc& point) 
@@ -41,7 +48,7 @@ public:
 
 	inline static chronos::time_point_hrc serverNow()
 	{
-		return chronos::hrc::now() + chronos::usec(TimeProvider::getInstance().getDiffToServer());
+		return chronos::hrc::now() + TimeProvider::getInstance().getDiffToServer<chronos::usec>();
 	}
 
 private:
@@ -49,8 +56,8 @@ private:
 	TimeProvider(TimeProvider const&);   // Don't Implement
 	void operator=(TimeProvider const&); // Don't implement
 
-	DoubleBuffer<long> diffBuffer;
-	std::atomic<long> diffToServer;
+	DoubleBuffer<chronos::usec::rep> diffBuffer;
+	std::atomic<chronos::usec::rep> diffToServer;
 };
 
 

@@ -5,6 +5,13 @@
 
 namespace chronos
 {
+	template <class Rep, class Period>
+	std::chrono::duration<Rep, Period> abs(std::chrono::duration<Rep, Period> d)
+	{
+		Rep x = d.count(); 
+		return std::chrono::duration<Rep, Period>(x >= 0 ? x : -x);
+	}
+
 	typedef std::chrono::high_resolution_clock hrc;
 	typedef std::chrono::time_point<hrc> time_point_hrc;
 	typedef std::chrono::seconds sec;

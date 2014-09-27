@@ -27,7 +27,7 @@ public:
 	const SampleFormat& format;
 
 private:
-	chronos::time_point_hrc getNextPlayerChunk(void* outputBuffer, unsigned long framesPerBuffer, size_t timeout, int correction = 0);
+	chronos::time_point_hrc getNextPlayerChunk(void* outputBuffer, unsigned long framesPerBuffer, size_t timeout, const chronos::usec& correction = chronos::usec(0));
 	chronos::time_point_hrc getSilentPlayerChunk(void* outputBuffer, unsigned long framesPerBuffer);
 	chronos::time_point_hrc seek(long ms);
 //	time_point_ms seekTo(const time_point_ms& to);
@@ -37,7 +37,7 @@ private:
 	SampleFormat format_;
 
 	long lastTick;
-	long sleep;
+	chronos::usec sleep;
 
 	Queue<std::shared_ptr<PcmChunk>> chunks;
 	DoubleBuffer<long> cardBuffer;

@@ -48,7 +48,7 @@ time_point_hrc Stream::getSilentPlayerChunk(void* outputBuffer, unsigned long fr
 {
 	if (!chunk)
 		chunk = chunks.pop();
-	time_point_hrc tp = chunk->timePoint();
+	time_point_hrc tp = chunk->start();
 	memset(outputBuffer, 0, framesPerBuffer * format.frameSize);
 	return tp;
 }
@@ -78,7 +78,7 @@ time_point_hrc Stream::seek(long ms)
 		chunk = chunks.pop();
 
 	if (ms <= 0)
-		return chunk->timePoint();
+		return chunk->start();
 
 //	time_point_ms tp = chunk->timePoint();
 	while (ms > chunk->duration<chronos::msec>().count())
@@ -87,27 +87,27 @@ time_point_hrc Stream::seek(long ms)
 		ms -= min(ms, (long)chunk->durationLeft<chronos::msec>().count());
 	}
 	chunk->seek(ms * format.msRate());
-	return chunk->timePoint();
+	return chunk->start();
 }
 
 
-time_point_hrc Stream::getNextPlayerChunk(void* outputBuffer, unsigned long framesPerBuffer, size_t timeout, int correction)
+time_point_hrc Stream::getNextPlayerChunk(void* outputBuffer, unsigned long framesPerBuffer, size_t timeout, const chronos::usec& correction)
 {
 	if (!chunk)
 		if (!chunks.try_pop(chunk, chronos::msec(timeout)))
 			throw 0;
 
 //cout << "duration: " << chunk->duration<chronos::msec>().count() << ", " << chunk->duration<chronos::usec>().count() << ", " << chunk->duration<chronos::nsec>().count() << "\n";
-	time_point_hrc tp = chunk->timePoint();
+	time_point_hrc tp = chunk->start();
 	int read = 0;
-	int toRead = framesPerBuffer + correction*format.msRate();
+	int toRead = framesPerBuffer + correction.count()*format.usRate();
 	char* buffer;
 
-	if (correction != 0)
+	if (correction.count() != 0)
 	{
-		int msBuffer = floor(framesPerBuffer / format.msRate());
-		if (abs(correction) > msBuffer / 2)
-			correction = copysign(msBuffer / 2, correction);
+//		chronos::usec usBuffer = (chronos::usec::rep)(framesPerBuffer / format.usRate());
+//		if (abs(correction) > usBuffer / 2)
+//			correction = copysign(usBuffer / 2, correction);
 		buffer = (char*)malloc(toRead * format.frameSize);
 	}
 	else
@@ -121,10 +121,10 @@ time_point_hrc Stream::getNextPlayerChunk(void* outputBuffer, unsigned long fram
 				throw 0;
 	}
 
-	if (correction != 0)
+	if (correction.count() != 0)
 	{
 		float factor = (float)toRead / framesPerBuffer;//(float)(framesPerBuffer*channels_);
-		std::cout << "correction: " << correction << ", factor: " << factor << "\n";
+		std::cout << "correction: " << correction.count() << ", factor: " << factor << "\n";
 		float idx = 0;
 		for (size_t n=0; n<framesPerBuffer; ++n)
 		{
@@ -156,128 +156,113 @@ void Stream::resetBuffers()
 }
 
 
+
 bool Stream::getPlayerChunk(void* outputBuffer, chronos::usec outputBufferDacTime, unsigned long framesPerBuffer, size_t timeout)
 {
 	try
 	{
 	//cout << "framesPerBuffer: " << framesPerBuffer << "\tms: " << framesPerBuffer*2 / PLAYER_CHUNK_MS_SIZE << "\t" << PLAYER_CHUNK_SIZE << "\n";
-		int msBuffer = framesPerBuffer / format_.msRate();
-	//cout << msBuffer << " ms, " << framesPerBuffer << "\t" << format_.rate/1000 << "\n";
-		int ticks = 0;
-		long currentTick = getTickCount();
-		if (lastTick == 0)
-			lastTick = currentTick;
-		ticks = currentTick - lastTick;
-		lastTick = currentTick;
-/*
-pShortBuffer->full() && (abs(shortMedian) > 5): 25
-Sleep: 25
-Chunk: 25	25	25	25	23	105941
-Chunk: 25	25	25	25	55	107210
-Chunk: 25	25	25	25	88	104671
-pShortBuffer->full() && (abs(shortMedian) > 5): 25
-Sleep: 25
-Chunk: 25	25	25	25	20	99614
-Chunk: 25	25	25	25	53	96802
-Chunk: 25	25	25	25	86	117732
-*/
-		int correction = 0;
-		if (sleep != 0)
+		chronos::nsec bufferDuration = chronos::nsec(chronos::usec::rep(framesPerBuffer / format_.nsRate()));
+//		cout << "buffer duration: " << bufferDuration.count() << "\n";
+
+		chronos::usec correction = chronos::usec(0);
+		if (sleep.count() != 0)
 		{
+//			cout << "Sleep " << sleep.count() << "\n";
 			resetBuffers();
-			if (sleep < -msBuffer/2)
+			if (sleep < -bufferDuration/2)
 			{
-				cout << "Sleep " << sleep;
-				msec age = chrono::duration_cast<msec>(TimeProvider::serverNow() - getSilentPlayerChunk(outputBuffer, framesPerBuffer) - bufferMs + outputBufferDacTime);
-				sleep = age.count();
+				usec age = chrono::duration_cast<usec>(TimeProvider::serverNow() - getSilentPlayerChunk(outputBuffer, framesPerBuffer) - bufferMs + outputBufferDacTime);
+				sleep = age;
 //				sleep = PcmChunk::getAge(getSilentPlayerChunk(outputBuffer, framesPerBuffer)) - bufferMs + outputBufferDacTime + TimeProvider::getInstance().getDiffToServerMs();
-				std::cerr << " after: " << sleep << ", chunks: " << chunks.size() << "\n";
+				std::cerr << " after: " << sleep.count() << ", chunks: " << chunks.size() << "\n";
 	//	std::clog << kLogNotice << "sleep: " << sleep << std::endl;
 	//			if (sleep > -msBuffer/2)
 	//				sleep = 0;
-				if (sleep < -msBuffer/2)
+				if (sleep < -bufferDuration/2)
 					return true;
 			}
-			else if (sleep > msBuffer/2)
+			else if (sleep > bufferDuration/2)
 			{
 				if (!chunk)
 					if (!chunks.try_pop(chunk, chronos::msec(timeout)))
 						throw 0;
-				while (sleep > chunk->duration<chronos::msec>().count())
+				while (sleep > chunk->duration<chronos::msec>())
 				{
-					cout << "sleep > chunk->getDuration(): " << sleep << " > " << chunk->duration<chronos::msec>().count() << ", chunks: " << chunks.size() << ", out: " << outputBufferDacTime.count() << ", needed: " << msBuffer << "\n";
+					cout << "sleep > chunk->getDuration(): " << sleep.count() << " > " << chunk->duration<chronos::msec>().count() << ", chunks: " << chunks.size() << ", out: " << outputBufferDacTime.count() << ", needed: " << bufferDuration.count() << "\n";
 					if (!chunks.try_pop(chunk, chronos::msec(timeout)))
 						throw 0;
-					msec age = std::chrono::duration_cast<msec>(TimeProvider::serverNow() - chunk->timePoint() - bufferMs + outputBufferDacTime);
-					sleep = age.count();
+					msec age = std::chrono::duration_cast<msec>(TimeProvider::serverNow() - chunk->start() - bufferMs + outputBufferDacTime);
+					sleep = age;
 					usleep(1000);
 				}
 //				cout << "seek: " << PcmChunk::getAge(seek(sleep)) - bufferMs + outputBufferDacTime << "\n";
-				sleep = 0;
+				sleep = chronos::usec(0);
 			}
-			else if (sleep < 0)
+			else if (sleep < -chronos::usec(100))
 			{
-				++sleep;
-				correction = -1;
+				sleep += chronos::usec(100);
+				correction = -chronos::usec(100);
 			}
-			else if (sleep > 0)
+			else if (sleep > chronos::usec(100))
 			{
-				--sleep;
-				correction = 1;
+				sleep -= chronos::usec(100);
+				correction = chronos::usec(100);
+			}
+			else
+			{
+				cout << "Sleep " << sleep.count() << "\n";
+				correction = sleep;
+				sleep = chronos::usec(0);
 			}
 		}
 
-		long age(0);
-		age = std::chrono::duration_cast<msec>(TimeProvider::serverNow() - getNextPlayerChunk(outputBuffer, framesPerBuffer, timeout, correction) - bufferMs + outputBufferDacTime).count();
+		chronos::usec age = std::chrono::duration_cast<usec>(TimeProvider::serverNow() - getNextPlayerChunk(outputBuffer, framesPerBuffer, timeout, correction) - bufferMs + outputBufferDacTime);
 
-
-		if (sleep == 0)
+		if (sleep.count() == 0)
 		{
-			if (buffer.full() && (abs(median) > 1))
+			if (buffer.full() && (chronos::usec(abs(median)) > chronos::msec(1)))
 			{
 				cout << "pBuffer->full() && (abs(median) > 1): " << median << "\n";
-				sleep = median;
+				sleep = chronos::usec(median);
 			}
-			else if (shortBuffer.full() && (abs(shortMedian) > 5))
+			else if (shortBuffer.full() && (chronos::usec(abs(shortMedian)) > chronos::msec(5)))
 			{
 				cout << "pShortBuffer->full() && (abs(shortMedian) > 5): " << shortMedian << "\n";
-				sleep = shortMedian;
+				sleep = chronos::usec(shortMedian);
 			}
-			else if (miniBuffer.full() && (abs(miniBuffer.median()) > 50))
+			else if (miniBuffer.full() && (chronos::usec(abs(miniBuffer.median())) > chronos::msec(50)))
 			{
 				cout << "pMiniBuffer->full() && (abs(pMiniBuffer->mean()) > 50): " << miniBuffer.median() << "\n";
-				sleep = miniBuffer.mean();
+				sleep = chronos::usec((chronos::msec::rep)miniBuffer.mean());
 			}
-			else if (abs(age) > 200)
+			else if (chronos::abs(age) > chronos::msec(200))
 			{
-				cout << "age > 50: " << age << "\n";
+				cout << "age > 50: " << age.count() << "\n";
 				sleep = age;
 			}
 		}
 
-		if (sleep != 0)
-			std::cerr << "Sleep: " << sleep << "\n";
+		if (sleep.count() != 0)
+			std::cerr << "Sleep: " << sleep.count() << "\n";
 
+
+		updateBuffers(age.count());
 
 	//	std::cerr << "Chunk: " << age << "\t" << outputBufferDacTime*1000 << "\n";
-		if (ticks > 2)
-		{
-	//		cout << age << "\n";
-			updateBuffers(age);
-		}
 		time_t now = time(NULL);
 		if (now != lastUpdate)
 		{
 			lastUpdate = now;
 			median = buffer.median();
 			shortMedian = shortBuffer.median();
-			std::cerr << "Chunk: " << age << "\t" << miniBuffer.median() << "\t" << shortMedian << "\t" << median << "\t" << buffer.size() << "\t" << /*cardBuffer << "\t" <<*/ outputBufferDacTime.count() << "\n";
+			std::cerr << "Chunk: " << age.count()/100 << "\t" << miniBuffer.median()/100 << "\t" << shortMedian/100 << "\t" << median/100 << "\t" << buffer.size() << "\t" << /*cardBuffer << "\t" <<*/ outputBufferDacTime.count() << "\n";
 		}
 		return true;
 	}
 	catch(int e)
 	{
-		sleep = 0;
+		sleep = chronos::usec(0);
 		return false;
 	}
 }

@@ -12,31 +12,57 @@
 #include "common/utils.h"
 #include "common/log.h"
 #include "controller.h"
-
+#include "alsaPlayer.h"
 
 
 using namespace std;
 namespace po = boost::program_options;
 
 
+PcmDevice getPcmDevice(const std::string& soundcard)
+{
+	vector<PcmDevice> pcmDevices = Player::pcm_list();
+	int soundcardIdx = -1;
+
+	try
+	{
+		soundcardIdx = boost::lexical_cast<int>(soundcard);
+		for (auto dev: pcmDevices)
+			if (dev.idx == soundcardIdx)
+				return dev;
+	}
+	catch(...)
+	{
+	}
+
+	for (auto dev: pcmDevices)
+		if (dev.name.find(soundcard) != string::npos)
+			return dev;
+
+	PcmDevice pcmDevice;
+	return pcmDevice;
+}
+
 
 int main (int argc, char *argv[])
 {
-	int deviceIdx;
+	string soundcard;
 	string ip;
 //	int bufferMs;
 	size_t port;
 	bool runAsDaemon;
+	bool listPcmDevices;
 //	string sampleFormat;
 	po::options_description desc("Allowed options");
 	desc.add_options()
 	("help,h", "produce help message")
 	("port,p", po::value<size_t>(&port)->default_value(98765), "port where the server listens on")
 	("ip,i", po::value<string>(&ip)->default_value("192.168.0.2"), "server IP")
-	("soundcard,s", po::value<int>(&deviceIdx)->default_value(-1), "index of the soundcard")
+	("soundcard,s", po::value<string>(&soundcard)->default_value("default"), "index or name of the soundcard")
 //		("sampleformat,f", po::value<string>(&sampleFormat)->default_value("48000:16:2"), "sample format")
 //	("buffer,b", po::value<int>(&bufferMs)->default_value(300), "buffer size [ms]")
 	("daemon,d", po::bool_switch(&runAsDaemon)->default_value(false), "daemonize")
+	("list,l", po::bool_switch(&listPcmDevices)->default_value(false), "list pcm devices")
 	;
 
 	po::variables_map vm;
@@ -49,6 +75,26 @@ int main (int argc, char *argv[])
 		return 1;
 	}
 
+	if (listPcmDevices)
+	{
+		vector<PcmDevice> pcmDevices = Player::pcm_list();
+		for (auto dev: pcmDevices)
+		{
+			cout << dev.idx << ": " << dev.name << "\n";
+			cout << dev.description << "\n\n";
+		}
+		return 1;
+	}
+
+	PcmDevice pcmDevice = getPcmDevice(soundcard);
+	if (pcmDevice.idx != -1)
+		cout << pcmDevice.idx << ": " << pcmDevice.name << "\n";
+	else
+	{
+		cout << "soundcard \"" << soundcard << "\" not found\n";
+		return 1;
+	}
+
 	std::clog.rdbuf(new Log("snapclient", LOG_DAEMON));
 	if (runAsDaemon)
 	{
@@ -56,8 +102,9 @@ int main (int argc, char *argv[])
 		std::clog << kLogNotice << "daemon started" << std::endl;
 	}
 
+
 	Controller controller;
-	controller.start(ip, port);
+	controller.start(pcmDevice, ip, port);
 
 	while(true)
 		usleep(10000);
