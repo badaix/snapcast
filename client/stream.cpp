@@ -1,7 +1,6 @@
 #include "stream.h"
 #include <iostream>
 #include <string.h>
-#include <unistd.h>
 #include "common/log.h"
 #include "timeProvider.h"
 
@@ -14,7 +13,7 @@ Stream::Stream(const SampleFormat& sampleFormat) : format(format_), format_(samp
 	buffer.setSize(500);
 	shortBuffer.setSize(100);
 	miniBuffer.setSize(20);
-	cardBuffer.setSize(50);
+//	cardBuffer.setSize(50);
 	bufferMs = msec(500);
 }
 
@@ -178,10 +177,10 @@ bool Stream::getPlayerChunk(void* outputBuffer, const chronos::usec& outputBuffe
 		chronos::usec correction = chronos::usec(0);
 		if (sleep.count() != 0)
 		{
-//			cout << "Sleep " << sleep.count() << "\n";
 			resetBuffers();
 			if (sleep < -bufferDuration/2)
 			{
+				// We're early: not enough chunks. play silence. Reference chunk is the oldest (front) one
 				sleep = chrono::duration_cast<usec>(TimeProvider::serverNow() - getSilentPlayerChunk(outputBuffer, framesPerBuffer) - bufferMs + outputBufferDacTime);
 //cout << "-sleep: " << sleep.count() << " " << -bufferDuration.count() / 2000 << "\n";
 				if (sleep < -bufferDuration/2)
@@ -189,17 +188,18 @@ bool Stream::getPlayerChunk(void* outputBuffer, const chronos::usec& outputBuffe
 			}
 			else if (sleep > bufferDuration/2)
 			{
+				// We're late: discard oldest chunks
 				while (sleep > chunk->duration<chronos::usec>())
 				{
-					cout << "sleep > chunk->getDuration(): " << sleep.count() << " > " << chunk->duration<chronos::msec>().count() << ", chunks: " << chunks.size() << ", out: " << outputBufferDacTime.count() << ", needed: " << bufferDuration.count() << "\n";
+//					cout << "sleep > chunk->getDuration(): " << sleep.count() << " > " << chunk->duration<chronos::msec>().count() << ", chunks: " << chunks.size() << ", out: " << outputBufferDacTime.count() << ", needed: " << bufferDuration.count() << "\n";
 					if (!chunks.try_pop(chunk, outputBufferDacTime))
 						return false;
 
 					sleep = std::chrono::duration_cast<usec>(TimeProvider::serverNow() - chunk->start() - bufferMs + outputBufferDacTime);
-					usleep(1000);
 				}
 			}
-			
+
+			// out of sync, can be corrected by playing faster/slower
 			if (sleep < -chronos::usec(100))
 			{
 				sleep += chronos::usec(100);
@@ -245,14 +245,14 @@ bool Stream::getPlayerChunk(void* outputBuffer, const chronos::usec& outputBuffe
 
 		updateBuffers(age.count());
 
-	//	std::cerr << "Chunk: " << age << "\t" << outputBufferDacTime*1000 << "\n";
+		// print sync stats
 		time_t now = time(NULL);
 		if (now != lastUpdate)
 		{
 			lastUpdate = now;
 			median = buffer.median();
 			shortMedian = shortBuffer.median();
-			std::cerr << "Chunk: " << age.count()/100 << "\t" << miniBuffer.median()/100 << "\t" << shortMedian/100 << "\t" << median/100 << "\t" << buffer.size() << "\t" << /*cardBuffer << "\t" <<*/ outputBufferDacTime.count() << "\n";
+			std::cerr << "Chunk: " << age.count()/100 << "\t" << miniBuffer.median()/100 << "\t" << shortMedian/100 << "\t" << median/100 << "\t" << buffer.size() << "\t" << outputBufferDacTime.count() << "\n";
 		}
 		return true;
 	}

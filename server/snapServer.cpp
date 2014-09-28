@@ -65,7 +65,7 @@ int main(int argc, char* argv[])
 
 		timeval tvChunk;
 		gettimeofday(&tvChunk, NULL);
-		long nextTick = getTickCount();
+		long nextTick = chronos::getTickCount();
 
 		mkfifo(fifoName.c_str(), 0777);
 		SampleFormat format(sampleFormat);
@@ -122,9 +122,9 @@ int main(int argc, char* argv[])
 						controlServer->send(chunk);
 //cout << chunk->tv_sec << ", " << chunk->tv_usec / 1000 << "\n";
 //                    addUs(tvChunk, 1000*chunk->getDuration());
-					addUs(tvChunk, chunkDuration * 1000);
+					chronos::addUs(tvChunk, chunkDuration * 1000);
 					nextTick += duration;
-					long currentTick = getTickCount();
+					long currentTick = chronos::getTickCount();
 					if (nextTick > currentTick)
 					{
 						usleep((nextTick - currentTick) * 1000);
@@ -132,7 +132,7 @@ int main(int argc, char* argv[])
 					else
 					{
 						gettimeofday(&tvChunk, NULL);
-						nextTick = getTickCount();
+						nextTick = chronos::getTickCount();
 					}
 				}
 			}

@@ -45,7 +45,7 @@ inline static long getAge(const time_point_ms& time_point)
 }
 */
 
-
+/*
 static void addMs(timeval& tv, int ms)
 {
 	if (ms < 0)
@@ -75,7 +75,7 @@ static void addUs(timeval& tv, int us)
 	tv.tv_sec += (tv.tv_usec / 1000000);
 	tv.tv_usec %= 1000000;
 }
-
+*/
 
 /*static long diffMs(const timeval& t1, const timeval& t2)
 {
@@ -83,21 +83,6 @@ static void addUs(timeval& tv, int us)
             (t1.tv_usec - t2.tv_usec))/1000;
 }*/
 
-
-static long getTickCount()
-{
-	struct timespec now;
-	clock_gettime(CLOCK_MONOTONIC, &now);
-	return now.tv_sec*1000 + now.tv_nsec / 1000000;
-}
-
-
-static long getuTickCount()
-{
-	struct timespec now;
-	clock_gettime(CLOCK_MONOTONIC, &now);
-	return now.tv_sec*1000000 + now.tv_nsec / 1000;
-}
 
 
 

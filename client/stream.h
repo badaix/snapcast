@@ -1,18 +1,18 @@
 #ifndef STREAM_H
 #define STREAM_H
 
+//#include <mutex>
+//#include <condition_variable>
+//#include <vector>
+//#include <chrono>
+//#include "common/timeUtils.h"
 
 #include <deque>
-#include <mutex>
-#include <condition_variable>
-#include <vector>
 #include <memory>
-#include <chrono>
 #include "doubleBuffer.h"
 #include "message/message.h"
 #include "message/pcmChunk.h"
 #include "message/sampleFormat.h"
-#include "common/timeUtils.h"
 #include "common/queue.h"
 
 
@@ -40,10 +40,10 @@ private:
 	chronos::usec sleep;
 
 	Queue<std::shared_ptr<PcmChunk>> chunks;
-	DoubleBuffer<long> cardBuffer;
-	DoubleBuffer<long> miniBuffer;
-	DoubleBuffer<long> buffer;
-	DoubleBuffer<long> shortBuffer;
+//	DoubleBuffer<chronos::usec::rep> cardBuffer;
+	DoubleBuffer<chronos::usec::rep> miniBuffer;
+	DoubleBuffer<chronos::usec::rep> buffer;
+	DoubleBuffer<chronos::usec::rep> shortBuffer;
 	std::shared_ptr<PcmChunk> chunk;
 
 	int median;
