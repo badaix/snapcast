@@ -52,17 +52,16 @@ int main (int argc, char *argv[])
 	size_t port;
 	bool runAsDaemon;
 	bool listPcmDevices;
-//	string sampleFormat;
+
 	po::options_description desc("Allowed options");
 	desc.add_options()
 	("help,h", "produce help message")
-	("port,p", po::value<size_t>(&port)->default_value(98765), "port where the server listens on")
+	("list,l", po::bool_switch(&listPcmDevices)->default_value(false), "list pcm devices")
 	("ip,i", po::value<string>(&ip)->default_value("192.168.0.2"), "server IP")
+	("port,p", po::value<size_t>(&port)->default_value(98765), "server port")
 	("soundcard,s", po::value<string>(&soundcard)->default_value("default"), "index or name of the soundcard")
-//		("sampleformat,f", po::value<string>(&sampleFormat)->default_value("48000:16:2"), "sample format")
 //	("buffer,b", po::value<int>(&bufferMs)->default_value(300), "buffer size [ms]")
 	("daemon,d", po::bool_switch(&runAsDaemon)->default_value(false), "daemonize")
-	("list,l", po::bool_switch(&listPcmDevices)->default_value(false), "list pcm devices")
 	;
 
 	po::variables_map vm;

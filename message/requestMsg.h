@@ -8,11 +8,11 @@
 class RequestMsg : public BaseMessage
 {
 public:
-	RequestMsg() : BaseMessage(message_type::requestmsg), request("")
+	RequestMsg() : BaseMessage(message_type::requestmsg), request(base)
 	{
 	}
 
-	RequestMsg(const std::string& _request) : BaseMessage(message_type::requestmsg), request(_request)
+	RequestMsg(message_type _request) : BaseMessage(message_type::requestmsg), request(_request)
 	{
 	}
 
@@ -22,25 +22,20 @@ public:
 
 	virtual void read(std::istream& stream)
 	{
-		int16_t size;
-		stream.read(reinterpret_cast<char *>(&size), sizeof(int16_t));
-		request.resize(size);
-		stream.read(&request[0], size);
+		stream.read(reinterpret_cast<char *>(&request), sizeof(int16_t));
 	}
 
 	virtual uint32_t getSize()
 	{
-		return sizeof(int16_t) + request.size();
+		return sizeof(int16_t);
 	}
 
-	std::string request;
+	message_type request;
 
 protected:
 	virtual void doserialize(std::ostream& stream)
 	{
-		int16_t size(request.size());
-		stream.write(reinterpret_cast<char *>(&size), sizeof(int16_t));
-		stream.write(request.c_str(), size);
+		stream.write(reinterpret_cast<char *>(&request), sizeof(int16_t));
 	}
 };
 

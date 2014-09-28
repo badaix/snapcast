@@ -37,7 +37,8 @@ enum message_type
 	serversettings = 4,
 	timemsg = 5,
 	requestmsg = 6,
-	ackMsg = 7
+	ackMsg = 7,
+	commandmsg = 8
 };
 
 

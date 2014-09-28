@@ -11,6 +11,7 @@
 #include "message/timeMsg.h"
 #include "message/requestMsg.h"
 #include "message/ackMsg.h"
+#include "message/commandMsg.h"
 
 using namespace std;
 
@@ -73,16 +74,16 @@ void Controller::worker()
 		try
 		{
 			clientConnection->start();
-			RequestMsg requestMsg("serverSettings");
+			RequestMsg requestMsg(serversettings);
 			shared_ptr<ServerSettings> serverSettings(NULL);
 			while (!(serverSettings = clientConnection->sendReq<ServerSettings>(&requestMsg, 1000)));
 			cout << "ServerSettings buffer: " << serverSettings->bufferMs << "\n";
 
-			requestMsg.request = "sampleFormat";
+			requestMsg.request = sampleformat;
 			while (!(sampleFormat = clientConnection->sendReq<SampleFormat>(&requestMsg, 1000)));
 			cout << "SampleFormat rate: " << sampleFormat->rate << ", bits: " << sampleFormat->bits << ", channels: " << sampleFormat->channels << "\n";
 
-			requestMsg.request = "headerChunk";
+			requestMsg.request = header;
 			shared_ptr<HeaderMessage> headerChunk(NULL);
 			while (!(headerChunk = clientConnection->sendReq<HeaderMessage>(&requestMsg, 1000)));
 			cout << "Codec: " << headerChunk->codec << "\n";
@@ -92,7 +93,7 @@ void Controller::worker()
 				decoder = new PcmDecoder();
 			decoder->setHeader(headerChunk.get());
 
-			RequestMsg timeReq("time");
+			RequestMsg timeReq(timemsg);
 			for (size_t n=0; n<50; ++n)
 			{
 				shared_ptr<TimeMsg> reply = clientConnection->sendReq<TimeMsg>(&timeReq, 2000);
@@ -111,7 +112,7 @@ void Controller::worker()
 			Player player(pcmDevice_, stream);
 			player.start();
 
-			RequestMsg startStream("startStream");
+			CommandMsg startStream("startStream");
 			shared_ptr<AckMsg> ackMsg(NULL);
 			while (!(ackMsg = clientConnection->sendReq<AckMsg>(&startStream, 1000)));
 

@@ -34,10 +34,10 @@ int main(int argc, char* argv[])
 		po::options_description desc("Allowed options");
 		desc.add_options()
 		("help,h", "produce help message")
-		("port,p", po::value<size_t>(&port)->default_value(98765), "port to listen on")
+		("port,p", po::value<size_t>(&port)->default_value(98765), "server port")
 		("sampleformat,s", po::value<string>(&sampleFormat)->default_value("48000:16:2"), "sample format")
 		("codec,c", po::value<string>(&codec)->default_value("ogg"), "transport codec [ogg|pcm]")
-		("fifo,f", po::value<string>(&fifoName)->default_value("/tmp/snapfifo"), "name of fifo file")
+		("fifo,f", po::value<string>(&fifoName)->default_value("/tmp/snapfifo"), "name of the input fifo file")
 		("daemon,d", po::bool_switch(&runAsDaemon)->default_value(false), "daemonize")
 		("buffer,b", po::value<int32_t>(&bufferMs)->default_value(500), "buffer [ms]")
 		;

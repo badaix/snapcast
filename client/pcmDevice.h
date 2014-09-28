@@ -4,9 +4,8 @@
 #include <string>
 
 
-class PcmDevice
+struct PcmDevice
 {
-public:
 	PcmDevice() : idx(-1){};
 	int idx;
 	std::string name;

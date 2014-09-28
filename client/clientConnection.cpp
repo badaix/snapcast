@@ -3,6 +3,7 @@
 #include <mutex>
 #include "common/log.h"
 #include "clientConnection.h"
+#include "common/utils.h"
 
 
 
@@ -54,6 +55,7 @@ void ClientConnection::start()
 //				setsockopt(socket->native(), SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
 //				setsockopt(socket->native(), SOL_SOCKET, SO_SNDTIMEO, &tv, sizeof(tv));
 	socket->connect(*iterator);
+	cout << "MAC: \"" << getMacAddress(socket->native()) << "\"\n";
 	connected_ = true;
 	cout << "connected\n";
 	std::clog << kLogNotice << "connected\n";// to " << ip << ":" << port << std::endl;

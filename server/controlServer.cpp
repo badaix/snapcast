@@ -2,6 +2,7 @@
 #include "message/timeMsg.h"
 #include "message/ackMsg.h"
 #include "message/requestMsg.h"
+#include "message/commandMsg.h"
 #include <iostream>
 
 
@@ -32,7 +33,6 @@ void ControlServer::send(shared_ptr<BaseMessage> message)
 }
 
 
-
 void ControlServer::onMessageReceived(ServerSession* connection, const BaseMessage& baseMessage, char* buffer)
 {
 //	cout << "onMessageReceived: " << baseMessage.type << ", size: " << baseMessage.size << ", sent: " << baseMessage.sent.sec << "," << baseMessage.sent.usec << ", recv: " << baseMessage.received.sec << "," << baseMessage.received.usec << "\n";
@@ -41,7 +41,7 @@ void ControlServer::onMessageReceived(ServerSession* connection, const BaseMessa
 		RequestMsg requestMsg;
 		requestMsg.deserialize(baseMessage, buffer);
 //		cout << "request: " << requestMsg.request << "\n";
-		if (requestMsg.request == "time")
+		if (requestMsg.request == timemsg)
 		{
 //		timeMsg.latency = (timeMsg.received.sec - timeMsg.sent.sec) * 1000000 + (timeMsg.received.usec - timeMsg.sent.usec);
 			TimeMsg timeMsg;
@@ -51,25 +51,30 @@ void ControlServer::onMessageReceived(ServerSession* connection, const BaseMessa
 //		cout << "Latency: " << diff.sec << "." << diff.usec << "\n";
 			connection->send(&timeMsg);
 		}
-		else if (requestMsg.request == "serverSettings")
+		else if (requestMsg.request == serversettings)
 		{
 			serverSettings->refersTo = requestMsg.id;
 			connection->send(serverSettings);
 		}
-		else if (requestMsg.request == "sampleFormat")
+		else if (requestMsg.request == sampleformat)
 		{
 			sampleFormat->refersTo = requestMsg.id;
 			connection->send(sampleFormat);
 		}
-		else if (requestMsg.request == "headerChunk")
+		else if (requestMsg.request == header)
 		{
 			headerChunk->refersTo = requestMsg.id;
 			connection->send(headerChunk);
 		}
-		else if (requestMsg.request == "startStream")
+	}
+	else if (baseMessage.type == message_type::commandmsg)
+	{
+		CommandMsg commandMsg;
+		commandMsg.deserialize(baseMessage, buffer);
+		if (commandMsg.command == "startStream")
 		{
 			AckMsg ackMsg;
-			ackMsg.refersTo = requestMsg.id;
+			ackMsg.refersTo = commandMsg.id;
 			connection->send(&ackMsg);
 			connection->setStreamActive(true);
 		}
