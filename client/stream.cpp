@@ -157,6 +157,9 @@ void Stream::resetBuffers()
 
 bool Stream::getPlayerChunk(void* outputBuffer, const chronos::usec& outputBufferDacTime, unsigned long framesPerBuffer)
 {
+	if (outputBufferDacTime > bufferMs)
+		return false;
+
 	if (!chunk && !chunks.try_pop(chunk, outputBufferDacTime))
 		return false;
 
@@ -191,7 +194,7 @@ bool Stream::getPlayerChunk(void* outputBuffer, const chronos::usec& outputBuffe
 				// We're late: discard oldest chunks
 				while (sleep > chunk->duration<chronos::usec>())
 				{
-//					cout << "sleep > chunk->getDuration(): " << sleep.count() << " > " << chunk->duration<chronos::msec>().count() << ", chunks: " << chunks.size() << ", out: " << outputBufferDacTime.count() << ", needed: " << bufferDuration.count() << "\n";
+					cout << "sleep > chunk->getDuration(): " << sleep.count() << " > " << chunk->duration<chronos::msec>().count() << ", chunks: " << chunks.size() << ", out: " << outputBufferDacTime.count() << ", needed: " << bufferDuration.count() << "\n";
 					if (!chunks.try_pop(chunk, outputBufferDacTime))
 						return false;
 
