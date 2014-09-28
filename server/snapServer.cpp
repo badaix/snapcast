@@ -1,7 +1,7 @@
 #include <boost/program_options.hpp>
 #include <chrono>
 #include <memory>
-#include "common/timeUtils.h"
+#include "common/timeDefs.h"
 #include "common/signalHandler.h"
 #include "common/utils.h"
 #include "message/sampleFormat.h"
@@ -128,7 +128,7 @@ int main(int argc, char* argv[])
 					if (nextTick > currentTick)
 					{
 						usleep((nextTick - currentTick) * 1000);
-					}
+					}	
 					else
 					{
 						gettimeofday(&tvChunk, NULL);
