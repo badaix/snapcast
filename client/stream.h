@@ -27,17 +27,22 @@ public:
 	const SampleFormat& format;
 
 private:
-	chronos::time_point_hrc getNextPlayerChunk(void* outputBuffer, const chronos::usec& timeout, unsigned long framesPerBuffer, const chronos::usec& correction = chronos::usec(0));
+	chronos::time_point_hrc getNextPlayerChunk(void* outputBuffer, const chronos::usec& timeout, unsigned long framesPerBuffer);
+	chronos::time_point_hrc getNextPlayerChunk(void* outputBuffer, const chronos::usec& timeout, unsigned long framesPerBuffer, long framesCorrection);
 	chronos::time_point_hrc getSilentPlayerChunk(void* outputBuffer, unsigned long framesPerBuffer);
 	chronos::time_point_hrc seek(long ms);
 //	time_point_ms seekTo(const time_point_ms& to);
 	void updateBuffers(int age);
 	void resetBuffers();
+	void setRealSampleRate(double sampleRate);
 
 	SampleFormat format_;
 
 	long lastTick;
 	chronos::usec sleep;
+
+unsigned long playedSamples;
+chronos::time_point_hrc playedSamplesTime;
 
 	Queue<std::shared_ptr<PcmChunk>> chunks;
 //	DoubleBuffer<chronos::usec::rep> cardBuffer;
@@ -50,6 +55,8 @@ private:
 	int shortMedian;
 	time_t lastUpdate;
 	chronos::msec bufferMs;
+	unsigned long playedFrames;
+	long correctAfterXFrames;
 };
 
 

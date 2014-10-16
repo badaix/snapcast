@@ -8,15 +8,34 @@ using namespace std;
 using namespace chronos;
 
 
-Stream::Stream(const SampleFormat& sampleFormat) : format(format_), format_(sampleFormat), sleep(0), median(0), shortMedian(0), lastUpdate(0)
+Stream::Stream(const SampleFormat& sampleFormat) : format(format_), format_(sampleFormat), sleep(0), median(0), shortMedian(0), lastUpdate(0), playedFrames(0)
 {
 	buffer.setSize(500);
 	shortBuffer.setSize(100);
 	miniBuffer.setSize(20);
 //	cardBuffer.setSize(50);
 	bufferMs = msec(500);
+
+	playedSamples = 0;
+/*
+48000     x
+------- = -----
+47999,2   x - 1
+
+x = 1,000016667 / (1,000016667 - 1)
+*/
+	setRealSampleRate(format.rate);
 }
 
+
+void Stream::setRealSampleRate(double sampleRate)
+{
+	if (sampleRate == format.rate)
+		correctAfterXFrames = 0;
+	else
+		correctAfterXFrames = round((format.rate / sampleRate) / (format.rate / sampleRate - 1.));
+//	cout << "Correct after X: " << correctAfterXFrames << " (Real rate: " << sampleRate << ", rate: " << format.rate << ")\n";
+}
 
 
 void Stream::setBufferLen(size_t bufferLenMs)
@@ -91,47 +110,44 @@ time_point_hrc Stream::seek(long ms)
 */
 
 
-time_point_hrc Stream::getNextPlayerChunk(void* outputBuffer, const chronos::usec& timeout, unsigned long framesPerBuffer, const chronos::usec& correction)
+time_point_hrc Stream::getNextPlayerChunk(void* outputBuffer, const chronos::usec& timeout, unsigned long framesPerBuffer)
 {
 	if (!chunk && !chunks.try_pop(chunk, timeout))
 		throw 0;
 
-//cout << "duration: " << chunk->duration<chronos::msec>().count() << ", " << chunk->duration<chronos::usec>().count() << ", " << chunk->duration<chronos::nsec>().count() << "\n";
 	time_point_hrc tp = chunk->start();
-	int read = 0;
-	int toRead = framesPerBuffer + correction.count()*format.usRate();
-	char* buffer;
-
-	if (correction.count() != 0)
+	char* buffer = (char*)outputBuffer;
+	unsigned long read = 0;
+	while (read < framesPerBuffer)
 	{
-//		chronos::usec usBuffer = (chronos::usec::rep)(framesPerBuffer / format.usRate());
-//		if (abs(correction) > usBuffer / 2)
-//			correction = copysign(usBuffer / 2, correction);
-		buffer = (char*)malloc(toRead * format.frameSize);
-	}
-	else
-		buffer = (char*)outputBuffer;
-
-	while (read < toRead)
-	{
-		read += chunk->readFrames(buffer + read*format.frameSize, toRead - read);
+		read += chunk->readFrames(buffer + read*format.frameSize, framesPerBuffer - read);
 		if (chunk->isEndOfChunk() && !chunks.try_pop(chunk, timeout))
 			throw 0;
 	}
+	return tp;
+}
 
-	if (correction.count() != 0)
+
+time_point_hrc Stream::getNextPlayerChunk(void* outputBuffer, const chronos::usec& timeout, unsigned long framesPerBuffer, long framesCorrection)
+{
+	if (framesCorrection == 0)
+		return getNextPlayerChunk(outputBuffer, timeout, framesPerBuffer);
+
+	long toRead = framesPerBuffer + framesCorrection;
+	char* buffer = (char*)malloc(toRead * format.frameSize);
+	time_point_hrc tp = getNextPlayerChunk(buffer, timeout, toRead);
+
+	float factor = (float)toRead / framesPerBuffer;//(float)(framesPerBuffer*channels_);
+	if (abs(framesCorrection) > 1)
+		std::cout << "correction: " << framesCorrection << ", factor: " << factor << "\n";
+	float idx = 0;
+	for (size_t n=0; n<framesPerBuffer; ++n)
 	{
-		float factor = (float)toRead / framesPerBuffer;//(float)(framesPerBuffer*channels_);
-		std::cout << "correction: " << correction.count() << ", factor: " << factor << "\n";
-		float idx = 0;
-		for (size_t n=0; n<framesPerBuffer; ++n)
-		{
-			size_t index(floor(idx));// = (int)(ceil(n*factor));
-			memcpy((char*)outputBuffer + n*format.frameSize, buffer + index*format.frameSize, format.frameSize);
-			idx += factor;
-		}
-		free(buffer);
+		size_t index(floor(idx));// = (int)(ceil(n*factor));
+		memcpy((char*)outputBuffer + n*format.frameSize, buffer + index*format.frameSize, format.frameSize);
+		idx += factor;
 	}
+	free(buffer);
 
 	return tp;
 }
@@ -157,11 +173,20 @@ void Stream::resetBuffers()
 
 bool Stream::getPlayerChunk(void* outputBuffer, const chronos::usec& outputBufferDacTime, unsigned long framesPerBuffer)
 {
+/*if (playedSamples == 0)
+	playedSamplesTime = chronos::hrc::now() + outputBufferDacTime;
+playedSamples += framesPerBuffer;
+chronos::msec since = std::chrono::duration_cast<msec>(chronos::hrc::now() + outputBufferDacTime - playedSamplesTime);
+if (since.count() > 0)
+	cout << (double)playedSamples / (double)since.count() << "\n";
+*/
 	if (outputBufferDacTime > bufferMs)
 		return false;
 
 	if (!chunk && !chunks.try_pop(chunk, outputBufferDacTime))
 		return false;
+
+	playedFrames += framesPerBuffer;
 
 	chronos::usec age = std::chrono::duration_cast<usec>(TimeProvider::serverNow() - chunk->start() - bufferMs + outputBufferDacTime);
 	if ((sleep.count() == 0) && (chronos::abs(age) > chronos::msec(200)))
@@ -196,7 +221,12 @@ bool Stream::getPlayerChunk(void* outputBuffer, const chronos::usec& outputBuffe
 				{
 					cout << "sleep > chunk->getDuration(): " << sleep.count() << " > " << chunk->duration<chronos::msec>().count() << ", chunks: " << chunks.size() << ", out: " << outputBufferDacTime.count() << ", needed: " << bufferDuration.count() << "\n";
 					if (!chunks.try_pop(chunk, outputBufferDacTime))
+					{
+						cout << "no chunks available\n";
+						chunk = NULL;
+						sleep = chronos::usec(0);
 						return false;
+					}
 
 					sleep = std::chrono::duration_cast<usec>(TimeProvider::serverNow() - chunk->start() - bufferMs + outputBufferDacTime);
 				}
@@ -221,15 +251,34 @@ bool Stream::getPlayerChunk(void* outputBuffer, const chronos::usec& outputBuffe
 			}
 		}
 
-		age = std::chrono::duration_cast<usec>(TimeProvider::serverNow() - getNextPlayerChunk(outputBuffer, outputBufferDacTime, framesPerBuffer, correction) - bufferMs + outputBufferDacTime);
+		long framesCorrection = correction.count()*format.usRate();
+		if ((correctAfterXFrames != 0) && (playedFrames >= (unsigned long)abs(correctAfterXFrames)))
+		{
+			framesCorrection += (correctAfterXFrames > 0)?1:-1;
+			playedFrames -= abs(correctAfterXFrames);
+		}
 
+		age = std::chrono::duration_cast<usec>(TimeProvider::serverNow() - getNextPlayerChunk(outputBuffer, outputBufferDacTime, framesPerBuffer, framesCorrection) - bufferMs + outputBufferDacTime);
+
+//		setRealSampleRate(format.rate);
 		if (sleep.count() == 0)
 		{
-			if (buffer.full() && (chronos::usec(abs(median)) > chronos::msec(1)))
+			if (buffer.full())
 			{
-				cout << "pBuffer->full() && (abs(median) > 1): " << median << "\n";
-				sleep = chronos::usec(median);
-			}
+				if (chronos::usec(abs(median)) > chronos::msec(1))
+				{
+					cout << "pBuffer->full() && (abs(median) > 1): " << median << "\n";
+					sleep = chronos::usec(shortMedian);
+				}
+/*				else if (chronos::usec(median) > chronos::usec(300))
+				{
+					setRealSampleRate(format.rate - format.rate / 1000);
+				}
+				else if (chronos::usec(median) < -chronos::usec(300))
+				{
+					setRealSampleRate(format.rate + format.rate / 1000);
+				}
+*/			}
 			else if (shortBuffer.full() && (chronos::usec(abs(shortMedian)) > chronos::msec(5)))
 			{
 				cout << "pShortBuffer->full() && (abs(shortMedian) > 5): " << shortMedian << "\n";

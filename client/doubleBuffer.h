@@ -67,6 +67,10 @@ public:
 		bufferSize = size;
 	}
 
+	const std::deque<T>& getBuffer() const
+	{
+		return &buffer;
+	}
 
 private:
 	size_t bufferSize;

@@ -121,14 +121,15 @@ void Player::stop()
 void Player::worker()
 {
 	unsigned int pcm;
-	snd_pcm_sframes_t avail;
-	snd_pcm_sframes_t delay;
+	snd_pcm_sframes_t framesAvail;
+	snd_pcm_sframes_t framesDelay;
 	active_ = true;
 	while (active_)
 	{
-		snd_pcm_avail_delay(pcm_handle, &avail, &delay);
-
-		if (stream_->getPlayerChunk(buff, chronos::usec((chronos::usec::rep)(1000 * (double)delay / stream_->format.msRate())), frames))
+		snd_pcm_avail_delay(pcm_handle, &framesAvail, &framesDelay);
+		
+		chronos::usec delay((chronos::usec::rep)(1000 * (double)framesDelay / stream_->format.msRate()));
+		if (stream_->getPlayerChunk(buff, delay, frames))
 		{
 			if ((pcm = snd_pcm_writei(pcm_handle, buff, frames)) == -EPIPE)
 			{
