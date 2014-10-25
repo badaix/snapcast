@@ -220,6 +220,7 @@ if (since.count() > 0)
 				while (sleep > chunk->duration<chronos::usec>())
 				{
 					cout << "sleep > chunk->getDuration(): " << sleep.count() << " > " << chunk->duration<chronos::msec>().count() << ", chunks: " << chunks.size() << ", out: " << outputBufferDacTime.count() << ", needed: " << bufferDuration.count() << "\n";
+					sleep = std::chrono::duration_cast<usec>(TimeProvider::serverNow() - chunk->start() - bufferMs + outputBufferDacTime);
 					if (!chunks.try_pop(chunk, outputBufferDacTime))
 					{
 						cout << "no chunks available\n";
@@ -227,8 +228,6 @@ if (since.count() > 0)
 						sleep = chronos::usec(0);
 						return false;
 					}
-
-					sleep = std::chrono::duration_cast<usec>(TimeProvider::serverNow() - chunk->start() - bufferMs + outputBufferDacTime);
 				}
 			}
 
@@ -260,7 +259,7 @@ if (since.count() > 0)
 
 		age = std::chrono::duration_cast<usec>(TimeProvider::serverNow() - getNextPlayerChunk(outputBuffer, outputBufferDacTime, framesPerBuffer, framesCorrection) - bufferMs + outputBufferDacTime);
 
-//		setRealSampleRate(format.rate);
+		setRealSampleRate(format.rate);
 		if (sleep.count() == 0)
 		{
 			if (buffer.full())
@@ -279,11 +278,22 @@ if (since.count() > 0)
 					setRealSampleRate(format.rate + format.rate / 1000);
 				}
 */			}
-			else if (shortBuffer.full() && (chronos::usec(abs(shortMedian)) > chronos::msec(5)))
+			else if (shortBuffer.full())
 			{
-				cout << "pShortBuffer->full() && (abs(shortMedian) > 5): " << shortMedian << "\n";
-				sleep = chronos::usec(shortMedian);
-			}
+				if (chronos::usec(abs(shortMedian)) > chronos::msec(5))
+				{
+					cout << "pShortBuffer->full() && (abs(shortMedian) > 5): " << shortMedian << "\n";
+					sleep = chronos::usec(shortMedian);
+				}
+				if (chronos::usec(shortMedian) > chronos::usec(100))
+					setRealSampleRate(format.rate * 0.9999);
+				else if (chronos::usec(shortMedian) < -chronos::usec(100))
+					setRealSampleRate(format.rate * 1.0001);
+/*				else
+				{
+					setRealSampleRate(format.rate + -shortMedian / 100);
+				}
+*/			}
 			else if (miniBuffer.full() && (chronos::usec(abs(miniBuffer.median())) > chronos::msec(50)))
 			{
 				cout << "pMiniBuffer->full() && (abs(pMiniBuffer->mean()) > 50): " << miniBuffer.median() << "\n";

@@ -3,7 +3,7 @@
 
 TimeProvider::TimeProvider() : diffToServer(0)
 {
-	diffBuffer.setSize(100);
+	diffBuffer.setSize(200);
 }
 
 
