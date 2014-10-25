@@ -285,10 +285,6 @@ if (since.count() > 0)
 					cout << "pShortBuffer->full() && (abs(shortMedian) > 5): " << shortMedian << "\n";
 					sleep = chronos::usec(shortMedian);
 				}
-				if (chronos::usec(shortMedian) > chronos::usec(100))
-					setRealSampleRate(format.rate * 0.9999);
-				else if (chronos::usec(shortMedian) < -chronos::usec(100))
-					setRealSampleRate(format.rate * 1.0001);
 /*				else
 				{
 					setRealSampleRate(format.rate + -shortMedian / 100);
@@ -303,7 +299,13 @@ if (since.count() > 0)
 
 		if (sleep.count() != 0)
 			std::cerr << "Sleep: " << sleep.count() << "\n";
-
+		else if (shortBuffer.full())
+		{
+			if (chronos::usec(shortMedian) > chronos::usec(100))
+				setRealSampleRate(format.rate * 0.99999);
+			else if (chronos::usec(shortMedian) < -chronos::usec(100))
+				setRealSampleRate(format.rate * 1.00001);
+		}
 
 		updateBuffers(age.count());
 
