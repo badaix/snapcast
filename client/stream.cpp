@@ -302,9 +302,9 @@ if (since.count() > 0)
 		else if (shortBuffer.full())
 		{
 			if (chronos::usec(shortMedian) > chronos::usec(100))
-				setRealSampleRate(format.rate * 0.99999);
+				setRealSampleRate(format.rate * 0.9999);
 			else if (chronos::usec(shortMedian) < -chronos::usec(100))
-				setRealSampleRate(format.rate * 1.00001);
+				setRealSampleRate(format.rate * 1.0001);
 		}
 
 		updateBuffers(age.count());
