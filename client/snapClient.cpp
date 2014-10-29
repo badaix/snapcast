@@ -50,6 +50,7 @@ int main (int argc, char *argv[])
 	string ip;
 //	int bufferMs;
 	size_t port;
+	size_t latency;
 	bool runAsDaemon;
 	bool listPcmDevices;
 
@@ -62,6 +63,7 @@ int main (int argc, char *argv[])
 	("soundcard,s", po::value<string>(&soundcard)->default_value("default"), "index or name of the soundcard")
 //	("buffer,b", po::value<int>(&bufferMs)->default_value(300), "buffer size [ms]")
 	("daemon,d", po::bool_switch(&runAsDaemon)->default_value(false), "daemonize")
+	("latency", po::value<size_t>(&latency)->default_value(0), "latency")
 	;
 
 	po::variables_map vm;
@@ -101,7 +103,7 @@ int main (int argc, char *argv[])
 
 
 	Controller controller;
-	controller.start(pcmDevice, ip, port);
+	controller.start(pcmDevice, ip, port, latency);
 
 	while(true)
 		usleep(10000);

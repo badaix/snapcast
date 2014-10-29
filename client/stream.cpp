@@ -17,6 +17,7 @@ Stream::Stream(const SampleFormat& sampleFormat) : format(format_), format_(samp
 	bufferMs = msec(500);
 
 	playedSamples = 0;
+	playedSamplesTime = time_point_hrc::min();
 /*
 48000     x
 ------- = -----
@@ -173,13 +174,17 @@ void Stream::resetBuffers()
 
 bool Stream::getPlayerChunk(void* outputBuffer, const chronos::usec& outputBufferDacTime, unsigned long framesPerBuffer)
 {
-/*if (playedSamples == 0)
+/*if (playedSamplesTime == time_point_hrc::min())
 	playedSamplesTime = chronos::hrc::now() + outputBufferDacTime;
-playedSamples += framesPerBuffer;
-chronos::msec since = std::chrono::duration_cast<msec>(chronos::hrc::now() + outputBufferDacTime - playedSamplesTime);
-if (since.count() > 0)
-	cout << (double)playedSamples / (double)since.count() << "\n";
+else
+{
+	playedSamples += framesPerBuffer;
+	chronos::msec since = std::chrono::duration_cast<msec>(chronos::hrc::now() + outputBufferDacTime - playedSamplesTime);
+	if (since.count() > 0)
+		cout << (double)playedSamples / (double)since.count() << "\n";
+}
 */
+
 	if (outputBufferDacTime > bufferMs)
 		return false;
 

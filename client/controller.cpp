@@ -48,10 +48,11 @@ void Controller::onMessageReceived(ClientConnection* connection, const BaseMessa
 }
 
 
-void Controller::start(const PcmDevice& pcmDevice, const std::string& _ip, size_t _port)
+void Controller::start(const PcmDevice& pcmDevice, const std::string& _ip, size_t _port, size_t latency)
 {
 	ip = _ip;
 	pcmDevice_ = pcmDevice;
+	latency_ = latency;
 	clientConnection = new ClientConnection(this, ip, _port);
 	controllerThread = new thread(&Controller::worker, this);
 }
@@ -107,7 +108,7 @@ void Controller::worker()
 			cout << "diff to server [ms]: " << TimeProvider::getInstance().getDiffToServer<chronos::msec>().count() << "\n";
 
 			stream = new Stream(*sampleFormat);
-			stream->setBufferLen(serverSettings->bufferMs);
+			stream->setBufferLen(serverSettings->bufferMs - latency_);
 
 			Player player(pcmDevice_, stream);
 			player.start();

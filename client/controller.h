@@ -14,7 +14,7 @@ class Controller : public MessageReceiver
 {
 public:
 	Controller();
-	void start(const PcmDevice& pcmDevice, const std::string& _ip, size_t _port);
+	void start(const PcmDevice& pcmDevice, const std::string& _ip, size_t _port, size_t latency);
 	void stop();
 	virtual void onMessageReceived(ClientConnection* connection, const BaseMessage& baseMessage, char* buffer);
 	virtual void onException(ClientConnection* connection, const std::exception& exception);
@@ -29,6 +29,7 @@ private:
 	std::shared_ptr<SampleFormat> sampleFormat;
 	Decoder* decoder;
 	PcmDevice pcmDevice_;
+	size_t latency_;
 };
 
 
