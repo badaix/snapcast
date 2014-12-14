@@ -166,7 +166,7 @@ void ClientConnection::getNextMessage()
 				req->response->message = baseMessage;
 				req->response->buffer = (char*)malloc(baseMessage.size);
 				memcpy(req->response->buffer, &buffer[0], baseMessage.size);
-				std::unique_lock<std::mutex> lck(m);
+//				std::unique_lock<std::mutex> lck(m);
 				req->cv.notify_one();
 				return;
 			}
