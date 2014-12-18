@@ -10,7 +10,7 @@
 using namespace std;
 
 
-ClientConnection::ClientConnection(MessageReceiver* _receiver, const std::string& _ip, size_t _port) : active_(false), connected_(false), messageReceiver(_receiver), reqId(0), ip(_ip), port(_port), readerThread(NULL)
+ClientConnection::ClientConnection(MessageReceiver* _receiver, const std::string& _ip, size_t _port) : active_(false), connected_(false), messageReceiver(_receiver), reqId(1), ip(_ip), port(_port), readerThread(NULL)
 {
 }
 
@@ -113,8 +113,8 @@ bool ClientConnection::send(BaseMessage* message)
 shared_ptr<SerializedMessage> ClientConnection::sendRequest(BaseMessage* message, size_t timeout)
 {
 	shared_ptr<SerializedMessage> response(NULL);
-	if (++reqId == 0)
-		++reqId;
+	if (++reqId == 10000)
+		reqId = 1;
 	message->id = reqId;
 	shared_ptr<PendingRequest> pendingRequest(new PendingRequest(reqId));
 
@@ -157,18 +157,21 @@ void ClientConnection::getNextMessage()
 	baseMessage.received = t;
 
 	{
-		std::unique_lock<std::mutex> mlock(mutex_);
-		for (auto req: pendingRequests)
+		std::unique_lock<std::mutex> mlock(mutex_);//, std::defer_lock);
+//		if (mlock.try_lock_for(std::chrono::milliseconds(1000)))
 		{
-			if (req->id == baseMessage.refersTo)
+			for (auto req: pendingRequests)
 			{
-				req->response.reset(new SerializedMessage());
-				req->response->message = baseMessage;
-				req->response->buffer = (char*)malloc(baseMessage.size);
-				memcpy(req->response->buffer, &buffer[0], baseMessage.size);
-//				std::unique_lock<std::mutex> lck(m);
-				req->cv.notify_one();
-				return;
+				if (req->id == baseMessage.refersTo)
+				{
+					req->response.reset(new SerializedMessage());
+					req->response->message = baseMessage;
+					req->response->buffer = (char*)malloc(baseMessage.size);
+					memcpy(req->response->buffer, &buffer[0], baseMessage.size);
+	//				std::unique_lock<std::mutex> lck(m);
+					req->cv.notify_one();
+					return;
+				}
 			}
 		}
 	}
