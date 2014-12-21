@@ -3,21 +3,31 @@
 
 #include <exception>
 #include <string>
+#include <cstring>        // std::strlen, std::strcpy
 
-
-struct snapException : std::exception {
-	snapException(const std::string& what) noexcept
+// text_exception uses a dynamically-allocated internal c-string for what():
+class snapException : std::exception {
+  char* text_;
+public:
+	snapException(const char* text) 
 	{
-		what_ = what;
+		text_ = new char[std::strlen(text)]; std::strcpy (text_,text);
+	}
+
+	snapException(const snapException& e) 
+	{
+		text_ = new char[std::strlen(e.text_)]; std::strcpy (text_,e.text_);
+	}
+
+	~snapException() throw() 
+	{
+		delete[] text_;
 	}
 
 	const char* what() const noexcept 
 	{
-		return what_.c_str();
+		return text_;
 	}
-
-private:
-	std::string what_;
 };
 
 
