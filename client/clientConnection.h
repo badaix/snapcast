@@ -88,6 +88,7 @@ protected:
 	std::string ip;
 	size_t port;
 	std::thread* readerThread;
+	int timeouts;
 };
 
 
