@@ -4,13 +4,13 @@
 #include "common/log.h"
 #include "clientConnection.h"
 #include "common/utils.h"
-
+#include "common/snapException.h"
 
 
 using namespace std;
 
 
-ClientConnection::ClientConnection(MessageReceiver* _receiver, const std::string& _ip, size_t _port) : active_(false), connected_(false), messageReceiver(_receiver), reqId(1), ip(_ip), port(_port), readerThread(NULL), timeouts(0)
+ClientConnection::ClientConnection(MessageReceiver* _receiver, const std::string& _ip, size_t _port) : active_(false), connected_(false), messageReceiver(_receiver), reqId(1), ip(_ip), port(_port), readerThread(NULL), sumTimeout(chronos::msec(0))
 {
 }
 
@@ -110,10 +110,10 @@ bool ClientConnection::send(BaseMessage* message)
 }
 
 
-shared_ptr<SerializedMessage> ClientConnection::sendRequest(BaseMessage* message, size_t timeout)
+shared_ptr<SerializedMessage> ClientConnection::sendRequest(BaseMessage* message, const chronos::msec& timeout)
 {
 	shared_ptr<SerializedMessage> response(NULL);
-	if (++reqId == 100)
+	if (++reqId == 10000)
 		reqId = 1;
 	message->id = reqId;
 //cout << "Req: " << reqId << "\n";
@@ -129,18 +129,15 @@ shared_ptr<SerializedMessage> ClientConnection::sendRequest(BaseMessage* message
 	if (pendingRequest->cv.wait_for(lck,std::chrono::milliseconds(timeout)) == std::cv_status::no_timeout)
 	{
 		response = pendingRequest->response;
-		timeouts = 0;
+		sumTimeout = chronos::msec(0);
 //cout << "Resp: " << pendingRequest->id << "\n";
 	}
 	else
 	{
-		++timeouts;
-		cout << "timeout while waiting for response to: " << reqId << ", timeout " << timeouts << "\n";
-		if (timeouts > 2*60)
-		{
-			std::exception e;
-			throw e;
-		}
+		sumTimeout += timeout;
+		cout << "timeout while waiting for response to: " << reqId << ", timeout " << sumTimeout.count() << "\n";
+		if (sumTimeout > chronos::sec(10))
+			throw snapException("sum timeout exceeded 10s");
 	}
 	{
 		std::unique_lock<std::mutex> mlock(mutex_);

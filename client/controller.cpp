@@ -77,16 +77,16 @@ void Controller::worker()
 			clientConnection->start();
 			RequestMsg requestMsg(serversettings);
 			shared_ptr<ServerSettings> serverSettings(NULL);
-			while (!(serverSettings = clientConnection->sendReq<ServerSettings>(&requestMsg, 1000)));
+			while (!(serverSettings = clientConnection->sendReq<ServerSettings>(&requestMsg)));
 			cout << "ServerSettings buffer: " << serverSettings->bufferMs << "\n";
 
 			requestMsg.request = sampleformat;
-			while (!(sampleFormat = clientConnection->sendReq<SampleFormat>(&requestMsg, 1000)));
+			while (!(sampleFormat = clientConnection->sendReq<SampleFormat>(&requestMsg)));
 			cout << "SampleFormat rate: " << sampleFormat->rate << ", bits: " << sampleFormat->bits << ", channels: " << sampleFormat->channels << "\n";
 
 			requestMsg.request = header;
 			shared_ptr<HeaderMessage> headerChunk(NULL);
-			while (!(headerChunk = clientConnection->sendReq<HeaderMessage>(&requestMsg, 1000)));
+			while (!(headerChunk = clientConnection->sendReq<HeaderMessage>(&requestMsg)));
 			cout << "Codec: " << headerChunk->codec << "\n";
 			if (headerChunk->codec == "ogg")
 				decoder = new OggDecoder();
@@ -97,7 +97,7 @@ void Controller::worker()
 			RequestMsg timeReq(timemsg);
 			for (size_t n=0; n<50; ++n)
 			{
-				shared_ptr<TimeMsg> reply = clientConnection->sendReq<TimeMsg>(&timeReq, 2000);
+				shared_ptr<TimeMsg> reply = clientConnection->sendReq<TimeMsg>(&timeReq, chronos::msec(2000));
 				if (reply)
 				{
 					double latency = (reply->received.sec - reply->sent.sec) + (reply->received.usec - reply->sent.usec) / 1000000.;
@@ -115,14 +115,14 @@ void Controller::worker()
 
 			CommandMsg startStream("startStream");
 			shared_ptr<AckMsg> ackMsg(NULL);
-			while (!(ackMsg = clientConnection->sendReq<AckMsg>(&startStream, 1000)));
+			while (!(ackMsg = clientConnection->sendReq<AckMsg>(&startStream)));
 
 			try
 			{
 				while (active_)
 				{
 					usleep(500*1000);
-                    shared_ptr<TimeMsg> reply = clientConnection->sendReq<TimeMsg>(&timeReq, 1000);
+                    shared_ptr<TimeMsg> reply = clientConnection->sendReq<TimeMsg>(&timeReq);
                     if (reply)
                     {
                         double latency = (reply->received.sec - reply->sent.sec) + (reply->received.usec - reply->sent.usec) / 1000000.;

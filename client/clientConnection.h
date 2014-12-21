@@ -10,6 +10,7 @@
 #include <condition_variable>
 #include <set>
 #include "message/message.h"
+#include "common/timeDefs.h"
 
 
 using boost::asio::ip::tcp;
@@ -44,10 +45,10 @@ public:
 	virtual void start();
 	virtual void stop();
 	virtual bool send(BaseMessage* _message);
-	virtual std::shared_ptr<SerializedMessage> sendRequest(BaseMessage* message, size_t timeout);
+	virtual std::shared_ptr<SerializedMessage> sendRequest(BaseMessage* message, const chronos::msec& timeout = chronos::msec(1000));
 
 	template <typename T>
-	std::shared_ptr<T> sendReq(BaseMessage* message, size_t timeout)
+	std::shared_ptr<T> sendReq(BaseMessage* message, const chronos::msec& timeout = chronos::msec(1000))
 	{
 		std::shared_ptr<SerializedMessage> reply = sendRequest(message, timeout);
 		if (!reply)
@@ -88,7 +89,7 @@ protected:
 	std::string ip;
 	size_t port;
 	std::thread* readerThread;
-	int timeouts;
+	chronos::msec sumTimeout;
 };
 
 
