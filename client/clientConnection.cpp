@@ -116,7 +116,7 @@ shared_ptr<SerializedMessage> ClientConnection::sendRequest(BaseMessage* message
 	if (++reqId == 100)
 		reqId = 1;
 	message->id = reqId;
-cout << "Req: " << reqId << "\n";
+//cout << "Req: " << reqId << "\n";
 	shared_ptr<PendingRequest> pendingRequest(new PendingRequest(reqId));
 
 	{
@@ -130,7 +130,7 @@ cout << "Req: " << reqId << "\n";
 	{
 		response = pendingRequest->response;
 		timeouts = 0;
-cout << "Resp: " << pendingRequest->id << "\n";
+//cout << "Resp: " << pendingRequest->id << "\n";
 	}
 	else
 	{
