@@ -11,6 +11,7 @@
 
 #include "common/utils.h"
 #include "common/log.h"
+#include "common/signalHandler.h"
 #include "controller.h"
 #include "alsaPlayer.h"
 
@@ -18,6 +19,8 @@
 using namespace std;
 namespace po = boost::program_options;
 
+//bool g_terminated = false;
+std::condition_variable terminateSignaled;
 
 PcmDevice getPcmDevice(const std::string& soundcard)
 {
@@ -87,6 +90,10 @@ int main (int argc, char *argv[])
 		return 1;
 	}
 
+    signal(SIGHUP, signal_handler);
+    signal(SIGTERM, signal_handler);
+    signal(SIGINT, signal_handler);
+
 	std::clog.rdbuf(new Log("snapclient", LOG_DAEMON));
 	if (runAsDaemon)
 	{
@@ -105,8 +112,11 @@ int main (int argc, char *argv[])
 	Controller controller;
 	controller.start(pcmDevice, ip, port, latency);
 
-	while(true)
-		usleep(10000);
+
+	std::mutex mtx;
+	std::unique_lock<std::mutex> lck(mtx);
+	terminateSignaled.wait(lck);
+	controller.stop();
 
 	return 0;
 }

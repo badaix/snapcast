@@ -8,7 +8,7 @@
 #include "message/message.h"
 #include "pcmEncoder.h"
 #include "oggEncoder.h"
-#include "controlServer.h"
+c#include "controlServer.h"
 
 
 bool g_terminated = false;
@@ -18,6 +18,7 @@ namespace po = boost::program_options;
 using namespace std;
 
 
+std::condition_variable terminateSignaled;
 
 int main(int argc, char* argv[])
 {
@@ -76,6 +77,11 @@ int main(int argc, char* argv[])
 			encoder.reset(new OggEncoder(sampleFormat));
 		else if (codec == "pcm")
 			encoder.reset(new PcmEncoder(sampleFormat));
+		else if (codec == "flac")
+		{
+			cout << "Not yet supported\n";
+			return 1;
+		}
 		else
 		{
 			cout << "unknown codec: " << codec << "\n";

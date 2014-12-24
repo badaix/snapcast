@@ -3,8 +3,9 @@
 
 #include <signal.h>
 #include <syslog.h>
+#include <condition_variable>
 
-extern bool g_terminated;
+extern std::condition_variable terminateSignaled;
 
 void signal_handler(int sig)
 {
@@ -16,7 +17,11 @@ void signal_handler(int sig)
 		break;
 	case SIGTERM:
 		syslog(LOG_WARNING, "Received SIGTERM signal.");
-		g_terminated = true;
+		terminateSignaled.notify_all();
+		break;
+	case SIGINT:
+		syslog(LOG_WARNING, "Received SIGINT signal.");
+		terminateSignaled.notify_all();
 		break;
 	default:
 		syslog(LOG_WARNING, "Unhandled signal ");
