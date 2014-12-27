@@ -6,11 +6,13 @@
 
 using namespace std;
 
-Player::Player(const PcmDevice& pcmDevice, Stream* stream) :
-		active_(false), stream_(stream), pcmDevice_(pcmDevice) {
+Player::Player(const PcmDevice& pcmDevice, Stream* stream) : pcm_handle(NULL), buff(NULL), active_(false), stream_(stream), pcmDevice_(pcmDevice) 
+{
 }
 
-void Player::start() {
+
+void Player::start() 
+{
 	unsigned int pcm, tmp, rate;
 	int channels;
 	snd_pcm_hw_params_t *params;
@@ -110,38 +112,65 @@ void Player::start() {
 	playerThread = new thread(&Player::worker, this);
 }
 
+
+Player::~Player()
+{
+	stop();
+}
+
+
 void Player::stop() {
 	active_ = false;
-	playerThread->join();
-	delete playerThread;
+	if (playerThread != NULL)
+	{
+		playerThread->join();
+		delete playerThread;
+		playerThread = NULL;
+	}
+
+	if (pcm_handle != NULL)
+	{
+		snd_pcm_drain(pcm_handle);
+		snd_pcm_close(pcm_handle);
+		pcm_handle = NULL;
+	}
+	
+	if (buff != NULL)
+	{
+		free(buff);
+		buff = NULL;
+	}
 }
+
 
 void Player::worker() {
 	unsigned int pcm;
 	snd_pcm_sframes_t framesAvail;
 	snd_pcm_sframes_t framesDelay;
 	active_ = true;
-	while (active_) {
+	while (active_) 
+	{
 		snd_pcm_avail_delay(pcm_handle, &framesAvail, &framesDelay);
+		chronos::usec delay((chronos::usec::rep) (1000 * (double) framesDelay / stream_->format.msRate()));
+//		cout << "Avail: " << framesAvail << ", delay: " << framesDelay << ", delay[ms]: " << delay.count() / 1000 << "\n";
 
-		chronos::usec delay(
-				(chronos::usec::rep) (1000 * (double) framesDelay
-						/ stream_->format.msRate()));
-		if (stream_->getPlayerChunk(buff, delay, frames)) {
-			if ((pcm = snd_pcm_writei(pcm_handle, buff, frames)) == -EPIPE) {
+		if (stream_->getPlayerChunk(buff, delay, frames)) 
+		{
+			if ((pcm = snd_pcm_writei(pcm_handle, buff, frames)) == -EPIPE) 
+			{
 				printf("XRUN.\n");
 				snd_pcm_prepare(pcm_handle);
-			} else if (pcm < 0) {
-				printf("ERROR. Can't write to PCM device. %s\n",
-						snd_strerror(pcm));
+			} 
+			else if (pcm < 0) 
+			{
+				printf("ERROR. Can't write to PCM device. %s\n", snd_strerror(pcm));
 			}
 		}
+		else
+			usleep(100*1000);
 	}
-
-	snd_pcm_drain(pcm_handle);
-	snd_pcm_close(pcm_handle);
-	free(buff);
 }
+
 
 vector<PcmDevice> Player::pcm_list(void) {
 	void **hints, **n;
@@ -163,23 +192,9 @@ vector<PcmDevice> Player::pcm_list(void) {
 		pcmDevice.description = descr;
 		pcmDevice.idx = idx++;
 		result.push_back(pcmDevice);
-//		printf("%s\n", name);
-//cout << "Name: " << name << "\n";
-//cout << "Desc: " << descr << "\n";
-		/*
-		 if ((descr1 = descr) != NULL) {
-		 printf("    ");
-		 while (*descr1) {
-		 if (*descr1 == '\n')
-		 printf("\n    ");
-		 else
-		 putchar(*descr1);
-		 descr1++;
-		 }
-		 putchar('\n');
-		 }
-		 */
-		__end: if (name != NULL)
+
+__end: 
+		if (name != NULL)
 			free(name);
 		if (descr != NULL)
 			free(descr);

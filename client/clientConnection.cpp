@@ -123,7 +123,6 @@ shared_ptr<SerializedMessage> ClientConnection::sendRequest(BaseMessage* message
 		std::unique_lock<std::mutex> mlock(mutex_);
 		pendingRequests.insert(pendingRequest);
 	}
-//	std::mutex mtx;
 	std::unique_lock<std::mutex> lck(m);
 	send(message);
 	if (pendingRequest->cv.wait_for(lck,std::chrono::milliseconds(timeout)) == std::cv_status::no_timeout)
@@ -136,8 +135,8 @@ shared_ptr<SerializedMessage> ClientConnection::sendRequest(BaseMessage* message
 	{
 		sumTimeout += timeout;
 		cout << "timeout while waiting for response to: " << reqId << ", timeout " << sumTimeout.count() << "\n";
-		if (sumTimeout > chronos::sec(10))
-			throw snapException("sum timeout exceeded 10s");
+		if (sumTimeout > chronos::sec(5))
+			throw SnapException("sum timeout exceeded 10s");
 	}
 	{
 		std::unique_lock<std::mutex> mlock(mutex_);
@@ -149,7 +148,6 @@ shared_ptr<SerializedMessage> ClientConnection::sendRequest(BaseMessage* message
 
 void ClientConnection::getNextMessage()
 {
-//cout << "getNextMessage\n";
 	BaseMessage baseMessage;
 	size_t baseMsgSize = baseMessage.getSize();
 	vector<char> buffer(baseMsgSize);
@@ -163,8 +161,7 @@ void ClientConnection::getNextMessage()
 	baseMessage.received = t;
 
 	{
-		std::unique_lock<std::mutex> mlock(mutex_);//, std::defer_lock);
-//		if (mlock.try_lock_for(std::chrono::milliseconds(1000)))
+		std::unique_lock<std::mutex> mlock(mutex_);
 		{
 			for (auto req: pendingRequests)
 			{
@@ -174,7 +171,6 @@ void ClientConnection::getNextMessage()
 					req->response->message = baseMessage;
 					req->response->buffer = (char*)malloc(baseMessage.size);
 					memcpy(req->response->buffer, &buffer[0], baseMessage.size);
-	//				std::unique_lock<std::mutex> lck(m);
 					req->cv.notify_one();
 					return;
 				}

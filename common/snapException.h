@@ -6,25 +6,27 @@
 #include <cstring>        // std::strlen, std::strcpy
 
 // text_exception uses a dynamically-allocated internal c-string for what():
-class snapException : std::exception {
+class SnapException : public std::exception {
   char* text_;
 public:
-	snapException(const char* text) 
+	SnapException(const char* text) 
 	{
-		text_ = new char[std::strlen(text)]; std::strcpy (text_,text);
+		text_ = new char[std::strlen(text)]; 
+		std::strcpy(text_, text);
 	}
 
-	snapException(const snapException& e) 
+	SnapException(const SnapException& e) 
 	{
-		text_ = new char[std::strlen(e.text_)]; std::strcpy (text_,e.text_);
+		text_ = new char[std::strlen(e.text_)]; 
+		std::strcpy(text_, e.text_);
 	}
 
-	~snapException() throw() 
+	virtual ~SnapException() throw() 
 	{
 		delete[] text_;
 	}
 
-	const char* what() const noexcept 
+	virtual const char* what() const noexcept 
 	{
 		return text_;
 	}

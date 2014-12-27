@@ -19,8 +19,7 @@
 using namespace std;
 namespace po = boost::program_options;
 
-//bool g_terminated = false;
-std::condition_variable terminateSignaled;
+bool g_terminated = false;
 
 PcmDevice getPcmDevice(const std::string& soundcard)
 {
@@ -64,7 +63,6 @@ int main (int argc, char *argv[])
 	("ip,i", po::value<string>(&ip)->default_value("192.168.0.2"), "server IP")
 	("port,p", po::value<size_t>(&port)->default_value(98765), "server port")
 	("soundcard,s", po::value<string>(&soundcard)->default_value("default"), "index or name of the soundcard")
-//	("buffer,b", po::value<int>(&bufferMs)->default_value(300), "buffer size [ms]")
 	("daemon,d", po::bool_switch(&runAsDaemon)->default_value(false), "daemonize")
 	("latency", po::value<size_t>(&latency)->default_value(0), "latency")
 	;
@@ -112,10 +110,9 @@ int main (int argc, char *argv[])
 	Controller controller;
 	controller.start(pcmDevice, ip, port, latency);
 
+	while(!g_terminated)
+		usleep(100*1000);
 
-	std::mutex mtx;
-	std::unique_lock<std::mutex> lck(mtx);
-	terminateSignaled.wait(lck);
 	controller.stop();
 
 	return 0;

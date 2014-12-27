@@ -14,6 +14,7 @@ class Player
 {
 public:
 	Player(const PcmDevice& pcmDevice, Stream* stream);
+	virtual ~Player();
 	void start();
 	void stop();
 	static std::vector<PcmDevice> pcm_list(void);

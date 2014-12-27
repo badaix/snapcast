@@ -8,7 +8,7 @@
 #include "message/message.h"
 #include "pcmEncoder.h"
 #include "oggEncoder.h"
-c#include "controlServer.h"
+#include "controlServer.h"
 
 
 bool g_terminated = false;
@@ -97,16 +97,17 @@ int main(int argc, char* argv[])
 		controlServer->setHeader(encoder->getHeader());
 		controlServer->start();
 
-//		StreamServer* server = new StreamServer(port + 1);
-//		server->start();
+		signal(SIGHUP, signal_handler);
+		signal(SIGTERM, signal_handler);
+		signal(SIGINT, signal_handler);
 
 		while (!g_terminated)
 		{
-			int fd = open(fifoName.c_str(), O_RDONLY);
+			int fd = open(fifoName.c_str(), O_RDONLY | O_NONBLOCK);
 			try
 			{
 				shared_ptr<PcmChunk> chunk;//(new WireChunk());
-				while (true)//cin.good())
+				while (!g_terminated)//cin.good())
 				{
 					chunk.reset(new PcmChunk(sampleFormat, duration));//2*WIRE_CHUNK_SIZE));
 					int toRead = chunk->payloadSize;
@@ -114,12 +115,14 @@ int main(int argc, char* argv[])
 					do
 					{
 						int count = read(fd, chunk->payload + len, toRead - len);
-						if (count <= 0)
-							throw ServerException("count = " + boost::lexical_cast<string>(count));
-
-						len += count;
+						if (count == 0)
+							throw ServerException("count = 0");
+						else if (count == -1)
+							usleep(100*1000);
+						else
+							len += count;
 					}
-					while (len < toRead);
+					while ((len < toRead) && !g_terminated);
 
 					chunk->timestamp.sec = tvChunk.tv_sec;
 					chunk->timestamp.usec = tvChunk.tv_usec;
@@ -157,6 +160,7 @@ int main(int argc, char* argv[])
 	}
 
 	syslog (LOG_NOTICE, "First daemon terminated.");
+	cout << "Terminated\n";
 	closelog();
 }
 

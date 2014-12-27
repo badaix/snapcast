@@ -64,6 +64,8 @@ void Controller::stop()
 	active_ = false;
 	controllerThread->join();
 	clientConnection->stop();
+	delete controllerThread;
+	delete clientConnection;
 }
 
 
@@ -72,6 +74,7 @@ void Controller::worker()
 //	Decoder* decoder;
 	active_ = true;
 	decoder = NULL;
+	stream = NULL;
 
 	while (active_)
 	{
@@ -120,35 +123,24 @@ void Controller::worker()
 			shared_ptr<AckMsg> ackMsg(NULL);
 			while (active_ && !(ackMsg = clientConnection->sendReq<AckMsg>(&startStream)));
 
-			try
+			while (active_)
 			{
-				while (active_)
-				{
-					usleep(500*1000);
-                    shared_ptr<TimeMsg> reply = clientConnection->sendReq<TimeMsg>(&timeReq);
-                    if (reply)
-                    {
-                        double latency = (reply->received.sec - reply->sent.sec) + (reply->received.usec - reply->sent.usec) / 1000000.;
-                        TimeProvider::getInstance().setDiffToServer((reply->latency - latency) * 1000 / 2);
-//                        cout << "Median: " << TimeProvider::getInstance().getDiffToServer() << "\n";
-                    }
-				}
-			}
-			catch (const std::exception& e)
-			{
-				cout << "Exception in Controller::worker(): " << e.what() << "\n";
-				cout << "Stopping player\n";
-				player.stop();
-				cout << "Deleting stream\n";
-				delete stream;
-				stream = NULL;
-				cout << "done\n";
-				throw;
+				usleep(500*1000);
+                shared_ptr<TimeMsg> reply = clientConnection->sendReq<TimeMsg>(&timeReq);
+                if (reply)
+                {
+                    double latency = (reply->received.sec - reply->sent.sec) + (reply->received.usec - reply->sent.usec) / 1000000.;
+                    TimeProvider::getInstance().setDiffToServer((reply->latency - latency) * 1000 / 2);
+                }
 			}
 		}
 		catch (const std::exception& e)
 		{
 			cout << "Exception in Controller::worker(): " << e.what() << "\n";
+			cout << "Deleting stream\n";
+			if (stream != NULL)
+				delete stream;
+			stream = NULL;
 			if (decoder != NULL)
 				delete decoder;
 			decoder = NULL;
@@ -156,7 +148,7 @@ void Controller::worker()
 			clientConnection->stop();
 			cout << "done\n";
 			if (active_)
-				usleep(1000000);
+				usleep(500*1000);
 		}
 	}
 	cout << "Thread stopped\n";
