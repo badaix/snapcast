@@ -98,6 +98,11 @@ int main (int argc, char *argv[])
 		daemonize();
 		std::clog << kLogNotice << "daemon started" << std::endl;
 	}
+	logS(kLogNotice) << "daemon started" << std::endl;
+	logD << "debug test" << std::endl;
+	logO << "out test" << std::endl;
+	logE << "error test" << std::endl;
+	log << "test" << std::endl;
 
 	PcmDevice pcmDevice = getPcmDevice(soundcard);
 	if (pcmDevice.idx == -1)

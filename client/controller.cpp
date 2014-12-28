@@ -132,6 +132,7 @@ void Controller::worker()
                     double latency = (reply->received.sec - reply->sent.sec) + (reply->received.usec - reply->sent.usec) / 1000000.;
                     TimeProvider::getInstance().setDiffToServer((reply->latency - latency) * 1000 / 2);
                 }
+//throw std::exception();
 			}
 		}
 		catch (const std::exception& e)

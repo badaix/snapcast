@@ -5,7 +5,11 @@
 #include <iostream>
 #include <cstring>
 
-#define logd std::clog << dbg
+#define logD std::clog << kLog
+#define logO std::clog << kOut
+#define logE std::clog << kErr
+#define logS(P) std::clog << P
+#define log logO
 
 enum LogPriority
 {
@@ -16,8 +20,8 @@ enum LogPriority
 	kLogWarning = LOG_WARNING, // warning conditions
 	kLogNotice  = LOG_NOTICE,  // normal, but significant, condition
 	kLogInfo    = LOG_INFO,    // informational message
-	kLogDebug   = LOG_DEBUG,    // debug-level message
-	dbg
+	kLogDebug   = LOG_DEBUG,   // debug-level message
+	kLog, kOut, kErr
 };
 
 std::ostream& operator<< (std::ostream& os, const LogPriority& log_priority);
@@ -33,6 +37,8 @@ protected:
 
 private:
 	friend std::ostream& operator<< (std::ostream& os, const LogPriority& log_priority);
+	std::string Timestamp();
+	std::string LogPriorityToString(const LogPriority& priority);
 	std::string buffer_;
 	int facility_;
 	int priority_;

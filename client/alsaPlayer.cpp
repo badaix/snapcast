@@ -109,6 +109,7 @@ void Player::start()
 //	snd_pcm_sw_params_set_stop_threshold(pcm_handle, swparams, frames);
 	snd_pcm_sw_params(pcm_handle, swparams);
 
+	active_ = true;
 	playerThread = new thread(&Player::worker, this);
 }
 
@@ -147,7 +148,7 @@ void Player::worker() {
 	unsigned int pcm;
 	snd_pcm_sframes_t framesAvail;
 	snd_pcm_sframes_t framesDelay;
-	active_ = true;
+//	active_ = true;
 	while (active_) 
 	{
 		snd_pcm_avail_delay(pcm_handle, &framesAvail, &framesDelay);
