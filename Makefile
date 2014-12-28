@@ -11,6 +11,6 @@ client:
 clean:
 	$(MAKE) clean -C client 
 	$(MAKE) clean -C server 
-	rm *~
+	rm -f *~
 	
 	
