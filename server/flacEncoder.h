@@ -12,8 +12,8 @@
 class FlacEncoder : public Encoder
 {
 public:
-	FlacEncoder(const SampleFormat& format);
-	virtual double encode(PcmChunk* chunk);
+	FlacEncoder(const msg::SampleFormat& format);
+	virtual double encode(msg::PcmChunk* chunk);
 
 protected:
 	void initEncoder();

@@ -93,7 +93,7 @@ void ClientConnection::stop()
 }
 
 
-bool ClientConnection::send(BaseMessage* message)
+bool ClientConnection::send(msg::BaseMessage* message)
 {
 //	std::unique_lock<std::mutex> mlock(mutex_);
 //cout << "send: " << message->type << ", size: " << message->getSize() << "\n";
@@ -110,9 +110,9 @@ bool ClientConnection::send(BaseMessage* message)
 }
 
 
-shared_ptr<SerializedMessage> ClientConnection::sendRequest(BaseMessage* message, const chronos::msec& timeout)
+shared_ptr<msg::SerializedMessage> ClientConnection::sendRequest(msg::BaseMessage* message, const chronos::msec& timeout)
 {
-	shared_ptr<SerializedMessage> response(NULL);
+	shared_ptr<msg::SerializedMessage> response(NULL);
 	if (++reqId == 10000)
 		reqId = 1;
 	message->id = reqId;
@@ -148,7 +148,7 @@ shared_ptr<SerializedMessage> ClientConnection::sendRequest(BaseMessage* message
 
 void ClientConnection::getNextMessage()
 {
-	BaseMessage baseMessage;
+	msg::BaseMessage baseMessage;
 	size_t baseMsgSize = baseMessage.getSize();
 	vector<char> buffer(baseMsgSize);
 	socketRead(&buffer[0], baseMsgSize);
@@ -167,7 +167,7 @@ void ClientConnection::getNextMessage()
 			{
 				if (req->id == baseMessage.refersTo)
 				{
-					req->response.reset(new SerializedMessage());
+					req->response.reset(new msg::SerializedMessage());
 					req->response->message = baseMessage;
 					req->response->buffer = (char*)malloc(baseMessage.size);
 					memcpy(req->response->buffer, &buffer[0], baseMessage.size);

@@ -4,6 +4,8 @@
 #include <string>
 #include "message.h"
 
+namespace msg
+{
 
 class SampleFormat : public BaseMessage
 {
@@ -63,6 +65,7 @@ protected:
 
 };
 
+}
 
 #endif
 

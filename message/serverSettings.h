@@ -4,11 +4,13 @@
 #include "message/message.h"
 
 
+namespace msg
+{
 
 class ServerSettings : public BaseMessage
 {
 public:
-	ServerSettings() : BaseMessage(message_type::serversettings)
+	ServerSettings() : BaseMessage(message_type::kServerSettings)
 	{
 	}
 
@@ -35,7 +37,7 @@ protected:
 	}
 };
 
-
+}
 
 
 #endif

@@ -4,19 +4,21 @@
 #include "message.h"
 #include <string>
 
+namespace msg
+{
 
-class RequestMsg : public BaseMessage
+class Request : public BaseMessage
 {
 public:
-	RequestMsg() : BaseMessage(message_type::requestmsg), request(base)
+	Request() : BaseMessage(message_type::kRequest), request(kBase)
 	{
 	}
 
-	RequestMsg(message_type _request) : BaseMessage(message_type::requestmsg), request(_request)
+	Request(message_type _request) : BaseMessage(message_type::kRequest), request(_request)
 	{
 	}
 
-	virtual ~RequestMsg()
+	virtual ~Request()
 	{
 	}
 
@@ -39,7 +41,7 @@ protected:
 	}
 };
 
-
+}
 
 
 #endif

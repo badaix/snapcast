@@ -5,17 +5,13 @@ PcmDecoder::PcmDecoder() : Decoder()
 }
 
 
-bool PcmDecoder::decode(PcmChunk* chunk)
+bool PcmDecoder::decode(msg::PcmChunk* chunk)
 {
-	/*	WireChunk* wireChunk = chunk->wireChunk;
-		for (size_t n=0; n<wireChunk->length; ++n)
-			wireChunk->payload[n] *= 1;
-	*/
 	return true;
 }
 
 
-bool PcmDecoder::setHeader(HeaderMessage* chunk)
+bool PcmDecoder::setHeader(msg::Header* chunk)
 {
 	return true;
 }

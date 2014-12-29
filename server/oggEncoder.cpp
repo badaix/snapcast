@@ -5,7 +5,7 @@
 using namespace std;
 
 
-OggEncoder::OggEncoder(const SampleFormat& format) : Encoder(format)
+OggEncoder::OggEncoder(const msg::SampleFormat& format) : Encoder(format)
 {
 	init();
 	lastGranulepos = -1;
@@ -13,7 +13,7 @@ OggEncoder::OggEncoder(const SampleFormat& format) : Encoder(format)
 
 
 
-double OggEncoder::encode(PcmChunk* chunk)
+double OggEncoder::encode(msg::PcmChunk* chunk)
 {
 	double res = 0;
 	if (tv_sec == 0)
@@ -126,7 +126,7 @@ void OggEncoder::init()
 
 	*********************************************************************/
 
-	ret=vorbis_encode_init_vbr(&vi, sampleFormat.channels, sampleFormat.rate, 0.9);
+	ret=vorbis_encode_init_vbr(&vi, sampleFormat.channels, sampleFormat.rate, 1.0);
 
 	/* do not continue if setup failed; this can happen if we ask for a
 	 mode that libVorbis does not support (eg, too low a bitrate, etc,
@@ -165,7 +165,7 @@ void OggEncoder::init()
 	 */
 //	  while(!eos){
 	size_t pos(0);
-	headerChunk = new HeaderMessage("ogg");
+	headerChunk = new msg::Header("ogg");
 	while (true)
 	{
 		int result=ogg_stream_flush(&os,&og);

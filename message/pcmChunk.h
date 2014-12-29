@@ -8,6 +8,8 @@
 #include "common/timeDefs.h"
 
 
+namespace msg
+{
 
 class PcmChunk : public WireChunk
 {
@@ -62,7 +64,7 @@ private:
 	uint32_t idx;
 };
 
-
+}
 
 #endif
 

@@ -4,13 +4,13 @@
 using namespace std;
 
 
-FlacEncoder::FlacEncoder(const SampleFormat& format) : Encoder(format)
+FlacEncoder::FlacEncoder(const msg::SampleFormat& format) : Encoder(format)
 {
 	headerChunk = new HeaderMessage("flac");
 }
 
 
-double FlacEncoder::encode(PcmChunk* chunk)
+double FlacEncoder::encode(msg::PcmChunk* chunk)
 {
 	return chunk->duration<chronos::msec>().count();
 }

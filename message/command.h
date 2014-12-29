@@ -5,18 +5,21 @@
 #include <string>
 
 
-class CommandMsg : public BaseMessage
+namespace msg
+{
+
+class Command : public BaseMessage
 {
 public:
-	CommandMsg() : BaseMessage(message_type::commandmsg), command("")
+	Command() : BaseMessage(message_type::kCommand), command("")
 	{
 	}
 
-	CommandMsg(const std::string& _command) : BaseMessage(message_type::commandmsg), command(_command)
+	Command(const std::string& _command) : BaseMessage(message_type::kCommand), command(_command)
 	{
 	}
 
-	virtual ~CommandMsg()
+	virtual ~Command()
 	{
 	}
 
@@ -44,7 +47,7 @@ protected:
 	}
 };
 
-
+}
 
 
 #endif

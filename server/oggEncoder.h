@@ -7,8 +7,8 @@
 class OggEncoder : public Encoder
 {
 public:
-	OggEncoder(const SampleFormat& format);
-	virtual double encode(PcmChunk* chunk);
+	OggEncoder(const msg::SampleFormat& format);
+	virtual double encode(msg::PcmChunk* chunk);
 
 private:
 	void init();

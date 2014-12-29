@@ -16,7 +16,7 @@ public:
 	Controller();
 	void start(const PcmDevice& pcmDevice, const std::string& _ip, size_t _port, size_t latency);
 	void stop();
-	virtual void onMessageReceived(ClientConnection* connection, const BaseMessage& baseMessage, char* buffer);
+	virtual void onMessageReceived(ClientConnection* connection, const msg::BaseMessage& baseMessage, char* buffer);
 	virtual void onException(ClientConnection* connection, const std::exception& exception);
 
 private:
@@ -26,7 +26,7 @@ private:
 	ClientConnection* clientConnection;
 	Stream* stream;
 	std::string ip;
-	std::shared_ptr<SampleFormat> sampleFormat;
+	std::shared_ptr<msg::SampleFormat> sampleFormat;
 	Decoder* decoder;
 	PcmDevice pcmDevice_;
 	size_t latency_;

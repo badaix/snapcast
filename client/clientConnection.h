@@ -24,7 +24,7 @@ struct PendingRequest
 	PendingRequest(uint16_t reqId) : id(reqId), response(NULL) {};
 
 	uint16_t id;
-	std::shared_ptr<SerializedMessage> response;
+	std::shared_ptr<msg::SerializedMessage> response;
 	std::condition_variable cv;
 };
 
@@ -32,7 +32,7 @@ struct PendingRequest
 class MessageReceiver
 {
 public:
-	virtual void onMessageReceived(ClientConnection* connection, const BaseMessage& baseMessage, char* buffer) = 0;
+	virtual void onMessageReceived(ClientConnection* connection, const msg::BaseMessage& baseMessage, char* buffer) = 0;
 	virtual void onException(ClientConnection* connection, const std::exception& exception) = 0;
 };
 
@@ -44,13 +44,13 @@ public:
 	virtual ~ClientConnection();
 	virtual void start();
 	virtual void stop();
-	virtual bool send(BaseMessage* _message);
-	virtual std::shared_ptr<SerializedMessage> sendRequest(BaseMessage* message, const chronos::msec& timeout = chronos::msec(1000));
+	virtual bool send(msg::BaseMessage* _message);
+	virtual std::shared_ptr<msg::SerializedMessage> sendRequest(msg::BaseMessage* message, const chronos::msec& timeout = chronos::msec(1000));
 
 	template <typename T>
-	std::shared_ptr<T> sendReq(BaseMessage* message, const chronos::msec& timeout = chronos::msec(1000))
+	std::shared_ptr<T> sendReq(msg::BaseMessage* message, const chronos::msec& timeout = chronos::msec(1000))
 	{
-		std::shared_ptr<SerializedMessage> reply = sendRequest(message, timeout);
+		std::shared_ptr<msg::SerializedMessage> reply = sendRequest(message, timeout);
 		if (!reply)
 			return NULL;
 		std::shared_ptr<T> msg(new T);

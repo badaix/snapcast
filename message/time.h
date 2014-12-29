@@ -3,15 +3,17 @@
 
 #include "message.h"
 
+namespace msg
+{
 
-class TimeMsg : public BaseMessage
+class Time : public BaseMessage
 {
 public:
-	TimeMsg() : BaseMessage(message_type::timemsg)
+	Time() : BaseMessage(message_type::kTime)
 	{
 	}
 
-	virtual ~TimeMsg()
+	virtual ~Time()
 	{
 	}
 
@@ -34,7 +36,7 @@ protected:
 	}
 };
 
-
+}
 
 
 #endif

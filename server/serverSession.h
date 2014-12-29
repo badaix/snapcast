@@ -21,7 +21,7 @@ class ServerSession;
 class MessageReceiver
 {
 public:
-	virtual void onMessageReceived(ServerSession* connection, const BaseMessage& baseMessage, char* buffer) = 0;
+	virtual void onMessageReceived(ServerSession* connection, const msg::BaseMessage& baseMessage, char* buffer) = 0;
 };
 
 
@@ -32,8 +32,8 @@ public:
 	~ServerSession();
 	void start();
 	void stop();
-	bool send(BaseMessage* message);
-	void add(std::shared_ptr<BaseMessage> message);
+	bool send(msg::BaseMessage* message);
+	void add(std::shared_ptr<msg::BaseMessage> message);
 
 	virtual bool active()
 	{
@@ -59,7 +59,7 @@ protected:
 	std::thread* writerThread;
 	std::shared_ptr<tcp::socket> socket;
 	MessageReceiver* messageReceiver;
-	Queue<std::shared_ptr<BaseMessage>> messages;
+	Queue<std::shared_ptr<msg::BaseMessage>> messages;
 };
 
 

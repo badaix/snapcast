@@ -12,7 +12,7 @@
 #include "serverSession.h"
 #include "common/queue.h"
 #include "message/message.h"
-#include "message/headerMessage.h"
+#include "message/header.h"
 #include "message/sampleFormat.h"
 #include "message/serverSettings.h"
 
@@ -29,11 +29,11 @@ public:
 
 	void start();
 	void stop();
-	void send(shared_ptr<BaseMessage> message);
-	virtual void onMessageReceived(ServerSession* connection, const BaseMessage& baseMessage, char* buffer);
-	void setHeader(HeaderMessage* header);
-	void setFormat(SampleFormat* format);
-	void setServerSettings(ServerSettings* settings);
+	void send(shared_ptr<msg::BaseMessage> message);
+	virtual void onMessageReceived(ServerSession* connection, const msg::BaseMessage& baseMessage, char* buffer);
+	void setHeader(msg::Header* header);
+	void setFormat(msg::SampleFormat* format);
+	void setServerSettings(msg::ServerSettings* settings);
 
 private:
 	void acceptor();
@@ -41,11 +41,11 @@ private:
 	set<shared_ptr<ServerSession>> sessions;
 	boost::asio::io_service io_service_;
 	unsigned short port_;
-	HeaderMessage* headerChunk;
-	SampleFormat* sampleFormat;
-	ServerSettings* serverSettings;
+	msg::Header* headerChunk;
+	msg::SampleFormat* sampleFormat;
+	msg::ServerSettings* serverSettings;
 	thread* acceptThread;
-	Queue<shared_ptr<BaseMessage>> messages;
+	Queue<shared_ptr<msg::BaseMessage>> messages;
 };
 
 

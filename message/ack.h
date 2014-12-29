@@ -3,19 +3,21 @@
 
 #include "message.h"
 
+namespace msg
+{
 
-class AckMsg : public BaseMessage
+class Ack : public BaseMessage
 {
 public:
-	AckMsg() : BaseMessage(message_type::ackMsg), message("")
+	Ack() : BaseMessage(message_type::kAck), message("")
 	{
 	}
 
-	AckMsg(const std::string& _message) : BaseMessage(message_type::requestmsg), message(_message)
+	Ack(const std::string& _message) : BaseMessage(message_type::kAck), message(_message)
 	{
 	}
 
-	virtual ~AckMsg()
+	virtual ~Ack()
 	{
 	}
 
@@ -43,6 +45,7 @@ protected:
 	}
 };
 
+}
 
 
 

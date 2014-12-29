@@ -40,7 +40,7 @@ int main(int argc, char* argv[])
 		("codec,c", po::value<string>(&codec)->default_value("ogg"), "transport codec [ogg|pcm]")
 		("fifo,f", po::value<string>(&fifoName)->default_value("/tmp/snapfifo"), "name of the input fifo file")
 		("daemon,d", po::bool_switch(&runAsDaemon)->default_value(false), "daemonize")
-		("buffer,b", po::value<int32_t>(&bufferMs)->default_value(500), "buffer [ms]")
+		("buffer,b", po::value<int32_t>(&bufferMs)->default_value(1000), "buffer [ms]")
 		;
 
 		po::variables_map vm;
@@ -69,7 +69,7 @@ int main(int argc, char* argv[])
 		long nextTick = chronos::getTickCount();
 
 		mkfifo(fifoName.c_str(), 0777);
-		SampleFormat format(sampleFormat);
+		msg::SampleFormat format(sampleFormat);
 		size_t duration = 50;
 //size_t chunkSize = duration*format.rate*format.frameSize / 1000;
 		std::auto_ptr<Encoder> encoder;
@@ -88,7 +88,7 @@ int main(int argc, char* argv[])
 			return 1;
 		}
 
-		ServerSettings serverSettings;
+		msg::ServerSettings serverSettings;
 		serverSettings.bufferMs = bufferMs;
 
 		ControlServer* controlServer = new ControlServer(port);
@@ -106,10 +106,10 @@ int main(int argc, char* argv[])
 			int fd = open(fifoName.c_str(), O_RDONLY | O_NONBLOCK);
 			try
 			{
-				shared_ptr<PcmChunk> chunk;//(new WireChunk());
+				shared_ptr<msg::PcmChunk> chunk;//(new WireChunk());
 				while (!g_terminated)//cin.good())
 				{
-					chunk.reset(new PcmChunk(sampleFormat, duration));//2*WIRE_CHUNK_SIZE));
+					chunk.reset(new msg::PcmChunk(sampleFormat, duration));//2*WIRE_CHUNK_SIZE));
 					int toRead = chunk->payloadSize;
 					int len = 0;
 					do

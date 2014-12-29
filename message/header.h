@@ -3,17 +3,18 @@
 
 #include "message.h"
 
+namespace msg
+{
 
-
-class HeaderMessage : public BaseMessage
+class Header : public BaseMessage
 {
 public:
-	HeaderMessage(const std::string& codecName = "", size_t size = 0) : BaseMessage(message_type::header), payloadSize(size), codec(codecName)
+	Header(const std::string& codecName = "", size_t size = 0) : BaseMessage(message_type::kHeader), payloadSize(size), codec(codecName)
 	{
 		payload = (char*)malloc(size);
 	}
 
-	virtual ~HeaderMessage()
+	virtual ~Header()
 	{
 		free(payload);
 	}
@@ -50,6 +51,7 @@ protected:
 	}
 };
 
+}
 
 
 #endif

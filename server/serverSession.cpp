@@ -78,7 +78,7 @@ void ServerSession::socketRead(void* _to, size_t _bytes)
 }
 
 
-void ServerSession::add(shared_ptr<BaseMessage> message)
+void ServerSession::add(shared_ptr<msg::BaseMessage> message)
 {
 	if (!message || !streamActive)
 		return;
@@ -89,7 +89,7 @@ void ServerSession::add(shared_ptr<BaseMessage> message)
 }
 
 
-bool ServerSession::send(BaseMessage* message)
+bool ServerSession::send(msg::BaseMessage* message)
 {
 	std::unique_lock<std::mutex> mlock(mutex_);
 	if (!socket)
@@ -107,7 +107,7 @@ bool ServerSession::send(BaseMessage* message)
 void ServerSession::getNextMessage()
 {
 //cout << "getNextMessage\n";
-	BaseMessage baseMessage;
+	msg::BaseMessage baseMessage;
 	size_t baseMsgSize = baseMessage.getSize();
 	vector<char> buffer(baseMsgSize);
 	socketRead(&buffer[0], baseMsgSize);
@@ -151,7 +151,7 @@ void ServerSession::writer()
 	{
 		boost::asio::streambuf streambuf;
 		std::ostream stream(&streambuf);
-		shared_ptr<BaseMessage> message;
+		shared_ptr<msg::BaseMessage> message;
 		while (active_)
 		{
 			if (messages.try_pop(message, std::chrono::milliseconds(500)))

@@ -1,12 +1,12 @@
 #include "pcmEncoder.h"
 
-PcmEncoder::PcmEncoder(const SampleFormat& format) : Encoder(format)
+PcmEncoder::PcmEncoder(const msg::SampleFormat& format) : Encoder(format)
 {
-	headerChunk = new HeaderMessage("pcm");
+	headerChunk = new msg::Header("pcm");
 }
 
 
-double PcmEncoder::encode(PcmChunk* chunk)
+double PcmEncoder::encode(msg::PcmChunk* chunk)
 {
 	return chunk->duration<chronos::msec>().count();
 }

@@ -28,7 +28,7 @@ OggDecoder::~OggDecoder()
 }
 
 
-bool OggDecoder::decode(PcmChunk* chunk)
+bool OggDecoder::decode(msg::PcmChunk* chunk)
 {
 
 	/* grab some data at the head of the stream. We want the first page
@@ -122,7 +122,7 @@ bool OggDecoder::decode(PcmChunk* chunk)
 }
 
 
-bool OggDecoder::setHeader(HeaderMessage* chunk)
+bool OggDecoder::setHeader(msg::Header* chunk)
 {
 	bytes = chunk->payloadSize;
 	buffer=ogg_sync_buffer(&oy, bytes);

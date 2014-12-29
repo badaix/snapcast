@@ -30,15 +30,15 @@ struct membuf : public std::basic_streambuf<char>
 
 enum message_type
 {
-	base = 0,
-	header = 1,
-	payload = 2,
-	sampleformat = 3,
-	serversettings = 4,
-	timemsg = 5,
-	requestmsg = 6,
-	ackMsg = 7,
-	commandmsg = 8
+	kBase = 0,
+	kHeader = 1,
+	kPayload = 2,
+	kSampleFormat = 3,
+	kServerSettings = 4,
+	kTime = 5,
+	kRequest = 6,
+	kAck = 7,
+	kCommand = 8
 };
 
 
@@ -90,10 +90,12 @@ struct tv
 	}
 };
 
+namespace msg
+{
 
 struct BaseMessage
 {
-	BaseMessage() : type(base), id(0), refersTo(0)
+	BaseMessage() : type(kBase), id(0), refersTo(0)
 	{
 	}
 
@@ -181,6 +183,7 @@ struct SerializedMessage
 	char* buffer;
 };
 
+}
 
 #endif
 

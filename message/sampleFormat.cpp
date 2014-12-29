@@ -5,18 +5,21 @@
 #include <iostream>
 
 
-SampleFormat::SampleFormat() : BaseMessage(message_type::sampleformat)
+namespace msg
+{
+
+SampleFormat::SampleFormat() : BaseMessage(message_type::kSampleFormat)
 {
 }
 
 
-SampleFormat::SampleFormat(const std::string& format) : BaseMessage(message_type::sampleformat)
+SampleFormat::SampleFormat(const std::string& format) : BaseMessage(message_type::kSampleFormat)
 {
 	setFormat(format);
 }
 
 
-SampleFormat::SampleFormat(uint32_t sampleRate, uint16_t bitsPerSample, uint16_t channelCount) : BaseMessage(message_type::sampleformat)
+SampleFormat::SampleFormat(uint32_t sampleRate, uint16_t bitsPerSample, uint16_t channelCount) : BaseMessage(message_type::kSampleFormat)
 {
 	setFormat(sampleRate, bitsPerSample, channelCount);
 }
@@ -43,6 +46,8 @@ void SampleFormat::setFormat(uint32_t rate, uint16_t bits, uint16_t channels)
 	if (bits == 24)
 		sampleSize = 4;
 	frameSize = channels*sampleSize;
+}
+
 }
 
 

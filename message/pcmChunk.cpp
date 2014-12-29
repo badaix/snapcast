@@ -6,6 +6,8 @@
 
 using namespace std;
 
+namespace msg
+{
 
 PcmChunk::PcmChunk(const SampleFormat& sampleFormat, size_t ms) : WireChunk(sampleFormat.rate*sampleFormat.frameSize*ms / 1000), format(sampleFormat), idx(0)
 {
@@ -50,5 +52,7 @@ int PcmChunk::readFrames(void* outputBuffer, size_t frameCount)
 	return result;
 }
 
+
+}
 
 

@@ -1,8 +1,8 @@
 #include "controlServer.h"
-#include "message/timeMsg.h"
-#include "message/ackMsg.h"
-#include "message/requestMsg.h"
-#include "message/commandMsg.h"
+#include "message/time.h"
+#include "message/ack.h"
+#include "message/request.h"
+#include "message/command.h"
 #include <iostream>
 
 
@@ -13,7 +13,7 @@ ControlServer::ControlServer(unsigned short port) : port_(port), headerChunk(NUL
 
 
 
-void ControlServer::send(shared_ptr<BaseMessage> message)
+void ControlServer::send(shared_ptr<msg::BaseMessage> message)
 {
 	std::unique_lock<std::mutex> mlock(mutex);
 	for (std::set<shared_ptr<ServerSession>>::iterator it = sessions.begin(); it != sessions.end(); )
@@ -33,47 +33,47 @@ void ControlServer::send(shared_ptr<BaseMessage> message)
 }
 
 
-void ControlServer::onMessageReceived(ServerSession* connection, const BaseMessage& baseMessage, char* buffer)
+void ControlServer::onMessageReceived(ServerSession* connection, const msg::BaseMessage& baseMessage, char* buffer)
 {
 //	cout << "onMessageReceived: " << baseMessage.type << ", size: " << baseMessage.size << ", sent: " << baseMessage.sent.sec << "," << baseMessage.sent.usec << ", recv: " << baseMessage.received.sec << "," << baseMessage.received.usec << "\n";
-	if (baseMessage.type == message_type::requestmsg)
+	if (baseMessage.type == message_type::kRequest)
 	{
-		RequestMsg requestMsg;
+		msg::Request requestMsg;
 		requestMsg.deserialize(baseMessage, buffer);
 //		cout << "request: " << requestMsg.request << "\n";
-		if (requestMsg.request == timemsg)
+		if (requestMsg.request == kTime)
 		{
 //		timeMsg.latency = (timeMsg.received.sec - timeMsg.sent.sec) * 1000000 + (timeMsg.received.usec - timeMsg.sent.usec);
-			TimeMsg timeMsg;
+			msg::Time timeMsg;
 			timeMsg.refersTo = requestMsg.id;
 			timeMsg.latency = (requestMsg.received.sec - requestMsg.sent.sec) + (requestMsg.received.usec - requestMsg.sent.usec) / 1000000.;
 //		tv diff = timeMsg.received - timeMsg.sent;
 //		cout << "Latency: " << diff.sec << "." << diff.usec << "\n";
 			connection->send(&timeMsg);
 		}
-		else if (requestMsg.request == serversettings)
+		else if (requestMsg.request == kServerSettings)
 		{
 			serverSettings->refersTo = requestMsg.id;
 			connection->send(serverSettings);
 		}
-		else if (requestMsg.request == sampleformat)
+		else if (requestMsg.request == kSampleFormat)
 		{
 			sampleFormat->refersTo = requestMsg.id;
 			connection->send(sampleFormat);
 		}
-		else if (requestMsg.request == header)
+		else if (requestMsg.request == kHeader)
 		{
 			headerChunk->refersTo = requestMsg.id;
 			connection->send(headerChunk);
 		}
 	}
-	else if (baseMessage.type == message_type::commandmsg)
+	else if (baseMessage.type == message_type::kCommand)
 	{
-		CommandMsg commandMsg;
+		msg::Command commandMsg;
 		commandMsg.deserialize(baseMessage, buffer);
 		if (commandMsg.command == "startStream")
 		{
-			AckMsg ackMsg;
+			msg::Ack ackMsg;
 			ackMsg.refersTo = commandMsg.id;
 			connection->send(&ackMsg);
 			connection->setStreamActive(true);
@@ -117,14 +117,14 @@ void ControlServer::stop()
 }
 
 
-void ControlServer::setHeader(HeaderMessage* header)
+void ControlServer::setHeader(msg::Header* header)
 {
 	if (header)
 		headerChunk = header;
 }
 
 
-void ControlServer::setFormat(SampleFormat* format)
+void ControlServer::setFormat(msg::SampleFormat* format)
 {
 	if (format)
 		sampleFormat = format;
@@ -132,7 +132,7 @@ void ControlServer::setFormat(SampleFormat* format)
 
 
 
-void ControlServer::setServerSettings(ServerSettings* settings)
+void ControlServer::setServerSettings(msg::ServerSettings* settings)
 {
 	if (settings)
 		serverSettings = settings;

@@ -8,7 +8,7 @@ using namespace std;
 using namespace chronos;
 
 
-Stream::Stream(const SampleFormat& sampleFormat) : format(format_), format_(sampleFormat), sleep(0), median(0), shortMedian(0), lastUpdate(0), playedFrames(0)
+Stream::Stream(const msg::SampleFormat& sampleFormat) : format(format_), format_(sampleFormat), sleep(0), median(0), shortMedian(0), lastUpdate(0), playedFrames(0)
 {
 	buffer.setSize(500);
 	shortBuffer.setSize(100);
@@ -16,8 +16,6 @@ Stream::Stream(const SampleFormat& sampleFormat) : format(format_), format_(samp
 //	cardBuffer.setSize(50);
 	bufferMs = msec(500);
 
-	playedSamples = 0;
-	playedSamplesTime = time_point_hrc::min();
 /*
 48000     x
 ------- = -----
@@ -53,11 +51,11 @@ void Stream::clearChunks()
 }
 
 
-void Stream::addChunk(PcmChunk* chunk)
+void Stream::addChunk(msg::PcmChunk* chunk)
 {
 	while (chunks.size() * chunk->duration<chronos::msec>().count() > 10000)
 		chunks.pop();
-	chunks.push(shared_ptr<PcmChunk>(chunk));
+	chunks.push(shared_ptr<msg::PcmChunk>(chunk));
 //	cout << "new chunk: " << chunk->getDuration() << ", Chunks: " << chunks.size() << "\n";
 }
 
@@ -174,17 +172,6 @@ void Stream::resetBuffers()
 
 bool Stream::getPlayerChunk(void* outputBuffer, const chronos::usec& outputBufferDacTime, unsigned long framesPerBuffer)
 {
-/*if (playedSamplesTime == time_point_hrc::min())
-	playedSamplesTime = chronos::hrc::now() + outputBufferDacTime;
-else
-{
-	playedSamples += framesPerBuffer;
-	chronos::msec since = std::chrono::duration_cast<msec>(chronos::hrc::now() + outputBufferDacTime - playedSamplesTime);
-	if (since.count() > 0)
-		cout << (double)playedSamples / (double)since.count() << "\n";
-}
-*/
-
 	if (outputBufferDacTime > bufferMs)
 		return false;
 

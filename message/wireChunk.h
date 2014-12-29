@@ -10,10 +10,13 @@
 #include "message.h"
 
 
+namespace msg
+{
+
 class WireChunk : public BaseMessage
 {
 public:
-	WireChunk(size_t size = 0) : BaseMessage(message_type::payload), payloadSize(size)
+	WireChunk(size_t size = 0) : BaseMessage(message_type::kPayload), payloadSize(size)
 	{
 		payload = (char*)malloc(size);
 	}
@@ -51,7 +54,7 @@ protected:
 	}
 };
 
-
+}
 
 
 #endif

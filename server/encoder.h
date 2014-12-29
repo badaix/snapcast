@@ -1,14 +1,14 @@
 #ifndef ENCODER_H
 #define ENCODER_H
 #include "message/pcmChunk.h"
-#include "message/headerMessage.h"
+#include "message/header.h"
 #include "message/sampleFormat.h"
 
 
 class Encoder
 {
 public:
-	Encoder(const SampleFormat& format) : sampleFormat(format), headerChunk(NULL)
+	Encoder(const msg::SampleFormat& format) : sampleFormat(format), headerChunk(NULL)
 	{
 	}
 
@@ -18,16 +18,16 @@ public:
 			delete headerChunk;
 	}
 
-	virtual double encode(PcmChunk* chunk) = 0;
+	virtual double encode(msg::PcmChunk* chunk) = 0;
 
-	virtual HeaderMessage* getHeader()
+	virtual msg::Header* getHeader()
 	{
 		return headerChunk;
 	}
 
 protected:
-	SampleFormat sampleFormat;
-	HeaderMessage* headerChunk;
+	msg::SampleFormat sampleFormat;
+	msg::Header* headerChunk;
 };
 
 

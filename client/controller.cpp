@@ -8,10 +8,10 @@
 #include "alsaPlayer.h"
 #include "timeProvider.h"
 #include "message/serverSettings.h"
-#include "message/timeMsg.h"
-#include "message/requestMsg.h"
-#include "message/ackMsg.h"
-#include "message/commandMsg.h"
+#include "message/time.h"
+#include "message/request.h"
+#include "message/ack.h"
+#include "message/command.h"
 
 using namespace std;
 
@@ -27,13 +27,13 @@ void Controller::onException(ClientConnection* connection, const std::exception&
 }
 
 
-void Controller::onMessageReceived(ClientConnection* connection, const BaseMessage& baseMessage, char* buffer)
+void Controller::onMessageReceived(ClientConnection* connection, const msg::BaseMessage& baseMessage, char* buffer)
 {
-	if (baseMessage.type == message_type::payload)
+	if (baseMessage.type == message_type::kPayload)
 	{
 		if ((stream != NULL) && (decoder != NULL))
 		{
-			PcmChunk* pcmChunk = new PcmChunk(*sampleFormat, 0);
+			msg::PcmChunk* pcmChunk = new msg::PcmChunk(*sampleFormat, 0);
 			pcmChunk->deserialize(baseMessage, buffer);
 //cout << "chunk: " << pcmChunk->payloadSize;
 			if (decoder->decode(pcmChunk))
@@ -81,18 +81,18 @@ void Controller::worker()
 		try
 		{
 			clientConnection->start();
-			RequestMsg requestMsg(serversettings);
-			shared_ptr<ServerSettings> serverSettings(NULL);
-			while (active_ && !(serverSettings = clientConnection->sendReq<ServerSettings>(&requestMsg)));
+			msg::Request requestMsg(kServerSettings);
+			shared_ptr<msg::ServerSettings> serverSettings(NULL);
+			while (active_ && !(serverSettings = clientConnection->sendReq<msg::ServerSettings>(&requestMsg)));
 			cout << "ServerSettings buffer: " << serverSettings->bufferMs << "\n";
 
-			requestMsg.request = sampleformat;
-			while (active_ && !(sampleFormat = clientConnection->sendReq<SampleFormat>(&requestMsg)));
+			requestMsg.request = kSampleFormat;
+			while (active_ && !(sampleFormat = clientConnection->sendReq<msg::SampleFormat>(&requestMsg)));
 			cout << "SampleFormat rate: " << sampleFormat->rate << ", bits: " << sampleFormat->bits << ", channels: " << sampleFormat->channels << "\n";
 
-			requestMsg.request = header;
-			shared_ptr<HeaderMessage> headerChunk(NULL);
-			while (active_ && !(headerChunk = clientConnection->sendReq<HeaderMessage>(&requestMsg)));
+			requestMsg.request = kHeader;
+			shared_ptr<msg::Header> headerChunk(NULL);
+			while (active_ && !(headerChunk = clientConnection->sendReq<msg::Header>(&requestMsg)));
 			cout << "Codec: " << headerChunk->codec << "\n";
 			if (headerChunk->codec == "ogg")
 				decoder = new OggDecoder();
@@ -100,10 +100,10 @@ void Controller::worker()
 				decoder = new PcmDecoder();
 			decoder->setHeader(headerChunk.get());
 
-			RequestMsg timeReq(timemsg);
+			msg::Request timeReq(kTime);
 			for (size_t n=0; n<50 && active_; ++n)
 			{
-				shared_ptr<TimeMsg> reply = clientConnection->sendReq<TimeMsg>(&timeReq, chronos::msec(2000));
+				shared_ptr<msg::Time> reply = clientConnection->sendReq<msg::Time>(&timeReq, chronos::msec(2000));
 				if (reply)
 				{
 					double latency = (reply->received.sec - reply->sent.sec) + (reply->received.usec - reply->sent.usec) / 1000000.;
@@ -119,14 +119,14 @@ void Controller::worker()
 			Player player(pcmDevice_, stream);
 			player.start();
 
-			CommandMsg startStream("startStream");
-			shared_ptr<AckMsg> ackMsg(NULL);
-			while (active_ && !(ackMsg = clientConnection->sendReq<AckMsg>(&startStream)));
+			msg::Command startStream("startStream");
+			shared_ptr<msg::Ack> ackMsg(NULL);
+			while (active_ && !(ackMsg = clientConnection->sendReq<msg::Ack>(&startStream)));
 
 			while (active_)
 			{
 				usleep(500*1000);
-                shared_ptr<TimeMsg> reply = clientConnection->sendReq<TimeMsg>(&timeReq);
+                shared_ptr<msg::Time> reply = clientConnection->sendReq<msg::Time>(&timeReq);
                 if (reply)
                 {
                     double latency = (reply->received.sec - reply->sent.sec) + (reply->received.usec - reply->sent.usec) / 1000000.;
