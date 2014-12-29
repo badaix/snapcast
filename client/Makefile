@@ -19,7 +19,6 @@ clean:
 	rm -rf $(BIN) $(OBJ) *~
 
 install:
-	
 	@cp ./snapclient /usr/sbin/snapclient
 	@echo "Please enter the IP address or host name of the snapserver: [localhost]"; \
     read server_ip; \

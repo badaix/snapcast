@@ -18,3 +18,7 @@ server: $(OBJ)
 clean:
 	rm -rf $(BIN) $(OBJ) *~
 
+install:
+	@cp ./snapserver /usr/sbin/snapserver; \
+	cp ../init.d/snapserver /etc/init.d/snapserver; \
+

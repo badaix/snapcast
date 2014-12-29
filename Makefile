@@ -13,4 +13,9 @@ clean:
 	$(MAKE) clean -C server 
 	rm -f *~
 	
+installclient:
+	$(MAKE) install -C client 
+
+installserver:
+	$(MAKE) install -C server 
 	

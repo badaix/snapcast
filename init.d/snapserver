@@ -1,6 +1,6 @@
 #! /bin/sh
 ### BEGIN INIT INFO
-# Provides:          snapclient
+# Provides:          snapserver
 # Required-Start:    $remote_fs $syslog
 # Required-Stop:     $remote_fs $syslog
 # Default-Start:     2 3 4 5
@@ -19,11 +19,10 @@
 
 # PATH should only include /usr/* if it runs after the mountnfs.sh script
 PATH=/sbin:/usr/sbin:/bin:/usr/bin:/
-DESC="Snapclient"
-NAME=snapclient
-SERVERIP=_SERVER_HOST_
+DESC="Snapserver"
+NAME=snapserver
 DAEMON=/usr/sbin/$NAME
-DAEMON_ARGS="-d -i $SERVERIP"
+DAEMON_ARGS="-d"
 PIDFILE=/var/run/$NAME.pid
 SCRIPTNAME=/etc/init.d/$NAME
 
