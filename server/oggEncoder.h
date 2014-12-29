@@ -31,7 +31,7 @@ private:
 
 	ogg_int64_t   lastGranulepos;
 
-	int eos=0,ret;
+	int eos, ret;
 	int i, founddata;
 
 	int32_t tv_sec;

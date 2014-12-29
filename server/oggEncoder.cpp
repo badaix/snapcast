@@ -6,7 +6,7 @@
 using namespace std;
 
 
-OggEncoder::OggEncoder(const msg::SampleFormat& format) : Encoder(format)
+OggEncoder::OggEncoder(const msg::SampleFormat& format) : Encoder(format), eos(0)
 {
 	init();
 	lastGranulepos = -1;
