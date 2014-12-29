@@ -4,6 +4,8 @@
 #include "common/timeDefs.h"
 #include "common/signalHandler.h"
 #include "common/daemon.h"
+#include "common/log.h"
+#include "common/snapException.h"
 #include "message/sampleFormat.h"
 #include "message/message.h"
 #include "pcmEncoder.h"
@@ -35,6 +37,7 @@ int main(int argc, char* argv[])
 		po::options_description desc("Allowed options");
 		desc.add_options()
 		("help,h", "produce help message")
+		("version,v", "show version number")
 		("port,p", po::value<size_t>(&port)->default_value(98765), "server port")
 		("sampleformat,s", po::value<string>(&sampleFormat)->default_value("48000:16:2"), "sample format")
 		("codec,c", po::value<string>(&codec)->default_value("ogg"), "transport codec [ogg|pcm]")
@@ -49,18 +52,28 @@ int main(int argc, char* argv[])
 
 		if (vm.count("help"))
 		{
-			cout << desc << "\n";
+			logO << desc << "\n";
 			return 1;
 		}
 
+		if (vm.count("version"))
+		{
+			logO << "snapserver " << VERSION << "\n"
+				 << "Copyright (C) 2014 BadAix (snapcast@badaix.de).\n"
+				 << "License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>.\n"
+				 << "This is free software: you are free to change and redistribute it.\n"
+				 << "There is NO WARRANTY, to the extent permitted by law.\n\n"
+				 << "Written by Johannes Pohl.\n";
+			return 1;
+		}
 
 		if (runAsDaemon)
 		{
 			daemonize("/var/run/snapserver.pid");
-			syslog (LOG_NOTICE, "First daemon started.");
+			logS(kLogNotice) << "daemon started." << endl;
 		}
 
-		openlog("firstdaemon", LOG_PID, LOG_DAEMON);
+		std::clog.rdbuf(new Log("snapserver", LOG_DAEMON));
 
 		using namespace std; // For atoi.
 
@@ -79,12 +92,12 @@ int main(int argc, char* argv[])
 			encoder.reset(new PcmEncoder(sampleFormat));
 		else if (codec == "flac")
 		{
-			cout << "Not yet supported\n";
+			logO << "Not yet supported\n";
 			return 1;
 		}
 		else
 		{
-			cout << "unknown codec: " << codec << "\n";
+			logO << "unknown codec: " << codec << "\n";
 			return 1;
 		}
 
@@ -129,7 +142,7 @@ int main(int argc, char* argv[])
 					double chunkDuration = encoder->encode(chunk.get());
 					if (chunkDuration > 0)
 						controlServer->send(chunk);
-//cout << chunk->tv_sec << ", " << chunk->tv_usec / 1000 << "\n";
+//logD << chunk->tv_sec << ", " << chunk->tv_usec / 1000 << "\n";
 //                    addUs(tvChunk, 1000*chunk->getDuration());
 					chronos::addUs(tvChunk, chunkDuration * 1000);
 					nextTick += duration;
@@ -152,16 +165,14 @@ int main(int argc, char* argv[])
 			close(fd);
 		}
 
-//		server->stop();
 	}
 	catch (const std::exception& e)
 	{
-		std::cerr << "Exception: " << e.what() << std::endl;
+		logS(kLogErr) << "Exception: " << e.what() << std::endl;
 	}
 
-	syslog(LOG_NOTICE, "First daemon terminated.");
+	logS(kLogNotice) << "daemon terminated." << endl;
 	daemonShutdown();
-	closelog();
 }
 
 

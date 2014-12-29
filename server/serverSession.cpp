@@ -39,19 +39,19 @@ void ServerSession::stop()
 		if (socket)
 		{
 			socket->shutdown(boost::asio::ip::tcp::socket::shutdown_both, ec);
-			if (ec) cout << "Error in socket shutdown: " << ec << "\n";
+			if (ec) logE << "Error in socket shutdown: " << ec << "\n";
 			socket->close(ec);
-			if (ec) cout << "Error in socket close: " << ec << "\n";
+			if (ec) logE << "Error in socket close: " << ec << "\n";
 		}
 		if (readerThread)
 		{
-			cout << "joining readerThread\n";
+			logD << "joining readerThread\n";
 			readerThread->join();
 			delete readerThread;
 		}
 		if (writerThread)
 		{
-			cout << "joining readerThread\n";
+			logD << "joining readerThread\n";
 			writerThread->join();
 			delete writerThread;
 		}
@@ -61,7 +61,7 @@ void ServerSession::stop()
 	}
 	readerThread = NULL;
 	writerThread = NULL;
-	cout << "ServerSession stopped\n";
+	logD << "ServerSession stopped\n";
 }
 
 
@@ -106,13 +106,13 @@ bool ServerSession::send(msg::BaseMessage* message)
 
 void ServerSession::getNextMessage()
 {
-//cout << "getNextMessage\n";
+//logD << "getNextMessage\n";
 	msg::BaseMessage baseMessage;
 	size_t baseMsgSize = baseMessage.getSize();
 	vector<char> buffer(baseMsgSize);
 	socketRead(&buffer[0], baseMsgSize);
 	baseMessage.deserialize(&buffer[0]);
-//cout << "getNextMessage: " << baseMessage.type << ", size: " << baseMessage.size << ", id: " << baseMessage.id << ", refers: " << baseMessage.refersTo << "\n";
+//logD << "getNextMessage: " << baseMessage.type << ", size: " << baseMessage.size << ", id: " << baseMessage.id << ", refers: " << baseMessage.refersTo << "\n";
 	if (baseMessage.size > buffer.size())
 		buffer.resize(baseMessage.size);
 	socketRead(&buffer[0], baseMessage.size);
@@ -137,7 +137,7 @@ void ServerSession::reader()
 	}
 	catch (const std::exception& e)
 	{
-		cout << kLogNotice << "Exception: " << e.what() << ", trying to reconnect" << std::endl;
+		logS(kLogErr) << "Exception: " << e.what() << ", trying to reconnect" << endl;
 	}
 	active_ = false;
 }
@@ -160,7 +160,7 @@ void ServerSession::writer()
 	}
 	catch (std::exception& e)
 	{
-		std::cerr << "Exception in thread: " << e.what() << "\n";
+		logE << "Exception in thread: " << e.what() << "\n";
 	}
 	active_ = false;
 }

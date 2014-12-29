@@ -3,6 +3,7 @@
 #include "message/ack.h"
 #include "message/request.h"
 #include "message/command.h"
+#include "common/log.h"
 #include <iostream>
 
 
@@ -20,7 +21,7 @@ void ControlServer::send(shared_ptr<msg::BaseMessage> message)
 	{
 		if (!(*it)->active())
 		{
-			cout << "Session inactive. Removing\n";
+			logO << "Session inactive. Removing\n";
 			(*it)->stop();
 			sessions.erase(it++);
 		}
@@ -35,12 +36,12 @@ void ControlServer::send(shared_ptr<msg::BaseMessage> message)
 
 void ControlServer::onMessageReceived(ServerSession* connection, const msg::BaseMessage& baseMessage, char* buffer)
 {
-//	cout << "onMessageReceived: " << baseMessage.type << ", size: " << baseMessage.size << ", sent: " << baseMessage.sent.sec << "," << baseMessage.sent.usec << ", recv: " << baseMessage.received.sec << "," << baseMessage.received.usec << "\n";
+//	logD << "onMessageReceived: " << baseMessage.type << ", size: " << baseMessage.size << ", sent: " << baseMessage.sent.sec << "," << baseMessage.sent.usec << ", recv: " << baseMessage.received.sec << "," << baseMessage.received.usec << "\n";
 	if (baseMessage.type == message_type::kRequest)
 	{
 		msg::Request requestMsg;
 		requestMsg.deserialize(baseMessage, buffer);
-//		cout << "request: " << requestMsg.request << "\n";
+//		logD << "request: " << requestMsg.request << "\n";
 		if (requestMsg.request == kTime)
 		{
 //		timeMsg.latency = (timeMsg.received.sec - timeMsg.sent.sec) * 1000000 + (timeMsg.received.usec - timeMsg.sent.usec);
@@ -48,7 +49,7 @@ void ControlServer::onMessageReceived(ServerSession* connection, const msg::Base
 			timeMsg.refersTo = requestMsg.id;
 			timeMsg.latency = (requestMsg.received.sec - requestMsg.sent.sec) + (requestMsg.received.usec - requestMsg.sent.usec) / 1000000.;
 //		tv diff = timeMsg.received - timeMsg.sent;
-//		cout << "Latency: " << diff.sec << "." << diff.usec << "\n";
+//		logD << "Latency: " << diff.sec << "." << diff.usec << "\n";
 			connection->send(&timeMsg);
 		}
 		else if (requestMsg.request == kServerSettings)
@@ -94,7 +95,7 @@ void ControlServer::acceptor()
 		a.accept(*sock);
 		setsockopt(sock->native(), SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
 		setsockopt(sock->native(), SOL_SOCKET, SO_SNDTIMEO, &tv, sizeof(tv));
-		cout << "ControlServer::NewConnection: " << sock->remote_endpoint().address().to_string() << "\n";
+		logS(kLogNotice) << "ControlServer::NewConnection: " << sock->remote_endpoint().address().to_string() << endl;
 		ServerSession* session = new ServerSession(this, sock);
 		{
 			std::unique_lock<std::mutex> mlock(mutex);

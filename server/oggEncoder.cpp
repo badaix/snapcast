@@ -1,4 +1,5 @@
 #include "oggEncoder.h"
+#include "common/log.h"
 #include <iostream>
 #include <cstring>
 
@@ -21,7 +22,7 @@ double OggEncoder::encode(msg::PcmChunk* chunk)
 		tv_sec = chunk->timestamp.sec;
 		tv_usec = chunk->timestamp.usec;
 	}
-//cout << "-> pcm: " << wireChunk->length << endl;
+//logD << "-> pcm: " << wireChunk->length << endl;
 	int bytes = chunk->payloadSize / 4;
 	float **buffer=vorbis_analysis_buffer(&vd, bytes);
 
@@ -173,7 +174,7 @@ void OggEncoder::init()
 			break;
 		headerChunk->payloadSize += og.header_len + og.body_len;
 		headerChunk->payload = (char*)realloc(headerChunk->payload, headerChunk->payloadSize);
-		cout << "HeadLen: " << og.header_len << ", bodyLen: " << og.body_len << ", result: " << result << "\n";
+		logD << "HeadLen: " << og.header_len << ", bodyLen: " << og.body_len << ", result: " << result << "\n";
 		memcpy(headerChunk->payload + pos, og.header, og.header_len);
 		pos += og.header_len;
 		memcpy(headerChunk->payload + pos, og.body, og.body_len);

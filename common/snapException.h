@@ -33,6 +33,21 @@ public:
 };
 
 
+
+class ServerException : public SnapException
+{
+public:
+	ServerException(const char* text) : SnapException(text)
+	{
+	}
+
+	virtual ~ServerException() throw()
+	{
+	}
+};
+
+
+
 #endif
 
 

@@ -7,6 +7,7 @@
 #include "pcmDecoder.h"
 #include "alsaPlayer.h"
 #include "timeProvider.h"
+#include "common/log.h"
 #include "message/serverSettings.h"
 #include "message/time.h"
 #include "message/request.h"
@@ -23,7 +24,7 @@ Controller::Controller() : MessageReceiver(), active_(false), sampleFormat(NULL)
 
 void Controller::onException(ClientConnection* connection, const std::exception& exception)
 {
-	cout << "onException: " << exception.what() << "\n";
+	logE << "onException: " << exception.what() << "\n";
 }
 
 
@@ -35,11 +36,11 @@ void Controller::onMessageReceived(ClientConnection* connection, const msg::Base
 		{
 			msg::PcmChunk* pcmChunk = new msg::PcmChunk(*sampleFormat, 0);
 			pcmChunk->deserialize(baseMessage, buffer);
-//cout << "chunk: " << pcmChunk->payloadSize;
+//logD << "chunk: " << pcmChunk->payloadSize;
 			if (decoder->decode(pcmChunk))
 			{
 				stream->addChunk(pcmChunk);
-//cout << ", decoded: " << pcmChunk->payloadSize << ", Duration: " << pcmChunk->getDuration() << ", sec: " << pcmChunk->timestamp.sec << ", usec: " << pcmChunk->timestamp.usec/1000 << ", type: " << pcmChunk->type << "\n";
+//logD << ", decoded: " << pcmChunk->payloadSize << ", Duration: " << pcmChunk->getDuration() << ", sec: " << pcmChunk->timestamp.sec << ", usec: " << pcmChunk->timestamp.usec/1000 << ", type: " << pcmChunk->type << "\n";
 			}
 			else
 				delete pcmChunk;
@@ -60,7 +61,7 @@ void Controller::start(const PcmDevice& pcmDevice, const std::string& _ip, size_
 
 void Controller::stop()
 {
-	cout << "Stopping\n";
+	logD << "Stopping\n";
 	active_ = false;
 	controllerThread->join();
 	clientConnection->stop();
@@ -84,16 +85,16 @@ void Controller::worker()
 			msg::Request requestMsg(kServerSettings);
 			shared_ptr<msg::ServerSettings> serverSettings(NULL);
 			while (active_ && !(serverSettings = clientConnection->sendReq<msg::ServerSettings>(&requestMsg)));
-			cout << "ServerSettings buffer: " << serverSettings->bufferMs << "\n";
+			logO << "ServerSettings buffer: " << serverSettings->bufferMs << "\n";
 
 			requestMsg.request = kSampleFormat;
 			while (active_ && !(sampleFormat = clientConnection->sendReq<msg::SampleFormat>(&requestMsg)));
-			cout << "SampleFormat rate: " << sampleFormat->rate << ", bits: " << sampleFormat->bits << ", channels: " << sampleFormat->channels << "\n";
+			logO << "SampleFormat rate: " << sampleFormat->rate << ", bits: " << sampleFormat->bits << ", channels: " << sampleFormat->channels << "\n";
 
 			requestMsg.request = kHeader;
 			shared_ptr<msg::Header> headerChunk(NULL);
 			while (active_ && !(headerChunk = clientConnection->sendReq<msg::Header>(&requestMsg)));
-			cout << "Codec: " << headerChunk->codec << "\n";
+			logO << "Codec: " << headerChunk->codec << "\n";
 			if (headerChunk->codec == "ogg")
 				decoder = new OggDecoder();
 			else if (headerChunk->codec == "pcm")
@@ -111,7 +112,7 @@ void Controller::worker()
 					usleep(1000);
 				}
 			}
-			cout << "diff to server [ms]: " << TimeProvider::getInstance().getDiffToServer<chronos::msec>().count() << "\n";
+			logO << "diff to server [ms]: " << TimeProvider::getInstance().getDiffToServer<chronos::msec>().count() << "\n";
 
 			stream = new Stream(*sampleFormat);
 			stream->setBufferLen(serverSettings->bufferMs - latency_);
@@ -137,22 +138,22 @@ void Controller::worker()
 		}
 		catch (const std::exception& e)
 		{
-			cout << "Exception in Controller::worker(): " << e.what() << "\n";
-			cout << "Deleting stream\n";
+			logS(kLogErr) << "Exception in Controller::worker(): " << e.what() << endl;
+			logD << "Deleting stream\n";
 			if (stream != NULL)
 				delete stream;
 			stream = NULL;
 			if (decoder != NULL)
 				delete decoder;
 			decoder = NULL;
-			cout << "Stopping clientConnection\n";
+			logD << "Stopping clientConnection\n";
 			clientConnection->stop();
-			cout << "done\n";
+			logD << "done\n";
 			if (active_)
 				usleep(500*1000);
 		}
 	}
-	cout << "Thread stopped\n";
+	logD << "Thread stopped\n";
 }
 
 

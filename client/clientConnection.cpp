@@ -46,7 +46,7 @@ void ClientConnection::start()
 	tcp::resolver resolver(io_service);
 	tcp::resolver::query query(tcp::v4(), ip, boost::lexical_cast<string>(port));
 	iterator = resolver.resolve(query);
-	cout << "connecting\n";
+	logO << "connecting\n";
 	socket.reset(new tcp::socket(io_service));
 //				struct timeval tv;
 //				tv.tv_sec  = 5;
@@ -55,10 +55,9 @@ void ClientConnection::start()
 //				setsockopt(socket->native(), SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
 //				setsockopt(socket->native(), SOL_SOCKET, SO_SNDTIMEO, &tv, sizeof(tv));
 	socket->connect(*iterator);
-	cout << "MAC: \"" << getMacAddress(socket->native()) << "\"\n";
+	logO << "MAC: \"" << getMacAddress(socket->native()) << "\"\n";
 	connected_ = true;
-	cout << "connected\n";
-	std::clog << kLogNotice << "connected\n";// to " << ip << ":" << port << std::endl;
+	logS(kLogNotice) << "connected" << endl;
 	active_ = true;
 	readerThread = new thread(&ClientConnection::reader, this);
 }
@@ -74,13 +73,13 @@ void ClientConnection::stop()
 		if (socket)
 		{
 			socket->shutdown(boost::asio::ip::tcp::socket::shutdown_both, ec);
-			if (ec) cout << "Error in socket shutdown: " << ec << "\n";
+			if (ec) logE << "Error in socket shutdown: " << ec << "\n";
 			socket->close(ec);
-			if (ec) cout << "Error in socket close: " << ec << "\n";
+			if (ec) logE << "Error in socket close: " << ec << "\n";
 		}
 		if (readerThread)
 		{
-			cout << "joining readerThread\n";
+			logD << "joining readerThread\n";
 			readerThread->join();
 			delete readerThread;
 		}
@@ -89,17 +88,17 @@ void ClientConnection::stop()
 	{
 	}
 	readerThread = NULL;
-	cout << "readerThread terminated\n";
+	logD << "readerThread terminated\n";
 }
 
 
 bool ClientConnection::send(msg::BaseMessage* message)
 {
 //	std::unique_lock<std::mutex> mlock(mutex_);
-//cout << "send: " << message->type << ", size: " << message->getSize() << "\n";
+//logD << "send: " << message->type << ", size: " << message->getSize() << "\n";
 	if (!connected())
 		return false;
-//cout << "send: " << message->type << ", size: " << message->getSize() << "\n";
+//logD << "send: " << message->type << ", size: " << message->getSize() << "\n";
 	boost::asio::streambuf streambuf;
 	std::ostream stream(&streambuf);
 	tv t;
@@ -116,7 +115,7 @@ shared_ptr<msg::SerializedMessage> ClientConnection::sendRequest(msg::BaseMessag
 	if (++reqId == 10000)
 		reqId = 1;
 	message->id = reqId;
-//cout << "Req: " << reqId << "\n";
+//logD << "Req: " << reqId << "\n";
 	shared_ptr<PendingRequest> pendingRequest(new PendingRequest(reqId));
 
 	{
@@ -129,12 +128,12 @@ shared_ptr<msg::SerializedMessage> ClientConnection::sendRequest(msg::BaseMessag
 	{
 		response = pendingRequest->response;
 		sumTimeout = chronos::msec(0);
-//cout << "Resp: " << pendingRequest->id << "\n";
+//logD << "Resp: " << pendingRequest->id << "\n";
 	}
 	else
 	{
 		sumTimeout += timeout;
-		cout << "timeout while waiting for response to: " << reqId << ", timeout " << sumTimeout.count() << "\n";
+		logO << "timeout while waiting for response to: " << reqId << ", timeout " << sumTimeout.count() << "\n";
 		if (sumTimeout > chronos::sec(5))
 			throw SnapException("sum timeout exceeded 10s");
 	}
@@ -153,7 +152,7 @@ void ClientConnection::getNextMessage()
 	vector<char> buffer(baseMsgSize);
 	socketRead(&buffer[0], baseMsgSize);
 	baseMessage.deserialize(&buffer[0]);
-//cout << "getNextMessage: " << baseMessage.type << ", size: " << baseMessage.size << ", id: " << baseMessage.id << ", refers: " << baseMessage.refersTo << "\n";
+//logD << "getNextMessage: " << baseMessage.type << ", size: " << baseMessage.size << ", id: " << baseMessage.id << ", refers: " << baseMessage.refersTo << "\n";
 	if (baseMessage.size > buffer.size())
 		buffer.resize(baseMessage.size);
 	socketRead(&buffer[0], baseMessage.size);

@@ -1,4 +1,5 @@
 #include "flacEncoder.h"
+#include "common/log.h"
 #include <iostream>
 
 using namespace std;

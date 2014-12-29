@@ -33,7 +33,7 @@ void Stream::setRealSampleRate(double sampleRate)
 		correctAfterXFrames = 0;
 	else
 		correctAfterXFrames = round((format.rate / sampleRate) / (format.rate / sampleRate - 1.));
-//	cout << "Correct after X: " << correctAfterXFrames << " (Real rate: " << sampleRate << ", rate: " << format.rate << ")\n";
+//	logD << "Correct after X: " << correctAfterXFrames << " (Real rate: " << sampleRate << ", rate: " << format.rate << ")\n";
 }
 
 
@@ -56,7 +56,7 @@ void Stream::addChunk(msg::PcmChunk* chunk)
 	while (chunks.size() * chunk->duration<chronos::msec>().count() > 10000)
 		chunks.pop();
 	chunks.push(shared_ptr<msg::PcmChunk>(chunk));
-//	cout << "new chunk: " << chunk->getDuration() << ", Chunks: " << chunks.size() << "\n";
+//	logD << "new chunk: " << chunk->getDuration() << ", Chunks: " << chunks.size() << "\n";
 }
 
 
@@ -80,8 +80,8 @@ time_point_ms Stream::seekTo(const time_point_ms& to)
 	while (to > chunk->timePoint())// + std::chrono::milliseconds((long int)chunk->getDuration()))//
 	{
 		chunk = chunks.pop();
-		cout << "\nto: " << Chunk::getAge(to) << "\t chunk: " << Chunk::getAge(chunk->timePoint()) << "\n";
-		cout << "diff: " << std::chrono::duration_cast<std::chrono::milliseconds>((to - chunk->timePoint())).count() << "\n";
+		logD << "\nto: " << Chunk::getAge(to) << "\t chunk: " << Chunk::getAge(chunk->timePoint()) << "\n";
+		logD << "diff: " << std::chrono::duration_cast<std::chrono::milliseconds>((to - chunk->timePoint())).count() << "\n";
 	}
 	chunk->seek(std::chrono::duration_cast<std::chrono::milliseconds>(to - chunk->timePoint()).count() * format.msRate());
 	return chunk->timePoint();
@@ -138,7 +138,7 @@ time_point_hrc Stream::getNextPlayerChunk(void* outputBuffer, const chronos::use
 
 	float factor = (float)toRead / framesPerBuffer;//(float)(framesPerBuffer*channels_);
 	if (abs(framesCorrection) > 1)
-		std::cout << "correction: " << framesCorrection << ", factor: " << factor << "\n";
+		logO << "correction: " << framesCorrection << ", factor: " << factor << "\n";
 	float idx = 0;
 	for (size_t n=0; n<framesPerBuffer; ++n)
 	{
@@ -183,16 +183,16 @@ bool Stream::getPlayerChunk(void* outputBuffer, const chronos::usec& outputBuffe
 	chronos::usec age = std::chrono::duration_cast<usec>(TimeProvider::serverNow() - chunk->start() - bufferMs + outputBufferDacTime);
 	if ((sleep.count() == 0) && (chronos::abs(age) > chronos::msec(200)))
 	{
-		cout << "age > 200: " << age.count() << "\n";
+		logO << "age > 200: " << age.count() << "\n";
 		sleep = age;
 	}
 
 	try
 	{
 
-	//cout << "framesPerBuffer: " << framesPerBuffer << "\tms: " << framesPerBuffer*2 / PLAYER_CHUNK_MS_SIZE << "\t" << PLAYER_CHUNK_SIZE << "\n";
+	//logD << "framesPerBuffer: " << framesPerBuffer << "\tms: " << framesPerBuffer*2 / PLAYER_CHUNK_MS_SIZE << "\t" << PLAYER_CHUNK_SIZE << "\n";
 		chronos::nsec bufferDuration = chronos::nsec(chronos::usec::rep(framesPerBuffer / format_.nsRate()));
-//		cout << "buffer duration: " << bufferDuration.count() << "\n";
+//		logD << "buffer duration: " << bufferDuration.count() << "\n";
 
 		chronos::usec correction = chronos::usec(0);
 		if (sleep.count() != 0)
@@ -202,7 +202,7 @@ bool Stream::getPlayerChunk(void* outputBuffer, const chronos::usec& outputBuffe
 			{
 				// We're early: not enough chunks. play silence. Reference chunk is the oldest (front) one
 				sleep = chrono::duration_cast<usec>(TimeProvider::serverNow() - getSilentPlayerChunk(outputBuffer, framesPerBuffer) - bufferMs + outputBufferDacTime);
-//cout << "-sleep: " << sleep.count() << " " << -bufferDuration.count() / 2000 << "\n";
+//logD << "-sleep: " << sleep.count() << " " << -bufferDuration.count() / 2000 << "\n";
 				if (sleep < -bufferDuration/2)
 					return true;
 			}
@@ -211,11 +211,11 @@ bool Stream::getPlayerChunk(void* outputBuffer, const chronos::usec& outputBuffe
 				// We're late: discard oldest chunks
 				while (sleep > chunk->duration<chronos::usec>())
 				{
-					cout << "sleep > chunk->getDuration(): " << sleep.count() << " > " << chunk->duration<chronos::msec>().count() << ", chunks: " << chunks.size() << ", out: " << outputBufferDacTime.count() << ", needed: " << bufferDuration.count() << "\n";
+					logO << "sleep > chunk->getDuration(): " << sleep.count() << " > " << chunk->duration<chronos::msec>().count() << ", chunks: " << chunks.size() << ", out: " << outputBufferDacTime.count() << ", needed: " << bufferDuration.count() << "\n";
 					sleep = std::chrono::duration_cast<usec>(TimeProvider::serverNow() - chunk->start() - bufferMs + outputBufferDacTime);
 					if (!chunks.try_pop(chunk, outputBufferDacTime))
 					{
-						cout << "no chunks available\n";
+						logO << "no chunks available\n";
 						chunk = NULL;
 						sleep = chronos::usec(0);
 						return false;
@@ -236,7 +236,7 @@ bool Stream::getPlayerChunk(void* outputBuffer, const chronos::usec& outputBuffe
 			}
 			else
 			{
-				cout << "Sleep " << sleep.count() << "\n";
+				logO << "Sleep " << sleep.count() << "\n";
 				correction = sleep;
 				sleep = chronos::usec(0);
 			}
@@ -258,7 +258,7 @@ bool Stream::getPlayerChunk(void* outputBuffer, const chronos::usec& outputBuffe
 			{
 				if (chronos::usec(abs(median)) > chronos::msec(1))
 				{
-					cout << "pBuffer->full() && (abs(median) > 1): " << median << "\n";
+					logO << "pBuffer->full() && (abs(median) > 1): " << median << "\n";
 					sleep = chronos::usec(shortMedian);
 				}
 /*				else if (chronos::usec(median) > chronos::usec(300))
@@ -274,7 +274,7 @@ bool Stream::getPlayerChunk(void* outputBuffer, const chronos::usec& outputBuffe
 			{
 				if (chronos::usec(abs(shortMedian)) > chronos::msec(5))
 				{
-					cout << "pShortBuffer->full() && (abs(shortMedian) > 5): " << shortMedian << "\n";
+					logO << "pShortBuffer->full() && (abs(shortMedian) > 5): " << shortMedian << "\n";
 					sleep = chronos::usec(shortMedian);
 				}
 /*				else
@@ -284,13 +284,13 @@ bool Stream::getPlayerChunk(void* outputBuffer, const chronos::usec& outputBuffe
 */			}
 			else if (miniBuffer.full() && (chronos::usec(abs(miniBuffer.median())) > chronos::msec(50)))
 			{
-				cout << "pMiniBuffer->full() && (abs(pMiniBuffer->mean()) > 50): " << miniBuffer.median() << "\n";
+				logO << "pMiniBuffer->full() && (abs(pMiniBuffer->mean()) > 50): " << miniBuffer.median() << "\n";
 				sleep = chronos::usec((chronos::msec::rep)miniBuffer.mean());
 			}
 		}
 
 		if (sleep.count() != 0)
-			std::cerr << "Sleep: " << sleep.count() << "\n";
+			logO << "Sleep: " << sleep.count() << "\n";
 		else if (shortBuffer.full())
 		{
 			if (chronos::usec(shortMedian) > chronos::usec(100))
@@ -308,7 +308,7 @@ bool Stream::getPlayerChunk(void* outputBuffer, const chronos::usec& outputBuffe
 			lastUpdate = now;
 			median = buffer.median();
 			shortMedian = shortBuffer.median();
-			std::cerr << "Chunk: " << age.count()/100 << "\t" << miniBuffer.median()/100 << "\t" << shortMedian/100 << "\t" << median/100 << "\t" << buffer.size() << "\t" << outputBufferDacTime.count() << "\n";
+			logO << "Chunk: " << age.count()/100 << "\t" << miniBuffer.median()/100 << "\t" << shortMedian/100 << "\t" << median/100 << "\t" << buffer.size() << "\t" << outputBufferDacTime.count() << "\n";
 		}
 		return true;
 	}

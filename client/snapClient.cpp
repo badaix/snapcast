@@ -59,8 +59,9 @@ int main (int argc, char *argv[])
 	po::options_description desc("Allowed options");
 	desc.add_options()
 	("help,h", "produce help message")
+	("version,v", "show version number")
 	("list,l", po::bool_switch(&listPcmDevices)->default_value(false), "list pcm devices")
-	("ip,i", po::value<string>(&ip)->default_value("192.168.0.2"), "server IP")
+	("ip,i", po::value<string>(&ip)->default_value("localhost"), "server IP")
 	("port,p", po::value<size_t>(&port)->default_value(98765), "server port")
 	("soundcard,s", po::value<string>(&soundcard)->default_value("default"), "index or name of the soundcard")
 	("daemon,d", po::bool_switch(&runAsDaemon)->default_value(false), "daemonize")
@@ -71,9 +72,22 @@ int main (int argc, char *argv[])
 	po::store(po::parse_command_line(argc, argv, desc), vm);
 	po::notify(vm);
 
+	std::clog.rdbuf(new Log("snapclient", LOG_DAEMON));
+
 	if (vm.count("help"))
 	{
-		cout << desc << "\n";
+		logO << desc << "\n";
+		return 1;
+	}
+
+	if (vm.count("version"))
+	{
+		logO << "snapclient v" << VERSION << "\n"
+			 << "Copyright (C) 2014 BadAix (snapcast@badaix.de).\n"
+			 << "License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>.\n"
+			 << "This is free software: you are free to change and redistribute it.\n"
+			 << "There is NO WARRANTY, to the extent permitted by law.\n\n"
+			 << "Written by Johannes M. Pohl.\n";
 		return 1;
 	}
 
@@ -82,8 +96,8 @@ int main (int argc, char *argv[])
 		vector<PcmDevice> pcmDevices = Player::pcm_list();
 		for (auto dev: pcmDevices)
 		{
-			cout << dev.idx << ": " << dev.name << "\n";
-			cout << dev.description << "\n\n";
+			logO << dev.idx << ": " << dev.name << "\n"
+				 << dev.description << "\n\n";
 		}
 		return 1;
 	}
@@ -92,22 +106,16 @@ int main (int argc, char *argv[])
     signal(SIGTERM, signal_handler);
     signal(SIGINT, signal_handler);
 
-	std::clog.rdbuf(new Log("snapclient", LOG_DAEMON));
 	if (runAsDaemon)
 	{
 		daemonize("/var/run/snapclient.pid");
-		std::clog << kLogNotice << "daemon started" << std::endl;
+		logS(kLogNotice) << "daemon started" << std::endl;
 	}
-	logS(kLogNotice) << "daemon started" << std::endl;
-	logD << "debug test" << std::endl;
-	logO << "out test" << std::endl;
-	logE << "error test" << std::endl;
-	log << "test" << std::endl;
 
 	PcmDevice pcmDevice = getPcmDevice(soundcard);
 	if (pcmDevice.idx == -1)
 	{
-		cout << "soundcard \"" << soundcard << "\" not found\n";
+		logO << "soundcard \"" << soundcard << "\" not found\n";
 		return 1;
 	}
 

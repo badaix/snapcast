@@ -49,27 +49,6 @@ private:
 };
 
 
-class ServerException : public std::exception
-{
-public:
-	ServerException(const std::string& what) : what_(what)
-	{
-	}
-
-	virtual ~ServerException() throw()
-	{
-	}
-
-	virtual const char* what() const throw()
-	{
-		return what_.c_str();
-	}
-
-private:
-	std::string what_;
-};
-
-
 
 #endif
 
