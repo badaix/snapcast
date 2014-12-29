@@ -21,8 +21,9 @@
 PATH=/sbin:/usr/sbin:/bin:/usr/bin:/
 DESC="Snapclient"
 NAME=snapclient
+SERVERIP=_SERVER_HOST_
 DAEMON=/usr/sbin/$NAME
-DAEMON_ARGS="-d"
+DAEMON_ARGS="-d -i $SERVERIP"
 PIDFILE=/var/run/$NAME.pid
 SCRIPTNAME=/etc/init.d/$NAME
 

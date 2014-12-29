@@ -17,3 +17,15 @@ client: $(OBJ)
 
 clean:
 	rm -rf $(BIN) $(OBJ) *~
+
+install:
+	
+	@cp ./snapclient /usr/sbin/snapclient
+	@echo "Please enter the IP address or host name of the snapserver: [localhost]"; \
+    read server_ip; \
+	if [ -z $${server_ip} ]; then \
+		server_ip="localhost"; \
+	fi; \
+    echo "Server: "$$server_ip; \
+	cp ../init.d/snapclient /etc/init.d/snapclient; \
+	sed -i s/_SERVER_HOST_/$${server_ip}/g /etc/init.d/snapclient; \
