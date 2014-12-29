@@ -18,7 +18,16 @@ server: $(OBJ)
 clean:
 	rm -rf $(BIN) $(OBJ) *~
 
-install:
+install: uninstall
 	@cp ./snapserver /usr/sbin/snapserver; \
 	cp ../init.d/snapserver /etc/init.d/snapserver; \
+	update-rc.d snapserver defaults; \
+	/etc/init.d/snapserver start; \
 
+uninstall:
+	@/etc/init.d/snapserver stop; \
+	killall -9 snapserver; \
+	rm -f /usr/sbin/snapserver; \
+	rm -f /etc/init.d/snapserver; \
+	update-rc.d -f snapserver remove; \
+	

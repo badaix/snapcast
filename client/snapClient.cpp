@@ -9,7 +9,7 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/program_options.hpp>
 
-#include "common/utils.h"
+#include "common/daemon.h"
 #include "common/log.h"
 #include "common/signalHandler.h"
 #include "controller.h"
@@ -95,7 +95,7 @@ int main (int argc, char *argv[])
 	std::clog.rdbuf(new Log("snapclient", LOG_DAEMON));
 	if (runAsDaemon)
 	{
-		daemonize();
+		daemonize("/var/run/snapclient.pid");
 		std::clog << kLogNotice << "daemon started" << std::endl;
 	}
 	logS(kLogNotice) << "daemon started" << std::endl;
@@ -119,6 +119,7 @@ int main (int argc, char *argv[])
 		usleep(100*1000);
 
 	controller.stop();
+	daemonShutdown();
 
 	return 0;
 }

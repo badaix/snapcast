@@ -3,7 +3,7 @@
 #include <memory>
 #include "common/timeDefs.h"
 #include "common/signalHandler.h"
-#include "common/utils.h"
+#include "common/daemon.h"
 #include "message/sampleFormat.h"
 #include "message/message.h"
 #include "pcmEncoder.h"
@@ -56,11 +56,11 @@ int main(int argc, char* argv[])
 
 		if (runAsDaemon)
 		{
-			daemonize();
+			daemonize("/var/run/snapserver.pid");
 			syslog (LOG_NOTICE, "First daemon started.");
 		}
 
-		openlog ("firstdaemon", LOG_PID, LOG_DAEMON);
+		openlog("firstdaemon", LOG_PID, LOG_DAEMON);
 
 		using namespace std; // For atoi.
 
@@ -159,8 +159,8 @@ int main(int argc, char* argv[])
 		std::cerr << "Exception: " << e.what() << std::endl;
 	}
 
-	syslog (LOG_NOTICE, "First daemon terminated.");
-	cout << "Terminated\n";
+	syslog(LOG_NOTICE, "First daemon terminated.");
+	daemonShutdown();
 	closelog();
 }
 

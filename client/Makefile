@@ -18,7 +18,7 @@ client: $(OBJ)
 clean:
 	rm -rf $(BIN) $(OBJ) *~
 
-install:
+install: uninstall
 	@cp ./snapclient /usr/sbin/snapclient
 	@echo "Please enter the IP address or host name of the snapserver: [localhost]"; \
     read server_ip; \
@@ -28,3 +28,13 @@ install:
     echo "Server: "$$server_ip; \
 	cp ../init.d/snapclient /etc/init.d/snapclient; \
 	sed -i s/_SERVER_HOST_/$${server_ip}/g /etc/init.d/snapclient; \
+	update-rc.d snapclient defaults; \
+	/etc/init.d/snapclient start; \
+
+uninstall:
+	@/etc/init.d/snapclient stop; \
+	killall -9 snapclient; \
+	rm -f /usr/sbin/snapclient; \
+	rm -f /etc/init.d/snapclient; \
+	update-rc.d -f snapclient remove; \
+
