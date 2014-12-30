@@ -128,6 +128,7 @@ int main(int argc, char* argv[])
 					do
 					{
 						int count = read(fd, chunk->payload + len, toRead - len);
+//continue;
 						if (count == 0)
 							throw ServerException("count = 0");
 						else if (count == -1)

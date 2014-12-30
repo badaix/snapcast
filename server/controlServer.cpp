@@ -17,12 +17,14 @@ ControlServer::ControlServer(unsigned short port) : port_(port), headerChunk(NUL
 void ControlServer::send(shared_ptr<msg::BaseMessage> message)
 {
 	std::unique_lock<std::mutex> mlock(mutex);
-	for (std::set<shared_ptr<ServerSession>>::iterator it = sessions.begin(); it != sessions.end(); )
+	for (auto it = sessions.begin(); it != sessions.end(); )
 	{
 		if (!(*it)->active())
 		{
 			logO << "Session inactive. Removing\n";
-			(*it)->stop();
+			auto func = [](shared_ptr<ServerSession> s)->void{s->stop();};
+			std::thread t(func, *it);
+			t.detach();
 			sessions.erase(it++);
 		}
 		else
