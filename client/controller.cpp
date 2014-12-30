@@ -8,6 +8,7 @@
 #include "alsaPlayer.h"
 #include "timeProvider.h"
 #include "common/log.h"
+#include "common/snapException.h"
 #include "message/serverSettings.h"
 #include "message/time.h"
 #include "message/request.h"
@@ -127,28 +128,28 @@ void Controller::worker()
 			while (active_)
 			{
 				usleep(500*1000);
+//throw SnapException("timeout");
                 shared_ptr<msg::Time> reply = clientConnection->sendReq<msg::Time>(&timeReq);
                 if (reply)
                 {
                     double latency = (reply->received.sec - reply->sent.sec) + (reply->received.usec - reply->sent.usec) / 1000000.;
                     TimeProvider::getInstance().setDiffToServer((reply->latency - latency) * 1000 / 2);
                 }
-//throw std::exception();
 			}
 		}
 		catch (const std::exception& e)
 		{
 			logS(kLogErr) << "Exception in Controller::worker(): " << e.what() << endl;
-			logD << "Deleting stream\n";
+			logO << "Stopping clientConnection" << endl;
+			clientConnection->stop();
+			logO << "Deleting stream" << endl;
 			if (stream != NULL)
 				delete stream;
 			stream = NULL;
 			if (decoder != NULL)
 				delete decoder;
 			decoder = NULL;
-			logD << "Stopping clientConnection\n";
-			clientConnection->stop();
-			logD << "done\n";
+			logO << "done" << endl;
 			if (active_)
 				usleep(500*1000);
 		}
