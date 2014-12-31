@@ -134,7 +134,7 @@ shared_ptr<msg::SerializedMessage> ClientConnection::sendRequest(msg::BaseMessag
 	{
 		sumTimeout += timeout;
 		logO << "timeout while waiting for response to: " << reqId << ", timeout " << sumTimeout.count() << "\n";
-		if (sumTimeout > chronos::sec(5))
+		if (sumTimeout > chronos::sec(10))
 			throw SnapException("sum timeout exceeded 10s");
 	}
 	{

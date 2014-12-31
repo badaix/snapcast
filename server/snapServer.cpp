@@ -129,9 +129,7 @@ int main(int argc, char* argv[])
 					{
 						int count = read(fd, chunk->payload + len, toRead - len);
 //continue;
-						if (count == 0)
-							throw ServerException("count = 0");
-						else if (count == -1)
+						if (count <= 0)
 							usleep(100*1000);
 						else
 							len += count;
