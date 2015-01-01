@@ -43,12 +43,11 @@ void ClientConnection::socketRead(void* _to, size_t _bytes)
 
 void ClientConnection::start()
 {
-	boost::asio::io_service io_service;
-	tcp::resolver resolver(io_service);
+	tcp::resolver resolver(io_service_);
 	tcp::resolver::query query(tcp::v4(), ip_, boost::lexical_cast<string>(port_));
 	auto iterator = resolver.resolve(query);
 	logO << "connecting\n";
-	socket_.reset(new tcp::socket(io_service));
+	socket_.reset(new tcp::socket(io_service_));
 //				struct timeval tv;
 //				tv.tv_sec  = 5;
 //				tv.tv_usec = 0;
@@ -74,9 +73,9 @@ void ClientConnection::stop()
 		if (socket_)
 		{
 			socket_->shutdown(boost::asio::ip::tcp::socket::shutdown_both, ec);
-			if (ec) logE << "Error in socket shutdown: " << ec << "\n";
+			if (ec) logE << "Error in socket shutdown: " << ec << endl;
 			socket_->close(ec);
-			if (ec) logE << "Error in socket close: " << ec << "\n";
+			if (ec) logE << "Error in socket close: " << ec << endl;
 		}
 		if (readerThread_)
 		{

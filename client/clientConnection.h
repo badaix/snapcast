@@ -75,6 +75,7 @@ protected:
 	void socketRead(void* to, size_t bytes);
 	void getNextMessage();
 
+	boost::asio::io_service io_service_;
 	std::shared_ptr<tcp::socket> socket_;
 	std::atomic<bool> active_;
 	std::atomic<bool> connected_;

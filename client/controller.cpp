@@ -62,7 +62,7 @@ void Controller::start(const PcmDevice& pcmDevice, const std::string& ip, size_t
 
 void Controller::stop()
 {
-	logD << "Stopping\n";
+	logD << "Stopping Controller" << endl;
 	active_ = false;
 	controllerThread_->join();
 	clientConnection_->stop();
