@@ -1,4 +1,4 @@
-VERSION = 0.01
+VERSION = 0.1
 CC      = /usr/bin/g++
 CFLAGS  = -std=gnu++0x -static-libgcc -static-libstdc++ -Wall -Wno-unused-function -O3 -D_REENTRANT -DVERSION=\"$(VERSION)\" -I..
 LDFLAGS = -lrt -lpthread -lboost_system -lboost_program_options -lasound -logg -lvorbis -lvorbisenc
