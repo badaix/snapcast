@@ -32,7 +32,7 @@ enum message_type
 {
 	kBase = 0,
 	kHeader = 1,
-	kPayload = 2,
+	kWireChunk = 2,
 	kSampleFormat = 3,
 	kServerSettings = 4,
 	kTime = 5,

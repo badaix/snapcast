@@ -31,7 +31,7 @@ void Controller::onException(ClientConnection* connection, const std::exception&
 
 void Controller::onMessageReceived(ClientConnection* connection, const msg::BaseMessage& baseMessage, char* buffer)
 {
-	if (baseMessage.type == message_type::kPayload)
+	if (baseMessage.type == message_type::kWireChunk)
 	{
 		if ((stream_ != NULL) && (decoder_ != NULL))
 		{

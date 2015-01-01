@@ -16,7 +16,7 @@ namespace msg
 class WireChunk : public BaseMessage
 {
 public:
-	WireChunk(size_t size = 0) : BaseMessage(message_type::kPayload), payloadSize(size)
+	WireChunk(size_t size = 0) : BaseMessage(message_type::kWireChunk), payloadSize(size)
 	{
 		payload = (char*)malloc(size);
 	}
