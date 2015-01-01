@@ -18,4 +18,10 @@ installclient:
 
 installserver:
 	$(MAKE) install -C server 
+
+uninstallclient:
+	$(MAKE) uninstall -C client 
+
+uninstallserver:
+	$(MAKE) uninstall -C server 
 	

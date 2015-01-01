@@ -37,15 +37,15 @@ public:
 
 private:
 	void acceptor();
-	mutable std::mutex mutex;
-	set<shared_ptr<ServerSession>> sessions;
+	mutable std::mutex mutex_;
+	set<shared_ptr<ServerSession>> sessions_;
 	boost::asio::io_service io_service_;
 	unsigned short port_;
-	msg::Header* headerChunk;
-	msg::SampleFormat* sampleFormat;
-	msg::ServerSettings* serverSettings;
-	thread* acceptThread;
-	Queue<shared_ptr<msg::BaseMessage>> messages;
+	msg::Header* headerChunk_;
+	msg::SampleFormat* sampleFormat_;
+	msg::ServerSettings* serverSettings_;
+	thread* acceptThread_;
+	Queue<shared_ptr<msg::BaseMessage>> messages_;
 };
 
 

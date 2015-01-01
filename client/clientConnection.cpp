@@ -10,7 +10,7 @@
 using namespace std;
 
 
-ClientConnection::ClientConnection(MessageReceiver* _receiver, const std::string& _ip, size_t _port) : active_(false), connected_(false), messageReceiver(_receiver), reqId(1), ip(_ip), port(_port), readerThread(NULL), sumTimeout(chronos::msec(0))
+ClientConnection::ClientConnection(MessageReceiver* receiver, const std::string& ip, size_t port) : active_(false), connected_(false), messageReceiver_(receiver), reqId_(1), ip_(ip), port_(port), readerThread_(NULL), sumTimeout_(chronos::msec(0))
 {
 }
 
@@ -31,7 +31,7 @@ void ClientConnection::socketRead(void* _to, size_t _bytes)
 //		cout << "/";
 //		cout.flush();
 //		boost::system::error_code error;
-		len += socket->read_some(boost::asio::buffer((char*)_to + len, toRead));
+		len += socket_->read_some(boost::asio::buffer((char*)_to + len, toRead));
 //cout << "len: " << len << ", error: " << error << endl;
 		toRead = _bytes - len;
 //		cout << "\\";
@@ -43,23 +43,24 @@ void ClientConnection::socketRead(void* _to, size_t _bytes)
 
 void ClientConnection::start()
 {
+	boost::asio::io_service io_service;
 	tcp::resolver resolver(io_service);
-	tcp::resolver::query query(tcp::v4(), ip, boost::lexical_cast<string>(port));
-	iterator = resolver.resolve(query);
+	tcp::resolver::query query(tcp::v4(), ip_, boost::lexical_cast<string>(port_));
+	auto iterator = resolver.resolve(query);
 	logO << "connecting\n";
-	socket.reset(new tcp::socket(io_service));
+	socket_.reset(new tcp::socket(io_service));
 //				struct timeval tv;
 //				tv.tv_sec  = 5;
 //				tv.tv_usec = 0;
 //				cout << "socket: " << socket->native() << "\n";
 //				setsockopt(socket->native(), SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
 //				setsockopt(socket->native(), SOL_SOCKET, SO_SNDTIMEO, &tv, sizeof(tv));
-	socket->connect(*iterator);
-	logO << "MAC: \"" << getMacAddress(socket->native()) << "\"\n";
+	socket_->connect(*iterator);
+	logO << "MAC: \"" << getMacAddress(socket_->native()) << "\"\n";
 	connected_ = true;
 	logS(kLogNotice) << "connected" << endl;
 	active_ = true;
-	readerThread = new thread(&ClientConnection::reader, this);
+	readerThread_ = new thread(&ClientConnection::reader, this);
 }
 
 
@@ -70,24 +71,24 @@ void ClientConnection::stop()
 	try
 	{
 		boost::system::error_code ec;
-		if (socket)
+		if (socket_)
 		{
-			socket->shutdown(boost::asio::ip::tcp::socket::shutdown_both, ec);
+			socket_->shutdown(boost::asio::ip::tcp::socket::shutdown_both, ec);
 			if (ec) logE << "Error in socket shutdown: " << ec << "\n";
-			socket->close(ec);
+			socket_->close(ec);
 			if (ec) logE << "Error in socket close: " << ec << "\n";
 		}
-		if (readerThread)
+		if (readerThread_)
 		{
 			logD << "joining readerThread\n";
-			readerThread->join();
-			delete readerThread;
+			readerThread_->join();
+			delete readerThread_;
 		}
 	}
 	catch(...)
 	{
 	}
-	readerThread = NULL;
+	readerThread_ = NULL;
 	logD << "readerThread terminated\n";
 }
 
@@ -104,7 +105,7 @@ bool ClientConnection::send(msg::BaseMessage* message)
 	tv t;
 	message->sent = t;
 	message->serialize(stream);
-	boost::asio::write(*socket.get(), streambuf);
+	boost::asio::write(*socket_.get(), streambuf);
 	return true;
 }
 
@@ -112,34 +113,35 @@ bool ClientConnection::send(msg::BaseMessage* message)
 shared_ptr<msg::SerializedMessage> ClientConnection::sendRequest(msg::BaseMessage* message, const chronos::msec& timeout)
 {
 	shared_ptr<msg::SerializedMessage> response(NULL);
-	if (++reqId == 10000)
-		reqId = 1;
-	message->id = reqId;
+	if (++reqId_ == 10000)
+		reqId_ = 1;
+	message->id = reqId_;
 //logD << "Req: " << reqId << "\n";
-	shared_ptr<PendingRequest> pendingRequest(new PendingRequest(reqId));
+	shared_ptr<PendingRequest> pendingRequest(new PendingRequest(reqId_));
 
 	{
 		std::unique_lock<std::mutex> mlock(mutex_);
-		pendingRequests.insert(pendingRequest);
+		pendingRequests_.insert(pendingRequest);
 	}
+	std::mutex m;
 	std::unique_lock<std::mutex> lck(m);
 	send(message);
 	if (pendingRequest->cv.wait_for(lck,std::chrono::milliseconds(timeout)) == std::cv_status::no_timeout)
 	{
 		response = pendingRequest->response;
-		sumTimeout = chronos::msec(0);
+		sumTimeout_ = chronos::msec(0);
 //logD << "Resp: " << pendingRequest->id << "\n";
 	}
 	else
 	{
-		sumTimeout += timeout;
-		logO << "timeout while waiting for response to: " << reqId << ", timeout " << sumTimeout.count() << "\n";
-		if (sumTimeout > chronos::sec(10))
+		sumTimeout_ += timeout;
+		logO << "timeout while waiting for response to: " << reqId_ << ", timeout " << sumTimeout_.count() << "\n";
+		if (sumTimeout_ > chronos::sec(10))
 			throw SnapException("sum timeout exceeded 10s");
 	}
 	{
 		std::unique_lock<std::mutex> mlock(mutex_);
-		pendingRequests.erase(pendingRequest);
+		pendingRequests_.erase(pendingRequest);
 	}
 	return response;
 }
@@ -162,7 +164,7 @@ void ClientConnection::getNextMessage()
 	{
 		std::unique_lock<std::mutex> mlock(mutex_);
 		{
-			for (auto req: pendingRequests)
+			for (auto req: pendingRequests_)
 			{
 				if (req->id == baseMessage.refersTo)
 				{
@@ -177,8 +179,8 @@ void ClientConnection::getNextMessage()
 		}
 	}
 
-	if (messageReceiver != NULL)
-		messageReceiver->onMessageReceived(this, baseMessage, &buffer[0]);
+	if (messageReceiver_ != NULL)
+		messageReceiver_->onMessageReceived(this, baseMessage, &buffer[0]);
 }
 
 
@@ -194,8 +196,8 @@ void ClientConnection::reader()
 	}
 	catch (const std::exception& e)
 	{
-		if (messageReceiver != NULL)
-			messageReceiver->onException(this, e);			
+		if (messageReceiver_ != NULL)
+			messageReceiver_->onException(this, e);			
 	}
 	catch (...)
 	{

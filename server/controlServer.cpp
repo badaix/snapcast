@@ -7,7 +7,7 @@
 #include <iostream>
 
 
-ControlServer::ControlServer(unsigned short port) : port_(port), headerChunk(NULL), sampleFormat(NULL)
+ControlServer::ControlServer(unsigned short port) : port_(port), headerChunk_(NULL), sampleFormat_(NULL)
 {
 }
 
@@ -17,7 +17,7 @@ ControlServer::ControlServer(unsigned short port) : port_(port), headerChunk(NUL
 void ControlServer::send(shared_ptr<msg::BaseMessage> message)
 {
 	std::unique_lock<std::mutex> mlock(mutex);
-	for (auto it = sessions.begin(); it != sessions.end(); )
+	for (auto it = sessions_.begin(); it != sessions_.end(); )
 	{
 		if (!(*it)->active())
 		{
@@ -25,13 +25,13 @@ void ControlServer::send(shared_ptr<msg::BaseMessage> message)
 			auto func = [](shared_ptr<ServerSession> s)->void{s->stop();};
 			std::thread t(func, *it);
 			t.detach();
-			sessions.erase(it++);
+			sessions_.erase(it++);
 		}
 		else
 			++it;
 	}
 
-	for (auto s : sessions)
+	for (auto s : sessions_)
 		s->add(message);
 }
 
@@ -56,18 +56,18 @@ void ControlServer::onMessageReceived(ServerSession* connection, const msg::Base
 		}
 		else if (requestMsg.request == kServerSettings)
 		{
-			serverSettings->refersTo = requestMsg.id;
-			connection->send(serverSettings);
+			serverSettings_->refersTo = requestMsg.id;
+			connection->send(serverSettings_);
 		}
 		else if (requestMsg.request == kSampleFormat)
 		{
-			sampleFormat->refersTo = requestMsg.id;
-			connection->send(sampleFormat);
+			sampleFormat_->refersTo = requestMsg.id;
+			connection->send(sampleFormat_);
 		}
 		else if (requestMsg.request == kHeader)
 		{
-			headerChunk->refersTo = requestMsg.id;
-			connection->send(headerChunk);
+			headerChunk_->refersTo = requestMsg.id;
+			connection->send(headerChunk_);
 		}
 	}
 	else if (baseMessage.type == message_type::kCommand)
@@ -102,7 +102,7 @@ void ControlServer::acceptor()
 		{
 			std::unique_lock<std::mutex> mlock(mutex);
 			session->start();
-			sessions.insert(shared_ptr<ServerSession>(session));
+			sessions_.insert(shared_ptr<ServerSession>(session));
 		}
 	}
 }
@@ -110,7 +110,7 @@ void ControlServer::acceptor()
 
 void ControlServer::start()
 {
-	acceptThread = new thread(&ControlServer::acceptor, this);
+	acceptThread_ = new thread(&ControlServer::acceptor, this);
 }
 
 
@@ -123,14 +123,14 @@ void ControlServer::stop()
 void ControlServer::setHeader(msg::Header* header)
 {
 	if (header)
-		headerChunk = header;
+		headerChunk_ = header;
 }
 
 
 void ControlServer::setFormat(msg::SampleFormat* format)
 {
 	if (format)
-		sampleFormat = format;
+		sampleFormat_ = format;
 }
 
 
@@ -138,7 +138,7 @@ void ControlServer::setFormat(msg::SampleFormat* format)
 void ControlServer::setServerSettings(msg::ServerSettings* settings)
 {
 	if (settings)
-		serverSettings = settings;
+		serverSettings_ = settings;
 }
 
 

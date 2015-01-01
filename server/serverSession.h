@@ -28,7 +28,7 @@ public:
 class ServerSession
 {
 public:
-	ServerSession(MessageReceiver* _receiver, std::shared_ptr<tcp::socket> _socket);
+	ServerSession(MessageReceiver* receiver, std::shared_ptr<tcp::socket> socket);
 	~ServerSession();
 	void start();
 	void stop();
@@ -42,7 +42,7 @@ public:
 
 	virtual void setStreamActive(bool active)
 	{
-		streamActive = active;
+		streamActive_ = active;
 	}
 
 
@@ -53,13 +53,13 @@ protected:
 	void writer();
 
 	std::atomic<bool> active_;
-	std::atomic<bool> streamActive;
+	std::atomic<bool> streamActive_;
 	mutable std::mutex mutex_;
-	std::thread* readerThread;
-	std::thread* writerThread;
-	std::shared_ptr<tcp::socket> socket;
-	MessageReceiver* messageReceiver;
-	Queue<std::shared_ptr<msg::BaseMessage>> messages;
+	std::thread* readerThread_;
+	std::thread* writerThread_;
+	std::shared_ptr<tcp::socket> socket_;
+	MessageReceiver* messageReceiver_;
+	Queue<std::shared_ptr<msg::BaseMessage>> messages_;
 };
 
 

@@ -1,16 +1,16 @@
 #include "timeProvider.h"
 
 
-TimeProvider::TimeProvider() : diffToServer(0)
+TimeProvider::TimeProvider() : diffToServer_(0)
 {
-	diffBuffer.setSize(200);
+	diffBuffer_.setSize(200);
 }
 
 
 void TimeProvider::setDiffToServer(double ms)
 {
-	diffBuffer.add(ms * 1000);
-	diffToServer = diffBuffer.median();
+	diffBuffer_.add(ms * 1000);
+	diffToServer_ = diffBuffer_.median();
 }
 
 /*

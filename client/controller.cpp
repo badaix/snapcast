@@ -18,7 +18,7 @@
 using namespace std;
 
 
-Controller::Controller() : MessageReceiver(), active_(false), sampleFormat(NULL), decoder(NULL)
+Controller::Controller() : MessageReceiver(), active_(false), sampleFormat_(NULL), decoder_(NULL)
 {
 }
 
@@ -33,14 +33,14 @@ void Controller::onMessageReceived(ClientConnection* connection, const msg::Base
 {
 	if (baseMessage.type == message_type::kPayload)
 	{
-		if ((stream != NULL) && (decoder != NULL))
+		if ((stream_ != NULL) && (decoder_ != NULL))
 		{
-			msg::PcmChunk* pcmChunk = new msg::PcmChunk(*sampleFormat, 0);
+			msg::PcmChunk* pcmChunk = new msg::PcmChunk(*sampleFormat_, 0);
 			pcmChunk->deserialize(baseMessage, buffer);
 //logD << "chunk: " << pcmChunk->payloadSize;
-			if (decoder->decode(pcmChunk))
+			if (decoder_->decode(pcmChunk))
 			{
-				stream->addChunk(pcmChunk);
+				stream_->addChunk(pcmChunk);
 //logD << ", decoded: " << pcmChunk->payloadSize << ", Duration: " << pcmChunk->getDuration() << ", sec: " << pcmChunk->timestamp.sec << ", usec: " << pcmChunk->timestamp.usec/1000 << ", type: " << pcmChunk->type << "\n";
 			}
 			else
@@ -50,13 +50,13 @@ void Controller::onMessageReceived(ClientConnection* connection, const msg::Base
 }
 
 
-void Controller::start(const PcmDevice& pcmDevice, const std::string& _ip, size_t _port, size_t latency)
+void Controller::start(const PcmDevice& pcmDevice, const std::string& ip, size_t port, size_t latency)
 {
-	ip = _ip;
+	ip_ = ip;
 	pcmDevice_ = pcmDevice;
 	latency_ = latency;
-	clientConnection = new ClientConnection(this, ip, _port);
-	controllerThread = new thread(&Controller::worker, this);
+	clientConnection_ = new ClientConnection(this, ip, port);
+	controllerThread_ = new thread(&Controller::worker, this);
 }
 
 
@@ -64,48 +64,47 @@ void Controller::stop()
 {
 	logD << "Stopping\n";
 	active_ = false;
-	controllerThread->join();
-	clientConnection->stop();
-	delete controllerThread;
-	delete clientConnection;
+	controllerThread_->join();
+	clientConnection_->stop();
+	delete controllerThread_;
+	delete clientConnection_;
 }
 
 
 void Controller::worker()
 {
-//	Decoder* decoder;
 	active_ = true;
-	decoder = NULL;
-	stream = NULL;
+	decoder_ = NULL;
+	stream_ = NULL;
 
 	while (active_)
 	{
 		try
 		{
-			clientConnection->start();
+			clientConnection_->start();
 			msg::Request requestMsg(kServerSettings);
 			shared_ptr<msg::ServerSettings> serverSettings(NULL);
-			while (active_ && !(serverSettings = clientConnection->sendReq<msg::ServerSettings>(&requestMsg)));
+			while (active_ && !(serverSettings = clientConnection_->sendReq<msg::ServerSettings>(&requestMsg)));
 			logO << "ServerSettings buffer: " << serverSettings->bufferMs << "\n";
 
 			requestMsg.request = kSampleFormat;
-			while (active_ && !(sampleFormat = clientConnection->sendReq<msg::SampleFormat>(&requestMsg)));
-			logO << "SampleFormat rate: " << sampleFormat->rate << ", bits: " << sampleFormat->bits << ", channels: " << sampleFormat->channels << "\n";
+			while (active_ && !(sampleFormat_ = clientConnection_->sendReq<msg::SampleFormat>(&requestMsg)));
+			logO << "SampleFormat rate: " << sampleFormat_->rate << ", bits: " << sampleFormat_->bits << ", channels: " << sampleFormat_->channels << "\n";
 
 			requestMsg.request = kHeader;
 			shared_ptr<msg::Header> headerChunk(NULL);
-			while (active_ && !(headerChunk = clientConnection->sendReq<msg::Header>(&requestMsg)));
+			while (active_ && !(headerChunk = clientConnection_->sendReq<msg::Header>(&requestMsg)));
 			logO << "Codec: " << headerChunk->codec << "\n";
 			if (headerChunk->codec == "ogg")
-				decoder = new OggDecoder();
+				decoder_ = new OggDecoder();
 			else if (headerChunk->codec == "pcm")
-				decoder = new PcmDecoder();
-			decoder->setHeader(headerChunk.get());
+				decoder_ = new PcmDecoder();
+			decoder_->setHeader(headerChunk.get());
 
 			msg::Request timeReq(kTime);
 			for (size_t n=0; n<50 && active_; ++n)
 			{
-				shared_ptr<msg::Time> reply = clientConnection->sendReq<msg::Time>(&timeReq, chronos::msec(2000));
+				shared_ptr<msg::Time> reply = clientConnection_->sendReq<msg::Time>(&timeReq, chronos::msec(2000));
 				if (reply)
 				{
 					double latency = (reply->received.sec - reply->sent.sec) + (reply->received.usec - reply->sent.usec) / 1000000.;
@@ -115,21 +114,21 @@ void Controller::worker()
 			}
 			logO << "diff to server [ms]: " << TimeProvider::getInstance().getDiffToServer<chronos::msec>().count() << "\n";
 
-			stream = new Stream(*sampleFormat);
-			stream->setBufferLen(serverSettings->bufferMs - latency_);
+			stream_ = new Stream(*sampleFormat_);
+			stream_->setBufferLen(serverSettings->bufferMs - latency_);
 
-			Player player(pcmDevice_, stream);
+			Player player(pcmDevice_, stream_);
 			player.start();
 
 			msg::Command startStream("startStream");
 			shared_ptr<msg::Ack> ackMsg(NULL);
-			while (active_ && !(ackMsg = clientConnection->sendReq<msg::Ack>(&startStream)));
+			while (active_ && !(ackMsg = clientConnection_->sendReq<msg::Ack>(&startStream)));
 
 			while (active_)
 			{
 				usleep(500*1000);
 //throw SnapException("timeout");
-                shared_ptr<msg::Time> reply = clientConnection->sendReq<msg::Time>(&timeReq);
+                shared_ptr<msg::Time> reply = clientConnection_->sendReq<msg::Time>(&timeReq);
                 if (reply)
                 {
                     double latency = (reply->received.sec - reply->sent.sec) + (reply->received.usec - reply->sent.usec) / 1000000.;
@@ -141,14 +140,14 @@ void Controller::worker()
 		{
 			logS(kLogErr) << "Exception in Controller::worker(): " << e.what() << endl;
 			logO << "Stopping clientConnection" << endl;
-			clientConnection->stop();
+			clientConnection_->stop();
 			logO << "Deleting stream" << endl;
-			if (stream != NULL)
-				delete stream;
-			stream = NULL;
-			if (decoder != NULL)
-				delete decoder;
-			decoder = NULL;
+			if (stream_ != NULL)
+				delete stream_;
+			stream_ = NULL;
+			if (decoder_ != NULL)
+				delete decoder_;
+			decoder_ = NULL;
 			logO << "done" << endl;
 			if (active_)
 				usleep(500*1000);

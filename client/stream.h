@@ -24,7 +24,10 @@ public:
 	void clearChunks();
 	bool getPlayerChunk(void* outputBuffer, const chronos::usec& outputBufferDacTime, unsigned long framesPerBuffer);
 	void setBufferLen(size_t bufferLenMs);
-	const msg::SampleFormat& format;
+	const msg::SampleFormat& getFormat() const
+	{
+		return format_;
+	}
 
 private:
 	chronos::time_point_hrc getNextPlayerChunk(void* outputBuffer, const chronos::usec& timeout, unsigned long framesPerBuffer);
@@ -38,22 +41,22 @@ private:
 
 	msg::SampleFormat format_;
 
-	long lastTick;
-	chronos::usec sleep;
+	long lastTick_;
+	chronos::usec sleep_;
 
-	Queue<std::shared_ptr<msg::PcmChunk>> chunks;
+	Queue<std::shared_ptr<msg::PcmChunk>> chunks_;
 //	DoubleBuffer<chronos::usec::rep> cardBuffer;
-	DoubleBuffer<chronos::usec::rep> miniBuffer;
-	DoubleBuffer<chronos::usec::rep> buffer;
-	DoubleBuffer<chronos::usec::rep> shortBuffer;
-	std::shared_ptr<msg::PcmChunk> chunk;
+	DoubleBuffer<chronos::usec::rep> miniBuffer_;
+	DoubleBuffer<chronos::usec::rep> buffer_;
+	DoubleBuffer<chronos::usec::rep> shortBuffer_;
+	std::shared_ptr<msg::PcmChunk> chunk_;
 
-	int median;
-	int shortMedian;
-	time_t lastUpdate;
-	chronos::msec bufferMs;
-	unsigned long playedFrames;
-	long correctAfterXFrames;
+	int median_;
+	int shortMedian_;
+	time_t lastUpdate_;
+	chronos::msec bufferMs_;
+	unsigned long playedFrames_;
+	long correctAfterXFrames_;
 };
 
 

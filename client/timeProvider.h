@@ -22,7 +22,7 @@ public:
 	template<typename T>
 	inline T getDiffToServer() const
 	{
-		return std::chrono::duration_cast<T>(chronos::usec(diffToServer));
+		return std::chrono::duration_cast<T>(chronos::usec(diffToServer_));
 	}
 
 /*	chronos::usec::rep getDiffToServer();
@@ -56,8 +56,8 @@ private:
 	TimeProvider(TimeProvider const&);   // Don't Implement
 	void operator=(TimeProvider const&); // Don't implement
 
-	DoubleBuffer<chronos::usec::rep> diffBuffer;
-	std::atomic<chronos::usec::rep> diffToServer;
+	DoubleBuffer<chronos::usec::rep> diffBuffer_;
+	std::atomic<chronos::usec::rep> diffToServer_;
 };
 
 

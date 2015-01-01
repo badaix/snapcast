@@ -9,9 +9,9 @@ using namespace std;
 
 
 
-ServerSession::ServerSession(MessageReceiver* _receiver, std::shared_ptr<tcp::socket> _socket) : messageReceiver(_receiver)
+ServerSession::ServerSession(MessageReceiver* receiver, std::shared_ptr<tcp::socket> socket) : messageReceiver_(receiver)
 {
-	socket = _socket;
+	socket_ = socket;
 }
 
 
@@ -24,9 +24,9 @@ ServerSession::~ServerSession()
 void ServerSession::start()
 {
 	active_ = true;
-	streamActive = false;
-	readerThread = new thread(&ServerSession::reader, this);
-	writerThread = new thread(&ServerSession::writer, this);
+	streamActive_ = false;
+	readerThread_ = new thread(&ServerSession::reader, this);
+	writerThread_ = new thread(&ServerSession::writer, this);
 }
 
 
@@ -36,31 +36,31 @@ void ServerSession::stop()
 	try
 	{
 		boost::system::error_code ec;
-		if (socket)
+		if (socket_)
 		{
-			socket->shutdown(boost::asio::ip::tcp::socket::shutdown_both, ec);
+			socket_->shutdown(boost::asio::ip::tcp::socket::shutdown_both, ec);
 			if (ec) logE << "Error in socket shutdown: " << ec << "\n";
-			socket->close(ec);
+			socket_->close(ec);
 			if (ec) logE << "Error in socket close: " << ec << "\n";
 		}
-		if (readerThread)
+		if (readerThread_)
 		{
 			logD << "joining readerThread\n";
-			readerThread->join();
-			delete readerThread;
+			readerThread_->join();
+			delete readerThread_;
 		}
-		if (writerThread)
+		if (writerThread_)
 		{
 			logD << "joining readerThread\n";
-			writerThread->join();
-			delete writerThread;
+			writerThread_->join();
+			delete writerThread_;
 		}
 	}
 	catch(...)
 	{
 	}
-	readerThread = NULL;
-	writerThread = NULL;
+	readerThread_ = NULL;
+	writerThread_ = NULL;
 	logD << "ServerSession stopped\n";
 }
 
@@ -72,7 +72,7 @@ void ServerSession::socketRead(void* _to, size_t _bytes)
 	do
 	{
 		boost::system::error_code error;
-		read += socket->read_some(boost::asio::buffer((char*)_to + read, _bytes - read));
+		read += socket_->read_some(boost::asio::buffer((char*)_to + read, _bytes - read));
 	}
 	while (read < _bytes);
 }
@@ -80,26 +80,26 @@ void ServerSession::socketRead(void* _to, size_t _bytes)
 
 void ServerSession::add(shared_ptr<msg::BaseMessage> message)
 {
-	if (!message || !streamActive)
+	if (!message || !streamActive_)
 		return;
 
-	while (messages.size() > 100)// chunk->getDuration() > 10000)
-		messages.pop();
-	messages.push(message);
+	while (messages_.size() > 100)// chunk->getDuration() > 10000)
+		messages_.pop();
+	messages_.push(message);
 }
 
 
 bool ServerSession::send(msg::BaseMessage* message)
 {
 	std::unique_lock<std::mutex> mlock(mutex_);
-	if (!socket)
+	if (!socket_)
 		return false;
 	boost::asio::streambuf streambuf;
 	std::ostream stream(&streambuf);
 	tv t;
 	message->sent = t;
 	message->serialize(stream);
-	boost::asio::write(*socket.get(), streambuf);
+	boost::asio::write(*socket_.get(), streambuf);
 	return true;
 }
 
@@ -119,8 +119,8 @@ void ServerSession::getNextMessage()
 	tv t;
 	baseMessage.received = t;
 
-	if (messageReceiver != NULL)
-		messageReceiver->onMessageReceived(this, baseMessage, &buffer[0]);
+	if (messageReceiver_ != NULL)
+		messageReceiver_->onMessageReceived(this, baseMessage, &buffer[0]);
 }
 
 
@@ -154,7 +154,7 @@ void ServerSession::writer()
 		shared_ptr<msg::BaseMessage> message;
 		while (active_)
 		{
-			if (messages.try_pop(message, std::chrono::milliseconds(500)))
+			if (messages_.try_pop(message, std::chrono::milliseconds(500)))
 				send(message.get());
 		}
 	}

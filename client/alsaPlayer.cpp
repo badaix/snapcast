@@ -7,7 +7,7 @@
 
 using namespace std;
 
-Player::Player(const PcmDevice& pcmDevice, Stream* stream) : pcm_handle(NULL), buff(NULL), active_(false), stream_(stream), pcmDevice_(pcmDevice) 
+Player::Player(const PcmDevice& pcmDevice, Stream* stream) : pcm_handle_(NULL), buff_(NULL), active_(false), stream_(stream), pcmDevice_(pcmDevice) 
 {
 }
 
@@ -19,11 +19,12 @@ void Player::start()
 	snd_pcm_hw_params_t *params;
 	int buff_size;
 
-	rate = stream_->format.rate;
-	channels = stream_->format.channels;
+	const msg::SampleFormat& format = stream_->getFormat();
+	rate = format.rate;
+	channels = format.channels;
 
 	/* Open the PCM device in playback mode */
-	if ((pcm = snd_pcm_open(&pcm_handle, pcmDevice_.name.c_str(), SND_PCM_STREAM_PLAYBACK, 0)) < 0)
+	if ((pcm = snd_pcm_open(&pcm_handle_, pcmDevice_.name.c_str(), SND_PCM_STREAM_PLAYBACK, 0)) < 0)
 		logE << "ERROR: Can't open " << pcmDevice_.name << " PCM device. " << snd_strerror(pcm) << "\n";
 
 	/*	struct snd_pcm_playback_info_t pinfo;
@@ -34,19 +35,19 @@ void Player::start()
 	/* Allocate parameters object and fill it with default values*/
 	snd_pcm_hw_params_alloca(&params);
 
-	snd_pcm_hw_params_any(pcm_handle, params);
+	snd_pcm_hw_params_any(pcm_handle_, params);
 
 	/* Set parameters */
-	if ((pcm = snd_pcm_hw_params_set_access(pcm_handle, params, SND_PCM_ACCESS_RW_INTERLEAVED)) < 0)
+	if ((pcm = snd_pcm_hw_params_set_access(pcm_handle_, params, SND_PCM_ACCESS_RW_INTERLEAVED)) < 0)
 		logE << "ERROR: Can't set interleaved mode. " << snd_strerror(pcm) << "\n";
 
-	if ((pcm = snd_pcm_hw_params_set_format(pcm_handle, params, SND_PCM_FORMAT_S16_LE)) < 0)
+	if ((pcm = snd_pcm_hw_params_set_format(pcm_handle_, params, SND_PCM_FORMAT_S16_LE)) < 0)
 		logE << "ERROR: Can't set format. " << snd_strerror(pcm) << "\n";
 
-	if ((pcm = snd_pcm_hw_params_set_channels(pcm_handle, params, channels)) < 0)
+	if ((pcm = snd_pcm_hw_params_set_channels(pcm_handle_, params, channels)) < 0)
 		logE << "ERROR: Can't set channels number. " << snd_strerror(pcm) << "\n";
 
-	if ((pcm = snd_pcm_hw_params_set_rate_near(pcm_handle, params, &rate, 0)) < 0)
+	if ((pcm = snd_pcm_hw_params_set_rate_near(pcm_handle_, params, &rate, 0)) < 0)
 		logE << "ERROR: Can't set rate. " << snd_strerror(pcm) << "\n";
 
 	unsigned int buffer_time;
@@ -56,20 +57,20 @@ void Player::start()
 
 	unsigned int period_time = buffer_time / 4;
 
-	snd_pcm_hw_params_set_period_time_near(pcm_handle, params, &period_time, 0);
-	snd_pcm_hw_params_set_buffer_time_near(pcm_handle, params, &buffer_time, 0);
+	snd_pcm_hw_params_set_period_time_near(pcm_handle_, params, &period_time, 0);
+	snd_pcm_hw_params_set_buffer_time_near(pcm_handle_, params, &buffer_time, 0);
 
 //	long unsigned int periodsize = stream_->format.msRate() * 50;//2*rate/50;
 //	if ((pcm = snd_pcm_hw_params_set_buffer_size_near(pcm_handle, params, &periodsize)) < 0)
 //		logE << "Unable to set buffer size " << (long int)periodsize << ": " <<  snd_strerror(pcm) << "\n";
 
 	/* Write parameters */
-	if ((pcm = snd_pcm_hw_params(pcm_handle, params)) < 0)
+	if ((pcm = snd_pcm_hw_params(pcm_handle_, params)) < 0)
 		logE << "ERROR: Can't set harware parameters. " << snd_strerror(pcm) << "\n";
 
 	/* Resume information */
-	logD << "PCM name: " << snd_pcm_name(pcm_handle) << "\n";
-	logD << "PCM state: " << snd_pcm_state_name(snd_pcm_state(pcm_handle)) << "\n";
+	logD << "PCM name: " << snd_pcm_name(pcm_handle_) << "\n";
+	logD << "PCM state: " << snd_pcm_state_name(snd_pcm_state(pcm_handle_)) << "\n";
 	snd_pcm_hw_params_get_channels(params, &tmp);
 	logD << "channels: " << tmp << "\n";
 
@@ -77,26 +78,26 @@ void Player::start()
 	logD << "rate: " << tmp << " bps\n";
 
 	/* Allocate buffer to hold single period */
-	snd_pcm_hw_params_get_period_size(params, &frames, 0);
-	logD << "frames: " << frames << "\n";
+	snd_pcm_hw_params_get_period_size(params, &frames_, 0);
+	logD << "frames: " << frames_ << "\n";
 
-	buff_size = frames * channels * 2 /* 2 -> sample size */;
-	buff = (char *) malloc(buff_size);
+	buff_size = frames_ * channels * 2 /* 2 -> sample size */;
+	buff_ = (char *) malloc(buff_size);
 
 	snd_pcm_hw_params_get_period_time(params, &tmp, NULL);
 	logD << "period time: " << tmp << "\n";
 
 	snd_pcm_sw_params_t *swparams;
 	snd_pcm_sw_params_alloca(&swparams);
-	snd_pcm_sw_params_current(pcm_handle, swparams);
+	snd_pcm_sw_params_current(pcm_handle_, swparams);
 
-	snd_pcm_sw_params_set_avail_min(pcm_handle, swparams, frames);
-	snd_pcm_sw_params_set_start_threshold(pcm_handle, swparams, frames);
-//	snd_pcm_sw_params_set_stop_threshold(pcm_handle, swparams, frames);
-	snd_pcm_sw_params(pcm_handle, swparams);
+	snd_pcm_sw_params_set_avail_min(pcm_handle_, swparams, frames_);
+	snd_pcm_sw_params_set_start_threshold(pcm_handle_, swparams, frames_);
+//	snd_pcm_sw_params_set_stop_threshold(pcm_handle, swparams, frames_);
+	snd_pcm_sw_params(pcm_handle_, swparams);
 
 	active_ = true;
-	playerThread = new thread(&Player::worker, this);
+	playerThread_ = new thread(&Player::worker, this);
 }
 
 
@@ -108,24 +109,24 @@ Player::~Player()
 
 void Player::stop() {
 	active_ = false;
-	if (playerThread != NULL)
+	if (playerThread_ != NULL)
 	{
-		playerThread->join();
-		delete playerThread;
-		playerThread = NULL;
+		playerThread_->join();
+		delete playerThread_;
+		playerThread_ = NULL;
 	}
 
-	if (pcm_handle != NULL)
+	if (pcm_handle_ != NULL)
 	{
-		snd_pcm_drain(pcm_handle);
-		snd_pcm_close(pcm_handle);
-		pcm_handle = NULL;
+		snd_pcm_drain(pcm_handle_);
+		snd_pcm_close(pcm_handle_);
+		pcm_handle_ = NULL;
 	}
 	
-	if (buff != NULL)
+	if (buff_ != NULL)
 	{
-		free(buff);
-		buff = NULL;
+		free(buff_);
+		buff_ = NULL;
 	}
 }
 
@@ -137,16 +138,16 @@ void Player::worker()
 	snd_pcm_sframes_t framesDelay;
 	while (active_) 
 	{
-		snd_pcm_avail_delay(pcm_handle, &framesAvail, &framesDelay);
-		chronos::usec delay((chronos::usec::rep) (1000 * (double) framesDelay / stream_->format.msRate()));
+		snd_pcm_avail_delay(pcm_handle_, &framesAvail, &framesDelay);
+		chronos::usec delay((chronos::usec::rep) (1000 * (double) framesDelay / stream_->getFormat().msRate()));
 		logD << "Avail: " << framesAvail << ", delay: " << framesDelay << ", delay[ms]: " << delay.count() / 1000 << "\n";
 
-		if (stream_->getPlayerChunk(buff, delay, frames)) 
+		if (stream_->getPlayerChunk(buff_, delay, frames_)) 
 		{
-			if ((pcm = snd_pcm_writei(pcm_handle, buff, frames)) == -EPIPE) 
+			if ((pcm = snd_pcm_writei(pcm_handle_, buff_, frames_)) == -EPIPE) 
 			{
 				logE << "XRUN\n";
-				snd_pcm_prepare(pcm_handle);
+				snd_pcm_prepare(pcm_handle_);
 			} 
 			else if (pcm < 0) 
 			{

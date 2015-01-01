@@ -40,11 +40,11 @@ public:
 class ClientConnection
 {
 public:
-	ClientConnection(MessageReceiver* _receiver, const std::string& _ip, size_t _port);
+	ClientConnection(MessageReceiver* receiver, const std::string& ip, size_t port);
 	virtual ~ClientConnection();
 	virtual void start();
 	virtual void stop();
-	virtual bool send(msg::BaseMessage* _message);
+	virtual bool send(msg::BaseMessage* message);
 	virtual std::shared_ptr<msg::SerializedMessage> sendRequest(msg::BaseMessage* message, const chronos::msec& timeout = chronos::msec(1000));
 
 	template <typename T>
@@ -65,31 +65,27 @@ public:
 
 	virtual bool connected()
 	{
-		return (socket != 0);
+		return (socket_ != 0);
 //		return (connected_ && socket);
 	}
 
 protected:
 	virtual void reader();
 
-	void socketRead(void* _to, size_t _bytes);
-	std::shared_ptr<tcp::socket> socket;
+	void socketRead(void* to, size_t bytes);
+	void getNextMessage();
 
-//	boost::asio::ip::tcp::endpoint endpt;
+	std::shared_ptr<tcp::socket> socket_;
 	std::atomic<bool> active_;
 	std::atomic<bool> connected_;
-	MessageReceiver* messageReceiver;
-	void getNextMessage();
-	boost::asio::io_service io_service;
-	tcp::resolver::iterator iterator;
+	MessageReceiver* messageReceiver_;
 	mutable std::mutex mutex_;
-	std::mutex m;
-	std::set<std::shared_ptr<PendingRequest>> pendingRequests;
-	uint16_t reqId;
-	std::string ip;
-	size_t port;
-	std::thread* readerThread;
-	chronos::msec sumTimeout;
+	std::set<std::shared_ptr<PendingRequest>> pendingRequests_;
+	uint16_t reqId_;
+	std::string ip_;
+	size_t port_;
+	std::thread* readerThread_;
+	chronos::msec sumTimeout_;
 };
 
 

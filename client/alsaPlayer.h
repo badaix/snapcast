@@ -21,12 +21,12 @@ public:
 
 private:
 	void worker();
-	snd_pcm_t* pcm_handle;
-	snd_pcm_uframes_t frames;
-	char *buff;
+	snd_pcm_t* pcm_handle_;
+	snd_pcm_uframes_t frames_;
+	char *buff_;
 	std::atomic<bool> active_;
 	Stream* stream_;
-	std::thread* playerThread;
+	std::thread* playerThread_;
 	PcmDevice pcmDevice_;
 };
 
