@@ -53,7 +53,7 @@ void Stream::clearChunks()
 
 void Stream::addChunk(msg::PcmChunk* chunk)
 {
-	while (chunks_.size() * chunk_->duration<chronos::msec>().count() > 10000)
+	while (chunks_.size() * chunk->duration<chronos::msec>().count() > 10000)
 		chunks_.pop();
 	chunks_.push(shared_ptr<msg::PcmChunk>(chunk));
 //	logD << "new chunk: " << chunk_->getDuration() << ", Chunks: " << chunks_.size() << "\n";
