@@ -2,6 +2,7 @@ SnapCast
 ========
 
 Synchronous audio player
+
 Snapcast is a multi room client-server audio player, where all clients are time synchronized with the server to play perfectly synced audio.
 The server's audio input is a named pipe (/tmp/snapfifo). All data that is fed into this file, will be send to the connected clients. One of the most generic ways to use snapcast is in conjunction with the music player daemon (mpd), which can by condfigured to use a named pipe as audio output.
 
@@ -56,7 +57,7 @@ Disable alsa audio output by commenting the section:
     #}
 
 Add a new audio output of the type "fifo", which will let mpd play audio into the named pipe "/tmp/snapfifo".
-Make sure that the "format" setting is the same as the format setting of the snapserver (default is "44100:16:2, which should make resampling unnecessary in most cases)
+Make sure that the "format" setting is the same as the format setting of the snapserver (default is "44100:16:2", which should make resampling unnecessary in most cases)
 
     audio_output {
         type            "fifo"
