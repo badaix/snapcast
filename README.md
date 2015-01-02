@@ -9,7 +9,7 @@ The server's audio input is a named pipe (/tmp/snapfifo). All data that is fed i
 
 Installation
 ------------
-These installation instructions are valid for Debian derivates (e.g. Raspbian).
+These installation instructions are valid for Debian derivates (e.g. Raspbian, Debian, Ubuntu, Mint).
 First install all packages needed to compile snapcast:
 
     $ sudo apt-get install libboost-dev libboost-system-dev libboost-program-options-dev libasound2-dev libvorbis-dev alsamixer
@@ -44,7 +44,7 @@ MPD setup
 ---------
 To connect MPD to the snapserver, edit /etc/mpd.conf, so that mpd will feed the audio into the snap-server's named pipe
 
-Disable alsa audio output by commenting the section:
+Disable alsa audio output by commenting out this section:
 
     #audio_output {
     #       type            "alsa"
