@@ -4,7 +4,7 @@ SnapCast
 Synchronous audio player
 
 Snapcast is a multi room client-server audio player, where all clients are time synchronized with the server to play perfectly synced audio.
-The server's audio input is a named pipe (`/tmp/snapfifo`). All data that is fed into this file, will be send to the connected clients. One of the most generic ways to use snapcast is in conjunction with the music player daemon (mpd), which can by condfigured to use a named pipe as audio output.
+The server's audio input is a named pipe `/tmp/snapfifo`. All data that is fed into this file, will be send to the connected clients. One of the most generic ways to use snapcast is in conjunction with the music player daemon (mpd), which can by condfigured to use a named pipe as audio output.
 
 
 Installation
@@ -42,7 +42,7 @@ http://www.maketecheasier.com/setup-wifi-on-raspberry-pi/
 
 MPD setup
 ---------
-To connect MPD to the snapserver, edit /etc/mpd.conf, so that mpd will feed the audio into the snap-server's named pipe
+To connect MPD to the snapserver, edit `/etc/mpd.conf`, so that mpd will feed the audio into the snap-server's named pipe
 
 Disable alsa audio output by commenting out this section:
 
@@ -56,7 +56,7 @@ Disable alsa audio output by commenting out this section:
     #       mixer_index     "0"             # optional
     #}
 
-Add a new audio output of the type "fifo", which will let mpd play audio into the named pipe "/tmp/snapfifo".
+Add a new audio output of the type "fifo", which will let mpd play audio into the named pipe `/tmp/snapfifo`.
 Make sure that the "format" setting is the same as the format setting of the snapserver (default is "44100:16:2", which should make resampling unnecessary in most cases)
 
     audio_output {
@@ -67,3 +67,8 @@ Make sure that the "format" setting is the same as the format setting of the sna
         mixer_type      "software"
     } 
 
+To test your mpd installation, you can add a radio station by
+
+    $ sudo su
+    $ echo "http://1live.akacast.akamaistream.net/7/706/119434/v1/gnl.akacast.akamaistream.net/1live" > /var/lib/mpd/playlists/einslive.m3u
+    
