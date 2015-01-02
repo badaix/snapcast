@@ -17,11 +17,6 @@ OggEncoder::OggEncoder(const msg::SampleFormat& format) : Encoder(format), eos(0
 double OggEncoder::encode(msg::PcmChunk* chunk)
 {
 	double res = 0;
-	if (tv_sec == 0)
-	{
-		tv_sec = chunk->timestamp.sec;
-		tv_usec = chunk->timestamp.usec;
-	}
 //logD << "-> pcm: " << wireChunk->length << endl;
 	int bytes = chunk->payloadSize / 4;
 	float **buffer=vorbis_analysis_buffer(&vd, bytes);
@@ -29,10 +24,16 @@ double OggEncoder::encode(msg::PcmChunk* chunk)
 	/* uninterleave samples */
 	for(int i=0; i<bytes; i++)
 	{
-		buffer[0][i]=((chunk->payload[i*4+1]<<8)|
-		              (0x00ff&(int)chunk->payload[i*4]))/32768.f;
-		buffer[1][i]=((chunk->payload[i*4+3]<<8)|
-		              (0x00ff&(int)chunk->payload[i*4+2]))/32768.f;
+	        int idx = 4*i;
+/*	        int8_t high = chunk->payload[idx+1];
+	        int8_t low = chunk->payload[idx];
+		buffer[0][i]=((high << 8) | (0x00ff&low))/32768.f;
+	        high = chunk->payload[idx+3];
+	        low = chunk->payload[idx+2];
+		buffer[1][i]=((high << 8) | (0x00ff&low))/32768.f;
+*/
+		buffer[0][i]=((((int8_t)chunk->payload[idx+1]) << 8) | (0x00ff&((int8_t)chunk->payload[idx])))/32768.f;
+		buffer[1][i]=((((int8_t)chunk->payload[idx+3]) << 8) | (0x00ff&((int8_t)chunk->payload[idx+2])))/32768.f;
 	}
 
 	/* tell the library how much we actually submitted */
@@ -70,6 +71,9 @@ double OggEncoder::encode(msg::PcmChunk* chunk)
 				pos += og.header_len;
 				memcpy(chunk->payload + pos, og.body, og.body_len);
 				pos += og.body_len;
+				
+				if (ogg_page_eos(&og))
+				 break;
 			}
 		}
 	}
@@ -83,8 +87,6 @@ double OggEncoder::encode(msg::PcmChunk* chunk)
 		lastGranulepos = os.granulepos;
 		chunk->payload = (char*)realloc(chunk->payload, pos);
 		chunk->payloadSize = pos;
-		tv_sec = 0;
-		tv_usec = 0;
 	}
 	return res;
 }
@@ -93,9 +95,6 @@ double OggEncoder::encode(msg::PcmChunk* chunk)
 void OggEncoder::init()
 {
 	/********** Encode setup ************/
-	tv_sec = 0;
-	tv_usec = 0;
-
 	vorbis_info_init(&vi);
 
 	/* choose an encoding mode.  A few possibilities commented out, one
@@ -156,7 +155,11 @@ void OggEncoder::init()
 	 make the headers, then pass them to libvorbis one at a time;
 	 libvorbis handles the additional Ogg bitstream constraints */
 
-	vorbis_analysis_headerout(&vd,&vc,&header,&header_comm,&header_code);
+        ogg_packet header;
+        ogg_packet header_comm;
+        ogg_packet header_code;
+            
+      	vorbis_analysis_headerout(&vd,&vc,&header,&header_comm,&header_code);
 	ogg_stream_packetin(&os,&header);
 	ogg_stream_packetin(&os,&header_comm);
 	ogg_stream_packetin(&os,&header_code);

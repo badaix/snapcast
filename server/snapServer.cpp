@@ -80,8 +80,9 @@ int main(int argc, char* argv[])
 		timeval tvChunk;
 		gettimeofday(&tvChunk, NULL);
 		long nextTick = chronos::getTickCount();
-
-		mkfifo(fifoName.c_str(), 0777);
+		
+		umask(0);
+		mkfifo(fifoName.c_str(), 0666);
 		msg::SampleFormat format(sampleFormat);
 		size_t duration = 50;
 //size_t chunkSize = duration*format.rate*format.frameSize / 1000;

@@ -25,17 +25,10 @@ private:
 	vorbis_dsp_state vd; /* central working state for the packet->PCM decoder */
 	vorbis_block     vb; /* local working space for packet->PCM decode */
 
-	ogg_packet header;
-	ogg_packet header_comm;
-	ogg_packet header_code;
-
 	ogg_int64_t   lastGranulepos;
 
 	int eos, ret;
 	int i, founddata;
-
-	int32_t tv_sec;
-	int32_t tv_usec;
 };
 
 
