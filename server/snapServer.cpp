@@ -10,6 +10,7 @@
 #include "message/message.h"
 #include "pcmEncoder.h"
 #include "oggEncoder.h"
+#include "flacEncoder.h"
 #include "controlServer.h"
 
 
@@ -92,10 +93,7 @@ int main(int argc, char* argv[])
 		else if (codec == "pcm")
 			encoder.reset(new PcmEncoder(sampleFormat));
 		else if (codec == "flac")
-		{
-			logO << "Not yet supported\n";
-			return 1;
-		}
+			encoder.reset(new FlacEncoder(sampleFormat));
 		else
 		{
 			logO << "unknown codec: " << codec << "\n";
@@ -144,8 +142,8 @@ int main(int argc, char* argv[])
 						controlServer->send(chunk);
 //logD << chunk->tv_sec << ", " << chunk->tv_usec / 1000 << "\n";
 //                    addUs(tvChunk, 1000*chunk->getDuration());
-					chronos::addUs(tvChunk, chunkDuration * 1000);
 					nextTick += duration;
+					chronos::addUs(tvChunk, chunkDuration * 1000);
 					long currentTick = chronos::getTickCount();
 					if (nextTick > currentTick)
 					{

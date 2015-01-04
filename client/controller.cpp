@@ -5,6 +5,7 @@
 #include <unistd.h>
 #include "oggDecoder.h"
 #include "pcmDecoder.h"
+#include "flacDecoder.h"
 #include "alsaPlayer.h"
 #include "timeProvider.h"
 #include "common/log.h"
@@ -99,6 +100,8 @@ void Controller::worker()
 				decoder_ = new OggDecoder();
 			else if (headerChunk->codec == "pcm")
 				decoder_ = new PcmDecoder();
+			else if (headerChunk->codec == "flac")
+				decoder_ = new FlacDecoder();
 			decoder_->setHeader(headerChunk.get());
 
 			msg::Request timeReq(kTime);
@@ -149,8 +152,8 @@ void Controller::worker()
 				delete decoder_;
 			decoder_ = NULL;
 			logO << "done" << endl;
-			if (active_)
-				usleep(500*1000);
+			for (size_t n=0; (n<10) && active_; ++n)
+				usleep(100*1000);
 		}
 	}
 	logD << "Thread stopped\n";

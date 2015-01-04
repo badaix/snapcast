@@ -14,9 +14,11 @@ class FlacEncoder : public Encoder
 public:
 	FlacEncoder(const msg::SampleFormat& format);
 	virtual double encode(msg::PcmChunk* chunk);
+	msg::Header* getHeaderChunk();
 
 protected:
 	void initEncoder();
+	FLAC__StreamEncoder *encoder;
 //	virtual void progress_callback(FLAC__uint64 bytes_written, FLAC__uint64 samples_written, unsigned frames_written, unsigned total_frames_estimate);
 };
 

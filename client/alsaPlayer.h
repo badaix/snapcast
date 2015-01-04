@@ -26,7 +26,7 @@ private:
 	char *buff_;
 	std::atomic<bool> active_;
 	Stream* stream_;
-	std::thread* playerThread_;
+	std::thread playerThread_;
 	PcmDevice pcmDevice_;
 };
 

@@ -97,7 +97,7 @@ void Player::start()
 	snd_pcm_sw_params(pcm_handle_, swparams);
 
 	active_ = true;
-	playerThread_ = new thread(&Player::worker, this);
+	playerThread_ = thread(&Player::worker, this);
 }
 
 
@@ -108,12 +108,10 @@ Player::~Player()
 
 
 void Player::stop() {
-	active_ = false;
-	if (playerThread_ != NULL)
+	if (active_)
 	{
-		playerThread_->join();
-		delete playerThread_;
-		playerThread_ = NULL;
+		active_ = false;
+		playerThread_.join();
 	}
 
 	if (pcm_handle_ != NULL)
