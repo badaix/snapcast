@@ -19,6 +19,7 @@ static unsigned channels = 0;
 static unsigned bps = 0;
 static msg::Header* flacHeader = NULL;
 static msg::PcmChunk* flacChunk = NULL;
+static msg::PcmChunk* pcmChunk = NULL;
 static FLAC__StreamDecoder *decoder = 0;
 
 
@@ -34,13 +35,17 @@ FlacDecoder::~FlacDecoder()
 
 bool FlacDecoder::decode(msg::PcmChunk* chunk)
 {
-	flacChunk = chunk;
+	pcmChunk = chunk;
 //logO << "Decode start: " << chunk->payloadSize << endl;
-//	flacChunk->payload = (char*)realloc(flacChunk->payload, chunk->payloadSize);
-//	memcpy(flacChunk->payload, chunk->payload, chunk->payloadSize);
-//	flacChunk->payloadSize = chunk->payloadSize;
+	flacChunk->payload = (char*)realloc(flacChunk->payload, chunk->payloadSize);
+	memcpy(flacChunk->payload, chunk->payload, chunk->payloadSize);
+	flacChunk->payloadSize = chunk->payloadSize;
+
+	pcmChunk->payload = (char*)realloc(pcmChunk->payload, 0);
+	pcmChunk->payloadSize = 0;
 	FLAC__stream_decoder_process_single(decoder);
-	FLAC__stream_decoder_process_single(decoder);
+	if (flacChunk->payloadSize > 0)
+		FLAC__stream_decoder_process_single(decoder);
 //logO << "Decode end\n" << endl;
 	return true;
 }
@@ -49,6 +54,7 @@ bool FlacDecoder::decode(msg::PcmChunk* chunk)
 bool FlacDecoder::setHeader(msg::Header* chunk)
 {
 	flacHeader = chunk;
+	flacChunk = new msg::PcmChunk();
 	FLAC__bool ok = true;
 	FLAC__StreamDecoderInitStatus init_status;
 
@@ -84,11 +90,14 @@ FLAC__StreamDecoderReadStatus read_callback(const FLAC__StreamDecoder *decoder, 
 	else if (flacChunk != NULL)
 	{
 //logO << "Read: " << *bytes << "\t" << flacChunk->payloadSize << "\n";
+		FLAC__StreamDecoderReadStatus result = FLAC__STREAM_DECODER_READ_STATUS_CONTINUE;
 		if (*bytes > flacChunk->payloadSize)
 			*bytes = flacChunk->payloadSize;
+//		else
+//			result = FLAC__STREAM_DECODER_READ_STATUS_END_OF_STREAM;
 
-		if (flacChunk->payloadSize == 0)
-			return FLAC__STREAM_DECODER_READ_STATUS_END_OF_STREAM;
+//		if (flacChunk->payloadSize == 0)
+//			return FLAC__STREAM_DECODER_READ_STATUS_END_OF_STREAM;
 
 		memcpy(buffer, flacChunk->payload, *bytes);
 		memmove(flacChunk->payload, flacChunk->payload + *bytes, flacChunk->payloadSize - *bytes);
@@ -96,6 +105,7 @@ FLAC__StreamDecoderReadStatus read_callback(const FLAC__StreamDecoder *decoder, 
 		flacChunk->payload = (char*)realloc(flacChunk->payload, flacChunk->payloadSize);
 //logO << "Read end\n";
 //		return FLAC__STREAM_DECODER_READ_STATUS_END_OF_STREAM;
+		return result;
 	}
 	return FLAC__STREAM_DECODER_READ_STATUS_CONTINUE;
 }
@@ -123,20 +133,20 @@ FLAC__StreamDecoderWriteStatus write_callback(const FLAC__StreamDecoder *decoder
 		return FLAC__STREAM_DECODER_WRITE_STATUS_ABORT;
 	}
 
-	if (flacChunk != NULL)
+	if (pcmChunk != NULL)
 	{
 		size_t bytes = frame->header.blocksize * 4;
 //logO << "blocksize: " << frame->header.blocksize << "\tframe_number: " << frame->header.number.frame_number << "\tsample_number: " << frame->header.number.sample_number << "\n";
-//logO << "Write: " << bytes << "\n";
+//logO << "Write: " << bytes << "\tpayloadSize: " << pcmChunk->payloadSize + bytes << "\n";
 //flacChunk->payloadSize = 0;
-		flacChunk->payload = (char*)realloc(flacChunk->payload, flacChunk->payloadSize + bytes);
+		pcmChunk->payload = (char*)realloc(pcmChunk->payload, pcmChunk->payloadSize + bytes);
+
 		for(size_t i = 0; i < frame->header.blocksize; i++) 
 		{
-			memcpy(flacChunk->payload + flacChunk->payloadSize + 4*i, (char*)(buffer[0] + i), 2);
-			memcpy(flacChunk->payload + flacChunk->payloadSize + 4*i+2, (char*)(buffer[1] + i), 2);
-//logO << 4*i+2 << "\t" << bytes << "\n";
+			memcpy(pcmChunk->payload + pcmChunk->payloadSize + 4*i, (char*)(buffer[0] + i), 2);
+			memcpy(pcmChunk->payload + pcmChunk->payloadSize + 4*i+2, (char*)(buffer[1] + i), 2);
 		}
-		flacChunk->payloadSize += bytes;
+		pcmChunk->payloadSize += bytes;
 //logO << "Write end: " << flacChunk->payloadSize << "\n";
 	}
 

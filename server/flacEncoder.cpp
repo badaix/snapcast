@@ -37,7 +37,7 @@ logD << "payload: " << chunk->payloadSize << "\tsamples: " << chunk->payloadSize
 	double res = encodedSamples / ((double)sampleFormat.rate / 1000.);
 	if (encodedSamples > 0)
 	{
-logD << "encoded: " << chunk->payloadSize << "\tsamples: " << encodedSamples << "\tres: " << res << "\n";
+logO << "encoded: " << chunk->payloadSize << "\tsamples: " << encodedSamples << "\tres: " << res << "\n";
 		encodedSamples = 0;
 		chunk->payloadSize = encodedChunk->payloadSize;
 		chunk->payload = (char*)realloc(chunk->payload, encodedChunk->payloadSize);
@@ -57,7 +57,7 @@ FLAC__StreamEncoderWriteStatus write_callback(const FLAC__StreamEncoder *encoder
     unsigned current_frame,
     void *client_data)
 {
-	logD << "write_callback: " << bytes << ", " << samples << ", " << current_frame << "\n";
+logO << "write_callback: " << bytes << ", " << samples << ", " << current_frame << "\n";
 	FlacEncoder* flacEncoder = (FlacEncoder*)client_data;
 	if ((current_frame == 0) && (bytes > 0) && (samples == 0))
 	{
@@ -96,7 +96,7 @@ void FlacEncoder::initEncoder()
 	}
 
 	ok &= FLAC__stream_encoder_set_verify(encoder, true);
-	ok &= FLAC__stream_encoder_set_compression_level(encoder, 8);
+	ok &= FLAC__stream_encoder_set_compression_level(encoder, 1);
 	ok &= FLAC__stream_encoder_set_channels(encoder, sampleFormat.channels);
 	ok &= FLAC__stream_encoder_set_bits_per_sample(encoder, sampleFormat.bits);
 	ok &= FLAC__stream_encoder_set_sample_rate(encoder, sampleFormat.rate);
