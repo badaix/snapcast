@@ -13,23 +13,23 @@ static FLAC__StreamDecoderWriteStatus write_callback(const FLAC__StreamDecoder *
 static void metadata_callback(const FLAC__StreamDecoder *decoder, const FLAC__StreamMetadata *metadata, void *client_data);
 static void error_callback(const FLAC__StreamDecoder *decoder, FLAC__StreamDecoderErrorStatus status, void *client_data);
 
-static FLAC__uint64 total_samples = 0;
-static unsigned sample_rate = 0;
-static unsigned channels = 0;
-static unsigned bps = 0;
+
 static msg::Header* flacHeader = NULL;
 static msg::PcmChunk* flacChunk = NULL;
 static msg::PcmChunk* pcmChunk = NULL;
-static FLAC__StreamDecoder *decoder = 0;
+static FLAC__StreamDecoder *decoder = NULL;
 
 
 FlacDecoder::FlacDecoder() : Decoder()
 {
+	flacChunk = new msg::PcmChunk();
 }
 
 
 FlacDecoder::~FlacDecoder()
 {
+	delete flacChunk;
+	delete decoder;
 }
 
 
@@ -54,7 +54,6 @@ bool FlacDecoder::decode(msg::PcmChunk* chunk)
 bool FlacDecoder::setHeader(msg::Header* chunk)
 {
 	flacHeader = chunk;
-	flacChunk = new msg::PcmChunk();
 	FLAC__bool ok = true;
 	FLAC__StreamDecoderInitStatus init_status;
 
@@ -116,7 +115,7 @@ FLAC__StreamDecoderWriteStatus write_callback(const FLAC__StreamDecoder *decoder
 //logO << "Write start\n";
 	(void)decoder;
 
-	if(channels != 2 || bps != 16) {
+/*	if(channels != 2 || bps != 16) {
 		fprintf(stderr, "ERROR: this example only supports 16bit stereo streams\n");
 		return FLAC__STREAM_DECODER_WRITE_STATUS_ABORT;
 	}
@@ -124,7 +123,7 @@ FLAC__StreamDecoderWriteStatus write_callback(const FLAC__StreamDecoder *decoder
 		fprintf(stderr, "ERROR: This frame contains %d channels (should be 2)\n", frame->header.channels);
 		return FLAC__STREAM_DECODER_WRITE_STATUS_ABORT;
 	}
-	if(buffer [0] == NULL) {
+*/	if(buffer [0] == NULL) {
 		fprintf(stderr, "ERROR: buffer [0] is NULL\n");
 		return FLAC__STREAM_DECODER_WRITE_STATUS_ABORT;
 	}
@@ -150,17 +149,6 @@ FLAC__StreamDecoderWriteStatus write_callback(const FLAC__StreamDecoder *decoder
 //logO << "Write end: " << flacChunk->payloadSize << "\n";
 	}
 
-	/* write decoded PCM samples */
-/*	for(i = 0; i < frame->header.blocksize; i++) {
-		if(
-			!write_little_endian_int16(f, (FLAC__int16)buffer[0][i]) ||  // left channel
-			!write_little_endian_int16(f, (FLAC__int16)buffer[1][i])     // right channel
-		) {
-			fprintf(stderr, "ERROR: write error\n");
-			return FLAC__STREAM_DECODER_WRITE_STATUS_ABORT;
-		}
-	}
-*/
 	return FLAC__STREAM_DECODER_WRITE_STATUS_CONTINUE;
 }
 
@@ -170,17 +158,11 @@ void metadata_callback(const FLAC__StreamDecoder *decoder, const FLAC__StreamMet
 	(void)decoder, (void)client_data;
 
 	/* print some stats */
-	if(metadata->type == FLAC__METADATA_TYPE_STREAMINFO) {
-		/* save for later */
-		total_samples = metadata->data.stream_info.total_samples;
-		sample_rate = metadata->data.stream_info.sample_rate;
-		channels = metadata->data.stream_info.channels;
-		bps = metadata->data.stream_info.bits_per_sample;
-
-		logO << "sample rate    : " << sample_rate << "Hz\n";
-		logO << "channels       : " << channels << "\n";
-		logO << "bits per sample: " << bps << "\n";
-		logO << "total samples  : " << total_samples << "\n";
+	if(metadata->type == FLAC__METADATA_TYPE_STREAMINFO) 
+	{
+		logO << "sample rate    : " << metadata->data.stream_info.sample_rate << "Hz\n";
+		logO << "channels       : " << metadata->data.stream_info.channels << "\n";
+		logO << "bits per sample: " << metadata->data.stream_info.bits_per_sample << "\n";
 	}
 }
 

@@ -4,18 +4,34 @@
 
 using namespace std;
 
-
-FlacEncoder::FlacEncoder(const msg::SampleFormat& format) : Encoder(format), encoder(0)
-{
-	initEncoder();
-}
-
-
 #define READSIZE 16384
 
 static FLAC__int32 pcm[READSIZE/*samples*/ * 2/*channels*/];
 size_t encodedSamples = 0;
-static msg::PcmChunk* encodedChunk;
+static msg::PcmChunk* encodedChunk = NULL;
+
+
+FlacEncoder::FlacEncoder(const msg::SampleFormat& format) : Encoder(format), encoder(NULL)
+{
+	encodedChunk = new msg::PcmChunk();
+	headerChunk = new msg::Header("flac");
+	initEncoder();
+}
+
+
+FlacEncoder::~FlacEncoder()
+{
+	if (encoder != NULL)
+	{
+		FLAC__stream_encoder_finish(encoder);
+		FLAC__metadata_object_delete(metadata[0]);
+		FLAC__metadata_object_delete(metadata[1]);
+		FLAC__stream_encoder_delete(encoder);
+	}
+
+	delete encodedChunk;
+}
+
 
 
 msg::Header* FlacEncoder::getHeaderChunk()
@@ -37,7 +53,7 @@ logD << "payload: " << chunk->payloadSize << "\tsamples: " << chunk->payloadSize
 	double res = encodedSamples / ((double)sampleFormat.rate / 1000.);
 	if (encodedSamples > 0)
 	{
-logO << "encoded: " << chunk->payloadSize << "\tsamples: " << encodedSamples << "\tres: " << res << "\n";
+logD << "encoded: " << chunk->payloadSize << "\tsamples: " << encodedSamples << "\tres: " << res << "\n";
 		encodedSamples = 0;
 		chunk->payloadSize = encodedChunk->payloadSize;
 		chunk->payload = (char*)realloc(chunk->payload, encodedChunk->payloadSize);
@@ -57,7 +73,7 @@ FLAC__StreamEncoderWriteStatus write_callback(const FLAC__StreamEncoder *encoder
     unsigned current_frame,
     void *client_data)
 {
-logO << "write_callback: " << bytes << ", " << samples << ", " << current_frame << "\n";
+logD << "write_callback: " << bytes << ", " << samples << ", " << current_frame << "\n";
 	FlacEncoder* flacEncoder = (FlacEncoder*)client_data;
 	if ((current_frame == 0) && (bytes > 0) && (samples == 0))
 	{
@@ -82,11 +98,8 @@ logO << "write_callback: " << bytes << ", " << samples << ", " << current_frame 
 
 void FlacEncoder::initEncoder()
 {
-	encodedChunk = new msg::PcmChunk();
-	headerChunk = new msg::Header("flac");
 	FLAC__bool ok = true;
 	FLAC__StreamEncoderInitStatus init_status;
-	FLAC__StreamMetadata *metadata[2];
 	FLAC__StreamMetadata_VorbisComment_Entry entry;
 
 	// allocate the encoder
@@ -96,7 +109,7 @@ void FlacEncoder::initEncoder()
 	}
 
 	ok &= FLAC__stream_encoder_set_verify(encoder, true);
-	ok &= FLAC__stream_encoder_set_compression_level(encoder, 1);
+	ok &= FLAC__stream_encoder_set_compression_level(encoder, 5);
 	ok &= FLAC__stream_encoder_set_channels(encoder, sampleFormat.channels);
 	ok &= FLAC__stream_encoder_set_bits_per_sample(encoder, sampleFormat.bits);
 	ok &= FLAC__stream_encoder_set_sample_rate(encoder, sampleFormat.rate);
