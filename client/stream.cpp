@@ -173,10 +173,18 @@ void Stream::resetBuffers()
 bool Stream::getPlayerChunk(void* outputBuffer, const chronos::usec& outputBufferDacTime, unsigned long framesPerBuffer)
 {
 	if (outputBufferDacTime > bufferMs_)
+	{
+		logO << "outputBufferDacTime > bufferMs: " << outputBufferDacTime.count() << " > " << std::chrono::duration_cast<usec>(bufferMs_).count() << "\n";
+		sleep_ = chronos::usec(0);
 		return false;
+	}
 
 	if (!chunk_ && !chunks_.try_pop(chunk_, outputBufferDacTime))
+	{
+		logO << "!chunk_ && !chunks_.try_pop(chunk_, outputBufferDacTime)\n";
+		sleep_ = chronos::usec(0);
 		return false;
+	}
 
 	playedFrames_ += framesPerBuffer;
 
@@ -290,7 +298,9 @@ bool Stream::getPlayerChunk(void* outputBuffer, const chronos::usec& outputBuffe
 		}
 
 		if (sleep_.count() != 0)
-			logO << "Sleep: " << sleep_.count() << "\n";
+		{
+			logO << "Sleep " << sleep_.count() << ", age: " << age.count() << ", bufferDuration: " << std::chrono::duration_cast<usec>(bufferDuration).count() << "\n";
+		}
 		else if (shortBuffer_.full())
 		{
 			if (chronos::usec(shortMedian_) > chronos::usec(100))
