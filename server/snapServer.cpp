@@ -118,10 +118,10 @@ int main(int argc, char* argv[])
 			int fd = open(fifoName.c_str(), O_RDONLY | O_NONBLOCK);
 			try
 			{
-				shared_ptr<msg::PcmChunk> chunk;//(new WireChunk());
+				shared_ptr<msg::PcmChunk> chunk;
 				while (!g_terminated)//cin.good())
 				{
-					chunk.reset(new msg::PcmChunk(sampleFormat, duration));//2*WIRE_CHUNK_SIZE));
+					chunk.reset(new msg::PcmChunk(sampleFormat, duration));
 					int toRead = chunk->payloadSize;
 					int len = 0;
 					do

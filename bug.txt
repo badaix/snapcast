@@ -1,0 +1,100 @@
+2015-02-11 06-53-30 [out] sleep > chunk_->getDuration(): 2552778 > 92, chunks: 35, out: 100000, needed: 25034013
+2015-02-11 06-53-30 [out] sleep > chunk_->getDuration(): 2461512 > 92, chunks: 34, out: 100000, needed: 25034013
+2015-02-11 06-53-30 [out] sleep > chunk_->getDuration(): 2369340 > 92, chunks: 33, out: 100000, needed: 25034013
+2015-02-11 06-53-30 [out] sleep > chunk_->getDuration(): 2276977 > 92, chunks: 32, out: 100000, needed: 25034013
+2015-02-11 06-53-30 [out] sleep > chunk_->getDuration(): 2184579 > 92, chunks: 31, out: 100000, needed: 25034013
+2015-02-11 06-53-30 [out] sleep > chunk_->getDuration(): 2092190 > 92, chunks: 30, out: 100000, needed: 25034013
+2015-02-11 06-53-30 [out] sleep > chunk_->getDuration(): 1999795 > 92, chunks: 29, out: 100000, needed: 25034013
+2015-02-11 06-53-30 [out] sleep > chunk_->getDuration(): 1907409 > 92, chunks: 28, out: 100000, needed: 25034013
+2015-02-11 06-53-30 [out] sleep > chunk_->getDuration(): 1816011 > 92, chunks: 27, out: 100000, needed: 25034013
+2015-02-11 06-53-30 [out] sleep > chunk_->getDuration(): 1723643 > 92, chunks: 26, out: 100000, needed: 25034013
+2015-02-11 06-53-30 [out] sleep > chunk_->getDuration(): 1631253 > 92, chunks: 25, out: 100000, needed: 25034013
+2015-02-11 06-53-30 [out] sleep > chunk_->getDuration(): 1538985 > 92, chunks: 24, out: 100000, needed: 25034013
+2015-02-11 06-53-30 [out] sleep > chunk_->getDuration(): 1446600 > 92, chunks: 23, out: 100000, needed: 25034013
+2015-02-11 06-53-30 [out] sleep > chunk_->getDuration(): 1354213 > 92, chunks: 22, out: 100000, needed: 25034013
+2015-02-11 06-53-30 [out] sleep > chunk_->getDuration(): 1266210 > 92, chunks: 22, out: 100000, needed: 25034013
+2015-02-11 06-53-30 [out] sleep > chunk_->getDuration(): 1173955 > 92, chunks: 21, out: 100000, needed: 25034013
+2015-02-11 06-53-30 [out] sleep > chunk_->getDuration(): 1081592 > 92, chunks: 20, out: 100000, needed: 25034013
+2015-02-11 06-53-30 [out] sleep > chunk_->getDuration(): 989316 > 92, chunks: 19, out: 100000, needed: 25034013
+2015-02-11 06-53-30 [out] sleep > chunk_->getDuration(): 896943 > 92, chunks: 18, out: 100000, needed: 25034013
+2015-02-11 06-53-30 [out] sleep > chunk_->getDuration(): 804551 > 92, chunks: 17, out: 100000, needed: 25034013
+2015-02-11 06-53-30 [out] sleep > chunk_->getDuration(): 712152 > 92, chunks: 16, out: 100000, needed: 25034013
+2015-02-11 06-53-30 [out] sleep > chunk_->getDuration(): 619757 > 92, chunks: 15, out: 100000, needed: 25034013
+2015-02-11 06-53-30 [out] sleep > chunk_->getDuration(): 527375 > 92, chunks: 14, out: 100000, needed: 25034013
+2015-02-11 06-53-30 [out] sleep > chunk_->getDuration(): 434978 > 92, chunks: 13, out: 100000, needed: 25034013
+2015-02-11 06-53-30 [out] sleep > chunk_->getDuration(): 342585 > 92, chunks: 12, out: 100000, needed: 25034013
+2015-02-11 06-53-30 [out] sleep > chunk_->getDuration(): 250190 > 92, chunks: 11, out: 100000, needed: 25034013
+2015-02-11 06-53-30 [out] sleep > chunk_->getDuration(): 157787 > 92, chunks: 10, out: 100000, needed: 25034013
+2015-02-11 06-53-30 [out] correction: 4, factor: 1.00362
+2015-02-11 06-53-30 [out] Sleep 65289, age: -27457, bufferDuration: 25034
+2015-02-11 06-53-30 [out] Chunk: -274   -274    -274    -274    1       100000
+2015-02-11 06-53-40 [out] correction: 4, factor: 1.00362
+2015-02-11 06-53-40 [out] Sleep 65189, age: 9939282, bufferDuration: 25034
+2015-02-11 06-53-40 [out] Chunk: 99392  99392   99392   99392   1       100000
+2015-02-11 06-53-50 [out] correction: 4, factor: 1.00362
+2015-02-11 06-53-50 [out] Sleep 65089, age: 19914052, bufferDuration: 25034
+2015-02-11 06-53-50 [out] Chunk: 199140 199140  199140  199140  1       100000
+2015-02-11 06-54-00 [out] correction: 4, factor: 1.00362
+2015-02-11 06-54-00 [out] Sleep 64989, age: 29888939, bufferDuration: 25034
+2015-02-11 06-54-00 [out] Chunk: 298889 298889  298889  298889  1       100000
+2015-02-11 06-54-10 [out] correction: 4, factor: 1.00362
+2015-02-11 06-54-10 [out] Sleep 64889, age: 19245105, bufferDuration: 25034
+2015-02-11 06-54-10 [out] Chunk: 192451 192451  192451  192451  1       100000
+2015-02-11 06-54-20 [out] correction: 4, factor: 1.00362
+2015-02-11 06-54-20 [out] Sleep 64789, age: 29219324, bufferDuration: 25034
+2015-02-11 06-54-20 [out] Chunk: 292193 292193  292193  292193  1       100000
+2015-02-11 06-54-30 [out] correction: 4, factor: 1.00362
+2015-02-11 06-54-30 [out] Sleep 64689, age: 39194206, bufferDuration: 25034
+2015-02-11 06-54-30 [out] Chunk: 391942 391942  391942  391942  1       100000
+...
+2015-02-11 07-16-00 [out] correction: 4, factor: 1.00362
+2015-02-11 07-16-00 [out] Sleep 51789, age: 29166609, bufferDuration: 25034
+2015-02-11 07-16-00 [out] Chunk: 291666 291666  291666  291666  1       100000
+2015-02-11 07-16-10 [out] correction: 4, factor: 1.00362
+2015-02-11 07-16-10 [out] Sleep 51689, age: 39141449, bufferDuration: 25034
+2015-02-11 07-16-10 [out] Chunk: 391414 391414  391414  391414  1       100000
+2015-02-11 07-16-20 [out] correction: 4, factor: 1.00362
+2015-02-11 07-16-20 [out] Sleep 51589, age: 19208741, bufferDuration: 25034
+2015-02-11 07-16-20 [out] Chunk: 192087 192087  192087  192087  1       100000
+2015-02-11 07-16-30 [out] correction: 4, factor: 1.00362
+2015-02-11 07-16-30 [out] Sleep 51489, age: 29183951, bufferDuration: 25034
+2015-02-11 07-16-30 [out] Chunk: 291839 291839  291839  291839  1       100000
+2015-02-11 07-16-40 [out] correction: 4, factor: 1.00362
+2015-02-11 07-16-40 [out] Sleep 51389, age: 39158778, bufferDuration: 25034
+2015-02-11 07-16-40 [out] Chunk: 391587 391587  391587  391587  1       100000
+2015-02-11 07-16-50 [out] correction: 4, factor: 1.00362
+2015-02-11 07-16-50 [out] Sleep 51289, age: 49133134, bufferDuration: 25034
+2015-02-11 07-16-50 [out] Chunk: 491331 491331  491331  491331  1       100000
+2015-02-11 07-17-00 [out] correction: 4, factor: 1.00362
+2015-02-11 07-17-00 [out] Sleep 51189, age: 19170398, bufferDuration: 25034
+2015-02-11 07-17-00 [out] Chunk: 191703 191703  191703  191703  1       100000
+2015-02-11 07-17-10 [out] correction: 4, factor: 1.00362
+2015-02-11 07-17-10 [out] Sleep 51089, age: 29145503, bufferDuration: 25034
+2015-02-11 07-17-10 [out] Chunk: 291455 291455  291455  291455  1       100000
+2015-02-11 07-17-20 [out] correction: 4, factor: 1.00362
+2015-02-11 07-17-20 [out] Sleep 50989, age: 39119549, bufferDuration: 25034
+2015-02-11 07-17-20 [out] Chunk: 391195 391195  391195  391195  1       100000
+2015-02-11 07-17-30 [out] correction: 4, factor: 1.00362
+2015-02-11 07-17-30 [out] Sleep 50889, age: 49094582, bufferDuration: 25034
+2015-02-11 07-17-30 [out] Chunk: 490945 490945  490945  490945  1       100000
+2015-02-11 07-17-40 [out] correction: 4, factor: 1.00362
+2015-02-11 07-17-40 [out] Sleep 50789, age: 19224557, bufferDuration: 25034
+2015-02-11 07-17-40 [out] Chunk: 192245 192245  192245  192245  1       100000
+2015-02-11 07-17-50 [out] correction: 4, factor: 1.00362
+2015-02-11 07-17-50 [out] Sleep 50689, age: 29199351, bufferDuration: 25034
+2015-02-11 07-17-50 [out] Chunk: 291993 291993  291993  291993  1       100000
+2015-02-11 07-18-00 [out] correction: 4, factor: 1.00362
+2015-02-11 07-18-00 [out] Sleep 50589, age: 39174527, bufferDuration: 25034
+2015-02-11 07-18-00 [out] Chunk: 391745 391745  391745  391745  1       100000
+2015-02-11 07-18-10 [out] correction: 4, factor: 1.00362
+2015-02-11 07-18-10 [out] Sleep 50489, age: 19242269, bufferDuration: 25034
+2015-02-11 07-18-10 [out] Chunk: 192422 192422  192422  192422  1       100000
+2015-02-11 07-18-20 [out] correction: 4, factor: 1.00362
+2015-02-11 07-18-20 [out] Sleep 50389, age: 29216343, bufferDuration: 25034
+2015-02-11 07-18-20 [out] Chunk: 292163 292163  292163  292163  1       100000
+^[[5~2015-02-11 07-18-30 [out] correction: 4, factor: 1.00362
+2015-02-11 07-18-30 [out] Sleep 50289, age: 39191836, bufferDuration: 25034
+2015-02-11 07-18-30 [out] Chunk: 391918 391918  391918  391918  1       100000
+
+
+

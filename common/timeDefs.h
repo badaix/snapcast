@@ -41,6 +41,12 @@ namespace chronos
 		Rep x = d.count(); 
 		return std::chrono::duration<Rep, Period>(x >= 0 ? x : -x);
 	}
+
+	template <class ToDuration, class Rep, class Period>
+	int64_t duration(std::chrono::duration<Rep, Period> d)
+	{
+		return std::chrono::duration_cast<ToDuration>(d).count();
+	}
 }
 
 
