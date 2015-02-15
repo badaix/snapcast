@@ -153,7 +153,10 @@ void Player::worker()
 			}
 		}
 		else
+		{
+			logO << "Failed to get chunk\n";
 			usleep(100*1000);
+		}
 	}
 }
 
