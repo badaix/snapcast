@@ -14,6 +14,7 @@
 #include "common/signalHandler.h"
 #include "controller.h"
 #include "alsaPlayer.h"
+#include "browseAvahi.h"
 
 
 using namespace std;
@@ -61,7 +62,7 @@ int main (int argc, char *argv[])
 	("help,h", "produce help message")
 	("version,v", "show version number")
 	("list,l", po::bool_switch(&listPcmDevices)->default_value(false), "list pcm devices")
-	("ip,i", po::value<string>(&ip)->default_value("localhost"), "server IP")
+	("ip,i", po::value<string>(&ip), "server IP")
 	("port,p", po::value<size_t>(&port)->default_value(98765), "server port")
 	("soundcard,s", po::value<string>(&soundcard)->default_value("default"), "index or name of the soundcard")
 	("daemon,d", po::bool_switch(&runAsDaemon)->default_value(false), "daemonize")
@@ -119,14 +120,30 @@ int main (int argc, char *argv[])
 		return 1;
 	}
 
+	if (!vm.count("ip"))
+	{
+		BrowseAvahi browseAvahi;
+		AvahiResult avahiResult;
+		while (!g_terminated)
+		{
+			if (browseAvahi.browse("_snapcast._tcp", AVAHI_PROTO_INET, avahiResult, 5000))
+			{
+				ip = avahiResult.ip_;
+				port = avahiResult.port_;
+				std::cout << ip << ":" << port << "\n";
+				break;
+			}
+		}
+	}
 
 	Controller controller;
-	controller.start(pcmDevice, ip, port, latency);
-
-	while(!g_terminated)
-		usleep(100*1000);
-
-	controller.stop();
+	if (!g_terminated)
+	{
+		controller.start(pcmDevice, ip, port, latency);
+		while(!g_terminated)
+			usleep(100*1000);
+		controller.stop();
+	}
 	daemonShutdown();
 
 	return 0;

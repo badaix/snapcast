@@ -17,25 +17,33 @@
   USA.
 ***/
 
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
+#include "browseAvahi.h"
+#include <unistd.h>
+#include <iostream>
 
-#include <stdio.h>
-#include <assert.h>
-#include <stdlib.h>
-#include <time.h>
-
-#include <avahi-client/client.h>
-#include <avahi-client/lookup.h>
-
-#include <avahi-common/simple-watch.h>
-#include <avahi-common/malloc.h>
-#include <avahi-common/error.h>
 
 static AvahiSimplePoll *simple_poll = NULL;
 
-static void resolve_callback(
+
+BrowseAvahi::BrowseAvahi() : client_(NULL), sb_(NULL)
+{
+}
+
+
+BrowseAvahi::~BrowseAvahi()
+{
+	if (sb_)
+        avahi_service_browser_free(sb_);
+
+    if (client_)
+        avahi_client_free(client_);
+
+    if (simple_poll)
+        avahi_simple_poll_free(simple_poll);
+}
+
+
+void BrowseAvahi::resolve_callback(
     AvahiServiceResolver *r,
     AVAHI_GCC_UNUSED AvahiIfIndex interface,
     AVAHI_GCC_UNUSED AvahiProtocol protocol,
@@ -50,6 +58,7 @@ static void resolve_callback(
     AvahiLookupResultFlags flags,
     AVAHI_GCC_UNUSED void* userdata) {
 
+    BrowseAvahi* browseAvahi = static_cast<BrowseAvahi*>(userdata);
     assert(r);
 
     /* Called whenever a service has been resolved successfully or timed out */
@@ -63,8 +72,14 @@ static void resolve_callback(
             char a[AVAHI_ADDRESS_STR_MAX], *t;
 
             fprintf(stderr, "Service '%s' of type '%s' in domain '%s':\n", name, type, domain);
-
+	
             avahi_address_snprint(a, sizeof(a), address);
+			browseAvahi->result_.host_ = host_name;
+			browseAvahi->result_.ip_ = a;
+			browseAvahi->result_.port_ = port;
+			browseAvahi->result_.proto_ = protocol;
+			browseAvahi->result_.valid_ = true;
+	
             t = avahi_string_list_to_string(txt);
             fprintf(stderr,
                     "\t%s:%u (%s)\n"
@@ -93,7 +108,8 @@ static void resolve_callback(
     avahi_service_resolver_free(r);
 }
 
-static void browse_callback(
+
+void BrowseAvahi::browse_callback(
     AvahiServiceBrowser *b,
     AvahiIfIndex interface,
     AvahiProtocol protocol,
@@ -104,7 +120,8 @@ static void browse_callback(
     AVAHI_GCC_UNUSED AvahiLookupResultFlags flags,
     void* userdata) {
 
-    AvahiClient *c = (AvahiClient*)userdata;
+//    AvahiClient* client = (AvahiClient*)userdata;
+    BrowseAvahi* browseAvahi = static_cast<BrowseAvahi*>(userdata);
     assert(b);
 
     /* Called whenever a new services becomes available on the LAN or is removed from the LAN */
@@ -124,8 +141,8 @@ static void browse_callback(
                the callback function is called the server will free
                the resolver for us. */
 
-            if (!(avahi_service_resolver_new(c, interface, protocol, name, type, domain, AVAHI_PROTO_UNSPEC, (AvahiLookupFlags)0, resolve_callback, c)))
-                fprintf(stderr, "Failed to resolve service '%s': %s\n", name, avahi_strerror(avahi_client_errno(c)));
+            if (!(avahi_service_resolver_new(browseAvahi->client_, interface, protocol, name, type, domain, AVAHI_PROTO_UNSPEC, (AvahiLookupFlags)0, resolve_callback, userdata)))
+                fprintf(stderr, "Failed to resolve service '%s': %s\n", name, avahi_strerror(avahi_client_errno(browseAvahi->client_)));
 
             break;
 
@@ -140,10 +157,12 @@ static void browse_callback(
     }
 }
 
-static void client_callback(AvahiClient *c, AvahiClientState state, AVAHI_GCC_UNUSED void * userdata) {
+
+void BrowseAvahi::client_callback(AvahiClient *c, AvahiClientState state, AVAHI_GCC_UNUSED void * userdata) {
     assert(c);
 
     /* Called whenever the client or server state changes */
+//    BrowseAvahi* browseAvahi = static_cast<BrowseAvahi*>(userdata);
 
     if (state == AVAHI_CLIENT_FAILURE) {
         fprintf(stderr, "Server connection failure: %s\n", avahi_strerror(avahi_client_errno(c)));
@@ -151,11 +170,10 @@ static void client_callback(AvahiClient *c, AvahiClientState state, AVAHI_GCC_UN
     }
 }
 
-int main(AVAHI_GCC_UNUSED int argc, AVAHI_GCC_UNUSED char*argv[]) {
-    AvahiClient *client = NULL;
-    AvahiServiceBrowser *sb = NULL;
+
+bool BrowseAvahi::browse(const std::string& serviceName, int proto, AvahiResult& result, int timeout)
+{
     int error;
-    int ret = 1;
 
     /* Allocate main loop object */
     if (!(simple_poll = avahi_simple_poll_new())) {
@@ -164,38 +182,51 @@ int main(AVAHI_GCC_UNUSED int argc, AVAHI_GCC_UNUSED char*argv[]) {
     }
 
     /* Allocate a new client */
-    client = avahi_client_new(avahi_simple_poll_get(simple_poll), (AvahiClientFlags)0, client_callback, NULL, &error);
+    client_ = avahi_client_new(avahi_simple_poll_get(simple_poll), (AvahiClientFlags)0, client_callback, this, &error);
 
     /* Check wether creating the client object succeeded */
-    if (!client) {
+    if (!client_) {
         fprintf(stderr, "Failed to create client: %s\n", avahi_strerror(error));
         goto fail;
     }
 
     /* Create the service browser */
-    if (!(sb = avahi_service_browser_new(client, AVAHI_IF_UNSPEC, AVAHI_PROTO_UNSPEC, "_snapcast._tcp", NULL, (AvahiLookupFlags)0, browse_callback, client))) {
-        fprintf(stderr, "Failed to create service browser: %s\n", avahi_strerror(avahi_client_errno(client)));
+    if (!(sb_ = avahi_service_browser_new(client_, AVAHI_IF_UNSPEC, proto, serviceName.c_str(), NULL, (AvahiLookupFlags)0, browse_callback, this))) {
+        fprintf(stderr, "Failed to create service browser: %s\n", avahi_strerror(avahi_client_errno(client_)));
         goto fail;
     }
 
-    /* Run the main loop */
-    avahi_simple_poll_loop(simple_poll);
-
-    ret = 0;
+	result_.valid_ = false;
+	while (timeout > 0)
+	{
+		avahi_simple_poll_iterate(simple_poll, 100);
+		timeout -= 100;
+		if (result_.valid_)
+		{
+			result = result_;
+			return true;
+		}			
+	}
 
 fail:
-
-    /* Cleanup things */
-    if (sb)
-        avahi_service_browser_free(sb);
-
-    if (client)
-        avahi_client_free(client);
-
-    if (simple_poll)
-        avahi_simple_poll_free(simple_poll);
-
-    return ret;
+	return false;
 }
+
+
+/*
+int main(AVAHI_GCC_UNUSED int argc, AVAHI_GCC_UNUSED char*argv[]) 
+{
+	std::string ip;
+	size_t port;
+	BrowseAvahi browseAvahi;
+	if (browseAvahi.browse("_snapcast._tcp", AVAHI_PROTO_INET, ip, port, 5000))
+		std::cout << ip << ":" << port << "\n";
+	
+    return 0;
+}
+*/
+
+
+
 
 

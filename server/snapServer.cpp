@@ -12,6 +12,7 @@
 #include "oggEncoder.h"
 #include "flacEncoder.h"
 #include "controlServer.h"
+#include "publishAvahi.h"
 
 
 bool g_terminated = false;
@@ -112,6 +113,12 @@ int main(int argc, char* argv[])
 		signal(SIGHUP, signal_handler);
 		signal(SIGTERM, signal_handler);
 		signal(SIGINT, signal_handler);
+
+		PublishAvahi publishAvahi("SnapCast");
+		std::vector<AvahiService> services;
+		services.push_back(AvahiService("_snapcast._tcp", port));
+		publishAvahi.publish(services);
+
 
 		while (!g_terminated)
 		{

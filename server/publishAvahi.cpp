@@ -17,12 +17,10 @@
   USA.
 ***/
 
-#include "publishAvahi.h"
-
-#include <time.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
+#include <unistd.h>
 
 #include <avahi-client/client.h>
 #include <avahi-client/publish.h>
@@ -33,16 +31,66 @@
 #include <avahi-common/error.h>
 #include <avahi-common/timeval.h>
 
-#include <boost/bind.hpp>
+#include "publishAvahi.h"
 
 
-PublishAvahi::PublishAvahi() : group(NULL), simple_poll(NULL), name(NULL)
+static AvahiEntryGroup *group;
+static AvahiSimplePoll *simple_poll;
+static char* name;
+
+PublishAvahi::PublishAvahi(const std::string& serviceName) : client(NULL), serviceName_(serviceName)
 {
+	group = NULL;
+	simple_poll = NULL;
+    name = avahi_strdup(serviceName_.c_str());
+}
+
+
+void PublishAvahi::publish(const std::vector<AvahiService>& services)
+{
+	this->services = services;
+
+    AvahiClient *client = NULL;
+    int error;
+
+    /* Allocate main loop object */
+    if (!(simple_poll = avahi_simple_poll_new())) 
+	{
+        fprintf(stderr, "Failed to create simple poll object.\n");
+    }
+
+    /* Allocate a new client */
+    client = avahi_client_new(avahi_simple_poll_get(simple_poll), AVAHI_CLIENT_IGNORE_USER_CONFIG, client_callback, this, &error);
+
+    /* Check wether creating the client object succeeded */
+    if (!client) 
+	{
+        fprintf(stderr, "Failed to create client: %s\n", avahi_strerror(error));
+    }
+
+	active_ = true;
+	pollThread_ = std::thread(&PublishAvahi::worker, this);
+}
+
+
+void PublishAvahi::worker() 
+{
+	while (active_ && (avahi_simple_poll_iterate(simple_poll, 100) == 0));
 }
 
 
 PublishAvahi::~PublishAvahi()
 {
+	active_ = false;
+	pollThread_.join();
+
+    if (client)
+        avahi_client_free(client);
+
+    if (simple_poll)
+        avahi_simple_poll_free(simple_poll);
+
+    avahi_free(name);
 }
 
 
@@ -70,7 +118,7 @@ void PublishAvahi::entry_group_callback(AvahiEntryGroup *g, AvahiEntryGroupState
             fprintf(stderr, "Service name collision, renaming service to '%s'\n", name);
 
             /* And recreate the services */
-            create_services(avahi_entry_group_get_client(g));
+            static_cast<PublishAvahi*>(userdata)->create_services(avahi_entry_group_get_client(g));
             break;
         }
 
@@ -98,7 +146,7 @@ void PublishAvahi::create_services(AvahiClient *c) {
 
     if (!group)
 	{
-        if (!(group = avahi_entry_group_new(c, (void(*)(AvahiEntryGroup*, AvahiEntryGroupState, void*))std::bind(&PublishAvahi::entry_group_callback, this), NULL))) {
+        if (!(group = avahi_entry_group_new(c, entry_group_callback, NULL))) {
             fprintf(stderr, "avahi_entry_group_new() failed: %s\n", avahi_strerror(avahi_client_errno(c)));
             goto fail;
         }
@@ -128,14 +176,18 @@ void PublishAvahi::create_services(AvahiClient *c) {
         }
 */
         /* Add the same service for BSD LPR */
-        if ((ret = avahi_entry_group_add_service(group, AVAHI_IF_UNSPEC, AVAHI_PROTO_UNSPEC, AvahiPublishFlags(0), name, "_snapcast._tcp", NULL, NULL, 515, NULL)) < 0) {
+		for (size_t n=0; n<services.size(); ++n)
+		{
+	        if ((ret = avahi_entry_group_add_service(group, AVAHI_IF_UNSPEC, services[n].proto_, AvahiPublishFlags(0), name, services[n].name_.c_str(), NULL, NULL, services[n].port_, NULL)) < 0) 
+			{
 
-            if (ret == AVAHI_ERR_COLLISION)
-                goto collision;
+    	        if (ret == AVAHI_ERR_COLLISION)
+    	            goto collision;
 
-            fprintf(stderr, "Failed to add _snapcast._tcp service: %s\n", avahi_strerror(ret));
-            goto fail;
-        }
+    	        fprintf(stderr, "Failed to add _snapcast._tcp service: %s\n", avahi_strerror(ret));
+    	        goto fail;
+    	    }
+		}
 
         /* Add an additional (hypothetic) subtype */
 /*        if ((ret = avahi_entry_group_add_service_subtype(group, AVAHI_IF_UNSPEC, AVAHI_PROTO_UNSPEC, AvahiPublishFlags(0), name, "_printer._tcp", NULL, "_magic._sub._printer._tcp") < 0)) {
@@ -171,6 +223,7 @@ fail:
     avahi_simple_poll_quit(simple_poll);
 }
 
+
 void PublishAvahi::client_callback(AvahiClient *c, AvahiClientState state, AVAHI_GCC_UNUSED void * userdata) {
     assert(c);
 
@@ -181,7 +234,7 @@ void PublishAvahi::client_callback(AvahiClient *c, AvahiClientState state, AVAHI
 
             /* The server has startup successfully and registered its host
              * name on the network, so it's time to create our services */
-            create_services(c);
+            static_cast<PublishAvahi*>(userdata)->create_services(c);
             break;
 
         case AVAHI_CLIENT_FAILURE:
@@ -214,58 +267,17 @@ void PublishAvahi::client_callback(AvahiClient *c, AvahiClientState state, AVAHI
     }
 }
 
-
-int main(AVAHI_GCC_UNUSED int argc, AVAHI_GCC_UNUSED char*argv[]) {
-	PublishAvahi publishAvahi;
-	
-    AvahiClient *client = NULL;
-    int error;
-    int ret = 1;
-    struct timeval tv;
-
-    /* Allocate main loop object */
-    if (!(simple_poll = avahi_simple_poll_new())) {
-        fprintf(stderr, "Failed to create simple poll object.\n");
-        goto fail;
-    }
-
-    name = avahi_strdup("MegaPrinter");
-
-    /* Allocate a new client */
-    client = avahi_client_new(avahi_simple_poll_get(simple_poll), AVAHI_CLIENT_IGNORE_USER_CONFIG, client_callback, NULL, &error);
-
-    /* Check wether creating the client object succeeded */
-    if (!client) {
-        fprintf(stderr, "Failed to create client: %s\n", avahi_strerror(error));
-        goto fail;
-    }
-
-    /* After 10s do some weird modification to the service */
-/*    avahi_simple_poll_get(simple_poll)->timeout_new(
-        avahi_simple_poll_get(simple_poll),
-        avahi_elapse_time(&tv, 1000*10, 0),
-        modify_callback,
-        client);
-*/
-    /* Run the main loop */
-    while (avahi_simple_poll_iterate(simple_poll, 100) == 0)
-		printf("1");
-
-    ret = 0;
-
-fail:
-
-    /* Cleanup things */
-
-    if (client)
-        avahi_client_free(client);
-
-    if (simple_poll)
-        avahi_simple_poll_free(simple_poll);
-
-    avahi_free(name);
-
-    return ret;
+/*
+int main(AVAHI_GCC_UNUSED int argc, AVAHI_GCC_UNUSED char*argv[]) 
+{
+	PublishAvahi publishAvahi("SnapCast");
+	std::vector<AvahiService> services;
+	services.push_back(AvahiService("_snapcast._tcp", 123));
+	publishAvahi.publish(services);
+	while (true)
+		usleep(100000);
+	return 0;
 }
+*/
 
 

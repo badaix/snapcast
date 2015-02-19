@@ -1,9 +1,9 @@
 VERSION = 0.1
 CC      = /usr/bin/g++
 CFLAGS  = -std=gnu++0x -Wall -Wno-unused-function -O3 -D_REENTRANT -DVERSION=\"$(VERSION)\" -I..
-LDFLAGS = -lrt -lpthread -lboost_system -lboost_program_options -lvorbis -lvorbisenc -logg -lFLAC
+LDFLAGS = -lrt -lpthread -lboost_system -lboost_program_options -lvorbis -lvorbisenc -logg -lFLAC -lavahi-client -lavahi-common
 
-OBJ = snapServer.o controlServer.o flacEncoder.o pcmEncoder.o oggEncoder.o serverSession.o ../common/log.o ../message/pcmChunk.o ../message/sampleFormat.o
+OBJ = snapServer.o controlServer.o flacEncoder.o pcmEncoder.o oggEncoder.o serverSession.o publishAvahi.o ../common/log.o ../message/pcmChunk.o ../message/sampleFormat.o
 BIN = snapserver
 
 all:	server
