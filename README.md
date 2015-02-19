@@ -12,7 +12,7 @@ Installation
 These installation instructions are valid for Debian derivates (e.g. Raspbian, Debian, Ubuntu, Mint).
 First install all packages needed to compile snapcast:
 
-    $ sudo apt-get install libboost-dev libboost-system-dev libboost-program-options-dev libasound2-dev libvorbis-dev libflac-dev alsamixer
+    $ sudo apt-get install libboost-dev libboost-system-dev libboost-program-options-dev libasound2-dev libvorbis-dev libflac-dev alsamixer libavahi-client-dev
 
 Build snapcast by cd'ing into the snapcast src-root directory
 
@@ -31,7 +31,7 @@ Test
 ----
 You can test your installation by copying random data into the server's fifo file
 
-    $ cat /dev/urandom > /tmp/snapfifo
+    $ sudo cat /dev/urandom > /tmp/snapfifo
 
 All connected clients should play random noise now. You might raise the client's volume with "alsamixer".
 
