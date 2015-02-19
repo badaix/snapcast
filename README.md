@@ -12,7 +12,7 @@ Installation
 These installation instructions are valid for Debian derivates (e.g. Raspbian, Debian, Ubuntu, Mint).
 First install all packages needed to compile snapcast:
 
-    $ sudo apt-get install libboost-dev libboost-system-dev libboost-program-options-dev libasound2-dev libvorbis-dev libflac-dev alsamixer libavahi-client-dev
+    $ sudo apt-get install libboost-dev libboost-system-dev libboost-program-options-dev libasound2-dev libvorbis-dev libflac-dev alsamixer libavahi-client-dev avahi-daemon
 
 Build snapcast by cd'ing into the snapcast src-root directory
 
