@@ -12,8 +12,15 @@ The snapserver reads PCM chunks of 50ms duration from the pipe '/tmp/snapfifo'. 
 * PCM: lossless uncompressed
 * FLAC: lossless compressed [default]
 * Vorbis: lossy compression
-The encoded chunk is now sent via TCP to the clients.
-Each client does conitnuos time synchronization with the server, so that the client is always aware of the local server time. Every received chunk is first decoded and added to the client's chunk-buffer. Knowing the server's time the chunk is played out using alsa at the appropriate time. Deviations are corrected by skipping whole chunks, playing silence or playing faster/slower. Typically the deviation is < 1ms.
+
+The encoded chunk is sent via a TCP connection to the clients.
+Each client does continuos time synchronization with the server, so that the client is always aware of the local server time.  
+Every received chunk is first decoded and added to the client's chunk-buffer. Knowing the server's time, the chunk is played out using alsa at the appropriate time. Time deviations are corrected by 
+* skipping parts or whole chunks
+* playing silence
+* playing faster/slower
+
+Typically the deviation is < 1ms.
 
 Installation
 ------------
