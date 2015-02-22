@@ -6,6 +6,14 @@ Synchronous audio player
 Snapcast is a multi room client-server audio player, where all clients are time synchronized with the server to play perfectly synced audio.
 The server's audio input is a named pipe `/tmp/snapfifo`. All data that is fed into this file, will be send to the connected clients. One of the most generic ways to use snapcast is in conjunction with the music player daemon (mpd), which can by configured to use a named pipe as audio output.
 
+How does is work
+----------------
+The snapserver reads PCM chunks of 50ms duration from the pipe '/tmp/snapfifo'. The chunk is encoded and tagged with the local time
+* PCM: lossless uncompressed
+* FLAC: lossless compressed [default]
+* Vorbis: lossy compression
+The encoded chunk is now sent via TCP to the clients.
+Each client does conitnuos time synchronization with the server, so that the client is always aware of the local server time. Every received chunk is first decoded and added to the client's chunk-buffer. Knowing the server's time the chunk is played out using alsa at the appropriate time. Deviations are corrected by skipping whole chunks, playing silence or playing faster/slower. Typically the deviation is < 1ms.
 
 Installation
 ------------
