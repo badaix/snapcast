@@ -18,8 +18,13 @@
 ***/
 
 #include "browseAvahi.h"
+#include <stdio.h>
+#include <assert.h>
+#include <stdlib.h>
+#include <time.h>
 #include <unistd.h>
 #include <iostream>
+#include "common/log.h"
 
 
 static AvahiSimplePoll *simple_poll = NULL;
@@ -65,13 +70,13 @@ void BrowseAvahi::resolve_callback(
 
     switch (event) {
         case AVAHI_RESOLVER_FAILURE:
-            fprintf(stderr, "(Resolver) Failed to resolve service '%s' of type '%s' in domain '%s': %s\n", name, type, domain, avahi_strerror(avahi_client_errno(avahi_service_resolver_get_client(r))));
+            logE << "(Resolver) Failed to resolve service '" << name << "' of type '" << type << "' in domain '" << domain << "': " << avahi_strerror(avahi_client_errno(avahi_service_resolver_get_client(r))) << "\n";
             break;
 
         case AVAHI_RESOLVER_FOUND: {
             char a[AVAHI_ADDRESS_STR_MAX], *t;
 
-            fprintf(stderr, "Service '%s' of type '%s' in domain '%s':\n", name, type, domain);
+            logO << "Service '" << name << "' of type '" << type << "' in domain '" << domain << "':\n";
 	
             avahi_address_snprint(a, sizeof(a), address);
 			browseAvahi->result_.host_ = host_name;
@@ -81,26 +86,16 @@ void BrowseAvahi::resolve_callback(
 			browseAvahi->result_.valid_ = true;
 	
             t = avahi_string_list_to_string(txt);
-            fprintf(stderr,
-                    "\t%s:%u (%s)\n"
-                    "\tTXT=%s\n"
-					"\tProto=%i\n"
-                    "\tcookie is %u\n"
-                    "\tis_local: %i\n"
-                    "\tour_own: %i\n"
-                    "\twide_area: %i\n"
-                    "\tmulticast: %i\n"
-                    "\tcached: %i\n",
-                    host_name, port, a,
-                    t,
-					(int)protocol,					
-                    avahi_string_list_get_service_cookie(txt),
-                    !!(flags & AVAHI_LOOKUP_RESULT_LOCAL),
-                    !!(flags & AVAHI_LOOKUP_RESULT_OUR_OWN),
-                    !!(flags & AVAHI_LOOKUP_RESULT_WIDE_AREA),
-                    !!(flags & AVAHI_LOOKUP_RESULT_MULTICAST),
-                    !!(flags & AVAHI_LOOKUP_RESULT_CACHED));
-
+            logO
+				<< "\t" << host_name << ":" << port << "(" << a << ")\n"
+				<< "\tTXT=" << t << "\n"
+				<< "\tProto=" << (int)protocol << "\n"
+				<< "\tcookie is " << avahi_string_list_get_service_cookie(txt) << "\n"
+				<< "\tis_local: " << !!(flags & AVAHI_LOOKUP_RESULT_LOCAL) << "\n"
+				<< "\tour_own: " << !!(flags & AVAHI_LOOKUP_RESULT_OUR_OWN) << "\n"
+				<< "\twide_area: " << !!(flags & AVAHI_LOOKUP_RESULT_WIDE_AREA) << "\n"
+				<< "\tmulticast: " << !!(flags & AVAHI_LOOKUP_RESULT_MULTICAST) << "\n"
+				<< "\tcached: " << !!(flags & AVAHI_LOOKUP_RESULT_CACHED) << "\n";
             avahi_free(t);
         }
     }
@@ -129,12 +124,12 @@ void BrowseAvahi::browse_callback(
     switch (event) {
         case AVAHI_BROWSER_FAILURE:
 
-            fprintf(stderr, "(Browser) %s\n", avahi_strerror(avahi_client_errno(avahi_service_browser_get_client(b))));
+            logE << "(Browser) " << avahi_strerror(avahi_client_errno(avahi_service_browser_get_client(b))) << "\n";
             avahi_simple_poll_quit(simple_poll);
             return;
 
         case AVAHI_BROWSER_NEW:
-            fprintf(stderr, "(Browser) NEW: service '%s' of type '%s' in domain '%s'\n", name, type, domain);
+            logO << "(Browser) NEW: service '" << name << "' of type '" << type << "' in domain '" << domain << "'\n";
 
             /* We ignore the returned resolver object. In the callback
                function we free it. If the server is terminated before
@@ -142,17 +137,17 @@ void BrowseAvahi::browse_callback(
                the resolver for us. */
 
             if (!(avahi_service_resolver_new(browseAvahi->client_, interface, protocol, name, type, domain, AVAHI_PROTO_UNSPEC, (AvahiLookupFlags)0, resolve_callback, userdata)))
-                fprintf(stderr, "Failed to resolve service '%s': %s\n", name, avahi_strerror(avahi_client_errno(browseAvahi->client_)));
+                logE << "Failed to resolve service '" << name << "': " << avahi_strerror(avahi_client_errno(browseAvahi->client_)) << "\n";
 
             break;
 
         case AVAHI_BROWSER_REMOVE:
-            fprintf(stderr, "(Browser) REMOVE: service '%s' of type '%s' in domain '%s'\n", name, type, domain);
+            logO << "(Browser) REMOVE: service '" << name << "' of type '" << type << "' in domain '" << domain << "'\n";
             break;
 
         case AVAHI_BROWSER_ALL_FOR_NOW:
         case AVAHI_BROWSER_CACHE_EXHAUSTED:
-            fprintf(stderr, "(Browser) %s\n", event == AVAHI_BROWSER_CACHE_EXHAUSTED ? "CACHE_EXHAUSTED" : "ALL_FOR_NOW");
+            logO << "(Browser) " << (event == AVAHI_BROWSER_CACHE_EXHAUSTED ? "CACHE_EXHAUSTED" : "ALL_FOR_NOW") << "\n";
             break;
     }
 }
@@ -165,7 +160,7 @@ void BrowseAvahi::client_callback(AvahiClient *c, AvahiClientState state, AVAHI_
 //    BrowseAvahi* browseAvahi = static_cast<BrowseAvahi*>(userdata);
 
     if (state == AVAHI_CLIENT_FAILURE) {
-        fprintf(stderr, "Server connection failure: %s\n", avahi_strerror(avahi_client_errno(c)));
+        logE << "Server connection failure: " << avahi_strerror(avahi_client_errno(c)) << "\n";
         avahi_simple_poll_quit(simple_poll);
     }
 }
@@ -177,7 +172,7 @@ bool BrowseAvahi::browse(const std::string& serviceName, int proto, AvahiResult&
 
     /* Allocate main loop object */
     if (!(simple_poll = avahi_simple_poll_new())) {
-        fprintf(stderr, "Failed to create simple poll object.\n");
+        logE << "Failed to create simple poll object.\n";
         goto fail;
     }
 
@@ -186,13 +181,13 @@ bool BrowseAvahi::browse(const std::string& serviceName, int proto, AvahiResult&
 
     /* Check wether creating the client object succeeded */
     if (!client_) {
-        fprintf(stderr, "Failed to create client: %s\n", avahi_strerror(error));
+        logE << "Failed to create client: " << avahi_strerror(error) << "\n";
         goto fail;
     }
 
     /* Create the service browser */
-    if (!(sb_ = avahi_service_browser_new(client_, AVAHI_IF_UNSPEC, proto, serviceName.c_str(), NULL, (AvahiLookupFlags)0, browse_callback, this))) {
-        fprintf(stderr, "Failed to create service browser: %s\n", avahi_strerror(avahi_client_errno(client_)));
+    if (!(sb_ = avahi_service_browser_new(client_, AVAHI_IF_UNSPEC, proto, serviceName.c_str(), NULL, (AvahiLookupFlags)0, browse_callback, this))) 	{
+        logE << "Failed to create service browser: " << avahi_strerror(avahi_client_errno(client_)) << "\n";
         goto fail;
     }
 
@@ -211,21 +206,6 @@ bool BrowseAvahi::browse(const std::string& serviceName, int proto, AvahiResult&
 fail:
 	return false;
 }
-
-
-/*
-int main(AVAHI_GCC_UNUSED int argc, AVAHI_GCC_UNUSED char*argv[]) 
-{
-	std::string ip;
-	size_t port;
-	BrowseAvahi browseAvahi;
-	if (browseAvahi.browse("_snapcast._tcp", AVAHI_PROTO_INET, ip, port, 5000))
-		std::cout << ip << ":" << port << "\n";
-	
-    return 0;
-}
-*/
-
 
 
 

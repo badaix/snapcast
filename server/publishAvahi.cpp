@@ -17,21 +17,9 @@
   USA.
 ***/
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <assert.h>
 #include <unistd.h>
-
-#include <avahi-client/client.h>
-#include <avahi-client/publish.h>
-
-#include <avahi-common/alternative.h>
-#include <avahi-common/simple-watch.h>
-#include <avahi-common/malloc.h>
-#include <avahi-common/error.h>
-#include <avahi-common/timeval.h>
-
 #include "publishAvahi.h"
+#include "common/log.h"
 
 
 static AvahiEntryGroup *group;
@@ -56,7 +44,7 @@ void PublishAvahi::publish(const std::vector<AvahiService>& services)
     /* Allocate main loop object */
     if (!(simple_poll = avahi_simple_poll_new())) 
 	{
-        fprintf(stderr, "Failed to create simple poll object.\n");
+        logE << "Failed to create simple poll object.\n";
     }
 
     /* Allocate a new client */
@@ -65,7 +53,7 @@ void PublishAvahi::publish(const std::vector<AvahiService>& services)
     /* Check wether creating the client object succeeded */
     if (!client) 
 	{
-        fprintf(stderr, "Failed to create client: %s\n", avahi_strerror(error));
+        logE << "Failed to create client: " << avahi_strerror(error) << "\n";
     }
 
 	active_ = true;
@@ -103,7 +91,7 @@ void PublishAvahi::entry_group_callback(AvahiEntryGroup *g, AvahiEntryGroupState
     switch (state) {
         case AVAHI_ENTRY_GROUP_ESTABLISHED :
             /* The entry group has been established successfully */
-            fprintf(stderr, "Service '%s' successfully established.\n", name);
+            logO << "Service '" << name << "' successfully established.\n";
             break;
 
         case AVAHI_ENTRY_GROUP_COLLISION : {
@@ -115,7 +103,7 @@ void PublishAvahi::entry_group_callback(AvahiEntryGroup *g, AvahiEntryGroupState
             avahi_free(name);
             name = n;
 
-            fprintf(stderr, "Service name collision, renaming service to '%s'\n", name);
+            logO << "Service name collision, renaming service to '" << name << "'\n";
 
             /* And recreate the services */
             static_cast<PublishAvahi*>(userdata)->create_services(avahi_entry_group_get_client(g));
@@ -124,7 +112,7 @@ void PublishAvahi::entry_group_callback(AvahiEntryGroup *g, AvahiEntryGroupState
 
         case AVAHI_ENTRY_GROUP_FAILURE :
 
-            fprintf(stderr, "Entry group failure: %s\n", avahi_strerror(avahi_client_errno(avahi_entry_group_get_client(g))));
+            logE << "Entry group failure: " << avahi_strerror(avahi_client_errno(avahi_entry_group_get_client(g))) << "\n";
 
             /* Some kind of failure happened while we were registering our services */
             avahi_simple_poll_quit(simple_poll);
@@ -147,7 +135,7 @@ void PublishAvahi::create_services(AvahiClient *c) {
     if (!group)
 	{
         if (!(group = avahi_entry_group_new(c, entry_group_callback, NULL))) {
-            fprintf(stderr, "avahi_entry_group_new() failed: %s\n", avahi_strerror(avahi_client_errno(c)));
+            logE << "avahi_entry_group_new() failed: " << avahi_strerror(avahi_client_errno(c)) << "\n";
             goto fail;
         }
 	}
@@ -155,7 +143,7 @@ void PublishAvahi::create_services(AvahiClient *c) {
      * because it was reset previously, add our entries.  */
 
     if (avahi_entry_group_is_empty(group)) {
-        fprintf(stderr, "Adding service '%s'\n", name);
+        logO << "Adding service '" << name << "'\n";
 
         /* Create some random TXT data */
         snprintf(r, sizeof(r), "random=%i", rand());
@@ -184,7 +172,7 @@ void PublishAvahi::create_services(AvahiClient *c) {
     	        if (ret == AVAHI_ERR_COLLISION)
     	            goto collision;
 
-    	        fprintf(stderr, "Failed to add _snapcast._tcp service: %s\n", avahi_strerror(ret));
+    	        logE << "Failed to add " << services[n].name_ << " service: " << avahi_strerror(ret) << "\n";
     	        goto fail;
     	    }
 		}
@@ -197,7 +185,7 @@ void PublishAvahi::create_services(AvahiClient *c) {
 */
         /* Tell the server to register the service */
         if ((ret = avahi_entry_group_commit(group)) < 0) {
-            fprintf(stderr, "Failed to commit entry group: %s\n", avahi_strerror(ret));
+            logE << "Failed to commit entry group: " << avahi_strerror(ret) << "\n";
             goto fail;
         }
     }
@@ -212,7 +200,7 @@ collision:
     avahi_free(name);
     name = n;
 
-    fprintf(stderr, "Service name collision, renaming service to '%s'\n", name);
+    logO << "Service name collision, renaming service to '" << name << "'\n";
 
     avahi_entry_group_reset(group);
 
@@ -239,7 +227,7 @@ void PublishAvahi::client_callback(AvahiClient *c, AvahiClientState state, AVAHI
 
         case AVAHI_CLIENT_FAILURE:
 
-            fprintf(stderr, "Client failure: %s\n", avahi_strerror(avahi_client_errno(c)));
+            logE << "Client failure: " << avahi_strerror(avahi_client_errno(c)) << "\n";
             avahi_simple_poll_quit(simple_poll);
 
             break;
@@ -267,17 +255,5 @@ void PublishAvahi::client_callback(AvahiClient *c, AvahiClientState state, AVAHI
     }
 }
 
-/*
-int main(AVAHI_GCC_UNUSED int argc, AVAHI_GCC_UNUSED char*argv[]) 
-{
-	PublishAvahi publishAvahi("SnapCast");
-	std::vector<AvahiService> services;
-	services.push_back(AvahiService("_snapcast._tcp", 123));
-	publishAvahi.publish(services);
-	while (true)
-		usleep(100000);
-	return 0;
-}
-*/
 
 

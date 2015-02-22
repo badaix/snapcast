@@ -1,4 +1,11 @@
-VERSION = 0.1
+VERSION = 0.2
+TARGET  = snapclient
+ifdef DESTDIR
+# dh_auto_install (Debian) sets this variable
+  TARGET_DIR = $(DESTDIR)/usr
+else
+  TARGET_DIR ?= /usr/local
+endif
 CC      = /usr/bin/g++
 CFLAGS  = -std=gnu++0x -static-libgcc -static-libstdc++ -Wall -Wno-unused-function -O3 -D_REENTRANT -DVERSION=\"$(VERSION)\" -I..
 LDFLAGS = -lrt -lpthread -lboost_system -lboost_program_options -lasound -logg -lvorbis -lvorbisenc -lFLAC -lavahi-client -lavahi-common
@@ -6,9 +13,9 @@ LDFLAGS = -lrt -lpthread -lboost_system -lboost_program_options -lasound -logg -
 OBJ = snapClient.o stream.o alsaPlayer.o clientConnection.o timeProvider.o oggDecoder.o pcmDecoder.o flacDecoder.o controller.o browseAvahi.o ../message/pcmChunk.o ../common/log.o ../message/sampleFormat.o
 BIN = snapclient
 
-all:	client
+all:	$(TARGET)
 
-client: $(OBJ)
+$(TARGET): $(OBJ)
 	$(CC) $(CFLAGS) -o $(BIN) $(OBJ) $(LDFLAGS)
 	strip $(BIN)
 	
@@ -18,7 +25,8 @@ client: $(OBJ)
 clean:
 	rm -rf $(BIN) $(OBJ) *~
 
-install: uninstall
+install: $(TARGET) uninstall
+#	install -D -g root -o root $(TARGET) $(TARGET_DIR)/sbin/$(TARGET)
 	@cp ./snapclient /usr/sbin/snapclient
 	cp ../init.d/snapclient /etc/init.d/snapclient; \
 	update-rc.d snapclient defaults; \
