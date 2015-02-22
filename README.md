@@ -87,3 +87,7 @@ To test your mpd installation, you can add a radio station by
     $ sudo su
     $ echo "http://1live.akacast.akamaistream.net/7/706/119434/v1/gnl.akacast.akamaistream.net/1live" > /var/lib/mpd/playlists/einslive.m3u
     
+Roadmap
+-------
+* Support multiple streams ("Zones")
+* Remote control: change client latency, volume, zone
