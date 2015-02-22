@@ -8,12 +8,12 @@ The server's audio input is a named pipe `/tmp/snapfifo`. All data that is fed i
 
 How does is work
 ----------------
-The snapserver reads PCM chunks of 50ms duration from the pipe '/tmp/snapfifo'. The chunk is encoded and tagged with the local time
+The snapserver reads PCM chunks of 50ms duration from the pipe `/tmp/snapfifo`. The chunk is encoded and tagged with the local time
 * PCM: lossless uncompressed
 * FLAC: lossless compressed [default]
 * Vorbis: lossy compression
 
-The encoded chunk is sent via a TCP connection to the clients.
+The encoded chunk is sent via a TCP connection to the snapclients.
 Each client does continuos time synchronization with the server, so that the client is always aware of the local server time.  
 Every received chunk is first decoded and added to the client's chunk-buffer. Knowing the server's time, the chunk is played out using alsa at the appropriate time. Time deviations are corrected by 
 * skipping parts or whole chunks
