@@ -243,7 +243,7 @@ bool Stream::getPlayerChunk(void* outputBuffer, const cs::usec& outputBufferDacT
 			{
 				logO << "sleep > bufferDuration/2: " << cs::duration<cs::msec>(sleep_) << " > " << cs::duration<cs::msec>(bufferDuration)/2 << "\n";
 				// We're late: discard oldest chunks
-				while (sleep_ > chunk_->duration<cs::usec>())
+				do
 				{
 					logO << "sleep > chunkDuration: " << cs::duration<cs::msec>(sleep_) << " > " << chunk_->duration<cs::msec>().count() << ", chunks: " << chunks_.size() << ", out: " << cs::duration<cs::msec>(outputBufferDacTime) << ", needed: " << cs::duration<cs::msec>(bufferDuration) << "\n";
 					sleep_ = std::chrono::duration_cast<cs::usec>(TimeProvider::serverNow() - chunk_->start() - bufferMs_ + outputBufferDacTime);
@@ -255,6 +255,7 @@ bool Stream::getPlayerChunk(void* outputBuffer, const cs::usec& outputBufferDacT
 						return false;
 					}
 				}
+				while (sleep_ > chunk_->duration<cs::usec>());
 			}
 
 			// out of sync, can be corrected by playing faster/slower
