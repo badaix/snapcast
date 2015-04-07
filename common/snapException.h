@@ -33,6 +33,12 @@ public:
 		std::strcpy(text_, text);
 	}
 
+	SnapException(const std::string& text) 
+	{
+		text_ = new char[text.size()]; 
+		std::strcpy(text_, text.c_str());
+	}
+
 	SnapException(const SnapException& e) 
 	{
 		text_ = new char[std::strlen(e.text_)]; 
