@@ -38,8 +38,9 @@ public:
 	static std::vector<PcmDevice> pcm_list(void);
 
 private:
+        snd_pcm_t* initAlsa();
+        void uninitAlsa(snd_pcm_t* handle);
 	void worker();
-	snd_pcm_t* pcm_handle_;
 	snd_pcm_uframes_t frames_;
 	char *buff_;
 	std::atomic<bool> active_;
