@@ -84,6 +84,7 @@ void BrowseAvahi::resolve_callback(
 			browseAvahi->result_.port_ = port;
 			browseAvahi->result_.proto_ = protocol;
 			browseAvahi->result_.valid_ = true;
+			browseAvahi->result_.serviceName_ = name;
 	
             t = avahi_string_list_to_string(txt);
             logO

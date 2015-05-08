@@ -64,7 +64,8 @@ int main (int argc, char *argv[])
 	string ip;
 //	int bufferMs;
 	size_t port;
-	size_t latency;
+	double latency;
+	string serviceName;
 	bool runAsDaemon;
 	bool listPcmDevices;
 
@@ -77,7 +78,8 @@ int main (int argc, char *argv[])
 	("port,p", po::value<size_t>(&port)->default_value(98765), "server port")
 	("soundcard,s", po::value<string>(&soundcard)->default_value("default"), "index or name of the soundcard")
 	("daemon,d", po::bool_switch(&runAsDaemon)->default_value(false), "daemonize")
-	("latency", po::value<size_t>(&latency)->default_value(0), "latency")
+	("latency", po::value<double>(&latency)->default_value(0), "latency")
+	("serviceName,n", po::value<string>(&serviceName)->default_value("SnapCast"), "Zone/ServiceName")
 	;
 
 	po::variables_map vm;
@@ -139,10 +141,18 @@ int main (int argc, char *argv[])
 		{
 			if (browseAvahi.browse("_snapcast._tcp", AVAHI_PROTO_INET, avahiResult, 5000))
 			{
-				ip = avahiResult.ip_;
-				port = avahiResult.port_;
-				std::cout << ip << ":" << port << "\n";
-				break;
+				if (avahiResult.serviceName_.compare(serviceName) == 0)
+				{
+					ip = avahiResult.ip_;
+					port = avahiResult.port_;
+					std::cout << ip << ":" << port << "\n";
+					break;
+				}
+				else
+				{
+					std::cout << "Found Snapcast service but Name/Zone wrong\n";
+					usleep(1000*1000);
+				}
 			}
 		}
 	}

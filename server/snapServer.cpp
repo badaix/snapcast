@@ -54,6 +54,7 @@ int main(int argc, char* argv[])
 		string codec;
 		bool runAsDaemon;
 		int32_t bufferMs;
+		string serviceName;
 
 		po::options_description desc("Allowed options");
 		desc.add_options()
@@ -65,6 +66,7 @@ int main(int argc, char* argv[])
 		("fifo,f", po::value<string>(&fifoName)->default_value("/tmp/snapfifo"), "name of the input fifo file")
 		("daemon,d", po::bool_switch(&runAsDaemon)->default_value(false), "daemonize")
 		("buffer,b", po::value<int32_t>(&bufferMs)->default_value(1000), "buffer [ms]")
+		("servicename,n", po::value<string>(&serviceName)->default_value("SnapCast"), "Zone/ServiceName")
 		;
 
 		po::variables_map vm;
@@ -133,7 +135,7 @@ int main(int argc, char* argv[])
 		signal(SIGTERM, signal_handler);
 		signal(SIGINT, signal_handler);
 
-		PublishAvahi publishAvahi("SnapCast");
+		PublishAvahi publishAvahi(serviceName);
 		std::vector<AvahiService> services;
 		services.push_back(AvahiService("_snapcast._tcp", port));
 		publishAvahi.publish(services);

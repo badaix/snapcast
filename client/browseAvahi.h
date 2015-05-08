@@ -33,6 +33,7 @@ struct AvahiResult
 	std::string host_;
 	size_t port_;
 	bool valid_;
+	std::string serviceName_;
 };
 
 
