@@ -34,12 +34,13 @@ ControlServer::ControlServer(unsigned short port) : port_(port), headerChunk_(NU
 
 void ControlServer::send(shared_ptr<msg::BaseMessage> message)
 {
-	std::unique_lock<std::mutex> mlock(mutex);
+	std::unique_lock<std::mutex> mlock(mutex_);
 	for (auto it = sessions_.begin(); it != sessions_.end(); )
 	{
 		if (!(*it)->active())
 		{
 			logO << "Session inactive. Removing\n";
+			// don't block: remove ServerSession in a thread 
 			auto func = [](shared_ptr<ServerSession> s)->void{s->stop();};
 			std::thread t(func, *it);
 			t.detach();
@@ -74,16 +75,19 @@ void ControlServer::onMessageReceived(ServerSession* connection, const msg::Base
 		}
 		else if (requestMsg.request == kServerSettings)
 		{
+			std::unique_lock<std::mutex> mlock(mutex_);
 			serverSettings_->refersTo = requestMsg.id;
 			connection->send(serverSettings_);
 		}
 		else if (requestMsg.request == kSampleFormat)
 		{
+			std::unique_lock<std::mutex> mlock(mutex_);
 			sampleFormat_->refersTo = requestMsg.id;
 			connection->send(sampleFormat_);
 		}
 		else if (requestMsg.request == kHeader)
 		{
+			std::unique_lock<std::mutex> mlock(mutex_);
 			headerChunk_->refersTo = requestMsg.id;
 			connection->send(headerChunk_);
 		}
@@ -118,7 +122,7 @@ void ControlServer::acceptor()
 		logS(kLogNotice) << "ControlServer::NewConnection: " << sock->remote_endpoint().address().to_string() << endl;
 		ServerSession* session = new ServerSession(this, sock);
 		{
-			std::unique_lock<std::mutex> mlock(mutex);
+			std::unique_lock<std::mutex> mlock(mutex_);
 			session->start();
 			sessions_.insert(shared_ptr<ServerSession>(session));
 		}

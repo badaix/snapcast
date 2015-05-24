@@ -134,7 +134,7 @@ void PublishAvahi::create_services(AvahiClient *c) {
 
     if (!group)
 	{
-        if (!(group = avahi_entry_group_new(c, entry_group_callback, NULL))) {
+        if (!(group = avahi_entry_group_new(c, entry_group_callback, this))) {
             logE << "avahi_entry_group_new() failed: " << avahi_strerror(avahi_client_errno(c)) << "\n";
             goto fail;
         }

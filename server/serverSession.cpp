@@ -16,10 +16,10 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
-#include "serverSession.h"
 #include <boost/lexical_cast.hpp>
 #include <iostream>
 #include <mutex>
+#include "serverSession.h"
 #include "common/log.h"
 
 using namespace std;
@@ -69,7 +69,7 @@ void ServerSession::stop()
 		}
 		if (writerThread_)
 		{
-			logD << "joining readerThread\n";
+			logD << "joining writerThread\n";
 			writerThread_->join();
 			delete writerThread_;
 		}
@@ -155,7 +155,7 @@ void ServerSession::reader()
 	}
 	catch (const std::exception& e)
 	{
-		logS(kLogErr) << "Exception: " << e.what() << ", trying to reconnect" << endl;
+		logS(kLogErr) << "Exception in ServerSession::reader(): " << e.what() << endl;
 	}
 	active_ = false;
 }
@@ -176,9 +176,9 @@ void ServerSession::writer()
 				send(message.get());
 		}
 	}
-	catch (std::exception& e)
+	catch (const std::exception& e)
 	{
-		logE << "Exception in thread: " << e.what() << "\n";
+		logS(kLogErr) << "Exception in ServerSession::writer(): " << e.what() << endl;
 	}
 	active_ = false;
 }
