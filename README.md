@@ -86,6 +86,13 @@ To test your mpd installation, you can add a radio station by
 
     $ sudo su
     $ echo "http://1live.akacast.akamaistream.net/7/706/119434/v1/gnl.akacast.akamaistream.net/1live" > /var/lib/mpd/playlists/einslive.m3u
+
+PulseAudio setup
+----------------
+On the server you could create a sink to route sound of your applications to the FIFO:
+```
+pacmd load-module module-pipe-sink file=/tmp/snapfifo
+```
     
 Roadmap
 -------
