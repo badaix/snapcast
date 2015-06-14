@@ -8,9 +8,9 @@ else
 endif
 CC      = /usr/bin/g++
 CFLAGS  = -std=gnu++0x -static-libgcc -static-libstdc++ -Wall -Wno-unused-function -O3 -D_REENTRANT -DVERSION=\"$(VERSION)\" -I..
-LDFLAGS = -lrt -lpthread -lboost_system -lboost_program_options -lasound -logg -lvorbis -lvorbisenc -lFLAC -lavahi-client -lavahi-common
+LDFLAGS = -lrt -lpthread -lboost_system -lboost_program_options -lasound -logg -lopus -lvorbis -lvorbisenc -lFLAC -lavahi-client -lavahi-common
 
-OBJ = snapClient.o stream.o alsaPlayer.o clientConnection.o timeProvider.o oggDecoder.o pcmDecoder.o flacDecoder.o controller.o browseAvahi.o ../message/pcmChunk.o ../common/log.o ../message/sampleFormat.o
+OBJ = snapClient.o stream.o alsaPlayer.o clientConnection.o timeProvider.o opusDecoder.o oggDecoder.o pcmDecoder.o flacDecoder.o controller.o browseAvahi.o ../message/pcmChunk.o ../common/log.o ../message/sampleFormat.o
 BIN = snapclient
 
 all:	$(TARGET)

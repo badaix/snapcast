@@ -22,6 +22,7 @@
 #include <memory>
 #include <unistd.h>
 #include "oggDecoder.h"
+#include "opusDecoder.h"
 #include "pcmDecoder.h"
 #include "flacDecoder.h"
 #include "alsaPlayer.h"
@@ -116,6 +117,8 @@ void Controller::worker()
 			logO << "Codec: " << headerChunk->codec << "\n";
 			if (headerChunk->codec == "ogg")
 				decoder_ = new OggDecoder();
+			else if (headerChunk->codec == "opus")
+				decoder_ = new OpusDecoderWrapper();
 			else if (headerChunk->codec == "pcm")
 				decoder_ = new PcmDecoder();
 			else if (headerChunk->codec == "flac")

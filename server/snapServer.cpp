@@ -29,6 +29,7 @@
 #include "message/message.h"
 #include "pcmEncoder.h"
 #include "oggEncoder.h"
+#include "opusEncoder.h"
 #include "flacEncoder.h"
 #include "controlServer.h"
 #include "publishAvahi.h"
@@ -60,8 +61,8 @@ int main(int argc, char* argv[])
 		("help,h", "produce help message")
 		("version,v", "show version number")
 		("port,p", po::value<size_t>(&port)->default_value(98765), "server port")
-		("sampleformat,s", po::value<string>(&sampleFormat)->default_value("44100:16:2"), "sample format")
-		("codec,c", po::value<string>(&codec)->default_value("flac"), "transport codec [flac|ogg|pcm]")
+		("sampleformat,s", po::value<string>(&sampleFormat)->default_value("48000:16:2"), "sample format")
+		("codec,c", po::value<string>(&codec)->default_value("flac"), "transport codec [flac|ogg|opus|pcm]")
 		("fifo,f", po::value<string>(&fifoName)->default_value("/tmp/snapfifo"), "name of the input fifo file")
 		("daemon,d", po::bool_switch(&runAsDaemon)->default_value(false), "daemonize")
 		("buffer,b", po::value<int32_t>(&bufferMs)->default_value(1000), "buffer [ms]")
@@ -96,22 +97,22 @@ int main(int argc, char* argv[])
 
 		std::clog.rdbuf(new Log("snapserver", LOG_DAEMON));
 
-		using namespace std; // For atoi.
-
 		timeval tvChunk;
 		gettimeofday(&tvChunk, NULL);
 		long nextTick = chronos::getTickCount();
-		
+
 		umask(0);
 		mkfifo(fifoName.c_str(), 0666);
 		msg::SampleFormat format(sampleFormat);
-		size_t duration = 50;
+		size_t duration = 10;
 //size_t chunkSize = duration*format.rate*format.frameSize / 1000;
 		std::auto_ptr<Encoder> encoder;
 		if (codec == "ogg")
 			encoder.reset(new OggEncoder(sampleFormat));
 		else if (codec == "pcm")
 			encoder.reset(new PcmEncoder(sampleFormat));
+		else if (codec == "opus")
+			encoder.reset(new OpusEncoderWrapper(sampleFormat));
 		else if (codec == "flac")
 			encoder.reset(new FlacEncoder(sampleFormat));
 		else
@@ -174,7 +175,7 @@ int main(int argc, char* argv[])
 					if (nextTick > currentTick)
 					{
 						usleep((nextTick - currentTick) * 1000);
-					}	
+					}
 					else
 					{
 						gettimeofday(&tvChunk, NULL);
@@ -198,8 +199,3 @@ int main(int argc, char* argv[])
 	logS(kLogNotice) << "daemon terminated." << endl;
 	daemonShutdown();
 }
-
-
-
-
-
