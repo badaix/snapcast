@@ -107,7 +107,7 @@ int main(int argc, char* argv[])
 		msg::SampleFormat format(sampleFormat);
 		size_t duration = 50;
 //size_t chunkSize = duration*format.rate*format.frameSize / 1000;
-		std::auto_ptr<Encoder> encoder;
+		std::unique_ptr<Encoder> encoder;
 		if (codec == "ogg")
 			encoder.reset(new OggEncoder(sampleFormat));
 		else if (codec == "pcm")
