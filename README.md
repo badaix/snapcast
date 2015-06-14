@@ -8,14 +8,15 @@ The server's audio input is a named pipe `/tmp/snapfifo`. All data that is fed i
 
 How does is work
 ----------------
-The snapserver reads PCM chunks of 50ms duration from the pipe `/tmp/snapfifo`. The chunk is encoded and tagged with the local time
+The snapserver reads PCM chunks of 10ms duration from the pipe `/tmp/snapfifo`. The chunk is encoded and tagged with the local time
 * PCM: lossless uncompressed
 * FLAC: lossless compressed [default]
 * Vorbis: lossy compression
+* Opus: lossy low-latency compression
 
 The encoded chunk is sent via a TCP connection to the snapclients.
-Each client does continuos time synchronization with the server, so that the client is always aware of the local server time.  
-Every received chunk is first decoded and added to the client's chunk-buffer. Knowing the server's time, the chunk is played out using alsa at the appropriate time. Time deviations are corrected by 
+Each client does continuos time synchronization with the server, so that the client is always aware of the local server time.
+Every received chunk is first decoded and added to the client's chunk-buffer. Knowing the server's time, the chunk is played out using alsa at the appropriate time. Time deviations are corrected by
 * skipping parts or whole chunks
 * playing silence
 * playing faster/slower
@@ -33,7 +34,7 @@ Build snapcast by cd'ing into the snapcast src-root directory
 
     $ cd <MY_SNAPCAST_ROOT>
     $ make all
-    
+
 Install snapclient and/or snapserver. The client installation will ask you for the server's hostname or ip address
 
     $ sudo make installserver
@@ -65,22 +66,22 @@ Disable alsa audio output by commenting out this section:
     #       type            "alsa"
     #       name            "My ALSA Device"
     #       device          "hw:0,0"        # optional
-    #       format          "44100:16:2"    # optional
+    #       format          "48000:16:2"    # optional
     #       mixer_device    "default"       # optional
     #       mixer_control   "PCM"           # optional
     #       mixer_index     "0"             # optional
     #}
 
 Add a new audio output of the type "fifo", which will let mpd play audio into the named pipe `/tmp/snapfifo`.
-Make sure that the "format" setting is the same as the format setting of the snapserver (default is "44100:16:2", which should make resampling unnecessary in most cases)
+Make sure that the "format" setting is the same as the format setting of the snapserver (default is "48000:16:2", which should make resampling unnecessary in most cases)
 
     audio_output {
         type            "fifo"
         name            "my pipe"
-        path            "/tmp/snapfifo" 
-        format          "44100:16:2"
+        path            "/tmp/snapfifo"
+        format          "48000:16:2"
         mixer_type      "software"
-    } 
+    }
 
 To test your mpd installation, you can add a radio station by
 
@@ -93,7 +94,7 @@ On the server you could create a sink to route sound of your applications to the
 ```
 pacmd load-module module-pipe-sink file=/tmp/snapfifo
 ```
-    
+
 Roadmap
 -------
 * Support multiple streams ("Zones")
