@@ -73,13 +73,13 @@ int main(int argc, char* argv[])
 
 		if (vm.count("help"))
 		{
-			logO << desc << "\n";
+			cout << desc << "\n";
 			return 1;
 		}
 
 		if (vm.count("version"))
 		{
-			logO << "snapserver " << VERSION << "\n"
+			cout << "snapserver " << VERSION << "\n"
 				 << "Copyright (C) 2014 BadAix (snapcast@badaix.de).\n"
 				 << "License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>.\n"
 				 << "This is free software: you are free to change and redistribute it.\n"
@@ -107,7 +107,7 @@ int main(int argc, char* argv[])
 		msg::SampleFormat format(sampleFormat);
 		size_t duration = 50;
 //size_t chunkSize = duration*format.rate*format.frameSize / 1000;
-		std::auto_ptr<Encoder> encoder;
+		std::unique_ptr<Encoder> encoder;
 		if (codec == "ogg")
 			encoder.reset(new OggEncoder(sampleFormat));
 		else if (codec == "pcm")
@@ -116,7 +116,7 @@ int main(int argc, char* argv[])
 			encoder.reset(new FlacEncoder(sampleFormat));
 		else
 		{
-			logO << "unknown codec: " << codec << "\n";
+			cout << "unknown codec: " << codec << "\n";
 			return 1;
 		}
 

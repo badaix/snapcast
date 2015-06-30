@@ -88,13 +88,13 @@ int main (int argc, char *argv[])
 
 	if (vm.count("help"))
 	{
-		logO << desc << "\n";
+		cout << desc << "\n";
 		return 1;
 	}
 
 	if (vm.count("version"))
 	{
-		logO << "snapclient v" << VERSION << "\n"
+		cout << "snapclient v" << VERSION << "\n"
 			 << "Copyright (C) 2014 BadAix (snapcast@badaix.de).\n"
 			 << "License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>.\n"
 			 << "This is free software: you are free to change and redistribute it.\n"
@@ -108,7 +108,7 @@ int main (int argc, char *argv[])
 		vector<PcmDevice> pcmDevices = Player::pcm_list();
 		for (auto dev: pcmDevices)
 		{
-			logO << dev.idx << ": " << dev.name << "\n"
+			cout << dev.idx << ": " << dev.name << "\n"
 				 << dev.description << "\n\n";
 		}
 		return 1;
@@ -127,7 +127,7 @@ int main (int argc, char *argv[])
 	PcmDevice pcmDevice = getPcmDevice(soundcard);
 	if (pcmDevice.idx == -1)
 	{
-		logO << "soundcard \"" << soundcard << "\" not found\n";
+		cout << "soundcard \"" << soundcard << "\" not found\n";
 		return 1;
 	}
 
