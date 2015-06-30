@@ -1,4 +1,6 @@
 VERSION = 0.2.1
+SHELL = /bin/bash
+
 CC      = /usr/bin/g++
 CFLAGS  = -std=c++0x -Wall -Wno-unused-function -O3 -D_REENTRANT -DVERSION=\"$(VERSION)\" -I..
 LDFLAGS = -lrt -lpthread -lboost_system -lboost_program_options -lvorbis -lvorbisenc -logg -lFLAC -lavahi-client -lavahi-common
