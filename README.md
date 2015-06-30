@@ -24,22 +24,29 @@ Typically the deviation is < 1ms.
 
 Installation
 ------------
-These installation instructions are valid for Debian derivates (e.g. Raspbian, Debian, Ubuntu, Mint).
-First install all packages needed to compile snapcast:
+First install all packages needed to compile snapcast
 
+For Debian derivates (e.g. Raspbian, Debian, Ubuntu, Mint):
+
+    $ sudo apt-get install git build-essential
     $ sudo apt-get install libboost-dev libboost-system-dev libboost-program-options-dev libasound2-dev libvorbis-dev libflac-dev alsa-utils libavahi-client-dev avahi-daemon
+    
+For Arch derivates:
 
+    $ pacman -S git base-devel
+    $ pacman -S boost boost-libs alsa-lib avahi libvorbis flac alsa-utils
+    
 Build snapcast by cd'ing into the snapcast src-root directory
 
     $ cd <MY_SNAPCAST_ROOT>
-    $ make all
+    $ make
     
-Install snapclient and/or snapserver. The client installation will ask you for the server's hostname or ip address
+Install snapclient and/or snapserver:
 
     $ sudo make installserver
     $ sudo make installclient
 
-This will copy the client and/or server binary to `/usr/sbin` and update init.d to start the client/server as a daemon.
+This will copy the client and/or server binary to `/usr/sbin` and update init.d/systemd to start the client/server as a daemon.
 
 
 Test
@@ -48,11 +55,14 @@ You can test your installation by copying random data into the server's fifo fil
 
     $ sudo cat /dev/urandom > /tmp/snapfifo
 
-All connected clients should play random noise now. You might raise the client's volume with "alsamixer".
+All connected clients should play random noise now. You might raise the client's volume with "alsamixer".  
+When you are using a raspberry pi, you might have to change your audio output to the 3.5mm jack:
 
+    #The last number is the audio output with 1 being the 3.5 jack, 2 being HDMI and 0 being auto.
+    $ amixer cset numid=3 1
 
-To setup WiFi on a raspberry pi, you can follow this guide:
-http://www.maketecheasier.com/setup-wifi-on-raspberry-pi/
+To setup WiFi on a raspberry pi, you can follow this guide:  
+https://www.raspberrypi.org/documentation/configuration/wireless/wireless-cli.md
 
 
 MPD setup
