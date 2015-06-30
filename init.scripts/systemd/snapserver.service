@@ -1,0 +1,9 @@
+[Unit]
+Description=Snapserver
+After=network.target
+
+[Service]
+ExecStart=/usr/sbin/snapserver
+
+[Install]
+WantedBy=multi-user.target 

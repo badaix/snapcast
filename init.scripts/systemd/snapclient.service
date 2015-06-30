@@ -1,0 +1,9 @@
+[Unit]
+Description=Snapclient
+After=network.target
+
+[Service]
+ExecStart=/usr/sbin/snapclient
+
+[Install]
+WantedBy=multi-user.target 
