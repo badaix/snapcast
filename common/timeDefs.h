@@ -31,7 +31,7 @@ namespace chronos
 	typedef std::chrono::microseconds usec;
 	typedef std::chrono::nanoseconds nsec;
 
-	static void addUs(timeval& tv, int us)
+	inline static void addUs(timeval& tv, int us)
 	{
 		if (us < 0)
 		{
@@ -46,7 +46,7 @@ namespace chronos
 		tv.tv_usec %= 1000000;
 	}
 
-	static long getTickCount()
+	inline static long getTickCount()
 	{
 		struct timespec now;
 		clock_gettime(CLOCK_MONOTONIC, &now);
@@ -54,14 +54,14 @@ namespace chronos
 	}
 
 	template <class Rep, class Period>
-	std::chrono::duration<Rep, Period> abs(std::chrono::duration<Rep, Period> d)
+	inline std::chrono::duration<Rep, Period> abs(std::chrono::duration<Rep, Period> d)
 	{
-		Rep x = d.count(); 
+		Rep x = d.count();
 		return std::chrono::duration<Rep, Period>(x >= 0 ? x : -x);
 	}
 
 	template <class ToDuration, class Rep, class Period>
-	int64_t duration(std::chrono::duration<Rep, Period> d)
+	inline int64_t duration(std::chrono::duration<Rep, Period> d)
 	{
 		return std::chrono::duration_cast<ToDuration>(d).count();
 	}
