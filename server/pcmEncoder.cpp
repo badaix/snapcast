@@ -20,7 +20,7 @@
 
 PcmEncoder::PcmEncoder(const msg::SampleFormat& format) : Encoder(format)
 {
-	headerChunk = new msg::Header("pcm");
+	headerChunk_ = new msg::Header("pcm");
 }
 
 

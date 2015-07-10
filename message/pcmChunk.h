@@ -75,6 +75,11 @@ public:
 		return (payloadSize / format.frameSize);
 	}
 
+	inline size_t getSampleCount() const
+	{
+		return (payloadSize / format.sampleSize);
+	}
+
 	SampleFormat format;
 
 private:

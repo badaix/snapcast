@@ -16,11 +16,13 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
-#include "sampleFormat.h"
 #include <vector>
 #include <boost/algorithm/string.hpp>
 #include <boost/lexical_cast.hpp>
 #include <iostream>
+
+#include "sampleFormat.h"
+#include "common/log.h"
 
 
 namespace msg
@@ -64,6 +66,7 @@ void SampleFormat::setFormat(uint32_t rate, uint16_t bits, uint16_t channels)
 	if (bits == 24)
 		sampleSize = 4;
 	frameSize = channels*sampleSize;
+	logD << "SampleFormat: " << rate << ":" << bits << ":" << channels << "\n";
 }
 
 }

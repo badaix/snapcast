@@ -24,10 +24,9 @@
 using namespace std;
 
 
-OggEncoder::OggEncoder(const msg::SampleFormat& format) : Encoder(format), eos(0)
+OggEncoder::OggEncoder(const msg::SampleFormat& format) : Encoder(format), lastGranulepos(0), eos(0)
 {
 	init();
-	lastGranulepos = -1;
 }
 
 
@@ -35,21 +34,14 @@ OggEncoder::OggEncoder(const msg::SampleFormat& format) : Encoder(format), eos(0
 double OggEncoder::encode(msg::PcmChunk* chunk)
 {
 	double res = 0;
-//logD << "-> pcm: " << wireChunk->length << endl;
+	logO << "payload: " << chunk->payloadSize << "\tframes: " << chunk->getFrameCount() << "\tduration: " << chunk->duration<chronos::msec>().count() << "\n";
 	int bytes = chunk->payloadSize / 4;
 	float **buffer=vorbis_analysis_buffer(&vd, bytes);
 
 	/* uninterleave samples */
-	for(int i=0; i<bytes; i++)
+	for (int i=0; i<bytes; i++)
 	{
-	        int idx = 4*i;
-/*	        int8_t high = chunk->payload[idx+1];
-	        int8_t low = chunk->payload[idx];
-		buffer[0][i]=((high << 8) | (0x00ff&low))/32768.f;
-	        high = chunk->payload[idx+3];
-	        low = chunk->payload[idx+2];
-		buffer[1][i]=((high << 8) | (0x00ff&low))/32768.f;
-*/
+		int idx = 4*i;
 		buffer[0][i]=((((int8_t)chunk->payload[idx+1]) << 8) | (0x00ff&((int8_t)chunk->payload[idx])))/32768.f;
 		buffer[1][i]=((((int8_t)chunk->payload[idx+3]) << 8) | (0x00ff&((int8_t)chunk->payload[idx+2])))/32768.f;
 	}
@@ -61,27 +53,27 @@ double OggEncoder::encode(msg::PcmChunk* chunk)
 	more involved (potentially parallel) processing.  Get a single
 	block for encoding now */
 	size_t pos = 0;
-	while(vorbis_analysis_blockout(&vd,&vb)==1)
+	while (vorbis_analysis_blockout(&vd,&vb)==1)
 	{
 		/* analysis, assume we want to use bitrate management */
 		vorbis_analysis(&vb,NULL);
 		vorbis_bitrate_addblock(&vb);
 
-		while(vorbis_bitrate_flushpacket(&vd,&op))
+		while (vorbis_bitrate_flushpacket(&vd,&op))
 		{
 			/* weld the packet into the bitstream */
-			ogg_stream_packetin(&os,&op);
+			ogg_stream_packetin(&os, &op);
 
 			/* write out pages (if any) */
-			while(true)
+			while (true)
 			{
-//				int result = ogg_stream_pageout(&os,&og);
-				int result = ogg_stream_flush(&os,&og);
+				int result = ogg_stream_flush(&os, &og);
 				if (result == 0)
 					break;
-				res = true;
+				res = os.granulepos - lastGranulepos;
 
 				size_t nextLen = pos + og.header_len + og.body_len;
+				// make chunk larger
 				if (chunk->payloadSize < nextLen)
 					chunk->payload = (char*)realloc(chunk->payload, nextLen);
 
@@ -91,21 +83,21 @@ double OggEncoder::encode(msg::PcmChunk* chunk)
 				pos += og.body_len;
 				
 				if (ogg_page_eos(&og))
-				 break;
+					break;
 			}
 		}
 	}
-	if (res)
+	
+	if (res > 0)
 	{
-		if (lastGranulepos == -1)
-			res = os.granulepos;
-		else
-			res = os.granulepos - lastGranulepos;
-		res /= (sampleFormat.rate / 1000.);
+		res /= (sampleFormat_.rate / 1000.);
+		logO << "res: " << res << "\n";
 		lastGranulepos = os.granulepos;
+		// make chunk smaller
 		chunk->payload = (char*)realloc(chunk->payload, pos);
 		chunk->payloadSize = pos;
 	}
+	
 	return res;
 }
 
@@ -144,17 +136,19 @@ void OggEncoder::init()
 
 	*********************************************************************/
 
-	ret=vorbis_encode_init_vbr(&vi, sampleFormat.channels, sampleFormat.rate, 1.0);
+	ret = vorbis_encode_init_vbr(&vi, sampleFormat_.channels, sampleFormat_.rate, 1.0);
 
 	/* do not continue if setup failed; this can happen if we ask for a
 	 mode that libVorbis does not support (eg, too low a bitrate, etc,
 	 will return 'OV_EIMPL') */
 
-	if(ret)exit(1);
+	if (ret)
+		exit(1);
 
 	/* add a comment */
 	vorbis_comment_init(&vc);
-	vorbis_comment_add_tag(&vc,"ENCODER","snapstream");
+	vorbis_comment_add_tag(&vc, "TITLE", "SnapStream");
+	vorbis_comment_add_tag(&vc, "VERSION", VERSION);
 
 	/* set up the analysis state and auxiliary encoding storage */
 	vorbis_analysis_init(&vd,&vi);
@@ -173,11 +167,11 @@ void OggEncoder::init()
 	 make the headers, then pass them to libvorbis one at a time;
 	 libvorbis handles the additional Ogg bitstream constraints */
 
-        ogg_packet header;
-        ogg_packet header_comm;
-        ogg_packet header_code;
-            
-      	vorbis_analysis_headerout(&vd,&vc,&header,&header_comm,&header_code);
+	ogg_packet header;
+	ogg_packet header_comm;
+	ogg_packet header_code;
+	    
+	vorbis_analysis_headerout(&vd,&vc,&header,&header_comm,&header_code);
 	ogg_stream_packetin(&os,&header);
 	ogg_stream_packetin(&os,&header_comm);
 	ogg_stream_packetin(&os,&header_code);
@@ -185,28 +179,21 @@ void OggEncoder::init()
 	/* This ensures the actual
 	 * audio data will start on a new page, as per spec
 	 */
-//	  while(!eos){
 	size_t pos(0);
-	headerChunk = new msg::Header("ogg");
+	headerChunk_ = new msg::Header("ogg");
 	while (true)
 	{
 		int result=ogg_stream_flush(&os,&og);
 		if (result == 0)
 			break;
-		headerChunk->payloadSize += og.header_len + og.body_len;
-		headerChunk->payload = (char*)realloc(headerChunk->payload, headerChunk->payloadSize);
+		headerChunk_->payloadSize += og.header_len + og.body_len;
+		headerChunk_->payload = (char*)realloc(headerChunk_->payload, headerChunk_->payloadSize);
 		logD << "HeadLen: " << og.header_len << ", bodyLen: " << og.body_len << ", result: " << result << "\n";
-		memcpy(headerChunk->payload + pos, og.header, og.header_len);
+		memcpy(headerChunk_->payload + pos, og.header, og.header_len);
 		pos += og.header_len;
-		memcpy(headerChunk->payload + pos, og.body, og.body_len);
+		memcpy(headerChunk_->payload + pos, og.body, og.body_len);
 		pos += og.body_len;
 	}
-
-
-//	  fwrite(og.header,1,og.header_len,stdout);
-//	  fwrite(og.body,1,og.body_len,stdout);
-//	}
 }
-
 
 

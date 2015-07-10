@@ -26,26 +26,26 @@
 class Encoder
 {
 public:
-	Encoder(const msg::SampleFormat& format) : sampleFormat(format), headerChunk(NULL)
+	Encoder(const msg::SampleFormat& format) : sampleFormat_(format), headerChunk_(NULL)
 	{
 	}
 
 	virtual ~Encoder()
 	{
-		if (headerChunk != NULL)
-			delete headerChunk;
+		if (headerChunk_ != NULL)
+			delete headerChunk_;
 	}
 
 	virtual double encode(msg::PcmChunk* chunk) = 0;
 
 	virtual msg::Header* getHeader()
 	{
-		return headerChunk;
+		return headerChunk_;
 	}
 
 protected:
-	msg::SampleFormat sampleFormat;
-	msg::Header* headerChunk;
+	msg::SampleFormat sampleFormat_;
+	msg::Header* headerChunk_;
 };
 
 
