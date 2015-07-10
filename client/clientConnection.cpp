@@ -72,6 +72,8 @@ void ClientConnection::start()
 //				cout << "socket: " << socket->native() << "\n";
 //				setsockopt(socket->native(), SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
 //				setsockopt(socket->native(), SOL_SOCKET, SO_SNDTIMEO, &tv, sizeof(tv));
+//boost::asio::ip::tcp::endpoint endpoint(boost::asio::ip::address::from_string("127.0.0.1"), port_);
+//socket_->connect(endpoint);//*iterator);
 	socket_->connect(*iterator);
 	logO << "MAC: \"" << getMacAddress(socket_->native()) << "\"\n";
 	connected_ = true;
@@ -130,24 +132,23 @@ bool ClientConnection::send(msg::BaseMessage* message)
 shared_ptr<msg::SerializedMessage> ClientConnection::sendRequest(msg::BaseMessage* message, const chronos::msec& timeout)
 {
 	shared_ptr<msg::SerializedMessage> response(NULL);
-	if (++reqId_ == 10000)
+	if (++reqId_ >= 10000)
 		reqId_ = 1;
 	message->id = reqId_;
-//logD << "Req: " << reqId << "\n";
+//	logD << "Req: " << reqId_ << "\n";
 	shared_ptr<PendingRequest> pendingRequest(new PendingRequest(reqId_));
 
 	{
 		std::unique_lock<std::mutex> mlock(mutex_);
 		pendingRequests_.insert(pendingRequest);
 	}
-	std::mutex m;
-	std::unique_lock<std::mutex> lck(m);
+	std::unique_lock<std::mutex> lck(requestMutex_);
 	send(message);
-	if (pendingRequest->cv.wait_for(lck,std::chrono::milliseconds(timeout)) == std::cv_status::no_timeout)
+	if (pendingRequest->cv.wait_for(lck, std::chrono::milliseconds(timeout)) == std::cv_status::no_timeout)
 	{
 		response = pendingRequest->response;
 		sumTimeout_ = chronos::msec(0);
-//logD << "Resp: " << pendingRequest->id << "\n";
+//		logD << "Resp: " << pendingRequest->id << "\n";
 	}
 	else
 	{
@@ -171,7 +172,7 @@ void ClientConnection::getNextMessage()
 	vector<char> buffer(baseMsgSize);
 	socketRead(&buffer[0], baseMsgSize);
 	baseMessage.deserialize(&buffer[0]);
-//logD << "getNextMessage: " << baseMessage.type << ", size: " << baseMessage.size << ", id: " << baseMessage.id << ", refers: " << baseMessage.refersTo << "\n";
+//	logD << "getNextMessage: " << baseMessage.type << ", size: " << baseMessage.size << ", id: " << baseMessage.id << ", refers: " << baseMessage.refersTo << "\n";
 	if (baseMessage.size > buffer.size())
 		buffer.resize(baseMessage.size);
 	socketRead(&buffer[0], baseMessage.size);
@@ -180,6 +181,7 @@ void ClientConnection::getNextMessage()
 
 	{
 		std::unique_lock<std::mutex> mlock(mutex_);
+//		logD << "got lock - getNextMessage: " << baseMessage.type << ", size: " << baseMessage.size << ", id: " << baseMessage.id << ", refers: " << baseMessage.refersTo << "\n";
 		{
 			for (auto req: pendingRequests_)
 			{
@@ -189,6 +191,7 @@ void ClientConnection::getNextMessage()
 					req->response->message = baseMessage;
 					req->response->buffer = (char*)malloc(baseMessage.size);
 					memcpy(req->response->buffer, &buffer[0], baseMessage.size);
+					std::unique_lock<std::mutex> lck(requestMutex_);
 					req->cv.notify_one();
 					return;
 				}
