@@ -57,7 +57,7 @@ void ControlServer::send(shared_ptr<msg::BaseMessage> message)
 
 void ControlServer::onMessageReceived(ServerSession* connection, const msg::BaseMessage& baseMessage, char* buffer)
 {
-//	logD << "onMessageReceived: " << baseMessage.type << ", size: " << baseMessage.size << ", sent: " << baseMessage.sent.sec << "," << baseMessage.sent.usec << ", recv: " << baseMessage.received.sec << "," << baseMessage.received.usec << "\n";
+//	logD << "getNextMessage: " << baseMessage.type << ", size: " << baseMessage.size << ", id: " << baseMessage.id << ", refers: " << baseMessage.refersTo << ", sent: " << baseMessage.sent.sec << "," << baseMessage.sent.usec << ", recv: " << baseMessage.received.sec << "," << baseMessage.received.usec << "\n";
 	if (baseMessage.type == message_type::kRequest)
 	{
 		msg::Request requestMsg;
@@ -70,7 +70,7 @@ void ControlServer::onMessageReceived(ServerSession* connection, const msg::Base
 			timeMsg.refersTo = requestMsg.id;
 			timeMsg.latency = (requestMsg.received.sec - requestMsg.sent.sec) + (requestMsg.received.usec - requestMsg.sent.usec) / 1000000.;
 //		tv diff = timeMsg.received - timeMsg.sent;
-//		logD << "Latency: " << diff.sec << "." << diff.usec << "\n";
+//			logD << "Latency: " << timeMsg.latency << ", refers to: " << timeMsg.refersTo << "\n";
 			connection->send(&timeMsg);
 		}
 		else if (requestMsg.request == kServerSettings)

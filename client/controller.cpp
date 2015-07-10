@@ -123,17 +123,17 @@ void Controller::worker()
 			decoder_->setHeader(headerChunk.get());
 
 			msg::Request timeReq(kTime);
-			for (size_t n=0; n<50 && active_; ++n)
+			for (size_t n=0; n<100 && active_; ++n)
 			{
 				shared_ptr<msg::Time> reply = clientConnection_->sendReq<msg::Time>(&timeReq, chronos::msec(2000));
 				if (reply)
 				{
 					double latency = (reply->received.sec - reply->sent.sec) + (reply->received.usec - reply->sent.usec) / 1000000.;
 					TimeProvider::getInstance().setDiffToServer((reply->latency - latency) * 1000 / 2);
-					usleep(1000);
+					usleep(100);
 				}
 			}
-			logO << "diff to server [ms]: " << TimeProvider::getInstance().getDiffToServer<chronos::msec>().count() << "\n";
+			logO << "diff to server [ms]: " << (float)TimeProvider::getInstance().getDiffToServer<chronos::usec>().count() / 1000.f << "\n";
 
 			stream_ = new Stream(*sampleFormat_);
 			stream_->setBufferLen(serverSettings->bufferMs - latency_);
@@ -148,7 +148,6 @@ void Controller::worker()
 			while (active_)
 			{
 				usleep(500*1000);
-//throw SnapException("timeout");
                 shared_ptr<msg::Time> reply = clientConnection_->sendReq<msg::Time>(&timeReq);
                 if (reply)
                 {
