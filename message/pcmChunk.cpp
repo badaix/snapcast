@@ -16,9 +16,9 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
-#include "pcmChunk.h"
 #include <string.h>
 #include <iostream>
+#include "pcmChunk.h"
 #include "common/log.h"
 
 

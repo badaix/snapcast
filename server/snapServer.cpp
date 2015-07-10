@@ -88,40 +88,43 @@ int main(int argc, char* argv[])
 			return 1;
 		}
 
-		if (runAsDaemon)
-		{
-			daemonize("/var/run/snapserver.pid");
-			logS(kLogNotice) << "daemon started." << endl;
-		}
-
 		std::clog.rdbuf(new Log("snapserver", LOG_DAEMON));
 
-		using namespace std; // For atoi.
-
-		timeval tvChunk;
-		gettimeofday(&tvChunk, NULL);
-		long nextTick = chronos::getTickCount();
-		
-		umask(0);
-		mkfifo(fifoName.c_str(), 0666);
 		msg::SampleFormat format(sampleFormat);
-		size_t duration = 50;
-//size_t chunkSize = duration*format.rate*format.frameSize / 1000;
 		std::unique_ptr<Encoder> encoder;
 		if (codec == "ogg")
-			encoder.reset(new OggEncoder(sampleFormat));
+			encoder.reset(new OggEncoder(format));
 		else if (codec == "pcm")
-			encoder.reset(new PcmEncoder(sampleFormat));
+			encoder.reset(new PcmEncoder(format));
 		else if (codec == "flac")
-			encoder.reset(new FlacEncoder(sampleFormat));
+			encoder.reset(new FlacEncoder(format));
 		else
 		{
 			cout << "unknown codec: " << codec << "\n";
 			return 1;
 		}
 
+		umask(0);
+		mkfifo(fifoName.c_str(), 0666);
+		int fd = open(fifoName.c_str(), O_RDONLY | O_NONBLOCK);
+		if (fd == -1)
+		{
+			cout << "failed to open fifo: " << fifoName << "\n";
+			return 1;
+		}
+
 		msg::ServerSettings serverSettings;
 		serverSettings.bufferMs = bufferMs;
+
+		signal(SIGHUP, signal_handler);
+		signal(SIGTERM, signal_handler);
+		signal(SIGINT, signal_handler);
+
+		if (runAsDaemon)
+		{
+			daemonize("/var/run/snapserver.pid");
+			logS(kLogNotice) << "daemon started." << endl;
+		}
 
 		ControlServer* controlServer = new ControlServer(port);
 		controlServer->setServerSettings(&serverSettings);
@@ -129,25 +132,24 @@ int main(int argc, char* argv[])
 		controlServer->setHeader(encoder->getHeader());
 		controlServer->start();
 
-		signal(SIGHUP, signal_handler);
-		signal(SIGTERM, signal_handler);
-		signal(SIGINT, signal_handler);
-
 		PublishAvahi publishAvahi("SnapCast");
 		std::vector<AvahiService> services;
 		services.push_back(AvahiService("_snapcast._tcp", port));
 		publishAvahi.publish(services);
 
-
+		timeval tvChunk;
+		gettimeofday(&tvChunk, NULL);
+		long nextTick = chronos::getTickCount();
+		size_t pcmReadMs = 20;
+		
 		while (!g_terminated)
 		{
-			int fd = open(fifoName.c_str(), O_RDONLY | O_NONBLOCK);
 			try
 			{
 				shared_ptr<msg::PcmChunk> chunk;
 				while (!g_terminated)//cin.good())
 				{
-					chunk.reset(new msg::PcmChunk(sampleFormat, duration));
+					chunk.reset(new msg::PcmChunk(sampleFormat, pcmReadMs));
 					int toRead = chunk->payloadSize;
 					int len = 0;
 					do
@@ -166,9 +168,9 @@ int main(int argc, char* argv[])
 					double chunkDuration = encoder->encode(chunk.get());
 					if (chunkDuration > 0)
 						controlServer->send(chunk);
-//logD << chunk->tv_sec << ", " << chunk->tv_usec / 1000 << "\n";
+//					logO << chunkDuration << "\n";
 //                    addUs(tvChunk, 1000*chunk->getDuration());
-					nextTick += duration;
+					nextTick += pcmReadMs;
 					chronos::addUs(tvChunk, chunkDuration * 1000);
 					long currentTick = chronos::getTickCount();
 					if (nextTick > currentTick)
