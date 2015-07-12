@@ -16,25 +16,39 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
-#include "oggEncoder.h"
-#include "common/log.h"
+#include <boost/lexical_cast.hpp>
 #include <iostream>
 #include <cstring>
+
+#include "oggEncoder.h"
+#include "common/log.h"
+#include "common/snapException.h"
+#include "common/utils.h"
 
 using namespace std;
 
 
-OggEncoder::OggEncoder(const msg::SampleFormat& format) : Encoder(format), lastGranulepos(0), eos(0)
+OggEncoder::OggEncoder() : Encoder(), lastGranulepos(0), eos(0)
 {
-	init();
 }
 
+
+std::string OggEncoder::getAvailableOptions()
+{
+	return "VBR:[-0.1 - 1.0]";
+}
+
+
+std::string OggEncoder::getDefaultOptions()
+{
+	return "VBR:0.9";
+}
 
 
 double OggEncoder::encode(msg::PcmChunk* chunk)
 {
 	double res = 0;
-	logO << "payload: " << chunk->payloadSize << "\tframes: " << chunk->getFrameCount() << "\tduration: " << chunk->duration<chronos::msec>().count() << "\n";
+	logD << "payload: " << chunk->payloadSize << "\tframes: " << chunk->getFrameCount() << "\tduration: " << chunk->duration<chronos::msec>().count() << "\n";
 	int bytes = chunk->payloadSize / 4;
 	float **buffer=vorbis_analysis_buffer(&vd, bytes);
 
@@ -91,7 +105,7 @@ double OggEncoder::encode(msg::PcmChunk* chunk)
 	if (res > 0)
 	{
 		res /= (sampleFormat_.rate / 1000.);
-		logO << "res: " << res << "\n";
+		logD << "res: " << res << "\n";
 		lastGranulepos = os.granulepos;
 		// make chunk smaller
 		chunk->payload = (char*)realloc(chunk->payload, pos);
@@ -102,8 +116,29 @@ double OggEncoder::encode(msg::PcmChunk* chunk)
 }
 
 
-void OggEncoder::init()
+void OggEncoder::initEncoder()
 {
+	if (codecOptions_.find(":") == string::npos)
+		throw SnapException("Invalid codec options: \"" + codecOptions_ + "\"");
+	string mode = trim_copy(codecOptions_.substr(0, codecOptions_.find(":")));
+	if (mode != "VBR")
+		throw SnapException("Unsupported codec mode: \"" + mode + "\". Available: \"VBR\"");
+	
+	string qual = trim_copy(codecOptions_.substr(codecOptions_.find(":") + 1));
+	double quality = 1.0;
+	try
+	{
+		quality = boost::lexical_cast<double>(qual);
+	}
+	catch(boost::bad_lexical_cast)
+	{
+		throw SnapException("Invalid codec option: \"" + codecOptions_ + "\"");
+	}
+	if ((quality < -0.1) || (quality > 1.0))
+	{
+		throw SnapException("compression level has to be between -0.1 and 1.0");
+	}
+	
 	/********** Encode setup ************/
 	vorbis_info_init(&vi);
 
@@ -136,14 +171,14 @@ void OggEncoder::init()
 
 	*********************************************************************/
 
-	ret = vorbis_encode_init_vbr(&vi, sampleFormat_.channels, sampleFormat_.rate, 1.0);
+	ret = vorbis_encode_init_vbr(&vi, sampleFormat_.channels, sampleFormat_.rate, quality);
 
 	/* do not continue if setup failed; this can happen if we ask for a
 	 mode that libVorbis does not support (eg, too low a bitrate, etc,
 	 will return 'OV_EIMPL') */
 
 	if (ret)
-		exit(1);
+		throw SnapException("failed to init encoder");
 
 	/* add a comment */
 	vorbis_comment_init(&vc);
@@ -183,7 +218,7 @@ void OggEncoder::init()
 	headerChunk_ = new msg::Header("ogg");
 	while (true)
 	{
-		int result=ogg_stream_flush(&os,&og);
+		int result = ogg_stream_flush(&os,&og);
 		if (result == 0)
 			break;
 		headerChunk_->payloadSize += og.header_len + og.body_len;

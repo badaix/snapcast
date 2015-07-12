@@ -21,12 +21,13 @@
 #include "message/pcmChunk.h"
 #include "message/header.h"
 #include "message/sampleFormat.h"
+#include <string>
 
 
 class Encoder
 {
 public:
-	Encoder(const msg::SampleFormat& format) : sampleFormat_(format), headerChunk_(NULL)
+	Encoder() : headerChunk_(NULL)
 	{
 	}
 
@@ -36,7 +37,26 @@ public:
 			delete headerChunk_;
 	}
 
+	virtual void init(const msg::SampleFormat& format, const std::string codecOptions = "")
+	{
+		sampleFormat_ = format;
+		codecOptions_ = codecOptions;
+		if (codecOptions == "")
+			codecOptions_ = getDefaultOptions();
+		initEncoder();
+	}
+
 	virtual double encode(msg::PcmChunk* chunk) = 0;
+
+	virtual std::string getAvailableOptions()
+	{
+		return "No codec options supported";
+	}
+
+	virtual std::string getDefaultOptions()
+	{
+		return "";
+	}
 
 	virtual msg::Header* getHeader()
 	{
@@ -44,8 +64,11 @@ public:
 	}
 
 protected:
+	virtual void initEncoder() = 0;
+
 	msg::SampleFormat sampleFormat_;
 	msg::Header* headerChunk_;
+	std::string codecOptions_;
 };
 
 

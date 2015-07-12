@@ -16,19 +16,21 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
+#include <boost/lexical_cast.hpp>
+#include <iostream>
+
 #include "flacEncoder.h"
 #include "common/log.h"
-#include <iostream>
+#include "common/snapException.h"
 
 using namespace std;
 
 
-FlacEncoder::FlacEncoder(const msg::SampleFormat& format) : Encoder(format), encoder_(NULL), pcmBufferSize_(0), encodedSamples_(0)
+FlacEncoder::FlacEncoder() : Encoder(), encoder_(NULL), pcmBufferSize_(0), encodedSamples_(0)
 {
 	encodedChunk_ = new msg::PcmChunk();
 	headerChunk_ = new msg::Header("flac");
 	pcmBuffer_ = (FLAC__int32*)malloc(pcmBufferSize_ * sizeof(FLAC__int32));
-	initEncoder();
 }
 
 
@@ -44,6 +46,18 @@ FlacEncoder::~FlacEncoder()
 
 	delete encodedChunk_;
 	free(pcmBuffer_);
+}
+
+
+std::string FlacEncoder::getAvailableOptions()
+{
+	return "compression level: [0..8]";
+}
+
+
+std::string FlacEncoder::getDefaultOptions()
+{
+	return "2";
 }
 
 
@@ -120,16 +134,27 @@ FLAC__StreamEncoderWriteStatus write_callback(const FLAC__StreamEncoder *encoder
 
 void FlacEncoder::initEncoder()
 {
+	int quality(2);
+	try
+	{
+		quality = boost::lexical_cast<int>(codecOptions_);
+	}
+	catch(boost::bad_lexical_cast)
+	{
+		throw SnapException("Invalid codec option: \"" + codecOptions_ + "\"");
+	}
+	if ((quality < 0) || (quality > 8))
+	{
+		throw SnapException("compression level has to be between 0 and 8");
+	}
+
 	FLAC__bool ok = true;
 	FLAC__StreamEncoderInitStatus init_status;
 	FLAC__StreamMetadata_VorbisComment_Entry entry;
 
 	// allocate the encoder
 	if ((encoder_ = FLAC__stream_encoder_new()) == NULL) 
-	{
-		fprintf(stderr, "ERROR: allocating encoder\n");
-		return;
-	}
+		throw SnapException("error allocating encoder");
 
 	ok &= FLAC__stream_encoder_set_verify(encoder_, true);
 	// compression levels (0-8):
@@ -137,41 +162,34 @@ void FlacEncoder::initEncoder()
 	// latency:
 	// 0-2: 1152 frames, ~26.1224ms
 	// 3-8: 4096 frames, ~92.8798ms
-	ok &= FLAC__stream_encoder_set_compression_level(encoder_, 2);
+	ok &= FLAC__stream_encoder_set_compression_level(encoder_, quality);
 	ok &= FLAC__stream_encoder_set_channels(encoder_, sampleFormat_.channels);
 	ok &= FLAC__stream_encoder_set_bits_per_sample(encoder_, sampleFormat_.bits);
 	ok &= FLAC__stream_encoder_set_sample_rate(encoder_, sampleFormat_.rate);
 
-	// now add some metadata; we'll add some tags and a padding block
-	if (ok) 
-	{
-		if (
-				(metadata_[0] = FLAC__metadata_object_new(FLAC__METADATA_TYPE_VORBIS_COMMENT)) == NULL ||
-				(metadata_[1] = FLAC__metadata_object_new(FLAC__METADATA_TYPE_PADDING)) == NULL ||
-				// there are many tag (vorbiscomment) functions but these are convenient for this particular use:
-				!FLAC__metadata_object_vorbiscomment_entry_from_name_value_pair(&entry, "TITLE", "SnapStream") ||
-				!FLAC__metadata_object_vorbiscomment_append_comment(metadata_[0], entry, false) || 
-				!FLAC__metadata_object_vorbiscomment_entry_from_name_value_pair(&entry, "VERSION", VERSION) ||
-				!FLAC__metadata_object_vorbiscomment_append_comment(metadata_[0], entry, false)
-			) 
-		{
-			fprintf(stderr, "ERROR: out of memory or tag error\n");
-			ok = false;
-		}
+	if (!ok)
+		throw SnapException("error setting up encoder");
 
-		metadata_[1]->length = 1234; // set the padding length
-		ok = FLAC__stream_encoder_set_metadata(encoder_, metadata_, 2);
-	}
+	// now add some metadata; we'll add some tags and a padding block
+	if (
+			(metadata_[0] = FLAC__metadata_object_new(FLAC__METADATA_TYPE_VORBIS_COMMENT)) == NULL ||
+			(metadata_[1] = FLAC__metadata_object_new(FLAC__METADATA_TYPE_PADDING)) == NULL ||
+			// there are many tag (vorbiscomment) functions but these are convenient for this particular use:
+			!FLAC__metadata_object_vorbiscomment_entry_from_name_value_pair(&entry, "TITLE", "SnapStream") ||
+			!FLAC__metadata_object_vorbiscomment_append_comment(metadata_[0], entry, false) || 
+			!FLAC__metadata_object_vorbiscomment_entry_from_name_value_pair(&entry, "VERSION", VERSION) ||
+			!FLAC__metadata_object_vorbiscomment_append_comment(metadata_[0], entry, false)
+		) 
+		throw SnapException("out of memory or tag error");
+
+	metadata_[1]->length = 1234; // set the padding length
+	ok = FLAC__stream_encoder_set_metadata(encoder_, metadata_, 2);
+	if (!ok)
+		throw SnapException("error setting meta data");
 
 	// initialize encoder
-	if (ok) 
-	{
-		init_status = FLAC__stream_encoder_init_stream(encoder_, ::write_callback, NULL, NULL, NULL, this);
-		if(init_status != FLAC__STREAM_ENCODER_INIT_STATUS_OK) 
-		{
-			fprintf(stderr, "ERROR: initializing encoder: %s\n", FLAC__StreamEncoderInitStatusString[init_status]);
-			ok = false;
-		}
-	}
+	init_status = FLAC__stream_encoder_init_stream(encoder_, ::write_callback, NULL, NULL, NULL, this);
+	if(init_status != FLAC__STREAM_ENCODER_INIT_STATUS_OK) 
+		throw SnapException("ERROR: initializing encoder: " + string(FLAC__StreamEncoderInitStatusString[init_status]));
 }
 

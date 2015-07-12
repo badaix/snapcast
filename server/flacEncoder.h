@@ -30,14 +30,16 @@
 class FlacEncoder : public Encoder
 {
 public:
-    FlacEncoder(const msg::SampleFormat& format);
+    FlacEncoder();
     ~FlacEncoder();
     virtual double encode(msg::PcmChunk* chunk);
-    
+   	virtual std::string getAvailableOptions();
+	virtual std::string getDefaultOptions();
+
     FLAC__StreamEncoderWriteStatus write_callback(const FLAC__StreamEncoder *encoder, const FLAC__byte buffer[], size_t bytes, unsigned samples, unsigned current_frame);
     
 protected:
-    void initEncoder();
+    virtual void initEncoder();
     
     FLAC__StreamEncoder *encoder_;
     FLAC__StreamMetadata *metadata_[2];

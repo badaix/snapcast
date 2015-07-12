@@ -16,14 +16,15 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
-
 #include <boost/program_options.hpp>
 #include <chrono>
 #include <memory>
+
 #include "common/timeDefs.h"
 #include "common/signalHandler.h"
 #include "common/daemon.h"
 #include "common/log.h"
+#include "common/utils.h"
 #include "common/snapException.h"
 #include "message/sampleFormat.h"
 #include "message/message.h"
@@ -61,7 +62,7 @@ int main(int argc, char* argv[])
 		("version,v", "show version number")
 		("port,p", po::value<size_t>(&port)->default_value(98765), "server port")
 		("sampleformat,s", po::value<string>(&sampleFormat)->default_value("44100:16:2"), "sample format")
-		("codec,c", po::value<string>(&codec)->default_value("flac"), "transport codec [flac|ogg|pcm]")
+		("codec,c", po::value<string>(&codec)->default_value("flac"), "transport codec [flac|ogg|pcm][:options]. Type codec:? to get codec specific options")
 		("fifo,f", po::value<string>(&fifoName)->default_value("/tmp/snapfifo"), "name of the input fifo file")
 		("daemon,d", po::bool_switch(&runAsDaemon)->default_value(false), "daemonize")
 		("buffer,b", po::value<int32_t>(&bufferMs)->default_value(1000), "buffer [ms]")
@@ -92,15 +93,38 @@ int main(int argc, char* argv[])
 
 		msg::SampleFormat format(sampleFormat);
 		std::unique_ptr<Encoder> encoder;
+		
+		std::string codecOptions;
+		if (codec.find(":") != std::string::npos)
+		{
+			codecOptions = trim_copy(codec.substr(codec.find(":") + 1));
+			codec = trim_copy(codec.substr(0, codec.find(":")));
+		}
 		if (codec == "ogg")
-			encoder.reset(new OggEncoder(format));
+			encoder.reset(new OggEncoder());
 		else if (codec == "pcm")
-			encoder.reset(new PcmEncoder(format));
+			encoder.reset(new PcmEncoder());
 		else if (codec == "flac")
-			encoder.reset(new FlacEncoder(format));
+			encoder.reset(new FlacEncoder());
 		else
 		{
 			cout << "unknown codec: " << codec << "\n";
+			return 1;
+		}
+		if (codecOptions == "?")
+		{
+			cout << "Options for codec \"" << codec << "\":\n"
+				<< "  " << encoder->getAvailableOptions() << "\n"
+				<< "  Default: \"" << encoder->getDefaultOptions() << "\"\n";
+			return 1;			
+		}
+		try
+		{
+			encoder->init(format, codecOptions);
+		}
+		catch (const std::exception& e)
+		{
+			cout << "Error: " << e.what() << "\n";
 			return 1;
 		}
 
@@ -155,7 +179,7 @@ int main(int argc, char* argv[])
 					do
 					{
 						int count = read(fd, chunk->payload + len, toRead - len);
-//continue;
+
 						if (count <= 0)
 							usleep(100*1000);
 						else

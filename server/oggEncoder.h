@@ -25,12 +25,15 @@
 class OggEncoder : public Encoder
 {
 public:
-	OggEncoder(const msg::SampleFormat& format);
+	OggEncoder();
 	virtual double encode(msg::PcmChunk* chunk);
+	virtual std::string getAvailableOptions();
+	virtual std::string getDefaultOptions();
+
+protected:
+    virtual void initEncoder();
 
 private:
-	void init();
-
 	ogg_stream_state os; /* take physical pages, weld into a logical
 		                  stream of packets */
 	ogg_page         og; /* one Ogg bitstream page.  Vorbis packets are inside */

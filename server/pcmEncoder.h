@@ -24,8 +24,11 @@
 class PcmEncoder : public Encoder
 {
 public:
-	PcmEncoder(const msg::SampleFormat& format);
+	PcmEncoder();
 	virtual double encode(msg::PcmChunk* chunk);
+
+protected:
+    virtual void initEncoder();
 };
 
 
