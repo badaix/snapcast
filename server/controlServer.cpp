@@ -30,8 +30,6 @@ ControlServer::ControlServer(unsigned short port) : port_(port), headerChunk_(NU
 }
 
 
-
-
 void ControlServer::send(shared_ptr<msg::BaseMessage> message)
 {
 	std::unique_lock<std::mutex> mlock(mutex_);
@@ -65,11 +63,9 @@ void ControlServer::onMessageReceived(ServerSession* connection, const msg::Base
 //		logD << "request: " << requestMsg.request << "\n";
 		if (requestMsg.request == kTime)
 		{
-//		timeMsg.latency = (timeMsg.received.sec - timeMsg.sent.sec) * 1000000 + (timeMsg.received.usec - timeMsg.sent.usec);
 			msg::Time timeMsg;
 			timeMsg.refersTo = requestMsg.id;
 			timeMsg.latency = (requestMsg.received.sec - requestMsg.sent.sec) + (requestMsg.received.usec - requestMsg.sent.usec) / 1000000.;
-//		tv diff = timeMsg.received - timeMsg.sent;
 //			logD << "Latency: " << timeMsg.latency << ", refers to: " << timeMsg.refersTo << "\n";
 			connection->send(&timeMsg);
 		}

@@ -37,21 +37,42 @@
 // trim from start
 static inline std::string &ltrim(std::string &s)
 {
-	s.erase(s.begin(), std::find_if(s.begin(), s.end(), std::not1(std::ptr_fun<int, int>(std::isspace))));
-	return s;
+    s.erase(s.begin(), std::find_if(s.begin(), s.end(), std::not1(std::ptr_fun<int, int>(std::isspace))));
+    return s;
 }
 
 // trim from end
 static inline std::string &rtrim(std::string &s)
 {
-	s.erase(std::find_if(s.rbegin(), s.rend(), std::not1(std::ptr_fun<int, int>(std::isspace))).base(), s.end());
-	return s;
+    s.erase(std::find_if(s.rbegin(), s.rend(), std::not1(std::ptr_fun<int, int>(std::isspace))).base(), s.end());
+    return s;
 }
 
 // trim from both ends
 static inline std::string &trim(std::string &s)
 {
 	return ltrim(rtrim(s));
+}
+
+// trim from start
+static inline std::string ltrim_copy(const std::string &s)
+{
+    std::string str(s);
+    return ltrim(str);
+}
+
+// trim from end
+static inline std::string rtrim_copy(const std::string &s)
+{
+    std::string str(s);
+    return rtrim(str);
+}
+
+// trim from both ends
+static inline std::string trim_copy(const std::string &s)
+{
+    std::string str(s);
+	return trim(str);
 }
 
 

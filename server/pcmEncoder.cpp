@@ -18,7 +18,7 @@
 
 #include "pcmEncoder.h"
 
-PcmEncoder::PcmEncoder(const msg::SampleFormat& format) : Encoder(format)
+PcmEncoder::PcmEncoder() : Encoder()
 {
 	headerChunk_ = new msg::Header("pcm");
 }
@@ -30,5 +30,8 @@ double PcmEncoder::encode(msg::PcmChunk* chunk)
 }
 
 
+void PcmEncoder::initEncoder()
+{
+}
 
 

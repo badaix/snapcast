@@ -29,7 +29,7 @@ class SnapException : public std::exception {
 public:
 	SnapException(const char* text) 
 	{
-		text_ = new char[std::strlen(text)]; 
+		text_ = new char[std::strlen(text) + 1]; 
 		std::strcpy(text_, text);
 	}
 
