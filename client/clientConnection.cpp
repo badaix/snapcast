@@ -62,22 +62,20 @@ void ClientConnection::socketRead(void* _to, size_t _bytes)
 void ClientConnection::start()
 {
 	tcp::resolver resolver(io_service_);
-	tcp::resolver::query query(tcp::v4(), ip_, boost::lexical_cast<string>(port_));
+	tcp::resolver::query query(tcp::v4(), ip_, boost::lexical_cast<string>(port_), boost::asio::ip::resolver_query_base::numeric_service);
 	auto iterator = resolver.resolve(query);
-	logO << "connecting\n";
+	logO << "Connecting\n";
 	socket_.reset(new tcp::socket(io_service_));
-//				struct timeval tv;
-//				tv.tv_sec  = 5;
-//				tv.tv_usec = 0;
-//				cout << "socket: " << socket->native() << "\n";
-//				setsockopt(socket->native(), SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
-//				setsockopt(socket->native(), SOL_SOCKET, SO_SNDTIMEO, &tv, sizeof(tv));
-//boost::asio::ip::tcp::endpoint endpoint(boost::asio::ip::address::from_string("127.0.0.1"), port_);
-//socket_->connect(endpoint);//*iterator);
+//	struct timeval tv;
+//	tv.tv_sec  = 5;
+//	tv.tv_usec = 0;
+//	cout << "socket: " << socket->native() << "\n";
+//	setsockopt(socket->native(), SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
+//	setsockopt(socket->native(), SOL_SOCKET, SO_SNDTIMEO, &tv, sizeof(tv));
 	socket_->connect(*iterator);
-	logO << "MAC: \"" << getMacAddress(socket_->native()) << "\"\n";
+	logO << "My MAC: \"" << getMacAddress(socket_->native()) << "\"\n";
 	connected_ = true;
-	logS(kLogNotice) << "connected" << endl;
+	logS(kLogNotice) << "Connected to " << socket_->remote_endpoint().address().to_string() << endl;
 	active_ = true;
 	readerThread_ = new thread(&ClientConnection::reader, this);
 }
