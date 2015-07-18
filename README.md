@@ -97,6 +97,14 @@ To test your mpd installation, you can add a radio station by
     $ sudo su
     $ echo "http://1live.akacast.akamaistream.net/7/706/119434/v1/gnl.akacast.akamaistream.net/1live" > /var/lib/mpd/playlists/einslive.m3u
 
+Mopidy setup
+------------
+Mopidy can stream the audio output into the snapserver's fifo with a `filesink` as audio output:
+
+    [audio]
+    #output = autoaudiosink
+    output = audioresample ! audioconvert ! wavenc ! filesink location=/tmp/snapfifo
+
 PulseAudio setup
 ----------------
 On the server you could create a sink to route sound of your applications to the FIFO:
