@@ -4,7 +4,7 @@ SnapCast
 **S**y**n**chronous **a**udio **p**layer
 
 SnapCast is a multi room client-server audio player, where all clients are time synchronized with the server to play perfectly synced audio.
-The server's audio input is a named pipe `/tmp/snapfifo`. All data that is fed into this file, will be send to the connected clients. One of the most generic ways to use snapcast is in conjunction with the music player daemon (mpd), which can be configured to use a named pipe as audio output.
+The server's audio input is a named pipe `/tmp/snapfifo`. All data that is fed into this file, will be send to the connected clients. One of the most generic ways to use snapcast is in conjunction with the music player daemon ([MPD](http://www.musicpd.org/)), which can be configured to use a named pipe as audio output.
 
 How does is work
 ----------------
@@ -67,7 +67,7 @@ https://www.raspberrypi.org/documentation/configuration/wireless/wireless-cli.md
 
 MPD setup
 ---------
-To connect MPD to the snapserver, edit `/etc/mpd.conf`, so that mpd will feed the audio into the snap-server's named pipe
+To connect [MPD](http://www.musicpd.org/) to the snapserver, edit `/etc/mpd.conf`, so that mpd will feed the audio into the snap-server's named pipe
 
 Disable alsa audio output by commenting out this section:
 
@@ -99,7 +99,7 @@ To test your mpd installation, you can add a radio station by
 
 Mopidy setup
 ------------
-Mopidy can stream the audio output into the snapserver's fifo with a `filesink` as audio output:
+[Mopidy](https://www.mopidy.com/) can stream the audio output into the snapserver's fifo with a `filesink` as audio output:
 
     [audio]
     #output = autoaudiosink
