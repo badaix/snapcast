@@ -8,12 +8,12 @@ The server's audio input is a named pipe `/tmp/snapfifo`. All data that is fed i
 
 How does is work
 ----------------
-The snapserver reads PCM chunks of 50ms duration from the pipe `/tmp/snapfifo`. The chunk is encoded and tagged with the local time
+The SnapServer reads PCM chunks of 50ms duration from the pipe `/tmp/snapfifo`. The chunk is encoded and tagged with the local time
 * PCM: lossless uncompressed
 * FLAC: lossless compressed [default]
 * Vorbis: lossy compression
 
-The encoded chunk is sent via a TCP connection to the snapclients.
+The encoded chunk is sent via a TCP connection to the SnapClients.
 Each client does continuos time synchronization with the server, so that the client is always aware of the local server time.  
 Every received chunk is first decoded and added to the client's chunk-buffer. Knowing the server's time, the chunk is played out using alsa at the appropriate time. Time deviations are corrected by 
 * skipping parts or whole chunks
@@ -41,7 +41,7 @@ Build snapcast by cd'ing into the snapcast src-root directory
     $ cd <MY_SNAPCAST_ROOT>
     $ make
     
-Install snapclient and/or snapserver:
+Install SnapClient and/or SnapServer:
 
     $ sudo make installserver
     $ sudo make installclient
@@ -65,9 +65,13 @@ To setup WiFi on a raspberry pi, you can follow this guide:
 https://www.raspberrypi.org/documentation/configuration/wireless/wireless-cli.md
 
 
-MPD setup
----------
-To connect [MPD](http://www.musicpd.org/) to the snapserver, edit `/etc/mpd.conf`, so that mpd will feed the audio into the snap-server's named pipe
+Setup of audio players/server
+-----------------------------
+Snapcast can be used with a number of different audio players and servers, and so it can be integrated into your favorite audio-player solultion and make it multiroom capable.  
+The only requirement is that the player's audio can be redirected into the SnapServer's fifo `/tmp/snapfifo`. In the following configuration hints for [MPD](http://www.musicpd.org/) and [Mopidy](https://www.mopidy.com/) are given, which are base of other audio player solutions, like [Volumio](https://volumio.org/) or [RuneAudio](http://www.runeaudio.com/).
+
+###MPD setup
+To connect [MPD](http://www.musicpd.org/) to the SnapServer, edit `/etc/mpd.conf`, so that mpd will feed the audio into the snap-server's named pipe
 
 Disable alsa audio output by commenting out this section:
 
@@ -82,7 +86,7 @@ Disable alsa audio output by commenting out this section:
     #}
 
 Add a new audio output of the type "fifo", which will let mpd play audio into the named pipe `/tmp/snapfifo`.
-Make sure that the "format" setting is the same as the format setting of the snapserver (default is "44100:16:2", which should make resampling unnecessary in most cases)
+Make sure that the "format" setting is the same as the format setting of the SnapServer (default is "44100:16:2", which should make resampling unnecessary in most cases)
 
     audio_output {
         type            "fifo"
@@ -97,16 +101,14 @@ To test your mpd installation, you can add a radio station by
     $ sudo su
     $ echo "http://1live.akacast.akamaistream.net/7/706/119434/v1/gnl.akacast.akamaistream.net/1live" > /var/lib/mpd/playlists/einslive.m3u
 
-Mopidy setup
-------------
-[Mopidy](https://www.mopidy.com/) can stream the audio output into the snapserver's fifo with a `filesink` as audio output:
+###Mopidy setup
+[Mopidy](https://www.mopidy.com/) can stream the audio output into the SnapServer's fifo with a `filesink` as audio output:
 
     [audio]
     #output = autoaudiosink
     output = audioresample ! audioconvert ! wavenc ! filesink location=/tmp/snapfifo
 
-PulseAudio setup
-----------------
+###PulseAudio setup
 On the server you could create a sink to route sound of your applications to the FIFO:
 ```
 pacmd load-module module-pipe-sink file=/tmp/snapfifo
