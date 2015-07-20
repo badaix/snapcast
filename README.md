@@ -67,7 +67,7 @@ https://www.raspberrypi.org/documentation/configuration/wireless/wireless-cli.md
 
 Setup of audio players/server
 -----------------------------
-Snapcast can be used with a number of different audio players and servers, and so it can be integrated into your favorite audio-player solultion and make it multiroom capable.  
+Snapcast can be used with a number of different audio players and servers, and so it can be integrated into your favorite audio-player solultion and make it synced-multiroom capable.  
 The only requirement is that the player's audio can be redirected into the SnapServer's fifo `/tmp/snapfifo`. In the following configuration hints for [MPD](http://www.musicpd.org/) and [Mopidy](https://www.mopidy.com/) are given, which are base of other audio player solutions, like [Volumio](https://volumio.org/) or [RuneAudio](http://www.runeaudio.com/).
 
 ###MPD setup
