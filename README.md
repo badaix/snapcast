@@ -3,8 +3,8 @@ SnapCast
 
 **S**y**n**chronous **a**udio **p**layer
 
-SnapCast is a multi room client-server audio player, where all clients are time synchronized with the server to play perfectly synced audio.  
-The server's audio input is a named pipe `/tmp/snapfifo`. All data that is fed into this file, will be send to the connected clients. One of the most generic ways to use SnapCast is in conjunction with the music player daemon ([MPD](http://www.musicpd.org/)), which can be configured to use a named pipe as audio output.
+SnapCast is a multi-room client-server audio player, where all clients are time synchronized with the server to play perfectly synced audio. It's not a standalone player, but an extension that turns your existing audio player into a Sonos-like multi-room solution.  
+The server's audio input is a named pipe `/tmp/snapfifo`. All data that is fed into this file, will be send to the connected clients. One of the most generic ways to use SnapCast is in conjunction with the music player daemon ([MPD](http://www.musicpd.org/)) or [Mopidy](https://www.mopidy.com/), which can be configured to use a named pipe as audio output.
 
 How does is work
 ----------------
@@ -67,8 +67,8 @@ https://www.raspberrypi.org/documentation/configuration/wireless/wireless-cli.md
 
 Setup of audio players/server
 -----------------------------
-SnapCast can be used with a number of different audio players and servers, and so it can be integrated into your favorite audio-player solultion and make it synced-multiroom capable.  
-The only requirement is that the player's audio can be redirected into the SnapServer's fifo `/tmp/snapfifo`. In the following configuration hints for [MPD](http://www.musicpd.org/) and [Mopidy](https://www.mopidy.com/) are given, which are base of other audio player solutions, like [Volumio](https://volumio.org/) or [RuneAudio](http://www.runeaudio.com/).
+SnapCast can be used with a number of different audio players and servers, and so it can be integrated into your favorite audio-player solution and make it synced-multiroom capable.  
+The only requirement is that the player's audio can be redirected into the SnapServer's fifo `/tmp/snapfifo`. In the following configuration hints for [MPD](http://www.musicpd.org/) and [Mopidy](https://www.mopidy.com/) are given, which are base of other audio player solutions, like [Volumio](https://volumio.org/) or [RuneAudio](http://www.runeaudio.com/) (both MPD) or [Pi MusicBox](http://www.pimusicbox.com/) (Mopidy).
 
 ###MPD setup
 To connect [MPD](http://www.musicpd.org/) to the SnapServer, edit `/etc/mpd.conf`, so that mpd will feed the audio into the snap-server's named pipe
