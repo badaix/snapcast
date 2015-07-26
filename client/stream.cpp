@@ -276,7 +276,10 @@ bool Stream::getPlayerChunk(void* outputBuffer, const cs::usec& outputBufferDacT
 			}
 		}
 
+		// framesCorrection = number of frames to be read more or less to get in-sync
 		long framesCorrection = correction.count()*format_.usRate();
+		
+		// sample rate correction
 		if ((correctAfterXFrames_ != 0) && (playedFrames_ >= (unsigned long)abs(correctAfterXFrames_)))
 		{
 			framesCorrection += (correctAfterXFrames_ > 0)?1:-1;

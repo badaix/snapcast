@@ -20,7 +20,6 @@
 #include <iostream>
 #include <string>
 #include <memory>
-#include <unistd.h>
 #include "oggDecoder.h"
 #include "pcmDecoder.h"
 #include "flacDecoder.h"
@@ -123,7 +122,7 @@ void Controller::worker()
 			decoder_->setHeader(headerChunk.get());
 
 			msg::Request timeReq(kTime);
-			for (size_t n=0; n<100 && active_; ++n)
+			for (size_t n=0; n<50 && active_; ++n)
 			{
 				shared_ptr<msg::Time> reply = clientConnection_->sendReq<msg::Time>(&timeReq, chronos::msec(2000));
 				if (reply)
