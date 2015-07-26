@@ -28,24 +28,30 @@
 using namespace std;
 
 
-OggEncoder::OggEncoder() : Encoder(), lastGranulepos(0), eos(0)
+OggEncoder::OggEncoder(const std::string& codecOptions) : Encoder(codecOptions), lastGranulepos(0), eos(0)
 {
 }
 
 
-std::string OggEncoder::getAvailableOptions()
+std::string OggEncoder::getAvailableOptions() const
 {
 	return "VBR:[-0.1 - 1.0]";
 }
 
 
-std::string OggEncoder::getDefaultOptions()
+std::string OggEncoder::getDefaultOptions() const
 {
 	return "VBR:0.9";
 }
 
 
-double OggEncoder::encode(msg::PcmChunk* chunk)
+std::string OggEncoder::name() const
+{
+	return "ogg";
+}
+
+
+void OggEncoder::encode(const msg::PcmChunk* chunk)
 {
 	double res = 0;
 	logD << "payload: " << chunk->payloadSize << "\tframes: " << chunk->getFrameCount() << "\tduration: " << chunk->duration<chronos::msec>().count() << "\n";
@@ -62,6 +68,8 @@ double OggEncoder::encode(msg::PcmChunk* chunk)
 
 	/* tell the library how much we actually submitted */
 	vorbis_analysis_wrote(&vd, bytes);
+
+	msg::PcmChunk* oggChunk = new msg::PcmChunk(chunk->format, 0);
 
 	/* vorbis does some data preanalysis, then divvies up blocks for
 	more involved (potentially parallel) processing.  Get a single
@@ -88,31 +96,32 @@ double OggEncoder::encode(msg::PcmChunk* chunk)
 
 				size_t nextLen = pos + og.header_len + og.body_len;
 				// make chunk larger
-				if (chunk->payloadSize < nextLen)
-					chunk->payload = (char*)realloc(chunk->payload, nextLen);
+				if (oggChunk->payloadSize < nextLen)
+					oggChunk->payload = (char*)realloc(oggChunk->payload, nextLen);
 
-				memcpy(chunk->payload + pos, og.header, og.header_len);
+				memcpy(oggChunk->payload + pos, og.header, og.header_len);
 				pos += og.header_len;
-				memcpy(chunk->payload + pos, og.body, og.body_len);
+				memcpy(oggChunk->payload + pos, og.body, og.body_len);
 				pos += og.body_len;
-				
+
 				if (ogg_page_eos(&og))
 					break;
 			}
 		}
 	}
-	
+
 	if (res > 0)
 	{
 		res /= (sampleFormat_.rate / 1000.);
-		logD << "res: " << res << "\n";
+		logO << "res: " << res << "\n";
 		lastGranulepos = os.granulepos;
-		// make chunk smaller
-		chunk->payload = (char*)realloc(chunk->payload, pos);
-		chunk->payloadSize = pos;
+		// make oggChunk smaller
+		oggChunk->payload = (char*)realloc(oggChunk->payload, pos);
+		oggChunk->payloadSize = pos;
+		listener_->onChunkEncoded(this, oggChunk, res);
 	}
-	
-	return res;
+	else
+		delete oggChunk;
 }
 
 
@@ -123,7 +132,7 @@ void OggEncoder::initEncoder()
 	string mode = trim_copy(codecOptions_.substr(0, codecOptions_.find(":")));
 	if (mode != "VBR")
 		throw SnapException("Unsupported codec mode: \"" + mode + "\". Available: \"VBR\"");
-	
+
 	string qual = trim_copy(codecOptions_.substr(codecOptions_.find(":") + 1));
 	double quality = 1.0;
 	try
@@ -138,7 +147,7 @@ void OggEncoder::initEncoder()
 	{
 		throw SnapException("compression level has to be between -0.1 and 1.0");
 	}
-	
+
 	/********** Encode setup ************/
 	vorbis_info_init(&vi);
 
@@ -205,7 +214,7 @@ void OggEncoder::initEncoder()
 	ogg_packet header;
 	ogg_packet header_comm;
 	ogg_packet header_code;
-	    
+
 	vorbis_analysis_headerout(&vd,&vc,&header,&header_comm,&header_code);
 	ogg_stream_packetin(&os,&header);
 	ogg_stream_packetin(&os,&header_comm);

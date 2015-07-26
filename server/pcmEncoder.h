@@ -24,8 +24,9 @@
 class PcmEncoder : public Encoder
 {
 public:
-	PcmEncoder();
-	virtual double encode(msg::PcmChunk* chunk);
+	PcmEncoder(const std::string& codecOptions = "");
+	virtual void encode(const msg::PcmChunk* chunk);
+	virtual std::string name() const;
 
 protected:
     virtual void initEncoder();

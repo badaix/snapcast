@@ -25,13 +25,14 @@
 class OggEncoder : public Encoder
 {
 public:
-	OggEncoder();
-	virtual double encode(msg::PcmChunk* chunk);
-	virtual std::string getAvailableOptions();
-	virtual std::string getDefaultOptions();
+	OggEncoder(const std::string& codecOptions = "");
+	virtual void encode(const msg::PcmChunk* chunk);
+	virtual std::string getAvailableOptions() const;
+	virtual std::string getDefaultOptions() const;
+	virtual std::string name() const;
 
 protected:
-    virtual void initEncoder();
+	virtual void initEncoder();
 
 private:
 	ogg_stream_state os; /* take physical pages, weld into a logical

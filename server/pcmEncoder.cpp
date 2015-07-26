@@ -16,22 +16,30 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
+#include <memory>
 #include "pcmEncoder.h"
 
-PcmEncoder::PcmEncoder() : Encoder()
+PcmEncoder::PcmEncoder(const std::string& codecOptions) : Encoder(codecOptions)
 {
 	headerChunk_ = new msg::Header("pcm");
 }
 
 
-double PcmEncoder::encode(msg::PcmChunk* chunk)
+void PcmEncoder::encode(const msg::PcmChunk* chunk)
 {
-	return chunk->duration<chronos::msec>().count();
+	msg::PcmChunk* pcmChunk = new msg::PcmChunk(*chunk);
+	listener_->onChunkEncoded(this, pcmChunk, pcmChunk->duration<chronos::msec>().count());
 }
 
 
 void PcmEncoder::initEncoder()
 {
+}
+
+
+std::string PcmEncoder::name() const
+{
+	return "pcm";
 }
 
 
