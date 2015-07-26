@@ -20,17 +20,15 @@
 #include <chrono>
 #include <memory>
 
+#include <sys/resource.h>
 #include "common/timeDefs.h"
 #include "common/signalHandler.h"
 #include "common/daemon.h"
 #include "common/log.h"
-#include "common/utils.h"
 #include "common/snapException.h"
 #include "message/sampleFormat.h"
 #include "message/message.h"
-#include "pcmEncoder.h"
-#include "oggEncoder.h"
-#include "flacEncoder.h"
+#include "encoderFactory.h"
 #include "controlServer.h"
 #include "publishAvahi.h"
 
@@ -48,24 +46,20 @@ int main(int argc, char* argv[])
 {
 	try
 	{
-		string sampleFormat;
-
-		size_t port;
-		string fifoName;
-		string codec;
+		ControlServerSettings settings;
 		bool runAsDaemon;
-		int32_t bufferMs;
+		string sampleFormat;
 
 		po::options_description desc("Allowed options");
 		desc.add_options()
 		("help,h", "produce help message")
 		("version,v", "show version number")
-		("port,p", po::value<size_t>(&port)->default_value(98765), "server port")
+		("port,p", po::value<size_t>(&settings.port)->default_value(98765), "server port")
 		("sampleformat,s", po::value<string>(&sampleFormat)->default_value("44100:16:2"), "sample format")
-		("codec,c", po::value<string>(&codec)->default_value("flac"), "transport codec [flac|ogg|pcm][:options]. Type codec:? to get codec specific options")
-		("fifo,f", po::value<string>(&fifoName)->default_value("/tmp/snapfifo"), "name of the input fifo file")
+		("codec,c", po::value<string>(&settings.codec)->default_value("flac"), "transport codec [flac|ogg|pcm][:options]. Type codec:? to get codec specific options")
+		("fifo,f", po::value<string>(&settings.fifoName)->default_value("/tmp/snapfifo"), "name of the input fifo file")
 		("daemon,d", po::bool_switch(&runAsDaemon)->default_value(false), "daemonize")
-		("buffer,b", po::value<int32_t>(&bufferMs)->default_value(1000), "buffer [ms]")
+		("buffer,b", po::value<int32_t>(&settings.bufferMs)->default_value(1000), "buffer [ms]")
 		;
 
 		po::variables_map vm;
@@ -81,7 +75,7 @@ int main(int argc, char* argv[])
 		if (vm.count("version"))
 		{
 			cout << "snapserver " << VERSION << "\n"
-				 << "Copyright (C) 2014 BadAix (snapcast@badaix.de).\n"
+				 << "Copyright (C) 2014, 2015 BadAix (snapcast@badaix.de).\n"
 				 << "License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>.\n"
 				 << "This is free software: you are free to change and redistribute it.\n"
 				 << "There is NO WARRANTY, to the extent permitted by law.\n\n"
@@ -89,56 +83,20 @@ int main(int argc, char* argv[])
 			return 1;
 		}
 
+		if (settings.codec.find(":?") != string::npos)
+		{
+			EncoderFactory encoderFactory;
+			std::unique_ptr<Encoder> encoder(encoderFactory.createEncoder(settings.codec));
+			if (encoder)
+			{
+				cout << "Options for codec \"" << encoder->name() << "\":\n"
+					<< "  " << encoder->getAvailableOptions() << "\n"
+					<< "  Default: \"" << encoder->getDefaultOptions() << "\"\n";
+			}
+			return 1;
+		}
+
 		std::clog.rdbuf(new Log("snapserver", LOG_DAEMON));
-
-		msg::SampleFormat format(sampleFormat);
-		std::unique_ptr<Encoder> encoder;
-		
-		std::string codecOptions;
-		if (codec.find(":") != std::string::npos)
-		{
-			codecOptions = trim_copy(codec.substr(codec.find(":") + 1));
-			codec = trim_copy(codec.substr(0, codec.find(":")));
-		}
-		if (codec == "ogg")
-			encoder.reset(new OggEncoder());
-		else if (codec == "pcm")
-			encoder.reset(new PcmEncoder());
-		else if (codec == "flac")
-			encoder.reset(new FlacEncoder());
-		else
-		{
-			cout << "unknown codec: " << codec << "\n";
-			return 1;
-		}
-		if (codecOptions == "?")
-		{
-			cout << "Options for codec \"" << codec << "\":\n"
-				<< "  " << encoder->getAvailableOptions() << "\n"
-				<< "  Default: \"" << encoder->getDefaultOptions() << "\"\n";
-			return 1;			
-		}
-		try
-		{
-			encoder->init(format, codecOptions);
-		}
-		catch (const std::exception& e)
-		{
-			cout << "Error: " << e.what() << "\n";
-			return 1;
-		}
-
-		umask(0);
-		mkfifo(fifoName.c_str(), 0666);
-		int fd = open(fifoName.c_str(), O_RDONLY | O_NONBLOCK);
-		if (fd == -1)
-		{
-			cout << "failed to open fifo: " << fifoName << "\n";
-			return 1;
-		}
-
-		msg::ServerSettings serverSettings;
-		serverSettings.bufferMs = bufferMs;
 
 		signal(SIGHUP, signal_handler);
 		signal(SIGTERM, signal_handler);
@@ -147,74 +105,21 @@ int main(int argc, char* argv[])
 		if (runAsDaemon)
 		{
 			daemonize("/var/run/snapserver.pid");
+			setpriority(PRIO_PROCESS, 0, -5);
 			logS(kLogNotice) << "daemon started." << endl;
 		}
 
-		ControlServer* controlServer = new ControlServer(port);
-		controlServer->setServerSettings(&serverSettings);
-		controlServer->setFormat(&format);
-		controlServer->setHeader(encoder->getHeader());
-		controlServer->start();
-
 		PublishAvahi publishAvahi("SnapCast");
 		std::vector<AvahiService> services;
-		services.push_back(AvahiService("_snapcast._tcp", port));
+		services.push_back(AvahiService("_snapcast._tcp", settings.port));
 		publishAvahi.publish(services);
 
-		timeval tvChunk;
-		gettimeofday(&tvChunk, NULL);
-		long nextTick = chronos::getTickCount();
-		size_t pcmReadMs = 20;
-		
+		settings.sampleFormat = sampleFormat;
+		ControlServer* controlServer = new ControlServer(settings);
+		controlServer->start();
+
 		while (!g_terminated)
-		{
-			try
-			{
-				shared_ptr<msg::PcmChunk> chunk;
-				while (!g_terminated)//cin.good())
-				{
-					chunk.reset(new msg::PcmChunk(sampleFormat, pcmReadMs));
-					int toRead = chunk->payloadSize;
-					int len = 0;
-					do
-					{
-						int count = read(fd, chunk->payload + len, toRead - len);
-
-						if (count <= 0)
-							usleep(100*1000);
-						else
-							len += count;
-					}
-					while ((len < toRead) && !g_terminated);
-
-					chunk->timestamp.sec = tvChunk.tv_sec;
-					chunk->timestamp.usec = tvChunk.tv_usec;
-					double chunkDuration = encoder->encode(chunk.get());
-					if (chunkDuration > 0)
-						controlServer->send(chunk);
-//					logO << chunkDuration << "\n";
-//                    addUs(tvChunk, 1000*chunk->getDuration());
-					nextTick += pcmReadMs;
-					chronos::addUs(tvChunk, chunkDuration * 1000);
-					long currentTick = chronos::getTickCount();
-					if (nextTick > currentTick)
-					{
-						usleep((nextTick - currentTick) * 1000);
-					}	
-					else
-					{
-						gettimeofday(&tvChunk, NULL);
-						nextTick = chronos::getTickCount();
-					}
-				}
-			}
-			catch(const std::exception& e)
-			{
-				std::cerr << "Exception: " << e.what() << std::endl;
-			}
-			close(fd);
-		}
-
+			usleep(100*1000);
 	}
 	catch (const std::exception& e)
 	{
