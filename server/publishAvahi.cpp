@@ -17,7 +17,6 @@
   USA.
 ***/
 
-#include <unistd.h>
 #include "publishAvahi.h"
 #include "common/log.h"
 
@@ -42,7 +41,7 @@ void PublishAvahi::publish(const std::vector<AvahiService>& services)
     int error;
 
     /* Allocate main loop object */
-    if (!(simple_poll = avahi_simple_poll_new())) 
+    if (!(simple_poll = avahi_simple_poll_new()))
 	{
         logE << "Failed to create simple poll object.\n";
     }
@@ -51,7 +50,7 @@ void PublishAvahi::publish(const std::vector<AvahiService>& services)
     client = avahi_client_new(avahi_simple_poll_get(simple_poll), AVAHI_CLIENT_IGNORE_USER_CONFIG, client_callback, this, &error);
 
     /* Check wether creating the client object succeeded */
-    if (!client) 
+    if (!client)
 	{
         logE << "Failed to create client: " << avahi_strerror(error) << "\n";
     }
@@ -61,7 +60,7 @@ void PublishAvahi::publish(const std::vector<AvahiService>& services)
 }
 
 
-void PublishAvahi::worker() 
+void PublishAvahi::worker()
 {
 	while (active_ && (avahi_simple_poll_iterate(simple_poll, 100) == 0));
 }
@@ -166,7 +165,7 @@ void PublishAvahi::create_services(AvahiClient *c) {
         /* Add the same service for BSD LPR */
 		for (size_t n=0; n<services.size(); ++n)
 		{
-	        if ((ret = avahi_entry_group_add_service(group, AVAHI_IF_UNSPEC, services[n].proto_, AvahiPublishFlags(0), name, services[n].name_.c_str(), NULL, NULL, services[n].port_, NULL)) < 0) 
+	        if ((ret = avahi_entry_group_add_service(group, AVAHI_IF_UNSPEC, services[n].proto_, AvahiPublishFlags(0), name, services[n].name_.c_str(), NULL, NULL, services[n].port_, NULL)) < 0)
 			{
 
     	        if (ret == AVAHI_ERR_COLLISION)

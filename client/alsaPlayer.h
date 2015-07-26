@@ -39,7 +39,7 @@ public:
 
 private:
 	void initAlsa();
-    void uninitAlsa();
+	void uninitAlsa();
 	void worker();
 	snd_pcm_t* handle_;
 	snd_pcm_uframes_t frames_;
