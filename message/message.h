@@ -75,16 +75,20 @@ struct tv
 
 	int32_t sec;
 	int32_t usec;
-	/*
-	5.3 - 6.2 = -0.9
-	-1
-	0.1
 
-	5.3 - 6.4 = -1.1
-	-1
-	-0.1
-	*/
-//(timeMsg.received.sec - timeMsg.sent.sec) * 1000000 + (timeMsg.received.usec - timeMsg.sent.usec)
+	tv operator+(const tv& other)
+	{
+		tv result(*this);
+		result.sec += other.sec;
+		result.usec += other.usec;
+		if (result.usec > 1000000)
+		{
+			result.sec += result.usec / 1000000;
+			result.usec %= 1000000;
+		}
+		return result;
+	}
+
 	tv operator-(const tv& other)
 	{
 		tv result(*this);
@@ -130,10 +134,10 @@ struct BaseMessage
 		stream.read(reinterpret_cast<char*>(&type), sizeof(uint16_t));
 		stream.read(reinterpret_cast<char*>(&id), sizeof(uint16_t));
 		stream.read(reinterpret_cast<char*>(&refersTo), sizeof(uint16_t));
-		stream.read(reinterpret_cast<char *>(&sent.sec), sizeof(int32_t));
-		stream.read(reinterpret_cast<char *>(&sent.usec), sizeof(int32_t));
-		stream.read(reinterpret_cast<char *>(&received.sec), sizeof(int32_t));
-		stream.read(reinterpret_cast<char *>(&received.usec), sizeof(int32_t));
+		stream.read(reinterpret_cast<char*>(&sent.sec), sizeof(int32_t));
+		stream.read(reinterpret_cast<char*>(&sent.usec), sizeof(int32_t));
+		stream.read(reinterpret_cast<char*>(&received.sec), sizeof(int32_t));
+		stream.read(reinterpret_cast<char*>(&received.usec), sizeof(int32_t));
 		stream.read(reinterpret_cast<char*>(&size), sizeof(uint32_t));
 	}
 
@@ -157,34 +161,34 @@ struct BaseMessage
 		read(is);
 	}
 
-	virtual void serialize(std::ostream& stream)
+	virtual void serialize(std::ostream& stream) const
 	{
-		stream.write(reinterpret_cast<char*>(&type), sizeof(uint16_t));
-		stream.write(reinterpret_cast<char*>(&id), sizeof(uint16_t));
-		stream.write(reinterpret_cast<char*>(&refersTo), sizeof(uint16_t));
-		stream.write(reinterpret_cast<char *>(&sent.sec), sizeof(int32_t));
-		stream.write(reinterpret_cast<char *>(&sent.usec), sizeof(int32_t));
-		stream.write(reinterpret_cast<char *>(&received.sec), sizeof(int32_t));
-		stream.write(reinterpret_cast<char *>(&received.usec), sizeof(int32_t));
+		stream.write(reinterpret_cast<const char*>(&type), sizeof(uint16_t));
+		stream.write(reinterpret_cast<const char*>(&id), sizeof(uint16_t));
+		stream.write(reinterpret_cast<const char*>(&refersTo), sizeof(uint16_t));
+		stream.write(reinterpret_cast<const char *>(&sent.sec), sizeof(int32_t));
+		stream.write(reinterpret_cast<const char *>(&sent.usec), sizeof(int32_t));
+		stream.write(reinterpret_cast<const char *>(&received.sec), sizeof(int32_t));
+		stream.write(reinterpret_cast<const char *>(&received.usec), sizeof(int32_t));
 		size = getSize();
-		stream.write(reinterpret_cast<char*>(&size), sizeof(uint32_t));
+		stream.write(reinterpret_cast<const char*>(&size), sizeof(uint32_t));
 		doserialize(stream);
 	}
 
-	virtual uint32_t getSize()
+	virtual uint32_t getSize() const
 	{
 		return 3*sizeof(uint16_t) + 2*sizeof(tv) + sizeof(uint32_t);
 	};
 
 	uint16_t type;
-	uint16_t id;
+	mutable uint16_t id;
 	uint16_t refersTo;
-	tv sent;
 	tv received;
-	uint32_t size;
+	mutable tv sent;
+	mutable uint32_t size;
 
 protected:
-	virtual void doserialize(std::ostream& stream)
+	virtual void doserialize(std::ostream& stream) const
 	{
 	};
 };

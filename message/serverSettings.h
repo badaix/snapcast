@@ -41,7 +41,7 @@ public:
 		stream.read(reinterpret_cast<char *>(&bufferMs), sizeof(int32_t));
 	}
 
-	virtual uint32_t getSize()
+	virtual uint32_t getSize() const
 	{
 		return sizeof(int32_t);
 	}
@@ -49,9 +49,9 @@ public:
 	int32_t bufferMs;
 
 protected:
-	virtual void doserialize(std::ostream& stream)
+	virtual void doserialize(std::ostream& stream) const
 	{
-		stream.write(reinterpret_cast<char *>(&bufferMs), sizeof(int32_t));
+		stream.write(reinterpret_cast<const char *>(&bufferMs), sizeof(int32_t));
 	}
 };
 

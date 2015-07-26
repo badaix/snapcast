@@ -32,6 +32,11 @@ PcmChunk::PcmChunk(const SampleFormat& sampleFormat, size_t ms) : WireChunk(samp
 }
 
 
+PcmChunk::PcmChunk(const PcmChunk& pcmChunk) : WireChunk(pcmChunk), format(pcmChunk.format), idx(0)
+{
+}
+
+
 PcmChunk::PcmChunk() : WireChunk(), idx(0)
 {
 }
