@@ -25,12 +25,13 @@
 #include <iostream>
 
 
-ControlServer::ControlServer(unsigned short port) : port_(port), headerChunk_(NULL), sampleFormat_(NULL)
+ControlServer::ControlServer(const ControlServerSettings& controlServerSettings) : settings_(controlServerSettings), sampleFormat_(controlServerSettings.sampleFormat)
 {
+	serverSettings_.bufferMs = settings_.bufferMs;
 }
 
 
-void ControlServer::send(shared_ptr<msg::BaseMessage> message)
+void ControlServer::send(const msg::BaseMessage* message)
 {
 	std::unique_lock<std::mutex> mlock(mutex_);
 	for (auto it = sessions_.begin(); it != sessions_.end(); )
@@ -38,7 +39,7 @@ void ControlServer::send(shared_ptr<msg::BaseMessage> message)
 		if (!(*it)->active())
 		{
 			logO << "Session inactive. Removing\n";
-			// don't block: remove ServerSession in a thread 
+			// don't block: remove ServerSession in a thread
 			auto func = [](shared_ptr<ServerSession> s)->void{s->stop();};
 			std::thread t(func, *it);
 			t.detach();
@@ -48,19 +49,33 @@ void ControlServer::send(shared_ptr<msg::BaseMessage> message)
 			++it;
 	}
 
+	std::shared_ptr<const msg::BaseMessage> shared_message(message);
 	for (auto s : sessions_)
-		s->add(message);
+		s->add(shared_message);
+}
+
+
+void ControlServer::onChunkRead(const PipeReader* pipeReader, const msg::PcmChunk* chunk)
+{
+//	logO << "onChunkRead " << chunk->duration<chronos::msec>().count() << "ms\n";
+	send(chunk);
+}
+
+
+void ControlServer::onResync(const PipeReader* pipeReader, double ms)
+{
+	logO << "onResync " << ms << "ms\n";
 }
 
 
 void ControlServer::onMessageReceived(ServerSession* connection, const msg::BaseMessage& baseMessage, char* buffer)
 {
-//	logD << "getNextMessage: " << baseMessage.type << ", size: " << baseMessage.size << ", id: " << baseMessage.id << ", refers: " << baseMessage.refersTo << ", sent: " << baseMessage.sent.sec << "," << baseMessage.sent.usec << ", recv: " << baseMessage.received.sec << "," << baseMessage.received.usec << "\n";
+//	logO << "getNextMessage: " << baseMessage.type << ", size: " << baseMessage.size << ", id: " << baseMessage.id << ", refers: " << baseMessage.refersTo << ", sent: " << baseMessage.sent.sec << "," << baseMessage.sent.usec << ", recv: " << baseMessage.received.sec << "," << baseMessage.received.usec << "\n";
 	if (baseMessage.type == message_type::kRequest)
 	{
 		msg::Request requestMsg;
 		requestMsg.deserialize(baseMessage, buffer);
-//		logD << "request: " << requestMsg.request << "\n";
+//		logO << "request: " << requestMsg.request << "\n";
 		if (requestMsg.request == kTime)
 		{
 			msg::Time timeMsg;
@@ -72,20 +87,21 @@ void ControlServer::onMessageReceived(ServerSession* connection, const msg::Base
 		else if (requestMsg.request == kServerSettings)
 		{
 			std::unique_lock<std::mutex> mlock(mutex_);
-			serverSettings_->refersTo = requestMsg.id;
-			connection->send(serverSettings_);
+			serverSettings_.refersTo = requestMsg.id;
+			connection->send(&serverSettings_);
 		}
 		else if (requestMsg.request == kSampleFormat)
 		{
 			std::unique_lock<std::mutex> mlock(mutex_);
-			sampleFormat_->refersTo = requestMsg.id;
-			connection->send(sampleFormat_);
+			sampleFormat_.refersTo = requestMsg.id;
+			connection->send(&sampleFormat_);
 		}
 		else if (requestMsg.request == kHeader)
 		{
 			std::unique_lock<std::mutex> mlock(mutex_);
-			headerChunk_->refersTo = requestMsg.id;
-			connection->send(headerChunk_);
+			msg::Header* headerChunk = pipeReader_->getHeader();
+			headerChunk->refersTo = requestMsg.id;
+			connection->send(headerChunk);
 		}
 	}
 	else if (baseMessage.type == message_type::kCommand)
@@ -105,7 +121,7 @@ void ControlServer::onMessageReceived(ServerSession* connection, const msg::Base
 
 void ControlServer::acceptor()
 {
-	tcp::acceptor a(io_service_, tcp::endpoint(tcp::v4(), port_));
+	tcp::acceptor a(io_service_, tcp::endpoint(tcp::v4(), settings_.port));
 	for (;;)
 	{
 		socket_ptr sock(new tcp::socket(io_service_));
@@ -128,6 +144,8 @@ void ControlServer::acceptor()
 
 void ControlServer::start()
 {
+	pipeReader_ = new PipeReader(this, settings_.sampleFormat, settings_.codec, settings_.fifoName);
+	pipeReader_->start();
 	acceptThread_ = new thread(&ControlServer::acceptor, this);
 }
 
@@ -136,30 +154,4 @@ void ControlServer::stop()
 {
 //		acceptThread->join();
 }
-
-
-void ControlServer::setHeader(msg::Header* header)
-{
-	if (header)
-		headerChunk_ = header;
-}
-
-
-void ControlServer::setFormat(msg::SampleFormat* format)
-{
-	if (format)
-		sampleFormat_ = format;
-}
-
-
-
-void ControlServer::setServerSettings(msg::ServerSettings* settings)
-{
-	if (settings)
-		serverSettings_ = settings;
-}
-
-
-
-
 

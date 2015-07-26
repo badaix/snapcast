@@ -28,6 +28,7 @@
 #include <mutex>
 
 #include "serverSession.h"
+#include "pipeReader.h"
 #include "common/queue.h"
 #include "message/message.h"
 #include "message/header.h"
@@ -40,28 +41,38 @@ typedef std::shared_ptr<tcp::socket> socket_ptr;
 using namespace std;
 
 
-class ControlServer : public MessageReceiver
+struct ControlServerSettings
+{
+	size_t port;
+	std::string fifoName;
+	std::string codec;
+	int32_t bufferMs;
+	msg::SampleFormat sampleFormat;
+};
+
+
+class ControlServer : public MessageReceiver, PipeListener
 {
 public:
-	ControlServer(unsigned short port);
+	ControlServer(const ControlServerSettings& controlServerSettings);
 
 	void start();
 	void stop();
-	void send(shared_ptr<msg::BaseMessage> message);
+	void send(const msg::BaseMessage* message);
 	virtual void onMessageReceived(ServerSession* connection, const msg::BaseMessage& baseMessage, char* buffer);
-	void setHeader(msg::Header* header);
-	void setFormat(msg::SampleFormat* format);
-	void setServerSettings(msg::ServerSettings* settings);
+	virtual void onChunkRead(const PipeReader* pipeReader, const msg::PcmChunk* chunk);
+	virtual void onResync(const PipeReader* pipeReader, double ms);
 
 private:
 	void acceptor();
 	mutable std::mutex mutex_;
+	PipeReader* pipeReader_;
 	set<shared_ptr<ServerSession>> sessions_;
 	boost::asio::io_service io_service_;
-	unsigned short port_;
-	msg::Header* headerChunk_;
-	msg::SampleFormat* sampleFormat_;
-	msg::ServerSettings* serverSettings_;
+
+	ControlServerSettings settings_;
+	msg::SampleFormat sampleFormat_;
+	msg::ServerSettings serverSettings_;
 	thread* acceptThread_;
 	Queue<shared_ptr<msg::BaseMessage>> messages_;
 };

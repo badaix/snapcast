@@ -1,5 +1,2 @@
 client: cannot connect to server when started first?
-server: throw exception in encode init
-server: put only one encoded frame into ota chunks
-client: time sync timeouts over wired LAN
 test 24, 32bit samples
