@@ -17,6 +17,7 @@
 ***/
 
 #include <iostream>
+#include <sys/resource.h>
 #include <boost/lexical_cast.hpp>
 #include <boost/program_options.hpp>
 
@@ -121,6 +122,7 @@ int main (int argc, char *argv[])
 	if (runAsDaemon)
 	{
 		daemonize("/var/run/snapclient.pid");
+		setpriority(PRIO_PROCESS, 0, -5);
 		logS(kLogNotice) << "daemon started" << std::endl;
 	}
 
