@@ -25,6 +25,9 @@
 namespace msg
 {
 
+/**
+ * Request is sent from client to server. The answer is identified by a request id
+ */
 class Request : public BaseMessage
 {
 public:
@@ -45,7 +48,7 @@ public:
 		stream.read(reinterpret_cast<char *>(&request), sizeof(int16_t));
 	}
 
-	virtual uint32_t getSize()
+	virtual uint32_t getSize() const
 	{
 		return sizeof(int16_t);
 	}
@@ -53,9 +56,9 @@ public:
 	message_type request;
 
 protected:
-	virtual void doserialize(std::ostream& stream)
+	virtual void doserialize(std::ostream& stream) const
 	{
-		stream.write(reinterpret_cast<char *>(&request), sizeof(int16_t));
+		stream.write(reinterpret_cast<const char *>(&request), sizeof(int16_t));
 	}
 };
 

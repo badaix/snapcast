@@ -40,7 +40,7 @@ public:
 		stream.read(reinterpret_cast<char *>(&latency), sizeof(double));
 	}
 
-	virtual uint32_t getSize()
+	virtual uint32_t getSize() const
 	{
 		return sizeof(double);
 	}
@@ -48,9 +48,9 @@ public:
 	double latency;
 
 protected:
-	virtual void doserialize(std::ostream& stream)
+	virtual void doserialize(std::ostream& stream) const
 	{
-		stream.write(reinterpret_cast<char *>(&latency), sizeof(double));
+		stream.write(reinterpret_cast<const char *>(&latency), sizeof(double));
 	}
 };
 

@@ -24,6 +24,9 @@
 namespace msg
 {
 
+/**
+ * Codec dependend header of encoded data stream
+ */
 class Header : public BaseMessage
 {
 public:
@@ -49,7 +52,7 @@ public:
 		stream.read(payload, payloadSize);
 	}
 
-	virtual uint32_t getSize()
+	virtual uint32_t getSize() const
 	{
 		return sizeof(int16_t) + codec.size() + sizeof(uint32_t) + payloadSize;
 	}
@@ -59,12 +62,12 @@ public:
 	std::string codec;
 
 protected:
-	virtual void doserialize(std::ostream& stream)
+	virtual void doserialize(std::ostream& stream) const
 	{
 		int16_t size(codec.size());
-		stream.write(reinterpret_cast<char *>(&size), sizeof(int16_t));
+		stream.write(reinterpret_cast<const char *>(&size), sizeof(int16_t));
 		stream.write(codec.c_str(), size);
-		stream.write(reinterpret_cast<char *>(&payloadSize), sizeof(uint32_t));
+		stream.write(reinterpret_cast<const char *>(&payloadSize), sizeof(uint32_t));
 		stream.write(payload, payloadSize);
 	}
 };

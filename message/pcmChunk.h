@@ -29,12 +29,18 @@
 namespace msg
 {
 
+/**
+ * Piece of PCM data with SampleFormat information
+ * Has information about "when" recorded (start) and duration
+ * frames can be read with "readFrames", which will also change the start time
+ */
 class PcmChunk : public WireChunk
 {
 public:
 	PcmChunk(const SampleFormat& sampleFormat, size_t ms);
+	PcmChunk(const PcmChunk& pcmChunk);
 	PcmChunk();
-	~PcmChunk();
+	virtual ~PcmChunk();
 
 	int readFrames(void* outputBuffer, size_t frameCount);
 	int seek(int frames);
@@ -42,8 +48,8 @@ public:
 	inline chronos::time_point_hrc start() const
 	{
 		return chronos::time_point_hrc(
-				chronos::sec(timestamp.sec) + 
-				chronos::usec(timestamp.usec) + 
+				chronos::sec(timestamp.sec) +
+				chronos::usec(timestamp.usec) +
 				chronos::usec((chronos::usec::rep)(1000000. * ((double)idx / (double)format.rate)))
 				);
 	}
@@ -52,7 +58,7 @@ public:
 	{
 		return start() + durationLeft<chronos::usec>();
 	}
-	
+
 	template<typename T>
 	inline T duration() const
 	{
@@ -83,7 +89,6 @@ public:
 	SampleFormat format;
 
 private:
-//	SampleFormat format_;
 	uint32_t idx;
 };
 

@@ -25,16 +25,17 @@
 namespace msg
 {
 
-// sample and frame as defined in alsa:
-// http://www.alsa-project.org/main/index.php/FramesPeriods
-// Say we want to work with a stereo, 16-bit, 44.1 KHz stream, one-way (meaning, either in playback or in capture direction). Then we have:
-// 'stereo' = number of channels: 2
-// 1 analog sample is represented with 16 bits = 2 bytes
-// 1 frame represents 1 analog sample from all channels; here we have 2 channels, and so:
-// 1 frame = (num_channels) * (1 sample in bytes) = (2 channels) * (2 bytes (16 bits) per sample) = 4 bytes (32 bits)
-// To sustain 2x 44.1 KHz analog rate - the system must be capable of data transfer rate, in Bytes/sec:
-// Bps_rate = (num_channels) * (1 sample in bytes) * (analog_rate) = (1 frame) * (analog_rate) = ( 2 channels ) * (2 bytes/sample) * (44100 samples/sec) = 2*2*44100 = 176400 Bytes/sec (link to formula img)
-
+/**
+ * sample and frame as defined in alsa:
+ * http://www.alsa-project.org/main/index.php/FramesPeriods
+ * Say we want to work with a stereo, 16-bit, 44.1 KHz stream, one-way (meaning, either in playback or in capture direction). Then we have:
+ * 'stereo' = number of channels: 2
+ * 1 analog sample is represented with 16 bits = 2 bytes
+ * 1 frame represents 1 analog sample from all channels; here we have 2 channels, and so:
+ * 1 frame = (num_channels) * (1 sample in bytes) = (2 channels) * (2 bytes (16 bits) per sample) = 4 bytes (32 bits)
+ * To sustain 2x 44.1 KHz analog rate - the system must be capable of data transfer rate, in Bytes/sec:
+ * Bps_rate = (num_channels) * (1 sample in bytes) * (analog_rate) = (1 frame) * (analog_rate) = ( 2 channels ) * (2 bytes/sample) * (44100 samples/sec) = 2*2*44100 = 176400 Bytes/sec (link to formula img)
+ */
 class SampleFormat : public BaseMessage
 {
 public:
@@ -79,19 +80,19 @@ public:
 		stream.read(reinterpret_cast<char *>(&frameSize), sizeof(uint16_t));
 	}
 
-	virtual uint32_t getSize()
+	virtual uint32_t getSize() const
 	{
 		return sizeof(int32_t) + 4*sizeof(int16_t);
 	}
 
 protected:
-	virtual void doserialize(std::ostream& stream)
+	virtual void doserialize(std::ostream& stream) const
 	{
-		stream.write(reinterpret_cast<char *>(&rate), sizeof(uint32_t));
-		stream.write(reinterpret_cast<char *>(&bits), sizeof(uint16_t));
-		stream.write(reinterpret_cast<char *>(&channels), sizeof(uint16_t));
-		stream.write(reinterpret_cast<char *>(&sampleSize), sizeof(uint16_t));
-		stream.write(reinterpret_cast<char *>(&frameSize), sizeof(uint16_t));
+		stream.write(reinterpret_cast<const char *>(&rate), sizeof(uint32_t));
+		stream.write(reinterpret_cast<const char *>(&bits), sizeof(uint16_t));
+		stream.write(reinterpret_cast<const char *>(&channels), sizeof(uint16_t));
+		stream.write(reinterpret_cast<const char *>(&sampleSize), sizeof(uint16_t));
+		stream.write(reinterpret_cast<const char *>(&frameSize), sizeof(uint16_t));
 	}
 
 };

@@ -31,12 +31,22 @@
 namespace msg
 {
 
+/**
+ * Piece of raw data
+ * Has information about "when" captured (timestamp)
+ */
 class WireChunk : public BaseMessage
 {
 public:
 	WireChunk(size_t size = 0) : BaseMessage(message_type::kWireChunk), payloadSize(size)
 	{
 		payload = (char*)malloc(size);
+	}
+
+	WireChunk(const WireChunk& wireChunk) : BaseMessage(message_type::kWireChunk), timestamp(wireChunk.timestamp), payloadSize(wireChunk.payloadSize)
+	{
+		payload = (char*)malloc(payloadSize);
+		memcpy(payload, wireChunk.payload, payloadSize);
 	}
 
 	virtual ~WireChunk()
@@ -53,7 +63,7 @@ public:
 		stream.read(payload, payloadSize);
 	}
 
-	virtual uint32_t getSize()
+	virtual uint32_t getSize() const
 	{
 		return sizeof(int32_t) + sizeof(int32_t) + sizeof(uint32_t) + payloadSize;
 	}
@@ -63,11 +73,11 @@ public:
 	char* payload;
 
 protected:
-	virtual void doserialize(std::ostream& stream)
+	virtual void doserialize(std::ostream& stream) const
 	{
-		stream.write(reinterpret_cast<char *>(&timestamp.sec), sizeof(int32_t));
-		stream.write(reinterpret_cast<char *>(&timestamp.usec), sizeof(int32_t));
-		stream.write(reinterpret_cast<char *>(&payloadSize), sizeof(uint32_t));
+		stream.write(reinterpret_cast<const char *>(&timestamp.sec), sizeof(int32_t));
+		stream.write(reinterpret_cast<const char *>(&timestamp.usec), sizeof(int32_t));
+		stream.write(reinterpret_cast<const char *>(&payloadSize), sizeof(uint32_t));
 		stream.write(payload, payloadSize);
 	}
 };
