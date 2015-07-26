@@ -96,7 +96,7 @@ void ServerSession::socketRead(void* _to, size_t _bytes)
 }
 
 
-void ServerSession::add(shared_ptr<msg::BaseMessage> message)
+void ServerSession::add(const shared_ptr<const msg::BaseMessage>& message)
 {
 	if (!message || !streamActive_)
 		return;
@@ -107,9 +107,9 @@ void ServerSession::add(shared_ptr<msg::BaseMessage> message)
 }
 
 
-bool ServerSession::send(msg::BaseMessage* message)
+bool ServerSession::send(const msg::BaseMessage* message) const
 {
-//	logD << "send: " << message->type << ", size: " << message->size << ", id: " << message->id << ", refers: " << message->refersTo << "\n";
+//	logO << "send: " << message->type << ", size: " << message->size << ", id: " << message->id << ", refers: " << message->refersTo << "\n";
 	std::unique_lock<std::mutex> mlock(mutex_);
 	if (!socket_)
 		return false;
@@ -119,6 +119,7 @@ bool ServerSession::send(msg::BaseMessage* message)
 	message->sent = t;
 	message->serialize(stream);
 	boost::asio::write(*socket_.get(), streambuf);
+//	logO << "done: " << message->type << ", size: " << message->size << ", id: " << message->id << ", refers: " << message->refersTo << "\n";
 	return true;
 }
 
@@ -130,7 +131,7 @@ void ServerSession::getNextMessage()
 	vector<char> buffer(baseMsgSize);
 	socketRead(&buffer[0], baseMsgSize);
 	baseMessage.deserialize(&buffer[0]);
-//	logD << "getNextMessage: " << baseMessage.type << ", size: " << baseMessage.size << ", id: " << baseMessage.id << ", refers: " << baseMessage.refersTo << "\n";
+//	logO << "getNextMessage: " << baseMessage.type << ", size: " << baseMessage.size << ", id: " << baseMessage.id << ", refers: " << baseMessage.refersTo << "\n";
 	if (baseMessage.size > buffer.size())
 		buffer.resize(baseMessage.size);
 	socketRead(&buffer[0], baseMessage.size);
@@ -169,7 +170,7 @@ void ServerSession::writer()
 	{
 		boost::asio::streambuf streambuf;
 		std::ostream stream(&streambuf);
-		shared_ptr<msg::BaseMessage> message;
+		shared_ptr<const msg::BaseMessage> message;
 		while (active_)
 		{
 			if (messages_.try_pop(message, std::chrono::milliseconds(500)))
