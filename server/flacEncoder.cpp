@@ -26,9 +26,9 @@
 using namespace std;
 
 
-FlacEncoder::FlacEncoder() : Encoder(), encoder_(NULL), pcmBufferSize_(0), encodedSamples_(0)
+FlacEncoder::FlacEncoder(const std::string& codecOptions) : Encoder(codecOptions), encoder_(NULL), pcmBufferSize_(0), encodedSamples_(0)
 {
-	encodedChunk_ = new msg::PcmChunk();
+	flacChunk_ = new msg::PcmChunk();
 	headerChunk_ = new msg::Header("flac");
 	pcmBuffer_ = (FLAC__int32*)malloc(pcmBufferSize_ * sizeof(FLAC__int32));
 }
@@ -44,55 +44,57 @@ FlacEncoder::~FlacEncoder()
 		FLAC__stream_encoder_delete(encoder_);
 	}
 
-	delete encodedChunk_;
+	if (flacChunk_)
+		delete flacChunk_;
 	free(pcmBuffer_);
 }
 
 
-std::string FlacEncoder::getAvailableOptions()
+std::string FlacEncoder::getAvailableOptions() const
 {
 	return "compression level: [0..8]";
 }
 
 
-std::string FlacEncoder::getDefaultOptions()
+std::string FlacEncoder::getDefaultOptions() const
 {
 	return "2";
 }
 
 
-double FlacEncoder::encode(msg::PcmChunk* chunk)
+std::string FlacEncoder::name() const
+{
+	return "flac";
+}
+
+
+void FlacEncoder::encode(const msg::PcmChunk* chunk)
 {
 	int samples = chunk->getSampleCount();
 	int frames = chunk->getFrameCount();
-	logD << "payload: " << chunk->payloadSize << "\tframes: " << frames << "\tsamples: " << samples << "\tduration: " << chunk->duration<chronos::msec>().count() << "\n";
+//	logO << "payload: " << chunk->payloadSize << "\tframes: " << frames << "\tsamples: " << samples << "\tduration: " << chunk->duration<chronos::msec>().count() << "\n";
 
 	if (pcmBufferSize_ < samples)
 	{
 		pcmBufferSize_ = samples;
 		pcmBuffer_ = (FLAC__int32*)realloc(pcmBuffer_, pcmBufferSize_ * sizeof(FLAC__int32));
 	}
-		
+
 	for(int i=0; i<samples; i++)
 	{
 		pcmBuffer_[i] = (FLAC__int32)(((FLAC__int16)(FLAC__int8)chunk->payload[2*i+1] << 8) | (FLAC__int16)(0x00ff&chunk->payload[2*i]));
 	}
-		
+
 	FLAC__stream_encoder_process_interleaved(encoder_, pcmBuffer_, frames);
 
-	double resMs = encodedSamples_ / ((double)sampleFormat_.rate / 1000.);
 	if (encodedSamples_ > 0)
 	{
-		logD << "encoded: " << chunk->payloadSize << "\tframes: " << encodedSamples_ << "\tres: " << resMs << "\n";
+		double resMs = encodedSamples_ / ((double)sampleFormat_.rate / 1000.);
+//		logO << "encoded: " << chunk->payloadSize << "\tframes: " << encodedSamples_ << "\tres: " << resMs << "\n";
 		encodedSamples_ = 0;
-		chunk->payloadSize = encodedChunk_->payloadSize;
-		chunk->payload = (char*)realloc(chunk->payload, encodedChunk_->payloadSize);
-		memcpy(chunk->payload, encodedChunk_->payload, encodedChunk_->payloadSize);
-		encodedChunk_->payloadSize = 0;
-		encodedChunk_->payload = (char*)realloc(encodedChunk_->payload, 0);
+		listener_->onChunkEncoded(this, flacChunk_, resMs);
+		flacChunk_ = new msg::PcmChunk();
 	}
-
-	return resMs;//chunk->duration<chronos::msec>().count();
 }
 
 
@@ -102,7 +104,7 @@ FLAC__StreamEncoderWriteStatus FlacEncoder::write_callback(const FLAC__StreamEnc
     unsigned samples,
     unsigned current_frame)
 {
-	logD << "write_callback: " << bytes << ", " << samples << ", " << current_frame << "\n";
+//	logO << "write_callback: " << bytes << ", " << samples << ", " << current_frame << "\n";
 	if ((current_frame == 0) && (bytes > 0) && (samples == 0))
 	{
 		headerChunk_->payload = (char*)realloc(headerChunk_->payload, headerChunk_->payloadSize + bytes);
@@ -111,9 +113,9 @@ FLAC__StreamEncoderWriteStatus FlacEncoder::write_callback(const FLAC__StreamEnc
 	}
 	else
 	{
-		encodedChunk_->payload = (char*)realloc(encodedChunk_->payload, encodedChunk_->payloadSize + bytes);
-		memcpy(encodedChunk_->payload + encodedChunk_->payloadSize, buffer, bytes);
-		encodedChunk_->payloadSize += bytes;
+		flacChunk_->payload = (char*)realloc(flacChunk_->payload, flacChunk_->payloadSize + bytes);
+		memcpy(flacChunk_->payload + flacChunk_->payloadSize, buffer, bytes);
+		flacChunk_->payloadSize += bytes;
 		encodedSamples_ += samples;
 	}
 	return FLAC__STREAM_ENCODER_WRITE_STATUS_OK;
@@ -128,7 +130,7 @@ FLAC__StreamEncoderWriteStatus write_callback(const FLAC__StreamEncoder *encoder
     void *client_data)
 {
 	FlacEncoder* flacEncoder = (FlacEncoder*)client_data;
-	return flacEncoder->write_callback(encoder, buffer, bytes, samples, current_frame);	
+	return flacEncoder->write_callback(encoder, buffer, bytes, samples, current_frame);
 }
 
 
@@ -153,7 +155,7 @@ void FlacEncoder::initEncoder()
 	FLAC__StreamMetadata_VorbisComment_Entry entry;
 
 	// allocate the encoder
-	if ((encoder_ = FLAC__stream_encoder_new()) == NULL) 
+	if ((encoder_ = FLAC__stream_encoder_new()) == NULL)
 		throw SnapException("error allocating encoder");
 
 	ok &= FLAC__stream_encoder_set_verify(encoder_, true);
@@ -176,10 +178,10 @@ void FlacEncoder::initEncoder()
 			(metadata_[1] = FLAC__metadata_object_new(FLAC__METADATA_TYPE_PADDING)) == NULL ||
 			// there are many tag (vorbiscomment) functions but these are convenient for this particular use:
 			!FLAC__metadata_object_vorbiscomment_entry_from_name_value_pair(&entry, "TITLE", "SnapStream") ||
-			!FLAC__metadata_object_vorbiscomment_append_comment(metadata_[0], entry, false) || 
+			!FLAC__metadata_object_vorbiscomment_append_comment(metadata_[0], entry, false) ||
 			!FLAC__metadata_object_vorbiscomment_entry_from_name_value_pair(&entry, "VERSION", VERSION) ||
 			!FLAC__metadata_object_vorbiscomment_append_comment(metadata_[0], entry, false)
-		) 
+		)
 		throw SnapException("out of memory or tag error");
 
 	metadata_[1]->length = 1234; // set the padding length
@@ -189,7 +191,7 @@ void FlacEncoder::initEncoder()
 
 	// initialize encoder
 	init_status = FLAC__stream_encoder_init_stream(encoder_, ::write_callback, NULL, NULL, NULL, this);
-	if(init_status != FLAC__STREAM_ENCODER_INIT_STATUS_OK) 
+	if(init_status != FLAC__STREAM_ENCODER_INIT_STATUS_OK)
 		throw SnapException("ERROR: initializing encoder: " + string(FLAC__StreamEncoderInitStatusString[init_status]));
 }
 

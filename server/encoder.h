@@ -18,16 +18,29 @@
 
 #ifndef ENCODER_H
 #define ENCODER_H
+
+#include <string>
+#include <memory>
+
 #include "message/pcmChunk.h"
 #include "message/header.h"
 #include "message/sampleFormat.h"
-#include <string>
+
+
+class Encoder;
+
+class EncoderListener
+{
+public:
+	virtual void onChunkEncoded(const Encoder* encoder, msg::PcmChunk* chunk, double duration) = 0;
+};
+
 
 
 class Encoder
 {
 public:
-	Encoder() : headerChunk_(NULL)
+	Encoder(const std::string& codecOptions = "") : headerChunk_(NULL), codecOptions_(codecOptions)
 	{
 	}
 
@@ -37,28 +50,30 @@ public:
 			delete headerChunk_;
 	}
 
-	virtual void init(const msg::SampleFormat& format, const std::string codecOptions = "")
+	virtual void init(EncoderListener* listener, const msg::SampleFormat& format)
 	{
-		sampleFormat_ = format;
-		codecOptions_ = codecOptions;
-		if (codecOptions == "")
+		if (codecOptions_ == "")
 			codecOptions_ = getDefaultOptions();
+		listener_ = listener;
+		sampleFormat_ = format;
 		initEncoder();
 	}
 
-	virtual double encode(msg::PcmChunk* chunk) = 0;
+	virtual void encode(const msg::PcmChunk* chunk) = 0;
 
-	virtual std::string getAvailableOptions()
+	virtual std::string name() const = 0;
+
+	virtual std::string getAvailableOptions() const
 	{
 		return "No codec options supported";
 	}
 
-	virtual std::string getDefaultOptions()
+	virtual std::string getDefaultOptions() const
 	{
 		return "";
 	}
 
-	virtual msg::Header* getHeader()
+	virtual msg::Header* getHeader() const
 	{
 		return headerChunk_;
 	}
@@ -68,6 +83,7 @@ protected:
 
 	msg::SampleFormat sampleFormat_;
 	msg::Header* headerChunk_;
+	EncoderListener* listener_;
 	std::string codecOptions_;
 };
 
