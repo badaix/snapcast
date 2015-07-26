@@ -62,11 +62,11 @@ public:
 	virtual ~ClientConnection();
 	virtual void start();
 	virtual void stop();
-	virtual bool send(msg::BaseMessage* message);
-	virtual std::shared_ptr<msg::SerializedMessage> sendRequest(msg::BaseMessage* message, const chronos::msec& timeout = chronos::msec(1000));
+	virtual bool send(const msg::BaseMessage* message) const;
+	virtual std::shared_ptr<msg::SerializedMessage> sendRequest(const msg::BaseMessage* message, const chronos::msec& timeout = chronos::msec(1000));
 
 	template <typename T>
-	std::shared_ptr<T> sendReq(msg::BaseMessage* message, const chronos::msec& timeout = chronos::msec(1000))
+	std::shared_ptr<T> sendReq(const msg::BaseMessage* message, const chronos::msec& timeout = chronos::msec(1000))
 	{
 		std::shared_ptr<msg::SerializedMessage> reply = sendRequest(message, timeout);
 		if (!reply)
@@ -76,12 +76,12 @@ public:
 		return msg;
 	}
 
-	virtual bool active()
+	virtual bool active() const
 	{
 		return active_;
 	}
 
-	virtual bool connected()
+	virtual bool connected() const
 	{
 		return (socket_ != 0);
 //		return (connected_ && socket);

@@ -50,10 +50,10 @@ public:
 	~ServerSession();
 	void start();
 	void stop();
-	bool send(msg::BaseMessage* message);
-	void add(std::shared_ptr<msg::BaseMessage> message);
+	bool send(const msg::BaseMessage* message) const;
+	void add(const std::shared_ptr<const msg::BaseMessage>& message);
 
-	virtual bool active()
+	virtual bool active() const
 	{
 		return active_;
 	}
@@ -77,7 +77,7 @@ protected:
 	std::thread* writerThread_;
 	std::shared_ptr<tcp::socket> socket_;
 	MessageReceiver* messageReceiver_;
-	Queue<std::shared_ptr<msg::BaseMessage>> messages_;
+	Queue<std::shared_ptr<const msg::BaseMessage>> messages_;
 };
 
 

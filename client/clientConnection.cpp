@@ -46,14 +46,10 @@ void ClientConnection::socketRead(void* _to, size_t _bytes)
 	size_t len = 0;
 	do
 	{
-//		cout << "/";
-//		cout.flush();
 //		boost::system::error_code error;
 		len += socket_->read_some(boost::asio::buffer((char*)_to + len, toRead));
 //cout << "len: " << len << ", error: " << error << endl;
 		toRead = _bytes - len;
-//		cout << "\\";
-//		cout.flush();
 	}
 	while (toRead > 0);
 }
@@ -110,7 +106,7 @@ void ClientConnection::stop()
 }
 
 
-bool ClientConnection::send(msg::BaseMessage* message)
+bool ClientConnection::send(const msg::BaseMessage* message) const
 {
 //	std::unique_lock<std::mutex> mlock(mutex_);
 //logD << "send: " << message->type << ", size: " << message->getSize() << "\n";
@@ -127,13 +123,13 @@ bool ClientConnection::send(msg::BaseMessage* message)
 }
 
 
-shared_ptr<msg::SerializedMessage> ClientConnection::sendRequest(msg::BaseMessage* message, const chronos::msec& timeout)
+shared_ptr<msg::SerializedMessage> ClientConnection::sendRequest(const msg::BaseMessage* message, const chronos::msec& timeout)
 {
 	shared_ptr<msg::SerializedMessage> response(NULL);
 	if (++reqId_ >= 10000)
 		reqId_ = 1;
 	message->id = reqId_;
-//	logD << "Req: " << reqId_ << "\n";
+//	logO << "Req: " << message->id << "\n";
 	shared_ptr<PendingRequest> pendingRequest(new PendingRequest(reqId_));
 
 	{
@@ -146,7 +142,7 @@ shared_ptr<msg::SerializedMessage> ClientConnection::sendRequest(msg::BaseMessag
 	{
 		response = pendingRequest->response;
 		sumTimeout_ = chronos::msec(0);
-//		logD << "Resp: " << pendingRequest->id << "\n";
+//		logO << "Resp: " << pendingRequest->id << "\n";
 	}
 	else
 	{
@@ -215,7 +211,7 @@ void ClientConnection::reader()
 	catch (const std::exception& e)
 	{
 		if (messageReceiver_ != NULL)
-			messageReceiver_->onException(this, e);			
+			messageReceiver_->onException(this, e);
 	}
 	catch (...)
 	{
