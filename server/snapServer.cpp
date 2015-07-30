@@ -47,7 +47,7 @@ int main(int argc, char* argv[])
 	try
 	{
 		ControlServerSettings settings;
-		bool runAsDaemon;
+		int runAsDaemon;
 		string sampleFormat;
 
 		po::options_description desc("Allowed options");
@@ -58,7 +58,7 @@ int main(int argc, char* argv[])
 		("sampleformat,s", po::value<string>(&sampleFormat)->default_value("44100:16:2"), "sample format")
 		("codec,c", po::value<string>(&settings.codec)->default_value("flac"), "transport codec [flac|ogg|pcm][:options]. Type codec:? to get codec specific options")
 		("fifo,f", po::value<string>(&settings.fifoName)->default_value("/tmp/snapfifo"), "name of the input fifo file")
-		("daemon,d", po::bool_switch(&runAsDaemon)->default_value(false), "daemonize")
+		("daemon,d", po::value<int>(&runAsDaemon)->implicit_value(-5), "daemonize, optional process priority [-20..19]")
 		("buffer,b", po::value<int32_t>(&settings.bufferMs)->default_value(1000), "buffer [ms]")
 		;
 
@@ -102,10 +102,14 @@ int main(int argc, char* argv[])
 		signal(SIGTERM, signal_handler);
 		signal(SIGINT, signal_handler);
 
-		if (runAsDaemon)
+		if (vm.count("daemon"))
 		{
 			daemonize("/var/run/snapserver.pid");
-			setpriority(PRIO_PROCESS, 0, -5);
+			if (runAsDaemon < -20)
+				runAsDaemon = -20;
+			else if (runAsDaemon > 19)
+				runAsDaemon = 10;
+			setpriority(PRIO_PROCESS, 0, runAsDaemon);
 			logS(kLogNotice) << "daemon started." << endl;
 		}
 
@@ -114,6 +118,8 @@ int main(int argc, char* argv[])
 		services.push_back(AvahiService("_snapcast._tcp", settings.port));
 		publishAvahi.publish(services);
 
+		if (settings.bufferMs < 400)
+			settings.bufferMs = 400;
 		settings.sampleFormat = sampleFormat;
 		ControlServer* controlServer = new ControlServer(settings);
 		controlServer->start();
@@ -128,6 +134,7 @@ int main(int argc, char* argv[])
 
 	logS(kLogNotice) << "daemon terminated." << endl;
 	daemonShutdown();
+	return 0;
 }
 
 
