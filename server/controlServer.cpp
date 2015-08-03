@@ -119,26 +119,29 @@ void ControlServer::onMessageReceived(ServerSession* connection, const msg::Base
 }
 
 
-void ControlServer::acceptor()
+
+void ControlServer::startAccept()
 {
-	tcp::acceptor a(io_service_, tcp::endpoint(tcp::v4(), settings_.port));
-	for (;;)
+	socket_ptr socket(new tcp::socket(io_service_));
+	acceptor_->async_accept(*socket, bind(&ControlServer::handleAccept, this, socket));
+}
+
+
+void ControlServer::handleAccept(socket_ptr socket)
+{
+	struct timeval tv;
+	tv.tv_sec  = 5;
+	tv.tv_usec = 0;
+	setsockopt(socket->native(), SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
+	setsockopt(socket->native(), SOL_SOCKET, SO_SNDTIMEO, &tv, sizeof(tv));
+	logS(kLogNotice) << "ControlServer::NewConnection: " << socket->remote_endpoint().address().to_string() << endl;
+	ServerSession* session = new ServerSession(this, socket);
 	{
-		socket_ptr sock(new tcp::socket(io_service_));
-		struct timeval tv;
-		tv.tv_sec  = 5;
-		tv.tv_usec = 0;
-		a.accept(*sock);
-		setsockopt(sock->native(), SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
-		setsockopt(sock->native(), SOL_SOCKET, SO_SNDTIMEO, &tv, sizeof(tv));
-		logS(kLogNotice) << "ControlServer::NewConnection: " << sock->remote_endpoint().address().to_string() << endl;
-		ServerSession* session = new ServerSession(this, sock);
-		{
-			std::unique_lock<std::mutex> mlock(mutex_);
-			session->start();
-			sessions_.insert(shared_ptr<ServerSession>(session));
-		}
+		std::unique_lock<std::mutex> mlock(mutex_);
+		session->start();
+		sessions_.insert(shared_ptr<ServerSession>(session));
 	}
+	startAccept();
 }
 
 
@@ -146,12 +149,25 @@ void ControlServer::start()
 {
 	pipeReader_ = new PipeReader(this, settings_.sampleFormat, settings_.codec, settings_.fifoName);
 	pipeReader_->start();
-	acceptThread_ = new thread(&ControlServer::acceptor, this);
+	acceptor_ = shared_ptr<tcp::acceptor>(new tcp::acceptor(io_service_, tcp::endpoint(tcp::v4(), settings_.port)));
+	startAccept();
+	acceptThread_ = thread(&ControlServer::acceptor, this);
 }
 
 
 void ControlServer::stop()
 {
-//		acceptThread->join();
+	io_service_.stop();
+	acceptor_->cancel();
+	acceptThread_.join();
+	std::unique_lock<std::mutex> mlock(mutex_);
+	for (auto it = sessions_.begin(); it != sessions_.end(); ++it)
+		(*it)->stop();
+}
+
+
+void ControlServer::acceptor()
+{
+	io_service_.run();
 }
 

@@ -64,16 +64,19 @@ public:
 	virtual void onResync(const PipeReader* pipeReader, double ms);
 
 private:
+	void startAccept();
+	void handleAccept(socket_ptr socket);
 	void acceptor();
 	mutable std::mutex mutex_;
 	PipeReader* pipeReader_;
 	set<shared_ptr<ServerSession>> sessions_;
 	boost::asio::io_service io_service_;
+	shared_ptr<tcp::acceptor> acceptor_;
 
 	ControlServerSettings settings_;
 	msg::SampleFormat sampleFormat_;
 	msg::ServerSettings serverSettings_;
-	thread* acceptThread_;
+	thread acceptThread_;
 	Queue<shared_ptr<msg::BaseMessage>> messages_;
 };
 
