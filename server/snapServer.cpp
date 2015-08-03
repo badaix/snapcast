@@ -126,6 +126,10 @@ int main(int argc, char* argv[])
 
 		while (!g_terminated)
 			usleep(100*1000);
+
+		logO << "Stopping controlServer" << endl;
+		controlServer->stop();
+		logO << "done" << endl;
 	}
 	catch (const std::exception& e)
 	{

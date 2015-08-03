@@ -26,7 +26,6 @@ using namespace std;
 
 
 
-
 ServerSession::ServerSession(MessageReceiver* receiver, std::shared_ptr<tcp::socket> socket) : messageReceiver_(receiver)
 {
 	socket_ = socket;
@@ -81,7 +80,6 @@ void ServerSession::stop()
 	writerThread_ = NULL;
 	logD << "ServerSession stopped\n";
 }
-
 
 
 void ServerSession::socketRead(void* _to, size_t _bytes)
@@ -143,7 +141,6 @@ void ServerSession::getNextMessage()
 }
 
 
-
 void ServerSession::reader()
 {
 	active_ = true;
@@ -160,8 +157,6 @@ void ServerSession::reader()
 	}
 	active_ = false;
 }
-
-
 
 
 void ServerSession::writer()
@@ -183,13 +178,5 @@ void ServerSession::writer()
 	}
 	active_ = false;
 }
-
-
-
-
-
-
-
-
 
 
