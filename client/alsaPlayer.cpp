@@ -22,16 +22,17 @@
 #include <alsa/asoundlib.h>
 #include <iostream>
 
-#define BUFFER_TIME 100000
+#define BUFFER_TIME 160000
+#define PERIOD_TIME 20000
 
 using namespace std;
 
-Player::Player(const PcmDevice& pcmDevice, Stream* stream) : handle_(NULL), buff_(NULL), active_(false), stream_(stream), pcmDevice_(pcmDevice) 
+Player::Player(const PcmDevice& pcmDevice, Stream* stream) : handle_(NULL), buff_(NULL), active_(false), stream_(stream), pcmDevice_(pcmDevice)
 {
 }
 
 
-void Player::initAlsa() 
+void Player::initAlsa()
 {
 	unsigned int tmp, rate;
 	int pcm, channels;
@@ -44,7 +45,7 @@ void Player::initAlsa()
 
 	/* Open the PCM device in playback mode */
 	if ((pcm = snd_pcm_open(&handle_, pcmDevice_.name.c_str(), SND_PCM_STREAM_PLAYBACK, 0)) < 0)
-		throw SnapException("Can't open " + pcmDevice_.name + " PCM device. " + snd_strerror(pcm));
+		throw SnapException("Can't open " + pcmDevice_.name + " PCM device: " + snd_strerror(pcm));
 
 	/*	struct snd_pcm_playback_info_t pinfo;
 	 if ( (pcm = snd_pcm_playback_info( pcm_handle, &pinfo )) < 0 )
@@ -54,27 +55,29 @@ void Player::initAlsa()
 	/* Allocate parameters object and fill it with default values*/
 	snd_pcm_hw_params_alloca(&params);
 
-	snd_pcm_hw_params_any(handle_, params);
+	if ((pcm = snd_pcm_hw_params_any(handle_, params)) < 0)
+		throw SnapException("Can't fill params: " + string(snd_strerror(pcm)));
 
 	/* Set parameters */
 	if ((pcm = snd_pcm_hw_params_set_access(handle_, params, SND_PCM_ACCESS_RW_INTERLEAVED)) < 0)
-		throw SnapException("Can't set interleaved mode. " + string(snd_strerror(pcm)));
+		throw SnapException("Can't set interleaved mode: " + string(snd_strerror(pcm)));
 
 	if ((pcm = snd_pcm_hw_params_set_format(handle_, params, SND_PCM_FORMAT_S16_LE)) < 0)
-		throw SnapException("Can't set format. " + string(snd_strerror(pcm)));
+		throw SnapException("Can't set format: " + string(snd_strerror(pcm)));
 
 	if ((pcm = snd_pcm_hw_params_set_channels(handle_, params, channels)) < 0)
-		throw SnapException("Can't set channels number. " + string(snd_strerror(pcm)));
+		throw SnapException("Can't set channels number: " + string(snd_strerror(pcm)));
 
 	if ((pcm = snd_pcm_hw_params_set_rate_near(handle_, params, &rate, 0)) < 0)
-		throw SnapException("Can't set rate. " + string(snd_strerror(pcm)));
+		throw SnapException("Can't set rate: " + string(snd_strerror(pcm)));
 
-	unsigned int buffer_time;
-	snd_pcm_hw_params_get_buffer_time_max(params, &buffer_time, 0);
-	if (buffer_time > BUFFER_TIME)
-		buffer_time = BUFFER_TIME;
+	unsigned int period_time;
+	snd_pcm_hw_params_get_period_time_max(params, &period_time, 0);
+	if (period_time > PERIOD_TIME)
+		period_time = PERIOD_TIME;
 
-	unsigned int period_time = buffer_time / 4;
+	unsigned int buffer_time = 4*period_time;
+
 
 	snd_pcm_hw_params_set_period_time_near(handle_, params, &period_time, 0);
 	snd_pcm_hw_params_set_buffer_time_near(handle_, params, &buffer_time, 0);
@@ -85,7 +88,7 @@ void Player::initAlsa()
 
 	/* Write parameters */
 	if ((pcm = snd_pcm_hw_params(handle_, params)) < 0)
-		throw SnapException("Can't set harware parameters. " + string(snd_strerror(pcm)));
+		throw SnapException("Can't set harware parameters: " + string(snd_strerror(pcm)));
 
 	/* Resume information */
 	logD << "PCM name: " << snd_pcm_name(handle_) << "\n";
@@ -98,7 +101,7 @@ void Player::initAlsa()
 
 	/* Allocate buffer to hold single period */
 	snd_pcm_hw_params_get_period_size(params, &frames_, 0);
-	logD << "frames: " << frames_ << "\n";
+	logO << "frames: " << frames_ << "\n";
 
 	buff_size = frames_ * channels * 2 /* 2 -> sample size */;
 	buff_ = (char *) malloc(buff_size);
@@ -125,7 +128,7 @@ void Player::uninitAlsa()
 		snd_pcm_close(handle_);
 		handle_ = NULL;
 	}
-	
+
 	if (buff_ != NULL)
 	{
 		free(buff_);
@@ -134,7 +137,7 @@ void Player::uninitAlsa()
 }
 
 
-void Player::start() 
+void Player::start()
 {
 	initAlsa();
 	active_ = true;
@@ -148,7 +151,7 @@ Player::~Player()
 }
 
 
-void Player::stop() 
+void Player::stop()
 {
 	if (active_)
 	{
@@ -159,12 +162,11 @@ void Player::stop()
 }
 
 
-void Player::worker() 
+void Player::worker()
 {
 	snd_pcm_sframes_t pcm;
-	snd_pcm_sframes_t framesAvail;
 	snd_pcm_sframes_t framesDelay;
-	while (active_) 
+	while (active_)
 	{
 		if (handle_ == NULL)
 		{
@@ -179,18 +181,19 @@ void Player::worker()
 			}
 		}
 
-		snd_pcm_avail_delay(handle_, &framesAvail, &framesDelay);
+//		snd_pcm_avail_delay(handle_, &framesAvail, &framesDelay);
+		snd_pcm_delay(handle_, &framesDelay);
 		chronos::usec delay((chronos::usec::rep) (1000 * (double) framesDelay / stream_->getFormat().msRate()));
-		logD << "Avail: " << framesAvail << ", delay: " << framesDelay << ", delay[ms]: " << delay.count() / 1000 << "\n";
+//		logO << "delay: " << framesDelay << ", delay[ms]: " << delay.count() / 1000 << "\n";
 
-		if (stream_->getPlayerChunk(buff_, delay, frames_)) 
+		if (stream_->getPlayerChunk(buff_, delay, frames_))
 		{
-			if ((pcm = snd_pcm_writei(handle_, buff_, frames_)) == -EPIPE) 
+			if ((pcm = snd_pcm_writei(handle_, buff_, frames_)) == -EPIPE)
 			{
 				logE << "XRUN\n";
 				snd_pcm_prepare(handle_);
-			} 
-			else if (pcm < 0) 
+			}
+			else if (pcm < 0)
 			{
 				logE << "ERROR. Can't write to PCM device: " << snd_strerror(pcm) << "\n";
 				uninitAlsa();
@@ -215,7 +218,7 @@ vector<PcmDevice> Player::pcm_list(void) {
 		return result;
 	n = hints;
 	size_t idx(0);
-	while (*n != NULL) 
+	while (*n != NULL)
 	{
 		name = snd_device_name_get_hint(*n, "NAME");
 		descr = snd_device_name_get_hint(*n, "DESC");
@@ -227,7 +230,7 @@ vector<PcmDevice> Player::pcm_list(void) {
 		pcmDevice.idx = idx++;
 		result.push_back(pcmDevice);
 
-__end: 
+__end:
 		if (name != NULL)
 			free(name);
 		if (descr != NULL)
