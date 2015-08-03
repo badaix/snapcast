@@ -1,4 +1,5 @@
-VERSION = 0.2.1
+VERSION = 0.2.91
+TARGET  = snapserver
 SHELL = /bin/bash
 
 CC      = /usr/bin/g++
@@ -8,9 +9,9 @@ LDFLAGS = -lrt -lpthread -lboost_system -lboost_program_options -lvorbis -lvorbi
 OBJ = snapServer.o controlServer.o flacEncoder.o pcmEncoder.o oggEncoder.o serverSession.o publishAvahi.o pipeReader.o encoderFactory.o ../common/log.o ../message/pcmChunk.o ../message/sampleFormat.o
 BIN = snapserver
 
-all:	server
+all:	$(TARGET)
 
-server: $(OBJ)
+$(TARGET): $(OBJ)
 	$(CC) $(CFLAGS) -o $(BIN) $(OBJ) $(LDFLAGS)
 	strip $(BIN)
 
@@ -31,20 +32,21 @@ install: $(TARGET) uninstall
 		echo cannot tell; \
 	fi; \
 
+
 installsystemd:
 	@echo using systemd; \
-	cp ./snapserver /usr/sbin/snapserver; \
-	cp ../init.scripts/systemd/snapserver.service /lib/systemd/system/snapserver.service; \
+	cp ./$(BIN) /usr/sbin/$(BIN); \
+	cp ../init.scripts/systemd/$(BIN).service /lib/systemd/system/$(BIN).service; \
 	systemctl daemon-reload; \
-	systemctl enable snapserver; \
-	systemctl start snapserver; \
+	systemctl enable $(BIN); \
+	systemctl start $(BIN); \
 
 installsysv:
 	@echo using sysv; \
-	cp ./snapserver /usr/sbin/snapserver; \
-	cp ../init.scripts/sysv/snapserver /etc/init.d/snapserver; \
-	update-rc.d snapserver defaults; \
-	/etc/init.d/snapserver start; \
+	cp ./$(BIN) /usr/sbin/$(BIN); \
+	cp ../init.scripts/sysv/$(BIN) /etc/init.d/$(BIN); \
+	update-rc.d $(BIN) defaults; \
+	/etc/init.d/$(BIN) start; \
 
 
 uninstall:
@@ -59,16 +61,16 @@ uninstall:
 	fi; \
 
 uninstallsysv:
-	@/etc/init.d/snapserver stop; \
-	killall -9 snapserver; \
-	rm -f /usr/sbin/snapserver; \
-	rm -f /etc/init.d/snapserver; \
-	update-rc.d -f snapserver remove; \
+	@/etc/init.d/$(BIN) stop; \
+	killall -9 $(BIN); \
+	rm -f /usr/sbin/$(BIN); \
+	rm -f /etc/init.d/$(BIN); \
+	update-rc.d -f $(BIN) remove; \
 
 uninstallsystemd:
-	@systemctl stop snapserver; \
-	systemctl disable snapserver; \
-	killall -9 snapserver; \
-	rm -f /usr/sbin/snapserver; \
-	rm -f /lib/systemd/system/snapserver.service; \
+	@systemctl stop $(BIN); \
+	systemctl disable $(BIN); \
+	killall -9 $(BIN); \
+	rm -f /usr/sbin/$(BIN); \
+	rm -f /lib/systemd/system/$(BIN).service; \
 	systemctl daemon-reload; \

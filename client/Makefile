@@ -1,9 +1,9 @@
-VERSION = 0.2.1
+VERSION = 0.2.91
 TARGET  = snapclient
 SHELL = /bin/bash
 
 CC      = /usr/bin/g++
-CFLAGS  = -std=c++0x -static-libgcc -static-libstdc++ -Wall -Wno-unused-function -O3 -D_REENTRANT -DVERSION=\"$(VERSION)\" -I..
+CFLAGS  = -std=c++0x -Wall -Wno-unused-function -O3 -D_REENTRANT -DVERSION=\"$(VERSION)\" -I.. # -static-libgcc -static-libstdc++
 LDFLAGS = -lrt -lpthread -lboost_system -lboost_program_options -lasound -logg -lvorbis -lvorbisenc -lFLAC -lavahi-client -lavahi-common
 
 OBJ = snapClient.o stream.o alsaPlayer.o clientConnection.o timeProvider.o oggDecoder.o pcmDecoder.o flacDecoder.o controller.o browseAvahi.o ../message/pcmChunk.o ../common/log.o ../message/sampleFormat.o
@@ -35,18 +35,18 @@ install: $(TARGET) uninstall
 
 installsystemd:
 	@echo using systemd; \
-	cp ./snapclient /usr/sbin/snapclient; \
-	cp ../init.scripts/systemd/snapclient.service /lib/systemd/system/snapclient.service; \
+	cp ./$(BIN) /usr/sbin/$(BIN); \
+	cp ../init.scripts/systemd/$(BIN).service /lib/systemd/system/$(BIN).service; \
 	systemctl daemon-reload; \
-	systemctl enable snapclient; \
-	systemctl start snapclient; \
+	systemctl enable $(BIN); \
+	systemctl start $(BIN); \
 
 installsysv:
 	@echo using sysv; \
-	cp ./snapclient /usr/sbin/snapclient; \
-	cp ../init.scripts/sysv/snapclient /etc/init.d/snapclient; \
-	update-rc.d snapclient defaults; \
-	/etc/init.d/snapclient start; \
+	cp ./$(BIN) /usr/sbin/$(BIN); \
+	cp ../init.scripts/sysv/$(BIN) /etc/init.d/$(BIN); \
+	update-rc.d $(BIN) defaults; \
+	/etc/init.d/$(BIN) start; \
 
 
 uninstall:
@@ -62,17 +62,17 @@ uninstall:
 	fi; \
 
 uninstallsysv:
-	@/etc/init.d/snapclient stop; \
-	killall -9 snapclient; \
-	rm -f /usr/sbin/snapclient; \
-	rm -f /etc/init.d/snapclient; \
-	update-rc.d -f snapclient remove; \
+	@/etc/init.d/$(BIN) stop; \
+	killall -9 $(BIN); \
+	rm -f /usr/sbin/$(BIN); \
+	rm -f /etc/init.d/$(BIN); \
+	update-rc.d -f $(BIN) remove; \
 
 uninstallsystemd:
-	@systemctl stop snapclient; \
-	systemctl disable snapclient; \
-	killall -9 snapclient; \
-	rm -f /usr/sbin/snapclient; \
-	rm -f /lib/systemd/system/snapclient.service; \
+	@systemctl stop $(BIN); \
+	systemctl disable $(BIN); \
+	killall -9 $(BIN); \
+	rm -f /usr/sbin/$(BIN); \
+	rm -f /lib/systemd/system/$(BIN).service; \
 	systemctl daemon-reload; \
 
