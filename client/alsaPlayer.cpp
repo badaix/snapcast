@@ -22,8 +22,8 @@
 #include <alsa/asoundlib.h>
 #include <iostream>
 
-#define BUFFER_TIME 160000
-#define PERIOD_TIME 20000
+//#define BUFFER_TIME 120000
+#define PERIOD_TIME 30000
 
 using namespace std;
 
@@ -76,8 +76,7 @@ void Player::initAlsa()
 	if (period_time > PERIOD_TIME)
 		period_time = PERIOD_TIME;
 
-	unsigned int buffer_time = 4*period_time;
-
+	unsigned int buffer_time = 4 * period_time;
 
 	snd_pcm_hw_params_set_period_time_near(handle_, params, &period_time, 0);
 	snd_pcm_hw_params_set_buffer_time_near(handle_, params, &buffer_time, 0);
