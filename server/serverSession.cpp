@@ -62,13 +62,13 @@ void ServerSession::stop()
 		}
 		if (readerThread_)
 		{
-			logD << "joining readerThread\n";
+			logO << "joining readerThread\n";
 			readerThread_->join();
 			delete readerThread_;
 		}
 		if (writerThread_)
 		{
-			logD << "joining writerThread\n";
+			logO << "joining writerThread\n";
 			writerThread_->join();
 			delete writerThread_;
 		}
@@ -78,7 +78,8 @@ void ServerSession::stop()
 	}
 	readerThread_ = NULL;
 	writerThread_ = NULL;
-	logD << "ServerSession stopped\n";
+	socket_ = NULL;
+	logO << "ServerSession stopped\n";
 }
 
 
@@ -90,7 +91,7 @@ void ServerSession::socketRead(void* _to, size_t _bytes)
 		boost::system::error_code error;
 		read += socket_->read_some(boost::asio::buffer((char*)_to + read, _bytes - read));
 	}
-	while (read < _bytes);
+	while (active_ && (read < _bytes));
 }
 
 
@@ -109,7 +110,7 @@ bool ServerSession::send(const msg::BaseMessage* message) const
 {
 //	logO << "send: " << message->type << ", size: " << message->size << ", id: " << message->id << ", refers: " << message->refersTo << "\n";
 	std::unique_lock<std::mutex> mlock(mutex_);
-	if (!socket_)
+	if (!socket_ || !active_)
 		return false;
 	boost::asio::streambuf streambuf;
 	std::ostream stream(&streambuf);
