@@ -79,7 +79,7 @@ int main (int argc, char *argv[])
 		("ip,i", po::value<string>(&ip), "server IP")
 		("port,p", po::value<size_t>(&port)->default_value(98765), "server port")
 		("soundcard,s", po::value<string>(&soundcard)->default_value("default"), "index or name of the soundcard")
-		("daemon,d", po::value<int>(&runAsDaemon)->implicit_value(-5), "daemonize, optional process priority [-20..19]")
+		("daemon,d", po::value<int>(&runAsDaemon)->implicit_value(-3), "daemonize, optional process priority [-20..19]")
 		("latency", po::value<size_t>(&latency)->default_value(0), "latency of the soundcard")
 		;
 
@@ -127,7 +127,7 @@ int main (int argc, char *argv[])
 			if (runAsDaemon < -20)
 				runAsDaemon = -20;
 			else if (runAsDaemon > 19)
-				runAsDaemon = 10;
+				runAsDaemon = 19;
 			setpriority(PRIO_PROCESS, 0, runAsDaemon);
 			logS(kLogNotice) << "daemon started" << std::endl;
 		}

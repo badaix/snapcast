@@ -58,7 +58,7 @@ int main(int argc, char* argv[])
 		("sampleformat,s", po::value<string>(&sampleFormat)->default_value("44100:16:2"), "sample format")
 		("codec,c", po::value<string>(&settings.codec)->default_value("flac"), "transport codec [flac|ogg|pcm][:options]. Type codec:? to get codec specific options")
 		("fifo,f", po::value<string>(&settings.fifoName)->default_value("/tmp/snapfifo"), "name of the input fifo file")
-		("daemon,d", po::value<int>(&runAsDaemon)->implicit_value(-5), "daemonize, optional process priority [-20..19]")
+		("daemon,d", po::value<int>(&runAsDaemon)->implicit_value(-3), "daemonize, optional process priority [-20..19]")
 		("buffer,b", po::value<int32_t>(&settings.bufferMs)->default_value(1000), "buffer [ms]")
 		;
 
@@ -108,7 +108,7 @@ int main(int argc, char* argv[])
 			if (runAsDaemon < -20)
 				runAsDaemon = -20;
 			else if (runAsDaemon > 19)
-				runAsDaemon = 10;
+				runAsDaemon = 19;
 			setpriority(PRIO_PROCESS, 0, runAsDaemon);
 			logS(kLogNotice) << "daemon started." << endl;
 		}
