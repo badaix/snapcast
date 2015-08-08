@@ -24,6 +24,8 @@
 #include "common/log.h"
 #include <iostream>
 
+using namespace std;
+
 
 ControlServer::ControlServer(const ControlServerSettings& controlServerSettings) : settings_(controlServerSettings), sampleFormat_(controlServerSettings.sampleFormat)
 {

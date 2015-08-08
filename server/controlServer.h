@@ -38,7 +38,6 @@
 
 using boost::asio::ip::tcp;
 typedef std::shared_ptr<tcp::socket> socket_ptr;
-using namespace std;
 
 
 struct ControlServerSettings
@@ -69,15 +68,15 @@ private:
 	void acceptor();
 	mutable std::mutex mutex_;
 	PipeReader* pipeReader_;
-	set<shared_ptr<ServerSession>> sessions_;
+	std::set<std::shared_ptr<ServerSession>> sessions_;
 	boost::asio::io_service io_service_;
-	shared_ptr<tcp::acceptor> acceptor_;
+	std::shared_ptr<tcp::acceptor> acceptor_;
 
 	ControlServerSettings settings_;
 	msg::SampleFormat sampleFormat_;
 	msg::ServerSettings serverSettings_;
-	thread acceptThread_;
-	Queue<shared_ptr<msg::BaseMessage>> messages_;
+	std::thread acceptThread_;
+	Queue<std::shared_ptr<msg::BaseMessage>> messages_;
 };
 
 
