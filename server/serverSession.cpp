@@ -49,6 +49,7 @@ void ServerSession::start()
 
 void ServerSession::stop()
 {
+	std::unique_lock<std::mutex> mlock(mutex_);
 	active_ = false;
 	try
 	{
@@ -62,13 +63,13 @@ void ServerSession::stop()
 		}
 		if (readerThread_)
 		{
-			logO << "joining readerThread\n";
+			logD << "joining readerThread\n";
 			readerThread_->join();
 			delete readerThread_;
 		}
 		if (writerThread_)
 		{
-			logO << "joining writerThread\n";
+			logD << "joining writerThread\n";
 			writerThread_->join();
 			delete writerThread_;
 		}
@@ -79,7 +80,7 @@ void ServerSession::stop()
 	readerThread_ = NULL;
 	writerThread_ = NULL;
 	socket_ = NULL;
-	logO << "ServerSession stopped\n";
+	logD << "ServerSession stopped\n";
 }
 
 

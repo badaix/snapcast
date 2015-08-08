@@ -139,7 +139,7 @@ void PipeReader::worker()
 		}
 		catch(const std::exception& e)
 		{
-			std::cerr << "Exception: " << e.what() << std::endl;
+			logE << "Exception: " << e.what() << std::endl;
 		}
 	}
 }

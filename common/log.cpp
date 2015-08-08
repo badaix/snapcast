@@ -55,7 +55,7 @@ int Log::sync()
 		else if (priority_ == kOut)
 			std::cout << Timestamp() << " [out] " << buffer_.c_str() << std::flush;
 		else if (priority_ == kErr)
-			std::cerr << Timestamp() << " [err] " << buffer_.c_str() << std::flush;
+			std::cout << Timestamp() << " [err] " << buffer_.c_str() << std::flush;
 		else
 		{
 			std::cout << Timestamp() << " [" << std::to_string(priority_) << "] " << buffer_.c_str() << std::flush;

@@ -1,4 +1,4 @@
-VERSION = 0.2.92
+VERSION = 0.2.93
 TARGET  = snapclient
 SHELL = /bin/bash
 
@@ -53,7 +53,6 @@ uninstall:
 	@if [[ `systemctl` =~ -\.mount ]]; then \
 		$(MAKE) uninstallsystemd; \
 	elif [[ `/sbin/init --version` =~ upstart ]]; then \
-		echo upstart => sysv; \
 		$(MAKE) uninstallsysv; \
 	elif [[ -f /etc/init.d/cron && ! -h /etc/init.d/cron ]]; then \
 		$(MAKE) uninstallsysv; \
