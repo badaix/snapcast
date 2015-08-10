@@ -21,9 +21,9 @@
 
 #include <thread>
 #include <atomic>
+#include "decoder/decoder.h"
 #include "message/message.h"
 #include "clientConnection.h"
-#include "decoder.h"
 #include "stream.h"
 #include "pcmDevice.h"
 

@@ -22,7 +22,7 @@
 #include <unistd.h>
 
 #include "pipeReader.h"
-#include "encoderFactory.h"
+#include "encoder/encoderFactory.h"
 #include "common/log.h"
 #include "common/snapException.h"
 

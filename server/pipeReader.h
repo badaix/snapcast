@@ -22,7 +22,7 @@
 #include <thread>
 #include <atomic>
 #include <string>
-#include "encoder.h"
+#include "encoder/encoder.h"
 #include "message/sampleFormat.h"
 #include "message/header.h"
 

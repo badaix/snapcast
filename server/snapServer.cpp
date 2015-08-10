@@ -28,7 +28,7 @@
 #include "common/snapException.h"
 #include "message/sampleFormat.h"
 #include "message/message.h"
-#include "encoderFactory.h"
+#include "encoder/encoderFactory.h"
 #include "controlServer.h"
 #include "publishAvahi.h"
 

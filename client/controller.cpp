@@ -20,9 +20,9 @@
 #include <iostream>
 #include <string>
 #include <memory>
-#include "oggDecoder.h"
-#include "pcmDecoder.h"
-#include "flacDecoder.h"
+#include "decoder/oggDecoder.h"
+#include "decoder/pcmDecoder.h"
+#include "decoder/flacDecoder.h"
 #include "alsaPlayer.h"
 #include "timeProvider.h"
 #include "common/log.h"
