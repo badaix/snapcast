@@ -50,6 +50,13 @@ struct ControlServerSettings
 };
 
 
+/// Forwars PCM data to the connected clients
+/**
+ * Reads PCM data with pipereader, implements PipeListener to get the (encoded) PCM stream.
+ * Accepts and holds client connections (ServerSession)
+ * Receives (via the MessageReceiver interface) and answers messages from the clients
+ * Forwards PCM data to the clients
+ */
 class ControlServer : public MessageReceiver, PipeListener
 {
 public:

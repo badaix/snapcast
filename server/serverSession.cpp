@@ -21,6 +21,7 @@
 #include <mutex>
 #include "serverSession.h"
 #include "common/log.h"
+#include "message/pcmChunk.h"
 
 using namespace std;
 
@@ -171,7 +172,23 @@ void ServerSession::writer()
 		while (active_)
 		{
 			if (messages_.try_pop(message, std::chrono::milliseconds(500)))
+			{
+				if (bufferMs_ > 0)
+				{
+					const msg::PcmChunk* pcmChunk = dynamic_cast<const msg::PcmChunk*>(message.get());
+					if (pcmChunk != NULL)
+					{
+						chronos::time_point_hrc now = chronos::hrc::now();
+						size_t age = 0;
+						if (now > pcmChunk->start())
+							age = std::chrono::duration_cast<chronos::msec>(now - pcmChunk->start()).count();
+						//logD << "PCM chunk. Age: " << age << ", buffer: " << bufferMs_ << ", age > buffer: " << (age > bufferMs_) << "\n";
+						if (age > bufferMs_)
+							continue;
+					}
+				}
 				send(message.get());
+			}
 		}
 	}
 	catch (const std::exception& e)

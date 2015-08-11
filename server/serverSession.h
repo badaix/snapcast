@@ -36,6 +36,8 @@ using boost::asio::ip::tcp;
 
 class ServerSession;
 
+
+/// Interface: callback for a received message.
 class MessageReceiver
 {
 public:
@@ -43,6 +45,12 @@ public:
 };
 
 
+/// Endpoint for a connected client.
+/**
+ * Endpoint for a connected client.
+ * Messages are sent to the client with the "send" method.
+ * Received messages from the client are passed to the MessageReceiver callback
+ */
 class ServerSession
 {
 public:
@@ -53,16 +61,20 @@ public:
 	bool send(const msg::BaseMessage* message) const;
 	void add(const std::shared_ptr<const msg::BaseMessage>& message);
 
-	virtual bool active() const
+	bool active() const
 	{
 		return active_;
 	}
 
-	virtual void setStreamActive(bool active)
+	void setStreamActive(bool active)
 	{
 		streamActive_ = active;
 	}
 
+	void setBufferMs(size_t bufferMs)
+	{
+		bufferMs_ = bufferMs;
+	}
 
 protected:
 	void socketRead(void* _to, size_t _bytes);
@@ -78,6 +90,7 @@ protected:
 	std::shared_ptr<tcp::socket> socket_;
 	MessageReceiver* messageReceiver_;
 	Queue<std::shared_ptr<const msg::BaseMessage>> messages_;
+	size_t bufferMs_;
 };
 
 

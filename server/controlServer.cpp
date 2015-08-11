@@ -137,11 +137,12 @@ void ControlServer::handleAccept(socket_ptr socket)
 	setsockopt(socket->native(), SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
 	setsockopt(socket->native(), SOL_SOCKET, SO_SNDTIMEO, &tv, sizeof(tv));
 	logS(kLogNotice) << "ControlServer::NewConnection: " << socket->remote_endpoint().address().to_string() << endl;
-	ServerSession* session = new ServerSession(this, socket);
+	shared_ptr<ServerSession> session(new ServerSession(this, socket));
 	{
 		std::unique_lock<std::mutex> mlock(mutex_);
+		session->setBufferMs(settings_.bufferMs);
 		session->start();
-		sessions_.insert(shared_ptr<ServerSession>(session));
+		sessions_.insert(session);
 	}
 	startAccept();
 }
