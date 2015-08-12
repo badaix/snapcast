@@ -175,13 +175,13 @@ void ServerSession::writer()
 			{
 				if (bufferMs_ > 0)
 				{
-					const msg::PcmChunk* pcmChunk = dynamic_cast<const msg::PcmChunk*>(message.get());
-					if (pcmChunk != NULL)
+					const msg::WireChunk* wireChunk = dynamic_cast<const msg::WireChunk*>(message.get());
+					if (wireChunk != NULL)
 					{
 						chronos::time_point_hrc now = chronos::hrc::now();
 						size_t age = 0;
-						if (now > pcmChunk->start())
-							age = std::chrono::duration_cast<chronos::msec>(now - pcmChunk->start()).count();
+						if (now > wireChunk->start())
+							age = std::chrono::duration_cast<chronos::msec>(now - wireChunk->start()).count();
 						//logD << "PCM chunk. Age: " << age << ", buffer: " << bufferMs_ << ", age > buffer: " << (age > bufferMs_) << "\n";
 						if (age > bufferMs_)
 							continue;

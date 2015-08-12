@@ -121,7 +121,7 @@ int main(int argc, char* argv[])
 		if (settings.bufferMs < 400)
 			settings.bufferMs = 400;
 		settings.sampleFormat = sampleFormat;
-		ControlServer* controlServer = new ControlServer(settings);
+		std::unique_ptr<ControlServer> controlServer(new ControlServer(settings));
 		controlServer->start();
 
 		while (!g_terminated)

@@ -124,7 +124,7 @@ void ControlServer::onMessageReceived(ServerSession* connection, const msg::Base
 
 void ControlServer::startAccept()
 {
-	socket_ptr socket(new tcp::socket(io_service_));
+	socket_ptr socket = make_shared<tcp::socket>(io_service_);
 	acceptor_->async_accept(*socket, bind(&ControlServer::handleAccept, this, socket));
 }
 
@@ -137,7 +137,7 @@ void ControlServer::handleAccept(socket_ptr socket)
 	setsockopt(socket->native(), SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
 	setsockopt(socket->native(), SOL_SOCKET, SO_SNDTIMEO, &tv, sizeof(tv));
 	logS(kLogNotice) << "ControlServer::NewConnection: " << socket->remote_endpoint().address().to_string() << endl;
-	shared_ptr<ServerSession> session(new ServerSession(this, socket));
+	shared_ptr<ServerSession> session = make_shared<ServerSession>(this, socket);
 	{
 		std::unique_lock<std::mutex> mlock(mutex_);
 		session->setBufferMs(settings_.bufferMs);
@@ -152,7 +152,7 @@ void ControlServer::start()
 {
 	pipeReader_ = new PipeReader(this, settings_.sampleFormat, settings_.codec, settings_.fifoName);
 	pipeReader_->start();
-	acceptor_ = shared_ptr<tcp::acceptor>(new tcp::acceptor(io_service_, tcp::endpoint(tcp::v4(), settings_.port)));
+	acceptor_ = make_shared<tcp::acceptor>(io_service_, tcp::endpoint(tcp::v4(), settings_.port));
 	startAccept();
 	acceptThread_ = thread(&ControlServer::acceptor, this);
 }

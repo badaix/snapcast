@@ -93,7 +93,7 @@ void FlacEncoder::encode(const msg::PcmChunk* chunk)
 //		logO << "encoded: " << chunk->payloadSize << "\tframes: " << encodedSamples_ << "\tres: " << resMs << "\n";
 		encodedSamples_ = 0;
 		listener_->onChunkEncoded(this, flacChunk_, resMs);
-		flacChunk_ = new msg::PcmChunk();
+		flacChunk_ = new msg::PcmChunk(chunk->format, 0);
 	}
 }
 
