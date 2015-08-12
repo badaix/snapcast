@@ -23,6 +23,7 @@
 #include <syslog.h>
 #include <iostream>
 #include <cstring>
+#include <sstream>
 
 #define logD std::clog << kDbg
 #define logO std::clog << kOut
@@ -57,7 +58,7 @@ protected:
 private:
 	friend std::ostream& operator<< (std::ostream& os, const LogPriority& log_priority);
 	std::string Timestamp();
-	std::string buffer_;
+	std::stringstream buffer_;
 	int facility_;
 	LogPriority priority_;
 	char ident_[50];
