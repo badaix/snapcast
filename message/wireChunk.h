@@ -26,6 +26,7 @@
 #include <streambuf>
 #include <vector>
 #include "message.h"
+#include "common/timeDefs.h"
 
 
 namespace msg
@@ -66,6 +67,11 @@ public:
 	virtual uint32_t getSize() const
 	{
 		return sizeof(int32_t) + sizeof(int32_t) + sizeof(uint32_t) + payloadSize;
+	}
+
+	virtual chronos::time_point_hrc start() const
+	{
+		return chronos::time_point_hrc(chronos::sec(timestamp.sec) + chronos::usec(timestamp.usec));
 	}
 
 	tv timestamp;

@@ -23,7 +23,6 @@
 #include "message.h"
 #include "wireChunk.h"
 #include "sampleFormat.h"
-#include "common/timeDefs.h"
 
 
 namespace msg
@@ -45,12 +44,12 @@ public:
 	int readFrames(void* outputBuffer, size_t frameCount);
 	int seek(int frames);
 
-	inline chronos::time_point_hrc start() const
+	virtual chronos::time_point_hrc start() const
 	{
 		return chronos::time_point_hrc(
 				chronos::sec(timestamp.sec) +
 				chronos::usec(timestamp.usec) +
-				chronos::usec((chronos::usec::rep)(1000000. * ((double)idx / (double)format.rate)))
+				chronos::usec((chronos::usec::rep)(1000000. * ((double)idx_ / (double)format.rate)))
 				);
 	}
 
@@ -68,12 +67,12 @@ public:
 	template<typename T>
 	inline T durationLeft() const
 	{
-		return std::chrono::duration_cast<T>(chronos::nsec((chronos::nsec::rep)(1000000 * (getFrameCount() - idx) / format.msRate())));
+		return std::chrono::duration_cast<T>(chronos::nsec((chronos::nsec::rep)(1000000 * (getFrameCount() - idx_) / format.msRate())));
 	}
 
 	inline bool isEndOfChunk() const
 	{
-		return idx >= getFrameCount();
+		return idx_ >= getFrameCount();
 	}
 
 	inline size_t getFrameCount() const
@@ -89,7 +88,7 @@ public:
 	SampleFormat format;
 
 private:
-	uint32_t idx;
+	uint32_t idx_;
 };
 
 }
