@@ -33,6 +33,11 @@ ControlServer::ControlServer(const ControlServerSettings& controlServerSettings)
 }
 
 
+ControlServer::~ControlServer()
+{
+}
+
+
 void ControlServer::send(const msg::BaseMessage* message)
 {
 	std::unique_lock<std::mutex> mlock(mutex_);
@@ -160,9 +165,10 @@ void ControlServer::start()
 
 void ControlServer::stop()
 {
-	io_service_.stop();
 	acceptor_->cancel();
+	io_service_.stop();
 	acceptThread_.join();
+	pipeReader_->stop();
 	std::unique_lock<std::mutex> mlock(mutex_);
 	for (auto it = sessions_.begin(); it != sessions_.end(); ++it)
 		(*it)->stop();

@@ -113,7 +113,7 @@ void OggEncoder::encode(const msg::PcmChunk* chunk)
 	if (res > 0)
 	{
 		res /= (sampleFormat_.rate / 1000.);
-		logO << "res: " << res << "\n";
+		// logO << "res: " << res << "\n";
 		lastGranulepos = os.granulepos;
 		// make oggChunk smaller
 		oggChunk->payload = (char*)realloc(oggChunk->payload, pos);

@@ -61,6 +61,7 @@ class ControlServer : public MessageReceiver, PipeListener
 {
 public:
 	ControlServer(const ControlServerSettings& controlServerSettings);
+	virtual ~ControlServer();
 
 	void start();
 	void stop();
