@@ -29,6 +29,11 @@
 
 class PipeReader;
 
+
+/// Callback interface for users of PipeReader
+/**
+ * Users of PipeReader should implement this to get the data
+ */
 class PipeListener
 {
 public:
@@ -47,12 +52,14 @@ public:
 class PipeReader : public EncoderListener
 {
 public:
+	/// ctor. Encoded PCM data is passed to the PipeListener
 	PipeReader(PipeListener* pipeListener, const msg::SampleFormat& sampleFormat, const std::string& codec, const std::string& fifoName);
 	virtual ~PipeReader();
 
 	void start();
 	void stop();
 
+	/// Implementation of EncoderListener::onChunkEncoded
 	virtual void onChunkEncoded(const Encoder* encoder, msg::PcmChunk* chunk, double duration);
 	msg::Header* getHeader();
 

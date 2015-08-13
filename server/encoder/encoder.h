@@ -29,6 +29,10 @@
 
 class Encoder;
 
+/// Callback interface for users of Encoder
+/**
+ * Users of Encoder should implement this to get the encoded PCM data
+ */
 class EncoderListener
 {
 public:
@@ -37,9 +41,15 @@ public:
 
 
 
+/// Abstract Encoder class
+/**
+ * Stream encoder. PCM chunks are fed into the encoder.
+ * As soon as a frame is encoded, the encoded data is passed to the EncoderListener
+ */
 class Encoder
 {
 public:
+	/// ctor. Codec options (E.g. compression level) are passed as string and are codec dependend
 	Encoder(const std::string& codecOptions = "") : headerChunk_(NULL), codecOptions_(codecOptions)
 	{
 	}
@@ -50,6 +60,7 @@ public:
 			delete headerChunk_;
 	}
 
+	/// The listener will receive the encoded stream
 	virtual void init(EncoderListener* listener, const msg::SampleFormat& format)
 	{
 		if (codecOptions_ == "")
@@ -59,6 +70,7 @@ public:
 		initEncoder();
 	}
 
+	/// Here the work is done. Encoded data is passed to the EncoderListener.
 	virtual void encode(const msg::PcmChunk* chunk) = 0;
 
 	virtual std::string name() const = 0;
@@ -73,6 +85,7 @@ public:
 		return "";
 	}
 
+	/// Header information needed to decode the data
 	virtual msg::Header* getHeader() const
 	{
 		return headerChunk_;

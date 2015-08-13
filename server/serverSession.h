@@ -54,11 +54,16 @@ public:
 class ServerSession
 {
 public:
+	/// ctor. Received message from the client are passed to MessageReceiver
 	ServerSession(MessageReceiver* receiver, std::shared_ptr<tcp::socket> socket);
 	~ServerSession();
 	void start();
 	void stop();
+
+	/// Sends a message to the client (synchronous)
 	bool send(const msg::BaseMessage* message) const;
+
+	/// Sends a message to the client (asynchronous)
 	void add(const std::shared_ptr<const msg::BaseMessage>& message);
 
 	bool active() const
@@ -66,11 +71,14 @@ public:
 		return active_;
 	}
 
+	/// Client subscribed for the PCM stream, by sending the "startStream" command
+	/// TODO: Currently there is only one stream ("zone")
 	void setStreamActive(bool active)
 	{
 		streamActive_ = active;
 	}
 
+	/// Max playout latency. No need to send PCM data that is older than bufferMs
 	void setBufferMs(size_t bufferMs)
 	{
 		bufferMs_ = bufferMs;

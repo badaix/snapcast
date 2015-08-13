@@ -52,7 +52,7 @@ struct ControlServerSettings
 
 /// Forwars PCM data to the connected clients
 /**
- * Reads PCM data with pipereader, implements PipeListener to get the (encoded) PCM stream.
+ * Reads PCM data using PipeReader, implements PipeListener to get the (encoded) PCM stream.
  * Accepts and holds client connections (ServerSession)
  * Receives (via the MessageReceiver interface) and answers messages from the clients
  * Forwards PCM data to the clients
@@ -65,8 +65,14 @@ public:
 
 	void start();
 	void stop();
+
+	/// Send a message to all connceted clients
 	void send(const msg::BaseMessage* message);
+
+	/// Clients call this when they receive a message. Implementation of MessageReceiver::onMessageReceived
 	virtual void onMessageReceived(ServerSession* connection, const msg::BaseMessage& baseMessage, char* buffer);
+
+	/// Implementation of PipeListener
 	virtual void onChunkRead(const PipeReader* pipeReader, const msg::PcmChunk* chunk);
 	virtual void onResync(const PipeReader* pipeReader, double ms);
 
