@@ -1,19 +1,15 @@
 #! /bin/sh
 ### BEGIN INIT INFO
 # Provides:          snapserver
-# Required-Start:    $remote_fs $syslog
-# Required-Stop:     $remote_fs $syslog
+# Required-Start:    $remote_fs $syslog $network
+# Required-Stop:     $remote_fs $syslog $network
 # Default-Start:     2 3 4 5
 # Default-Stop:      0 1 6
-# Short-Description: Example initscript
-# Description:       This file should be used to construct scripts to be
-#                    placed in /etc/init.d.
+# Short-Description: SnapServer initscript
+# Description:       SnapServer - SnapCast server
 ### END INIT INFO
 
-# Author: Foo Bar <foobar@baz.org>
-#
-# Please remove the "Author" lines above and replace them
-# with your own name if you copy and modify this script.
+# Author: Johannes Pohl <johannes.pohl@badaix.de>
 
 # Do NOT "set -e"
 
