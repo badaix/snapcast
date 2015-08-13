@@ -1,2 +1,0 @@
-client: cannot connect to server when started first?
-test 24, 32bit samples
