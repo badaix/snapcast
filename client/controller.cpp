@@ -55,11 +55,12 @@ void Controller::onMessageReceived(ClientConnection* connection, const msg::Base
 		{
 			msg::PcmChunk* pcmChunk = new msg::PcmChunk(*sampleFormat_, 0);
 			pcmChunk->deserialize(baseMessage, buffer);
-//logD << "chunk: " << pcmChunk->payloadSize;
+			//logD << "chunk: " << pcmChunk->payloadSize;
 			if (decoder_->decode(pcmChunk))
 			{
+//TODO: do decoding in thread?
 				stream_->addChunk(pcmChunk);
-//logD << ", decoded: " << pcmChunk->payloadSize << ", Duration: " << pcmChunk->getDuration() << ", sec: " << pcmChunk->timestamp.sec << ", usec: " << pcmChunk->timestamp.usec/1000 << ", type: " << pcmChunk->type << "\n";
+				//logD << ", decoded: " << pcmChunk->payloadSize << ", Duration: " << pcmChunk->getDuration() << ", sec: " << pcmChunk->timestamp.sec << ", usec: " << pcmChunk->timestamp.usec/1000 << ", type: " << pcmChunk->type << "\n";
 			}
 			else
 				delete pcmChunk;

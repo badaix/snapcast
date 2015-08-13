@@ -28,13 +28,25 @@
 #include "pcmDevice.h"
 
 
+/// Forwards PCM data to the audio player
+/**
+ * Sets up a connection to the server (using ClientConnection)
+ * Sets up the audio decoder and player. Decodes audio feeds PCM to the audio stream buffer
+ * Does timesync with the server
+ */
 class Controller : public MessageReceiver
 {
 public:
 	Controller();
 	void start(const PcmDevice& pcmDevice, const std::string& ip, size_t port, size_t latency);
 	void stop();
+
+	/// Implementation of MessageReceiver.
+	/// ClientConnection passes messages from the server through these callbacks
 	virtual void onMessageReceived(ClientConnection* connection, const msg::BaseMessage& baseMessage, char* buffer);
+
+	/// Implementation of MessageReceiver.
+	/// Used for async exception reporting
 	virtual void onException(ClientConnection* connection, const std::exception& exception);
 
 private:

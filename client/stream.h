@@ -34,14 +34,27 @@
 #include "common/queue.h"
 
 
+/// Time synchronized audio stream
+/**
+ * Queue with PCM data.
+ * Returns "online" server-time-synchronized PCM data
+ */
 class Stream
 {
 public:
 	Stream(const msg::SampleFormat& format);
+
+	/// Adds PCM data to the queue
 	void addChunk(msg::PcmChunk* chunk);
 	void clearChunks();
+
+	/// Get PCM data, which will be played out in "outputBufferDacTime" time
+	/// frame = (num_channels) * (1 sample in bytes) = (2 channels) * (2 bytes (16 bits) per sample) = 4 bytes (32 bits)
 	bool getPlayerChunk(void* outputBuffer, const chronos::usec& outputBufferDacTime, unsigned long framesPerBuffer);
+
+	/// "Server buffer": playout latency, e.g. 1000ms
 	void setBufferLen(size_t bufferLenMs);
+	
 	const msg::SampleFormat& getFormat() const
 	{
 		return format_;
@@ -72,9 +85,9 @@ private:
 	int median_;
 	int shortMedian_;
 	time_t lastUpdate_;
-	chronos::msec bufferMs_;
 	unsigned long playedFrames_;
 	long correctAfterXFrames_;
+	chronos::msec bufferMs_;
 };
 
 

@@ -26,6 +26,12 @@
 #include "common/timeDefs.h"
 
 
+/// Provides local and server time
+/**
+ * Stores time difference to the server
+ * Returns server's local system time.
+ * Clients are using the server time to play audio in sync, independent of the client's system time
+ */
 class TimeProvider
 {
 public:
@@ -49,7 +55,7 @@ public:
 */
 
 	template<typename T>
-	static T sinceEpoche(const chronos::time_point_hrc& point) 
+	static T sinceEpoche(const chronos::time_point_hrc& point)
 	{
 		return std::chrono::duration_cast<T>(point.time_since_epoch());
 	}
@@ -70,7 +76,7 @@ public:
 	}
 
 private:
-	TimeProvider(); 
+	TimeProvider();
 	TimeProvider(TimeProvider const&);   // Don't Implement
 	void operator=(TimeProvider const&); // Don't implement
 

@@ -37,6 +37,7 @@ using boost::asio::ip::tcp;
 class ClientConnection;
 
 
+/// Used to synchronize server requests (wait for server response)
 struct PendingRequest
 {
 	PendingRequest(uint16_t reqId) : id(reqId), response(NULL) {};
@@ -47,6 +48,7 @@ struct PendingRequest
 };
 
 
+/// Interface: callback for a received message and error reporting
 class MessageReceiver
 {
 public:
@@ -55,16 +57,26 @@ public:
 };
 
 
+/// Endpoint of the server connection
+/**
+ * Server connection endpoint.
+ * Messages are sent to the server with the "send" method (async).
+ * Messages are sent sync to server with the sendReq method.
+ */
 class ClientConnection
 {
 public:
+	/// ctor. Received message from the server are passed to MessageReceiver
 	ClientConnection(MessageReceiver* receiver, const std::string& ip, size_t port);
 	virtual ~ClientConnection();
 	virtual void start();
 	virtual void stop();
 	virtual bool send(const msg::BaseMessage* message) const;
+
+	/// Send request to the server and wait for answer
 	virtual std::shared_ptr<msg::SerializedMessage> sendRequest(const msg::BaseMessage* message, const chronos::msec& timeout = chronos::msec(1000));
 
+	/// Send request to the server and wait for answer of type T
 	template <typename T>
 	std::shared_ptr<T> sendReq(const msg::BaseMessage* message, const chronos::msec& timeout = chronos::msec(1000))
 	{
