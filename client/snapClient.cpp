@@ -155,13 +155,13 @@ int main (int argc, char *argv[])
 			}
 		}
 
-		Controller controller;
+		std::unique_ptr<Controller> controller(new Controller());
 		if (!g_terminated)
 		{
-			controller.start(pcmDevice, ip, port, latency);
+			controller->start(pcmDevice, ip, port, latency);
 			while(!g_terminated)
 				usleep(100*1000);
-			controller.stop();
+			controller->stop();
 		}
 	}
 	catch (const std::exception& e)
