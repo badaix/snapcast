@@ -42,11 +42,21 @@ typedef std::shared_ptr<tcp::socket> socket_ptr;
 
 struct ControlServerSettings
 {
+	ControlServerSettings() :
+		port(98765),
+		fifoName("/tmp/snapfifo"),
+		codec("flac"),
+		bufferMs(1000),
+		sampleFormat("44100:16:2"),
+		pipeReadMs(20)
+	{
+	}
 	size_t port;
 	std::string fifoName;
 	std::string codec;
 	int32_t bufferMs;
 	msg::SampleFormat sampleFormat;
+	size_t pipeReadMs;
 };
 
 
@@ -73,7 +83,7 @@ public:
 	virtual void onMessageReceived(ServerSession* connection, const msg::BaseMessage& baseMessage, char* buffer);
 
 	/// Implementation of PipeListener
-	virtual void onChunkRead(const PipeReader* pipeReader, const msg::PcmChunk* chunk);
+	virtual void onChunkRead(const PipeReader* pipeReader, const msg::PcmChunk* chunk, double duration);
 	virtual void onResync(const PipeReader* pipeReader, double ms);
 
 private:

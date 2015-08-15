@@ -43,6 +43,8 @@ public:
 	SampleFormat(const std::string& format);
 	SampleFormat(uint32_t rate, uint16_t bits, uint16_t channels);
 
+	std::string getFormat() const;
+
 	void setFormat(const std::string& format);
 	void setFormat(uint32_t rate, uint16_t bits, uint16_t channels);
 

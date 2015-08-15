@@ -32,14 +32,13 @@ using namespace std;
 
 
 
-PipeReader::PipeReader(PipeListener* pipeListener, const msg::SampleFormat& sampleFormat, const std::string& codec, const std::string& fifoName) : pipeListener_(pipeListener), sampleFormat_(sampleFormat)
+PipeReader::PipeReader(PipeListener* pipeListener, const msg::SampleFormat& sampleFormat, const std::string& codec, const std::string& fifoName, size_t pcmReadMs) : pipeListener_(pipeListener), sampleFormat_(sampleFormat), pcmReadMs_(pcmReadMs)
 {
 	umask(0);
 	mkfifo(fifoName.c_str(), 0666);
 	fd_ = open(fifoName.c_str(), O_RDONLY | O_NONBLOCK);
 	if (fd_ == -1)
 		throw SnapException("failed to open fifo: \"" + fifoName + "\"");
-	pcmReadMs_ = 20;
 	EncoderFactory encoderFactory;
 	encoder_.reset(encoderFactory.createEncoder(codec));
 }
@@ -85,7 +84,7 @@ void PipeReader::onChunkEncoded(const Encoder* encoder, msg::PcmChunk* chunk, do
 	chunk->timestamp.sec = tvEncodedChunk_.tv_sec;
 	chunk->timestamp.usec = tvEncodedChunk_.tv_usec;
 	chronos::addUs(tvEncodedChunk_, duration * 1000);
-	pipeListener_->onChunkRead(this, chunk);
+	pipeListener_->onChunkRead(this, chunk, duration);
 }
 
 

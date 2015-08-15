@@ -23,7 +23,10 @@
 
 #include "sampleFormat.h"
 #include "common/log.h"
+#include <sstream>
 
+
+using namespace std;
 
 namespace msg
 {
@@ -42,6 +45,14 @@ SampleFormat::SampleFormat(const std::string& format) : BaseMessage(message_type
 SampleFormat::SampleFormat(uint32_t sampleRate, uint16_t bitsPerSample, uint16_t channelCount) : BaseMessage(message_type::kSampleFormat)
 {
 	setFormat(sampleRate, bitsPerSample, channelCount);
+}
+
+
+string SampleFormat::getFormat() const
+{
+	stringstream ss;
+	ss << rate << ":" << bits << ":" << channels;
+	return ss.str();
 }
 
 

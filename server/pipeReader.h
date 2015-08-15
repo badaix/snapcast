@@ -37,7 +37,7 @@ class PipeReader;
 class PipeListener
 {
 public:
-	virtual void onChunkRead(const PipeReader* pipeReader, const msg::PcmChunk* chunk) = 0;
+	virtual void onChunkRead(const PipeReader* pipeReader, const msg::PcmChunk* chunk, double duration) = 0;
 	virtual void onResync(const PipeReader* pipeReader, double ms) = 0;
 };
 
@@ -53,7 +53,7 @@ class PipeReader : public EncoderListener
 {
 public:
 	/// ctor. Encoded PCM data is passed to the PipeListener
-	PipeReader(PipeListener* pipeListener, const msg::SampleFormat& sampleFormat, const std::string& codec, const std::string& fifoName);
+	PipeReader(PipeListener* pipeListener, const msg::SampleFormat& sampleFormat, const std::string& codec, const std::string& fifoName, size_t pcmReadMs = 20);
 	virtual ~PipeReader();
 
 	void start();
@@ -66,12 +66,12 @@ public:
 protected:
 	void worker();
 	int fd_;
-	size_t pcmReadMs_;
 	timeval tvEncodedChunk_;
 	std::atomic<bool> active_;
 	std::thread readerThread_;
 	PipeListener* pipeListener_;
 	msg::SampleFormat sampleFormat_;
+	size_t pcmReadMs_;
 	std::unique_ptr<Encoder> encoder_;
 };
 

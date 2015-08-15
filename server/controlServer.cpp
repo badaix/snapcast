@@ -62,9 +62,9 @@ void ControlServer::send(const msg::BaseMessage* message)
 }
 
 
-void ControlServer::onChunkRead(const PipeReader* pipeReader, const msg::PcmChunk* chunk)
+void ControlServer::onChunkRead(const PipeReader* pipeReader, const msg::PcmChunk* chunk, double duration)
 {
-//	logO << "onChunkRead " << chunk->duration<chronos::msec>().count() << "ms\n";
+//	logO << "onChunkRead " << duration << "ms\n";
 	send(chunk);
 }
 
@@ -155,7 +155,7 @@ void ControlServer::handleAccept(socket_ptr socket)
 
 void ControlServer::start()
 {
-	pipeReader_ = new PipeReader(this, settings_.sampleFormat, settings_.codec, settings_.fifoName);
+	pipeReader_ = new PipeReader(this, settings_.sampleFormat, settings_.codec, settings_.fifoName, settings_.pipeReadMs);
 	pipeReader_->start();
 	acceptor_ = make_shared<tcp::acceptor>(io_service_, tcp::endpoint(tcp::v4(), settings_.port));
 	startAccept();
