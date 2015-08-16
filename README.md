@@ -8,7 +8,7 @@ The server's audio input is a named pipe `/tmp/snapfifo`. All data that is fed i
 
 How does is work
 ----------------
-The SnapServer reads PCM chunks from the pipe `/tmp/snapfifo`. The chunk is encoded and tagged with the local time. Supported codecs:
+The SnapServer reads PCM chunks from the pipe `/tmp/snapfifo`. The chunk is encoded and tagged with the local time. Supported codecs are:
 * PCM: lossless uncompressed
 * FLAC: lossless compressed [default]
 * Vorbis: lossy compression
