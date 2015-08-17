@@ -36,7 +36,7 @@
 using namespace std;
 
 
-Controller::Controller() : MessageReceiver(), active_(false), sampleFormat_(NULL), decoder_(NULL)
+Controller::Controller() : MessageReceiver(), active_(false), sampleFormat_(NULL), decoder_(NULL), sendTimeSyncMsg_(false), asyncException_(false)
 {
 }
 
@@ -44,6 +44,8 @@ Controller::Controller() : MessageReceiver(), active_(false), sampleFormat_(NULL
 void Controller::onException(ClientConnection* connection, const std::exception& exception)
 {
 	logE << "onException: " << exception.what() << "\n";
+	exception_ = exception;
+	asyncException_ = true;
 }
 
 
@@ -65,6 +67,22 @@ void Controller::onMessageReceived(ClientConnection* connection, const msg::Base
 			else
 				delete pcmChunk;
 		}
+	}
+	else if (baseMessage.type == message_type::kTime)
+	{
+		msg::Time reply;
+		reply.deserialize(baseMessage, buffer);
+		double latency = (reply.received.sec - reply.sent.sec) + (reply.received.usec - reply.sent.usec) / 1000000.;
+//		logO << "diff to server [ms]: " << (float)TimeProvider::getInstance().getDiffToServer<chronos::usec>().count() / 1000.f << "\n";
+//		logO << "timeMsg: " << latency << "\n";
+		TimeProvider::getInstance().setDiffToServer((reply.latency - latency) * 1000 / 2);
+	}
+
+	if (sendTimeSyncMsg_)
+	{
+		msg::Request timeReq(kTime);
+		clientConnection_->send(&timeReq);
+		sendTimeSyncMsg_ = false;
 	}
 }
 
@@ -147,17 +165,25 @@ void Controller::worker()
 
 			while (active_)
 			{
-				usleep(500*1000);
-                shared_ptr<msg::Time> reply = clientConnection_->sendReq<msg::Time>(&timeReq);
-                if (reply)
-                {
-                    double latency = (reply->received.sec - reply->sent.sec) + (reply->received.usec - reply->sent.usec) / 1000000.;
-                    TimeProvider::getInstance().setDiffToServer((reply->latency - latency) * 1000 / 2);
-                }
+				for (size_t n=0; n<10 && active_; ++n)
+				{
+					usleep(100*1000);
+					if (asyncException_)
+						throw exception_;
+				}
+
+				sendTimeSyncMsg_ = true;
+//				shared_ptr<msg::Time> reply = clientConnection_->sendReq<msg::Time>(&timeReq);
+//				if (reply)
+//				{
+//					double latency = (reply->received.sec - reply->sent.sec) + (reply->received.usec - reply->sent.usec) / 1000000.;
+//					TimeProvider::getInstance().setDiffToServer((reply->latency - latency) * 1000 / 2);
+//				}
 			}
 		}
 		catch (const std::exception& e)
 		{
+			asyncException_ = false;
 			logS(kLogErr) << "Exception in Controller::worker(): " << e.what() << endl;
 			logO << "Stopping clientConnection" << endl;
 			clientConnection_->stop();
