@@ -54,11 +54,13 @@ public:
 
 	/// "Server buffer": playout latency, e.g. 1000ms
 	void setBufferLen(size_t bufferLenMs);
-	
+
 	const msg::SampleFormat& getFormat() const
 	{
 		return format_;
 	}
+
+	bool waitForChunk(size_t ms) const;
 
 private:
 	chronos::time_point_hrc getNextPlayerChunk(void* outputBuffer, const chronos::usec& timeout, unsigned long framesPerBuffer);
@@ -88,6 +90,9 @@ private:
 	unsigned long playedFrames_;
 	long correctAfterXFrames_;
 	chronos::msec bufferMs_;
+
+	mutable std::condition_variable cv_;
+	mutable std::mutex cvMutex_;
 };
 
 

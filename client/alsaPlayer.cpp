@@ -201,13 +201,15 @@ void Player::worker()
 		else
 		{
 			logO << "Failed to get chunk\n";
-			usleep(100*1000);
+			while (active_ && !stream_->waitForChunk(100))
+				logD << "Waiting for chunk\n";
 		}
 	}
 }
 
 
-vector<PcmDevice> Player::pcm_list(void) {
+vector<PcmDevice> Player::pcm_list(void)
+{
 	void **hints, **n;
 	char *name, *descr, *io;
 	vector<PcmDevice> result;

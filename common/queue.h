@@ -101,6 +101,11 @@ public:
 		return queue_.size();
 	}
 
+	bool empty() const
+	{
+		return (size() == 0);
+	}
+
 	Queue()=default;
 	Queue(const Queue&) = delete;            // disable copying
 	Queue& operator=(const Queue&) = delete; // disable assignment

@@ -74,7 +74,17 @@ void Stream::addChunk(msg::PcmChunk* chunk)
 	while (chunks_.size() * chunk->duration<cs::msec>().count() > 10000)
 		chunks_.pop();
 	chunks_.push(shared_ptr<msg::PcmChunk>(chunk));
+	std::unique_lock<std::mutex> lck(cvMutex_);
+	cv_.notify_one();
 //	logD << "new chunk: " << chunk_->getDuration() << ", Chunks: " << chunks_.size() << "\n";
+}
+
+
+bool Stream::waitForChunk(size_t ms) const
+{
+	std::unique_lock<std::mutex> lck(cvMutex_);
+	cv_.wait_for(lck, std::chrono::milliseconds(ms));
+	return !chunks_.empty();
 }
 
 
