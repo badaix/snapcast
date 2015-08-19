@@ -58,7 +58,7 @@ std::string FlacEncoder::getAvailableOptions() const
 
 std::string FlacEncoder::getDefaultOptions() const
 {
-	return "5";
+	return "2";
 }
 
 
