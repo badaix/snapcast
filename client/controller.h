@@ -60,6 +60,9 @@ private:
 	Decoder* decoder_;
 	PcmDevice pcmDevice_;
 	size_t latency_;
+	bool sendTimeSyncMsg_;
+	std::exception exception_;
+	bool asyncException_;
 };
 
 
