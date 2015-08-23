@@ -80,6 +80,11 @@ public:
 		return buffer.size();
 	}
 
+	inline bool empty() const
+	{
+		return (buffer.size() == 0);
+	}
+
 	void setSize(size_t size)
 	{
 		bufferSize = size;

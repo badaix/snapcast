@@ -88,16 +88,15 @@ void BrowseAvahi::resolve_callback(
 			browseAvahi->result_.valid_ = true;
 
 			t = avahi_string_list_to_string(txt);
-			logO
-				<< "\t" << host_name << ":" << port << "(" << a << ")\n"
-				<< "\tTXT=" << t << "\n"
-				<< "\tProto=" << (int)protocol << "\n"
-				<< "\tcookie is " << avahi_string_list_get_service_cookie(txt) << "\n"
-				<< "\tis_local: " << !!(flags & AVAHI_LOOKUP_RESULT_LOCAL) << "\n"
-				<< "\tour_own: " << !!(flags & AVAHI_LOOKUP_RESULT_OUR_OWN) << "\n"
-				<< "\twide_area: " << !!(flags & AVAHI_LOOKUP_RESULT_WIDE_AREA) << "\n"
-				<< "\tmulticast: " << !!(flags & AVAHI_LOOKUP_RESULT_MULTICAST) << "\n"
-				<< "\tcached: " << !!(flags & AVAHI_LOOKUP_RESULT_CACHED) << "\n";
+			logO << "\t" << host_name << ":" << port << "(" << a << ")\n";
+			logD << "\tTXT=" << t << "\n";
+			logD << "\tProto=" << (int)protocol << "\n";
+			logD << "\tcookie is " << avahi_string_list_get_service_cookie(txt) << "\n";
+			logD << "\tis_local: " << !!(flags & AVAHI_LOOKUP_RESULT_LOCAL) << "\n";
+			logD << "\tour_own: " << !!(flags & AVAHI_LOOKUP_RESULT_OUR_OWN) << "\n";
+			logD << "\twide_area: " << !!(flags & AVAHI_LOOKUP_RESULT_WIDE_AREA) << "\n";
+			logD << "\tmulticast: " << !!(flags & AVAHI_LOOKUP_RESULT_MULTICAST) << "\n";
+			logD << "\tcached: " << !!(flags & AVAHI_LOOKUP_RESULT_CACHED) << "\n";
 			avahi_free(t);
 		}
 	}

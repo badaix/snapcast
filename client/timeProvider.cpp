@@ -30,7 +30,7 @@ void TimeProvider::setDiffToServer(double ms)
 {
 	long now = chronos::getTickCount();
 	/// clear diffBuffer if last update is older than a minute
-	if (now > lastTimeSync_ + 60*1000)
+	if (!diffBuffer_.empty() && (now > lastTimeSync_ + 60*1000))
 	{
 		logO << "Last time sync older than a minute. Clearing time buffer\n";
 		diffToServer_ = ms*1000;
