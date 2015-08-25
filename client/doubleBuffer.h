@@ -37,13 +37,27 @@ public:
 			buffer.pop_front();
 	}
 
-	T median() const
+	T median(unsigned int mean = 1) const
 	{
 		if (buffer.empty())
 			return 0;
 		std::deque<T> tmpBuffer(buffer.begin(), buffer.end());
 		std::sort(tmpBuffer.begin(), tmpBuffer.end());
-		return tmpBuffer[tmpBuffer.size() / 2];
+		if ((mean <= 1) || (tmpBuffer.size() < mean))
+			return tmpBuffer[tmpBuffer.size() / 2];
+		else
+		{
+			unsigned int low = tmpBuffer.size() / 2;
+			unsigned int high = low;
+			low -= mean/2;
+			high += mean/2;
+			T result((T)0);
+			for (unsigned int i=low; i<=high; ++i)
+			{
+				result += tmpBuffer[i];
+			}
+			return result / mean;
+		}
 	}
 
 	double mean() const

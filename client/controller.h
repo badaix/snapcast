@@ -51,6 +51,7 @@ public:
 
 private:
 	void worker();
+	bool sendTimeSyncMessage(long after = 1000);
 	std::atomic<bool> active_;
 	std::thread* controllerThread_;
 	ClientConnection* clientConnection_;
@@ -60,7 +61,7 @@ private:
 	Decoder* decoder_;
 	PcmDevice pcmDevice_;
 	size_t latency_;
-	bool sendTimeSyncMsg_;
+
 	std::exception exception_;
 	bool asyncException_;
 };

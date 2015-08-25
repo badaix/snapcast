@@ -36,7 +36,7 @@
 using namespace std;
 
 
-Controller::Controller() : MessageReceiver(), active_(false), sampleFormat_(NULL), decoder_(NULL), sendTimeSyncMsg_(false), asyncException_(false)
+Controller::Controller() : MessageReceiver(), active_(false), sampleFormat_(NULL), decoder_(NULL), asyncException_(false)
 {
 }
 
@@ -73,17 +73,28 @@ void Controller::onMessageReceived(ClientConnection* connection, const msg::Base
 		msg::Time reply;
 		reply.deserialize(baseMessage, buffer);
 		double latency = (reply.received.sec - reply.sent.sec) + (reply.received.usec - reply.sent.usec) / 1000000.;
-//		logO << "diff to server [ms]: " << (float)TimeProvider::getInstance().getDiffToServer<chronos::usec>().count() / 1000.f << "\n";
 //		logO << "timeMsg: " << latency << "\n";
 		TimeProvider::getInstance().setDiffToServer((reply.latency - latency) * 1000 / 2);
+//		logO << "diff to server [ms]: " << (float)TimeProvider::getInstance().getDiffToServer<chronos::usec>().count() / 1000.f << "\n";
 	}
 
-	if (sendTimeSyncMsg_)
-	{
-		msg::Request timeReq(kTime);
-		clientConnection_->send(&timeReq);
-		sendTimeSyncMsg_ = false;
-	}
+	if (baseMessage.type != message_type::kTime)
+		if (sendTimeSyncMessage(1000))
+			logD << "time sync onMessageReceived\n";
+}
+
+
+bool Controller::sendTimeSyncMessage(long after)
+{
+	static long lastTimeSync(0);
+	long now = chronos::getTickCount();
+	if (lastTimeSync + after > now)
+		return false;
+
+	lastTimeSync = now;
+	msg::Request timeReq(kTime);
+	clientConnection_->send(&timeReq);
+	return true;
 }
 
 
@@ -172,7 +183,8 @@ void Controller::worker()
 						throw exception_;
 				}
 
-				sendTimeSyncMsg_ = true;
+				if (sendTimeSyncMessage(2000))
+					logO << "time sync main loop\n";
 //				shared_ptr<msg::Time> reply = clientConnection_->sendReq<msg::Time>(&timeReq);
 //				if (reply)
 //				{

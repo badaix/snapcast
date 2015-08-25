@@ -82,7 +82,6 @@ private:
 
 	DoubleBuffer<chronos::usec::rep> diffBuffer_;
 	std::atomic<chronos::usec::rep> diffToServer_;
-	long lastTimeSync_;
 };
 
 

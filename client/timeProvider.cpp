@@ -20,7 +20,7 @@
 #include "common/log.h"
 
 
-TimeProvider::TimeProvider() : diffToServer_(0), lastTimeSync_(0)
+TimeProvider::TimeProvider() : diffToServer_(0)
 {
 	diffBuffer_.setSize(200);
 }
@@ -28,18 +28,19 @@ TimeProvider::TimeProvider() : diffToServer_(0), lastTimeSync_(0)
 
 void TimeProvider::setDiffToServer(double ms)
 {
+	static long lastTimeSync = 0;
 	long now = chronos::getTickCount();
 	/// clear diffBuffer if last update is older than a minute
-	if (!diffBuffer_.empty() && (now > lastTimeSync_ + 60*1000))
+	if (!diffBuffer_.empty() && (now > lastTimeSync + 60*1000))
 	{
 		logO << "Last time sync older than a minute. Clearing time buffer\n";
 		diffToServer_ = ms*1000;
 		diffBuffer_.clear();
 	}
-	lastTimeSync_ = now;
+	lastTimeSync = now;
 
 	diffBuffer_.add(ms*1000);
-	diffToServer_ = diffBuffer_.median();
+	diffToServer_ = diffBuffer_.median(3);
 //	logO << "setDiffToServer: " << ms << ", diff: " << diffToServer_ / 1000.f << "\n";
 }
 
