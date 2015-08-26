@@ -24,6 +24,7 @@
 #include <time.h>
 #include <unistd.h>
 #include <iostream>
+#include "common/snapException.h"
 #include "common/log.h"
 
 
@@ -37,14 +38,23 @@ BrowseAvahi::BrowseAvahi() : client_(NULL), sb_(NULL)
 
 BrowseAvahi::~BrowseAvahi()
 {
+	cleanUp();
+}
+
+
+void BrowseAvahi::cleanUp()
+{
 	if (sb_)
 		avahi_service_browser_free(sb_);
+	sb_ = NULL;
 
 	if (client_)
 		avahi_client_free(client_);
+	client_ = NULL;
 
 	if (simple_poll)
 		avahi_simple_poll_free(simple_poll);
+	simple_poll = NULL;
 }
 
 
@@ -88,7 +98,7 @@ void BrowseAvahi::resolve_callback(
 			browseAvahi->result_.valid_ = true;
 
 			t = avahi_string_list_to_string(txt);
-			logO << "\t" << host_name << ":" << port << "(" << a << ")\n";
+			logO << "\t" << host_name << ":" << port << " (" << a << ")\n";
 			logD << "\tTXT=" << t << "\n";
 			logD << "\tProto=" << (int)protocol << "\n";
 			logD << "\tcookie is " << avahi_string_list_get_service_cookie(txt) << "\n";
@@ -114,7 +124,8 @@ void BrowseAvahi::browse_callback(
 	const char *type,
 	const char *domain,
 	AVAHI_GCC_UNUSED AvahiLookupResultFlags flags,
-	void* userdata) {
+	void* userdata)
+{
 
 //    AvahiClient* client = (AvahiClient*)userdata;
 	BrowseAvahi* browseAvahi = static_cast<BrowseAvahi*>(userdata);
@@ -154,7 +165,8 @@ void BrowseAvahi::browse_callback(
 }
 
 
-void BrowseAvahi::client_callback(AvahiClient *c, AvahiClientState state, AVAHI_GCC_UNUSED void * userdata) {
+void BrowseAvahi::client_callback(AvahiClient *c, AvahiClientState state, AVAHI_GCC_UNUSED void * userdata)
+{
 	assert(c);
 
 	/* Called whenever the client or server state changes */
@@ -170,48 +182,42 @@ void BrowseAvahi::client_callback(AvahiClient *c, AvahiClientState state, AVAHI_
 
 bool BrowseAvahi::browse(const std::string& serviceName, int proto, AvahiResult& result, int timeout)
 {
-	int error;
-
-	/* Allocate main loop object */
-	if (!(simple_poll = avahi_simple_poll_new()))
+	try
 	{
-		logE << "Failed to create simple poll object.\n";
-		goto fail;
-	}
+		/* Allocate main loop object */
+		if (!(simple_poll = avahi_simple_poll_new()))
+			throw SnapException("BrowseAvahi - Failed to create simple poll object");
 
-	/* Allocate a new client */
-	client_ = avahi_client_new(avahi_simple_poll_get(simple_poll), (AvahiClientFlags)0, client_callback, this, &error);
+		/* Allocate a new client */
+		int error;
+		if (!(client_ = avahi_client_new(avahi_simple_poll_get(simple_poll), (AvahiClientFlags)0, client_callback, this, &error)))
+			throw SnapException("BrowseAvahi - Failed to create client: " + std::string(avahi_strerror(error)));
 
-	/* Check wether creating the client object succeeded */
-	if (!client_)
-	{
-		logE << "Failed to create client: " << avahi_strerror(error) << "\n";
-		goto fail;
-	}
+		/* Create the service browser */
+		if (!(sb_ = avahi_service_browser_new(client_, AVAHI_IF_UNSPEC, proto, serviceName.c_str(), NULL, (AvahiLookupFlags)0, browse_callback, this)))
+			throw SnapException("BrowseAvahi - Failed to create service browser: " + std::string(avahi_strerror(avahi_client_errno(client_))));
 
-	/* Create the service browser */
-	if (!(sb_ = avahi_service_browser_new(client_, AVAHI_IF_UNSPEC, proto, serviceName.c_str(), NULL, (AvahiLookupFlags)0, browse_callback, this)))
-	{
-		logE << "Failed to create service browser: " << avahi_strerror(avahi_client_errno(client_)) << "\n";
-		goto fail;
-	}
-
-	result_.valid_ = false;
-	while (timeout > 0)
-	{
-		avahi_simple_poll_iterate(simple_poll, 100);
-		timeout -= 100;
-		if (result_.valid_)
+		result_.valid_ = false;
+		while (timeout > 0)
 		{
-			result = result_;
-			return true;
+			avahi_simple_poll_iterate(simple_poll, 100);
+			timeout -= 100;
+			if (result_.valid_)
+			{
+				result = result_;
+				cleanUp();
+				return true;
+			}
 		}
+
+		cleanUp();
+		return false;
 	}
-
-fail:
-	return false;
+	catch (...)
+	{
+		cleanUp();
+		throw;
+	}
 }
-
-
 
 

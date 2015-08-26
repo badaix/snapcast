@@ -145,13 +145,21 @@ int main (int argc, char *argv[])
 			AvahiResult avahiResult;
 			while (!g_terminated)
 			{
-				if (browseAvahi.browse("_snapcast._tcp", AVAHI_PROTO_INET, avahiResult, 5000))
+				try
 				{
-					ip = avahiResult.ip_;
-					port = avahiResult.port_;
-					std::cout << ip << ":" << port << "\n";
-					break;
+					if (browseAvahi.browse("_snapcast._tcp", AVAHI_PROTO_INET, avahiResult, 5000))
+					{
+						ip = avahiResult.ip_;
+						port = avahiResult.port_;
+						logO << "Found server " << ip << ":" << port << "\n";
+						break;
+					}
 				}
+				catch (const std::exception& e)
+				{
+					logS(kLogErr) << "Exception: " << e.what() << std::endl;
+				}
+				usleep(500*1000);
 			}
 		}
 
