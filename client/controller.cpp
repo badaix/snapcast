@@ -183,7 +183,7 @@ void Controller::worker()
 						throw exception_;
 				}
 
-				if (sendTimeSyncMessage(2000))
+				if (sendTimeSyncMessage(5000))
 					logO << "time sync main loop\n";
 //				shared_ptr<msg::Time> reply = clientConnection_->sendReq<msg::Time>(&timeReq);
 //				if (reply)
