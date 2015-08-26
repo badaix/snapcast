@@ -29,7 +29,7 @@ PublishAvahi::PublishAvahi(const std::string& serviceName) : client(NULL), servi
 {
 	group = NULL;
 	simple_poll = NULL;
-    name = avahi_strdup(serviceName_.c_str());
+	name = avahi_strdup(serviceName_.c_str());
 }
 
 
@@ -37,23 +37,23 @@ void PublishAvahi::publish(const std::vector<AvahiService>& services)
 {
 	this->services = services;
 
-    AvahiClient *client = NULL;
-    int error;
+	AvahiClient *client = NULL;
+	int error;
 
-    /* Allocate main loop object */
-    if (!(simple_poll = avahi_simple_poll_new()))
+	/* Allocate main loop object */
+	if (!(simple_poll = avahi_simple_poll_new()))
 	{
-        logE << "Failed to create simple poll object.\n";
-    }
+		logE << "Failed to create simple poll object.\n";
+	}
 
-    /* Allocate a new client */
-    client = avahi_client_new(avahi_simple_poll_get(simple_poll), AVAHI_CLIENT_IGNORE_USER_CONFIG, client_callback, this, &error);
+	/* Allocate a new client */
+	client = avahi_client_new(avahi_simple_poll_get(simple_poll), AVAHI_CLIENT_IGNORE_USER_CONFIG, client_callback, this, &error);
 
-    /* Check wether creating the client object succeeded */
-    if (!client)
+	/* Check wether creating the client object succeeded */
+	if (!client)
 	{
-        logE << "Failed to create client: " << avahi_strerror(error) << "\n";
-    }
+		logE << "Failed to create client: " << avahi_strerror(error) << "\n";
+	}
 
 	active_ = true;
 	pollThread_ = std::thread(&PublishAvahi::worker, this);
@@ -81,177 +81,187 @@ PublishAvahi::~PublishAvahi()
 }
 
 
-void PublishAvahi::entry_group_callback(AvahiEntryGroup *g, AvahiEntryGroupState state, AVAHI_GCC_UNUSED void *userdata) {
-    assert(g == group || group == NULL);
-    group = g;
+void PublishAvahi::entry_group_callback(AvahiEntryGroup *g, AvahiEntryGroupState state, AVAHI_GCC_UNUSED void *userdata)
+{
+	assert(g == group || group == NULL);
+	group = g;
 
-    /* Called whenever the entry group state changes */
+	/* Called whenever the entry group state changes */
 
-    switch (state) {
-        case AVAHI_ENTRY_GROUP_ESTABLISHED :
-            /* The entry group has been established successfully */
-            logO << "Service '" << name << "' successfully established.\n";
-            break;
-
-        case AVAHI_ENTRY_GROUP_COLLISION : {
-            char *n;
-
-            /* A service name collision with a remote service
-             * happened. Let's pick a new name */
-            n = avahi_alternative_service_name(name);
-            avahi_free(name);
-            name = n;
-
-            logO << "Service name collision, renaming service to '" << name << "'\n";
-
-            /* And recreate the services */
-            static_cast<PublishAvahi*>(userdata)->create_services(avahi_entry_group_get_client(g));
-            break;
-        }
-
-        case AVAHI_ENTRY_GROUP_FAILURE :
-
-            logE << "Entry group failure: " << avahi_strerror(avahi_client_errno(avahi_entry_group_get_client(g))) << "\n";
-
-            /* Some kind of failure happened while we were registering our services */
-            avahi_simple_poll_quit(simple_poll);
-            break;
-
-        case AVAHI_ENTRY_GROUP_UNCOMMITED:
-        case AVAHI_ENTRY_GROUP_REGISTERING:
-            ;
-    }
-}
-
-void PublishAvahi::create_services(AvahiClient *c) {
-    char *n, r[128];
-    int ret;
-    assert(c);
-
-    /* If this is the first time we're called, let's create a new
-     * entry group if necessary */
-
-    if (!group)
+	switch (state)
 	{
-        if (!(group = avahi_entry_group_new(c, entry_group_callback, this))) {
-            logE << "avahi_entry_group_new() failed: " << avahi_strerror(avahi_client_errno(c)) << "\n";
-            goto fail;
-        }
-	}
-    /* If the group is empty (either because it was just created, or
-     * because it was reset previously, add our entries.  */
+		case AVAHI_ENTRY_GROUP_ESTABLISHED :
+			/* The entry group has been established successfully */
+			logO << "Service '" << name << "' successfully established.\n";
+			break;
 
-    if (avahi_entry_group_is_empty(group)) {
-        logO << "Adding service '" << name << "'\n";
+		case AVAHI_ENTRY_GROUP_COLLISION : {
+			char *n;
 
-        /* Create some random TXT data */
-        snprintf(r, sizeof(r), "random=%i", rand());
+			/* A service name collision with a remote service
+				* happened. Let's pick a new name */
+			n = avahi_alternative_service_name(name);
+			avahi_free(name);
+			name = n;
 
-        /* We will now add two services and one subtype to the entry
-         * group. The two services have the same name, but differ in
-         * the service type (IPP vs. BSD LPR). Only services with the
-         * same name should be put in the same entry group. */
+			logO << "Service name collision, renaming service to '" << name << "'\n";
 
-        /* Add the service for IPP */
-/*        if ((ret = avahi_entry_group_add_service(group, AVAHI_IF_UNSPEC, AVAHI_PROTO_UNSPEC, AVAHI_PUBLISH_UNIQUE, name, "_ipp._tcp", NULL, NULL, 651, "test=blah", r, NULL)) < 0) {
-
-            if (ret == AVAHI_ERR_COLLISION)
-                goto collision;
-
-            fprintf(stderr, "Failed to add _ipp._tcp service: %s\n", avahi_strerror(ret));
-            goto fail;
-        }
-*/
-        /* Add the same service for BSD LPR */
-		for (size_t n=0; n<services.size(); ++n)
-		{
-	        if ((ret = avahi_entry_group_add_service(group, AVAHI_IF_UNSPEC, services[n].proto_, AvahiPublishFlags(0), name, services[n].name_.c_str(), NULL, NULL, services[n].port_, NULL)) < 0)
-			{
-
-    	        if (ret == AVAHI_ERR_COLLISION)
-    	            goto collision;
-
-    	        logE << "Failed to add " << services[n].name_ << " service: " << avahi_strerror(ret) << "\n";
-    	        goto fail;
-    	    }
+			/* And recreate the services */
+			static_cast<PublishAvahi*>(userdata)->create_services(avahi_entry_group_get_client(g));
+			break;
 		}
 
-        /* Add an additional (hypothetic) subtype */
-/*        if ((ret = avahi_entry_group_add_service_subtype(group, AVAHI_IF_UNSPEC, AVAHI_PROTO_UNSPEC, AvahiPublishFlags(0), name, "_printer._tcp", NULL, "_magic._sub._printer._tcp") < 0)) {
-            fprintf(stderr, "Failed to add subtype _magic._sub._printer._tcp: %s\n", avahi_strerror(ret));
-            goto fail;
-        }
-*/
-        /* Tell the server to register the service */
-        if ((ret = avahi_entry_group_commit(group)) < 0) {
-            logE << "Failed to commit entry group: " << avahi_strerror(ret) << "\n";
-            goto fail;
-        }
-    }
+		case AVAHI_ENTRY_GROUP_FAILURE :
 
-    return;
+			logE << "Entry group failure: " << avahi_strerror(avahi_client_errno(avahi_entry_group_get_client(g))) << "\n";
+
+			/* Some kind of failure happened while we were registering our services */
+			avahi_simple_poll_quit(simple_poll);
+			break;
+
+		case AVAHI_ENTRY_GROUP_UNCOMMITED:
+		case AVAHI_ENTRY_GROUP_REGISTERING:
+			;
+	}
+}
+
+void PublishAvahi::create_services(AvahiClient *c)
+{
+	char *n, r[128];
+	int ret;
+	assert(c);
+
+	/* If this is the first time we're called, let's create a new
+		* entry group if necessary */
+
+	if (!group)
+	{
+		if (!(group = avahi_entry_group_new(c, entry_group_callback, this)))
+		{
+			logE << "avahi_entry_group_new() failed: " << avahi_strerror(avahi_client_errno(c)) << "\n";
+			goto fail;
+		}
+	}
+	/* If the group is empty (either because it was just created, or
+		* because it was reset previously, add our entries.  */
+
+	if (avahi_entry_group_is_empty(group))
+	{
+		logO << "Adding service '" << name << "'\n";
+
+		/* Create some random TXT data */
+		snprintf(r, sizeof(r), "random=%i", rand());
+
+		/* We will now add two services and one subtype to the entry
+			* group. The two services have the same name, but differ in
+			* the service type (IPP vs. BSD LPR). Only services with the
+			* same name should be put in the same entry group. */
+
+		/* Add the service for IPP */
+/*        if ((ret = avahi_entry_group_add_service(group, AVAHI_IF_UNSPEC, AVAHI_PROTO_UNSPEC, AVAHI_PUBLISH_UNIQUE, name, "_ipp._tcp", NULL, NULL, 651, "test=blah", r, NULL)) < 0)
+		{
+
+			if (ret == AVAHI_ERR_COLLISION)
+				goto collision;
+
+			fprintf(stderr, "Failed to add _ipp._tcp service: %s\n", avahi_strerror(ret));
+			goto fail;
+		}
+*/
+		/* Add the same service for BSD LPR */
+		for (size_t n=0; n<services.size(); ++n)
+		{
+			if ((ret = avahi_entry_group_add_service(group, AVAHI_IF_UNSPEC, services[n].proto_, AvahiPublishFlags(0), name, services[n].name_.c_str(), NULL, NULL, services[n].port_, NULL)) < 0)
+			{
+
+				if (ret == AVAHI_ERR_COLLISION)
+					goto collision;
+
+				logE << "Failed to add " << services[n].name_ << " service: " << avahi_strerror(ret) << "\n";
+				goto fail;
+			}
+		}
+
+		/* Add an additional (hypothetic) subtype */
+/*        if ((ret = avahi_entry_group_add_service_subtype(group, AVAHI_IF_UNSPEC, AVAHI_PROTO_UNSPEC, AvahiPublishFlags(0), name, "_printer._tcp", NULL, "_magic._sub._printer._tcp") < 0))
+		{
+			fprintf(stderr, "Failed to add subtype _magic._sub._printer._tcp: %s\n", avahi_strerror(ret));
+			goto fail;
+		}
+*/
+		/* Tell the server to register the service */
+		if ((ret = avahi_entry_group_commit(group)) < 0)
+		{
+			logE << "Failed to commit entry group: " << avahi_strerror(ret) << "\n";
+			goto fail;
+		}
+	}
+
+	return;
 
 collision:
 
-    /* A service name collision with a local service happened. Let's
-     * pick a new name */
-    n = avahi_alternative_service_name(name);
-    avahi_free(name);
-    name = n;
+	/* A service name collision with a local service happened. Let's
+		* pick a new name */
+	n = avahi_alternative_service_name(name);
+	avahi_free(name);
+	name = n;
 
-    logO << "Service name collision, renaming service to '" << name << "'\n";
+	logO << "Service name collision, renaming service to '" << name << "'\n";
 
-    avahi_entry_group_reset(group);
+	avahi_entry_group_reset(group);
 
-    create_services(c);
-    return;
+	create_services(c);
+	return;
 
 fail:
-    avahi_simple_poll_quit(simple_poll);
+	avahi_simple_poll_quit(simple_poll);
 }
 
 
-void PublishAvahi::client_callback(AvahiClient *c, AvahiClientState state, AVAHI_GCC_UNUSED void * userdata) {
-    assert(c);
+void PublishAvahi::client_callback(AvahiClient *c, AvahiClientState state, AVAHI_GCC_UNUSED void * userdata)
+{
+	assert(c);
 
-    /* Called whenever the client or server state changes */
+	/* Called whenever the client or server state changes */
 
-    switch (state) {
-        case AVAHI_CLIENT_S_RUNNING:
+	switch (state)
+	{
+		case AVAHI_CLIENT_S_RUNNING:
 
-            /* The server has startup successfully and registered its host
-             * name on the network, so it's time to create our services */
-            static_cast<PublishAvahi*>(userdata)->create_services(c);
-            break;
+			/* The server has startup successfully and registered its host
+				* name on the network, so it's time to create our services */
+			static_cast<PublishAvahi*>(userdata)->create_services(c);
+			break;
 
-        case AVAHI_CLIENT_FAILURE:
+		case AVAHI_CLIENT_FAILURE:
 
-            logE << "Client failure: " << avahi_strerror(avahi_client_errno(c)) << "\n";
-            avahi_simple_poll_quit(simple_poll);
+			logE << "Client failure: " << avahi_strerror(avahi_client_errno(c)) << "\n";
+			avahi_simple_poll_quit(simple_poll);
 
-            break;
+			break;
 
-        case AVAHI_CLIENT_S_COLLISION:
+		case AVAHI_CLIENT_S_COLLISION:
 
-            /* Let's drop our registered services. When the server is back
-             * in AVAHI_SERVER_RUNNING state we will register them
-             * again with the new host name. */
+			/* Let's drop our registered services. When the server is back
+				* in AVAHI_SERVER_RUNNING state we will register them
+				* again with the new host name. */
 
-        case AVAHI_CLIENT_S_REGISTERING:
+		case AVAHI_CLIENT_S_REGISTERING:
 
-            /* The server records are now being established. This
-             * might be caused by a host name change. We need to wait
-             * for our own records to register until the host name is
-             * properly esatblished. */
+			/* The server records are now being established. This
+				* might be caused by a host name change. We need to wait
+				* for our own records to register until the host name is
+				* properly esatblished. */
 
-            if (group)
-                avahi_entry_group_reset(group);
+			if (group)
+				avahi_entry_group_reset(group);
 
-            break;
+			break;
 
-        case AVAHI_CLIENT_CONNECTING:
-            ;
-    }
+		case AVAHI_CLIENT_CONNECTING:
+			;
+	}
 }
 
 

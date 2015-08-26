@@ -57,7 +57,7 @@ private:
 	static void entry_group_callback(AvahiEntryGroup *g, AvahiEntryGroupState state, AVAHI_GCC_UNUSED void *userdata);
 	static void client_callback(AvahiClient *c, AvahiClientState state, AVAHI_GCC_UNUSED void * userdata);
 	void create_services(AvahiClient *c);
-    AvahiClient* client;
+	AvahiClient* client;
 	std::string serviceName_;
 	std::thread pollThread_;
 	void worker();
