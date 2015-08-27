@@ -23,6 +23,7 @@
 #include "clientConnection.h"
 #include "common/utils.h"
 #include "common/snapException.h"
+#include "message/hello.h"
 
 
 using namespace std;
@@ -69,7 +70,10 @@ void ClientConnection::start()
 //	setsockopt(socket->native(), SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
 //	setsockopt(socket->native(), SOL_SOCKET, SO_SNDTIMEO, &tv, sizeof(tv));
 	socket_->connect(*iterator);
+
 	logO << "My MAC: \"" << getMacAddress(socket_->native()) << "\"\n";
+	msg::Hello hello(getMacAddress(socket_->native()));
+	send(&hello);
 	connected_ = true;
 	logS(kLogNotice) << "Connected to " << socket_->remote_endpoint().address().to_string() << endl;
 	active_ = true;

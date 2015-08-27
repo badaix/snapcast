@@ -16,8 +16,8 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
-#ifndef CONTROL_SERVER_H
-#define CONTROL_SERVER_H
+#ifndef STREAM_SERVER_H
+#define STREAM_SERVER_H
 
 #include <boost/asio.hpp>
 #include <vector>
@@ -27,50 +27,82 @@
 #include <sstream>
 #include <mutex>
 
-#include "controlSession.h"
+#include "serverSession.h"
 #include "pipeReader.h"
 #include "common/queue.h"
 #include "message/message.h"
 #include "message/header.h"
 #include "message/sampleFormat.h"
 #include "message/serverSettings.h"
+#include "controlServer.h"
 
 
 using boost::asio::ip::tcp;
 typedef std::shared_ptr<tcp::socket> socket_ptr;
 
 
-/// Telnet like remote control
+struct StreamServerSettings
+{
+	StreamServerSettings() :
+		port(1704),
+		fifoName("/tmp/snapfifo"),
+		codec("flac"),
+		bufferMs(1000),
+		sampleFormat("44100:16:2"),
+		pipeReadMs(20)
+	{
+	}
+	size_t port;
+	std::string fifoName;
+	std::string codec;
+	int32_t bufferMs;
+	msg::SampleFormat sampleFormat;
+	size_t pipeReadMs;
+};
+
+
+/// Forwars PCM data to the connected clients
 /**
- * Telnet like remote control
+ * Reads PCM data using PipeReader, implements PipeListener to get the (encoded) PCM stream.
+ * Accepts and holds client connections (ServerSession)
+ * Receives (via the MessageReceiver interface) and answers messages from the clients
+ * Forwards PCM data to the clients
  */
-class ControlServer : public ControlMessageReceiver
+class StreamServer : public MessageReceiver, PipeListener
 {
 public:
-	ControlServer(size_t port);
-	virtual ~ControlServer();
+	StreamServer(const StreamServerSettings& streamServerSettings);
+	virtual ~StreamServer();
 
 	void start();
 	void stop();
 
 	/// Send a message to all connceted clients
-	void send(const std::string& message);
+	void send(const msg::BaseMessage* message);
 
 	/// Clients call this when they receive a message. Implementation of MessageReceiver::onMessageReceived
-	virtual void onMessageReceived(ControlSession* connection, const std::string& message);
+	virtual void onMessageReceived(ServerSession* connection, const msg::BaseMessage& baseMessage, char* buffer);
+
+	/// Implementation of PipeListener
+	virtual void onChunkRead(const PipeReader* pipeReader, const msg::PcmChunk* chunk, double duration);
+	virtual void onResync(const PipeReader* pipeReader, double ms);
 
 private:
 	void startAccept();
 	void handleAccept(socket_ptr socket);
 	void acceptor();
 	mutable std::mutex mutex_;
-	size_t port_;
-	std::set<std::shared_ptr<ControlSession>> sessions_;
+	PipeReader* pipeReader_;
+	std::set<std::shared_ptr<ServerSession>> sessions_;
 	boost::asio::io_service io_service_;
 	std::shared_ptr<tcp::acceptor> acceptor_;
 
+	StreamServerSettings settings_;
+	msg::SampleFormat sampleFormat_;
+	msg::ServerSettings serverSettings_;
 	std::thread acceptThread_;
 	Queue<std::shared_ptr<msg::BaseMessage>> messages_;
+	std::unique_ptr<ControlServer> controlServer;
 };
 
 
