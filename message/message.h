@@ -56,7 +56,8 @@ enum message_type
 	kTime = 5,
 	kRequest = 6,
 	kAck = 7,
-	kCommand = 8
+	kCommand = 8,
+	kHello = 9
 };
 
 

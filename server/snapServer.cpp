@@ -29,7 +29,7 @@
 #include "message/sampleFormat.h"
 #include "message/message.h"
 #include "encoder/encoderFactory.h"
-#include "controlServer.h"
+#include "streamServer.h"
 #include "publishAvahi.h"
 
 
@@ -46,7 +46,7 @@ int main(int argc, char* argv[])
 {
 	try
 	{
-		ControlServerSettings settings;
+		StreamServerSettings settings;
 		int runAsDaemon;
 		string sampleFormat;
 
@@ -122,14 +122,14 @@ int main(int argc, char* argv[])
 		if (settings.bufferMs < 400)
 			settings.bufferMs = 400;
 		settings.sampleFormat = sampleFormat;
-		std::unique_ptr<ControlServer> controlServer(new ControlServer(settings));
-		controlServer->start();
+		std::unique_ptr<StreamServer> streamServer(new StreamServer(settings));
+		streamServer->start();
 
 		while (!g_terminated)
 			usleep(100*1000);
 
-		logO << "Stopping controlServer" << endl;
-		controlServer->stop();
+		logO << "Stopping streamServer" << endl;
+		streamServer->stop();
 		logO << "done" << endl;
 	}
 	catch (const std::exception& e)

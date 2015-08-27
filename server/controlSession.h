@@ -16,8 +16,8 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
-#ifndef SERVER_SESSION_H
-#define SERVER_SESSION_H
+#ifndef CONTROL_SESSION_H
+#define CONTROL_SESSION_H
 
 #include <string>
 #include <thread>
@@ -34,14 +34,14 @@
 using boost::asio::ip::tcp;
 
 
-class ServerSession;
+class ControlSession;
 
 
 /// Interface: callback for a received message.
-class MessageReceiver
+class ControlMessageReceiver
 {
 public:
-	virtual void onMessageReceived(ServerSession* connection, const msg::BaseMessage& baseMessage, char* buffer) = 0;
+	virtual void onMessageReceived(ControlSession* connection, const std::string& message) = 0;
 };
 
 
@@ -51,61 +51,37 @@ public:
  * Messages are sent to the client with the "send" method.
  * Received messages from the client are passed to the MessageReceiver callback
  */
-class ServerSession
+class ControlSession
 {
 public:
 	/// ctor. Received message from the client are passed to MessageReceiver
-	ServerSession(MessageReceiver* receiver, std::shared_ptr<tcp::socket> socket);
-	~ServerSession();
+	ControlSession(ControlMessageReceiver* receiver, std::shared_ptr<tcp::socket> socket);
+	~ControlSession();
 	void start();
 	void stop();
 
 	/// Sends a message to the client (synchronous)
-	bool send(const msg::BaseMessage* message) const;
+	bool send(const std::string& message) const;
 
 	/// Sends a message to the client (asynchronous)
-	void add(const std::shared_ptr<const msg::BaseMessage>& message);
+	void add(const std::string& message);
 
 	bool active() const
 	{
 		return active_;
 	}
 
-	/// Client subscribed for the PCM stream, by sending the "startStream" command
-	/// TODO: Currently there is only one stream ("zone")
-	void setStreamActive(bool active)
-	{
-		streamActive_ = active;
-	}
-
-	/// Max playout latency. No need to send PCM data that is older than bufferMs
-	void setBufferMs(size_t bufferMs)
-	{
-		bufferMs_ = bufferMs;
-	}
-
-	std::string macAddress;
-
-	std::string getIP()
-	{
-		return socket_->remote_endpoint().address().to_string();
-	}
-
 protected:
-	void socketRead(void* _to, size_t _bytes);
-	void getNextMessage();
 	void reader();
 	void writer();
 
 	std::atomic<bool> active_;
-	std::atomic<bool> streamActive_;
 	mutable std::mutex mutex_;
 	std::thread* readerThread_;
 	std::thread* writerThread_;
 	std::shared_ptr<tcp::socket> socket_;
-	MessageReceiver* messageReceiver_;
-	Queue<std::shared_ptr<const msg::BaseMessage>> messages_;
-	size_t bufferMs_;
+	ControlMessageReceiver* messageReceiver_;
+	Queue<std::string> messages_;
 };
 
 
