@@ -16,42 +16,53 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
-#ifndef COMMAND_MSG_H
-#define COMMAND_MSG_H
+#ifndef STRING_MESSAGE_H
+#define STRING_MESSAGE_H
 
-#include "stringMessage.h"
+#include "message.h"
 #include <string>
 
 
 namespace msg
 {
 
-class Command : public StringMessage
+class StringMessage : public BaseMessage
 {
 public:
-	Command() : StringMessage(message_type::kCommand)
+	StringMessage(message_type msgType) : BaseMessage(msgType), str("")
 	{
 	}
 
-	Command(const std::string& _command) : StringMessage(message_type::kCommand, _command)
+	StringMessage(message_type msgType, const std::string& _str) : BaseMessage(msgType), str(_str)
 	{
 	}
 
-	virtual ~Command()
+	virtual ~StringMessage()
 	{
 	}
 
-
-	const std::string& getCommand() const
+	virtual void read(std::istream& stream)
 	{
-		return str;
+		int16_t size;
+		stream.read(reinterpret_cast<char *>(&size), sizeof(int16_t));
+		str.resize(size);
+		stream.read(&str[0], size);
 	}
 
-	void setCommand(const std::string& command)
+	virtual uint32_t getSize() const
 	{
-		str = command;
+		return sizeof(int16_t) + str.size();
 	}
 
+	std::string str;
+
+protected:
+	virtual void doserialize(std::ostream& stream) const
+	{
+		int16_t size(str.size());
+		stream.write(reinterpret_cast<const char *>(&size), sizeof(int16_t));
+		stream.write(str.c_str(), size);
+	}
 };
 
 }
