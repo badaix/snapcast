@@ -19,50 +19,47 @@
 #ifndef HELLO_MSG_H
 #define HELLO_MSG_H
 
-#include "message.h"
+#include "mapMessage.h"
+#include "common/utils.h"
 #include <string>
 
 
 namespace msg
 {
 
-class Hello : public BaseMessage
+class Hello : public MapMessage
 {
 public:
-	Hello() : BaseMessage(message_type::kHello), macAddress("")
+	Hello() : MapMessage(message_type::kHello)
 	{
 	}
 
-	Hello(const std::string& _macAddress) : BaseMessage(message_type::kHello), macAddress(_macAddress)
+	Hello(const std::string& macAddress) : MapMessage(message_type::kHello)
 	{
+		add("MAC", macAddress);
+		add("HostName", ::getHostName());
+		add("Version", VERSION);
 	}
 
 	virtual ~Hello()
 	{
 	}
 
-	virtual void read(std::istream& stream)
+	std::string getMacAddress()
 	{
-		int16_t size;
-		stream.read(reinterpret_cast<char *>(&size), sizeof(int16_t));
-		macAddress.resize(size);
-		stream.read(&macAddress[0], size);
+		return get("MAC");
 	}
 
-	virtual uint32_t getSize() const
+	std::string getHostName()
 	{
-		return sizeof(int16_t) + macAddress.size();
+		return get("HostName");
 	}
 
-	std::string macAddress;
-
-protected:
-	virtual void doserialize(std::ostream& stream) const
+	std::string getVersion()
 	{
-		int16_t size(macAddress.size());
-		stream.write(reinterpret_cast<const char *>(&size), sizeof(int16_t));
-		stream.write(macAddress.c_str(), size);
+		return get("Version");
 	}
+
 };
 
 }
