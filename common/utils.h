@@ -28,10 +28,11 @@
 #include <fstream>
 #include <iterator>
 #include <sys/ioctl.h>
-#include <net/if.h> 
+#include <net/if.h>
 #include <netinet/in.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <unistd.h>
 #include <iomanip>
 
 // trim from start
@@ -76,6 +77,15 @@ static inline std::string trim_copy(const std::string &s)
 }
 
 
+static std::string getHostName()
+{
+	char hostname[1024];
+	hostname[1023] = '\0';
+	gethostname(hostname, 1023);
+	return hostname;
+}
+
+
 static std::string getMacAddress(int sock)
 {
     struct ifreq ifr;
@@ -88,7 +98,7 @@ static std::string getMacAddress(int sock)
 
     ifc.ifc_len = sizeof(buf);
     ifc.ifc_buf = buf;
-    if (ioctl(sock, SIOCGIFCONF, &ifc) == -1) 
+    if (ioctl(sock, SIOCGIFCONF, &ifc) == -1)
 		return "";
 
     struct ifreq* it = ifc.ifc_req;
@@ -111,7 +121,7 @@ static std::string getMacAddress(int sock)
 		return "";
 
 	char mac[19];
-    sprintf(mac, "%02x:%02x:%02x:%02x:%02x:%02x", 
+    sprintf(mac, "%02x:%02x:%02x:%02x:%02x:%02x",
         (unsigned char)ifr.ifr_hwaddr.sa_data[0], (unsigned char)ifr.ifr_hwaddr.sa_data[1], (unsigned char)ifr.ifr_hwaddr.sa_data[2],
         (unsigned char)ifr.ifr_hwaddr.sa_data[3], (unsigned char)ifr.ifr_hwaddr.sa_data[4], (unsigned char)ifr.ifr_hwaddr.sa_data[5]);
 	return mac;
