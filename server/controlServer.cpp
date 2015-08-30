@@ -22,9 +22,13 @@
 #include "message/request.h"
 #include "message/command.h"
 #include "common/log.h"
+#include "common/snapException.h"
+#include "json.hpp"
 #include <iostream>
 
 using namespace std;
+
+using json = nlohmann::json;
 
 
 ControlServer::ControlServer(size_t port) : port_(port)
@@ -63,8 +67,8 @@ void ControlServer::send(const std::string& message)
 
 void ControlServer::onMessageReceived(ControlSession* connection, const std::string& message)
 {
-	logO << "received: " << message << "\n";
-	if (message == "quit")
+	logO << "received: \"" << message << "\"\n";
+	if ((message == "quit") || (message == "exit") || (message == "bye"))
 	{
 		for (auto it = sessions_.begin(); it != sessions_.end(); ++it)
 		{
@@ -76,7 +80,92 @@ void ControlServer::onMessageReceived(ControlSession* connection, const std::str
 		}
 	}
 	else
-		connection->send("echo " + message);
+	{
+		int id = -1;
+		try
+		{
+			// http://www.jsonrpc.org/specification
+			//	code	message	meaning
+			//	-32700	Parse error	Invalid JSON was received by the server. An error occurred on the server while parsing the JSON text.
+			//	-32600	Invalid Request	The JSON sent is not a valid Request object.
+			//	-32601	Method not found	The method does not exist / is not available.
+			//	-32602	Invalid params	Invalid method parameter(s).
+			//	-32603	Internal error	Internal JSON-RPC error.
+			//	-32000 to -32099	Server error	Reserved for implementation-defined server-errors.
+			json request;
+			try
+			{
+				try
+				{
+					request = json::parse(message);
+				}
+				catch (const exception& e)
+				{
+					throw SnapException(e.what(), -32700);
+				}
+
+				id = request["id"].get<int>();
+				string jsonrpc = request["jsonrpc"].get<string>();
+				if (jsonrpc != "2.0")
+					throw SnapException("invalid jsonrpc value: " + jsonrpc, -32600);
+				string method = request["method"].get<string>();
+				if (method.empty())
+					throw SnapException("method must not be empty", -32600);
+				if (id < 0)
+					throw SnapException("id must be a positive integer", -32600);
+
+				json response = {
+					{"jsonrpc", "2.0"},
+					{"id", id}
+				};
+
+				if (method == "get")
+				{
+					response["result"] = "???";//nullptr;
+				}
+				else if (method == "set")
+				{
+					response["result"] = "234";//nullptr;
+				}
+				else
+					throw SnapException("method not found: \"" + method + "\"", -32601);
+
+				connection->send(response.dump());
+			}
+			catch (const SnapException& e)
+			{
+				throw;
+			}
+			catch (const exception& e)
+			{
+				throw SnapException(e.what(), -32603);
+			}
+		}
+		catch (const SnapException& e)
+		{
+			int errorCode = e.errorCode();
+			if (errorCode == 0)
+				errorCode = -32603;
+
+			json response = {
+				{"jsonrpc", "2.0"},
+				{"error", {
+					{"code", errorCode},
+					{"message", e.what()}
+				}},
+			};
+			if (id == -1)
+				response["id"] = nullptr;
+			else
+				response["id"] = id;
+
+			connection->send(response.dump());
+		}
+	}
+//get status
+//get status server
+//get status client[:MAC]
+//set volume client[:MAC] {VOLUME}
 }
 
 
