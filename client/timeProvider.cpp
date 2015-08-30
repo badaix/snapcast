@@ -28,16 +28,19 @@ TimeProvider::TimeProvider() : diffToServer_(0)
 
 void TimeProvider::setDiffToServer(double ms)
 {
-	static long lastTimeSync = 0;
-	long now = chronos::getTickCount();
+	static int32_t lastTimeSync = 0;
+	timeval now;
+	gettimeofday(&now, NULL);
+
 	/// clear diffBuffer if last update is older than a minute
-	if (!diffBuffer_.empty() && (now > lastTimeSync + 60*1000))
+	logO << "now: " << now.tv_sec << ", lastSync: " << lastTimeSync << ", diff: " << now.tv_sec - lastTimeSync << "\n";
+	if (!diffBuffer_.empty() && (now.tv_sec > lastTimeSync + 60))
 	{
 		logO << "Last time sync older than a minute. Clearing time buffer\n";
 		diffToServer_ = ms*1000;
 		diffBuffer_.clear();
 	}
-	lastTimeSync = now;
+	lastTimeSync = now.tv_sec;
 
 	diffBuffer_.add(ms*1000);
 	diffToServer_ = diffBuffer_.median(3);
