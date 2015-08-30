@@ -115,11 +115,11 @@ void ControlSession::reader()
 		{
 			boost::asio::streambuf response;
 			boost::asio::read_until(*socket_, response, "\r\n");
-			std::istream response_stream(&response);
-			std::string strResponse;
-			response_stream >> strResponse;
+			std::string s((istreambuf_iterator<char>(&response)), istreambuf_iterator<char>());
+			s.resize(s.length() - 2);
+
 			if (messageReceiver_ != NULL)
-				messageReceiver_->onMessageReceived(this, strResponse);
+				messageReceiver_->onMessageReceived(this, s);
 		}
 	}
 	catch (const std::exception& e)
