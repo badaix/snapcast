@@ -33,8 +33,7 @@ void TimeProvider::setDiffToServer(double ms)
 	gettimeofday(&now, NULL);
 
 	/// clear diffBuffer if last update is older than a minute
-	logO << "now: " << now.tv_sec << ", lastSync: " << lastTimeSync << ", diff: " << now.tv_sec - lastTimeSync << "\n";
-	if (!diffBuffer_.empty() && (now.tv_sec > lastTimeSync + 60))
+	if (!diffBuffer_.empty() && (abs(now.tv_sec - lastTimeSync) > 60))
 	{
 		logO << "Last time sync older than a minute. Clearing time buffer\n";
 		diffToServer_ = ms*1000;
