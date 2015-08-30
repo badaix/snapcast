@@ -26,33 +26,39 @@
 // text_exception uses a dynamically-allocated internal c-string for what():
 class SnapException : public std::exception {
   char* text_;
+  int errorCode_;
 public:
-	SnapException(const char* text) 
+	SnapException(const char* text, int errorCode = 0) : errorCode_(errorCode)
 	{
-		text_ = new char[std::strlen(text) + 1]; 
+		text_ = new char[std::strlen(text) + 1];
 		std::strcpy(text_, text);
 	}
 
-	SnapException(const std::string& text) 
+	SnapException(const std::string& text, int errorCode = 0) : errorCode_(errorCode)
 	{
-		text_ = new char[text.size()]; 
+		text_ = new char[text.size()];
 		std::strcpy(text_, text.c_str());
 	}
 
-	SnapException(const SnapException& e) 
+	SnapException(const SnapException& e)
 	{
-		text_ = new char[std::strlen(e.text_)]; 
+		text_ = new char[std::strlen(e.text_)];
 		std::strcpy(text_, e.text_);
 	}
 
-	virtual ~SnapException() throw() 
+	virtual ~SnapException() throw()
 	{
 		delete[] text_;
 	}
 
-	virtual const char* what() const noexcept 
+	virtual const char* what() const noexcept
 	{
 		return text_;
+	}
+
+	virtual int errorCode() const noexcept
+	{
+		return errorCode_;
 	}
 };
 
