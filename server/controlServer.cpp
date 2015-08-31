@@ -16,6 +16,7 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
+#include "boost/lexical_cast.hpp"
 #include "controlServer.h"
 #include "message/time.h"
 #include "message/ack.h"
@@ -23,7 +24,7 @@
 #include "message/command.h"
 #include "common/log.h"
 #include "common/snapException.h"
-#include "json.hpp"
+#include "jsonrpc.h"
 #include <iostream>
 
 using namespace std;
@@ -81,91 +82,81 @@ void ControlServer::onMessageReceived(ControlSession* connection, const std::str
 	}
 	else
 	{
-		int id = -1;
 		try
 		{
-			// http://www.jsonrpc.org/specification
-			//	code	message	meaning
-			//	-32700	Parse error	Invalid JSON was received by the server. An error occurred on the server while parsing the JSON text.
-			//	-32600	Invalid Request	The JSON sent is not a valid Request object.
+			JsonRequest jsonRequest;
+			jsonRequest.parse(message);
+
+
+			//{"jsonrpc": "2.0", "method": "get", "id": 2}
+			//{"jsonrpc": "2.0", "method": "get", "params": ["status"], "id": 2}
+			//{"jsonrpc": "2.0", "method": "get", "params": ["status", "server"], "id": 2}
+			//{"jsonrpc": "2.0", "method": "get", "params": ["status", "client"], "id": 2}
+			//{"jsonrpc": "2.0", "method": "get", "params": ["status", "client", "MAC"], "id": 2}
+			//{"jsonrpc": "2.0", "method": "test", "params": ["status", "client", "MAC"], "id": 2}
+			//{"jsonrpc": "2.0", "method": "set", "params": ["voume", "client", "MAC", "1.0"], "id": 2}
+
 			//	-32601	Method not found	The method does not exist / is not available.
 			//	-32602	Invalid params	Invalid method parameter(s).
 			//	-32603	Internal error	Internal JSON-RPC error.
-			//	-32000 to -32099	Server error	Reserved for implementation-defined server-errors.
-			json request;
-			try
+
+			logO << "method: " << jsonRequest.method << ", " << "id: " << jsonRequest.id << "\n";
+			for (string s: jsonRequest.params)
+				logO << "param: " << s << "\n";
+
+			if (jsonRequest.params.empty())
+				throw JsonInvalidParamsException(jsonRequest);
+
+			vector<string>& params = jsonRequest.params;
+			if (jsonRequest.method == "get")
 			{
-				try
+				if (params[0] == "status")
 				{
-					request = json::parse(message);
-				}
-				catch (const exception& e)
-				{
-					throw SnapException(e.what(), -32700);
-				}
 
-				id = request["id"].get<int>();
-				string jsonrpc = request["jsonrpc"].get<string>();
-				if (jsonrpc != "2.0")
-					throw SnapException("invalid jsonrpc value: " + jsonrpc, -32600);
-				string method = request["method"].get<string>();
-				if (method.empty())
-					throw SnapException("method must not be empty", -32600);
-				if (id < 0)
-					throw SnapException("id must be a positive integer", -32600);
-
-				json response = {
-					{"jsonrpc", "2.0"},
-					{"id", id}
-				};
-
-				if (method == "get")
-				{
-					response["result"] = "???";//nullptr;
-				}
-				else if (method == "set")
-				{
-					response["result"] = "234";//nullptr;
 				}
 				else
-					throw SnapException("method not found: \"" + method + "\"", -32601);
-
-				connection->send(response.dump());
+					throw JsonInvalidParamsException(jsonRequest);
 			}
-			catch (const SnapException& e)
+			else if (jsonRequest.method == "set")
 			{
-				throw;
+				if (params[0] == "volume")
+				{
+					if ((params.size() < 4) || (params[1] != "client"))
+						throw JsonInvalidParamsException(jsonRequest);
+					try
+					{
+						double volume = boost::lexical_cast<double>(params[3]);
+					}
+					catch(...)
+					{
+						throw JsonInvalidParamsException(jsonRequest);
+					}
+				}
+				else if (params[0] == "latency")
+				{
+					if ((params.size() < 3) || (params[1] != "client"))
+						throw JsonInvalidParamsException(jsonRequest);
+				}
+				else
+					throw JsonInvalidParamsException(jsonRequest);
 			}
-			catch (const exception& e)
-			{
-				throw SnapException(e.what(), -32603);
-			}
-		}
-		catch (const SnapException& e)
-		{
-			int errorCode = e.errorCode();
-			if (errorCode == 0)
-				errorCode = -32603;
+			else
+				throw JsonMethodNotFoundException(jsonRequest);
 
 			json response = {
-				{"jsonrpc", "2.0"},
+				{"test", "123"},
 				{"error", {
-					{"code", errorCode},
-					{"message", e.what()}
-				}},
-			};
-			if (id == -1)
-				response["id"] = nullptr;
-			else
-				response["id"] = id;
+					{"code", 12},
+					{"message", true}
+				}}};
 
-			connection->send(response.dump());
+			connection->send(jsonRequest.getResponse(response).dump());
+		}
+		catch (const JsonRequestException& e)
+		{
+			connection->send(e.getResponse().dump());
 		}
 	}
-//get status
-//get status server
-//get status client[:MAC]
-//set volume client[:MAC] {VOLUME}
 }
 
 

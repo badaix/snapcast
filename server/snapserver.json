@@ -1,0 +1,49 @@
+{
+	"Zone":
+	[
+		{
+			"uri": "file:///tmp/SnapCast/snapfifo",
+			"name": "zone 1"
+		},
+		{
+			"uri": "file:///tmp/SnapCast/snapfifo2",
+			"name": "zone 2"
+		}
+	],
+
+	"Client":
+	[
+		{
+			"MAC": "00:21:6a:7d:74:fc",
+			"IP": "10.1.2.3",
+			"host": "T400",
+			"version": "1.2",
+			"name": "living room",
+			"volume": 0.9,
+			"lastSeen":
+			{
+				"sec": 99,
+				"usec": 1
+			},
+			"conntected": true,
+			"zone": "file:///tmp/SnapCast/snapfifo",
+			"latency": 0
+		},
+		{
+			"MAC": "11:21:6a:7d:74:fc",
+			"IP": "10.1.2.3",
+			"host": "T400",
+			"version": "1.2",
+			"name": "kitchen",
+			"volume": 0.9,
+			"lastSeen":
+			{
+				"sec": 99,
+				"usec": 1
+			},
+			"status": 0,
+			"zone": "file:///tmp/SnapCast/snapfifo",
+			"latency": 0
+		}
+	]
+}
