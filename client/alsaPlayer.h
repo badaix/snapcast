@@ -33,6 +33,7 @@ class Player
 public:
 	Player(const PcmDevice& pcmDevice, Stream* stream);
 	virtual ~Player();
+	void setVolume(double volume);
 	void start();
 	void stop();
 	static std::vector<PcmDevice> pcm_list(void);
