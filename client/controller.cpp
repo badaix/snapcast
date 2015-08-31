@@ -133,7 +133,7 @@ void Controller::worker()
 			msg::Request requestMsg(kServerSettings);
 			shared_ptr<msg::ServerSettings> serverSettings(NULL);
 			while (active_ && !(serverSettings = clientConnection_->sendReq<msg::ServerSettings>(&requestMsg)));
-			logO << "ServerSettings buffer: " << serverSettings->bufferMs << "\n";
+			logO << "ServerSettings buffer: " << serverSettings->bufferMs << ", latency: " << serverSettings->latency << ", volume: " << serverSettings->volume << "\n";
 
 			requestMsg.request = kSampleFormat;
 			while (active_ && !(sampleFormat_ = clientConnection_->sendReq<msg::SampleFormat>(&requestMsg)));
@@ -168,6 +168,7 @@ void Controller::worker()
 			stream_->setBufferLen(serverSettings->bufferMs - latency_);
 
 			Player player(pcmDevice_, stream_);
+			player.setVolume(serverSettings->volume);
 			player.start();
 
 			msg::Command startStream("startStream");
