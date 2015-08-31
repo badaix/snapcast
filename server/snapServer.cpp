@@ -31,6 +31,7 @@
 #include "encoder/encoderFactory.h"
 #include "streamServer.h"
 #include "publishAvahi.h"
+#include "config.h"
 
 
 bool g_terminated = false;
@@ -53,6 +54,7 @@ int main(int argc, char* argv[])
 		po::options_description desc("Allowed options");
 		desc.add_options()
 		("help,h", "produce help message")
+		("test", "for testing")
 		("version,v", "show version number")
 		("port,p", po::value<size_t>(&settings.port)->default_value(settings.port), "server port")
 		("sampleformat,s", po::value<string>(&sampleFormat)->default_value(settings.sampleFormat.getFormat()), "sample format")
@@ -66,6 +68,12 @@ int main(int argc, char* argv[])
 		po::variables_map vm;
 		po::store(po::parse_command_line(argc, argv, desc), vm);
 		po::notify(vm);
+
+		if (vm.count("test"))
+		{
+			Config::instance().test();
+			return 1;
+		}
 
 		if (vm.count("help"))
 		{

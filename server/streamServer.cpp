@@ -120,7 +120,7 @@ void StreamServer::onMessageReceived(ServerSession* connection, const msg::BaseM
 	{
 		msg::Command commandMsg;
 		commandMsg.deserialize(baseMessage, buffer);
-		if (commandMsg.command == "startStream")
+		if (commandMsg.getCommand() == "startStream")
 		{
 			msg::Ack ackMsg;
 			ackMsg.refersTo = commandMsg.id;
@@ -132,8 +132,8 @@ void StreamServer::onMessageReceived(ServerSession* connection, const msg::BaseM
 	{
 		msg::Hello helloMsg;
 		helloMsg.deserialize(baseMessage, buffer);
-		connection->macAddress = helloMsg.macAddress;
-		logO << "Hello from " << connection->macAddress << "\n";
+		connection->macAddress = helloMsg.getMacAddress();
+		logO << "Hello from " << connection->macAddress << ", host: " << helloMsg.getHostName() << ", v" << helloMsg.getVersion() << "\n";
 		json j = {
   			{"event", "newConnection"},
   			{"client", {
@@ -142,7 +142,6 @@ void StreamServer::onMessageReceived(ServerSession* connection, const msg::BaseM
   			}}
 		};
 		controlServer->send(j.dump());
-
 	}
 }
 
