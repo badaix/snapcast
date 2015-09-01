@@ -74,6 +74,14 @@ protected:
 
 
 
+class JsonNotification
+{
+public:
+	static Json getJson(const std::string& method, Json data);
+
+};
+
+
 
 class JsonRequestException : public SnapException
 {

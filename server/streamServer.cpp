@@ -16,6 +16,7 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
+#include "jsonrpc.h"
 #include "streamServer.h"
 #include "message/time.h"
 #include "message/ack.h"
@@ -23,7 +24,7 @@
 #include "message/command.h"
 #include "message/hello.h"
 #include "common/log.h"
-#include "json.hpp"
+#include "config.h"
 #include <iostream>
 
 using namespace std;
@@ -134,14 +135,17 @@ void StreamServer::onMessageReceived(ServerSession* connection, const msg::BaseM
 		helloMsg.deserialize(baseMessage, buffer);
 		connection->macAddress = helloMsg.getMacAddress();
 		logO << "Hello from " << connection->macAddress << ", host: " << helloMsg.getHostName() << ", v" << helloMsg.getVersion() << "\n";
-		json j = {
-  			{"event", "newConnection"},
-  			{"client", {
-    			{"ip", connection->getIP()},
-    			{"mac", connection->macAddress}
-  			}}
-		};
-		controlServer->send(j.dump());
+
+		ClientInfoPtr client = Config::instance().getClientInfo(connection->macAddress);
+		client->ipAddress = connection->getIP();
+		client->hostName = helloMsg.getHostName();
+		client->version = helloMsg.getVersion();
+		client->connected = true;
+		gettimeofday(&client->lastSeen, NULL);
+
+		json notification = JsonNotification::getJson("Client.OnConnect", client->toJson());
+		logO << std::setw(4) << notification << std::endl;
+		controlServer->send(notification.dump(4));
 	}
 }
 

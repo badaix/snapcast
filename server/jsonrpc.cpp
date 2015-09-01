@@ -117,6 +117,21 @@ bool JsonRequest::isParam(size_t idx, const std::string& param)
 }
 
 
+Json JsonNotification::getJson(const std::string& method, Json data)
+{
+	Json notification = {
+		{"jsonrpc", "2.0"},
+		{"method", method},
+		{"params", {
+			{"data", data}
+		}}
+	};
+
+	return notification;
+}
+
+
+
 /*
 
 			if ((method == "get") || (method == "set"))
