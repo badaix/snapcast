@@ -81,6 +81,16 @@ void StreamServer::onResync(const PipeReader* pipeReader, double ms)
 }
 
 
+void StreamServer::onDisconnect(ServerSession* connection)
+{
+	ClientInfoPtr client = Config::instance().getClientInfo(connection->macAddress);
+	client->connected = false;
+	gettimeofday(&client->lastSeen, NULL);
+	json notification = JsonNotification::getJson("Client.OnDisconnect", client->toJson());
+	controlServer->send(notification.dump(4));
+}
+
+
 void StreamServer::onMessageReceived(ServerSession* connection, const msg::BaseMessage& baseMessage, char* buffer)
 {
 //	logO << "getNextMessage: " << baseMessage.type << ", size: " << baseMessage.size << ", id: " << baseMessage.id << ", refers: " << baseMessage.refersTo << ", sent: " << baseMessage.sent.sec << "," << baseMessage.sent.usec << ", recv: " << baseMessage.received.sec << "," << baseMessage.received.usec << "\n";
@@ -144,7 +154,6 @@ void StreamServer::onMessageReceived(ServerSession* connection, const msg::BaseM
 		gettimeofday(&client->lastSeen, NULL);
 
 		json notification = JsonNotification::getJson("Client.OnConnect", client->toJson());
-		logO << std::setw(4) << notification << std::endl;
 		controlServer->send(notification.dump(4));
 	}
 }

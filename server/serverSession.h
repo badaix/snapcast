@@ -42,6 +42,7 @@ class MessageReceiver
 {
 public:
 	virtual void onMessageReceived(ServerSession* connection, const msg::BaseMessage& baseMessage, char* buffer) = 0;
+	virtual void onDisconnect(ServerSession* connection) = 0;
 };
 
 
@@ -96,6 +97,7 @@ protected:
 	void getNextMessage();
 	void reader();
 	void writer();
+	void setActive(bool active);
 
 	std::atomic<bool> active_;
 	std::atomic<bool> streamActive_;
