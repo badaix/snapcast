@@ -131,6 +131,10 @@ public:
 };
 
 
+//	-32601	Method not found	The method does not exist / is not available.
+//	-32602	Invalid params	Invalid method parameter(s).
+//	-32603	Internal error	Internal JSON-RPC error.
+
 class JsonMethodNotFoundException : public JsonRequestException
 {
 public:
@@ -156,6 +160,20 @@ public:
 	{
 	}
 };
+
+
+class JsonInternalErrorException : public JsonRequestException
+{
+public:
+	JsonInternalErrorException(const JsonRequest& request) : JsonRequestException(request, "internal error", -32603)
+	{
+	}
+
+	JsonInternalErrorException(const JsonRequest& request, const std::string& message) : JsonRequestException(request, message, -32603)
+	{
+	}
+};
+
 
 
 #endif
