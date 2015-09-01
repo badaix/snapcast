@@ -21,18 +21,25 @@
 
 #include <string>
 #include <vector>
+#include <boost/lexical_cast.hpp>
 #include "json.hpp"
 #include "common/snapException.h"
+
 
 using Json = nlohmann::json;
 
 
+class JsonInvalidParamsException;
 
 
+/// JSON-RPC 2.0 request
+/**
+ * Simple jsonrpc 2.0 parser with getters
+ * Currently no named parameters are supported, but only array parameters
+ */
 class JsonRequest
 {
 public:
-	/// ctor. Encoded PCM data is passed to the PipeListener
 	JsonRequest();
 
 	void parse(const std::string& json);
@@ -42,6 +49,23 @@ public:
 
 	Json getResponse(const Json& result);
 	Json getError(int code, const std::string& message);
+
+	template<typename T>
+	T getParam(size_t idx)
+	{
+		if (idx >= params.size())
+			throw JsonInvalidParamsException(*this);
+		try
+		{
+			return boost::lexical_cast<T>(params[idx]);
+		}
+		catch(...)
+		{
+			throw JsonInvalidParamsException(*this);
+		}
+	}
+
+	bool isParam(size_t idx, const std::string& param);
 
 protected:
 	Json json_;
