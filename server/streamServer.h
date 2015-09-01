@@ -82,6 +82,7 @@ public:
 
 	/// Clients call this when they receive a message. Implementation of MessageReceiver::onMessageReceived
 	virtual void onMessageReceived(ServerSession* connection, const msg::BaseMessage& baseMessage, char* buffer);
+	virtual void onDisconnect(ServerSession* connection);
 
 	/// Implementation of PipeListener
 	virtual void onChunkRead(const PipeReader* pipeReader, const msg::PcmChunk* chunk, double duration);

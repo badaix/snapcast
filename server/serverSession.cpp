@@ -51,7 +51,7 @@ void ServerSession::start()
 void ServerSession::stop()
 {
 	std::unique_lock<std::mutex> mlock(mutex_);
-	active_ = false;
+	setActive(false);
 	try
 	{
 		boost::system::error_code ec;
@@ -146,7 +146,6 @@ void ServerSession::getNextMessage()
 
 void ServerSession::reader()
 {
-	active_ = true;
 	try
 	{
 		while (active_)
@@ -158,7 +157,7 @@ void ServerSession::reader()
 	{
 		logS(kLogErr) << "Exception in ServerSession::reader(): " << e.what() << endl;
 	}
-	active_ = false;
+	setActive(false);
 }
 
 
@@ -195,7 +194,15 @@ void ServerSession::writer()
 	{
 		logS(kLogErr) << "Exception in ServerSession::writer(): " << e.what() << endl;
 	}
-	active_ = false;
+	setActive(false);
+}
+
+
+void ServerSession::setActive(bool active)
+{
+	if (active_ && !active && (messageReceiver_ != NULL))
+		messageReceiver_->onDisconnect(this);
+	active_ = active;
 }
 
 
