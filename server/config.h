@@ -20,6 +20,8 @@
 #define CONFIG_H
 
 #include <string>
+#include <memory>
+#include <vector>
 #include <sys/time.h>
 #include "json.hpp"
 
@@ -41,6 +43,12 @@ T jGet(json j, const std::string& what, const T& def)
 
 struct ClientInfo
 {
+	ClientInfo(const std::string& _macAddress = "") : macAddress(_macAddress), volume(1.0), connected(false)
+	{
+		lastSeen.tv_sec = 0;
+		lastSeen.tv_usec = 0;
+	}
+
 	void fromJson(const json& j)
 	{
 		macAddress = jGet<std::string>(j, "MAC", "");
@@ -61,12 +69,20 @@ struct ClientInfo
 		j["IP"] = ipAddress;
 		j["host"] = hostName;
 		j["version"] = version;
-		j["name"] = name;
+		j["name"] = getName();
 		j["volume"] = volume;
 		j["lastSeen"]["sec"] = lastSeen.tv_sec;
 		j["lastSeen"]["usec"] = lastSeen.tv_usec;
 		j["connected"] = connected;
 		return j;
+	}
+
+	std::string getName()
+	{
+		if (name.empty())
+			return hostName;
+		else
+			return name;
 	}
 
 	std::string macAddress;
@@ -79,6 +95,8 @@ struct ClientInfo
 	bool connected;
 };
 
+typedef std::shared_ptr<ClientInfo> ClientInfoPtr;
+
 
 class Config
 {
@@ -90,10 +108,13 @@ public:
 	}
 
 	void test();
+	ClientInfoPtr getClientInfo(const std::string& mac);
+
+	std::vector<ClientInfoPtr> clients;
+	json getClientInfos() const;
 
 private:
 	Config();
-
 
 };
 

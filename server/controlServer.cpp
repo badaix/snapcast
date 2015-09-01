@@ -25,6 +25,7 @@
 #include "common/log.h"
 #include "common/snapException.h"
 #include "jsonrpc.h"
+#include "config.h"
 #include <iostream>
 
 using namespace std;
@@ -107,11 +108,16 @@ void ControlServer::onMessageReceived(ControlSession* connection, const std::str
 			for (string s: request.params)
 				logO << "param: " << s << "\n";
 
+			json response;
+
 			if (request.method == "get")
 			{
 				if (request.isParam(0, "status"))
 				{
-
+					response = {
+						{"server", "xxx"},
+						{"clients", Config::instance().getClientInfos()}
+					};
 				}
 				else
 					throw JsonInvalidParamsException(request);
@@ -138,13 +144,6 @@ void ControlServer::onMessageReceived(ControlSession* connection, const std::str
 			}
 			else
 				throw JsonMethodNotFoundException(request);
-
-			json response = {
-				{"test", "123"},
-				{"error", {
-					{"code", 12},
-					{"message", true}
-				}}};
 
 			connection->send(request.getResponse(response).dump());
 		}
