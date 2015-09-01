@@ -34,15 +34,37 @@ void Config::test()
 	json j;
 	ifs >> j;
 	std::cout << std::setw(4) << j << std::endl;
-	json j1 = j["Client"];//["Hobbys"];
+	json j1 = j["Client"];
 	for (json::iterator it = j1.begin(); it != j1.end(); ++it)
 	{
-//		json j2 = *it;
-//		cout << "Key: " << j2.key() << ", value: " j2.value() << "\n";
 		ClientInfo client;
 		client.fromJson(*it);
 		std::cout << "Client:\n" << std::setw(4) << client.toJson() << '\n';
 	}
-//	std::cout << std::setw(4) << j["Inhaber"]["Hobbys2"] << std::endl;
 }
+
+
+ClientInfoPtr Config::getClientInfo(const std::string& macAddress)
+{
+	for (auto client: clients)
+	{
+		if (client->macAddress == macAddress)
+			return client;
+	}
+
+	ClientInfoPtr client = make_shared<ClientInfo>(macAddress);
+	clients.push_back(client);
+
+	return client;
+}
+
+
+json Config::getClientInfos() const
+{
+	json result = json::array();
+	for (auto client: clients)
+		result.push_back(client->toJson());
+	return result;
+}
+
 
