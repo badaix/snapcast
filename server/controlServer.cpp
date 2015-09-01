@@ -84,8 +84,8 @@ void ControlServer::onMessageReceived(ControlSession* connection, const std::str
 	{
 		try
 		{
-			JsonRequest jsonRequest;
-			jsonRequest.parse(message);
+			JsonRequest request;
+			request.parse(message);
 
 
 			//{"jsonrpc": "2.0", "method": "get", "id": 2}
@@ -94,54 +94,50 @@ void ControlServer::onMessageReceived(ControlSession* connection, const std::str
 			//{"jsonrpc": "2.0", "method": "get", "params": ["status", "client"], "id": 2}
 			//{"jsonrpc": "2.0", "method": "get", "params": ["status", "client", "MAC"], "id": 2}
 			//{"jsonrpc": "2.0", "method": "test", "params": ["status", "client", "MAC"], "id": 2}
+
 			//{"jsonrpc": "2.0", "method": "set", "params": ["voume", "client", "MAC", "1.0"], "id": 2}
+			//{"jsonrpc": "2.0", "method": "set", "params": ["latency", "client", "MAC", "20"], "id": 2}
+			//{"jsonrpc": "2.0", "method": "set", "params": ["name", "client", "MAC", "living room"], "id": 2}
 
 			//	-32601	Method not found	The method does not exist / is not available.
 			//	-32602	Invalid params	Invalid method parameter(s).
 			//	-32603	Internal error	Internal JSON-RPC error.
 
-			logO << "method: " << jsonRequest.method << ", " << "id: " << jsonRequest.id << "\n";
-			for (string s: jsonRequest.params)
+			logO << "method: " << request.method << ", " << "id: " << request.id << "\n";
+			for (string s: request.params)
 				logO << "param: " << s << "\n";
 
-			if (jsonRequest.params.empty())
-				throw JsonInvalidParamsException(jsonRequest);
-
-			vector<string>& params = jsonRequest.params;
-			if (jsonRequest.method == "get")
+			if (request.method == "get")
 			{
-				if (params[0] == "status")
+				if (request.isParam(0, "status"))
 				{
 
 				}
 				else
-					throw JsonInvalidParamsException(jsonRequest);
+					throw JsonInvalidParamsException(request);
 			}
-			else if (jsonRequest.method == "set")
+			else if (request.method == "set")
 			{
-				if (params[0] == "volume")
+				if (request.isParam(0, "voume") && request.isParam(1, "client"))
 				{
-					if ((params.size() < 4) || (params[1] != "client"))
-						throw JsonInvalidParamsException(jsonRequest);
-					try
-					{
-						double volume = boost::lexical_cast<double>(params[3]);
-					}
-					catch(...)
-					{
-						throw JsonInvalidParamsException(jsonRequest);
-					}
+					double volume = request.getParam<double>(3);
+					logO << "volume: " << volume << "\n";
 				}
-				else if (params[0] == "latency")
+				else if (request.isParam(0, "latency") && request.isParam(1, "client"))
 				{
-					if ((params.size() < 3) || (params[1] != "client"))
-						throw JsonInvalidParamsException(jsonRequest);
+					int latency = request.getParam<int>(3);
+					logO << "latency: " << latency << "\n";
+				}
+				else if (request.isParam(0, "name") && request.isParam(1, "client"))
+				{
+					string name = request.getParam<string>(3);
+					logO << "name: " << name << ", client: " << request.getParam<string>(2) << "\n";
 				}
 				else
-					throw JsonInvalidParamsException(jsonRequest);
+					throw JsonInvalidParamsException(request);
 			}
 			else
-				throw JsonMethodNotFoundException(jsonRequest);
+				throw JsonMethodNotFoundException(request);
 
 			json response = {
 				{"test", "123"},
@@ -150,7 +146,7 @@ void ControlServer::onMessageReceived(ControlSession* connection, const std::str
 					{"message", true}
 				}}};
 
-			connection->send(jsonRequest.getResponse(response).dump());
+			connection->send(request.getResponse(response).dump());
 		}
 		catch (const JsonRequestException& e)
 		{

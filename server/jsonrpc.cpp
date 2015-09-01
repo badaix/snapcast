@@ -109,6 +109,13 @@ Json JsonRequest::getError(int code, const std::string& message)
 }
 
 
+bool JsonRequest::isParam(size_t idx, const std::string& param)
+{
+	if (idx >= params.size())
+		throw JsonInvalidParamsException(*this);
+	return (params[idx] == param);
+}
+
 
 /*
 
