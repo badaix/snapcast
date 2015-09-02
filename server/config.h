@@ -41,9 +41,34 @@ T jGet(json j, const std::string& what, const T& def)
 }
 
 
+struct Volume
+{
+	Volume(uint16_t _percent = 100, bool _muted = false) : percent(_percent), muted(_muted)
+	{
+	}
+
+	void fromJson(const json& j)
+	{
+		percent = jGet<uint16_t>(j, "percent", percent);
+		muted = jGet<bool>(j, "muted", muted);
+	}
+
+	json toJson()
+	{
+		json j;
+		j["percent"] = percent;
+		j["muted"] = muted;
+		return j;
+	}
+
+	uint16_t percent;
+	bool muted;
+};
+
+
 struct ClientInfo
 {
-	ClientInfo(const std::string& _macAddress = "") : macAddress(_macAddress), volume(1.0), connected(false)
+	ClientInfo(const std::string& _macAddress = "") : macAddress(_macAddress), volume(100), connected(false)
 	{
 		lastSeen.tv_sec = 0;
 		lastSeen.tv_usec = 0;
@@ -56,7 +81,7 @@ struct ClientInfo
 		hostName = jGet<std::string>(j, "host", "");
 		version = jGet<std::string>(j, "version", "");
 		name = jGet<std::string>(j, "name", "");
-		volume = jGet<double>(j, "volume", 1.0);
+		volume.fromJson(j["volume"]);
 		lastSeen.tv_sec = jGet<int32_t>(j["lastSeen"], "sec", 0);
 		lastSeen.tv_usec = jGet<int32_t>(j["lastSeen"], "usec", 0);
 		connected = jGet<bool>(j, "connected", true);
@@ -70,7 +95,7 @@ struct ClientInfo
 		j["host"] = hostName;
 		j["version"] = version;
 		j["name"] = getName();
-		j["volume"] = volume;
+		j["volume"] = volume.toJson();
 		j["lastSeen"]["sec"] = lastSeen.tv_sec;
 		j["lastSeen"]["usec"] = lastSeen.tv_usec;
 		j["connected"] = connected;
@@ -90,7 +115,8 @@ struct ClientInfo
 	std::string hostName;
 	std::string version;
 	std::string name;
-	double volume;
+	Volume volume;
+	bool muted;
 	timeval lastSeen;
 	bool connected;
 };
@@ -108,7 +134,7 @@ public:
 	}
 
 	void test();
-	ClientInfoPtr getClientInfo(const std::string& mac);
+	ClientInfoPtr getClientInfo(const std::string& mac, bool add = true);
 
 	std::vector<ClientInfoPtr> clients;
 	json getClientInfos() const;
