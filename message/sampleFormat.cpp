@@ -70,6 +70,7 @@ void SampleFormat::setFormat(const std::string& format)
 
 void SampleFormat::setFormat(uint32_t rate, uint16_t bits, uint16_t channels)
 {
+	//needs something like: 24_3 = 3 bytes, 24 = 4 bytes
 	this->rate = rate;
 	this->bits = bits;
 	this->channels = channels;
