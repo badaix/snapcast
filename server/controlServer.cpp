@@ -23,6 +23,7 @@
 #include "message/request.h"
 #include "message/command.h"
 #include "common/log.h"
+#include "common/utils.h"
 #include "common/snapException.h"
 #include "jsonrpc.h"
 #include "config.h"
@@ -88,59 +89,67 @@ void ControlServer::onMessageReceived(ControlSession* connection, const std::str
 			JsonRequest request;
 			request.parse(message);
 
+			//{"jsonrpc": "2.0", "method": "System.GetStatus", "id": 2}
+			//{"jsonrpc": "2.0", "method": "System.GetStatus", "params": {"client": "00:21:6a:7d:74:fc"}, "id": 2}
 
-			//{"jsonrpc": "2.0", "method": "get", "id": 2}
-			//{"jsonrpc": "2.0", "method": "get", "params": ["status"], "id": 2}
-			//{"jsonrpc": "2.0", "method": "get", "params": ["status", "server"], "id": 2}
-			//{"jsonrpc": "2.0", "method": "get", "params": ["status", "client"], "id": 2}
-			//{"jsonrpc": "2.0", "method": "get", "params": ["status", "client", "MAC"], "id": 2}
-			//{"jsonrpc": "2.0", "method": "test", "params": ["status", "client", "MAC"], "id": 2}
+			//{"jsonrpc": "2.0", "method": "Client.SetVolume", "params": {"client": "00:21:6a:7d:74:fc", "volume": 83}, "id": 2}
+			//{"jsonrpc": "2.0", "method": "Client.SetLatency", "params": {"client": "00:21:6a:7d:74:fc", "latency": 10}, "id": 2}
+			//{"jsonrpc": "2.0", "method": "Client.SetName", "params": {"client": "00:21:6a:7d:74:fc", "name": "living room"}, "id": 2}
+			//{"jsonrpc": "2.0", "method": "Client.SetMute", "params": {"client": "00:21:6a:7d:74:fc", "mute": false}, "id": 2}
 
-			//{"jsonrpc": "2.0", "method": "set", "params": ["voume", "client", "MAC", "1.0"], "id": 2}
-			//{"jsonrpc": "2.0", "method": "set", "params": ["latency", "client", "MAC", "20"], "id": 2}
-			//{"jsonrpc": "2.0", "method": "set", "params": ["name", "client", "MAC", "living room"], "id": 2}
+//curl -X POST -H "Content-Type: application/json" -d '{"jsonrpc": "2.0", "method": "Application.SetVolume", "params": {"volume":100}, "id": 1}' http://i3c.pla.lcl:8080/jsonrpc
+//https://github.com/pla1/utils/blob/master/kodi_remote.desktop
+//http://forum.fhem.de/index.php?topic=10075.130;wap2
+//http://kodi.wiki/view/JSON-RPC_API/v6#Application.SetVolume
 
-			//	-32601	Method not found	The method does not exist / is not available.
-			//	-32602	Invalid params	Invalid method parameter(s).
-			//	-32603	Internal error	Internal JSON-RPC error.
 
 			logO << "method: " << request.method << ", " << "id: " << request.id << "\n";
-			for (string s: request.params)
-				logO << "param: " << s << "\n";
 
 			json response;
 
-			if (request.method == "get")
+			if (request.method == "System.GetStatus")
 			{
-				if (request.isParam(0, "status"))
+				json jClient = json::array();
+				if (request.hasParam("client"))
 				{
-					response = {
-						{"server", "xxx"},
-						{"clients", Config::instance().getClientInfos()}
-					};
+					ClientInfoPtr client = Config::instance().getClientInfo(request.getParam("client").get<string>(), false);
+					if (client)
+						jClient += client->toJson();
 				}
 				else
-					throw JsonInvalidParamsException(request);
+					jClient = Config::instance().getClientInfos();
+
+				response = {
+					{"server", {
+						{"host", getHostName()},
+						{"version", VERSION}
+					}},
+					{"clients", jClient}
+				};
 			}
-			else if (request.method == "set")
+			else if (request.method == "Client.SetVolume")
 			{
-				if (request.isParam(0, "voume") && request.isParam(1, "client"))
-				{
-					double volume = request.getParam<double>(3);
-					logO << "volume: " << volume << "\n";
-				}
-				else if (request.isParam(0, "latency") && request.isParam(1, "client"))
-				{
-					int latency = request.getParam<int>(3);
-					logO << "latency: " << latency << "\n";
-				}
-				else if (request.isParam(0, "name") && request.isParam(1, "client"))
-				{
-					string name = request.getParam<string>(3);
-					logO << "name: " << name << ", client: " << request.getParam<string>(2) << "\n";
-				}
-				else
-					throw JsonInvalidParamsException(request);
+				int volume = request.getParam("volume").get<int>();
+				logO << "client: " << request.getParam("client").get<string>() << ", volume: " << volume << "\n";
+				response = volume;
+			}
+			else if (request.method == "Client.SetLatency")
+			{
+				int latency = request.getParam("latency").get<int>();
+				logO << "client: " << request.getParam("client").get<string>() << ", latency: " << latency << "\n";
+				response = latency;
+			}
+			else if (request.method == "Client.SetName")
+			{
+				string name = request.getParam("name").get<string>();
+				logO << "client: " << request.getParam("client").get<string>() << ", name: " << name << "\n";
+				response = name;
+			}
+			else if (request.method == "Client.SetMute")
+			{
+				bool mute = request.getParam("mute").get<bool>();
+				logO << "client: " << request.getParam("client").get<string>() << ", mute: " << mute << "\n";
+				response = mute;
 			}
 			else
 				throw JsonMethodNotFoundException(request);

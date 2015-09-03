@@ -45,12 +45,17 @@ public:
 	void parse(const std::string& json);
 	int id;
 	std::string method;
-	std::vector<std::string> params;
+	std::map<std::string, Json> params;
 
 	Json getResponse(const Json& result);
 	Json getError(int code, const std::string& message);
 
-	template<typename T>
+	Json getParam(const std::string& key);
+	bool hasParam(const std::string& key);
+
+//	bool isParam(size_t idx, const std::string& param);
+
+/*	template<typename T>
 	T getParam(size_t idx)
 	{
 		if (idx >= params.size())
@@ -66,6 +71,7 @@ public:
 	}
 
 	bool isParam(size_t idx, const std::string& param);
+*/
 
 protected:
 	Json json_;

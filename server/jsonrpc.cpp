@@ -64,7 +64,11 @@ void JsonRequest::parse(const std::string& json)
 		try
 		{
 			if (json_["params"] != nullptr)
-				params = json_["params"].get<vector<string>>();
+			{
+				Json p = json_["params"];
+				for (Json::iterator it = p.begin(); it != p.end(); ++it)
+					params[it.key()] = it.value();
+			}
 		}
 		catch (const exception& e)
 		{
@@ -109,13 +113,29 @@ Json JsonRequest::getError(int code, const std::string& message)
 }
 
 
+bool JsonRequest::hasParam(const std::string& key)
+{
+	return (params.find(key) != params.end());
+}
+
+
+Json JsonRequest::getParam(const std::string& key)
+{
+	if (!hasParam(key))
+		throw JsonInvalidParamsException(*this);
+	return params[key];
+}
+
+
+
+/*
 bool JsonRequest::isParam(size_t idx, const std::string& param)
 {
 	if (idx >= params.size())
 		throw JsonInvalidParamsException(*this);
 	return (params[idx] == param);
 }
-
+*/
 
 Json JsonNotification::getJson(const std::string& method, Json data)
 {
