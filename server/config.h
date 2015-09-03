@@ -139,8 +139,11 @@ public:
 	std::vector<ClientInfoPtr> clients;
 	json getClientInfos() const;
 
+	void save();
+
 private:
 	Config();
+	std::string filename_;
 
 };
 

@@ -152,6 +152,7 @@ void StreamServer::onMessageReceived(ServerSession* connection, const msg::BaseM
 		client->version = helloMsg.getVersion();
 		client->connected = true;
 		gettimeofday(&client->lastSeen, NULL);
+		Config::instance().save();
 
 		json notification = JsonNotification::getJson("Client.OnConnect", client->toJson());
 		controlServer->send(notification.dump(4));
