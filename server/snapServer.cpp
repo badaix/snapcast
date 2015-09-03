@@ -105,6 +105,7 @@ int main(int argc, char* argv[])
 			return 1;
 		}
 
+		Config::instance();
 		std::clog.rdbuf(new Log("snapserver", LOG_DAEMON));
 
 		signal(SIGHUP, signal_handler);

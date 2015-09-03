@@ -17,15 +17,33 @@
 ***/
 
 #include "config.h"
+#include <sys/types.h>
+#include <sys/stat.h>
 #include <fstream>
+
 
 using namespace std;
 
 
 Config::Config()
 {
+	string dir = getenv("HOME") + string("/.config/SnapCast/");
+	mkdir(dir.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+	filename_ = dir + "settings.json";
+	cerr << filename_ << "\n";
+//	fs::create_directory(filename_.parent_path());
 }
 
+
+void Config::save()
+{
+	std::ofstream ofs(filename_.c_str(), std::ofstream::out|std::ofstream::trunc);
+	json clients = {
+		{"Client", getClientInfos()}
+	};
+	ofs << std::setw(4) << clients;
+	ofs.close();
+}
 
 
 void Config::test()
@@ -48,7 +66,7 @@ ClientInfoPtr Config::getClientInfo(const std::string& macAddress, bool add)
 {
 	if (macAddress.empty())
 		return nullptr;
-		
+
 	for (auto client: clients)
 	{
 		if (client->macAddress == macAddress)
