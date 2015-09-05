@@ -86,6 +86,7 @@ void StreamServer::onDisconnect(ClientSession* connection)
 	ClientInfoPtr client = Config::instance().getClientInfo(connection->macAddress);
 	client->connected = false;
 	gettimeofday(&client->lastSeen, NULL);
+	Config::instance().save();
 	json notification = JsonNotification::getJson("Client.OnDisconnect", client->toJson());
 	controlServer->send(notification.dump(4));
 }
@@ -93,9 +94,9 @@ void StreamServer::onDisconnect(ClientSession* connection)
 
 void StreamServer::onMessageReceived(ControlSession* connection, const std::string& message)
 {
+	JsonRequest request;
 	try
 	{
-		JsonRequest request;
 		request.parse(message);
 
 		//{"jsonrpc": "2.0", "method": "System.GetStatus", "id": 2}
@@ -116,6 +117,14 @@ void StreamServer::onMessageReceived(ControlSession* connection, const std::stri
 		logO << "method: " << request.method << ", " << "id: " << request.id << "\n";
 
 		json response;
+		ClientInfoPtr clientInfo = nullptr;
+
+		if (request.method.find("Client.Set") == 0)
+		{
+			clientInfo = Config::instance().getClientInfo(request.getParam("client").get<string>(), false);
+			if (clientInfo == nullptr)
+				throw JsonInternalErrorException("Client not found", request.id);
+		}
 
 		if (request.method == "System.GetStatus")
 		{
@@ -139,39 +148,51 @@ void StreamServer::onMessageReceived(ControlSession* connection, const std::stri
 		}
 		else if (request.method == "Client.SetVolume")
 		{
-			int volume = request.getParam("volume").get<int>();
-			logO << "client: " << request.getParam("client").get<string>() << ", volume: " << volume << "\n";
-			ClientSession* session = getClientSession(request.getParam("client").get<string>());
-//			if (session != NULL)
-
-			response = volume;
-		}
-		else if (request.method == "Client.SetLatency")
-		{
-			int latency = request.getParam("latency").get<int>();
-			logO << "client: " << request.getParam("client").get<string>() << ", latency: " << latency << "\n";
-			response = latency;
-		}
-		else if (request.method == "Client.SetName")
-		{
-			string name = request.getParam("name").get<string>();
-			logO << "client: " << request.getParam("client").get<string>() << ", name: " << name << "\n";
-			response = name;
+			serverSettings_.volume = request.getParam<uint16_t>("volume", 0, 100);
+			response = serverSettings_.volume;
+			clientInfo->volume.percent = serverSettings_.volume;
 		}
 		else if (request.method == "Client.SetMute")
 		{
-			bool mute = request.getParam("mute").get<bool>();
-			logO << "client: " << request.getParam("client").get<string>() << ", mute: " << mute << "\n";
-			response = mute;
+			serverSettings_.muted = request.getParam<bool>("mute", false, true);
+			response = serverSettings_.muted;
+			clientInfo->volume.muted = serverSettings_.muted;
+		}
+		else if (request.method == "Client.SetLatency")
+		{
+			serverSettings_.latency = request.getParam<int>("latency", -10000, serverSettings_.bufferMs);
+			response = serverSettings_.latency;
+			clientInfo->latency = serverSettings_.latency;
+		}
+		else if (request.method == "Client.SetName")
+		{
+			clientInfo->name = request.getParam("name").get<string>();
+			response = clientInfo->name;
 		}
 		else
-			throw JsonMethodNotFoundException(request);
+			throw JsonMethodNotFoundException(request.id);
+
+		if (clientInfo != nullptr)
+		{
+			ClientSession* session = getClientSession(request.getParam("client").get<string>());
+			if (session != NULL)
+				session->send(&serverSettings_);
+
+			Config::instance().save();
+			json notification = JsonNotification::getJson("Client.OnUpdate", clientInfo->toJson());
+			controlServer->send(notification.dump());
+		}
 
 		connection->send(request.getResponse(response).dump());
 	}
 	catch (const JsonRequestException& e)
 	{
 		connection->send(e.getResponse().dump());
+	}
+	catch (const exception& e)
+	{
+		JsonInternalErrorException jsonException(e.what(), request.id);
+		connection->send(jsonException.getResponse().dump());
 	}
 }
 

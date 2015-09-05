@@ -28,7 +28,7 @@ namespace msg
 class ServerSettings : public BaseMessage
 {
 public:
-	ServerSettings() : BaseMessage(message_type::kServerSettings), bufferMs(0), latency(0), volume(1.0)
+	ServerSettings() : BaseMessage(message_type::kServerSettings), bufferMs(0), latency(0), volume(100), muted(false)
 	{
 	}
 
@@ -40,24 +40,27 @@ public:
 	{
 		stream.read(reinterpret_cast<char*>(&bufferMs), sizeof(int32_t));
 		stream.read(reinterpret_cast<char*>(&latency), sizeof(int32_t));
-		stream.read(reinterpret_cast<char*>(&volume), sizeof(double));
+		stream.read(reinterpret_cast<char*>(&volume), sizeof(uint16_t));
+		stream.read(reinterpret_cast<char*>(&muted), sizeof(bool));
 	}
 
 	virtual uint32_t getSize() const
 	{
-		return sizeof(int32_t) + sizeof(int32_t) + sizeof(double);
+		return sizeof(int32_t) + sizeof(int32_t) + sizeof(uint16_t) + sizeof(bool);
 	}
 
 	int32_t bufferMs;
 	int32_t latency;
-	double volume;
+	uint16_t volume;
+	bool muted;
 
 protected:
 	virtual void doserialize(std::ostream& stream) const
 	{
 		stream.write(reinterpret_cast<const char*>(&bufferMs), sizeof(int32_t));
 		stream.write(reinterpret_cast<const char*>(&latency), sizeof(int32_t));
-		stream.write(reinterpret_cast<const char*>(&volume), sizeof(double));
+		stream.write(reinterpret_cast<const char*>(&volume), sizeof(uint16_t));
+		stream.write(reinterpret_cast<const char*>(&muted), sizeof(bool));
 	}
 };
 
