@@ -29,81 +29,22 @@
 using Json = nlohmann::json;
 
 
-class JsonInvalidParamsException;
-
-
-/// JSON-RPC 2.0 request
-/**
- * Simple jsonrpc 2.0 parser with getters
- * Currently no named parameters are supported, but only array parameters
- */
-class JsonRequest
-{
-public:
-	JsonRequest();
-
-	void parse(const std::string& json);
-	int id;
-	std::string method;
-	std::map<std::string, Json> params;
-
-	Json getResponse(const Json& result);
-	Json getError(int code, const std::string& message);
-
-	Json getParam(const std::string& key);
-	bool hasParam(const std::string& key);
-
-//	bool isParam(size_t idx, const std::string& param);
-
-/*	template<typename T>
-	T getParam(size_t idx)
-	{
-		if (idx >= params.size())
-			throw JsonInvalidParamsException(*this);
-		try
-		{
-			return boost::lexical_cast<T>(params[idx]);
-		}
-		catch(...)
-		{
-			throw JsonInvalidParamsException(*this);
-		}
-	}
-
-	bool isParam(size_t idx, const std::string& param);
-*/
-
-protected:
-	Json json_;
-
-};
-
-
-
-class JsonNotification
-{
-public:
-	static Json getJson(const std::string& method, Json data);
-
-};
-
-
 
 class JsonRequestException : public SnapException
 {
   int errorCode_, id_;
 public:
-	JsonRequestException(const char* text, int errorCode = 0, int id = -1) : SnapException(text), errorCode_(errorCode), id_(id)
+	JsonRequestException(const char* text, int errorCode = 0, int requestId = -1) : SnapException(text), errorCode_(errorCode), id_(requestId)
 	{
 	}
 
-	JsonRequestException(const std::string& text, int errorCode = 0, int id = -1) : SnapException(text), errorCode_(errorCode), id_(id)
+	JsonRequestException(const std::string& text, int errorCode = 0, int requestId = -1) : SnapException(text), errorCode_(errorCode), id_(requestId)
 	{
 	}
 
-	JsonRequestException(const JsonRequest& request, const std::string& text, int errorCode = 0) : SnapException(text), errorCode_(errorCode), id_(request.id)
-	{
-	}
+//	JsonRequestException(const JsonRequest& request, const std::string& text, int errorCode = 0) : SnapException(text), errorCode_(errorCode), id_(request.id)
+//	{
+//	}
 
 	JsonRequestException(const JsonRequestException& e) :  SnapException(e.what()), errorCode_(e.errorCode()), id_(e.id_)
 	{
@@ -144,11 +85,11 @@ public:
 class JsonMethodNotFoundException : public JsonRequestException
 {
 public:
-	JsonMethodNotFoundException(const JsonRequest& request) : JsonRequestException(request, "method not found", -32601)
+	JsonMethodNotFoundException(int requestId = -1) : JsonRequestException("method not found", -32601, requestId)
 	{
 	}
 
-	JsonMethodNotFoundException(const JsonRequest& request, const std::string& message) : JsonRequestException(request, message, -32601)
+	JsonMethodNotFoundException(const std::string& message, int requestId = -1) : JsonRequestException(message, -32601, requestId)
 	{
 	}
 };
@@ -158,11 +99,11 @@ public:
 class JsonInvalidParamsException : public JsonRequestException
 {
 public:
-	JsonInvalidParamsException(const JsonRequest& request) : JsonRequestException(request, "invalid params", -32602)
+	JsonInvalidParamsException(int requestId = -1) : JsonRequestException("invalid params", -32602, requestId)
 	{
 	}
 
-	JsonInvalidParamsException(const JsonRequest& request, const std::string& message) : JsonRequestException(request, message, -32602)
+	JsonInvalidParamsException(const std::string& message, int requestId = -1) : JsonRequestException(message, -32602, requestId)
 	{
 	}
 };
@@ -171,14 +112,86 @@ public:
 class JsonInternalErrorException : public JsonRequestException
 {
 public:
-	JsonInternalErrorException(const JsonRequest& request) : JsonRequestException(request, "internal error", -32603)
+	JsonInternalErrorException(int requestId = -1) : JsonRequestException("internal error", -32603, requestId)
 	{
 	}
 
-	JsonInternalErrorException(const JsonRequest& request, const std::string& message) : JsonRequestException(request, message, -32603)
+	JsonInternalErrorException(const std::string& message, int requestId = -1) : JsonRequestException(message, -32603, requestId)
 	{
 	}
 };
+
+
+
+
+/// JSON-RPC 2.0 request
+/**
+ * Simple jsonrpc 2.0 parser with getters
+ * Currently no named parameters are supported, but only array parameters
+ */
+class JsonRequest
+{
+public:
+	JsonRequest();
+
+	void parse(const std::string& json);
+	int id;
+	std::string method;
+	std::map<std::string, Json> params;
+
+	Json getResponse(const Json& result);
+	Json getError(int code, const std::string& message);
+
+	Json getParam(const std::string& key);
+	bool hasParam(const std::string& key);
+
+	template<typename T>
+	T getParam(const std::string& key, const T& lowerRange, const T& upperRange)
+	{
+		T value = getParam(key).get<T>();
+		if (value < lowerRange)
+			throw JsonInvalidParamsException(key + " out of range", id);
+		else if (value > upperRange)
+			throw JsonInvalidParamsException(key + " out of range", id);
+
+		return value;
+	}
+
+//	bool isParam(size_t idx, const std::string& param);
+
+/*	template<typename T>
+	T getParam(size_t idx)
+	{
+		if (idx >= params.size())
+			throw JsonInvalidParamsException(*this);
+		try
+		{
+			return boost::lexical_cast<T>(params[idx]);
+		}
+		catch(...)
+		{
+			throw JsonInvalidParamsException(*this);
+		}
+	}
+
+	bool isParam(size_t idx, const std::string& param);
+*/
+
+protected:
+	Json json_;
+
+};
+
+
+
+class JsonNotification
+{
+public:
+	static Json getJson(const std::string& method, Json data);
+
+};
+
+
 
 
 
