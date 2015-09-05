@@ -27,7 +27,7 @@
 #include <sstream>
 #include <mutex>
 
-#include "serverSession.h"
+#include "clientSession.h"
 #include "pipeReader.h"
 #include "common/queue.h"
 #include "message/message.h"
@@ -64,7 +64,7 @@ struct StreamServerSettings
 /// Forwars PCM data to the connected clients
 /**
  * Reads PCM data using PipeReader, implements PipeListener to get the (encoded) PCM stream.
- * Accepts and holds client connections (ServerSession)
+ * Accepts and holds client connections (ClientSession)
  * Receives (via the MessageReceiver interface) and answers messages from the clients
  * Forwards PCM data to the clients
  */
@@ -81,8 +81,8 @@ public:
 	void send(const msg::BaseMessage* message);
 
 	/// Clients call this when they receive a message. Implementation of MessageReceiver::onMessageReceived
-	virtual void onMessageReceived(ServerSession* connection, const msg::BaseMessage& baseMessage, char* buffer);
-	virtual void onDisconnect(ServerSession* connection);
+	virtual void onMessageReceived(ClientSession* connection, const msg::BaseMessage& baseMessage, char* buffer);
+	virtual void onDisconnect(ClientSession* connection);
 
 	virtual void onMessageReceived(ControlSession* connection, const std::string& message);
 
@@ -94,10 +94,10 @@ private:
 	void startAccept();
 	void handleAccept(socket_ptr socket);
 	void acceptor();
-	ServerSession* getClientSession(const std::string& mac);
+	ClientSession* getClientSession(const std::string& mac);
 	mutable std::mutex mutex_;
 	PipeReader* pipeReader_;
-	std::set<std::shared_ptr<ServerSession>> sessions_;
+	std::set<std::shared_ptr<ClientSession>> sessions_;
 	boost::asio::io_service io_service_;
 	std::shared_ptr<tcp::acceptor> acceptor_;
 
