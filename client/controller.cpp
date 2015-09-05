@@ -212,6 +212,8 @@ void Controller::worker()
 			logS(kLogErr) << "Exception in Controller::worker(): " << e.what() << endl;
 			logO << "Stopping clientConnection" << endl;
 			clientConnection_->stop();
+			if (player_ != nullptr)
+				player_->stop();
 			logO << "Deleting stream" << endl;
 			if (stream_ != NULL)
 				delete stream_;

@@ -34,7 +34,6 @@ using json = nlohmann::json;
 
 StreamServer::StreamServer(const StreamServerSettings& streamServerSettings) : settings_(streamServerSettings), sampleFormat_(streamServerSettings.sampleFormat)
 {
-	serverSettings_.bufferMs = settings_.bufferMs;
 }
 
 
@@ -118,6 +117,8 @@ void StreamServer::onMessageReceived(ControlSession* connection, const std::stri
 
 		json response;
 		ClientInfoPtr clientInfo = nullptr;
+		msg::ServerSettings serverSettings;
+		serverSettings.bufferMs = settings_.bufferMs;
 
 		if (request.method.find("Client.Set") == 0)
 		{
@@ -148,21 +149,18 @@ void StreamServer::onMessageReceived(ControlSession* connection, const std::stri
 		}
 		else if (request.method == "Client.SetVolume")
 		{
-			serverSettings_.volume = request.getParam<uint16_t>("volume", 0, 100);
-			response = serverSettings_.volume;
-			clientInfo->volume.percent = serverSettings_.volume;
+			clientInfo->volume.percent = request.getParam<uint16_t>("volume", 0, 100);
+			response = clientInfo->volume.percent;
 		}
 		else if (request.method == "Client.SetMute")
 		{
-			serverSettings_.muted = request.getParam<bool>("mute", false, true);
-			response = serverSettings_.muted;
-			clientInfo->volume.muted = serverSettings_.muted;
+			clientInfo->volume.muted = request.getParam<bool>("mute", false, true);
+			response = clientInfo->volume.muted;
 		}
 		else if (request.method == "Client.SetLatency")
 		{
-			serverSettings_.latency = request.getParam<int>("latency", -10000, serverSettings_.bufferMs);
-			response = serverSettings_.latency;
-			clientInfo->latency = serverSettings_.latency;
+			clientInfo->latency = request.getParam<int>("latency", -10000, settings_.bufferMs);
+			response = clientInfo->latency;
 		}
 		else if (request.method == "Client.SetName")
 		{
@@ -174,9 +172,13 @@ void StreamServer::onMessageReceived(ControlSession* connection, const std::stri
 
 		if (clientInfo != nullptr)
 		{
+			serverSettings.volume = clientInfo->volume.percent;
+			serverSettings.muted = clientInfo->volume.muted;
+			serverSettings.latency = clientInfo->latency;
+
 			ClientSession* session = getClientSession(request.getParam("client").get<string>());
 			if (session != NULL)
-				session->send(&serverSettings_);
+				session->send(&serverSettings);
 
 			Config::instance().save();
 			json notification = JsonNotification::getJson("Client.OnUpdate", clientInfo->toJson());
@@ -216,8 +218,14 @@ void StreamServer::onMessageReceived(ClientSession* connection, const msg::BaseM
 		else if (requestMsg.request == kServerSettings)
 		{
 			std::unique_lock<std::mutex> mlock(mutex_);
-			serverSettings_.refersTo = requestMsg.id;
-			connection->send(&serverSettings_);
+			ClientInfoPtr clientInfo = Config::instance().getClientInfo(connection->macAddress, true);
+			msg::ServerSettings serverSettings;
+			serverSettings.volume = clientInfo->volume.percent;
+			serverSettings.muted = clientInfo->volume.muted;
+			serverSettings.latency = clientInfo->latency;
+			serverSettings.refersTo = requestMsg.id;
+			serverSettings.bufferMs = settings_.bufferMs;
+			connection->send(&serverSettings);
 		}
 		else if (requestMsg.request == kSampleFormat)
 		{
@@ -318,6 +326,7 @@ void StreamServer::start()
 
 void StreamServer::stop()
 {
+	controlServer->stop();
 	acceptor_->cancel();
 	io_service_.stop();
 	acceptThread_.join();

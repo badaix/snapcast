@@ -103,7 +103,6 @@ private:
 
 	StreamServerSettings settings_;
 	msg::SampleFormat sampleFormat_;
-	msg::ServerSettings serverSettings_;
 	std::thread acceptThread_;
 	Queue<std::shared_ptr<msg::BaseMessage>> messages_;
 	std::unique_ptr<ControlServer> controlServer;
