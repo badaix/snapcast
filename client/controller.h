@@ -26,6 +26,7 @@
 #include "clientConnection.h"
 #include "stream.h"
 #include "pcmDevice.h"
+#include "alsaPlayer.h"
 
 
 /// Forwards PCM data to the audio player
@@ -61,6 +62,7 @@ private:
 	Decoder* decoder_;
 	PcmDevice pcmDevice_;
 	size_t latency_;
+	std::unique_ptr<Player> player_;
 
 	std::exception exception_;
 	bool asyncException_;

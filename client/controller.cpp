@@ -23,7 +23,6 @@
 #include "decoder/oggDecoder.h"
 #include "decoder/pcmDecoder.h"
 #include "decoder/flacDecoder.h"
-#include "alsaPlayer.h"
 #include "timeProvider.h"
 #include "common/log.h"
 #include "common/snapException.h"
@@ -32,11 +31,12 @@
 #include "message/request.h"
 #include "message/ack.h"
 #include "message/command.h"
+#include "message/hello.h"
 
 using namespace std;
 
 
-Controller::Controller() : MessageReceiver(), active_(false), sampleFormat_(NULL), decoder_(NULL), asyncException_(false)
+Controller::Controller() : MessageReceiver(), active_(false), sampleFormat_(NULL), decoder_(NULL), player_(nullptr), asyncException_(false)
 {
 }
 
@@ -76,6 +76,18 @@ void Controller::onMessageReceived(ClientConnection* connection, const msg::Base
 //		logO << "timeMsg: " << latency << "\n";
 		TimeProvider::getInstance().setDiffToServer((reply.latency - latency) * 1000 / 2);
 //		logO << "diff to server [ms]: " << (float)TimeProvider::getInstance().getDiffToServer<chronos::usec>().count() / 1000.f << "\n";
+	}
+	else if (baseMessage.type == message_type::kServerSettings)
+	{
+		msg::ServerSettings serverSettings;
+		serverSettings.deserialize(baseMessage, buffer);
+		logO << "ServerSettings - buffer: " << serverSettings.bufferMs << ", latency: " << serverSettings.latency << ", volume: " << serverSettings.volume << ", muted: " << serverSettings.muted << "\n";
+		if (player_ != nullptr)
+		{
+			player_->setVolume(serverSettings.volume / 100.);
+			player_->setMute(serverSettings.muted);
+		}
+		stream_->setBufferLen(serverSettings.bufferMs - serverSettings.latency);
 	}
 
 	if (baseMessage.type != message_type::kTime)
@@ -167,9 +179,9 @@ void Controller::worker()
 			stream_ = new Stream(*sampleFormat_);
 			stream_->setBufferLen(serverSettings->bufferMs - latency_);
 
-			Player player(pcmDevice_, stream_);
-			player.setVolume(serverSettings->volume);
-			player.start();
+			player_.reset(new Player(pcmDevice_, stream_));
+			player_->setVolume(serverSettings->volume);
+			player_->start();
 
 			msg::Command startStream("startStream");
 			shared_ptr<msg::Ack> ackMsg(NULL);
