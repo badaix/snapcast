@@ -16,7 +16,7 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
-#include "jsonrpc.h"
+#include "json/jsonrpc.h"
 #include "streamServer.h"
 #include "message/time.h"
 #include "message/ack.h"
