@@ -34,6 +34,7 @@ public:
 	Player(const PcmDevice& pcmDevice, Stream* stream);
 	virtual ~Player();
 	void setVolume(double volume);
+	void setMute(bool mute);
 	void start();
 	void stop();
 	static std::vector<PcmDevice> pcm_list(void);
@@ -42,8 +43,10 @@ private:
 	void initAlsa();
 	void uninitAlsa();
 	void worker();
+
 	snd_pcm_t* handle_;
 	snd_pcm_uframes_t frames_;
+
 	char *buff_;
 	std::atomic<bool> active_;
 	Stream* stream_;
