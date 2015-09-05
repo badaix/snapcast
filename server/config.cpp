@@ -31,6 +31,22 @@ Config::Config()
 	mkdir(dir.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
 	filename_ = dir + "settings.json";
 	cerr << filename_ << "\n";
+
+	ifstream ifs(filename_, std::ifstream::in);
+	if (ifs.good())
+	{
+		json j;
+		ifs >> j;
+		json jClient = j["Client"];
+		for (json::iterator it = jClient.begin(); it != jClient.end(); ++it)
+		{
+			ClientInfoPtr client = make_shared<ClientInfo>();
+			client->fromJson(*it);
+			clients.push_back(client);
+			std::cout << "Client:\n" << std::setw(4) << client->toJson() << '\n';
+		}
+	}
+
 //	fs::create_directory(filename_.parent_path());
 }
 

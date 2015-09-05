@@ -68,7 +68,7 @@ struct Volume
 
 struct ClientInfo
 {
-	ClientInfo(const std::string& _macAddress = "") : macAddress(_macAddress), volume(100), connected(false)
+	ClientInfo(const std::string& _macAddress = "") : macAddress(_macAddress), volume(100), connected(false), latency(0)
 	{
 		lastSeen.tv_sec = 0;
 		lastSeen.tv_usec = 0;
@@ -85,6 +85,7 @@ struct ClientInfo
 		lastSeen.tv_sec = jGet<int32_t>(j["lastSeen"], "sec", 0);
 		lastSeen.tv_usec = jGet<int32_t>(j["lastSeen"], "usec", 0);
 		connected = jGet<bool>(j, "connected", true);
+		latency = jGet<int32_t>(j, "latency", 0);
 	}
 
 	json toJson()
@@ -94,20 +95,13 @@ struct ClientInfo
 		j["IP"] = ipAddress;
 		j["host"] = hostName;
 		j["version"] = version;
-		j["name"] = getName();
+		j["name"] = name;
 		j["volume"] = volume.toJson();
 		j["lastSeen"]["sec"] = lastSeen.tv_sec;
 		j["lastSeen"]["usec"] = lastSeen.tv_usec;
 		j["connected"] = connected;
+		j["latency"] = latency;
 		return j;
-	}
-
-	std::string getName()
-	{
-		if (name.empty())
-			return hostName;
-		else
-			return name;
 	}
 
 	std::string macAddress;
@@ -119,6 +113,7 @@ struct ClientInfo
 	bool muted;
 	timeval lastSeen;
 	bool connected;
+	int32_t latency;
 };
 
 typedef std::shared_ptr<ClientInfo> ClientInfoPtr;
