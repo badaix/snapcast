@@ -47,7 +47,7 @@ typedef std::shared_ptr<tcp::socket> socket_ptr;
 class ControlServer : public ControlMessageReceiver
 {
 public:
-	ControlServer(size_t port);
+	ControlServer(size_t port, ControlMessageReceiver* controlMessageReceiver = NULL);
 	virtual ~ControlServer();
 
 	void start();
@@ -71,6 +71,8 @@ private:
 
 	std::thread acceptThread_;
 	Queue<std::shared_ptr<msg::BaseMessage>> messages_;
+
+	ControlMessageReceiver* controlMessageReceiver_;
 };
 
 

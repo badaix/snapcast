@@ -68,7 +68,7 @@ struct StreamServerSettings
  * Receives (via the MessageReceiver interface) and answers messages from the clients
  * Forwards PCM data to the clients
  */
-class StreamServer : public MessageReceiver, PipeListener
+class StreamServer : public MessageReceiver, ControlMessageReceiver, PipeListener
 {
 public:
 	StreamServer(const StreamServerSettings& streamServerSettings);
@@ -84,6 +84,8 @@ public:
 	virtual void onMessageReceived(ServerSession* connection, const msg::BaseMessage& baseMessage, char* buffer);
 	virtual void onDisconnect(ServerSession* connection);
 
+	virtual void onMessageReceived(ControlSession* connection, const std::string& message);
+
 	/// Implementation of PipeListener
 	virtual void onChunkRead(const PipeReader* pipeReader, const msg::PcmChunk* chunk, double duration);
 	virtual void onResync(const PipeReader* pipeReader, double ms);
@@ -92,6 +94,7 @@ private:
 	void startAccept();
 	void handleAccept(socket_ptr socket);
 	void acceptor();
+	ServerSession* getClientSession(const std::string& mac);
 	mutable std::mutex mutex_;
 	PipeReader* pipeReader_;
 	std::set<std::shared_ptr<ServerSession>> sessions_;
