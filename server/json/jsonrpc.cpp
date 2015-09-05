@@ -122,7 +122,7 @@ bool JsonRequest::hasParam(const std::string& key)
 Json JsonRequest::getParam(const std::string& key)
 {
 	if (!hasParam(key))
-		throw JsonInvalidParamsException(*this);
+		throw JsonInvalidParamsException(id);
 	return params[key];
 }
 
