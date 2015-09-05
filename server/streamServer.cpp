@@ -51,8 +51,8 @@ void StreamServer::send(const msg::BaseMessage* message)
 		if (!(*it)->active())
 		{
 			logS(kLogErr) << "Session inactive. Removing\n";
-			// don't block: remove ServerSession in a thread
-			auto func = [](shared_ptr<ServerSession> s)->void{s->stop();};
+			// don't block: remove ClientSession in a thread
+			auto func = [](shared_ptr<ClientSession> s)->void{s->stop();};
 			std::thread t(func, *it);
 			t.detach();
 			controlServer->send("Client gone: " + (*it)->macAddress);
@@ -81,7 +81,7 @@ void StreamServer::onResync(const PipeReader* pipeReader, double ms)
 }
 
 
-void StreamServer::onDisconnect(ServerSession* connection)
+void StreamServer::onDisconnect(ClientSession* connection)
 {
 	ClientInfoPtr client = Config::instance().getClientInfo(connection->macAddress);
 	client->connected = false;
@@ -141,7 +141,7 @@ void StreamServer::onMessageReceived(ControlSession* connection, const std::stri
 		{
 			int volume = request.getParam("volume").get<int>();
 			logO << "client: " << request.getParam("client").get<string>() << ", volume: " << volume << "\n";
-			ServerSession* session = getClientSession(request.getParam("client").get<string>());
+			ClientSession* session = getClientSession(request.getParam("client").get<string>());
 //			if (session != NULL)
 
 			response = volume;
@@ -176,7 +176,7 @@ void StreamServer::onMessageReceived(ControlSession* connection, const std::stri
 }
 
 
-void StreamServer::onMessageReceived(ServerSession* connection, const msg::BaseMessage& baseMessage, char* buffer)
+void StreamServer::onMessageReceived(ClientSession* connection, const msg::BaseMessage& baseMessage, char* buffer)
 {
 //	logO << "getNextMessage: " << baseMessage.type << ", size: " << baseMessage.size << ", id: " << baseMessage.id << ", refers: " << baseMessage.refersTo << ", sent: " << baseMessage.sent.sec << "," << baseMessage.sent.usec << ", recv: " << baseMessage.received.sec << "," << baseMessage.received.usec << "\n";
 	if (baseMessage.type == message_type::kRequest)
@@ -245,7 +245,7 @@ void StreamServer::onMessageReceived(ServerSession* connection, const msg::BaseM
 }
 
 
-ServerSession* StreamServer::getClientSession(const std::string& mac)
+ClientSession* StreamServer::getClientSession(const std::string& mac)
 {
 	for (auto session: sessions_)
 	{
@@ -271,7 +271,7 @@ void StreamServer::handleAccept(socket_ptr socket)
 	setsockopt(socket->native(), SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
 	setsockopt(socket->native(), SOL_SOCKET, SO_SNDTIMEO, &tv, sizeof(tv));
 	logS(kLogNotice) << "StreamServer::NewConnection: " << socket->remote_endpoint().address().to_string() << endl;
-	shared_ptr<ServerSession> session = make_shared<ServerSession>(this, socket);
+	shared_ptr<ClientSession> session = make_shared<ClientSession>(this, socket);
 	{
 		std::unique_lock<std::mutex> mlock(mutex_);
 		session->setBufferMs(settings_.bufferMs);

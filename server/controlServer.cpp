@@ -53,7 +53,7 @@ void ControlServer::send(const std::string& message)
 		if (!(*it)->active())
 		{
 			logS(kLogErr) << "Session inactive. Removing\n";
-			// don't block: remove ServerSession in a thread
+			// don't block: remove ClientSession in a thread
 			auto func = [](shared_ptr<ControlSession> s)->void{s->stop();};
 			std::thread t(func, *it);
 			t.detach();

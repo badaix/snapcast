@@ -19,7 +19,7 @@
 #include <boost/lexical_cast.hpp>
 #include <iostream>
 #include <mutex>
-#include "serverSession.h"
+#include "clientSession.h"
 #include "common/log.h"
 #include "message/pcmChunk.h"
 
@@ -27,28 +27,28 @@ using namespace std;
 
 
 
-ServerSession::ServerSession(MessageReceiver* receiver, std::shared_ptr<tcp::socket> socket) : messageReceiver_(receiver)
+ClientSession::ClientSession(MessageReceiver* receiver, std::shared_ptr<tcp::socket> socket) : messageReceiver_(receiver)
 {
 	socket_ = socket;
 }
 
 
-ServerSession::~ServerSession()
+ClientSession::~ClientSession()
 {
 	stop();
 }
 
 
-void ServerSession::start()
+void ClientSession::start()
 {
 	active_ = true;
 	streamActive_ = false;
-	readerThread_ = new thread(&ServerSession::reader, this);
-	writerThread_ = new thread(&ServerSession::writer, this);
+	readerThread_ = new thread(&ClientSession::reader, this);
+	writerThread_ = new thread(&ClientSession::writer, this);
 }
 
 
-void ServerSession::stop()
+void ClientSession::stop()
 {
 	std::unique_lock<std::mutex> mlock(mutex_);
 	setActive(false);
@@ -81,11 +81,11 @@ void ServerSession::stop()
 	readerThread_ = NULL;
 	writerThread_ = NULL;
 	socket_ = NULL;
-	logD << "ServerSession stopped\n";
+	logD << "ClientSession stopped\n";
 }
 
 
-void ServerSession::socketRead(void* _to, size_t _bytes)
+void ClientSession::socketRead(void* _to, size_t _bytes)
 {
 	size_t read = 0;
 	do
@@ -97,7 +97,7 @@ void ServerSession::socketRead(void* _to, size_t _bytes)
 }
 
 
-void ServerSession::add(const shared_ptr<const msg::BaseMessage>& message)
+void ClientSession::add(const shared_ptr<const msg::BaseMessage>& message)
 {
 	if (!message || !streamActive_)
 		return;
@@ -108,7 +108,7 @@ void ServerSession::add(const shared_ptr<const msg::BaseMessage>& message)
 }
 
 
-bool ServerSession::send(const msg::BaseMessage* message) const
+bool ClientSession::send(const msg::BaseMessage* message) const
 {
 //	logO << "send: " << message->type << ", size: " << message->size << ", id: " << message->id << ", refers: " << message->refersTo << "\n";
 	std::unique_lock<std::mutex> mlock(mutex_);
@@ -125,7 +125,7 @@ bool ServerSession::send(const msg::BaseMessage* message) const
 }
 
 
-void ServerSession::getNextMessage()
+void ClientSession::getNextMessage()
 {
 	msg::BaseMessage baseMessage;
 	size_t baseMsgSize = baseMessage.getSize();
@@ -144,7 +144,7 @@ void ServerSession::getNextMessage()
 }
 
 
-void ServerSession::reader()
+void ClientSession::reader()
 {
 	try
 	{
@@ -155,13 +155,13 @@ void ServerSession::reader()
 	}
 	catch (const std::exception& e)
 	{
-		logS(kLogErr) << "Exception in ServerSession::reader(): " << e.what() << endl;
+		logS(kLogErr) << "Exception in ClientSession::reader(): " << e.what() << endl;
 	}
 	setActive(false);
 }
 
 
-void ServerSession::writer()
+void ClientSession::writer()
 {
 	try
 	{
@@ -192,13 +192,13 @@ void ServerSession::writer()
 	}
 	catch (const std::exception& e)
 	{
-		logS(kLogErr) << "Exception in ServerSession::writer(): " << e.what() << endl;
+		logS(kLogErr) << "Exception in ClientSession::writer(): " << e.what() << endl;
 	}
 	setActive(false);
 }
 
 
-void ServerSession::setActive(bool active)
+void ClientSession::setActive(bool active)
 {
 	if (active_ && !active && (messageReceiver_ != NULL))
 		messageReceiver_->onDisconnect(this);

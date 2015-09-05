@@ -34,15 +34,15 @@
 using boost::asio::ip::tcp;
 
 
-class ServerSession;
+class ClientSession;
 
 
 /// Interface: callback for a received message.
 class MessageReceiver
 {
 public:
-	virtual void onMessageReceived(ServerSession* connection, const msg::BaseMessage& baseMessage, char* buffer) = 0;
-	virtual void onDisconnect(ServerSession* connection) = 0;
+	virtual void onMessageReceived(ClientSession* connection, const msg::BaseMessage& baseMessage, char* buffer) = 0;
+	virtual void onDisconnect(ClientSession* connection) = 0;
 };
 
 
@@ -52,12 +52,12 @@ public:
  * Messages are sent to the client with the "send" method.
  * Received messages from the client are passed to the MessageReceiver callback
  */
-class ServerSession
+class ClientSession
 {
 public:
 	/// ctor. Received message from the client are passed to MessageReceiver
-	ServerSession(MessageReceiver* receiver, std::shared_ptr<tcp::socket> socket);
-	~ServerSession();
+	ClientSession(MessageReceiver* receiver, std::shared_ptr<tcp::socket> socket);
+	~ClientSession();
 	void start();
 	void stop();
 
