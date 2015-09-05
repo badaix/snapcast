@@ -25,7 +25,7 @@
 #include "common/log.h"
 #include "common/utils.h"
 #include "common/snapException.h"
-#include "jsonrpc.h"
+#include "json/jsonrpc.h"
 #include "config.h"
 #include <iostream>
 
