@@ -34,7 +34,7 @@ using namespace std;
 using json = nlohmann::json;
 
 
-ControlServer::ControlServer(size_t port) : port_(port)
+ControlServer::ControlServer(size_t port, ControlMessageReceiver* controlMessageReceiver) : port_(port), controlMessageReceiver_(controlMessageReceiver)
 {
 }
 
@@ -84,82 +84,8 @@ void ControlServer::onMessageReceived(ControlSession* connection, const std::str
 	}
 	else
 	{
-		try
-		{
-			JsonRequest request;
-			request.parse(message);
-
-			//{"jsonrpc": "2.0", "method": "System.GetStatus", "id": 2}
-			//{"jsonrpc": "2.0", "method": "System.GetStatus", "params": {"client": "00:21:6a:7d:74:fc"}, "id": 2}
-
-			//{"jsonrpc": "2.0", "method": "Client.SetVolume", "params": {"client": "00:21:6a:7d:74:fc", "volume": 83}, "id": 2}
-			//{"jsonrpc": "2.0", "method": "Client.SetLatency", "params": {"client": "00:21:6a:7d:74:fc", "latency": 10}, "id": 2}
-			//{"jsonrpc": "2.0", "method": "Client.SetName", "params": {"client": "00:21:6a:7d:74:fc", "name": "living room"}, "id": 2}
-			//{"jsonrpc": "2.0", "method": "Client.SetMute", "params": {"client": "00:21:6a:7d:74:fc", "mute": false}, "id": 2}
-
-//curl -X POST -H "Content-Type: application/json" -d '{"jsonrpc": "2.0", "method": "Application.SetVolume", "params": {"volume":100}, "id": 1}' http://i3c.pla.lcl:8080/jsonrpc
-//https://github.com/pla1/utils/blob/master/kodi_remote.desktop
-//http://forum.fhem.de/index.php?topic=10075.130;wap2
-//http://kodi.wiki/view/JSON-RPC_API/v6#Application.SetVolume
-
-
-			logO << "method: " << request.method << ", " << "id: " << request.id << "\n";
-
-			json response;
-
-			if (request.method == "System.GetStatus")
-			{
-				json jClient = json::array();
-				if (request.hasParam("client"))
-				{
-					ClientInfoPtr client = Config::instance().getClientInfo(request.getParam("client").get<string>(), false);
-					if (client)
-						jClient += client->toJson();
-				}
-				else
-					jClient = Config::instance().getClientInfos();
-
-				response = {
-					{"server", {
-						{"host", getHostName()},
-						{"version", VERSION}
-					}},
-					{"clients", jClient}
-				};
-			}
-			else if (request.method == "Client.SetVolume")
-			{
-				int volume = request.getParam("volume").get<int>();
-				logO << "client: " << request.getParam("client").get<string>() << ", volume: " << volume << "\n";
-				response = volume;
-			}
-			else if (request.method == "Client.SetLatency")
-			{
-				int latency = request.getParam("latency").get<int>();
-				logO << "client: " << request.getParam("client").get<string>() << ", latency: " << latency << "\n";
-				response = latency;
-			}
-			else if (request.method == "Client.SetName")
-			{
-				string name = request.getParam("name").get<string>();
-				logO << "client: " << request.getParam("client").get<string>() << ", name: " << name << "\n";
-				response = name;
-			}
-			else if (request.method == "Client.SetMute")
-			{
-				bool mute = request.getParam("mute").get<bool>();
-				logO << "client: " << request.getParam("client").get<string>() << ", mute: " << mute << "\n";
-				response = mute;
-			}
-			else
-				throw JsonMethodNotFoundException(request);
-
-			connection->send(request.getResponse(response).dump());
-		}
-		catch (const JsonRequestException& e)
-		{
-			connection->send(e.getResponse().dump());
-		}
+		if (controlMessageReceiver_ != NULL)
+			controlMessageReceiver_->onMessageReceived(connection, message);
 	}
 }
 
