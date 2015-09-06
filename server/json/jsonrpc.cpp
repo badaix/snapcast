@@ -50,15 +50,23 @@ void JsonRequest::parse(const std::string& json)
 			throw JsonRequestException(e.what(), -32700);
 		}
 
+		if (json_.count("id") == 0)
+			throw JsonInvalidRequestException("id is missing", -1);
 		id = json_["id"].get<int>();
+		if (id < 0)
+			throw JsonInvalidRequestException("id must be a positive integer", id);
+
+		if (json_.count("jsonrpc") == 0)
+			throw JsonInvalidRequestException("jsonrpc is missing", id);
 		string jsonrpc = json_["jsonrpc"].get<string>();
 		if (jsonrpc != "2.0")
-			throw JsonRequestException("invalid jsonrpc value: " + jsonrpc, -32600);
+			throw JsonInvalidRequestException("invalid jsonrpc value: " + jsonrpc, id);
+
+		if (json_.count("method") == 0)
+			throw JsonInvalidRequestException("method is missing", id);
 		method = json_["method"].get<string>();
 		if (method.empty())
-			throw JsonRequestException("method must not be empty", -32600);
-		if (id < 0)
-			throw JsonRequestException("id must be a positive integer", -32600);
+			throw JsonInvalidRequestException("method must not be empty", id);
 
 		params.clear();
 		try
@@ -72,7 +80,7 @@ void JsonRequest::parse(const std::string& json)
 		}
 		catch (const exception& e)
 		{
-			throw JsonRequestException(e.what(), -32602);
+			throw JsonInvalidParamsException(e.what(), id);
 		}
 	}
 	catch (const JsonRequestException& e)
@@ -81,7 +89,7 @@ void JsonRequest::parse(const std::string& json)
 	}
 	catch (const exception& e)
 	{
-		throw JsonRequestException(e.what(), -32603, id);
+		throw JsonInternalErrorException(e.what(), id);
 	}
 }
 
