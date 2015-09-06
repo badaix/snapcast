@@ -23,104 +23,10 @@
 #include <vector>
 #include <boost/lexical_cast.hpp>
 #include "json.hpp"
-#include "common/snapException.h"
+#include "jsonrpcException.h"
 
 
 using Json = nlohmann::json;
-
-
-
-class JsonRequestException : public SnapException
-{
-  int errorCode_, id_;
-public:
-	JsonRequestException(const char* text, int errorCode = 0, int requestId = -1) : SnapException(text), errorCode_(errorCode), id_(requestId)
-	{
-	}
-
-	JsonRequestException(const std::string& text, int errorCode = 0, int requestId = -1) : SnapException(text), errorCode_(errorCode), id_(requestId)
-	{
-	}
-
-//	JsonRequestException(const JsonRequest& request, const std::string& text, int errorCode = 0) : SnapException(text), errorCode_(errorCode), id_(request.id)
-//	{
-//	}
-
-	JsonRequestException(const JsonRequestException& e) :  SnapException(e.what()), errorCode_(e.errorCode()), id_(e.id_)
-	{
-	}
-
-	virtual int errorCode() const noexcept
-	{
-		return errorCode_;
-	}
-
-	Json getResponse() const noexcept
-	{
-		int errorCode = errorCode_;
-		if (errorCode == 0)
-			errorCode = -32603;
-
-		Json response = {
-			{"jsonrpc", "2.0"},
-			{"error", {
-				{"code", errorCode},
-				{"message", what()}
-			}},
-		};
-		if (id_ == -1)
-			response["id"] = nullptr;
-		else
-			response["id"] = id_;
-
-		return response;
-	}
-};
-
-
-//	-32601	Method not found	The method does not exist / is not available.
-//	-32602	Invalid params	Invalid method parameter(s).
-//	-32603	Internal error	Internal JSON-RPC error.
-
-class JsonMethodNotFoundException : public JsonRequestException
-{
-public:
-	JsonMethodNotFoundException(int requestId = -1) : JsonRequestException("method not found", -32601, requestId)
-	{
-	}
-
-	JsonMethodNotFoundException(const std::string& message, int requestId = -1) : JsonRequestException(message, -32601, requestId)
-	{
-	}
-};
-
-
-
-class JsonInvalidParamsException : public JsonRequestException
-{
-public:
-	JsonInvalidParamsException(int requestId = -1) : JsonRequestException("invalid params", -32602, requestId)
-	{
-	}
-
-	JsonInvalidParamsException(const std::string& message, int requestId = -1) : JsonRequestException(message, -32602, requestId)
-	{
-	}
-};
-
-
-class JsonInternalErrorException : public JsonRequestException
-{
-public:
-	JsonInternalErrorException(int requestId = -1) : JsonRequestException("internal error", -32603, requestId)
-	{
-	}
-
-	JsonInternalErrorException(const std::string& message, int requestId = -1) : JsonRequestException(message, -32603, requestId)
-	{
-	}
-};
-
 
 
 

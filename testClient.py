@@ -48,6 +48,16 @@ doRequest("{\"jsonrpc\": \"2.0\", \"method\": \"Client.SetMute\", \"params\": {\
 doRequest("{\"jsonrpc\": \"2.0\", \"method\": \"Client.SetMute\", \"params\": {\"client\": \"00:21:6a:7d:74:fc\", \"mute\": false}, \"id\": 9}\r\n")
 doRequest("{\"jsonrpc\": \"2.0\", \"method\": \"Client.SetLatency\", \"params\": {\"client\": \"00:21:6a:7d:74:fc\", \"latency\": 10}, \"id\": 7}\r\n")
 doRequest("{\"jsonrpc\": \"2.0\", \"method\": \"Client.SetName\", \"params\": {\"client\": \"00:21:6a:7d:74:fc\", \"name\": \"living room\"}, \"id\": 8}\r\n")
+#invalid json
+doRequest("some message to test invalid requests\r\n")
+#missing id
+doRequest("{\"jsonrpc\": \"2.0\", \"method\": \"Client.SetName\", \"params\": {\"client\": \"00:21:6a:7d:74:fc\", \"name\": \"living room\"}}\r\n")
+#missing parameter
+doRequest("{\"jsonrpc\": \"2.0\", \"method\": \"Client.SetName\", \"params\": {\"client\": \"00:21:6a:7d:74:fc\"}, \"id\": 8}\r\n")
+#invalid method
+doRequest("{\"jsonrpc\": \"2.0\", \"method\": \"NonExistingMethod\", \"params\": {\"client\": \"00:21:6a:7d:74:fc\"}, \"id\": 8}\r\n")
+#out of range
+doRequest("{\"jsonrpc\": \"2.0\", \"method\": \"Client.SetVolume\", \"params\": {\"client\": \"00:21:6a:7d:74:fc\", \"volume\": 101}, \"id\": 3}\r\n")
 
 s = raw_input("")
 print(s)
