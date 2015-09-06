@@ -64,14 +64,12 @@ private:
 	void handleAccept(socket_ptr socket);
 //	void acceptor();
 	mutable std::mutex mutex_;
-	size_t port_;
 	std::set<std::shared_ptr<ControlSession>> sessions_;
-	boost::asio::io_service* io_service_;
 	std::shared_ptr<tcp::acceptor> acceptor_;
 
-//	std::thread acceptThread_;
 	Queue<std::shared_ptr<msg::BaseMessage>> messages_;
-
+	boost::asio::io_service* io_service_;
+	size_t port_;
 	ControlMessageReceiver* controlMessageReceiver_;
 };
 
