@@ -131,11 +131,20 @@ int main(int argc, char* argv[])
 		if (settings.bufferMs < 400)
 			settings.bufferMs = 400;
 		settings.sampleFormat = sampleFormat;
-		std::unique_ptr<StreamServer> streamServer(new StreamServer(settings));
+
+		boost::asio::io_service io_service;
+		auto func = [](boost::asio::io_service* ioservice)->void{ioservice->run();};
+		std::thread t(func, &io_service);
+
+		std::unique_ptr<StreamServer> streamServer(new StreamServer(&io_service, settings));
 		streamServer->start();
 
 		while (!g_terminated)
 			usleep(100*1000);
+
+		io_service.stop();
+		t.join();
+
 
 		logO << "Stopping streamServer" << endl;
 		streamServer->stop();

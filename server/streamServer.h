@@ -71,7 +71,7 @@ struct StreamServerSettings
 class StreamServer : public MessageReceiver, ControlMessageReceiver, PipeListener
 {
 public:
-	StreamServer(const StreamServerSettings& streamServerSettings);
+	StreamServer(boost::asio::io_service* io_service, const StreamServerSettings& streamServerSettings);
 	virtual ~StreamServer();
 
 	void start();
@@ -93,19 +93,19 @@ public:
 private:
 	void startAccept();
 	void handleAccept(socket_ptr socket);
-	void acceptor();
+//	void acceptor();
 	ClientSession* getClientSession(const std::string& mac);
 	mutable std::mutex mutex_;
 	PipeReader* pipeReader_;
 	std::set<std::shared_ptr<ClientSession>> sessions_;
-	boost::asio::io_service io_service_;
+	boost::asio::io_service* io_service_;
 	std::shared_ptr<tcp::acceptor> acceptor_;
 
 	StreamServerSettings settings_;
 	msg::SampleFormat sampleFormat_;
-	std::thread acceptThread_;
+//	std::thread acceptThread_;
 	Queue<std::shared_ptr<msg::BaseMessage>> messages_;
-	std::unique_ptr<ControlServer> controlServer;
+	std::unique_ptr<ControlServer> controlServer_;
 };
 
 

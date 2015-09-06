@@ -34,14 +34,14 @@ using namespace std;
 using json = nlohmann::json;
 
 
-ControlServer::ControlServer(size_t port, ControlMessageReceiver* controlMessageReceiver) : port_(port), controlMessageReceiver_(controlMessageReceiver)
+ControlServer::ControlServer(boost::asio::io_service* io_service, size_t port, ControlMessageReceiver* controlMessageReceiver) : io_service_(io_service), port_(port), controlMessageReceiver_(controlMessageReceiver)
 {
 }
 
 
 ControlServer::~ControlServer()
 {
-	stop();
+//	stop();
 }
 
 
@@ -93,7 +93,7 @@ void ControlServer::onMessageReceived(ControlSession* connection, const std::str
 
 void ControlServer::startAccept()
 {
-	socket_ptr socket = make_shared<tcp::socket>(io_service_);
+	socket_ptr socket = make_shared<tcp::socket>(*io_service_);
 	acceptor_->async_accept(*socket, bind(&ControlServer::handleAccept, this, socket));
 }
 
@@ -118,25 +118,32 @@ void ControlServer::handleAccept(socket_ptr socket)
 
 void ControlServer::start()
 {
-	acceptor_ = make_shared<tcp::acceptor>(io_service_, tcp::endpoint(tcp::v4(), port_));
+	acceptor_ = make_shared<tcp::acceptor>(*io_service_, tcp::endpoint(tcp::v4(), port_));
 	startAccept();
-	acceptThread_ = thread(&ControlServer::acceptor, this);
+//	acceptThread_ = thread(&ControlServer::acceptor, this);
 }
 
 
 void ControlServer::stop()
 {
 	acceptor_->cancel();
-	io_service_.stop();
-	acceptThread_.join();
-	std::unique_lock<std::mutex> mlock(mutex_);
+//	io_service_.stop();
+/*	try
+	{
+		acceptThread_.join();
+	}
+	catch(const exception& e)
+	{
+		logO << "ControlServer::stop exception: " << e.what() << "\n";
+	}
+*/	std::unique_lock<std::mutex> mlock(mutex_);
 	for (auto it = sessions_.begin(); it != sessions_.end(); ++it)
 		(*it)->stop();
 }
 
 
-void ControlServer::acceptor()
-{
-	io_service_.run();
-}
+//void ControlServer::acceptor()
+//{
+//	io_service_.run();
+//}
 
