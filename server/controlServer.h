@@ -47,7 +47,7 @@ typedef std::shared_ptr<tcp::socket> socket_ptr;
 class ControlServer : public ControlMessageReceiver
 {
 public:
-	ControlServer(size_t port, ControlMessageReceiver* controlMessageReceiver = NULL);
+	ControlServer(boost::asio::io_service* io_service, size_t port, ControlMessageReceiver* controlMessageReceiver = NULL);
 	virtual ~ControlServer();
 
 	void start();
@@ -62,14 +62,14 @@ public:
 private:
 	void startAccept();
 	void handleAccept(socket_ptr socket);
-	void acceptor();
+//	void acceptor();
 	mutable std::mutex mutex_;
 	size_t port_;
 	std::set<std::shared_ptr<ControlSession>> sessions_;
-	boost::asio::io_service io_service_;
+	boost::asio::io_service* io_service_;
 	std::shared_ptr<tcp::acceptor> acceptor_;
 
-	std::thread acceptThread_;
+//	std::thread acceptThread_;
 	Queue<std::shared_ptr<msg::BaseMessage>> messages_;
 
 	ControlMessageReceiver* controlMessageReceiver_;

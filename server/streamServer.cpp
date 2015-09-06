@@ -32,7 +32,7 @@ using namespace std;
 using json = nlohmann::json;
 
 
-StreamServer::StreamServer(const StreamServerSettings& streamServerSettings) : settings_(streamServerSettings), sampleFormat_(streamServerSettings.sampleFormat)
+StreamServer::StreamServer(boost::asio::io_service* io_service, const StreamServerSettings& streamServerSettings) : io_service_(io_service), settings_(streamServerSettings), sampleFormat_(streamServerSettings.sampleFormat)
 {
 }
 
@@ -54,7 +54,7 @@ void StreamServer::send(const msg::BaseMessage* message)
 			auto func = [](shared_ptr<ClientSession> s)->void{s->stop();};
 			std::thread t(func, *it);
 			t.detach();
-			controlServer->send("Client gone: " + (*it)->macAddress);
+			controlServer_->send("Client gone: " + (*it)->macAddress);
 			sessions_.erase(it++);
 		}
 		else
@@ -87,7 +87,7 @@ void StreamServer::onDisconnect(ClientSession* connection)
 	gettimeofday(&client->lastSeen, NULL);
 	Config::instance().save();
 	json notification = JsonNotification::getJson("Client.OnDisconnect", client->toJson());
-	controlServer->send(notification.dump(4));
+	controlServer_->send(notification.dump(4));
 }
 
 
@@ -182,7 +182,7 @@ void StreamServer::onMessageReceived(ControlSession* connection, const std::stri
 
 			Config::instance().save();
 			json notification = JsonNotification::getJson("Client.OnUpdate", clientInfo->toJson());
-			controlServer->send(notification.dump());
+			controlServer_->send(notification.dump());
 		}
 
 		connection->send(request.getResponse(response).dump());
@@ -269,7 +269,7 @@ void StreamServer::onMessageReceived(ClientSession* connection, const msg::BaseM
 		Config::instance().save();
 
 		json notification = JsonNotification::getJson("Client.OnConnect", client->toJson());
-		controlServer->send(notification.dump(4));
+		controlServer_->send(notification.dump(4));
 	}
 }
 
@@ -287,7 +287,7 @@ ClientSession* StreamServer::getClientSession(const std::string& mac)
 
 void StreamServer::startAccept()
 {
-	socket_ptr socket = make_shared<tcp::socket>(io_service_);
+	socket_ptr socket = make_shared<tcp::socket>(*io_service_);
 	acceptor_->async_accept(*socket, bind(&StreamServer::handleAccept, this, socket));
 }
 
@@ -313,23 +313,23 @@ void StreamServer::handleAccept(socket_ptr socket)
 
 void StreamServer::start()
 {
-	controlServer.reset(new ControlServer(settings_.port + 1, this));
-	controlServer->start();
+	controlServer_.reset(new ControlServer(io_service_, settings_.port + 1, this));
+	controlServer_->start();
 
 	pipeReader_ = new PipeReader(this, settings_.sampleFormat, settings_.codec, settings_.fifoName, settings_.pipeReadMs);
 	pipeReader_->start();
-	acceptor_ = make_shared<tcp::acceptor>(io_service_, tcp::endpoint(tcp::v4(), settings_.port));
+	acceptor_ = make_shared<tcp::acceptor>(*io_service_, tcp::endpoint(tcp::v4(), settings_.port));
 	startAccept();
-	acceptThread_ = thread(&StreamServer::acceptor, this);
+//	acceptThread_ = thread(&StreamServer::acceptor, this);
 }
 
 
 void StreamServer::stop()
 {
-	controlServer->stop();
+	controlServer_->stop();
 	acceptor_->cancel();
-	io_service_.stop();
-	acceptThread_.join();
+//	io_service_.stop();
+//	acceptThread_.join();
 	pipeReader_->stop();
 	std::unique_lock<std::mutex> mlock(mutex_);
 	for (auto it = sessions_.begin(); it != sessions_.end(); ++it)
@@ -337,8 +337,8 @@ void StreamServer::stop()
 }
 
 
-void StreamServer::acceptor()
-{
-	io_service_.run();
-}
+//void StreamServer::acceptor()
+//{
+//	io_service_.run();
+//}
 
