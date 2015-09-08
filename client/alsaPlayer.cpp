@@ -27,7 +27,14 @@
 
 using namespace std;
 
-Player::Player(const PcmDevice& pcmDevice, Stream* stream) : handle_(NULL), buff_(NULL), active_(false), stream_(stream), pcmDevice_(pcmDevice)
+Player::Player(const PcmDevice& pcmDevice, Stream* stream) :
+	handle_(NULL),
+	buff_(NULL),
+	active_(false),
+	stream_(stream),
+	pcmDevice_(pcmDevice),
+	volume_(1.0),
+	muted_(false)
 {
 }
 
@@ -184,9 +191,22 @@ void Player::worker()
 		snd_pcm_delay(handle_, &framesDelay);
 		chronos::usec delay((chronos::usec::rep) (1000 * (double) framesDelay / stream_->getFormat().msRate()));
 //		logO << "delay: " << framesDelay << ", delay[ms]: " << delay.count() / 1000 << "\n";
+		double volume = volume_;
+		if (muted_)
+			volume = 0.;
 
+		const msg::SampleFormat& sampleFormat = stream_->getFormat();
 		if (stream_->getPlayerChunk(buff_, delay, frames_))
 		{
+			if (volume < 1.0)
+			{
+				if (sampleFormat.bits == 8)
+					adjustVolume<int8_t>(buff_, frames_*sampleFormat.channels, volume);
+				else if (sampleFormat.bits == 16)
+					adjustVolume<int16_t>(buff_, frames_*sampleFormat.channels, volume);
+				else if (sampleFormat.bits == 32)
+					adjustVolume<int32_t>(buff_, frames_*sampleFormat.channels, volume);
+			}
 			if ((pcm = snd_pcm_writei(handle_, buff_, frames_)) == -EPIPE)
 			{
 				logE << "XRUN\n";
@@ -211,49 +231,14 @@ void Player::worker()
 
 void Player::setVolume(double volume)
 {
-	long min, max;
-	snd_mixer_t *handle;
-	snd_mixer_selem_id_t *sid;
-	const char *selem_name = "Master";
-
-	snd_mixer_open(&handle, 0);
-	snd_mixer_attach(handle, pcmDevice_.name.c_str());
-	snd_mixer_selem_register(handle, NULL, NULL);
-	snd_mixer_load(handle);
-
-	snd_mixer_selem_id_alloca(&sid);
-	snd_mixer_selem_id_set_index(sid, 0);
-	snd_mixer_selem_id_set_name(sid, selem_name);
-	snd_mixer_elem_t* elem = snd_mixer_find_selem(handle, sid);
-
-	snd_mixer_selem_get_playback_volume_range(elem, &min, &max);
-	snd_mixer_selem_set_playback_volume_all(elem, volume * max);
-
-	snd_mixer_close(handle);
+	volume_ = volume;
 }
 
 
 
 void Player::setMute(bool mute)
 {
-	snd_mixer_t *handle;
-	snd_mixer_selem_id_t *sid;
-	const char *selem_name = "Master";
-
-	snd_mixer_open(&handle, 0);
-	snd_mixer_attach(handle, pcmDevice_.name.c_str());
-	snd_mixer_selem_register(handle, NULL, NULL);
-	snd_mixer_load(handle);
-
-	snd_mixer_selem_id_alloca(&sid);
-	snd_mixer_selem_id_set_index(sid, 0);
-	snd_mixer_selem_id_set_name(sid, selem_name);
-	snd_mixer_elem_t* elem = snd_mixer_find_selem(handle, sid);
-
-	if (snd_mixer_selem_has_playback_switch(elem))
-		snd_mixer_selem_set_playback_switch_all(elem, mute?0:1);
-
-	snd_mixer_close(handle);
+	muted_ = mute;
 }
 
 
