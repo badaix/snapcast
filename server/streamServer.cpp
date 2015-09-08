@@ -313,7 +313,7 @@ void StreamServer::handleAccept(socket_ptr socket)
 
 void StreamServer::start()
 {
-	controlServer_.reset(new ControlServer(io_service_, settings_.port + 1, this));
+	controlServer_.reset(new ControlServer(io_service_, settings_.controlPort, this));
 	controlServer_->start();
 
 	pipeReader_ = new PipeReader(this, settings_.sampleFormat, settings_.codec, settings_.fifoName, settings_.pipeReadMs);

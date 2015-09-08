@@ -57,6 +57,7 @@ int main(int argc, char* argv[])
 		("test", "for testing")
 		("version,v", "show version number")
 		("port,p", po::value<size_t>(&settings.port)->default_value(settings.port), "server port")
+		("controlPort", po::value<size_t>(&settings.controlPort)->default_value(settings.controlPort), "Remote control port")
 		("sampleformat,s", po::value<string>(&sampleFormat)->default_value(settings.sampleFormat.getFormat()), "sample format")
 		("codec,c", po::value<string>(&settings.codec)->default_value(settings.codec), "transport codec [flac|ogg|pcm][:options]. Type codec:? to get codec specific options")
 		("fifo,f", po::value<string>(&settings.fifoName)->default_value(settings.fifoName), "name of the input fifo file")
@@ -126,6 +127,7 @@ int main(int argc, char* argv[])
 		PublishAvahi publishAvahi("SnapCast");
 		std::vector<AvahiService> services;
 		services.push_back(AvahiService("_snapcast._tcp", settings.port));
+		services.push_back(AvahiService("_snapcast-jsonrpc._tcp", settings.controlPort));
 		publishAvahi.publish(services);
 
 		if (settings.bufferMs < 400)
