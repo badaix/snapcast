@@ -180,7 +180,7 @@ void Controller::worker()
 			stream_->setBufferLen(serverSettings->bufferMs - latency_);
 
 			player_.reset(new Player(pcmDevice_, stream_));
-			player_->setVolume(serverSettings->volume);
+			player_->setVolume(serverSettings->volume / 100.);
 			player_->start();
 
 			msg::Command startStream("startStream");
