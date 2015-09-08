@@ -31,6 +31,13 @@ For Debian derivates (e.g. Raspbian, Debian, Ubuntu, Mint):
     $ sudo apt-get install git build-essential
     $ sudo apt-get install libboost-dev libboost-system-dev libboost-program-options-dev libasound2-dev libvorbis-dev libflac-dev alsa-utils libavahi-client-dev avahi-daemon
     
+Compilation requires gcc 4.8 or higher. To upate gcc on Debian Wheezy (and Raspbian), install g++-4.8 and update the symbolic links:
+
+    $ sudo apt-get install g++-4.8
+    $ cd /usr/bin
+    $ sudo ln -sf gcc-4.8 gcc
+    $ sudo ln -sf g++-4.8 g++
+    
 For Arch derivates:
 
     $ pacman -S git base-devel
