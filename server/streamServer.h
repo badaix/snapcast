@@ -45,6 +45,7 @@ struct StreamServerSettings
 {
 	StreamServerSettings() :
 		port(1704),
+		controlPort(1705),
 		fifoName("/tmp/snapfifo"),
 		codec("flac"),
 		bufferMs(1000),
@@ -53,6 +54,7 @@ struct StreamServerSettings
 	{
 	}
 	size_t port;
+	size_t controlPort;
 	std::string fifoName;
 	std::string codec;
 	int32_t bufferMs;
