@@ -221,7 +221,7 @@ bool Stream::getPlayerChunk(void* outputBuffer, const cs::usec& outputBufferDacT
 	/// age = 0 => play now
 	/// age < 0 => play in -age
 	/// age > 0 => too old
-	cs::usec age = std::chrono::duration_cast<cs::usec>(TimeProvider::serverNow() - chunk_->start() - bufferMs_ + outputBufferDacTime);
+	cs::usec age = std::chrono::duration_cast<cs::usec>(TimeProvider::serverNow() - chunk_->start()) - bufferMs_ + outputBufferDacTime;
 	if ((sleep_.count() == 0) && (cs::abs(age) > cs::msec(200)))
 	{
 		logO << "age > 200: " << cs::duration<cs::msec>(age) << "\n";
