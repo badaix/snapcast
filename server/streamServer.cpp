@@ -97,22 +97,6 @@ void StreamServer::onMessageReceived(ControlSession* connection, const std::stri
 	try
 	{
 		request.parse(message);
-
-		//{"jsonrpc": "2.0", "method": "System.GetStatus", "id": 2}
-		//{"jsonrpc": "2.0", "method": "System.GetStatus", "params": {"client": "00:21:6a:7d:74:fc"}, "id": 2}
-
-		//{"jsonrpc": "2.0", "method": "Client.SetVolume", "params": {"client": "00:21:6a:7d:74:fc", "volume": 83}, "id": 2}
-		//{"jsonrpc": "2.0", "method": "Client.SetLatency", "params": {"client": "00:21:6a:7d:74:fc", "latency": 10}, "id": 2}
-		//{"jsonrpc": "2.0", "method": "Client.SetName", "params": {"client": "00:21:6a:7d:74:fc", "name": "living room"}, "id": 2}
-		//{"jsonrpc": "2.0", "method": "Client.SetMute", "params": {"client": "00:21:6a:7d:74:fc", "mute": false}, "id": 2}
-
-//curl -X POST -H "Content-Type: application/json" -d '{"jsonrpc": "2.0", "method": "Application.SetVolume", "params": {"volume":100}, "id": 1}' http://i3c.pla.lcl:8080/jsonrpc
-//https://en.wikipedia.org/wiki/JSON-RPC
-//https://github.com/pla1/utils/blob/master/kodi_remote.desktop
-//http://forum.fhem.de/index.php?topic=10075.130;wap2
-//http://kodi.wiki/view/JSON-RPC_API/v6#Application.SetVolume
-
-
 		logO << "method: " << request.method << ", " << "id: " << request.id << "\n";
 
 		json response;
