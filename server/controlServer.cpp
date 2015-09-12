@@ -120,30 +120,14 @@ void ControlServer::start()
 {
 	acceptor_ = make_shared<tcp::acceptor>(*io_service_, tcp::endpoint(tcp::v4(), port_));
 	startAccept();
-//	acceptThread_ = thread(&ControlServer::acceptor, this);
 }
 
 
 void ControlServer::stop()
 {
 	acceptor_->cancel();
-//	io_service_.stop();
-/*	try
-	{
-		acceptThread_.join();
-	}
-	catch(const exception& e)
-	{
-		logO << "ControlServer::stop exception: " << e.what() << "\n";
-	}
-*/	std::unique_lock<std::mutex> mlock(mutex_);
+	std::unique_lock<std::mutex> mlock(mutex_);
 	for (auto it = sessions_.begin(); it != sessions_.end(); ++it)
 		(*it)->stop();
 }
-
-
-//void ControlServer::acceptor()
-//{
-//	io_service_.run();
-//}
 

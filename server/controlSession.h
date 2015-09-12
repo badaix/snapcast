@@ -45,11 +45,11 @@ public:
 };
 
 
-/// Endpoint for a connected client.
+/// Endpoint for a connected control client.
 /**
- * Endpoint for a connected client.
+ * Endpoint for a connected control client.
  * Messages are sent to the client with the "send" method.
- * Received messages from the client are passed to the MessageReceiver callback
+ * Received messages from the client are passed to the ControlMessageReceiver callback
  */
 class ControlSession
 {

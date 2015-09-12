@@ -22,6 +22,12 @@
 #include<deque>
 #include<algorithm>
 
+
+/// Size limited queue
+/**
+ * Size limited queue with basic statistic functions:
+ * median, mean, percentile
+ */
 template <class T>
 class DoubleBuffer
 {
@@ -37,6 +43,7 @@ public:
 			buffer.pop_front();
 	}
 
+	/// Median as mean over N values around the median
 	T median(unsigned int mean = 1) const
 	{
 		if (buffer.empty())

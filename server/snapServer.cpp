@@ -54,7 +54,6 @@ int main(int argc, char* argv[])
 		po::options_description desc("Allowed options");
 		desc.add_options()
 		("help,h", "produce help message")
-		("test", "for testing")
 		("version,v", "show version number")
 		("port,p", po::value<size_t>(&settings.port)->default_value(settings.port), "server port")
 		("controlPort", po::value<size_t>(&settings.controlPort)->default_value(settings.controlPort), "Remote control port")
@@ -69,12 +68,6 @@ int main(int argc, char* argv[])
 		po::variables_map vm;
 		po::store(po::parse_command_line(argc, argv, desc), vm);
 		po::notify(vm);
-
-		if (vm.count("test"))
-		{
-			Config::instance().test();
-			return 1;
-		}
 
 		if (vm.count("help"))
 		{
