@@ -54,7 +54,7 @@ void StreamServer::send(const msg::BaseMessage* message)
 			auto func = [](shared_ptr<ClientSession> s)->void{s->stop();};
 			std::thread t(func, *it);
 			t.detach();
-			controlServer_->send("Client gone: " + (*it)->macAddress);
+			onDisconnect(it->get());
 			sessions_.erase(it++);
 		}
 		else
@@ -83,11 +83,13 @@ void StreamServer::onResync(const PipeReader* pipeReader, double ms)
 void StreamServer::onDisconnect(ClientSession* connection)
 {
 	ClientInfoPtr client = Config::instance().getClientInfo(connection->macAddress);
+	if (!client->connected)
+		return;
 	client->connected = false;
 	gettimeofday(&client->lastSeen, NULL);
 	Config::instance().save();
 	json notification = JsonNotification::getJson("Client.OnDisconnect", client->toJson());
-	controlServer_->send(notification.dump(4));
+	controlServer_->send(notification.dump());
 }
 
 
@@ -253,7 +255,7 @@ void StreamServer::onMessageReceived(ClientSession* connection, const msg::BaseM
 		Config::instance().save();
 
 		json notification = JsonNotification::getJson("Client.OnConnect", client->toJson());
-		controlServer_->send(notification.dump(4));
+		controlServer_->send(notification.dump());
 	}
 }
 
@@ -304,7 +306,6 @@ void StreamServer::start()
 	pipeReader_->start();
 	acceptor_ = make_shared<tcp::acceptor>(*io_service_, tcp::endpoint(tcp::v4(), settings_.port));
 	startAccept();
-//	acceptThread_ = thread(&StreamServer::acceptor, this);
 }
 
 
@@ -312,17 +313,9 @@ void StreamServer::stop()
 {
 	controlServer_->stop();
 	acceptor_->cancel();
-//	io_service_.stop();
-//	acceptThread_.join();
 	pipeReader_->stop();
 	std::unique_lock<std::mutex> mlock(mutex_);
 	for (auto it = sessions_.begin(); it != sessions_.end(); ++it)
 		(*it)->stop();
 }
-
-
-//void StreamServer::acceptor()
-//{
-//	io_service_.run();
-//}
 
