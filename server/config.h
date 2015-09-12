@@ -128,7 +128,6 @@ public:
 		return instance_;
 	}
 
-	void test();
 	ClientInfoPtr getClientInfo(const std::string& mac, bool add = true);
 
 	std::vector<ClientInfoPtr> clients;
@@ -139,7 +138,6 @@ public:
 private:
 	Config();
 	std::string filename_;
-
 };
 
 
