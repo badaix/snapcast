@@ -64,7 +64,7 @@ public:
 	bool send(const std::string& message) const;
 
 	/// Sends a message to the client (asynchronous)
-	void add(const std::string& message);
+	void sendAsync(const std::string& message);
 
 	bool active() const
 	{

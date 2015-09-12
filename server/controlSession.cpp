@@ -85,7 +85,7 @@ void ControlSession::stop()
 
 
 
-void ControlSession::add(const std::string& message)
+void ControlSession::sendAsync(const std::string& message)
 {
 	messages_.push(message);
 }

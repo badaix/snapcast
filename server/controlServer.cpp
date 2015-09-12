@@ -64,7 +64,7 @@ void ControlServer::send(const std::string& message)
 	}
 
 	for (auto s : sessions_)
-		s->add(message);
+		s->sendAsync(message);
 }
 
 

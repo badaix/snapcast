@@ -93,7 +93,7 @@ void StreamServer::onDisconnect(ClientSession* connection)
 }
 
 
-void StreamServer::onMessageReceived(ControlSession* connection, const std::string& message)
+void StreamServer::onMessageReceived(ControlSession* controlSession, const std::string& message)
 {
 	JsonRequest request;
 	try
@@ -171,16 +171,16 @@ void StreamServer::onMessageReceived(ControlSession* connection, const std::stri
 			controlServer_->send(notification.dump());
 		}
 
-		connection->send(request.getResponse(response).dump());
+		controlSession->send(request.getResponse(response).dump());
 	}
 	catch (const JsonRequestException& e)
 	{
-		connection->send(e.getResponse().dump());
+		controlSession->send(e.getResponse().dump());
 	}
 	catch (const exception& e)
 	{
 		JsonInternalErrorException jsonException(e.what(), request.id);
-		connection->send(jsonException.getResponse().dump());
+		controlSession->send(jsonException.getResponse().dump());
 	}
 }
 
