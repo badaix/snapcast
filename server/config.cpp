@@ -42,12 +42,11 @@ Config::Config()
 		{
 			ClientInfoPtr client = make_shared<ClientInfo>();
 			client->fromJson(*it);
+			client->connected = false;
 			clients.push_back(client);
 			std::cout << "Client:\n" << std::setw(4) << client->toJson() << '\n';
 		}
 	}
-
-//	fs::create_directory(filename_.parent_path());
 }
 
 
@@ -59,22 +58,6 @@ void Config::save()
 	};
 	ofs << std::setw(4) << clients;
 	ofs.close();
-}
-
-
-void Config::test()
-{
-	ifstream ifs("snapserver.json", std::ifstream::in);
-	json j;
-	ifs >> j;
-	std::cout << std::setw(4) << j << std::endl;
-	json j1 = j["Client"];
-	for (json::iterator it = j1.begin(); it != j1.end(); ++it)
-	{
-		ClientInfo client;
-		client.fromJson(*it);
-		std::cout << "Client:\n" << std::setw(4) << client.toJson() << '\n';
-	}
 }
 
 
