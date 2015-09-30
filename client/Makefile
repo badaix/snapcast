@@ -1,8 +1,8 @@
-VERSION = 0.3.1
+VERSION = 0.3.2
 TARGET  = snapclient
 SHELL = /bin/bash
 
-CC      = /usr/bin/g++
+CXX     = /usr/bin/g++
 CFLAGS  = -std=c++0x -Wall -Wno-unused-function -O3 -pthread -DVERSION=\"$(VERSION)\" -I.. # -static-libgcc -static-libstdc++
 LDFLAGS = -lrt -lboost_system -lboost_program_options -lasound -logg -lvorbis -lvorbisenc -lFLAC -lavahi-client -lavahi-common
 
@@ -12,11 +12,11 @@ BIN = snapclient
 all:	$(TARGET)
 
 $(TARGET): $(OBJ)
-	$(CC) $(CFLAGS) -o $(BIN) $(OBJ) $(LDFLAGS)
+	$(CXX) $(CFLAGS) -o $(BIN) $(OBJ) $(LDFLAGS)
 	strip $(BIN)
 
 %.o: %.cpp
-	$(CC) $(CFLAGS) -c $< -o $@
+	$(CXX) $(CFLAGS) -c $< -o $@
 
 clean:
 	rm -rf $(BIN) $(OBJ) *~
