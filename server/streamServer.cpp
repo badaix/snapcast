@@ -48,17 +48,7 @@ void StreamServer::send(const msg::BaseMessage* message)
 	for (auto it = sessions_.begin(); it != sessions_.end(); )
 	{
 		if (!(*it)->active())
-		{
-			logS(kLogErr) << "Session inactive. Removing\n";
-			// don't block: remove ClientSession in a thread
-			auto func = [](shared_ptr<ClientSession> s)->void{s->stop();};
-			std::thread t(func, *it);
-			t.detach();
 			onDisconnect(it->get());
-			sessions_.erase(it++);
-		}
-		else
-			++it;
 	}
 
 	std::shared_ptr<const msg::BaseMessage> shared_message(message);
@@ -80,15 +70,32 @@ void StreamServer::onResync(const PipeReader* pipeReader, double ms)
 }
 
 
-void StreamServer::onDisconnect(ClientSession* connection)
+void StreamServer::onDisconnect(ClientSession* clientSession)
 {
-	ClientInfoPtr client = Config::instance().getClientInfo(connection->macAddress);
-	if (!client->connected)
+	logO << "onDisconnect: " << clientSession->macAddress << "\n";
+	auto func = [](ClientSession* s)->void{s->stop();};
+	std::thread t(func, clientSession);
+	t.detach();
+
+	ClientInfoPtr clientInfo = Config::instance().getClientInfo(clientSession->macAddress);
+	// don't block: remove ClientSession in a thread
+	for (auto it = sessions_.begin(); it != sessions_.end(); )
+	{
+		if (it->get() == clientSession)
+		{
+	logO << "erase: " << (*it)->macAddress << "\n";
+			sessions_.erase(it);
+			break;
+		}
+	}
+
+	// notify controllers if not yet done
+	if (!clientInfo->connected)
 		return;
-	client->connected = false;
-	gettimeofday(&client->lastSeen, NULL);
+	clientInfo->connected = false;
+	gettimeofday(&clientInfo->lastSeen, NULL);
 	Config::instance().save();
-	json notification = JsonNotification::getJson("Client.OnDisconnect", client->toJson());
+	json notification = JsonNotification::getJson("Client.OnDisconnect", clientInfo->toJson());
 	controlServer_->send(notification.dump());
 }
 
