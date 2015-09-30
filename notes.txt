@@ -1,0 +1,26 @@
+*Todo:
+-Server ping client
+-Server: OnResync while terminating?!?
+
+
+*g++ 4.8 installation:
+sudo apt-get install g++-4.8
+cd /usr/bin
+sudo ln -sf gcc-4.8 gcc
+sudo ln -sf g++-4.8 g++
+
+
+*Links:
+curl -X POST -H "Content-Type: application/json" -d '{"jsonrpc": "2.0", "method": "Application.SetVolume", "params": {"volume":100}, "id": 1}' http://i3c.pla.lcl:8080/jsonrpc
+https://en.wikipedia.org/wiki/JSON-RPC
+https://github.com/pla1/utils/blob/master/kodi_remote.desktop
+http://forum.fhem.de/index.php?topic=10075.130;wap2
+http://kodi.wiki/view/JSON-RPC_API/v6#Application.SetVolume
+
+
+*Logging:
+-Too many of these:
+Sep 20 06:50:58 wohnzimmer snapclient[2358]: Exception in Controller::worker(): connect: Network is unreachable
+Sep 20 06:50:59 wohnzimmer snapclient[2358]: Exception in Controller::worker(): connect: Network is unreachable
+Sep 20 06:51:00 wohnzimmer snapclient[2358]: Exception in Controller::worker(): connect: Network is unreachable
+-Limit repeaded syslog logging
