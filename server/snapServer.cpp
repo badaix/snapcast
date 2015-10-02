@@ -61,6 +61,7 @@ int main(int argc, char* argv[])
 		("daemon,d", po::value<int>(&runAsDaemon)->implicit_value(-3), "daemonize, optional process priority [-20..19]")
 		("buffer,b", po::value<int32_t>(&settings.bufferMs)->default_value(settings.bufferMs), "buffer [ms]")
 		("pipeReadBuffer", po::value<size_t>(&settings.pipeReadMs)->default_value(settings.pipeReadMs), "pipe read buffer [ms]")
+		("pid-file", po::value<string>(&settings.pidFile)->default_value(settings.pidFile), "default /var/run/snapserver.pid")
 		;
 
 		po::variables_map vm;
@@ -105,7 +106,7 @@ int main(int argc, char* argv[])
 
 		if (vm.count("daemon"))
 		{
-			daemonize("/var/run/snapserver.pid");
+			daemonize(settings.pidFile.c_str());
 			if (runAsDaemon < -20)
 				runAsDaemon = -20;
 			else if (runAsDaemon > 19)

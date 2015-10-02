@@ -48,7 +48,8 @@ struct ControlServerSettings
 		codec("flac"),
 		bufferMs(1000),
 		sampleFormat("44100:16:2"),
-		pipeReadMs(20)
+		pipeReadMs(20),
+		pidFile("/var/run/snapserver.pid")
 	{
 	}
 	size_t port;
@@ -57,6 +58,7 @@ struct ControlServerSettings
 	int32_t bufferMs;
 	msg::SampleFormat sampleFormat;
 	size_t pipeReadMs;
+	std::string pidFile;
 };
 
 
