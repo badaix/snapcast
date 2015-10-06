@@ -30,7 +30,7 @@
 #include "message/message.h"
 #include "encoder/encoderFactory.h"
 #include "controlServer.h"
-#include "publishAvahi.h"
+#include "common/publishAvahi.h"
 
 
 bool g_terminated = false;
@@ -61,6 +61,7 @@ int main(int argc, char* argv[])
 		("daemon,d", po::value<int>(&runAsDaemon)->implicit_value(-3), "daemonize, optional process priority [-20..19]")
 		("buffer,b", po::value<int32_t>(&settings.bufferMs)->default_value(settings.bufferMs), "buffer [ms]")
 		("pipeReadBuffer", po::value<size_t>(&settings.pipeReadMs)->default_value(settings.pipeReadMs), "pipe read buffer [ms]")
+		("name", po::value<string>(&settings.name)->default_value(settings.name), "name of this server")
 		;
 
 		po::variables_map vm;
@@ -114,7 +115,7 @@ int main(int argc, char* argv[])
 			logS(kLogNotice) << "daemon started." << endl;
 		}
 
-		PublishAvahi publishAvahi("SnapCast");
+		PublishAvahi publishAvahi(settings.name);
 		std::vector<AvahiService> services;
 		services.push_back(AvahiService("_snapcast._tcp", settings.port));
 		publishAvahi.publish(services);

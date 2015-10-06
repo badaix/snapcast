@@ -6,7 +6,7 @@ CXX     = /usr/bin/g++
 CFLAGS  = -std=c++0x -Wall -Wno-unused-function -O3 -pthread -DVERSION=\"$(VERSION)\" -I..
 LDFLAGS = -lrt -lboost_system -lboost_program_options -lvorbis -lvorbisenc -logg -lFLAC -lavahi-client -lavahi-common
 
-OBJ = snapServer.o controlServer.o encoder/encoderFactory.o encoder/flacEncoder.o encoder/pcmEncoder.o encoder/oggEncoder.o serverSession.o publishAvahi.o pipeReader.o ../common/log.o ../message/pcmChunk.o ../message/sampleFormat.o
+OBJ = snapServer.o controlServer.o encoder/encoderFactory.o encoder/flacEncoder.o encoder/pcmEncoder.o encoder/oggEncoder.o serverSession.o pipeReader.o ../common/log.o ../common/publishAvahi.o ../message/pcmChunk.o ../message/sampleFormat.o
 BIN = snapserver
 
 all:	$(TARGET)
