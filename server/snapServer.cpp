@@ -62,6 +62,7 @@ int main(int argc, char* argv[])
 		("buffer,b", po::value<int32_t>(&settings.bufferMs)->default_value(settings.bufferMs), "buffer [ms]")
 		("pipeReadBuffer", po::value<size_t>(&settings.pipeReadMs)->default_value(settings.pipeReadMs), "pipe read buffer [ms]")
 		("name", po::value<string>(&settings.name)->default_value(settings.name), "name of this server")
+		("pid-file", po::value<string>(&settings.pidFile)->default_value(settings.pidFile), "default /var/run/snapserver.pid")
 		;
 
 		po::variables_map vm;
@@ -106,7 +107,7 @@ int main(int argc, char* argv[])
 
 		if (vm.count("daemon"))
 		{
-			daemonize("/var/run/snapserver.pid");
+			daemonize(settings.pidFile.c_str());
 			if (runAsDaemon < -20)
 				runAsDaemon = -20;
 			else if (runAsDaemon > 19)
@@ -117,7 +118,7 @@ int main(int argc, char* argv[])
 
 		PublishAvahi publishAvahi(settings.name);
 		std::vector<AvahiService> services;
-		services.push_back(AvahiService("_snapcast._tcp", settings.port));
+		services.push_back(AvahiService("_snapcastserver._tcp", settings.port));
 		publishAvahi.publish(services);
 
 		if (settings.bufferMs < 400)

@@ -49,7 +49,8 @@ struct ControlServerSettings
 		bufferMs(1000),
 		sampleFormat("44100:16:2"),
 		pipeReadMs(20),
-		name("SnapCast")
+		name("SnapCast"),
+		pidFile("/var/run/snapserver.pid")
 	{
 	}
 	size_t port;
@@ -59,6 +60,7 @@ struct ControlServerSettings
 	msg::SampleFormat sampleFormat;
 	size_t pipeReadMs;
 	std::string name;
+	std::string pidFile;
 };
 
 
