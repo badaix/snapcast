@@ -20,6 +20,7 @@
 #include <iostream>
 #include <string>
 #include <memory>
+#include <boost/tokenizer.hpp>
 #include "decoder/oggDecoder.h"
 #include "decoder/pcmDecoder.h"
 #include "decoder/flacDecoder.h"
@@ -98,13 +99,18 @@ bool Controller::sendTimeSyncMessage(long after)
 }
 
 
-void Controller::start(const PcmDevice& pcmDevice, const std::string& ip, size_t port, size_t latency)
+void Controller::start(const PcmDevice& pcmDevice, const std::string& ip, size_t port, size_t latency, unsigned char volume, size_t ctlport)
 {
 	ip_ = ip;
 	pcmDevice_ = pcmDevice;
 	latency_ = latency;
+	volume_ = volume;
+	acceptThread_ = NULL;
 	clientConnection_ = new ClientConnection(this, ip, port);
 	controllerThread_ = new thread(&Controller::worker, this);
+
+	if (ctlport>0)
+		acceptThread_ = new thread(&Controller::startCtlServer, this, ctlport);
 }
 
 
@@ -114,6 +120,12 @@ void Controller::stop()
 	active_ = false;
 	controllerThread_->join();
 	clientConnection_->stop();
+
+	if (acceptThread_ != NULL) {
+		acceptThread_->join();
+		delete acceptThread_;
+	}
+
 	delete controllerThread_;
 	delete clientConnection_;
 }
@@ -167,8 +179,8 @@ void Controller::worker()
 			stream_ = new Stream(*sampleFormat_);
 			stream_->setBufferLen(serverSettings->bufferMs - latency_);
 
-			Player player(pcmDevice_, stream_);
-			player.start();
+			player_ = new Player(pcmDevice_, stream_, volume_);
+			player_->start();
 
 			msg::Command startStream("startStream");
 			shared_ptr<msg::Ack> ackMsg(NULL);
@@ -214,5 +226,62 @@ void Controller::worker()
 	logD << "Thread stopped\n";
 }
 
+void Controller::startCtlServer(size_t port)
+{
+	boost::asio::io_service io_service;
+	tcp::acceptor a(io_service, tcp::endpoint(tcp::v4(), port));
+	logO << "remote control: bind on port " << port << endl;
+	while (active_) {
+		tcp::socket sock(io_service);
+		a.accept(sock);
+		std::thread(&Controller::handleRequest, this, std::move(sock)).detach();
+	}
+}
 
+void Controller::handleRequest(tcp::socket sock) {
+	boost::asio::streambuf buff;
+	boost::system::error_code error;
+	read_until(sock, buff, "\n", error);
 
+	std::istream str(&buff);
+	std::string l;
+	std::getline(str, l);
+	std::vector<string> v;
+	boost::tokenizer<> tok(l);
+	for (auto && s : tok) { v.push_back(s); }
+
+	std::string msg;
+	bool err=false;
+	if (v.size()==0) { err=true; }
+	else if (v[0]=="volume") {
+		if (v.size()==1) { err=true; }
+		else {
+			if (v[1]=="get") {
+				msg = to_string(player_->getVolume())+"\n";
+			} else if (v[1]=="set") {
+				if (v.size()==2) { err=true; }
+				else {
+					int vol=100;
+					try {
+						vol = stoi(v[2]);
+					} catch (const std::exception& e) {
+						vol = -1;
+					}
+					if (vol<0 || vol>200)
+						err=true;
+					else
+						player_->setVolume((unsigned char) vol);
+						msg = "ok\n";
+						logO << "set player volume to " << vol << endl;
+				}
+
+			}
+		}
+	} else { err=true; }
+
+	if (err) msg = "invalid\nUsage: volume get | volume set VOL\n";
+
+	boost::asio::write(sock, boost::asio::buffer(msg),
+			boost::asio::transfer_all(), error);
+	sock.close();
+}

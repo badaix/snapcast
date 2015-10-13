@@ -27,6 +27,7 @@
 #include "controller.h"
 #include "alsaPlayer.h"
 #include "browseAvahi.h"
+#include "server/publishAvahi.h"
 
 
 using namespace std;
@@ -67,7 +68,9 @@ int main (int argc, char *argv[])
 		string ip;
 	//	int bufferMs;
 		size_t port;
+		size_t ctlport;
 		size_t latency;
+		size_t volume;
 		int runAsDaemon;
 		bool listPcmDevices;
 
@@ -78,6 +81,8 @@ int main (int argc, char *argv[])
 		("list,l", po::bool_switch(&listPcmDevices)->default_value(false), "list pcm devices")
 		("ip,i", po::value<string>(&ip), "server IP")
 		("port,p", po::value<size_t>(&port)->default_value(98765), "server port")
+		("ctlport,P", po::value<size_t>(&ctlport)->default_value(3333), "client remote control port")
+		("volume,V", po::value<size_t>(&volume)->default_value(100), "initial stream volume in percent")
 		("soundcard,s", po::value<string>(&soundcard)->default_value("default"), "index or name of the soundcard")
 		("daemon,d", po::value<int>(&runAsDaemon)->implicit_value(-3), "daemonize, optional process priority [-20..19]")
 		("latency", po::value<size_t>(&latency)->default_value(0), "latency of the soundcard")
@@ -163,10 +168,15 @@ int main (int argc, char *argv[])
 			}
 		}
 
+		PublishAvahi publishAvahi("SnapCast Client");
+		std::vector<AvahiService> services;
+		services.push_back(AvahiService("_snapcast_client._tcp", ctlport));
+		publishAvahi.publish(services);
+
 		std::unique_ptr<Controller> controller(new Controller());
 		if (!g_terminated)
 		{
-			controller->start(pcmDevice, ip, port, latency);
+			controller->start(pcmDevice, ip, port, latency, (unsigned char)volume, ctlport);
 			while(!g_terminated)
 				usleep(100*1000);
 			controller->stop();

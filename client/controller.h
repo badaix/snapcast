@@ -26,7 +26,9 @@
 #include "clientConnection.h"
 #include "stream.h"
 #include "pcmDevice.h"
+#include "alsaPlayer.h"
 
+using boost::asio::ip::tcp;
 
 /// Forwards PCM data to the audio player
 /**
@@ -38,7 +40,7 @@ class Controller : public MessageReceiver
 {
 public:
 	Controller();
-	void start(const PcmDevice& pcmDevice, const std::string& ip, size_t port, size_t latency);
+	void start(const PcmDevice& pcmDevice, const std::string& ip, size_t port, size_t latency, unsigned char volume, size_t ctlport);
 	void stop();
 
 	/// Implementation of MessageReceiver.
@@ -55,15 +57,21 @@ private:
 	std::atomic<bool> active_;
 	std::thread* controllerThread_;
 	ClientConnection* clientConnection_;
+	Player* player_;
 	Stream* stream_;
 	std::string ip_;
 	std::shared_ptr<msg::SampleFormat> sampleFormat_;
 	Decoder* decoder_;
 	PcmDevice pcmDevice_;
 	size_t latency_;
+	unsigned char volume_;
 
 	std::exception exception_;
 	bool asyncException_;
+
+	void startCtlServer(size_t port);
+	void handleRequest(tcp::socket sock);
+	std::thread* acceptThread_;
 };
 
 
