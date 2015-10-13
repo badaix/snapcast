@@ -27,8 +27,20 @@
 
 using namespace std;
 
-Player::Player(const PcmDevice& pcmDevice, Stream* stream) : handle_(NULL), buff_(NULL), active_(false), stream_(stream), pcmDevice_(pcmDevice)
+Player::Player(const PcmDevice& pcmDevice, Stream* stream, unsigned char volume) :
+	handle_(NULL), buff_(NULL), active_(false),
+	stream_(stream), pcmDevice_(pcmDevice), volume_(volume)
 {
+}
+
+void Player::setVolume(unsigned char volume)
+{
+	volume_ = volume;
+}
+
+unsigned char Player::getVolume()
+{
+	return volume_;
 }
 
 
@@ -37,7 +49,6 @@ void Player::initAlsa()
 	unsigned int tmp, rate;
 	int pcm, channels;
 	snd_pcm_hw_params_t *params;
-	int buff_size;
 
 	const msg::SampleFormat& format = stream_->getFormat();
 	rate = format.rate;
@@ -102,8 +113,8 @@ void Player::initAlsa()
 	snd_pcm_hw_params_get_period_size(params, &frames_, 0);
 	logO << "frames: " << frames_ << "\n";
 
-	buff_size = frames_ * channels * 2 /* 2 -> sample size */;
-	buff_ = (char *) malloc(buff_size);
+	buff_size_ = frames_ * channels * 2 /* 2 -> sample size */;
+	buff_ = (char *) malloc(buff_size_);
 
 	snd_pcm_hw_params_get_period_time(params, &tmp, NULL);
 	logD << "period time: " << tmp << "\n";
@@ -187,6 +198,7 @@ void Player::worker()
 
 		if (stream_->getPlayerChunk(buff_, delay, frames_))
 		{
+			applyVolume();
 			if ((pcm = snd_pcm_writei(handle_, buff_, frames_)) == -EPIPE)
 			{
 				logE << "XRUN\n";
@@ -242,5 +254,21 @@ __end:
 	}
 	snd_device_name_free_hint(hints);
 	return result;
+}
+
+void Player::applyVolume() {
+	if (volume_ == 100)
+		return;
+	if (volume_ == 0) {
+		/* optimized special case: 0% volume = memset(0) */
+		memset(buff_, 0, buff_size_);
+		return;
+	}
+
+	float vol = ((float)volume_)/100;
+	unsigned int samples = buff_size_ / sizeof(int16_t);
+	int16_t* buffsam = (int16_t*)buff_;
+	for (size_t i = 0; i != samples; ++i)
+		buffsam[i] *= vol;
 }
 

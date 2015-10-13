@@ -27,27 +27,31 @@
 #include "stream.h"
 #include "pcmDevice.h"
 
-
 class Player
 {
 public:
-	Player(const PcmDevice& pcmDevice, Stream* stream);
+	Player(const PcmDevice& pcmDevice, Stream* stream, unsigned char volume);
 	virtual ~Player();
 	void start();
 	void stop();
 	static std::vector<PcmDevice> pcm_list(void);
+	unsigned char getVolume();
+	void setVolume(unsigned char volume);
 
 private:
+    void applyVolume();
 	void initAlsa();
 	void uninitAlsa();
 	void worker();
 	snd_pcm_t* handle_;
 	snd_pcm_uframes_t frames_;
 	char *buff_;
+	int buff_size_;
 	std::atomic<bool> active_;
 	Stream* stream_;
 	std::thread playerThread_;
 	PcmDevice pcmDevice_;
+	unsigned char volume_; //0 - 100 in percent, incoming stream has 100
 };
 
 

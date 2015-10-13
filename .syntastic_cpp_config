@@ -1,0 +1,7 @@
+-std=c++0x
+-Wall
+-Wno-unused-function
+-O3
+-pthread
+-DVERSION="$(VERSION)"
+-I..
