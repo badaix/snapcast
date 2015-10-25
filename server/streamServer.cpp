@@ -45,12 +45,31 @@ StreamServer::~StreamServer()
 void StreamServer::send(const msg::BaseMessage* message)
 {
 	std::unique_lock<std::mutex> mlock(mutex_);
+
+
 	for (auto it = sessions_.begin(); it != sessions_.end(); )
+	{
+		if (!(*it)->active())
+		{
+			logS(kLogErr) << "Session inactive. Removing\n";
+			// don't block: remove ServerSession in a thread
+			onDisconnect(it->get());
+			auto func = [](shared_ptr<StreamSession> s)->void{s->stop();};
+			std::thread t(func, *it);
+			t.detach();
+			sessions_.erase(it++);
+		}
+		else
+			++it;
+	}
+
+
+/*	for (auto it = sessions_.begin(); it != sessions_.end(); )
 	{
 		if (!(*it)->active())
 			onDisconnect(it->get());
 	}
-
+*/
 	std::shared_ptr<const msg::BaseMessage> shared_message(message);
 	for (auto s : sessions_)
 		s->add(shared_message);
@@ -73,12 +92,12 @@ void StreamServer::onResync(const PipeReader* pipeReader, double ms)
 void StreamServer::onDisconnect(StreamSession* streamSession)
 {
 	logO << "onDisconnect: " << streamSession->macAddress << "\n";
-	auto func = [](StreamSession* s)->void{s->stop();};
+/*	auto func = [](StreamSession* s)->void{s->stop();};
 	std::thread t(func, streamSession);
 	t.detach();
-
+*/
 	ClientInfoPtr clientInfo = Config::instance().getClientInfo(streamSession->macAddress);
-	// don't block: remove StreamSession in a thread
+/*	// don't block: remove StreamSession in a thread
 	for (auto it = sessions_.begin(); it != sessions_.end(); )
 	{
 		if (it->get() == streamSession)
@@ -88,7 +107,7 @@ void StreamServer::onDisconnect(StreamSession* streamSession)
 			break;
 		}
 	}
-
+*/
 	// notify controllers if not yet done
 	if (!clientInfo->connected)
 		return;
