@@ -16,8 +16,8 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
-#ifndef SERVER_SESSION_H
-#define SERVER_SESSION_H
+#ifndef STREAM_SESSION_H
+#define STREAM_SESSION_H
 
 #include <string>
 #include <thread>
@@ -34,15 +34,15 @@
 using boost::asio::ip::tcp;
 
 
-class ClientSession;
+class StreamSession;
 
 
 /// Interface: callback for a received message.
 class MessageReceiver
 {
 public:
-	virtual void onMessageReceived(ClientSession* connection, const msg::BaseMessage& baseMessage, char* buffer) = 0;
-	virtual void onDisconnect(ClientSession* connection) = 0;
+	virtual void onMessageReceived(StreamSession* connection, const msg::BaseMessage& baseMessage, char* buffer) = 0;
+	virtual void onDisconnect(StreamSession* connection) = 0;
 };
 
 
@@ -52,12 +52,12 @@ public:
  * Messages are sent to the client with the "send" method.
  * Received messages from the client are passed to the MessageReceiver callback
  */
-class ClientSession
+class StreamSession
 {
 public:
 	/// ctor. Received message from the client are passed to MessageReceiver
-	ClientSession(MessageReceiver* receiver, std::shared_ptr<tcp::socket> socket);
-	~ClientSession();
+	StreamSession(MessageReceiver* receiver, std::shared_ptr<tcp::socket> socket);
+	~StreamSession();
 	void start();
 	void stop();
 
