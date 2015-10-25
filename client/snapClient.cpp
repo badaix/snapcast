@@ -64,7 +64,7 @@ int main (int argc, char *argv[])
 	try
 	{
 		string soundcard;
-		string ip;
+		string host;
 	//	int bufferMs;
 		size_t port;
 		size_t latency;
@@ -73,10 +73,10 @@ int main (int argc, char *argv[])
 
 		po::options_description desc("Allowed options");
 		desc.add_options()
-		("help,h", "produce help message")
+		("help", "produce help message")
 		("version,v", "show version number")
 		("list,l", po::bool_switch(&listPcmDevices)->default_value(false), "list pcm devices")
-		("ip,i", po::value<string>(&ip), "server IP")
+		("host,h", po::value<string>(&host), "server hostname or ip address")
 		("port,p", po::value<size_t>(&port)->default_value(1704), "server port")
 		("soundcard,s", po::value<string>(&soundcard)->default_value("default"), "index or name of the soundcard")
 		("daemon,d", po::value<int>(&runAsDaemon)->implicit_value(-3), "daemonize, optional process priority [-20..19]")
@@ -139,7 +139,7 @@ int main (int argc, char *argv[])
 			return 1;
 		}
 
-		if (!vm.count("ip"))
+		if (!vm.count("host"))
 		{
 			BrowseAvahi browseAvahi;
 			AvahiResult avahiResult;
@@ -149,9 +149,9 @@ int main (int argc, char *argv[])
 				{
 					if (browseAvahi.browse("_snapcast._tcp", AVAHI_PROTO_INET, avahiResult, 5000))
 					{
-						ip = avahiResult.ip_;
+						host = avahiResult.ip_;
 						port = avahiResult.port_;
-						logO << "Found server " << ip << ":" << port << "\n";
+						logO << "Found server " << host << ":" << port << "\n";
 						break;
 					}
 				}
@@ -166,7 +166,7 @@ int main (int argc, char *argv[])
 		std::unique_ptr<Controller> controller(new Controller());
 		if (!g_terminated)
 		{
-			controller->start(pcmDevice, ip, port, latency);
+			controller->start(pcmDevice, host, port, latency);
 			while(!g_terminated)
 				usleep(100*1000);
 			controller->stop();

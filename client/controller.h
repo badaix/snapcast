@@ -39,7 +39,7 @@ class Controller : public MessageReceiver
 {
 public:
 	Controller();
-	void start(const PcmDevice& pcmDevice, const std::string& ip, size_t port, size_t latency);
+	void start(const PcmDevice& pcmDevice, const std::string& host, size_t port, size_t latency);
 	void stop();
 
 	/// Implementation of MessageReceiver.

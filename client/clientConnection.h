@@ -67,7 +67,7 @@ class ClientConnection
 {
 public:
 	/// ctor. Received message from the server are passed to MessageReceiver
-	ClientConnection(MessageReceiver* receiver, const std::string& ip, size_t port);
+	ClientConnection(MessageReceiver* receiver, const std::string& host, size_t port);
 	virtual ~ClientConnection();
 	virtual void start();
 	virtual void stop();
@@ -114,7 +114,7 @@ protected:
 	mutable std::mutex requestMutex_;
 	std::set<std::shared_ptr<PendingRequest>> pendingRequests_;
 	uint16_t reqId_;
-	std::string ip_;
+	std::string host_;
 	size_t port_;
 	std::thread* readerThread_;
 	chronos::msec sumTimeout_;
