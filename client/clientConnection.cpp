@@ -29,7 +29,7 @@
 using namespace std;
 
 
-ClientConnection::ClientConnection(MessageReceiver* receiver, const std::string& ip, size_t port) : active_(false), connected_(false), messageReceiver_(receiver), reqId_(1), ip_(ip), port_(port), readerThread_(NULL), sumTimeout_(chronos::msec(0))
+ClientConnection::ClientConnection(MessageReceiver* receiver, const std::string& host, size_t port) : active_(false), connected_(false), messageReceiver_(receiver), reqId_(1), host_(host), port_(port), readerThread_(NULL), sumTimeout_(chronos::msec(0))
 {
 }
 
@@ -59,7 +59,7 @@ void ClientConnection::socketRead(void* _to, size_t _bytes)
 void ClientConnection::start()
 {
 	tcp::resolver resolver(io_service_);
-	tcp::resolver::query query(tcp::v4(), ip_, boost::lexical_cast<string>(port_), boost::asio::ip::resolver_query_base::numeric_service);
+	tcp::resolver::query query(tcp::v4(), host_, boost::lexical_cast<string>(port_), boost::asio::ip::resolver_query_base::numeric_service);
 	auto iterator = resolver.resolve(query);
 	logO << "Connecting\n";
 	socket_.reset(new tcp::socket(io_service_));

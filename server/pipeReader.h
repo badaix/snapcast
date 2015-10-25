@@ -45,7 +45,7 @@ public:
 
 /// Reads and decodes PCM data from a named pipe
 /**
- * Reads PCM from a named pipe and passed the data to an encoder.
+ * Reads PCM from a named pipe and passes the data to an encoder.
  * Implements EncoderListener to get the encoded data.
  * Data is passed to the PipeListener
  */
