@@ -28,7 +28,7 @@ using namespace std;
 
 
 
-StreamSession::StreamSession(MessageReceiver* receiver, std::shared_ptr<tcp::socket> socket) : messageReceiver_(receiver)
+StreamSession::StreamSession(MessageReceiver* receiver, std::shared_ptr<tcp::socket> socket) : active_(true), messageReceiver_(receiver)
 {
 	socket_ = socket;
 }
@@ -42,7 +42,7 @@ StreamSession::~StreamSession()
 
 void StreamSession::start()
 {
-	active_ = true;
+	setActive(true);
 	streamActive_ = false;
 	readerThread_ = new thread(&StreamSession::reader, this);
 	writerThread_ = new thread(&StreamSession::writer, this);
