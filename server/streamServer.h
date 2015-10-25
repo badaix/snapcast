@@ -27,7 +27,7 @@
 #include <sstream>
 #include <mutex>
 
-#include "clientSession.h"
+#include "streamSession.h"
 #include "pipeReader.h"
 #include "common/queue.h"
 #include "message/message.h"
@@ -66,7 +66,7 @@ struct StreamServerSettings
 /// Forwars PCM data to the connected clients
 /**
  * Reads PCM data using PipeReader, implements PipeListener to get the (encoded) PCM stream.
- * Accepts and holds client connections (ClientSession)
+ * Accepts and holds client connections (StreamSession)
  * Receives (via the MessageReceiver interface) and answers messages from the clients
  * Forwards PCM data to the clients
  */
@@ -83,9 +83,10 @@ public:
 	void send(const msg::BaseMessage* message);
 
 	/// Clients call this when they receive a message. Implementation of MessageReceiver::onMessageReceived
-	virtual void onMessageReceived(ClientSession* connection, const msg::BaseMessage& baseMessage, char* buffer);
-	virtual void onDisconnect(ClientSession* connection);
+	virtual void onMessageReceived(StreamSession* connection, const msg::BaseMessage& baseMessage, char* buffer);
+	virtual void onDisconnect(StreamSession* connection);
 
+	/// Implementation of ControllMessageReceiver::onMessageReceived, called by ControlServer::onMessageReceived
 	virtual void onMessageReceived(ControlSession* connection, const std::string& message);
 
 	/// Implementation of PipeListener
@@ -95,17 +96,15 @@ public:
 private:
 	void startAccept();
 	void handleAccept(socket_ptr socket);
-//	void acceptor();
-	ClientSession* getClientSession(const std::string& mac);
+	StreamSession* getStreamSession(const std::string& mac);
 	mutable std::mutex mutex_;
 	PipeReader* pipeReader_;
-	std::set<std::shared_ptr<ClientSession>> sessions_;
+	std::set<std::shared_ptr<StreamSession>> sessions_;
 	boost::asio::io_service* io_service_;
 	std::shared_ptr<tcp::acceptor> acceptor_;
 
 	StreamServerSettings settings_;
 	msg::SampleFormat sampleFormat_;
-//	std::thread acceptThread_;
 	Queue<std::shared_ptr<msg::BaseMessage>> messages_;
 	std::unique_ptr<ControlServer> controlServer_;
 };

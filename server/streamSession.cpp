@@ -16,10 +16,11 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
+#include "streamSession.h"
+
 #include <boost/lexical_cast.hpp>
 #include <iostream>
 #include <mutex>
-#include "clientSession.h"
 #include "common/log.h"
 #include "message/pcmChunk.h"
 
@@ -27,28 +28,28 @@ using namespace std;
 
 
 
-ClientSession::ClientSession(MessageReceiver* receiver, std::shared_ptr<tcp::socket> socket) : messageReceiver_(receiver)
+StreamSession::StreamSession(MessageReceiver* receiver, std::shared_ptr<tcp::socket> socket) : messageReceiver_(receiver)
 {
 	socket_ = socket;
 }
 
 
-ClientSession::~ClientSession()
+StreamSession::~StreamSession()
 {
 	stop();
 }
 
 
-void ClientSession::start()
+void StreamSession::start()
 {
 	active_ = true;
 	streamActive_ = false;
-	readerThread_ = new thread(&ClientSession::reader, this);
-	writerThread_ = new thread(&ClientSession::writer, this);
+	readerThread_ = new thread(&StreamSession::reader, this);
+	writerThread_ = new thread(&StreamSession::writer, this);
 }
 
 
-void ClientSession::stop()
+void StreamSession::stop()
 {
 	std::unique_lock<std::mutex> mlock(mutex_);
 	setActive(false);
@@ -81,11 +82,11 @@ void ClientSession::stop()
 	readerThread_ = NULL;
 	writerThread_ = NULL;
 	socket_ = NULL;
-	logD << "ClientSession stopped\n";
+	logD << "StreamSession stopped\n";
 }
 
 
-void ClientSession::socketRead(void* _to, size_t _bytes)
+void StreamSession::socketRead(void* _to, size_t _bytes)
 {
 	size_t read = 0;
 	do
@@ -97,7 +98,7 @@ void ClientSession::socketRead(void* _to, size_t _bytes)
 }
 
 
-void ClientSession::add(const shared_ptr<const msg::BaseMessage>& message)
+void StreamSession::add(const shared_ptr<const msg::BaseMessage>& message)
 {
 	if (!message || !streamActive_)
 		return;
@@ -108,7 +109,7 @@ void ClientSession::add(const shared_ptr<const msg::BaseMessage>& message)
 }
 
 
-bool ClientSession::send(const msg::BaseMessage* message) const
+bool StreamSession::send(const msg::BaseMessage* message) const
 {
 //	logO << "send: " << message->type << ", size: " << message->size << ", id: " << message->id << ", refers: " << message->refersTo << "\n";
 	std::unique_lock<std::mutex> mlock(mutex_);
@@ -125,7 +126,7 @@ bool ClientSession::send(const msg::BaseMessage* message) const
 }
 
 
-void ClientSession::getNextMessage()
+void StreamSession::getNextMessage()
 {
 	msg::BaseMessage baseMessage;
 	size_t baseMsgSize = baseMessage.getSize();
@@ -144,7 +145,7 @@ void ClientSession::getNextMessage()
 }
 
 
-void ClientSession::reader()
+void StreamSession::reader()
 {
 	try
 	{
@@ -155,13 +156,13 @@ void ClientSession::reader()
 	}
 	catch (const std::exception& e)
 	{
-		logS(kLogErr) << "Exception in ClientSession::reader(): " << e.what() << endl;
+		logS(kLogErr) << "Exception in StreamSession::reader(): " << e.what() << endl;
 	}
 	setActive(false);
 }
 
 
-void ClientSession::writer()
+void StreamSession::writer()
 {
 	try
 	{
@@ -192,13 +193,13 @@ void ClientSession::writer()
 	}
 	catch (const std::exception& e)
 	{
-		logS(kLogErr) << "Exception in ClientSession::writer(): " << e.what() << endl;
+		logS(kLogErr) << "Exception in StreamSession::writer(): " << e.what() << endl;
 	}
 	setActive(false);
 }
 
 
-void ClientSession::setActive(bool active)
+void StreamSession::setActive(bool active)
 {
 	if (active_ && !active && (messageReceiver_ != NULL))
 		messageReceiver_->onDisconnect(this);
