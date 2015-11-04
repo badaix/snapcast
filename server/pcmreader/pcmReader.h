@@ -16,60 +16,60 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
-#ifndef PIPE_READER_H
-#define PIPE_READER_H
+#ifndef PCM_READER_H
+#define PCM_READER_H
 
 #include <thread>
 #include <atomic>
 #include <string>
-#include "encoder/encoder.h"
+#include "../encoder/encoder.h"
 #include "message/sampleFormat.h"
 #include "message/header.h"
 
 
-class PipeReader;
+class PcmReader;
 
 
-/// Callback interface for users of PipeReader
+/// Callback interface for users of PcmReader
 /**
- * Users of PipeReader should implement this to get the data
+ * Users of PcmReader should implement this to get the data
  */
-class PipeListener
+class PcmListener
 {
 public:
-	virtual void onChunkRead(const PipeReader* pipeReader, const msg::PcmChunk* chunk, double duration) = 0;
-	virtual void onResync(const PipeReader* pipeReader, double ms) = 0;
+	virtual void onChunkRead(const PcmReader* pcmReader, const msg::PcmChunk* chunk, double duration) = 0;
+	virtual void onResync(const PcmReader* pcmReader, double ms) = 0;
 };
 
 
 
-/// Reads and decodes PCM data from a named pipe
+/// Reads and decodes PCM data
 /**
- * Reads PCM from a named pipe and passes the data to an encoder.
+ * Reads PCM and passes the data to an encoder.
  * Implements EncoderListener to get the encoded data.
- * Data is passed to the PipeListener
+ * Data is passed to the PcmListener
  */
-class PipeReader : public EncoderListener
+class PcmReader : public EncoderListener
 {
 public:
-	/// ctor. Encoded PCM data is passed to the PipeListener
-	PipeReader(PipeListener* pipeListener, const msg::SampleFormat& sampleFormat, const std::string& codec, const std::string& fifoName, size_t pcmReadMs = 20);
-	virtual ~PipeReader();
+	/// ctor. Encoded PCM data is passed to the PcmListener
+	PcmReader(PcmListener* pcmListener, const msg::SampleFormat& sampleFormat, const std::string& codec, const std::string& fifoName, size_t pcmReadMs = 20);
+	virtual ~PcmReader();
 
-	void start();
-	void stop();
+	virtual void start();
+	virtual void stop();
 
 	/// Implementation of EncoderListener::onChunkEncoded
 	virtual void onChunkEncoded(const Encoder* encoder, msg::PcmChunk* chunk, double duration);
-	msg::Header* getHeader();
+	virtual msg::Header* getHeader();
 
 protected:
-	void worker();
+	virtual void worker() = 0;
 	int fd_;
 	timeval tvEncodedChunk_;
 	std::atomic<bool> active_;
 	std::thread readerThread_;
-	PipeListener* pipeListener_;
+	PcmListener* pcmListener_;
 	msg::SampleFormat sampleFormat_;
 	size_t pcmReadMs_;
 	std::unique_ptr<Encoder> encoder_;

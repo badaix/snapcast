@@ -76,14 +76,14 @@ void StreamServer::send(const msg::BaseMessage* message)
 }
 
 
-void StreamServer::onChunkRead(const PipeReader* pipeReader, const msg::PcmChunk* chunk, double duration)
+void StreamServer::onChunkRead(const PcmReader* pcmReader, const msg::PcmChunk* chunk, double duration)
 {
 //	logO << "onChunkRead " << duration << "ms\n";
 	send(chunk);
 }
 
 
-void StreamServer::onResync(const PipeReader* pipeReader, double ms)
+void StreamServer::onResync(const PcmReader* pcmReader, double ms)
 {
 	logO << "onResync " << ms << "ms\n";
 }
@@ -248,7 +248,7 @@ void StreamServer::onMessageReceived(StreamSession* connection, const msg::BaseM
 		else if (requestMsg.request == kHeader)
 		{
 			std::unique_lock<std::mutex> mlock(mutex_);
-			msg::Header* headerChunk = pipeReader_->getHeader();
+			msg::Header* headerChunk = pcmReader_->getHeader();
 			headerChunk->refersTo = requestMsg.id;
 			connection->send(headerChunk);
 		}
@@ -328,8 +328,8 @@ void StreamServer::start()
 	controlServer_.reset(new ControlServer(io_service_, settings_.controlPort, this));
 	controlServer_->start();
 
-	pipeReader_ = new PipeReader(this, settings_.sampleFormat, settings_.codec, settings_.fifoName, settings_.pipeReadMs);
-	pipeReader_->start();
+	pcmReader_ .reset(new PipeReader(this, settings_.sampleFormat, settings_.codec, settings_.fifoName, settings_.pipeReadMs));
+	pcmReader_->start();
 	acceptor_ = make_shared<tcp::acceptor>(*io_service_, tcp::endpoint(tcp::v4(), settings_.port));
 	startAccept();
 }
@@ -339,7 +339,7 @@ void StreamServer::stop()
 {
 	controlServer_->stop();
 	acceptor_->cancel();
-	pipeReader_->stop();
+	pcmReader_->stop();
 	std::unique_lock<std::mutex> mlock(mutex_);
 	for (auto it = sessions_.begin(); it != sessions_.end(); ++it)
 		(*it)->stop();
