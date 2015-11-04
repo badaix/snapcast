@@ -28,7 +28,6 @@
 #include <mutex>
 
 #include "controlSession.h"
-#include "pipeReader.h"
 #include "common/queue.h"
 #include "message/message.h"
 #include "message/header.h"

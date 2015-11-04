@@ -28,7 +28,7 @@
 #include <mutex>
 
 #include "streamSession.h"
-#include "pipeReader.h"
+#include "pcmreader/pipeReader.h"
 #include "common/queue.h"
 #include "message/message.h"
 #include "message/header.h"
@@ -65,12 +65,12 @@ struct StreamServerSettings
 
 /// Forwars PCM data to the connected clients
 /**
- * Reads PCM data using PipeReader, implements PipeListener to get the (encoded) PCM stream.
+ * Reads PCM data using PipeReader, implements PcmListener to get the (encoded) PCM stream.
  * Accepts and holds client connections (StreamSession)
  * Receives (via the MessageReceiver interface) and answers messages from the clients
  * Forwards PCM data to the clients
  */
-class StreamServer : public MessageReceiver, ControlMessageReceiver, PipeListener
+class StreamServer : public MessageReceiver, ControlMessageReceiver, PcmListener
 {
 public:
 	StreamServer(boost::asio::io_service* io_service, const StreamServerSettings& streamServerSettings);
@@ -89,16 +89,16 @@ public:
 	/// Implementation of ControllMessageReceiver::onMessageReceived, called by ControlServer::onMessageReceived
 	virtual void onMessageReceived(ControlSession* connection, const std::string& message);
 
-	/// Implementation of PipeListener
-	virtual void onChunkRead(const PipeReader* pipeReader, const msg::PcmChunk* chunk, double duration);
-	virtual void onResync(const PipeReader* pipeReader, double ms);
+	/// Implementation of PcmListener
+	virtual void onChunkRead(const PcmReader* pcmReader, const msg::PcmChunk* chunk, double duration);
+	virtual void onResync(const PcmReader* pcmReader, double ms);
 
 private:
 	void startAccept();
 	void handleAccept(socket_ptr socket);
 	StreamSession* getStreamSession(const std::string& mac);
 	mutable std::mutex mutex_;
-	PipeReader* pipeReader_;
+	std::unique_ptr<PcmReader> pcmReader_;
 	std::set<std::shared_ptr<StreamSession>> sessions_;
 	boost::asio::io_service* io_service_;
 	std::shared_ptr<tcp::acceptor> acceptor_;

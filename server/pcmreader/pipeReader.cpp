@@ -22,7 +22,7 @@
 #include <unistd.h>
 
 #include "pipeReader.h"
-#include "encoder/encoderFactory.h"
+#include "../encoder/encoderFactory.h"
 #include "common/log.h"
 #include "common/snapException.h"
 
@@ -32,59 +32,18 @@ using namespace std;
 
 
 
-PipeReader::PipeReader(PipeListener* pipeListener, const msg::SampleFormat& sampleFormat, const std::string& codec, const std::string& fifoName, size_t pcmReadMs) : pipeListener_(pipeListener), sampleFormat_(sampleFormat), pcmReadMs_(pcmReadMs)
+PipeReader::PipeReader(PcmListener* pcmListener, const msg::SampleFormat& sampleFormat, const std::string& codec, const std::string& fifoName, size_t pcmReadMs) : PcmReader(pcmListener, sampleFormat, codec, fifoName, pcmReadMs)
 {
 	umask(0);
 	mkfifo(fifoName.c_str(), 0666);
 	fd_ = open(fifoName.c_str(), O_RDONLY | O_NONBLOCK);
 	if (fd_ == -1)
 		throw SnapException("failed to open fifo: \"" + fifoName + "\"");
-	EncoderFactory encoderFactory;
-	encoder_.reset(encoderFactory.createEncoder(codec));
 }
 
 
 PipeReader::~PipeReader()
 {
-	stop();
-	close(fd_);
-}
-
-
-msg::Header* PipeReader::getHeader()
-{
-	return encoder_->getHeader();
-}
-
-
-void PipeReader::start()
-{
-	encoder_->init(this, sampleFormat_);
- 	active_ = true;
-	readerThread_ = thread(&PipeReader::worker, this);
-}
-
-
-void PipeReader::stop()
-{
-	if (active_)
-	{
-		active_ = false;
-		readerThread_.join();
-	}
-}
-
-
-void PipeReader::onChunkEncoded(const Encoder* encoder, msg::PcmChunk* chunk, double duration)
-{
-//	logO << "onChunkEncoded: " << duration << " us\n";
-	if (duration <= 0)
-		return;
-
-	chunk->timestamp.sec = tvEncodedChunk_.tv_sec;
-	chunk->timestamp.usec = tvEncodedChunk_.tv_usec;
-	chronos::addUs(tvEncodedChunk_, duration * 1000);
-	pipeListener_->onChunkRead(this, chunk, duration);
 }
 
 
@@ -131,7 +90,7 @@ void PipeReader::worker()
 				{
 					gettimeofday(&tvChunk, NULL);
 					tvEncodedChunk_ = tvChunk;
-					pipeListener_->onResync(this, currentTick - nextTick);
+					pcmListener_->onResync(this, currentTick - nextTick);
 					nextTick = currentTick;
 				}
 			}
