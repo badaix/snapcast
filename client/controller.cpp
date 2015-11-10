@@ -178,7 +178,7 @@ void Controller::worker()
 			stream_ = new Stream(*sampleFormat_);
 			stream_->setBufferLen(serverSettings->bufferMs - latency_);
 
-			player_.reset(new Player(pcmDevice_, stream_));
+			player_.reset(new AlsaPlayer(pcmDevice_, stream_));
 			player_->setVolume(serverSettings->volume / 100.);
 			player_->start();
 

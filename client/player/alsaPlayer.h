@@ -16,41 +16,36 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
-#ifndef PLAYER_H
-#define PLAYER_H
+#ifndef ALSA_PLAYER_H
+#define ALSA_PLAYER_H
 
-#include <string>
-#include <thread>
-#include <atomic>
-#include <vector>
+#include "player.h"
 #include <alsa/asoundlib.h>
-#include "stream.h"
-#include "pcmDevice.h"
 
 
 /// Audio Player
 /**
  * Audio player implementation using Alsa
  */
-class Player
+class AlsaPlayer : public Player
 {
 public:
-	Player(const PcmDevice& pcmDevice, Stream* stream);
-	virtual ~Player();
+	AlsaPlayer(const PcmDevice& pcmDevice, Stream* stream);
+	virtual ~AlsaPlayer();
 
 	/// Set audio volume in range [0..1]
-	void setVolume(double volume);
-	void setMute(bool mute);
-	void start();
-	void stop();
+	virtual void start();
+	virtual void stop();
 
 	/// List the system's audio output devices
 	static std::vector<PcmDevice> pcm_list(void);
 
+protected:
+	virtual void worker();
+
 private:
 	void initAlsa();
 	void uninitAlsa();
-	void worker();
 
 	template <typename T>
 	void adjustVolume(char *buffer, size_t count, double volume)
@@ -64,12 +59,6 @@ private:
 	snd_pcm_uframes_t frames_;
 
 	char *buff_;
-	std::atomic<bool> active_;
-	Stream* stream_;
-	std::thread playerThread_;
-	PcmDevice pcmDevice_;
-	double volume_;
-	bool muted_;
 };
 
 

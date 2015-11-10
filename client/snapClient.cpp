@@ -25,7 +25,7 @@
 #include "common/log.h"
 #include "common/signalHandler.h"
 #include "controller.h"
-#include "alsaPlayer.h"
+#include "player/alsaPlayer.h"
 #include "browseAvahi.h"
 
 
@@ -36,7 +36,7 @@ bool g_terminated = false;
 
 PcmDevice getPcmDevice(const std::string& soundcard)
 {
-	vector<PcmDevice> pcmDevices = Player::pcm_list();
+	vector<PcmDevice> pcmDevices = AlsaPlayer::pcm_list();
 	int soundcardIdx = -1;
 
 	try
@@ -108,7 +108,7 @@ int main (int argc, char *argv[])
 
 		if (listPcmDevices)
 		{
-			vector<PcmDevice> pcmDevices = Player::pcm_list();
+			vector<PcmDevice> pcmDevices = AlsaPlayer::pcm_list();
 			for (auto dev: pcmDevices)
 			{
 				cout << dev.idx << ": " << dev.name << "\n"

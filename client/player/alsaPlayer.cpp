@@ -19,27 +19,18 @@
 #include "alsaPlayer.h"
 #include "common/log.h"
 #include "common/snapException.h"
-#include <alsa/asoundlib.h>
-#include <iostream>
 
 //#define BUFFER_TIME 120000
 #define PERIOD_TIME 30000
 
 using namespace std;
 
-Player::Player(const PcmDevice& pcmDevice, Stream* stream) :
-	handle_(NULL),
-	buff_(NULL),
-	active_(false),
-	stream_(stream),
-	pcmDevice_(pcmDevice),
-	volume_(1.0),
-	muted_(false)
+AlsaPlayer::AlsaPlayer(const PcmDevice& pcmDevice, Stream* stream) : Player(pcmDevice, stream), handle_(NULL), buff_(NULL)
 {
 }
 
 
-void Player::initAlsa()
+void AlsaPlayer::initAlsa()
 {
 	unsigned int tmp, rate;
 	int pcm, channels;
@@ -126,7 +117,7 @@ void Player::initAlsa()
 }
 
 
-void Player::uninitAlsa()
+void AlsaPlayer::uninitAlsa()
 {
 	if (handle_ != NULL)
 	{
@@ -143,32 +134,27 @@ void Player::uninitAlsa()
 }
 
 
-void Player::start()
+void AlsaPlayer::start()
 {
 	initAlsa();
-	active_ = true;
-	playerThread_ = thread(&Player::worker, this);
+	Player::start();
 }
 
 
-Player::~Player()
+AlsaPlayer::~AlsaPlayer()
 {
 	stop();
 }
 
 
-void Player::stop()
+void AlsaPlayer::stop()
 {
-	if (active_)
-	{
-		active_ = false;
-		playerThread_.join();
-	}
+	Player::stop();
 	uninitAlsa();
 }
 
 
-void Player::worker()
+void AlsaPlayer::worker()
 {
 	snd_pcm_sframes_t pcm;
 	snd_pcm_sframes_t framesDelay;
@@ -229,21 +215,7 @@ void Player::worker()
 
 
 
-void Player::setVolume(double volume)
-{
-	volume_ = volume;
-}
-
-
-
-void Player::setMute(bool mute)
-{
-	muted_ = mute;
-}
-
-
-
-vector<PcmDevice> Player::pcm_list(void)
+vector<PcmDevice> AlsaPlayer::pcm_list(void)
 {
 	void **hints, **n;
 	char *name, *descr, *io;

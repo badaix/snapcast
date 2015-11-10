@@ -23,10 +23,10 @@
 #include <atomic>
 #include "decoder/decoder.h"
 #include "message/message.h"
+#include "player/pcmDevice.h"
+#include "player/alsaPlayer.h"
 #include "clientConnection.h"
 #include "stream.h"
-#include "pcmDevice.h"
-#include "alsaPlayer.h"
 
 
 /// Forwards PCM data to the audio player
