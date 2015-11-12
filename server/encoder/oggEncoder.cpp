@@ -16,7 +16,6 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
-#include <boost/lexical_cast.hpp>
 #include <iostream>
 #include <cstring>
 
@@ -137,9 +136,9 @@ void OggEncoder::initEncoder()
 	double quality = 1.0;
 	try
 	{
-		quality = boost::lexical_cast<double>(qual);
+		quality = std::stod(qual);
 	}
-	catch(boost::bad_lexical_cast)
+	catch(...)
 	{
 		throw SnapException("Invalid codec option: \"" + codecOptions_ + "\"");
 	}

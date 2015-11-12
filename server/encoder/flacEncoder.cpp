@@ -16,7 +16,6 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
-#include <boost/lexical_cast.hpp>
 #include <iostream>
 
 #include "flacEncoder.h"
@@ -139,9 +138,9 @@ void FlacEncoder::initEncoder()
 	int quality(2);
 	try
 	{
-		quality = boost::lexical_cast<int>(codecOptions_);
+		quality = std::stoi(codecOptions_);
 	}
-	catch(boost::bad_lexical_cast)
+	catch(...)
 	{
 		throw SnapException("Invalid codec option: \"" + codecOptions_ + "\"");
 	}

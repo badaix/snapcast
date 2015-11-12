@@ -18,7 +18,6 @@
 
 #include <vector>
 #include <boost/algorithm/string.hpp>
-#include <boost/lexical_cast.hpp>
 #include <iostream>
 
 #include "sampleFormat.h"
@@ -62,9 +61,9 @@ void SampleFormat::setFormat(const std::string& format)
 	boost::split(strs, format, boost::is_any_of(":"));
 	if (strs.size() == 3)
 		setFormat(
-		    boost::lexical_cast<uint32_t>(strs[0]),
-		    boost::lexical_cast<uint16_t>(strs[1]),
-		    boost::lexical_cast<uint16_t>(strs[2]));
+		    std::stoul(strs[0]),
+		    std::stoul(strs[1]),
+		    std::stoul(strs[2]));
 }
 
 
