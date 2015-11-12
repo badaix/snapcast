@@ -24,7 +24,6 @@
 #include <iostream>
 #include <cstring>
 #include <sstream>
-#include <boost/lexical_cast.hpp>
 
 #define logD std::clog << kDbg
 #define logO std::clog << kOut
