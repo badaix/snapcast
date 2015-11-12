@@ -20,7 +20,6 @@
 #define JSON_RPC_EXCEPTION_H
 
 #include <string>
-#include <boost/lexical_cast.hpp>
 #include "json.hpp"
 #include "common/snapException.h"
 

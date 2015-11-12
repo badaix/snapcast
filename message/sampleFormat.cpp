@@ -17,12 +17,12 @@
 ***/
 
 #include <vector>
-#include <boost/algorithm/string.hpp>
 #include <iostream>
+#include <sstream>
 
 #include "sampleFormat.h"
+#include "common/utils.h"
 #include "common/log.h"
-#include <sstream>
 
 
 using namespace std;
@@ -58,7 +58,7 @@ string SampleFormat::getFormat() const
 void SampleFormat::setFormat(const std::string& format)
 {
 	std::vector<std::string> strs;
-	boost::split(strs, format, boost::is_any_of(":"));
+	strs = split(format, ':');
 	if (strs.size() == 3)
 		setFormat(
 		    std::stoul(strs[0]),

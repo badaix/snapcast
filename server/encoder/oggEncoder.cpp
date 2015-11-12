@@ -20,9 +20,9 @@
 #include <cstring>
 
 #include "oggEncoder.h"
-#include "common/log.h"
 #include "common/snapException.h"
 #include "common/utils.h"
+#include "common/log.h"
 
 using namespace std;
 

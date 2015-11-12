@@ -18,11 +18,11 @@
 
 #include <iostream>
 #include <mutex>
-#include "common/log.h"
 #include "clientConnection.h"
 #include "common/utils.h"
 #include "common/snapException.h"
 #include "message/hello.h"
+#include "common/log.h"
 
 
 using namespace std;
