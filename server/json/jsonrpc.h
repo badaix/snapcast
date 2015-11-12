@@ -21,7 +21,6 @@
 
 #include <string>
 #include <vector>
-#include <boost/lexical_cast.hpp>
 #include "json.hpp"
 #include "jsonrpcException.h"
 
@@ -63,25 +62,6 @@ public:
 		return value;
 	}
 
-//	bool isParam(size_t idx, const std::string& param);
-
-/*	template<typename T>
-	T getParam(size_t idx)
-	{
-		if (idx >= params.size())
-			throw JsonInvalidParamsException(*this);
-		try
-		{
-			return boost::lexical_cast<T>(params[idx]);
-		}
-		catch(...)
-		{
-			throw JsonInvalidParamsException(*this);
-		}
-	}
-
-	bool isParam(size_t idx, const std::string& param);
-*/
 
 protected:
 	Json json_;

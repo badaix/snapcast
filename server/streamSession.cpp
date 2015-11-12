@@ -18,7 +18,6 @@
 
 #include "streamSession.h"
 
-#include <boost/lexical_cast.hpp>
 #include <iostream>
 #include <mutex>
 #include "common/log.h"

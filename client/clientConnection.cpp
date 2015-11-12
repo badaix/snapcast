@@ -16,7 +16,6 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
-#include <boost/lexical_cast.hpp>
 #include <iostream>
 #include <mutex>
 #include "common/log.h"
@@ -59,7 +58,7 @@ void ClientConnection::socketRead(void* _to, size_t _bytes)
 void ClientConnection::start()
 {
 	tcp::resolver resolver(io_service_);
-	tcp::resolver::query query(tcp::v4(), host_, boost::lexical_cast<string>(port_), boost::asio::ip::resolver_query_base::numeric_service);
+	tcp::resolver::query query(tcp::v4(), host_, std::to_string(port_), boost::asio::ip::resolver_query_base::numeric_service);
 	auto iterator = resolver.resolve(query);
 	logO << "Connecting\n";
 	socket_.reset(new tcp::socket(io_service_));

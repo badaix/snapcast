@@ -18,7 +18,6 @@
 
 #include <iostream>
 #include <sys/resource.h>
-#include <boost/lexical_cast.hpp>
 #include <boost/program_options.hpp>
 
 #include "common/daemon.h"
@@ -41,7 +40,7 @@ PcmDevice getPcmDevice(const std::string& soundcard)
 
 	try
 	{
-		soundcardIdx = boost::lexical_cast<int>(soundcard);
+		soundcardIdx = std::stoi(soundcard);
 		for (auto dev: pcmDevices)
 			if (dev.idx == soundcardIdx)
 				return dev;
