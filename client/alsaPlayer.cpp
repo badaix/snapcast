@@ -227,7 +227,11 @@ vector<PcmDevice> Player::pcm_list(void)
 		if (io != NULL && strcmp(io, "Output") != 0)
 			goto __end;
 		pcmDevice.name = name;
-		pcmDevice.description = descr;
+		if(descr == NULL) {
+			pcmDevice.description = "";
+		} else {
+			pcmDevice.description = descr;
+		}
 		pcmDevice.idx = idx++;
 		result.push_back(pcmDevice);
 
