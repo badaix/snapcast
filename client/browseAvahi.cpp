@@ -89,7 +89,7 @@ void BrowseAvahi::resolve_callback(
 			char a[AVAHI_ADDRESS_STR_MAX], *t;
 
 			logO << "Service '" << name << "' of type '" << type << "' in domain '" << domain << "':\n";
-			if (!browseAvahi->name_.empty() && browseAvahi->name_.compare(name) == 0) {
+			if (!browseAvahi->name_.empty() && browseAvahi->name_.compare(name) != 0) {
 				logO << "Skipping service " << name << " looking for " << browseAvahi->name_ << "\n";
 				break;
       }

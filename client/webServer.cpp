@@ -39,12 +39,16 @@ void WebServer::set_server(struct evhttp_request *req, void *arg)
       std::string name(nameParam);
       WebServer::name_ = string(name);
     }
+
+    // reset this to trigger a new scan
+    WebServer::ip_ = "";
     const char *ipParam = evhttp_find_header(&params, "ip");
     if (ipParam != NULL) {
       cout << "Got ip param" << std::endl;
       std::string ip(ipParam);
       WebServer::ip_ = string(ip);
     }
+
     const char *portParam = evhttp_find_header(&params, "port");
     if (portParam != NULL) {
       cout << "Got port param" << std::endl;

@@ -84,7 +84,7 @@ int main (int argc, char *argv[])
 		("daemon,d", po::value<int>(&runAsDaemon)->implicit_value(-3), "daemonize, optional process priority [-20..19]")
 		("latency", po::value<size_t>(&latency)->default_value(0), "latency of the soundcard")
 		("name,n", po::value<string>(&name)->default_value("SnapCast Client"), "name for this snapcast client")
-                ("www,w", po::value<size_t>(&www)->default_value(8000), "www port")
+    ("www,w", po::value<size_t>(&www)->default_value(8000), "www port")
 		;
 
 		po::variables_map vm;

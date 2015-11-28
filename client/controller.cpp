@@ -106,7 +106,7 @@ void Controller::start(const PcmDevice& pcmDevice, const std::string& serverName
   port_ = port; 
 	pcmDevice_ = pcmDevice;
 	latency_ = latency;
-  cout << "Scanning " << endl;
+  cout << "Scanning " << serverName << endl;
   scan(serverName);
   cout << "Done scanning " << endl;
 	clientConnection_ = new ClientConnection(this, ip_, port_);
