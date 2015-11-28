@@ -36,7 +36,7 @@
 using namespace std;
 
 
-Controller::Controller() : MessageReceiver(), active_(false), sampleFormat_(NULL), decoder_(NULL), asyncException_(false)
+Controller::Controller() : MessageReceiver(), active_(false), started_(false), stopping_(false), sampleFormat_(NULL), decoder_(NULL), asyncException_(false)
 {
 }
 
@@ -98,13 +98,47 @@ bool Controller::sendTimeSyncMessage(long after)
 }
 
 
-void Controller::start(const PcmDevice& pcmDevice, const std::string& ip, size_t port, size_t latency)
+void Controller::start(const PcmDevice& pcmDevice, const std::string& serverName, const std::string& ip, size_t port, size_t latency)
 {
+  stopping_ = false;
+	name_ = serverName;
 	ip_ = ip;
+  port_ = port; 
 	pcmDevice_ = pcmDevice;
 	latency_ = latency;
-	clientConnection_ = new ClientConnection(this, ip, port);
+  cout << "Scanning " << endl;
+  scan(serverName);
+  cout << "Done scanning " << endl;
+	clientConnection_ = new ClientConnection(this, ip_, port_);
 	controllerThread_ = new thread(&Controller::worker, this);
+  started_ = true;
+}
+
+void Controller::scan(const std::string serverName) {
+  if (!ip_.empty()) {
+    cout << "Returning because IP is not empty" << ip_ << std::endl;
+    return;
+  }
+  BrowseAvahi browseAvahi;
+  AvahiResult avahiResult;
+  while (!stopping_) {
+    try {                                       
+      logO << "Looking for " << serverName << "\n";
+      if (browseAvahi.browse("_snapcastserver._tcp", serverName, AVAHI_PROTO_INET, avahiResult, 5000)) {
+        logO << "Found " << avahiResult.name_ << "\n";
+        ip_ = avahiResult.ip_;
+        port_ = avahiResult.port_;
+        name_ = avahiResult.name_;
+        logO << "Found server " << ip_ << ":" << port_ << ":" << avahiResult.name_ << "\n";
+        break;
+      }
+    }
+    catch (const std::exception& e)
+    {
+      logS(kLogErr) << "Exception: " << e.what() << std::endl;
+    }
+    usleep(500*1000);
+  }
 }
 
 
@@ -112,10 +146,14 @@ void Controller::stop()
 {
 	logD << "Stopping Controller" << endl;
 	active_ = false;
-	controllerThread_->join();
-	clientConnection_->stop();
-	delete controllerThread_;
-	delete clientConnection_;
+  stopping_ = true;
+  if (started_) {
+    cout << "In here" << endl;
+	  controllerThread_->join();
+    clientConnection_->stop();
+	  delete controllerThread_;
+  	delete clientConnection_;
+  }
 }
 
 

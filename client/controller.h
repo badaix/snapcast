@@ -19,6 +19,7 @@
 #ifndef CONTROLLER_H
 #define CONTROLLER_H
 
+#include "browseAvahi.h"
 #include <thread>
 #include <atomic>
 #include "decoder/decoder.h"
@@ -38,7 +39,7 @@ class Controller : public MessageReceiver
 {
 public:
 	Controller();
-	void start(const PcmDevice& pcmDevice, const std::string& ip, size_t port, size_t latency);
+	void start(const PcmDevice& pcmDevice, const std::string& name, const std::string& ip, size_t port, size_t latency);
 	void stop();
 
 	/// Implementation of MessageReceiver.
@@ -48,19 +49,25 @@ public:
 	/// Implementation of MessageReceiver.
 	/// Used for async exception reporting
 	virtual void onException(ClientConnection* connection, const std::exception& exception);
+	PcmDevice pcmDevice_;
+	size_t latency_;
+        std::string name_;
+	std::string ip_;
+        size_t port_;
+
 
 private:
 	void worker();
 	bool sendTimeSyncMessage(long after = 1000);
+        void scan(const std::string serverName);
 	std::atomic<bool> active_;
+  std::atomic<bool> started_;
+  std::atomic<bool> stopping_;
 	std::thread* controllerThread_;
 	ClientConnection* clientConnection_;
 	Stream* stream_;
-	std::string ip_;
 	std::shared_ptr<msg::SampleFormat> sampleFormat_;
 	Decoder* decoder_;
-	PcmDevice pcmDevice_;
-	size_t latency_;
 
 	std::exception exception_;
 	bool asyncException_;

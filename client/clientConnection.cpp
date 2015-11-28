@@ -91,7 +91,7 @@ void ClientConnection::stop()
 			socket_->close(ec);
 			if (ec) logE << "Error in socket close: " << ec << endl;
 		}
-		if (readerThread_)
+		if (readerThread_ && readerThread_->joinable())
 		{
 			logD << "joining readerThread\n";
 			readerThread_->join();

@@ -26,8 +26,8 @@
 #include "common/signalHandler.h"
 #include "controller.h"
 #include "alsaPlayer.h"
-#include "browseAvahi.h"
-
+#include "common/publishAvahi.h"
+#include "webServer.h"
 
 using namespace std;
 namespace po = boost::program_options;
@@ -68,8 +68,10 @@ int main (int argc, char *argv[])
 	//	int bufferMs;
 		size_t port;
 		size_t latency;
+		size_t www;
 		int runAsDaemon;
 		bool listPcmDevices;
+		string name;
 
 		po::options_description desc("Allowed options");
 		desc.add_options()
@@ -81,6 +83,8 @@ int main (int argc, char *argv[])
 		("soundcard,s", po::value<string>(&soundcard)->default_value("default"), "index or name of the soundcard")
 		("daemon,d", po::value<int>(&runAsDaemon)->implicit_value(-3), "daemonize, optional process priority [-20..19]")
 		("latency", po::value<size_t>(&latency)->default_value(0), "latency of the soundcard")
+		("name,n", po::value<string>(&name)->default_value("SnapCast Client"), "name for this snapcast client")
+                ("www,w", po::value<size_t>(&www)->default_value(8000), "www port")
 		;
 
 		po::variables_map vm;
@@ -139,38 +143,45 @@ int main (int argc, char *argv[])
 			return 1;
 		}
 
-		if (!vm.count("ip"))
-		{
-			BrowseAvahi browseAvahi;
-			AvahiResult avahiResult;
-			while (!g_terminated)
-			{
-				try
-				{
-					if (browseAvahi.browse("_snapcast._tcp", AVAHI_PROTO_INET, avahiResult, 5000))
-					{
-						ip = avahiResult.ip_;
-						port = avahiResult.port_;
-						logO << "Found server " << ip << ":" << port << "\n";
-						break;
-					}
-				}
-				catch (const std::exception& e)
-				{
-					logS(kLogErr) << "Exception: " << e.what() << std::endl;
-				}
-				usleep(500*1000);
-			}
-		}
+    PublishAvahi publishAvahi(name);
+    std::vector<AvahiService> services;
+    services.push_back(AvahiService("_snapcastclient._tcp", www));
+    publishAvahi.publish(services);
+
+		std::unique_ptr<WebServer> webserver(new WebServer());
+		webserver->startServer(www);
 
 		std::unique_ptr<Controller> controller(new Controller());
 		if (!g_terminated)
 		{
-			controller->start(pcmDevice, ip, port, latency);
-			while(!g_terminated)
-				usleep(100*1000);
+      /*
+			controller->start(pcmDevice, "", ip, port, latency);
+                        cout << "Started" << std::endl;
+      */
+      webserver->ip_ = ip;
+      webserver->port_ = port;
+			while(!g_terminated) {
+        cout << "check for webserver changes" << std::endl;
+				if (webserver->ip_ != controller->ip_ || webserver->port_ != controller->port_ || webserver->name_ != controller->name_) {
+          cout << webserver->ip_ << ":" << controller->ip_ << std::endl;
+          cout << webserver->port_ << ":" << controller->port_ << std::endl;
+          cout << webserver->name_ << ":" << controller->name_ << std::endl;
+          cout << "stopping due to webserver change" << std::endl;
+					controller->stop();
+          cout << "starting due to webserver change" << std::endl;
+					controller->start(pcmDevice, webserver->name_, webserver->ip_, webserver->port_, latency);
+          // controller does a scan so we need to update the webserver with scanned results
+          webserver->ip_ = controller->ip_;
+          webserver->port_ = controller->port_;
+          webserver->name_ = controller->name_;
+        }             
+        cout << "Sleeping" << std::endl;
+        usleep(100*1000);
+      }
+			cout << "Stopping\n";
 			controller->stop();
 		}
+    webserver->stopServer();
 	}
 	catch (const std::exception& e)
 	{

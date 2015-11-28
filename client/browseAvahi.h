@@ -31,6 +31,7 @@ struct AvahiResult
 	int proto_;
 	std::string ip_;
 	std::string host_;
+	std::string name_;
 	size_t port_;
 	bool valid_;
 };
@@ -41,7 +42,7 @@ class BrowseAvahi
 public:
 	BrowseAvahi();
 	~BrowseAvahi();
-	bool browse(const std::string& serviceName, int proto, AvahiResult& result, int timeout);
+	bool browse(const std::string& serviceName, const std::string& name, int proto, AvahiResult& result, int timeout);
 
 private:
 	void cleanUp();
@@ -51,6 +52,7 @@ private:
 	AvahiClient* client_;
 	AvahiResult result_;
 	AvahiServiceBrowser* sb_;
+  std::string name_;
 };
 
 

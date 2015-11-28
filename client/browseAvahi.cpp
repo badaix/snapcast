@@ -89,6 +89,10 @@ void BrowseAvahi::resolve_callback(
 			char a[AVAHI_ADDRESS_STR_MAX], *t;
 
 			logO << "Service '" << name << "' of type '" << type << "' in domain '" << domain << "':\n";
+			if (!browseAvahi->name_.empty() && browseAvahi->name_.compare(name) == 0) {
+				logO << "Skipping service " << name << " looking for " << browseAvahi->name_ << "\n";
+				break;
+      }
 
 			avahi_address_snprint(a, sizeof(a), address);
 			browseAvahi->result_.host_ = host_name;
@@ -96,6 +100,7 @@ void BrowseAvahi::resolve_callback(
 			browseAvahi->result_.port_ = port;
 			browseAvahi->result_.proto_ = protocol;
 			browseAvahi->result_.valid_ = true;
+			browseAvahi->result_.name_ = name;
 
 			t = avahi_string_list_to_string(txt);
 			logO << "\t" << host_name << ":" << port << " (" << a << ")\n";
@@ -180,10 +185,11 @@ void BrowseAvahi::client_callback(AvahiClient *c, AvahiClientState state, AVAHI_
 }
 
 
-bool BrowseAvahi::browse(const std::string& serviceName, int proto, AvahiResult& result, int timeout)
+bool BrowseAvahi::browse(const std::string& serviceName, const std::string& name, int proto, AvahiResult& result, int timeout)
 {
 	try
 	{
+                name_ = name;
 		/* Allocate main loop object */
 		if (!(simple_poll = avahi_simple_poll_new()))
 			throw SnapException("BrowseAvahi - Failed to create simple poll object");
