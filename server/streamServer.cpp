@@ -32,7 +32,7 @@ using namespace std;
 using json = nlohmann::json;
 
 
-StreamServer::StreamServer(boost::asio::io_service* io_service, const StreamServerSettings& streamServerSettings) : io_service_(io_service), settings_(streamServerSettings), sampleFormat_(streamServerSettings.sampleFormat)
+StreamServer::StreamServer(asio::io_service* io_service, const StreamServerSettings& streamServerSettings) : io_service_(io_service), settings_(streamServerSettings), sampleFormat_(streamServerSettings.sampleFormat)
 {
 }
 

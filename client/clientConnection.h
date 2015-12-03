@@ -24,14 +24,14 @@
 #include <atomic>
 #include <mutex>
 #include <memory>
-#include <boost/asio.hpp>
+#include <asio.hpp>
 #include <condition_variable>
 #include <set>
 #include "message/message.h"
 #include "common/timeDefs.h"
 
 
-using boost::asio::ip::tcp;
+using asio::ip::tcp;
 
 
 class ClientConnection;
@@ -105,7 +105,7 @@ protected:
 	void socketRead(void* to, size_t bytes);
 	void getNextMessage();
 
-	boost::asio::io_service io_service_;
+	asio::io_service io_service_;
 	std::shared_ptr<tcp::socket> socket_;
 	std::atomic<bool> active_;
 	std::atomic<bool> connected_;

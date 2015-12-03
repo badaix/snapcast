@@ -52,10 +52,10 @@ void ControlSession::stop()
 	active_ = false;
 	try
 	{
-		boost::system::error_code ec;
+		std::error_code ec;
 		if (socket_)
 		{
-			socket_->shutdown(boost::asio::ip::tcp::socket::shutdown_both, ec);
+			socket_->shutdown(asio::ip::tcp::socket::shutdown_both, ec);
 			if (ec) logE << "Error in socket shutdown: " << ec << "\n";
 			socket_->close(ec);
 			if (ec) logE << "Error in socket close: " << ec << "\n";
@@ -96,10 +96,10 @@ bool ControlSession::send(const std::string& message) const
 	std::unique_lock<std::mutex> mlock(mutex_);
 	if (!socket_ || !active_)
 		return false;
-	boost::asio::streambuf streambuf;
+	asio::streambuf streambuf;
 	std::ostream request_stream(&streambuf);
 	request_stream << message << "\r\n";
-	boost::asio::write(*socket_.get(), streambuf);
+	asio::write(*socket_.get(), streambuf);
 //	logO << "done: " << message->type << ", size: " << message->size << ", id: " << message->id << ", refers: " << message->refersTo << "\n";
 	return true;
 }
@@ -112,8 +112,8 @@ void ControlSession::reader()
 	{
 		while (active_)
 		{
-			boost::asio::streambuf response;
-			boost::asio::read_until(*socket_, response, "\r\n");
+			asio::streambuf response;
+			asio::read_until(*socket_, response, "\r\n");
 			std::string s((istreambuf_iterator<char>(&response)), istreambuf_iterator<char>());
 			s.resize(s.length() - 2);
 
@@ -133,7 +133,7 @@ void ControlSession::writer()
 {
 	try
 	{
-		boost::asio::streambuf streambuf;
+		asio::streambuf streambuf;
 		std::ostream stream(&streambuf);
 		string message;
 		while (active_)

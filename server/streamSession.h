@@ -24,14 +24,14 @@
 #include <atomic>
 #include <mutex>
 #include <memory>
-#include <boost/asio.hpp>
+#include <asio.hpp>
 #include <condition_variable>
 #include <set>
 #include "message/message.h"
 #include "common/queue.h"
 
 
-using boost::asio::ip::tcp;
+using asio::ip::tcp;
 
 
 class StreamSession;

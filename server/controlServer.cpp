@@ -33,7 +33,7 @@ using namespace std;
 using json = nlohmann::json;
 
 
-ControlServer::ControlServer(boost::asio::io_service* io_service, size_t port, ControlMessageReceiver* controlMessageReceiver) : io_service_(io_service), port_(port), controlMessageReceiver_(controlMessageReceiver)
+ControlServer::ControlServer(asio::io_service* io_service, size_t port, ControlMessageReceiver* controlMessageReceiver) : io_service_(io_service), port_(port), controlMessageReceiver_(controlMessageReceiver)
 {
 }
 

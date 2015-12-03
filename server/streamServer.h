@@ -19,7 +19,7 @@
 #ifndef STREAM_SERVER_H
 #define STREAM_SERVER_H
 
-#include <boost/asio.hpp>
+#include <asio.hpp>
 #include <vector>
 #include <thread>
 #include <memory>
@@ -37,7 +37,7 @@
 #include "controlServer.h"
 
 
-using boost::asio::ip::tcp;
+using asio::ip::tcp;
 typedef std::shared_ptr<tcp::socket> socket_ptr;
 
 
@@ -73,7 +73,7 @@ struct StreamServerSettings
 class StreamServer : public MessageReceiver, ControlMessageReceiver, PcmListener
 {
 public:
-	StreamServer(boost::asio::io_service* io_service, const StreamServerSettings& streamServerSettings);
+	StreamServer(asio::io_service* io_service, const StreamServerSettings& streamServerSettings);
 	virtual ~StreamServer();
 
 	void start();
@@ -100,7 +100,7 @@ private:
 	mutable std::mutex mutex_;
 	std::unique_ptr<PcmReader> pcmReader_;
 	std::set<std::shared_ptr<StreamSession>> sessions_;
-	boost::asio::io_service* io_service_;
+	asio::io_service* io_service_;
 	std::shared_ptr<tcp::acceptor> acceptor_;
 
 	StreamServerSettings settings_;

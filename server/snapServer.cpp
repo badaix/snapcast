@@ -127,11 +127,11 @@ int main(int argc, char* argv[])
 			settings.bufferMs = 400;
 		settings.sampleFormat = sampleFormat;
 
-		boost::asio::io_service io_service;
+		asio::io_service io_service;
 		std::unique_ptr<StreamServer> streamServer(new StreamServer(&io_service, settings));
 		streamServer->start();
 
-		auto func = [](boost::asio::io_service* ioservice)->void{ioservice->run();};
+		auto func = [](asio::io_service* ioservice)->void{ioservice->run();};
 		std::thread t(func, &io_service);
 
 		while (!g_terminated)

@@ -47,7 +47,7 @@ void ClientConnection::socketRead(void* _to, size_t _bytes)
 	do
 	{
 //		boost::system::error_code error;
-		len += socket_->read_some(boost::asio::buffer((char*)_to + len, toRead));
+		len += socket_->read_some(asio::buffer((char*)_to + len, toRead));
 //cout << "len: " << len << ", error: " << error << endl;
 		toRead = _bytes - len;
 	}
@@ -58,7 +58,7 @@ void ClientConnection::socketRead(void* _to, size_t _bytes)
 void ClientConnection::start()
 {
 	tcp::resolver resolver(io_service_);
-	tcp::resolver::query query(tcp::v4(), host_, std::to_string(port_), boost::asio::ip::resolver_query_base::numeric_service);
+	tcp::resolver::query query(tcp::v4(), host_, std::to_string(port_), asio::ip::resolver_query_base::numeric_service);
 	auto iterator = resolver.resolve(query);
 	logO << "Connecting\n";
 	socket_.reset(new tcp::socket(io_service_));
@@ -86,10 +86,10 @@ void ClientConnection::stop()
 	active_ = false;
 	try
 	{
-		boost::system::error_code ec;
+		std::error_code ec;
 		if (socket_)
 		{
-			socket_->shutdown(boost::asio::ip::tcp::socket::shutdown_both, ec);
+			socket_->shutdown(asio::ip::tcp::socket::shutdown_both, ec);
 			if (ec) logE << "Error in socket shutdown: " << ec << endl;
 			socket_->close(ec);
 			if (ec) logE << "Error in socket close: " << ec << endl;
@@ -116,12 +116,12 @@ bool ClientConnection::send(const msg::BaseMessage* message) const
 	if (!connected())
 		return false;
 //logD << "send: " << message->type << ", size: " << message->getSize() << "\n";
-	boost::asio::streambuf streambuf;
+	asio::streambuf streambuf;
 	std::ostream stream(&streambuf);
 	tv t;
 	message->sent = t;
 	message->serialize(stream);
-	boost::asio::write(*socket_.get(), streambuf);
+	asio::write(*socket_.get(), streambuf);
 	return true;
 }
 

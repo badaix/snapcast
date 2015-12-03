@@ -19,7 +19,7 @@
 #ifndef CONTROL_SERVER_H
 #define CONTROL_SERVER_H
 
-#include <boost/asio.hpp>
+#include <asio.hpp>
 #include <vector>
 #include <thread>
 #include <memory>
@@ -35,7 +35,7 @@
 #include "message/serverSettings.h"
 
 
-using boost::asio::ip::tcp;
+using asio::ip::tcp;
 typedef std::shared_ptr<tcp::socket> socket_ptr;
 
 
@@ -46,7 +46,7 @@ typedef std::shared_ptr<tcp::socket> socket_ptr;
 class ControlServer : public ControlMessageReceiver
 {
 public:
-	ControlServer(boost::asio::io_service* io_service, size_t port, ControlMessageReceiver* controlMessageReceiver = NULL);
+	ControlServer(asio::io_service* io_service, size_t port, ControlMessageReceiver* controlMessageReceiver = NULL);
 	virtual ~ControlServer();
 
 	void start();
@@ -67,7 +67,7 @@ private:
 	std::shared_ptr<tcp::acceptor> acceptor_;
 
 	Queue<std::shared_ptr<msg::BaseMessage>> messages_;
-	boost::asio::io_service* io_service_;
+	asio::io_service* io_service_;
 	size_t port_;
 	ControlMessageReceiver* controlMessageReceiver_;
 };
