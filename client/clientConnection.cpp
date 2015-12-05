@@ -46,7 +46,6 @@ void ClientConnection::socketRead(void* _to, size_t _bytes)
 	size_t len = 0;
 	do
 	{
-//		boost::system::error_code error;
 		len += socket_->read_some(asio::buffer((char*)_to + len, toRead));
 //cout << "len: " << len << ", error: " << error << endl;
 		toRead = _bytes - len;
@@ -70,8 +69,11 @@ void ClientConnection::start()
 //	setsockopt(socket->native(), SOL_SOCKET, SO_SNDTIMEO, &tv, sizeof(tv));
 	socket_->connect(*iterator);
 
-	logO << "My MAC: \"" << getMacAddress(socket_->native()) << "\"\n";
-	msg::Hello hello(getMacAddress(socket_->native()));
+	std::string mac = getMacAddress(socket_->native());
+	if (mac.empty())
+		mac = "00:00:00:00:00:00";
+	logO << "My MAC: \"" << mac << "\"\n";
+	msg::Hello hello(mac);
 	send(&hello);
 	connected_ = true;
 	logS(kLogNotice) << "Connected to " << socket_->remote_endpoint().address().to_string() << endl;
