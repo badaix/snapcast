@@ -16,15 +16,14 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
-#include <boost/program_options.hpp>
+#include <getopt.h>
 #include <chrono>
 #include <memory>
-
 #include <sys/resource.h>
+
+#include "common/daemon.h"
 #include "common/timeDefs.h"
 #include "common/signalHandler.h"
-#include "common/daemon.h"
-#include "common/log.h"
 #include "common/snapException.h"
 #include "message/sampleFormat.h"
 #include "message/message.h"
@@ -32,58 +31,106 @@
 #include "streamServer.h"
 #include "publishAvahi.h"
 #include "config.h"
+#include "common/log.h"
 
 
 bool g_terminated = false;
-
-namespace po = boost::program_options;
+std::condition_variable terminateSignaled;
 
 using namespace std;
 
 
-std::condition_variable terminateSignaled;
 
 int main(int argc, char* argv[])
 {
 	try
 	{
 		StreamServerSettings settings;
-		int runAsDaemon;
+		bool runAsDaemon(false);
+		int processPriority(-3);
 		string sampleFormat;
 
-		po::options_description desc("Allowed options");
-		desc.add_options()
-		("help,h", "produce help message")
-		("version,v", "show version number")
-		("port,p", po::value<size_t>(&settings.port)->default_value(settings.port), "server port")
-		("controlPort", po::value<size_t>(&settings.controlPort)->default_value(settings.controlPort), "Remote control port")
-		("sampleformat,s", po::value<string>(&sampleFormat)->default_value(settings.sampleFormat.getFormat()), "sample format")
-		("codec,c", po::value<string>(&settings.codec)->default_value(settings.codec), "transport codec [flac|ogg|pcm][:options]. Type codec:? to get codec specific options")
-		("fifo,f", po::value<string>(&settings.fifoName)->default_value(settings.fifoName), "name of the input fifo file")
-		("daemon,d", po::value<int>(&runAsDaemon)->implicit_value(-3), "daemonize, optional process priority [-20..19]")
-		("buffer,b", po::value<int32_t>(&settings.bufferMs)->default_value(settings.bufferMs), "buffer [ms]")
-		("pipeReadBuffer", po::value<size_t>(&settings.pipeReadMs)->default_value(settings.pipeReadMs), "pipe read buffer [ms]")
-		;
-
-		po::variables_map vm;
-		po::store(po::parse_command_line(argc, argv, desc), vm);
-		po::notify(vm);
-
-		if (vm.count("help"))
+		while (1)
 		{
-			cout << desc << "\n";
-			return 1;
-		}
+			int option_index = 0;
+			static struct option long_options[] =
+			{
+				{"help",           no_argument,       0, 'h'},
+				{"version",        no_argument,       0, 'v'},
+				{"port",           required_argument, 0, 'p'},
+				{"controlPort",    required_argument, 0,  0 },
+				{"sampleformat",   required_argument, 0, 's'},
+				{"codec",          required_argument, 0, 'c'},
+				{"fifo",           required_argument, 0, 'f'},
+				{"daemon",         optional_argument, 0, 'd'},
+				{"buffer",         required_argument, 0, 'b'},
+				{"pipeReadBuffer", required_argument, 0,  0 },
+				{0,                0,                 0,  0 }
+			};
 
-		if (vm.count("version"))
-		{
-			cout << "snapserver " << VERSION << "\n"
-				 << "Copyright (C) 2014, 2015 BadAix (snapcast@badaix.de).\n"
-				 << "License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>.\n"
-				 << "This is free software: you are free to change and redistribute it.\n"
-				 << "There is NO WARRANTY, to the extent permitted by law.\n\n"
-				 << "Written by Johannes Pohl.\n";
-			return 1;
+			char c = getopt_long(argc, argv, "hvp:s:c:f:d::b:", long_options, &option_index);
+			if (c == -1)
+				break;
+
+			switch (c)
+			{
+				case 0:
+					if (strcmp(long_options[option_index].name, "controlPort") == 0)
+						settings.controlPort = atoi(optarg);
+					else if (strcmp(long_options[option_index].name, "pipeReadBuffer") == 0)
+						settings.pipeReadMs = atoi(optarg);
+					break;
+
+				case 'v':
+					cout << "snapserver " << VERSION << "\n"
+						<< "Copyright (C) 2014, 2015 BadAix (snapcast@badaix.de).\n"
+						<< "License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>.\n"
+						<< "This is free software: you are free to change and redistribute it.\n"
+						<< "There is NO WARRANTY, to the extent permitted by law.\n\n"
+						<< "Written by Johannes Pohl.\n";
+					exit(EXIT_SUCCESS);
+
+				case 'p':
+					settings.port = atoi(optarg);
+					break;
+
+				case 's':
+					settings.sampleFormat = string(optarg);
+					break;
+
+				case 'c':
+					settings.codec = optarg;
+					break;
+
+				case 'f':
+					settings.fifoName = optarg;
+					break;
+
+				case 'd':
+					runAsDaemon = true;
+					if (optarg)
+						processPriority = atoi(optarg);
+					break;
+
+				case 'b':
+					settings.bufferMs = atoi(optarg);
+					break;
+
+				default: //?
+					cout << "Allowed options:\n\n"
+						<< "  -h, --help        \t\t\t produce help message\n"
+						<< "  -v, --version     \t\t\t show version number\n"
+						<< "  -p, --port arg (=" << settings.port << ")\t\t server port\n"
+						<< "      --controlPort arg (=" << settings.controlPort << ")\t\t Remote control port\n"
+						<< "  -s, --sampleformat arg(=" << settings.sampleFormat.getFormat() << ")\t sample format\n"
+						<< "  -c, --codec arg(=" << settings.codec << ")\t\t transport codec [flac|ogg|pcm][:options]. Type codec:? to get codec specific options\n"
+						<< "  -f, --fifo arg(=" << settings.fifoName << ")\t name of the input fifo file\n"
+						<< "  -d, --daemon [arg(=" << processPriority << ")]\t\t daemonize, optional process priority [-20..19]\n"
+						<< "  -b, --buffer arg(=" << settings.bufferMs << ")\t\t buffer [ms]\n"
+						<< "      --pipeReadBuffer arg(=" << settings.pipeReadMs << ")\t\t pipe read buffer [ms]\n"
+						<< "\n";
+					exit(EXIT_FAILURE);
+			}
 		}
 
 		if (settings.codec.find(":?") != string::npos)
@@ -106,15 +153,16 @@ int main(int argc, char* argv[])
 		signal(SIGTERM, signal_handler);
 		signal(SIGINT, signal_handler);
 
-		if (vm.count("daemon"))
+		if (runAsDaemon)
 		{
 			daemonize("/var/run/snapserver.pid");
-			if (runAsDaemon < -20)
-				runAsDaemon = -20;
-			else if (runAsDaemon > 19)
-				runAsDaemon = 19;
-			setpriority(PRIO_PROCESS, 0, runAsDaemon);
-			logS(kLogNotice) << "daemon started." << endl;
+			if (processPriority < -20)
+				processPriority = -20;
+			else if (processPriority > 19)
+				processPriority = 19;
+			if (processPriority != 0)
+				setpriority(PRIO_PROCESS, 0, processPriority);
+			logS(kLogNotice) << "daemon started" << std::endl;
 		}
 
 		PublishAvahi publishAvahi("SnapCast");
@@ -125,7 +173,6 @@ int main(int argc, char* argv[])
 
 		if (settings.bufferMs < 400)
 			settings.bufferMs = 400;
-		settings.sampleFormat = sampleFormat;
 
 		asio::io_service io_service;
 		std::unique_ptr<StreamServer> streamServer(new StreamServer(&io_service, settings));

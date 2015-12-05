@@ -23,6 +23,8 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <syslog.h>
+#include <unistd.h>
+#include <string.h>
 
 int pidFilehandle;
 

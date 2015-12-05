@@ -77,7 +77,7 @@ void SampleFormat::setFormat(uint32_t rate, uint16_t bits, uint16_t channels)
 	if (bits == 24)
 		sampleSize = 4;
 	frameSize = channels*sampleSize;
-	logD << "SampleFormat: " << rate << ":" << bits << ":" << channels << "\n";
+//	logD << "SampleFormat: " << rate << ":" << bits << ":" << channels << "\n";
 }
 
 }

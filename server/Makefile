@@ -3,8 +3,8 @@ TARGET  = snapserver
 SHELL = /bin/bash
 
 CXX     = /usr/bin/g++
-CFLAGS  = -std=c++0x -Wall -Wno-unused-function -O3 -pthread -DVERSION=\"$(VERSION)\" -I.. -I../externals/asio/asio/include
-LDFLAGS = -lrt -lboost_system -lboost_program_options -lvorbis -lvorbisenc -logg -lFLAC -lavahi-client -lavahi-common
+CFLAGS  = -std=c++0x -Wall -Wno-unused-function -O3 -pthread -DASIO_STANDALONE -DVERSION=\"$(VERSION)\" -I.. -I../externals/asio/asio/include
+LDFLAGS = -lrt -lvorbis -lvorbisenc -logg -lFLAC -lavahi-client -lavahi-common
 
 OBJ = snapServer.o config.o controlServer.o controlSession.o streamServer.o streamSession.o json/jsonrpc.o pcmreader/pcmReader.o pcmreader/pipeReader.o encoder/encoderFactory.o encoder/flacEncoder.o encoder/pcmEncoder.o encoder/oggEncoder.o publishAvahi.o ../common/log.o ../message/pcmChunk.o ../message/sampleFormat.o
 BIN = snapserver
