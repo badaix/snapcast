@@ -1,6 +1,3 @@
 [submodule "externals/asio"]
 	path = externals/asio
 	url = https://github.com/chriskohlhoff/asio.git
-[submodule "externals/tclap"]
-	path = externals/tclap
-	url = https://github.com/eile/tclap.git
