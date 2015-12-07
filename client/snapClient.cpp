@@ -174,7 +174,7 @@ int main (int argc, char **argv)
 			exit(EXIT_FAILURE);
 		}
 
-		if (!host.empty())
+		if (host.empty())
 		{
 			BrowseAvahi browseAvahi;
 			AvahiResult avahiResult;
