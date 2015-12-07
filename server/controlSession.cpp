@@ -56,9 +56,9 @@ void ControlSession::stop()
 		if (socket_)
 		{
 			socket_->shutdown(asio::ip::tcp::socket::shutdown_both, ec);
-			if (ec) logE << "Error in socket shutdown: " << ec << "\n";
+			if (ec) logE << "Error in socket shutdown: " << ec.message() << "\n";
 			socket_->close(ec);
-			if (ec) logE << "Error in socket close: " << ec << "\n";
+			if (ec) logE << "Error in socket close: " << ec.message() << "\n";
 		}
 		if (readerThread_)
 		{

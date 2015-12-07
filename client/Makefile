@@ -2,11 +2,8 @@ VERSION = 0.3.90
 TARGET  = snapclient
 SHELL = /bin/bash
 
-#CXX     = /home/johannes/Develop/android-ndk-r10e-arm-21/bin/arm-linux-androideabi-g++
-#CFLAGS  = -std=c++0x -Wall -Wno-unused-function -O3 -pthread -DASIO_STANDALONE -DVERSION=\"$(VERSION)\" -I.. -I../externals/asio/asio/include -I../externals/tclap/include -I../externals/ezOptionParser -I/home/johannes/Develop/build/arm/include -L/home/johannes/Develop/build/arm/lib
-
 CXX     = /usr/bin/g++
-CFLAGS  = -std=c++0x -Wall -Wno-unused-function -O3 -pthread -DASIO_STANDALONE -DVERSION=\"$(VERSION)\" -I.. -I../externals/asio/asio/include -I../externals/tclap/include -I../externals/ezOptionParser
+CFLAGS  = -std=c++0x -Wall -Wno-unused-function -O3 -pthread -DASIO_STANDALONE -DVERSION=\"$(VERSION)\" -I.. -I../externals/asio/asio/include
 LDFLAGS = -lrt -lasound -logg -lvorbis -lvorbisenc -lFLAC -lavahi-client -lavahi-common
 
 OBJ = snapClient.o stream.o clientConnection.o timeProvider.o player/player.o player/alsaPlayer.o decoder/oggDecoder.o decoder/pcmDecoder.o decoder/flacDecoder.o controller.o browseAvahi.o ../message/pcmChunk.o ../common/log.o ../message/sampleFormat.o
