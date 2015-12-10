@@ -1,3 +1,6 @@
 [submodule "externals/asio"]
 	path = externals/asio
 	url = https://github.com/chriskohlhoff/asio.git
+[submodule "externals/popl"]
+	path = externals/popl
+	url = https://github.com/badaix/popl.git
