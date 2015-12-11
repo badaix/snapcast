@@ -18,8 +18,8 @@
 
 #include <iostream>
 #include <sys/resource.h>
-#include <getopt.h>
 
+#include "popl.hpp"
 #include "controller.h"
 #include "player/alsaPlayer.h"
 #include "browseAvahi.h"
@@ -29,6 +29,7 @@
 
 
 using namespace std;
+using namespace popl;
 
 bool g_terminated = false;
 
@@ -65,87 +66,64 @@ int main (int argc, char **argv)
 		string host("");
 		size_t port(1704);
 		size_t latency(0);
-		bool runAsDaemon(false);
 		int processPriority(-3);
 
-		while (1)
+		Switch helpSwitch("", "help", "produce help message");
+		Switch versionSwitch("v", "version", "show version number");
+		Switch listSwitch("l", "list", "list pcm devices");
+		Value<string> hostValue("h", "host", "server hostname or ip address", "", &host);
+		Value<size_t> portValue("p", "port", "server port", 1704, &port);
+		Value<string> soundcardValue("s", "soundcard", "index or name of the soundcard", "default", &soundcard);
+		Implicit<int> daemonOption("d", "daemon", "daemonize, optional process priority [-20..19]", -3, &processPriority);
+		Value<size_t> latencyValue("", "latency", "latency of the soundcard", 0, &latency);
+
+		OptionParser op("Allowed options");
+		op.add(helpSwitch)
+		 .add(versionSwitch)
+		 .add(listSwitch)
+		 .add(hostValue)
+		 .add(portValue)
+		 .add(soundcardValue)
+		 .add(daemonOption)
+		 .add(latencyValue);
+
+		try
 		{
-			int option_index = 0;
-			static struct option long_options[] =
+			op.parse(argc, argv);
+		}
+		catch (const std::invalid_argument& e)
+		{
+			logS(kLogErr) << "Exception: " << e.what() << std::endl;
+			cout << "\n" << op << "\n";
+			exit(EXIT_FAILURE);
+		}
+
+		if (versionSwitch.isSet())
+		{
+			cout << "snapclient v" << VERSION << "\n"
+				<< "Copyright (C) 2014, 2015 BadAix (snapcast@badaix.de).\n"
+				<< "License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>.\n"
+				<< "This is free software: you are free to change and redistribute it.\n"
+				<< "There is NO WARRANTY, to the extent permitted by law.\n\n"
+				<< "Written by Johannes M. Pohl.\n\n";
+			exit(EXIT_SUCCESS);
+		}
+
+		if (listSwitch.isSet())
+		{
+			vector<PcmDevice> pcmDevices = AlsaPlayer::pcm_list();
+			for (auto dev: pcmDevices)
 			{
-				{"help",      no_argument,       0, '?'},
-				{"version",   no_argument,       0, 'v'},
-				{"list",      no_argument,       0, 'l'},
-				{"host",      required_argument, 0, 'h'},
-				{"port",      required_argument, 0, 'p'},
-				{"soundcard", required_argument, 0, 's'},
-				{"daemon",    optional_argument, 0, 'd'},
-				{"latency",   required_argument, 0,  0 },
-				{0,           0,                 0,  0 }
-			};
-
-			char c = getopt_long(argc, argv, "?vlh:p:s:d::", long_options, &option_index);
-			if (c == -1)
-				break;
-
-			switch (c)
-			{
-				case 0:
-					if (strcmp(long_options[option_index].name, "latency") == 0)
-						latency = atoi(optarg);
-					break;
-
-				case 'v':
-					cout << "snapclient v" << VERSION << "\n"
-						<< "Copyright (C) 2014, 2015 BadAix (snapcast@badaix.de).\n"
-						<< "License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>.\n"
-						<< "This is free software: you are free to change and redistribute it.\n"
-						<< "There is NO WARRANTY, to the extent permitted by law.\n\n"
-						<< "Written by Johannes M. Pohl.\n\n";
-					exit(EXIT_SUCCESS);
-
-				case 'l':
-					{
-						vector<PcmDevice> pcmDevices = AlsaPlayer::pcm_list();
-						for (auto dev: pcmDevices)
-						{
-							cout << dev.idx << ": " << dev.name << "\n"
-								<< dev.description << "\n\n";
-						}
-						exit(EXIT_SUCCESS);
-					}
-
-				case 'h':
-					host = optarg;
-					break;
-
-				case 'p':
-					port = atoi(optarg);
-					break;
-
-				case 's':
-					soundcard = optarg;
-					break;
-
-				case 'd':
-					runAsDaemon = true;
-					if (optarg)
-						processPriority = atoi(optarg);
-					break;
-
-				default: //?
-					cout << "Allowed options:\n\n"
-						<< "      --help        \t\t produce help message\n"
-						<< "  -v, --version     \t\t show version number\n"
-						<< "  -l, --list        \t\t list pcm devices\n"
-						<< "  -h, --host arg    \t\t server hostname or ip address\n"
-						<< "  -p, --port arg (=" << port << ")\t server port\n"
-						<< "  -s, --soundcard arg(=" << soundcard << ")\t index or name of the soundcard\n"
-						<< "  -d, --daemon [arg(=" << processPriority << ")]\t daemonize, optional process priority [-20..19]\n"
-						<< "      --latency arg(=" << latency << ")\t\t latency of the soundcard [ms]\n"
-						<< "\n";
-					exit(EXIT_FAILURE);
+				cout << dev.idx << ": " << dev.name << "\n"
+					<< dev.description << "\n\n";
 			}
+			exit(EXIT_SUCCESS);
+		}
+
+		if (helpSwitch.isSet())
+		{
+			cout << op << "\n";
+			exit(EXIT_SUCCESS);
 		}
 
 
@@ -155,7 +133,7 @@ int main (int argc, char **argv)
 		signal(SIGTERM, signal_handler);
 		signal(SIGINT, signal_handler);
 
-		if (runAsDaemon)
+		if (daemonOption.isSet())
 		{
 			daemonize("/var/run/snapclient.pid");
 			if (processPriority < -20)
