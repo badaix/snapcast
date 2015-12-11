@@ -30,4 +30,5 @@
 *.*~
 client/snapclient
 server/snapserver
+.vscode
 
