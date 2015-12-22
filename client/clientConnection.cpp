@@ -87,9 +87,9 @@ void ClientConnection::stop()
 		if (socket_)
 		{
 			socket_->shutdown(boost::asio::ip::tcp::socket::shutdown_both, ec);
-			if (ec) logE << "Error in socket shutdown: " << ec << endl;
+			if (ec) logE << "Error in socket shutdown: " << ec.message() << endl;
 			socket_->close(ec);
-			if (ec) logE << "Error in socket close: " << ec << endl;
+			if (ec) logE << "Error in socket close: " << ec.message() << endl;
 		}
 		if (readerThread_)
 		{
