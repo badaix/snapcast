@@ -94,21 +94,12 @@ struct tv
 		tv result(*this);
 		result.sec -= other.sec;
 		result.usec -= other.usec;
-		if (result.usec > 0)
+		while (result.usec < 0)
 		{
-			result.sec += 1;
-			result.usec = 1000000 - result.usec;
+			result.sec -= 1;
+			result.usec += 1000000;
 		}
-		else if (result.usec < 0)
-		{
-			result.usec *= -1;
-		}
-		/*		else if (result.usec >= 1000000)
-				{
-					result.usec -= 1000000;
-					result.sec += 1;
-				}
-		*/		return result;
+		return result;
 	}
 };
 
