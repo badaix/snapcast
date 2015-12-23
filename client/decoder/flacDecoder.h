@@ -18,7 +18,26 @@
 
 #ifndef FLAC_DECODER_H
 #define FLAC_DECODER_H
+
 #include "decoder.h"
+
+struct CacheInfo
+{
+	CacheInfo() : sampleRate_(0)
+	{
+		reset();
+	}
+
+	void reset()
+	{
+		isCachedChunk_ = true;
+		cachedBlocks_ = 0;
+	}
+
+	bool isCachedChunk_;
+	size_t cachedBlocks_;
+	size_t sampleRate_;
+};
 
 
 class FlacDecoder : public Decoder
@@ -28,6 +47,8 @@ public:
 	virtual ~FlacDecoder();
 	virtual bool decode(msg::PcmChunk* chunk);
 	virtual bool setHeader(msg::Header* chunk);
+
+	CacheInfo cacheInfo_;
 };
 
 

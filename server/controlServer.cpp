@@ -104,6 +104,7 @@ void ControlServer::handleAccept(socket_ptr socket)
 	tv.tv_usec = 0;
 	setsockopt(socket->native(), SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
 	setsockopt(socket->native(), SOL_SOCKET, SO_SNDTIMEO, &tv, sizeof(tv));
+//	socket->set_option(boost::asio::ip::tcp::no_delay(false));
 	logS(kLogNotice) << "ControlServer::NewConnection: " << socket->remote_endpoint().address().to_string() << endl;
 	shared_ptr<ControlSession> session = make_shared<ControlSession>(this, socket);
 	{
