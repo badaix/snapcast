@@ -1,4 +1,4 @@
-VERSION = 0.3.2
+VERSION = 0.3.4
 TARGET  = snapserver
 SHELL = /bin/bash
 
