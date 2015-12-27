@@ -1,9 +1,11 @@
 [Unit]
-Description=SnapClient
+Description=Snapcast client
 After=network.target
 
 [Service]
-ExecStart=/usr/sbin/snapclient
+Type=forking
+ExecStart=/usr/sbin/snapclient -d
+PIDFile=/var/run/snapclient.pid
 
 [Install]
 WantedBy=multi-user.target
