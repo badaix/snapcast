@@ -58,7 +58,7 @@ int main(int argc, char* argv[])
 		("sampleformat,s", po::value<string>(&sampleFormat)->default_value(settings.sampleFormat.getFormat()), "sample format")
 		("codec,c", po::value<string>(&settings.codec)->default_value(settings.codec), "transport codec [flac|ogg|pcm][:options]. Type codec:? to get codec specific options")
 		("fifo,f", po::value<string>(&settings.fifoName)->default_value(settings.fifoName), "name of the input fifo file")
-		("daemon,d", po::value<int>(&runAsDaemon)->implicit_value(-3), "daemonize, optional process priority [-20..19]")
+		("daemon,d", po::value<int>(&runAsDaemon)->implicit_value(0), "daemonize, optional process priority [-20..19]")
 		("buffer,b", po::value<int32_t>(&settings.bufferMs)->default_value(settings.bufferMs), "buffer [ms]")
 		("pipeReadBuffer", po::value<size_t>(&settings.pipeReadMs)->default_value(settings.pipeReadMs), "pipe read buffer [ms]")
 		;
