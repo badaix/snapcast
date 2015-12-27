@@ -15,7 +15,7 @@
 
 # PATH should only include /usr/* if it runs after the mountnfs.sh script
 PATH=/sbin:/usr/sbin:/bin:/usr/bin:/
-DESC="Snapclient"
+DESC="Snapcast client"
 NAME=snapclient
 DAEMON=/usr/sbin/$NAME
 DAEMON_ARGS="-d"
