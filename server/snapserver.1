@@ -1,0 +1,54 @@
+.TH SNAPSERVER 1 "December 2015"
+.SH NAME
+snapserver - Snapcast server
+.SH SYNOPSIS
+\fBsnapserver\fR [\fIOPTION\fR]...
+.SH DESCRIPTION
+SnapCast is a multi-room client-server audio player, where all clients are
+time synchronized with the server to play perfectly synced audio. It's not a
+standalone player, but an extension that turns your existing audio player into
+a Sonos-like multi-room solution.
+.br
+The server's audio input is a named pipe `/tmp/snapfifo`. All data that is fed
+into this file will be send to the connected clients. One of the most generic
+ways to use SnapCast is in conjunction with the music player daemon or Mopidy,
+which can be configured to use a named pipe as audio output.
+.SS Options
+.TP
+\fB-h, --help\fR
+produce help message
+.TP
+\fB-v, --version\fR
+show version number
+.TP
+\fB-p, --port\fR
+server port
+.TP
+\fB-s, --sampleformat\fR
+sample format (default = 44100:16:2)
+.TP
+\fB-c, --codec\fR
+transport codec [flac|ogg|pcm][:options]. Type codec:? to get codec specific options
+.TP
+\fB-f, --fifo\fR
+name of the input fifo file (default = /tmp/snapfifo)
+.TP
+\fB-d, --daemon\fR
+daemonize, optional process priority [-20..19]
+.TP
+\fB-b, --buffer\fR
+buffer [ms] (default = 1000)
+.TP
+\fB--pipeReadBuffer\fR
+pipe read buffer [ms] (default = 20)
+.SH FILES
+.TP
+\fC/tmp/snapfifo\fR
+PCM input fifo file
+.SH "COPYRIGHT"
+Copyright (C) 2014-2016 Johannes Pohl (johannes.pohl@badaix.de).
+License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>.
+This is free software: you are free to change and redistribute it.
+There is NO WARRANTY, to the extent permitted by law.
+.SH "SEE ALSO"
+snapclient(1)
