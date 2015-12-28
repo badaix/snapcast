@@ -14,6 +14,7 @@ Description: Snapcast server
  time synchronized with the server to play perfectly synced audio. It's not a
  standalone player, but an extension that turns your existing audio player into
  a Sonos-like multi-room solution.
+ .
  The server's audio input is a named pipe `/tmp/snapfifo`. All data that is fed
  into this file will be send to the connected clients. One of the most generic
  ways to use SnapCast is in conjunction with the music player daemon or Mopidy,
