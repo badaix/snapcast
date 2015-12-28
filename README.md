@@ -24,6 +24,9 @@ Typically the deviation is < 1ms.
 
 Installation
 ------------
+You can either build and install snapcast from source, or on debian systems install a prebuild .deb package
+
+###Installation from source
 First install all packages needed to compile SnapCast
 
 For Debian derivates (e.g. Raspbian, Debian, Ubuntu, Mint):
@@ -48,6 +51,16 @@ Install SnapClient and/or SnapServer:
 
 This will copy the client and/or server binary to `/usr/sbin` and update init.d/systemd to start the client/server as a daemon.
 
+###Install debian packages
+Download the debian package for your CPU architecture from the [latest release page](https://github.com/badaix/snapcast/releases/latest), e.g. for Raspberry pi `snapclient_0.x.x_armhf.deb`  
+Install the package:
+
+    $ sudo dpkg -i snapclient_0.x.x_armhf.deb
+    
+Install missing dependencies:
+
+    $ sudo apt-get -f install
+
 
 Test
 ----
@@ -56,7 +69,7 @@ You can test your installation by copying random data into the server's fifo fil
     $ sudo cat /dev/urandom > /tmp/snapfifo
 
 All connected clients should play random noise now. You might raise the client's volume with "alsamixer".  
-When you are using a raspberry pi, you might have to change your audio output to the 3.5mm jack:
+When you are using a Raspberry pi, you might have to change your audio output to the 3.5mm jack:
 
     #The last number is the audio output with 1 being the 3.5 jack, 2 being HDMI and 0 being auto.
     $ amixer cset numid=3 1
