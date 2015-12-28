@@ -1,0 +1,67 @@
+snapserver (0.4.0) unstable; urgency=low
+
+  * Features
+    Debian packages (.deb) for amd64 and armhf
+    Added man pages
+  * Bugfixes
+    Snapserver and Snapclient are started as daemon on systemd systems (e.g. ARCH, Debian Jessie)
+  * General
+    Snapserver is started with normal process priority (changed nice from -3 to 0)
+
+ -- Johannes Pohl <johannes.pohl@badaix.de>  Mon, 28 Dec 2015 12:00:00 +0200
+
+snapserver (0.3.4) unstable; urgency=low
+
+  * Bugfixes
+    Fix synchronization bug in FLAC decoder that could cause audible dropouts
+
+ -- Johannes Pohl <johannes.pohl@badaix.de>  Wed, 23 Dec 2015 12:00:00 +0200
+
+snapserver (0.3.3) unstable; urgency=low
+
+  * Bugfixes
+    Fix Segfault when ALSA device has no description
+
+ -- Johannes Pohl <johannes.pohl@badaix.de>  Sun, 15 Nov 2015 12:00:00 +0200
+
+snapserver (0.3.2) unstable; urgency=low
+
+  * General
+    Makefile uses CXX instead of CC to invoke the c++ compiler
+  * Bugfixes
+    Time calculation for PCM chunk play-out was wrong on some gcc versions
+
+ -- Johannes Pohl <johannes.pohl@badaix.de>  Wed, 30 Sep 2015 12:00:00 +0200
+
+snapserver (0.3.1) unstable; urgency=low
+
+  * General
+    Improved stability over WiFi by avoiding simultaneous reads/writes on the socket connection
+  * Bugfixes
+    Fixed a bug in avahi browser
+
+ -- Johannes Pohl <johannes.pohl@badaix.de>  Wed, 26 Aug 2015 12:00:00 +0200
+
+snapserver (0.3.0) unstable; urgency=low
+
+  * Features
+    Configurable codec options. Run snapserver -c [flac|ogg|pcm]:? to get supported options for the codec
+    Configurable buffer size for the pipe reader (default 20ms, was 50ms before)
+    Process priority can be changed as argument to the daemon option -d<proi>. Default priority is -3
+  * Bugfixes
+    Fixed deadlock in logger
+    Fixed occasional timeouts for client to server requests (e.g. time sync commands)
+    Client didn't connect to a local server if the loopback device is the only device with an address
+  * General
+    Code clean up
+    Refactored encoding for lower latency
+
+ -- Johannes Pohl <johannes.pohl@badaix.de>  Sun, 16 Aug 2015 19:25:51 +0100
+
+snapserver (0.2.1) unstable; urgency=low
+
+  * Features
+    Arch Linux compatibility
+
+ -- Johannes Pohl <johannes.pohl@badaix.de>  Fri, 24 Jul 2015 15:47:00 +0100
+

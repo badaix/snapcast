@@ -1,10 +1,17 @@
-VERSION = 0.3.4
+VERSION = 0.4.0
 TARGET  = snapclient
 SHELL = /bin/bash
 
+ifdef DESTDIR
+# dh_auto_install (Debian) sets this variable
+  TARGET_DIR = $(DESTDIR)/usr
+else
+  TARGET_DIR ?= /usr
+endif
+
 CXX     = /usr/bin/g++
-CFLAGS  = -std=c++0x -Wall -Wno-unused-function -O3 -pthread -DVERSION=\"$(VERSION)\" -I.. # -static-libgcc -static-libstdc++
-LDFLAGS = -lrt -lboost_system -lboost_program_options -lasound -logg -lvorbis -lvorbisenc -lFLAC -lavahi-client -lavahi-common
+CFLAGS  = -std=c++0x -Wall -Wno-unused-function -O3 -pthread -DVERSION=\"$(VERSION)\" -I.. #-static -static-libgcc -static-libstdc++
+LDFLAGS = -lrt -lboost_system -lboost_program_options -lasound -logg -lvorbis -lFLAC -lavahi-client -lavahi-common
 
 OBJ = snapClient.o stream.o alsaPlayer.o clientConnection.o timeProvider.o decoder/oggDecoder.o decoder/pcmDecoder.o decoder/flacDecoder.o controller.o browseAvahi.o ../message/pcmChunk.o ../common/log.o ../message/sampleFormat.o
 BIN = snapclient
@@ -21,7 +28,27 @@ $(TARGET): $(OBJ)
 clean:
 	rm -rf $(BIN) $(OBJ) *~
 
-install: $(TARGET) uninstall
+.PHONY: dpkg
+#sudo apt-get install build-essential debhelper dh-make dh-systemd quilt fakeroot lintian
+dpkg:
+	cp ../init.scripts/sysv/$(BIN) debian/$(BIN).init
+	cp ../init.scripts/systemd/$(BIN).service debian/$(BIN).service
+	dpkg-buildpackage -rfakeroot -b
+	dh_clean
+	rm -f debian/$(BIN).service
+	rm -f debian/$(BIN).init
+
+ifdef DESTDIR
+
+install:
+	install -D -g root -o root $(BIN) $(TARGET_DIR)/sbin/$(BIN)
+	install -D -g root -o root $(BIN).1 $(TARGET_DIR)/share/man/man1/$(BIN).1
+
+else
+
+install:
+	install -D -g root -o root $(BIN) $(TARGET_DIR)/sbin/$(BIN)
+	install -D -g root -o root $(BIN).1 $(TARGET_DIR)/share/man/man1/$(BIN).1
 	@if [[ `systemctl` =~ -\.mount ]]; then \
 		$(MAKE) installsystemd; \
 	elif [[ `/sbin/init --version` =~ upstart ]]; then \
@@ -32,10 +59,10 @@ install: $(TARGET) uninstall
 		echo cannot tell; \
 	fi; \
 
+endif
 
 installsystemd:
 	@echo using systemd; \
-	cp ./$(BIN) /usr/sbin/$(BIN); \
 	cp ../init.scripts/systemd/$(BIN).service /lib/systemd/system/$(BIN).service; \
 	systemctl daemon-reload; \
 	systemctl enable $(BIN); \
@@ -43,7 +70,6 @@ installsystemd:
 
 installsysv:
 	@echo using sysv; \
-	cp ./$(BIN) /usr/sbin/$(BIN); \
 	cp ../init.scripts/sysv/$(BIN) /etc/init.d/$(BIN); \
 	update-rc.d $(BIN) defaults; \
 	/etc/init.d/$(BIN) start; \
