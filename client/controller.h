@@ -24,7 +24,7 @@
 #include "decoder/decoder.h"
 #include "message/message.h"
 #include "player/pcmDevice.h"
-#include "player/alsaPlayer.h"
+#include "player/openslPlayer.h"
 #include "clientConnection.h"
 #include "stream.h"
 

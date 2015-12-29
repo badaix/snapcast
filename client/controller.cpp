@@ -20,7 +20,7 @@
 #include <iostream>
 #include <string>
 #include <memory>
-#include "decoder/oggDecoder.h"
+//#include "decoder/oggDecoder.h"
 #include "decoder/pcmDecoder.h"
 #include "decoder/flacDecoder.h"
 #include "timeProvider.h"
@@ -38,6 +38,7 @@ using namespace std;
 
 Controller::Controller() : MessageReceiver(), active_(false), sampleFormat_(NULL), decoder_(NULL), player_(nullptr), asyncException_(false)
 {
+logE << "Controller\n";
 }
 
 
@@ -112,10 +113,15 @@ bool Controller::sendTimeSyncMessage(long after)
 
 void Controller::start(const PcmDevice& pcmDevice, const std::string& host, size_t port, size_t latency)
 {
+logE << "start 1\n";
 	pcmDevice_ = pcmDevice;
+logE << "start 2\n";
 	latency_ = latency;
+logE << "start 3\n";
 	clientConnection_ = new ClientConnection(this, host, port);
+logE << "start 4\n";
 	controllerThread_ = new thread(&Controller::worker, this);
+logE << "start 5\n";
 }
 
 
@@ -154,10 +160,10 @@ void Controller::worker()
 			shared_ptr<msg::Header> headerChunk(NULL);
 			while (active_ && !(headerChunk = clientConnection_->sendReq<msg::Header>(&requestMsg)));
 			logO << "Codec: " << headerChunk->codec << "\n";
-			if (headerChunk->codec == "ogg")
-				decoder_ = new OggDecoder();
-			else if (headerChunk->codec == "pcm")
+			if (headerChunk->codec == "pcm")
 				decoder_ = new PcmDecoder();
+//			if (headerChunk->codec == "ogg")
+//				decoder_ = new OggDecoder();
 			else if (headerChunk->codec == "flac")
 				decoder_ = new FlacDecoder();
 			decoder_->setHeader(headerChunk.get());
@@ -178,7 +184,7 @@ void Controller::worker()
 			stream_ = new Stream(*sampleFormat_);
 			stream_->setBufferLen(serverSettings->bufferMs - latency_);
 
-			player_.reset(new AlsaPlayer(pcmDevice_, stream_));
+			player_.reset(new OpenslPlayer(pcmDevice_, stream_));
 			player_->setVolume(serverSettings->volume / 100.);
 			player_->start();
 
