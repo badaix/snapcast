@@ -76,6 +76,7 @@ installsysv:
 
 
 uninstall:
+	rm -f $(TARGET_DIR)/share/man/man1/$(BIN).1
 	@if [[ `systemctl` =~ -\.mount ]]; then \
 		$(MAKE) uninstallsystemd; \
 	elif [[ `/sbin/init --version` =~ upstart ]]; then \
