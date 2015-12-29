@@ -1,9 +1,11 @@
 [Unit]
-Description=SnapServer
+Description=Snapcast server
 After=network.target
 
 [Service]
-ExecStart=/usr/sbin/snapserver
+Type=forking
+ExecStart=/usr/sbin/snapserver -d
+PIDFile=/var/run/snapserver.pid
 
 [Install]
 WantedBy=multi-user.target
