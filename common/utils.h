@@ -159,6 +159,22 @@ static std::string getMacAddress(int sock)
 }
 
 
+namespace utl
+{
+	template<typename T>
+	static std::string to_string(const T& t)
+	{
+		std::stringstream ss;
+		ss << t;
+		return ss.str();
+	}
+
+	static long stoul(const std::string& s)
+	{
+		return atol(s.c_str());
+	}
+}
+
 #endif
 
 

@@ -61,9 +61,9 @@ void SampleFormat::setFormat(const std::string& format)
 	strs = split(format, ':');
 	if (strs.size() == 3)
 		setFormat(
-		    std::stoul(strs[0]),
-		    std::stoul(strs[1]),
-		    std::stoul(strs[2]));
+		    utl::stoul(strs[0]),
+		    utl::stoul(strs[1]),
+		    utl::stoul(strs[2]));
 }
 
 
