@@ -51,7 +51,7 @@ static int curBuffer = 0;
 static int framesPerBuffer;
 int sampleRate;
 
-static AndroidAudioCallback audioCallback;
+//static AndroidAudioCallback audioCallback;
 
 // This callback handler is called every time a buffer finishes playing.
 // The documentation available is very unclear about how to best manage buffers.
@@ -64,47 +64,53 @@ static void bqPlayerCallback(SLAndroidSimpleBufferQueueItf bq, void *context)
 		logE << "Wrong bq!\n";
 		return;
 	}
-		chronos::usec delay(130*1000);
-		OpenslPlayer* player = (OpenslPlayer*)context;
 
-		if (player->pubStream_->getPlayerChunk(buffer[curBuffer], delay, player->frames_))
-		{
+	OpenslPlayer* player = (OpenslPlayer*)context;
 
-			SLresult result;
-			do
-			{
-				result = (*bqPlayerBufferQueue)->Enqueue(bqPlayerBufferQueue, buffer[curBuffer], player->buff_size);
-				if (result == SL_RESULT_BUFFER_INSUFFICIENT)
-					usleep(1000);
-			}
-			while (result == SL_RESULT_BUFFER_INSUFFICIENT);
-		}
-	curBuffer ^= 1;	// Switch buffer
-
-/*	int renderedFrames = 100;//audioCallback(buffer[curBuffer], framesPerBuffer);
-
-	int sizeInBytes = framesPerBuffer * 2 * sizeof(short);
-	int byteCount = (framesPerBuffer - renderedFrames) * 4;
-	if (byteCount > 0) {
-		memset(buffer[curBuffer] + renderedFrames * 2, 0, byteCount);
-	}
-	SLresult result = (*bqPlayerBufferQueue)->Enqueue(bqPlayerBufferQueue, buffer[curBuffer], sizeInBytes);
-
-	// Comment from sample code:
-	// the most likely other result is SL_RESULT_BUFFER_INSUFFICIENT,
-	// which for this code example would indicate a programming error
-	if (result != SL_RESULT_SUCCESS)
+/*	static long lastTick = 0;
+	long now = chronos::getTickCount();
+	int diff = 0;
+	if (lastTick != 0)
 	{
-		logE << "OpenSL ES: Failed to enqueue! " << renderedFrames << " " << sizeInBytes << "\n";
+		diff = now - lastTick;
+//		logE << "diff: " << diff << ", frames: " << player->frames_  / 44.1 << "\n";
+//		if (diff <= 50)
+//		{
+//			usleep(1000 * (50 - diff));
+//			diff = 50;
+//		}
 	}
-
-	curBuffer ^= 1;	// Switch buffer
+	lastTick = chronos::getTickCount();
 */
+
+//	size_t d = player->frames_ / 0.48d;
+//	logE << "Delay: " << d << "\n";
+//	SLAndroidSimpleBufferQueueState state;
+//	(*bq)->GetState(bq, &state);
+//	cout << "bqPlayerCallback count: " << state.count << ", idx: " << state.index << "\n";
+
+//	diff = 0;
+//	chronos::usec delay((250 - diff) * 1000);
+	chronos::usec delay(250 * 1000);
+
+	if (player->pubStream_->getPlayerChunk(buffer[curBuffer], delay, player->frames_))
+	{
+
+		SLresult result;
+		do
+		{
+			result = (*bqPlayerBufferQueue)->Enqueue(bqPlayerBufferQueue, buffer[curBuffer], player->buff_size);
+			if (result == SL_RESULT_BUFFER_INSUFFICIENT)
+				usleep(1000);
+		}
+		while (result == SL_RESULT_BUFFER_INSUFFICIENT);
+	}
+	curBuffer ^= 1;	// Switch buffer
 }
 
 
 
-OpenslPlayer::OpenslPlayer(const PcmDevice& pcmDevice, Stream* stream) : Player(pcmDevice, stream), buff_(NULL), pubStream_(stream)
+OpenslPlayer::OpenslPlayer(const PcmDevice& pcmDevice, Stream* stream) : Player(pcmDevice, stream), pubStream_(stream)
 {
 }
 
@@ -125,13 +131,10 @@ void OpenslPlayer::initOpensl()
 	rate = format.rate;
 	channels = format.channels;
 
-	frames_ = 2048;
+	frames_ = rate / 20; // => 50ms
 
 	buff_size = frames_ * channels * 2 /* 2 -> sample size */;
 	logO << "frames: " << frames_ << ", channels: " << channels << ", rate: " << rate << ", buff: " << buff_size << "\n";
-	buff_ = (char *) malloc(buff_size);
-	if (buff_ == NULL)
-		logO << "NULL\n";
 
 ////	audioCallback = cb;
 	framesPerBuffer = frames_;//_FramesPerBuffer;
@@ -146,10 +149,8 @@ void OpenslPlayer::initOpensl()
 		sampleRate = 44100;
 	}
 
-logE << "1\n";
 	buffer[0] = new char[buff_size];
 	buffer[1] = new char[buff_size];
-logE << "1\n";
 
 	SLresult result;
 	// create engine
@@ -163,7 +164,6 @@ logE << "1\n";
 	assert(SL_RESULT_SUCCESS == result);
 	result = (*outputMixObject)->Realize(outputMixObject, SL_BOOLEAN_FALSE);
 	assert(SL_RESULT_SUCCESS == result);
-logE << "1\n";
 
 	SLuint32 sr = SL_SAMPLINGRATE_44_1;
 	if (sampleRate == 48000)
@@ -171,7 +171,6 @@ logE << "1\n";
 		sr = SL_SAMPLINGRATE_48;
 	}
 
-logE << "1\n";
 	SLDataLocator_AndroidSimpleBufferQueue loc_bufq = {SL_DATALOCATOR_ANDROIDSIMPLEBUFFERQUEUE, 2};
 	SLDataFormat_PCM format_pcm =
 	{
@@ -183,20 +182,24 @@ logE << "1\n";
 		SL_SPEAKER_FRONT_LEFT | SL_SPEAKER_FRONT_RIGHT,
 		SL_BYTEORDER_LITTLEENDIAN
 	};
-logE << "1\n";
 
 	SLDataSource audioSrc = {&loc_bufq, &format_pcm};
 
 	// configure audio sink
 	SLDataLocator_OutputMix loc_outmix = {SL_DATALOCATOR_OUTPUTMIX, outputMixObject};
 	SLDataSink audioSnk = {&loc_outmix, NULL};
-logE << "1\n";
 
 	// create audio player
-	const SLInterfaceID ids[2] = {SL_IID_BUFFERQUEUE, SL_IID_VOLUME};
-	const SLboolean req[2] = {SL_BOOLEAN_TRUE, SL_BOOLEAN_TRUE};
-	result = (*engineEngine)->CreateAudioPlayer(engineEngine, &bqPlayerObject, &audioSrc, &audioSnk, 2, ids, req);
+	const SLInterfaceID ids[3] = {SL_IID_ANDROIDCONFIGURATION, SL_IID_BUFFERQUEUE, SL_IID_VOLUME};
+	const SLboolean req[3] = {SL_BOOLEAN_TRUE, SL_BOOLEAN_TRUE, SL_BOOLEAN_TRUE};
+	result = (*engineEngine)->CreateAudioPlayer(engineEngine, &bqPlayerObject, &audioSrc, &audioSnk, 3, ids, req);
 	assert(SL_RESULT_SUCCESS == result);
+
+	SLAndroidConfigurationItf playerConfig;
+	result = (*bqPlayerObject)->GetInterface(bqPlayerObject, SL_IID_ANDROIDCONFIGURATION, &playerConfig);
+//	SLint32 streamType = SL_ANDROID_STREAM_MEDIA;
+	SLint32 streamType = SL_ANDROID_STREAM_VOICE;
+	result = (*playerConfig)->SetConfiguration(playerConfig, SL_ANDROID_KEY_STREAM_TYPE, &streamType, sizeof(SLint32));
 
 	result = (*bqPlayerObject)->Realize(bqPlayerObject, SL_BOOLEAN_FALSE);
 	assert(SL_RESULT_SUCCESS == result);
@@ -265,12 +268,6 @@ void OpenslPlayer::uninitOpensl()
 	delete [] buffer[0];
 	delete [] buffer[1];
 	logO << "OpenSLWrap_Shutdown - finished\n";
-
-	if (buff_ != NULL)
-	{
-		free(buff_);
-		buff_ = NULL;
-	}
 }
 
 
@@ -292,34 +289,10 @@ void OpenslPlayer::stop()
 
 void OpenslPlayer::worker()
 {
-	buff_ = (char *) malloc(buff_size);
 	while (active_)
 	{
-//		const msg::SampleFormat& sampleFormat = stream_->getFormat();
-//		logE << "worker\n";
-		chronos::usec delay(100*1000);
-		usleep(500*1000);
-continue;
-		if (stream_->getPlayerChunk(buff_, delay, frames_))
-		{
-
-			SLresult result;
-			do
-			{
-				result = (*bqPlayerBufferQueue)->Enqueue(bqPlayerBufferQueue, buff_, buff_size);
-				if (result == SL_RESULT_BUFFER_INSUFFICIENT)
-					usleep(1000);
-			}
-			while (result == SL_RESULT_BUFFER_INSUFFICIENT);
-//			logO << "got chunk: " << result << "\n";
-//			usleep(28500);
-		}
-		else
-		{
-			logO << "Failed to get chunk\n";
-			while (active_ && !stream_->waitForChunk(100))
-				logD << "Waiting for chunk\n";
-		}
+		usleep(100*1000);
+		continue;
 	}
 }
 

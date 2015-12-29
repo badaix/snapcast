@@ -37,10 +37,9 @@ public:
 	virtual void stop();
 
 public:
-	Stream* pubStream_;
-	char *buff_;
 	size_t frames_;
 	size_t buff_size;
+	Stream* pubStream_;
 
 protected:
 	void initOpensl();

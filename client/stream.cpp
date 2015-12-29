@@ -222,6 +222,7 @@ bool Stream::getPlayerChunk(void* outputBuffer, const cs::usec& outputBufferDacT
 	/// age < 0 => play in -age
 	/// age > 0 => too old
 	cs::usec age = std::chrono::duration_cast<cs::usec>(TimeProvider::serverNow() - chunk_->start()) - bufferMs_ + outputBufferDacTime;
+//	logO << "age: " << age.count() / 1000 << "\n";
 	if ((sleep_.count() == 0) && (cs::abs(age) > cs::msec(200)))
 	{
 		logO << "age > 200: " << cs::duration<cs::msec>(age) << "\n";
@@ -356,7 +357,8 @@ bool Stream::getPlayerChunk(void* outputBuffer, const cs::usec& outputBufferDacT
 			lastUpdate_ = now;
 			median_ = buffer_.median();
 			shortMedian_ = shortBuffer_.median();
-			logO << "Chunk: " << age.count()/100 << "\t" << miniBuffer_.median()/100 << "\t" << shortMedian_/100 << "\t" << median_/100 << "\t" << buffer_.size() << "\t" << cs::duration<cs::msec>(outputBufferDacTime) << "\n";
+//			logO << "Chunk: " << age.count()/100 << "\t" << miniBuffer_.median()/100 << "\t" << shortMedian_/100 << "\t" << median_/100 << "\t" << buffer_.size() << "\t" << cs::duration<cs::msec>(outputBufferDacTime) << "\n";
+			logO << "Chunk: " << age.count()/1000 << "\t" << miniBuffer_.median()/1000 << "\t" << shortMedian_/1000 << "\t" << median_/1000 << "\t" << buffer_.size() << "\t" << cs::duration<cs::msec>(outputBufferDacTime) << "\n";
 		}
 		return true;
 	}
