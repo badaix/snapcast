@@ -23,7 +23,6 @@
 #include <thread>
 #include <atomic>
 #include <vector>
-#include <alsa/asoundlib.h>
 #include "../stream.h"
 #include "pcmDevice.h"
 

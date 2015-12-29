@@ -58,7 +58,7 @@ int Log::sync()
 			std::cout << Timestamp() << " [err] " << buffer_.str() << std::flush;
 		else
 		{
-			std::cout << Timestamp() << " [" << std::to_string(priority_) << "] " << buffer_.str() << std::flush;
+			std::cout << Timestamp() << " [" << priority_ << "] " << buffer_.str() << std::flush;
 			syslog(priority_, "%s", buffer_.str().c_str());
 		}
 		buffer_.str("");
