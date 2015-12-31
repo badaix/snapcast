@@ -2,11 +2,14 @@ package de.badaix.snapcast;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 import android.content.res.AssetManager;
 import android.net.Uri;
 import android.net.nsd.NsdManager;
 import android.net.nsd.NsdServiceInfo;
+import android.net.wifi.WifiManager;
 import android.os.*;
+import android.provider.Settings;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.widget.DrawerLayout;
@@ -16,7 +19,10 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.WindowManager;
 import android.widget.Button;
+import android.widget.CheckBox;
+import android.widget.CompoundButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -32,7 +38,10 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.lang.Process;
+import java.lang.reflect.Array;
 import java.net.InetAddress;
+
+import static android.os.PowerManager.PARTIAL_WAKE_LOCK;
 
 public class MainActivity extends ActionBarActivity
         implements NavigationDrawerFragment.NavigationDrawerCallbacks {
@@ -210,8 +219,10 @@ public class MainActivity extends ActionBarActivity
         private Button buttonStart;
         private Button buttonStop;
         private TextView tvHost;
+        private CheckBox cbScreenWakelock;
         private Process process = null;
         private PowerManager.WakeLock wakeLock = null;
+        private WifiManager.WifiLock wifiWakeLock = null;
         private Thread reader = null;
         private NsdManager.DiscoveryListener mDiscoveryListener;
         private NsdManager mNsdManager = null;
@@ -242,6 +253,16 @@ public class MainActivity extends ActionBarActivity
             buttonStart = (Button) rootView.findViewById(R.id.buttonStart);
             buttonStop = (Button) rootView.findViewById(R.id.buttonStop);
             tvHost = (TextView) rootView.findViewById(R.id.tvHost);
+            cbScreenWakelock = (CheckBox) rootView.findViewById(R.id.cbScreenWakelock);
+            cbScreenWakelock.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+                @Override
+                public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
+                    if (b)
+                        getActivity().getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+                    else
+                        getActivity().getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+                }
+            });
 
             buttonScan.setOnClickListener(this);
             buttonStart.setOnClickListener(this);
@@ -264,14 +285,19 @@ public class MainActivity extends ActionBarActivity
                 File binary = new File(this.getActivity().getFilesDir(), "snapclient");
 //                    process = Runtime.getRuntime().exec("\"" + binary.getAbsolutePath() + " -h elaine -p 33229\" 2>&1");
                 android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_URGENT_AUDIO);
+
+                PowerManager powerManager = (PowerManager) this.getActivity().getSystemService(POWER_SERVICE);
+                wakeLock = powerManager.newWakeLock(PARTIAL_WAKE_LOCK, "SnapcastWakeLock");
+                wakeLock.acquire();
+
+                WifiManager wm = (WifiManager) getActivity().getSystemService(WIFI_SERVICE);
+                wifiWakeLock = wm.createWifiLock(WifiManager.WIFI_MODE_FULL_HIGH_PERF, "SnapcastWifiWakeLock");
+                wifiWakeLock.acquire();
+
                 process = new ProcessBuilder()
                         .command(binary.getAbsolutePath(), "-h", host, "-p", Integer.toString(port))
                         .redirectErrorStream(true)
                         .start();
-
-                PowerManager powerManager = (PowerManager) this.getActivity().getSystemService(POWER_SERVICE);
-                wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "Snapcast");
-                wakeLock.acquire();
 
                 Thread reader = new Thread(new Runnable() {
                     @Override
@@ -299,8 +325,11 @@ public class MainActivity extends ActionBarActivity
                 process.destroy();
             if ((wakeLock != null) && wakeLock.isHeld())
                 wakeLock.release();
+            if ((wifiWakeLock != null) && wifiWakeLock.isHeld())
+                wifiWakeLock.release();
             if (reader != null)
                 reader.interrupt();
+            getActivity().getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
             android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_DEFAULT);
         }
 
@@ -323,10 +352,21 @@ public class MainActivity extends ActionBarActivity
             // Instantiate a new DiscoveryListener
             mDiscoveryListener = new NsdManager.DiscoveryListener() {
 
+                private void setStatus(final String text) {
+                    Log.e(TAG, text);
+                    tvHost.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            tvHost.setText("Host: " + text);
+                        }
+                    });
+                }
+
                 //  Called as soon as service discovery begins.
                 @Override
                 public void onDiscoveryStarted(String regType) {
                     Log.d(TAG, "Service discovery started");
+                    setStatus("Host: searching for a Snapserver");
                 }
 
                 @Override
@@ -344,12 +384,7 @@ public class MainActivity extends ActionBarActivity
                             Log.d(TAG, "resolved: " + nsdServiceInfo);
                             host = nsdServiceInfo.getHost().getCanonicalHostName();
                             port = nsdServiceInfo.getPort();
-                            tvHost.post(new Runnable() {
-                                @Override
-                                public void run() {
-                                    tvHost.setText("Host: " + host + ":" + port);
-                                }
-                            });
+                            setStatus(host + ":" + port);
                             mNsdManager.stopServiceDiscovery(mDiscoveryListener);
                         }
                     });
@@ -369,13 +404,13 @@ public class MainActivity extends ActionBarActivity
 
                 @Override
                 public void onStartDiscoveryFailed(String serviceType, int errorCode) {
-                    Log.e(TAG, "Discovery failed: Error code:" + errorCode);
+                    setStatus("Discovery failed: Error code:" + errorCode);
                     mNsdManager.stopServiceDiscovery(this);
                 }
 
                 @Override
                 public void onStopDiscoveryFailed(String serviceType, int errorCode) {
-                    Log.e(TAG, "Discovery failed: Error code:" + errorCode);
+                    setStatus("Discovery failed: Error code:" + errorCode);
                     mNsdManager.stopServiceDiscovery(this);
                 }
             };
