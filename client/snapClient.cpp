@@ -89,9 +89,7 @@ int main (int argc, char **argv)
 
 		try
 		{
-logO << "1\n";
 			op.parse(argc, argv);
-logO << "2\n";
 		}
 		catch (const std::invalid_argument& e)
 		{

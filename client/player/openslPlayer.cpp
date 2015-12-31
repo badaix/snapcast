@@ -29,6 +29,7 @@
 
 using namespace std;
 
+// source: https://github.com/hrydgard/native/blob/master/android/native-audio-so.cpp
 
 // This is kinda ugly, but for simplicity I've left these as globals just like in the sample,
 // as there's not really any use case for this where we have multiple audio devices yet.
@@ -91,7 +92,7 @@ static void bqPlayerCallback(SLAndroidSimpleBufferQueueItf bq, void *context)
 
 //	diff = 0;
 //	chronos::usec delay((250 - diff) * 1000);
-	chronos::usec delay(250 * 1000);
+	chronos::usec delay(150 * 1000);
 
 	if (player->pubStream_->getPlayerChunk(buffer[curBuffer], delay, player->frames_))
 	{
@@ -197,8 +198,8 @@ void OpenslPlayer::initOpensl()
 
 	SLAndroidConfigurationItf playerConfig;
 	result = (*bqPlayerObject)->GetInterface(bqPlayerObject, SL_IID_ANDROIDCONFIGURATION, &playerConfig);
-//	SLint32 streamType = SL_ANDROID_STREAM_MEDIA;
-	SLint32 streamType = SL_ANDROID_STREAM_VOICE;
+	SLint32 streamType = SL_ANDROID_STREAM_MEDIA;
+//	SLint32 streamType = SL_ANDROID_STREAM_VOICE;
 	result = (*playerConfig)->SetConfiguration(playerConfig, SL_ANDROID_KEY_STREAM_TYPE, &streamType, sizeof(SLint32));
 
 	result = (*bqPlayerObject)->Realize(bqPlayerObject, SL_BOOLEAN_FALSE);

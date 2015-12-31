@@ -303,7 +303,7 @@ bool Stream::getPlayerChunk(void* outputBuffer, const cs::usec& outputBufferDacT
 		{
 			if (buffer_.full())
 			{
-				if (cs::usec(abs(median_)) > cs::msec(1))
+				if (cs::usec(abs(median_)) > cs::msec(2))
 				{
 					logO << "pBuffer->full() && (abs(median_) > 1): " << median_ << "\n";
 					sleep_ = cs::usec(shortMedian_);
@@ -319,7 +319,7 @@ bool Stream::getPlayerChunk(void* outputBuffer, const cs::usec& outputBufferDacT
 */			}
 			else if (shortBuffer_.full())
 			{
-				if (cs::usec(abs(shortMedian_)) > cs::msec(5))
+				if (cs::usec(abs(shortMedian_)) > cs::msec(20))
 				{
 					logO << "pShortBuffer->full() && (abs(shortMedian_) > 5): " << shortMedian_ << "\n";
 					sleep_ = cs::usec(shortMedian_);
@@ -329,7 +329,7 @@ bool Stream::getPlayerChunk(void* outputBuffer, const cs::usec& outputBufferDacT
 					setRealSampleRate(format_.rate + -shortMedian_ / 100);
 				}
 */			}
-			else if (miniBuffer_.full() && (cs::usec(abs(miniBuffer_.median())) > cs::msec(50)))
+			else if (miniBuffer_.full() && (cs::usec(abs(miniBuffer_.median())) > cs::msec(200)))
 			{
 				logO << "pMiniBuffer->full() && (abs(pMiniBuffer->mean()) > 50): " << miniBuffer_.median() << "\n";
 				sleep_ = cs::usec((cs::msec::rep)miniBuffer_.mean());
