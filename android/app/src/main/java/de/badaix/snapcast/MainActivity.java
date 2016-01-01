@@ -1,9 +1,12 @@
 package de.badaix.snapcast;
 
 import android.app.Activity;
+import android.app.Notification;
+import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.content.res.AssetManager;
+import android.media.MediaPlayer;
 import android.net.Uri;
 import android.net.nsd.NsdManager;
 import android.net.nsd.NsdServiceInfo;
@@ -220,10 +223,6 @@ public class MainActivity extends ActionBarActivity
         private Button buttonStop;
         private TextView tvHost;
         private CheckBox cbScreenWakelock;
-        private Process process = null;
-        private PowerManager.WakeLock wakeLock = null;
-        private WifiManager.WifiLock wifiWakeLock = null;
-        private Thread reader = null;
         private NsdManager.DiscoveryListener mDiscoveryListener;
         private NsdManager mNsdManager = null;
         private String host = "";
@@ -280,57 +279,18 @@ public class MainActivity extends ActionBarActivity
 
 
         private void start() {
-            try {
-                stop();
-                File binary = new File(this.getActivity().getFilesDir(), "snapclient");
-//                    process = Runtime.getRuntime().exec("\"" + binary.getAbsolutePath() + " -h elaine -p 33229\" 2>&1");
-                android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_URGENT_AUDIO);
+            Intent i = new Intent(this.getActivity(), SnapclientService.class);
 
-                PowerManager powerManager = (PowerManager) this.getActivity().getSystemService(POWER_SERVICE);
-                wakeLock = powerManager.newWakeLock(PARTIAL_WAKE_LOCK, "SnapcastWakeLock");
-                wakeLock.acquire();
+            i.putExtra(SnapclientService.EXTRA_HOST, host);
+            i.putExtra(SnapclientService.EXTRA_PORT, port);
 
-                WifiManager wm = (WifiManager) getActivity().getSystemService(WIFI_SERVICE);
-                wifiWakeLock = wm.createWifiLock(WifiManager.WIFI_MODE_FULL_HIGH_PERF, "SnapcastWifiWakeLock");
-                wifiWakeLock.acquire();
+            getActivity().startService(i);
 
-                process = new ProcessBuilder()
-                        .command(binary.getAbsolutePath(), "-h", host, "-p", Integer.toString(port))
-                        .redirectErrorStream(true)
-                        .start();
-
-                Thread reader = new Thread(new Runnable() {
-                    @Override
-                    public void run() {
-                        BufferedReader bufferedReader = new BufferedReader(
-                                new InputStreamReader(process.getInputStream()));
-                        String line;
-                        try {
-                            while ((line = bufferedReader.readLine()) != null) {
-                                Log.d("Main", line);
-                            }
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                });
-                reader.start();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
         }
 
         private void stop() {
-            if (process != null)
-                process.destroy();
-            if ((wakeLock != null) && wakeLock.isHeld())
-                wakeLock.release();
-            if ((wifiWakeLock != null) && wifiWakeLock.isHeld())
-                wifiWakeLock.release();
-            if (reader != null)
-                reader.interrupt();
+            getActivity().stopService(new Intent(this.getActivity(), SnapclientService.class));
             getActivity().getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-            android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_DEFAULT);
         }
 
         @Override

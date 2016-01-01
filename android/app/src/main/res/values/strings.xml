@@ -11,4 +11,7 @@
     <string name="action_example">Example action</string>
 
     <string name="action_settings">Settings</string>
+    <string name="ticker_text">Snapclient started</string>
+    <string name="notification_title">Snapclient</string>
+    <string name="notification_message">Snapclient is running...</string>
 </resources>
