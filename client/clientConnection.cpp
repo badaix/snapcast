@@ -19,7 +19,7 @@
 #include <iostream>
 #include <mutex>
 #include "clientConnection.h"
-#include "common/utils.h"
+#include "common/compat.h"
 #include "common/snapException.h"
 #include "message/hello.h"
 #include "common/log.h"
@@ -57,7 +57,7 @@ void ClientConnection::socketRead(void* _to, size_t _bytes)
 void ClientConnection::start()
 {
 	tcp::resolver resolver(io_service_);
-	tcp::resolver::query query(tcp::v4(), host_, utl::to_string(port_), asio::ip::resolver_query_base::numeric_service);
+	tcp::resolver::query query(tcp::v4(), host_, cpt::to_string(port_), asio::ip::resolver_query_base::numeric_service);
 	auto iterator = resolver.resolve(query);
 	logO << "Connecting\n";
 	socket_.reset(new tcp::socket(io_service_));

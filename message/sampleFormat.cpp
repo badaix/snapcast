@@ -21,6 +21,7 @@
 #include <sstream>
 
 #include "sampleFormat.h"
+#include "common/compat.h"
 #include "common/utils.h"
 #include "common/log.h"
 
@@ -61,9 +62,9 @@ void SampleFormat::setFormat(const std::string& format)
 	strs = split(format, ':');
 	if (strs.size() == 3)
 		setFormat(
-		    utl::stoul(strs[0]),
-		    utl::stoul(strs[1]),
-		    utl::stoul(strs[2]));
+		    cpt::stoul(strs[0]),
+		    cpt::stoul(strs[1]),
+		    cpt::stoul(strs[2]));
 }
 
 
