@@ -21,9 +21,11 @@
 
 #include "popl.hpp"
 #include "controller.h"
-//#include "player/alsaPlayer.h"
-//#include "browseAvahi.h"
-//#include "common/daemon.h"
+#ifndef ANDROID
+#include "player/alsaPlayer.h"
+#include "browseAvahi.h"
+#include "common/daemon.h"
+#endif
 #include "common/log.h"
 #include "common/signalHandler.h"
 
@@ -35,7 +37,8 @@ bool g_terminated = false;
 
 PcmDevice getPcmDevice(const std::string& soundcard)
 {
-/*	vector<PcmDevice> pcmDevices = AlsaPlayer::pcm_list();
+#ifndef ANDROID
+	vector<PcmDevice> pcmDevices = AlsaPlayer::pcm_list();
 	int soundcardIdx = -1;
 
 	try
@@ -52,7 +55,7 @@ PcmDevice getPcmDevice(const std::string& soundcard)
 	for (auto dev: pcmDevices)
 		if (dev.name.find(soundcard) != string::npos)
 			return dev;
-*/
+#endif
 	PcmDevice pcmDevice;
 	return pcmDevice;
 }
@@ -111,13 +114,15 @@ int main (int argc, char **argv)
 
 		if (listSwitch.isSet())
 		{
-/*			vector<PcmDevice> pcmDevices = AlsaPlayer::pcm_list();
+#ifndef ANDROID
+			vector<PcmDevice> pcmDevices = AlsaPlayer::pcm_list();
 			for (auto dev: pcmDevices)
 			{
 				cout << dev.idx << ": " << dev.name << "\n"
 					<< dev.description << "\n\n";
 			}
-*/			exit(EXIT_SUCCESS);
+#endif
+			exit(EXIT_SUCCESS);
 		}
 
 		if (helpSwitch.isSet())
@@ -140,7 +145,8 @@ int main (int argc, char **argv)
 
 		if (daemonOption.isSet())
 		{
-/*			daemonize("/var/run/snapclient.pid");
+#ifndef ANDROID
+			daemonize("/var/run/snapclient.pid");
 			if (processPriority < -20)
 				processPriority = -20;
 			else if (processPriority > 19)
@@ -148,7 +154,8 @@ int main (int argc, char **argv)
 			if (processPriority != 0)
 				setpriority(PRIO_PROCESS, 0, processPriority);
 			logS(kLogNotice) << "daemon started" << std::endl;
-*/		}
+#endif
+		}
 
 		PcmDevice pcmDevice = getPcmDevice(soundcard);
 		if (pcmDevice.idx == -1)
@@ -159,7 +166,8 @@ int main (int argc, char **argv)
 
 		if (host.empty())
 		{
-/*			BrowseAvahi browseAvahi;
+#ifndef ANDROID
+			BrowseAvahi browseAvahi;
 			AvahiResult avahiResult;
 			while (!g_terminated)
 			{
@@ -179,9 +187,8 @@ int main (int argc, char **argv)
 				}
 				usleep(500*1000);
 			}
-*/		}
-
-		logO << "host: " << host << "\n";
+#endif
+		}
 
 		std::unique_ptr<Controller> controller(new Controller());
 		if (!g_terminated)
@@ -199,7 +206,9 @@ int main (int argc, char **argv)
 	}
 
 	logS(kLogNotice) << "daemon terminated." << endl;
-//	daemonShutdown();
+#ifndef ANDROID
+	daemonShutdown();
+#endif
 	exit(EXIT_SUCCESS);
 }
 

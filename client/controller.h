@@ -24,7 +24,11 @@
 #include "decoder/decoder.h"
 #include "message/message.h"
 #include "player/pcmDevice.h"
+#ifdef ANDROID
 #include "player/openslPlayer.h"
+#else
+#include "player/alsaPlayer.h"
+#endif
 #include "clientConnection.h"
 #include "stream.h"
 
