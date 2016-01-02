@@ -55,7 +55,7 @@ int main(int argc, char* argv[])
 		Value<string> sampleFormatValue("s", "sampleformat", "sample format", settings.sampleFormat.getFormat());
 		Value<string> codecValue("c", "codec", "transport codec [flac|ogg|pcm][:options]\nType codec:? to get codec specific options", settings.codec, &settings.codec);
 		Value<string> fifoValue("f", "fifo", "name of the input fifo file", settings.fifoName, &settings.fifoName);
-		Implicit<int> daemonOption("d", "daemon", "daemonize\noptional process priority [-20..19]", -3, &processPriority);
+		Implicit<int> daemonOption("d", "daemon", "daemonize\noptional process priority [-20..19]", 0, &processPriority);
 		Value<int> bufferValue("b", "buffer", "buffer [ms]", settings.bufferMs, &settings.bufferMs);
 		Value<size_t> pipeBufferValue("", "pipeReadBuffer", "pipe read buffer [ms]", settings.pipeReadMs, &settings.pipeReadMs);
 
