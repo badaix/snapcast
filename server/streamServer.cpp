@@ -92,6 +92,8 @@ void StreamServer::onResync(const PcmReader* pcmReader, double ms)
 void StreamServer::onDisconnect(StreamSession* streamSession)
 {
 	logO << "onDisconnect: " << streamSession->macAddress << "\n";
+	if (streamSession->macAddress.empty())
+		return;
 /*	auto func = [](StreamSession* s)->void{s->stop();};
 	std::thread t(func, streamSession);
 	t.detach();
@@ -213,31 +215,42 @@ void StreamServer::onMessageReceived(ControlSession* controlSession, const std::
 
 void StreamServer::onMessageReceived(StreamSession* connection, const msg::BaseMessage& baseMessage, char* buffer)
 {
-//	logO << "getNextMessage: " << baseMessage.type << ", size: " << baseMessage.size << ", id: " << baseMessage.id << ", refers: " << baseMessage.refersTo << ", sent: " << baseMessage.sent.sec << "," << baseMessage.sent.usec << ", recv: " << baseMessage.received.sec << "," << baseMessage.received.usec << "\n";
+	logO << "getNextMessage: " << baseMessage.type << ", size: " << baseMessage.size << ", id: " << baseMessage.id << ", refers: " << baseMessage.refersTo << ", sent: " << baseMessage.sent.sec << "," << baseMessage.sent.usec << ", recv: " << baseMessage.received.sec << "," << baseMessage.received.usec << "\n";
 	if (baseMessage.type == message_type::kRequest)
 	{
 		msg::Request requestMsg;
 		requestMsg.deserialize(baseMessage, buffer);
-//		logO << "request: " << requestMsg.request << "\n";
+		logO << "request: " << requestMsg.request << "\n";
 		if (requestMsg.request == kTime)
 		{
 			msg::Time timeMsg;
 			timeMsg.refersTo = requestMsg.id;
 			timeMsg.latency = (requestMsg.received.sec - requestMsg.sent.sec) + (requestMsg.received.usec - requestMsg.sent.usec) / 1000000.;
-//			logD << "Latency: " << timeMsg.latency << ", refers to: " << timeMsg.refersTo << "\n";
+			logD << "Latency: " << timeMsg.latency << ", refers to: " << timeMsg.refersTo << "\n";
 			connection->send(&timeMsg);
 		}
 		else if (requestMsg.request == kServerSettings)
 		{
+			logO << "request kServerSettings: " << connection->macAddress << "\n";
 			std::unique_lock<std::mutex> mlock(mutex_);
 			ClientInfoPtr clientInfo = Config::instance().getClientInfo(connection->macAddress, true);
-			msg::ServerSettings serverSettings;
-			serverSettings.volume = clientInfo->volume.percent;
-			serverSettings.muted = clientInfo->volume.muted;
-			serverSettings.latency = clientInfo->latency;
-			serverSettings.refersTo = requestMsg.id;
-			serverSettings.bufferMs = settings_.bufferMs;
-			connection->send(&serverSettings);
+			if (clientInfo == nullptr)
+			{
+				logE << "could not get client info for MAC: " << connection->macAddress << "\n";
+			}
+			else
+			{
+				logO << "request kServerSettings\n";
+				msg::ServerSettings serverSettings;
+				serverSettings.volume = clientInfo->volume.percent;
+				serverSettings.muted = clientInfo->volume.muted;
+				serverSettings.latency = clientInfo->latency;
+				serverSettings.refersTo = requestMsg.id;
+				serverSettings.bufferMs = settings_.bufferMs;
+				logO << "request kServerSettings\n";
+				connection->send(&serverSettings);
+				logO << "request kServerSettings\n";
+			}
 		}
 		else if (requestMsg.request == kSampleFormat)
 		{
