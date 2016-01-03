@@ -306,7 +306,7 @@ bool Stream::getPlayerChunk(void* outputBuffer, const cs::usec& outputBufferDacT
 				if (cs::usec(abs(median_)) > cs::msec(2))
 				{
 					logO << "pBuffer->full() && (abs(median_) > 1): " << median_ << "\n";
-					sleep_ = cs::usec(shortMedian_);
+					sleep_ = cs::usec(median_);
 				}
 /*				else if (cs::usec(median_) > cs::usec(300))
 				{

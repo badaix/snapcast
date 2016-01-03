@@ -131,17 +131,11 @@ int main (int argc, char **argv)
 			exit(EXIT_SUCCESS);
 		}
 
-		cout << "1\n";
-
-		logO << "1\n";
-
 		std::clog.rdbuf(new Log("snapclient", LOG_DAEMON));
 
 		signal(SIGHUP, signal_handler);
 		signal(SIGTERM, signal_handler);
 		signal(SIGINT, signal_handler);
-
-		logO << "1\n";
 
 		if (daemonOption.isSet())
 		{
