@@ -113,31 +113,12 @@ void OpenslPlayer::playerCallback(SLAndroidSimpleBufferQueueItf bq)
 
 void OpenslPlayer::initOpensl()
 {
-	unsigned int rate;
-	int channels;
-//	int buff_size;
-
 	const msg::SampleFormat& format = stream_->getFormat();
-	rate = format.rate;
-	channels = format.channels;
 
-	frames_ = rate / 20; // => 50ms
+	frames_ = 960;//rate / 50; // => 50ms
 
-	buff_size = frames_ * channels * 2 /* 2 -> sample size */;
-	logO << "frames: " << frames_ << ", channels: " << channels << ", rate: " << rate << ", buff: " << buff_size << "\n";
-
-////	audioCallback = cb;
-	framesPerBuffer = frames_;//_FramesPerBuffer;
-	if (framesPerBuffer == 0)
-		framesPerBuffer = 256;
-	if (framesPerBuffer < 32)
-		framesPerBuffer = 32;
-	sampleRate = rate;
-	if (sampleRate != 44100 && sampleRate != 48000)
-	{
-		logE << "Invalid sample rate " << sampleRate << " - choosing 44100\n";
-		sampleRate = 44100;
-	}
+	buff_size = frames_ * format.channels * 2 /* 2 -> sample size */;
+	logO << "frames: " << frames_ << ", channels: " << format.channels << ", rate: " << format.rate << ", buff: " << buff_size << "\n";
 
 	buffer[0] = new char[buff_size];
 	buffer[1] = new char[buff_size];
@@ -156,12 +137,47 @@ void OpenslPlayer::initOpensl()
 	assert(SL_RESULT_SUCCESS == result);
 
 	SLuint32 sr = SL_SAMPLINGRATE_44_1;
-	if (sampleRate == 48000)
+	switch(format.rate)
 	{
-		sr = SL_SAMPLINGRATE_48;
+		case 8000:
+ 			sr = SL_SAMPLINGRATE_8;
+ 			break;
+ 		case 11025:
+			sr = SL_SAMPLINGRATE_11_025;
+			break;
+		case 16000:
+			sr = SL_SAMPLINGRATE_16;
+			break;
+		case 22050:
+			sr = SL_SAMPLINGRATE_22_05;
+			break;
+		case 24000:
+			sr = SL_SAMPLINGRATE_24;
+			break;
+		case 32000:
+			sr = SL_SAMPLINGRATE_32;
+			break;
+		case 44100:
+			sr = SL_SAMPLINGRATE_44_1;
+			break;
+		case 48000:
+			sr = SL_SAMPLINGRATE_48;
+			break;
+		case 64000:
+			sr = SL_SAMPLINGRATE_64;
+			break;
+		case 88200:
+			sr = SL_SAMPLINGRATE_88_2;
+			break;
+		case 96000:
+			sr = SL_SAMPLINGRATE_96;
+			break;
+		case 192000:
+			sr = SL_SAMPLINGRATE_192;
+			break;
+		default:
+			throw SnapException("Sample rate not supported");
 	}
-
-	logO << "SamplingRate: " << sr/1000 << "\n";
 
 	SLDataLocator_AndroidSimpleBufferQueue loc_bufq = {SL_DATALOCATOR_ANDROIDSIMPLEBUFFERQUEUE, 2};
 	SLDataFormat_PCM format_pcm =

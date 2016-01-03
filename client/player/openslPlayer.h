@@ -66,8 +66,6 @@ protected:
 
 	// Double buffering.
 	char *buffer[2];
-	int framesPerBuffer;
-	int sampleRate;
 	int curBuffer;
 };
 
