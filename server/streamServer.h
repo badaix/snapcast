@@ -49,7 +49,7 @@ struct StreamServerSettings
 		fifoName("/tmp/snapfifo"),
 		codec("flac"),
 		bufferMs(1000),
-		sampleFormat("44100:16:2"),
+		sampleFormat("48000:16:2"),
 		pipeReadMs(20)
 	{
 	}
