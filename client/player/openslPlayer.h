@@ -19,6 +19,9 @@
 #ifndef OPEN_SL_PLAYER_H
 #define OPEN_SL_PLAYER_H
 
+#include <SLES/OpenSLES.h>
+#include <SLES/OpenSLES_Android.h>
+
 #include "player.h"
 
 typedef int (*AndroidAudioCallback)(short *buffer, int num_samples);
@@ -36,6 +39,8 @@ public:
 	virtual void start();
 	virtual void stop();
 
+	void playerCallback(SLAndroidSimpleBufferQueueItf bq);
+
 public:
 	size_t frames_;
 	size_t buff_size;
@@ -47,6 +52,23 @@ protected:
 
 	virtual void worker();
 
+	// engine interfaces
+	SLObjectItf engineObject;
+	SLEngineItf engineEngine;
+	SLObjectItf outputMixObject;
+
+	// buffer queue player interfaces
+	SLObjectItf bqPlayerObject;// = NULL;
+	SLPlayItf bqPlayerPlay;
+	SLAndroidSimpleBufferQueueItf bqPlayerBufferQueue;
+	SLMuteSoloItf bqPlayerMuteSolo;
+	SLVolumeItf bqPlayerVolume;
+
+	// Double buffering.
+	char *buffer[2];
+	int framesPerBuffer;
+	int sampleRate;
+	int curBuffer;
 };
 
 

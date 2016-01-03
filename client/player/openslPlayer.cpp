@@ -20,9 +20,6 @@
 #include <assert.h>
 #include <iostream>
 
-#include <SLES/OpenSLES.h>
-#include <SLES/OpenSLES_Android.h>
-
 #include "openslPlayer.h"
 #include "common/log.h"
 #include "common/snapException.h"
@@ -31,28 +28,6 @@ using namespace std;
 
 // source: https://github.com/hrydgard/native/blob/master/android/native-audio-so.cpp
 
-// This is kinda ugly, but for simplicity I've left these as globals just like in the sample,
-// as there's not really any use case for this where we have multiple audio devices yet.
-
-// engine interfaces
-static SLObjectItf engineObject;
-static SLEngineItf engineEngine;
-static SLObjectItf outputMixObject;
-
-// buffer queue player interfaces
-static SLObjectItf bqPlayerObject = NULL;
-static SLPlayItf bqPlayerPlay;
-static SLAndroidSimpleBufferQueueItf bqPlayerBufferQueue;
-static SLMuteSoloItf bqPlayerMuteSolo;
-static SLVolumeItf bqPlayerVolume;
-
-// Double buffering.
-static char *buffer[2];
-static int curBuffer = 0;
-static int framesPerBuffer;
-int sampleRate;
-
-//static AndroidAudioCallback audioCallback;
 
 // This callback handler is called every time a buffer finishes playing.
 // The documentation available is very unclear about how to best manage buffers.
@@ -60,13 +35,30 @@ int sampleRate;
 // and then render the next. Hopefully it's okay to spend time in this callback after having enqueued.
 static void bqPlayerCallback(SLAndroidSimpleBufferQueueItf bq, void *context)
 {
+	OpenslPlayer* player = (OpenslPlayer*)context;
+	player->playerCallback(bq);
+}
+
+
+
+OpenslPlayer::OpenslPlayer(const PcmDevice& pcmDevice, Stream* stream) : Player(pcmDevice, stream), pubStream_(stream), bqPlayerObject(NULL), curBuffer(0)
+{
+}
+
+
+OpenslPlayer::~OpenslPlayer()
+{
+	stop();
+}
+
+
+void OpenslPlayer::playerCallback(SLAndroidSimpleBufferQueueItf bq)
+{
 	if (bq != bqPlayerBufferQueue)
 	{
 		logE << "Wrong bq!\n";
 		return;
 	}
-
-	OpenslPlayer* player = (OpenslPlayer*)context;
 
 /*	static long lastTick = 0;
 	long now = chronos::getTickCount();
@@ -94,31 +86,19 @@ static void bqPlayerCallback(SLAndroidSimpleBufferQueueItf bq, void *context)
 //	chronos::usec delay((250 - diff) * 1000);
 	chronos::usec delay(150 * 1000);
 
-	if (player->pubStream_->getPlayerChunk(buffer[curBuffer], delay, player->frames_))
+	if (pubStream_->getPlayerChunk(buffer[curBuffer], delay, frames_))
 	{
 
 		SLresult result;
 		do
 		{
-			result = (*bqPlayerBufferQueue)->Enqueue(bqPlayerBufferQueue, buffer[curBuffer], player->buff_size);
+			result = (*bq)->Enqueue(bq, buffer[curBuffer], buff_size);
 			if (result == SL_RESULT_BUFFER_INSUFFICIENT)
 				usleep(1000);
 		}
 		while (result == SL_RESULT_BUFFER_INSUFFICIENT);
 	}
 	curBuffer ^= 1;	// Switch buffer
-}
-
-
-
-OpenslPlayer::OpenslPlayer(const PcmDevice& pcmDevice, Stream* stream) : Player(pcmDevice, stream), pubStream_(stream)
-{
-}
-
-
-OpenslPlayer::~OpenslPlayer()
-{
-	stop();
 }
 
 
@@ -172,6 +152,8 @@ void OpenslPlayer::initOpensl()
 		sr = SL_SAMPLINGRATE_48;
 	}
 
+	logO << "SamplingRate: " << sr/1000 << "\n";
+
 	SLDataLocator_AndroidSimpleBufferQueue loc_bufq = {SL_DATALOCATOR_ANDROIDSIMPLEBUFFERQUEUE, 2};
 	SLDataFormat_PCM format_pcm =
 	{
@@ -191,9 +173,9 @@ void OpenslPlayer::initOpensl()
 	SLDataSink audioSnk = {&loc_outmix, NULL};
 
 	// create audio player
-	const SLInterfaceID ids[3] = {SL_IID_ANDROIDCONFIGURATION, SL_IID_BUFFERQUEUE, SL_IID_VOLUME};
-	const SLboolean req[3] = {SL_BOOLEAN_TRUE, SL_BOOLEAN_TRUE, SL_BOOLEAN_TRUE};
-	result = (*engineEngine)->CreateAudioPlayer(engineEngine, &bqPlayerObject, &audioSrc, &audioSnk, 3, ids, req);
+	const SLInterfaceID ids[4] = {SL_IID_ANDROIDCONFIGURATION, SL_IID_PLAY, SL_IID_BUFFERQUEUE, SL_IID_VOLUME};
+	const SLboolean req[4] = {SL_BOOLEAN_TRUE, SL_BOOLEAN_TRUE, SL_BOOLEAN_TRUE, SL_BOOLEAN_TRUE};
+	result = (*engineEngine)->CreateAudioPlayer(engineEngine, &bqPlayerObject, &audioSrc, &audioSnk, 4, ids, req);
 	assert(SL_RESULT_SUCCESS == result);
 
 	SLAndroidConfigurationItf playerConfig;
@@ -275,13 +257,11 @@ void OpenslPlayer::uninitOpensl()
 void OpenslPlayer::start()
 {
 	initOpensl();
-	Player::start();
 }
 
 
 void OpenslPlayer::stop()
 {
-	Player::stop();
 	uninitOpensl();
 }
 
@@ -290,10 +270,5 @@ void OpenslPlayer::stop()
 
 void OpenslPlayer::worker()
 {
-	while (active_)
-	{
-		usleep(100*1000);
-		continue;
-	}
 }
 
