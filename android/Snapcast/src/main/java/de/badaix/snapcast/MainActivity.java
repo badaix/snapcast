@@ -3,6 +3,7 @@ package de.badaix.snapcast;
 import android.content.Context;
 import android.content.Intent;
 import android.content.res.AssetManager;
+import android.media.AudioManager;
 import android.net.nsd.NsdManager;
 import android.net.nsd.NsdServiceInfo;
 import android.support.v7.app.ActionBarActivity;
@@ -30,6 +31,7 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
     private Button buttonStart;
     private Button buttonStop;
     private TextView tvHost;
+    private TextView tvInfo;
     private CheckBox cbScreenWakelock;
     private NsdManager.DiscoveryListener mDiscoveryListener;
     private NsdManager mNsdManager = null;
@@ -44,6 +46,7 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
         buttonStart = (Button) findViewById(R.id.buttonStart);
         buttonStop = (Button) findViewById(R.id.buttonStop);
         tvHost = (TextView) findViewById(R.id.tvHost);
+        tvInfo = (TextView) findViewById(R.id.tvInfo);
         cbScreenWakelock = (CheckBox) findViewById(R.id.cbScreenWakelock);
         cbScreenWakelock.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
@@ -58,6 +61,13 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
         buttonScan.setOnClickListener(this);
         buttonStart.setOnClickListener(this);
         buttonStop.setOnClickListener(this);
+
+        AudioManager audioManager = (AudioManager) this.getSystemService(Context.AUDIO_SERVICE);
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.JELLY_BEAN_MR1) {
+            String rate = audioManager.getProperty(AudioManager.PROPERTY_OUTPUT_SAMPLE_RATE);
+            String size = audioManager.getProperty(AudioManager.PROPERTY_OUTPUT_FRAMES_PER_BUFFER);
+            tvInfo.setText("Preferred buffer size: " + size + "\nPreferred sample rate: " + rate);
+        }
 
         copyAssets();
         initializeDiscoveryListener();
@@ -116,7 +126,7 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
 
     private void start() {
         Intent i = new Intent(this, SnapclientService.class);
-
+        i.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
         i.putExtra(SnapclientService.EXTRA_HOST, host);
         i.putExtra(SnapclientService.EXTRA_PORT, port);
 
