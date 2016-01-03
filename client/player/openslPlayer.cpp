@@ -84,20 +84,29 @@ void OpenslPlayer::playerCallback(SLAndroidSimpleBufferQueueItf bq)
 
 //	diff = 0;
 //	chronos::usec delay((250 - diff) * 1000);
+
+//	while (active_ && !stream_->waitForChunk(100))
+//		logO << "Waiting for chunk\n";
+
+	if (!active_)
+		return;
+
 	chronos::usec delay(150 * 1000);
-
-	if (pubStream_->getPlayerChunk(buffer[curBuffer], delay, frames_))
+	if (!pubStream_->getPlayerChunk(buffer[curBuffer], delay, frames_))
 	{
-
-		SLresult result;
-		do
-		{
-			result = (*bq)->Enqueue(bq, buffer[curBuffer], buff_size);
-			if (result == SL_RESULT_BUFFER_INSUFFICIENT)
-				usleep(1000);
-		}
-		while (result == SL_RESULT_BUFFER_INSUFFICIENT);
+		logO << "Failed to get chunk. Playing silence.\n";
+		memset(buffer[curBuffer], 0, buff_size);
 	}
+
+	while (active_)
+	{
+		SLresult result = (*bq)->Enqueue(bq, buffer[curBuffer], buff_size);
+		if (result == SL_RESULT_BUFFER_INSUFFICIENT)
+			usleep(1000);
+		else
+			break;
+	}
+
 	curBuffer ^= 1;	// Switch buffer
 }
 
@@ -256,12 +265,14 @@ void OpenslPlayer::uninitOpensl()
 
 void OpenslPlayer::start()
 {
+	active_ = true;
 	initOpensl();
 }
 
 
 void OpenslPlayer::stop()
 {
+	active_ = false;
 	uninitOpensl();
 }
 

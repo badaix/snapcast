@@ -82,6 +82,9 @@ void Stream::addChunk(msg::PcmChunk* chunk)
 
 bool Stream::waitForChunk(size_t ms) const
 {
+	if (!chunks_.empty())
+		return true;
+
 	std::unique_lock<std::mutex> lck(cvMutex_);
 	cv_.wait_for(lck, std::chrono::milliseconds(ms));
 	return !chunks_.empty();
