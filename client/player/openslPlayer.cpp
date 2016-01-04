@@ -113,6 +113,9 @@ void OpenslPlayer::playerCallback(SLAndroidSimpleBufferQueueItf bq)
 
 void OpenslPlayer::initOpensl()
 {
+	if (active_)
+		return;
+
 	const msg::SampleFormat& format = stream_->getFormat();
 
 	frames_ = 960;//rate / 50; // => 50ms
@@ -225,6 +228,7 @@ void OpenslPlayer::initOpensl()
 	// Render and enqueue a first buffer. (or should we just play the buffer empty?)
 	curBuffer = 0;
 ////	audioCallback(buffer[curBuffer], framesPerBuffer);
+	active_ = true;
 
 	result = (*bqPlayerBufferQueue)->Enqueue(bqPlayerBufferQueue, buffer[curBuffer], sizeof(buffer[curBuffer]));
 	if (SL_RESULT_SUCCESS != result)
@@ -236,6 +240,9 @@ void OpenslPlayer::initOpensl()
 
 void OpenslPlayer::uninitOpensl()
 {
+	if (!active_)
+		return;
+
 	logE << "uninitOpensl\n";
 	SLresult result;
 	logO << "OpenSLWrap_Shutdown - stopping playback\n";
@@ -276,19 +283,18 @@ void OpenslPlayer::uninitOpensl()
 	delete [] buffer[0];
 	delete [] buffer[1];
 	logO << "OpenSLWrap_Shutdown - finished\n";
+	active_ = false;
 }
 
 
 void OpenslPlayer::start()
 {
-	active_ = true;
 	initOpensl();
 }
 
 
 void OpenslPlayer::stop()
 {
-	active_ = false;
 	uninitOpensl();
 }
 
