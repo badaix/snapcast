@@ -23,4 +23,22 @@ http://kodi.wiki/view/JSON-RPC_API/v6#Application.SetVolume
 Sep 20 06:50:58 wohnzimmer snapclient[2358]: Exception in Controller::worker(): connect: Network is unreachable
 Sep 20 06:50:59 wohnzimmer snapclient[2358]: Exception in Controller::worker(): connect: Network is unreachable
 Sep 20 06:51:00 wohnzimmer snapclient[2358]: Exception in Controller::worker(): connect: Network is unreachable
--Limit repeaded syslog logging
+-Limit repeated syslog logging
+
+*Submodules:
+http://stackoverflow.com/questions/2140985/how-to-set-up-a-git-project-to-use-an-external-repo-submodule
+cd MyWebApp
+git submodule add git://github.com/jquery/jquery.git externals/jquery
+
+http://stackoverflow.com/questions/1777854/git-submodules-specify-a-branch-tag
+cd submodule_directory
+git checkout v1.0
+cd ..
+git add submodule_directory
+git commit -m "moved submodule to v1.0"
+git push
+
+http://stackoverflow.com/questions/3796927/how-to-git-clone-including-submodules
+git clone git://github.com/foo/bar.git
+cd bar
+git submodule update --init --recursive
