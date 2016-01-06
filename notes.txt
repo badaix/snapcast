@@ -42,3 +42,6 @@ http://stackoverflow.com/questions/3796927/how-to-git-clone-including-submodules
 git clone git://github.com/foo/bar.git
 cd bar
 git submodule update --init --recursive
+
+
+http://s.evemarket.info/images/gnome/256x256/devices/speaker.png

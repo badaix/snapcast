@@ -4,18 +4,31 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.res.AssetManager;
 import android.media.AudioManager;
+import android.net.Uri;
 import android.net.nsd.NsdManager;
 import android.net.nsd.NsdServiceInfo;
+import android.os.Build;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.WindowManager;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
+import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import com.google.android.gms.appindexing.Action;
+import com.google.android.gms.appindexing.AppIndex;
+import com.google.android.gms.common.api.GoogleApiClient;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -23,20 +36,34 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-public class MainActivity extends ActionBarActivity implements View.OnClickListener {
+import de.badaix.snapcast.control.ClientInfo;
+import de.badaix.snapcast.control.ServerInfo;
+
+public class MainActivity extends ActionBarActivity implements View.OnClickListener, TcpClient.TcpClientListener {
 
     private static final String TAG = "Main";
 
     private Button buttonScan;
     private Button buttonStart;
     private Button buttonStop;
+    private Button button;
     private TextView tvHost;
     private TextView tvInfo;
     private CheckBox cbScreenWakelock;
+    private ListView lvClient;
     private NsdManager.DiscoveryListener mDiscoveryListener;
     private NsdManager mNsdManager = null;
     private String host = "";
     private int port = 1704;
+    private TcpClient tcpClient;
+    private ServerInfo serverInfo;
+    private ClientInfoAdapter clientInfoAdapter;
+
+    /**
+     * ATTENTION: This was auto-generated to implement the App Indexing API.
+     * See https://g.co/AppIndexing/AndroidStudio for more information.
+     */
+    private GoogleApiClient client;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -45,6 +72,7 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
         buttonScan = (Button) findViewById(R.id.buttonScan);
         buttonStart = (Button) findViewById(R.id.buttonStart);
         buttonStop = (Button) findViewById(R.id.buttonStop);
+        button = (Button) findViewById(R.id.button);
         tvHost = (TextView) findViewById(R.id.tvHost);
         tvInfo = (TextView) findViewById(R.id.tvInfo);
         cbScreenWakelock = (CheckBox) findViewById(R.id.cbScreenWakelock);
@@ -58,20 +86,55 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
             }
         });
 
+        lvClient = (ListView) findViewById(R.id.lvClient);
+
         buttonScan.setOnClickListener(this);
         buttonStart.setOnClickListener(this);
         buttonStop.setOnClickListener(this);
+        button.setOnClickListener(this);
 
         AudioManager audioManager = (AudioManager) this.getSystemService(Context.AUDIO_SERVICE);
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.JELLY_BEAN_MR1) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
             String rate = audioManager.getProperty(AudioManager.PROPERTY_OUTPUT_SAMPLE_RATE);
             String size = audioManager.getProperty(AudioManager.PROPERTY_OUTPUT_FRAMES_PER_BUFFER);
             tvInfo.setText("Preferred buffer size: " + size + "\nPreferred sample rate: " + rate);
         }
 
+        serverInfo = new ServerInfo();
+        clientInfoAdapter = new ClientInfoAdapter(this, 0);
+        lvClient.setAdapter(clientInfoAdapter);
+
         copyAssets();
         initializeDiscoveryListener();
+        // ATTENTION: This was auto-generated to implement the App Indexing API.
+        // See https://g.co/AppIndexing/AndroidStudio for more information.
+        client = new GoogleApiClient.Builder(this).addApi(AppIndex.API).build();
     }
+
+    private class ClientInfoAdapter extends ArrayAdapter<ClientInfo> {
+        private Context context;
+
+        public ClientInfoAdapter(Context context, int textViewResourceId) {
+            super(context, textViewResourceId);
+            this.context = context;
+        }
+
+        @Override
+        public View getView(int position, View convertView, ViewGroup parent) {
+            ClientInfo clientInfo = getItem(position);
+            final ClientInfoItem clientInfoItem;
+
+            if (convertView != null) {
+                clientInfoItem = (ClientInfoItem) convertView;
+                clientInfoItem.setClientInfo(clientInfo);
+            } else {
+                clientInfoItem = new ClientInfoItem(context, clientInfo);
+            }
+
+            return clientInfoItem;
+        }
+    }
+
 
     private void copyAssets() {
         AssetManager assetManager = getAssets();
@@ -141,14 +204,16 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
     @Override
     public void onClick(View view) {
         if (view == buttonStart) {
-            Toast.makeText(this, "Start", Toast.LENGTH_SHORT).show();
             start();
         } else if (view == buttonStop) {
-            Toast.makeText(this, "Stop", Toast.LENGTH_SHORT).show();
             stop();
         } else if (view == buttonScan) {
             Toast.makeText(this, "Scan", Toast.LENGTH_SHORT).show();
             initializeDiscoveryListener();
+        } else if (view == button) {
+            Toast.makeText(this, "Connecting", Toast.LENGTH_SHORT).show();
+            tcpClient = new TcpClient(this);
+            tcpClient.start(host, port + 1);
         }
     }
 
@@ -222,6 +287,98 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
 
         mNsdManager = (NsdManager) getSystemService(Context.NSD_SERVICE);
         mNsdManager.discoverServices("_snapcast._tcp.", NsdManager.PROTOCOL_DNS_SD, mDiscoveryListener);
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+
+        // ATTENTION: This was auto-generated to implement the App Indexing API.
+        // See https://g.co/AppIndexing/AndroidStudio for more information.
+        client.connect();
+        Action viewAction = Action.newAction(
+                Action.TYPE_VIEW, // TODO: choose an action type.
+                "Main Page", // TODO: Define a title for the content shown.
+                // TODO: If you have web page content that matches this app activity's content,
+                // make sure this auto-generated web page URL is correct.
+                // Otherwise, set the URL to null.
+                Uri.parse("http://host/path"),
+                // TODO: Make sure this auto-generated app deep link URI is correct.
+                Uri.parse("android-app://de.badaix.snapcast/http/host/path")
+        );
+        AppIndex.AppIndexApi.start(client, viewAction);
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+
+        // ATTENTION: This was auto-generated to implement the App Indexing API.
+        // See https://g.co/AppIndexing/AndroidStudio for more information.
+        Action viewAction = Action.newAction(
+                Action.TYPE_VIEW, // TODO: choose an action type.
+                "Main Page", // TODO: Define a title for the content shown.
+                // TODO: If you have web page content that matches this app activity's content,
+                // make sure this auto-generated web page URL is correct.
+                // Otherwise, set the URL to null.
+                Uri.parse("http://host/path"),
+                // TODO: Make sure this auto-generated app deep link URI is correct.
+                Uri.parse("android-app://de.badaix.snapcast/http/host/path")
+        );
+        AppIndex.AppIndexApi.end(client, viewAction);
+        client.disconnect();
+    }
+
+    @Override
+    public void onMessageReceived(TcpClient tcpClient, String message) {
+        Log.d(TAG, "Msg received: " + message);
+        try {
+            JSONObject json = new JSONObject(message);
+            if (json.has("id")) {
+                Log.d(TAG, "ID: " + json.getString("id"));
+                if (json.getJSONObject("result").has("clients")) {
+                    JSONArray clients = json.getJSONObject("result").getJSONArray("clients");
+                    for (int i = 0; i < clients.length(); i++) {
+                        final ClientInfo clientInfo = new ClientInfo(clients.getJSONObject(i));
+                        Log.d(TAG, "ClientInfo: " + clientInfo);
+//                        clientInfoAdapter.add(clientInfo);
+                        this.runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                clientInfoAdapter.add(clientInfo);
+                            }
+                        });
+                    }
+                }
+            } else {
+                Log.d(TAG, "Notification: " + json.getString("method"));
+                if (json.getString("method").equals("Client.OnUpdate")) {
+                    final ClientInfo clientInfo = new ClientInfo(json.getJSONObject("params").getJSONObject("data"));
+                    Log.d(TAG, "ClientInfo: " + clientInfo);
+                    Log.d(TAG, "Changed: " + serverInfo.addClient(clientInfo));
+//                    clientInfoAdapter.add(clientInfo);
+                    this.runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            clientInfoAdapter.add(clientInfo);
+                        }
+                    });
+                }
+            }
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public void onConnected(TcpClient tcpClient) {
+        Log.d(TAG, "onConnected");
+        tcpClient.sendMessage("{\"jsonrpc\": \"2.0\", \"method\": \"System.GetStatus\", \"id\": 1}");
+    }
+
+    @Override
+    public void onDisconnected(TcpClient tcpClient) {
+        Log.d(TAG, "onDisconnected");
     }
 }
 
