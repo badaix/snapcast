@@ -345,7 +345,8 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
                         this.runOnUiThread(new Runnable() {
                             @Override
                             public void run() {
-                                clientInfoAdapter.add(clientInfo);
+                                if (clientInfo.isConnected())
+                                    clientInfoAdapter.add(clientInfo);
                             }
                         });
                     }
@@ -360,7 +361,8 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
                     this.runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
-                            clientInfoAdapter.add(clientInfo);
+                            if (clientInfo.isConnected())
+                                clientInfoAdapter.add(clientInfo);
                         }
                     });
                 }
