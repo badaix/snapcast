@@ -44,7 +44,7 @@ ControlServer::~ControlServer()
 }
 
 
-void ControlServer::send(const std::string& message)
+void ControlServer::send(const std::string& message, const ControlSession* excludeSession)
 {
 	std::unique_lock<std::mutex> mlock(mutex_);
 	for (auto it = sessions_.begin(); it != sessions_.end(); )
@@ -63,7 +63,10 @@ void ControlServer::send(const std::string& message)
 	}
 
 	for (auto s : sessions_)
-		s->sendAsync(message);
+	{
+		if (s.get() != excludeSession)
+			s->sendAsync(message);
+	}
 }
 
 

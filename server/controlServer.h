@@ -53,7 +53,7 @@ public:
 	void stop();
 
 	/// Send a message to all connceted clients
-	void send(const std::string& message);
+	void send(const std::string& message, const ControlSession* excludeSession = NULL);
 
 	/// Clients call this when they receive a message. Implementation of MessageReceiver::onMessageReceived
 	virtual void onMessageReceived(ControlSession* connection, const std::string& message);

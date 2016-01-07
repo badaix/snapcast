@@ -196,7 +196,7 @@ void StreamServer::onMessageReceived(ControlSession* controlSession, const std::
 
 			Config::instance().save();
 			json notification = JsonNotification::getJson("Client.OnUpdate", clientInfo->toJson());
-			controlServer_->send(notification.dump());
+			controlServer_->send(notification.dump(), controlSession);
 		}
 
 		controlSession->send(request.getResponse(response).dump());
