@@ -38,8 +38,9 @@ import java.io.OutputStream;
 
 import de.badaix.snapcast.control.ClientInfo;
 import de.badaix.snapcast.control.ServerInfo;
+import de.badaix.snapcast.control.Volume;
 
-public class MainActivity extends ActionBarActivity implements View.OnClickListener, TcpClient.TcpClientListener {
+public class MainActivity extends ActionBarActivity implements View.OnClickListener, TcpClient.TcpClientListener, ClientInfoItem.ClientInfoItemListener {
 
     private static final String TAG = "Main";
 
@@ -101,7 +102,7 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
         }
 
         serverInfo = new ServerInfo();
-        clientInfoAdapter = new ClientInfoAdapter(this, 0);
+        clientInfoAdapter = new ClientInfoAdapter(this, this);
         lvClient.setAdapter(clientInfoAdapter);
 
         copyAssets();
@@ -113,11 +114,14 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
 
     private class ClientInfoAdapter extends ArrayAdapter<ClientInfo> {
         private Context context;
+        private ClientInfoItem.ClientInfoItemListener listener;
 
-        public ClientInfoAdapter(Context context, int textViewResourceId) {
-            super(context, textViewResourceId);
+        public ClientInfoAdapter(Context context, ClientInfoItem.ClientInfoItemListener listener) {
+            super(context, 0);
             this.context = context;
+            this.listener = listener;
         }
+
 
         @Override
         public View getView(int position, View convertView, ViewGroup parent) {
@@ -130,11 +134,32 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
             } else {
                 clientInfoItem = new ClientInfoItem(context, clientInfo);
             }
-
+            clientInfoItem.setListener(listener);
             return clientInfoItem;
+        }
+
+        public void addClient(ClientInfo clientInfo) {
+            if (clientInfo == null)
+                return;
+
+            for (int i = 0; i < getCount(); i++) {
+                ClientInfo client = getItem(i);
+                if (client.getMac().equals(clientInfo.getMac())) {
+                    insert(clientInfo, i);
+                    remove(client);
+                    return;
+                }
+            }
+            add(clientInfo);
         }
     }
 
+    @Override
+    protected void onPause() {
+        if ((tcpClient != null) && (tcpClient.isConnected()))
+            tcpClient.stop();
+        super.onPause();
+    }
 
     private void copyAssets() {
         AssetManager assetManager = getAssets();
@@ -211,9 +236,13 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
             Toast.makeText(this, "Scan", Toast.LENGTH_SHORT).show();
             initializeDiscoveryListener();
         } else if (view == button) {
-            Toast.makeText(this, "Connecting", Toast.LENGTH_SHORT).show();
-            tcpClient = new TcpClient(this);
-            tcpClient.start(host, port + 1);
+            if ((tcpClient == null) || !tcpClient.isConnected()) {
+                Toast.makeText(this, "Connecting", Toast.LENGTH_SHORT).show();
+                tcpClient = new TcpClient(this);
+                tcpClient.start(host, port + 1);
+            } else {
+                tcpClient.sendMessage("{\"jsonrpc\": \"2.0\", \"method\": \"System.GetStatus\", \"id\": 1}");
+            }
         }
     }
 
@@ -336,7 +365,7 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
             JSONObject json = new JSONObject(message);
             if (json.has("id")) {
                 Log.d(TAG, "ID: " + json.getString("id"));
-                if (json.getJSONObject("result").has("clients")) {
+                if ((json.get("result") instanceof  JSONObject) &&  json.getJSONObject("result").has("clients")) {
                     JSONArray clients = json.getJSONObject("result").getJSONArray("clients");
                     for (int i = 0; i < clients.length(); i++) {
                         final ClientInfo clientInfo = new ClientInfo(clients.getJSONObject(i));
@@ -346,14 +375,14 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
                             @Override
                             public void run() {
                                 if (clientInfo.isConnected())
-                                    clientInfoAdapter.add(clientInfo);
+                                    clientInfoAdapter.addClient(clientInfo);
                             }
                         });
                     }
                 }
             } else {
                 Log.d(TAG, "Notification: " + json.getString("method"));
-                if (json.getString("method").equals("Client.OnUpdate")) {
+                if (json.getString("method").equals("Client.OnUpdate") || json.getString("method").equals("Client.OnConnect")) {
                     final ClientInfo clientInfo = new ClientInfo(json.getJSONObject("params").getJSONObject("data"));
                     Log.d(TAG, "ClientInfo: " + clientInfo);
                     Log.d(TAG, "Changed: " + serverInfo.addClient(clientInfo));
@@ -362,7 +391,7 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
                         @Override
                         public void run() {
                             if (clientInfo.isConnected())
-                                clientInfoAdapter.add(clientInfo);
+                                clientInfoAdapter.addClient(clientInfo);
                         }
                     });
                 }
@@ -382,5 +411,13 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
     public void onDisconnected(TcpClient tcpClient) {
         Log.d(TAG, "onDisconnected");
     }
+
+    @Override
+    public void onVolumeChanged(ClientInfoItem clientInfoItem, Volume volume) {
+        ClientInfo client = clientInfoItem.getClientInfo();
+        tcpClient.sendMessage("{\"jsonrpc\": \"2.0\", \"method\": \"Client.SetVolume\", \"params\": {\"client\": \"" + client.getMac() + "\", \"volume\": " + client.getVolume().getPercent() + "}, \"id\": 3}");
+    }
+
 }
+
 

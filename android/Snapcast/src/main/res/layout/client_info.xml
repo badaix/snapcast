@@ -2,11 +2,12 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="?android:attr/selectableItemBackground"
     android:gravity="center_vertical"
+    android:background="?android:attr/selectableItemBackground"
     android:minHeight="?android:attr/listPreferredItemHeight"
     android:paddingRight="?android:attr/scrollbarSize"
     android:orientation="vertical">
+<!--    android:background="@drawable/big_card"-->
 
     <RelativeLayout
         android:layout_width="wrap_content"
@@ -28,18 +29,7 @@
         android:fadingEdge="horizontal"
         android:singleLine="true"
         android:text="Title"
-        android:textAppearance="?android:attr/textAppearanceLarge" />
-
-    <TextView
-        android:id="@+id/summary"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignLeft="@id/title"
-        android:layout_below="@id/title"
-        android:maxLines="4"
-        android:text="Summary"
-        android:textAppearance="?android:attr/textAppearanceSmall"
-        android:textColor="?android:attr/textColorSecondary" />
+        android:textAppearance="?android:attr/textAppearanceMedium" />
 
     <SeekBar
         android:layout_width="match_parent"

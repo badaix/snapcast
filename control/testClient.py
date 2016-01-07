@@ -49,8 +49,8 @@ doRequest("{\"jsonrpc\": \"2.0\", \"method\": \"Client.SetMute\", \"params\": {\
 doRequest("{\"jsonrpc\": \"2.0\", \"method\": \"Client.SetMute\", \"params\": {\"client\": \"80:1f:02:ed:fd:e0\", \"mute\": false}, \"id\": 9}\r\n")
 doRequest("{\"jsonrpc\": \"2.0\", \"method\": \"Client.SetMute\", \"params\": {\"client\": \"80:1f:02:ed:fd:e0\", \"mute\": true}, \"id\": 9}\r\n")
 doRequest("{\"jsonrpc\": \"2.0\", \"method\": \"Client.SetMute\", \"params\": {\"client\": \"80:1f:02:ed:fd:e0\", \"mute\": false}, \"id\": 9}\r\n")
-doRequest("{\"jsonrpc\": \"2.0\", \"method\": \"Client.SetLatency\", \"params\": {\"client\": \"80:1f:02:ed:fd:e0\", \"latency\": 10}, \"id\": 7}\r\n")
-doRequest("{\"jsonrpc\": \"2.0\", \"method\": \"Client.SetName\", \"params\": {\"client\": \"80:1f:02:ed:fd:e0\", \"name\": \"living room\"}, \"id\": 8}\r\n")
+doRequest("{\"jsonrpc\": \"2.0\", \"method\": \"Client.SetLatency\", \"params\": {\"client\": \"80:1f:02:ed:fd:e0\", \"latency\": 0}, \"id\": 7}\r\n")
+doRequest("{\"jsonrpc\": \"2.0\", \"method\": \"Client.SetName\", \"params\": {\"client\": \"80:1f:02:ed:fd:e0\", \"name\": \"T400\"}, \"id\": 8}\r\n")
 #invalid json
 doRequest("some message to test invalid requests\r\n")
 #missing id

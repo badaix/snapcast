@@ -22,7 +22,9 @@ public class TcpClient {
     // class at on asynckTask doInBackground
     public interface TcpClientListener {
         void onMessageReceived(TcpClient tcpClient, String message);
+
         void onConnected(TcpClient tcpClient);
+
         void onDisconnected(TcpClient tcpClient);
     }
 
@@ -36,6 +38,7 @@ public class TcpClient {
     // used to read messages from the server
     private BufferedReader mBufferIn;
     private Thread worker = null;
+    private Socket socket = null;
 
     private String uid;
 
@@ -45,6 +48,12 @@ public class TcpClient {
      */
     public TcpClient(TcpClientListener listener) {
         mMessageListener = listener;
+    }
+
+    public boolean isConnected() {
+        if (socket == null)
+            return false;
+        return socket.isConnected();
     }
 
     /**
@@ -90,7 +99,7 @@ public class TcpClient {
                     Log.d(TAG, "Connecting to " + serverAddr.getCanonicalHostName() + ":" + port);
 
                     // create a socket to make the connection with the server
-                    Socket socket = new Socket(serverAddr, port);
+                    socket = new Socket(serverAddr, port);
 
                     try {
 
