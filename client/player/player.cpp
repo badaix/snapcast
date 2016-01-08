@@ -61,6 +61,25 @@ void Player::stop()
 }
 
 
+void Player::adjustVolume(char* buffer, size_t frames)
+{
+	double volume = volume_;
+	if (muted_)
+		volume = 0.;
+
+	const msg::SampleFormat& sampleFormat = stream_->getFormat();
+
+	if (volume < 1.0)
+	{
+		if (sampleFormat.bits == 8)
+			adjustVolume<int8_t>(buffer, frames*sampleFormat.channels, volume);
+		else if (sampleFormat.bits == 16)
+			adjustVolume<int16_t>(buffer, frames*sampleFormat.channels, volume);
+		else if (sampleFormat.bits == 32)
+			adjustVolume<int32_t>(buffer, frames*sampleFormat.channels, volume);
+	}
+}
+
 
 void Player::setVolume(double volume)
 {

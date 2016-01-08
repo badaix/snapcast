@@ -177,22 +177,10 @@ void AlsaPlayer::worker()
 		snd_pcm_delay(handle_, &framesDelay);
 		chronos::usec delay((chronos::usec::rep) (1000 * (double) framesDelay / stream_->getFormat().msRate()));
 //		logO << "delay: " << framesDelay << ", delay[ms]: " << delay.count() / 1000 << "\n";
-		double volume = volume_;
-		if (muted_)
-			volume = 0.;
 
-		const msg::SampleFormat& sampleFormat = stream_->getFormat();
 		if (stream_->getPlayerChunk(buff_, delay, frames_))
 		{
-			if (volume < 1.0)
-			{
-				if (sampleFormat.bits == 8)
-					adjustVolume<int8_t>(buff_, frames_*sampleFormat.channels, volume);
-				else if (sampleFormat.bits == 16)
-					adjustVolume<int16_t>(buff_, frames_*sampleFormat.channels, volume);
-				else if (sampleFormat.bits == 32)
-					adjustVolume<int32_t>(buff_, frames_*sampleFormat.channels, volume);
-			}
+			adjustVolume(buff_, frames_);
 			if ((pcm = snd_pcm_writei(handle_, buff_, frames_)) == -EPIPE)
 			{
 				logE << "XRUN\n";

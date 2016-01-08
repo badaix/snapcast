@@ -46,6 +46,16 @@ public:
 protected:
 	virtual void worker() = 0;
 
+	template <typename T>
+	void adjustVolume(char *buffer, size_t count, double volume)
+	{
+		T* bufferT = (T*)buffer;
+		for (size_t n=0; n<count; ++n)
+			bufferT[n] *= volume;
+	}
+
+	void adjustVolume(char* buffer, size_t frames);
+
 	std::atomic<bool> active_;
 	Stream* stream_;
 	std::thread playerThread_;

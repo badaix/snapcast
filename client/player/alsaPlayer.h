@@ -47,17 +47,8 @@ private:
 	void initAlsa();
 	void uninitAlsa();
 
-	template <typename T>
-	void adjustVolume(char *buffer, size_t count, double volume)
-	{
-		T* bufferT = (T*)buffer;
-		for (size_t n=0; n<count; ++n)
-			bufferT[n] *= volume;
-	}
-
 	snd_pcm_t* handle_;
 	snd_pcm_uframes_t frames_;
-
 	char *buff_;
 };
 

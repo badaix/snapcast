@@ -98,6 +98,8 @@ void OpenslPlayer::playerCallback(SLAndroidSimpleBufferQueueItf bq)
 		memset(buffer[curBuffer], 0, buff_size);
 	}
 
+	adjustVolume(buffer[curBuffer], frames_);
+
 	while (active_)
 	{
 		SLresult result = (*bq)->Enqueue(bq, buffer[curBuffer], buff_size);
