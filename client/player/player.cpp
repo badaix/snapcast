@@ -17,8 +17,11 @@
 ***/
 
 #include <iostream>
+#include <cmath>
 
 #include "player.h"
+#include "common/log.h"
+
 
 using namespace std;
 
@@ -61,7 +64,9 @@ void Player::stop()
 
 void Player::setVolume(double volume)
 {
-	volume_ = volume;
+	double base = 10.;
+	volume_ = (pow(base, volume)-1) / (base-1);
+	logD << "setVolume: " << volume << " => " << volume_ << "\n";
 }
 
 
