@@ -3,6 +3,7 @@ package de.badaix.snapcast;
 import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.SeekBar;
@@ -12,14 +13,16 @@ import android.widget.TextView;
 import de.badaix.snapcast.control.ClientInfo;
 import de.badaix.snapcast.control.Volume;
 
-public class ClientInfoItem extends LinearLayout implements SeekBar.OnSeekBarChangeListener {
+public class ClientInfoItem extends LinearLayout implements SeekBar.OnSeekBarChangeListener, View.OnClickListener {
 
     public interface ClientInfoItemListener {
-        void onVolumeChanged(ClientInfoItem clientInfoItem, Volume volume);
+        void onVolumeChanged(ClientInfoItem clientInfoItem, int percent);
+        void onMute(ClientInfoItem clientInfoItem, boolean mute);
     }
 
     private TextView title;
     private SeekBar volumeSeekBar;
+    private ImageView ivMute;
     private ClientInfo clientInfo;
     private ClientInfoItemListener listener = null;
 
@@ -30,18 +33,29 @@ public class ClientInfoItem extends LinearLayout implements SeekBar.OnSeekBarCha
         vi.inflate(R.layout.client_info, this);
         title = (TextView) findViewById(R.id.title);
         volumeSeekBar = (SeekBar) findViewById(R.id.volumeSeekBar);
+        ivMute = (ImageView) findViewById(R.id.ivMute);
+        ivMute.setImageResource(R.drawable.ic_speaker_icon);
+        ivMute.setOnClickListener(this);
         volumeSeekBar.setMax(100);
         setClientInfo(clientInfo);
         volumeSeekBar.setOnSeekBarChangeListener(this);
     }
 
-    public void setClientInfo(final ClientInfo clientInfo) {
-        this.clientInfo = clientInfo;
+    private void update() {
         if (!clientInfo.getName().isEmpty())
             title.setText(clientInfo.getName());
         else
             title.setText(clientInfo.getHost());
         volumeSeekBar.setProgress(clientInfo.getVolume().getPercent());
+        if (clientInfo.getVolume().isMuted())
+            ivMute.setImageResource(R.drawable.ic_mute_icon);
+        else
+            ivMute.setImageResource(R.drawable.ic_speaker_icon);
+    }
+
+    public void setClientInfo(final ClientInfo clientInfo) {
+        this.clientInfo = clientInfo;
+        update();
     }
 
     public ClientInfo getClientInfo() {
@@ -57,8 +71,16 @@ public class ClientInfoItem extends LinearLayout implements SeekBar.OnSeekBarCha
         if (fromUser && (listener != null)) {
             Volume volume = new Volume(progress, false);
             clientInfo.setVolume(volume);
-            listener.onVolumeChanged(this, volume);
+            listener.onVolumeChanged(this, volume.getPercent());
         }
+    }
+
+    @Override
+    public void onClick(View v) {
+        Volume volume = clientInfo.getVolume();
+        volume.setMuted(!volume.isMuted());
+        update();
+        listener.onMute(this, volume.isMuted());
     }
 
     @Override

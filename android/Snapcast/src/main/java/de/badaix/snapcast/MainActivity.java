@@ -413,9 +413,14 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
     }
 
     @Override
-    public void onVolumeChanged(ClientInfoItem clientInfoItem, Volume volume) {
+    public void onVolumeChanged(ClientInfoItem clientInfoItem, int percent) {
         ClientInfo client = clientInfoItem.getClientInfo();
-        tcpClient.sendMessage("{\"jsonrpc\": \"2.0\", \"method\": \"Client.SetVolume\", \"params\": {\"client\": \"" + client.getMac() + "\", \"volume\": " + client.getVolume().getPercent() + "}, \"id\": 3}");
+        tcpClient.sendMessage("{\"jsonrpc\": \"2.0\", \"method\": \"Client.SetVolume\", \"params\": {\"client\": \"" + client.getMac() + "\", \"volume\": " + percent + "}, \"id\": 3}");
+    }
+
+    public void onMute(ClientInfoItem clientInfoItem, boolean mute) {
+        ClientInfo client = clientInfoItem.getClientInfo();
+        tcpClient.sendMessage("{\"jsonrpc\": \"2.0\", \"method\": \"Client.SetMute\", \"params\": {\"client\": \"" + client.getMac() + "\", \"mute\": " + mute + "}, \"id\": 3}");
     }
 
 }
