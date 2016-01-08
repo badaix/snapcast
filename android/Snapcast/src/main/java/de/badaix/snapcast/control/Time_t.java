@@ -6,7 +6,7 @@ import org.json.JSONObject;
 /**
  * Created by johannes on 06.01.16.
  */
-public class Time_t {
+public class Time_t implements JsonSerialisable {
     private int sec;
     private int usec;
 
@@ -19,6 +19,7 @@ public class Time_t {
         this.usec = usec;
     }
 
+    @Override
     public void fromJson(JSONObject json) {
         try {
             sec = json.getInt("sec");
@@ -26,6 +27,18 @@ public class Time_t {
         } catch (JSONException e) {
             e.printStackTrace();
         }
+    }
+
+    @Override
+    public JSONObject toJson() {
+        JSONObject json = new JSONObject();
+        try {
+            json.put("sec", sec);
+            json.put("usec", usec);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        return json;
     }
 
     public int getSec() {

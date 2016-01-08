@@ -6,7 +6,7 @@ import org.json.JSONObject;
 /**
  * Created by johannes on 06.01.16.
  */
-public class Volume {
+public class Volume implements JsonSerialisable {
     private boolean muted;
     private int percent;
 
@@ -19,6 +19,7 @@ public class Volume {
         this.muted = muted;
     }
 
+    @Override
     public void fromJson(JSONObject json) {
         try {
             percent = json.getInt("percent");
@@ -26,6 +27,18 @@ public class Volume {
         } catch (JSONException e) {
             e.printStackTrace();
         }
+    }
+
+    @Override
+    public JSONObject toJson() {
+        JSONObject json = new JSONObject();
+        try {
+            json.put("percent", percent);
+            json.put("muted", muted);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        return json;
     }
 
     public int getPercent() {

@@ -6,7 +6,7 @@ import org.json.JSONObject;
 /**
  * Created by johannes on 06.01.16.
  */
-public class ClientInfo {
+public class ClientInfo implements JsonSerialisable {
     private String mac;
     private String ip;
     private String host;
@@ -21,6 +21,7 @@ public class ClientInfo {
         fromJson(json);
     }
 
+    @Override
     public void fromJson(JSONObject json) {
         try {
             mac = json.getString("MAC");
@@ -35,6 +36,25 @@ public class ClientInfo {
         } catch (JSONException e) {
             e.printStackTrace();
         }
+    }
+
+    @Override
+    public JSONObject toJson() {
+        JSONObject json = new JSONObject();
+        try {
+            json.put("MAC", mac);
+            json.put("IP", ip);
+            json.put("host", host);
+            json.put("version", version);
+            json.put("name", name);
+            json.put("volume", volume);
+            json.put("lastSeen", lastSeen);
+            json.put("connected", connected);
+            json.put("latency", latency);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        return json;
     }
 
     public Volume getVolume() {
