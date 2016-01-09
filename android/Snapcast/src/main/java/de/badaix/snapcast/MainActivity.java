@@ -154,12 +154,6 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
         }
     }
 
-    @Override
-    protected void onPause() {
-        if ((tcpClient != null) && (tcpClient.isConnected()))
-            tcpClient.stop();
-        super.onPause();
-    }
 
     private void copyAssets() {
         AssetManager assetManager = getAssets();
@@ -236,15 +230,28 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
             Toast.makeText(this, "Scan", Toast.LENGTH_SHORT).show();
             initializeDiscoveryListener();
         } else if (view == button) {
-            if ((tcpClient == null) || !tcpClient.isConnected()) {
-                Toast.makeText(this, "Connecting", Toast.LENGTH_SHORT).show();
-                tcpClient = new TcpClient(this);
-                tcpClient.start(host, port + 1);
-            } else {
-                tcpClient.sendMessage("{\"jsonrpc\": \"2.0\", \"method\": \"System.GetStatus\", \"id\": 1}");
-            }
+            startTcpClient();
         }
     }
+
+    private void startTcpClient() {
+        if ((tcpClient == null) || !tcpClient.isConnected()) {
+            if (tcpClient != null)
+                tcpClient.stop();
+//            Toast.makeText(this, "Connecting", Toast.LENGTH_SHORT).show();
+            tcpClient = new TcpClient(this);
+            tcpClient.start(host, port + 1);
+        } else {
+            tcpClient.sendMessage("{\"jsonrpc\": \"2.0\", \"method\": \"System.GetStatus\", \"id\": 1}");
+        }
+    }
+
+    private void stopTcpClient() {
+        if ((tcpClient != null) && (tcpClient.isConnected()))
+            tcpClient.stop();
+        tcpClient = null;
+    }
+
 
     public void initializeDiscoveryListener() {
 
@@ -253,7 +260,7 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
 
             private void setStatus(final String text) {
                 Log.e(TAG, text);
-                tvHost.post(new Runnable() {
+                MainActivity.this.runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
                         tvHost.setText("Host: " + text);
@@ -284,6 +291,7 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
                         host = nsdServiceInfo.getHost().getCanonicalHostName();
                         port = nsdServiceInfo.getPort();
                         setStatus(host + ":" + port);
+                        startTcpClient();
                         mNsdManager.stopServiceDiscovery(mDiscoveryListener);
                     }
                 });
@@ -319,9 +327,14 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
     }
 
     @Override
+    public void onResume() {
+        super.onResume();
+        startTcpClient();
+    }
+
+    @Override
     public void onStart() {
         super.onStart();
-
         // ATTENTION: This was auto-generated to implement the App Indexing API.
         // See https://g.co/AppIndexing/AndroidStudio for more information.
         client.connect();
@@ -340,6 +353,8 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
 
     @Override
     public void onStop() {
+        stopTcpClient();
+
         super.onStop();
 
         // ATTENTION: This was auto-generated to implement the App Indexing API.
@@ -365,7 +380,7 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
             JSONObject json = new JSONObject(message);
             if (json.has("id")) {
                 Log.d(TAG, "ID: " + json.getString("id"));
-                if ((json.get("result") instanceof  JSONObject) &&  json.getJSONObject("result").has("clients")) {
+                if ((json.get("result") instanceof JSONObject) && json.getJSONObject("result").has("clients")) {
                     JSONArray clients = json.getJSONObject("result").getJSONArray("clients");
                     for (int i = 0; i < clients.length(); i++) {
                         final ClientInfo clientInfo = new ClientInfo(clients.getJSONObject(i));
@@ -374,15 +389,17 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
                         this.runOnUiThread(new Runnable() {
                             @Override
                             public void run() {
-                                if (clientInfo.isConnected())
-                                    clientInfoAdapter.addClient(clientInfo);
+//                                if (clientInfo.isConnected())
+                                clientInfoAdapter.addClient(clientInfo);
                             }
                         });
                     }
                 }
             } else {
                 Log.d(TAG, "Notification: " + json.getString("method"));
-                if (json.getString("method").equals("Client.OnUpdate") || json.getString("method").equals("Client.OnConnect")) {
+                if (json.getString("method").equals("Client.OnUpdate") ||
+                        json.getString("method").equals("Client.OnConnect") ||
+                        json.getString("method").equals("Client.OnDisconnect")) {
                     final ClientInfo clientInfo = new ClientInfo(json.getJSONObject("params").getJSONObject("data"));
                     Log.d(TAG, "ClientInfo: " + clientInfo);
                     Log.d(TAG, "Changed: " + serverInfo.addClient(clientInfo));
@@ -390,8 +407,8 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
                     this.runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
-                            if (clientInfo.isConnected())
-                                clientInfoAdapter.addClient(clientInfo);
+//                            if (clientInfo.isConnected())
+                            clientInfoAdapter.addClient(clientInfo);
                         }
                     });
                 }
