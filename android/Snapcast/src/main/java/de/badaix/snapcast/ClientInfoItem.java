@@ -3,6 +3,7 @@ package de.badaix.snapcast;
 import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
@@ -22,7 +23,7 @@ public class ClientInfoItem extends LinearLayout implements SeekBar.OnSeekBarCha
 
     private TextView title;
     private SeekBar volumeSeekBar;
-    private ImageView ivMute;
+    private ImageButton ibMute;
     private ClientInfo clientInfo;
     private ClientInfoItemListener listener = null;
 
@@ -33,9 +34,9 @@ public class ClientInfoItem extends LinearLayout implements SeekBar.OnSeekBarCha
         vi.inflate(R.layout.client_info, this);
         title = (TextView) findViewById(R.id.title);
         volumeSeekBar = (SeekBar) findViewById(R.id.volumeSeekBar);
-        ivMute = (ImageView) findViewById(R.id.ivMute);
-        ivMute.setImageResource(R.drawable.ic_speaker_icon);
-        ivMute.setOnClickListener(this);
+        ibMute = (ImageButton) findViewById(R.id.ibMute);
+        ibMute.setImageResource(R.drawable.ic_speaker_icon);
+        ibMute.setOnClickListener(this);
         volumeSeekBar.setMax(100);
         setClientInfo(clientInfo);
         volumeSeekBar.setOnSeekBarChangeListener(this);
@@ -48,9 +49,9 @@ public class ClientInfoItem extends LinearLayout implements SeekBar.OnSeekBarCha
             title.setText(clientInfo.getHost());
         volumeSeekBar.setProgress(clientInfo.getVolume().getPercent());
         if (clientInfo.getVolume().isMuted())
-            ivMute.setImageResource(R.drawable.ic_mute_icon);
+            ibMute.setImageResource(R.drawable.ic_mute_icon);
         else
-            ivMute.setImageResource(R.drawable.ic_speaker_icon);
+            ibMute.setImageResource(R.drawable.ic_speaker_icon);
     }
 
     public void setClientInfo(final ClientInfo clientInfo) {

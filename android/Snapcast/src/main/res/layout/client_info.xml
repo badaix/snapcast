@@ -36,11 +36,12 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
-        <ImageView
+        <ImageButton
             android:layout_width="60dp"
             android:layout_height="match_parent"
-            android:id="@+id/ivMute"
-            android:src="@drawable/ic_speaker_icon" />
+            android:id="@+id/ibMute"
+            android:src="@drawable/ic_speaker_icon"
+            style="@style/PlayerButton" />
 
         <SeekBar
             android:layout_width="match_parent"
