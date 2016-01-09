@@ -1,25 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
+
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
+    android:background="@drawable/card_background_selector"
     android:gravity="center_vertical"
-    android:background="?android:attr/selectableItemBackground"
     android:minHeight="?android:attr/listPreferredItemHeight"
-    android:paddingRight="?android:attr/scrollbarSize"
-    android:orientation="vertical">
-<!--    android:background="@drawable/big_card"-->
-
-    <RelativeLayout
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="6dip"
-        android:layout_marginLeft="15dip"
-        android:layout_marginRight="6dip"
-        android:layout_marginTop="6dip"
-        android:layout_weight="1">
-
-
-    </RelativeLayout>
+    android:descendantFocusability="blocksDescendants"
+    android:orientation="vertical"
+    android:paddingBottom="5dp"
+    android:paddingLeft="5dp"
+    android:paddingRight="5dp"
+    android:paddingTop="5dp">
+    <!--    android:descendantFocusability="afterDescendants"-->
+    <!--    android:paddingRight="?android:attr/scrollbarSize"-->
+    <!--    android:background="@drawable/big_card"-->
 
     <TextView
         android:id="@+id/title"
@@ -32,21 +27,21 @@
         android:textAppearance="?android:attr/textAppearanceMedium" />
 
     <LinearLayout
-        android:orientation="horizontal"
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="match_parent"
+        android:orientation="horizontal">
 
         <ImageButton
+            android:id="@+id/ibMute"
+            style="@style/PlayerButton"
             android:layout_width="60dp"
             android:layout_height="match_parent"
-            android:id="@+id/ibMute"
-            android:src="@drawable/ic_speaker_icon"
-            style="@style/PlayerButton" />
+            android:src="@drawable/ic_speaker_icon" />
 
         <SeekBar
+            android:id="@+id/volumeSeekBar"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:id="@+id/volumeSeekBar"
             android:layout_gravity="center_vertical" />
     </LinearLayout>
 

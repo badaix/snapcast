@@ -47,6 +47,7 @@ public class ClientInfoItem extends LinearLayout implements SeekBar.OnSeekBarCha
             title.setText(clientInfo.getName());
         else
             title.setText(clientInfo.getHost());
+        title.setEnabled(clientInfo.isConnected());
         volumeSeekBar.setProgress(clientInfo.getVolume().getPercent());
         if (clientInfo.getVolume().isMuted())
             ibMute.setImageResource(R.drawable.ic_mute_icon);
