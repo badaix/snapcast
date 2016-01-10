@@ -27,6 +27,7 @@
 #include <vector>
 #include <fstream>
 #include <sstream>
+#include <memory>
 #include <iterator>
 #include <sys/ioctl.h>
 #include <net/if.h>
@@ -100,8 +101,32 @@ static std::vector<std::string> split(const std::string &s, char delim)
 }
 
 
+#ifdef ANDROID
+static std::string getProp(const std::string& prop)
+{
+	std::string cmd = "getprop " + prop;
+	std::shared_ptr<FILE> pipe(popen(cmd.c_str(), "r"), pclose);
+	if (!pipe)
+		return "";
+	char buffer[512];
+	std::string result = "";
+	while (!feof(pipe.get()))
+	{
+		if (fgets(buffer, 512, pipe.get()) != NULL)
+			result += buffer;
+	}
+	return result;
+}
+#endif
+
+
 static std::string getHostName()
 {
+#ifdef ANDROID
+	std::string result = getProp("net.hostname");
+	if (!result.empty())
+		return result;
+#endif
 	char hostname[1024];
 	hostname[1023] = '\0';
 	gethostname(hostname, 1023);
