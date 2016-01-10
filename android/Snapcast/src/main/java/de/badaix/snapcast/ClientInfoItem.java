@@ -1,29 +1,27 @@
 package de.badaix.snapcast;
 
 import android.content.Context;
+import android.support.v7.widget.PopupMenu;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.ImageButton;
-import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.ProgressBar;
 import android.widget.SeekBar;
 import android.widget.TextView;
-
+import android.widget.Toast;
 
 import de.badaix.snapcast.control.ClientInfo;
 import de.badaix.snapcast.control.Volume;
 
-public class ClientInfoItem extends LinearLayout implements SeekBar.OnSeekBarChangeListener, View.OnClickListener {
-
-    public interface ClientInfoItemListener {
-        void onVolumeChanged(ClientInfoItem clientInfoItem, int percent);
-        void onMute(ClientInfoItem clientInfoItem, boolean mute);
-    }
+public class ClientInfoItem extends LinearLayout implements SeekBar.OnSeekBarChangeListener, View.OnClickListener, PopupMenu.OnMenuItemClickListener {
 
     private TextView title;
     private SeekBar volumeSeekBar;
     private ImageButton ibMute;
+    private ImageButton ibOverflow;
     private ClientInfo clientInfo;
     private ClientInfoItemListener listener = null;
 
@@ -37,6 +35,8 @@ public class ClientInfoItem extends LinearLayout implements SeekBar.OnSeekBarCha
         ibMute = (ImageButton) findViewById(R.id.ibMute);
         ibMute.setImageResource(R.drawable.ic_speaker_icon);
         ibMute.setOnClickListener(this);
+        ibOverflow = (ImageButton) findViewById(R.id.ibOverflow);
+        ibOverflow.setOnClickListener(this);
         volumeSeekBar.setMax(100);
         setClientInfo(clientInfo);
         volumeSeekBar.setOnSeekBarChangeListener(this);
@@ -55,13 +55,13 @@ public class ClientInfoItem extends LinearLayout implements SeekBar.OnSeekBarCha
             ibMute.setImageResource(R.drawable.ic_speaker_icon);
     }
 
+    public ClientInfo getClientInfo() {
+        return clientInfo;
+    }
+
     public void setClientInfo(final ClientInfo clientInfo) {
         this.clientInfo = clientInfo;
         update();
-    }
-
-    public ClientInfo getClientInfo() {
-        return clientInfo;
     }
 
     public void setListener(ClientInfoItemListener listener) {
@@ -79,10 +79,18 @@ public class ClientInfoItem extends LinearLayout implements SeekBar.OnSeekBarCha
 
     @Override
     public void onClick(View v) {
-        Volume volume = clientInfo.getVolume();
-        volume.setMuted(!volume.isMuted());
-        update();
-        listener.onMute(this, volume.isMuted());
+        if (v == ibMute) {
+            Volume volume = clientInfo.getVolume();
+            volume.setMuted(!volume.isMuted());
+            update();
+            listener.onMute(this, volume.isMuted());
+        } else if (v == ibOverflow) {
+            PopupMenu popup = new PopupMenu(v.getContext(), v);
+            popup.getMenu().add(Menu.NONE, R.id.menu_details, 0, R.string.menu_details);
+            popup.getMenu().add(Menu.NONE, R.id.menu_delete, 1, R.string.menu_delete);
+            popup.setOnMenuItemClickListener(this);
+            popup.show();
+        }
     }
 
     @Override
@@ -93,6 +101,26 @@ public class ClientInfoItem extends LinearLayout implements SeekBar.OnSeekBarCha
     @Override
     public void onStopTrackingTouch(SeekBar seekBar) {
 
+    }
+
+    @Override
+    public boolean onMenuItemClick(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.menu_details:
+                Toast.makeText(this.getContext(), getContext().getText(R.string.menu_details), Toast.LENGTH_SHORT).show();
+                return true;
+            case R.id.menu_delete:
+                Toast.makeText(this.getContext(), getContext().getText(R.string.menu_delete), Toast.LENGTH_SHORT).show();
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    public interface ClientInfoItemListener {
+        void onVolumeChanged(ClientInfoItem clientInfoItem, int percent);
+
+        void onMute(ClientInfoItem clientInfoItem, boolean mute);
     }
 
 }

@@ -22,16 +22,29 @@
             android:layout_height="match_parent"
             android:orientation="vertical">
 
-            <TextView
-                android:id="@+id/title"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:ellipsize="marquee"
-                android:fadingEdge="horizontal"
-                android:paddingLeft="5dp"
-                android:singleLine="true"
-                android:text="Title"
-                android:textAppearance="?android:attr/textAppearanceMedium" />
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
+
+                <TextView
+                    android:id="@+id/title"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:ellipsize="marquee"
+                    android:fadingEdge="horizontal"
+                    android:paddingLeft="5dp"
+                    android:singleLine="true"
+                    android:text="Title"
+                    android:textAppearance="?android:attr/textAppearanceMedium" />
+
+                <ImageButton
+                    android:id="@+id/ibOverflow"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentEnd="true"
+                    android:background="@null"
+                    android:src="@drawable/abc_ic_menu_moreoverflow_mtrl_alpha" />
+            </RelativeLayout>
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -41,7 +54,7 @@
 
                 <ImageButton
                     android:id="@+id/ibMute"
-                    style="@style/PlayerButton"
+                    android:background="@null"
                     android:layout_width="60dp"
                     android:layout_height="match_parent"
                     android:src="@drawable/ic_speaker_icon" />
