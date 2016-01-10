@@ -8,8 +8,8 @@ import android.net.Uri;
 import android.net.nsd.NsdManager;
 import android.net.nsd.NsdServiceInfo;
 import android.os.Build;
-import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
+import android.support.v7.app.ActionBarActivity;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
@@ -37,8 +37,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 
 import de.badaix.snapcast.control.ClientInfo;
-import de.badaix.snapcast.control.ServerInfo;
-import de.badaix.snapcast.control.Volume;
 
 public class MainActivity extends ActionBarActivity implements View.OnClickListener, TcpClient.TcpClientListener, ClientInfoItem.ClientInfoItemListener {
 
@@ -57,7 +55,6 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
     private String host = "";
     private int port = 1704;
     private TcpClient tcpClient;
-    private ServerInfo serverInfo;
     private ClientInfoAdapter clientInfoAdapter;
 
     /**
@@ -101,7 +98,6 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
             tvInfo.setText("Preferred buffer size: " + size + "\nPreferred sample rate: " + rate);
         }
 
-        serverInfo = new ServerInfo();
         clientInfoAdapter = new ClientInfoAdapter(this, this);
         lvClient.setAdapter(clientInfoAdapter);
 
@@ -152,7 +148,7 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
             }
             add(clientInfo);
         }
-    }
+	}
 
 
     private void copyAssets() {
@@ -402,7 +398,6 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
                         json.getString("method").equals("Client.OnDisconnect")) {
                     final ClientInfo clientInfo = new ClientInfo(json.getJSONObject("params").getJSONObject("data"));
                     Log.d(TAG, "ClientInfo: " + clientInfo);
-                    Log.d(TAG, "Changed: " + serverInfo.addClient(clientInfo));
 //                    clientInfoAdapter.add(clientInfo);
                     this.runOnUiThread(new Runnable() {
                         @Override

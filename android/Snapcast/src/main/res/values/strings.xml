@@ -8,9 +8,8 @@
     <string name="menu_delete">delete</string>
 
     <!-- TODO: Remove or change this placeholder text -->
-    <string name="hello_blank_fragment">Hello blank fragment</string>
-    <string name="title_activity_snapcast">SnapcastActivity</string>
+    <string name="title_activity_snapcast">Snapcast</string>
     <string name="action_settings">Settings</string>
-    <string name="section_format">Hello World from section: %1$d</string>
+    <string name="action_scan">Scan</string>
 </resources>
 
