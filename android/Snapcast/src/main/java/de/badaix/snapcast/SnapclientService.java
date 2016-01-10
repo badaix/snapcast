@@ -1,19 +1,20 @@
 package de.badaix.snapcast;
 
 import android.app.Notification;
+import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
+import android.app.TaskStackBuilder;
+import android.content.Context;
 import android.content.Intent;
 import android.net.wifi.WifiManager;
 import android.os.Handler;
-import android.os.PowerManager;
-import android.os.Process;
-import android.os.HandlerThread;
 import android.os.IBinder;
 import android.os.Looper;
 import android.os.Message;
+import android.os.PowerManager;
+import android.support.v4.app.NotificationCompat;
 import android.util.Log;
-import android.view.WindowManager;
 import android.widget.Toast;
 
 import java.io.BufferedReader;
@@ -36,58 +37,55 @@ public class SnapclientService extends Service {
     private WifiManager.WifiLock wifiWakeLock = null;
     private Thread reader = null;
 
-    // Handler that receives messages from the thread
-    private final class ServiceHandler extends Handler {
-        public ServiceHandler(Looper looper) {
-            super(looper);
-        }
-
-        @Override
-        public void handleMessage(Message msg) {
-            // Normally we would do some work here, like download a file.
-            // For our sample, we just sleep for 5 seconds.
-            long endTime = System.currentTimeMillis() + 5*1000;
-            while (System.currentTimeMillis() < endTime) {
-                synchronized (this) {
-                    try {
-                        wait(endTime - System.currentTimeMillis());
-                    } catch (Exception e) {
-                    }
-                }
-            }
-            // Stop the service using the startId, so that we don't stop
-            // the service in the middle of handling another job
-            stopSelf(msg.arg1);
-        }
-    }
-
-
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         Toast.makeText(this, "service starting", Toast.LENGTH_SHORT).show();
 
+        NotificationCompat.Builder builder =
+                new NotificationCompat.Builder(this)
+                        .setSmallIcon(android.R.drawable.ic_media_play)
+                        .setTicker(getText(R.string.ticker_text))
+                        .setContentTitle(getText(R.string.notification_title))
+                        .setContentText(getText(R.string.notification_text))
+                        .setContentInfo(getText(R.string.notification_info));
+
+        Intent resultIntent = new Intent(this, MainActivity.class);
+
+        // The stack builder object will contain an artificial back stack for the
+        // started Activity.
+        // This ensures that navigating backward from the Activity leads out of
+        // your application to the Home screen.
+        TaskStackBuilder stackBuilder = TaskStackBuilder.create(this);
+        // Adds the back stack for the Intent (but not the Intent itself)
+        stackBuilder.addParentStack(MainActivity.class);
+        // Adds the Intent that starts the Activity to the top of the stack
+        stackBuilder.addNextIntent(resultIntent);
+        PendingIntent resultPendingIntent =
+                stackBuilder.getPendingIntent(
+                        0,
+                        PendingIntent.FLAG_UPDATE_CURRENT
+                );
+        builder.setContentIntent(resultPendingIntent);
+        NotificationManager mNotificationManager =
+                (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+        // mId allows you to update the notification later on.
+        final Notification notification = builder.build();
+//        mNotificationManager.notify(123, notification);
+        startForeground(123, notification);
+
+
         String host = intent.getStringExtra(EXTRA_HOST);
         int port = intent.getIntExtra(EXTRA_PORT, 1704);
-
-        Notification notification = new Notification(android.R.drawable.ic_media_play,  getText(R.string.ticker_text),
-                System.currentTimeMillis());
-        Intent notificationIntent = new Intent(this, MainActivity.class);
-        PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, notificationIntent, 0);
-        notification.setLatestEventInfo(this, getText(R.string.notification_title),
-                getText(R.string.notification_message), pendingIntent);
-        startForeground(123, notification);
         start(host, port);
 
         // If we get killed, after returning from here, restart
         return START_STICKY;
     }
 
-
     @Override
     public void onDestroy() {
         stop();
     }
-
 
     @Override
     public IBinder onBind(Intent intent) {
@@ -95,10 +93,12 @@ public class SnapclientService extends Service {
         return null;
     }
 
-
     private void stopService() {
         stop();
         stopForeground(true);
+        NotificationManager mNotificationManager =
+                (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+        mNotificationManager.cancel(123);
     }
 
     private void start(String host, int port) {
@@ -152,6 +152,31 @@ public class SnapclientService extends Service {
         if ((wifiWakeLock != null) && wifiWakeLock.isHeld())
             wifiWakeLock.release();
         android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_DEFAULT);
+    }
+
+    // Handler that receives messages from the thread
+    private final class ServiceHandler extends Handler {
+        public ServiceHandler(Looper looper) {
+            super(looper);
+        }
+
+        @Override
+        public void handleMessage(Message msg) {
+            // Normally we would do some work here, like download a file.
+            // For our sample, we just sleep for 5 seconds.
+            long endTime = System.currentTimeMillis() + 5 * 1000;
+            while (System.currentTimeMillis() < endTime) {
+                synchronized (this) {
+                    try {
+                        wait(endTime - System.currentTimeMillis());
+                    } catch (Exception e) {
+                    }
+                }
+            }
+            // Stop the service using the startId, so that we don't stop
+            // the service in the middle of handling another job
+            stopSelf(msg.arg1);
+        }
     }
 
 }

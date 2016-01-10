@@ -1,15 +1,16 @@
 apply plugin: 'com.android.application'
 
 android {
-    compileSdkVersion 20
-    buildToolsVersion "23.0.2"
+    compileSdkVersion 23
+    buildToolsVersion '23.0.2'
 
     defaultConfig {
         applicationId "de.badaix.snapcast"
         minSdkVersion 16
-        targetSdkVersion 20
+        targetSdkVersion 23
         versionCode 1
         versionName "1.0"
+        multiDexEnabled true
     }
     buildTypes {
         release {
@@ -22,6 +23,7 @@ android {
 dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
     testCompile 'junit:junit:4.12'
-    compile 'com.android.support:appcompat-v7:20.0.0'
+    compile 'com.android.support:appcompat-v7:23.0.+'
+    compile 'com.android.support:cardview-v7:23.0.+'
     compile 'com.google.android.gms:play-services-appindexing:8.1.0'
 }

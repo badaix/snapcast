@@ -272,7 +272,7 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
             @Override
             public void onDiscoveryStarted(String regType) {
                 Log.d(TAG, "Service discovery started");
-                setStatus("Host: searching for a Snapserver");
+                setStatus("Searching for a Snapserver");
             }
 
             @Override
