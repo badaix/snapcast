@@ -1,5 +1,8 @@
 package de.badaix.snapcast.control;
 
+import android.os.Parcel;
+import android.os.Parcelable;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -20,6 +23,30 @@ public class ClientInfo implements JsonSerialisable {
     public ClientInfo(JSONObject json) {
         fromJson(json);
     }
+
+    protected ClientInfo(Parcel in) {
+        mac = in.readString();
+        ip = in.readString();
+        host = in.readString();
+        version = in.readString();
+        name = in.readString();
+        volume = in.readParcelable(Volume.class.getClassLoader());
+        lastSeen = in.readParcelable(Time_t.class.getClassLoader());
+        connected = in.readByte() != 0;
+        latency = in.readInt();
+    }
+
+    public static final Creator<ClientInfo> CREATOR = new Creator<ClientInfo>() {
+        @Override
+        public ClientInfo createFromParcel(Parcel in) {
+            return new ClientInfo(in);
+        }
+
+        @Override
+        public ClientInfo[] newArray(int size) {
+            return new ClientInfo[size];
+        }
+    };
 
     @Override
     public void fromJson(JSONObject json) {
@@ -153,6 +180,25 @@ public class ClientInfo implements JsonSerialisable {
         result = 31 * result + (connected ? 1 : 0);
         result = 31 * result + latency;
         return result;
+    }
+
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+
+    @Override
+    public void writeToParcel(Parcel dest, int flags) {
+        dest.writeString(mac);
+        dest.writeString(ip);
+        dest.writeString(host);
+        dest.writeString(version);
+        dest.writeString(name);
+        dest.writeParcelable(volume, flags);
+        dest.writeParcelable(lastSeen, flags);
+        dest.writeByte((byte) (connected ? 1 : 0));
+        dest.writeInt(latency);
     }
 }
 
