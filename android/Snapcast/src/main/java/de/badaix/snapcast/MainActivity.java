@@ -11,6 +11,8 @@ import android.os.Build;
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
@@ -42,7 +44,6 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
 
     private static final String TAG = "Main";
 
-    private Button buttonScan;
     private Button buttonStart;
     private Button buttonStop;
     private Button button;
@@ -67,7 +68,6 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        buttonScan = (Button) findViewById(R.id.buttonScan);
         buttonStart = (Button) findViewById(R.id.buttonStart);
         buttonStop = (Button) findViewById(R.id.buttonStop);
         button = (Button) findViewById(R.id.button);
@@ -86,7 +86,6 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
 
         lvClient = (ListView) findViewById(R.id.lvClient);
 
-        buttonScan.setOnClickListener(this);
         buttonStart.setOnClickListener(this);
         buttonStop.setOnClickListener(this);
         button.setOnClickListener(this);
@@ -95,7 +94,7 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
             String rate = audioManager.getProperty(AudioManager.PROPERTY_OUTPUT_SAMPLE_RATE);
             String size = audioManager.getProperty(AudioManager.PROPERTY_OUTPUT_FRAMES_PER_BUFFER);
-            tvInfo.setText("Preferred buffer size: " + size + "\nPreferred sample rate: " + rate);
+            tvInfo.setText("Sample rate: " + rate + ", buffer size: " + size);
         }
 
         clientInfoAdapter = new ClientInfoAdapter(this, this);
@@ -149,6 +148,33 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
             add(clientInfo);
         }
 	}
+
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.menu_snapcast, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle action bar item clicks here. The action bar will
+        // automatically handle clicks on the Home/Up button, so long
+        // as you specify a parent activity in AndroidManifest.xml.
+        int id = item.getItemId();
+
+        //noinspection SimplifiableIfStatement
+        if (id == R.id.action_settings) {
+            Toast.makeText(this, "Not implemented", Toast.LENGTH_SHORT).show();
+            return true;
+        } else if (id == R.id.action_scan) {
+            initializeDiscoveryListener();
+            return true;
+        }
+
+        return super.onOptionsItemSelected(item);
+    }
 
 
     private void copyAssets() {
@@ -222,9 +248,6 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
             start();
         } else if (view == buttonStop) {
             stop();
-        } else if (view == buttonScan) {
-            Toast.makeText(this, "Scan", Toast.LENGTH_SHORT).show();
-            initializeDiscoveryListener();
         } else if (view == button) {
             startTcpClient();
         }
