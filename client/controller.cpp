@@ -146,7 +146,7 @@ void Controller::worker()
 			msg::Request requestMsg(kServerSettings);
 			shared_ptr<msg::ServerSettings> serverSettings(NULL);
 			while (active_ && !(serverSettings = clientConnection_->sendReq<msg::ServerSettings>(&requestMsg)));
-			logO << "ServerSettings buffer: " << serverSettings->bufferMs << ", latency: " << serverSettings->latency << ", volume: " << serverSettings->volume << "\n";
+			logO << "ServerSettings - buffer: " << serverSettings->bufferMs << ", latency: " << serverSettings->latency << ", volume: " << serverSettings->volume << ", muted: " << serverSettings->muted << "\n";
 
 			requestMsg.request = kSampleFormat;
 			while (active_ && !(sampleFormat_ = clientConnection_->sendReq<msg::SampleFormat>(&requestMsg)));
@@ -188,6 +188,7 @@ void Controller::worker()
 			player_.reset(new OpenslPlayer(pcmDevice_, stream_));
 #endif
 			player_->setVolume(serverSettings->volume / 100.);
+			player_->setMute(serverSettings->muted);
 			player_->start();
 
 			msg::Command startStream("startStream");
