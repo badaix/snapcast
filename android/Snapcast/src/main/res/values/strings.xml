@@ -11,5 +11,13 @@
     <string name="title_activity_snapcast">Snapcast</string>
     <string name="action_settings">Settings</string>
     <string name="action_scan">Scan</string>
-</resources>
+    <string name="client_name">Name</string>
+    <string name="client_mac">MAC</string>
+    <string name="client_ip">IP</string>
+    <string name="client_host">Host</string>
+    <string name="client_version">Version</string>
+    <string name="client_last_seen">Last seen</string>
+    <string name="client_latency">Latency</string>
+    <string name="title_activity_client_settings">Client settings</string>
+ </resources>
 

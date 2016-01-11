@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+    <EditTextPreference
+        android:key="pref_client_name"
+        android:title="@string/client_name"
+        android:summary="name" />
+    <Preference
+        android:key="pref_client_mac"
+        android:title="@string/client_mac"
+        android:summary="mac" />
+    <Preference
+        android:key="pref_client_ip"
+        android:title="@string/client_ip"
+        android:summary="ip" />
+    <Preference
+        android:key="pref_client_host"
+        android:title="@string/client_host"
+        android:summary="host" />
+    <Preference
+        android:key="pref_client_version"
+        android:title="@string/client_version"
+        android:summary="version" />
+    <Preference
+        android:key="pref_client_last_seen"
+        android:title="@string/client_last_seen"
+        android:summary="online" />
+    <Preference
+        android:key="pref_client_latency"
+        android:title="@string/client_latency"
+        android:summary="0ms" />
+</PreferenceScreen>

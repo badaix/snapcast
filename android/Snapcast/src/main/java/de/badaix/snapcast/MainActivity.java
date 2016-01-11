@@ -10,6 +10,7 @@ import android.net.nsd.NsdServiceInfo;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
+import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -40,7 +41,7 @@ import java.io.OutputStream;
 
 import de.badaix.snapcast.control.ClientInfo;
 
-public class MainActivity extends ActionBarActivity implements View.OnClickListener, TcpClient.TcpClientListener, ClientInfoItem.ClientInfoItemListener {
+public class MainActivity extends AppCompatActivity implements View.OnClickListener, TcpClient.TcpClientListener, ClientInfoItem.ClientInfoItemListener {
 
     private static final String TAG = "Main";
 
@@ -371,9 +372,13 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
     }
 
     @Override
-    public void onStop() {
+    public void onDestroy() {
         stopTcpClient();
+        super.onDestroy();
+    }
 
+    @Override
+    public void onStop() {
         super.onStop();
 
         // ATTENTION: This was auto-generated to implement the App Indexing API.
@@ -458,6 +463,26 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
         tcpClient.sendMessage("{\"jsonrpc\": \"2.0\", \"method\": \"Client.SetMute\", \"params\": {\"client\": \"" + client.getMac() + "\", \"mute\": " + mute + "}, \"id\": 3}");
     }
 
+    @Override
+    public void onPropertiesClicked(ClientInfoItem clientInfoItem) {
+        Intent intent = new Intent(this, ClientSettingsActivity.class);
+        intent.putExtra("clientInfo", clientInfoItem.getClientInfo());
+        startActivityForResult(intent, 1);
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if (resultCode == RESULT_CANCELED) {
+            return;
+        }
+        if (requestCode == 1) {
+            ClientInfo clientInfo = data.getParcelableExtra("clientInfo");
+            tcpClient.sendMessage("{\"jsonrpc\": \"2.0\", \"method\": \"Client.SetName\", \"params\": {\"client\": \"" + clientInfo.getMac() + "\", \"name\": \"" + clientInfo.getName() + "\"}, \"id\": 3}");
+            clientInfoAdapter.addClient(clientInfo);
+        }
+    }
 }
 
 

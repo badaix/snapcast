@@ -1,12 +1,15 @@
 package de.badaix.snapcast;
 
 import android.content.Context;
+import android.content.Intent;
+import android.os.Bundle;
 import android.support.v7.widget.PopupMenu;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.SeekBar;
@@ -107,7 +110,7 @@ public class ClientInfoItem extends LinearLayout implements SeekBar.OnSeekBarCha
     public boolean onMenuItemClick(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.menu_details:
-                Toast.makeText(this.getContext(), getContext().getText(R.string.menu_details), Toast.LENGTH_SHORT).show();
+                listener.onPropertiesClicked(this);
                 return true;
             case R.id.menu_delete:
                 Toast.makeText(this.getContext(), getContext().getText(R.string.menu_delete), Toast.LENGTH_SHORT).show();
@@ -119,8 +122,8 @@ public class ClientInfoItem extends LinearLayout implements SeekBar.OnSeekBarCha
 
     public interface ClientInfoItemListener {
         void onVolumeChanged(ClientInfoItem clientInfoItem, int percent);
-
         void onMute(ClientInfoItem clientInfoItem, boolean mute);
+        void onPropertiesClicked(ClientInfoItem clientInfoItem);
     }
 
 }
