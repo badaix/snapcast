@@ -77,7 +77,7 @@
             android:listSelector="@android:color/transparent"
             android:cacheColorHint="@android:color/transparent"
             android:divider="@null"
-            android:dividerHeight="2dp"
+            android:dividerHeight="1dp"
             android:id="@+id/lvClient" />
 
     </LinearLayout>

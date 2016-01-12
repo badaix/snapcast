@@ -10,7 +10,7 @@
         android:id="@+id/card_view"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        card_view:contentPadding="2dp"
+        card_view:contentPadding="5dp"
         card_view:cardUseCompatPadding="true"
         card_view:cardCornerRadius="4dp">
 
@@ -45,16 +45,16 @@
                     android:text="Title"
                     android:textAppearance="?android:attr/textAppearanceMedium"
                     android:paddingLeft="5dp"
-                    android:paddingTop="2dp"
-                    android:paddingBottom="1dp"/>
+                    android:paddingTop="5dp"
+                    android:paddingBottom="5dp"/>
 
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
                     android:orientation="horizontal"
-                    android:paddingBottom="4dp"
-                    android:paddingLeft="3dp">
+                    android:paddingBottom="7dp"
+                    android:paddingLeft="5dp">
 
                     <ImageButton
                         android:id="@+id/ibMute"
