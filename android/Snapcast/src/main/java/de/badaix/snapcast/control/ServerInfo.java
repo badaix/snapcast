@@ -16,11 +16,15 @@ public class ServerInfo {
         if (client == null)
             return false;
 
-        for (ClientInfo clientInfo: clientInfos) {
+        for (int i=0; i<clientInfos.size(); ++i) {
+            ClientInfo clientInfo = clientInfos.get(i);
+            if (clientInfo == null)
+                continue;
+
             if (client.getMac().equals(clientInfo.getMac())) {
                 if (clientInfo.equals(client))
                     return false;
-                clientInfos.add(client);
+                clientInfos.set(i, client);
                 return true;
             }
         }

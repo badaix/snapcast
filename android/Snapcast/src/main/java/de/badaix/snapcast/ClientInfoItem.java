@@ -90,7 +90,8 @@ public class ClientInfoItem extends LinearLayout implements SeekBar.OnSeekBarCha
         } else if (v == ibOverflow) {
             PopupMenu popup = new PopupMenu(v.getContext(), v);
             popup.getMenu().add(Menu.NONE, R.id.menu_details, 0, R.string.menu_details);
-            popup.getMenu().add(Menu.NONE, R.id.menu_delete, 1, R.string.menu_delete);
+            if (!clientInfo.isConnected())
+                popup.getMenu().add(Menu.NONE, R.id.menu_delete, 1, R.string.menu_delete);
             popup.setOnMenuItemClickListener(this);
             popup.show();
         }

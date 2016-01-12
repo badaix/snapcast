@@ -4,6 +4,8 @@ import android.os.Bundle;
 import android.preference.EditTextPreference;
 import android.preference.Preference;
 import android.preference.PreferenceFragment;
+import android.text.format.DateUtils;
+import android.util.Log;
 
 import de.badaix.snapcast.control.ClientInfo;
 
@@ -60,7 +62,12 @@ public class ClientSettingsFragment extends PreferenceFragment {
         prefIp.setSummary(clientInfo.getIp());
         prefHost.setSummary(clientInfo.getHost());
         prefVersion.setSummary(clientInfo.getVersion());
-        prefLastSeen.setSummary(clientInfo.getLastSeen().toString());
+        String lastSeen = getText(R.string.online).toString();
+        if (!clientInfo.isConnected()) {
+            long lastSeenTs = Math.min(clientInfo.getLastSeen().getSec() * 1000, System.currentTimeMillis());
+            lastSeen = DateUtils.getRelativeTimeSpanString(lastSeenTs, System.currentTimeMillis(), DateUtils.SECOND_IN_MILLIS).toString();
+        }
+        prefLastSeen.setSummary(lastSeen);
         prefLatency.setSummary(clientInfo.getLatency() + "ms");
     }
 }

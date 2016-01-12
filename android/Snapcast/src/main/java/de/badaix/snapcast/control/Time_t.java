@@ -21,28 +21,28 @@ public class Time_t implements JsonSerialisable {
             return new Time_t[size];
         }
     };
-    private int sec;
-    private int usec;
+    private long sec;
+    private long usec;
 
     public Time_t(JSONObject json) {
         fromJson(json);
     }
 
-    public Time_t(int sec, int usec) {
+    public Time_t(long sec, long usec) {
         this.sec = sec;
         this.usec = usec;
     }
 
     protected Time_t(Parcel in) {
-        sec = in.readInt();
-        usec = in.readInt();
+        sec = in.readLong();
+        usec = in.readLong();
     }
 
     @Override
     public void fromJson(JSONObject json) {
         try {
-            sec = json.getInt("sec");
-            usec = json.getInt("usec");
+            sec = json.getLong("sec");
+            usec = json.getLong("usec");
         } catch (JSONException e) {
             e.printStackTrace();
         }
@@ -60,19 +60,19 @@ public class Time_t implements JsonSerialisable {
         return json;
     }
 
-    public int getSec() {
+    public long getSec() {
         return sec;
     }
 
-    public void setSec(int sec) {
+    public void setSec(long sec) {
         this.sec = sec;
     }
 
-    public int getUsec() {
+    public long getUsec() {
         return usec;
     }
 
-    public void setUsec(int usec) {
+    public void setUsec(long usec) {
         this.usec = usec;
     }
 
@@ -98,8 +98,8 @@ public class Time_t implements JsonSerialisable {
 
     @Override
     public int hashCode() {
-        int result = sec;
-        result = 31 * result + usec;
+        int result = (int) sec;
+        result = (int) (31 * result + usec);
         return result;
     }
 
@@ -110,7 +110,7 @@ public class Time_t implements JsonSerialisable {
 
     @Override
     public void writeToParcel(Parcel dest, int flags) {
-        dest.writeInt(sec);
-        dest.writeInt(usec);
+        dest.writeLong(sec);
+        dest.writeLong(usec);
     }
 }

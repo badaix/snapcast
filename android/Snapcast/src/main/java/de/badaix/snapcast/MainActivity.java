@@ -2,6 +2,7 @@ package de.badaix.snapcast;
 
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.res.AssetManager;
 import android.media.AudioManager;
 import android.net.Uri;
@@ -9,7 +10,6 @@ import android.net.nsd.NsdManager;
 import android.net.nsd.NsdServiceInfo;
 import android.os.Build;
 import android.os.Bundle;
-import android.support.v7.app.ActionBarActivity;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.Menu;
@@ -40,6 +40,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 
 import de.badaix.snapcast.control.ClientInfo;
+import de.badaix.snapcast.control.ServerInfo;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener, TcpClient.TcpClientListener, ClientInfoItem.ClientInfoItemListener {
 
@@ -48,7 +49,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private Button buttonStart;
     private Button buttonStop;
     private Button button;
-    private TextView tvHost;
     private TextView tvInfo;
     private CheckBox cbScreenWakelock;
     private ListView lvClient;
@@ -58,6 +58,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private int port = 1704;
     private TcpClient tcpClient;
     private ClientInfoAdapter clientInfoAdapter;
+    private ServerInfo serverInfo;
 
     /**
      * ATTENTION: This was auto-generated to implement the App Indexing API.
@@ -72,7 +73,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         buttonStart = (Button) findViewById(R.id.buttonStart);
         buttonStop = (Button) findViewById(R.id.buttonStop);
         button = (Button) findViewById(R.id.button);
-        tvHost = (TextView) findViewById(R.id.tvHost);
         tvInfo = (TextView) findViewById(R.id.tvInfo);
         cbScreenWakelock = (CheckBox) findViewById(R.id.cbScreenWakelock);
         cbScreenWakelock.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
@@ -98,8 +98,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             tvInfo.setText("Sample rate: " + rate + ", buffer size: " + size);
         }
 
-        clientInfoAdapter = new ClientInfoAdapter(this, this);
+        serverInfo = new ServerInfo();
+        clientInfoAdapter = new ClientInfoAdapter(this, serverInfo, this);
         lvClient.setAdapter(clientInfoAdapter);
+        getSupportActionBar().setSubtitle("Host: no Snapserver found");
 
         copyAssets();
         initializeDiscoveryListener();
@@ -108,53 +110,15 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         client = new GoogleApiClient.Builder(this).addApi(AppIndex.API).build();
     }
 
-    private class ClientInfoAdapter extends ArrayAdapter<ClientInfo> {
-        private Context context;
-        private ClientInfoItem.ClientInfoItemListener listener;
-
-        public ClientInfoAdapter(Context context, ClientInfoItem.ClientInfoItemListener listener) {
-            super(context, 0);
-            this.context = context;
-            this.listener = listener;
-        }
-
-
-        @Override
-        public View getView(int position, View convertView, ViewGroup parent) {
-            ClientInfo clientInfo = getItem(position);
-            final ClientInfoItem clientInfoItem;
-
-            if (convertView != null) {
-                clientInfoItem = (ClientInfoItem) convertView;
-                clientInfoItem.setClientInfo(clientInfo);
-            } else {
-                clientInfoItem = new ClientInfoItem(context, clientInfo);
-            }
-            clientInfoItem.setListener(listener);
-            return clientInfoItem;
-        }
-
-        public void addClient(ClientInfo clientInfo) {
-            if (clientInfo == null)
-                return;
-
-            for (int i = 0; i < getCount(); i++) {
-                ClientInfo client = getItem(i);
-                if (client.getMac().equals(clientInfo.getMac())) {
-                    insert(clientInfo, i);
-                    remove(client);
-                    return;
-                }
-            }
-            add(clientInfo);
-        }
-	}
-
-
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.menu_snapcast, menu);
+        SharedPreferences settings = getSharedPreferences("settings", 0);
+        boolean isChecked = settings.getBoolean("hide_offline", false);
+        MenuItem menuItem = menu.findItem(R.id.action_hide_offline);
+        menuItem.setChecked(isChecked);
+        clientInfoAdapter.setHideOffline(isChecked);
         return true;
     }
 
@@ -172,11 +136,18 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         } else if (id == R.id.action_scan) {
             initializeDiscoveryListener();
             return true;
+        } else if (id == R.id.action_hide_offline) {
+            item.setChecked(!item.isChecked());
+            SharedPreferences settings = getSharedPreferences("settings", 0);
+            SharedPreferences.Editor editor = settings.edit();
+            editor.putBoolean("hide_offline", item.isChecked());
+            editor.apply();
+            clientInfoAdapter.setHideOffline(item.isChecked());
+            return true;
         }
 
         return super.onOptionsItemSelected(item);
     }
-
 
     private void copyAssets() {
         AssetManager assetManager = getAssets();
@@ -272,7 +243,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         tcpClient = null;
     }
 
-
     public void initializeDiscoveryListener() {
 
         // Instantiate a new DiscoveryListener
@@ -283,7 +253,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 MainActivity.this.runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        tvHost.setText("Host: " + text);
+                        getSupportActionBar().setSubtitle("Host: " + text);
                     }
                 });
             }
@@ -401,6 +371,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     public void onMessageReceived(TcpClient tcpClient, String message) {
         Log.d(TAG, "Msg received: " + message);
         try {
+            boolean needsUpdate = false;
             JSONObject json = new JSONObject(message);
             if (json.has("id")) {
                 Log.d(TAG, "ID: " + json.getString("id"));
@@ -408,15 +379,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     JSONArray clients = json.getJSONObject("result").getJSONArray("clients");
                     for (int i = 0; i < clients.length(); i++) {
                         final ClientInfo clientInfo = new ClientInfo(clients.getJSONObject(i));
-                        Log.d(TAG, "ClientInfo: " + clientInfo);
-//                        clientInfoAdapter.add(clientInfo);
-                        this.runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-//                                if (clientInfo.isConnected())
-                                clientInfoAdapter.addClient(clientInfo);
-                            }
-                        });
+                        needsUpdate = serverInfo.addClient(clientInfo) || needsUpdate;
                     }
                 }
             } else {
@@ -425,17 +388,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         json.getString("method").equals("Client.OnConnect") ||
                         json.getString("method").equals("Client.OnDisconnect")) {
                     final ClientInfo clientInfo = new ClientInfo(json.getJSONObject("params").getJSONObject("data"));
-                    Log.d(TAG, "ClientInfo: " + clientInfo);
-//                    clientInfoAdapter.add(clientInfo);
-                    this.runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-//                            if (clientInfo.isConnected())
-                            clientInfoAdapter.addClient(clientInfo);
-                        }
-                    });
+                    needsUpdate = serverInfo.addClient(clientInfo);
                 }
             }
+            if (needsUpdate)
+                clientInfoAdapter.update();
+
         } catch (JSONException e) {
             e.printStackTrace();
         }
@@ -480,7 +438,78 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         if (requestCode == 1) {
             ClientInfo clientInfo = data.getParcelableExtra("clientInfo");
             tcpClient.sendMessage("{\"jsonrpc\": \"2.0\", \"method\": \"Client.SetName\", \"params\": {\"client\": \"" + clientInfo.getMac() + "\", \"name\": \"" + clientInfo.getName() + "\"}, \"id\": 3}");
-            clientInfoAdapter.addClient(clientInfo);
+            if (serverInfo.addClient(clientInfo))
+                clientInfoAdapter.update();
+        }
+    }
+
+    private class ClientInfoAdapter extends ArrayAdapter<ClientInfo> {
+        private Context context;
+        private ClientInfoItem.ClientInfoItemListener listener;
+        private boolean hideOffline = false;
+        private ServerInfo serverInfo;
+
+        public ClientInfoAdapter(Context context, ServerInfo serverInfo, ClientInfoItem.ClientInfoItemListener listener) {
+            super(context, 0);
+            this.context = context;
+            this.serverInfo = serverInfo;
+            this.listener = listener;
+        }
+
+
+        @Override
+        public View getView(int position, View convertView, ViewGroup parent) {
+            ClientInfo clientInfo = getItem(position);
+            final ClientInfoItem clientInfoItem;
+
+            if (convertView != null) {
+                clientInfoItem = (ClientInfoItem) convertView;
+                clientInfoItem.setClientInfo(clientInfo);
+            } else {
+                clientInfoItem = new ClientInfoItem(context, clientInfo);
+            }
+            clientInfoItem.setListener(listener);
+            return clientInfoItem;
+        }
+
+        /*        public void addClient(ClientInfo clientInfo) {
+                    if (clientInfo == null)
+                        return;
+
+                    for (int i = 0; i < getCount(); i++) {
+                        ClientInfo client = getItem(i);
+                        if (client.getMac().equals(clientInfo.getMac())) {
+                            insert(clientInfo, i);
+                            remove(client);
+                            return;
+                        }
+                    }
+                    add(clientInfo);
+                }
+        */
+        public void update() {
+            MainActivity.this.runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    clear();
+                    for (ClientInfo clientInfo : serverInfo.getClientInfos()) {
+                        if ((clientInfo != null) && (!hideOffline || clientInfo.isConnected()))
+                            add(clientInfo);
+                    }
+                    notifyDataSetChanged();
+                }
+            });
+        }
+
+        public boolean isHideOffline() {
+            return hideOffline;
+        }
+
+        public void setHideOffline(boolean hideOffline) {
+            if (this.hideOffline == hideOffline)
+                return;
+            this.hideOffline = hideOffline;
+            update();
         }
     }
 }
