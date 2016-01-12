@@ -12,4 +12,10 @@
         android:orderInCategory="100"
         android:title="@string/action_scan"
         app:showAsAction="never" />
+    <item
+        android:id="@+id/action_hide_offline"
+        android:orderInCategory="100"
+        android:title="@string/action_hide_offline"
+        android:checkable="true"
+        app:showAsAction="never" />
 </menu>
