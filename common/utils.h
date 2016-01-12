@@ -160,13 +160,30 @@ static std::string getMacAddress(int sock)
 	struct ifreq* it = ifc.ifc_req;
 	const struct ifreq* const end = it + (ifc.ifc_len / sizeof(struct ifreq));
 
-	for (; it != end; ++it) {
+	for (; it != end; ++it)
+	{
 		strcpy(ifr.ifr_name, it->ifr_name);
-		if (ioctl(sock, SIOCGIFFLAGS, &ifr) == 0) {
-			if (! (ifr.ifr_flags & IFF_LOOPBACK)) { // don't count loopback
-				if (ioctl(sock, SIOCGIFHWADDR, &ifr) == 0) {
+		if (ioctl(sock, SIOCGIFFLAGS, &ifr) == 0)
+		{
+			if (!(ifr.ifr_flags & IFF_LOOPBACK)) // don't count loopback
+			{
+				if (ioctl(sock, SIOCGIFHWADDR, &ifr) == 0)
+				{
 					success = 1;
 					break;
+				}
+				else
+				{
+					std::stringstream ss;
+					ss << "/sys/class/net/" << ifr.ifr_name << "/address";
+					std::ifstream infile(ss.str().c_str());
+					std::string line;
+					if (infile.good() && std::getline(infile, line))
+					{
+						trim(line);
+						if ((line.size() == 17) && (line[2] == ':'))
+							return line;
+					}
 				}
 			}
 		}

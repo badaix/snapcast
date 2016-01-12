@@ -72,7 +72,7 @@ void ClientConnection::start()
 	std::string mac = getMacAddress(socket_->native());
 	if (mac.empty())
 		mac = "00:00:00:00:00:00";
-	logO << "My MAC: \"" << mac << "\"\n";
+	logO << "My MAC: \"" << mac << "\", socket: " << socket_->native() << "\n";
 	msg::Hello hello(mac);
 	send(&hello);
 	connected_ = true;
