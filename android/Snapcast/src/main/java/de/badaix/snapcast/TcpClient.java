@@ -111,7 +111,8 @@ public class TcpClient {
                         mBufferIn = new BufferedReader(new InputStreamReader(
                                 socket.getInputStream()));
 
-                        mMessageListener.onConnected(TcpClient.this);
+                        if (mMessageListener != null)
+                            mMessageListener.onConnected(TcpClient.this);
 
                         // in this while the client listens for the messages sent by the
                         // server
@@ -137,7 +138,8 @@ public class TcpClient {
                         // after it is closed, which means a new socket instance has to
                         // be created.
                         socket.close();
-                        mMessageListener.onDisconnected(TcpClient.this);
+                        if (mMessageListener != null)
+                            mMessageListener.onDisconnected(TcpClient.this);
                     }
 
                 } catch (Exception e) {

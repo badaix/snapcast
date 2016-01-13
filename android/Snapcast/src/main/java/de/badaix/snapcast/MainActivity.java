@@ -29,10 +29,6 @@ import com.google.android.gms.appindexing.Action;
 import com.google.android.gms.appindexing.AppIndex;
 import com.google.android.gms.common.api.GoogleApiClient;
 
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -40,9 +36,10 @@ import java.io.InputStream;
 import java.io.OutputStream;
 
 import de.badaix.snapcast.control.ClientInfo;
+import de.badaix.snapcast.control.RemoteControl;
 import de.badaix.snapcast.control.ServerInfo;
 
-public class MainActivity extends AppCompatActivity implements View.OnClickListener, TcpClient.TcpClientListener, ClientInfoItem.ClientInfoItemListener {
+public class MainActivity extends AppCompatActivity implements View.OnClickListener, ClientInfoItem.ClientInfoItemListener, RemoteControl.RemoteControlListener {
 
     private static final String TAG = "Main";
 
@@ -56,9 +53,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private NsdManager mNsdManager = null;
     private String host = "";
     private int port = 1704;
-    private TcpClient tcpClient;
+    private RemoteControl remoteControl = null;
     private ClientInfoAdapter clientInfoAdapter;
-    private ServerInfo serverInfo;
 
     /**
      * ATTENTION: This was auto-generated to implement the App Indexing API.
@@ -98,8 +94,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             tvInfo.setText("Sample rate: " + rate + ", buffer size: " + size);
         }
 
-        serverInfo = new ServerInfo();
-        clientInfoAdapter = new ClientInfoAdapter(this, serverInfo, this);
+        clientInfoAdapter = new ClientInfoAdapter(this, this);
         lvClient.setAdapter(clientInfoAdapter);
         getSupportActionBar().setSubtitle("Host: no Snapserver found");
 
@@ -144,6 +139,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             editor.apply();
             clientInfoAdapter.setHideOffline(item.isChecked());
             return true;
+        } else if (id == R.id.action_refresh) {
+            if ((remoteControl != null) && remoteControl.isConnected())
+                remoteControl.getServerStatus();
         }
 
         return super.onOptionsItemSelected(item);
@@ -221,26 +219,21 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         } else if (view == buttonStop) {
             stop();
         } else if (view == button) {
-            startTcpClient();
+//            startTcpClient();
         }
     }
 
-    private void startTcpClient() {
-        if ((tcpClient == null) || !tcpClient.isConnected()) {
-            if (tcpClient != null)
-                tcpClient.stop();
-//            Toast.makeText(this, "Connecting", Toast.LENGTH_SHORT).show();
-            tcpClient = new TcpClient(this);
-            tcpClient.start(host, port + 1);
-        } else {
-            tcpClient.sendMessage("{\"jsonrpc\": \"2.0\", \"method\": \"System.GetStatus\", \"id\": 1}");
-        }
+    private void startRemoteControl() {
+        if (remoteControl == null)
+            remoteControl = new RemoteControl(this);
+        if (!host.isEmpty())
+            remoteControl.connect(host, port + 1);
     }
 
-    private void stopTcpClient() {
-        if ((tcpClient != null) && (tcpClient.isConnected()))
-            tcpClient.stop();
-        tcpClient = null;
+    private void stopRemoteControl() {
+        if ((remoteControl != null) && (remoteControl.isConnected()))
+            remoteControl.disconnect();
+        remoteControl = null;
     }
 
     public void initializeDiscoveryListener() {
@@ -281,7 +274,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         host = nsdServiceInfo.getHost().getCanonicalHostName();
                         port = nsdServiceInfo.getPort();
                         setStatus(host + ":" + port);
-                        startTcpClient();
+                        startRemoteControl();
                         mNsdManager.stopServiceDiscovery(mDiscoveryListener);
                     }
                 });
@@ -319,7 +312,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     @Override
     public void onResume() {
         super.onResume();
-        startTcpClient();
+        startRemoteControl();
     }
 
     @Override
@@ -343,7 +336,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     @Override
     public void onDestroy() {
-        stopTcpClient();
+        stopRemoteControl();
         super.onDestroy();
     }
 
@@ -367,58 +360,16 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         client.disconnect();
     }
 
-    @Override
-    public void onMessageReceived(TcpClient tcpClient, String message) {
-        Log.d(TAG, "Msg received: " + message);
-        try {
-            boolean needsUpdate = false;
-            JSONObject json = new JSONObject(message);
-            if (json.has("id")) {
-                Log.d(TAG, "ID: " + json.getString("id"));
-                if ((json.get("result") instanceof JSONObject) && json.getJSONObject("result").has("clients")) {
-                    JSONArray clients = json.getJSONObject("result").getJSONArray("clients");
-                    for (int i = 0; i < clients.length(); i++) {
-                        final ClientInfo clientInfo = new ClientInfo(clients.getJSONObject(i));
-                        needsUpdate = serverInfo.addClient(clientInfo) || needsUpdate;
-                    }
-                }
-            } else {
-                Log.d(TAG, "Notification: " + json.getString("method"));
-                if (json.getString("method").equals("Client.OnUpdate") ||
-                        json.getString("method").equals("Client.OnConnect") ||
-                        json.getString("method").equals("Client.OnDisconnect")) {
-                    final ClientInfo clientInfo = new ClientInfo(json.getJSONObject("params").getJSONObject("data"));
-                    needsUpdate = serverInfo.addClient(clientInfo);
-                }
-            }
-            if (needsUpdate)
-                clientInfoAdapter.update();
-
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
-    }
-
-    @Override
-    public void onConnected(TcpClient tcpClient) {
-        Log.d(TAG, "onConnected");
-        tcpClient.sendMessage("{\"jsonrpc\": \"2.0\", \"method\": \"System.GetStatus\", \"id\": 1}");
-    }
-
-    @Override
-    public void onDisconnected(TcpClient tcpClient) {
-        Log.d(TAG, "onDisconnected");
-    }
 
     @Override
     public void onVolumeChanged(ClientInfoItem clientInfoItem, int percent) {
         ClientInfo client = clientInfoItem.getClientInfo();
-        tcpClient.sendMessage("{\"jsonrpc\": \"2.0\", \"method\": \"Client.SetVolume\", \"params\": {\"client\": \"" + client.getMac() + "\", \"volume\": " + percent + "}, \"id\": 3}");
+        remoteControl.setVolume(client, percent);
     }
 
     public void onMute(ClientInfoItem clientInfoItem, boolean mute) {
         ClientInfo client = clientInfoItem.getClientInfo();
-        tcpClient.sendMessage("{\"jsonrpc\": \"2.0\", \"method\": \"Client.SetMute\", \"params\": {\"client\": \"" + client.getMac() + "\", \"mute\": " + mute + "}, \"id\": 3}");
+        remoteControl.setMute(client, mute);
     }
 
     @Override
@@ -437,22 +388,53 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
         if (requestCode == 1) {
             ClientInfo clientInfo = data.getParcelableExtra("clientInfo");
-            tcpClient.sendMessage("{\"jsonrpc\": \"2.0\", \"method\": \"Client.SetName\", \"params\": {\"client\": \"" + clientInfo.getMac() + "\", \"name\": \"" + clientInfo.getName() + "\"}, \"id\": 3}");
-            if (serverInfo.addClient(clientInfo))
-                clientInfoAdapter.update();
+            remoteControl.setName(clientInfo, clientInfo.getName());
+            clientInfoAdapter.updateClient(clientInfo);
         }
+    }
+
+    @Override
+    public void onConnected(RemoteControl remoteControl) {
+        remoteControl.getServerStatus();
+    }
+
+    @Override
+    public void onDisconnected(RemoteControl remoteControl) {
+        Log.d(TAG, "onDisconnected");
+    }
+
+    @Override
+    public void onClientConnected(RemoteControl remoteControl, ClientInfo clientInfo) {
+        Log.d(TAG, "onClientConnected");
+        clientInfoAdapter.updateClient(clientInfo);
+    }
+
+    @Override
+    public void onClientDisconnected(RemoteControl remoteControl, ClientInfo clientInfo) {
+        Log.d(TAG, "onClientDisconnected");
+        clientInfoAdapter.updateClient(clientInfo);
+    }
+
+    @Override
+    public void onClientUpdated(RemoteControl remoteControl, ClientInfo clientInfo) {
+        Log.d(TAG, "onClientUpdated");
+        clientInfoAdapter.updateClient(clientInfo);
+    }
+
+    @Override
+    public void onServerInfo(RemoteControl remoteControl, ServerInfo serverInfo) {
+        clientInfoAdapter.update(serverInfo);
     }
 
     private class ClientInfoAdapter extends ArrayAdapter<ClientInfo> {
         private Context context;
         private ClientInfoItem.ClientInfoItemListener listener;
         private boolean hideOffline = false;
-        private ServerInfo serverInfo;
+        private ServerInfo serverInfo = new ServerInfo();
 
-        public ClientInfoAdapter(Context context, ServerInfo serverInfo, ClientInfoItem.ClientInfoItemListener listener) {
+        public ClientInfoAdapter(Context context, ClientInfoItem.ClientInfoItemListener listener) {
             super(context, 0);
             this.context = context;
-            this.serverInfo = serverInfo;
             this.listener = listener;
         }
 
@@ -472,27 +454,20 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             return clientInfoItem;
         }
 
-        /*        public void addClient(ClientInfo clientInfo) {
-                    if (clientInfo == null)
-                        return;
+        public void updateClient(final ClientInfo clientInfo) {
+            if (serverInfo.addClient(clientInfo))
+                update(null);
+        }
 
-                    for (int i = 0; i < getCount(); i++) {
-                        ClientInfo client = getItem(i);
-                        if (client.getMac().equals(clientInfo.getMac())) {
-                            insert(clientInfo, i);
-                            remove(client);
-                            return;
-                        }
-                    }
-                    add(clientInfo);
-                }
-        */
-        public void update() {
+        public void update(final ServerInfo serverInfo) {
+            if (serverInfo != null)
+                ClientInfoAdapter.this.serverInfo = serverInfo;
+
             MainActivity.this.runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
                     clear();
-                    for (ClientInfo clientInfo : serverInfo.getClientInfos()) {
+                    for (ClientInfo clientInfo : ClientInfoAdapter.this.serverInfo.getClientInfos()) {
                         if ((clientInfo != null) && (!hideOffline || clientInfo.isConnected()))
                             add(clientInfo);
                     }
@@ -509,7 +484,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             if (this.hideOffline == hideOffline)
                 return;
             this.hideOffline = hideOffline;
-            update();
+            update(null);
         }
     }
 }

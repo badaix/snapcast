@@ -19,7 +19,8 @@
     <string name="client_last_seen">Last seen</string>
     <string name="client_latency">Latency</string>
     <string name="title_activity_client_settings">Client settings</string>
-    <string name="action_hide_offline">Hide offline</string>
+    <string name="action_hide_offline">Hide offline clients</string>
     <string name="online">online</string>
+    <string name="action_refresh">refresh</string>
 </resources>
 

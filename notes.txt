@@ -45,3 +45,5 @@ git submodule update --init --recursive
 
 
 http://s.evemarket.info/images/gnome/256x256/devices/speaker.png
+https://upload.wikimedia.org/wikipedia/commons/3/3f/Mute_Icon.svg
+https://upload.wikimedia.org/wikipedia/commons/2/21/Speaker_Icon.svg

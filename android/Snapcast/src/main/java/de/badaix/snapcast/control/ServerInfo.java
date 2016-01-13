@@ -12,6 +12,10 @@ public class ServerInfo {
 
     }
 
+    public void clear() {
+        clientInfos.clear();
+    }
+
     public boolean addClient(ClientInfo client) {
         if (client == null)
             return false;
