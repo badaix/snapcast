@@ -94,11 +94,13 @@ void OpenslPlayer::playerCallback(SLAndroidSimpleBufferQueueItf bq)
 	chronos::usec delay(50 * 1000);
 	if (!pubStream_->getPlayerChunk(buffer[curBuffer], delay, frames_))
 	{
-		logO << "Failed to get chunk. Playing silence.\n";
+//		logO << "Failed to get chunk. Playing silence.\n";
 		memset(buffer[curBuffer], 0, buff_size);
 	}
-
-	adjustVolume(buffer[curBuffer], frames_);
+	else
+	{
+		adjustVolume(buffer[curBuffer], frames_);
+	}
 
 	while (active_)
 	{
@@ -232,6 +234,7 @@ void OpenslPlayer::initOpensl()
 ////	audioCallback(buffer[curBuffer], framesPerBuffer);
 	active_ = true;
 
+	memset(buffer[curBuffer], 0, buff_size);
 	result = (*bqPlayerBufferQueue)->Enqueue(bqPlayerBufferQueue, buffer[curBuffer], sizeof(buffer[curBuffer]));
 	if (SL_RESULT_SUCCESS != result)
 		throw SnapException("SL_RESULT_SUCCESS != result");
