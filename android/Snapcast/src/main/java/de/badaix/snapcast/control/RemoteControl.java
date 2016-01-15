@@ -21,13 +21,18 @@ public class RemoteControl implements TcpClient.TcpClientListener {
     private RemoteControlListener listener;
     private ServerInfo serverInfo;
 
+    public enum ClientEvent {
+        connected,
+        disconnected,
+        updated,
+        deleted
+    }
+
     public interface RemoteControlListener {
         void onConnected(RemoteControl remoteControl);
         void onDisconnected(RemoteControl remoteControl);
 
-        void onClientConnected(RemoteControl remoteControl, ClientInfo clientInfo);
-        void onClientDisconnected(RemoteControl remoteControl, ClientInfo clientInfo);
-        void onClientUpdated(RemoteControl remoteControl, ClientInfo clientInfo);
+        void onClientEvent(RemoteControl remoteControl, ClientInfo clientInfo, ClientEvent event);
 
         void onServerInfo(RemoteControl remoteControl, ServerInfo serverInfo);
     }
@@ -64,7 +69,12 @@ public class RemoteControl implements TcpClient.TcpClientListener {
             JSONObject json = new JSONObject(message);
             if (json.has("id")) {
                 Log.d(TAG, "ID: " + json.getString("id"));
-                if ((json.get("result") instanceof JSONObject) && json.getJSONObject("result").has("clients")) {
+                if (json.has("error")) {
+                    JSONObject error = json.getJSONObject("error");
+                    Log.e(TAG, "error " + error.getInt("code") + ": " + error.getString("message"));
+                }
+                else if (json.has("result") && (json.get("result") instanceof JSONObject) &&
+                        json.getJSONObject("result").has("clients")) {
                     serverInfo.clear();
                     JSONArray clients = json.getJSONObject("result").getJSONArray("clients");
                     for (int i = 0; i < clients.length(); i++) {
@@ -81,12 +91,16 @@ public class RemoteControl implements TcpClient.TcpClientListener {
                     final ClientInfo clientInfo = new ClientInfo(json.getJSONObject("params").getJSONObject("data"));
 //                    serverInfo.addClient(clientInfo);
                     if (listener != null) {
+                        ClientEvent event;
                         if (method.equals("Client.OnUpdate"))
-                            listener.onClientUpdated(this, clientInfo);
+                            listener.onClientEvent(this, clientInfo, ClientEvent.updated);
                         else if (method.equals("Client.OnConnect"))
-                            listener.onClientConnected(this, clientInfo);
+                            listener.onClientEvent(this, clientInfo, ClientEvent.connected);
                         else if (method.equals("Client.OnDisconnect"))
-                            listener.onClientDisconnected(this, clientInfo);
+                            listener.onClientEvent(this, clientInfo, ClientEvent.disconnected);
+                        else if (method.equals("Client.OnDelete")) {
+                            listener.onClientEvent(this, clientInfo, ClientEvent.deleted);
+                        }
                     }
                 }
             }
@@ -132,7 +146,7 @@ public class RemoteControl implements TcpClient.TcpClientListener {
 
     public void setName(ClientInfo clientInfo, String name) {
         try {
-            JSONObject request = jsonRequest("Client.SetName", new JSONObject("{\"client\": \"" + clientInfo.getMac() + "\", \"name\": " + name + "}"));
+            JSONObject request = jsonRequest("Client.SetName", new JSONObject("{\"client\": \"" + clientInfo.getMac() + "\", \"name\": \"" + name + "\"}"));
             tcpClient.sendMessage(request.toString());
         } catch (JSONException e) {
             e.printStackTrace();
@@ -151,6 +165,15 @@ public class RemoteControl implements TcpClient.TcpClientListener {
     public void setMute(ClientInfo clientInfo, boolean mute) {
         try {
             JSONObject request = jsonRequest("Client.SetMute", new JSONObject("{\"client\": \"" + clientInfo.getMac() + "\", \"mute\": " + mute + "}"));
+            tcpClient.sendMessage(request.toString());
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void delete(ClientInfo clientInfo) {
+        try {
+            JSONObject request = jsonRequest("System.DeleteClient", new JSONObject("{\"client\": \"" + clientInfo.getMac() + "\"}"));
             tcpClient.sendMessage(request.toString());
         } catch (JSONException e) {
             e.printStackTrace();

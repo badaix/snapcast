@@ -16,6 +16,16 @@ public class ServerInfo {
         clientInfos.clear();
     }
 
+    public boolean removeClient(ClientInfo client) {
+        for (int i=0; i<clientInfos.size(); ++i) {
+            if (clientInfos.get(i).getMac().equals(client.getMac())) {
+                clientInfos.remove(i);
+                return true;
+            }
+        }
+        return false;
+    }
+
     public boolean addClient(ClientInfo client) {
         if (client == null)
             return false;

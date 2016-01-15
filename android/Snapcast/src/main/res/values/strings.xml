@@ -4,13 +4,19 @@
     <string name="notification_title">Snapclient</string>
     <string name="notification_text">Snapclient is running...</string>
     <string name="notification_info">info...</string>
-    <string name="menu_details">details</string>
-    <string name="menu_delete">delete</string>
+    <string name="stop">stop</string>
+    <string name="menu_details">Details</string>
+    <string name="menu_delete">Delete</string>
 
     <!-- TODO: Remove or change this placeholder text -->
     <string name="title_activity_snapcast">Snapcast</string>
+
     <string name="action_settings">Settings</string>
     <string name="action_scan">Scan</string>
+    <string name="action_refresh">Refresh client list</string>
+    <string name="action_hide_offline">Hide offline clients</string>
+
+    <string name="title_activity_client_settings">Client settings</string>
     <string name="client_name">Name</string>
     <string name="client_mac">MAC</string>
     <string name="client_ip">IP</string>
@@ -18,9 +24,7 @@
     <string name="client_version">Version</string>
     <string name="client_last_seen">Last seen</string>
     <string name="client_latency">Latency</string>
-    <string name="title_activity_client_settings">Client settings</string>
-    <string name="action_hide_offline">Hide offline clients</string>
     <string name="online">online</string>
-    <string name="action_refresh">refresh</string>
+    <string name="action_play_stop">Play/Stop</string>
 </resources>
 

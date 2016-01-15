@@ -114,7 +114,7 @@ public class ClientInfoItem extends LinearLayout implements SeekBar.OnSeekBarCha
                 listener.onPropertiesClicked(this);
                 return true;
             case R.id.menu_delete:
-                Toast.makeText(this.getContext(), getContext().getText(R.string.menu_delete), Toast.LENGTH_SHORT).show();
+                listener.onDeleteClicked(this);
                 return true;
             default:
                 return false;
@@ -124,6 +124,7 @@ public class ClientInfoItem extends LinearLayout implements SeekBar.OnSeekBarCha
     public interface ClientInfoItemListener {
         void onVolumeChanged(ClientInfoItem clientInfoItem, int percent);
         void onMute(ClientInfoItem clientInfoItem, boolean mute);
+        void onDeleteClicked(ClientInfoItem clientInfoItem);
         void onPropertiesClicked(ClientInfoItem clientInfoItem);
     }
 

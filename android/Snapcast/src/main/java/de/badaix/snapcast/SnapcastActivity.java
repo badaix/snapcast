@@ -100,7 +100,7 @@ public class SnapcastActivity extends AppCompatActivity implements PlayerFragmen
         try {
             files = assetManager.list("");
         } catch (IOException e) {
-            Log.e("tag", "Failed to get asset file list.", e);
+            Log.e(TAG, "Failed to get asset file list.", e);
         }
         if (files != null) for (String filename : files) {
             InputStream in = null;
@@ -117,7 +117,7 @@ public class SnapcastActivity extends AppCompatActivity implements PlayerFragmen
                 copyFile(in, out);
                 Runtime.getRuntime().exec("chmod 755 " + outFile.getAbsolutePath()).waitFor();
             } catch (Exception e) {
-                Log.e("tag", "Failed to copy asset file: " + filename, e);
+                Log.e(TAG, "Failed to copy asset file: " + filename, e);
             } finally {
                 if (in != null) {
                     try {

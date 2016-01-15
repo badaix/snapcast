@@ -1,7 +1,9 @@
 package de.badaix.snapcast;
 
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.content.res.AssetManager;
 import android.media.AudioManager;
@@ -10,6 +12,7 @@ import android.net.nsd.NsdManager;
 import android.net.nsd.NsdServiceInfo;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.IBinder;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.Menu;
@@ -26,6 +29,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.gms.appindexing.Action;
+import com.google.android.gms.appindexing.AndroidAppUri;
 import com.google.android.gms.appindexing.AppIndex;
 import com.google.android.gms.common.api.GoogleApiClient;
 
@@ -39,22 +43,22 @@ import de.badaix.snapcast.control.ClientInfo;
 import de.badaix.snapcast.control.RemoteControl;
 import de.badaix.snapcast.control.ServerInfo;
 
-public class MainActivity extends AppCompatActivity implements View.OnClickListener, ClientInfoItem.ClientInfoItemListener, RemoteControl.RemoteControlListener {
+public class MainActivity extends AppCompatActivity implements ClientInfoItem.ClientInfoItemListener, RemoteControl.RemoteControlListener, SnapclientService.SnapclientListener {
 
     private static final String TAG = "Main";
 
-    private Button buttonStart;
-    private Button buttonStop;
-    private Button button;
     private TextView tvInfo;
     private CheckBox cbScreenWakelock;
     private ListView lvClient;
+    private MenuItem miStartStop = null;
     private NsdManager.DiscoveryListener mDiscoveryListener;
     private NsdManager mNsdManager = null;
     private String host = "";
     private int port = 1704;
     private RemoteControl remoteControl = null;
     private ClientInfoAdapter clientInfoAdapter;
+    private SnapclientService snapclientService;
+    boolean bound = false;
 
     /**
      * ATTENTION: This was auto-generated to implement the App Indexing API.
@@ -62,13 +66,29 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
      */
     private GoogleApiClient client;
 
+    /** Defines callbacks for service binding, passed to bindService() */
+    private ServiceConnection mConnection = new ServiceConnection() {
+
+        @Override
+        public void onServiceConnected(ComponentName className,
+                                       IBinder service) {
+            // We've bound to LocalService, cast the IBinder and get LocalService instance
+            SnapclientService.LocalBinder binder = (SnapclientService.LocalBinder) service;
+            snapclientService = binder.getService();
+            snapclientService.setListener(MainActivity.this);
+            bound = true;
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName arg0) {
+            bound = false;
+        }
+    };
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        buttonStart = (Button) findViewById(R.id.buttonStart);
-        buttonStop = (Button) findViewById(R.id.buttonStop);
-        button = (Button) findViewById(R.id.button);
         tvInfo = (TextView) findViewById(R.id.tvInfo);
         cbScreenWakelock = (CheckBox) findViewById(R.id.cbScreenWakelock);
         cbScreenWakelock.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
@@ -82,10 +102,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         });
 
         lvClient = (ListView) findViewById(R.id.lvClient);
-
-        buttonStart.setOnClickListener(this);
-        buttonStop.setOnClickListener(this);
-        button.setOnClickListener(this);
 
         AudioManager audioManager = (AudioManager) this.getSystemService(Context.AUDIO_SERVICE);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
@@ -109,6 +125,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.menu_snapcast, menu);
+        miStartStop = menu.findItem(R.id.action_play_stop);
+        updateStartStopMenuItem();
         SharedPreferences settings = getSharedPreferences("settings", 0);
         boolean isChecked = settings.getBoolean("hide_offline", false);
         MenuItem menuItem = menu.findItem(R.id.action_hide_offline);
@@ -130,6 +148,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             return true;
         } else if (id == R.id.action_scan) {
             initializeDiscoveryListener();
+            return true;
+        } else if (id == R.id.action_play_stop) {
+            if (snapclientService.isRunning()) {
+                stopSnapclient();
+            } else {
+                startSnapclient();
+            }
             return true;
         } else if (id == R.id.action_hide_offline) {
             item.setChecked(!item.isChecked());
@@ -153,7 +178,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         try {
             files = assetManager.list("");
         } catch (IOException e) {
-            Log.e("tag", "Failed to get asset file list.", e);
+            Log.e(TAG, "Failed to get asset file list.", e);
         }
         if (files != null) for (String filename : files) {
             InputStream in = null;
@@ -170,7 +195,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 copyFile(in, out);
                 Runtime.getRuntime().exec("chmod 755 " + outFile.getAbsolutePath()).waitFor();
             } catch (Exception e) {
-                Log.e("tag", "Failed to copy asset file: " + filename, e);
+                Log.e(TAG, "Failed to copy asset file: " + filename, e);
             } finally {
                 if (in != null) {
                     try {
@@ -198,7 +223,15 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
     }
 
-    private void start() {
+    private void updateStartStopMenuItem() {
+        if (snapclientService.isRunning()) {
+            miStartStop.setIcon(android.R.drawable.ic_media_pause);
+        } else {
+            miStartStop.setIcon(android.R.drawable.ic_media_play);
+        }
+    }
+
+    private void startSnapclient() {
         Intent i = new Intent(this, SnapclientService.class);
         i.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
         i.putExtra(SnapclientService.EXTRA_HOST, host);
@@ -207,21 +240,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         startService(i);
     }
 
-    private void stop() {
-        stopService(new Intent(this, SnapclientService.class));
+    private void stopSnapclient() {
+        snapclientService.stopPlayer();
+//        stopService(new Intent(this, SnapclientService.class));
         getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
     }
 
-    @Override
-    public void onClick(View view) {
-        if (view == buttonStart) {
-            start();
-        } else if (view == buttonStop) {
-            stop();
-        } else if (view == button) {
-//            startTcpClient();
-        }
-    }
 
     private void startRemoteControl() {
         if (remoteControl == null)
@@ -318,6 +342,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     @Override
     public void onStart() {
         super.onStart();
+
+        Intent intent = new Intent(this, SnapclientService.class);
+        bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
+
         // ATTENTION: This was auto-generated to implement the App Indexing API.
         // See https://g.co/AppIndexing/AndroidStudio for more information.
         client.connect();
@@ -344,6 +372,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     public void onStop() {
         super.onStop();
 
+// Unbind from the service
+        if (bound) {
+            unbindService(mConnection);
+            bound = false;
+        }
+
         // ATTENTION: This was auto-generated to implement the App Indexing API.
         // See https://g.co/AppIndexing/AndroidStudio for more information.
         Action viewAction = Action.newAction(
@@ -360,16 +394,36 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         client.disconnect();
     }
 
+    @Override
+    public void onPlayerStart() {
+        updateStartStopMenuItem();
+    }
+
+    @Override
+    public void onPlayerStop() {
+        updateStartStopMenuItem();
+    }
+
+    @Override
+    public void onLog(String log) {
+        Log.d(TAG, log);
+    }
+
 
     @Override
     public void onVolumeChanged(ClientInfoItem clientInfoItem, int percent) {
-        ClientInfo client = clientInfoItem.getClientInfo();
-        remoteControl.setVolume(client, percent);
+        remoteControl.setVolume(clientInfoItem.getClientInfo(), percent);
     }
 
+    @Override
     public void onMute(ClientInfoItem clientInfoItem, boolean mute) {
-        ClientInfo client = clientInfoItem.getClientInfo();
-        remoteControl.setMute(client, mute);
+        remoteControl.setMute(clientInfoItem.getClientInfo(), mute);
+    }
+
+    @Override
+    public void onDeleteClicked(ClientInfoItem clientInfoItem) {
+        remoteControl.delete(clientInfoItem.getClientInfo());
+        clientInfoAdapter.removeClient(clientInfoItem.getClientInfo());
     }
 
     @Override
@@ -404,21 +458,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     @Override
-    public void onClientConnected(RemoteControl remoteControl, ClientInfo clientInfo) {
-        Log.d(TAG, "onClientConnected");
-        clientInfoAdapter.updateClient(clientInfo);
-    }
+    public void onClientEvent(RemoteControl remoteControl, ClientInfo clientInfo, RemoteControl.ClientEvent event) {
+        Log.d(TAG, "onClientEvent: " + event.toString());
+        if (event == RemoteControl.ClientEvent.deleted)
+            clientInfoAdapter.removeClient(clientInfo);
+        else
+            clientInfoAdapter.updateClient(clientInfo);
 
-    @Override
-    public void onClientDisconnected(RemoteControl remoteControl, ClientInfo clientInfo) {
-        Log.d(TAG, "onClientDisconnected");
-        clientInfoAdapter.updateClient(clientInfo);
-    }
-
-    @Override
-    public void onClientUpdated(RemoteControl remoteControl, ClientInfo clientInfo) {
-        Log.d(TAG, "onClientUpdated");
-        clientInfoAdapter.updateClient(clientInfo);
     }
 
     @Override
@@ -457,6 +503,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         public void updateClient(final ClientInfo clientInfo) {
             if (serverInfo.addClient(clientInfo))
                 update(null);
+        }
+
+        public void removeClient(final ClientInfo clientInfo) {
+            Log.d(TAG, "removeClient: " + clientInfo.getMac());
+            if (serverInfo.removeClient(clientInfo)) {
+                Log.d(TAG, "removeClient 1: " + clientInfo.getMac());
+                update(null);
+            }
         }
 
         public void update(final ServerInfo serverInfo) {

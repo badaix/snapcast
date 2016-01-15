@@ -8,6 +8,7 @@ import android.app.TaskStackBuilder;
 import android.content.Context;
 import android.content.Intent;
 import android.net.wifi.WifiManager;
+import android.os.Binder;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
@@ -29,6 +30,13 @@ import static android.os.PowerManager.PARTIAL_WAKE_LOCK;
  */
 
 public class SnapclientService extends Service {
+
+    public interface SnapclientListener {
+        void onPlayerStart();
+        void onPlayerStop();
+        void onLog(String log);
+    }
+
     public static final String EXTRA_HOST = "EXTRA_HOST";
     public static final String EXTRA_PORT = "EXTRA_PORT";
 
@@ -36,10 +44,41 @@ public class SnapclientService extends Service {
     private PowerManager.WakeLock wakeLock = null;
     private WifiManager.WifiLock wifiWakeLock = null;
     private Thread reader = null;
+    private boolean running = false;
+    private SnapclientListener listener = null;
+
+    private final IBinder mBinder = new LocalBinder();
+
+    /**
+     * Class used for the client Binder.  Because we know this service always
+     * runs in the same process as its clients, we don't need to deal with IPC.
+     */
+    public class LocalBinder extends Binder {
+        SnapclientService getService() {
+            // Return this instance of LocalService so clients can call public methods
+            return SnapclientService.this;
+        }
+    }
+
+    public boolean isRunning() {
+        return running;
+    }
+
+    public void setListener(SnapclientListener listener) {
+        this.listener = listener;
+    }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+        if (intent.getAction() == "ACTION_STOP") {
+            stopService();
+            return START_NOT_STICKY;
+        }
         Toast.makeText(this, "service starting", Toast.LENGTH_SHORT).show();
+
+        Intent stopIntent = new Intent(this, SnapclientService.class);
+        stopIntent.setAction("ACTION_STOP");
+        PendingIntent piStop = PendingIntent.getService(this, 0, stopIntent, 0);
 
         NotificationCompat.Builder builder =
                 new NotificationCompat.Builder(this)
@@ -47,7 +86,9 @@ public class SnapclientService extends Service {
                         .setTicker(getText(R.string.ticker_text))
                         .setContentTitle(getText(R.string.notification_title))
                         .setContentText(getText(R.string.notification_text))
-                        .setContentInfo(getText(R.string.notification_info));
+                        .setContentInfo(getText(R.string.notification_info))
+                        .setStyle(new NotificationCompat.BigTextStyle().bigText(getText(R.string.notification_text)))
+                        .addAction(android.R.drawable.ic_media_pause, getString(R.string.stop), piStop);
 
         Intent resultIntent = new Intent(this, MainActivity.class);
 
@@ -89,8 +130,11 @@ public class SnapclientService extends Service {
 
     @Override
     public IBinder onBind(Intent intent) {
-        // We don't provide binding, so return null
-        return null;
+        return mBinder;
+    }
+
+    public void stopPlayer() {
+        stopService();
     }
 
     private void stopService() {
@@ -104,7 +148,8 @@ public class SnapclientService extends Service {
     private void start(String host, int port) {
         try {
             //https://code.google.com/p/android/issues/detail?id=22763
-            stop();
+            if (running)
+                return;
             File binary = new File(getFilesDir(), "snapclient");
             android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_URGENT_AUDIO);
 
@@ -129,7 +174,8 @@ public class SnapclientService extends Service {
                     String line;
                     try {
                         while ((line = bufferedReader.readLine()) != null) {
-                            Log.d("Main", line);
+                            if (listener != null)
+                                listener.onLog(line);
                         }
                     } catch (IOException e) {
                         e.printStackTrace();
@@ -137,6 +183,9 @@ public class SnapclientService extends Service {
                 }
             });
             reader.start();
+            running = true;
+            if (listener != null)
+                listener.onPlayerStart();
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -152,6 +201,9 @@ public class SnapclientService extends Service {
         if ((wifiWakeLock != null) && wifiWakeLock.isHeld())
             wifiWakeLock.release();
         android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_DEFAULT);
+        running = false;
+        if (listener != null)
+            listener.onPlayerStop();
     }
 
     // Handler that receives messages from the thread
