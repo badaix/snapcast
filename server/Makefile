@@ -31,12 +31,8 @@ clean:
 .PHONY: dpkg
 #sudo apt-get install build-essential debhelper dh-make dh-systemd quilt fakeroot lintian
 dpkg:
-	cp ../init.scripts/sysv/$(BIN) debian/$(BIN).init
-	cp ../init.scripts/systemd/$(BIN).service debian/$(BIN).service
 	dpkg-buildpackage -rfakeroot -b
 	dh_clean
-	rm -f debian/$(BIN).service
-	rm -f debian/$(BIN).init
 
 ifdef DESTDIR
 
@@ -63,14 +59,16 @@ endif
 
 installsystemd:
 	@echo using systemd; \
-	cp ../init.scripts/systemd/$(BIN).service /lib/systemd/system/$(BIN).service; \
+	cp debian/$(BIN).service /lib/systemd/system/$(BIN).service; \
+	cp debian/$(BIN).default /etc/default/$(BIN); \
 	systemctl daemon-reload; \
 	systemctl enable $(BIN); \
 	systemctl start $(BIN); \
 
 installsysv:
 	@echo using sysv; \
-	cp ../init.scripts/sysv/$(BIN) /etc/init.d/$(BIN); \
+	cp debian/$(BIN).init /etc/init.d/$(BIN); \
+	cp debian/$(BIN).default /etc/default/$(BIN); \
 	update-rc.d $(BIN) defaults; \
 	/etc/init.d/$(BIN) start; \
 
@@ -92,6 +90,7 @@ uninstallsysv:
 	killall -9 $(BIN); \
 	rm -f /usr/sbin/$(BIN); \
 	rm -f /etc/init.d/$(BIN); \
+	rm -f /etc/default/$(BIN); \
 	update-rc.d -f $(BIN) remove; \
 
 uninstallsystemd:
@@ -100,4 +99,5 @@ uninstallsystemd:
 	killall -9 $(BIN); \
 	rm -f /usr/sbin/$(BIN); \
 	rm -f /lib/systemd/system/$(BIN).service; \
+	rm -f /etc/default/$(BIN); \
 	systemctl daemon-reload; \

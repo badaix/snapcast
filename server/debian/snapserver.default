@@ -1,2 +1,21 @@
 # defaults file for snapserver
-# currently not used
+
+# start snapserver automatically?
+START_SNAPSERVER=true
+
+# Allowed options:
+#   -h, --help                          produce help message
+#   -v, --version                       show version number
+#   -p, --port arg (=1704)              server port
+#   --controlPort arg (=1705)           Remote control port
+#   -s, --sampleformat arg (=48000:16:2)
+#                                       sample format
+#   -c, --codec arg (=flac)             transport codec [flac|ogg|pcm][:options]
+#                                       Type codec:? to get codec specific options
+#   -f, --fifo arg (=/tmp/snapfifo)     name of the input fifo file
+#   -d, --daemon [=arg(=0)]             daemonize
+#                                       optional process priority [-20..19]
+#   -b, --buffer arg (=1000)            buffer [ms]
+#   --pipeReadBuffer arg (=20)          pipe read buffer [ms]
+
+SNAPSERVER_OPTS="-d"

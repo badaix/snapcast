@@ -1,2 +1,16 @@
 # defaults file for snapclient
-# currently not used
+
+# start snapclient automatically?
+START_SNAPCLIENT=true
+
+# Allowed options:
+#   --help                          produce help message
+#   -v, --version                   show version number
+#   -l, --list                      list pcm devices
+#   -h, --host arg                  server hostname or ip address
+#   -p, --port arg (=1704)          server port
+#   -s, --soundcard arg (=default)  index or name of the soundcard
+#   -d, --daemon [=arg(=-3)]        daemonize, optional process priority [-20..19]
+#   --latency arg (=0)              latency of the soundcard
+
+SNAPCLIENT_OPTS="-d"

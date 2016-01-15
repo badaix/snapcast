@@ -1,10 +1,11 @@
 [Unit]
 Description=Snapcast server
 After=network.target
+EnvironmentFile=-/etc/default/snapserver
 
 [Service]
 Type=forking
-ExecStart=/usr/sbin/snapserver -d
+ExecStart=/usr/sbin/snapserver $SNAPSERVER_OPTS
 PIDFile=/var/run/snapserver.pid
 
 [Install]
