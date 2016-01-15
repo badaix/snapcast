@@ -161,6 +161,18 @@ void StreamServer::onMessageReceived(ControlSession* controlSession, const std::
 				{"clients", jClient}
 			};
 		}
+		else if (request.method == "System.DeleteClient")
+		{
+			clientInfo = Config::instance().getClientInfo(request.getParam("client").get<string>(), false);
+			if (clientInfo == nullptr)
+				throw JsonInternalErrorException("Client not found", request.id);
+			response = clientInfo->macAddress;
+			Config::instance().remove(clientInfo);
+			Config::instance().save();
+			json notification = JsonNotification::getJson("Client.OnDelete", clientInfo->toJson());
+			controlServer_->send(notification.dump(), controlSession);
+			clientInfo = nullptr;
+		}
 		else if (request.method == "Client.SetVolume")
 		{
 			clientInfo->volume.percent = request.getParam<uint16_t>("volume", 0, 100);

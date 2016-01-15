@@ -91,3 +91,8 @@ json Config::getClientInfos() const
 }
 
 
+void Config::remove(ClientInfoPtr client)
+{
+	clients.erase(std::remove(clients.begin(), clients.end(), client), clients.end());
+}
+

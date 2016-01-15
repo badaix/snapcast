@@ -129,6 +129,7 @@ public:
 	}
 
 	ClientInfoPtr getClientInfo(const std::string& mac, bool add = true);
+	void remove(ClientInfoPtr client);
 
 	std::vector<ClientInfoPtr> clients;
 	json getClientInfos() const;
