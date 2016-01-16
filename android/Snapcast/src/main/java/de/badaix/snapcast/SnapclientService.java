@@ -15,7 +15,6 @@ import android.os.Looper;
 import android.os.Message;
 import android.os.PowerManager;
 import android.support.v4.app.NotificationCompat;
-import android.util.Log;
 import android.widget.Toast;
 
 import java.io.BufferedReader;
@@ -31,34 +30,15 @@ import static android.os.PowerManager.PARTIAL_WAKE_LOCK;
 
 public class SnapclientService extends Service {
 
-    public interface SnapclientListener {
-        void onPlayerStart();
-        void onPlayerStop();
-        void onLog(String log);
-    }
-
     public static final String EXTRA_HOST = "EXTRA_HOST";
     public static final String EXTRA_PORT = "EXTRA_PORT";
-
+    private final IBinder mBinder = new LocalBinder();
     private java.lang.Process process = null;
     private PowerManager.WakeLock wakeLock = null;
     private WifiManager.WifiLock wifiWakeLock = null;
     private Thread reader = null;
     private boolean running = false;
     private SnapclientListener listener = null;
-
-    private final IBinder mBinder = new LocalBinder();
-
-    /**
-     * Class used for the client Binder.  Because we know this service always
-     * runs in the same process as its clients, we don't need to deal with IPC.
-     */
-    public class LocalBinder extends Binder {
-        SnapclientService getService() {
-            // Return this instance of LocalService so clients can call public methods
-            return SnapclientService.this;
-        }
-    }
 
     public boolean isRunning() {
         return running;
@@ -204,6 +184,25 @@ public class SnapclientService extends Service {
         running = false;
         if (listener != null)
             listener.onPlayerStop();
+    }
+
+    public interface SnapclientListener {
+        void onPlayerStart();
+
+        void onPlayerStop();
+
+        void onLog(String log);
+    }
+
+    /**
+     * Class used for the client Binder.  Because we know this service always
+     * runs in the same process as its clients, we don't need to deal with IPC.
+     */
+    public class LocalBinder extends Binder {
+        SnapclientService getService() {
+            // Return this instance of LocalService so clients can call public methods
+            return SnapclientService.this;
+        }
     }
 
     // Handler that receives messages from the thread

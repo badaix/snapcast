@@ -1,7 +1,6 @@
 package de.badaix.snapcast.control;
 
 import android.os.Parcel;
-import android.os.Parcelable;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -10,6 +9,17 @@ import org.json.JSONObject;
  * Created by johannes on 06.01.16.
  */
 public class ClientInfo implements JsonSerialisable {
+    public static final Creator<ClientInfo> CREATOR = new Creator<ClientInfo>() {
+        @Override
+        public ClientInfo createFromParcel(Parcel in) {
+            return new ClientInfo(in);
+        }
+
+        @Override
+        public ClientInfo[] newArray(int size) {
+            return new ClientInfo[size];
+        }
+    };
     private String mac;
     private String ip;
     private String host;
@@ -35,18 +45,6 @@ public class ClientInfo implements JsonSerialisable {
         connected = in.readByte() != 0;
         latency = in.readInt();
     }
-
-    public static final Creator<ClientInfo> CREATOR = new Creator<ClientInfo>() {
-        @Override
-        public ClientInfo createFromParcel(Parcel in) {
-            return new ClientInfo(in);
-        }
-
-        @Override
-        public ClientInfo[] newArray(int size) {
-            return new ClientInfo[size];
-        }
-    };
 
     @Override
     public void fromJson(JSONObject json) {
@@ -88,6 +86,10 @@ public class ClientInfo implements JsonSerialisable {
         return volume;
     }
 
+    public void setVolume(Volume volume) {
+        this.volume = volume;
+    }
+
     public Time_t getLastSeen() {
         return lastSeen;
     }
@@ -112,28 +114,24 @@ public class ClientInfo implements JsonSerialisable {
         return name;
     }
 
+    public void setName(String name) {
+        this.name = name;
+    }
+
     public int getLatency() {
         return latency;
+    }
+
+    public void setLatency(int latency) {
+        this.latency = latency;
     }
 
     public boolean isConnected() {
         return connected;
     }
 
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public void setVolume(Volume volume) {
-        this.volume = volume;
-    }
-
     public void setConnected(boolean connected) {
         this.connected = connected;
-    }
-
-    public void setLatency(int latency) {
-        this.latency = latency;
     }
 
     @Override

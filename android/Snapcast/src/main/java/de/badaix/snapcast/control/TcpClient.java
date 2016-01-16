@@ -1,4 +1,4 @@
-package de.badaix.snapcast;
+package de.badaix.snapcast.control;
 
 import android.util.Log;
 
@@ -16,18 +16,6 @@ import java.net.Socket;
 public class TcpClient {
 
     private static final String TAG = "TCP";
-
-    // Declare the interface. The method messageReceived(String message) will
-    // must be implemented in the MyActivity
-    // class at on asynckTask doInBackground
-    public interface TcpClientListener {
-        void onMessageReceived(TcpClient tcpClient, String message);
-
-        void onConnected(TcpClient tcpClient);
-
-        void onDisconnected(TcpClient tcpClient);
-    }
-
     private String mServerMessage;
     // sends message received notifications
     private TcpClientListener mMessageListener = null;
@@ -39,7 +27,6 @@ public class TcpClient {
     private BufferedReader mBufferIn;
     private Thread worker = null;
     private Socket socket = null;
-
     private String uid;
 
     /**
@@ -152,6 +139,17 @@ public class TcpClient {
         };
         worker = new Thread(runnable);
         worker.start();
+    }
+
+    // Declare the interface. The method messageReceived(String message) will
+    // must be implemented in the MyActivity
+    // class at on asynckTask doInBackground
+    public interface TcpClientListener {
+        void onMessageReceived(TcpClient tcpClient, String message);
+
+        void onConnected(TcpClient tcpClient);
+
+        void onDisconnected(TcpClient tcpClient);
     }
 
 }

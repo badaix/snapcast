@@ -6,9 +6,6 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import de.badaix.snapcast.ClientInfoItem;
-import de.badaix.snapcast.TcpClient;
-
 /**
  * Created by johannes on 13.01.16.
  */
@@ -30,6 +27,7 @@ public class RemoteControl implements TcpClient.TcpClientListener {
 
     public interface RemoteControlListener {
         void onConnected(RemoteControl remoteControl);
+
         void onDisconnected(RemoteControl remoteControl);
 
         void onClientEvent(RemoteControl remoteControl, ClientInfo clientInfo, ClientEvent event);
