@@ -106,7 +106,6 @@ public class MainActivity extends AppCompatActivity implements ClientInfoItem.Cl
         clientInfoAdapter = new ClientInfoAdapter(this, this);
         lvClient.setAdapter(clientInfoAdapter);
         getSupportActionBar().setSubtitle("Host: no Snapserver found");
-        getSupportActionBar().setBackgroundDrawable(new ColorDrawable(Color.parseColor("#37474F")));
 
         Setup.copyAssets(this, new String[]{"snapclient"});
         initializeDiscoveryListener();
@@ -168,9 +167,9 @@ public class MainActivity extends AppCompatActivity implements ClientInfoItem.Cl
 
     private void updateStartStopMenuItem() {
         if (snapclientService.isRunning()) {
-            miStartStop.setIcon(android.R.drawable.ic_media_pause);
+            miStartStop.setIcon(R.drawable.ic_media_stop);
         } else {
-            miStartStop.setIcon(android.R.drawable.ic_media_play);
+            miStartStop.setIcon(R.drawable.ic_media_play);
         }
     }
 
