@@ -136,10 +136,7 @@ public class MainActivity extends AppCompatActivity implements ClientInfoItem.Cl
         int id = item.getItemId();
 
         //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
-            Toast.makeText(this, "Not implemented", Toast.LENGTH_SHORT).show();
-            return true;
-        } else if (id == R.id.action_scan) {
+        if (id == R.id.action_scan) {
             initializeDiscoveryListener();
             return true;
         } else if (id == R.id.action_play_stop) {

@@ -12,7 +12,7 @@
     <string name="title_activity_snapcast">Snapcast</string>
 
     <string name="action_settings">Settings</string>
-    <string name="action_scan">Scan</string>
+    <string name="action_scan">Scan for server</string>
     <string name="action_refresh">Refresh client list</string>
     <string name="action_hide_offline">Hide offline clients</string>
 

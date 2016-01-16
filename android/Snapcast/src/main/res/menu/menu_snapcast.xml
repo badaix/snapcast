@@ -8,11 +8,11 @@
         android:title="@string/action_play_stop"
         android:icon="@android:drawable/ic_media_play"
         app:showAsAction="always" />
-    <item
+<!--    <item
         android:id="@+id/action_settings"
         android:orderInCategory="100"
         android:title="@string/action_settings"
-        app:showAsAction="never" />
+        app:showAsAction="never" /> -->
     <item
         android:id="@+id/action_scan"
         android:orderInCategory="100"
