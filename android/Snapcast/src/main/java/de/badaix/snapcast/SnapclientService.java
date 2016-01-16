@@ -62,13 +62,13 @@ public class SnapclientService extends Service {
 
         NotificationCompat.Builder builder =
                 new NotificationCompat.Builder(this)
-                        .setSmallIcon(android.R.drawable.ic_media_play)
+                        .setSmallIcon(R.drawable.ic_media_play)
                         .setTicker(getText(R.string.ticker_text))
                         .setContentTitle(getText(R.string.notification_title))
                         .setContentText(getText(R.string.notification_text))
                         .setContentInfo(getText(R.string.notification_info))
                         .setStyle(new NotificationCompat.BigTextStyle().bigText(getText(R.string.notification_text)))
-                        .addAction(android.R.drawable.ic_media_pause, getString(R.string.stop), piStop);
+                        .addAction(R.drawable.ic_media_stop, getString(R.string.stop), piStop);
 
         Intent resultIntent = new Intent(this, MainActivity.class);
 
