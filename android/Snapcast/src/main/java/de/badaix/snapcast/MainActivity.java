@@ -5,7 +5,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
-import android.content.res.AssetManager;
+import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
 import android.media.AudioManager;
 import android.net.Uri;
 import android.net.nsd.NsdManager;
@@ -21,7 +22,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.ArrayAdapter;
-import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.ListView;
@@ -29,15 +29,8 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.gms.appindexing.Action;
-import com.google.android.gms.appindexing.AndroidAppUri;
 import com.google.android.gms.appindexing.AppIndex;
 import com.google.android.gms.common.api.GoogleApiClient;
-
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 
 import de.badaix.snapcast.control.ClientInfo;
 import de.badaix.snapcast.control.RemoteControl;
@@ -46,7 +39,7 @@ import de.badaix.snapcast.control.ServerInfo;
 public class MainActivity extends AppCompatActivity implements ClientInfoItem.ClientInfoItemListener, RemoteControl.RemoteControlListener, SnapclientService.SnapclientListener {
 
     private static final String TAG = "Main";
-
+    boolean bound = false;
     private TextView tvInfo;
     private CheckBox cbScreenWakelock;
     private ListView lvClient;
@@ -58,15 +51,15 @@ public class MainActivity extends AppCompatActivity implements ClientInfoItem.Cl
     private RemoteControl remoteControl = null;
     private ClientInfoAdapter clientInfoAdapter;
     private SnapclientService snapclientService;
-    boolean bound = false;
-
     /**
      * ATTENTION: This was auto-generated to implement the App Indexing API.
      * See https://g.co/AppIndexing/AndroidStudio for more information.
      */
     private GoogleApiClient client;
 
-    /** Defines callbacks for service binding, passed to bindService() */
+    /**
+     * Defines callbacks for service binding, passed to bindService()
+     */
     private ServiceConnection mConnection = new ServiceConnection() {
 
         @Override
@@ -113,8 +106,9 @@ public class MainActivity extends AppCompatActivity implements ClientInfoItem.Cl
         clientInfoAdapter = new ClientInfoAdapter(this, this);
         lvClient.setAdapter(clientInfoAdapter);
         getSupportActionBar().setSubtitle("Host: no Snapserver found");
+        getSupportActionBar().setBackgroundDrawable(new ColorDrawable(Color.parseColor("#37474F")));
 
-        copyAssets();
+        Setup.copyAssets(this, new String[]{"snapclient"});
         initializeDiscoveryListener();
         // ATTENTION: This was auto-generated to implement the App Indexing API.
         // See https://g.co/AppIndexing/AndroidStudio for more information.
@@ -172,57 +166,6 @@ public class MainActivity extends AppCompatActivity implements ClientInfoItem.Cl
         return super.onOptionsItemSelected(item);
     }
 
-    private void copyAssets() {
-        AssetManager assetManager = getAssets();
-        String[] files = null;
-        try {
-            files = assetManager.list("");
-        } catch (IOException e) {
-            Log.e(TAG, "Failed to get asset file list.", e);
-        }
-        if (files != null) for (String filename : files) {
-            InputStream in = null;
-            OutputStream out = null;
-            try {
-                File outFile = new File(getFilesDir(), filename);
-//                if (outFile.exists() && (outFile.length() == assetManager.openFd(filename).getLength())) {
-//                    Log.d("Main", "Exists: " + outFile.getAbsolutePath());
-//                    continue;
-//                }
-                Log.d("Main", "Asset: " + outFile.getAbsolutePath());
-                in = assetManager.open(filename);
-                out = new FileOutputStream(outFile);
-                copyFile(in, out);
-                Runtime.getRuntime().exec("chmod 755 " + outFile.getAbsolutePath()).waitFor();
-            } catch (Exception e) {
-                Log.e(TAG, "Failed to copy asset file: " + filename, e);
-            } finally {
-                if (in != null) {
-                    try {
-                        in.close();
-                    } catch (IOException e) {
-                        // NOOP
-                    }
-                }
-                if (out != null) {
-                    try {
-                        out.close();
-                    } catch (IOException e) {
-                        // NOOP
-                    }
-                }
-            }
-        }
-    }
-
-    private void copyFile(InputStream in, OutputStream out) throws IOException {
-        byte[] buffer = new byte[1024];
-        int read;
-        while ((read = in.read(buffer)) != -1) {
-            out.write(buffer, 0, read);
-        }
-    }
-
     private void updateStartStopMenuItem() {
         if (snapclientService.isRunning()) {
             miStartStop.setIcon(android.R.drawable.ic_media_pause);
@@ -270,7 +213,7 @@ public class MainActivity extends AppCompatActivity implements ClientInfoItem.Cl
                 MainActivity.this.runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        getSupportActionBar().setSubtitle("Host: " + text);
+                        getSupportActionBar().setSubtitle(text);
                     }
                 });
             }
@@ -289,7 +232,8 @@ public class MainActivity extends AppCompatActivity implements ClientInfoItem.Cl
                 mNsdManager.resolveService(service, new NsdManager.ResolveListener() {
                     @Override
                     public void onResolveFailed(NsdServiceInfo nsdServiceInfo, int i) {
-
+                        setStatus("Failed: " + i);
+                        mNsdManager.stopServiceDiscovery(mDiscoveryListener);
                     }
 
                     @Override
@@ -318,13 +262,13 @@ public class MainActivity extends AppCompatActivity implements ClientInfoItem.Cl
 
             @Override
             public void onStartDiscoveryFailed(String serviceType, int errorCode) {
-                setStatus("Discovery failed: Error code:" + errorCode);
+                setStatus("StartDiscovery failed: " + errorCode);
                 mNsdManager.stopServiceDiscovery(this);
             }
 
             @Override
             public void onStopDiscoveryFailed(String serviceType, int errorCode) {
-                setStatus("Discovery failed: Error code:" + errorCode);
+                setStatus("StopDiscovery failed: " + errorCode);
                 mNsdManager.stopServiceDiscovery(this);
             }
         };
