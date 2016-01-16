@@ -1,20 +1,15 @@
 package de.badaix.snapcast;
 
 import android.content.Context;
-import android.content.Intent;
-import android.os.Bundle;
 import android.support.v7.widget.PopupMenu;
 import android.view.LayoutInflater;
 import android.view.Menu;
-import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.SeekBar;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import de.badaix.snapcast.control.ClientInfo;
 import de.badaix.snapcast.control.Volume;
@@ -123,8 +118,11 @@ public class ClientInfoItem extends LinearLayout implements SeekBar.OnSeekBarCha
 
     public interface ClientInfoItemListener {
         void onVolumeChanged(ClientInfoItem clientInfoItem, int percent);
+
         void onMute(ClientInfoItem clientInfoItem, boolean mute);
+
         void onDeleteClicked(ClientInfoItem clientInfoItem);
+
         void onPropertiesClicked(ClientInfoItem clientInfoItem);
     }
 

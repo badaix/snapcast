@@ -17,7 +17,7 @@ public class ServerInfo {
     }
 
     public boolean removeClient(ClientInfo client) {
-        for (int i=0; i<clientInfos.size(); ++i) {
+        for (int i = 0; i < clientInfos.size(); ++i) {
             if (clientInfos.get(i).getMac().equals(client.getMac())) {
                 clientInfos.remove(i);
                 return true;
@@ -30,7 +30,7 @@ public class ServerInfo {
         if (client == null)
             return false;
 
-        for (int i=0; i<clientInfos.size(); ++i) {
+        for (int i = 0; i < clientInfos.size(); ++i) {
             ClientInfo clientInfo = clientInfos.get(i);
             if (clientInfo == null)
                 continue;

@@ -9,5 +9,6 @@ import org.json.JSONObject;
  */
 public interface JsonSerialisable extends Parcelable {
     public void fromJson(JSONObject json);
+
     public JSONObject toJson();
 }

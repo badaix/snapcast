@@ -70,8 +70,7 @@ public class RemoteControl implements TcpClient.TcpClientListener {
                 if (json.has("error")) {
                     JSONObject error = json.getJSONObject("error");
                     Log.e(TAG, "error " + error.getInt("code") + ": " + error.getString("message"));
-                }
-                else if (json.has("result") && (json.get("result") instanceof JSONObject) &&
+                } else if (json.has("result") && (json.get("result") instanceof JSONObject) &&
                         json.getJSONObject("result").has("clients")) {
                     serverInfo.clear();
                     JSONArray clients = json.getJSONObject("result").getJSONArray("clients");

@@ -5,7 +5,6 @@ import android.preference.EditTextPreference;
 import android.preference.Preference;
 import android.preference.PreferenceFragment;
 import android.text.format.DateUtils;
-import android.util.Log;
 
 import de.badaix.snapcast.control.ClientInfo;
 
@@ -27,7 +26,7 @@ public class ClientSettingsFragment extends PreferenceFragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        clientInfo = (ClientInfo)getArguments().getParcelable("clientInfo");
+        clientInfo = (ClientInfo) getArguments().getParcelable("clientInfo");
 
         // Load the preferences from an XML resource
         addPreferencesFromResource(R.xml.client_preferences);
@@ -35,8 +34,8 @@ public class ClientSettingsFragment extends PreferenceFragment {
         prefName.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
             @Override
             public boolean onPreferenceChange(Preference preference, Object newValue) {
-                prefName.setSummary((String)newValue);
-                clientInfo.setName((String)newValue);
+                prefName.setSummary((String) newValue);
+                clientInfo.setName((String) newValue);
                 return true;
             }
         });

@@ -6,7 +6,6 @@ import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.view.MenuItem;
 
-import de.badaix.snapcast.ClientSettingsFragment;
 import de.badaix.snapcast.control.ClientInfo;
 
 /**
@@ -19,7 +18,7 @@ public class ClientSettingsActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        ClientInfo clientInfo = (ClientInfo)getIntent().getParcelableExtra("clientInfo");
+        ClientInfo clientInfo = (ClientInfo) getIntent().getParcelableExtra("clientInfo");
         clientSettingsFragment = new ClientSettingsFragment();
         Bundle bundle = new Bundle();
         bundle.putParcelable("clientInfo", clientInfo);
