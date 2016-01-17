@@ -66,9 +66,38 @@ struct Volume
 };
 
 
+struct Stream
+{
+//TODO
+	Stream() : id("TODO_ID"), name("TODO_NAME"), uri("file:///tmp/snapfifo")
+	{
+	}
+
+	void fromJson(const json& j)
+	{
+		id = jGet<std::string>(j, "id", "TODO_ID");
+		name = jGet<std::string>(j, "name", "TODO_NAME");
+		uri = jGet<std::string>(j, "uri", "file:///tmp/snapfifo");
+	}
+
+	json toJson()
+	{
+		json j;
+		j["id"] = id;
+		j["name"] = name;
+		j["uri"] = uri;
+		return j;
+	}
+
+	std::string id;
+	std::string name;
+	std::string uri;
+};
+
+
 struct ClientInfo
 {
-	ClientInfo(const std::string& _macAddress = "") : macAddress(_macAddress), volume(100), connected(false), latency(0)
+	ClientInfo(const std::string& _macAddress = "") : macAddress(_macAddress), volume(100), connected(false), latency(0), streamId("TODO")
 	{
 		lastSeen.tv_sec = 0;
 		lastSeen.tv_usec = 0;
@@ -86,6 +115,7 @@ struct ClientInfo
 		lastSeen.tv_usec = jGet<int32_t>(j["lastSeen"], "usec", 0);
 		connected = jGet<bool>(j, "connected", true);
 		latency = jGet<int32_t>(j, "latency", 0);
+		streamId = jGet<std::string>(j, "stream", "TODO");
 	}
 
 	json toJson()
@@ -101,6 +131,7 @@ struct ClientInfo
 		j["lastSeen"]["usec"] = lastSeen.tv_usec;
 		j["connected"] = connected;
 		j["latency"] = latency;
+		j["stream"] = streamId;
 		return j;
 	}
 
@@ -114,6 +145,7 @@ struct ClientInfo
 	timeval lastSeen;
 	bool connected;
 	int32_t latency;
+	std::string streamId;
 };
 
 typedef std::shared_ptr<ClientInfo> ClientInfoPtr;
