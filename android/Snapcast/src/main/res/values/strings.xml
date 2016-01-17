@@ -26,5 +26,7 @@
     <string name="client_latency">Latency</string>
     <string name="online">online</string>
     <string name="action_play_stop">Play/Stop</string>
+    <string name="client_deleted">Client %1$s deleted</string>
+    <string name="undo_string">undo</string>
 </resources>
 

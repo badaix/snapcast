@@ -76,7 +76,7 @@ public class RemoteControl implements TcpClient.TcpClientListener {
                     JSONArray clients = json.getJSONObject("result").getJSONArray("clients");
                     for (int i = 0; i < clients.length(); i++) {
                         final ClientInfo clientInfo = new ClientInfo(clients.getJSONObject(i));
-                        serverInfo.addClient(clientInfo);
+                        serverInfo.updateClient(clientInfo);
                     }
                     if (listener != null)
                         listener.onServerInfo(this, serverInfo);

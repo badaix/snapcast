@@ -5,8 +5,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
-import android.graphics.Color;
-import android.graphics.drawable.ColorDrawable;
 import android.media.AudioManager;
 import android.net.Uri;
 import android.net.nsd.NsdManager;
@@ -14,6 +12,9 @@ import android.net.nsd.NsdServiceInfo;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.support.design.widget.Snackbar;
+import android.support.design.widget.Snackbar.Callback;
+import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.Menu;
@@ -26,7 +27,6 @@ import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.ListView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.google.android.gms.appindexing.Action;
 import com.google.android.gms.appindexing.AppIndex;
@@ -40,9 +40,6 @@ public class MainActivity extends AppCompatActivity implements ClientInfoItem.Cl
 
     private static final String TAG = "Main";
     boolean bound = false;
-    private TextView tvInfo;
-    private CheckBox cbScreenWakelock;
-    private ListView lvClient;
     private MenuItem miStartStop = null;
     private NsdManager.DiscoveryListener mDiscoveryListener;
     private NsdManager mNsdManager = null;
@@ -82,8 +79,8 @@ public class MainActivity extends AppCompatActivity implements ClientInfoItem.Cl
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        tvInfo = (TextView) findViewById(R.id.tvInfo);
-        cbScreenWakelock = (CheckBox) findViewById(R.id.cbScreenWakelock);
+        TextView tvInfo = (TextView) findViewById(R.id.tvInfo);
+        CheckBox cbScreenWakelock = (CheckBox) findViewById(R.id.cbScreenWakelock);
         cbScreenWakelock.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
@@ -94,8 +91,6 @@ public class MainActivity extends AppCompatActivity implements ClientInfoItem.Cl
             }
         });
 
-        lvClient = (ListView) findViewById(R.id.lvClient);
-
         AudioManager audioManager = (AudioManager) this.getSystemService(Context.AUDIO_SERVICE);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
             String rate = audioManager.getProperty(AudioManager.PROPERTY_OUTPUT_SAMPLE_RATE);
@@ -104,6 +99,7 @@ public class MainActivity extends AppCompatActivity implements ClientInfoItem.Cl
         }
 
         clientInfoAdapter = new ClientInfoAdapter(this, this);
+        ListView lvClient = (ListView) findViewById(R.id.lvClient);
         lvClient.setAdapter(clientInfoAdapter);
         getSupportActionBar().setSubtitle("Host: no Snapserver found");
 
@@ -175,6 +171,7 @@ public class MainActivity extends AppCompatActivity implements ClientInfoItem.Cl
         i.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
         i.putExtra(SnapclientService.EXTRA_HOST, host);
         i.putExtra(SnapclientService.EXTRA_PORT, port);
+        i.setAction(SnapclientService.ACTION_START);
 
         startService(i);
     }
@@ -209,7 +206,9 @@ public class MainActivity extends AppCompatActivity implements ClientInfoItem.Cl
                 MainActivity.this.runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        getSupportActionBar().setSubtitle(text);
+                        ActionBar actionBar = getSupportActionBar();
+                        if (actionBar != null)
+                            actionBar.setSubtitle(text);
                     }
                 });
             }
@@ -361,9 +360,31 @@ public class MainActivity extends AppCompatActivity implements ClientInfoItem.Cl
     }
 
     @Override
-    public void onDeleteClicked(ClientInfoItem clientInfoItem) {
-        remoteControl.delete(clientInfoItem.getClientInfo());
-        clientInfoAdapter.removeClient(clientInfoItem.getClientInfo());
+    public void onDeleteClicked(final ClientInfoItem clientInfoItem) {
+        final ClientInfo clientInfo = clientInfoItem.getClientInfo();
+        clientInfo.setDeleted(true);
+        clientInfoAdapter.update();
+        Snackbar mySnackbar = Snackbar.make(findViewById(R.id.myCoordinatorLayout),
+                getString(R.string.client_deleted, clientInfo.getVisibleName()),
+                Snackbar.LENGTH_SHORT);
+        mySnackbar.setAction(R.string.undo_string, new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                clientInfo.setDeleted(false);
+                clientInfoAdapter.update();
+            }
+        });
+        mySnackbar.setCallback(new Callback() {
+            @Override
+            public void onDismissed(Snackbar snackbar, int event) {
+                super.onDismissed(snackbar, event);
+                if (event != DISMISS_EVENT_ACTION) {
+                    remoteControl.delete(clientInfo);
+                    clientInfoAdapter.removeClient(clientInfo);
+                }
+            }
+        });
+        mySnackbar.show();
     }
 
     @Override
@@ -409,7 +430,7 @@ public class MainActivity extends AppCompatActivity implements ClientInfoItem.Cl
 
     @Override
     public void onServerInfo(RemoteControl remoteControl, ServerInfo serverInfo) {
-        clientInfoAdapter.update(serverInfo);
+        clientInfoAdapter.updateServer(serverInfo);
     }
 
     private class ClientInfoAdapter extends ArrayAdapter<ClientInfo> {
@@ -440,29 +461,36 @@ public class MainActivity extends AppCompatActivity implements ClientInfoItem.Cl
             return clientInfoItem;
         }
 
-        public void updateClient(final ClientInfo clientInfo) {
-            if (serverInfo.addClient(clientInfo))
-                update(null);
-        }
-
         public void removeClient(final ClientInfo clientInfo) {
-            Log.d(TAG, "removeClient: " + clientInfo.getMac());
-            if (serverInfo.removeClient(clientInfo)) {
+            if ((clientInfo != null) && serverInfo.removeClient(clientInfo)) {
                 Log.d(TAG, "removeClient 1: " + clientInfo.getMac());
-                update(null);
+                update();
             }
         }
 
-        public void update(final ServerInfo serverInfo) {
-            if (serverInfo != null)
+        public void updateClient(final ClientInfo clientInfo) {
+            Log.d(TAG, "updateClient: " + clientInfo.getHost() + " " + clientInfo.isDeleted());
+            if (serverInfo.updateClient(clientInfo)) {
+                update();
+            }
+        }
+
+        public void updateServer(final ServerInfo serverInfo) {
+            if (serverInfo != null) {
                 ClientInfoAdapter.this.serverInfo = serverInfo;
+                update();
+            }
+        }
+
+
+        public void update() {
 
             MainActivity.this.runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
                     clear();
                     for (ClientInfo clientInfo : ClientInfoAdapter.this.serverInfo.getClientInfos()) {
-                        if ((clientInfo != null) && (!hideOffline || clientInfo.isConnected()))
+                        if ((clientInfo != null) && (!hideOffline || clientInfo.isConnected()) && !clientInfo.isDeleted())
                             add(clientInfo);
                     }
                     notifyDataSetChanged();
@@ -478,7 +506,7 @@ public class MainActivity extends AppCompatActivity implements ClientInfoItem.Cl
             if (this.hideOffline == hideOffline)
                 return;
             this.hideOffline = hideOffline;
-            update(null);
+            update();
         }
     }
 }

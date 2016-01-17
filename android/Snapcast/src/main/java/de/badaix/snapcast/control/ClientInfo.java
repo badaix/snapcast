@@ -29,6 +29,7 @@ public class ClientInfo implements JsonSerialisable {
     private Time_t lastSeen;
     private boolean connected;
     private int latency = 0;
+    private boolean deleted = false;
 
     public ClientInfo(JSONObject json) {
         fromJson(json);
@@ -114,6 +115,12 @@ public class ClientInfo implements JsonSerialisable {
         return name;
     }
 
+    public String getVisibleName() {
+        if ((name != null) && !name.isEmpty())
+            return name;
+        return getHost();
+    }
+
     public void setName(String name) {
         this.name = name;
     }
@@ -132,6 +139,14 @@ public class ClientInfo implements JsonSerialisable {
 
     public void setConnected(boolean connected) {
         this.connected = connected;
+    }
+
+    public boolean isDeleted() {
+        return deleted;
+    }
+
+    public void setDeleted(boolean deleted) {
+        this.deleted = deleted;
     }
 
     @Override
@@ -157,6 +172,7 @@ public class ClientInfo implements JsonSerialisable {
         ClientInfo that = (ClientInfo) o;
 
         if (connected != that.connected) return false;
+        if (deleted != that.deleted) return false;
         if (latency != that.latency) return false;
         if (mac != null ? !mac.equals(that.mac) : that.mac != null) return false;
         if (ip != null ? !ip.equals(that.ip) : that.ip != null) return false;
@@ -176,6 +192,7 @@ public class ClientInfo implements JsonSerialisable {
         result = 31 * result + (name != null ? name.hashCode() : 0);
         result = 31 * result + (volume != null ? volume.hashCode() : 0);
         result = 31 * result + (connected ? 1 : 0);
+        result = 31 * result + (deleted ? 1 : 0);
         result = 31 * result + latency;
         return result;
     }

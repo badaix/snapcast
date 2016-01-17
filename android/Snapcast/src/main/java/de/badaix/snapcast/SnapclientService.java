@@ -15,7 +15,6 @@ import android.os.Looper;
 import android.os.Message;
 import android.os.PowerManager;
 import android.support.v4.app.NotificationCompat;
-import android.widget.Toast;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -32,6 +31,8 @@ public class SnapclientService extends Service {
 
     public static final String EXTRA_HOST = "EXTRA_HOST";
     public static final String EXTRA_PORT = "EXTRA_PORT";
+    public static final String ACTION_START = "ACTION_START";
+    public static final String ACTION_STOP = "ACTION_STOP";
     private final IBinder mBinder = new LocalBinder();
     private java.lang.Process process = null;
     private PowerManager.WakeLock wakeLock = null;
@@ -50,57 +51,57 @@ public class SnapclientService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        if (intent.getAction() == "ACTION_STOP") {
+        if (intent == null)
+            return START_NOT_STICKY;
+
+        if (intent.getAction() == ACTION_STOP) {
             stopService();
             return START_NOT_STICKY;
-        }
-        Toast.makeText(this, "service starting", Toast.LENGTH_SHORT).show();
+        } else if (intent.getAction() == ACTION_START) {
+            Intent stopIntent = new Intent(this, SnapclientService.class);
+            stopIntent.setAction(ACTION_STOP);
+            PendingIntent piStop = PendingIntent.getService(this, 0, stopIntent, 0);
 
-        Intent stopIntent = new Intent(this, SnapclientService.class);
-        stopIntent.setAction("ACTION_STOP");
-        PendingIntent piStop = PendingIntent.getService(this, 0, stopIntent, 0);
+            NotificationCompat.Builder builder =
+                    new NotificationCompat.Builder(this)
+                            .setSmallIcon(R.drawable.ic_media_play)
+                            .setTicker(getText(R.string.ticker_text))
+                            .setContentTitle(getText(R.string.notification_title))
+                            .setContentText(getText(R.string.notification_text))
+                            .setContentInfo(getText(R.string.notification_info))
+                            .setStyle(new NotificationCompat.BigTextStyle().bigText(getText(R.string.notification_text)))
+                            .addAction(R.drawable.ic_media_stop, getString(R.string.stop), piStop);
 
-        NotificationCompat.Builder builder =
-                new NotificationCompat.Builder(this)
-                        .setSmallIcon(R.drawable.ic_media_play)
-                        .setTicker(getText(R.string.ticker_text))
-                        .setContentTitle(getText(R.string.notification_title))
-                        .setContentText(getText(R.string.notification_text))
-                        .setContentInfo(getText(R.string.notification_info))
-                        .setStyle(new NotificationCompat.BigTextStyle().bigText(getText(R.string.notification_text)))
-                        .addAction(R.drawable.ic_media_stop, getString(R.string.stop), piStop);
+            Intent resultIntent = new Intent(this, MainActivity.class);
 
-        Intent resultIntent = new Intent(this, MainActivity.class);
-
-        // The stack builder object will contain an artificial back stack for the
-        // started Activity.
-        // This ensures that navigating backward from the Activity leads out of
-        // your application to the Home screen.
-        TaskStackBuilder stackBuilder = TaskStackBuilder.create(this);
-        // Adds the back stack for the Intent (but not the Intent itself)
-        stackBuilder.addParentStack(MainActivity.class);
-        // Adds the Intent that starts the Activity to the top of the stack
-        stackBuilder.addNextIntent(resultIntent);
-        PendingIntent resultPendingIntent =
-                stackBuilder.getPendingIntent(
-                        0,
-                        PendingIntent.FLAG_UPDATE_CURRENT
-                );
-        builder.setContentIntent(resultPendingIntent);
-        NotificationManager mNotificationManager =
-                (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-        // mId allows you to update the notification later on.
-        final Notification notification = builder.build();
+            // The stack builder object will contain an artificial back stack for the
+            // started Activity.
+            // This ensures that navigating backward from the Activity leads out of
+            // your application to the Home screen.
+            TaskStackBuilder stackBuilder = TaskStackBuilder.create(this);
+            // Adds the back stack for the Intent (but not the Intent itself)
+            stackBuilder.addParentStack(MainActivity.class);
+            // Adds the Intent that starts the Activity to the top of the stack
+            stackBuilder.addNextIntent(resultIntent);
+            PendingIntent resultPendingIntent =
+                    stackBuilder.getPendingIntent(
+                            0,
+                            PendingIntent.FLAG_UPDATE_CURRENT
+                    );
+            builder.setContentIntent(resultPendingIntent);
+            NotificationManager mNotificationManager =
+                    (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+            // mId allows you to update the notification later on.
+            final Notification notification = builder.build();
 //        mNotificationManager.notify(123, notification);
-        startForeground(123, notification);
+            startForeground(123, notification);
 
-
-        String host = intent.getStringExtra(EXTRA_HOST);
-        int port = intent.getIntExtra(EXTRA_PORT, 1704);
-        start(host, port);
-
-        // If we get killed, after returning from here, restart
-        return START_STICKY;
+            String host = intent.getStringExtra(EXTRA_HOST);
+            int port = intent.getIntExtra(EXTRA_PORT, 1704);
+            start(host, port);
+            return START_STICKY;
+        }
+        return START_NOT_STICKY;
     }
 
     @Override

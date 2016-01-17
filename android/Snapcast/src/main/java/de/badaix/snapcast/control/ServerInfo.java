@@ -26,7 +26,7 @@ public class ServerInfo {
         return false;
     }
 
-    public boolean addClient(ClientInfo client) {
+    public boolean updateClient(ClientInfo client) {
         if (client == null)
             return false;
 

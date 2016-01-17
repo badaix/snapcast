@@ -41,10 +41,7 @@ public class ClientInfoItem extends LinearLayout implements SeekBar.OnSeekBarCha
     }
 
     private void update() {
-        if (!clientInfo.getName().isEmpty())
-            title.setText(clientInfo.getName());
-        else
-            title.setText(clientInfo.getHost());
+        title.setText(clientInfo.getVisibleName());
         title.setEnabled(clientInfo.isConnected());
         volumeSeekBar.setProgress(clientInfo.getVolume().getPercent());
         if (clientInfo.getVolume().isMuted())
