@@ -7,25 +7,31 @@
     <Preference
         android:key="pref_client_mac"
         android:title="@string/client_mac"
+        android:enabled="false"
         android:summary="mac" />
     <Preference
         android:key="pref_client_ip"
         android:title="@string/client_ip"
+        android:enabled="false"
         android:summary="ip" />
     <Preference
         android:key="pref_client_host"
         android:title="@string/client_host"
+        android:enabled="false"
         android:summary="host" />
     <Preference
         android:key="pref_client_version"
         android:title="@string/client_version"
+        android:enabled="false"
         android:summary="version" />
     <Preference
         android:key="pref_client_last_seen"
         android:title="@string/client_last_seen"
+        android:enabled="false"
         android:summary="online" />
     <Preference
         android:key="pref_client_latency"
         android:title="@string/client_latency"
-        android:summary="0ms" />
+        android:enabled="false"
+        android:summary="TODO: make configurable... 0ms" />
 </PreferenceScreen>

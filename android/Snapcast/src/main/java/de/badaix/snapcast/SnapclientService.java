@@ -58,6 +58,9 @@ public class SnapclientService extends Service {
             stopService();
             return START_NOT_STICKY;
         } else if (intent.getAction() == ACTION_START) {
+            String host = intent.getStringExtra(EXTRA_HOST);
+            int port = intent.getIntExtra(EXTRA_PORT, 1704);
+
             Intent stopIntent = new Intent(this, SnapclientService.class);
             stopIntent.setAction(ACTION_STOP);
             PendingIntent piStop = PendingIntent.getService(this, 0, stopIntent, 0);
@@ -68,7 +71,7 @@ public class SnapclientService extends Service {
                             .setTicker(getText(R.string.ticker_text))
                             .setContentTitle(getText(R.string.notification_title))
                             .setContentText(getText(R.string.notification_text))
-                            .setContentInfo(getText(R.string.notification_info))
+                            .setContentInfo(host)
                             .setStyle(new NotificationCompat.BigTextStyle().bigText(getText(R.string.notification_text)))
                             .addAction(R.drawable.ic_media_stop, getString(R.string.stop), piStop);
 
@@ -96,8 +99,6 @@ public class SnapclientService extends Service {
 //        mNotificationManager.notify(123, notification);
             startForeground(123, notification);
 
-            String host = intent.getStringExtra(EXTRA_HOST);
-            int port = intent.getIntExtra(EXTRA_PORT, 1704);
             start(host, port);
             return START_STICKY;
         }
