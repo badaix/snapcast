@@ -141,7 +141,7 @@ void StreamServer::onMessageReceived(ControlSession* controlSession, const std::
 				throw JsonInternalErrorException("Client not found", request.id);
 		}
 
-		if (request.method == "System.GetStatus")
+		if (request.method == "Server.GetStatus")
 		{
 			json jClient = json::array();
 			if (request.hasParam("client"))
@@ -158,10 +158,11 @@ void StreamServer::onMessageReceived(ControlSession* controlSession, const std::
 					{"host", getHostName()},
 					{"version", VERSION}
 				}},
-				{"clients", jClient}
+				{"clients", jClient},
+				{"streams", "TODO"}
 			};
 		}
-		else if (request.method == "System.DeleteClient")
+		else if (request.method == "Server.DeleteClient")
 		{
 			clientInfo = Config::instance().getClientInfo(request.getParam("client").get<string>(), false);
 			if (clientInfo == nullptr)

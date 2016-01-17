@@ -137,7 +137,7 @@ public class RemoteControl implements TcpClient.TcpClientListener {
     }
 
     public void getServerStatus() {
-        JSONObject request = jsonRequest("System.GetStatus", null);
+        JSONObject request = jsonRequest("Server.GetStatus", null);
         tcpClient.sendMessage(request.toString());
     }
 
@@ -170,7 +170,7 @@ public class RemoteControl implements TcpClient.TcpClientListener {
 
     public void delete(ClientInfo clientInfo) {
         try {
-            JSONObject request = jsonRequest("System.DeleteClient", new JSONObject("{\"client\": \"" + clientInfo.getMac() + "\"}"));
+            JSONObject request = jsonRequest("Server.DeleteClient", new JSONObject("{\"client\": \"" + clientInfo.getMac() + "\"}"));
             tcpClient.sendMessage(request.toString());
         } catch (JSONException e) {
             e.printStackTrace();

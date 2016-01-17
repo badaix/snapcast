@@ -26,11 +26,11 @@ def setVolume(client, volume):
 	requestId = requestId + 1
 
 volume = int(sys.argv[2])
-j = doRequest(json.dumps({'jsonrpc': '2.0', 'method': 'System.GetStatus', 'id': 1}), 1)
+j = doRequest(json.dumps({'jsonrpc': '2.0', 'method': 'Server.GetStatus', 'id': 1}), 1)
 for client in j["result"]["clients"]:
 	setVolume(client['MAC'], volume)
 
-j = doRequest(json.dumps({'jsonrpc': '2.0', 'method': 'System.GetStatus', 'id': 1}), 1)
+j = doRequest(json.dumps({'jsonrpc': '2.0', 'method': 'Server.GetStatus', 'id': 1}), 1)
 for client in j["result"]["clients"]:
 	print("MAC: " + client['MAC'] + ", name: " + client['name'] + ", conntect: " + str(client['connected']) + ", volume: " + str(client['volume']['percent']))
 
