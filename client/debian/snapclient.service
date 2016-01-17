@@ -1,9 +1,9 @@
 [Unit]
 Description=Snapcast client
 After=network.target
-EnvironmentFile=-/etc/default/snapclient
 
 [Service]
+EnvironmentFile=-/etc/default/snapclient
 Type=forking
 ExecStart=/usr/sbin/snapclient $SNAPCLIENT_OPTS
 PIDFile=/var/run/snapclient.pid

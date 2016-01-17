@@ -1,6 +1,9 @@
 *Todo:
 -Server ping client
 -Server: OnResync while terminating?!?
+-Clean up build process for Android
+-Add more defines for ALSA, OpenSL, Vorbis, Avahi, ...
+-Clean up messages and serialization
 
 
 *g++ 4.8 installation:
