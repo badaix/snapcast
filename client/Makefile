@@ -10,7 +10,15 @@ else
 endif
 
 ifdef ANDROID
-CXX     = /home/johannes/Develop/android-ndk-r10e-arm-21/bin/arm-linux-androideabi-g++
+# Android NDK setup: (http://developer.android.com/ndk/guides/standalone_toolchain.html)
+# 1. Download NDK: http://dl.google.com/android/ndk/android-ndk-r10e-linux-x86_64.bin
+# 2. Extract to: /home/johannes/Develop/android-ndk-r10e
+# 3. Setup toolchain:
+#    i.  cd /home/johannes/Develop/android-ndk-r10e/build/tools
+#    ii. ./make-standalone-toolchain.sh --arch=arm --platform=android-17 --install-dir=/home/johannes/Develop/android-toolchain-arm-17 --ndk-dir=/home/johannes/Develop/android-ndk-r10e --system=linux-x86_64
+# build with:
+#    make ANDROID=1
+CXX     = /home/johannes/Develop/android-toolchain-arm-17/bin/arm-linux-androideabi-g++
 CFLAGS  = -std=c++0x -Wall -Wno-unused-function -fPIC -O3 -pthread -DASIO_STANDALONE -DANDROID -DVERSION=\"$(VERSION)\" -I.. -I../externals/asio/asio/include -I../externals/popl/include -I/home/johannes/Develop/build/arm/include
 LDFLAGS = -L/home/johannes/Develop/build/arm/lib -pie -lFLAC -lOpenSLES
 OBJ     = snapClient.o stream.o clientConnection.o timeProvider.o player/player.o player/openslPlayer.o decoder/pcmDecoder.o decoder/flacDecoder.o controller.o ../message/pcmChunk.o ../common/log.o ../message/sampleFormat.o
