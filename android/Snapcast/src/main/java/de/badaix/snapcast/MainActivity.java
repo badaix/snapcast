@@ -160,6 +160,9 @@ public class MainActivity extends AppCompatActivity implements ClientInfoItem.Cl
         } else if (id == R.id.action_refresh) {
             if ((remoteControl != null) && remoteControl.isConnected())
                 remoteControl.getServerStatus();
+        } else if (id == R.id.action_about) {
+            Intent intent = new Intent(this, AboutActivity.class);
+            startActivity(intent);
         }
 
         return super.onOptionsItemSelected(item);

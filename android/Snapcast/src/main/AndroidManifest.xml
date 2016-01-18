@@ -32,11 +32,19 @@
             android:name="com.google.android.gms.version"
             android:value="@integer/google_play_services_version" />
 
-        <!--            android:theme="@style/Theme.AppCompat.Light.DialogWhenLarge" -->
+        <!-- android:theme="@style/Theme.AppCompat.Light.DialogWhenLarge" -->
         <activity
             android:name=".ClientSettingsActivity"
             android:label="@string/title_activity_client_settings"
-            android:parentActivityName=".MainActivity" >
+            android:parentActivityName=".MainActivity">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value=".MainActivity" />
+        </activity>
+        <activity
+            android:name=".AboutActivity"
+            android:label="@string/title_activity_about"
+            android:parentActivityName=".MainActivity">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value=".MainActivity" />
