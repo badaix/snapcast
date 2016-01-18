@@ -103,7 +103,14 @@ public class MainActivity extends AppCompatActivity implements ClientInfoItem.Cl
         lvClient.setAdapter(clientInfoAdapter);
         getSupportActionBar().setSubtitle("Host: no Snapserver found");
 
-        Setup.copyAssets(this, new String[]{"snapclient"});
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                Log.d(TAG, "copying snapclient");
+                Setup.copyAssets(MainActivity.this, new String[]{"snapclient"});
+                Log.d(TAG, "done copying snapclient");
+            }
+        }).start();
         initializeDiscoveryListener();
         // ATTENTION: This was auto-generated to implement the App Indexing API.
         // See https://g.co/AppIndexing/AndroidStudio for more information.

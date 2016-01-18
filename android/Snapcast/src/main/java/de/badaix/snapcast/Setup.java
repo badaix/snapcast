@@ -1,6 +1,7 @@
 package de.badaix.snapcast;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.content.res.AssetManager;
 import android.util.Log;
 
@@ -35,16 +36,18 @@ public class Setup {
             InputStream in = null;
             OutputStream out = null;
             try {
-                File outFile = new File(context.getFilesDir(), filename);
-//                if (outFile.exists() && (outFile.length() == assetManager.openFd(filename).getLength())) {
-//                    Log.d("Main", "Exists: " + outFile.getAbsolutePath());
-//                    continue;
-//                }
-                Log.d("Main", "Asset: " + outFile.getAbsolutePath());
+                SharedPreferences prefs = context.getSharedPreferences("assets", Context.MODE_PRIVATE);
                 in = assetManager.open(filename);
+                String md5 = MD5.calculateMD5(in);
+                File outFile = new File(context.getFilesDir(), filename);
+                Log.d(TAG, "Asset: " + outFile.getAbsolutePath() + ", md5: " + md5);
+                if (outFile.exists() && md5.equals(prefs.getString(filename, "")))
+                    continue;
+                Log.d(TAG, "Copying " + outFile.getAbsolutePath());
                 out = new FileOutputStream(outFile);
                 copyFile(in, out);
                 Runtime.getRuntime().exec("chmod 755 " + outFile.getAbsolutePath()).waitFor();
+                prefs.edit().putString(filename, md5).apply();
             } catch (Exception e) {
                 Log.e(TAG, "Failed to copy asset file: " + filename, e);
             } finally {
