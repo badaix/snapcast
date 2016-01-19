@@ -7,7 +7,6 @@ import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.media.AudioManager;
 import android.net.Uri;
-import android.net.nsd.NsdManager;
 import android.net.nsd.NsdServiceInfo;
 import android.os.Build;
 import android.os.Bundle;
@@ -36,18 +35,17 @@ import de.badaix.snapcast.control.ClientInfo;
 import de.badaix.snapcast.control.RemoteControl;
 import de.badaix.snapcast.control.ServerInfo;
 
-public class MainActivity extends AppCompatActivity implements ClientInfoItem.ClientInfoItemListener, RemoteControl.RemoteControlListener, SnapclientService.SnapclientListener {
+public class MainActivity extends AppCompatActivity implements ClientInfoItem.ClientInfoItemListener, RemoteControl.RemoteControlListener, SnapclientService.SnapclientListener, NsdHelper.NsdHelperListener {
 
     private static final String TAG = "Main";
     boolean bound = false;
     private MenuItem miStartStop = null;
-    private NsdManager.DiscoveryListener mDiscoveryListener;
-    private NsdManager mNsdManager = null;
     private String host = "";
     private int port = 1704;
     private RemoteControl remoteControl = null;
     private ClientInfoAdapter clientInfoAdapter;
     private SnapclientService snapclientService;
+
     /**
      * ATTENTION: This was auto-generated to implement the App Indexing API.
      * See https://g.co/AppIndexing/AndroidStudio for more information.
@@ -111,7 +109,7 @@ public class MainActivity extends AppCompatActivity implements ClientInfoItem.Cl
                 Log.d(TAG, "done copying snapclient");
             }
         }).start();
-        initializeDiscoveryListener();
+//        initializeDiscoveryListener();
         // ATTENTION: This was auto-generated to implement the App Indexing API.
         // See https://g.co/AppIndexing/AndroidStudio for more information.
         client = new GoogleApiClient.Builder(this).addApi(AppIndex.API).build();
@@ -140,10 +138,11 @@ public class MainActivity extends AppCompatActivity implements ClientInfoItem.Cl
 
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_scan) {
-            initializeDiscoveryListener();
+//            NsdHelper.getInstance(this).startListening("*._tcp.", "SnapCast", this);
+            NsdHelper.getInstance(this).startListening("_snapcast._tcp.", "SnapCast", this);
             return true;
         } else if (id == R.id.action_play_stop) {
-            if (snapclientService.isRunning()) {
+            if (bound && snapclientService.isRunning()) {
                 stopSnapclient();
             } else {
                 startSnapclient();
@@ -169,7 +168,7 @@ public class MainActivity extends AppCompatActivity implements ClientInfoItem.Cl
     }
 
     private void updateStartStopMenuItem() {
-        if (snapclientService.isRunning()) {
+        if (bound && snapclientService.isRunning()) {
             miStartStop.setIcon(R.drawable.ic_media_stop);
         } else {
             miStartStop.setIcon(R.drawable.ic_media_play);
@@ -187,7 +186,8 @@ public class MainActivity extends AppCompatActivity implements ClientInfoItem.Cl
     }
 
     private void stopSnapclient() {
-        snapclientService.stopPlayer();
+        if (bound)
+            snapclientService.stopPlayer();
 //        stopService(new Intent(this, SnapclientService.class));
         getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
     }
@@ -206,86 +206,18 @@ public class MainActivity extends AppCompatActivity implements ClientInfoItem.Cl
         remoteControl = null;
     }
 
-    public void initializeDiscoveryListener() {
-
-        // Instantiate a new DiscoveryListener
-        mDiscoveryListener = new NsdManager.DiscoveryListener() {
-
-            private void setStatus(final String text) {
-                Log.e(TAG, text);
-                MainActivity.this.runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        ActionBar actionBar = getSupportActionBar();
-                        if (actionBar != null)
-                            actionBar.setSubtitle(text);
-                    }
-                });
-            }
-
-            //  Called as soon as service discovery begins.
-            @Override
-            public void onDiscoveryStarted(String regType) {
-                Log.d(TAG, "Service discovery started");
-                setStatus("Searching for a Snapserver");
-            }
-
-            @Override
-            public void onServiceFound(NsdServiceInfo service) {
-                // A service was found!  Do something with it.
-                Log.d(TAG, "Service discovery success" + service);
-                mNsdManager.resolveService(service, new NsdManager.ResolveListener() {
-                    @Override
-                    public void onResolveFailed(NsdServiceInfo nsdServiceInfo, int i) {
-                        setStatus("Failed: " + i);
-                        mNsdManager.stopServiceDiscovery(mDiscoveryListener);
-                    }
-
-                    @Override
-                    public void onServiceResolved(NsdServiceInfo nsdServiceInfo) {
-                        Log.d(TAG, "resolved: " + nsdServiceInfo);
-                        host = nsdServiceInfo.getHost().getCanonicalHostName();
-                        port = nsdServiceInfo.getPort();
-                        setStatus(host + ":" + port);
-                        startRemoteControl();
-                        mNsdManager.stopServiceDiscovery(mDiscoveryListener);
-                    }
-                });
-            }
-
-            @Override
-            public void onServiceLost(NsdServiceInfo service) {
-                // When the network service is no longer available.
-                // Internal bookkeeping code goes here.
-                Log.e(TAG, "service lost" + service);
-            }
-
-            @Override
-            public void onDiscoveryStopped(String serviceType) {
-                Log.i(TAG, "Discovery stopped: " + serviceType);
-            }
-
-            @Override
-            public void onStartDiscoveryFailed(String serviceType, int errorCode) {
-                setStatus("StartDiscovery failed: " + errorCode);
-                mNsdManager.stopServiceDiscovery(this);
-            }
-
-            @Override
-            public void onStopDiscoveryFailed(String serviceType, int errorCode) {
-                setStatus("StopDiscovery failed: " + errorCode);
-                mNsdManager.stopServiceDiscovery(this);
-            }
-        };
-
-        mNsdManager = (NsdManager) getSystemService(Context.NSD_SERVICE);
-        mNsdManager.discoverServices("_snapcast._tcp.", NsdManager.PROTOCOL_DNS_SD, mDiscoveryListener);
-    }
 
     @Override
     public void onResume() {
         super.onResume();
+        NsdHelper.getInstance(this).startListening("_snapcast._tcp.", "SnapCast", this);
         startRemoteControl();
+    }
+
+    @Override
+    protected void onPause() {
+        NsdHelper.getInstance(this).stopListening();
+        super.onPause();
     }
 
     @Override
@@ -441,6 +373,27 @@ public class MainActivity extends AppCompatActivity implements ClientInfoItem.Cl
     @Override
     public void onServerInfo(RemoteControl remoteControl, ServerInfo serverInfo) {
         clientInfoAdapter.updateServer(serverInfo);
+    }
+
+    private void setActionbarSubtitle(final String subtitle) {
+        MainActivity.this.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                ActionBar actionBar = getSupportActionBar();
+                if (actionBar != null)
+                    actionBar.setSubtitle(subtitle);
+            }
+        });
+    }
+
+    @Override
+    public void onResolved(NsdHelper nsdHelper, NsdServiceInfo serviceInfo) {
+        Log.d(TAG, "resolved: " + serviceInfo);
+        host = serviceInfo.getHost().getCanonicalHostName();
+        port = serviceInfo.getPort();
+        setActionbarSubtitle(host + ":" + port);
+        startRemoteControl();
+        NsdHelper.getInstance(this).stopListening();
     }
 
     private class ClientInfoAdapter extends ArrayAdapter<ClientInfo> {
