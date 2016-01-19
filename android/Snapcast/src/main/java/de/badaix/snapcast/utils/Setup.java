@@ -1,4 +1,4 @@
-package de.badaix.snapcast;
+package de.badaix.snapcast.utils;
 
 import android.content.Context;
 import android.content.SharedPreferences;

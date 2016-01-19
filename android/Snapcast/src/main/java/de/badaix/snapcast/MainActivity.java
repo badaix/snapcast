@@ -34,6 +34,8 @@ import com.google.android.gms.common.api.GoogleApiClient;
 import de.badaix.snapcast.control.ClientInfo;
 import de.badaix.snapcast.control.RemoteControl;
 import de.badaix.snapcast.control.ServerInfo;
+import de.badaix.snapcast.utils.NsdHelper;
+import de.badaix.snapcast.utils.Setup;
 
 public class MainActivity extends AppCompatActivity implements ClientInfoItem.ClientInfoItemListener, RemoteControl.RemoteControlListener, SnapclientService.SnapclientListener, NsdHelper.NsdHelperListener {
 

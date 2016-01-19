@@ -1,4 +1,4 @@
-package de.badaix.snapcast;
+package de.badaix.snapcast.utils;
 
 /*
  * Copyright (C) 2012 The CyanogenMod Project

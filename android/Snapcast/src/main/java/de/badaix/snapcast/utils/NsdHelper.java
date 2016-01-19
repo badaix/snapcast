@@ -1,4 +1,4 @@
-package de.badaix.snapcast;
+package de.badaix.snapcast.utils;
 
 /**
  * Created by johannes on 19.01.16.
