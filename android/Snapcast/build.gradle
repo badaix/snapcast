@@ -9,7 +9,7 @@ android {
         minSdkVersion 17
         targetSdkVersion 23
         versionCode 1
-        versionName "1.0"
+        versionName "0.5.0-beta-1"
         multiDexEnabled true
     }
     buildTypes {

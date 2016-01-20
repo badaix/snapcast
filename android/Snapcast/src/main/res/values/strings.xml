@@ -31,5 +31,6 @@
     <string name="action_about">About...</string>
     <string name="title_activity_about">About</string>
     <string name="about_file">about.html</string>
+    <string name="about">About</string>
 </resources>
 
