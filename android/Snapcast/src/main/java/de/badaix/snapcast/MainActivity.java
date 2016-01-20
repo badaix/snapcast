@@ -212,19 +212,14 @@ public class MainActivity extends AppCompatActivity implements ClientInfoItem.Cl
     @Override
     public void onResume() {
         super.onResume();
-        NsdHelper.getInstance(this).startListening("_snapcast._tcp.", "SnapCast", this);
         startRemoteControl();
-    }
-
-    @Override
-    protected void onPause() {
-        NsdHelper.getInstance(this).stopListening();
-        super.onPause();
     }
 
     @Override
     public void onStart() {
         super.onStart();
+
+        NsdHelper.getInstance(this).startListening("_snapcast._tcp.", "SnapCast", this);
 
         Intent intent = new Intent(this, SnapclientService.class);
         bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
@@ -255,6 +250,7 @@ public class MainActivity extends AppCompatActivity implements ClientInfoItem.Cl
     public void onStop() {
         super.onStop();
 
+        NsdHelper.getInstance(this).stopListening();
 // Unbind from the service
         if (bound) {
             unbindService(mConnection);

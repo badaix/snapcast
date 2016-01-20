@@ -17,6 +17,8 @@ public class RemoteControl implements TcpClient.TcpClientListener {
     private long msgId;
     private RemoteControlListener listener;
     private ServerInfo serverInfo;
+    private String host;
+    private int port;
 
     public enum ClientEvent {
         connected,
@@ -44,7 +46,14 @@ public class RemoteControl implements TcpClient.TcpClientListener {
 
     public void connect(final String host, final int port) {
         if ((tcpClient != null) && tcpClient.isConnected())
-            return;
+        {
+            if (this.host.equals(host) && (this.port == port))
+                return;
+            else
+                disconnect();
+        }
+        this.host = host;
+        this.port = port;
 
         tcpClient = new TcpClient(this);
         tcpClient.start(host, port);
