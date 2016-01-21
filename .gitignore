@@ -31,4 +31,6 @@
 client/snapclient
 server/snapserver
 .vscode
-
+GPATH
+GRTAGS
+GTAGS
