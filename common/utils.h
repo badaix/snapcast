@@ -24,6 +24,7 @@
 #include <cctype>
 #include <locale>
 #include <string>
+#include <cstring>
 #include <vector>
 #include <fstream>
 #include <sstream>

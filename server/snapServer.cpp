@@ -46,6 +46,7 @@ int main(int argc, char* argv[])
 	try
 	{
 		StreamServerSettings settings;
+		std::string pcmStream = "pipe:///tmp/snapfifo";
 		int processPriority(-3);
 
 		Switch helpSwitch("h", "help", "produce help message");
@@ -54,7 +55,7 @@ int main(int argc, char* argv[])
 		Value<size_t> controlPortValue("", "controlPort", "Remote control port", settings.controlPort, &settings.controlPort);
 		Value<string> sampleFormatValue("s", "sampleformat", "sample format", settings.sampleFormat.getFormat());
 		Value<string> codecValue("c", "codec", "transport codec [flac|ogg|pcm][:options]\nType codec:? to get codec specific options", settings.codec, &settings.codec);
-		Value<string> fifoValue("f", "fifo", "name of the input fifo file", settings.fifoName, &settings.fifoName);
+		Value<string> fifoValue("f", "fifo", "name of the input fifo file", pcmStream, &pcmStream);
 		Implicit<int> daemonOption("d", "daemon", "daemonize\noptional process priority [-20..19]", 0, &processPriority);
 		Value<int> bufferValue("b", "buffer", "buffer [ms]", settings.bufferMs, &settings.bufferMs);
 		Value<size_t> pipeBufferValue("", "pipeReadBuffer", "pipe read buffer [ms]", settings.pipeReadMs, &settings.pipeReadMs);
@@ -97,6 +98,15 @@ int main(int argc, char* argv[])
 		{
 			cout << op << "\n";
 			exit(EXIT_SUCCESS);
+		}
+
+		if (!fifoValue.isSet())
+			settings.pcmStreams.push_back(fifoValue.getValue());
+
+		for (size_t n=0; n<fifoValue.count(); ++n)
+		{
+			cout << fifoValue.getValue(n) << "\n";
+			settings.pcmStreams.push_back(fifoValue.getValue(n));
 		}
 
 		if (settings.codec.find(":?") != string::npos)

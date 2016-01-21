@@ -349,10 +349,19 @@ void StreamServer::handleAccept(socket_ptr socket)
 
 void StreamServer::start()
 {
+	for (auto& s: settings_.pcmStreams)
+	{
+		ReaderUri uri(s);
+		logO << "URI: " << uri.uri << "\nscheme: " << uri.scheme << "\nhost: " << uri.host << "\npath: " << uri.path << "\nfragment: " << uri.fragment << "\n";
+		for (auto kv: uri.query)
+			logD << "key: '" << kv.first << "' value: '" << kv.second << "'\n";
+	}
+
 	controlServer_.reset(new ControlServer(io_service_, settings_.controlPort, this));
 	controlServer_->start();
 
-	pcmReader_ .reset(new PipeReader(this, settings_.sampleFormat, settings_.codec, settings_.fifoName, settings_.pipeReadMs));
+	settings_.pcmStreams[0] = "/tmp/snapfifo";
+	pcmReader_.reset(new PipeReader(this, settings_.sampleFormat, settings_.codec, settings_.pcmStreams[0], settings_.pipeReadMs));
 	pcmReader_->start();
 	acceptor_ = make_shared<tcp::acceptor>(*io_service_, tcp::endpoint(tcp::v4(), settings_.port));
 	startAccept();

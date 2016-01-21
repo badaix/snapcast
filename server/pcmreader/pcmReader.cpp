@@ -23,13 +23,70 @@
 
 #include "pcmReader.h"
 #include "../encoder/encoderFactory.h"
-#include "common/log.h"
+#include "common/utils.h"
 #include "common/snapException.h"
+#include "common/log.h"
 
 
 using namespace std;
 
 
+ReaderUri::ReaderUri(const std::string& uri)
+{
+// https://en.wikipedia.org/wiki/Uniform_Resource_Identifier
+// scheme:[//[user:password@]host[:port]][/]path[?query][#fragment]
+	size_t pos;
+	this->uri = uri;
+	string tmp(uri);
+
+	pos = tmp.find(':');
+	if (pos == string::npos)
+		throw invalid_argument("missing ':'");
+	scheme = tmp.substr(0, pos);
+	tmp = tmp.substr(pos + 1);
+//	logD << "scheme: '" << scheme << "' tmp: '" << tmp << "'\n";
+
+	if (tmp.find("//") != 0)
+		throw invalid_argument("missing host separator: '//'");
+	tmp = tmp.substr(2);
+
+	pos = tmp.find('/');
+	if (pos == string::npos)
+		throw invalid_argument("missing path separator: '/'");
+	host = tmp.substr(0, pos);
+	tmp = tmp.substr(pos + 1);
+	path = tmp;
+//	logD << "host: '" << host << "' tmp: '" << tmp << "' path: '" << path << "'\n";
+
+	pos = tmp.find('?');
+	if (pos == string::npos)
+		return;
+
+	path = tmp.substr(0, pos);
+	tmp = tmp.substr(pos + 1);
+	string queryStr = tmp;
+//	logD << "path: '" << path << "' tmp: '" << tmp << "' query: '" << queryStr << "'\n";
+
+	pos = tmp.find('#');
+	if (pos != string::npos)
+	{
+		queryStr = tmp.substr(0, pos);
+		tmp = tmp.substr(pos + 1);
+		fragment = tmp;
+//		logD << "query: '" << queryStr << "' fragment: '" << fragment << "' tmp: '" << tmp << "'\n";
+	}
+
+	vector<string> keyValueList = split(queryStr, '&');
+	for (auto& kv: keyValueList)
+	{
+		pos = kv.find('=');
+		if (pos != string::npos)
+			query[kv.substr(0, pos)] = kv.substr(pos+1);
+	}
+
+//	for (auto& kv: query)
+//		logD << "key: '" << kv.first << "' value: '" << kv.second << "'\n";
+}
 
 
 PcmReader::PcmReader(PcmListener* pcmListener, const msg::SampleFormat& sampleFormat, const std::string& codec, const std::string& fifoName, size_t pcmReadMs) : pcmListener_(pcmListener), sampleFormat_(sampleFormat), pcmReadMs_(pcmReadMs)
@@ -42,7 +99,6 @@ PcmReader::PcmReader(PcmListener* pcmListener, const msg::SampleFormat& sampleFo
 PcmReader::~PcmReader()
 {
 	stop();
-	close(fd_);
 }
 
 

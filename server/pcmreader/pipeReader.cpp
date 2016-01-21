@@ -44,6 +44,7 @@ PipeReader::PipeReader(PcmListener* pcmListener, const msg::SampleFormat& sample
 
 PipeReader::~PipeReader()
 {
+	close(fd_);
 }
 
 
