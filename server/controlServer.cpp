@@ -18,7 +18,6 @@
 
 #include "controlServer.h"
 #include "message/time.h"
-#include "message/ack.h"
 #include "message/request.h"
 #include "common/log.h"
 #include "common/utils.h"
