@@ -32,7 +32,6 @@
 #include "message/time.h"
 #include "message/request.h"
 #include "message/ack.h"
-#include "message/command.h"
 #include "message/hello.h"
 
 using namespace std;
@@ -190,10 +189,6 @@ void Controller::worker()
 			player_->setVolume(serverSettings->volume / 100.);
 			player_->setMute(serverSettings->muted);
 			player_->start();
-
-			msg::Command startStream("startStream");
-			shared_ptr<msg::Ack> ackMsg(NULL);
-			while (active_ && !(ackMsg = clientConnection_->sendReq<msg::Ack>(&startStream)));
 
 			while (active_)
 			{

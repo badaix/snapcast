@@ -42,7 +42,6 @@ StreamSession::~StreamSession()
 void StreamSession::start()
 {
 	setActive(true);
-	streamActive_ = false;
 	readerThread_ = new thread(&StreamSession::reader, this);
 	writerThread_ = new thread(&StreamSession::writer, this);
 }
@@ -99,7 +98,7 @@ void StreamSession::socketRead(void* _to, size_t _bytes)
 
 void StreamSession::add(const shared_ptr<const msg::BaseMessage>& message)
 {
-	if (!message || !streamActive_)
+	if (!message)
 		return;
 
 	while (messages_.size() > 100)// chunk->getDuration() > 10000)

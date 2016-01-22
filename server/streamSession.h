@@ -72,13 +72,6 @@ public:
 		return active_;
 	}
 
-	/// Client subscribed for the PCM stream, by sending the "startStream" command
-	/// TODO: Currently there is only one stream ("zone")
-	void setStreamActive(bool active)
-	{
-		streamActive_ = active;
-	}
-
 	/// Max playout latency. No need to send PCM data that is older than bufferMs
 	void setBufferMs(size_t bufferMs)
 	{
@@ -100,7 +93,6 @@ protected:
 	void setActive(bool active);
 
 	std::atomic<bool> active_;
-	std::atomic<bool> streamActive_;
 	mutable std::mutex mutex_;
 	std::thread* readerThread_;
 	std::thread* writerThread_;
