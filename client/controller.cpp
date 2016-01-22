@@ -31,7 +31,6 @@
 #include "message/serverSettings.h"
 #include "message/time.h"
 #include "message/request.h"
-#include "message/ack.h"
 #include "message/hello.h"
 
 using namespace std;
