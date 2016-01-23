@@ -5,8 +5,8 @@
 # Required-Stop:     $remote_fs $syslog $network
 # Default-Start:     2 3 4 5
 # Default-Stop:      0 1 6
-# Short-Description: SnapServer initscript
-# Description:       SnapServer - SnapCast server
+# Short-Description: Snapserver initscript
+# Description:       Snapserver - Snapcast server
 ### END INIT INFO
 
 # Author: Johannes Pohl <johannes.pohl@badaix.de>

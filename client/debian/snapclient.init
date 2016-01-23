@@ -5,8 +5,8 @@
 # Required-Stop:     $remote_fs $syslog $network
 # Default-Start:     2 3 4 5
 # Default-Stop:      0 1 6
-# Short-Description: SnapClient initscript
-# Description:       SnapClient - SnapCast client
+# Short-Description: Snapclient initscript
+# Description:       Snapclient - Snapcast client
 ### END INIT INFO
 
 # Author: Johannes Pohl <johannes.pohl@badaix.de>

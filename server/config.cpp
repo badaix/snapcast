@@ -27,7 +27,7 @@ using namespace std;
 
 Config::Config()
 {
-	string dir = getenv("HOME") + string("/.config/SnapCast/");
+	string dir = getenv("HOME") + string("/.config/Snapcast/");
 	mkdir(dir.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
 	filename_ = dir + "settings.json";
 	cerr << filename_ << "\n";

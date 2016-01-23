@@ -1,19 +1,19 @@
-SnapCast
+Snapcast
 ========
 
 **S**y**n**chronous **a**udio **p**layer
 
-SnapCast is a multi-room client-server audio player, where all clients are time synchronized with the server to play perfectly synced audio. It's not a standalone player, but an extension that turns your existing audio player into a Sonos-like multi-room solution.  
-The server's audio input is a named pipe `/tmp/snapfifo`. All data that is fed into this file will be send to the connected clients. One of the most generic ways to use SnapCast is in conjunction with the music player daemon ([MPD](http://www.musicpd.org/)) or [Mopidy](https://www.mopidy.com/), which can be configured to use a named pipe as audio output.
+Snapcast is a multi-room client-server audio player, where all clients are time synchronized with the server to play perfectly synced audio. It's not a standalone player, but an extension that turns your existing audio player into a Sonos-like multi-room solution.  
+The server's audio input is a named pipe `/tmp/snapfifo`. All data that is fed into this file will be send to the connected clients. One of the most generic ways to use Snapcast is in conjunction with the music player daemon ([MPD](http://www.musicpd.org/)) or [Mopidy](https://www.mopidy.com/), which can be configured to use a named pipe as audio output.
 
 How does is work
 ----------------
-The SnapServer reads PCM chunks from the pipe `/tmp/snapfifo`. The chunk is encoded and tagged with the local time. Supported codecs are:
+The Snapserver reads PCM chunks from the pipe `/tmp/snapfifo`. The chunk is encoded and tagged with the local time. Supported codecs are:
 * **PCM** lossless uncompressed
 * **FLAC** lossless compressed [default]
 * **Vorbis** lossy compression
 
-The encoded chunk is sent via a TCP connection to the SnapClients.
+The encoded chunk is sent via a TCP connection to the Snapclients.
 Each client does continuos time synchronization with the server, so that the client is always aware of the local server time.  
 Every received chunk is first decoded and added to the client's chunk-buffer. Knowing the server's time, the chunk is played out using ALSA at the appropriate time. Time deviations are corrected by 
 * skipping parts or whole chunks
@@ -27,7 +27,7 @@ Installation
 You can either build and install snapcast from source, or on debian systems install a prebuild .deb package
 
 ###Installation from source
-First install all packages needed to compile SnapCast
+First install all packages needed to compile Snapcast
 
 For Debian derivates (e.g. Raspbian, Debian, Ubuntu, Mint):
 
@@ -46,12 +46,12 @@ For Arch derivates:
     $ pacman -S git base-devel
     $ pacman -S boost boost-libs alsa-lib avahi libvorbis flac alsa-utils
     
-Build SnapCast by cd'ing into the SnapCast src-root directory
+Build Snapcast by cd'ing into the Snapcast src-root directory
 
     $ cd <MY_SNAPCAST_ROOT>
     $ make
     
-Install SnapClient and/or SnapServer:
+Install Snapclient and/or Snapserver:
 
     $ sudo make installserver
     $ sudo make installclient
@@ -87,11 +87,11 @@ https://www.raspberrypi.org/documentation/configuration/wireless/wireless-cli.md
 
 Setup of audio players/server
 -----------------------------
-SnapCast can be used with a number of different audio players and servers, and so it can be integrated into your favorite audio-player solution and make it synced-multiroom capable.  
-The only requirement is that the player's audio can be redirected into the SnapServer's fifo `/tmp/snapfifo`. In the following configuration hints for [MPD](http://www.musicpd.org/) and [Mopidy](https://www.mopidy.com/) are given, which are base of other audio player solutions, like [Volumio](https://volumio.org/) or [RuneAudio](http://www.runeaudio.com/) (both MPD) or [Pi MusicBox](http://www.pimusicbox.com/) (Mopidy).
+Snapcast can be used with a number of different audio players and servers, and so it can be integrated into your favorite audio-player solution and make it synced-multiroom capable.  
+The only requirement is that the player's audio can be redirected into the Snapserver's fifo `/tmp/snapfifo`. In the following configuration hints for [MPD](http://www.musicpd.org/) and [Mopidy](https://www.mopidy.com/) are given, which are base of other audio player solutions, like [Volumio](https://volumio.org/) or [RuneAudio](http://www.runeaudio.com/) (both MPD) or [Pi MusicBox](http://www.pimusicbox.com/) (Mopidy).
 
 ###MPD setup
-To connect [MPD](http://www.musicpd.org/) to the SnapServer, edit `/etc/mpd.conf`, so that mpd will feed the audio into the snap-server's named pipe
+To connect [MPD](http://www.musicpd.org/) to the Snapserver, edit `/etc/mpd.conf`, so that mpd will feed the audio into the snapserver's named pipe
 
 Disable alsa audio output by commenting out this section:
 
@@ -106,7 +106,7 @@ Disable alsa audio output by commenting out this section:
     #}
 
 Add a new audio output of the type "fifo", which will let mpd play audio into the named pipe `/tmp/snapfifo`.
-Make sure that the "format" setting is the same as the format setting of the SnapServer (default is "44100:16:2", which should make resampling unnecessary in most cases)
+Make sure that the "format" setting is the same as the format setting of the Snapserver (default is "44100:16:2", which should make resampling unnecessary in most cases)
 
     audio_output {
         type            "fifo"
@@ -122,7 +122,7 @@ To test your mpd installation, you can add a radio station by
     $ echo "http://1live.akacast.akamaistream.net/7/706/119434/v1/gnl.akacast.akamaistream.net/1live" > /var/lib/mpd/playlists/einslive.m3u
 
 ###Mopidy setup
-[Mopidy](https://www.mopidy.com/) can stream the audio output into the SnapServer's fifo with a `filesink` as audio output:
+[Mopidy](https://www.mopidy.com/) can stream the audio output into the Snapserver's fifo with a `filesink` as audio output:
 
     [audio]
     #output = autoaudiosink
