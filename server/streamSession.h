@@ -67,16 +67,10 @@ public:
 	/// Sends a message to the client (asynchronous)
 	void add(const std::shared_ptr<const msg::BaseMessage>& message);
 
-	bool active() const
-	{
-		return active_;
-	}
+	bool active() const;
 
 	/// Max playout latency. No need to send PCM data that is older than bufferMs
-	void setBufferMs(size_t bufferMs)
-	{
-		bufferMs_ = bufferMs;
-	}
+	void setBufferMs(size_t bufferMs);
 
 	std::string macAddress;
 

@@ -107,6 +107,18 @@ void StreamSession::add(const shared_ptr<const msg::BaseMessage>& message)
 }
 
 
+bool StreamSession::active() const
+{
+	return active_;
+}
+
+
+void StreamSession::setBufferMs(size_t bufferMs)
+{
+	bufferMs_ = bufferMs;
+}
+
+
 bool StreamSession::send(const msg::BaseMessage* message) const
 {
 //	logO << "send: " << message->type << ", size: " << message->size << ", id: " << message->id << ", refers: " << message->refersTo << "\n";

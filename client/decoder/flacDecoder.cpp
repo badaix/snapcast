@@ -180,8 +180,8 @@ void metadata_callback(const FLAC__StreamDecoder *decoder, const FLAC__StreamMet
 	{
 		((FlacDecoder*)client_data)->cacheInfo_.sampleRate_ = metadata->data.stream_info.sample_rate;
 		logO << "sample rate    : " << metadata->data.stream_info.sample_rate << "Hz\n";
-		logO << "channels       : " << metadata->data.stream_info.channels << "\n";
 		logO << "bits per sample: " << metadata->data.stream_info.bits_per_sample << "\n";
+		logO << "channels       : " << metadata->data.stream_info.channels << "\n";
 	}
 }
 
