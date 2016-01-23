@@ -141,7 +141,7 @@ public class MainActivity extends AppCompatActivity implements ClientInfoItem.Cl
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_scan) {
 //            NsdHelper.getInstance(this).startListening("*._tcp.", "SnapCast", this);
-            NsdHelper.getInstance(this).startListening("_snapcast._tcp.", "SnapCast", this);
+            NsdHelper.getInstance(this).startListening("_snapcast._tcp.", "Snapcast", this);
             return true;
         } else if (id == R.id.action_play_stop) {
             if (bound && snapclientService.isRunning()) {
@@ -219,7 +219,7 @@ public class MainActivity extends AppCompatActivity implements ClientInfoItem.Cl
     public void onStart() {
         super.onStart();
 
-        NsdHelper.getInstance(this).startListening("_snapcast._tcp.", "SnapCast", this);
+        NsdHelper.getInstance(this).startListening("_snapcast._tcp.", "Snapcast", this);
 
         Intent intent = new Intent(this, SnapclientService.class);
         bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
