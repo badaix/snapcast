@@ -159,9 +159,9 @@ void Controller::worker()
 			else if (headerChunk->codec == "flac")
 				decoder_ = new FlacDecoder();
 			sampleFormat_ = decoder_->setHeader(headerChunk.get());
-			logO << "sample rate    : " << sampleFormat_.rate << "Hz\n";
-			logO << "bits per sample: " << sampleFormat_.bits << "\n";
-			logO << "channels       : " << sampleFormat_.channels << "\n";
+			logO << "sample rate: " << sampleFormat_.rate << "Hz\n";
+			logO << "bits/sample: " << sampleFormat_.bits << "\n";
+			logO << "channels   : " << sampleFormat_.channels << "\n";
 
 			msg::Request timeReq(kTime);
 			for (size_t n=0; n<50 && active_; ++n)

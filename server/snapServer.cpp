@@ -49,28 +49,30 @@ int main(int argc, char* argv[])
 		std::string pcmStream = "pipe:///tmp/snapfifo?name=default";
 		int processPriority(-3);
 
-		Switch helpSwitch("h", "help", "produce help message");
-		Switch versionSwitch("v", "version", "show version number");
-		Value<size_t> portValue("p", "port", "server port", settings.port, &settings.port);
+		Switch helpSwitch("h", "help", "Produce help message");
+		Switch versionSwitch("v", "version", "Show version number");
+		Value<size_t> portValue("p", "port", "Server port", settings.port, &settings.port);
 		Value<size_t> controlPortValue("", "controlPort", "Remote control port", settings.controlPort, &settings.controlPort);
-		Value<string> sampleFormatValue("s", "sampleformat", "sample format", settings.sampleFormat);
-		Value<string> codecValue("c", "codec", "transport codec [flac|ogg|pcm][:options]\nType codec:? to get codec specific options", settings.codec, &settings.codec);
-		Value<string> fifoValue("f", "fifo", "name of the input fifo file", pcmStream, &pcmStream);
-		Implicit<int> daemonOption("d", "daemon", "daemonize\noptional process priority [-20..19]", 0, &processPriority);
-		Value<int> bufferValue("b", "buffer", "buffer [ms]", settings.bufferMs, &settings.bufferMs);
-		Value<size_t> pipeBufferValue("", "pipeReadBuffer", "pipe read buffer [ms]", settings.pipeReadMs, &settings.pipeReadMs);
+		Value<string> streamValue("s", "stream", "URI of the PCM input stream.\nFormat: TYPE://host/path?name=NAME\n[&codec=CODEC]\n[&sampleformat=SAMPLEFORMAT]", pcmStream, &pcmStream);
+
+		Value<string> sampleFormatValue("", "sampleformat", "Default sample format", settings.sampleFormat);
+		Value<string> codecValue("", "codec", "Default transport codec\n(flac|ogg|pcm)[:options]\nType codec:? to get codec specific options", settings.codec, &settings.codec);
+		Value<size_t> streamBufferValue("", "streamBuffer", "Default stream read buffer [ms]", settings.streamReadMs, &settings.streamReadMs);
+
+		Value<int> bufferValue("b", "buffer", "Buffer [ms]", settings.bufferMs, &settings.bufferMs);
+		Implicit<int> daemonOption("d", "daemon", "Daemonize\noptional process priority [-20..19]", 0, &processPriority);
 
 		OptionParser op("Allowed options");
 		op.add(helpSwitch)
 		 .add(versionSwitch)
 		 .add(portValue)
 		 .add(controlPortValue)
+		 .add(streamValue)
 		 .add(sampleFormatValue)
 		 .add(codecValue)
-		 .add(fifoValue)
-		 .add(daemonOption)
+		 .add(streamBufferValue)
 		 .add(bufferValue)
-		 .add(pipeBufferValue);
+		 .add(daemonOption);
 
 		try
 		{
@@ -100,13 +102,13 @@ int main(int argc, char* argv[])
 			exit(EXIT_SUCCESS);
 		}
 
-		if (!fifoValue.isSet())
-			settings.pcmStreams.push_back(fifoValue.getValue());
+		if (!streamValue.isSet())
+			settings.pcmStreams.push_back(streamValue.getValue());
 
-		for (size_t n=0; n<fifoValue.count(); ++n)
+		for (size_t n=0; n<streamValue.count(); ++n)
 		{
-			cout << fifoValue.getValue(n) << "\n";
-			settings.pcmStreams.push_back(fifoValue.getValue(n));
+			cout << streamValue.getValue(n) << "\n";
+			settings.pcmStreams.push_back(streamValue.getValue(n));
 		}
 
 		if (settings.codec.find(":?") != string::npos)

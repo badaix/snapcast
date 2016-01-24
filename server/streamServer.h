@@ -49,7 +49,7 @@ struct StreamServerSettings
 		codec("flac"),
 		bufferMs(1000),
 		sampleFormat("48000:16:2"),
-		pipeReadMs(20)
+		streamReadMs(20)
 	{
 	}
 	size_t port;
@@ -58,7 +58,7 @@ struct StreamServerSettings
 	std::string codec;
 	int32_t bufferMs;
 	std::string sampleFormat;
-	size_t pipeReadMs;
+	size_t streamReadMs;
 };
 
 

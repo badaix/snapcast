@@ -343,7 +343,7 @@ void StreamServer::start()
 
 	for (auto& streamUri: settings_.pcmStreams)
 	{
-		shared_ptr<PcmReader> reader(PcmReaderFactory::createPcmReader(this, streamUri, settings_.sampleFormat, settings_.codec, settings_.pipeReadMs));
+		shared_ptr<PcmReader> reader(PcmReaderFactory::createPcmReader(this, streamUri, settings_.sampleFormat, settings_.codec, settings_.streamReadMs));
 		pcmReader_.push_back(reader);
 		pcmReader_.back()->start();
 	}
