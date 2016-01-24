@@ -46,14 +46,14 @@ int main(int argc, char* argv[])
 	try
 	{
 		StreamServerSettings settings;
-		std::string pcmStream = "pipe:///tmp/snapfifo";
+		std::string pcmStream = "pipe:///tmp/snapfifo?name=default";
 		int processPriority(-3);
 
 		Switch helpSwitch("h", "help", "produce help message");
 		Switch versionSwitch("v", "version", "show version number");
 		Value<size_t> portValue("p", "port", "server port", settings.port, &settings.port);
 		Value<size_t> controlPortValue("", "controlPort", "Remote control port", settings.controlPort, &settings.controlPort);
-		Value<string> sampleFormatValue("s", "sampleformat", "sample format", settings.sampleFormat.getFormat());
+		Value<string> sampleFormatValue("s", "sampleformat", "sample format", settings.sampleFormat);
 		Value<string> codecValue("c", "codec", "transport codec [flac|ogg|pcm][:options]\nType codec:? to get codec specific options", settings.codec, &settings.codec);
 		Value<string> fifoValue("f", "fifo", "name of the input fifo file", pcmStream, &pcmStream);
 		Implicit<int> daemonOption("d", "daemon", "daemonize\noptional process priority [-20..19]", 0, &processPriority);
@@ -141,7 +141,7 @@ int main(int argc, char* argv[])
 			logS(kLogNotice) << "daemon started" << std::endl;
 		}
 
-		PublishAvahi publishAvahi("SnapCast");
+		PublishAvahi publishAvahi("Snapcast");
 		std::vector<AvahiService> services;
 		services.push_back(AvahiService("_snapcast._tcp", settings.port));
 		services.push_back(AvahiService("_snapcast-jsonrpc._tcp", settings.controlPort));

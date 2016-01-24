@@ -32,13 +32,13 @@ using namespace std;
 
 
 
-PipeReader::PipeReader(PcmListener* pcmListener, const msg::SampleFormat& sampleFormat, const std::string& codec, const std::string& fifoName, size_t pcmReadMs) : PcmReader(pcmListener, sampleFormat, codec, fifoName, pcmReadMs)
+PipeReader::PipeReader(PcmListener* pcmListener, const ReaderUri& uri) : PcmReader(pcmListener, uri)
 {
 	umask(0);
-	mkfifo(fifoName.c_str(), 0666);
-	fd_ = open(fifoName.c_str(), O_RDONLY | O_NONBLOCK);
+	mkfifo(uri_.path.c_str(), 0666);
+	fd_ = open(uri_.path.c_str(), O_RDONLY | O_NONBLOCK);
 	if (fd_ == -1)
-		throw SnapException("failed to open fifo: \"" + fifoName + "\"");
+		throw SnapException("failed to open fifo: \"" + uri_.path + "\"");
 }
 
 

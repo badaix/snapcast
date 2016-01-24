@@ -74,7 +74,7 @@ class PcmReader : public EncoderListener
 {
 public:
 	/// ctor. Encoded PCM data is passed to the PcmListener
-	PcmReader(PcmListener* pcmListener, const msg::SampleFormat& sampleFormat, const std::string& codec, const std::string& fifoName, size_t pcmReadMs = 20);
+	PcmReader(PcmListener* pcmListener, const ReaderUri& uri);
 	virtual ~PcmReader();
 
 	virtual void start();
@@ -84,6 +84,10 @@ public:
 	virtual void onChunkEncoded(const Encoder* encoder, msg::PcmChunk* chunk, double duration);
 	virtual msg::Header* getHeader();
 
+	virtual const ReaderUri& getUri() const;
+	virtual const std::string& getName() const;
+	virtual const SampleFormat& getSampleFormat() const;
+
 protected:
 	virtual void worker() = 0;
 	int fd_;
@@ -91,9 +95,11 @@ protected:
 	std::atomic<bool> active_;
 	std::thread readerThread_;
 	PcmListener* pcmListener_;
-	msg::SampleFormat sampleFormat_;
+	ReaderUri uri_;
+	SampleFormat sampleFormat_;
 	size_t pcmReadMs_;
 	std::unique_ptr<Encoder> encoder_;
+	std::string name_;
 };
 
 

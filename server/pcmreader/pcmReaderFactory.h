@@ -7,7 +7,7 @@
 class PcmReaderFactory
 {
 public:
-	PcmReader* createPcmReader(const std::string& uri) const;
+	static PcmReader* createPcmReader(PcmListener* pcmListener, const std::string& uri, const std::string& defaultSampleFormat, const std::string& defaultCodec, size_t defaultReadBufferMs = 20);
 };
 
 

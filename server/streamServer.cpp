@@ -19,9 +19,7 @@
 #include "json/jsonrpc.h"
 #include "streamServer.h"
 #include "message/time.h"
-#include "message/ack.h"
 #include "message/request.h"
-#include "message/command.h"
 #include "message/hello.h"
 #include "common/log.h"
 #include "config.h"
@@ -32,7 +30,7 @@ using namespace std;
 using json = nlohmann::json;
 
 
-StreamServer::StreamServer(asio::io_service* io_service, const StreamServerSettings& streamServerSettings) : io_service_(io_service), settings_(streamServerSettings), sampleFormat_(streamServerSettings.sampleFormat)
+StreamServer::StreamServer(asio::io_service* io_service, const StreamServerSettings& streamServerSettings) : io_service_(io_service), settings_(streamServerSettings)
 {
 }
 
@@ -78,14 +76,22 @@ void StreamServer::send(const msg::BaseMessage* message)
 
 void StreamServer::onChunkRead(const PcmReader* pcmReader, const msg::PcmChunk* chunk, double duration)
 {
-//	logO << "onChunkRead " << duration << "ms\n";
-	send(chunk);
+	logO << "onChunkRead (" << pcmReader->getName() << "): " << duration << "ms\n";
+	bool isDefaultStream(pcmReader == pcmReader_.front().get());
+
+	std::shared_ptr<const msg::BaseMessage> shared_message(chunk);
+	for (auto s : sessions_)
+	{
+		if (isDefaultStream)//->getName() == "default")
+			s->add(shared_message);
+	}
+//	send(chunk);
 }
 
 
 void StreamServer::onResync(const PcmReader* pcmReader, double ms)
 {
-	logO << "onResync " << ms << "ms\n";
+	logO << "onResync (" << pcmReader->getName() << "): " << ms << "ms\n";
 }
 
 
@@ -263,30 +269,13 @@ void StreamServer::onMessageReceived(StreamSession* connection, const msg::BaseM
 				connection->send(&serverSettings);
 			}
 		}
-		else if (requestMsg.request == kSampleFormat)
-		{
-			std::unique_lock<std::mutex> mlock(mutex_);
-			sampleFormat_.refersTo = requestMsg.id;
-			connection->send(&sampleFormat_);
-		}
 		else if (requestMsg.request == kHeader)
 		{
 			std::unique_lock<std::mutex> mlock(mutex_);
-			msg::Header* headerChunk = pcmReader_->getHeader();
+//TODO: use the correct stream
+			msg::Header* headerChunk = pcmReader_.front()->getHeader();
 			headerChunk->refersTo = requestMsg.id;
 			connection->send(headerChunk);
-		}
-	}
-	else if (baseMessage.type == message_type::kCommand)
-	{
-		msg::Command commandMsg;
-		commandMsg.deserialize(baseMessage, buffer);
-		if (commandMsg.getCommand() == "startStream")
-		{
-			msg::Ack ackMsg;
-			ackMsg.refersTo = commandMsg.id;
-			connection->send(&ackMsg);
-			connection->setStreamActive(true);
 		}
 	}
 	else if (baseMessage.type == message_type::kHello)
@@ -349,20 +338,16 @@ void StreamServer::handleAccept(socket_ptr socket)
 
 void StreamServer::start()
 {
-	for (auto& s: settings_.pcmStreams)
-	{
-		ReaderUri uri(s);
-		logO << "URI: " << uri.uri << "\nscheme: " << uri.scheme << "\nhost: " << uri.host << "\npath: " << uri.path << "\nfragment: " << uri.fragment << "\n";
-		for (auto kv: uri.query)
-			logD << "key: '" << kv.first << "' value: '" << kv.second << "'\n";
-	}
-
 	controlServer_.reset(new ControlServer(io_service_, settings_.controlPort, this));
 	controlServer_->start();
 
-	settings_.pcmStreams[0] = "/tmp/snapfifo";
-	pcmReader_.reset(new PipeReader(this, settings_.sampleFormat, settings_.codec, settings_.pcmStreams[0], settings_.pipeReadMs));
-	pcmReader_->start();
+	for (auto& streamUri: settings_.pcmStreams)
+	{
+		shared_ptr<PcmReader> reader(PcmReaderFactory::createPcmReader(this, streamUri, settings_.sampleFormat, settings_.codec, settings_.pipeReadMs));
+		pcmReader_.push_back(reader);
+		pcmReader_.back()->start();
+	}
+
 	acceptor_ = make_shared<tcp::acceptor>(*io_service_, tcp::endpoint(tcp::v4(), settings_.port));
 	startAccept();
 }
@@ -372,9 +357,11 @@ void StreamServer::stop()
 {
 	controlServer_->stop();
 	acceptor_->cancel();
-	pcmReader_->stop();
+	for (auto pcmReader: pcmReader_)
+		pcmReader->stop();
+
 	std::unique_lock<std::mutex> mlock(mutex_);
-	for (auto it = sessions_.begin(); it != sessions_.end(); ++it)
-		(*it)->stop();
+	for (auto session: sessions_)//it = sessions_.begin(); it != sessions_.end(); ++it)
+		session->stop();
 }
 

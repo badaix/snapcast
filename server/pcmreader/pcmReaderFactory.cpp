@@ -19,35 +19,32 @@
 #include "common/utils.h"
 #include "pcmReaderFactory.h"
 #include "pipeReader.h"
+#include "common/log.h"
 
 
 using namespace std;
 
 
-PcmReader* PcmReaderFactory::createPcmReader(const std::string& uri) const
+PcmReader* PcmReaderFactory::createPcmReader(PcmListener* pcmListener, const std::string& uri, const std::string& defaultSampleFormat, const std::string& defaultCodec, size_t defaultReadBufferMs)
 {
-	PcmReader* pcmReader = NULL;
-/*
-	std::string codec(codecSettings);
-	std::string codecOptions;
-	if (codec.find(":") != std::string::npos)
-	{
-		codecOptions = trim_copy(codec.substr(codec.find(":") + 1));
-		codec = trim_copy(codec.substr(0, codec.find(":")));
-	}
-	if (codec == "ogg")
-		encoder = new OggEncoder(codecOptions);
-	else if (codec == "pcm")
-		encoder = new PcmEncoder(codecOptions);
-	else if (codec == "flac")
-		encoder = new FlacEncoder(codecOptions);
-	else
-	{
-		cout << "unknown codec: " << codec << "\n";
-		return NULL;
-	}
-*/
-	return pcmReader;
+	ReaderUri readerUri(uri);
+
+	if (readerUri.query.find("sampleformat") == readerUri.query.end())
+		readerUri.query["sampleformat"] = defaultSampleFormat;
+
+	if (readerUri.query.find("codec") == readerUri.query.end())
+		readerUri.query["codec"] = defaultCodec;
+
+	logE << "\nURI: " << readerUri.uri << "\nscheme: " << readerUri.scheme << "\nhost: "
+		<< readerUri.host << "\npath: " << readerUri.path << "\nfragment: " << readerUri.fragment << "\n";
+
+	for (auto kv: readerUri.query)
+		logE << "key: '" << kv.first << "' value: '" << kv.second << "'\n";
+
+	if (readerUri.scheme == "pipe")
+		return new PipeReader(pcmListener, readerUri);//, sampleFormat, codec, pcmReadMs);
+
+	return NULL;
 }
 
 

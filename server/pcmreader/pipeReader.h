@@ -33,7 +33,7 @@ class PipeReader : public PcmReader
 {
 public:
 	/// ctor. Encoded PCM data is passed to the PipeListener
-	PipeReader(PcmListener* pcmListener, const msg::SampleFormat& sampleFormat, const std::string& codec, const std::string& fifoName, size_t pcmReadMs = 20);
+	PipeReader(PcmListener* pcmListener, const ReaderUri& uri);
 	virtual ~PipeReader();
 
 protected:
