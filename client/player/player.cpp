@@ -67,7 +67,7 @@ void Player::adjustVolume(char* buffer, size_t frames)
 	if (muted_)
 		volume = 0.;
 
-	const msg::SampleFormat& sampleFormat = stream_->getFormat();
+	const SampleFormat& sampleFormat = stream_->getFormat();
 
 	if (volume < 1.0)
 	{

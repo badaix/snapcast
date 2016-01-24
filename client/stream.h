@@ -42,7 +42,7 @@
 class Stream
 {
 public:
-	Stream(const msg::SampleFormat& format);
+	Stream(const SampleFormat& format);
 
 	/// Adds PCM data to the queue
 	void addChunk(msg::PcmChunk* chunk);
@@ -55,7 +55,7 @@ public:
 	/// "Server buffer": playout latency, e.g. 1000ms
 	void setBufferLen(size_t bufferLenMs);
 
-	const msg::SampleFormat& getFormat() const
+	const SampleFormat& getFormat() const
 	{
 		return format_;
 	}
@@ -72,7 +72,7 @@ private:
 	void resetBuffers();
 	void setRealSampleRate(double sampleRate);
 
-	msg::SampleFormat format_;
+	SampleFormat format_;
 
 	long lastTick_;
 	chronos::usec sleep_;

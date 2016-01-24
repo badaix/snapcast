@@ -37,7 +37,7 @@ static void error_callback(const FLAC__StreamDecoder *decoder, FLAC__StreamDecod
 static msg::Header* flacHeader = NULL;
 static msg::PcmChunk* flacChunk = NULL;
 static msg::PcmChunk* pcmChunk = NULL;
-static msg::SampleFormat sampleFormat;
+static SampleFormat sampleFormat;
 static FLAC__StreamDecoder *decoder = NULL;
 
 
@@ -81,7 +81,7 @@ bool FlacDecoder::decode(msg::PcmChunk* chunk)
 }
 
 
-msg::SampleFormat FlacDecoder::setHeader(msg::Header* chunk)
+SampleFormat FlacDecoder::setHeader(msg::Header* chunk)
 {
 	flacHeader = chunk;
 	FLAC__StreamDecoderInitStatus init_status;

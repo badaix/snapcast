@@ -28,7 +28,7 @@ public:
 	OggDecoder();
 	virtual ~OggDecoder();
 	virtual bool decode(msg::PcmChunk* chunk);
-	virtual msg::SampleFormat setHeader(msg::Header* chunk);
+	virtual SampleFormat setHeader(msg::Header* chunk);
 
 private:
 	bool decodePayload(msg::PcmChunk* chunk);

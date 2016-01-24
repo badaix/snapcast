@@ -146,10 +146,6 @@ void Controller::worker()
 			while (active_ && !(serverSettings = clientConnection_->sendReq<msg::ServerSettings>(&requestMsg)));
 			logO << "ServerSettings - buffer: " << serverSettings->bufferMs << ", latency: " << serverSettings->latency << ", volume: " << serverSettings->volume << ", muted: " << serverSettings->muted << "\n";
 
-//			requestMsg.request = kSampleFormat;
-//			while (active_ && !(sampleFormat_ = clientConnection_->sendReq<msg::SampleFormat>(&requestMsg)));
-//			logO << "SampleFormat rate: " << sampleFormat_->rate << ", bits: " << sampleFormat_->bits << ", channels: " << sampleFormat_->channels << "\n";
-
 			requestMsg.request = kHeader;
 			shared_ptr<msg::Header> headerChunk(NULL);
 			while (active_ && !(headerChunk = clientConnection_->sendReq<msg::Header>(&requestMsg)));

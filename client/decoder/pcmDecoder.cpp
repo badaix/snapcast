@@ -63,7 +63,7 @@ bool PcmDecoder::decode(msg::PcmChunk* chunk)
 }
 
 
-msg::SampleFormat PcmDecoder::setHeader(msg::Header* chunk)
+SampleFormat PcmDecoder::setHeader(msg::Header* chunk)
 {
 	if (chunk->payloadSize < 44)
 		throw SnapException("PCM header too small");
@@ -112,7 +112,7 @@ msg::SampleFormat PcmDecoder::setHeader(msg::Header* chunk)
 	if (chunk_fmt.sample_rate == 0)
 		throw SnapException("Sample format not found");
 
-	msg::SampleFormat sampleFormat(
+	SampleFormat sampleFormat(
 		chunk_fmt.sample_rate,
 		chunk_fmt.bits_per_sample,
 		chunk_fmt.num_channels);

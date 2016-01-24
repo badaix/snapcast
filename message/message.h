@@ -51,7 +51,7 @@ enum message_type
 	kBase = 0,
 	kHeader = 1,
 	kWireChunk = 2,
-	kSampleFormat = 3,
+//	kSampleFormat = 3,
 	kServerSettings = 4,
 	kTime = 5,
 	kRequest = 6,

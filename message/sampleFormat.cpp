@@ -28,21 +28,19 @@
 
 using namespace std;
 
-namespace msg
-{
 
-SampleFormat::SampleFormat() : BaseMessage(message_type::kSampleFormat)
+SampleFormat::SampleFormat()
 {
 }
 
 
-SampleFormat::SampleFormat(const std::string& format) : BaseMessage(message_type::kSampleFormat)
+SampleFormat::SampleFormat(const std::string& format)
 {
 	setFormat(format);
 }
 
 
-SampleFormat::SampleFormat(uint32_t sampleRate, uint16_t bitsPerSample, uint16_t channelCount) : BaseMessage(message_type::kSampleFormat)
+SampleFormat::SampleFormat(uint32_t sampleRate, uint16_t bitsPerSample, uint16_t channelCount)
 {
 	setFormat(sampleRate, bitsPerSample, channelCount);
 }
@@ -80,8 +78,5 @@ void SampleFormat::setFormat(uint32_t rate, uint16_t bits, uint16_t channels)
 	frameSize = channels*sampleSize;
 //	logD << "SampleFormat: " << rate << ":" << bits << ":" << channels << "\n";
 }
-
-}
-
 
 

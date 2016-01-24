@@ -37,7 +37,7 @@ void AlsaPlayer::initAlsa()
 	snd_pcm_hw_params_t *params;
 	int buff_size;
 
-	const msg::SampleFormat& format = stream_->getFormat();
+	const SampleFormat& format = stream_->getFormat();
 	rate = format.rate;
 	channels = format.channels;
 

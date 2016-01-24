@@ -29,7 +29,7 @@ public:
 	Decoder() {};
 	virtual ~Decoder() {};
 	virtual bool decode(msg::PcmChunk* chunk) = 0;
-	virtual msg::SampleFormat setHeader(msg::Header* chunk) = 0;
+	virtual SampleFormat setHeader(msg::Header* chunk) = 0;
 };
 
 

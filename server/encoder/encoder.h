@@ -61,7 +61,7 @@ public:
 	}
 
 	/// The listener will receive the encoded stream
-	virtual void init(EncoderListener* listener, const msg::SampleFormat& format)
+	virtual void init(EncoderListener* listener, const SampleFormat& format)
 	{
 		if (codecOptions_ == "")
 			codecOptions_ = getDefaultOptions();
@@ -94,7 +94,7 @@ public:
 protected:
 	virtual void initEncoder() = 0;
 
-	msg::SampleFormat sampleFormat_;
+	SampleFormat sampleFormat_;
 	msg::Header* headerChunk_;
 	EncoderListener* listener_;
 	std::string codecOptions_;

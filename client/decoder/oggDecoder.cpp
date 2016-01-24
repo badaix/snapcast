@@ -143,7 +143,7 @@ bool OggDecoder::decode(msg::PcmChunk* chunk)
 }
 
 
-msg::SampleFormat OggDecoder::setHeader(msg::Header* chunk)
+SampleFormat OggDecoder::setHeader(msg::Header* chunk)
 {
 	bytes = chunk->payloadSize;
 	buffer=ogg_sync_buffer(&oy, bytes);
@@ -217,7 +217,7 @@ msg::SampleFormat OggDecoder::setHeader(msg::Header* chunk)
 	/// in parallel. We could init multiple vorbis_block structures for vd here
 
 
-	msg::SampleFormat sampleFormat(vi.rate, 16, vi.channels);
+	SampleFormat sampleFormat(vi.rate, 16, vi.channels);
 	return sampleFormat;
 }
 

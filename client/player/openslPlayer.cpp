@@ -120,7 +120,7 @@ void OpenslPlayer::initOpensl()
 	if (active_)
 		return;
 
-	const msg::SampleFormat& format = stream_->getFormat();
+	const SampleFormat& format = stream_->getFormat();
 
 	frames_ = 960;//rate / 50; // => 50ms
 
