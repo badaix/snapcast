@@ -77,7 +77,7 @@ void StreamServer::send(const msg::BaseMessage* message)
 void StreamServer::onChunkRead(const PcmReader* pcmReader, const msg::PcmChunk* chunk, double duration)
 {
 	logO << "onChunkRead (" << pcmReader->getName() << "): " << duration << "ms\n";
-	bool isDefaultStream(pcmReader == pcmReader_.front().get());
+	bool isDefaultStream(pcmReader == streamManager_->getDefaultStream().get());
 
 	std::shared_ptr<const msg::BaseMessage> shared_message(chunk);
 	for (auto s : sessions_)
@@ -85,7 +85,6 @@ void StreamServer::onChunkRead(const PcmReader* pcmReader, const msg::PcmChunk* 
 		if (isDefaultStream)//->getName() == "default")
 			s->add(shared_message);
 	}
-//	send(chunk);
 }
 
 
@@ -273,7 +272,7 @@ void StreamServer::onMessageReceived(StreamSession* connection, const msg::BaseM
 		{
 			std::unique_lock<std::mutex> mlock(mutex_);
 //TODO: use the correct stream
-			msg::Header* headerChunk = pcmReader_.front()->getHeader();
+			msg::Header* headerChunk = streamManager_->getDefaultStream()->getHeader();
 			headerChunk->refersTo = requestMsg.id;
 			connection->send(headerChunk);
 		}
@@ -341,12 +340,11 @@ void StreamServer::start()
 	controlServer_.reset(new ControlServer(io_service_, settings_.controlPort, this));
 	controlServer_->start();
 
+	streamManager_.reset(new StreamManager(this, settings_.sampleFormat, settings_.codec, settings_.streamReadMs));
 	for (auto& streamUri: settings_.pcmStreams)
-	{
-		shared_ptr<PcmReader> reader(PcmReaderFactory::createPcmReader(this, streamUri, settings_.sampleFormat, settings_.codec, settings_.streamReadMs));
-		pcmReader_.push_back(reader);
-		pcmReader_.back()->start();
-	}
+		streamManager_->addStream(streamUri);
+
+	streamManager_->start();
 
 	acceptor_ = make_shared<tcp::acceptor>(*io_service_, tcp::endpoint(tcp::v4(), settings_.port));
 	startAccept();
@@ -357,8 +355,8 @@ void StreamServer::stop()
 {
 	controlServer_->stop();
 	acceptor_->cancel();
-	for (auto pcmReader: pcmReader_)
-		pcmReader->stop();
+
+	streamManager_->stop();
 
 	std::unique_lock<std::mutex> mlock(mutex_);
 	for (auto session: sessions_)//it = sessions_.begin(); it != sessions_.end(); ++it)

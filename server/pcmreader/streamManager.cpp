@@ -17,7 +17,7 @@
 ***/
 
 #include "common/utils.h"
-#include "pcmReaderFactory.h"
+#include "streamManager.h"
 #include "pipeReader.h"
 #include "common/log.h"
 
@@ -25,15 +25,23 @@
 using namespace std;
 
 
-PcmReader* PcmReaderFactory::createPcmReader(PcmListener* pcmListener, const std::string& uri, const std::string& defaultSampleFormat, const std::string& defaultCodec, size_t defaultReadBufferMs)
+StreamManager::StreamManager(PcmListener* pcmListener, const std::string& defaultSampleFormat, const std::string& defaultCodec, size_t defaultReadBufferMs) : pcmListener_(pcmListener), sampleFormat_(defaultSampleFormat), codec_(defaultCodec), readBufferMs_(defaultReadBufferMs)
+{
+}
+
+
+PcmReader* StreamManager::addStream(const std::string& uri)
 {
 	ReaderUri readerUri(uri);
 
 	if (readerUri.query.find("sampleformat") == readerUri.query.end())
-		readerUri.query["sampleformat"] = defaultSampleFormat;
+		readerUri.query["sampleformat"] = sampleFormat_;
 
 	if (readerUri.query.find("codec") == readerUri.query.end())
-		readerUri.query["codec"] = defaultCodec;
+		readerUri.query["codec"] = codec_;
+
+	if (readerUri.query.find("buffer_ms") == readerUri.query.end())
+		readerUri.query["buffer_ms"] = to_string(readBufferMs_);
 
 	logE << "\nURI: " << readerUri.uri << "\nscheme: " << readerUri.scheme << "\nhost: "
 		<< readerUri.host << "\npath: " << readerUri.path << "\nfragment: " << readerUri.fragment << "\n";
@@ -42,9 +50,41 @@ PcmReader* PcmReaderFactory::createPcmReader(PcmListener* pcmListener, const std
 		logE << "key: '" << kv.first << "' value: '" << kv.second << "'\n";
 
 	if (readerUri.scheme == "pipe")
-		return new PipeReader(pcmListener, readerUri);//, sampleFormat, codec, pcmReadMs);
+	{
+		streams_.push_back(make_shared<PipeReader>(pcmListener_, readerUri));//, sampleFormat, codec, pcmReadMs);
+		return streams_.back().get();
+	}
 
 	return NULL;
+}
+
+
+const std::vector<PcmReaderPtr>& StreamManager::getStreams()
+{
+	return streams_;
+}
+
+
+const PcmReaderPtr StreamManager::getDefaultStream()
+{
+	if (streams_.empty())
+		return nullptr;
+
+	return streams_.front();
+}
+
+
+void StreamManager::start()
+{
+	for (auto stream: streams_)
+		stream->start();
+}
+
+
+void StreamManager::stop()
+{
+	for (auto stream: streams_)
+		stream->stop();
 }
 
 

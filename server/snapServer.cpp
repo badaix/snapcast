@@ -47,7 +47,7 @@ int main(int argc, char* argv[])
 	{
 		StreamServerSettings settings;
 		std::string pcmStream = "pipe:///tmp/snapfifo?name=default";
-		int processPriority(-3);
+		int processPriority(0);
 
 		Switch helpSwitch("h", "help", "Produce help message");
 		Switch versionSwitch("v", "version", "Show version number");

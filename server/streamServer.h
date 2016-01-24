@@ -28,7 +28,7 @@
 #include <mutex>
 
 #include "streamSession.h"
-#include "pcmreader/pcmReaderFactory.h"
+#include "pcmreader/streamManager.h"
 #include "common/queue.h"
 #include "message/message.h"
 #include "message/header.h"
@@ -97,7 +97,6 @@ private:
 	void handleAccept(socket_ptr socket);
 	StreamSession* getStreamSession(const std::string& mac);
 	mutable std::mutex mutex_;
-	std::vector<std::shared_ptr<PcmReader>> pcmReader_;
 	std::set<std::shared_ptr<StreamSession>> sessions_;
 	asio::io_service* io_service_;
 	std::shared_ptr<tcp::acceptor> acceptor_;
@@ -105,6 +104,7 @@ private:
 	StreamServerSettings settings_;
 	Queue<std::shared_ptr<msg::BaseMessage>> messages_;
 	std::unique_ptr<ControlServer> controlServer_;
+	std::unique_ptr<StreamManager> streamManager_;
 };
 
 
