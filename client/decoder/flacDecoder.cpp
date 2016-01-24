@@ -21,6 +21,7 @@
 #include <cmath>
 #include <FLAC/stream_decoder.h>
 #include "flacDecoder.h"
+#include "common/snapException.h"
 #include "common/log.h"
 
 
@@ -36,7 +37,9 @@ static void error_callback(const FLAC__StreamDecoder *decoder, FLAC__StreamDecod
 static msg::Header* flacHeader = NULL;
 static msg::PcmChunk* flacChunk = NULL;
 static msg::PcmChunk* pcmChunk = NULL;
+static msg::SampleFormat sampleFormat;
 static FLAC__StreamDecoder *decoder = NULL;
+
 
 
 FlacDecoder::FlacDecoder() : Decoder()
@@ -78,28 +81,25 @@ bool FlacDecoder::decode(msg::PcmChunk* chunk)
 }
 
 
-bool FlacDecoder::setHeader(msg::Header* chunk)
+msg::SampleFormat FlacDecoder::setHeader(msg::Header* chunk)
 {
 	flacHeader = chunk;
-	FLAC__bool ok = true;
 	FLAC__StreamDecoderInitStatus init_status;
 
 	if ((decoder = FLAC__stream_decoder_new()) == NULL)
-	{
-		logS(kLogErr) << "ERROR: allocating decoder\n";
-		return false;
-	}
+		throw SnapException("ERROR: allocating decoder");
 
 //	(void)FLAC__stream_decoder_set_md5_checking(decoder, true);
 	init_status = FLAC__stream_decoder_init_stream(decoder, read_callback, NULL, NULL, NULL, NULL, write_callback, metadata_callback, error_callback, this);
-	if(init_status != FLAC__STREAM_DECODER_INIT_STATUS_OK)
-	{
-		logS(kLogErr) << "ERROR: initializing decoder: " << FLAC__StreamDecoderInitStatusString[init_status] << "\n";
-		ok = false;
-	}
-	FLAC__stream_decoder_process_until_end_of_metadata(decoder);
+	if (init_status != FLAC__STREAM_DECODER_INIT_STATUS_OK)
+		throw SnapException("ERROR: initializing decoder: " + string(FLAC__StreamDecoderInitStatusString[init_status]));
 
-	return ok;
+	sampleFormat.rate = 0;
+	FLAC__stream_decoder_process_until_end_of_metadata(decoder);
+	if (sampleFormat.rate == 0)
+		throw SnapException("Sample format not found");
+
+	return sampleFormat;
 }
 
 
@@ -179,9 +179,10 @@ void metadata_callback(const FLAC__StreamDecoder *decoder, const FLAC__StreamMet
 	if(metadata->type == FLAC__METADATA_TYPE_STREAMINFO)
 	{
 		((FlacDecoder*)client_data)->cacheInfo_.sampleRate_ = metadata->data.stream_info.sample_rate;
-		logO << "sample rate    : " << metadata->data.stream_info.sample_rate << "Hz\n";
-		logO << "bits per sample: " << metadata->data.stream_info.bits_per_sample << "\n";
-		logO << "channels       : " << metadata->data.stream_info.channels << "\n";
+		sampleFormat.setFormat(
+			metadata->data.stream_info.sample_rate,
+			metadata->data.stream_info.bits_per_sample,
+			metadata->data.stream_info.channels);
 	}
 }
 

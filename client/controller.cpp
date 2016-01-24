@@ -36,7 +36,7 @@
 using namespace std;
 
 
-Controller::Controller() : MessageReceiver(), active_(false), sampleFormat_(NULL), decoder_(NULL), player_(nullptr), asyncException_(false)
+Controller::Controller() : MessageReceiver(), active_(false), stream_(NULL), decoder_(NULL), player_(nullptr), asyncException_(false)
 {
 }
 
@@ -55,9 +55,9 @@ void Controller::onMessageReceived(ClientConnection* connection, const msg::Base
 	{
 		if ((stream_ != NULL) && (decoder_ != NULL))
 		{
-			msg::PcmChunk* pcmChunk = new msg::PcmChunk(*sampleFormat_, 0);
+			msg::PcmChunk* pcmChunk = new msg::PcmChunk(sampleFormat_, 0);
 			pcmChunk->deserialize(baseMessage, buffer);
-			//logD << "chunk: " << pcmChunk->payloadSize;
+//			logD << "chunk: " << pcmChunk->payloadSize << ", sampleFormat: " << sampleFormat_.rate << "\n";
 			if (decoder_->decode(pcmChunk))
 			{
 //TODO: do decoding in thread?
@@ -146,9 +146,9 @@ void Controller::worker()
 			while (active_ && !(serverSettings = clientConnection_->sendReq<msg::ServerSettings>(&requestMsg)));
 			logO << "ServerSettings - buffer: " << serverSettings->bufferMs << ", latency: " << serverSettings->latency << ", volume: " << serverSettings->volume << ", muted: " << serverSettings->muted << "\n";
 
-			requestMsg.request = kSampleFormat;
-			while (active_ && !(sampleFormat_ = clientConnection_->sendReq<msg::SampleFormat>(&requestMsg)));
-			logO << "SampleFormat rate: " << sampleFormat_->rate << ", bits: " << sampleFormat_->bits << ", channels: " << sampleFormat_->channels << "\n";
+//			requestMsg.request = kSampleFormat;
+//			while (active_ && !(sampleFormat_ = clientConnection_->sendReq<msg::SampleFormat>(&requestMsg)));
+//			logO << "SampleFormat rate: " << sampleFormat_->rate << ", bits: " << sampleFormat_->bits << ", channels: " << sampleFormat_->channels << "\n";
 
 			requestMsg.request = kHeader;
 			shared_ptr<msg::Header> headerChunk(NULL);
@@ -162,7 +162,10 @@ void Controller::worker()
 #endif
 			else if (headerChunk->codec == "flac")
 				decoder_ = new FlacDecoder();
-			decoder_->setHeader(headerChunk.get());
+			sampleFormat_ = decoder_->setHeader(headerChunk.get());
+			logO << "sample rate    : " << sampleFormat_.rate << "Hz\n";
+			logO << "bits per sample: " << sampleFormat_.bits << "\n";
+			logO << "channels       : " << sampleFormat_.channels << "\n";
 
 			msg::Request timeReq(kTime);
 			for (size_t n=0; n<50 && active_; ++n)
@@ -177,7 +180,7 @@ void Controller::worker()
 			}
 			logO << "diff to server [ms]: " << (float)TimeProvider::getInstance().getDiffToServer<chronos::usec>().count() / 1000.f << "\n";
 
-			stream_ = new Stream(*sampleFormat_);
+			stream_ = new Stream(sampleFormat_);
 			stream_->setBufferLen(serverSettings->bufferMs - latency_);
 
 #ifndef ANDROID

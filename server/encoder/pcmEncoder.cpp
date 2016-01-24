@@ -19,6 +19,7 @@
 #include <memory>
 #include "pcmEncoder.h"
 
+
 PcmEncoder::PcmEncoder(const std::string& codecOptions) : Encoder(codecOptions)
 {
 	headerChunk_ = new msg::Header("pcm");
@@ -34,6 +35,30 @@ void PcmEncoder::encode(const msg::PcmChunk* chunk)
 
 void PcmEncoder::initEncoder()
 {
+	//TODO: Endianess
+	headerChunk_->payloadSize = 44;
+	headerChunk_->payload = (char*)malloc(headerChunk_->payloadSize);
+	memcpy(headerChunk_->payload, "RIFF", 4);
+	uint32_t int32 = 36;
+	memcpy(headerChunk_->payload + 4, reinterpret_cast<const char *>(&int32), sizeof(uint32_t));
+	memcpy(headerChunk_->payload + 8, "WAVEfmt ", 8);
+	int32 = 16;
+	memcpy(headerChunk_->payload + 16, reinterpret_cast<const char *>(&int32), sizeof(uint32_t));
+	uint16_t int16 = 1;
+	memcpy(headerChunk_->payload + 20, reinterpret_cast<const char *>(&int16), sizeof(uint16_t));
+	int16 = sampleFormat_.channels;
+	memcpy(headerChunk_->payload + 22, reinterpret_cast<const char *>(&int16), sizeof(uint16_t));
+	int32 = sampleFormat_.rate;
+	memcpy(headerChunk_->payload + 24, reinterpret_cast<const char *>(&int32), sizeof(uint32_t));
+	int32 = sampleFormat_.rate * sampleFormat_.bits * sampleFormat_.channels / 8;
+	memcpy(headerChunk_->payload + 28, reinterpret_cast<const char *>(&int32), sizeof(uint32_t));
+	int16 = sampleFormat_.channels * ((sampleFormat_.bits + 7) / 8);
+	memcpy(headerChunk_->payload + 32, reinterpret_cast<const char *>(&int16), sizeof(uint16_t));
+	int16 = sampleFormat_.bits;
+	memcpy(headerChunk_->payload + 34, reinterpret_cast<const char *>(&int16), sizeof(uint16_t));
+	memcpy(headerChunk_->payload + 36, "data", 4);
+	int32 = 0;
+	memcpy(headerChunk_->payload + 40, reinterpret_cast<const char *>(&int32), sizeof(uint32_t));
 }
 
 

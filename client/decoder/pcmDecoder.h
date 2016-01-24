@@ -26,7 +26,7 @@ class PcmDecoder : public Decoder
 public:
 	PcmDecoder();
 	virtual bool decode(msg::PcmChunk* chunk);
-	virtual bool setHeader(msg::Header* chunk);
+	virtual msg::SampleFormat setHeader(msg::Header* chunk);
 };
 
 

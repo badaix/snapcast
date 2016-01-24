@@ -62,7 +62,7 @@ private:
 	ClientConnection* clientConnection_;
 	Stream* stream_;
 	std::string ip_;
-	std::shared_ptr<msg::SampleFormat> sampleFormat_;
+	msg::SampleFormat sampleFormat_;
 	Decoder* decoder_;
 	PcmDevice pcmDevice_;
 	size_t latency_;
