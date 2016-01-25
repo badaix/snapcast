@@ -21,74 +21,15 @@
 #include <fcntl.h>
 #include <unistd.h>
 
-#include "pcmReader.h"
 #include "../encoder/encoderFactory.h"
-#include "common/utils.h"
-#include "common/compat.h"
 #include "common/snapException.h"
+#include "common/compat.h"
+#include "pcmReader.h"
 #include "common/log.h"
 
 
 using namespace std;
 
-
-ReaderUri::ReaderUri(const std::string& uri)
-{
-// https://en.wikipedia.org/wiki/Uniform_Resource_Identifier
-// scheme:[//[user:password@]host[:port]][/]path[?query][#fragment]
-// would be more elegant with regex. Not yet supported on my dev machine's gcc 4.8 :(
-	size_t pos;
-	this->uri = uri;
-	string tmp(uri);
-
-	pos = tmp.find(':');
-	if (pos == string::npos)
-		throw invalid_argument("missing ':'");
-	scheme = tmp.substr(0, pos);
-	tmp = tmp.substr(pos + 1);
-	logE << "scheme: '" << scheme << "' tmp: '" << tmp << "'\n";
-
-	if (tmp.find("//") != 0)
-		throw invalid_argument("missing host separator: '//'");
-	tmp = tmp.substr(2);
-
-	pos = tmp.find('/');
-	if (pos == string::npos)
-		throw invalid_argument("missing path separator: '/'");
-	host = tmp.substr(0, pos);
-	tmp = tmp.substr(pos);
-	path = tmp;
-	logE << "host: '" << host << "' tmp: '" << tmp << "' path: '" << path << "'\n";
-
-	pos = tmp.find('?');
-	if (pos == string::npos)
-		return;
-
-	path = tmp.substr(0, pos);
-	tmp = tmp.substr(pos + 1);
-	string queryStr = tmp;
-	logE << "path: '" << path << "' tmp: '" << tmp << "' query: '" << queryStr << "'\n";
-
-	pos = tmp.find('#');
-	if (pos != string::npos)
-	{
-		queryStr = tmp.substr(0, pos);
-		tmp = tmp.substr(pos + 1);
-		fragment = tmp;
-		logE << "query: '" << queryStr << "' fragment: '" << fragment << "' tmp: '" << tmp << "'\n";
-	}
-
-	vector<string> keyValueList = split(queryStr, '&');
-	for (auto& kv: keyValueList)
-	{
-		pos = kv.find('=');
-		if (pos != string::npos)
-			query[kv.substr(0, pos)] = kv.substr(pos+1);
-	}
-
-//	for (auto& kv: query)
-//		logD << "key: '" << kv.first << "' value: '" << kv.second << "'\n";
-}
 
 
 PcmReader::PcmReader(PcmListener* pcmListener, const ReaderUri& uri) : pcmListener_(pcmListener), uri_(uri), pcmReadMs_(20)

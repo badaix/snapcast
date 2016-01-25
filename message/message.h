@@ -19,6 +19,7 @@
 #ifndef MESSAGE_H
 #define MESSAGE_H
 
+#include <cstdlib>
 #include <cstring>
 #include <iostream>
 #include <streambuf>

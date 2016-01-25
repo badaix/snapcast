@@ -9,6 +9,14 @@ else
   TARGET_DIR ?= /usr
 endif
 
+# MIPS
+# export STAGING_DIR=/home/johannes/Develop/openwrt/staging_dir
+# TOOLCHAIN_DIR=$(STAGING_DIR)/toolchain-mips_34kc_gcc-4.8-linaro_uClibc-0.9.33.2
+# LDCFLAGS=$(TOOLCHAIN_DIR)/usr/lib
+# LD_LIBRARY_PATH=$(TOOLCHAIN_DIR)/usr/lib
+# PATH=$(TOOLCHAIN_DIR)/bin:$PATH
+# CXX     = $(TOOLCHAIN_DIR)/bin/mips-openwrt-linux-g++
+
 ifdef ANDROID
 # Android NDK setup: (http://developer.android.com/ndk/guides/standalone_toolchain.html)
 # 1. Download NDK: http://dl.google.com/android/ndk/android-ndk-r10e-linux-x86_64.bin

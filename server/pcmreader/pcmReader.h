@@ -23,6 +23,7 @@
 #include <atomic>
 #include <string>
 #include <map>
+#include "readerUri.h"
 #include "../encoder/encoder.h"
 #include "message/sampleFormat.h"
 #include "message/header.h"
@@ -40,27 +41,6 @@ class PcmListener
 public:
 	virtual void onChunkRead(const PcmReader* pcmReader, const msg::PcmChunk* chunk, double duration) = 0;
 	virtual void onResync(const PcmReader* pcmReader, double ms) = 0;
-};
-
-
-struct ReaderUri
-{
-	ReaderUri(const std::string& uri);
-	std::string uri;
-	std::string scheme;
-/*	struct Authority
-	{
-		std::string username;
-		std::string password;
-		std::string host;
-		size_t port;
-	};
-	Authority authority;
-*/
-	std::string host;
-	std::string path;
-	std::map<std::string, std::string> query;
-	std::string fragment;
 };
 
 

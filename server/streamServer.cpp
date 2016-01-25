@@ -164,7 +164,7 @@ void StreamServer::onMessageReceived(ControlSession* controlSession, const std::
 					{"version", VERSION}
 				}},
 				{"clients", jClient},
-				{"streams", "TODO"}
+				{"streams", streamManager_->toJson()}
 			};
 		}
 		else if (request.method == "Server.DeleteClient")
@@ -342,7 +342,7 @@ void StreamServer::start()
 
 	streamManager_.reset(new StreamManager(this, settings_.sampleFormat, settings_.codec, settings_.streamReadMs));
 	for (auto& streamUri: settings_.pcmStreams)
-		streamManager_->addStream(streamUri);
+		logE << "Stream: " << streamManager_->addStream(streamUri)->getUri().toJson() << "\n";
 
 	streamManager_->start();
 

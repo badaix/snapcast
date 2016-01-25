@@ -66,34 +66,6 @@ struct Volume
 };
 
 
-struct Stream
-{
-//TODO
-	Stream() : id("TODO_ID"), name("TODO_NAME"), uri("file:///tmp/snapfifo")
-	{
-	}
-
-	void fromJson(const json& j)
-	{
-		id = jGet<std::string>(j, "id", "TODO_ID");
-		name = jGet<std::string>(j, "name", "TODO_NAME");
-		uri = jGet<std::string>(j, "uri", "file:///tmp/snapfifo");
-	}
-
-	json toJson()
-	{
-		json j;
-		j["id"] = id;
-		j["name"] = name;
-		j["uri"] = uri;
-		return j;
-	}
-
-	std::string id;
-	std::string name;
-	std::string uri;
-};
-
 
 struct ClientInfo
 {
