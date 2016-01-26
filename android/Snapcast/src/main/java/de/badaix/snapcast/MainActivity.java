@@ -10,6 +10,7 @@ import android.net.Uri;
 import android.net.nsd.NsdServiceInfo;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.IBinder;
 import android.support.design.widget.Snackbar;
 import android.support.design.widget.Snackbar.Callback;
@@ -47,12 +48,15 @@ public class MainActivity extends AppCompatActivity implements ClientInfoItem.Cl
     private RemoteControl remoteControl = null;
     private ClientInfoAdapter clientInfoAdapter;
     private SnapclientService snapclientService;
+    private Runnable enablePlayButtonRunnable;
+    private Handler handler;
 
     /**
      * ATTENTION: This was auto-generated to implement the App Indexing API.
      * See https://g.co/AppIndexing/AndroidStudio for more information.
      */
     private GoogleApiClient client;
+
 
     /**
      * Defines callbacks for service binding, passed to bindService()
@@ -115,6 +119,16 @@ public class MainActivity extends AppCompatActivity implements ClientInfoItem.Cl
         // ATTENTION: This was auto-generated to implement the App Indexing API.
         // See https://g.co/AppIndexing/AndroidStudio for more information.
         client = new GoogleApiClient.Builder(this).addApi(AppIndex.API).build();
+
+        handler = new Handler();
+        enablePlayButtonRunnable =
+                new Runnable() {
+                    @Override
+                    public void run() {
+                        if (miStartStop != null)
+                            miStartStop.setEnabled(true);
+                    }
+                };
     }
 
     @Override
@@ -148,6 +162,8 @@ public class MainActivity extends AppCompatActivity implements ClientInfoItem.Cl
                 stopSnapclient();
             } else {
                 startSnapclient();
+                item.setEnabled(false);
+                handler.postDelayed(enablePlayButtonRunnable, 5000);
             }
             return true;
         } else if (id == R.id.action_hide_offline) {
@@ -171,9 +187,15 @@ public class MainActivity extends AppCompatActivity implements ClientInfoItem.Cl
 
     private void updateStartStopMenuItem() {
         if (bound && snapclientService.isRunning()) {
+            Log.d(TAG, "updateStartStopMenuItem: ic_media_stop");
             miStartStop.setIcon(R.drawable.ic_media_stop);
         } else {
+            Log.d(TAG, "updateStartStopMenuItem: ic_media_play");
             miStartStop.setIcon(R.drawable.ic_media_play);
+        }
+        if (miStartStop != null) {
+            handler.removeCallbacks(enablePlayButtonRunnable);
+            miStartStop.setEnabled(true);
         }
     }
 
@@ -275,11 +297,13 @@ public class MainActivity extends AppCompatActivity implements ClientInfoItem.Cl
 
     @Override
     public void onPlayerStart() {
+        Log.d(TAG, "onPlayerStart");
         updateStartStopMenuItem();
     }
 
     @Override
     public void onPlayerStop() {
+        Log.d(TAG, "onPlayerStop");
         updateStartStopMenuItem();
     }
 
