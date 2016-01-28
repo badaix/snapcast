@@ -249,24 +249,6 @@ void StreamServer::onMessageReceived(StreamSession* connection, const msg::BaseM
 		}
 		else if (requestMsg.request == kServerSettings)
 		{
-			logD << "request kServerSettings: " << connection->macAddress << "\n";
-			std::unique_lock<std::mutex> mlock(mutex_);
-			ClientInfoPtr clientInfo = Config::instance().getClientInfo(connection->macAddress, true);
-			if (clientInfo == nullptr)
-			{
-				logE << "could not get client info for MAC: " << connection->macAddress << "\n";
-			}
-			else
-			{
-				logD << "request kServerSettings\n";
-				msg::ServerSettings serverSettings;
-				serverSettings.volume = clientInfo->volume.percent;
-				serverSettings.muted = clientInfo->volume.muted;
-				serverSettings.latency = clientInfo->latency;
-				serverSettings.refersTo = requestMsg.id;
-				serverSettings.bufferMs = settings_.bufferMs;
-				connection->send(&serverSettings);
-			}
 		}
 		else if (requestMsg.request == kHeader)
 		{
@@ -283,6 +265,25 @@ void StreamServer::onMessageReceived(StreamSession* connection, const msg::BaseM
 		helloMsg.deserialize(baseMessage, buffer);
 		connection->macAddress = helloMsg.getMacAddress();
 		logO << "Hello from " << connection->macAddress << ", host: " << helloMsg.getHostName() << ", v" << helloMsg.getVersion() << "\n";
+
+		logD << "request kServerSettings: " << connection->macAddress << "\n";
+		std::unique_lock<std::mutex> mlock(mutex_);
+		ClientInfoPtr clientInfo = Config::instance().getClientInfo(connection->macAddress, true);
+		if (clientInfo == nullptr)
+		{
+			logE << "could not get client info for MAC: " << connection->macAddress << "\n";
+		}
+		else
+		{
+			logD << "request kServerSettings\n";
+			msg::ServerSettings serverSettings;
+			serverSettings.volume = clientInfo->volume.percent;
+			serverSettings.muted = clientInfo->volume.muted;
+			serverSettings.latency = clientInfo->latency;
+			serverSettings.refersTo = helloMsg.id;
+			serverSettings.bufferMs = settings_.bufferMs;
+			connection->send(&serverSettings);
+		}
 
 		ClientInfoPtr client = Config::instance().getClientInfo(connection->macAddress);
 		client->ipAddress = connection->getIP();

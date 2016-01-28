@@ -141,9 +141,11 @@ void Controller::worker()
 		try
 		{
 			clientConnection_->start();
+
+			msg::Hello hello(clientConnection_->getMacAddress());
 			msg::Request requestMsg(kServerSettings);
 			shared_ptr<msg::ServerSettings> serverSettings(NULL);
-			while (active_ && !(serverSettings = clientConnection_->sendReq<msg::ServerSettings>(&requestMsg)));
+			while (active_ && !(serverSettings = clientConnection_->sendReq<msg::ServerSettings>(&hello)));
 			logO << "ServerSettings - buffer: " << serverSettings->bufferMs << ", latency: " << serverSettings->latency << ", volume: " << serverSettings->volume << ", muted: " << serverSettings->muted << "\n";
 
 			requestMsg.request = kHeader;
@@ -199,12 +201,6 @@ void Controller::worker()
 
 				if (sendTimeSyncMessage(5000))
 					logO << "time sync main loop\n";
-//				shared_ptr<msg::Time> reply = clientConnection_->sendReq<msg::Time>(&timeReq);
-//				if (reply)
-//				{
-//					double latency = (reply->received.sec - reply->sent.sec) + (reply->received.usec - reply->sent.usec) / 1000000.;
-//					TimeProvider::getInstance().setDiffToServer((reply->latency - latency) * 1000 / 2);
-//				}
 			}
 		}
 		catch (const std::exception& e)

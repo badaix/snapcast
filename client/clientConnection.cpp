@@ -28,7 +28,7 @@
 using namespace std;
 
 
-ClientConnection::ClientConnection(MessageReceiver* receiver, const std::string& host, size_t port) : active_(false), connected_(false), messageReceiver_(receiver), reqId_(1), host_(host), port_(port), readerThread_(NULL), sumTimeout_(chronos::msec(0))
+ClientConnection::ClientConnection(MessageReceiver* receiver, const std::string& host, size_t port) : socket_(nullptr), active_(false), connected_(false), messageReceiver_(receiver), reqId_(1), host_(host), port_(port), readerThread_(NULL), sumTimeout_(chronos::msec(0))
 {
 }
 
@@ -54,6 +54,19 @@ void ClientConnection::socketRead(void* _to, size_t _bytes)
 }
 
 
+std::string ClientConnection::getMacAddress() const
+{
+	if (socket_ == nullptr)
+		throw SnapException("socket not connected");
+
+	std::string mac = ::getMacAddress(socket_->native());
+	if (mac.empty())
+		mac = "00:00:00:00:00:00";
+	logO << "My MAC: \"" << mac << "\", socket: " << socket_->native() << "\n";
+	return mac;
+}
+
+
 void ClientConnection::start()
 {
 	tcp::resolver resolver(io_service_);
@@ -68,13 +81,6 @@ void ClientConnection::start()
 //	setsockopt(socket->native(), SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
 //	setsockopt(socket->native(), SOL_SOCKET, SO_SNDTIMEO, &tv, sizeof(tv));
 	socket_->connect(*iterator);
-
-	std::string mac = getMacAddress(socket_->native());
-	if (mac.empty())
-		mac = "00:00:00:00:00:00";
-	logO << "My MAC: \"" << mac << "\", socket: " << socket_->native() << "\n";
-	msg::Hello hello(mac);
-	send(&hello);
 	connected_ = true;
 	logS(kLogNotice) << "Connected to " << socket_->remote_endpoint().address().to_string() << endl;
 	active_ = true;

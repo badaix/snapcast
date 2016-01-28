@@ -88,6 +88,8 @@ public:
 		return msg;
 	}
 
+	std::string getMacAddress() const;
+
 	virtual bool active() const
 	{
 		return active_;
@@ -95,7 +97,7 @@ public:
 
 	virtual bool connected() const
 	{
-		return (socket_ != 0);
+		return (socket_ != nullptr);
 //		return (connected_ && socket);
 	}
 
