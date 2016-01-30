@@ -29,7 +29,7 @@
 using namespace std;
 
 
-OggDecoder::OggDecoder() : Decoder(), buffer(NULL)
+OggDecoder::OggDecoder() : Decoder(), buffer(NULL), bytes(0)
 {
 	ogg_sync_init(&oy); /* Now we can read pages */
 	convsize = 4096;

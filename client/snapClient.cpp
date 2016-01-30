@@ -39,11 +39,10 @@ PcmDevice getPcmDevice(const std::string& soundcard)
 {
 #ifndef ANDROID
 	vector<PcmDevice> pcmDevices = AlsaPlayer::pcm_list();
-	int soundcardIdx = -1;
 
 	try
 	{
-		soundcardIdx = std::stoi(soundcard);
+		int soundcardIdx = std::stoi(soundcard);
 		for (auto dev: pcmDevices)
 			if (dev.idx == soundcardIdx)
 				return dev;

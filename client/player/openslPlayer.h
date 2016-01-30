@@ -41,11 +41,6 @@ public:
 
 	void playerCallback(SLAndroidSimpleBufferQueueItf bq);
 
-public:
-	size_t frames_;
-	size_t buff_size;
-	Stream* pubStream_;
-
 protected:
 	void initOpensl();
 	void uninitOpensl();
@@ -65,8 +60,12 @@ protected:
 	SLVolumeItf bqPlayerVolume;
 
 	// Double buffering.
-	char *buffer[2];
 	int curBuffer;
+	char *buffer[2];
+
+	size_t frames_;
+	size_t buff_size;
+	Stream* pubStream_;
 };
 
 

@@ -74,7 +74,6 @@ private:
 
 	SampleFormat format_;
 
-	long lastTick_;
 	chronos::usec sleep_;
 
 	Queue<std::shared_ptr<msg::PcmChunk>> chunks_;

@@ -35,13 +35,14 @@ using namespace std;
 // and then render the next. Hopefully it's okay to spend time in this callback after having enqueued.
 static void bqPlayerCallback(SLAndroidSimpleBufferQueueItf bq, void *context)
 {
-	OpenslPlayer* player = (OpenslPlayer*)context;
+	OpenslPlayer* player = static_cast<OpenslPlayer*>(context);
 	player->playerCallback(bq);
 }
 
 
 
-OpenslPlayer::OpenslPlayer(const PcmDevice& pcmDevice, Stream* stream) : Player(pcmDevice, stream), pubStream_(stream), bqPlayerObject(NULL), curBuffer(0)
+OpenslPlayer::OpenslPlayer(const PcmDevice& pcmDevice, Stream* stream) :
+	Player(pcmDevice, stream), pubStream_(stream), bqPlayerObject(NULL), curBuffer(0), frames_(0), buff_size(0)
 {
 }
 
@@ -212,10 +213,11 @@ void OpenslPlayer::initOpensl()
 
 	SLAndroidConfigurationItf playerConfig;
 	result = (*bqPlayerObject)->GetInterface(bqPlayerObject, SL_IID_ANDROIDCONFIGURATION, &playerConfig);
+	assert(SL_RESULT_SUCCESS == result);
 	SLint32 streamType = SL_ANDROID_STREAM_MEDIA;
 //	SLint32 streamType = SL_ANDROID_STREAM_VOICE;
 	result = (*playerConfig)->SetConfiguration(playerConfig, SL_ANDROID_KEY_STREAM_TYPE, &streamType, sizeof(SLint32));
-
+	assert(SL_RESULT_SUCCESS == result);
 	result = (*bqPlayerObject)->Realize(bqPlayerObject, SL_BOOLEAN_FALSE);
 	assert(SL_RESULT_SUCCESS == result);
 	result = (*bqPlayerObject)->GetInterface(bqPlayerObject, SL_IID_PLAY, &bqPlayerPlay);

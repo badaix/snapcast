@@ -113,7 +113,7 @@ FLAC__StreamDecoderReadStatus read_callback(const FLAC__StreamDecoder *decoder, 
 	}
 	else if (flacChunk != NULL)
 	{
-		((FlacDecoder*)client_data)->cacheInfo_.isCachedChunk_ = false;
+		static_cast<FlacDecoder*>(client_data)->cacheInfo_.isCachedChunk_ = false;
 		if (*bytes > flacChunk->payloadSize)
 			*bytes = flacChunk->payloadSize;
 
@@ -155,8 +155,9 @@ FLAC__StreamDecoderWriteStatus write_callback(const FLAC__StreamDecoder *decoder
 //TODO: hard coded to 2 channels, 16 bit
 		size_t bytes = frame->header.blocksize * 4;
 
-		if (((FlacDecoder*)client_data)->cacheInfo_.isCachedChunk_)
-			((FlacDecoder*)client_data)->cacheInfo_.cachedBlocks_ += frame->header.blocksize;
+		FlacDecoder* flacDecoder = static_cast<FlacDecoder*>(client_data);
+		if (flacDecoder->cacheInfo_.isCachedChunk_)
+			flacDecoder->cacheInfo_.cachedBlocks_ += frame->header.blocksize;
 
 		pcmChunk->payload = (char*)realloc(pcmChunk->payload, pcmChunk->payloadSize + bytes);
 
@@ -178,7 +179,7 @@ void metadata_callback(const FLAC__StreamDecoder *decoder, const FLAC__StreamMet
 	/* print some stats */
 	if(metadata->type == FLAC__METADATA_TYPE_STREAMINFO)
 	{
-		((FlacDecoder*)client_data)->cacheInfo_.sampleRate_ = metadata->data.stream_info.sample_rate;
+		static_cast<FlacDecoder*>(client_data)->cacheInfo_.sampleRate_ = metadata->data.stream_info.sample_rate;
 		sampleFormat.setFormat(
 			metadata->data.stream_info.sample_rate,
 			metadata->data.stream_info.bits_per_sample,
