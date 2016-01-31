@@ -27,7 +27,7 @@
 using namespace std;
 
 // source: https://github.com/hrydgard/native/blob/master/android/native-audio-so.cpp
-
+// https://android.googlesource.com/platform/development/+/c21a505/ndk/platforms/android-9/samples/native-audio/jni/native-audio-jni.c
 
 // This callback handler is called every time a buffer finishes playing.
 // The documentation available is very unclear about how to best manage buffers.
@@ -42,18 +42,19 @@ static void bqPlayerCallback(SLAndroidSimpleBufferQueueItf bq, void *context)
 
 
 OpenslPlayer::OpenslPlayer(const PcmDevice& pcmDevice, Stream* stream) :
-	Player(pcmDevice, stream), bqPlayerObject(NULL), curBuffer(0), frames_(0), buff_size(0), pubStream_(stream)
+	Player(pcmDevice, stream),
+	engineObject(NULL),
+	engineEngine(NULL),
+	outputMixObject(NULL),
+	bqPlayerObject(NULL),
+	bqPlayerPlay(NULL),
+	bqPlayerBufferQueue(NULL),
+	bqPlayerVolume(NULL),
+	curBuffer(0),
+	frames_(0),
+	buff_size(0),
+	pubStream_(stream)
 {
-	engineObject = NULL;
-	engineEngine = NULL;
-	outputMixObject = NULL;
-
-	bqPlayerObject = NULL;
-	bqPlayerPlay = NULL;
-	bqPlayerBufferQueue = NULL;
-	bqPlayerMuteSolo = NULL;
-	bqPlayerVolume = NULL;
-
 	buffer[0] = NULL;
 	buffer[1] = NULL;
 }
@@ -128,12 +129,57 @@ void OpenslPlayer::playerCallback(SLAndroidSimpleBufferQueueItf bq)
 }
 
 
+std::string OpenslPlayer::resultToString(SLresult result) const
+{
+	switch(result)
+	{
+		case SL_RESULT_SUCCESS:
+			return "SL_RESULT_SUCCESS";
+		case SL_RESULT_PRECONDITIONS_VIOLATED:
+			return "SL_RESULT_PRECONDITIONS_VIOLATED";
+		case SL_RESULT_PARAMETER_INVALID:
+			return "SL_RESULT_PARAMETER_INVALID";
+		case SL_RESULT_MEMORY_FAILURE:
+			return "SL_RESULT_MEMORY_FAILURE";
+		case SL_RESULT_RESOURCE_ERROR:
+			return "SL_RESULT_RESOURCE_ERROR";
+		case SL_RESULT_RESOURCE_LOST:
+			return "SL_RESULT_RESOURCE_LOST";
+		case SL_RESULT_IO_ERROR:
+			return "SL_RESULT_IO_ERROR";
+		case SL_RESULT_BUFFER_INSUFFICIENT:
+			return "SL_RESULT_BUFFER_INSUFFICIENT";
+		case SL_RESULT_CONTENT_CORRUPTED:
+			return "SL_RESULT_CONTENT_CORRUPTED";
+		case SL_RESULT_CONTENT_UNSUPPORTED:
+			return "SL_RESULT_CONTENT_UNSUPPORTED";
+		case SL_RESULT_CONTENT_NOT_FOUND:
+			return "SL_RESULT_CONTENT_NOT_FOUND";
+		case SL_RESULT_PERMISSION_DENIED:
+			return "SL_RESULT_PERMISSION_DENIED";
+		case SL_RESULT_FEATURE_UNSUPPORTED:
+			return "SL_RESULT_FEATURE_UNSUPPORTED";
+		case SL_RESULT_INTERNAL_ERROR:
+			return "SL_RESULT_INTERNAL_ERROR";
+		case SL_RESULT_UNKNOWN_ERROR:
+			return "SL_RESULT_UNKNOWN_ERROR";
+		case SL_RESULT_OPERATION_ABORTED:
+			return "SL_RESULT_OPERATION_ABORTED";
+		case SL_RESULT_CONTROL_LOST:
+			return "SL_RESULT_CONTROL_LOST";
+		default:
+			return "UNKNOWN";
+	}
+}
+
+
+
 void OpenslPlayer::throwUnsuccess(const std::string& what, SLresult result)
 {
 	if (SL_RESULT_SUCCESS == result)
 		return;
 	stringstream ss;
-	ss << what << " failed: " << result;
+	ss << what << " failed: " << resultToString(result) << "(" << result << ")";
 	throw SnapException(ss.str());
 }
 
@@ -149,9 +195,6 @@ void OpenslPlayer::initOpensl()
 
 	buff_size = frames_ * format.channels * 2 /* 2 -> sample size */;
 	logO << "frames: " << frames_ << ", channels: " << format.channels << ", rate: " << format.rate << ", buff: " << buff_size << "\n";
-
-	buffer[0] = new char[buff_size];
-	buffer[1] = new char[buff_size];
 
 	SLresult result;
 	// create engine
@@ -213,7 +256,7 @@ void OpenslPlayer::initOpensl()
 	SLDataFormat_PCM format_pcm =
 	{
 		SL_DATAFORMAT_PCM,
-		2,
+		format.channels,
 		sr,
 		SL_PCMSAMPLEFORMAT_FIXED_16,
 		SL_PCMSAMPLEFORMAT_FIXED_16,
@@ -228,18 +271,18 @@ void OpenslPlayer::initOpensl()
 	SLDataSink audioSnk = {&loc_outmix, NULL};
 
 	// create audio player
-	const SLInterfaceID ids[4] = {SL_IID_ANDROIDCONFIGURATION, SL_IID_PLAY, SL_IID_BUFFERQUEUE, SL_IID_VOLUME};
-	const SLboolean req[4] = {SL_BOOLEAN_TRUE, SL_BOOLEAN_TRUE, SL_BOOLEAN_TRUE, SL_BOOLEAN_TRUE};
-	result = (*engineEngine)->CreateAudioPlayer(engineEngine, &bqPlayerObject, &audioSrc, &audioSnk, 4, ids, req);
+	const SLInterfaceID ids[2] = {/*SL_IID_ANDROIDCONFIGURATION, SL_IID_PLAY,*/ SL_IID_BUFFERQUEUE, SL_IID_VOLUME};
+	const SLboolean req[2] = {/*SL_BOOLEAN_TRUE, SL_BOOLEAN_TRUE,*/ SL_BOOLEAN_TRUE, SL_BOOLEAN_TRUE};
+	result = (*engineEngine)->CreateAudioPlayer(engineEngine, &bqPlayerObject, &audioSrc, &audioSnk, 2, ids, req);
 	throwUnsuccess("Engine::CreateAudioPlayer", result);
 
-	SLAndroidConfigurationItf playerConfig;
-	result = (*bqPlayerObject)->GetInterface(bqPlayerObject, SL_IID_ANDROIDCONFIGURATION, &playerConfig);
-	throwUnsuccess("PlayerObject::GetInterface", result);
-	SLint32 streamType = SL_ANDROID_STREAM_MEDIA;
-//	SLint32 streamType = SL_ANDROID_STREAM_VOICE;
-	result = (*playerConfig)->SetConfiguration(playerConfig, SL_ANDROID_KEY_STREAM_TYPE, &streamType, sizeof(SLint32));
-	throwUnsuccess("PlayerConfig::SetConfiguration", result);
+//	SLAndroidConfigurationItf playerConfig;
+//	result = (*bqPlayerObject)->GetInterface(bqPlayerObject, SL_IID_ANDROIDCONFIGURATION, &playerConfig);
+//	throwUnsuccess("PlayerObject::GetInterface", result);
+//	SLint32 streamType = SL_ANDROID_STREAM_MEDIA;
+////	SLint32 streamType = SL_ANDROID_STREAM_VOICE;
+//	result = (*playerConfig)->SetConfiguration(playerConfig, SL_ANDROID_KEY_STREAM_TYPE, &streamType, sizeof(SLint32));
+//	throwUnsuccess("PlayerConfig::SetConfiguration", result);
 	result = (*bqPlayerObject)->Realize(bqPlayerObject, SL_BOOLEAN_FALSE);
 	throwUnsuccess("PlayerObject::Realize", result);
 	result = (*bqPlayerObject)->GetInterface(bqPlayerObject, SL_IID_PLAY, &bqPlayerPlay);
@@ -255,7 +298,9 @@ void OpenslPlayer::initOpensl()
 
 	// Render and enqueue a first buffer. (or should we just play the buffer empty?)
 	curBuffer = 0;
-////	audioCallback(buffer[curBuffer], framesPerBuffer);
+	buffer[0] = new char[buff_size];
+	buffer[1] = new char[buff_size];
+
 	active_ = true;
 
 	memset(buffer[curBuffer], 0, buff_size);
@@ -289,7 +334,6 @@ void OpenslPlayer::uninitOpensl()
 		bqPlayerObject = NULL;
 		bqPlayerPlay = NULL;
 		bqPlayerBufferQueue = NULL;
-		bqPlayerMuteSolo = NULL;
 		bqPlayerVolume = NULL;
 	}
 

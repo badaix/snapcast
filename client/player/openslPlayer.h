@@ -21,6 +21,7 @@
 
 #include <SLES/OpenSLES.h>
 #include <SLES/OpenSLES_Android.h>
+#include <string>
 
 #include "player.h"
 
@@ -47,6 +48,7 @@ protected:
 
 	virtual void worker();
 	void throwUnsuccess(const std::string& what, SLresult result);
+	std::string resultToString(SLresult result) const;
 
 	// engine interfaces
 	SLObjectItf engineObject;
@@ -57,7 +59,6 @@ protected:
 	SLObjectItf bqPlayerObject;// = NULL;
 	SLPlayItf bqPlayerPlay;
 	SLAndroidSimpleBufferQueueItf bqPlayerBufferQueue;
-	SLMuteSoloItf bqPlayerMuteSolo;
 	SLVolumeItf bqPlayerVolume;
 
 	// Double buffering.
