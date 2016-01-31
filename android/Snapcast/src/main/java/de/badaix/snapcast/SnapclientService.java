@@ -29,6 +29,15 @@ import static android.os.PowerManager.PARTIAL_WAKE_LOCK;
 
 public class SnapclientService extends Service {
 
+    public interface SnapclientListener {
+        void onPlayerStart(SnapclientService snapclientService);
+
+        void onPlayerStop(SnapclientService snapclientService);
+
+        void onLog(SnapclientService snapclientService, String log);
+        void onError(SnapclientService snapclientService, String msg, Exception exception);
+    }
+
     public static final String EXTRA_HOST = "EXTRA_HOST";
     public static final String EXTRA_PORT = "EXTRA_PORT";
     public static final String ACTION_START = "ACTION_START";
@@ -40,6 +49,7 @@ public class SnapclientService extends Service {
     private Thread reader = null;
     private boolean running = false;
     private SnapclientListener listener = null;
+    private boolean logReceived;
 
     public boolean isRunning() {
         return running;
@@ -156,44 +166,60 @@ public class SnapclientService extends Service {
                     String line;
                     try {
                         while ((line = bufferedReader.readLine()) != null) {
-                            if (listener != null)
-                                listener.onLog(line);
+                            log(line);
                         }
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
                 }
             });
+            logReceived = false;
             reader.start();
-            running = true;
-            if (listener != null)
-                listener.onPlayerStart();
-        } catch (IOException e) {
+
+            //TODO: wait for started message on stdout
+/*            long now = System.currentTimeMillis();
+            while (!logReceived) {
+                if (System.currentTimeMillis() > now + 1000)
+                    throw new Exception("start timeout");
+                Thread.sleep(100, 0);
+            }
+*/
+        } catch (Exception e) {
             e.printStackTrace();
+            if (listener != null)
+                listener.onError(this, e.getMessage(), e);
+            stop();
         }
     }
 
-    private void stop() {
-        if (reader != null)
-            reader.interrupt();
-        if (process != null)
-            process.destroy();
-        if ((wakeLock != null) && wakeLock.isHeld())
-            wakeLock.release();
-        if ((wifiWakeLock != null) && wifiWakeLock.isHeld())
-            wifiWakeLock.release();
-        android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_DEFAULT);
-        running = false;
+    private void log(String msg) {
+        if (!logReceived) {
+            logReceived = true;
+            running = true;
+            if (listener != null)
+                listener.onPlayerStart(this);
+        }
         if (listener != null)
-            listener.onPlayerStop();
+            listener.onLog(SnapclientService.this, msg);
     }
 
-    public interface SnapclientListener {
-        void onPlayerStart();
-
-        void onPlayerStop();
-
-        void onLog(String log);
+    private void stop() {
+        try {
+            if (reader != null)
+                reader.interrupt();
+            if (process != null)
+                process.destroy();
+            if ((wakeLock != null) && wakeLock.isHeld())
+                wakeLock.release();
+            if ((wifiWakeLock != null) && wifiWakeLock.isHeld())
+                wifiWakeLock.release();
+            android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_DEFAULT);
+            running = false;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        if (listener != null)
+            listener.onPlayerStop(this);
     }
 
     /**

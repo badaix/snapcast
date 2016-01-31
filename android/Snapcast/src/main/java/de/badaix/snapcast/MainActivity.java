@@ -10,22 +10,23 @@ import android.net.Uri;
 import android.net.nsd.NsdServiceInfo;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Handler;
 import android.os.IBinder;
 import android.support.design.widget.Snackbar;
-import android.support.design.widget.Snackbar.Callback;
+import android.support.design.widget.TabLayout;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentPagerAdapter;
+import android.support.v4.view.ViewPager;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.ViewGroup;
 import android.view.WindowManager;
-import android.widget.ArrayAdapter;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
-import android.widget.ListView;
 import android.widget.TextView;
 
 import com.google.android.gms.appindexing.Action;
@@ -38,18 +39,24 @@ import de.badaix.snapcast.control.ServerInfo;
 import de.badaix.snapcast.utils.NsdHelper;
 import de.badaix.snapcast.utils.Setup;
 
-public class MainActivity extends AppCompatActivity implements ClientInfoItem.ClientInfoItemListener, RemoteControl.RemoteControlListener, SnapclientService.SnapclientListener, NsdHelper.NsdHelperListener {
+public class MainActivity extends AppCompatActivity implements ClientListFragment.OnFragmentInteractionListener, ClientInfoItem.ClientInfoItemListener, RemoteControl.RemoteControlListener, SnapclientService.SnapclientListener, NsdHelper.NsdHelperListener {
 
     private static final String TAG = "Main";
+    private static final String SERVICE_NAME = "Snapcast";
+
     boolean bound = false;
     private MenuItem miStartStop = null;
     private String host = "";
     private int port = 1704;
     private RemoteControl remoteControl = null;
-    private ClientInfoAdapter clientInfoAdapter;
+    private ServerInfo serverInfo = null;
     private SnapclientService snapclientService;
-    private Runnable enablePlayButtonRunnable;
-    private Handler handler;
+    private SectionsPagerAdapter sectionsPagerAdapter;
+
+    /**
+     * The {@link ViewPager} that will host the section contents.
+     */
+    private ViewPager mViewPager;
 
     /**
      * ATTENTION: This was auto-generated to implement the App Indexing API.
@@ -102,9 +109,19 @@ public class MainActivity extends AppCompatActivity implements ClientInfoItem.Cl
             tvInfo.setText("Sample rate: " + rate + ", buffer size: " + size);
         }
 
-        clientInfoAdapter = new ClientInfoAdapter(this, this);
-        ListView lvClient = (ListView) findViewById(R.id.lvClient);
-        lvClient.setAdapter(clientInfoAdapter);
+        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
+        // Create the adapter that will return a fragment for each of the three
+        // primary sections of the activity.
+        sectionsPagerAdapter = new SectionsPagerAdapter(getSupportFragmentManager());
+
+        // Set up the ViewPager with the sections adapter.
+        mViewPager = (ViewPager) findViewById(R.id.container);
+        mViewPager.setAdapter(sectionsPagerAdapter);
+
+        TabLayout tabLayout = (TabLayout) findViewById(R.id.tabs);
+        tabLayout.setupWithViewPager(mViewPager);
+
         getSupportActionBar().setSubtitle("Host: no Snapserver found");
 
         new Thread(new Runnable() {
@@ -119,16 +136,6 @@ public class MainActivity extends AppCompatActivity implements ClientInfoItem.Cl
         // ATTENTION: This was auto-generated to implement the App Indexing API.
         // See https://g.co/AppIndexing/AndroidStudio for more information.
         client = new GoogleApiClient.Builder(this).addApi(AppIndex.API).build();
-
-        handler = new Handler();
-        enablePlayButtonRunnable =
-                new Runnable() {
-                    @Override
-                    public void run() {
-                        if (miStartStop != null)
-                            miStartStop.setEnabled(true);
-                    }
-                };
     }
 
     @Override
@@ -141,7 +148,7 @@ public class MainActivity extends AppCompatActivity implements ClientInfoItem.Cl
         boolean isChecked = settings.getBoolean("hide_offline", false);
         MenuItem menuItem = menu.findItem(R.id.action_hide_offline);
         menuItem.setChecked(isChecked);
-        clientInfoAdapter.setHideOffline(isChecked);
+        sectionsPagerAdapter.setHideOffline(isChecked);
         return true;
     }
 
@@ -155,15 +162,14 @@ public class MainActivity extends AppCompatActivity implements ClientInfoItem.Cl
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_scan) {
 //            NsdHelper.getInstance(this).startListening("*._tcp.", "SnapCast", this);
-            NsdHelper.getInstance(this).startListening("_snapcast._tcp.", "Snapcast", this);
+            NsdHelper.getInstance(this).startListening("_snapcast._tcp.", SERVICE_NAME, this);
             return true;
         } else if (id == R.id.action_play_stop) {
             if (bound && snapclientService.isRunning()) {
                 stopSnapclient();
             } else {
-                startSnapclient();
                 item.setEnabled(false);
-                handler.postDelayed(enablePlayButtonRunnable, 5000);
+                startSnapclient();
             }
             return true;
         } else if (id == R.id.action_hide_offline) {
@@ -172,11 +178,11 @@ public class MainActivity extends AppCompatActivity implements ClientInfoItem.Cl
             SharedPreferences.Editor editor = settings.edit();
             editor.putBoolean("hide_offline", item.isChecked());
             editor.apply();
-            clientInfoAdapter.setHideOffline(item.isChecked());
+            sectionsPagerAdapter.setHideOffline(item.isChecked());
             return true;
         } else if (id == R.id.action_refresh) {
-            if ((remoteControl != null) && remoteControl.isConnected())
-                remoteControl.getServerStatus();
+            startRemoteControl();
+            remoteControl.getServerStatus();
         } else if (id == R.id.action_about) {
             Intent intent = new Intent(this, AboutActivity.class);
             startActivity(intent);
@@ -186,17 +192,22 @@ public class MainActivity extends AppCompatActivity implements ClientInfoItem.Cl
     }
 
     private void updateStartStopMenuItem() {
-        if (bound && snapclientService.isRunning()) {
-            Log.d(TAG, "updateStartStopMenuItem: ic_media_stop");
-            miStartStop.setIcon(R.drawable.ic_media_stop);
-        } else {
-            Log.d(TAG, "updateStartStopMenuItem: ic_media_play");
-            miStartStop.setIcon(R.drawable.ic_media_play);
-        }
-        if (miStartStop != null) {
-            handler.removeCallbacks(enablePlayButtonRunnable);
-            miStartStop.setEnabled(true);
-        }
+        MainActivity.this.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+
+                if (bound && snapclientService.isRunning()) {
+                    Log.d(TAG, "updateStartStopMenuItem: ic_media_stop");
+                    miStartStop.setIcon(R.drawable.ic_media_stop);
+                } else {
+                    Log.d(TAG, "updateStartStopMenuItem: ic_media_play");
+                    miStartStop.setIcon(R.drawable.ic_media_play);
+                }
+                if (miStartStop != null) {
+                    miStartStop.setEnabled(true);
+                }
+            }
+        });
     }
 
     private void startSnapclient() {
@@ -241,7 +252,7 @@ public class MainActivity extends AppCompatActivity implements ClientInfoItem.Cl
     public void onStart() {
         super.onStart();
 
-        NsdHelper.getInstance(this).startListening("_snapcast._tcp.", "Snapcast", this);
+        NsdHelper.getInstance(this).startListening("_snapcast._tcp.", SERVICE_NAME, this);
 
         Intent intent = new Intent(this, SnapclientService.class);
         bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
@@ -296,67 +307,27 @@ public class MainActivity extends AppCompatActivity implements ClientInfoItem.Cl
     }
 
     @Override
-    public void onPlayerStart() {
+    public void onPlayerStart(SnapclientService snapclientService) {
         Log.d(TAG, "onPlayerStart");
         updateStartStopMenuItem();
     }
 
     @Override
-    public void onPlayerStop() {
+    public void onPlayerStop(SnapclientService snapclientService) {
         Log.d(TAG, "onPlayerStop");
         updateStartStopMenuItem();
     }
 
     @Override
-    public void onLog(String log) {
+    public void onLog(SnapclientService snapclientService, String log) {
         Log.d(TAG, log);
     }
 
-
     @Override
-    public void onVolumeChanged(ClientInfoItem clientInfoItem, int percent) {
-        remoteControl.setVolume(clientInfoItem.getClientInfo(), percent);
+    public void onError(SnapclientService snapclientService, String msg, Exception exception) {
+        updateStartStopMenuItem();
     }
 
-    @Override
-    public void onMute(ClientInfoItem clientInfoItem, boolean mute) {
-        remoteControl.setMute(clientInfoItem.getClientInfo(), mute);
-    }
-
-    @Override
-    public void onDeleteClicked(final ClientInfoItem clientInfoItem) {
-        final ClientInfo clientInfo = clientInfoItem.getClientInfo();
-        clientInfo.setDeleted(true);
-        clientInfoAdapter.update();
-        Snackbar mySnackbar = Snackbar.make(findViewById(R.id.myCoordinatorLayout),
-                getString(R.string.client_deleted, clientInfo.getVisibleName()),
-                Snackbar.LENGTH_SHORT);
-        mySnackbar.setAction(R.string.undo_string, new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                clientInfo.setDeleted(false);
-                clientInfoAdapter.update();
-            }
-        });
-        mySnackbar.setCallback(new Callback() {
-            @Override
-            public void onDismissed(Snackbar snackbar, int event) {
-                super.onDismissed(snackbar, event);
-                if (event != DISMISS_EVENT_ACTION) {
-                    remoteControl.delete(clientInfo);
-                    clientInfoAdapter.removeClient(clientInfo);
-                }
-            }
-        });
-        mySnackbar.show();
-    }
-
-    @Override
-    public void onPropertiesClicked(ClientInfoItem clientInfoItem) {
-        Intent intent = new Intent(this, ClientSettingsActivity.class);
-        intent.putExtra("clientInfo", clientInfoItem.getClientInfo());
-        startActivityForResult(intent, 1);
-    }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -368,7 +339,7 @@ public class MainActivity extends AppCompatActivity implements ClientInfoItem.Cl
         if (requestCode == 1) {
             ClientInfo clientInfo = data.getParcelableExtra("clientInfo");
             remoteControl.setName(clientInfo, clientInfo.getName());
-            clientInfoAdapter.updateClient(clientInfo);
+//TODO            clientInfoAdapter.updateClient(clientInfo);
         }
     }
 
@@ -386,15 +357,16 @@ public class MainActivity extends AppCompatActivity implements ClientInfoItem.Cl
     public void onClientEvent(RemoteControl remoteControl, ClientInfo clientInfo, RemoteControl.ClientEvent event) {
         Log.d(TAG, "onClientEvent: " + event.toString());
         if (event == RemoteControl.ClientEvent.deleted)
-            clientInfoAdapter.removeClient(clientInfo);
+            serverInfo.removeClient(clientInfo);
         else
-            clientInfoAdapter.updateClient(clientInfo);
-
+            serverInfo.updateClient(clientInfo);
+        sectionsPagerAdapter.updateServer(serverInfo);
     }
 
     @Override
     public void onServerInfo(RemoteControl remoteControl, ServerInfo serverInfo) {
-        clientInfoAdapter.updateServer(serverInfo);
+        this.serverInfo = serverInfo;
+        sectionsPagerAdapter.updateServer(serverInfo);
     }
 
     private void setActionbarSubtitle(final String subtitle) {
@@ -418,81 +390,112 @@ public class MainActivity extends AppCompatActivity implements ClientInfoItem.Cl
         NsdHelper.getInstance(this).stopListening();
     }
 
-    private class ClientInfoAdapter extends ArrayAdapter<ClientInfo> {
-        private Context context;
-        private ClientInfoItem.ClientInfoItemListener listener;
-        private boolean hideOffline = false;
-        private ServerInfo serverInfo = new ServerInfo();
-
-        public ClientInfoAdapter(Context context, ClientInfoItem.ClientInfoItemListener listener) {
-            super(context, 0);
-            this.context = context;
-            this.listener = listener;
-        }
+    @Override
+    public void onFragmentInteraction(Uri uri) {
+        Log.d(TAG, "onFragmentInteraction: " + uri);
+    }
 
 
-        @Override
-        public View getView(int position, View convertView, ViewGroup parent) {
-            ClientInfo clientInfo = getItem(position);
-            final ClientInfoItem clientInfoItem;
+    @Override
+    public void onVolumeChanged(ClientInfoItem clientInfoItem, int percent) {
+        remoteControl.setVolume(clientInfoItem.getClientInfo(), percent);
+    }
 
-            if (convertView != null) {
-                clientInfoItem = (ClientInfoItem) convertView;
-                clientInfoItem.setClientInfo(clientInfo);
-            } else {
-                clientInfoItem = new ClientInfoItem(context, clientInfo);
+    @Override
+    public void onMute(ClientInfoItem clientInfoItem, boolean mute) {
+        remoteControl.setMute(clientInfoItem.getClientInfo(), mute);
+    }
+
+    @Override
+    public void onDeleteClicked(final ClientInfoItem clientInfoItem) {
+        final ClientInfo clientInfo = clientInfoItem.getClientInfo();
+        clientInfo.setDeleted(true);
+        serverInfo.updateClient(clientInfo);
+//        sectionsPagerAdapter.update();
+        Snackbar mySnackbar = Snackbar.make(findViewById(R.id.myCoordinatorLayout),
+                getString(R.string.client_deleted, clientInfo.getVisibleName()),
+                Snackbar.LENGTH_SHORT);
+        mySnackbar.setAction(R.string.undo_string, new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                clientInfo.setDeleted(false);
+                serverInfo.updateClient(clientInfo);
+//                sectionsPagerAdapter.update();
             }
-            clientInfoItem.setListener(listener);
-            return clientInfoItem;
-        }
-
-        public void removeClient(final ClientInfo clientInfo) {
-            if ((clientInfo != null) && serverInfo.removeClient(clientInfo)) {
-                Log.d(TAG, "removeClient 1: " + clientInfo.getMac());
-                update();
+        });
+        mySnackbar.setCallback(new Snackbar.Callback() {
+            @Override
+            public void onDismissed(Snackbar snackbar, int event) {
+                super.onDismissed(snackbar, event);
+                if (event != DISMISS_EVENT_ACTION) {
+                    remoteControl.delete(clientInfo);
+                    serverInfo.removeClient(clientInfo);
+                }
             }
-        }
+        });
+        mySnackbar.show();
+    }
 
-        public void updateClient(final ClientInfo clientInfo) {
-            Log.d(TAG, "updateClient: " + clientInfo.getHost() + " " + clientInfo.isDeleted());
-            if (serverInfo.updateClient(clientInfo)) {
-                update();
-            }
+    @Override
+    public void onPropertiesClicked(ClientInfoItem clientInfoItem) {
+        Intent intent = new Intent(this, ClientSettingsActivity.class);
+        intent.putExtra("clientInfo", clientInfoItem.getClientInfo());
+        startActivityForResult(intent, 1);
+    }
+
+
+    /**
+     * A {@link FragmentPagerAdapter} that returns a fragment corresponding to
+     * one of the sections/tabs/pages.
+     */
+    public class SectionsPagerAdapter extends FragmentPagerAdapter {
+
+        private ClientListFragment clientListFragment;
+
+        public SectionsPagerAdapter(FragmentManager fm) {
+            super(fm);
+            clientListFragment = ClientListFragment.newInstance("TODO1", "TODO2");
         }
 
         public void updateServer(final ServerInfo serverInfo) {
-            if (serverInfo != null) {
-                ClientInfoAdapter.this.serverInfo = serverInfo;
-                update();
+            clientListFragment.updateServer(serverInfo);
+        }
+
+        public void setHideOffline(boolean hide) {
+            clientListFragment.setHideOffline(hide);
+        }
+
+//        public void update() {
+//            clientListFragment.update();
+//        }
+
+
+        @Override
+        public Fragment getItem(int position) {
+            // getItem is called to instantiate the fragment for the given page.
+            // Return a PlaceholderFragment (defined as a static inner class below).
+            return clientListFragment;
+        }
+
+        @Override
+        public int getCount() {
+            // Show 3 total pages.
+            return 1;
+        }
+
+        @Override
+        public CharSequence getPageTitle(int position) {
+            switch (position) {
+                case 0:
+                    return "SECTION 1";
+                case 1:
+                    return "SECTION 2";
+                case 2:
+                    return "SECTION 3";
             }
+            return null;
         }
 
-
-        public void update() {
-
-            MainActivity.this.runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    clear();
-                    for (ClientInfo clientInfo : ClientInfoAdapter.this.serverInfo.getClientInfos()) {
-                        if ((clientInfo != null) && (!hideOffline || clientInfo.isConnected()) && !clientInfo.isDeleted())
-                            add(clientInfo);
-                    }
-                    notifyDataSetChanged();
-                }
-            });
-        }
-
-        public boolean isHideOffline() {
-            return hideOffline;
-        }
-
-        public void setHideOffline(boolean hideOffline) {
-            if (this.hideOffline == hideOffline)
-                return;
-            this.hideOffline = hideOffline;
-            update();
-        }
     }
 }
 

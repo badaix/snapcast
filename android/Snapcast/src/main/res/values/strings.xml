@@ -32,5 +32,8 @@
     <string name="title_activity_about">About</string>
     <string name="about_file">about.html</string>
     <string name="about">About</string>
+
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
 </resources>
 
