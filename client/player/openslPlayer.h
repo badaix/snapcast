@@ -46,6 +46,7 @@ protected:
 	void uninitOpensl();
 
 	virtual void worker();
+	void throwUnsuccess(const std::string& what, SLresult result);
 
 	// engine interfaces
 	SLObjectItf engineObject;

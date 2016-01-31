@@ -42,8 +42,20 @@ static void bqPlayerCallback(SLAndroidSimpleBufferQueueItf bq, void *context)
 
 
 OpenslPlayer::OpenslPlayer(const PcmDevice& pcmDevice, Stream* stream) :
-	Player(pcmDevice, stream), pubStream_(stream), bqPlayerObject(NULL), curBuffer(0), frames_(0), buff_size(0)
+	Player(pcmDevice, stream), bqPlayerObject(NULL), curBuffer(0), frames_(0), buff_size(0), pubStream_(stream)
 {
+	engineObject = NULL;
+	engineEngine = NULL;
+	outputMixObject = NULL;
+
+	bqPlayerObject = NULL;
+	bqPlayerPlay = NULL;
+	bqPlayerBufferQueue = NULL;
+	bqPlayerMuteSolo = NULL;
+	bqPlayerVolume = NULL;
+
+	buffer[0] = NULL;
+	buffer[1] = NULL;
 }
 
 
@@ -116,6 +128,16 @@ void OpenslPlayer::playerCallback(SLAndroidSimpleBufferQueueItf bq)
 }
 
 
+void OpenslPlayer::throwUnsuccess(const std::string& what, SLresult result)
+{
+	if (SL_RESULT_SUCCESS == result)
+		return;
+	stringstream ss;
+	ss << what << " failed: " << result;
+	throw SnapException(ss.str());
+}
+
+
 void OpenslPlayer::initOpensl()
 {
 	if (active_)
@@ -134,15 +156,15 @@ void OpenslPlayer::initOpensl()
 	SLresult result;
 	// create engine
 	result = slCreateEngine(&engineObject, 0, NULL, 0, NULL, NULL);
-	assert(SL_RESULT_SUCCESS == result);
+	throwUnsuccess("slCreateEngine", result);
 	result = (*engineObject)->Realize(engineObject, SL_BOOLEAN_FALSE);
-	assert(SL_RESULT_SUCCESS == result);
+	throwUnsuccess("EngineObject::Realize", result);
 	result = (*engineObject)->GetInterface(engineObject, SL_IID_ENGINE, &engineEngine);
-	assert(SL_RESULT_SUCCESS == result);
+	throwUnsuccess("EngineObject::GetInterface", result);
 	result = (*engineEngine)->CreateOutputMix(engineEngine, &outputMixObject, 0, 0, 0);
-	assert(SL_RESULT_SUCCESS == result);
+	throwUnsuccess("EngineEngine::CreateOutputMix", result);
 	result = (*outputMixObject)->Realize(outputMixObject, SL_BOOLEAN_FALSE);
-	assert(SL_RESULT_SUCCESS == result);
+	throwUnsuccess("OutputMixObject::Realize", result);
 
 	SLuint32 sr = SL_SAMPLINGRATE_44_1;
 	switch(format.rate)
@@ -209,27 +231,27 @@ void OpenslPlayer::initOpensl()
 	const SLInterfaceID ids[4] = {SL_IID_ANDROIDCONFIGURATION, SL_IID_PLAY, SL_IID_BUFFERQUEUE, SL_IID_VOLUME};
 	const SLboolean req[4] = {SL_BOOLEAN_TRUE, SL_BOOLEAN_TRUE, SL_BOOLEAN_TRUE, SL_BOOLEAN_TRUE};
 	result = (*engineEngine)->CreateAudioPlayer(engineEngine, &bqPlayerObject, &audioSrc, &audioSnk, 4, ids, req);
-	assert(SL_RESULT_SUCCESS == result);
+	throwUnsuccess("Engine::CreateAudioPlayer", result);
 
 	SLAndroidConfigurationItf playerConfig;
 	result = (*bqPlayerObject)->GetInterface(bqPlayerObject, SL_IID_ANDROIDCONFIGURATION, &playerConfig);
-	assert(SL_RESULT_SUCCESS == result);
+	throwUnsuccess("PlayerObject::GetInterface", result);
 	SLint32 streamType = SL_ANDROID_STREAM_MEDIA;
 //	SLint32 streamType = SL_ANDROID_STREAM_VOICE;
 	result = (*playerConfig)->SetConfiguration(playerConfig, SL_ANDROID_KEY_STREAM_TYPE, &streamType, sizeof(SLint32));
-	assert(SL_RESULT_SUCCESS == result);
+	throwUnsuccess("PlayerConfig::SetConfiguration", result);
 	result = (*bqPlayerObject)->Realize(bqPlayerObject, SL_BOOLEAN_FALSE);
-	assert(SL_RESULT_SUCCESS == result);
+	throwUnsuccess("PlayerObject::Realize", result);
 	result = (*bqPlayerObject)->GetInterface(bqPlayerObject, SL_IID_PLAY, &bqPlayerPlay);
-	assert(SL_RESULT_SUCCESS == result);
+	throwUnsuccess("PlayerObject::GetInterface", result);
 	result = (*bqPlayerObject)->GetInterface(bqPlayerObject, SL_IID_BUFFERQUEUE, &bqPlayerBufferQueue);
-	assert(SL_RESULT_SUCCESS == result);
+	throwUnsuccess("PlayerObject::GetInterface", result);
 	result = (*bqPlayerBufferQueue)->RegisterCallback(bqPlayerBufferQueue, bqPlayerCallback, this);
-	assert(SL_RESULT_SUCCESS == result);
+	throwUnsuccess("PlayerBufferQueue::RegisterCallback", result);
 	result = (*bqPlayerObject)->GetInterface(bqPlayerObject, SL_IID_VOLUME, &bqPlayerVolume);
-	assert(SL_RESULT_SUCCESS == result);
+	throwUnsuccess("PlayerObject::GetInterface", result);
 	result = (*bqPlayerPlay)->SetPlayState(bqPlayerPlay, SL_PLAYSTATE_PLAYING);
-	assert(SL_RESULT_SUCCESS == result);
+	throwUnsuccess("PlayerPlay::SetPlayState", result);
 
 	// Render and enqueue a first buffer. (or should we just play the buffer empty?)
 	curBuffer = 0;
@@ -238,8 +260,7 @@ void OpenslPlayer::initOpensl()
 
 	memset(buffer[curBuffer], 0, buff_size);
 	result = (*bqPlayerBufferQueue)->Enqueue(bqPlayerBufferQueue, buffer[curBuffer], sizeof(buffer[curBuffer]));
-	if (SL_RESULT_SUCCESS != result)
-		throw SnapException("SL_RESULT_SUCCESS != result");
+	throwUnsuccess("PlayerBufferQueue::Enqueue", result);
 
 	curBuffer ^= 1;
 }
@@ -247,16 +268,17 @@ void OpenslPlayer::initOpensl()
 
 void OpenslPlayer::uninitOpensl()
 {
-	if (!active_)
-		return;
+//	if (!active_)
+//		return;
 
 	logE << "uninitOpensl\n";
 	SLresult result;
 	logO << "OpenSLWrap_Shutdown - stopping playback\n";
-	result = (*bqPlayerPlay)->SetPlayState(bqPlayerPlay, SL_PLAYSTATE_STOPPED);
-	if (SL_RESULT_SUCCESS != result)
+	if (bqPlayerPlay != NULL)
 	{
-		logE << "SetPlayState failed\n";
+		result = (*bqPlayerPlay)->SetPlayState(bqPlayerPlay, SL_PLAYSTATE_STOPPED);
+		if (SL_RESULT_SUCCESS != result)
+			logE << "SetPlayState failed\n";
 	}
 
 	logO << "OpenSLWrap_Shutdown - deleting player object\n";
@@ -287,8 +309,17 @@ void OpenslPlayer::uninitOpensl()
 		engineObject = NULL;
 		engineEngine = NULL;
 	}
-	delete [] buffer[0];
-	delete [] buffer[1];
+
+	if (buffer[0] != NULL)
+	{
+		delete [] buffer[0];
+		buffer[0] = NULL;
+	}
+	if (buffer[1] != NULL)
+	{
+		delete [] buffer[1];
+		buffer[1] = NULL;
+	}
 	logO << "OpenSLWrap_Shutdown - finished\n";
 	active_ = false;
 }
