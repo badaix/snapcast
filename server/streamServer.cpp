@@ -39,17 +39,20 @@ StreamServer::~StreamServer()
 {
 }
 
-
+/*
 void StreamServer::send(const msg::BaseMessage* message)
 {
-	std::unique_lock<std::mutex> mlock(mutex_);
+	std::lock_guard<std::mutex> mlock(mutex_);
 
+	logE << "send: " << sessions_.size() << "\n";
 
 	for (auto it = sessions_.begin(); it != sessions_.end(); )
 	{
+		logE << "send: " << (*it)->macAddress << ", " << !(*it)->active() << "\n";
 		if (!(*it)->active())
 		{
 			logS(kLogErr) << "Session inactive. Removing\n";
+			logE << "Session inactive. Removing\n";
 			// don't block: remove ServerSession in a thread
 			onDisconnect(it->get());
 			auto func = [](shared_ptr<StreamSession> s)->void{s->stop();};
@@ -62,24 +65,25 @@ void StreamServer::send(const msg::BaseMessage* message)
 	}
 
 
-/*	for (auto it = sessions_.begin(); it != sessions_.end(); )
-	{
-		if (!(*it)->active())
-			onDisconnect(it->get());
-	}
-*/
+//	for (auto it = sessions_.begin(); it != sessions_.end(); )
+//	{
+//		if (!(*it)->active())
+//			onDisconnect(it->get());
+//	}
+
 	std::shared_ptr<const msg::BaseMessage> shared_message(message);
 	for (auto s : sessions_)
 		s->add(shared_message);
 }
-
+*/
 
 void StreamServer::onChunkRead(const PcmReader* pcmReader, const msg::PcmChunk* chunk, double duration)
 {
-	logO << "onChunkRead (" << pcmReader->getName() << "): " << duration << "ms\n";
+//	logO << "onChunkRead (" << pcmReader->getName() << "): " << duration << "ms\n";
 	bool isDefaultStream(pcmReader == streamManager_->getDefaultStream().get());
 
 	std::shared_ptr<const msg::BaseMessage> shared_message(chunk);
+	std::lock_guard<std::mutex> mlock(sessionsMutex_);
 	for (auto s : sessions_)
 	{
 		if (isDefaultStream)//->getName() == "default")
@@ -96,28 +100,36 @@ void StreamServer::onResync(const PcmReader* pcmReader, double ms)
 
 void StreamServer::onDisconnect(StreamSession* streamSession)
 {
-	logO << "onDisconnect: " << streamSession->macAddress << "\n";
-	if (streamSession->macAddress.empty())
-		return;
-/*	auto func = [](StreamSession* s)->void{s->stop();};
-	std::thread t(func, streamSession);
-	t.detach();
-*/
-	ClientInfoPtr clientInfo = Config::instance().getClientInfo(streamSession->macAddress);
-/*	// don't block: remove StreamSession in a thread
-	for (auto it = sessions_.begin(); it != sessions_.end(); )
+	std::lock_guard<std::mutex> mlock(sessionsMutex_);
+	std::shared_ptr<StreamSession> session = nullptr;
+
+	for (auto s: sessions_)
 	{
-		if (it->get() == streamSession)
+		if (s.get() == streamSession)
 		{
-	logO << "erase: " << (*it)->macAddress << "\n";
-			sessions_.erase(it);
+			session = s;
 			break;
 		}
 	}
-*/
-	// notify controllers if not yet done
-	if (!clientInfo->connected)
+
+	if (session == nullptr)
 		return;
+
+	logO << "onDisconnect: " << session->macAddress << "\n";
+	ClientInfoPtr clientInfo = Config::instance().getClientInfo(streamSession->macAddress);
+	logE << "sessions: " << sessions_.size() << "\n";
+	// don't block: remove StreamSession in a thread
+	auto func = [](shared_ptr<StreamSession> s)->void{s->stop();};
+	std::thread t(func, session);
+	t.detach();
+	sessions_.erase(session);
+
+	logE << "sessions: " << sessions_.size() << "\n";
+
+	// notify controllers if not yet done
+	if (!clientInfo || !clientInfo->connected)
+		return;
+
 	clientInfo->connected = false;
 	gettimeofday(&clientInfo->lastSeen, NULL);
 	Config::instance().save();
@@ -252,7 +264,7 @@ void StreamServer::onMessageReceived(StreamSession* connection, const msg::BaseM
 		}
 		else if (requestMsg.request == kHeader)
 		{
-			std::unique_lock<std::mutex> mlock(mutex_);
+//			std::lock_guard<std::mutex> mlock(mutex_);
 //TODO: use the correct stream
 			msg::Header* headerChunk = streamManager_->getDefaultStream()->getHeader();
 			headerChunk->refersTo = requestMsg.id;
@@ -267,7 +279,7 @@ void StreamServer::onMessageReceived(StreamSession* connection, const msg::BaseM
 		logO << "Hello from " << connection->macAddress << ", host: " << helloMsg.getHostName() << ", v" << helloMsg.getVersion() << "\n";
 
 		logD << "request kServerSettings: " << connection->macAddress << "\n";
-		std::unique_lock<std::mutex> mlock(mutex_);
+//		std::lock_guard<std::mutex> mlock(mutex_);
 		ClientInfoPtr clientInfo = Config::instance().getClientInfo(connection->macAddress, true);
 		if (clientInfo == nullptr)
 		{
@@ -285,6 +297,11 @@ void StreamServer::onMessageReceived(StreamSession* connection, const msg::BaseM
 			connection->send(&serverSettings);
 		}
 
+//TODO: use the correct stream
+		msg::Header* headerChunk = streamManager_->getDefaultStream()->getHeader();
+		connection->send(headerChunk);
+
+
 		ClientInfoPtr client = Config::instance().getClientInfo(connection->macAddress);
 		client->ipAddress = connection->getIP();
 		client->hostName = helloMsg.getHostName();
@@ -294,6 +311,7 @@ void StreamServer::onMessageReceived(StreamSession* connection, const msg::BaseM
 		Config::instance().save();
 
 		json notification = JsonNotification::getJson("Client.OnConnect", client->toJson());
+		logO << notification.dump(4) << "\n";
 		controlServer_->send(notification.dump());
 	}
 }
@@ -301,8 +319,10 @@ void StreamServer::onMessageReceived(StreamSession* connection, const msg::BaseM
 
 StreamSession* StreamServer::getStreamSession(const std::string& mac)
 {
+//	logO << "getStreamSession: " << mac << "\n";
 	for (auto session: sessions_)
 	{
+//		logO << "getStreamSession, checking: " << session->macAddress << "\n";
 		if (session->macAddress == mac)
 			return session.get();
 	}
@@ -327,7 +347,7 @@ void StreamServer::handleAccept(socket_ptr socket)
 	logS(kLogNotice) << "StreamServer::NewConnection: " << socket->remote_endpoint().address().to_string() << endl;
 	shared_ptr<StreamSession> session = make_shared<StreamSession>(this, socket);
 	{
-		std::unique_lock<std::mutex> mlock(mutex_);
+		std::lock_guard<std::mutex> mlock(sessionsMutex_);
 		session->setBufferMs(settings_.bufferMs);
 		session->start();
 		sessions_.insert(session);
@@ -338,12 +358,14 @@ void StreamServer::handleAccept(socket_ptr socket)
 
 void StreamServer::start()
 {
+//	throw SnapException("good");
 	controlServer_.reset(new ControlServer(io_service_, settings_.controlPort, this));
 	controlServer_->start();
 
 	streamManager_.reset(new StreamManager(this, settings_.sampleFormat, settings_.codec, settings_.streamReadMs));
 	for (auto& streamUri: settings_.pcmStreams)
 		logE << "Stream: " << streamManager_->addStream(streamUri)->getUri().toJson() << "\n";
+//	throw SnapException("bad");
 
 	streamManager_->start();
 
@@ -359,7 +381,7 @@ void StreamServer::stop()
 
 	streamManager_->stop();
 
-	std::unique_lock<std::mutex> mlock(mutex_);
+//	std::lock_guard<std::mutex> mlock(sessionsMutex_);
 	for (auto session: sessions_)//it = sessions_.begin(); it != sessions_.end(); ++it)
 		session->stop();
 }

@@ -58,14 +58,23 @@ public:
 
 
 
-class ServerException : public SnapException
+class AsyncSnapException : public SnapException
 {
 public:
-	ServerException(const char* text) : SnapException(text)
+	AsyncSnapException(const char* text) : SnapException(text)
 	{
 	}
 
-	virtual ~ServerException() throw()
+	AsyncSnapException(const std::string& text) : SnapException(text)
+	{
+	}
+
+	AsyncSnapException(const AsyncSnapException& e) : SnapException(e.what())
+	{
+	}
+
+
+	virtual ~AsyncSnapException() throw()
 	{
 	}
 };

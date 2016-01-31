@@ -86,7 +86,9 @@ protected:
 	void writer();
 	void setActive(bool active);
 
+	mutable std::mutex activeMutex_;
 	std::atomic<bool> active_;
+
 	mutable std::mutex mutex_;
 	std::thread* readerThread_;
 	std::thread* writerThread_;

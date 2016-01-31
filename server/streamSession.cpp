@@ -49,8 +49,8 @@ void StreamSession::start()
 
 void StreamSession::stop()
 {
-	std::unique_lock<std::mutex> mlock(mutex_);
 	setActive(false);
+	std::unique_lock<std::mutex> mlock(mutex_);
 	try
 	{
 		std::error_code ec;
@@ -121,7 +121,8 @@ void StreamSession::setBufferMs(size_t bufferMs)
 
 bool StreamSession::send(const msg::BaseMessage* message) const
 {
-//	logO << "send: " << message->type << ", size: " << message->size << ", id: " << message->id << ", refers: " << message->refersTo << "\n";
+	//TODO on exception: set active = false
+//	logO << "send: " << message->type << ", size: " << message->getSize() << ", id: " << message->id << ", refers: " << message->refersTo << "\n";
 	std::unique_lock<std::mutex> mlock(mutex_);
 	if (!socket_ || !active_)
 		return false;
@@ -211,6 +212,7 @@ void StreamSession::writer()
 
 void StreamSession::setActive(bool active)
 {
+	std::lock_guard<std::mutex> mlock(activeMutex_);
 	if (active_ && !active && (messageReceiver_ != NULL))
 		messageReceiver_->onDisconnect(this);
 	active_ = active;

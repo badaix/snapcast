@@ -79,7 +79,7 @@ public:
 	void stop();
 
 	/// Send a message to all connceted clients
-	void send(const msg::BaseMessage* message);
+//	void send(const msg::BaseMessage* message);
 
 	/// Clients call this when they receive a message. Implementation of MessageReceiver::onMessageReceived
 	virtual void onMessageReceived(StreamSession* connection, const msg::BaseMessage& baseMessage, char* buffer);
@@ -96,7 +96,7 @@ private:
 	void startAccept();
 	void handleAccept(socket_ptr socket);
 	StreamSession* getStreamSession(const std::string& mac);
-	mutable std::mutex mutex_;
+	mutable std::mutex sessionsMutex_;
 	std::set<std::shared_ptr<StreamSession>> sessions_;
 	asio::io_service* io_service_;
 	std::shared_ptr<tcp::acceptor> acceptor_;

@@ -16,7 +16,6 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
-#include "controller.h"
 #include <iostream>
 #include <string>
 #include <memory>
@@ -28,23 +27,23 @@
 #include "timeProvider.h"
 #include "common/log.h"
 #include "common/snapException.h"
-#include "message/serverSettings.h"
 #include "message/time.h"
 #include "message/request.h"
 #include "message/hello.h"
+#include "controller.h"
 
 using namespace std;
 
 
-Controller::Controller() : MessageReceiver(), active_(false), stream_(NULL), decoder_(NULL), player_(nullptr), asyncException_(false)
+Controller::Controller() : MessageReceiver(), active_(false), latency_(0), stream_(nullptr), decoder_(nullptr), player_(nullptr), serverSettings_(nullptr), asyncException_(false)
 {
 }
 
 
 void Controller::onException(ClientConnection* connection, const std::exception& exception)
 {
-	logE << "onException: " << exception.what() << "\n";
-	exception_ = exception;
+	logE << "Controller::onException: " << exception.what() << "\n";
+	exception_ = exception.what();
 	asyncException_ = true;
 }
 
@@ -53,7 +52,7 @@ void Controller::onMessageReceived(ClientConnection* connection, const msg::Base
 {
 	if (baseMessage.type == message_type::kWireChunk)
 	{
-		if ((stream_ != NULL) && (decoder_ != NULL))
+		if (stream_ && decoder_)
 		{
 			msg::PcmChunk* pcmChunk = new msg::PcmChunk(sampleFormat_, 0);
 			pcmChunk->deserialize(baseMessage, buffer);
@@ -79,15 +78,46 @@ void Controller::onMessageReceived(ClientConnection* connection, const msg::Base
 	}
 	else if (baseMessage.type == message_type::kServerSettings)
 	{
-		msg::ServerSettings serverSettings;
-		serverSettings.deserialize(baseMessage, buffer);
-		logO << "ServerSettings - buffer: " << serverSettings.bufferMs << ", latency: " << serverSettings.latency << ", volume: " << serverSettings.volume << ", muted: " << serverSettings.muted << "\n";
-		if (player_ != nullptr)
+		serverSettings_.reset(new msg::ServerSettings());
+		serverSettings_->deserialize(baseMessage, buffer);
+		logO << "ServerSettings - buffer: " << serverSettings_->bufferMs << ", latency: " << serverSettings_->latency << ", volume: " << serverSettings_->volume << ", muted: " << serverSettings_->muted << "\n";
+		if (stream_ && player_)
 		{
-			player_->setVolume(serverSettings.volume / 100.);
-			player_->setMute(serverSettings.muted);
+			player_->setVolume(serverSettings_->volume / 100.);
+			player_->setMute(serverSettings_->muted);
+			stream_->setBufferLen(serverSettings_->bufferMs - serverSettings_->latency);
 		}
-		stream_->setBufferLen(serverSettings.bufferMs - serverSettings.latency);
+	}
+	else if (baseMessage.type == message_type::kHeader)
+	{
+		headerChunk_.reset(new msg::Header());
+		headerChunk_->deserialize(baseMessage, buffer);
+
+		logO << "Codec: " << headerChunk_->codec << "\n";
+		if (headerChunk_->codec == "pcm")
+			decoder_.reset(new PcmDecoder());
+#ifndef ANDROID
+		if (headerChunk_->codec == "ogg")
+			decoder_.reset(new OggDecoder());
+#endif
+		else if (headerChunk_->codec == "flac")
+			decoder_.reset(new FlacDecoder());
+		sampleFormat_ = decoder_->setHeader(headerChunk_.get());
+		logO << "sample rate: " << sampleFormat_.rate << "Hz\n";
+		logO << "bits/sample: " << sampleFormat_.bits << "\n";
+		logO << "channels   : " << sampleFormat_.channels << "\n";
+
+		stream_.reset(new Stream(sampleFormat_));
+		stream_->setBufferLen(serverSettings_->bufferMs - latency_);
+
+#ifndef ANDROID
+		player_.reset(new AlsaPlayer(pcmDevice_, stream_.get()));
+#else
+		player_.reset(new OpenslPlayer(pcmDevice_, stream_.get()));
+#endif
+		player_->setVolume(serverSettings_->volume / 100.);
+		player_->setMute(serverSettings_->muted);
+		player_->start();
 	}
 
 	if (baseMessage.type != message_type::kTime)
@@ -114,8 +144,8 @@ void Controller::start(const PcmDevice& pcmDevice, const std::string& host, size
 {
 	pcmDevice_ = pcmDevice;
 	latency_ = latency;
-	clientConnection_ = new ClientConnection(this, host, port);
-	controllerThread_ = new thread(&Controller::worker, this);
+	clientConnection_.reset(new ClientConnection(this, host, port));
+	controllerThread_ = thread(&Controller::worker, this);
 }
 
 
@@ -123,18 +153,14 @@ void Controller::stop()
 {
 	logD << "Stopping Controller" << endl;
 	active_ = false;
-	controllerThread_->join();
+	controllerThread_.join();
 	clientConnection_->stop();
-	delete controllerThread_;
-	delete clientConnection_;
 }
 
 
 void Controller::worker()
 {
 	active_ = true;
-	decoder_ = NULL;
-	stream_ = NULL;
 
 	while (active_)
 	{
@@ -143,27 +169,7 @@ void Controller::worker()
 			clientConnection_->start();
 
 			msg::Hello hello(clientConnection_->getMacAddress());
-			msg::Request requestMsg(kServerSettings);
-			shared_ptr<msg::ServerSettings> serverSettings(NULL);
-			while (active_ && !(serverSettings = clientConnection_->sendReq<msg::ServerSettings>(&hello)));
-			logO << "ServerSettings - buffer: " << serverSettings->bufferMs << ", latency: " << serverSettings->latency << ", volume: " << serverSettings->volume << ", muted: " << serverSettings->muted << "\n";
-
-			requestMsg.request = kHeader;
-			shared_ptr<msg::Header> headerChunk(NULL);
-			while (active_ && !(headerChunk = clientConnection_->sendReq<msg::Header>(&requestMsg)));
-			logO << "Codec: " << headerChunk->codec << "\n";
-			if (headerChunk->codec == "pcm")
-				decoder_ = new PcmDecoder();
-#ifndef ANDROID
-			if (headerChunk->codec == "ogg")
-				decoder_ = new OggDecoder();
-#endif
-			else if (headerChunk->codec == "flac")
-				decoder_ = new FlacDecoder();
-			sampleFormat_ = decoder_->setHeader(headerChunk.get());
-			logO << "sample rate: " << sampleFormat_.rate << "Hz\n";
-			logO << "bits/sample: " << sampleFormat_.bits << "\n";
-			logO << "channels   : " << sampleFormat_.channels << "\n";
+			clientConnection_->send(&hello);
 
 			msg::Request timeReq(kTime);
 			for (size_t n=0; n<50 && active_; ++n)
@@ -178,25 +184,13 @@ void Controller::worker()
 			}
 			logO << "diff to server [ms]: " << (float)TimeProvider::getInstance().getDiffToServer<chronos::usec>().count() / 1000.f << "\n";
 
-			stream_ = new Stream(sampleFormat_);
-			stream_->setBufferLen(serverSettings->bufferMs - latency_);
-
-#ifndef ANDROID
-			player_.reset(new AlsaPlayer(pcmDevice_, stream_));
-#else
-			player_.reset(new OpenslPlayer(pcmDevice_, stream_));
-#endif
-			player_->setVolume(serverSettings->volume / 100.);
-			player_->setMute(serverSettings->muted);
-			player_->start();
-
 			while (active_)
 			{
 				for (size_t n=0; n<10 && active_; ++n)
 				{
 					usleep(100*1000);
 					if (asyncException_)
-						throw exception_;
+						throw AsyncSnapException(exception_);
 				}
 
 				if (sendTimeSyncMessage(5000))
@@ -207,18 +201,10 @@ void Controller::worker()
 		{
 			asyncException_ = false;
 			logS(kLogErr) << "Exception in Controller::worker(): " << e.what() << endl;
-			logO << "Stopping clientConnection" << endl;
 			clientConnection_->stop();
-			if (player_ != nullptr)
-				player_->stop();
-			logO << "Deleting stream" << endl;
-			if (stream_ != NULL)
-				delete stream_;
-			stream_ = NULL;
-			if (decoder_ != NULL)
-				delete decoder_;
-			decoder_ = NULL;
-			logO << "done" << endl;
+			player_.reset();
+			stream_.reset();
+			decoder_.reset();
 			for (size_t n=0; (n<10) && active_; ++n)
 				usleep(100*1000);
 		}

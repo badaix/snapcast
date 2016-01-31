@@ -43,11 +43,11 @@ PcmReader* StreamManager::addStream(const std::string& uri)
 	if (readerUri.query.find("buffer_ms") == readerUri.query.end())
 		readerUri.query["buffer_ms"] = to_string(readBufferMs_);
 
-	logE << "\nURI: " << readerUri.uri << "\nscheme: " << readerUri.scheme << "\nhost: "
-		<< readerUri.host << "\npath: " << readerUri.path << "\nfragment: " << readerUri.fragment << "\n";
+//	logE << "\nURI: " << readerUri.uri << "\nscheme: " << readerUri.scheme << "\nhost: "
+//		<< readerUri.host << "\npath: " << readerUri.path << "\nfragment: " << readerUri.fragment << "\n";
 
-	for (auto kv: readerUri.query)
-		logE << "key: '" << kv.first << "' value: '" << kv.second << "'\n";
+//	for (auto kv: readerUri.query)
+//		logE << "key: '" << kv.first << "' value: '" << kv.second << "'\n";
 
 	if (readerUri.scheme == "pipe")
 	{

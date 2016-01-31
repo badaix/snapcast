@@ -86,7 +86,9 @@ const SampleFormat& PcmReader::getSampleFormat() const
 void PcmReader::start()
 {
 	logE << "PcmReader start: " << sampleFormat_.getFormat() << "\n";
+//TODO: wrong encoder settings leads to: terminate called after throwing an instance of 'std::system_error'  what():  Invalid argument
 	encoder_->init(this, sampleFormat_);
+
  	active_ = true;
 	readerThread_ = thread(&PcmReader::worker, this);
 }

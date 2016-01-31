@@ -23,6 +23,7 @@
 #include <atomic>
 #include "decoder/decoder.h"
 #include "message/message.h"
+#include "message/serverSettings.h"
 #include "player/pcmDevice.h"
 #ifdef ANDROID
 #include "player/openslPlayer.h"
@@ -58,17 +59,19 @@ private:
 	void worker();
 	bool sendTimeSyncMessage(long after = 1000);
 	std::atomic<bool> active_;
-	std::thread* controllerThread_;
-	ClientConnection* clientConnection_;
-	Stream* stream_;
-	std::string ip_;
+	std::thread controllerThread_;
 	SampleFormat sampleFormat_;
-	Decoder* decoder_;
 	PcmDevice pcmDevice_;
 	size_t latency_;
+	std::unique_ptr<ClientConnection> clientConnection_;
+	std::unique_ptr<Stream> stream_;
+	std::unique_ptr<Decoder> decoder_;
 	std::unique_ptr<Player> player_;
+	std::shared_ptr<msg::ServerSettings> serverSettings_;
+	std::shared_ptr<msg::Header> headerChunk_;
 
-	std::exception exception_;
+
+	std::string exception_;
 	bool asyncException_;
 };
 

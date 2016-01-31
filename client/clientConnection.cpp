@@ -35,6 +35,7 @@ ClientConnection::ClientConnection(MessageReceiver* receiver, const std::string&
 
 ClientConnection::~ClientConnection()
 {
+	stop();
 }
 
 
@@ -113,6 +114,7 @@ void ClientConnection::stop()
 	{
 	}
 	readerThread_ = NULL;
+	socket_.reset();
 	logD << "readerThread terminated\n";
 }
 

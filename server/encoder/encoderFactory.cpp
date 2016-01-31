@@ -17,10 +17,12 @@
 ***/
 
 #include "encoderFactory.h"
-#include "common/utils.h"
 #include "pcmEncoder.h"
 #include "oggEncoder.h"
 #include "flacEncoder.h"
+#include "common/utils.h"
+#include "common/snapException.h"
+#include "common/log.h"
 
 
 using namespace std;
@@ -44,8 +46,7 @@ Encoder* EncoderFactory::createEncoder(const std::string& codecSettings) const
 		encoder = new FlacEncoder(codecOptions);
 	else
 	{
-		cout << "unknown codec: " << codec << "\n";
-		return NULL;
+		throw SnapException("unknown codec: " + codec);
 	}
 
 	return encoder;

@@ -113,9 +113,12 @@ void ControlSession::reader()
 		while (active_)
 		{
 			asio::streambuf response;
-			asio::read_until(*socket_, response, "\r\n");
+			asio::read_until(*socket_, response, "\n");
 			std::string s((istreambuf_iterator<char>(&response)), istreambuf_iterator<char>());
-			s.resize(s.length() - 2);
+			size_t len = s.length() - 1;
+			if ((len >= 2) && s[len-2] == '\r')
+				--len;
+			s.resize(len);
 
 			if (messageReceiver_ != NULL)
 				messageReceiver_->onMessageReceived(this, s);
