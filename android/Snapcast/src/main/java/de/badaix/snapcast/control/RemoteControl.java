@@ -20,24 +20,6 @@ public class RemoteControl implements TcpClient.TcpClientListener {
     private String host;
     private int port;
 
-    public enum ClientEvent {
-        connected,
-        disconnected,
-        updated,
-        deleted
-    }
-
-    public interface RemoteControlListener {
-        void onConnected(RemoteControl remoteControl);
-
-        void onDisconnected(RemoteControl remoteControl);
-
-        void onClientEvent(RemoteControl remoteControl, ClientInfo clientInfo, ClientEvent event);
-
-        void onServerInfo(RemoteControl remoteControl, ServerInfo serverInfo);
-    }
-
-
     public RemoteControl(RemoteControlListener listener) {
         this.listener = listener;
         serverInfo = new ServerInfo();
@@ -45,8 +27,7 @@ public class RemoteControl implements TcpClient.TcpClientListener {
     }
 
     public void connect(final String host, final int port) {
-        if ((tcpClient != null) && tcpClient.isConnected())
-        {
+        if ((tcpClient != null) && tcpClient.isConnected()) {
             if (this.host.equals(host) && (this.port == port))
                 return;
             else
@@ -86,6 +67,13 @@ public class RemoteControl implements TcpClient.TcpClientListener {
                     for (int i = 0; i < clients.length(); i++) {
                         final ClientInfo clientInfo = new ClientInfo(clients.getJSONObject(i));
                         serverInfo.updateClient(clientInfo);
+                    }
+                    if (json.getJSONObject("result").has("streams")) {
+                        JSONArray streams = json.getJSONObject("result").getJSONArray("streams");
+                        for (int i = 0; i < streams.length(); i++) {
+                            final Stream stream = new Stream(streams.getJSONObject(i));
+                            serverInfo.updateStream(stream);
+                        }
                     }
                     if (listener != null)
                         listener.onServerInfo(this, serverInfo);
@@ -184,5 +172,22 @@ public class RemoteControl implements TcpClient.TcpClientListener {
         } catch (JSONException e) {
             e.printStackTrace();
         }
+    }
+
+    public enum ClientEvent {
+        connected,
+        disconnected,
+        updated,
+        deleted
+    }
+
+    public interface RemoteControlListener {
+        void onConnected(RemoteControl remoteControl);
+
+        void onDisconnected(RemoteControl remoteControl);
+
+        void onClientEvent(RemoteControl remoteControl, ClientInfo clientInfo, ClientEvent event);
+
+        void onServerInfo(RemoteControl remoteControl, ServerInfo serverInfo);
     }
 }

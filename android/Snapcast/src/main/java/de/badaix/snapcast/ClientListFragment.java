@@ -33,7 +33,7 @@ public class ClientListFragment extends Fragment {
     private static final String ARG_PARAM2 = "param2";
 
     // TODO: Rename and change types of parameters
-    private String mParam1;
+    private String name;
     private String mParam2;
 
     private OnFragmentInteractionListener mListener;
@@ -50,15 +50,15 @@ public class ClientListFragment extends Fragment {
      * Use this factory method to create a new instance of
      * this fragment using the provided parameters.
      *
-     * @param param1 Parameter 1.
+     * @param name Parameter 1.
      * @param param2 Parameter 2.
      * @return A new instance of fragment ClientListFragment.
      */
     // TODO: Rename and change types and number of parameters
-    public static ClientListFragment newInstance(String param1, String param2) {
+    public static ClientListFragment newInstance(String name, String param2) {
         ClientListFragment fragment = new ClientListFragment();
         Bundle args = new Bundle();
-        args.putString(ARG_PARAM1, param1);
+        args.putString(ARG_PARAM1, name);
         args.putString(ARG_PARAM2, param2);
         fragment.setArguments(args);
         return fragment;
@@ -68,7 +68,7 @@ public class ClientListFragment extends Fragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         if (getArguments() != null) {
-            mParam1 = getArguments().getString(ARG_PARAM1);
+            name = getArguments().getString(ARG_PARAM1);
             mParam2 = getArguments().getString(ARG_PARAM2);
         }
     }
@@ -123,6 +123,13 @@ public class ClientListFragment extends Fragment {
             clientInfoAdapter.setHideOffline(hideOffline);
     }
 
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
 
     /**
      * This interface must be implemented by activities that contain this

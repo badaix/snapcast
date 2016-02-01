@@ -7,6 +7,7 @@ import java.util.Vector;
  */
 public class ServerInfo {
     private Vector<ClientInfo> clientInfos = new Vector<ClientInfo>();
+    private Vector<Stream> streams = new Vector<Stream>();
 
     public ServerInfo() {
 
@@ -46,7 +47,32 @@ public class ServerInfo {
         return true;
     }
 
+    public boolean updateStream(Stream stream) {
+        if (stream == null)
+            return false;
+
+        for (int i = 0; i < streams.size(); ++i) {
+            Stream s = streams.get(i);
+            if (s == null)
+                continue;
+
+
+            if (stream.getUri().equals(s.getUri())) {
+                if (stream.equals(stream))
+                    return false;
+                streams.set(i, stream);
+                return true;
+            }
+        }
+        streams.add(stream);
+        return true;
+    }
+
     public Vector<ClientInfo> getClientInfos() {
         return clientInfos;
+    }
+
+    public Vector<Stream> getStreams() {
+        return streams;
     }
 }

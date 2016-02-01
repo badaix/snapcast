@@ -33,16 +33,19 @@ import com.google.android.gms.appindexing.Action;
 import com.google.android.gms.appindexing.AppIndex;
 import com.google.android.gms.common.api.GoogleApiClient;
 
+import java.util.Vector;
+
 import de.badaix.snapcast.control.ClientInfo;
 import de.badaix.snapcast.control.RemoteControl;
 import de.badaix.snapcast.control.ServerInfo;
+import de.badaix.snapcast.control.Stream;
 import de.badaix.snapcast.utils.NsdHelper;
 import de.badaix.snapcast.utils.Setup;
 
 public class MainActivity extends AppCompatActivity implements ClientListFragment.OnFragmentInteractionListener, ClientInfoItem.ClientInfoItemListener, RemoteControl.RemoteControlListener, SnapclientService.SnapclientListener, NsdHelper.NsdHelperListener {
 
     private static final String TAG = "Main";
-    private static final String SERVICE_NAME = "Snapcast";
+    private static final String SERVICE_NAME = "Snapcast #2";
 
     boolean bound = false;
     private MenuItem miStartStop = null;
@@ -360,12 +363,15 @@ public class MainActivity extends AppCompatActivity implements ClientListFragmen
             serverInfo.removeClient(clientInfo);
         else
             serverInfo.updateClient(clientInfo);
+
         sectionsPagerAdapter.updateServer(serverInfo);
     }
 
     @Override
     public void onServerInfo(RemoteControl remoteControl, ServerInfo serverInfo) {
         this.serverInfo = serverInfo;
+        for (Stream s : serverInfo.getStreams())
+            Log.d(TAG, s.toString());
         sectionsPagerAdapter.updateServer(serverInfo);
     }
 
@@ -450,50 +456,61 @@ public class MainActivity extends AppCompatActivity implements ClientListFragmen
      */
     public class SectionsPagerAdapter extends FragmentPagerAdapter {
 
-        private ClientListFragment clientListFragment;
+        private Vector<ClientListFragment> fragments = new Vector<>();
+        private ServerInfo serverInfo = new ServerInfo();
 
         public SectionsPagerAdapter(FragmentManager fm) {
             super(fm);
-            clientListFragment = ClientListFragment.newInstance("TODO1", "TODO2");
+            fragments.add(ClientListFragment.newInstance("TODO1", "TODO2"));
         }
 
         public void updateServer(final ServerInfo serverInfo) {
-            clientListFragment.updateServer(serverInfo);
-        }
+            SectionsPagerAdapter.this.serverInfo = serverInfo;
+            MainActivity.this.runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
 
-        public void setHideOffline(boolean hide) {
-            clientListFragment.setHideOffline(hide);
-        }
+                    while (serverInfo.getStreams().size() < fragments.size())
+                        fragments.removeElement(fragments.lastElement());
 
+                    while (serverInfo.getStreams().size() > fragments.size())
+                        fragments.add(ClientListFragment.newInstance("TODO1", "TODO2"));
+
+                    for (int i = 0; i < serverInfo.getStreams().size(); ++i) {
+                        fragments.get(i).setName(serverInfo.getStreams().get(i).getQuery().get("name"));
+                        fragments.get(i).updateServer(serverInfo);
+                    }
+
+                    notifyDataSetChanged();
+                }
+
+            });
+        }
 //        public void update() {
 //            clientListFragment.update();
 //        }
 
+        public void setHideOffline(boolean hide) {
+            for (ClientListFragment clientListFragment : fragments)
+                clientListFragment.setHideOffline(hide);
+        }
 
         @Override
         public Fragment getItem(int position) {
             // getItem is called to instantiate the fragment for the given page.
             // Return a PlaceholderFragment (defined as a static inner class below).
-            return clientListFragment;
+            return fragments.get(position);
         }
 
         @Override
         public int getCount() {
             // Show 3 total pages.
-            return 1;
+            return fragments.size();
         }
 
         @Override
         public CharSequence getPageTitle(int position) {
-            switch (position) {
-                case 0:
-                    return "SECTION 1";
-                case 1:
-                    return "SECTION 2";
-                case 2:
-                    return "SECTION 3";
-            }
-            return null;
+            return fragments.get(position).getName();
         }
 
     }
