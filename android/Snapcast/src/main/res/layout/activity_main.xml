@@ -40,36 +40,36 @@
         app:layout_behavior="@string/appbar_scrolling_view_behavior"/>
 
     <LinearLayout
-        android:orientation="vertical"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_centerVertical="true"
+        android:layout_height="wrap_content"
         android:layout_centerHorizontal="true"
+        android:layout_centerVertical="true"
+        android:orientation="vertical"
         android:paddingBottom="@dimen/activity_vertical_margin"
         android:paddingLeft="@dimen/activity_horizontal_margin"
         android:paddingRight="@dimen/activity_horizontal_margin"
         android:paddingTop="@dimen/activity_vertical_margin">
 
         <TextView
+            android:id="@+id/tvInfo"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textAppearance="?android:attr/textAppearanceSmall"
+            android:layout_marginLeft="3dp"
             android:text="Info: this is a prototype"
-            android:id="@+id/tvInfo"
-            android:layout_marginLeft="3dp" />
+            android:textAppearance="?android:attr/textAppearanceSmall"/>
 
         <CheckBox
+            android:id="@+id/cbScreenWakelock"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Keep screen on"
-            android:id="@+id/cbScreenWakelock" />
+            android:text="Keep screen on"/>
 
         <Button
+            android:id="@+id/button"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="New Button"
-            android:visibility="gone"
-            android:id="@+id/button" />
+            android:visibility="gone"/>
 
     </LinearLayout>
 

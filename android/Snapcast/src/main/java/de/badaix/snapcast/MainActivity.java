@@ -16,6 +16,7 @@ import android.support.design.widget.TabLayout;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
+import android.support.v4.app.FragmentStatePagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
@@ -24,6 +25,7 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
@@ -32,6 +34,9 @@ import android.widget.TextView;
 import com.google.android.gms.appindexing.Action;
 import com.google.android.gms.appindexing.AppIndex;
 import com.google.android.gms.common.api.GoogleApiClient;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.util.Vector;
 
@@ -55,6 +60,7 @@ public class MainActivity extends AppCompatActivity implements ClientListFragmen
     private ServerInfo serverInfo = null;
     private SnapclientService snapclientService;
     private SectionsPagerAdapter sectionsPagerAdapter;
+    private TabLayout tabLayout;
 
     /**
      * The {@link ViewPager} that will host the section contents.
@@ -122,7 +128,7 @@ public class MainActivity extends AppCompatActivity implements ClientListFragmen
         mViewPager = (ViewPager) findViewById(R.id.container);
         mViewPager.setAdapter(sectionsPagerAdapter);
 
-        TabLayout tabLayout = (TabLayout) findViewById(R.id.tabs);
+        tabLayout = (TabLayout) findViewById(R.id.tabs);
         tabLayout.setupWithViewPager(mViewPager);
 
         getSupportActionBar().setSubtitle("Host: no Snapserver found");
@@ -454,41 +460,42 @@ public class MainActivity extends AppCompatActivity implements ClientListFragmen
      * A {@link FragmentPagerAdapter} that returns a fragment corresponding to
      * one of the sections/tabs/pages.
      */
-    public class SectionsPagerAdapter extends FragmentPagerAdapter {
+    public class SectionsPagerAdapter extends FragmentStatePagerAdapter {
 
         private Vector<ClientListFragment> fragments = new Vector<>();
         private ServerInfo serverInfo = new ServerInfo();
 
         public SectionsPagerAdapter(FragmentManager fm) {
             super(fm);
-            fragments.add(ClientListFragment.newInstance("TODO1", "TODO2"));
         }
 
         public void updateServer(final ServerInfo serverInfo) {
-            SectionsPagerAdapter.this.serverInfo = serverInfo;
             MainActivity.this.runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
+                    SectionsPagerAdapter.this.serverInfo = serverInfo;
+                    boolean changed = (serverInfo.getStreams().size() != fragments.size());
 
                     while (serverInfo.getStreams().size() < fragments.size())
                         fragments.removeElement(fragments.lastElement());
 
                     while (serverInfo.getStreams().size() > fragments.size())
-                        fragments.add(ClientListFragment.newInstance("TODO1", "TODO2"));
+                        fragments.add(ClientListFragment.newInstance("TODO1"));
 
                     for (int i = 0; i < serverInfo.getStreams().size(); ++i) {
-                        fragments.get(i).setName(serverInfo.getStreams().get(i).getQuery().get("name"));
+                        fragments.get(i).setStream(serverInfo.getStreams().get(i));
                         fragments.get(i).updateServer(serverInfo);
                     }
 
-                    notifyDataSetChanged();
+                    if (changed) {
+                        notifyDataSetChanged();
+                        tabLayout.setTabsFromPagerAdapter(SectionsPagerAdapter.this);
+                    }
                 }
 
             });
+
         }
-//        public void update() {
-//            clientListFragment.update();
-//        }
 
         public void setHideOffline(boolean hide) {
             for (ClientListFragment clientListFragment : fragments)
@@ -497,14 +504,11 @@ public class MainActivity extends AppCompatActivity implements ClientListFragmen
 
         @Override
         public Fragment getItem(int position) {
-            // getItem is called to instantiate the fragment for the given page.
-            // Return a PlaceholderFragment (defined as a static inner class below).
             return fragments.get(position);
         }
 
         @Override
         public int getCount() {
-            // Show 3 total pages.
             return fragments.size();
         }
 
