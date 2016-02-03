@@ -59,7 +59,7 @@ PcmReader::~PcmReader()
 }
 
 
-msg::Header* PcmReader::getHeader()
+std::shared_ptr<msg::Header> PcmReader::getHeader()
 {
 	return encoder_->getHeader();
 }

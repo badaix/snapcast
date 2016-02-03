@@ -22,7 +22,7 @@
 
 PcmEncoder::PcmEncoder(const std::string& codecOptions) : Encoder(codecOptions)
 {
-	headerChunk_ = new msg::Header("pcm");
+	headerChunk_.reset(new msg::Header("pcm"));
 }
 
 

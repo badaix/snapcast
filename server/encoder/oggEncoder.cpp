@@ -223,7 +223,7 @@ void OggEncoder::initEncoder()
 	 * audio data will start on a new page, as per spec
 	 */
 	size_t pos(0);
-	headerChunk_ = new msg::Header("ogg");
+	headerChunk_.reset(new msg::Header("ogg"));
 	while (true)
 	{
 		int result = ogg_stream_flush(&os,&og);

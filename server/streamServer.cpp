@@ -217,8 +217,7 @@ void StreamServer::onMessageReceived(ControlSession* controlSession, const std::
 			StreamSession* session = getStreamSession(request.getParam("client").get<string>());
 			if (session != NULL)
 			{
-				msg::Header* headerChunk = stream->getHeader();
-				session->send(headerChunk);
+				session->add(stream->getHeader());
 				session->setPcmReader(stream);
 			}
 		}
@@ -287,9 +286,9 @@ void StreamServer::onMessageReceived(StreamSession* connection, const msg::BaseM
 		{
 //			std::lock_guard<std::mutex> mlock(mutex_);
 //TODO: use the correct stream
-			msg::Header* headerChunk = streamManager_->getDefaultStream()->getHeader();
+			auto headerChunk = streamManager_->getDefaultStream()->getHeader();
 			headerChunk->refersTo = requestMsg.id;
-			connection->send(headerChunk);
+			connection->send(headerChunk.get());
 		}
 	}
 	else if (baseMessage.type == message_type::kHello)
@@ -319,8 +318,8 @@ void StreamServer::onMessageReceived(StreamSession* connection, const msg::BaseM
 		}
 
 //TODO: use the correct stream
-		msg::Header* headerChunk = streamManager_->getDefaultStream()->getHeader();
-		connection->send(headerChunk);
+		auto headerChunk = streamManager_->getDefaultStream()->getHeader();
+		connection->send(headerChunk.get());
 
 
 		ClientInfoPtr client = Config::instance().getClientInfo(connection->macAddress);

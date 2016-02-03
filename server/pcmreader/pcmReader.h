@@ -62,7 +62,7 @@ public:
 
 	/// Implementation of EncoderListener::onChunkEncoded
 	virtual void onChunkEncoded(const Encoder* encoder, msg::PcmChunk* chunk, double duration);
-	virtual msg::Header* getHeader();
+	virtual std::shared_ptr<msg::Header> getHeader();
 
 	virtual const ReaderUri& getUri() const;
 	virtual const std::string& getName() const;

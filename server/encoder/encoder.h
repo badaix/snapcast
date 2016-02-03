@@ -56,8 +56,6 @@ public:
 
 	virtual ~Encoder()
 	{
-		if (headerChunk_ != NULL)
-			delete headerChunk_;
 	}
 
 	/// The listener will receive the encoded stream
@@ -86,7 +84,7 @@ public:
 	}
 
 	/// Header information needed to decode the data
-	virtual msg::Header* getHeader() const
+	virtual std::shared_ptr<msg::Header> getHeader() const
 	{
 		return headerChunk_;
 	}
@@ -95,7 +93,7 @@ protected:
 	virtual void initEncoder() = 0;
 
 	SampleFormat sampleFormat_;
-	msg::Header* headerChunk_;
+	std::shared_ptr<msg::Header> headerChunk_;
 	EncoderListener* listener_;
 	std::string codecOptions_;
 };
