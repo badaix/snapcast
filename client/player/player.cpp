@@ -81,9 +81,11 @@ void Player::adjustVolume(char* buffer, size_t frames)
 }
 
 
+//http://stackoverflow.com/questions/1165026/what-algorithms-could-i-use-for-audio-volume-level
 void Player::setVolume(double volume)
 {
-	double base = 10.;
+	double base = M_E;
+//	double base = 10.;
 	volume_ = (pow(base, volume)-1) / (base-1);
 	logD << "setVolume: " << volume << " => " << volume_ << "\n";
 }
