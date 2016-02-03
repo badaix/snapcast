@@ -128,7 +128,7 @@ void ControlServer::stop()
 {
 	acceptor_->cancel();
 	std::unique_lock<std::mutex> mlock(mutex_);
-	for (auto it = sessions_.begin(); it != sessions_.end(); ++it)
-		(*it)->stop();
+	for (auto s: sessions_)
+		s->stop();
 }
 

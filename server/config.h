@@ -69,7 +69,7 @@ struct Volume
 
 struct ClientInfo
 {
-	ClientInfo(const std::string& _macAddress = "") : macAddress(_macAddress), volume(100), connected(false), latency(0), streamId("TODO")
+	ClientInfo(const std::string& _macAddress = "") : macAddress(_macAddress), volume(100), connected(false), latency(0), streamId("")
 	{
 		lastSeen.tv_sec = 0;
 		lastSeen.tv_usec = 0;
@@ -87,7 +87,7 @@ struct ClientInfo
 		lastSeen.tv_usec = jGet<int32_t>(j["lastSeen"], "usec", 0);
 		connected = jGet<bool>(j, "connected", true);
 		latency = jGet<int32_t>(j, "latency", 0);
-		streamId = jGet<std::string>(j, "stream", "TODO");
+		streamId = jGet<std::string>(j, "stream", "");
 	}
 
 	json toJson()

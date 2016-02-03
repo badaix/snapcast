@@ -86,7 +86,9 @@ void StreamServer::onChunkRead(const PcmReader* pcmReader, const msg::PcmChunk* 
 	std::lock_guard<std::mutex> mlock(sessionsMutex_);
 	for (auto s : sessions_)
 	{
-		if (isDefaultStream)//->getName() == "default")
+		if (!s->pcmReader() && isDefaultStream)//->getName() == "default")
+			s->add(shared_message);
+		else if (s->pcmReader().get() == pcmReader)
 			s->add(shared_message);
 	}
 }
@@ -200,6 +202,25 @@ void StreamServer::onMessageReceived(ControlSession* controlSession, const std::
 		{
 			clientInfo->volume.muted = request.getParam<bool>("mute", false, true);
 			response = clientInfo->volume.muted;
+		}
+		else if (request.method == "Client.SetStream")
+		{
+			//TODO: check stream id
+			string streamId = request.getParam("id").get<string>();
+			PcmReaderPtr stream = streamManager_->getStream(streamId);
+			if (stream == nullptr)
+				throw JsonInternalErrorException("Stream not found", request.id);
+
+			clientInfo->streamId = streamId;
+			response = clientInfo->streamId;
+
+			StreamSession* session = getStreamSession(request.getParam("client").get<string>());
+			if (session != NULL)
+			{
+				msg::Header* headerChunk = stream->getHeader();
+				session->send(headerChunk);
+				session->setPcmReader(stream);
+			}
 		}
 		else if (request.method == "Client.SetLatency")
 		{
@@ -363,6 +384,7 @@ void StreamServer::start()
 	controlServer_->start();
 
 	streamManager_.reset(new StreamManager(this, settings_.sampleFormat, settings_.codec, settings_.streamReadMs));
+	//TODO: check uniqueness of the stream
 	for (auto& streamUri: settings_.pcmStreams)
 		logE << "Stream: " << streamManager_->addStream(streamUri)->getUri().toJson() << "\n";
 //	throw SnapException("bad");

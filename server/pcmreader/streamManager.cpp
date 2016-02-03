@@ -74,6 +74,17 @@ const PcmReaderPtr StreamManager::getDefaultStream()
 }
 
 
+const PcmReaderPtr StreamManager::getStream(const std::string& id)
+{
+	for (auto stream: streams_)
+	{
+		if (stream->getUri().id() == id)
+			return stream;
+	}
+	return nullptr;
+}
+
+
 void StreamManager::start()
 {
 	for (auto stream: streams_)

@@ -27,7 +27,8 @@ using namespace std;
 
 
 
-StreamSession::StreamSession(MessageReceiver* receiver, std::shared_ptr<tcp::socket> socket) : active_(true), messageReceiver_(receiver)
+StreamSession::StreamSession(MessageReceiver* receiver, std::shared_ptr<tcp::socket> socket) :
+	active_(true), messageReceiver_(receiver), pcmReader_(nullptr)
 {
 	socket_ = socket;
 }
@@ -36,6 +37,18 @@ StreamSession::StreamSession(MessageReceiver* receiver, std::shared_ptr<tcp::soc
 StreamSession::~StreamSession()
 {
 	stop();
+}
+
+
+void StreamSession::setPcmReader(PcmReaderPtr pcmReader)
+{
+	pcmReader_ = pcmReader;
+}
+
+
+const PcmReaderPtr StreamSession::pcmReader() const
+{
+	return pcmReader_;
 }
 
 

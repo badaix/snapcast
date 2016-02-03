@@ -33,6 +33,16 @@ ReaderUri::ReaderUri(const std::string& uri)
 // would be more elegant with regex. Not yet supported on my dev machine's gcc 4.8 :(
 	size_t pos;
 	this->uri = uri;
+
+	id_ = uri;
+	pos = id_.find('?');
+	if (pos != string::npos)
+		id_ = id_.substr(0, pos);
+	pos = id_.find('#');
+	if (pos != string::npos)
+		id_ = id_.substr(0, pos);
+	logE << "id: '" << id_ << "'\n";
+
 	string tmp(uri);
 
 	pos = tmp.find(':');
@@ -91,6 +101,12 @@ json ReaderUri::toJson() const
 	j["path"] = path;
 	j["fragment"] = fragment;
 	j["query"] = json(query);
+	j["id"] = id_;
 	return j;
 }
 
+
+std::string ReaderUri::id() const
+{
+	return id_;
+}

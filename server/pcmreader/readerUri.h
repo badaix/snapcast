@@ -45,7 +45,12 @@ struct ReaderUri
 	std::map<std::string, std::string> query;
 	std::string fragment;
 
+	std::string id() const;
 	json toJson() const;
+
+private:
+	std::string id_;
+
 };
 
 

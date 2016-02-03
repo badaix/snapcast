@@ -29,6 +29,7 @@
 #include <set>
 #include "message/message.h"
 #include "common/queue.h"
+#include "pcmreader/streamManager.h"
 
 
 using asio::ip::tcp;
@@ -79,6 +80,9 @@ public:
 		return socket_->remote_endpoint().address().to_string();
 	}
 
+	void setPcmReader(PcmReaderPtr pcmReader);
+	const PcmReaderPtr pcmReader() const;
+
 protected:
 	void socketRead(void* _to, size_t _bytes);
 	void getNextMessage();
@@ -96,6 +100,7 @@ protected:
 	MessageReceiver* messageReceiver_;
 	Queue<std::shared_ptr<const msg::BaseMessage>> messages_;
 	size_t bufferMs_;
+	PcmReaderPtr pcmReader_;
 };
 
 

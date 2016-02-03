@@ -18,6 +18,7 @@ public:
 	void stop();
 	const std::vector<PcmReaderPtr>& getStreams();
 	const PcmReaderPtr getDefaultStream();
+	const PcmReaderPtr getStream(const std::string& id);
 	json toJson() const;
 
 private:
