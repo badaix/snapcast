@@ -31,6 +31,7 @@ public class Stream implements JsonSerialisable {
     private String host;
     private String path;
     private String fragment;
+    private String id;
     private HashMap<String, String> query;
 
     public Stream(JSONObject json) {
@@ -43,6 +44,7 @@ public class Stream implements JsonSerialisable {
         host = in.readString();
         path = in.readString();
         fragment = in.readString();
+        id = in.readString();
         Bundle bundle = in.readBundle();
         query = (HashMap<String, String>)bundle.getSerializable("query");
     }
@@ -55,6 +57,7 @@ public class Stream implements JsonSerialisable {
             host = json.getString("host");
             path = json.getString("path");
             fragment = json.getString("fragment");
+            id = json.getString("id");
             query = new HashMap<>();
             JSONObject jQuery = json.getJSONObject("query");
             for(int i = 0; i<jQuery.names().length(); i++)
@@ -73,6 +76,7 @@ public class Stream implements JsonSerialisable {
             json.put("host", host);
             json.put("path", path);
             json.put("fragment", fragment);
+            json.put("id", id);
             JSONObject jQuery = new JSONObject();
             for (Map.Entry<String, String> entry : query.entrySet())
                 jQuery.put(entry.getKey(), entry.getValue());
@@ -94,10 +98,9 @@ public class Stream implements JsonSerialisable {
         if (scheme != null ? !scheme.equals(stream.scheme) : stream.scheme != null) return false;
         if (host != null ? !host.equals(stream.host) : stream.host != null) return false;
         if (path != null ? !path.equals(stream.path) : stream.path != null) return false;
-        if (fragment != null ? !fragment.equals(stream.fragment) : stream.fragment != null)
-            return false;
+        if (fragment != null ? !fragment.equals(stream.fragment) : stream.fragment != null) return false;
+        if (id != null ? !id.equals(stream.id) : stream.id != null) return false;
         return !(query != null ? !query.equals(stream.query) : stream.query != null);
-
     }
 
     @Override
@@ -107,6 +110,7 @@ public class Stream implements JsonSerialisable {
         result = 31 * result + (host != null ? host.hashCode() : 0);
         result = 31 * result + (path != null ? path.hashCode() : 0);
         result = 31 * result + (fragment != null ? fragment.hashCode() : 0);
+        result = 31 * result + (id != null ? id.hashCode() : 0);
         result = 31 * result + (query != null ? query.hashCode() : 0);
         return result;
     }
@@ -151,6 +155,14 @@ public class Stream implements JsonSerialisable {
         this.fragment = fragment;
     }
 
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
+
     public HashMap<String, String> getQuery() {
         return query;
     }
@@ -167,6 +179,7 @@ public class Stream implements JsonSerialisable {
                 ", host='" + host + '\'' +
                 ", path='" + path + '\'' +
                 ", fragment='" + fragment + '\'' +
+                ", id='" + id + '\'' +
                 ", query=" + query +
                 '}';
     }
@@ -183,6 +196,7 @@ public class Stream implements JsonSerialisable {
         dest.writeString(host);
         dest.writeString(path);
         dest.writeString(fragment);
+        dest.writeString(id);
         Bundle bundle = new Bundle();
         bundle.putSerializable("query", query);
         dest.writeBundle(bundle);

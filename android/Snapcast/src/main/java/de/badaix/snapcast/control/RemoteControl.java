@@ -147,6 +147,15 @@ public class RemoteControl implements TcpClient.TcpClientListener {
         }
     }
 
+    public void setStream(ClientInfo clientInfo, String id) {
+        try {
+            JSONObject request = jsonRequest("Client.SetStream", new JSONObject("{\"client\": \"" + clientInfo.getMac() + "\", \"id\": \"" + id + "\"}"));
+            tcpClient.sendMessage(request.toString());
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+    }
+
     public void setVolume(ClientInfo clientInfo, int percent) {
         try {
             JSONObject request = jsonRequest("Client.SetVolume", new JSONObject("{\"client\": \"" + clientInfo.getMac() + "\", \"volume\": " + percent + "}"));

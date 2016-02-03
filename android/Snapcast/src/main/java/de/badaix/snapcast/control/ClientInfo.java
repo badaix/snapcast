@@ -29,6 +29,7 @@ public class ClientInfo implements JsonSerialisable {
     private Time_t lastSeen;
     private boolean connected;
     private int latency = 0;
+    private String stream;
     private boolean deleted = false;
 
     public ClientInfo(JSONObject json) {
@@ -45,6 +46,7 @@ public class ClientInfo implements JsonSerialisable {
         lastSeen = in.readParcelable(Time_t.class.getClassLoader());
         connected = in.readByte() != 0;
         latency = in.readInt();
+        stream = in.readString();
     }
 
     @Override
@@ -59,6 +61,7 @@ public class ClientInfo implements JsonSerialisable {
             lastSeen = new Time_t(json.getJSONObject("lastSeen"));
             connected = json.getBoolean("connected");
             latency = json.getInt("latency");
+            stream = json.getString("stream");
         } catch (JSONException e) {
             e.printStackTrace();
         }
@@ -77,6 +80,7 @@ public class ClientInfo implements JsonSerialisable {
             json.put("lastSeen", lastSeen);
             json.put("connected", connected);
             json.put("latency", latency);
+            json.put("stream", stream);
         } catch (JSONException e) {
             e.printStackTrace();
         }
@@ -133,6 +137,14 @@ public class ClientInfo implements JsonSerialisable {
         this.latency = latency;
     }
 
+    public String getStream() {
+        return stream;
+    }
+
+    public void setStream(String stream) {
+        this.stream = stream;
+    }
+
     public boolean isConnected() {
         return connected;
     }
@@ -161,6 +173,7 @@ public class ClientInfo implements JsonSerialisable {
                 ", lastSeen=" + lastSeen +
                 ", connected=" + connected +
                 ", latency=" + latency +
+                ", stream=" + stream +
                 '}';
     }
 
@@ -179,6 +192,7 @@ public class ClientInfo implements JsonSerialisable {
         if (host != null ? !host.equals(that.host) : that.host != null) return false;
         if (version != null ? !version.equals(that.version) : that.version != null) return false;
         if (name != null ? !name.equals(that.name) : that.name != null) return false;
+        if (stream != null ? !stream.equals(that.stream) : that.stream != null) return false;
         return !(volume != null ? !volume.equals(that.volume) : that.volume != null);
 
     }
@@ -194,6 +208,7 @@ public class ClientInfo implements JsonSerialisable {
         result = 31 * result + (connected ? 1 : 0);
         result = 31 * result + (deleted ? 1 : 0);
         result = 31 * result + latency;
+        result = 31 * result + (stream != null ? stream.hashCode() : 0);
         return result;
     }
 
@@ -214,6 +229,7 @@ public class ClientInfo implements JsonSerialisable {
         dest.writeParcelable(lastSeen, flags);
         dest.writeByte((byte) (connected ? 1 : 0));
         dest.writeInt(latency);
+        dest.writeString(stream);
     }
 }
 
