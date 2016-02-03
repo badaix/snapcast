@@ -20,7 +20,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fstream>
-
+#include "common/log.h"
 
 using namespace std;
 
@@ -32,20 +32,27 @@ Config::Config()
 	filename_ = dir + "settings.json";
 	cerr << filename_ << "\n";
 
-	ifstream ifs(filename_, std::ifstream::in);
-	if (ifs.good())
+	try
 	{
-		json j;
-		ifs >> j;
-		json jClient = j["Client"];
-		for (json::iterator it = jClient.begin(); it != jClient.end(); ++it)
+		ifstream ifs(filename_, std::ifstream::in);
+		if (ifs.good())
 		{
-			ClientInfoPtr client = make_shared<ClientInfo>();
-			client->fromJson(*it);
-			client->connected = false;
-			clients.push_back(client);
-			std::cout << "Client:\n" << std::setw(4) << client->toJson() << '\n';
+			json j;
+			ifs >> j;
+			json jClient = j["Client"];
+			for (json::iterator it = jClient.begin(); it != jClient.end(); ++it)
+			{
+				ClientInfoPtr client = make_shared<ClientInfo>();
+				client->fromJson(*it);
+				client->connected = false;
+				clients.push_back(client);
+				std::cout << "Client:\n" << std::setw(4) << client->toJson() << '\n';
+			}
 		}
+	}
+	catch(const std::exception& e)
+	{
+		logE << "Error reading config: " << e.what() << "\n";
 	}
 }
 
