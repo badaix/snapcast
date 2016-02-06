@@ -70,7 +70,6 @@ public:
 
 protected:
 	virtual void worker() = 0;
-	int fd_;
 	timeval tvEncodedChunk_;
 	std::atomic<bool> active_;
 	std::thread readerThread_;

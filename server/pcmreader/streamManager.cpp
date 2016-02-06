@@ -19,6 +19,7 @@
 #include "common/utils.h"
 #include "streamManager.h"
 #include "pipeReader.h"
+#include "fileReader.h"
 #include "common/log.h"
 
 
@@ -52,6 +53,11 @@ PcmReader* StreamManager::addStream(const std::string& uri)
 	if (readerUri.scheme == "pipe")
 	{
 		streams_.push_back(make_shared<PipeReader>(pcmListener_, readerUri));//, sampleFormat, codec, pcmReadMs);
+		return streams_.back().get();
+	}
+	else if (readerUri.scheme == "file")
+	{
+		streams_.push_back(make_shared<FileReader>(pcmListener_, readerUri));//, sampleFormat, codec, pcmReadMs);
 		return streams_.back().get();
 	}
 
