@@ -87,7 +87,13 @@ ReaderUri::ReaderUri(const std::string& uri)
 	{
 		pos = kv.find('=');
 		if (pos != string::npos)
-			query[kv.substr(0, pos)] = kv.substr(pos+1);
+		{
+			string key = trim_copy(kv.substr(0, pos));
+			string value = trim_copy(kv.substr(pos+1));
+			query[key] = value;
+			if (key == "id")
+				id_ = value;
+		}
 	}
 }
 
