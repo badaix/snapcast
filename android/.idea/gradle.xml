@@ -13,6 +13,12 @@
             <option value="$PROJECT_DIR$/Snapcast" />
           </set>
         </option>
+        <option name="myModules">
+          <set>
+            <option value="$PROJECT_DIR$" />
+            <option value="$PROJECT_DIR$/Snapcast" />
+          </set>
+        </option>
       </GradleProjectSettings>
     </option>
   </component>
