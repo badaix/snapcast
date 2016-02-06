@@ -6,8 +6,6 @@ import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.view.MenuItem;
 
-import de.badaix.snapcast.control.ClientInfo;
-
 /**
  * Created by johannes on 11.01.16.
  */
@@ -17,13 +15,9 @@ public class ClientSettingsActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
-        ClientInfo clientInfo = (ClientInfo) getIntent().getParcelableExtra("clientInfo");
         clientSettingsFragment = new ClientSettingsFragment();
-        Bundle bundle = new Bundle();
-        bundle.putParcelable("clientInfo", clientInfo);
-        clientSettingsFragment.setArguments(bundle);
-//        clientSettingsFragment.setClientInfo((ClientInfo)(getIntent().getParcelableExtra("clientInfo")));
+        clientSettingsFragment.setArguments(getIntent().getExtras());
+
         // Display the fragment as the main content.
         getFragmentManager().beginTransaction()
                 .replace(android.R.id.content, clientSettingsFragment)

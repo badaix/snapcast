@@ -344,7 +344,9 @@ public class MainActivity extends AppCompatActivity implements ClientListFragmen
         if (requestCode == 1) {
             ClientInfo clientInfo = data.getParcelableExtra("clientInfo");
             remoteControl.setName(clientInfo, clientInfo.getName());
-//TODO            clientInfoAdapter.updateClient(clientInfo);
+            remoteControl.setStream(clientInfo, clientInfo.getStream());
+            serverInfo.updateClient(clientInfo);
+            sectionsPagerAdapter.updateServer(serverInfo);
         }
     }
 
@@ -448,6 +450,7 @@ public class MainActivity extends AppCompatActivity implements ClientListFragmen
     public void onPropertiesClicked(ClientInfoItem clientInfoItem) {
         Intent intent = new Intent(this, ClientSettingsActivity.class);
         intent.putExtra("clientInfo", clientInfoItem.getClientInfo());
+        intent.putParcelableArrayListExtra("streams", serverInfo.getStreams());
         startActivityForResult(intent, 1);
     }
 

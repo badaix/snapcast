@@ -4,6 +4,10 @@
         android:key="pref_client_name"
         android:title="@string/client_name"
         android:summary="name" />
+    <ListPreference
+        android:key="pref_client_stream"
+        android:title="@string/client_stream"
+        android:summary="stream" />
     <Preference
         android:key="pref_client_mac"
         android:title="@string/client_mac"

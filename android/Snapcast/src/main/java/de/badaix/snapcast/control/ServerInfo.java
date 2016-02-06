@@ -1,13 +1,13 @@
 package de.badaix.snapcast.control;
 
-import java.util.Vector;
+import java.util.ArrayList;
 
 /**
  * Created by johannes on 06.01.16.
  */
 public class ServerInfo {
-    private Vector<ClientInfo> clientInfos = new Vector<ClientInfo>();
-    private Vector<Stream> streams = new Vector<Stream>();
+    private ArrayList<ClientInfo> clientInfos = new ArrayList<ClientInfo>();
+    private ArrayList<Stream> streams = new ArrayList<Stream>();
 
     public ServerInfo() {
 
@@ -68,11 +68,11 @@ public class ServerInfo {
         return true;
     }
 
-    public Vector<ClientInfo> getClientInfos() {
+    public ArrayList<ClientInfo> getClientInfos() {
         return clientInfos;
     }
 
-    public Vector<Stream> getStreams() {
+    public ArrayList<Stream> getStreams() {
         return streams;
     }
 }
