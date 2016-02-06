@@ -50,6 +50,7 @@ void Controller::onException(ClientConnection* connection, const std::exception&
 
 void Controller::onMessageReceived(ClientConnection* connection, const msg::BaseMessage& baseMessage, char* buffer)
 {
+	std::lock_guard<std::mutex> lock(receiveMutex_);
 	if (baseMessage.type == message_type::kWireChunk)
 	{
 		if (stream_ && decoder_)
@@ -95,6 +96,9 @@ void Controller::onMessageReceived(ClientConnection* connection, const msg::Base
 
 		logO << "Codec: " << headerChunk_->codec << "\n";
 		decoder_.reset(nullptr);
+		stream_.reset(nullptr);
+		player_.reset(nullptr);
+
 		if (headerChunk_->codec == "pcm")
 			decoder_.reset(new PcmDecoder());
 #ifndef ANDROID

@@ -69,7 +69,7 @@ private:
 	std::unique_ptr<Player> player_;
 	std::shared_ptr<msg::ServerSettings> serverSettings_;
 	std::shared_ptr<msg::Header> headerChunk_;
-
+	std::mutex receiveMutex_;
 
 	std::string exception_;
 	bool asyncException_;
