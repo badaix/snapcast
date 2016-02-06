@@ -21,6 +21,7 @@
 
 #include "decoder.h"
 
+
 struct CacheInfo
 {
 	CacheInfo() : sampleRate_(0)

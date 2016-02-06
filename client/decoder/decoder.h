@@ -18,6 +18,7 @@
 
 #ifndef DECODER_H
 #define DECODER_H
+#include <mutex>
 #include "message/pcmChunk.h"
 #include "message/header.h"
 #include "message/sampleFormat.h"
@@ -30,6 +31,9 @@ public:
 	virtual ~Decoder() {};
 	virtual bool decode(msg::PcmChunk* chunk) = 0;
 	virtual SampleFormat setHeader(msg::Header* chunk) = 0;
+
+protected:
+	std::mutex mutex_;
 };
 
 

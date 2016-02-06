@@ -39,6 +39,7 @@ OggDecoder::OggDecoder() : Decoder(), buffer(NULL), bytes(0)
 
 OggDecoder::~OggDecoder()
 {
+	std::lock_guard<std::mutex> lock(mutex_);
 	free(convbuffer);
     vorbis_block_clear(&vb);
     vorbis_dsp_clear(&vd);
@@ -51,7 +52,7 @@ OggDecoder::~OggDecoder()
 
 bool OggDecoder::decode(msg::PcmChunk* chunk)
 {
-
+	std::lock_guard<std::mutex> lock(mutex_);
 	/* grab some data at the head of the stream. We want the first page
 	(which is guaranteed to be small and only contain the Vorbis
 	stream initial header) We need the first page to get the stream

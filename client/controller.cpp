@@ -94,14 +94,18 @@ void Controller::onMessageReceived(ClientConnection* connection, const msg::Base
 		headerChunk_->deserialize(baseMessage, buffer);
 
 		logO << "Codec: " << headerChunk_->codec << "\n";
+		decoder_.reset(nullptr);
 		if (headerChunk_->codec == "pcm")
 			decoder_.reset(new PcmDecoder());
 #ifndef ANDROID
-		if (headerChunk_->codec == "ogg")
+		else if (headerChunk_->codec == "ogg")
 			decoder_.reset(new OggDecoder());
 #endif
 		else if (headerChunk_->codec == "flac")
 			decoder_.reset(new FlacDecoder());
+		else
+			throw SnapException("codec not supported: \"" + headerChunk_->codec + "\"");
+
 		sampleFormat_ = decoder_->setHeader(headerChunk_.get());
 		logO << "sample rate: " << sampleFormat_.rate << "Hz\n";
 		logO << "bits/sample: " << sampleFormat_.bits << "\n";

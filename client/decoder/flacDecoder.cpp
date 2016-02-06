@@ -50,6 +50,7 @@ FlacDecoder::FlacDecoder() : Decoder()
 
 FlacDecoder::~FlacDecoder()
 {
+	std::lock_guard<std::mutex> lock(mutex_);
 	delete flacChunk;
 	delete decoder;
 }
@@ -57,6 +58,7 @@ FlacDecoder::~FlacDecoder()
 
 bool FlacDecoder::decode(msg::PcmChunk* chunk)
 {
+	std::lock_guard<std::mutex> lock(mutex_);
 	cacheInfo_.reset();
 	pcmChunk = chunk;
 	flacChunk->payload = (char*)realloc(flacChunk->payload, chunk->payloadSize);
