@@ -4,7 +4,6 @@ import android.content.Context;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -130,7 +129,6 @@ public class ClientListFragment extends Fragment {
     }
 
 
-
     /**
      * This interface must be implemented by activities that contain this
      * fragment to allow an interaction in this fragment to be communicated
@@ -189,7 +187,7 @@ public class ClientListFragment extends Fragment {
                 public void run() {
                     clear();
                     for (ClientInfo clientInfo : ClientInfoAdapter.this.serverInfo.getClientInfos()) {
-                        if ((clientInfo != null) && (!hideOffline || clientInfo.isConnected()) && !clientInfo.isDeleted())
+                        if ((clientInfo != null) && (!hideOffline || clientInfo.isConnected()) && !clientInfo.isDeleted() && clientInfo.getStream().equals(ClientListFragment.this.stream.getId()))
                             add(clientInfo);
                     }
                     notifyDataSetChanged();
