@@ -35,6 +35,7 @@ public class SnapclientService extends Service {
         void onPlayerStop(SnapclientService snapclientService);
 
         void onLog(SnapclientService snapclientService, String log);
+
         void onError(SnapclientService snapclientService, String msg, Exception exception);
     }
 

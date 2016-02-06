@@ -7,7 +7,6 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 
 /**
@@ -46,7 +45,7 @@ public class Stream implements JsonSerialisable {
         fragment = in.readString();
         id = in.readString();
         Bundle bundle = in.readBundle();
-        query = (HashMap<String, String>)bundle.getSerializable("query");
+        query = (HashMap<String, String>) bundle.getSerializable("query");
     }
 
     @Override
@@ -60,7 +59,7 @@ public class Stream implements JsonSerialisable {
             id = json.getString("id");
             query = new HashMap<>();
             JSONObject jQuery = json.getJSONObject("query");
-            for(int i = 0; i<jQuery.names().length(); i++)
+            for (int i = 0; i < jQuery.names().length(); i++)
                 query.put(jQuery.names().getString(i), jQuery.getString(jQuery.names().getString(i)));
         } catch (JSONException e) {
             e.printStackTrace();
@@ -98,7 +97,8 @@ public class Stream implements JsonSerialisable {
         if (scheme != null ? !scheme.equals(stream.scheme) : stream.scheme != null) return false;
         if (host != null ? !host.equals(stream.host) : stream.host != null) return false;
         if (path != null ? !path.equals(stream.path) : stream.path != null) return false;
-        if (fragment != null ? !fragment.equals(stream.fragment) : stream.fragment != null) return false;
+        if (fragment != null ? !fragment.equals(stream.fragment) : stream.fragment != null)
+            return false;
         if (id != null ? !id.equals(stream.id) : stream.id != null) return false;
         return !(query != null ? !query.equals(stream.query) : stream.query != null);
     }
