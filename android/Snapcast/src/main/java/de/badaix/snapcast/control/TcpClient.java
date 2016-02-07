@@ -107,14 +107,16 @@ public class TcpClient {
 
                             mServerMessage = mBufferIn.readLine();
 
-                            if (mServerMessage != null && mMessageListener != null) {
-                                // call the method messageReceived from MyActivity class
-                                mMessageListener.onMessageReceived(TcpClient.this, mServerMessage);
+                            if (mServerMessage != null) {
+                                Log.d(TAG, "Received Message: '" + mServerMessage + "'");
+                                if (mMessageListener != null) {
+                                    mMessageListener.onMessageReceived(TcpClient.this, mServerMessage);
+                                }
+                            } else {
+                                break;
                             }
-
                         }
 
-                        Log.d(TAG, "Received Message: '" + mServerMessage + "'");
 
                     } catch (Exception e) {
                         Log.d(TAG, "Error", e);
@@ -124,17 +126,15 @@ public class TcpClient {
                         // this socket
                         // after it is closed, which means a new socket instance has to
                         // be created.
+                        mRun = false;
                         socket.close();
                         if (mMessageListener != null)
                             mMessageListener.onDisconnected(TcpClient.this);
                     }
 
                 } catch (Exception e) {
-
                     Log.d(TAG, "Error", e);
-
                 }
-
             }
         };
         worker = new Thread(runnable);

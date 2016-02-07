@@ -126,6 +126,7 @@ public class MainActivity extends AppCompatActivity implements ClientListFragmen
 
         tabLayout = (TabLayout) findViewById(R.id.tabs);
         tabLayout.setupWithViewPager(mViewPager);
+        mViewPager.setVisibility(View.GONE);
 
         getSupportActionBar().setSubtitle("Host: no Snapserver found");
 
@@ -352,12 +353,26 @@ public class MainActivity extends AppCompatActivity implements ClientListFragmen
 
     @Override
     public void onConnected(RemoteControl remoteControl) {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                mViewPager.setVisibility(View.VISIBLE);
+            }
+        });
         remoteControl.getServerStatus();
     }
 
     @Override
     public void onDisconnected(RemoteControl remoteControl) {
         Log.d(TAG, "onDisconnected");
+        serverInfo = null;
+        sectionsPagerAdapter.updateServer(serverInfo);
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                mViewPager.setVisibility(View.GONE);
+            }
+        });
     }
 
     @Override
@@ -473,17 +488,23 @@ public class MainActivity extends AppCompatActivity implements ClientListFragmen
                 @Override
                 public void run() {
                     SectionsPagerAdapter.this.serverInfo = serverInfo;
-                    boolean changed = (serverInfo.getStreams().size() != fragments.size());
 
-                    while (serverInfo.getStreams().size() < fragments.size())
-                        fragments.removeElement(fragments.lastElement());
+                    boolean changed = ((serverInfo == null) || (serverInfo.getStreams().size() != fragments.size()));
 
-                    while (serverInfo.getStreams().size() > fragments.size())
-                        fragments.add(ClientListFragment.newInstance("TODO1"));
+                    if (serverInfo != null) {
 
-                    for (int i = 0; i < serverInfo.getStreams().size(); ++i) {
-                        fragments.get(i).setStream(serverInfo.getStreams().get(i));
-                        fragments.get(i).updateServer(serverInfo);
+                        while (serverInfo.getStreams().size() < fragments.size())
+                            fragments.removeElement(fragments.lastElement());
+
+                        while (serverInfo.getStreams().size() > fragments.size())
+                            fragments.add(ClientListFragment.newInstance("TODO1"));
+
+                        for (int i = 0; i < serverInfo.getStreams().size(); ++i) {
+                            fragments.get(i).setStream(serverInfo.getStreams().get(i));
+                            fragments.get(i).updateServer(serverInfo);
+                        }
+                    } else {
+                        fragments.clear();
                     }
 
                     if (changed) {
