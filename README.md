@@ -32,19 +32,14 @@ First install all packages needed to compile Snapcast
 For Debian derivates (e.g. Raspbian, Debian, Ubuntu, Mint):
 
     $ sudo apt-get install git build-essential
-    $ sudo apt-get install libboost-dev libboost-system-dev libboost-program-options-dev libasound2-dev libvorbis-dev libflac-dev alsa-utils libavahi-client-dev avahi-daemon
+    $ sudo apt-get install libasound2-dev libvorbis-dev libflac-dev alsa-utils libavahi-client-dev avahi-daemon
     
-Compilation requires gcc 4.8 or higher. To upate gcc on Debian Wheezy (and Raspbian), install g++-4.8 and update the symbolic links:
-
-    $ sudo apt-get install g++-4.8
-    $ cd /usr/bin
-    $ sudo ln -sf gcc-4.8 gcc
-    $ sudo ln -sf g++-4.8 g++
+Compilation requires gcc 4.8 or higher, so it's highly recommended to use Debian (Respbian) Jessie.
     
 For Arch derivates:
 
     $ pacman -S git base-devel
-    $ pacman -S boost boost-libs alsa-lib avahi libvorbis flac alsa-utils
+    $ pacman -S alsa-lib avahi libvorbis flac alsa-utils
     
 Build Snapcast by cd'ing into the Snapcast src-root directory
 
