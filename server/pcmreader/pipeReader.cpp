@@ -25,6 +25,7 @@
 #include "../encoder/encoderFactory.h"
 #include "common/log.h"
 #include "common/snapException.h"
+#include "common/compat.h"
 
 
 using namespace std;
@@ -32,19 +33,18 @@ using namespace std;
 
 
 
-PipeReader::PipeReader(PcmListener* pcmListener, const ReaderUri& uri) : PcmReader(pcmListener, uri)
+PipeReader::PipeReader(PcmListener* pcmListener, const ReaderUri& uri) : PcmReader(pcmListener, uri), fd_(-1)
 {
 	umask(0);
-	mkfifo(uri_.path.c_str(), 0666);
-	fd_ = open(uri_.path.c_str(), O_RDONLY | O_NONBLOCK);
-	if (fd_ == -1)
-		throw SnapException("failed to open fifo: \"" + uri_.path + "\"");
+	if ((mkfifo(uri_.path.c_str(), 0666) != 0) && (errno != EEXIST))
+		throw SnapException("failed to make fifo \"" + uri_.path + "\": " + cpt::to_string(errno));
 }
 
 
 PipeReader::~PipeReader()
 {
-	close(fd_);
+	if (fd_ != -1)
+		close(fd_);
 }
 
 
@@ -55,11 +55,17 @@ void PipeReader::worker()
 
 	while (active_)
 	{
+		if (fd_ != -1)
+			close(fd_);
+		fd_ = open(uri_.path.c_str(), O_RDONLY | O_NONBLOCK);
 		gettimeofday(&tvChunk, NULL);
 		tvEncodedChunk_ = tvChunk;
 		long nextTick = chronos::getTickCount();
 		try
 		{
+			if (fd_ == -1)
+				throw SnapException("failed to open fifo: \"" + uri_.path + "\"");
+
 			while (active_)
 			{
 				chunk->timestamp.sec = tvChunk.tv_sec;
@@ -69,9 +75,10 @@ void PipeReader::worker()
 				do
 				{
 					int count = read(fd_, chunk->payload + len, toRead - len);
-
-					if (count <= 0)
+					if (count < 0)
 						usleep(100*1000);
+					else if (count == 0)
+						throw SnapException("end of file");
 					else
 						len += count;
 				}
@@ -99,6 +106,7 @@ void PipeReader::worker()
 		catch(const std::exception& e)
 		{
 			logE << "Exception: " << e.what() << std::endl;
+			usleep(100*1000);
 		}
 	}
 }
