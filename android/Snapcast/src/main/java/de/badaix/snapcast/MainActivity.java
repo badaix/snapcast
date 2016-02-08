@@ -43,7 +43,7 @@ import de.badaix.snapcast.utils.Setup;
 public class MainActivity extends AppCompatActivity implements ClientListFragment.OnFragmentInteractionListener, ClientInfoItem.ClientInfoItemListener, RemoteControl.RemoteControlListener, SnapclientService.SnapclientListener, NsdHelper.NsdHelperListener {
 
     private static final String TAG = "Main";
-    private static final String SERVICE_NAME = "Snapcast #2";
+    private static final String SERVICE_NAME = "Snapcast";// #2";
 
     boolean bound = false;
     private MenuItem miStartStop = null;
