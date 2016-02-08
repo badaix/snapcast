@@ -52,12 +52,12 @@ PcmReader* StreamManager::addStream(const std::string& uri)
 
 	if (readerUri.scheme == "pipe")
 	{
-		streams_.push_back(make_shared<PipeReader>(pcmListener_, readerUri));//, sampleFormat, codec, pcmReadMs);
+		streams_.push_back(make_shared<PipeReader>(pcmListener_, readerUri));
 		return streams_.back().get();
 	}
 	else if (readerUri.scheme == "file")
 	{
-		streams_.push_back(make_shared<FileReader>(pcmListener_, readerUri));//, sampleFormat, codec, pcmReadMs);
+		streams_.push_back(make_shared<FileReader>(pcmListener_, readerUri));
 		return streams_.back().get();
 	}
 

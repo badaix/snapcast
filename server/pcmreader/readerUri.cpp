@@ -41,7 +41,7 @@ ReaderUri::ReaderUri(const std::string& uri)
 	pos = id_.find('#');
 	if (pos != string::npos)
 		id_ = id_.substr(0, pos);
-	logE << "id: '" << id_ << "'\n";
+	logD << "id: '" << id_ << "'\n";
 
 	string tmp(uri);
 
@@ -50,7 +50,7 @@ ReaderUri::ReaderUri(const std::string& uri)
 		throw invalid_argument("missing ':'");
 	scheme = tmp.substr(0, pos);
 	tmp = tmp.substr(pos + 1);
-	logE << "scheme: '" << scheme << "' tmp: '" << tmp << "'\n";
+	logD << "scheme: '" << scheme << "' tmp: '" << tmp << "'\n";
 
 	if (tmp.find("//") != 0)
 		throw invalid_argument("missing host separator: '//'");
@@ -62,7 +62,7 @@ ReaderUri::ReaderUri(const std::string& uri)
 	host = tmp.substr(0, pos);
 	tmp = tmp.substr(pos);
 	path = tmp;
-	logE << "host: '" << host << "' tmp: '" << tmp << "' path: '" << path << "'\n";
+	logD << "host: '" << host << "' tmp: '" << tmp << "' path: '" << path << "'\n";
 
 	pos = tmp.find('?');
 	if (pos == string::npos)
@@ -71,7 +71,7 @@ ReaderUri::ReaderUri(const std::string& uri)
 	path = tmp.substr(0, pos);
 	tmp = tmp.substr(pos + 1);
 	string queryStr = tmp;
-	logE << "path: '" << path << "' tmp: '" << tmp << "' query: '" << queryStr << "'\n";
+	logD << "path: '" << path << "' tmp: '" << tmp << "' query: '" << queryStr << "'\n";
 
 	pos = tmp.find('#');
 	if (pos != string::npos)
@@ -79,7 +79,7 @@ ReaderUri::ReaderUri(const std::string& uri)
 		queryStr = tmp.substr(0, pos);
 		tmp = tmp.substr(pos + 1);
 		fragment = tmp;
-		logE << "query: '" << queryStr << "' fragment: '" << fragment << "' tmp: '" << tmp << "'\n";
+		logD << "query: '" << queryStr << "' fragment: '" << fragment << "' tmp: '" << tmp << "'\n";
 	}
 
 	vector<string> keyValueList = split(queryStr, '&');

@@ -39,43 +39,6 @@ StreamServer::~StreamServer()
 {
 }
 
-/*
-void StreamServer::send(const msg::BaseMessage* message)
-{
-	std::lock_guard<std::mutex> mlock(mutex_);
-
-	logE << "send: " << sessions_.size() << "\n";
-
-	for (auto it = sessions_.begin(); it != sessions_.end(); )
-	{
-		logE << "send: " << (*it)->macAddress << ", " << !(*it)->active() << "\n";
-		if (!(*it)->active())
-		{
-			logS(kLogErr) << "Session inactive. Removing\n";
-			logE << "Session inactive. Removing\n";
-			// don't block: remove ServerSession in a thread
-			onDisconnect(it->get());
-			auto func = [](shared_ptr<StreamSession> s)->void{s->stop();};
-			std::thread t(func, *it);
-			t.detach();
-			sessions_.erase(it++);
-		}
-		else
-			++it;
-	}
-
-
-//	for (auto it = sessions_.begin(); it != sessions_.end(); )
-//	{
-//		if (!(*it)->active())
-//			onDisconnect(it->get());
-//	}
-
-	std::shared_ptr<const msg::BaseMessage> shared_message(message);
-	for (auto s : sessions_)
-		s->add(shared_message);
-}
-*/
 
 void StreamServer::onChunkRead(const PcmReader* pcmReader, const msg::PcmChunk* chunk, double duration)
 {
@@ -205,7 +168,6 @@ void StreamServer::onMessageReceived(ControlSession* controlSession, const std::
 		}
 		else if (request.method == "Client.SetStream")
 		{
-			//TODO: check stream id
 			string streamId = request.getParam("id").get<string>();
 			PcmReaderPtr stream = streamManager_->getStream(streamId);
 			if (stream == nullptr)
@@ -279,17 +241,6 @@ void StreamServer::onMessageReceived(StreamSession* connection, const msg::BaseM
 			logD << "Latency: " << timeMsg.latency << ", refers to: " << timeMsg.refersTo << "\n";
 			connection->send(&timeMsg);
 		}
-		else if (requestMsg.request == kServerSettings)
-		{
-		}
-		else if (requestMsg.request == kHeader)
-		{
-//			std::lock_guard<std::mutex> mlock(mutex_);
-//TODO: use the correct stream
-			auto headerChunk = streamManager_->getDefaultStream()->getHeader();
-			headerChunk->refersTo = requestMsg.id;
-			connection->send(headerChunk.get());
-		}
 	}
 	else if (baseMessage.type == message_type::kHello)
 	{
@@ -317,18 +268,26 @@ void StreamServer::onMessageReceived(StreamSession* connection, const msg::BaseM
 			connection->send(&serverSettings);
 		}
 
-//TODO: use the correct stream
-		auto headerChunk = streamManager_->getDefaultStream()->getHeader();
-		connection->send(headerChunk.get());
-
-
 		ClientInfoPtr client = Config::instance().getClientInfo(connection->macAddress);
 		client->ipAddress = connection->getIP();
 		client->hostName = helloMsg.getHostName();
 		client->version = helloMsg.getVersion();
 		client->connected = true;
 		gettimeofday(&client->lastSeen, NULL);
+
+		// Assign and update stream
+		PcmReaderPtr stream = streamManager_->getStream(client->streamId);
+		if (stream == nullptr)
+		{
+			stream = streamManager_->getDefaultStream();
+			client->streamId = stream->getUri().id();
+		}
 		Config::instance().save();
+
+		//TODO: wording pcmReader vs stream
+		connection->setPcmReader(stream);
+		auto headerChunk = stream->getHeader();
+		connection->send(headerChunk.get());
 
 		json notification = JsonNotification::getJson("Client.OnConnect", client->toJson());
 		logO << notification.dump(4) << "\n";
