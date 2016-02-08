@@ -107,6 +107,7 @@ public class RemoteControl implements TcpClient.TcpClientListener {
     @Override
     public void onConnected(TcpClient tcpClient) {
         Log.d(TAG, "onConnected");
+        serverInfo = new ServerInfo();
         if (listener != null)
             listener.onConnected(this);
     }
@@ -114,6 +115,7 @@ public class RemoteControl implements TcpClient.TcpClientListener {
     @Override
     public void onDisconnected(TcpClient tcpClient) {
         Log.d(TAG, "onDisconnected");
+        serverInfo = null;
         if (listener != null)
             listener.onDisconnected(this);
     }

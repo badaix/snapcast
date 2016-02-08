@@ -365,7 +365,7 @@ public class MainActivity extends AppCompatActivity implements ClientListFragmen
     @Override
     public void onDisconnected(RemoteControl remoteControl) {
         Log.d(TAG, "onDisconnected");
-        serverInfo = null;
+        serverInfo = new ServerInfo();
         sectionsPagerAdapter.updateServer(serverInfo);
         runOnUiThread(new Runnable() {
             @Override
@@ -436,7 +436,7 @@ public class MainActivity extends AppCompatActivity implements ClientListFragmen
         final ClientInfo clientInfo = clientInfoItem.getClientInfo();
         clientInfo.setDeleted(true);
         serverInfo.updateClient(clientInfo);
-//        sectionsPagerAdapter.update();
+        sectionsPagerAdapter.updateServer(serverInfo);
         Snackbar mySnackbar = Snackbar.make(findViewById(R.id.myCoordinatorLayout),
                 getString(R.string.client_deleted, clientInfo.getVisibleName()),
                 Snackbar.LENGTH_SHORT);
@@ -445,7 +445,7 @@ public class MainActivity extends AppCompatActivity implements ClientListFragmen
             public void onClick(View v) {
                 clientInfo.setDeleted(false);
                 serverInfo.updateClient(clientInfo);
-//                sectionsPagerAdapter.update();
+                sectionsPagerAdapter.updateServer(serverInfo);
             }
         });
         mySnackbar.setCallback(new Snackbar.Callback() {
@@ -478,6 +478,7 @@ public class MainActivity extends AppCompatActivity implements ClientListFragmen
 
         private Vector<ClientListFragment> fragments = new Vector<>();
         private ServerInfo serverInfo = new ServerInfo();
+        private int streamCount = 0;
 
         public SectionsPagerAdapter(FragmentManager fm) {
             super(fm);
@@ -487,27 +488,23 @@ public class MainActivity extends AppCompatActivity implements ClientListFragmen
             MainActivity.this.runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    SectionsPagerAdapter.this.serverInfo = serverInfo;
+                    if (serverInfo == null)
+                        SectionsPagerAdapter.this.serverInfo = new ServerInfo();
+                    else;
+                        SectionsPagerAdapter.this.serverInfo = serverInfo;
 
-                    boolean changed = ((serverInfo == null) || (serverInfo.getStreams().size() != fragments.size()));
+                    boolean changed = (serverInfo.getStreams().size() != streamCount);
 
-                    if (serverInfo != null) {
+                    while (serverInfo.getStreams().size() > fragments.size())
+                        fragments.add(ClientListFragment.newInstance("TODO1"));
 
-                        while (serverInfo.getStreams().size() < fragments.size())
-                            fragments.removeElement(fragments.lastElement());
-
-                        while (serverInfo.getStreams().size() > fragments.size())
-                            fragments.add(ClientListFragment.newInstance("TODO1"));
-
-                        for (int i = 0; i < serverInfo.getStreams().size(); ++i) {
-                            fragments.get(i).setStream(serverInfo.getStreams().get(i));
-                            fragments.get(i).updateServer(serverInfo);
-                        }
-                    } else {
-                        fragments.clear();
+                    for (int i = 0; i < serverInfo.getStreams().size(); ++i) {
+                        fragments.get(i).setStream(serverInfo.getStreams().get(i));
+                        fragments.get(i).updateServer(serverInfo);
                     }
 
                     if (changed) {
+                        streamCount = serverInfo.getStreams().size();
                         notifyDataSetChanged();
                         tabLayout.setTabsFromPagerAdapter(SectionsPagerAdapter.this);
                     }
@@ -529,7 +526,7 @@ public class MainActivity extends AppCompatActivity implements ClientListFragmen
 
         @Override
         public int getCount() {
-            return fragments.size();
+            return streamCount;
         }
 
         @Override
