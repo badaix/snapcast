@@ -50,7 +50,6 @@ struct ReaderUri
 
 private:
 	std::string id_;
-
 };
 
 

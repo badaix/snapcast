@@ -81,6 +81,29 @@ static inline std::string trim_copy(const std::string &s)
 	return trim(str);
 }
 
+// decode %xx to char
+static std::string uriDecode(const std::string& src) {
+	std::string ret;
+	char ch;
+	for (size_t i=0; i<src.length(); i++)
+	{
+		if (int(src[i]) == 37)
+		{
+			unsigned int ii;
+			sscanf(src.substr(i+1, 2).c_str(), "%x", &ii);
+			ch = static_cast<char>(ii);
+			ret += ch;
+			i += 2;
+		}
+		else
+		{
+			ret += src[i];
+		}
+	}
+	return (ret);
+}
+
+
 
 static std::vector<std::string> &split(const std::string &s, char delim, std::vector<std::string> &elems)
 {

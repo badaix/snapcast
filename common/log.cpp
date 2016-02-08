@@ -33,12 +33,12 @@ Log::Log(std::string ident, int facility)
 
 std::string Log::Timestamp()
 {
-    struct tm * dt;
-    char buffer [30];
+	struct tm * dt;
+	char buffer [30];
 	std::time_t t = std::time(nullptr);
-    dt = localtime(&t);
-    strftime(buffer, sizeof(buffer), "%Y-%m-%d %H-%M-%S", dt);
-    return std::string(buffer);
+	dt = localtime(&t);
+	strftime(buffer, sizeof(buffer), "%Y-%m-%d %H-%M-%S", dt);
+	return std::string(buffer);
 }
 
 

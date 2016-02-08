@@ -33,8 +33,9 @@ ReaderUri::ReaderUri(const std::string& uri)
 // would be more elegant with regex. Not yet supported on my dev machine's gcc 4.8 :(
 	size_t pos;
 	this->uri = uri;
+	string decodedUri = uriDecode(uri);
 
-	id_ = uri;
+	id_ = decodedUri;
 	pos = id_.find('?');
 	if (pos != string::npos)
 		id_ = id_.substr(0, pos);
@@ -43,7 +44,7 @@ ReaderUri::ReaderUri(const std::string& uri)
 		id_ = id_.substr(0, pos);
 	logD << "id: '" << id_ << "'\n";
 
-	string tmp(uri);
+	string tmp(decodedUri);
 
 	pos = tmp.find(':');
 	if (pos == string::npos)
