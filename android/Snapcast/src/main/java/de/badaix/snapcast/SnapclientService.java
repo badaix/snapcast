@@ -29,16 +29,6 @@ import static android.os.PowerManager.PARTIAL_WAKE_LOCK;
 
 public class SnapclientService extends Service {
 
-    public interface SnapclientListener {
-        void onPlayerStart(SnapclientService snapclientService);
-
-        void onPlayerStop(SnapclientService snapclientService);
-
-        void onLog(SnapclientService snapclientService, String log);
-
-        void onError(SnapclientService snapclientService, String msg, Exception exception);
-    }
-
     public static final String EXTRA_HOST = "EXTRA_HOST";
     public static final String EXTRA_PORT = "EXTRA_PORT";
     public static final String ACTION_START = "ACTION_START";
@@ -200,8 +190,13 @@ public class SnapclientService extends Service {
             if (listener != null)
                 listener.onPlayerStart(this);
         }
-        if (listener != null)
-            listener.onLog(SnapclientService.this, msg);
+        if (listener != null) {
+            int idxBracketOpen = msg.indexOf('[');
+            int idxBracketClose = msg.indexOf(']', idxBracketOpen);
+            if ((idxBracketOpen > 0) && (idxBracketClose > 0)) {
+                listener.onLog(SnapclientService.this, msg.substring(0, idxBracketOpen - 1), msg.substring(idxBracketOpen + 1, idxBracketClose), msg.substring(idxBracketClose + 2));
+            }
+        }
     }
 
     private void stop() {
@@ -221,6 +216,16 @@ public class SnapclientService extends Service {
         }
         if (listener != null)
             listener.onPlayerStop(this);
+    }
+
+    public interface SnapclientListener {
+        void onPlayerStart(SnapclientService snapclientService);
+
+        void onPlayerStop(SnapclientService snapclientService);
+
+        void onLog(SnapclientService snapclientService, String timestamp, String logClass, String msg);
+
+        void onError(SnapclientService snapclientService, String msg, Exception exception);
     }
 
     /**

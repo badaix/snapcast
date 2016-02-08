@@ -26,9 +26,6 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.WindowManager;
-import android.widget.CheckBox;
-import android.widget.CompoundButton;
-import android.widget.TextView;
 
 import com.google.android.gms.appindexing.Action;
 import com.google.android.gms.appindexing.AppIndex;
@@ -57,6 +54,8 @@ public class MainActivity extends AppCompatActivity implements ClientListFragmen
     private SnapclientService snapclientService;
     private SectionsPagerAdapter sectionsPagerAdapter;
     private TabLayout tabLayout;
+    private Snackbar wrongSamplerateSnackbar = null;
+    private int nativeSampleRate = 0;
 
     /**
      * The {@link ViewPager} that will host the section contents.
@@ -95,6 +94,7 @@ public class MainActivity extends AppCompatActivity implements ClientListFragmen
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+/*
         TextView tvInfo = (TextView) findViewById(R.id.tvInfo);
         CheckBox cbScreenWakelock = (CheckBox) findViewById(R.id.cbScreenWakelock);
         cbScreenWakelock.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
@@ -106,12 +106,14 @@ public class MainActivity extends AppCompatActivity implements ClientListFragmen
                     getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
             }
         });
+         */
 
         AudioManager audioManager = (AudioManager) this.getSystemService(Context.AUDIO_SERVICE);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
             String rate = audioManager.getProperty(AudioManager.PROPERTY_OUTPUT_SAMPLE_RATE);
-            String size = audioManager.getProperty(AudioManager.PROPERTY_OUTPUT_FRAMES_PER_BUFFER);
-            tvInfo.setText("Sample rate: " + rate + ", buffer size: " + size);
+            nativeSampleRate = Integer.valueOf(rate);
+//            String size = audioManager.getProperty(AudioManager.PROPERTY_OUTPUT_FRAMES_PER_BUFFER);
+//            tvInfo.setText("Sample rate: " + rate + ", buffer size: " + size);
         }
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
@@ -322,11 +324,38 @@ public class MainActivity extends AppCompatActivity implements ClientListFragmen
     public void onPlayerStop(SnapclientService snapclientService) {
         Log.d(TAG, "onPlayerStop");
         updateStartStopMenuItem();
+        if (wrongSamplerateSnackbar != null)
+            wrongSamplerateSnackbar.dismiss();
     }
 
     @Override
-    public void onLog(SnapclientService snapclientService, String log) {
-        Log.d(TAG, log);
+    public void onLog(SnapclientService snapclientService, String timestamp, String logClass, String msg) {
+        Log.d(TAG, "[" + logClass + "] " + msg);
+        if ("state".equals(logClass)) {
+            if (msg.startsWith("sampleformat")) {
+                msg = msg.substring(msg.indexOf(":") + 2);
+                Log.d(TAG, "sampleformat: " + msg);
+                if (msg.indexOf(':') > 0) {
+                    int samplerate = Integer.valueOf(msg.substring(0, msg.indexOf(':')));
+
+                    if (wrongSamplerateSnackbar != null)
+                        wrongSamplerateSnackbar.dismiss();
+
+                    if ((nativeSampleRate != 0) && (nativeSampleRate != samplerate)) {
+                        wrongSamplerateSnackbar = Snackbar.make(findViewById(R.id.myCoordinatorLayout),
+                                getString(R.string.wrong_sample_rate, samplerate, nativeSampleRate), Snackbar.LENGTH_INDEFINITE);
+/*                        wrongSamplerateSnackbar.setAction(android.R.string.ok, new View.OnClickListener() {
+                            @Override
+                            public void onClick(View v) {
+                                wrongSamplerateSnackbar.dismiss();
+                            }
+                        });
+*/
+                        wrongSamplerateSnackbar.show();
+                    }
+                }
+            }
+        }
     }
 
     @Override
@@ -490,8 +519,8 @@ public class MainActivity extends AppCompatActivity implements ClientListFragmen
                 public void run() {
                     if (serverInfo == null)
                         SectionsPagerAdapter.this.serverInfo = new ServerInfo();
-                    else;
-                        SectionsPagerAdapter.this.serverInfo = serverInfo;
+                    else ;
+                    SectionsPagerAdapter.this.serverInfo = serverInfo;
 
                     boolean changed = (serverInfo.getStreams().size() != streamCount);
 
