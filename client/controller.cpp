@@ -111,9 +111,7 @@ void Controller::onMessageReceived(ClientConnection* connection, const msg::Base
 			throw SnapException("codec not supported: \"" + headerChunk_->codec + "\"");
 
 		sampleFormat_ = decoder_->setHeader(headerChunk_.get());
-		logO << "sample rate: " << sampleFormat_.rate << "Hz\n";
-		logO << "bits/sample: " << sampleFormat_.bits << "\n";
-		logO << "channels   : " << sampleFormat_.channels << "\n";
+		logState << "sampleformat: " << sampleFormat_.rate << ":" << sampleFormat_.bits << ":" << sampleFormat_.channels << "\n";
 
 		stream_.reset(new Stream(sampleFormat_));
 		stream_->setBufferLen(serverSettings_->bufferMs - latency_);

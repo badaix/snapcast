@@ -1,11 +1,25 @@
-snapclient (0.5.0-beta-1) unstable; urgency=low
+snapclient (0.5.0~beta-1) unstable; urgency=low
 
   * Features
-    -TODO
+    -Remote control API (JSON)
+     Get server status, get streams, get active clients
+     assign volume, assign stream, rename client, ...
+    -Android port of the Snapclient with a remote control app
+    -Multiple streams ("zones") can be configured using "-s, --stream":
+     The stream is configured by an URI: path, name, codec, sample format, ...
+     E.g. "pipe:///tmp/snapfifo?name=Radio&sampleformat=48000:16:2&codec=flac"
+     or "file:///home/user/some_pcm_file.wav?name=file"
+    -Added .default file for the service (/etc/default/snapserver).
+     Default program options should be configured here (e.g. streams)
   * Bugfixes
-    -TODO
+    -pipe reader recovers if the pipe has been reopened
   * General
-    -TODO
+    -SnapCast is renamed to Snapcast
+     SnapClient => Snapclient
+     SnapServer => Snapserver
+    -Snapcast protocol:
+     Less messaging: SampleFormat, Command, Ack, String, not yet final
+    -Removed dependency to boost
 
  -- Johannes Pohl <johannes.pohl@badaix.de>  Tue, 29 Dec 2015 12:00:00 +0200
 

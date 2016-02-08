@@ -54,11 +54,13 @@ int Log::sync()
 #endif
 		else if (priority_ == kOut)
 			std::cout << Timestamp() << " [out] " << buffer_.str() << std::flush;
+		else if (priority_ == kState)
+			std::cout << Timestamp() << " [state] " << buffer_.str() << std::flush;
 		else if (priority_ == kErr)
 			std::cout << Timestamp() << " [err] " << buffer_.str() << std::flush;
 		else
 		{
-			std::cout << Timestamp() << " [" << priority_ << "] " << buffer_.str() << std::flush;
+			std::cout << Timestamp() << " [" << (int)priority_ << "] " << buffer_.str() << std::flush;
 			syslog(priority_, "%s", buffer_.str().c_str());
 		}
 		buffer_.str("");

@@ -28,6 +28,7 @@
 #define logD std::clog << kDbg
 #define logO std::clog << kOut
 #define logE std::clog << kErr
+#define logState std::clog << kState
 #define logS(P) std::clog << P
 #define log logO
 
@@ -41,7 +42,7 @@ enum LogPriority
 	kLogNotice  = LOG_NOTICE,  // normal, but significant, condition
 	kLogInfo    = LOG_INFO,    // informational message
 	kLogDebug   = LOG_DEBUG,   // debug-level message
-	kDbg, kOut, kErr
+	kDbg, kOut, kState, kErr
 };
 
 std::ostream& operator<< (std::ostream& os, const LogPriority& log_priority);
