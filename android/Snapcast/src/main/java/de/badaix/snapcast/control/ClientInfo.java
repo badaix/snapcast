@@ -119,14 +119,14 @@ public class ClientInfo implements JsonSerialisable {
         return name;
     }
 
+    public void setName(String name) {
+        this.name = name;
+    }
+
     public String getVisibleName() {
         if ((name != null) && !name.isEmpty())
             return name;
         return getHost();
-    }
-
-    public void setName(String name) {
-        this.name = name;
     }
 
     public int getLatency() {

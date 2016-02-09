@@ -13,11 +13,8 @@ import java.net.InetAddress;
 
 public class NsdHelper {
 
-    public interface NsdHelperListener {
-        void onResolved(NsdHelper nsdHelper, NsdServiceInfo serviceInfo);
-    }
-
     private static final String TAG = "NsdHelper";
+    private static NsdHelper mInstance;
     private String serviceName;
     private String serviceType;
     //    private static final String NSD_SERVICE_TYPE = "_http._tcp.";
@@ -28,8 +25,6 @@ public class NsdHelper {
     private android.net.nsd.NsdManager.ResolveListener mResolveListener = null;
     private Context mContext;
     private NsdHelperListener listener = null;
-    private static NsdHelper mInstance;
-
     private NsdHelper(Context context) {
         mContext = context;
     }
@@ -119,6 +114,10 @@ public class NsdHelper {
                 Log.d(TAG, "Service lost: " + info.getServiceName());
             }
         };
+    }
+
+    public interface NsdHelperListener {
+        void onResolved(NsdHelper nsdHelper, NsdServiceInfo serviceInfo);
     }
 }
 

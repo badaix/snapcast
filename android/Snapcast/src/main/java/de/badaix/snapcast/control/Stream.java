@@ -167,15 +167,15 @@ public class Stream implements JsonSerialisable {
         return query;
     }
 
+    public void setQuery(HashMap<String, String> query) {
+        this.query = query;
+    }
+
     public String getName() {
         if (query.containsKey("name"))
             return query.get("name");
         else
             return "";
-    }
-
-    public void setQuery(HashMap<String, String> query) {
-        this.query = query;
     }
 
     @Override
