@@ -17,6 +17,7 @@ import de.badaix.snapcast.control.Stream;
  */
 public class ClientSettingsFragment extends PreferenceFragment {
     private ClientInfo clientInfo = null;
+    private ClientInfo clientInfoOriginal = null;
     private EditTextPreference prefName;
     private ListPreference prefStream;
     private Preference prefMac;
@@ -33,6 +34,7 @@ public class ClientSettingsFragment extends PreferenceFragment {
 
         Bundle bundle = getArguments();
         clientInfo = (ClientInfo) bundle.getParcelable("clientInfo");
+        clientInfoOriginal = new ClientInfo(clientInfo.toJson());
         final ArrayList<Stream> streams = bundle.getParcelableArrayList("streams");
         final CharSequence[] streamNames = new CharSequence[streams.size()];
         final CharSequence[] streamIds = new CharSequence[streams.size()];
@@ -91,6 +93,10 @@ public class ClientSettingsFragment extends PreferenceFragment {
 
     public ClientInfo getClientInfo() {
         return clientInfo;
+    }
+
+    public ClientInfo getOriginalClientInfo() {
+        return clientInfoOriginal;
     }
 
     public void update() {

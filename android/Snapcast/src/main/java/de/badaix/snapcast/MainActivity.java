@@ -373,8 +373,11 @@ public class MainActivity extends AppCompatActivity implements ClientListFragmen
         }
         if (requestCode == 1) {
             ClientInfo clientInfo = data.getParcelableExtra("clientInfo");
-            remoteControl.setName(clientInfo, clientInfo.getName());
-            remoteControl.setStream(clientInfo, clientInfo.getStream());
+            ClientInfo clientInfoOriginal = data.getParcelableExtra("clientInfoOriginal");
+            if (!clientInfo.getName().equals(clientInfoOriginal.getName()))
+                remoteControl.setName(clientInfo, clientInfo.getName());
+            if (!clientInfo.getStream().equals(clientInfoOriginal.getStream()))
+                remoteControl.setStream(clientInfo, clientInfo.getStream());
             serverInfo.updateClient(clientInfo);
             sectionsPagerAdapter.updateServer(serverInfo);
         }
