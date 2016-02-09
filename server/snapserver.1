@@ -24,23 +24,26 @@ show version number
 \fB-p, --port\fR
 server port
 .TP
-\fB-s, --sampleformat\fR
-sample format (default = 48000:16:2)
+\fB--controlPort\fR
+Remote control port (default =1705)
 .TP
-\fB-c, --codec\fR
-transport codec [flac|ogg|pcm][:options]. Type codec:? to get codec specific options
+\fB-s, --stream\fR
+URI of the PCM input stream. Format: TYPE://host/path?name=NAME[&codec=CODEC][&sampleformat=SAMPLEFORMAT] (default = 48000:16:2)
 .TP
-\fB-f, --fifo\fR
-name of the input fifo file (default = /tmp/snapfifo)
+\fB--sampleformat\fR
+default sample format (default = 48000:16:2)
 .TP
-\fB-d, --daemon\fR
-daemonize, optional process priority [-20..19]
+\fB--codec\fR
+default transport codec [flac|ogg|pcm][:options]. Type codec:? to get codec specific options
+.TP
+\fB--streamBuffer\fR
+Default stream read buffer [ms] (default = 20)
 .TP
 \fB-b, --buffer\fR
 buffer [ms] (default = 1000)
 .TP
-\fB--pipeReadBuffer\fR
-pipe read buffer [ms] (default = 20)
+\fB-d, --daemon\fR
+daemonize, optional process priority [-20..19]
 .SH FILES
 .TP
 \fC/tmp/snapfifo\fR
