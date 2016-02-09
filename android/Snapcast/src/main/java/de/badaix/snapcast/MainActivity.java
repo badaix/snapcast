@@ -369,6 +369,11 @@ public class MainActivity extends AppCompatActivity implements ClientListFragmen
 */
                         wrongSamplerateSnackbar.show();
                     }
+                    else if (nativeSampleRate == 0) {
+                        wrongSamplerateSnackbar = Snackbar.make(findViewById(R.id.myCoordinatorLayout),
+                                getString(R.string.unknown_sample_rate), Snackbar.LENGTH_LONG);
+                        wrongSamplerateSnackbar.show();
+                    }
                 }
             }
         }
