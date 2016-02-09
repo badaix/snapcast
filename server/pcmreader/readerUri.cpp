@@ -26,14 +26,21 @@
 using namespace std;
 
 
-ReaderUri::ReaderUri(const std::string& uri)
+ReaderUri::ReaderUri(const std::string& readerUri)
 {
 // https://en.wikipedia.org/wiki/Uniform_Resource_Identifier
 // scheme:[//[user:password@]host[:port]][/]path[?query][#fragment]
 // would be more elegant with regex. Not yet supported on my dev machine's gcc 4.8 :(
+	logE << "ReaderUri: " << readerUri << "\n";
 	size_t pos;
-	this->uri = uri;
+	uri = trim_copy(readerUri);
+	while (!uri.empty() && ((uri[0] == '\'') || (uri[0] == '"')))
+		uri = uri.substr(1);
+	while (!uri.empty() && ((uri[uri.length()-1] == '\'') || (uri[uri.length()-1] == '"')))
+		uri = uri.substr(0, this->uri.length()-1);
+
 	string decodedUri = uriDecode(uri);
+	logD << "ReaderUri: " << decodedUri << "\n";
 
 	id_ = decodedUri;
 	pos = id_.find('?');
@@ -49,7 +56,7 @@ ReaderUri::ReaderUri(const std::string& uri)
 	pos = tmp.find(':');
 	if (pos == string::npos)
 		throw invalid_argument("missing ':'");
-	scheme = tmp.substr(0, pos);
+	scheme = trim_copy(tmp.substr(0, pos));
 	tmp = tmp.substr(pos + 1);
 	logD << "scheme: '" << scheme << "' tmp: '" << tmp << "'\n";
 
@@ -60,7 +67,7 @@ ReaderUri::ReaderUri(const std::string& uri)
 	pos = tmp.find('/');
 	if (pos == string::npos)
 		throw invalid_argument("missing path separator: '/'");
-	host = tmp.substr(0, pos);
+	host = trim_copy(tmp.substr(0, pos));
 	tmp = tmp.substr(pos);
 	path = tmp;
 	logD << "host: '" << host << "' tmp: '" << tmp << "' path: '" << path << "'\n";
@@ -69,7 +76,7 @@ ReaderUri::ReaderUri(const std::string& uri)
 	if (pos == string::npos)
 		return;
 
-	path = tmp.substr(0, pos);
+	path = trim_copy(tmp.substr(0, pos));
 	tmp = tmp.substr(pos + 1);
 	string queryStr = tmp;
 	logD << "path: '" << path << "' tmp: '" << tmp << "' query: '" << queryStr << "'\n";
@@ -79,7 +86,7 @@ ReaderUri::ReaderUri(const std::string& uri)
 	{
 		queryStr = tmp.substr(0, pos);
 		tmp = tmp.substr(pos + 1);
-		fragment = tmp;
+		fragment = trim_copy(tmp);
 		logD << "query: '" << queryStr << "' fragment: '" << fragment << "' tmp: '" << tmp << "'\n";
 	}
 

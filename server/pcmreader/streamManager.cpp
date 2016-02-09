@@ -21,6 +21,7 @@
 #include "pipeReader.h"
 #include "fileReader.h"
 #include "common/log.h"
+#include "common/snapException.h"
 
 
 using namespace std;
@@ -59,6 +60,10 @@ PcmReader* StreamManager::addStream(const std::string& uri)
 	{
 		streams_.push_back(make_shared<FileReader>(pcmListener_, readerUri));
 		return streams_.back().get();
+	}
+	else
+	{
+		throw SnapException("Unknown stream type: " + readerUri.scheme);
 	}
 
 	return NULL;
