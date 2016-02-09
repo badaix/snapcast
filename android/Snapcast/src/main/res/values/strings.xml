@@ -37,5 +37,7 @@
     <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
     <string name="client_stream">Stream</string>
+    <string name="first_run_title">Warning</string>
+    <string name="first_run_text">This is just a test client.\nNot meant for production use.</string>
 </resources>
 

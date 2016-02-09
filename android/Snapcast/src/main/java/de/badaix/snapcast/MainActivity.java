@@ -2,6 +2,7 @@ package de.badaix.snapcast;
 
 import android.content.ComponentName;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
@@ -19,6 +20,7 @@ import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.app.FragmentStatePagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.ActionBar;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
@@ -146,13 +148,26 @@ public class MainActivity extends AppCompatActivity implements ClientListFragmen
         client = new GoogleApiClient.Builder(this).addApi(AppIndex.API).build();
     }
 
+    public void checkFirstRun() {
+        boolean isFirstRun = getSharedPreferences("settings", MODE_PRIVATE).getBoolean("isFirstRun", true);
+        if (isFirstRun) {
+            // Place your dialog code here to display the dialog
+            new AlertDialog.Builder(this).setTitle(R.string.first_run_title).setMessage(R.string.first_run_text).setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    getSharedPreferences("settings", MODE_PRIVATE).edit().putBoolean("isFirstRun", false).apply();
+                }
+            }).setCancelable(true).show();
+        }
+    }
+
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.menu_snapcast, menu);
         miStartStop = menu.findItem(R.id.action_play_stop);
         updateStartStopMenuItem();
-        SharedPreferences settings = getSharedPreferences("settings", 0);
+        SharedPreferences settings = getSharedPreferences("settings", MODE_PRIVATE);
         boolean isChecked = settings.getBoolean("hide_offline", false);
         MenuItem menuItem = menu.findItem(R.id.action_hide_offline);
         menuItem.setChecked(isChecked);
@@ -182,7 +197,7 @@ public class MainActivity extends AppCompatActivity implements ClientListFragmen
             return true;
         } else if (id == R.id.action_hide_offline) {
             item.setChecked(!item.isChecked());
-            SharedPreferences settings = getSharedPreferences("settings", 0);
+            SharedPreferences settings = getSharedPreferences("settings", MODE_PRIVATE);
             SharedPreferences.Editor editor = settings.edit();
             editor.putBoolean("hide_offline", item.isChecked());
             editor.apply();
@@ -254,6 +269,7 @@ public class MainActivity extends AppCompatActivity implements ClientListFragmen
     public void onResume() {
         super.onResume();
         startRemoteControl();
+        checkFirstRun();
     }
 
     @Override
