@@ -41,7 +41,12 @@ For Arch derivates:
     $ pacman -S git base-devel
     $ pacman -S alsa-lib avahi libvorbis flac alsa-utils
     
-Build Snapcast by cd'ing into the Snapcast src-root directory
+After cloning the Snapcast repository, you have to update the external submodules:
+
+    $ cd <MY_SNAPCAST_ROOT>/externals
+    $ git submodule update --init --recursive
+    
+Build Snapcast by cd'ing into the Snapcast src-root directory:
 
     $ cd <MY_SNAPCAST_ROOT>
     $ make
