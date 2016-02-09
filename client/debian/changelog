@@ -21,7 +21,7 @@ snapclient (0.5.0~beta-1) unstable; urgency=low
      Less messaging: SampleFormat, Command, Ack, String, not yet final
     -Removed dependency to boost
 
- -- Johannes Pohl <johannes.pohl@badaix.de>  Tue, 29 Dec 2015 12:00:00 +0200
+ -- Johannes Pohl <johannes.pohl@badaix.de>  Tue, 09 Feb 2016 13:25:00 +0200
 
 snapclient (0.4.0) unstable; urgency=low
 
