@@ -76,8 +76,8 @@ public class ClientInfo implements JsonSerialisable {
             json.put("host", host);
             json.put("version", version);
             json.put("name", name);
-            json.put("volume", volume);
-            json.put("lastSeen", lastSeen);
+            json.put("volume", volume.toJson());
+            json.put("lastSeen", lastSeen.toJson());
             json.put("connected", connected);
             json.put("latency", latency);
             json.put("stream", stream);

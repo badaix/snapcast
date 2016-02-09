@@ -374,8 +374,10 @@ public class MainActivity extends AppCompatActivity implements ClientListFragmen
         if (requestCode == 1) {
             ClientInfo clientInfo = data.getParcelableExtra("clientInfo");
             ClientInfo clientInfoOriginal = data.getParcelableExtra("clientInfoOriginal");
+            Log.d(TAG, "new name: " + clientInfo.getName() + ", old name: " + clientInfoOriginal.getName());
             if (!clientInfo.getName().equals(clientInfoOriginal.getName()))
                 remoteControl.setName(clientInfo, clientInfo.getName());
+            Log.d(TAG, "new stream: " + clientInfo.getStream() + ", old stream: " + clientInfoOriginal.getStream());
             if (!clientInfo.getStream().equals(clientInfoOriginal.getStream()))
                 remoteControl.setStream(clientInfo, clientInfo.getStream());
             serverInfo.updateClient(clientInfo);
