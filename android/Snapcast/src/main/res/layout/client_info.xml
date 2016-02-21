@@ -25,7 +25,8 @@
                 android:layout_alignParentEnd="true"
                 android:background="@null"
                 android:src="@drawable/abc_ic_menu_moreoverflow_mtrl_alpha"
-                android:layout_centerVertical="true" />
+                android:layout_centerVertical="true"
+                android:layout_alignParentRight="true"/>
 
             <LinearLayout
                 android:layout_alignParentLeft="true"
