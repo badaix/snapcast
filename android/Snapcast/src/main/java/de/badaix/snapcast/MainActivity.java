@@ -5,7 +5,6 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.ServiceConnection;
-import android.content.SharedPreferences;
 import android.media.AudioManager;
 import android.net.Uri;
 import android.net.nsd.NsdServiceInfo;
@@ -40,6 +39,7 @@ import de.badaix.snapcast.control.RemoteControl;
 import de.badaix.snapcast.control.ServerInfo;
 import de.badaix.snapcast.control.Stream;
 import de.badaix.snapcast.utils.NsdHelper;
+import de.badaix.snapcast.utils.Settings;
 import de.badaix.snapcast.utils.Setup;
 
 public class MainActivity extends AppCompatActivity implements ClientListFragment.OnFragmentInteractionListener, ClientInfoItem.ClientInfoItemListener, RemoteControl.RemoteControlListener, SnapclientService.SnapclientListener, NsdHelper.NsdHelperListener {
@@ -146,6 +146,8 @@ public class MainActivity extends AppCompatActivity implements ClientListFragmen
         // ATTENTION: This was auto-generated to implement the App Indexing API.
         // See https://g.co/AppIndexing/AndroidStudio for more information.
         client = new GoogleApiClient.Builder(this).addApi(AppIndex.API).build();
+
+        sectionsPagerAdapter.setHideOffline(Settings.getInstance(this).getBoolean("hide_offline", false));
     }
 
     public void checkFirstRun() {
@@ -167,8 +169,7 @@ public class MainActivity extends AppCompatActivity implements ClientListFragmen
         getMenuInflater().inflate(R.menu.menu_snapcast, menu);
         miStartStop = menu.findItem(R.id.action_play_stop);
         updateStartStopMenuItem();
-        SharedPreferences settings = getSharedPreferences("settings", MODE_PRIVATE);
-        boolean isChecked = settings.getBoolean("hide_offline", false);
+        boolean isChecked = Settings.getInstance(this).getBoolean("hide_offline", false);
         MenuItem menuItem = menu.findItem(R.id.action_hide_offline);
         menuItem.setChecked(isChecked);
         sectionsPagerAdapter.setHideOffline(isChecked);
@@ -197,10 +198,7 @@ public class MainActivity extends AppCompatActivity implements ClientListFragmen
             return true;
         } else if (id == R.id.action_hide_offline) {
             item.setChecked(!item.isChecked());
-            SharedPreferences settings = getSharedPreferences("settings", MODE_PRIVATE);
-            SharedPreferences.Editor editor = settings.edit();
-            editor.putBoolean("hide_offline", item.isChecked());
-            editor.apply();
+            Settings.getInstance(this).put("hide_offline", item.isChecked());
             sectionsPagerAdapter.setHideOffline(item.isChecked());
             return true;
         } else if (id == R.id.action_refresh) {
@@ -368,8 +366,7 @@ public class MainActivity extends AppCompatActivity implements ClientListFragmen
                         });
 */
                         wrongSamplerateSnackbar.show();
-                    }
-                    else if (nativeSampleRate == 0) {
+                    } else if (nativeSampleRate == 0) {
                         wrongSamplerateSnackbar = Snackbar.make(findViewById(R.id.myCoordinatorLayout),
                                 getString(R.string.unknown_sample_rate), Snackbar.LENGTH_LONG);
                         wrongSamplerateSnackbar.show();
@@ -532,8 +529,8 @@ public class MainActivity extends AppCompatActivity implements ClientListFragmen
     public class SectionsPagerAdapter extends FragmentStatePagerAdapter {
 
         private Vector<ClientListFragment> fragments = new Vector<>();
-        private ServerInfo serverInfo = new ServerInfo();
         private int streamCount = 0;
+        private boolean hideOffline = false;
 
         public SectionsPagerAdapter(FragmentManager fm) {
             super(fm);
@@ -543,11 +540,6 @@ public class MainActivity extends AppCompatActivity implements ClientListFragmen
             MainActivity.this.runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    if (serverInfo == null)
-                        SectionsPagerAdapter.this.serverInfo = new ServerInfo();
-                    else ;
-                    SectionsPagerAdapter.this.serverInfo = serverInfo;
-
                     boolean changed = (serverInfo.getStreams().size() != streamCount);
 
                     while (serverInfo.getStreams().size() > fragments.size())
@@ -563,6 +555,8 @@ public class MainActivity extends AppCompatActivity implements ClientListFragmen
                         notifyDataSetChanged();
                         tabLayout.setTabsFromPagerAdapter(SectionsPagerAdapter.this);
                     }
+
+                    setHideOffline(hideOffline);
                 }
 
             });
@@ -570,6 +564,7 @@ public class MainActivity extends AppCompatActivity implements ClientListFragmen
         }
 
         public void setHideOffline(boolean hide) {
+            this.hideOffline = hide;
             for (ClientListFragment clientListFragment : fragments)
                 clientListFragment.setHideOffline(hide);
         }

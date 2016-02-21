@@ -25,6 +25,7 @@ public class NsdHelper {
     private android.net.nsd.NsdManager.ResolveListener mResolveListener = null;
     private Context mContext;
     private NsdHelperListener listener = null;
+
     private NsdHelper(Context context) {
         mContext = context;
     }
