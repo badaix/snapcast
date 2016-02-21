@@ -20,6 +20,8 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fstream>
+#include "common/snapException.h"
+#include "common/compat.h"
 #include "common/log.h"
 
 using namespace std;
@@ -27,10 +29,17 @@ using namespace std;
 
 Config::Config()
 {
-	string dir = getenv("HOME") + string("/.config/Snapcast/");
-	mkdir(dir.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
-	filename_ = dir + "settings.json";
-	cerr << filename_ << "\n";
+	string dir;
+	if (getenv("HOME") == NULL)
+		dir = "/var/lib/snapcast/";
+	else
+		dir = getenv("HOME") + string("/.config/snapcast/");
+	int status = mkdir(dir.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+	if ((status != 0) && (errno != EEXIST))
+		throw SnapException("failed to create settings directory: \"" + dir + "\": " + cpt::to_string(errno));
+
+	filename_ = dir + "server.json";
+	logO << "Settings file: " << filename_ << "\n";
 
 	try
 	{

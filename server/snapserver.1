@@ -46,8 +46,14 @@ buffer [ms] (default = 1000)
 daemonize, optional process priority [-20..19]
 .SH FILES
 .TP
-\fC/tmp/snapfifo\fR
+\fI/tmp/snapfifo\fR
 PCM input fifo file
+.TP
+\fI/etc/default/snapserver\fR
+the daemon default configuration file
+.TP
+\fI~/.config/snapcast/server.json\fR or (if $HOME is not set) \fI/var/lib/snapcast/server.json\fR
+persistent server data file
 .SH "COPYRIGHT"
 Copyright (C) 2014-2016 Johannes Pohl (johannes.pohl@badaix.de).
 License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>.
