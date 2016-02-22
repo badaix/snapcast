@@ -88,4 +88,22 @@ public class Settings {
     public long getLong(String key, long defaultValue) {
         return getPrefs().getLong(key, defaultValue);
     }
+
+    public String getHost() {
+        return getString("host", "");
+    }
+
+    public int getStreamPort() {
+        return getInt("streamPort", 1704);
+    }
+
+    public int getControlPort() {
+        return getInt("controlPort", getStreamPort() + 1);
+    }
+
+    public void setHost(String host, int streamPort, int controlPort) {
+        put("host", host);
+        put("streamPort", streamPort);
+        put("controlPort", controlPort);
+    }
 }

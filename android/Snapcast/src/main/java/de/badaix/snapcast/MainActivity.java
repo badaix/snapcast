@@ -22,11 +22,13 @@ import android.support.v7.app.ActionBar;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.WindowManager;
+import android.widget.Toast;
 
 import com.google.android.gms.appindexing.Action;
 import com.google.android.gms.appindexing.AppIndex;
@@ -49,8 +51,10 @@ public class MainActivity extends AppCompatActivity implements ClientListFragmen
 
     boolean bound = false;
     private MenuItem miStartStop = null;
+    private MenuItem miSettings = null;
     private String host = "";
     private int port = 1704;
+    private int controlPort = 1705;
     private RemoteControl remoteControl = null;
     private ServerInfo serverInfo = null;
     private SnapclientService snapclientService;
@@ -168,11 +172,13 @@ public class MainActivity extends AppCompatActivity implements ClientListFragmen
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.menu_snapcast, menu);
         miStartStop = menu.findItem(R.id.action_play_stop);
+        miSettings = menu.findItem(R.id.action_settings);
         updateStartStopMenuItem();
         boolean isChecked = Settings.getInstance(this).getBoolean("hide_offline", false);
         MenuItem menuItem = menu.findItem(R.id.action_hide_offline);
         menuItem.setChecked(isChecked);
         sectionsPagerAdapter.setHideOffline(isChecked);
+        setHost(host, port, controlPort);
         return true;
     }
 
@@ -184,9 +190,18 @@ public class MainActivity extends AppCompatActivity implements ClientListFragmen
         int id = item.getItemId();
 
         //noinspection SimplifiableIfStatement
-        if (id == R.id.action_scan) {
+        if (id == R.id.action_settings) {
 //            NsdHelper.getInstance(this).startListening("*._tcp.", "SnapCast", this);
-            NsdHelper.getInstance(this).startListening("_snapcast._tcp.", SERVICE_NAME, this);
+            ServerDialogFragment serverDialogFragment = new ServerDialogFragment();
+            serverDialogFragment.setHost(Settings.getInstance(this).getHost(), Settings.getInstance(this).getStreamPort(), Settings.getInstance(this).getControlPort());
+            serverDialogFragment.setListener(new ServerDialogFragment.ServerDialogListener() {
+                @Override
+                public void onHostChanged(String host, int streamPort, int controlPort) {
+                    setHost(host, streamPort, controlPort);
+                }
+            });
+            serverDialogFragment.show(getSupportFragmentManager(), "serverDialogFragment");
+//            NsdHelper.getInstance(this).startListening("_snapcast._tcp.", SERVICE_NAME, this);
             return true;
         } else if (id == R.id.action_play_stop) {
             if (bound && snapclientService.isRunning()) {
@@ -253,7 +268,7 @@ public class MainActivity extends AppCompatActivity implements ClientListFragmen
         if (remoteControl == null)
             remoteControl = new RemoteControl(this);
         if (!host.isEmpty())
-            remoteControl.connect(host, port + 1);
+            remoteControl.connect(host, controlPort);
     }
 
     private void stopRemoteControl() {
@@ -274,7 +289,10 @@ public class MainActivity extends AppCompatActivity implements ClientListFragmen
     public void onStart() {
         super.onStart();
 
-        NsdHelper.getInstance(this).startListening("_snapcast._tcp.", SERVICE_NAME, this);
+        if (TextUtils.isEmpty(Settings.getInstance(this).getHost()))
+            NsdHelper.getInstance(this).startListening("_snapcast._tcp.", SERVICE_NAME, this);
+        else
+            setHost(Settings.getInstance(this).getHost(), Settings.getInstance(this).getStreamPort(), Settings.getInstance(this).getControlPort());
 
         Intent intent = new Intent(this, SnapclientService.class);
         bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
@@ -457,13 +475,34 @@ public class MainActivity extends AppCompatActivity implements ClientListFragmen
         });
     }
 
+    private void setHost(final String host, final int streamPort, final int controlPort) {
+        if (TextUtils.isEmpty(host))
+            return;
+
+        this.host = host;
+        this.port = streamPort;
+        this.controlPort = controlPort;
+        Settings.getInstance(this).setHost(host, streamPort, controlPort);
+        this.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                if (miSettings != null)
+                    miSettings.setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER);
+                if (miStartStop != null)
+                    miStartStop.setVisible(true);
+                setActionbarSubtitle(host + ":" + streamPort);
+            }
+        });
+        startRemoteControl();
+    }
+
+
     @Override
     public void onResolved(NsdHelper nsdHelper, NsdServiceInfo serviceInfo) {
         Log.d(TAG, "resolved: " + serviceInfo);
-        host = serviceInfo.getHost().getCanonicalHostName();
-        port = serviceInfo.getPort();
-        setActionbarSubtitle(host + ":" + port);
-        startRemoteControl();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+            setHost(serviceInfo.getHost().getCanonicalHostName(), serviceInfo.getPort(), serviceInfo.getPort() + 1);
+        }
         NsdHelper.getInstance(this).stopListening();
     }
 

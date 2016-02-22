@@ -40,5 +40,9 @@
     <string name="client_stream">Stream</string>
     <string name="first_run_title">Warning</string>
     <string name="first_run_text">This is just a test client.\nNot meant for production use.</string>
+    <string name="host">Host</string>
+    <string name="streaming_port">stream port</string>
+    <string name="control_port">control port</string>
+    <string name="server_host">Snapserver host</string>
 </resources>
 

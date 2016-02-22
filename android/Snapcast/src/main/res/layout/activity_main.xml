@@ -7,7 +7,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:fitsSystemWindows="true"
-    tools:context="de.badaix.swipe.MainActivity">
+    tools:context="de.badaix.snapcast.MainActivity">
 
     <android.support.design.widget.AppBarLayout
         android:id="@+id/appbar"
