@@ -4,13 +4,16 @@ package de.badaix.snapcast.utils;
  * Created by johannes on 19.01.16.
  */
 
+import android.annotation.TargetApi;
 import android.content.Context;
 import android.net.nsd.NsdManager;
 import android.net.nsd.NsdServiceInfo;
+import android.os.Build;
 import android.util.Log;
 
 import java.net.InetAddress;
 
+@TargetApi(Build.VERSION_CODES.JELLY_BEAN)
 public class NsdHelper {
 
     private static final String TAG = "NsdHelper";
@@ -40,6 +43,9 @@ public class NsdHelper {
     }
 
     public void startListening(String serviceType, String serviceName, NsdHelperListener listener) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN)
+            return;
+
         stopListening();
         this.listener = listener;
         this.serviceName = serviceName;
@@ -52,6 +58,9 @@ public class NsdHelper {
     }
 
     public void stopListening() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN)
+            return;
+
         if (mDiscoveryListener != null) {
             try {
                 mNsdManager.stopServiceDiscovery(mDiscoveryListener);
