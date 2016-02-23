@@ -6,12 +6,12 @@
 
 
     <ListView
+        android:id="@+id/lvClient"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:listSelector="@android:color/transparent"
         android:cacheColorHint="@android:color/transparent"
         android:divider="@null"
         android:dividerHeight="1dp"
-        android:id="@+id/lvClient" />
+        android:listSelector="@android:color/transparent"/>
 
 </FrameLayout>

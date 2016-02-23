@@ -2,40 +2,40 @@
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
     <EditTextPreference
         android:key="pref_client_name"
-        android:title="@string/client_name"
-        android:summary="name" />
+        android:summary="name"
+        android:title="@string/client_name"/>
     <ListPreference
         android:key="pref_client_stream"
-        android:title="@string/client_stream"
-        android:summary="stream" />
+        android:summary="stream"
+        android:title="@string/client_stream"/>
     <Preference
+        android:enabled="false"
         android:key="pref_client_mac"
-        android:title="@string/client_mac"
-        android:enabled="false"
-        android:summary="mac" />
+        android:summary="mac"
+        android:title="@string/client_mac"/>
     <Preference
+        android:enabled="false"
         android:key="pref_client_ip"
-        android:title="@string/client_ip"
-        android:enabled="false"
-        android:summary="ip" />
+        android:summary="ip"
+        android:title="@string/client_ip"/>
     <Preference
+        android:enabled="false"
         android:key="pref_client_host"
-        android:title="@string/client_host"
-        android:enabled="false"
-        android:summary="host" />
+        android:summary="host"
+        android:title="@string/client_host"/>
     <Preference
+        android:enabled="false"
         android:key="pref_client_version"
-        android:title="@string/client_version"
-        android:enabled="false"
-        android:summary="version" />
+        android:summary="version"
+        android:title="@string/client_version"/>
     <Preference
+        android:enabled="false"
         android:key="pref_client_last_seen"
-        android:title="@string/client_last_seen"
-        android:enabled="false"
-        android:summary="online" />
+        android:summary="online"
+        android:title="@string/client_last_seen"/>
     <Preference
-        android:key="pref_client_latency"
-        android:title="@string/client_latency"
         android:enabled="false"
-        android:summary="TODO: make configurable... 0ms" />
+        android:key="pref_client_latency"
+        android:summary="TODO: make configurable... 0ms"
+        android:title="@string/client_latency"/>
 </PreferenceScreen>
