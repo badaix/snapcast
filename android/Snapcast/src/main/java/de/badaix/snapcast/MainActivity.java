@@ -198,6 +198,7 @@ public class MainActivity extends AppCompatActivity implements ClientListFragmen
                 @Override
                 public void onHostChanged(String host, int streamPort, int controlPort) {
                     setHost(host, streamPort, controlPort);
+                    startRemoteControl();
                 }
             });
             serverDialogFragment.show(getSupportFragmentManager(), "serverDialogFragment");
@@ -493,7 +494,6 @@ public class MainActivity extends AppCompatActivity implements ClientListFragmen
                 setActionbarSubtitle(host + ":" + streamPort);
             }
         });
-        startRemoteControl();
     }
 
 
@@ -502,6 +502,7 @@ public class MainActivity extends AppCompatActivity implements ClientListFragmen
         Log.d(TAG, "resolved: " + serviceInfo);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
             setHost(serviceInfo.getHost().getCanonicalHostName(), serviceInfo.getPort(), serviceInfo.getPort() + 1);
+            startRemoteControl();
         }
         NsdHelper.getInstance(this).stopListening();
     }

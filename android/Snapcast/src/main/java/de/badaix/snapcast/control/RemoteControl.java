@@ -26,7 +26,7 @@ public class RemoteControl implements TcpClient.TcpClientListener {
         msgId = 0;
     }
 
-    public void connect(final String host, final int port) {
+    public synchronized void connect(final String host, final int port) {
         if ((tcpClient != null) && tcpClient.isConnected()) {
             if (this.host.equals(host) && (this.port == port))
                 return;
