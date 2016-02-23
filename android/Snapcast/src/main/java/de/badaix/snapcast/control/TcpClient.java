@@ -67,7 +67,7 @@ public class TcpClient {
             mBufferOut.close();
         }
 
-        mMessageListener = null;
+//        mMessageListener = null;
         mBufferIn = null;
         mBufferOut = null;
         mServerMessage = null;
@@ -80,6 +80,9 @@ public class TcpClient {
                 mRun = true;
 
                 try {
+                    if (mMessageListener != null)
+                        mMessageListener.onConnecting(TcpClient.this);
+
                     // here you must put your computer's IP address.
                     InetAddress serverAddr = InetAddress.getByName(host);
 
@@ -129,11 +132,13 @@ public class TcpClient {
                         mRun = false;
                         socket.close();
                         if (mMessageListener != null)
-                            mMessageListener.onDisconnected(TcpClient.this);
+                            mMessageListener.onDisconnected(TcpClient.this, null);
                     }
 
                 } catch (Exception e) {
                     Log.d(TAG, "Error", e);
+                    if (mMessageListener != null)
+                        mMessageListener.onDisconnected(TcpClient.this, e);
                 }
             }
         };
@@ -147,9 +152,11 @@ public class TcpClient {
     public interface TcpClientListener {
         void onMessageReceived(TcpClient tcpClient, String message);
 
+        void onConnecting(TcpClient tcpClient);
+
         void onConnected(TcpClient tcpClient);
 
-        void onDisconnected(TcpClient tcpClient);
+        void onDisconnected(TcpClient tcpClient, Exception e);
     }
 
 }

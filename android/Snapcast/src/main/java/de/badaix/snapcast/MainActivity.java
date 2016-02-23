@@ -33,6 +33,7 @@ import com.google.android.gms.appindexing.Action;
 import com.google.android.gms.appindexing.AppIndex;
 import com.google.android.gms.common.api.GoogleApiClient;
 
+import java.net.UnknownHostException;
 import java.util.Vector;
 
 import de.badaix.snapcast.control.ClientInfo;
@@ -429,14 +430,28 @@ public class MainActivity extends AppCompatActivity implements ClientListFragmen
                 mViewPager.setVisibility(View.VISIBLE);
             }
         });
+        setActionbarSubtitle("connected: " + remoteControl.getHost());
         remoteControl.getServerStatus();
     }
 
     @Override
-    public void onDisconnected(RemoteControl remoteControl) {
+    public void onConnecting(RemoteControl remoteControl) {
+        setActionbarSubtitle("connecting: " + remoteControl.getHost());
+    }
+
+    @Override
+    public void onDisconnected(RemoteControl remoteControl, Exception e) {
         Log.d(TAG, "onDisconnected");
         serverInfo = new ServerInfo();
         sectionsPagerAdapter.updateServer(serverInfo);
+        if (e != null) {
+            if (e instanceof UnknownHostException)
+                setActionbarSubtitle("error: unknown host");
+            else
+                setActionbarSubtitle("error: " + e.getMessage());
+        } else {
+            setActionbarSubtitle("not connected");
+        }
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
@@ -490,7 +505,7 @@ public class MainActivity extends AppCompatActivity implements ClientListFragmen
                     miSettings.setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER);
                 if (miStartStop != null)
                     miStartStop.setVisible(true);
-                setActionbarSubtitle(host + ":" + streamPort);
+//                setActionbarSubtitle(host + ":" + streamPort);
             }
         });
     }

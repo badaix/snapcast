@@ -1,6 +1,8 @@
 package de.badaix.snapcast;
 
+import android.app.Activity;
 import android.app.Dialog;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.net.nsd.NsdServiceInfo;
 import android.os.Build;
@@ -85,7 +87,20 @@ public class ServerDialogFragment extends DialogFragment implements View.OnClick
         });
     }
 
+    @Override
+    public void onAttach(Context context) {
+        super.onAttach(context);
+
+        if (context instanceof Activity) {
+            update();
+        }
+
+    }
+
     private void update() {
+        if (this.getActivity() == null)
+            return;
+
         try {
             this.getActivity().runOnUiThread(new Runnable() {
                 @Override

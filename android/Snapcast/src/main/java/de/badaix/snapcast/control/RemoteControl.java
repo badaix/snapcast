@@ -26,6 +26,16 @@ public class RemoteControl implements TcpClient.TcpClientListener {
         msgId = 0;
     }
 
+    public String getHost() {
+        return host;
+    }
+
+
+    public int getPort() {
+        return port;
+    }
+
+
     public synchronized void connect(final String host, final int port) {
         if ((tcpClient != null) && tcpClient.isConnected()) {
             if (this.host.equals(host) && (this.port == port))
@@ -105,6 +115,13 @@ public class RemoteControl implements TcpClient.TcpClientListener {
     }
 
     @Override
+    public void onConnecting(TcpClient tcpClient) {
+        Log.d(TAG, "onConnecting");
+        if (listener != null)
+            listener.onConnecting(this);
+    }
+
+    @Override
     public void onConnected(TcpClient tcpClient) {
         Log.d(TAG, "onConnected");
         serverInfo = new ServerInfo();
@@ -113,11 +130,11 @@ public class RemoteControl implements TcpClient.TcpClientListener {
     }
 
     @Override
-    public void onDisconnected(TcpClient tcpClient) {
+    public void onDisconnected(TcpClient tcpClient, Exception e) {
         Log.d(TAG, "onDisconnected");
         serverInfo = null;
         if (listener != null)
-            listener.onDisconnected(this);
+            listener.onDisconnected(this, e);
     }
 
     private JSONObject jsonRequest(String method, JSONObject params) {
@@ -195,7 +212,9 @@ public class RemoteControl implements TcpClient.TcpClientListener {
     public interface RemoteControlListener {
         void onConnected(RemoteControl remoteControl);
 
-        void onDisconnected(RemoteControl remoteControl);
+        void onConnecting(RemoteControl remoteControl);
+
+        void onDisconnected(RemoteControl remoteControl, Exception e);
 
         void onClientEvent(RemoteControl remoteControl, ClientInfo clientInfo, ClientEvent event);
 
