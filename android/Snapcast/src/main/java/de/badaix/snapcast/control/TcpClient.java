@@ -78,6 +78,7 @@ public class TcpClient {
             @Override
             public void run() {
                 mRun = true;
+                Exception exception = null;
 
                 try {
                     if (mMessageListener != null)
@@ -91,54 +92,53 @@ public class TcpClient {
                     // create a socket to make the connection with the server
                     socket = new Socket(serverAddr, port);
 
-                    try {
 
-                        // sends the message to the server
-                        mBufferOut = new PrintWriter(new BufferedWriter(
-                                new OutputStreamWriter(socket.getOutputStream())), true);
+                    // sends the message to the server
+                    mBufferOut = new PrintWriter(new BufferedWriter(
+                            new OutputStreamWriter(socket.getOutputStream())), true);
 
-                        // receives the message which the server sends back
-                        mBufferIn = new BufferedReader(new InputStreamReader(
-                                socket.getInputStream()));
+                    // receives the message which the server sends back
+                    mBufferIn = new BufferedReader(new InputStreamReader(
+                            socket.getInputStream()));
 
-                        if (mMessageListener != null)
-                            mMessageListener.onConnected(TcpClient.this);
+                    if (mMessageListener != null)
+                        mMessageListener.onConnected(TcpClient.this);
 
-                        // in this while the client listens for the messages sent by the
-                        // server
-                        while (mRun) {
+                    // in this while the client listens for the messages sent by the
+                    // server
+                    while (mRun) {
 
-                            mServerMessage = mBufferIn.readLine();
+                        mServerMessage = mBufferIn.readLine();
 
-                            if (mServerMessage != null) {
-                                Log.d(TAG, "Received Message: '" + mServerMessage + "'");
-                                if (mMessageListener != null) {
-                                    mMessageListener.onMessageReceived(TcpClient.this, mServerMessage);
-                                }
-                            } else {
-                                break;
+                        if (mServerMessage != null) {
+                            Log.d(TAG, "Received Message: '" + mServerMessage + "'");
+                            if (mMessageListener != null) {
+                                mMessageListener.onMessageReceived(TcpClient.this, mServerMessage);
                             }
+                        } else {
+                            break;
                         }
-
-
-                    } catch (Exception e) {
-                        Log.d(TAG, "Error", e);
-
-                    } finally {
-                        // the socket must be closed. It is not possible to reconnect to
-                        // this socket
-                        // after it is closed, which means a new socket instance has to
-                        // be created.
-                        mRun = false;
-                        socket.close();
-                        if (mMessageListener != null)
-                            mMessageListener.onDisconnected(TcpClient.this, null);
                     }
+
 
                 } catch (Exception e) {
                     Log.d(TAG, "Error", e);
+                    exception = e;
+                } finally {
+                    // the socket must be closed. It is not possible to reconnect to
+                    // this socket
+                    // after it is closed, which means a new socket instance has to
+                    // be created.
+                    mRun = false;
+                    if (socket != null) {
+                        try {
+                            socket.close();
+                        } catch (Exception e) {
+                        }
+                    }
+                    socket = null;
                     if (mMessageListener != null)
-                        mMessageListener.onDisconnected(TcpClient.this, e);
+                        mMessageListener.onDisconnected(TcpClient.this, exception);
                 }
             }
         };

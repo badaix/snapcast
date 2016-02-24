@@ -80,10 +80,9 @@ public class NsdHelper {
             @Override
             public void onServiceResolved(NsdServiceInfo serviceInfo) {
                 NsdServiceInfo info = serviceInfo;
-                mHost = info.getHost();
-                mPort = info.getPort();
-                Log.d(TAG, "Service resolved :" + mHost + ":" + mPort);
-                listener.onResolved(NsdHelper.this, serviceInfo);
+                // sometimes it returns an IPv6 address...
+                if (!info.getHost().getCanonicalHostName().contains(":"))
+                    listener.onResolved(NsdHelper.this, serviceInfo);
             }
         };
     }

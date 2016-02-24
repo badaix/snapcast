@@ -5,6 +5,8 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
 import android.media.AudioManager;
 import android.net.Uri;
 import android.net.nsd.NsdServiceInfo;
@@ -52,6 +54,7 @@ public class MainActivity extends AppCompatActivity implements ClientListFragmen
     boolean bound = false;
     private MenuItem miStartStop = null;
     private MenuItem miSettings = null;
+    private MenuItem miRefresh = null;
     private String host = "";
     private int port = 1704;
     private int controlPort = 1705;
@@ -155,15 +158,23 @@ public class MainActivity extends AppCompatActivity implements ClientListFragmen
     }
 
     public void checkFirstRun() {
-        boolean isFirstRun = getSharedPreferences("settings", MODE_PRIVATE).getBoolean("isFirstRun", true);
-        if (isFirstRun) {
-            // Place your dialog code here to display the dialog
-            new AlertDialog.Builder(this).setTitle(R.string.first_run_title).setMessage(R.string.first_run_text).setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialog, int which) {
-                    getSharedPreferences("settings", MODE_PRIVATE).edit().putBoolean("isFirstRun", false).apply();
-                }
-            }).setCancelable(true).show();
+        PackageInfo pInfo = null;
+        try {
+            pInfo = getPackageManager().getPackageInfo(getPackageName(), 0);
+            final int verCode = pInfo.versionCode;
+            int lastRunVersion = Settings.getInstance(this).getInt("lastRunVersion", 0);
+            Log.d(TAG, "lastRunVersion: " + lastRunVersion + ", version: " + verCode);
+            if (lastRunVersion < verCode) {
+                // Place your dialog code here to display the dialog
+                new AlertDialog.Builder(this).setTitle(R.string.first_run_title).setMessage(R.string.first_run_text).setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        Settings.getInstance(MainActivity.this).put("lastRunVersion", verCode);
+                    }
+                }).setCancelable(true).show();
+            }
+        } catch (PackageManager.NameNotFoundException e) {
+            e.printStackTrace();
         }
     }
 
@@ -173,12 +184,16 @@ public class MainActivity extends AppCompatActivity implements ClientListFragmen
         getMenuInflater().inflate(R.menu.menu_snapcast, menu);
         miStartStop = menu.findItem(R.id.action_play_stop);
         miSettings = menu.findItem(R.id.action_settings);
+        miRefresh = menu.findItem(R.id.action_refresh);
         updateStartStopMenuItem();
         boolean isChecked = Settings.getInstance(this).getBoolean("hide_offline", false);
         MenuItem menuItem = menu.findItem(R.id.action_hide_offline);
         menuItem.setChecked(isChecked);
         sectionsPagerAdapter.setHideOffline(isChecked);
-        setHost(host, port, controlPort);
+//        setHost(host, port, controlPort);
+        if (remoteControl != null) {
+            updateMenuItems(remoteControl.isConnected());
+        }
         return true;
     }
 
@@ -432,6 +447,7 @@ public class MainActivity extends AppCompatActivity implements ClientListFragmen
         });
         setActionbarSubtitle("connected: " + remoteControl.getHost());
         remoteControl.getServerStatus();
+        updateMenuItems(true);
     }
 
     @Override
@@ -458,6 +474,7 @@ public class MainActivity extends AppCompatActivity implements ClientListFragmen
                 mViewPager.setVisibility(View.GONE);
             }
         });
+        updateMenuItems(false);
     }
 
     @Override
@@ -498,14 +515,27 @@ public class MainActivity extends AppCompatActivity implements ClientListFragmen
         this.port = streamPort;
         this.controlPort = controlPort;
         Settings.getInstance(this).setHost(host, streamPort, controlPort);
+    }
+
+    public void updateMenuItems(final boolean connected) {
         this.runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                if (miSettings != null)
-                    miSettings.setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER);
-                if (miStartStop != null)
-                    miStartStop.setVisible(true);
-//                setActionbarSubtitle(host + ":" + streamPort);
+                if (connected) {
+                    if (miSettings != null)
+                        miSettings.setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER);
+                    if (miStartStop != null)
+                        miStartStop.setVisible(true);
+                    if (miRefresh != null)
+                        miRefresh.setVisible(true);
+                } else {
+                    if (miSettings != null)
+                        miSettings.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+                    if (miStartStop != null)
+                        miStartStop.setVisible(false);
+                    if (miRefresh != null)
+                        miRefresh.setVisible(false);
+                }
             }
         });
     }
