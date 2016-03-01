@@ -191,7 +191,7 @@ void OpenslPlayer::initOpensl()
 
 	const SampleFormat& format = stream_->getFormat();
 
-	frames_ = 960;//rate / 50; // => 50ms
+	frames_ = 1920;//960;//rate / 50; // => 50ms
 
 	buff_size = frames_ * format.channels * 2 /* 2 -> sample size */;
 	logO << "frames: " << frames_ << ", channels: " << format.channels << ", rate: " << format.rate << ", buff: " << buff_size << "\n";

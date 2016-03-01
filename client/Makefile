@@ -26,13 +26,15 @@ ifdef ANDROID
 #    ii. ./make-standalone-toolchain.sh --arch=arm --platform=android-14 --install-dir=/home/johannes/Develop/android-toolchain-arm-14 --ndk-dir=/home/johannes/Develop/android-ndk-r10e --system=linux-x86_64
 # build with:
 #    make ANDROID=1
-CXX     = /home/johannes/Develop/android-toolchain-arm-14/bin/arm-linux-androideabi-g++
+CXX     = $(NDK_DIR)/bin/arm-linux-androideabi-g++
+STRIP	= $(NDK_DIR)/bin/arm-linux-androideabi-strip
 CFLAGS  = $(ADD_CFLAGS) -std=c++0x -Wall -Wno-unused-function -fPIC -O3 -pthread -DASIO_STANDALONE -DANDROID -DVERSION=\"$(VERSION)\" -I.. -I../externals/asio/asio/include -I../externals/popl/include -I/home/johannes/Develop/build/arm/include
 #-march=armv7-a -mfloat-abi=softfp -mfpu=vfpv3-d16
 LDFLAGS = -L/home/johannes/Develop/build/arm/lib -pie -lFLAC -lOpenSLES
 OBJ     = snapClient.o stream.o clientConnection.o timeProvider.o player/player.o player/openslPlayer.o decoder/pcmDecoder.o decoder/flacDecoder.o controller.o ../message/pcmChunk.o ../common/log.o ../message/sampleFormat.o
 else
 CXX     = /usr/bin/g++
+STRIP	= strip
 CFLAGS  = -std=c++0x -Wall -Wno-unused-function -O3 -pthread -DASIO_STANDALONE -DVERSION=\"$(VERSION)\" -I.. -I../externals/asio/asio/include -I../externals/popl/include
 LDFLAGS = -lrt -lasound -logg -lvorbis -lFLAC -lavahi-client -lavahi-common
 OBJ     = snapClient.o stream.o clientConnection.o timeProvider.o player/player.o player/alsaPlayer.o decoder/oggDecoder.o decoder/pcmDecoder.o decoder/flacDecoder.o controller.o browseAvahi.o ../message/pcmChunk.o ../common/log.o ../message/sampleFormat.o
@@ -45,7 +47,7 @@ all:	$(TARGET)
 
 $(TARGET): $(OBJ)
 	$(CXX) $(CFLAGS) -o $(BIN) $(OBJ) $(LDFLAGS)
-#	strip $(BIN)
+	$(STRIP) $(BIN)
 
 %.o: %.cpp
 	$(CXX) $(CFLAGS) -c $< -o $@
