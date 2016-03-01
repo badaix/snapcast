@@ -5,6 +5,7 @@ import android.preference.EditTextPreference;
 import android.preference.ListPreference;
 import android.preference.Preference;
 import android.preference.PreferenceFragment;
+import android.text.TextUtils;
 import android.text.format.DateUtils;
 
 import java.util.ArrayList;
@@ -20,12 +21,12 @@ public class ClientSettingsFragment extends PreferenceFragment {
     private ClientInfo clientInfoOriginal = null;
     private EditTextPreference prefName;
     private ListPreference prefStream;
+    private EditTextPreference prefLatency;
     private Preference prefMac;
     private Preference prefIp;
     private Preference prefHost;
     private Preference prefVersion;
     private Preference prefLastSeen;
-    private Preference prefLatency;
 
 
     @Override
@@ -42,9 +43,6 @@ public class ClientSettingsFragment extends PreferenceFragment {
             streamNames[i] = streams.get(i).getName();
             streamIds[i] = streams.get(i).getId();
         }
-
-//        ArrayList<String> streamNames = bundle.getStringArrayList("streamNames");
-//        ArrayList<String> streamIds = bundle.getStringArrayList("streamIds");
 
         // Load the preferences from an XML resource
         addPreferencesFromResource(R.xml.client_preferences);
@@ -87,7 +85,18 @@ public class ClientSettingsFragment extends PreferenceFragment {
         prefHost = (Preference) findPreference("pref_client_host");
         prefVersion = (Preference) findPreference("pref_client_version");
         prefLastSeen = (Preference) findPreference("pref_client_last_seen");
-        prefLatency = (Preference) findPreference("pref_client_latency");
+        prefLatency = (EditTextPreference) findPreference("pref_client_latency");
+        prefLatency.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
+            @Override
+            public boolean onPreferenceChange(Preference preference, Object newValue) {
+                String latency = (String) newValue;
+                if (TextUtils.isEmpty(latency))
+                    latency = "0";
+                prefLatency.setSummary(latency + "ms");
+                clientInfo.setLatency(Integer.parseInt(latency));
+                return true;
+            }
+        });
         update();
     }
 
@@ -115,5 +124,6 @@ public class ClientSettingsFragment extends PreferenceFragment {
         }
         prefLastSeen.setSummary(lastSeen);
         prefLatency.setSummary(clientInfo.getLatency() + "ms");
+        prefLatency.setText(clientInfo.getLatency() + "");
     }
 }

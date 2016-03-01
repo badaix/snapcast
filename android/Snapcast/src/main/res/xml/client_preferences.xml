@@ -8,6 +8,11 @@
         android:key="pref_client_stream"
         android:summary="stream"
         android:title="@string/client_stream"/>
+    <EditTextPreference
+        android:inputType="numberSigned"
+        android:key="pref_client_latency"
+        android:summary="0ms"
+        android:title="@string/client_latency"/>
     <Preference
         android:enabled="false"
         android:key="pref_client_mac"
@@ -33,9 +38,4 @@
         android:key="pref_client_last_seen"
         android:summary="online"
         android:title="@string/client_last_seen"/>
-    <Preference
-        android:enabled="false"
-        android:key="pref_client_latency"
-        android:summary="TODO: make configurable... 0ms"
-        android:title="@string/client_latency"/>
 </PreferenceScreen>

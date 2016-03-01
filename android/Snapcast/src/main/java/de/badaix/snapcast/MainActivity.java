@@ -7,7 +7,9 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.media.AudioFormat;
 import android.media.AudioManager;
+import android.media.AudioRecord;
 import android.net.Uri;
 import android.net.nsd.NsdServiceInfo;
 import android.os.Build;
@@ -116,6 +118,14 @@ public class MainActivity extends AppCompatActivity implements ClientListFragmen
             }
         });
          */
+
+        for (int rate : new int[]{8000, 11025, 16000, 22050, 44100, 48000}) {  // add the rates you wish to check against
+            Log.d(TAG, "Samplerate: " + rate);
+            int bufferSize = AudioRecord.getMinBufferSize(rate, AudioFormat.CHANNEL_OUT_STEREO, AudioFormat.ENCODING_PCM_16BIT);
+            if (bufferSize > 0) {
+                Log.d(TAG, "Samplerate: " + rate + ", buffer: " + bufferSize);
+            }
+        }
 
         AudioManager audioManager = (AudioManager) this.getSystemService(Context.AUDIO_SERVICE);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
@@ -433,6 +443,9 @@ public class MainActivity extends AppCompatActivity implements ClientListFragmen
             Log.d(TAG, "new stream: " + clientInfo.getStream() + ", old stream: " + clientInfoOriginal.getStream());
             if (!clientInfo.getStream().equals(clientInfoOriginal.getStream()))
                 remoteControl.setStream(clientInfo, clientInfo.getStream());
+            Log.d(TAG, "new latency: " + clientInfo.getLatency() + ", old latency: " + clientInfoOriginal.getLatency());
+            if (clientInfo.getLatency() != clientInfoOriginal.getLatency())
+                remoteControl.setLatency(clientInfo, clientInfo.getLatency());
             serverInfo.updateClient(clientInfo);
             sectionsPagerAdapter.updateServer(serverInfo);
         }
@@ -603,6 +616,7 @@ public class MainActivity extends AppCompatActivity implements ClientListFragmen
         Intent intent = new Intent(this, ClientSettingsActivity.class);
         intent.putExtra("clientInfo", clientInfoItem.getClientInfo());
         intent.putParcelableArrayListExtra("streams", serverInfo.getStreams());
+        intent.setFlags(0);
         startActivityForResult(intent, 1);
     }
 
@@ -625,12 +639,14 @@ public class MainActivity extends AppCompatActivity implements ClientListFragmen
             MainActivity.this.runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
+                    Log.d(TAG, "updateServer: " + serverInfo.getStreams().size());
                     boolean changed = (serverInfo.getStreams().size() != streamCount);
 
                     while (serverInfo.getStreams().size() > fragments.size())
                         fragments.add(ClientListFragment.newInstance("TODO1"));
 
                     for (int i = 0; i < serverInfo.getStreams().size(); ++i) {
+                        Log.d(TAG, "updateServer Stream: " + serverInfo.getStreams().get(i).getName());
                         fragments.get(i).setStream(serverInfo.getStreams().get(i));
                         fragments.get(i).updateServer(serverInfo);
                     }

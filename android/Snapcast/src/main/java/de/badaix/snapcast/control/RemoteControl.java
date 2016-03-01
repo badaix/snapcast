@@ -166,6 +166,15 @@ public class RemoteControl implements TcpClient.TcpClientListener {
         }
     }
 
+    public void setLatency(ClientInfo clientInfo, int latency) {
+        try {
+            JSONObject request = jsonRequest("Client.SetLatency", new JSONObject("{\"client\": \"" + clientInfo.getMac() + "\", \"latency\": " + latency + "}"));
+            tcpClient.sendMessage(request.toString());
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+    }
+
     public void setStream(ClientInfo clientInfo, String id) {
         try {
             JSONObject request = jsonRequest("Client.SetStream", new JSONObject("{\"client\": \"" + clientInfo.getMac() + "\", \"id\": \"" + id + "\"}"));
