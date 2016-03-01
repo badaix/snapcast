@@ -145,10 +145,11 @@ public class MainActivity extends AppCompatActivity implements ClientListFragmen
             @Override
             public void run() {
                 Log.d(TAG, "copying snapclient");
-                Setup.copyAssets(MainActivity.this, new String[]{"snapclient"});
+                Setup.copyBinAsset(MainActivity.this, "snapclient", "snapclient");
                 Log.d(TAG, "done copying snapclient");
             }
         }).start();
+
 //        initializeDiscoveryListener();
         // ATTENTION: This was auto-generated to implement the App Indexing API.
         // See https://g.co/AppIndexing/AndroidStudio for more information.

@@ -1,18 +1,16 @@
 package de.badaix.snapcast.utils;
 
 import android.content.Context;
-import android.content.SharedPreferences;
 import android.content.res.AssetManager;
 import android.util.Log;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
 
 /**
  * Created by johannes on 16.01.16.
@@ -21,51 +19,92 @@ public class Setup {
 
     private static final String TAG = "Setup";
 
-    public static void copyAssets(Context context, String[] fileList) {
-        Set<String> fileSet = new HashSet<String>(Arrays.asList(fileList));
+    public static String getProp(String prop, String def) {
+        Process process = null;
+        try {
+            process = new ProcessBuilder()
+                    .command("/system/bin/getprop", prop)
+                    .redirectErrorStream(true)
+                    .start();
+
+            BufferedReader bufferedReader = new BufferedReader(
+                    new InputStreamReader(process.getInputStream()));
+            String line;
+            if ((line = bufferedReader.readLine()) != null) {
+                return line;
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return def;
+    }
+
+    public static boolean copyBinAsset(Context context, String sourceFilename, String destFilename) {
+        if (copyAsset(context, "bin/" + getProp("ro.product.cpu.abi", "armeabi") + "/" + sourceFilename, destFilename))
+            return true;
+        else if (copyAsset(context, "bin/" + getProp("ro.product.cpu.abi2", "armeabi") + "/" + sourceFilename, destFilename))
+            return true;
+        else if (copyAsset(context, "bin/armeabi/" + sourceFilename, destFilename))
+            return true;
+        return false;
+    }
+
+    public static boolean copyAsset(Context context, String sourceFilename, String destFilename) {
+        AssetManager assetManager = context.getAssets();
+
+        InputStream in = null;
+        OutputStream out = null;
+        try {
+            in = assetManager.open(sourceFilename);
+            String md5 = MD5.calculateMD5(in);
+            File outFile = new File(context.getFilesDir(), destFilename);
+            Log.d(TAG, "Asset: " + sourceFilename + " => " + outFile.getAbsolutePath() + ", md5: " + md5);
+            String hashKey = "asset_" + sourceFilename;
+            if (outFile.exists() && md5.equals(Settings.getInstance(context).getString(hashKey, "")))
+                return true;
+            Log.d(TAG, "Copying " + sourceFilename + " => " + outFile.getAbsolutePath());
+            out = new FileOutputStream(outFile);
+            copyFile(in, out);
+            Runtime.getRuntime().exec("chmod 755 " + outFile.getAbsolutePath()).waitFor();
+            Settings.getInstance(context).put(hashKey, md5);
+            return true;
+        } catch (Exception e) {
+            Log.e(TAG, "Failed to copy asset file: " + sourceFilename, e);
+        } finally {
+            if (in != null) {
+                try {
+                    in.close();
+                } catch (IOException e) {
+                    // NOOP
+                }
+            }
+            if (out != null) {
+                try {
+                    out.close();
+                } catch (IOException e) {
+                    // NOOP
+                }
+            }
+        }
+        return false;
+    }
+
+    public static void copyAssets(Context context, String sourceDir, String destDir) {
         AssetManager assetManager = context.getAssets();
         String[] files = null;
         try {
-            files = assetManager.list("");
+            files = assetManager.list(sourceDir);
+            if (files == null)
+                return;
         } catch (IOException e) {
             Log.e(TAG, "Failed to get asset file list.", e);
         }
-        if (files != null) for (String filename : files) {
-            if (!fileSet.contains(filename))
-                continue;
-            InputStream in = null;
-            OutputStream out = null;
-            try {
-                SharedPreferences prefs = context.getSharedPreferences("assets", Context.MODE_PRIVATE);
-                in = assetManager.open(filename);
-                String md5 = MD5.calculateMD5(in);
-                File outFile = new File(context.getFilesDir(), filename);
-                Log.d(TAG, "Asset: " + outFile.getAbsolutePath() + ", md5: " + md5);
-                if (outFile.exists() && md5.equals(prefs.getString(filename, "")))
-                    continue;
-                Log.d(TAG, "Copying " + outFile.getAbsolutePath());
-                out = new FileOutputStream(outFile);
-                copyFile(in, out);
-                Runtime.getRuntime().exec("chmod 755 " + outFile.getAbsolutePath()).waitFor();
-                prefs.edit().putString(filename, md5).apply();
-            } catch (Exception e) {
-                Log.e(TAG, "Failed to copy asset file: " + filename, e);
-            } finally {
-                if (in != null) {
-                    try {
-                        in.close();
-                    } catch (IOException e) {
-                        // NOOP
-                    }
-                }
-                if (out != null) {
-                    try {
-                        out.close();
-                    } catch (IOException e) {
-                        // NOOP
-                    }
-                }
-            }
+
+        for (String file : files) {
+            String sourceFile = sourceDir + "/" + file;
+            String destFile = destDir + "/" + file;
+            copyAsset(context, sourceFile, destFile);
         }
     }
 
