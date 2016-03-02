@@ -1,8 +1,5 @@
 package de.badaix.snapcast.control;
 
-import android.os.Bundle;
-import android.os.Parcel;
-
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -13,18 +10,6 @@ import java.util.Map;
  * Created by johannes on 06.01.16.
  */
 public class Stream implements JsonSerialisable {
-    public static final Creator<Stream> CREATOR = new Creator<Stream>() {
-        @Override
-        public Stream createFromParcel(Parcel in) {
-            return new Stream(in);
-        }
-
-        @Override
-        public Stream[] newArray(int size) {
-            return new Stream[size];
-        }
-    };
-
     private String uri;
     private String scheme;
     private String host;
@@ -35,17 +20,6 @@ public class Stream implements JsonSerialisable {
 
     public Stream(JSONObject json) {
         fromJson(json);
-    }
-
-    protected Stream(Parcel in) {
-        uri = in.readString();
-        scheme = in.readString();
-        host = in.readString();
-        path = in.readString();
-        fragment = in.readString();
-        id = in.readString();
-        Bundle bundle = in.readBundle();
-        query = (HashMap<String, String>) bundle.getSerializable("query");
     }
 
     @Override
@@ -79,7 +53,7 @@ public class Stream implements JsonSerialisable {
             JSONObject jQuery = new JSONObject();
             for (Map.Entry<String, String> entry : query.entrySet())
                 jQuery.put(entry.getKey(), entry.getValue());
-            json.put("query", query);
+            json.put("query", jQuery);
         } catch (JSONException e) {
             e.printStackTrace();
         }
@@ -189,23 +163,5 @@ public class Stream implements JsonSerialisable {
                 ", id='" + id + '\'' +
                 ", query=" + query +
                 '}';
-    }
-
-    @Override
-    public int describeContents() {
-        return 0;
-    }
-
-    @Override
-    public void writeToParcel(Parcel dest, int flags) {
-        dest.writeString(uri);
-        dest.writeString(scheme);
-        dest.writeString(host);
-        dest.writeString(path);
-        dest.writeString(fragment);
-        dest.writeString(id);
-        Bundle bundle = new Bundle();
-        bundle.putSerializable("query", query);
-        dest.writeBundle(bundle);
     }
 }

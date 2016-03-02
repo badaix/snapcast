@@ -37,6 +37,9 @@ import com.google.android.gms.appindexing.Action;
 import com.google.android.gms.appindexing.AppIndex;
 import com.google.android.gms.common.api.GoogleApiClient;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.net.UnknownHostException;
 import java.util.Vector;
 
@@ -435,8 +438,18 @@ public class MainActivity extends AppCompatActivity implements ClientListFragmen
             return;
         }
         if (requestCode == 1) {
-            ClientInfo clientInfo = data.getParcelableExtra("clientInfo");
-            ClientInfo clientInfoOriginal = data.getParcelableExtra("clientInfoOriginal");
+            ClientInfo clientInfo = null;
+            try {
+                clientInfo = new ClientInfo(new JSONObject(data.getStringExtra("client")));
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+            ClientInfo clientInfoOriginal = null;
+            try {
+                clientInfoOriginal = new ClientInfo(new JSONObject(data.getStringExtra("clientOriginal")));
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
             Log.d(TAG, "new name: " + clientInfo.getName() + ", old name: " + clientInfoOriginal.getName());
             if (!clientInfo.getName().equals(clientInfoOriginal.getName()))
                 remoteControl.setName(clientInfo, clientInfo.getName());
@@ -614,8 +627,8 @@ public class MainActivity extends AppCompatActivity implements ClientListFragmen
     @Override
     public void onPropertiesClicked(ClientInfoItem clientInfoItem) {
         Intent intent = new Intent(this, ClientSettingsActivity.class);
-        intent.putExtra("clientInfo", clientInfoItem.getClientInfo());
-        intent.putParcelableArrayListExtra("streams", serverInfo.getStreams());
+        intent.putExtra("client", clientInfoItem.getClientInfo().toJson().toString());
+        intent.putExtra("streams", serverInfo.getJsonStreams().toString());
         intent.setFlags(0);
         startActivityForResult(intent, 1);
     }

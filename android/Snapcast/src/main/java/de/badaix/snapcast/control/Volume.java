@@ -1,7 +1,5 @@
 package de.badaix.snapcast.control;
 
-import android.os.Parcel;
-
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -9,17 +7,6 @@ import org.json.JSONObject;
  * Created by johannes on 06.01.16.
  */
 public class Volume implements JsonSerialisable {
-    public static final Creator<Volume> CREATOR = new Creator<Volume>() {
-        @Override
-        public Volume createFromParcel(Parcel in) {
-            return new Volume(in);
-        }
-
-        @Override
-        public Volume[] newArray(int size) {
-            return new Volume[size];
-        }
-    };
     private boolean muted;
     private int percent;
 
@@ -30,11 +17,6 @@ public class Volume implements JsonSerialisable {
     public Volume(int percent, boolean muted) {
         this.percent = percent;
         this.muted = muted;
-    }
-
-    protected Volume(Parcel in) {
-        muted = in.readByte() != 0;
-        percent = in.readInt();
     }
 
     @Override
@@ -100,16 +82,5 @@ public class Volume implements JsonSerialisable {
         int result = (muted ? 1 : 0);
         result = 31 * result + percent;
         return result;
-    }
-
-    @Override
-    public int describeContents() {
-        return 0;
-    }
-
-    @Override
-    public void writeToParcel(Parcel dest, int flags) {
-        dest.writeByte((byte) (muted ? 1 : 0));
-        dest.writeInt(percent);
     }
 }

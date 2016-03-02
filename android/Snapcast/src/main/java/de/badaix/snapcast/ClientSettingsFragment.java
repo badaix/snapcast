@@ -8,6 +8,10 @@ import android.preference.PreferenceFragment;
 import android.text.TextUtils;
 import android.text.format.DateUtils;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.util.ArrayList;
 
 import de.badaix.snapcast.control.ClientInfo;
@@ -34,9 +38,21 @@ public class ClientSettingsFragment extends PreferenceFragment {
         super.onCreate(savedInstanceState);
 
         Bundle bundle = getArguments();
-        clientInfo = (ClientInfo) bundle.getParcelable("clientInfo");
+        try {
+            clientInfo = new ClientInfo(new JSONObject(bundle.getString("client")));
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
         clientInfoOriginal = new ClientInfo(clientInfo.toJson());
-        final ArrayList<Stream> streams = bundle.getParcelableArrayList("streams");
+        final ArrayList<Stream> streams = new ArrayList<>();
+        try {
+            JSONArray jsonArray = new JSONArray(bundle.getString("streams"));
+            for (int i = 0; i < jsonArray.length(); i++)
+                streams.add(new Stream(jsonArray.getJSONObject(i)));
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
         final CharSequence[] streamNames = new CharSequence[streams.size()];
         final CharSequence[] streamIds = new CharSequence[streams.size()];
         for (int i = 0; i < streams.size(); ++i) {
