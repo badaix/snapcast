@@ -51,7 +51,7 @@ import de.badaix.snapcast.utils.NsdHelper;
 import de.badaix.snapcast.utils.Settings;
 import de.badaix.snapcast.utils.Setup;
 
-public class MainActivity extends AppCompatActivity implements ClientListFragment.OnFragmentInteractionListener, ClientInfoItem.ClientInfoItemListener, RemoteControl.RemoteControlListener, SnapclientService.SnapclientListener, NsdHelper.NsdHelperListener {
+public class MainActivity extends AppCompatActivity implements ClientListFragment.OnFragmentInteractionListener, ClientItem.ClientInfoItemListener, RemoteControl.RemoteControlListener, SnapclientService.SnapclientListener, NsdHelper.NsdHelperListener {
 
     private static final String TAG = "Main";
     private static final String SERVICE_NAME = "Snapcast";// #2";
@@ -585,18 +585,18 @@ public class MainActivity extends AppCompatActivity implements ClientListFragmen
 
 
     @Override
-    public void onVolumeChanged(ClientInfoItem clientInfoItem, int percent) {
-        remoteControl.setVolume(clientInfoItem.getClientInfo(), percent);
+    public void onVolumeChanged(ClientItem clientItem, int percent) {
+        remoteControl.setVolume(clientItem.getClientInfo(), percent);
     }
 
     @Override
-    public void onMute(ClientInfoItem clientInfoItem, boolean mute) {
-        remoteControl.setMute(clientInfoItem.getClientInfo(), mute);
+    public void onMute(ClientItem clientItem, boolean mute) {
+        remoteControl.setMute(clientItem.getClientInfo(), mute);
     }
 
     @Override
-    public void onDeleteClicked(final ClientInfoItem clientInfoItem) {
-        final ClientInfo clientInfo = clientInfoItem.getClientInfo();
+    public void onDeleteClicked(final ClientItem clientItem) {
+        final ClientInfo clientInfo = clientItem.getClientInfo();
         clientInfo.setDeleted(true);
         serverInfo.updateClient(clientInfo);
         sectionsPagerAdapter.updateServer(serverInfo);
@@ -625,9 +625,9 @@ public class MainActivity extends AppCompatActivity implements ClientListFragmen
     }
 
     @Override
-    public void onPropertiesClicked(ClientInfoItem clientInfoItem) {
+    public void onPropertiesClicked(ClientItem clientItem) {
         Intent intent = new Intent(this, ClientSettingsActivity.class);
-        intent.putExtra("client", clientInfoItem.getClientInfo().toJson().toString());
+        intent.putExtra("client", clientItem.getClientInfo().toJson().toString());
         intent.putExtra("streams", serverInfo.getJsonStreams().toString());
         intent.setFlags(0);
         startActivityForResult(intent, 1);

@@ -37,7 +37,7 @@ public class ClientListFragment extends Fragment {
     private String mParam1;
 
     private OnFragmentInteractionListener mListener;
-    private ClientInfoItem.ClientInfoItemListener clientInfoItemListener;
+    private ClientItem.ClientInfoItemListener clientInfoItemListener;
     private ClientInfoAdapter clientInfoAdapter;
     private ServerInfo serverInfo = null;
     private boolean hideOffline = false;
@@ -99,7 +99,7 @@ public class ClientListFragment extends Fragment {
             throw new RuntimeException(context.toString()
                     + " must implement OnFragmentInteractionListener");
         }
-        clientInfoItemListener = (ClientInfoItem.ClientInfoItemListener) context;
+        clientInfoItemListener = (ClientItem.ClientInfoItemListener) context;
     }
 
     @Override
@@ -147,11 +147,11 @@ public class ClientListFragment extends Fragment {
 
     public class ClientInfoAdapter extends ArrayAdapter<ClientInfo> {
         private Context context;
-        private ClientInfoItem.ClientInfoItemListener listener;
+        private ClientItem.ClientInfoItemListener listener;
         private boolean hideOffline = false;
         private ServerInfo serverInfo = new ServerInfo();
 
-        public ClientInfoAdapter(Context context, ClientInfoItem.ClientInfoItemListener listener) {
+        public ClientInfoAdapter(Context context, ClientItem.ClientInfoItemListener listener) {
             super(context, 0);
             this.context = context;
             this.listener = listener;
@@ -160,16 +160,16 @@ public class ClientListFragment extends Fragment {
         @Override
         public View getView(int position, View convertView, ViewGroup parent) {
             ClientInfo clientInfo = getItem(position);
-            final ClientInfoItem clientInfoItem;
+            final ClientItem clientItem;
 
             if (convertView != null) {
-                clientInfoItem = (ClientInfoItem) convertView;
-                clientInfoItem.setClientInfo(clientInfo);
+                clientItem = (ClientItem) convertView;
+                clientItem.setClientInfo(clientInfo);
             } else {
-                clientInfoItem = new ClientInfoItem(context, clientInfo);
+                clientItem = new ClientItem(context, clientInfo);
             }
-            clientInfoItem.setListener(listener);
-            return clientInfoItem;
+            clientItem.setListener(listener);
+            return clientItem;
         }
 
         public void updateServer(final ServerInfo serverInfo) {

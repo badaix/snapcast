@@ -14,7 +14,7 @@ import android.widget.TextView;
 import de.badaix.snapcast.control.ClientInfo;
 import de.badaix.snapcast.control.Volume;
 
-public class ClientInfoItem extends LinearLayout implements SeekBar.OnSeekBarChangeListener, View.OnClickListener, PopupMenu.OnMenuItemClickListener {
+public class ClientItem extends LinearLayout implements SeekBar.OnSeekBarChangeListener, View.OnClickListener, PopupMenu.OnMenuItemClickListener {
 
     private TextView title;
     private SeekBar volumeSeekBar;
@@ -23,7 +23,7 @@ public class ClientInfoItem extends LinearLayout implements SeekBar.OnSeekBarCha
     private ClientInfo clientInfo;
     private ClientInfoItemListener listener = null;
 
-    public ClientInfoItem(Context context, ClientInfo clientInfo) {
+    public ClientItem(Context context, ClientInfo clientInfo) {
         super(context);
         LayoutInflater vi = (LayoutInflater) context
                 .getSystemService(Context.LAYOUT_INFLATER_SERVICE);
@@ -114,13 +114,13 @@ public class ClientInfoItem extends LinearLayout implements SeekBar.OnSeekBarCha
     }
 
     public interface ClientInfoItemListener {
-        void onVolumeChanged(ClientInfoItem clientInfoItem, int percent);
+        void onVolumeChanged(ClientItem clientItem, int percent);
 
-        void onMute(ClientInfoItem clientInfoItem, boolean mute);
+        void onMute(ClientItem clientItem, boolean mute);
 
-        void onDeleteClicked(ClientInfoItem clientInfoItem);
+        void onDeleteClicked(ClientItem clientItem);
 
-        void onPropertiesClicked(ClientInfoItem clientInfoItem);
+        void onPropertiesClicked(ClientItem clientItem);
     }
 
 }
