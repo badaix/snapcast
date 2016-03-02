@@ -9,16 +9,16 @@ import java.util.ArrayList;
 /**
  * Created by johannes on 06.01.16.
  */
-public class ServerInfo implements JsonSerialisable {
+public class ServerStatus implements JsonSerialisable {
     private ArrayList<ClientInfo> clients = new ArrayList<ClientInfo>();
     private ArrayList<Stream> streams = new ArrayList<Stream>();
     private Server server = null;
 
-    public ServerInfo(JSONObject json) {
+    public ServerStatus(JSONObject json) {
         fromJson(json);
     }
 
-    public ServerInfo() {
+    public ServerStatus() {
     }
 
     @Override

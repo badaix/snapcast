@@ -18,14 +18,14 @@ public class RemoteControl implements TcpClient.TcpClientListener {
     private TcpClient tcpClient;
     private long msgId;
     private RemoteControlListener listener;
-    private ServerInfo serverInfo;
+    private ServerStatus serverStatus;
     private String host;
     private int port;
     private HashMap<Long, String> pendingRequests;
 
     public RemoteControl(RemoteControlListener listener) {
         this.listener = listener;
-        serverInfo = new ServerInfo();
+        serverStatus = new ServerStatus();
         msgId = 0;
         pendingRequests = new HashMap<>();
     }
@@ -84,9 +84,9 @@ public class RemoteControl implements TcpClient.TcpClientListener {
                     Log.e(TAG, "error " + error.getInt("code") + ": " + error.getString("message"));
                 } else if (!TextUtils.isEmpty(request)) {
                     if (request.equals("Server.GetStatus")) {
-                        serverInfo.fromJson(json.getJSONObject("result"));
+                        serverStatus.fromJson(json.getJSONObject("result"));
                         if (listener != null)
-                            listener.onServerInfo(this, serverInfo);
+                            listener.onServerStatus(this, serverStatus);
                     }
                 }
             } else {
@@ -94,7 +94,7 @@ public class RemoteControl implements TcpClient.TcpClientListener {
                 Log.d(TAG, "Notification: " + method);
                 if (method.contains("Client.On")) {
                     final ClientInfo clientInfo = new ClientInfo(json.getJSONObject("params").getJSONObject("data"));
-//                    serverInfo.addClient(clientInfo);
+//                    serverStatus.addClient(clientInfo);
                     if (listener != null) {
                         ClientEvent event;
                         if (method.equals("Client.OnUpdate"))
@@ -125,7 +125,7 @@ public class RemoteControl implements TcpClient.TcpClientListener {
     @Override
     public void onConnected(TcpClient tcpClient) {
         Log.d(TAG, "onConnected");
-        serverInfo = new ServerInfo();
+        serverStatus = new ServerStatus();
         if (listener != null)
             listener.onConnected(this);
     }
@@ -133,7 +133,7 @@ public class RemoteControl implements TcpClient.TcpClientListener {
     @Override
     public void onDisconnected(TcpClient tcpClient, Exception e) {
         Log.d(TAG, "onDisconnected");
-        serverInfo = null;
+        serverStatus = null;
         if (listener != null)
             listener.onDisconnected(this, e);
     }
@@ -229,6 +229,6 @@ public class RemoteControl implements TcpClient.TcpClientListener {
 
         void onClientEvent(RemoteControl remoteControl, ClientInfo clientInfo, ClientEvent event);
 
-        void onServerInfo(RemoteControl remoteControl, ServerInfo serverInfo);
+        void onServerStatus(RemoteControl remoteControl, ServerStatus serverStatus);
     }
 }

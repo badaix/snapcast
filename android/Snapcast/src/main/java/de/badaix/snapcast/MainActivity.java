@@ -45,7 +45,7 @@ import java.util.Vector;
 
 import de.badaix.snapcast.control.ClientInfo;
 import de.badaix.snapcast.control.RemoteControl;
-import de.badaix.snapcast.control.ServerInfo;
+import de.badaix.snapcast.control.ServerStatus;
 import de.badaix.snapcast.control.Stream;
 import de.badaix.snapcast.utils.NsdHelper;
 import de.badaix.snapcast.utils.Settings;
@@ -64,7 +64,7 @@ public class MainActivity extends AppCompatActivity implements ClientListFragmen
     private int port = 1704;
     private int controlPort = 1705;
     private RemoteControl remoteControl = null;
-    private ServerInfo serverInfo = null;
+    private ServerStatus serverStatus = null;
     private SnapclientService snapclientService;
     private SectionsPagerAdapter sectionsPagerAdapter;
     private TabLayout tabLayout;
@@ -459,8 +459,8 @@ public class MainActivity extends AppCompatActivity implements ClientListFragmen
             Log.d(TAG, "new latency: " + clientInfo.getLatency() + ", old latency: " + clientInfoOriginal.getLatency());
             if (clientInfo.getLatency() != clientInfoOriginal.getLatency())
                 remoteControl.setLatency(clientInfo, clientInfo.getLatency());
-            serverInfo.updateClient(clientInfo);
-            sectionsPagerAdapter.updateServer(serverInfo);
+            serverStatus.updateClient(clientInfo);
+            sectionsPagerAdapter.updateServer(serverStatus);
         }
     }
 
@@ -485,8 +485,8 @@ public class MainActivity extends AppCompatActivity implements ClientListFragmen
     @Override
     public void onDisconnected(RemoteControl remoteControl, Exception e) {
         Log.d(TAG, "onDisconnected");
-        serverInfo = new ServerInfo();
-        sectionsPagerAdapter.updateServer(serverInfo);
+        serverStatus = new ServerStatus();
+        sectionsPagerAdapter.updateServer(serverStatus);
         if (e != null) {
             if (e instanceof UnknownHostException)
                 setActionbarSubtitle("error: unknown host");
@@ -508,19 +508,19 @@ public class MainActivity extends AppCompatActivity implements ClientListFragmen
     public void onClientEvent(RemoteControl remoteControl, ClientInfo clientInfo, RemoteControl.ClientEvent event) {
         Log.d(TAG, "onClientEvent: " + event.toString());
         if (event == RemoteControl.ClientEvent.deleted)
-            serverInfo.removeClient(clientInfo);
+            serverStatus.removeClient(clientInfo);
         else
-            serverInfo.updateClient(clientInfo);
+            serverStatus.updateClient(clientInfo);
 
-        sectionsPagerAdapter.updateServer(serverInfo);
+        sectionsPagerAdapter.updateServer(serverStatus);
     }
 
     @Override
-    public void onServerInfo(RemoteControl remoteControl, ServerInfo serverInfo) {
-        this.serverInfo = serverInfo;
-        for (Stream s : serverInfo.getStreams())
+    public void onServerStatus(RemoteControl remoteControl, ServerStatus serverStatus) {
+        this.serverStatus = serverStatus;
+        for (Stream s : serverStatus.getStreams())
             Log.d(TAG, s.toString());
-        sectionsPagerAdapter.updateServer(serverInfo);
+        sectionsPagerAdapter.updateServer(serverStatus);
     }
 
     private void setActionbarSubtitle(final String subtitle) {
@@ -598,8 +598,8 @@ public class MainActivity extends AppCompatActivity implements ClientListFragmen
     public void onDeleteClicked(final ClientItem clientItem) {
         final ClientInfo clientInfo = clientItem.getClientInfo();
         clientInfo.setDeleted(true);
-        serverInfo.updateClient(clientInfo);
-        sectionsPagerAdapter.updateServer(serverInfo);
+        serverStatus.updateClient(clientInfo);
+        sectionsPagerAdapter.updateServer(serverStatus);
         Snackbar mySnackbar = Snackbar.make(findViewById(R.id.myCoordinatorLayout),
                 getString(R.string.client_deleted, clientInfo.getVisibleName()),
                 Snackbar.LENGTH_SHORT);
@@ -607,8 +607,8 @@ public class MainActivity extends AppCompatActivity implements ClientListFragmen
             @Override
             public void onClick(View v) {
                 clientInfo.setDeleted(false);
-                serverInfo.updateClient(clientInfo);
-                sectionsPagerAdapter.updateServer(serverInfo);
+                serverStatus.updateClient(clientInfo);
+                sectionsPagerAdapter.updateServer(serverStatus);
             }
         });
         mySnackbar.setCallback(new Snackbar.Callback() {
@@ -617,7 +617,7 @@ public class MainActivity extends AppCompatActivity implements ClientListFragmen
                 super.onDismissed(snackbar, event);
                 if (event != DISMISS_EVENT_ACTION) {
                     remoteControl.delete(clientInfo);
-                    serverInfo.removeClient(clientInfo);
+                    serverStatus.removeClient(clientInfo);
                 }
             }
         });
@@ -628,7 +628,7 @@ public class MainActivity extends AppCompatActivity implements ClientListFragmen
     public void onPropertiesClicked(ClientItem clientItem) {
         Intent intent = new Intent(this, ClientSettingsActivity.class);
         intent.putExtra("client", clientItem.getClientInfo().toJson().toString());
-        intent.putExtra("streams", serverInfo.getJsonStreams().toString());
+        intent.putExtra("streams", serverStatus.getJsonStreams().toString());
         intent.setFlags(0);
         startActivityForResult(intent, 1);
     }
@@ -648,24 +648,24 @@ public class MainActivity extends AppCompatActivity implements ClientListFragmen
             super(fm);
         }
 
-        public void updateServer(final ServerInfo serverInfo) {
+        public void updateServer(final ServerStatus serverStatus) {
             MainActivity.this.runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    Log.d(TAG, "updateServer: " + serverInfo.getStreams().size());
-                    boolean changed = (serverInfo.getStreams().size() != streamCount);
+                    Log.d(TAG, "updateServer: " + serverStatus.getStreams().size());
+                    boolean changed = (serverStatus.getStreams().size() != streamCount);
 
-                    while (serverInfo.getStreams().size() > fragments.size())
+                    while (serverStatus.getStreams().size() > fragments.size())
                         fragments.add(ClientListFragment.newInstance("TODO1"));
 
-                    for (int i = 0; i < serverInfo.getStreams().size(); ++i) {
-                        Log.d(TAG, "updateServer Stream: " + serverInfo.getStreams().get(i).getName());
-                        fragments.get(i).setStream(serverInfo.getStreams().get(i));
-                        fragments.get(i).updateServer(serverInfo);
+                    for (int i = 0; i < serverStatus.getStreams().size(); ++i) {
+                        Log.d(TAG, "updateServer Stream: " + serverStatus.getStreams().get(i).getName());
+                        fragments.get(i).setStream(serverStatus.getStreams().get(i));
+                        fragments.get(i).updateServer(serverStatus);
                     }
 
                     if (changed) {
-                        streamCount = serverInfo.getStreams().size();
+                        streamCount = serverStatus.getStreams().size();
                         notifyDataSetChanged();
                         tabLayout.setTabsFromPagerAdapter(SectionsPagerAdapter.this);
                     }

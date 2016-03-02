@@ -11,7 +11,7 @@ import android.widget.ArrayAdapter;
 import android.widget.ListView;
 
 import de.badaix.snapcast.control.ClientInfo;
-import de.badaix.snapcast.control.ServerInfo;
+import de.badaix.snapcast.control.ServerStatus;
 import de.badaix.snapcast.control.Stream;
 
 
@@ -39,7 +39,7 @@ public class ClientListFragment extends Fragment {
     private OnFragmentInteractionListener mListener;
     private ClientItem.ClientInfoItemListener clientInfoItemListener;
     private ClientInfoAdapter clientInfoAdapter;
-    private ServerInfo serverInfo = null;
+    private ServerStatus serverStatus = null;
     private boolean hideOffline = false;
 
     public ClientListFragment() {
@@ -78,7 +78,7 @@ public class ClientListFragment extends Fragment {
         ListView lvClient = (ListView) view.findViewById(R.id.lvClient);
         clientInfoAdapter = new ClientInfoAdapter(getContext(), clientInfoItemListener);
         clientInfoAdapter.setHideOffline(hideOffline);
-        clientInfoAdapter.updateServer(serverInfo);
+        clientInfoAdapter.updateServer(serverStatus);
         lvClient.setAdapter(clientInfoAdapter);
         return view;
     }
@@ -108,10 +108,10 @@ public class ClientListFragment extends Fragment {
         mListener = null;
     }
 
-    public void updateServer(ServerInfo serverInfo) {
-        this.serverInfo = serverInfo;
+    public void updateServer(ServerStatus serverStatus) {
+        this.serverStatus = serverStatus;
         if (clientInfoAdapter != null)
-            clientInfoAdapter.updateServer(this.serverInfo);
+            clientInfoAdapter.updateServer(this.serverStatus);
     }
 
     public void setHideOffline(boolean hide) {
@@ -149,7 +149,7 @@ public class ClientListFragment extends Fragment {
         private Context context;
         private ClientItem.ClientInfoItemListener listener;
         private boolean hideOffline = false;
-        private ServerInfo serverInfo = new ServerInfo();
+        private ServerStatus serverStatus = new ServerStatus();
 
         public ClientInfoAdapter(Context context, ClientItem.ClientInfoItemListener listener) {
             super(context, 0);
@@ -172,9 +172,9 @@ public class ClientListFragment extends Fragment {
             return clientItem;
         }
 
-        public void updateServer(final ServerInfo serverInfo) {
-            if (serverInfo != null) {
-                ClientInfoAdapter.this.serverInfo = serverInfo;
+        public void updateServer(final ServerStatus serverStatus) {
+            if (serverStatus != null) {
+                ClientInfoAdapter.this.serverStatus = serverStatus;
                 update();
             }
         }
@@ -186,7 +186,7 @@ public class ClientListFragment extends Fragment {
                 @Override
                 public void run() {
                     clear();
-                    for (ClientInfo clientInfo : ClientInfoAdapter.this.serverInfo.getClientInfos()) {
+                    for (ClientInfo clientInfo : ClientInfoAdapter.this.serverStatus.getClientInfos()) {
                         if ((clientInfo != null) && (!hideOffline || clientInfo.isConnected()) && !clientInfo.isDeleted() && clientInfo.getStream().equals(ClientListFragment.this.stream.getId()))
                             add(clientInfo);
                     }
