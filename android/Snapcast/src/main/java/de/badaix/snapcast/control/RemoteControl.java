@@ -1,10 +1,12 @@
 package de.badaix.snapcast.control;
 
+import android.text.TextUtils;
 import android.util.Log;
 
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+
+import java.util.HashMap;
 
 /**
  * Created by johannes on 13.01.16.
@@ -19,11 +21,13 @@ public class RemoteControl implements TcpClient.TcpClientListener {
     private ServerInfo serverInfo;
     private String host;
     private int port;
+    private HashMap<Long, String> pendingRequests;
 
     public RemoteControl(RemoteControlListener listener) {
         this.listener = listener;
         serverInfo = new ServerInfo();
         msgId = 0;
+        pendingRequests = new HashMap<>();
     }
 
     public String getHost() {
@@ -54,6 +58,7 @@ public class RemoteControl implements TcpClient.TcpClientListener {
         if ((tcpClient != null) && (tcpClient.isConnected()))
             tcpClient.stop();
         tcpClient = null;
+        pendingRequests.clear();
     }
 
     public boolean isConnected() {
@@ -67,26 +72,22 @@ public class RemoteControl implements TcpClient.TcpClientListener {
             JSONObject json = new JSONObject(message);
             if (json.has("id")) {
                 Log.d(TAG, "ID: " + json.getString("id"));
+                long id = json.getLong("id");
+                String request = "";
+                if (pendingRequests.containsKey(id)) {
+                    request = pendingRequests.get(id);
+                    Log.d(TAG, "Response to: " + request);
+                    pendingRequests.remove(id);
+                }
                 if (json.has("error")) {
                     JSONObject error = json.getJSONObject("error");
                     Log.e(TAG, "error " + error.getInt("code") + ": " + error.getString("message"));
-                } else if (json.has("result") && (json.get("result") instanceof JSONObject) &&
-                        json.getJSONObject("result").has("clients")) {
-                    serverInfo.clear();
-                    JSONArray clients = json.getJSONObject("result").getJSONArray("clients");
-                    for (int i = 0; i < clients.length(); i++) {
-                        final ClientInfo clientInfo = new ClientInfo(clients.getJSONObject(i));
-                        serverInfo.updateClient(clientInfo);
+                } else if (!TextUtils.isEmpty(request)) {
+                    if (request.equals("Server.GetStatus")) {
+                        serverInfo.fromJson(json.getJSONObject("result"));
+                        if (listener != null)
+                            listener.onServerInfo(this, serverInfo);
                     }
-                    if (json.getJSONObject("result").has("streams")) {
-                        JSONArray streams = json.getJSONObject("result").getJSONArray("streams");
-                        for (int i = 0; i < streams.length(); i++) {
-                            final Stream stream = new Stream(streams.getJSONObject(i));
-                            serverInfo.updateStream(stream);
-                        }
-                    }
-                    if (listener != null)
-                        listener.onServerInfo(this, serverInfo);
                 }
             } else {
                 String method = json.getString("method");
@@ -145,6 +146,7 @@ public class RemoteControl implements TcpClient.TcpClientListener {
             request.put("id", msgId);
             if (params != null)
                 request.put("params", params);
+            pendingRequests.put(msgId, method);
             msgId++;
         } catch (JSONException e) {
             e.printStackTrace();
