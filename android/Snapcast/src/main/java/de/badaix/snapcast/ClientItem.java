@@ -11,8 +11,8 @@ import android.widget.LinearLayout;
 import android.widget.SeekBar;
 import android.widget.TextView;
 
-import de.badaix.snapcast.control.Client;
-import de.badaix.snapcast.control.Volume;
+import de.badaix.snapcast.control.json.Client;
+import de.badaix.snapcast.control.json.Volume;
 
 public class ClientItem extends LinearLayout implements SeekBar.OnSeekBarChangeListener, View.OnClickListener, PopupMenu.OnMenuItemClickListener {
 

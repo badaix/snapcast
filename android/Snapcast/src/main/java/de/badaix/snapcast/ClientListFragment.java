@@ -10,9 +10,9 @@ import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 
-import de.badaix.snapcast.control.Client;
-import de.badaix.snapcast.control.ServerStatus;
-import de.badaix.snapcast.control.Stream;
+import de.badaix.snapcast.control.json.Client;
+import de.badaix.snapcast.control.json.ServerStatus;
+import de.badaix.snapcast.control.json.Stream;
 
 
 /**

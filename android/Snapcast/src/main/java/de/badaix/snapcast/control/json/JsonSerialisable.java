@@ -1,4 +1,4 @@
-package de.badaix.snapcast.control;
+package de.badaix.snapcast.control.json;
 
 import org.json.JSONObject;
 

@@ -14,8 +14,8 @@ import org.json.JSONObject;
 
 import java.util.ArrayList;
 
-import de.badaix.snapcast.control.Client;
-import de.badaix.snapcast.control.Stream;
+import de.badaix.snapcast.control.json.Client;
+import de.badaix.snapcast.control.json.Stream;
 
 /**
  * Created by johannes on 11.01.16.

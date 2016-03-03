@@ -8,6 +8,9 @@ import org.json.JSONObject;
 
 import java.util.HashMap;
 
+import de.badaix.snapcast.control.json.Client;
+import de.badaix.snapcast.control.json.ServerStatus;
+
 /**
  * Created by johannes on 13.01.16.
  */

@@ -43,10 +43,10 @@ import org.json.JSONObject;
 import java.net.UnknownHostException;
 import java.util.Vector;
 
-import de.badaix.snapcast.control.Client;
 import de.badaix.snapcast.control.RemoteControl;
-import de.badaix.snapcast.control.ServerStatus;
-import de.badaix.snapcast.control.Stream;
+import de.badaix.snapcast.control.json.Client;
+import de.badaix.snapcast.control.json.ServerStatus;
+import de.badaix.snapcast.control.json.Stream;
 import de.badaix.snapcast.utils.NsdHelper;
 import de.badaix.snapcast.utils.Settings;
 import de.badaix.snapcast.utils.Setup;
