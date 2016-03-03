@@ -14,15 +14,15 @@ import org.json.JSONObject;
 
 import java.util.ArrayList;
 
-import de.badaix.snapcast.control.ClientInfo;
+import de.badaix.snapcast.control.Client;
 import de.badaix.snapcast.control.Stream;
 
 /**
  * Created by johannes on 11.01.16.
  */
 public class ClientSettingsFragment extends PreferenceFragment {
-    private ClientInfo clientInfo = null;
-    private ClientInfo clientInfoOriginal = null;
+    private Client client = null;
+    private Client clientOriginal = null;
     private EditTextPreference prefName;
     private ListPreference prefStream;
     private EditTextPreference prefLatency;
@@ -39,11 +39,11 @@ public class ClientSettingsFragment extends PreferenceFragment {
 
         Bundle bundle = getArguments();
         try {
-            clientInfo = new ClientInfo(new JSONObject(bundle.getString("client")));
+            client = new Client(new JSONObject(bundle.getString("client")));
         } catch (JSONException e) {
             e.printStackTrace();
         }
-        clientInfoOriginal = new ClientInfo(clientInfo.toJson());
+        clientOriginal = new Client(client.toJson());
         final ArrayList<Stream> streams = new ArrayList<>();
         try {
             JSONArray jsonArray = new JSONArray(bundle.getString("streams"));
@@ -67,7 +67,7 @@ public class ClientSettingsFragment extends PreferenceFragment {
             @Override
             public boolean onPreferenceChange(Preference preference, Object newValue) {
                 prefName.setSummary((String) newValue);
-                clientInfo.setName((String) newValue);
+                client.setName((String) newValue);
                 return true;
             }
         });
@@ -75,7 +75,7 @@ public class ClientSettingsFragment extends PreferenceFragment {
         prefStream.setEntries(streamNames);
         prefStream.setEntryValues(streamIds);
         for (int i = 0; i < streams.size(); ++i) {
-            if (streamIds[i].equals(clientInfo.getStream())) {
+            if (streamIds[i].equals(client.getStream())) {
                 prefStream.setSummary(streamNames[i]);
                 prefStream.setValueIndex(i);
                 break;
@@ -87,7 +87,7 @@ public class ClientSettingsFragment extends PreferenceFragment {
                 for (int i = 0; i < streams.size(); ++i) {
                     if (streamIds[i].equals(newValue)) {
                         prefStream.setSummary(streamNames[i]);
-                        clientInfo.setStream(streamIds[i].toString());
+                        client.setStream(streamIds[i].toString());
                         prefStream.setValueIndex(i);
                         break;
                     }
@@ -109,37 +109,37 @@ public class ClientSettingsFragment extends PreferenceFragment {
                 if (TextUtils.isEmpty(latency))
                     latency = "0";
                 prefLatency.setSummary(latency + "ms");
-                clientInfo.setLatency(Integer.parseInt(latency));
+                client.setLatency(Integer.parseInt(latency));
                 return true;
             }
         });
         update();
     }
 
-    public ClientInfo getClientInfo() {
-        return clientInfo;
+    public Client getClient() {
+        return client;
     }
 
-    public ClientInfo getOriginalClientInfo() {
-        return clientInfoOriginal;
+    public Client getOriginalClientInfo() {
+        return clientOriginal;
     }
 
     public void update() {
-        if (clientInfo == null)
+        if (client == null)
             return;
-        prefName.setSummary(clientInfo.getName());
-        prefName.setText(clientInfo.getName());
-        prefMac.setSummary(clientInfo.getMac());
-        prefIp.setSummary(clientInfo.getIp());
-        prefHost.setSummary(clientInfo.getHost());
-        prefVersion.setSummary(clientInfo.getVersion());
+        prefName.setSummary(client.getName());
+        prefName.setText(client.getName());
+        prefMac.setSummary(client.getMac());
+        prefIp.setSummary(client.getIp());
+        prefHost.setSummary(client.getHost());
+        prefVersion.setSummary(client.getVersion());
         String lastSeen = getText(R.string.online).toString();
-        if (!clientInfo.isConnected()) {
-            long lastSeenTs = Math.min(clientInfo.getLastSeen().getSec() * 1000, System.currentTimeMillis());
+        if (!client.isConnected()) {
+            long lastSeenTs = Math.min(client.getLastSeen().getSec() * 1000, System.currentTimeMillis());
             lastSeen = DateUtils.getRelativeTimeSpanString(lastSeenTs, System.currentTimeMillis(), DateUtils.SECOND_IN_MILLIS).toString();
         }
         prefLastSeen.setSummary(lastSeen);
-        prefLatency.setSummary(clientInfo.getLatency() + "ms");
-        prefLatency.setText(clientInfo.getLatency() + "");
+        prefLatency.setSummary(client.getLatency() + "ms");
+        prefLatency.setText(client.getLatency() + "");
     }
 }

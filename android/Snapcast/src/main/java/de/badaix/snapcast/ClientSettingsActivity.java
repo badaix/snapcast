@@ -36,7 +36,7 @@ public class ClientSettingsActivity extends AppCompatActivity {
     @Override
     public void onBackPressed() {
         Intent intent = new Intent();
-        intent.putExtra("client", clientSettingsFragment.getClientInfo().toJson().toString());
+        intent.putExtra("client", clientSettingsFragment.getClient().toJson().toString());
         intent.putExtra("clientOriginal", clientSettingsFragment.getOriginalClientInfo().toJson().toString());
         setResult(Activity.RESULT_OK, intent);
         finish();

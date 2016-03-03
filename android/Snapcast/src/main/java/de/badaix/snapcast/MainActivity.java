@@ -43,7 +43,7 @@ import org.json.JSONObject;
 import java.net.UnknownHostException;
 import java.util.Vector;
 
-import de.badaix.snapcast.control.ClientInfo;
+import de.badaix.snapcast.control.Client;
 import de.badaix.snapcast.control.RemoteControl;
 import de.badaix.snapcast.control.ServerStatus;
 import de.badaix.snapcast.control.Stream;
@@ -438,28 +438,28 @@ public class MainActivity extends AppCompatActivity implements ClientListFragmen
             return;
         }
         if (requestCode == 1) {
-            ClientInfo clientInfo = null;
+            Client client = null;
             try {
-                clientInfo = new ClientInfo(new JSONObject(data.getStringExtra("client")));
+                client = new Client(new JSONObject(data.getStringExtra("client")));
             } catch (JSONException e) {
                 e.printStackTrace();
             }
-            ClientInfo clientInfoOriginal = null;
+            Client clientOriginal = null;
             try {
-                clientInfoOriginal = new ClientInfo(new JSONObject(data.getStringExtra("clientOriginal")));
+                clientOriginal = new Client(new JSONObject(data.getStringExtra("clientOriginal")));
             } catch (JSONException e) {
                 e.printStackTrace();
             }
-            Log.d(TAG, "new name: " + clientInfo.getName() + ", old name: " + clientInfoOriginal.getName());
-            if (!clientInfo.getName().equals(clientInfoOriginal.getName()))
-                remoteControl.setName(clientInfo, clientInfo.getName());
-            Log.d(TAG, "new stream: " + clientInfo.getStream() + ", old stream: " + clientInfoOriginal.getStream());
-            if (!clientInfo.getStream().equals(clientInfoOriginal.getStream()))
-                remoteControl.setStream(clientInfo, clientInfo.getStream());
-            Log.d(TAG, "new latency: " + clientInfo.getLatency() + ", old latency: " + clientInfoOriginal.getLatency());
-            if (clientInfo.getLatency() != clientInfoOriginal.getLatency())
-                remoteControl.setLatency(clientInfo, clientInfo.getLatency());
-            serverStatus.updateClient(clientInfo);
+            Log.d(TAG, "new name: " + client.getName() + ", old name: " + clientOriginal.getName());
+            if (!client.getName().equals(clientOriginal.getName()))
+                remoteControl.setName(client, client.getName());
+            Log.d(TAG, "new stream: " + client.getStream() + ", old stream: " + clientOriginal.getStream());
+            if (!client.getStream().equals(clientOriginal.getStream()))
+                remoteControl.setStream(client, client.getStream());
+            Log.d(TAG, "new latency: " + client.getLatency() + ", old latency: " + clientOriginal.getLatency());
+            if (client.getLatency() != clientOriginal.getLatency())
+                remoteControl.setLatency(client, client.getLatency());
+            serverStatus.updateClient(client);
             sectionsPagerAdapter.updateServer(serverStatus);
         }
     }
@@ -505,12 +505,12 @@ public class MainActivity extends AppCompatActivity implements ClientListFragmen
     }
 
     @Override
-    public void onClientEvent(RemoteControl remoteControl, ClientInfo clientInfo, RemoteControl.ClientEvent event) {
+    public void onClientEvent(RemoteControl remoteControl, Client client, RemoteControl.ClientEvent event) {
         Log.d(TAG, "onClientEvent: " + event.toString());
         if (event == RemoteControl.ClientEvent.deleted)
-            serverStatus.removeClient(clientInfo);
+            serverStatus.removeClient(client);
         else
-            serverStatus.updateClient(clientInfo);
+            serverStatus.updateClient(client);
 
         sectionsPagerAdapter.updateServer(serverStatus);
     }
@@ -586,28 +586,28 @@ public class MainActivity extends AppCompatActivity implements ClientListFragmen
 
     @Override
     public void onVolumeChanged(ClientItem clientItem, int percent) {
-        remoteControl.setVolume(clientItem.getClientInfo(), percent);
+        remoteControl.setVolume(clientItem.getClient(), percent);
     }
 
     @Override
     public void onMute(ClientItem clientItem, boolean mute) {
-        remoteControl.setMute(clientItem.getClientInfo(), mute);
+        remoteControl.setMute(clientItem.getClient(), mute);
     }
 
     @Override
     public void onDeleteClicked(final ClientItem clientItem) {
-        final ClientInfo clientInfo = clientItem.getClientInfo();
-        clientInfo.setDeleted(true);
-        serverStatus.updateClient(clientInfo);
+        final Client client = clientItem.getClient();
+        client.setDeleted(true);
+        serverStatus.updateClient(client);
         sectionsPagerAdapter.updateServer(serverStatus);
         Snackbar mySnackbar = Snackbar.make(findViewById(R.id.myCoordinatorLayout),
-                getString(R.string.client_deleted, clientInfo.getVisibleName()),
+                getString(R.string.client_deleted, client.getVisibleName()),
                 Snackbar.LENGTH_SHORT);
         mySnackbar.setAction(R.string.undo_string, new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                clientInfo.setDeleted(false);
-                serverStatus.updateClient(clientInfo);
+                client.setDeleted(false);
+                serverStatus.updateClient(client);
                 sectionsPagerAdapter.updateServer(serverStatus);
             }
         });
@@ -616,8 +616,8 @@ public class MainActivity extends AppCompatActivity implements ClientListFragmen
             public void onDismissed(Snackbar snackbar, int event) {
                 super.onDismissed(snackbar, event);
                 if (event != DISMISS_EVENT_ACTION) {
-                    remoteControl.delete(clientInfo);
-                    serverStatus.removeClient(clientInfo);
+                    remoteControl.delete(client);
+                    serverStatus.removeClient(client);
                 }
             }
         });
@@ -627,7 +627,7 @@ public class MainActivity extends AppCompatActivity implements ClientListFragmen
     @Override
     public void onPropertiesClicked(ClientItem clientItem) {
         Intent intent = new Intent(this, ClientSettingsActivity.class);
-        intent.putExtra("client", clientItem.getClientInfo().toJson().toString());
+        intent.putExtra("client", clientItem.getClient().toJson().toString());
         intent.putExtra("streams", serverStatus.getJsonStreams().toString());
         intent.setFlags(0);
         startActivityForResult(intent, 1);

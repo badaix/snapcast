@@ -10,7 +10,7 @@ import java.util.ArrayList;
  * Created by johannes on 06.01.16.
  */
 public class ServerStatus implements JsonSerialisable {
-    private ArrayList<ClientInfo> clients = new ArrayList<ClientInfo>();
+    private ArrayList<Client> clients = new ArrayList<Client>();
     private ArrayList<Stream> streams = new ArrayList<Stream>();
     private Server server = null;
 
@@ -31,7 +31,7 @@ public class ServerStatus implements JsonSerialisable {
                 streams.add(new Stream(jStreams.getJSONObject(i)));
             JSONArray jClients = json.getJSONArray("clients");
             for (int i = 0; i < jClients.length(); i++)
-                clients.add(new ClientInfo(jClients.getJSONObject(i)));
+                clients.add(new Client(jClients.getJSONObject(i)));
         } catch (JSONException e) {
             e.printStackTrace();
         }
@@ -55,7 +55,7 @@ public class ServerStatus implements JsonSerialisable {
         streams.clear();
     }
 
-    public boolean removeClient(ClientInfo client) {
+    public boolean removeClient(Client client) {
         for (int i = 0; i < clients.size(); ++i) {
             if (clients.get(i).getMac().equals(client.getMac())) {
                 clients.remove(i);
@@ -65,12 +65,12 @@ public class ServerStatus implements JsonSerialisable {
         return false;
     }
 
-    public boolean updateClient(ClientInfo client) {
+    public boolean updateClient(Client client) {
         if (client == null)
             return false;
 
         for (int i = 0; i < clients.size(); ++i) {
-            ClientInfo clientInfo = clients.get(i);
+            Client clientInfo = clients.get(i);
             if (clientInfo == null)
                 continue;
 
@@ -106,7 +106,7 @@ public class ServerStatus implements JsonSerialisable {
         return true;
     }
 
-    public ArrayList<ClientInfo> getClientInfos() {
+    public ArrayList<Client> getClientInfos() {
         return clients;
     }
 
@@ -123,7 +123,7 @@ public class ServerStatus implements JsonSerialisable {
 
     public JSONArray getJsonClients() {
         JSONArray jsonArray = new JSONArray();
-        for (ClientInfo client : clients)
+        for (Client client : clients)
             jsonArray.put(client.toJson());
         return jsonArray;
     }

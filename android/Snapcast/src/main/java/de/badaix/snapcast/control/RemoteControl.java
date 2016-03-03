@@ -74,10 +74,12 @@ public class RemoteControl implements TcpClient.TcpClientListener {
                 Log.d(TAG, "ID: " + json.getString("id"));
                 long id = json.getLong("id");
                 String request = "";
-                if (pendingRequests.containsKey(id)) {
-                    request = pendingRequests.get(id);
-                    Log.d(TAG, "Response to: " + request);
-                    pendingRequests.remove(id);
+                synchronized (pendingRequests) {
+                    if (pendingRequests.containsKey(id)) {
+                        request = pendingRequests.get(id);
+                        Log.d(TAG, "Response to: " + request);
+                        pendingRequests.remove(id);
+                    }
                 }
                 if (json.has("error")) {
                     JSONObject error = json.getJSONObject("error");
@@ -93,18 +95,18 @@ public class RemoteControl implements TcpClient.TcpClientListener {
                 String method = json.getString("method");
                 Log.d(TAG, "Notification: " + method);
                 if (method.contains("Client.On")) {
-                    final ClientInfo clientInfo = new ClientInfo(json.getJSONObject("params").getJSONObject("data"));
-//                    serverStatus.addClient(clientInfo);
+                    final Client client = new Client(json.getJSONObject("params").getJSONObject("data"));
+//                    serverStatus.addClient(client);
                     if (listener != null) {
                         ClientEvent event;
                         if (method.equals("Client.OnUpdate"))
-                            listener.onClientEvent(this, clientInfo, ClientEvent.updated);
+                            listener.onClientEvent(this, client, ClientEvent.updated);
                         else if (method.equals("Client.OnConnect"))
-                            listener.onClientEvent(this, clientInfo, ClientEvent.connected);
+                            listener.onClientEvent(this, client, ClientEvent.connected);
                         else if (method.equals("Client.OnDisconnect"))
-                            listener.onClientEvent(this, clientInfo, ClientEvent.disconnected);
+                            listener.onClientEvent(this, client, ClientEvent.disconnected);
                         else if (method.equals("Client.OnDelete")) {
-                            listener.onClientEvent(this, clientInfo, ClientEvent.deleted);
+                            listener.onClientEvent(this, client, ClientEvent.deleted);
                         }
                     }
                 }
@@ -146,7 +148,9 @@ public class RemoteControl implements TcpClient.TcpClientListener {
             request.put("id", msgId);
             if (params != null)
                 request.put("params", params);
-            pendingRequests.put(msgId, method);
+            synchronized (pendingRequests) {
+                pendingRequests.put(msgId, method);
+            }
             msgId++;
         } catch (JSONException e) {
             e.printStackTrace();
@@ -159,54 +163,54 @@ public class RemoteControl implements TcpClient.TcpClientListener {
         tcpClient.sendMessage(request.toString());
     }
 
-    public void setName(ClientInfo clientInfo, String name) {
+    public void setName(Client client, String name) {
         try {
-            JSONObject request = jsonRequest("Client.SetName", new JSONObject("{\"client\": \"" + clientInfo.getMac() + "\", \"name\": \"" + name + "\"}"));
+            JSONObject request = jsonRequest("Client.SetName", new JSONObject("{\"client\": \"" + client.getMac() + "\", \"name\": \"" + name + "\"}"));
             tcpClient.sendMessage(request.toString());
         } catch (JSONException e) {
             e.printStackTrace();
         }
     }
 
-    public void setLatency(ClientInfo clientInfo, int latency) {
+    public void setLatency(Client client, int latency) {
         try {
-            JSONObject request = jsonRequest("Client.SetLatency", new JSONObject("{\"client\": \"" + clientInfo.getMac() + "\", \"latency\": " + latency + "}"));
+            JSONObject request = jsonRequest("Client.SetLatency", new JSONObject("{\"client\": \"" + client.getMac() + "\", \"latency\": " + latency + "}"));
             tcpClient.sendMessage(request.toString());
         } catch (JSONException e) {
             e.printStackTrace();
         }
     }
 
-    public void setStream(ClientInfo clientInfo, String id) {
+    public void setStream(Client client, String id) {
         try {
-            JSONObject request = jsonRequest("Client.SetStream", new JSONObject("{\"client\": \"" + clientInfo.getMac() + "\", \"id\": \"" + id + "\"}"));
+            JSONObject request = jsonRequest("Client.SetStream", new JSONObject("{\"client\": \"" + client.getMac() + "\", \"id\": \"" + id + "\"}"));
             tcpClient.sendMessage(request.toString());
         } catch (JSONException e) {
             e.printStackTrace();
         }
     }
 
-    public void setVolume(ClientInfo clientInfo, int percent) {
+    public void setVolume(Client client, int percent) {
         try {
-            JSONObject request = jsonRequest("Client.SetVolume", new JSONObject("{\"client\": \"" + clientInfo.getMac() + "\", \"volume\": " + percent + "}"));
+            JSONObject request = jsonRequest("Client.SetVolume", new JSONObject("{\"client\": \"" + client.getMac() + "\", \"volume\": " + percent + "}"));
             tcpClient.sendMessage(request.toString());
         } catch (JSONException e) {
             e.printStackTrace();
         }
     }
 
-    public void setMute(ClientInfo clientInfo, boolean mute) {
+    public void setMute(Client client, boolean mute) {
         try {
-            JSONObject request = jsonRequest("Client.SetMute", new JSONObject("{\"client\": \"" + clientInfo.getMac() + "\", \"mute\": " + mute + "}"));
+            JSONObject request = jsonRequest("Client.SetMute", new JSONObject("{\"client\": \"" + client.getMac() + "\", \"mute\": " + mute + "}"));
             tcpClient.sendMessage(request.toString());
         } catch (JSONException e) {
             e.printStackTrace();
         }
     }
 
-    public void delete(ClientInfo clientInfo) {
+    public void delete(Client client) {
         try {
-            JSONObject request = jsonRequest("Server.DeleteClient", new JSONObject("{\"client\": \"" + clientInfo.getMac() + "\"}"));
+            JSONObject request = jsonRequest("Server.DeleteClient", new JSONObject("{\"client\": \"" + client.getMac() + "\"}"));
             tcpClient.sendMessage(request.toString());
         } catch (JSONException e) {
             e.printStackTrace();
@@ -227,7 +231,7 @@ public class RemoteControl implements TcpClient.TcpClientListener {
 
         void onDisconnected(RemoteControl remoteControl, Exception e);
 
-        void onClientEvent(RemoteControl remoteControl, ClientInfo clientInfo, ClientEvent event);
+        void onClientEvent(RemoteControl remoteControl, Client client, ClientEvent event);
 
         void onServerStatus(RemoteControl remoteControl, ServerStatus serverStatus);
     }

@@ -10,7 +10,7 @@ import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 
-import de.badaix.snapcast.control.ClientInfo;
+import de.badaix.snapcast.control.Client;
 import de.badaix.snapcast.control.ServerStatus;
 import de.badaix.snapcast.control.Stream;
 
@@ -145,7 +145,7 @@ public class ClientListFragment extends Fragment {
     }
 
 
-    public class ClientInfoAdapter extends ArrayAdapter<ClientInfo> {
+    public class ClientInfoAdapter extends ArrayAdapter<Client> {
         private Context context;
         private ClientItem.ClientInfoItemListener listener;
         private boolean hideOffline = false;
@@ -159,14 +159,14 @@ public class ClientListFragment extends Fragment {
 
         @Override
         public View getView(int position, View convertView, ViewGroup parent) {
-            ClientInfo clientInfo = getItem(position);
+            Client client = getItem(position);
             final ClientItem clientItem;
 
             if (convertView != null) {
                 clientItem = (ClientItem) convertView;
-                clientItem.setClientInfo(clientInfo);
+                clientItem.setClient(client);
             } else {
-                clientItem = new ClientItem(context, clientInfo);
+                clientItem = new ClientItem(context, client);
             }
             clientItem.setListener(listener);
             return clientItem;
@@ -186,9 +186,9 @@ public class ClientListFragment extends Fragment {
                 @Override
                 public void run() {
                     clear();
-                    for (ClientInfo clientInfo : ClientInfoAdapter.this.serverStatus.getClientInfos()) {
-                        if ((clientInfo != null) && (!hideOffline || clientInfo.isConnected()) && !clientInfo.isDeleted() && clientInfo.getStream().equals(ClientListFragment.this.stream.getId()))
-                            add(clientInfo);
+                    for (Client client : ClientInfoAdapter.this.serverStatus.getClientInfos()) {
+                        if ((client != null) && (!hideOffline || client.isConnected()) && !client.isDeleted() && client.getStream().equals(ClientListFragment.this.stream.getId()))
+                            add(client);
                     }
                     notifyDataSetChanged();
                 }

@@ -6,7 +6,7 @@ import org.json.JSONObject;
 /**
  * Created by johannes on 06.01.16.
  */
-public class ClientInfo implements JsonSerialisable {
+public class Client implements JsonSerialisable {
     private String mac;
     private String ip;
     private String host;
@@ -19,7 +19,7 @@ public class ClientInfo implements JsonSerialisable {
     private String stream;
     private boolean deleted = false;
 
-    public ClientInfo(JSONObject json) {
+    public Client(JSONObject json) {
         fromJson(json);
     }
 
@@ -137,7 +137,7 @@ public class ClientInfo implements JsonSerialisable {
 
     @Override
     public String toString() {
-        return "ClientInfo{" +
+        return "Client{" +
                 "mac='" + mac + '\'' +
                 ", ip='" + ip + '\'' +
                 ", host='" + host + '\'' +
@@ -156,7 +156,7 @@ public class ClientInfo implements JsonSerialisable {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
 
-        ClientInfo that = (ClientInfo) o;
+        Client that = (Client) o;
 
         if (connected != that.connected) return false;
         if (deleted != that.deleted) return false;
