@@ -121,7 +121,7 @@ public class ClientListFragment extends Fragment {
     }
 
     public String getName() {
-        return stream.getQuery().get("name");
+        return stream.getName();
     }
 
     public void setStream(Stream stream) {

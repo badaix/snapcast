@@ -10,13 +10,9 @@ import java.util.Map;
  * Created by johannes on 06.01.16.
  */
 public class Stream implements JsonSerialisable {
-    private String uri;
-    private String scheme;
-    private String host;
-    private String path;
-    private String fragment;
+    private StreamUri uri;
     private String id;
-    private HashMap<String, String> query;
+    private Status status;
 
     public Stream(JSONObject json) {
         fromJson(json);
@@ -25,16 +21,9 @@ public class Stream implements JsonSerialisable {
     @Override
     public void fromJson(JSONObject json) {
         try {
-            uri = json.getString("uri");
-            scheme = json.getString("scheme");
-            host = json.getString("host");
-            path = json.getString("path");
-            fragment = json.getString("fragment");
+            uri = new StreamUri(json.getJSONObject("uri"));
             id = json.getString("id");
-            query = new HashMap<>();
-            JSONObject jQuery = json.getJSONObject("query");
-            for (int i = 0; i < jQuery.names().length(); i++)
-                query.put(jQuery.names().getString(i), jQuery.getString(jQuery.names().getString(i)));
+            status = Status.fromString(json.getString("status"));
         } catch (JSONException e) {
             e.printStackTrace();
         }
@@ -44,16 +33,9 @@ public class Stream implements JsonSerialisable {
     public JSONObject toJson() {
         JSONObject json = new JSONObject();
         try {
-            json.put("uri", uri);
-            json.put("scheme", scheme);
-            json.put("host", host);
-            json.put("path", path);
-            json.put("fragment", fragment);
+            json.put("uri", uri.toJson());
             json.put("id", id);
-            JSONObject jQuery = new JSONObject();
-            for (Map.Entry<String, String> entry : query.entrySet())
-                jQuery.put(entry.getKey(), entry.getValue());
-            json.put("query", jQuery);
+            json.put("status", status);
         } catch (JSONException e) {
             e.printStackTrace();
         }
@@ -68,65 +50,24 @@ public class Stream implements JsonSerialisable {
         Stream stream = (Stream) o;
 
         if (uri != null ? !uri.equals(stream.uri) : stream.uri != null) return false;
-        if (scheme != null ? !scheme.equals(stream.scheme) : stream.scheme != null) return false;
-        if (host != null ? !host.equals(stream.host) : stream.host != null) return false;
-        if (path != null ? !path.equals(stream.path) : stream.path != null) return false;
-        if (fragment != null ? !fragment.equals(stream.fragment) : stream.fragment != null)
-            return false;
         if (id != null ? !id.equals(stream.id) : stream.id != null) return false;
-        return !(query != null ? !query.equals(stream.query) : stream.query != null);
+        return !(status != null ? !status.equals(stream.status) : stream.status != null);
     }
 
     @Override
     public int hashCode() {
         int result = uri != null ? uri.hashCode() : 0;
-        result = 31 * result + (scheme != null ? scheme.hashCode() : 0);
-        result = 31 * result + (host != null ? host.hashCode() : 0);
-        result = 31 * result + (path != null ? path.hashCode() : 0);
-        result = 31 * result + (fragment != null ? fragment.hashCode() : 0);
         result = 31 * result + (id != null ? id.hashCode() : 0);
-        result = 31 * result + (query != null ? query.hashCode() : 0);
+        result = 31 * result + (status != null ? status.hashCode() : 0);
         return result;
     }
 
-    public String getUri() {
+    public StreamUri getUri() {
         return uri;
     }
 
-    public void setUri(String uri) {
+    public void setUri(StreamUri uri) {
         this.uri = uri;
-    }
-
-    public String getScheme() {
-        return scheme;
-    }
-
-    public void setScheme(String scheme) {
-        this.scheme = scheme;
-    }
-
-    public String getHost() {
-        return host;
-    }
-
-    public void setHost(String host) {
-        this.host = host;
-    }
-
-    public String getPath() {
-        return path;
-    }
-
-    public void setPath(String path) {
-        this.path = path;
-    }
-
-    public String getFragment() {
-        return fragment;
-    }
-
-    public void setFragment(String fragment) {
-        this.fragment = fragment;
     }
 
     public String getId() {
@@ -137,31 +78,47 @@ public class Stream implements JsonSerialisable {
         this.id = id;
     }
 
-    public HashMap<String, String> getQuery() {
-        return query;
+    public Status getStatus() {
+        return status;
     }
 
-    public void setQuery(HashMap<String, String> query) {
-        this.query = query;
+    public void setStatus(Status status) {
+        this.status = status;
     }
 
     public String getName() {
-        if (query.containsKey("name"))
-            return query.get("name");
-        else
-            return "";
+        return uri.getName();
     }
 
     @Override
     public String toString() {
         return "Stream{" +
                 "uri='" + uri + '\'' +
-                ", scheme='" + scheme + '\'' +
-                ", host='" + host + '\'' +
-                ", path='" + path + '\'' +
-                ", fragment='" + fragment + '\'' +
                 ", id='" + id + '\'' +
-                ", query=" + query +
+                ", status=" + status +
                 '}';
+    }
+
+    public enum Status {
+        idle("idle"),
+        playing("playing"),
+        disabled("disabled");
+
+        private String status;
+
+        Status(String status) {
+            this.status = status;
+        }
+
+        public static Status fromString(String status) {
+            if (status != null) {
+                for (Status s : Status.values()) {
+                    if (status.equalsIgnoreCase(s.status)) {
+                        return s;
+                    }
+                }
+            }
+            return null;
+        }
     }
 }

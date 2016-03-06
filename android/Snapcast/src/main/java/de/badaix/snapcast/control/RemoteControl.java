@@ -10,6 +10,7 @@ import java.util.HashMap;
 
 import de.badaix.snapcast.control.json.Client;
 import de.badaix.snapcast.control.json.ServerStatus;
+import de.badaix.snapcast.control.json.Stream;
 
 /**
  * Created by johannes on 13.01.16.
@@ -112,6 +113,9 @@ public class RemoteControl implements TcpClient.TcpClientListener {
                             listener.onClientEvent(this, client, ClientEvent.deleted);
                         }
                     }
+                } else if (method.equals("Stream.OnUpdate")) {
+                    Stream stream = new Stream(json.getJSONObject("params").getJSONObject("data"));
+                    Log.d(TAG, stream.toString());
                 }
             }
 
