@@ -76,7 +76,10 @@ void PipeReader::worker()
 				{
 					int count = read(fd_, chunk->payload + len, toRead - len);
 					if (count < 0)
+					{
+						setState(kIdle);
 						usleep(100*1000);
+					}
 					else if (count == 0)
 						throw SnapException("end of file");
 					else
@@ -92,6 +95,7 @@ void PipeReader::worker()
 				if (nextTick >= currentTick)
 				{
 //					logO << "sleep: " << nextTick - currentTick << "\n";
+					setState(kPlaying);
 					usleep((nextTick - currentTick) * 1000);
 				}
 				else

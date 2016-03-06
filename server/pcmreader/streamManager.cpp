@@ -114,7 +114,7 @@ json StreamManager::toJson() const
 {
 	json result = json::array();
 	for (auto stream: streams_)
-		result.push_back(stream->getUri().toJson());
+		result.push_back(stream->toJson());
 	return result;
 }
 

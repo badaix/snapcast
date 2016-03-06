@@ -58,6 +58,8 @@ void FileReader::worker()
 	size_t length = ifs.tellg();
 	ifs.seekg (0, ifs.beg);
 
+	setState(kPlaying);
+
 	while (active_)
 	{
 		gettimeofday(&tvChunk, NULL);

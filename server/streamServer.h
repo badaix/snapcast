@@ -89,6 +89,7 @@ public:
 	virtual void onMessageReceived(ControlSession* connection, const std::string& message);
 
 	/// Implementation of PcmListener
+	virtual void onStateChanged(const PcmReader* pcmReader, const ReaderState& state);
 	virtual void onChunkRead(const PcmReader* pcmReader, const msg::PcmChunk* chunk, double duration);
 	virtual void onResync(const PcmReader* pcmReader, double ms);
 

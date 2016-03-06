@@ -108,14 +108,14 @@ ReaderUri::ReaderUri(const std::string& readerUri)
 
 json ReaderUri::toJson() const
 {
-	json j;
-	j["uri"] = uri;
-	j["scheme"] = scheme;
-	j["host"] = host;
-	j["path"] = path;
-	j["fragment"] = fragment;
-	j["query"] = json(query);
-	j["id"] = id_;
+	json j = {
+		{"raw", uri},
+		{"scheme", scheme},
+		{"host", host},
+		{"path", path},
+		{"fragment", fragment},
+		{"query", query}
+	};
 	return j;
 }
 

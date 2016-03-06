@@ -40,6 +40,15 @@ StreamServer::~StreamServer()
 }
 
 
+void StreamServer::onStateChanged(const PcmReader* pcmReader, const ReaderState& state)
+{
+	logO << "onStateChanged (" << pcmReader->getName() << "): " << state << "\n";
+//	logO << pcmReader->toJson().dump(4);
+	json notification = JsonNotification::getJson("Stream.OnUpdate", pcmReader->toJson());
+	controlServer_->send(notification.dump(), NULL);
+}
+
+
 void StreamServer::onChunkRead(const PcmReader* pcmReader, const msg::PcmChunk* chunk, double duration)
 {
 //	logO << "onChunkRead (" << pcmReader->getName() << "): " << duration << "ms\n";
@@ -301,7 +310,7 @@ void StreamServer::onMessageReceived(StreamSession* connection, const msg::BaseM
 		connection->send(headerChunk.get());
 
 		json notification = JsonNotification::getJson("Client.OnConnect", client->toJson());
-		logO << notification.dump(4) << "\n";
+//		logO << notification.dump(4) << "\n";
 		controlServer_->send(notification.dump());
 	}
 }

@@ -55,7 +55,7 @@ Config::Config()
 				client->fromJson(*it);
 				client->connected = false;
 				clients.push_back(client);
-				std::cout << "Client:\n" << std::setw(4) << client->toJson() << '\n';
+//				logO << "Client:\n" << std::setw(4) << client->toJson() << '\n';
 			}
 		}
 	}

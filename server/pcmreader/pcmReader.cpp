@@ -32,7 +32,7 @@ using namespace std;
 
 
 
-PcmReader::PcmReader(PcmListener* pcmListener, const ReaderUri& uri) : pcmListener_(pcmListener), uri_(uri), pcmReadMs_(20)
+PcmReader::PcmReader(PcmListener* pcmListener, const ReaderUri& uri) : pcmListener_(pcmListener), uri_(uri), pcmReadMs_(20), state_(kIdle)
 {
 	EncoderFactory encoderFactory;
  	if (uri_.query.find("codec") == uri_.query.end())
@@ -104,6 +104,22 @@ void PcmReader::stop()
 }
 
 
+ReaderState PcmReader::getState() const
+{
+	return state_;
+}
+
+
+void PcmReader::setState(const ReaderState& newState)
+{
+	if (newState != state_)
+	{
+		state_ = newState;
+		pcmListener_->onStateChanged(this, newState);
+	}
+}
+
+
 void PcmReader::onChunkEncoded(const Encoder* encoder, msg::PcmChunk* chunk, double duration)
 {
 //	logO << "onChunkEncoded: " << duration << " us\n";
@@ -114,5 +130,24 @@ void PcmReader::onChunkEncoded(const Encoder* encoder, msg::PcmChunk* chunk, dou
 	chunk->timestamp.usec = tvEncodedChunk_.tv_usec;
 	chronos::addUs(tvEncodedChunk_, duration * 1000);
 	pcmListener_->onChunkRead(this, chunk, duration);
+}
+
+
+json PcmReader::toJson() const
+{
+	string state("idle");
+	if (state_ == kIdle)
+		state = "idle";
+	else if (state_ == kPlaying)
+		state = "playing";
+	else if (state_ == kDisabled)
+		state = "disabled";
+
+	json j = {
+		{"uri", uri_.toJson()},
+		{"id", uri_.id()},
+		{"status", state}
+	};
+	return j;
 }
 

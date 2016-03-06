@@ -25,11 +25,19 @@
 #include <map>
 #include "readerUri.h"
 #include "../encoder/encoder.h"
+#include "../json/json.hpp"
 #include "message/sampleFormat.h"
 #include "message/header.h"
 
 
 class PcmReader;
+
+enum ReaderState
+{
+	kIdle = 0,
+	kPlaying = 1,
+	kDisabled = 2
+};
 
 
 /// Callback interface for users of PcmReader
@@ -39,6 +47,7 @@ class PcmReader;
 class PcmListener
 {
 public:
+	virtual void onStateChanged(const PcmReader* pcmReader, const ReaderState& state) = 0;
 	virtual void onChunkRead(const PcmReader* pcmReader, const msg::PcmChunk* chunk, double duration) = 0;
 	virtual void onResync(const PcmReader* pcmReader, double ms) = 0;
 };
@@ -68,8 +77,14 @@ public:
 	virtual const std::string& getName() const;
 	virtual const SampleFormat& getSampleFormat() const;
 
+	virtual ReaderState getState() const;
+	virtual json toJson() const;
+
+
 protected:
 	virtual void worker() = 0;
+	void setState(const ReaderState& newState);
+
 	timeval tvEncodedChunk_;
 	std::atomic<bool> active_;
 	std::thread readerThread_;
@@ -79,6 +94,7 @@ protected:
 	size_t pcmReadMs_;
 	std::unique_ptr<Encoder> encoder_;
 	std::string name_;
+	ReaderState state_;
 };
 
 
