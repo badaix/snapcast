@@ -7,8 +7,12 @@ import org.json.JSONObject;
  * Created by johannes on 06.01.16.
  */
 public class Time_t implements JsonSerialisable {
-    private long sec;
-    private long usec;
+    private long sec = 0;
+    private long usec = 0;
+
+    public Time_t() {
+
+    }
 
     public Time_t(JSONObject json) {
         fromJson(json);

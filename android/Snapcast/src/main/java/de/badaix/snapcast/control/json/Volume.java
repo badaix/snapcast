@@ -7,11 +7,15 @@ import org.json.JSONObject;
  * Created by johannes on 06.01.16.
  */
 public class Volume implements JsonSerialisable {
-    private boolean muted;
-    private int percent;
+    private boolean muted = false;
+    private int percent = 100;
 
     public Volume(JSONObject json) {
         fromJson(json);
+    }
+
+    public Volume() {
+
     }
 
     public Volume(int percent, boolean muted) {

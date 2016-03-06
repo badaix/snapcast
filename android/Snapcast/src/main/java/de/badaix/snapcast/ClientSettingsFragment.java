@@ -75,7 +75,7 @@ public class ClientSettingsFragment extends PreferenceFragment {
         prefStream.setEntries(streamNames);
         prefStream.setEntryValues(streamIds);
         for (int i = 0; i < streams.size(); ++i) {
-            if (streamIds[i].equals(client.getStream())) {
+            if (streamIds[i].equals(client.getConfig().getStream())) {
                 prefStream.setSummary(streamNames[i]);
                 prefStream.setValueIndex(i);
                 break;
@@ -87,7 +87,7 @@ public class ClientSettingsFragment extends PreferenceFragment {
                 for (int i = 0; i < streams.size(); ++i) {
                     if (streamIds[i].equals(newValue)) {
                         prefStream.setSummary(streamNames[i]);
-                        client.setStream(streamIds[i].toString());
+                        client.getConfig().setStream(streamIds[i].toString());
                         prefStream.setValueIndex(i);
                         break;
                     }
@@ -109,7 +109,7 @@ public class ClientSettingsFragment extends PreferenceFragment {
                 if (TextUtils.isEmpty(latency))
                     latency = "0";
                 prefLatency.setSummary(latency + "ms");
-                client.setLatency(Integer.parseInt(latency));
+                client.getConfig().setLatency(Integer.parseInt(latency));
                 return true;
             }
         });
@@ -127,19 +127,19 @@ public class ClientSettingsFragment extends PreferenceFragment {
     public void update() {
         if (client == null)
             return;
-        prefName.setSummary(client.getName());
-        prefName.setText(client.getName());
-        prefMac.setSummary(client.getMac());
-        prefIp.setSummary(client.getIp());
-        prefHost.setSummary(client.getHost());
-        prefVersion.setSummary(client.getVersion());
+        prefName.setSummary(client.getConfig().getName());
+        prefName.setText(client.getConfig().getName());
+        prefMac.setSummary(client.getHost().getMac());
+        prefIp.setSummary(client.getHost().getIp());
+        prefHost.setSummary(client.getHost().getName());
+        prefVersion.setSummary(client.getSnapclient().getVersion());
         String lastSeen = getText(R.string.online).toString();
         if (!client.isConnected()) {
             long lastSeenTs = Math.min(client.getLastSeen().getSec() * 1000, System.currentTimeMillis());
             lastSeen = DateUtils.getRelativeTimeSpanString(lastSeenTs, System.currentTimeMillis(), DateUtils.SECOND_IN_MILLIS).toString();
         }
         prefLastSeen.setSummary(lastSeen);
-        prefLatency.setSummary(client.getLatency() + "ms");
-        prefLatency.setText(client.getLatency() + "");
+        prefLatency.setSummary(client.getConfig().getLatency() + "ms");
+        prefLatency.setText(client.getConfig().getLatency() + "");
     }
 }

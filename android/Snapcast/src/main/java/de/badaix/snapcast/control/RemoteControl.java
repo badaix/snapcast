@@ -70,17 +70,17 @@ public class RemoteControl implements TcpClient.TcpClientListener {
 
     @Override
     public void onMessageReceived(TcpClient tcpClient, String message) {
-        Log.d(TAG, "Msg received: " + message);
+//        Log.d(TAG, "Msg received: " + message);
         try {
             JSONObject json = new JSONObject(message);
             if (json.has("id")) {
-                Log.d(TAG, "ID: " + json.getString("id"));
+//                Log.d(TAG, "ID: " + json.getString("id"));
                 long id = json.getLong("id");
                 String request = "";
                 synchronized (pendingRequests) {
                     if (pendingRequests.containsKey(id)) {
                         request = pendingRequests.get(id);
-                        Log.d(TAG, "Response to: " + request);
+//                        Log.d(TAG, "Response to: " + request);
                         pendingRequests.remove(id);
                     }
                 }
@@ -96,7 +96,7 @@ public class RemoteControl implements TcpClient.TcpClientListener {
                 }
             } else {
                 String method = json.getString("method");
-                Log.d(TAG, "Notification: " + method);
+//                Log.d(TAG, "Notification: " + method);
                 if (method.contains("Client.On")) {
                     final Client client = new Client(json.getJSONObject("params").getJSONObject("data"));
 //                    serverStatus.addClient(client);

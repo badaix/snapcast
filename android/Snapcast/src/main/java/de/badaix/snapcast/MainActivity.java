@@ -450,15 +450,15 @@ public class MainActivity extends AppCompatActivity implements ClientListFragmen
             } catch (JSONException e) {
                 e.printStackTrace();
             }
-            Log.d(TAG, "new name: " + client.getName() + ", old name: " + clientOriginal.getName());
-            if (!client.getName().equals(clientOriginal.getName()))
-                remoteControl.setName(client, client.getName());
-            Log.d(TAG, "new stream: " + client.getStream() + ", old stream: " + clientOriginal.getStream());
-            if (!client.getStream().equals(clientOriginal.getStream()))
-                remoteControl.setStream(client, client.getStream());
-            Log.d(TAG, "new latency: " + client.getLatency() + ", old latency: " + clientOriginal.getLatency());
-            if (client.getLatency() != clientOriginal.getLatency())
-                remoteControl.setLatency(client, client.getLatency());
+            Log.d(TAG, "new name: " + client.getConfig().getName() + ", old name: " + clientOriginal.getConfig().getName());
+            if (!client.getConfig().getName().equals(clientOriginal.getConfig().getName()))
+                remoteControl.setName(client, client.getConfig().getName());
+            Log.d(TAG, "new stream: " + client.getConfig().getStream() + ", old stream: " + clientOriginal.getConfig().getStream());
+            if (!client.getConfig().getStream().equals(clientOriginal.getConfig().getStream()))
+                remoteControl.setStream(client, client.getConfig().getStream());
+            Log.d(TAG, "new latency: " + client.getConfig().getLatency() + ", old latency: " + clientOriginal.getConfig().getLatency());
+            if (client.getConfig().getLatency() != clientOriginal.getConfig().getLatency())
+                remoteControl.setLatency(client, client.getConfig().getLatency());
             serverStatus.updateClient(client);
             sectionsPagerAdapter.updateServer(serverStatus);
         }

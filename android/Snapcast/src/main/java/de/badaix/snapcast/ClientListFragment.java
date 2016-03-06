@@ -187,7 +187,7 @@ public class ClientListFragment extends Fragment {
                 public void run() {
                     clear();
                     for (Client client : ClientInfoAdapter.this.serverStatus.getClientInfos()) {
-                        if ((client != null) && (!hideOffline || client.isConnected()) && !client.isDeleted() && client.getStream().equals(ClientListFragment.this.stream.getId()))
+                        if ((client != null) && (!hideOffline || client.isConnected()) && !client.isDeleted() && client.getConfig().getStream().equals(ClientListFragment.this.stream.getId()))
                             add(client);
                     }
                     notifyDataSetChanged();

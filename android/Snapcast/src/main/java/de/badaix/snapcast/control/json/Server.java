@@ -7,8 +7,8 @@ import org.json.JSONObject;
  * Created by johannes on 02.03.16.
  */
 public class Server implements JsonSerialisable {
-    private String host;
-    private String version;
+    private Host host;
+    private Snapcast snapserver;
 
     public Server(JSONObject json) {
         fromJson(json);
@@ -17,8 +17,19 @@ public class Server implements JsonSerialisable {
     @Override
     public void fromJson(JSONObject json) {
         try {
-            host = json.getString("host");
-            version = json.getString("version");
+            if (json.has("host") && !(json.get("host") instanceof String))
+                host = new Host(json.getJSONObject("host"));
+            else {
+                host = new Host();
+                host.name = json.getString("host");
+            }
+
+            if (json.has("snapserver"))
+                snapserver = new Snapcast(json.getJSONObject("snapserver"));
+            else {
+                snapserver = new Snapcast();
+                snapserver.version = json.getString("version");
+            }
         } catch (JSONException e) {
             e.printStackTrace();
         }
@@ -28,27 +39,27 @@ public class Server implements JsonSerialisable {
     public JSONObject toJson() {
         JSONObject json = new JSONObject();
         try {
-            json.put("host", host);
-            json.put("version", version);
+            json.put("host", host.toJson());
+            json.put("snapserver", snapserver.toJson());
         } catch (JSONException e) {
             e.printStackTrace();
         }
         return json;
     }
 
-    public String getHost() {
+    public Host getHost() {
         return host;
     }
 
-    public String getVersion() {
-        return version;
+    public Snapcast getSnapserver() {
+        return snapserver;
     }
 
     @Override
     public String toString() {
         return "Server{" +
                 "host='" + host + '\'' +
-                ", version='" + version + '\'' +
+                ", snapserver='" + snapserver + '\'' +
                 '}';
     }
 
@@ -60,14 +71,14 @@ public class Server implements JsonSerialisable {
         Server server = (Server) o;
 
         if (host != null ? !host.equals(server.host) : server.host != null) return false;
-        return version != null ? version.equals(server.version) : server.version == null;
+        return snapserver != null ? snapserver.equals(server.snapserver) : server.snapserver == null;
 
     }
 
     @Override
     public int hashCode() {
         int result = host != null ? host.hashCode() : 0;
-        result = 31 * result + (version != null ? version.hashCode() : 0);
+        result = 31 * result + (snapserver != null ? snapserver.hashCode() : 0);
         return result;
     }
 }

@@ -43,8 +43,8 @@ public class ClientItem extends LinearLayout implements SeekBar.OnSeekBarChangeL
     private void update() {
         title.setText(client.getVisibleName());
         title.setEnabled(client.isConnected());
-        volumeSeekBar.setProgress(client.getVolume().getPercent());
-        if (client.getVolume().isMuted())
+        volumeSeekBar.setProgress(client.getConfig().getVolume().getPercent());
+        if (client.getConfig().getVolume().isMuted())
             ibMute.setImageResource(R.drawable.ic_mute_icon);
         else
             ibMute.setImageResource(R.drawable.ic_speaker_icon);
@@ -75,7 +75,7 @@ public class ClientItem extends LinearLayout implements SeekBar.OnSeekBarChangeL
     @Override
     public void onClick(View v) {
         if (v == ibMute) {
-            Volume volume = client.getVolume();
+            Volume volume = client.getConfig().getVolume();
             volume.setMuted(!volume.isMuted());
             update();
             listener.onMute(this, volume.isMuted());
