@@ -84,7 +84,7 @@ ClientInfoPtr Config::getClientInfo(const std::string& macAddress, bool add)
 
 	for (auto client: clients)
 	{
-		if (client->macAddress == macAddress)
+		if (client->host.mac == macAddress)
 			return client;
 	}
 

@@ -135,21 +135,25 @@ void StreamServer::onMessageReceived(ControlSession* controlSession, const std::
 			else
 				jClient = Config::instance().getClientInfos();
 
+			Host host;
+			//TODO: Set MAC and IP
+			Snapcast snapserver("Snapserver", VERSION);
 			response = {
 				{"server", {
-					{"host", getHostName()},
-					{"version", VERSION}
+					{"host", host.toJson()},//getHostName()},
+					{"snapserver", snapserver.toJson()}
 				}},
 				{"clients", jClient},
 				{"streams", streamManager_->toJson()}
 			};
+//			cout << response.dump(4);
 		}
 		else if (request.method == "Server.DeleteClient")
 		{
 			clientInfo = Config::instance().getClientInfo(request.getParam("client").get<string>(), false);
 			if (clientInfo == nullptr)
 				throw JsonInternalErrorException("Client not found", request.id);
-			response = clientInfo->macAddress;
+			response = clientInfo->host.mac;
 			Config::instance().remove(clientInfo);
 			Config::instance().save();
 			json notification = JsonNotification::getJson("Client.OnDelete", clientInfo->toJson());
@@ -158,13 +162,13 @@ void StreamServer::onMessageReceived(ControlSession* controlSession, const std::
 		}
 		else if (request.method == "Client.SetVolume")
 		{
-			clientInfo->volume.percent = request.getParam<uint16_t>("volume", 0, 100);
-			response = clientInfo->volume.percent;
+			clientInfo->config.volume.percent = request.getParam<uint16_t>("volume", 0, 100);
+			response = clientInfo->config.volume.percent;
 		}
 		else if (request.method == "Client.SetMute")
 		{
-			clientInfo->volume.muted = request.getParam<bool>("mute", false, true);
-			response = clientInfo->volume.muted;
+			clientInfo->config.volume.muted = request.getParam<bool>("mute", false, true);
+			response = clientInfo->config.volume.muted;
 		}
 		else if (request.method == "Client.SetStream")
 		{
@@ -173,8 +177,8 @@ void StreamServer::onMessageReceived(ControlSession* controlSession, const std::
 			if (stream == nullptr)
 				throw JsonInternalErrorException("Stream not found", request.id);
 
-			clientInfo->streamId = streamId;
-			response = clientInfo->streamId;
+			clientInfo->config.streamId = streamId;
+			response = clientInfo->config.streamId;
 
 			StreamSession* session = getStreamSession(request.getParam("client").get<string>());
 			if (session != NULL)
@@ -185,22 +189,22 @@ void StreamServer::onMessageReceived(ControlSession* controlSession, const std::
 		}
 		else if (request.method == "Client.SetLatency")
 		{
-			clientInfo->latency = request.getParam<int>("latency", -10000, settings_.bufferMs);
-			response = clientInfo->latency;
+			clientInfo->config.latency = request.getParam<int>("latency", -10000, settings_.bufferMs);
+			response = clientInfo->config.latency;
 		}
 		else if (request.method == "Client.SetName")
 		{
-			clientInfo->name = request.getParam("name").get<string>();
-			response = clientInfo->name;
+			clientInfo->config.name = request.getParam("name").get<string>();
+			response = clientInfo->config.name;
 		}
 		else
 			throw JsonMethodNotFoundException(request.id);
 
 		if (clientInfo != nullptr)
 		{
-			serverSettings.volume = clientInfo->volume.percent;
-			serverSettings.muted = clientInfo->volume.muted;
-			serverSettings.latency = clientInfo->latency;
+			serverSettings.volume = clientInfo->config.volume.percent;
+			serverSettings.muted = clientInfo->config.volume.muted;
+			serverSettings.latency = clientInfo->config.latency;
 
 			StreamSession* session = getStreamSession(request.getParam("client").get<string>());
 			if (session != NULL)
@@ -247,7 +251,9 @@ void StreamServer::onMessageReceived(StreamSession* connection, const msg::BaseM
 		msg::Hello helloMsg;
 		helloMsg.deserialize(baseMessage, buffer);
 		connection->macAddress = helloMsg.getMacAddress();
-		logO << "Hello from " << connection->macAddress << ", host: " << helloMsg.getHostName() << ", v" << helloMsg.getVersion() << "\n";
+		logO << "Hello from " << connection->macAddress << ", host: " << helloMsg.getHostName() << ", v" << helloMsg.getVersion()
+			<< ", ClientName: " << helloMsg.getClientName() << ", OS: " << helloMsg.getOS() << ", Arch: " << helloMsg.getArch()
+			<< ", control version: " << helloMsg.getControlProtocolVersion() << ", Stream version: " << helloMsg.getStreamProtocolVersion() << "\n";
 
 		logD << "request kServerSettings: " << connection->macAddress << "\n";
 //		std::lock_guard<std::mutex> mlock(mutex_);
@@ -260,27 +266,32 @@ void StreamServer::onMessageReceived(StreamSession* connection, const msg::BaseM
 		{
 			logD << "request kServerSettings\n";
 			msg::ServerSettings serverSettings;
-			serverSettings.volume = clientInfo->volume.percent;
-			serverSettings.muted = clientInfo->volume.muted;
-			serverSettings.latency = clientInfo->latency;
+			serverSettings.volume = clientInfo->config.volume.percent;
+			serverSettings.muted = clientInfo->config.volume.muted;
+			serverSettings.latency = clientInfo->config.latency;
 			serverSettings.refersTo = helloMsg.id;
 			serverSettings.bufferMs = settings_.bufferMs;
 			connection->send(&serverSettings);
 		}
 
 		ClientInfoPtr client = Config::instance().getClientInfo(connection->macAddress);
-		client->ipAddress = connection->getIP();
-		client->hostName = helloMsg.getHostName();
-		client->version = helloMsg.getVersion();
+		client->host.ip = connection->getIP();
+		client->host.name = helloMsg.getHostName();
+		client->host.os = helloMsg.getOS();
+		client->host.arch = helloMsg.getArch();
+		client->snapclient.version = helloMsg.getVersion();
+		client->snapclient.name = helloMsg.getClientName();
+		client->snapclient.streamProtocolVersion = helloMsg.getStreamProtocolVersion();
+		client->snapclient.controlProtocolVersion = helloMsg.getControlProtocolVersion();
 		client->connected = true;
 		gettimeofday(&client->lastSeen, NULL);
 
 		// Assign and update stream
-		PcmReaderPtr stream = streamManager_->getStream(client->streamId);
+		PcmReaderPtr stream = streamManager_->getStream(client->config.streamId);
 		if (stream == nullptr)
 		{
 			stream = streamManager_->getDefaultStream();
-			client->streamId = stream->getUri().id();
+			client->config.streamId = stream->getUri().id();
 		}
 		Config::instance().save();
 
