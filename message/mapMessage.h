@@ -22,6 +22,7 @@
 #include "message.h"
 #include <string>
 #include <map>
+#include <sstream>
 #include "common/log.h"
 
 
@@ -85,6 +86,26 @@ public:
 			return def;
 
 		return strMap[key];
+	}
+
+
+	template<class T>
+	T get(const std::string& key, const T& def)
+	{
+		T result;
+		std::stringstream defaultValue;
+		defaultValue << def;
+		std::string value = get(key, defaultValue.str());
+
+		std::istringstream is(value);
+		while (is.good())
+		{
+			if (is.peek() != EOF)
+				is >> result;
+			else
+				break;
+		}
+		return result;
 	}
 
 

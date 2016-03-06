@@ -38,6 +38,7 @@
 #include <unistd.h>
 #include <iomanip>
 #include <sys/sysinfo.h>
+#include <sys/utsname.h>
 
 
 // trim from start
@@ -125,23 +126,48 @@ static std::vector<std::string> split(const std::string &s, char delim)
 }
 
 
-#ifdef ANDROID
-static std::string getProp(const std::string& prop)
+static std::string execGetOutput(const std::string& cmd)
 {
-	std::string cmd = "getprop " + prop;
 	std::shared_ptr<FILE> pipe(popen(cmd.c_str(), "r"), pclose);
 	if (!pipe)
 		return "";
-	char buffer[512];
+	char buffer[1024];
 	std::string result = "";
 	while (!feof(pipe.get()))
 	{
-		if (fgets(buffer, 512, pipe.get()) != NULL)
+		if (fgets(buffer, 1024, pipe.get()) != NULL)
 			result += buffer;
 	}
-	return result;
+	return trim(result);
+}
+
+
+#ifdef ANDROID
+static std::string getProp(const std::string& prop)
+{
+	return execGetOutput("getprop " + prop);
 }
 #endif
+
+
+static std::string getOS()
+{
+	std::string os;
+#ifdef ANDROID
+	os = trim_copy("Android " + getProp("ro.build.version.release"));
+#else
+	os = execGetOutput("lsb_release -d");
+	if (os.find(":") != std::string::npos)
+		os = trim_copy(os.substr(os.find(":") + 1));
+#endif
+	if (os.empty())
+	{
+		utsname u;
+		uname(&u);
+		os = u.sysname;
+	}
+	return trim_copy(os);
+}
 
 
 static std::string getHostName()
@@ -155,6 +181,19 @@ static std::string getHostName()
 	hostname[1023] = '\0';
 	gethostname(hostname, 1023);
 	return hostname;
+}
+
+
+static std::string getArch()
+{
+	std::string arch;
+#ifdef ANDROID
+	arch = getProp("ro.product.cpu.abi");
+	if (!arch.empty())
+		return arch;
+#endif
+	arch = execGetOutput("uname -i");
+	return trim_copy(arch);
 }
 
 

@@ -39,6 +39,11 @@ public:
 		add("MAC", macAddress);
 		add("HostName", ::getHostName());
 		add("Version", VERSION);
+		add("ClientName", "Snapclient");
+		add("OS", ::getOS());
+		add("Arch", ::getArch());
+		add("SnapControlProtocolVersion", "1");
+		add("SnapStreamProtocolVersion", "1");
 	}
 
 	virtual ~Hello()
@@ -58,6 +63,31 @@ public:
 	std::string getVersion()
 	{
 		return get("Version");
+	}
+
+	std::string getClientName()
+	{
+		return get("ClientName");
+	}
+
+	std::string getOS()
+	{
+		return get("OS");
+	}
+
+	std::string getArch()
+	{
+		return get("Arch");
+	}
+
+	int getControlProtocolVersion()
+	{
+		return get("SnapControlProtocolVersion", 1);
+	}
+
+	int getStreamProtocolVersion()
+	{
+		return get("SnapStreamProtocolVersion", 1);
 	}
 
 };
