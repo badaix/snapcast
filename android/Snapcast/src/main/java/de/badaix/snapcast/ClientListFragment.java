@@ -4,11 +4,13 @@ import android.content.Context;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
+import android.widget.TextView;
 
 import de.badaix.snapcast.control.json.Client;
 import de.badaix.snapcast.control.json.ServerStatus;
@@ -41,6 +43,7 @@ public class ClientListFragment extends Fragment {
     private ClientInfoAdapter clientInfoAdapter;
     private ServerStatus serverStatus = null;
     private boolean hideOffline = false;
+    private TextView tvStreamState = null;
 
     public ClientListFragment() {
         // Required empty public constructor
@@ -75,11 +78,13 @@ public class ClientListFragment extends Fragment {
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_client_list, container, false);
+        tvStreamState = (TextView) view.findViewById(R.id.tvStreamState);
         ListView lvClient = (ListView) view.findViewById(R.id.lvClient);
         clientInfoAdapter = new ClientInfoAdapter(getContext(), clientInfoItemListener);
         clientInfoAdapter.setHideOffline(hideOffline);
         clientInfoAdapter.updateServer(serverStatus);
         lvClient.setAdapter(clientInfoAdapter);
+        updateGui();
         return view;
     }
 
@@ -88,6 +93,12 @@ public class ClientListFragment extends Fragment {
         if (mListener != null) {
             mListener.onFragmentInteraction(uri);
         }
+    }
+
+    private void updateGui() {
+        if ((tvStreamState == null) || (stream == null))
+            return;
+        tvStreamState.setText(stream.getUri().getQuery().get("sampleformat") + " - " + stream.getStatus().toString());
     }
 
     @Override
@@ -100,6 +111,7 @@ public class ClientListFragment extends Fragment {
                     + " must implement OnFragmentInteractionListener");
         }
         clientInfoItemListener = (ClientItem.ClientInfoItemListener) context;
+        updateGui();
     }
 
     @Override
@@ -125,7 +137,9 @@ public class ClientListFragment extends Fragment {
     }
 
     public void setStream(Stream stream) {
+        Log.d(TAG, "setStream: " + stream.getName() + ", status: " + stream.getStatus());
         this.stream = stream;
+        updateGui();
     }
 
 

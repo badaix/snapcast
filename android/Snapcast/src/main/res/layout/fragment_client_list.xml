@@ -5,13 +5,37 @@
              tools:context="de.badaix.snapcast.ClientListFragment">
 
 
-    <ListView
-        android:id="@+id/lvClient"
+    <RelativeLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:cacheColorHint="@android:color/transparent"
-        android:divider="@null"
-        android:dividerHeight="1dp"
-        android:listSelector="@android:color/transparent"/>
+        android:layout_height="match_parent">
+
+        <ListView
+            android:id="@+id/lvClient"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:cacheColorHint="@android:color/transparent"
+            android:divider="@null"
+            android:dividerHeight="1dp"
+            android:listSelector="@android:color/transparent"
+            android:layout_above="@+id/tvStreamState"
+            android:layout_alignParentTop="true"
+            android:layout_alignParentRight="true"
+            android:layout_alignParentEnd="true"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentStart="true"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:text="Stream state"
+            android:id="@+id/tvStreamState"
+            android:layout_alignParentBottom="true"
+            android:layout_alignParentRight="true"
+            android:layout_alignParentEnd="true"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentStart="true"
+            android:padding="5dp"/>
+    </RelativeLayout>
 
 </FrameLayout>

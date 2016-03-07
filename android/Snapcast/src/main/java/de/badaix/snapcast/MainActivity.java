@@ -523,6 +523,13 @@ public class MainActivity extends AppCompatActivity implements ClientListFragmen
         sectionsPagerAdapter.updateServer(serverStatus);
     }
 
+    @Override
+    public void onStreamUpdate(RemoteControl remoteControl, Stream stream) {
+        serverStatus.updateStream(stream);
+        sectionsPagerAdapter.updateServer(serverStatus);
+    }
+
+
     private void setActionbarSubtitle(final String subtitle) {
         MainActivity.this.runOnUiThread(new Runnable() {
             @Override
@@ -659,7 +666,6 @@ public class MainActivity extends AppCompatActivity implements ClientListFragmen
                         fragments.add(ClientListFragment.newInstance("TODO1"));
 
                     for (int i = 0; i < serverStatus.getStreams().size(); ++i) {
-                        Log.d(TAG, "updateServer Stream: " + serverStatus.getStreams().get(i).getName());
                         fragments.get(i).setStream(serverStatus.getStreams().get(i));
                         fragments.get(i).updateServer(serverStatus);
                     }
@@ -669,7 +675,6 @@ public class MainActivity extends AppCompatActivity implements ClientListFragmen
                         notifyDataSetChanged();
                         tabLayout.setTabsFromPagerAdapter(SectionsPagerAdapter.this);
                     }
-
                     setHideOffline(hideOffline);
                 }
 

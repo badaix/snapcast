@@ -115,6 +115,7 @@ public class RemoteControl implements TcpClient.TcpClientListener {
                     }
                 } else if (method.equals("Stream.OnUpdate")) {
                     Stream stream = new Stream(json.getJSONObject("params").getJSONObject("data"));
+                    listener.onStreamUpdate(this, stream);
                     Log.d(TAG, stream.toString());
                 }
             }
@@ -241,5 +242,7 @@ public class RemoteControl implements TcpClient.TcpClientListener {
         void onClientEvent(RemoteControl remoteControl, Client client, ClientEvent event);
 
         void onServerStatus(RemoteControl remoteControl, ServerStatus serverStatus);
+
+        void onStreamUpdate(RemoteControl remoteControl, Stream stream);
     }
 }

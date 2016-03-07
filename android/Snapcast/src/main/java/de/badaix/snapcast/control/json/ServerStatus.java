@@ -99,9 +99,8 @@ public class ServerStatus implements JsonSerialisable {
             if (s == null)
                 continue;
 
-
-            if (stream.getUri().equals(s.getUri())) {
-                if (stream.equals(stream))
+            if (stream.getId().equals(s.getId())) {
+                if (s.equals(stream))
                     return false;
                 streams.set(i, stream);
                 return true;
