@@ -135,7 +135,7 @@ void PcmReader::onChunkEncoded(const Encoder* encoder, msg::PcmChunk* chunk, dou
 
 json PcmReader::toJson() const
 {
-	string state("idle");
+	string state("unknown");
 	if (state_ == kIdle)
 		state = "idle";
 	else if (state_ == kPlaying)

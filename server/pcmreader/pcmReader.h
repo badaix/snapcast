@@ -34,9 +34,10 @@ class PcmReader;
 
 enum ReaderState
 {
-	kIdle = 0,
-	kPlaying = 1,
-	kDisabled = 2
+	kUnknown = 0,
+	kIdle = 1,
+	kPlaying = 2,
+	kDisabled = 3
 };
 
 

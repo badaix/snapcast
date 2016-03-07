@@ -25,7 +25,7 @@ public class Stream implements JsonSerialisable {
             } else {
                 uri = new StreamUri(json);
                 id = json.getString("id");
-                status = Status.fromString("idle");
+                status = Status.unknown;
             }
         } catch (JSONException e) {
             e.printStackTrace();
@@ -99,6 +99,7 @@ public class Stream implements JsonSerialisable {
     }
 
     public enum Status {
+        unknown("unknown"),
         idle("idle"),
         playing("playing"),
         disabled("disabled");
