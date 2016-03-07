@@ -21,9 +21,15 @@ public class Stream implements JsonSerialisable {
     @Override
     public void fromJson(JSONObject json) {
         try {
-            uri = new StreamUri(json.getJSONObject("uri"));
-            id = json.getString("id");
-            status = Status.fromString(json.getString("status"));
+            if (json.has("uri") && (json.get("uri") instanceof  JSONObject)) {
+                uri = new StreamUri(json.getJSONObject("uri"));
+                id = json.getString("id");
+                status = Status.fromString(json.getString("status"));
+            } else {
+                uri = new StreamUri(json);
+                id = json.getString("id");
+                status = Status.fromString("idle");
+            }
         } catch (JSONException e) {
             e.printStackTrace();
         }

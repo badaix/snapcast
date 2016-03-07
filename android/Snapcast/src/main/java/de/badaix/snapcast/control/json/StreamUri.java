@@ -24,7 +24,10 @@ public class StreamUri implements JsonSerialisable {
     @Override
     public void fromJson(JSONObject json) {
         try {
-            raw = json.getString("raw");
+            if (json.has("raw"))
+                raw = json.getString("raw");
+            else if (json.has("uri"))
+                raw = json.getString("uri");
             scheme = json.getString("scheme");
             host = json.getString("host");
             path = json.getString("path");
