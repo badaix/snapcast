@@ -3,9 +3,6 @@ package de.badaix.snapcast.control.json;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.util.HashMap;
-import java.util.Map;
-
 /**
  * Created by johannes on 06.01.16.
  */
@@ -21,7 +18,7 @@ public class Stream implements JsonSerialisable {
     @Override
     public void fromJson(JSONObject json) {
         try {
-            if (json.has("uri") && (json.get("uri") instanceof  JSONObject)) {
+            if (json.has("uri") && (json.get("uri") instanceof JSONObject)) {
                 uri = new StreamUri(json.getJSONObject("uri"));
                 id = json.getString("id");
                 status = Status.fromString(json.getString("status"));
@@ -98,11 +95,7 @@ public class Stream implements JsonSerialisable {
 
     @Override
     public String toString() {
-        return "Stream{" +
-                "uri='" + uri + '\'' +
-                ", id='" + id + '\'' +
-                ", status=" + status +
-                '}';
+        return toJson().toString();
     }
 
     public enum Status {

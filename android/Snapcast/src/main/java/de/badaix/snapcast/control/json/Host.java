@@ -71,13 +71,7 @@ public class Host implements JsonSerialisable {
 
     @Override
     public String toString() {
-        return "Client{" +
-                "name='" + name + '\'' +
-                ", mac='" + mac + '\'' +
-                ", os='" + os + '\'' +
-                ", arch='" + arch + '\'' +
-                ", ip='" + ip + '\'' +
-                '}';
+        return toJson().toString();
     }
 
     @Override

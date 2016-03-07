@@ -63,10 +63,7 @@ public class Volume implements JsonSerialisable {
 
     @Override
     public String toString() {
-        return "Volume{" +
-                "muted=" + muted +
-                ", percent=" + percent +
-                '}';
+        return toJson().toString();
     }
 
     @Override

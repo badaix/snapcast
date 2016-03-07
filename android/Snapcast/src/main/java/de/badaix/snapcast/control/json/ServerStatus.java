@@ -50,6 +50,11 @@ public class ServerStatus implements JsonSerialisable {
         return json;
     }
 
+    @Override
+    public String toString() {
+        return toJson().toString();
+    }
+
     public void clear() {
         clients.clear();
         streams.clear();

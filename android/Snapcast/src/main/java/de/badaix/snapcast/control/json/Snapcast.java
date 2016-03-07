@@ -63,12 +63,7 @@ public class Snapcast implements JsonSerialisable {
 
     @Override
     public String toString() {
-        return "Client{" +
-                "name='" + name + '\'' +
-                ", version='" + version + '\'' +
-                ", streamProtocolVersion=" + streamProtocolVersion +
-                ", controlProtocolVersion=" + controlProtocolVersion +
-                '}';
+        return toJson().toString();
     }
 
     @Override

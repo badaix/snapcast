@@ -80,12 +80,7 @@ public class ClientConfig implements JsonSerialisable {
 
     @Override
     public String toString() {
-        return "Client{" +
-                "name='" + name + '\'' +
-                ", volume=" + volume +
-                ", latency=" + latency +
-                ", stream=" + stream +
-                '}';
+        return toJson().toString();
     }
 
     @Override

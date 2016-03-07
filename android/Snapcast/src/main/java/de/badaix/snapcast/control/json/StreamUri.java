@@ -144,13 +144,6 @@ public class StreamUri implements JsonSerialisable {
 
     @Override
     public String toString() {
-        return "Stream{" +
-                "raw='" + raw + '\'' +
-                ", scheme='" + scheme + '\'' +
-                ", host='" + host + '\'' +
-                ", path='" + path + '\'' +
-                ", fragment='" + fragment + '\'' +
-                ", query=" + query +
-                '}';
+        return toJson().toString();
     }
 }

@@ -117,14 +117,9 @@ public class Client implements JsonSerialisable {
 
     @Override
     public String toString() {
-        return "Client{" +
-                "hots='" + host + '\'' +
-                ", snapclient='" + snapclient + '\'' +
-                ", config='" + config + '\'' +
-                ", lastSeen=" + lastSeen +
-                ", connected=" + connected +
-                '}';
+        return toJson().toString();
     }
+
 
     @Override
     public boolean equals(Object o) {

@@ -63,10 +63,7 @@ public class Time_t implements JsonSerialisable {
 
     @Override
     public String toString() {
-        return "Time_t{" +
-                "sec=" + sec +
-                ", usec=" + usec +
-                '}';
+        return toJson().toString();
     }
 
     @Override

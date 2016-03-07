@@ -57,10 +57,7 @@ public class Server implements JsonSerialisable {
 
     @Override
     public String toString() {
-        return "Server{" +
-                "host='" + host + '\'' +
-                ", snapserver='" + snapserver + '\'' +
-                '}';
+        return toJson().toString();
     }
 
     @Override
