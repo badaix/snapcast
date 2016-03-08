@@ -137,31 +137,63 @@ struct ClientConfig
 
 struct Snapcast
 {
-	Snapcast(const std::string& _name = "", const std::string& _version = "") : name(_name), version(_version), streamProtocolVersion(1), controlProtocolVersion(1)
+	Snapcast(const std::string& _name = "", const std::string& _version = "") : name(_name), version(_version), protocolVersion(1)
 	{
 	}
 
-	void fromJson(const json& j)
+	virtual ~Snapcast()
+	{
+	}
+
+	virtual void fromJson(const json& j)
 	{
 		name = trim_copy(jGet<std::string>(j, "name", ""));
 		version = trim_copy(jGet<std::string>(j, "version", ""));
-		streamProtocolVersion = jGet<int>(j, "streamProtocolVersion", 1);
-		controlProtocolVersion = jGet<int>(j, "controlProtocolVersion", 1);
+		protocolVersion = jGet<int>(j, "protocolVersion", 1);
 	}
 
-	json toJson()
+	virtual json toJson()
 	{
 		json j;
 		j["name"] = trim_copy(name);
 		j["version"] = trim_copy(version);
-		j["streamProtocolVersion"] = streamProtocolVersion;
-		j["controlProtocolVersion"] = controlProtocolVersion;
+		j["protocolVersion"] = protocolVersion;
 		return j;
 	}
 
 	std::string name;
 	std::string version;
-	int streamProtocolVersion;
+	int protocolVersion;
+};
+
+
+struct Snapclient : public Snapcast
+{
+	Snapclient(const std::string& _name = "", const std::string& _version = "") : Snapcast(_name, _version)
+	{
+	}
+};
+
+
+struct Snapserver : public Snapcast
+{
+	Snapserver(const std::string& _name = "", const std::string& _version = "") : Snapcast(_name, _version), controlProtocolVersion(1)
+	{
+	}
+
+	virtual void fromJson(const json& j)
+	{
+		Snapcast::fromJson(j);
+		controlProtocolVersion = jGet<int>(j, "controlProtocolVersion", 1);
+	}
+
+	virtual json toJson()
+	{
+		json j = Snapcast::toJson();
+		j["controlProtocolVersion"] = controlProtocolVersion;
+		return j;
+	}
+
 	int controlProtocolVersion;
 };
 
@@ -218,7 +250,7 @@ struct ClientInfo
 	}
 
 	Host host;
-	Snapcast snapclient;
+	Snapclient snapclient;
 	ClientConfig config;
 	timeval lastSeen;
 	bool connected;

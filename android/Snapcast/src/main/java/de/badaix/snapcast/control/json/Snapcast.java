@@ -9,8 +9,7 @@ import org.json.JSONObject;
 public class Snapcast implements JsonSerialisable {
     String name = "";
     String version = "";
-    int streamProtocolVersion = 1;
-    int controlProtocolVersion = 1;
+    int protocolVersion = 1;
 
     public Snapcast() {
     }
@@ -24,8 +23,7 @@ public class Snapcast implements JsonSerialisable {
         try {
             name = json.getString("name");
             version = json.getString("version");
-            streamProtocolVersion = json.getInt("streamProtocolVersion");
-            controlProtocolVersion = json.getInt("controlProtocolVersion");
+            protocolVersion = json.getInt("protocolVersion");
         } catch (JSONException e) {
             e.printStackTrace();
         }
@@ -37,8 +35,7 @@ public class Snapcast implements JsonSerialisable {
         try {
             json.put("name", name);
             json.put("version", version);
-            json.put("streamProtocolVersion", streamProtocolVersion);
-            json.put("controlProtocolVersion", controlProtocolVersion);
+            json.put("protocolVersion", protocolVersion);
         } catch (JSONException e) {
             e.printStackTrace();
         }
@@ -53,12 +50,8 @@ public class Snapcast implements JsonSerialisable {
         return version;
     }
 
-    public int getStreamProtocolVersion() {
-        return streamProtocolVersion;
-    }
-
-    public int getControlProtocolVersion() {
-        return controlProtocolVersion;
+    public int getProtocolVersion() {
+        return protocolVersion;
     }
 
     @Override
@@ -75,16 +68,14 @@ public class Snapcast implements JsonSerialisable {
 
         if (name != null ? !name.equals(that.name) : that.name != null) return false;
         if (version != null ? !version.equals(that.version) : that.version != null) return false;
-        if (streamProtocolVersion != that.streamProtocolVersion) return false;
-        return (controlProtocolVersion == that.controlProtocolVersion);
+        return (protocolVersion == that.protocolVersion);
     }
 
     @Override
     public int hashCode() {
         int result = name != null ? name.hashCode() : 0;
         result = 31 * result + (version != null ? version.hashCode() : 0);
-        result = 31 * result + streamProtocolVersion;
-        result = 31 * result + controlProtocolVersion;
+        result = 31 * result + protocolVersion;
         return result;
     }
 }

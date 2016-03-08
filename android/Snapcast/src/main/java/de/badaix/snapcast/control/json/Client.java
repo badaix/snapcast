@@ -8,7 +8,7 @@ import org.json.JSONObject;
  */
 public class Client implements JsonSerialisable {
     private Host host;
-    private Snapcast snapclient;
+    private Snapclient snapclient;
     private ClientConfig config;
     private Time_t lastSeen;
     private boolean connected;
@@ -31,9 +31,9 @@ public class Client implements JsonSerialisable {
             }
 
             if (json.has("snapclient"))
-                snapclient = new Snapcast(json.getJSONObject("snapclient"));
+                snapclient = new Snapclient(json.getJSONObject("snapclient"));
             else {
-                snapclient = new Snapcast();
+                snapclient = new Snapclient();
                 snapclient.version = json.getString("version");
             }
 

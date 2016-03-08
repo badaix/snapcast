@@ -146,7 +146,7 @@ void StreamServer::onMessageReceived(ControlSession* controlSession, const std::
 
 			Host host;
 			//TODO: Set MAC and IP
-			Snapcast snapserver("Snapserver", VERSION);
+			Snapserver snapserver("Snapserver", VERSION);
 			response = {
 				{"server", {
 					{"host", host.toJson()},//getHostName()},
@@ -262,7 +262,7 @@ void StreamServer::onMessageReceived(StreamSession* connection, const msg::BaseM
 		connection->macAddress = helloMsg.getMacAddress();
 		logO << "Hello from " << connection->macAddress << ", host: " << helloMsg.getHostName() << ", v" << helloMsg.getVersion()
 			<< ", ClientName: " << helloMsg.getClientName() << ", OS: " << helloMsg.getOS() << ", Arch: " << helloMsg.getArch()
-			<< ", control version: " << helloMsg.getControlProtocolVersion() << ", Stream version: " << helloMsg.getStreamProtocolVersion() << "\n";
+			<< ", Protocol version: " << helloMsg.getProtocolVersion() << "\n";
 
 		logD << "request kServerSettings: " << connection->macAddress << "\n";
 //		std::lock_guard<std::mutex> mlock(mutex_);
@@ -290,8 +290,7 @@ void StreamServer::onMessageReceived(StreamSession* connection, const msg::BaseM
 		client->host.arch = helloMsg.getArch();
 		client->snapclient.version = helloMsg.getVersion();
 		client->snapclient.name = helloMsg.getClientName();
-		client->snapclient.streamProtocolVersion = helloMsg.getStreamProtocolVersion();
-		client->snapclient.controlProtocolVersion = helloMsg.getControlProtocolVersion();
+		client->snapclient.protocolVersion = helloMsg.getProtocolVersion();
 		client->connected = true;
 		gettimeofday(&client->lastSeen, NULL);
 

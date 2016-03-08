@@ -42,7 +42,6 @@ public:
 		add("ClientName", "Snapclient");
 		add("OS", ::getOS());
 		add("Arch", ::getArch());
-		add("SnapControlProtocolVersion", "1");
 		add("SnapStreamProtocolVersion", "1");
 	}
 
@@ -80,12 +79,7 @@ public:
 		return get("Arch");
 	}
 
-	int getControlProtocolVersion()
-	{
-		return get("SnapControlProtocolVersion", 1);
-	}
-
-	int getStreamProtocolVersion()
+	int getProtocolVersion()
 	{
 		return get("SnapStreamProtocolVersion", 1);
 	}

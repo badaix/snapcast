@@ -8,7 +8,7 @@ import org.json.JSONObject;
  */
 public class Server implements JsonSerialisable {
     private Host host;
-    private Snapcast snapserver;
+    private Snapserver snapserver;
 
     public Server(JSONObject json) {
         fromJson(json);
@@ -25,9 +25,9 @@ public class Server implements JsonSerialisable {
             }
 
             if (json.has("snapserver"))
-                snapserver = new Snapcast(json.getJSONObject("snapserver"));
+                snapserver = new Snapserver(json.getJSONObject("snapserver"));
             else {
-                snapserver = new Snapcast();
+                snapserver = new Snapserver();
                 snapserver.version = json.getString("version");
             }
         } catch (JSONException e) {
