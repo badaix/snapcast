@@ -48,14 +48,17 @@ Config::Config()
 		{
 			json j;
 			ifs >> j;
-			json jClient = j["Client"];
-			for (json::iterator it = jClient.begin(); it != jClient.end(); ++it)
+			if (j.count("ConfigVersion"))
 			{
-				ClientInfoPtr client = make_shared<ClientInfo>();
-				client->fromJson(*it);
-				client->connected = false;
-				clients.push_back(client);
-//				logO << "Client:\n" << std::setw(4) << client->toJson() << '\n';
+				json jClient = j["Client"];
+				for (json::iterator it = jClient.begin(); it != jClient.end(); ++it)
+				{
+					ClientInfoPtr client = make_shared<ClientInfo>();
+					client->fromJson(*it);
+					client->connected = false;
+					clients.push_back(client);
+		//				logO << "Client:\n" << std::setw(4) << client->toJson() << '\n';
+				}
 			}
 		}
 	}
@@ -70,6 +73,7 @@ void Config::save()
 {
 	std::ofstream ofs(filename_.c_str(), std::ofstream::out|std::ofstream::trunc);
 	json clients = {
+		{"ConfigVersion", 1},
 		{"Client", getClientInfos()}
 	};
 	ofs << std::setw(4) << clients;
