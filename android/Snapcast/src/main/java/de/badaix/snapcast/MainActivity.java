@@ -51,7 +51,7 @@ import de.badaix.snapcast.utils.NsdHelper;
 import de.badaix.snapcast.utils.Settings;
 import de.badaix.snapcast.utils.Setup;
 
-public class MainActivity extends AppCompatActivity implements ClientListFragment.OnFragmentInteractionListener, ClientItem.ClientInfoItemListener, RemoteControl.RemoteControlListener, SnapclientService.SnapclientListener, NsdHelper.NsdHelperListener {
+public class MainActivity extends AppCompatActivity implements ClientItem.ClientInfoItemListener, RemoteControl.RemoteControlListener, SnapclientService.SnapclientListener, NsdHelper.NsdHelperListener {
 
     private static final String TAG = "Main";
     private static final String SERVICE_NAME = "Snapcast";// #2";
@@ -585,11 +585,6 @@ public class MainActivity extends AppCompatActivity implements ClientListFragmen
         NsdHelper.getInstance(this).stopListening();
     }
 
-    @Override
-    public void onFragmentInteraction(Uri uri) {
-        Log.d(TAG, "onFragmentInteraction: " + uri);
-    }
-
 
     @Override
     public void onVolumeChanged(ClientItem clientItem, int percent) {
@@ -663,7 +658,7 @@ public class MainActivity extends AppCompatActivity implements ClientListFragmen
                     boolean changed = (serverStatus.getStreams().size() != streamCount);
 
                     while (serverStatus.getStreams().size() > fragments.size())
-                        fragments.add(ClientListFragment.newInstance("TODO1"));
+                        fragments.add(new ClientListFragment());
 
                     for (int i = 0; i < serverStatus.getStreams().size(); ++i) {
                         fragments.get(i).setStream(serverStatus.getStreams().get(i));
