@@ -90,7 +90,10 @@ public class ClientListFragment extends Fragment {
         Log.d(TAG, "(tvStreamState == null): " + (tvStreamState == null) + " " + this.toString());
         if ((tvStreamState == null) || (stream == null))
             return;
-        tvStreamState.setText(stream.getUri().getQuery().get("sampleformat") + " - " + stream.getStatus().toString());
+        String codec = stream.getUri().getQuery().get("codec");
+        if (codec.contains(":"))
+            codec = codec.split(":")[0];
+        tvStreamState.setText(stream.getUri().getQuery().get("sampleformat") + " - " + codec + " - " + stream.getStatus().toString());
     }
 
     @Override
