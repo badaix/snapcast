@@ -253,6 +253,14 @@ void StreamServer::onMessageReceived(StreamSession* connection, const msg::BaseM
 			timeMsg.latency = (requestMsg.received.sec - requestMsg.sent.sec) + (requestMsg.received.usec - requestMsg.sent.usec) / 1000000.;
 			logD << "Latency: " << timeMsg.latency << ", refers to: " << timeMsg.refersTo << "\n";
 			connection->send(&timeMsg);
+
+			// refresh connection state
+			ClientInfoPtr client = Config::instance().getClientInfo(connection->macAddress);
+			if (client != nullptr)
+			{
+				gettimeofday(&client->lastSeen, NULL);
+				client->connected = true;
+			}
 		}
 	}
 	else if (baseMessage.type == message_type::kHello)
