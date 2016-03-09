@@ -60,4 +60,15 @@ http://hd-idle.sourceforge.net/
 http://0pointer.de/public/systemd-man/systemd.exec.html#Environment=
 
 
+*file locations:
+http://stackoverflow.com/questions/1024114/location-of-ini-config-files-in-linux-unix
 
+
+*v0.5.0-beta-2:
+-server host name dialog, ignore IPv6
+-Fix hide offline on start
+-HOME dir bug
+-Client latency
+-stream playing state
+
+-Empty latency: app restart, empty client list
