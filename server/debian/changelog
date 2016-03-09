@@ -3,7 +3,7 @@ snapserver (0.5.0~beta-2) unstable; urgency=low
   * Features
     -Remote control API (JSON)
      Added version information
-     Get stream state (unknown, idle, playing, inactive)
+     Stream playing state (unknown, idle, playing, inactive) (Issue #34)
     -Android client: manually configure snapserver host name
     -Android client compatibility improved: armeabi and armeabi-v7 binaries
     -Android client: configurable latency
@@ -11,6 +11,8 @@ snapserver (0.5.0~beta-2) unstable; urgency=low
   * Bugfixes
     -Android client: fixed "hide offline" on start
     -Store config in /var/lib/snapcast/ when running as daemon (Issue #33)
+  * General
+    -README.md: Added resampling command to the Mopidy section (Issue #32)
 
  -- Johannes Pohl <johannes.pohl@badaix.de>  Wed, 09 Mar 2016 00:02:00 +0200
 
@@ -20,9 +22,9 @@ snapserver (0.5.0~beta-1) unstable; urgency=low
     -Remote control API (JSON)
      Get server status, get streams, get active clients
      assign volume, assign stream, rename client, ...
-    -Android port of the Snapclient with a remote control app
-    -Multiple streams ("zones") can be configured using "-s, --stream":
-     The stream is configured by an URI: path, name, codec, sample format, ...
+    -Android port of the Snapclient with a remote control app (Issue #9)
+    -Multiple streams ("zones") can be configured (Issue #21)
+     Use "-s, --stream" to add a stream URI: path, name, codec, sample format
      E.g. "pipe:///tmp/snapfifo?name=Radio&sampleformat=48000:16:2&codec=flac"
      or "file:///home/user/some_pcm_file.wav?name=file"
     -Added .default file for the service (/etc/default/snapserver).
