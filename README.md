@@ -3,7 +3,7 @@ Snapcast
 
 **S**y**n**chronous **a**udio **p**layer
 
-Snapcast is a multi-room client-server audio player, where all clients are time synchronized with the server to play perfectly synced audio. It's not a standalone player, but an extension that turns your existing audio player into a Sonos-like multi-room solution.  
+Snapcast is a multi-room client-server audio player, where all clients are time synchronized with the server to play perfectly synced audio. It's not a standalone player, but an extension that turns your existing audio player into a Sonos-like multi-room solution.
 The server's audio input is a named pipe `/tmp/snapfifo`. All data that is fed into this file will be send to the connected clients. One of the most generic ways to use Snapcast is in conjunction with the music player daemon ([MPD](http://www.musicpd.org/)) or [Mopidy](https://www.mopidy.com/), which can be configured to use a named pipe as audio output.
 
 How does is work
@@ -14,8 +14,8 @@ The Snapserver reads PCM chunks from the pipe `/tmp/snapfifo`. The chunk is enco
 * **Vorbis** lossy compression
 
 The encoded chunk is sent via a TCP connection to the Snapclients.
-Each client does continuos time synchronization with the server, so that the client is always aware of the local server time.  
-Every received chunk is first decoded and added to the client's chunk-buffer. Knowing the server's time, the chunk is played out using ALSA at the appropriate time. Time deviations are corrected by 
+Each client does continuos time synchronization with the server, so that the client is always aware of the local server time.
+Every received chunk is first decoded and added to the client's chunk-buffer. Knowing the server's time, the chunk is played out using ALSA at the appropriate time. Time deviations are corrected by
 * skipping parts or whole chunks
 * playing silence
 * playing faster/slower
@@ -33,24 +33,24 @@ For Debian derivates (e.g. Raspbian, Debian, Ubuntu, Mint):
 
     $ sudo apt-get install git build-essential
     $ sudo apt-get install libasound2-dev libvorbis-dev libflac-dev alsa-utils libavahi-client-dev avahi-daemon
-    
+
 Compilation requires gcc 4.8 or higher, so it's highly recommended to use Debian (Respbian) Jessie.
-    
+
 For Arch derivates:
 
     $ pacman -S git base-devel
     $ pacman -S alsa-lib avahi libvorbis flac alsa-utils
-    
+
 After cloning the Snapcast repository, you have to update the external submodules:
 
     $ cd <MY_SNAPCAST_ROOT>/externals
     $ git submodule update --init --recursive
-    
+
 Build Snapcast by cd'ing into the Snapcast src-root directory:
 
     $ cd <MY_SNAPCAST_ROOT>
     $ make
-    
+
 Install Snapclient and/or Snapserver:
 
     $ sudo make installserver
@@ -59,19 +59,19 @@ Install Snapclient and/or Snapserver:
 This will copy the client and/or server binary to `/usr/sbin` and update init.d/systemd to start the client/server as a daemon.
 
 ###Install debian packages
-Download the debian package for your CPU architecture from the [latest release page](https://github.com/badaix/snapcast/releases/latest), e.g. for Raspberry pi `snapclient_0.x.x_armhf.deb`  
+Download the debian package for your CPU architecture from the [latest release page](https://github.com/badaix/snapcast/releases/latest), e.g. for Raspberry pi `snapclient_0.x.x_armhf.deb`
 Install the package:
 
     $ sudo dpkg -i snapclient_0.x.x_armhf.deb
-    
+
 Install missing dependencies:
 
     $ sudo apt-get -f install
 
 Configuration
 -------------
-After installation, Snapserver and Snapclient are started with the command line arguments, that are configured in `/etc/default/snapserver` and `/etc/default/snapclient`.  
-Allowed options are listed in the man pages (`man snapserver`, `man snapclient`) or by invoking the snapserver or snapclient with the `-h` option.  
+After installation, Snapserver and Snapclient are started with the command line arguments that are configured in `/etc/default/snapserver` and `/etc/default/snapclient`.
+Allowed options are listed in the man pages (`man snapserver`, `man snapclient`) or by invoking the snapserver or snapclient with the `-h` option.
 
 Different streams can by configured with a list of `-s` options, e.g.:
 
@@ -83,7 +83,7 @@ You can test your installation by copying random data into the server's fifo fil
 
     $ sudo cat /dev/urandom > /tmp/snapfifo
 
-All connected clients should play random noise now. You might raise the client's volume with "alsamixer".  
+All connected clients should play random noise now. You might raise the client's volume with "alsamixer".
 It's also possible to let the server play a wave file. Simply configure a `file` stream in `/etc/default/snapserver`, and restart the server:
 
     SNAPSERVER_OPTS="-d -s file:///home/johannes/Musik/Some%20wave%20file.wav?name=test"
@@ -93,13 +93,13 @@ When you are using a Raspberry pi, you might have to change your audio output to
     #The last number is the audio output with 1 being the 3.5 jack, 2 being HDMI and 0 being auto.
     $ amixer cset numid=3 1
 
-To setup WiFi on a raspberry pi, you can follow this guide:  
+To setup WiFi on a raspberry pi, you can follow this guide:
 https://www.raspberrypi.org/documentation/configuration/wireless/wireless-cli.md
 
 
 Setup of audio players/server
 -----------------------------
-Snapcast can be used with a number of different audio players and servers, and so it can be integrated into your favorite audio-player solution and make it synced-multiroom capable.  
+Snapcast can be used with a number of different audio players and servers, and so it can be integrated into your favorite audio-player solution and make it synced-multiroom capable.
 The only requirement is that the player's audio can be redirected into the Snapserver's fifo `/tmp/snapfifo`. In the following configuration hints for [MPD](http://www.musicpd.org/) and [Mopidy](https://www.mopidy.com/) are given, which are base of other audio player solutions, like [Volumio](https://volumio.org/) or [RuneAudio](http://www.runeaudio.com/) (both MPD) or [Pi MusicBox](http://www.pimusicbox.com/) (Mopidy).
 
 ###MPD setup
@@ -123,10 +123,10 @@ Make sure that the "format" setting is the same as the format setting of the Sna
     audio_output {
         type            "fifo"
         name            "my pipe"
-        path            "/tmp/snapfifo" 
+        path            "/tmp/snapfifo"
         format          "44100:16:2"
         mixer_type      "software"
-    } 
+    }
 
 To test your mpd installation, you can add a radio station by
 
@@ -145,7 +145,8 @@ On the server you could create a sink to route sound of your applications to the
 ```
 pacmd load-module module-pipe-sink file=/tmp/snapfifo
 ```
-    
+It might me neccessary to set the pulse audio latency environment variable to 60 msec: `PULSE_LATENCY_MSEC=60`
+
 Roadmap
 -------
 * **Remote control** JSON-RPC API to change client latency, volume, zone, ...
