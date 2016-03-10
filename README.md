@@ -138,7 +138,7 @@ To test your mpd installation, you can add a radio station by
 
     [audio]
     #output = autoaudiosink
-    output = audioresample ! audio/x-raw,rate=48000,channels=2,format=S16LE ! audioconvert ! wavenc ! filesink location=/tmp/snapfifo
+    output = audioresample ! audioconvert ! audio/x-raw,rate=48000,channels=2,format=S16LE ! wavenc ! filesink location=/tmp/snapfifo
 
 ###PulseAudio setup
 On the server you could create a sink to route sound of your applications to the FIFO:
