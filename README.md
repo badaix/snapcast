@@ -1,6 +1,8 @@
 Snapcast
 ========
 
+[![Join the chat at https://gitter.im/badaix/snapcast](https://badges.gitter.im/badaix/snapcast.svg)](https://gitter.im/badaix/snapcast?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 **S**y**n**chronous **a**udio **p**layer
 
 Snapcast is a multi-room client-server audio player, where all clients are time synchronized with the server to play perfectly synced audio. It's not a standalone player, but an extension that turns your existing audio player into a Sonos-like multi-room solution.
