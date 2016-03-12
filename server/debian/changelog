@@ -41,6 +41,14 @@ snapserver (0.5.0~beta-1) unstable; urgency=low
 
  -- Johannes Pohl <johannes.pohl@badaix.de>  Tue, 09 Feb 2016 13:25:00 +0200
 
+snapserver (0.4.1) unstable; urgency=low
+
+  * General
+    -Debian packages (.deb) are linked statically against libgcc and libstdc++
+     to improve compatibility
+
+ -- Johannes Pohl <johannes.pohl@badaix.de>  Sat, 12 Mar 2016 12:00:00 +0200
+
 snapserver (0.4.0) unstable; urgency=low
 
   * Features
