@@ -4,6 +4,7 @@
 -Clean up build process for Android
 -Add more defines for ALSA, OpenSL, Vorbis, Avahi, ...
 -Clean up messages and serialization
+-LastSeen: relative time [s] or [ms]
 
 
 *g++ 4.8 installation:
