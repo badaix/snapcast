@@ -151,5 +151,13 @@ It might me neccessary to set the pulse audio latency environment variable to 60
 
 Roadmap
 -------
-* **Remote control** JSON-RPC API to change client latency, volume, zone, ...
-* **Zones** Support multiple streams
+Unordered list of features that should make it into the v1.0
+- [X] **Remote control** JSON-RPC API to change client latency, volume, zone, ...
+- [X] **Android client** JSON-RPC client and Snapclient
+- [X] **Zones** Support multiple streams
+- [X] **Debian packages** prebuild deb packages
+- [ ] **Protocol specification** Snapcast binary streaming protocol, JSON-RPC protocol
+- [ ] **Hi-Res audio** support (like 192kHz 24bit)
+- [ ] **CMake** or another build system
+- [ ] **Endianness** independence
+- [ ] **Ports** Snapclient for OpenWrt, Windows, ...
