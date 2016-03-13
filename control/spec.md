@@ -50,6 +50,39 @@ Snapcast control protocol
 }
 ```
 
+#Client
+##Client status
+```json
+{
+  "config": {
+    "latency": 0,
+    "name": "",
+    "stream": "pipe:///tmp/snapfifo",
+    "volume": {
+      "muted": false,
+      "percent": 75
+    }
+  },
+  "connected": true,
+  "host": {
+    "arch": "unknown",
+    "ip": "192.168.0.24",
+    "mac": "80:1f:02:ed:fd:e0",
+    "name": "wohnzimmer",
+    "os": "Raspbian GNU/Linux 8.0 (jessie)"
+  },
+  "lastSeen": {
+    "sec": 1457597583,
+    "usec": 956325
+  },
+  "snapclient": {
+    "name": "Snapclient",
+    "protocolVersion": 1,
+    "version": "0.5.0-beta-2"
+  }
+}
+```
+
 #Server 
 ##Server status
 ```json
