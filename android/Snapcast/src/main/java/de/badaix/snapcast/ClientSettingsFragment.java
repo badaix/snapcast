@@ -29,6 +29,7 @@ public class ClientSettingsFragment extends PreferenceFragment {
     private Preference prefMac;
     private Preference prefIp;
     private Preference prefHost;
+    private Preference prefOS;
     private Preference prefVersion;
     private Preference prefLastSeen;
 
@@ -99,6 +100,7 @@ public class ClientSettingsFragment extends PreferenceFragment {
         prefMac = (Preference) findPreference("pref_client_mac");
         prefIp = (Preference) findPreference("pref_client_ip");
         prefHost = (Preference) findPreference("pref_client_host");
+        prefOS = (Preference) findPreference("pref_client_os");
         prefVersion = (Preference) findPreference("pref_client_version");
         prefLastSeen = (Preference) findPreference("pref_client_last_seen");
         prefLatency = (EditTextPreference) findPreference("pref_client_latency");
@@ -132,6 +134,7 @@ public class ClientSettingsFragment extends PreferenceFragment {
         prefMac.setSummary(client.getHost().getMac());
         prefIp.setSummary(client.getHost().getIp());
         prefHost.setSummary(client.getHost().getName());
+        prefOS.setSummary(client.getHost().getOs() + "@" + client.getHost().getArch());
         prefVersion.setSummary(client.getSnapclient().getVersion());
         String lastSeen = getText(R.string.online).toString();
         if (!client.isConnected()) {

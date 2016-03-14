@@ -30,6 +30,11 @@
         android:title="@string/client_host"/>
     <Preference
         android:enabled="false"
+        android:key="pref_client_os"
+        android:summary="operating system"
+        android:title="@string/client_os"/>
+    <Preference
+        android:enabled="false"
         android:key="pref_client_version"
         android:summary="version"
         android:title="@string/client_version"/>

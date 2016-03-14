@@ -22,6 +22,7 @@
     <string name="client_mac">MAC</string>
     <string name="client_ip">IP</string>
     <string name="client_host">Host</string>
+    <string name="client_os">Operating system</string>
     <string name="client_version">Version</string>
     <string name="client_last_seen">Last seen</string>
     <string name="client_latency">Latency</string>
