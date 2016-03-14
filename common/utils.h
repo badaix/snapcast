@@ -162,6 +162,15 @@ static std::string getOS()
 #endif
 	if (os.empty())
 	{
+		os = trim_copy(execGetOutput("cat /etc/os-release |grep PRETTY_NAME"));
+		if (os.find("=") != std::string::npos)
+		{
+			os = trim_copy(os.substr(os.find("=") + 1));
+			os.erase(std::remove(os.begin(), os.end(), '"'), os.end());
+		}
+	}
+	if (os.empty())
+	{
 		utsname u;
 		uname(&u);
 		os = u.sysname;
@@ -192,7 +201,11 @@ static std::string getArch()
 	if (!arch.empty())
 		return arch;
 #endif
-	arch = execGetOutput("uname -i");
+	arch = execGetOutput("arch");
+	if (arch.empty())
+		arch = execGetOutput("uname -i");
+	if (arch.empty() || (arch == "unknown"))
+		arch = execGetOutput("uname -m");
 	return trim_copy(arch);
 }
 
