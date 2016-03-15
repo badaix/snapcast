@@ -635,6 +635,15 @@ public class MainActivity extends AppCompatActivity implements ClientItem.Client
         startActivityForResult(intent, 1);
     }
 
+    @Override
+    public void onStreamClicked(ClientItem clientItem, Stream stream) {
+        Client client = clientItem.getClient();
+        client.getConfig().setStream(stream.getId());
+        remoteControl.setStream(client, client.getConfig().getStream());
+        serverStatus.updateClient(client);
+        sectionsPagerAdapter.updateServer(serverStatus);
+    }
+
 
     /**
      * A {@link FragmentPagerAdapter} that returns a fragment corresponding to

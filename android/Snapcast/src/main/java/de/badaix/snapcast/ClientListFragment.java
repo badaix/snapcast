@@ -158,7 +158,7 @@ public class ClientListFragment extends Fragment {
                 clientItem = (ClientItem) convertView;
                 clientItem.setClient(client);
             } else {
-                clientItem = new ClientItem(context, client);
+                clientItem = new ClientItem(context, serverStatus, client);
             }
             clientItem.setListener(listener);
             return clientItem;
