@@ -55,9 +55,16 @@ Config::Config()
 				{
 					ClientInfoPtr client = make_shared<ClientInfo>();
 					client->fromJson(*it);
+					if (client->host.mac.empty())
+						continue;
+					for (const auto& c: clients)
+					{
+						if (c->host.mac == client->host.mac)
+							continue;
+					}
+
 					client->connected = false;
 					clients.push_back(client);
-		//				logO << "Client:\n" << std::setw(4) << client->toJson() << '\n';
 				}
 			}
 		}

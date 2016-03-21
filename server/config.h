@@ -209,7 +209,9 @@ struct ClientInfo
 	void fromJson(const json& j)
 	{
 		if (j.count("host") && !j["host"].is_string())
+		{
 			host.fromJson(j["host"]);
+		}
 		else
 		{
 			host.ip = jGet<std::string>(j, "IP", "");
@@ -223,7 +225,9 @@ struct ClientInfo
 			snapclient.version = jGet<std::string>(j, "version", "");
 
 		if (j.count("config"))
-			host.fromJson(j["config"]);
+		{
+			config.fromJson(j["config"]);
+		}
 		else
 		{
 			config.name = trim_copy(jGet<std::string>(j, "name", ""));
