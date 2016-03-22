@@ -45,11 +45,11 @@ PcmStream* StreamManager::addStream(const std::string& uri)
 	if (streamUri.query.find("buffer_ms") == streamUri.query.end())
 		streamUri.query["buffer_ms"] = to_string(readBufferMs_);
 
-//	logE << "\nURI: " << streamUri.uri << "\nscheme: " << streamUri.scheme << "\nhost: "
+//	logD << "\nURI: " << streamUri.uri << "\nscheme: " << streamUri.scheme << "\nhost: "
 //		<< streamUri.host << "\npath: " << streamUri.path << "\nfragment: " << streamUri.fragment << "\n";
 
 //	for (auto kv: streamUri.query)
-//		logE << "key: '" << kv.first << "' value: '" << kv.second << "'\n";
+//		logD << "key: '" << kv.first << "' value: '" << kv.second << "'\n";
 
 	if (streamUri.scheme == "pipe")
 	{

@@ -316,7 +316,7 @@ void OpenslPlayer::uninitOpensl()
 //	if (!active_)
 //		return;
 
-	logE << "uninitOpensl\n";
+	logO << "uninitOpensl\n";
 	SLresult result;
 	logO << "OpenSLWrap_Shutdown - stopping playback\n";
 	if (bqPlayerPlay != NULL)

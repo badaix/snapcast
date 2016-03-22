@@ -31,7 +31,7 @@ StreamUri::StreamUri(const std::string& streamUri)
 // https://en.wikipedia.org/wiki/Uniform_Resource_Identifier
 // scheme:[//[user:password@]host[:port]][/]path[?query][#fragment]
 // would be more elegant with regex. Not yet supported on my dev machine's gcc 4.8 :(
-	logE << "StreamUri: " << streamUri << "\n";
+	logD << "StreamUri: " << streamUri << "\n";
 	size_t pos;
 	uri = trim_copy(streamUri);
 	while (!uri.empty() && ((uri[0] == '\'') || (uri[0] == '"')))

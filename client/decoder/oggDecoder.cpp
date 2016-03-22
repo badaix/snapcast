@@ -208,7 +208,7 @@ SampleFormat OggDecoder::setHeader(msg::Header* chunk)
 		++ptr;
 	}
 
-	logE << "Encoded by: " << vc.vendor << "\n";
+	logO << "Encoded by: " << vc.vendor << "\n";
 
 	/// OK, got and parsed all three headers. Initialize the Vorbis packet->PCM decoder.
 	if (vorbis_synthesis_init(&vd, &vi) == 0)

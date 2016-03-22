@@ -46,7 +46,7 @@ PcmStream::PcmStream(PcmListener* pcmListener, const StreamUri& uri) : pcmListen
  	if (uri_.query.find("sampleformat") == uri_.query.end())
 		throw SnapException("Stream URI must have a sampleformat");
 	sampleFormat_ = SampleFormat(uri_.query["sampleformat"]);
-	logE << "PcmStream sampleFormat: " << sampleFormat_.getFormat() << "\n";
+	logO << "PcmStream sampleFormat: " << sampleFormat_.getFormat() << "\n";
 
  	if (uri_.query.find("buffer_ms") != uri_.query.end())
 		pcmReadMs_ = cpt::stoul(uri_.query["buffer_ms"]);
@@ -85,7 +85,7 @@ const SampleFormat& PcmStream::getSampleFormat() const
 
 void PcmStream::start()
 {
-	logE << "PcmStream start: " << sampleFormat_.getFormat() << "\n";
+	logD << "PcmStream start: " << sampleFormat_.getFormat() << "\n";
 //TODO: wrong encoder settings leads to: terminate called after throwing an instance of 'std::system_error'  what():  Invalid argument
 	encoder_->init(this, sampleFormat_);
 

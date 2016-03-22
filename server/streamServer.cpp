@@ -91,14 +91,14 @@ void StreamServer::onDisconnect(StreamSession* streamSession)
 
 	logO << "onDisconnect: " << session->macAddress << "\n";
 	ClientInfoPtr clientInfo = Config::instance().getClientInfo(streamSession->macAddress);
-	logE << "sessions: " << sessions_.size() << "\n";
+	logD << "sessions: " << sessions_.size() << "\n";
 	// don't block: remove StreamSession in a thread
 	auto func = [](shared_ptr<StreamSession> s)->void{s->stop();};
 	std::thread t(func, session);
 	t.detach();
 	sessions_.erase(session);
 
-	logE << "sessions: " << sessions_.size() << "\n";
+	logD << "sessions: " << sessions_.size() << "\n";
 
 	// notify controllers if not yet done
 	if (!clientInfo || !clientInfo->connected)
@@ -371,7 +371,7 @@ void StreamServer::start()
 	streamManager_.reset(new StreamManager(this, settings_.sampleFormat, settings_.codec, settings_.streamReadMs));
 	//TODO: check uniqueness of the stream
 	for (auto& streamUri: settings_.pcmStreams)
-		logE << "Stream: " << streamManager_->addStream(streamUri)->getUri().toJson() << "\n";
+		logO << "Stream: " << streamManager_->addStream(streamUri)->getUri().toJson() << "\n";
 //	throw SnapException("bad");
 
 	streamManager_->start();
