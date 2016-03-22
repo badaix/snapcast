@@ -58,7 +58,8 @@ protected:
 
 private:
 	friend std::ostream& operator<< (std::ostream& os, const LogPriority& log_priority);
-	std::string Timestamp();
+	std::string toString(LogPriority logPriority) const;
+	std::string Timestamp() const;
 	std::stringstream buffer_;
 	int facility_;
 	LogPriority priority_;

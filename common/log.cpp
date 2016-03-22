@@ -19,6 +19,7 @@
 #include "log.h"
 #include <iomanip>
 #include <ctime>
+#include <sstream>
 
 Log::Log(std::string ident, int facility)
 {
@@ -31,7 +32,7 @@ Log::Log(std::string ident, int facility)
 }
 
 
-std::string Log::Timestamp()
+std::string Log::Timestamp() const
 {
 	struct tm * dt;
 	char buffer [30];
@@ -39,6 +40,43 @@ std::string Log::Timestamp()
 	dt = localtime(&t);
 	strftime(buffer, sizeof(buffer), "%Y-%m-%d %H-%M-%S", dt);
 	return std::string(buffer);
+}
+
+
+std::string Log::toString(LogPriority logPriority) const
+{
+	switch (logPriority)
+	{
+		case kDbg:
+			return "dbg";
+		case kOut:
+			return "out";
+		case kState:
+			return "state";
+		case kErr:
+			return "err";
+
+		case kLogEmerg:
+			return "Emerg";
+		case kLogAlert:
+			return "Alert";
+		case kLogCrit:
+			return "Crit";
+		case kLogErr:
+			return "Err";
+		case kLogWarning:
+			return "Warning";
+		case kLogNotice:
+			return "Notice";
+		case kLogInfo:
+			return "Info";
+		case kLogDebug:
+			return "Debug";
+		default:
+			std::stringstream ss;
+			ss << logPriority;
+			return ss.str();
+	}
 }
 
 
@@ -52,15 +90,11 @@ int Log::sync()
 #else
 			;
 #endif
-		else if (priority_ == kOut)
-			std::cout << Timestamp() << " [out] " << buffer_.str() << std::flush;
-		else if (priority_ == kState)
-			std::cout << Timestamp() << " [state] " << buffer_.str() << std::flush;
-		else if (priority_ == kErr)
-			std::cout << Timestamp() << " [err] " << buffer_.str() << std::flush;
+		else if ((priority_ == kOut) || (priority_ == kState) || (priority_ == kErr))
+			std::cout << Timestamp() << " [" << toString(priority_) << "] " << buffer_.str() << std::flush;
 		else
 		{
-			std::cout << Timestamp() << " [" << (int)priority_ << "] " << buffer_.str() << std::flush;
+			std::cout << Timestamp() << " [" << toString(priority_) << "] " << buffer_.str() << std::flush;
 			syslog(priority_, "%s", buffer_.str().c_str());
 		}
 		buffer_.str("");
