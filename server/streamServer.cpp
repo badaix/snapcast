@@ -40,35 +40,35 @@ StreamServer::~StreamServer()
 }
 
 
-void StreamServer::onStateChanged(const PcmReader* pcmReader, const ReaderState& state)
+void StreamServer::onStateChanged(const PcmStream* pcmStream, const ReaderState& state)
 {
-	logO << "onStateChanged (" << pcmReader->getName() << "): " << state << "\n";
-//	logO << pcmReader->toJson().dump(4);
-	json notification = JsonNotification::getJson("Stream.OnUpdate", pcmReader->toJson());
+	logO << "onStateChanged (" << pcmStream->getName() << "): " << state << "\n";
+//	logO << pcmStream->toJson().dump(4);
+	json notification = JsonNotification::getJson("Stream.OnUpdate", pcmStream->toJson());
 	controlServer_->send(notification.dump(), NULL);
 }
 
 
-void StreamServer::onChunkRead(const PcmReader* pcmReader, const msg::PcmChunk* chunk, double duration)
+void StreamServer::onChunkRead(const PcmStream* pcmStream, const msg::PcmChunk* chunk, double duration)
 {
-//	logO << "onChunkRead (" << pcmReader->getName() << "): " << duration << "ms\n";
-	bool isDefaultStream(pcmReader == streamManager_->getDefaultStream().get());
+//	logO << "onChunkRead (" << pcmStream->getName() << "): " << duration << "ms\n";
+	bool isDefaultStream(pcmStream == streamManager_->getDefaultStream().get());
 
 	std::shared_ptr<const msg::BaseMessage> shared_message(chunk);
 	std::lock_guard<std::mutex> mlock(sessionsMutex_);
 	for (auto s : sessions_)
 	{
-		if (!s->pcmReader() && isDefaultStream)//->getName() == "default")
+		if (!s->pcmStream() && isDefaultStream)//->getName() == "default")
 			s->add(shared_message);
-		else if (s->pcmReader().get() == pcmReader)
+		else if (s->pcmStream().get() == pcmStream)
 			s->add(shared_message);
 	}
 }
 
 
-void StreamServer::onResync(const PcmReader* pcmReader, double ms)
+void StreamServer::onResync(const PcmStream* pcmStream, double ms)
 {
-	logO << "onResync (" << pcmReader->getName() << "): " << ms << "ms\n";
+	logO << "onResync (" << pcmStream->getName() << "): " << ms << "ms\n";
 }
 
 
@@ -182,7 +182,7 @@ void StreamServer::onMessageReceived(ControlSession* controlSession, const std::
 		else if (request.method == "Client.SetStream")
 		{
 			string streamId = request.getParam("id").get<string>();
-			PcmReaderPtr stream = streamManager_->getStream(streamId);
+			PcmStreamPtr stream = streamManager_->getStream(streamId);
 			if (stream == nullptr)
 				throw JsonInternalErrorException("Stream not found", request.id);
 
@@ -193,7 +193,7 @@ void StreamServer::onMessageReceived(ControlSession* controlSession, const std::
 			if (session != NULL)
 			{
 				session->add(stream->getHeader());
-				session->setPcmReader(stream);
+				session->setPcmStream(stream);
 			}
 		}
 		else if (request.method == "Client.SetLatency")
@@ -303,7 +303,7 @@ void StreamServer::onMessageReceived(StreamSession* connection, const msg::BaseM
 		gettimeofday(&client->lastSeen, NULL);
 
 		// Assign and update stream
-		PcmReaderPtr stream = streamManager_->getStream(client->config.streamId);
+		PcmStreamPtr stream = streamManager_->getStream(client->config.streamId);
 		if (stream == nullptr)
 		{
 			stream = streamManager_->getDefaultStream();
@@ -311,8 +311,8 @@ void StreamServer::onMessageReceived(StreamSession* connection, const msg::BaseM
 		}
 		Config::instance().save();
 
-		//TODO: wording pcmReader vs stream
-		connection->setPcmReader(stream);
+		//TODO: wording pcmStream vs stream
+		connection->setPcmStream(stream);
 		auto headerChunk = stream->getHeader();
 		connection->send(headerChunk.get());
 

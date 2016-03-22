@@ -26,9 +26,9 @@
 using json = nlohmann::json;
 
 
-struct ReaderUri
+struct StreamUri
 {
-	ReaderUri(const std::string& uri);
+	StreamUri(const std::string& uri);
 	std::string uri;
 	std::string scheme;
 /*	struct Authority

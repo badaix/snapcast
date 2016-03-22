@@ -21,11 +21,10 @@
 #include <fcntl.h>
 #include <unistd.h>
 
-#include "pipeReader.h"
+#include "fileStream.h"
 #include "../encoder/encoderFactory.h"
 #include "common/log.h"
 #include "common/snapException.h"
-#include "common/compat.h"
 
 
 using namespace std;
@@ -33,59 +32,57 @@ using namespace std;
 
 
 
-PipeReader::PipeReader(PcmListener* pcmListener, const ReaderUri& uri) : PcmReader(pcmListener, uri), fd_(-1)
+FileStream::FileStream(PcmListener* pcmListener, const StreamUri& uri) : PcmStream(pcmListener, uri)
 {
-	umask(0);
-	if ((mkfifo(uri_.path.c_str(), 0666) != 0) && (errno != EEXIST))
-		throw SnapException("failed to make fifo \"" + uri_.path + "\": " + cpt::to_string(errno));
+	ifs.open(uri_.path.c_str(), std::ifstream::in|std::ifstream::binary);
+	if (!ifs.good())
+	{
+		logE << "failed to open PCM file: \"" + uri_.path + "\"\n";
+		throw SnapException("failed to open PCM file: \"" + uri_.path + "\"");
+	}
 }
 
 
-PipeReader::~PipeReader()
+FileStream::~FileStream()
 {
-	if (fd_ != -1)
-		close(fd_);
+	ifs.close();
 }
 
 
-void PipeReader::worker()
+void FileStream::worker()
 {
 	timeval tvChunk;
 	std::unique_ptr<msg::PcmChunk> chunk(new msg::PcmChunk(sampleFormat_, pcmReadMs_));
 
+	ifs.seekg (0, ifs.end);
+	size_t length = ifs.tellg();
+	ifs.seekg (0, ifs.beg);
+
+	setState(kPlaying);
+
 	while (active_)
 	{
-		if (fd_ != -1)
-			close(fd_);
-		fd_ = open(uri_.path.c_str(), O_RDONLY | O_NONBLOCK);
 		gettimeofday(&tvChunk, NULL);
 		tvEncodedChunk_ = tvChunk;
 		long nextTick = chronos::getTickCount();
 		try
 		{
-			if (fd_ == -1)
-				throw SnapException("failed to open fifo: \"" + uri_.path + "\"");
-
 			while (active_)
 			{
 				chunk->timestamp.sec = tvChunk.tv_sec;
 				chunk->timestamp.usec = tvChunk.tv_usec;
-				int toRead = chunk->payloadSize;
-				int len = 0;
-				do
+				size_t toRead = chunk->payloadSize;
+				size_t count = 0;
+
+				size_t pos = ifs.tellg();
+				size_t left = length - pos;
+				if (left < toRead)
 				{
-					int count = read(fd_, chunk->payload + len, toRead - len);
-					if (count < 0)
-					{
-						setState(kIdle);
-						usleep(100*1000);
-					}
-					else if (count == 0)
-						throw SnapException("end of file");
-					else
-						len += count;
+					ifs.read(chunk->payload, left);
+					ifs.seekg (0, ifs.beg);
+					count = left;
 				}
-				while ((len < toRead) && active_);
+				ifs.read(chunk->payload + count, toRead - count);
 
 				encoder_->encode(chunk.get());
 				nextTick += pcmReadMs_;
@@ -95,7 +92,6 @@ void PipeReader::worker()
 				if (nextTick >= currentTick)
 				{
 //					logO << "sleep: " << nextTick - currentTick << "\n";
-					setState(kPlaying);
 					usleep((nextTick - currentTick) * 1000);
 				}
 				else
@@ -110,7 +106,6 @@ void PipeReader::worker()
 		catch(const std::exception& e)
 		{
 			logE << "Exception: " << e.what() << std::endl;
-			usleep(100*1000);
 		}
 	}
 }

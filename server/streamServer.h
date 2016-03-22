@@ -28,7 +28,7 @@
 #include <mutex>
 
 #include "streamSession.h"
-#include "pcmreader/streamManager.h"
+#include "streamreader/streamManager.h"
 #include "common/queue.h"
 #include "message/message.h"
 #include "message/header.h"
@@ -64,7 +64,7 @@ struct StreamServerSettings
 
 /// Forwars PCM data to the connected clients
 /**
- * Reads PCM data using PipeReader, implements PcmListener to get the (encoded) PCM stream.
+ * Reads PCM data using PipeStream, implements PcmListener to get the (encoded) PCM stream.
  * Accepts and holds client connections (StreamSession)
  * Receives (via the MessageReceiver interface) and answers messages from the clients
  * Forwards PCM data to the clients
@@ -89,9 +89,9 @@ public:
 	virtual void onMessageReceived(ControlSession* connection, const std::string& message);
 
 	/// Implementation of PcmListener
-	virtual void onStateChanged(const PcmReader* pcmReader, const ReaderState& state);
-	virtual void onChunkRead(const PcmReader* pcmReader, const msg::PcmChunk* chunk, double duration);
-	virtual void onResync(const PcmReader* pcmReader, double ms);
+	virtual void onStateChanged(const PcmStream* pcmStream, const ReaderState& state);
+	virtual void onChunkRead(const PcmStream* pcmStream, const msg::PcmChunk* chunk, double duration);
+	virtual void onResync(const PcmStream* pcmStream, double ms);
 
 private:
 	void startAccept();

@@ -18,8 +18,8 @@
 
 #include "common/utils.h"
 #include "streamManager.h"
-#include "pipeReader.h"
-#include "fileReader.h"
+#include "pipeStream.h"
+#include "fileStream.h"
 #include "common/log.h"
 #include "common/snapException.h"
 
@@ -32,51 +32,51 @@ StreamManager::StreamManager(PcmListener* pcmListener, const std::string& defaul
 }
 
 
-PcmReader* StreamManager::addStream(const std::string& uri)
+PcmStream* StreamManager::addStream(const std::string& uri)
 {
-	ReaderUri readerUri(uri);
+	StreamUri streamUri(uri);
 
-	if (readerUri.query.find("sampleformat") == readerUri.query.end())
-		readerUri.query["sampleformat"] = sampleFormat_;
+	if (streamUri.query.find("sampleformat") == streamUri.query.end())
+		streamUri.query["sampleformat"] = sampleFormat_;
 
-	if (readerUri.query.find("codec") == readerUri.query.end())
-		readerUri.query["codec"] = codec_;
+	if (streamUri.query.find("codec") == streamUri.query.end())
+		streamUri.query["codec"] = codec_;
 
-	if (readerUri.query.find("buffer_ms") == readerUri.query.end())
-		readerUri.query["buffer_ms"] = to_string(readBufferMs_);
+	if (streamUri.query.find("buffer_ms") == streamUri.query.end())
+		streamUri.query["buffer_ms"] = to_string(readBufferMs_);
 
-//	logE << "\nURI: " << readerUri.uri << "\nscheme: " << readerUri.scheme << "\nhost: "
-//		<< readerUri.host << "\npath: " << readerUri.path << "\nfragment: " << readerUri.fragment << "\n";
+//	logE << "\nURI: " << streamUri.uri << "\nscheme: " << streamUri.scheme << "\nhost: "
+//		<< streamUri.host << "\npath: " << streamUri.path << "\nfragment: " << streamUri.fragment << "\n";
 
-//	for (auto kv: readerUri.query)
+//	for (auto kv: streamUri.query)
 //		logE << "key: '" << kv.first << "' value: '" << kv.second << "'\n";
 
-	if (readerUri.scheme == "pipe")
+	if (streamUri.scheme == "pipe")
 	{
-		streams_.push_back(make_shared<PipeReader>(pcmListener_, readerUri));
+		streams_.push_back(make_shared<PipeStream>(pcmListener_, streamUri));
 		return streams_.back().get();
 	}
-	else if (readerUri.scheme == "file")
+	else if (streamUri.scheme == "file")
 	{
-		streams_.push_back(make_shared<FileReader>(pcmListener_, readerUri));
+		streams_.push_back(make_shared<FileStream>(pcmListener_, streamUri));
 		return streams_.back().get();
 	}
 	else
 	{
-		throw SnapException("Unknown stream type: " + readerUri.scheme);
+		throw SnapException("Unknown stream type: " + streamUri.scheme);
 	}
 
 	return NULL;
 }
 
 
-const std::vector<PcmReaderPtr>& StreamManager::getStreams()
+const std::vector<PcmStreamPtr>& StreamManager::getStreams()
 {
 	return streams_;
 }
 
 
-const PcmReaderPtr StreamManager::getDefaultStream()
+const PcmStreamPtr StreamManager::getDefaultStream()
 {
 	if (streams_.empty())
 		return nullptr;
@@ -85,7 +85,7 @@ const PcmReaderPtr StreamManager::getDefaultStream()
 }
 
 
-const PcmReaderPtr StreamManager::getStream(const std::string& id)
+const PcmStreamPtr StreamManager::getStream(const std::string& id)
 {
 	for (auto stream: streams_)
 	{

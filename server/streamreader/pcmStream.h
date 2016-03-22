@@ -23,14 +23,14 @@
 #include <atomic>
 #include <string>
 #include <map>
-#include "readerUri.h"
+#include "streamUri.h"
 #include "../encoder/encoder.h"
 #include "../json/json.hpp"
 #include "message/sampleFormat.h"
 #include "message/header.h"
 
 
-class PcmReader;
+class PcmStream;
 
 enum ReaderState
 {
@@ -41,16 +41,16 @@ enum ReaderState
 };
 
 
-/// Callback interface for users of PcmReader
+/// Callback interface for users of PcmStream
 /**
- * Users of PcmReader should implement this to get the data
+ * Users of PcmStream should implement this to get the data
  */
 class PcmListener
 {
 public:
-	virtual void onStateChanged(const PcmReader* pcmReader, const ReaderState& state) = 0;
-	virtual void onChunkRead(const PcmReader* pcmReader, const msg::PcmChunk* chunk, double duration) = 0;
-	virtual void onResync(const PcmReader* pcmReader, double ms) = 0;
+	virtual void onStateChanged(const PcmStream* pcmStream, const ReaderState& state) = 0;
+	virtual void onChunkRead(const PcmStream* pcmStream, const msg::PcmChunk* chunk, double duration) = 0;
+	virtual void onResync(const PcmStream* pcmStream, double ms) = 0;
 };
 
 
@@ -60,12 +60,12 @@ public:
  * Implements EncoderListener to get the encoded data.
  * Data is passed to the PcmListener
  */
-class PcmReader : public EncoderListener
+class PcmStream : public EncoderListener
 {
 public:
 	/// ctor. Encoded PCM data is passed to the PcmListener
-	PcmReader(PcmListener* pcmListener, const ReaderUri& uri);
-	virtual ~PcmReader();
+	PcmStream(PcmListener* pcmListener, const StreamUri& uri);
+	virtual ~PcmStream();
 
 	virtual void start();
 	virtual void stop();
@@ -74,7 +74,7 @@ public:
 	virtual void onChunkEncoded(const Encoder* encoder, msg::PcmChunk* chunk, double duration);
 	virtual std::shared_ptr<msg::Header> getHeader();
 
-	virtual const ReaderUri& getUri() const;
+	virtual const StreamUri& getUri() const;
 	virtual const std::string& getName() const;
 	virtual const SampleFormat& getSampleFormat() const;
 
@@ -90,7 +90,7 @@ protected:
 	std::atomic<bool> active_;
 	std::thread readerThread_;
 	PcmListener* pcmListener_;
-	ReaderUri uri_;
+	StreamUri uri_;
 	SampleFormat sampleFormat_;
 	size_t pcmReadMs_;
 	std::unique_ptr<Encoder> encoder_;

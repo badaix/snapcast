@@ -24,7 +24,7 @@
 #include "../encoder/encoderFactory.h"
 #include "common/snapException.h"
 #include "common/compat.h"
-#include "pcmReader.h"
+#include "pcmStream.h"
 #include "common/log.h"
 
 
@@ -32,7 +32,7 @@ using namespace std;
 
 
 
-PcmReader::PcmReader(PcmListener* pcmListener, const ReaderUri& uri) : pcmListener_(pcmListener), uri_(uri), pcmReadMs_(20), state_(kIdle)
+PcmStream::PcmStream(PcmListener* pcmListener, const StreamUri& uri) : pcmListener_(pcmListener), uri_(uri), pcmReadMs_(20), state_(kIdle)
 {
 	EncoderFactory encoderFactory;
  	if (uri_.query.find("codec") == uri_.query.end())
@@ -46,55 +46,55 @@ PcmReader::PcmReader(PcmListener* pcmListener, const ReaderUri& uri) : pcmListen
  	if (uri_.query.find("sampleformat") == uri_.query.end())
 		throw SnapException("Stream URI must have a sampleformat");
 	sampleFormat_ = SampleFormat(uri_.query["sampleformat"]);
-	logE << "PcmReader sampleFormat: " << sampleFormat_.getFormat() << "\n";
+	logE << "PcmStream sampleFormat: " << sampleFormat_.getFormat() << "\n";
 
  	if (uri_.query.find("buffer_ms") != uri_.query.end())
 		pcmReadMs_ = cpt::stoul(uri_.query["buffer_ms"]);
 }
 
 
-PcmReader::~PcmReader()
+PcmStream::~PcmStream()
 {
 	stop();
 }
 
 
-std::shared_ptr<msg::Header> PcmReader::getHeader()
+std::shared_ptr<msg::Header> PcmStream::getHeader()
 {
 	return encoder_->getHeader();
 }
 
 
-const ReaderUri& PcmReader::getUri() const
+const StreamUri& PcmStream::getUri() const
 {
 	return uri_;
 }
 
 
-const std::string& PcmReader::getName() const
+const std::string& PcmStream::getName() const
 {
 	return name_;
 }
 
 
-const SampleFormat& PcmReader::getSampleFormat() const
+const SampleFormat& PcmStream::getSampleFormat() const
 {
 	return sampleFormat_;
 }
 
 
-void PcmReader::start()
+void PcmStream::start()
 {
-	logE << "PcmReader start: " << sampleFormat_.getFormat() << "\n";
+	logE << "PcmStream start: " << sampleFormat_.getFormat() << "\n";
 //TODO: wrong encoder settings leads to: terminate called after throwing an instance of 'std::system_error'  what():  Invalid argument
 	encoder_->init(this, sampleFormat_);
 
  	active_ = true;
-	readerThread_ = thread(&PcmReader::worker, this);
+	readerThread_ = thread(&PcmStream::worker, this);
 }
 
 
-void PcmReader::stop()
+void PcmStream::stop()
 {
 	if (active_)
 	{
@@ -104,13 +104,13 @@ void PcmReader::stop()
 }
 
 
-ReaderState PcmReader::getState() const
+ReaderState PcmStream::getState() const
 {
 	return state_;
 }
 
 
-void PcmReader::setState(const ReaderState& newState)
+void PcmStream::setState(const ReaderState& newState)
 {
 	if (newState != state_)
 	{
@@ -120,7 +120,7 @@ void PcmReader::setState(const ReaderState& newState)
 }
 
 
-void PcmReader::onChunkEncoded(const Encoder* encoder, msg::PcmChunk* chunk, double duration)
+void PcmStream::onChunkEncoded(const Encoder* encoder, msg::PcmChunk* chunk, double duration)
 {
 //	logO << "onChunkEncoded: " << duration << " us\n";
 	if (duration <= 0)
@@ -133,7 +133,7 @@ void PcmReader::onChunkEncoded(const Encoder* encoder, msg::PcmChunk* chunk, dou
 }
 
 
-json PcmReader::toJson() const
+json PcmStream::toJson() const
 {
 	string state("unknown");
 	if (state_ == kIdle)

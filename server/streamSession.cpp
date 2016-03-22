@@ -28,7 +28,7 @@ using namespace std;
 
 
 StreamSession::StreamSession(MessageReceiver* receiver, std::shared_ptr<tcp::socket> socket) :
-	active_(true), messageReceiver_(receiver), pcmReader_(nullptr)
+	active_(true), messageReceiver_(receiver), pcmStream_(nullptr)
 {
 	socket_ = socket;
 }
@@ -40,15 +40,15 @@ StreamSession::~StreamSession()
 }
 
 
-void StreamSession::setPcmReader(PcmReaderPtr pcmReader)
+void StreamSession::setPcmStream(PcmStreamPtr pcmStream)
 {
-	pcmReader_ = pcmReader;
+	pcmStream_ = pcmStream;
 }
 
 
-const PcmReaderPtr StreamSession::pcmReader() const
+const PcmStreamPtr StreamSession::pcmStream() const
 {
-	return pcmReader_;
+	return pcmStream_;
 }
 
 

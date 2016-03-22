@@ -20,27 +20,27 @@
 #include <common/utils.h>
 #include <common/compat.h>
 #include <common/log.h>
-#include "readerUri.h"
+#include "streamUri.h"
 
 
 using namespace std;
 
 
-ReaderUri::ReaderUri(const std::string& readerUri)
+StreamUri::StreamUri(const std::string& streamUri)
 {
 // https://en.wikipedia.org/wiki/Uniform_Resource_Identifier
 // scheme:[//[user:password@]host[:port]][/]path[?query][#fragment]
 // would be more elegant with regex. Not yet supported on my dev machine's gcc 4.8 :(
-	logE << "ReaderUri: " << readerUri << "\n";
+	logE << "StreamUri: " << streamUri << "\n";
 	size_t pos;
-	uri = trim_copy(readerUri);
+	uri = trim_copy(streamUri);
 	while (!uri.empty() && ((uri[0] == '\'') || (uri[0] == '"')))
 		uri = uri.substr(1);
 	while (!uri.empty() && ((uri[uri.length()-1] == '\'') || (uri[uri.length()-1] == '"')))
 		uri = uri.substr(0, this->uri.length()-1);
 
 	string decodedUri = uriDecode(uri);
-	logD << "ReaderUri: " << decodedUri << "\n";
+	logD << "StreamUri: " << decodedUri << "\n";
 
 	id_ = decodedUri;
 	pos = id_.find('?');
@@ -106,7 +106,7 @@ ReaderUri::ReaderUri(const std::string& readerUri)
 }
 
 
-json ReaderUri::toJson() const
+json StreamUri::toJson() const
 {
 	json j = {
 		{"raw", uri},
@@ -120,7 +120,7 @@ json ReaderUri::toJson() const
 }
 
 
-std::string ReaderUri::id() const
+std::string StreamUri::id() const
 {
 	return id_;
 }

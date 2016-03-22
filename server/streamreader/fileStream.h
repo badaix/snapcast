@@ -16,29 +16,29 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
-#ifndef PIPE_READER_H
-#define PIPE_READER_H
+#ifndef FILE_READER_H
+#define FILE_READER_H
 
-#include "pcmReader.h"
+#include "pcmStream.h"
+#include <fstream>
 
 
-
-/// Reads and decodes PCM data from a named pipe
+/// Reads and decodes PCM data from a file
 /**
- * Reads PCM from a named pipe and passes the data to an encoder.
+ * Reads PCM from a file and passes the data to an encoder.
  * Implements EncoderListener to get the encoded data.
  * Data is passed to the PcmListener
  */
-class PipeReader : public PcmReader
+class FileStream : public PcmStream
 {
 public:
 	/// ctor. Encoded PCM data is passed to the PipeListener
-	PipeReader(PcmListener* pcmListener, const ReaderUri& uri);
-	virtual ~PipeReader();
+	FileStream(PcmListener* pcmListener, const StreamUri& uri);
+	virtual ~FileStream();
 
 protected:
 	void worker();
-	int fd_;
+	std::ifstream ifs;
 };
 
 
