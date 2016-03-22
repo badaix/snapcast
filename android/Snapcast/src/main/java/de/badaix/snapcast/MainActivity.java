@@ -472,7 +472,7 @@ public class MainActivity extends AppCompatActivity implements ClientItem.Client
                 mViewPager.setVisibility(View.VISIBLE);
             }
         });
-        setActionbarSubtitle("connected: " + remoteControl.getHost());
+        setActionbarSubtitle(remoteControl.getHost());
         remoteControl.getServerStatus();
         updateMenuItems(true);
     }
