@@ -21,9 +21,13 @@
 
 #include "popl.hpp"
 #include "controller.h"
-#ifndef ANDROID
+#ifdef HAS_ALSA
 #include "player/alsaPlayer.h"
+#endif
+#ifdef HAS_AVAHI
 #include "browseAvahi.h"
+#endif
+#ifdef HAS_DAEMON
 #include "common/daemon.h"
 #endif
 #include "common/log.h"
@@ -37,7 +41,7 @@ bool g_terminated = false;
 
 PcmDevice getPcmDevice(const std::string& soundcard)
 {
-#ifndef ANDROID
+#ifdef HAS_ALSA
 	vector<PcmDevice> pcmDevices = AlsaPlayer::pcm_list();
 
 	try
@@ -113,7 +117,7 @@ int main (int argc, char **argv)
 
 		if (listSwitch.isSet())
 		{
-#ifndef ANDROID
+#ifdef HAS_ALSA
 			vector<PcmDevice> pcmDevices = AlsaPlayer::pcm_list();
 			for (auto dev: pcmDevices)
 			{
@@ -138,7 +142,7 @@ int main (int argc, char **argv)
 
 		if (daemonOption.isSet())
 		{
-#ifndef ANDROID
+#ifdef HAS_DAEMON
 			daemonize("/var/run/snapclient.pid");
 			if (processPriority < -20)
 				processPriority = -20;
@@ -159,7 +163,7 @@ int main (int argc, char **argv)
 
 		if (host.empty())
 		{
-#ifndef ANDROID
+#ifdef HAS_AVAHI
 			BrowseAvahi browseAvahi;
 			AvahiResult avahiResult;
 			while (!g_terminated)
@@ -199,7 +203,7 @@ int main (int argc, char **argv)
 	}
 
 	logS(kLogNotice) << "daemon terminated." << endl;
-#ifndef ANDROID
+#ifdef HAS_DAEMON
 	daemonShutdown();
 #endif
 	exit(EXIT_SUCCESS);

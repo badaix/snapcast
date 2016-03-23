@@ -19,7 +19,7 @@
 #include <iostream>
 #include <string>
 #include <memory>
-#ifndef ANDROID
+#ifdef HAS_OGG
 #include "decoder/oggDecoder.h"
 #endif
 #include "decoder/pcmDecoder.h"
@@ -101,7 +101,7 @@ void Controller::onMessageReceived(ClientConnection* connection, const msg::Base
 
 		if (headerChunk_->codec == "pcm")
 			decoder_.reset(new PcmDecoder());
-#ifndef ANDROID
+#ifdef HAS_OGG
 		else if (headerChunk_->codec == "ogg")
 			decoder_.reset(new OggDecoder());
 #endif
@@ -116,10 +116,12 @@ void Controller::onMessageReceived(ClientConnection* connection, const msg::Base
 		stream_.reset(new Stream(sampleFormat_));
 		stream_->setBufferLen(serverSettings_->bufferMs - latency_);
 
-#ifndef ANDROID
+#ifdef HAS_ALSA
 		player_.reset(new AlsaPlayer(pcmDevice_, stream_.get()));
-#else
+#elif HAS_OPENSL
 		player_.reset(new OpenslPlayer(pcmDevice_, stream_.get()));
+#else
+		throw SnapException("No ALSA or OPENSL support");
 #endif
 		player_->setVolume(serverSettings_->volume / 100.);
 		player_->setMute(serverSettings_->muted);

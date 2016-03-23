@@ -311,7 +311,6 @@ void StreamServer::onMessageReceived(StreamSession* connection, const msg::BaseM
 		}
 		Config::instance().save();
 
-		//TODO: wording pcmStream vs stream
 		connection->setPcmStream(stream);
 		auto headerChunk = stream->getHeader();
 		connection->send(headerChunk.get());

@@ -25,10 +25,10 @@
 #include "message/message.h"
 #include "message/serverSettings.h"
 #include "player/pcmDevice.h"
-#ifdef ANDROID
-#include "player/openslPlayer.h"
-#else
+#ifdef HAS_ALSA
 #include "player/alsaPlayer.h"
+#elif HAS_OPENSL
+#include "player/openslPlayer.h"
 #endif
 #include "clientConnection.h"
 #include "stream.h"

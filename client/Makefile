@@ -28,14 +28,14 @@ ifdef ANDROID
 #    make ANDROID=1
 CXX     = $(NDK_DIR)/bin/arm-linux-androideabi-g++
 STRIP	= $(NDK_DIR)/bin/arm-linux-androideabi-strip
-CFLAGS  = $(ADD_CFLAGS) -std=c++0x -Wall -Wno-unused-function -fPIC -O3 -pthread -DASIO_STANDALONE -DANDROID -DVERSION=\"$(VERSION)\" -I.. -I../externals/asio/asio/include -I../externals/popl/include -I/home/johannes/Develop/build/arm/include
+CFLAGS  = $(ADD_CFLAGS) -std=c++0x -Wall -Wno-unused-function -fPIC -O3 -pthread -DASIO_STANDALONE -DANDROID -DHAS_OPENSL -DVERSION=\"$(VERSION)\" -I.. -I../externals/asio/asio/include -I../externals/popl/include -I/home/johannes/Develop/build/arm/include
 #-march=armv7-a -mfloat-abi=softfp -mfpu=vfpv3-d16
 LDFLAGS = -L/home/johannes/Develop/build/arm/lib -pie -lFLAC -lOpenSLES
 OBJ     = snapClient.o stream.o clientConnection.o timeProvider.o player/player.o player/openslPlayer.o decoder/pcmDecoder.o decoder/flacDecoder.o controller.o ../message/pcmChunk.o ../common/log.o ../message/sampleFormat.o
 else
 CXX     = /usr/bin/g++
 STRIP	= strip
-CFLAGS  = -std=c++0x -static-libgcc -static-libstdc++ -Wall -Wno-unused-function -O3 -pthread -DASIO_STANDALONE -DVERSION=\"$(VERSION)\" -I.. -I../externals/asio/asio/include -I../externals/popl/include
+CFLAGS  = -std=c++0x -static-libgcc -static-libstdc++ -Wall -Wno-unused-function -O3 -pthread -DASIO_STANDALONE -DHAS_OGG -DHAS_ALSA -DHAS_AVAHI -DHAS_DAEMON -DVERSION=\"$(VERSION)\" -I.. -I../externals/asio/asio/include -I../externals/popl/include
 LDFLAGS = -lrt -lasound -logg -lvorbis -lFLAC -lavahi-client -lavahi-common
 OBJ     = snapClient.o stream.o clientConnection.o timeProvider.o player/player.o player/alsaPlayer.o decoder/oggDecoder.o decoder/pcmDecoder.o decoder/flacDecoder.o controller.o browseAvahi.o ../message/pcmChunk.o ../common/log.o ../message/sampleFormat.o
 endif
