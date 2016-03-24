@@ -1,3 +1,14 @@
+snapserver (0.5.0) unstable; urgency=low
+
+  * Features
+    -Android client: Fast switching of clients between streams
+  * Bugfixes
+    -Server: Fixed reading of server.json config file
+  * General
+    -Source code cleanups
+
+ -- Johannes Pohl <johannes.pohl@badaix.de>  Fri, 25 Mar 2016 00:02:00 +0200
+
 snapserver (0.5.0~beta-2) unstable; urgency=low
 
   * Features
