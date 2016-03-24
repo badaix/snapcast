@@ -113,20 +113,20 @@ Disable alsa audio output by commenting out this section:
     #       type            "alsa"
     #       name            "My ALSA Device"
     #       device          "hw:0,0"        # optional
-    #       format          "44100:16:2"    # optional
+    #       format          "48000:16:2"    # optional
     #       mixer_device    "default"       # optional
     #       mixer_control   "PCM"           # optional
     #       mixer_index     "0"             # optional
     #}
 
 Add a new audio output of the type "fifo", which will let mpd play audio into the named pipe `/tmp/snapfifo`.
-Make sure that the "format" setting is the same as the format setting of the Snapserver (default is "44100:16:2", which should make resampling unnecessary in most cases)
+Make sure that the "format" setting is the same as the format setting of the Snapserver (default is "48000:16:2", which should make resampling unnecessary in most cases)
 
     audio_output {
         type            "fifo"
         name            "my pipe"
         path            "/tmp/snapfifo"
-        format          "44100:16:2"
+        format          "48000:16:2"
         mixer_type      "software"
     }
 
