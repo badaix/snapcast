@@ -4,6 +4,8 @@
 #ifdef ANDROID
 #define NO_TO_STRING
 #define NO_STOUL
+#define NO_STOUL
+#define NO_STOI
 #endif
 
 #include <string>
