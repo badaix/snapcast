@@ -9,15 +9,11 @@ else
   TARGET_DIR ?= /usr
 endif
 
-# MIPS
-# export STAGING_DIR=/home/johannes/Develop/openwrt/staging_dir
-# TOOLCHAIN_DIR=$(STAGING_DIR)/toolchain-mips_34kc_gcc-4.8-linaro_uClibc-0.9.33.2
-# LDCFLAGS=$(TOOLCHAIN_DIR)/usr/lib
-# LD_LIBRARY_PATH=$(TOOLCHAIN_DIR)/usr/lib
-# PATH=$(TOOLCHAIN_DIR)/bin:$PATH
-# CXX     = $(TOOLCHAIN_DIR)/bin/mips-openwrt-linux-g++
 
-ifdef ANDROID
+CXXFLAGS += $(ADD_CFLAGS) -std=c++0x -Wall -Wno-unused-function -O3 -pthread -DASIO_STANDALONE -DVERSION=\"$(VERSION)\" -I.. -I../externals/asio/asio/include -I../externals/popl/include
+OBJ       = snapClient.o stream.o clientConnection.o timeProvider.o player/player.o decoder/pcmDecoder.o decoder/flacDecoder.o controller.o ../message/pcmChunk.o ../common/log.o ../message/sampleFormat.o
+
+ifeq ($(TARGET), ANDROID)
 # Android NDK setup: (http://developer.android.com/ndk/guides/standalone_toolchain.html)
 # 1. Download NDK: http://dl.google.com/android/ndk/android-ndk-r10e-linux-x86_64.bin
 # 2. Extract to: /home/johannes/Develop/android-ndk-r10e
@@ -26,19 +22,28 @@ ifdef ANDROID
 #    ii. ./make-standalone-toolchain.sh --arch=arm --platform=android-14 --install-dir=/home/johannes/Develop/android-toolchain-arm-14 --ndk-dir=/home/johannes/Develop/android-ndk-r10e --system=linux-x86_64
 # build with:
 #    make ANDROID=1
-CXX     = $(NDK_DIR)/bin/arm-linux-androideabi-g++
-STRIP	= $(NDK_DIR)/bin/arm-linux-androideabi-strip
-CFLAGS  = $(ADD_CFLAGS) -std=c++0x -Wall -Wno-unused-function -fPIC -O3 -pthread -DASIO_STANDALONE -DANDROID -DHAS_OPENSL -DVERSION=\"$(VERSION)\" -I.. -I../externals/asio/asio/include -I../externals/popl/include -I/home/johannes/Develop/build/arm/include
-#-march=armv7-a -mfloat-abi=softfp -mfpu=vfpv3-d16
-LDFLAGS = -L/home/johannes/Develop/build/arm/lib -pie -lFLAC -lOpenSLES
-OBJ     = snapClient.o stream.o clientConnection.o timeProvider.o player/player.o player/openslPlayer.o decoder/pcmDecoder.o decoder/flacDecoder.o controller.o ../message/pcmChunk.o ../common/log.o ../message/sampleFormat.o
+CXX      = $(NDK_DIR)/bin/arm-linux-androideabi-g++
+STRIP	 = $(NDK_DIR)/bin/arm-linux-androideabi-strip
+CXXFLAGS += -DANDROID -fPIC -DHAS_OPENSL -I/home/johannes/Develop/build/arm/include
+LDFLAGS  = -L/home/johannes/Develop/build/arm/lib -pie -lFLAC -lOpenSLES
+OBJ      += player/openslPlayer.o
+
+else ifeq ($(TARGET), OPENWRT)
+
+CXXFLAGS += -DIS_BIG_ENDIAN -DNO_TO_STRING -DNO_STOUL -DNO_STOI -DHAS_OGG -DHAS_ALSA -DHAS_AVAHI -DHAS_DAEMON
+LDFLAGS  = -lasound -logg -lvorbis -lFLAC -lavahi-client -lavahi-common -latomic
+OBJ      += player/alsaPlayer.o decoder/oggDecoder.o browseAvahi.o
+
 else
-CXX     = /usr/bin/g++
-STRIP	= strip
-CFLAGS  = -std=c++0x -static-libgcc -static-libstdc++ -Wall -Wno-unused-function -O3 -pthread -DASIO_STANDALONE -DHAS_OGG -DHAS_ALSA -DHAS_AVAHI -DHAS_DAEMON -DVERSION=\"$(VERSION)\" -I.. -I../externals/asio/asio/include -I../externals/popl/include
-LDFLAGS = -lrt -lasound -logg -lvorbis -lFLAC -lavahi-client -lavahi-common
-OBJ     = snapClient.o stream.o clientConnection.o timeProvider.o player/player.o player/alsaPlayer.o decoder/oggDecoder.o decoder/pcmDecoder.o decoder/flacDecoder.o controller.o browseAvahi.o ../message/pcmChunk.o ../common/log.o ../message/sampleFormat.o
+
+CXX      = /usr/bin/g++
+STRIP	 = strip
+CXXFLAGS += -static-libgcc -static-libstdc++ -DHAS_OGG -DHAS_ALSA -DHAS_AVAHI -DHAS_DAEMON
+LDFLAGS  = -lrt -lasound -logg -lvorbis -lFLAC -lavahi-client -lavahi-common
+OBJ      += player/alsaPlayer.o decoder/oggDecoder.o browseAvahi.o
+
 endif
+
 
 BIN = snapclient
 
@@ -46,11 +51,11 @@ BIN = snapclient
 all:	$(TARGET)
 
 $(TARGET): $(OBJ)
-	$(CXX) $(CFLAGS) -o $(BIN) $(OBJ) $(LDFLAGS)
-	$(STRIP) $(BIN)
+	$(CXX) $(CXXFLAGS) -o $(BIN) $(OBJ) $(LDFLAGS)
+#	$(STRIP) $(BIN)
 
 %.o: %.cpp
-	$(CXX) $(CFLAGS) -c $< -o $@
+	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 clean:
 	rm -rf $(BIN) $(OBJ) *~

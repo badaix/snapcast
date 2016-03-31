@@ -44,21 +44,15 @@ public:
 	{
 		strMap.clear();
 		uint16_t mapSize;
-		stream.read(reinterpret_cast<char *>(&mapSize), sizeof(uint16_t));
+		readVal(stream, mapSize);
 
 		for (size_t n=0; n<mapSize; ++n)
 		{
-			uint16_t size;
 			std::string key;
-			stream.read(reinterpret_cast<char *>(&size), sizeof(uint16_t));
-			key.resize(size);
-			stream.read(&key[0], size);
-
 			std::string value;
-			stream.read(reinterpret_cast<char *>(&size), sizeof(uint16_t));
-			value.resize(size);
-			stream.read(&value[0], size);
 
+			readVal(stream, key);
+			readVal(stream, value);
 			strMap[key] = value;
 		}
 	}
@@ -67,7 +61,7 @@ public:
 	{
 		uint32_t size = sizeof(uint16_t); /// count elements
 		for (auto iter = strMap.begin(); iter != strMap.end(); ++iter)
-			size += (sizeof(uint16_t) + iter->first.size()) + (sizeof(uint16_t) + iter->second.size());
+			size += (sizeof(uint32_t) + iter->first.size()) + (sizeof(uint32_t) + iter->second.size());
 		return size;
 	}
 
@@ -113,15 +107,11 @@ protected:
 	virtual void doserialize(std::ostream& stream) const
 	{
 		uint16_t size = strMap.size();
-		stream.write(reinterpret_cast<const char *>(&size), sizeof(uint16_t));
+		writeVal(stream, size);
 		for (auto iter = strMap.begin(); iter != strMap.end(); ++iter)
 		{
-			size = iter->first.size();
-			stream.write(reinterpret_cast<const char *>(&size), sizeof(uint16_t));
-			stream.write(iter->first.c_str(), iter->first.size());
-			size = iter->second.size();
-			stream.write(reinterpret_cast<const char *>(&size), sizeof(uint16_t));
-			stream.write(iter->second.c_str(), iter->second.size());
+			writeVal(stream, iter->first);
+			writeVal(stream, iter->second);
 		}
 	}
 };

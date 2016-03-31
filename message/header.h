@@ -42,19 +42,13 @@ public:
 
 	virtual void read(std::istream& stream)
 	{
-		int16_t size;
-		stream.read(reinterpret_cast<char *>(&size), sizeof(int16_t));
-		codec.resize(size);
-		stream.read(&codec[0], size);
-
-		stream.read(reinterpret_cast<char *>(&payloadSize), sizeof(uint32_t));
-		payload = (char*)realloc(payload, payloadSize);
-		stream.read(payload, payloadSize);
+		readVal(stream, codec);
+		readVal(stream, &payload, payloadSize);
 	}
 
 	virtual uint32_t getSize() const
 	{
-		return sizeof(int16_t) + codec.size() + sizeof(uint32_t) + payloadSize;
+		return sizeof(uint32_t) + codec.size() + sizeof(uint32_t) + payloadSize;
 	}
 
 	uint32_t payloadSize;
@@ -64,11 +58,8 @@ public:
 protected:
 	virtual void doserialize(std::ostream& stream) const
 	{
-		int16_t size(codec.size());
-		stream.write(reinterpret_cast<const char *>(&size), sizeof(int16_t));
-		stream.write(codec.c_str(), size);
-		stream.write(reinterpret_cast<const char *>(&payloadSize), sizeof(uint32_t));
-		stream.write(payload, payloadSize);
+		writeVal(stream, codec);
+		writeVal(stream, payload, payloadSize);
 	}
 };
 

@@ -25,6 +25,8 @@
 #include <vector>
 #include "../stream.h"
 #include "pcmDevice.h"
+#include "common/endian.h"
+#include "common/log.h"
 
 
 /// Audio Player
@@ -50,8 +52,9 @@ protected:
 	void adjustVolume(char *buffer, size_t count, double volume)
 	{
 		T* bufferT = (T*)buffer;
+		//TODO: SWAP_T
 		for (size_t n=0; n<count; ++n)
-			bufferT[n] *= volume;
+			bufferT[n] = (T)(SWAP_16(((T)SWAP_16(bufferT[n])) * volume));
 	}
 
 	void adjustVolume(char* buffer, size_t frames);

@@ -45,7 +45,9 @@ public:
 
 	virtual void read(std::istream& stream)
 	{
-		stream.read(reinterpret_cast<char *>(&request), sizeof(int16_t));
+		uint16_t i;
+		readVal(stream, i);
+		request = (message_type)i;
 	}
 
 	virtual uint32_t getSize() const
@@ -58,7 +60,8 @@ public:
 protected:
 	virtual void doserialize(std::ostream& stream) const
 	{
-		stream.write(reinterpret_cast<const char *>(&request), sizeof(int16_t));
+		uint16_t i = request;
+		writeVal(stream, i);
 	}
 };
 

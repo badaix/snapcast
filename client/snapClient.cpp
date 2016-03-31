@@ -32,6 +32,7 @@
 #endif
 #include "common/log.h"
 #include "common/signalHandler.h"
+#include "common/compat.h"
 
 
 using namespace std;
@@ -46,7 +47,7 @@ PcmDevice getPcmDevice(const std::string& soundcard)
 
 	try
 	{
-		int soundcardIdx = std::stoi(soundcard);
+		int soundcardIdx = cpt::stoi(soundcard);
 		for (auto dev: pcmDevices)
 			if (dev.idx == soundcardIdx)
 				return dev;

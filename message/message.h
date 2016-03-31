@@ -25,6 +25,7 @@
 #include <streambuf>
 #include <vector>
 #include <sys/time.h>
+#include "common/endian.h"
 
 
 template<typename CharT, typename TraitsT = std::char_traits<CharT> >
@@ -126,14 +127,17 @@ struct BaseMessage
 
 	virtual void read(std::istream& stream)
 	{
-		stream.read(reinterpret_cast<char*>(&type), sizeof(uint16_t));
-		stream.read(reinterpret_cast<char*>(&id), sizeof(uint16_t));
-		stream.read(reinterpret_cast<char*>(&refersTo), sizeof(uint16_t));
-		stream.read(reinterpret_cast<char*>(&sent.sec), sizeof(int32_t));
-		stream.read(reinterpret_cast<char*>(&sent.usec), sizeof(int32_t));
-		stream.read(reinterpret_cast<char*>(&received.sec), sizeof(int32_t));
-		stream.read(reinterpret_cast<char*>(&received.usec), sizeof(int32_t));
-		stream.read(reinterpret_cast<char*>(&size), sizeof(uint32_t));
+		readVal(stream, type);
+		readVal(stream, id);
+		readVal(stream, refersTo);
+		readVal(stream, sent.sec);
+		readVal(stream, sent.usec);
+		readVal(stream, received.sec);
+		readVal(stream, received.usec);
+		readVal(stream, size);
+//std::cout << type << ", " << id << ", " << refersTo << ", " << sent.sec << ":" << sent.usec << ", " << received.sec << ":" << received.usec << ", " << size << "\n";
+//std::cout << __builtin_bswap32(type) << ", " << __builtin_bswap16(id) << ", " << __builtin_bswap16(refersTo) << ", " << __builtin_bswap32(sent.sec) << ":" << __builtin_bswap32(sent.usec) << ", " << __builtin_bswap32(received.sec) << ":" << __builtin_bswap32(received.usec) << ", " << __builtin_bswap32(size) << "\n";
+//std::cout << SWAP_32(type) << ", " << SWAP_16(id) << ", " << SWAP_16(refersTo) << ", " << SWAP_32(sent.sec) << ":" << SWAP_32(sent.usec) << ", " << SWAP_32(received.sec) << ":" << SWAP_32(received.usec) << ", " << SWAP_32(size) << "\n";
 	}
 
 	void deserialize(char* payload)
@@ -158,24 +162,26 @@ struct BaseMessage
 
 	virtual void serialize(std::ostream& stream) const
 	{
-		stream.write(reinterpret_cast<const char*>(&type), sizeof(uint16_t));
-		stream.write(reinterpret_cast<const char*>(&id), sizeof(uint16_t));
-		stream.write(reinterpret_cast<const char*>(&refersTo), sizeof(uint16_t));
-		stream.write(reinterpret_cast<const char *>(&sent.sec), sizeof(int32_t));
-		stream.write(reinterpret_cast<const char *>(&sent.usec), sizeof(int32_t));
-		stream.write(reinterpret_cast<const char *>(&received.sec), sizeof(int32_t));
-		stream.write(reinterpret_cast<const char *>(&received.usec), sizeof(int32_t));
+		writeVal(stream, type);
+		writeVal(stream, id);
+		writeVal(stream, refersTo);
+		writeVal(stream, sent.sec);
+		writeVal(stream, sent.usec);
+		writeVal(stream, received.sec);
+		writeVal(stream, received.usec);
 		size = getSize();
-		stream.write(reinterpret_cast<const char*>(&size), sizeof(uint32_t));
+		writeVal(stream, size);
+//std::cout << type << ", " << id << ", " << refersTo << ", " << sent.sec << ":" << sent.usec << ", " << received.sec << ":" << received.usec << ", " << size << "\n";
+//std::cout << SWAP_32(type) << ", " << SWAP_16(id) << ", " << SWAP_16(refersTo) << ", " << SWAP_32(sent.sec) << ":" << SWAP_32(sent.usec) << ", " << SWAP_32(received.sec) << ":" << SWAP_32(received.usec) << ", " << SWAP_32(size) << "\n";
 		doserialize(stream);
 	}
 
 	virtual uint32_t getSize() const
 	{
-		return 3*sizeof(uint16_t) + 2*sizeof(tv) + sizeof(uint32_t);
+		return 2*sizeof(uint16_t) + 2*sizeof(tv) + 2*sizeof(uint32_t);
 	};
 
-	uint16_t type;
+	uint32_t type;
 	mutable uint16_t id;
 	uint16_t refersTo;
 	tv received;
@@ -183,6 +189,119 @@ struct BaseMessage
 	mutable uint32_t size;
 
 protected:
+	void writeVal(std::ostream& stream, const bool& val) const
+	{
+		char c = val?1:0;
+		writeVal(stream, c);
+	}
+
+	void writeVal(std::ostream& stream, const char& val) const
+	{
+		stream.write(reinterpret_cast<const char*>(&val), sizeof(char));
+	}
+
+	void writeVal(std::ostream& stream, const uint16_t& val) const
+	{
+		uint16_t v = SWAP_16(val);
+		stream.write(reinterpret_cast<const char*>(&v), sizeof(uint16_t));
+	}
+
+	void writeVal(std::ostream& stream, const int16_t& val) const
+	{
+		uint16_t v = SWAP_16(val);
+		stream.write(reinterpret_cast<const char*>(&v), sizeof(int16_t));
+	}
+
+	void writeVal(std::ostream& stream, const uint32_t& val) const
+	{
+		uint32_t v = SWAP_32(val);
+		stream.write(reinterpret_cast<const char*>(&v), sizeof(uint32_t));
+	}
+
+	void writeVal(std::ostream& stream, const int32_t& val) const
+	{
+		uint32_t v = SWAP_32(val);
+		stream.write(reinterpret_cast<const char*>(&v), sizeof(int32_t));
+	}
+
+	void writeVal(std::ostream& stream, const double& val) const
+	{
+		uint64_t v = SWAP_64(*(int64_t*)&val);
+		stream.write(reinterpret_cast<const char*>(&v), sizeof(int64_t));
+	}
+
+	void writeVal(std::ostream& stream, const char* payload, const uint32_t& size) const
+	{
+		writeVal(stream, size);
+		stream.write(payload, size);
+	}
+
+	void writeVal(std::ostream& stream, const std::string& val) const
+	{
+		uint32_t size = val.size();
+		writeVal(stream, val.c_str(), size);
+	}
+
+
+
+	void readVal(std::istream& stream, bool& val) const
+	{
+		char c;
+		readVal(stream, c);
+		val = (c != 0);
+	}
+
+	void readVal(std::istream& stream, char& val) const
+	{
+		stream.read(reinterpret_cast<char*>(&val), sizeof(char));
+	}
+
+	void readVal(std::istream& stream, uint16_t& val) const
+	{
+		stream.read(reinterpret_cast<char*>(&val), sizeof(uint16_t));
+		val = SWAP_16(val);
+	}
+
+	void readVal(std::istream& stream, int16_t& val) const
+	{
+		stream.read(reinterpret_cast<char*>(&val), sizeof(int16_t));
+		val = SWAP_16(val);
+	}
+
+	void readVal(std::istream& stream, uint32_t& val) const
+	{
+		stream.read(reinterpret_cast<char*>(&val), sizeof(uint32_t));
+		val = SWAP_32(val);
+	}
+
+	void readVal(std::istream& stream, int32_t& val) const
+	{
+		stream.read(reinterpret_cast<char*>(&val), sizeof(int32_t));
+		val = SWAP_32(val);
+	}
+
+	void readVal(std::istream& stream, double& val) const
+	{
+		stream.read(reinterpret_cast<char*>(&val), sizeof(int64_t));
+		val = SWAP_64(val);
+	}
+
+	void readVal(std::istream& stream, char** payload, uint32_t& size) const
+	{
+		readVal(stream, size);
+		*payload = (char*)realloc(*payload, size);
+		stream.read(*payload, size);
+	}
+
+	void readVal(std::istream& stream, std::string& val) const
+	{
+		uint32_t size;
+		readVal(stream, size);
+		val.resize(size);
+		stream.read(&val[0], size);
+	}
+
+
 	virtual void doserialize(std::ostream& stream) const
 	{
 	};

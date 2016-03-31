@@ -17,6 +17,7 @@
 ***/
 
 #include "common/snapException.h"
+#include "common/endian.h"
 #include "common/log.h"
 #include "pcmDecoder.h"
 
@@ -59,7 +60,19 @@ PcmDecoder::PcmDecoder() : Decoder()
 
 bool PcmDecoder::decode(msg::PcmChunk* chunk)
 {
-	return true;
+/*	int16_t* bufferT = (int16_t*)chunk->payload;
+	for (size_t n=0; n<chunk->getSampleCount(); ++n)
+	{
+		bufferT[n] = SWAP_16(bufferT[n]);
+	}
+
+		if (sampleFormat.bits == 8)
+			adjustVolume<int8_t>(buffer, frames*sampleFormat.channels, volume);
+		else if (sampleFormat.bits == 16)
+			adjustVolume<int16_t>(buffer, frames*sampleFormat.channels, volume);
+		else if (sampleFormat.bits == 32)
+			adjustVolume<int32_t>(buffer, frames*sampleFormat.channels, volume);
+*/	return true;
 }
 
 
@@ -71,12 +84,14 @@ SampleFormat PcmDecoder::setHeader(msg::Header* chunk)
     struct riff_wave_header riff_wave_header;
 	struct chunk_header chunk_header;
 	struct chunk_fmt chunk_fmt;
-	chunk_fmt.sample_rate = 0;
+	chunk_fmt.sample_rate = SWAP_32(0);
+	chunk_fmt.bits_per_sample = SWAP_16(0);
+	chunk_fmt.num_channels = SWAP_16(0);
 
 	size_t pos(0);
 	memcpy(&riff_wave_header, chunk->payload + pos, sizeof(riff_wave_header));
 	pos += sizeof(riff_wave_header);
-	if ((riff_wave_header.riff_id != ID_RIFF) || (riff_wave_header.wave_id != ID_WAVE))
+	if ((SWAP_32(riff_wave_header.riff_id) != ID_RIFF) || (SWAP_32(riff_wave_header.wave_id) != ID_WAVE))
 		throw SnapException("Not a riff/wave header");
 
 	bool moreChunks(true);
@@ -86,7 +101,7 @@ SampleFormat PcmDecoder::setHeader(msg::Header* chunk)
 			throw SnapException("riff/wave header incomplete");
 		memcpy(&chunk_header, chunk->payload + pos, sizeof(chunk_header));
 		pos += sizeof(chunk_header);
-		switch (chunk_header.id)
+		switch (SWAP_32(chunk_header.id))
 		{
 		case ID_FMT:
 			if (pos + sizeof(chunk_fmt) > chunk->payloadSize)
@@ -94,8 +109,8 @@ SampleFormat PcmDecoder::setHeader(msg::Header* chunk)
 			memcpy(&chunk_fmt, chunk->payload + pos, sizeof(chunk_fmt));
 			pos += sizeof(chunk_fmt);
 			/// If the format header is larger, skip the rest
-			if (chunk_header.sz > sizeof(chunk_fmt))
-				pos += (chunk_header.sz - sizeof(chunk_fmt));
+			if (SWAP_32(chunk_header.sz) > sizeof(chunk_fmt))
+				pos += (SWAP_32(chunk_header.sz) - sizeof(chunk_fmt));
 			break;
 		case ID_DATA:
 			/// Stop looking for chunks
@@ -103,19 +118,19 @@ SampleFormat PcmDecoder::setHeader(msg::Header* chunk)
 			break;
 		default:
 			/// Unknown chunk, skip bytes
-			pos += chunk_header.sz;
+			pos += SWAP_32(chunk_header.sz);
 		}
 	}
 	while (moreChunks);
 
 
-	if (chunk_fmt.sample_rate == 0)
+	if (SWAP_32(chunk_fmt.sample_rate) == 0)
 		throw SnapException("Sample format not found");
 
 	SampleFormat sampleFormat(
-		chunk_fmt.sample_rate,
-		chunk_fmt.bits_per_sample,
-		chunk_fmt.num_channels);
+		SWAP_32(chunk_fmt.sample_rate),
+		SWAP_16(chunk_fmt.bits_per_sample),
+		SWAP_16(chunk_fmt.num_channels));
 
 	return sampleFormat;
 }

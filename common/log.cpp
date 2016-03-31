@@ -20,6 +20,8 @@
 #include <iomanip>
 #include <ctime>
 #include <sstream>
+#include <cstdio>
+
 
 Log::Log(std::string ident, int facility)
 {

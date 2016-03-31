@@ -38,15 +38,15 @@ public:
 
 	virtual void read(std::istream& stream)
 	{
-		stream.read(reinterpret_cast<char*>(&bufferMs), sizeof(int32_t));
-		stream.read(reinterpret_cast<char*>(&latency), sizeof(int32_t));
-		stream.read(reinterpret_cast<char*>(&volume), sizeof(uint16_t));
-		stream.read(reinterpret_cast<char*>(&muted), sizeof(bool));
+		readVal(stream, bufferMs);
+		readVal(stream, latency);
+		readVal(stream, volume);
+		readVal(stream, muted);
 	}
 
 	virtual uint32_t getSize() const
 	{
-		return sizeof(int32_t) + sizeof(int32_t) + sizeof(uint16_t) + sizeof(bool);
+		return sizeof(int32_t) + sizeof(int32_t) + sizeof(uint16_t) + sizeof(unsigned char);
 	}
 
 	int32_t bufferMs;
@@ -57,10 +57,10 @@ public:
 protected:
 	virtual void doserialize(std::ostream& stream) const
 	{
-		stream.write(reinterpret_cast<const char*>(&bufferMs), sizeof(int32_t));
-		stream.write(reinterpret_cast<const char*>(&latency), sizeof(int32_t));
-		stream.write(reinterpret_cast<const char*>(&volume), sizeof(uint16_t));
-		stream.write(reinterpret_cast<const char*>(&muted), sizeof(bool));
+		writeVal(stream, bufferMs);
+		writeVal(stream, latency);
+		writeVal(stream, volume);
+		writeVal(stream, muted);
 	}
 };
 

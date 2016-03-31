@@ -12,7 +12,7 @@
 #include <sstream>
 #endif
 
-#ifdef NO_STOUL
+#if defined(NO_STOUL) || defined(NO_STOI)
 #include <cstdlib>
 #endif
 
@@ -37,6 +37,16 @@ namespace cpt
 		return atol(s.c_str());
 	#else
 		return std::stoul(s);
+	#endif
+	}
+
+
+	static int stoi(const std::string& str)
+	{
+	#ifdef NO_STOI
+		return strtol(str.c_str(), 0, 10);
+	#else
+		return std::stoi(str);
 	#endif
 	}
 }

@@ -57,16 +57,14 @@ public:
 
 	virtual void read(std::istream& stream)
 	{
-		stream.read(reinterpret_cast<char *>(&timestamp.sec), sizeof(int32_t));
-		stream.read(reinterpret_cast<char *>(&timestamp.usec), sizeof(int32_t));
-		stream.read(reinterpret_cast<char *>(&payloadSize), sizeof(uint32_t));
-		payload = (char*)realloc(payload, payloadSize);
-		stream.read(payload, payloadSize);
+		readVal(stream, timestamp.sec);
+		readVal(stream, timestamp.usec);
+		readVal(stream, &payload, payloadSize);
 	}
 
 	virtual uint32_t getSize() const
 	{
-		return sizeof(int32_t) + sizeof(int32_t) + sizeof(uint32_t) + payloadSize;
+		return sizeof(tv) + sizeof(int32_t) + payloadSize;
 	}
 
 	virtual chronos::time_point_hrc start() const
@@ -81,10 +79,9 @@ public:
 protected:
 	virtual void doserialize(std::ostream& stream) const
 	{
-		stream.write(reinterpret_cast<const char *>(&timestamp.sec), sizeof(int32_t));
-		stream.write(reinterpret_cast<const char *>(&timestamp.usec), sizeof(int32_t));
-		stream.write(reinterpret_cast<const char *>(&payloadSize), sizeof(uint32_t));
-		stream.write(payload, payloadSize);
+		writeVal(stream, timestamp.sec);
+		writeVal(stream, timestamp.usec);
+		writeVal(stream, payload, payloadSize);
 	}
 };
 

@@ -202,9 +202,9 @@ SampleFormat OggDecoder::setHeader(msg::Header* chunk)
 
 	/* Throw the comments plus a few lines about the bitstream we're decoding */
 	char **ptr=vc.user_comments;
-	while(*ptr)
+	while (*ptr)
 	{
-		fprintf(stderr,"%s\n",*ptr);
+		logO << "comment: " << *ptr << "\n";;
 		++ptr;
 	}
 

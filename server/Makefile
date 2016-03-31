@@ -9,9 +9,9 @@ else
   TARGET_DIR ?= /usr
 endif
 
-CXX     = /usr/bin/g++
-CFLAGS  = -std=c++0x -static-libgcc -static-libstdc++ -Wall -Wno-unused-function -O3 -pthread -DASIO_STANDALONE -DVERSION=\"$(VERSION)\" -I.. -I../externals/asio/asio/include -I../externals/popl/include
-LDFLAGS = -lrt -lvorbis -lvorbisenc -logg -lFLAC -lavahi-client -lavahi-common
+CXX      = /usr/bin/g++
+CXXFLAGS = -std=c++0x -static-libgcc -static-libstdc++ -Wall -Wno-unused-function -O3 -pthread -DASIO_STANDALONE -DVERSION=\"$(VERSION)\" -I.. -I../externals/asio/asio/include -I../externals/popl/include
+LDFLAGS  = -lrt -lvorbis -lvorbisenc -logg -lFLAC -lavahi-client -lavahi-common
 
 OBJ = snapServer.o config.o controlServer.o controlSession.o streamServer.o streamSession.o json/jsonrpc.o streamreader/streamUri.o streamreader/streamManager.o streamreader/pcmStream.o streamreader/pipeStream.o streamreader/fileStream.o encoder/encoderFactory.o encoder/flacEncoder.o encoder/pcmEncoder.o encoder/oggEncoder.o publishAvahi.o ../common/log.o ../message/pcmChunk.o ../message/sampleFormat.o
 BIN = snapserver
@@ -19,11 +19,11 @@ BIN = snapserver
 all:	$(TARGET)
 
 $(TARGET): $(OBJ)
-	$(CXX) $(CFLAGS) -o $(BIN) $(OBJ) $(LDFLAGS)
+	$(CXX) $(CXXFLAGS) -o $(BIN) $(OBJ) $(LDFLAGS)
 	strip $(BIN)
 
 %.o: %.cpp
-	$(CXX) $(CFLAGS) -c $< -o $@
+	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 clean:
 	rm -rf $(BIN) $(OBJ) *~
