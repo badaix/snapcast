@@ -24,13 +24,13 @@ ifeq ($(TARGET), ANDROID)
 #    make ANDROID=1
 CXX      = $(NDK_DIR)/bin/arm-linux-androideabi-g++
 STRIP	 = $(NDK_DIR)/bin/arm-linux-androideabi-strip
-CXXFLAGS += -DANDROID -fPIC -DHAS_OPENSL -I/home/johannes/Develop/build/arm/include
+CXXFLAGS += -DANDROID -DNO_CPP11_STRING -fPIC -DHAS_OPENSL -I/home/johannes/Develop/build/arm/include
 LDFLAGS  = -L/home/johannes/Develop/build/arm/lib -pie -lFLAC -lOpenSLES
 OBJ      += player/openslPlayer.o
 
 else ifeq ($(TARGET), OPENWRT)
 
-CXXFLAGS += -DIS_BIG_ENDIAN -DNO_TO_STRING -DNO_STOUL -DNO_STOI -DHAS_OGG -DHAS_ALSA -DHAS_AVAHI -DHAS_DAEMON
+CXXFLAGS += -DIS_BIG_ENDIAN -DNO_CPP11_STRING -DHAS_OGG -DHAS_ALSA -DHAS_AVAHI -DHAS_DAEMON
 LDFLAGS  = -lasound -logg -lvorbisidec -lFLAC -lavahi-client -lavahi-common -latomic
 OBJ      += player/alsaPlayer.o decoder/oggDecoder.o browseAvahi.o
 
