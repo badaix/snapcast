@@ -23,6 +23,7 @@
 
 #include "oggDecoder.h"
 #include "common/snapException.h"
+#include "common/endian.h"
 #include "common/log.h"
 
 
@@ -121,7 +122,7 @@ bool OggDecoder::decode(msg::PcmChunk* chunk)
 							val=32767;
 						else if(val<-32768)
 							val=-32768;
-						*ptr=val;
+						*ptr=SWAP_16(val);
 						ptr+=vi.channels;
 					}
 				}

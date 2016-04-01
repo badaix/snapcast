@@ -22,6 +22,7 @@
 #include <FLAC/stream_decoder.h>
 #include "flacDecoder.h"
 #include "common/snapException.h"
+#include "common/endian.h"
 #include "common/log.h"
 
 
@@ -163,10 +164,13 @@ FLAC__StreamDecoderWriteStatus write_callback(const FLAC__StreamDecoder *decoder
 
 		pcmChunk->payload = (char*)realloc(pcmChunk->payload, pcmChunk->payloadSize + bytes);
 
+		int16_t* pcm = (int16_t*)(pcmChunk->payload + pcmChunk->payloadSize);
 		for(size_t i = 0; i < frame->header.blocksize; i++)
 		{
-			memcpy(pcmChunk->payload + pcmChunk->payloadSize + 4*i, (char*)(buffer[0] + i), 2);
-			memcpy(pcmChunk->payload + pcmChunk->payloadSize + 4*i+2, (char*)(buffer[1] + i), 2);
+			pcm[2*i] = SWAP_16((int16_t)(buffer[0][i]));
+			pcm[2*i + 1] = SWAP_16((int16_t)(buffer[1][i]));
+//			memcpy(pcmChunk->payload + pcmChunk->payloadSize + 4*i, (char*)(buffer[0] + i), 2);
+//			memcpy(pcmChunk->payload + pcmChunk->payloadSize + 4*i+2, (char*)(buffer[1] + i), 2);
 		}
 		pcmChunk->payloadSize += bytes;
 	}

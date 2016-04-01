@@ -65,4 +65,5 @@ http://0pointer.de/public/systemd-man/systemd.exec.html#Environment=
 http://stackoverflow.com/questions/1024114/location-of-ini-config-files-in-linux-unix
 
 
-
+*OpenWrt:
+https://wiki.openwrt.org/doc/howto/buildroot.exigence
