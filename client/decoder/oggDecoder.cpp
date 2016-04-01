@@ -19,7 +19,7 @@
 #include <iostream>
 #include <cstring>
 #include <cmath>
-#include <vorbis/vorbisenc.h>
+//#include <tremor/ivorbisfile.h>
 
 #include "oggDecoder.h"
 #include "common/snapException.h"
@@ -42,8 +42,8 @@ OggDecoder::~OggDecoder()
 {
 	std::lock_guard<std::mutex> lock(mutex_);
 	free(convbuffer);
-    vorbis_block_clear(&vb);
-    vorbis_dsp_clear(&vd);
+	vorbis_block_clear(&vb);
+	vorbis_dsp_clear(&vd);
 	ogg_stream_clear(&os);
 	vorbis_comment_clear(&vc);
 	vorbis_info_clear(&vi);  /* must be called last */
@@ -92,7 +92,7 @@ bool OggDecoder::decode(msg::PcmChunk* chunk)
 				continue; /* missing or corrupt data at this page position */
 			/* no reason to complain; already complained above */
 			/* we have a packet.  Decode it */
-			float **pcm;
+			ogg_int32_t **pcm;
 			int samples;
 
 			if (vorbis_synthesis(&vb,&op) == 0) /* test for success! */
@@ -113,17 +113,17 @@ bool OggDecoder::decode(msg::PcmChunk* chunk)
 				for(int i=0; i<vi.channels; i++)
 				{
 					ogg_int16_t *ptr=convbuffer+i;
-					float *mono=pcm[i];
+					ogg_int32_t *mono=pcm[i];
 					for (int j=0; j<bout; j++)
 					{
-						int val=floor(mono[j]*32767.f+.5f);
+						ogg_int32_t val = mono[j] >> 9;//floor(mono[j]*32767.f+.5f);
 						/* might as well guard against clipping */
 						if(val>32767)
 							val=32767;
 						else if(val<-32768)
 							val=-32768;
-						*ptr=SWAP_16(val);
-						ptr+=vi.channels;
+						*ptr = SWAP_16(val);
+						ptr += vi.channels;
 					}
 				}
 

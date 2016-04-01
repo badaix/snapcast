@@ -31,7 +31,7 @@ OBJ      += player/openslPlayer.o
 else ifeq ($(TARGET), OPENWRT)
 
 CXXFLAGS += -DIS_BIG_ENDIAN -DNO_TO_STRING -DNO_STOUL -DNO_STOI -DHAS_OGG -DHAS_ALSA -DHAS_AVAHI -DHAS_DAEMON
-LDFLAGS  = -lasound -logg -lvorbis -lFLAC -lavahi-client -lavahi-common -latomic
+LDFLAGS  = -lasound -logg -lvorbisidec -lFLAC -lavahi-client -lavahi-common -latomic
 OBJ      += player/alsaPlayer.o decoder/oggDecoder.o browseAvahi.o
 
 else
@@ -39,7 +39,7 @@ else
 CXX      = /usr/bin/g++
 STRIP	 = strip
 CXXFLAGS += -static-libgcc -static-libstdc++ -DHAS_OGG -DHAS_ALSA -DHAS_AVAHI -DHAS_DAEMON
-LDFLAGS  = -lrt -lasound -logg -lvorbis -lFLAC -lavahi-client -lavahi-common
+LDFLAGS  = -lrt -lasound -logg -lvorbisidec -lFLAC -lavahi-client -lavahi-common
 OBJ      += player/alsaPlayer.o decoder/oggDecoder.o browseAvahi.o
 
 endif

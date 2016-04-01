@@ -19,7 +19,7 @@
 #ifndef OGG_DECODER_H
 #define OGG_DECODER_H
 #include "decoder.h"
-#include <vorbis/codec.h>
+#include <tremor/ivorbiscodec.h>
 
 
 class OggDecoder : public Decoder

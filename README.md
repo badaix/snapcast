@@ -34,7 +34,7 @@ First install all packages needed to compile Snapcast
 For Debian derivates (e.g. Raspbian, Debian, Ubuntu, Mint):
 
     $ sudo apt-get install git build-essential
-    $ sudo apt-get install libasound2-dev libvorbis-dev libflac-dev alsa-utils libavahi-client-dev avahi-daemon
+    $ sudo apt-get install libasound2-dev libvorbisidec-dev libvorbis-dev libflac-dev alsa-utils libavahi-client-dev avahi-daemon
 
 Compilation requires gcc 4.8 or higher, so it's highly recommended to use Debian (Respbian) Jessie.
 
