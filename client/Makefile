@@ -30,6 +30,7 @@ OBJ      += player/openslPlayer.o
 
 else ifeq ($(TARGET), OPENWRT)
 
+STRIP	 = echo
 CXXFLAGS += -DIS_BIG_ENDIAN -DNO_CPP11_STRING -DHAS_OGG -DHAS_ALSA -DHAS_AVAHI -DHAS_DAEMON
 LDFLAGS  = -lasound -logg -lvorbisidec -lFLAC -lavahi-client -lavahi-common -latomic
 OBJ      += player/alsaPlayer.o decoder/oggDecoder.o browseAvahi.o
@@ -52,7 +53,7 @@ all:	$(TARGET)
 
 $(TARGET): $(OBJ)
 	$(CXX) $(CXXFLAGS) -o $(BIN) $(OBJ) $(LDFLAGS)
-#	$(STRIP) $(BIN)
+	$(STRIP) $(BIN)
 
 %.o: %.cpp
 	$(CXX) $(CXXFLAGS) -c $< -o $@
