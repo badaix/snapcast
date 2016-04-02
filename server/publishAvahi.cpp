@@ -17,6 +17,8 @@
   USA.
 ***/
 
+#include <cstdio>
+#include <cstdlib>
 #include "publishAvahi.h"
 #include "common/log.h"
 

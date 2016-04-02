@@ -20,6 +20,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <cerrno>
 
 #include "pipeStream.h"
 #include "../encoder/encoderFactory.h"

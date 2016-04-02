@@ -20,6 +20,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fstream>
+#include <cerrno>
 #include "common/snapException.h"
 #include "common/compat.h"
 #include "common/log.h"

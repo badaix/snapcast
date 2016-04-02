@@ -19,8 +19,9 @@
 #include <iostream>
 
 #include "flacEncoder.h"
-#include "common/log.h"
+#include "common/compat.h"
 #include "common/snapException.h"
+#include "common/log.h"
 
 using namespace std;
 
@@ -138,7 +139,7 @@ void FlacEncoder::initEncoder()
 	int quality(2);
 	try
 	{
-		quality = std::stoi(codecOptions_);
+		quality = cpt::stoi(codecOptions_);
 	}
 	catch(...)
 	{

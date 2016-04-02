@@ -61,6 +61,8 @@ Class @ref nlohmann::basic_json is a good entry point for the documentation.
 #include <utility>
 #include <vector>
 
+#include "common/compat.h"
+
 // enable ssize_t on MinGW
 #ifdef __GNUC__
     #ifdef __MINGW32__
@@ -2739,7 +2741,7 @@ class basic_json
             catch (std::out_of_range&)
             {
                 // create better exception explanation
-                throw std::out_of_range("array index " + std::to_string(idx) + " is out of range");
+                throw std::out_of_range("array index " + cpt::to_string(idx) + " is out of range");
             }
         }
         else
@@ -2783,7 +2785,7 @@ class basic_json
             catch (std::out_of_range&)
             {
                 // create better exception explanation
-                throw std::out_of_range("array index " + std::to_string(idx) + " is out of range");
+                throw std::out_of_range("array index " + cpt::to_string(idx) + " is out of range");
             }
         }
         else
@@ -5789,7 +5791,7 @@ class basic_json
                     // use integer array index as key
                     case value_t::array:
                     {
-                        return std::to_string(array_index);
+                        return cpt::to_string(array_index);
                     }
 
                     // use key from the object
@@ -7781,7 +7783,7 @@ basic_json_parser_64:
 
         This function (and its overloads) serves to select the most approprate
         standard floating point number parsing function (i.e., `std::strtof`,
-        `std::strtod`, or `std::strtold`) based on the type supplied via the
+        `std::strtod`, or `cpt::strtold`) based on the type supplied via the
         first parameter. Set this to @a static_cast<number_float_t>(nullptr).
 
         @param[in] type  the @ref number_float_t in use
@@ -7791,14 +7793,14 @@ basic_json_parser_64:
 
         @return the floating point number
 
-        @bug This function uses `std::strtof`, `std::strtod`, or `std::strtold`
+        @bug This function uses `std::strtof`, `std::strtod`, or `cpt::strtold`
         which use the current C locale to determine which character is used as
         decimal point character. This may yield to parse errors if the locale
         does not used `.`.
         */
         long double str_to_float_t(long double* /* type */, char** endptr) const
         {
-            return std::strtold(reinterpret_cast<typename string_t::const_pointer>(m_start), endptr);
+            return cpt::strtold(reinterpret_cast<typename string_t::const_pointer>(m_start), endptr);
         }
 
         /// @copydoc str_to_float_t
@@ -7810,7 +7812,7 @@ basic_json_parser_64:
         /// @copydoc str_to_float_t
         float str_to_float_t(float*, char** endptr) const
         {
-            return std::strtof(reinterpret_cast<typename string_t::const_pointer>(m_start), endptr);
+            return cpt::strtof(reinterpret_cast<typename string_t::const_pointer>(m_start), endptr);
         }
 
         /*!

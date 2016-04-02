@@ -21,6 +21,7 @@
 
 #include "oggEncoder.h"
 #include "common/snapException.h"
+#include "common/compat.h"
 #include "common/utils.h"
 #include "common/log.h"
 
@@ -136,7 +137,7 @@ void OggEncoder::initEncoder()
 	double quality = 1.0;
 	try
 	{
-		quality = std::stod(qual);
+		quality = cpt::stod(qual);
 	}
 	catch(...)
 	{
@@ -201,7 +202,7 @@ void OggEncoder::initEncoder()
 	/* pick a random serial number; that way we can more likely build
 	 chained streams just by concatenation */
 	srand(time(NULL));
-	ogg_stream_init(&os,rand());
+	ogg_stream_init(&os, rand());
 
 	/* Vorbis streams begin with three headers; the initial header (with
 	 most of the codec setup parameters) which is mandated by the Ogg

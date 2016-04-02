@@ -16,10 +16,11 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
-#include "common/utils.h"
 #include "streamManager.h"
 #include "pipeStream.h"
 #include "fileStream.h"
+#include "common/utils.h"
+#include "common/compat.h"
 #include "common/log.h"
 #include "common/snapException.h"
 
@@ -43,7 +44,7 @@ PcmStream* StreamManager::addStream(const std::string& uri)
 		streamUri.query["codec"] = codec_;
 
 	if (streamUri.query.find("buffer_ms") == streamUri.query.end())
-		streamUri.query["buffer_ms"] = to_string(readBufferMs_);
+		streamUri.query["buffer_ms"] = cpt::to_string(readBufferMs_);
 
 //	logD << "\nURI: " << streamUri.uri << "\nscheme: " << streamUri.scheme << "\nhost: "
 //		<< streamUri.host << "\npath: " << streamUri.path << "\nfragment: " << streamUri.fragment << "\n";

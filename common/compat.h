@@ -41,6 +41,33 @@ namespace cpt
 		return std::stoi(str);
 	#endif
 	}
+
+	static double stod(const std::string& str)
+	{
+	#ifdef NO_CPP11_STRING
+		return strtod(str.c_str(), NULL);
+	#else
+		return std::stod(str.c_str());
+	#endif
+	}
+
+	static long double strtold(const char* str, char** endptr)
+	{
+	#ifdef NO_CPP11_STRING
+		return strtod(str, endptr);
+	#else
+		return std::strtold(str, endptr);
+	#endif
+	}
+
+	static float strtof(const char* str, char** endptr)
+	{
+	#ifdef NO_CPP11_STRING
+		return (float)strtod(str, endptr);
+	#else
+		return std::strtof(str, endptr);
+	#endif
+	}
 }
 
 
