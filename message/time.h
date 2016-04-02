@@ -37,21 +37,22 @@ public:
 
 	virtual void read(std::istream& stream)
 	{
-		readVal(stream, latency);
-//		stream.read(reinterpret_cast<char *>(&latency), sizeof(double));
+		readVal(stream, latency.sec);
+		readVal(stream, latency.usec);
 	}
 
 	virtual uint32_t getSize() const
 	{
-		return sizeof(double);
+		return sizeof(tv);
 	}
 
-	double latency;
+	tv latency;
 
 protected:
 	virtual void doserialize(std::ostream& stream) const
 	{
-		writeVal(stream, latency);//reinterpret_cast<const char *>(&latency), sizeof(double));
+		writeVal(stream, latency.sec);
+		writeVal(stream, latency.usec);
 	}
 };
 

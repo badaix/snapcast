@@ -81,7 +81,7 @@ struct tv
 	int32_t sec;
 	int32_t usec;
 
-	tv operator+(const tv& other)
+	tv operator+(const tv& other) const
 	{
 		tv result(*this);
 		result.sec += other.sec;
@@ -94,7 +94,7 @@ struct tv
 		return result;
 	}
 
-	tv operator-(const tv& other)
+	tv operator-(const tv& other) const
 	{
 		tv result(*this);
 		result.sec -= other.sec;

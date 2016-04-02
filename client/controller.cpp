@@ -72,10 +72,7 @@ void Controller::onMessageReceived(ClientConnection* connection, const msg::Base
 	{
 		msg::Time reply;
 		reply.deserialize(baseMessage, buffer);
-		double latency = (reply.received.sec - reply.sent.sec) + (reply.received.usec - reply.sent.usec) / 1000000.;
-//		logO << "timeMsg: " << latency << "\n";
-		TimeProvider::getInstance().setDiffToServer((reply.latency - latency) * 1000 / 2);
-//		logO << "diff to server [ms]: " << (float)TimeProvider::getInstance().getDiffToServer<chronos::usec>().count() / 1000.f << "\n";
+		TimeProvider::getInstance().setDiff(reply.latency, reply.received - reply.sent);// ToServer(diff / 2);
 	}
 	else if (baseMessage.type == message_type::kServerSettings)
 	{
@@ -185,8 +182,7 @@ void Controller::worker()
 				shared_ptr<msg::Time> reply = clientConnection_->sendReq<msg::Time>(&timeReq, chronos::msec(2000));
 				if (reply)
 				{
-					double latency = (reply->received.sec - reply->sent.sec) + (reply->received.usec - reply->sent.usec) / 1000000.;
-					TimeProvider::getInstance().setDiffToServer((reply->latency - latency) * 1000 / 2);
+					TimeProvider::getInstance().setDiff(reply->latency, reply->received - reply->sent);
 					usleep(100);
 				}
 			}

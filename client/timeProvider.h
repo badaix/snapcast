@@ -42,6 +42,7 @@ public:
 	}
 
 	void setDiffToServer(double ms);
+	void setDiff(const tv& c2s, const tv& s2c);
 
 	template<typename T>
 	inline T getDiffToServer() const

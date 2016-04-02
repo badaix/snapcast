@@ -26,6 +26,14 @@ TimeProvider::TimeProvider() : diffToServer_(0)
 }
 
 
+void TimeProvider::setDiff(const tv& c2s, const tv& s2c)
+{
+		tv latency = c2s - s2c;
+		double diff = latency.sec * 1000. + latency.usec / 1000.;
+		setDiffToServer(diff / 2.);
+}
+
+
 void TimeProvider::setDiffToServer(double ms)
 {
 	static int32_t lastTimeSync = 0;

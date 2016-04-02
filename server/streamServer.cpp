@@ -250,8 +250,8 @@ void StreamServer::onMessageReceived(StreamSession* connection, const msg::BaseM
 		{
 			msg::Time timeMsg;
 			timeMsg.refersTo = requestMsg.id;
-			timeMsg.latency = (requestMsg.received.sec - requestMsg.sent.sec) + (requestMsg.received.usec - requestMsg.sent.usec) / 1000000.;
-			logD << "Latency: " << timeMsg.latency << ", refers to: " << timeMsg.refersTo << "\n";
+			timeMsg.latency = requestMsg.received - requestMsg.sent;
+//			logO << "Latency sec: " << timeMsg.latency.sec << ", usec: " << timeMsg.latency.usec << ", refers to: " << timeMsg.refersTo << "\n";
 			connection->send(&timeMsg);
 
 			// refresh connection state
