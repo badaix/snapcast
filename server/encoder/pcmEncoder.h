@@ -30,6 +30,13 @@ public:
 
 protected:
     virtual void initEncoder();
+
+	template<typename T>
+	void assign(void* pointer, T val)
+	{
+		T* p = (T*)pointer;
+		*p = val;
+	}
 };
 
 

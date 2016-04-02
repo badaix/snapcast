@@ -17,8 +17,8 @@ include $(INCLUDE_DIR)/package.mk
 
 define Package/snapcast/Default
 	SECTION := sxx
-	CATEGORY :=  Sxx
-	TITLE :=  snapcast
+	CATEGORY := Sxx
+	TITLE := snapcast
 	DEPENDS := +libstdcpp +libavahi-client +libatomic +libogg +libflac
 endef
 
@@ -28,7 +28,7 @@ endef
 
 define Package/snapcast
 	$(call Package/snapcast/Default)
-	TITLE +=  packages
+	TITLE += packages
 endef
 
 define Package/snapcast/description
@@ -39,7 +39,8 @@ endef
 
 define Package/snapserver
 	$(call Package/snapcast/Default)
-	TITLE +=  snapserver
+	TITLE += snapserver
+	DEPENDS += +libvorbis #+libvorbisenc
 	HIDDEN := 1
 endef
 
@@ -61,19 +62,19 @@ define Package/snapclient/description
 endef
 
 define Package/snapcast/config
-	menu "Select snapcast Options"
+ 	menu "Select snapcast Options"
 		depends on PACKAGE_snapcast
 		comment "Choose server or client to compile"
 		config PACKAGE_snapserver
 			prompt "Compile snapserver"
 			help
-				Compile multiroom server.
+				Compile multiroom server
 			default n
 
 		config PACKAGE_snapclient
-			prompt "Compile snapclient."
+			prompt "Compile snapclient"
 			help
-				Compile multiroom client.
+				Compile multiroom client
 			default n
 	endmenu
 endef
@@ -90,8 +91,8 @@ define Build/Prepare
 endef
 
 define Build/Compile
-#	$(if $(CONFIG_PACKAGE_snapserver), \
-#		$(call Build/Compile/Default, -C server),)
+	$(if $(CONFIG_PACKAGE_snapserver), \
+		$(call Build/Compile/Default, -C server TARGET=OPENWRT),)
 
 	$(if $(CONFIG_PACKAGE_snapclient), \
 		$(call Build/Compile/Default, -C client TARGET=OPENWRT),)
@@ -111,6 +112,6 @@ define Package/snapclient/install
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/client/snapclient $(1)/usr/bin/
 endef
 
-#$(eval $(call BuildPackage,snapserver))
+$(eval $(call BuildPackage,snapserver))
 $(eval $(call BuildPackage,snapclient))
 $(eval $(call BuildPackage,snapcast))

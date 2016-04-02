@@ -10,18 +10,19 @@ else
 endif
 
 CXXFLAGS += -std=c++0x -Wall -Wno-unused-function -O3 -pthread -DASIO_STANDALONE -DVERSION=\"$(VERSION)\" -I.. -I../externals/asio/asio/include -I../externals/popl/include
-LDFLAGS  = -lrt -lvorbis -lvorbisenc -logg -lFLAC -lavahi-client -lavahi-common
 
 ifeq ($(TARGET), OPENWRT)
 
 STRIP	 = echo
 CXXFLAGS += -DIS_BIG_ENDIAN -DNO_CPP11_STRING
+LDFLAGS  = -lvorbis -lvorbisenc -logg -lFLAC -lavahi-client -lavahi-common -latomic
 
 else
 
 CXX      = /usr/bin/g++
 STRIP	 = strip
 CXXFLAGS += -static-libgcc -static-libstdc++
+LDFLAGS  = -lrt -lvorbis -lvorbisenc -logg -lFLAC -lavahi-client -lavahi-common
 
 endif
 
