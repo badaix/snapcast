@@ -162,11 +162,12 @@ static std::string getOS()
 #endif
 	if (os.empty())
 	{
-		os = trim_copy(execGetOutput("cat /etc/os-release |grep PRETTY_NAME"));
+		os = trim_copy(execGetOutput("cat /etc/os-release /etc/openwrt_release |grep -e PRETTY_NAME -e DISTRIB_DESCRIPTION"));
 		if (os.find("=") != std::string::npos)
 		{
 			os = trim_copy(os.substr(os.find("=") + 1));
 			os.erase(std::remove(os.begin(), os.end(), '"'), os.end());
+			os.erase(std::remove(os.begin(), os.end(), '\''), os.end());
 		}
 	}
 	if (os.empty())
