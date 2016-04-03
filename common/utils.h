@@ -29,6 +29,7 @@
 #include <fstream>
 #include <sstream>
 #include <memory>
+#include <cerrno>
 #include <iterator>
 #include <sys/ioctl.h>
 #include <net/if.h>
