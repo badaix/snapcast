@@ -23,7 +23,7 @@
 #include <thread>
 #include <atomic>
 #include <vector>
-#include "../stream.h"
+#include "stream.h"
 #include "pcmDevice.h"
 #include "common/endian.h"
 #include "common/log.h"

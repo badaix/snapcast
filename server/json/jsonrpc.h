@@ -21,7 +21,7 @@
 
 #include <string>
 #include <vector>
-#include "json.hpp"
+#include "externals/json.hpp"
 #include "jsonrpcException.h"
 
 

@@ -21,7 +21,7 @@
 
 #include <string>
 #include <map>
-#include "../json/json.hpp"
+#include "externals/json.hpp"
 
 using json = nlohmann::json;
 

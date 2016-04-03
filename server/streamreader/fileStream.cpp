@@ -22,7 +22,7 @@
 #include <unistd.h>
 
 #include "fileStream.h"
-#include "../encoder/encoderFactory.h"
+#include "encoder/encoderFactory.h"
 #include "common/log.h"
 #include "common/snapException.h"
 

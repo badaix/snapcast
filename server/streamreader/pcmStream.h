@@ -24,8 +24,8 @@
 #include <string>
 #include <map>
 #include "streamUri.h"
-#include "../encoder/encoder.h"
-#include "../json/json.hpp"
+#include "encoder/encoder.h"
+#include "externals/json.hpp"
 #include "message/sampleFormat.h"
 #include "message/header.h"
 

@@ -20,7 +20,7 @@
 #define JSON_RPC_EXCEPTION_H
 
 #include <string>
-#include "json.hpp"
+#include "externals/json.hpp"
 #include "common/snapException.h"
 
 

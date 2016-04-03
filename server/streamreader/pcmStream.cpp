@@ -21,7 +21,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 
-#include "../encoder/encoderFactory.h"
+#include "encoder/encoderFactory.h"
 #include "common/snapException.h"
 #include "common/compat.h"
 #include "pcmStream.h"

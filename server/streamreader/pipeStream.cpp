@@ -23,7 +23,7 @@
 #include <cerrno>
 
 #include "pipeStream.h"
-#include "../encoder/encoderFactory.h"
+#include "encoder/encoderFactory.h"
 #include "common/log.h"
 #include "common/snapException.h"
 #include "common/compat.h"
