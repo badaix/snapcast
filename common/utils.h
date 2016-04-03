@@ -126,6 +126,24 @@ static std::vector<std::string> split(const std::string &s, char delim)
 }
 
 
+static int mkdirRecursive(const char *path, mode_t mode)
+{
+	std::vector<std::string> pathes = split(path, '/');
+	std::stringstream ss;
+	int res = 0;
+	for (const auto& p: pathes)
+	{
+		if (p.empty())
+			continue;
+		ss << "/" << p;
+		int res = mkdir(ss.str().c_str(), mode);
+		if ((res != 0) && (errno != EEXIST))
+			return res;
+	}
+	return res;
+}
+
+
 static std::string execGetOutput(const std::string& cmd)
 {
 	std::shared_ptr<FILE> pipe(popen(cmd.c_str(), "r"), pclose);
