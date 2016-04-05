@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 include $(INCLUDE_DIR)/target.mk
 
 PKG_NAME := snapcast
-PKG_VERSION := 0_5_0
+PKG_VERSION := 0.5.0
 PKG_RELEASE := $(PKG_SOURCE_VERSION)
 PKG_USE_MIPS16 := 0
 
@@ -23,7 +23,7 @@ define Package/snapcast/Default
 endef
 
 define Package/snapcast/description/Default
-	A collection of multiroom functions
+	Synchronous audio player
 endef
 
 define Package/snapcast
@@ -33,7 +33,7 @@ endef
 
 define Package/snapcast/description
 	$(call Package/snapcast/description/Default)
-	This Package provide for multiroom function
+	Multi-room client-server audio player
 	Include Server and Client
 endef
 
@@ -53,12 +53,12 @@ endef
 
 define Package/snapserver/description
 	$(call Package/snapcast/description/Default)
-	Multiroom server program.
+	Snapcast server
 endef
 
 define Package/snapclient/description
 	$(call Package/snapcast/description/Default)
-	Multiroom client program.
+	Snapcast client
 endef
 
 define Package/snapcast/config
@@ -68,13 +68,13 @@ define Package/snapcast/config
 		config PACKAGE_snapserver
 			prompt "Compile snapserver"
 			help
-				Compile multiroom server
+				Compile Snapcast server
 			default n
 
 		config PACKAGE_snapclient
 			prompt "Compile snapclient"
 			help
-				Compile multiroom client
+				Compile Snapcast client
 			default n
 	endmenu
 endef

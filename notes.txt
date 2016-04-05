@@ -67,3 +67,10 @@ http://stackoverflow.com/questions/1024114/location-of-ini-config-files-in-linux
 
 *OpenWrt:
 https://wiki.openwrt.org/doc/howto/buildroot.exigence
+
+johannes@T400 ~/Develop/openwrt.15.05/package/sxx/snapcast $ ln -s ~/Develop/snapcast/Makefile.openwrt Makefile
+johannes@T400 ~/Develop/openwrt.15.05/package/sxx/snapcast $ ln -s ~/Develop/snapcast/ src
+johannes@T400 ~/Develop/openwrt.15.05/package/sxx/snapcast $ ls -l
+lrwxrwxrwx 1 johannes johannes   48 Apr  3 14:50 Makefile -> /home/johannes/Develop/snapcast/Makefile.openwrt
+lrwxrwxrwx 1 johannes johannes   32 Mär 29 21:22 src -> /home/johannes/Develop/snapcast/
+
