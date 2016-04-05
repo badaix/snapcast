@@ -51,17 +51,12 @@ struct membuf : public std::basic_streambuf<char>
 enum message_type
 {
 	kBase = 0,
-	kHeader = 1,
+	kCodecHeader = 1,
 	kWireChunk = 2,
-//	kSampleFormat = 3,
-	kServerSettings = 4,
-	kTime = 5,
-	kRequest = 6,
-//	kAck = 7,
-//	kCommand = 8,
-	kHello = 9,
-	kMap = 10
-//	kString = 11
+	kServerSettings = 3,
+	kTime = 4,
+	kRequest = 5,
+	kHello = 6
 };
 
 
@@ -135,9 +130,6 @@ struct BaseMessage
 		readVal(stream, received.sec);
 		readVal(stream, received.usec);
 		readVal(stream, size);
-//std::cout << type << ", " << id << ", " << refersTo << ", " << sent.sec << ":" << sent.usec << ", " << received.sec << ":" << received.usec << ", " << size << "\n";
-//std::cout << __builtin_bswap32(type) << ", " << __builtin_bswap16(id) << ", " << __builtin_bswap16(refersTo) << ", " << __builtin_bswap32(sent.sec) << ":" << __builtin_bswap32(sent.usec) << ", " << __builtin_bswap32(received.sec) << ":" << __builtin_bswap32(received.usec) << ", " << __builtin_bswap32(size) << "\n";
-//std::cout << SWAP_32(type) << ", " << SWAP_16(id) << ", " << SWAP_16(refersTo) << ", " << SWAP_32(sent.sec) << ":" << SWAP_32(sent.usec) << ", " << SWAP_32(received.sec) << ":" << SWAP_32(received.usec) << ", " << SWAP_32(size) << "\n";
 	}
 
 	void deserialize(char* payload)
@@ -171,17 +163,15 @@ struct BaseMessage
 		writeVal(stream, received.usec);
 		size = getSize();
 		writeVal(stream, size);
-//std::cout << type << ", " << id << ", " << refersTo << ", " << sent.sec << ":" << sent.usec << ", " << received.sec << ":" << received.usec << ", " << size << "\n";
-//std::cout << SWAP_32(type) << ", " << SWAP_16(id) << ", " << SWAP_16(refersTo) << ", " << SWAP_32(sent.sec) << ":" << SWAP_32(sent.usec) << ", " << SWAP_32(received.sec) << ":" << SWAP_32(received.usec) << ", " << SWAP_32(size) << "\n";
 		doserialize(stream);
 	}
 
 	virtual uint32_t getSize() const
 	{
-		return 2*sizeof(uint16_t) + 2*sizeof(tv) + 2*sizeof(uint32_t);
+		return 3*sizeof(uint16_t) + 2*sizeof(tv) + sizeof(uint32_t);
 	};
 
-	uint32_t type;
+	uint16_t type;
 	mutable uint16_t id;
 	uint16_t refersTo;
 	tv received;
@@ -222,12 +212,6 @@ protected:
 	{
 		uint32_t v = SWAP_32(val);
 		stream.write(reinterpret_cast<const char*>(&v), sizeof(int32_t));
-	}
-
-	void writeVal(std::ostream& stream, const double& val) const
-	{
-		uint64_t v = SWAP_64(*(int64_t*)&val);
-		stream.write(reinterpret_cast<const char*>(&v), sizeof(int64_t));
 	}
 
 	void writeVal(std::ostream& stream, const char* payload, const uint32_t& size) const
@@ -278,12 +262,6 @@ protected:
 	{
 		stream.read(reinterpret_cast<char*>(&val), sizeof(int32_t));
 		val = SWAP_32(val);
-	}
-
-	void readVal(std::istream& stream, double& val) const
-	{
-		stream.read(reinterpret_cast<char*>(&val), sizeof(int64_t));
-		val = SWAP_64(val);
 	}
 
 	void readVal(std::istream& stream, char** payload, uint32_t& size) const

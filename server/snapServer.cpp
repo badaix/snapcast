@@ -25,7 +25,7 @@
 #include "common/timeDefs.h"
 #include "common/signalHandler.h"
 #include "common/snapException.h"
-#include "message/sampleFormat.h"
+#include "common/sampleFormat.h"
 #include "message/message.h"
 #include "encoder/encoderFactory.h"
 #include "streamServer.h"

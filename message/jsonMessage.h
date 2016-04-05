@@ -16,50 +16,62 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
-#ifndef HEADER_MESSAGE_H
-#define HEADER_MESSAGE_H
+#ifndef JSON_MESSAGE_H
+#define JSON_MESSAGE_H
 
 #include "message.h"
+#include "externals/json.hpp"
+
+
+using json = nlohmann::json;
+
 
 namespace msg
 {
 
-/**
- * Codec dependend header of encoded data stream
- */
-class Header : public BaseMessage
+class JsonMessage : public BaseMessage
 {
 public:
-	Header(const std::string& codecName = "", size_t size = 0) : BaseMessage(message_type::kHeader), payloadSize(size), codec(codecName)
+	JsonMessage(message_type msgType) : BaseMessage(msgType)
 	{
-		payload = (char*)malloc(size);
 	}
 
-	virtual ~Header()
+	virtual ~JsonMessage()
 	{
-		free(payload);
 	}
 
 	virtual void read(std::istream& stream)
 	{
-		readVal(stream, codec);
-		readVal(stream, &payload, payloadSize);
+		std::string s;
+		readVal(stream, s);
+		msg = json::parse(s);
 	}
 
 	virtual uint32_t getSize() const
 	{
-		return sizeof(uint32_t) + codec.size() + sizeof(uint32_t) + payloadSize;
+		return sizeof(uint32_t) + msg.dump().size();
 	}
 
-	uint32_t payloadSize;
-	char* payload;
-	std::string codec;
+	json msg;
+
 
 protected:
 	virtual void doserialize(std::ostream& stream) const
 	{
-		writeVal(stream, codec);
-		writeVal(stream, payload, payloadSize);
+		writeVal(stream, msg.dump());
+	}
+
+	template<typename T>
+	T get(const std::string& what, const T& def)
+	{
+		try
+		{
+			return msg[what].get<T>();
+		}
+		catch(...)
+		{
+			return def;
+		}
 	}
 };
 

@@ -145,7 +145,7 @@ bool OggDecoder::decode(msg::PcmChunk* chunk)
 }
 
 
-SampleFormat OggDecoder::setHeader(msg::Header* chunk)
+SampleFormat OggDecoder::setHeader(msg::CodecHeader* chunk)
 {
 	bytes = chunk->payloadSize;
 	buffer=ogg_sync_buffer(&oy, bytes);

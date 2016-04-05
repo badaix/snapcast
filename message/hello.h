@@ -19,7 +19,7 @@
 #ifndef HELLO_MSG_H
 #define HELLO_MSG_H
 
-#include "mapMessage.h"
+#include "jsonMessage.h"
 #include "common/utils.h"
 #include <string>
 
@@ -27,22 +27,22 @@
 namespace msg
 {
 
-class Hello : public MapMessage
+class Hello : public JsonMessage
 {
 public:
-	Hello() : MapMessage(message_type::kHello)
+	Hello() : JsonMessage(message_type::kHello)
 	{
 	}
 
-	Hello(const std::string& macAddress) : MapMessage(message_type::kHello)
+	Hello(const std::string& macAddress) : JsonMessage(message_type::kHello)
 	{
-		add("MAC", macAddress);
-		add("HostName", ::getHostName());
-		add("Version", VERSION);
-		add("ClientName", "Snapclient");
-		add("OS", ::getOS());
-		add("Arch", ::getArch());
-		add("SnapStreamProtocolVersion", "1");
+		msg["MAC"] = macAddress;
+		msg["HostName"] = ::getHostName();
+		msg["Version"] = VERSION;
+		msg["ClientName"] = "Snapclient";
+		msg["OS"] = ::getOS();
+		msg["Arch"] = ::getArch();
+		msg["SnapStreamProtocolVersion"] = 1;
 	}
 
 	virtual ~Hello()
@@ -51,32 +51,32 @@ public:
 
 	std::string getMacAddress()
 	{
-		return get("MAC");
+		return msg["MAC"];
 	}
 
 	std::string getHostName()
 	{
-		return get("HostName");
+		return msg["HostName"];
 	}
 
 	std::string getVersion()
 	{
-		return get("Version");
+		return msg["Version"];
 	}
 
 	std::string getClientName()
 	{
-		return get("ClientName");
+		return msg["ClientName"];
 	}
 
 	std::string getOS()
 	{
-		return get("OS");
+		return msg["OS"];
 	}
 
 	std::string getArch()
 	{
-		return get("Arch");
+		return msg["Arch"];
 	}
 
 	int getProtocolVersion()

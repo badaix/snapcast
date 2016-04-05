@@ -23,8 +23,8 @@
 #include <memory>
 
 #include "message/pcmChunk.h"
-#include "message/header.h"
-#include "message/sampleFormat.h"
+#include "message/codecHeader.h"
+#include "common/sampleFormat.h"
 
 
 class Encoder;
@@ -84,7 +84,7 @@ public:
 	}
 
 	/// Header information needed to decode the data
-	virtual std::shared_ptr<msg::Header> getHeader() const
+	virtual std::shared_ptr<msg::CodecHeader> getHeader() const
 	{
 		return headerChunk_;
 	}
@@ -93,7 +93,7 @@ protected:
 	virtual void initEncoder() = 0;
 
 	SampleFormat sampleFormat_;
-	std::shared_ptr<msg::Header> headerChunk_;
+	std::shared_ptr<msg::CodecHeader> headerChunk_;
 	EncoderListener* listener_;
 	std::string codecOptions_;
 };

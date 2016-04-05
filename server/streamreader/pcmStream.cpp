@@ -59,7 +59,7 @@ PcmStream::~PcmStream()
 }
 
 
-std::shared_ptr<msg::Header> PcmStream::getHeader()
+std::shared_ptr<msg::CodecHeader> PcmStream::getHeader()
 {
 	return encoder_->getHeader();
 }

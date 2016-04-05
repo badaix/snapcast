@@ -78,17 +78,17 @@ void Controller::onMessageReceived(ClientConnection* connection, const msg::Base
 	{
 		serverSettings_.reset(new msg::ServerSettings());
 		serverSettings_->deserialize(baseMessage, buffer);
-		logO << "ServerSettings - buffer: " << serverSettings_->bufferMs << ", latency: " << serverSettings_->latency << ", volume: " << serverSettings_->volume << ", muted: " << serverSettings_->muted << "\n";
+		logO << "ServerSettings - buffer: " << serverSettings_->getBufferMs() << ", latency: " << serverSettings_->getLatency() << ", volume: " << serverSettings_->getVolume() << ", muted: " << serverSettings_->isMuted() << "\n";
 		if (stream_ && player_)
 		{
-			player_->setVolume(serverSettings_->volume / 100.);
-			player_->setMute(serverSettings_->muted);
-			stream_->setBufferLen(serverSettings_->bufferMs - serverSettings_->latency);
+			player_->setVolume(serverSettings_->getVolume() / 100.);
+			player_->setMute(serverSettings_->isMuted());
+			stream_->setBufferLen(serverSettings_->getBufferMs() - serverSettings_->getLatency());
 		}
 	}
-	else if (baseMessage.type == message_type::kHeader)
+	else if (baseMessage.type == message_type::kCodecHeader)
 	{
-		headerChunk_.reset(new msg::Header());
+		headerChunk_.reset(new msg::CodecHeader());
 		headerChunk_->deserialize(baseMessage, buffer);
 
 		logO << "Codec: " << headerChunk_->codec << "\n";
@@ -111,7 +111,7 @@ void Controller::onMessageReceived(ClientConnection* connection, const msg::Base
 		logState << "sampleformat: " << sampleFormat_.rate << ":" << sampleFormat_.bits << ":" << sampleFormat_.channels << "\n";
 
 		stream_.reset(new Stream(sampleFormat_));
-		stream_->setBufferLen(serverSettings_->bufferMs - latency_);
+		stream_->setBufferLen(serverSettings_->getBufferMs() - latency_);
 
 #ifdef HAS_ALSA
 		player_.reset(new AlsaPlayer(pcmDevice_, stream_.get()));
@@ -120,8 +120,8 @@ void Controller::onMessageReceived(ClientConnection* connection, const msg::Base
 #else
 		throw SnapException("No ALSA or OPENSL support");
 #endif
-		player_->setVolume(serverSettings_->volume / 100.);
-		player_->setMute(serverSettings_->muted);
+		player_->setVolume(serverSettings_->getVolume() / 100.);
+		player_->setMute(serverSettings_->isMuted());
 		player_->start();
 	}
 

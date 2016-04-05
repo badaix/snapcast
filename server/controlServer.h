@@ -29,9 +29,9 @@
 
 #include "controlSession.h"
 #include "common/queue.h"
+#include "common/sampleFormat.h"
 #include "message/message.h"
-#include "message/header.h"
-#include "message/sampleFormat.h"
+#include "message/codecHeader.h"
 #include "message/serverSettings.h"
 
 

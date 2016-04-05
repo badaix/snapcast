@@ -16,70 +16,50 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
-#ifndef SERVER_SETTINGS_H
-#define SERVER_SETTINGS_H
+#ifndef CODEC_HEADER_MESSAGE_H
+#define CODEC_HEADER_MESSAGE_H
 
-#include "jsonMessage.h"
-
+#include "message.h"
 
 namespace msg
 {
 
-class ServerSettings : public JsonMessage
+/**
+ * Codec dependend header of encoded data stream
+ */
+class CodecHeader : public BaseMessage
 {
 public:
-	ServerSettings() : JsonMessage(message_type::kServerSettings)
+	CodecHeader(const std::string& codecName = "", size_t size = 0) : BaseMessage(message_type::kCodecHeader), payloadSize(size), codec(codecName)
 	{
-		setBufferMs(0);
-		setLatency(0);
-		setVolume(100);
-		setMuted(false);
+		payload = (char*)malloc(size);
 	}
 
-	virtual ~ServerSettings()
+	virtual ~CodecHeader()
 	{
+		free(payload);
 	}
 
-	int32_t getBufferMs()
+	virtual void read(std::istream& stream)
 	{
-		return get("bufferMs", 0);
+		readVal(stream, codec);
+		readVal(stream, &payload, payloadSize);
 	}
 
-	int32_t getLatency()
+	virtual uint32_t getSize() const
 	{
-		return get("latency", 0);
+		return sizeof(uint32_t) + codec.size() + sizeof(uint32_t) + payloadSize;
 	}
 
-	uint16_t getVolume()
+	uint32_t payloadSize;
+	char* payload;
+	std::string codec;
+
+protected:
+	virtual void doserialize(std::ostream& stream) const
 	{
-		return get("volume", 100);
-	}
-
-	bool isMuted()
-	{
-		return get("muted", false);
-	}
-
-
-
-	void setBufferMs(int32_t bufferMs)
-	{
-		msg["bufferMs"] = bufferMs;
-	}
-
-	void setLatency(int32_t latency)
-	{
-		msg["latency"] = latency;
-	}
-
-	void setVolume(uint16_t volume)
-	{
-		msg["volume"] = volume;
-	}
-
-	void setMuted(bool muted)
-	{
-		msg["muted"] = muted;
+		writeVal(stream, codec);
+		writeVal(stream, payload, payloadSize);
 	}
 };
 

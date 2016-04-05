@@ -123,7 +123,7 @@ void StreamServer::onMessageReceived(ControlSession* controlSession, const std::
 		json response;
 		ClientInfoPtr clientInfo = nullptr;
 		msg::ServerSettings serverSettings;
-		serverSettings.bufferMs = settings_.bufferMs;
+		serverSettings.setBufferMs(settings_.bufferMs);
 
 		if (request.method.find("Client.Set") == 0)
 		{
@@ -211,9 +211,9 @@ void StreamServer::onMessageReceived(ControlSession* controlSession, const std::
 
 		if (clientInfo != nullptr)
 		{
-			serverSettings.volume = clientInfo->config.volume.percent;
-			serverSettings.muted = clientInfo->config.volume.muted;
-			serverSettings.latency = clientInfo->config.latency;
+			serverSettings.setVolume(clientInfo->config.volume.percent);
+			serverSettings.setMuted(clientInfo->config.volume.muted);
+			serverSettings.setLatency(clientInfo->config.latency);
 
 			StreamSession* session = getStreamSession(request.getParam("client").get<string>());
 			if (session != NULL)
@@ -283,11 +283,11 @@ void StreamServer::onMessageReceived(StreamSession* connection, const msg::BaseM
 		{
 			logD << "request kServerSettings\n";
 			msg::ServerSettings serverSettings;
-			serverSettings.volume = clientInfo->config.volume.percent;
-			serverSettings.muted = clientInfo->config.volume.muted;
-			serverSettings.latency = clientInfo->config.latency;
+			serverSettings.setVolume(clientInfo->config.volume.percent);
+			serverSettings.setMuted(clientInfo->config.volume.muted);
+			serverSettings.setLatency(clientInfo->config.latency);
+			serverSettings.setBufferMs(settings_.bufferMs);
 			serverSettings.refersTo = helloMsg.id;
-			serverSettings.bufferMs = settings_.bufferMs;
 			connection->send(&serverSettings);
 		}
 

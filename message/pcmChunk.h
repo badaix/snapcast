@@ -22,7 +22,7 @@
 #include <chrono>
 #include "message.h"
 #include "wireChunk.h"
-#include "sampleFormat.h"
+#include "common/sampleFormat.h"
 
 
 namespace msg

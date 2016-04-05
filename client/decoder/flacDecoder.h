@@ -47,7 +47,7 @@ public:
 	FlacDecoder();
 	virtual ~FlacDecoder();
 	virtual bool decode(msg::PcmChunk* chunk);
-	virtual SampleFormat setHeader(msg::Header* chunk);
+	virtual SampleFormat setHeader(msg::CodecHeader* chunk);
 
 	CacheInfo cacheInfo_;
 };

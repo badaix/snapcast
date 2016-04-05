@@ -76,7 +76,7 @@ bool PcmDecoder::decode(msg::PcmChunk* chunk)
 }
 
 
-SampleFormat PcmDecoder::setHeader(msg::Header* chunk)
+SampleFormat PcmDecoder::setHeader(msg::CodecHeader* chunk)
 {
 	if (chunk->payloadSize < 44)
 		throw SnapException("PCM header too small");

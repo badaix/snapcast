@@ -26,8 +26,8 @@
 #include "streamUri.h"
 #include "encoder/encoder.h"
 #include "externals/json.hpp"
-#include "message/sampleFormat.h"
-#include "message/header.h"
+#include "common/sampleFormat.h"
+#include "message/codecHeader.h"
 
 
 class PcmStream;
@@ -72,7 +72,7 @@ public:
 
 	/// Implementation of EncoderListener::onChunkEncoded
 	virtual void onChunkEncoded(const Encoder* encoder, msg::PcmChunk* chunk, double duration);
-	virtual std::shared_ptr<msg::Header> getHeader();
+	virtual std::shared_ptr<msg::CodecHeader> getHeader();
 
 	virtual const StreamUri& getUri() const;
 	virtual const std::string& getName() const;

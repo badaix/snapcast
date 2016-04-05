@@ -68,7 +68,7 @@ private:
 	std::unique_ptr<Decoder> decoder_;
 	std::unique_ptr<Player> player_;
 	std::shared_ptr<msg::ServerSettings> serverSettings_;
-	std::shared_ptr<msg::Header> headerChunk_;
+	std::shared_ptr<msg::CodecHeader> headerChunk_;
 	std::mutex receiveMutex_;
 
 	std::string exception_;

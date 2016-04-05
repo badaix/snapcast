@@ -29,7 +29,7 @@ using namespace std;
 FlacEncoder::FlacEncoder(const std::string& codecOptions) : Encoder(codecOptions), encoder_(NULL), pcmBufferSize_(0), encodedSamples_(0)
 {
 	flacChunk_ = new msg::PcmChunk();
-	headerChunk_.reset(new msg::Header("flac"));
+	headerChunk_.reset(new msg::CodecHeader("flac"));
 	pcmBuffer_ = (FLAC__int32*)malloc(pcmBufferSize_ * sizeof(FLAC__int32));
 }
 

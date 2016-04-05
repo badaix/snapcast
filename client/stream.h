@@ -30,7 +30,7 @@
 #include "doubleBuffer.h"
 #include "message/message.h"
 #include "message/pcmChunk.h"
-#include "message/sampleFormat.h"
+#include "common/sampleFormat.h"
 #include "common/queue.h"
 
 
