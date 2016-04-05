@@ -19,7 +19,6 @@
 #include "json/jsonrpc.h"
 #include "streamServer.h"
 #include "message/time.h"
-#include "message/request.h"
 #include "message/hello.h"
 #include "common/log.h"
 #include "config.h"
@@ -241,26 +240,21 @@ void StreamServer::onMessageReceived(ControlSession* controlSession, const std::
 void StreamServer::onMessageReceived(StreamSession* connection, const msg::BaseMessage& baseMessage, char* buffer)
 {
 	logD << "getNextMessage: " << baseMessage.type << ", size: " << baseMessage.size << ", id: " << baseMessage.id << ", refers: " << baseMessage.refersTo << ", sent: " << baseMessage.sent.sec << "," << baseMessage.sent.usec << ", recv: " << baseMessage.received.sec << "," << baseMessage.received.usec << "\n";
-	if (baseMessage.type == message_type::kRequest)
+	if (baseMessage.type == message_type::kTime)
 	{
-		msg::Request requestMsg;
-		requestMsg.deserialize(baseMessage, buffer);
-		logD << "request: " << requestMsg.request << "\n";
-		if (requestMsg.request == kTime)
-		{
-			msg::Time timeMsg;
-			timeMsg.refersTo = requestMsg.id;
-			timeMsg.latency = requestMsg.received - requestMsg.sent;
-//			logO << "Latency sec: " << timeMsg.latency.sec << ", usec: " << timeMsg.latency.usec << ", refers to: " << timeMsg.refersTo << "\n";
-			connection->send(&timeMsg);
+		msg::Time timeMsg;
+		timeMsg.deserialize(baseMessage, buffer);
+		timeMsg.refersTo = timeMsg.id;
+		timeMsg.latency = timeMsg.received - timeMsg.sent;
+//		logO << "Latency sec: " << timeMsg.latency.sec << ", usec: " << timeMsg.latency.usec << ", refers to: " << timeMsg.refersTo << "\n";
+		connection->send(&timeMsg);
 
-			// refresh connection state
-			ClientInfoPtr client = Config::instance().getClientInfo(connection->macAddress);
-			if (client != nullptr)
-			{
-				gettimeofday(&client->lastSeen, NULL);
-				client->connected = true;
-			}
+		// refresh connection state
+		ClientInfoPtr client = Config::instance().getClientInfo(connection->macAddress);
+		if (client != nullptr)
+		{
+			gettimeofday(&client->lastSeen, NULL);
+			client->connected = true;
 		}
 	}
 	else if (baseMessage.type == message_type::kHello)

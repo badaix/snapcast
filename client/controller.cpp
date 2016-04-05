@@ -28,7 +28,6 @@
 #include "common/log.h"
 #include "common/snapException.h"
 #include "message/time.h"
-#include "message/request.h"
 #include "message/hello.h"
 #include "controller.h"
 
@@ -139,7 +138,7 @@ bool Controller::sendTimeSyncMessage(long after)
 		return false;
 
 	lastTimeSync = now;
-	msg::Request timeReq(kTime);
+	msg::Time timeReq;
 	clientConnection_->send(&timeReq);
 	return true;
 }
@@ -176,7 +175,7 @@ void Controller::worker()
 			msg::Hello hello(clientConnection_->getMacAddress());
 			clientConnection_->send(&hello);
 
-			msg::Request timeReq(kTime);
+			msg::Time timeReq;
 			for (size_t n=0; n<50 && active_; ++n)
 			{
 				shared_ptr<msg::Time> reply = clientConnection_->sendReq<msg::Time>(&timeReq, chronos::msec(2000));
