@@ -118,7 +118,7 @@ void StreamServer::onMessageReceived(ControlSession* controlSession, const std::
 	try
 	{
 		request.parse(message);
-		logO << "method: " << request.method << ", " << "id: " << request.id << "\n";
+		logD << "method: " << request.method << ", " << "id: " << request.id << "\n";
 
 		json response;
 		ClientInfoPtr clientInfo = nullptr;

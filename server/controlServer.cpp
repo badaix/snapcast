@@ -70,7 +70,7 @@ void ControlServer::send(const std::string& message, const ControlSession* exclu
 
 void ControlServer::onMessageReceived(ControlSession* connection, const std::string& message)
 {
-	logO << "received: \"" << message << "\"\n";
+	logD << "received: \"" << message << "\"\n";
 	if ((message == "quit") || (message == "exit") || (message == "bye"))
 	{
 		for (auto it = sessions_.begin(); it != sessions_.end(); ++it)
