@@ -84,6 +84,7 @@ define Build/Prepare
 	$(CP) -r src/common/ $(PKG_BUILD_DIR)
 	$(CP) -r src/message/ $(PKG_BUILD_DIR)
 	$(CP) -r src/externals/ $(PKG_BUILD_DIR)
+	$(CP) -r src/openWrt/ $(PKG_BUILD_DIR)
 	$(if $(CONFIG_PACKAGE_snapserver), \
 		$(CP) -r src/server/ $(PKG_BUILD_DIR),)
 	$(if $(CONFIG_PACKAGE_snapclient), \
@@ -105,11 +106,19 @@ endef
 define Package/snapserver/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/server/snapserver $(1)/usr/bin/
+	$(INSTALL_DIR) $(1)/etc/init.d
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/openWrt/snapserver.init $(1)/etc/init.d/snapserver
+	$(INSTALL_DIR) $(1)/etc/default
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/server/debian/snapserver.default $(1)/etc/default/snapserver
 endef
 
 define Package/snapclient/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/client/snapclient $(1)/usr/bin/
+	$(INSTALL_DIR) $(1)/etc/init.d
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/openWrt/snapclient.init $(1)/etc/init.d/snapclient
+	$(INSTALL_DIR) $(1)/etc/default
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/client/debian/snapclient.default $(1)/etc/default/snapclient
 endef
 
 $(eval $(call BuildPackage,snapserver))

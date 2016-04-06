@@ -1,17 +1,10 @@
-*Todo:
--Server ping client
+*TODO:
+-Server ping client?
 -Server: OnResync while terminating?!?
 -Clean up build process for Android
--Clean up messages and serialization
--LastSeen: relative time [s] or [ms]
--Empty latency: app restart, empty client list
-
-
-*g++ 4.8 installation:
-sudo apt-get install g++-4.8
-cd /usr/bin
-sudo ln -sf gcc-4.8 gcc
-sudo ln -sf g++-4.8 g++
+-LastSeen: relative time [s] or [ms]?
+-Android crash: Empty latency => app restart => empty client list
+-Segfault when ^c on OpenWrt with client connected
 
 
 *JSON RPC:
@@ -68,9 +61,11 @@ http://stackoverflow.com/questions/1024114/location-of-ini-config-files-in-linux
 *OpenWrt:
 https://wiki.openwrt.org/doc/howto/buildroot.exigence
 
-johannes@T400 ~/Develop/openwrt.15.05/package/sxx/snapcast $ ln -s ~/Develop/snapcast/openWrt/Makefile Makefile
+johannes@T400 ~/Develop/openwrt.15.05/package/sxx/snapcast $ ln -s ~/Develop/snapcast/openWrt/Makefile.openwrt Makefile
 johannes@T400 ~/Develop/openwrt.15.05/package/sxx/snapcast $ ln -s ~/Develop/snapcast/ src
 johannes@T400 ~/Develop/openwrt.15.05/package/sxx/snapcast $ ls -l
-lrwxrwxrwx 1 johannes johannes   48 Apr  3 14:50 Makefile -> /home/johannes/Develop/snapcast/openWrt/Makefile
+lrwxrwxrwx 1 johannes johannes   48 Apr  3 14:50 Makefile -> /home/johannes/Develop/snapcast/openWrt/Makefile.openwrt
 lrwxrwxrwx 1 johannes johannes   32 Mär 29 21:22 src -> /home/johannes/Develop/snapcast/
 
+johannes@T400 ~/Develop/openwrt.15.05 $ make package/sxx/snapcast/clean V=s
+johannes@T400 ~/Develop/openwrt.15.05 $ make package/sxx/snapcast/compile -j1 V=s
