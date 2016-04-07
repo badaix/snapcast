@@ -1,15 +1,82 @@
 #Build Snapcast
+Clone the Snapcast repository. To do this, you need git.
+For Debian derivates (e.g. Raspbian, Debian, Ubuntu, Mint):
 
-##Native Linux
+    $ sudo apt-get install git
 
-##Cross compile Android
+For Arch derivates:
 
-##Cross compile OpenWrt
+    $ pacman -S git
+
+Clone Snapcast:
+
+    $ git clone https://github.com/badaix/snapcast.git
+
+this creates a directory `snapcast`, in the following referred to as `<snapcast dir>`.
+Next clone the external submodules:
+
+    $ cd <snapcast dir>/externals
+    $ git submodule update --init --recursive
+
+
+##Linux (Native)
+Install the build tools and required libs:
+For Debian derivates (e.g. Raspbian, Debian, Ubuntu, Mint):
+
+    $ sudo apt-get install build-essential
+    $ sudo apt-get install libasound2-dev libvorbisidec-dev libvorbis-dev libflac-dev alsa-utils libavahi-client-dev avahi-daemon
+
+Compilation requires gcc 4.8 or higher, so it's highly recommended to use Debian (Respbian) Jessie.
+
+For Arch derivates:
+
+    $ pacman -S base-devel
+    $ pacman -S alsa-lib avahi libvorbis flac alsa-utils
+
+###Build Snapclient and Snapserver
+`cd` into the Snapcast src-root directory:
+
+    $ cd <snapcast dir>
+    $ make
+
+Install Snapclient and/or Snapserver:
+
+    $ sudo make installserver
+    $ sudo make installclient
+
+This will copy the client and/or server binary to `/usr/sbin` and update init.d/systemd to start the client/server as a daemon.
+
+###Build Snapclient
+`cd` into the Snapclient src-root directory:
+
+    $ cd <snapcast dir>/client
+    $ make
+
+Install Snapclient
+
+    $ sudo make install
+
+This will copy the client binary to `/usr/sbin` and update init.d/systemd to start the client as a daemon.
+
+###Build Snapserver
+`cd` into the Snapserver src-root directory:
+
+    $ cd <snapcast dir>/server
+    $ make
+
+Install Snapserver
+
+    $ sudo make install
+
+This will copy the server binary to `/usr/sbin` and update init.d/systemd to start the server as a daemon.
+
+##Android (Cross compile)
+
+##OpenWrt (Cross compile)
 https://wiki.openwrt.org/doc/howto/buildroot.exigence
 
 1. Do everything as non-root user
 2. Issue all commands in the <buildroot dir> directory, e.g. ~/openwrt
-<snapcast dir>
 
 ```
 git clone git://git.openwrt.org/15.05/openwrt.git
