@@ -1,5 +1,5 @@
 #Build Snapcast
-Clone the Snapcast repository. To do this, you need git.
+Clone the Snapcast repository. To do this, you need git.  
 For Debian derivates (e.g. Raspbian, Debian, Ubuntu, Mint):
 
     $ sudo apt-get install git
@@ -12,7 +12,7 @@ Clone Snapcast:
 
     $ git clone https://github.com/badaix/snapcast.git
 
-this creates a directory `snapcast`, in the following referred to as `<snapcast dir>`.
+this creates a directory `snapcast`, in the following referred to as `<snapcast dir>`.  
 Next clone the external submodules:
 
     $ cd <snapcast dir>/externals
@@ -20,7 +20,7 @@ Next clone the external submodules:
 
 
 ##Linux (Native)
-Install the build tools and required libs:
+Install the build tools and required libs:  
 For Debian derivates (e.g. Raspbian, Debian, Ubuntu, Mint):
 
     $ sudo apt-get install build-essential
