@@ -1,3 +1,10 @@
+#Build Snapcast
+
+##Native Linux
+
+##Cross compile Android
+
+##Cross compile OpenWrt
 https://wiki.openwrt.org/doc/howto/buildroot.exigence
 
 1. Do everything as non-root user
