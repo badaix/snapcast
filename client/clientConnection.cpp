@@ -60,10 +60,10 @@ std::string ClientConnection::getMacAddress() const
 	if (socket_ == nullptr)
 		throw SnapException("socket not connected");
 
-	std::string mac = ::getMacAddress(socket_->native());
+	std::string mac = ::getMacAddress(socket_->native_handle());
 	if (mac.empty())
 		mac = "00:00:00:00:00:00";
-	logO << "My MAC: \"" << mac << "\", socket: " << socket_->native() << "\n";
+	logO << "My MAC: \"" << mac << "\", socket: " << socket_->native_handle() << "\n";
 	return mac;
 }
 
@@ -78,9 +78,9 @@ void ClientConnection::start()
 //	struct timeval tv;
 //	tv.tv_sec  = 5;
 //	tv.tv_usec = 0;
-//	cout << "socket: " << socket->native() << "\n";
-//	setsockopt(socket->native(), SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
-//	setsockopt(socket->native(), SOL_SOCKET, SO_SNDTIMEO, &tv, sizeof(tv));
+//	cout << "socket: " << socket->native_handle() << "\n";
+//	setsockopt(socket->native_handle(), SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
+//	setsockopt(socket->native_handle(), SOL_SOCKET, SO_SNDTIMEO, &tv, sizeof(tv));
 	socket_->connect(*iterator);
 	connected_ = true;
 	logS(kLogNotice) << "Connected to " << socket_->remote_endpoint().address().to_string() << endl;
