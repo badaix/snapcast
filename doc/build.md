@@ -71,8 +71,28 @@ Install Snapserver
 This will copy the server binary to `/usr/sbin` and update init.d/systemd to start the server as a daemon.
 
 ##Android (Cross compile)
+http://developer.android.com/tools/sdk/ndk/index.html  
+TODO: Host Linux, compile flac, use build.sh
+###Android NDK setup
+http://developer.android.com/ndk/guides/standalone_toolchain.html
+ 1. Download NDK: `http://dl.google.com/android/ndk/android-ndk-r10e-linux-x86_64.bin`
+ 2. Extract to: `/SOME/LOCAL/PATH/android-ndk-r10e`
+ 3. Setup toolchain in somewhere in your home dir (`<android-ndk dir>`):
+
+```
+$ cd /SOME/LOCAL/PATH/android-ndk-r10e/build/tools
+$ ./make-standalone-toolchain.sh --arch=arm --platform=android-14 --install-dir=<android-ndk dir> --ndk-dir=/SOME/LOCAL/PATH/android-ndk-r10e --system=linux-x86_64
+```
+
+###Build Snapclient
+`cd` into the Snapclient src-root directory:
+
+    $ cd <snapcast dir>/client
+    $ make TARGET=ANDROID`
 
 ##OpenWrt (Cross compile)
+https://wiki.openwrt.org/doc/howto/build
+###OpenWrt build system setup
 https://wiki.openwrt.org/doc/howto/buildroot.exigence
 
 1. Do everything as non-root user
