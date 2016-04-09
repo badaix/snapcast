@@ -1,7 +1,6 @@
 *TODO:
 -Server ping client?
 -Server: OnResync while terminating?!?
--Clean up build process for Android
 -LastSeen: relative time [s] or [ms]?
 -Android crash: Empty latency => app restart => empty client list
 -Segfault when ^c on OpenWrt with client connected
