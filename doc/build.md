@@ -107,41 +107,31 @@ https://wiki.openwrt.org/doc/howto/build
 ###OpenWrt build system setup
 https://wiki.openwrt.org/doc/howto/buildroot.exigence
 
-1. Clone OpenWrt to some place in your home directory (`<buildroot dir>`)
+Clone OpenWrt to some place in your home directory (`<buildroot dir>`)
 
-````
-$ git clone git://git.openwrt.org/15.05/openwrt.git
-````
+    $ git clone git://git.openwrt.org/15.05/openwrt.git
 
-2. Download and install available feeds
+Download and install available feeds
 
-````
-$ cd <buildroot dir>
-$ ./scripts/feeds update -a
-$ ./scripts/feeds install -a
-````
+    $ cd <buildroot dir>
+    $ ./scripts/feeds update -a
+    $ ./scripts/feeds install -a
 
-3. Build
+Build
 
-````
-$ make menuconfig
-$ make
-````
+    $ make menuconfig
+    $ make
 
-4. Within the OpenWrt directory create symbolic links to the Snapcast source directory and to the OpenWrt Makefile:
+Within the OpenWrt directory create symbolic links to the Snapcast source directory and to the OpenWrt Makefile:
 
-````
-$ cd <buildroot dir>/package/sxx/snapcast
-$ ln -s <snapcast dir>/openWrt/Makefile.openwrt Makefile
-$ ln -s <snapcast dir> src
-````
+    $ cd <buildroot dir>/package/sxx/snapcast
+    $ ln -s <snapcast dir>/openWrt/Makefile.openwrt Makefile
+    $ ln -s <snapcast dir> src
 
-5. Build Snapcast:
+Build Snapcast:
 
-````
-$ cd <buildroot dir>
-$ make package/sxx/snapcast/clean V=s
-$ make package/sxx/snapcast/compile -j1 V=s
-````
+    $ cd <buildroot dir>
+    $ make package/sxx/snapcast/clean V=s
+    $ make package/sxx/snapcast/compile -j1 V=s
 
 The packaged `ipk` files are in `<buildroot dir>/bin/ar71xx/packages/base/snap[client|server]_0.5.0_ar71xx.ipk`
