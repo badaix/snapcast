@@ -6,3 +6,5 @@ cd flac
 ./configure --host=arm --disable-ogg --prefix=$NDK_DIR
 make
 make install
+make clean
+

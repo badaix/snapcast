@@ -14,14 +14,7 @@ CXXFLAGS += $(ADD_CFLAGS) -std=c++0x -Wall -Wno-unused-function -O3 -pthread -DA
 OBJ       = snapClient.o stream.o clientConnection.o timeProvider.o player/player.o decoder/pcmDecoder.o decoder/flacDecoder.o controller.o ../message/pcmChunk.o ../common/log.o ../common/sampleFormat.o
 
 ifeq ($(TARGET), ANDROID)
-# Android NDK setup: (http://developer.android.com/ndk/guides/standalone_toolchain.html)
-# 1. Download NDK: http://dl.google.com/android/ndk/android-ndk-r10e-linux-x86_64.bin
-# 2. Extract to: /home/johannes/Develop/android-ndk-r10e
-# 3. Setup toolchain:
-#    i.  cd /home/johannes/Develop/android-ndk-r10e/build/tools
-#    ii. ./make-standalone-toolchain.sh --arch=arm --platform=android-14 --install-dir=/home/johannes/Develop/android-toolchain-arm-14 --ndk-dir=/home/johannes/Develop/android-ndk-r10e --system=linux-x86_64
-# build with:
-#    make ANDROID=1
+
 CXX      = $(NDK_DIR)/bin/arm-linux-androideabi-g++
 STRIP	 = $(NDK_DIR)/bin/arm-linux-androideabi-strip
 CXXFLAGS += -DANDROID -DNO_CPP11_STRING -fPIC -DHAS_OPENSL -I$(NDK_DIR)/include

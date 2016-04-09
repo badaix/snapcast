@@ -60,6 +60,7 @@ http://stackoverflow.com/questions/1024114/location-of-ini-config-files-in-linux
 
 *OpenWrt:
 https://wiki.openwrt.org/doc/howto/buildroot.exigence
+https://wiki.openwrt.org/doc/devel/packages
 
 johannes@T400 ~/Develop/openwrt.15.05/package/sxx/snapcast $ ln -s ~/Develop/snapcast/openWrt/Makefile.openwrt Makefile
 johannes@T400 ~/Develop/openwrt.15.05/package/sxx/snapcast $ ln -s ~/Develop/snapcast/ src
@@ -69,3 +70,12 @@ lrwxrwxrwx 1 johannes johannes   32 Mär 29 21:22 src -> /home/johannes/Develop/
 
 johannes@T400 ~/Develop/openwrt.15.05 $ make package/sxx/snapcast/clean V=s
 johannes@T400 ~/Develop/openwrt.15.05 $ make package/sxx/snapcast/compile -j1 V=s
+
+
+*Sample format
+http://0pointer.de/lennart/projects/pulseaudio/doxygen/sample.html
+https://www.musicpd.org/doc/user/config_audio_outputs.html#ao_format
+
+
+*URI:
+https://en.wikipedia.org/wiki/Uniform_Resource_Identifier
