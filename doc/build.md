@@ -80,8 +80,10 @@ http://developer.android.com/ndk/guides/standalone_toolchain.html
  2. Extract to: `/SOME/LOCAL/PATH/android-ndk-r10e`
  3. Setup toolchain somewhere in your home dir (`<android-ndk dir>`):
 
-    $ cd /SOME/LOCAL/PATH/android-ndk-r10e/build/tools
-    $ ./make-standalone-toolchain.sh --arch=arm --platform=android-14 --install-dir=<android-ndk dir> --ndk-dir=/SOME/LOCAL/PATH/android-ndk-r10e --system=linux-x86_64
+````
+$ cd /SOME/LOCAL/PATH/android-ndk-r10e/build/tools
+$ ./make-standalone-toolchain.sh --arch=arm --platform=android-14 --install-dir=<android-ndk dir> --ndk-dir=/SOME/LOCAL/PATH/android-ndk-r10e --system=linux-x86_64
+````
 
 ###Build Snapclient
 Edit the first lines in `<snapcast dir>/client/build_android.sh` and in `<snapcast dir>/externals/build_flac_android.sh` to let `NDK_DIR` point to your `<android-ndk dir>`  
@@ -107,29 +109,39 @@ https://wiki.openwrt.org/doc/howto/buildroot.exigence
 
 1. Clone OpenWrt to some place in your home directory (`<buildroot dir>`)
 
-    $ git clone git://git.openwrt.org/15.05/openwrt.git
+````
+$ git clone git://git.openwrt.org/15.05/openwrt.git
+````
 
 2. Download and install available feeds
 
-    $ cd <buildroot dir>
-    $ ./scripts/feeds update -a
-    $ ./scripts/feeds install -a
+````
+$ cd <buildroot dir>
+$ ./scripts/feeds update -a
+$ ./scripts/feeds install -a
+````
 
 3. Build
 
-    $ make menuconfig
-    $ make
+````
+$ make menuconfig
+$ make
+````
 
 4. Within the OpenWrt directory create symbolic links to the Snapcast source directory and to the OpenWrt Makefile:
 
-    $ cd <buildroot dir>/package/sxx/snapcast
-    $ ln -s <snapcast dir>/openWrt/Makefile.openwrt Makefile
-    $ ln -s <snapcast dir> src
+````
+$ cd <buildroot dir>/package/sxx/snapcast
+$ ln -s <snapcast dir>/openWrt/Makefile.openwrt Makefile
+$ ln -s <snapcast dir> src
+````
 
 5. Build Snapcast:
 
-    $ cd <buildroot dir>
-    $ make package/sxx/snapcast/clean V=s
-    $ make package/sxx/snapcast/compile -j1 V=s
+````
+$ cd <buildroot dir>
+$ make package/sxx/snapcast/clean V=s
+$ make package/sxx/snapcast/compile -j1 V=s
+````
 
 The packaged `ipk` files are in `<buildroot dir>/bin/ar71xx/packages/base/snap[client|server]_0.5.0_ar71xx.ipk`
