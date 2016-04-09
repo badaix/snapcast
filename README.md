@@ -29,36 +29,7 @@ Installation
 You can either build and install snapcast from source, or on debian systems install a prebuild .deb package
 
 ###Installation from source
-First install all packages needed to compile Snapcast
-
-For Debian derivates (e.g. Raspbian, Debian, Ubuntu, Mint):
-
-    $ sudo apt-get install git build-essential
-    $ sudo apt-get install libasound2-dev libvorbisidec-dev libvorbis-dev libflac-dev alsa-utils libavahi-client-dev avahi-daemon
-
-Compilation requires gcc 4.8 or higher, so it's highly recommended to use Debian (Respbian) Jessie.
-
-For Arch derivates:
-
-    $ pacman -S git base-devel
-    $ pacman -S alsa-lib avahi libvorbis flac alsa-utils
-
-After cloning the Snapcast repository, you have to update the external submodules:
-
-    $ cd <MY_SNAPCAST_ROOT>/externals
-    $ git submodule update --init --recursive
-
-Build Snapcast by cd'ing into the Snapcast src-root directory:
-
-    $ cd <MY_SNAPCAST_ROOT>
-    $ make
-
-Install Snapclient and/or Snapserver:
-
-    $ sudo make installserver
-    $ sudo make installclient
-
-This will copy the client and/or server binary to `/usr/sbin` and update init.d/systemd to start the client/server as a daemon.
+Please follow this [guide](doc/build.md) to build or cross compile Snapcast 
 
 ###Install debian packages
 Download the debian package for your CPU architecture from the [latest release page](https://github.com/badaix/snapcast/releases/latest), e.g. for Raspberry pi `snapclient_0.x.x_armhf.deb`
