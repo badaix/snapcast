@@ -70,65 +70,66 @@ Install Snapserver
 
 This will copy the server binary to `/usr/sbin` and update init.d/systemd to start the server as a daemon.
 
+
 ##Android (Cross compile)
-http://developer.android.com/tools/sdk/ndk/index.html  
-TODO: Host Linux, compile flac, use build.sh
+Cross compilation for Android is done with the [Android NDK](http://developer.android.com/tools/sdk/ndk/index.html) on a Linux host machine.  
+
 ###Android NDK setup
 http://developer.android.com/ndk/guides/standalone_toolchain.html
  1. Download NDK: `http://dl.google.com/android/ndk/android-ndk-r10e-linux-x86_64.bin`
  2. Extract to: `/SOME/LOCAL/PATH/android-ndk-r10e`
- 3. Setup toolchain in somewhere in your home dir (`<android-ndk dir>`):
+ 3. Setup toolchain somewhere in your home dir (`<android-ndk dir>`):
 
-```
-$ cd /SOME/LOCAL/PATH/android-ndk-r10e/build/tools
-$ ./make-standalone-toolchain.sh --arch=arm --platform=android-14 --install-dir=<android-ndk dir> --ndk-dir=/SOME/LOCAL/PATH/android-ndk-r10e --system=linux-x86_64
-```
+    $ cd /SOME/LOCAL/PATH/android-ndk-r10e/build/tools
+    $ ./make-standalone-toolchain.sh --arch=arm --platform=android-14 --install-dir=<android-ndk dir> --ndk-dir=/SOME/LOCAL/PATH/android-ndk-r10e --system=linux-x86_64
 
 ###Build Snapclient
-`cd` into the Snapclient src-root directory:
+Edit the first lines in `<snapcast dir>/client/build_android.sh` and in `<snapcast dir>/externals/build_flac_android.sh` to let `NDK_DIR` point to your `<android-ndk dir>`  
+Cross compile and install FLAC (only needed once):
+
+    $ cd <snapcast dir>/externals
+    $ ./build_flac_android.sh
+   
+Compile the Snapclient:
 
     $ cd <snapcast dir>/client
-    $ make TARGET=ANDROID`
+    $ ./build_android.sh
+
+The binaries for `armeabi` and `armeabi-v7a` will be copied into the Android's assets directory (`<snapcast dir>/android/Snapcast/src/main/assets/bin/`) and will be part of the Snapcast App.
+
 
 ##OpenWrt (Cross compile)
+Cross compilation for OpenWrt is done with the [OpenWrt build system](https://wiki.openwrt.org/about/toolchain) on a Linux host machine.  
 https://wiki.openwrt.org/doc/howto/build
+
 ###OpenWrt build system setup
 https://wiki.openwrt.org/doc/howto/buildroot.exigence
 
-1. Do everything as non-root user
-2. Issue all commands in the <buildroot dir> directory, e.g. ~/openwrt
+1. Clone OpenWrt to some place in your home directory (`<buildroot dir>`)
 
-```
-git clone git://git.openwrt.org/15.05/openwrt.git
-```
+    $ git clone git://git.openwrt.org/15.05/openwrt.git
 
+2. Download and install available feeds
 
-```
-cd openwrt
-./scripts/feeds update -a
-./scripts/feeds install -a
-```
+    $ cd <buildroot dir>
+    $ ./scripts/feeds update -a
+    $ ./scripts/feeds install -a
 
+3. Build
 
-```
-make menuconfig
-make
-```
+    $ make menuconfig
+    $ make
 
+4. Within the OpenWrt directory create symbolic links to the Snapcast source directory and to the OpenWrt Makefile:
 
-Within the OpenWrt directory I'm linking to it, like this:
-```
-cd <buildroot dir>/package/sxx/snapcast
-ln -s <snapcast dir>/openWrt/Makefile.openwrt Makefile
-ln -s <snapcast dir> src
+    $ cd <buildroot dir>/package/sxx/snapcast
+    $ ln -s <snapcast dir>/openWrt/Makefile.openwrt Makefile
+    $ ln -s <snapcast dir> src
 
-ls -l
-Makefile -> <snapcast dir>/openWrt/Makefile.openwrt
-src -> <snapcast dir>
-```
-...and build like this:
-```
-cd <buildroot dir>
-make package/sxx/snapcast/clean V=s
-make package/sxx/snapcast/compile -j1 V=s
-```
+5. Build Snapcast:
+
+    $ cd <buildroot dir>
+    $ make package/sxx/snapcast/clean V=s
+    $ make package/sxx/snapcast/compile -j1 V=s
+
+The packaged `ipk` files are in `<buildroot dir>/bin/ar71xx/packages/base/snap[client|server]_0.5.0_ar71xx.ipk`
