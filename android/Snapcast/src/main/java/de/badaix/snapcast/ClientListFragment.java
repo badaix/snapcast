@@ -173,18 +173,19 @@ public class ClientListFragment extends Fragment {
 
 
         public void update() {
-
-            ClientListFragment.this.getActivity().runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    clear();
-                    for (Client client : ClientInfoAdapter.this.serverStatus.getClientInfos()) {
-                        if ((client != null) && (!hideOffline || client.isConnected()) && !client.isDeleted() && client.getConfig().getStream().equals(ClientListFragment.this.stream.getId()))
-                            add(client);
+            clear();
+            for (Client client : ClientInfoAdapter.this.serverStatus.getClientInfos()) {
+                if ((client != null) && (!hideOffline || client.isConnected()) && !client.isDeleted() && client.getConfig().getStream().equals(ClientListFragment.this.stream.getId()))
+                    add(client);
+            }
+            if (getActivity() != null) {
+                ClientListFragment.this.getActivity().runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        notifyDataSetChanged();
                     }
-                    notifyDataSetChanged();
-                }
-            });
+                });
+            }
         }
 
         public boolean isHideOffline() {
