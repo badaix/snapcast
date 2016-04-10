@@ -134,4 +134,4 @@ Build Snapcast:
     $ make package/sxx/snapcast/clean V=s
     $ make package/sxx/snapcast/compile -j1 V=s
 
-The packaged `ipk` files are in `<buildroot dir>/bin/ar71xx/packages/base/snap[client|server]_0.5.0_ar71xx.ipk`
+The packaged `ipk` files are in `<buildroot dir>/bin/ar71xx/packages/base/snap[client|server]_0.6.0_ar71xx.ipk`

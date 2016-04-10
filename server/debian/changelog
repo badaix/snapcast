@@ -1,3 +1,16 @@
+snapserver (0.6.0) unstable; urgency=low
+
+  * Features
+    -Port to OpenWrt
+  * Bugfixes
+    -Android client: fixed crash if more than two streams are active
+  * General
+    -Support Tremor, an integer only Ogg-Vorbis implementation 
+    -Endian-independent code
+    -Cleaned up build process
+
+ -- Johannes Pohl <johannes.pohl@badaix.de>  Sun, 10 Apr 2016 00:02:00 +0200
+
 snapserver (0.5.0) unstable; urgency=low
 
   * Features

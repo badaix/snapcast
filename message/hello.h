@@ -42,7 +42,7 @@ public:
 		msg["ClientName"] = "Snapclient";
 		msg["OS"] = ::getOS();
 		msg["Arch"] = ::getArch();
-		msg["SnapStreamProtocolVersion"] = 1;
+		msg["SnapStreamProtocolVersion"] = 2;
 	}
 
 	virtual ~Hello()
