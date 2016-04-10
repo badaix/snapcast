@@ -22,7 +22,7 @@ Every received chunk is first decoded and added to the client's chunk-buffer. Kn
 * playing silence
 * playing faster/slower
 
-Typically the deviation is samller than 1ms.
+Typically the deviation is smaller than 1ms.
 
 Installation
 ------------
