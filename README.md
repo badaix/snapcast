@@ -29,7 +29,10 @@ Installation
 You can either build and install snapcast from source, or on debian systems install a prebuild .deb package
 
 ###Installation from source
-Please follow this [guide](doc/build.md) to build or cross compile Snapcast 
+Please follow this [guide](doc/build.md) to build Snapcast for
+* [Linux](doc/build.md#linux-native)
+* [Android](doc/build.md#android-cross-compile)
+* [OpenWrt](doc/build.md#openwrt-cross-compile)
 
 ###Install debian packages
 Download the debian package for your CPU architecture from the [latest release page](https://github.com/badaix/snapcast/releases/latest), e.g. for Raspberry pi `snapclient_0.x.x_armhf.deb`
@@ -79,6 +82,10 @@ Setup of audio players/server
 Snapcast can be used with a number of different audio players and servers, and so it can be integrated into your favorite audio-player solution and make it synced-multiroom capable.
 The only requirement is that the player's audio can be redirected into the Snapserver's fifo `/tmp/snapfifo`. In the following configuration hints for [MPD](http://www.musicpd.org/) and [Mopidy](https://www.mopidy.com/) are given, which are base of other audio player solutions, like [Volumio](https://volumio.org/) or [RuneAudio](http://www.runeaudio.com/) (both MPD) or [Pi MusicBox](http://www.pimusicbox.com/) (Mopidy).
 
+The goal is to build the following chain:
+
+    audio player software -> snapfifo -> snapserver -> network -> snapclient -> alsa
+
 ###MPD setup
 To connect [MPD](http://www.musicpd.org/) to the Snapserver, edit `/etc/mpd.conf`, so that mpd will feed the audio into the snapserver's named pipe
 
@@ -117,8 +124,42 @@ To test your mpd installation, you can add a radio station by
     #output = autoaudiosink
     output = audioresample ! audioconvert ! audio/x-raw,rate=48000,channels=2,format=S16LE ! wavenc ! filesink location=/tmp/snapfifo
 
+###Alsa setup
+If the player cannot be configured to route the audio stream into the snapfifo, Alsa or PulseAudio can be redirected, resulting in this chain:
+
+    audio player software -> Alsa -> Alsa file plugin -> snapfifo -> snapserver -> network -> snapclient -> Alsa
+
+Edit or create your Alsa config `/etc/asound.conf` like this:
+
+```
+pcm.!default {
+	type plug
+	slave.pcm rate48000Hz
+}
+
+pcm.rate48000Hz {
+	type rate
+	slave {
+		pcm writeFile # Direct to the plugin which will write to a file
+		format S16_LE
+		rate 48000
+	}
+}
+
+pcm.writeFile {
+	type file
+	slave.pcm null
+	file "/tmp/snapfifo"
+	format "raw"
+}
+```
+
 ###PulseAudio setup
-On the server you could create a sink to route sound of your applications to the FIFO:
+Redirect the PulseAudio stream into the snapfifo:
+
+    audio player software -> PulseAudio -> PulsaAudio pipe sink -> snapfifo -> snapserver -> network -> snapclient -> Alsa
+
+Load the module `pipe-sink` like this:
 
     pacmd load-module module-pipe-sink file=/tmp/snapfifo
 
