@@ -121,7 +121,7 @@ To test your mpd installation, you can add a radio station by
     output = audioresample ! audioconvert ! audio/x-raw,rate=48000,channels=2,format=S16LE ! wavenc ! filesink location=/tmp/snapfifo
 
 ###Alsa setup
-If the player cannot be configured to route the audio stream into the snapfifo, Alsa or PulseAudio can be redirected, resulting into this chain:
+If the player cannot be configured to route the audio stream into the snapfifo, Alsa or PulseAudio can be redirected, resulting in this chain:
 
     audio player software -> Alsa -> Alsa file plugin -> snapfifo -> snapserver -> network -> snapclient -> Alsa
 
