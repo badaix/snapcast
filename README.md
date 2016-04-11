@@ -41,6 +41,10 @@ Install missing dependencies:
 
     $ sudo apt-get -f install
 
+On OpenWrt do:
+
+    $ opkg install snapclient_0.x.x_ar71xx.ipk
+
 Configuration
 -------------
 After installation, Snapserver and Snapclient are started with the command line arguments that are configured in `/etc/default/snapserver` and `/etc/default/snapclient`.
