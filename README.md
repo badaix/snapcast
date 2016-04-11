@@ -48,7 +48,7 @@ Allowed options are listed in the man pages (`man snapserver`, `man snapclient`)
 
 Different streams can by configured with a list of `-s` options, e.g.:
 
-    SNAPSERVER_OPTS="-d -s pipe:///tmp/snapfifo?name=Radio&sampleformat=48000:16:2&codec=flac -s file:///home/johannes/Musik/Some%20wave%20file.wav?name=File"
+    SNAPSERVER_OPTS="-d -s pipe:///tmp/snapfifo?name=Radio&sampleformat=48000:16:2&codec=flac -s file:///home/user/Musik/Some%20wave%20file.wav?name=File"
 
 Test
 ----
@@ -59,7 +59,7 @@ You can test your installation by copying random data into the server's fifo fil
 All connected clients should play random noise now. You might raise the client's volume with "alsamixer".
 It's also possible to let the server play a wave file. Simply configure a `file` stream in `/etc/default/snapserver`, and restart the server:
 
-    SNAPSERVER_OPTS="-d -s file:///home/johannes/Musik/Some%20wave%20file.wav?name=test"
+    SNAPSERVER_OPTS="-d -s file:///home/user/Musik/Some%20wave%20file.wav?name=test"
 
 When you are using a Raspberry pi, you might have to change your audio output to the 3.5mm jack:
 
@@ -115,9 +115,9 @@ To test your mpd installation, you can add a radio station by
 
 ###PulseAudio setup
 On the server you could create a sink to route sound of your applications to the FIFO:
-```
-pacmd load-module module-pipe-sink file=/tmp/snapfifo
-```
+
+    pacmd load-module module-pipe-sink file=/tmp/snapfifo
+
 It might me neccessary to set the pulse audio latency environment variable to 60 msec: `PULSE_LATENCY_MSEC=60`
 
 Roadmap
@@ -127,8 +127,9 @@ Unordered list of features that should make it into the v1.0
 - [X] **Android client** JSON-RPC client and Snapclient
 - [X] **Zones** Support multiple streams
 - [X] **Debian packages** prebuild deb packages
-- [ ] **Protocol specification** Snapcast binary streaming protocol, JSON-RPC protocol
+- [X] **Endian** independent code
+- [X] **OpenWrt** port Snapclient to OpenWrt
 - [ ] **Hi-Res audio** support (like 192kHz 24bit)
+- [ ] **Protocol specification** Snapcast binary streaming protocol, JSON-RPC protocol
 - [ ] **CMake** or another build system
-- [ ] **Endianness** independence
-- [ ] **Ports** Snapclient for OpenWrt, Windows, ...
+- [ ] **Ports** Snapclient for Windows, ...
