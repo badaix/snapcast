@@ -19,7 +19,7 @@
 #include <iostream>
 #include <mutex>
 #include "clientConnection.h"
-#include "common/compat.h"
+#include "common/strCompat.h"
 #include "common/snapException.h"
 #include "message/hello.h"
 #include "common/log.h"

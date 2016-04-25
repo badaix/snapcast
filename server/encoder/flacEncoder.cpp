@@ -19,7 +19,7 @@
 #include <iostream>
 
 #include "flacEncoder.h"
-#include "common/compat.h"
+#include "common/strCompat.h"
 #include "common/snapException.h"
 #include "common/log.h"
 

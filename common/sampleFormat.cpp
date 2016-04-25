@@ -21,7 +21,7 @@
 #include <sstream>
 
 #include "sampleFormat.h"
-#include "common/compat.h"
+#include "common/strCompat.h"
 #include "common/utils.h"
 #include "common/log.h"
 

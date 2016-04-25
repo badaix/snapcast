@@ -61,7 +61,7 @@ Class @ref nlohmann::basic_json is a good entry point for the documentation.
 #include <utility>
 #include <vector>
 
-#include "common/compat.h"
+#include "common/strCompat.h"
 
 // enable ssize_t on MinGW
 #ifdef __GNUC__
