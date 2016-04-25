@@ -18,7 +18,7 @@
 
 
 #include <common/utils.h>
-#include <common/compat.h>
+#include <common/strCompat.h>
 #include <common/log.h>
 #include "streamUri.h"
 

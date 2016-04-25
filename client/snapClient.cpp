@@ -32,7 +32,7 @@
 #endif
 #include "common/log.h"
 #include "common/signalHandler.h"
-#include "common/compat.h"
+#include "common/strCompat.h"
 
 
 using namespace std;

@@ -7,6 +7,10 @@
 #ifdef NO_CPP11_STRING
 #include <sstream>
 #include <cstdlib>
+#include <cmath>
+#include <climits>
+#include <stdexcept>
+#include <cerrno>
 #endif
 
 
@@ -24,19 +28,26 @@ namespace cpt
 	#endif
 	}
 
-	static long stoul(const std::string& s)
+	static long stoul(const std::string& str)
 	{
 	#ifdef NO_CPP11_STRING
-		return atol(s.c_str());
+		errno = 0;
+		char *temp;
+		long val = strtol(str.c_str(), &temp, 10);
+		if (temp == str.c_str() || *temp != '\0')
+			throw std::invalid_argument("stoi");
+		if (((val == LONG_MIN) || (val == LONG_MAX)) && (errno == ERANGE))
+			throw std::out_of_range("stoi");
+		return val;
 	#else
-		return std::stoul(s);
+		return std::stoul(str);
 	#endif
 	}
 
 	static int stoi(const std::string& str)
 	{
 	#ifdef NO_CPP11_STRING
-		return strtol(str.c_str(), 0, 10);
+		return cpt::stoul(str);
 	#else
 		return std::stoi(str);
 	#endif
@@ -45,7 +56,14 @@ namespace cpt
 	static double stod(const std::string& str)
 	{
 	#ifdef NO_CPP11_STRING
-		return strtod(str.c_str(), NULL);
+		errno = 0;
+		char *temp;
+		double val = strtod(str.c_str(), &temp);
+		if (temp == str.c_str() || *temp != '\0')
+			throw std::invalid_argument("stod");
+		if ((val == HUGE_VAL) && (errno == ERANGE))
+			throw std::out_of_range("stod");
+		return val;
 	#else
 		return std::stod(str.c_str());
 	#endif
@@ -54,7 +72,7 @@ namespace cpt
 	static long double strtold(const char* str, char** endptr)
 	{
 	#ifdef NO_CPP11_STRING
-		return strtod(str, endptr);
+		return cpt::stod(str);
 	#else
 		return std::strtold(str, endptr);
 	#endif
@@ -63,7 +81,7 @@ namespace cpt
 	static float strtof(const char* str, char** endptr)
 	{
 	#ifdef NO_CPP11_STRING
-		return (float)strtod(str, endptr);
+		return (float)cpt::stod(str);
 	#else
 		return std::strtof(str, endptr);
 	#endif

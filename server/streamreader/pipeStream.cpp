@@ -26,7 +26,7 @@
 #include "encoder/encoderFactory.h"
 #include "common/log.h"
 #include "common/snapException.h"
-#include "common/compat.h"
+#include "common/strCompat.h"
 
 
 using namespace std;

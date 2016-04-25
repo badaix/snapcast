@@ -23,7 +23,7 @@
 
 #include "encoder/encoderFactory.h"
 #include "common/snapException.h"
-#include "common/compat.h"
+#include "common/strCompat.h"
 #include "pcmStream.h"
 #include "common/log.h"
 

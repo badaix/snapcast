@@ -22,7 +22,7 @@
 #include <fstream>
 #include <cerrno>
 #include "common/snapException.h"
-#include "common/compat.h"
+#include "common/strCompat.h"
 #include "common/log.h"
 
 using namespace std;
