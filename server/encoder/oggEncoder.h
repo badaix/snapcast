@@ -48,9 +48,6 @@ private:
 	vorbis_block     vb; /* local working space for packet->PCM decode */
 
 	ogg_int64_t   lastGranulepos;
-
-	int eos, ret;
-	int i, founddata;
 };
 
 

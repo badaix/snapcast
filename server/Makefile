@@ -21,8 +21,7 @@ else
 
 CXX      = /usr/bin/g++
 STRIP	 = strip
-CXXFLAGS += -static-libgcc -static-libstdc++
-LDFLAGS  = -lrt -lvorbis -lvorbisenc -logg -lFLAC -lavahi-client -lavahi-common
+LDFLAGS  = -lrt -lvorbis -lvorbisenc -logg -lFLAC -lavahi-client -lavahi-common -static-libgcc -static-libstdc++
 
 endif
 

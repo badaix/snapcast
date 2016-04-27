@@ -28,7 +28,7 @@
 using namespace std;
 
 
-OggEncoder::OggEncoder(const std::string& codecOptions) : Encoder(codecOptions), lastGranulepos(0), eos(0)
+OggEncoder::OggEncoder(const std::string& codecOptions) : Encoder(codecOptions), lastGranulepos(0)
 {
 }
 
@@ -180,7 +180,7 @@ void OggEncoder::initEncoder()
 
 	*********************************************************************/
 
-	ret = vorbis_encode_init_vbr(&vi, sampleFormat_.channels, sampleFormat_.rate, quality);
+	int ret = vorbis_encode_init_vbr(&vi, sampleFormat_.channels, sampleFormat_.rate, quality);
 
 	/* do not continue if setup failed; this can happen if we ask for a
 	 mode that libVorbis does not support (eg, too low a bitrate, etc,
