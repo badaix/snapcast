@@ -19,6 +19,7 @@
 #include "alsaPlayer.h"
 #include "common/log.h"
 #include "common/snapException.h"
+#include "common/strCompat.h"
 
 //#define BUFFER_TIME 120000
 #define PERIOD_TIME 30000
@@ -60,7 +61,19 @@ void AlsaPlayer::initAlsa()
 	if ((pcm = snd_pcm_hw_params_set_access(handle_, params, SND_PCM_ACCESS_RW_INTERLEAVED)) < 0)
 		throw SnapException("Can't set interleaved mode: " + string(snd_strerror(pcm)));
 
-	if ((pcm = snd_pcm_hw_params_set_format(handle_, params, SND_PCM_FORMAT_S16_LE)) < 0)
+	snd_pcm_format_t snd_pcm_format;
+	if (format.bits == 8)
+		snd_pcm_format = SND_PCM_FORMAT_S8;
+	else if (format.bits == 16)
+		snd_pcm_format = SND_PCM_FORMAT_S16_LE;
+	else if ((format.bits == 24) && (format.sampleSize == 4)) 
+		snd_pcm_format = SND_PCM_FORMAT_S24_LE;
+	else if (format.bits == 32)
+		snd_pcm_format = SND_PCM_FORMAT_S32_LE;
+	else
+		throw SnapException("Unsupported sample format: "  + cpt::to_string(format.bits));
+
+	if ((pcm = snd_pcm_hw_params_set_format(handle_, params, snd_pcm_format)) < 0)
 		throw SnapException("Can't set format: " + string(snd_strerror(pcm)));
 
 	if ((pcm = snd_pcm_hw_params_set_channels(handle_, params, channels)) < 0)
@@ -100,7 +113,7 @@ void AlsaPlayer::initAlsa()
 	snd_pcm_hw_params_get_period_size(params, &frames_, 0);
 	logO << "frames: " << frames_ << "\n";
 
-	buff_size = frames_ * channels * 2 /* 2 -> sample size */;
+	buff_size = frames_ * format.frameSize; //channels * 2 /* 2 -> sample size */;
 	buff_ = (char *) malloc(buff_size);
 
 	snd_pcm_hw_params_get_period_time(params, &tmp, NULL);
