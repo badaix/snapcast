@@ -194,7 +194,7 @@ void OpenslPlayer::initOpensl()
 
 	frames_ = 1920;//960;//rate / 50; // => 50ms
 
-	buff_size = frames_ * format.channels * 2 /* 2 -> sample size */;
+	buff_size = frames_ * format.frameSize /* 2 -> sample size */;
 	logO << "frames: " << frames_ << ", channels: " << format.channels << ", rate: " << format.rate << ", buff: " << buff_size << "\n";
 
 	SLresult result;
