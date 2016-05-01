@@ -62,8 +62,8 @@ void OggEncoder::encode(const msg::PcmChunk* chunk)
 	for (int i=0; i<bytes; i++)
 	{
 		int idx = 4*i;
-		buffer[0][i]=((((int8_t)chunk->payload[idx+1]) << 8) | (0x00ff&((int8_t)chunk->payload[idx])))/32768.f;
-		buffer[1][i]=((((int8_t)chunk->payload[idx+3]) << 8) | (0x00ff&((int8_t)chunk->payload[idx+2])))/32768.f;
+		buffer[0][i]=((((int8_t)chunk->payload[idx+1]) << 8) | (0x00ff & ((int8_t)chunk->payload[idx])))/32768.f;
+		buffer[1][i]=((((int8_t)chunk->payload[idx+3]) << 8) | (0x00ff & ((int8_t)chunk->payload[idx+2])))/32768.f;
 	}
 
 	/* tell the library how much we actually submitted */
@@ -75,13 +75,13 @@ void OggEncoder::encode(const msg::PcmChunk* chunk)
 	more involved (potentially parallel) processing.  Get a single
 	block for encoding now */
 	size_t pos = 0;
-	while (vorbis_analysis_blockout(&vd,&vb)==1)
+	while (vorbis_analysis_blockout(&vd, &vb)==1)
 	{
 		/* analysis, assume we want to use bitrate management */
-		vorbis_analysis(&vb,NULL);
+		vorbis_analysis(&vb, NULL);
 		vorbis_bitrate_addblock(&vb);
 
-		while (vorbis_bitrate_flushpacket(&vd,&op))
+		while (vorbis_bitrate_flushpacket(&vd, &op))
 		{
 			/* weld the packet into the bitstream */
 			ogg_stream_packetin(&os, &op);
@@ -195,8 +195,8 @@ void OggEncoder::initEncoder()
 	vorbis_comment_add_tag(&vc, "VERSION", VERSION);
 
 	/* set up the analysis state and auxiliary encoding storage */
-	vorbis_analysis_init(&vd,&vi);
-	vorbis_block_init(&vd,&vb);
+	vorbis_analysis_init(&vd, &vi);
+	vorbis_block_init(&vd, &vb);
 
 	/* set up our packet->stream encoder */
 	/* pick a random serial number; that way we can more likely build
@@ -215,10 +215,10 @@ void OggEncoder::initEncoder()
 	ogg_packet header_comm;
 	ogg_packet header_code;
 
-	vorbis_analysis_headerout(&vd,&vc,&header,&header_comm,&header_code);
-	ogg_stream_packetin(&os,&header);
-	ogg_stream_packetin(&os,&header_comm);
-	ogg_stream_packetin(&os,&header_code);
+	vorbis_analysis_headerout(&vd, &vc, &header, &header_comm, &header_code);
+	ogg_stream_packetin(&os, &header);
+	ogg_stream_packetin(&os, &header_comm);
+	ogg_stream_packetin(&os, &header_code);
 
 	/* This ensures the actual
 	 * audio data will start on a new page, as per spec
@@ -227,7 +227,7 @@ void OggEncoder::initEncoder()
 	headerChunk_.reset(new msg::CodecHeader("ogg"));
 	while (true)
 	{
-		int result = ogg_stream_flush(&os,&og);
+		int result = ogg_stream_flush(&os, &og);
 		if (result == 0)
 			break;
 		headerChunk_->payloadSize += og.header_len + og.body_len;
