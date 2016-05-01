@@ -106,8 +106,11 @@ void StreamServer::onDisconnect(StreamSession* streamSession)
 	clientInfo->connected = false;
 	gettimeofday(&clientInfo->lastSeen, NULL);
 	Config::instance().save();
-	json notification = JsonNotification::getJson("Client.OnDisconnect", clientInfo->toJson());
-	controlServer_->send(notification.dump());
+	if (controlServer_ != nullptr)
+	{
+		json notification = JsonNotification::getJson("Client.OnDisconnect", clientInfo->toJson());
+		controlServer_->send(notification.dump());
+	}
 }
 
 
@@ -357,32 +360,58 @@ void StreamServer::handleAccept(socket_ptr socket)
 
 void StreamServer::start()
 {
-//	throw SnapException("good");
-	controlServer_.reset(new ControlServer(io_service_, settings_.controlPort, this));
-	controlServer_->start();
+	try
+	{
+		controlServer_.reset(new ControlServer(io_service_, settings_.controlPort, this));
+		controlServer_->start();
 
-	streamManager_.reset(new StreamManager(this, settings_.sampleFormat, settings_.codec, settings_.streamReadMs));
-	//TODO: check uniqueness of the stream
-	for (auto& streamUri: settings_.pcmStreams)
-		logO << "Stream: " << streamManager_->addStream(streamUri)->getUri().toJson() << "\n";
-//	throw SnapException("bad");
+		streamManager_.reset(new StreamManager(this, settings_.sampleFormat, settings_.codec, settings_.streamReadMs));
+//	throw SnapException("xxx");
+		//TODO: check uniqueness of the stream
+		for (const auto& streamUri: settings_.pcmStreams)
+		{
+			PcmStream* stream = streamManager_->addStream(streamUri);
+			if (stream != NULL)
+				logO << "Stream: " << stream->getUri().toJson() << "\n";
+		}
+		streamManager_->start();
 
-	streamManager_->start();
-
-	acceptor_ = make_shared<tcp::acceptor>(*io_service_, tcp::endpoint(tcp::v4(), settings_.port));
-	startAccept();
+		acceptor_ = make_shared<tcp::acceptor>(*io_service_, tcp::endpoint(tcp::v4(), settings_.port));
+		startAccept();
+	}
+	catch (const std::exception&)
+	{
+		stop();
+		throw;
+	}
 }
 
 
 void StreamServer::stop()
 {
-	controlServer_->stop();
-	acceptor_->cancel();
-
-	streamManager_->stop();
-
+	if (controlServer_)
+	{
+		controlServer_->stop();
+		controlServer_ = nullptr;
+	}
+	
+	if (acceptor_)
+	{
+		acceptor_->cancel();
+		acceptor_ = nullptr;
+	}
+	
+	if (streamManager_)
+	{
+		streamManager_->stop();
+		streamManager_ = nullptr;
+	}
 //	std::lock_guard<std::mutex> mlock(sessionsMutex_);
 	for (auto session: sessions_)//it = sessions_.begin(); it != sessions_.end(); ++it)
-		session->stop();
+	{
+		if (session)
+			session->stop();
+	}
+	
 }
 
