@@ -26,7 +26,8 @@
 
 using namespace std;
 
-AlsaPlayer::AlsaPlayer(const PcmDevice& pcmDevice, Stream* stream) : Player(pcmDevice, stream), handle_(NULL), buff_(NULL)
+AlsaPlayer::AlsaPlayer(const PcmDevice& pcmDevice, Stream* stream) : 
+	Player(pcmDevice, stream), handle_(NULL), buff_(NULL)
 {
 }
 
@@ -73,8 +74,17 @@ void AlsaPlayer::initAlsa()
 	else
 		throw SnapException("Unsupported sample format: "  + cpt::to_string(format.bits));
 
-	if ((pcm = snd_pcm_hw_params_set_format(handle_, params, snd_pcm_format)) < 0)
+	pcm = snd_pcm_hw_params_set_format(handle_, params, snd_pcm_format);
+	if ((pcm == -EINVAL) && (snd_pcm_format == SND_PCM_FORMAT_S24_LE))
 	{
+		snd_pcm_format = SND_PCM_FORMAT_S32_LE;
+		volCorrection_ = 256;
+	}
+	
+	pcm = snd_pcm_hw_params_set_format(handle_, params, snd_pcm_format);
+	if (pcm < 0)
+	{
+		cerr << "error: " << pcm << "\n";
 		stringstream ss;
 		ss << "Can't set format: " << string(snd_strerror(pcm)) << ", supported: ";
 		for (int format = 0; format <= (int)SND_PCM_FORMAT_LAST; format++)
