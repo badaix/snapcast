@@ -75,10 +75,17 @@ void AlsaPlayer::initAlsa()
 		throw SnapException("Unsupported sample format: "  + cpt::to_string(format.bits));
 
 	pcm = snd_pcm_hw_params_set_format(handle_, params, snd_pcm_format);
-	if ((pcm == -EINVAL) && (snd_pcm_format == SND_PCM_FORMAT_S24_LE))
+	if (pcm == -EINVAL)
 	{
-		snd_pcm_format = SND_PCM_FORMAT_S32_LE;
-		volCorrection_ = 256;
+		if (snd_pcm_format == SND_PCM_FORMAT_S24_LE)
+		{
+			snd_pcm_format = SND_PCM_FORMAT_S32_LE;
+			volCorrection_ = 256;
+		}
+		if (snd_pcm_format == SND_PCM_FORMAT_S8)
+		{
+			snd_pcm_format = SND_PCM_FORMAT_U8;
+		}
 	}
 	
 	pcm = snd_pcm_hw_params_set_format(handle_, params, snd_pcm_format);
