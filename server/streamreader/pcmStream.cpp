@@ -32,7 +32,8 @@ using namespace std;
 
 
 
-PcmStream::PcmStream(PcmListener* pcmListener, const StreamUri& uri) : pcmListener_(pcmListener), uri_(uri), pcmReadMs_(20), state_(kIdle)
+PcmStream::PcmStream(PcmListener* pcmListener, const StreamUri& uri) : 
+	active_(false), pcmListener_(pcmListener), uri_(uri), pcmReadMs_(20), state_(kIdle)
 {
 	EncoderFactory encoderFactory;
  	if (uri_.query.find("codec") == uri_.query.end())

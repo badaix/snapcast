@@ -26,7 +26,8 @@ using namespace std;
 
 
 
-ControlSession::ControlSession(ControlMessageReceiver* receiver, std::shared_ptr<tcp::socket> socket) : messageReceiver_(receiver)
+ControlSession::ControlSession(ControlMessageReceiver* receiver, std::shared_ptr<tcp::socket> socket) : 
+	active_(false), messageReceiver_(receiver)
 {
 	socket_ = socket;
 }
