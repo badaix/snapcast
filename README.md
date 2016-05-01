@@ -82,8 +82,10 @@ Snapcast can be controlled using JSON-RPC:
 * Rename clients
 * Assign a client to a stream
 * ...
-There is an Android client available in [Releases](https://github.com/badaix/snapcast/releases/latest)
-![Snapcast for Android](https://raw.githubusercontent.com/badaix/snapcast/develop/doc/snapcast_android_scaled.png)
+
+There is an Android client available in [Releases](https://github.com/badaix/snapcast/releases/latest) 
+
+![Snapcast for Android](https://raw.githubusercontent.com/badaix/snapcast/master/doc/snapcast_android_scaled.png)
 
 Setup of audio players/server
 -----------------------------
