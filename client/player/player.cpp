@@ -31,7 +31,8 @@ Player::Player(const PcmDevice& pcmDevice, Stream* stream) :
 	stream_(stream),
 	pcmDevice_(pcmDevice),
 	volume_(1.0),
-	muted_(false)
+	muted_(false),
+	volCorrection_(1.0)
 {
 }
 
@@ -69,13 +70,14 @@ void Player::adjustVolume(char* buffer, size_t frames)
 
 	const SampleFormat& sampleFormat = stream_->getFormat();
 
-	if (volume < 1.0)
+	if ((volume < 1.0) || (volCorrection_ != 1.))
 	{
-		if (sampleFormat.bits == 8)
+		volume *= volCorrection_;
+		if (sampleFormat.sampleSize == 1)
 			adjustVolume<int8_t>(buffer, frames*sampleFormat.channels, volume);
-		else if (sampleFormat.bits == 16)
+		else if (sampleFormat.sampleSize == 2)
 			adjustVolume<int16_t>(buffer, frames*sampleFormat.channels, volume);
-		else if (sampleFormat.bits == 32)
+		else if (sampleFormat.sampleSize == 4)
 			adjustVolume<int32_t>(buffer, frames*sampleFormat.channels, volume);
 	}
 }
