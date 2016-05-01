@@ -74,6 +74,16 @@ When you are using a Raspberry pi, you might have to change your audio output to
 To setup WiFi on a raspberry pi, you can follow this guide:
 https://www.raspberrypi.org/documentation/configuration/wireless/wireless-cli.md
 
+Control
+-------
+Snapcast can be controlled using JSON-RPC:
+* Set client's volume
+* Mute clients
+* Rename clients
+* Assign a client to a stream
+* ...
+There is an Android client available in [Releases](https://github.com/badaix/snapcast/releases/latest)
+![Snapcast for Android](https://raw.githubusercontent.com/badaix/snapcast/develop/doc/snapcast_android_scaled.png)
 
 Setup of audio players/server
 -----------------------------
