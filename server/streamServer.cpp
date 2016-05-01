@@ -389,6 +389,13 @@ void StreamServer::start()
 
 void StreamServer::stop()
 {
+//	std::lock_guard<std::mutex> mlock(sessionsMutex_);
+	for (auto session: sessions_)//it = sessions_.begin(); it != sessions_.end(); ++it)
+	{
+		if (session)
+			session->stop();
+	}
+
 	if (controlServer_)
 	{
 		controlServer_->stop();
@@ -406,12 +413,5 @@ void StreamServer::stop()
 		streamManager_->stop();
 		streamManager_ = nullptr;
 	}
-//	std::lock_guard<std::mutex> mlock(sessionsMutex_);
-	for (auto session: sessions_)//it = sessions_.begin(); it != sessions_.end(); ++it)
-	{
-		if (session)
-			session->stop();
-	}
-	
 }
 

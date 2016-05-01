@@ -87,7 +87,6 @@ const SampleFormat& PcmStream::getSampleFormat() const
 void PcmStream::start()
 {
 	logD << "PcmStream start: " << sampleFormat_.getFormat() << "\n";
-//TODO: wrong encoder settings leads to: terminate called after throwing an instance of 'std::system_error'  what():  Invalid argument
 	encoder_->init(this, sampleFormat_);
 
  	active_ = true;
