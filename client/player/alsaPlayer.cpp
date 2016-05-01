@@ -74,7 +74,17 @@ void AlsaPlayer::initAlsa()
 		throw SnapException("Unsupported sample format: "  + cpt::to_string(format.bits));
 
 	if ((pcm = snd_pcm_hw_params_set_format(handle_, params, snd_pcm_format)) < 0)
-		throw SnapException("Can't set format: " + string(snd_strerror(pcm)));
+	{
+		stringstream ss;
+		ss << "Can't set format: " << string(snd_strerror(pcm)) << ", supported: ";
+		for (int format = 0; format <= (int)SND_PCM_FORMAT_LAST; format++)
+		{
+			snd_pcm_format_t snd_pcm_format = static_cast<snd_pcm_format_t>(format);
+ 			if (snd_pcm_hw_params_test_format(handle_, params, snd_pcm_format) == 0)
+ 				ss << snd_pcm_format_name(snd_pcm_format) << " ";
+		}
+ 		throw SnapException(ss.str());
+	}
 
 	if ((pcm = snd_pcm_hw_params_set_channels(handle_, params, channels)) < 0)
 		throw SnapException("Can't set channels number: " + string(snd_strerror(pcm)));
