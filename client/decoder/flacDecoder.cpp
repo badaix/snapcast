@@ -133,30 +133,9 @@ FLAC__StreamDecoderWriteStatus write_callback(const FLAC__StreamDecoder *decoder
 {
 	(void)decoder;
 
-/*	if(channels != 2 || bps != 16) {
-		fprintf(stderr, "ERROR: this example only supports 16bit stereo streams\n");
-		return FLAC__STREAM_DECODER_WRITE_STATUS_ABORT;
-	}
-	if(frame->header.channels != 2) {
-		fprintf(stderr, "ERROR: This frame contains %d channels (should be 2)\n", frame->header.channels);
-		return FLAC__STREAM_DECODER_WRITE_STATUS_ABORT;
-	}
-*/	if (buffer[0] == NULL)
-	{
-		logS(kLogErr) << "ERROR: buffer [0] is NULL\n";
-		return FLAC__STREAM_DECODER_WRITE_STATUS_ABORT;
-	}
-
-	if (buffer[1] == NULL)
-	{
-		logS(kLogErr) << "ERROR: buffer [1] is NULL\n";
-		return FLAC__STREAM_DECODER_WRITE_STATUS_ABORT;
-	}
-
 	if (pcmChunk != NULL)
 	{
-//TODO: hard coded to 2 channels, 16 bit
-		size_t bytes = frame->header.blocksize * 4;
+		size_t bytes = frame->header.blocksize * sampleFormat.frameSize;
 
 		FlacDecoder* flacDecoder = static_cast<FlacDecoder*>(client_data);
 		if (flacDecoder->cacheInfo_.isCachedChunk_)
@@ -164,13 +143,32 @@ FLAC__StreamDecoderWriteStatus write_callback(const FLAC__StreamDecoder *decoder
 
 		pcmChunk->payload = (char*)realloc(pcmChunk->payload, pcmChunk->payloadSize + bytes);
 
-		int16_t* pcm = (int16_t*)(pcmChunk->payload + pcmChunk->payloadSize);
-		for(size_t i = 0; i < frame->header.blocksize; i++)
+		for (size_t channel = 0; channel < sampleFormat.channels; ++channel)
 		{
-			pcm[2*i] = SWAP_16((int16_t)(buffer[0][i]));
-			pcm[2*i + 1] = SWAP_16((int16_t)(buffer[1][i]));
-//			memcpy(pcmChunk->payload + pcmChunk->payloadSize + 4*i, (char*)(buffer[0] + i), 2);
-//			memcpy(pcmChunk->payload + pcmChunk->payloadSize + 4*i+2, (char*)(buffer[1] + i), 2);
+			if (buffer[channel] == NULL)
+			{
+				logS(kLogErr) << "ERROR: buffer[" << channel << "] is NULL\n";
+				return FLAC__STREAM_DECODER_WRITE_STATUS_ABORT;
+			}
+			
+			if (sampleFormat.sampleSize == 1)
+			{
+				int8_t* pcm = (int8_t*)(pcmChunk->payload + pcmChunk->payloadSize);
+				for(size_t i = 0; i < frame->header.blocksize; i++)
+					pcm[sampleFormat.channels*i + channel] = (int8_t)(buffer[channel][i]);
+			}
+			else if (sampleFormat.sampleSize == 2)
+			{
+				int16_t* pcm = (int16_t*)(pcmChunk->payload + pcmChunk->payloadSize);
+				for(size_t i = 0; i < frame->header.blocksize; i++)
+					pcm[sampleFormat.channels*i + channel] = SWAP_16((int16_t)(buffer[channel][i]));
+			}
+			else if (sampleFormat.sampleSize == 4)
+			{
+				int32_t* pcm = (int32_t*)(pcmChunk->payload + pcmChunk->payloadSize);
+				for(size_t i = 0; i < frame->header.blocksize; i++)
+					pcm[sampleFormat.channels*i + channel] = SWAP_32((int32_t)(buffer[channel][i]));
+			}
 		}
 		pcmChunk->payloadSize += bytes;
 	}
