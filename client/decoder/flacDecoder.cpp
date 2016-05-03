@@ -153,21 +153,21 @@ FLAC__StreamDecoderWriteStatus write_callback(const FLAC__StreamDecoder *decoder
 			
 			if (sampleFormat.sampleSize == 1)
 			{
-				int8_t* pcm = (int8_t*)(pcmChunk->payload + pcmChunk->payloadSize);
-				for(size_t i = 0; i < frame->header.blocksize; i++)
-					pcm[sampleFormat.channels*i + channel] = (int8_t)(buffer[channel][i]);
+				int8_t* chunkBuffer = (int8_t*)(pcmChunk->payload + pcmChunk->payloadSize);
+				for (size_t i = 0; i < frame->header.blocksize; i++)
+					chunkBuffer[sampleFormat.channels*i + channel] = (int8_t)(buffer[channel][i]);
 			}
 			else if (sampleFormat.sampleSize == 2)
 			{
-				int16_t* pcm = (int16_t*)(pcmChunk->payload + pcmChunk->payloadSize);
-				for(size_t i = 0; i < frame->header.blocksize; i++)
-					pcm[sampleFormat.channels*i + channel] = SWAP_16((int16_t)(buffer[channel][i]));
+				int16_t* chunkBuffer = (int16_t*)(pcmChunk->payload + pcmChunk->payloadSize);
+				for (size_t i = 0; i < frame->header.blocksize; i++)
+					chunkBuffer[sampleFormat.channels*i + channel] = SWAP_16((int16_t)(buffer[channel][i]));
 			}
 			else if (sampleFormat.sampleSize == 4)
 			{
-				int32_t* pcm = (int32_t*)(pcmChunk->payload + pcmChunk->payloadSize);
-				for(size_t i = 0; i < frame->header.blocksize; i++)
-					pcm[sampleFormat.channels*i + channel] = SWAP_32((int32_t)(buffer[channel][i]));
+				int32_t* chunkBuffer = (int32_t*)(pcmChunk->payload + pcmChunk->payloadSize);
+				for (size_t i = 0; i < frame->header.blocksize; i++)
+					chunkBuffer[sampleFormat.channels*i + channel] = SWAP_32((int32_t)(buffer[channel][i]));
 			}
 		}
 		pcmChunk->payloadSize += bytes;

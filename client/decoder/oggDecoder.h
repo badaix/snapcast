@@ -36,6 +36,13 @@ public:
 
 private:
 	bool decodePayload(msg::PcmChunk* chunk);
+	template <typename T>
+	T clip(const T& value, const T& lower, const T& upper) const
+	{
+		if (value > upper) return upper;
+		if (value < lower) return lower;
+		return value;
+	}
 
 	ogg_sync_state   oy; /// sync and verify incoming physical bitstream
 	ogg_stream_state os; /// take physical pages, weld into a logical stream of packets
@@ -47,11 +54,7 @@ private:
 	vorbis_dsp_state vd; /// central working state for the packet->PCM decoder
 	vorbis_block     vb; /// local working space for packet->PCM decode
 
-	ogg_int16_t* convbuffer; /// take 8k out of the data segment, not the stack
-	int convsize;
-
-	char *buffer;
-	int  bytes;
+	SampleFormat sampleFormat_;
 };
 
 

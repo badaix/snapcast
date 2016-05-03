@@ -55,19 +55,34 @@ void OggEncoder::encode(const msg::PcmChunk* chunk)
 {
 	double res = 0;
 	logD << "payload: " << chunk->payloadSize << "\tframes: " << chunk->getFrameCount() << "\tduration: " << chunk->duration<chronos::msec>().count() << "\n";
-	int bytes = chunk->payloadSize / 4;
-	float **buffer=vorbis_analysis_buffer(&vd, bytes);
+	int frames = chunk->getFrameCount();
+	float **buffer=vorbis_analysis_buffer(&vd, frames);
 
 	/* uninterleave samples */
-	for (int i=0; i<bytes; i++)
+	for (size_t channel = 0; channel < sampleFormat_.channels; ++channel)
 	{
-		int idx = 4*i;
-		buffer[0][i]=((((int8_t)chunk->payload[idx+1]) << 8) | (0x00ff & ((int8_t)chunk->payload[idx])))/32768.f;
-		buffer[1][i]=((((int8_t)chunk->payload[idx+3]) << 8) | (0x00ff & ((int8_t)chunk->payload[idx+2])))/32768.f;
+		if (sampleFormat_.sampleSize == 1)
+		{
+			int8_t* chunkBuffer = (int8_t*)chunk->payload; 
+			for (int i=0; i<frames; i++)
+				buffer[channel][i]= chunkBuffer[sampleFormat_.channels*i + channel] / 128.f;
+		}
+		else if (sampleFormat_.sampleSize == 2)
+		{
+			int16_t* chunkBuffer = (int16_t*)chunk->payload; 
+			for (int i=0; i<frames; i++)
+				buffer[channel][i]= chunkBuffer[sampleFormat_.channels*i + channel] / 32768.f;
+		}
+		else if (sampleFormat_.sampleSize == 4)
+		{
+			int32_t* chunkBuffer = (int32_t*)chunk->payload; 
+			for (int i=0; i<frames; i++)
+				buffer[channel][i]= chunkBuffer[sampleFormat_.channels*i + channel] / 2147483648.f;
+		}
 	}
 
 	/* tell the library how much we actually submitted */
-	vorbis_analysis_wrote(&vd, bytes);
+	vorbis_analysis_wrote(&vd, frames);
 
 	msg::PcmChunk* oggChunk = new msg::PcmChunk(chunk->format, 0);
 
@@ -193,6 +208,7 @@ void OggEncoder::initEncoder()
 	vorbis_comment_init(&vc);
 	vorbis_comment_add_tag(&vc, "TITLE", "SnapStream");
 	vorbis_comment_add_tag(&vc, "VERSION", VERSION);
+	vorbis_comment_add_tag(&vc, "SAMPLE_FORMAT", sampleFormat_.getFormat().c_str());
 
 	/* set up the analysis state and auxiliary encoding storage */
 	vorbis_analysis_init(&vd, &vi);
