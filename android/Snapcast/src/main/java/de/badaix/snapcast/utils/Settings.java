@@ -101,6 +101,14 @@ public class Settings {
         return getInt("controlPort", getStreamPort() + 1);
     }
 
+    public boolean isAutostart() {
+        return getBoolean("autoStart", false);
+    }
+
+    public void setAutostart(boolean autoStart) {
+        put("autoStart", autoStart);
+    }
+
     public void setHost(String host, int streamPort, int controlPort) {
         put("host", host);
         put("streamPort", streamPort);

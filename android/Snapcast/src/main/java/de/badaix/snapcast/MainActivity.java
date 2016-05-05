@@ -1,5 +1,6 @@
 package de.badaix.snapcast;
 
+import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -10,7 +11,6 @@ import android.content.pm.PackageManager;
 import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.media.AudioRecord;
-import android.net.Uri;
 import android.net.nsd.NsdServiceInfo;
 import android.os.Build;
 import android.os.Bundle;
@@ -30,6 +30,7 @@ import android.text.TextUtils;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.TextureView;
 import android.view.View;
 import android.view.WindowManager;
 
@@ -210,11 +211,17 @@ public class MainActivity extends AppCompatActivity implements ClientItem.Client
 //            NsdHelper.getInstance(this).startListening("*._tcp.", "SnapCast", this);
             ServerDialogFragment serverDialogFragment = new ServerDialogFragment();
             serverDialogFragment.setHost(Settings.getInstance(this).getHost(), Settings.getInstance(this).getStreamPort(), Settings.getInstance(this).getControlPort());
+            serverDialogFragment.setAutoStart(Settings.getInstance(this).isAutostart());
             serverDialogFragment.setListener(new ServerDialogFragment.ServerDialogListener() {
                 @Override
                 public void onHostChanged(String host, int streamPort, int controlPort) {
                     setHost(host, streamPort, controlPort);
                     startRemoteControl();
+                }
+
+                @Override
+                public void onAutoStartChanged(boolean autoStart) {
+                    Settings.getInstance(MainActivity.this).setAutostart(autoStart);
                 }
             });
             serverDialogFragment.show(getSupportFragmentManager(), "serverDialogFragment");
@@ -264,6 +271,9 @@ public class MainActivity extends AppCompatActivity implements ClientItem.Client
     }
 
     private void startSnapclient() {
+        if (TextUtils.isEmpty(host))
+            return;
+
         Intent i = new Intent(this, SnapclientService.class);
         i.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
         i.putExtra(SnapclientService.EXTRA_HOST, host);

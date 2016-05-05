@@ -75,6 +75,12 @@
 
     </TableLayout>
 
+    <CheckBox
+        android:id="@+id/checkBoxAutoStart"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/auto_start"/>
+
     <Button
         android:id="@+id/btn_scan"
         android:layout_width="wrap_content"
