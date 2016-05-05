@@ -139,7 +139,7 @@ bool OggDecoder::decode(msg::PcmChunk* chunk)
 						{
 							int32_t& val = chunkBuffer[sampleFormat_.channels*i + channel];
 #ifdef HAS_TREMOR
-							val = SWAP_32(clip<int32_t>(pcm[channel][i] << 8, -2147483648, 2147483647));
+							val = SWAP_32(clip<int32_t>(pcm[channel][i] << 7, -2147483648, 2147483647));
 #else
 							val = SWAP_32(clip<int32_t>(floor(pcm[channel][i]*2147483647.f + .5f), -2147483648, 2147483647));
 #endif
