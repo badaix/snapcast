@@ -52,21 +52,8 @@ protected:
 	void adjustVolume(char *buffer, size_t count, double volume)
 	{
 		T* bufferT = (T*)buffer;
-		if (sizeof(T) == 1)
-		{
-			for (size_t n=0; n<count; ++n)
-				bufferT[n] = bufferT[n] * volume;
-		}
-		else if (sizeof(T) == 2)
-		{
-			for (size_t n=0; n<count; ++n)
-				bufferT[n] = (T)(SWAP_16(((T)SWAP_16(bufferT[n])) * volume));
-		}
-		else if (sizeof(T) == 4)
-		{
-			for (size_t n=0; n<count; ++n)
-				bufferT[n] = (T)(SWAP_32(((T)SWAP_32(bufferT[n])) * volume));
-		}
+		for (size_t n=0; n<count; ++n)
+			bufferT[n] = endian::swap<T>(endian::swap<T>(bufferT[n]) * volume);
 	}
 
 	void adjustVolume(char* buffer, size_t frames);
