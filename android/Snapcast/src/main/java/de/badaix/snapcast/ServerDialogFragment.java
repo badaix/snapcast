@@ -141,6 +141,7 @@ public class ServerDialogFragment extends DialogFragment implements View.OnClick
 
     public interface ServerDialogListener {
         void onHostChanged(String host, int streamPort, int controlPort);
+
         void onAutoStartChanged(boolean autoStart);
     }
 }
