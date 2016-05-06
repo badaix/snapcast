@@ -9,8 +9,9 @@ snapserver (0.7.0) unstable; urgency=low
   * Bugfixes
     -Server was sometimes crashing during shutdown
     -Exceptions were not properly logged (e.g. unsupported sample rates)
+    -Fixed default sound card detection on OpenWrt
 
- -- Johannes Pohl <johannes.pohl@badaix.de>  Thu, 05 May 2016 13:37:00 +0200
+ -- Johannes Pohl <johannes.pohl@badaix.de>  Sat, 07 May 2016 00:13:37 +0200
 
 snapserver (0.6.0) unstable; urgency=low
 
