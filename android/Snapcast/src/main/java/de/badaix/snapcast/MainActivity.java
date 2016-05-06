@@ -1,6 +1,5 @@
 package de.badaix.snapcast;
 
-import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -15,6 +14,7 @@ import android.net.nsd.NsdServiceInfo;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.Snackbar;
 import android.support.design.widget.TabLayout;
 import android.support.v4.app.Fragment;
@@ -30,7 +30,6 @@ import android.text.TextUtils;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.TextureView;
 import android.view.View;
 import android.view.WindowManager;
 
@@ -65,8 +64,9 @@ public class MainActivity extends AppCompatActivity implements ClientItem.Client
     private SnapclientService snapclientService;
     private SectionsPagerAdapter sectionsPagerAdapter;
     private TabLayout tabLayout;
-    private Snackbar wrongSamplerateSnackbar = null;
+    private Snackbar warningSamplerateSnackbar = null;
     private int nativeSampleRate = 0;
+    private CoordinatorLayout coordinatorLayout;
 
     /**
      * The {@link ViewPager} that will host the section contents.
@@ -129,6 +129,7 @@ public class MainActivity extends AppCompatActivity implements ClientItem.Client
 //            tvInfo.setText("Sample rate: " + rate + ", buffer size: " + size);
         }
 
+        coordinatorLayout = (CoordinatorLayout) findViewById(R.id.myCoordinatorLayout);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         // Create the adapter that will return a fragment for each of the three
@@ -353,8 +354,8 @@ public class MainActivity extends AppCompatActivity implements ClientItem.Client
     public void onPlayerStop(SnapclientService snapclientService) {
         Log.d(TAG, "onPlayerStop");
         updateStartStopMenuItem();
-        if (wrongSamplerateSnackbar != null)
-            wrongSamplerateSnackbar.dismiss();
+        if (warningSamplerateSnackbar != null)
+            warningSamplerateSnackbar.dismiss();
     }
 
     @Override
@@ -367,27 +368,33 @@ public class MainActivity extends AppCompatActivity implements ClientItem.Client
                 if (msg.indexOf(':') > 0) {
                     int samplerate = Integer.valueOf(msg.substring(0, msg.indexOf(':')));
 
-                    if (wrongSamplerateSnackbar != null)
-                        wrongSamplerateSnackbar.dismiss();
+                    if (warningSamplerateSnackbar != null)
+                        warningSamplerateSnackbar.dismiss();
 
                     if ((nativeSampleRate != 0) && (nativeSampleRate != samplerate)) {
-                        wrongSamplerateSnackbar = Snackbar.make(findViewById(R.id.myCoordinatorLayout),
+                        warningSamplerateSnackbar = Snackbar.make(coordinatorLayout,
                                 getString(R.string.wrong_sample_rate, samplerate, nativeSampleRate), Snackbar.LENGTH_INDEFINITE);
-/*                        wrongSamplerateSnackbar.setAction(android.R.string.ok, new View.OnClickListener() {
+/*                        warningSamplerateSnackbar.setAction(android.R.string.ok, new View.OnClickListener() {
                             @Override
                             public void onClick(View v) {
-                                wrongSamplerateSnackbar.dismiss();
+                                warningSamplerateSnackbar.dismiss();
                             }
                         });
 */
-                        wrongSamplerateSnackbar.show();
+                        warningSamplerateSnackbar.show();
                     } else if (nativeSampleRate == 0) {
-                        wrongSamplerateSnackbar = Snackbar.make(findViewById(R.id.myCoordinatorLayout),
+                        warningSamplerateSnackbar = Snackbar.make(coordinatorLayout,
                                 getString(R.string.unknown_sample_rate), Snackbar.LENGTH_LONG);
-                        wrongSamplerateSnackbar.show();
+                        warningSamplerateSnackbar.show();
                     }
                 }
             }
+        } else if ("err".equals(logClass) || "Emerg".equals(logClass) || "Alert".equals(logClass) || "Crit".equals(logClass) || "Err".equals(logClass)) {
+            if (warningSamplerateSnackbar != null)
+                warningSamplerateSnackbar.dismiss();
+            warningSamplerateSnackbar = Snackbar.make(findViewById(R.id.myCoordinatorLayout),
+                    msg, Snackbar.LENGTH_LONG);
+            warningSamplerateSnackbar.show();
         }
     }
 
