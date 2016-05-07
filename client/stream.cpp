@@ -17,6 +17,7 @@
 ***/
 
 #include "stream.h"
+#include <cmath>
 #include <iostream>
 #include <string.h>
 #include "common/log.h"
