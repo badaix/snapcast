@@ -1,3 +1,21 @@
+/*
+ *     This file is part of snapcast
+ *     Copyright (C) 2014-2016  Johannes Pohl
+ *
+ *     This program is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     (at your option) any later version.
+ *
+ *     This program is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 package de.badaix.snapcast;
 
 import android.content.ComponentName;
@@ -10,11 +28,11 @@ import android.content.pm.PackageManager;
 import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.media.AudioRecord;
-import android.net.Uri;
 import android.net.nsd.NsdServiceInfo;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.Snackbar;
 import android.support.design.widget.TabLayout;
 import android.support.v4.app.Fragment;
@@ -64,8 +82,9 @@ public class MainActivity extends AppCompatActivity implements ClientItem.Client
     private SnapclientService snapclientService;
     private SectionsPagerAdapter sectionsPagerAdapter;
     private TabLayout tabLayout;
-    private Snackbar wrongSamplerateSnackbar = null;
+    private Snackbar warningSamplerateSnackbar = null;
     private int nativeSampleRate = 0;
+    private CoordinatorLayout coordinatorLayout;
 
     /**
      * The {@link ViewPager} that will host the section contents.
@@ -128,6 +147,7 @@ public class MainActivity extends AppCompatActivity implements ClientItem.Client
 //            tvInfo.setText("Sample rate: " + rate + ", buffer size: " + size);
         }
 
+        coordinatorLayout = (CoordinatorLayout) findViewById(R.id.myCoordinatorLayout);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         // Create the adapter that will return a fragment for each of the three
@@ -210,11 +230,17 @@ public class MainActivity extends AppCompatActivity implements ClientItem.Client
 //            NsdHelper.getInstance(this).startListening("*._tcp.", "SnapCast", this);
             ServerDialogFragment serverDialogFragment = new ServerDialogFragment();
             serverDialogFragment.setHost(Settings.getInstance(this).getHost(), Settings.getInstance(this).getStreamPort(), Settings.getInstance(this).getControlPort());
+            serverDialogFragment.setAutoStart(Settings.getInstance(this).isAutostart());
             serverDialogFragment.setListener(new ServerDialogFragment.ServerDialogListener() {
                 @Override
                 public void onHostChanged(String host, int streamPort, int controlPort) {
                     setHost(host, streamPort, controlPort);
                     startRemoteControl();
+                }
+
+                @Override
+                public void onAutoStartChanged(boolean autoStart) {
+                    Settings.getInstance(MainActivity.this).setAutostart(autoStart);
                 }
             });
             serverDialogFragment.show(getSupportFragmentManager(), "serverDialogFragment");
@@ -264,6 +290,9 @@ public class MainActivity extends AppCompatActivity implements ClientItem.Client
     }
 
     private void startSnapclient() {
+        if (TextUtils.isEmpty(host))
+            return;
+
         Intent i = new Intent(this, SnapclientService.class);
         i.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
         i.putExtra(SnapclientService.EXTRA_HOST, host);
@@ -343,8 +372,8 @@ public class MainActivity extends AppCompatActivity implements ClientItem.Client
     public void onPlayerStop(SnapclientService snapclientService) {
         Log.d(TAG, "onPlayerStop");
         updateStartStopMenuItem();
-        if (wrongSamplerateSnackbar != null)
-            wrongSamplerateSnackbar.dismiss();
+        if (warningSamplerateSnackbar != null)
+            warningSamplerateSnackbar.dismiss();
     }
 
     @Override
@@ -357,27 +386,33 @@ public class MainActivity extends AppCompatActivity implements ClientItem.Client
                 if (msg.indexOf(':') > 0) {
                     int samplerate = Integer.valueOf(msg.substring(0, msg.indexOf(':')));
 
-                    if (wrongSamplerateSnackbar != null)
-                        wrongSamplerateSnackbar.dismiss();
+                    if (warningSamplerateSnackbar != null)
+                        warningSamplerateSnackbar.dismiss();
 
                     if ((nativeSampleRate != 0) && (nativeSampleRate != samplerate)) {
-                        wrongSamplerateSnackbar = Snackbar.make(findViewById(R.id.myCoordinatorLayout),
+                        warningSamplerateSnackbar = Snackbar.make(coordinatorLayout,
                                 getString(R.string.wrong_sample_rate, samplerate, nativeSampleRate), Snackbar.LENGTH_INDEFINITE);
-/*                        wrongSamplerateSnackbar.setAction(android.R.string.ok, new View.OnClickListener() {
+/*                        warningSamplerateSnackbar.setAction(android.R.string.ok, new View.OnClickListener() {
                             @Override
                             public void onClick(View v) {
-                                wrongSamplerateSnackbar.dismiss();
+                                warningSamplerateSnackbar.dismiss();
                             }
                         });
 */
-                        wrongSamplerateSnackbar.show();
+                        warningSamplerateSnackbar.show();
                     } else if (nativeSampleRate == 0) {
-                        wrongSamplerateSnackbar = Snackbar.make(findViewById(R.id.myCoordinatorLayout),
+                        warningSamplerateSnackbar = Snackbar.make(coordinatorLayout,
                                 getString(R.string.unknown_sample_rate), Snackbar.LENGTH_LONG);
-                        wrongSamplerateSnackbar.show();
+                        warningSamplerateSnackbar.show();
                     }
                 }
             }
+        } else if ("err".equals(logClass) || "Emerg".equals(logClass) || "Alert".equals(logClass) || "Crit".equals(logClass) || "Err".equals(logClass)) {
+            if (warningSamplerateSnackbar != null)
+                warningSamplerateSnackbar.dismiss();
+            warningSamplerateSnackbar = Snackbar.make(findViewById(R.id.myCoordinatorLayout),
+                    msg, Snackbar.LENGTH_LONG);
+            warningSamplerateSnackbar.show();
         }
     }
 

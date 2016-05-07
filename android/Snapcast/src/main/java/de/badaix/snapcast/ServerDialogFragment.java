@@ -1,3 +1,21 @@
+/*
+ *     This file is part of snapcast
+ *     Copyright (C) 2014-2016  Johannes Pohl
+ *
+ *     This program is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     (at your option) any later version.
+ *
+ *     This program is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 package de.badaix.snapcast;
 
 import android.app.Activity;
@@ -12,6 +30,7 @@ import android.support.v7.app.AlertDialog;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.EditText;
 
 import de.badaix.snapcast.utils.NsdHelper;
@@ -25,9 +44,11 @@ public class ServerDialogFragment extends DialogFragment implements View.OnClick
     private EditText editHost;
     private EditText editStreamPort;
     private EditText editControlPort;
+    private CheckBox checkBoxAutoStart;
     private String host = "";
     private int streamPort = 1704;
     private int controlPort = 1705;
+    private boolean autoStart = false;
     private ServerDialogListener listener = null;
 
     public void setListener(ServerDialogListener listener) {
@@ -50,6 +71,7 @@ public class ServerDialogFragment extends DialogFragment implements View.OnClick
         editHost = (EditText) view.findViewById(R.id.host);
         editStreamPort = (EditText) view.findViewById(R.id.stream_port);
         editControlPort = (EditText) view.findViewById(R.id.control_port);
+        checkBoxAutoStart = (CheckBox) view.findViewById(R.id.checkBoxAutoStart);
         update();
 
         builder.setView(view)
@@ -61,8 +83,10 @@ public class ServerDialogFragment extends DialogFragment implements View.OnClick
                         host = editHost.getText().toString();
                         streamPort = Integer.parseInt(editStreamPort.getText().toString());
                         controlPort = Integer.parseInt(editControlPort.getText().toString());
-                        if (listener != null)
+                        if (listener != null) {
                             listener.onHostChanged(host, streamPort, controlPort);
+                            listener.onAutoStartChanged(checkBoxAutoStart.isChecked());
+                        }
                     }
                 })
                 .setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
@@ -109,6 +133,7 @@ public class ServerDialogFragment extends DialogFragment implements View.OnClick
                         editHost.setText(host);
                         editStreamPort.setText(Integer.toString(streamPort));
                         editControlPort.setText(Integer.toString(controlPort));
+                        checkBoxAutoStart.setChecked(autoStart);
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
@@ -126,19 +151,15 @@ public class ServerDialogFragment extends DialogFragment implements View.OnClick
         update();
     }
 
-    public String getHostName() {
-        return host;
+    public void setAutoStart(boolean autoStart) {
+        this.autoStart = autoStart;
+        update();
     }
 
-    public int getStreamPort() {
-        return streamPort;
-    }
-
-    public int getControlPort() {
-        return controlPort;
-    }
 
     public interface ServerDialogListener {
         void onHostChanged(String host, int streamPort, int controlPort);
+
+        void onAutoStartChanged(boolean autoStart);
     }
 }

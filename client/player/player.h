@@ -52,9 +52,8 @@ protected:
 	void adjustVolume(char *buffer, size_t count, double volume)
 	{
 		T* bufferT = (T*)buffer;
-		//TODO: SWAP_T. Hard coded to 16 bit audio
 		for (size_t n=0; n<count; ++n)
-			bufferT[n] = (T)(SWAP_16(((T)SWAP_16(bufferT[n])) * volume));
+			bufferT[n] = endian::swap<T>(endian::swap<T>(bufferT[n]) * volume);
 	}
 
 	void adjustVolume(char* buffer, size_t frames);
@@ -65,6 +64,7 @@ protected:
 	PcmDevice pcmDevice_;
 	double volume_;
 	bool muted_;
+	double volCorrection_;
 };
 
 

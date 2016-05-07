@@ -16,11 +16,10 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
-
-#include <common/utils.h>
-#include <common/strCompat.h>
-#include <common/log.h>
 #include "streamUri.h"
+#include "common/utils.h"
+#include "common/strCompat.h"
+#include "common/log.h"
 
 
 using namespace std;

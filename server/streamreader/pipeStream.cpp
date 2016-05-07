@@ -37,8 +37,19 @@ using namespace std;
 PipeStream::PipeStream(PcmListener* pcmListener, const StreamUri& uri) : PcmStream(pcmListener, uri), fd_(-1)
 {
 	umask(0);
-	if ((mkfifo(uri_.path.c_str(), 0666) != 0) && (errno != EEXIST))
-		throw SnapException("failed to make fifo \"" + uri_.path + "\": " + cpt::to_string(errno));
+	string mode = uri_.query["mode"];
+	if (mode.empty())
+		mode = "create";
+		
+	logO << "PipeStream mode: " << mode << "\n";
+	if ((mode != "read") && (mode != "create"))
+		throw SnapException("create mode for fifo must be \"read\" or \"create\"");
+	
+	if (mode == "create")
+	{
+		if ((mkfifo(uri_.path.c_str(), 0666) != 0) && (errno != EEXIST))
+			throw SnapException("failed to make fifo \"" + uri_.path + "\": " + cpt::to_string(errno));
+	}
 }
 
 

@@ -19,13 +19,15 @@
 #include "alsaPlayer.h"
 #include "common/log.h"
 #include "common/snapException.h"
+#include "common/strCompat.h"
 
 //#define BUFFER_TIME 120000
 #define PERIOD_TIME 30000
 
 using namespace std;
 
-AlsaPlayer::AlsaPlayer(const PcmDevice& pcmDevice, Stream* stream) : Player(pcmDevice, stream), handle_(NULL), buff_(NULL)
+AlsaPlayer::AlsaPlayer(const PcmDevice& pcmDevice, Stream* stream) : 
+	Player(pcmDevice, stream), handle_(NULL), buff_(NULL)
 {
 }
 
@@ -60,8 +62,46 @@ void AlsaPlayer::initAlsa()
 	if ((pcm = snd_pcm_hw_params_set_access(handle_, params, SND_PCM_ACCESS_RW_INTERLEAVED)) < 0)
 		throw SnapException("Can't set interleaved mode: " + string(snd_strerror(pcm)));
 
-	if ((pcm = snd_pcm_hw_params_set_format(handle_, params, SND_PCM_FORMAT_S16_LE)) < 0)
-		throw SnapException("Can't set format: " + string(snd_strerror(pcm)));
+	snd_pcm_format_t snd_pcm_format;
+	if (format.bits == 8)
+		snd_pcm_format = SND_PCM_FORMAT_S8;
+	else if (format.bits == 16)
+		snd_pcm_format = SND_PCM_FORMAT_S16_LE;
+	else if ((format.bits == 24) && (format.sampleSize == 4)) 
+		snd_pcm_format = SND_PCM_FORMAT_S24_LE;
+	else if (format.bits == 32)
+		snd_pcm_format = SND_PCM_FORMAT_S32_LE;
+	else
+		throw SnapException("Unsupported sample format: "  + cpt::to_string(format.bits));
+
+	pcm = snd_pcm_hw_params_set_format(handle_, params, snd_pcm_format);
+	if (pcm == -EINVAL)
+	{
+		if (snd_pcm_format == SND_PCM_FORMAT_S24_LE)
+		{
+			snd_pcm_format = SND_PCM_FORMAT_S32_LE;
+			volCorrection_ = 256;
+		}
+		if (snd_pcm_format == SND_PCM_FORMAT_S8)
+		{
+			snd_pcm_format = SND_PCM_FORMAT_U8;
+		}
+	}
+	
+	pcm = snd_pcm_hw_params_set_format(handle_, params, snd_pcm_format);
+	if (pcm < 0)
+	{
+		cerr << "error: " << pcm << "\n";
+		stringstream ss;
+		ss << "Can't set format: " << string(snd_strerror(pcm)) << ", supported: ";
+		for (int format = 0; format <= (int)SND_PCM_FORMAT_LAST; format++)
+		{
+			snd_pcm_format_t snd_pcm_format = static_cast<snd_pcm_format_t>(format);
+ 			if (snd_pcm_hw_params_test_format(handle_, params, snd_pcm_format) == 0)
+ 				ss << snd_pcm_format_name(snd_pcm_format) << " ";
+		}
+ 		throw SnapException(ss.str());
+	}
 
 	if ((pcm = snd_pcm_hw_params_set_channels(handle_, params, channels)) < 0)
 		throw SnapException("Can't set channels number: " + string(snd_strerror(pcm)));
@@ -100,7 +140,7 @@ void AlsaPlayer::initAlsa()
 	snd_pcm_hw_params_get_period_size(params, &frames_, 0);
 	logO << "frames: " << frames_ << "\n";
 
-	buff_size = frames_ * channels * 2 /* 2 -> sample size */;
+	buff_size = frames_ * format.frameSize; //channels * 2 /* 2 -> sample size */;
 	buff_ = (char *) malloc(buff_size);
 
 	snd_pcm_hw_params_get_period_time(params, &tmp, NULL);

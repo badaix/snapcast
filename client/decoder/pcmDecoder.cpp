@@ -60,19 +60,7 @@ PcmDecoder::PcmDecoder() : Decoder()
 
 bool PcmDecoder::decode(msg::PcmChunk* chunk)
 {
-/*	int16_t* bufferT = (int16_t*)chunk->payload;
-	for (size_t n=0; n<chunk->getSampleCount(); ++n)
-	{
-		bufferT[n] = SWAP_16(bufferT[n]);
-	}
-
-		if (sampleFormat.bits == 8)
-			adjustVolume<int8_t>(buffer, frames*sampleFormat.channels, volume);
-		else if (sampleFormat.bits == 16)
-			adjustVolume<int16_t>(buffer, frames*sampleFormat.channels, volume);
-		else if (sampleFormat.bits == 32)
-			adjustVolume<int32_t>(buffer, frames*sampleFormat.channels, volume);
-*/	return true;
+	return true;
 }
 
 

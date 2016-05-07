@@ -27,7 +27,8 @@ static AvahiEntryGroup *group;
 static AvahiSimplePoll *simple_poll;
 static char* name;
 
-PublishAvahi::PublishAvahi(const std::string& serviceName) : client(NULL), serviceName_(serviceName)
+PublishAvahi::PublishAvahi(const std::string& serviceName) : 
+	client(NULL), serviceName_(serviceName), active_(false)
 {
 	group = NULL;
 	simple_poll = NULL;

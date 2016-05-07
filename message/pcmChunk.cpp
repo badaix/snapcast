@@ -50,11 +50,13 @@ PcmChunk::~PcmChunk()
 
 int PcmChunk::seek(int frames)
 {
+	if ((frames < 0) && (-frames > (int)idx_))
+		frames = -idx_;
+		
 	idx_ += frames;
 	if (idx_ > getFrameCount())
 		idx_ = getFrameCount();
-	if (idx_ < 0)
-		idx_ = 0;
+
 	return idx_;
 }
 

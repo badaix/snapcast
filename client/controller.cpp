@@ -19,17 +19,17 @@
 #include <iostream>
 #include <string>
 #include <memory>
+#include "controller.h"
 #if defined(HAS_OGG) || defined(HAS_TREMOR)
 #include "decoder/oggDecoder.h"
 #endif
 #include "decoder/pcmDecoder.h"
 #include "decoder/flacDecoder.h"
 #include "timeProvider.h"
-#include "common/log.h"
-#include "common/snapException.h"
 #include "message/time.h"
 #include "message/hello.h"
-#include "controller.h"
+#include "common/snapException.h"
+#include "common/log.h"
 
 using namespace std;
 

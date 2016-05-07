@@ -78,3 +78,8 @@ https://www.musicpd.org/doc/user/config_audio_outputs.html#ao_format
 
 *URI:
 https://en.wikipedia.org/wiki/Uniform_Resource_Identifier
+
+*0.7:
+-HiRes Audio
+-Android auto start
+-pipe creation mode: `-s pipe:///tmp/snapfifo?mode=[read|create]`

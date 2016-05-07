@@ -1,3 +1,18 @@
+snapclient (0.7.0) unstable; urgency=low
+
+  * Features
+    -Support for HiRes audio (e.g. 96000:24:2) (Issue #13)
+     Bitdepth must be one of 8, 16, 24 (=24 bit padded to 32) or 32 
+    -Auto start option for Android (Issue #49)
+    -creation mode for the fifo can be configured (Issue #52)
+     "-s pipe:///tmp/snapfifo?mode=[read|create]" 
+  * Bugfixes
+    -Server was sometimes crashing during shutdown
+    -Exceptions were not properly logged (e.g. unsupported sample rates)
+    -Fixed default sound card detection on OpenWrt
+
+ -- Johannes Pohl <johannes.pohl@badaix.de>  Sat, 07 May 2016 00:13:37 +0200
+
 snapclient (0.6.0) unstable; urgency=low
 
   * Features

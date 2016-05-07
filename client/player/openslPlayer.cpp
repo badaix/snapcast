@@ -23,6 +23,7 @@
 #include "openslPlayer.h"
 #include "common/log.h"
 #include "common/snapException.h"
+#include "common/strCompat.h"
 
 using namespace std;
 
@@ -193,7 +194,7 @@ void OpenslPlayer::initOpensl()
 
 	frames_ = 1920;//960;//rate / 50; // => 50ms
 
-	buff_size = frames_ * format.channels * 2 /* 2 -> sample size */;
+	buff_size = frames_ * format.frameSize /* 2 -> sample size */;
 	logO << "frames: " << frames_ << ", channels: " << format.channels << ", rate: " << format.rate << ", buff: " << buff_size << "\n";
 
 	SLresult result;
@@ -209,57 +210,82 @@ void OpenslPlayer::initOpensl()
 	result = (*outputMixObject)->Realize(outputMixObject, SL_BOOLEAN_FALSE);
 	throwUnsuccess("OutputMixObject::Realize", result);
 
-	SLuint32 sr = SL_SAMPLINGRATE_44_1;
+	SLuint32 samplesPerSec = SL_SAMPLINGRATE_48;
 	switch(format.rate)
 	{
 		case 8000:
- 			sr = SL_SAMPLINGRATE_8;
+ 			samplesPerSec = SL_SAMPLINGRATE_8;
  			break;
  		case 11025:
-			sr = SL_SAMPLINGRATE_11_025;
+			samplesPerSec = SL_SAMPLINGRATE_11_025;
 			break;
 		case 16000:
-			sr = SL_SAMPLINGRATE_16;
+			samplesPerSec = SL_SAMPLINGRATE_16;
 			break;
 		case 22050:
-			sr = SL_SAMPLINGRATE_22_05;
+			samplesPerSec = SL_SAMPLINGRATE_22_05;
 			break;
 		case 24000:
-			sr = SL_SAMPLINGRATE_24;
+			samplesPerSec = SL_SAMPLINGRATE_24;
 			break;
 		case 32000:
-			sr = SL_SAMPLINGRATE_32;
+			samplesPerSec = SL_SAMPLINGRATE_32;
 			break;
 		case 44100:
-			sr = SL_SAMPLINGRATE_44_1;
+			samplesPerSec = SL_SAMPLINGRATE_44_1;
 			break;
 		case 48000:
-			sr = SL_SAMPLINGRATE_48;
+			samplesPerSec = SL_SAMPLINGRATE_48;
 			break;
 		case 64000:
-			sr = SL_SAMPLINGRATE_64;
+			samplesPerSec = SL_SAMPLINGRATE_64;
 			break;
 		case 88200:
-			sr = SL_SAMPLINGRATE_88_2;
+			samplesPerSec = SL_SAMPLINGRATE_88_2;
 			break;
 		case 96000:
-			sr = SL_SAMPLINGRATE_96;
+			samplesPerSec = SL_SAMPLINGRATE_96;
 			break;
 		case 192000:
-			sr = SL_SAMPLINGRATE_192;
+			samplesPerSec = SL_SAMPLINGRATE_192;
 			break;
 		default:
 			throw SnapException("Sample rate not supported");
 	}
 
+	SLuint32 bitsPerSample = SL_PCMSAMPLEFORMAT_FIXED_16;
+	SLuint32 containerSize = SL_PCMSAMPLEFORMAT_FIXED_16;
+	switch(format.bits)
+	{
+		case 8:
+			bitsPerSample = SL_PCMSAMPLEFORMAT_FIXED_8;
+			containerSize = SL_PCMSAMPLEFORMAT_FIXED_8;
+ 			break;
+		case 16:
+			bitsPerSample = SL_PCMSAMPLEFORMAT_FIXED_16;
+			containerSize = SL_PCMSAMPLEFORMAT_FIXED_16;
+ 			break;
+		case 24:
+			bitsPerSample = SL_PCMSAMPLEFORMAT_FIXED_24;
+			containerSize = SL_PCMSAMPLEFORMAT_FIXED_32;
+ 			break;
+		case 32:
+			bitsPerSample = SL_PCMSAMPLEFORMAT_FIXED_32;
+			containerSize = SL_PCMSAMPLEFORMAT_FIXED_32;
+ 			break;
+		default:
+			throw SnapException("Unsupported sample format: "  + cpt::to_string(format.bits));
+	}
+	
+	
 	SLDataLocator_AndroidSimpleBufferQueue loc_bufq = {SL_DATALOCATOR_ANDROIDSIMPLEBUFFERQUEUE, 2};
 	SLDataFormat_PCM format_pcm =
 	{
 		SL_DATAFORMAT_PCM,
 		format.channels,
-		sr,
-		SL_PCMSAMPLEFORMAT_FIXED_16,
-		SL_PCMSAMPLEFORMAT_FIXED_16,
+		samplesPerSec,
+		bitsPerSample,
+		containerSize,
 		SL_SPEAKER_FRONT_LEFT | SL_SPEAKER_FRONT_RIGHT,
 		SL_BYTEORDER_LITTLEENDIAN
 	};

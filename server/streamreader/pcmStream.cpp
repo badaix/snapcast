@@ -32,7 +32,8 @@ using namespace std;
 
 
 
-PcmStream::PcmStream(PcmListener* pcmListener, const StreamUri& uri) : pcmListener_(pcmListener), uri_(uri), pcmReadMs_(20), state_(kIdle)
+PcmStream::PcmStream(PcmListener* pcmListener, const StreamUri& uri) : 
+	active_(false), pcmListener_(pcmListener), uri_(uri), pcmReadMs_(20), state_(kIdle)
 {
 	EncoderFactory encoderFactory;
  	if (uri_.query.find("codec") == uri_.query.end())
@@ -86,7 +87,6 @@ const SampleFormat& PcmStream::getSampleFormat() const
 void PcmStream::start()
 {
 	logD << "PcmStream start: " << sampleFormat_.getFormat() << "\n";
-//TODO: wrong encoder settings leads to: terminate called after throwing an instance of 'std::system_error'  what():  Invalid argument
 	encoder_->init(this, sampleFormat_);
 
  	active_ = true;

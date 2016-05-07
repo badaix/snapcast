@@ -157,6 +157,12 @@ void StreamSession::getNextMessage()
 	vector<char> buffer(baseMsgSize);
 	socketRead(&buffer[0], baseMsgSize);
 	baseMessage.deserialize(&buffer[0]);
+	if (baseMessage.size > msg::max_size)
+	{
+		logS(kLogErr) << "received message of type " << baseMessage.type << " to large: " << baseMessage.size << "\n";
+		stop();
+		return;
+	}
 //	logO << "getNextMessage: " << baseMessage.type << ", size: " << baseMessage.size << ", id: " << baseMessage.id << ", refers: " << baseMessage.refersTo << "\n";
 	if (baseMessage.size > buffer.size())
 		buffer.resize(baseMessage.size);

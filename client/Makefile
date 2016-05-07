@@ -1,4 +1,4 @@
-VERSION = 0.6.0
+VERSION = 0.7.0
 TARGET  = snapclient
 SHELL = /bin/bash
 
@@ -32,8 +32,8 @@ else
 
 CXX      = /usr/bin/g++
 STRIP	 = strip
-CXXFLAGS += -static-libgcc -static-libstdc++ -DHAS_OGG -DHAS_ALSA -DHAS_AVAHI -DHAS_DAEMON
-LDFLAGS  = -lrt -lasound -logg -lvorbis -lFLAC -lavahi-client -lavahi-common
+CXXFLAGS += -DHAS_OGG -DHAS_ALSA -DHAS_AVAHI -DHAS_DAEMON
+LDFLAGS  = -lrt -lasound -logg -lvorbis -lFLAC -lavahi-client -lavahi-common -static-libgcc -static-libstdc++
 OBJ      += player/alsaPlayer.o decoder/oggDecoder.o browseAvahi.o
 
 endif

@@ -105,6 +105,8 @@ struct tv
 namespace msg
 {
 
+const size_t max_size = 1000000; 
+
 struct BaseMessage
 {
 	BaseMessage() : type(kBase), id(0), refersTo(0)

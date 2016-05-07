@@ -29,18 +29,15 @@
 using namespace std;
 
 
-OggDecoder::OggDecoder() : Decoder(), buffer(NULL), bytes(0)
+OggDecoder::OggDecoder() : Decoder()
 {
 	ogg_sync_init(&oy); /* Now we can read pages */
-	convsize = 4096;
-	convbuffer = (ogg_int16_t*)malloc(convsize * sizeof(ogg_int16_t));
 }
 
 
 OggDecoder::~OggDecoder()
 {
 	std::lock_guard<std::mutex> lock(mutex_);
-	free(convbuffer);
 	vorbis_block_clear(&vb);
 	vorbis_dsp_clear(&vd);
 	ogg_stream_clear(&os);
@@ -57,14 +54,13 @@ bool OggDecoder::decode(msg::PcmChunk* chunk)
 	(which is guaranteed to be small and only contain the Vorbis
 	stream initial header) We need the first page to get the stream
 	serialno. */
-	bytes = chunk->payloadSize;
-	buffer = ogg_sync_buffer(&oy, bytes);
-	memcpy(buffer, chunk->payload, bytes);
-	ogg_sync_wrote(&oy,bytes);
+	int size = chunk->payloadSize;
+	char *buffer = ogg_sync_buffer(&oy, size);
+	memcpy(buffer, chunk->payload, size);
+	ogg_sync_wrote(&oy, size);
 
 
 	chunk->payloadSize = 0;
-	convsize = 4096;//bytes/vi.channels;
 	/* The rest is just a straight decode loop until end of stream */
 	//      while(!eos){
 	while(true)
@@ -72,15 +68,14 @@ bool OggDecoder::decode(msg::PcmChunk* chunk)
 		int result = ogg_sync_pageout(&oy, &og);
 		if (result == 0)
 			break; /* need more data */
-		if(result < 0)
+		if (result < 0)
 		{
 			/* missing or corrupt data at this page position */
 			logE << "Corrupt or missing data in bitstream; continuing...\n";
 			continue;
 		}
 
-		ogg_stream_pagein(&os,&og); /* can safely ignore errors at
-					   this point */
+		ogg_stream_pagein(&os,&og); /* can safely ignore errors at this point */
 		while(1)
 		{
 			result = ogg_stream_packetout(&os, &op);
@@ -101,67 +96,73 @@ bool OggDecoder::decode(msg::PcmChunk* chunk)
 			if (vorbis_synthesis(&vb,&op) == 0) /* test for success! */
 				vorbis_synthesis_blockin(&vd, &vb);
 			/*
-
 			**pcm is a multichannel float vector.  In stereo, for
 			example, pcm[0] is left, and pcm[1] is right.  samples is
 			the size of each channel.  Convert the float values
 			(-1.<=range<=1.) to whatever PCM format and write it out */
-
 			while ((samples = vorbis_synthesis_pcmout(&vd, &pcm)) > 0)
 			{
-				int bout = (samples<convsize?samples:convsize);
-				//cout << "samples: " << samples << ", convsize: " << convsize << "\n";
-				/* convert floats to 16 bit signed ints (host order) and
-				interleave */
-				for(int i=0; i<vi.channels; i++)
+				size_t bytes = sampleFormat_.sampleSize * vi.channels * samples;
+				chunk->payload = (char*)realloc(chunk->payload, chunk->payloadSize + bytes);
+				for (int channel = 0; channel < vi.channels; ++channel)
 				{
-					ogg_int16_t *ptr=convbuffer+i;
-#ifdef HAS_TREMOR
-					ogg_int32_t *mono=pcm[i];
-#else
-					float *mono=pcm[i];
-#endif
-					for (int j=0; j<bout; j++)
+					if (sampleFormat_.sampleSize == 1)
 					{
+						int8_t* chunkBuffer = (int8_t*)(chunk->payload + chunk->payloadSize);
+						for (int i = 0; i < samples; i++)
+						{
+							int8_t& val = chunkBuffer[sampleFormat_.channels*i + channel];
 #ifdef HAS_TREMOR
-						ogg_int32_t val = mono[j] >> 9;
+							val = clip<int8_t>(pcm[channel][i], -128, 127);
 #else
-						ogg_int32_t val = floor(mono[j]*32767.f+.5f);
+							val = clip<int8_t>(floor(pcm[channel][i]*127.f + .5f), -128, 127);
 #endif
-						/* might as well guard against clipping */
-						if(val>32767)
-							val=32767;
-						else if(val<-32768)
-							val=-32768;
-						*ptr = SWAP_16(val);
-						ptr += vi.channels;
+						}
+					}
+					else if (sampleFormat_.sampleSize == 2)
+					{
+						int16_t* chunkBuffer = (int16_t*)(chunk->payload + chunk->payloadSize);
+						for (int i = 0; i < samples; i++)
+						{
+							int16_t& val = chunkBuffer[sampleFormat_.channels*i + channel];
+#ifdef HAS_TREMOR
+							val = SWAP_16(clip<int16_t>(pcm[channel][i] >> 9, -32768, 32767));
+#else
+							val = SWAP_16(clip<int16_t>(floor(pcm[channel][i]*32767.f + .5f), -32768, 32767));
+#endif
+						}
+					}
+					else if (sampleFormat_.sampleSize == 4)
+					{
+						int32_t* chunkBuffer = (int32_t*)(chunk->payload + chunk->payloadSize);
+						for (int i = 0; i < samples; i++)
+						{
+							int32_t& val = chunkBuffer[sampleFormat_.channels*i + channel];
+#ifdef HAS_TREMOR
+							val = SWAP_32(clip<int32_t>(pcm[channel][i] << 7, -2147483648, 2147483647));
+#else
+							val = SWAP_32(clip<int32_t>(floor(pcm[channel][i]*2147483647.f + .5f), -2147483648, 2147483647));
+#endif
+						}
 					}
 				}
 
-				size_t oldSize = chunk->payloadSize;
-				size_t size = 2*vi.channels * bout;
-				chunk->payloadSize += size;
-				chunk->payload = (char*)realloc(chunk->payload, chunk->payloadSize);
-				memcpy(chunk->payload + oldSize, convbuffer, size);
-				/* tell libvorbis how many samples we actually consumed */
-				vorbis_synthesis_read(&vd,bout);
+				chunk->payloadSize += bytes;
+				vorbis_synthesis_read(&vd, samples);
 			}
 		}
 	}
-	//            if(ogg_page_eos(&og))eos=1;
-	//    ogg_stream_clear(&os);
-	//    vorbis_comment_clear(&vc);
-	//    vorbis_info_clear(&vi);  /* must be called last */
+
 	return true;
 }
 
 
 SampleFormat OggDecoder::setHeader(msg::CodecHeader* chunk)
 {
-	bytes = chunk->payloadSize;
-	buffer=ogg_sync_buffer(&oy, bytes);
-	memcpy(buffer, chunk->payload, bytes);
-	ogg_sync_wrote(&oy, bytes);
+	int size = chunk->payloadSize;
+	char *buffer = ogg_sync_buffer(&oy, size);
+	memcpy(buffer, chunk->payload, size);
+	ogg_sync_wrote(&oy, size);
 
 	if (ogg_sync_pageout(&oy, &og) != 1)
 		throw SnapException("Input does not appear to be an Ogg bitstream");
@@ -212,16 +213,6 @@ SampleFormat OggDecoder::setHeader(msg::CodecHeader* chunk)
 		}
 	}
 
-	/* Throw the comments plus a few lines about the bitstream we're decoding */
-	char **ptr=vc.user_comments;
-	while (*ptr)
-	{
-		logO << "comment: " << *ptr << "\n";;
-		++ptr;
-	}
-
-	logO << "Encoded by: " << vc.vendor << "\n";
-
 	/// OK, got and parsed all three headers. Initialize the Vorbis packet->PCM decoder.
 	if (vorbis_synthesis_init(&vd, &vi) == 0)
 		vorbis_block_init(&vd, &vb);
@@ -229,9 +220,22 @@ SampleFormat OggDecoder::setHeader(msg::CodecHeader* chunk)
 	/// local state for most of the decode so multiple block decodes can proceed
 	/// in parallel. We could init multiple vorbis_block structures for vd here
 
+	sampleFormat_.setFormat(vi.rate, 16, vi.channels);
 
-	SampleFormat sampleFormat(vi.rate, 16, vi.channels);
-	return sampleFormat;
+	/* Throw the comments plus a few lines about the bitstream we're decoding */
+	char **ptr=vc.user_comments;
+	while (*ptr)
+	{
+		std::string comment(*ptr);
+		if (comment.find("SAMPLE_FORMAT=") == 0)
+			sampleFormat_.setFormat(comment.substr(comment.find("=") + 1));
+		logO << "comment: " << comment << "\n";;
+		++ptr;
+	}
+
+	logO << "Encoded by: " << vc.vendor << "\n";
+
+	return sampleFormat_;
 }
 
 

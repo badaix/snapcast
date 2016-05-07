@@ -80,10 +80,25 @@ void FlacEncoder::encode(const msg::PcmChunk* chunk)
 		pcmBuffer_ = (FLAC__int32*)realloc(pcmBuffer_, pcmBufferSize_ * sizeof(FLAC__int32));
 	}
 
-	for(int i=0; i<samples; i++)
+	if (sampleFormat_.sampleSize == 1)
 	{
-		pcmBuffer_[i] = (FLAC__int32)(((FLAC__int16)(FLAC__int8)chunk->payload[2*i+1] << 8) | (FLAC__int16)(0x00ff&chunk->payload[2*i]));
+		FLAC__int8* buffer = (FLAC__int8*)chunk->payload; 
+		for(int i=0; i<samples; i++)
+			pcmBuffer_[i] = (FLAC__int32)(buffer[i]);
 	}
+	else if (sampleFormat_.sampleSize == 2)
+	{
+		FLAC__int16* buffer = (FLAC__int16*)chunk->payload; 
+		for(int i=0; i<samples; i++)
+			pcmBuffer_[i] = (FLAC__int32)(buffer[i]);
+	}
+	else if (sampleFormat_.sampleSize == 4)
+	{
+		FLAC__int32* buffer = (FLAC__int32*)chunk->payload; 
+		for(int i=0; i<samples; i++)
+			pcmBuffer_[i] = (FLAC__int32)(buffer[i]);
+	}
+
 
 	FLAC__stream_encoder_process_interleaved(encoder_, pcmBuffer_, frames);
 

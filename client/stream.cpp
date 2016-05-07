@@ -17,6 +17,7 @@
 ***/
 
 #include "stream.h"
+#include <cmath>
 #include <iostream>
 #include <string.h>
 #include "common/log.h"
@@ -76,7 +77,7 @@ void Stream::addChunk(msg::PcmChunk* chunk)
 	chunks_.push(shared_ptr<msg::PcmChunk>(chunk));
 	std::unique_lock<std::mutex> lck(cvMutex_);
 	cv_.notify_one();
-//	logD << "new chunk: " << chunk_->getDuration() << ", Chunks: " << chunks_.size() << "\n";
+//	logD << "new chunk: " << chunk->duration<cs::msec>().count() << ", Chunks: " << chunks_.size() << "\n";
 }
 
 
