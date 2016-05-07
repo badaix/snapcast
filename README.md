@@ -184,7 +184,7 @@ Unordered list of features that should make it into the v1.0
 - [X] **Debian packages** prebuild deb packages
 - [X] **Endian** independent code
 - [X] **OpenWrt** port Snapclient to OpenWrt
-- [ ] **Hi-Res audio** support (like 192kHz 24bit)
+- [X] **Hi-Res audio** support (like 192kHz 24bit)
+- [ ] **JSON-RPC** Possibility to add, remove, rename streams
 - [ ] **Protocol specification** Snapcast binary streaming protocol, JSON-RPC protocol
-- [ ] **CMake** or another build system
-- [ ] **Ports** Snapclient for Windows, ...
+- [ ] **Ports** Snapclient for Windows, Mac OS X, ...
