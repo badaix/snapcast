@@ -55,6 +55,10 @@ Different streams can by configured with a list of `-s` options, e.g.:
 
     SNAPSERVER_OPTS="-d -s pipe:///tmp/snapfifo?name=Radio&sampleformat=48000:16:2&codec=flac -s file:///home/user/Musik/Some%20wave%20file.wav?name=File"
 
+The pipe stream (`-s pipe`) will per default create the pipe. Sometimes your audio source might insist in creating the pipe itself. So the pipe creation mode can by changed to "not create, but only read mode", using the `mode` option set to `create` or `read`:
+    
+    SNAPSERVER_OPTS="-d -s pipe:///tmp/snapfifo?name=Radio&mode=read"
+    
 Test
 ----
 You can test your installation by copying random data into the server's fifo file
@@ -184,7 +188,7 @@ Unordered list of features that should make it into the v1.0
 - [X] **Debian packages** prebuild deb packages
 - [X] **Endian** independent code
 - [X] **OpenWrt** port Snapclient to OpenWrt
-- [ ] **Hi-Res audio** support (like 192kHz 24bit)
+- [X] **Hi-Res audio** support (like 192kHz 24bit)
+- [ ] **JSON-RPC** Possibility to add, remove, rename streams
 - [ ] **Protocol specification** Snapcast binary streaming protocol, JSON-RPC protocol
-- [ ] **CMake** or another build system
-- [ ] **Ports** Snapclient for Windows, ...
+- [ ] **Ports** Snapclient for Windows, Mac OS X, ...
