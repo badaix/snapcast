@@ -20,7 +20,7 @@ def doRequest( j, requestId ):
 		jResponse = json.loads(response)
 		if 'id' in jResponse:
 			if jResponse['id'] == requestId:
-#				print("recv: " + response)
+				print("recv: " + response)
 				return jResponse;
 	return;
 
@@ -41,7 +41,7 @@ if sys.argv[2] == "setVolume":
 	volume = int(sys.argv[3])
 	j = doRequest(json.dumps({'jsonrpc': '2.0', 'method': 'Server.GetStatus', 'id': 1}), 1)
 	for client in j["result"]["clients"]:
-		setVolume(client['MAC'], volume)
+		setVolume(client["host"]["mac"], volume)
 
 elif sys.argv[2] == "setName":
 	if len(sys.argv) < 5:
@@ -54,7 +54,7 @@ else:
 
 j = doRequest(json.dumps({'jsonrpc': '2.0', 'method': 'Server.GetStatus', 'id': 1}), 1)
 for client in j["result"]["clients"]:
-	print("MAC: " + client['MAC'] + ", conntect: " + str(client['connected']) + ", volume: " + str(client['volume']['percent']) + ", name: " + client['name'] + ", host: " + client['host'])
+	print("MAC: " + client["host"]["mac"] + ", conntect: " + str(client['connected']) + ", volume: " + str(client["config"]["volume"]["percent"]) + ", name: " + client["config"]["name"] + ", host: " + client["host"]["name"])
 
 telnet.close
 
