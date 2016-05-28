@@ -102,7 +102,6 @@ void StreamSession::socketRead(void* _to, size_t _bytes)
 	size_t read = 0;
 	do
 	{
-		std::error_code error;
 		read += socket_->read_some(asio::buffer((char*)_to + read, _bytes - read));
 	}
 	while (active_ && (read < _bytes));
