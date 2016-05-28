@@ -1,0 +1,99 @@
+{
+  "id": 1,
+  "jsonrpc": "2.0",
+  "result": {
+    "clients": [
+      {
+        "config": {
+          "latency": 0,
+          "name": "Schlafzimmer",
+          "stream": "pipe:///tmp/snapfifo",
+          "volume": {
+            "muted": false,
+            "percent": 100
+          }
+        },
+        "connected": false,
+        "host": {
+          "arch": "armv6l",
+          "ip": "192.168.0.24",
+          "mac": "80:1f:02:ed:fd:e0",
+          "name": "wohnzimmer",
+          "os": "Raspbian GNU/Linux 8.0 (jessie)"
+        },
+        "lastSeen": {
+          "sec": 1464339375,
+          "usec": 480894
+        },
+        "snapclient": {
+          "name": "Snapclient",
+          "protocolVersion": 2,
+          "version": "0.7.0"
+        }
+      },
+      {
+        "config": {
+          "latency": 0,
+          "name": "Küche",
+          "stream": "pipe:///tmp/snapfifo",
+          "volume": {
+            "muted": false,
+            "percent": 100
+          }
+        },
+        "connected": true,
+        "host": {
+          "arch": "armv6l",
+          "ip": "192.168.0.31",
+          "mac": "80:1f:02:ff:79:6e",
+          "name": "kueche",
+          "os": "Raspbian GNU/Linux 8 (jessie)"
+        },
+        "lastSeen": {
+          "sec": 1464358728,
+          "usec": 910393
+        },
+        "snapclient": {
+          "name": "Snapclient",
+          "protocolVersion": 2,
+          "version": "0.7.0"
+        }
+      }
+    ],
+    "server": {
+      "host": {
+        "arch": "x86_64",
+        "ip": "",
+        "mac": "",
+        "name": "elaine",
+        "os": "Linux Mint 17.3 Rosa"
+      },
+      "snapserver": {
+        "controlProtocolVersion": 1,
+        "name": "Snapserver",
+        "protocolVersion": 1,
+        "version": "0.7.0"
+      }
+    },
+    "streams": [
+      {
+        "id": "pipe:///tmp/snapfifo",
+        "status": "playing",
+        "uri": {
+          "fragment": "",
+          "host": "",
+          "path": "/tmp/snapfifo",
+          "query": {
+            "buffer_ms": "20",
+            "codec": "flac",
+            "mode": "",
+            "name": "Radio",
+            "sampleformat": "48000:16:2"
+          },
+          "raw": "pipe:///tmp/snapfifo?name=Radio&sampleformat=48000:16:2",
+          "scheme": "pipe"
+        }
+      }
+    ]
+  }
+}

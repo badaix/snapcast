@@ -1,0 +1,18 @@
+{
+  "id": "pipe:///tmp/snapfifo",
+  "status": "playing",
+  "uri": {
+    "fragment": "",
+    "host": "",
+    "path": "/tmp/snapfifo",
+    "query": {
+      "buffer_ms": "20",
+      "codec": "flac",
+      "mode": "",
+      "name": "Radio",
+      "sampleformat": "48000:16:2"
+    },
+    "raw": "pipe:///tmp/snapfifo?name=Radio&sampleformat=48000:16:2",
+    "scheme": "pipe"
+  }
+}

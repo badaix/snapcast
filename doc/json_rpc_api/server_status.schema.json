@@ -1,0 +1,42 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "integer"
+    },
+    "jsonrpc": {
+      "type": "string"
+    },
+    "result": {
+      "type": "object",
+      "properties": {
+        "clients": {
+          "type": "array",
+          "items": {
+            "$ref": "https://raw.githubusercontent.com/badaix/snapcast/master/doc/json_rpc_api/client.schema.json"
+          }
+        },
+        "server": {
+          "$ref": "https://raw.githubusercontent.com/badaix/snapcast/master/doc/json_rpc_api/server.schema.json"
+        },
+        "streams": {
+          "type": "array",
+          "items": {
+            "$ref": "https://raw.githubusercontent.com/badaix/snapcast/master/doc/json_rpc_api/stream.schema.json"
+          }
+        }
+      },
+      "required": [
+        "clients",
+        "server",
+        "streams"
+      ]
+    }
+  },
+  "required": [
+    "id",
+    "jsonrpc",
+    "result"
+  ]
+}

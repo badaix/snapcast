@@ -1,0 +1,112 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "type": "object",
+  "properties": {
+    "config": {
+      "type": "object",
+      "properties": {
+        "latency": {
+          "type": "integer"
+        },
+        "name": {
+          "type": "string"
+        },
+        "stream": {
+          "type": "string"
+        },
+        "volume": {
+          "type": "object",
+          "properties": {
+            "muted": {
+              "type": "boolean"
+            },
+            "percent": {
+              "type": "integer"
+            }
+          },
+          "required": [
+            "muted",
+            "percent"
+          ]
+        }
+      },
+      "required": [
+        "latency",
+        "name",
+        "stream",
+        "volume"
+      ]
+    },
+    "connected": {
+      "type": "boolean"
+    },
+    "host": {
+      "type": "object",
+      "properties": {
+        "arch": {
+          "type": "string"
+        },
+        "ip": {
+          "type": "string"
+        },
+        "mac": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "os": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "arch",
+        "ip",
+        "mac",
+        "name",
+        "os"
+      ]
+    },
+    "lastSeen": {
+      "type": "object",
+      "properties": {
+        "sec": {
+          "type": "integer"
+        },
+        "usec": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "sec",
+        "usec"
+      ]
+    },
+    "snapclient": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "protocolVersion": {
+          "type": "integer"
+        },
+        "version": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "protocolVersion",
+        "version"
+      ]
+    }
+  },
+  "required": [
+    "config",
+    "connected",
+    "host",
+    "lastSeen",
+    "snapclient"
+  ]
+}

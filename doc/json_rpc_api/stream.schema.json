@@ -1,0 +1,72 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string"
+    },
+    "uri": {
+      "type": "object",
+      "properties": {
+        "fragment": {
+          "type": "string"
+        },
+        "host": {
+          "type": "string"
+        },
+        "path": {
+          "type": "string"
+        },
+        "query": {
+          "type": "object",
+          "properties": {
+            "buffer_ms": {
+              "type": "string"
+            },
+            "codec": {
+              "type": "string"
+            },
+            "mode": {
+              "type": "string"
+            },
+            "name": {
+              "type": "string"
+            },
+            "sampleformat": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "buffer_ms",
+            "codec",
+            "mode",
+            "name",
+            "sampleformat"
+          ]
+        },
+        "raw": {
+          "type": "string"
+        },
+        "scheme": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "fragment",
+        "host",
+        "path",
+        "query",
+        "raw",
+        "scheme"
+      ]
+    }
+  },
+  "required": [
+    "id",
+    "status",
+    "uri"
+  ]
+}

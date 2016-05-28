@@ -1,0 +1,60 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "type": "object",
+  "properties": {
+    "host": {
+      "type": "object",
+      "properties": {
+        "arch": {
+          "type": "string"
+        },
+        "ip": {
+          "type": "string"
+        },
+        "mac": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "os": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "arch",
+        "ip",
+        "mac",
+        "name",
+        "os"
+      ]
+    },
+    "snapserver": {
+      "type": "object",
+      "properties": {
+        "controlProtocolVersion": {
+          "type": "integer"
+        },
+        "name": {
+          "type": "string"
+        },
+        "protocolVersion": {
+          "type": "integer"
+        },
+        "version": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "controlProtocolVersion",
+        "name",
+        "protocolVersion",
+        "version"
+      ]
+    }
+  },
+  "required": [
+    "host",
+    "snapserver"
+  ]
+}

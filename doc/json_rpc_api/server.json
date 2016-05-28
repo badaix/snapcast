@@ -1,0 +1,15 @@
+{
+  "host": {
+    "arch": "x86_64",
+    "ip": "",
+    "mac": "",
+    "name": "elaine",
+    "os": "Linux Mint 17.3 Rosa"
+  },
+  "snapserver": {
+    "controlProtocolVersion": 1,
+    "name": "Snapserver",
+    "protocolVersion": 1,
+    "version": "0.7.0"
+  }
+}
