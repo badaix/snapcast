@@ -1,0 +1,22 @@
+cmake_minimum_required(VERSION 2.6)
+project(snapcast)
+
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${PROJECT_SOURCE_DIR}/cmake/")
+add_definitions(-DVERSION="FOOBAR")
+
+if(target STREQUAL "OPENWRT")
+  message("OpenWrt compilation enabled")
+elseif(target STREQUAL "ANDROID")
+  message("Android compilation enabled")
+elseif(UNIX)
+  set(target "LINUX")
+  message("Unix compilation enabled")
+elseif(WIN32)
+  set(target "WIN32")
+  message("Windows compilation enabled")
+else()
+  message("Unsupported platform.  Things may not work")
+endif()
+
+add_subdirectory(server)
+add_subdirectory(client)

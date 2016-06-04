@@ -1,0 +1,23 @@
+find_package(Threads)
+
+set(CLIENT_SOURCES snapClient.cpp stream.cpp clientConnection.cpp timeProvider.cpp player/player.cpp decoder/pcmDecoder.cpp decoder/flacDecoder.cpp controller.cpp ${PROJECT_SOURCE_DIR}/message/pcmChunk.cpp ${PROJECT_SOURCE_DIR}/common/log.cpp ${PROJECT_SOURCE_DIR}/common/sampleFormat.cpp)
+
+set(CLIENT_LIBRARIES ${CMAKE_THREAD_LIBS_INIT})
+
+set(CLIENT_INCLUDE ${PROJECT_SOURCE_DIR}/externals/asio/asio/include ${PROJECT_SOURCE_DIR}/externals/popl/include ${PROJECT_SOURCE_DIR}/client ${PROJECT_SOURCE_DIR})
+
+if (target STREQUAL "LINUX")
+  list(APPEND CLIENT_SOURCES player/alsaPlayer.cpp decoder/oggDecoder.cpp browseAvahi.cpp)
+  find_package(Avahi REQUIRED)
+  find_package(FLAC REQUIRED)
+  find_package(Vorbis REQUIRED)
+  find_package(Ogg REQUIRED)
+  find_package(ALSA REQUIRED)
+  list(APPEND CLIENT_LIBRARIES ${AVAHI_LIBRARIES} ${FLAC_LIBRARY} ${VORBIS_LIBRARIES} ${OGG_LIBRARIES} ${ALSA_LIBRARY} rt)
+  add_definitions(-DHAS_OGG -DHAS_ALSA -DHAS_AVAHI -DHAS_DAEMON)
+  list(APPEND CLIENT_INCLUDE ${AVAHI_INCLUDE_DIRS} ${FLAC_INCLUDE_DIR} ${VORBIS_INCLUDE_DIRS} ${OGG_INCLUDE_DIRS} ${ALSA_INCLUDE_DIRS})
+endif()
+
+include_directories(${CLIENT_INCLUDE})
+add_executable(snapclient ${CLIENT_SOURCES})
+target_link_libraries(snapclient ${CLIENT_LIBRARIES})
