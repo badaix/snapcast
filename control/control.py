@@ -35,13 +35,20 @@ def setName(client, name):
 	requestId = requestId + 1
 
 if sys.argv[2] == "setVolume":
-	if len(sys.argv) < 4:
-		print("usage: control.py <SERVER HOST> setVolume <VOLUME>")
+	if len(sys.argv) < 5:
+		print("usage: control.py <SERVER HOST> setVolume <HOSTNAME> [+/-]<VOLUME>")
 		exit(0)
-	volume = int(sys.argv[3])
+	volstr = sys.argv[4]
 	j = doRequest(json.dumps({'jsonrpc': '2.0', 'method': 'Server.GetStatus', 'id': 1}), 1)
 	for client in j["result"]["clients"]:
-		setVolume(client['MAC'], volume)
+		if(sys.argv[3] == client['host']['name'] or sys.argv[3] == 'all'):
+			if(volstr[0] == '+'):
+				volume = int(client['config']['volume']['percent']) + int(volstr[1:])
+			elif(volstr[0] == '-'):
+				volume = int(client['config']['volume']['percent']) - int(volstr[1:])
+			else:
+				volume = int(volstr)
+			setVolume(client['host']['mac'], volume)
 
 elif sys.argv[2] == "setName":
 	if len(sys.argv) < 5:
@@ -54,7 +61,8 @@ else:
 
 j = doRequest(json.dumps({'jsonrpc': '2.0', 'method': 'Server.GetStatus', 'id': 1}), 1)
 for client in j["result"]["clients"]:
-	print("MAC: " + client['MAC'] + ", conntect: " + str(client['connected']) + ", volume: " + str(client['volume']['percent']) + ", name: " + client['name'] + ", host: " + client['host'])
+	#print client	
+	print("MAC: " + client['host']['mac'] + ", connect: " + str(client['connected']) + ", volume: " + str(client['config']['volume']['percent']) + ", name: " + client['host']['name'] + ", host: " + client['host']['ip'])
 
 telnet.close
 
