@@ -379,8 +379,9 @@ void StreamServer::start()
 		acceptor_ = make_shared<tcp::acceptor>(*io_service_, tcp::endpoint(tcp::v4(), settings_.port));
 		startAccept();
 	}
-	catch (const std::exception&)
+	catch (const std::exception& e)
 	{
+		logS(kLogNotice) << "StreamServer::start: " << e.what() << endl;
 		stop();
 		throw;
 	}
