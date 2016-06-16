@@ -33,22 +33,29 @@
 #include <memory>
 #include <cerrno>
 #include <iterator>
+#ifndef WINDOWS
 #include <sys/ioctl.h>
 #include <net/if.h>
 #include <netinet/in.h>
+#endif
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
 #include <iomanip>
-#ifndef FREEBSD
+#if !defined(FREEBSD) && !defined(WINDOWS)
 #include <sys/sysinfo.h>
-#endif
 #include <sys/utsname.h>
+#endif
 #ifdef MACOS
 #include <ifaddrs.h>
 #include <net/if_dl.h>
 #endif
 
+#ifdef WINDOWS
+#include <chrono>
+#include <windows.h>
+#include <direct.h>
+#endif
 
 // trim from start
 static inline std::string &ltrim(std::string &s)
@@ -145,7 +152,11 @@ static int mkdirRecursive(const char *path, mode_t mode)
 		if (p.empty())
 			continue;
 		ss << "/" << p;
+#ifndef WINDOWS
 		int res = mkdir(ss.str().c_str(), mode);
+#else
+		int res = _mkdir(ss.str().c_str());
+#endif
 		if ((res != 0) && (errno != EEXIST))
 			return res;
 	}
@@ -199,9 +210,13 @@ static std::string getOS()
 	}
 	if (os.empty())
 	{
+#ifndef WINDOWS
 		utsname u;
 		uname(&u);
 		os = u.sysname;
+#else
+		os = "Windows";
+#endif
 	}
 	return trim_copy(os);
 }
@@ -240,11 +255,16 @@ static std::string getArch()
 
 static long uptime()
 {
+<<<<<<< HEAD
 #ifndef FREEBSD
+=======
+#ifndef WINDOWS
+>>>>>>> adding windows alternate codepaths
 	struct sysinfo info;
 	sysinfo(&info);
 	return info.uptime;
 #else
+<<<<<<< HEAD
 	std::string uptime = execGetOutput("sysctl kern.boottime");
 	if ((uptime.find(" sec = ") != std::string::npos) && (uptime.find(",") != std::string::npos))
 	{
@@ -261,6 +281,9 @@ static long uptime()
 		}
 	}
 	return 0;
+=======
+	return std::chrono::duration_cast<std::chrono::seconds>(std::chrono::milliseconds(GetTickCount())).count();
+>>>>>>> adding windows alternate codepaths
 #endif
 }
 
@@ -268,6 +291,7 @@ static long uptime()
 /// https://gist.github.com/OrangeTide/909204
 static std::string getMacAddress(int sock)
 {
+#ifndef WINDOWS // TODO http://stackoverflow.com/questions/2069855/getting-machines-mac-address-good-solution
 	struct ifreq ifr;
 	struct ifconf ifc;
 	char buf[16384];
@@ -367,6 +391,8 @@ static std::string getMacAddress(int sock)
 		(unsigned char)ifr.ifr_ifru.ifru_addr.sa_data[3], (unsigned char)ifr.ifr_ifru.ifru_addr.sa_data[4], (unsigned char)ifr.ifr_ifru.ifru_addr.sa_data[5]);
 #endif
 	return mac;
+#endif
+	return "";
 }
 
 

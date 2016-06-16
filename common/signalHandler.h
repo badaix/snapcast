@@ -20,18 +20,26 @@
 #define SIGNAL_HANDLER_H
 
 #include <signal.h>
+#ifndef WINDOWS
 #include <syslog.h>
+#endif
 
 extern volatile sig_atomic_t g_terminated;
+
+#ifdef WINDOWS
+#define syslog(log, message) std::clog << (message); // TODO
+#endif
 
 void signal_handler(int sig)
 {
 
 	switch(sig)
 	{
+#ifndef WINDOWS // Windows does not define/send sighup
 	case SIGHUP:
 		syslog(LOG_WARNING, "Received SIGHUP signal.");
 		break;
+#endif
 	case SIGTERM:
 		syslog(LOG_WARNING, "Received SIGTERM signal.");
 		g_terminated = true;

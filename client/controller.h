@@ -31,6 +31,8 @@
 #include "player/openslPlayer.h"
 #elif HAS_COREAUDIO
 #include "player/coreAudioPlayer.h"
+#elif WINDOWS
+#include "player/wasapiPlayer.h"
 #endif
 #include "clientConnection.h"
 #include "stream.h"

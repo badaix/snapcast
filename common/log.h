@@ -20,7 +20,9 @@
 #ifndef LOG_H
 #define LOG_H
 
+#ifndef WINDOWS
 #include <syslog.h>
+#endif
 #include <iostream>
 #include <cstring>
 #include <sstream>
@@ -31,6 +33,17 @@
 #define logState std::clog << kState
 #define logS(P) std::clog << P
 #define log logO
+
+#ifdef WINDOWS
+#define LOG_EMERG   0
+#define LOG_ALERT   1
+#define LOG_CRIT    2
+#define LOG_ERR     3
+#define LOG_WARNING 4
+#define LOG_NOTICE  5
+#define LOG_INFO    6
+#define LOG_DEBUG   7
+#endif
 
 enum LogPriority
 {

@@ -17,7 +17,9 @@
 ***/
 
 #include <iostream>
+#ifndef WINDOWS
 #include <sys/resource.h>
+#endif
 
 #include "popl.hpp"
 #include "controller.h"
@@ -141,9 +143,14 @@ int main (int argc, char **argv)
 			exit(EXIT_SUCCESS);
 		}
 
+#ifdef WINDOWS
+#define LOG_DAEMON 0
+#endif
 		std::clog.rdbuf(new Log("snapclient", LOG_DAEMON));
 
+#ifndef WINDOWS // no sighup on windows
 		signal(SIGHUP, signal_handler);
+#endif
 		signal(SIGTERM, signal_handler);
 		signal(SIGINT, signal_handler);
 
