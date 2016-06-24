@@ -10,7 +10,7 @@
 find_path(FLAC_INCLUDE_DIR FLAC/all.h)
 find_path(FLAC_INCLUDE_DIR FLAC/stream_decoder.h)
 
-find_library(FLAC_LIBRARY NAMES FLAC)
+find_library(FLAC_LIBRARY NAMES FLAC FLAC_static FLAC_dynamic)
 
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(FLAC DEFAULT_MSG FLAC_LIBRARY FLAC_INCLUDE_DIR)

@@ -25,12 +25,14 @@
 
 Log::Log(std::string ident, int facility)
 {
+#ifndef WINDOWS
 	facility_ = facility;
 	priority_ = kLogDebug;
 	strncpy(ident_, ident.c_str(), sizeof(ident_));
 	ident_[sizeof(ident_)-1] = '\0';
 
 	openlog(ident_, LOG_PID, facility_);
+#endif
 }
 
 
@@ -97,7 +99,9 @@ int Log::sync()
 		else
 		{
 			std::cout << Timestamp() << " [" << toString(priority_) << "] " << buffer_.str() << std::flush;
+#ifndef WINDOWS
 			syslog(priority_, "%s", buffer_.str().c_str());
+#endif
 		}
 		buffer_.str("");
 		buffer_.clear();
