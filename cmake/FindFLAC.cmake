@@ -1,18 +1,22 @@
-#
-# Try to find FLAC libraries and include paths.
+# - Try to find FLAC
 # Once done this will define
 #
-# FLAC_FOUND
-# FLAC_INCLUDE_DIR
-# FLAC_LIBRARY
-#
+# FLAC_FOUND - system has libFLAC
+# FLAC_INCLUDE_DIRS - the libFLAC include directory
+# FLAC_LIBRARIES - The libFLAC libraries
 
-find_path(FLAC_INCLUDE_DIR FLAC/all.h)
-find_path(FLAC_INCLUDE_DIR FLAC/stream_decoder.h)
+find_package(PkgConfig)
+if(PKG_CONFIG_FOUND)
+  pkg_check_modules (FLAC flac)
+  list(APPEND FLAC_INCLUDE_DIRS ${FLAC_INCLUDEDIR})
+endif()
 
-find_library(FLAC_LIBRARY NAMES FLAC FLAC_static FLAC_dynamic)
+if(NOT FLAC_FOUND)
+  find_path(FLAC_INCLUDE_DIRS FLAC/all.h)
+  find_library(FLAC_LIBRARIES FLAC)
+endif()
 
 include(FindPackageHandleStandardArgs)
-find_package_handle_standard_args(FLAC DEFAULT_MSG FLAC_LIBRARY FLAC_INCLUDE_DIR)
+find_package_handle_standard_args(FLAC DEFAULT_MSG FLAC_INCLUDE_DIRS FLAC_LIBRARIES)
 
-mark_as_advanced(FLAC_INCLUDE_DIR FLAC_LIBRARY)
+mark_as_advanced(FLAC_INCLUDE_DIRS FLAC_LIBRARIES)
