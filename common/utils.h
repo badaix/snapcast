@@ -38,7 +38,9 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <iomanip>
+#ifndef FREEBSD
 #include <sys/sysinfo.h>
+#endif
 #include <sys/utsname.h>
 
 
@@ -232,9 +234,13 @@ static std::string getArch()
 
 static long uptime()
 {
+#ifndef FREEBSD
 	struct sysinfo info;
 	sysinfo(&info);
 	return info.uptime;
+#else
+	return 0;
+#endif
 }
 
 
@@ -263,7 +269,11 @@ static std::string getMacAddress(int sock)
 		{
 			if (!(ifr.ifr_flags & IFF_LOOPBACK)) // don't count loopback
 			{
+#ifndef FREEBSD
 				if (ioctl(sock, SIOCGIFHWADDR, &ifr) == 0)
+#else
+				if (ioctl(sock, SIOCGIFMAC, &ifr) == 0)
+#endif
 				{
 					success = 1;
 					break;
@@ -290,9 +300,19 @@ static std::string getMacAddress(int sock)
 		return "";
 
 	char mac[19];
+#ifndef FREEBSD
 	sprintf(mac, "%02x:%02x:%02x:%02x:%02x:%02x",
 		(unsigned char)ifr.ifr_hwaddr.sa_data[0], (unsigned char)ifr.ifr_hwaddr.sa_data[1], (unsigned char)ifr.ifr_hwaddr.sa_data[2],
 		(unsigned char)ifr.ifr_hwaddr.sa_data[3], (unsigned char)ifr.ifr_hwaddr.sa_data[4], (unsigned char)ifr.ifr_hwaddr.sa_data[5]);
+#else
+	sprintf(mac, "%02x:%02x:%02x:%02x:%02x:%02x",
+		(unsigned char)ifr.ifr_ifru.ifru_addr.sa_data[0], (unsigned char)ifr.ifr_ifru.ifru_addr.sa_data[1], 
+(unsigned 
+char)ifr.ifr_ifru.ifru_addr.sa_data[2],
+		(unsigned char)ifr.ifr_ifru.ifru_addr.sa_data[3], (unsigned char)ifr.ifr_ifru.ifru_addr.sa_data[4], 
+(unsigned 
+char)ifr.ifr_ifru.ifru_addr.sa_data[5]);
+#endif
 	return mac;
 }
 

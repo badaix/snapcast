@@ -17,6 +17,14 @@ STRIP	 = echo
 CXXFLAGS += -DIS_BIG_ENDIAN -DNO_CPP11_STRING
 LDFLAGS  = -lvorbis -lvorbisenc -logg -lFLAC -lavahi-client -lavahi-common -latomic
 
+else ifeq ($(TARGET), FREEBSD)
+
+SHELL    = /usr/local/bin/bash
+CXX      = /usr/local/bin/g++
+CXXFLAGS += -DNO_CPP11_STRING
+STRIP	 = strip
+LDFLAGS  = -lrt -lvorbis -lvorbisenc -logg -lFLAC -lavahi-client -lavahi-common -static-libgcc -static-libstdc++
+
 else
 
 CXX      = /usr/bin/g++
