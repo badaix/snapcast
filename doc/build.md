@@ -8,6 +8,10 @@ For Arch derivates:
 
     $ pacman -S git
 
+For FreeBSD:
+
+    $ sudo pkg install git
+
 Clone Snapcast:
 
     $ git clone https://github.com/badaix/snapcast.git
@@ -69,6 +73,18 @@ Install Snapserver
     $ sudo make install
 
 This will copy the server binary to `/usr/sbin` and update init.d/systemd to start the server as a daemon.
+
+
+##FreeBSD (Native)
+Install the build tools and required libs:  
+
+    $ sudo pkg install gmake gcc bash avahi libogg libvorbis flac
+
+###Build Snapserver
+`cd` into the Snapserver src-root directory:
+
+    $ cd <snapcast dir>/server
+    $ gmake TARGET=FREEBSD
 
 
 ##Android (Cross compile)
