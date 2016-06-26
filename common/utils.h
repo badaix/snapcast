@@ -19,6 +19,8 @@
 #ifndef UTILS_H
 #define UTILS_H
 
+#include "common/strCompat.h"
+
 #include <algorithm>
 #include <functional>
 #include <cctype>
@@ -239,6 +241,21 @@ static long uptime()
 	sysinfo(&info);
 	return info.uptime;
 #else
+	std::string uptime = execGetOutput("sysctl kern.boottime");
+	if ((uptime.find(" sec = ") != std::string::npos) && (uptime.find(",") != std::string::npos))
+	{
+		uptime = trim_copy(uptime.substr(uptime.find(" sec = ") + 7));
+		uptime.resize(uptime.find(","));
+		timeval now;
+		gettimeofday(&now, NULL);
+		try
+		{
+			return now.tv_sec - cpt::stoul(uptime);
+		}
+		catch (...)
+		{
+		}
+	}
 	return 0;
 #endif
 }
