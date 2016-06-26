@@ -29,6 +29,7 @@ You can either build and install snapcast from source, or on debian systems inst
 ###Installation from source
 Please follow this [guide](doc/build.md) to build Snapcast for
 * [Linux](doc/build.md#linux-native)
+* [FreeBSD](doc/build.md#freebsd-native)
 * [Android](doc/build.md#android-cross-compile)
 * [OpenWrt](doc/build.md#openwrt-cross-compile)
 
