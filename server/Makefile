@@ -21,7 +21,7 @@ else ifeq ($(TARGET), FREEBSD)
 
 SHELL    = /usr/local/bin/bash
 CXX      = /usr/local/bin/g++
-CXXFLAGS += -DNO_CPP11_STRING
+CXXFLAGS += -DNO_CPP11_STRING -DFREEBSD
 STRIP	 = strip
 LDFLAGS  = -lrt -lvorbis -lvorbisenc -logg -lFLAC -lavahi-client -lavahi-common -static-libgcc -static-libstdc++
 
