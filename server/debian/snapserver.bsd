@@ -1,0 +1,36 @@
+#!/bin/sh
+
+# PROVIDE: snapserver
+# REQUIRE: DAEMON
+# KEYWORD: Snapserver
+#
+# Snapserver - Snapcast server
+#
+# Add the following line to /etc/rc.conf to enable snapserver:
+# snapserver_enable=YES
+# Add snapserver_opts=<options> to configure command line arguments
+
+snapserver_opts="-d"
+
+. /etc/rc.subr
+
+name=snapserver
+rcvar=snapserver_enable
+desc="Snapserver - Snapcast server"
+
+load_rc_config $name
+
+: ${snapserver_enable:=NO}
+
+command=/usr/local/sbin/${name}
+pidfile="/var/run/${name}.pid"
+                                            
+start_cmd=snapserver_start
+
+
+snapserver_start() {
+	checkyesno snapserver_enable && echo "Starting snapserver." && ${command} ${snapserver_opts}
+}
+
+run_rc_command $1
+

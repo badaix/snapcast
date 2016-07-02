@@ -61,6 +61,14 @@ install:
 	install -D -g root -o root $(BIN) $(TARGET_DIR)/sbin/$(BIN)
 	install -D -g root -o root $(BIN).1 $(TARGET_DIR)/share/man/man1/$(BIN).1
 
+else ifeq ($(TARGET), FREEBSD)
+
+install:
+	echo BSD
+	install -g wheel -o root -m 555 $(BIN) $(TARGET_DIR)/local/sbin/$(BIN)
+	install -g wheel -o root -m 555 $(BIN).1 $(TARGET_DIR)/local/man/man1/$(BIN).1
+	install -g wheel -o root -m 555 debian/$(BIN).bsd /usr/local/etc/rc.d/$(BIN)
+
 else
 
 install:
@@ -93,6 +101,9 @@ installsysv:
 	update-rc.d $(BIN) defaults; \
 	/etc/init.d/$(BIN) start; \
 
+installbsd:
+	@echo using bsd; \
+	cp debian/$(BIN).bsd /usr/local/etc/rc.d/$(BIN); \
 
 uninstall:
 	rm -f $(TARGET_DIR)/share/man/man1/$(BIN).1
