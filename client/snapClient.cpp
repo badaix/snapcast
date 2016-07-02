@@ -38,7 +38,7 @@
 using namespace std;
 using namespace popl;
 
-bool g_terminated = false;
+volatile sig_atomic_t g_terminated = false;
 
 PcmDevice getPcmDevice(const std::string& soundcard)
 {

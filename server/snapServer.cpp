@@ -34,7 +34,7 @@
 #include "common/log.h"
 
 
-bool g_terminated = false;
+volatile sig_atomic_t g_terminated = false;
 std::condition_variable terminateSignaled;
 
 using namespace std;

@@ -22,7 +22,7 @@
 #include <signal.h>
 #include <syslog.h>
 
-extern bool g_terminated;
+extern volatile sig_atomic_t g_terminated;
 
 void signal_handler(int sig)
 {
