@@ -86,6 +86,19 @@ Install the build tools and required libs:
     $ cd <snapcast dir>/server
     $ gmake TARGET=FREEBSD
 
+Install Snapserver
+
+    $ sudo gmake TARGET=FREEBSD install
+
+This will copy the server binary to `/usr/local/sbin` and the startup script to `/local/etc/rc.d/snapserver`. To enable the Snapserver, add this line to `/etc/rc.conf`: 
+
+    snapserver_enable="YES"
+
+For additional command line arguments, add:
+
+    snapserver_opts="<your custom options>"
+
+Start and stop the server with `sudo service snapserver start` and `sudo service snapserver stop`.
 
 ##Android (Cross compile)
 Cross compilation for Android is done with the [Android NDK](http://developer.android.com/tools/sdk/ndk/index.html) on a Linux host machine.  
