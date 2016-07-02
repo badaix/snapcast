@@ -67,7 +67,7 @@ install:
 	echo BSD
 	install -g wheel -o root -m 555 $(BIN) $(TARGET_DIR)/local/sbin/$(BIN)
 	install -g wheel -o root -m 555 $(BIN).1 $(TARGET_DIR)/local/man/man1/$(BIN).1
-	install -g wheel -o root -m 555 debian/$(BIN).bsd /usr/local/etc/rc.d/$(BIN)
+	install -g wheel -o root -m 555 debian/$(BIN).bsd $(TARGET_DIR)/local/etc/rc.d/$(BIN)
 
 else
 
@@ -105,6 +105,18 @@ installbsd:
 	@echo using bsd; \
 	cp debian/$(BIN).bsd /usr/local/etc/rc.d/$(BIN); \
 
+
+ifeq ($(TARGET), FREEBSD)
+
+uninstall:
+	@service $(BIN) stop; \
+	killall -9 $(BIN); \
+	rm -f $(TARGET_DIR)/local/sbin/$(BIN); \
+	rm -f $(TARGET_DIR)/local/man/man1/$(BIN).1; \
+	rm -f $(TARGET_DIR)/local/etc/rc.d/$(BIN); \
+
+else
+
 uninstall:
 	rm -f $(TARGET_DIR)/share/man/man1/$(BIN).1
 	@if [[ `systemctl` =~ -\.mount ]]; then \
@@ -116,6 +128,8 @@ uninstall:
 	else \
 		echo cannot tell; \
 	fi; \
+
+endif
 
 uninstallsysv:
 	@/etc/init.d/$(BIN) stop; \
@@ -133,3 +147,4 @@ uninstallsystemd:
 	rm -f /lib/systemd/system/$(BIN).service; \
 	rm -f /etc/default/$(BIN); \
 	systemctl daemon-reload; \
+
