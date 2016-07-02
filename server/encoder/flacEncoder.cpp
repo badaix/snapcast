@@ -44,8 +44,7 @@ FlacEncoder::~FlacEncoder()
 		FLAC__stream_encoder_delete(encoder_);
 	}
 
-	if (flacChunk_)
-		delete flacChunk_;
+	delete flacChunk_;
 	free(pcmBuffer_);
 }
 
