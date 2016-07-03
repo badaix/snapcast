@@ -125,7 +125,8 @@ void ControlServer::start()
 
 void ControlServer::stop()
 {
-	acceptor_->cancel();
+	if (acceptor_)	
+		acceptor_->cancel();
 	std::unique_lock<std::mutex> mlock(mutex_);
 	for (auto s: sessions_)
 		s->stop();
