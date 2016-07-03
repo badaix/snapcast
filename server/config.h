@@ -71,8 +71,15 @@ struct Volume
 
 struct Host
 {
-	Host(const std::string& _macAddress = "") : name(getHostName()), mac(_macAddress), os(getOS()), arch(getArch()), ip("")
+	Host(const std::string& _macAddress = "") : name(""), mac(_macAddress), os(""), arch(""), ip("")
 	{
+	}
+
+	void update() 
+	{
+		name = getHostName();
+		os = getOS();
+		arch = getArch();
 	}
 
 	void fromJson(const json& j)

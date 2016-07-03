@@ -147,6 +147,7 @@ void StreamServer::onMessageReceived(ControlSession* controlSession, const std::
 				jClient = Config::instance().getClientInfos();
 
 			Host host;
+			host.update();
 			//TODO: Set MAC and IP
 			Snapserver snapserver("Snapserver", VERSION);
 			response = {
