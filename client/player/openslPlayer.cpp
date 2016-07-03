@@ -380,16 +380,12 @@ void OpenslPlayer::uninitOpensl()
 		engineEngine = NULL;
 	}
 
-	if (buffer[0] != NULL)
-	{
-		delete [] buffer[0];
-		buffer[0] = NULL;
-	}
-	if (buffer[1] != NULL)
-	{
-		delete [] buffer[1];
-		buffer[1] = NULL;
-	}
+	delete [] buffer[0];
+	buffer[0] = NULL;
+
+	delete [] buffer[1];
+	buffer[1] = NULL;
+
 	logO << "OpenSLWrap_Shutdown - finished\n";
 	active_ = false;
 }
