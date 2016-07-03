@@ -90,11 +90,11 @@ Install Snapserver
 
     $ sudo gmake TARGET=FREEBSD install
 
-This will copy the server binary to `/usr/local/sbin` and the startup script to `/local/etc/rc.d/snapserver`. To enable the Snapserver, add this line to `/etc/rc.conf`: 
+This will copy the server binary to `/usr/local/sbin` and the startup script to `/usr/local/etc/rc.d/snapserver`. To enable the Snapserver, add this line to `/etc/rc.conf`: 
 
     snapserver_enable="YES"
 
-For additional command line arguments, add:
+For additional command line arguments, add in `/etc/rc.conf`:
 
     snapserver_opts="<your custom options>"
 
