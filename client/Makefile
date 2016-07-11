@@ -11,22 +11,22 @@ endif
 
 
 CXXFLAGS += $(ADD_CFLAGS) -std=c++0x -Wall -Wno-unused-function -O3 -pthread -DASIO_STANDALONE -DVERSION=\"$(VERSION)\" -I. -I.. -I../externals/asio/asio/include -I../externals/popl/include
-OBJ       = snapClient.o stream.o clientConnection.o timeProvider.o player/player.o decoder/pcmDecoder.o decoder/flacDecoder.o controller.o ../message/pcmChunk.o ../common/log.o ../common/sampleFormat.o
+OBJ       = snapClient.o stream.o clientConnection.o timeProvider.o player/player.o decoder/pcmDecoder.o decoder/oggDecoder.o decoder/flacDecoder.o controller.o ../message/pcmChunk.o ../common/log.o ../common/sampleFormat.o
 
 ifeq ($(TARGET), ANDROID)
 
 CXX      = $(NDK_DIR)/bin/arm-linux-androideabi-g++
 STRIP	 = $(NDK_DIR)/bin/arm-linux-androideabi-strip
-CXXFLAGS += -DANDROID -DNO_CPP11_STRING -fPIC -DHAS_OPENSL -I$(NDK_DIR)/include
-LDFLAGS  = -L$(NDK_DIR)/lib -pie -lFLAC -lOpenSLES
-OBJ      += player/openslPlayer.o
+CXXFLAGS += -DANDROID -DNO_CPP11_STRING -fPIC -DHAS_TREMOR -DHAS_OPENSL -I$(NDK_DIR)/include
+LDFLAGS  = -L$(NDK_DIR)/lib -pie -lvorbisidec -logg -lFLAC -lOpenSLES 
+OBJ      += player/openslPlayer.o 
 
 else ifeq ($(TARGET), OPENWRT)
 
 STRIP	 = echo
 CXXFLAGS += -DIS_BIG_ENDIAN -DNO_CPP11_STRING -DHAS_TREMOR -DHAS_ALSA -DHAS_AVAHI -DHAS_DAEMON
-LDFLAGS  = -lasound -logg -lvorbisidec -lFLAC -lavahi-client -lavahi-common -latomic
-OBJ      += player/alsaPlayer.o decoder/oggDecoder.o browseAvahi.o
+LDFLAGS  = -lasound -lvorbisidec -logg -lFLAC -lavahi-client -lavahi-common -latomic
+OBJ      += player/alsaPlayer.o browseAvahi.o
 
 else
 
@@ -34,7 +34,7 @@ CXX      = /usr/bin/g++
 STRIP	 = strip
 CXXFLAGS += -DHAS_OGG -DHAS_ALSA -DHAS_AVAHI -DHAS_DAEMON
 LDFLAGS  = -lrt -lasound -logg -lvorbis -lFLAC -lavahi-client -lavahi-common -static-libgcc -static-libstdc++
-OBJ      += player/alsaPlayer.o decoder/oggDecoder.o browseAvahi.o
+OBJ      += player/alsaPlayer.o browseAvahi.o
 
 endif
 
