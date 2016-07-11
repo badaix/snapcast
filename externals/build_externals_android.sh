@@ -23,4 +23,26 @@ cd ../tremor
 make
 make install
 make clean
+rm -rf .deps/
+rm Makefile
+rm Makefile.in
+rm Version_script
+rm aclocal.m4
+rm -rf autom4te.cache/
+rm compile
+rm config.guess
+rm config.h
+rm config.h.in
+rm config.log
+rm config.status
+rm config.sub
+rm configure
+rm depcomp
+rm install-sh
+rm libtool
+rm ltmain.sh
+rm missing
+rm stamp-h1
+rm vorbisidec.pc
 
+cd ..
