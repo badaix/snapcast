@@ -11,10 +11,14 @@ endif
 
 CXXFLAGS += -std=c++0x -Wall -Wno-unused-function -O3 -pthread -DASIO_STANDALONE -DVERSION=\"$(VERSION)\" -I. -I.. -I../externals/asio/asio/include -I../externals/popl/include
 
+ifeq ($(ENDIAN), BIG)
+CXXFLAGS += -DIS_BIG_ENDIAN
+endif
+
 ifeq ($(TARGET), OPENWRT)
 
 STRIP	 = echo
-CXXFLAGS += -DIS_BIG_ENDIAN -DNO_CPP11_STRING
+CXXFLAGS += -DNO_CPP11_STRING
 LDFLAGS  = -lvorbis -lvorbisenc -logg -lFLAC -lavahi-client -lavahi-common -latomic
 
 else ifeq ($(TARGET), FREEBSD)

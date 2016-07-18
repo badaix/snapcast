@@ -13,6 +13,10 @@ endif
 CXXFLAGS += $(ADD_CFLAGS) -std=c++0x -Wall -Wno-unused-function -O3 -pthread -DASIO_STANDALONE -DVERSION=\"$(VERSION)\" -I. -I.. -I../externals/asio/asio/include -I../externals/popl/include
 OBJ       = snapClient.o stream.o clientConnection.o timeProvider.o player/player.o decoder/pcmDecoder.o decoder/oggDecoder.o decoder/flacDecoder.o controller.o ../message/pcmChunk.o ../common/log.o ../common/sampleFormat.o
 
+ifeq ($(ENDIAN), BIG)
+CXXFLAGS += -DIS_BIG_ENDIAN
+endif
+
 ifeq ($(TARGET), ANDROID)
 
 CXX      = $(NDK_DIR)/bin/arm-linux-androideabi-g++
@@ -24,7 +28,7 @@ OBJ      += player/openslPlayer.o
 else ifeq ($(TARGET), OPENWRT)
 
 STRIP	 = echo
-CXXFLAGS += -DIS_BIG_ENDIAN -DNO_CPP11_STRING -DHAS_TREMOR -DHAS_ALSA -DHAS_AVAHI -DHAS_DAEMON
+CXXFLAGS += -DNO_CPP11_STRING -DHAS_TREMOR -DHAS_ALSA -DHAS_AVAHI -DHAS_DAEMON
 LDFLAGS  = -lasound -lvorbisidec -logg -lFLAC -lavahi-client -lavahi-common -latomic
 OBJ      += player/alsaPlayer.o browseAvahi.o
 

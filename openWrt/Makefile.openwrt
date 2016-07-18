@@ -15,6 +15,11 @@ PKG_USE_MIPS16 := 0
 
 include $(INCLUDE_DIR)/package.mk
 
+ENDIANNESS:=LITTLE
+ifeq ($(ARCH),mips)
+ENDIANNESS:=BIG
+endif
+
 define Package/snapcast/Default
 	SECTION := sxx
 	CATEGORY := Sxx
@@ -40,7 +45,7 @@ endef
 define Package/snapserver
 	$(call Package/snapcast/Default)
 	TITLE += snapserver
-	DEPENDS += +libvorbis #+libvorbisenc
+	DEPENDS += +libvorbis
 	HIDDEN := 1
 endef
 
@@ -93,10 +98,10 @@ endef
 
 define Build/Compile
 	$(if $(CONFIG_PACKAGE_snapserver), \
-		$(call Build/Compile/Default, -C server TARGET=OPENWRT),)
+		$(call Build/Compile/Default, -C server TARGET=OPENWRT ENDIAN=$(ENDIANNESS)),)
 
 	$(if $(CONFIG_PACKAGE_snapclient), \
-		$(call Build/Compile/Default, -C client TARGET=OPENWRT),)
+		$(call Build/Compile/Default, -C client TARGET=OPENWRT ENDIAN=$(ENDIANNESS)),)
 endef
 
 define Package/snapcast/Default/install
