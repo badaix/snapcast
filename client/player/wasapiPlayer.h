@@ -23,6 +23,17 @@
 
 class WASAPIPlayer : public Player
 {
+public:
+	WASAPIPlayer(const PcmDevice& pcmDevice, Stream* stream);
+	virtual ~WASAPIPlayer();
+
+	virtual void start();
+	virtual void stop();
+protected:
+	virtual void worker();
+private:
+	void initWasapi(void);
+	void uninitWasapi(void);
 };
 
 #endif
