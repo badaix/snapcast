@@ -1,7 +1,9 @@
 #include "wasapiPlayer.h"
 
-#include <audioclient.h>
-#include <mmdeviceapi.h>
+using namespace std;
+
+#include <avrt.h>
+#include <ksmedia.h>
 
 #define REFTIMES_PER_SEC  10000000
 #define REFTIMES_PER_MILLISEC  10000
@@ -10,8 +12,6 @@ const CLSID CLSID_MMDeviceEnumerator = __uuidof(MMDeviceEnumerator);
 const IID IID_IMMDeviceEnumerator = __uuidof(IMMDeviceEnumerator);
 const IID IID_IAudioClient = __uuidof(IAudioClient);
 const IID IID_IAudioRenderClient = __uuidof(IAudioRenderClient);
-
-using namespace std;
 
 WASAPIPlayer::WASAPIPlayer(const PcmDevice& pcmDevice, Stream* stream)
 	: Player(pcmDevice, stream)
@@ -36,6 +36,7 @@ void WASAPIPlayer::stop()
 }
 
 #define CHECK_HR(hres) if (FAILED(hres)) { cout << "HRESULT fault status: " << hres << " line " << __LINE__ << endl; uninitWasapi(); return; }
+#define SAFE_FREE(obj) if ((obj) != NULL) { (obj)->Release(); (obj) = NULL; }
 
 void WASAPIPlayer::initWasapi()
 {
@@ -47,8 +48,37 @@ void WASAPIPlayer::initWasapi()
 		COINIT_MULTITHREADED);
 	CHECK_HR(hr);
 
+	// Create the format specifier
+	waveformat = (WAVEFORMATEX*)(CoTaskMemAlloc(sizeof(WAVEFORMATEX)));
+	waveformat->wFormatTag      = WAVE_FORMAT_PCM;
+	waveformat->nChannels       = stream_->getFormat().channels;
+	waveformat->nSamplesPerSec  = stream_->getFormat().rate;
+	waveformat->wBitsPerSample  = stream_->getFormat().bits;
+
+	waveformat->nBlockAlign     = waveformat->nChannels * waveformat->wBitsPerSample / 8;
+	waveformat->nAvgBytesPerSec = waveformat->nSamplesPerSec * waveformat->nBlockAlign;
+
+	waveformat->cbSize          = 0;
+
+	waveformatExtended = (WAVEFORMATEXTENSIBLE*)(CoTaskMemAlloc(sizeof(WAVEFORMATEXTENSIBLE)));
+	waveformatExtended->Format                      = *waveformat;
+	waveformatExtended->Format.wFormatTag           = WAVE_FORMAT_EXTENSIBLE;
+	waveformatExtended->Format.cbSize               = 22;
+	waveformatExtended->Samples.wValidBitsPerSample = waveformat->wBitsPerSample;
+	waveformatExtended->dwChannelMask               = SPEAKER_FRONT_LEFT | SPEAKER_FRONT_RIGHT;
+	waveformatExtended->SubFormat                   = KSDATAFORMAT_SUBTYPE_PCM;
+
+	cout
+		<< "wave format correct: " << to_string(waveformat->wFormatTag == WAVE_FORMAT_PCM)
+		<< "wave format correct: " << to_string(waveformat->wFormatTag)
+		<< "\r\nchannels: " << to_string(waveformat->nChannels)
+		<< "\r\nsample rate: " << to_string(waveformat->nSamplesPerSec)
+		<< "\r\naverage data-transfer rate correct: " << to_string(waveformat->nAvgBytesPerSec == (waveformat->nSamplesPerSec * waveformat->nBlockAlign))
+		<< "\r\nblock alignment correct: " << to_string(waveformat->nBlockAlign == (waveformat->nChannels * waveformat->wBitsPerSample) / 8)
+		<< "\r\nbits per sample: " << to_string(waveformat->wBitsPerSample)
+		<< "\r\nbits per sample valid: " << to_string(waveformat->wBitsPerSample == 8 || waveformat->wBitsPerSample == 16) << endl;
+
 	// Retrieve the device enumerator
-	IMMDeviceEnumerator* deviceEnumerator = NULL;
 	hr = CoCreateInstance(
 		CLSID_MMDeviceEnumerator, NULL,
 		CLSCTX_ALL, IID_IMMDeviceEnumerator,
@@ -56,21 +86,122 @@ void WASAPIPlayer::initWasapi()
 	CHECK_HR(hr);
 
 	// Register the default playback device (eRender for playback)
-	IMMDevice* device = NULL;
 	hr = deviceEnumerator->GetDefaultAudioEndpoint(eRender, eConsole, &device);
 	CHECK_HR(hr);
 
 	// Activate the device
-	IAudioClient* audioClient = NULL;
 	hr = device->Activate(IID_IAudioClient, CLSCTX_ALL, NULL, (void**)&audioClient);
 	CHECK_HR(hr);
+
+	hr = audioClient->IsFormatSupported(
+		AUDCLNT_SHAREMODE_EXCLUSIVE,
+		&(waveformatExtended->Format),
+		NULL);
+	CHECK_HR(hr);
+
+	// Get the device period
+	REFERENCE_TIME hnsRequestedDuration = REFTIMES_PER_SEC;
+	hr = audioClient->GetDevicePeriod(NULL, &hnsRequestedDuration);
+	CHECK_HR(hr);
+	
+	// Initialize the client at minimum latency
+	hr = audioClient->Initialize(
+		AUDCLNT_SHAREMODE_EXCLUSIVE,
+		AUDCLNT_STREAMFLAGS_EVENTCALLBACK,
+		hnsRequestedDuration,
+		hnsRequestedDuration,
+		&(waveformatExtended->Format),
+		NULL);
+	if (hr == AUDCLNT_E_BUFFER_SIZE_NOT_ALIGNED)
+	{
+		UINT32 alignedBufferSize;
+		hr = audioClient->GetBufferSize(&alignedBufferSize);
+		CHECK_HR(hr);
+		hr = audioClient->Release();
+		CHECK_HR(hr);
+		hnsRequestedDuration = (REFERENCE_TIME)((10000.0 * 1000 / waveformatExtended->Format.nSamplesPerSec * alignedBufferSize) + 0.5);
+		hr = device->Activate(IID_IAudioClient, CLSCTX_ALL, NULL, (void**)&audioClient);
+		CHECK_HR(hr);
+		hr = audioClient->Initialize(
+			AUDCLNT_SHAREMODE_EXCLUSIVE,
+			AUDCLNT_STREAMFLAGS_EVENTCALLBACK,
+			hnsRequestedDuration,
+			hnsRequestedDuration,
+			&(waveformatExtended->Format),
+			NULL);
+	}
+	CHECK_HR(hr);
+
+	// Register an event to refill the buffer
+	eventHandle = CreateEvent(NULL, FALSE, FALSE, NULL);
+	if (eventHandle == NULL)
+	{
+		CHECK_HR(E_FAIL);
+	}
+	hr = audioClient->SetEventHandle(eventHandle);
+	CHECK_HR(hr);
+
+	// Get size of buffer
+	hr = audioClient->GetBufferSize(&bufferFrameCount);
+	CHECK_HR(hr);
+
+	// Get the rendering service
+	hr = audioClient->GetService(
+		IID_IAudioRenderClient,
+		(void**)&renderClient);
+	CHECK_HR(hr);
+
+	// Boost our priority
+	DWORD taskIndex = 0;
+	taskHandle = AvSetMmThreadCharacteristics(TEXT("Pro Audio"), &taskIndex);
+	if (taskHandle == NULL)
+	{
+		CHECK_HR(E_FAIL);
+	}
+
+	// And, action!
+	hr = audioClient->Start();
+	CHECK_HR(hr);
+
+	wasapiActive = true;
 }
 
 void WASAPIPlayer::uninitWasapi()
 {
+	if (eventHandle != NULL)
+	{
+		CloseHandle(eventHandle);
+	}
+	if (taskHandle != NULL)
+	{
+		AvRevertMmThreadCharacteristics(taskHandle);
+	}
+	CoTaskMemFree(waveformat);
+	CoTaskMemFree(waveformatExtended);
+	SAFE_FREE(deviceEnumerator);
+	SAFE_FREE(device);
+	SAFE_FREE(audioClient);
+	SAFE_FREE(renderClient);
+	
+	wasapiActive = false;
 }
 
 void WASAPIPlayer::worker()
 {
-	initWasapi();
+	while (active_)
+	{
+		if (!wasapiActive)
+		{
+			try
+			{
+				initWasapi();
+			}
+			catch (const std::exception& e)
+			{
+				logE << "Exception in initWasapi: " << e.what() << endl;
+			}
+		}
+
+		// go
+	}
 }

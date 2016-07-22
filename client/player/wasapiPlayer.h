@@ -19,6 +19,9 @@
 #ifndef WASAPI_PLAYER_H
 #define WASAPI_PLAYER_H
 
+#include <audioclient.h>
+#include <mmdeviceapi.h>
+
 #include "player.h"
 
 class WASAPIPlayer : public Player
@@ -32,6 +35,18 @@ public:
 protected:
 	virtual void worker();
 private:
+	IMMDeviceEnumerator* deviceEnumerator = NULL;
+	IMMDevice* device = NULL;
+	IAudioClient* audioClient = NULL;
+	WAVEFORMATEX* waveformat = NULL;
+	WAVEFORMATEXTENSIBLE* waveformatExtended = NULL;
+	IAudioRenderClient* renderClient = NULL;
+	UINT32 bufferFrameCount;
+	HANDLE taskHandle;
+	HANDLE eventHandle;
+
+	bool wasapiActive = false;
+	
 	void initWasapi(void);
 	void uninitWasapi(void);
 };
