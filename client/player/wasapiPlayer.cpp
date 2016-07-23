@@ -1,9 +1,11 @@
 #include "wasapiPlayer.h"
 
-using namespace std;
-
 #include <avrt.h>
 #include <ksmedia.h>
+#include <chrono>
+
+using namespace std;
+using namespace std::chrono_literals;
 
 #define REFTIMES_PER_SEC  10000000
 #define REFTIMES_PER_MILLISEC  10000
@@ -12,6 +14,7 @@ const CLSID CLSID_MMDeviceEnumerator = __uuidof(MMDeviceEnumerator);
 const IID IID_IMMDeviceEnumerator = __uuidof(IMMDeviceEnumerator);
 const IID IID_IAudioClient = __uuidof(IAudioClient);
 const IID IID_IAudioRenderClient = __uuidof(IAudioRenderClient);
+const IID IID_IAudioClock = __uuidof(IAudioClock);
 
 WASAPIPlayer::WASAPIPlayer(const PcmDevice& pcmDevice, Stream* stream)
 	: Player(pcmDevice, stream)
@@ -151,6 +154,12 @@ void WASAPIPlayer::initWasapi()
 		(void**)&renderClient);
 	CHECK_HR(hr);
 
+	// Grab the clock service
+	hr = audioClient->GetService(
+		IID_IAudioClock,
+		(void**)&clock);
+	CHECK_HR(hr);
+
 	// Boost our priority
 	DWORD taskIndex = 0;
 	taskHandle = AvSetMmThreadCharacteristics(TEXT("Pro Audio"), &taskIndex);
@@ -182,12 +191,17 @@ void WASAPIPlayer::uninitWasapi()
 	SAFE_FREE(device);
 	SAFE_FREE(audioClient);
 	SAFE_FREE(renderClient);
+	SAFE_FREE(clock);
 	
 	wasapiActive = false;
 }
 
 void WASAPIPlayer::worker()
 {
+	size_t bufferSize = bufferFrameCount * waveformatExtended->Format.nBlockAlign;
+//	BYTE* bufferTemp = (BYTE*)malloc(bufferSize);
+	BYTE* buffer;
+	HRESULT hr;
 	while (active_)
 	{
 		if (!wasapiActive)
@@ -202,6 +216,20 @@ void WASAPIPlayer::worker()
 			}
 		}
 
-		// go
+		
+		DWORD returnVal = WaitForSingleObject(eventHandle, 5000);
+		if (returnVal != WAIT_OBJECT_0)
+		{
+			audioClient->Stop();
+			CHECK_HR(ERROR_TIMEOUT);
+		}
+		
+		hr = renderClient->GetBuffer(bufferFrameCount, &buffer);
+		CHECK_HR(hr);
+
+		stream_->getPlayerChunk(buffer, 999000us, bufferFrameCount);
+
+		hr = renderClient->ReleaseBuffer(bufferFrameCount, 0);
+		CHECK_HR(hr);
 	}
 }

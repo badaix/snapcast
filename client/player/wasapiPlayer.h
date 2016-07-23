@@ -41,6 +41,7 @@ private:
 	WAVEFORMATEX* waveformat = NULL;
 	WAVEFORMATEXTENSIBLE* waveformatExtended = NULL;
 	IAudioRenderClient* renderClient = NULL;
+	IAudioClock* clock = NULL;
 	UINT32 bufferFrameCount;
 	HANDLE taskHandle;
 	HANDLE eventHandle;
