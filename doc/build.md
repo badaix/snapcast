@@ -105,13 +105,13 @@ Cross compilation for Android is done with the [Android NDK](http://developer.an
 
 ###Android NDK setup
 http://developer.android.com/ndk/guides/standalone_toolchain.html
- 1. Download NDK: `http://dl.google.com/android/ndk/android-ndk-r10e-linux-x86_64.bin`
- 2. Extract to: `/SOME/LOCAL/PATH/android-ndk-r10e`
+ 1. Download NDK: `http://dl.google.com/android/repository/android-ndk-r12b-linux-x86_64.zip`
+ 2. Extract to: `/SOME/LOCAL/PATH/android-ndk-r12b`
  3. Setup toolchain somewhere in your home dir (`<android-ndk dir>`):
 
 ````
 $ cd /SOME/LOCAL/PATH/android-ndk-r10e/build/tools
-$ ./make-standalone-toolchain.sh --arch=arm --platform=android-14 --install-dir=<android-ndk dir> --ndk-dir=/SOME/LOCAL/PATH/android-ndk-r10e --system=linux-x86_64
+$ ./make-standalone-toolchain.sh --arch=arm --platform=android-14 --install-dir=<android-ndk dir> --ndk-dir=/SOME/LOCAL/PATH/android-ndk-r12b
 ````
 
 ###Build Snapclient
