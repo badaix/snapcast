@@ -202,6 +202,8 @@ void WASAPIPlayer::worker()
 //	BYTE* bufferTemp = (BYTE*)malloc(bufferSize);
 	BYTE* buffer;
 	HRESULT hr;
+	UINT64 position = 0, bufferPosition = 0, frequency;
+	clock->GetFrequency(&frequency);
 	while (active_)
 	{
 		if (!wasapiActive)
@@ -216,20 +218,25 @@ void WASAPIPlayer::worker()
 			}
 		}
 
-		
 		DWORD returnVal = WaitForSingleObject(eventHandle, 5000);
 		if (returnVal != WAIT_OBJECT_0)
 		{
 			audioClient->Stop();
 			CHECK_HR(ERROR_TIMEOUT);
 		}
+
+		clock->GetPosition(&position, NULL);
 		
 		hr = renderClient->GetBuffer(bufferFrameCount, &buffer);
 		CHECK_HR(hr);
 
-		stream_->getPlayerChunk(buffer, 999000us, bufferFrameCount);
+		cout << "position: " << position << " freq: " << frequency << " result: " << (position * 1000000) / frequency << endl;
+		cout << "position: " << bufferPosition << " freq: " << waveformat->nSamplesPerSec << " result: " << (bufferPosition * 1000000) / waveformat->nSamplesPerSec << endl;
+		stream_->getPlayerChunk(buffer, std::chrono::microseconds(((bufferPosition * 1000000) / waveformat->nSamplesPerSec) - ((position * 1000000) / frequency)), bufferFrameCount);
 
 		hr = renderClient->ReleaseBuffer(bufferFrameCount, 0);
 		CHECK_HR(hr);
+
+		bufferPosition += bufferFrameCount;
 	}
 }
