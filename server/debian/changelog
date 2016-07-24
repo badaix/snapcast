@@ -1,3 +1,14 @@
+snapserver (0.8.0) unstable; urgency=low
+
+  * Features
+    -Added support for FreeBSD (Issue #67)
+    -Android client: Added Japanese and German translation
+    -Android client: Added support for ogg (Issue #83)
+  * Bugfixes
+    -OpenWRT: makefile automatically sets correct endian (Issue #91)
+
+ -- Johannes Pohl <johannes.pohl@badaix.de>  Sun, 24 Jul 2016 00:13:37 +0200
+
 snapserver (0.7.0) unstable; urgency=low
 
   * Features
