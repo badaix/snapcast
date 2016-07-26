@@ -24,6 +24,9 @@
 
 #include "player.h"
 
+#define REFTIMES_PER_SEC  10000000
+#define REFTIMES_PER_MILLISEC  10000
+
 class WASAPIPlayer : public Player
 {
 public:
@@ -45,6 +48,7 @@ private:
 	UINT32 bufferFrameCount;
 	HANDLE taskHandle;
 	HANDLE eventHandle;
+	REFERENCE_TIME hnsRequestedDuration = REFTIMES_PER_SEC;
 
 	bool wasapiActive = false;
 	

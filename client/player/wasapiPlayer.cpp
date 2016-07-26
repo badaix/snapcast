@@ -3,12 +3,10 @@
 #include <avrt.h>
 #include <ksmedia.h>
 #include <chrono>
+#include "common/snapException.h"
 
 using namespace std;
 using namespace std::chrono_literals;
-
-#define REFTIMES_PER_SEC  10000000
-#define REFTIMES_PER_MILLISEC  10000
 
 const CLSID CLSID_MMDeviceEnumerator = __uuidof(MMDeviceEnumerator);
 const IID IID_IMMDeviceEnumerator = __uuidof(IMMDeviceEnumerator);
@@ -21,25 +19,23 @@ WASAPIPlayer::WASAPIPlayer(const PcmDevice& pcmDevice, Stream* stream)
 {
 }
 
+#define CHECK_HR(hres) if (FAILED(hres)) { cout << "HRESULT fault status: " << hres << " line " << __LINE__ << endl; uninitWasapi(); return; }
+#define SAFE_FREE(obj) if ((obj) != NULL) { (obj)->Release(); (obj) = NULL; }
+
 WASAPIPlayer::~WASAPIPlayer()
 {
-	stop();
+	WASAPIPlayer::stop();
 }
 
 void WASAPIPlayer::start()
 {
-	initWasapi();
 	Player::start();
 }
 
 void WASAPIPlayer::stop()
 {
 	Player::stop();
-	uninitWasapi();
 }
-
-#define CHECK_HR(hres) if (FAILED(hres)) { cout << "HRESULT fault status: " << hres << " line " << __LINE__ << endl; uninitWasapi(); return; }
-#define SAFE_FREE(obj) if ((obj) != NULL) { (obj)->Release(); (obj) = NULL; }
 
 void WASAPIPlayer::initWasapi()
 {
@@ -103,7 +99,6 @@ void WASAPIPlayer::initWasapi()
 	CHECK_HR(hr);
 
 	// Get the device period
-	REFERENCE_TIME hnsRequestedDuration = REFTIMES_PER_SEC;
 	hr = audioClient->GetDevicePeriod(NULL, &hnsRequestedDuration);
 	CHECK_HR(hr);
 	
@@ -171,72 +166,102 @@ void WASAPIPlayer::initWasapi()
 	// And, action!
 	hr = audioClient->Start();
 	CHECK_HR(hr);
-
+	
 	wasapiActive = true;
 }
 
 void WASAPIPlayer::uninitWasapi()
 {
-	if (eventHandle != NULL)
+	if (wasapiActive)
 	{
-		CloseHandle(eventHandle);
+		wasapiActive = false;
+		if (eventHandle != NULL)
+			CloseHandle(eventHandle);
+		if (taskHandle != NULL)
+			AvRevertMmThreadCharacteristics(taskHandle);
+		CoTaskMemFree(waveformat);
+		CoTaskMemFree(waveformatExtended);
+		SAFE_FREE(deviceEnumerator);
+		SAFE_FREE(device);
+		SAFE_FREE(audioClient);
 	}
-	if (taskHandle != NULL)
-	{
-		AvRevertMmThreadCharacteristics(taskHandle);
-	}
-	CoTaskMemFree(waveformat);
-	CoTaskMemFree(waveformatExtended);
-	SAFE_FREE(deviceEnumerator);
-	SAFE_FREE(device);
-	SAFE_FREE(audioClient);
-	SAFE_FREE(renderClient);
-	SAFE_FREE(clock);
-	
-	wasapiActive = false;
 }
 
 void WASAPIPlayer::worker()
 {
+	initWasapi();
+	
 	size_t bufferSize = bufferFrameCount * waveformatExtended->Format.nBlockAlign;
-//	BYTE* bufferTemp = (BYTE*)malloc(bufferSize);
 	BYTE* buffer;
 	HRESULT hr;
 	UINT64 position = 0, bufferPosition = 0, frequency;
+	DWORD returnVal;
+	bool gotChunk;
 	clock->GetFrequency(&frequency);
+	
 	while (active_)
 	{
-		if (!wasapiActive)
-		{
-			try
-			{
-				initWasapi();
-			}
-			catch (const std::exception& e)
-			{
-				logE << "Exception in initWasapi: " << e.what() << endl;
-			}
-		}
-
-		DWORD returnVal = WaitForSingleObject(eventHandle, 5000);
+		returnVal = WaitForSingleObject(eventHandle, 2000);
 		if (returnVal != WAIT_OBJECT_0)
 		{
-			audioClient->Stop();
+			stop();
 			CHECK_HR(ERROR_TIMEOUT);
 		}
 
+		// Thread was sleeping above, double check that we are still running
+		// If not, wasapi is probably been unloaded
+		if (!active_ || !wasapiActive)
+			break;
+
 		clock->GetPosition(&position, NULL);
-		
+
 		hr = renderClient->GetBuffer(bufferFrameCount, &buffer);
 		CHECK_HR(hr);
 
-		cout << "position: " << position << " freq: " << frequency << " result: " << (position * 1000000) / frequency << endl;
-		cout << "position: " << bufferPosition << " freq: " << waveformat->nSamplesPerSec << " result: " << (bufferPosition * 1000000) / waveformat->nSamplesPerSec << endl;
-		stream_->getPlayerChunk(buffer, std::chrono::microseconds(((bufferPosition * 1000000) / waveformat->nSamplesPerSec) - ((position * 1000000) / frequency)), bufferFrameCount);
+		try
+		{
+			gotChunk = stream_->getPlayerChunk(buffer, std::chrono::microseconds(
+																					 ((bufferPosition * 1000000) / waveformat->nSamplesPerSec) -
+																					 ((position * 1000000) / frequency)),
+																				 bufferFrameCount);
+		}
+		catch (SnapException)
+		{
+			gotChunk = false;
+		}
 
 		hr = renderClient->ReleaseBuffer(bufferFrameCount, 0);
 		CHECK_HR(hr);
 
-		bufferPosition += bufferFrameCount;
+		if (!gotChunk)
+		{
+			logO << "Failed to get chunk\n";
+			
+			hr = renderClient->GetBuffer(bufferFrameCount, &buffer);
+			CHECK_HR(hr);
+			memset(buffer, 0, waveformat->nBlockAlign * bufferFrameCount);
+			hr = renderClient->ReleaseBuffer(bufferFrameCount, 0);
+			CHECK_HR(hr);
+
+			Sleep((DWORD)(hnsRequestedDuration / REFTIMES_PER_MILLISEC));
+			
+			hr = audioClient->Stop();
+			CHECK_HR(hr);
+			hr = audioClient->Reset();
+			CHECK_HR(hr);
+			
+			while (active_ && !stream_->waitForChunk(100))
+				logD << "Waiting for chunk\n";
+			
+			hr = audioClient->Start();
+			CHECK_HR(hr);
+			bufferPosition = 0;
+		}
+		else
+		{
+			bufferPosition += bufferFrameCount;
+		}
 	}
+
+	uninitWasapi();
 }
