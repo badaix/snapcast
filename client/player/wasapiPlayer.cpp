@@ -3,6 +3,7 @@
 #include <avrt.h>
 #include <ksmedia.h>
 #include <chrono>
+#include <assert.h>
 #include "common/snapException.h"
 
 using namespace std;
@@ -190,9 +191,12 @@ void WASAPIPlayer::uninitWasapi()
 void WASAPIPlayer::worker()
 {
 	initWasapi();
+
+  assert(sizeof(char) == sizeof(BYTE));
 	
 	size_t bufferSize = bufferFrameCount * waveformatExtended->Format.nBlockAlign;
 	BYTE* buffer;
+	char* queueBuffer = (char*)malloc(bufferSize);
 	HRESULT hr;
 	UINT64 position = 0, bufferPosition = 0, frequency;
 	DWORD returnVal;
@@ -215,35 +219,24 @@ void WASAPIPlayer::worker()
 
 		clock->GetPosition(&position, NULL);
 
-		hr = renderClient->GetBuffer(bufferFrameCount, &buffer);
-		CHECK_HR(hr);
-
-		try
+		gotChunk = stream_->getPlayerChunk(queueBuffer, std::chrono::microseconds(
+																				 ((bufferPosition * 1000000) / waveformat->nSamplesPerSec) -
+																				 ((position * 1000000) / frequency)),
+																			 bufferFrameCount);
+		if (gotChunk)
 		{
-			gotChunk = stream_->getPlayerChunk(buffer, std::chrono::microseconds(
-																					 ((bufferPosition * 1000000) / waveformat->nSamplesPerSec) -
-																					 ((position * 1000000) / frequency)),
-																				 bufferFrameCount);
-		}
-		catch (SnapException)
-		{
-			gotChunk = false;
-		}
-
-		hr = renderClient->ReleaseBuffer(bufferFrameCount, 0);
-		CHECK_HR(hr);
-
-		if (!gotChunk)
-		{
-			logO << "Failed to get chunk\n";
-			
+			adjustVolume(queueBuffer, bufferFrameCount);
 			hr = renderClient->GetBuffer(bufferFrameCount, &buffer);
 			CHECK_HR(hr);
-			memset(buffer, 0, waveformat->nBlockAlign * bufferFrameCount);
+			memcpy(buffer, queueBuffer, bufferSize);
 			hr = renderClient->ReleaseBuffer(bufferFrameCount, 0);
 			CHECK_HR(hr);
-
-			Sleep((DWORD)(hnsRequestedDuration / REFTIMES_PER_MILLISEC));
+			
+			bufferPosition += bufferFrameCount;
+		}
+		else
+		{
+			logO << "Failed to get chunk\n";
 			
 			hr = audioClient->Stop();
 			CHECK_HR(hr);
@@ -257,11 +250,8 @@ void WASAPIPlayer::worker()
 			CHECK_HR(hr);
 			bufferPosition = 0;
 		}
-		else
-		{
-			bufferPosition += bufferFrameCount;
-		}
 	}
 
+	free(queueBuffer);
 	uninitWasapi();
 }
