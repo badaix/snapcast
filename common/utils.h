@@ -197,7 +197,7 @@ static std::string getOS()
 #ifdef ANDROID
 	os = trim_copy("Android " + getProp("ro.build.version.release"));
 #elif WINDOWS
-	if (IsWindows10OrGreater())
+	if (/*IsWindows10OrGreater()*/FALSE)
 		os = "Windows 10";
 	else if (IsWindows8Point1OrGreater())
 		os = "Windows 8.1";

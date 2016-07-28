@@ -63,7 +63,7 @@ std::string ClientConnection::getMacAddress() const
 #ifndef WINDOWS
 		::getMacAddress(socket_->native_handle());
 #else
-		::getMacAddress(socket_->remote_endpoint().address().to_string());
+		::getMacAddress(socket_->local_endpoint().address().to_string());
 #endif
 	if (mac.empty())
 		mac = "00:00:00:00:00:00";
