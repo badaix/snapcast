@@ -43,8 +43,13 @@ volatile sig_atomic_t g_terminated = false;
 
 PcmDevice getPcmDevice(const std::string& soundcard)
 {
+#if defined(HAS_ALSA) || defined(WINDOWS)
+	vector<PcmDevice> pcmDevices =
 #ifdef HAS_ALSA
-	vector<PcmDevice> pcmDevices = AlsaPlayer::pcm_list();
+	AlsaPlayer::pcm_list();
+#else
+	WASAPIPlayer::pcm_list();
+#endif
 
 	try
 	{

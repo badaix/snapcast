@@ -8,11 +8,13 @@
 #include <ksmedia.h>
 #include <chrono>
 #include <assert.h>
-#include <locale>
+#include <functiondiscoverykeys_devpkey.h>
 #include <codecvt>
+#include <locale>
 #include "common/snapException.h"
 
 using namespace std;
+using namespace std::chrono;
 using namespace std::chrono_literals;
 
 template<typename T>
@@ -43,17 +45,14 @@ _COM_SMARTPTR_TYPEDEF(IMMDevice,__uuidof(IMMDevice));
 _COM_SMARTPTR_TYPEDEF(IMMDeviceCollection,__uuidof(IMMDeviceCollection));
 _COM_SMARTPTR_TYPEDEF(IMMDeviceEnumerator,__uuidof(IMMDeviceEnumerator));
 _COM_SMARTPTR_TYPEDEF(IAudioClient,__uuidof(IAudioClient));
+_COM_SMARTPTR_TYPEDEF(IPropertyStore,__uuidof(IPropertyStore));
 
 #define REFTIMES_PER_SEC  10000000
 #define REFTIMES_PER_MILLISEC  10000
 
-#define CHECK_HR(hres)\
-	if (FAILED(hres))\
-	{\
-		stringstream ss;\
-		ss << "HRESULT fault status: " << hex << (hres) << " line " << __LINE__ << endl;\
-		throw SnapException(ss.str());\
-	}
+EXTERN_C const PROPERTYKEY DECLSPEC_SELECTANY PKEY_Device_FriendlyName = { { 0xa45c254e, 0xdf1c, 0x4efd, { 0x80, 0x20, 0x67, 0xd1, 0x46, 0xa8, 0x50, 0xe0 } }, 14 };
+
+#define CHECK_HR(hres) if(FAILED(hres)){stringstream ss;ss<<"HRESULT fault status: "<<hex<<(hres)<<" line "<<dec<<__LINE__<<endl;throw SnapException(ss.str());}
 
 WASAPIPlayer::WASAPIPlayer(const PcmDevice& pcmDevice, Stream* stream)
 	: Player(pcmDevice, stream)
@@ -69,11 +68,44 @@ WASAPIPlayer::~WASAPIPlayer()
 	WASAPIPlayer::stop();
 }
 
+inline PcmDevice convertToDevice(int idx, IMMDevicePtr& device)
+{
+	HRESULT hr;
+	PcmDevice desc;
+
+	LPWSTR id = NULL;
+	hr = device->GetId(&id);
+	CHECK_HR(hr);
+
+	IPropertyStorePtr properties = nullptr;
+	hr = device->OpenPropertyStore(STGM_READ, &properties);
+
+	PROPVARIANT deviceName;
+	PropVariantInit(&deviceName);
+
+	hr = properties->GetValue(PKEY_Device_FriendlyName, &deviceName);
+	CHECK_HR(hr);
+
+	desc.idx = idx;
+	desc.name = wstring_convert<codecvt_utf8<wchar_t>, wchar_t>().to_bytes(id);
+	desc.description = wstring_convert<codecvt_utf8<wchar_t>, wchar_t>().to_bytes(deviceName.pwszVal);
+	
+	CoTaskMemFree(id);
+	
+	return desc;
+}
+
 vector<PcmDevice> WASAPIPlayer::pcm_list()
 {
 	HRESULT hr;
 	IMMDeviceCollectionPtr devices = nullptr;
 	IMMDeviceEnumeratorPtr deviceEnumerator = nullptr;
+	
+	hr = CoInitializeEx(
+		NULL,
+		COINIT_MULTITHREADED);
+	if (hr != CO_E_ALREADYINITIALIZED)
+		CHECK_HR(hr);
 	
 	hr = CoCreateInstance(
 		CLSID_MMDeviceEnumerator, NULL,
@@ -89,8 +121,18 @@ vector<PcmDevice> WASAPIPlayer::pcm_list()
 
 	if (deviceCount == 0)
 		throw SnapException("no valid devices");
-
+	
 	vector<PcmDevice> deviceList;
+	
+	{
+		IMMDevicePtr defaultDevice = nullptr;
+		hr = deviceEnumerator->GetDefaultAudioEndpoint(eRender, eConsole, &defaultDevice);
+		CHECK_HR(hr);
+
+		auto dev = convertToDevice(0, defaultDevice);
+		dev.name = "default";
+		deviceList.push_back(dev);
+	}
 	
 	for (UINT i = 0; i < deviceCount; ++i)
 	{
@@ -99,19 +141,7 @@ vector<PcmDevice> WASAPIPlayer::pcm_list()
 		hr = devices->Item(i, &device);
 		CHECK_HR(hr);
 
-		PcmDevice desc;
-
-		com_mem_ptr<LPWSTR> id(nullptr);
-		hr = device->GetId(id.get());
-		CHECK_HR(hr);
-		
-		DWORD state;
-		hr = device->GetState(&state);
-		CHECK_HR(hr);
-		
-		desc.name = wstring_convert<codecvt_utf8<wchar_t>, wchar_t>().to_bytes(*id);
-		desc.description = to_string(state);
-		deviceList.push_back(desc);
+		deviceList.push_back(convertToDevice(i + 1, device));
 	}
 
 	return deviceList;
@@ -153,8 +183,19 @@ void WASAPIPlayer::worker()
 
 	// Register the default playback device (eRender for playback)
 	IMMDevicePtr device = nullptr;
-	hr = deviceEnumerator->GetDefaultAudioEndpoint(eRender, eConsole, &device);
-	CHECK_HR(hr);
+	if (pcmDevice_.idx == 0)
+	{
+		hr = deviceEnumerator->GetDefaultAudioEndpoint(eRender, eConsole, &device);
+		CHECK_HR(hr);
+	}
+	else
+	{
+		IMMDeviceCollectionPtr devices = nullptr;
+		hr = deviceEnumerator->EnumAudioEndpoints(eRender, DEVICE_STATE_ACTIVE | DEVICE_STATE_UNPLUGGED, &devices);
+		CHECK_HR(hr);
+
+		devices->Item(pcmDevice_.idx, &device);
+	}
 
 	// Activate the device
 	IAudioClientPtr audioClient = nullptr;
@@ -185,8 +226,6 @@ void WASAPIPlayer::worker()
 		UINT32 alignedBufferSize;
 		hr = audioClient->GetBufferSize(&alignedBufferSize);
 		CHECK_HR(hr);
-		/*hr = audioClient.Detach()->Release();
-			CHECK_HR(hr);*/
 		audioClient.Attach(NULL, false);
 		hnsRequestedDuration = (REFERENCE_TIME)((10000.0 * 1000 / waveformatExtended->Format.nSamplesPerSec * alignedBufferSize) + 0.5);
 		hr = device->Activate(IID_IAudioClient, CLSCTX_ALL, NULL, (void**)&audioClient);
@@ -204,9 +243,7 @@ void WASAPIPlayer::worker()
 	// Register an event to refill the buffer
 	com_handle eventHandle(CreateEvent(NULL, FALSE, FALSE, NULL), &::CloseHandle);
 	if (eventHandle == NULL)
-	{
 		CHECK_HR(E_FAIL);
-	}
 	hr = audioClient->SetEventHandle(HANDLE(eventHandle.get()));
 	CHECK_HR(hr);
 
@@ -234,9 +271,7 @@ void WASAPIPlayer::worker()
 	com_handle taskHandle(AvSetMmThreadCharacteristics(TEXT("Pro Audio"), &taskIndex),
 		&::AvRevertMmThreadCharacteristics);
 	if (taskHandle == NULL)
-	{
 		CHECK_HR(E_FAIL);
-	}
 
 	// And, action!
 	hr = audioClient->Start();
@@ -263,9 +298,9 @@ void WASAPIPlayer::worker()
 
 		clock->GetPosition(&position, NULL);
 
-		if (stream_->getPlayerChunk(queueBuffer, std::chrono::microseconds(
-	                                                                     ((bufferPosition * 1000000) / waveformat->nSamplesPerSec) -
-																																			 ((position * 1000000) / frequency)),
+		if (stream_->getPlayerChunk(queueBuffer, microseconds(
+		                                                      ((bufferPosition * 1000000) / waveformat->nSamplesPerSec) -
+		                                                      ((position * 1000000) / frequency)),
 		                            bufferFrameCount))
 		{
 			adjustVolume(queueBuffer, bufferFrameCount);
