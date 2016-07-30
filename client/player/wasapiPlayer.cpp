@@ -185,8 +185,9 @@ void WASAPIPlayer::worker()
 		UINT32 alignedBufferSize;
 		hr = audioClient->GetBufferSize(&alignedBufferSize);
 		CHECK_HR(hr);
-		hr = audioClient->Release();
-		CHECK_HR(hr);
+		/*hr = audioClient.Detach()->Release();
+			CHECK_HR(hr);*/
+		audioClient.Attach(NULL, false);
 		hnsRequestedDuration = (REFERENCE_TIME)((10000.0 * 1000 / waveformatExtended->Format.nSamplesPerSec * alignedBufferSize) + 0.5);
 		hr = device->Activate(IID_IAudioClient, CLSCTX_ALL, NULL, (void**)&audioClient);
 		CHECK_HR(hr);
