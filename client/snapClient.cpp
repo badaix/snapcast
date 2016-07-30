@@ -126,8 +126,13 @@ int main (int argc, char **argv)
 
 		if (listSwitch.isSet())
 		{
+#if defined(HAS_ALSA) || defined(WINDOWS)
+			vector<PcmDevice> pcmDevices =
 #ifdef HAS_ALSA
-			vector<PcmDevice> pcmDevices = AlsaPlayer::pcm_list();
+			AlsaPlayer::pcm_list();
+#elif WINDOWS
+			WASAPIPlayer::pcm_list();
+#endif
 			for (auto dev: pcmDevices)
 			{
 				cout << dev.idx << ": " << dev.name << "\n"

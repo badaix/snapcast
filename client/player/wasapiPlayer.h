@@ -19,41 +19,17 @@
 #ifndef WASAPI_PLAYER_H
 #define WASAPI_PLAYER_H
 
-#include <audioclient.h>
-#include <mmdeviceapi.h>
-
 #include "player.h"
-
-#define REFTIMES_PER_SEC  10000000
-#define REFTIMES_PER_MILLISEC  10000
 
 class WASAPIPlayer : public Player
 {
 public:
 	WASAPIPlayer(const PcmDevice& pcmDevice, Stream* stream);
 	virtual ~WASAPIPlayer();
-
-	virtual void start();
-	virtual void stop();
+	
+	static std::vector<PcmDevice> pcm_list(void);
 protected:
 	virtual void worker();
-private:
-	IMMDeviceEnumerator* deviceEnumerator = NULL;
-	IMMDevice* device = NULL;
-	IAudioClient* audioClient = NULL;
-	WAVEFORMATEX* waveformat = NULL;
-	WAVEFORMATEXTENSIBLE* waveformatExtended = NULL;
-	IAudioRenderClient* renderClient = NULL;
-	IAudioClock* clock = NULL;
-	UINT32 bufferFrameCount;
-	HANDLE taskHandle;
-	HANDLE eventHandle;
-	REFERENCE_TIME hnsRequestedDuration = REFTIMES_PER_SEC;
-
-	bool wasapiActive = false;
-	
-	void initWasapi(void);
-	void uninitWasapi(void);
 };
 
 #endif
