@@ -37,10 +37,10 @@
 #include <sys/ioctl.h>
 #include <net/if.h>
 #include <netinet/in.h>
-#endif
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#endif
 #include <iomanip>
 #if !defined(FREEBSD) && !defined(WINDOWS)
 #include <sys/sysinfo.h>
@@ -50,7 +50,6 @@
 #include <ifaddrs.h>
 #include <net/if_dl.h>
 #endif
-
 #ifdef WINDOWS
 #include <chrono>
 #include <windows.h>
@@ -144,8 +143,11 @@ static std::vector<std::string> split(const std::string &s, char delim)
 	return elems;
 }
 
-
+#ifdef WINDOWS
+static int mkdirRecursive(const char *path)
+#else
 static int mkdirRecursive(const char *path, mode_t mode)
+#endif
 {
 	std::vector<std::string> pathes = split(path, '/');
 	std::stringstream ss;
@@ -166,7 +168,7 @@ static int mkdirRecursive(const char *path, mode_t mode)
 	return res;
 }
 
-
+#ifndef WINDOWS
 static std::string execGetOutput(const std::string& cmd)
 {
 	std::shared_ptr<FILE> pipe(popen((cmd + " 2> /dev/null").c_str(), "r"), pclose);
@@ -181,7 +183,7 @@ static std::string execGetOutput(const std::string& cmd)
 	}
 	return trim(result);
 }
-
+#endif
 
 #ifdef ANDROID
 static std::string getProp(const std::string& prop)
