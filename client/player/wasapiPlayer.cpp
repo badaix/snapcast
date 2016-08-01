@@ -298,7 +298,7 @@ void WASAPIPlayer::worker()
 
 		clock->GetPosition(&position, NULL);
 
-		if (stream_->getPlayerChunk(queueBuffer, microseconds(
+		if (stream_->getPlayerChunk(queueBuffer.get(), microseconds(
 		                                                      ((bufferPosition * 1000000) / waveformat->nSamplesPerSec) -
 		                                                      ((position * 1000000) / frequency)),
 		                            bufferFrameCount))
