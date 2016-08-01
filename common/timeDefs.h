@@ -46,7 +46,7 @@
 static BOOL g_first_time = 1;
 static LARGE_INTEGER g_counts_per_sec;
 
-int clock_gettime(int dummy, struct timespec *ct)
+inline static int clock_gettime(int dummy, struct timespec *ct)
 {
 	LARGE_INTEGER count;
 
