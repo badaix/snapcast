@@ -279,7 +279,7 @@ void WASAPIPlayer::worker()
 	
 	size_t bufferSize = bufferFrameCount * waveformatExtended->Format.nBlockAlign;
 	BYTE* buffer;
-	char queueBuffer[bufferSize];
+	unique_ptr<char[]> queueBuffer(new char[bufferSize]);
 	UINT64 position = 0, bufferPosition = 0, frequency;
 	clock->GetFrequency(&frequency);
 	
@@ -303,10 +303,10 @@ void WASAPIPlayer::worker()
 		                                                      ((position * 1000000) / frequency)),
 		                            bufferFrameCount))
 		{
-			adjustVolume(queueBuffer, bufferFrameCount);
+			adjustVolume(queueBuffer.get(), bufferFrameCount);
 			hr = renderClient->GetBuffer(bufferFrameCount, &buffer);
 			CHECK_HR(hr);
-			memcpy(buffer, queueBuffer, bufferSize);
+			memcpy(buffer, queueBuffer.get(), bufferSize);
 			hr = renderClient->ReleaseBuffer(bufferFrameCount, 0);
 			CHECK_HR(hr);
 			

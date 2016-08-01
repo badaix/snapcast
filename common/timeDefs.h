@@ -38,71 +38,38 @@
     }                                                                         \
   } while (0)
 
-#else
 #define CLOCK_MONOTONIC 42 // discarded on windows plaforms
 
-// from http://stackoverflow.com/a/5404467/2510022
-LARGE_INTEGER getFILETIMEoffset()
+// from http://stackoverflow.com/a/38212960/2510022
+#define BILLION                             (1E9)
+
+static BOOL g_first_time = 1;
+static LARGE_INTEGER g_counts_per_sec;
+
+int clock_gettime(int dummy, struct timespec *ct)
 {
-	SYSTEMTIME s;
-	FILETIME f;
-	LARGE_INTEGER t;
+	LARGE_INTEGER count;
 
-	s.wYear = 1970;
-	s.wMonth = 1;
-	s.wDay = 1;
-	s.wHour = 0;
-	s.wMinute = 0;
-	s.wSecond = 0;
-	s.wMilliseconds = 0;
-	SystemTimeToFileTime(&s, &f);
-	t.QuadPart = f.dwHighDateTime;
-	t.QuadPart <<= 32;
-	t.QuadPart |= f.dwLowDateTime;
-	return (t);
-}
-
-int clock_gettime(int X, struct timeval *tv)
-{
-	LARGE_INTEGER           t;
-	FILETIME                f;
-	double                  microseconds;
-	static LARGE_INTEGER    offset;
-	static double           frequencyToMicroseconds;
-	static int              initialized = 0;
-	static BOOL             usePerformanceCounter = 0;
-
-	if (!initialized)
+	if (g_first_time)
 	{
-		LARGE_INTEGER performanceFrequency;
-		initialized = 1;
-		usePerformanceCounter = QueryPerformanceFrequency(&performanceFrequency);
-		if (usePerformanceCounter)
+		g_first_time = 0;
+		
+		if (0 == QueryPerformanceFrequency(&g_counts_per_sec))
 		{
-			QueryPerformanceCounter(&offset);
-			frequencyToMicroseconds = (double)performanceFrequency.QuadPart / 1000000.;
-		}
-		else
-		{
-			offset = getFILETIMEoffset();
-			frequencyToMicroseconds = 10.;
+			g_counts_per_sec.QuadPart = 0;
 		}
 	}
-	if (usePerformanceCounter) QueryPerformanceCounter(&t);
-	else
+
+	if ((NULL == ct) || (g_counts_per_sec.QuadPart <= 0) ||
+			(0 == QueryPerformanceCounter(&count)))
 	{
-		GetSystemTimeAsFileTime(&f);
-		t.QuadPart = f.dwHighDateTime;
-		t.QuadPart <<= 32;
-		t.QuadPart |= f.dwLowDateTime;
+		return -1;
 	}
 
-	t.QuadPart -= offset.QuadPart;
-	microseconds = (double)t.QuadPart / frequencyToMicroseconds;
-	t.QuadPart = microseconds;
-	tv->tv_sec = t.QuadPart / 1000000;
-	tv->tv_usec = t.QuadPart % 1000000;
-	return (0);
+	ct->tv_sec = count.QuadPart / g_counts_per_sec.QuadPart;
+	ct->tv_nsec = ((count.QuadPart % g_counts_per_sec.QuadPart) * BILLION) / g_counts_per_sec.QuadPart;
+
+	return 0;
 }
 #endif
 

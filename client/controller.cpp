@@ -19,6 +19,8 @@
 #include <iostream>
 #include <string>
 #include <memory>
+#include <chrono>
+#include <thread>
 #include "controller.h"
 #if defined(HAS_OGG) || defined(HAS_TREMOR)
 #include "decoder/oggDecoder.h"
