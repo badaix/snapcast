@@ -19,6 +19,13 @@ ENDIANNESS:=LITTLE
 ifeq ($(ARCH),mips)
 ENDIANNESS:=BIG
 endif
+ifeq ($(ARCH),armeb)
+ENDIANNESS:=BIG
+endif
+ifeq ($(ARCH),powerpc)
+ENDIANNESS:=BIG
+endif
+
 
 define Package/snapcast/Default
 	SECTION := sxx
