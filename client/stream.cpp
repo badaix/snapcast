@@ -67,6 +67,7 @@ void Stream::clearChunks()
 {
 	while (chunks_.size() > 0)
 		chunks_.pop();
+	resetBuffers();
 }
 
 
@@ -364,7 +365,7 @@ bool Stream::getPlayerChunk(void* outputBuffer, const cs::usec& outputBufferDacT
 			logO << "Chunk: " << age.count()/100 << "\t" << miniBuffer_.median()/100 << "\t" << shortMedian_/100 << "\t" << median_/100 << "\t" << buffer_.size() << "\t" << cs::duration<cs::msec>(outputBufferDacTime) << "\n";
 //			logO << "Chunk: " << age.count()/1000 << "\t" << miniBuffer_.median()/1000 << "\t" << shortMedian_/1000 << "\t" << median_/1000 << "\t" << buffer_.size() << "\t" << cs::duration<cs::msec>(outputBufferDacTime) << "\n";
 		}
-		return true;
+		return (abs(cs::duration<cs::msec>(age)) < 500);
 	}
 	catch(int e)
 	{
