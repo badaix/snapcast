@@ -170,8 +170,8 @@ cs::time_point_hrc Stream::getNextPlayerChunk(void* outputBuffer, const cs::usec
 	cs::time_point_hrc tp = getNextPlayerChunk(buffer, timeout, toRead);
 
 	float factor = (float)toRead / framesPerBuffer;//(float)(framesPerBuffer*channels_);
-	if (abs(framesCorrection) > 1)
-		logO << "correction: " << framesCorrection << ", factor: " << factor << "\n";
+//	if (abs(framesCorrection) > 1)
+//		logO << "correction: " << framesCorrection << ", factor: " << factor << "\n";
 	float idx = 0;
 	for (size_t n=0; n<framesPerBuffer; ++n)
 	{
@@ -343,7 +343,13 @@ bool Stream::getPlayerChunk(void* outputBuffer, const cs::usec& outputBufferDacT
 
 		if (sleep_.count() != 0)
 		{
-			logO << "Sleep " << cs::duration<cs::msec>(sleep_) << ", age: " << cs::duration<cs::msec>(age) << ", bufferDuration: " << cs::duration<cs::msec>(bufferDuration) << "\n";
+			static int lastAge(0);
+			int msAge = cs::duration<cs::msec>(age);
+			if (lastAge != msAge) 
+			{
+				lastAge = msAge;
+				logO << "Sleep " << cs::duration<cs::msec>(sleep_) << ", age: " << msAge << ", bufferDuration: " << cs::duration<cs::msec>(bufferDuration) << "\n";
+			}
 		}
 		else if (shortBuffer_.full())
 		{
