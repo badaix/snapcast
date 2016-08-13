@@ -27,9 +27,10 @@
 
 typedef int (*AndroidAudioCallback)(short *buffer, int num_samples);
 
-/// Audio Player
+
+/// OpenSL Audio Player
 /**
- * Abstract audio player implementation
+ * Player implementation for OpenSL (e.g. Android)
  */
 class OpenslPlayer : public Player
 {
@@ -56,7 +57,7 @@ protected:
 	SLObjectItf outputMixObject;
 
 	// buffer queue player interfaces
-	SLObjectItf bqPlayerObject;// = NULL;
+	SLObjectItf bqPlayerObject;
 	SLPlayItf bqPlayerPlay;
 	SLAndroidSimpleBufferQueueItf bqPlayerBufferQueue;
 	SLVolumeItf bqPlayerVolume;
@@ -65,6 +66,7 @@ protected:
 	int curBuffer;
 	char *buffer[2];
 
+	size_t ms_;
 	size_t frames_;
 	size_t buff_size;
 	Stream* pubStream_;
