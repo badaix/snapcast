@@ -18,6 +18,7 @@
 
 #include <iostream>
 #include <future>
+
 #ifndef WINDOWS
 #include <sys/resource.h>
 #endif
@@ -29,12 +30,13 @@
 #ifdef HAS_ALSA
 #include "player/alsaPlayer.h"
 #endif
+
+#include "browsemDNS.h"
+
 #ifdef HAS_DAEMON
 #include "common/daemon.h"
 #endif
-#ifdef HAS_BONJOUR
-#include <dns_sd.h>
-#endif
+
 #include "common/log.h"
 #include "common/signalHandler.h"
 #include "common/strCompat.h"
@@ -73,69 +75,6 @@ PcmDevice getPcmDevice(const std::string& soundcard)
 	PcmDevice pcmDevice;
 	return pcmDevice;
 }
-
-#ifdef HAS_BONJOUR
-struct BonjourResult
-{
-	string host;
-	uint16_t port;
-};
-
-void BonjourResolve(DNSServiceRef service,
-										DNSServiceFlags flags,
-										uint32_t interfaceIndex,
-										DNSServiceErrorType errorCode,
-										const char* fullName,
-										const char* hosttarget,
-										uint16_t port,
-										uint16_t txtLen,
-										const unsigned char* txtRecord,
-										void* context)
-{
-	promise<BonjourResult>* result = static_cast<promise<BonjourResult>*>(context);
-	try
-	{
-		if (errorCode != kDNSServiceErr_NoError)
-			throw errorCode;
-		else
-		{
-			BonjourResult val;
-			val.host = string(fullName);
-			val.port = port;
-			result->set_value(val);
-		}
-	}
-	catch (...)
-	{
-		result->set_exception(current_exception());
-	}
-}
-
-void BonjourReply(DNSServiceRef service,
-									DNSServiceFlags flags,
-									uint32_t interfaceIndex,
-									DNSServiceErrorType errorCode,
-									const char* serviceName,
-									const char* regtype,
-									const char* replyDomain,
-									void* context)
-{
-	promise<BonjourResult>* result = static_cast<promise<BonjourResult>*>(context);
-
-	try
-	{
-		if (errorCode != kDNSServiceErr_NoError)
-			throw errorCode;
-		errorCode = DNSServiceResolve(&service, 0, interfaceIndex, serviceName, regtype, replyDomain, BonjourResolve, context);
-		if (errorCode != kDNSServiceErr_NoError)
-			throw errorCode;
-	}
-	catch (...)
-	{
-		result->set_exception(current_exception());
-	}
-}
-#endif
 
 int main (int argc, char **argv)
 {
@@ -276,25 +215,6 @@ int main (int argc, char **argv)
 				}
 				chronos::sleep(500);
 			}
-#elif defined(HAS_BONJOUR)
-			while (!g_terminated)
-			{
-				DNSServiceRef service;
-				promise<BonjourResult> result;
-				future<BonjourResult> futureResult = result.get_future();
-				if (DNSServiceBrowse(&service, 0, 0, "_snapcast._tcp", NULL, BonjourReply, &result) == kDNSServiceErr_NoError)
-				{
-					futureResult.wait();
-					auto r = futureResult.get();
-					host = r.host;
-					port = r.port;
-					logO << "Found server " << host << ":" << port << "\n";
-					break;
-				}
-				else
-				{
-				}
-			}
 #endif
 		}
 
@@ -319,5 +239,3 @@ int main (int argc, char **argv)
 #endif
 	exit(EXIT_SUCCESS);
 }
-
-

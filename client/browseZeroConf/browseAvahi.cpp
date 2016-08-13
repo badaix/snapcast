@@ -178,7 +178,6 @@ void BrowseAvahi::client_callback(AvahiClient *c, AvahiClientState state, AVAHI_
 	}
 }
 
-
 bool BrowseAvahi::browse(const std::string& serviceName, mDNSResult& result, int timeout)
 {
 	try
