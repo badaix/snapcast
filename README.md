@@ -141,6 +141,11 @@ To test your mpd installation, you can add a radio station by
     #output = autoaudiosink
     output = audioresample ! audioconvert ! audio/x-raw,rate=48000,channels=2,format=S16LE ! wavenc ! filesink location=/tmp/snapfifo
 
+###MPlayer setup
+Use `-novideo` and `-ao` to pipe MPlayer's audio output to the snapfifo:
+
+    mplayer http://wms-15.streamsrus.com:11630 -novideo -channels 2 -srate 48000 -af format=s16le -ao pcm:file=/tmp/snapfifo
+
 ###Alsa setup
 If the player cannot be configured to route the audio stream into the snapfifo, Alsa or PulseAudio can be redirected, resulting in this chain:
 
