@@ -17,25 +17,11 @@
    version="1.1"
    inkscape:version="0.91 r"
    inkscape:export-filename="/home/johannes/Develop/snapcast/doc/Snapcast_800.png"
-   inkscape:export-xdpi="21.375"
-   inkscape:export-ydpi="21.375"
+   inkscape:export-xdpi="21.515625"
+   inkscape:export-ydpi="21.515625"
    sodipodi:docname="Snapcast.svg">
   <defs
-     id="defs4">
-    <filter
-       inkscape:collect="always"
-       style="color-interpolation-filters:sRGB"
-       id="filter4184"
-       x="-0.0070033028"
-       width="1.0140066"
-       y="-0.04188149"
-       height="1.083763">
-      <feGaussianBlur
-         inkscape:collect="always"
-         stdDeviation="8.0347442"
-         id="feGaussianBlur4186" />
-    </filter>
-  </defs>
+     id="defs4" />
   <sodipodi:namedview
      id="base"
      pagecolor="#ffffff"
@@ -44,8 +30,8 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="0.175"
-     inkscape:cx="916.02466"
-     inkscape:cy="565.4968"
+     inkscape:cx="784.59609"
+     inkscape:cy="542.63966"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      showgrid="false"
@@ -113,31 +99,16 @@
          id="tspan4161"
          x="612.65753"
          y="241.71478" /></text>
-    <g
-       id="g4188"
-       transform="matrix(0.96564518,0,0,0.96564518,2.4840576,-3.2612679)">
-      <text
-         sodipodi:linespacing="125%"
-         id="text4136"
-         y="296.95764"
-         x="66.645172"
-         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:532.1418457px;line-height:125%;font-family:Audiowide;-inkscape-font-specification:Audiowide;letter-spacing:0px;word-spacing:0px;fill:#171717;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
-         xml:space="preserve"><tspan
-           y="296.95764"
-           x="66.645172"
-           id="tspan4138"
-           sodipodi:role="line">Snapcast</tspan></text>
-      <text
-         sodipodi:linespacing="125%"
-         id="text4136-3"
-         y="296.95764"
-         x="66.645172"
-         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:532.1418457px;line-height:125%;font-family:Audiowide;-inkscape-font-specification:Audiowide;letter-spacing:0px;word-spacing:0px;opacity:1;fill:#171717;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;filter:url(#filter4184)"
-         xml:space="preserve"><tspan
-           y="296.95764"
-           x="66.645172"
-           id="tspan4138-6"
-           sodipodi:role="line">Snapcast</tspan></text>
-    </g>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:513.86022949px;line-height:125%;font-family:Audiowide;-inkscape-font-specification:Audiowide;letter-spacing:0px;word-spacing:0px;fill:#171717;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       x="66.839645"
+       y="283.49445"
+       id="text4136"
+       sodipodi:linespacing="125%"><tspan
+         sodipodi:role="line"
+         id="tspan4138"
+         x="66.839645"
+         y="283.49445">Snapcast</tspan></text>
   </g>
 </svg>
