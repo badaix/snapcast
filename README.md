@@ -1,7 +1,7 @@
 Snapcast
 ========
 
-![Snapcast](https://raw.githubusercontent.com/badaix/snapcast/develop/doc/Snapcast_800.png)
+![Snapcast](https://raw.githubusercontent.com/badaix/snapcast/master/doc/Snapcast_800.png)
 
 **S**y**n**chronous **a**udio **p**layer
 
