@@ -110,7 +110,6 @@ This [guide](doc/player_setup.md) shows how to configure different players/audio
 * [Alsa](doc/player_setup.md#alsa-setup)
 * [PulseAudio](doc/player_setup.md#pulseaudio-setup)
 
-
 Roadmap
 -------
 Unordered list of features that should make it into the v1.0
