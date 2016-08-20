@@ -8,7 +8,7 @@ struct mDNSResult
 	int proto_;
 	std::string ip_;
 	std::string host_;
-	size_t port_;
+	uint16_t port_;
 	bool valid_;
 };
 

@@ -1,13 +1,12 @@
 #include "browseBonjour.h"
 
-#include <future>
-#include <experimental/optional>
 #include <iostream>
+#include <deque>
+#include <sys/socket.h>
 
 #include "common/snapException.h"
 
 using namespace std;
-using namespace std::experimental;
 
 BrowseBonjour::BrowseBonjour()
 {
@@ -98,6 +97,12 @@ struct mDNSReply
 	string name, regtype, domain;
 };
 
+struct mDNSResolve
+{
+	string fullName;
+	uint16_t port;
+};
+
 #define CHECKED(err) if((err)!=kDNSServiceErr_NoError)throw SnapException(BonjourGetError(err));
 
 void BrowseBonjour::BonjourResolve(DNSServiceRef service,
@@ -111,6 +116,10 @@ void BrowseBonjour::BonjourResolve(DNSServiceRef service,
 																	 const unsigned char* txtRecord,
 																	 void* context)
 {
+	auto resultCollection = static_cast<deque<mDNSResolve>*>(context);
+
+	CHECKED(errorCode);
+	resultCollection->push_back(mDNSResolve { string(fullName), port });
 }
 
 void BrowseBonjour::BonjourReply(DNSServiceRef service,
@@ -122,18 +131,87 @@ void BrowseBonjour::BonjourReply(DNSServiceRef service,
 																 const char* replyDomain,
 																 void* context)
 {
-	cout << serviceName << "," << regtype << "," << replyDomain << endl;
+	auto replyCollection = static_cast<deque<mDNSReply>*>(context);
+	
+	CHECKED(errorCode);
+	replyCollection->push_back(mDNSReply { string(serviceName), string(regtype), string(replyDomain) });
+}
+
+void runService(const DNSServiceRef& service, timeval& timeout)
+{
+	auto socket = DNSServiceRefSockFD(service);
+	fd_set set;
+	FD_ZERO(&set);
+	FD_SET(socket, &set);
+	
+	while (select(FD_SETSIZE, &set, NULL, NULL, &timeout))
+		CHECKED(DNSServiceProcessResult(service));
 }
 
 bool BrowseBonjour::browse(const string& serviceName, mDNSResult& result, int timeout)
 {
-	DNSServiceRef service = NULL;
-	CHECKED(DNSServiceBrowse(&service, 0,	0, "_snapcast._tcp", "local", BrowseBonjour::BonjourReply, NULL));
-	while (true)
+  result.valid_ = false;
+	
+	timeval timeoutVal;
+	timeoutVal.tv_sec = 5;
+	timeoutVal.tv_usec = 0;
+	
+	// Discover
+	deque<mDNSReply> replyCollection;
 	{
-		CHECKED(DNSServiceProcessResult(service));
+		DNSServiceRef service = NULL;
+		CHECKED(DNSServiceBrowse(&service, 0, 0, "_snapcast._tcp", "local.", BrowseBonjour::BonjourReply, &replyCollection));
+
+		runService(service, timeoutVal);
+		
+		DNSServiceRefDeallocate(service); // TODO wrap RAII
 	}
-	DNSServiceRefDeallocate(service);
+	
+	timeoutVal.tv_sec = 5;
+	timeoutVal.tv_usec = 0;
+
+	// Results
+	deque<mDNSResolve> resolveCollection;
+	{
+		DNSServiceRef service = NULL;
+		for (auto& reply : replyCollection)
+			CHECKED(DNSServiceResolve(&service, 0, 0, reply.name.c_str(), reply.regtype.c_str(), reply.domain.c_str(), BrowseBonjour::BonjourResolve, &resolveCollection));
+
+		runService(service, timeoutVal);
+		
+		DNSServiceRefDeallocate(service); // TODO wrap RAII
+	}
+
+	// DNS/mDNS Resolve
+	deque<mDNSResult> resultCollection;
+	{
+		DNSServiceRef service = NULL;
+		for (auto& resolve : resolveCollection)
+		{
+			auto port = resolve.port;
+			CHECKED(DNSServiceGetAddrInfo(&service, 0, 0, 0, resolve.fullName,
+																		[port](DNSServiceRef service,
+																					 DNSServiceFlags flags,
+																					 uint32_t interface_index,
+																					 DNSServiceErrorType errorCode,
+																					 const char* hostname,
+																					 const sockaddr* address,
+																					 uint32_t ttl,
+																					 void* context)
+																		{
+																		}, &resultCollection));
+		}
+		
+		runService(service, timeoutVal);
+		
+		DNSServiceRefDeallocate(service); // TODO wrap RAII
+	}
+
+	cout << replyCollection.size() << endl;
+	cout << resultCollection.size() << endl;
+	for (auto& result : resultCollection)
+		cout << result.host_ << endl;
+	
 	return true;
 }
 
