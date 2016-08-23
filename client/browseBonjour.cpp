@@ -1,5 +1,6 @@
 #include "browseBonjour.h"
 
+#include <memory>
 #include <iostream>
 #include <deque>
 #include <sys/socket.h>
@@ -10,13 +11,16 @@
 
 using namespace std;
 
-BrowseBonjour::BrowseBonjour()
+struct DNSServiceRefDeleter
 {
-}
+	void operator () (DNSServiceRef* ref)
+	{
+		DNSServiceRefDeallocate(*ref);
+		delete ref;
+	}
+};
 
-BrowseBonjour::~BrowseBonjour()
-{
-}
+typedef std::unique_ptr<DNSServiceRef, DNSServiceRefDeleter> DNSServiceHandle;
 
 string BonjourGetError(DNSServiceErrorType error)
 {
@@ -132,32 +136,36 @@ struct mDNSResolve
 	uint16_t port;
 };
 
-#define CHECKED(err) if((err)!=kDNSServiceErr_NoError)throw SnapException(BonjourGetError(err) + to_string(__LINE__));
+#define CHECKED(err) if((err)!=kDNSServiceErr_NoError)throw SnapException(BonjourGetError(err) + ":" + to_string(__LINE__));
 
-void runService(const DNSServiceRef& service, timeval& timeout)
+void runService(const DNSServiceHandle& service)
 {
-	auto socket = DNSServiceRefSockFD(service);
+	auto socket = DNSServiceRefSockFD(*service);
 	fd_set set;
 	FD_ZERO(&set);
 	FD_SET(socket, &set);
 	
+	timeval timeout;
+	timeout.tv_sec = 0;
+	timeout.tv_usec = 500000;
+	
 	while (select(FD_SETSIZE, &set, NULL, NULL, &timeout))
-		CHECKED(DNSServiceProcessResult(service));
+	{
+		CHECKED(DNSServiceProcessResult(*service));
+		timeout.tv_sec = 0;
+		timeout.tv_usec = 500000;
+	}
 }
 
 bool BrowseBonjour::browse(const string& serviceName, mDNSResult& result, int timeout)
 {
   result.valid_ = false;
 	
-	timeval timeoutVal;
-	timeoutVal.tv_sec = 5;
-	timeoutVal.tv_usec = 0;
-	
 	// Discover
 	deque<mDNSReply> replyCollection;
 	{
-		DNSServiceRef service = NULL;
-		CHECKED(DNSServiceBrowse(&service, 0, 0, serviceName.c_str(), "local.",
+		DNSServiceHandle service(new DNSServiceRef(NULL));
+		CHECKED(DNSServiceBrowse(service.get(), 0, 0, serviceName.c_str(), "local.",
 														 [](DNSServiceRef service,
 																DNSServiceFlags flags,
 																uint32_t interfaceIndex,
@@ -173,20 +181,15 @@ bool BrowseBonjour::browse(const string& serviceName, mDNSResult& result, int ti
 															 replyCollection->push_back(mDNSReply{ string(serviceName), string(regtype), string(replyDomain) });
 														 }, &replyCollection));
 
-		runService(service, timeoutVal);
-		
-		DNSServiceRefDeallocate(service); // TODO wrap RAII
+		runService(service);
 	}
-	
-	timeoutVal.tv_sec = 5;
-	timeoutVal.tv_usec = 0;
 
 	// Resolve
 	deque<mDNSResolve> resolveCollection;
 	{
-		DNSServiceRef service = NULL;
+		DNSServiceHandle service(new DNSServiceRef(NULL));
 		for (auto& reply : replyCollection)
-			CHECKED(DNSServiceResolve(&service, 0, 0, reply.name.c_str(), reply.regtype.c_str(), reply.domain.c_str(),
+			CHECKED(DNSServiceResolve(service.get(), 0, 0, reply.name.c_str(), reply.regtype.c_str(), reply.domain.c_str(),
 																[](DNSServiceRef service,
 																	 DNSServiceFlags flags,
 																	 uint32_t interfaceIndex,
@@ -204,23 +207,18 @@ bool BrowseBonjour::browse(const string& serviceName, mDNSResult& result, int ti
 																	resultCollection->push_back(mDNSResolve { string(hosttarget), ntohs(port) });
 																}, &resolveCollection));
 
-		runService(service, timeoutVal);
-		
-		DNSServiceRefDeallocate(service); // TODO wrap RAII
+		runService(service);
 	}
-	
-	timeoutVal.tv_sec = 5;
-	timeoutVal.tv_usec = 0;
 
 	// DNS/mDNS Resolve
 	deque<mDNSResult> resultCollection(resolveCollection.size(), mDNSResult { 0, "", "", 0, false });
 	{
-		DNSServiceRef service = NULL;
+		DNSServiceHandle service(new DNSServiceRef(NULL));
 		unsigned i = 0;
 		for (auto& resolve : resolveCollection)
 		{
 			resultCollection[i].port_ = resolve.port;
-			CHECKED(DNSServiceGetAddrInfo(&service, kDNSServiceFlagsLongLivedQuery, 0, kDNSServiceProtocol_IPv4, resolve.fullName.c_str(),
+			CHECKED(DNSServiceGetAddrInfo(service.get(), kDNSServiceFlagsLongLivedQuery, 0, kDNSServiceProtocol_IPv4, resolve.fullName.c_str(),
 																		[](DNSServiceRef service,
 																			 DNSServiceFlags flags,
 																			 uint32_t interfaceIndex,
@@ -248,9 +246,7 @@ bool BrowseBonjour::browse(const string& serviceName, mDNSResult& result, int ti
 																		}, &resultCollection[i++]));
 		}
 		
-		runService(service, timeoutVal);
-		
-		DNSServiceRefDeallocate(service); // TODO wrap RAII
+		runService(service);
 	}
 
 	if (resultCollection.size() == 0)
