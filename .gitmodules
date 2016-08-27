@@ -4,9 +4,6 @@
 [submodule "externals/asio"]
 	path = externals/asio
 	url = https://github.com/chriskohlhoff/asio.git
-[submodule "externals/flac"]
-	path = externals/flac
-	url = https://git.xiph.org/flac.git
 [submodule "externals/ogg"]
 	path = externals/ogg
 	url = https://git.xiph.org/ogg.git

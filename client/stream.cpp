@@ -21,7 +21,6 @@
 #include <iostream>
 #include <string.h>
 #include "common/log.h"
-#include "common/snapException.h"
 #include "timeProvider.h"
 
 using namespace std;
@@ -148,7 +147,7 @@ cs::time_point_clk Stream::getNextPlayerChunk(void* outputBuffer, const cs::usec
 	{
 		read += chunk_->readFrames(buffer + read*format_.frameSize, framesPerBuffer - read);
 		if (chunk_->isEndOfChunk() && !chunks_.try_pop(chunk_, timeout))
-			return cs::time_point_hrc();
+			throw 0;
 	}
 	return tp;
 }
