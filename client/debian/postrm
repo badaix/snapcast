@@ -1,0 +1,29 @@
+#!/bin/sh
+set -e
+# Automatically added by dh_installinit
+if [ "$1" = "purge" ] ; then
+	update-rc.d snapclient remove >/dev/null
+fi
+
+
+# In case this system is running systemd, we make systemd reload the unit files
+# to pick up changes.
+if [ -d /run/systemd/system ] ; then
+	systemctl --system daemon-reload >/dev/null || true
+fi
+# End automatically added section
+# Automatically added by dh_systemd_enable
+if [ "$1" = "remove" ]; then
+	if [ -x "/usr/bin/deb-systemd-helper" ]; then
+		deb-systemd-helper mask snapclient.service >/dev/null
+	fi
+fi
+
+if [ "$1" = "purge" ]; then
+	if [ -x "/usr/bin/deb-systemd-helper" ]; then
+		export _DEB_SYSTEMD_HELPER_PURGE=1
+		deb-systemd-helper disable snapclient.service >/dev/null
+		deb-systemd-helper unmask snapclient.service >/dev/null
+	fi
+fi
+# End automatically added section
