@@ -66,12 +66,19 @@ public class TcpClient {
      *
      * @param message text entered by client
      */
-    public void sendMessage(String message) {
-        if (mBufferOut != null) {
-            Log.d(TAG, "Sending: " + message);
-            mBufferOut.println(message + "\r\n");
-            mBufferOut.flush();
-        }
+    public void sendMessage(final String message) {
+        Runnable runnable = new Runnable() {
+            @Override
+            public void run() {
+                if (mBufferOut != null) {
+                    Log.d(TAG, "Sending: " + message);
+                    mBufferOut.println(message + "\r\n");
+                    mBufferOut.flush();
+                }
+            }
+        };
+        Thread thread = new Thread(runnable);
+        thread.start();
     }
 
     /**
