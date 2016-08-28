@@ -87,7 +87,8 @@ Redirect the PulseAudio stream into the snapfifo:
 
 Load the module `pipe-sink` like this:
 
-    pacmd load-module module-pipe-sink file=/tmp/snapfifo
+    pacmd load-module module-pipe-sink file=/tmp/snapfifo sink_name=SnapCast
+    pacmd update-sink-proplist SnapCast device.description=SnapCast
 
 It might me neccessary to set the pulse audio latency environment variable to 60 msec: `PULSE_LATENCY_MSEC=60`
 
