@@ -12,8 +12,10 @@ if(PKG_CONFIG_FOUND)
 endif()
 
 if(NOT FLAC_FOUND)
-  find_path(FLAC_INCLUDE_DIRS FLAC/all.h)
-  find_library(FLAC_LIBRARIES FLAC)
+  find_path(FLAC_INCLUDE_DIRS FLAC/all.h
+    PATHS ${CMAKE_SOURCE_DIR}/externals/flac/include)
+  find_library(FLAC_LIBRARIES libFLAC_dynamic
+    PATHS ${CMAKE_SOURCE_DIR}/externals/flac/objs/x64/Release/lib)
 endif()
 
 include(FindPackageHandleStandardArgs)

@@ -12,8 +12,10 @@ if(PKG_CONFIG_FOUND)
 endif()
 
 if(NOT OGG_FOUND)
-  find_path(OGG_INCLUDE_DIRS ogg/ogg.h)
-  find_library(OGG_LIBRARIES ogg)
+  find_path(OGG_INCLUDE_DIRS ogg/ogg.h
+    PATHS ${CMAKE_SOURCE_DIR}/externals/ogg/include)
+  find_library(OGG_LIBRARIES libogg
+    PATHS ${CMAKE_SOURCE_DIR}/externals/ogg/win32/VS2015/x64/Release)
 endif()
 
 include(FindPackageHandleStandardArgs)

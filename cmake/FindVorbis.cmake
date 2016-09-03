@@ -12,8 +12,10 @@ if(PKG_CONFIG_FOUND)
 endif()
 
 if(NOT VORBIS_FOUND)
-  find_path(VORBIS_INCLUDE_DIRS vorbis/vorbis.h)
-  find_library(VORBIS_LIBRARIES vorbis)
+  find_path(VORBIS_INCLUDE_DIRS vorbis/codec.h
+    PATHS ${CMAKE_SOURCE_DIR}/externals/vorbis/include)
+  find_library(VORBIS_LIBRARIES libvorbis
+    PATHS ${CMAKE_SOURCE_DIR}/externals/vorbis/win32/VS2010/x64/Release)
 endif()
 
 include(FindPackageHandleStandardArgs)

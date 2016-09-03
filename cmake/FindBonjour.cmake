@@ -13,10 +13,10 @@ endif()
 
 if(NOT BONJOUR_FOUND)
   find_path(BONJOUR_INCLUDE_DIRS dns_sd.h
-    PATHS ${CMAKE_SOURCE_DIR}/externals/mDNSResponder-320.10.80/mDNSShared
+    PATHS "C:/Program Files/Bonjour SDK/Include" "C:/Program Files (x86)/Bonjour SDK/Include"
     NO_DEFAULT_PATH)
-  find_library(BONJOUR_LIBRARIES dns_sd
-    PATHS ${CMAKE_SOURCE_DIR}/externals/mDNSResponder-320.10.80/mDNSPosix/build/prod
+  find_library(BONJOUR_LIBRARIES dnssd
+    PATHS "C:/Program Files (x86)/Bonjour SDK/Lib/x64" "C:/Program Files (x86)/Bonjour SDK/Lib/Win32" "C:/Program Files/Bonjour SDK/Lib/x64" "C:/Program Files/Bonjour SDK/Lib/Win32"
     NO_DEFAULT_PATH)
 endif()
 

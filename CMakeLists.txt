@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.1)
+cmake_minimum_required(VERSION 3.4)
 project(snapcast)
 
 include_directories(${CMAKE_SOURCE_DIR})
@@ -11,6 +11,9 @@ find_package(Vorbis REQUIRED)
 find_package(Ogg REQUIRED)
 
 if(WIN32)
+  set(CMAKE_SYSTEM_NAME WindowsStore)
+  set(CMAKE_SYSTEM_VERSION 10.0)
+  add_definitions(-D_WIN32_WINNT=0x0600 -DWINDOWS -DWIN32_LEAN_AND_MEAN -DUNICODE -D_UNICODE)
   find_package(Bonjour REQUIRED)
 else()
   find_package(Avahi REQUIRED)
