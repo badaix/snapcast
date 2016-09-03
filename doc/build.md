@@ -200,3 +200,35 @@ Build Snapcast:
     $ make package/sxx/snapcast/compile
 
 The packaged `ipk` files are in `<buildroot dir>/bin/ar71xx/packages/base/snap[client|server]_x.x.x_ar71xx.ipk`
+
+##Windows (Native)
+install the bonjour sdk
+install nasm.exe
+
+Open `externals/ogg/win32/VS2015/libogg_dynamic.sln`
+When prompted, upgrade the toolset
+Set the configuration to release
+Set the platform to x64 or Win32 depending on which you are building for
+
+Open `externals/ogg/win32/VS2015/libogg_static.sln`
+Set the configuration to release
+Set the platform to x64 or Win32 depending on which you are building for
+
+Copy all files from `externals/ogg/win32/VS2015/(x64|Win32)/Release` to `externals/flac/objs/(x64|Win32)/Release/lib` (you may need to create part of this tree)
+Copy `ogg` folder from `externals/ogg/include/ogg` to `externals/flac/include`
+
+Open `externals/flac/FLAC.sln`
+When prompted, upgrade the toolset
+Set the configuration to release
+Set the platform to x64 or Win32 depending on which you are building for
+
+Open `externals/vorbis/win32/VS2010/vorbis_dynamic.sln`
+When prompted, upgrade the toolset
+Set the configuration to release
+Set the platform to x64 or Win32 depending on which you are building for
+Right click the project `libvorbis` and select `Properties`
+Under `Linker\General`, modify `Additional Library Directories` to read `..\..\..\..\ogg\win32\VS2015\$(Platform)\$(Configuration);%(AdditionalLibraryDirectories)`
+Close the property sheet
+Right click `libvorbis` and select `Build`
+
+Open CMake GUI and generate a visual studio solution
