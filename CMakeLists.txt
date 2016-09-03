@@ -40,7 +40,7 @@ endif()
 if(UNIX)
   set(CPACK_GENERATOR "DEB" "TZ")
 elseif(WIN32)
-  set(CPACK_GENERATOR "ZIP")
+  set(CPACK_GENERATOR "ZIP" "NSIS")
 endif()
 set(CPACK_PACKAGING_INSTALL_PREFIX "/")
 
@@ -84,6 +84,20 @@ set(CPACK_COMPONENT_SERVER_DESCRIPTION "Snapcast server\n\
 ")
 set(CPACK_DEBIAN_CLIENT_PACKAGE_CONTROL_EXTRA ${CMAKE_SOURCE_DIR}/client/debian/conffiles ${CMAKE_SOURCE_DIR}/client/debian/prerm ${CMAKE_SOURCE_DIR}/client/debian/postrm ${CMAKE_SOURCE_DIR}/client/debian/postinit)
 set(CPACK_DEBIAN_SERVER_PACKAGE_CONTROL_EXTRA ${CMAKE_SOURCE_DIR}/server/debian/conffiles ${CMAKE_SOURCE_DIR}/server/debian/prerm ${CMAKE_SOURCE_DIR}/server/debian/postrm ${CMAKE_SOURCE_DIR}/server/debian/postinit)
+
+# NSIS Specifics
+set(CPACK_NSIS_MUI_ICON ${CMAKE_SOURCE_DIR}/cmake/icon.ico)
+set(CPACK_NSIS_MUI_UNIICON ${CMAKE_SOURCE_DIR}/cmake/icon.ico)
+set(CPACK_PACKAGE_ICON ${CMAKE_SOURCE_DIR}/cmake/installer.bmp)
+set(CPACK_NSIS_EXTRA_INSTALL_COMMANDS "")
+set(CPACK_NSIS_EXTRA_UNINSTALL_COMMANDS "")
+set(CPACK_NSIS_COMPRESSOR "/SOLID lzma")
+set(CPACK_NSIS_MODIFY_PATH ON)
+set(CPACK_NSIS_INSTALLED_ICON_NAME snapclient.exe)
+set(CPACK_NSIS_HELP_LINK "https://github.com/badaix/snapcast")
+set(CPACK_NSIS_URL_INFO_ABOUT "https://github.com/badaix/snapcast")
+set(CPACK_NSIS_NSIS_CONTACT "Johannes Pohl <johannes.pohl@badaix.de>")
+set(CPACK_NSIS_EXECUTABLES_DIRECTORY ".")
 
 # Enable component packages
 set(CPACK_DEB_COMPONENT_INSTALL ON)
