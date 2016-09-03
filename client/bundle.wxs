@@ -1,14 +1,18 @@
 <?xml version="1.0"?>
+
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
-  <Bundle Name="$(var.CPACK_PACKAGE_NAME)" Version="$(var.CPACK_PACKAGE_VERSION)">
-    <BootstrapperApplicationRef Id="WixStandardBootstrapperApplication.RtfLicense" />
-    <Chain>
-		  <MsiPackage
-			  SourceFile="c:\Program Files\Bonjour SDK\Installer\Bonjour64.msi"
+	<Bundle Name="@CPACK_PACKAGE_NAME@"
+		Version="@CPACK_PACKAGE_VERSION@"
+		Manufacturer="@CPACK_PACKAGE_VENDOR@"
+		UpgradeCode="@CPACK_WIX_UPGRADE_GUID@">
+		<BootstrapperApplicationRef Id="WixStandardBootstrapperApplication.RtfLicense" />
+		<Chain>
+			<MsiPackage
+				SourceFile="c:\Program Files\Bonjour SDK\Installer\Bonjour64.msi"
 				InstallCondition="VersionNT64" />
 			<MsiPackage
-			  SourceFile="c:\Program Files\Bonjour SDK\Installer\Bonjour.msi"
+				SourceFile="c:\Program Files\Bonjour SDK\Installer\Bonjour.msi"
 				InstallCondition="NOT VersionNT64" />
-    </Chain>
-  </Bundle>
+		</Chain>
+	</Bundle>
 </Wix>
