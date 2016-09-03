@@ -4,14 +4,14 @@
 	<Bundle Name="@CPACK_PACKAGE_NAME@"
 		Version="@CPACK_PACKAGE_VERSION@"
 		Manufacturer="@CPACK_PACKAGE_VENDOR@"
-		UpgradeCode="@CPACK_WIX_UPGRADE_GUID@">
+		UpgradeCode="c3bd6772-f05a-4daf-bc49-98aa3ba03a71">
 		<BootstrapperApplicationRef Id="WixStandardBootstrapperApplication.RtfLicense" />
 		<Chain>
 			<MsiPackage
-				SourceFile="c:\Program Files\Bonjour SDK\Installer\Bonjour64.msi"
-				InstallCondition="VersionNT64" />
-			<MsiPackage
 				SourceFile="c:\Program Files\Bonjour SDK\Installer\Bonjour.msi"
+				InstallCondition="NOT VersionNT64" />
+			<MsiPackage
+				SourceFile="@SNAPCLIENT_MSI@"
 				InstallCondition="NOT VersionNT64" />
 		</Chain>
 	</Bundle>

@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+	<Bundle Name="@CPACK_PACKAGE_NAME@"
+		Version="@CPACK_PACKAGE_VERSION@"
+		Manufacturer="@CPACK_PACKAGE_VENDOR@"
+		UpgradeCode="5c50aaf7-5b3f-40e6-a3bd-91bc74e48bc9">
+		<BootstrapperApplicationRef Id="WixStandardBootstrapperApplication.RtfLicense" />
+		<Chain>
+			<MsiPackage
+				SourceFile="c:\Program Files\Bonjour SDK\Installer\Bonjour64.msi"
+				InstallCondition="VersionNT64" />
+			<MsiPackage
+				SourceFile="@SNAPCLIENT_MSI@"
+				InstallCondition="VersionNT64" />
+		</Chain>
+	</Bundle>
+</Wix>
