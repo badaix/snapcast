@@ -1,46 +1,45 @@
 cmake_minimum_required(VERSION 3.4)
-project(snapcast)
+project(snapcast VERSION 0.9.0.0)
 
+# Configure paths
 include_directories(${CMAKE_SOURCE_DIR})
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/")
-add_definitions(-DVERSION="FOOBAR")
+add_definitions(-DVERSION="${PROJECT_VERSION}")
+if(ANDROID)
+  set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/android/Snapcast/src/main/assets/bin/${ANDROID_ABI})
+  set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
+  set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/android/Snapcast/src/main/assets/bin/${ANDROID_ABI})
+  set(CPACK_OUTPUT_FILE_PREFIX ${CMAKE_SOURCE_DIR}/android/Snapcast/src/main/assets/bin/${ANDROID_ABI})
+else()
+  set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
+  set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
+  set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
+  set(CPACK_OUTPUT_FILE_PREFIX ${CMAKE_SOURCE_DIR}/bin)
+endif()
 
-find_package(Threads)
+# Configure compiler options
+set(CMAKE_CXX_STANDARD 11)
+if(ANDROID)
+  add_definitions(-DNO_CPP11_STRING)
+endif()
+
+# Find dependencies
+if (NOT ANDROID)
+  find_package(Threads)
+endif()
 find_package(FLAC REQUIRED)
 find_package(Vorbis REQUIRED)
 find_package(Ogg REQUIRED)
 
-if(WIN32)
-  set(CMAKE_SYSTEM_NAME WindowsStore)
-  set(CMAKE_SYSTEM_VERSION 10.0)
-  add_definitions(-D_WIN32_WINNT=0x0600 -DWINDOWS -DWIN32_LEAN_AND_MEAN -DUNICODE -D_UNICODE)
-  find_package(Bonjour REQUIRED)
-else()
-  find_package(Avahi REQUIRED)
-  add_subdirectory(server)
-endif()
-
-add_subdirectory(common)
-add_subdirectory(message)
-add_subdirectory(client)
-
-if(UNIX)
-  add_custom_command(OUTPUT README.md.gz
-    COMMAND cmake -E copy ${CMAKE_SOURCE_DIR}/README.md ${CMAKE_CURRENT_BINARY_DIR}/README.md
-  	COMMAND gzip --force README.md)
-
-  add_custom_command(OUTPUT changelog.gz
-    COMMAND cmake -E copy ${CMAKE_SOURCE_DIR}/client/debian/changelog ${CMAKE_CURRENT_BINARY_DIR}/changelog
-  	COMMAND gzip --force changelog)
-	
-  add_custom_target(doc ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/README.md.gz ${CMAKE_CURRENT_BINARY_DIR}/changelog.gz)
-endif()
+# Get arch
+include(${CMAKE_SOURCE_DIR}/cmake/TargetArch.cmake)
+target_architecture(ARCH)
 
 # Set generators
 if(UNIX)
   set(CPACK_GENERATOR "DEB" "TZ")
 elseif(WIN32)
-  set(CPACK_GENERATOR "ZIP" "NSIS")
+  set(CPACK_GENERATOR "ZIP" "WIX")
 endif()
 set(CPACK_PACKAGING_INSTALL_PREFIX "/")
 
@@ -48,15 +47,16 @@ set(CPACK_PACKAGING_INSTALL_PREFIX "/")
 set(CPACK_PACKAGE_NAME "snapcast")
 set(CPACK_PACKAGE_VENDOR "badaix")
 set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "https://github.com/badaix/snapcast")
-set(CPACK_PACKAGE_VERSION "1.0.0")
-set(CPACK_PACKAGE_VERSION_MAJOR "1")
-set(CPACK_PACKAGE_VERSION_MINOR "0")
-set(CPACK_PACKAGE_VERSION_PATCH "0")
+set(CPACK_PACKAGE_VERSION ${PROJECT_VERSION})
+set(CPACK_PACKAGE_VERSION_MAJOR ${PROJECT_VERSION_MAJOR})
+set(CPACK_PACKAGE_VERSION_MINOR ${PROJECT_VERSION_MINOR})
+set(CPACK_PACKAGE_VERSION_PATCH ${PROJECT_VERSION_PATCH})
+set(CPACK_PACKAGE_VERSION_TWEAK ${PROJECT_VERSION_TWEAK})
 set(CPACK_PACKAGE_INSTALL_DIRECTORY "snapcast")
 set(CPACK_PACKAGE_CONTACT "Johannes Pohl <johannes.pohl@badaix.de>")
 
 # Debian specifics
-set(CPACK_DEBIAN_PACKAGE_ARCHITECTURE "i386")
+set(CPACK_DEBIAN_PACKAGE_ARCHITECTURE ${ARCH})
 set(CPACK_DEBIAN_PACKAGE_SECTION "utils")
 set(CPACK_DEBIAN_PACKAGE_PRIORITY "extra")
 set(CPACK_DEBIAN_PACKAGE_SHLIBDEPS ON)
@@ -85,22 +85,44 @@ set(CPACK_COMPONENT_SERVER_DESCRIPTION "Snapcast server\n\
 set(CPACK_DEBIAN_CLIENT_PACKAGE_CONTROL_EXTRA ${CMAKE_SOURCE_DIR}/client/debian/conffiles ${CMAKE_SOURCE_DIR}/client/debian/prerm ${CMAKE_SOURCE_DIR}/client/debian/postrm ${CMAKE_SOURCE_DIR}/client/debian/postinit)
 set(CPACK_DEBIAN_SERVER_PACKAGE_CONTROL_EXTRA ${CMAKE_SOURCE_DIR}/server/debian/conffiles ${CMAKE_SOURCE_DIR}/server/debian/prerm ${CMAKE_SOURCE_DIR}/server/debian/postrm ${CMAKE_SOURCE_DIR}/server/debian/postinit)
 
-# NSIS Specifics
-set(CPACK_NSIS_MUI_ICON ${CMAKE_SOURCE_DIR}/cmake/icon.ico)
-set(CPACK_NSIS_MUI_UNIICON ${CMAKE_SOURCE_DIR}/cmake/icon.ico)
-set(CPACK_PACKAGE_ICON ${CMAKE_SOURCE_DIR}/cmake\\\\installer.bmp)
-set(CPACK_NSIS_EXTRA_INSTALL_COMMANDS "")
-set(CPACK_NSIS_EXTRA_UNINSTALL_COMMANDS "")
-set(CPACK_NSIS_COMPRESSOR "/SOLID lzma")
-set(CPACK_NSIS_MODIFY_PATH ON)
-set(CPACK_NSIS_INSTALLED_ICON_NAME snapclient.exe)
-set(CPACK_NSIS_HELP_LINK "https://github.com/badaix/snapcast")
-set(CPACK_NSIS_URL_INFO_ABOUT "https://github.com/badaix/snapcast")
-set(CPACK_NSIS_NSIS_CONTACT "Johannes Pohl <johannes.pohl@badaix.de>")
-set(CPACK_NSIS_EXECUTABLES_DIRECTORY ".")
+# WiX Specifics
+set(CPACK_WIX_UPGRADE_GUID 7D46CFF3-436E-4381-A34C-7D87274A7FB4)
+set(CPACK_WIX_PRODUCT_GUID 7D46CFF3-436E-4381-A34C-7D87274A7FB4)
+set(CPACK_WIX_LICENSE_RTF ${CMAKE_SOURCE_DIR}/LICENSE.txt)
+set(CPACK_WIX_PRODUCT_ICON ${CMAKE_SOURCE_DIR}/cmake/icon.ico)
+set(CPACK_WIX_UI_BANNER ${CMAKE_SOURCE_DIR}/cmake/banner.bmp)
+set(CPACK_WIX_UI_DIALOG ${CMAKE_SOURCE_DIR}/cmake/welcome.bmp)
+set(MSI_ICON ${CMAKE_SOURCE_DIR}/cmake/icon.bmp)
+set(CPACK_WIX_TEMPLATE ${CMAKE_SOURCE_DIR}/main.wxs)
 
 # Enable component packages
 set(CPACK_DEB_COMPONENT_INSTALL ON)
 set(CPACK_ARCHIVE_COMPONENT_INSTALL ON)
 
+# Configure components
+if(WIN32)
+  add_definitions(-D_WIN32_WINNT=0x0600 -DWINDOWS -DWIN32_LEAN_AND_MEAN -DUNICODE -D_UNICODE -D_CRT_SECURE_NO_WARNINGS)
+  find_package(Bonjour REQUIRED)
+elseif(NOT ANDROID)
+  find_package(Avahi REQUIRED)
+  add_subdirectory(server)
+endif()
+
+add_subdirectory(common)
+add_subdirectory(message)
+add_subdirectory(client)
+
+if(UNIX)
+  add_custom_command(OUTPUT README.md.gz
+    COMMAND cmake -E copy ${CMAKE_SOURCE_DIR}/README.md ${CMAKE_CURRENT_BINARY_DIR}/README.md
+  	COMMAND gzip --force README.md)
+
+  add_custom_command(OUTPUT changelog.gz
+    COMMAND cmake -E copy ${CMAKE_SOURCE_DIR}/client/debian/changelog ${CMAKE_CURRENT_BINARY_DIR}/changelog
+  	COMMAND gzip --force changelog)
+	
+  add_custom_target(doc ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/README.md.gz ${CMAKE_CURRENT_BINARY_DIR}/changelog.gz)
+endif()
+
+# Create CPack definition
 include(CPack)
