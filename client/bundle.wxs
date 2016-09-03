@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+  <Bundle>
+    <BootstrapperApplicationRef Id="WixStandardBootstrapperApplication.RtfLicense" />
+    <Chain>
+		  <MsiPackage
+			  SourceFile="c:\Program Files\Bonjour SDK\Installer\Bonjour64.msi"
+				InstallCondition="VersionNT64" />
+			<MsiPackage
+			  SourceFile="c:\Program Files\Bonjour SDK\Installer\Bonjour.msi"
+				InstallCondition="NOT VersionNT64" />
+    </Chain>
+  </Bundle>
+</Wix>
