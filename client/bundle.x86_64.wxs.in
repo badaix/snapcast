@@ -1,18 +1,26 @@
 <?xml version="1.0"?>
 
-<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi" xmlns:bal="http://schemas.microsoft.com/wix/BalExtension">
 	<Bundle Name="@CPACK_PACKAGE_NAME@"
 		Version="@CPACK_PACKAGE_VERSION@"
 		Manufacturer="@CPACK_PACKAGE_VENDOR@"
 		UpgradeCode="5c50aaf7-5b3f-40e6-a3bd-91bc74e48bc9">
-		<BootstrapperApplicationRef Id="WixStandardBootstrapperApplication.RtfLicense" />
+		<BootstrapperApplicationRef Id="WixStandardBootstrapperApplication.HyperlinkLicense">
+			<bal:WixStandardBootstrapperApplication LicenseUrl="" />
+		</BootstrapperApplicationRef>
 		<Chain>
 			<MsiPackage
 				SourceFile="c:\Program Files\Bonjour SDK\Installer\Bonjour64.msi"
-				InstallCondition="VersionNT64" />
+				InstallCondition="VersionNT64"
+				DisplayInternalUI="yes"
+				Vital="yes"
+				Permanent="yes" />
 			<MsiPackage
 				SourceFile="@SNAPCLIENT_MSI@"
-				InstallCondition="VersionNT64" />
+				InstallCondition="VersionNT64"
+				DisplayInternalUI="yes"
+				Vital="yes"
+				Permanent="no" />
 		</Chain>
 	</Bundle>
 </Wix>
