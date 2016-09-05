@@ -16,6 +16,3 @@
 [submodule "externals/vorbis"]
 	path = externals/vorbis
 	url = https://git.xiph.org/vorbis.git
-[submodule "externals/mDNSResponder"]
-	path = externals/mDNSResponder
-	url = https://github.com/jevinskie/mDNSResponder.git
