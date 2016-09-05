@@ -6,7 +6,7 @@
 		Manufacturer="@CPACK_PACKAGE_VENDOR@"
 		UpgradeCode="c3bd6772-f05a-4daf-bc49-98aa3ba03a71">
 		<BootstrapperApplicationRef Id="WixStandardBootstrapperApplication.HyperlinkLicense">
-			<bal:WixStandardBootstrapperApplication LicenseUrl="" />
+			<bal:WixStandardBootstrapperApplication LicenseUrl="" LogoFile="@MSI_ICON@" SuppressOptionsUI="yes" />
 		</BootstrapperApplicationRef>
 		<Chain>
 			<MsiPackage
