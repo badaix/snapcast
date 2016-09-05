@@ -17,7 +17,6 @@
 ***/
 
 #include <iostream>
-#include <future>
 
 #ifndef WINDOWS
 #include <sys/resource.h>

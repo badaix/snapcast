@@ -196,7 +196,7 @@ void Stream::resetBuffers()
 
 
 
-bool Stream::getPlayerChunk(void* outputBuffer, const cs::usec& outputBufferDacTime, unsigned long framesPerBuffer)
+bool Stream::getPlayerChunk(void* outputBuffer, const cs::usec& outputBufferDacTime, UINT32 framesPerBuffer)
 {
 	if (outputBufferDacTime > bufferMs_)
 	{

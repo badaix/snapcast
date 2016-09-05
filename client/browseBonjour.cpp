@@ -3,8 +3,13 @@
 #include <memory>
 #include <iostream>
 #include <deque>
+#ifdef WINDOWS
+#include <WinSock2.h>
+#include <Ws2tcpip.h>
+#else
 #include <sys/socket.h>
 #include <netdb.h>
+#endif
 
 #include "common/log.h"
 #include "common/snapException.h"
