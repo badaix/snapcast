@@ -50,7 +50,7 @@ public:
 
 	/// Get PCM data, which will be played out in "outputBufferDacTime" time
 	/// frame = (num_channels) * (1 sample in bytes) = (2 channels) * (2 bytes (16 bits) per sample) = 4 bytes (32 bits)
-	bool getPlayerChunk(void* outputBuffer, const chronos::usec& outputBufferDacTime, UINT32 framesPerBuffer);
+	bool getPlayerChunk(void* outputBuffer, const chronos::usec& outputBufferDacTime, uint32_t framesPerBuffer);
 
 	/// "Server buffer": playout latency, e.g. 1000ms
 	void setBufferLen(size_t bufferLenMs);

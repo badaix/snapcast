@@ -38,40 +38,6 @@
       (result)->tv_usec += 1000000;                                           \
     }                                                                         \
   } while (0)
-
-#define CLOCK_MONOTONIC 42 // discarded on windows plaforms
-
-// from http://stackoverflow.com/a/38212960/2510022
-#define BILLION                             (1E9)
-
-static BOOL g_first_time = 1;
-static LARGE_INTEGER g_counts_per_sec;
-
-inline static int clock_gettime(int dummy, struct timespec *ct)
-{
-	LARGE_INTEGER count;
-
-	if (g_first_time)
-	{
-		g_first_time = 0;
-		
-		if (0 == QueryPerformanceFrequency(&g_counts_per_sec))
-		{
-			g_counts_per_sec.QuadPart = 0;
-		}
-	}
-
-	if ((NULL == ct) || (g_counts_per_sec.QuadPart <= 0) ||
-			(0 == QueryPerformanceCounter(&count)))
-	{
-		return -1;
-	}
-
-	ct->tv_sec = count.QuadPart / g_counts_per_sec.QuadPart;
-	ct->tv_nsec = ((count.QuadPart % g_counts_per_sec.QuadPart) * BILLION) / g_counts_per_sec.QuadPart;
-
-	return 0;
-}
 #endif
 
 namespace chronos
@@ -108,9 +74,7 @@ namespace chronos
 		mach_port_deallocate(mach_task_self(), cclock);
 		return mts.tv_sec*1000 + mts.tv_nsec / 1000000;
 #else
-		struct timespec now;
-		clock_gettime(CLOCK_MONOTONIC, &now);
-		return now.tv_sec*1000 + now.tv_nsec / 1000000;
+		return steady::now().time_since_epoch().count();
 #endif
 	}
 
