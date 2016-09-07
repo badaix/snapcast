@@ -73,7 +73,7 @@ struct tv
 	tv()
 	{
 		timeval t;
-		to_timeval(chronos::hrc::now().time_since_epoch(), t);
+		to_timeval(chronos::system::now().time_since_epoch(), t);
 		sec = t.tv_sec;
 		usec = t.tv_usec;
 	}
