@@ -18,7 +18,7 @@
 
 #include "timeProvider.h"
 #include "common/log.h"
-
+#include "common/timeDefs.h"
 
 TimeProvider::TimeProvider() : diffToServer_(0)
 {
@@ -28,17 +28,16 @@ TimeProvider::TimeProvider() : diffToServer_(0)
 
 void TimeProvider::setDiff(const tv& c2s, const tv& s2c)
 {
-		tv latency = c2s - s2c;
-		double diff = latency.sec * 1000. + latency.usec / 1000.;
-		setDiffToServer(diff / 2.);
+	tv latency = c2s - s2c;
+	double diff = latency.sec * 1000. + latency.usec / 1000.;
+	setDiffToServer(diff / 2.);
 }
 
 
 void TimeProvider::setDiffToServer(double ms)
 {
 	static int32_t lastTimeSync = 0;
-	timeval now;
-	gettimeofday(&now, NULL);
+	auto nowSeconds = chronos::system::now().time_since_epoch().count() * chronos::system::period::num / chronos::system::period::den;
 
 	/// clear diffBuffer if last update is older than a minute
 	if (!diffBuffer_.empty() && (std::abs(now.tv_sec - lastTimeSync) > 60))
@@ -47,7 +46,7 @@ void TimeProvider::setDiffToServer(double ms)
 		diffToServer_ = ms*1000;
 		diffBuffer_.clear();
 	}
-	lastTimeSync = now.tv_sec;
+	lastTimeSync = nowSeconds;
 
 	diffBuffer_.add(ms*1000);
 	diffToServer_ = diffBuffer_.median(3);
