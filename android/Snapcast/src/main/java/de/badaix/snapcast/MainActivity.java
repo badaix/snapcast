@@ -552,15 +552,15 @@ public class MainActivity extends AppCompatActivity implements ClientItem.Client
                         miSettings.setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER);
                     if (miStartStop != null)
                         miStartStop.setVisible(true);
-                    if (miRefresh != null)
-                        miRefresh.setVisible(true);
+//                    if (miRefresh != null)
+//                        miRefresh.setVisible(true);
                 } else {
                     if (miSettings != null)
                         miSettings.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
                     if (miStartStop != null)
                         miStartStop.setVisible(false);
-                    if (miRefresh != null)
-                        miRefresh.setVisible(false);
+//                    if (miRefresh != null)
+//                        miRefresh.setVisible(false);
                 }
             }
         });

@@ -198,6 +198,8 @@ void AlsaPlayer::worker()
 {
 	snd_pcm_sframes_t pcm;
 	snd_pcm_sframes_t framesDelay;
+	long lastChunkTick = 0;
+
 	while (active_)
 	{
 		if (handle_ == NULL)
@@ -220,6 +222,7 @@ void AlsaPlayer::worker()
 
 		if (stream_->getPlayerChunk(buff_, delay, frames_))
 		{
+			lastChunkTick = chronos::getTickCount();
 			adjustVolume(buff_, frames_);
 			if ((pcm = snd_pcm_writei(handle_, buff_, frames_)) == -EPIPE)
 			{
@@ -236,7 +239,15 @@ void AlsaPlayer::worker()
 		{
 			logO << "Failed to get chunk\n";
 			while (active_ && !stream_->waitForChunk(100))
+			{
 				logD << "Waiting for chunk\n";
+				if ((handle_ != NULL) && (chronos::getTickCount() - lastChunkTick > 5000))
+				{
+					logO << "No chunk received for 5000ms. Closing ALSA.\n";
+					uninitAlsa();
+					stream_->clearChunks();
+				}
+			}
 		}
 	}
 }
