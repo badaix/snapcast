@@ -28,6 +28,7 @@
 #ifndef WINDOWS
 #include <sys/time.h>
 #else // from the GNU C library implementation of sys/time.h
+#include <WinSock2.h>
 # define timersub(a, b, result)                                               \
   do {                                                                        \
     (result)->tv_sec = (a)->tv_sec - (b)->tv_sec;                             \
