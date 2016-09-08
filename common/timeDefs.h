@@ -74,7 +74,7 @@ namespace chronos
 		mach_port_deallocate(mach_task_self(), cclock);
 		return mts.tv_sec*1000 + mts.tv_nsec / 1000000;
 #else
-		return clk::now().time_since_epoch().count();
+		return std::chrono::duration_cast<std::chrono::milliseconds>(clk::now().time_since_epoch()).count();
 #endif
 	}
 
