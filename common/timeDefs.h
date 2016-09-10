@@ -53,8 +53,7 @@ namespace chronos
 		tv.tv_usec = std::chrono::duration_cast<std::chrono::microseconds>(d - sec).count();
 	}
 	typedef std::chrono::high_resolution_clock hrc;
-	//typedef std::chrono::steady_clock steady;
-	typedef std::chrono::high_resolution_clock system;
+	typedef std::chrono::system_clock system;
 	typedef std::chrono::time_point<hrc> time_point_hrc;
 
 	typedef std::chrono::seconds sec;
