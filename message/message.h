@@ -27,15 +27,6 @@
 #include "common/endian.h"
 #include "common/timeDefs.h"
 
-template<typename duration>
-void to_timeval(duration&& d, timeval& tv)
-{
-	const auto sec = std::chrono::duration_cast<std::chrono::seconds>(d);
-
-	tv.tv_sec = sec.count();
-	tv.tv_usec = std::chrono::duration_cast<std::chrono::microseconds>(d - sec).count();
-}
-
 template<typename CharT, typename TraitsT = std::char_traits<CharT> >
 class vectorwrapbuf : public std::basic_streambuf<CharT, TraitsT>
 {
@@ -73,7 +64,7 @@ struct tv
 	tv()
 	{
 		timeval t;
-		to_timeval(chronos::system::now().time_since_epoch(), t);
+		chronos::to_timeval(chronos::system::now().time_since_epoch(), t);
 		sec = t.tv_sec;
 		usec = t.tv_usec;
 	}
