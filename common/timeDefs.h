@@ -44,6 +44,13 @@ namespace chronos
 {
 	typedef std::chrono::system_clock clk;
 	typedef std::chrono::time_point<clk> time_point_clk;
+
+	template<typename source_clock, typename destination_clock>
+	typename destination_clock::time_point rebase_time_point(typename source_clock::time_point source)
+	{
+		return destination_clock::from_time_t(source_clock::to_time_t(source));
+	}
+	
 	template<typename duration>
 	void to_timeval(duration&& d, timeval& tv)
 	{
@@ -52,9 +59,6 @@ namespace chronos
 		tv.tv_sec = sec.count();
 		tv.tv_usec = std::chrono::duration_cast<std::chrono::microseconds>(d - sec).count();
 	}
-	typedef std::chrono::high_resolution_clock hrc;
-	typedef std::chrono::system_clock system;
-	typedef std::chrono::time_point<hrc> time_point_hrc;
 
 	typedef std::chrono::seconds sec;
 	typedef std::chrono::milliseconds msec;
