@@ -48,9 +48,15 @@ namespace chronos
 
 	inline static long getTickCount()
 	{
+#ifdef __MACH__
+		struct timeval now;
+		gettimeofday(&now, NULL);
+		return now.tv_sec*1000 + now.tv_usec / 1000;
+#else
 		struct timespec now;
 		clock_gettime(CLOCK_MONOTONIC, &now);
 		return now.tv_sec*1000 + now.tv_nsec / 1000000;
+#endif
 	}
 
 	template <class Rep, class Period>

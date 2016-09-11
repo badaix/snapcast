@@ -116,6 +116,8 @@ void Controller::onMessageReceived(ClientConnection* connection, const msg::Base
 		player_.reset(new AlsaPlayer(pcmDevice_, stream_.get()));
 #elif HAS_OPENSL
 		player_.reset(new OpenslPlayer(pcmDevice_, stream_.get()));
+#elif HAS_COREAUDIO
+		player_.reset(new CoreAudioPlayer(pcmDevice_, stream_.get()));
 #else
 		throw SnapException("No ALSA or OPENSL support");
 #endif

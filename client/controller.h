@@ -29,6 +29,8 @@
 #include "player/alsaPlayer.h"
 #elif HAS_OPENSL
 #include "player/openslPlayer.h"
+#elif HAS_COREAUDIO
+#include "player/coreAudioPlayer.h"
 #endif
 #include "clientConnection.h"
 #include "stream.h"

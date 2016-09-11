@@ -10,7 +10,7 @@ else
 endif
 
 
-CXXFLAGS += $(ADD_CFLAGS) -std=c++0x -Wall -Wno-unused-function -O3 -pthread -DASIO_STANDALONE -DVERSION=\"$(VERSION)\" -I. -I.. -I../externals/asio/asio/include -I../externals/popl/include
+CXXFLAGS += $(ADD_CFLAGS) -std=c++0x -Wall -Wno-unused-function -O3 -DASIO_STANDALONE -DVERSION=\"$(VERSION)\" -I. -I.. -I../externals/asio/asio/include -I../externals/popl/include
 OBJ       = snapClient.o stream.o clientConnection.o timeProvider.o player/player.o decoder/pcmDecoder.o decoder/oggDecoder.o decoder/flacDecoder.o controller.o ../message/pcmChunk.o ../common/log.o ../common/sampleFormat.o
 
 ifeq ($(ENDIAN), BIG)
@@ -21,22 +21,30 @@ ifeq ($(TARGET), ANDROID)
 
 CXX      = $(NDK_DIR)/bin/arm-linux-androideabi-g++
 STRIP	 = $(NDK_DIR)/bin/arm-linux-androideabi-strip
-CXXFLAGS += -DANDROID -DNO_CPP11_STRING -fPIC -DHAS_TREMOR -DHAS_OPENSL -I$(NDK_DIR)/include
+CXXFLAGS += -pthread -DANDROID -DNO_CPP11_STRING -fPIC -DHAS_TREMOR -DHAS_OPENSL -I$(NDK_DIR)/include
 LDFLAGS  = -L$(NDK_DIR)/lib -pie -lvorbisidec -logg -lFLAC -lOpenSLES 
 OBJ      += player/openslPlayer.o 
 
 else ifeq ($(TARGET), OPENWRT)
 
 STRIP	 = echo
-CXXFLAGS += -DNO_CPP11_STRING -DHAS_TREMOR -DHAS_ALSA -DHAS_AVAHI -DHAS_DAEMON
+CXXFLAGS += -pthread -DNO_CPP11_STRING -DHAS_TREMOR -DHAS_ALSA -DHAS_AVAHI -DHAS_DAEMON
 LDFLAGS  = -lasound -lvorbisidec -logg -lFLAC -lavahi-client -lavahi-common -latomic
 OBJ      += player/alsaPlayer.o browseAvahi.o
+
+else ifeq ($(TARGET), MAC)
+
+CXX      = /usr/bin/g++
+STRIP	 = strip
+CXXFLAGS += -DHAS_TREMOR -DHAS_COREAUDIO -DFREEBSD -I/usr/local/include -Wno-unused-local-typedef
+LDFLAGS  = -logg -lvorbisidec -lFLAC -L/usr/local/lib -framework AudioToolbox -framework CoreFoundation
+OBJ      += player/coreAudioPlayer.o
 
 else
 
 CXX      = /usr/bin/g++
 STRIP	 = strip
-CXXFLAGS += -DHAS_OGG -DHAS_ALSA -DHAS_AVAHI -DHAS_DAEMON
+CXXFLAGS += -pthread -DHAS_OGG -DHAS_ALSA -DHAS_AVAHI -DHAS_DAEMON
 LDFLAGS  = -lrt -lasound -logg -lvorbis -lFLAC -lavahi-client -lavahi-common -static-libgcc -static-libstdc++
 OBJ      += player/alsaPlayer.o browseAvahi.o
 

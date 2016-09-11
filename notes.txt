@@ -91,3 +91,7 @@ libflac8
 libogg0
 libvorbis0a
 libvorbisenc2
+
+
+*Mac
+brew install autoconf automake pkg-config libtool

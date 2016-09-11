@@ -41,7 +41,7 @@ void TimeProvider::setDiffToServer(double ms)
 	gettimeofday(&now, NULL);
 
 	/// clear diffBuffer if last update is older than a minute
-	if (!diffBuffer_.empty() && (abs(now.tv_sec - lastTimeSync) > 60))
+	if (!diffBuffer_.empty() && (std::abs(now.tv_sec - lastTimeSync) > 60))
 	{
 		logO << "Last time sync older than a minute. Clearing time buffer\n";
 		diffToServer_ = ms*1000;
