@@ -19,8 +19,11 @@
 #ifndef CORE_AUDIO_PLAYER_H
 #define CORE_AUDIO_PLAYER_H
 
-#include "player.h"
+#include <AudioToolbox/AudioQueue.h>
+#include <CoreAudio/CoreAudioTypes.h>
+#include <CoreFoundation/CFRunLoop.h>
 
+#include "player.h"
 
 /// Audio Player
 /**
@@ -32,9 +35,15 @@ public:
 	CoreAudioPlayer(const PcmDevice& pcmDevice, Stream* stream);
 	virtual ~CoreAudioPlayer();
 
+	void playerCallback(AudioQueueRef queue, AudioQueueBufferRef bufferRef);
+
 protected:
 	virtual void worker();
 
+	size_t ms_;
+	size_t frames_;
+	size_t buff_size_;
+	Stream* pubStream_;
 };
 
 

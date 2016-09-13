@@ -119,7 +119,7 @@ void Controller::onMessageReceived(ClientConnection* connection, const msg::Base
 #elif HAS_COREAUDIO
 		player_.reset(new CoreAudioPlayer(pcmDevice_, stream_.get()));
 #else
-		throw SnapException("No ALSA or OPENSL support");
+		throw SnapException("No audio player support");
 #endif
 		player_->setVolume(serverSettings_->getVolume() / 100.);
 		player_->setMute(serverSettings_->isMuted());
