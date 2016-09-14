@@ -17,10 +17,9 @@
 ***/
 
 #include <unistd.h>
-
-
-
 #include "coreAudioPlayer.h"
+
+#define NUM_BUFFERS 2
 
 
 //http://stackoverflow.com/questions/4863811/how-to-use-audioqueue-to-play-a-sound-for-mac-osx-in-c
@@ -48,8 +47,15 @@ CoreAudioPlayer::~CoreAudioPlayer()
 
 void CoreAudioPlayer::playerCallback(AudioQueueRef queue, AudioQueueBufferRef bufferRef)
 {
-//logO << "Callback\n";
-	chronos::usec delay(ms_ * 1000);
+    /// Estimate the playout delay by checking the number of frames left in the buffer
+    /// and add ms_ (= complete buffer size). Based on trying.
+    AudioTimeStamp timestamp;
+    AudioQueueGetCurrentTime(queue, timeLine, &timestamp, NULL);
+    size_t bufferedFrames = (frames_ - ((uint64_t)timestamp.mSampleTime % frames_)) % frames_;
+    size_t bufferedMs = bufferedFrames * 1000 / pubStream_->getFormat().rate + (ms_ * (NUM_BUFFERS - 1));
+//    logO << "buffered: " << bufferedFrames << ", ms: " << bufferedMs << ", mSampleTime: " << timestamp.mSampleTime << "\n";
+
+	chronos::usec delay(bufferedMs * 1000);
     char *buffer = (char*)bufferRef->mAudioData;
 	if (!pubStream_->getPlayerChunk(buffer, delay, frames_))
 	{
@@ -75,12 +81,9 @@ void CoreAudioPlayer::playerCallback(AudioQueueRef queue, AudioQueueBufferRef bu
 
 void CoreAudioPlayer::worker()
 {
-    AudioStreamBasicDescription format;
-    AudioQueueRef queue;
-    AudioQueueBufferRef buffers[2];
-
     const SampleFormat& sampleFormat = pubStream_->getFormat();
 
+    AudioStreamBasicDescription format;
     format.mSampleRate       = sampleFormat.rate;
     format.mFormatID         = kAudioFormatLinearPCM;
     format.mFormatFlags      = kLinearPCMFormatFlagIsSignedInteger;// | kAudioFormatFlagIsPacked;
@@ -91,14 +94,17 @@ void CoreAudioPlayer::worker()
     format.mBytesPerPacket   = format.mBytesPerFrame * format.mFramesPerPacket;
     format.mReserved         = 0;
 
+    AudioQueueRef queue;
     AudioQueueNewOutput(&format, callback, this, CFRunLoopGetCurrent(), kCFRunLoopCommonModes, 0, &queue);
+    AudioQueueCreateTimeline(queue, &timeLine);
     
 	frames_ = (sampleFormat.rate * ms_) / 1000;
     ms_ = frames_ * 1000 / sampleFormat.rate;
     logO << "frames: " << frames_ << ", ms: " << ms_ << "\n";
 	buff_size_ = frames_ * sampleFormat.frameSize;
     
-    for (int i = 0; i < 2; i++)
+    AudioQueueBufferRef buffers[NUM_BUFFERS];
+    for (int i = 0; i < NUM_BUFFERS; i++)
     {
         AudioQueueAllocateBuffer(queue, buff_size_, &buffers[i]);
         buffers[i]->mAudioDataByteSize = buff_size_;
@@ -106,7 +112,9 @@ void CoreAudioPlayer::worker()
     }
 
     logE << "CoreAudioPlayer::worker\n";
+    AudioQueueCreateTimeline(queue, &timeLine);
     AudioQueueStart(queue, NULL);
     CFRunLoopRun();    
 }
+
 

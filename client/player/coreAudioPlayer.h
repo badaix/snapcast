@@ -40,6 +40,7 @@ public:
 protected:
 	virtual void worker();
 
+    AudioQueueTimelineRef timeLine;
 	size_t ms_;
 	size_t frames_;
 	size_t buff_size_;
