@@ -72,7 +72,7 @@ int main (int argc, char **argv)
 		string soundcard("default");
 		string host("");
 		size_t port(1704);
-		size_t latency(0);
+		int latency(0);
 		int processPriority(-3);
 
 		Switch helpSwitch("", "help", "produce help message");
@@ -82,7 +82,7 @@ int main (int argc, char **argv)
 		Value<size_t> portValue("p", "port", "server port", 1704, &port);
 		Value<string> soundcardValue("s", "soundcard", "index or name of the soundcard", "default", &soundcard);
 		Implicit<int> daemonOption("d", "daemon", "daemonize, optional process priority [-20..19]", -3, &processPriority);
-		Value<size_t> latencyValue("", "latency", "latency of the soundcard", 0, &latency);
+		Value<int> latencyValue("y", "latency", "latency of the soundcard", 0, &latency);
 
 		OptionParser op("Allowed options");
 		op.add(helpSwitch)
