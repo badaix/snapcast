@@ -53,6 +53,8 @@ void CoreAudioPlayer::playerCallback(AudioQueueRef queue, AudioQueueBufferRef bu
     AudioQueueGetCurrentTime(queue, timeLine, &timestamp, NULL);
     size_t bufferedFrames = (frames_ - ((uint64_t)timestamp.mSampleTime % frames_)) % frames_;
     size_t bufferedMs = bufferedFrames * 1000 / pubStream_->getFormat().rate + (ms_ * (NUM_BUFFERS - 1));
+    /// 15ms DAC delay. Based on trying.
+    bufferedMs += 15;
 //    logO << "buffered: " << bufferedFrames << ", ms: " << bufferedMs << ", mSampleTime: " << timestamp.mSampleTime << "\n";
 
 	chronos::usec delay(bufferedMs * 1000);
