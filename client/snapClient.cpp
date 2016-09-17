@@ -82,7 +82,7 @@ int main (int argc, char **argv)
 		Value<size_t> portValue("p", "port", "server port", 1704, &port);
 		Value<string> soundcardValue("s", "soundcard", "index or name of the soundcard", "default", &soundcard);
 		Implicit<int> daemonOption("d", "daemon", "daemonize, optional process priority [-20..19]", -3, &processPriority);
-		Value<int> latencyValue("y", "latency", "latency of the soundcard", 0, &latency);
+		Value<int> latencyValue("", "latency", "latency of the soundcard", 0, &latency);
 
 		OptionParser op("Allowed options");
 		op.add(helpSwitch)
