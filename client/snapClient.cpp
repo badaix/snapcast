@@ -91,7 +91,9 @@ int main (int argc, char **argv)
 		 .add(hostValue)
 		 .add(portValue)
 		 .add(soundcardValue)
+#ifdef HAS_DAEMON
 		 .add(daemonOption)
+#endif
 		 .add(latencyValue);
 
 		try
