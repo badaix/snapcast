@@ -44,6 +44,10 @@
 #include <sys/sysinfo.h>
 #endif
 #include <sys/utsname.h>
+#ifdef __MACH__
+#include <ifaddrs.h>
+#include <net/if_dl.h>
+#endif
 
 
 // trim from start
@@ -261,11 +265,12 @@ static long uptime()
 }
 
 
+/// https://gist.github.com/OrangeTide/909204
 static std::string getMacAddress(int sock)
 {
 	struct ifreq ifr;
 	struct ifconf ifc;
-	char buf[1024];
+	char buf[16384];
 	int success = 0;
 
 	if (sock < 0)
@@ -273,23 +278,54 @@ static std::string getMacAddress(int sock)
 
 	ifc.ifc_len = sizeof(buf);
 	ifc.ifc_buf = buf;
-	if (ioctl(sock, SIOCGIFCONF, &ifc) == -1)
+	if (ioctl(sock, SIOCGIFCONF, &ifc) != 0)
 		return "";
 
 	struct ifreq* it = ifc.ifc_req;
-	const struct ifreq* const end = it + (ifc.ifc_len / sizeof(struct ifreq));
-
-	for (; it != end; ++it)
+	for (size_t i=0; i<ifc.ifc_len;) 
 	{
+		/// some systems have ifr_addr.sa_len and adjust the length that way, but not mine. weird */
+#ifdef FREEBSD
+		size_t len = IFNAMSIZ + it->ifr_addr.sa_len;
+#else
+		size_t len = sizeof(*it);
+#endif
+
 		strcpy(ifr.ifr_name, it->ifr_name);
 		if (ioctl(sock, SIOCGIFFLAGS, &ifr) == 0)
 		{
 			if (!(ifr.ifr_flags & IFF_LOOPBACK)) // don't count loopback
 			{
-#ifndef FREEBSD
-				if (ioctl(sock, SIOCGIFHWADDR, &ifr) == 0)
-#else
+#ifdef __MACH__
+				struct ifaddrs *ifap, *ifaptr;
+				unsigned char *ptr;
+
+				if (getifaddrs(&ifap) == 0) 
+				{
+					for (ifaptr = ifap; ifaptr != NULL; ifaptr = ifaptr->ifa_next) 
+					{
+//						std::cout << ifaptr->ifa_name << ", " << ifreq->ifr_name << "\n";
+						if (strcmp(ifaptr->ifa_name, it->ifr_name) != 0)
+							continue;
+						if (ifaptr->ifa_addr->sa_family == AF_LINK) 
+						{
+							ptr = (unsigned char *)LLADDR((struct sockaddr_dl *)ifaptr->ifa_addr);
+							char mac[19];
+							sprintf(mac, "%02x:%02x:%02x:%02x:%02x:%02x", *ptr, *(ptr+1), *(ptr+2), *(ptr+3), *(ptr+4), *(ptr+5));
+							if (strcmp(mac, "00:00:00:00:00:00") == 0)
+								continue;     	
+							freeifaddrs(ifap);
+							return mac;
+						}
+					}
+					freeifaddrs(ifap);
+				}   
+#endif
+
+#ifdef FREEBSD
 				if (ioctl(sock, SIOCGIFMAC, &ifr) == 0)
+#else
+				if (ioctl(sock, SIOCGIFHWADDR, &ifr) == 0)
 #endif
 				{
 					success = 1;
@@ -311,6 +347,9 @@ static std::string getMacAddress(int sock)
 			}
 		}
 		else { /* handle error */ }
+
+		it = (struct ifreq*)((char*)it + len);
+		i += len;
 	}
 
 	if (!success)
@@ -323,12 +362,8 @@ static std::string getMacAddress(int sock)
 		(unsigned char)ifr.ifr_hwaddr.sa_data[3], (unsigned char)ifr.ifr_hwaddr.sa_data[4], (unsigned char)ifr.ifr_hwaddr.sa_data[5]);
 #else
 	sprintf(mac, "%02x:%02x:%02x:%02x:%02x:%02x",
-		(unsigned char)ifr.ifr_ifru.ifru_addr.sa_data[0], (unsigned char)ifr.ifr_ifru.ifru_addr.sa_data[1], 
-(unsigned 
-char)ifr.ifr_ifru.ifru_addr.sa_data[2],
-		(unsigned char)ifr.ifr_ifru.ifru_addr.sa_data[3], (unsigned char)ifr.ifr_ifru.ifru_addr.sa_data[4], 
-(unsigned 
-char)ifr.ifr_ifru.ifru_addr.sa_data[5]);
+		(unsigned char)ifr.ifr_ifru.ifru_addr.sa_data[0], (unsigned char)ifr.ifr_ifru.ifru_addr.sa_data[1], (unsigned char)ifr.ifr_ifru.ifru_addr.sa_data[2], 
+		(unsigned char)ifr.ifr_ifru.ifru_addr.sa_data[3], (unsigned char)ifr.ifr_ifru.ifru_addr.sa_data[4], (unsigned char)ifr.ifr_ifru.ifru_addr.sa_data[5]);
 #endif
 	return mac;
 }
