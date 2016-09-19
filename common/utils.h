@@ -282,7 +282,7 @@ static std::string getMacAddress(int sock)
 		return "";
 
 	struct ifreq* it = ifc.ifc_req;
-	for (size_t i=0; i<ifc.ifc_len;) 
+	for (int i=0; i<ifc.ifc_len;) 
 	{
 		/// some systems have ifr_addr.sa_len and adjust the length that way, but not mine. weird */
 #ifdef FREEBSD
