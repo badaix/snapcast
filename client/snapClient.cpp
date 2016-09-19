@@ -21,11 +21,10 @@
 
 #include "popl.hpp"
 #include "controller.h"
+#include "browsemDNS.h"
+
 #ifdef HAS_ALSA
 #include "player/alsaPlayer.h"
-#endif
-#ifdef HAS_AVAHI
-#include "browseAvahi.h"
 #endif
 #ifdef HAS_DAEMON
 #include "common/daemon.h"
@@ -166,14 +165,14 @@ int main (int argc, char **argv)
 
 		if (host.empty())
 		{
-#ifdef HAS_AVAHI
-			BrowseAvahi browseAvahi;
-			AvahiResult avahiResult;
+#if defined(HAS_AVAHI) || defined(HAS_BONJOUR)
+			BrowseZeroConf browser;
+			mDNSResult avahiResult;
 			while (!g_terminated)
 			{
 				try
 				{
-					if (browseAvahi.browse("_snapcast._tcp", AVAHI_PROTO_INET, avahiResult, 5000))
+					if (browser.browse("_snapcast._tcp", avahiResult, 5000))
 					{
 						host = avahiResult.ip_;
 						port = avahiResult.port_;

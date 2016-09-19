@@ -15,6 +15,8 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
+#ifndef BROWSEAVAHI_H
+#define BROWSEAVAHI_H
 
 #include <avahi-client/client.h>
 #include <avahi-client/lookup.h>
@@ -23,25 +25,16 @@
 #include <avahi-common/malloc.h>
 #include <avahi-common/error.h>
 
-#include <string>
+class BrowseAvahi;
 
+#include "browsemDNS.h"
 
-struct AvahiResult
-{
-	int proto_;
-	std::string ip_;
-	std::string host_;
-	size_t port_;
-	bool valid_;
-};
-
-
-class BrowseAvahi
+class BrowseAvahi : public BrowsemDNS
 {
 public:
 	BrowseAvahi();
 	~BrowseAvahi();
-	bool browse(const std::string& serviceName, int proto, AvahiResult& result, int timeout);
+	bool browse(const std::string& serviceName, mDNSResult& result, int timeout) override;
 
 private:
 	void cleanUp();
@@ -49,8 +42,8 @@ private:
 	static void browse_callback(AvahiServiceBrowser *b, AvahiIfIndex interface, AvahiProtocol protocol, AvahiBrowserEvent event, const char *name, const char *type, const char *domain, AVAHI_GCC_UNUSED AvahiLookupResultFlags flags, void* userdata);
 	static void client_callback(AvahiClient *c, AvahiClientState state, AVAHI_GCC_UNUSED void * userdata);
 	AvahiClient* client_;
-	AvahiResult result_;
+	mDNSResult result_;
 	AvahiServiceBrowser* sb_;
 };
 
-
+#endif

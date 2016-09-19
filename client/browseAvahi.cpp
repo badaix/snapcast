@@ -180,7 +180,7 @@ void BrowseAvahi::client_callback(AvahiClient *c, AvahiClientState state, AVAHI_
 }
 
 
-bool BrowseAvahi::browse(const std::string& serviceName, int proto, AvahiResult& result, int timeout)
+bool BrowseAvahi::browse(const std::string& serviceName, mDNSResult& result, int timeout)
 {
 	try
 	{
@@ -194,7 +194,7 @@ bool BrowseAvahi::browse(const std::string& serviceName, int proto, AvahiResult&
 			throw SnapException("BrowseAvahi - Failed to create client: " + std::string(avahi_strerror(error)));
 
 		/* Create the service browser */
-		if (!(sb_ = avahi_service_browser_new(client_, AVAHI_IF_UNSPEC, proto, serviceName.c_str(), NULL, (AvahiLookupFlags)0, browse_callback, this)))
+		if (!(sb_ = avahi_service_browser_new(client_, AVAHI_IF_UNSPEC, AVAHI_PROTO_INET, serviceName.c_str(), NULL, (AvahiLookupFlags)0, browse_callback, this)))
 			throw SnapException("BrowseAvahi - Failed to create service browser: " + std::string(avahi_strerror(avahi_client_errno(client_))));
 
 		result_.valid_ = false;

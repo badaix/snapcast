@@ -297,6 +297,7 @@ static std::string getMacAddress(int sock)
 			if (!(ifr.ifr_flags & IFF_LOOPBACK)) // don't count loopback
 			{
 #ifdef __MACH__
+				/// Dirty Mac version
 				struct ifaddrs *ifap, *ifaptr;
 				unsigned char *ptr;
 
