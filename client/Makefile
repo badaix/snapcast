@@ -32,7 +32,7 @@ CXXFLAGS += -pthread -DNO_CPP11_STRING -DHAS_TREMOR -DHAS_ALSA -DHAS_AVAHI -DHAS
 LDFLAGS  = -lasound -lvorbisidec -logg -lFLAC -lavahi-client -lavahi-common -latomic
 OBJ      += player/alsaPlayer.o browseAvahi.o
 
-else ifeq ($(TARGET), MAC)
+else ifeq ($(TARGET), MACOS)
 
 CXX      = /usr/bin/g++
 STRIP	 = strip
