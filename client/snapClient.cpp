@@ -86,10 +86,12 @@ int main (int argc, char **argv)
 		OptionParser op("Allowed options");
 		op.add(helpSwitch)
 		 .add(versionSwitch)
-		 .add(listSwitch)
 		 .add(hostValue)
 		 .add(portValue)
+#if defined(HAS_ALSA)
+		 .add(listSwitch)
 		 .add(soundcardValue)
+#endif
 #ifdef HAS_DAEMON
 		 .add(daemonOption)
 #endif
@@ -157,11 +159,13 @@ int main (int argc, char **argv)
 		}
 
 		PcmDevice pcmDevice = getPcmDevice(soundcard);
+#if defined(HAS_ALSA)
 		if (pcmDevice.idx == -1)
 		{
 			cout << "soundcard \"" << soundcard << "\" not found\n";
 //			exit(EXIT_FAILURE);
 		}
+#endif
 
 		if (host.empty())
 		{
