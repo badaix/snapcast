@@ -44,7 +44,7 @@
 #include <sys/sysinfo.h>
 #endif
 #include <sys/utsname.h>
-#ifdef __MACH__
+#ifdef MACOS
 #include <ifaddrs.h>
 #include <net/if_dl.h>
 #endif
@@ -296,7 +296,7 @@ static std::string getMacAddress(int sock)
 		{
 			if (!(ifr.ifr_flags & IFF_LOOPBACK)) // don't count loopback
 			{
-#ifdef __MACH__
+#ifdef MACOS
 				/// Dirty Mac version
 				struct ifaddrs *ifap, *ifaptr;
 				unsigned char *ptr;
