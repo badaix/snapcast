@@ -110,6 +110,16 @@ Install the build tools and required libs:
     $ brew install autoconf automake pkg-config libtool
 
 ###Build Snapclient
+Build the external libs:
+
+    $ cd <snapcast dir>/externals/flac
+    $ ./autogen.sh
+    $ ./configure
+    $ make
+    $ make install
+    
+Repeat for `ogg` and `tremor`
+
 `cd` into the Snapclient src-root directory:
 
     $ cd <snapcast dir>/client
