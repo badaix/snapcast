@@ -100,6 +100,21 @@ For additional command line arguments, add in `/etc/rc.conf`:
 
 Start and stop the server with `sudo service snapserver start` and `sudo service snapserver stop`.
 
+##macOS (Native)
+
+*Warning: macOS support is experimental*
+
+Install Xcode from the App Store  
+Install the build tools and required libs:  
+
+    $ brew install autoconf automake pkg-config libtool
+
+###Build Snapclient
+`cd` into the Snapclient src-root directory:
+
+    $ cd <snapcast dir>/client
+    $ make TARGET=MACOS
+
 ##Android (Cross compile)
 Cross compilation for Android is done with the [Android NDK](http://developer.android.com/tools/sdk/ndk/index.html) on a Linux host machine.  
 
