@@ -141,7 +141,7 @@ $ ./make-standalone-toolchain.sh --arch=arm --platform=android-14 --install-dir=
 
 ###Build Snapclient
 Edit the first lines in `<snapcast dir>/client/build_android.sh` and in `<snapcast dir>/externals/build_externals_android.sh` to let `NDK_DIR` point to your `<android-ndk dir>`  
-Cross compile and install FLAC (only needed once):
+Cross compile and install FLAC, ogg, and tremor (only needed once):
 
     $ cd <snapcast dir>/externals
     $ ./build_externals_android.sh
