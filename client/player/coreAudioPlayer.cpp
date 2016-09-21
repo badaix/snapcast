@@ -34,7 +34,7 @@ void callback(void *custom_data, AudioQueueRef queue, AudioQueueBufferRef buffer
 
 CoreAudioPlayer::CoreAudioPlayer(const PcmDevice& pcmDevice, Stream* stream) : 
     Player(pcmDevice, stream),
-	ms_(50),
+	ms_(100),
 	pubStream_(stream)
 {
 }
@@ -100,10 +100,17 @@ void CoreAudioPlayer::worker()
     AudioQueueNewOutput(&format, callback, this, CFRunLoopGetCurrent(), kCFRunLoopCommonModes, 0, &queue);
     AudioQueueCreateTimeline(queue, &timeLine);
     
+    // Apple recommends this as buffer size:
+    // https://developer.apple.com/library/content/documentation/MusicAudio/Conceptual/CoreAudioOverview/CoreAudioEssentials/CoreAudioEssentials.html
+    // static const int maxBufferSize = 0x10000;   // limit maximum size to 64K
+    // static const int minBufferSize = 0x4000;    // limit minimum size to 16K
+    //
+    // For 100ms @ 48000:16:2 we have 19.2K
+    // frames: 4800, ms: 100, buffer size: 19200
 	frames_ = (sampleFormat.rate * ms_) / 1000;
     ms_ = frames_ * 1000 / sampleFormat.rate;
-    logO << "frames: " << frames_ << ", ms: " << ms_ << "\n";
 	buff_size_ = frames_ * sampleFormat.frameSize;
+    logO << "frames: " << frames_ << ", ms: " << ms_ << ", buffer size: " << buff_size_ << "\n";
     
     AudioQueueBufferRef buffers[NUM_BUFFERS];
     for (int i = 0; i < NUM_BUFFERS; i++)
