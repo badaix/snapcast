@@ -28,6 +28,11 @@
 /// Audio Player
 /**
  * Audio player implementation using CoreAudio
+ * 
+ * Warning: 
+ *
+ *  !! This player is experimental and might not be maintained !!
+ * 
  */
 class CoreAudioPlayer : public Player
 {
