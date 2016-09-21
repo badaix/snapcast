@@ -105,20 +105,11 @@ Start and stop the server with `sudo service snapserver start` and `sudo service
 *Warning: macOS support is experimental*
 
 Install Xcode from the App Store  
-Install the build tools and required libs:  
-
-    $ brew install autoconf automake pkg-config libtool
 
 ###Build Snapclient
-Build the external libs:
+Install the required libs:  
 
-    $ cd <snapcast dir>/externals/flac
-    $ ./autogen.sh
-    $ ./configure
-    $ make
-    $ make install
-    
-Repeat for `ogg` and `tremor`
+    $ brew install flac libvorbis
 
 `cd` into the Snapclient src-root directory:
 
