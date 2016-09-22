@@ -26,9 +26,13 @@
 #include <mach/mach.h>
 #endif
 #ifndef WINDOWS
+
 #include <sys/time.h>
-#else // from the GNU C library implementation of sys/time.h
+
+#else
+
 #include <WinSock2.h>
+// from the GNU C library implementation of sys/time.h
 # define timersub(a, b, result)                                               \
   do {                                                                        \
     (result)->tv_sec = (a)->tv_sec - (b)->tv_sec;                             \
@@ -38,6 +42,7 @@
       (result)->tv_usec += 1000000;                                           \
     }                                                                         \
   } while (0)
+
 #endif
 
 namespace chronos
@@ -45,12 +50,26 @@ namespace chronos
 	typedef std::chrono::system_clock clk;
 	typedef std::chrono::time_point<clk> time_point_clk;
 
-	template<typename source_clock, typename destination_clock>
-	typename destination_clock::time_point rebase_time_point(typename source_clock::time_point source)
+	#ifdef WINDOWS
+	// Epoch is January 1st 1601
+	// Period is 100ns
+	class filetime_clock
 	{
-		return destination_clock::from_time_t(source_clock::to_time_t(source));
-	}
-	
+		typedef std::chrono::duration<uint64, std::ratio<1, 10000000> > duration;
+		typedef duration::rep rep;
+		typedef duration::period period;
+		typedef std::chrono::time_point<filetime_clock> time_point;
+		static const bool is_steady = false;
+
+		static time_point now() noexcept
+		{
+			FILETIME time;
+			GetSystemTimePreciseAsFileTime(&time); // oh so eloquently named
+			return time_point(duration((time.dwHighDateTime << 32) + time.dwLowDateTime));
+		}
+	};
+	#endif
+
 	template<typename duration>
 	void to_timeval(duration&& d, timeval& tv)
 	{
@@ -59,6 +78,13 @@ namespace chronos
 		tv.tv_sec = sec.count();
 		tv.tv_usec = std::chrono::duration_cast<std::chrono::microseconds>(d - sec).count();
 	}
+
+	#ifndef WINDOWS
+	typedef std::chrono::system_clock clk;
+	#else
+	typedef filetime_clock clk;
+	#endif
+	typedef std::chrono::time_point<clk> time_point_clk;
 
 	typedef std::chrono::seconds sec;
 	typedef std::chrono::milliseconds msec;

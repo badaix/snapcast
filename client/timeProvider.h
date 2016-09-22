@@ -56,11 +56,7 @@ public:
 */
 
 	template<typename T>
-<<<<<<< HEAD
 	static T sinceEpoche(const chronos::time_point_clk& point)
-=======
-	static T sinceEpoche(const chronos::time_point_system& point)
->>>>>>> created timer rebase func
 	{
 		return std::chrono::duration_cast<T>(point.time_since_epoch());
 	}
