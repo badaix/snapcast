@@ -55,7 +55,8 @@ namespace chronos
 	// Period is 100ns
 	class filetime_clock
 	{
-		typedef std::chrono::duration<uint64, std::ratio<1, 10000000> > duration;
+	public:
+		typedef std::chrono::duration<uint64_t, std::nano> duration;
 		typedef duration::rep rep;
 		typedef duration::period period;
 		typedef std::chrono::time_point<filetime_clock> time_point;
@@ -65,7 +66,7 @@ namespace chronos
 		{
 			FILETIME time;
 			GetSystemTimePreciseAsFileTime(&time); // oh so eloquently named
-			return time_point(duration((time.dwHighDateTime << 32) + time.dwLowDateTime));
+			return time_point(duration(((rep(time.dwHighDateTime) << 32) + rep(time.dwLowDateTime) - (11644473600000 * 10000)) * 100));
 		}
 	};
 	#endif
