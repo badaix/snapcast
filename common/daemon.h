@@ -25,6 +25,7 @@
 #include <syslog.h>
 #include <unistd.h>
 #include <string.h>
+#include <stdlib.h>
 
 int pidFilehandle;
 
