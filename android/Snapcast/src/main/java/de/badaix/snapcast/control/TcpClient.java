@@ -118,7 +118,6 @@ public class TcpClient {
     }
 
 
-
     private class WriterRunnable implements Runnable {
         @Override
         public void run() {
@@ -205,11 +204,13 @@ public class TcpClient {
                 // after it is closed, which means a new socket instance has to
                 // be created.
                 mRun = false;
-                writerThread.interrupt();
-                try {
-                    writerThread.join(100);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
+                if (writerThread != null) {
+                    try {
+                        writerThread.interrupt();
+                        writerThread.join(100);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
                 }
                 if (socket != null) {
                     try {

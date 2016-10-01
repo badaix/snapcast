@@ -67,14 +67,13 @@ import de.badaix.snapcast.utils.Setup;
 
 public class MainActivity extends AppCompatActivity implements ClientItem.ClientInfoItemListener, RemoteControl.RemoteControlListener, SnapclientService.SnapclientListener, NsdHelper.NsdHelperListener {
 
+    static final int CLIENT_PROPERTIES_REQUEST = 1;
     private static final String TAG = "Main";
     private static final String SERVICE_NAME = "Snapcast";// #2";
-    static final int CLIENT_PROPERTIES_REQUEST = 1;
-
     boolean bound = false;
     private MenuItem miStartStop = null;
     private MenuItem miSettings = null;
-//    private MenuItem miRefresh = null;
+    //    private MenuItem miRefresh = null;
     private String host = "";
     private int port = 1704;
     private int controlPort = 1705;
