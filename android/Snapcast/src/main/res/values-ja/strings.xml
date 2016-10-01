@@ -29,7 +29,7 @@
     <string name="online">オンライン</string>
     <string name="action_play_stop">再生/停止</string>
     <string name="client_deleted">クライアント %1$s を削除しました</string>
-    <string name="wrong_sample_rate">ストリームはネイティブのサンプリングレートではありません: %1$s\nネイティブのサンプリングレート: %2$s</string>
+    <string name="wrong_sample_rate">ストリームはネイティブのサンプリングレートではありません: %1$d\nネイティブのサンプリングレート: %2$d</string>
     <string name="unknown_sample_rate">ネイティブのサンプリングレートではないストリームは同期して再生されないことがあります</string>
     <string name="undo_string">元に戻す</string>
     <string name="title_activity_about">アプリについて</string>

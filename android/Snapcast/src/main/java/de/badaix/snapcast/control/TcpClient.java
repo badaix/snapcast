@@ -107,7 +107,7 @@ public class TcpClient {
     // Declare the interface. The method messageReceived(String message) will
     // must be implemented in the MyActivity
     // class at on asynckTask doInBackground
-    public interface TcpClientListener {
+    interface TcpClientListener {
         void onMessageReceived(TcpClient tcpClient, String message);
 
         void onConnecting(TcpClient tcpClient);
@@ -117,9 +117,9 @@ public class TcpClient {
         void onDisconnected(TcpClient tcpClient, Exception e);
     }
 
-    ;
 
-    class WriterRunnable implements Runnable {
+
+    private class WriterRunnable implements Runnable {
         @Override
         public void run() {
             while (mRun) {
@@ -137,11 +137,11 @@ public class TcpClient {
         }
     }
 
-    class ReaderRunnable implements Runnable {
+    private class ReaderRunnable implements Runnable {
         private String host;
         private int port;
 
-        public ReaderRunnable(final String host, final int port) {
+        ReaderRunnable(final String host, final int port) {
             this.host = host;
             this.port = port;
         }

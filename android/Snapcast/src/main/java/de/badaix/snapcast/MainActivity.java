@@ -69,11 +69,12 @@ public class MainActivity extends AppCompatActivity implements ClientItem.Client
 
     private static final String TAG = "Main";
     private static final String SERVICE_NAME = "Snapcast";// #2";
+    static final int CLIENT_PROPERTIES_REQUEST = 1;
 
     boolean bound = false;
     private MenuItem miStartStop = null;
     private MenuItem miSettings = null;
-    private MenuItem miRefresh = null;
+//    private MenuItem miRefresh = null;
     private String host = "";
     private int port = 1704;
     private int controlPort = 1705;
@@ -117,19 +118,6 @@ public class MainActivity extends AppCompatActivity implements ClientItem.Client
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-/*
-        TextView tvInfo = (TextView) findViewById(R.id.tvInfo);
-        CheckBox cbScreenWakelock = (CheckBox) findViewById(R.id.cbScreenWakelock);
-        cbScreenWakelock.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
-                if (b)
-                    getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-                else
-                    getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-            }
-        });
-         */
 
         for (int rate : new int[]{8000, 11025, 16000, 22050, 44100, 48000}) {  // add the rates you wish to check against
             Log.d(TAG, "Samplerate: " + rate);
@@ -162,7 +150,7 @@ public class MainActivity extends AppCompatActivity implements ClientItem.Client
         tabLayout.setupWithViewPager(mViewPager);
         mViewPager.setVisibility(View.GONE);
 
-        getSupportActionBar().setSubtitle("Host: no Snapserver found");
+        setActionbarSubtitle("Host: no Snapserver found");
 
         new Thread(new Runnable() {
             @Override
@@ -172,8 +160,6 @@ public class MainActivity extends AppCompatActivity implements ClientItem.Client
                 Log.d(TAG, "done copying snapclient");
             }
         }).start();
-
-//        initializeDiscoveryListener();
 
         sectionsPagerAdapter.setHideOffline(Settings.getInstance(this).getBoolean("hide_offline", false));
     }
@@ -205,7 +191,7 @@ public class MainActivity extends AppCompatActivity implements ClientItem.Client
         getMenuInflater().inflate(R.menu.menu_snapcast, menu);
         miStartStop = menu.findItem(R.id.action_play_stop);
         miSettings = menu.findItem(R.id.action_settings);
-        miRefresh = menu.findItem(R.id.action_refresh);
+//        miRefresh = menu.findItem(R.id.action_refresh);
         updateStartStopMenuItem();
         boolean isChecked = Settings.getInstance(this).getBoolean("hide_offline", false);
         MenuItem menuItem = menu.findItem(R.id.action_hide_offline);
@@ -227,7 +213,6 @@ public class MainActivity extends AppCompatActivity implements ClientItem.Client
 
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_settings) {
-//            NsdHelper.getInstance(this).startListening("*._tcp.", "SnapCast", this);
             ServerDialogFragment serverDialogFragment = new ServerDialogFragment();
             serverDialogFragment.setHost(Settings.getInstance(this).getHost(), Settings.getInstance(this).getStreamPort(), Settings.getInstance(this).getControlPort());
             serverDialogFragment.setAutoStart(Settings.getInstance(this).isAutostart());
@@ -392,13 +377,6 @@ public class MainActivity extends AppCompatActivity implements ClientItem.Client
                     if ((nativeSampleRate != 0) && (nativeSampleRate != samplerate)) {
                         warningSamplerateSnackbar = Snackbar.make(coordinatorLayout,
                                 getString(R.string.wrong_sample_rate, samplerate, nativeSampleRate), Snackbar.LENGTH_INDEFINITE);
-/*                        warningSamplerateSnackbar.setAction(android.R.string.ok, new View.OnClickListener() {
-                            @Override
-                            public void onClick(View v) {
-                                warningSamplerateSnackbar.dismiss();
-                            }
-                        });
-*/
                         warningSamplerateSnackbar.show();
                     } else if (nativeSampleRate == 0) {
                         warningSamplerateSnackbar = Snackbar.make(coordinatorLayout,
@@ -429,18 +407,20 @@ public class MainActivity extends AppCompatActivity implements ClientItem.Client
         if (resultCode == RESULT_CANCELED) {
             return;
         }
-        if (requestCode == 1) {
+        if (requestCode == CLIENT_PROPERTIES_REQUEST) {
             Client client = null;
             try {
                 client = new Client(new JSONObject(data.getStringExtra("client")));
             } catch (JSONException e) {
                 e.printStackTrace();
+                return;
             }
             Client clientOriginal = null;
             try {
                 clientOriginal = new Client(new JSONObject(data.getStringExtra("clientOriginal")));
             } catch (JSONException e) {
                 e.printStackTrace();
+                return;
             }
             Log.d(TAG, "new name: " + client.getConfig().getName() + ", old name: " + clientOriginal.getConfig().getName());
             if (!client.getConfig().getName().equals(clientOriginal.getConfig().getName()))
@@ -624,7 +604,7 @@ public class MainActivity extends AppCompatActivity implements ClientItem.Client
         intent.putExtra("client", clientItem.getClient().toJson().toString());
         intent.putExtra("streams", serverStatus.getJsonStreams().toString());
         intent.setFlags(0);
-        startActivityForResult(intent, 1);
+        startActivityForResult(intent, CLIENT_PROPERTIES_REQUEST);
     }
 
     @Override

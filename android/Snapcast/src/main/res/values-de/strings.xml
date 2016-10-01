@@ -29,7 +29,7 @@
     <string name="online">Online</string>
     <string name="action_play_stop">Play/Stop</string>
     <string name="client_deleted">Client %1$s gelöscht</string>
-    <string name="wrong_sample_rate">Stream ist nicht in nativer sample rate: %1$s\nNative sample rate: %2$s</string>
+    <string name="wrong_sample_rate">Stream ist nicht in nativer sample rate: %1$d\nNative sample rate: %2$d</string>
     <string name="unknown_sample_rate">Streams in nicht-nativer sample rate sind evtl. nicht synchron</string>
     <string name="undo_string">Rückgängig</string>
     <string name="title_activity_about">Über</string>

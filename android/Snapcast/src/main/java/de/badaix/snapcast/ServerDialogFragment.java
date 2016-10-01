@@ -81,8 +81,12 @@ public class ServerDialogFragment extends DialogFragment implements View.OnClick
                     public void onClick(DialogInterface dialog, int id) {
                         // sign in the user ...
                         host = editHost.getText().toString();
-                        streamPort = Integer.parseInt(editStreamPort.getText().toString());
-                        controlPort = Integer.parseInt(editControlPort.getText().toString());
+                        try {
+                            streamPort = Integer.parseInt(editStreamPort.getText().toString());
+                            controlPort = Integer.parseInt(editControlPort.getText().toString());
+                        } catch (NumberFormatException e) {
+                            e.printStackTrace();
+                        }
                         if (listener != null) {
                             listener.onHostChanged(host, streamPort, controlPort);
                             listener.onAutoStartChanged(checkBoxAutoStart.isChecked());
