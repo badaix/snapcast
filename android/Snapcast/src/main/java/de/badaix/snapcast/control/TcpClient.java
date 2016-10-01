@@ -27,6 +27,9 @@ import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.net.InetAddress;
 import java.net.Socket;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Created by johannes on 06.01.16.
@@ -43,9 +46,10 @@ public class TcpClient {
     private PrintWriter mBufferOut;
     // used to read messages from the server
     private BufferedReader mBufferIn;
-    private Thread worker = null;
+    private Thread readerThread = null;
     private Socket socket = null;
     private String uid;
+    private BlockingQueue<String> messages = new LinkedBlockingQueue<>();
 
     /**
      * Constructor of the class. OnMessagedReceived listens for the messages
@@ -67,18 +71,7 @@ public class TcpClient {
      * @param message text entered by client
      */
     public void sendMessage(final String message) {
-        Runnable runnable = new Runnable() {
-            @Override
-            public void run() {
-                if (mBufferOut != null) {
-                    Log.d(TAG, "Sending: " + message);
-                    mBufferOut.println(message + "\r\n");
-                    mBufferOut.flush();
-                }
-            }
-        };
-        Thread thread = new Thread(runnable);
-        thread.start();
+        messages.offer(message);
     }
 
     /**
@@ -93,82 +86,22 @@ public class TcpClient {
         }
 
 //        mMessageListener = null;
+        readerThread.interrupt();
+        try {
+            readerThread.join(1000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
         mBufferIn = null;
         mBufferOut = null;
         mServerMessage = null;
     }
 
     public void start(final String host, final int port) {
-        Runnable runnable = new Runnable() {
-            @Override
-            public void run() {
-                mRun = true;
-                Exception exception = null;
-
-                try {
-                    if (mMessageListener != null)
-                        mMessageListener.onConnecting(TcpClient.this);
-
-                    // here you must put your computer's IP address.
-                    InetAddress serverAddr = InetAddress.getByName(host);
-
-                    Log.d(TAG, "Connecting to " + serverAddr.getCanonicalHostName() + ":" + port);
-
-                    // create a socket to make the connection with the server
-                    socket = new Socket(serverAddr, port);
-
-
-                    // sends the message to the server
-                    mBufferOut = new PrintWriter(new BufferedWriter(
-                            new OutputStreamWriter(socket.getOutputStream())), true);
-
-                    // receives the message which the server sends back
-                    mBufferIn = new BufferedReader(new InputStreamReader(
-                            socket.getInputStream()));
-
-                    if (mMessageListener != null)
-                        mMessageListener.onConnected(TcpClient.this);
-
-                    // in this while the client listens for the messages sent by the
-                    // server
-                    while (mRun) {
-
-                        mServerMessage = mBufferIn.readLine();
-
-                        if (mServerMessage != null) {
-                            Log.d(TAG, "Received Message: '" + mServerMessage + "'");
-                            if (mMessageListener != null) {
-                                mMessageListener.onMessageReceived(TcpClient.this, mServerMessage);
-                            }
-                        } else {
-                            break;
-                        }
-                    }
-
-
-                } catch (Exception e) {
-                    Log.d(TAG, "Error", e);
-                    exception = e;
-                } finally {
-                    // the socket must be closed. It is not possible to reconnect to
-                    // this socket
-                    // after it is closed, which means a new socket instance has to
-                    // be created.
-                    mRun = false;
-                    if (socket != null) {
-                        try {
-                            socket.close();
-                        } catch (Exception e) {
-                        }
-                    }
-                    socket = null;
-                    if (mMessageListener != null)
-                        mMessageListener.onDisconnected(TcpClient.this, exception);
-                }
-            }
-        };
-        worker = new Thread(runnable);
-        worker.start();
+        ReaderRunnable readerRunnable = new ReaderRunnable(host, port);
+        readerThread = new Thread(readerRunnable);
+        readerThread.start();
     }
 
     // Declare the interface. The method messageReceived(String message) will
@@ -182,6 +115,113 @@ public class TcpClient {
         void onConnected(TcpClient tcpClient);
 
         void onDisconnected(TcpClient tcpClient, Exception e);
+    }
+
+    ;
+
+    class WriterRunnable implements Runnable {
+        @Override
+        public void run() {
+            while (mRun) {
+                try {
+                    String message = messages.poll(50, TimeUnit.MILLISECONDS);
+                    if ((message != null) && (mBufferOut != null)) {
+                        Log.d(TAG, "Sending: " + message);
+                        mBufferOut.println(message + "\r\n");
+                        mBufferOut.flush();
+                    }
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
+
+    class ReaderRunnable implements Runnable {
+        private String host;
+        private int port;
+
+        public ReaderRunnable(final String host, final int port) {
+            this.host = host;
+            this.port = port;
+        }
+
+        @Override
+        public void run() {
+            mRun = true;
+            Exception exception = null;
+            Thread writerThread = null;
+
+            try {
+                if (mMessageListener != null)
+                    mMessageListener.onConnecting(TcpClient.this);
+
+                // here you must put your computer's IP address.
+                InetAddress serverAddr = InetAddress.getByName(host);
+
+                Log.d(TAG, "Connecting to " + serverAddr.getCanonicalHostName() + ":" + port);
+
+                // create a socket to make the connection with the server
+                socket = new Socket(serverAddr, port);
+
+
+                // sends the message to the server
+                mBufferOut = new PrintWriter(new BufferedWriter(
+                        new OutputStreamWriter(socket.getOutputStream())), true);
+
+                // receives the message which the server sends back
+                mBufferIn = new BufferedReader(new InputStreamReader(
+                        socket.getInputStream()));
+
+                if (mMessageListener != null)
+                    mMessageListener.onConnected(TcpClient.this);
+
+                writerThread = new Thread(new WriterRunnable());
+                writerThread.start();
+
+                // in this while the client listens for the messages sent by the
+                // server
+                while (mRun) {
+
+                    mServerMessage = mBufferIn.readLine();
+
+                    if (mServerMessage != null) {
+                        Log.d(TAG, "Received Message: '" + mServerMessage + "'");
+                        if (mMessageListener != null) {
+                            mMessageListener.onMessageReceived(TcpClient.this, mServerMessage);
+                        }
+                    } else {
+                        break;
+                    }
+                }
+
+
+            } catch (Exception e) {
+                Log.d(TAG, "Error", e);
+                exception = e;
+            } finally {
+                // the socket must be closed. It is not possible to reconnect to
+                // this socket
+                // after it is closed, which means a new socket instance has to
+                // be created.
+                mRun = false;
+                writerThread.interrupt();
+                try {
+                    writerThread.join(100);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                if (socket != null) {
+                    try {
+                        socket.close();
+                    } catch (Exception e) {
+                    }
+                }
+                socket = null;
+                if (mMessageListener != null)
+                    mMessageListener.onDisconnected(TcpClient.this, exception);
+            }
+        }
     }
 
 }
