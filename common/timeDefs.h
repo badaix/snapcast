@@ -24,8 +24,8 @@
 
 namespace chronos
 {
-	typedef std::chrono::system_clock hrc;
-	typedef std::chrono::time_point<hrc> time_point_hrc;
+	typedef std::chrono::system_clock clk;
+	typedef std::chrono::time_point<clk> time_point_clk;
 	typedef std::chrono::seconds sec;
 	typedef std::chrono::milliseconds msec;
 	typedef std::chrono::microseconds usec;

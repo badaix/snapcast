@@ -44,16 +44,16 @@ public:
 	int readFrames(void* outputBuffer, size_t frameCount);
 	int seek(int frames);
 
-	virtual chronos::time_point_hrc start() const
+	virtual chronos::time_point_clk start() const
 	{
-		return chronos::time_point_hrc(
+		return chronos::time_point_clk(
 				chronos::sec(timestamp.sec) +
 				chronos::usec(timestamp.usec) +
 				chronos::usec((chronos::usec::rep)(1000000. * ((double)idx_ / (double)format.rate)))
 				);
 	}
 
-	inline chronos::time_point_hrc end() const
+	inline chronos::time_point_clk end() const
 	{
 		return start() + durationLeft<chronos::usec>();
 	}

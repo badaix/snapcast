@@ -94,11 +94,11 @@ bool Stream::waitForChunk(size_t ms) const
 
 
 
-cs::time_point_hrc Stream::getSilentPlayerChunk(void* outputBuffer, unsigned long framesPerBuffer)
+cs::time_point_clk Stream::getSilentPlayerChunk(void* outputBuffer, unsigned long framesPerBuffer)
 {
 	if (!chunk_)
 		chunk_ = chunks_.pop();
-	cs::time_point_hrc tp = chunk_->start();
+	cs::time_point_clk tp = chunk_->start();
 	memset(outputBuffer, 0, framesPerBuffer * format_.frameSize);
 	return tp;
 }
@@ -122,7 +122,7 @@ time_point_ms Stream::seekTo(const time_point_ms& to)
 */
 
 /*
-time_point_hrc Stream::seek(long ms)
+time_point_clk Stream::seek(long ms)
 {
 	if (!chunk)
 		chunk_ = chunks_.pop();
@@ -142,12 +142,12 @@ time_point_hrc Stream::seek(long ms)
 */
 
 
-cs::time_point_hrc Stream::getNextPlayerChunk(void* outputBuffer, const cs::usec& timeout, unsigned long framesPerBuffer)
+cs::time_point_clk Stream::getNextPlayerChunk(void* outputBuffer, const cs::usec& timeout, unsigned long framesPerBuffer)
 {
 	if (!chunk_ && !chunks_.try_pop(chunk_, timeout))
 		throw 0;
 
-	cs::time_point_hrc tp = chunk_->start();
+	cs::time_point_clk tp = chunk_->start();
 	char* buffer = (char*)outputBuffer;
 	unsigned long read = 0;
 	while (read < framesPerBuffer)
@@ -160,14 +160,14 @@ cs::time_point_hrc Stream::getNextPlayerChunk(void* outputBuffer, const cs::usec
 }
 
 
-cs::time_point_hrc Stream::getNextPlayerChunk(void* outputBuffer, const cs::usec& timeout, unsigned long framesPerBuffer, long framesCorrection)
+cs::time_point_clk Stream::getNextPlayerChunk(void* outputBuffer, const cs::usec& timeout, unsigned long framesPerBuffer, long framesCorrection)
 {
 	if (framesCorrection == 0)
 		return getNextPlayerChunk(outputBuffer, timeout, framesPerBuffer);
 
 	long toRead = framesPerBuffer + framesCorrection;
 	char* buffer = (char*)malloc(toRead * format_.frameSize);
-	cs::time_point_hrc tp = getNextPlayerChunk(buffer, timeout, toRead);
+	cs::time_point_clk tp = getNextPlayerChunk(buffer, timeout, toRead);
 
 	float factor = (float)toRead / framesPerBuffer;//(float)(framesPerBuffer*channels_);
 //	if (abs(framesCorrection) > 1)

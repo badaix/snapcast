@@ -207,7 +207,7 @@ void StreamSession::writer()
 					const msg::WireChunk* wireChunk = dynamic_cast<const msg::WireChunk*>(message.get());
 					if (wireChunk != NULL)
 					{
-						chronos::time_point_hrc now = chronos::hrc::now();
+						chronos::time_point_clk now = chronos::clk::now();
 						size_t age = 0;
 						if (now > wireChunk->start())
 							age = std::chrono::duration_cast<chronos::msec>(now - wireChunk->start()).count();

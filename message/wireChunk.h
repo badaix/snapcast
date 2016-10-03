@@ -67,9 +67,9 @@ public:
 		return sizeof(tv) + sizeof(int32_t) + payloadSize;
 	}
 
-	virtual chronos::time_point_hrc start() const
+	virtual chronos::time_point_clk start() const
 	{
-		return chronos::time_point_hrc(chronos::sec(timestamp.sec) + chronos::usec(timestamp.usec));
+		return chronos::time_point_clk(chronos::sec(timestamp.sec) + chronos::usec(timestamp.usec));
 	}
 
 	tv timestamp;

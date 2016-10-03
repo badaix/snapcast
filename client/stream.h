@@ -63,10 +63,10 @@ public:
 	bool waitForChunk(size_t ms) const;
 
 private:
-	chronos::time_point_hrc getNextPlayerChunk(void* outputBuffer, const chronos::usec& timeout, unsigned long framesPerBuffer);
-	chronos::time_point_hrc getNextPlayerChunk(void* outputBuffer, const chronos::usec& timeout, unsigned long framesPerBuffer, long framesCorrection);
-	chronos::time_point_hrc getSilentPlayerChunk(void* outputBuffer, unsigned long framesPerBuffer);
-	chronos::time_point_hrc seek(long ms);
+	chronos::time_point_clk getNextPlayerChunk(void* outputBuffer, const chronos::usec& timeout, unsigned long framesPerBuffer);
+	chronos::time_point_clk getNextPlayerChunk(void* outputBuffer, const chronos::usec& timeout, unsigned long framesPerBuffer, long framesCorrection);
+	chronos::time_point_clk getSilentPlayerChunk(void* outputBuffer, unsigned long framesPerBuffer);
+	chronos::time_point_clk seek(long ms);
 //	time_point_ms seekTo(const time_point_ms& to);
 	void updateBuffers(int age);
 	void resetBuffers();

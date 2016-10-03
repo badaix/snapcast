@@ -56,24 +56,24 @@ public:
 */
 
 	template<typename T>
-	static T sinceEpoche(const chronos::time_point_hrc& point)
+	static T sinceEpoche(const chronos::time_point_clk& point)
 	{
 		return std::chrono::duration_cast<T>(point.time_since_epoch());
 	}
 
-	static chronos::time_point_hrc toTimePoint(const tv& timeval)
+	static chronos::time_point_clk toTimePoint(const tv& timeval)
 	{
-		return chronos::time_point_hrc(chronos::usec(timeval.usec) + chronos::sec(timeval.sec));
+		return chronos::time_point_clk(chronos::usec(timeval.usec) + chronos::sec(timeval.sec));
 	}
 
-	inline static chronos::time_point_hrc now()
+	inline static chronos::time_point_clk now()
 	{
-		return chronos::hrc::now();
+		return chronos::clk::now();
 	}
 
-	inline static chronos::time_point_hrc serverNow()
+	inline static chronos::time_point_clk serverNow()
 	{
-		return chronos::hrc::now() + TimeProvider::getInstance().getDiffToServer<chronos::usec>();
+		return chronos::clk::now() + TimeProvider::getInstance().getDiffToServer<chronos::usec>();
 	}
 
 private:
