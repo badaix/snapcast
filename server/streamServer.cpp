@@ -231,6 +231,7 @@ void StreamServer::onMessageReceived(ControlSession* controlSession, const std::
 	}
 	catch (const JsonRequestException& e)
 	{
+//		logE << "JsonRequestException: " << e.getResponse().dump() << ", message: " << message << "\n";
 		controlSession->send(e.getResponse().dump());
 	}
 	catch (const exception& e)

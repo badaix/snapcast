@@ -111,18 +111,32 @@ void ControlSession::reader()
 	active_ = true;
 	try
 	{
+		std::stringstream message;
 		while (active_)
 		{
 			asio::streambuf response;
 			asio::read_until(*socket_, response, "\n");
-			std::string s((istreambuf_iterator<char>(&response)), istreambuf_iterator<char>());
-			size_t len = s.length() - 1;
-			if ((len >= 2) && s[len-2] == '\r')
-				--len;
-			s.resize(len);
 
-			if (messageReceiver_ != NULL)
-				messageReceiver_->onMessageReceived(this, s);
+			std::string s((istreambuf_iterator<char>(&response)), istreambuf_iterator<char>());
+			message << s;
+			if (s.empty() || (s.back() != '\n'))
+				continue;
+
+			string line;
+			while (std::getline(message, line, '\n'))
+			{
+				if (line.empty())
+					continue;
+
+				size_t len = line.length() - 1;
+				if ((len >= 2) && line[len-2] == '\r')
+					--len;
+				line.resize(len);
+				if ((messageReceiver_ != NULL) && !line.empty())
+					messageReceiver_->onMessageReceived(this, line);
+			}
+			message.str("");
+			message.clear();
 		}
 	}
 	catch (const std::exception& e)
