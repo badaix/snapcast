@@ -348,6 +348,13 @@ void StreamServer::handleAccept(socket_ptr socket)
 	tv.tv_usec = 0;
 	setsockopt(socket->native_handle(), SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
 	setsockopt(socket->native_handle(), SOL_SOCKET, SO_SNDTIMEO, &tv, sizeof(tv));
+
+	/// experimental: turn on tcp::no_delay	
+//	asio::ip::tcp::no_delay option;
+//	socket->get_option(option);
+//	logE << "no_delay: " << option.value() << "\n";
+	socket->set_option(tcp::no_delay(true));
+
 	logS(kLogNotice) << "StreamServer::NewConnection: " << socket->remote_endpoint().address().to_string() << endl;
 	shared_ptr<StreamSession> session = make_shared<StreamSession>(this, socket);
 	{
