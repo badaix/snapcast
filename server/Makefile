@@ -9,7 +9,8 @@ else
   TARGET_DIR ?= /usr
 endif
 
-CXXFLAGS += -std=c++0x -Wall -Wno-unused-function -O3 -pthread -DASIO_STANDALONE -DVERSION=\"$(VERSION)\" -I. -I.. -I../externals/asio/asio/include -I../externals/popl/include
+CXXFLAGS += -std=c++0x -Wall -Wno-unused-function -O3 -DASIO_STANDALONE -DVERSION=\"$(VERSION)\" -I. -I.. -I../externals/asio/asio/include -I../externals/popl/include
+OBJ       = snapServer.o config.o controlServer.o controlSession.o streamServer.o streamSession.o json/jsonrpc.o streamreader/streamUri.o streamreader/streamManager.o streamreader/pcmStream.o streamreader/pipeStream.o streamreader/fileStream.o encoder/encoderFactory.o encoder/flacEncoder.o encoder/pcmEncoder.o encoder/oggEncoder.o ../common/log.o ../common/sampleFormat.o ../message/pcmChunk.o
 
 ifeq ($(ENDIAN), BIG)
 CXXFLAGS += -DIS_BIG_ENDIAN
@@ -18,27 +19,38 @@ endif
 ifeq ($(TARGET), OPENWRT)
 
 STRIP	 = echo
-CXXFLAGS += -DNO_CPP11_STRING
+CXXFLAGS += -DNO_CPP11_STRING -pthread
 LDFLAGS  = -lvorbis -lvorbisenc -logg -lFLAC -lavahi-client -lavahi-common -latomic
+OBJ      += publishAvahi.o 
 
 else ifeq ($(TARGET), FREEBSD)
 
 SHELL    = /usr/local/bin/bash
 CXX      = /usr/local/bin/g++
-CXXFLAGS += -DNO_CPP11_STRING -DFREEBSD
+CXXFLAGS += -DNO_CPP11_STRING -DFREEBSD -pthread
 STRIP	 = strip
 LDFLAGS  = -lrt -lvorbis -lvorbisenc -logg -lFLAC -lavahi-client -lavahi-common -static-libgcc -static-libstdc++
+OBJ      += publishAvahi.o 
+
+else ifeq ($(TARGET), MACOS)
+
+CXX      = /usr/bin/g++
+CXXFLAGS += -DFREEBSD -DMACOS -DHAS_BONJOUR -Wno-deprecated -I/usr/local/include
+STRIP	 = strip
+LDFLAGS  = -lvorbis -lvorbisenc -logg -lFLAC -L/usr/local/lib 
+OBJ      += publishBonjour.o 
 
 else
 
 CXX      = /usr/bin/g++
 STRIP	 = strip
+CXXFLAGS += -pthread
 LDFLAGS  = -lrt -lvorbis -lvorbisenc -logg -lFLAC -lavahi-client -lavahi-common -static-libgcc -static-libstdc++
+OBJ      += publishAvahi.o 
 
 endif
 
 
-OBJ = snapServer.o config.o controlServer.o controlSession.o streamServer.o streamSession.o json/jsonrpc.o streamreader/streamUri.o streamreader/streamManager.o streamreader/pcmStream.o streamreader/pipeStream.o streamreader/fileStream.o encoder/encoderFactory.o encoder/flacEncoder.o encoder/pcmEncoder.o encoder/oggEncoder.o publishAvahi.o ../common/log.o ../common/sampleFormat.o ../message/pcmChunk.o
 BIN = snapserver
 
 all:	$(TARGET)
