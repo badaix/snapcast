@@ -5,8 +5,8 @@ After=network.target
 [Service]
 EnvironmentFile=-/etc/default/snapserver
 Type=forking
-ExecStart=/usr/sbin/snapserver $SNAPSERVER_OPTS
-PIDFile=/var/run/snapserver.pid
+ExecStart=/usr/bin/snapserver $SNAPSERVER_OPTS
+PIDFile=/var/run/snapserver/pid
 
 [Install]
 WantedBy=multi-user.target

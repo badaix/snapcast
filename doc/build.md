@@ -48,7 +48,7 @@ Install Snapclient and/or Snapserver:
     $ sudo make installserver
     $ sudo make installclient
 
-This will copy the client and/or server binary to `/usr/sbin` and update init.d/systemd to start the client/server as a daemon.
+This will copy the client and/or server binary to `/usr/bin` and update init.d/systemd to start the client/server as a daemon.
 
 ###Build Snapclient
 `cd` into the Snapclient src-root directory:
@@ -60,7 +60,7 @@ Install Snapclient
 
     $ sudo make install
 
-This will copy the client binary to `/usr/sbin` and update init.d/systemd to start the client as a daemon.
+This will copy the client binary to `/usr/bin` and update init.d/systemd to start the client as a daemon.
 
 ###Build Snapserver
 `cd` into the Snapserver src-root directory:
@@ -72,7 +72,7 @@ Install Snapserver
 
     $ sudo make install
 
-This will copy the server binary to `/usr/sbin` and update init.d/systemd to start the server as a daemon.
+This will copy the server binary to `/usr/bin` and update init.d/systemd to start the server as a daemon.
 
 
 ##FreeBSD (Native)
@@ -90,7 +90,7 @@ Install Snapserver
 
     $ sudo gmake TARGET=FREEBSD install
 
-This will copy the server binary to `/usr/local/sbin` and the startup script to `/usr/local/etc/rc.d/snapserver`. To enable the Snapserver, add this line to `/etc/rc.conf`: 
+This will copy the server binary to `/usr/local/bin` and the startup script to `/usr/local/etc/rc.d/snapserver`. To enable the Snapserver, add this line to `/etc/rc.conf`: 
 
     snapserver_enable="YES"
 

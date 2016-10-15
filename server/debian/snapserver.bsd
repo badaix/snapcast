@@ -22,8 +22,8 @@ load_rc_config $name
 
 : ${snapserver_enable:=NO}
 
-command=/usr/local/sbin/${name}
-pidfile="/var/run/${name}.pid"
+command=/usr/local/bin/${name}
+pidfile="/var/run/${name}/pid"
                                             
 start_cmd=snapserver_start
 

@@ -75,14 +75,15 @@ dpkg:
 ifdef DESTDIR
 
 install:
-	install -D -g root -o root $(BIN) $(TARGET_DIR)/sbin/$(BIN)
-	install -D -g root -o root $(BIN).1 $(TARGET_DIR)/share/man/man1/$(BIN).1
+	$(MAKE) installfiles
 
 else
 
 install:
-	install -D -g root -o root $(BIN) $(TARGET_DIR)/sbin/$(BIN)
-	install -D -g root -o root $(BIN).1 $(TARGET_DIR)/share/man/man1/$(BIN).1
+	$(MAKE) adduser
+	$(MAKE) installfiles
+	install -g audio -o snapcast -d /var/run/$(BIN)
+
 	@if [[ `systemctl` =~ -\.mount ]]; then \
 		$(MAKE) installsystemd; \
 	elif [[ `/sbin/init --version` =~ upstart ]]; then \
@@ -94,6 +95,10 @@ install:
 	fi; \
 
 endif
+
+installfiles:
+	install -D -g root -o root $(BIN) $(TARGET_DIR)/bin/$(BIN)
+	install -D -g root -o root $(BIN).1 $(TARGET_DIR)/share/man/man1/$(BIN).1
 
 installsystemd:
 	@echo using systemd; \
@@ -110,6 +115,10 @@ installsysv:
 	update-rc.d $(BIN) defaults; \
 	/etc/init.d/$(BIN) start; \
 
+adduser:
+	@if ! getent passwd snapcast >/dev/null; then \
+		adduser --quiet --ingroup audio --system --no-create-home --home /var/lib/snapcast snapcast; \
+	fi; \
 
 uninstall:
 	rm -f $(TARGET_DIR)/share/man/man1/$(BIN).1
@@ -122,11 +131,13 @@ uninstall:
 	else \
 		echo cannot tell; \
 	fi; \
+	rm -rf /var/run/$(BIN)
+	$(MAKE) deluser
 
 uninstallsysv:
 	@/etc/init.d/$(BIN) stop; \
 	killall -9 $(BIN); \
-	rm -f /usr/sbin/$(BIN); \
+	rm -f /usr/bin/$(BIN); \
 	rm -f /etc/init.d/$(BIN); \
 	rm -f /etc/default/$(BIN); \
 	update-rc.d -f $(BIN) remove; \
@@ -135,8 +146,11 @@ uninstallsystemd:
 	@systemctl stop $(BIN); \
 	systemctl disable $(BIN); \
 	killall -9 $(BIN); \
-	rm -f /usr/sbin/$(BIN); \
+	rm -f /usr/bin/$(BIN); \
 	rm -f /lib/systemd/system/$(BIN).service; \
 	rm -f /etc/default/$(BIN); \
 	systemctl daemon-reload; \
+
+deluser:
+	@deluser --quiet --system snapcast > /dev/null || true
 

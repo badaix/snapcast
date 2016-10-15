@@ -5,8 +5,8 @@ After=network.target
 [Service]
 EnvironmentFile=-/etc/default/snapclient
 Type=forking
-ExecStart=/usr/sbin/snapclient $SNAPCLIENT_OPTS
-PIDFile=/var/run/snapclient.pid
+ExecStart=/usr/bin/snapclient $SNAPCLIENT_OPTS
+PIDFile=/var/run/snapclient/pid
 
 [Install]
 WantedBy=multi-user.target

@@ -17,9 +17,9 @@
 PATH=/sbin:/usr/sbin:/bin:/usr/bin:/
 DESC="Snapcast client"
 NAME=snapclient
-DAEMON=/usr/sbin/$NAME
+DAEMON=/usr/bin/$NAME
 SNAPCLIENT_OPTS="-d"
-PIDFILE=/var/run/$NAME.pid
+PIDFILE=/var/run/$NAME/pid
 SCRIPTNAME=/etc/init.d/$NAME
 
 # Exit if the package is not installed
@@ -45,12 +45,18 @@ fi
 #
 do_start()
 {
+	PIDDIR=$(dirname "$PIDFILE")
+	if [ ! -d "$PIDDIR" ]; then
+			mkdir -m 0755 $PIDDIR
+			chown snapcast:audio $PIDDIR
+	fi
+
 	# Return
 	#   0 if daemon has been started
 	#   1 if daemon was already running
 	#   2 if daemon could not be started
-	start-stop-daemon --start --quiet --pidfile $PIDFILE --exec $DAEMON --test > /dev/null || return 1
-	start-stop-daemon --start --quiet --pidfile $PIDFILE --exec $DAEMON -- $SNAPCLIENT_OPTS || return 2
+	start-stop-daemon --start --quiet --pidfile "$PIDFILE" --exec "$DAEMON" --test > /dev/null || return 1
+	start-stop-daemon --start --quiet --pidfile "$PIDFILE" --exec "$DAEMON" -- $SNAPCLIENT_OPTS || return 2
 	# Add code here, if necessary, that waits for the process to be ready
 	# to handle requests from services started subsequently which depend
 	# on this one.  As a last resort, sleep for some time.

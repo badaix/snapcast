@@ -62,21 +62,21 @@ dpkg:
 ifdef DESTDIR
 
 install:
-	install -D -g root -o root $(BIN) $(TARGET_DIR)/sbin/$(BIN)
+	install -D -g root -o root $(BIN) $(TARGET_DIR)/bin/$(BIN)
 	install -D -g root -o root $(BIN).1 $(TARGET_DIR)/share/man/man1/$(BIN).1
 
 else ifeq ($(TARGET), FREEBSD)
 
 install:
 	echo BSD
-	install -g wheel -o root -m 555 $(BIN) $(TARGET_DIR)/local/sbin/$(BIN)
+	install -g wheel -o root -m 555 $(BIN) $(TARGET_DIR)/local/bin/$(BIN)
 	install -g wheel -o root -m 555 $(BIN).1 $(TARGET_DIR)/local/man/man1/$(BIN).1
 	install -g wheel -o root -m 555 debian/$(BIN).bsd $(TARGET_DIR)/local/etc/rc.d/$(BIN)
 
 else
 
 install:
-	install -D -g root -o root $(BIN) $(TARGET_DIR)/sbin/$(BIN)
+	install -D -g root -o root $(BIN) $(TARGET_DIR)/bin/$(BIN)
 	install -D -g root -o root $(BIN).1 $(TARGET_DIR)/share/man/man1/$(BIN).1
 	@if [[ `systemctl` =~ -\.mount ]]; then \
 		$(MAKE) installsystemd; \
@@ -115,7 +115,7 @@ ifeq ($(TARGET), FREEBSD)
 uninstall:
 	@service $(BIN) stop; \
 	killall -9 $(BIN); \
-	rm -f $(TARGET_DIR)/local/sbin/$(BIN); \
+	rm -f $(TARGET_DIR)/local/bin/$(BIN); \
 	rm -f $(TARGET_DIR)/local/man/man1/$(BIN).1; \
 	rm -f $(TARGET_DIR)/local/etc/rc.d/$(BIN); \
 
@@ -138,7 +138,7 @@ endif
 uninstallsysv:
 	@/etc/init.d/$(BIN) stop; \
 	killall -9 $(BIN); \
-	rm -f /usr/sbin/$(BIN); \
+	rm -f /usr/bin/$(BIN); \
 	rm -f /etc/init.d/$(BIN); \
 	rm -f /etc/default/$(BIN); \
 	update-rc.d -f $(BIN) remove; \
@@ -147,7 +147,7 @@ uninstallsystemd:
 	@systemctl stop $(BIN); \
 	systemctl disable $(BIN); \
 	killall -9 $(BIN); \
-	rm -f /usr/sbin/$(BIN); \
+	rm -f /usr/bin/$(BIN); \
 	rm -f /lib/systemd/system/$(BIN).service; \
 	rm -f /etc/default/$(BIN); \
 	systemctl daemon-reload; \
