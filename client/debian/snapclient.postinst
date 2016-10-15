@@ -1,0 +1,16 @@
+#!/bin/sh
+
+set -e
+
+umask 0022
+ACTION="$1"
+VERSION="$2"
+
+if [ "$ACTION" = "configure" ]; then
+	# add the snapcast user
+	if ! getent passwd snapcast >/dev/null; then
+		adduser --quiet --ingroup audio --system --no-create-home snapcast
+	fi
+fi
+
+#DEBHELPER#

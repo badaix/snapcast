@@ -1,0 +1,17 @@
+#!/bin/sh
+
+set -e
+
+if [ "$1" = "purge" ]; then
+	# clean up all statoverrides that belonged to snapcast, so the
+	# snapcast system user can be removed cleanly
+	for i in $(dpkg-statoverride --list | awk '/^snapcast / {print $4}'); do
+		if dpkg-statoverride --list --quiet "$i" >/dev/null; then
+			dpkg-statoverride --force --quiet --remove "$i"
+		fi
+	done
+
+	deluser --quiet --system snapcast > /dev/null || true
+fi
+
+#DEBHELPER#

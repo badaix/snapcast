@@ -32,6 +32,7 @@
 #include "common/log.h"
 #include "common/signalHandler.h"
 #include "common/strCompat.h"
+#include "common/utils.h"
 
 
 using namespace std;
@@ -150,7 +151,7 @@ int main (int argc, char **argv)
 		if (daemonOption.isSet())
 		{
 #ifdef HAS_DAEMON
-			daemonize("/var/run/snapclient.pid");
+			daemonize("snapcast", "audio", "/var/run/snapclient/pid");
 			if (processPriority < -20)
 				processPriority = -20;
 			else if (processPriority > 19)

@@ -26,75 +26,120 @@
 #include <unistd.h>
 #include <string.h>
 #include <stdlib.h>
+#include <pwd.h>
+#include <grp.h>
+#include "common/snapException.h"
+#include "common/strCompat.h"
+#include "common/utils.h"
+
 
 int pidFilehandle;
 
-void daemonize(const char *pidfile)
+void daemonize(const std::string& user, const std::string& group, const std::string& pidfile)
 {
-	/* Our process ID and Session ID */
+	if (pidfile.empty() || pidfile.find('/') == std::string::npos) 
+		throw SnapException("invalid pid file \"" + pidfile + "\"");
+	
+	std::string pidfileDir(pidfile.substr(0, pidfile.find_last_of('/')));
+	mkdirRecursive(pidfileDir.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+
+	/// Ensure only one copy
+	pidFilehandle = open(pidfile.c_str(), O_RDWR|O_CREAT, 0600);
+	if (pidFilehandle == -1 )
+	{
+		/// Couldn't open lock file
+		throw SnapException("Could not open PID lock file \"" + pidfile + "\"");
+	}
+
+	uid_t user_uid = (uid_t)-1;
+	gid_t user_gid = (gid_t)-1;
+	std::string user_name;
+#ifdef FREEBSD
+	bool had_group = false;
+#endif
+
+	if (!user.empty()) 
+	{
+		struct passwd *pwd = getpwnam(user.c_str());
+		if (pwd == nullptr)
+			throw SnapException("no such user \"" + user + "\"");
+		user_uid = pwd->pw_uid;
+		user_gid = pwd->pw_gid;
+		user_name = strdup(user.c_str());
+		/// this is needed by libs such as arts
+		setenv("HOME", pwd->pw_dir, true);
+	}
+	
+	if (!group.empty()) {
+		struct group *grp = getgrnam(group.c_str());
+		if (grp == nullptr)
+			throw SnapException("no such group \"" + group + "\"");
+		user_gid = grp->gr_gid;
+#ifdef FREEBSD
+		had_group = true;
+#endif
+	}
+
+	/// set gid
+	if (user_gid != (gid_t)-1 && user_gid != getgid() && setgid(user_gid) == -1) 
+		throw SnapException("Failed to set group " + cpt::to_string((int)user_gid));
+
+#ifdef FREEBSD
+	/// init supplementary groups
+	/// (must be done before we change our uid)
+	/// no need to set the new user's supplementary groups if we are already this user
+	if (!had_group && user_uid != getuid() && initgroups(user_name, user_gid) == -1)
+		throw SnapException("Failed to set supplementary groups of user \"" + user + "\"");
+#endif
+	/// set uid
+	if (user_uid != (uid_t)-1 && user_uid != getuid() && setuid(user_uid) == -1)
+		throw SnapException("Failed to set user " + user);
+
+	/// Our process ID and Session ID
 	pid_t pid, sid;
 
-	/* Fork off the parent process */
+	/// Fork off the parent process
 	pid = fork();
 	if (pid < 0)
 		exit(EXIT_FAILURE);
 
-	/* If we got a good PID, then
-	   we can exit the parent process. */
+	/// If we got a good PID, then we can exit the parent process.
 	if (pid > 0)
 		exit(EXIT_SUCCESS);
 
-	/* Change the file mode mask */
+	/// Change the file mode mask
 	umask(0);
 
-	/* Open any logs here */
+	/// Open any logs here
 
-	/* Create a new SID for the child process */
+	/// Create a new SID for the child process
 	sid = setsid();
 	if (sid < 0)
 	{
-		/* Log the failure */
+		/// Log the failure
 		exit(EXIT_FAILURE);
 	}
 
-	/* Change the current working directory */
+	/// Change the current working directory
 	if ((chdir("/")) < 0)
 	{
-		/* Log the failure */
+		/// Log the failure
 		exit(EXIT_FAILURE);
 	}
 
-	/* Ensure only one copy */
-	pidFilehandle = open(pidfile, O_RDWR|O_CREAT, 0600);
-
-	if (pidFilehandle == -1 )
-	{
-		/* Couldn't open lock file */
-		syslog(LOG_INFO, "Could not open PID lock file %s, exiting", pidfile);
-		exit(EXIT_FAILURE);
-	}
-
-	/* Try to lock file */
-	if (lockf(pidFilehandle,F_TLOCK,0) == -1)
-	{
-		/* Couldn't get lock on lock file */
-		syslog(LOG_INFO, "Could not lock PID lock file %s, exiting", pidfile);
-		exit(EXIT_FAILURE);
-	}
+	/// Try to lock file
+	if (lockf(pidFilehandle, F_TLOCK, 0) == -1)
+		throw SnapException("Could not lock PID lock file \"" + pidfile + "\"");
 
 	char str[10];
-	/* Get and format PID */
+	/// Get and format PID
 	sprintf(str, "%d\n", getpid());
 
-	/* write pid to lockfile */
+	/// write pid to lockfile
 	if (write(pidFilehandle, str, strlen(str)) != (int)strlen(str))
-	{
-		/* Couldn't get lock on lock file */
-		syslog(LOG_INFO, "Could write PID to lock file %s, exiting", pidfile);
-		exit(EXIT_FAILURE);
-	}
+		throw SnapException("Could not write PID to lock file \"" + pidfile + "\"");
 
-	/* Close out the standard file descriptors */
+	/// Close out the standard file descriptors
 	close(STDIN_FILENO);
 	close(STDOUT_FILENO);
 	close(STDERR_FILENO);
