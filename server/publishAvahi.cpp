@@ -27,8 +27,8 @@ static AvahiEntryGroup *group;
 static AvahiSimplePoll *simple_poll;
 static char* name;
 
-PublishAvahi::PublishAvahi(const std::string& serviceName) : 
-	client(NULL), serviceName_(serviceName), active_(false)
+PublishAvahi::PublishAvahi(const std::string& serviceName) : PublishmDNS(serviceName)
+	client(NULL), active_(false)
 {
 	group = NULL;
 	simple_poll = NULL;
@@ -36,7 +36,7 @@ PublishAvahi::PublishAvahi(const std::string& serviceName) :
 }
 
 
-void PublishAvahi::publish(const std::vector<AvahiService>& services)
+void PublishAvahi::publish(const std::vector<mDNSService>& services)
 {
 	this->services = services;
 

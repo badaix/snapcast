@@ -21,14 +21,24 @@
 #define PUBLISH_BONJOUR_H
 
 #include <string>
+#include <dns_sd.h>
 
+class PublishBonjour;
 
-class PublishBonjour
+#include "publishmDNS.h"
+
+class PublishBonjour : public PublishmDNS
 {
 public:
 	PublishBonjour(const std::string& serviceName);
-	~PublishBonjour();
+	virtual ~PublishBonjour();
+	virtual void publish(const std::vector<mDNSService>& services);
 
+private:
+	std::thread pollThread_;
+	void worker();
+	std::atomic<bool> active_;
+    std::vector<DNSServiceRef> clients;
 };
 
 

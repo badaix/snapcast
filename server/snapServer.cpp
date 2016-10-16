@@ -29,10 +29,8 @@
 #include "message/message.h"
 #include "encoder/encoderFactory.h"
 #include "streamServer.h"
-#if defined(HAS_AVAHI)
-#include "publishAvahi.h"
-#elif defined(HAS_BONJOUR)
-#include "publishBonjour.h"
+#if defined(HAS_AVAHI) || defined(HAS_BONJOUR)
+#include "publishmDNS.h"
 #endif
 #include "config.h"
 #include "common/log.h"
@@ -146,13 +144,11 @@ int main(int argc, char* argv[])
 				setpriority(PRIO_PROCESS, 0, processPriority);
 			logS(kLogNotice) << "daemon started" << std::endl;
 		}
-#if defined(HAS_AVAHI)
-		PublishAvahi publishAvahi("Snapcast");
-		std::vector<AvahiService> services;
-		services.push_back(AvahiService("_snapcast._tcp", settings.port));
-		services.push_back(AvahiService("_snapcast-jsonrpc._tcp", settings.controlPort));
-		publishAvahi.publish(services);
+#if defined(HAS_AVAHI) || defined(HAS_BONJOUR)
+		PublishZeroConf publishZeroConfg("Snapcast");
+		publishZeroConfg.publish({mDNSService("_snapcast._tcp", settings.port), mDNSService("_snapcast-jsonrpc._tcp", settings.controlPort)});
 #endif
+
 		if (settings.bufferMs < 400)
 			settings.bufferMs = 400;
 		settings.sampleFormat = sampleFormatValue.getValue();

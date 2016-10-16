@@ -18,34 +18,33 @@ endif
 
 ifeq ($(TARGET), OPENWRT)
 
-STRIP	 = echo
+STRIP     = echo
 CXXFLAGS += -DNO_CPP11_STRING -pthread
-LDFLAGS  = -lvorbis -lvorbisenc -logg -lFLAC -lavahi-client -lavahi-common -latomic
+LDFLAGS   = -lvorbis -lvorbisenc -logg -lFLAC -lavahi-client -lavahi-common -latomic
 OBJ      += publishAvahi.o 
 
 else ifeq ($(TARGET), FREEBSD)
 
-SHELL    = /usr/local/bin/bash
-CXX      = /usr/local/bin/g++
+CXX       = /usr/local/bin/g++
+STRIP     = echo
 CXXFLAGS += -DNO_CPP11_STRING -DFREEBSD -pthread
-STRIP	 = strip
-LDFLAGS  = -lrt -lvorbis -lvorbisenc -logg -lFLAC -lavahi-client -lavahi-common -static-libgcc -static-libstdc++
+LDFLAGS   = -lrt -lvorbis -lvorbisenc -logg -lFLAC -lavahi-client -lavahi-common -static-libgcc -static-libstdc++
 OBJ      += publishAvahi.o 
 
 else ifeq ($(TARGET), MACOS)
 
-CXX      = /usr/bin/g++
+CXX       = /usr/bin/g++
+STRIP     = strip
 CXXFLAGS += -DFREEBSD -DMACOS -DHAS_BONJOUR -Wno-deprecated -I/usr/local/include
-STRIP	 = strip
-LDFLAGS  = -lvorbis -lvorbisenc -logg -lFLAC -L/usr/local/lib 
-OBJ      += publishBonjour.o 
+LDFLAGS   = -lvorbis -lvorbisenc -logg -lFLAC -L/usr/local/lib 
+OBJ      += publishBonjour.o
 
 else
 
-CXX      = /usr/bin/g++
-STRIP	 = strip
+CXX       = /usr/bin/g++
+STRIP     = strip
 CXXFLAGS += -pthread
-LDFLAGS  = -lrt -lvorbis -lvorbisenc -logg -lFLAC -lavahi-client -lavahi-common -static-libgcc -static-libstdc++
+LDFLAGS   = -lrt -lvorbis -lvorbisenc -logg -lFLAC -lavahi-client -lavahi-common -static-libgcc -static-libstdc++
 OBJ      += publishAvahi.o 
 
 endif
