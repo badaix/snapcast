@@ -19,7 +19,7 @@ endif
 ifeq ($(TARGET), OPENWRT)
 
 STRIP     = echo
-CXXFLAGS += -DNO_CPP11_STRING -pthread
+CXXFLAGS += -DNO_CPP11_STRING -DHAS_AVAHI -pthread
 LDFLAGS   = -lvorbis -lvorbisenc -logg -lFLAC -lavahi-client -lavahi-common -latomic
 OBJ      += publishAvahi.o 
 
@@ -27,7 +27,7 @@ else ifeq ($(TARGET), FREEBSD)
 
 CXX       = /usr/local/bin/g++
 STRIP     = echo
-CXXFLAGS += -DNO_CPP11_STRING -DFREEBSD -pthread
+CXXFLAGS += -DNO_CPP11_STRING -DFREEBSD -DHAS_AVAHI -pthread
 LDFLAGS   = -lrt -lvorbis -lvorbisenc -logg -lFLAC -lavahi-client -lavahi-common -static-libgcc -static-libstdc++
 OBJ      += publishAvahi.o 
 
@@ -43,7 +43,7 @@ else
 
 CXX       = /usr/bin/g++
 STRIP     = strip
-CXXFLAGS += -pthread
+CXXFLAGS += -DHAS_AVAHI -pthread
 LDFLAGS   = -lrt -lvorbis -lvorbisenc -logg -lFLAC -lavahi-client -lavahi-common -static-libgcc -static-libstdc++
 OBJ      += publishAvahi.o 
 

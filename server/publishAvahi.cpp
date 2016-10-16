@@ -27,8 +27,8 @@ static AvahiEntryGroup *group;
 static AvahiSimplePoll *simple_poll;
 static char* name;
 
-PublishAvahi::PublishAvahi(const std::string& serviceName) : PublishmDNS(serviceName)
-	client(NULL), active_(false)
+PublishAvahi::PublishAvahi(const std::string& serviceName) : PublishmDNS(serviceName),
+	client_(NULL), active_(false)
 {
 	group = NULL;
 	simple_poll = NULL;
@@ -40,9 +40,6 @@ void PublishAvahi::publish(const std::vector<mDNSService>& services)
 {
 	this->services = services;
 
-	AvahiClient *client = NULL;
-	int error;
-
 	/* Allocate main loop object */
 	if (!(simple_poll = avahi_simple_poll_new()))
 	{
@@ -50,10 +47,11 @@ void PublishAvahi::publish(const std::vector<mDNSService>& services)
 	}
 
 	/* Allocate a new client */
-	client = avahi_client_new(avahi_simple_poll_get(simple_poll), AVAHI_CLIENT_IGNORE_USER_CONFIG, client_callback, this, &error);
+	int error;
+	client_ = avahi_client_new(avahi_simple_poll_get(simple_poll), AVAHI_CLIENT_IGNORE_USER_CONFIG, client_callback, this, &error);
 
 	/* Check wether creating the client object succeeded */
-	if (!client)
+	if (!client_)
 	{
 		logE << "Failed to create client: " << avahi_strerror(error) << "\n";
 	}
@@ -74,8 +72,8 @@ PublishAvahi::~PublishAvahi()
 	active_ = false;
 	pollThread_.join();
 
-    if (client)
-        avahi_client_free(client);
+    if (client_)
+        avahi_client_free(client_);
 
     if (simple_poll)
         avahi_simple_poll_free(simple_poll);
@@ -174,7 +172,7 @@ void PublishAvahi::create_services(AvahiClient *c)
 		/* Add the same service for BSD LPR */
 		for (size_t n=0; n<services.size(); ++n)
 		{
-			if ((ret = avahi_entry_group_add_service(group, AVAHI_IF_UNSPEC, services[n].proto_, AvahiPublishFlags(0), name, services[n].name_.c_str(), NULL, NULL, services[n].port_, NULL)) < 0)
+			if ((ret = avahi_entry_group_add_service(group, AVAHI_IF_UNSPEC, AVAHI_PROTO_UNSPEC, AvahiPublishFlags(0), name, services[n].name_.c_str(), NULL, NULL, services[n].port_, NULL)) < 0)
 			{
 
 				if (ret == AVAHI_ERR_COLLISION)

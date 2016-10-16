@@ -48,9 +48,9 @@ private:
 	static void entry_group_callback(AvahiEntryGroup *g, AvahiEntryGroupState state, AVAHI_GCC_UNUSED void *userdata);
 	static void client_callback(AvahiClient *c, AvahiClientState state, AVAHI_GCC_UNUSED void * userdata);
 	void create_services(AvahiClient *c);
-	AvahiClient* client;
-	std::thread pollThread_;
 	void worker();
+	AvahiClient* client_;
+	std::thread pollThread_;
 	std::atomic<bool> active_;
 	std::vector<mDNSService> services;
 };
