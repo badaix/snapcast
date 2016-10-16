@@ -30,7 +30,7 @@
 using json = nlohmann::json;
 
 template<typename T>
-T jGet(json j, const std::string& what, const T& def)
+T jGet(const json& j, const std::string& what, const T& def)
 {
 	try
 	{
