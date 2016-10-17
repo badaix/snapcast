@@ -107,9 +107,9 @@ Start and stop the server with `sudo service snapserver start` and `sudo service
  1. Install Xcode from the App Store
  2. Install [Homebrew](http://brew.sh)
  3. Install the required libs
+
     ```    
     $ brew install flac libvorbis
-
     ```
 
 ###Build Snapclient
