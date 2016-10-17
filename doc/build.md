@@ -104,16 +104,23 @@ Start and stop the server with `sudo service snapserver start` and `sudo service
 
 *Warning: macOS support is experimental*
 
-Install Xcode from the App Store  
-
-###Build Snapclient
-Install the required libs:  
+ 1. Install Xcode from the App Store
+ 2. Install [Homebrew](http://brew.sh)
+ 3. Install the required libs:
 
     $ brew install flac libvorbis
 
+
+###Build Snapclient
 `cd` into the Snapclient src-root directory:
 
     $ cd <snapcast dir>/client
+    $ make TARGET=MACOS
+
+###Build Snapserver
+`cd` into the Snapserver src-root directory:
+
+    $ cd <snapcast dir>/server
     $ make TARGET=MACOS
 
 ##Android (Cross compile)
