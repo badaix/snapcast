@@ -90,7 +90,7 @@ void PublishBonjour::worker()
 					DNSServiceErrorType err = DNSServiceProcessResult(clients[n]);
 					if (err)
 					{
-						fprintf(stderr, "DNSServiceProcessResult returned %d\n", err); 
+						logE << "DNSServiceProcessResult returned " << err << "\n"; 
 						active_ = false;
 					} 
 				}
@@ -100,7 +100,7 @@ void PublishBonjour::worker()
 //			myTimerCallBack();
 		else if (result < 0)
 		{
-			printf("select() returned %d errno %d %s\n", result, errno, strerror(errno));
+			logE << "select() returned " << result << " errno " << errno << " " << strerror(errno) << "\n";
 			if (errno != EINTR) 
 				active_ = false;
 		}
