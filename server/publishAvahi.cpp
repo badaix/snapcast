@@ -72,13 +72,13 @@ PublishAvahi::~PublishAvahi()
 	active_ = false;
 	pollThread_.join();
 
-    if (client_)
-        avahi_client_free(client_);
+	if (client_)
+		avahi_client_free(client_);
 
-    if (simple_poll)
-        avahi_simple_poll_free(simple_poll);
+	if (simple_poll)
+		avahi_simple_poll_free(simple_poll);
 
-    avahi_free(name);
+	avahi_free(name);
 }
 
 

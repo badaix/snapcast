@@ -67,7 +67,7 @@ PcmDevice getPcmDevice(const std::string& soundcard)
 int main (int argc, char **argv)
 {
 #ifdef MACOS
-#pragma message "Warning: the Mac OS support is experimental and might not be maintained"
+#pragma message "Warning: the macOS support is experimental and might not be maintained"
 #endif
 	try
 	{
