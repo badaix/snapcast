@@ -21,7 +21,7 @@
 
 #include "popl.hpp"
 #include "controller.h"
-#include "browsemDNS.h"
+#include "browseZeroConf/browsemDNS.h"
 
 #ifdef HAS_ALSA
 #include "player/alsaPlayer.h"
