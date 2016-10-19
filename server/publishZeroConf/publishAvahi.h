@@ -52,7 +52,7 @@ private:
 	AvahiClient* client_;
 	std::thread pollThread_;
 	std::atomic<bool> active_;
-	std::vector<mDNSService> services;
+	std::vector<mDNSService> services_;
 };
 
 

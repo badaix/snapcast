@@ -30,7 +30,7 @@
 #include "encoder/encoderFactory.h"
 #include "streamServer.h"
 #if defined(HAS_AVAHI) || defined(HAS_BONJOUR)
-#include "publishmDNS.h"
+#include "publishZeroConf/publishmDNS.h"
 #endif
 #include "config.h"
 #include "common/log.h"
