@@ -78,6 +78,15 @@ install:
 	install -D -g root -o root $(BIN) $(TARGET_DIR)/sbin/$(BIN)
 	install -D -g root -o root $(BIN).1 $(TARGET_DIR)/share/man/man1/$(BIN).1
 
+else ifeq ($(TARGET), MACOS)
+
+install:
+	echo macOS
+	install -g wheel -o root $(BIN) $(TARGET_DIR)/local/bin/$(BIN)
+	install -g wheel -o root $(BIN).1 $(TARGET_DIR)/local/share/man/man1/$(BIN).1
+	install -g wheel -o root debian/$(BIN).plist /Library/LaunchAgents/de.badaix.snapcast.$(BIN).plist
+	launchctl load /Library/LaunchAgents/de.badaix.snapcast.$(BIN).plist
+
 else
 
 install:
@@ -111,6 +120,17 @@ installsysv:
 	/etc/init.d/$(BIN) start; \
 
 
+ifeq ($(TARGET), MACOS)
+
+uninstall:
+	@launchctl unload /Library/LaunchAgents/de.badaix.snapcast.$(BIN).plist; \
+	killall -9 $(BIN); \
+	rm -f $(TARGET_DIR)/local/bin/$(BIN); \
+	rm -f $(TARGET_DIR)/local/share/man/man1/$(BIN).1; \
+	rm -f /Library/LaunchAgents/de.badaix.snapcast.$(BIN).plist; \
+
+else
+
 uninstall:
 	rm -f $(TARGET_DIR)/share/man/man1/$(BIN).1
 	@if [[ `systemctl` =~ -\.mount ]]; then \
@@ -122,6 +142,8 @@ uninstall:
 	else \
 		echo cannot tell; \
 	fi; \
+
+endif
 
 uninstallsysv:
 	@/etc/init.d/$(BIN) stop; \

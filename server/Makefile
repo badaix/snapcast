@@ -84,6 +84,15 @@ install:
 	install -g wheel -o root -m 555 $(BIN).1 $(TARGET_DIR)/local/man/man1/$(BIN).1
 	install -g wheel -o root -m 555 debian/$(BIN).bsd $(TARGET_DIR)/local/etc/rc.d/$(BIN)
 
+else ifeq ($(TARGET), MACOS)
+
+install:
+	echo macOS
+	install -g wheel -o root $(BIN) $(TARGET_DIR)/local/bin/$(BIN)
+	install -g wheel -o root $(BIN).1 $(TARGET_DIR)/local/share/man/man1/$(BIN).1
+	install -g wheel -o root debian/$(BIN).plist /Library/LaunchAgents/de.badaix.snapcast.$(BIN).plist
+	launchctl load /Library/LaunchAgents/de.badaix.snapcast.$(BIN).plist
+
 else
 
 install:
@@ -129,6 +138,15 @@ uninstall:
 	rm -f $(TARGET_DIR)/local/sbin/$(BIN); \
 	rm -f $(TARGET_DIR)/local/man/man1/$(BIN).1; \
 	rm -f $(TARGET_DIR)/local/etc/rc.d/$(BIN); \
+
+else ifeq ($(TARGET), MACOS)
+
+uninstall:
+	@launchctl unload /Library/LaunchAgents/de.badaix.snapcast.$(BIN).plist; \
+	killall -9 $(BIN); \
+	rm -f $(TARGET_DIR)/local/bin/$(BIN); \
+	rm -f $(TARGET_DIR)/local/share/man/man1/$(BIN).1; \
+	rm -f /Library/LaunchAgents/de.badaix.snapcast.$(BIN).plist; \
 
 else
 
