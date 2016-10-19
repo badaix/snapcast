@@ -128,10 +128,9 @@ void PublishAvahi::entry_group_callback(AvahiEntryGroup *g, AvahiEntryGroupState
 
 void PublishAvahi::create_services(AvahiClient *c)
 {
-	char *n, r[128];
-	int ret;
 	assert(c);
-
+	char *n;
+	
 	/// If this is the first time we're called, let's create a new entry group if necessary
 	if (!group)
 	{
@@ -143,12 +142,13 @@ void PublishAvahi::create_services(AvahiClient *c)
 	}
 
 	/// If the group is empty (either because it was just created, or because it was reset previously, add our entries. 
+	int ret;
 	if (avahi_entry_group_is_empty(group))
 	{
 		logO << "Adding service '" << name << "'\n";
 
 		/// We will now add two services and one subtype to the entry group
-		for (const auto& service: services)
+		for (const auto& service: services_)
 		{
 			if ((ret = avahi_entry_group_add_service(group, AVAHI_IF_UNSPEC, AVAHI_PROTO_UNSPEC, AvahiPublishFlags(0), name, service.name_.c_str(), NULL, NULL, service.port_, NULL)) < 0)
 			{
