@@ -28,7 +28,7 @@
 using namespace std;
 
 
-OggEncoder::OggEncoder(const std::string& codecOptions) : Encoder(codecOptions), lastGranulepos(0)
+OggEncoder::OggEncoder(const std::string& codecOptions) : Encoder(codecOptions), lastGranulepos_(0)
 {
 }
 
@@ -56,7 +56,7 @@ void OggEncoder::encode(const msg::PcmChunk* chunk)
 	double res = 0;
 	logD << "payload: " << chunk->payloadSize << "\tframes: " << chunk->getFrameCount() << "\tduration: " << chunk->duration<chronos::msec>().count() << "\n";
 	int frames = chunk->getFrameCount();
-	float **buffer=vorbis_analysis_buffer(&vd, frames);
+	float **buffer=vorbis_analysis_buffer(&vd_, frames);
 
 	/* uninterleave samples */
 	for (size_t channel = 0; channel < sampleFormat_.channels; ++channel)
@@ -82,7 +82,7 @@ void OggEncoder::encode(const msg::PcmChunk* chunk)
 	}
 
 	/* tell the library how much we actually submitted */
-	vorbis_analysis_wrote(&vd, frames);
+	vorbis_analysis_wrote(&vd_, frames);
 
 	msg::PcmChunk* oggChunk = new msg::PcmChunk(chunk->format, 0);
 
@@ -90,36 +90,36 @@ void OggEncoder::encode(const msg::PcmChunk* chunk)
 	more involved (potentially parallel) processing.  Get a single
 	block for encoding now */
 	size_t pos = 0;
-	while (vorbis_analysis_blockout(&vd, &vb)==1)
+	while (vorbis_analysis_blockout(&vd_, &vb_)==1)
 	{
 		/* analysis, assume we want to use bitrate management */
-		vorbis_analysis(&vb, NULL);
-		vorbis_bitrate_addblock(&vb);
+		vorbis_analysis(&vb_, NULL);
+		vorbis_bitrate_addblock(&vb_);
 
-		while (vorbis_bitrate_flushpacket(&vd, &op))
+		while (vorbis_bitrate_flushpacket(&vd_, &op_))
 		{
 			/* weld the packet into the bitstream */
-			ogg_stream_packetin(&os, &op);
+			ogg_stream_packetin(&os_, &op_);
 
 			/* write out pages (if any) */
 			while (true)
 			{
-				int result = ogg_stream_flush(&os, &og);
+				int result = ogg_stream_flush(&os_, &og_);
 				if (result == 0)
 					break;
-				res = os.granulepos - lastGranulepos;
+				res = os_.granulepos - lastGranulepos_;
 
-				size_t nextLen = pos + og.header_len + og.body_len;
+				size_t nextLen = pos + og_.header_len + og_.body_len;
 				// make chunk larger
 				if (oggChunk->payloadSize < nextLen)
 					oggChunk->payload = (char*)realloc(oggChunk->payload, nextLen);
 
-				memcpy(oggChunk->payload + pos, og.header, og.header_len);
-				pos += og.header_len;
-				memcpy(oggChunk->payload + pos, og.body, og.body_len);
-				pos += og.body_len;
+				memcpy(oggChunk->payload + pos, og_.header, og_.header_len);
+				pos += og_.header_len;
+				memcpy(oggChunk->payload + pos, og_.body, og_.body_len);
+				pos += og_.body_len;
 
-				if (ogg_page_eos(&og))
+				if (ogg_page_eos(&og_))
 					break;
 			}
 		}
@@ -129,7 +129,7 @@ void OggEncoder::encode(const msg::PcmChunk* chunk)
 	{
 		res /= (sampleFormat_.rate / 1000.);
 		// logO << "res: " << res << "\n";
-		lastGranulepos = os.granulepos;
+		lastGranulepos_ = os_.granulepos;
 		// make oggChunk smaller
 		oggChunk->payload = (char*)realloc(oggChunk->payload, pos);
 		oggChunk->payloadSize = pos;
@@ -164,7 +164,7 @@ void OggEncoder::initEncoder()
 	}
 
 	/********** Encode setup ************/
-	vorbis_info_init(&vi);
+	vorbis_info_init(&vi_);
 
 	/* choose an encoding mode.  A few possibilities commented out, one
 	 actually used: */
@@ -195,7 +195,7 @@ void OggEncoder::initEncoder()
 
 	*********************************************************************/
 
-	int ret = vorbis_encode_init_vbr(&vi, sampleFormat_.channels, sampleFormat_.rate, quality);
+	int ret = vorbis_encode_init_vbr(&vi_, sampleFormat_.channels, sampleFormat_.rate, quality);
 
 	/* do not continue if setup failed; this can happen if we ask for a
 	 mode that libVorbis does not support (eg, too low a bitrate, etc,
@@ -205,20 +205,20 @@ void OggEncoder::initEncoder()
 		throw SnapException("failed to init encoder");
 
 	/* add a comment */
-	vorbis_comment_init(&vc);
-	vorbis_comment_add_tag(&vc, "TITLE", "SnapStream");
-	vorbis_comment_add_tag(&vc, "VERSION", VERSION);
-	vorbis_comment_add_tag(&vc, "SAMPLE_FORMAT", sampleFormat_.getFormat().c_str());
+	vorbis_comment_init(&vc_);
+	vorbis_comment_add_tag(&vc_, "TITLE", "SnapStream");
+	vorbis_comment_add_tag(&vc_, "VERSION", VERSION);
+	vorbis_comment_add_tag(&vc_, "SAMPLE_FORMAT", sampleFormat_.getFormat().c_str());
 
 	/* set up the analysis state and auxiliary encoding storage */
-	vorbis_analysis_init(&vd, &vi);
-	vorbis_block_init(&vd, &vb);
+	vorbis_analysis_init(&vd_, &vi_);
+	vorbis_block_init(&vd_, &vb_);
 
 	/* set up our packet->stream encoder */
 	/* pick a random serial number; that way we can more likely build
 	 chained streams just by concatenation */
 	srand(time(NULL));
-	ogg_stream_init(&os, rand());
+	ogg_stream_init(&os_, rand());
 
 	/* Vorbis streams begin with three headers; the initial header (with
 	 most of the codec setup parameters) which is mandated by the Ogg
@@ -231,10 +231,10 @@ void OggEncoder::initEncoder()
 	ogg_packet header_comm;
 	ogg_packet header_code;
 
-	vorbis_analysis_headerout(&vd, &vc, &header, &header_comm, &header_code);
-	ogg_stream_packetin(&os, &header);
-	ogg_stream_packetin(&os, &header_comm);
-	ogg_stream_packetin(&os, &header_code);
+	vorbis_analysis_headerout(&vd_, &vc_, &header, &header_comm, &header_code);
+	ogg_stream_packetin(&os_, &header);
+	ogg_stream_packetin(&os_, &header_comm);
+	ogg_stream_packetin(&os_, &header_code);
 
 	/* This ensures the actual
 	 * audio data will start on a new page, as per spec
@@ -243,16 +243,16 @@ void OggEncoder::initEncoder()
 	headerChunk_.reset(new msg::CodecHeader("ogg"));
 	while (true)
 	{
-		int result = ogg_stream_flush(&os, &og);
+		int result = ogg_stream_flush(&os_, &og_);
 		if (result == 0)
 			break;
-		headerChunk_->payloadSize += og.header_len + og.body_len;
+		headerChunk_->payloadSize += og_.header_len + og_.body_len;
 		headerChunk_->payload = (char*)realloc(headerChunk_->payload, headerChunk_->payloadSize);
-		logD << "HeadLen: " << og.header_len << ", bodyLen: " << og.body_len << ", result: " << result << "\n";
-		memcpy(headerChunk_->payload + pos, og.header, og.header_len);
-		pos += og.header_len;
-		memcpy(headerChunk_->payload + pos, og.body, og.body_len);
-		pos += og.body_len;
+		logD << "HeadLen: " << og_.header_len << ", bodyLen: " << og_.body_len << ", result: " << result << "\n";
+		memcpy(headerChunk_->payload + pos, og_.header, og_.header_len);
+		pos += og_.header_len;
+		memcpy(headerChunk_->payload + pos, og_.body, og_.body_len);
+		pos += og_.body_len;
 	}
 }
 

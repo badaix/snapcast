@@ -47,18 +47,19 @@ CoreAudioPlayer::~CoreAudioPlayer()
 
 void CoreAudioPlayer::playerCallback(AudioQueueRef queue, AudioQueueBufferRef bufferRef)
 {
-    /// Estimate the playout delay by checking the number of frames left in the buffer
-    /// and add ms_ (= complete buffer size). Based on trying.
-    AudioTimeStamp timestamp;
-    AudioQueueGetCurrentTime(queue, timeLine, &timestamp, NULL);
-    size_t bufferedFrames = (frames_ - ((uint64_t)timestamp.mSampleTime % frames_)) % frames_;
-    size_t bufferedMs = bufferedFrames * 1000 / pubStream_->getFormat().rate + (ms_ * (NUM_BUFFERS - 1));
-    /// 15ms DAC delay. Based on trying.
-    bufferedMs += 15;
+	/// Estimate the playout delay by checking the number of frames left in the buffer
+	/// and add ms_ (= complete buffer size). Based on trying.
+	AudioTimeStamp timestamp;
+	AudioQueueGetCurrentTime(queue, timeLine_, &timestamp, NULL);
+	size_t bufferedFrames = (frames_ - ((uint64_t)timestamp.mSampleTime % frames_)) % frames_;
+	size_t bufferedMs = bufferedFrames * 1000 / pubStream_->getFormat().rate + (ms_ * (NUM_BUFFERS - 1));
+	/// 15ms DAC delay. Based on trying.
+	bufferedMs += 15;
 //    logO << "buffered: " << bufferedFrames << ", ms: " << bufferedMs << ", mSampleTime: " << timestamp.mSampleTime << "\n";
 
+	/// TODO: sometimes this bufferedMS or AudioTimeStamp wraps around 1s (i.e. we're 1s out of sync (behind)) and recovers later on
 	chronos::usec delay(bufferedMs * 1000);
-    char *buffer = (char*)bufferRef->mAudioData;
+	char *buffer = (char*)bufferRef->mAudioData;
 	if (!pubStream_->getPlayerChunk(buffer, delay, frames_))
 	{
 		logO << "Failed to get chunk. Playing silence.\n";
@@ -70,60 +71,60 @@ void CoreAudioPlayer::playerCallback(AudioQueueRef queue, AudioQueueBufferRef bu
 	}
 
 //    OSStatus status = 
-    AudioQueueEnqueueBuffer(queue, bufferRef, 0, NULL);
+	AudioQueueEnqueueBuffer(queue, bufferRef, 0, NULL);
 
-    if (!active_)
-    {
-        AudioQueueStop(queue, false);
-        AudioQueueDispose(queue, false);
-        CFRunLoopStop(CFRunLoopGetCurrent());
-    }
+	if (!active_)
+	{
+		AudioQueueStop(queue, false);
+		AudioQueueDispose(queue, false);
+		CFRunLoopStop(CFRunLoopGetCurrent());
+	}
 }
 
 
 void CoreAudioPlayer::worker()
 {
-    const SampleFormat& sampleFormat = pubStream_->getFormat();
+	const SampleFormat& sampleFormat = pubStream_->getFormat();
 
-    AudioStreamBasicDescription format;
-    format.mSampleRate       = sampleFormat.rate;
-    format.mFormatID         = kAudioFormatLinearPCM;
-    format.mFormatFlags      = kLinearPCMFormatFlagIsSignedInteger;// | kAudioFormatFlagIsPacked;
-    format.mBitsPerChannel   = sampleFormat.bits;
-    format.mChannelsPerFrame = sampleFormat.channels;
-    format.mBytesPerFrame    = sampleFormat.frameSize;
-    format.mFramesPerPacket  = 1;
-    format.mBytesPerPacket   = format.mBytesPerFrame * format.mFramesPerPacket;
-    format.mReserved         = 0;
+	AudioStreamBasicDescription format;
+	format.mSampleRate       = sampleFormat.rate;
+	format.mFormatID         = kAudioFormatLinearPCM;
+	format.mFormatFlags      = kLinearPCMFormatFlagIsSignedInteger;// | kAudioFormatFlagIsPacked;
+	format.mBitsPerChannel   = sampleFormat.bits;
+	format.mChannelsPerFrame = sampleFormat.channels;
+	format.mBytesPerFrame    = sampleFormat.frameSize;
+	format.mFramesPerPacket  = 1;
+	format.mBytesPerPacket   = format.mBytesPerFrame * format.mFramesPerPacket;
+	format.mReserved         = 0;
 
-    AudioQueueRef queue;
-    AudioQueueNewOutput(&format, callback, this, CFRunLoopGetCurrent(), kCFRunLoopCommonModes, 0, &queue);
-    AudioQueueCreateTimeline(queue, &timeLine);
-    
-    // Apple recommends this as buffer size:
-    // https://developer.apple.com/library/content/documentation/MusicAudio/Conceptual/CoreAudioOverview/CoreAudioEssentials/CoreAudioEssentials.html
-    // static const int maxBufferSize = 0x10000;   // limit maximum size to 64K
-    // static const int minBufferSize = 0x4000;    // limit minimum size to 16K
-    //
-    // For 100ms @ 48000:16:2 we have 19.2K
-    // frames: 4800, ms: 100, buffer size: 19200
+	AudioQueueRef queue;
+	AudioQueueNewOutput(&format, callback, this, CFRunLoopGetCurrent(), kCFRunLoopCommonModes, 0, &queue);
+	AudioQueueCreateTimeline(queue, &timeLine_);
+	
+	// Apple recommends this as buffer size:
+	// https://developer.apple.com/library/content/documentation/MusicAudio/Conceptual/CoreAudioOverview/CoreAudioEssentials/CoreAudioEssentials.html
+	// static const int maxBufferSize = 0x10000;   // limit maximum size to 64K
+	// static const int minBufferSize = 0x4000;    // limit minimum size to 16K
+	//
+	// For 100ms @ 48000:16:2 we have 19.2K
+	// frames: 4800, ms: 100, buffer size: 19200
 	frames_ = (sampleFormat.rate * ms_) / 1000;
-    ms_ = frames_ * 1000 / sampleFormat.rate;
+	ms_ = frames_ * 1000 / sampleFormat.rate;
 	buff_size_ = frames_ * sampleFormat.frameSize;
-    logO << "frames: " << frames_ << ", ms: " << ms_ << ", buffer size: " << buff_size_ << "\n";
-    
-    AudioQueueBufferRef buffers[NUM_BUFFERS];
-    for (int i = 0; i < NUM_BUFFERS; i++)
-    {
-        AudioQueueAllocateBuffer(queue, buff_size_, &buffers[i]);
-        buffers[i]->mAudioDataByteSize = buff_size_;
-        callback(this, queue, buffers[i]);
-    }
+	logO << "frames: " << frames_ << ", ms: " << ms_ << ", buffer size: " << buff_size_ << "\n";
+	
+	AudioQueueBufferRef buffers[NUM_BUFFERS];
+	for (int i = 0; i < NUM_BUFFERS; i++)
+	{
+		AudioQueueAllocateBuffer(queue, buff_size_, &buffers[i]);
+		buffers[i]->mAudioDataByteSize = buff_size_;
+		callback(this, queue, buffers[i]);
+	}
 
-    logE << "CoreAudioPlayer::worker\n";
-    AudioQueueCreateTimeline(queue, &timeLine);
-    AudioQueueStart(queue, NULL);
-    CFRunLoopRun();    
+	logE << "CoreAudioPlayer::worker\n";
+	AudioQueueCreateTimeline(queue, &timeLine_);
+	AudioQueueStart(queue, NULL);
+	CFRunLoopRun();    
 }
 
 
