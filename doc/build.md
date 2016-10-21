@@ -108,9 +108,9 @@ Start and stop the server with `sudo service snapserver start` and `sudo service
  2. Install [Homebrew](http://brew.sh)
  3. Install the required libs
 
-    ```    
-    $ brew install flac libvorbis
-    ```
+```    
+$ brew install flac libvorbis
+```
 
 ###Build Snapclient
 `cd` into the Snapclient src-root directory:
