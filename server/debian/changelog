@@ -1,3 +1,18 @@
+snapserver (0.9.0) unstable; urgency=low
+
+  * Features
+    -Added (experimental) support for macOS (make TARGET=MACOS)
+  * Bugfixes
+    -Android client: Fixed crash on Nougat (Issue #97)
+    -Fixed FreeBSD compile error for Snapserver (Issue #107)
+    -Snapserver randomly dropped JSON control messages
+    -Long command line options (like --sampleformat) 
+     didn't work on some systems (Issue #103) 
+  * General
+    -Updated Android NDK to revision 13 
+
+ -- Johannes Pohl <johannes.pohl@badaix.de>  Sat, 22 Oct 2016 00:13:37 +0200
+
 snapserver (0.8.0) unstable; urgency=low
 
   * Features
