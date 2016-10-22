@@ -118,11 +118,23 @@ $ brew install flac libvorbis
     $ cd <snapcast dir>/client
     $ make TARGET=MACOS
 
+Install Snapclient
+
+    $ sudo make install
+
+This will copy the client binary to `/usr/local/bin` and create a Launch Agent to start the client as a daemon.
+
 ###Build Snapserver
 `cd` into the Snapserver src-root directory:
 
     $ cd <snapcast dir>/server
     $ make TARGET=MACOS
+
+Install Snapserver
+
+    $ sudo make install
+
+This will copy the server binary to `/usr/local/bin` and create a Launch Agent to start the server as a daemon.
 
 ##Android (Cross compile)
 Cross compilation for Android is done with the [Android NDK](http://developer.android.com/tools/sdk/ndk/index.html) on a Linux host machine.  
