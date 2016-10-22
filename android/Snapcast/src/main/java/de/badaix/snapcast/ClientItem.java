@@ -56,7 +56,6 @@ public class ClientItem extends LinearLayout implements SeekBar.OnSeekBarChangeL
         ibMute.setOnClickListener(this);
         ibOverflow = (ImageButton) findViewById(R.id.ibOverflow);
         ibOverflow.setOnClickListener(this);
-        volumeSeekBar.setMax(100);
         setClient(client);
         volumeSeekBar.setOnSeekBarChangeListener(this);
         this.server = server;

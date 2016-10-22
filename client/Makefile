@@ -1,4 +1,4 @@
-VERSION = 0.8.0
+VERSION = 0.9.0
 TARGET  = snapclient
 SHELL = /bin/bash
 
@@ -19,34 +19,34 @@ endif
 
 ifeq ($(TARGET), ANDROID)
 
-CXX      = $(NDK_DIR)/bin/arm-linux-androideabi-g++
-STRIP	 = $(NDK_DIR)/bin/arm-linux-androideabi-strip
+CXX       = $(NDK_DIR)/bin/arm-linux-androideabi-g++
+STRIP     = $(NDK_DIR)/bin/arm-linux-androideabi-strip
 CXXFLAGS += -pthread -DANDROID -DNO_CPP11_STRING -fPIC -DHAS_TREMOR -DHAS_OPENSL -I$(NDK_DIR)/include
-LDFLAGS  = -L$(NDK_DIR)/lib -pie -lvorbisidec -logg -lFLAC -lOpenSLES 
+LDFLAGS   = -L$(NDK_DIR)/lib -pie -lvorbisidec -logg -lFLAC -lOpenSLES 
 OBJ      += player/openslPlayer.o 
 
 else ifeq ($(TARGET), OPENWRT)
 
-STRIP	 = echo
+STRIP     = echo
 CXXFLAGS += -pthread -DNO_CPP11_STRING -DHAS_TREMOR -DHAS_ALSA -DHAS_AVAHI -DHAS_DAEMON
-LDFLAGS  = -lasound -lvorbisidec -logg -lFLAC -lavahi-client -lavahi-common -latomic
-OBJ      += player/alsaPlayer.o browseAvahi.o
+LDFLAGS   = -lasound -lvorbisidec -logg -lFLAC -lavahi-client -lavahi-common -latomic
+OBJ      += player/alsaPlayer.o browseZeroConf/browseAvahi.o
 
 else ifeq ($(TARGET), MACOS)
 
-CXX      = /usr/bin/g++
-STRIP	 = strip
+CXX       = /usr/bin/g++
+STRIP     = strip
 CXXFLAGS += -DHAS_OGG -DHAS_COREAUDIO -DFREEBSD -DMACOS -DHAS_BONJOUR -I/usr/local/include -Wno-unused-local-typedef -Wno-deprecated
-LDFLAGS  = -logg -lvorbis -lFLAC -L/usr/local/lib -framework AudioToolbox -framework CoreFoundation
-OBJ      += player/coreAudioPlayer.o browseBonjour.o
+LDFLAGS   = -logg -lvorbis -lFLAC -L/usr/local/lib -framework AudioToolbox -framework CoreFoundation
+OBJ      += player/coreAudioPlayer.o browseZeroConf/browseBonjour.o
 
 else
 
-CXX      = /usr/bin/g++
-STRIP	 = strip
+CXX       = /usr/bin/g++
+STRIP     = strip
 CXXFLAGS += -pthread -DHAS_OGG -DHAS_ALSA -DHAS_AVAHI -DHAS_DAEMON
-LDFLAGS  = -lrt -lasound -logg -lvorbis -lFLAC -lavahi-client -lavahi-common -static-libgcc -static-libstdc++
-OBJ      += player/alsaPlayer.o browseAvahi.o
+LDFLAGS   = -lrt -lasound -logg -lvorbis -lFLAC -lavahi-client -lavahi-common -static-libgcc -static-libstdc++
+OBJ      += player/alsaPlayer.o browseZeroConf/browseAvahi.o
 
 endif
 
@@ -76,6 +76,15 @@ ifdef DESTDIR
 
 install:
 	$(MAKE) installfiles
+
+else ifeq ($(TARGET), MACOS)
+
+install:
+	echo macOS
+	install -g wheel -o root $(BIN) $(TARGET_DIR)/local/bin/$(BIN)
+	install -g wheel -o root $(BIN).1 $(TARGET_DIR)/local/share/man/man1/$(BIN).1
+	install -g wheel -o root debian/$(BIN).plist /Library/LaunchAgents/de.badaix.snapcast.$(BIN).plist
+	launchctl load /Library/LaunchAgents/de.badaix.snapcast.$(BIN).plist
 
 else
 
@@ -120,6 +129,17 @@ adduser:
 		adduser --quiet --ingroup audio --system --no-create-home --home /var/lib/snapcast snapcast; \
 	fi; \
 
+ifeq ($(TARGET), MACOS)
+
+uninstall:
+	@launchctl unload /Library/LaunchAgents/de.badaix.snapcast.$(BIN).plist; \
+	killall -9 $(BIN); \
+	rm -f $(TARGET_DIR)/local/bin/$(BIN); \
+	rm -f $(TARGET_DIR)/local/share/man/man1/$(BIN).1; \
+	rm -f /Library/LaunchAgents/de.badaix.snapcast.$(BIN).plist; \
+
+else
+
 uninstall:
 	rm -f $(TARGET_DIR)/share/man/man1/$(BIN).1
 	@if [[ `systemctl` =~ -\.mount ]]; then \
@@ -133,6 +153,8 @@ uninstall:
 	fi; \
 	rm -rf /var/run/$(BIN)
 	$(MAKE) deluser
+
+endif
 
 uninstallsysv:
 	@/etc/init.d/$(BIN) stop; \

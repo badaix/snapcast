@@ -33,36 +33,26 @@
 #include <thread>
 #include <atomic>
 
+class PublishAvahi;
 
-struct AvahiService
-{
-	AvahiService(const std::string& name, size_t port, int proto = AVAHI_PROTO_UNSPEC) : name_(name), port_(port), proto_(proto)
-	{
-	}
+#include "publishmDNS.h"
 
-	std::string name_;
-	size_t port_;
-	int proto_;
-};
-
-
-class PublishAvahi
+class PublishAvahi : public PublishmDNS
 {
 public:
 	PublishAvahi(const std::string& serviceName);
-	~PublishAvahi();
-	void publish(const std::vector<AvahiService>& services);
+	virtual ~PublishAvahi();
+	virtual void publish(const std::vector<mDNSService>& services);
 
 private:
 	static void entry_group_callback(AvahiEntryGroup *g, AvahiEntryGroupState state, AVAHI_GCC_UNUSED void *userdata);
 	static void client_callback(AvahiClient *c, AvahiClientState state, AVAHI_GCC_UNUSED void * userdata);
 	void create_services(AvahiClient *c);
-	AvahiClient* client;
-	std::string serviceName_;
-	std::thread pollThread_;
 	void worker();
+	AvahiClient* client_;
+	std::thread pollThread_;
 	std::atomic<bool> active_;
-	std::vector<AvahiService> services;
+	std::vector<mDNSService> services_;
 };
 
 

@@ -29,7 +29,9 @@
 #include "message/message.h"
 #include "encoder/encoderFactory.h"
 #include "streamServer.h"
-#include "publishAvahi.h"
+#if defined(HAS_AVAHI) || defined(HAS_BONJOUR)
+#include "publishZeroConf/publishmDNS.h"
+#endif
 #include "config.h"
 #include "common/log.h"
 
@@ -43,6 +45,9 @@ using namespace popl;
 
 int main(int argc, char* argv[])
 {
+#ifdef MACOS
+#pragma message "Warning: the macOS support is experimental and might not be maintained"
+#endif
 	try
 	{
 		StreamServerSettings settings;
@@ -142,12 +147,10 @@ int main(int argc, char* argv[])
 				setpriority(PRIO_PROCESS, 0, processPriority);
 			logS(kLogNotice) << "daemon started" << std::endl;
 		}
-
-		PublishAvahi publishAvahi("Snapcast");
-		std::vector<AvahiService> services;
-		services.push_back(AvahiService("_snapcast._tcp", settings.port));
-		services.push_back(AvahiService("_snapcast-jsonrpc._tcp", settings.controlPort));
-		publishAvahi.publish(services);
+#if defined(HAS_AVAHI) || defined(HAS_BONJOUR)
+		PublishZeroConf publishZeroConfg("Snapcast");
+		publishZeroConfg.publish({mDNSService("_snapcast._tcp", settings.port), mDNSService("_snapcast-jsonrpc._tcp", settings.controlPort)});
+#endif
 
 		if (settings.bufferMs < 400)
 			settings.bufferMs = 400;
@@ -180,8 +183,4 @@ int main(int argc, char* argv[])
 	daemonShutdown();
 	return 0;
 }
-
-
-
-
 

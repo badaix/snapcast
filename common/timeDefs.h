@@ -21,6 +21,10 @@
 
 #include <chrono>
 #include <sys/time.h>
+#ifdef MACOS
+#include <mach/clock.h>
+#include <mach/mach.h>
+#endif
 
 namespace chronos
 {
@@ -49,9 +53,12 @@ namespace chronos
 	inline static long getTickCount()
 	{
 #ifdef MACOS
-		struct timeval now;
-		gettimeofday(&now, NULL);
-		return now.tv_sec*1000 + now.tv_usec / 1000;
+		clock_serv_t cclock;
+		mach_timespec_t mts;
+		host_get_clock_service(mach_host_self(), CALENDAR_CLOCK, &cclock);
+		clock_get_time(cclock, &mts);
+		mach_port_deallocate(mach_task_self(), cclock);
+		return mts.tv_sec*1000 + mts.tv_nsec / 1000000;
 #else
 		struct timespec now;
 		clock_gettime(CLOCK_MONOTONIC, &now);

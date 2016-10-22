@@ -86,7 +86,8 @@
                         android:id="@+id/volumeSeekBar"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_gravity="center_vertical"/>
+                        android:layout_gravity="center_vertical"
+                        android:max="100"/>
                 </LinearLayout>
             </LinearLayout>
         </RelativeLayout>

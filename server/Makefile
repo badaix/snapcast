@@ -1,4 +1,4 @@
-VERSION = 0.8.0
+VERSION = 0.9.0
 TARGET  = snapserver
 SHELL = /bin/bash
 
@@ -9,7 +9,8 @@ else
   TARGET_DIR ?= /usr
 endif
 
-CXXFLAGS += -std=c++0x -Wall -Wno-unused-function -O3 -pthread -DASIO_STANDALONE -DVERSION=\"$(VERSION)\" -I. -I.. -I../externals/asio/asio/include -I../externals/popl/include
+CXXFLAGS += -std=c++0x -Wall -Wno-unused-function -O3 -DASIO_STANDALONE -DVERSION=\"$(VERSION)\" -I. -I.. -I../externals/asio/asio/include -I../externals/popl/include
+OBJ       = snapServer.o config.o controlServer.o controlSession.o streamServer.o streamSession.o json/jsonrpc.o streamreader/streamUri.o streamreader/streamManager.o streamreader/pcmStream.o streamreader/pipeStream.o streamreader/fileStream.o encoder/encoderFactory.o encoder/flacEncoder.o encoder/pcmEncoder.o encoder/oggEncoder.o ../common/log.o ../common/sampleFormat.o ../message/pcmChunk.o
 
 ifeq ($(ENDIAN), BIG)
 CXXFLAGS += -DIS_BIG_ENDIAN
@@ -17,28 +18,38 @@ endif
 
 ifeq ($(TARGET), OPENWRT)
 
-STRIP	 = echo
-CXXFLAGS += -DNO_CPP11_STRING
-LDFLAGS  = -lvorbis -lvorbisenc -logg -lFLAC -lavahi-client -lavahi-common -latomic
+STRIP     = echo
+CXXFLAGS += -DNO_CPP11_STRING -DHAS_AVAHI -pthread
+LDFLAGS   = -lvorbis -lvorbisenc -logg -lFLAC -lavahi-client -lavahi-common -latomic
+OBJ      += publishZeroConf/publishAvahi.o 
 
 else ifeq ($(TARGET), FREEBSD)
 
-SHELL    = /usr/local/bin/bash
-CXX      = /usr/local/bin/g++
-CXXFLAGS += -DNO_CPP11_STRING -DFREEBSD
-STRIP	 = strip
-LDFLAGS  = -lrt -lvorbis -lvorbisenc -logg -lFLAC -lavahi-client -lavahi-common -static-libgcc -static-libstdc++
+CXX       = /usr/local/bin/g++
+STRIP     = echo
+CXXFLAGS += -DNO_CPP11_STRING -DFREEBSD -DHAS_AVAHI -pthread
+LDFLAGS   = -lrt -lvorbis -lvorbisenc -logg -lFLAC -lavahi-client -lavahi-common -static-libgcc -static-libstdc++
+OBJ      += publishZeroConf/publishAvahi.o 
+
+else ifeq ($(TARGET), MACOS)
+
+CXX       = /usr/bin/g++
+STRIP     = strip
+CXXFLAGS += -DFREEBSD -DMACOS -DHAS_BONJOUR -Wno-deprecated -I/usr/local/include
+LDFLAGS   = -lvorbis -lvorbisenc -logg -lFLAC -L/usr/local/lib 
+OBJ      += publishZeroConf/publishBonjour.o
 
 else
 
-CXX      = /usr/bin/g++
-STRIP	 = strip
-LDFLAGS  = -lrt -lvorbis -lvorbisenc -logg -lFLAC -lavahi-client -lavahi-common -static-libgcc -static-libstdc++
+CXX       = /usr/bin/g++
+STRIP     = strip
+CXXFLAGS += -DHAS_AVAHI -pthread
+LDFLAGS   = -lrt -lvorbis -lvorbisenc -logg -lFLAC -lavahi-client -lavahi-common -static-libgcc -static-libstdc++
+OBJ      += publishZeroConf/publishAvahi.o 
 
 endif
 
 
-OBJ = snapServer.o config.o controlServer.o controlSession.o streamServer.o streamSession.o json/jsonrpc.o streamreader/streamUri.o streamreader/streamManager.o streamreader/pcmStream.o streamreader/pipeStream.o streamreader/fileStream.o encoder/encoderFactory.o encoder/flacEncoder.o encoder/pcmEncoder.o encoder/oggEncoder.o publishAvahi.o ../common/log.o ../common/sampleFormat.o ../message/pcmChunk.o
 BIN = snapserver
 
 all:	$(TARGET)
@@ -72,6 +83,15 @@ install:
 	install -g wheel -o root -m 555 $(BIN) $(TARGET_DIR)/local/bin/$(BIN)
 	install -g wheel -o root -m 555 $(BIN).1 $(TARGET_DIR)/local/man/man1/$(BIN).1
 	install -g wheel -o root -m 555 debian/$(BIN).bsd $(TARGET_DIR)/local/etc/rc.d/$(BIN)
+
+else ifeq ($(TARGET), MACOS)
+
+install:
+	echo macOS
+	install -g wheel -o root $(BIN) $(TARGET_DIR)/local/bin/$(BIN)
+	install -g wheel -o root $(BIN).1 $(TARGET_DIR)/local/share/man/man1/$(BIN).1
+	install -g wheel -o root debian/$(BIN).plist /Library/LaunchAgents/de.badaix.snapcast.$(BIN).plist
+	launchctl load /Library/LaunchAgents/de.badaix.snapcast.$(BIN).plist
 
 else
 
@@ -118,6 +138,15 @@ uninstall:
 	rm -f $(TARGET_DIR)/local/bin/$(BIN); \
 	rm -f $(TARGET_DIR)/local/man/man1/$(BIN).1; \
 	rm -f $(TARGET_DIR)/local/etc/rc.d/$(BIN); \
+
+else ifeq ($(TARGET), MACOS)
+
+uninstall:
+	@launchctl unload /Library/LaunchAgents/de.badaix.snapcast.$(BIN).plist; \
+	killall -9 $(BIN); \
+	rm -f $(TARGET_DIR)/local/bin/$(BIN); \
+	rm -f $(TARGET_DIR)/local/share/man/man1/$(BIN).1; \
+	rm -f /Library/LaunchAgents/de.badaix.snapcast.$(BIN).plist; \
 
 else
 

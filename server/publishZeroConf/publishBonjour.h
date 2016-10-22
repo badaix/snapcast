@@ -16,42 +16,32 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
-#ifndef CORE_AUDIO_PLAYER_H
-#define CORE_AUDIO_PLAYER_H
 
-#include <AudioToolbox/AudioQueue.h>
-#include <CoreAudio/CoreAudioTypes.h>
-#include <CoreFoundation/CFRunLoop.h>
+#ifndef PUBLISH_BONJOUR_H
+#define PUBLISH_BONJOUR_H
 
-#include "player.h"
+#include <string>
+#include <dns_sd.h>
 
-/// Audio Player
-/**
- * Audio player implementation using CoreAudio
- * 
- * Warning: 
- *
- *  !! This player is experimental and might not be maintained !!
- * 
- */
-class CoreAudioPlayer : public Player
+class PublishBonjour;
+
+#include "publishmDNS.h"
+
+class PublishBonjour : public PublishmDNS
 {
 public:
-	CoreAudioPlayer(const PcmDevice& pcmDevice, Stream* stream);
-	virtual ~CoreAudioPlayer();
+	PublishBonjour(const std::string& serviceName);
+	virtual ~PublishBonjour();
+	virtual void publish(const std::vector<mDNSService>& services);
 
-	void playerCallback(AudioQueueRef queue, AudioQueueBufferRef bufferRef);
-
-protected:
-	virtual void worker();
-
-	AudioQueueTimelineRef timeLine_;
-	size_t ms_;
-	size_t frames_;
-	size_t buff_size_;
-	Stream* pubStream_;
+private:
+	std::thread pollThread_;
+	void worker();
+	std::atomic<bool> active_;
+    std::vector<DNSServiceRef> clients;
 };
 
 
 #endif
+
 

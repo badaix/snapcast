@@ -104,30 +104,50 @@ Start and stop the server with `sudo service snapserver start` and `sudo service
 
 *Warning: macOS support is experimental*
 
-Install Xcode from the App Store  
+ 1. Install Xcode from the App Store
+ 2. Install [Homebrew](http://brew.sh)
+ 3. Install the required libs
+
+```    
+$ brew install flac libvorbis
+```
 
 ###Build Snapclient
-Install the required libs:  
-
-    $ brew install flac libvorbis
-
 `cd` into the Snapclient src-root directory:
 
     $ cd <snapcast dir>/client
     $ make TARGET=MACOS
+
+Install Snapclient
+
+    $ sudo make install
+
+This will copy the client binary to `/usr/local/bin` and create a Launch Agent to start the client as a daemon.
+
+###Build Snapserver
+`cd` into the Snapserver src-root directory:
+
+    $ cd <snapcast dir>/server
+    $ make TARGET=MACOS
+
+Install Snapserver
+
+    $ sudo make install
+
+This will copy the server binary to `/usr/local/bin` and create a Launch Agent to start the server as a daemon.
 
 ##Android (Cross compile)
 Cross compilation for Android is done with the [Android NDK](http://developer.android.com/tools/sdk/ndk/index.html) on a Linux host machine.  
 
 ###Android NDK setup
 http://developer.android.com/ndk/guides/standalone_toolchain.html
- 1. Download NDK: `http://dl.google.com/android/repository/android-ndk-r12b-linux-x86_64.zip`
- 2. Extract to: `/SOME/LOCAL/PATH/android-ndk-r12b`
+ 1. Download NDK: `https://dl.google.com/android/repository/android-ndk-r13-linux-x86_64.zip`
+ 2. Extract to: `/SOME/LOCAL/PATH/android-ndk-r13`
  3. Setup toolchain somewhere in your home dir (`<android-ndk dir>`):
 
 ````
-$ cd /SOME/LOCAL/PATH/android-ndk-r10e/build/tools
-$ ./make-standalone-toolchain.sh --arch=arm --platform=android-14 --install-dir=<android-ndk dir> --ndk-dir=/SOME/LOCAL/PATH/android-ndk-r12b
+$ cd /SOME/LOCAL/PATH/android-ndk-r13/build/tools
+$ ./make_standalone_toolchain.py --arch arm --api 14 --install-dir <android-ndk dir>
 ````
 
 ###Build Snapclient
@@ -176,7 +196,7 @@ Within the OpenWrt directory create symbolic links to the Snapcast source direct
 Build Snapcast:
 
     $ cd <buildroot dir>
-    $ make package/sxx/snapcast/clean V=s
-    $ make package/sxx/snapcast/compile -j1 V=s
+    $ make package/sxx/snapcast/clean
+    $ make package/sxx/snapcast/compile
 
-The packaged `ipk` files are in `<buildroot dir>/bin/ar71xx/packages/base/snap[client|server]_0.6.0_ar71xx.ipk`
+The packaged `ipk` files are in `<buildroot dir>/bin/ar71xx/packages/base/snap[client|server]_x.x.x_ar71xx.ipk`
