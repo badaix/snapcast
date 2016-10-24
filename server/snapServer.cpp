@@ -21,7 +21,9 @@
 #include <sys/resource.h>
 
 #include "popl.hpp"
+#ifdef HAS_DAEMON
 #include "common/daemon.h"
+#endif
 #include "common/timeDefs.h"
 #include "common/signalHandler.h"
 #include "common/snapException.h"
@@ -77,7 +79,10 @@ int main(int argc, char* argv[])
 		 .add(codecValue)
 		 .add(streamBufferValue)
 		 .add(bufferValue)
-		 .add(daemonOption);
+#ifdef HAS_DAEMON
+		 .add(daemonOption)
+#endif
+		 ;
 
 		try
 		{
@@ -138,6 +143,7 @@ int main(int argc, char* argv[])
 
 		if (daemonOption.isSet())
 		{
+#ifdef HAS_DAEMON
 			daemonize("/var/run/snapserver.pid");
 			if (processPriority < -20)
 				processPriority = -20;
@@ -146,6 +152,7 @@ int main(int argc, char* argv[])
 			if (processPriority != 0)
 				setpriority(PRIO_PROCESS, 0, processPriority);
 			logS(kLogNotice) << "daemon started" << std::endl;
+#endif
 		}
 #if defined(HAS_AVAHI) || defined(HAS_BONJOUR)
 		PublishZeroConf publishZeroConfg("Snapcast");
@@ -180,7 +187,9 @@ int main(int argc, char* argv[])
 	}
 
 	logS(kLogNotice) << "daemon terminated." << endl;
+#ifdef HAS_DAEMON
 	daemonShutdown();
+#endif
 	return 0;
 }
 

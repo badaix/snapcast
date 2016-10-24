@@ -17,6 +17,13 @@ make
 make install
 make clean
 
+cd ../vorbis
+./autogen.sh
+./configure --host=arm --prefix=$NDK_DIR --with-ogg=$NDK_DIR
+make
+make install
+make clean
+
 cd ../tremor
 ./autogen.sh
 ./configure --host=arm --prefix=$NDK_DIR --with-ogg=$NDK_DIR

@@ -9,41 +9,49 @@ else
   TARGET_DIR ?= /usr
 endif
 
-CXXFLAGS += -std=c++0x -Wall -Wno-unused-function -O3 -DASIO_STANDALONE -DVERSION=\"$(VERSION)\" -I. -I.. -I../externals/asio/asio/include -I../externals/popl/include
+CXXFLAGS += $(ADD_CFLAGS) -std=c++0x -Wall -Wno-unused-function -O3 -DASIO_STANDALONE -DVERSION=\"$(VERSION)\" -I. -I.. -I../externals/asio/asio/include -I../externals/popl/include
+LDFLAGS   = -lvorbis -lvorbisenc -logg -lFLAC
 OBJ       = snapServer.o config.o controlServer.o controlSession.o streamServer.o streamSession.o json/jsonrpc.o streamreader/streamUri.o streamreader/streamManager.o streamreader/pcmStream.o streamreader/pipeStream.o streamreader/fileStream.o encoder/encoderFactory.o encoder/flacEncoder.o encoder/pcmEncoder.o encoder/oggEncoder.o ../common/log.o ../common/sampleFormat.o ../message/pcmChunk.o
 
 ifeq ($(ENDIAN), BIG)
 CXXFLAGS += -DIS_BIG_ENDIAN
 endif
 
-ifeq ($(TARGET), OPENWRT)
+ifeq ($(TARGET), ANDROID)
+
+CXX       = $(NDK_DIR)/bin/arm-linux-androideabi-g++
+STRIP     = $(NDK_DIR)/bin/arm-linux-androideabi-strip
+CXXFLAGS += -pthread -DANDROID -DNO_CPP11_STRING -fPIC -I$(NDK_DIR)/include
+LDFLAGS  += -L$(NDK_DIR)/lib -pie 
+
+else ifeq ($(TARGET), OPENWRT)
 
 STRIP     = echo
-CXXFLAGS += -DNO_CPP11_STRING -DHAS_AVAHI -pthread
-LDFLAGS   = -lvorbis -lvorbisenc -logg -lFLAC -lavahi-client -lavahi-common -latomic
+CXXFLAGS += -DNO_CPP11_STRING -DHAS_AVAHI -DHAS_DAEMON -pthread
+LDFLAGS  += -lavahi-client -lavahi-common -latomic
 OBJ      += publishZeroConf/publishAvahi.o 
 
 else ifeq ($(TARGET), FREEBSD)
 
 CXX       = /usr/local/bin/g++
 STRIP     = echo
-CXXFLAGS += -DNO_CPP11_STRING -DFREEBSD -DHAS_AVAHI -pthread
-LDFLAGS   = -lrt -lvorbis -lvorbisenc -logg -lFLAC -lavahi-client -lavahi-common -static-libgcc -static-libstdc++
+CXXFLAGS += -DNO_CPP11_STRING -DFREEBSD -DHAS_AVAHI -DHAS_DAEMON -pthread
+LDFLAGS  += -lrt -lavahi-client -lavahi-common -static-libgcc -static-libstdc++
 OBJ      += publishZeroConf/publishAvahi.o 
 
 else ifeq ($(TARGET), MACOS)
 
 CXX       = /usr/bin/g++
 STRIP     = strip
-CXXFLAGS += -DFREEBSD -DMACOS -DHAS_BONJOUR -Wno-deprecated -I/usr/local/include
-LDFLAGS   = -lvorbis -lvorbisenc -logg -lFLAC -L/usr/local/lib 
+CXXFLAGS += -DFREEBSD -DMACOS -DHAS_BONJOUR -DHAS_DAEMON -Wno-deprecated -I/usr/local/include
+LDFLAGS  += -L/usr/local/lib 
 OBJ      += publishZeroConf/publishBonjour.o
 
 else
 
 CXX       = /usr/bin/g++
 STRIP     = strip
-CXXFLAGS += -DHAS_AVAHI -pthread
+CXXFLAGS += -DHAS_AVAHI -DHAS_DAEMON -pthread
 LDFLAGS   = -lrt -lvorbis -lvorbisenc -logg -lFLAC -lavahi-client -lavahi-common -static-libgcc -static-libstdc++
 OBJ      += publishZeroConf/publishAvahi.o 
 
