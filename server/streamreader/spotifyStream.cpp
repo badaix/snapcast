@@ -16,30 +16,20 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
-#ifndef FILE_STREAM_H
-#define FILE_STREAM_H
-
-#include "pcmStream.h"
-#include <fstream>
+#include "spotifyStream.h"
 
 
-/// Reads and decodes PCM data from a file
-/**
- * Reads PCM from a file and passes the data to an encoder.
- * Implements EncoderListener to get the encoded data.
- * Data is passed to the PcmListener
- */
-class FileStream : public PcmStream
+using namespace std;
+
+
+
+
+SpotifyStream::SpotifyStream(PcmListener* pcmListener, const StreamUri& uri) : ProcessStream(pcmListener, uri)
 {
-public:
-	/// ctor. Encoded PCM data is passed to the PipeListener
-	FileStream(PcmListener* pcmListener, const StreamUri& uri);
-	virtual ~FileStream();
-
-protected:
-	void worker();
-	std::ifstream ifs;
-};
+}
 
 
-#endif
+SpotifyStream::~SpotifyStream()
+{
+}
+

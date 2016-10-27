@@ -16,8 +16,8 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
-#ifndef PCM_READER_H
-#define PCM_READER_H
+#ifndef PCM_STREAM_H
+#define PCM_STREAM_H
 
 #include <thread>
 #include <atomic>

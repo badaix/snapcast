@@ -17,6 +17,8 @@
 ***/
 
 #include "streamManager.h"
+#include "spotifyStream.h"
+#include "processStream.h"
 #include "pipeStream.h"
 #include "fileStream.h"
 #include "common/utils.h"
@@ -60,6 +62,16 @@ PcmStream* StreamManager::addStream(const std::string& uri)
 	else if (streamUri.scheme == "file")
 	{
 		streams_.push_back(make_shared<FileStream>(pcmListener_, streamUri));
+		return streams_.back().get();
+	}
+	else if (streamUri.scheme == "process")
+	{
+		streams_.push_back(make_shared<ProcessStream>(pcmListener_, streamUri));
+		return streams_.back().get();
+	}
+	else if (streamUri.scheme == "spotify")
+	{
+		streams_.push_back(make_shared<SpotifyStream>(pcmListener_, streamUri));
 		return streams_.back().get();
 	}
 	else
