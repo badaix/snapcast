@@ -211,7 +211,7 @@ void AlsaPlayer::worker()
 			catch (const std::exception& e)
 			{
 				logE << "Exception in initAlsa: " << e.what() << endl;
-				usleep(100*1000);
+				chronos::sleep(100);
 			}
 		}
 

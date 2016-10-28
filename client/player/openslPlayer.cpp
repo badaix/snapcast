@@ -16,7 +16,6 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
-#include <unistd.h>
 #include <assert.h>
 #include <iostream>
 
@@ -122,7 +121,7 @@ void OpenslPlayer::playerCallback(SLAndroidSimpleBufferQueueItf bq)
 	{
 		SLresult result = (*bq)->Enqueue(bq, buffer[curBuffer], buff_size);
 		if (result == SL_RESULT_BUFFER_INSUFFICIENT)
-			usleep(1000);
+			chronos::sleep(1);
 		else
 			break;
 	}

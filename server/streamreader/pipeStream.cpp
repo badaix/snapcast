@@ -90,7 +90,7 @@ void PipeStream::worker()
 					if (count < 0)
 					{
 						setState(kIdle);
-						usleep(100*1000);
+						chronos::sleep(100);
 					}
 					else if (count == 0)
 						throw SnapException("end of file");
@@ -108,7 +108,7 @@ void PipeStream::worker()
 				{
 //					logO << "sleep: " << nextTick - currentTick << "\n";
 					setState(kPlaying);
-					usleep((nextTick - currentTick) * 1000);
+					chronos::sleep(nextTick - currentTick);
 				}
 				else
 				{
@@ -122,7 +122,7 @@ void PipeStream::worker()
 		catch(const std::exception& e)
 		{
 			logE << "Exception: " << e.what() << std::endl;
-			usleep(100*1000);
+			chronos::sleep(100);
 		}
 	}
 }

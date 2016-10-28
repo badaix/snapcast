@@ -184,7 +184,7 @@ void Controller::worker()
 				if (reply)
 				{
 					TimeProvider::getInstance().setDiff(reply->latency, reply->received - reply->sent);
-					usleep(100);
+					chronos::usleep(100);
 				}
 			}
 			logO << "diff to server [ms]: " << (float)TimeProvider::getInstance().getDiffToServer<chronos::usec>().count() / 1000.f << "\n";
@@ -193,7 +193,7 @@ void Controller::worker()
 			{
 				for (size_t n=0; n<10 && active_; ++n)
 				{
-					usleep(100*1000);
+					chronos::sleep(100);
 					if (asyncException_)
 						throw AsyncSnapException(exception_);
 				}
@@ -211,7 +211,7 @@ void Controller::worker()
 			stream_.reset();
 			decoder_.reset();
 			for (size_t n=0; (n<10) && active_; ++n)
-				usleep(100*1000);
+				chronos::sleep(100);
 		}
 	}
 	logD << "Thread stopped\n";

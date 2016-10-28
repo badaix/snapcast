@@ -16,7 +16,6 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
-#include <unistd.h>
 
 #include "processStream.h"
 #include "common/log.h"
@@ -67,7 +66,7 @@ void ProcessStream::worker()
 
 				if (nextTick >= currentTick)
 				{
-					usleep((nextTick - currentTick) * 1000);
+					chronos::sleep(nextTick - currentTick);
 				}
 				else
 				{

@@ -22,7 +22,6 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <time.h>
-#include <unistd.h>
 #include <iostream>
 #include "common/snapException.h"
 #include "common/log.h"

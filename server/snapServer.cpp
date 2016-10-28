@@ -164,7 +164,7 @@ int main(int argc, char* argv[])
 		std::thread t(func, &io_service);
 
 		while (!g_terminated)
-			usleep(100*1000);
+			chronos::sleep(100);
 
 		io_service.stop();
 		t.join();

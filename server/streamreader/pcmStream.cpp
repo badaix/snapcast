@@ -19,7 +19,6 @@
 #include <memory>
 #include <sys/stat.h>
 #include <fcntl.h>
-#include <unistd.h>
 
 #include "encoder/encoderFactory.h"
 #include "common/snapException.h"

@@ -19,7 +19,6 @@
 #include <memory>
 #include <sys/stat.h>
 #include <fcntl.h>
-#include <unistd.h>
 
 #include "fileStream.h"
 #include "encoder/encoderFactory.h"
@@ -92,7 +91,7 @@ void FileStream::worker()
 				if (nextTick >= currentTick)
 				{
 //					logO << "sleep: " << nextTick - currentTick << "\n";
-					usleep((nextTick - currentTick) * 1000);
+					chronos::sleep(nextTick - currentTick);
 				}
 				else
 				{
