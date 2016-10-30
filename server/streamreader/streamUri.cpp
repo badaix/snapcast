@@ -123,3 +123,12 @@ std::string StreamUri::id() const
 {
 	return id_;
 }
+
+
+std::string StreamUri::getQuery(const std::string& key, const std::string& def) const
+{
+	auto iter = query.find(key);
+	if (iter != query.end())
+		return iter->second;
+	return def;
+}

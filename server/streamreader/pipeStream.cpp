@@ -37,9 +37,7 @@ using namespace std;
 PipeStream::PipeStream(PcmListener* pcmListener, const StreamUri& uri) : PcmStream(pcmListener, uri), fd_(-1)
 {
 	umask(0);
-	string mode = uri_.query["mode"];
-	if (mode.empty())
-		mode = "create";
+	string mode = uri_.getQuery("mode", "create");
 		
 	logO << "PipeStream mode: " << mode << "\n";
 	if ((mode != "read") && (mode != "create"))
