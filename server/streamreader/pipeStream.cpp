@@ -104,7 +104,6 @@ void PipeStream::worker()
 
 				if (nextTick >= currentTick)
 				{
-//					logO << "sleep: " << nextTick - currentTick << "\n";
 					setState(kPlaying);
 					chronos::sleep(nextTick - currentTick);
 				}

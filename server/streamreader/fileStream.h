@@ -37,7 +37,7 @@ public:
 	virtual ~FileStream();
 
 protected:
-	void worker();
+	virtual void worker();
 	std::ifstream ifs;
 };
 

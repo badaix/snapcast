@@ -19,7 +19,11 @@
 #ifndef PROCESS_STREAM_H
 #define PROCESS_STREAM_H
 
+#include <memory>
+#include <string>
+
 #include "pcmStream.h"
+#include "process.hpp"
 
 
 /// Starts an external process and reads and PCM data from stdout
@@ -35,8 +39,20 @@ public:
 	ProcessStream(PcmListener* pcmListener, const StreamUri& uri);
 	virtual ~ProcessStream();
 
+	virtual void start();
+	virtual void stop();
+
 protected:
-	void worker();
+	std::string exe;
+	std::string path;	
+	std::unique_ptr<Process> process_;
+	std::thread stderrReaderThread_;
+
+	virtual void worker();
+	void stderrReader();
+
+	bool fileExists(const std::string& name);
+	std::string findExe(const std::string& name);
 };
 
 

@@ -37,7 +37,7 @@ public:
 	virtual ~PipeStream();
 
 protected:
-	void worker();
+	virtual void worker();
 	int fd_;
 };
 
