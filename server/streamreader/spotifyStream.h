@@ -27,6 +27,8 @@
  * Starts librespot, reads PCM data from stdout, and passes the data to an encoder.
  * Implements EncoderListener to get the encoded data.
  * Data is passed to the PcmListener
+ * usage:
+ *   snapserver -s "spotify:///librespot?name=Spotify&username=<my username>&password=<my password>[&devicename=Snapcast][&bitrate=320]"
  */
 class SpotifyStream : public ProcessStream
 {
