@@ -19,6 +19,7 @@
 
 #include <sys/stat.h>
 #include <limits.h>
+#include <fcntl.h>
 #include "processStream.h"
 #include "common/snapException.h"
 #include "common/utils.h"
@@ -39,7 +40,8 @@ ProcessStream::ProcessStream(PcmListener* pcmListener, const StreamUri& uri) : P
 
 ProcessStream::~ProcessStream()
 {
-	process_->kill();
+	if (process_)
+		process_->kill();
 }
 
 
@@ -138,6 +140,9 @@ void ProcessStream::worker()
 	while (active_)
 	{
 		process_.reset(new Process(exe + " " + params, path));
+		int flags = fcntl(process_->getStdout(), F_GETFL, 0);
+		fcntl(process_->getStdout(), F_SETFL, flags | O_NONBLOCK);
+
 		stderrReaderThread_ = thread(&ProcessStream::stderrReader, this);
 		stderrReaderThread_.detach();
 
@@ -190,7 +195,7 @@ void ProcessStream::worker()
 		{
 			logE << "Exception: " << e.what() << std::endl;
 			process_->kill();
-			chronos::sleep(100);
+			chronos::sleep(1000);
 		}
 	}
 }
