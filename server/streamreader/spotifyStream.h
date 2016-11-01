@@ -34,6 +34,10 @@ public:
 	/// ctor. Encoded PCM data is passed to the PipeListener
 	SpotifyStream(PcmListener* pcmListener, const StreamUri& uri);
 	virtual ~SpotifyStream();
+
+protected:
+	virtual void onStderrMsg(const char* buffer, size_t n);
+	virtual void initExeAndPath(const std::string& filename);
 };
 
 

@@ -45,14 +45,17 @@ public:
 protected:
 	std::string exe;
 	std::string path;	
+	std::string params;
 	std::unique_ptr<Process> process_;
 	std::thread stderrReaderThread_;
 
 	virtual void worker();
-	void stderrReader();
+	virtual void stderrReader();
+	virtual void onStderrMsg(const char* buffer, size_t n);
+	virtual void initExeAndPath(const std::string& filename);
 
-	bool fileExists(const std::string& name);
-	std::string findExe(const std::string& name);
+	bool fileExists(const std::string& filename);
+	std::string findExe(const std::string& filename);
 };
 
 

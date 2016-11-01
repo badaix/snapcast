@@ -30,22 +30,37 @@ using namespace std;
 
 
 
-bool ProcessStream::fileExists(const std::string& name) 
+ProcessStream::ProcessStream(PcmListener* pcmListener, const StreamUri& uri) : PcmStream(pcmListener, uri), path(""), process_(nullptr)
 {
-	struct stat buffer;   
-	return (stat (name.c_str(), &buffer) == 0); 
+	logO << "ProcessStream: " << uri_.getQuery("params") << "\n";
+	params = uri_.getQuery("params");
 }
 
 
-std::string ProcessStream::findExe(const std::string& name)
+ProcessStream::~ProcessStream()
 {
-	if (fileExists(name))
-		return name;
+	process_->kill();
+}
 
-	std::string exe = name;
+
+bool ProcessStream::fileExists(const std::string& filename) 
+{
+	struct stat buffer;
+	return (stat(filename.c_str(), &buffer) == 0); 
+}
+
+
+std::string ProcessStream::findExe(const std::string& filename)
+{
+	/// check if filename exists
+	if (fileExists(filename))
+		return filename;
+
+	std::string exe = filename;
 	if (exe.find("/") != string::npos)
 		exe = exe.substr(exe.find_last_of("/") + 1);
 
+	/// check with "whereis"
 	string whereis = execGetOutput("whereis " + exe);
 	if (whereis.find(":") != std::string::npos)
 	{
@@ -54,6 +69,7 @@ std::string ProcessStream::findExe(const std::string& name)
 			return whereis;
 	}
 
+	/// check in the same path as this binary
 	char buff[PATH_MAX];
 	char szTmp[32];
 	sprintf(szTmp, "/proc/%d/exe", getpid());
@@ -68,28 +84,20 @@ std::string ProcessStream::findExe(const std::string& name)
 }
 
 
-ProcessStream::ProcessStream(PcmListener* pcmListener, const StreamUri& uri) : PcmStream(pcmListener, uri), path(""), process_(nullptr)
+void ProcessStream::initExeAndPath(const std::string& filename)
 {
-	logO << "ProcessStream: " << uri_.getQuery("params") << "\n";
-
-	exe = findExe(uri.path);
+	exe = findExe(filename);
 	if (exe.find("/") != string::npos)
 		path = exe.substr(0, exe.find_last_of("/"));
 
 	if (!fileExists(exe))
-		throw SnapException("file not found: \"" + uri.path + "\"");
-//	const auto& queries = uri_.query;
-}
-
-
-ProcessStream::~ProcessStream()
-{
-	process_->kill();
+		throw SnapException("file not found: \"" + filename + "\"");
 }
 
 
 void ProcessStream::start()
 {
+	initExeAndPath(uri_.path);
 	PcmStream::start();
 }
 
@@ -103,6 +111,12 @@ void ProcessStream::stop()
 }
 
 
+void ProcessStream::onStderrMsg(const char* buffer, size_t n)
+{
+	/// do nothing
+}
+
+
 void ProcessStream::stderrReader()
 {
 	size_t buffer_size = 8192;
@@ -110,15 +124,7 @@ void ProcessStream::stderrReader()
 	ssize_t n;
 	stringstream message;
 	while (active_ && (n=read(process_->getStderr(), buffer.get(), buffer_size)) > 0)
-	{
-		string logmsg(buffer.get(), n);
-		if ((logmsg.find("allocated stream") == string::npos) &&
-			(logmsg.find("Got channel") == string::npos) &&
-			(logmsg.size() > 4))
-		{
-			logO << logmsg;
-		}
-	}
+		onStderrMsg(buffer.get(), n);
 }
 
 
@@ -131,7 +137,7 @@ void ProcessStream::worker()
 
 	while (active_)
 	{
-		process_.reset(new Process(exe + " " + uri_.getQuery("params"), path));
+		process_.reset(new Process(exe + " " + params, path));
 		stderrReaderThread_ = thread(&ProcessStream::stderrReader, this);
 		stderrReaderThread_.detach();
 
