@@ -33,6 +33,12 @@ SpotifyStream::SpotifyStream(PcmListener* pcmListener, const StreamUri& uri) : P
 	string password = uri_.getQuery("password", "");
 	string bitrate = uri_.getQuery("bitrate", "320");
 	string devicename = uri_.getQuery("devicename", "Snapcast");
+
+	if (username.empty())
+		throw SnapException("missing parameter \"username\"");
+	if (password.empty())
+		throw SnapException("missing parameter \"password\"");
+
 	params = "--name \"" + devicename + "\" --username \"" + username + "\" --password \"" + password + "\" --bitrate " + bitrate + " --backend stdout";
 	logO << "params: " << params << "\n";
 }
