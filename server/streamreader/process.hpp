@@ -6,7 +6,7 @@
 #include <sys/wait.h>
 #include <cstdlib>
 #include <unistd.h>
-
+#include <signal.h>
 
 
 ///Create a new process given command and run path.
