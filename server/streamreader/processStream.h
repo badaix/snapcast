@@ -43,11 +43,12 @@ public:
 	virtual void stop();
 
 protected:
-	std::string exe;
-	std::string path;	
-	std::string params;
+	std::string exe_;
+	std::string path_;	
+	std::string params_;
 	std::unique_ptr<Process> process_;
 	std::thread stderrReaderThread_;
+	bool logStderr_;
 
 	virtual void worker();
 	virtual void stderrReader();

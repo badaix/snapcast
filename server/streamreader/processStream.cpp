@@ -31,10 +31,10 @@ using namespace std;
 
 
 
-ProcessStream::ProcessStream(PcmListener* pcmListener, const StreamUri& uri) : PcmStream(pcmListener, uri), path(""), process_(nullptr)
+ProcessStream::ProcessStream(PcmListener* pcmListener, const StreamUri& uri) : PcmStream(pcmListener, uri), path_(""), process_(nullptr)
 {
-	logO << "ProcessStream: " << uri_.getQuery("params") << "\n";
-	params = uri_.getQuery("params");
+	params_ = uri_.getQuery("params");
+	logStderr_ = (uri_.getQuery("logStderr", "false") == "true");
 }
 
 
@@ -88,11 +88,11 @@ std::string ProcessStream::findExe(const std::string& filename)
 
 void ProcessStream::initExeAndPath(const std::string& filename)
 {
-	exe = findExe(filename);
-	if (exe.find("/") != string::npos)
-		path = exe.substr(0, exe.find_last_of("/"));
+	exe_ = findExe(filename);
+	if (exe_.find("/") != string::npos)
+		path_ = exe_.substr(0, exe_.find_last_of("/"));
 
-	if (!fileExists(exe))
+	if (!fileExists(exe_))
 		throw SnapException("file not found: \"" + filename + "\"");
 }
 
@@ -115,7 +115,10 @@ void ProcessStream::stop()
 
 void ProcessStream::onStderrMsg(const char* buffer, size_t n)
 {
-	/// do nothing
+	if (logStderr_)
+	{
+		logO << string(buffer, n);
+	}
 }
 
 
@@ -139,7 +142,7 @@ void ProcessStream::worker()
 
 	while (active_)
 	{
-		process_.reset(new Process(exe + " " + params, path));
+		process_.reset(new Process(exe_ + " " + params_, path_));
 		int flags = fcntl(process_->getStdout(), F_GETFL, 0);
 		fcntl(process_->getStdout(), F_SETFL, flags | O_NONBLOCK);
 

@@ -39,8 +39,8 @@ SpotifyStream::SpotifyStream(PcmListener* pcmListener, const StreamUri& uri) : P
 	if (password.empty())
 		throw SnapException("missing parameter \"password\"");
 
-	params = "--name \"" + devicename + "\" --username \"" + username + "\" --password \"" + password + "\" --bitrate " + bitrate + " --backend stdout";
-	logO << "params: " << params << "\n";
+	params_ = "--name \"" + devicename + "\" --username \"" + username + "\" --password \"" + password + "\" --bitrate " + bitrate + " --backend stdout";
+//	logO << "params: " << params << "\n";
 }
 
 
@@ -51,16 +51,16 @@ SpotifyStream::~SpotifyStream()
 
 void SpotifyStream::initExeAndPath(const std::string& filename)
 {
-	exe = findExe(filename);
-	if (!fileExists(exe) || (exe == "/"))
+	exe_ = findExe(filename);
+	if (!fileExists(exe_) || (exe_ == "/"))
 	{
-		exe = findExe("librespot");
-		if (!fileExists(exe))
+		exe_ = findExe("librespot");
+		if (!fileExists(exe_))
 			throw SnapException("librespot not found");
 	}
 
-	if (exe.find("/") != string::npos)
-		path = exe.substr(0, exe.find_last_of("/"));
+	if (exe_.find("/") != string::npos)
+		path_ = exe_.substr(0, exe_.find_last_of("/"));
 }
 
 
