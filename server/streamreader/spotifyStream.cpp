@@ -18,6 +18,7 @@
 
 #include "spotifyStream.h"
 #include "common/snapException.h"
+#include "common/utils.h"
 #include "common/log.h"
 
 
@@ -29,6 +30,8 @@ using namespace std;
 SpotifyStream::SpotifyStream(PcmListener* pcmListener, const StreamUri& uri) : ProcessStream(pcmListener, uri)
 {
 	sampleFormat_ = SampleFormat("44100:16:2");
+ 	uri_.query["sampleformat"] == sampleFormat_.getFormat();
+
 	string username = uri_.getQuery("username", "");
 	string password = uri_.getQuery("password", "");
 	string bitrate = uri_.getQuery("bitrate", "320");
@@ -66,12 +69,30 @@ void SpotifyStream::initExeAndPath(const std::string& filename)
 
 void SpotifyStream::onStderrMsg(const char* buffer, size_t n)
 {
-	string logmsg(buffer, n);
+	/// TODO: Watch dog needed. Kill librespot if there was no message received for 70min
+	// 2016-11-02 22-05-15 [out] TRACE:librespot::stream: allocated stream 3580
+	// 2016-11-02 22-05-15 [Debug] DEBUG:librespot::audio_file2: Got channel 3580
+	// 2016-11-02 22-06-39 [out] DEBUG:librespot::spirc: kMessageTypeHello "SM-G901F" 5e1ffdd73f0d1741c4a173d5b238826464ca8e2f 1 0
+	// 2016-11-02 22-06-39 [out] DEBUG:librespot::spirc: kMessageTypeNotify "Snapcast" 68724ecccd67781303655c49a73b74c5968667b1 123 1478120652755
+	// 2016-11-02 22-06-40 [out] DEBUG:librespot::spirc: kMessageTypeNotify "SM-G901F" 5e1ffdd73f0d1741c4a173d5b238826464ca8e2f 1 0
+	// 2016-11-02 22-06-41 [out] DEBUG:librespot::spirc: kMessageTypePause "SM-G901F" 5e1ffdd73f0d1741c4a173d5b238826464ca8e2f 2 0
+	// 2016-11-02 22-06-42 [out] DEBUG:librespot::spirc: kMessageTypeNotify "Snapcast" 68724ecccd67781303655c49a73b74c5968667b1 124 1478120801615
+	// 2016-11-02 22-06-47 [out] DEBUG:librespot::spirc: kMessageTypeNotify "SM-G901F" 5e1ffdd73f0d1741c4a173d5b238826464ca8e2f 2 1478120801615
+	// 2016-11-02 22-35-10 [out] DEBUG:librespot::spirc: kMessageTypeNotify "Snapcast" 68724ecccd67781303655c49a73b74c5968667b1 125 1478120801615
+	// 2016-11-02 23-36-06 [out] DEBUG:librespot::spirc: kMessageTypeNotify "Snapcast" 68724ecccd67781303655c49a73b74c5968667b1 126 1478120801615
+	// 2016-11-03 01-37-08 [out] DEBUG:librespot::spirc: kMessageTypeNotify "Snapcast" 68724ecccd67781303655c49a73b74c5968667b1 127 1478120801615
+	// 2016-11-03 02-38-13 [out] DEBUG:librespot::spirc: kMessageTypeNotify "Snapcast" 68724ecccd67781303655c49a73b74c5968667b1 128 1478120801615
+	// killall librespot
+	// 2016-11-03 09-00-18 [out] INFO:librespot::main_helper: librespot 6fa4e4d (2016-09-21). Built on 2016-10-27.
+	// 2016-11-03 09-00-18 [out] INFO:librespot::session: Connecting to AP lon3-accesspoint-a34.ap.spotify.com:443
+	// 2016-11-03 09-00-18 [out] INFO:librespot::session: Authenticated !
+	string logmsg = trim_copy(string(buffer, n));
 	if ((logmsg.find("allocated stream") == string::npos) &&
 		(logmsg.find("Got channel") == string::npos) &&
+		(logmsg.find('\0') == string::npos) &&
 		(logmsg.size() > 4))
 	{
-		logO << logmsg;
+		logO << logmsg << "\n";
 	}
 }
 

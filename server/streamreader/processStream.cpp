@@ -117,7 +117,9 @@ void ProcessStream::onStderrMsg(const char* buffer, size_t n)
 {
 	if (logStderr_)
 	{
-		logO << string(buffer, n);
+		string line = trim_copy(string(buffer, n));
+		if (line.find('\0') == string::npos)
+			logO << line << "\n";
 	}
 }
 
