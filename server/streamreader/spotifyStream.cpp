@@ -101,14 +101,15 @@ void SpotifyStream::onStderrMsg(const char* buffer, size_t n)
 void SpotifyStream::stderrReader()
 {
 	watchdog_.reset(new Watchdog(this));
-	/// 70min
-	watchdog_->start(70*60*1000);
+	/// 130min
+	watchdog_->start(130*60*1000);
 	ProcessStream::stderrReader();
 }
 
 
 void SpotifyStream::onTimeout(const Watchdog* watchdog, size_t ms)
 {
+	logE << "Spotify timeout: " << ms / 1000 << "\n";
 	if (process_)
 		process_->kill();
 }
