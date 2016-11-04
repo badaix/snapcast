@@ -30,7 +30,7 @@ using namespace std;
 SpotifyStream::SpotifyStream(PcmListener* pcmListener, const StreamUri& uri) : ProcessStream(pcmListener, uri)
 {
 	sampleFormat_ = SampleFormat("44100:16:2");
- 	uri_.query["sampleformat"] == sampleFormat_.getFormat();
+ 	uri_.query["sampleformat"] = sampleFormat_.getFormat();
 
 	string username = uri_.getQuery("username", "");
 	string password = uri_.getQuery("password", "");
