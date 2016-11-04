@@ -20,7 +20,7 @@
 #define SPOTIFY_STREAM_H
 
 #include "processStream.h"
-
+#include "watchdog.h"
 
 /// Starts librespot and reads and PCM data from stdout
 /**
@@ -30,7 +30,7 @@
  * usage:
  *   snapserver -s "spotify:///librespot?name=Spotify&username=<my username>&password=<my password>[&devicename=Snapcast][&bitrate=320]"
  */
-class SpotifyStream : public ProcessStream
+class SpotifyStream : public ProcessStream, WatchdogListener
 {
 public:
 	/// ctor. Encoded PCM data is passed to the PipeListener
@@ -38,8 +38,13 @@ public:
 	virtual ~SpotifyStream();
 
 protected:
+	std::unique_ptr<Watchdog> watchdog_;
+
+	virtual void stderrReader();
 	virtual void onStderrMsg(const char* buffer, size_t n);
 	virtual void initExeAndPath(const std::string& filename);
+
+	virtual void onTimeout(const Watchdog* watchdog, size_t ms);
 };
 
 

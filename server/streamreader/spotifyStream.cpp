@@ -86,6 +86,7 @@ void SpotifyStream::onStderrMsg(const char* buffer, size_t n)
 	// 2016-11-03 09-00-18 [out] INFO:librespot::main_helper: librespot 6fa4e4d (2016-09-21). Built on 2016-10-27.
 	// 2016-11-03 09-00-18 [out] INFO:librespot::session: Connecting to AP lon3-accesspoint-a34.ap.spotify.com:443
 	// 2016-11-03 09-00-18 [out] INFO:librespot::session: Authenticated !
+	watchdog_->trigger();
 	string logmsg = trim_copy(string(buffer, n));
 	if ((logmsg.find("allocated stream") == string::npos) &&
 		(logmsg.find("Got channel") == string::npos) &&
@@ -95,4 +96,21 @@ void SpotifyStream::onStderrMsg(const char* buffer, size_t n)
 		logO << logmsg << "\n";
 	}
 }
+
+
+void SpotifyStream::stderrReader()
+{
+	watchdog_.reset(new Watchdog(this));
+	/// 70min
+	watchdog_->start(70*60*1000);
+	ProcessStream::stderrReader();
+}
+
+
+void SpotifyStream::onTimeout(const Watchdog* watchdog, size_t ms)
+{
+	if (process_)
+		process_->kill();
+}
+
 
