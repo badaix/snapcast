@@ -88,11 +88,15 @@ std::string ProcessStream::findExe(const std::string& filename)
 
 void ProcessStream::initExeAndPath(const std::string& filename)
 {
+	path_ = "";
 	exe_ = findExe(filename);
 	if (exe_.find("/") != string::npos)
-		path_ = exe_.substr(0, exe_.find_last_of("/"));
+	{
+		path_ = exe_.substr(0, exe_.find_last_of("/") + 1);
+		exe_ = exe_.substr(exe_.find_last_of("/") + 1);
+	}
 
-	if (!fileExists(exe_))
+	if (!fileExists(path_ + exe_))
 		throw SnapException("file not found: \"" + filename + "\"");
 }
 
@@ -119,7 +123,7 @@ void ProcessStream::onStderrMsg(const char* buffer, size_t n)
 	{
 		string line = trim_copy(string(buffer, n));
 		if ((line.find('\0') == string::npos) && !line.empty())
-			logO << "(" << uri_.getQuery("name") << ") " << line << "\n";
+			logO << "(" << exe_ << ") " << line << "\n";
 	}
 }
 
@@ -144,7 +148,7 @@ void ProcessStream::worker()
 
 	while (active_)
 	{
-		process_.reset(new Process(exe_ + " " + params_, path_));
+		process_.reset(new Process(path_ + exe_ + " " + params_, path_));
 		int flags = fcntl(process_->getStdout(), F_GETFL, 0);
 		fcntl(process_->getStdout(), F_SETFL, flags | O_NONBLOCK);
 

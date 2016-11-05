@@ -18,6 +18,7 @@
 
 #include "airplayStream.h"
 #include "common/snapException.h"
+#include "common/utils.h"
 
 
 using namespace std;
@@ -28,7 +29,7 @@ using namespace std;
 AirplayStream::AirplayStream(PcmListener* pcmListener, const StreamUri& uri) : ProcessStream(pcmListener, uri)
 {
 	logStderr_ = true;
-	
+
 	sampleFormat_ = SampleFormat("44100:16:2");
  	uri_.query["sampleformat"] = sampleFormat_.getFormat();
 
@@ -44,6 +45,7 @@ AirplayStream::~AirplayStream()
 
 void AirplayStream::initExeAndPath(const std::string& filename)
 {
+	path_ = "";
 	exe_ = findExe(filename);
 	if (!fileExists(exe_) || (exe_ == "/"))
 	{
@@ -53,6 +55,12 @@ void AirplayStream::initExeAndPath(const std::string& filename)
 	}
 
 	if (exe_.find("/") != string::npos)
-		path_ = exe_.substr(0, exe_.find_last_of("/"));
+	{
+		path_ = exe_.substr(0, exe_.find_last_of("/") + 1);
+		exe_ = exe_.substr(exe_.find_last_of("/") + 1);
+	}
+
+	/// kill if it's already running
+	execGetOutput("killall " + exe_);
 }
 

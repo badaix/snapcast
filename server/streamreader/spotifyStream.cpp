@@ -54,6 +54,7 @@ SpotifyStream::~SpotifyStream()
 
 void SpotifyStream::initExeAndPath(const std::string& filename)
 {
+	path_ = "";
 	exe_ = findExe(filename);
 	if (!fileExists(exe_) || (exe_ == "/"))
 	{
@@ -63,7 +64,13 @@ void SpotifyStream::initExeAndPath(const std::string& filename)
 	}
 
 	if (exe_.find("/") != string::npos)
-		path_ = exe_.substr(0, exe_.find_last_of("/"));
+	{
+		path_ = exe_.substr(0, exe_.find_last_of("/") + 1);
+		exe_ = exe_.substr(exe_.find_last_of("/") + 1);
+	}
+
+	/// kill if it's already running
+	execGetOutput("killall " + exe_);
 }
 
 
@@ -93,7 +100,7 @@ void SpotifyStream::onStderrMsg(const char* buffer, size_t n)
 		(logmsg.find('\0') == string::npos) &&
 		(logmsg.size() > 4))
 	{
-		logO << logmsg << "\n";
+		logO << "(" << exe_ << ") " << logmsg << "\n";
 	}
 }
 
