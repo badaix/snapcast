@@ -200,7 +200,7 @@ void ProcessStream::worker()
 		{
 			logE << "Exception: " << e.what() << std::endl;
 			process_->kill();
-			chronos::sleep(1000);
+			chronos::sleep(30000);
 		}
 	}
 }
