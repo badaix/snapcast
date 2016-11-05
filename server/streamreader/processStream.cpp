@@ -118,8 +118,8 @@ void ProcessStream::onStderrMsg(const char* buffer, size_t n)
 	if (logStderr_)
 	{
 		string line = trim_copy(string(buffer, n));
-		if (line.find('\0') == string::npos)
-			logO << line << "\n";
+		if ((line.find('\0') == string::npos) && !line.empty())
+			logO << "(" << uri_.getQuery("name") << ") " << line << "\n";
 	}
 }
 
@@ -200,7 +200,12 @@ void ProcessStream::worker()
 		{
 			logE << "Exception: " << e.what() << std::endl;
 			process_->kill();
-			chronos::sleep(30000);
+			int sleepMs = 30000;
+			while (active_ && (sleepMs > 0))
+			{
+				chronos::sleep(100);
+				sleepMs -= 100;
+			}
 		}
 	}
 }

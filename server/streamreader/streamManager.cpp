@@ -17,6 +17,7 @@
 ***/
 
 #include "streamManager.h"
+#include "airplayStream.h"
 #include "spotifyStream.h"
 #include "processStream.h"
 #include "pipeStream.h"
@@ -72,6 +73,11 @@ PcmStream* StreamManager::addStream(const std::string& uri)
 	else if (streamUri.scheme == "spotify")
 	{
 		streams_.push_back(make_shared<SpotifyStream>(pcmListener_, streamUri));
+		return streams_.back().get();
+	}
+	else if (streamUri.scheme == "airplay")
+	{
+		streams_.push_back(make_shared<AirplayStream>(pcmListener_, streamUri));
 		return streams_.back().get();
 	}
 	else
