@@ -1,6 +1,5 @@
 VERSION = 0.9.0
 TARGET  = snapclient
-SHELL = /bin/bash
 
 ifdef DESTDIR
 # dh_auto_install (Debian) sets this variable
@@ -69,7 +68,7 @@ clean:
 .PHONY: dpkg
 #sudo apt-get install build-essential debhelper dh-make dh-systemd quilt fakeroot lintian
 dpkg:
-	dpkg-buildpackage -rfakeroot -b
+	dpkg-buildpackage -rfakeroot -b -uc -us
 	dh_clean
 
 ifdef DESTDIR
