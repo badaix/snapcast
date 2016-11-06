@@ -104,7 +104,7 @@ void FileStream::worker()
 		}
 		catch(const std::exception& e)
 		{
-			logE << "Exception: " << e.what() << std::endl;
+			logE << "(FileStream) Exception: " << e.what() << std::endl;
 		}
 	}
 }

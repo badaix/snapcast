@@ -113,7 +113,10 @@ void ProcessStream::stop()
 	if (process_)
 		process_->kill();
 	PcmStream::stop();
-	stderrReaderThread_.join();
+
+	/// thread is detached, so it is not joinable
+	if (stderrReaderThread_.joinable())
+		stderrReaderThread_.join();
 }
 
 
@@ -181,6 +184,9 @@ void ProcessStream::worker()
 				}
 				while ((len < toRead) && active_);
 
+				if (!active_)
+					break;
+
 				encoder_->encode(chunk.get());
 				nextTick += pcmReadMs_;
 				chronos::addUs(tvChunk, pcmReadMs_ * 1000);
@@ -202,7 +208,7 @@ void ProcessStream::worker()
 		}
 		catch(const std::exception& e)
 		{
-			logE << "Exception: " << e.what() << std::endl;
+			logE << "(ProcessStream) Exception: " << e.what() << std::endl;
 			process_->kill();
 			int sleepMs = 30000;
 			while (active_ && (sleepMs > 0))

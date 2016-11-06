@@ -98,7 +98,8 @@ void PcmStream::stop()
 	if (active_)
 	{
 		active_ = false;
-		readerThread_.join();
+		if (readerThread_.joinable())
+			readerThread_.join();
 	}
 }
 

@@ -97,6 +97,9 @@ void PipeStream::worker()
 				}
 				while ((len < toRead) && active_);
 
+				if (!active_)
+					break;
+
 				encoder_->encode(chunk.get());
 				nextTick += pcmReadMs_;
 				chronos::addUs(tvChunk, pcmReadMs_ * 1000);
@@ -118,7 +121,7 @@ void PipeStream::worker()
 		}
 		catch(const std::exception& e)
 		{
-			logE << "Exception: " << e.what() << std::endl;
+			logE << "(PipeStream) Exception: " << e.what() << std::endl;
 			chronos::sleep(100);
 		}
 	}
