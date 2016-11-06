@@ -59,7 +59,7 @@ void Watchdog::stop()
 
 void Watchdog::trigger()
 {
-	std::unique_lock<std::mutex> lck(mtx_);
+//	std::unique_lock<std::mutex> lck(mtx_);
 	cv_.notify_one();
 }
 

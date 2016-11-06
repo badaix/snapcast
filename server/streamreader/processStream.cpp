@@ -175,7 +175,8 @@ void ProcessStream::worker()
 					if (count < 0)
 					{
 						setState(kIdle);
-						chronos::sleep(100);
+						if (!sleep(100))
+							break;
 					}
 					else if (count == 0)
 						throw SnapException("end of file");
@@ -195,7 +196,8 @@ void ProcessStream::worker()
 				if (nextTick >= currentTick)
 				{
 					setState(kPlaying);
-					chronos::sleep(nextTick - currentTick);
+					if (!sleep(nextTick - currentTick))
+						break;
 				}
 				else
 				{
@@ -210,12 +212,8 @@ void ProcessStream::worker()
 		{
 			logE << "(ProcessStream) Exception: " << e.what() << std::endl;
 			process_->kill();
-			int sleepMs = 30000;
-			while (active_ && (sleepMs > 0))
-			{
-				chronos::sleep(100);
-				sleepMs -= 100;
-			}
+			if (!sleep(30000))
+				break;
 		}
 	}
 }

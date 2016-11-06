@@ -87,20 +87,29 @@ void PcmStream::start()
 {
 	logD << "PcmStream start: " << sampleFormat_.getFormat() << "\n";
 	encoder_->init(this, sampleFormat_);
-
- 	active_ = true;
-	readerThread_ = thread(&PcmStream::worker, this);
+	active_ = true;
+	thread_ = thread(&PcmStream::worker, this);
 }
 
 
 void PcmStream::stop()
 {
-	if (active_)
-	{
-		active_ = false;
-		if (readerThread_.joinable())
-			readerThread_.join();
-	}
+	if (!active_ && !thread_.joinable())
+		return;
+		
+	active_ = false;
+	cv_.notify_one();
+	if (thread_.joinable())
+		thread_.join();
+}
+
+
+bool PcmStream::sleep(int32_t ms)
+{
+	if (ms < 0)
+		return true;
+	std::unique_lock<std::mutex> lck(mtx_);
+	return (cv_.wait_for(lck, std::chrono::milliseconds(ms)) == std::cv_status::timeout);
 }
 
 

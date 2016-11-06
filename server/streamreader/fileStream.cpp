@@ -91,7 +91,8 @@ void FileStream::worker()
 				if (nextTick >= currentTick)
 				{
 //					logO << "sleep: " << nextTick - currentTick << "\n";
-					chronos::sleep(nextTick - currentTick);
+					if (!sleep(nextTick - currentTick))
+						break;
 				}
 				else
 				{

@@ -22,6 +22,8 @@
 #include <thread>
 #include <atomic>
 #include <string>
+#include <mutex>
+#include <condition_variable>
 #include <map>
 #include "streamUri.h"
 #include "encoder/encoder.h"
@@ -83,12 +85,16 @@ public:
 
 
 protected:
+	std::condition_variable cv_;
+	std::mutex mtx_;
+	std::thread thread_;
+	std::atomic<bool> active_;
+
 	virtual void worker() = 0;
+	virtual bool sleep(int32_t ms);
 	void setState(const ReaderState& newState);
 
 	timeval tvEncodedChunk_;
-	std::atomic<bool> active_;
-	std::thread readerThread_;
 	PcmListener* pcmListener_;
 	StreamUri uri_;
 	SampleFormat sampleFormat_;
