@@ -28,7 +28,7 @@ using namespace std;
 
 
 StreamSession::StreamSession(MessageReceiver* receiver, std::shared_ptr<tcp::socket> socket) :
-	active_(true), messageReceiver_(receiver), pcmStream_(nullptr)
+	active_(false), readerThread_(nullptr), writerThread_(nullptr), messageReceiver_(receiver), pcmStream_(nullptr)
 {
 	socket_ = socket;
 }
@@ -54,16 +54,20 @@ const PcmStreamPtr StreamSession::pcmStream() const
 
 void StreamSession::start()
 {
-	setActive(true);
-	readerThread_ = new thread(&StreamSession::reader, this);
-	writerThread_ = new thread(&StreamSession::writer, this);
+	std::lock_guard<std::recursive_mutex> mlock(mutex_);
+	active_ = true;
+	readerThread_.reset(new thread(&StreamSession::reader, this));
+	writerThread_.reset(new thread(&StreamSession::writer, this));
 }
 
 
 void StreamSession::stop()
 {
-	setActive(false);
-	std::unique_lock<std::mutex> mlock(mutex_);
+	std::lock_guard<std::recursive_mutex> mlock(mutex_);
+	if (!active_)
+		return;
+
+	active_ = false;
 	try
 	{
 		std::error_code ec;
@@ -74,25 +78,25 @@ void StreamSession::stop()
 			socket_->close(ec);
 			if (ec) logE << "Error in socket close: " << ec.message() << "\n";
 		}
-		if (readerThread_)
+		if (readerThread_ && readerThread_->joinable())
 		{
 			logD << "joining readerThread\n";
+			messages_.abort_wait();
 			readerThread_->join();
-			delete readerThread_;
 		}
-		if (writerThread_)
+		if (writerThread_ && writerThread_->joinable())
 		{
 			logD << "joining writerThread\n";
 			writerThread_->join();
-			delete writerThread_;
 		}
 	}
 	catch(...)
 	{
 	}
-	readerThread_ = NULL;
-	writerThread_ = NULL;
-	socket_ = NULL;
+
+	readerThread_ = nullptr;
+	writerThread_ = nullptr;
+	socket_ = nullptr;
 	logD << "StreamSession stopped\n";
 }
 
@@ -135,7 +139,7 @@ bool StreamSession::send(const msg::BaseMessage* message) const
 {
 	//TODO on exception: set active = false
 //	logO << "send: " << message->type << ", size: " << message->getSize() << ", id: " << message->id << ", refers: " << message->refersTo << "\n";
-	std::unique_lock<std::mutex> mlock(mutex_);
+	std::lock_guard<std::recursive_mutex> mlock(mutex_);
 	if (!socket_ || !active_)
 		return false;
 	asio::streambuf streambuf;
@@ -169,7 +173,7 @@ void StreamSession::getNextMessage()
 	tv t;
 	baseMessage.received = t;
 
-	if (messageReceiver_ != NULL)
+	if (active_ && (messageReceiver_ != NULL))
 		messageReceiver_->onMessageReceived(this, baseMessage, &buffer[0]);
 }
 
@@ -187,7 +191,9 @@ void StreamSession::reader()
 	{
 		logS(kLogErr) << "Exception in StreamSession::reader(): " << e.what() << endl;
 	}
-	setActive(false);
+
+	if (active_ && (messageReceiver_ != NULL))
+		messageReceiver_->onDisconnect(this);
 }
 
 
@@ -224,16 +230,9 @@ void StreamSession::writer()
 	{
 		logS(kLogErr) << "Exception in StreamSession::writer(): " << e.what() << endl;
 	}
-	setActive(false);
-}
 
-
-void StreamSession::setActive(bool active)
-{
-	std::lock_guard<std::mutex> mlock(activeMutex_);
-	if (active_ && !active && (messageReceiver_ != NULL))
+	if (active_ && (messageReceiver_ != NULL))
 		messageReceiver_->onDisconnect(this);
-	active_ = active;
 }
 
 

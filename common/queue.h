@@ -33,9 +33,8 @@ public:
 	{
 		std::unique_lock<std::mutex> mlock(mutex_);
 		while (queue_.empty())
-		{
 			cond_.wait(mlock);
-		}
+
 		auto val = queue_.front();
 		queue_.pop();
 		return val;
@@ -54,7 +53,10 @@ public:
 	{
 		std::unique_lock<std::mutex> mlock(mutex_);
 
-		if(!cond_.wait_for(mlock, timeout, [this] { return !queue_.empty(); }))
+		if (!cond_.wait_for(mlock, timeout, [this] { return !queue_.empty(); }))
+			return false;
+
+		if (queue_.empty())
 			return false;
 
 		item = std::move(queue_.front());
@@ -66,6 +68,11 @@ public:
 	bool try_pop(T& item, std::chrono::milliseconds timeout)
 	{
 		return try_pop(item, std::chrono::duration_cast<std::chrono::microseconds>(timeout));
+	}
+
+	void abort_wait()
+	{
+		cond_.notify_one();
 	}
 
 	void pop(T& item)

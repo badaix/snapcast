@@ -39,7 +39,7 @@
 
 using asio::ip::tcp;
 typedef std::shared_ptr<tcp::socket> socket_ptr;
-
+typedef std::shared_ptr<StreamSession> session_ptr;
 
 struct StreamServerSettings
 {
@@ -96,9 +96,10 @@ public:
 private:
 	void startAccept();
 	void handleAccept(socket_ptr socket);
-	StreamSession* getStreamSession(const std::string& mac);
-	mutable std::mutex sessionsMutex_;
-	std::set<std::shared_ptr<StreamSession>> sessions_;
+	session_ptr getStreamSession(const std::string& mac) const;
+	session_ptr getStreamSession(StreamSession* session) const;
+	mutable std::recursive_mutex sessionsMutex_;
+	std::set<session_ptr> sessions_;
 	asio::io_service* io_service_;
 	std::shared_ptr<tcp::acceptor> acceptor_;
 
