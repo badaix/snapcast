@@ -52,9 +52,7 @@ public:
 	bool try_pop(T& item, std::chrono::microseconds timeout)
 	{
 		std::unique_lock<std::mutex> mlock(mutex_);
-
-		if (!cond_.wait_for(mlock, timeout, [this] { return !queue_.empty(); }))
-			return false;
+		cond_.wait_for(mlock, timeout);
 
 		if (queue_.empty())
 			return false;
@@ -75,15 +73,17 @@ public:
 		cond_.notify_one();
 	}
 
-	void pop(T& item)
+	bool pop(T& item)
 	{
 		std::unique_lock<std::mutex> mlock(mutex_);
-		while (queue_.empty())
-		{
-			cond_.wait(mlock);
-		}
-		item = queue_.front();
+		cond_.wait(mlock);
+
+		if (queue_.empty())
+			return false;
+
+		item = std::move(queue_.front());
 		queue_.pop();
+		return true;
 	}
 
 	void push(const T& item)
