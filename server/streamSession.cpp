@@ -54,8 +54,10 @@ const PcmStreamPtr StreamSession::pcmStream() const
 
 void StreamSession::start()
 {
-	std::lock_guard<std::recursive_mutex> mlock(mutex_);
-	active_ = true;
+	{
+		std::lock_guard<std::mutex> mlock(mutex_);
+		active_ = true;
+	}
 	readerThread_.reset(new thread(&StreamSession::reader, this));
 	writerThread_.reset(new thread(&StreamSession::writer, this));
 }
@@ -63,11 +65,14 @@ void StreamSession::start()
 
 void StreamSession::stop()
 {
-	std::lock_guard<std::recursive_mutex> mlock(mutex_);
-	if (!active_)
-		return;
+	{
+		std::lock_guard<std::mutex> mlock(mutex_);
+		if (!active_)
+			return;
 
-	active_ = false;
+		active_ = false;
+	}
+
 	try
 	{
 		std::error_code ec;
@@ -81,12 +86,12 @@ void StreamSession::stop()
 		if (readerThread_ && readerThread_->joinable())
 		{
 			logD << "joining readerThread\n";
-			messages_.abort_wait();
 			readerThread_->join();
 		}
 		if (writerThread_ && writerThread_->joinable())
 		{
 			logD << "joining writerThread\n";
+			messages_.abort_wait();
 			writerThread_->join();
 		}
 	}
@@ -139,9 +144,11 @@ bool StreamSession::send(const msg::BaseMessage* message) const
 {
 	//TODO on exception: set active = false
 //	logO << "send: " << message->type << ", size: " << message->getSize() << ", id: " << message->id << ", refers: " << message->refersTo << "\n";
-	std::lock_guard<std::recursive_mutex> mlock(mutex_);
-	if (!socket_ || !active_)
-		return false;
+	{
+		std::lock_guard<std::mutex> mlock(mutex_);
+		if (!socket_ || !active_)
+			return false;
+	}
 	asio::streambuf streambuf;
 	std::ostream stream(&streambuf);
 	tv t;

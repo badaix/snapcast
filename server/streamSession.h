@@ -89,7 +89,7 @@ protected:
 	void reader();
 	void writer();
 
-	mutable std::recursive_mutex mutex_;
+	mutable std::mutex mutex_;
 	std::atomic<bool> active_;
 
 	std::unique_ptr<std::thread> readerThread_;
