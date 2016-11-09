@@ -294,10 +294,10 @@ void StreamServer::onMessageReceived(StreamSession* connection, const msg::BaseM
 
 		// Assign and update stream
 		PcmStreamPtr stream = streamManager_->getStream(client->config.streamId);
-		if (stream == nullptr)
+		if (!stream)
 		{
 			stream = streamManager_->getDefaultStream();
-			client->config.streamId = stream->getUri().id();
+			client->config.streamId = stream->getId();
 		}
 		Config::instance().save();
 
@@ -384,8 +384,8 @@ void StreamServer::start()
 		//TODO: check uniqueness of the stream
 		for (const auto& streamUri: settings_.pcmStreams)
 		{
-			PcmStream* stream = streamManager_->addStream(streamUri);
-			if (stream != NULL)
+			PcmStreamPtr stream = streamManager_->addStream(streamUri);
+			if (stream)
 				logO << "Stream: " << stream->getUri().toJson() << "\n";
 		}
 		streamManager_->start();

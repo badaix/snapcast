@@ -77,6 +77,12 @@ const std::string& PcmStream::getName() const
 }
 
 
+const std::string& PcmStream::getId() const
+{
+	return getName();
+}
+
+
 const SampleFormat& PcmStream::getSampleFormat() const
 {
 	return sampleFormat_;
@@ -154,7 +160,7 @@ json PcmStream::toJson() const
 
 	json j = {
 		{"uri", uri_.toJson()},
-		{"id", uri_.id()},
+		{"id", getId()},
 		{"status", state}
 	};
 	return j;

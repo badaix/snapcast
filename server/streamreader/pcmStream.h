@@ -78,6 +78,7 @@ public:
 
 	virtual const StreamUri& getUri() const;
 	virtual const std::string& getName() const;
+	virtual const std::string& getId() const;
 	virtual const SampleFormat& getSampleFormat() const;
 
 	virtual ReaderState getState() const;

@@ -49,9 +49,6 @@ struct StreamUri
 	std::string id() const;
 	json toJson() const;
 	std::string getQuery(const std::string& key, const std::string& def = "") const;
-
-private:
-	std::string id_;
 };
 
 
