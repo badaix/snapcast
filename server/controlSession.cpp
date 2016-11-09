@@ -70,6 +70,7 @@ void ControlSession::stop()
 		if (writerThread_)
 		{
 			logD << "joining writerThread\n";
+			messages_.abort_wait();
 			writerThread_->join();
 			delete writerThread_;
 		}
