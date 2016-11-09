@@ -69,9 +69,11 @@ void AirplayStream::initExeAndPath(const std::string& filename)
 void AirplayStream::onStderrMsg(const char* buffer, size_t n)
 {
 	string logmsg = trim_copy(string(buffer, n));
+	if (logmsg.empty())
+		return;
+	logO << "(" << exe_ << ") " << logmsg << "\n";
 	if (logmsg.find("Is another Shairport Sync running on this device") != string::npos)
 	{
-		logO << logmsg << "\n";
 		logE << "Seem there is another Shairport Sync runnig on port " << port_ << ", switching to port " << port_ + 1 << "\n";
 		++port_;
 		params_ = params_wo_port_ + " --port=" + cpt::to_string(port_);
