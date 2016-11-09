@@ -20,6 +20,7 @@
 #define QUEUE_H
 
 #include <queue>
+#include <atomic>
 #include <thread>
 #include <mutex>
 #include <condition_variable>
@@ -33,8 +34,9 @@ public:
 	{
 		std::unique_lock<std::mutex> mlock(mutex_);
 		while (queue_.empty())
+		{
 			cond_.wait(mlock);
-
+		}
 		auto val = queue_.front();
 		queue_.pop();
 		return val;
@@ -49,12 +51,21 @@ public:
 		return queue_.front();
 	}
 
+	void abort_wait()
+	{
+		abort_ = true;
+		cond_.notify_one();
+	}
+
 	bool try_pop(T& item, std::chrono::microseconds timeout)
 	{
 		std::unique_lock<std::mutex> mlock(mutex_);
-		cond_.wait_for(mlock, timeout);
+		abort_ = false;
 
-		if (queue_.empty())
+		if (!cond_.wait_for(mlock, timeout, [this] { return (!queue_.empty() || abort_); }))
+			return false;
+		
+		if (queue_.empty() || abort_)
 			return false;
 
 		item = std::move(queue_.front());
@@ -68,22 +79,15 @@ public:
 		return try_pop(item, std::chrono::duration_cast<std::chrono::microseconds>(timeout));
 	}
 
-	void abort_wait()
-	{
-		cond_.notify_one();
-	}
-
-	bool pop(T& item)
+	void pop(T& item)
 	{
 		std::unique_lock<std::mutex> mlock(mutex_);
-		cond_.wait(mlock);
-
-		if (queue_.empty())
-			return false;
-
-		item = std::move(queue_.front());
+		while (queue_.empty())
+		{
+			cond_.wait(mlock);
+		}
+		item = queue_.front();
 		queue_.pop();
-		return true;
 	}
 
 	void push(const T& item)
@@ -119,6 +123,7 @@ public:
 
 private:
 	std::queue<T> queue_;
+	std::atomic<bool> abort_;
 	mutable std::mutex mutex_;
 	std::condition_variable cond_;
 };

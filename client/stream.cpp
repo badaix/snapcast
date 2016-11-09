@@ -88,8 +88,7 @@ bool Stream::waitForChunk(size_t ms) const
 		return true;
 
 	std::unique_lock<std::mutex> lck(cvMutex_);
-	cv_.wait_for(lck, std::chrono::milliseconds(ms));
-	return !chunks_.empty();
+	return (cv_.wait_for(lck, std::chrono::milliseconds(ms), [this] { return !chunks_.empty(); }));
 }
 
 

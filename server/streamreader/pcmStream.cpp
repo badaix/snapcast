@@ -115,7 +115,7 @@ bool PcmStream::sleep(int32_t ms)
 	if (ms < 0)
 		return true;
 	std::unique_lock<std::mutex> lck(mtx_);
-	return (cv_.wait_for(lck, std::chrono::milliseconds(ms)) == std::cv_status::timeout);
+	return (!cv_.wait_for(lck, std::chrono::milliseconds(ms), [this] { return !active_; }));
 }
 
 
