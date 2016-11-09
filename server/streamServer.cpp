@@ -404,16 +404,24 @@ void StreamServer::start()
 
 void StreamServer::stop()
 {
-	std::lock_guard<std::recursive_mutex> mlock(sessionsMutex_);
-	for (auto session: sessions_)//it = sessions_.begin(); it != sessions_.end(); ++it)
+	if (streamManager_)
 	{
-		if (session)
-		{
-			session->stop();
-			session = nullptr;
-		}
+		streamManager_->stop();
+		streamManager_ = nullptr;
 	}
-	sessions_.clear();
+
+	{
+		std::lock_guard<std::recursive_mutex> mlock(sessionsMutex_);
+		for (auto session: sessions_)//it = sessions_.begin(); it != sessions_.end(); ++it)
+		{
+			if (session)
+			{
+				session->stop();
+				session = nullptr;
+			}
+		}
+		sessions_.clear();
+	}
 
 	if (controlServer_)
 	{
@@ -425,12 +433,6 @@ void StreamServer::stop()
 	{
 		acceptor_->cancel();
 		acceptor_ = nullptr;
-	}
-	
-	if (streamManager_)
-	{
-		streamManager_->stop();
-		streamManager_ = nullptr;
 	}
 }
 

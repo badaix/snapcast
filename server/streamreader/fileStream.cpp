@@ -84,6 +84,7 @@ void FileStream::worker()
 				ifs.read(chunk->payload + count, toRead - count);
 
 				encoder_->encode(chunk.get());
+				if (!active_) break;
 				nextTick += pcmReadMs_;
 				chronos::addUs(tvChunk, pcmReadMs_ * 1000);
 				long currentTick = chronos::getTickCount();

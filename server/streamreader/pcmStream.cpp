@@ -130,7 +130,8 @@ void PcmStream::setState(const ReaderState& newState)
 	if (newState != state_)
 	{
 		state_ = newState;
-		pcmListener_->onStateChanged(this, newState);
+		if (pcmListener_)
+			pcmListener_->onStateChanged(this, newState);
 	}
 }
 
@@ -144,7 +145,8 @@ void PcmStream::onChunkEncoded(const Encoder* encoder, msg::PcmChunk* chunk, dou
 	chunk->timestamp.sec = tvEncodedChunk_.tv_sec;
 	chunk->timestamp.usec = tvEncodedChunk_.tv_usec;
 	chronos::addUs(tvEncodedChunk_, duration * 1000);
-	pcmListener_->onChunkRead(this, chunk, duration);
+	if (pcmListener_)
+		pcmListener_->onChunkRead(this, chunk, duration);
 }
 
 

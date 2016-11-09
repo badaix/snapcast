@@ -185,10 +185,12 @@ void ProcessStream::worker()
 				}
 				while ((len < toRead) && active_);
 
-				if (!active_)
-					break;
+				if (!active_) break;
 
 				encoder_->encode(chunk.get());
+
+				if (!active_) break;
+
 				nextTick += pcmReadMs_;
 				chronos::addUs(tvChunk, pcmReadMs_ * 1000);
 				long currentTick = chronos::getTickCount();

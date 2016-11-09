@@ -88,7 +88,8 @@ void PipeStream::worker()
 					if (count < 0)
 					{
 						setState(kIdle);
-						chronos::sleep(100);
+						if (!sleep(100))
+							break;
 					}
 					else if (count == 0)
 						throw SnapException("end of file");
@@ -97,10 +98,12 @@ void PipeStream::worker()
 				}
 				while ((len < toRead) && active_);
 
-				if (!active_)
-					break;
+				if (!active_) break;
 
 				encoder_->encode(chunk.get());
+
+				if (!active_) break;
+
 				nextTick += pcmReadMs_;
 				chronos::addUs(tvChunk, pcmReadMs_ * 1000);
 				long currentTick = chronos::getTickCount();
@@ -108,7 +111,8 @@ void PipeStream::worker()
 				if (nextTick >= currentTick)
 				{
 					setState(kPlaying);
-					chronos::sleep(nextTick - currentTick);
+					if (!sleep(nextTick - currentTick))
+						break;
 				}
 				else
 				{
@@ -122,7 +126,8 @@ void PipeStream::worker()
 		catch(const std::exception& e)
 		{
 			logE << "(PipeStream) Exception: " << e.what() << std::endl;
-			chronos::sleep(100);
+			if (!sleep(100))
+				break;
 		}
 	}
 }
