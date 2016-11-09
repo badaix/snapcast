@@ -19,6 +19,7 @@
 #include "airplayStream.h"
 #include "common/snapException.h"
 #include "common/utils.h"
+#include "common/log.h"
 
 
 using namespace std;
@@ -26,15 +27,18 @@ using namespace std;
 
 
 
-AirplayStream::AirplayStream(PcmListener* pcmListener, const StreamUri& uri) : ProcessStream(pcmListener, uri)
+AirplayStream::AirplayStream(PcmListener* pcmListener, const StreamUri& uri) : ProcessStream(pcmListener, uri), port_(5000)
 {
 	logStderr_ = true;
 
 	sampleFormat_ = SampleFormat("44100:16:2");
  	uri_.query["sampleformat"] = sampleFormat_.getFormat();
 
+	port_ = cpt::stoul(uri_.getQuery("port", "5000")); 
+
 	string devicename = uri_.getQuery("devicename", "Snapcast");
-	params_ = "--name=\"" + devicename + "\" --output=stdout";
+	params_wo_port_ = "--name=\"" + devicename + "\" --output=stdout";
+	params_ = params_wo_port_ + " --port=" + cpt::to_string(port_);
 }
 
 
@@ -59,8 +63,18 @@ void AirplayStream::initExeAndPath(const std::string& filename)
 		path_ = exe_.substr(0, exe_.find_last_of("/") + 1);
 		exe_ = exe_.substr(exe_.find_last_of("/") + 1);
 	}
+}
 
-	/// kill if it's already running
-	execGetOutput("killall " + exe_);
+
+void AirplayStream::onStderrMsg(const char* buffer, size_t n)
+{
+	string logmsg = trim_copy(string(buffer, n));
+	if (logmsg.find("Is another Shairport Sync running on this device") != string::npos)
+	{
+		logO << logmsg << "\n";
+		logE << "Seem there is another Shairport Sync runnig on port " << port_ << ", switching to port " << port_ + 1 << "\n";
+		++port_;
+		params_ = params_wo_port_ + " --port=" + cpt::to_string(port_);
+	}
 }
 

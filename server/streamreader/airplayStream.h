@@ -37,8 +37,10 @@ public:
 	virtual ~AirplayStream();
 
 protected:
+	virtual void onStderrMsg(const char* buffer, size_t n);
 	virtual void initExeAndPath(const std::string& filename);
-
+	size_t port_;
+	std::string params_wo_port_;
 };
 
 
