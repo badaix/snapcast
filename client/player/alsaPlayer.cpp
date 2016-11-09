@@ -198,7 +198,7 @@ void AlsaPlayer::worker()
 {
 	snd_pcm_sframes_t pcm;
 	snd_pcm_sframes_t framesDelay;
-	long lastChunkTick = 0;
+	long lastChunkTick = chronos::getTickCount();
 
 	while (active_)
 	{
