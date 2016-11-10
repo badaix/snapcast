@@ -21,13 +21,13 @@
 
 #include "processStream.h"
 
-/// Starts shairport-sync and reads and PCM data from stdout
+/// Starts shairport-sync and reads PCM data from stdout
 /**
  * Starts librespot, reads PCM data from stdout, and passes the data to an encoder.
  * Implements EncoderListener to get the encoded data.
  * Data is passed to the PcmListener
  * usage:
- *   snapserver -s "airplay:///shairport-sync?name=Airplay[&devicename=Snapcast]"
+ *   snapserver -s "airplay:///shairport-sync?name=Airplay[&devicename=Snapcast][&port=5000]"
  */
 class AirplayStream : public ProcessStream
 {

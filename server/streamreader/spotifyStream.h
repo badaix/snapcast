@@ -22,7 +22,7 @@
 #include "processStream.h"
 #include "watchdog.h"
 
-/// Starts librespot and reads and PCM data from stdout
+/// Starts librespot and reads PCM data from stdout
 /**
  * Starts librespot, reads PCM data from stdout, and passes the data to an encoder.
  * Implements EncoderListener to get the encoded data.

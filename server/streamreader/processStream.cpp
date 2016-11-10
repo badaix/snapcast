@@ -126,7 +126,7 @@ void ProcessStream::onStderrMsg(const char* buffer, size_t n)
 	{
 		string line = trim_copy(string(buffer, n));
 		if ((line.find('\0') == string::npos) && !line.empty())
-			logO << "(" << exe_ << ") " << line << "\n";
+			logO << "(" << getName() << ") " << line << "\n";
 	}
 }
 

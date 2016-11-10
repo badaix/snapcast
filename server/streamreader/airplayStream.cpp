@@ -71,7 +71,7 @@ void AirplayStream::onStderrMsg(const char* buffer, size_t n)
 	string logmsg = trim_copy(string(buffer, n));
 	if (logmsg.empty())
 		return;
-	logO << "(" << exe_ << ") " << logmsg << "\n";
+	logO << "(" << getName() << ") " << logmsg << "\n";
 	if (logmsg.find("Is another Shairport Sync running on this device") != string::npos)
 	{
 		logE << "Seem there is another Shairport Sync runnig on port " << port_ << ", switching to port " << port_ + 1 << "\n";

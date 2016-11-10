@@ -100,7 +100,7 @@ void SpotifyStream::onStderrMsg(const char* buffer, size_t n)
 		(logmsg.find('\0') == string::npos) &&
 		(logmsg.size() > 4))
 	{
-		logO << "(" << exe_ << ") " << logmsg << "\n";
+		logO << "(" << getName() << ") " << logmsg << "\n";
 	}
 }
 
