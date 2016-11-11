@@ -48,7 +48,6 @@ public:
 		while (queue_.empty())
 			cond_.wait(mlock);
 
-//		std::lock_guard<std::mutex> lock(mutex_);
 		return queue_.front();
 	}
 
