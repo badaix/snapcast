@@ -34,9 +34,9 @@ public:
 	{
 		std::unique_lock<std::mutex> mlock(mutex_);
 		while (queue_.empty())
-		{
 			cond_.wait(mlock);
-		}
+
+//		std::lock_guard<std::mutex> lock(mutex_);
 		auto val = queue_.front();
 		queue_.pop();
 		return val;
@@ -48,20 +48,33 @@ public:
 		while (queue_.empty())
 			cond_.wait(mlock);
 
+//		std::lock_guard<std::mutex> lock(mutex_);
 		return queue_.front();
 	}
 
 	void abort_wait()
 	{
-		abort_ = true;
+		{
+			std::lock_guard<std::mutex> mlock(mutex_);
+			abort_ = true;
+		}
 		cond_.notify_one();
+	}
+
+	bool wait_for(std::chrono::milliseconds timeout) const
+	{
+		std::unique_lock<std::mutex> mlock(mutex_);
+		abort_ = false;
+		if (!cond_.wait_for(mlock, timeout, [this] { return (!queue_.empty() || abort_); }))
+			return false;
+		
+		return !queue_.empty() && !abort_;
 	}
 
 	bool try_pop(T& item, std::chrono::microseconds timeout)
 	{
 		std::unique_lock<std::mutex> mlock(mutex_);
 		abort_ = false;
-
 		if (!cond_.wait_for(mlock, timeout, [this] { return (!queue_.empty() || abort_); }))
 			return false;
 		
@@ -83,32 +96,33 @@ public:
 	{
 		std::unique_lock<std::mutex> mlock(mutex_);
 		while (queue_.empty())
-		{
 			cond_.wait(mlock);
-		}
+
 		item = queue_.front();
 		queue_.pop();
 	}
 
 	void push(const T& item)
 	{
-		std::unique_lock<std::mutex> mlock(mutex_);
-		queue_.push(item);
-		mlock.unlock();
+		{
+			std::lock_guard<std::mutex> mlock(mutex_);
+			queue_.push(item);
+		}
 		cond_.notify_one();
 	}
 
 	void push(T&& item)
 	{
-		std::unique_lock<std::mutex> mlock(mutex_);
-		queue_.push(std::move(item));
-		mlock.unlock();
+		{
+			std::lock_guard<std::mutex> mlock(mutex_);
+			queue_.push(std::move(item));
+		}
 		cond_.notify_one();
 	}
 
 	size_t size() const
 	{
-		std::unique_lock<std::mutex> mlock(mutex_);
+		std::lock_guard<std::mutex> mlock(mutex_);
 		return queue_.size();
 	}
 
@@ -123,9 +137,9 @@ public:
 
 private:
 	std::queue<T> queue_;
-	std::atomic<bool> abort_;
+	mutable std::atomic<bool> abort_;
 	mutable std::mutex mutex_;
-	std::condition_variable cond_;
+	mutable std::condition_variable cond_;
 };
 
 

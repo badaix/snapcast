@@ -196,6 +196,15 @@ void error_callback(const FLAC__StreamDecoder *decoder, FLAC__StreamDecoderError
 {
 	(void)decoder, (void)client_data;
 	logS(kLogErr) << "Got error callback: " << FLAC__StreamDecoderErrorStatusString[status] << "\n";
+	/// TODO, see issue #120:
+	// Thu Nov 10 07:26:44 2016 daemon.warn dnsmasq-dhcp[1194]: no address range available for DHCP request via wlan0
+	// Thu Nov 10 07:54:39 2016 daemon.err snapclient[1158]: Got error callback: FLAC__STREAM_DECODER_ERROR_STATUS_LOST_SYNC
+	// Thu Nov 10 07:54:39 2016 daemon.err snapclient[1158]: Got error callback: FLAC__STREAM_DECODER_ERROR_STATUS_LOST_SYNC
+	//
+	// and:
+	// Oct 27 17:37:38 kitchen snapclient[869]: Connected to 192.168.222.10
+	// Oct 27 17:47:13 kitchen snapclient[869]: Got error callback: FLAC__STREAM_DECODER_ERROR_STATUS_UNPARSEABLE_STREAM
+	// Oct 27 17:47:13 kitchen snapclient[869]: Got error callback: FLAC__STREAM_DECODER_ERROR_STATUS_LOST_SYNC
 }
 
 

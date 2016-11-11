@@ -113,7 +113,6 @@ protected:
 	std::atomic<bool> connected_;
 	MessageReceiver* messageReceiver_;
 	mutable std::mutex mutex_;
-	mutable std::mutex requestMutex_;
 	std::set<std::shared_ptr<PendingRequest>> pendingRequests_;
 	uint16_t reqId_;
 	std::string host_;
