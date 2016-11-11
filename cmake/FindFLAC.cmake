@@ -5,16 +5,18 @@
 # FLAC_INCLUDE_DIRS - the libFLAC include directory
 # FLAC_LIBRARIES - The libFLAC libraries
 
-find_package(PkgConfig)
-if(PKG_CONFIG_FOUND)
-  pkg_check_modules (FLAC flac)
-  list(APPEND FLAC_INCLUDE_DIRS ${FLAC_INCLUDEDIR})
+if(UNIX AND NOT ANDROID)
+  find_package(PkgConfig)
+  if(PKG_CONFIG_FOUND)
+    pkg_check_modules (FLAC flac)
+    list(APPEND FLAC_INCLUDE_DIRS ${FLAC_INCLUDEDIR})
+  endif()
 endif()
 
 if(NOT FLAC_FOUND)
-  find_path(FLAC_INCLUDE_DIRS FLAC/all.h
+  find_path(FLAC_INCLUDE_DIRS NAMES FLAC/all.h
     PATHS ${CMAKE_SOURCE_DIR}/externals/flac/include)
-  find_library(FLAC_LIBRARIES libFLAC_dynamic
+  find_library(FLAC_LIBRARIES NAMES libFLAC_dynamic
     PATHS ${CMAKE_SOURCE_DIR}/externals/flac/objs/x64/Release/lib)
 endif()
 

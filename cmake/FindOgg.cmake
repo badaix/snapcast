@@ -5,7 +5,9 @@
 # OGG_INCLUDE_DIRS - the ogg include directory
 # OGG_LIBRARIES - The ogg libraries
 
-find_package(PkgConfig)
+if(UNIX AND NOT ANDROID)
+  find_package(PkgConfig)
+endif()
 if(PKG_CONFIG_FOUND)
   pkg_check_modules (OGG ogg)
   list(APPEND OGG_INCLUDE_DIRS ${OGG_INCLUDEDIR})
