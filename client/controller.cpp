@@ -92,7 +92,7 @@ void Controller::onMessageReceived(ClientConnection* connection, const msg::Base
 
 		logO << "Codec: " << headerChunk_->codec << "\n";
 		decoder_.reset(nullptr);
-		stream_.reset(nullptr);
+		stream_ = nullptr;
 		player_.reset(nullptr);
 
 		if (headerChunk_->codec == "pcm")
@@ -109,15 +109,15 @@ void Controller::onMessageReceived(ClientConnection* connection, const msg::Base
 		sampleFormat_ = decoder_->setHeader(headerChunk_.get());
 		logState << "sampleformat: " << sampleFormat_.rate << ":" << sampleFormat_.bits << ":" << sampleFormat_.channels << "\n";
 
-		stream_.reset(new Stream(sampleFormat_));
+		stream_ = make_shared<Stream>(sampleFormat_);
 		stream_->setBufferLen(serverSettings_->getBufferMs() - latency_);
 
 #ifdef HAS_ALSA
-		player_.reset(new AlsaPlayer(pcmDevice_, stream_.get()));
+		player_.reset(new AlsaPlayer(pcmDevice_, stream_));
 #elif HAS_OPENSL
-		player_.reset(new OpenslPlayer(pcmDevice_, stream_.get()));
+		player_.reset(new OpenslPlayer(pcmDevice_, stream_));
 #elif HAS_COREAUDIO
-		player_.reset(new CoreAudioPlayer(pcmDevice_, stream_.get()));
+		player_.reset(new CoreAudioPlayer(pcmDevice_, stream_));
 #else
 		throw SnapException("No audio player support");
 #endif

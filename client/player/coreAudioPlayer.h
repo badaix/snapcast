@@ -37,7 +37,7 @@
 class CoreAudioPlayer : public Player
 {
 public:
-	CoreAudioPlayer(const PcmDevice& pcmDevice, Stream* stream);
+	CoreAudioPlayer(const PcmDevice& pcmDevice, std::shared_ptr<Stream> stream);
 	virtual ~CoreAudioPlayer();
 
 	void playerCallback(AudioQueueRef queue, AudioQueueBufferRef bufferRef);
@@ -49,7 +49,7 @@ protected:
 	size_t ms_;
 	size_t frames_;
 	size_t buff_size_;
-	Stream* pubStream_;
+	std::shared_ptr<Stream> pubStream_;
 };
 
 

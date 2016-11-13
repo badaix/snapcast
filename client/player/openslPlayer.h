@@ -35,7 +35,7 @@ typedef int (*AndroidAudioCallback)(short *buffer, int num_samples);
 class OpenslPlayer : public Player
 {
 public:
-	OpenslPlayer(const PcmDevice& pcmDevice, Stream* stream);
+	OpenslPlayer(const PcmDevice& pcmDevice, std::shared_ptr<Stream> stream);
 	virtual ~OpenslPlayer();
 
 	virtual void start();
@@ -69,7 +69,7 @@ protected:
 	size_t ms_;
 	size_t frames_;
 	size_t buff_size;
-	Stream* pubStream_;
+	std::shared_ptr<Stream> pubStream_;
 };
 
 

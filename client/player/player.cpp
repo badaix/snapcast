@@ -26,7 +26,7 @@
 using namespace std;
 
 
-Player::Player(const PcmDevice& pcmDevice, Stream* stream) :
+Player::Player(const PcmDevice& pcmDevice, std::shared_ptr<Stream> stream) :
 	active_(false),
 	stream_(stream),
 	pcmDevice_(pcmDevice),

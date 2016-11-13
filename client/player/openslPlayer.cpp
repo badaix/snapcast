@@ -43,7 +43,7 @@ static void bqPlayerCallback(SLAndroidSimpleBufferQueueItf bq, void *context)
 
 
 
-OpenslPlayer::OpenslPlayer(const PcmDevice& pcmDevice, Stream* stream) :
+OpenslPlayer::OpenslPlayer(const PcmDevice& pcmDevice, std::shared_ptr<Stream> stream) :
 	Player(pcmDevice, stream),
 	engineObject(NULL),
 	engineEngine(NULL),

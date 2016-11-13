@@ -26,7 +26,7 @@
 
 using namespace std;
 
-AlsaPlayer::AlsaPlayer(const PcmDevice& pcmDevice, Stream* stream) : 
+AlsaPlayer::AlsaPlayer(const PcmDevice& pcmDevice, std::shared_ptr<Stream> stream) : 
 	Player(pcmDevice, stream), handle_(NULL), buff_(NULL)
 {
 }

@@ -31,7 +31,7 @@ void callback(void *custom_data, AudioQueueRef queue, AudioQueueBufferRef buffer
 }
 
 
-CoreAudioPlayer::CoreAudioPlayer(const PcmDevice& pcmDevice, Stream* stream) : 
+CoreAudioPlayer::CoreAudioPlayer(const PcmDevice& pcmDevice, std::shared_ptr<Stream> stream) : 
     Player(pcmDevice, stream),
 	ms_(100),
 	pubStream_(stream)
