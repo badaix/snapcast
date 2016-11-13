@@ -19,7 +19,7 @@
 #ifndef QUEUE_H
 #define QUEUE_H
 
-#include <queue>
+#include <deque>
 #include <atomic>
 #include <thread>
 #include <mutex>
@@ -38,7 +38,7 @@ public:
 
 //		std::lock_guard<std::mutex> lock(mutex_);
 		auto val = queue_.front();
-		queue_.pop();
+		queue_.pop_front();
 		return val;
 	}
 
@@ -81,7 +81,7 @@ public:
 			return false;
 
 		item = std::move(queue_.front());
-		queue_.pop();
+		queue_.pop_front();
 
 		return true;
 	}
@@ -98,14 +98,32 @@ public:
 			cond_.wait(mlock);
 
 		item = queue_.front();
-		queue_.pop();
+		queue_.pop_front();
+	}
+
+	void push_front(const T& item)
+	{
+		{
+			std::lock_guard<std::mutex> mlock(mutex_);
+			queue_.push_front(item);
+		}
+		cond_.notify_one();
+	}
+
+	void push_front(T&& item)
+	{
+		{
+			std::lock_guard<std::mutex> mlock(mutex_);
+			queue_.push_front(std::move(item));
+		}
+		cond_.notify_one();
 	}
 
 	void push(const T& item)
 	{
 		{
 			std::lock_guard<std::mutex> mlock(mutex_);
-			queue_.push(item);
+			queue_.push_back(item);
 		}
 		cond_.notify_one();
 	}
@@ -114,7 +132,7 @@ public:
 	{
 		{
 			std::lock_guard<std::mutex> mlock(mutex_);
-			queue_.push(std::move(item));
+			queue_.push_back(std::move(item));
 		}
 		cond_.notify_one();
 	}
@@ -135,7 +153,7 @@ public:
 	Queue& operator=(const Queue&) = delete; // disable assignment
 
 private:
-	std::queue<T> queue_;
+	std::deque<T> queue_;
 	mutable std::atomic<bool> abort_;
 	mutable std::mutex mutex_;
 	mutable std::condition_variable cond_;

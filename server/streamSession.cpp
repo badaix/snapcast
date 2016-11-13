@@ -118,21 +118,26 @@ void StreamSession::socketRead(void* _to, size_t _bytes)
 }
 
 
-void StreamSession::sendAsync(const msg::BaseMessage* message)
+void StreamSession::sendAsync(const msg::BaseMessage* message, bool sendNow)
 {
 	std::shared_ptr<const msg::BaseMessage> shared_message(message);
-	sendAsync(shared_message);
+	sendAsync(shared_message, sendNow);
 }
 
 
-void StreamSession::sendAsync(const shared_ptr<const msg::BaseMessage>& message)
+void StreamSession::sendAsync(const shared_ptr<const msg::BaseMessage>& message, bool sendNow)
 {
 	if (!message)
 		return;
 
-	while (messages_.size() > 100)// chunk->getDuration() > 10000)
+	//the writer will take care about old messages
+	while (messages_.size() > 10000)// chunk->getDuration() > 10000)
 		messages_.pop();
-	messages_.push(message);
+
+	if (sendNow)
+		messages_.push_front(message);
+	else	
+		messages_.push(message);
 }
 
 

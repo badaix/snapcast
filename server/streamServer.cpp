@@ -243,7 +243,7 @@ void StreamServer::onMessageReceived(StreamSession* connection, const msg::BaseM
 		timeMsg->refersTo = timeMsg->id;
 		timeMsg->latency = timeMsg->received - timeMsg->sent;
 //		logO << "Latency sec: " << timeMsg.latency.sec << ", usec: " << timeMsg.latency.usec << ", refers to: " << timeMsg.refersTo << "\n";
-		connection->sendAsync(timeMsg);
+		connection->sendAsync(timeMsg, true);
 
 		// refresh connection state
 		ClientInfoPtr client = Config::instance().getClientInfo(connection->macAddress);
