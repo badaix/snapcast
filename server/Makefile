@@ -1,5 +1,10 @@
 VERSION = 0.9.90
 TARGET  = snapserver
+ifeq ($(TARGET), FREEBSD)
+SHELL   = /usr/local/bin/bash
+else
+SHELL   = /bin/bash
+endif
 
 ifdef DESTDIR
 # dh_auto_install (Debian) sets this variable
