@@ -176,10 +176,10 @@ void ClientConnection::getNextMessage()
 //	logD << "getNextMessage: " << baseMessage.type << ", size: " << baseMessage.size << ", id: " << baseMessage.id << ", refers: " << baseMessage.refersTo << "\n";
 	if (baseMessage.size > buffer.size())
 		buffer.resize(baseMessage.size);
-	{
-		std::lock_guard<std::mutex> socketLock(socketMutex_);
-		socketRead(&buffer[0], baseMessage.size);
-	}
+//	{
+//		std::lock_guard<std::mutex> socketLock(socketMutex_);
+	socketRead(&buffer[0], baseMessage.size);
+//	}
 	tv t;
 	baseMessage.received = t;
 

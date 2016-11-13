@@ -66,7 +66,8 @@ public:
 	bool send(const msg::BaseMessage* message) const;
 
 	/// Sends a message to the client (asynchronous)
-	void add(const std::shared_ptr<const msg::BaseMessage>& message);
+	void sendAsync(const std::shared_ptr<const msg::BaseMessage>& message);
+	void sendAsync(const msg::BaseMessage* message);
 
 	bool active() const;
 

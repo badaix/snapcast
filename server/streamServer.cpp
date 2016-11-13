@@ -58,9 +58,9 @@ void StreamServer::onChunkRead(const PcmStream* pcmStream, const msg::PcmChunk* 
 	for (auto s : sessions_)
 	{
 		if (!s->pcmStream() && isDefaultStream)//->getName() == "default")
-			s->add(shared_message);
+			s->sendAsync(shared_message);
 		else if (s->pcmStream().get() == pcmStream)
-			s->add(shared_message);
+			s->sendAsync(shared_message);
 	}
 }
 
@@ -186,7 +186,7 @@ void StreamServer::onMessageReceived(ControlSession* controlSession, const std::
 			session_ptr session = getStreamSession(request.getParam("client").get<string>());
 			if (session != nullptr)
 			{
-				session->add(stream->getHeader());
+				session->sendAsync(stream->getHeader());
 				session->setPcmStream(stream);
 			}
 		}
@@ -238,12 +238,12 @@ void StreamServer::onMessageReceived(StreamSession* connection, const msg::BaseM
 //	logD << "onMessageReceived: " << baseMessage.type << ", size: " << baseMessage.size << ", id: " << baseMessage.id << ", refers: " << baseMessage.refersTo << ", sent: " << baseMessage.sent.sec << "," << baseMessage.sent.usec << ", recv: " << baseMessage.received.sec << "," << baseMessage.received.usec << "\n";
 	if (baseMessage.type == message_type::kTime)
 	{
-		msg::Time timeMsg;
-		timeMsg.deserialize(baseMessage, buffer);
-		timeMsg.refersTo = timeMsg.id;
-		timeMsg.latency = timeMsg.received - timeMsg.sent;
+		msg::Time* timeMsg = new msg::Time();
+		timeMsg->deserialize(baseMessage, buffer);
+		timeMsg->refersTo = timeMsg->id;
+		timeMsg->latency = timeMsg->received - timeMsg->sent;
 //		logO << "Latency sec: " << timeMsg.latency.sec << ", usec: " << timeMsg.latency.usec << ", refers to: " << timeMsg.refersTo << "\n";
-		connection->send(&timeMsg);
+		connection->sendAsync(timeMsg);
 
 		// refresh connection state
 		ClientInfoPtr client = Config::instance().getClientInfo(connection->macAddress);
@@ -272,13 +272,13 @@ void StreamServer::onMessageReceived(StreamSession* connection, const msg::BaseM
 		else
 		{
 			logD << "request kServerSettings\n";
-			msg::ServerSettings serverSettings;
-			serverSettings.setVolume(clientInfo->config.volume.percent);
-			serverSettings.setMuted(clientInfo->config.volume.muted);
-			serverSettings.setLatency(clientInfo->config.latency);
-			serverSettings.setBufferMs(settings_.bufferMs);
-			serverSettings.refersTo = helloMsg.id;
-			connection->send(&serverSettings);
+			msg::ServerSettings* serverSettings = new msg::ServerSettings();
+			serverSettings->setVolume(clientInfo->config.volume.percent);
+			serverSettings->setMuted(clientInfo->config.volume.muted);
+			serverSettings->setLatency(clientInfo->config.latency);
+			serverSettings->setBufferMs(settings_.bufferMs);
+			serverSettings->refersTo = helloMsg.id;
+			connection->sendAsync(serverSettings);
 		}
 
 		ClientInfoPtr client = Config::instance().getClientInfo(connection->macAddress);
@@ -303,7 +303,7 @@ void StreamServer::onMessageReceived(StreamSession* connection, const msg::BaseM
 
 		connection->setPcmStream(stream);
 		auto headerChunk = stream->getHeader();
-		connection->send(headerChunk.get());
+		connection->sendAsync(headerChunk);
 
 		json notification = JsonNotification::getJson("Client.OnConnect", client->toJson());
 //		logO << notification.dump(4) << "\n";

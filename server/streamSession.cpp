@@ -118,7 +118,14 @@ void StreamSession::socketRead(void* _to, size_t _bytes)
 }
 
 
-void StreamSession::add(const shared_ptr<const msg::BaseMessage>& message)
+void StreamSession::sendAsync(const msg::BaseMessage* message)
+{
+	std::shared_ptr<const msg::BaseMessage> shared_message(message);
+	sendAsync(shared_message);
+}
+
+
+void StreamSession::sendAsync(const shared_ptr<const msg::BaseMessage>& message)
 {
 	if (!message)
 		return;
@@ -178,10 +185,10 @@ void StreamSession::getNextMessage()
 //	logO << "getNextMessage: " << baseMessage.type << ", size: " << baseMessage.size << ", id: " << baseMessage.id << ", refers: " << baseMessage.refersTo << "\n";
 	if (baseMessage.size > buffer.size())
 		buffer.resize(baseMessage.size);
-	{
-		std::lock_guard<std::mutex> socketLock(socketMutex_);
-		socketRead(&buffer[0], baseMessage.size);
-	}	
+//	{
+//		std::lock_guard<std::mutex> socketLock(socketMutex_);
+	socketRead(&buffer[0], baseMessage.size);
+//	}	
 	tv t;
 	baseMessage.received = t;
 
