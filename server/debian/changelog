@@ -1,4 +1,4 @@
-snapserver (0.10.0) unstable; urgency=low
+snapserver (0.9.90) unstable; urgency=low
 
   * Features
     -Added support "process" streams
