@@ -5,10 +5,12 @@
 # VORBIS_INCLUDE_DIRS - the libvorbis include directory
 # VORBIS_LIBRARIES - The libvorbis libraries
 
-find_package(PkgConfig)
-if(PKG_CONFIG_FOUND)
-  pkg_check_modules (VORBIS vorbis)
-  list(APPEND VORBIS_INCLUDE_DIRS ${VORBIS_INCLUDEDIR})
+if (UNIX AND NOT ANDROID)
+  find_package(PkgConfig)
+  if(PKG_CONFIG_FOUND)
+    pkg_check_modules (VORBIS vorbis)
+    list(APPEND VORBIS_INCLUDE_DIRS ${VORBIS_INCLUDEDIR})
+  endif()
 endif()
 
 if(NOT VORBIS_FOUND)

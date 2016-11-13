@@ -15,9 +15,10 @@ endif()
 
 if(NOT FLAC_FOUND)
   find_path(FLAC_INCLUDE_DIRS NAMES FLAC/all.h
-    PATHS ${CMAKE_SOURCE_DIR}/externals/flac/include)
+    PATHS ${CMAKE_SOURCE_DIR}/externals/flac/include ${CMAKE_SOURCE_DIR}/externals/env/include)
   find_library(FLAC_LIBRARIES NAMES libFLAC_dynamic
-    PATHS ${CMAKE_SOURCE_DIR}/externals/flac/objs/x64/Release/lib)
+    PATHS ${CMAKE_SOURCE_DIR}/externals/flac/objs/x64/Release/lib
+          ${CMAKE_SOURCE_DIR}/externals/env/lib)
 endif()
 
 include(FindPackageHandleStandardArgs)

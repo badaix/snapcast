@@ -1,8 +1,14 @@
 #!/bin/bash
-export ANDROID_NDK="/home/joseph/Android/ndk-bundle"
+NDK_PATH			= "/your/path/here"
+HOST_PLATFORM_ANDROID		= "linux-x86_64"
+HOST_PLATFORM_AUTOTOOLS		= "x86_64-pc-linux-gnu"
+TARGET_PLATFORM			= "arch-arm"
+ANDROID_VERSION			= "android-12"
+
+export ANDROID_NDK=$NDK_PATH
 export CROSS_COMPILE=arm-linux-androideabi
-export ANDROID_PREFIX=${ANDROID_NDK}/toolchains/${CROSS_COMPILE}-4.9/prebuilt/linux-x86_64
-export SYSROOT=${ANDROID_NDK}/platforms/android-12/arch-arm
+export ANDROID_PREFIX=${ANDROID_NDK}/toolchains/${CROSS_COMPILE}-4.9/prebuilt/$HOST_PLATFORM_ANDROID
+export SYSROOT=${ANDROID_NDK}/platforms/$ANDROID_VERSION/$TARGET_PLATFORM
 export CROSS_PATH=${ANDROID_PREFIX}/bin/${CROSS_COMPILE}
 
 mkdir -p env/lib/pkgconfig
@@ -30,21 +36,21 @@ export LDFLAGS="${LDFLAGS} -L${SYSROOT}/usr/lib -L${ANDROID_PREFIX}/lib -static"
 
 pushd flac
 ./autogen.sh
-PATH=$PATH:${ANDROID_PREFIX}/bin ./configure --host=${CROSS_COMPILE} --build=x86_64-pc-linux-gnu --with-sysroot=${SYSROOT} --prefix=${PREFIX}
+PATH=$PATH:${ANDROID_PREFIX}/bin ./configure --host=${CROSS_COMPILE} --build=$HOST_PLATFORM_AUTOTOOLS --with-sysroot=${SYSROOT} --prefix=${PREFIX}
 PATH=$PATH:${ANDROID_PREFIX}/bin make
 PATH=$PATH:${ANDROID_PREFIX}/bin make install
 popd
 
 pushd ogg
 ./autogen.sh
-PATH=$PATH:${ANDROID_PREFIX}/bin ./configure --host=${CROSS_COMPILE} --build=x86_64-pc-linux-gnu --with-sysroot=${SYSROOT} --prefix=${PREFIX}
+PATH=$PATH:${ANDROID_PREFIX}/bin ./configure --host=${CROSS_COMPILE} --build=$HOST_PLATFORM_AUTOTOOLS --with-sysroot=${SYSROOT} --prefix=${PREFIX}
 PATH=$PATH:${ANDROID_PREFIX}/bin make
 PATH=$PATH:${ANDROID_PREFIX}/bin make install
 popd
 
 pushd vorbis
 ./autogen.sh
-PATH=$PATH:${ANDROID_PREFIX}/bin ./configure --host=${CROSS_COMPILE} --build=x86_64-pc-linux-gnu --with-sysroot=${SYSROOT} --prefix=${PREFIX}
+PATH=$PATH:${ANDROID_PREFIX}/bin ./configure --host=${CROSS_COMPILE} --build=$HOST_PLATFORM_AUTOTOOLS --with-sysroot=${SYSROOT} --prefix=${PREFIX}
 PATH=$PATH:${ANDROID_PREFIX}/bin make
 PATH=$PATH:${ANDROID_PREFIX}/bin make install
 popd

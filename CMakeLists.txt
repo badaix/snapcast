@@ -23,6 +23,12 @@ if(ANDROID)
   add_definitions(-DNO_CPP11_STRING)
 endif()
 
+# Configure compiler options
+set (CMAKE_CXX_STANDARD 11)
+if (ANDROID)
+  add_definitions(-DNO_CPP11_STRING)
+endif()
+
 # Find dependencies
 if (NOT ANDROID)
   find_package(Threads)
