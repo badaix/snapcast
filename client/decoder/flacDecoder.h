@@ -21,6 +21,11 @@
 
 #include "decoder.h"
 
+#include <FLAC/stream_decoder.h>
+#include <atomic>
+#include <memory>
+
+
 
 struct CacheInfo
 {
@@ -50,6 +55,7 @@ public:
 	virtual SampleFormat setHeader(msg::CodecHeader* chunk);
 
 	CacheInfo cacheInfo_;
+	std::unique_ptr<FLAC__StreamDecoderErrorStatus> lastError_;
 };
 
 
