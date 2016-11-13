@@ -55,7 +55,7 @@ const PcmStreamPtr StreamSession::pcmStream() const
 void StreamSession::start()
 {
 	{
-		std::lock_guard<std::mutex> mlock(mutex_);
+		std::lock_guard<std::mutex> activeLock(activeMutex_);
 		active_ = true;
 	}
 	readerThread_.reset(new thread(&StreamSession::reader, this));
@@ -66,7 +66,7 @@ void StreamSession::start()
 void StreamSession::stop()
 {
 	{
-		std::lock_guard<std::mutex> mlock(mutex_);
+		std::lock_guard<std::mutex> activeLock(activeMutex_);
 		if (!active_)
 			return;
 
@@ -78,6 +78,7 @@ void StreamSession::stop()
 		std::error_code ec;
 		if (socket_)
 		{
+			std::lock_guard<std::mutex> socketLock(socketMutex_);
 			socket_->shutdown(asio::ip::tcp::socket::shutdown_both, ec);
 			if (ec) logE << "Error in socket shutdown: " << ec.message() << "\n";
 			socket_->close(ec);
@@ -144,8 +145,9 @@ bool StreamSession::send(const msg::BaseMessage* message) const
 {
 	//TODO on exception: set active = false
 //	logO << "send: " << message->type << ", size: " << message->getSize() << ", id: " << message->id << ", refers: " << message->refersTo << "\n";
+	std::lock_guard<std::mutex> socketLock(socketMutex_);
 	{
-		std::lock_guard<std::mutex> mlock(mutex_);
+		std::lock_guard<std::mutex> activeLock(activeMutex_);
 		if (!socket_ || !active_)
 			return false;
 	}
@@ -176,7 +178,10 @@ void StreamSession::getNextMessage()
 //	logO << "getNextMessage: " << baseMessage.type << ", size: " << baseMessage.size << ", id: " << baseMessage.id << ", refers: " << baseMessage.refersTo << "\n";
 	if (baseMessage.size > buffer.size())
 		buffer.resize(baseMessage.size);
-	socketRead(&buffer[0], baseMessage.size);
+	{
+		std::lock_guard<std::mutex> socketLock(socketMutex_);
+		socketRead(&buffer[0], baseMessage.size);
+	}	
 	tv t;
 	baseMessage.received = t;
 

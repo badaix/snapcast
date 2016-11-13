@@ -108,11 +108,12 @@ protected:
 	void getNextMessage();
 
 	asio::io_service io_service_;
+	mutable std::mutex socketMutex_;
 	std::shared_ptr<tcp::socket> socket_;
 	std::atomic<bool> active_;
 	std::atomic<bool> connected_;
 	MessageReceiver* messageReceiver_;
-	mutable std::mutex mutex_;
+	mutable std::mutex pendingRequestsMutex_;
 	std::set<std::shared_ptr<PendingRequest>> pendingRequests_;
 	uint16_t reqId_;
 	std::string host_;

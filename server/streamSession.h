@@ -89,11 +89,12 @@ protected:
 	void reader();
 	void writer();
 
-	mutable std::mutex mutex_;
+	mutable std::mutex activeMutex_;
 	std::atomic<bool> active_;
 
 	std::unique_ptr<std::thread> readerThread_;
 	std::unique_ptr<std::thread> writerThread_;
+	mutable std::mutex socketMutex_;
 	std::shared_ptr<tcp::socket> socket_;
 	MessageReceiver* messageReceiver_;
 	Queue<std::shared_ptr<const msg::BaseMessage>> messages_;
