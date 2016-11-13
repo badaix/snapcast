@@ -76,7 +76,8 @@ protected:
 	void writer();
 
 	std::atomic<bool> active_;
-	mutable std::mutex mutex_;
+	mutable std::mutex activeMutex_;
+	mutable std::mutex socketMutex_;
 	std::thread* readerThread_;
 	std::thread* writerThread_;
 	std::shared_ptr<tcp::socket> socket_;
