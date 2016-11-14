@@ -78,5 +78,10 @@ void AirplayStream::onStderrMsg(const char* buffer, size_t n)
 		++port_;
 		params_ = params_wo_port_ + " --port=" + cpt::to_string(port_);
 	}
+	else if (logmsg.find("Invalid audio output specified") != string::npos)
+	{
+		logE << "shairport sync compiled without stdout audio backend\n";
+		logE << "build with: \"./configure --with-stdout --with-avahi --with-ssl=openssl --with-metadata\"\n";
+	}
 }
 
