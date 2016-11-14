@@ -44,7 +44,7 @@ public:
 
 protected:
 	std::string exe_;
-	std::string path_;	
+	std::string path_;
 	std::string params_;
 	std::unique_ptr<Process> process_;
 	std::thread stderrReaderThread_;

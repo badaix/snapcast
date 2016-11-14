@@ -314,7 +314,7 @@ static std::string getMacAddress(int sock)
 							char mac[19];
 							sprintf(mac, "%02x:%02x:%02x:%02x:%02x:%02x", *ptr, *(ptr+1), *(ptr+2), *(ptr+3), *(ptr+4), *(ptr+5));
 							if (strcmp(mac, "00:00:00:00:00:00") == 0)
-								continue;     	
+								continue;
 							freeifaddrs(ifap);
 							return mac;
 						}

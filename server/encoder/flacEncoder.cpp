@@ -81,19 +81,19 @@ void FlacEncoder::encode(const msg::PcmChunk* chunk)
 
 	if (sampleFormat_.sampleSize == 1)
 	{
-		FLAC__int8* buffer = (FLAC__int8*)chunk->payload; 
+		FLAC__int8* buffer = (FLAC__int8*)chunk->payload;
 		for(int i=0; i<samples; i++)
 			pcmBuffer_[i] = (FLAC__int32)(buffer[i]);
 	}
 	else if (sampleFormat_.sampleSize == 2)
 	{
-		FLAC__int16* buffer = (FLAC__int16*)chunk->payload; 
+		FLAC__int16* buffer = (FLAC__int16*)chunk->payload;
 		for(int i=0; i<samples; i++)
 			pcmBuffer_[i] = (FLAC__int32)(buffer[i]);
 	}
 	else if (sampleFormat_.sampleSize == 4)
 	{
-		FLAC__int32* buffer = (FLAC__int32*)chunk->payload; 
+		FLAC__int32* buffer = (FLAC__int32*)chunk->payload;
 		for(int i=0; i<samples; i++)
 			pcmBuffer_[i] = (FLAC__int32)(buffer[i]);
 	}

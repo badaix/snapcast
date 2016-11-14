@@ -123,7 +123,7 @@ void CoreAudioPlayer::worker()
 	logE << "CoreAudioPlayer::worker\n";
 	AudioQueueCreateTimeline(queue, &timeLine_);
 	AudioQueueStart(queue, NULL);
-	CFRunLoopRun();    
+	CFRunLoopRun();
 }
 
 

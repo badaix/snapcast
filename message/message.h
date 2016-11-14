@@ -105,7 +105,7 @@ struct tv
 namespace msg
 {
 
-const size_t max_size = 1000000; 
+const size_t max_size = 1000000;
 
 struct BaseMessage
 {

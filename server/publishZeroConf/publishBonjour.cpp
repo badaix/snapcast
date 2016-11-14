@@ -90,7 +90,7 @@ void PublishBonjour::worker()
 					DNSServiceErrorType err = DNSServiceProcessResult(clients[n]);
 					if (err)
 					{
-						logE << "DNSServiceProcessResult returned " << err << "\n"; 
+						logE << "DNSServiceProcessResult returned " << err << "\n";
 						active_ = false;
 					} 
 				}

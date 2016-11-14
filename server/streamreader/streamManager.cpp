@@ -54,7 +54,7 @@ PcmStreamPtr StreamManager::addStream(const std::string& uri)
 
 //	for (auto kv: streamUri.query)
 //		logD << "key: '" << kv.first << "' value: '" << kv.second << "'\n";
-	PcmStreamPtr stream(nullptr); 
+	PcmStreamPtr stream(nullptr);
 
 	if (streamUri.scheme == "pipe")
 	{
