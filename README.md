@@ -107,6 +107,7 @@ The goal is to build the following chain:
 This [guide](doc/player_setup.md) shows how to configure different players/audio sources to redirect their audio signal into the Snapserver's fifo:
 * [MPD](doc/player_setup.md#mpd-setup)
 * [Mopidy](doc/player_setup.md#mopidy-setup)
+* [FFmpeg](doc/player_setup.md#ffmpeg-setup)
 * [MPlayer](doc/player_setup.md#mplayer-setup)
 * [Alsa](doc/player_setup.md#alsa-setup)
 * [PulseAudio](doc/player_setup.md#pulseaudio-setup)
