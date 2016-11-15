@@ -96,14 +96,14 @@ It might me neccessary to set the pulse audio latency environment variable to 60
 
 
 ###AirPlay
-Snapserver supports (shairport-sync)[https://github.com/mikebrady/shairport-sync] with `stdout` backend.
+Snapserver supports [shairport-sync](https://github.com/mikebrady/shairport-sync) with `stdout` backend.
  1. Build shairport-sync with `stdout` backend: `./configure --with-stdout --with-avahi --with-ssl=openssl --with-metadata`
  2. Copy the `shairport-sync` binary somewhere to your `PATH`, e.g. `/usr/local/bin/`
  3. Configure snapserver with `-s "airplay:///shairport-sync?name=Airplay[&devicename=Snapcast][&port=5000]"`
  
 
 ###Spotify
-Snapserver supports (librespot)[https://github.com/badaix/librespot] with `stdout` backend.
+Snapserver supports [librespot](https://github.com/badaix/librespot) with `stdout` backend.
  1. Build `librespot` with `stdout` backend: `cargo build --features stdout-backend`    
  2. Copy the `librespot` binary somewhere to your `PATH`, e.g. `/usr/local/bin/`
  3. Configure snapserver with `-s "spotify:///librespot?name=Spotify&username=<my username>&password=<my password>[&devicename=Snapcast][&bitrate=320]"`
