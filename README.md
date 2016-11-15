@@ -112,6 +112,7 @@ This [guide](doc/player_setup.md) shows how to configure different players/audio
 * [PulseAudio](doc/player_setup.md#pulseaudio)
 * [AirPlay](doc/player_setup.md#airplay)
 * [Spotify](doc/player_setup.md#spotify)
+* [Process](doc/player_setup.md#process)
 
 Roadmap
 -------
