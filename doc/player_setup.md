@@ -108,3 +108,8 @@ Snapserver supports [librespot](https://github.com/badaix/librespot) with `stdou
  2. Copy the `librespot` binary somewhere to your `PATH`, e.g. `/usr/local/bin/`
  3. Configure snapserver with `-s "spotify:///librespot?name=Spotify&username=<my username>&password=<my password>[&devicename=Snapcast][&bitrate=320]"`
 
+###Process
+Snapserver can start any process and read PCM data from stdout: 
+
+Configure snapserver with `-s "process:///path/to/process?name=Process[&params=<--my list --of params>][&logStderr=false]"`
+
