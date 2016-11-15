@@ -50,7 +50,7 @@ Pipe FFmpeg's audio output to the snapfifo:
 
     ffmpeg -y -i http://wms-15.streamsrus.com:11630 -f u16le -acodec pcm_s16le -ac 2 -ar 48000 /tmp/snapfifo
 
-###MPlayer setup
+###MPlayer
 Use `-novideo` and `-ao` to pipe MPlayer's audio output to the snapfifo:
 
     mplayer http://wms-15.streamsrus.com:11630 -novideo -channels 2 -srate 48000 -af format=s16le -ao pcm:file=/tmp/snapfifo
