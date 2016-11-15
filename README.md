@@ -105,22 +105,25 @@ The goal is to build the following chain:
     audio player software -> snapfifo -> snapserver -> network -> snapclient -> alsa
 
 This [guide](doc/player_setup.md) shows how to configure different players/audio sources to redirect their audio signal into the Snapserver's fifo:
-* [MPD](doc/player_setup.md#mpd-setup)
-* [Mopidy](doc/player_setup.md#mopidy-setup)
-* [MPlayer](doc/player_setup.md#mplayer-setup)
-* [Alsa](doc/player_setup.md#alsa-setup)
-* [PulseAudio](doc/player_setup.md#pulseaudio-setup)
+* [MPD](doc/player_setup.md#mpd)
+* [Mopidy](doc/player_setup.md#mopidy)
+* [MPlayer](doc/player_setup.md#mplayer)
+* [Alsa](doc/player_setup.md#alsa)
+* [PulseAudio](doc/player_setup.md#pulseaudio)
+* [AirPlay](doc/player_setup.md#airplay)
+* [Spotify](doc/player_setup.md#spotify)
 
 Roadmap
 -------
 Unordered list of features that should make it into the v1.0
 - [X] **Remote control** JSON-RPC API to change client latency, volume, zone, ...
 - [X] **Android client** JSON-RPC client and Snapclient
-- [X] **Zones** Support multiple streams
+- [X] **Streams** Support multiple streams
 - [X] **Debian packages** prebuild deb packages
 - [X] **Endian** independent code
 - [X] **OpenWrt** port Snapclient to OpenWrt
 - [X] **Hi-Res audio** support (like 192kHz 24bit)
+- [ ] **Groups** support multiple Groups of clients ("Zones")
 - [ ] **JSON-RPC** Possibility to add, remove, rename streams
 - [ ] **Protocol specification** Snapcast binary streaming protocol, JSON-RPC protocol
 - [ ] **Ports** Snapclient for Windows, Mac OS X, ...
