@@ -131,7 +131,7 @@ void StreamSession::sendAsync(const shared_ptr<const msg::BaseMessage>& message,
 		return;
 
 	//the writer will take care about old messages
-	while (messages_.size() > 10000)// chunk->getDuration() > 10000)
+	while (messages_.size() > 2000)// chunk->getDuration() > 10000)
 		messages_.pop();
 
 	if (sendNow)
