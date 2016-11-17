@@ -24,9 +24,9 @@
 
 #include "pipeStream.h"
 #include "encoder/encoderFactory.h"
-#include "common/log.h"
 #include "common/snapException.h"
 #include "common/strCompat.h"
+#include "common/log.h"
 
 
 using namespace std;
@@ -37,9 +37,7 @@ using namespace std;
 PipeStream::PipeStream(PcmListener* pcmListener, const StreamUri& uri) : PcmStream(pcmListener, uri), fd_(-1)
 {
 	umask(0);
-	string mode = uri_.query["mode"];
-	if (mode.empty())
-		mode = "create";
+	string mode = uri_.getQuery("mode", "create");
 		
 	logO << "PipeStream mode: " << mode << "\n";
 	if ((mode != "read") && (mode != "create"))
@@ -90,7 +88,8 @@ void PipeStream::worker()
 					if (count < 0)
 					{
 						setState(kIdle);
-						usleep(100*1000);
+						if (!sleep(100))
+							break;
 					}
 					else if (count == 0)
 						throw SnapException("end of file");
@@ -99,16 +98,21 @@ void PipeStream::worker()
 				}
 				while ((len < toRead) && active_);
 
+				if (!active_) break;
+
 				encoder_->encode(chunk.get());
+
+				if (!active_) break;
+
 				nextTick += pcmReadMs_;
 				chronos::addUs(tvChunk, pcmReadMs_ * 1000);
 				long currentTick = chronos::getTickCount();
 
 				if (nextTick >= currentTick)
 				{
-//					logO << "sleep: " << nextTick - currentTick << "\n";
 					setState(kPlaying);
-					usleep((nextTick - currentTick) * 1000);
+					if (!sleep(nextTick - currentTick))
+						break;
 				}
 				else
 				{
@@ -121,8 +125,9 @@ void PipeStream::worker()
 		}
 		catch(const std::exception& e)
 		{
-			logE << "Exception: " << e.what() << std::endl;
-			usleep(100*1000);
+			logE << "(PipeStream) Exception: " << e.what() << std::endl;
+			if (!sleep(100))
+				break;
 		}
 	}
 }

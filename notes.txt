@@ -1,10 +1,9 @@
 *TODO:
 -Server ping client?
--Server: OnResync while terminating?!?
 -LastSeen: relative time [s] or [ms]?
 -Android crash: Empty latency => app restart => empty client list
 -Segfault when ^c on OpenWrt with client connected
-
+-Android clean data structures after changing the Server
 
 *JSON RPC:
 curl -X POST -H "Content-Type: application/json" -d '{"jsonrpc": "2.0", "method": "Application.SetVolume", "params": {"volume":100}, "id": 1}' http://i3c.pla.lcl:8080/jsonrpc

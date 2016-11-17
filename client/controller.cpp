@@ -92,7 +92,7 @@ void Controller::onMessageReceived(ClientConnection* connection, const msg::Base
 
 		logO << "Codec: " << headerChunk_->codec << "\n";
 		decoder_.reset(nullptr);
-		stream_.reset(nullptr);
+		stream_ = nullptr;
 		player_.reset(nullptr);
 
 		if (headerChunk_->codec == "pcm")
@@ -109,15 +109,15 @@ void Controller::onMessageReceived(ClientConnection* connection, const msg::Base
 		sampleFormat_ = decoder_->setHeader(headerChunk_.get());
 		logState << "sampleformat: " << sampleFormat_.rate << ":" << sampleFormat_.bits << ":" << sampleFormat_.channels << "\n";
 
-		stream_.reset(new Stream(sampleFormat_));
+		stream_ = make_shared<Stream>(sampleFormat_);
 		stream_->setBufferLen(serverSettings_->getBufferMs() - latency_);
 
 #ifdef HAS_ALSA
-		player_.reset(new AlsaPlayer(pcmDevice_, stream_.get()));
+		player_.reset(new AlsaPlayer(pcmDevice_, stream_));
 #elif HAS_OPENSL
-		player_.reset(new OpenslPlayer(pcmDevice_, stream_.get()));
+		player_.reset(new OpenslPlayer(pcmDevice_, stream_));
 #elif HAS_COREAUDIO
-		player_.reset(new CoreAudioPlayer(pcmDevice_, stream_.get()));
+		player_.reset(new CoreAudioPlayer(pcmDevice_, stream_));
 #else
 		throw SnapException("No audio player support");
 #endif
@@ -184,7 +184,7 @@ void Controller::worker()
 				if (reply)
 				{
 					TimeProvider::getInstance().setDiff(reply->latency, reply->received - reply->sent);
-					usleep(100);
+					chronos::usleep(100);
 				}
 			}
 			logO << "diff to server [ms]: " << (float)TimeProvider::getInstance().getDiffToServer<chronos::usec>().count() / 1000.f << "\n";
@@ -193,7 +193,7 @@ void Controller::worker()
 			{
 				for (size_t n=0; n<10 && active_; ++n)
 				{
-					usleep(100*1000);
+					chronos::sleep(100);
 					if (asyncException_)
 						throw AsyncSnapException(exception_);
 				}
@@ -211,7 +211,7 @@ void Controller::worker()
 			stream_.reset();
 			decoder_.reset();
 			for (size_t n=0; (n<10) && active_; ++n)
-				usleep(100*1000);
+				chronos::sleep(100);
 		}
 	}
 	logD << "Thread stopped\n";

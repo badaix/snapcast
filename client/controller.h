@@ -66,7 +66,7 @@ private:
 	PcmDevice pcmDevice_;
 	int latency_;
 	std::unique_ptr<ClientConnection> clientConnection_;
-	std::unique_ptr<Stream> stream_;
+	std::shared_ptr<Stream> stream_;
 	std::unique_ptr<Decoder> decoder_;
 	std::unique_ptr<Player> player_;
 	std::shared_ptr<msg::ServerSettings> serverSettings_;

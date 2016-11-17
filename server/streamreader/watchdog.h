@@ -16,49 +16,48 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
-#ifndef FLAC_DECODER_H
-#define FLAC_DECODER_H
+#ifndef WATCH_DOG_H
+#define WATCH_DOG_H
 
-#include "decoder.h"
-
-#include <FLAC/stream_decoder.h>
-#include <atomic>
+#include <mutex>
+#include <thread>
 #include <memory>
+#include <atomic>
+#include <condition_variable>
 
 
+class Watchdog;
 
-struct CacheInfo
+
+class WatchdogListener
 {
-	CacheInfo() : sampleRate_(0)
-	{
-		reset();
-	}
-
-	void reset()
-	{
-		isCachedChunk_ = true;
-		cachedBlocks_ = 0;
-	}
-
-	bool isCachedChunk_;
-	size_t cachedBlocks_;
-	size_t sampleRate_;
+public:
+	virtual void onTimeout(const Watchdog* watchdog, size_t ms) = 0;
 };
 
 
-class FlacDecoder : public Decoder
+/// Watchdog
+class Watchdog
 {
 public:
-	FlacDecoder();
-	virtual ~FlacDecoder();
-	virtual bool decode(msg::PcmChunk* chunk);
-	virtual SampleFormat setHeader(msg::CodecHeader* chunk);
+	Watchdog(WatchdogListener* listener = nullptr);
+	virtual ~Watchdog();
 
-	CacheInfo cacheInfo_;
-	std::unique_ptr<FLAC__StreamDecoderErrorStatus> lastError_;
+	void start(size_t timeoutMs);
+	void stop();
+	void trigger();
+
+private:
+	WatchdogListener* listener_;
+	std::condition_variable cv_;
+	std::mutex mtx_;
+	std::unique_ptr<std::thread> thread_;
+	size_t timeoutMs_;
+	std::atomic<bool> active_;
+
+	void worker();
 };
 
 
 #endif
-
 

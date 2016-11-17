@@ -16,29 +16,35 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
-#ifndef FILE_STREAM_H
-#define FILE_STREAM_H
+#ifndef SPOTIFY_STREAM_H
+#define SPOTIFY_STREAM_H
 
-#include "pcmStream.h"
-#include <fstream>
+#include "processStream.h"
+#include "watchdog.h"
 
-
-/// Reads and decodes PCM data from a file
+/// Starts librespot and reads PCM data from stdout
 /**
- * Reads PCM from a file and passes the data to an encoder.
+ * Starts librespot, reads PCM data from stdout, and passes the data to an encoder.
  * Implements EncoderListener to get the encoded data.
  * Data is passed to the PcmListener
+ * usage:
+ *   snapserver -s "spotify:///librespot?name=Spotify&username=<my username>&password=<my password>[&devicename=Snapcast][&bitrate=320]"
  */
-class FileStream : public PcmStream
+class SpotifyStream : public ProcessStream, WatchdogListener
 {
 public:
 	/// ctor. Encoded PCM data is passed to the PipeListener
-	FileStream(PcmListener* pcmListener, const StreamUri& uri);
-	virtual ~FileStream();
+	SpotifyStream(PcmListener* pcmListener, const StreamUri& uri);
+	virtual ~SpotifyStream();
 
 protected:
-	virtual void worker();
-	std::ifstream ifs;
+	std::unique_ptr<Watchdog> watchdog_;
+
+	virtual void stderrReader();
+	virtual void onStderrMsg(const char* buffer, size_t n);
+	virtual void initExeAndPath(const std::string& filename);
+
+	virtual void onTimeout(const Watchdog* watchdog, size_t ms);
 };
 
 

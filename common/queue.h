@@ -19,7 +19,8 @@
 #ifndef QUEUE_H
 #define QUEUE_H
 
-#include <queue>
+#include <deque>
+#include <atomic>
 #include <thread>
 #include <mutex>
 #include <condition_variable>
@@ -33,11 +34,11 @@ public:
 	{
 		std::unique_lock<std::mutex> mlock(mutex_);
 		while (queue_.empty())
-		{
 			cond_.wait(mlock);
-		}
+
+//		std::lock_guard<std::mutex> lock(mutex_);
 		auto val = queue_.front();
-		queue_.pop();
+		queue_.pop_front();
 		return val;
 	}
 
@@ -50,15 +51,37 @@ public:
 		return queue_.front();
 	}
 
+	void abort_wait()
+	{
+		{
+			std::lock_guard<std::mutex> mlock(mutex_);
+			abort_ = true;
+		}
+		cond_.notify_one();
+	}
+
+	bool wait_for(std::chrono::milliseconds timeout) const
+	{
+		std::unique_lock<std::mutex> mlock(mutex_);
+		abort_ = false;
+		if (!cond_.wait_for(mlock, timeout, [this] { return (!queue_.empty() || abort_); }))
+			return false;
+		
+		return !queue_.empty() && !abort_;
+	}
+
 	bool try_pop(T& item, std::chrono::microseconds timeout)
 	{
 		std::unique_lock<std::mutex> mlock(mutex_);
-
-		if(!cond_.wait_for(mlock, timeout, [this] { return !queue_.empty(); }))
+		abort_ = false;
+		if (!cond_.wait_for(mlock, timeout, [this] { return (!queue_.empty() || abort_); }))
+			return false;
+		
+		if (queue_.empty() || abort_)
 			return false;
 
 		item = std::move(queue_.front());
-		queue_.pop();
+		queue_.pop_front();
 
 		return true;
 	}
@@ -72,32 +95,51 @@ public:
 	{
 		std::unique_lock<std::mutex> mlock(mutex_);
 		while (queue_.empty())
-		{
 			cond_.wait(mlock);
-		}
+
 		item = queue_.front();
-		queue_.pop();
+		queue_.pop_front();
+	}
+
+	void push_front(const T& item)
+	{
+		{
+			std::lock_guard<std::mutex> mlock(mutex_);
+			queue_.push_front(item);
+		}
+		cond_.notify_one();
+	}
+
+	void push_front(T&& item)
+	{
+		{
+			std::lock_guard<std::mutex> mlock(mutex_);
+			queue_.push_front(std::move(item));
+		}
+		cond_.notify_one();
 	}
 
 	void push(const T& item)
 	{
-		std::unique_lock<std::mutex> mlock(mutex_);
-		queue_.push(item);
-		mlock.unlock();
+		{
+			std::lock_guard<std::mutex> mlock(mutex_);
+			queue_.push_back(item);
+		}
 		cond_.notify_one();
 	}
 
 	void push(T&& item)
 	{
-		std::unique_lock<std::mutex> mlock(mutex_);
-		queue_.push(std::move(item));
-		mlock.unlock();
+		{
+			std::lock_guard<std::mutex> mlock(mutex_);
+			queue_.push_back(std::move(item));
+		}
 		cond_.notify_one();
 	}
 
 	size_t size() const
 	{
-		std::unique_lock<std::mutex> mlock(mutex_);
+		std::lock_guard<std::mutex> mlock(mutex_);
 		return queue_.size();
 	}
 
@@ -111,9 +153,10 @@ public:
 	Queue& operator=(const Queue&) = delete; // disable assignment
 
 private:
-	std::queue<T> queue_;
+	std::deque<T> queue_;
+	mutable std::atomic<bool> abort_;
 	mutable std::mutex mutex_;
-	std::condition_variable cond_;
+	mutable std::condition_variable cond_;
 };
 
 

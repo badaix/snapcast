@@ -17,6 +17,9 @@
 ***/
 
 #include "streamManager.h"
+#include "airplayStream.h"
+#include "spotifyStream.h"
+#include "processStream.h"
 #include "pipeStream.h"
 #include "fileStream.h"
 #include "common/utils.h"
@@ -33,7 +36,7 @@ StreamManager::StreamManager(PcmListener* pcmListener, const std::string& defaul
 }
 
 
-PcmStream* StreamManager::addStream(const std::string& uri)
+PcmStreamPtr StreamManager::addStream(const std::string& uri)
 {
 	StreamUri streamUri(uri);
 
@@ -51,23 +54,44 @@ PcmStream* StreamManager::addStream(const std::string& uri)
 
 //	for (auto kv: streamUri.query)
 //		logD << "key: '" << kv.first << "' value: '" << kv.second << "'\n";
+	PcmStreamPtr stream(nullptr);
 
 	if (streamUri.scheme == "pipe")
 	{
-		streams_.push_back(make_shared<PipeStream>(pcmListener_, streamUri));
-		return streams_.back().get();
+		stream = make_shared<PipeStream>(pcmListener_, streamUri);
 	}
 	else if (streamUri.scheme == "file")
 	{
-		streams_.push_back(make_shared<FileStream>(pcmListener_, streamUri));
-		return streams_.back().get();
+		stream = make_shared<FileStream>(pcmListener_, streamUri);
+	}
+	else if (streamUri.scheme == "process")
+	{
+		stream = make_shared<ProcessStream>(pcmListener_, streamUri);
+	}
+	else if (streamUri.scheme == "spotify")
+	{
+		stream = make_shared<SpotifyStream>(pcmListener_, streamUri);
+	}
+	else if (streamUri.scheme == "airplay")
+	{
+		stream = make_shared<AirplayStream>(pcmListener_, streamUri);
 	}
 	else
 	{
 		throw SnapException("Unknown stream type: " + streamUri.scheme);
 	}
 
-	return NULL;
+	if (stream) 
+	{
+		for (auto s: streams_)
+		{
+			if (s->getName() == stream->getName())
+				throw SnapException("Stream with name \"" + stream->getName() + "\" already exists");
+		}
+		streams_.push_back(stream);
+	}
+
+	return stream;
 }
 
 
@@ -90,7 +114,7 @@ const PcmStreamPtr StreamManager::getStream(const std::string& id)
 {
 	for (auto stream: streams_)
 	{
-		if (stream->getUri().id() == id)
+		if (stream->getId() == id)
 			return stream;
 	}
 	return nullptr;

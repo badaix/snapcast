@@ -1,6 +1,10 @@
-VERSION = 0.9.0
+VERSION = 0.10.0
 TARGET  = snapserver
-SHELL = /bin/bash
+ifeq ($(TARGET), FREEBSD)
+SHELL   = /usr/local/bin/bash
+else
+SHELL   = /bin/bash
+endif
 
 ifdef DESTDIR
 # dh_auto_install (Debian) sets this variable
@@ -11,7 +15,8 @@ endif
 
 CXXFLAGS += $(ADD_CFLAGS) -std=c++0x -Wall -Wno-unused-function -O3 -DASIO_STANDALONE -DVERSION=\"$(VERSION)\" -I. -I.. -I../externals/asio/asio/include -I../externals/popl/include
 LDFLAGS   = -lvorbis -lvorbisenc -logg -lFLAC
-OBJ       = snapServer.o config.o controlServer.o controlSession.o streamServer.o streamSession.o json/jsonrpc.o streamreader/streamUri.o streamreader/streamManager.o streamreader/pcmStream.o streamreader/pipeStream.o streamreader/fileStream.o encoder/encoderFactory.o encoder/flacEncoder.o encoder/pcmEncoder.o encoder/oggEncoder.o ../common/log.o ../common/sampleFormat.o ../message/pcmChunk.o
+OBJ       = snapServer.o config.o controlServer.o controlSession.o streamServer.o streamSession.o json/jsonrpc.o streamreader/streamUri.o streamreader/streamManager.o streamreader/pcmStream.o streamreader/pipeStream.o streamreader/fileStream.o streamreader/processStream.o streamreader/airplayStream.o streamreader/spotifyStream.o streamreader/watchdog.o encoder/encoderFactory.o encoder/flacEncoder.o encoder/pcmEncoder.o encoder/oggEncoder.o ../common/log.o ../common/sampleFormat.o ../message/pcmChunk.o
+
 
 ifeq ($(ENDIAN), BIG)
 CXXFLAGS += -DIS_BIG_ENDIAN
@@ -75,7 +80,7 @@ clean:
 .PHONY: dpkg
 #sudo apt-get install build-essential debhelper dh-make dh-systemd quilt fakeroot lintian
 dpkg:
-	dpkg-buildpackage -rfakeroot -b
+	dpkg-buildpackage -rfakeroot -b -uc -us
 	dh_clean
 
 ifdef DESTDIR

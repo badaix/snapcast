@@ -1,3 +1,18 @@
+snapserver (0.10.0) unstable; urgency=low
+
+  * Features
+    -Added support "process" streams: 
+     Snapserver starts a process and reads PCM data from stdout 
+    -Specialized versions for Spotify "spotify" and AirPlay "airplay"
+  * Bugfixes
+    -Fixed crash during server shutdown
+    -Fixed Makefile for FreeBSD
+    -Fixed building of dpk (unsigned .changes file)
+  * General
+    -Speed up client and server shutdown
+
+ -- Johannes Pohl <johannes.pohl@badaix.de>  Wed, 16 Nov 2016 00:13:37 +0200
+
 snapserver (0.9.0) unstable; urgency=low
 
   * Features

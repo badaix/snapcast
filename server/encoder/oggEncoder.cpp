@@ -69,13 +69,13 @@ void OggEncoder::encode(const msg::PcmChunk* chunk)
 		}
 		else if (sampleFormat_.sampleSize == 2)
 		{
-			int16_t* chunkBuffer = (int16_t*)chunk->payload; 
+			int16_t* chunkBuffer = (int16_t*)chunk->payload;
 			for (int i=0; i<frames; i++)
 				buffer[channel][i]= chunkBuffer[sampleFormat_.channels*i + channel] / 32768.f;
 		}
 		else if (sampleFormat_.sampleSize == 4)
 		{
-			int32_t* chunkBuffer = (int32_t*)chunk->payload; 
+			int32_t* chunkBuffer = (int32_t*)chunk->payload;
 			for (int i=0; i<frames; i++)
 				buffer[channel][i]= chunkBuffer[sampleFormat_.channels*i + channel] / 2147483648.f;
 		}

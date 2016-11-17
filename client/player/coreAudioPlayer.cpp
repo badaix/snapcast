@@ -16,7 +16,6 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
-#include <unistd.h>
 #include "coreAudioPlayer.h"
 
 #define NUM_BUFFERS 2
@@ -32,7 +31,7 @@ void callback(void *custom_data, AudioQueueRef queue, AudioQueueBufferRef buffer
 }
 
 
-CoreAudioPlayer::CoreAudioPlayer(const PcmDevice& pcmDevice, Stream* stream) : 
+CoreAudioPlayer::CoreAudioPlayer(const PcmDevice& pcmDevice, std::shared_ptr<Stream> stream) : 
     Player(pcmDevice, stream),
 	ms_(100),
 	pubStream_(stream)
@@ -124,7 +123,7 @@ void CoreAudioPlayer::worker()
 	logE << "CoreAudioPlayer::worker\n";
 	AudioQueueCreateTimeline(queue, &timeLine_);
 	AudioQueueStart(queue, NULL);
-	CFRunLoopRun();    
+	CFRunLoopRun();
 }
 
 

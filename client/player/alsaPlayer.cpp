@@ -26,7 +26,7 @@
 
 using namespace std;
 
-AlsaPlayer::AlsaPlayer(const PcmDevice& pcmDevice, Stream* stream) : 
+AlsaPlayer::AlsaPlayer(const PcmDevice& pcmDevice, std::shared_ptr<Stream> stream) : 
 	Player(pcmDevice, stream), handle_(NULL), buff_(NULL)
 {
 }
@@ -198,7 +198,7 @@ void AlsaPlayer::worker()
 {
 	snd_pcm_sframes_t pcm;
 	snd_pcm_sframes_t framesDelay;
-	long lastChunkTick = 0;
+	long lastChunkTick = chronos::getTickCount();
 
 	while (active_)
 	{
@@ -211,7 +211,7 @@ void AlsaPlayer::worker()
 			catch (const std::exception& e)
 			{
 				logE << "Exception in initAlsa: " << e.what() << endl;
-				usleep(100*1000);
+				chronos::sleep(100);
 			}
 		}
 

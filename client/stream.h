@@ -89,9 +89,6 @@ private:
 	unsigned long playedFrames_;
 	long correctAfterXFrames_;
 	chronos::msec bufferMs_;
-
-	mutable std::condition_variable cv_;
-	mutable std::mutex cvMutex_;
 };
 
 

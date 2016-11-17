@@ -20,6 +20,7 @@
 #define TIME_DEFS_H
 
 #include <chrono>
+#include <thread>
 #include <sys/time.h>
 #ifdef MACOS
 #include <mach/clock.h>
@@ -77,6 +78,27 @@ namespace chronos
 	inline int64_t duration(std::chrono::duration<Rep, Period> d)
 	{
 		return std::chrono::duration_cast<ToDuration>(d).count();
+	}
+
+	/// some sleep functions. Just for convenience.
+	template< class Rep, class Period >
+	inline void sleep(const std::chrono::duration<Rep, Period>& sleep_duration)
+	{
+		std::this_thread::sleep_for(sleep_duration);
+	}
+
+	inline void sleep(const int32_t& milliseconds)
+	{
+		if (milliseconds < 0)
+			return;
+		sleep(msec(milliseconds));
+	}
+
+	inline void usleep(const int32_t& microseconds)
+	{
+		if (microseconds < 0)
+			return;
+		sleep(usec(microseconds));
 	}
 }
 

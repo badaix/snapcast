@@ -16,29 +16,31 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
-#ifndef FILE_STREAM_H
-#define FILE_STREAM_H
+#ifndef AIRPLAY_STREAM_H
+#define AIRPLAY_STREAM_H
 
-#include "pcmStream.h"
-#include <fstream>
+#include "processStream.h"
 
-
-/// Reads and decodes PCM data from a file
+/// Starts shairport-sync and reads PCM data from stdout
 /**
- * Reads PCM from a file and passes the data to an encoder.
+ * Starts librespot, reads PCM data from stdout, and passes the data to an encoder.
  * Implements EncoderListener to get the encoded data.
  * Data is passed to the PcmListener
+ * usage:
+ *   snapserver -s "airplay:///shairport-sync?name=Airplay[&devicename=Snapcast][&port=5000]"
  */
-class FileStream : public PcmStream
+class AirplayStream : public ProcessStream
 {
 public:
 	/// ctor. Encoded PCM data is passed to the PipeListener
-	FileStream(PcmListener* pcmListener, const StreamUri& uri);
-	virtual ~FileStream();
+	AirplayStream(PcmListener* pcmListener, const StreamUri& uri);
+	virtual ~AirplayStream();
 
 protected:
-	virtual void worker();
-	std::ifstream ifs;
+	virtual void onStderrMsg(const char* buffer, size_t n);
+	virtual void initExeAndPath(const std::string& filename);
+	size_t port_;
+	std::string params_wo_port_;
 };
 
 

@@ -16,12 +16,14 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
-#ifndef PCM_READER_H
-#define PCM_READER_H
+#ifndef PCM_STREAM_H
+#define PCM_STREAM_H
 
 #include <thread>
 #include <atomic>
 #include <string>
+#include <mutex>
+#include <condition_variable>
 #include <map>
 #include "streamUri.h"
 #include "encoder/encoder.h"
@@ -76,6 +78,7 @@ public:
 
 	virtual const StreamUri& getUri() const;
 	virtual const std::string& getName() const;
+	virtual const std::string& getId() const;
 	virtual const SampleFormat& getSampleFormat() const;
 
 	virtual ReaderState getState() const;
@@ -83,12 +86,16 @@ public:
 
 
 protected:
+	std::condition_variable cv_;
+	std::mutex mtx_;
+	std::thread thread_;
+	std::atomic<bool> active_;
+
 	virtual void worker() = 0;
+	virtual bool sleep(int32_t ms);
 	void setState(const ReaderState& newState);
 
 	timeval tvEncodedChunk_;
-	std::atomic<bool> active_;
-	std::thread readerThread_;
 	PcmListener* pcmListener_;
 	StreamUri uri_;
 	SampleFormat sampleFormat_;

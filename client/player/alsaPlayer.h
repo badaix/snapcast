@@ -30,7 +30,7 @@
 class AlsaPlayer : public Player
 {
 public:
-	AlsaPlayer(const PcmDevice& pcmDevice, Stream* stream);
+	AlsaPlayer(const PcmDevice& pcmDevice, std::shared_ptr<Stream> stream);
 	virtual ~AlsaPlayer();
 
 	/// Set audio volume in range [0..1]

@@ -26,6 +26,7 @@
 using json = nlohmann::json;
 
 
+// scheme:[//[user:password@]host[:port]][/]path[?query][#fragment]
 struct StreamUri
 {
 	StreamUri(const std::string& uri);
@@ -47,9 +48,7 @@ struct StreamUri
 
 	std::string id() const;
 	json toJson() const;
-
-private:
-	std::string id_;
+	std::string getQuery(const std::string& key, const std::string& def = "") const;
 };
 
 

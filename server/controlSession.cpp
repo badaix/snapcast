@@ -41,7 +41,10 @@ ControlSession::~ControlSession()
 
 void ControlSession::start()
 {
-	active_ = true;
+	{
+		std::lock_guard<std::mutex> activeLock(activeMutex_);
+		active_ = true;
+	}
 	readerThread_ = new thread(&ControlSession::reader, this);
 	writerThread_ = new thread(&ControlSession::writer, this);
 }
@@ -49,13 +52,20 @@ void ControlSession::start()
 
 void ControlSession::stop()
 {
-	std::unique_lock<std::mutex> mlock(mutex_);
-	active_ = false;
+	{
+		std::lock_guard<std::mutex> activeLock(activeMutex_);
+		if (!active_)
+			return;
+
+		active_ = false;
+	}
+
 	try
 	{
 		std::error_code ec;
 		if (socket_)
 		{
+			std::lock_guard<std::mutex> socketLock(socketMutex_);
 			socket_->shutdown(asio::ip::tcp::socket::shutdown_both, ec);
 			if (ec) logE << "Error in socket shutdown: " << ec.message() << "\n";
 			socket_->close(ec);
@@ -70,6 +80,7 @@ void ControlSession::stop()
 		if (writerThread_)
 		{
 			logD << "joining writerThread\n";
+			messages_.abort_wait();
 			writerThread_->join();
 			delete writerThread_;
 		}
@@ -94,9 +105,12 @@ void ControlSession::sendAsync(const std::string& message)
 bool ControlSession::send(const std::string& message) const
 {
 //	logO << "send: " << message->type << ", size: " << message->size << ", id: " << message->id << ", refers: " << message->refersTo << "\n";
-	std::unique_lock<std::mutex> mlock(mutex_);
-	if (!socket_ || !active_)
-		return false;
+	std::lock_guard<std::mutex> socketLock(socketMutex_);
+	{
+		std::lock_guard<std::mutex> activeLock(activeMutex_);
+		if (!socket_ || !active_)
+			return false;
+	}
 	asio::streambuf streambuf;
 	std::ostream request_stream(&streambuf);
 	request_stream << message << "\r\n";
@@ -108,7 +122,6 @@ bool ControlSession::send(const std::string& message) const
 
 void ControlSession::reader()
 {
-	active_ = true;
 	try
 	{
 		std::stringstream message;

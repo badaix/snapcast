@@ -19,7 +19,6 @@
 #include <memory>
 #include <sys/stat.h>
 #include <fcntl.h>
-#include <unistd.h>
 
 #include "encoder/encoderFactory.h"
 #include "common/snapException.h"
@@ -78,6 +77,12 @@ const std::string& PcmStream::getName() const
 }
 
 
+const std::string& PcmStream::getId() const
+{
+	return getName();
+}
+
+
 const SampleFormat& PcmStream::getSampleFormat() const
 {
 	return sampleFormat_;
@@ -88,19 +93,29 @@ void PcmStream::start()
 {
 	logD << "PcmStream start: " << sampleFormat_.getFormat() << "\n";
 	encoder_->init(this, sampleFormat_);
-
- 	active_ = true;
-	readerThread_ = thread(&PcmStream::worker, this);
+	active_ = true;
+	thread_ = thread(&PcmStream::worker, this);
 }
 
 
 void PcmStream::stop()
 {
-	if (active_)
-	{
-		active_ = false;
-		readerThread_.join();
-	}
+	if (!active_ && !thread_.joinable())
+		return;
+		
+	active_ = false;
+	cv_.notify_one();
+	if (thread_.joinable())
+		thread_.join();
+}
+
+
+bool PcmStream::sleep(int32_t ms)
+{
+	if (ms < 0)
+		return true;
+	std::unique_lock<std::mutex> lck(mtx_);
+	return (!cv_.wait_for(lck, std::chrono::milliseconds(ms), [this] { return !active_; }));
 }
 
 
@@ -115,7 +130,8 @@ void PcmStream::setState(const ReaderState& newState)
 	if (newState != state_)
 	{
 		state_ = newState;
-		pcmListener_->onStateChanged(this, newState);
+		if (pcmListener_)
+			pcmListener_->onStateChanged(this, newState);
 	}
 }
 
@@ -129,7 +145,8 @@ void PcmStream::onChunkEncoded(const Encoder* encoder, msg::PcmChunk* chunk, dou
 	chunk->timestamp.sec = tvEncodedChunk_.tv_sec;
 	chunk->timestamp.usec = tvEncodedChunk_.tv_usec;
 	chronos::addUs(tvEncodedChunk_, duration * 1000);
-	pcmListener_->onChunkRead(this, chunk, duration);
+	if (pcmListener_)
+		pcmListener_->onChunkRead(this, chunk, duration);
 }
 
 
@@ -145,7 +162,7 @@ json PcmStream::toJson() const
 
 	json j = {
 		{"uri", uri_.toJson()},
-		{"id", uri_.id()},
+		{"id", getId()},
 		{"status", state}
 	};
 	return j;

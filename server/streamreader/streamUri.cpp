@@ -41,15 +41,6 @@ StreamUri::StreamUri(const std::string& streamUri)
 	string decodedUri = uriDecode(uri);
 	logD << "StreamUri: " << decodedUri << "\n";
 
-	id_ = decodedUri;
-	pos = id_.find('?');
-	if (pos != string::npos)
-		id_ = id_.substr(0, pos);
-	pos = id_.find('#');
-	if (pos != string::npos)
-		id_ = id_.substr(0, pos);
-	logD << "id: '" << id_ << "'\n";
-
 	string tmp(decodedUri);
 
 	pos = tmp.find(':');
@@ -98,8 +89,6 @@ StreamUri::StreamUri(const std::string& streamUri)
 			string key = trim_copy(kv.substr(0, pos));
 			string value = trim_copy(kv.substr(pos+1));
 			query[key] = value;
-			if (key == "id")
-				id_ = value;
 		}
 	}
 }
@@ -119,7 +108,10 @@ json StreamUri::toJson() const
 }
 
 
-std::string StreamUri::id() const
+std::string StreamUri::getQuery(const std::string& key, const std::string& def) const
 {
-	return id_;
+	auto iter = query.find(key);
+	if (iter != query.end())
+		return iter->second;
+	return def;
 }

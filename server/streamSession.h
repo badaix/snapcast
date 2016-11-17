@@ -22,11 +22,11 @@
 #include <string>
 #include <thread>
 #include <atomic>
-#include <mutex>
 #include <memory>
 #include <asio.hpp>
 #include <condition_variable>
 #include <set>
+#include <mutex>
 #include "message/message.h"
 #include "common/queue.h"
 #include "streamreader/streamManager.h"
@@ -66,7 +66,8 @@ public:
 	bool send(const msg::BaseMessage* message) const;
 
 	/// Sends a message to the client (asynchronous)
-	void add(const std::shared_ptr<const msg::BaseMessage>& message);
+	void sendAsync(const std::shared_ptr<const msg::BaseMessage>& message, bool sendNow = false);
+	void sendAsync(const msg::BaseMessage* message, bool sendNow = false);
 
 	bool active() const;
 
@@ -88,14 +89,13 @@ protected:
 	void getNextMessage();
 	void reader();
 	void writer();
-	void setActive(bool active);
 
 	mutable std::mutex activeMutex_;
 	std::atomic<bool> active_;
 
-	mutable std::mutex mutex_;
-	std::thread* readerThread_;
-	std::thread* writerThread_;
+	std::unique_ptr<std::thread> readerThread_;
+	std::unique_ptr<std::thread> writerThread_;
+	mutable std::mutex socketMutex_;
 	std::shared_ptr<tcp::socket> socket_;
 	MessageReceiver* messageReceiver_;
 	Queue<std::shared_ptr<const msg::BaseMessage>> messages_;

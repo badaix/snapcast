@@ -19,7 +19,6 @@
 #include <memory>
 #include <sys/stat.h>
 #include <fcntl.h>
-#include <unistd.h>
 
 #include "fileStream.h"
 #include "encoder/encoderFactory.h"
@@ -85,6 +84,7 @@ void FileStream::worker()
 				ifs.read(chunk->payload + count, toRead - count);
 
 				encoder_->encode(chunk.get());
+				if (!active_) break;
 				nextTick += pcmReadMs_;
 				chronos::addUs(tvChunk, pcmReadMs_ * 1000);
 				long currentTick = chronos::getTickCount();
@@ -92,7 +92,8 @@ void FileStream::worker()
 				if (nextTick >= currentTick)
 				{
 //					logO << "sleep: " << nextTick - currentTick << "\n";
-					usleep((nextTick - currentTick) * 1000);
+					if (!sleep(nextTick - currentTick))
+						break;
 				}
 				else
 				{
@@ -105,7 +106,7 @@ void FileStream::worker()
 		}
 		catch(const std::exception& e)
 		{
-			logE << "Exception: " << e.what() << std::endl;
+			logE << "(FileStream) Exception: " << e.what() << std::endl;
 		}
 	}
 }

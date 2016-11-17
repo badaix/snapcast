@@ -54,13 +54,13 @@ void StreamServer::onChunkRead(const PcmStream* pcmStream, const msg::PcmChunk* 
 	bool isDefaultStream(pcmStream == streamManager_->getDefaultStream().get());
 
 	std::shared_ptr<const msg::BaseMessage> shared_message(chunk);
-	std::lock_guard<std::mutex> mlock(sessionsMutex_);
+	std::lock_guard<std::recursive_mutex> mlock(sessionsMutex_);
 	for (auto s : sessions_)
 	{
 		if (!s->pcmStream() && isDefaultStream)//->getName() == "default")
-			s->add(shared_message);
+			s->sendAsync(shared_message);
 		else if (s->pcmStream().get() == pcmStream)
-			s->add(shared_message);
+			s->sendAsync(shared_message);
 	}
 }
 
@@ -73,17 +73,8 @@ void StreamServer::onResync(const PcmStream* pcmStream, double ms)
 
 void StreamServer::onDisconnect(StreamSession* streamSession)
 {
-	std::lock_guard<std::mutex> mlock(sessionsMutex_);
-	std::shared_ptr<StreamSession> session = nullptr;
-
-	for (auto s: sessions_)
-	{
-		if (s.get() == streamSession)
-		{
-			session = s;
-			break;
-		}
-	}
+	std::lock_guard<std::recursive_mutex> mlock(sessionsMutex_);
+	session_ptr session = getStreamSession(streamSession);
 
 	if (session == nullptr)
 		return;
@@ -192,10 +183,10 @@ void StreamServer::onMessageReceived(ControlSession* controlSession, const std::
 			clientInfo->config.streamId = streamId;
 			response = clientInfo->config.streamId;
 
-			StreamSession* session = getStreamSession(request.getParam("client").get<string>());
-			if (session != NULL)
+			session_ptr session = getStreamSession(request.getParam("client").get<string>());
+			if (session != nullptr)
 			{
-				session->add(stream->getHeader());
+				session->sendAsync(stream->getHeader());
 				session->setPcmStream(stream);
 			}
 		}
@@ -218,8 +209,8 @@ void StreamServer::onMessageReceived(ControlSession* controlSession, const std::
 			serverSettings.setMuted(clientInfo->config.volume.muted);
 			serverSettings.setLatency(clientInfo->config.latency);
 
-			StreamSession* session = getStreamSession(request.getParam("client").get<string>());
-			if (session != NULL)
+			session_ptr session = getStreamSession(request.getParam("client").get<string>());
+			if (session != nullptr)
 				session->send(&serverSettings);
 
 			Config::instance().save();
@@ -244,15 +235,15 @@ void StreamServer::onMessageReceived(ControlSession* controlSession, const std::
 
 void StreamServer::onMessageReceived(StreamSession* connection, const msg::BaseMessage& baseMessage, char* buffer)
 {
-	logD << "getNextMessage: " << baseMessage.type << ", size: " << baseMessage.size << ", id: " << baseMessage.id << ", refers: " << baseMessage.refersTo << ", sent: " << baseMessage.sent.sec << "," << baseMessage.sent.usec << ", recv: " << baseMessage.received.sec << "," << baseMessage.received.usec << "\n";
+//	logD << "onMessageReceived: " << baseMessage.type << ", size: " << baseMessage.size << ", id: " << baseMessage.id << ", refers: " << baseMessage.refersTo << ", sent: " << baseMessage.sent.sec << "," << baseMessage.sent.usec << ", recv: " << baseMessage.received.sec << "," << baseMessage.received.usec << "\n";
 	if (baseMessage.type == message_type::kTime)
 	{
-		msg::Time timeMsg;
-		timeMsg.deserialize(baseMessage, buffer);
-		timeMsg.refersTo = timeMsg.id;
-		timeMsg.latency = timeMsg.received - timeMsg.sent;
+		msg::Time* timeMsg = new msg::Time();
+		timeMsg->deserialize(baseMessage, buffer);
+		timeMsg->refersTo = timeMsg->id;
+		timeMsg->latency = timeMsg->received - timeMsg->sent;
 //		logO << "Latency sec: " << timeMsg.latency.sec << ", usec: " << timeMsg.latency.usec << ", refers to: " << timeMsg.refersTo << "\n";
-		connection->send(&timeMsg);
+		connection->sendAsync(timeMsg, true);
 
 		// refresh connection state
 		ClientInfoPtr client = Config::instance().getClientInfo(connection->macAddress);
@@ -281,13 +272,13 @@ void StreamServer::onMessageReceived(StreamSession* connection, const msg::BaseM
 		else
 		{
 			logD << "request kServerSettings\n";
-			msg::ServerSettings serverSettings;
-			serverSettings.setVolume(clientInfo->config.volume.percent);
-			serverSettings.setMuted(clientInfo->config.volume.muted);
-			serverSettings.setLatency(clientInfo->config.latency);
-			serverSettings.setBufferMs(settings_.bufferMs);
-			serverSettings.refersTo = helloMsg.id;
-			connection->send(&serverSettings);
+			msg::ServerSettings* serverSettings = new msg::ServerSettings();
+			serverSettings->setVolume(clientInfo->config.volume.percent);
+			serverSettings->setMuted(clientInfo->config.volume.muted);
+			serverSettings->setLatency(clientInfo->config.latency);
+			serverSettings->setBufferMs(settings_.bufferMs);
+			serverSettings->refersTo = helloMsg.id;
+			connection->sendAsync(serverSettings);
 		}
 
 		ClientInfoPtr client = Config::instance().getClientInfo(connection->macAddress);
@@ -303,16 +294,16 @@ void StreamServer::onMessageReceived(StreamSession* connection, const msg::BaseM
 
 		// Assign and update stream
 		PcmStreamPtr stream = streamManager_->getStream(client->config.streamId);
-		if (stream == nullptr)
+		if (!stream)
 		{
 			stream = streamManager_->getDefaultStream();
-			client->config.streamId = stream->getUri().id();
+			client->config.streamId = stream->getId();
 		}
 		Config::instance().save();
 
 		connection->setPcmStream(stream);
 		auto headerChunk = stream->getHeader();
-		connection->send(headerChunk.get());
+		connection->sendAsync(headerChunk);
 
 		json notification = JsonNotification::getJson("Client.OnConnect", client->toJson());
 //		logO << notification.dump(4) << "\n";
@@ -321,16 +312,29 @@ void StreamServer::onMessageReceived(StreamSession* connection, const msg::BaseM
 }
 
 
-StreamSession* StreamServer::getStreamSession(const std::string& mac)
+session_ptr StreamServer::getStreamSession(StreamSession* streamSession) const
+{
+	std::lock_guard<std::recursive_mutex> mlock(sessionsMutex_);
+	for (auto session: sessions_)
+	{
+		if (session.get() == streamSession)
+			return session;
+	}
+	return nullptr;
+}
+
+
+session_ptr StreamServer::getStreamSession(const std::string& mac) const
 {
 //	logO << "getStreamSession: " << mac << "\n";
+	std::lock_guard<std::recursive_mutex> mlock(sessionsMutex_);
 	for (auto session: sessions_)
 	{
 //		logO << "getStreamSession, checking: " << session->macAddress << "\n";
 		if (session->macAddress == mac)
-			return session.get();
+			return session;
 	}
-	return NULL;
+	return nullptr;
 }
 
 
@@ -350,19 +354,17 @@ void StreamServer::handleAccept(socket_ptr socket)
 	setsockopt(socket->native_handle(), SOL_SOCKET, SO_SNDTIMEO, &tv, sizeof(tv));
 
 	/// experimental: turn on tcp::no_delay	
-//	asio::ip::tcp::no_delay option;
-//	socket->get_option(option);
-//	logE << "no_delay: " << option.value() << "\n";
 	socket->set_option(tcp::no_delay(true));
 
 	logS(kLogNotice) << "StreamServer::NewConnection: " << socket->remote_endpoint().address().to_string() << endl;
 	shared_ptr<StreamSession> session = make_shared<StreamSession>(this, socket);
-	{
-		std::lock_guard<std::mutex> mlock(sessionsMutex_);
-		session->setBufferMs(settings_.bufferMs);
-		session->start();
-		sessions_.insert(session);
-	}
+
+	session->setBufferMs(settings_.bufferMs);
+	session->start();
+
+	std::lock_guard<std::recursive_mutex> mlock(sessionsMutex_);
+	sessions_.insert(session);
+
 	startAccept();
 }
 
@@ -376,11 +378,10 @@ void StreamServer::start()
 
 		streamManager_.reset(new StreamManager(this, settings_.sampleFormat, settings_.codec, settings_.streamReadMs));
 //	throw SnapException("xxx");
-		//TODO: check uniqueness of the stream
 		for (const auto& streamUri: settings_.pcmStreams)
 		{
-			PcmStream* stream = streamManager_->addStream(streamUri);
-			if (stream != NULL)
+			PcmStreamPtr stream = streamManager_->addStream(streamUri);
+			if (stream)
 				logO << "Stream: " << stream->getUri().toJson() << "\n";
 		}
 		streamManager_->start();
@@ -399,11 +400,23 @@ void StreamServer::start()
 
 void StreamServer::stop()
 {
-//	std::lock_guard<std::mutex> mlock(sessionsMutex_);
-	for (auto session: sessions_)//it = sessions_.begin(); it != sessions_.end(); ++it)
+	if (streamManager_)
 	{
-		if (session)
-			session->stop();
+		streamManager_->stop();
+		streamManager_ = nullptr;
+	}
+
+	{
+		std::lock_guard<std::recursive_mutex> mlock(sessionsMutex_);
+		for (auto session: sessions_)//it = sessions_.begin(); it != sessions_.end(); ++it)
+		{
+			if (session)
+			{
+				session->stop();
+				session = nullptr;
+			}
+		}
+		sessions_.clear();
 	}
 
 	if (controlServer_)
@@ -416,12 +429,6 @@ void StreamServer::stop()
 	{
 		acceptor_->cancel();
 		acceptor_ = nullptr;
-	}
-	
-	if (streamManager_)
-	{
-		streamManager_->stop();
-		streamManager_ = nullptr;
 	}
 }
 

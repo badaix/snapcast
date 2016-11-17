@@ -13,7 +13,7 @@ class StreamManager
 public:
 	StreamManager(PcmListener* pcmListener, const std::string& defaultSampleFormat, const std::string& defaultCodec, size_t defaultReadBufferMs = 20);
 
-	PcmStream* addStream(const std::string& uri);
+	PcmStreamPtr addStream(const std::string& uri);
 	void start();
 	void stop();
 	const std::vector<PcmStreamPtr>& getStreams();

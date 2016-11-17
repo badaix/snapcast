@@ -36,7 +36,7 @@
 class Player
 {
 public:
-	Player(const PcmDevice& pcmDevice, Stream* stream);
+	Player(const PcmDevice& pcmDevice, std::shared_ptr<Stream> stream);
 	virtual ~Player();
 
 	/// Set audio volume in range [0..1]
@@ -59,7 +59,7 @@ protected:
 	void adjustVolume(char* buffer, size_t frames);
 
 	std::atomic<bool> active_;
-	Stream* stream_;
+	std::shared_ptr<Stream> stream_;
 	std::thread playerThread_;
 	PcmDevice pcmDevice_;
 	double volume_;

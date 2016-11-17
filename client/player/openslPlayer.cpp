@@ -16,7 +16,6 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
-#include <unistd.h>
 #include <assert.h>
 #include <iostream>
 
@@ -44,7 +43,7 @@ static void bqPlayerCallback(SLAndroidSimpleBufferQueueItf bq, void *context)
 
 
 
-OpenslPlayer::OpenslPlayer(const PcmDevice& pcmDevice, Stream* stream) :
+OpenslPlayer::OpenslPlayer(const PcmDevice& pcmDevice, std::shared_ptr<Stream> stream) :
 	Player(pcmDevice, stream),
 	engineObject(NULL),
 	engineEngine(NULL),
@@ -122,7 +121,7 @@ void OpenslPlayer::playerCallback(SLAndroidSimpleBufferQueueItf bq)
 	{
 		SLresult result = (*bq)->Enqueue(bq, buffer[curBuffer], buff_size);
 		if (result == SL_RESULT_BUFFER_INSUFFICIENT)
-			usleep(1000);
+			chronos::sleep(1);
 		else
 			break;
 	}
