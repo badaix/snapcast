@@ -8,9 +8,11 @@
 #include <unistd.h>
 #include <signal.h>
 
+// Forked from: https://github.com/eidheim/tiny-process-library
+// Copyright (c) 2015-2016 Ole Christian Eidheim
+// Thanks, Christian :-)
 
 ///Create a new process given command and run path.
-///TODO: on Windows it is harder to specify which pipes to redirect.
 ///Thus, at the moment, if read_stdout==nullptr, read_stderr==nullptr and open_stdin==false,
 ///the stdout, stderr and stdin are sent to the parent process instead.
 ///Compile with -DMSYS_PROCESS_USE_SH to run command using "sh -c [command]" on Windows as well.
@@ -178,8 +180,6 @@ private:
 				close(fd);
 
 			setpgid(0, 0);
-			//TODO: See here on how to emulate tty for colors: http://stackoverflow.com/questions/1401002/trick-an-application-into-thinking-its-stdin-is-interactive-not-a-pipe
-			//TODO: One solution is: echo "command;exit"|script -q /dev/null
 			
 			if (!path.empty()) 
 			{

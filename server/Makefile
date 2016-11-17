@@ -1,4 +1,4 @@
-VERSION = 0.9.90
+VERSION = 0.10.0
 TARGET  = snapserver
 ifeq ($(TARGET), FREEBSD)
 SHELL   = /usr/local/bin/bash

@@ -76,7 +76,7 @@ void SpotifyStream::initExeAndPath(const std::string& filename)
 
 void SpotifyStream::onStderrMsg(const char* buffer, size_t n)
 {
-	/// TODO: Watch dog needed. Kill librespot if there was no message received for 70min
+	/// Watch will kill librespot if there was no message received for 130min
 	// 2016-11-02 22-05-15 [out] TRACE:librespot::stream: allocated stream 3580
 	// 2016-11-02 22-05-15 [Debug] DEBUG:librespot::audio_file2: Got channel 3580
 	// 2016-11-02 22-06-39 [out] DEBUG:librespot::spirc: kMessageTypeHello "SM-G901F" 5e1ffdd73f0d1741c4a173d5b238826464ca8e2f 1 0

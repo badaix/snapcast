@@ -378,7 +378,6 @@ void StreamServer::start()
 
 		streamManager_.reset(new StreamManager(this, settings_.sampleFormat, settings_.codec, settings_.streamReadMs));
 //	throw SnapException("xxx");
-		//TODO: check uniqueness of the stream
 		for (const auto& streamUri: settings_.pcmStreams)
 		{
 			PcmStreamPtr stream = streamManager_->addStream(streamUri);
