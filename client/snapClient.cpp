@@ -76,6 +76,7 @@ int main (int argc, char **argv)
 		string host("");
 		size_t port(1704);
 		int latency(0);
+		size_t instance(1);
 		int processPriority(-3);
 
 		Switch helpSwitch("", "help", "produce help message");
@@ -86,6 +87,7 @@ int main (int argc, char **argv)
 		Value<string> soundcardValue("s", "soundcard", "index or name of the soundcard", "default", &soundcard);
 		Implicit<int> daemonOption("d", "daemon", "daemonize, optional process priority [-20..19]", -3, &processPriority);
 		Value<int> latencyValue("", "latency", "latency of the soundcard", 0, &latency);
+		Value<size_t> instanceValue("i", "instance", "instance id", 1, &instance);
 
 		OptionParser op("Allowed options");
 		op.add(helpSwitch)
@@ -99,7 +101,8 @@ int main (int argc, char **argv)
 #ifdef HAS_DAEMON
 		 .add(daemonOption)
 #endif
-		 .add(latencyValue);
+		 .add(latencyValue)
+		 .add(instanceValue);
 
 		try
 		{
@@ -151,7 +154,7 @@ int main (int argc, char **argv)
 		if (daemonOption.isSet())
 		{
 #ifdef HAS_DAEMON
-			daemonize("snapcast", "audio", "/var/run/snapclient/pid");
+			daemonize("snapcast", "audio", "/var/run/snapclient/pid." + cpt::to_string(instance));
 			if (processPriority < -20)
 				processPriority = -20;
 			else if (processPriority > 19)
@@ -197,7 +200,7 @@ int main (int argc, char **argv)
 #endif
 		}
 
-		std::unique_ptr<Controller> controller(new Controller());
+		std::unique_ptr<Controller> controller(new Controller(instance));
 		if (!g_terminated)
 		{
 			logO << "Latency: " << latency << "\n";

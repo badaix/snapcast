@@ -34,7 +34,15 @@
 using namespace std;
 
 
-Controller::Controller() : MessageReceiver(), active_(false), latency_(0), stream_(nullptr), decoder_(nullptr), player_(nullptr), serverSettings_(nullptr), asyncException_(false)
+Controller::Controller(size_t instance) : MessageReceiver(), 
+	instance_(instance), 
+	active_(false), 
+	latency_(0), 
+	stream_(nullptr), 
+	decoder_(nullptr), 
+	player_(nullptr), 
+	serverSettings_(nullptr), 
+	asyncException_(false)
 {
 }
 
@@ -174,7 +182,7 @@ void Controller::worker()
 		{
 			clientConnection_->start();
 
-			msg::Hello hello(clientConnection_->getMacAddress());
+			msg::Hello hello(clientConnection_->getMacAddress(), instance_);
 			clientConnection_->send(&hello);
 
 			msg::Time timeReq;

@@ -45,7 +45,7 @@
 class Controller : public MessageReceiver
 {
 public:
-	Controller();
+	Controller(size_t instance);
 	void start(const PcmDevice& pcmDevice, const std::string& host, size_t port, int latency);
 	void stop();
 
@@ -60,6 +60,7 @@ public:
 private:
 	void worker();
 	bool sendTimeSyncMessage(long after = 1000);
+	size_t instance_;
 	std::atomic<bool> active_;
 	std::thread controllerThread_;
 	SampleFormat sampleFormat_;

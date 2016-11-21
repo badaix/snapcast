@@ -34,7 +34,7 @@ public:
 	{
 	}
 
-	Hello(const std::string& macAddress) : JsonMessage(message_type::kHello)
+	Hello(const std::string& macAddress, size_t instance) : JsonMessage(message_type::kHello)
 	{
 		msg["MAC"] = macAddress;
 		msg["HostName"] = ::getHostName();
@@ -42,6 +42,7 @@ public:
 		msg["ClientName"] = "Snapclient";
 		msg["OS"] = ::getOS();
 		msg["Arch"] = ::getArch();
+		msg["Instance"] = instance;
 		msg["SnapStreamProtocolVersion"] = 2;
 	}
 
@@ -77,6 +78,11 @@ public:
 	std::string getArch()
 	{
 		return msg["Arch"];
+	}
+
+	int getInstance()
+	{
+		return get("Instance", 1);
 	}
 
 	int getProtocolVersion()

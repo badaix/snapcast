@@ -84,13 +84,14 @@ void daemonize(const std::string& user, const std::string& group, const std::str
 	if (user_gid != (gid_t)-1 && user_gid != getgid() && setgid(user_gid) == -1) 
 		throw SnapException("Failed to set group " + cpt::to_string((int)user_gid));
 
-#ifdef FREEBSD
+//#if defined(FREEBSD) && !defined(MACOS)
+//#ifdef FREEBSD
 	/// init supplementary groups
 	/// (must be done before we change our uid)
 	/// no need to set the new user's supplementary groups if we are already this user
-	if (!had_group && user_uid != getuid() && initgroups(user_name, user_gid) == -1)
-		throw SnapException("Failed to set supplementary groups of user \"" + user + "\"");
-#endif
+//	if (!had_group && user_uid != getuid() && initgroups(user_name, user_gid) == -1)
+//		throw SnapException("Failed to set supplementary groups of user \"" + user + "\"");
+//#endif
 	/// set uid
 	if (user_uid != (uid_t)-1 && user_uid != getuid() && setuid(user_uid) == -1)
 		throw SnapException("Failed to set user " + user);
