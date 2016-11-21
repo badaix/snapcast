@@ -50,6 +50,11 @@ Pipe FFmpeg's audio output to the snapfifo:
 
     ffmpeg -y -i http://wms-15.streamsrus.com:11630 -f u16le -acodec pcm_s16le -ac 2 -ar 48000 /tmp/snapfifo
 
+###mpv
+Pipe mpv's audio output to the snapfifo:
+
+    mpv http://wms-15.streamsrus.com:11630 --audio-display=no --audio-channels=stereo --audio-samplerate=48000 --audio-format=s16 --ao=pcm --ao-pcm-file=/tmp/snapfifo
+
 ###MPlayer
 Use `-novideo` and `-ao` to pipe MPlayer's audio output to the snapfifo:
 
@@ -109,12 +114,14 @@ Snapserver supports [shairport-sync](https://github.com/mikebrady/shairport-sync
 
 ###Spotify
 Snapserver supports [librespot](https://github.com/badaix/librespot) with `stdout` backend.
- 1. Build `librespot` with `stdout` backend: `cargo build --features stdout-backend`    
+ 1. Build `librespot` with `stdout` backend: `cargo build --features stdout-backend`
+   * Prebuild binaries are in [releases](https://github.com/badaix/librespot/releases)
  2. Copy the `librespot` binary somewhere to your `PATH`, e.g. `/usr/local/bin/`
  3. Configure snapserver with `-s "spotify:///librespot?name=Spotify&username=<my username>&password=<my password>[&devicename=Snapcast][&bitrate=320]"`
+   * Valid bitrates are 96, 160, 320
 
 ###Process
-Snapserver can start any process and read PCM data from stdout: 
+Snapserver can start any process and read PCM data from the stdout of the process: 
 
 Configure snapserver with `-s "process:///path/to/process?name=Process[&params=<--my list --of params>][&logStderr=false]"`
 
