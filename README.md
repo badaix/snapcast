@@ -108,6 +108,7 @@ This [guide](doc/player_setup.md) shows how to configure different players/audio
 * [MPD](doc/player_setup.md#mpd)
 * [Mopidy](doc/player_setup.md#mopidy)
 * [FFmpeg](doc/player_setup.md#ffmpeg)
+* [mpv](doc/play_setup.md#mpv)
 * [MPlayer](doc/player_setup.md#mplayer)
 * [Alsa](doc/player_setup.md#alsa)
 * [PulseAudio](doc/player_setup.md#pulseaudio)
