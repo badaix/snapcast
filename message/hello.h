@@ -21,6 +21,7 @@
 
 #include "jsonMessage.h"
 #include "common/utils.h"
+#include "common/strCompat.h"
 #include <string>
 
 
@@ -50,46 +51,56 @@ public:
 	{
 	}
 
-	std::string getMacAddress()
+	std::string getMacAddress() const
 	{
 		return msg["MAC"];
 	}
 
-	std::string getHostName()
+	std::string getHostName() const
 	{
 		return msg["HostName"];
 	}
 
-	std::string getVersion()
+	std::string getVersion() const
 	{
 		return msg["Version"];
 	}
 
-	std::string getClientName()
+	std::string getClientName() const
 	{
 		return msg["ClientName"];
 	}
 
-	std::string getOS()
+	std::string getOS() const
 	{
 		return msg["OS"];
 	}
 
-	std::string getArch()
+	std::string getArch() const
 	{
 		return msg["Arch"];
 	}
 
-	int getInstance()
+	int getInstance() const
 	{
 		return get("Instance", 1);
 	}
 
-	int getProtocolVersion()
+	int getProtocolVersion() const
 	{
 		return get("SnapStreamProtocolVersion", 1);
 	}
 
+	std::string getClientId() const
+	{
+		std::string id = getMacAddress();
+		int instance = getInstance();
+		if (instance != 1)
+		{
+			id = id + "#" + cpt::to_string(instance);
+		}
+		return id;
+	}
 };
 
 }

@@ -62,7 +62,7 @@ protected:
 	}
 
 	template<typename T>
-	T get(const std::string& what, const T& def)
+	T get(const std::string& what, const T& def) const
 	{
 		try
 		{
