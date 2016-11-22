@@ -145,6 +145,9 @@ struct mDNSResolve
 
 void runService(const DNSServiceHandle& service)
 {
+	if (!*service)
+		return;
+
 	auto socket = DNSServiceRefSockFD(*service);
 	fd_set set;
 	FD_ZERO(&set);
@@ -164,8 +167,7 @@ void runService(const DNSServiceHandle& service)
 
 bool BrowseBonjour::browse(const string& serviceName, mDNSResult& result, int timeout)
 {
-  result.valid_ = false;
-	
+	result.valid_ = false;
 	// Discover
 	deque<mDNSReply> replyCollection;
 	{
