@@ -74,7 +74,7 @@ public:
 	/// Max playout latency. No need to send PCM data that is older than bufferMs
 	void setBufferMs(size_t bufferMs);
 
-	std::string macAddress;
+	std::string clientId;
 
 	std::string getIP()
 	{

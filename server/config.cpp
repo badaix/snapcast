@@ -89,21 +89,21 @@ void Config::save()
 }
 
 
-ClientInfoPtr Config::getClientInfo(const std::string& macAddress, bool add)
+ClientInfoPtr Config::getClientInfo(const std::string& clientId, bool add)
 {
-	if (macAddress.empty())
+	if (clientId.empty())
 		return nullptr;
 
 	for (auto client: clients)
 	{
-		if (client->host.mac == macAddress)
+		if (client->clientId == clientId)
 			return client;
 	}
 
 	if (!add)
 		return nullptr;
 
-	ClientInfoPtr client = make_shared<ClientInfo>(macAddress);
+	ClientInfoPtr client = make_shared<ClientInfo>(clientId);
 	clients.push_back(client);
 
 	return client;

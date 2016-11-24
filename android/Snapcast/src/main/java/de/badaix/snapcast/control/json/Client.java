@@ -30,6 +30,7 @@ public class Client implements JsonSerialisable {
     private ClientConfig config;
     private Time_t lastSeen;
     private boolean connected;
+    private string clientId;
     private boolean deleted = false;
 
     public Client(JSONObject json) {
@@ -67,6 +68,7 @@ public class Client implements JsonSerialisable {
 
             lastSeen = new Time_t(json.getJSONObject("lastSeen"));
             connected = json.getBoolean("connected");
+            clientId = json.getString("id");
         } catch (JSONException e) {
             e.printStackTrace();
         }
@@ -81,6 +83,7 @@ public class Client implements JsonSerialisable {
             json.put("config", config.toJson());
             json.put("lastSeen", lastSeen.toJson());
             json.put("connected", connected);
+            json.put("id", clientId);
         } catch (JSONException e) {
             e.printStackTrace();
         }
@@ -118,11 +121,18 @@ public class Client implements JsonSerialisable {
     public String getVisibleName() {
         if ((config.getName() != null) && !config.getName().isEmpty())
             return config.getName();
-        return host.getName();
+		String name = host.getName();
+		if (config.getInstance() > 1)
+			name += " #" + config.getInstance(); 
+        return name;
     }
 
     public boolean isConnected() {
         return connected;
+    }
+
+    public string getId() {
+        return clientId;
     }
 
     public boolean isDeleted() {
@@ -151,6 +161,7 @@ public class Client implements JsonSerialisable {
             return false;
         if (config != null ? !config.equals(that.config) : that.config != null) return false;
         if (connected != that.connected) return false;
+        if (clientId != null ? !clientId.equals(that.clientId) : that.clientId != null) return false;
         return (deleted == that.deleted);
     }
 
@@ -160,6 +171,7 @@ public class Client implements JsonSerialisable {
         result = 31 * result + (snapclient != null ? snapclient.hashCode() : 0);
         result = 31 * result + (config != null ? config.hashCode() : 0);
         result = 31 * result + (connected ? 1 : 0);
+        result = 31 * result + (clientId != null ? clientId.hashCode() : 0);
         result = 31 * result + (deleted ? 1 : 0);
         return result;
     }

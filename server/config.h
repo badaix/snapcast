@@ -34,6 +34,8 @@ T jGet(const json& j, const std::string& what, const T& def)
 {
 	try
 	{
+		if (!j.count(what))
+			return def;
 		return j[what].get<T>();
 	}
 	catch(...)
@@ -71,7 +73,7 @@ struct Volume
 
 struct Host
 {
-	Host(const std::string& _macAddress = "") : name(""), mac(_macAddress), os(""), arch(""), ip("")
+	Host() : name(""), mac(""), os(""), arch(""), ip("")
 	{
 	}
 
@@ -112,7 +114,7 @@ struct Host
 
 struct ClientConfig
 {
-	ClientConfig() : name(""), volume(100), latency(0), streamId("")
+	ClientConfig() : name(""), volume(100), latency(0), streamId(""), instance(1)
 	{
 	}
 
@@ -122,8 +124,9 @@ struct ClientConfig
 		volume.fromJson(j["volume"]);
 		latency = jGet<int32_t>(j, "latency", 0);
 		streamId = trim_copy(jGet<std::string>(j, "stream", ""));
+		instance = jGet<size_t>(j, "instance", 1);
 	}
-
+	
 	json toJson()
 	{
 		json j;
@@ -131,6 +134,7 @@ struct ClientConfig
 		j["volume"] = volume.toJson();
 		j["latency"] = latency;
 		j["stream"] = trim_copy(streamId);
+		j["instance"] = instance;
 		return j;
 	}
 
@@ -138,6 +142,7 @@ struct ClientConfig
 	Volume volume;
 	int32_t latency;
 	std::string streamId;
+	size_t instance;
 };
 
 
@@ -207,7 +212,7 @@ struct Snapserver : public Snapcast
 
 struct ClientInfo
 {
-	ClientInfo(const std::string& _macAddress = "") : host(_macAddress), connected(false)
+	ClientInfo(const std::string& _clientId = "") : clientId(_clientId), connected(false)
 	{
 		lastSeen.tv_sec = 0;
 		lastSeen.tv_usec = 0;
@@ -215,34 +220,10 @@ struct ClientInfo
 
 	void fromJson(const json& j)
 	{
-		if (j.count("host") && !j["host"].is_string())
-		{
-			host.fromJson(j["host"]);
-		}
-		else
-		{
-			host.ip = jGet<std::string>(j, "IP", "");
-			host.mac = jGet<std::string>(j, "MAC", "");
-			host.name = jGet<std::string>(j, "host", "");
-		}
-
-		if (j.count("snapclient"))
-			snapclient.fromJson(j["snapclient"]);
-		else
-			snapclient.version = jGet<std::string>(j, "version", "");
-
-		if (j.count("config"))
-		{
-			config.fromJson(j["config"]);
-		}
-		else
-		{
-			config.name = trim_copy(jGet<std::string>(j, "name", ""));
-			config.volume.fromJson(j["volume"]);
-			config.latency = jGet<int32_t>(j, "latency", 0);
-			config.streamId = trim_copy(jGet<std::string>(j, "stream", ""));
-		}
-
+		clientId = jGet<std::string>(j, "id", j["host"]);
+		host.fromJson(j["host"]);
+		snapclient.fromJson(j["snapclient"]);
+		config.fromJson(j["config"]);
 		lastSeen.tv_sec = jGet<int32_t>(j["lastSeen"], "sec", 0);
 		lastSeen.tv_usec = jGet<int32_t>(j["lastSeen"], "usec", 0);
 		connected = jGet<bool>(j, "connected", true);
@@ -251,6 +232,7 @@ struct ClientInfo
 	json toJson()
 	{
 		json j;
+		j["id"] = clientId;
 		j["host"] = host.toJson();
 		j["snapclient"] = snapclient.toJson();
 		j["config"] = config.toJson();
@@ -260,6 +242,7 @@ struct ClientInfo
 		return j;
 	}
 
+	std::string clientId;
 	Host host;
 	Snapclient snapclient;
 	ClientConfig config;

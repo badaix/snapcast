@@ -29,6 +29,7 @@ public class ClientConfig implements JsonSerialisable {
     Volume volume;
     int latency = 0;
     String stream = "";
+    int instance = 1;
 
     public ClientConfig() {
         volume = new Volume();
@@ -45,6 +46,7 @@ public class ClientConfig implements JsonSerialisable {
             volume = new Volume(json.getJSONObject("volume"));
             latency = json.getInt("latency");
             stream = json.getString("stream");
+            instance = json.getInt("instance");
         } catch (JSONException e) {
             e.printStackTrace();
         }
@@ -58,6 +60,7 @@ public class ClientConfig implements JsonSerialisable {
             json.put("volume", volume.toJson());
             json.put("latency", latency);
             json.put("stream", stream);
+            json.put("instance", instance);
         } catch (JSONException e) {
             e.printStackTrace();
         }
@@ -96,6 +99,10 @@ public class ClientConfig implements JsonSerialisable {
         this.stream = stream;
     }
 
+    public int getInstance() {
+        return instance;
+    }
+
     @Override
     public String toString() {
         return toJson().toString();
@@ -111,6 +118,7 @@ public class ClientConfig implements JsonSerialisable {
         if (latency != that.latency) return false;
         if (name != null ? !name.equals(that.name) : that.name != null) return false;
         if (stream != null ? !stream.equals(that.stream) : that.stream != null) return false;
+        if (instance != that.instance) return false;
         return !(volume != null ? !volume.equals(that.volume) : that.volume != null);
 
     }
@@ -120,6 +128,7 @@ public class ClientConfig implements JsonSerialisable {
         int result = name != null ? name.hashCode() : 0;
         result = 31 * result + (volume != null ? volume.hashCode() : 0);
         result = 31 * result + latency;
+        result = 31 * result + instance;
         result = 31 * result + (stream != null ? stream.hashCode() : 0);
         return result;
     }
