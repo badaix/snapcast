@@ -95,6 +95,10 @@ There is an Android client available in [Releases](https://github.com/badaix/sna
 
 ![Snapcast for Android](https://raw.githubusercontent.com/badaix/snapcast/master/doc/snapcast_android_scaled.png)
 
+There is also an unofficial WebApp from @atoomic [atoomic/snapcast-volume-ui](https://github.com/atoomic/snapcast-volume-ui).
+This app list all clients connected to a server and allow to control individualy the volume of each client.
+Once installed, you can use any mobile device, laptop, desktop, or browser.
+
 Setup of audio players/server
 -----------------------------
 Snapcast can be used with a number of different audio players and servers, and so it can be integrated into your favorite audio-player solution and make it synced-multiroom capable.
