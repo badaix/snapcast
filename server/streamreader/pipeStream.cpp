@@ -62,6 +62,7 @@ void PipeStream::worker()
 {
 	timeval tvChunk;
 	std::unique_ptr<msg::PcmChunk> chunk(new msg::PcmChunk(sampleFormat_, pcmReadMs_));
+	string lastException = "";
 
 	while (active_)
 	{
@@ -121,11 +122,17 @@ void PipeStream::worker()
 					pcmListener_->onResync(this, currentTick - nextTick);
 					nextTick = currentTick;
 				}
+
+				lastException = "";
 			}
 		}
 		catch(const std::exception& e)
 		{
-			logE << "(PipeStream) Exception: " << e.what() << std::endl;
+			if (lastException != e.what())
+			{
+				logE << "(PipeStream) Exception: " << e.what() << std::endl;
+				lastException = e.what();
+			}
 			if (!sleep(100))
 				break;
 		}
