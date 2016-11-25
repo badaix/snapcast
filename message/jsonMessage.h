@@ -66,6 +66,8 @@ protected:
 	{
 		try
 		{
+			if (!msg.count(what))
+				return def;
 			return msg[what].get<T>();
 		}
 		catch(...)
