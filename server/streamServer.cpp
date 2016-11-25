@@ -249,7 +249,7 @@ void StreamServer::onMessageReceived(StreamSession* connection, const msg::BaseM
 		ClientInfoPtr client = Config::instance().getClientInfo(connection->macAddress);
 		if (client != nullptr)
 		{
-			chronos::to_timeval(chronos::hrc::now().time_since_epoch(), client->lastSeen);
+			chronos::to_timeval(chronos::clk::now().time_since_epoch(), client->lastSeen);
 			client->connected = true;
 		}
 	}

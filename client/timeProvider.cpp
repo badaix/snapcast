@@ -37,10 +37,10 @@ void TimeProvider::setDiff(const tv& c2s, const tv& s2c)
 void TimeProvider::setDiffToServer(double ms)
 {
 	static int32_t lastTimeSync = 0;
-	auto nowSeconds = std::chrono::duration_cast<chronos::sec>(chronos::hrc::now().time_since_epoch()).count();
+	auto nowSeconds = std::chrono::duration_cast<chronos::sec>(chronos::clk::now().time_since_epoch()).count();
 
 	/// clear diffBuffer if last update is older than a minute
-	if (!diffBuffer_.empty() && (std::abs(now.tv_sec - lastTimeSync) > 60))
+	if (!diffBuffer_.empty() && (std::abs(nowSeconds - lastTimeSync) > 60))
 	{
 		logO << "Last time sync older than a minute. Clearing time buffer\n";
 		diffToServer_ = ms*1000;
