@@ -61,7 +61,7 @@ void CoreAudioPlayer::playerCallback(AudioQueueRef queue, AudioQueueBufferRef bu
 	char *buffer = (char*)bufferRef->mAudioData;
 	if (!pubStream_->getPlayerChunk(buffer, delay, frames_))
 	{
-		logO << "Failed to get chunk. Playing silence.\n";
+//		logO << "Failed to get chunk. Playing silence.\n";
 		memset(buffer, 0, buff_size_);
 	}
 	else

@@ -207,7 +207,7 @@ bool Stream::getPlayerChunk(void* outputBuffer, const cs::usec& outputBufferDacT
 
 	if (!chunk_ && !chunks_.try_pop(chunk_, outputBufferDacTime))
 	{
-		logO << "no chunks available\n";
+		//logO << "no chunks available\n";
 		sleep_ = cs::usec(0);
 		return false;
 	}
