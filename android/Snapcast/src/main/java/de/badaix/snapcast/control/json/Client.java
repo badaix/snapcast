@@ -30,7 +30,7 @@ public class Client implements JsonSerialisable {
     private ClientConfig config;
     private Time_t lastSeen;
     private boolean connected;
-    private string clientId;
+    private String clientId;
     private boolean deleted = false;
 
     public Client(JSONObject json) {
@@ -40,35 +40,13 @@ public class Client implements JsonSerialisable {
     @Override
     public void fromJson(JSONObject json) {
         try {
-            if (json.has("host") && !(json.get("host") instanceof String))
-                host = new Host(json.getJSONObject("host"));
-            else {
-                host = new Host();
-                host.ip = json.getString("IP");
-                host.mac = json.getString("MAC");
-                host.name = json.getString("host");
-            }
-
-            if (json.has("snapclient"))
-                snapclient = new Snapclient(json.getJSONObject("snapclient"));
-            else {
-                snapclient = new Snapclient();
-                snapclient.version = json.getString("version");
-            }
-
-            if (json.has("config"))
-                config = new ClientConfig(json.getJSONObject("config"));
-            else {
-                config = new ClientConfig();
-                config.name = json.getString("name");
-                config.volume = new Volume(json.getJSONObject("volume"));
-                config.latency = json.getInt("latency");
-                config.stream = json.getString("stream");
-            }
+            host = new Host(json.getJSONObject("host"));
+            snapclient = new Snapclient(json.getJSONObject("snapclient"));
+            config = new ClientConfig(json.getJSONObject("config"));
 
             lastSeen = new Time_t(json.getJSONObject("lastSeen"));
             connected = json.getBoolean("connected");
-            clientId = json.getString("id");
+            clientId = json.optString("id", host.mac);
         } catch (JSONException e) {
             e.printStackTrace();
         }
@@ -102,10 +80,6 @@ public class Client implements JsonSerialisable {
         return config;
     }
 
-    public String getMac() {
-        return getHost().getMac();
-    }
-
     public Time_t getLastSeen() {
         return lastSeen;
     }
@@ -131,7 +105,7 @@ public class Client implements JsonSerialisable {
         return connected;
     }
 
-    public string getId() {
+    public String getId() {
         return clientId;
     }
 

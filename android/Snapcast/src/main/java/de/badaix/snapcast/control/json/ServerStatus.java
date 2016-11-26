@@ -80,7 +80,7 @@ public class ServerStatus implements JsonSerialisable {
 
     public boolean removeClient(Client client) {
         for (int i = 0; i < clients.size(); ++i) {
-            if (clients.get(i).getMac().equals(client.getMac())) {
+            if (clients.get(i).getId().equals(client.getId())) {
                 clients.remove(i);
                 return true;
             }
@@ -97,7 +97,7 @@ public class ServerStatus implements JsonSerialisable {
             if (clientInfo == null)
                 continue;
 
-            if (client.getMac().equals(clientInfo.getMac())) {
+            if (client.getId().equals(clientInfo.getId())) {
                 if (clientInfo.equals(client))
                     return false;
                 clients.set(i, client);

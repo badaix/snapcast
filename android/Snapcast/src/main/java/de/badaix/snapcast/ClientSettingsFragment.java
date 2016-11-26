@@ -45,6 +45,7 @@ public class ClientSettingsFragment extends PreferenceFragment {
     private ListPreference prefStream;
     private EditTextPreference prefLatency;
     private Preference prefMac;
+    private Preference prefId;
     private Preference prefIp;
     private Preference prefHost;
     private Preference prefOS;
@@ -116,6 +117,7 @@ public class ClientSettingsFragment extends PreferenceFragment {
             }
         });
         prefMac = (Preference) findPreference("pref_client_mac");
+        prefId = (Preference) findPreference("pref_client_id");
         prefIp = (Preference) findPreference("pref_client_ip");
         prefHost = (Preference) findPreference("pref_client_host");
         prefOS = (Preference) findPreference("pref_client_os");
@@ -150,6 +152,7 @@ public class ClientSettingsFragment extends PreferenceFragment {
         prefName.setSummary(client.getConfig().getName());
         prefName.setText(client.getConfig().getName());
         prefMac.setSummary(client.getHost().getMac());
+        prefId.setSummary(client.getId());
         prefIp.setSummary(client.getHost().getIp());
         prefHost.setSummary(client.getHost().getName());
         prefOS.setSummary(client.getHost().getOs() + "@" + client.getHost().getArch());

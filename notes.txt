@@ -2,7 +2,6 @@
 -Server ping client?
 -LastSeen: relative time [s] or [ms]?
 -Android crash: Empty latency => app restart => empty client list
--Segfault when ^c on OpenWrt with client connected
 -Android clean data structures after changing the Server
 
 *JSON RPC:

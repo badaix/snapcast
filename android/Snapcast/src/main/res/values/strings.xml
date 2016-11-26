@@ -20,6 +20,7 @@
     <string name="title_activity_client_settings">Client settings</string>
     <string name="client_name">Name</string>
     <string name="client_mac">MAC</string>
+    <string name="client_id">ID</string>
     <string name="client_ip">IP</string>
     <string name="client_host">Host</string>
     <string name="client_os">Operating system</string>
