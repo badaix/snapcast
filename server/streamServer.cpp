@@ -118,7 +118,7 @@ void StreamServer::onMessageReceived(ControlSession* controlSession, const std::
 		msg::ServerSettings serverSettings;
 		serverSettings.setBufferMs(settings_.bufferMs);
 
-		if (request.method.find("Client.Set") == 0)
+		if (request.method.find("Client.Set") == string::npos)
 		{
 			clientInfo = Config::instance().getClientInfo(request.getParam("client").get<string>(), false);
 			if (clientInfo == nullptr)
