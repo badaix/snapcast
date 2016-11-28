@@ -220,8 +220,8 @@ struct ClientInfo
 
 	void fromJson(const json& j)
 	{
-		clientId = jGet<std::string>(j, "id", j["host"]);
 		host.fromJson(j["host"]);
+		clientId = jGet<std::string>(j, "id", host.mac);
 		snapclient.fromJson(j["snapclient"]);
 		config.fromJson(j["config"]);
 		lastSeen.tv_sec = jGet<int32_t>(j["lastSeen"], "sec", 0);
@@ -262,16 +262,19 @@ public:
 		return instance_;
 	}
 
-	ClientInfoPtr getClientInfo(const std::string& mac, bool add = true);
+	ClientInfoPtr getClientInfo(const std::string& clientId) const;
+	ClientInfoPtr addClientInfo(const std::string& clientId);
 	void remove(ClientInfoPtr client);
 
 	std::vector<ClientInfoPtr> clients;
 	json getClientInfos() const;
+	json getServerStatus(const std::string& clientId, const json& streams) const;
 
 	void save();
 
 private:
 	Config();
+	~Config();
 	std::string filename_;
 };
 

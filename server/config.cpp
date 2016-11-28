@@ -52,17 +52,12 @@ Config::Config()
 			if (j.count("ConfigVersion"))
 			{
 				json jClient = j["Client"];
-				for (json::iterator it = jClient.begin(); it != jClient.end(); ++it)
+				for (auto it = jClient.begin(); it != jClient.end(); ++it)
 				{
 					ClientInfoPtr client = make_shared<ClientInfo>();
 					client->fromJson(*it);
-					if (client->host.mac.empty())
+					if (client->clientId.empty() || getClientInfo(client->clientId))
 						continue;
-					for (const auto& c: clients)
-					{
-						if (c->host.mac == client->host.mac)
-							continue;
-					}
 
 					client->connected = false;
 					clients.push_back(client);
@@ -74,6 +69,12 @@ Config::Config()
 	{
 		logE << "Error reading config: " << e.what() << "\n";
 	}
+}
+
+
+Config::~Config()
+{
+	save();
 }
 
 
@@ -89,7 +90,7 @@ void Config::save()
 }
 
 
-ClientInfoPtr Config::getClientInfo(const std::string& clientId, bool add)
+ClientInfoPtr Config::getClientInfo(const std::string& clientId) const
 {
 	if (clientId.empty())
 		return nullptr;
@@ -100,13 +101,49 @@ ClientInfoPtr Config::getClientInfo(const std::string& clientId, bool add)
 			return client;
 	}
 
-	if (!add)
-		return nullptr;
+	return nullptr;
+}
 
-	ClientInfoPtr client = make_shared<ClientInfo>(clientId);
-	clients.push_back(client);
+
+ClientInfoPtr Config::addClientInfo(const std::string& clientId)
+{
+	ClientInfoPtr client = getClientInfo(clientId);
+	if (!client)
+	{
+		client = make_shared<ClientInfo>(clientId);
+		clients.push_back(client);
+	}
 
 	return client;
+}
+
+
+json Config::getServerStatus(const std::string& clientId, const json& streams) const
+{
+	json jClient = json::array();
+	if (clientId != "")
+	{
+		ClientInfoPtr client = getClientInfo(clientId);
+		if (client)
+			jClient += client->toJson();
+	}
+	else
+		jClient = getClientInfos();
+
+	Host host;
+	host.update();
+	//TODO: Set MAC and IP
+	Snapserver snapserver("Snapserver", VERSION);
+	json serverStatus = {
+		{"server", {
+			{"host", host.toJson()},//getHostName()},
+			{"snapserver", snapserver.toJson()}
+		}},
+		{"clients", jClient},
+		{"streams", streams}
+	};
+
+	return serverStatus;
 }
 
 

@@ -80,7 +80,6 @@ void StreamServer::onDisconnect(StreamSession* streamSession)
 		return;
 
 	logO << "onDisconnect: " << session->clientId << "\n";
-	ClientInfoPtr clientInfo = Config::instance().getClientInfo(streamSession->clientId);
 	logD << "sessions: " << sessions_.size() << "\n";
 	// don't block: remove StreamSession in a thread
 	auto func = [](shared_ptr<StreamSession> s)->void{s->stop();};
@@ -91,6 +90,7 @@ void StreamServer::onDisconnect(StreamSession* streamSession)
 	logD << "sessions: " << sessions_.size() << "\n";
 
 	// notify controllers if not yet done
+	ClientInfoPtr clientInfo = Config::instance().getClientInfo(streamSession->clientId);
 	if (!clientInfo || !clientInfo->connected)
 		return;
 
@@ -118,42 +118,22 @@ void StreamServer::onMessageReceived(ControlSession* controlSession, const std::
 		msg::ServerSettings serverSettings;
 		serverSettings.setBufferMs(settings_.bufferMs);
 
-		if (request.method.find("Client.Set") == string::npos)
+		if (request.method.find("Client.Set") == 0)
 		{
-			clientInfo = Config::instance().getClientInfo(request.getParam("client").get<string>(), false);
+			clientInfo = Config::instance().getClientInfo(request.getParam("client").get<string>());
 			if (clientInfo == nullptr)
 				throw JsonInternalErrorException("Client not found", request.id);
 		}
 
 		if (request.method == "Server.GetStatus")
 		{
-			json jClient = json::array();
-			if (request.hasParam("client"))
-			{
-				ClientInfoPtr client = Config::instance().getClientInfo(request.getParam("client").get<string>(), false);
-				if (client)
-					jClient += client->toJson();
-			}
-			else
-				jClient = Config::instance().getClientInfos();
-
-			Host host;
-			host.update();
-			//TODO: Set MAC and IP
-			Snapserver snapserver("Snapserver", VERSION);
-			response = {
-				{"server", {
-					{"host", host.toJson()},//getHostName()},
-					{"snapserver", snapserver.toJson()}
-				}},
-				{"clients", jClient},
-				{"streams", streamManager_->toJson()}
-			};
-//			cout << response.dump(4);
+			string clientId = request.hasParam("client") ? request.getParam("client").get<string>() : "";
+			response = Config::instance().getServerStatus(clientId, streamManager_->toJson());
+//			logO << response.dump(4);
 		}
 		else if (request.method == "Server.DeleteClient")
 		{
-			clientInfo = Config::instance().getClientInfo(request.getParam("client").get<string>(), false);
+			clientInfo = Config::instance().getClientInfo(request.getParam("client").get<string>());
 			if (clientInfo == nullptr)
 				throw JsonInternalErrorException("Client not found", request.id);
 			response = clientInfo->host.mac;
@@ -264,24 +244,17 @@ void StreamServer::onMessageReceived(StreamSession* connection, const msg::BaseM
 
 		logD << "request kServerSettings: " << connection->clientId << "\n";
 //		std::lock_guard<std::mutex> mlock(mutex_);
-		ClientInfoPtr clientInfo = Config::instance().getClientInfo(connection->clientId, true);
-		if (clientInfo == nullptr)
-		{
-			logE << "could not get client info for client: " << connection->clientId << "\n";
-		}
-		else
-		{
-			logD << "request kServerSettings\n";
-			msg::ServerSettings* serverSettings = new msg::ServerSettings();
-			serverSettings->setVolume(clientInfo->config.volume.percent);
-			serverSettings->setMuted(clientInfo->config.volume.muted);
-			serverSettings->setLatency(clientInfo->config.latency);
-			serverSettings->setBufferMs(settings_.bufferMs);
-			serverSettings->refersTo = helloMsg.id;
-			connection->sendAsync(serverSettings);
-		}
+		ClientInfoPtr client = Config::instance().addClientInfo(connection->clientId);
 
-		ClientInfoPtr client = Config::instance().getClientInfo(connection->clientId);
+		logD << "request kServerSettings\n";
+		msg::ServerSettings* serverSettings = new msg::ServerSettings();
+		serverSettings->setVolume(client->config.volume.percent);
+		serverSettings->setMuted(client->config.volume.muted);
+		serverSettings->setLatency(client->config.latency);
+		serverSettings->setBufferMs(settings_.bufferMs);
+		serverSettings->refersTo = helloMsg.id;
+		connection->sendAsync(serverSettings);
+
 		client->host.mac = helloMsg.getMacAddress();
 		client->host.ip = connection->getIP();
 		client->host.name = helloMsg.getHostName();
