@@ -51,16 +51,14 @@ Config::Config()
 			ifs >> j;
 			if (j.count("ConfigVersion"))
 			{
-				json jClient = j["Client"];
-				for (auto it = jClient.begin(); it != jClient.end(); ++it)
+				json jGroups = j["Groups"];
+				for (auto it = jGroups.begin(); it != jGroups.end(); ++it)
 				{
-					ClientInfoPtr client = make_shared<ClientInfo>();
-					client->fromJson(*it);
-					if (client->clientId.empty() || getClientInfo(client->clientId))
-						continue;
-
-					client->connected = false;
-					clients.push_back(client);
+					GroupPtr group = make_shared<Group>();
+					group->fromJson(*it);
+//					if (client->clientId.empty() || getClientInfo(client->clientId))
+//						continue;
+					groups.push_back(group);
 				}
 			}
 		}
@@ -82,8 +80,8 @@ void Config::save()
 {
 	std::ofstream ofs(filename_.c_str(), std::ofstream::out|std::ofstream::trunc);
 	json clients = {
-		{"ConfigVersion", 1},
-		{"Client", getClientInfos()}
+		{"ConfigVersion", 2},
+		{"Groups", getGroups()}
 	};
 	ofs << std::setw(4) << clients;
 	ofs.close();
@@ -115,6 +113,26 @@ ClientInfoPtr Config::addClientInfo(const std::string& clientId)
 	}
 
 	return client;
+}
+
+
+GroupPtr Config::getGroup(ClientInfoPtr client)
+{
+	for (auto group: groups)
+	{
+		for (auto c: group->clients)
+		{
+			if (c->clientId == client->clientId)
+				return group;
+		}
+	}
+
+	GroupPtr group = std::make_shared<Group>();
+	group->id = generateUUID();
+	group->clients.push_back(client);
+	groups.push_back(group);
+
+	return group;
 }
 
 
@@ -156,8 +174,21 @@ json Config::getClientInfos() const
 }
 
 
+json Config::getGroups() const
+{
+	json result = json::array();
+	for (auto group: groups)
+		result.push_back(group->toJson());
+	return result;
+}
+
+
 void Config::remove(ClientInfoPtr client)
 {
+	auto group = getGroup(client);
+	if (group->clients.size() == 1)
+		groups.erase(std::remove(groups.begin(), groups.end(), group), groups.end());
+
 	clients.erase(std::remove(clients.begin(), clients.end(), client), clients.end());
 }
 

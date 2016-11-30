@@ -29,6 +29,13 @@
 
 using json = nlohmann::json;
 
+struct ClientInfo;
+struct Group;
+
+typedef std::shared_ptr<ClientInfo> ClientInfoPtr;
+typedef std::shared_ptr<Group> GroupPtr;
+
+
 template<typename T>
 T jGet(const json& j, const std::string& what, const T& def)
 {
@@ -114,7 +121,7 @@ struct Host
 
 struct ClientConfig
 {
-	ClientConfig() : name(""), volume(100), latency(0), streamId(""), instance(1)
+	ClientConfig() : name(""), volume(100), latency(0), instance(1)
 	{
 	}
 
@@ -123,7 +130,6 @@ struct ClientConfig
 		name = trim_copy(jGet<std::string>(j, "name", ""));
 		volume.fromJson(j["volume"]);
 		latency = jGet<int32_t>(j, "latency", 0);
-		streamId = trim_copy(jGet<std::string>(j, "stream", ""));
 		instance = jGet<size_t>(j, "instance", 1);
 	}
 	
@@ -133,7 +139,6 @@ struct ClientConfig
 		j["name"] = trim_copy(name);
 		j["volume"] = volume.toJson();
 		j["latency"] = latency;
-		j["stream"] = trim_copy(streamId);
 		j["instance"] = instance;
 		return j;
 	}
@@ -141,7 +146,6 @@ struct ClientConfig
 	std::string name;
 	Volume volume;
 	int32_t latency;
-	std::string streamId;
 	size_t instance;
 };
 
@@ -250,7 +254,50 @@ struct ClientInfo
 	bool connected;
 };
 
-typedef std::shared_ptr<ClientInfo> ClientInfoPtr;
+
+struct Group
+{
+	Group()
+	{
+	}
+
+	void fromJson(const json& j)
+	{
+		name = trim_copy(jGet<std::string>(j, "name", ""));
+		id = trim_copy(jGet<std::string>(j, "id", ""));
+		streamId = trim_copy(jGet<std::string>(j, "stream", ""));
+		clients.clear();
+		if (j.count("clients"))
+		{
+			for (auto& jClient : j["clients"])
+			{
+				ClientInfoPtr client = std::make_shared<ClientInfo>();
+				client->fromJson(jClient);
+				client->connected = false;
+				clients.push_back(client);
+			}
+		}
+	}
+	
+	json toJson()
+	{
+		json j;
+		j["name"] = trim_copy(name);
+		j["id"] = trim_copy(id);
+		j["stream"] = trim_copy(streamId);
+
+		json jClients = json::array();
+		for (auto client: clients)
+			jClients.push_back(client->toJson());
+		j["clients"] = jClients;
+		return j;
+	}
+
+	std::string name;
+	std::string id;
+	std::string streamId;
+	std::vector<ClientInfoPtr> clients;
+};
 
 
 class Config
@@ -266,11 +313,16 @@ public:
 	ClientInfoPtr addClientInfo(const std::string& clientId);
 	void remove(ClientInfoPtr client);
 
-	std::vector<ClientInfoPtr> clients;
+	GroupPtr getGroup(ClientInfoPtr client);
+
 	json getClientInfos() const;
+	json getGroups() const;
 	json getServerStatus(const std::string& clientId, const json& streams) const;
 
 	void save();
+
+	std::vector<GroupPtr> groups;
+	std::vector<ClientInfoPtr> clients;
 
 private:
 	Config();

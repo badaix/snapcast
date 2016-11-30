@@ -155,6 +155,7 @@ void StreamServer::onMessageReceived(ControlSession* controlSession, const std::
 		}
 		else if (request.method == "Client.SetStream")
 		{
+/* TODO: Group.SetStream
 			string streamId = request.getParam("id").get<string>();
 			PcmStreamPtr stream = streamManager_->getStream(streamId);
 			if (stream == nullptr)
@@ -169,6 +170,7 @@ void StreamServer::onMessageReceived(ControlSession* controlSession, const std::
 				session->sendAsync(stream->getHeader());
 				session->setPcmStream(stream);
 			}
+*/
 		}
 		else if (request.method == "Client.SetLatency")
 		{
@@ -246,6 +248,8 @@ void StreamServer::onMessageReceived(StreamSession* connection, const msg::BaseM
 //		std::lock_guard<std::mutex> mlock(mutex_);
 		ClientInfoPtr client = Config::instance().addClientInfo(connection->clientId);
 
+		GroupPtr group = Config::instance().getGroup(client);
+
 		logD << "request kServerSettings\n";
 		msg::ServerSettings* serverSettings = new msg::ServerSettings();
 		serverSettings->setVolume(client->config.volume.percent);
@@ -268,12 +272,14 @@ void StreamServer::onMessageReceived(StreamSession* connection, const msg::BaseM
 		gettimeofday(&client->lastSeen, NULL);
 
 		// Assign and update stream
-		PcmStreamPtr stream = streamManager_->getStream(client->config.streamId);
+		PcmStreamPtr stream = streamManager_->getStream(group->streamId);
 		if (!stream)
 		{
 			stream = streamManager_->getDefaultStream();
-			client->config.streamId = stream->getId();
+			group->streamId = stream->getId();
 		}
+		logO << "Group: " << group->id << ", stream: " << group->streamId << "\n";
+
 		Config::instance().save();
 
 		connection->setPcmStream(stream);
