@@ -30,6 +30,7 @@
 #include <vector>
 #include <fstream>
 #include <sstream>
+#include <iomanip>
 #include <memory>
 #include <cerrno>
 #include <iterator>
@@ -262,6 +263,21 @@ static long uptime()
 	}
 	return 0;
 #endif
+}
+
+
+/// http://stackoverflow.com/questions/2174768/generating-random-uuids-in-linux
+static std::string generateUUID()
+{
+	std::srand(std::time(0));
+	std::stringstream ss;
+	ss << std::setfill('0') << std::hex  
+		<< std::setw(4) << (std::rand() % 0xffff) << std::setw(4) << (std::rand() % 0xffff)
+		<< "-" << std::setw(4) << (std::rand() % 0xffff)
+		<< "-" << std::setw(4) << (std::rand() % 0xffff)
+		<< "-" << std::setw(4) << (std::rand() % 0xffff)
+		<< "-" << std::setw(4) << (std::rand() % 0xffff) << std::setw(4) << (std::rand() % 0xffff) << std::setw(4) << (std::rand() % 0xffff);
+	return ss.str();
 }
 
 
