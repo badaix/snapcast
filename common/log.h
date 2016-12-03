@@ -30,7 +30,7 @@
 #define logE std::clog << kErr
 #define logState std::clog << kState
 #define logS(P) std::clog << P
-#define log logO
+//#define log logO
 
 enum LogPriority
 {
