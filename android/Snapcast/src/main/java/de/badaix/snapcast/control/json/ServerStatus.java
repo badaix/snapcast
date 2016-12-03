@@ -28,7 +28,7 @@ import java.util.ArrayList;
  * Created by johannes on 06.01.16.
  */
 public class ServerStatus implements JsonSerialisable {
-    private ArrayList<Client> clients = new ArrayList<Client>();
+    private ArrayList<Group> groups = new ArrayList<Group>();
     private ArrayList<Stream> streams = new ArrayList<Stream>();
     private Server server = null;
 
@@ -47,9 +47,9 @@ public class ServerStatus implements JsonSerialisable {
             JSONArray jStreams = json.getJSONArray("streams");
             for (int i = 0; i < jStreams.length(); i++)
                 streams.add(new Stream(jStreams.getJSONObject(i)));
-            JSONArray jClients = json.getJSONArray("clients");
-            for (int i = 0; i < jClients.length(); i++)
-                clients.add(new Client(jClients.getJSONObject(i)));
+            JSONArray jGroups = json.getJSONArray("groups");
+            for (int i = 0; i < jGroups.length(); i++)
+                groups.add(new Group(jGroups.getJSONObject(i)));
         } catch (JSONException e) {
             e.printStackTrace();
         }
@@ -60,8 +60,8 @@ public class ServerStatus implements JsonSerialisable {
         JSONObject json = new JSONObject();
         try {
             json.put("server", server.toJson());
+            json.put("groups", getJsonGroups());
             json.put("streams", getJsonStreams());
-            json.put("clients", getJsonClients());
         } catch (JSONException e) {
             e.printStackTrace();
         }
@@ -74,40 +74,41 @@ public class ServerStatus implements JsonSerialisable {
     }
 
     public void clear() {
-        clients.clear();
+        groups.clear();
         streams.clear();
     }
 
-    public boolean removeClient(Client client) {
-        for (int i = 0; i < clients.size(); ++i) {
-            if (clients.get(i).getId().equals(client.getId())) {
-                clients.remove(i);
-                return true;
+    /*
+        public boolean removeClient(Client client) {
+            for (int i = 0; i < clients.size(); ++i) {
+                if (clients.get(i).getId().equals(client.getId())) {
+                    clients.remove(i);
+                    return true;
+                }
             }
-        }
-        return false;
-    }
-
-    public boolean updateClient(Client client) {
-        if (client == null)
             return false;
-
-        for (int i = 0; i < clients.size(); ++i) {
-            Client clientInfo = clients.get(i);
-            if (clientInfo == null)
-                continue;
-
-            if (client.getId().equals(clientInfo.getId())) {
-                if (clientInfo.equals(client))
-                    return false;
-                clients.set(i, client);
-                return true;
-            }
         }
-        clients.add(client);
-        return true;
-    }
 
+        public boolean updateClient(Client client) {
+            if (client == null)
+                return false;
+
+            for (int i = 0; i < clients.size(); ++i) {
+                Client clientInfo = clients.get(i);
+                if (clientInfo == null)
+                    continue;
+
+                if (client.getId().equals(clientInfo.getId())) {
+                    if (clientInfo.equals(client))
+                        return false;
+                    clients.set(i, client);
+                    return true;
+                }
+            }
+            clients.add(client);
+            return true;
+        }
+    */
     public boolean updateStream(Stream stream) {
         if (stream == null)
             return false;
@@ -128,8 +129,8 @@ public class ServerStatus implements JsonSerialisable {
         return true;
     }
 
-    public ArrayList<Client> getClientInfos() {
-        return clients;
+    public ArrayList<Group> getGroups() {
+        return groups;
     }
 
     public ArrayList<Stream> getStreams() {
@@ -143,10 +144,10 @@ public class ServerStatus implements JsonSerialisable {
         return jsonArray;
     }
 
-    public JSONArray getJsonClients() {
+    public JSONArray getJsonGroups() {
         JSONArray jsonArray = new JSONArray();
-        for (Client client : clients)
-            jsonArray.put(client.toJson());
+        for (Group group : groups)
+            jsonArray.put(group.toJson());
         return jsonArray;
     }
 

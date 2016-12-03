@@ -28,7 +28,6 @@ public class ClientConfig implements JsonSerialisable {
     String name = "";
     Volume volume;
     int latency = 0;
-    String stream = "";
     int instance = 1;
 
     public ClientConfig() {
@@ -45,7 +44,6 @@ public class ClientConfig implements JsonSerialisable {
             name = json.getString("name");
             volume = new Volume(json.getJSONObject("volume"));
             latency = json.getInt("latency");
-            stream = json.getString("stream");
             instance = json.getInt("instance");
         } catch (JSONException e) {
             e.printStackTrace();
@@ -59,7 +57,6 @@ public class ClientConfig implements JsonSerialisable {
             json.put("name", name);
             json.put("volume", volume.toJson());
             json.put("latency", latency);
-            json.put("stream", stream);
             json.put("instance", instance);
         } catch (JSONException e) {
             e.printStackTrace();
@@ -91,14 +88,6 @@ public class ClientConfig implements JsonSerialisable {
         this.latency = latency;
     }
 
-    public String getStream() {
-        return stream;
-    }
-
-    public void setStream(String stream) {
-        this.stream = stream;
-    }
-
     public int getInstance() {
         return instance;
     }
@@ -117,7 +106,6 @@ public class ClientConfig implements JsonSerialisable {
 
         if (latency != that.latency) return false;
         if (name != null ? !name.equals(that.name) : that.name != null) return false;
-        if (stream != null ? !stream.equals(that.stream) : that.stream != null) return false;
         if (instance != that.instance) return false;
         return !(volume != null ? !volume.equals(that.volume) : that.volume != null);
 
@@ -129,7 +117,6 @@ public class ClientConfig implements JsonSerialisable {
         result = 31 * result + (volume != null ? volume.hashCode() : 0);
         result = 31 * result + latency;
         result = 31 * result + instance;
-        result = 31 * result + (stream != null ? stream.hashCode() : 0);
         return result;
     }
 }

@@ -95,9 +95,9 @@ public class Client implements JsonSerialisable {
     public String getVisibleName() {
         if ((config.getName() != null) && !config.getName().isEmpty())
             return config.getName();
-		String name = host.getName();
-		if (config.getInstance() > 1)
-			name += " #" + config.getInstance(); 
+        String name = host.getName();
+        if (config.getInstance() > 1)
+            name += " #" + config.getInstance();
         return name;
     }
 
@@ -135,7 +135,8 @@ public class Client implements JsonSerialisable {
             return false;
         if (config != null ? !config.equals(that.config) : that.config != null) return false;
         if (connected != that.connected) return false;
-        if (clientId != null ? !clientId.equals(that.clientId) : that.clientId != null) return false;
+        if (clientId != null ? !clientId.equals(that.clientId) : that.clientId != null)
+            return false;
         return (deleted == that.deleted);
     }
 
