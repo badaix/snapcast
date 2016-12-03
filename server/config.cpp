@@ -56,7 +56,7 @@ Config::Config()
 				{
 					GroupPtr group = make_shared<Group>();
 					group->fromJson(*it);
-//					if (client->clientId.empty() || getClientInfo(client->clientId))
+//					if (client->id.empty() || getClientInfo(client->id))
 //						continue;
 					groups.push_back(group);
 				}
@@ -95,7 +95,7 @@ ClientInfoPtr Config::getClientInfo(const std::string& clientId) const
 
 	for (auto client: clients)
 	{
-		if (client->clientId == clientId)
+		if (client->id == clientId)
 			return client;
 	}
 
@@ -122,7 +122,7 @@ GroupPtr Config::getGroup(ClientInfoPtr client)
 	{
 		for (auto c: group->clients)
 		{
-			if (c->clientId == client->clientId)
+			if (c->id == client->id)
 				return group;
 		}
 	}

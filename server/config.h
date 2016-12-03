@@ -216,7 +216,7 @@ struct Snapserver : public Snapcast
 
 struct ClientInfo
 {
-	ClientInfo(const std::string& _clientId = "") : clientId(_clientId), connected(false)
+	ClientInfo(const std::string& _clientId = "") : id(_clientId), connected(false)
 	{
 		lastSeen.tv_sec = 0;
 		lastSeen.tv_usec = 0;
@@ -225,7 +225,7 @@ struct ClientInfo
 	void fromJson(const json& j)
 	{
 		host.fromJson(j["host"]);
-		clientId = jGet<std::string>(j, "id", host.mac);
+		id = jGet<std::string>(j, "id", host.mac);
 		snapclient.fromJson(j["snapclient"]);
 		config.fromJson(j["config"]);
 		lastSeen.tv_sec = jGet<int32_t>(j["lastSeen"], "sec", 0);
@@ -236,7 +236,7 @@ struct ClientInfo
 	json toJson()
 	{
 		json j;
-		j["id"] = clientId;
+		j["id"] = id;
 		j["host"] = host.toJson();
 		j["snapclient"] = snapclient.toJson();
 		j["config"] = config.toJson();
@@ -246,7 +246,7 @@ struct ClientInfo
 		return j;
 	}
 
-	std::string clientId;
+	std::string id;
 	Host host;
 	Snapclient snapclient;
 	ClientConfig config;
