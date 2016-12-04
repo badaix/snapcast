@@ -93,10 +93,13 @@ ClientInfoPtr Config::getClientInfo(const std::string& clientId) const
 	if (clientId.empty())
 		return nullptr;
 
-	for (auto client: clients)
+	for (auto group: groups)
 	{
-		if (client->id == clientId)
-			return client;
+		for (auto client: group->clients)
+		{
+			if (client->id == clientId)
+				return client;
+		}
 	}
 
 	return nullptr;
@@ -109,10 +112,23 @@ ClientInfoPtr Config::addClientInfo(const std::string& clientId)
 	if (!client)
 	{
 		client = make_shared<ClientInfo>(clientId);
-		clients.push_back(client);
+//TODO: strange contruct
+		getGroup(client);
 	}
 
 	return client;
+}
+
+
+GroupPtr Config::getGroup(const std::string& groupId) const
+{
+	for (auto group: groups)
+	{
+		if (group->id == groupId)
+			return group;
+	}
+
+	return nullptr;
 }
 
 
@@ -127,8 +143,7 @@ GroupPtr Config::getGroup(ClientInfoPtr client)
 		}
 	}
 
-	GroupPtr group = std::make_shared<Group>();
-	group->id = generateUUID();
+	GroupPtr group = std::make_shared<Group>();//client);
 	group->clients.push_back(client);
 	groups.push_back(group);
 
@@ -136,9 +151,9 @@ GroupPtr Config::getGroup(ClientInfoPtr client)
 }
 
 
-json Config::getServerStatus(const std::string& clientId, const json& streams) const
+json Config::getServerStatus(const json& streams) const
 {
-	json jClient = json::array();
+/*	json jClient = json::array();
 	if (clientId != "")
 	{
 		ClientInfoPtr client = getClientInfo(clientId);
@@ -147,7 +162,7 @@ json Config::getServerStatus(const std::string& clientId, const json& streams) c
 	}
 	else
 		jClient = getClientInfos();
-
+*/
 	Host host;
 	host.update();
 	//TODO: Set MAC and IP
@@ -157,7 +172,7 @@ json Config::getServerStatus(const std::string& clientId, const json& streams) c
 			{"host", host.toJson()},//getHostName()},
 			{"snapserver", snapserver.toJson()}
 		}},
-		{"clients", jClient},
+		{"groups", getGroups()},
 		{"streams", streams}
 	};
 
@@ -165,14 +180,14 @@ json Config::getServerStatus(const std::string& clientId, const json& streams) c
 }
 
 
-json Config::getClientInfos() const
+/*json Config::getClientInfos() const
 {
 	json result = json::array();
 	for (auto client: clients)
 		result.push_back(client->toJson());
 	return result;
 }
-
+*/
 
 json Config::getGroups() const
 {
@@ -186,9 +201,9 @@ json Config::getGroups() const
 void Config::remove(ClientInfoPtr client)
 {
 	auto group = getGroup(client);
-	if (group->clients.size() == 1)
-		groups.erase(std::remove(groups.begin(), groups.end(), group), groups.end());
-
+	auto clients = group->clients;
 	clients.erase(std::remove(clients.begin(), clients.end(), client), clients.end());
+	if (group->clients.empty())
+		groups.erase(std::remove(groups.begin(), groups.end(), group), groups.end());
 }
 

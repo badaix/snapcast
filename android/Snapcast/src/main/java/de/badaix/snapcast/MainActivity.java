@@ -35,11 +35,6 @@ import android.os.IBinder;
 import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.Snackbar;
 import android.support.design.widget.TabLayout;
-import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentManager;
-import android.support.v4.app.FragmentPagerAdapter;
-import android.support.v4.app.FragmentStatePagerAdapter;
-import android.support.v4.view.ViewPager;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
@@ -48,24 +43,20 @@ import android.text.TextUtils;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.View;
 import android.view.WindowManager;
 
-import org.json.JSONException;
-import org.json.JSONObject;
-
 import java.net.UnknownHostException;
-import java.util.Vector;
 
 import de.badaix.snapcast.control.RemoteControl;
 import de.badaix.snapcast.control.json.Client;
+import de.badaix.snapcast.control.json.Group;
 import de.badaix.snapcast.control.json.ServerStatus;
 import de.badaix.snapcast.control.json.Stream;
 import de.badaix.snapcast.utils.NsdHelper;
 import de.badaix.snapcast.utils.Settings;
 import de.badaix.snapcast.utils.Setup;
 
-public class MainActivity extends AppCompatActivity implements ClientItem.ClientInfoItemListener, RemoteControl.RemoteControlListener, SnapclientService.SnapclientListener, NsdHelper.NsdHelperListener {
+public class MainActivity extends AppCompatActivity implements GroupItem.GroupItemListener, RemoteControl.RemoteControlListener, SnapclientService.SnapclientListener, NsdHelper.NsdHelperListener {
 
     static final int CLIENT_PROPERTIES_REQUEST = 1;
     private static final String TAG = "Main";
@@ -80,16 +71,11 @@ public class MainActivity extends AppCompatActivity implements ClientItem.Client
     private RemoteControl remoteControl = null;
     private ServerStatus serverStatus = null;
     private SnapclientService snapclientService;
-    private SectionsPagerAdapter sectionsPagerAdapter;
+    private ClientListFragment clientListFragment;
     private TabLayout tabLayout;
     private Snackbar warningSamplerateSnackbar = null;
     private int nativeSampleRate = 0;
     private CoordinatorLayout coordinatorLayout;
-
-    /**
-     * The {@link ViewPager} that will host the section contents.
-     */
-    private ViewPager mViewPager;
 
 
     /**
@@ -139,15 +125,8 @@ public class MainActivity extends AppCompatActivity implements ClientItem.Client
         setSupportActionBar(toolbar);
         // Create the adapter that will return a fragment for each of the three
         // primary sections of the activity.
-        sectionsPagerAdapter = new SectionsPagerAdapter(getSupportFragmentManager());
 
-        // Set up the ViewPager with the sections adapter.
-        mViewPager = (ViewPager) findViewById(R.id.container);
-        mViewPager.setAdapter(sectionsPagerAdapter);
-
-        tabLayout = (TabLayout) findViewById(R.id.tabs);
-        tabLayout.setupWithViewPager(mViewPager);
-        mViewPager.setVisibility(View.GONE);
+        clientListFragment = (ClientListFragment) getSupportFragmentManager().findFragmentById(R.id.clientListFragment);
 
         setActionbarSubtitle("Host: no Snapserver found");
 
@@ -159,8 +138,6 @@ public class MainActivity extends AppCompatActivity implements ClientItem.Client
                 Log.d(TAG, "done copying snapclient");
             }
         }).start();
-
-        sectionsPagerAdapter.setHideOffline(Settings.getInstance(this).getBoolean("hide_offline", false));
     }
 
     public void checkFirstRun() {
@@ -195,7 +172,6 @@ public class MainActivity extends AppCompatActivity implements ClientItem.Client
         boolean isChecked = Settings.getInstance(this).getBoolean("hide_offline", false);
         MenuItem menuItem = menu.findItem(R.id.action_hide_offline);
         menuItem.setChecked(isChecked);
-        sectionsPagerAdapter.setHideOffline(isChecked);
 //        setHost(host, port, controlPort);
         if (remoteControl != null) {
             updateMenuItems(remoteControl.isConnected());
@@ -241,7 +217,7 @@ public class MainActivity extends AppCompatActivity implements ClientItem.Client
         } else if (id == R.id.action_hide_offline) {
             item.setChecked(!item.isChecked());
             Settings.getInstance(this).put("hide_offline", item.isChecked());
-            sectionsPagerAdapter.setHideOffline(item.isChecked());
+//TODO: group            sectionsPagerAdapter.setHideOffline(item.isChecked());
             return true;
         } else if (id == R.id.action_refresh) {
             startRemoteControl();
@@ -407,7 +383,7 @@ public class MainActivity extends AppCompatActivity implements ClientItem.Client
             return;
         }
         if (requestCode == CLIENT_PROPERTIES_REQUEST) {
-            Client client = null;
+/* TODO: group            Client client = null;
             try {
                 client = new Client(new JSONObject(data.getStringExtra("client")));
             } catch (JSONException e) {
@@ -432,17 +408,12 @@ public class MainActivity extends AppCompatActivity implements ClientItem.Client
                 remoteControl.setLatency(client, client.getConfig().getLatency());
             serverStatus.updateClient(client);
             sectionsPagerAdapter.updateServer(serverStatus);
+*/
         }
     }
 
     @Override
     public void onConnected(RemoteControl remoteControl) {
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                mViewPager.setVisibility(View.VISIBLE);
-            }
-        });
         setActionbarSubtitle(remoteControl.getHost());
         remoteControl.getServerStatus();
         updateMenuItems(true);
@@ -457,7 +428,7 @@ public class MainActivity extends AppCompatActivity implements ClientItem.Client
     public void onDisconnected(RemoteControl remoteControl, Exception e) {
         Log.d(TAG, "onDisconnected");
         serverStatus = new ServerStatus();
-        sectionsPagerAdapter.updateServer(serverStatus);
+//TODO: group        sectionsPagerAdapter.updateServer(serverStatus);
         if (e != null) {
             if (e instanceof UnknownHostException)
                 setActionbarSubtitle("error: unknown host");
@@ -466,38 +437,38 @@ public class MainActivity extends AppCompatActivity implements ClientItem.Client
         } else {
             setActionbarSubtitle("not connected");
         }
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                mViewPager.setVisibility(View.GONE);
-            }
-        });
         updateMenuItems(false);
     }
 
     @Override
     public void onClientEvent(RemoteControl remoteControl, Client client, RemoteControl.ClientEvent event) {
         Log.d(TAG, "onClientEvent: " + event.toString());
+        remoteControl.getServerStatus();
+/* TODO: group
         if (event == RemoteControl.ClientEvent.deleted)
             serverStatus.removeClient(client);
         else
             serverStatus.updateClient(client);
-
         sectionsPagerAdapter.updateServer(serverStatus);
+*/
     }
 
     @Override
     public void onServerStatus(RemoteControl remoteControl, ServerStatus serverStatus) {
         this.serverStatus = serverStatus;
-        for (Stream s : serverStatus.getStreams())
-            Log.d(TAG, s.toString());
-        sectionsPagerAdapter.updateServer(serverStatus);
+        MainActivity.this.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                clientListFragment.updateServer(MainActivity.this.serverStatus);
+            }
+        });
+// TODO: group        sectionsPagerAdapter.updateServer(serverStatus);
     }
 
     @Override
     public void onStreamUpdate(RemoteControl remoteControl, Stream stream) {
         serverStatus.updateStream(stream);
-        sectionsPagerAdapter.updateServer(serverStatus);
+// TODO: group        sectionsPagerAdapter.updateServer(serverStatus);
     }
 
 
@@ -558,19 +529,20 @@ public class MainActivity extends AppCompatActivity implements ClientItem.Client
 
 
     @Override
-    public void onVolumeChanged(ClientItem clientItem, int percent) {
+    public void onVolumeChanged(GroupItem groupItem, ClientItem clientItem, int percent) {
         remoteControl.setVolume(clientItem.getClient(), percent);
     }
 
     @Override
-    public void onMute(ClientItem clientItem, boolean mute) {
+    public void onMute(GroupItem groupItem, ClientItem clientItem, boolean mute) {
         remoteControl.setMute(clientItem.getClient(), mute);
     }
 
     @Override
-    public void onDeleteClicked(final ClientItem clientItem) {
+    public void onDeleteClicked(GroupItem groupItem, final ClientItem clientItem) {
         final Client client = clientItem.getClient();
         client.setDeleted(true);
+/* TODO: group
         serverStatus.updateClient(client);
         sectionsPagerAdapter.updateServer(serverStatus);
         Snackbar mySnackbar = Snackbar.make(findViewById(R.id.myCoordinatorLayout),
@@ -595,10 +567,11 @@ public class MainActivity extends AppCompatActivity implements ClientItem.Client
             }
         });
         mySnackbar.show();
+*/
     }
 
     @Override
-    public void onPropertiesClicked(ClientItem clientItem) {
+    public void onPropertiesClicked(GroupItem groupItem, ClientItem clientItem) {
         Intent intent = new Intent(this, ClientSettingsActivity.class);
         intent.putExtra("client", clientItem.getClient().toJson().toString());
         intent.putExtra("streams", serverStatus.getJsonStreams().toString());
@@ -607,78 +580,15 @@ public class MainActivity extends AppCompatActivity implements ClientItem.Client
     }
 
     @Override
-    public void onStreamClicked(ClientItem clientItem, Stream stream) {
+    public void onStreamClicked(GroupItem groupItem, Stream stream) {
+/* TODO: group
         Client client = clientItem.getClient();
         client.getConfig().setStream(stream.getId());
         remoteControl.setStream(client, client.getConfig().getStream());
         serverStatus.updateClient(client);
         sectionsPagerAdapter.updateServer(serverStatus);
+*/
     }
 
-
-    /**
-     * A {@link FragmentPagerAdapter} that returns a fragment corresponding to
-     * one of the sections/tabs/pages.
-     */
-    public class SectionsPagerAdapter extends FragmentStatePagerAdapter {
-
-        private Vector<ClientListFragment> fragments = new Vector<>();
-        private int streamCount = 0;
-        private boolean hideOffline = false;
-
-        public SectionsPagerAdapter(FragmentManager fm) {
-            super(fm);
-        }
-
-        public void updateServer(final ServerStatus serverStatus) {
-            MainActivity.this.runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    Log.d(TAG, "updateServer: " + serverStatus.getStreams().size());
-                    boolean changed = (serverStatus.getStreams().size() != streamCount);
-
-                    while (serverStatus.getStreams().size() > fragments.size())
-                        fragments.add(new ClientListFragment());
-
-                    for (int i = 0; i < serverStatus.getStreams().size(); ++i) {
-                        fragments.get(i).setStream(serverStatus.getStreams().get(i));
-                        fragments.get(i).updateServer(serverStatus);
-                    }
-
-                    if (changed) {
-                        streamCount = serverStatus.getStreams().size();
-                        notifyDataSetChanged();
-                        tabLayout.setTabsFromPagerAdapter(SectionsPagerAdapter.this);
-                    }
-                    setHideOffline(hideOffline);
-                }
-
-            });
-
-        }
-
-        public void setHideOffline(boolean hide) {
-            this.hideOffline = hide;
-            for (ClientListFragment clientListFragment : fragments)
-                clientListFragment.setHideOffline(hide);
-        }
-
-        @Override
-        public Fragment getItem(int position) {
-            return fragments.get(position);
-        }
-
-        @Override
-        public int getCount() {
-            return streamCount;
-        }
-
-        @Override
-        public CharSequence getPageTitle(int position) {
-            return fragments.get(position).getName();
-        }
-
-    }
 }
-
 

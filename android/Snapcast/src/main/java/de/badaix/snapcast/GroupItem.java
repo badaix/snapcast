@@ -30,71 +30,110 @@ import android.widget.SeekBar;
 import android.widget.TextView;
 
 import de.badaix.snapcast.control.json.Client;
+import de.badaix.snapcast.control.json.Group;
 import de.badaix.snapcast.control.json.ServerStatus;
 import de.badaix.snapcast.control.json.Stream;
-import de.badaix.snapcast.control.json.Volume;
 
-public class ClientItem extends LinearLayout implements SeekBar.OnSeekBarChangeListener, View.OnClickListener, PopupMenu.OnMenuItemClickListener {
+/**
+ * Created by johannes on 04.12.16.
+ */
 
-    private static final String TAG = "ClientItem";
 
-    private TextView title;
+public class GroupItem extends LinearLayout implements SeekBar.OnSeekBarChangeListener, View.OnClickListener, PopupMenu.OnMenuItemClickListener, ClientItem.ClientItemListener {
+
+    private static final String TAG = "GroupItem";
+
+    //    private TextView title;
     private SeekBar volumeSeekBar;
     private ImageButton ibMute;
     private ImageButton ibOverflow;
-    private Client client;
+    private LinearLayout llClient;
+    private Group group;
     private ServerStatus server;
-    private ClientItemListener listener = null;
+    private TextView tvStreamState = null;
+    private GroupItemListener listener = null;
+    private Stream stream = null;
+    private LinearLayout llVolume;
 
-    public ClientItem(Context context, ServerStatus server, Client client) {
+    public GroupItem(Context context, ServerStatus server, Group group) {
         super(context);
         LayoutInflater vi = (LayoutInflater) context
                 .getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-        vi.inflate(R.layout.client_item, this);
-        title = (TextView) findViewById(R.id.title);
+        vi.inflate(R.layout.group_item, this);
+//        title = (TextView) findViewById(R.id.title);
         volumeSeekBar = (SeekBar) findViewById(R.id.volumeSeekBar);
         ibMute = (ImageButton) findViewById(R.id.ibMute);
         ibMute.setImageResource(R.drawable.ic_speaker_icon);
         ibMute.setOnClickListener(this);
         ibOverflow = (ImageButton) findViewById(R.id.ibOverflow);
         ibOverflow.setOnClickListener(this);
-        setClient(client);
+        llVolume = (LinearLayout) findViewById(R.id.llVolume);
+        llVolume.setVisibility(GONE);
+        llClient = (LinearLayout) findViewById(R.id.llClient);
+        llClient.setLayoutParams(new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT));
+        tvStreamState = (TextView) findViewById(R.id.tvStreamState);
+        setGroup(group);
         volumeSeekBar.setOnSeekBarChangeListener(this);
         this.server = server;
+        stream = server.getStream(group.getStreamId());
         update();
     }
 
     private void update() {
-        Log.d(TAG, "update: " + client.getVisibleName() + ", connected: " + client.isConnected());
-        title.setText(client.getVisibleName());
-        title.setEnabled(client.isConnected());
-        volumeSeekBar.setProgress(client.getConfig().getVolume().getPercent());
+//        title.setText(group.getName());
+        llClient.removeAllViews();
+        for (Client client : group.getClients()) {
+            ClientItem clientItem = new ClientItem(this.getContext(), server, client);
+            clientItem.setListener(this);
+            llClient.addView(clientItem);
+        }
+        Log.d(TAG, "(tvStreamState == null): " + (tvStreamState == null) + " " + this.toString());
+
+        if ((tvStreamState == null) || (stream == null))
+            return;
+        tvStreamState.setText(stream.getName());
+/*        String codec = stream.getUri().getQuery().get("codec");
+        if (codec.contains(":"))
+            codec = codec.split(":")[0];
+        tvStreamState.setText(stream.getUri().getQuery().get("sampleformat") + " - " + codec + " - " + stream.getStatus().toString());
+*/
+
+        /*        title.setEnabled(group.isConnected());
+        volumeSeekBar.setProgress(group.getConfig().getVolume().getPercent());
         if (client.getConfig().getVolume().isMuted())
             ibMute.setImageResource(R.drawable.ic_mute_icon);
         else
             ibMute.setImageResource(R.drawable.ic_speaker_icon);
+*/
     }
 
-    public Client getClient() {
-        return client;
+    public Group getGroup() {
+        return group;
     }
 
-    public void setClient(final Client client) {
-        this.client = client;
+    public void setGroup(final Group group) {
+        this.group = group;
         update();
     }
 
-    public void setListener(ClientItemListener listener) {
+    public void setStream(Stream stream) {
+        Log.d(TAG, "setStream: " + stream.getName() + ", status: " + stream.getStatus());
+        this.stream = stream;
+        update();
+    }
+
+    public void setListener(GroupItemListener listener) {
         this.listener = listener;
     }
 
     @Override
     public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-        if (fromUser && (listener != null)) {
+/*        if (fromUser && (listener != null)) {
             Volume volume = new Volume(progress, false);
             client.setVolume(volume);
             listener.onVolumeChanged(this, volume.getPercent());
         }
+*/
     }
 
     @Override
@@ -144,7 +183,7 @@ public class ClientItem extends LinearLayout implements SeekBar.OnSeekBarChangeL
 
     @Override
     public boolean onMenuItemClick(MenuItem item) {
-        switch (item.getItemId()) {
+/*        switch (item.getItemId()) {
             case R.id.menu_details:
                 listener.onPropertiesClicked(this);
                 return true;
@@ -154,16 +193,45 @@ public class ClientItem extends LinearLayout implements SeekBar.OnSeekBarChangeL
             default:
                 return false;
         }
+*/
+        return false;
     }
 
-    public interface ClientItemListener {
-        void onVolumeChanged(ClientItem clientItem, int percent);
+    @Override
+    public void onVolumeChanged(ClientItem clientItem, int percent) {
+        if (listener != null)
+            listener.onVolumeChanged(this, clientItem, percent);
+    }
 
-        void onMute(ClientItem clientItem, boolean mute);
+    @Override
+    public void onMute(ClientItem clientItem, boolean mute) {
+        if (listener != null)
+            listener.onMute(this, clientItem, mute);
+    }
 
-        void onDeleteClicked(ClientItem clientItem);
+    @Override
+    public void onDeleteClicked(ClientItem clientItem) {
+        if (listener != null)
+            listener.onDeleteClicked(this, clientItem);
+    }
 
-        void onPropertiesClicked(ClientItem clientItem);
+    @Override
+    public void onPropertiesClicked(ClientItem clientItem) {
+        if (listener != null)
+            listener.onPropertiesClicked(this, clientItem);
+    }
+
+
+    public interface GroupItemListener {
+        void onVolumeChanged(GroupItem group, ClientItem clientItem, int percent);
+
+        void onMute(GroupItem group, ClientItem clientItem, boolean mute);
+
+        void onDeleteClicked(GroupItem group, ClientItem clientItem);
+
+        void onPropertiesClicked(GroupItem group, ClientItem clientItem);
+
+        void onStreamClicked(GroupItem group, Stream stream);
     }
 
 }

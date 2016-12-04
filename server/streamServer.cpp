@@ -115,8 +115,16 @@ void StreamServer::onMessageReceived(ControlSession* controlSession, const std::
 
 		json response;
 		ClientInfoPtr clientInfo = nullptr;
+		GroupPtr group = nullptr;
 		msg::ServerSettings serverSettings;
 		serverSettings.setBufferMs(settings_.bufferMs);
+
+		if (request.method.find("Group.Set") == 0)
+		{
+			group = Config::instance().getGroup(request.getParam("group").get<string>());
+			if (group == nullptr)
+				throw JsonInternalErrorException("Group not found", request.id);
+		}
 
 		if (request.method.find("Client.Set") == 0)
 		{
@@ -127,8 +135,9 @@ void StreamServer::onMessageReceived(ControlSession* controlSession, const std::
 
 		if (request.method == "Server.GetStatus")
 		{
+			/// TODO: rpc
 			string clientId = request.hasParam("client") ? request.getParam("client").get<string>() : "";
-			response = Config::instance().getServerStatus(clientId, streamManager_->toJson());
+			response = Config::instance().getServerStatus(/*clientId,*/ streamManager_->toJson());
 //			logO << response.dump(4);
 		}
 		else if (request.method == "Server.DeleteClient")
@@ -153,24 +162,25 @@ void StreamServer::onMessageReceived(ControlSession* controlSession, const std::
 			clientInfo->config.volume.muted = request.getParam<bool>("mute", false, true);
 			response = clientInfo->config.volume.muted;
 		}
-		else if (request.method == "Client.SetStream")
+		else if (request.method == "Group.SetStream")
 		{
-/* TODO: Group.SetStream
 			string streamId = request.getParam("id").get<string>();
 			PcmStreamPtr stream = streamManager_->getStream(streamId);
 			if (stream == nullptr)
 				throw JsonInternalErrorException("Stream not found", request.id);
 
-			clientInfo->config.streamId = streamId;
-			response = clientInfo->config.streamId;
+			group->streamId = streamId;
+			response = group->streamId;
 
-			session_ptr session = getStreamSession(request.getParam("client").get<string>());
-			if (session != nullptr)
+			for (auto client: group->clients)
 			{
-				session->sendAsync(stream->getHeader());
-				session->setPcmStream(stream);
+				session_ptr session = getStreamSession(client->id);
+				if (session != nullptr)
+				{
+					session->sendAsync(stream->getHeader());
+					session->setPcmStream(stream);
+				}
 			}
-*/
 		}
 		else if (request.method == "Client.SetLatency")
 		{
@@ -247,7 +257,6 @@ void StreamServer::onMessageReceived(StreamSession* connection, const msg::BaseM
 		logD << "request kServerSettings: " << connection->clientId << "\n";
 //		std::lock_guard<std::mutex> mlock(mutex_);
 		ClientInfoPtr client = Config::instance().addClientInfo(connection->clientId);
-
 		GroupPtr group = Config::instance().getGroup(client);
 
 		logD << "request kServerSettings\n";
@@ -289,6 +298,8 @@ void StreamServer::onMessageReceived(StreamSession* connection, const msg::BaseM
 		json notification = JsonNotification::getJson("Client.OnConnect", client->toJson());
 //		logO << notification.dump(4) << "\n";
 		controlServer_->send(notification.dump());
+//		cout << Config::instance().getServerStatus(streamManager_->toJson()).dump(4) << "\n";
+//		cout << group->toJson().dump(4) << "\n";
 	}
 }
 

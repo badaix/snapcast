@@ -94,6 +94,7 @@ public class ClientSettingsFragment extends PreferenceFragment {
         prefStream = (ListPreference) findPreference("pref_client_stream");
         prefStream.setEntries(streamNames);
         prefStream.setEntryValues(streamIds);
+/* TODO: group
         for (int i = 0; i < streams.size(); ++i) {
             if (streamIds[i].equals(client.getConfig().getStream())) {
                 prefStream.setSummary(streamNames[i]);
@@ -116,6 +117,7 @@ public class ClientSettingsFragment extends PreferenceFragment {
                 return false;
             }
         });
+*/
         prefMac = (Preference) findPreference("pref_client_mac");
         prefId = (Preference) findPreference("pref_client_id");
         prefIp = (Preference) findPreference("pref_client_ip");

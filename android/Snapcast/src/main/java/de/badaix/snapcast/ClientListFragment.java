@@ -27,17 +27,15 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
-import android.widget.TextView;
 
-import de.badaix.snapcast.control.json.Client;
+import de.badaix.snapcast.control.json.Group;
 import de.badaix.snapcast.control.json.ServerStatus;
-import de.badaix.snapcast.control.json.Stream;
 
 
 /**
  * A simple {@link Fragment} subclass.
  * Activities that contain this fragment must implement the
- * {@link ClientItem.ClientInfoItemListener} interface
+ * {@link GroupItem.GroupItemListener} interface
  * to handle interaction events.
  */
 public class ClientListFragment extends Fragment {
@@ -49,14 +47,10 @@ public class ClientListFragment extends Fragment {
     private static final String ARG_PARAM1 = "param1";
     private static final String ARG_PARAM2 = "param2";
 
-    // TODO: Rename and change types of parameters
-    private Stream stream;
-
-    private ClientItem.ClientInfoItemListener clientInfoItemListener;
-    private ClientInfoAdapter clientInfoAdapter;
+    private GroupItem.GroupItemListener groupItemListener;
+    private GroupAdapter groupAdapter;
     private ServerStatus serverStatus = null;
     private boolean hideOffline = false;
-    private TextView tvStreamState = null;
 
     public ClientListFragment() {
         // Required empty public constructor
@@ -93,35 +87,27 @@ public class ClientListFragment extends Fragment {
         // Inflate the layout for this fragment
         Log.d(TAG, "onCreateView: " + this.toString());
         View view = inflater.inflate(R.layout.fragment_client_list, container, false);
-        tvStreamState = (TextView) view.findViewById(R.id.tvStreamState);
-        ListView lvClient = (ListView) view.findViewById(R.id.lvClient);
-        clientInfoAdapter = new ClientInfoAdapter(getContext(), clientInfoItemListener);
-        clientInfoAdapter.setHideOffline(hideOffline);
-        clientInfoAdapter.updateServer(serverStatus);
-        lvClient.setAdapter(clientInfoAdapter);
+        ListView lvGroup = (ListView) view.findViewById(R.id.lvGroup);
+        groupAdapter = new GroupAdapter(getContext(), groupItemListener);
+        groupAdapter.setHideOffline(hideOffline);
+        groupAdapter.updateServer(serverStatus);
+        lvGroup.setAdapter(groupAdapter);
         updateGui();
         return view;
     }
 
 
     private void updateGui() {
-        Log.d(TAG, "(tvStreamState == null): " + (tvStreamState == null) + " " + this.toString());
-        if ((tvStreamState == null) || (stream == null))
-            return;
-        String codec = stream.getUri().getQuery().get("codec");
-        if (codec.contains(":"))
-            codec = codec.split(":")[0];
-        tvStreamState.setText(stream.getUri().getQuery().get("sampleformat") + " - " + codec + " - " + stream.getStatus().toString());
     }
 
     @Override
     public void onAttach(Context context) {
         super.onAttach(context);
-        if (context instanceof ClientItem.ClientInfoItemListener) {
-            clientInfoItemListener = (ClientItem.ClientInfoItemListener) context;
+        if (context instanceof GroupItem.GroupItemListener) {
+            groupItemListener = (GroupItem.GroupItemListener) context;
         } else {
             throw new RuntimeException(context.toString()
-                    + " must implement ClientInfoItemListener");
+                    + " must implement GroupItemListener");
         }
         updateGui();
     }
@@ -129,39 +115,28 @@ public class ClientListFragment extends Fragment {
     @Override
     public void onDetach() {
         super.onDetach();
-        clientInfoItemListener = null;
+        groupItemListener = null;
     }
 
     public void updateServer(ServerStatus serverStatus) {
         this.serverStatus = serverStatus;
-        if (clientInfoAdapter != null)
-            clientInfoAdapter.updateServer(this.serverStatus);
+        if (groupAdapter != null)
+            groupAdapter.updateServer(this.serverStatus);
     }
 
     public void setHideOffline(boolean hide) {
         this.hideOffline = hide;
-        if (clientInfoAdapter != null)
-            clientInfoAdapter.setHideOffline(hideOffline);
+        if (groupAdapter != null)
+            groupAdapter.setHideOffline(hideOffline);
     }
 
-    public String getName() {
-        return stream.getName();
-    }
-
-    public void setStream(Stream stream) {
-        Log.d(TAG, "setStream: " + stream.getName() + ", status: " + stream.getStatus());
-        this.stream = stream;
-        updateGui();
-    }
-
-
-    public class ClientInfoAdapter extends ArrayAdapter<Client> {
+    public class GroupAdapter extends ArrayAdapter<Group> {
         private Context context;
-        private ClientItem.ClientInfoItemListener listener;
+        private GroupItem.GroupItemListener listener;
         private boolean hideOffline = false;
         private ServerStatus serverStatus = new ServerStatus();
 
-        public ClientInfoAdapter(Context context, ClientItem.ClientInfoItemListener listener) {
+        public GroupAdapter(Context context, GroupItem.GroupItemListener listener) {
             super(context, 0);
             this.context = context;
             this.listener = listener;
@@ -169,22 +144,22 @@ public class ClientListFragment extends Fragment {
 
         @Override
         public View getView(int position, View convertView, ViewGroup parent) {
-            Client client = getItem(position);
-            final ClientItem clientItem;
+            Group group = getItem(position);
+            final GroupItem groupItem;
 
             if (convertView != null) {
-                clientItem = (ClientItem) convertView;
-                clientItem.setClient(client);
+                groupItem = (GroupItem) convertView;
+                groupItem.setGroup(group);
             } else {
-                clientItem = new ClientItem(context, serverStatus, client);
+                groupItem = new GroupItem(context, serverStatus, group);
             }
-            clientItem.setListener(listener);
-            return clientItem;
+            groupItem.setListener(listener);
+            return groupItem;
         }
 
         public void updateServer(final ServerStatus serverStatus) {
             if (serverStatus != null) {
-                ClientInfoAdapter.this.serverStatus = serverStatus;
+                GroupAdapter.this.serverStatus = serverStatus;
                 update();
             }
         }
@@ -192,10 +167,16 @@ public class ClientListFragment extends Fragment {
 
         public void update() {
             clear();
-            for (Client client : ClientInfoAdapter.this.serverStatus.getClientInfos()) {
-                if ((client != null) && (!hideOffline || client.isConnected()) && !client.isDeleted() && client.getConfig().getStream().equals(ClientListFragment.this.stream.getId()))
-                    add(client);
+// TODO: group
+            for (Group group : GroupAdapter.this.serverStatus.getGroups()) {
+                add(group);
+/*                for (Client client : group.getClients()) {
+                    if ((client != null) && (!hideOffline || client.isConnected()) && !client.isDeleted())// && client.getConfig().getStream().equals(ClientListFragment.this.stream.getId()))
+                        add(client);
+                }
+*/
             }
+
             if (getActivity() != null) {
                 ClientListFragment.this.getActivity().runOnUiThread(new Runnable() {
                     @Override

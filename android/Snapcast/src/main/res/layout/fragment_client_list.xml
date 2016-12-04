@@ -23,38 +23,19 @@
              android:layout_height="match_parent"
              tools:context="de.badaix.snapcast.ClientListFragment">
 
-
-    <RelativeLayout
+    <ListView
+        android:id="@+id/lvGroup"
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
-
-        <ListView
-            android:id="@+id/lvClient"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_above="@+id/tvStreamState"
-            android:layout_alignParentEnd="true"
-            android:layout_alignParentLeft="true"
-            android:layout_alignParentRight="true"
-            android:layout_alignParentStart="true"
-            android:layout_alignParentTop="true"
-            android:cacheColorHint="@android:color/transparent"
-            android:divider="@null"
-            android:dividerHeight="1dp"
-            android:listSelector="@android:color/transparent"/>
-
-        <TextView
-            android:id="@+id/tvStreamState"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_alignParentBottom="true"
-            android:layout_alignParentEnd="true"
-            android:layout_alignParentLeft="true"
-            android:layout_alignParentRight="true"
-            android:layout_alignParentStart="true"
-            android:padding="5dp"
-            android:text="Stream state"
-            android:textAppearance="?android:attr/textAppearanceMedium"/>
-    </RelativeLayout>
+        android:layout_height="match_parent"
+        android:layout_above="@+id/tvStreamState"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentTop="true"
+        android:cacheColorHint="@android:color/transparent"
+        android:divider="@null"
+        android:dividerHeight="1dp"
+        android:listSelector="@android:color/transparent"/>
 
 </FrameLayout>

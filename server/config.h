@@ -257,8 +257,11 @@ struct ClientInfo
 
 struct Group
 {
-	Group()
+	Group(const ClientInfoPtr client = nullptr)
 	{
+		if (client)
+			id = client->id;
+		id = generateUUID();
 	}
 
 	void fromJson(const json& j)
@@ -314,15 +317,16 @@ public:
 	void remove(ClientInfoPtr client);
 
 	GroupPtr getGroup(ClientInfoPtr client);
+	GroupPtr getGroup(const std::string& groupId) const;
 
-	json getClientInfos() const;
+//	json getClientInfos() const;
 	json getGroups() const;
-	json getServerStatus(const std::string& clientId, const json& streams) const;
+	json getServerStatus(const json& streams) const;
 
 	void save();
 
 	std::vector<GroupPtr> groups;
-	std::vector<ClientInfoPtr> clients;
+//	std::vector<ClientInfoPtr> clients;
 
 private:
 	Config();

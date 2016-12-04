@@ -88,27 +88,28 @@ public class ServerStatus implements JsonSerialisable {
             }
             return false;
         }
+*/
+    public boolean updateClient(Client client) {
+        if (client == null)
+            return false;
 
-        public boolean updateClient(Client client) {
-            if (client == null)
-                return false;
-
-            for (int i = 0; i < clients.size(); ++i) {
-                Client clientInfo = clients.get(i);
-                if (clientInfo == null)
+        for (Group group : groups) {
+            for (int i = 0; i < group.getClients().size(); ++i) {
+                Client c = group.getClients().get(i);
+                if (c == null)
                     continue;
 
-                if (client.getId().equals(clientInfo.getId())) {
-                    if (clientInfo.equals(client))
-                        return false;
-                    clients.set(i, client);
+                if (client.getId().equals(c.getId())) {
+                    if (client.equals(c))
+                        return true;
+                    group.getClients().set(i, client);
                     return true;
                 }
             }
-            clients.add(client);
-            return true;
         }
-    */
+        return false;
+    }
+
     public boolean updateStream(Stream stream) {
         if (stream == null)
             return false;
@@ -135,6 +136,13 @@ public class ServerStatus implements JsonSerialisable {
 
     public ArrayList<Stream> getStreams() {
         return streams;
+    }
+
+    public Stream getStream(String id) {
+        for (Stream s : streams)
+            if ((s != null) && (s.getId().equals(id)))
+                return s;
+        return null;
     }
 
     public JSONArray getJsonStreams() {
