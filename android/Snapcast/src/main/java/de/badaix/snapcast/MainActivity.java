@@ -581,13 +581,11 @@ public class MainActivity extends AppCompatActivity implements GroupItem.GroupIt
 
     @Override
     public void onStreamClicked(GroupItem groupItem, Stream stream) {
-/* TODO: group
-        Client client = clientItem.getClient();
-        client.getConfig().setStream(stream.getId());
-        remoteControl.setStream(client, client.getConfig().getStream());
-        serverStatus.updateClient(client);
-        sectionsPagerAdapter.updateServer(serverStatus);
-*/
+        Group group = groupItem.getGroup();
+        group.setStreamId(stream.getId());
+        remoteControl.setStream(group, stream.getId());
+        serverStatus.updateGroup(group);
+        clientListFragment.updateServer(serverStatus);
     }
 
 }

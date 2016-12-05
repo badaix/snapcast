@@ -110,6 +110,25 @@ public class ServerStatus implements JsonSerialisable {
         return false;
     }
 
+    public boolean updateGroup(Group group) {
+        if (group == null)
+            return false;
+
+        for (int i = 0; i < groups.size(); ++i) {
+            Group g = groups.get(i);
+            if (g == null)
+                continue;
+
+            if (group.getId().equals(g.getId())) {
+                if (g.equals(group))
+                    return false;
+                groups.set(i, group);
+                return true;
+            }
+        }
+        return false;
+    }
+
     public boolean updateStream(Stream stream) {
         if (stream == null)
             return false;

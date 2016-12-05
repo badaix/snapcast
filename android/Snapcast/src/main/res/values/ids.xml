@@ -2,4 +2,5 @@
 <resources>
     <item name="menu_details" type="id">1</item>
     <item name="menu_delete" type="id">2</item>
+    <item name="menu_group" type="id">3</item>
 </resources>

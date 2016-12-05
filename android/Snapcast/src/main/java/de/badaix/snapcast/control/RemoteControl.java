@@ -27,6 +27,7 @@ import org.json.JSONObject;
 import java.util.HashMap;
 
 import de.badaix.snapcast.control.json.Client;
+import de.badaix.snapcast.control.json.Group;
 import de.badaix.snapcast.control.json.ServerStatus;
 import de.badaix.snapcast.control.json.Stream;
 
@@ -207,9 +208,9 @@ public class RemoteControl implements TcpClient.TcpClientListener {
         }
     }
 
-    public void setStream(Client client, String id) {
+    public void setStream(Group group, String id) {
         try {
-            JSONObject request = jsonRequest("Client.SetStream", new JSONObject("{\"client\": \"" + client.getId() + "\", \"id\": \"" + id + "\"}"));
+            JSONObject request = jsonRequest("Group.SetStream", new JSONObject("{\"group\": \"" + group.getId() + "\", \"id\": \"" + id + "\"}"));
             tcpClient.sendMessage(request.toString());
         } catch (JSONException e) {
             e.printStackTrace();

@@ -7,6 +7,7 @@
     <string name="stop">stop</string>
     <string name="menu_details">Details</string>
     <string name="menu_delete">Delete</string>
+    <string name="menu_group">Group</string>
 
     <!-- TODO: Remove or change this placeholder text -->
     <string name="title_activity_snapcast">Snapcast</string>

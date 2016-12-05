@@ -20,8 +20,8 @@ package de.badaix.snapcast;
 
 import android.content.Context;
 import android.support.v7.widget.PopupMenu;
-import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.ImageButton;
@@ -52,7 +52,6 @@ public class GroupItem extends LinearLayout implements SeekBar.OnSeekBarChangeLi
     private ServerStatus server;
     private TextView tvStreamState = null;
     private GroupItemListener listener = null;
-    private Stream stream = null;
     private LinearLayout llVolume;
 
     public GroupItem(Context context, ServerStatus server, Group group) {
@@ -72,11 +71,9 @@ public class GroupItem extends LinearLayout implements SeekBar.OnSeekBarChangeLi
         llClient = (LinearLayout) findViewById(R.id.llClient);
         llClient.setLayoutParams(new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT));
         tvStreamState = (TextView) findViewById(R.id.tvStreamState);
-        setGroup(group);
         volumeSeekBar.setOnSeekBarChangeListener(this);
         this.server = server;
-        stream = server.getStream(group.getStreamId());
-        update();
+        setGroup(group);
     }
 
     private void update() {
@@ -87,8 +84,8 @@ public class GroupItem extends LinearLayout implements SeekBar.OnSeekBarChangeLi
             clientItem.setListener(this);
             llClient.addView(clientItem);
         }
-        Log.d(TAG, "(tvStreamState == null): " + (tvStreamState == null) + " " + this.toString());
 
+        Stream stream = server.getStream(group.getStreamId());
         if ((tvStreamState == null) || (stream == null))
             return;
         tvStreamState.setText(stream.getName());
@@ -96,9 +93,8 @@ public class GroupItem extends LinearLayout implements SeekBar.OnSeekBarChangeLi
         if (codec.contains(":"))
             codec = codec.split(":")[0];
         tvStreamState.setText(stream.getUri().getQuery().get("sampleformat") + " - " + codec + " - " + stream.getStatus().toString());
-*/
 
-        /*        title.setEnabled(group.isConnected());
+        title.setEnabled(group.isConnected());
         volumeSeekBar.setProgress(group.getConfig().getVolume().getPercent());
         if (client.getConfig().getVolume().isMuted())
             ibMute.setImageResource(R.drawable.ic_mute_icon);
@@ -113,12 +109,6 @@ public class GroupItem extends LinearLayout implements SeekBar.OnSeekBarChangeLi
 
     public void setGroup(final Group group) {
         this.group = group;
-        update();
-    }
-
-    public void setStream(Stream stream) {
-        Log.d(TAG, "setStream: " + stream.getName() + ", status: " + stream.getStatus());
-        this.stream = stream;
         update();
     }
 
@@ -143,21 +133,21 @@ public class GroupItem extends LinearLayout implements SeekBar.OnSeekBarChangeLi
             volume.setMuted(!volume.isMuted());
             update();
             listener.onMute(this, volume.isMuted());
-        } else if (v == ibOverflow) {
+        } else
+*/
+        if (v == ibOverflow) {
             PopupMenu popup = new PopupMenu(v.getContext(), v);
-            popup.getMenu().add(Menu.NONE, R.id.menu_details, 0, R.string.menu_details);
-            if (!client.isConnected())
-                popup.getMenu().add(Menu.NONE, R.id.menu_delete, 1, R.string.menu_delete);
+            popup.getMenu().add(Menu.NONE, R.id.menu_group, 0, R.string.menu_group);
             if ((server != null) && (server.getStreams().size() > 1)) {
                 int pos = 2;
                 for (final Stream stream : server.getStreams()) {
-                    if (client.getConfig().getStream().equals(stream.getId()))
+                    if (group.getStreamId().equals(stream.getId()))
                         continue;
                     final MenuItem menuItem = popup.getMenu().add(Menu.NONE, Menu.NONE, pos, stream.getName());
                     menuItem.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
                         @Override
                         public boolean onMenuItemClick(MenuItem item) {
-                            listener.onStreamClicked(ClientItem.this, stream);
+                            listener.onStreamClicked(GroupItem.this, stream);
                             return true;
                         }
                     });
@@ -168,7 +158,6 @@ public class GroupItem extends LinearLayout implements SeekBar.OnSeekBarChangeLi
             popup.setOnMenuItemClickListener(this);
             popup.show();
         }
-*/
     }
 
     @Override

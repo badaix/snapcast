@@ -22,6 +22,7 @@ import android.content.Context;
 import android.support.v7.widget.PopupMenu;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.ImageButton;
@@ -31,7 +32,6 @@ import android.widget.TextView;
 
 import de.badaix.snapcast.control.json.Client;
 import de.badaix.snapcast.control.json.ServerStatus;
-import de.badaix.snapcast.control.json.Stream;
 import de.badaix.snapcast.control.json.Volume;
 
 public class ClientItem extends LinearLayout implements SeekBar.OnSeekBarChangeListener, View.OnClickListener, PopupMenu.OnMenuItemClickListener {
@@ -58,10 +58,9 @@ public class ClientItem extends LinearLayout implements SeekBar.OnSeekBarChangeL
         ibMute.setOnClickListener(this);
         ibOverflow = (ImageButton) findViewById(R.id.ibOverflow);
         ibOverflow.setOnClickListener(this);
-        setClient(client);
         volumeSeekBar.setOnSeekBarChangeListener(this);
         this.server = server;
-        update();
+        setClient(client);
     }
 
     private void update() {
@@ -99,7 +98,7 @@ public class ClientItem extends LinearLayout implements SeekBar.OnSeekBarChangeL
 
     @Override
     public void onClick(View v) {
-/* TODO: group        if (v == ibMute) {
+        if (v == ibMute) {
             Volume volume = client.getConfig().getVolume();
             volume.setMuted(!volume.isMuted());
             update();
@@ -109,27 +108,9 @@ public class ClientItem extends LinearLayout implements SeekBar.OnSeekBarChangeL
             popup.getMenu().add(Menu.NONE, R.id.menu_details, 0, R.string.menu_details);
             if (!client.isConnected())
                 popup.getMenu().add(Menu.NONE, R.id.menu_delete, 1, R.string.menu_delete);
-            if ((server != null) && (server.getStreams().size() > 1)) {
-                int pos = 2;
-                for (final Stream stream : server.getStreams()) {
-                    if (client.getConfig().getStream().equals(stream.getId()))
-                        continue;
-                    final MenuItem menuItem = popup.getMenu().add(Menu.NONE, Menu.NONE, pos, stream.getName());
-                    menuItem.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
-                        @Override
-                        public boolean onMenuItemClick(MenuItem item) {
-                            listener.onStreamClicked(ClientItem.this, stream);
-                            return true;
-                        }
-                    });
-
-                    ++pos;
-                }
-            }
             popup.setOnMenuItemClickListener(this);
             popup.show();
         }
-*/
     }
 
     @Override
