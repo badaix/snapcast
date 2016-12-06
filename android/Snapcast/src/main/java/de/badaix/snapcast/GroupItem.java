@@ -172,18 +172,13 @@ public class GroupItem extends LinearLayout implements SeekBar.OnSeekBarChangeLi
 
     @Override
     public boolean onMenuItemClick(MenuItem item) {
-/*        switch (item.getItemId()) {
-            case R.id.menu_details:
+        switch (item.getItemId()) {
+            case R.id.menu_group:
                 listener.onPropertiesClicked(this);
-                return true;
-            case R.id.menu_delete:
-                listener.onDeleteClicked(this);
                 return true;
             default:
                 return false;
         }
-*/
-        return false;
     }
 
     @Override
@@ -207,7 +202,7 @@ public class GroupItem extends LinearLayout implements SeekBar.OnSeekBarChangeLi
     @Override
     public void onPropertiesClicked(ClientItem clientItem) {
         if (listener != null)
-            listener.onPropertiesClicked(this, clientItem);
+            listener.onClientPropertiesClicked(this, clientItem);
     }
 
 
@@ -218,7 +213,9 @@ public class GroupItem extends LinearLayout implements SeekBar.OnSeekBarChangeLi
 
         void onDeleteClicked(GroupItem group, ClientItem clientItem);
 
-        void onPropertiesClicked(GroupItem group, ClientItem clientItem);
+        void onClientPropertiesClicked(GroupItem group, ClientItem clientItem);
+
+        void onPropertiesClicked(GroupItem group);
 
         void onStreamClicked(GroupItem group, Stream stream);
     }

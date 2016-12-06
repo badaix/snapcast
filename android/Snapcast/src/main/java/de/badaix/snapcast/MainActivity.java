@@ -59,6 +59,7 @@ import de.badaix.snapcast.utils.Setup;
 public class MainActivity extends AppCompatActivity implements GroupItem.GroupItemListener, RemoteControl.RemoteControlListener, SnapclientService.SnapclientListener, NsdHelper.NsdHelperListener {
 
     static final int CLIENT_PROPERTIES_REQUEST = 1;
+    static final int GROUP_PROPERTIES_REQUEST = 2;
     private static final String TAG = "Main";
     private static final String SERVICE_NAME = "Snapcast";// #2";
     boolean bound = false;
@@ -571,12 +572,20 @@ public class MainActivity extends AppCompatActivity implements GroupItem.GroupIt
     }
 
     @Override
-    public void onPropertiesClicked(GroupItem groupItem, ClientItem clientItem) {
+    public void onClientPropertiesClicked(GroupItem groupItem, ClientItem clientItem) {
         Intent intent = new Intent(this, ClientSettingsActivity.class);
         intent.putExtra("client", clientItem.getClient().toJson().toString());
         intent.putExtra("streams", serverStatus.getJsonStreams().toString());
         intent.setFlags(0);
         startActivityForResult(intent, CLIENT_PROPERTIES_REQUEST);
+    }
+
+    @Override
+    public void onPropertiesClicked(GroupItem groupItem) {
+        Intent intent = new Intent(this, GroupPreferenceActivity.class);
+        intent.putExtra("test", "xxx");
+        intent.setFlags(0);
+        startActivityForResult(intent, GROUP_PROPERTIES_REQUEST);
     }
 
     @Override
