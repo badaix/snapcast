@@ -42,7 +42,6 @@ public class ClientSettingsFragment extends PreferenceFragment {
     private Client client = null;
     private Client clientOriginal = null;
     private EditTextPreference prefName;
-    private ListPreference prefStream;
     private EditTextPreference prefLatency;
     private Preference prefMac;
     private Preference prefId;
@@ -57,6 +56,7 @@ public class ClientSettingsFragment extends PreferenceFragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+/*
         Bundle bundle = getArguments();
         try {
             client = new Client(new JSONObject(bundle.getString("client")));
@@ -79,6 +79,7 @@ public class ClientSettingsFragment extends PreferenceFragment {
             streamNames[i] = streams.get(i).getName();
             streamIds[i] = streams.get(i).getId();
         }
+*/
 
         // Load the preferences from an XML resource
         addPreferencesFromResource(R.xml.client_preferences);
@@ -91,10 +92,11 @@ public class ClientSettingsFragment extends PreferenceFragment {
                 return true;
             }
         });
+/*
         prefStream = (ListPreference) findPreference("pref_client_stream");
         prefStream.setEntries(streamNames);
         prefStream.setEntryValues(streamIds);
-/* TODO: group
+
         for (int i = 0; i < streams.size(); ++i) {
             if (streamIds[i].equals(client.getConfig().getStream())) {
                 prefStream.setSummary(streamNames[i]);

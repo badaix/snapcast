@@ -33,9 +33,11 @@ public class GroupPreferenceActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        GroupPreferenceFragment groupPreferenceFragment = new GroupPreferenceFragment();
+        groupPreferenceFragment.setArguments(getIntent().getExtras());
         // Display the fragment as the main content.
         getFragmentManager().beginTransaction()
-                .replace(android.R.id.content, new GroupPreferenceFragment()).commit();
+                .replace(android.R.id.content, groupPreferenceFragment).commit();
     }
 
     @Override

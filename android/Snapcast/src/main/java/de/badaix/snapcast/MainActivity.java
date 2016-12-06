@@ -575,7 +575,6 @@ public class MainActivity extends AppCompatActivity implements GroupItem.GroupIt
     public void onClientPropertiesClicked(GroupItem groupItem, ClientItem clientItem) {
         Intent intent = new Intent(this, ClientSettingsActivity.class);
         intent.putExtra("client", clientItem.getClient().toJson().toString());
-        intent.putExtra("streams", serverStatus.getJsonStreams().toString());
         intent.setFlags(0);
         startActivityForResult(intent, CLIENT_PROPERTIES_REQUEST);
     }
@@ -583,7 +582,8 @@ public class MainActivity extends AppCompatActivity implements GroupItem.GroupIt
     @Override
     public void onPropertiesClicked(GroupItem groupItem) {
         Intent intent = new Intent(this, GroupPreferenceActivity.class);
-        intent.putExtra("test", "xxx");
+        intent.putExtra("serverStatus", serverStatus.toJson().toString());
+        intent.putExtra("group", groupItem.getGroup().toJson().toString());
         intent.setFlags(0);
         startActivityForResult(intent, GROUP_PROPERTIES_REQUEST);
     }

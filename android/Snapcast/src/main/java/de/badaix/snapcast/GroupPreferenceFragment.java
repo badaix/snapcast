@@ -26,12 +26,24 @@ import android.preference.PreferenceCategory;
 import android.preference.PreferenceFragment;
 import android.preference.PreferenceScreen;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.util.ArrayList;
+
+import de.badaix.snapcast.control.json.Client;
+import de.badaix.snapcast.control.json.Group;
+import de.badaix.snapcast.control.json.ServerStatus;
+import de.badaix.snapcast.control.json.Stream;
+
 /**
  * Created by johannes on 06.12.16.
  */
 
 public class GroupPreferenceFragment extends PreferenceFragment {
     private ListPreference prefStreams;
+    private Group group = null;
+    private ServerStatus serverStatus = null;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -42,28 +54,61 @@ public class GroupPreferenceFragment extends PreferenceFragment {
         PreferenceScreen screen = this.getPreferenceScreen();
 
         prefStreams = (ListPreference) findPreference("pref_stream");
-        final CharSequence[] entries = { "English", "French" };
-        final CharSequence[] entryValues = {"1" , "2"};
-        prefStreams.setEntries(entries);
-        prefStreams.setDefaultValue("1");
-        prefStreams.setEntryValues(entryValues);
+
+        Bundle bundle = getArguments();
+        try {
+            group = new Group(new JSONObject(bundle.getString("group")));
+            serverStatus = new ServerStatus(new JSONObject(bundle.getString("serverStatus")));
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+        final ArrayList<Stream> streams = serverStatus.getStreams();
+        final CharSequence[] streamNames = new CharSequence[streams.size()];
+        final CharSequence[] streamIds = new CharSequence[streams.size()];
+        for (int i = 0; i < streams.size(); ++i) {
+            streamNames[i] = streams.get(i).getName();
+            streamIds[i] = streams.get(i).getId();
+        }
+
+        prefStreams.setEntries(streamNames);
+        prefStreams.setEntryValues(streamIds);
+
+        for (int i = 0; i < streams.size(); ++i) {
+            if (streamIds[i].equals(group.getStreamId())) {
+                prefStreams.setTitle(streamNames[i]);
+                prefStreams.setValueIndex(i);
+                break;
+            }
+        }
+
         prefStreams.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
             @Override
             public boolean onPreferenceChange(Preference preference, Object newValue) {
-                preference.setSummary(newValue.toString());
-                prefStreams.setTitle(entries[prefStreams.findIndexOfValue(newValue.toString())]);
-                return true;
+                for (int i = 0; i < streams.size(); ++i) {
+                    if (streamIds[i].equals(newValue)) {
+                        prefStreams.setTitle(streamNames[i]);
+//                        client.getConfig().setStream(streamIds[i].toString());
+                        prefStreams.setValueIndex(i);
+                        break;
+                    }
+                }
+
+                return false;
             }
         });
 
+
         PreferenceCategory prefStream = (PreferenceCategory) findPreference("pref_cat_clients");
 
-        for (int i=0; i<3; ++i) {
-            CheckBoxPreference checkBoxPref = new CheckBoxPreference(screen.getContext());
-            checkBoxPref.setKey("key" + i);
-            checkBoxPref.setTitle("Title " + i);
-            checkBoxPref.setChecked(true);
-            prefStream.addPreference(checkBoxPref);
+        for (Group g : serverStatus.getGroups()) {
+            for (Client client : g.getClients()) {
+                CheckBoxPreference checkBoxPref = new CheckBoxPreference(screen.getContext());
+                checkBoxPref.setKey(client.getId());
+                checkBoxPref.setTitle(client.getVisibleName());
+                checkBoxPref.setChecked(g.getId().equals(group.getId()));
+                prefStream.addPreference(checkBoxPref);
+            }
         }
     }
 }
