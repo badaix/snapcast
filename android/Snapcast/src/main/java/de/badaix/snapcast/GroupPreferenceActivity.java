@@ -29,11 +29,14 @@ import android.view.MenuItem;
  */
 
 public class GroupPreferenceActivity extends AppCompatActivity {
+
+    private GroupPreferenceFragment groupPreferenceFragment;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        GroupPreferenceFragment groupPreferenceFragment = new GroupPreferenceFragment();
+        groupPreferenceFragment = new GroupPreferenceFragment();
         groupPreferenceFragment.setArguments(getIntent().getExtras());
         // Display the fragment as the main content.
         getFragmentManager().beginTransaction()
@@ -52,8 +55,10 @@ public class GroupPreferenceActivity extends AppCompatActivity {
     @Override
     public void onBackPressed() {
         Intent intent = new Intent();
-//        intent.putExtra("client", clientSettingsFragment.getClient().toJson().toString());
-//        intent.putExtra("clientOriginal", clientSettingsFragment.getOriginalClientInfo().toJson().toString());
+
+        intent.putStringArrayListExtra("clients", groupPreferenceFragment.getClients());
+        intent.putExtra("stream", groupPreferenceFragment.getStream());
+        intent.putExtra("group", groupPreferenceFragment.getGroup().getId());
         setResult(Activity.RESULT_OK, intent);
         finish();
     }

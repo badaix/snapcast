@@ -209,8 +209,12 @@ public class RemoteControl implements TcpClient.TcpClientListener {
     }
 
     public void setStream(Group group, String id) {
+        setStream(group.getId(), id);
+    }
+
+    public void setStream(String group, String id) {
         try {
-            JSONObject request = jsonRequest("Group.SetStream", new JSONObject("{\"group\": \"" + group.getId() + "\", \"id\": \"" + id + "\"}"));
+            JSONObject request = jsonRequest("Group.SetStream", new JSONObject("{\"group\": \"" + group + "\", \"id\": \"" + id + "\"}"));
             tcpClient.sendMessage(request.toString());
         } catch (JSONException e) {
             e.printStackTrace();

@@ -56,7 +56,6 @@ public class ClientSettingsFragment extends PreferenceFragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-/*
         Bundle bundle = getArguments();
         try {
             client = new Client(new JSONObject(bundle.getString("client")));
@@ -64,22 +63,6 @@ public class ClientSettingsFragment extends PreferenceFragment {
             e.printStackTrace();
         }
         clientOriginal = new Client(client.toJson());
-        final ArrayList<Stream> streams = new ArrayList<>();
-        try {
-            JSONArray jsonArray = new JSONArray(bundle.getString("streams"));
-            for (int i = 0; i < jsonArray.length(); i++)
-                streams.add(new Stream(jsonArray.getJSONObject(i)));
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
-
-        final CharSequence[] streamNames = new CharSequence[streams.size()];
-        final CharSequence[] streamIds = new CharSequence[streams.size()];
-        for (int i = 0; i < streams.size(); ++i) {
-            streamNames[i] = streams.get(i).getName();
-            streamIds[i] = streams.get(i).getId();
-        }
-*/
 
         // Load the preferences from an XML resource
         addPreferencesFromResource(R.xml.client_preferences);
@@ -92,34 +75,7 @@ public class ClientSettingsFragment extends PreferenceFragment {
                 return true;
             }
         });
-/*
-        prefStream = (ListPreference) findPreference("pref_client_stream");
-        prefStream.setEntries(streamNames);
-        prefStream.setEntryValues(streamIds);
 
-        for (int i = 0; i < streams.size(); ++i) {
-            if (streamIds[i].equals(client.getConfig().getStream())) {
-                prefStream.setSummary(streamNames[i]);
-                prefStream.setValueIndex(i);
-                break;
-            }
-        }
-        prefStream.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
-            @Override
-            public boolean onPreferenceChange(Preference preference, Object newValue) {
-                for (int i = 0; i < streams.size(); ++i) {
-                    if (streamIds[i].equals(newValue)) {
-                        prefStream.setSummary(streamNames[i]);
-                        client.getConfig().setStream(streamIds[i].toString());
-                        prefStream.setValueIndex(i);
-                        break;
-                    }
-                }
-
-                return false;
-            }
-        });
-*/
         prefMac = (Preference) findPreference("pref_client_mac");
         prefId = (Preference) findPreference("pref_client_id");
         prefIp = (Preference) findPreference("pref_client_ip");

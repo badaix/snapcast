@@ -4,10 +4,6 @@
         android:key="pref_client_name"
         android:summary="name"
         android:title="@string/client_name"/>
-    <ListPreference
-        android:key="pref_client_stream"
-        android:summary="stream"
-        android:title="@string/client_stream"/>
     <EditTextPreference
         android:inputType="numberSigned"
         android:key="pref_client_latency"

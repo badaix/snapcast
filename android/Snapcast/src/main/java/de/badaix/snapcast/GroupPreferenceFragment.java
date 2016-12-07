@@ -25,6 +25,7 @@ import android.preference.Preference;
 import android.preference.PreferenceCategory;
 import android.preference.PreferenceFragment;
 import android.preference.PreferenceScreen;
+import android.util.Log;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -41,9 +42,14 @@ import de.badaix.snapcast.control.json.Stream;
  */
 
 public class GroupPreferenceFragment extends PreferenceFragment {
+
+    private static final String TAG = "GroupPreferenceFragment";
+
     private ListPreference prefStreams;
     private Group group = null;
     private ServerStatus serverStatus = null;
+    private PreferenceCategory prefCatClients = null;
+
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -99,7 +105,7 @@ public class GroupPreferenceFragment extends PreferenceFragment {
         });
 
 
-        PreferenceCategory prefStream = (PreferenceCategory) findPreference("pref_cat_clients");
+        prefCatClients = (PreferenceCategory) findPreference("pref_cat_clients");
 
         for (Group g : serverStatus.getGroups()) {
             for (Client client : g.getClients()) {
@@ -107,8 +113,27 @@ public class GroupPreferenceFragment extends PreferenceFragment {
                 checkBoxPref.setKey(client.getId());
                 checkBoxPref.setTitle(client.getVisibleName());
                 checkBoxPref.setChecked(g.getId().equals(group.getId()));
-                prefStream.addPreference(checkBoxPref);
+                checkBoxPref.setPersistent(false);
+                prefCatClients.addPreference(checkBoxPref);
             }
         }
+    }
+
+    public ArrayList<String> getClients() {
+        ArrayList<String> clients = new ArrayList<>();
+        for (int i=0; i<prefCatClients.getPreferenceCount(); ++i) {
+            CheckBoxPreference checkBoxPref = (CheckBoxPreference) prefCatClients.getPreference(i);
+            if (checkBoxPref.isChecked())
+                clients.add(checkBoxPref.getKey());
+        }
+        return clients;
+    }
+
+    public String getStream() {
+        return prefStreams.getValue();
+    }
+
+    public Group getGroup() {
+        return group;
     }
 }

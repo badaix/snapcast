@@ -45,7 +45,11 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.WindowManager;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.net.UnknownHostException;
+import java.util.ArrayList;
 
 import de.badaix.snapcast.control.RemoteControl;
 import de.badaix.snapcast.control.json.Client;
@@ -384,13 +388,14 @@ public class MainActivity extends AppCompatActivity implements GroupItem.GroupIt
             return;
         }
         if (requestCode == CLIENT_PROPERTIES_REQUEST) {
-/* TODO: group            Client client = null;
+            Client client = null;
             try {
                 client = new Client(new JSONObject(data.getStringExtra("client")));
             } catch (JSONException e) {
                 e.printStackTrace();
                 return;
             }
+
             Client clientOriginal = null;
             try {
                 clientOriginal = new Client(new JSONObject(data.getStringExtra("clientOriginal")));
@@ -401,15 +406,30 @@ public class MainActivity extends AppCompatActivity implements GroupItem.GroupIt
             Log.d(TAG, "new name: " + client.getConfig().getName() + ", old name: " + clientOriginal.getConfig().getName());
             if (!client.getConfig().getName().equals(clientOriginal.getConfig().getName()))
                 remoteControl.setName(client, client.getConfig().getName());
-            Log.d(TAG, "new stream: " + client.getConfig().getStream() + ", old stream: " + clientOriginal.getConfig().getStream());
-            if (!client.getConfig().getStream().equals(clientOriginal.getConfig().getStream()))
-                remoteControl.setStream(client, client.getConfig().getStream());
             Log.d(TAG, "new latency: " + client.getConfig().getLatency() + ", old latency: " + clientOriginal.getConfig().getLatency());
             if (client.getConfig().getLatency() != clientOriginal.getConfig().getLatency())
                 remoteControl.setLatency(client, client.getConfig().getLatency());
             serverStatus.updateClient(client);
-            sectionsPagerAdapter.updateServer(serverStatus);
-*/
+            MainActivity.this.runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    clientListFragment.updateServer(MainActivity.this.serverStatus);
+                }
+            });
+        } else if (requestCode == GROUP_PROPERTIES_REQUEST) {
+            ArrayList<String> clients = data.getStringArrayListExtra("client");
+            String streamId = data.getStringExtra("stream");
+            String groupId = data.getStringExtra("group");
+            remoteControl.setStream(groupId, streamId);
+            Group group = serverStatus.getGroup(groupId);
+            group.setStreamId(streamId);
+            serverStatus.updateGroup(group);
+            MainActivity.this.runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    clientListFragment.updateServer(MainActivity.this.serverStatus);
+                }
+            });
         }
     }
 

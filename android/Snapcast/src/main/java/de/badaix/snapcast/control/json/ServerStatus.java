@@ -164,6 +164,13 @@ public class ServerStatus implements JsonSerialisable {
         return null;
     }
 
+    public Group getGroup(String id) {
+        for (Group g : groups)
+            if ((g != null) && (g.getId().equals(id)))
+                return g;
+        return null;
+    }
+
     public JSONArray getJsonStreams() {
         JSONArray jsonArray = new JSONArray();
         for (Stream stream : streams)
