@@ -21,9 +21,11 @@ package de.badaix.snapcast.control;
 import android.text.TextUtils;
 import android.util.Log;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 
 import de.badaix.snapcast.control.json.Client;
@@ -212,9 +214,24 @@ public class RemoteControl implements TcpClient.TcpClientListener {
         setStream(group.getId(), id);
     }
 
-    public void setStream(String group, String id) {
+    public void setClients(String groupId, ArrayList<String> clientIds) {
         try {
-            JSONObject request = jsonRequest("Group.SetStream", new JSONObject("{\"group\": \"" + group + "\", \"id\": \"" + id + "\"}"));
+            JSONArray clients = new JSONArray();
+            for (String clientId: clientIds)
+                clients.put(clientId);
+            JSONObject body = new JSONObject();
+            body.put("group", groupId);
+            body.put("clients", clients);
+            JSONObject request = jsonRequest("Group.SetClients", body);
+            tcpClient.sendMessage(request.toString());
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void setStream(String groupId, String id) {
+        try {
+            JSONObject request = jsonRequest("Group.SetStream", new JSONObject("{\"group\": \"" + groupId + "\", \"id\": \"" + id + "\"}"));
             tcpClient.sendMessage(request.toString());
         } catch (JSONException e) {
             e.printStackTrace();

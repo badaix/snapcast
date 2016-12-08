@@ -417,10 +417,12 @@ public class MainActivity extends AppCompatActivity implements GroupItem.GroupIt
                 }
             });
         } else if (requestCode == GROUP_PROPERTIES_REQUEST) {
-            ArrayList<String> clients = data.getStringArrayListExtra("client");
+            ArrayList<String> clients = data.getStringArrayListExtra("clients");
+            Log.d(TAG, "clients: " + clients);
             String streamId = data.getStringExtra("stream");
             String groupId = data.getStringExtra("group");
             remoteControl.setStream(groupId, streamId);
+            remoteControl.setClients(groupId, clients);
             Group group = serverStatus.getGroup(groupId);
             group.setStreamId(streamId);
             serverStatus.updateGroup(group);
