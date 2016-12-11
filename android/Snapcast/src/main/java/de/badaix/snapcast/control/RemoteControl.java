@@ -217,7 +217,7 @@ public class RemoteControl implements TcpClient.TcpClientListener {
     public void setClients(String groupId, ArrayList<String> clientIds) {
         try {
             JSONArray clients = new JSONArray();
-            for (String clientId: clientIds)
+            for (String clientId : clientIds)
                 clients.put(clientId);
             JSONObject body = new JSONObject();
             body.put("group", groupId);

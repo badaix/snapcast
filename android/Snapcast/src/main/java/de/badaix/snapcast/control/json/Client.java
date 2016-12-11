@@ -24,7 +24,7 @@ import org.json.JSONObject;
 /**
  * Created by johannes on 06.01.16.
  */
-public class Client implements JsonSerialisable, Comparable<Client>  {
+public class Client implements JsonSerialisable, Comparable<Client> {
     private Host host;
     private Snapclient snapclient;
     private ClientConfig config;

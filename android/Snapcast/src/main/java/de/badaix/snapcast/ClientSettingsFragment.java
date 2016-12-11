@@ -20,20 +20,15 @@ package de.badaix.snapcast;
 
 import android.os.Bundle;
 import android.preference.EditTextPreference;
-import android.preference.ListPreference;
 import android.preference.Preference;
 import android.preference.PreferenceFragment;
 import android.text.TextUtils;
 import android.text.format.DateUtils;
 
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.util.ArrayList;
-
 import de.badaix.snapcast.control.json.Client;
-import de.badaix.snapcast.control.json.Stream;
 
 /**
  * Created by johannes on 11.01.16.
