@@ -19,10 +19,7 @@
 package de.badaix.snapcast;
 
 import android.content.Context;
-import android.support.v7.widget.PopupMenu;
 import android.view.LayoutInflater;
-import android.view.Menu;
-import android.view.MenuItem;
 import android.view.View;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
@@ -39,14 +36,14 @@ import de.badaix.snapcast.control.json.Stream;
  */
 
 
-public class GroupItem extends LinearLayout implements SeekBar.OnSeekBarChangeListener, View.OnClickListener, PopupMenu.OnMenuItemClickListener, ClientItem.ClientItemListener {
+public class GroupItem extends LinearLayout implements SeekBar.OnSeekBarChangeListener, View.OnClickListener, ClientItem.ClientItemListener {
 
     private static final String TAG = "GroupItem";
 
     //    private TextView title;
     private SeekBar volumeSeekBar;
     private ImageButton ibMute;
-    private ImageButton ibOverflow;
+    private ImageButton ibSettings;
     private LinearLayout llClient;
     private Group group;
     private ServerStatus server;
@@ -64,8 +61,9 @@ public class GroupItem extends LinearLayout implements SeekBar.OnSeekBarChangeLi
         ibMute = (ImageButton) findViewById(R.id.ibMute);
         ibMute.setImageResource(R.drawable.ic_speaker_icon);
         ibMute.setOnClickListener(this);
-        ibOverflow = (ImageButton) findViewById(R.id.ibOverflow);
-        ibOverflow.setOnClickListener(this);
+        ibSettings = (ImageButton) findViewById(R.id.ibSettings);
+        ibSettings.setImageAlpha(138);
+        ibSettings.setOnClickListener(this);
         llVolume = (LinearLayout) findViewById(R.id.llVolume);
         llVolume.setVisibility(GONE);
         llClient = (LinearLayout) findViewById(R.id.llClient);
@@ -135,28 +133,8 @@ public class GroupItem extends LinearLayout implements SeekBar.OnSeekBarChangeLi
             listener.onMute(this, volume.isMuted());
         } else
 */
-        if (v == ibOverflow) {
-            PopupMenu popup = new PopupMenu(v.getContext(), v);
-            popup.getMenu().add(Menu.NONE, R.id.menu_group, 0, R.string.menu_group);
-            if ((server != null) && (server.getStreams().size() > 1)) {
-                int pos = 2;
-                for (final Stream stream : server.getStreams()) {
-                    if (group.getStreamId().equals(stream.getId()))
-                        continue;
-                    final MenuItem menuItem = popup.getMenu().add(Menu.NONE, Menu.NONE, pos, stream.getName());
-                    menuItem.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
-                        @Override
-                        public boolean onMenuItemClick(MenuItem item) {
-                            listener.onStreamClicked(GroupItem.this, stream);
-                            return true;
-                        }
-                    });
-
-                    ++pos;
-                }
-            }
-            popup.setOnMenuItemClickListener(this);
-            popup.show();
+        if (v == ibSettings) {
+            listener.onPropertiesClicked(this);
         }
     }
 
@@ -168,17 +146,6 @@ public class GroupItem extends LinearLayout implements SeekBar.OnSeekBarChangeLi
     @Override
     public void onStopTrackingTouch(SeekBar seekBar) {
 
-    }
-
-    @Override
-    public boolean onMenuItemClick(MenuItem item) {
-        switch (item.getItemId()) {
-            case R.id.menu_group:
-                listener.onPropertiesClicked(this);
-                return true;
-            default:
-                return false;
-        }
     }
 
     @Override
