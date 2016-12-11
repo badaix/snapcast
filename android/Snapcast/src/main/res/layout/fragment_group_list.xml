@@ -21,7 +21,7 @@
              xmlns:tools="http://schemas.android.com/tools"
              android:layout_width="match_parent"
              android:layout_height="match_parent"
-             tools:context="de.badaix.snapcast.ClientListFragment">
+             tools:context="de.badaix.snapcast.GroupListFragment">
 
     <ListView
         android:id="@+id/lvGroup"

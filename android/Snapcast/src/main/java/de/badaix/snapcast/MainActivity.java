@@ -75,7 +75,7 @@ public class MainActivity extends AppCompatActivity implements GroupItem.GroupIt
     private RemoteControl remoteControl = null;
     private ServerStatus serverStatus = null;
     private SnapclientService snapclientService;
-    private ClientListFragment clientListFragment;
+    private GroupListFragment groupListFragment;
     private TabLayout tabLayout;
     private Snackbar warningSamplerateSnackbar = null;
     private int nativeSampleRate = 0;
@@ -130,7 +130,7 @@ public class MainActivity extends AppCompatActivity implements GroupItem.GroupIt
         // Create the adapter that will return a fragment for each of the three
         // primary sections of the activity.
 
-        clientListFragment = (ClientListFragment) getSupportFragmentManager().findFragmentById(R.id.clientListFragment);
+        groupListFragment = (GroupListFragment) getSupportFragmentManager().findFragmentById(R.id.groupListFragment);
 
         setActionbarSubtitle("Host: no Snapserver found");
 
@@ -409,7 +409,7 @@ public class MainActivity extends AppCompatActivity implements GroupItem.GroupIt
             if (client.getConfig().getLatency() != clientOriginal.getConfig().getLatency())
                 remoteControl.setLatency(client, client.getConfig().getLatency());
             serverStatus.updateClient(client);
-            clientListFragment.updateServer(MainActivity.this.serverStatus);
+            groupListFragment.updateServer(MainActivity.this.serverStatus);
         } else if (requestCode == GROUP_PROPERTIES_REQUEST) {
             ArrayList<String> clients = data.getStringArrayListExtra("clients");
             Log.d(TAG, "clients: " + clients);
@@ -424,7 +424,7 @@ public class MainActivity extends AppCompatActivity implements GroupItem.GroupIt
             MainActivity.this.runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    clientListFragment.updateServer(MainActivity.this.serverStatus);
+                    groupListFragment.updateServer(MainActivity.this.serverStatus);
                 }
             });
  */
@@ -447,7 +447,7 @@ public class MainActivity extends AppCompatActivity implements GroupItem.GroupIt
     public void onDisconnected(RemoteControl remoteControl, Exception e) {
         Log.d(TAG, "onDisconnected");
         serverStatus = new ServerStatus();
-        clientListFragment.updateServer(serverStatus);
+        groupListFragment.updateServer(serverStatus);
         if (e != null) {
             if (e instanceof UnknownHostException)
                 setActionbarSubtitle("error: unknown host");
@@ -475,7 +475,7 @@ public class MainActivity extends AppCompatActivity implements GroupItem.GroupIt
     @Override
     public void onServerStatus(RemoteControl remoteControl, ServerStatus serverStatus) {
         this.serverStatus = serverStatus;
-        clientListFragment.updateServer(serverStatus);
+        groupListFragment.updateServer(serverStatus);
     }
 
     @Override

@@ -47,12 +47,12 @@
     </android.support.design.widget.AppBarLayout>
 
     <fragment
-        android:id="@+id/clientListFragment"
-        android:name="de.badaix.snapcast.ClientListFragment"
+        android:id="@+id/groupListFragment"
+        android:name="de.badaix.snapcast.GroupListFragment"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_marginTop="?attr/actionBarSize"
-        tools:layout="@layout/fragment_client_list"/>
+        tools:layout="@layout/fragment_group_list"/>
 
 </android.support.design.widget.CoordinatorLayout>
 

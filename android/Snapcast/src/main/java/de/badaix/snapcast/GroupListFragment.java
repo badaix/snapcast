@@ -38,9 +38,9 @@ import de.badaix.snapcast.control.json.ServerStatus;
  * {@link GroupItem.GroupItemListener} interface
  * to handle interaction events.
  */
-public class ClientListFragment extends Fragment {
+public class GroupListFragment extends Fragment {
 
-    private static final String TAG = "ClientList";
+    private static final String TAG = "GroupList";
 
     // TODO: Rename parameter arguments, choose names that match
     // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
@@ -52,7 +52,7 @@ public class ClientListFragment extends Fragment {
     private ServerStatus serverStatus = null;
     private boolean hideOffline = false;
 
-    public ClientListFragment() {
+    public GroupListFragment() {
         // Required empty public constructor
     }
 
@@ -62,10 +62,10 @@ public class ClientListFragment extends Fragment {
      * <p/>
      * //@param param1 Parameter 1.
      *
-     * @return A new instance of fragment ClientListFragment.
+     * @return A new instance of fragment GroupListFragment.
      * // TODO: Rename and change types and number of parameters
-     * public static ClientListFragment newInstance(String param1) {
-     * ClientListFragment fragment = new ClientListFragment();
+     * public static GroupListFragment newInstance(String param1) {
+     * GroupListFragment fragment = new GroupListFragment();
      * Bundle args = new Bundle();
      * args.putString(ARG_PARAM1, param1);
      * fragment.setArguments(args);
@@ -86,7 +86,7 @@ public class ClientListFragment extends Fragment {
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         Log.d(TAG, "onCreateView: " + this.toString());
-        View view = inflater.inflate(R.layout.fragment_client_list, container, false);
+        View view = inflater.inflate(R.layout.fragment_group_list, container, false);
         ListView lvGroup = (ListView) view.findViewById(R.id.lvGroup);
         groupAdapter = new GroupAdapter(getContext(), groupItemListener);
         groupAdapter.setHideOffline(hideOffline);
@@ -174,7 +174,7 @@ public class ClientListFragment extends Fragment {
                     for (Group group : GroupAdapter.this.serverStatus.getGroups()) {
                         add(group);
 /*                for (Client client : group.getClients()) {
-                    if ((client != null) && (!hideOffline || client.isConnected()) && !client.isDeleted())// && client.getConfig().getStream().equals(ClientListFragment.this.stream.getId()))
+                    if ((client != null) && (!hideOffline || client.isConnected()) && !client.isDeleted())// && client.getConfig().getStream().equals(GroupListFragment.this.stream.getId()))
                         add(client);
                 }
 */
