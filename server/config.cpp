@@ -106,17 +106,25 @@ ClientInfoPtr Config::getClientInfo(const std::string& clientId) const
 }
 
 
-ClientInfoPtr Config::addClientInfo(const std::string& clientId)
+GroupPtr Config::addClientInfo(ClientInfoPtr client)
+{
+	GroupPtr group = getGroupFromClient(client);
+	if (!group)
+	{
+		group = std::make_shared<Group>();
+		group->addClient(client);
+		groups.push_back(group);
+	}
+	return group;
+}
+
+
+GroupPtr Config::addClientInfo(const std::string& clientId)
 {
 	ClientInfoPtr client = getClientInfo(clientId);
 	if (!client)
-	{
 		client = make_shared<ClientInfo>(clientId);
-//TODO: strange contruct
-		getGroup(client);
-	}
-
-	return client;
+	return addClientInfo(client);
 }
 
 
@@ -132,37 +140,28 @@ GroupPtr Config::getGroup(const std::string& groupId) const
 }
 
 
-GroupPtr Config::getGroup(ClientInfoPtr client)
+GroupPtr Config::getGroupFromClient(const std::string& clientId)
 {
 	for (auto group: groups)
 	{
 		for (auto c: group->clients)
 		{
-			if (c->id == client->id)
+			if (c->id == clientId)
 				return group;
 		}
 	}
+	return nullptr;
+}
 
-	GroupPtr group = std::make_shared<Group>();//client);
-	group->clients.push_back(client);
-	groups.push_back(group);
 
-	return group;
+GroupPtr Config::getGroupFromClient(ClientInfoPtr client)
+{
+	return getGroupFromClient(client->id);
 }
 
 
 json Config::getServerStatus(const json& streams) const
 {
-/*	json jClient = json::array();
-	if (clientId != "")
-	{
-		ClientInfoPtr client = getClientInfo(clientId);
-		if (client)
-			jClient += client->toJson();
-	}
-	else
-		jClient = getClientInfos();
-*/
 	Host host;
 	host.update();
 	//TODO: Set MAC and IP
@@ -180,14 +179,6 @@ json Config::getServerStatus(const json& streams) const
 }
 
 
-/*json Config::getClientInfos() const
-{
-	json result = json::array();
-	for (auto client: clients)
-		result.push_back(client->toJson());
-	return result;
-}
-*/
 
 json Config::getGroups() const
 {
@@ -200,10 +191,60 @@ json Config::getGroups() const
 
 void Config::remove(ClientInfoPtr client)
 {
-	auto group = getGroup(client);
-	auto clients = group->clients;
-	clients.erase(std::remove(clients.begin(), clients.end(), client), clients.end());
-	if (group->clients.empty())
+	auto group = getGroupFromClient(client);
+	if (!group)
+		return;
+	group->removeClient(client);
+	if (group->empty())
+		remove(group);
+}
+
+
+void Config::remove(GroupPtr group, bool force)
+{
+	if (!group)
+		return;
+
+	if (group->empty() || force)
 		groups.erase(std::remove(groups.begin(), groups.end(), group), groups.end());
 }
+
+/*
+GroupPtr Config::removeFromGroup(const std::string& groupId, const std::string& clientId)
+{
+	GroupPtr group = getGroup(groupId);
+	if (!group || (group->id != groupId))
+		return group;
+
+	auto client = getClientInfo(clientId);
+	if (client)
+		group->clients.erase(std::remove(group->clients.begin(), group->clients.end(), client), group->clients.end());
+
+	addClientInfo(clientId);
+	return group;
+}
+
+
+GroupPtr Config::setGroupForClient(const std::string& groupId, const std::string& clientId)
+{
+	GroupPtr oldGroup = getGroupFromClient(clientId);
+	if (oldGroup && (oldGroup->id == groupId))
+		return oldGroup;
+	
+	GroupPtr newGroup = getGroup(groupId);
+	if (!newGroup)
+		return nullptr;
+
+	auto client = getClientInfo(clientId);
+	if (!client)
+		return nullptr;
+
+	if (oldGroup)
+		removeFromGroup(oldGroup->id, clientId);
+
+	newGroup->addClient(client);
+	return newGroup;	
+}
+*/
+
 

@@ -182,6 +182,49 @@ void StreamServer::onMessageReceived(ControlSession* controlSession, const std::
 				}
 			}
 		}
+		else if (request.method == "Group.SetClients")
+		{
+			vector<string> clients = request.getParam("clients").get<vector<string>>();
+			string groupId = request.getParam("group").get<string>();
+
+			GroupPtr group = Config::instance().getGroup(groupId);
+			/// Remove clients from group
+			for (auto iter = group->clients.begin(); iter != group->clients.end();)
+			{
+				auto client = *iter;
+				if (find(clients.begin(), clients.end(), client->id) != clients.end())
+				{
+					++iter;
+					continue;
+				}
+				iter = group->clients.erase(iter);
+				GroupPtr newGroup = Config::instance().addClientInfo(client);
+				newGroup->streamId = group->streamId;
+			}
+
+			/// Add clients to group
+			for (const auto& clientId: clients)
+			{
+				ClientInfoPtr client = Config::instance().getClientInfo(clientId);
+				if (!client)
+					continue;
+				GroupPtr oldGroup = Config::instance().getGroupFromClient(client);
+				if (oldGroup && (oldGroup->id == groupId))
+					continue;
+				
+				if (oldGroup)
+				{
+					oldGroup->removeClient(client);
+					Config::instance().remove(oldGroup);
+				}	
+				
+				group->addClient(client);
+			}
+
+			if (group->empty())
+				Config::instance().remove(group);
+//			response = Config::instance().getServerStatus(/*clientId,*/ streamManager_->toJson());
+		}
 		else if (request.method == "Client.SetLatency")
 		{
 			clientInfo->config.latency = request.getParam<int>("latency", -10000, settings_.bufferMs);
@@ -256,8 +299,8 @@ void StreamServer::onMessageReceived(StreamSession* connection, const msg::BaseM
 
 		logD << "request kServerSettings: " << connection->clientId << "\n";
 //		std::lock_guard<std::mutex> mlock(mutex_);
-		ClientInfoPtr client = Config::instance().addClientInfo(connection->clientId);
-		GroupPtr group = Config::instance().getGroup(client);
+		GroupPtr group = Config::instance().addClientInfo(connection->clientId);
+		ClientInfoPtr client = group->getClient(connection->clientId);
 
 		logD << "request kServerSettings\n";
 		msg::ServerSettings* serverSettings = new msg::ServerSettings();

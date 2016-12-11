@@ -277,7 +277,7 @@ struct Group
 				ClientInfoPtr client = std::make_shared<ClientInfo>();
 				client->fromJson(jClient);
 				client->connected = false;
-				clients.push_back(client);
+				addClient(client);
 			}
 		}
 	}
@@ -294,6 +294,62 @@ struct Group
 			jClients.push_back(client->toJson());
 		j["clients"] = jClients;
 		return j;
+	}
+
+	ClientInfoPtr removeClient(const std::string& clientId)
+	{
+		for (auto iter = clients.begin(); iter != clients.end(); ++iter)
+		{
+			if ((*iter)->id == clientId)
+			{
+				clients.erase(iter);
+				return (*iter);
+			}
+		}
+		return nullptr;
+	}
+
+	ClientInfoPtr removeClient(ClientInfoPtr client)
+	{
+		if (!client)
+			return nullptr;
+
+		return removeClient(client->id);
+	}
+
+	ClientInfoPtr getClient(const std::string& clientId)
+	{
+		for (auto client: clients)
+		{
+			if (client->id == clientId)
+				return client;
+		}
+		return nullptr;		
+	}
+
+	void addClient(ClientInfoPtr client)
+	{
+		if (!client)
+			return;
+
+		for (auto c: clients)
+		{
+			if (c->id == client->id)
+				return;
+		}
+
+		clients.push_back(client);
+/*		sort(clients.begin(), clients.end(), 
+			[](const ClientInfoPtr a, const ClientInfoPtr b) -> bool
+			{ 
+				return a.name > b.name; 
+			});
+*/
+	}
+
+	bool empty() const
+	{
+		return clients.empty();
 	}
 
 	std::string name;
@@ -313,20 +369,24 @@ public:
 	}
 
 	ClientInfoPtr getClientInfo(const std::string& clientId) const;
-	ClientInfoPtr addClientInfo(const std::string& clientId);
+	GroupPtr addClientInfo(const std::string& clientId);
+	GroupPtr addClientInfo(ClientInfoPtr client);
 	void remove(ClientInfoPtr client);
+	void remove(GroupPtr group, bool force = false);
 
-	GroupPtr getGroup(ClientInfoPtr client);
+//	GroupPtr removeFromGroup(const std::string& groupId, const std::string& clientId);
+//	GroupPtr setGroupForClient(const std::string& groupId, const std::string& clientId);
+
+	GroupPtr getGroupFromClient(const std::string& clientId);
+	GroupPtr getGroupFromClient(ClientInfoPtr client);
 	GroupPtr getGroup(const std::string& groupId) const;
 
-//	json getClientInfos() const;
 	json getGroups() const;
 	json getServerStatus(const json& streams) const;
 
 	void save();
 
 	std::vector<GroupPtr> groups;
-//	std::vector<ClientInfoPtr> clients;
 
 private:
 	Config();
