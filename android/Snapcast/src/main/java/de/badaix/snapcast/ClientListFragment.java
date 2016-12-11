@@ -118,10 +118,10 @@ public class ClientListFragment extends Fragment {
         groupItemListener = null;
     }
 
-    public void updateServer(ServerStatus serverStatus) {
+    public void updateServer(final ServerStatus serverStatus) {
         this.serverStatus = serverStatus;
         if (groupAdapter != null)
-            groupAdapter.updateServer(this.serverStatus);
+            groupAdapter.updateServer(serverStatus);
     }
 
     public void setHideOffline(boolean hide) {
@@ -166,25 +166,24 @@ public class ClientListFragment extends Fragment {
 
 
         public void update() {
-            clear();
+            getActivity().runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    clear();
 // TODO: group
-            for (Group group : GroupAdapter.this.serverStatus.getGroups()) {
-                add(group);
+                    for (Group group : GroupAdapter.this.serverStatus.getGroups()) {
+                        add(group);
 /*                for (Client client : group.getClients()) {
                     if ((client != null) && (!hideOffline || client.isConnected()) && !client.isDeleted())// && client.getConfig().getStream().equals(ClientListFragment.this.stream.getId()))
                         add(client);
                 }
 */
-            }
-
-            if (getActivity() != null) {
-                ClientListFragment.this.getActivity().runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        notifyDataSetChanged();
                     }
-                });
-            }
+
+                    if (getActivity() != null)
+                        notifyDataSetChanged();
+                }
+            });
         }
 
         public boolean isHideOffline() {

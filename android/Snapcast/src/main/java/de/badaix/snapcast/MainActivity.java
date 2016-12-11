@@ -53,7 +53,6 @@ import java.util.ArrayList;
 
 import de.badaix.snapcast.control.RemoteControl;
 import de.badaix.snapcast.control.json.Client;
-import de.badaix.snapcast.control.json.Group;
 import de.badaix.snapcast.control.json.ServerStatus;
 import de.badaix.snapcast.control.json.Stream;
 import de.badaix.snapcast.utils.NsdHelper;
@@ -410,12 +409,7 @@ public class MainActivity extends AppCompatActivity implements GroupItem.GroupIt
             if (client.getConfig().getLatency() != clientOriginal.getConfig().getLatency())
                 remoteControl.setLatency(client, client.getConfig().getLatency());
             serverStatus.updateClient(client);
-            MainActivity.this.runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    clientListFragment.updateServer(MainActivity.this.serverStatus);
-                }
-            });
+            clientListFragment.updateServer(MainActivity.this.serverStatus);
         } else if (requestCode == GROUP_PROPERTIES_REQUEST) {
             ArrayList<String> clients = data.getStringArrayListExtra("clients");
             Log.d(TAG, "clients: " + clients);
@@ -453,7 +447,7 @@ public class MainActivity extends AppCompatActivity implements GroupItem.GroupIt
     public void onDisconnected(RemoteControl remoteControl, Exception e) {
         Log.d(TAG, "onDisconnected");
         serverStatus = new ServerStatus();
-//TODO: group        sectionsPagerAdapter.updateServer(serverStatus);
+        clientListFragment.updateServer(serverStatus);
         if (e != null) {
             if (e instanceof UnknownHostException)
                 setActionbarSubtitle("error: unknown host");
@@ -481,13 +475,7 @@ public class MainActivity extends AppCompatActivity implements GroupItem.GroupIt
     @Override
     public void onServerStatus(RemoteControl remoteControl, ServerStatus serverStatus) {
         this.serverStatus = serverStatus;
-        MainActivity.this.runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                clientListFragment.updateServer(MainActivity.this.serverStatus);
-            }
-        });
-// TODO: group        sectionsPagerAdapter.updateServer(serverStatus);
+        clientListFragment.updateServer(serverStatus);
     }
 
     @Override
@@ -610,15 +598,6 @@ public class MainActivity extends AppCompatActivity implements GroupItem.GroupIt
         intent.putExtra("group", groupItem.getGroup().toJson().toString());
         intent.setFlags(0);
         startActivityForResult(intent, GROUP_PROPERTIES_REQUEST);
-    }
-
-    @Override
-    public void onStreamClicked(GroupItem groupItem, Stream stream) {
-        Group group = groupItem.getGroup();
-        group.setStreamId(stream.getId());
-        remoteControl.setStream(group, stream.getId());
-        serverStatus.updateGroup(group);
-        clientListFragment.updateServer(serverStatus);
     }
 
 }

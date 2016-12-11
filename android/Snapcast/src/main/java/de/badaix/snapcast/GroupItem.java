@@ -183,8 +183,6 @@ public class GroupItem extends LinearLayout implements SeekBar.OnSeekBarChangeLi
         void onClientPropertiesClicked(GroupItem group, ClientItem clientItem);
 
         void onPropertiesClicked(GroupItem group);
-
-        void onStreamClicked(GroupItem group, Stream stream);
     }
 
 }
