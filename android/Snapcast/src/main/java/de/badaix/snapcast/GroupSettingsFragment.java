@@ -25,12 +25,13 @@ import android.preference.Preference;
 import android.preference.PreferenceCategory;
 import android.preference.PreferenceFragment;
 import android.preference.PreferenceScreen;
-import android.util.Log;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 
 import de.badaix.snapcast.control.json.Client;
 import de.badaix.snapcast.control.json.Group;
@@ -41,9 +42,9 @@ import de.badaix.snapcast.control.json.Stream;
  * Created by johannes on 06.12.16.
  */
 
-public class GroupPreferenceFragment extends PreferenceFragment {
+public class GroupSettingsFragment extends PreferenceFragment {
 
-    private static final String TAG = "GroupPreferenceFragment";
+    private static final String TAG = "GroupSettingsFragment";
 
     private ListPreference prefStreams;
     private Group group = null;
@@ -106,7 +107,7 @@ public class GroupPreferenceFragment extends PreferenceFragment {
 
 
         prefCatClients = (PreferenceCategory) findPreference("pref_cat_clients");
-
+        ArrayList<CheckBoxPreference> allClients = new ArrayList<>();
         for (Group g : serverStatus.getGroups()) {
             for (Client client : g.getClients()) {
                 CheckBoxPreference checkBoxPref = new CheckBoxPreference(screen.getContext());
@@ -114,14 +115,22 @@ public class GroupPreferenceFragment extends PreferenceFragment {
                 checkBoxPref.setTitle(client.getVisibleName());
                 checkBoxPref.setChecked(g.getId().equals(group.getId()));
                 checkBoxPref.setPersistent(false);
-                prefCatClients.addPreference(checkBoxPref);
+                allClients.add(checkBoxPref);
             }
         }
+        Collections.sort(allClients, new Comparator<CheckBoxPreference>() {
+            @Override
+            public int compare(CheckBoxPreference lhs, CheckBoxPreference rhs) {
+                return lhs.getTitle().toString().compareToIgnoreCase(rhs.getTitle().toString());
+            }
+        });
+        for (CheckBoxPreference pref : allClients)
+            prefCatClients.addPreference(pref);
     }
 
     public ArrayList<String> getClients() {
         ArrayList<String> clients = new ArrayList<>();
-        for (int i=0; i<prefCatClients.getPreferenceCount(); ++i) {
+        for (int i = 0; i < prefCatClients.getPreferenceCount(); ++i) {
             CheckBoxPreference checkBoxPref = (CheckBoxPreference) prefCatClients.getPreference(i);
             if (checkBoxPref.isChecked())
                 clients.add(checkBoxPref.getKey());

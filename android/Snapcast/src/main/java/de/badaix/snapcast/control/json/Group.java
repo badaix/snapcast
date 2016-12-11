@@ -23,13 +23,15 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 
 
 /**
  * Created by johannes on 03.12.16.
  */
 
-public class Group implements JsonSerialisable {
+public class Group implements JsonSerialisable, Comparable<Group> {
     private String name = "";
     private String id = "";
     private String streamId = "";
@@ -58,6 +60,7 @@ public class Group implements JsonSerialisable {
         } catch (JSONException e) {
             e.printStackTrace();
         }
+        sort();
     }
 
     @Override
@@ -72,6 +75,10 @@ public class Group implements JsonSerialisable {
             e.printStackTrace();
         }
         return json;
+    }
+
+    public void sort() {
+        Collections.sort(clients);
     }
 
     public String getName() {
@@ -134,4 +141,12 @@ public class Group implements JsonSerialisable {
         return result;
     }
 
+    @Override
+    public int compareTo(Group another) {
+        if (getClients().isEmpty())
+            return -1;
+        if (another.getClients().isEmpty())
+            return 1;
+        return getClients().get(0).compareTo(another.getClients().get(0));
+    }
 }

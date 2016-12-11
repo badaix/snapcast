@@ -23,6 +23,8 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 
 /**
  * Created by johannes on 06.01.16.
@@ -53,6 +55,7 @@ public class ServerStatus implements JsonSerialisable {
         } catch (JSONException e) {
             e.printStackTrace();
         }
+        sort();
     }
 
     @Override
@@ -66,6 +69,13 @@ public class ServerStatus implements JsonSerialisable {
             e.printStackTrace();
         }
         return json;
+    }
+
+    public void sort() {
+        for (Group group: groups)
+            group.sort();
+
+        Collections.sort(groups);
     }
 
     @Override

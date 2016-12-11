@@ -423,7 +423,8 @@ public class MainActivity extends AppCompatActivity implements GroupItem.GroupIt
             String groupId = data.getStringExtra("group");
             remoteControl.setStream(groupId, streamId);
             remoteControl.setClients(groupId, clients);
-            Group group = serverStatus.getGroup(groupId);
+            remoteControl.getServerStatus();
+/*            Group group = serverStatus.getGroup(groupId);
             group.setStreamId(streamId);
             serverStatus.updateGroup(group);
             MainActivity.this.runOnUiThread(new Runnable() {
@@ -432,6 +433,7 @@ public class MainActivity extends AppCompatActivity implements GroupItem.GroupIt
                     clientListFragment.updateServer(MainActivity.this.serverStatus);
                 }
             });
+ */
         }
     }
 
@@ -603,7 +605,7 @@ public class MainActivity extends AppCompatActivity implements GroupItem.GroupIt
 
     @Override
     public void onPropertiesClicked(GroupItem groupItem) {
-        Intent intent = new Intent(this, GroupPreferenceActivity.class);
+        Intent intent = new Intent(this, GroupSettingsActivity.class);
         intent.putExtra("serverStatus", serverStatus.toJson().toString());
         intent.putExtra("group", groupItem.getGroup().toJson().toString());
         intent.setFlags(0);

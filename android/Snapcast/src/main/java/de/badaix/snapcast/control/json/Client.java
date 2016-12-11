@@ -24,7 +24,7 @@ import org.json.JSONObject;
 /**
  * Created by johannes on 06.01.16.
  */
-public class Client implements JsonSerialisable {
+public class Client implements JsonSerialisable, Comparable<Client>  {
     private Host host;
     private Snapclient snapclient;
     private ClientConfig config;
@@ -149,6 +149,11 @@ public class Client implements JsonSerialisable {
         result = 31 * result + (clientId != null ? clientId.hashCode() : 0);
         result = 31 * result + (deleted ? 1 : 0);
         return result;
+    }
+
+    @Override
+    public int compareTo(Client another) {
+        return getVisibleName().compareToIgnoreCase(another.getVisibleName());
     }
 }
 

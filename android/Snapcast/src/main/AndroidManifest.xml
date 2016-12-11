@@ -43,7 +43,7 @@
                 android:value=".MainActivity"/>
         </activity>
         <activity
-            android:name=".GroupPreferenceActivity"
+            android:name=".GroupSettingsActivity"
             android:label="@string/title_activity_group_preference"
             android:parentActivityName=".MainActivity">
             <meta-data
