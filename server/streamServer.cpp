@@ -105,6 +105,7 @@ void StreamServer::onDisconnect(StreamSession* streamSession)
 }
 
 
+
 void StreamServer::onMessageReceived(ControlSession* controlSession, const std::string& message)
 {
 	JsonRequest request;
@@ -175,7 +176,7 @@ void StreamServer::onMessageReceived(ControlSession* controlSession, const std::
 			for (auto client: group->clients)
 			{
 				session_ptr session = getStreamSession(client->id);
-				if (session != nullptr)
+				if (session && (session->pcmStream() != stream))
 				{
 					session->sendAsync(stream->getHeader());
 					session->setPcmStream(stream);
@@ -203,6 +204,7 @@ void StreamServer::onMessageReceived(ControlSession* controlSession, const std::
 			}
 
 			/// Add clients to group
+			PcmStreamPtr stream = streamManager_->getStream(group->streamId);
 			for (const auto& clientId: clients)
 			{
 				ClientInfoPtr client = Config::instance().getClientInfo(clientId);
@@ -219,6 +221,14 @@ void StreamServer::onMessageReceived(ControlSession* controlSession, const std::
 				}	
 				
 				group->addClient(client);
+
+				/// assign new stream
+				session_ptr session = getStreamSession(client->id);
+				if (session && stream && (session->pcmStream() != stream))
+				{
+					session->sendAsync(stream->getHeader());
+					session->setPcmStream(stream);
+				}
 			}
 
 			if (group->empty())
@@ -266,6 +276,7 @@ void StreamServer::onMessageReceived(ControlSession* controlSession, const std::
 		controlSession->send(jsonException.getResponse().dump());
 	}
 }
+
 
 
 void StreamServer::onMessageReceived(StreamSession* connection, const msg::BaseMessage& baseMessage, char* buffer)
@@ -345,6 +356,7 @@ void StreamServer::onMessageReceived(StreamSession* connection, const msg::BaseM
 //		cout << group->toJson().dump(4) << "\n";
 	}
 }
+
 
 
 session_ptr StreamServer::getStreamSession(StreamSession* streamSession) const
