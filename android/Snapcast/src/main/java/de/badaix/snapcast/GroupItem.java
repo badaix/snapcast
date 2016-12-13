@@ -62,7 +62,6 @@ public class GroupItem extends LinearLayout implements SeekBar.OnSeekBarChangeLi
         ibMute.setImageResource(R.drawable.ic_speaker_icon);
         ibMute.setOnClickListener(this);
         ibSettings = (ImageButton) findViewById(R.id.ibSettings);
-        ibSettings.setImageAlpha(138);
         ibSettings.setOnClickListener(this);
         llVolume = (LinearLayout) findViewById(R.id.llVolume);
         llVolume.setVisibility(GONE);
