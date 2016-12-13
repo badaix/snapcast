@@ -50,5 +50,6 @@
     <string name="control_port">control port</string>
     <string name="server_host">Snapserver host</string>
     <string name="auto_start">Auto start Snapclient</string>
+    <string name="connect">Connect</string>
 </resources>
 

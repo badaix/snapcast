@@ -43,7 +43,9 @@ import android.text.TextUtils;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
 import android.view.WindowManager;
+import android.widget.Button;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -80,6 +82,7 @@ public class MainActivity extends AppCompatActivity implements GroupItem.GroupIt
     private Snackbar warningSamplerateSnackbar = null;
     private int nativeSampleRate = 0;
     private CoordinatorLayout coordinatorLayout;
+    private Button btnConnect = null;
 
 
     /**
@@ -127,6 +130,9 @@ public class MainActivity extends AppCompatActivity implements GroupItem.GroupIt
         coordinatorLayout = (CoordinatorLayout) findViewById(R.id.myCoordinatorLayout);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+
+        btnConnect = (Button) findViewById(R.id.btnConnect);
+        btnConnect.setVisibility(View.GONE);
         // Create the adapter that will return a fragment for each of the three
         // primary sections of the activity.
 
@@ -411,23 +417,20 @@ public class MainActivity extends AppCompatActivity implements GroupItem.GroupIt
             serverStatus.updateClient(client);
             groupListFragment.updateServer(MainActivity.this.serverStatus);
         } else if (requestCode == GROUP_PROPERTIES_REQUEST) {
-            ArrayList<String> clients = data.getStringArrayListExtra("clients");
-            Log.d(TAG, "clients: " + clients);
-            String streamId = data.getStringExtra("stream");
             String groupId = data.getStringExtra("group");
-            remoteControl.setStream(groupId, streamId);
-            remoteControl.setClients(groupId, clients);
-            remoteControl.getServerStatus();
-/*            Group group = serverStatus.getGroup(groupId);
-            group.setStreamId(streamId);
-            serverStatus.updateGroup(group);
-            MainActivity.this.runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    groupListFragment.updateServer(MainActivity.this.serverStatus);
-                }
-            });
- */
+            boolean changed = false;
+            if (data.hasExtra("clients")) {
+                ArrayList<String> clients = data.getStringArrayListExtra("clients");
+                remoteControl.setClients(groupId, clients);
+                changed = true;
+            }
+            if (data.hasExtra("stream")) {
+                String streamId = data.getStringExtra("stream");
+                remoteControl.setStream(groupId, streamId);
+                changed = true;
+            }
+            if (changed)
+                remoteControl.getServerStatus();
         }
     }
 

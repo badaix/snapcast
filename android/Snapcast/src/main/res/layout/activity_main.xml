@@ -54,5 +54,12 @@
         android:layout_marginTop="?attr/actionBarSize"
         tools:layout="@layout/fragment_group_list"/>
 
+    <Button
+        android:text="@string/connect"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/btnConnect"
+        android:layout_gravity="center_vertical|center_horizontal"/>
+
 </android.support.design.widget.CoordinatorLayout>
 

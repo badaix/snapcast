@@ -51,6 +51,8 @@ public class GroupSettingsFragment extends PreferenceFragment {
     private ServerStatus serverStatus = null;
     private PreferenceCategory prefCatClients = null;
 
+    private String oldClients = "";
+    private String oldStream = "";
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -85,6 +87,7 @@ public class GroupSettingsFragment extends PreferenceFragment {
             if (streamIds[i].equals(group.getStreamId())) {
                 prefStreams.setTitle(streamNames[i]);
                 prefStreams.setValueIndex(i);
+                oldStream = prefStreams.getValue();
                 break;
             }
         }
@@ -126,6 +129,8 @@ public class GroupSettingsFragment extends PreferenceFragment {
         });
         for (CheckBoxPreference pref : allClients)
             prefCatClients.addPreference(pref);
+
+        oldClients = getClients().toString();
     }
 
     public ArrayList<String> getClients() {
@@ -136,6 +141,15 @@ public class GroupSettingsFragment extends PreferenceFragment {
                 clients.add(checkBoxPref.getKey());
         }
         return clients;
+    }
+
+
+    public boolean didStreamChange() {
+        return !oldStream.equals(prefStreams.getValue());
+    }
+
+    public boolean didClientsChange() {
+        return !oldClients.equalsIgnoreCase(getClients().toString());
     }
 
     public String getStream() {
