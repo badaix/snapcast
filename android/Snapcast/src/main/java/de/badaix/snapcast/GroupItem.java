@@ -148,15 +148,9 @@ public class GroupItem extends LinearLayout implements SeekBar.OnSeekBarChangeLi
     }
 
     @Override
-    public void onVolumeChanged(ClientItem clientItem, int percent) {
+    public void onVolumeChanged(ClientItem clientItem, int percent, boolean mute) {
         if (listener != null)
-            listener.onVolumeChanged(this, clientItem, percent);
-    }
-
-    @Override
-    public void onMute(ClientItem clientItem, boolean mute) {
-        if (listener != null)
-            listener.onMute(this, clientItem, mute);
+            listener.onVolumeChanged(this, clientItem, percent, mute);
     }
 
     @Override
@@ -173,9 +167,7 @@ public class GroupItem extends LinearLayout implements SeekBar.OnSeekBarChangeLi
 
 
     public interface GroupItemListener {
-        void onVolumeChanged(GroupItem group, ClientItem clientItem, int percent);
-
-        void onMute(GroupItem group, ClientItem clientItem, boolean mute);
+        void onVolumeChanged(GroupItem group, ClientItem clientItem, int percent, boolean mute);
 
         void onDeleteClicked(GroupItem group, ClientItem clientItem);
 

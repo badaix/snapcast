@@ -32,6 +32,7 @@ import de.badaix.snapcast.control.json.Client;
 import de.badaix.snapcast.control.json.Group;
 import de.badaix.snapcast.control.json.ServerStatus;
 import de.badaix.snapcast.control.json.Stream;
+import de.badaix.snapcast.control.json.Volume;
 
 /**
  * Created by johannes on 13.01.16.
@@ -238,18 +239,13 @@ public class RemoteControl implements TcpClient.TcpClientListener {
         }
     }
 
-    public void setVolume(Client client, int percent) {
+    public void setVolume(Client client, int percent, boolean mute) {
         try {
-            JSONObject request = jsonRequest("Client.SetVolume", new JSONObject("{\"client\": \"" + client.getId() + "\", \"volume\": " + percent + "}"));
-            tcpClient.sendMessage(request.toString());
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
-    }
-
-    public void setMute(Client client, boolean mute) {
-        try {
-            JSONObject request = jsonRequest("Client.SetMute", new JSONObject("{\"client\": \"" + client.getId() + "\", \"mute\": " + mute + "}"));
+            Volume volume = new Volume(percent, mute);
+            JSONObject body = new JSONObject();
+            body.put("client", client.getId());
+            body.put("volume", volume.toJson());
+            JSONObject request = jsonRequest("Client.SetVolume", body);
             tcpClient.sendMessage(request.toString());
         } catch (JSONException e) {
             e.printStackTrace();

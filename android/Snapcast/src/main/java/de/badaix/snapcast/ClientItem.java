@@ -90,9 +90,9 @@ public class ClientItem extends LinearLayout implements SeekBar.OnSeekBarChangeL
     @Override
     public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
         if (fromUser && (listener != null)) {
-            Volume volume = new Volume(progress, false);
-            client.setVolume(volume);
-            listener.onVolumeChanged(this, volume.getPercent());
+            Volume volume = client.getConfig().getVolume();
+            volume.setPercent(progress);
+            listener.onVolumeChanged(this, volume.getPercent(), volume.isMuted());
         }
     }
 
@@ -102,7 +102,7 @@ public class ClientItem extends LinearLayout implements SeekBar.OnSeekBarChangeL
             Volume volume = client.getConfig().getVolume();
             volume.setMuted(!volume.isMuted());
             update();
-            listener.onMute(this, volume.isMuted());
+            listener.onVolumeChanged(this, volume.getPercent(), volume.isMuted());
         } else if (v == ibOverflow) {
             PopupMenu popup = new PopupMenu(v.getContext(), v);
             popup.getMenu().add(Menu.NONE, R.id.menu_details, 0, R.string.menu_details);
@@ -138,9 +138,7 @@ public class ClientItem extends LinearLayout implements SeekBar.OnSeekBarChangeL
     }
 
     public interface ClientItemListener {
-        void onVolumeChanged(ClientItem clientItem, int percent);
-
-        void onMute(ClientItem clientItem, boolean mute);
+        void onVolumeChanged(ClientItem clientItem, int percent, boolean mute);
 
         void onDeleteClicked(ClientItem clientItem);
 

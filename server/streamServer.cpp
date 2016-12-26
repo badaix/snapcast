@@ -155,13 +155,8 @@ void StreamServer::onMessageReceived(ControlSession* controlSession, const std::
 		}
 		else if (request.method == "Client.SetVolume")
 		{
-			clientInfo->config.volume.percent = request.getParam<uint16_t>("volume", 0, 100);
-			response = clientInfo->config.volume.percent;
-		}
-		else if (request.method == "Client.SetMute")
-		{
-			clientInfo->config.volume.muted = request.getParam<bool>("mute", false, true);
-			response = clientInfo->config.volume.muted;
+			clientInfo->config.volume.fromJson(request.getParam("volume"));
+			response = clientInfo->config.volume.toJson();
 		}
 		else if (request.method == "Group.SetStream")
 		{

@@ -545,13 +545,8 @@ public class MainActivity extends AppCompatActivity implements GroupItem.GroupIt
 
 
     @Override
-    public void onVolumeChanged(GroupItem groupItem, ClientItem clientItem, int percent) {
-        remoteControl.setVolume(clientItem.getClient(), percent);
-    }
-
-    @Override
-    public void onMute(GroupItem groupItem, ClientItem clientItem, boolean mute) {
-        remoteControl.setMute(clientItem.getClient(), mute);
+    public void onVolumeChanged(GroupItem groupItem, ClientItem clientItem, int percent, boolean mute) {
+        remoteControl.setVolume(clientItem.getClient(), percent, mute);
     }
 
     @Override
