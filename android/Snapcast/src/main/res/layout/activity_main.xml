@@ -55,11 +55,11 @@
         tools:layout="@layout/fragment_group_list"/>
 
     <Button
-        android:text="@string/connect"
+        android:id="@+id/btnConnect"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:id="@+id/btnConnect"
-        android:layout_gravity="center_vertical|center_horizontal"/>
+        android:layout_gravity="center_vertical|center_horizontal"
+        android:text="@string/connect"/>
 
 </android.support.design.widget.CoordinatorLayout>
 

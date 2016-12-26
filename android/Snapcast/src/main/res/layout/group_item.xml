@@ -48,8 +48,8 @@
                     android:layout_height="wrap_content"
                     android:layout_alignParentRight="true"
                     android:layout_centerVertical="true"
-                    android:background="@null"
                     android:alpha="0.54"
+                    android:background="@null"
                     android:src="@drawable/ic_settings_black_24dp"/>
 
                 <TextView
@@ -64,13 +64,14 @@
                     android:text="Stream state"
                     android:textAppearance="?android:attr/textAppearanceMedium"/>
             </RelativeLayout>
+
             <View
                 android:layout_width="fill_parent"
                 android:layout_height="1dip"
                 android:layout_marginLeft="5dip"
                 android:layout_marginRight="5dip"
                 android:alpha="0.1"
-                android:background="#000000" />
+                android:background="#000000"/>
 
             <LinearLayout
                 android:id="@+id/llClient"
