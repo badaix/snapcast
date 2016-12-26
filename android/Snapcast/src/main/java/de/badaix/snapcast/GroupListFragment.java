@@ -28,6 +28,7 @@ import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 
+import de.badaix.snapcast.control.json.Client;
 import de.badaix.snapcast.control.json.Group;
 import de.badaix.snapcast.control.json.ServerStatus;
 
@@ -153,6 +154,7 @@ public class GroupListFragment extends Fragment {
             } else {
                 groupItem = new GroupItem(context, serverStatus, group);
             }
+            groupItem.setHideOffline(hideOffline);
             groupItem.setListener(listener);
             return groupItem;
         }
@@ -172,22 +174,20 @@ public class GroupListFragment extends Fragment {
                     clear();
 // TODO: group
                     for (Group group : GroupAdapter.this.serverStatus.getGroups()) {
-                        add(group);
-/*                for (Client client : group.getClients()) {
-                    if ((client != null) && (!hideOffline || client.isConnected()) && !client.isDeleted())// && client.getConfig().getStream().equals(GroupListFragment.this.stream.getId()))
-                        add(client);
-                }
-*/
+//                        add(group);
+                        int visibleCount = 0;
+                        for (Client client : group.getClients()) {
+                            if ((client != null) && client.isConnected() && !client.isDeleted())// && client.getConfig().getStream().equals(GroupListFragment.this.stream.getId()))
+                                visibleCount++;
+                        }
+                        if ((visibleCount > 0) || !hideOffline)
+                            add(group);
                     }
 
                     if (getActivity() != null)
                         notifyDataSetChanged();
                 }
             });
-        }
-
-        public boolean isHideOffline() {
-            return hideOffline;
         }
 
         public void setHideOffline(boolean hideOffline) {

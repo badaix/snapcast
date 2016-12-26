@@ -50,6 +50,7 @@ public class GroupItem extends LinearLayout implements SeekBar.OnSeekBarChangeLi
     private TextView tvStreamState = null;
     private GroupItemListener listener = null;
     private LinearLayout llVolume;
+    private boolean hideOffline = false;
 
     public GroupItem(Context context, ServerStatus server, Group group) {
         super(context);
@@ -77,6 +78,9 @@ public class GroupItem extends LinearLayout implements SeekBar.OnSeekBarChangeLi
 //        title.setText(group.getName());
         llClient.removeAllViews();
         for (Client client : group.getClients()) {
+            if ((client == null) || client.isDeleted() || (hideOffline && !client.isConnected()))
+                continue;
+
             ClientItem clientItem = new ClientItem(this.getContext(), server, client);
             clientItem.setListener(this);
             llClient.addView(clientItem);
@@ -111,6 +115,13 @@ public class GroupItem extends LinearLayout implements SeekBar.OnSeekBarChangeLi
 
     public void setListener(GroupItemListener listener) {
         this.listener = listener;
+    }
+
+    public void setHideOffline(boolean hideOffline) {
+        if (this.hideOffline == hideOffline)
+            return;
+        this.hideOffline = hideOffline;
+        update();
     }
 
     @Override

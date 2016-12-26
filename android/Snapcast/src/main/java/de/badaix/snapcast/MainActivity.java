@@ -137,6 +137,7 @@ public class MainActivity extends AppCompatActivity implements GroupItem.GroupIt
         // primary sections of the activity.
 
         groupListFragment = (GroupListFragment) getSupportFragmentManager().findFragmentById(R.id.groupListFragment);
+        groupListFragment.setHideOffline(Settings.getInstance(this).getBoolean("hide_offline", false));
 
         setActionbarSubtitle("Host: no Snapserver found");
 
@@ -148,6 +149,7 @@ public class MainActivity extends AppCompatActivity implements GroupItem.GroupIt
                 Log.d(TAG, "done copying snapclient");
             }
         }).start();
+
     }
 
     public void checkFirstRun() {
@@ -227,7 +229,7 @@ public class MainActivity extends AppCompatActivity implements GroupItem.GroupIt
         } else if (id == R.id.action_hide_offline) {
             item.setChecked(!item.isChecked());
             Settings.getInstance(this).put("hide_offline", item.isChecked());
-//TODO: group            sectionsPagerAdapter.setHideOffline(item.isChecked());
+            groupListFragment.setHideOffline(item.isChecked());
             return true;
         } else if (id == R.id.action_refresh) {
             startRemoteControl();
