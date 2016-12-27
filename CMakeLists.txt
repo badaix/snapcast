@@ -106,7 +106,7 @@ set(CPACK_ARCHIVE_COMPONENT_INSTALL ON)
 # Configure components
 if(WIN32)
   add_definitions(-D_WIN32_WINNT=0x0600 -DWINDOWS -DWIN32_LEAN_AND_MEAN -DUNICODE -D_UNICODE -D_CRT_SECURE_NO_WARNINGS)
-  find_package(Bonjour REQUIRED)
+  find_package(mDNSResponder REQUIRED)
 elseif(NOT ANDROID)
   find_package(Avahi REQUIRED)
   add_subdirectory(server)
