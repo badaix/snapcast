@@ -1,5 +1,3 @@
-find_package(VorbisEnc REQUIRED)
-
 set(SERVER_SOURCES snapServer.cpp config.cpp controlServer.cpp controlSession.cpp streamServer.cpp streamSession.cpp json/jsonrpc.cpp streamreader/streamUri.cpp streamreader/streamManager.cpp streamreader/pcmStream.cpp streamreader/pipeStream.cpp streamreader/fileStream.cpp encoder/encoderFactory.cpp encoder/flacEncoder.cpp encoder/pcmEncoder.cpp encoder/oggEncoder.cpp streamreader/airplayStream.cpp streamreader/spotifyStream.cpp streamreader/watchdog.cpp streamreader/processStream.cpp)
 
 set(SERVER_LIBRARIES ${CMAKE_THREAD_LIBS_INIT} ${FLAC_LIBRARIES} ${OGG_LIBRARIES} ${VORBIS_LIBRARIES} ${VORBISENC_LIBRARIES} common message)

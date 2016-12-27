@@ -1,6 +1,10 @@
 cmake_minimum_required(VERSION 3.4)
 project(snapcast VERSION 0.9.0.0)
 
+# Import dependencies from conan
+include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
+conan_basic_setup()
+
 # Configure paths
 include_directories(${CMAKE_SOURCE_DIR})
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/")
@@ -28,7 +32,7 @@ if (NOT ANDROID)
   find_package(Threads)
 endif()
 find_package(FLAC REQUIRED)
-find_package(Vorbis REQUIRED)
+find_package(VORBIS REQUIRED)
 find_package(Ogg REQUIRED)
 
 # Get arch

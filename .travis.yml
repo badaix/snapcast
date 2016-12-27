@@ -1,0 +1,8 @@
+dist: trusty
+sudo: false
+install: pip install conan
+script:
+- mkdir build
+- cd build
+- conan install .. --build missing
+- conan build ..

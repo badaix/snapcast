@@ -1,9 +1,9 @@
 #!/bin/bash
-NDK_PATH			= "/your/path/here"
-HOST_PLATFORM_ANDROID		= "linux-x86_64"
-HOST_PLATFORM_AUTOTOOLS		= "x86_64-pc-linux-gnu"
-TARGET_PLATFORM			= "arch-arm"
-ANDROID_VERSION			= "android-23"
+export NDK_PATH=/home/joseph/Android/ndk-bundle
+export HOST_PLATFORM_ANDROID=linux-x86_64
+export HOST_PLATFORM_AUTOTOOLS=x86_64-pc-linux-gnu
+export TARGET_PLATFORM=arch-arm
+export ANDROID_VERSION=android-16
 
 export ANDROID_NDK=$NDK_PATH
 export CROSS_COMPILE=arm-linux-androideabi
@@ -54,3 +54,11 @@ PATH=$PATH:${ANDROID_PREFIX}/bin ./configure --host=${CROSS_COMPILE} --build=$HO
 PATH=$PATH:${ANDROID_PREFIX}/bin make
 PATH=$PATH:${ANDROID_PREFIX}/bin make install
 popd
+
+pushd tremor
+./autogen.sh
+PATH=$PATH:${ANDROID_PREFIX}/bin ./configure --host=${CROSS_COMPILE} --build=$HOST_PLATFORM_AUTOTOOLS --with-sysroot=${SYSROOT} --prefix=${PREFIX}
+PATH=$PATH:${ANDROID_PREFIX}/bin make
+PATH=$PATH:${ANDROID_PREFIX}/bin make install
+popd
+

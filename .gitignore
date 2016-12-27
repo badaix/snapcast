@@ -41,3 +41,5 @@ build_armeabi-v7a
 build_armeabi
 snapcast.coatidb
 snapcast.coatiproject
+*.pyc
+.python
