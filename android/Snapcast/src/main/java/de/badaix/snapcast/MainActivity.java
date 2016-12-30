@@ -467,7 +467,7 @@ public class MainActivity extends AppCompatActivity implements GroupItem.GroupIt
     }
 
     @Override
-    public void onClientEvent(RemoteControl remoteControl, Client client, RemoteControl.ClientEvent event) {
+    public void onClientEvent(RemoteControl remoteControl, RemoteControl.RpcEvent rpcEvent, Client client, RemoteControl.ClientEvent event) {
         Log.d(TAG, "onClientEvent: " + event.toString());
 //        remoteControl.getServerStatus();
 /* TODO: group
@@ -477,25 +477,29 @@ public class MainActivity extends AppCompatActivity implements GroupItem.GroupIt
             serverStatus.updateClient(client);
         sectionsPagerAdapter.updateServer(serverStatus);
 */
+        /// update only in case of notifications
+        if (rpcEvent == RemoteControl.RpcEvent.response)
+            return;
+
         if (event != RemoteControl.ClientEvent.deleted)
             serverStatus.updateClient(client);
         groupListFragment.updateServer(serverStatus);
     }
 
     @Override
-    public void onServerStatus(RemoteControl remoteControl, ServerStatus serverStatus) {
+    public void onServerUpdate(RemoteControl remoteControl, RemoteControl.RpcEvent rpcEvent, ServerStatus serverStatus) {
         this.serverStatus = serverStatus;
         groupListFragment.updateServer(serverStatus);
     }
 
     @Override
-    public void onStreamUpdate(RemoteControl remoteControl, Stream stream) {
+    public void onStreamUpdate(RemoteControl remoteControl, RemoteControl.RpcEvent rpcEvent, Stream stream) {
         serverStatus.updateStream(stream);
 // TODO: group        sectionsPagerAdapter.updateServer(serverStatus);
     }
 
     @Override
-    public void onGroupUpdate(RemoteControl remoteControl, Group group) {
+    public void onGroupUpdate(RemoteControl remoteControl, RemoteControl.RpcEvent rpcEvent, Group group) {
         // TODO
         Log.d(TAG, "onGroupUpdate: " + group.toString());
     }

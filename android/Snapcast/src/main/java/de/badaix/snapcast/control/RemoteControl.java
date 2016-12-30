@@ -121,39 +121,40 @@ public class RemoteControl implements TcpClient.TcpClientListener {
                     return;
                 }
 
+                RpcEvent rpcEvent = RpcEvent.response;
                 /// Response to a "Object.GetStatus" message
                 if (request.equals("Client.GetStatus")) {
-                    listener.onClientEvent(this, new Client(json.getJSONObject("result")), ClientEvent.updated);
+                    listener.onClientEvent(this, rpcEvent, new Client(json.getJSONObject("result")), ClientEvent.updated);
                 } else if (request.equals("Group.GetStatus")) {
-                    listener.onGroupUpdate(this, new Group(json.getJSONObject("result")));
+                    listener.onGroupUpdate(this, rpcEvent, new Group(json.getJSONObject("result")));
                 } else if (request.equals("Server.GetStatus")) {
-                    listener.onServerStatus(this, new ServerStatus(json.getJSONObject("result")));
+                    listener.onServerUpdate(this, rpcEvent, new ServerStatus(json.getJSONObject("result")));
                 } else if (json.getJSONObject("result").has("method") && json.getJSONObject("result").has("params")) {
                     /// Response to a "Object.Set" message
                     JSONObject result = json.getJSONObject("result");
                     String method = result.getString("method");
                     if ("Client.OnUpdate".equals(method)) {
-//                        listener.onClientEvent(this, new Client(result.getJSONObject("params")), ClientEvent.updated);
+                        listener.onClientEvent(this, rpcEvent, new Client(result.getJSONObject("params")), ClientEvent.updated);
                     } else if ("Group.OnUpdate".equals(method)) {
-                        listener.onGroupUpdate(this, new Group(result.getJSONObject("params")));
+                        listener.onGroupUpdate(this, rpcEvent, new Group(result.getJSONObject("params")));
                     } else if ("Server.OnUpdate".equals(method)) {
-                        listener.onServerStatus(this, new ServerStatus(result.getJSONObject("params")));
+                        listener.onServerUpdate(this, rpcEvent, new ServerStatus(result.getJSONObject("params")));
                     }
                 }
             } else {
                 /// Notification
                 if (listener == null)
                     return;
+                RpcEvent rpcEvent = RpcEvent.notification;
                 String method = json.getString("method");
                 if (method.contains("Client.On")) {
-                    final Client client = new Client(json.getJSONObject("params"));
-                    listener.onClientEvent(this, client, ClientEvent.fromString(method));
+                    listener.onClientEvent(this, rpcEvent, new Client(json.getJSONObject("params")), ClientEvent.fromString(method));
                 } else if (method.equals("Stream.OnUpdate")) {
-                    listener.onStreamUpdate(this, new Stream(json.getJSONObject("params")));
+                    listener.onStreamUpdate(this, rpcEvent, new Stream(json.getJSONObject("params")));
                 } else if (method.equals("Group.OnUpdate")) {
-                    listener.onGroupUpdate(this, new Group(json.getJSONObject("params")));
+                    listener.onGroupUpdate(this, rpcEvent, new Group(json.getJSONObject("params")));
                 } else if (method.equals("Server.OnUpdate")) {
-                    listener.onServerStatus(this, new ServerStatus(json.getJSONObject("params")));
+                    listener.onServerUpdate(this, rpcEvent, new ServerStatus(json.getJSONObject("params")));
                 }
             }
 
@@ -301,6 +302,11 @@ public class RemoteControl implements TcpClient.TcpClientListener {
         }
     }
 
+    public enum RpcEvent {
+        response,
+        notification
+    }
+
     public interface RemoteControlListener {
         void onConnected(RemoteControl remoteControl);
 
@@ -308,12 +314,12 @@ public class RemoteControl implements TcpClient.TcpClientListener {
 
         void onDisconnected(RemoteControl remoteControl, Exception e);
 
-        void onClientEvent(RemoteControl remoteControl, Client client, ClientEvent event);
+        void onClientEvent(RemoteControl remoteControl, RpcEvent rpcEvent, Client client, ClientEvent event);
 
-        void onServerStatus(RemoteControl remoteControl, ServerStatus serverStatus);
+        void onServerUpdate(RemoteControl remoteControl, RpcEvent rpcEvent, ServerStatus serverStatus);
 
-        void onStreamUpdate(RemoteControl remoteControl, Stream stream);
+        void onStreamUpdate(RemoteControl remoteControl, RpcEvent rpcEvent, Stream stream);
 
-        void onGroupUpdate(RemoteControl remoteControl, Group group);
+        void onGroupUpdate(RemoteControl remoteControl, RpcEvent rpcEvent, Group group);
     }
 }
