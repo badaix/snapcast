@@ -55,6 +55,7 @@ import java.util.ArrayList;
 
 import de.badaix.snapcast.control.RemoteControl;
 import de.badaix.snapcast.control.json.Client;
+import de.badaix.snapcast.control.json.Group;
 import de.badaix.snapcast.control.json.ServerStatus;
 import de.badaix.snapcast.control.json.Stream;
 import de.badaix.snapcast.utils.NsdHelper;
@@ -431,8 +432,9 @@ public class MainActivity extends AppCompatActivity implements GroupItem.GroupIt
                 remoteControl.setStream(groupId, streamId);
                 changed = true;
             }
-            if (changed)
-                remoteControl.getServerStatus();
+//TODO
+//            if (changed)
+//                remoteControl.getServerStatus();
         }
     }
 
@@ -467,7 +469,7 @@ public class MainActivity extends AppCompatActivity implements GroupItem.GroupIt
     @Override
     public void onClientEvent(RemoteControl remoteControl, Client client, RemoteControl.ClientEvent event) {
         Log.d(TAG, "onClientEvent: " + event.toString());
-        remoteControl.getServerStatus();
+//        remoteControl.getServerStatus();
 /* TODO: group
         if (event == RemoteControl.ClientEvent.deleted)
             serverStatus.removeClient(client);
@@ -475,6 +477,9 @@ public class MainActivity extends AppCompatActivity implements GroupItem.GroupIt
             serverStatus.updateClient(client);
         sectionsPagerAdapter.updateServer(serverStatus);
 */
+        if (event != RemoteControl.ClientEvent.deleted)
+            serverStatus.updateClient(client);
+        groupListFragment.updateServer(serverStatus);
     }
 
     @Override
@@ -487,6 +492,12 @@ public class MainActivity extends AppCompatActivity implements GroupItem.GroupIt
     public void onStreamUpdate(RemoteControl remoteControl, Stream stream) {
         serverStatus.updateStream(stream);
 // TODO: group        sectionsPagerAdapter.updateServer(serverStatus);
+    }
+
+    @Override
+    public void onGroupUpdate(RemoteControl remoteControl, Group group) {
+        // TODO
+        Log.d(TAG, "onGroupUpdate: " + group.toString());
     }
 
 

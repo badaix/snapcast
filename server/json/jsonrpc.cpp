@@ -150,9 +150,7 @@ Json JsonNotification::getJson(const std::string& method, Json data)
 	Json notification = {
 		{"jsonrpc", "2.0"},
 		{"method", method},
-		{"params", {
-			{"data", data}
-		}}
+		{"params", data}
 	};
 
 	return notification;

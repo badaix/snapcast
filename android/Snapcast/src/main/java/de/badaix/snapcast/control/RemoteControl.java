@@ -44,14 +44,12 @@ public class RemoteControl implements TcpClient.TcpClientListener {
     private TcpClient tcpClient;
     private long msgId;
     private RemoteControlListener listener;
-    private ServerStatus serverStatus;
     private String host;
     private int port;
     private HashMap<Long, String> pendingRequests;
 
     public RemoteControl(RemoteControlListener listener) {
         this.listener = listener;
-        serverStatus = new ServerStatus();
         msgId = 0;
         pendingRequests = new HashMap<>();
     }
@@ -96,7 +94,9 @@ public class RemoteControl implements TcpClient.TcpClientListener {
 //        Log.d(TAG, "Msg received: " + message);
         try {
             JSONObject json = new JSONObject(message);
+
             if (json.has("id")) {
+                /// Response
 //                Log.d(TAG, "ID: " + json.getString("id"));
                 long id = json.getLong("id");
                 String request = "";
@@ -107,38 +107,53 @@ public class RemoteControl implements TcpClient.TcpClientListener {
                         pendingRequests.remove(id);
                     }
                 }
+
+                if (listener == null)
+                    return;
+
                 if (json.has("error")) {
                     JSONObject error = json.getJSONObject("error");
                     Log.e(TAG, "error " + error.getInt("code") + ": " + error.getString("message"));
-                } else if (!TextUtils.isEmpty(request)) {
-                    if (request.equals("Server.GetStatus")) {
-                        serverStatus.fromJson(json.getJSONObject("result"));
-                        if (listener != null)
-                            listener.onServerStatus(this, serverStatus);
+                }
+
+                if (TextUtils.isEmpty(request)) {
+                    Log.e(TAG, "request for id " + id + " not found");
+                    return;
+                }
+
+                /// Response to a "Object.GetStatus" message
+                if (request.equals("Client.GetStatus")) {
+                    listener.onClientEvent(this, new Client(json.getJSONObject("result")), ClientEvent.updated);
+                } else if (request.equals("Group.GetStatus")) {
+                    listener.onGroupUpdate(this, new Group(json.getJSONObject("result")));
+                } else if (request.equals("Server.GetStatus")) {
+                    listener.onServerStatus(this, new ServerStatus(json.getJSONObject("result")));
+                } else if (json.getJSONObject("result").has("method") && json.getJSONObject("result").has("params")) {
+                    /// Response to a "Object.Set" message
+                    JSONObject result = json.getJSONObject("result");
+                    String method = result.getString("method");
+                    if ("Client.OnUpdate".equals(method)) {
+//                        listener.onClientEvent(this, new Client(result.getJSONObject("params")), ClientEvent.updated);
+                    } else if ("Group.OnUpdate".equals(method)) {
+                        listener.onGroupUpdate(this, new Group(result.getJSONObject("params")));
+                    } else if ("Server.OnUpdate".equals(method)) {
+                        listener.onServerStatus(this, new ServerStatus(result.getJSONObject("params")));
                     }
                 }
             } else {
+                /// Notification
+                if (listener == null)
+                    return;
                 String method = json.getString("method");
-//                Log.d(TAG, "Notification: " + method);
                 if (method.contains("Client.On")) {
-                    final Client client = new Client(json.getJSONObject("params").getJSONObject("data"));
-//                    serverStatus.addClient(client);
-                    if (listener != null) {
-                        ClientEvent event;
-                        if (method.equals("Client.OnUpdate"))
-                            listener.onClientEvent(this, client, ClientEvent.updated);
-                        else if (method.equals("Client.OnConnect"))
-                            listener.onClientEvent(this, client, ClientEvent.connected);
-                        else if (method.equals("Client.OnDisconnect"))
-                            listener.onClientEvent(this, client, ClientEvent.disconnected);
-                        else if (method.equals("Client.OnDelete")) {
-                            listener.onClientEvent(this, client, ClientEvent.deleted);
-                        }
-                    }
+                    final Client client = new Client(json.getJSONObject("params"));
+                    listener.onClientEvent(this, client, ClientEvent.fromString(method));
                 } else if (method.equals("Stream.OnUpdate")) {
-                    Stream stream = new Stream(json.getJSONObject("params").getJSONObject("data"));
-                    listener.onStreamUpdate(this, stream);
-                    Log.d(TAG, stream.toString());
+                    listener.onStreamUpdate(this, new Stream(json.getJSONObject("params")));
+                } else if (method.equals("Group.OnUpdate")) {
+                    listener.onGroupUpdate(this, new Group(json.getJSONObject("params")));
+                } else if (method.equals("Server.OnUpdate")) {
+                    listener.onServerStatus(this, new ServerStatus(json.getJSONObject("params")));
                 }
             }
 
@@ -157,7 +172,6 @@ public class RemoteControl implements TcpClient.TcpClientListener {
     @Override
     public void onConnected(TcpClient tcpClient) {
         Log.d(TAG, "onConnected");
-        serverStatus = new ServerStatus();
         if (listener != null)
             listener.onConnected(this);
     }
@@ -165,7 +179,6 @@ public class RemoteControl implements TcpClient.TcpClientListener {
     @Override
     public void onDisconnected(TcpClient tcpClient, Exception e) {
         Log.d(TAG, "onDisconnected");
-        serverStatus = null;
         if (listener != null)
             listener.onDisconnected(this, e);
     }
@@ -262,10 +275,30 @@ public class RemoteControl implements TcpClient.TcpClientListener {
     }
 
     public enum ClientEvent {
-        connected,
-        disconnected,
-        updated,
-        deleted
+        connected("Client.OnConnect"),
+        disconnected("Client.OnDisconnect"),
+        updated("Client.OnUpdate"),
+        deleted("Client.OnDelete");
+        private String text;
+
+        ClientEvent(String text) {
+            this.text = text;
+        }
+
+        public static ClientEvent fromString(String text) {
+            if (text != null) {
+                for (ClientEvent b : ClientEvent.values()) {
+                    if (text.equalsIgnoreCase(b.text)) {
+                        return b;
+                    }
+                }
+            }
+            throw new IllegalArgumentException("No ClientEvent with text " + text + " found");
+        }
+
+        public String getText() {
+            return this.text;
+        }
     }
 
     public interface RemoteControlListener {
@@ -280,5 +313,7 @@ public class RemoteControl implements TcpClient.TcpClientListener {
         void onServerStatus(RemoteControl remoteControl, ServerStatus serverStatus);
 
         void onStreamUpdate(RemoteControl remoteControl, Stream stream);
+
+        void onGroupUpdate(RemoteControl remoteControl, Group group);
     }
 }

@@ -20,7 +20,6 @@ package de.badaix.snapcast;
 
 import android.content.Context;
 import android.support.v7.widget.PopupMenu;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -64,7 +63,7 @@ public class ClientItem extends LinearLayout implements SeekBar.OnSeekBarChangeL
     }
 
     private void update() {
-        Log.d(TAG, "update: " + client.getVisibleName() + ", connected: " + client.isConnected());
+        //Log.d(TAG, "update: " + client.getVisibleName() + ", connected: " + client.isConnected());
         title.setText(client.getVisibleName());
         title.setEnabled(client.isConnected());
         volumeSeekBar.setProgress(client.getConfig().getVolume().getPercent());
