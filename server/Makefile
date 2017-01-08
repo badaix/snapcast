@@ -65,6 +65,7 @@ endif
 
 BIN = snapserver
 
+
 all:	$(TARGET)
 
 $(TARGET): $(OBJ)
@@ -86,8 +87,7 @@ dpkg:
 ifdef DESTDIR
 
 install:
-	install -D -g root -o root $(BIN) $(TARGET_DIR)/bin/$(BIN)
-	install -D -g root -o root $(BIN).1 $(TARGET_DIR)/share/man/man1/$(BIN).1
+	$(MAKE) installfiles
 
 else ifeq ($(TARGET), FREEBSD)
 
@@ -109,8 +109,10 @@ install:
 else
 
 install:
-	install -D -g root -o root $(BIN) $(TARGET_DIR)/bin/$(BIN)
-	install -D -g root -o root $(BIN).1 $(TARGET_DIR)/share/man/man1/$(BIN).1
+	$(MAKE) adduser
+	$(MAKE) installfiles
+	install -g audio -o snapcast -d /var/run/$(BIN)
+
 	@if [[ `systemctl` =~ -\.mount ]]; then \
 		$(MAKE) installsystemd; \
 	elif [[ `/sbin/init --version` =~ upstart ]]; then \
@@ -122,6 +124,10 @@ install:
 	fi; \
 
 endif
+
+installfiles:
+	install -D -g root -o root $(BIN) $(TARGET_DIR)/bin/$(BIN)
+	install -D -g root -o root $(BIN).1 $(TARGET_DIR)/share/man/man1/$(BIN).1
 
 installsystemd:
 	@echo using systemd; \
@@ -141,6 +147,11 @@ installsysv:
 installbsd:
 	@echo using bsd; \
 	cp debian/$(BIN).bsd /usr/local/etc/rc.d/$(BIN); \
+
+adduser:
+	@if ! getent passwd snapcast >/dev/null; then \
+		adduser --quiet --ingroup audio --system --no-create-home --home /var/lib/snapcast snapcast; \
+	fi; \
 
 
 ifeq ($(TARGET), FREEBSD)
@@ -174,6 +185,8 @@ uninstall:
 	else \
 		echo cannot tell; \
 	fi; \
+	rm -rf /var/run/$(BIN)
+	$(MAKE) deluser
 
 endif
 
@@ -193,4 +206,7 @@ uninstallsystemd:
 	rm -f /lib/systemd/system/$(BIN).service; \
 	rm -f /etc/default/$(BIN); \
 	systemctl daemon-reload; \
+
+deluser:
+	@deluser --quiet --system snapcast > /dev/null || true
 
