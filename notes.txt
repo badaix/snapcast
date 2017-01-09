@@ -93,3 +93,13 @@ brew install autoconf automake pkg-config libtool
 *Listen
 https://www.postgresql.org/docs/9.1/static/runtime-config-connection.html
 http://www.cyberciti.biz/faq/unix-linux-mysqld-server-bind-to-more-than-one-ip-address/
+
+
+*Sonos
+https://www.youtube.com/watch?v=LGv6vL-YDIk
+https://www.youtube.com/watch?v=W8A7rtVkdrE&t=2s
+
+
+*MPD
+https://git.devuan.org/dev1fanboy/mpd
+https://git.devuan.org/dev1fanboy/mpd/blob/master/src/Main.cxx
