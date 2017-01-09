@@ -37,14 +37,14 @@ int pidFilehandle;
 
 void daemonize(const std::string& user, const std::string& group, const std::string& pidfile)
 {
-	if (pidfile.empty() || pidfile.find('/') == std::string::npos) 
+	if (pidfile.empty() || pidfile.find('/') == std::string::npos)
 		throw SnapException("invalid pid file \"" + pidfile + "\"");
-	
+
 	std::string pidfileDir(pidfile.substr(0, pidfile.find_last_of('/')));
 	mkdirRecursive(pidfileDir.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
 
 	/// Ensure only one copy
-	pidFilehandle = open(pidfile.c_str(), O_RDWR|O_CREAT, 0600);
+	pidFilehandle = open(pidfile.c_str(), O_RDWR|O_CREAT, 0644);
 	if (pidFilehandle == -1 )
 	{
 		/// Couldn't open lock file
@@ -58,7 +58,7 @@ void daemonize(const std::string& user, const std::string& group, const std::str
 	bool had_group = false;
 #endif
 
-	if (!user.empty()) 
+	if (!user.empty())
 	{
 		struct passwd *pwd = getpwnam(user.c_str());
 		if (pwd == nullptr)
@@ -69,7 +69,7 @@ void daemonize(const std::string& user, const std::string& group, const std::str
 		/// this is needed by libs such as arts
 		setenv("HOME", pwd->pw_dir, true);
 	}
-	
+
 	if (!group.empty()) {
 		struct group *grp = getgrnam(group.c_str());
 		if (grp == nullptr)
@@ -81,7 +81,7 @@ void daemonize(const std::string& user, const std::string& group, const std::str
 	}
 
 	/// set gid
-	if (user_gid != (gid_t)-1 && user_gid != getgid() && setgid(user_gid) == -1) 
+	if (user_gid != (gid_t)-1 && user_gid != getgid() && setgid(user_gid) == -1)
 		throw SnapException("Failed to set group " + cpt::to_string((int)user_gid));
 
 //#if defined(FREEBSD) && !defined(MACOS)
