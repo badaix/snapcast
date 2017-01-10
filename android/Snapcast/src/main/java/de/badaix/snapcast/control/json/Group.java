@@ -18,6 +18,8 @@
 
 package de.badaix.snapcast.control.json;
 
+import android.text.TextUtils;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -107,6 +109,55 @@ public class Group implements JsonSerialisable, Comparable<Group> {
 
     public ArrayList<Client> getClients() {
         return clients;
+    }
+
+
+    public boolean removeClient(String id) {
+        if (TextUtils.isEmpty(id))
+            return false;
+
+        for (int i = 0; i < clients.size(); ++i) {
+            if (clients.get(i).getId().equals(id)) {
+                clients.remove(i);
+                return true;
+            }
+        }
+        return false;
+    }
+
+
+    boolean updateClient(Client client) {
+        if (client == null)
+            return false;
+
+        for (int i = 0; i < clients.size(); ++i) {
+            Client c = clients.get(i);
+            if (c == null)
+                continue;
+
+            if (client.getId().equals(c.getId())) {
+                if (client.equals(c))
+                    return true;
+                clients.set(i, client);
+                return true;
+            }
+        }
+        return false;
+    }
+
+
+    public Client getClient(String id) {
+        if (TextUtils.isEmpty(id))
+            return null;
+
+        for (Client c: clients) {
+            if (c == null)
+                continue;
+
+            if (id.equals(c.getId()))
+                return c;
+        }
+        return null;
     }
 
     public JSONArray getJsonClients() {

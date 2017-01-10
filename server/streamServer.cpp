@@ -343,7 +343,14 @@ void StreamServer::onMessageReceived(StreamSession* connection, const msg::BaseM
 
 		logD << "request kServerSettings: " << connection->clientId << "\n";
 //		std::lock_guard<std::mutex> mlock(mutex_);
-		GroupPtr group = Config::instance().addClientInfo(connection->clientId);
+		bool newGroup(false);
+		GroupPtr group = Config::instance().getGroupFromClient(connection->clientId);
+		if (group == nullptr)
+		{
+			group = Config::instance().addClientInfo(connection->clientId);
+			newGroup = true;
+		}
+
 		ClientInfoPtr client = group->getClient(connection->clientId);
 
 		logD << "request kServerSettings\n";
@@ -382,9 +389,18 @@ void StreamServer::onMessageReceived(StreamSession* connection, const msg::BaseM
 		auto headerChunk = stream->getHeader();
 		connection->sendAsync(headerChunk);
 
-		json notification = JsonNotification::getJson("Client.OnConnect", client->toJson());
-//		logO << notification.dump(4) << "\n";
-		controlServer_->send(notification.dump());
+		if (newGroup)
+		{
+			json serverJson = Config::instance().getServerStatus(streamManager_->toJson());
+			json notification = JsonNotification::getJson("Server.OnUpdate", serverJson);
+			controlServer_->send(notification.dump());
+		}
+		else
+		{
+			json notification = JsonNotification::getJson("Client.OnConnect", client->toJson());
+			//logO << notification.dump(4) << "\n";
+			controlServer_->send(notification.dump());
+		}
 //		cout << Config::instance().getServerStatus(streamManager_->toJson()).dump(4) << "\n";
 //		cout << group->toJson().dump(4) << "\n";
 	}

@@ -494,14 +494,17 @@ public class MainActivity extends AppCompatActivity implements GroupItem.GroupIt
 
     @Override
     public void onStreamUpdate(RemoteControl remoteControl, RemoteControl.RpcEvent rpcEvent, Stream stream) {
+        // TODO
         serverStatus.updateStream(stream);
-// TODO: group        sectionsPagerAdapter.updateServer(serverStatus);
+        groupListFragment.updateServer(serverStatus);
     }
 
     @Override
     public void onGroupUpdate(RemoteControl remoteControl, RemoteControl.RpcEvent rpcEvent, Group group) {
         // TODO
         Log.d(TAG, "onGroupUpdate: " + group.toString());
+        serverStatus.updateGroup(group);
+        groupListFragment.updateServer(serverStatus);
     }
 
 
@@ -570,9 +573,9 @@ public class MainActivity extends AppCompatActivity implements GroupItem.GroupIt
     public void onDeleteClicked(GroupItem groupItem, final ClientItem clientItem) {
         final Client client = clientItem.getClient();
         client.setDeleted(true);
-/* TODO: group
+
         serverStatus.updateClient(client);
-        sectionsPagerAdapter.updateServer(serverStatus);
+        groupListFragment.updateServer(serverStatus);
         Snackbar mySnackbar = Snackbar.make(findViewById(R.id.myCoordinatorLayout),
                 getString(R.string.client_deleted, client.getVisibleName()),
                 Snackbar.LENGTH_SHORT);
@@ -581,7 +584,7 @@ public class MainActivity extends AppCompatActivity implements GroupItem.GroupIt
             public void onClick(View v) {
                 client.setDeleted(false);
                 serverStatus.updateClient(client);
-                sectionsPagerAdapter.updateServer(serverStatus);
+                groupListFragment.updateServer(serverStatus);
             }
         });
         mySnackbar.setCallback(new Snackbar.Callback() {
@@ -595,7 +598,7 @@ public class MainActivity extends AppCompatActivity implements GroupItem.GroupIt
             }
         });
         mySnackbar.show();
-*/
+
     }
 
     @Override

@@ -175,12 +175,20 @@ public class GroupListFragment extends Fragment {
 // TODO: group
                     for (Group group : GroupAdapter.this.serverStatus.getGroups()) {
 //                        add(group);
-                        int visibleCount = 0;
+                        if (group.getClients().isEmpty())
+                            continue;
+
+                        int onlineCount = 0;
+                        int count = 0;
                         for (Client client : group.getClients()) {
-                            if ((client != null) && client.isConnected() && !client.isDeleted())// && client.getConfig().getStream().equals(GroupListFragment.this.stream.getId()))
-                                visibleCount++;
+                            if (client == null || client.isDeleted())
+                                continue;
+                            if (client.isConnected())// && client.getConfig().getStream().equals(GroupListFragment.this.stream.getId()))
+                                onlineCount++;
+                            count++;
                         }
-                        if ((visibleCount > 0) || !hideOffline)
+
+                        if ((onlineCount > 0) || (!hideOffline && (count > 0)))
                             add(group);
                     }
 

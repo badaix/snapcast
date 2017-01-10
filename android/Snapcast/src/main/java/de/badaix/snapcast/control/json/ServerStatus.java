@@ -87,33 +87,27 @@ public class ServerStatus implements JsonSerialisable {
         streams.clear();
     }
 
-    /*
-        public boolean removeClient(Client client) {
-            for (int i = 0; i < clients.size(); ++i) {
-                if (clients.get(i).getId().equals(client.getId())) {
-                    clients.remove(i);
-                    return true;
-                }
-            }
+    public boolean removeClient(Client client) {
+        if (client == null)
             return false;
+
+        for (Group group : groups) {
+            if (group.getClient(client.getId()) != null) {
+                group.removeClient(client.getId());
+                return true;
+            }
         }
-*/
+        return false;
+    }
+
     public boolean updateClient(Client client) {
         if (client == null)
             return false;
 
         for (Group group : groups) {
-            for (int i = 0; i < group.getClients().size(); ++i) {
-                Client c = group.getClients().get(i);
-                if (c == null)
-                    continue;
-
-                if (client.getId().equals(c.getId())) {
-                    if (client.equals(c))
-                        return true;
-                    group.getClients().set(i, client);
-                    return true;
-                }
+            if (group.getClient(client.getId()) != null) {
+                group.updateClient(client);
+                return true;
             }
         }
         return false;
