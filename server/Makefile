@@ -117,7 +117,7 @@ endif
 installsystemd:
 	@echo using systemd; \
 	cp debian/$(BIN).service /lib/systemd/system/$(BIN).service; \
-	cp debian/$(BIN).default /etc/default/$(BIN); \
+	cp -n debian/$(BIN).default /etc/default/$(BIN); \
 	systemctl daemon-reload; \
 	systemctl enable $(BIN); \
 	systemctl start $(BIN); \
@@ -125,7 +125,7 @@ installsystemd:
 installsysv:
 	@echo using sysv; \
 	cp debian/$(BIN).init /etc/init.d/$(BIN); \
-	cp debian/$(BIN).default /etc/default/$(BIN); \
+	cp -n debian/$(BIN).default /etc/default/$(BIN); \
 	update-rc.d $(BIN) defaults; \
 	/etc/init.d/$(BIN) start; \
 
