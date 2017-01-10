@@ -120,7 +120,7 @@ $ brew install flac libvorbis
 
 Install Snapclient
 
-    $ sudo make install
+    $ sudo make install TARGET=MACOS
 
 This will copy the client binary to `/usr/local/bin` and create a Launch Agent to start the client as a daemon.
 
@@ -132,7 +132,7 @@ This will copy the client binary to `/usr/local/bin` and create a Launch Agent t
 
 Install Snapserver
 
-    $ sudo make install
+    $ sudo make install TARGET=MACOS
 
 This will copy the server binary to `/usr/local/bin` and create a Launch Agent to start the server as a daemon.
 
