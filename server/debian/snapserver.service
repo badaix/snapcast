@@ -1,6 +1,6 @@
 [Unit]
 Description=Snapcast server
-After=network-online.target sound.target
+After=network-online.target
 Requires=network-online.target
 
 [Service]
