@@ -22,6 +22,7 @@
 #include <string>
 #include "externals/json.hpp"
 #include "common/snapException.h"
+#include "jsonRequestId.h"
 
 
 using Json = nlohmann::json;
@@ -30,13 +31,14 @@ using Json = nlohmann::json;
 
 class JsonRequestException : public SnapException
 {
-  int errorCode_, id_;
+  int errorCode_;
+  req_id id_;
 public:
-	JsonRequestException(const char* text, int errorCode = 0, int requestId = -1) : SnapException(text), errorCode_(errorCode), id_(requestId)
+	JsonRequestException(const char* text, int errorCode = 0, const req_id& requestId = req_id()) : SnapException(text), errorCode_(errorCode), id_(requestId)
 	{
 	}
 
-	JsonRequestException(const std::string& text, int errorCode = 0, int requestId = -1) : SnapException(text), errorCode_(errorCode), id_(requestId)
+	JsonRequestException(const std::string& text, int errorCode = 0, const req_id& requestId = req_id()) : SnapException(text), errorCode_(errorCode), id_(requestId)
 	{
 	}
 
@@ -65,11 +67,8 @@ public:
 				{"code", errorCode},
 				{"message", what()}
 			}},
+			{"id", id_.toJson()}
 		};
-		if (id_ == -1)
-			response["id"] = nullptr;
-		else
-			response["id"] = id_;
 
 		return response;
 	}
@@ -84,11 +83,11 @@ public:
 class JsonInvalidRequestException : public JsonRequestException
 {
 public:
-	JsonInvalidRequestException(int requestId = -1) : JsonRequestException("invalid request", -32600, requestId)
+	JsonInvalidRequestException(const req_id& requestId = req_id()) : JsonRequestException("invalid request", -32600, requestId)
 	{
 	}
 
-	JsonInvalidRequestException(const std::string& message, int requestId = -1) : JsonRequestException(message, -32600, requestId)
+	JsonInvalidRequestException(const std::string& message, const req_id& requestId = req_id()) : JsonRequestException(message, -32600, requestId)
 	{
 	}
 };
@@ -98,11 +97,11 @@ public:
 class JsonMethodNotFoundException : public JsonRequestException
 {
 public:
-	JsonMethodNotFoundException(int requestId = -1) : JsonRequestException("method not found", -32601, requestId)
+	JsonMethodNotFoundException(const req_id& requestId = req_id()) : JsonRequestException("method not found", -32601, requestId)
 	{
 	}
 
-	JsonMethodNotFoundException(const std::string& message, int requestId = -1) : JsonRequestException(message, -32601, requestId)
+	JsonMethodNotFoundException(const std::string& message, const req_id& requestId = req_id()) : JsonRequestException(message, -32601, requestId)
 	{
 	}
 };
@@ -112,11 +111,11 @@ public:
 class JsonInvalidParamsException : public JsonRequestException
 {
 public:
-	JsonInvalidParamsException(int requestId = -1) : JsonRequestException("invalid params", -32602, requestId)
+	JsonInvalidParamsException(const req_id& requestId = req_id()) : JsonRequestException("invalid params", -32602, requestId)
 	{
 	}
 
-	JsonInvalidParamsException(const std::string& message, int requestId = -1) : JsonRequestException(message, -32602, requestId)
+	JsonInvalidParamsException(const std::string& message, const req_id& requestId = req_id()) : JsonRequestException(message, -32602, requestId)
 	{
 	}
 };
@@ -125,11 +124,11 @@ public:
 class JsonInternalErrorException : public JsonRequestException
 {
 public:
-	JsonInternalErrorException(int requestId = -1) : JsonRequestException("internal error", -32603, requestId)
+	JsonInternalErrorException(const req_id& requestId = req_id()) : JsonRequestException("internal error", -32603, requestId)
 	{
 	}
 
-	JsonInternalErrorException(const std::string& message, int requestId = -1) : JsonRequestException(message, -32603, requestId)
+	JsonInternalErrorException(const std::string& message, const req_id& requestId = req_id()) : JsonRequestException(message, -32603, requestId)
 	{
 	}
 };

@@ -51,10 +51,16 @@ void JsonRequest::parse(const std::string& json)
 		}
 
 		if (json_.count("id") == 0)
-			throw JsonInvalidRequestException("id is missing", -1);
-		id = json_["id"].get<int>();
-		if (id < 0)
-			throw JsonInvalidRequestException("id must be a positive integer", id);
+			throw JsonInvalidRequestException("id is missing");
+
+		try
+		{
+			id = req_id(json_["id"]);
+		}
+		catch(const std::exception& e)
+		{
+			throw JsonInvalidRequestException(e.what());
+		}
 
 		if (json_.count("jsonrpc") == 0)
 			throw JsonInvalidRequestException("jsonrpc is missing", id);
@@ -98,7 +104,7 @@ Json JsonRequest::getResponse(const Json& result)
 {
 	Json response = {
 		{"jsonrpc", "2.0"},
-		{"id", id},
+		{"id", id.toJson()},
 		{"result", result}
 	};
 

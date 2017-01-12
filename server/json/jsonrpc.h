@@ -23,6 +23,7 @@
 #include <vector>
 #include "externals/json.hpp"
 #include "jsonrpcException.h"
+#include "jsonRequestId.h"
 
 
 using Json = nlohmann::json;
@@ -40,7 +41,7 @@ public:
 	JsonRequest();
 
 	void parse(const std::string& json);
-	int id;
+	req_id id;
 	std::string method;
 	std::map<std::string, Json> params;
 
