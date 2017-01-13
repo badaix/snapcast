@@ -1,10 +1,6 @@
 cmake_minimum_required(VERSION 3.2)
 project(snapcast VERSION 0.9.0.0)
 
-# Import dependencies from conan
-include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
-conan_basic_setup()
-
 # Configure paths
 include_directories(${CMAKE_SOURCE_DIR})
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/")
@@ -26,18 +22,43 @@ set(CMAKE_CXX_STANDARD 11)
 if(ANDROID)
   add_definitions(-DNO_CPP11_STRING)
 endif()
-
-# Find dependencies
-if (NOT ANDROID)
-  find_package(Threads)
+if(WIN32)
+  add_definitions(-D_WIN32_WINNT=0x0600 -DWINDOWS -DWIN32_LEAN_AND_MEAN -DUNICODE -D_UNICODE -D_CRT_SECURE_NO_WARNINGS)
 endif()
-find_package(FLAC REQUIRED)
-find_package(VORBIS REQUIRED)
-find_package(Ogg REQUIRED)
 
 # Get arch
 include(${CMAKE_SOURCE_DIR}/cmake/TargetArch.cmake)
 target_architecture(ARCH)
+
+# Find dependencies
+if(WIN32)
+  find_package(Threads)
+  find_package(Bonjour REQUIRED)
+  find_package(FLAC REQUIRED)
+  find_package(VORBIS REQUIRED)
+  find_package(Ogg REQUIRED)
+elseif(APPLE)
+  find_package(Threads)
+  find_package(Bonjour REQUIRED)
+  find_package(FLAC REQUIRED)
+  find_package(VORBIS REQUIRED)
+  find_package(Ogg REQUIRED)
+elseif(ANDROID)
+  find_package(FLAC REQUIRED)
+  find_package(VORBIS REQUIRED)
+  find_package(Ogg REQUIRED)
+elseif(UNIX)
+  find_package(PkgConfig REQUIRED)
+  find_package(Threads REQUIRED)
+  pkg_search_module(ALSA REQUIRED alsa)
+  pkg_search_module(AVAHI REQUIRED avahi-client)
+  pkg_search_module(FLAC REQUIRED flac)
+  pkg_search_module(VORBIS REQUIRED vorbis)
+  pkg_search_module(VORBISENC REQUIRED vorbisenc)
+  pkg_search_module(OGG REQUIRED ogg)
+else()
+  message(FATAL_ERROR "Unknown platform")
+endif()
 
 # Set generators
 if(UNIX)
@@ -86,32 +107,27 @@ set(CPACK_COMPONENT_SERVER_DESCRIPTION "Snapcast server\n\
  ways to use Snapcast is in conjunction with the music player daemon or Mopidy,\n\
  which can be configured to use a named pipe as audio output.\n\
 ")
-set(CPACK_DEBIAN_CLIENT_PACKAGE_CONTROL_EXTRA ${CMAKE_SOURCE_DIR}/client/debian/conffiles ${CMAKE_SOURCE_DIR}/client/debian/prerm ${CMAKE_SOURCE_DIR}/client/debian/postrm ${CMAKE_SOURCE_DIR}/client/debian/postinit)
-set(CPACK_DEBIAN_SERVER_PACKAGE_CONTROL_EXTRA ${CMAKE_SOURCE_DIR}/server/debian/conffiles ${CMAKE_SOURCE_DIR}/server/debian/prerm ${CMAKE_SOURCE_DIR}/server/debian/postrm ${CMAKE_SOURCE_DIR}/server/debian/postinit)
+set(CPACK_DEBIAN_CLIENT_PACKAGE_CONTROL_EXTRA ${CMAKE_SOURCE_DIR}/platform/debian/client/conffiles ${CMAKE_SOURCE_DIR}/platform/debian/client/prerm ${CMAKE_SOURCE_DIR}/platform/debian/client/postrm ${CMAKE_SOURCE_DIR}/platform/debian/client/postinit)
+set(CPACK_DEBIAN_SERVER_PACKAGE_CONTROL_EXTRA ${CMAKE_SOURCE_DIR}/platform/debian/server/conffiles ${CMAKE_SOURCE_DIR}/platform/debian/server/prerm ${CMAKE_SOURCE_DIR}/platform/debian/server/postrm ${CMAKE_SOURCE_DIR}/platform/debian/server/postinit)
 
 # WiX Specifics
 set(CPACK_WIX_UPGRADE_GUID 7D46CFF3-436E-4381-A34C-7D87274A7FB4)
 set(CPACK_WIX_PRODUCT_GUID 7D46CFF3-436E-4381-A34C-7D87274A7FB4)
 set(CPACK_WIX_LICENSE_RTF ${CMAKE_SOURCE_DIR}/LICENSE.txt)
-set(CPACK_WIX_PRODUCT_ICON ${CMAKE_SOURCE_DIR}/cmake/icon.ico)
-set(CPACK_WIX_UI_BANNER ${CMAKE_SOURCE_DIR}/cmake/banner.bmp)
-set(CPACK_WIX_UI_DIALOG ${CMAKE_SOURCE_DIR}/cmake/welcome.bmp)
-set(MSI_ICON ${CMAKE_SOURCE_DIR}/cmake/icon.bmp)
-set(CPACK_WIX_TEMPLATE ${CMAKE_SOURCE_DIR}/main.wxs)
+set(CPACK_WIX_PRODUCT_ICON ${CMAKE_SOURCE_DIR}/platform/windows/icon.ico)
+set(CPACK_WIX_UI_BANNER ${CMAKE_SOURCE_DIR}/platform/windows/banner.bmp)
+set(CPACK_WIX_UI_DIALOG ${CMAKE_SOURCE_DIR}/platform/windows/welcome.bmp)
+set(MSI_ICON ${CMAKE_SOURCE_DIR}/platform/windows/icon.bmp)
+set(CPACK_WIX_TEMPLATE ${CMAKE_SOURCE_DIR}/platform/windows/main.wxs)
 
 # Enable component packages
 set(CPACK_DEB_COMPONENT_INSTALL ON)
 set(CPACK_ARCHIVE_COMPONENT_INSTALL ON)
 
-# Configure components
-if(WIN32)
-  add_definitions(-D_WIN32_WINNT=0x0600 -DWINDOWS -DWIN32_LEAN_AND_MEAN -DUNICODE -D_UNICODE -D_CRT_SECURE_NO_WARNINGS)
-  find_package(mDNSResponder REQUIRED)
-elseif(NOT ANDROID)
-  find_package(Avahi REQUIRED)
+# Configure internal components
+if(NOT ANDROID AND NOT WIN32)
   add_subdirectory(server)
 endif()
-
 add_subdirectory(common)
 add_subdirectory(message)
 add_subdirectory(client)
@@ -122,7 +138,7 @@ if(UNIX)
   	COMMAND gzip --force README.md)
 
   add_custom_command(OUTPUT changelog.gz
-    COMMAND cmake -E copy ${CMAKE_SOURCE_DIR}/client/debian/changelog ${CMAKE_CURRENT_BINARY_DIR}/changelog
+    COMMAND cmake -E copy ${CMAKE_SOURCE_DIR}/platform/debian/client/changelog ${CMAKE_CURRENT_BINARY_DIR}/changelog
   	COMMAND gzip --force changelog)
 	
   add_custom_target(doc ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/README.md.gz ${CMAKE_CURRENT_BINARY_DIR}/changelog.gz)
