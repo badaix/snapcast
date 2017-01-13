@@ -48,7 +48,7 @@ struct req_id
 	{
 	}
 
-	explicit req_id(Json json_id) : type(value_t::null)
+	req_id(const Json& json_id) : type(value_t::null)
 	{
 		if (json_id.is_null())
 		{
