@@ -36,11 +36,19 @@ struct req_id
 		integer
 	};
 
-	req_id() : type(value_t::null)
+	req_id() : type(value_t::null), int_id(0), string_id("")
 	{
 	}
 
-	req_id(Json json_id) : type(value_t::null)
+	req_id(int id) : type(value_t::integer), int_id(id), string_id("")
+	{
+	}
+
+	req_id(const std::string& id) : type(value_t::string), int_id(0), string_id(id)
+	{
+	}
+
+	explicit req_id(Json json_id) : type(value_t::null)
 	{
 		if (json_id.is_null())
 		{
@@ -77,8 +85,8 @@ struct req_id
 	}
 
 	value_t type;
-	std::string string_id;
 	int int_id;
+	std::string string_id;
 };
 
 

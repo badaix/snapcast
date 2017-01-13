@@ -24,7 +24,7 @@ using namespace std;
 
 
 
-JsonRequest::JsonRequest() : id(-1), method("")
+JsonRequest::JsonRequest() : id(), method("")
 {
 }
 
