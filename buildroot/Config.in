@@ -1,0 +1,1 @@
+source "$BR2_EXTERNAL_SNAPCAST_PATH/package/snapcast/Config.in"
