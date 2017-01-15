@@ -43,7 +43,7 @@ void StreamServer::onStateChanged(const PcmStream* pcmStream, const ReaderState&
 {
 	logO << "onStateChanged (" << pcmStream->getName() << "): " << state << "\n";
 //	logO << pcmStream->toJson().dump(4);
-	json notification = JsonNotification::getJson("Stream.OnUpdate", pcmStream->toJson());
+	json notification = jsonrpc::Notification::getJson("Stream.OnUpdate", pcmStream->toJson());
 	controlServer_->send(notification.dump(), NULL);
 }
 
@@ -99,7 +99,7 @@ void StreamServer::onDisconnect(StreamSession* streamSession)
 	Config::instance().save();
 	if (controlServer_ != nullptr)
 	{
-		json notification = JsonNotification::getJson("Client.OnDisconnect", clientInfo->toJson());
+		json notification = jsonrpc::Notification::getJson("Client.OnDisconnect", clientInfo->toJson());
 		controlServer_->send(notification.dump());
 	}
 }
@@ -108,7 +108,7 @@ void StreamServer::onDisconnect(StreamSession* streamSession)
 
 void StreamServer::onMessageReceived(ControlSession* controlSession, const std::string& message)
 {
-	JsonRequest request;
+	jsonrpc::Request request;
 	try
 	{
 		request.parse(message);
@@ -120,7 +120,7 @@ void StreamServer::onMessageReceived(ControlSession* controlSession, const std::
 		{
 			ClientInfoPtr clientInfo = Config::instance().getClientInfo(request.getParam("client").get<string>());
 			if (clientInfo == nullptr)
-				throw JsonInternalErrorException("Client not found", request.id);
+				throw jsonrpc::InternalErrorException("Client not found", request.id);
 
 			if (request.method == "Client.GetStatus")
 			{
@@ -139,7 +139,7 @@ void StreamServer::onMessageReceived(ControlSession* controlSession, const std::
 				clientInfo->config.name = request.getParam("name").get<string>();
 			}
 			else
-				throw JsonMethodNotFoundException(request.id);
+				throw jsonrpc::MethodNotFoundException(request.id);
 
 
 			if (request.method.find("Client.Set") == 0)
@@ -160,7 +160,7 @@ void StreamServer::onMessageReceived(ControlSession* controlSession, const std::
 				}
 
 				/// Notify others
-				json notification = JsonNotification::getJson("Client.OnUpdate", clientInfo->toJson());
+				json notification = jsonrpc::Notification::getJson("Client.OnUpdate", clientInfo->toJson());
 				logO << "Notification: " << notification.dump() << "\n";
 				controlServer_->send(notification.dump(), controlSession);
 			}
@@ -169,7 +169,7 @@ void StreamServer::onMessageReceived(ControlSession* controlSession, const std::
 		{
 			GroupPtr group = Config::instance().getGroup(request.getParam("group").get<string>());
 			if (group == nullptr)
-				throw JsonInternalErrorException("Group not found", request.id);
+				throw jsonrpc::InternalErrorException("Group not found", request.id);
 
 			if (request.method == "Group.GetStatus")
 			{
@@ -180,7 +180,7 @@ void StreamServer::onMessageReceived(ControlSession* controlSession, const std::
 				string streamId = request.getParam("id").get<string>();
 				PcmStreamPtr stream = streamManager_->getStream(streamId);
 				if (stream == nullptr)
-					throw JsonInternalErrorException("Stream not found", request.id);
+					throw jsonrpc::InternalErrorException("Stream not found", request.id);
 
 				group->streamId = streamId;
 
@@ -199,7 +199,7 @@ void StreamServer::onMessageReceived(ControlSession* controlSession, const std::
 				}
 
 				/// Notify others
-				json notification = JsonNotification::getJson("Group.OnUpdate", group->toJson());
+				json notification = jsonrpc::Notification::getJson("Group.OnUpdate", group->toJson());
 				logO << "Notification: " << notification.dump() << "\n";
 				controlServer_->send(notification.dump(), controlSession);
 			}
@@ -258,12 +258,12 @@ void StreamServer::onMessageReceived(ControlSession* controlSession, const std::
 				result =  {{"method", "Server.OnUpdate"}, {"params", serverJson}};
 
 				/// Notify others: since at least two groups are affected, send a complete server update
-				json notification = JsonNotification::getJson("Server.OnUpdate", serverJson);
+				json notification = jsonrpc::Notification::getJson("Server.OnUpdate", serverJson);
 				logO << "Notification: " << notification.dump() << "\n";
 				controlServer_->send(notification.dump(), controlSession);
 			}
 			else
-				throw JsonMethodNotFoundException(request.id);
+				throw jsonrpc::MethodNotFoundException(request.id);
 		}
 		else if (request.method.find("Server.") == 0)
 		{
@@ -275,7 +275,7 @@ void StreamServer::onMessageReceived(ControlSession* controlSession, const std::
 			{
 				ClientInfoPtr clientInfo = Config::instance().getClientInfo(request.getParam("client").get<string>());
 				if (clientInfo == nullptr)
-					throw JsonInternalErrorException("Client not found", request.id);
+					throw jsonrpc::InternalErrorException("Client not found", request.id);
 
 				Config::instance().remove(clientInfo);
 
@@ -283,29 +283,29 @@ void StreamServer::onMessageReceived(ControlSession* controlSession, const std::
 				result =  {{"method", "Server.OnUpdate"}, {"params", serverJson}};
 
 				/// Notify others
-				json notification = JsonNotification::getJson("Server.OnUpdate", serverJson);
+				json notification = jsonrpc::Notification::getJson("Server.OnUpdate", serverJson);
 				logO << "Notification: " << notification.dump() << "\n";
 				controlServer_->send(notification.dump(), controlSession);
 			}
 			else
-				throw JsonMethodNotFoundException(request.id);
+				throw jsonrpc::MethodNotFoundException(request.id);
 		}
 		else
-			throw JsonMethodNotFoundException(request.id);
+			throw jsonrpc::MethodNotFoundException(request.id);
 
 		Config::instance().save();
 		string responseJson = request.getResponse(result).dump();
 		logO << "Response: " << responseJson << "\n";
 		controlSession->send(responseJson);
 	}
-	catch (const JsonRequestException& e)
+	catch (const jsonrpc::RequestException& e)
 	{
 //		logE << "JsonRequestException: " << e.getResponse().dump() << ", message: " << message << "\n";
 		controlSession->send(e.getResponse().dump());
 	}
 	catch (const exception& e)
 	{
-		JsonInternalErrorException jsonException(e.what(), request.id);
+		jsonrpc::InternalErrorException jsonException(e.what(), request.id);
 		controlSession->send(jsonException.getResponse().dump());
 	}
 }
@@ -392,12 +392,12 @@ void StreamServer::onMessageReceived(StreamSession* connection, const msg::BaseM
 		if (newGroup)
 		{
 			json serverJson = Config::instance().getServerStatus(streamManager_->toJson());
-			json notification = JsonNotification::getJson("Server.OnUpdate", serverJson);
+			json notification = jsonrpc::Notification::getJson("Server.OnUpdate", serverJson);
 			controlServer_->send(notification.dump());
 		}
 		else
 		{
-			json notification = JsonNotification::getJson("Client.OnConnect", client->toJson());
+			json notification = jsonrpc::Notification::getJson("Client.OnConnect", client->toJson());
 			//logO << notification.dump(4) << "\n";
 			controlServer_->send(notification.dump());
 		}

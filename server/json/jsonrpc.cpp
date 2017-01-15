@@ -22,14 +22,15 @@
 
 using namespace std;
 
+namespace jsonrpc
+{
 
-
-JsonRequest::JsonRequest() : id(), method("")
+Request::Request() : method(""), id()
 {
 }
 
 
-void JsonRequest::parse(const std::string& json)
+void Request::parse(const std::string& json)
 {
 	// http://www.jsonrpc.org/specification
 	//	code	message	meaning
@@ -47,32 +48,32 @@ void JsonRequest::parse(const std::string& json)
 		}
 		catch (const exception& e)
 		{
-			throw JsonRequestException(e.what(), -32700);
+			throw RequestException(e.what(), -32700);
 		}
 
 		if (json_.count("id") == 0)
-			throw JsonInvalidRequestException("id is missing");
+			throw InvalidRequestException("id is missing");
 
 		try
 		{
-			id = req_id(json_["id"]);
+			id = Id(json_["id"]);
 		}
 		catch(const std::exception& e)
 		{
-			throw JsonInvalidRequestException(e.what());
+			throw InvalidRequestException(e.what());
 		}
 
 		if (json_.count("jsonrpc") == 0)
-			throw JsonInvalidRequestException("jsonrpc is missing", id);
+			throw InvalidRequestException("jsonrpc is missing", id);
 		string jsonrpc = json_["jsonrpc"].get<string>();
 		if (jsonrpc != "2.0")
-			throw JsonInvalidRequestException("invalid jsonrpc value: " + jsonrpc, id);
+			throw InvalidRequestException("invalid jsonrpc value: " + jsonrpc, id);
 
 		if (json_.count("method") == 0)
-			throw JsonInvalidRequestException("method is missing", id);
+			throw InvalidRequestException("method is missing", id);
 		method = json_["method"].get<string>();
 		if (method.empty())
-			throw JsonInvalidRequestException("method must not be empty", id);
+			throw InvalidRequestException("method must not be empty", id);
 
 		params.clear();
 		try
@@ -86,25 +87,25 @@ void JsonRequest::parse(const std::string& json)
 		}
 		catch (const exception& e)
 		{
-			throw JsonInvalidParamsException(e.what(), id);
+			throw InvalidParamsException(e.what(), id);
 		}
 	}
-	catch (const JsonRequestException& e)
+	catch (const RequestException& e)
 	{
 		throw;
 	}
 	catch (const exception& e)
 	{
-		throw JsonInternalErrorException(e.what(), id);
+		throw InternalErrorException(e.what(), id);
 	}
 }
 
 
-Json JsonRequest::getResponse(const Json& result)
+Json Request::getResponse(const Json& result)
 {
 	Json response = {
 		{"jsonrpc", "2.0"},
-		{"id", id.toJson()},
+		{"id", id.to_json()},
 		{"result", result}
 	};
 
@@ -112,7 +113,7 @@ Json JsonRequest::getResponse(const Json& result)
 }
 
 
-Json JsonRequest::getError(int code, const std::string& message)
+Json Request::getError(int code, const std::string& message)
 {
 	Json response = {
 		{"jsonrpc", "2.0"},
@@ -127,16 +128,16 @@ Json JsonRequest::getError(int code, const std::string& message)
 }
 
 
-bool JsonRequest::hasParam(const std::string& key)
+bool Request::hasParam(const std::string& key)
 {
 	return (params.find(key) != params.end());
 }
 
 
-Json JsonRequest::getParam(const std::string& key)
+Json Request::getParam(const std::string& key)
 {
 	if (!hasParam(key))
-		throw JsonInvalidParamsException(id);
+		throw InvalidParamsException(id);
 	return params[key];
 }
 
@@ -146,12 +147,12 @@ Json JsonRequest::getParam(const std::string& key)
 bool JsonRequest::isParam(size_t idx, const std::string& param)
 {
 	if (idx >= params.size())
-		throw JsonInvalidParamsException(*this);
+		throw InvalidParamsException(*this);
 	return (params[idx] == param);
 }
 */
 
-Json JsonNotification::getJson(const std::string& method, Json data)
+Json Notification::getJson(const std::string& method, const Json& data)
 {
 	Json notification = {
 		{"jsonrpc", "2.0"},
@@ -161,4 +162,7 @@ Json JsonNotification::getJson(const std::string& method, Json data)
 
 	return notification;
 }
+
+}
+
 
