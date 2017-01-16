@@ -99,6 +99,8 @@ There is also an unofficial WebApp from @atoomic [atoomic/snapcast-volume-ui](ht
 This app list all clients connected to a server and allow to control individualy the volume of each client.
 Once installed, you can use any mobile device, laptop, desktop, or browser.
 
+There is also an [unofficial FHEM module](https://forum.fhem.de/index.php/topic,62389.0.html) from @unimatrix27 which integrates a snapcast controller in the the [FHEM](https://fhem.de/fhem.html) home automation system 
+
 Setup of audio players/server
 -----------------------------
 Snapcast can be used with a number of different audio players and servers, and so it can be integrated into your favorite audio-player solution and make it synced-multiroom capable.
