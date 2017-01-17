@@ -35,6 +35,7 @@ Please follow this [guide](doc/build.md) to build Snapcast for
 * [macOS](doc/build.md#macos-native)
 * [Android](doc/build.md#android-cross-compile)
 * [OpenWrt](doc/build.md#openwrt-cross-compile)
+* [Buildroot](doc/build.md#buildroot-cross-compile)
 
 ###Install debian packages
 Download the debian package for your CPU architecture from the [latest release page](https://github.com/badaix/snapcast/releases/latest), e.g. for Raspberry pi `snapclient_0.x.x_armhf.deb`
