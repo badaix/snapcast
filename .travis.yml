@@ -1,8 +1,15 @@
 dist: trusty
 sudo: false
-install: pip install conan
+matrix:
+  include:
+	- language: cpp
+	  compiler: clang
+		os: linux
+	- language: cpp
+	  compiler: clang
+		os: osx
 script:
 - mkdir build
 - cd build
-- conan install .. --build missing
-- conan build ..
+- cmake ..
+- make
