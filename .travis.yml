@@ -1,13 +1,12 @@
 dist: trusty
 sudo: false
+language: cpp
 matrix:
   include:
-	- language: cpp
-	  compiler: clang
-		os: linux
-	- language: cpp
-	  compiler: clang
-		os: osx
+    - compiler: clang
+      os: linux
+    - compiler: clang
+      os: osx
 script:
 - mkdir build
 - cd build
