@@ -2,20 +2,20 @@ dist: trusty
 sudo: false
 language: cpp
 matrix:
-	include:
-		- compiler: clang
-			os: linux
-			addons:
-			  apt:
-				  packages:
-					  - libasound2-dev
-						- libavahi-client-dev
-						- libavahi-common-dev
-						- libflac-dev
-						- libvorbis-dev
-						- libogg-dev
-		- compiler: clang
-			os: osx
+  include:
+    - compiler: clang
+      os: linux
+      addons:
+        apt:
+          packages:
+            - libasound2-dev
+            - libavahi-client-dev
+            - libavahi-common-dev
+            - libflac-dev
+            - libvorbis-dev
+            - libogg-dev
+    - compiler: clang
+      os: osx
 script:
 - mkdir build
 - cd build
