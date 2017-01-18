@@ -13,6 +13,7 @@ matrix:
             - libavahi-common-dev
             - libflac-dev
             - libvorbis-dev
+            - libboost-all-dev
             - libogg-dev
     - compiler: clang
       os: osx
