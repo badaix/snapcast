@@ -38,7 +38,7 @@ OBJ      += publishZeroConf/publishAvahi.o
 
 else ifeq ($(TARGET), FREEBSD)
 
-CXX       = /usr/local/bin/g++
+CXX       = g++
 STRIP     = echo
 CXXFLAGS += -DNO_CPP11_STRING -DFREEBSD -DHAS_AVAHI -DHAS_DAEMON -pthread
 LDFLAGS  += -lrt -lavahi-client -lavahi-common -static-libgcc -static-libstdc++
@@ -46,7 +46,7 @@ OBJ      += publishZeroConf/publishAvahi.o
 
 else ifeq ($(TARGET), MACOS)
 
-CXX       = /usr/bin/g++
+CXX       = g++
 STRIP     = strip
 CXXFLAGS += -DFREEBSD -DMACOS -DHAS_BONJOUR -DHAS_DAEMON -Wno-deprecated -I/usr/local/include
 LDFLAGS  += -L/usr/local/lib 
@@ -54,7 +54,7 @@ OBJ      += publishZeroConf/publishBonjour.o
 
 else
 
-CXX       = /usr/bin/g++
+CXX       = g++
 STRIP     = strip
 CXXFLAGS += -DHAS_AVAHI -DHAS_DAEMON -pthread
 LDFLAGS   = -lrt -lvorbis -lvorbisenc -logg -lFLAC -lavahi-client -lavahi-common -static-libgcc -static-libstdc++

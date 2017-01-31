@@ -38,7 +38,7 @@ OBJ      += player/alsaPlayer.o browseZeroConf/browseAvahi.o
 
 else ifeq ($(TARGET), MACOS)
 
-CXX       = /usr/bin/g++
+CXX       = g++
 STRIP     = strip
 CXXFLAGS += -DHAS_OGG -DHAS_COREAUDIO -DFREEBSD -DMACOS -DHAS_BONJOUR -DHAS_DAEMON -I/usr/local/include -Wno-unused-local-typedef -Wno-deprecated
 LDFLAGS   = -logg -lvorbis -lFLAC -L/usr/local/lib -framework AudioToolbox -framework CoreFoundation
@@ -46,7 +46,7 @@ OBJ      += player/coreAudioPlayer.o browseZeroConf/browseBonjour.o
 
 else
 
-CXX       = /usr/bin/g++
+CXX       = g++
 STRIP     = strip
 CXXFLAGS += -pthread -DHAS_OGG -DHAS_ALSA -DHAS_AVAHI -DHAS_DAEMON
 LDFLAGS   = -lrt -lasound -logg -lvorbis -lFLAC -lavahi-client -lavahi-common -static-libgcc -static-libstdc++
