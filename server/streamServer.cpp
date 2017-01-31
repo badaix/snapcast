@@ -43,7 +43,7 @@ void StreamServer::onStateChanged(const PcmStream* pcmStream, const ReaderState&
 {
 	logO << "onStateChanged (" << pcmStream->getName() << "): " << state << "\n";
 //	logO << pcmStream->toJson().dump(4);
-	json notification = jsonrpcpp::Notification("Stream.OnUpdate", Json({"data", pcmStream->toJson()})).to_json();
+	json notification = jsonrpcpp::Notification("Stream.OnUpdate", pcmStream->toJson()).to_json();
 	controlServer_->send(notification.dump(), NULL);
 }
 
@@ -99,7 +99,7 @@ void StreamServer::onDisconnect(StreamSession* streamSession)
 	Config::instance().save();
 	if (controlServer_ != nullptr)
 	{
-		json notification = jsonrpcpp::Notification("Client.OnDisconnect", Json({"data", clientInfo->toJson()})).to_json();
+		json notification = jsonrpcpp::Notification("Client.OnDisconnect", clientInfo->toJson()).to_json();
 		controlServer_->send(notification.dump());
 	}
 }
@@ -112,7 +112,7 @@ void StreamServer::onMessageReceived(ControlSession* controlSession, const std::
 	jsonrpcpp::Request request;
 	try
 	{
-		request.parse(Json::parse(message));
+		request.parse(message);
 		logO << "method: " << request.method << ", " << "id: " << request.id << "\n";
 
 		json result;
@@ -166,7 +166,7 @@ void StreamServer::onMessageReceived(ControlSession* controlSession, const std::
 				}
 
 				/// Notify others
-				json notification = jsonrpcpp::Notification("Client.OnUpdate", Json({"data", clientInfo->toJson()})).to_json();
+				json notification = jsonrpcpp::Notification("Client.OnUpdate", clientInfo->toJson()).to_json();
 				logO << "Notification: " << notification.dump() << "\n";
 				controlServer_->send(notification.dump(), controlSession);
 			}
@@ -205,7 +205,7 @@ void StreamServer::onMessageReceived(ControlSession* controlSession, const std::
 				}
 
 				/// Notify others
-				json notification = jsonrpcpp::Notification("Group.OnUpdate", Json({"data", group->toJson()})).to_json();
+				json notification = jsonrpcpp::Notification("Group.OnUpdate", group->toJson()).to_json();
 				logO << "Notification: " << notification.dump() << "\n";
 				controlServer_->send(notification.dump(), controlSession);
 			}
@@ -264,7 +264,7 @@ void StreamServer::onMessageReceived(ControlSession* controlSession, const std::
 				result =  {{"method", "Server.OnUpdate"}, {"params", serverJson}};
 
 				/// Notify others: since at least two groups are affected, send a complete server update
-				json notification = jsonrpcpp::Notification("Server.OnUpdate", Json({"data", serverJson})).to_json();
+				json notification = jsonrpcpp::Notification("Server.OnUpdate", serverJson).to_json();
 				logO << "Notification: " << notification.dump() << "\n";
 				controlServer_->send(notification.dump(), controlSession);
 			}
@@ -289,7 +289,7 @@ void StreamServer::onMessageReceived(ControlSession* controlSession, const std::
 				result =  {{"method", "Server.OnUpdate"}, {"params", serverJson}};
 
 				/// Notify others
-				json notification = jsonrpcpp::Notification("Server.OnUpdate", Json({"data", serverJson})).to_json();
+				json notification = jsonrpcpp::Notification("Server.OnUpdate", serverJson).to_json();
 				logO << "Notification: " << notification.dump() << "\n";
 				controlServer_->send(notification.dump(), controlSession);
 			}
@@ -399,13 +399,13 @@ void StreamServer::onMessageReceived(StreamSession* connection, const msg::BaseM
 		if (newGroup)
 		{
 			json serverJson = Config::instance().getServerStatus(streamManager_->toJson());
-			json notification = jsonrpcpp::Notification("Server.OnUpdate", Json({"data", serverJson})).to_json();
+			json notification = jsonrpcpp::Notification("Server.OnUpdate", serverJson).to_json();
 			controlServer_->send(notification.dump());
 		}
 		else
 		{
-			json notification = jsonrpcpp::Notification("Client.OnConnect", Json({"data", client->toJson()})).to_json();
-			//logO << notification.dump(4) << "\n";
+			json notification = jsonrpcpp::Notification("Client.OnConnect", client->toJson()).to_json();
+			// logO << notification.dump(4) << "\n";
 			controlServer_->send(notification.dump());
 		}
 //		cout << Config::instance().getServerStatus(streamManager_->toJson()).dump(4) << "\n";
