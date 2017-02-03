@@ -27,6 +27,7 @@
 #include <sstream>
 #include <mutex>
 
+#include "jsonrp.hpp"
 #include "streamSession.h"
 #include "streamreader/streamManager.h"
 #include "common/queue.h"
@@ -98,6 +99,7 @@ private:
 	void handleAccept(socket_ptr socket);
 	session_ptr getStreamSession(const std::string& mac) const;
 	session_ptr getStreamSession(StreamSession* session) const;
+	void ProcessJson(const std::string& json, jsonrpcpp::entity_ptr& response, jsonrpcpp::notification_ptr& notification) const;
 	mutable std::recursive_mutex sessionsMutex_;
 	std::set<session_ptr> sessions_;
 	asio::io_service* io_service_;

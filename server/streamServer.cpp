@@ -16,7 +16,6 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
-#include "jsonrp.hpp"
 #include "streamServer.h"
 #include "message/time.h"
 #include "message/hello.h"
@@ -105,17 +104,16 @@ void StreamServer::onDisconnect(StreamSession* streamSession)
 }
 
 
-
-void StreamServer::onMessageReceived(ControlSession* controlSession, const std::string& message)
+void StreamServer::ProcessJson(const std::string& json, jsonrpcpp::entity_ptr& response, jsonrpcpp::notification_ptr& notification) const
 {
-	logO << "onMessageReceived: " << message << "\n";
+	logD << "onMessageReceived: " << json << "\n";
 	jsonrpcpp::Request request;
 	try
 	{
-		request.parse(message);
-		logO << "method: " << request.method << ", " << "id: " << request.id << "\n";
+		request.parse(json);
+		logO << "StreamServer::ProcessJson method: " << request.method << ", " << "id: " << request.id << "\n";
 
-		json result;
+		Json result;
 
 		if (request.method.find("Client.") == 0)
 		{
@@ -166,9 +164,7 @@ void StreamServer::onMessageReceived(ControlSession* controlSession, const std::
 				}
 
 				/// Notify others
-				json notification = jsonrpcpp::Notification("Client.OnUpdate", clientInfo->toJson()).to_json();
-				logO << "Notification: " << notification.dump() << "\n";
-				controlServer_->send(notification.dump(), controlSession);
+				notification.reset(new jsonrpcpp::Notification("Client.OnUpdate", clientInfo->toJson()));
 			}
 		}
 		else if (request.method.find("Group.") == 0)
@@ -205,9 +201,7 @@ void StreamServer::onMessageReceived(ControlSession* controlSession, const std::
 				}
 
 				/// Notify others
-				json notification = jsonrpcpp::Notification("Group.OnUpdate", group->toJson()).to_json();
-				logO << "Notification: " << notification.dump() << "\n";
-				controlServer_->send(notification.dump(), controlSession);
+				notification.reset(new jsonrpcpp::Notification("Group.OnUpdate", group->toJson()));;
 			}
 			else if (request.method == "Group.SetClients")
 			{
@@ -260,13 +254,11 @@ void StreamServer::onMessageReceived(ControlSession* controlSession, const std::
 				if (group->empty())
 					Config::instance().remove(group);
 
-				json serverJson = Config::instance().getServerStatus(streamManager_->toJson());
+				Json serverJson = Config::instance().getServerStatus(streamManager_->toJson());
 				result =  {{"method", "Server.OnUpdate"}, {"params", serverJson}};
 
 				/// Notify others: since at least two groups are affected, send a complete server update
-				json notification = jsonrpcpp::Notification("Server.OnUpdate", serverJson).to_json();
-				logO << "Notification: " << notification.dump() << "\n";
-				controlServer_->send(notification.dump(), controlSession);
+				notification.reset(new jsonrpcpp::Notification("Server.OnUpdate", serverJson));
 			}
 			else
 				throw jsonrpcpp::MethodNotFoundException(request.id);
@@ -285,13 +277,11 @@ void StreamServer::onMessageReceived(ControlSession* controlSession, const std::
 
 				Config::instance().remove(clientInfo);
 
-				json serverJson = Config::instance().getServerStatus(streamManager_->toJson());
+				Json serverJson = Config::instance().getServerStatus(streamManager_->toJson());
 				result =  {{"method", "Server.OnUpdate"}, {"params", serverJson}};
 
 				/// Notify others
-				json notification = jsonrpcpp::Notification("Server.OnUpdate", serverJson).to_json();
-				logO << "Notification: " << notification.dump() << "\n";
-				controlServer_->send(notification.dump(), controlSession);
+				notification.reset(new jsonrpcpp::Notification("Server.OnUpdate", serverJson));
 			}
 			else
 				throw jsonrpcpp::MethodNotFoundException(request.id);
@@ -300,21 +290,30 @@ void StreamServer::onMessageReceived(ControlSession* controlSession, const std::
 			throw jsonrpcpp::MethodNotFoundException(request.id);
 
 		Config::instance().save();
-		string responseJson = jsonrpcpp::Response(request, result).to_json().dump();
-		logO << "Response: " << responseJson << "\n";
-		controlSession->send(responseJson);
+		response.reset(new jsonrpcpp::Response(request, result));
 	}
 	catch (const jsonrpcpp::RequestException& e)
 	{
-		logE << "StreamServer::onMessageReceived JsonRequestException: " << e.to_json().dump() << ", message: " << message << "\n";
-		controlSession->send(e.to_json().dump());
+		logE << "StreamServer::onMessageReceived JsonRequestException: " << e.to_json().dump() << ", message: " << json << "\n";
+		response.reset(new jsonrpcpp::RequestException(e));
 	}
 	catch (const exception& e)
 	{
-		logE << "StreamServer::onMessageReceived exception: " << e.what() << ", message: " << message << "\n";
-		jsonrpcpp::InternalErrorException jsonException(e.what(), request.id);
-		controlSession->send(jsonException.to_json().dump()); //jsonrpcpp::Response(jsonException).to_json().dump());
+		logE << "StreamServer::onMessageReceived exception: " << e.what() << ", message: " << json << "\n";
+		response.reset(new jsonrpcpp::InternalErrorException(e.what(), request.id));
 	}
+}
+
+
+void StreamServer::onMessageReceived(ControlSession* controlSession, const std::string& message)
+{
+	jsonrpcpp::entity_ptr response(nullptr);
+	jsonrpcpp::notification_ptr notification(nullptr);
+	ProcessJson(message, response, notification);
+	if (response != nullptr)
+		controlSession->send(response->to_json().dump());
+	if (notification != nullptr)
+		controlServer_->send(notification->to_json().dump(), controlSession);
 }
 
 
@@ -405,7 +404,6 @@ void StreamServer::onMessageReceived(StreamSession* connection, const msg::BaseM
 		else
 		{
 			json notification = jsonrpcpp::Notification("Client.OnConnect", client->toJson()).to_json();
-			// logO << notification.dump(4) << "\n";
 			controlServer_->send(notification.dump());
 		}
 //		cout << Config::instance().getServerStatus(streamManager_->toJson()).dump(4) << "\n";

@@ -104,7 +104,7 @@ void ControlSession::sendAsync(const std::string& message)
 
 bool ControlSession::send(const std::string& message) const
 {
-//	logO << "send: " << message->type << ", size: " << message->size << ", id: " << message->id << ", refers: " << message->refersTo << "\n";
+	//logO << "send: " << message << ", size: " << message.length() << "\n";
 	std::lock_guard<std::mutex> socketLock(socketMutex_);
 	{
 		std::lock_guard<std::mutex> activeLock(activeMutex_);
@@ -115,7 +115,7 @@ bool ControlSession::send(const std::string& message) const
 	std::ostream request_stream(&streambuf);
 	request_stream << message << "\r\n";
 	asio::write(*socket_.get(), streambuf);
-//	logO << "done: " << message->type << ", size: " << message->size << ", id: " << message->id << ", refers: " << message->refersTo << "\n";
+	//logO << "done\n";
 	return true;
 }
 
