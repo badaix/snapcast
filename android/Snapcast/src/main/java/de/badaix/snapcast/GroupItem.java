@@ -19,12 +19,17 @@
 package de.badaix.snapcast;
 
 import android.content.Context;
+import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
 import android.widget.SeekBar;
 import android.widget.TextView;
+
+import java.util.Vector;
 
 import de.badaix.snapcast.control.json.Client;
 import de.badaix.snapcast.control.json.Group;
@@ -36,7 +41,7 @@ import de.badaix.snapcast.control.json.Stream;
  */
 
 
-public class GroupItem extends LinearLayout implements SeekBar.OnSeekBarChangeListener, View.OnClickListener, ClientItem.ClientItemListener {
+public class GroupItem extends LinearLayout implements SeekBar.OnSeekBarChangeListener, View.OnClickListener, ClientItem.ClientItemListener, View.OnTouchListener {
 
     private static final String TAG = "GroupItem";
 
@@ -47,10 +52,13 @@ public class GroupItem extends LinearLayout implements SeekBar.OnSeekBarChangeLi
     private LinearLayout llClient;
     private Group group;
     private ServerStatus server;
-    private TextView tvStreamState = null;
+    private TextView tvStreamName = null;
     private GroupItemListener listener = null;
     private LinearLayout llVolume;
     private boolean hideOffline = false;
+    private Vector<ClientItem> clientItems = null;
+    private Vector<Integer> clientVolumes = null;
+    private int groupVolume = 0;
 
     public GroupItem(Context context, ServerStatus server, Group group) {
         super(context);
@@ -68,28 +76,39 @@ public class GroupItem extends LinearLayout implements SeekBar.OnSeekBarChangeLi
         llVolume.setVisibility(GONE);
         llClient = (LinearLayout) findViewById(R.id.llClient);
         llClient.setLayoutParams(new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT));
-        tvStreamState = (TextView) findViewById(R.id.tvStreamState);
+        tvStreamName = (TextView) findViewById(R.id.tvStreamName);
         volumeSeekBar.setOnSeekBarChangeListener(this);
+        volumeSeekBar.setOnTouchListener(this);
         this.server = server;
+        clientItems = new Vector<>();
+        clientVolumes = new Vector<>();
         setGroup(group);
     }
 
     private void update() {
 //        title.setText(group.getName());
         llClient.removeAllViews();
+        clientItems.clear();
         for (Client client : group.getClients()) {
             if ((client == null) || client.isDeleted() || (hideOffline && !client.isConnected()))
                 continue;
 
             ClientItem clientItem = new ClientItem(this.getContext(), server, client);
             clientItem.setListener(this);
+            clientItems.add(clientItem);
             llClient.addView(clientItem);
         }
 
+        if (clientItems.size() >= 2)
+            llVolume.setVisibility(VISIBLE);
+        else
+            llVolume.setVisibility(GONE);
+        updateVolume();
+
         Stream stream = server.getStream(group.getStreamId());
-        if ((tvStreamState == null) || (stream == null))
+        if ((tvStreamName == null) || (stream == null))
             return;
-        tvStreamState.setText(stream.getName());
+        tvStreamName.setText(stream.getName());
 /*        String codec = stream.getUri().getQuery().get("codec");
         if (codec.contains(":"))
             codec = codec.split(":")[0];
@@ -102,6 +121,15 @@ public class GroupItem extends LinearLayout implements SeekBar.OnSeekBarChangeLi
         else
             ibMute.setImageResource(R.drawable.ic_speaker_icon);
 */
+    }
+
+    private void updateVolume() {
+        double meanVolume = 0;
+        for (ClientItem c : clientItems) {
+            meanVolume += c.getClient().getConfig().getVolume().getPercent();
+        }
+        meanVolume /= clientItems.size();
+        volumeSeekBar.setProgress((int) (Math.ceil(meanVolume)));
     }
 
     public Group getGroup() {
@@ -126,13 +154,45 @@ public class GroupItem extends LinearLayout implements SeekBar.OnSeekBarChangeLi
 
     @Override
     public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-/*        if (fromUser && (listener != null)) {
-            Volume volume = new Volume(progress, false);
-            client.setVolume(volume);
-            listener.onVolumeChanged(this, volume.getPercent());
+        if (!fromUser)
+            return;
+
+        int delta = progress - groupVolume;
+        if (delta == 0)
+            return;
+
+        double ratio;
+        if (delta < 0)
+            ratio = (double) (groupVolume - progress) / (double) groupVolume;
+        else
+            ratio = (double) (progress - groupVolume) / (double) (100 - groupVolume);
+
+        for (int i = 0; i < clientItems.size(); ++i) {
+            ClientItem clientItem = clientItems.get(i);
+            int clientVolume = clientVolumes.get(i);
+            int newVolume = clientVolume;
+            if (delta < 0)
+                newVolume -= ratio * clientVolume;
+            else
+                newVolume += ratio * (100 - clientVolume);
+            clientItem.getClient().getConfig().getVolume().setPercent(newVolume);
+            clientItem.update();
         }
-*/
     }
+
+
+    @Override
+    public boolean onTouch(View v, MotionEvent event) {
+        if (event.getAction() == MotionEvent.ACTION_DOWN) {
+            clientVolumes.clear();
+            for (int i = 0; i < clientItems.size(); ++i)
+                clientVolumes.add(clientItems.get(i).getClient().getConfig().getVolume().getPercent());
+            groupVolume = volumeSeekBar.getProgress();
+            Log.d(TAG, "onTouch: " + groupVolume);
+        }
+        return false;
+    }
+
 
     @Override
     public void onClick(View v) {
@@ -162,6 +222,7 @@ public class GroupItem extends LinearLayout implements SeekBar.OnSeekBarChangeLi
     public void onVolumeChanged(ClientItem clientItem, int percent, boolean mute) {
         if (listener != null)
             listener.onVolumeChanged(this, clientItem, percent, mute);
+        updateVolume();
     }
 
     @Override

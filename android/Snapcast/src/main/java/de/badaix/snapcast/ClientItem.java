@@ -62,7 +62,7 @@ public class ClientItem extends LinearLayout implements SeekBar.OnSeekBarChangeL
         setClient(client);
     }
 
-    private void update() {
+    public void update() {
         //Log.d(TAG, "update: " + client.getVisibleName() + ", connected: " + client.isConnected());
         title.setText(client.getVisibleName());
         title.setEnabled(client.isConnected());
