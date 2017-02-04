@@ -209,25 +209,24 @@ Buildroot recommends [keeping customizations outside of the main Buildroot direc
 
 Clone Buildroot to some place in your home directory (`<buildroot dir>`):
 
-    $ git clone --branch BUILDROOT_VERSION --depth=1 git://git.buildroot.net/buildroot
+    $ BUILDROOT_VERSION=2016.11.2
+    $ git clone --branch $BUILDROOT_VERSION --depth=1 git://git.buildroot.net/buildroot
 
 The `<snapcast dir>/buildroot` is currently setup as an external Buildroot folder following the [recommended structure](https://buildroot.org/downloads/manual/manual.html#customize-dir-structure). As of [Buildroot 2016.11](https://git.buildroot.net/buildroot/tag/?h=2016.11) you may specify multiple BR2_EXTERNAL trees. If you are using a version of Buildroot prior to this, then you will need to manually merge `<snapcast dir>/buildroot` with your existing Buildroot external tree.
 
-Now add the following packages to your Buildroot `.config` file:
+Now configure buildroot with the [required packages](/buildroot/configs/snapcast_defconfig) (you can also manually add them to your project's existing defconfig):
 
-    BR2_PACKAGE_FLAC=y
-    BR2_PACKAGE_LIBOGG=y
-    BR2_PACKAGE_TREMOR=y
-    BR2_PACKAGE_SNAPCAST=y
+    $ cd <buildroot dir> && make BR2_EXTERNAL=<snapcast dir>/buildroot snapcast_defconfig
 
-Or use `menuconfig` to add them graphically:
+Then use `menuconfig` to configure the rest of your project:
 
     $ cd <buildroot dir> && make BR2_EXTERNAL=<snapcast dir>/buildroot menuconfig
 
-Or if you have another Buildroot external tree (`<buildroot external dir>`):
-
-     $ cd <buildroot dir> && make BR2_EXTERNAL=<snapcast dir>/buildroot:<buildroot external dir> menuconfig
-
 And finally run the build:
 
-    $ cd <buildroot dir> && make BR2_EXTERNAL=<snapcast dir>/buildroot:<buildroot external dir>
+    $ cd <buildroot dir> && make BR2_EXTERNAL=<snapcast dir>/buildroot
+
+##Raspberry Pi (Cross compile)
+This example will show you how to add snapcast to [Buildroot](https://buildroot.org/) and compile for Raspberry Pi.
+
+* https://github.com/nickaknudson/snapcast-pi
