@@ -35,6 +35,8 @@ Please follow this [guide](doc/build.md) to build Snapcast for
 * [macOS](doc/build.md#macos-native)
 * [Android](doc/build.md#android-cross-compile)
 * [OpenWrt](doc/build.md#openwrt-cross-compile)
+* [Buildroot](doc/build.md#buildroot-cross-compile)
+  * [Raspberry Pi](doc/build.md#raspberry-pi-cross-compile)
 
 ###Install debian packages
 Download the debian package for your CPU architecture from the [latest release page](https://github.com/badaix/snapcast/releases/latest), e.g. for Raspberry pi `snapclient_0.x.x_armhf.deb`
@@ -98,6 +100,10 @@ There is an Android client available in [Releases](https://github.com/badaix/sna
 There is also an unofficial WebApp from @atoomic [atoomic/snapcast-volume-ui](https://github.com/atoomic/snapcast-volume-ui).
 This app list all clients connected to a server and allow to control individualy the volume of each client.
 Once installed, you can use any mobile device, laptop, desktop, or browser.
+
+There is also an [unofficial FHEM module](https://forum.fhem.de/index.php/topic,62389.0.html) from @unimatrix27 which integrates a snapcast controller in to the [FHEM](https://fhem.de/fhem.html) home automation system.
+
+There is a [snapcast component for Home Assistant](https://home-assistant.io/components/media_player.snapcast/) which integrates a snapcast controller in to the [Home Assistant](https://home-assistant.io/) home automation system.
 
 Setup of audio players/server
 -----------------------------

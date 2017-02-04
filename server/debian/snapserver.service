@@ -1,12 +1,14 @@
 [Unit]
 Description=Snapcast server
-After=network.target
+After=network-online.target
+Requires=network-online.target
 
 [Service]
 EnvironmentFile=-/etc/default/snapserver
 Type=forking
-ExecStart=/usr/bin/snapserver $SNAPSERVER_OPTS
-PIDFile=/var/run/snapserver/pid
+ExecStart=/usr/sbin/snapserver $SNAPSERVER_OPTS
+PIDFile=/var/run/snapserver.pid
+Restart=always
 
 [Install]
 WantedBy=multi-user.target

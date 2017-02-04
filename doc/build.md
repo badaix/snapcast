@@ -200,3 +200,33 @@ Build Snapcast:
     $ make package/sxx/snapcast/compile
 
 The packaged `ipk` files are in `<buildroot dir>/bin/ar71xx/packages/base/snap[client|server]_x.x.x_ar71xx.ipk`
+
+##Buildroot (Cross compile)
+This example will show you how to add snapcast to [Buildroot](https://buildroot.org/).
+
+###Buildroot setup
+Buildroot recommends [keeping customizations outside of the main Buildroot directory](https://buildroot.org/downloads/manual/manual.html#outside-br-custom) which is what this example will walk through.
+
+Clone Buildroot to some place in your home directory (`<buildroot dir>`):
+
+    $ BUILDROOT_VERSION=2016.11.2
+    $ git clone --branch $BUILDROOT_VERSION --depth=1 git://git.buildroot.net/buildroot
+
+The `<snapcast dir>/buildroot` is currently setup as an external Buildroot folder following the [recommended structure](https://buildroot.org/downloads/manual/manual.html#customize-dir-structure). As of [Buildroot 2016.11](https://git.buildroot.net/buildroot/tag/?h=2016.11) you may specify multiple BR2_EXTERNAL trees. If you are using a version of Buildroot prior to this, then you will need to manually merge `<snapcast dir>/buildroot` with your existing Buildroot external tree.
+
+Now configure buildroot with the [required packages](/buildroot/configs/snapcast_defconfig) (you can also manually add them to your project's existing defconfig):
+
+    $ cd <buildroot dir> && make BR2_EXTERNAL=<snapcast dir>/buildroot snapcast_defconfig
+
+Then use `menuconfig` to configure the rest of your project:
+
+    $ cd <buildroot dir> && make BR2_EXTERNAL=<snapcast dir>/buildroot menuconfig
+
+And finally run the build:
+
+    $ cd <buildroot dir> && make BR2_EXTERNAL=<snapcast dir>/buildroot
+
+##Raspberry Pi (Cross compile)
+This example will show you how to add snapcast to [Buildroot](https://buildroot.org/) and compile for Raspberry Pi.
+
+* https://github.com/nickaknudson/snapcast-pi

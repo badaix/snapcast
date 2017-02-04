@@ -36,6 +36,12 @@ CXXFLAGS += -pthread -DNO_CPP11_STRING -DHAS_TREMOR -DHAS_ALSA -DHAS_AVAHI -DHAS
 LDFLAGS   = -lasound -lvorbisidec -logg -lFLAC -lavahi-client -lavahi-common -latomic
 OBJ      += player/alsaPlayer.o browseZeroConf/browseAvahi.o
 
+else ifeq ($(TARGET), BUILDROOT)
+
+CXXFLAGS += -pthread -DNO_CPP11_STRING -DHAS_TREMOR -DHAS_ALSA -DHAS_AVAHI -DHAS_DAEMON
+LDFLAGS  += -lasound -lvorbisidec -logg -lFLAC -lavahi-client -lavahi-common -latomic
+OBJ      += player/alsaPlayer.o browseZeroConf/browseAvahi.o
+
 else ifeq ($(TARGET), MACOS)
 
 CXX       = g++
@@ -116,7 +122,7 @@ installfiles:
 installsystemd:
 	@echo using systemd; \
 	cp debian/$(BIN).service /lib/systemd/system/$(BIN).service; \
-	cp debian/$(BIN).default /etc/default/$(BIN); \
+	cp -n debian/$(BIN).default /etc/default/$(BIN); \
 	systemctl daemon-reload; \
 	systemctl enable $(BIN); \
 	systemctl start $(BIN); \
@@ -124,7 +130,7 @@ installsystemd:
 installsysv:
 	@echo using sysv; \
 	cp debian/$(BIN).init /etc/init.d/$(BIN); \
-	cp debian/$(BIN).default /etc/default/$(BIN); \
+	cp -n debian/$(BIN).default /etc/default/$(BIN); \
 	update-rc.d $(BIN) defaults; \
 	/etc/init.d/$(BIN) start; \
 
