@@ -35,6 +35,7 @@ import de.badaix.snapcast.control.json.Client;
 import de.badaix.snapcast.control.json.Group;
 import de.badaix.snapcast.control.json.ServerStatus;
 import de.badaix.snapcast.control.json.Stream;
+import de.badaix.snapcast.control.json.Volume;
 
 /**
  * Created by johannes on 04.12.16.
@@ -175,7 +176,11 @@ public class GroupItem extends LinearLayout implements SeekBar.OnSeekBarChangeLi
                 newVolume -= ratio * clientVolume;
             else
                 newVolume += ratio * (100 - clientVolume);
-            clientItem.getClient().getConfig().getVolume().setPercent(newVolume);
+            Volume volume = clientItem.getClient().getConfig().getVolume();
+            volume.setPercent(newVolume);
+
+            //TODO: must be changed group-wise, in a batch
+            onVolumeChanged(clientItem, volume.getPercent(), volume.isMuted());
             clientItem.update();
         }
     }
