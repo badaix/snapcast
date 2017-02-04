@@ -102,7 +102,7 @@ Load the module `pipe-sink` like this:
     pacmd load-module module-pipe-sink file=/tmp/snapfifo sink_name=Snapcast
     pacmd update-sink-proplist Snapcast device.description=Snapcast
 
-It might me neccessary to set the pulse audio latency environment variable to 60 msec: `PULSE_LATENCY_MSEC=60`
+It might be neccessary to set the pulse audio latency environment variable to 60 msec: `PULSE_LATENCY_MSEC=60`
 
 
 ###AirPlay
