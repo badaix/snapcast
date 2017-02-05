@@ -178,11 +178,10 @@ public class GroupItem extends LinearLayout implements SeekBar.OnSeekBarChangeLi
                 newVolume += ratio * (100 - clientVolume);
             Volume volume = clientItem.getClient().getConfig().getVolume();
             volume.setPercent(newVolume);
-
-            //TODO: must be changed group-wise, in a batch
-            onVolumeChanged(clientItem, volume.getPercent(), volume.isMuted());
             clientItem.update();
         }
+        if (listener != null)
+            listener.onGroupVolumeChanged(this);
     }
 
 
@@ -244,6 +243,8 @@ public class GroupItem extends LinearLayout implements SeekBar.OnSeekBarChangeLi
 
 
     public interface GroupItemListener {
+        void onGroupVolumeChanged(GroupItem group);
+
         void onVolumeChanged(GroupItem group, ClientItem clientItem, int percent, boolean mute);
 
         void onDeleteClicked(GroupItem group, ClientItem clientItem);

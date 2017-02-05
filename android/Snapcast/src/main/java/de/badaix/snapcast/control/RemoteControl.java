@@ -91,9 +91,25 @@ public class RemoteControl implements TcpClient.TcpClientListener {
 
     @Override
     public void onMessageReceived(TcpClient tcpClient, String message) {
+        try {
+            if (message.trim().startsWith("[")) {
+                JSONArray jsonArray = new JSONArray(message);
+                for (int i=0; i<jsonArray.length(); ++i) {
+                    JSONObject json = jsonArray.getJSONObject(i);
+                    processJson(tcpClient, json);
+                }
+            } else {
+                JSONObject json = new JSONObject(message);
+                processJson(tcpClient, json);
+            }
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void processJson(TcpClient tcpClient, JSONObject json) {
 //        Log.d(TAG, "Msg received: " + message);
         try {
-            JSONObject json = new JSONObject(message);
 
             if (json.has("id")) {
                 /// Response
@@ -253,14 +269,31 @@ public class RemoteControl implements TcpClient.TcpClientListener {
         }
     }
 
+    public void setGroupVolume(Group group) {
+        try {
+            JSONArray batch = new JSONArray();
+            for (Client client : group.getClients()) {
+                Volume volume = client.getConfig().getVolume();
+                JSONObject volumeRequest = getVolumeRequest(client, volume.getPercent(), volume.isMuted());
+                batch.put(volumeRequest);
+            }
+            tcpClient.sendMessage(batch.toString());
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private JSONObject getVolumeRequest(Client client, int percent, boolean mute) throws JSONException {
+        Volume volume = new Volume(percent, mute);
+        JSONObject body = new JSONObject();
+        body.put("client", client.getId());
+        body.put("volume", volume.toJson());
+        return jsonRequest("Client.SetVolume", body);
+    }
+
     public void setVolume(Client client, int percent, boolean mute) {
         try {
-            Volume volume = new Volume(percent, mute);
-            JSONObject body = new JSONObject();
-            body.put("client", client.getId());
-            body.put("volume", volume.toJson());
-            JSONObject request = jsonRequest("Client.SetVolume", body);
-            tcpClient.sendMessage(request.toString());
+            tcpClient.sendMessage(getVolumeRequest(client, percent, mute).toString());
         } catch (JSONException e) {
             e.printStackTrace();
         }

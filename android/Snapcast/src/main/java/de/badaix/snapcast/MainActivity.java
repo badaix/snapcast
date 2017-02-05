@@ -58,6 +58,7 @@ import de.badaix.snapcast.control.json.Client;
 import de.badaix.snapcast.control.json.Group;
 import de.badaix.snapcast.control.json.ServerStatus;
 import de.badaix.snapcast.control.json.Stream;
+import de.badaix.snapcast.control.json.Volume;
 import de.badaix.snapcast.utils.NsdHelper;
 import de.badaix.snapcast.utils.Settings;
 import de.badaix.snapcast.utils.Setup;
@@ -563,6 +564,11 @@ public class MainActivity extends AppCompatActivity implements GroupItem.GroupIt
         NsdHelper.getInstance(this).stopListening();
     }
 
+
+    @Override
+    public void onGroupVolumeChanged(GroupItem groupItem) {
+        remoteControl.setGroupVolume(groupItem.getGroup());
+    }
 
     @Override
     public void onVolumeChanged(GroupItem groupItem, ClientItem clientItem, int percent, boolean mute) {
