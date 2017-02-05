@@ -141,12 +141,12 @@ Cross compilation for Android is done with the [Android NDK](http://developer.an
 
 ###Android NDK setup
 http://developer.android.com/ndk/guides/standalone_toolchain.html
- 1. Download NDK: `https://dl.google.com/android/repository/android-ndk-r13-linux-x86_64.zip`
- 2. Extract to: `/SOME/LOCAL/PATH/android-ndk-r13`
+ 1. Download NDK: `https://dl.google.com/android/repository/android-ndk-r13b-linux-x86_64.zip`
+ 2. Extract to: `/SOME/LOCAL/PATH/android-ndk-r13b`
  3. Setup toolchain somewhere in your home dir (`<android-ndk dir>`):
 
 ````
-$ cd /SOME/LOCAL/PATH/android-ndk-r13/build/tools
+$ cd /SOME/LOCAL/PATH/android-ndk-r13b/build/tools
 $ ./make_standalone_toolchain.py --arch arm --api 14 --install-dir <android-ndk dir>
 ````
 
@@ -162,7 +162,7 @@ Compile the Snapclient:
     $ cd <snapcast dir>/client
     $ ./build_android.sh
 
-The binaries for `armeabi` and `armeabi-v7a` will be copied into the Android's assets directory (`<snapcast dir>/android/Snapcast/src/main/assets/bin/`) and will be part of the Snapcast App.
+The binaries for `armeabi` and `armeabi-v7a` will be copied into the Android's assets directory (`<snapcast dir>/android/Snapcast/src/main/assets/bin/`) and so will bundled with the Snapcast App.
 
 
 ##OpenWrt (Cross compile)
