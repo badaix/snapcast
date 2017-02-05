@@ -162,7 +162,7 @@ Compile the Snapclient:
     $ cd <snapcast dir>/client
     $ ./build_android.sh
 
-The binaries for `armeabi` and `armeabi-v7a` will be copied into the Android's assets directory (`<snapcast dir>/android/Snapcast/src/main/assets/bin/`) and so will bundled with the Snapcast App.
+The binaries for `armeabi` and `armeabi-v7a` will be copied into the Android's assets directory (`<snapcast dir>/android/Snapcast/src/main/assets/bin/`) and so will be bundled with the Snapcast App.
 
 
 ##OpenWrt (Cross compile)
