@@ -25,6 +25,7 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
 import android.widget.SeekBar;
 import android.widget.TextView;
 
@@ -104,7 +105,7 @@ public class GroupItem extends LinearLayout implements SeekBar.OnSeekBarChangeLi
         else
             ibMute.setImageResource(R.drawable.ic_speaker_icon);
 
-        if (clientItems.size() >= 2)
+        if ((clientItems.size() >= 2) || ((clientItems.size() == 1) && group.isMuted()))
             llVolume.setVisibility(VISIBLE);
         else
             llVolume.setVisibility(GONE);
