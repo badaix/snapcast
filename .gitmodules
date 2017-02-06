@@ -13,9 +13,6 @@
 [submodule "externals/tremor"]
 	path = externals/tremor
 	url = https://git.xiph.org/tremor.git
-[submodule "externals/vorbis"]
-	path = externals/vorbis
-	url = https://git.xiph.org/vorbis.git
 [submodule "externals/jsonrpcpp"]
 	path = externals/jsonrpcpp
 	url = https://github.com/badaix/jsonrpcpp.git
