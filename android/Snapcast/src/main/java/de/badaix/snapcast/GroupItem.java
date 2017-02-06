@@ -25,7 +25,6 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
-import android.widget.RelativeLayout;
 import android.widget.SeekBar;
 import android.widget.TextView;
 
@@ -99,6 +98,11 @@ public class GroupItem extends LinearLayout implements SeekBar.OnSeekBarChangeLi
             clientItems.add(clientItem);
             llClient.addView(clientItem);
         }
+
+        if (group.isMuted())
+            ibMute.setImageResource(R.drawable.ic_mute_icon);
+        else
+            ibMute.setImageResource(R.drawable.ic_speaker_icon);
 
         if (clientItems.size() >= 2)
             llVolume.setVisibility(VISIBLE);
@@ -200,14 +204,11 @@ public class GroupItem extends LinearLayout implements SeekBar.OnSeekBarChangeLi
 
     @Override
     public void onClick(View v) {
-/* TODO: group        if (v == ibMute) {
-            Volume volume = client.getConfig().getVolume();
-            volume.setMuted(!volume.isMuted());
+        if (v == ibMute) {
+            group.setMuted(!group.isMuted());
             update();
-            listener.onMute(this, volume.isMuted());
-        } else
-*/
-        if (v == ibSettings) {
+            listener.onMute(this, group.isMuted());
+        } else if (v == ibSettings) {
             listener.onPropertiesClicked(this);
         }
     }
@@ -244,6 +245,8 @@ public class GroupItem extends LinearLayout implements SeekBar.OnSeekBarChangeLi
 
     public interface GroupItemListener {
         void onGroupVolumeChanged(GroupItem group);
+
+        void onMute(GroupItem group, boolean mute);
 
         void onVolumeChanged(GroupItem group, ClientItem clientItem, int percent, boolean mute);
 

@@ -155,7 +155,8 @@ void StreamServer::ProcessRequest(const jsonrpcpp::request_ptr request, jsonrpcp
 					msg::ServerSettings serverSettings;
 					serverSettings.setBufferMs(settings_.bufferMs);
 					serverSettings.setVolume(clientInfo->config.volume.percent);
-					serverSettings.setMuted(clientInfo->config.volume.muted);
+					GroupPtr group = Config::instance().getGroupFromClient(clientInfo);
+					serverSettings.setMuted(clientInfo->config.volume.muted || group->muted);
 					serverSettings.setLatency(clientInfo->config.latency);
 					session->send(&serverSettings);
 				}
@@ -173,6 +174,30 @@ void StreamServer::ProcessRequest(const jsonrpcpp::request_ptr request, jsonrpcp
 			if (request->method == "Group.GetStatus")
 			{
 				result = group->toJson();
+			}
+			else if (request->method == "Group.SetMuted")
+			{
+				bool muted = request->params.get<bool>("muted");
+				group->muted = muted;				
+
+				/// Update clients
+				for (auto client: group->clients)
+				{
+					session_ptr session = getStreamSession(client->id);
+					if (session != nullptr)
+					{
+						msg::ServerSettings serverSettings;
+						serverSettings.setBufferMs(settings_.bufferMs);
+						serverSettings.setVolume(client->config.volume.percent);
+						GroupPtr group = Config::instance().getGroupFromClient(client);
+						serverSettings.setMuted(client->config.volume.muted || group->muted);
+						serverSettings.setLatency(client->config.latency);
+						session->send(&serverSettings);
+					}
+				}
+
+				/// Notify others
+				notification.reset(new jsonrpcpp::Notification("Group.OnUpdate", group->toJson()));;
 			}
 			else if (request->method == "Group.SetStream")
 			{
@@ -304,7 +329,7 @@ void StreamServer::ProcessRequest(const jsonrpcpp::request_ptr request, jsonrpcp
 
 void StreamServer::onMessageReceived(ControlSession* controlSession, const std::string& message)
 {
-	logO << "onMessageReceived: " << message << "\n";
+	logD << "onMessageReceived: " << message << "\n";
 	jsonrpcpp::entity_ptr entity(nullptr);
 	try
 	{
@@ -328,7 +353,7 @@ void StreamServer::onMessageReceived(ControlSession* controlSession, const std::
 	if (entity->is_request())
 	{
 		jsonrpcpp::request_ptr request = dynamic_pointer_cast<jsonrpcpp::Request>(entity);
-		logO << "isRequest: " << request->to_json().dump() << "\n";
+		logD << "isRequest: " << request->to_json().dump() << "\n";
 		ProcessRequest(request, response, notification);
 		if (response)
 			controlSession->send(response->to_json().dump());
@@ -338,7 +363,7 @@ void StreamServer::onMessageReceived(ControlSession* controlSession, const std::
 	else if (entity->is_batch())
 	{
 		jsonrpcpp::batch_ptr batch = dynamic_pointer_cast<jsonrpcpp::Batch>(entity);
-		logO << "isBatch: " << batch->to_json().dump() << "\n";
+		logD << "isBatch: " << batch->to_json().dump() << "\n";
 		jsonrpcpp::Batch responseBatch;
 		jsonrpcpp::Batch notificationBatch;
 		for (const auto& batch_entity: batch->entities)
@@ -406,7 +431,7 @@ void StreamServer::onMessageReceived(StreamSession* connection, const msg::BaseM
 		logD << "request kServerSettings\n";
 		msg::ServerSettings* serverSettings = new msg::ServerSettings();
 		serverSettings->setVolume(client->config.volume.percent);
-		serverSettings->setMuted(client->config.volume.muted);
+		serverSettings->setMuted(client->config.volume.muted || group->muted);
 		serverSettings->setLatency(client->config.latency);
 		serverSettings->setBufferMs(settings_.bufferMs);
 		serverSettings->refersTo = helloMsg.id;

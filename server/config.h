@@ -257,7 +257,7 @@ struct ClientInfo
 
 struct Group
 {
-	Group(const ClientInfoPtr client = nullptr)
+	Group(const ClientInfoPtr client = nullptr) : muted(false)
 	{
 		if (client)
 			id = client->id;
@@ -269,6 +269,7 @@ struct Group
 		name = trim_copy(jGet<std::string>(j, "name", ""));
 		id = trim_copy(jGet<std::string>(j, "id", ""));
 		streamId = trim_copy(jGet<std::string>(j, "stream", ""));
+		muted = jGet<bool>(j, "muted", false);
 		clients.clear();
 		if (j.count("clients"))
 		{
@@ -288,6 +289,7 @@ struct Group
 		j["name"] = trim_copy(name);
 		j["id"] = trim_copy(id);
 		j["stream"] = trim_copy(streamId);
+		j["muted"] = muted;
 
 		json jClients = json::array();
 		for (auto client: clients)
@@ -355,6 +357,7 @@ struct Group
 	std::string name;
 	std::string id;
 	std::string streamId;
+	bool muted;
 	std::vector<ClientInfoPtr> clients;
 };
 

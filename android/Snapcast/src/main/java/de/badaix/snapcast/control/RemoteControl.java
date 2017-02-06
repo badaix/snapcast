@@ -94,7 +94,7 @@ public class RemoteControl implements TcpClient.TcpClientListener {
         try {
             if (message.trim().startsWith("[")) {
                 JSONArray jsonArray = new JSONArray(message);
-                for (int i=0; i<jsonArray.length(); ++i) {
+                for (int i = 0; i < jsonArray.length(); ++i) {
                     JSONObject json = jsonArray.getJSONObject(i);
                     processJson(tcpClient, json);
                 }
@@ -263,6 +263,18 @@ public class RemoteControl implements TcpClient.TcpClientListener {
     public void setStream(String groupId, String id) {
         try {
             JSONObject request = jsonRequest("Group.SetStream", new JSONObject("{\"group\": \"" + groupId + "\", \"id\": \"" + id + "\"}"));
+            tcpClient.sendMessage(request.toString());
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void setGroupMuted(Group group, boolean muted) {
+        try {
+            JSONObject body = new JSONObject();
+            body.put("muted", muted);
+            body.put("group", group.getId());
+            JSONObject request = jsonRequest("Group.SetMuted", body);
             tcpClient.sendMessage(request.toString());
         } catch (JSONException e) {
             e.printStackTrace();

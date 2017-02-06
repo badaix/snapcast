@@ -36,6 +36,7 @@ public class Group implements JsonSerialisable, Comparable<Group> {
     private String name = "";
     private String id = "";
     private String streamId = "";
+    private boolean muted = false;
     private ArrayList<Client> clients = new ArrayList<Client>();
 
     public Group(JSONObject json) {
@@ -52,7 +53,7 @@ public class Group implements JsonSerialisable, Comparable<Group> {
             name = json.getString("name");
             id = json.getString("id");
             streamId = json.getString("stream");
-
+            muted = json.optBoolean("muted", false);
             JSONArray jClients = json.optJSONArray("clients");
             if (jClients != null) {
                 for (int i = 0; i < jClients.length(); i++)
@@ -71,6 +72,7 @@ public class Group implements JsonSerialisable, Comparable<Group> {
             json.put("name", name);
             json.put("id", id);
             json.put("stream", streamId);
+            json.put("muted", muted);
             json.put("clients", getJsonClients());
         } catch (JSONException e) {
             e.printStackTrace();
@@ -111,6 +113,13 @@ public class Group implements JsonSerialisable, Comparable<Group> {
         return clients;
     }
 
+    public boolean isMuted() {
+        return muted;
+    }
+
+    public void setMuted(boolean muted) {
+        this.muted = muted;
+    }
 
     public boolean removeClient(String id) {
         if (TextUtils.isEmpty(id))
@@ -150,7 +159,7 @@ public class Group implements JsonSerialisable, Comparable<Group> {
         if (TextUtils.isEmpty(id))
             return null;
 
-        for (Client c: clients) {
+        for (Client c : clients) {
             if (c == null)
                 continue;
 
@@ -176,6 +185,7 @@ public class Group implements JsonSerialisable, Comparable<Group> {
 
         if (name != null ? !name.equals(group.name) : group.name != null) return false;
         if (id != null ? !id.equals(group.id) : group.id != null) return false;
+        if (muted != group.muted) return false;
         if (streamId != null ? !streamId.equals(group.streamId) : group.streamId != null)
             return false;
         return clients != null ? clients.equals(group.clients) : group.clients == null;
@@ -187,6 +197,7 @@ public class Group implements JsonSerialisable, Comparable<Group> {
         int result = name != null ? name.hashCode() : 0;
         result = 31 * result + (id != null ? id.hashCode() : 0);
         result = 31 * result + (streamId != null ? streamId.hashCode() : 0);
+        result = 31 * result + (muted ? 1 : 0);
         result = 31 * result + (clients != null ? clients.hashCode() : 0);
         return result;
     }
