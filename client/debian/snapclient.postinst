@@ -7,9 +7,9 @@ ACTION="$1"
 VERSION="$2"
 
 if [ "$ACTION" = "configure" ]; then
-	# add the snapcast user
-	if ! getent passwd snapcast >/dev/null; then
-		adduser --quiet --ingroup audio --system --no-create-home snapcast
+	# add the snapclient user
+	if ! getent passwd snapclient >/dev/null; then
+		adduser --quiet --ingroup audio --system --no-create-home snapclient
 	fi
 fi
 

@@ -48,7 +48,7 @@ do_start()
 	PIDDIR=$(dirname "$PIDFILE")
 	if [ ! -d "$PIDDIR" ]; then
 			mkdir -m 0755 $PIDDIR
-			chown snapcast:audio $PIDDIR
+			chown snapclient:audio $PIDDIR
 	fi
 
 	# Return

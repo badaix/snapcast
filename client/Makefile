@@ -101,7 +101,7 @@ else
 install:
 	$(MAKE) adduser
 	$(MAKE) installfiles
-	install -g audio -o snapcast -d /var/run/$(BIN)
+	install -g audio -o snapclient -d /var/run/$(BIN)
 
 	@if [[ `systemctl` =~ -\.mount ]]; then \
 		$(MAKE) installsystemd; \
@@ -135,8 +135,8 @@ installsysv:
 	/etc/init.d/$(BIN) start; \
 
 adduser:
-	@if ! getent passwd snapcast >/dev/null; then \
-		adduser --quiet --ingroup audio --system --no-create-home --home /var/lib/snapcast snapcast; \
+	@if ! getent passwd snapclient >/dev/null; then \
+		adduser --quiet --ingroup audio --system --no-create-home --home /var/lib/snapclient snapclient; \
 	fi; \
 
 ifeq ($(TARGET), MACOS)
@@ -184,5 +184,5 @@ uninstallsystemd:
 	systemctl daemon-reload; \
 
 deluser:
-	@deluser --quiet --system snapcast > /dev/null || true
+	@deluser --quiet --system snapclient > /dev/null || true
 

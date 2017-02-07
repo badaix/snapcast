@@ -144,7 +144,7 @@ int main(int argc, char* argv[])
 		if (daemonOption.isSet())
 		{
 #ifdef HAS_DAEMON
-			daemonize("snapcast", "audio", "/var/run/snapserver/pid");
+			daemonize("snapserver", "nogroup", "/var/run/snapserver/pid");
 			if (processPriority < -20)
 				processPriority = -20;
 			else if (processPriority > 19)

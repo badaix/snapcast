@@ -111,7 +111,7 @@ else
 install:
 	$(MAKE) adduser
 	$(MAKE) installfiles
-	install -g audio -o snapcast -d /var/run/$(BIN)
+	install -g nogroup -o snapserver -d /var/run/$(BIN)
 
 	@if [[ `systemctl` =~ -\.mount ]]; then \
 		$(MAKE) installsystemd; \
@@ -149,8 +149,8 @@ installbsd:
 	cp debian/$(BIN).bsd /usr/local/etc/rc.d/$(BIN); \
 
 adduser:
-	@if ! getent passwd snapcast >/dev/null; then \
-		adduser --quiet --ingroup audio --system --no-create-home --home /var/lib/snapcast snapcast; \
+	@if ! getent passwd snapserver >/dev/null; then \
+		adduser --quiet --ingroup nogroup --system --no-create-home --home /var/lib/snapserver snapserver; \
 	fi; \
 
 
@@ -208,5 +208,5 @@ uninstallsystemd:
 	systemctl daemon-reload; \
 
 deluser:
-	@deluser --quiet --system snapcast > /dev/null || true
+	@deluser --quiet --system snapserver > /dev/null || true
 

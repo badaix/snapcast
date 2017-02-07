@@ -32,9 +32,9 @@ Config::Config()
 {
 	string dir;
 	if (getenv("HOME") == NULL)
-		dir = "/var/lib/snapcast/";
+		dir = "/var/lib/snapserver/";
 	else
-		dir = getenv("HOME") + string("/.config/snapcast/");
+		dir = getenv("HOME") + string("/.config/snapserver/");
 	int status = mkdirRecursive(dir.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
 	if ((status != 0) && (errno != EEXIST))
 		throw SnapException("failed to create settings directory: \"" + dir + "\": " + cpt::to_string(errno));

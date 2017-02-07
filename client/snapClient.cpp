@@ -160,7 +160,10 @@ int main (int argc, char **argv)
 		if (daemonOption.isSet())
 		{
 #ifdef HAS_DAEMON
-			daemonize("snapcast", "audio", "/var/run/snapclient/pid." + cpt::to_string(instance));
+			string pidFile = "/var/run/snapclient/pid";
+			if (instance != 1)
+				pidFile += "." + cpt::to_string(instance);
+			daemonize("snapclient", "audio", pidFile);
 			if (processPriority < -20)
 				processPriority = -20;
 			else if (processPriority > 19)
