@@ -48,7 +48,6 @@ public class TcpClient {
     private BufferedReader mBufferIn;
     private Thread readerThread = null;
     private Socket socket = null;
-    private String uid;
     private BlockingQueue<String> messages = new LinkedBlockingQueue<>();
 
     /**
@@ -215,7 +214,7 @@ public class TcpClient {
                 if (socket != null) {
                     try {
                         socket.close();
-                    } catch (Exception e) {
+                    } catch (Exception ignored) {
                     }
                 }
                 socket = null;

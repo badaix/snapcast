@@ -46,7 +46,7 @@ public class RemoteControl implements TcpClient.TcpClientListener {
     private RemoteControlListener listener;
     private String host;
     private int port;
-    private HashMap<Long, String> pendingRequests;
+    private final HashMap<Long, String> pendingRequests;
 
     public RemoteControl(RemoteControlListener listener) {
         this.listener = listener;
@@ -96,18 +96,18 @@ public class RemoteControl implements TcpClient.TcpClientListener {
                 JSONArray jsonArray = new JSONArray(message);
                 for (int i = 0; i < jsonArray.length(); ++i) {
                     JSONObject json = jsonArray.getJSONObject(i);
-                    processJson(tcpClient, json);
+                    processJson(json);
                 }
             } else {
                 JSONObject json = new JSONObject(message);
-                processJson(tcpClient, json);
+                processJson(json);
             }
         } catch (JSONException e) {
             e.printStackTrace();
         }
     }
 
-    public void processJson(TcpClient tcpClient, JSONObject json) {
+    private void processJson(JSONObject json) {
 //        Log.d(TAG, "Msg received: " + message);
         try {
 
@@ -323,8 +323,8 @@ public class RemoteControl implements TcpClient.TcpClientListener {
     public enum ClientEvent {
         connected("Client.OnConnect"),
         disconnected("Client.OnDisconnect"),
-        updated("Client.OnUpdate"),
-        deleted("Client.OnDelete");
+        updated("Client.OnUpdate");
+        //deleted("Client.OnDelete");
         private String text;
 
         ClientEvent(String text) {

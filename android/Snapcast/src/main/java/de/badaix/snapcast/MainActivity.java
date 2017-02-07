@@ -423,16 +423,11 @@ public class MainActivity extends AppCompatActivity implements GroupItem.GroupIt
             if (data.hasExtra("clients")) {
                 ArrayList<String> clients = data.getStringArrayListExtra("clients");
                 remoteControl.setClients(groupId, clients);
-                changed = true;
             }
             if (data.hasExtra("stream")) {
                 String streamId = data.getStringExtra("stream");
                 remoteControl.setStream(groupId, streamId);
-                changed = true;
             }
-//TODO
-//            if (changed)
-//                remoteControl.getServerStatus();
         }
     }
 
@@ -467,20 +462,11 @@ public class MainActivity extends AppCompatActivity implements GroupItem.GroupIt
     @Override
     public void onClientEvent(RemoteControl remoteControl, RemoteControl.RpcEvent rpcEvent, Client client, RemoteControl.ClientEvent event) {
         Log.d(TAG, "onClientEvent: " + event.toString());
-//        remoteControl.getServerStatus();
-/* TODO: group
-        if (event == RemoteControl.ClientEvent.deleted)
-            serverStatus.removeClient(client);
-        else
-            serverStatus.updateClient(client);
-        sectionsPagerAdapter.updateServer(serverStatus);
-*/
         /// update only in case of notifications
         if (rpcEvent == RemoteControl.RpcEvent.response)
             return;
 
-        if (event != RemoteControl.ClientEvent.deleted)
-            serverStatus.updateClient(client);
+        serverStatus.updateClient(client);
         groupListFragment.updateServer(serverStatus);
     }
 
@@ -492,15 +478,12 @@ public class MainActivity extends AppCompatActivity implements GroupItem.GroupIt
 
     @Override
     public void onStreamUpdate(RemoteControl remoteControl, RemoteControl.RpcEvent rpcEvent, Stream stream) {
-        // TODO
         serverStatus.updateStream(stream);
         groupListFragment.updateServer(serverStatus);
     }
 
     @Override
     public void onGroupUpdate(RemoteControl remoteControl, RemoteControl.RpcEvent rpcEvent, Group group) {
-        // TODO
-        Log.d(TAG, "onGroupUpdate: " + group.toString());
         serverStatus.updateGroup(group);
         groupListFragment.updateServer(serverStatus);
     }
