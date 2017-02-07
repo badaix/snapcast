@@ -94,7 +94,7 @@ public class GroupItem extends LinearLayout implements SeekBar.OnSeekBarChangeLi
             if ((client == null) || client.isDeleted() || (hideOffline && !client.isConnected()))
                 continue;
 
-            ClientItem clientItem = new ClientItem(this.getContext(), server, client);
+            ClientItem clientItem = new ClientItem(this.getContext(), client);
             clientItem.setListener(this);
             clientItems.add(clientItem);
             llClient.addView(clientItem);

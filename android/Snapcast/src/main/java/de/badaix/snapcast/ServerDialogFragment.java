@@ -122,7 +122,6 @@ public class ServerDialogFragment extends DialogFragment implements View.OnClick
         if (context instanceof Activity) {
             update();
         }
-
     }
 
     private void update() {

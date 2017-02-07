@@ -18,6 +18,7 @@
 
 package de.badaix.snapcast.control.json;
 
+import android.support.annotation.NonNull;
 import android.text.TextUtils;
 
 import org.json.JSONArray;
@@ -203,7 +204,7 @@ public class Group implements JsonSerialisable, Comparable<Group> {
     }
 
     @Override
-    public int compareTo(Group another) {
+    public int compareTo(@NonNull Group another) {
         if (getClients().isEmpty())
             return -1;
         if (another.getClients().isEmpty())

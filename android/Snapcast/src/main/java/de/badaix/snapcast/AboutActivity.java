@@ -30,8 +30,11 @@ public class AboutActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_about);
-        getSupportActionBar().setTitle(getString(R.string.about) + " Snapcast");
-        PackageInfo pInfo = null;
+        try {
+            getSupportActionBar().setTitle(getString(R.string.about) + " Snapcast");
+        } catch (Exception e) {
+        }
+        PackageInfo pInfo;
         try {
             pInfo = getPackageManager().getPackageInfo(getPackageName(), 0);
             getSupportActionBar().setSubtitle("v" + pInfo.versionName);

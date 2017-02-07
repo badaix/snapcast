@@ -2,17 +2,16 @@
     <string name="app_name">Snapcast</string>
     <string name="ticker_text">Snapclient 開始しました</string>
     <string name="notification_title">Snapclient</string>
-    <string name="notification_text">Snapclient は実行中です...</string>
-    <string name="notification_info">情報...</string>
+    <string name="notification_text">Snapclient は実行中です…</string>
+    <string name="notification_info">情報…</string>
     <string name="stop">停止</string>
     <string name="menu_details">詳細</string>
     <string name="menu_delete">削除</string>
 
-    <!-- TODO: Remove or change this placeholder text -->
     <string name="title_activity_snapcast">Snapcast</string>
 
-    <string name="action_about">アプリについて...</string>
-    <string name="action_settings">設定...</string>
+    <string name="action_about">アプリについて…</string>
+    <string name="action_settings">設定…</string>
     <string name="action_scan">サーバーのスキャン</string>
     <string name="action_refresh">クライアント一覧の更新</string>
     <string name="action_hide_offline">オフラインのクライアントを非表示</string>
@@ -36,7 +35,6 @@
     <string name="about_file">files/about.html</string>
     <string name="about">アプリについて</string>
 
-    <!-- TODO: Remove or change this placeholder text -->
     <string name="client_stream">ストリーム</string>
     <string name="first_run_title">警告</string>
     <string name="first_run_text">これはテストクライアントです。\n正式利用用途ではありません。</string>

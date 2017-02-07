@@ -20,6 +20,8 @@ package de.badaix.snapcast;
 
 import android.content.Context;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -43,11 +45,6 @@ public class GroupListFragment extends Fragment {
 
     private static final String TAG = "GroupList";
 
-    // TODO: Rename parameter arguments, choose names that match
-    // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-    private static final String ARG_PARAM1 = "param1";
-    private static final String ARG_PARAM2 = "param2";
-
     private GroupItem.GroupItemListener groupItemListener;
     private GroupAdapter groupAdapter;
     private ServerStatus serverStatus = null;
@@ -57,29 +54,13 @@ public class GroupListFragment extends Fragment {
         // Required empty public constructor
     }
 
-    /**
-     * Use this factory method to create a new instance of
-     * this fragment using the provided parameters.
-     * <p/>
-     * //@param param1 Parameter 1.
-     *
-     * @return A new instance of fragment GroupListFragment.
-     * // TODO: Rename and change types and number of parameters
-     * public static GroupListFragment newInstance(String param1) {
-     * GroupListFragment fragment = new GroupListFragment();
-     * Bundle args = new Bundle();
-     * args.putString(ARG_PARAM1, param1);
-     * fragment.setArguments(args);
-     * return fragment;
-     * }
-     */
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        if (getArguments() != null) {
+//        if (getArguments() != null) {
 //            mParam1 = getArguments().getString(ARG_PARAM1);
-        }
+//        }
     }
 
     @Override
@@ -137,14 +118,17 @@ public class GroupListFragment extends Fragment {
         private boolean hideOffline = false;
         private ServerStatus serverStatus = new ServerStatus();
 
-        public GroupAdapter(Context context, GroupItem.GroupItemListener listener) {
+        GroupAdapter(Context context, GroupItem.GroupItemListener listener) {
             super(context, 0);
             this.context = context;
             this.listener = listener;
         }
 
         @Override
-        public View getView(int position, View convertView, ViewGroup parent) {
+        public
+        @NonNull
+        View getView(int position, @Nullable View convertView,
+                     @NonNull ViewGroup parent) {
             Group group = getItem(position);
             final GroupItem groupItem;
 
@@ -159,7 +143,7 @@ public class GroupListFragment extends Fragment {
             return groupItem;
         }
 
-        public void updateServer(final ServerStatus serverStatus) {
+        void updateServer(final ServerStatus serverStatus) {
             if (serverStatus != null) {
                 GroupAdapter.this.serverStatus = serverStatus;
                 update();
@@ -167,14 +151,12 @@ public class GroupListFragment extends Fragment {
         }
 
 
-        public void update() {
+        void update() {
             getActivity().runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
                     clear();
-// TODO: group
                     for (Group group : GroupAdapter.this.serverStatus.getGroups()) {
-//                        add(group);
                         if (group.getClients().isEmpty())
                             continue;
 
@@ -198,7 +180,7 @@ public class GroupListFragment extends Fragment {
             });
         }
 
-        public void setHideOffline(boolean hideOffline) {
+        void setHideOffline(boolean hideOffline) {
             if (this.hideOffline == hideOffline)
                 return;
             this.hideOffline = hideOffline;

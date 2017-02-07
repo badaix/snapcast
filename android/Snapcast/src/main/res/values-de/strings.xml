@@ -2,17 +2,16 @@
     <string name="app_name">Snapcast</string>
     <string name="ticker_text">Snapclient gestartet</string>
     <string name="notification_title">Snapclient</string>
-    <string name="notification_text">Snapclient läuft...</string>
-    <string name="notification_info">Info...</string>
+    <string name="notification_text">Snapclient läuft…</string>
+    <string name="notification_info">Info…</string>
     <string name="stop">Stop</string>
     <string name="menu_details">Details</string>
     <string name="menu_delete">Löschen</string>
 
-    <!-- TODO: Remove or change this placeholder text -->
     <string name="title_activity_snapcast">Snapcast</string>
 
-    <string name="action_about">Über...</string>
-    <string name="action_settings">Einstellungen...</string>
+    <string name="action_about">Über…</string>
+    <string name="action_settings">Einstellungen…</string>
     <string name="action_scan">Suche nach Server</string>
     <string name="action_refresh">Aktualisiere Client-Liste</string>
     <string name="action_hide_offline">Verstecke offline Clients</string>
@@ -36,7 +35,6 @@
     <string name="about_file">files/about.html</string>
     <string name="about">Über</string>
 
-    <!-- TODO: Remove or change this placeholder text -->
     <string name="client_stream">Stream</string>
     <string name="first_run_title">Warnung</string>
     <string name="first_run_text">Dies ist ein Test-Client.\nNicht für den Produktiv-Einsatz vorgesehen.</string>

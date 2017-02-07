@@ -44,7 +44,7 @@ import de.badaix.snapcast.control.json.Stream;
 
 public class GroupSettingsFragment extends PreferenceFragment {
 
-    private static final String TAG = "GroupSettingsFragment";
+    //private static final String TAG = "GroupSettingsFragment";
 
     private ListPreference prefStreams;
     private Group group = null;

@@ -34,7 +34,6 @@ import android.os.Bundle;
 import android.os.IBinder;
 import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.Snackbar;
-import android.support.design.widget.TabLayout;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
@@ -79,7 +78,6 @@ public class MainActivity extends AppCompatActivity implements GroupItem.GroupIt
     private ServerStatus serverStatus = null;
     private SnapclientService snapclientService;
     private GroupListFragment groupListFragment;
-    private TabLayout tabLayout;
     private Snackbar warningSamplerateSnackbar = null;
     private int nativeSampleRate = 0;
     private CoordinatorLayout coordinatorLayout;
@@ -154,7 +152,7 @@ public class MainActivity extends AppCompatActivity implements GroupItem.GroupIt
     }
 
     public void checkFirstRun() {
-        PackageInfo pInfo = null;
+        PackageInfo pInfo;
         try {
             pInfo = getPackageManager().getPackageInfo(getPackageName(), 0);
             final int verCode = pInfo.versionCode;
@@ -396,7 +394,7 @@ public class MainActivity extends AppCompatActivity implements GroupItem.GroupIt
             return;
         }
         if (requestCode == CLIENT_PROPERTIES_REQUEST) {
-            Client client = null;
+            Client client;
             try {
                 client = new Client(new JSONObject(data.getStringExtra("client")));
             } catch (JSONException e) {
@@ -404,7 +402,7 @@ public class MainActivity extends AppCompatActivity implements GroupItem.GroupIt
                 return;
             }
 
-            Client clientOriginal = null;
+            Client clientOriginal;
             try {
                 clientOriginal = new Client(new JSONObject(data.getStringExtra("clientOriginal")));
             } catch (JSONException e) {
@@ -597,7 +595,7 @@ public class MainActivity extends AppCompatActivity implements GroupItem.GroupIt
                 groupListFragment.updateServer(serverStatus);
             }
         });
-        mySnackbar.setCallback(new Snackbar.Callback() {
+        mySnackbar.addCallback(new Snackbar.Callback() {
             @Override
             public void onDismissed(Snackbar snackbar, int event) {
                 super.onDismissed(snackbar, event);

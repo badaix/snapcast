@@ -26,10 +26,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.net.wifi.WifiManager;
 import android.os.Binder;
-import android.os.Handler;
 import android.os.IBinder;
-import android.os.Looper;
-import android.os.Message;
 import android.os.PowerManager;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.TaskStackBuilder;
@@ -73,10 +70,10 @@ public class SnapclientService extends Service {
         if (intent == null)
             return START_NOT_STICKY;
 
-        if (intent.getAction() == ACTION_STOP) {
+        if (intent.getAction().equals(ACTION_STOP)) {
             stopService();
             return START_NOT_STICKY;
-        } else if (intent.getAction() == ACTION_START) {
+        } else if (intent.getAction().equals(ACTION_START)) {
             String host = intent.getStringExtra(EXTRA_HOST);
             int port = intent.getIntExtra(EXTRA_PORT, 1704);
 
@@ -111,11 +108,8 @@ public class SnapclientService extends Service {
                             PendingIntent.FLAG_UPDATE_CURRENT
                     );
             builder.setContentIntent(resultPendingIntent);
-            NotificationManager mNotificationManager =
-                    (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
             // mId allows you to update the notification later on.
             final Notification notification = builder.build();
-//        mNotificationManager.notify(123, notification);
             startForeground(123, notification);
 
             start(host, port);
@@ -254,31 +248,6 @@ public class SnapclientService extends Service {
         SnapclientService getService() {
             // Return this instance of LocalService so clients can call public methods
             return SnapclientService.this;
-        }
-    }
-
-    // Handler that receives messages from the thread
-    private final class ServiceHandler extends Handler {
-        public ServiceHandler(Looper looper) {
-            super(looper);
-        }
-
-        @Override
-        public void handleMessage(Message msg) {
-            // Normally we would do some work here, like download a file.
-            // For our sample, we just sleep for 5 seconds.
-            long endTime = System.currentTimeMillis() + 5 * 1000;
-            while (System.currentTimeMillis() < endTime) {
-                synchronized (this) {
-                    try {
-                        wait(endTime - System.currentTimeMillis());
-                    } catch (Exception e) {
-                    }
-                }
-            }
-            // Stop the service using the startId, so that we don't stop
-            // the service in the middle of handling another job
-            stopSelf(msg.arg1);
         }
     }
 

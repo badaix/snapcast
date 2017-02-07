@@ -30,7 +30,6 @@ import android.widget.SeekBar;
 import android.widget.TextView;
 
 import de.badaix.snapcast.control.json.Client;
-import de.badaix.snapcast.control.json.ServerStatus;
 import de.badaix.snapcast.control.json.Volume;
 
 public class ClientItem extends LinearLayout implements SeekBar.OnSeekBarChangeListener, View.OnClickListener, PopupMenu.OnMenuItemClickListener {
@@ -42,10 +41,13 @@ public class ClientItem extends LinearLayout implements SeekBar.OnSeekBarChangeL
     private ImageButton ibMute;
     private ImageButton ibOverflow;
     private Client client;
-    private ServerStatus server;
     private ClientItemListener listener = null;
 
-    public ClientItem(Context context, ServerStatus server, Client client) {
+    public ClientItem(Context context) {
+        this(context, null);
+    }
+
+    public ClientItem(Context context, Client client) {
         super(context);
         LayoutInflater vi = (LayoutInflater) context
                 .getSystemService(Context.LAYOUT_INFLATER_SERVICE);
@@ -58,7 +60,6 @@ public class ClientItem extends LinearLayout implements SeekBar.OnSeekBarChangeL
         ibOverflow = (ImageButton) findViewById(R.id.ibOverflow);
         ibOverflow.setOnClickListener(this);
         volumeSeekBar.setOnSeekBarChangeListener(this);
-        this.server = server;
         setClient(client);
     }
 
