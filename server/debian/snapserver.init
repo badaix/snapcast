@@ -48,7 +48,7 @@ do_start()
 	PIDDIR=$(dirname "$PIDFILE")
 	if [ ! -d "$PIDDIR" ]; then
 			mkdir -m 0755 $PIDDIR
-			chown snapserver:nogroup $PIDDIR
+			chown snapserver:snapserver $PIDDIR
 	fi
 
 	# Return

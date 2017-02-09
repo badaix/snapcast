@@ -24,7 +24,7 @@ load_rc_config $name
 
 command=/usr/local/bin/${name}
 pidfile="/var/run/${name}/pid"
-                                            
+
 start_cmd=snapserver_start
 
 

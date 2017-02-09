@@ -111,7 +111,7 @@ else
 install:
 	$(MAKE) adduser
 	$(MAKE) installfiles
-	install -g nogroup -o snapserver -d /var/run/$(BIN)
+	install -g snapserver -o snapserver -d /var/run/$(BIN)
 
 	@if [[ `systemctl` =~ -\.mount ]]; then \
 		$(MAKE) installsystemd; \
@@ -150,7 +150,8 @@ installbsd:
 
 adduser:
 	@if ! getent passwd snapserver >/dev/null; then \
-		adduser --quiet --ingroup nogroup --system --no-create-home --home /var/lib/snapserver snapserver; \
+		addgroup --quiet --system snapserver; \
+		adduser --quiet --ingroup snapserver --system --no-create-home --home /var/lib/snapserver snapserver; \
 	fi; \
 
 
@@ -208,5 +209,6 @@ uninstallsystemd:
 	systemctl daemon-reload; \
 
 deluser:
-	@deluser --quiet --system snapserver > /dev/null || true
+	@deluser --quiet --system snapserver > /dev/null || true; \
+	delgroup --quiet --system snapserver > /dev/null || true
 
