@@ -6,7 +6,7 @@ For Debian derivates (e.g. Raspbian, Debian, Ubuntu, Mint):
 
 For Arch derivates:
 
-    $ pacman -S git
+    $ sudo pacman -S git
 
 For FreeBSD:
 
@@ -34,8 +34,8 @@ Compilation requires gcc 4.8 or higher, so it's highly recommended to use Debian
 
 For Arch derivates:
 
-    $ pacman -S base-devel
-    $ pacman -S alsa-lib avahi libvorbis flac alsa-utils
+    $ sudo pacman -S base-devel
+    $ sudo pacman -S alsa-lib avahi libvorbis flac alsa-utils
 
 ###Build Snapclient and Snapserver
 `cd` into the Snapcast src-root directory:
