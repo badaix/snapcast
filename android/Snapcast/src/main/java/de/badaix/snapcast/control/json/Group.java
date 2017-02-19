@@ -53,7 +53,7 @@ public class Group implements JsonSerialisable, Comparable<Group> {
             clients.clear();
             name = json.getString("name");
             id = json.getString("id");
-            streamId = json.getString("stream");
+            streamId = json.getString("stream_id");
             muted = json.optBoolean("muted", false);
             JSONArray jClients = json.optJSONArray("clients");
             if (jClients != null) {
@@ -72,7 +72,7 @@ public class Group implements JsonSerialisable, Comparable<Group> {
         try {
             json.put("name", name);
             json.put("id", id);
-            json.put("stream", streamId);
+            json.put("stream_id", streamId);
             json.put("muted", muted);
             json.put("clients", getJsonClients());
         } catch (JSONException e) {
