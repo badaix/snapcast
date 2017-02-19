@@ -42,8 +42,9 @@ void StreamServer::onStateChanged(const PcmStream* pcmStream, const ReaderState&
 {
 	logO << "onStateChanged (" << pcmStream->getName() << "): " << state << "\n";
 //	logO << pcmStream->toJson().dump(4);
-	json notification = jsonrpcpp::Notification("Stream.OnUpdate", pcmStream->toJson()).to_json();
+	json notification = jsonrpcpp::Notification("Stream.OnUpdate", jsonrpcpp::Parameter("id", pcmStream->getId(), "stream", pcmStream->toJson())).to_json();
 	controlServer_->send(notification.dump(), NULL);
+	cout << "Notification:\n" << notification.dump(4) << "\n";
 }
 
 
@@ -98,8 +99,9 @@ void StreamServer::onDisconnect(StreamSession* streamSession)
 	Config::instance().save();
 	if (controlServer_ != nullptr)
 	{
-		json notification = jsonrpcpp::Notification("Client.OnDisconnect", clientInfo->toJson()).to_json();
+		json notification = jsonrpcpp::Notification("Client.OnDisconnect", jsonrpcpp::Parameter("id", clientInfo->id, "client", clientInfo->toJson())).to_json();
 		controlServer_->send(notification.dump());
+		cout << "Notification:\n" << notification.dump(4) << "\n";
 	}
 }
 
@@ -112,9 +114,13 @@ void StreamServer::ProcessRequest(const jsonrpcpp::request_ptr request, jsonrpcp
 
 		Json result;
 
-		if (request->method.find("Client.") == 0)
+		if (request->method.find("JSONRPC.") == 0)
 		{
-			ClientInfoPtr clientInfo = Config::instance().getClientInfo(request->params.get("client"));
+			//TODO: JSONRPC.Version, JSONRPC.Ping
+		}
+		else if (request->method.find("Client.") == 0)
+		{
+			ClientInfoPtr clientInfo = Config::instance().getClientInfo(request->params.get("id"));
 			if (clientInfo == nullptr)
 				throw jsonrpcpp::InternalErrorException("Client not found", request->id);
 
@@ -124,20 +130,32 @@ void StreamServer::ProcessRequest(const jsonrpcpp::request_ptr request, jsonrpcp
 			}
 			else if (request->method == "Client.SetVolume")
 			{
+				/// -> {"jsonrpc":"2.0","method":"Client.SetVolume","id":5,"params":{"id":"00:21:6a:7d:74:fc#2","volume":{"percent":56,"muted":false}}}
+				/// <- {"id":5,"jsonrpc":"2.0","result":{"volume":{"muted":false,"percent":56}}}
 				clientInfo->config.volume.fromJson(request->params.get("volume"));
+				result["volume"] = clientInfo->config.volume.toJson();
+				notification.reset(new jsonrpcpp::Notification("Client.OnVolumeChanged", jsonrpcpp::Parameter("id", clientInfo->id, "volume", clientInfo->config.volume.toJson())));
 			}
 			else if (request->method == "Client.SetLatency")
 			{
+				/// -> {"jsonrpc":"2.0","method":"Client.SetLatency","id":4,"params":{"id":"00:21:6a:7d:74:fc#2","latency":50}}
+				/// <- {"id":4,"jsonrpc":"2.0","result":{"latency":50}}
 				int latency = request->params.get("latency");
 				if (latency < -10000)
 					latency = -10000;
 				else if (latency > settings_.bufferMs)
 					latency = settings_.bufferMs;
 				clientInfo->config.latency = latency; //, -10000, settings_.bufferMs);
+				result["latency"] = clientInfo->config.latency;
+				notification.reset(new jsonrpcpp::Notification("Client.OnLatencyChanged", jsonrpcpp::Parameter("id", clientInfo->id, "latency", clientInfo->config.latency)));
 			}
 			else if (request->method == "Client.SetName")
 			{
+				/// -> {"jsonrpc":"2.0","method":"Client.SetName","id":3,"params":{"id":"00:21:6a:7d:74:fc#2","name":"test"}}
+				/// <- {"id":3,"jsonrpc":"2.0","result":{"name":"test"}}
 				clientInfo->config.name = request->params.get("name");
+				result["name"] = clientInfo->config.name;
+				notification.reset(new jsonrpcpp::Notification("Client.OnNameChanged", jsonrpcpp::Parameter("id", clientInfo->id, "name", clientInfo->config.name)));
 			}
 			else
 				throw jsonrpcpp::MethodNotFoundException(request->id);
@@ -145,11 +163,8 @@ void StreamServer::ProcessRequest(const jsonrpcpp::request_ptr request, jsonrpcp
 
 			if (request->method.find("Client.Set") == 0)
 			{
-				/// Response: updated client
-				result =  {{"method", "Client.OnUpdate"}, {"params", clientInfo->toJson()}};
-
 				/// Update client
-				session_ptr session = getStreamSession(request->params.get("client"));
+				session_ptr session = getStreamSession(clientInfo->id);
 				if (session != nullptr)
 				{
 					msg::ServerSettings serverSettings;
@@ -160,14 +175,11 @@ void StreamServer::ProcessRequest(const jsonrpcpp::request_ptr request, jsonrpcp
 					serverSettings.setLatency(clientInfo->config.latency);
 					session->send(&serverSettings);
 				}
-
-				/// Notify others
-				notification.reset(new jsonrpcpp::Notification("Client.OnUpdate", clientInfo->toJson()));
 			}
 		}
 		else if (request->method.find("Group.") == 0)
 		{
-			GroupPtr group = Config::instance().getGroup(request->params.get("group"));
+			GroupPtr group = Config::instance().getGroup(request->params.get("id"));
 			if (group == nullptr)
 				throw jsonrpcpp::InternalErrorException("Group not found", request->id);
 
@@ -175,9 +187,11 @@ void StreamServer::ProcessRequest(const jsonrpcpp::request_ptr request, jsonrpcp
 			{
 				result = group->toJson();
 			}
-			else if (request->method == "Group.SetMuted")
+			else if (request->method == "Group.SetMute")
 			{
-				bool muted = request->params.get<bool>("muted");
+				/// -> {"jsonrpc":"2.0","method":"Group.SetMute","id":3,"params":{"id":"296ddff1-56fd-f2e4-232e-62c44faba7aa","mute":true}}
+				/// <- {"id":3,"jsonrpc":"2.0","result":{"mute":true}}
+				bool muted = request->params.get<bool>("mute");
 				group->muted = muted;				
 
 				/// Update clients
@@ -196,20 +210,19 @@ void StreamServer::ProcessRequest(const jsonrpcpp::request_ptr request, jsonrpcp
 					}
 				}
 
-				/// Notify others
-				notification.reset(new jsonrpcpp::Notification("Group.OnUpdate", group->toJson()));;
+				result["mute"] = group->muted;
+				notification.reset(new jsonrpcpp::Notification("Group.OnMute", jsonrpcpp::Parameter("id", group->id, "mute", group->muted)));
 			}
 			else if (request->method == "Group.SetStream")
 			{
-				string streamId = request->params.get("id");
+				/// -> {"jsonrpc":"2.0","method":"Group.SetStream","id":1,"params":{"id":"296ddff1-56fd-f2e4-232e-62c44faba7aa","stream_id":"stream 2"}}
+				/// <- {"id":1,"jsonrpc":"2.0","result":{"stream_id":"stream 2"}}
+				string streamId = request->params.get("stream_id");
 				PcmStreamPtr stream = streamManager_->getStream(streamId);
 				if (stream == nullptr)
 					throw jsonrpcpp::InternalErrorException("Stream not found", request->id);
 
 				group->streamId = streamId;
-
-				/// Response: updated group
-				result =  {{"method", "Group.OnUpdate"}, {"params", group->toJson()}};
 
 				/// Update clients
 				for (auto client: group->clients)
@@ -223,14 +236,14 @@ void StreamServer::ProcessRequest(const jsonrpcpp::request_ptr request, jsonrpcp
 				}
 
 				/// Notify others
-				notification.reset(new jsonrpcpp::Notification("Group.OnUpdate", group->toJson()));;
+				result["stream_id"] = group->streamId;
+				notification.reset(new jsonrpcpp::Notification("Group.OnStreamChanged", jsonrpcpp::Parameter("id", group->id, "stream_id", group->streamId)));
 			}
 			else if (request->method == "Group.SetClients")
 			{
+				/// -> {"jsonrpc":"2.0","method":"Group.SetClients","id":6,"params":{"id":"25d719fd-3a4b-2090-2ac4-b17f62b7b18b","clients":["00:21:6a:7d:74:fc","00:21:6a:7d:74:fc#2"]}}
+				/// <- {"id":6,"jsonrpc":"2.0","result":{"server":{"groups":[{"clients":[{"config":{"instance":1,"latency":0,"name":"","volume":{"muted":false,"percent":100}},"connected":true,"host":{"arch":"x86_64","ip":"192.168.0.54","mac":"00:21:6a:7d:74:fc","name":"T400","os":"Linux Mint 17.3 Rosa"},"id":"00:21:6a:7d:74:fc","lastSeen":{"sec":1487521394,"usec":253219},"snapclient":{"name":"Snapclient","protocolVersion":2,"version":"0.10.0"}},{"config":{"instance":2,"latency":50,"name":"test","volume":{"muted":false,"percent":56}},"connected":true,"host":{"arch":"x86_64","ip":"127.0.0.1","mac":"00:21:6a:7d:74:fc","name":"T400","os":"Linux Mint 17.3 Rosa"},"id":"00:21:6a:7d:74:fc#2","lastSeen":{"sec":1487521393,"usec":332977},"snapclient":{"name":"Snapclient","protocolVersion":2,"version":"0.10.0"}}],"id":"25d719fd-3a4b-2090-2ac4-b17f62b7b18b","muted":false,"name":"","stream_id":"default"}],"server":{"host":{"arch":"x86_64","ip":"","mac":"","name":"T400","os":"Linux Mint 17.3 Rosa"},"snapserver":{"controlProtocolVersion":1,"name":"Snapserver","protocolVersion":1,"version":"0.10.0"}},"streams":[{"id":"default","status":"idle","uri":{"fragment":"","host":"","path":"/tmp/snapfifo","query":{"buffer_ms":"20","codec":"flac","name":"default","sampleformat":"48000:16:2"},"raw":"pipe:///tmp/snapfifo?name=default","scheme":"pipe"}}]}}}
 				vector<string> clients = request->params.get("clients");
-				string groupId = request->params.get("group");
-
-				GroupPtr group = Config::instance().getGroup(groupId);
 				/// Remove clients from group
 				for (auto iter = group->clients.begin(); iter != group->clients.end();)
 				{
@@ -253,7 +266,7 @@ void StreamServer::ProcessRequest(const jsonrpcpp::request_ptr request, jsonrpcp
 					if (!client)
 						continue;
 					GroupPtr oldGroup = Config::instance().getGroupFromClient(client);
-					if (oldGroup && (oldGroup->id == groupId))
+					if (oldGroup && (oldGroup->id == group->id))
 						continue;
 
 					if (oldGroup)
@@ -276,11 +289,11 @@ void StreamServer::ProcessRequest(const jsonrpcpp::request_ptr request, jsonrpcp
 				if (group->empty())
 					Config::instance().remove(group);
 
-				Json serverJson = Config::instance().getServerStatus(streamManager_->toJson());
-				result =  {{"method", "Server.OnUpdate"}, {"params", serverJson}};
+				json server = Config::instance().getServerStatus(streamManager_->toJson());
+				result["server"] = server;
 
 				/// Notify others: since at least two groups are affected, send a complete server update
-				notification.reset(new jsonrpcpp::Notification("Server.OnUpdate", serverJson));
+				notification.reset(new jsonrpcpp::Notification("Server.OnUpdate", jsonrpcpp::Parameter("server", server)));
 			}
 			else
 				throw jsonrpcpp::MethodNotFoundException(request->id);
@@ -293,17 +306,17 @@ void StreamServer::ProcessRequest(const jsonrpcpp::request_ptr request, jsonrpcp
 			}
 			else if (request->method == "Server.DeleteClient")
 			{
-				ClientInfoPtr clientInfo = Config::instance().getClientInfo(request->params.get("client"));
+				ClientInfoPtr clientInfo = Config::instance().getClientInfo(request->params.get("id"));
 				if (clientInfo == nullptr)
 					throw jsonrpcpp::InternalErrorException("Client not found", request->id);
 
 				Config::instance().remove(clientInfo);
 
-				Json serverJson = Config::instance().getServerStatus(streamManager_->toJson());
-				result =  {{"method", "Server.OnUpdate"}, {"params", serverJson}};
+				json server = Config::instance().getServerStatus(streamManager_->toJson());
+				result["server"] = server;
 
 				/// Notify others
-				notification.reset(new jsonrpcpp::Notification("Server.OnUpdate", serverJson));
+				notification.reset(new jsonrpcpp::Notification("Server.OnUpdate", jsonrpcpp::Parameter("server", server)));
 			}
 			else
 				throw jsonrpcpp::MethodNotFoundException(request->id);
@@ -333,7 +346,7 @@ void StreamServer::onMessageReceived(ControlSession* controlSession, const std::
 	jsonrpcpp::entity_ptr entity(nullptr);
 	try
 	{
-		entity = jsonrpcpp::Parser::parse(message);
+		entity = jsonrpcpp::Parser::do_parse(message);
 		if (!entity)
 			return;
 	}
@@ -353,17 +366,23 @@ void StreamServer::onMessageReceived(ControlSession* controlSession, const std::
 	if (entity->is_request())
 	{
 		jsonrpcpp::request_ptr request = dynamic_pointer_cast<jsonrpcpp::Request>(entity);
-		logD << "isRequest: " << request->to_json().dump() << "\n";
+		cout << "Request:\n" << request->to_json().dump(4) << "\n";
 		ProcessRequest(request, response, notification);
 		if (response)
+		{
+			cout << "Response:\n" << response->to_json().dump(4) << "\n";
 			controlSession->send(response->to_json().dump());
+		}
 		if (notification)
+		{
+			cout << "Notification:\n" << notification->to_json().dump(4) << "\n";
 			controlServer_->send(notification->to_json().dump(), controlSession);
+		}
 	}
 	else if (entity->is_batch())
 	{
 		jsonrpcpp::batch_ptr batch = dynamic_pointer_cast<jsonrpcpp::Batch>(entity);
-		logD << "isBatch: " << batch->to_json().dump() << "\n";
+		cout << "Batch: " << batch->to_json().dump() << "\n";
 		jsonrpcpp::Batch responseBatch;
 		jsonrpcpp::Batch notificationBatch;
 		for (const auto& batch_entity: batch->entities)
@@ -466,14 +485,16 @@ void StreamServer::onMessageReceived(StreamSession* connection, const msg::BaseM
 
 		if (newGroup)
 		{
-			json serverJson = Config::instance().getServerStatus(streamManager_->toJson());
-			json notification = jsonrpcpp::Notification("Server.OnUpdate", serverJson).to_json();
+			json server = Config::instance().getServerStatus(streamManager_->toJson());
+			json notification = jsonrpcpp::Notification("Server.OnUpdate", jsonrpcpp::Parameter("server", server)).to_json();
 			controlServer_->send(notification.dump());
+			cout << "Notification:\n" << notification.dump(4) << "\n";
 		}
 		else
 		{
-			json notification = jsonrpcpp::Notification("Client.OnConnect", client->toJson()).to_json();
+			json notification = jsonrpcpp::Notification("Client.OnConnect", jsonrpcpp::Parameter("id", client->id, "client", client->toJson())).to_json();
 			controlServer_->send(notification.dump());
+			cout << "Notification:\n" << notification.dump(4) << "\n";
 		}
 //		cout << Config::instance().getServerStatus(streamManager_->toJson()).dump(4) << "\n";
 //		cout << group->toJson().dump(4) << "\n";

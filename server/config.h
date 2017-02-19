@@ -268,7 +268,7 @@ struct Group
 	{
 		name = trim_copy(jGet<std::string>(j, "name", ""));
 		id = trim_copy(jGet<std::string>(j, "id", ""));
-		streamId = trim_copy(jGet<std::string>(j, "stream", ""));
+		streamId = trim_copy(jGet<std::string>(j, "stream_id", ""));
 		muted = jGet<bool>(j, "muted", false);
 		clients.clear();
 		if (j.count("clients"))
@@ -288,7 +288,7 @@ struct Group
 		json j;
 		j["name"] = trim_copy(name);
 		j["id"] = trim_copy(id);
-		j["stream"] = trim_copy(streamId);
+		j["stream_id"] = trim_copy(streamId);
 		j["muted"] = muted;
 
 		json jClients = json::array();
