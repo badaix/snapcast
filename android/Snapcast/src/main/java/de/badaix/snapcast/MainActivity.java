@@ -57,6 +57,7 @@ import de.badaix.snapcast.control.json.Client;
 import de.badaix.snapcast.control.json.Group;
 import de.badaix.snapcast.control.json.ServerStatus;
 import de.badaix.snapcast.control.json.Stream;
+import de.badaix.snapcast.control.json.Volume;
 import de.badaix.snapcast.utils.NsdHelper;
 import de.badaix.snapcast.utils.Settings;
 import de.badaix.snapcast.utils.Setup;
@@ -82,6 +83,7 @@ public class MainActivity extends AppCompatActivity implements GroupItem.GroupIt
     private int nativeSampleRate = 0;
     private CoordinatorLayout coordinatorLayout;
     private Button btnConnect = null;
+    private boolean batchActive = false;
 
 
     /**
@@ -431,63 +433,6 @@ public class MainActivity extends AppCompatActivity implements GroupItem.GroupIt
         }
     }
 
-    @Override
-    public void onConnected(RemoteControl remoteControl) {
-        setActionbarSubtitle(remoteControl.getHost());
-        remoteControl.getServerStatus();
-        updateMenuItems(true);
-    }
-
-    @Override
-    public void onConnecting(RemoteControl remoteControl) {
-        setActionbarSubtitle("connecting: " + remoteControl.getHost());
-    }
-
-    @Override
-    public void onDisconnected(RemoteControl remoteControl, Exception e) {
-        Log.d(TAG, "onDisconnected");
-        serverStatus = new ServerStatus();
-        groupListFragment.updateServer(serverStatus);
-        if (e != null) {
-            if (e instanceof UnknownHostException)
-                setActionbarSubtitle("error: unknown host");
-            else
-                setActionbarSubtitle("error: " + e.getMessage());
-        } else {
-            setActionbarSubtitle("not connected");
-        }
-        updateMenuItems(false);
-    }
-
-    @Override
-    public void onClientEvent(RemoteControl remoteControl, RemoteControl.RpcEvent rpcEvent, Client client, RemoteControl.ClientEvent event) {
-        Log.d(TAG, "onClientEvent: " + event.toString());
-        /// update only in case of notifications
-        if (rpcEvent == RemoteControl.RpcEvent.response)
-            return;
-
-        serverStatus.updateClient(client);
-        groupListFragment.updateServer(serverStatus);
-    }
-
-    @Override
-    public void onServerUpdate(RemoteControl remoteControl, RemoteControl.RpcEvent rpcEvent, ServerStatus serverStatus) {
-        this.serverStatus = serverStatus;
-        groupListFragment.updateServer(serverStatus);
-    }
-
-    @Override
-    public void onStreamUpdate(RemoteControl remoteControl, RemoteControl.RpcEvent rpcEvent, Stream stream) {
-        serverStatus.updateStream(stream);
-        groupListFragment.updateServer(serverStatus);
-    }
-
-    @Override
-    public void onGroupUpdate(RemoteControl remoteControl, RemoteControl.RpcEvent rpcEvent, Group group) {
-        serverStatus.updateGroup(group);
-        groupListFragment.updateServer(serverStatus);
-    }
-
 
     private void setActionbarSubtitle(final String subtitle) {
         MainActivity.this.runOnUiThread(new Runnable() {
@@ -609,5 +554,172 @@ public class MainActivity extends AppCompatActivity implements GroupItem.GroupIt
         startActivityForResult(intent, GROUP_PROPERTIES_REQUEST);
     }
 
+    @Override
+    public void onConnected(RemoteControl remoteControl) {
+        setActionbarSubtitle(remoteControl.getHost());
+        remoteControl.getServerStatus();
+        updateMenuItems(true);
+    }
+
+    @Override
+    public void onConnecting(RemoteControl remoteControl) {
+        setActionbarSubtitle("connecting: " + remoteControl.getHost());
+    }
+
+    @Override
+    public void onDisconnected(RemoteControl remoteControl, Exception e) {
+        Log.d(TAG, "onDisconnected");
+        serverStatus = new ServerStatus();
+        groupListFragment.updateServer(serverStatus);
+        if (e != null) {
+            if (e instanceof UnknownHostException)
+                setActionbarSubtitle("error: unknown host");
+            else
+                setActionbarSubtitle("error: " + e.getMessage());
+        } else {
+            setActionbarSubtitle("not connected");
+        }
+        updateMenuItems(false);
+    }
+
+
+    @Override
+    public void onBatchStart() {
+        batchActive = true;
+    }
+
+
+    @Override
+    public void onBatchEnd() {
+        batchActive = false;
+        groupListFragment.updateServer(serverStatus);
+    }
+
+
+
+/*
+    @Override
+    public void onClientEvent(RemoteControl remoteControl, RemoteControl.RpcEvent rpcEvent, Client client, RemoteControl.ClientEvent event) {
+        Log.d(TAG, "onClientEvent: " + event.toString());
+        /// update only in case of notifications
+        if (rpcEvent == RemoteControl.RpcEvent.response)
+            return;
+
+        serverStatus.updateClient(client);
+        groupListFragment.updateServer(serverStatus);
+    }
+
+    @Override
+    public void onServerUpdate(RemoteControl remoteControl, RemoteControl.RpcEvent rpcEvent, ServerStatus serverStatus) {
+        this.serverStatus = serverStatus;
+        groupListFragment.updateServer(serverStatus);
+    }
+
+    @Override
+    public void onStreamUpdate(RemoteControl remoteControl, RemoteControl.RpcEvent rpcEvent, Stream stream) {
+        serverStatus.updateStream(stream);
+        groupListFragment.updateServer(serverStatus);
+    }
+
+    @Override
+    public void onGroupUpdate(RemoteControl remoteControl, RemoteControl.RpcEvent rpcEvent, Group group) {
+        serverStatus.updateGroup(group);
+        groupListFragment.updateServer(serverStatus);
+    }
+*/
+
+    @Override
+    public void onConnect(Client client) {
+        serverStatus.getClient(client.getId());
+        if (client == null)
+            return;
+        client.setConnected(true);
+        serverStatus.updateClient(client);
+        groupListFragment.updateServer(serverStatus);
+    }
+
+    @Override
+    public void onDisconnect(String clientId) {
+        Client client = serverStatus.getClient(clientId);
+        if (client == null)
+            return;
+        client.setConnected(false);
+        serverStatus.updateClient(client);
+        groupListFragment.updateServer(serverStatus);
+    }
+
+    @Override
+    public void onUpdate(Client client) {
+        serverStatus.updateClient(client);
+        groupListFragment.updateServer(serverStatus);
+    }
+
+    @Override
+    public void onVolumeChanged(RemoteControl.RPCEvent event, String clientId, Volume volume) {
+        if (event == RemoteControl.RPCEvent.response)
+            return;
+        Client client = serverStatus.getClient(clientId);
+        if (client == null)
+            return;
+        client.setVolume(volume);
+        if (!batchActive)
+            groupListFragment.updateServer(serverStatus);
+    }
+
+    @Override
+    public void onLatencyChanged(RemoteControl.RPCEvent event, String clientId, long latency) {
+        Client client = serverStatus.getClient(clientId);
+        if (client == null)
+            return;
+        client.getConfig().setLatency((int)latency);
+        groupListFragment.updateServer(serverStatus);
+    }
+
+    @Override
+    public void onNameChanged(RemoteControl.RPCEvent event, String clientId, String name) {
+        Client client = serverStatus.getClient(clientId);
+        if (client == null)
+            return;
+        client.getConfig().setName(name);
+        groupListFragment.updateServer(serverStatus);
+    }
+
+    @Override
+    public void onUpdate(Group group) {
+        serverStatus.updateGroup(group);
+        groupListFragment.updateServer(serverStatus);
+    }
+
+    @Override
+    public void onMute(RemoteControl.RPCEvent event, String groupId, boolean mute) {
+        Group g = serverStatus.getGroup(groupId);
+        if (g == null)
+            return;
+        g.setMuted(mute);
+        serverStatus.updateGroup(g);
+        groupListFragment.updateServer(serverStatus);
+    }
+
+    @Override
+    public void onStreamChanged(RemoteControl.RPCEvent event, String groupId, String streamId) {
+        Group g = serverStatus.getGroup(groupId);
+        if (g == null)
+            return;
+        g.setStreamId(streamId);
+        serverStatus.updateGroup(g);
+        groupListFragment.updateServer(serverStatus);
+    }
+
+    @Override
+    public void onUpdate(ServerStatus server) {
+        this.serverStatus = server;
+        groupListFragment.updateServer(serverStatus);
+    }
+
+    @Override
+    public void onUpdate(String streamId, Stream stream) {
+        serverStatus.updateStream(stream);
+        groupListFragment.updateServer(serverStatus);
+    }
 }
 

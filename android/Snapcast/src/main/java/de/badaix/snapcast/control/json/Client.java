@@ -105,6 +105,10 @@ public class Client implements JsonSerialisable, Comparable<Client> {
         return connected;
     }
 
+    public void setConnected(boolean connected) {
+        this.connected = connected;
+    }
+
     public String getId() {
         return clientId;
     }

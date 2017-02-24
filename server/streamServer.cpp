@@ -130,16 +130,18 @@ void StreamServer::ProcessRequest(const jsonrpcpp::request_ptr request, jsonrpcp
 			}
 			else if (request->method == "Client.SetVolume")
 			{
-				/// -> {"jsonrpc":"2.0","method":"Client.SetVolume","id":5,"params":{"id":"00:21:6a:7d:74:fc#2","volume":{"percent":56,"muted":false}}}
-				/// <- {"id":5,"jsonrpc":"2.0","result":{"volume":{"muted":false,"percent":56}}}
+				/// Request:      {"id":2,"jsonrpc":"2.0","method":"Client.SetVolume","params":{"id":"00:21:6a:7d:74:fc","volume":{"muted":false,"percent":36}}}
+				/// Response:     {"id":2,"jsonrpc":"2.0","result":{"volume":{"muted":false,"percent":36}}}
+				/// Notification: {"jsonrpc":"2.0","method":"Client.OnVolumeChanged","params":{"id":"00:21:6a:7d:74:fc","volume":{"muted":false,"percent":36}}}
 				clientInfo->config.volume.fromJson(request->params.get("volume"));
 				result["volume"] = clientInfo->config.volume.toJson();
 				notification.reset(new jsonrpcpp::Notification("Client.OnVolumeChanged", jsonrpcpp::Parameter("id", clientInfo->id, "volume", clientInfo->config.volume.toJson())));
 			}
 			else if (request->method == "Client.SetLatency")
 			{
-				/// -> {"jsonrpc":"2.0","method":"Client.SetLatency","id":4,"params":{"id":"00:21:6a:7d:74:fc#2","latency":50}}
-				/// <- {"id":4,"jsonrpc":"2.0","result":{"latency":50}}
+				/// Request:      {"id":4,"jsonrpc":"2.0","method":"Client.SetLatency","params":{"id":"00:21:6a:7d:74:fc","latency":20}}
+				/// Response:     {"id":4,"jsonrpc":"2.0","result":{"latency":20}}
+				/// Notification: {"jsonrpc":"2.0","method":"Client.OnLatencyChanged","params":{"id":"00:21:6a:7d:74:fc","latency":20}}
 				int latency = request->params.get("latency");
 				if (latency < -10000)
 					latency = -10000;
@@ -151,8 +153,9 @@ void StreamServer::ProcessRequest(const jsonrpcpp::request_ptr request, jsonrpcp
 			}
 			else if (request->method == "Client.SetName")
 			{
-				/// -> {"jsonrpc":"2.0","method":"Client.SetName","id":3,"params":{"id":"00:21:6a:7d:74:fc#2","name":"test"}}
-				/// <- {"id":3,"jsonrpc":"2.0","result":{"name":"test"}}
+				/// Request:      {"id":3,"jsonrpc":"2.0","method":"Client.SetName","params":{"id":"00:21:6a:7d:74:fc","name":"teat"}}
+				/// Response:     {"id":3,"jsonrpc":"2.0","result":{"name":"teat"}}
+				/// Notification: {"jsonrpc":"2.0","method":"Client.OnNameChanged","params":{"id":"00:21:6a:7d:74:fc","name":"teat"}}
 				clientInfo->config.name = request->params.get("name");
 				result["name"] = clientInfo->config.name;
 				notification.reset(new jsonrpcpp::Notification("Client.OnNameChanged", jsonrpcpp::Parameter("id", clientInfo->id, "name", clientInfo->config.name)));
@@ -189,8 +192,9 @@ void StreamServer::ProcessRequest(const jsonrpcpp::request_ptr request, jsonrpcp
 			}
 			else if (request->method == "Group.SetMute")
 			{
-				/// -> {"jsonrpc":"2.0","method":"Group.SetMute","id":3,"params":{"id":"296ddff1-56fd-f2e4-232e-62c44faba7aa","mute":true}}
-				/// <- {"id":3,"jsonrpc":"2.0","result":{"mute":true}}
+				/// Request:      {"id":6,"jsonrpc":"2.0","method":"Group.SetMute","params":{"id":"8e374310-b1a7-d410-d80e-ff29cf504657","mute":true}}
+				/// Response:     {"id":6,"jsonrpc":"2.0","result":{"mute":true}}
+				/// Notification: {"jsonrpc":"2.0","method":"Group.OnMute","params":{"id":"8e374310-b1a7-d410-d80e-ff29cf504657","mute":true}}
 				bool muted = request->params.get<bool>("mute");
 				group->muted = muted;				
 
@@ -215,8 +219,9 @@ void StreamServer::ProcessRequest(const jsonrpcpp::request_ptr request, jsonrpcp
 			}
 			else if (request->method == "Group.SetStream")
 			{
-				/// -> {"jsonrpc":"2.0","method":"Group.SetStream","id":1,"params":{"id":"296ddff1-56fd-f2e4-232e-62c44faba7aa","stream_id":"stream 2"}}
-				/// <- {"id":1,"jsonrpc":"2.0","result":{"stream_id":"stream 2"}}
+				/// Request:      {"id":8,"jsonrpc":"2.0","method":"Group.SetStream","params":{"id":"8e374310-b1a7-d410-d80e-ff29cf504657","stream_id":"stream 2"}}
+				/// Response:     {"id":8,"jsonrpc":"2.0","result":{"stream_id":"stream 2"}}
+				/// Notification: {"jsonrpc":"2.0","method":"Group.OnStreamChanged","params":{"id":"8e374310-b1a7-d410-d80e-ff29cf504657","stream_id":"stream 2"}}
 				string streamId = request->params.get("stream_id");
 				PcmStreamPtr stream = streamManager_->getStream(streamId);
 				if (stream == nullptr)
@@ -241,8 +246,9 @@ void StreamServer::ProcessRequest(const jsonrpcpp::request_ptr request, jsonrpcp
 			}
 			else if (request->method == "Group.SetClients")
 			{
-				/// -> {"jsonrpc":"2.0","method":"Group.SetClients","id":6,"params":{"id":"25d719fd-3a4b-2090-2ac4-b17f62b7b18b","clients":["00:21:6a:7d:74:fc","00:21:6a:7d:74:fc#2"]}}
-				/// <- {"id":6,"jsonrpc":"2.0","result":{"server":{"groups":[{"clients":[{"config":{"instance":1,"latency":0,"name":"","volume":{"muted":false,"percent":100}},"connected":true,"host":{"arch":"x86_64","ip":"192.168.0.54","mac":"00:21:6a:7d:74:fc","name":"T400","os":"Linux Mint 17.3 Rosa"},"id":"00:21:6a:7d:74:fc","lastSeen":{"sec":1487521394,"usec":253219},"snapclient":{"name":"Snapclient","protocolVersion":2,"version":"0.10.0"}},{"config":{"instance":2,"latency":50,"name":"test","volume":{"muted":false,"percent":56}},"connected":true,"host":{"arch":"x86_64","ip":"127.0.0.1","mac":"00:21:6a:7d:74:fc","name":"T400","os":"Linux Mint 17.3 Rosa"},"id":"00:21:6a:7d:74:fc#2","lastSeen":{"sec":1487521393,"usec":332977},"snapclient":{"name":"Snapclient","protocolVersion":2,"version":"0.10.0"}}],"id":"25d719fd-3a4b-2090-2ac4-b17f62b7b18b","muted":false,"name":"","stream_id":"default"}],"server":{"host":{"arch":"x86_64","ip":"","mac":"","name":"T400","os":"Linux Mint 17.3 Rosa"},"snapserver":{"controlProtocolVersion":1,"name":"Snapserver","protocolVersion":1,"version":"0.10.0"}},"streams":[{"id":"default","status":"idle","uri":{"fragment":"","host":"","path":"/tmp/snapfifo","query":{"buffer_ms":"20","codec":"flac","name":"default","sampleformat":"48000:16:2"},"raw":"pipe:///tmp/snapfifo?name=default","scheme":"pipe"}}]}}}
+				/// Request:      {"id":5,"jsonrpc":"2.0","method":"Group.SetClients","params":{"clients":["00:21:6a:7d:74:fc#2","00:21:6a:7d:74:fc"],"id":"8e374310-b1a7-d410-d80e-ff29cf504657"}}
+				/// Response:     {"id":5,"jsonrpc":"2.0","result":{"server":{"groups":[{"clients":[{"config":{"instance":1,"latency":20,"name":"teat","volume":{"muted":false,"percent":36}},"connected":true,"host":{"arch":"x86_64","ip":"192.168.0.54","mac":"00:21:6a:7d:74:fc","name":"T400","os":"Linux Mint 17.3 Rosa"},"id":"00:21:6a:7d:74:fc","lastSeen":{"sec":1487524341,"usec":500664},"snapclient":{"name":"Snapclient","protocolVersion":2,"version":"0.10.0"}},{"config":{"instance":2,"latency":0,"name":"","volume":{"muted":false,"percent":100}},"connected":true,"host":{"arch":"x86_64","ip":"127.0.0.1","mac":"00:21:6a:7d:74:fc","name":"T400","os":"Linux Mint 17.3 Rosa"},"id":"00:21:6a:7d:74:fc#2","lastSeen":{"sec":1487524340,"usec":557095},"snapclient":{"name":"Snapclient","protocolVersion":2,"version":"0.10.0"}}],"id":"8e374310-b1a7-d410-d80e-ff29cf504657","muted":false,"name":"","stream_id":"stream 1"}],"server":{"host":{"arch":"x86_64","ip":"","mac":"","name":"T400","os":"Linux Mint 17.3 Rosa"},"snapserver":{"controlProtocolVersion":1,"name":"Snapserver","protocolVersion":1,"version":"0.10.0"}},"streams":[{"id":"stream 1","status":"idle","uri":{"fragment":"","host":"","path":"/tmp/snapfifo","query":{"buffer_ms":"20","codec":"flac","name":"stream 1","sampleformat":"48000:16:2"},"raw":"pipe:///tmp/snapfifo?name=stream 1","scheme":"pipe"}},{"id":"stream 2","status":"idle","uri":{"fragment":"","host":"","path":"/tmp/snapfifo","query":{"buffer_ms":"20","codec":"flac","name":"stream 2","sampleformat":"48000:16:2"},"raw":"pipe:///tmp/snapfifo?name=stream 2","scheme":"pipe"}}]}}}
+				/// Notification: {"jsonrpc":"2.0","method":"Server.OnUpdate","params":{"server":{"groups":[{"clients":[{"config":{"instance":1,"latency":20,"name":"teat","volume":{"muted":false,"percent":36}},"connected":true,"host":{"arch":"x86_64","ip":"192.168.0.54","mac":"00:21:6a:7d:74:fc","name":"T400","os":"Linux Mint 17.3 Rosa"},"id":"00:21:6a:7d:74:fc","lastSeen":{"sec":1487524341,"usec":500664},"snapclient":{"name":"Snapclient","protocolVersion":2,"version":"0.10.0"}},{"config":{"instance":2,"latency":0,"name":"","volume":{"muted":false,"percent":100}},"connected":true,"host":{"arch":"x86_64","ip":"127.0.0.1","mac":"00:21:6a:7d:74:fc","name":"T400","os":"Linux Mint 17.3 Rosa"},"id":"00:21:6a:7d:74:fc#2","lastSeen":{"sec":1487524340,"usec":557095},"snapclient":{"name":"Snapclient","protocolVersion":2,"version":"0.10.0"}}],"id":"8e374310-b1a7-d410-d80e-ff29cf504657","muted":false,"name":"","stream_id":"stream 1"}],"server":{"host":{"arch":"x86_64","ip":"","mac":"","name":"T400","os":"Linux Mint 17.3 Rosa"},"snapserver":{"controlProtocolVersion":1,"name":"Snapserver","protocolVersion":1,"version":"0.10.0"}},"streams":[{"id":"stream 1","status":"idle","uri":{"fragment":"","host":"","path":"/tmp/snapfifo","query":{"buffer_ms":"20","codec":"flac","name":"stream 1","sampleformat":"48000:16:2"},"raw":"pipe:///tmp/snapfifo?name=stream 1","scheme":"pipe"}},{"id":"stream 2","status":"idle","uri":{"fragment":"","host":"","path":"/tmp/snapfifo","query":{"buffer_ms":"20","codec":"flac","name":"stream 2","sampleformat":"48000:16:2"},"raw":"pipe:///tmp/snapfifo?name=stream 2","scheme":"pipe"}}]}}}
 				vector<string> clients = request->params.get("clients");
 				/// Remove clients from group
 				for (auto iter = group->clients.begin(); iter != group->clients.end();)
@@ -366,16 +372,16 @@ void StreamServer::onMessageReceived(ControlSession* controlSession, const std::
 	if (entity->is_request())
 	{
 		jsonrpcpp::request_ptr request = dynamic_pointer_cast<jsonrpcpp::Request>(entity);
-		cout << "Request:\n" << request->to_json().dump(4) << "\n";
 		ProcessRequest(request, response, notification);
+		cout << "Request:      " << request->to_json().dump() << "\n";
 		if (response)
 		{
-			cout << "Response:\n" << response->to_json().dump(4) << "\n";
+			cout << "Response:     " << response->to_json().dump() << "\n";
 			controlSession->send(response->to_json().dump());
 		}
 		if (notification)
 		{
-			cout << "Notification:\n" << notification->to_json().dump(4) << "\n";
+			cout << "Notification: " << notification->to_json().dump() << "\n";
 			controlServer_->send(notification->to_json().dump(), controlSession);
 		}
 	}

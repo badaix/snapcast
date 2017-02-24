@@ -18,7 +18,6 @@
 
 package de.badaix.snapcast.control;
 
-import android.text.TextUtils;
 import android.util.Log;
 
 import org.json.JSONArray;
@@ -38,6 +37,11 @@ import de.badaix.snapcast.control.json.Volume;
  * Created by johannes on 13.01.16.
  */
 public class RemoteControl implements TcpClient.TcpClientListener {
+
+    public enum RPCEvent {
+        response,
+        notification
+    }
 
     private static final String TAG = "RC";
 
@@ -113,14 +117,14 @@ public class RemoteControl implements TcpClient.TcpClientListener {
 
             if (json.has("id")) {
                 /// Response
+                RPCResponse response = new RPCResponse(json);
 //                Log.d(TAG, "ID: " + json.getString("id"));
-                long id = json.getLong("id");
-                String requestMethod = "";
+                RPCRequest request = null;
                 synchronized (pendingRequests) {
-                    if (pendingRequests.containsKey(id)) {
-                        requestMethod = pendingRequests.get(id);
-//                        Log.d(TAG, "Response to: " + request);
-                        pendingRequests.remove(id);
+                    if (pendingRequests.containsKey(response.id)) {
+                        request = new RPCRequest(new JSONObject(pendingRequests.get(response.id)));
+                        Log.d(TAG, "Response to: " + request.method);
+                        pendingRequests.remove(response.id);
                     }
                 }
 
@@ -132,68 +136,57 @@ public class RemoteControl implements TcpClient.TcpClientListener {
                     Log.e(TAG, "error " + error.getInt("code") + ": " + error.getString("message") + "; data: " + error.getString("data"));
                 }
 
-                if (TextUtils.isEmpty(requestMethod)) {
-                    Log.e(TAG, "request for id " + id + " not found");
+                if (request == null) {
+                    Log.e(TAG, "request for id " + response.id + " not found");
                     return;
                 }
 
-                RpcEvent rpcEvent = RpcEvent.response;
+                RPCEvent rpcEvent = RPCEvent.response;
                 /// Response to a "Object.GetStatus" message
-                if (requestMethod.equals("Client.GetStatus")) {
-                    listener.onClientEvent(this, rpcEvent, new Client(json.getJSONObject("result")), ClientEvent.updated);
-                } else if (requestMethod.equals("Client.SetVolume")) {
-                } else if (requestMethod.equals("Client.SetLatency")) {
-                } else if (requestMethod.equals("Client.SetName")) {
-
-                } else if (requestMethod.equals("Group.GetStatus")) {
-                    listener.onGroupUpdate(this, rpcEvent, new Group(json.getJSONObject("result")));
-                } else if (requestMethod.equals("Group.SetMute")) {
-                } else if (requestMethod.equals("Group.SetStream")) {
-                } else if (requestMethod.equals("Group.SetClients")) {
-                    listener.onServerUpdate(this, rpcEvent, new ServerStatus(json.getJSONObject("result").getJSONObject("server")));
-                } else if (requestMethod.equals("Server.GetStatus")) {
-                    listener.onServerUpdate(this, rpcEvent, new ServerStatus(json.getJSONObject("result")));
-                } else if (requestMethod.equals("Server.DeleteClient")) {
-//                } else if (json.getJSONObject("result").has("method") && json.getJSONObject("result").has("params")) {
-                    /// Response to a "Object.Set" message
-                    JSONObject result = json.getJSONObject("result");
-                    String method = result.getString("method");
-                    if ("Client.OnUpdate".equals(method)) {
-                        listener.onClientEvent(this, rpcEvent, new Client(result.getJSONObject("params")), ClientEvent.updated);
-                    } else if ("Group.OnUpdate".equals(method)) {
-                        listener.onGroupUpdate(this, rpcEvent, new Group(result.getJSONObject("params")));
-                    } else if ("Server.OnUpdate".equals(method)) {
-                        listener.onServerUpdate(this, rpcEvent, new ServerStatus(result.getJSONObject("params")));
-                    }
+                if (request.method.equals("Client.GetStatus")) {
+                    listener.onUpdate(new Client(json.getJSONObject("result")));
+                } else if (request.method.equals("Client.SetVolume")) {
+                } else if (request.method.equals("Client.SetLatency")) {
+                } else if (request.method.equals("Client.SetName")) {
+                } else if (request.method.equals("Group.GetStatus")) {
+                    listener.onUpdate(new Group(json.getJSONObject("result")));
+                } else if (request.method.equals("Group.SetMute")) {
+//                    listener.onMute(rpcEvent, request.params.getString("id"), response.result.getBoolean("mute"));
+                } else if (request.method.equals("Group.SetStream")) {
+                } else if (request.method.equals("Group.SetClients")) {
+                    listener.onUpdate(new ServerStatus(json.getJSONObject("result").getJSONObject("server")));
+                } else if (request.method.equals("Server.GetStatus")) {
+                    listener.onUpdate(new ServerStatus(json.getJSONObject("result")));
+                } else if (request.method.equals("Server.DeleteClient")) {
+                    listener.onUpdate(new ServerStatus(json.getJSONObject("result").getJSONObject("server")));
                 }
             } else {
                 /// Notification
                 if (listener == null)
                     return;
-                RpcEvent rpcEvent = RpcEvent.notification;
-                String method = json.getString("method");
+                RPCEvent rpcEvent = RPCEvent.notification;
+                RPCNotification notification = new RPCNotification(json);
 
-                if (method.equals("Client.OnConnect")) {
-                } else if (method.equals("Client.OnDisconnect")) {
-                } else if (method.equals("Client.OnVolumeChanged")) {
-                } else if (method.equals("Client.OnLatencyChanged")) {
-                } else if (method.equals("Client.OnNameChanged")) {
-
-                } else if (method.equals("Group.OnMute")) {
-                } else if (method.equals("Group.OnStreamChanged")) {
-
-                } else if (method.equals("Stream.OnUpdate")) {
-
-                } else if (method.equals("Server.OnUpdate")) {
-
-                } else if (method.contains("Client.On")) {
-                    listener.onClientEvent(this, rpcEvent, new Client(json.getJSONObject("params").getJSONObject("client")), ClientEvent.fromString(method));
-                } else if (method.equals("Stream.OnUpdate")) {
-                    listener.onStreamUpdate(this, rpcEvent, new Stream(json.getJSONObject("params").getJSONObject("stream")));
-                } else if (method.equals("Group.OnUpdate")) {
-                    listener.onGroupUpdate(this, rpcEvent, new Group(json.getJSONObject("params").getJSONObject("group")));
-                } else if (method.equals("Server.OnUpdate")) {
-                    listener.onServerUpdate(this, rpcEvent, new ServerStatus(json.getJSONObject("params").getJSONObject("server")));
+                if (notification.method.equals("Client.OnConnect")) {
+                    listener.onConnect(new Client(notification.params.getJSONObject("client")));
+                } else if (notification.method.equals("Client.OnDisconnect")) {
+                    listener.onDisconnect(notification.params.getString("id"));
+                } else if (notification.method.equals("Client.OnVolumeChanged")) {
+                    listener.onVolumeChanged(rpcEvent, notification.params.getString("id"), new Volume(notification.params.getJSONObject("volume")));
+                } else if (notification.method.equals("Client.OnLatencyChanged")) {
+                    listener.onLatencyChanged(rpcEvent, notification.params.getString("id"), notification.params.getInt("latency"));
+                } else if (notification.method.equals("Client.OnNameChanged")) {
+                    listener.onNameChanged(rpcEvent, notification.params.getString("id"), notification.params.getString("name"));
+                } else if (notification.method.equals("Group.OnMute")) {
+                    listener.onMute(rpcEvent, notification.params.getString("id"), notification.params.getBoolean("mute"));
+                } else if (notification.method.equals("Group.OnStreamChanged")) {
+                    listener.onStreamChanged(rpcEvent, notification.params.getString("id"), notification.params.getString("stream_id"));
+                } else if (notification.method.equals("Stream.OnUpdate")) {
+                    listener.onUpdate(notification.params.getString("id"), new Stream(notification.params.getJSONObject("stream")));
+                } else if (notification.method.equals("Group.OnUpdate")) {
+                    listener.onUpdate(new Group(notification.params.getJSONObject("group")));
+                } else if (notification.method.equals("Server.OnUpdate")) {
+                    listener.onUpdate(new ServerStatus(notification.params.getJSONObject("server")));
                 }
             }
 
@@ -223,35 +216,26 @@ public class RemoteControl implements TcpClient.TcpClientListener {
             listener.onDisconnected(this, e);
     }
 
-    private JSONObject jsonRequest(String method, JSONObject params) {
-        JSONObject request = new JSONObject();
-        try {
-            request.put("jsonrpc", "2.0");
-            request.put("method", method);
-            request.put("id", msgId);
-            if (params != null)
-                request.put("params", params);
-            synchronized (pendingRequests) {
-                pendingRequests.put(msgId, method);
-            }
-            msgId++;
-        } catch (JSONException e) {
-            e.printStackTrace();
+    private RPCRequest jsonRequest(String method, JSONObject params) {
+        RPCRequest request = new RPCRequest(method, msgId, params);
+        synchronized (pendingRequests) {
+            pendingRequests.put(msgId, request.toString());
         }
+        msgId++;
         return request;
     }
 
     public void getServerStatus() {
-        JSONObject request = jsonRequest("Server.GetStatus", null);
+        RPCRequest request = jsonRequest("Server.GetStatus", null);
         tcpClient.sendMessage(request.toString());
     }
 
     public void setName(Client client, String name) {
         try {
-            JSONObject body = new JSONObject();
-            body.put("id", client.getId());
-            body.put("name", name);
-            JSONObject request = jsonRequest("Client.SetName", body);
+            JSONObject params = new JSONObject();
+            params.put("id", client.getId());
+            params.put("name", name);
+            RPCRequest request = jsonRequest("Client.SetName", params);
             tcpClient.sendMessage(request.toString());
         } catch (JSONException e) {
             e.printStackTrace();
@@ -260,10 +244,10 @@ public class RemoteControl implements TcpClient.TcpClientListener {
 
     public void setLatency(Client client, int latency) {
         try {
-            JSONObject body = new JSONObject();
-            body.put("id", client.getId());
-            body.put("latency", latency);
-            JSONObject request = jsonRequest("Client.SetLatency", body);
+            JSONObject params = new JSONObject();
+            params.put("id", client.getId());
+            params.put("latency", latency);
+            RPCRequest request = jsonRequest("Client.SetLatency", params);
             tcpClient.sendMessage(request.toString());
         } catch (JSONException e) {
             e.printStackTrace();
@@ -279,10 +263,10 @@ public class RemoteControl implements TcpClient.TcpClientListener {
             JSONArray clients = new JSONArray();
             for (String clientId : clientIds)
                 clients.put(clientId);
-            JSONObject body = new JSONObject();
-            body.put("id", groupId);
-            body.put("clients", clients);
-            JSONObject request = jsonRequest("Group.SetClients", body);
+            JSONObject params = new JSONObject();
+            params.put("id", groupId);
+            params.put("clients", clients);
+            RPCRequest request = jsonRequest("Group.SetClients", params);
             tcpClient.sendMessage(request.toString());
         } catch (JSONException e) {
             e.printStackTrace();
@@ -291,10 +275,10 @@ public class RemoteControl implements TcpClient.TcpClientListener {
 
     public void setStream(String groupId, String streamId) {
         try {
-            JSONObject body = new JSONObject();
-            body.put("id", groupId);
-            body.put("stream_id", streamId);
-            JSONObject request = jsonRequest("Group.SetStream", body);
+            JSONObject params = new JSONObject();
+            params.put("id", groupId);
+            params.put("stream_id", streamId);
+            RPCRequest request = jsonRequest("Group.SetStream", params);
             tcpClient.sendMessage(request.toString());
         } catch (JSONException e) {
             e.printStackTrace();
@@ -303,10 +287,10 @@ public class RemoteControl implements TcpClient.TcpClientListener {
 
     public void setGroupMuted(Group group, boolean muted) {
         try {
-            JSONObject body = new JSONObject();
-            body.put("id", group.getId());
-            body.put("mute", muted);
-            JSONObject request = jsonRequest("Group.SetMute", body);
+            JSONObject params = new JSONObject();
+            params.put("id", group.getId());
+            params.put("mute", muted);
+            RPCRequest request = jsonRequest("Group.SetMute", params);
             tcpClient.sendMessage(request.toString());
         } catch (JSONException e) {
             e.printStackTrace();
@@ -318,8 +302,8 @@ public class RemoteControl implements TcpClient.TcpClientListener {
             JSONArray batch = new JSONArray();
             for (Client client : group.getClients()) {
                 Volume volume = client.getConfig().getVolume();
-                JSONObject volumeRequest = getVolumeRequest(client, volume.getPercent(), volume.isMuted());
-                batch.put(volumeRequest);
+                RPCRequest volumeRequest = getVolumeRequest(client, volume.getPercent(), volume.isMuted());
+                batch.put(volumeRequest.toJson());
             }
             tcpClient.sendMessage(batch.toString());
         } catch (JSONException e) {
@@ -327,12 +311,12 @@ public class RemoteControl implements TcpClient.TcpClientListener {
         }
     }
 
-    private JSONObject getVolumeRequest(Client client, int percent, boolean mute) throws JSONException {
+    private RPCRequest getVolumeRequest(Client client, int percent, boolean mute) throws JSONException {
         Volume volume = new Volume(percent, mute);
-        JSONObject body = new JSONObject();
-        body.put("id", client.getId());
-        body.put("volume", volume.toJson());
-        return jsonRequest("Client.SetVolume", body);
+        JSONObject params = new JSONObject();
+        params.put("id", client.getId());
+        params.put("volume", volume.toJson());
+        return jsonRequest("Client.SetVolume", params);
     }
 
     public void setVolume(Client client, int percent, boolean mute) {
@@ -345,9 +329,9 @@ public class RemoteControl implements TcpClient.TcpClientListener {
 
     public void delete(Client client) {
         try {
-            JSONObject body = new JSONObject();
-            body.put("id", client.getId());
-            JSONObject request = jsonRequest("Server.DeleteClient", body);
+            JSONObject params = new JSONObject();
+            params.put("id", client.getId());
+            RPCRequest request = jsonRequest("Server.DeleteClient", params);
             tcpClient.sendMessage(request.toString());
         } catch (JSONException e) {
             e.printStackTrace();
@@ -381,24 +365,49 @@ public class RemoteControl implements TcpClient.TcpClientListener {
         }
     }
 
-    public enum RpcEvent {
-        response,
-        notification
+
+    public interface ClientListener {
+        void onConnect(Client client);
+        void onDisconnect(String clientId);
+        void onUpdate(Client client);
+        void onVolumeChanged(RPCEvent event, String clientId, Volume volume);
+        void onLatencyChanged(RPCEvent event, String clientId, long latency);
+        void onNameChanged(RPCEvent event, String clientId, String name);
     }
 
-    public interface RemoteControlListener {
+    public interface GroupListener {
+        void onUpdate(Group group);
+        void onMute(RPCEvent event, String groupId, boolean mute);
+        void onStreamChanged(RPCEvent event, String groupId, String streamId);
+    }
+
+    public interface StreamListener {
+        void onUpdate(String streamId, Stream stream);
+    }
+
+    public interface ServerListener {
+        void onUpdate(ServerStatus server);
+    }
+
+
+
+    public interface RemoteControlListener extends ServerListener, StreamListener, GroupListener, ClientListener {
         void onConnected(RemoteControl remoteControl);
 
         void onConnecting(RemoteControl remoteControl);
 
         void onDisconnected(RemoteControl remoteControl, Exception e);
 
-        void onClientEvent(RemoteControl remoteControl, RpcEvent rpcEvent, Client client, ClientEvent event);
+        void onBatchStart();
+        void onBatchEnd();
+/*
+        void onClientEvent(RemoteControl remoteControl, RPCEvent rpcEvent, Client client, ClientEvent event);
 
-        void onServerUpdate(RemoteControl remoteControl, RpcEvent rpcEvent, ServerStatus serverStatus);
+        void onServerUpdate(RemoteControl remoteControl, RPCEvent rpcEvent, ServerStatus serverStatus);
 
-        void onStreamUpdate(RemoteControl remoteControl, RpcEvent rpcEvent, Stream stream);
+        void onStreamUpdate(RemoteControl remoteControl, RPCEvent rpcEvent, Stream stream);
 
-        void onGroupUpdate(RemoteControl remoteControl, RpcEvent rpcEvent, Group group);
+        void onGroupUpdate(RemoteControl remoteControl, RPCEvent rpcEvent, Group group);
+*/
     }
 }
