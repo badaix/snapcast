@@ -1,233 +1,164 @@
 Snapcast control protocol
 =========================
 
-#Stream
-###Stream status
+### Client.GetStatus
+#### Request
 ```json
-{
-  "id": "pipe:///tmp/snapfifo",
-  "status": "playing",
-  "uri": {
-    "fragment": "",
-    "host": "",
-    "path": "/tmp/snapfifo",
-    "query": {
-      "buffer_ms": "20",
-      "codec": "flac",
-      "name": "Radio",
-      "sampleformat": "48000:16:2"
-    },
-    "raw": "pipe:///tmp/snapfifo?name=Radio&sampleformat=48000:16:2&codec=flac",
-    "scheme": "pipe"
-  }
-}
+{"id":8,"jsonrpc":"2.0","method":"Client.GetStatus","params":{"id":"00:21:6a:7d:74:fc"}}
 ```
 
-###Stream update push notification
+#### Response
 ```json
-{
-  "jsonrpc": "2.0",
-  "method": "Stream.OnUpdate",
-  "params": {
-    "data": {
-      "id": "pipe:///tmp/snapfifo",
-      "status": "playing",
-      "uri": {
-        "fragment": "",
-        "host": "",
-        "path": "/tmp/snapfifo",
-        "query": {
-          "buffer_ms": "20",
-          "codec": "flac",
-          "name": "Radio",
-          "sampleformat": "48000:16:2"
-        },
-        "raw": "pipe:///tmp/snapfifo?name=Radio&sampleformat=48000:16:2&codec=flac",
-        "scheme": "pipe"
-      }
-    }
-  }
-}
+{"id":8,"jsonrpc":"2.0","result":{"client":{"config":{"instance":1,"latency":0,"name":"","volume":{"muted":false,"percent":74}},"connected":true,"host":{"arch":"x86_64","ip":"127.0.0.1","mac":"00:21:6a:7d:74:fc","name":"T400","os":"Linux Mint 17.3 Rosa"},"id":"00:21:6a:7d:74:fc","lastSeen":{"sec":1488026416,"usec":135973},"snapclient":{"name":"Snapclient","protocolVersion":2,"version":"0.10.0"}}}}
 ```
 
-#Client
-##Client status
+### Client.SetVolume
+#### Request
 ```json
-{
-  "config": {
-    "latency": 0,
-    "name": "",
-    "stream": "pipe:///tmp/snapfifo",
-    "volume": {
-      "muted": false,
-      "percent": 75
-    }
-  },
-  "connected": true,
-  "host": {
-    "arch": "unknown",
-    "ip": "192.168.0.24",
-    "mac": "80:1f:02:ed:fd:e0",
-    "name": "wohnzimmer",
-    "os": "Raspbian GNU/Linux 8.0 (jessie)"
-  },
-  "lastSeen": {
-    "sec": 1457597583,
-    "usec": 956325
-  },
-  "snapclient": {
-    "name": "Snapclient",
-    "protocolVersion": 1,
-    "version": "0.5.0-beta-2"
-  }
-}
+{"id":8,"jsonrpc":"2.0","method":"Client.SetVolume","params":{"id":"00:21:6a:7d:74:fc","volume":{"muted":false,"percent":74}}}
 ```
 
-#Server 
-##Server status
+#### Response
 ```json
-{
-  "id": 0,
-  "jsonrpc": "2.0",
-  "result": {
-    "clients": [
-      {
-        "config": {
-          "latency": 0,
-          "name": "",
-          "stream": "pipe:///tmp/snapfifo",
-          "volume": {
-            "muted": false,
-            "percent": 75
-          }
-        },
-        "connected": true,
-        "host": {
-          "arch": "unknown",
-          "ip": "192.168.0.24",
-          "mac": "80:1f:02:ed:fd:e0",
-          "name": "wohnzimmer",
-          "os": "Raspbian GNU/Linux 8.0 (jessie)"
-        },
-        "lastSeen": {
-          "sec": 1457597583,
-          "usec": 956325
-        },
-        "snapclient": {
-          "name": "Snapclient",
-          "protocolVersion": 1,
-          "version": "0.5.0-beta-2"
-        }
-      },
-      {
-        "config": {
-          "latency": 0,
-          "name": "Galaxy S5",
-          "stream": "pipe:///tmp/snapfifo",
-          "volume": {
-            "muted": false,
-            "percent": 35
-          }
-        },
-        "connected": false,
-        "host": {
-          "arch": "armeabi-v7a",
-          "ip": "192.168.0.23",
-          "mac": "a0:b4:a5:3a:f1:db",
-          "name": "android-6bd0a5e5c0068caf",
-          "os": "Android 5.0.2"
-        },
-        "lastSeen": {
-          "sec": 1457594760,
-          "usec": 278026
-        },
-        "snapclient": {
-          "name": "Snapclient",
-          "protocolVersion": 1,
-          "version": "0.5.0-beta-2"
-        }
-      },
-      {
-        "config": {
-          "latency": 0,
-          "name": "",
-          "stream": "pipe:///tmp/snapfifo",
-          "volume": {
-            "muted": false,
-            "percent": 76
-          }
-        },
-        "connected": false,
-        "host": {
-          "arch": "x86_64",
-          "ip": "192.168.0.54",
-          "mac": "00:21:6a:7d:74:fc",
-          "name": "T400",
-          "os": "Linux Mint 17.3 Rosa"
-        },
-        "lastSeen": {
-          "sec": 1457594824,
-          "usec": 708630
-        },
-        "snapclient": {
-          "name": "Snapclient",
-          "protocolVersion": 1,
-          "version": "0.5.0-beta-2"
-        }
-      }
-    ],
-    "server": {
-      "host": {
-        "arch": "x86_64",
-        "ip": "",
-        "mac": "",
-        "name": "elaine",
-        "os": "Linux Mint 17.3 Rosa"
-      },
-      "snapserver": {
-        "controlProtocolVersion": 1,
-        "name": "Snapserver",
-        "protocolVersion": 1,
-        "version": "0.5.0-beta-2"
-      }
-    },
-    "streams": [
-      {
-        "id": "pipe:///tmp/snapfifo",
-        "status": "idle",
-        "uri": {
-          "fragment": "",
-          "host": "",
-          "path": "/tmp/snapfifo",
-          "query": {
-            "buffer_ms": "20",
-            "codec": "flac",
-            "name": "Radio",
-            "sampleformat": "48000:16:2"
-          },
-          "raw": "pipe:///tmp/snapfifo?name=Radio&sampleformat=48000:16:2&codec=flac",
-          "scheme": "pipe"
-        }
-      },
-      {
-        "id": "file:///home/johannes/Intern/Music/Wave file.wav",
-        "status": "playing",
-        "uri": {
-          "fragment": "",
-          "host": "",
-          "path": "/home/johannes/Intern/Music/Wave file.wav",
-          "query": {
-            "buffer_ms": "20",
-            "codec": "ogg:VBR:0.1",
-            "name": "AL",
-            "sampleformat": "48000:16:2"
-          },
-          "raw": "file:///home/johannes/Intern/Music/Wave%20file.wav?name=AL&sampleformat=48000:16:2&codec=ogg:VBR:0.1",
-          "scheme": "file"
-        }
-      }
-    ]
-  }
-}
+{"id":8,"jsonrpc":"2.0","result":{"volume":{"muted":false,"percent":74}}}
+```
+
+#### Notification
+```json
+{"jsonrpc":"2.0","method":"Client.OnVolumeChanged","params":{"id":"00:21:6a:7d:74:fc","volume":{"muted":false,"percent":74}}}
+```
+
+### Client.SetLatency
+#### Request
+```json
+{"id":7,"jsonrpc":"2.0","method":"Client.SetLatency","params":{"id":"00:21:6a:7d:74:fc#2","latency":10}}
+```
+
+#### Response
+```json
+{"id":7,"jsonrpc":"2.0","result":{"latency":10}}
+```
+
+#### Notification
+```json
+{"jsonrpc":"2.0","method":"Client.OnLatencyChanged","params":{"id":"00:21:6a:7d:74:fc#2","latency":10}}
+```
+
+### Client.SetName
+#### Request
+```json
+{"id":6,"jsonrpc":"2.0","method":"Client.SetName","params":{"id":"00:21:6a:7d:74:fc#2","name":"Laptop"}}
+```
+
+#### Response
+```json
+{"id":6,"jsonrpc":"2.0","result":{"name":"Laptop"}}
+```
+
+#### Notification
+```json
+{"jsonrpc":"2.0","method":"Client.OnNameChanged","params":{"id":"00:21:6a:7d:74:fc#2","name":"Laptop"}}
+```
+
+
+### Group.GetStatus
+#### Request
+```json
+{"id":5,"jsonrpc":"2.0","method":"Group.GetStatus","params":{"id":"4dcc4e3b-c699-a04b-7f0c-8260d23c43e1"}}
+```
+
+#### Response
+```json
+{"id":5,"jsonrpc":"2.0","result":{"group":{"clients":[{"config":{"instance":2,"latency":10,"name":"Laptop","volume":{"muted":false,"percent":48}},"connected":true,"host":{"arch":"x86_64","ip":"127.0.0.1","mac":"00:21:6a:7d:74:fc","name":"T400","os":"Linux Mint 17.3 Rosa"},"id":"00:21:6a:7d:74:fc#2","lastSeen":{"sec":1488026485,"usec":644997},"snapclient":{"name":"Snapclient","protocolVersion":2,"version":"0.10.0"}},{"config":{"instance":1,"latency":0,"name":"","volume":{"muted":false,"percent":74}},"connected":true,"host":{"arch":"x86_64","ip":"127.0.0.1","mac":"00:21:6a:7d:74:fc","name":"T400","os":"Linux Mint 17.3 Rosa"},"id":"00:21:6a:7d:74:fc","lastSeen":{"sec":1488026481,"usec":223747},"snapclient":{"name":"Snapclient","protocolVersion":2,"version":"0.10.0"}}],"id":"4dcc4e3b-c699-a04b-7f0c-8260d23c43e1","muted":true,"name":"","stream_id":"stream 1"}}}
+```
+
+### Group.SetMute
+#### Request
+```json
+{"id":5,"jsonrpc":"2.0","method":"Group.SetMute","params":{"id":"4dcc4e3b-c699-a04b-7f0c-8260d23c43e1","mute":true}}
+```
+
+#### Response
+```json
+{"id":5,"jsonrpc":"2.0","result":{"mute":true}}
+```
+
+#### Notification
+```json
+{"jsonrpc":"2.0","method":"Group.OnMute","params":{"id":"4dcc4e3b-c699-a04b-7f0c-8260d23c43e1","mute":true}}
+```
+
+### Group.SetStream
+#### Request
+```json
+{"id":4,"jsonrpc":"2.0","method":"Group.SetStream","params":{"id":"4dcc4e3b-c699-a04b-7f0c-8260d23c43e1","stream_id":"stream 1"}}
+```
+
+#### Response
+```json
+{"id":4,"jsonrpc":"2.0","result":{"stream_id":"stream 1"}}
+```
+
+#### Notification
+```json
+{"jsonrpc":"2.0","method":"Group.OnStreamChanged","params":{"id":"4dcc4e3b-c699-a04b-7f0c-8260d23c43e1","stream_id":"stream 1"}}
+```
+
+
+### Group.SetClients
+#### Request
+```json
+{"id":3,"jsonrpc":"2.0","method":"Group.SetClients","params":{"clients":["00:21:6a:7d:74:fc#2","00:21:6a:7d:74:fc"],"id":"4dcc4e3b-c699-a04b-7f0c-8260d23c43e1"}}
+```
+
+#### Response
+```json
+{"id":3,"jsonrpc":"2.0","result":{"server":{"groups":[{"clients":[{"config":{"instance":2,"latency":6,"name":"123 456","volume":{"muted":false,"percent":48}},"connected":true,"host":{"arch":"x86_64","ip":"127.0.0.1","mac":"00:21:6a:7d:74:fc","name":"T400","os":"Linux Mint 17.3 Rosa"},"id":"00:21:6a:7d:74:fc#2","lastSeen":{"sec":1488025901,"usec":864472},"snapclient":{"name":"Snapclient","protocolVersion":2,"version":"0.10.0"}},{"config":{"instance":1,"latency":0,"name":"","volume":{"muted":false,"percent":100}},"connected":true,"host":{"arch":"x86_64","ip":"127.0.0.1","mac":"00:21:6a:7d:74:fc","name":"T400","os":"Linux Mint 17.3 Rosa"},"id":"00:21:6a:7d:74:fc","lastSeen":{"sec":1488025905,"usec":45238},"snapclient":{"name":"Snapclient","protocolVersion":2,"version":"0.10.0"}}],"id":"4dcc4e3b-c699-a04b-7f0c-8260d23c43e1","muted":false,"name":"","stream_id":"stream 2"}],"server":{"host":{"arch":"x86_64","ip":"","mac":"","name":"T400","os":"Linux Mint 17.3 Rosa"},"snapserver":{"controlProtocolVersion":1,"name":"Snapserver","protocolVersion":1,"version":"0.10.0"}},"streams":[{"id":"stream 1","status":"idle","uri":{"fragment":"","host":"","path":"/tmp/snapfifo","query":{"buffer_ms":"20","codec":"flac","name":"stream 1","sampleformat":"48000:16:2"},"raw":"pipe:///tmp/snapfifo?name=stream 1","scheme":"pipe"}},{"id":"stream 2","status":"idle","uri":{"fragment":"","host":"","path":"/tmp/snapfifo","query":{"buffer_ms":"20","codec":"flac","name":"stream 2","sampleformat":"48000:16:2"},"raw":"pipe:///tmp/snapfifo?name=stream 2","scheme":"pipe"}}]}}}
+```
+
+#### Notification
+```json
+{"jsonrpc":"2.0","method":"Server.OnUpdate","params":{"server":{"groups":[{"clients":[{"config":{"instance":2,"latency":6,"name":"123 456","volume":{"muted":false,"percent":48}},"connected":true,"host":{"arch":"x86_64","ip":"127.0.0.1","mac":"00:21:6a:7d:74:fc","name":"T400","os":"Linux Mint 17.3 Rosa"},"id":"00:21:6a:7d:74:fc#2","lastSeen":{"sec":1488025901,"usec":864472},"snapclient":{"name":"Snapclient","protocolVersion":2,"version":"0.10.0"}},{"config":{"instance":1,"latency":0,"name":"","volume":{"muted":false,"percent":100}},"connected":true,"host":{"arch":"x86_64","ip":"127.0.0.1","mac":"00:21:6a:7d:74:fc","name":"T400","os":"Linux Mint 17.3 Rosa"},"id":"00:21:6a:7d:74:fc","lastSeen":{"sec":1488025905,"usec":45238},"snapclient":{"name":"Snapclient","protocolVersion":2,"version":"0.10.0"}}],"id":"4dcc4e3b-c699-a04b-7f0c-8260d23c43e1","muted":false,"name":"","stream_id":"stream 2"}],"server":{"host":{"arch":"x86_64","ip":"","mac":"","name":"T400","os":"Linux Mint 17.3 Rosa"},"snapserver":{"controlProtocolVersion":1,"name":"Snapserver","protocolVersion":1,"version":"0.10.0"}},"streams":[{"id":"stream 1","status":"idle","uri":{"fragment":"","host":"","path":"/tmp/snapfifo","query":{"buffer_ms":"20","codec":"flac","name":"stream 1","sampleformat":"48000:16:2"},"raw":"pipe:///tmp/snapfifo?name=stream 1","scheme":"pipe"}},{"id":"stream 2","status":"idle","uri":{"fragment":"","host":"","path":"/tmp/snapfifo","query":{"buffer_ms":"20","codec":"flac","name":"stream 2","sampleformat":"48000:16:2"},"raw":"pipe:///tmp/snapfifo?name=stream 2","scheme":"pipe"}}]}}}
+```
+
+
+### Server.GetRPCVersion
+#### Request
+```json
+{"id":8,"jsonrpc":"2.0","method":"Server.GetRPCVersion"}
+```
+
+#### Response
+```json
+{"id":8,"jsonrpc":"2.0","result":{"major":2,"minor":0,"patch":0}}
+```
+
+
+### Server.GetStatus
+#### Request
+```json
+{"id":1,"jsonrpc":"2.0","method":"Server.GetStatus"}
+```
+
+#### Response
+```json
+{"id":1,"jsonrpc":"2.0","result":{"server":{"groups":[{"clients":[{"config":{"instance":2,"latency":6,"name":"123 456","volume":{"muted":false,"percent":48}},"connected":true,"host":{"arch":"x86_64","ip":"127.0.0.1","mac":"00:21:6a:7d:74:fc","name":"T400","os":"Linux Mint 17.3 Rosa"},"id":"00:21:6a:7d:74:fc#2","lastSeen":{"sec":1488025696,"usec":578142},"snapclient":{"name":"Snapclient","protocolVersion":2,"version":"0.10.0"}},{"config":{"instance":1,"latency":0,"name":"","volume":{"muted":false,"percent":81}},"connected":true,"host":{"arch":"x86_64","ip":"192.168.0.54","mac":"00:21:6a:7d:74:fc","name":"T400","os":"Linux Mint 17.3 Rosa"},"id":"00:21:6a:7d:74:fc","lastSeen":{"sec":1488025696,"usec":611255},"snapclient":{"name":"Snapclient","protocolVersion":2,"version":"0.10.0"}}],"id":"4dcc4e3b-c699-a04b-7f0c-8260d23c43e1","muted":false,"name":"","stream_id":"stream 2"}],"server":{"host":{"arch":"x86_64","ip":"","mac":"","name":"T400","os":"Linux Mint 17.3 Rosa"},"snapserver":{"controlProtocolVersion":1,"name":"Snapserver","protocolVersion":1,"version":"0.10.0"}},"streams":[{"id":"stream 1","status":"idle","uri":{"fragment":"","host":"","path":"/tmp/snapfifo","query":{"buffer_ms":"20","codec":"flac","name":"stream 1","sampleformat":"48000:16:2"},"raw":"pipe:///tmp/snapfifo?name=stream 1","scheme":"pipe"}},{"id":"stream 2","status":"idle","uri":{"fragment":"","host":"","path":"/tmp/snapfifo","query":{"buffer_ms":"20","codec":"flac","name":"stream 2","sampleformat":"48000:16:2"},"raw":"pipe:///tmp/snapfifo?name=stream 2","scheme":"pipe"}}]}}}
+```
+
+
+### Server.DeleteClient
+#### Request
+```json
+{"id":2,"jsonrpc":"2.0","method":"Server.DeleteClient","params":{"id":"00:21:6a:7d:74:fc"}}
+```
+
+#### Response
+```json
+{"id":2,"jsonrpc":"2.0","result":{"server":{"groups":[{"clients":[{"config":{"instance":2,"latency":6,"name":"123 456","volume":{"muted":false,"percent":48}},"connected":true,"host":{"arch":"x86_64","ip":"127.0.0.1","mac":"00:21:6a:7d:74:fc","name":"T400","os":"Linux Mint 17.3 Rosa"},"id":"00:21:6a:7d:74:fc#2","lastSeen":{"sec":1488025751,"usec":654777},"snapclient":{"name":"Snapclient","protocolVersion":2,"version":"0.10.0"}}],"id":"4dcc4e3b-c699-a04b-7f0c-8260d23c43e1","muted":false,"name":"","stream_id":"stream 2"}],"server":{"host":{"arch":"x86_64","ip":"","mac":"","name":"T400","os":"Linux Mint 17.3 Rosa"},"snapserver":{"controlProtocolVersion":1,"name":"Snapserver","protocolVersion":1,"version":"0.10.0"}},"streams":[{"id":"stream 1","status":"idle","uri":{"fragment":"","host":"","path":"/tmp/snapfifo","query":{"buffer_ms":"20","codec":"flac","name":"stream 1","sampleformat":"48000:16:2"},"raw":"pipe:///tmp/snapfifo?name=stream 1","scheme":"pipe"}},{"id":"stream 2","status":"idle","uri":{"fragment":"","host":"","path":"/tmp/snapfifo","query":{"buffer_ms":"20","codec":"flac","name":"stream 2","sampleformat":"48000:16:2"},"raw":"pipe:///tmp/snapfifo?name=stream 2","scheme":"pipe"}}]}}}
+```
+
+#### Notification
+```json
+{"jsonrpc":"2.0","method":"Server.OnUpdate","params":{"server":{"groups":[{"clients":[{"config":{"instance":2,"latency":6,"name":"123 456","volume":{"muted":false,"percent":48}},"connected":true,"host":{"arch":"x86_64","ip":"127.0.0.1","mac":"00:21:6a:7d:74:fc","name":"T400","os":"Linux Mint 17.3 Rosa"},"id":"00:21:6a:7d:74:fc#2","lastSeen":{"sec":1488025751,"usec":654777},"snapclient":{"name":"Snapclient","protocolVersion":2,"version":"0.10.0"}}],"id":"4dcc4e3b-c699-a04b-7f0c-8260d23c43e1","muted":false,"name":"","stream_id":"stream 2"}],"server":{"host":{"arch":"x86_64","ip":"","mac":"","name":"T400","os":"Linux Mint 17.3 Rosa"},"snapserver":{"controlProtocolVersion":1,"name":"Snapserver","protocolVersion":1,"version":"0.10.0"}},"streams":[{"id":"stream 1","status":"idle","uri":{"fragment":"","host":"","path":"/tmp/snapfifo","query":{"buffer_ms":"20","codec":"flac","name":"stream 1","sampleformat":"48000:16:2"},"raw":"pipe:///tmp/snapfifo?name=stream 1","scheme":"pipe"}},{"id":"stream 2","status":"idle","uri":{"fragment":"","host":"","path":"/tmp/snapfifo","query":{"buffer_ms":"20","codec":"flac","name":"stream 2","sampleformat":"48000:16:2"},"raw":"pipe:///tmp/snapfifo?name=stream 2","scheme":"pipe"}}]}}}
 ```
 
