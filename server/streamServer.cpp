@@ -307,9 +307,9 @@ void StreamServer::ProcessRequest(const jsonrpcpp::request_ptr request, jsonrpcp
 		}
 		else if (request->method.find("Server.") == 0)
 		{
-			if (request->method.find("Server.RPCVersion") == 0)
+			if (request->method.find("Server.GetRPCVersion") == 0)
 			{
-				/// Request:      {"id":8,"jsonrpc":"2.0","method":"Server.RPCVersion"}
+				/// Request:      {"id":8,"jsonrpc":"2.0","method":"Server.GetRPCVersion"}
 				/// Response:     {"id":8,"jsonrpc":"2.0","result":{"major":2,"minor":0,"patch":0}}
 				// <major>: backwards incompatible change
 				result["major"] = 2;
