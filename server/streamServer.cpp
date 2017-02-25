@@ -114,11 +114,7 @@ void StreamServer::ProcessRequest(const jsonrpcpp::request_ptr request, jsonrpcp
 
 		Json result;
 
-		if (request->method.find("JSONRPC.") == 0)
-		{
-			//TODO: JSONRPC.Version, JSONRPC.Ping
-		}
-		else if (request->method.find("Client.") == 0)
+		if (request->method.find("Client.") == 0)
 		{
 			ClientInfoPtr clientInfo = Config::instance().getClientInfo(request->params.get("id"));
 			if (clientInfo == nullptr)
@@ -306,7 +302,16 @@ void StreamServer::ProcessRequest(const jsonrpcpp::request_ptr request, jsonrpcp
 		}
 		else if (request->method.find("Server.") == 0)
 		{
-			if (request->method == "Server.GetStatus")
+			if (request->method.find("Server.RPCVersion") == 0)
+			{
+				// <major>: backwards incompatible change
+				result["major"] = 2;
+				// <minor>: feature addition to the API
+				result["minor"] = 0;
+				// <patch>: bugfix release
+				result["patch"] = 0;
+			}
+			else if (request->method == "Server.GetStatus")
 			{
 				result = Config::instance().getServerStatus(streamManager_->toJson());
 			}
