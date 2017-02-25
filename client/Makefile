@@ -1,4 +1,4 @@
-VERSION = 0.10.0
+VERSION = 0.11.0-beta-1
 TARGET  = snapclient
 ifeq ($(TARGET), FREEBSD)
 SHELL   = /usr/local/bin/bash
