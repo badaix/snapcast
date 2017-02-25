@@ -8,7 +8,7 @@ Homepage: https://github.com/badaix/snapcast
 
 Package: snapserver
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}
+Depends: adduser, ${shlibs:Depends}, ${misc:Depends}
 Description: Snapcast server
  Snapcast is a multi-room client-server audio player, where all clients are
  time synchronized with the server to play perfectly synced audio. It's not a
