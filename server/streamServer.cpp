@@ -40,6 +40,7 @@ StreamServer::~StreamServer()
 
 void StreamServer::onStateChanged(const PcmStream* pcmStream, const ReaderState& state)
 {
+	/// Notification: {"jsonrpc":"2.0","method":"Stream.OnUpdate","params":{"id":"stream 1","stream":{"id":"stream 1","status":"idle","uri":{"fragment":"","host":"","path":"/tmp/snapfifo","query":{"buffer_ms":"20","codec":"flac","name":"stream 1","sampleformat":"48000:16:2"},"raw":"pipe:///tmp/snapfifo?name=stream 1","scheme":"pipe"}}}}
 	logO << "onStateChanged (" << pcmStream->getName() << "): " << state << "\n";
 //	logO << pcmStream->toJson().dump(4);
 	json notification = jsonrpcpp::Notification("Stream.OnUpdate", jsonrpcpp::Parameter("id", pcmStream->getId(), "stream", pcmStream->toJson())).to_json();
