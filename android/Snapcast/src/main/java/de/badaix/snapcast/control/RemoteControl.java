@@ -144,21 +144,21 @@ public class RemoteControl implements TcpClient.TcpClientListener {
                 RPCEvent rpcEvent = RPCEvent.response;
                 /// Response to a "Object.GetStatus" message
                 if (request.method.equals("Client.GetStatus")) {
-                    listener.onUpdate(new Client(json.getJSONObject("result")));
+                    listener.onUpdate(new Client(response.result.getJSONObject("client")));
                 } else if (request.method.equals("Client.SetVolume")) {
                 } else if (request.method.equals("Client.SetLatency")) {
                 } else if (request.method.equals("Client.SetName")) {
                 } else if (request.method.equals("Group.GetStatus")) {
-                    listener.onUpdate(new Group(json.getJSONObject("result")));
+                    listener.onUpdate(new Group(response.result.getJSONObject("group")));
                 } else if (request.method.equals("Group.SetMute")) {
 //                    listener.onMute(rpcEvent, request.params.getString("id"), response.result.getBoolean("mute"));
                 } else if (request.method.equals("Group.SetStream")) {
                 } else if (request.method.equals("Group.SetClients")) {
-                    listener.onUpdate(new ServerStatus(json.getJSONObject("result").getJSONObject("server")));
+                    listener.onUpdate(new ServerStatus(response.result.getJSONObject("server")));
                 } else if (request.method.equals("Server.GetStatus")) {
-                    listener.onUpdate(new ServerStatus(json.getJSONObject("result")));
+                    listener.onUpdate(new ServerStatus(response.result.getJSONObject("server")));
                 } else if (request.method.equals("Server.DeleteClient")) {
-                    listener.onUpdate(new ServerStatus(json.getJSONObject("result").getJSONObject("server")));
+                    listener.onUpdate(new ServerStatus(response.result.getJSONObject("server")));
                 }
             } else {
                 /// Notification
