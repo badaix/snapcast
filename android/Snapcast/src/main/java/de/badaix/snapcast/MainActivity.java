@@ -631,8 +631,10 @@ public class MainActivity extends AppCompatActivity implements GroupItem.GroupIt
     @Override
     public void onConnect(Client client) {
         serverStatus.getClient(client.getId());
-        if (client == null)
+        if (client == null) {
+            remoteControl.getServerStatus();
             return;
+        }
         client.setConnected(true);
         serverStatus.updateClient(client);
         groupListFragment.updateServer(serverStatus);
@@ -641,8 +643,10 @@ public class MainActivity extends AppCompatActivity implements GroupItem.GroupIt
     @Override
     public void onDisconnect(String clientId) {
         Client client = serverStatus.getClient(clientId);
-        if (client == null)
+        if (client == null) {
+            remoteControl.getServerStatus();
             return;
+        }
         client.setConnected(false);
         serverStatus.updateClient(client);
         groupListFragment.updateServer(serverStatus);
@@ -659,8 +663,10 @@ public class MainActivity extends AppCompatActivity implements GroupItem.GroupIt
         if (event == RemoteControl.RPCEvent.response)
             return;
         Client client = serverStatus.getClient(clientId);
-        if (client == null)
+        if (client == null) {
+            remoteControl.getServerStatus();
             return;
+        }
         client.setVolume(volume);
         if (!batchActive)
             groupListFragment.updateServer(serverStatus);
@@ -669,17 +675,21 @@ public class MainActivity extends AppCompatActivity implements GroupItem.GroupIt
     @Override
     public void onLatencyChanged(RemoteControl.RPCEvent event, String clientId, long latency) {
         Client client = serverStatus.getClient(clientId);
-        if (client == null)
+        if (client == null) {
+            remoteControl.getServerStatus();
             return;
-        client.getConfig().setLatency((int)latency);
+        }
+        client.getConfig().setLatency((int) latency);
         groupListFragment.updateServer(serverStatus);
     }
 
     @Override
     public void onNameChanged(RemoteControl.RPCEvent event, String clientId, String name) {
         Client client = serverStatus.getClient(clientId);
-        if (client == null)
+        if (client == null) {
+            remoteControl.getServerStatus();
             return;
+        }
         client.getConfig().setName(name);
         groupListFragment.updateServer(serverStatus);
     }
@@ -693,8 +703,10 @@ public class MainActivity extends AppCompatActivity implements GroupItem.GroupIt
     @Override
     public void onMute(RemoteControl.RPCEvent event, String groupId, boolean mute) {
         Group g = serverStatus.getGroup(groupId);
-        if (g == null)
+        if (g == null) {
+            remoteControl.getServerStatus();
             return;
+        }
         g.setMuted(mute);
         serverStatus.updateGroup(g);
         groupListFragment.updateServer(serverStatus);
@@ -703,8 +715,10 @@ public class MainActivity extends AppCompatActivity implements GroupItem.GroupIt
     @Override
     public void onStreamChanged(RemoteControl.RPCEvent event, String groupId, String streamId) {
         Group g = serverStatus.getGroup(groupId);
-        if (g == null)
+        if (g == null) {
+            remoteControl.getServerStatus();
             return;
+        }
         g.setStreamId(streamId);
         serverStatus.updateGroup(g);
         groupListFragment.updateServer(serverStatus);
