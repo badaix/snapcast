@@ -148,10 +148,7 @@ int main (int argc, char **argv)
 		}
 
 		if (instance <= 0)
-		{
-			cout << "instance id must be >= 1\n";
-			exit(EXIT_FAILURE);
-		}
+			std::invalid_argument("instance id must be >= 1");
 
 		std::clog.rdbuf(new Log("snapclient", LOG_DAEMON));
 
