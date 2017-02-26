@@ -429,6 +429,7 @@ public class MainActivity extends AppCompatActivity implements GroupItem.GroupIt
             if (data.hasExtra("stream")) {
                 String streamId = data.getStringExtra("stream");
                 remoteControl.setStream(groupId, streamId);
+                onStreamChanged(RemoteControl.RPCEvent.response, groupId, streamId);
             }
         }
     }
