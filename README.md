@@ -86,7 +86,7 @@ https://www.raspberrypi.org/documentation/configuration/wireless/wireless-cli.md
 
 Control
 -------
-Snapcast can be controlled using JSON-RPC:
+Snapcast can be controlled using a [JSON-RPC API](doc/json_rpc_api/v2_0_0.md):
 * Set client's volume
 * Mute clients
 * Rename clients
