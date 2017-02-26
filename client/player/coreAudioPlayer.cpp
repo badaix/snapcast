@@ -31,7 +31,7 @@ void callback(void *custom_data, AudioQueueRef queue, AudioQueueBufferRef buffer
 }
 
 
-CoreAudioPlayer::CoreAudioPlayer(const PcmDevice& pcmDevice, std::shared_ptr<Stream> stream) : 
+CoreAudioPlayer::CoreAudioPlayer(const PcmDevice& pcmDevice, std::shared_ptr<Stream> stream) :
     Player(pcmDevice, stream),
 	ms_(100),
 	pubStream_(stream)
@@ -61,27 +61,52 @@ void CoreAudioPlayer::playerCallback(AudioQueueRef queue, AudioQueueBufferRef bu
 	char *buffer = (char*)bufferRef->mAudioData;
 	if (!pubStream_->getPlayerChunk(buffer, delay, frames_))
 	{
+		if (chronos::getTickCount() - lastChunkTick > 5000)
+		{
+			logO << "No chunk received for 5000ms. Closing Audio Queue.\n";
+			uninitAudioQueue(queue);
+			return;
+		}
 //		logO << "Failed to get chunk. Playing silence.\n";
 		memset(buffer, 0, buff_size_);
 	}
 	else
 	{
+		lastChunkTick = chronos::getTickCount();
 		adjustVolume(buffer, frames_);
 	}
 
-//    OSStatus status = 
+//    OSStatus status =
 	AudioQueueEnqueueBuffer(queue, bufferRef, 0, NULL);
 
 	if (!active_)
 	{
-		AudioQueueStop(queue, false);
-		AudioQueueDispose(queue, false);
-		CFRunLoopStop(CFRunLoopGetCurrent());
+		uninitAudioQueue(queue);
 	}
 }
 
 
 void CoreAudioPlayer::worker()
+{
+	while (active_)
+	{
+		if (pubStream_->waitForChunk(100))
+		{
+			try
+			{
+				initAudioQueue();
+			}
+			catch (const std::exception& e)
+			{
+				logE << "Exception in worker: " << e.what() << "\n";
+				chronos::sleep(100);
+			}
+		}
+		chronos::sleep(100);
+	}
+}
+
+void CoreAudioPlayer::initAudioQueue()
 {
 	const SampleFormat& sampleFormat = pubStream_->getFormat();
 
@@ -99,7 +124,7 @@ void CoreAudioPlayer::worker()
 	AudioQueueRef queue;
 	AudioQueueNewOutput(&format, callback, this, CFRunLoopGetCurrent(), kCFRunLoopCommonModes, 0, &queue);
 	AudioQueueCreateTimeline(queue, &timeLine_);
-	
+
 	// Apple recommends this as buffer size:
 	// https://developer.apple.com/library/content/documentation/MusicAudio/Conceptual/CoreAudioOverview/CoreAudioEssentials/CoreAudioEssentials.html
 	// static const int maxBufferSize = 0x10000;   // limit maximum size to 64K
@@ -111,7 +136,7 @@ void CoreAudioPlayer::worker()
 	ms_ = frames_ * 1000 / sampleFormat.rate;
 	buff_size_ = frames_ * sampleFormat.frameSize;
 	logO << "frames: " << frames_ << ", ms: " << ms_ << ", buffer size: " << buff_size_ << "\n";
-	
+
 	AudioQueueBufferRef buffers[NUM_BUFFERS];
 	for (int i = 0; i < NUM_BUFFERS; i++)
 	{
@@ -126,4 +151,10 @@ void CoreAudioPlayer::worker()
 	CFRunLoopRun();
 }
 
-
+void CoreAudioPlayer::uninitAudioQueue(AudioQueueRef queue)
+{
+	AudioQueueStop(queue, false);
+	AudioQueueDispose(queue, false);
+	pubStream_->clearChunks();
+	CFRunLoopStop(CFRunLoopGetCurrent());
+}
