@@ -88,6 +88,7 @@ int main (int argc, char **argv)
 		Implicit<int> daemonOption("d", "daemon", "daemonize, optional process priority [-20..19]", -3, &processPriority);
 		Value<int> latencyValue("", "latency", "latency of the soundcard", 0, &latency);
 		Value<size_t> instanceValue("i", "instance", "instance id", 1, &instance);
+		Value<string> userValue("", "user", "the user[:group] to run snapclient as when daemonized", "snapclient:audio");
 
 		OptionParser op("Allowed options");
 		op.add(helpSwitch)
@@ -100,6 +101,7 @@ int main (int argc, char **argv)
 #endif
 #ifdef HAS_DAEMON
 		 .add(daemonOption)
+		 .add(userValue)
 #endif
 		 .add(latencyValue)
 		 .add(instanceValue);
@@ -163,7 +165,14 @@ int main (int argc, char **argv)
 			string pidFile = "/var/run/snapclient/pid";
 			if (instance != 1)
 				pidFile += "." + cpt::to_string(instance);
-			daemonize("snapclient", "audio", pidFile);
+			
+			if (userValue.getValue().empty())
+				std::invalid_argument("user must not be empty");
+
+			vector<string> user_group = split(userValue.getValue(), ':');
+			string user = user_group[0];
+			string group = (user_group.size() == 1)?user_group[0]:user_group[1];
+			daemonize(user, group, pidFile);
 			if (processPriority < -20)
 				processPriority = -20;
 			else if (processPriority > 19)
