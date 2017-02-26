@@ -44,12 +44,15 @@ public:
 
 protected:
 	virtual void worker();
+	void initAudioQueue();
+	void uninitAudioQueue(AudioQueueRef queue);
 
 	AudioQueueTimelineRef timeLine_;
 	size_t ms_;
 	size_t frames_;
 	size_t buff_size_;
 	std::shared_ptr<Stream> pubStream_;
+	long lastChunkTick;
 };
 
 
