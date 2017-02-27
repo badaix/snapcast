@@ -113,11 +113,9 @@ Snapserver supports [shairport-sync](https://github.com/mikebrady/shairport-sync
  
 
 ###Spotify
-Snapserver supports [librespot](https://github.com/badaix/librespot) with `stdout` backend.
- 1. Build `librespot` with `stdout` backend: `cargo build --features stdout-backend`
-   * Prebuild binaries are in [releases](https://github.com/badaix/librespot/releases)
- 2. Copy the `librespot` binary somewhere to your `PATH`, e.g. `/usr/local/bin/`
- 3. Configure snapserver with `-s "spotify:///librespot?name=Spotify&username=<my username>&password=<my password>[&devicename=Snapcast][&bitrate=320]"`
+Snapserver supports [librespot](https://github.com/badaix/librespot) with `pipe` backend.
+ 1. Build and copy the `librespot` binary somewhere to your `PATH`, e.g. `/usr/local/bin/`
+ 2. Configure snapserver with `-s "spotify:///librespot?name=Spotify[&username=<my username>&password=<my password>][&devicename=Snapcast][&bitrate=320]"`
    * Valid bitrates are 96, 160, 320
 
 ###Process
