@@ -1,10 +1,20 @@
 snapserver (0.11.0~beta-1) unstable; urgency=low
 
   * Features
+    -Snapclient multi-instance support (Issue #73)
+    -daemon can run as different user (default: snapserver, Issue #89)
+    -Spotify plugin does not require username and password (PR #181)
+    -Spotify plugin is compatible to librespot's pipe backend (PR #158)
+    -Clients are organized in Groups
+    -JSON RPC API: Support batch requests
   * Bugfixes
+    -Resync issue on macOS (Issue #156)
+    -Id in JSON RPC API can be String, Number or NULL (Issue #161)
   * General
+    -JSON RPC API is versionized (current version is 2.0.0)
+    -Restructured Android App to support Groups
 
- -- Johannes Pohl <johannes.pohl@badaix.de>  Sun, 26 Feb 2017 00:13:37 +0200
+ -- Johannes Pohl <johannes.pohl@badaix.de>  Mon, 27 Feb 2017 00:13:37 +0200
 
 snapserver (0.10.0) unstable; urgency=low
 
