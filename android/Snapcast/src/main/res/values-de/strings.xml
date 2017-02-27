@@ -7,6 +7,7 @@
     <string name="stop">Stop</string>
     <string name="menu_details">Details</string>
     <string name="menu_delete">Löschen</string>
+    <string name="menu_group">Gruppe</string>
 
     <string name="title_activity_snapcast">Snapcast</string>
 
@@ -19,6 +20,7 @@
     <string name="title_activity_client_settings">Client Einstellungen</string>
     <string name="client_name">Name</string>
     <string name="client_mac">MAC</string>
+    <string name="client_id">ID</string>
     <string name="client_ip">IP</string>
     <string name="client_host">Host</string>
     <string name="client_os">Betriebssystem</string>
@@ -26,6 +28,9 @@
     <string name="client_last_seen">Zuletzt gesehen</string>
     <string name="client_latency">Latenz</string>
     <string name="online">Online</string>
+
+    <string name="title_activity_group_preference">Gruppe</string>
+
     <string name="action_play_stop">Play/Stop</string>
     <string name="client_deleted">Client %1$s gelöscht</string>
     <string name="wrong_sample_rate">Stream ist nicht in nativer sample rate: %1$d\nNative sample rate: %2$d</string>
@@ -43,5 +48,6 @@
     <string name="control_port">Control-Port</string>
     <string name="server_host">Snapserver host</string>
     <string name="auto_start">Auto-start Snapclient</string>
+    <string name="connect">Verbinden</string>
 </resources>
 

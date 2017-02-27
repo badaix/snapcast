@@ -8,7 +8,7 @@ android {
         applicationId "de.badaix.snapcast"
         minSdkVersion 16
         targetSdkVersion 23
-        versionCode 1000
+        versionCode 1090
         versionName "0.11.0-beta-1"
         multiDexEnabled true
     }
@@ -17,6 +17,9 @@ android {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
+    }
+    lintOptions{
+        disable 'MissingTranslation'
     }
 }
 
