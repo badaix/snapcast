@@ -45,7 +45,7 @@ ProcessStream::~ProcessStream()
 }
 
 
-bool ProcessStream::fileExists(const std::string& filename) 
+bool ProcessStream::fileExists(const std::string& filename)
 {
 	struct stat buffer;
 	return (stat(filename.c_str(), &buffer) == 0);
@@ -62,14 +62,10 @@ std::string ProcessStream::findExe(const std::string& filename)
 	if (exe.find("/") != string::npos)
 		exe = exe.substr(exe.find_last_of("/") + 1);
 
-	/// check with "whereis"
-	string whereis = execGetOutput("whereis " + exe);
-	if (whereis.find(":") != std::string::npos)
-	{
-		whereis = trim_copy(whereis.substr(whereis.find(":") + 1));
-		if (!whereis.empty())
-			return whereis;
-	}
+	/// check with "which"
+	string which = execGetOutput("which " + exe);
+	if (!which.empty())
+		return which;
 
 	/// check in the same path as this binary
 	char buff[PATH_MAX];
