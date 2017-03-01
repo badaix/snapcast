@@ -10,8 +10,8 @@ if [ "$1" = "purge" ]; then
 			dpkg-statoverride --force --quiet --remove "$i"
 		fi
 	done
-
-	deluser --quiet --system snapclient > /dev/null || true
 fi
+
+deluser --quiet --system snapclient > /dev/null || true
 
 #DEBHELPER#
