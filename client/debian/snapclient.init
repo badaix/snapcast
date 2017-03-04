@@ -20,15 +20,14 @@ NAME=snapclient
 DAEMON=/usr/bin/$NAME
 PIDFILE=/var/run/$NAME/pid
 SCRIPTNAME=/etc/init.d/$NAME
-SNAPCLIENT_USER="snapclient"
-SNAPCLIENT_GROUP="audio"
+USER_OPTS="snapclient:audio"
 
 # Exit if the package is not installed
 [ -x "$DAEMON" ] || exit 0
 
 # Read configuration variable file if it is present
 [ -r /etc/default/$NAME ] && . /etc/default/$NAME
-SNAPCLIENT_OPTS="-d --user $SNAPCLIENT_USER:$SNAPCLIENT_GROUP $SNAPCLIENT_OPTS"
+SNAPCLIENT_OPTS="-d $USER_OPTS $SNAPCLIENT_OPTS"
 
 if [ "$START_SNAPCLIENT" != "true" ] ; then
   exit 0

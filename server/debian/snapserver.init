@@ -20,15 +20,14 @@ NAME=snapserver
 DAEMON=/usr/bin/$NAME
 PIDFILE=/var/run/$NAME/pid
 SCRIPTNAME=/etc/init.d/$NAME
-SNAPSERVER_USER="snapserver"
-SNAPSERVER_GROUP="snapserver"
+USER_OPTS="snapserver:snapserver"
 
 # Exit if the package is not installed
 [ -x "$DAEMON" ] || exit 0
 
 # Read configuration variable file if it is present
 [ -r /etc/default/$NAME ] && . /etc/default/$NAME
-SNAPSERVER_OPTS="-d --user $SNAPSERVER_USER:$SNAPSERVER_GROUP $SNAPSERVER_OPTS"
+SNAPSERVER_OPTS="-d $USER_OPTS $SNAPSERVER_OPTS"
 
 if [ "$START_SNAPSERVER" != "true" ] ; then
   exit 0
