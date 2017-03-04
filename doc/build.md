@@ -165,7 +165,7 @@ Compile the Snapclient:
 The binaries for `armeabi` and `armeabi-v7a` will be copied into the Android's assets directory (`<snapcast dir>/android/Snapcast/src/main/assets/bin/`) and so will be bundled with the Snapcast App.
 
 
-##OpenWrt (Cross compile)
+##OpenWrt/LEDE (Cross compile)
 Cross compilation for OpenWrt is done with the [OpenWrt build system](https://wiki.openwrt.org/about/toolchain) on a Linux host machine.  
 https://wiki.openwrt.org/doc/howto/build
 
@@ -188,14 +188,20 @@ Build
     $ make
 
 Within the OpenWrt directory create symbolic links to the Snapcast source directory and to the OpenWrt Makefile:
-
+    $ mkdir -p <buildroot dir>/package/sxx/snapcast
     $ cd <buildroot dir>/package/sxx/snapcast
-    $ ln -s <snapcast dir>/openWrt/Makefile.openwrt Makefile
-    $ ln -s <snapcast dir> src
+    $ git clone https://github.com/badaix/snapcast.git
+    $ mv snapcast src
+    $ ln -s src/openWrt/Makefile.openwrt Makefile
+    $ cd src/externals
+    $ git submodule update --init --recursive
+    $ cd <buildroot dir>
+    $ make menuconfig
+
+in menuconfig select the snapcast package to be installed
 
 Build Snapcast:
 
-    $ cd <buildroot dir>
     $ make package/sxx/snapcast/clean
     $ make package/sxx/snapcast/compile
 
