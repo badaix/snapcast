@@ -50,6 +50,7 @@ int main(int argc, char* argv[])
 #ifdef MACOS
 #pragma message "Warning: the macOS support is experimental and might not be maintained"
 #endif
+	int exitcode = EXIT_SUCCESS;
 	try
 	{
 		StreamServerSettings settings;
@@ -191,7 +192,6 @@ int main(int argc, char* argv[])
 		io_service.stop();
 		t.join();
 
-
 		logO << "Stopping streamServer" << endl;
 		streamServer->stop();
 		logO << "done" << endl;
@@ -199,12 +199,13 @@ int main(int argc, char* argv[])
 	catch (const std::exception& e)
 	{
 		logS(kLogErr) << "Exception: " << e.what() << std::endl;
+		exitcode = EXIT_FAILURE;
 	}
 
 	logS(kLogNotice) << "daemon terminated." << endl;
 #ifdef HAS_DAEMON
 	daemonShutdown();
 #endif
-	return 0;
+	exit(exitcode);
 }
 
