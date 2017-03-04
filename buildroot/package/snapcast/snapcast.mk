@@ -25,7 +25,7 @@ define SNAPCAST_BUILD_CMDS
 endef
 
 define SNAPCAST_INSTALL_TARGET_CMDS
-	$(INSTALL) -m 0755 -D $(@D)/client/snapclient $(TARGET_DIR)/usr/sbin/snapclient
+	$(INSTALL) -m 0755 -D $(@D)/client/snapclient $(TARGET_DIR)/usr/bin/snapclient
 	$(INSTALL) -m 0755 -D $(SNAPCAST_PKGDIR)/S99snapclient $(TARGET_DIR)/etc/init.d/S99snapclient
 endef
 
