@@ -9,8 +9,7 @@ VERSION="$2"
 if [ "$ACTION" = "configure" ]; then
 	# add the snapserver user
 	if ! getent passwd snapserver >/dev/null; then
-		addgroup --quiet --system snapserver
-		adduser --quiet --ingroup snapserver --system --no-create-home snapserver
+		useradd --user-group --system --home-dir /var/lib/snapserver snapserver
 	fi
 fi
 

@@ -12,6 +12,6 @@ if [ "$1" = "purge" ]; then
 	done
 fi
 
-deluser --quiet --system snapclient > /dev/null || true
+userdel --force --remove snapclient > /dev/null || true
 
 #DEBHELPER#

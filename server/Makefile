@@ -150,8 +150,7 @@ installbsd:
 
 adduser:
 	@if ! getent passwd snapserver >/dev/null; then \
-		addgroup --quiet --system snapserver; \
-		adduser --quiet --ingroup snapserver --system --no-create-home --home /var/lib/snapserver snapserver; \
+		useradd --user-group --system --home-dir /var/lib/snapserver snapserver; \
 	fi; \
 
 
@@ -209,6 +208,6 @@ uninstallsystemd:
 	systemctl daemon-reload; \
 
 deluser:
-	@deluser --quiet --system snapserver > /dev/null || true; \
-	delgroup --quiet --system snapserver > /dev/null || true
+	@userdel --force --remove snapserver > /dev/null || true; \
+	groupdel snapserver > /dev/null || true; \
 

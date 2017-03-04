@@ -136,7 +136,7 @@ installsysv:
 
 adduser:
 	@if ! getent passwd snapclient >/dev/null; then \
-		adduser --quiet --ingroup audio --system --no-create-home --home /var/lib/snapclient snapclient; \
+		useradd --gid audio --system --home-dir /var/lib/snapclient snapclient; \
 	fi; \
 
 ifeq ($(TARGET), MACOS)
@@ -184,5 +184,5 @@ uninstallsystemd:
 	systemctl daemon-reload; \
 
 deluser:
-	@deluser --quiet --system snapclient > /dev/null || true
+	@userdel --force --remove snapclient > /dev/null || true; \
 
