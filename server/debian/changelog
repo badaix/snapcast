@@ -11,11 +11,12 @@ snapserver (0.11.0~beta-1) unstable; urgency=low
     -Resync issue on macOS (Issue #156)
     -Id in JSON RPC API can be String, Number or NULL (Issue #161)
     -Use "which" instead of "whereis" to find binaries (PR #196, Issue #185)
+    -Compiles on lede (Issue #203)
   * General
     -JSON RPC API is versionized (current version is 2.0.0)
     -Restructured Android App to support Groups
 
- -- Johannes Pohl <johannes.pohl@badaix.de>  Wed, 01 Mar 2017 00:13:37 +0200
+ -- Johannes Pohl <johannes.pohl@badaix.de>  Sat, 04 Mar 2017 00:13:37 +0200
 
 snapserver (0.10.0) unstable; urgency=low
 
