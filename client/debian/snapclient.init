@@ -18,7 +18,6 @@ PATH=/sbin:/usr/sbin:/bin:/usr/bin:/
 DESC="Snapcast client"
 NAME=snapclient
 DAEMON=/usr/bin/$NAME
-SNAPCLIENT_OPTS="-d"
 PIDFILE=/var/run/$NAME/pid
 SCRIPTNAME=/etc/init.d/$NAME
 
@@ -27,6 +26,7 @@ SCRIPTNAME=/etc/init.d/$NAME
 
 # Read configuration variable file if it is present
 [ -r /etc/default/$NAME ] && . /etc/default/$NAME
+SNAPCLIENT_OPTS="-d --user snapclient:audio $SNAPCLIENT_OPTS"
 
 if [ "$START_SNAPCLIENT" != "true" ] ; then
   exit 0

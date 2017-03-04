@@ -68,7 +68,7 @@ int main(int argc, char* argv[])
 
 		Value<int> bufferValue("b", "buffer", "Buffer [ms]", settings.bufferMs, &settings.bufferMs);
 		Implicit<int> daemonOption("d", "daemon", "Daemonize\noptional process priority [-20..19]", 0, &processPriority);
-		Value<string> userValue("", "user", "the user[:group] to run snapserver as when daemonized", "snapserver:snapserver");
+		Value<string> userValue("", "user", "the user[:group] to run snapserver as when daemonized", "");
 
 		OptionParser op("Allowed options");
 		op.add(helpSwitch)
@@ -146,12 +146,19 @@ int main(int argc, char* argv[])
 		if (daemonOption.isSet())
 		{
 #ifdef HAS_DAEMON
-			if (userValue.getValue().empty())
-				std::invalid_argument("user must not be empty");
+			string user = "";
+			string group = "";
 
-			vector<string> user_group = split(userValue.getValue(), ':');
-			string user = user_group[0];
-			string group = (user_group.size() == 1)?user_group[0]:user_group[1];
+			if (userValue.isSet())
+			{
+				if (userValue.getValue().empty())
+					std::invalid_argument("user must not be empty");
+
+				vector<string> user_group = split(userValue.getValue(), ':');
+				user = user_group[0];
+				if (user_group.size() > 1)
+					group = user_group[1];
+			}
 			daemonize(user, group, "/var/run/snapserver/pid");
 			if (processPriority < -20)
 				processPriority = -20;

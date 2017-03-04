@@ -9,7 +9,7 @@ SERVICE_PID_FILE=/var/run/$SERVICE_NAME/pid
 
 DESC="Snapcast client"
 DAEMON=/usr/bin/$SERVICE_NAME
-SNAPCLIENT_OPTS="-d --user root"
+SNAPCLIENT_OPTS="-d"
 
 
 # Exit if the package is not installed
