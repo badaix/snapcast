@@ -7,7 +7,7 @@ Requires=network-online.target
 EnvironmentFile=-/etc/default/snapserver
 Type=forking
 ExecStart=/usr/bin/snapserver -d --user snapserver:snapserver $SNAPSERVER_OPTS
-PIDFile=/var/run/snapserver.pid
+PIDFile=/var/run/snapserver/pid
 Restart=always
 
 [Install]

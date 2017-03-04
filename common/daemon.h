@@ -80,6 +80,12 @@ void daemonize(const std::string& user, const std::string& group, const std::str
 #endif
 	}
 
+	if (chown(pidfile.c_str(), user_uid, user_gid) == -1)
+	{
+		/// Couldn't open lock file
+		throw SnapException("Could not chown PID lock file \"" + pidfile + "\"");
+	}
+
 	/// set gid
 	if (user_gid != (gid_t)-1 && user_gid != getgid() && setgid(user_gid) == -1)
 		throw SnapException("Failed to set group " + cpt::to_string((int)user_gid));

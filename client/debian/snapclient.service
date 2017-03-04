@@ -7,7 +7,7 @@ Requires=network-online.target
 EnvironmentFile=-/etc/default/snapclient
 Type=forking
 ExecStart=/usr/bin/snapclient -d --user snapclient:audio $SNAPCLIENT_OPTS
-PIDFile=/var/run/snapclient.pid
+PIDFile=/var/run/snapclient/pid
 Restart=always
 
 [Install]
