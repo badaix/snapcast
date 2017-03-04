@@ -12,7 +12,7 @@ if [ "$1" = "purge" ]; then
 	done
 fi
 
-userdel --force --remove snapserver > /dev/null || true
+userdel --force snapserver > /dev/null || true
 groupdel snapserver > /dev/null || true
 
 #DEBHELPER#

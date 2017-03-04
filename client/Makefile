@@ -184,5 +184,5 @@ uninstallsystemd:
 	systemctl daemon-reload; \
 
 deluser:
-	@userdel --force --remove snapclient > /dev/null || true; \
+	@userdel --force snapclient > /dev/null || true; \
 

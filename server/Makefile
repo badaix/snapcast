@@ -208,6 +208,6 @@ uninstallsystemd:
 	systemctl daemon-reload; \
 
 deluser:
-	@userdel --force --remove snapserver > /dev/null || true; \
+	@userdel --force snapserver > /dev/null || true; \
 	groupdel snapserver > /dev/null || true; \
 
