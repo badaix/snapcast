@@ -20,7 +20,7 @@ NAME=snapclient
 DAEMON=/usr/bin/$NAME
 PIDFILE=/var/run/$NAME/pid
 SCRIPTNAME=/etc/init.d/$NAME
-SNAPCLIENT_USER=""
+SNAPCLIENT_USER="snapclient"
 SNAPCLIENT_GROUP="audio"
 
 # Exit if the package is not installed
@@ -50,7 +50,6 @@ do_start()
 	PIDDIR=$(dirname "$PIDFILE")
 	if [ ! -d "$PIDDIR" ]; then
 			mkdir -m 0755 $PIDDIR
-			chown snapclient:audio $PIDDIR
 	fi
 
 	# Return

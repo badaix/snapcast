@@ -15,7 +15,7 @@ START_SNAPCLIENT=true
 #   --latency arg (=0)              latency of the soundcard
 #   -i, --instance arg (=1)         instance id
 
-SNAPCLIENT_USER=""
+SNAPCLIENT_USER="snapclient"
 SNAPCLIENT_GROUP="audio"
 
 SNAPCLIENT_OPTS=""
