@@ -9,7 +9,6 @@ SERVICE_PID_FILE=/var/run/$SERVICE_NAME/pid
 
 DESC="Snapcast server"
 DAEMON=/usr/bin/$SERVICE_NAME
-SNAPSERVER_OPTS="-d"
 
 
 # Exit if the package is not installed
@@ -17,6 +16,7 @@ SNAPSERVER_OPTS="-d"
 
 # Read configuration variable file if it is present
 [ -r /etc/default/$SERVICE_NAME ] && . /etc/default/$SERVICE_NAME
+SNAPSERVER_OPTS="-d $SNAPSERVER_OPTS"
 
 if [ "$START_SNAPSERVER" != "true" ] ; then
   exit 0
@@ -36,7 +36,7 @@ start()
 stop()
 {
 	service_stop $DAEMON
-	killall $DAEMON
+	killall $SERVICE_NAME
 	# Many daemons don't delete their pidfiles when they exit.
 	rm -f $SERVICE_PID_FILE
 }
