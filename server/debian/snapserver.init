@@ -20,7 +20,7 @@ NAME=snapserver
 DAEMON=/usr/bin/$NAME
 PIDFILE=/var/run/$NAME/pid
 SCRIPTNAME=/etc/init.d/$NAME
-USER_OPTS="snapserver:snapserver"
+USER_OPTS="--user snapserver:snapserver"
 
 # Exit if the package is not installed
 [ -x "$DAEMON" ] || exit 0

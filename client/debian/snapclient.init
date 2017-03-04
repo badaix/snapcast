@@ -20,7 +20,7 @@ NAME=snapclient
 DAEMON=/usr/bin/$NAME
 PIDFILE=/var/run/$NAME/pid
 SCRIPTNAME=/etc/init.d/$NAME
-USER_OPTS="snapclient:audio"
+USER_OPTS="--user snapclient:audio"
 
 # Exit if the package is not installed
 [ -x "$DAEMON" ] || exit 0
