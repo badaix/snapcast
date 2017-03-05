@@ -125,6 +125,7 @@ This [guide](doc/player_setup.md) shows how to configure different players/audio
 * [AirPlay](doc/player_setup.md#airplay)
 * [Spotify](doc/player_setup.md#spotify)
 * [Process](doc/player_setup.md#process)
+* [Line-in](doc/player_setup.md#line-in)
 
 Roadmap
 -------
