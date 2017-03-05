@@ -126,4 +126,4 @@ Configure snapserver with `-s "process:///path/to/process?name=Process[&params=<
 
 
 ###Line-in
-Audio captured from line-in can be redirected to a snapserver's pipe, e.g. by using [cpipe](https://github.com/b-fitzpatrick/cpiped)
+Audio captured from line-in can be redirected to the snapserver's pipe, e.g. by using [cpipe](https://github.com/b-fitzpatrick/cpiped)
