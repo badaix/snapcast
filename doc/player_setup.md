@@ -118,8 +118,12 @@ Snapserver supports [librespot](https://github.com/plietar/librespot) with `pipe
  2. Configure snapserver with `-s "spotify:///librespot?name=Spotify[&username=<my username>&password=<my password>][&devicename=Snapcast][&bitrate=320]"`
    * Valid bitrates are 96, 160, 320
 
+
 ###Process
 Snapserver can start any process and read PCM data from the stdout of the process: 
 
 Configure snapserver with `-s "process:///path/to/process?name=Process[&params=<--my list --of params>][&logStderr=false]"`
 
+
+###Line-in
+Audio captured from line-in can be redirected to a snapserver's pipe, e.g. by using [cpipe](https://github.com/b-fitzpatrick/cpiped)
