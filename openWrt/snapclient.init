@@ -36,7 +36,7 @@ start()
 stop()
 {
 	service_stop $DAEMON
-	killall $SERVICE_NAME
+	#killall $SERVICE_NAME
 	# Many daemons don't delete their pidfiles when they exit.
 	rm -f $SERVICE_PID_FILE
 }
