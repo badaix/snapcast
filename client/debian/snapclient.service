@@ -6,7 +6,7 @@ Requires=network-online.target
 [Service]
 EnvironmentFile=-/etc/default/snapclient
 Type=forking
-ExecStart=/usr/bin/snapclient -d $USER_OPTS $SNAPSERVER_OPTS
+ExecStart=/usr/bin/snapclient -d $USER_OPTS $SNAPCLIENT_OPTS
 PIDFile=/var/run/snapclient/pid
 Restart=always
 
