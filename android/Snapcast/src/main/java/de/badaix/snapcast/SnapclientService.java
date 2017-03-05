@@ -152,7 +152,7 @@ public class SnapclientService extends Service {
             wakeLock = powerManager.newWakeLock(PARTIAL_WAKE_LOCK, "SnapcastWakeLock");
             wakeLock.acquire();
 
-            WifiManager wm = (WifiManager) getSystemService(WIFI_SERVICE);
+            WifiManager wm = (WifiManager) getApplicationContext().getSystemService(WIFI_SERVICE);
             wifiWakeLock = wm.createWifiLock(WifiManager.WIFI_MODE_FULL_HIGH_PERF, "SnapcastWifiWakeLock");
             wifiWakeLock.acquire();
 
