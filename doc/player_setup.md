@@ -7,6 +7,24 @@ The goal is to build the following chain:
 
     audio player software -> snapfifo -> snapserver -> network -> snapclient -> alsa
 
+####About the notation
+In this document some expressions are in brackets:
+* `<angle brackets>`: the whole expression must be replaced with you specific setting
+* `[square brackets]`: the whole expression is optional and can be left out
+  * `[key=value]`: if you leave this option out, `value` will be the default for `key`
+
+For example:
+```
+-s "spotify:///librespot?name=Spotify[&username=<my username>&password=<my password>][&devicename=Snapcast][&bitrate=320]"
+```
+* `username` and `password` are both optional in this case. You need to specify none of both of them
+* `bitrate` is optional. If not configured, 320 will be used. Same for `devicename` 
+
+A valid usage would be for instance:
+```
+-s "spotify:///librespot?name=Spotify&bitrate=160"
+```
+
 ###MPD
 To connect [MPD](http://www.musicpd.org/) to the Snapserver, edit `/etc/mpd.conf`, so that mpd will feed the audio into the snapserver's named pipe
 
