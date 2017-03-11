@@ -22,17 +22,19 @@ def doRequest( j, requestId ):
 
 def setVolume(client, volume):
 	global requestId
-	doRequest(json.dumps({'jsonrpc': '2.0', 'method': 'Client.SetVolume', 'params': {'client':  client, 'volume': volume}, 'id': requestId}), requestId)
+	doRequest(json.dumps({'jsonrpc': '2.0', 'method': 'Client.SetVolume', 'params': {'id':  client, 'volume': {'muted': False, 'percent': volume}}, 'id': requestId}), requestId)
 	requestId = requestId + 1
 
 volume = int(sys.argv[2])
 j = doRequest(json.dumps({'jsonrpc': '2.0', 'method': 'Server.GetStatus', 'id': 1}), 1)
-for client in j["result"]["clients"]:
-	setVolume(client['MAC'], volume)
+for group in j["result"]["server"]["groups"]:
+    for client in group["clients"]:
+    	setVolume(client['id'], volume)
 
 j = doRequest(json.dumps({'jsonrpc': '2.0', 'method': 'Server.GetStatus', 'id': 1}), 1)
-for client in j["result"]["clients"]:
-	print("MAC: " + client['MAC'] + ", name: " + client['name'] + ", conntect: " + str(client['connected']) + ", volume: " + str(client['volume']['percent']))
+for group in j["result"]["server"]["groups"]:
+    for client in group["clients"]:
+    	print("MAC: " + client['host']['mac'] + ", name: " + client['config']['name'] + ", conntect: " + str(client['connected']) + ", volume: " + str(client['config']['volume']['percent']))
 
 telnet.close
 
