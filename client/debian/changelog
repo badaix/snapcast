@@ -1,3 +1,11 @@
+snapclient (0.11.0~beta-2) unstable; urgency=low
+
+  * Features
+  * Bugfixes
+  * General
+
+ -- Johannes Pohl <johannes.pohl@badaix.de>  Sun, 12 Mar 2017 00:13:37 +0200
+
 snapclient (0.11.0~beta-1) unstable; urgency=low
 
   * Features

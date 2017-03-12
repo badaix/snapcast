@@ -9,7 +9,7 @@ android {
         minSdkVersion 16
         targetSdkVersion 23
         versionCode 1090
-        versionName "0.11.0-beta-1"
+        versionName "0.11.0-beta-2"
         multiDexEnabled true
     }
     buildTypes {
