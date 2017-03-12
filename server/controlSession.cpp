@@ -42,7 +42,7 @@ ControlSession::~ControlSession()
 void ControlSession::start()
 {
 	{
-		std::lock_guard<std::mutex> activeLock(activeMutex_);
+		std::lock_guard<std::recursive_mutex> activeLock(activeMutex_);
 		active_ = true;
 	}
 	readerThread_ = new thread(&ControlSession::reader, this);
@@ -52,20 +52,15 @@ void ControlSession::start()
 
 void ControlSession::stop()
 {
-	{
-		std::lock_guard<std::mutex> activeLock(activeMutex_);
-		if (!active_)
-			return;
-
-		active_ = false;
-	}
-
+	logD << "ControlSession::stop\n";
+	std::lock_guard<std::recursive_mutex> activeLock(activeMutex_);
+	active_ = false;
 	try
 	{
 		std::error_code ec;
 		if (socket_)
 		{
-			std::lock_guard<std::mutex> socketLock(socketMutex_);
+			std::lock_guard<std::recursive_mutex> socketLock(socketMutex_);
 			socket_->shutdown(asio::ip::tcp::socket::shutdown_both, ec);
 			if (ec) logE << "Error in socket shutdown: " << ec.message() << "\n";
 			socket_->close(ec);
@@ -105,9 +100,9 @@ void ControlSession::sendAsync(const std::string& message)
 bool ControlSession::send(const std::string& message) const
 {
 	//logO << "send: " << message << ", size: " << message.length() << "\n";
-	std::lock_guard<std::mutex> socketLock(socketMutex_);
+	std::lock_guard<std::recursive_mutex> socketLock(socketMutex_);
 	{
-		std::lock_guard<std::mutex> activeLock(activeMutex_);
+		std::lock_guard<std::recursive_mutex> activeLock(activeMutex_);
 		if (!socket_ || !active_)
 			return false;
 	}

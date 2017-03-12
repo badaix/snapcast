@@ -41,9 +41,9 @@ ControlServer::~ControlServer()
 }
 
 
-void ControlServer::send(const std::string& message, const ControlSession* excludeSession)
+void ControlServer::cleanup()
 {
-	std::unique_lock<std::mutex> mlock(mutex_);
+	std::lock_guard<std::recursive_mutex> mlock(mutex_);
 	for (auto it = sessions_.begin(); it != sessions_.end(); )
 	{
 		if (!(*it)->active())
@@ -53,12 +53,18 @@ void ControlServer::send(const std::string& message, const ControlSession* exclu
 			auto func = [](shared_ptr<ControlSession> s)->void{s->stop();};
 			std::thread t(func, *it);
 			t.detach();
+			//(*it)->stop();
 			sessions_.erase(it++);
 		}
 		else
 			++it;
 	}
+}
 
+
+void ControlServer::send(const std::string& message, const ControlSession* excludeSession)
+{
+	cleanup();
 	for (auto s : sessions_)
 	{
 		if (s.get() != excludeSession)
@@ -69,6 +75,7 @@ void ControlServer::send(const std::string& message, const ControlSession* exclu
 
 void ControlServer::onMessageReceived(ControlSession* connection, const std::string& message)
 {
+	std::lock_guard<std::recursive_mutex> mlock(mutex_);
 	logD << "received: \"" << message << "\"\n";
 	if ((message == "quit") || (message == "exit") || (message == "bye"))
 	{
@@ -108,9 +115,10 @@ void ControlServer::handleAccept(socket_ptr socket)
 	logS(kLogNotice) << "ControlServer::NewConnection: " << socket->remote_endpoint().address().to_string() << endl;
 	shared_ptr<ControlSession> session = make_shared<ControlSession>(this, socket);
 	{
-		std::unique_lock<std::mutex> mlock(mutex_);
+		std::lock_guard<std::recursive_mutex> mlock(mutex_);
 		session->start();
 		sessions_.insert(session);
+		cleanup();
 	}
 	startAccept();
 }
@@ -127,7 +135,7 @@ void ControlServer::stop()
 {
 	if (acceptor_)	
 		acceptor_->cancel();
-	std::unique_lock<std::mutex> mlock(mutex_);
+	std::lock_guard<std::recursive_mutex> mlock(mutex_);
 	for (auto s: sessions_)
 		s->stop();
 }

@@ -61,8 +61,9 @@ public:
 private:
 	void startAccept();
 	void handleAccept(socket_ptr socket);
+	void cleanup();
 //	void acceptor();
-	mutable std::mutex mutex_;
+	mutable std::recursive_mutex mutex_;
 	std::set<std::shared_ptr<ControlSession>> sessions_;
 	std::shared_ptr<tcp::acceptor> acceptor_;
 
