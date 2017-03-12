@@ -45,7 +45,7 @@ void StreamServer::onStateChanged(const PcmStream* pcmStream, const ReaderState&
 //	logO << pcmStream->toJson().dump(4);
 	json notification = jsonrpcpp::Notification("Stream.OnUpdate", jsonrpcpp::Parameter("id", pcmStream->getId(), "stream", pcmStream->toJson())).to_json();
 	controlServer_->send(notification.dump(), NULL);
-	cout << "Notification: " << notification.dump() << "\n";
+	////cout << "Notification: " << notification.dump() << "\n";
 }
 
 
@@ -103,7 +103,7 @@ void StreamServer::onDisconnect(StreamSession* streamSession)
 		/// Notification: {"jsonrpc":"2.0","method":"Client.OnDisconnect","params":{"client":{"config":{"instance":1,"latency":0,"name":"","volume":{"muted":false,"percent":81}},"connected":false,"host":{"arch":"x86_64","ip":"192.168.0.54","mac":"00:21:6a:7d:74:fc","name":"T400","os":"Linux Mint 17.3 Rosa"},"id":"00:21:6a:7d:74:fc","lastSeen":{"sec":1488025523,"usec":814067},"snapclient":{"name":"Snapclient","protocolVersion":2,"version":"0.10.0"}},"id":"00:21:6a:7d:74:fc"}}
 		json notification = jsonrpcpp::Notification("Client.OnDisconnect", jsonrpcpp::Parameter("id", clientInfo->id, "client", clientInfo->toJson())).to_json();
 		controlServer_->send(notification.dump());
-		cout << "Notification: " << notification.dump() << "\n";
+		////cout << "Notification: " << notification.dump() << "\n";
 	}
 }
 
@@ -112,8 +112,7 @@ void StreamServer::ProcessRequest(const jsonrpcpp::request_ptr request, jsonrpcp
 {
 	try
 	{
-		logO << "StreamServer::ProcessRequest method: " << request->method << ", " << "id: " << request->id << "\n";
-
+		////logO << "StreamServer::ProcessRequest method: " << request->method << ", " << "id: " << request->id << "\n";
 		Json result;
 
 		if (request->method.find("Client.") == 0)
@@ -391,22 +390,22 @@ void StreamServer::onMessageReceived(ControlSession* controlSession, const std::
 	{
 		jsonrpcpp::request_ptr request = dynamic_pointer_cast<jsonrpcpp::Request>(entity);
 		ProcessRequest(request, response, notification);
-		cout << "Request:      " << request->to_json().dump() << "\n";
+		////cout << "Request:      " << request->to_json().dump() << "\n";
 		if (response)
 		{
-			cout << "Response:     " << response->to_json().dump() << "\n";
+			////cout << "Response:     " << response->to_json().dump() << "\n";
 			controlSession->send(response->to_json().dump());
 		}
 		if (notification)
 		{
-			cout << "Notification: " << notification->to_json().dump() << "\n";
+			////cout << "Notification: " << notification->to_json().dump() << "\n";
 			controlServer_->send(notification->to_json().dump(), controlSession);
 		}
 	}
 	else if (entity->is_batch())
 	{
 		jsonrpcpp::batch_ptr batch = dynamic_pointer_cast<jsonrpcpp::Batch>(entity);
-		cout << "Batch: " << batch->to_json().dump() << "\n";
+		////cout << "Batch: " << batch->to_json().dump() << "\n";
 		jsonrpcpp::Batch responseBatch;
 		jsonrpcpp::Batch notificationBatch;
 		for (const auto& batch_entity: batch->entities)
@@ -513,14 +512,14 @@ void StreamServer::onMessageReceived(StreamSession* connection, const msg::BaseM
 			json server = Config::instance().getServerStatus(streamManager_->toJson());
 			json notification = jsonrpcpp::Notification("Server.OnUpdate", jsonrpcpp::Parameter("server", server)).to_json();
 			controlServer_->send(notification.dump());
-			cout << "Notification: " << notification.dump() << "\n";
+			////cout << "Notification: " << notification.dump() << "\n";
 		}
 		else
 		{
 			/// Notification: {"jsonrpc":"2.0","method":"Client.OnConnect","params":{"client":{"config":{"instance":1,"latency":0,"name":"","volume":{"muted":false,"percent":81}},"connected":true,"host":{"arch":"x86_64","ip":"192.168.0.54","mac":"00:21:6a:7d:74:fc","name":"T400","os":"Linux Mint 17.3 Rosa"},"id":"00:21:6a:7d:74:fc","lastSeen":{"sec":1488025524,"usec":876332},"snapclient":{"name":"Snapclient","protocolVersion":2,"version":"0.10.0"}},"id":"00:21:6a:7d:74:fc"}}
 			json notification = jsonrpcpp::Notification("Client.OnConnect", jsonrpcpp::Parameter("id", client->id, "client", client->toJson())).to_json();
 			controlServer_->send(notification.dump());
-			cout << "Notification: " << notification.dump() << "\n";
+			////cout << "Notification: " << notification.dump() << "\n";
 		}
 //		cout << Config::instance().getServerStatus(streamManager_->toJson()).dump(4) << "\n";
 //		cout << group->toJson().dump(4) << "\n";
