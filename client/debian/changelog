@@ -2,6 +2,8 @@ snapclient (0.11.0~beta-2) unstable; urgency=low
 
   * Features
   * Bugfixes
+    -Compilation error on recent GCC versions (Issues #146, #170)
+    -Crash when frequently connecting to the control port (Issue #200)
   * General
 
  -- Johannes Pohl <johannes.pohl@badaix.de>  Sun, 12 Mar 2017 00:13:37 +0200
