@@ -20,7 +20,7 @@
 #define OGG_ENCODER_H
 #include "encoder.h"
 #include <vorbis/vorbisenc.h>
-
+#include <ogg/ogg.h>
 
 class OggEncoder : public Encoder
 {
