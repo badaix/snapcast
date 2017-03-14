@@ -8,7 +8,7 @@ android {
         applicationId "de.badaix.snapcast"
         minSdkVersion 16
         targetSdkVersion 23
-        versionCode 1090
+        versionCode 1091
         versionName "0.11.0-beta-2"
         multiDexEnabled true
     }
