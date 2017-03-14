@@ -252,7 +252,7 @@ static long uptime()
 		uptime = trim_copy(uptime.substr(uptime.find(" sec = ") + 7));
 		uptime.resize(uptime.find(","));
 		timeval now;
-		gettimeofday(&now, NULL);
+		chronos::systemtimeofday(&now);
 		try
 		{
 			return now.tv_sec - cpt::stoul(uptime);

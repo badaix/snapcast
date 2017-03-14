@@ -96,7 +96,7 @@ void StreamServer::onDisconnect(StreamSession* streamSession)
 		return;
 
 	clientInfo->connected = false;
-	gettimeofday(&clientInfo->lastSeen, NULL);
+	chronos::systemtimeofday(&clientInfo->lastSeen);
 	Config::instance().save();
 	if (controlServer_ != nullptr)
 	{
@@ -445,7 +445,7 @@ void StreamServer::onMessageReceived(StreamSession* connection, const msg::BaseM
 		ClientInfoPtr client = Config::instance().getClientInfo(connection->clientId);
 		if (client != nullptr)
 		{
-			gettimeofday(&client->lastSeen, NULL);
+			chronos::systemtimeofday(&client->lastSeen);
 			client->connected = true;
 		}
 	}
@@ -489,7 +489,7 @@ void StreamServer::onMessageReceived(StreamSession* connection, const msg::BaseM
 		client->snapclient.protocolVersion = helloMsg.getProtocolVersion();
 		client->config.instance = helloMsg.getInstance();
 		client->connected = true;
-		gettimeofday(&client->lastSeen, NULL);
+		chronos::systemtimeofday(&client->lastSeen);
 
 		// Assign and update stream
 		PcmStreamPtr stream = streamManager_->getStream(group->streamId);

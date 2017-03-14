@@ -154,7 +154,7 @@ void ProcessStream::worker()
 		stderrReaderThread_ = thread(&ProcessStream::stderrReader, this);
 		stderrReaderThread_.detach();
 
-		gettimeofday(&tvChunk, NULL);
+		chronos::systemtimeofday(&tvChunk);
 		tvEncodedChunk_ = tvChunk;
 		long nextTick = chronos::getTickCount();
 		try
@@ -199,7 +199,7 @@ void ProcessStream::worker()
 				}
 				else
 				{
-					gettimeofday(&tvChunk, NULL);
+					chronos::systemtimeofday(&tvChunk);
 					tvEncodedChunk_ = tvChunk;
 					pcmListener_->onResync(this, currentTick - nextTick);
 					nextTick = currentTick;

@@ -61,7 +61,7 @@ void FileStream::worker()
 
 	while (active_)
 	{
-		gettimeofday(&tvChunk, NULL);
+		chronos::systemtimeofday(&tvChunk);
 		tvEncodedChunk_ = tvChunk;
 		long nextTick = chronos::getTickCount();
 		try
@@ -97,7 +97,7 @@ void FileStream::worker()
 				}
 				else
 				{
-					gettimeofday(&tvChunk, NULL);
+					chronos::systemtimeofday(&tvChunk);
 					tvEncodedChunk_ = tvChunk;
 					pcmListener_->onResync(this, currentTick - nextTick);
 					nextTick = currentTick;

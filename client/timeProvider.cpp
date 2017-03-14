@@ -38,7 +38,7 @@ void TimeProvider::setDiffToServer(double ms)
 {
 	static int32_t lastTimeSync = 0;
 	timeval now;
-	gettimeofday(&now, NULL);
+	chronos::systemtimeofday(&now);
 
 	/// clear diffBuffer if last update is older than a minute
 	if (!diffBuffer_.empty() && (std::abs(now.tv_sec - lastTimeSync) > 60))

@@ -69,7 +69,7 @@ void PipeStream::worker()
 		if (fd_ != -1)
 			close(fd_);
 		fd_ = open(uri_.path.c_str(), O_RDONLY | O_NONBLOCK);
-		gettimeofday(&tvChunk, NULL);
+		chronos::systemtimeofday(&tvChunk);
 		tvEncodedChunk_ = tvChunk;
 		long nextTick = chronos::getTickCount();
 		try
@@ -117,7 +117,7 @@ void PipeStream::worker()
 				}
 				else
 				{
-					gettimeofday(&tvChunk, NULL);
+					chronos::systemtimeofday(&tvChunk);
 					tvEncodedChunk_ = tvChunk;
 					pcmListener_->onResync(this, currentTick - nextTick);
 					nextTick = currentTick;

@@ -36,6 +36,20 @@ namespace chronos
 	typedef std::chrono::microseconds usec;
 	typedef std::chrono::nanoseconds nsec;
 
+	template <class Clock>
+	inline static void timeofday(struct timeval *tv)
+	{
+		auto now = Clock::now();
+  		auto millisecs = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch());
+  		tv->tv_sec = millisecs.count()/1000;
+  		tv->tv_usec = (millisecs.count()%1000)*1000;
+	}
+
+	inline static void systemtimeofday(struct timeval *tv)
+	{
+		timeofday<std::chrono::system_clock>(tv);
+	}
+
 	inline static void addUs(timeval& tv, int us)
 	{
 		if (us < 0)

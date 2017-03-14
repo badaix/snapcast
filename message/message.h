@@ -26,6 +26,7 @@
 #include <vector>
 #include <sys/time.h>
 #include "common/endian.h"
+#include "common/timeDefs.h"
 
 
 template<typename CharT, typename TraitsT = std::char_traits<CharT> >
@@ -65,7 +66,7 @@ struct tv
 	tv()
 	{
 		timeval t;
-		gettimeofday(&t, NULL);
+		chronos::systemtimeofday(&t);
 		sec = t.tv_sec;
 		usec = t.tv_usec;
 	}
