@@ -24,7 +24,7 @@
 #else
 #include <vorbis/codec.h>
 #endif
-
+#include <ogg/ogg.h>
 
 class OggDecoder : public Decoder
 {
