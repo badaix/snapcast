@@ -25,20 +25,20 @@ ifeq ($(TARGET), ANDROID)
 
 CXX       = $(NDK_DIR)/bin/arm-linux-androideabi-g++
 STRIP     = $(NDK_DIR)/bin/arm-linux-androideabi-strip
-CXXFLAGS += -pthread -DANDROID -DNO_CPP11_STRING -fPIC -DHAS_TREMOR -DHAS_OPENSL -I$(NDK_DIR)/include
+CXXFLAGS += -pthread -DANDROID -DNO_CPP11_STRING -fPIC -DHAS_OGG -DHAS_TREMOR -DHAS_OPENSL -I$(NDK_DIR)/include
 LDFLAGS   = -L$(NDK_DIR)/lib -pie -lvorbisidec -logg -lFLAC -lOpenSLES 
 OBJ      += player/openslPlayer.o 
 
 else ifeq ($(TARGET), OPENWRT)
 
 STRIP     = echo
-CXXFLAGS += -pthread -DNO_CPP11_STRING -DHAS_TREMOR -DHAS_ALSA -DHAS_AVAHI -DHAS_DAEMON
+CXXFLAGS += -pthread -DNO_CPP11_STRING -DHAS_OGG -DHAS_TREMOR -DHAS_ALSA -DHAS_AVAHI -DHAS_DAEMON
 LDFLAGS   = -lasound -lvorbisidec -logg -lFLAC -lavahi-client -lavahi-common -latomic
 OBJ      += player/alsaPlayer.o browseZeroConf/browseAvahi.o
 
 else ifeq ($(TARGET), BUILDROOT)
 
-CXXFLAGS += -pthread -DNO_CPP11_STRING -DHAS_TREMOR -DHAS_ALSA -DHAS_AVAHI -DHAS_DAEMON
+CXXFLAGS += -pthread -DNO_CPP11_STRING -DHAS_OGG -DHAS_TREMOR -DHAS_ALSA -DHAS_AVAHI -DHAS_DAEMON
 LDFLAGS  += -lasound -lvorbisidec -logg -lFLAC -lavahi-client -lavahi-common -latomic
 OBJ      += player/alsaPlayer.o browseZeroConf/browseAvahi.o
 
@@ -46,7 +46,7 @@ else ifeq ($(TARGET), MACOS)
 
 CXX       = g++
 STRIP     = strip
-CXXFLAGS += -DHAS_OGG -DHAS_COREAUDIO -DFREEBSD -DMACOS -DHAS_BONJOUR -DHAS_DAEMON -I/usr/local/include -Wno-unused-local-typedef -Wno-deprecated
+CXXFLAGS += -DHAS_OGG -DHAS_VORBIS -DHAS_COREAUDIO -DFREEBSD -DMACOS -DHAS_BONJOUR -DHAS_DAEMON -I/usr/local/include -Wno-unused-local-typedef -Wno-deprecated
 LDFLAGS   = -logg -lvorbis -lFLAC -L/usr/local/lib -framework AudioToolbox -framework CoreFoundation
 OBJ      += player/coreAudioPlayer.o browseZeroConf/browseBonjour.o
 
@@ -54,7 +54,7 @@ else
 
 CXX       = g++
 STRIP     = strip
-CXXFLAGS += -pthread -DHAS_OGG -DHAS_ALSA -DHAS_AVAHI -DHAS_DAEMON
+CXXFLAGS += -pthread -DHAS_OGG -DHAS_VORBIS -DHAS_ALSA -DHAS_AVAHI -DHAS_DAEMON
 LDFLAGS   = -lrt -lasound -logg -lvorbis -lFLAC -lavahi-client -lavahi-common -static-libgcc -static-libstdc++
 OBJ      += player/alsaPlayer.o browseZeroConf/browseAvahi.o
 

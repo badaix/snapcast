@@ -20,7 +20,7 @@
 #include <string>
 #include <memory>
 #include "controller.h"
-#if defined(HAS_OGG) || defined(HAS_TREMOR)
+#if defined(HAS_OGG) && (defined(HAS_TREMOR) || defined(HAS_VORBIS))
 #include "decoder/oggDecoder.h"
 #endif
 #include "decoder/pcmDecoder.h"
@@ -105,7 +105,7 @@ void Controller::onMessageReceived(ClientConnection* connection, const msg::Base
 
 		if (headerChunk_->codec == "pcm")
 			decoder_.reset(new PcmDecoder());
-#if defined(HAS_OGG) || defined(HAS_TREMOR)
+#if defined(HAS_OGG) && (defined(HAS_TREMOR) || defined(HAS_VORBIS))
 		else if (headerChunk_->codec == "ogg")
 			decoder_.reset(new OggDecoder());
 #endif
