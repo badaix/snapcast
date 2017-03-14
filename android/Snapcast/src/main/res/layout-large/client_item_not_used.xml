@@ -22,10 +22,10 @@
                 android:id="@+id/ibOverflow"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_alignParentEnd="true"
+                android:layout_alignParentRight="true"
                 android:layout_centerVertical="true"
                 android:background="@null"
-                android:src="@drawable/abc_ic_menu_overflow_material"/>
+                android:src="@drawable/ic_menu_overflow_material"/>
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -44,7 +44,7 @@
                     android:paddingBottom="5dp"
                     android:paddingLeft="5dp"
                     android:paddingTop="5dp"
-                    android:singleLine="true"
+                    android:maxLines="1"
                     android:text="Title"
                     android:textAppearance="?android:attr/textAppearanceMedium"/>
 

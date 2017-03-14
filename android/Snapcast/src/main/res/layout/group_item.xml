@@ -70,7 +70,7 @@
                         android:paddingBottom="1dp"
                         android:paddingLeft="5dp"
                         android:paddingTop="2dp"
-                        android:singleLine="true"
+                        android:maxLines="1"
                         android:text="Stream name"
                         android:textAppearance="?android:attr/textAppearanceMedium"/>
 

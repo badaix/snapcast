@@ -61,9 +61,6 @@ public class NsdHelper {
     }
 
     public void startListening(String serviceType, String serviceName, NsdHelperListener listener) {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN)
-            return;
-
         stopListening();
         this.listener = listener;
         this.serviceName = serviceName;
@@ -76,9 +73,6 @@ public class NsdHelper {
     }
 
     public void stopListening() {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN)
-            return;
-
         if (mDiscoveryListener != null) {
             try {
                 mNsdManager.stopServiceDiscovery(mDiscoveryListener);

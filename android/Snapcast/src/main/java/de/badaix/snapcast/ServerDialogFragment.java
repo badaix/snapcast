@@ -65,8 +65,6 @@ public class ServerDialogFragment extends DialogFragment implements View.OnClick
         View view = inflater.inflate(R.layout.dialog_server, null);
         btnScan = (Button) view.findViewById(R.id.btn_scan);
         btnScan.setOnClickListener(this);
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN)
-            btnScan.setVisibility(View.GONE);
 
         editHost = (EditText) view.findViewById(R.id.host);
         editStreamPort = (EditText) view.findViewById(R.id.stream_port);
@@ -108,9 +106,7 @@ public class ServerDialogFragment extends DialogFragment implements View.OnClick
         NsdHelper.getInstance(getContext()).startListening("_snapcast._tcp.", "Snapcast", new NsdHelper.NsdHelperListener() {
             @Override
             public void onResolved(NsdHelper nsdHelper, NsdServiceInfo serviceInfo) {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
-                    setHost(serviceInfo.getHost().getCanonicalHostName(), serviceInfo.getPort(), serviceInfo.getPort() + 1);
-                }
+                setHost(serviceInfo.getHost().getCanonicalHostName(), serviceInfo.getPort(), serviceInfo.getPort() + 1);
             }
         });
     }

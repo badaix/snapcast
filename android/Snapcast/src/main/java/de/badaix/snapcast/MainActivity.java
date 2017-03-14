@@ -483,10 +483,8 @@ public class MainActivity extends AppCompatActivity implements GroupItem.GroupIt
     @Override
     public void onResolved(NsdHelper nsdHelper, NsdServiceInfo serviceInfo) {
         Log.d(TAG, "resolved: " + serviceInfo);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
-            setHost(serviceInfo.getHost().getCanonicalHostName(), serviceInfo.getPort(), serviceInfo.getPort() + 1);
-            startRemoteControl();
-        }
+        setHost(serviceInfo.getHost().getCanonicalHostName(), serviceInfo.getPort(), serviceInfo.getPort() + 1);
+        startRemoteControl();
         NsdHelper.getInstance(this).stopListening();
     }
 

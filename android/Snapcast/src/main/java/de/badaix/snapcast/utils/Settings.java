@@ -55,35 +55,35 @@ public class Settings {
     public Settings put(String key, String value) {
         SharedPreferences.Editor editor = getPrefs().edit();
         editor.putString(key, value);
-        editor.commit();
+        editor.apply();
         return this;
     }
 
     public Settings put(String key, boolean value) {
         SharedPreferences.Editor editor = getPrefs().edit();
         editor.putBoolean(key, value);
-        editor.commit();
+        editor.apply();
         return this;
     }
 
     public Settings put(String key, float value) {
         SharedPreferences.Editor editor = getPrefs().edit();
         editor.putFloat(key, value);
-        editor.commit();
+        editor.apply();
         return this;
     }
 
     public Settings put(String key, int value) {
         SharedPreferences.Editor editor = getPrefs().edit();
         editor.putInt(key, value);
-        editor.commit();
+        editor.apply();
         return this;
     }
 
     public Settings put(String key, long value) {
         SharedPreferences.Editor editor = getPrefs().edit();
         editor.putLong(key, value);
-        editor.commit();
+        editor.apply();
         return this;
     }
 
