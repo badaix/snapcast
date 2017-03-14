@@ -47,7 +47,8 @@ namespace chronos
 
 	inline static void systemtimeofday(struct timeval *tv)
 	{
-		timeofday<std::chrono::system_clock>(tv);
+		gettimeofday(tv, NULL);
+		//timeofday<std::chrono::system_clock>(tv);
 	}
 
 	inline static void addUs(timeval& tv, int us)
