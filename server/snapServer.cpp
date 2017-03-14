@@ -68,6 +68,7 @@ int main(int argc, char* argv[])
 		Value<size_t> streamBufferValue("", "streamBuffer", "Default stream read buffer [ms]", settings.streamReadMs, &settings.streamReadMs);
 
 		Value<int> bufferValue("b", "buffer", "Buffer [ms]", settings.bufferMs, &settings.bufferMs);
+		Switch muteSwitch("", "sendToMuted", "Send audio to muted clients", &settings.sendAudioToMutedClients);
 		Implicit<int> daemonOption("d", "daemon", "Daemonize\noptional process priority [-20..19]", 0, &processPriority);
 		Value<string> userValue("", "user", "the user[:group] to run snapserver as when daemonized", "");
 
@@ -81,6 +82,7 @@ int main(int argc, char* argv[])
 		 .add(codecValue)
 		 .add(streamBufferValue)
 		 .add(bufferValue)
+		 .add(muteSwitch)
 #ifdef HAS_DAEMON
 		 .add(daemonOption)
 		 .add(userValue)

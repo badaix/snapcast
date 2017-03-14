@@ -58,6 +58,17 @@ void StreamServer::onChunkRead(const PcmStream* pcmStream, const msg::PcmChunk* 
 	std::lock_guard<std::recursive_mutex> mlock(sessionsMutex_);
 	for (auto s : sessions_)
 	{
+		if (!settings_.sendAudioToMutedClients)
+		{
+			GroupPtr group = Config::instance().getGroupFromClient(s->clientId);
+			if (group)
+			{
+				ClientInfoPtr client = group->getClient(s->clientId);
+				if ((client && client->config.volume.muted) || group->muted)
+					return;
+			}
+		}
+
 		if (!s->pcmStream() && isDefaultStream)//->getName() == "default")
 			s->sendAsync(shared_message);
 		else if (s->pcmStream().get() == pcmStream)
