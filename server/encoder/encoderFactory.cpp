@@ -21,6 +21,7 @@
 #if defined(HAS_OGG) && defined(HAS_VORBIS) && defined(HAS_VORBIS_ENC)
 #include "oggEncoder.h"
 #endif
+#if defined(HAS_FLAC)
 #include "flacEncoder.h"
 #include "common/utils/string_utils.h"
 #include "common/snapException.h"
@@ -46,8 +47,10 @@ Encoder* EncoderFactory::createEncoder(const std::string& codecSettings) const
     else if (codec == "ogg")
 		encoder = new OggEncoder(codecOptions);
 #endif
+#if defined(HAS_FLAC)
 	else if (codec == "flac")
 		encoder = new FlacEncoder(codecOptions);
+#endif
 	else
 	{
 		throw SnapException("unknown codec: " + codec);
