@@ -23,6 +23,10 @@
 #include <memory>
 #include <vector>
 #include <sys/time.h>
+
+#ifdef HAS_JSONRPCPP
+#include <jsonrpcpp/json.hpp>
+#else
 #include "externals/json.hpp"
 #include "common/utils/string_utils.h"
 #include "common/utils.h"
