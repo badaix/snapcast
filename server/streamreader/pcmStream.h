@@ -27,10 +27,14 @@
 #include <map>
 #include "streamUri.h"
 #include "encoder/encoder.h"
-#include "externals/json.hpp"
 #include "common/sampleFormat.h"
 #include "message/codecHeader.h"
 
+#ifdef HAS_JSONRPCPP
+#include <jsonrpcpp/json.hpp>
+#else
+#include "externals/json.hpp"
+#endif
 
 class PcmStream;
 

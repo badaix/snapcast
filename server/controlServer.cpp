@@ -16,12 +16,17 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
+#ifdef HAS_JSONRPCPP
+#include <jsonrpcpp/jsonrp.hpp>
+#else
+#include "jsonrp.hpp"
+#endif
+
 #include "controlServer.h"
 #include "message/time.h"
 #include "common/log.h"
 #include "common/utils.h"
 #include "common/snapException.h"
-#include "jsonrp.hpp"
 #include "config.h"
 #include <iostream>
 

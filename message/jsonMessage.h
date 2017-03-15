@@ -20,7 +20,12 @@
 #define JSON_MESSAGE_H
 
 #include "message.h"
+
+#ifdef HAS_JSONRPCPP
+#include <jsonrpcpp/json.hpp>
+#else
 #include "externals/json.hpp"
+#endif
 
 
 using json = nlohmann::json;
