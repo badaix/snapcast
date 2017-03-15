@@ -18,7 +18,9 @@
 
 #include "encoderFactory.h"
 #include "pcmEncoder.h"
+#if defined(HAS_OGG) && defined(HAS_VORBIS) && defined(HAS_VORBIS_ENC)
 #include "oggEncoder.h"
+#endif
 #include "flacEncoder.h"
 #include "common/utils.h"
 #include "common/snapException.h"
@@ -38,10 +40,12 @@ Encoder* EncoderFactory::createEncoder(const std::string& codecSettings) const
 		codecOptions = trim_copy(codec.substr(codec.find(":") + 1));
 		codec = trim_copy(codec.substr(0, codec.find(":")));
 	}
-	if (codec == "ogg")
+    if (codec == "pcm")
+        encoder = new PcmEncoder(codecOptions);
+#if defined(HAS_OGG) && defined(HAS_VORBIS) && defined(HAS_VORBIS_ENC)
+    else if (codec == "ogg")
 		encoder = new OggEncoder(codecOptions);
-	else if (codec == "pcm")
-		encoder = new PcmEncoder(codecOptions);
+#endif
 	else if (codec == "flac")
 		encoder = new FlacEncoder(codecOptions);
 	else
