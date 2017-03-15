@@ -20,11 +20,13 @@
 #include <string>
 #include <memory>
 #include "controller.h"
+#include "decoder/pcmDecoder.h"
 #if defined(HAS_OGG) && (defined(HAS_TREMOR) || defined(HAS_VORBIS))
 #include "decoder/oggDecoder.h"
 #endif
-#include "decoder/pcmDecoder.h"
+#if defined(HAS_FLAC)
 #include "decoder/flacDecoder.h"
+#endif
 #include "timeProvider.h"
 #include "message/time.h"
 #include "message/hello.h"
@@ -109,8 +111,10 @@ void Controller::onMessageReceived(ClientConnection* connection, const msg::Base
 		else if (headerChunk_->codec == "ogg")
 			decoder_.reset(new OggDecoder());
 #endif
+#if defined(HAS_FLAC)
 		else if (headerChunk_->codec == "flac")
 			decoder_.reset(new FlacDecoder());
+#endif
 		else
 			throw SnapException("codec not supported: \"" + headerChunk_->codec + "\"");
 
