@@ -1,10 +1,13 @@
-snapserver (0.11.0~beta-2) unstable; urgency=low
+snapserver (0.11.0) unstable; urgency=low
 
   * Features
+    -Don't send audio to muted clients (Issue #109, #150)
   * Bugfixes
-  * General
+    -Compilation error on recent GCC versions (Issues #146, #170)
+    -Crash when frequently connecting to the control port (Issue #200)
+    -Snapcast App crashes on Android 4.x (Issue #207)
 
- -- Johannes Pohl <johannes.pohl@badaix.de>  Sun, 12 Mar 2017 00:13:37 +0200
+ -- Johannes Pohl <johannes.pohl@badaix.de>  Thu, 16 Mar 2017 00:13:37 +0200
 
 snapserver (0.11.0~beta-1) unstable; urgency=low
 
@@ -14,7 +17,7 @@ snapserver (0.11.0~beta-1) unstable; urgency=low
     -Spotify plugin does not require username and password (PR #181)
     -Spotify plugin is compatible to librespot's pipe backend (PR #158)
     -Clients are organized in Groups
-    -JSON RPC API: Support batch requests
+    -JSON RPC API supports batch requests
   * Bugfixes
     -Resync issue on macOS (Issue #156)
     -Id in JSON RPC API can be String, Number or NULL (Issue #161)
