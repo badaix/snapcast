@@ -63,9 +63,12 @@ void StreamServer::onChunkRead(const PcmStream* pcmStream, const msg::PcmChunk* 
 			GroupPtr group = Config::instance().getGroupFromClient(s->clientId);
 			if (group)
 			{
+				if (group->muted)
+					continue;
+
 				ClientInfoPtr client = group->getClient(s->clientId);
-				if ((client && client->config.volume.muted) || group->muted)
-					return;
+				if (client && client->config.volume.muted)
+					continue;
 			}
 		}
 
