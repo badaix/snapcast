@@ -137,7 +137,7 @@ Unordered list of features that should make it into the v1.0
 - [X] **Endian** independent code
 - [X] **OpenWrt** port Snapclient to OpenWrt
 - [X] **Hi-Res audio** support (like 192kHz 24bit)
-- [ ] **Groups** support multiple Groups of clients ("Zones")
+- [X] **Groups** support multiple Groups of clients ("Zones")
 - [ ] **JSON-RPC** Possibility to add, remove, rename streams
 - [ ] **Protocol specification** Snapcast binary streaming protocol, JSON-RPC protocol
-- [ ] **Ports** Snapclient for Windows, Mac OS X, ...
+- [ ] **Ports** Snapclient for Windows, ~~Mac OS X~~, ...
