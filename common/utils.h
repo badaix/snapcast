@@ -185,7 +185,7 @@ static std::string getOS()
 	os = trim_copy("Android " + getProp("ro.build.version.release"));
 #else
 	os = execGetOutput("lsb_release -d");
-	if (os.find(":") != std::string::npos)
+	if ((os.find(":") != std::string::npos) && (os.find("lsb_release") == std::string::npos))
 		os = trim_copy(os.substr(os.find(":") + 1));
 #endif
 	if (os.empty())
