@@ -34,7 +34,7 @@ Please follow this [guide](doc/build.md) to build Snapcast for
 * [FreeBSD](doc/build.md#freebsd-native)
 * [macOS](doc/build.md#macos-native)
 * [Android](doc/build.md#android-cross-compile)
-* [OpenWrt](doc/build.md#openwrt-cross-compile)
+* [OpenWrt](doc/build.md#openwrtlede-cross-compile)
 * [Buildroot](doc/build.md#buildroot-cross-compile)
   * [Raspberry Pi](doc/build.md#raspberry-pi-cross-compile)
 
