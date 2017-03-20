@@ -1,3 +1,10 @@
+snapclient (0.11.1) unstable; urgency=low
+
+  * Bugfixes
+    -Fix high CPU load
+
+ -- Johannes Pohl <johannes.pohl@badaix.de>  Sun, 19 Mar 2017 00:13:37 +0200
+
 snapclient (0.11.0) unstable; urgency=low
 
   * Features
