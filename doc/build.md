@@ -1,4 +1,4 @@
-#Build Snapcast
+# Build Snapcast
 Clone the Snapcast repository. To do this, you need git.  
 For Debian derivates (e.g. Raspbian, Debian, Ubuntu, Mint):
 
@@ -23,7 +23,7 @@ Next clone the external submodules:
     $ git submodule update --init --recursive
 
 
-##Linux (Native)
+## Linux (Native)
 Install the build tools and required libs:  
 For Debian derivates (e.g. Raspbian, Debian, Ubuntu, Mint):
 
@@ -37,7 +37,7 @@ For Arch derivates:
     $ sudo pacman -S base-devel
     $ sudo pacman -S alsa-lib avahi libvorbis flac alsa-utils
 
-###Build Snapclient and Snapserver
+### Build Snapclient and Snapserver
 `cd` into the Snapcast src-root directory:
 
     $ cd <snapcast dir>
@@ -50,7 +50,7 @@ Install Snapclient and/or Snapserver:
 
 This will copy the client and/or server binary to `/usr/bin` and update init.d/systemd to start the client/server as a daemon.
 
-###Build Snapclient
+### Build Snapclient
 `cd` into the Snapclient src-root directory:
 
     $ cd <snapcast dir>/client
@@ -62,7 +62,7 @@ Install Snapclient
 
 This will copy the client binary to `/usr/bin` and update init.d/systemd to start the client as a daemon.
 
-###Build Snapserver
+### Build Snapserver
 `cd` into the Snapserver src-root directory:
 
     $ cd <snapcast dir>/server
@@ -75,12 +75,12 @@ Install Snapserver
 This will copy the server binary to `/usr/bin` and update init.d/systemd to start the server as a daemon.
 
 
-##FreeBSD (Native)
+## FreeBSD (Native)
 Install the build tools and required libs:  
 
     $ sudo pkg install gmake gcc bash avahi libogg libvorbis flac
 
-###Build Snapserver
+### Build Snapserver
 `cd` into the Snapserver src-root directory:
 
     $ cd <snapcast dir>/server
@@ -100,7 +100,7 @@ For additional command line arguments, add in `/etc/rc.conf`:
 
 Start and stop the server with `sudo service snapserver start` and `sudo service snapserver stop`.
 
-##macOS (Native)
+## macOS (Native)
 
 *Warning: macOS support is experimental*
 
@@ -112,7 +112,7 @@ Start and stop the server with `sudo service snapserver start` and `sudo service
 $ brew install flac libvorbis
 ```
 
-###Build Snapclient
+### Build Snapclient
 `cd` into the Snapclient src-root directory:
 
     $ cd <snapcast dir>/client
@@ -124,7 +124,7 @@ Install Snapclient
 
 This will copy the client binary to `/usr/local/bin` and create a Launch Agent to start the client as a daemon.
 
-###Build Snapserver
+### Build Snapserver
 `cd` into the Snapserver src-root directory:
 
     $ cd <snapcast dir>/server
@@ -136,21 +136,21 @@ Install Snapserver
 
 This will copy the server binary to `/usr/local/bin` and create a Launch Agent to start the server as a daemon.
 
-##Android (Cross compile)
+## Android (Cross compile)
 Cross compilation for Android is done with the [Android NDK](http://developer.android.com/tools/sdk/ndk/index.html) on a Linux host machine.  
 
-###Android NDK setup
+### Android NDK setup
 http://developer.android.com/ndk/guides/standalone_toolchain.html
  1. Download NDK: `https://dl.google.com/android/repository/android-ndk-r13b-linux-x86_64.zip`
  2. Extract to: `/SOME/LOCAL/PATH/android-ndk-r13b`
  3. Setup toolchain somewhere in your home dir (`<android-ndk dir>`):
 
-````
+```
 $ cd /SOME/LOCAL/PATH/android-ndk-r13b/build/tools
 $ ./make_standalone_toolchain.py --arch arm --api 14 --install-dir <android-ndk dir>
-````
+```
 
-###Build Snapclient
+### Build Snapclient
 Edit the first lines in `<snapcast dir>/client/build_android.sh` and in `<snapcast dir>/externals/build_externals_android.sh` to let `NDK_DIR` point to your `<android-ndk dir>`  
 Cross compile and install FLAC, ogg, and tremor (only needed once):
 
@@ -165,11 +165,11 @@ Compile the Snapclient:
 The binaries for `armeabi` and `armeabi-v7a` will be copied into the Android's assets directory (`<snapcast dir>/android/Snapcast/src/main/assets/bin/`) and so will be bundled with the Snapcast App.
 
 
-##OpenWrt/LEDE (Cross compile)
+## OpenWrt/LEDE (Cross compile)
 Cross compilation for OpenWrt is done with the [OpenWrt build system](https://wiki.openwrt.org/about/toolchain) on a Linux host machine.  
 https://wiki.openwrt.org/doc/howto/build
 
-###OpenWrt build system setup
+### OpenWrt build system setup
 https://wiki.openwrt.org/doc/howto/buildroot.exigence
 
 Clone OpenWrt to some place in your home directory (`<buildroot dir>`)
@@ -207,10 +207,10 @@ Build Snapcast:
 
 The packaged `ipk` files are in `<buildroot dir>/bin/ar71xx/packages/base/snap[client|server]_x.x.x_ar71xx.ipk`
 
-##Buildroot (Cross compile)
+## Buildroot (Cross compile)
 This example will show you how to add snapcast to [Buildroot](https://buildroot.org/).
 
-###Buildroot setup
+### Buildroot setup
 Buildroot recommends [keeping customizations outside of the main Buildroot directory](https://buildroot.org/downloads/manual/manual.html#outside-br-custom) which is what this example will walk through.
 
 Clone Buildroot to some place in your home directory (`<buildroot dir>`):
@@ -232,7 +232,7 @@ And finally run the build:
 
     $ cd <buildroot dir> && make BR2_EXTERNAL=<snapcast dir>/buildroot
 
-##Raspberry Pi (Cross compile)
+## Raspberry Pi (Cross compile)
 This example will show you how to add snapcast to [Buildroot](https://buildroot.org/) and compile for Raspberry Pi.
 
 * https://github.com/nickaknudson/snapcast-pi
