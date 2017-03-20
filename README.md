@@ -28,17 +28,17 @@ Installation
 ------------
 You can either build and install snapcast from source, or on debian systems install a prebuild .deb package
 
-###Installation from source
+### Installation from source
 Please follow this [guide](doc/build.md) to build Snapcast for
 * [Linux](doc/build.md#linux-native)
 * [FreeBSD](doc/build.md#freebsd-native)
 * [macOS](doc/build.md#macos-native)
 * [Android](doc/build.md#android-cross-compile)
-* [OpenWrt](doc/build.md#openwrt-cross-compile)
+* [OpenWrt](doc/build.md#openwrtlede-cross-compile)
 * [Buildroot](doc/build.md#buildroot-cross-compile)
   * [Raspberry Pi](doc/build.md#raspberry-pi-cross-compile)
 
-###Install debian packages
+### Install debian packages
 Download the debian package for your CPU architecture from the [latest release page](https://github.com/badaix/snapcast/releases/latest), e.g. for Raspberry pi `snapclient_0.x.x_armhf.deb`
 Install the package:
 
