@@ -2,7 +2,7 @@ snapclient (0.11.1) unstable; urgency=low
 
   * Bugfixes
     -Snapserver produces high CPU load on some systems (Issue #174)
-	-Snapserver compile error on FreeBSD
+    -Snapserver compile error on FreeBSD
   * General
     -Updated Markdown files (PR #216, #218)
 
