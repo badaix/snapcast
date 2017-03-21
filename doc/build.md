@@ -188,6 +188,7 @@ Build
     $ make
 
 Within the OpenWrt directory create symbolic links to the Snapcast source directory and to the OpenWrt Makefile:
+
     $ mkdir -p <buildroot dir>/package/sxx/snapcast
     $ cd <buildroot dir>/package/sxx/snapcast
     $ git clone https://github.com/badaix/snapcast.git
