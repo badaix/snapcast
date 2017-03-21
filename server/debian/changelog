@@ -1,9 +1,12 @@
 snapserver (0.11.1) unstable; urgency=low
 
   * Bugfixes
-    -Fix high CPU load
+    -Snapserver produces high CPU load on some systems (Issue #174)
+	-Snapserver compile error on FreeBSD
+  * General
+    -Updated Markdown files (PR #216, #218)
 
- -- Johannes Pohl <johannes.pohl@badaix.de>  Sun, 19 Mar 2017 00:13:37 +0200
+ -- Johannes Pohl <johannes.pohl@badaix.de>  Tue, 21 Mar 2017 00:13:37 +0200
 
 snapserver (0.11.0) unstable; urgency=low
 
