@@ -54,7 +54,7 @@ EXTERN_C const PROPERTYKEY DECLSPEC_SELECTANY PKEY_Device_FriendlyName = { { 0xa
 
 #define CHECK_HR(hres) if(FAILED(hres)){stringstream ss;ss<<"HRESULT fault status: "<<hex<<(hres)<<" line "<<dec<<__LINE__<<endl;throw SnapException(ss.str());}
 
-WASAPIPlayer::WASAPIPlayer(const PcmDevice& pcmDevice, Stream* stream)
+WASAPIPlayer::WASAPIPlayer(const PcmDevice& pcmDevice, std::shared_ptr<Stream> stream)
 	: Player(pcmDevice, stream)
 {
 	HRESULT hr = CoInitializeEx(

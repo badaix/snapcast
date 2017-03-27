@@ -314,7 +314,7 @@ static long uptime()
 {
 #if defined(WINDOWS)
 	return std::chrono::duration_cast<std::chrono::seconds>(std::chrono::milliseconds(GetTickCount())).count();
-#elseif defined(FREEBSD)
+#elif defined(FREEBSD)
 	std::string uptime = execGetOutput("sysctl kern.boottime");
 	if ((uptime.find(" sec = ") != std::string::npos) && (uptime.find(",") != std::string::npos))
 	{

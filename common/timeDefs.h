@@ -31,6 +31,7 @@
 
 #else
 
+#include <Windows.h>
 #include <WinSock2.h>
 // from the GNU C library implementation of sys/time.h
 # define timersub(a, b, result)                                               \
@@ -47,9 +48,6 @@
 
 namespace chronos
 {
-	typedef std::chrono::system_clock clk;
-	typedef std::chrono::time_point<clk> time_point_clk;
-
 	#ifdef WINDOWS
 	// Epoch is January 1st 1601
 	// Period is 100ns

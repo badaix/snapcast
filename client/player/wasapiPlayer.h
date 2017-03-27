@@ -6,7 +6,7 @@
 class WASAPIPlayer : public Player
 {
 public:
-	WASAPIPlayer(const PcmDevice& pcmDevice, Stream* stream);
+	WASAPIPlayer(const PcmDevice& pcmDevice, std::shared_ptr<Stream> stream);
 	virtual ~WASAPIPlayer();
 	
 	static std::vector<PcmDevice> pcm_list(void);
