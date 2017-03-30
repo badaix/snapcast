@@ -25,7 +25,7 @@
 struct PcmDevice
 {
 	PcmDevice() : 
-		idx(-1)
+		idx(-1), name("default")
 	{
 	};
 	
