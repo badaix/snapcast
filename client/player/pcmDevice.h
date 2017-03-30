@@ -24,7 +24,7 @@
 
 struct PcmDevice
 {
-	PcmDevice() : idx(-1){};
+	PcmDevice() : idx(-1), name("default") {};
 	int idx;
 	std::string name;
 	std::string description;
