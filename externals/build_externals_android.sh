@@ -1,6 +1,6 @@
 export NDK_DIR="/home/johannes/Develop/android-toolchain-arm-14"
-export CC=$NDK_DIR/bin/arm-linux-androideabi-gcc
-export CXX=$NDK_DIR/bin/arm-linux-androideabi-g++
+export CC=$NDK_DIR/bin/arm-linux-androideabi-clang
+export CXX=$NDK_DIR/bin/arm-linux-androideabi-clang++
 export CPPFLAGS="-U_ARM_ASSEM_ -I$NDK_DIR/include"
 
 cd flac
@@ -13,13 +13,6 @@ make clean
 cd ../ogg
 ./autogen.sh
 ./configure --host=arm --prefix=$NDK_DIR
-make
-make install
-make clean
-
-cd ../vorbis
-./autogen.sh
-./configure --host=arm --prefix=$NDK_DIR --with-ogg=$NDK_DIR
 make
 make install
 make clean
