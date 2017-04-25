@@ -7,7 +7,7 @@
 SNAPCAST_VERSION = master
 SNAPCAST_SITE = https://github.com/badaix/snapcast
 SNAPCAST_SITE_METHOD = git
-SNAPCAST_DEPENDENCIES = libogg alsa-lib #libstdcpp libavahi-client libatomic libflac libvorbisidec
+SNAPCAST_DEPENDENCIES = libogg alsa-lib # libstdcpp libavahi-client libatomic libflac libvorbisidec
 SNAPCAST_LICENSE = GPLv3
 SNAPCAST_LICENSE_FILES = COPYING
 
@@ -21,9 +21,7 @@ define SNAPCAST_EXTRACT_CMDS
 endef
 
 define SNAPCAST_BUILD_CMDS
-	$(TARGET_CONFIGURE_OPTS) $(MAKE) -C $(@D) TARGET=BUILDROOT
-#	$(TARGET_CONFIGURE_OPTS) $(MAKE) -C $(@D)/client TARGET=BUILDROOT
-#	$(TARGET_CONFIGURE_OPTS) $(MAKE) -C $(@D)/server TARGET=BUILDROOT
+	$(TARGET_CONFIGURE_OPTS) $(MAKE) -C $(@D) TARGET=BUILDROOT #build server and client
 endef
 
 define SNAPCAST_INSTALL_TARGET_CMDS
