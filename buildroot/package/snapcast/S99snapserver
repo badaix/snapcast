@@ -1,14 +1,14 @@
 #! /bin/sh
 
 start() {
-	echo -n "Starting snapclient: "
-	start-stop-daemon -S -q -b -x snapclient
+	echo -n "Starting snapserver: "
+	start-stop-daemon -S -q -b -x snapserver
 	[ $? = 0 ] && echo "OK" || echo "FAIL"
 }
 
 stop() {
-	echo -n "Stopping snapclient: "
-	start-stop-daemon -K -q -x snapclient
+	echo -n "Stopping snapserver: "
+	start-stop-daemon -K -q -x snapserver
 	[ $? = 0 ] && echo "OK" || echo "FAIL"
 }
 
