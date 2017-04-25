@@ -7,7 +7,7 @@
 SNAPCAST_VERSION = master
 SNAPCAST_SITE = https://github.com/badaix/snapcast
 SNAPCAST_SITE_METHOD = git
-SNAPCAST_DEPENDENCIES = libogg alsa-lib # libstdcpp libavahi-client libatomic libflac libvorbisidec
+SNAPCAST_DEPENDENCIES = libogg alsa-lib #libstdcpp libavahi-client libatomic libflac libvorbisidec
 SNAPCAST_LICENSE = GPLv3
 SNAPCAST_LICENSE_FILES = COPYING
 
@@ -21,12 +21,16 @@ define SNAPCAST_EXTRACT_CMDS
 endef
 
 define SNAPCAST_BUILD_CMDS
-	$(TARGET_CONFIGURE_OPTS) $(MAKE) -C $(@D)/client TARGET=BUILDROOT
+	$(TARGET_CONFIGURE_OPTS) $(MAKE) -C $(@D) TARGET=BUILDROOT
+#	$(TARGET_CONFIGURE_OPTS) $(MAKE) -C $(@D)/client TARGET=BUILDROOT
+#	$(TARGET_CONFIGURE_OPTS) $(MAKE) -C $(@D)/server TARGET=BUILDROOT
 endef
 
 define SNAPCAST_INSTALL_TARGET_CMDS
 	$(INSTALL) -m 0755 -D $(@D)/client/snapclient $(TARGET_DIR)/usr/bin/snapclient
+	$(INSTALL) -m 0755 -D $(@D)/server/snapserver $(TARGET_DIR)/usr/bin/snapserver
 	$(INSTALL) -m 0755 -D $(SNAPCAST_PKGDIR)/S99snapclient $(TARGET_DIR)/etc/init.d/S99snapclient
+	$(INSTALL) -m 0755 -D $(SNAPCAST_PKGDIR)/S99snapserver $(TARGET_DIR)/etc/init.d/S99snapserver
 endef
 
 $(eval $(generic-package))
