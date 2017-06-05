@@ -22,6 +22,7 @@
 #include <fcntl.h>
 #include "processStream.h"
 #include "common/snapException.h"
+#include "common/utils/string_utils.h"
 #include "common/utils.h"
 #include "common/log.h"
 
@@ -120,7 +121,7 @@ void ProcessStream::onStderrMsg(const char* buffer, size_t n)
 {
 	if (logStderr_)
 	{
-		string line = trim_copy(string(buffer, n));
+		string line = utils::string::trim_copy(string(buffer, n));
 		if ((line.find('\0') == string::npos) && !line.empty())
 			logO << "(" << getName() << ") " << line << "\n";
 	}

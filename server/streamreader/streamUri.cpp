@@ -17,12 +17,13 @@
 ***/
 
 #include "streamUri.h"
-#include "common/utils.h"
+#include "common/utils/string_utils.h"
 #include "common/strCompat.h"
 #include "common/log.h"
 
 
 using namespace std;
+namespace strutils = utils::string;
 
 
 StreamUri::StreamUri(const std::string& streamUri)
@@ -32,13 +33,13 @@ StreamUri::StreamUri(const std::string& streamUri)
 // would be more elegant with regex. Not yet supported on my dev machine's gcc 4.8 :(
 	logD << "StreamUri: " << streamUri << "\n";
 	size_t pos;
-	uri = trim_copy(streamUri);
+	uri = strutils::trim_copy(streamUri);
 	while (!uri.empty() && ((uri[0] == '\'') || (uri[0] == '"')))
 		uri = uri.substr(1);
 	while (!uri.empty() && ((uri[uri.length()-1] == '\'') || (uri[uri.length()-1] == '"')))
 		uri = uri.substr(0, this->uri.length()-1);
 
-	string decodedUri = uriDecode(uri);
+	string decodedUri = strutils::uriDecode(uri);
 	logD << "StreamUri: " << decodedUri << "\n";
 
 	string tmp(decodedUri);
@@ -46,7 +47,7 @@ StreamUri::StreamUri(const std::string& streamUri)
 	pos = tmp.find(':');
 	if (pos == string::npos)
 		throw invalid_argument("missing ':'");
-	scheme = trim_copy(tmp.substr(0, pos));
+	scheme = strutils::trim_copy(tmp.substr(0, pos));
 	tmp = tmp.substr(pos + 1);
 	logD << "scheme: '" << scheme << "' tmp: '" << tmp << "'\n";
 
@@ -57,7 +58,7 @@ StreamUri::StreamUri(const std::string& streamUri)
 	pos = tmp.find('/');
 	if (pos == string::npos)
 		throw invalid_argument("missing path separator: '/'");
-	host = trim_copy(tmp.substr(0, pos));
+	host = strutils::trim_copy(tmp.substr(0, pos));
 	tmp = tmp.substr(pos);
 	path = tmp;
 	logD << "host: '" << host << "' tmp: '" << tmp << "' path: '" << path << "'\n";
@@ -66,7 +67,7 @@ StreamUri::StreamUri(const std::string& streamUri)
 	if (pos == string::npos)
 		return;
 
-	path = trim_copy(tmp.substr(0, pos));
+	path = strutils::trim_copy(tmp.substr(0, pos));
 	tmp = tmp.substr(pos + 1);
 	string queryStr = tmp;
 	logD << "path: '" << path << "' tmp: '" << tmp << "' query: '" << queryStr << "'\n";
@@ -76,18 +77,18 @@ StreamUri::StreamUri(const std::string& streamUri)
 	{
 		queryStr = tmp.substr(0, pos);
 		tmp = tmp.substr(pos + 1);
-		fragment = trim_copy(tmp);
+		fragment = strutils::trim_copy(tmp);
 		logD << "query: '" << queryStr << "' fragment: '" << fragment << "' tmp: '" << tmp << "'\n";
 	}
 
-	vector<string> keyValueList = split(queryStr, '&');
+	vector<string> keyValueList = strutils::split(queryStr, '&');
 	for (auto& kv: keyValueList)
 	{
 		pos = kv.find('=');
 		if (pos != string::npos)
 		{
-			string key = trim_copy(kv.substr(0, pos));
-			string value = trim_copy(kv.substr(pos+1));
+			string key = strutils::trim_copy(kv.substr(0, pos));
+			string value = strutils::trim_copy(kv.substr(pos+1));
 			query[key] = value;
 		}
 	}

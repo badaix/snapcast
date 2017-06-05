@@ -22,6 +22,7 @@
 
 #include "sampleFormat.h"
 #include "common/strCompat.h"
+#include "common/utils/string_utils.h"
 #include "common/utils.h"
 #include "common/log.h"
 
@@ -57,7 +58,7 @@ string SampleFormat::getFormat() const
 void SampleFormat::setFormat(const std::string& format)
 {
 	std::vector<std::string> strs;
-	strs = split(format, ':');
+	strs = utils::string::split(format, ':');
 	if (strs.size() == 3)
 		setFormat(
 		    cpt::stoul(strs[0]),

@@ -18,6 +18,7 @@
 
 #include "spotifyStream.h"
 #include "common/snapException.h"
+#include "common/utils/string_utils.h"
 #include "common/utils.h"
 #include "common/log.h"
 
@@ -101,7 +102,7 @@ void SpotifyStream::onStderrMsg(const char* buffer, size_t n)
 	// 2016-11-03 09-00-18 [out] INFO:librespot::session: Connecting to AP lon3-accesspoint-a34.ap.spotify.com:443
 	// 2016-11-03 09-00-18 [out] INFO:librespot::session: Authenticated !
 	watchdog_->trigger();
-	string logmsg = trim_copy(string(buffer, n));
+	string logmsg = utils::string::trim_copy(string(buffer, n));
 	if ((logmsg.find("allocated stream") == string::npos) &&
 		(logmsg.find("Got channel") == string::npos) &&
 		(logmsg.find('\0') == string::npos) &&

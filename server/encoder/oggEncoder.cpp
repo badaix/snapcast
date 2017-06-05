@@ -22,6 +22,7 @@
 #include "oggEncoder.h"
 #include "common/snapException.h"
 #include "common/strCompat.h"
+#include "common/utils/string_utils.h"
 #include "common/utils.h"
 #include "common/log.h"
 
@@ -144,11 +145,11 @@ void OggEncoder::initEncoder()
 {
 	if (codecOptions_.find(":") == string::npos)
 		throw SnapException("Invalid codec options: \"" + codecOptions_ + "\"");
-	string mode = trim_copy(codecOptions_.substr(0, codecOptions_.find(":")));
+	string mode = utils::string::trim_copy(codecOptions_.substr(0, codecOptions_.find(":")));
 	if (mode != "VBR")
 		throw SnapException("Unsupported codec mode: \"" + mode + "\". Available: \"VBR\"");
 
-	string qual = trim_copy(codecOptions_.substr(codecOptions_.find(":") + 1));
+	string qual = utils::string::trim_copy(codecOptions_.substr(codecOptions_.find(":") + 1));
 	double quality = 1.0;
 	try
 	{

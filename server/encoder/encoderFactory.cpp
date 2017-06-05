@@ -20,7 +20,7 @@
 #include "pcmEncoder.h"
 #include "oggEncoder.h"
 #include "flacEncoder.h"
-#include "common/utils.h"
+#include "common/utils/string_utils.h"
 #include "common/snapException.h"
 #include "common/log.h"
 
@@ -35,8 +35,8 @@ Encoder* EncoderFactory::createEncoder(const std::string& codecSettings) const
 	std::string codecOptions;
 	if (codec.find(":") != std::string::npos)
 	{
-		codecOptions = trim_copy(codec.substr(codec.find(":") + 1));
-		codec = trim_copy(codec.substr(0, codec.find(":")));
+		codecOptions = utils::string::trim_copy(codec.substr(codec.find(":") + 1));
+		codec = utils::string::trim_copy(codec.substr(0, codec.find(":")));
 	}
 	if (codec == "ogg")
 		encoder = new OggEncoder(codecOptions);

@@ -25,6 +25,7 @@
 #include "common/daemon.h"
 #endif
 #include "common/timeDefs.h"
+#include "common/utils/string_utils.h"
 #include "common/signalHandler.h"
 #include "common/snapException.h"
 #include "common/sampleFormat.h"
@@ -157,7 +158,7 @@ int main(int argc, char* argv[])
 				if (userValue.getValue().empty())
 					std::invalid_argument("user must not be empty");
 
-				vector<string> user_group = split(userValue.getValue(), ':');
+				vector<string> user_group = utils::string::split(userValue.getValue(), ':');
 				user = user_group[0];
 				if (user_group.size() > 1)
 					group = user_group[1];

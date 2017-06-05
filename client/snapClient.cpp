@@ -171,7 +171,7 @@ int main (int argc, char **argv)
 				if (userValue.getValue().empty())
 					std::invalid_argument("user must not be empty");
 
-				vector<string> user_group = split(userValue.getValue(), ':');
+				vector<string> user_group = utils::string::split(userValue.getValue(), ':');
 				user = user_group[0];
 				if (user_group.size() > 1)
 					group = user_group[1];

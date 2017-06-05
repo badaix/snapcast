@@ -18,6 +18,7 @@
 
 #include "airplayStream.h"
 #include "common/snapException.h"
+#include "common/utils/string_utils.h"
 #include "common/utils.h"
 #include "common/log.h"
 
@@ -68,7 +69,7 @@ void AirplayStream::initExeAndPath(const std::string& filename)
 
 void AirplayStream::onStderrMsg(const char* buffer, size_t n)
 {
-	string logmsg = trim_copy(string(buffer, n));
+	string logmsg = utils::string::trim_copy(string(buffer, n));
 	if (logmsg.empty())
 		return;
 	logO << "(" << getName() << ") " << logmsg << "\n";
