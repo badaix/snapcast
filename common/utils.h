@@ -308,10 +308,12 @@ static std::string getMacAddress(int sock)
 }
 
 
-static std::string getClientId(const std::string defaultId = "")
+static std::string getHostId(const std::string defaultId = "")
 {
 	std::string result = defaultId;
-	if (!result.empty())
+	/// the Android API will return "02:00:00:00:00:00" for WifiInfo.getMacAddress(). 
+	/// Maybe this could also happen with native code
+	if (!result.empty() && (result != "02:00:00:00:00:00") && (result != "00:00:00:00:00:00"))
 		return result;
 
 #ifdef ANDROID
@@ -320,6 +322,7 @@ static std::string getClientId(const std::string defaultId = "")
 		return result;
 #endif
 
+	/// The host name should be unique enough in a LAN
 	return getHostName();
 }
 

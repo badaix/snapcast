@@ -39,7 +39,8 @@
 /// Forwards PCM data to the audio player
 /**
  * Sets up a connection to the server (using ClientConnection)
- * Sets up the audio decoder and player. Decodes audio feeds PCM to the audio stream buffer
+ * Sets up the audio decoder and player. 
+ * Decodes audio (message_type::kWireChunk) and feeds PCM to the audio stream buffer
  * Does timesync with the server
  */
 class Controller : public MessageReceiver

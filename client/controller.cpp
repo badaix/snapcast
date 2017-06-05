@@ -182,9 +182,12 @@ void Controller::worker()
 		{
 			clientConnection_->start();
 
-			msg::Hello hello(clientConnection_->getMacAddress(), instance_);
+			/// Say hello to the server
+			string macAddress = clientConnection_->getMacAddress();
+			msg::Hello hello(macAddress, ::getHostId(macAddress), instance_);
 			clientConnection_->send(&hello);
 
+			/// Do initial time sync with the server
 			msg::Time timeReq;
 			for (size_t n=0; n<50 && active_; ++n)
 			{
@@ -197,6 +200,7 @@ void Controller::worker()
 			}
 			logO << "diff to server [ms]: " << (float)TimeProvider::getInstance().getDiffToServer<chronos::usec>().count() / 1000.f << "\n";
 
+			/// Main loop
 			while (active_)
 			{
 				for (size_t n=0; n<10 && active_; ++n)

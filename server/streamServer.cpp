@@ -467,7 +467,7 @@ void StreamServer::onMessageReceived(StreamSession* connection, const msg::BaseM
 	{
 		msg::Hello helloMsg;
 		helloMsg.deserialize(baseMessage, buffer);
-		connection->clientId = helloMsg.getClientId();
+		connection->clientId = helloMsg.getUniqueId();
 		logO << "Hello from " << connection->clientId << ", host: " << helloMsg.getHostName() << ", v" << helloMsg.getVersion()
 			<< ", ClientName: " << helloMsg.getClientName() << ", OS: " << helloMsg.getOS() << ", Arch: " << helloMsg.getArch()
 			<< ", Protocol version: " << helloMsg.getProtocolVersion() << "\n";
