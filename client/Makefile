@@ -23,7 +23,7 @@ endif
 
 ifeq ($(TARGET), ANDROID)
 
-CXX       = $(NDK_DIR)/bin/arm-linux-androideabi-g++
+CXX       = $(NDK_DIR)/bin/arm-linux-androideabi-clang++
 STRIP     = $(NDK_DIR)/bin/arm-linux-androideabi-strip
 CXXFLAGS += -pthread -DANDROID -DNO_CPP11_STRING -fPIC -DHAS_TREMOR -DHAS_OPENSL -I$(NDK_DIR)/include
 LDFLAGS   = -L$(NDK_DIR)/lib -pie -lvorbisidec -logg -lFLAC -lOpenSLES 
