@@ -83,7 +83,10 @@ void ControlServer::onMessageReceived(ControlSession* connection, const std::str
 		{
 			if (it->get() == connection)
 			{
-				sessions_.erase(it);
+				/// delete in a thread to avoid deadlock
+				auto func = [&](std::shared_ptr<ControlSession> s)->void{sessions_.erase(s);};
+				std::thread t(func, *it);
+				t.detach();
 				break;
 			}
 		}

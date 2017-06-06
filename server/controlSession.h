@@ -78,8 +78,8 @@ protected:
 	std::atomic<bool> active_;
 	mutable std::recursive_mutex activeMutex_;
 	mutable std::recursive_mutex socketMutex_;
-	std::thread* readerThread_;
-	std::thread* writerThread_;
+	std::thread readerThread_;
+	std::thread writerThread_;
 	std::shared_ptr<tcp::socket> socket_;
 	ControlMessageReceiver* messageReceiver_;
 	Queue<std::string> messages_;

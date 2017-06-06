@@ -45,8 +45,8 @@ void ControlSession::start()
 		std::lock_guard<std::recursive_mutex> activeLock(activeMutex_);
 		active_ = true;
 	}
-	readerThread_ = new thread(&ControlSession::reader, this);
-	writerThread_ = new thread(&ControlSession::writer, this);
+	readerThread_ = thread(&ControlSession::reader, this);
+	writerThread_ = thread(&ControlSession::writer, this);
 }
 
 
@@ -66,25 +66,21 @@ void ControlSession::stop()
 			socket_->close(ec);
 			if (ec) logE << "Error in socket close: " << ec.message() << "\n";
 		}
-		if (readerThread_)
+		if (readerThread_.joinable())
 		{
 			logD << "joining readerThread\n";
-			readerThread_->join();
-			delete readerThread_;
+			readerThread_.join();
 		}
-		if (writerThread_)
+		if (writerThread_.joinable())
 		{
 			logD << "joining writerThread\n";
 			messages_.abort_wait();
-			writerThread_->join();
-			delete writerThread_;
+			writerThread_.join();
 		}
 	}
 	catch(...)
 	{
 	}
-	readerThread_ = NULL;
-	writerThread_ = NULL;
 	socket_ = NULL;
 	logD << "ControlSession stopped\n";
 }
