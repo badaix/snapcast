@@ -48,6 +48,8 @@
 #ifdef MACOS
 #include <ifaddrs.h>
 #include <net/if_dl.h>
+#include <IOKit/IOCFPlugIn.h>
+#include <IOKit/IOTypes.h>
 #endif
 
 
@@ -310,17 +312,28 @@ static std::string getMacAddress(int sock)
 
 static std::string getHostId(const std::string defaultId = "")
 {
-	std::string result = defaultId;
+	std::string result = "";
+#ifdef MACOS
+	/// https://stackoverflow.com/questions/933460/unique-hardware-id-in-mac-os-x
+	/// About this Mac, Hardware-UUID
+	char buf[64];
+	io_registry_entry_t ioRegistryRoot = IORegistryEntryFromPath(kIOMasterPortDefault, "IOService:/");
+	CFStringRef uuidCf = (CFStringRef) IORegistryEntryCreateCFProperty(ioRegistryRoot, CFSTR(kIOPlatformUUIDKey), kCFAllocatorDefault, 0);
+	IOObjectRelease(ioRegistryRoot);
+	if (CFStringGetCString(uuidCf, buf, 64, kCFStringEncodingMacRoman))
+		result = buf;
+	CFRelease(uuidCf);
+#elif ANDROID
+	result = getProp("ro.serialno");
+#endif
+	if (!result.empty())
+		return result;
+
+	result = defaultId;
 	/// the Android API will return "02:00:00:00:00:00" for WifiInfo.getMacAddress(). 
 	/// Maybe this could also happen with native code
 	if (!result.empty() && (result != "02:00:00:00:00:00") && (result != "00:00:00:00:00:00"))
 		return result;
-
-#ifdef ANDROID
-	result = getProp("ro.serialno");
-	if (!result.empty())
-		return result;
-#endif
 
 	/// The host name should be unique enough in a LAN
 	return getHostName();

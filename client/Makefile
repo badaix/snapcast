@@ -47,7 +47,7 @@ else ifeq ($(TARGET), MACOS)
 CXX       = g++
 STRIP     = strip
 CXXFLAGS += -DHAS_OGG -DHAS_COREAUDIO -DFREEBSD -DMACOS -DHAS_BONJOUR -DHAS_DAEMON -I/usr/local/include -Wno-unused-local-typedef -Wno-deprecated
-LDFLAGS   = -logg -lvorbis -lFLAC -L/usr/local/lib -framework AudioToolbox -framework CoreFoundation
+LDFLAGS   = -logg -lvorbis -lFLAC -L/usr/local/lib -framework AudioToolbox -framework CoreFoundation -framework IOKit
 OBJ      += player/coreAudioPlayer.o browseZeroConf/browseBonjour.o
 
 else

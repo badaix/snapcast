@@ -49,7 +49,7 @@ else ifeq ($(TARGET), MACOS)
 CXX       = g++
 STRIP     = strip
 CXXFLAGS += -DFREEBSD -DMACOS -DHAS_BONJOUR -DHAS_DAEMON -Wno-deprecated -I/usr/local/include
-LDFLAGS  += -L/usr/local/lib 
+LDFLAGS  += -L/usr/local/lib -framework CoreFoundation -framework IOKit
 OBJ      += publishZeroConf/publishBonjour.o
 
 else
