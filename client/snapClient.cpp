@@ -89,6 +89,7 @@ int main (int argc, char **argv)
 		Implicit<int> daemonOption("d", "daemon", "daemonize, optional process priority [-20..19]", -3, &processPriority);
 		Value<int> latencyValue("", "latency", "latency of the soundcard", 0, &latency);
 		Value<size_t> instanceValue("i", "instance", "instance id", 1, &instance);
+		Value<string> clientIdValue("", "clientID", "unique client id", "");
 		Value<string> userValue("", "user", "the user[:group] to run snapclient as when daemonized");
 
 		OptionParser op("Allowed options");
@@ -105,6 +106,7 @@ int main (int argc, char **argv)
 		 .add(userValue)
 #endif
 		 .add(latencyValue)
+		 .add(clientIdValue)
 		 .add(instanceValue);
 
 		try
@@ -222,7 +224,7 @@ int main (int argc, char **argv)
 #endif
 		}
 
-		std::unique_ptr<Controller> controller(new Controller(instance));
+		std::unique_ptr<Controller> controller(new Controller(clientIdValue.getValue(), instance));
 		if (!g_terminated)
 		{
 			logO << "Latency: " << latency << "\n";

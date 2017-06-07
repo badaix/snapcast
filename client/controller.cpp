@@ -34,14 +34,15 @@
 using namespace std;
 
 
-Controller::Controller(size_t instance) : MessageReceiver(), 
-	instance_(instance), 
-	active_(false), 
-	latency_(0), 
-	stream_(nullptr), 
-	decoder_(nullptr), 
-	player_(nullptr), 
-	serverSettings_(nullptr), 
+Controller::Controller(const std::string& clientId, size_t instance) : MessageReceiver(), 
+	clientId_(clientId),
+	instance_(instance),
+	active_(false),
+	latency_(0),
+	stream_(nullptr),
+	decoder_(nullptr),
+	player_(nullptr),
+	serverSettings_(nullptr),
 	asyncException_(false)
 {
 }
@@ -184,7 +185,9 @@ void Controller::worker()
 
 			/// Say hello to the server
 			string macAddress = clientConnection_->getMacAddress();
-			msg::Hello hello(macAddress, ::getHostId(macAddress), instance_);
+			if (clientId_.empty())
+				clientId_ = ::getHostId(macAddress);
+			msg::Hello hello(macAddress, clientId_, instance_);
 			clientConnection_->send(&hello);
 
 			/// Do initial time sync with the server

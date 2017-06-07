@@ -325,7 +325,12 @@ static std::string getHostId(const std::string defaultId = "")
 	CFRelease(uuidCf);
 #elif ANDROID
 	result = getProp("ro.serialno");
+#else
+	std::ifstream infile("/var/lib/dbus/machine-id");
+	if (infile.good())
+		std::getline(infile, result);
 #endif
+	strutils::trim(result);
 	if (!result.empty())
 		return result;
 
