@@ -34,8 +34,8 @@
 using namespace std;
 
 
-Controller::Controller(const std::string& clientId, size_t instance) : MessageReceiver(), 
-	clientId_(clientId),
+Controller::Controller(const std::string& hostId, size_t instance) : MessageReceiver(), 
+	hostId_(hostId),
 	instance_(instance),
 	active_(false),
 	latency_(0),
@@ -177,6 +177,10 @@ void Controller::worker()
 {
 	active_ = true;
 
+	string macAddress = clientConnection_->getMacAddress();
+	if (hostId_.empty())
+		hostId_ = ::getHostId(macAddress);
+
 	while (active_)
 	{
 		try
@@ -184,10 +188,7 @@ void Controller::worker()
 			clientConnection_->start();
 
 			/// Say hello to the server
-			string macAddress = clientConnection_->getMacAddress();
-			if (clientId_.empty())
-				clientId_ = ::getHostId(macAddress);
-			msg::Hello hello(macAddress, clientId_, instance_);
+			msg::Hello hello(macAddress, hostId_, instance_);
 			clientConnection_->send(&hello);
 
 			/// Do initial time sync with the server

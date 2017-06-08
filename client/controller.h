@@ -61,7 +61,7 @@ public:
 private:
 	void worker();
 	bool sendTimeSyncMessage(long after = 1000);
-	std::string clientId_;
+	std::string hostId_;
 	size_t instance_;
 	std::atomic<bool> active_;
 	std::thread controllerThread_;
