@@ -177,15 +177,15 @@ void Controller::worker()
 {
 	active_ = true;
 
-	string macAddress = clientConnection_->getMacAddress();
-	if (hostId_.empty())
-		hostId_ = ::getHostId(macAddress);
-
 	while (active_)
 	{
 		try
 		{
 			clientConnection_->start();
+
+			string macAddress = clientConnection_->getMacAddress();
+			if (hostId_.empty())
+				hostId_ = ::getHostId(macAddress);
 
 			/// Say hello to the server
 			msg::Hello hello(macAddress, hostId_, instance_);
