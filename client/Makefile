@@ -1,3 +1,19 @@
+#    This file is part of snapcast
+#   Copyright (C) 2014-2017  Johannes Pohl
+#
+#   This program is free software: you can redistribute it and/or modify
+#   it under the terms of the GNU General Public License as published by
+#   the Free Software Foundation, either version 3 of the License, or
+#   (at your option) any later version.
+#
+#   This program is distributed in the hope that it will be useful,
+#   but WITHOUT ANY WARRANTY; without even the implied warranty of
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#   GNU General Public License for more details.
+#
+#   You should have received a copy of the GNU General Public License
+#   along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 VERSION = 0.11.1
 TARGET  = snapclient
 ifeq ($(TARGET), FREEBSD)
@@ -25,7 +41,7 @@ ifeq ($(TARGET), ANDROID)
 
 CXX       = $(NDK_DIR)/bin/arm-linux-androideabi-clang++
 STRIP     = $(NDK_DIR)/bin/arm-linux-androideabi-strip
-CXXFLAGS += -pthread -DANDROID -DNO_CPP11_STRING -fPIC -DHAS_TREMOR -DHAS_OPENSL -I$(NDK_DIR)/include
+CXXFLAGS += -march=armv7 -pthread -DANDROID -DNO_CPP11_STRING -fPIC -DHAS_TREMOR -DHAS_OPENSL -I$(NDK_DIR)/include
 LDFLAGS   = -L$(NDK_DIR)/lib -pie -lvorbisidec -logg -lFLAC -lOpenSLES 
 OBJ      += player/openslPlayer.o 
 
@@ -64,7 +80,14 @@ endif
 BIN = snapclient
 
 
-all:	$(TARGET)
+all:	check-env $(TARGET)
+
+check-env:
+ifeq ($(TARGET), ANDROID)
+ifndef NDK_DIR
+	$(error android NDK_DIR is not set)
+endif
+endif
 
 $(TARGET): $(OBJ)
 	$(CXX) $(CXXFLAGS) -o $(BIN) $(OBJ) $(LDFLAGS)
