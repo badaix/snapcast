@@ -1,5 +1,9 @@
-export NDK_DIR="/home/johannes/Develop/android-toolchain-arm-14"
-export ADD_CFLAGS="-march=armv7"
+export NDK_DIR="/home/johannes/Develop/android-toolchain-arm"
+export ARCH=arm
 make clean; make TARGET=ANDROID -j 4; cp ./snapclient ../android/Snapcast/src/main/assets/bin/armeabi/
-export ADD_CFLAGS="-march=armv7-a"
-make clean; make TARGET=ANDROID -j 4; cp ./snapclient ../android/Snapcast/src/main/assets/bin/armeabi-v7a/
+export NDK_DIR="/home/johannes/Develop/android-toolchain-mips"
+export ARCH=mips
+make clean; make TARGET=ANDROID -j 4; cp ./snapclient ../android/Snapcast/src/main/assets/bin/mips/
+export NDK_DIR="/home/johannes/Develop/android-toolchain-x86"
+export ARCH=x86
+make clean; make TARGET=ANDROID -j 4; cp ./snapclient ../android/Snapcast/src/main/assets/bin/x86/

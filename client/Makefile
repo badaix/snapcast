@@ -39,10 +39,10 @@ endif
 
 ifeq ($(TARGET), ANDROID)
 
-CXX       = $(NDK_DIR)/bin/arm-linux-androideabi-clang++
-STRIP     = $(NDK_DIR)/bin/arm-linux-androideabi-strip
-CXXFLAGS += -march=armv7 -pthread -DANDROID -DNO_CPP11_STRING -fPIC -DHAS_TREMOR -DHAS_OPENSL -I$(NDK_DIR)/include
-LDFLAGS   = -L$(NDK_DIR)/lib -pie -lvorbisidec -logg -lFLAC -lOpenSLES 
+CXX       = $(PROGRAM_PREFIX)clang++
+STRIP     = $(PROGRAM_PREFIX)strip
+CXXFLAGS += -pthread -DANDROID -DNO_CPP11_STRING -fPIC -DHAS_TREMOR -DHAS_OPENSL -I$(NDK_DIR)/include
+LDFLAGS   = -L$(NDK_DIR)/lib -pie -lvorbisidec -logg -lFLAC -lOpenSLES -latomic
 OBJ      += player/openslPlayer.o 
 
 else ifeq ($(TARGET), OPENWRT)
@@ -87,6 +87,18 @@ ifeq ($(TARGET), ANDROID)
 ifndef NDK_DIR
 	$(error android NDK_DIR is not set)
 endif
+ifndef ARCH
+	$(error ARCH is not set (arm, mips, x86))
+endif
+ifeq ($(ARCH), x86)
+	$(eval PROGRAM_PREFIX:=$(NDK_DIR)/bin/i686-linux-android-)
+else ifeq ($(ARCH), mips)
+	$(eval CXXFLAGS:=$(CXXFLAGS) -DIS_BIG_ENDIAN)
+	$(eval PROGRAM_PREFIX:=$(NDK_DIR)/bin/mipsel-linux-android-)
+else
+	$(eval CXXFLAGS:=$(CXXFLAGS) -march=armv7)
+	$(eval PROGRAM_PREFIX:=$(NDK_DIR)/bin/arm-linux-androideabi-)
+endif
 endif
 
 $(TARGET): $(OBJ)
@@ -97,7 +109,7 @@ $(TARGET): $(OBJ)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 clean:
-	rm -rf $(BIN) $(OBJ) *~
+	rm -rf $(BIN) $(OBJ) *~ player/*.o
 
 .PHONY: dpkg
 #sudo apt-get install build-essential debhelper dh-make dh-systemd quilt fakeroot lintian

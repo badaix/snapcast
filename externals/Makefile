@@ -32,7 +32,7 @@ ifndef NDK_DIR
 	$(error android NDK_DIR is not set)
 endif
 ifndef ARCH
-	export ARCH=arm
+	$(error ARCH is not set (arm, mips, x86))
 endif
 ifeq ($(ARCH), x86)
 	$(eval CPPFLAGS:=-DLITTLE_ENDIAN=1234 -DBIG_ENDIAN=4321 -DBYTE_ORDER=LITTLE_ENDIAN)
