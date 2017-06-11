@@ -16,7 +16,7 @@
 
 .PHONY: all check-env flac ogg tremor
 
-all: check-env flac ogg tremor
+all: flac ogg tremor
 
 check-env:
 #	if [ ! -d "flac" ]; then \
@@ -31,36 +31,42 @@ check-env:
 ifndef NDK_DIR
 	$(error android NDK_DIR is not set)
 endif
+ifndef ARCH
+	export ARCH=arm
+endif
+ifeq ($(ARCH), x86)
+	$(eval CPPFLAGS:=-DLITTLE_ENDIAN=1234 -DBIG_ENDIAN=4321 -DBYTE_ORDER=LITTLE_ENDIAN)
+	$(eval PROGRAM_PREFIX:=$(NDK_DIR)/bin/i686-linux-android-)
+else ifeq ($(ARCH), mips)
+	$(eval CPPFLAGS:=-DLITTLE_ENDIAN=1234 -DBIG_ENDIAN=4321 -DBYTE_ORDER=BIG_ENDIAN)
+	$(eval PROGRAM_PREFIX:=$(NDK_DIR)/bin/mipsel-linux-android-)
+else
+	$(eval PROGRAM_PREFIX:=$(NDK_DIR)/bin/arm-linux-androideabi-)
+endif
+	$(eval CC:=$(PROGRAM_PREFIX)clang)
+	$(eval CXX:=$(PROGRAM_PREFIX)clang++)
+	$(eval CPPFLAGS:=-I$(NDK_DIR)/include $(CPPFLAGS))
 
-flac:
+flac: check-env
 	@cd flac; \
-	export CC=$(NDK_DIR)/bin/arm-linux-androideabi-clang; \
-	export CXX=$(NDK_DIR)/bin/arm-linux-androideabi-clang++; \
-	export CPPFLAGS="-U_ARM_ASSEM_ -I$(NDK_DIR)/include"; \
 	./autogen.sh; \
-	./configure --host=arm --disable-ogg --prefix=$(NDK_DIR); \
+	./configure --host=$(ARCH) --disable-ogg --prefix=$(NDK_DIR); \
 	make; \
 	make install; \
 	make clean;
 
-ogg:
+ogg: check-env
 	@cd ogg; \
-	export CC=$(NDK_DIR)/bin/arm-linux-androideabi-clang; \
-	export CXX=$(NDK_DIR)/bin/arm-linux-androideabi-clang++; \
-	export CPPFLAGS="-U_ARM_ASSEM_ -I$(NDK_DIR)/include"; \
 	./autogen.sh; \
-	./configure --host=arm --prefix=$(NDK_DIR); \
+	./configure --host=$(ARCH) --prefix=$(NDK_DIR); \
 	make; \
 	make install; \
 	make clean;
 
-tremor:
-	@cd tremor; \
-	export CC=$(NDK_DIR)/bin/arm-linux-androideabi-clang; \
-	export CXX=$(NDK_DIR)/bin/arm-linux-androideabi-clang++; \
-	export CPPFLAGS="-U_ARM_ASSEM_ -I$(NDK_DIR)/include"; \
+tremor:	check-env
+	cd tremor; \
 	./autogen.sh; \
-	./configure --host=arm --prefix=$(NDK_DIR) --with-ogg=$(NDK_DIR); \
+	./configure --host=$(ARCH) --prefix=$(NDK_DIR) --with-ogg=$(NDK_DIR); \
 	make; \
 	make install; \
 	make clean; \
