@@ -1,9 +1,5 @@
 #/bin/sh
 
-export NDK_DIR_ARM="/home/johannes/Develop/android-toolchain-arm"
-export NDK_DIR_MIPS="/home/johannes/Develop/android-toolchain-mips"
-export NDK_DIR_X86="/home/johannes/Develop/android-toolchain-x86"
-
 if [ -z "$NDK_DIR_ARM" ] && [ -z "$NDK_DIR_MIPS" ] && [ -z "$NDK_DIR_X86" ]; then
 	echo "Specify at least one NDK_DIR_[ARM|MIPS|X86]"
 	exit
