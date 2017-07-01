@@ -50,7 +50,7 @@ else ifeq ($(TARGET), OPENWRT)
 STRIP     = echo
 CXXFLAGS += -DNO_CPP11_STRING -DHAS_AVAHI -DHAS_DAEMON -pthread
 LDFLAGS  += -lavahi-client -lavahi-common -latomic
-OBJ      += publishZeroConf/publishAvahi.o 
+OBJ      += ../common/daemon.o publishZeroConf/publishAvahi.o 
 
 else ifeq ($(TARGET), FREEBSD)
 
@@ -58,7 +58,7 @@ CXX       = g++
 STRIP     = echo
 CXXFLAGS += -DNO_CPP11_STRING -DFREEBSD -DHAS_AVAHI -DHAS_DAEMON -pthread
 LDFLAGS  += -lrt -lavahi-client -lavahi-common -static-libgcc -static-libstdc++
-OBJ      += publishZeroConf/publishAvahi.o 
+OBJ      += ../common/daemon.o publishZeroConf/publishAvahi.o 
 
 else ifeq ($(TARGET), MACOS)
 
@@ -66,7 +66,7 @@ CXX       = g++
 STRIP     = strip
 CXXFLAGS += -DFREEBSD -DMACOS -DHAS_BONJOUR -DHAS_DAEMON -Wno-deprecated -I/usr/local/include
 LDFLAGS  += -L/usr/local/lib -framework CoreFoundation -framework IOKit
-OBJ      += publishZeroConf/publishBonjour.o
+OBJ      += ../common/daemon.o publishZeroConf/publishBonjour.o
 
 else
 
@@ -74,7 +74,7 @@ CXX       = g++
 STRIP     = strip
 CXXFLAGS += -DHAS_AVAHI -DHAS_DAEMON -pthread
 LDFLAGS   = -lrt -lvorbis -lvorbisenc -logg -lFLAC -lavahi-client -lavahi-common -static-libgcc -static-libstdc++
-OBJ      += publishZeroConf/publishAvahi.o 
+OBJ      += ../common/daemon.o publishZeroConf/publishAvahi.o 
 
 endif
 

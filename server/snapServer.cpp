@@ -51,6 +51,7 @@ int main(int argc, char* argv[])
 #ifdef MACOS
 #pragma message "Warning: the macOS support is experimental and might not be maintained"
 #endif
+
 	int exitcode = EXIT_SUCCESS;
 	try
 	{
@@ -140,16 +141,16 @@ int main(int argc, char* argv[])
 			return 1;
 		}
 
-		Config::instance();
 		std::clog.rdbuf(new Log("snapserver", LOG_DAEMON));
 
 		signal(SIGHUP, signal_handler);
 		signal(SIGTERM, signal_handler);
 		signal(SIGINT, signal_handler);
 
+#ifdef HAS_DAEMON
+		std::unique_ptr<Daemon> daemon;
 		if (daemonOption.isSet())
 		{
-#ifdef HAS_DAEMON
 			string user = "";
 			string group = "";
 
@@ -163,7 +164,9 @@ int main(int argc, char* argv[])
 				if (user_group.size() > 1)
 					group = user_group[1];
 			}
-			daemonize(user, group, "/var/run/snapserver/pid");
+
+			daemon.reset(new Daemon(user, group, "/var/run/snapserver/pid"));
+			daemon->daemonize();
 			if (processPriority < -20)
 				processPriority = -20;
 			else if (processPriority > 19)
@@ -171,8 +174,11 @@ int main(int argc, char* argv[])
 			if (processPriority != 0)
 				setpriority(PRIO_PROCESS, 0, processPriority);
 			logS(kLogNotice) << "daemon started" << std::endl;
-#endif
 		}
+#endif
+
+		Config::instance();
+
 #if defined(HAS_AVAHI) || defined(HAS_BONJOUR)
 		PublishZeroConf publishZeroConfg("Snapcast");
 		publishZeroConfg.publish({mDNSService("_snapcast._tcp", settings.port), mDNSService("_snapcast-jsonrpc._tcp", settings.controlPort)});
@@ -206,9 +212,6 @@ int main(int argc, char* argv[])
 	}
 
 	logS(kLogNotice) << "daemon terminated." << endl;
-#ifdef HAS_DAEMON
-	daemonShutdown();
-#endif
 	exit(exitcode);
 }
 

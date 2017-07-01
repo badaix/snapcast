@@ -159,9 +159,10 @@ int main (int argc, char **argv)
 		signal(SIGTERM, signal_handler);
 		signal(SIGINT, signal_handler);
 
+#ifdef HAS_DAEMON
+		std::unique_ptr<Daemon> daemon;
 		if (daemonOption.isSet())
 		{
-#ifdef HAS_DAEMON
 			string pidFile = "/var/run/snapclient/pid";
 			if (instance != 1)
 				pidFile += "." + cpt::to_string(instance);
@@ -178,7 +179,8 @@ int main (int argc, char **argv)
 				if (user_group.size() > 1)
 					group = user_group[1];
 			}
-			daemonize(user, group, pidFile);
+			daemon.reset(new Daemon(user, group, pidFile));
+			daemon->daemonize();
 			if (processPriority < -20)
 				processPriority = -20;
 			else if (processPriority > 19)
@@ -186,8 +188,8 @@ int main (int argc, char **argv)
 			if (processPriority != 0)
 				setpriority(PRIO_PROCESS, 0, processPriority);
 			logS(kLogNotice) << "daemon started" << std::endl;
-#endif
 		}
+#endif
 
 		PcmDevice pcmDevice = getPcmDevice(soundcard);
 #if defined(HAS_ALSA)
@@ -241,9 +243,6 @@ int main (int argc, char **argv)
 	}
 
 	logS(kLogNotice) << "daemon terminated." << endl;
-#ifdef HAS_DAEMON
-	daemonShutdown();
-#endif
 	exit(exitcode);
 }
 
