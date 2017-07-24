@@ -60,6 +60,7 @@ int main(int argc, char* argv[])
 		int processPriority(0);
 
 		Switch helpSwitch("h", "help", "Produce help message");
+		Switch debugSwitch("", "debug", "enable debug logging");
 		Switch versionSwitch("v", "version", "Show version number");
 		Value<size_t> portValue("p", "port", "Server port", settings.port, &settings.port);
 		Value<size_t> controlPortValue("", "controlPort", "Remote control port", settings.controlPort, &settings.controlPort);
@@ -76,6 +77,7 @@ int main(int argc, char* argv[])
 
 		OptionParser op("Allowed options");
 		op.add(helpSwitch)
+		 .add(debugSwitch, hidden)
 		 .add(versionSwitch)
 		 .add(portValue)
 		 .add(controlPortValue)
@@ -143,7 +145,7 @@ int main(int argc, char* argv[])
 
 		Log::init(
 			{
-				make_shared<LogSinkCout>(LogPriority::info, LogSink::Type::all), //, "%Y-%m-%d %H-%M-%S [#prio]"),
+				make_shared<LogSinkCout>(debugSwitch.isSet()?(LogPriority::debug):(LogPriority::info), LogSink::Type::all, debugSwitch.isSet()?"%Y-%m-%d %H-%M-%S.#ms [#prio] (#tag)":"%Y-%m-%d %H-%M-%S [#prio]"),
 				make_shared<LogSinkNative>("snapserver", LogPriority::debug, LogSink::Type::special)
 			}
 		);
