@@ -54,7 +54,7 @@ void CoreAudioPlayer::playerCallback(AudioQueueRef queue, AudioQueueBufferRef bu
 	size_t bufferedMs = bufferedFrames * 1000 / pubStream_->getFormat().rate + (ms_ * (NUM_BUFFERS - 1));
 	/// 15ms DAC delay. Based on trying.
 	bufferedMs += 15;
-//    logO << "buffered: " << bufferedFrames << ", ms: " << bufferedMs << ", mSampleTime: " << timestamp.mSampleTime << "\n";
+//    LOG(INFO) << "buffered: " << bufferedFrames << ", ms: " << bufferedMs << ", mSampleTime: " << timestamp.mSampleTime << "\n";
 
 	/// TODO: sometimes this bufferedMS or AudioTimeStamp wraps around 1s (i.e. we're 1s out of sync (behind)) and recovers later on
 	chronos::usec delay(bufferedMs * 1000);
@@ -63,11 +63,11 @@ void CoreAudioPlayer::playerCallback(AudioQueueRef queue, AudioQueueBufferRef bu
 	{
 		if (chronos::getTickCount() - lastChunkTick > 5000)
 		{
-			logO << "No chunk received for 5000ms. Closing Audio Queue.\n";
+			LOG(NOTICE) << "No chunk received for 5000ms. Closing Audio Queue.\n";
 			uninitAudioQueue(queue);
 			return;
 		}
-//		logO << "Failed to get chunk. Playing silence.\n";
+//		LOG(INFO) << "Failed to get chunk. Playing silence.\n";
 		memset(buffer, 0, buff_size_);
 	}
 	else
@@ -98,7 +98,7 @@ void CoreAudioPlayer::worker()
 			}
 			catch (const std::exception& e)
 			{
-				logE << "Exception in worker: " << e.what() << "\n";
+				LOG(ERROR) << "Exception in worker: " << e.what() << "\n";
 				chronos::sleep(100);
 			}
 		}
@@ -135,7 +135,7 @@ void CoreAudioPlayer::initAudioQueue()
 	frames_ = (sampleFormat.rate * ms_) / 1000;
 	ms_ = frames_ * 1000 / sampleFormat.rate;
 	buff_size_ = frames_ * sampleFormat.frameSize;
-	logO << "frames: " << frames_ << ", ms: " << ms_ << ", buffer size: " << buff_size_ << "\n";
+	LOG(INFO) << "frames: " << frames_ << ", ms: " << ms_ << ", buffer size: " << buff_size_ << "\n";
 
 	AudioQueueBufferRef buffers[NUM_BUFFERS];
 	for (int i = 0; i < NUM_BUFFERS; i++)
@@ -145,7 +145,7 @@ void CoreAudioPlayer::initAudioQueue()
 		callback(this, queue, buffers[i]);
 	}
 
-	logE << "CoreAudioPlayer::worker\n";
+	LOG(ERROR) << "CoreAudioPlayer::worker\n";
 	AudioQueueCreateTimeline(queue, &timeLine_);
 	AudioQueueStart(queue, NULL);
 	CFRunLoopRun();

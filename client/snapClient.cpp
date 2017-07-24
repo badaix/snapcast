@@ -115,7 +115,7 @@ int main (int argc, char **argv)
 		}
 		catch (const std::invalid_argument& e)
 		{
-			logS(kLogErr) << "Exception: " << e.what() << std::endl;
+			SLOG(LOG_ERR) << "Exception: " << e.what() << std::endl;
 			cout << "\n" << op << "\n";
 			exit(EXIT_FAILURE);
 		}
@@ -153,7 +153,12 @@ int main (int argc, char **argv)
 		if (instance <= 0)
 			std::invalid_argument("instance id must be >= 1");
 
-		std::clog.rdbuf(new Log("snapclient", LOG_DAEMON));
+		Log::init(
+			{
+				make_shared<LogSinkCout>(LogPriority::info, LogSink::Type::all), //, "%Y-%m-%d %H-%M-%S [#prio]"),
+				make_shared<LogSinkNative>("snapclient", LogPriority::debug, LogSink::Type::special)
+			}
+		);
 
 		signal(SIGHUP, signal_handler);
 		signal(SIGTERM, signal_handler);
@@ -187,7 +192,7 @@ int main (int argc, char **argv)
 				processPriority = 19;
 			if (processPriority != 0)
 				setpriority(PRIO_PROCESS, 0, processPriority);
-			logS(kLogNotice) << "daemon started" << std::endl;
+			SLOG(LOG_NOTICE) << "daemon started" << std::endl;
 		}
 #endif
 
@@ -213,13 +218,13 @@ int main (int argc, char **argv)
 					{
 						host = avahiResult.ip_;
 						port = avahiResult.port_;
-						logO << "Found server " << host << ":" << port << "\n";
+						LOG(INFO) << "Found server " << host << ":" << port << "\n";
 						break;
 					}
 				}
 				catch (const std::exception& e)
 				{
-					logS(kLogErr) << "Exception: " << e.what() << std::endl;
+					SLOG(LOG_ERR) << "Exception: " << e.what() << std::endl;
 				}
 				chronos::sleep(500);
 			}
@@ -229,7 +234,7 @@ int main (int argc, char **argv)
 		std::unique_ptr<Controller> controller(new Controller(hostIdValue.getValue(), instance));
 		if (!g_terminated)
 		{
-			logO << "Latency: " << latency << "\n";
+			LOG(INFO) << "Latency: " << latency << "\n";
 			controller->start(pcmDevice, host, port, latency);
 			while(!g_terminated)
 				chronos::sleep(100);
@@ -238,11 +243,11 @@ int main (int argc, char **argv)
 	}
 	catch (const std::exception& e)
 	{
-		logS(kLogErr) << "Exception: " << e.what() << std::endl;
+		SLOG(LOG_ERR) << "Exception: " << e.what() << std::endl;
 		exitcode = EXIT_FAILURE;
 	}
 
-	logS(kLogNotice) << "daemon terminated." << endl;
+	SLOG(LOG_NOTICE) << "daemon terminated." << endl;
 	exit(exitcode);
 }
 

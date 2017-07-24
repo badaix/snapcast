@@ -43,7 +43,7 @@ void TimeProvider::setDiffToServer(double ms)
 	/// clear diffBuffer if last update is older than a minute
 	if (!diffBuffer_.empty() && (std::abs(now.tv_sec - lastTimeSync) > 60))
 	{
-		logO << "Last time sync older than a minute. Clearing time buffer\n";
+		LOG(INFO) << "Last time sync older than a minute. Clearing time buffer\n";
 		diffToServer_ = ms*1000;
 		diffBuffer_.clear();
 	}
@@ -51,7 +51,7 @@ void TimeProvider::setDiffToServer(double ms)
 
 	diffBuffer_.add(ms*1000);
 	diffToServer_ = diffBuffer_.median(3);
-//	logO << "setDiffToServer: " << ms << ", diff: " << diffToServer_ / 1000.f << "\n";
+//	LOG(INFO) << "setDiffToServer: " << ms << ", diff: " << diffToServer_ / 1000.f << "\n";
 }
 
 /*

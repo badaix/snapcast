@@ -39,7 +39,7 @@ PipeStream::PipeStream(PcmListener* pcmListener, const StreamUri& uri) : PcmStre
 	umask(0);
 	string mode = uri_.getQuery("mode", "create");
 		
-	logO << "PipeStream mode: " << mode << "\n";
+	LOG(INFO) << "PipeStream mode: " << mode << "\n";
 	if ((mode != "read") && (mode != "create"))
 		throw SnapException("create mode for fifo must be \"read\" or \"create\"");
 	
@@ -130,7 +130,7 @@ void PipeStream::worker()
 		{
 			if (lastException != e.what())
 			{
-				logE << "(PipeStream) Exception: " << e.what() << std::endl;
+				LOG(ERROR) << "(PipeStream) Exception: " << e.what() << std::endl;
 				lastException = e.what();
 			}
 			if (!sleep(100))

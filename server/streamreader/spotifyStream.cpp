@@ -51,7 +51,7 @@ SpotifyStream::SpotifyStream(PcmListener* pcmListener, const StreamUri& uri) : P
 		params_ += " --onstart \"" + onstart + "\"";
 	if (!onstop.empty())
 		params_ += " --onstop \"" + onstop + "\"";
-//	logO << "params: " << params << "\n";
+//	LOG(INFO) << "params: " << params << "\n";
 }
 
 
@@ -108,7 +108,7 @@ void SpotifyStream::onStderrMsg(const char* buffer, size_t n)
 		(logmsg.find('\0') == string::npos) &&
 		(logmsg.size() > 4))
 	{
-		logO << "(" << getName() << ") " << logmsg << "\n";
+		LOG(INFO) << "(" << getName() << ") " << logmsg << "\n";
 	}
 }
 
@@ -124,7 +124,7 @@ void SpotifyStream::stderrReader()
 
 void SpotifyStream::onTimeout(const Watchdog* watchdog, size_t ms)
 {
-	logE << "Spotify timeout: " << ms / 1000 << "\n";
+	LOG(ERROR) << "Spotify timeout: " << ms / 1000 << "\n";
 	if (process_)
 		process_->kill();
 }

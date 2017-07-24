@@ -50,7 +50,7 @@ Controller::Controller(const std::string& hostId, size_t instance) : MessageRece
 
 void Controller::onException(ClientConnection* connection, const std::exception& exception)
 {
-	logE << "Controller::onException: " << exception.what() << "\n";
+	LOG(ERROR) << "Controller::onException: " << exception.what() << "\n";
 	exception_ = exception.what();
 	asyncException_ = true;
 }
@@ -65,12 +65,12 @@ void Controller::onMessageReceived(ClientConnection* connection, const msg::Base
 		{
 			msg::PcmChunk* pcmChunk = new msg::PcmChunk(sampleFormat_, 0);
 			pcmChunk->deserialize(baseMessage, buffer);
-//			logD << "chunk: " << pcmChunk->payloadSize << ", sampleFormat: " << sampleFormat_.rate << "\n";
+//			LOG(DEBUG) << "chunk: " << pcmChunk->payloadSize << ", sampleFormat: " << sampleFormat_.rate << "\n";
 			if (decoder_->decode(pcmChunk))
 			{
 //TODO: do decoding in thread?
 				stream_->addChunk(pcmChunk);
-				//logD << ", decoded: " << pcmChunk->payloadSize << ", Duration: " << pcmChunk->getDuration() << ", sec: " << pcmChunk->timestamp.sec << ", usec: " << pcmChunk->timestamp.usec/1000 << ", type: " << pcmChunk->type << "\n";
+				//LOG(DEBUG) << ", decoded: " << pcmChunk->payloadSize << ", Duration: " << pcmChunk->getDuration() << ", sec: " << pcmChunk->timestamp.sec << ", usec: " << pcmChunk->timestamp.usec/1000 << ", type: " << pcmChunk->type << "\n";
 			}
 			else
 				delete pcmChunk;
@@ -86,7 +86,7 @@ void Controller::onMessageReceived(ClientConnection* connection, const msg::Base
 	{
 		serverSettings_.reset(new msg::ServerSettings());
 		serverSettings_->deserialize(baseMessage, buffer);
-		logO << "ServerSettings - buffer: " << serverSettings_->getBufferMs() << ", latency: " << serverSettings_->getLatency() << ", volume: " << serverSettings_->getVolume() << ", muted: " << serverSettings_->isMuted() << "\n";
+		LOG(INFO) << "ServerSettings - buffer: " << serverSettings_->getBufferMs() << ", latency: " << serverSettings_->getLatency() << ", volume: " << serverSettings_->getVolume() << ", muted: " << serverSettings_->isMuted() << "\n";
 		if (stream_ && player_)
 		{
 			player_->setVolume(serverSettings_->getVolume() / 100.);
@@ -99,7 +99,7 @@ void Controller::onMessageReceived(ClientConnection* connection, const msg::Base
 		headerChunk_.reset(new msg::CodecHeader());
 		headerChunk_->deserialize(baseMessage, buffer);
 
-		logO << "Codec: " << headerChunk_->codec << "\n";
+		LOG(INFO) << "Codec: " << headerChunk_->codec << "\n";
 		decoder_.reset(nullptr);
 		stream_ = nullptr;
 		player_.reset(nullptr);
@@ -116,7 +116,8 @@ void Controller::onMessageReceived(ClientConnection* connection, const msg::Base
 			throw SnapException("codec not supported: \"" + headerChunk_->codec + "\"");
 
 		sampleFormat_ = decoder_->setHeader(headerChunk_.get());
-		logState << "sampleformat: " << sampleFormat_.rate << ":" << sampleFormat_.bits << ":" << sampleFormat_.channels << "\n";
+		/// TODO: read in Android client
+		LOG(INFO) << TAG("state") << "sampleformat: " << sampleFormat_.rate << ":" << sampleFormat_.bits << ":" << sampleFormat_.channels << "\n";
 
 		stream_ = make_shared<Stream>(sampleFormat_);
 		stream_->setBufferLen(serverSettings_->getBufferMs() - latency_);
@@ -137,7 +138,7 @@ void Controller::onMessageReceived(ClientConnection* connection, const msg::Base
 
 	if (baseMessage.type != message_type::kTime)
 		if (sendTimeSyncMessage(1000))
-			logD << "time sync onMessageReceived\n";
+			LOG(DEBUG) << "time sync onMessageReceived\n";
 }
 
 
@@ -166,7 +167,7 @@ void Controller::start(const PcmDevice& pcmDevice, const std::string& host, size
 
 void Controller::stop()
 {
-	logD << "Stopping Controller" << endl;
+	LOG(DEBUG) << "Stopping Controller" << endl;
 	active_ = false;
 	controllerThread_.join();
 	clientConnection_->stop();
@@ -202,7 +203,7 @@ void Controller::worker()
 					chronos::usleep(100);
 				}
 			}
-			logO << "diff to server [ms]: " << (float)TimeProvider::getInstance().getDiffToServer<chronos::usec>().count() / 1000.f << "\n";
+			LOG(INFO) << "diff to server [ms]: " << (float)TimeProvider::getInstance().getDiffToServer<chronos::usec>().count() / 1000.f << "\n";
 
 			/// Main loop
 			while (active_)
@@ -215,13 +216,13 @@ void Controller::worker()
 				}
 
 				if (sendTimeSyncMessage(5000))
-					logO << "time sync main loop\n";
+					LOG(DEBUG) << "time sync main loop\n";
 			}
 		}
 		catch (const std::exception& e)
 		{
 			asyncException_ = false;
-			logS(kLogErr) << "Exception in Controller::worker(): " << e.what() << endl;
+			SLOG(LOG_ERR) << "Exception in Controller::worker(): " << e.what() << endl;
 			clientConnection_->stop();
 			player_.reset();
 			stream_.reset();
@@ -230,7 +231,7 @@ void Controller::worker()
 				chronos::sleep(100);
 		}
 	}
-	logD << "Thread stopped\n";
+	LOG(DEBUG) << "Thread stopped\n";
 }
 
 

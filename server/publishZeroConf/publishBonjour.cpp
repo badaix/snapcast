@@ -90,7 +90,7 @@ void PublishBonjour::worker()
 					DNSServiceErrorType err = DNSServiceProcessResult(clients[n]);
 					if (err)
 					{
-						logE << "DNSServiceProcessResult returned " << err << "\n";
+						LOG(ERROR) << "DNSServiceProcessResult returned " << err << "\n";
 						active_ = false;
 					} 
 				}
@@ -100,7 +100,7 @@ void PublishBonjour::worker()
 //			myTimerCallBack();
 		else if (result < 0)
 		{
-			logE << "select() returned " << result << " errno " << errno << " " << strerror(errno) << "\n";
+			LOG(ERROR) << "select() returned " << result << " errno " << errno << " " << strerror(errno) << "\n";
 			if (errno != EINTR) 
 				active_ = false;
 		}
@@ -116,23 +116,23 @@ static void DNSSD_API reg_reply(DNSServiceRef sdref, const DNSServiceFlags flags
 	PublishBonjour* publishBonjour = (PublishBonjour*)context;
 	(void)publishBonjour; // unused
 
-	logO << "Got a reply for service " << name << "." << regtype << domain << "\n";
+	LOG(INFO) << "Got a reply for service " << name << "." << regtype << domain << "\n";
 
 	if (errorCode == kDNSServiceErr_NoError)
 	{
 		if (flags & kDNSServiceFlagsAdd) 
-			logO << "Name now registered and active\n";
+			LOG(INFO) << "Name now registered and active\n";
 		else 
-			logO << "Name registration removed\n";
+			LOG(INFO) << "Name registration removed\n";
 	}
 	else if (errorCode == kDNSServiceErr_NameConflict)
 	{
 		/// TODO: Error handling
-		logO << "Name in use, please choose another\n";
+		LOG(INFO) << "Name in use, please choose another\n";
 		exit(-1);
 	}
 	else
-		logO << "Error " << errorCode << "\n";
+		LOG(INFO) << "Error " << errorCode << "\n";
 
 	if (!(flags & kDNSServiceFlagsMoreComing)) 
 		fflush(stdout);

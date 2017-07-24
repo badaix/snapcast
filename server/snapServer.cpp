@@ -97,7 +97,7 @@ int main(int argc, char* argv[])
 		}
 		catch (const std::invalid_argument& e)
 		{
-			logS(kLogErr) << "Exception: " << e.what() << std::endl;
+			SLOG(LOG_ERR) << "Exception: " << e.what() << std::endl;
 			cout << "\n" << op << "\n";
 			exit(EXIT_FAILURE);
 		}
@@ -141,7 +141,12 @@ int main(int argc, char* argv[])
 			return 1;
 		}
 
-		std::clog.rdbuf(new Log("snapserver", LOG_DAEMON));
+		Log::init(
+			{
+				make_shared<LogSinkCout>(LogPriority::info, LogSink::Type::all), //, "%Y-%m-%d %H-%M-%S [#prio]"),
+				make_shared<LogSinkNative>("snapserver", LogPriority::debug, LogSink::Type::special)
+			}
+		);
 
 		signal(SIGHUP, signal_handler);
 		signal(SIGTERM, signal_handler);
@@ -173,7 +178,7 @@ int main(int argc, char* argv[])
 				processPriority = 19;
 			if (processPriority != 0)
 				setpriority(PRIO_PROCESS, 0, processPriority);
-			logS(kLogNotice) << "daemon started" << std::endl;
+			SLOG(LOG_NOTICE) << "daemon started" << std::endl;
 		}
 #endif
 
@@ -201,17 +206,17 @@ int main(int argc, char* argv[])
 		io_service.stop();
 		t.join();
 
-		logO << "Stopping streamServer" << endl;
+		LOG(INFO) << "Stopping streamServer" << endl;
 		streamServer->stop();
-		logO << "done" << endl;
+		LOG(INFO) << "done" << endl;
 	}
 	catch (const std::exception& e)
 	{
-		logS(kLogErr) << "Exception: " << e.what() << std::endl;
+		SLOG(LOG_ERR) << "Exception: " << e.what() << std::endl;
 		exitcode = EXIT_FAILURE;
 	}
 
-	logS(kLogNotice) << "daemon terminated." << endl;
+	SLOG(LOG_NOTICE) << "daemon terminated." << endl;
 	exit(exitcode);
 }
 

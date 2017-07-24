@@ -52,7 +52,7 @@ void ControlSession::start()
 
 void ControlSession::stop()
 {
-	logD << "ControlSession::stop\n";
+	LOG(DEBUG) << "ControlSession::stop\n";
 	std::lock_guard<std::recursive_mutex> activeLock(activeMutex_);
 	active_ = false;
 	try
@@ -62,18 +62,18 @@ void ControlSession::stop()
 		{
 			std::lock_guard<std::recursive_mutex> socketLock(socketMutex_);
 			socket_->shutdown(asio::ip::tcp::socket::shutdown_both, ec);
-			if (ec) logE << "Error in socket shutdown: " << ec.message() << "\n";
+			if (ec) LOG(ERROR) << "Error in socket shutdown: " << ec.message() << "\n";
 			socket_->close(ec);
-			if (ec) logE << "Error in socket close: " << ec.message() << "\n";
+			if (ec) LOG(ERROR) << "Error in socket close: " << ec.message() << "\n";
 		}
 		if (readerThread_.joinable())
 		{
-			logD << "joining readerThread\n";
+			LOG(DEBUG) << "joining readerThread\n";
 			readerThread_.join();
 		}
 		if (writerThread_.joinable())
 		{
-			logD << "joining writerThread\n";
+			LOG(DEBUG) << "joining writerThread\n";
 			messages_.abort_wait();
 			writerThread_.join();
 		}
@@ -82,7 +82,7 @@ void ControlSession::stop()
 	{
 	}
 	socket_ = NULL;
-	logD << "ControlSession stopped\n";
+	LOG(DEBUG) << "ControlSession stopped\n";
 }
 
 
@@ -95,7 +95,7 @@ void ControlSession::sendAsync(const std::string& message)
 
 bool ControlSession::send(const std::string& message) const
 {
-	//logO << "send: " << message << ", size: " << message.length() << "\n";
+	//LOG(INFO) << "send: " << message << ", size: " << message.length() << "\n";
 	std::lock_guard<std::recursive_mutex> socketLock(socketMutex_);
 	{
 		std::lock_guard<std::recursive_mutex> activeLock(activeMutex_);
@@ -106,7 +106,7 @@ bool ControlSession::send(const std::string& message) const
 	std::ostream request_stream(&streambuf);
 	request_stream << message << "\r\n";
 	asio::write(*socket_.get(), streambuf);
-	//logO << "done\n";
+	//LOG(INFO) << "done\n";
 	return true;
 }
 
@@ -145,7 +145,7 @@ void ControlSession::reader()
 	}
 	catch (const std::exception& e)
 	{
-		logS(kLogErr) << "Exception in ControlSession::reader(): " << e.what() << endl;
+		SLOG(LOG_ERR) << "Exception in ControlSession::reader(): " << e.what() << endl;
 	}
 	active_ = false;
 }
@@ -166,7 +166,7 @@ void ControlSession::writer()
 	}
 	catch (const std::exception& e)
 	{
-		logS(kLogErr) << "Exception in ControlSession::writer(): " << e.what() << endl;
+		SLOG(LOG_ERR) << "Exception in ControlSession::writer(): " << e.what() << endl;
 	}
 	active_ = false;
 }

@@ -121,30 +121,30 @@ void AlsaPlayer::initAlsa()
 
 //	long unsigned int periodsize = stream_->format.msRate() * 50;//2*rate/50;
 //	if ((pcm = snd_pcm_hw_params_set_buffer_size_near(pcm_handle, params, &periodsize)) < 0)
-//		logE << "Unable to set buffer size " << (long int)periodsize << ": " <<  snd_strerror(pcm) << "\n";
+//		LOG(ERROR) << "Unable to set buffer size " << (long int)periodsize << ": " <<  snd_strerror(pcm) << "\n";
 
 	/* Write parameters */
 	if ((pcm = snd_pcm_hw_params(handle_, params)) < 0)
 		throw SnapException("Can't set harware parameters: " + string(snd_strerror(pcm)));
 
 	/* Resume information */
-	logD << "PCM name: " << snd_pcm_name(handle_) << "\n";
-	logD << "PCM state: " << snd_pcm_state_name(snd_pcm_state(handle_)) << "\n";
+	LOG(DEBUG) << "PCM name: " << snd_pcm_name(handle_) << "\n";
+	LOG(DEBUG) << "PCM state: " << snd_pcm_state_name(snd_pcm_state(handle_)) << "\n";
 	snd_pcm_hw_params_get_channels(params, &tmp);
-	logD << "channels: " << tmp << "\n";
+	LOG(DEBUG) << "channels: " << tmp << "\n";
 
 	snd_pcm_hw_params_get_rate(params, &tmp, 0);
-	logD << "rate: " << tmp << " bps\n";
+	LOG(DEBUG) << "rate: " << tmp << " bps\n";
 
 	/* Allocate buffer to hold single period */
 	snd_pcm_hw_params_get_period_size(params, &frames_, 0);
-	logO << "frames: " << frames_ << "\n";
+	LOG(INFO) << "frames: " << frames_ << "\n";
 
 	buff_size = frames_ * format.frameSize; //channels * 2 /* 2 -> sample size */;
 	buff_ = (char *) malloc(buff_size);
 
 	snd_pcm_hw_params_get_period_time(params, &tmp, NULL);
-	logD << "period time: " << tmp << "\n";
+	LOG(DEBUG) << "period time: " << tmp << "\n";
 
 	snd_pcm_sw_params_t *swparams;
 	snd_pcm_sw_params_alloca(&swparams);
@@ -210,7 +210,7 @@ void AlsaPlayer::worker()
 			}
 			catch (const std::exception& e)
 			{
-				logE << "Exception in initAlsa: " << e.what() << endl;
+				LOG(ERROR) << "Exception in initAlsa: " << e.what() << endl;
 				chronos::sleep(100);
 			}
 		}
@@ -218,7 +218,7 @@ void AlsaPlayer::worker()
 //		snd_pcm_avail_delay(handle_, &framesAvail, &framesDelay);
 		snd_pcm_delay(handle_, &framesDelay);
 		chronos::usec delay((chronos::usec::rep) (1000 * (double) framesDelay / stream_->getFormat().msRate()));
-//		logO << "delay: " << framesDelay << ", delay[ms]: " << delay.count() / 1000 << "\n";
+//		LOG(INFO) << "delay: " << framesDelay << ", delay[ms]: " << delay.count() / 1000 << "\n";
 
 		if (stream_->getPlayerChunk(buff_, delay, frames_))
 		{
@@ -226,24 +226,24 @@ void AlsaPlayer::worker()
 			adjustVolume(buff_, frames_);
 			if ((pcm = snd_pcm_writei(handle_, buff_, frames_)) == -EPIPE)
 			{
-				logE << "XRUN\n";
+				LOG(ERROR) << "XRUN\n";
 				snd_pcm_prepare(handle_);
 			}
 			else if (pcm < 0)
 			{
-				logE << "ERROR. Can't write to PCM device: " << snd_strerror(pcm) << "\n";
+				LOG(ERROR) << "ERROR. Can't write to PCM device: " << snd_strerror(pcm) << "\n";
 				uninitAlsa();
 			}
 		}
 		else
 		{
-			logO << "Failed to get chunk\n";
+			LOG(INFO) << "Failed to get chunk\n";
 			while (active_ && !stream_->waitForChunk(100))
 			{
-				logD << "Waiting for chunk\n";
+				LOG(DEBUG) << "Waiting for chunk\n";
 				if ((handle_ != NULL) && (chronos::getTickCount() - lastChunkTick > 5000))
 				{
-					logO << "No chunk received for 5000ms. Closing ALSA.\n";
+					LOG(NOTICE) << "No chunk received for 5000ms. Closing ALSA.\n";
 					uninitAlsa();
 					stream_->clearChunks();
 				}

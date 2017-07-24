@@ -36,7 +36,7 @@ FileStream::FileStream(PcmListener* pcmListener, const StreamUri& uri) : PcmStre
 	ifs.open(uri_.path.c_str(), std::ifstream::in|std::ifstream::binary);
 	if (!ifs.good())
 	{
-		logE << "failed to open PCM file: \"" + uri_.path + "\"\n";
+		LOG(ERROR) << "failed to open PCM file: \"" + uri_.path + "\"\n";
 		throw SnapException("failed to open PCM file: \"" + uri_.path + "\"");
 	}
 }
@@ -91,7 +91,7 @@ void FileStream::worker()
 
 				if (nextTick >= currentTick)
 				{
-//					logO << "sleep: " << nextTick - currentTick << "\n";
+//					LOG(INFO) << "sleep: " << nextTick - currentTick << "\n";
 					if (!sleep(nextTick - currentTick))
 						break;
 				}
@@ -106,7 +106,7 @@ void FileStream::worker()
 		}
 		catch(const std::exception& e)
 		{
-			logE << "(FileStream) Exception: " << e.what() << std::endl;
+			LOG(ERROR) << "(FileStream) Exception: " << e.what() << std::endl;
 		}
 	}
 }

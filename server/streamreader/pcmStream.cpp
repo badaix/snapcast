@@ -46,7 +46,7 @@ PcmStream::PcmStream(PcmListener* pcmListener, const StreamUri& uri) :
  	if (uri_.query.find("sampleformat") == uri_.query.end())
 		throw SnapException("Stream URI must have a sampleformat");
 	sampleFormat_ = SampleFormat(uri_.query["sampleformat"]);
-	logO << "PcmStream sampleFormat: " << sampleFormat_.getFormat() << "\n";
+	LOG(INFO) << "PcmStream sampleFormat: " << sampleFormat_.getFormat() << "\n";
 
  	if (uri_.query.find("buffer_ms") != uri_.query.end())
 		pcmReadMs_ = cpt::stoul(uri_.query["buffer_ms"]);
@@ -91,7 +91,7 @@ const SampleFormat& PcmStream::getSampleFormat() const
 
 void PcmStream::start()
 {
-	logD << "PcmStream start: " << sampleFormat_.getFormat() << "\n";
+	LOG(DEBUG) << "PcmStream start: " << sampleFormat_.getFormat() << "\n";
 	encoder_->init(this, sampleFormat_);
 	active_ = true;
 	thread_ = thread(&PcmStream::worker, this);
@@ -138,7 +138,7 @@ void PcmStream::setState(const ReaderState& newState)
 
 void PcmStream::onChunkEncoded(const Encoder* encoder, msg::PcmChunk* chunk, double duration)
 {
-//	logO << "onChunkEncoded: " << duration << " us\n";
+//	LOG(INFO) << "onChunkEncoded: " << duration << " us\n";
 	if (duration <= 0)
 		return;
 

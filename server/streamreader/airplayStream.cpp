@@ -72,17 +72,17 @@ void AirplayStream::onStderrMsg(const char* buffer, size_t n)
 	string logmsg = utils::string::trim_copy(string(buffer, n));
 	if (logmsg.empty())
 		return;
-	logO << "(" << getName() << ") " << logmsg << "\n";
+	LOG(INFO) << "(" << getName() << ") " << logmsg << "\n";
 	if (logmsg.find("Is another Shairport Sync running on this device") != string::npos)
 	{
-		logE << "Seem there is another Shairport Sync runnig on port " << port_ << ", switching to port " << port_ + 1 << "\n";
+		LOG(ERROR) << "Seem there is another Shairport Sync runnig on port " << port_ << ", switching to port " << port_ + 1 << "\n";
 		++port_;
 		params_ = params_wo_port_ + " --port=" + cpt::to_string(port_);
 	}
 	else if (logmsg.find("Invalid audio output specified") != string::npos)
 	{
-		logE << "shairport sync compiled without stdout audio backend\n";
-		logE << "build with: \"./configure --with-stdout --with-avahi --with-ssl=openssl --with-metadata\"\n";
+		LOG(ERROR) << "shairport sync compiled without stdout audio backend\n";
+		LOG(ERROR) << "build with: \"./configure --with-stdout --with-avahi --with-ssl=openssl --with-metadata\"\n";
 	}
 }
 

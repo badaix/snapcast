@@ -48,15 +48,15 @@ Config::Config()
 		throw SnapException("failed to create settings directory: \"" + dir + "\": " + cpt::to_string(errno));
 
 	filename_ = dir + "server.json";
-	logS(kLogNotice) << "Settings file: \"" << filename_ << "\"\n";
+	SLOG(LOG_NOTICE) << "Settings file: \"" << filename_ << "\"\n";
 
 	int fd;
 	if ((fd = open(filename_.c_str(), O_RDWR | O_CREAT, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH)) == -1)
 	{
 		if (errno == EACCES)
-			throw std::runtime_error("failed to open file \"" + filename_ + "\", permission denied");
+			throw std::runtime_error("failed to open file \"" + filename_ + "\", permission denied (error " + cpt::to_string(errno) + ")");
 		else 
-			throw std::runtime_error("failed to open file \"" + filename_ + "\"");
+			throw std::runtime_error("failed to open file \"" + filename_ + "\", error " + cpt::to_string(errno));
 	}
 	close(fd);
 
@@ -83,7 +83,7 @@ Config::Config()
 	}
 	catch(const std::exception& e)
 	{
-		logE << "Error reading config: " << e.what() << "\n";
+		LOG(ERROR) << "Error reading config: " << e.what() << "\n";
 	}
 }
 

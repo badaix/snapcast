@@ -55,7 +55,7 @@ std::string OggEncoder::name() const
 void OggEncoder::encode(const msg::PcmChunk* chunk)
 {
 	double res = 0;
-	logD << "payload: " << chunk->payloadSize << "\tframes: " << chunk->getFrameCount() << "\tduration: " << chunk->duration<chronos::msec>().count() << "\n";
+	LOG(DEBUG) << "payload: " << chunk->payloadSize << "\tframes: " << chunk->getFrameCount() << "\tduration: " << chunk->duration<chronos::msec>().count() << "\n";
 	int frames = chunk->getFrameCount();
 	float **buffer=vorbis_analysis_buffer(&vd_, frames);
 
@@ -129,7 +129,7 @@ void OggEncoder::encode(const msg::PcmChunk* chunk)
 	if (res > 0)
 	{
 		res /= (sampleFormat_.rate / 1000.);
-		// logO << "res: " << res << "\n";
+		// LOG(INFO) << "res: " << res << "\n";
 		lastGranulepos_ = os_.granulepos;
 		// make oggChunk smaller
 		oggChunk->payload = (char*)realloc(oggChunk->payload, pos);
@@ -249,7 +249,7 @@ void OggEncoder::initEncoder()
 			break;
 		headerChunk_->payloadSize += og_.header_len + og_.body_len;
 		headerChunk_->payload = (char*)realloc(headerChunk_->payload, headerChunk_->payloadSize);
-		logD << "HeadLen: " << og_.header_len << ", bodyLen: " << og_.body_len << ", result: " << result << "\n";
+		LOG(DEBUG) << "HeadLen: " << og_.header_len << ", bodyLen: " << og_.body_len << ", result: " << result << "\n";
 		memcpy(headerChunk_->payload + pos, og_.header, og_.header_len);
 		pos += og_.header_len;
 		memcpy(headerChunk_->payload + pos, og_.body, og_.body_len);

@@ -31,7 +31,7 @@ StreamUri::StreamUri(const std::string& streamUri)
 // https://en.wikipedia.org/wiki/Uniform_Resource_Identifier
 // scheme:[//[user:password@]host[:port]][/]path[?query][#fragment]
 // would be more elegant with regex. Not yet supported on my dev machine's gcc 4.8 :(
-	logD << "StreamUri: " << streamUri << "\n";
+	LOG(DEBUG) << "StreamUri: " << streamUri << "\n";
 	size_t pos;
 	uri = strutils::trim_copy(streamUri);
 	while (!uri.empty() && ((uri[0] == '\'') || (uri[0] == '"')))
@@ -40,7 +40,7 @@ StreamUri::StreamUri(const std::string& streamUri)
 		uri = uri.substr(0, this->uri.length()-1);
 
 	string decodedUri = strutils::uriDecode(uri);
-	logD << "StreamUri: " << decodedUri << "\n";
+	LOG(DEBUG) << "StreamUri: " << decodedUri << "\n";
 
 	string tmp(decodedUri);
 
@@ -49,7 +49,7 @@ StreamUri::StreamUri(const std::string& streamUri)
 		throw invalid_argument("missing ':'");
 	scheme = strutils::trim_copy(tmp.substr(0, pos));
 	tmp = tmp.substr(pos + 1);
-	logD << "scheme: '" << scheme << "' tmp: '" << tmp << "'\n";
+	LOG(DEBUG) << "scheme: '" << scheme << "' tmp: '" << tmp << "'\n";
 
 	if (tmp.find("//") != 0)
 		throw invalid_argument("missing host separator: '//'");
@@ -61,7 +61,7 @@ StreamUri::StreamUri(const std::string& streamUri)
 	host = strutils::trim_copy(tmp.substr(0, pos));
 	tmp = tmp.substr(pos);
 	path = tmp;
-	logD << "host: '" << host << "' tmp: '" << tmp << "' path: '" << path << "'\n";
+	LOG(DEBUG) << "host: '" << host << "' tmp: '" << tmp << "' path: '" << path << "'\n";
 
 	pos = tmp.find('?');
 	if (pos == string::npos)
@@ -70,7 +70,7 @@ StreamUri::StreamUri(const std::string& streamUri)
 	path = strutils::trim_copy(tmp.substr(0, pos));
 	tmp = tmp.substr(pos + 1);
 	string queryStr = tmp;
-	logD << "path: '" << path << "' tmp: '" << tmp << "' query: '" << queryStr << "'\n";
+	LOG(DEBUG) << "path: '" << path << "' tmp: '" << tmp << "' query: '" << queryStr << "'\n";
 
 	pos = tmp.find('#');
 	if (pos != string::npos)
@@ -78,7 +78,7 @@ StreamUri::StreamUri(const std::string& streamUri)
 		queryStr = tmp.substr(0, pos);
 		tmp = tmp.substr(pos + 1);
 		fragment = strutils::trim_copy(tmp);
-		logD << "query: '" << queryStr << "' fragment: '" << fragment << "' tmp: '" << tmp << "'\n";
+		LOG(DEBUG) << "query: '" << queryStr << "' fragment: '" << fragment << "' tmp: '" << tmp << "'\n";
 	}
 
 	vector<string> keyValueList = strutils::split(queryStr, '&');

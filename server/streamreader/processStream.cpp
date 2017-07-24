@@ -123,7 +123,7 @@ void ProcessStream::onStderrMsg(const char* buffer, size_t n)
 	{
 		string line = utils::string::trim_copy(string(buffer, n));
 		if ((line.find('\0') == string::npos) && !line.empty())
-			logO << "(" << getName() << ") " << line << "\n";
+			LOG(INFO) << "(" << getName() << ") " << line << "\n";
 	}
 }
 
@@ -213,7 +213,7 @@ void ProcessStream::worker()
 		{
 			if (lastException != e.what())
 			{
-				logE << "(PipeStream) Exception: " << e.what() << std::endl;
+				LOG(ERROR) << "(PipeStream) Exception: " << e.what() << std::endl;
 				lastException = e.what();
 			}
 			process_->kill();
