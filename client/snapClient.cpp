@@ -157,8 +157,8 @@ int main (int argc, char **argv)
 
 		Log::init(
 			{
-				make_shared<LogSinkCout>(debugSwitch.isSet()?(LogPriority::debug):(LogPriority::info), LogSink::Type::all, debugSwitch.isSet()?"%Y-%m-%d %H-%M-%S.#ms [#prio] (#tag)":"%Y-%m-%d %H-%M-%S [#prio]"),
-				make_shared<LogSinkNative>("snapclient", LogPriority::debug, LogSink::Type::special)
+				make_shared<LogSinkCout>(debugSwitch.isSet()?(LogSeverity::trace):(LogSeverity::info), LogSink::Type::all, debugSwitch.isSet()?"%Y-%m-%d %H-%M-%S.#ms [#prio] (#tag)":"%Y-%m-%d %H-%M-%S [#prio]"),
+				make_shared<LogSinkNative>("snapclient", LogSeverity::trace, LogSink::Type::special)
 			}
 		);
 
