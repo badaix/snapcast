@@ -43,7 +43,7 @@ ifeq ($(TARGET), ANDROID)
 CXX       = $(NDK_DIR)/bin/arm-linux-androideabi-g++
 STRIP     = $(NDK_DIR)/bin/arm-linux-androideabi-strip
 CXXFLAGS += -pthread -DANDROID -DNO_CPP11_STRING -fPIC -I$(NDK_DIR)/include
-LDFLAGS  += -L$(NDK_DIR)/lib -pie 
+LDFLAGS  += -L$(NDK_DIR)/lib -pie -llog
 
 else ifeq ($(TARGET), OPENWRT)
 

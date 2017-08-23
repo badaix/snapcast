@@ -117,7 +117,7 @@ int main (int argc, char **argv)
 		}
 		catch (const std::invalid_argument& e)
 		{
-			SLOG(LOG_ERR) << "Exception: " << e.what() << std::endl;
+			cerr << "Exception: " << e.what() << std::endl;
 			cout << "\n" << op << "\n";
 			exit(EXIT_FAILURE);
 		}
@@ -155,10 +155,10 @@ int main (int argc, char **argv)
 		if (instance <= 0)
 			std::invalid_argument("instance id must be >= 1");
 
-		Log::init(
+		AixLog::Log::init(
 			{
-				make_shared<LogSinkCout>(debugSwitch.isSet()?(LogSeverity::trace):(LogSeverity::info), LogSink::Type::all, debugSwitch.isSet()?"%Y-%m-%d %H-%M-%S.#ms [#prio] (#tag)":"%Y-%m-%d %H-%M-%S [#prio]"),
-				make_shared<LogSinkNative>("snapclient", LogSeverity::trace, LogSink::Type::special)
+				make_shared<AixLog::SinkCout>(debugSwitch.isSet()?(AixLog::Severity::trace):(AixLog::Severity::info), AixLog::Type::all, debugSwitch.isSet()?"%Y-%m-%d %H-%M-%S.#ms [#severity] (#tag)":"%Y-%m-%d %H-%M-%S [#severity]"),
+				make_shared<AixLog::SinkNative>("snapclient", AixLog::Severity::trace, AixLog::Type::special)
 			}
 		);
 
