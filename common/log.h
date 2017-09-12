@@ -3,7 +3,7 @@
      / _\ (  )( \/ )(  )   /  \  / __)
     /    \ )(  )  ( / (_/\(  O )( (_ \
     \_/\_/(__)(_/\_)\____/ \__/  \___/
-    version 0.13.0
+    version 0.16.0
     https://github.com/badaix/aixlog
 
     This file is part of aixlog
@@ -47,20 +47,26 @@
 #endif
 
 
-/// Internal helper defines
-#define LOG_WO_TAG(P) std::clog << (AixLog::Severity)P
-#define LOG_TAG(P, T) std::clog << (AixLog::Severity)P << TAG(T)
+/// Internal helper macros (exposed, but shouldn't be used directly)
+#define AIXLOG_INTERNAL__LOG_WO_TAG(SEVERITY_) std::clog << (AixLog::Severity)AixLog::SEVERITY_
+#define AIXLOG_INTERNAL__LOG_TAG(SEVERITY_, TAG_) std::clog << (AixLog::Severity)AixLog::SEVERITY_ << TAG(TAG_)
 
-#define ONE_COLOR(FG) AixLog::Color::FG
-#define TWO_COLOR(FG, BG) AixLog::TextColor(AixLog::Color::FG, AixLog::Color::BG)
+#define AIXLOG_INTERNAL__ONE_COLOR(FG_) AixLog::Color::FG_
+#define AIXLOG_INTERNAL__TWO_COLOR(FG_, BG_) AixLog::TextColor(AixLog::Color::FG_, AixLog::Color::BG_)
 
-#define VAR_PARM(x,P,T,FUN, ...) FUN
+//https://stackoverflow.com/questions/3046889/optional-parameters-with-c-macros
+#define AIXLOG_INTERNAL__VAR_PARM(x,PARAM1_,PARAM2_,FUNC_, ...) FUNC_
 
 
-/// External logger defines
-#define LOG(...) VAR_PARM(,##__VA_ARGS__, LOG_TAG(__VA_ARGS__), LOG_WO_TAG(__VA_ARGS__)) << TIMESTAMP << FUNC
-#define SLOG(...) VAR_PARM(,##__VA_ARGS__, LOG_TAG(__VA_ARGS__), LOG_WO_TAG(__VA_ARGS__)) << TIMESTAMP << SPECIAL << FUNC
-#define COLOR(...) VAR_PARM(,##__VA_ARGS__, TWO_COLOR(__VA_ARGS__), ONE_COLOR(__VA_ARGS__))
+/// External logger macros
+// usage: LOG(SEVERITY) or LOG(SEVERITY, TAG)
+// e.g.: LOG(NOTICE) or LOG(NOTICE, "my tag")
+#define LOG(...) AIXLOG_INTERNAL__VAR_PARM(,##__VA_ARGS__, AIXLOG_INTERNAL__LOG_TAG(__VA_ARGS__), AIXLOG_INTERNAL__LOG_WO_TAG(__VA_ARGS__)) << TIMESTAMP << FUNC
+#define SLOG(...) AIXLOG_INTERNAL__VAR_PARM(,##__VA_ARGS__, AIXLOG_INTERNAL__LOG_TAG(__VA_ARGS__), AIXLOG_INTERNAL__LOG_WO_TAG(__VA_ARGS__)) << TIMESTAMP << SPECIAL << FUNC
+
+// usage: COLOR(TEXT_COLOR, BACKGROUND_COLOR) or COLOR(TEXT_COLOR)
+// e.g.: COLOR(yellow, blue) or COLOR(red)
+#define COLOR(...) AIXLOG_INTERNAL__VAR_PARM(,##__VA_ARGS__, AIXLOG_INTERNAL__TWO_COLOR(__VA_ARGS__), AIXLOG_INTERNAL__ONE_COLOR(__VA_ARGS__))
 
 #define FUNC AixLog::Function(__func__, __FILE__, __LINE__)
 #define TAG AixLog::Tag
@@ -68,6 +74,10 @@
 #define SPECIAL AixLog::Type::special
 #define TIMESTAMP AixLog::Timestamp(std::chrono::system_clock::now())
 
+
+
+namespace AixLog
+{
 
 enum SEVERITY
 {
@@ -97,9 +107,6 @@ enum SEVERITY
 };
 
 
-
-namespace AixLog
-{
 
 enum class Type
 {
@@ -557,7 +564,7 @@ struct SinkCerr : public SinkFormat
 
 
 /// Not tested due to unavailability of Windows
-struct SinkOutputDebugString : Sink
+struct SinkOutputDebugString : public Sink
 {
 	SinkOutputDebugString(Severity severity, Type type = Type::all, const std::string& default_tag = "") : Sink(severity, type)
 	{
@@ -573,7 +580,7 @@ struct SinkOutputDebugString : Sink
 
 
 
-struct SinkUnifiedLogging : Sink
+struct SinkUnifiedLogging : public Sink
 {
 	SinkUnifiedLogging(Severity severity, Type type = Type::all) : Sink(severity, type)
 	{
@@ -918,7 +925,7 @@ static std::ostream& operator<< (std::ostream& os, const Color& color)
 }
 
 
-}
+} /// namespace AixLog
 
 
 #endif /// AIX_LOG_HPP

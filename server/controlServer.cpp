@@ -48,7 +48,7 @@ void ControlServer::cleanup()
 	{
 		if (!(*it)->active())
 		{
-			SLOG(LOG_ERR) << "Session inactive. Removing\n";
+			SLOG(ERROR) << "Session inactive. Removing\n";
 			// don't block: remove ClientSession in a thread
 			auto func = [](shared_ptr<ControlSession> s)->void{s->stop();};
 			std::thread t(func, *it);
@@ -115,7 +115,7 @@ void ControlServer::handleAccept(socket_ptr socket)
 	setsockopt(socket->native_handle(), SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
 	setsockopt(socket->native_handle(), SOL_SOCKET, SO_SNDTIMEO, &tv, sizeof(tv));
 //	socket->set_option(boost::asio::ip::tcp::no_delay(false));
-	SLOG(LOG_NOTICE) << "ControlServer::NewConnection: " << socket->remote_endpoint().address().to_string() << endl;
+	SLOG(NOTICE) << "ControlServer::NewConnection: " << socket->remote_endpoint().address().to_string() << endl;
 	shared_ptr<ControlSession> session = make_shared<ControlSession>(this, socket);
 	{
 		std::lock_guard<std::recursive_mutex> mlock(mutex_);

@@ -99,7 +99,7 @@ int main(int argc, char* argv[])
 		}
 		catch (const std::invalid_argument& e)
 		{
-			SLOG(LOG_ERR) << "Exception: " << e.what() << std::endl;
+			SLOG(ERROR) << "Exception: " << e.what() << std::endl;
 			cout << "\n" << op << "\n";
 			exit(EXIT_FAILURE);
 		}
@@ -180,7 +180,7 @@ int main(int argc, char* argv[])
 				processPriority = 19;
 			if (processPriority != 0)
 				setpriority(PRIO_PROCESS, 0, processPriority);
-			SLOG(LOG_NOTICE) << "daemon started" << std::endl;
+			SLOG(NOTICE) << "daemon started" << std::endl;
 		}
 #endif
 
@@ -214,11 +214,11 @@ int main(int argc, char* argv[])
 	}
 	catch (const std::exception& e)
 	{
-		SLOG(LOG_ERR) << "Exception: " << e.what() << std::endl;
+		SLOG(ERROR) << "Exception: " << e.what() << std::endl;
 		exitcode = EXIT_FAILURE;
 	}
 
-	SLOG(LOG_NOTICE) << "daemon terminated." << endl;
+	SLOG(NOTICE) << "daemon terminated." << endl;
 	exit(exitcode);
 }
 

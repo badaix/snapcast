@@ -585,7 +585,7 @@ void StreamServer::handleAccept(socket_ptr socket)
 	/// experimental: turn on tcp::no_delay
 	socket->set_option(tcp::no_delay(true));
 
-	SLOG(LOG_NOTICE) << "StreamServer::NewConnection: " << socket->remote_endpoint().address().to_string() << endl;
+	SLOG(NOTICE) << "StreamServer::NewConnection: " << socket->remote_endpoint().address().to_string() << endl;
 	shared_ptr<StreamSession> session = make_shared<StreamSession>(this, socket);
 
 	session->setBufferMs(settings_.bufferMs);
@@ -620,7 +620,7 @@ void StreamServer::start()
 	}
 	catch (const std::exception& e)
 	{
-		SLOG(LOG_NOTICE) << "StreamServer::start: " << e.what() << endl;
+		SLOG(NOTICE) << "StreamServer::start: " << e.what() << endl;
 		stop();
 		throw;
 	}

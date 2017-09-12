@@ -162,7 +162,7 @@ FLAC__StreamDecoderWriteStatus write_callback(const FLAC__StreamDecoder *decoder
 		{
 			if (buffer[channel] == NULL)
 			{
-				SLOG(LOG_ERR) << "ERROR: buffer[" << channel << "] is NULL\n";
+				SLOG(ERROR) << "ERROR: buffer[" << channel << "] is NULL\n";
 				return FLAC__STREAM_DECODER_WRITE_STATUS_ABORT;
 			}
 			
@@ -210,7 +210,7 @@ void metadata_callback(const FLAC__StreamDecoder *decoder, const FLAC__StreamMet
 void error_callback(const FLAC__StreamDecoder *decoder, FLAC__StreamDecoderErrorStatus status, void *client_data)
 {
 	(void)decoder, (void)client_data;
-	SLOG(LOG_ERR) << "Got error callback: " << FLAC__StreamDecoderErrorStatusString[status] << "\n";
+	SLOG(ERROR) << "Got error callback: " << FLAC__StreamDecoderErrorStatusString[status] << "\n";
 	static_cast<FlacDecoder*>(client_data)->lastError_ = std::unique_ptr<FLAC__StreamDecoderErrorStatus>(new FLAC__StreamDecoderErrorStatus(status));
 
 	/// TODO, see issue #120:

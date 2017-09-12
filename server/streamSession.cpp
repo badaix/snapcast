@@ -183,7 +183,7 @@ void StreamSession::getNextMessage()
 	baseMessage.deserialize(&buffer[0]);
 	if (baseMessage.size > msg::max_size)
 	{
-		SLOG(LOG_ERR) << "received message of type " << baseMessage.type << " to large: " << baseMessage.size << "\n";
+		SLOG(ERROR) << "received message of type " << baseMessage.type << " to large: " << baseMessage.size << "\n";
 		stop();
 		return;
 	}
@@ -213,7 +213,7 @@ void StreamSession::reader()
 	}
 	catch (const std::exception& e)
 	{
-		SLOG(LOG_ERR) << "Exception in StreamSession::reader(): " << e.what() << endl;
+		SLOG(ERROR) << "Exception in StreamSession::reader(): " << e.what() << endl;
 	}
 
 	if (active_ && (messageReceiver_ != NULL))
@@ -252,7 +252,7 @@ void StreamSession::writer()
 	}
 	catch (const std::exception& e)
 	{
-		SLOG(LOG_ERR) << "Exception in StreamSession::writer(): " << e.what() << endl;
+		SLOG(ERROR) << "Exception in StreamSession::writer(): " << e.what() << endl;
 	}
 
 	if (active_ && (messageReceiver_ != NULL))

@@ -145,7 +145,7 @@ void ControlSession::reader()
 	}
 	catch (const std::exception& e)
 	{
-		SLOG(LOG_ERR) << "Exception in ControlSession::reader(): " << e.what() << endl;
+		SLOG(ERROR) << "Exception in ControlSession::reader(): " << e.what() << endl;
 	}
 	active_ = false;
 }
@@ -166,7 +166,7 @@ void ControlSession::writer()
 	}
 	catch (const std::exception& e)
 	{
-		SLOG(LOG_ERR) << "Exception in ControlSession::writer(): " << e.what() << endl;
+		SLOG(ERROR) << "Exception in ControlSession::writer(): " << e.what() << endl;
 	}
 	active_ = false;
 }

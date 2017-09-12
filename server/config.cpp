@@ -48,7 +48,7 @@ Config::Config()
 		throw SnapException("failed to create settings directory: \"" + dir + "\": " + cpt::to_string(errno));
 
 	filename_ = dir + "server.json";
-	SLOG(LOG_NOTICE) << "Settings file: \"" << filename_ << "\"\n";
+	SLOG(NOTICE) << "Settings file: \"" << filename_ << "\"\n";
 
 	int fd;
 	if ((fd = open(filename_.c_str(), O_RDWR | O_CREAT, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH)) == -1)
