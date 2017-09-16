@@ -56,7 +56,7 @@ public:
 
 	/// Implementation of MessageReceiver.
 	/// Used for async exception reporting
-	virtual void onException(ClientConnection* connection, const std::exception& exception);
+	virtual void onException(ClientConnection* connection, shared_exception_ptr exception);
 
 private:
 	void worker();
@@ -76,8 +76,7 @@ private:
 	std::shared_ptr<msg::CodecHeader> headerChunk_;
 	std::mutex receiveMutex_;
 
-	std::string exception_;
-	bool asyncException_;
+	shared_exception_ptr async_exception_;
 };
 
 

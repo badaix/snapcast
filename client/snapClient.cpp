@@ -157,7 +157,7 @@ int main (int argc, char **argv)
 
 		AixLog::Log::init(
 			{
-				make_shared<AixLog::SinkCout>(debugSwitch.isSet()?(AixLog::Severity::trace):(AixLog::Severity::info), AixLog::Type::all, debugSwitch.isSet()?"%Y-%m-%d %H-%M-%S.#ms [#severity] (#tag)":"%Y-%m-%d %H-%M-%S [#severity]"),
+				make_shared<AixLog::SinkCout>(debugSwitch.isSet()?(AixLog::Severity::trace):(AixLog::Severity::info), AixLog::Type::all, debugSwitch.isSet()?"%Y-%m-%d %H-%M-%S.#ms [#severity] (#function)":"%Y-%m-%d %H-%M-%S [#severity]"),
 				make_shared<AixLog::SinkNative>("snapclient", AixLog::Severity::trace, AixLog::Type::special)
 			}
 		);

@@ -22,7 +22,7 @@
 #include "common/strCompat.h"
 #include "common/snapException.h"
 #include "message/hello.h"
-#include "common/log.h"
+#include "aixlog.hpp"
 
 
 using namespace std;
@@ -82,7 +82,7 @@ void ClientConnection::start()
 //	setsockopt(socket->native_handle(), SOL_SOCKET, SO_SNDTIMEO, &tv, sizeof(tv));
 	socket_->connect(*iterator);
 	connected_ = true;
-	SLOG(LOG_NOTICE) << "Connected to " << socket_->remote_endpoint().address().to_string() << endl;
+	SLOG(NOTICE) << "Connected to " << socket_->remote_endpoint().address().to_string() << endl;
 	active_ = true;
 	readerThread_ = new thread(&ClientConnection::reader, this);
 }
@@ -221,7 +221,7 @@ void ClientConnection::reader()
 	catch (const std::exception& e)
 	{
 		if (messageReceiver_ != NULL)
-			messageReceiver_->onException(this, e);
+			messageReceiver_->onException(this, make_shared<SnapException>(e.what()));
 	}
 	catch (...)
 	{

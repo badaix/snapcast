@@ -29,7 +29,7 @@
 #include "message/time.h"
 #include "message/hello.h"
 #include "common/snapException.h"
-#include "common/log.h"
+#include "aixlog.hpp"
 
 using namespace std;
 
@@ -43,16 +43,15 @@ Controller::Controller(const std::string& hostId, size_t instance) : MessageRece
 	decoder_(nullptr),
 	player_(nullptr),
 	serverSettings_(nullptr),
-	asyncException_(false)
+	async_exception_(nullptr)
 {
 }
 
 
-void Controller::onException(ClientConnection* connection, const std::exception& exception)
+void Controller::onException(ClientConnection* connection, shared_exception_ptr exception)
 {
-	LOG(ERROR) << "Controller::onException: " << exception.what() << "\n";
-	exception_ = exception.what();
-	asyncException_ = true;
+	LOG(ERROR) << "Controller::onException: " << exception->what() << "\n";
+	async_exception_ = exception;
 }
 
 
@@ -196,6 +195,12 @@ void Controller::worker()
 			msg::Time timeReq;
 			for (size_t n=0; n<50 && active_; ++n)
 			{
+				if (async_exception_)
+				{
+					LOG(ERROR) << "Async exception: " << async_exception_->what() << "\n";
+					throw *async_exception_;
+				}
+
 				shared_ptr<msg::Time> reply = clientConnection_->sendReq<msg::Time>(&timeReq, chronos::msec(2000));
 				if (reply)
 				{
@@ -208,11 +213,15 @@ void Controller::worker()
 			/// Main loop
 			while (active_)
 			{
+				LOG(DEBUG) << "Main loop\n";
 				for (size_t n=0; n<10 && active_; ++n)
 				{
 					chronos::sleep(100);
-					if (asyncException_)
-						throw AsyncSnapException(exception_);
+					if (async_exception_)
+					{
+						LOG(ERROR) << "Async exception: " << async_exception_->what() << "\n";
+						throw *async_exception_;
+					}
 				}
 
 				if (sendTimeSyncMessage(5000))
@@ -221,8 +230,8 @@ void Controller::worker()
 		}
 		catch (const std::exception& e)
 		{
-			asyncException_ = false;
-			SLOG(LOG_ERR) << "Exception in Controller::worker(): " << e.what() << endl;
+			async_exception_ = nullptr;
+			SLOG(ERROR) << "Exception in Controller::worker(): " << e.what() << endl;
 			clientConnection_->stop();
 			player_.reset();
 			stream_.reset();
