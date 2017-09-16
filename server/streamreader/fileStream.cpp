@@ -22,7 +22,7 @@
 
 #include "fileStream.h"
 #include "encoder/encoderFactory.h"
-#include "common/log.h"
+#include "aixlog.hpp"
 #include "common/snapException.h"
 
 

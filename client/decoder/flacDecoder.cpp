@@ -22,7 +22,7 @@
 #include "flacDecoder.h"
 #include "common/snapException.h"
 #include "common/endian.h"
-#include "common/log.h"
+#include "aixlog.hpp"
 
 
 using namespace std;

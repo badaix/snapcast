@@ -19,7 +19,7 @@
 #include "streamUri.h"
 #include "common/utils/string_utils.h"
 #include "common/strCompat.h"
-#include "common/log.h"
+#include "aixlog.hpp"
 
 
 using namespace std;

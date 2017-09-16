@@ -20,7 +20,7 @@
 
 #include <iostream>
 #include <mutex>
-#include "common/log.h"
+#include "aixlog.hpp"
 #include "message/pcmChunk.h"
 
 using namespace std;

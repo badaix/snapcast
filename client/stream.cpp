@@ -20,7 +20,7 @@
 #include <cmath>
 #include <iostream>
 #include <string.h>
-#include "common/log.h"
+#include "aixlog.hpp"
 #include "timeProvider.h"
 
 using namespace std;

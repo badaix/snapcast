@@ -19,7 +19,7 @@
 #include <string.h>
 #include <iostream>
 #include "pcmChunk.h"
-#include "common/log.h"
+#include "aixlog.hpp"
 
 
 using namespace std;

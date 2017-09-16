@@ -21,7 +21,7 @@
 #include "flacEncoder.h"
 #include "common/strCompat.h"
 #include "common/snapException.h"
-#include "common/log.h"
+#include "aixlog.hpp"
 
 using namespace std;
 

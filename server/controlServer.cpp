@@ -18,7 +18,7 @@
 
 #include "controlServer.h"
 #include "message/time.h"
-#include "common/log.h"
+#include "aixlog.hpp"
 #include "common/utils.h"
 #include "common/snapException.h"
 #include "jsonrp.hpp"

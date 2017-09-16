@@ -24,7 +24,7 @@
 #include <time.h>
 #include <iostream>
 #include "common/snapException.h"
-#include "common/log.h"
+#include "aixlog.hpp"
 
 
 static AvahiSimplePoll *simple_poll = NULL;

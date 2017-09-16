@@ -19,7 +19,7 @@
 #include <iostream>
 #include <mutex>
 #include "controlSession.h"
-#include "common/log.h"
+#include "aixlog.hpp"
 #include "message/pcmChunk.h"
 
 using namespace std;

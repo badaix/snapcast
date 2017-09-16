@@ -20,7 +20,7 @@
 #include <thread>
 
 #include "publishBonjour.h"
-#include "common/log.h"
+#include "aixlog.hpp"
 
 typedef union { unsigned char b[2]; unsigned short NotAnInteger; } Opaque16;
 

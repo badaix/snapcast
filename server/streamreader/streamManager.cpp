@@ -24,7 +24,7 @@
 #include "fileStream.h"
 #include "common/utils.h"
 #include "common/strCompat.h"
-#include "common/log.h"
+#include "aixlog.hpp"
 #include "common/snapException.h"
 
 

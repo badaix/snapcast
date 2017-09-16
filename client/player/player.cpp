@@ -20,7 +20,7 @@
 #include <cmath>
 
 #include "player.h"
-#include "common/log.h"
+#include "aixlog.hpp"
 
 
 using namespace std;

@@ -11,7 +11,7 @@
 #include <netdb.h>
 #endif
 
-#include "common/log.h"
+#include "aixlog.hpp"
 #include "common/snapException.h"
 
 using namespace std;

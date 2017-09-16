@@ -19,7 +19,7 @@
 #include "streamServer.h"
 #include "message/time.h"
 #include "message/hello.h"
-#include "common/log.h"
+#include "aixlog.hpp"
 #include "config.h"
 #include <iostream>
 

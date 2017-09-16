@@ -18,7 +18,7 @@
 
 #include "common/snapException.h"
 #include "common/endian.h"
-#include "common/log.h"
+#include "aixlog.hpp"
 #include "pcmDecoder.h"
 
 

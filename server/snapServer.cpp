@@ -36,7 +36,7 @@
 #include "publishZeroConf/publishmDNS.h"
 #endif
 #include "config.h"
-#include "common/log.h"
+#include "aixlog.hpp"
 
 
 volatile sig_atomic_t g_terminated = false;

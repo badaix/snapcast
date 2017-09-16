@@ -29,7 +29,7 @@
 #ifdef HAS_DAEMON
 #include "common/daemon.h"
 #endif
-#include "common/log.h"
+#include "aixlog.hpp"
 #include "common/signalHandler.h"
 #include "common/strCompat.h"
 #include "common/utils.h"

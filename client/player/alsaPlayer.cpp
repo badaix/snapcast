@@ -17,7 +17,7 @@
 ***/
 
 #include "alsaPlayer.h"
-#include "common/log.h"
+#include "aixlog.hpp"
 #include "common/snapException.h"
 #include "common/strCompat.h"
 

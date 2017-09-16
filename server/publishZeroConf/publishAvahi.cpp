@@ -20,7 +20,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include "publishAvahi.h"
-#include "common/log.h"
+#include "aixlog.hpp"
 
 
 static AvahiEntryGroup *group;
