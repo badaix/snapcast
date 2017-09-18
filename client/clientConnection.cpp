@@ -70,7 +70,7 @@ std::string ClientConnection::getMacAddress() const
 void ClientConnection::start()
 {
 	tcp::resolver resolver(io_service_);
-	tcp::resolver::query query(tcp::v4(), host_, cpt::to_string(port_), asio::ip::resolver_query_base::numeric_service);
+	tcp::resolver::query query(host_, cpt::to_string(port_), asio::ip::resolver_query_base::numeric_service);
 	auto iterator = resolver.resolve(query);
 	logO << "Connecting\n";
 	socket_.reset(new tcp::socket(io_service_));
