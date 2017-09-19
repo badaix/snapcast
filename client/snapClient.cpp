@@ -78,38 +78,25 @@ int main (int argc, char **argv)
 		size_t port(1704);
 		int latency(0);
 		size_t instance(1);
-		int processPriority(-3);
-
-		Switch helpSwitch("", "help", "produce help message");
-		Switch debugSwitch("", "debug", "enable debug logging");
-		Switch versionSwitch("v", "version", "show version number");
-		Switch listSwitch("l", "list", "list pcm devices");
-		Value<string> hostValue("h", "host", "server hostname or ip address", "", &host);
-		Value<size_t> portValue("p", "port", "server port", 1704, &port);
-		Value<string> soundcardValue("s", "soundcard", "index or name of the soundcard", "default", &soundcard);
-		Implicit<int> daemonOption("d", "daemon", "daemonize, optional process priority [-20..19]", -3, &processPriority);
-		Value<int> latencyValue("", "latency", "latency of the soundcard", 0, &latency);
-		Value<size_t> instanceValue("i", "instance", "instance id", 1, &instance);
-		Value<string> hostIdValue("", "hostID", "unique host id", "");
-		Value<string> userValue("", "user", "the user[:group] to run snapclient as when daemonized");
 
 		OptionParser op("Allowed options");
-		op.add(helpSwitch)
-		 .add(debugSwitch, hidden)
-		 .add(versionSwitch)
-		 .add(hostValue)
-		 .add(portValue)
+		auto helpSwitch =     op.add<Switch>("", "help", "produce help message");
+		auto debugSwitch =    op.add<Switch, Attribute::hidden>("", "debug", "enable debug logging");
+		auto versionSwitch =  op.add<Switch>("v", "version", "show version number");
 #if defined(HAS_ALSA)
-		 .add(listSwitch)
-		 .add(soundcardValue)
+		auto listSwitch =     op.add<Switch>("l", "list", "list pcm devices");
+		auto soundcardValue = op.add<Value<string>>("s", "soundcard", "index or name of the soundcard", "default", &soundcard);
 #endif
+		auto hostValue =      op.add<Value<string>>("h", "host", "server hostname or ip address", "", &host);
+		auto portValue =      op.add<Value<size_t>>("p", "port", "server port", 1704, &port);
 #ifdef HAS_DAEMON
-		 .add(daemonOption)
-		 .add(userValue)
+		int processPriority(-3);
+		auto daemonOption =   op.add<Implicit<int>>("d", "daemon", "daemonize, optional process priority [-20..19]", -3, &processPriority);
+		auto userValue =      op.add<Value<string>>("", "user", "the user[:group] to run snapclient as when daemonized");
 #endif
-		 .add(latencyValue)
-		 .add(hostIdValue)
-		 .add(instanceValue);
+		auto latencyValue =   op.add<Value<int>>("", "latency", "latency of the soundcard", 0, &latency);
+		auto instanceValue =  op.add<Value<size_t>>("i", "instance", "instance id", 1, &instance);
+		auto hostIdValue =    op.add<Value<string>>("", "hostID", "unique host id", "");
 
 		try
 		{
@@ -122,7 +109,7 @@ int main (int argc, char **argv)
 			exit(EXIT_FAILURE);
 		}
 
-		if (versionSwitch.isSet())
+		if (versionSwitch->is_set())
 		{
 			cout << "snapclient v" << VERSION << "\n"
 				<< "Copyright (C) 2014-2017 BadAix (snapcast@badaix.de).\n"
@@ -133,20 +120,20 @@ int main (int argc, char **argv)
 			exit(EXIT_SUCCESS);
 		}
 
-		if (listSwitch.isSet())
-		{
 #ifdef HAS_ALSA
+		if (listSwitch->is_set())
+		{
 			vector<PcmDevice> pcmDevices = AlsaPlayer::pcm_list();
 			for (auto dev: pcmDevices)
 			{
 				cout << dev.idx << ": " << dev.name << "\n"
 					<< dev.description << "\n\n";
 			}
-#endif
 			exit(EXIT_SUCCESS);
 		}
+#endif
 
-		if (helpSwitch.isSet())
+		if (helpSwitch->is_set())
 		{
 			cout << op << "\n";
 			exit(EXIT_SUCCESS);
@@ -157,7 +144,7 @@ int main (int argc, char **argv)
 
 		AixLog::Log::init(
 			{
-				make_shared<AixLog::SinkCout>(debugSwitch.isSet()?(AixLog::Severity::trace):(AixLog::Severity::info), AixLog::Type::all, debugSwitch.isSet()?"%Y-%m-%d %H-%M-%S.#ms [#severity] (#function)":"%Y-%m-%d %H-%M-%S [#severity]"),
+				make_shared<AixLog::SinkCout>(debugSwitch->is_set()?(AixLog::Severity::trace):(AixLog::Severity::info), AixLog::Type::all, debugSwitch->is_set()?"%Y-%m-%d %H-%M-%S.#ms [#severity] (#function)":"%Y-%m-%d %H-%M-%S [#severity]"),
 				make_shared<AixLog::SinkNative>("snapclient", AixLog::Severity::trace, AixLog::Type::special)
 			}
 		);
@@ -168,7 +155,7 @@ int main (int argc, char **argv)
 
 #ifdef HAS_DAEMON
 		std::unique_ptr<Daemon> daemon;
-		if (daemonOption.isSet())
+		if (daemonOption->is_set())
 		{
 			string pidFile = "/var/run/snapclient/pid";
 			if (instance != 1)
@@ -176,12 +163,12 @@ int main (int argc, char **argv)
 			string user = "";
 			string group = "";
 
-			if (userValue.isSet())
+			if (userValue->is_set())
 			{
-				if (userValue.getValue().empty())
+				if (userValue->value().empty())
 					std::invalid_argument("user must not be empty");
 
-				vector<string> user_group = utils::string::split(userValue.getValue(), ':');
+				vector<string> user_group = utils::string::split(userValue->value(), ':');
 				user = user_group[0];
 				if (user_group.size() > 1)
 					group = user_group[1];
@@ -233,7 +220,7 @@ int main (int argc, char **argv)
 #endif
 		}
 
-		std::unique_ptr<Controller> controller(new Controller(hostIdValue.getValue(), instance));
+		std::unique_ptr<Controller> controller(new Controller(hostIdValue->value(), instance));
 		if (!g_terminated)
 		{
 			LOG(INFO) << "Latency: " << latency << "\n";

@@ -59,39 +59,23 @@ int main(int argc, char* argv[])
 		std::string pcmStream = "pipe:///tmp/snapfifo?name=default";
 		int processPriority(0);
 
-		Switch helpSwitch("h", "help", "Produce help message");
-		Switch debugSwitch("", "debug", "enable debug logging");
-		Switch versionSwitch("v", "version", "Show version number");
-		Value<size_t> portValue("p", "port", "Server port", settings.port, &settings.port);
-		Value<size_t> controlPortValue("", "controlPort", "Remote control port", settings.controlPort, &settings.controlPort);
-		Value<string> streamValue("s", "stream", "URI of the PCM input stream.\nFormat: TYPE://host/path?name=NAME\n[&codec=CODEC]\n[&sampleformat=SAMPLEFORMAT]", pcmStream, &pcmStream);
-
-		Value<string> sampleFormatValue("", "sampleformat", "Default sample format", settings.sampleFormat);
-		Value<string> codecValue("c", "codec", "Default transport codec\n(flac|ogg|pcm)[:options]\nType codec:? to get codec specific options", settings.codec, &settings.codec);
-		Value<size_t> streamBufferValue("", "streamBuffer", "Default stream read buffer [ms]", settings.streamReadMs, &settings.streamReadMs);
-
-		Value<int> bufferValue("b", "buffer", "Buffer [ms]", settings.bufferMs, &settings.bufferMs);
-		Switch muteSwitch("", "sendToMuted", "Send audio to muted clients", &settings.sendAudioToMutedClients);
-		Implicit<int> daemonOption("d", "daemon", "Daemonize\noptional process priority [-20..19]", 0, &processPriority);
-		Value<string> userValue("", "user", "the user[:group] to run snapserver as when daemonized", "");
-
 		OptionParser op("Allowed options");
-		op.add(helpSwitch)
-		 .add(debugSwitch, hidden)
-		 .add(versionSwitch)
-		 .add(portValue)
-		 .add(controlPortValue)
-		 .add(streamValue)
-		 .add(sampleFormatValue)
-		 .add(codecValue)
-		 .add(streamBufferValue)
-		 .add(bufferValue)
-		 .add(muteSwitch)
+		auto helpSwitch =        op.add<Switch>("h", "help", "Produce help message");
+		auto debugSwitch =       op.add<Switch, Attribute::hidden>("", "debug", "enable debug logging");
+		auto versionSwitch =     op.add<Switch>("v", "version", "Show version number");
+		auto portValue =         op.add<Value<size_t>>("p", "port", "Server port", settings.port, &settings.port);
+		auto controlPortValue =  op.add<Value<size_t>>("", "controlPort", "Remote control port", settings.controlPort, &settings.controlPort);
+		auto streamValue =       op.add<Value<string>>("s", "stream", "URI of the PCM input stream.\nFormat: TYPE://host/path?name=NAME\n[&codec=CODEC]\n[&sampleformat=SAMPLEFORMAT]", pcmStream, &pcmStream);
+
+		auto sampleFormatValue = op.add<Value<string>>("", "sampleformat", "Default sample format", settings.sampleFormat);
+		auto codecValue =        op.add<Value<string>>("c", "codec", "Default transport codec\n(flac|ogg|pcm)[:options]\nType codec:? to get codec specific options", settings.codec, &settings.codec);
+		auto streamBufferValue = op.add<Value<size_t>>("", "streamBuffer", "Default stream read buffer [ms]", settings.streamReadMs, &settings.streamReadMs);
+		auto bufferValue =       op.add<Value<int>>("b", "buffer", "Buffer [ms]", settings.bufferMs, &settings.bufferMs);
+		auto muteSwitch =        op.add<Switch>("", "sendToMuted", "Send audio to muted clients", &settings.sendAudioToMutedClients);
 #ifdef HAS_DAEMON
-		 .add(daemonOption)
-		 .add(userValue)
+		auto daemonOption =      op.add<Implicit<int>>("d", "daemon", "Daemonize\noptional process priority [-20..19]", 0, &processPriority);
+		auto userValue =         op.add<Value<string>>("", "user", "the user[:group] to run snapserver as when daemonized", "");
 #endif
-		 ;
 
 		try
 		{
@@ -104,7 +88,7 @@ int main(int argc, char* argv[])
 			exit(EXIT_FAILURE);
 		}
 
-		if (versionSwitch.isSet())
+		if (versionSwitch->is_set())
 		{
 			cout << "snapserver v" << VERSION << "\n"
 				<< "Copyright (C) 2014-2017 BadAix (snapcast@badaix.de).\n"
@@ -115,19 +99,19 @@ int main(int argc, char* argv[])
 			exit(EXIT_SUCCESS);
 		}
 
-		if (helpSwitch.isSet())
+		if (helpSwitch->is_set())
 		{
 			cout << op << "\n";
 			exit(EXIT_SUCCESS);
 		}
 
-		if (!streamValue.isSet())
-			settings.pcmStreams.push_back(streamValue.getValue());
+		if (!streamValue->is_set())
+			settings.pcmStreams.push_back(streamValue->value());
 
-		for (size_t n=0; n<streamValue.count(); ++n)
+		for (size_t n=0; n<streamValue->count(); ++n)
 		{
-			cout << streamValue.getValue(n) << "\n";
-			settings.pcmStreams.push_back(streamValue.getValue(n));
+			cout << streamValue->value(n) << "\n";
+			settings.pcmStreams.push_back(streamValue->value(n));
 		}
 
 		if (settings.codec.find(":?") != string::npos)
@@ -145,7 +129,7 @@ int main(int argc, char* argv[])
 
 		AixLog::Log::init(
 			{
-				make_shared<AixLog::SinkCout>(debugSwitch.isSet()?(AixLog::Severity::trace):(AixLog::Severity::info), AixLog::Type::all, debugSwitch.isSet()?"%Y-%m-%d %H-%M-%S.#ms [#severity] (#tag)":"%Y-%m-%d %H-%M-%S [#severity]"),
+				make_shared<AixLog::SinkCout>(debugSwitch->is_set()?(AixLog::Severity::trace):(AixLog::Severity::info), AixLog::Type::all, debugSwitch->is_set()?"%Y-%m-%d %H-%M-%S.#ms [#severity] (#tag)":"%Y-%m-%d %H-%M-%S [#severity]"),
 				make_shared<AixLog::SinkNative>("snapserver", AixLog::Severity::trace, AixLog::Type::special)
 			}
 		);
@@ -156,17 +140,17 @@ int main(int argc, char* argv[])
 
 #ifdef HAS_DAEMON
 		std::unique_ptr<Daemon> daemon;
-		if (daemonOption.isSet())
+		if (daemonOption->is_set())
 		{
 			string user = "";
 			string group = "";
 
-			if (userValue.isSet())
+			if (userValue->is_set())
 			{
-				if (userValue.getValue().empty())
+				if (userValue->value().empty())
 					std::invalid_argument("user must not be empty");
 
-				vector<string> user_group = utils::string::split(userValue.getValue(), ':');
+				vector<string> user_group = utils::string::split(userValue->value(), ':');
 				user = user_group[0];
 				if (user_group.size() > 1)
 					group = user_group[1];
@@ -193,7 +177,7 @@ int main(int argc, char* argv[])
 
 		if (settings.bufferMs < 400)
 			settings.bufferMs = 400;
-		settings.sampleFormat = sampleFormatValue.getValue();
+		settings.sampleFormat = sampleFormatValue->value();
 
 		asio::io_service io_service;
 		std::unique_ptr<StreamServer> streamServer(new StreamServer(&io_service, settings));
