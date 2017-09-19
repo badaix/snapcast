@@ -85,17 +85,17 @@ int main (int argc, char **argv)
 		auto versionSwitch =  op.add<Switch>("v", "version", "show version number");
 #if defined(HAS_ALSA)
 		auto listSwitch =     op.add<Switch>("l", "list", "list pcm devices");
-		auto soundcardValue = op.add<Value<string>>("s", "soundcard", "index or name of the soundcard", "default", &soundcard);
+		/*auto soundcardValue =*/ op.add<Value<string>>("s", "soundcard", "index or name of the soundcard", "default", &soundcard);
 #endif
-		auto hostValue =      op.add<Value<string>>("h", "host", "server hostname or ip address", "", &host);
-		auto portValue =      op.add<Value<size_t>>("p", "port", "server port", 1704, &port);
+		/*auto hostValue =*/  op.add<Value<string>>("h", "host", "server hostname or ip address", "", &host);
+		/*auto portValue =*/  op.add<Value<size_t>>("p", "port", "server port", 1704, &port);
 #ifdef HAS_DAEMON
 		int processPriority(-3);
 		auto daemonOption =   op.add<Implicit<int>>("d", "daemon", "daemonize, optional process priority [-20..19]", -3, &processPriority);
 		auto userValue =      op.add<Value<string>>("", "user", "the user[:group] to run snapclient as when daemonized");
 #endif
-		auto latencyValue =   op.add<Value<int>>("", "latency", "latency of the soundcard", 0, &latency);
-		auto instanceValue =  op.add<Value<size_t>>("i", "instance", "instance id", 1, &instance);
+		/*auto latencyValue =*/   op.add<Value<int>>("", "latency", "latency of the soundcard", 0, &latency);
+		/*auto instanceValue =*/  op.add<Value<size_t>>("i", "instance", "instance id", 1, &instance);
 		auto hostIdValue =    op.add<Value<string>>("", "hostID", "unique host id", "");
 
 		try

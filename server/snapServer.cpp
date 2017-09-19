@@ -57,22 +57,22 @@ int main(int argc, char* argv[])
 	{
 		StreamServerSettings settings;
 		std::string pcmStream = "pipe:///tmp/snapfifo?name=default";
-		int processPriority(0);
 
 		OptionParser op("Allowed options");
 		auto helpSwitch =        op.add<Switch>("h", "help", "Produce help message");
 		auto debugSwitch =       op.add<Switch, Attribute::hidden>("", "debug", "enable debug logging");
 		auto versionSwitch =     op.add<Switch>("v", "version", "Show version number");
-		auto portValue =         op.add<Value<size_t>>("p", "port", "Server port", settings.port, &settings.port);
-		auto controlPortValue =  op.add<Value<size_t>>("", "controlPort", "Remote control port", settings.controlPort, &settings.controlPort);
+		/*auto portValue =*/         op.add<Value<size_t>>("p", "port", "Server port", settings.port, &settings.port);
+		/*auto controlPortValue =*/  op.add<Value<size_t>>("", "controlPort", "Remote control port", settings.controlPort, &settings.controlPort);
 		auto streamValue =       op.add<Value<string>>("s", "stream", "URI of the PCM input stream.\nFormat: TYPE://host/path?name=NAME\n[&codec=CODEC]\n[&sampleformat=SAMPLEFORMAT]", pcmStream, &pcmStream);
 
-		auto sampleFormatValue = op.add<Value<string>>("", "sampleformat", "Default sample format", settings.sampleFormat);
-		auto codecValue =        op.add<Value<string>>("c", "codec", "Default transport codec\n(flac|ogg|pcm)[:options]\nType codec:? to get codec specific options", settings.codec, &settings.codec);
-		auto streamBufferValue = op.add<Value<size_t>>("", "streamBuffer", "Default stream read buffer [ms]", settings.streamReadMs, &settings.streamReadMs);
-		auto bufferValue =       op.add<Value<int>>("b", "buffer", "Buffer [ms]", settings.bufferMs, &settings.bufferMs);
-		auto muteSwitch =        op.add<Switch>("", "sendToMuted", "Send audio to muted clients", &settings.sendAudioToMutedClients);
+		/*auto sampleFormatValue =*/ op.add<Value<string>>("", "sampleformat", "Default sample format", settings.sampleFormat, &settings.sampleFormat);
+		/*auto codecValue =*/        op.add<Value<string>>("c", "codec", "Default transport codec\n(flac|ogg|pcm)[:options]\nType codec:? to get codec specific options", settings.codec, &settings.codec);
+		/*auto streamBufferValue =*/ op.add<Value<size_t>>("", "streamBuffer", "Default stream read buffer [ms]", settings.streamReadMs, &settings.streamReadMs);
+		/*auto bufferValue =*/       op.add<Value<int>>("b", "buffer", "Buffer [ms]", settings.bufferMs, &settings.bufferMs);
+		/*auto muteSwitch =*/        op.add<Switch>("", "sendToMuted", "Send audio to muted clients", &settings.sendAudioToMutedClients);
 #ifdef HAS_DAEMON
+		int processPriority(0);
 		auto daemonOption =      op.add<Implicit<int>>("d", "daemon", "Daemonize\noptional process priority [-20..19]", 0, &processPriority);
 		auto userValue =         op.add<Value<string>>("", "user", "the user[:group] to run snapserver as when daemonized", "");
 #endif
@@ -177,7 +177,6 @@ int main(int argc, char* argv[])
 
 		if (settings.bufferMs < 400)
 			settings.bufferMs = 400;
-		settings.sampleFormat = sampleFormatValue->value();
 
 		asio::io_service io_service;
 		std::unique_ptr<StreamServer> streamServer(new StreamServer(&io_service, settings));
