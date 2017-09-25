@@ -81,7 +81,7 @@ int main (int argc, char **argv)
 
 		OptionParser op("Allowed options");
 		auto helpSwitch =     op.add<Switch>("", "help", "produce help message");
-		auto debugSwitch =    op.add<Switch, Attribute::hidden>("", "debug", "enable debug logging");
+		auto debugSwitch =    op.add<Switch, Visibility::hidden>("", "debug", "enable debug logging");
 		auto versionSwitch =  op.add<Switch>("v", "version", "show version number");
 #if defined(HAS_ALSA)
 		auto listSwitch =     op.add<Switch>("l", "list", "list pcm devices");

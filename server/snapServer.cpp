@@ -60,7 +60,7 @@ int main(int argc, char* argv[])
 
 		OptionParser op("Allowed options");
 		auto helpSwitch =        op.add<Switch>("h", "help", "Produce help message");
-		auto debugSwitch =       op.add<Switch, Attribute::hidden>("", "debug", "enable debug logging");
+		auto debugSwitch =       op.add<Switch, Visibility::hidden>("", "debug", "enable debug logging");
 		auto versionSwitch =     op.add<Switch>("v", "version", "Show version number");
 		/*auto portValue =*/         op.add<Value<size_t>>("p", "port", "Server port", settings.port, &settings.port);
 		/*auto controlPortValue =*/  op.add<Value<size_t>>("", "controlPort", "Remote control port", settings.controlPort, &settings.controlPort);
