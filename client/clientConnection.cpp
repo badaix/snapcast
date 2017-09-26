@@ -84,6 +84,7 @@ void ClientConnection::start()
 	connected_ = true;
 	SLOG(NOTICE) << "Connected to " << socket_->remote_endpoint().address().to_string() << endl;
 	active_ = true;
+	sumTimeout_ = chronos::msec(0);
 	readerThread_ = new thread(&ClientConnection::reader, this);
 }
 

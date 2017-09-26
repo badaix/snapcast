@@ -197,8 +197,8 @@ void Controller::worker()
 			{
 				if (async_exception_)
 				{
-					LOG(ERROR) << "Async exception: " << async_exception_->what() << "\n";
-					throw *async_exception_;
+					LOG(DEBUG) << "Async exception: " << async_exception_->what() << "\n";
+					throw SnapException(async_exception_->what());
 				}
 
 				shared_ptr<msg::Time> reply = clientConnection_->sendReq<msg::Time>(&timeReq, chronos::msec(2000));
@@ -219,8 +219,8 @@ void Controller::worker()
 					chronos::sleep(100);
 					if (async_exception_)
 					{
-						LOG(ERROR) << "Async exception: " << async_exception_->what() << "\n";
-						throw *async_exception_;
+						LOG(DEBUG) << "Async exception: " << async_exception_->what() << "\n";
+						throw SnapException(async_exception_->what());
 					}
 				}
 
