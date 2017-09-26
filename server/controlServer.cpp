@@ -126,7 +126,14 @@ void ControlServer::handleAccept(socket_ptr socket)
 
 void ControlServer::start()
 {
-	acceptor_ = make_shared<tcp::acceptor>(*io_service_, tcp::endpoint(tcp::v4(), port_));
+	asio::ip::address address = asio::ip::address::from_string("::");
+	tcp::endpoint endpoint(address, port_);
+	acceptor_ = make_shared<tcp::acceptor>(*io_service_, endpoint);
+	if (endpoint.protocol() == tcp::v6())
+	{
+		error_code ec;
+		acceptor_->set_option(asio::ip::v6_only(false), ec);
+	}
 	startAccept();
 }
 
