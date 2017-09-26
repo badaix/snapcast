@@ -615,7 +615,14 @@ void StreamServer::start()
 		}
 		streamManager_->start();
 
-		acceptor_ = make_shared<tcp::acceptor>(*io_service_, tcp::endpoint(tcp::v4(), settings_.port));
+		asio::ip::address address = asio::ip::address::from_string("::");
+		tcp::endpoint endpoint(address, settings_.port);
+		acceptor_ = make_shared<tcp::acceptor>(*io_service_, endpoint);
+		if (endpoint.protocol() == tcp::v6())
+		{
+			error_code ec;
+			acceptor_->set_option(asio::ip::v6_only(false), ec);
+		}
 		startAccept();
 	}
 	catch (const std::exception& e)
