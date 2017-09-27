@@ -60,7 +60,7 @@ int main(int argc, char* argv[])
 
 		OptionParser op("Allowed options");
 		auto helpSwitch =        op.add<Switch>("h", "help", "Produce help message");
-		auto debugSwitch =       op.add<Switch, Visibility::hidden>("", "debug", "enable debug logging");
+		auto debugOption =       op.add<Implicit<string>, Visibility::hidden>("", "debug", "enable debug logging", "");
 		auto versionSwitch =     op.add<Switch>("v", "version", "Show version number");
 		/*auto portValue =*/         op.add<Value<size_t>>("p", "port", "Server port", settings.port, &settings.port);
 		/*auto controlPortValue =*/  op.add<Value<size_t>>("", "controlPort", "Remote control port", settings.controlPort, &settings.controlPort);
@@ -127,12 +127,18 @@ int main(int argc, char* argv[])
 			return 1;
 		}
 
-		AixLog::Log::init(
-			{
-				make_shared<AixLog::SinkCout>(debugSwitch->is_set()?(AixLog::Severity::trace):(AixLog::Severity::info), AixLog::Type::all, debugSwitch->is_set()?"%Y-%m-%d %H-%M-%S.#ms [#severity] (#tag)":"%Y-%m-%d %H-%M-%S [#severity]"),
-				make_shared<AixLog::SinkNative>("snapserver", AixLog::Severity::trace, AixLog::Type::special)
-			}
-		);
+		AixLog::Log::init<AixLog::SinkNative>("snapserver", AixLog::Severity::trace, AixLog::Type::special);
+		if (debugOption->is_set())
+		{
+			AixLog::Log::instance().add_logsink<AixLog::SinkCout>(AixLog::Severity::trace, AixLog::Type::all, "%Y-%m-%d %H-%M-%S.#ms [#severity] (#tag_func)");
+			if (!debugOption->value().empty())
+				AixLog::Log::instance().add_logsink<AixLog::SinkFile>(AixLog::Severity::trace, AixLog::Type::all, debugOption->value(), "%Y-%m-%d %H-%M-%S.#ms [#severity] (#tag_func)");
+		}
+		else
+		{
+			AixLog::Log::instance().add_logsink<AixLog::SinkCout>(AixLog::Severity::info, AixLog::Type::all, "%Y-%m-%d %H-%M-%S [#severity]");
+		}
+
 
 		signal(SIGHUP, signal_handler);
 		signal(SIGTERM, signal_handler);

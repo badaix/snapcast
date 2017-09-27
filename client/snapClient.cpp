@@ -81,7 +81,7 @@ int main (int argc, char **argv)
 
 		OptionParser op("Allowed options");
 		auto helpSwitch =     op.add<Switch>("", "help", "produce help message");
-		auto debugSwitch =    op.add<Switch, Visibility::hidden>("", "debug", "enable debug logging");
+		auto debugOption =    op.add<Implicit<string>, Visibility::hidden>("", "debug", "enable debug logging", "");
 		auto versionSwitch =  op.add<Switch>("v", "version", "show version number");
 #if defined(HAS_ALSA)
 		auto listSwitch =     op.add<Switch>("l", "list", "list pcm devices");
@@ -142,12 +142,18 @@ int main (int argc, char **argv)
 		if (instance <= 0)
 			std::invalid_argument("instance id must be >= 1");
 
-		AixLog::Log::init(
-			{
-				make_shared<AixLog::SinkCout>(debugSwitch->is_set()?(AixLog::Severity::trace):(AixLog::Severity::info), AixLog::Type::all, debugSwitch->is_set()?"%Y-%m-%d %H-%M-%S.#ms [#severity] (#function)":"%Y-%m-%d %H-%M-%S [#severity]"),
-				make_shared<AixLog::SinkNative>("snapclient", AixLog::Severity::trace, AixLog::Type::special)
-			}
-		);
+		AixLog::Log::init<AixLog::SinkNative>("snapclient", AixLog::Severity::trace, AixLog::Type::special);
+		if (debugOption->is_set())
+		{
+			AixLog::Log::instance().add_logsink<AixLog::SinkCout>(AixLog::Severity::trace, AixLog::Type::all, "%Y-%m-%d %H-%M-%S.#ms [#severity] (#tag_func)");
+			if (!debugOption->value().empty())
+				AixLog::Log::instance().add_logsink<AixLog::SinkFile>(AixLog::Severity::trace, AixLog::Type::all, debugOption->value(), "%Y-%m-%d %H-%M-%S.#ms [#severity] (#tag_func)");
+		}
+		else
+		{
+			AixLog::Log::instance().add_logsink<AixLog::SinkCout>(AixLog::Severity::info, AixLog::Type::all, "%Y-%m-%d %H-%M-%S [#severity]");
+		}
+
 
 		signal(SIGHUP, signal_handler);
 		signal(SIGTERM, signal_handler);
