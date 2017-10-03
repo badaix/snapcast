@@ -64,19 +64,6 @@ void Config::init(const std::string& root_directory, const std::string& user, co
 	filename_ = dir + "server.json";
 	SLOG(NOTICE) << "Settings file: \"" << filename_ << "\"\n";
 
-	if (!user.empty() && !group.empty())
-	{
-		try
-		{
-			utils::file::do_chown(dir, user, group);
-			utils::file::do_chown(filename_, user, group);
-		}
-		catch(const std::exception& e)
-		{
-			LOG(ERROR) << "Exception in chown: " << e.what() << "\n";
-		}
-	}
-
 	int fd;
 	if ((fd = open(filename_.c_str(), O_RDWR | O_CREAT, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH)) == -1)
 	{
@@ -86,6 +73,19 @@ void Config::init(const std::string& root_directory, const std::string& user, co
 			throw std::runtime_error("failed to open file \"" + filename_ + "\", error " + cpt::to_string(errno));
 	}
 	close(fd);
+
+	if (!user.empty() && !group.empty())
+	{
+		try
+		{
+			utils::file::do_chown(dir, user, group);
+			utils::file::do_chown(filename_, user, group);
+		}
+		catch(const std::exception& e)
+		{
+			SLOG(ERROR) << "Exception in chown: " << e.what() << "\n";
+		}
+	}
 
 	try
 	{

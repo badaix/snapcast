@@ -31,22 +31,40 @@ namespace utils
 namespace file
 {
 
+
+static bool exists(const std::string& filename)
+{
+    std::ifstream infile(filename.c_str());
+    return infile.good();
+}
+
+
 static void do_chown(const std::string& file_path, const std::string& user_name, const std::string& group_name)
 {
-	uid_t uid;
-	gid_t gid;
-	struct passwd *pwd;
-	struct group *grp;
+	if (user_name.empty() && group_name.empty())
+		return;
 
-	pwd = getpwnam(user_name.c_str());
-	if (pwd == NULL) 
-		throw std::runtime_error("Failed to get uid");
-	uid = pwd->pw_uid;
+	if (!exists(file_path))
+		return;
 
-	grp = getgrnam(group_name.c_str());
-	if (grp == NULL)
-		throw std::runtime_error("Failed to get gid");
-	gid = grp->gr_gid;
+	uid_t uid = -1;
+	gid_t gid = -1;
+
+	if (!user_name.empty())
+	{
+		struct passwd *pwd = getpwnam(user_name.c_str());
+		if (pwd == NULL) 
+			throw std::runtime_error("Failed to get uid");
+		uid = pwd->pw_uid;
+	}
+
+	if (!group_name.empty())
+	{
+		struct group *grp = getgrnam(group_name.c_str());
+		if (grp == NULL)
+			throw std::runtime_error("Failed to get gid");
+		gid = grp->gr_gid;
+	}
 
 	if (chown(file_path.c_str(), uid, gid) == -1)
 		throw std::runtime_error("chown failed");

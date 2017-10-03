@@ -162,7 +162,7 @@ int main(int argc, char* argv[])
 					group = user_group[1];
 			}
 
-			Config::instance().init("/var/lib/snapserver");
+			Config::instance().init("/var/lib/snapserver", user, group);
 			daemon.reset(new Daemon(user, group, "/var/run/snapserver/pid"));
 			daemon->daemonize();
 			if (processPriority < -20)
