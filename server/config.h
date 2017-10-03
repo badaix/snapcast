@@ -391,6 +391,8 @@ public:
 
 	void save();
 
+	void init(const std::string& root_directory = "", const std::string& user = "", const std::string& group = "");
+
 	std::vector<GroupPtr> groups;
 
 private:

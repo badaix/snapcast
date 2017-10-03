@@ -162,6 +162,7 @@ int main(int argc, char* argv[])
 					group = user_group[1];
 			}
 
+			Config::instance().init("/var/lib/snapserver");
 			daemon.reset(new Daemon(user, group, "/var/run/snapserver/pid"));
 			daemon->daemonize();
 			if (processPriority < -20)
@@ -172,9 +173,12 @@ int main(int argc, char* argv[])
 				setpriority(PRIO_PROCESS, 0, processPriority);
 			SLOG(NOTICE) << "daemon started" << std::endl;
 		}
+		else
+			Config::instance().init();
+#else
+		Config::instance().init();
 #endif
 
-		Config::instance();
 
 #if defined(HAS_AVAHI) || defined(HAS_BONJOUR)
 		PublishZeroConf publishZeroConfg("Snapcast");

@@ -30,6 +30,7 @@
 #include <iostream>
 #include "common/snapException.h"
 #include "common/strCompat.h"
+#include "common/utils/file_utils.h"
 #include "common/utils.h"
 
 
@@ -54,7 +55,7 @@ Daemon::~Daemon()
 void Daemon::daemonize()
 {
 	std::string pidfileDir(pidfile_.substr(0, pidfile_.find_last_of('/')));
-	mkdirRecursive(pidfileDir.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+	utils::file::mkdirRecursive(pidfileDir.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
 
 	/// Ensure only one copy
 	pidFilehandle_ = open(pidfile_.c_str(), O_RDWR|O_CREAT, 0644);

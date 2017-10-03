@@ -55,22 +55,6 @@
 
 namespace strutils = utils::string;
 
-static int mkdirRecursive(const char *path, mode_t mode)
-{
-	std::vector<std::string> pathes = strutils::split(path, '/');
-	std::stringstream ss;
-	int res = 0;
-	for (const auto& p: pathes)
-	{
-		if (p.empty())
-			continue;
-		ss << "/" << p;
-		int res = mkdir(ss.str().c_str(), mode);
-		if ((res != 0) && (errno != EEXIST))
-			return res;
-	}
-	return res;
-}
 
 
 static std::string execGetOutput(const std::string& cmd)

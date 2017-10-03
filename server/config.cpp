@@ -24,6 +24,7 @@
 #include <cerrno>
 #include "common/snapException.h"
 #include "common/strCompat.h"
+#include "common/utils/file_utils.h"
 #include "aixlog.hpp"
 
 using namespace std;
@@ -31,24 +32,50 @@ using namespace std;
 
 Config::Config()
 {
+}
+
+
+Config::~Config()
+{
+	save();
+}
+
+
+void Config::init(const std::string& root_directory, const std::string& user, const std::string& group)
+{
 	string dir;
-	if (getenv("HOME") == NULL)
+	if (!root_directory.empty())
+		dir = root_directory;
+	else if (getenv("HOME") == NULL)
 		dir = "/var/lib/snapserver/";
 	else
 		dir = getenv("HOME");
-	
+
 	if (!dir.empty() && (dir.back() != '/'))
 		dir += "/";
 
 	if (dir.find("/var/lib/snapserver") == string::npos)
 		dir += ".config/snapserver/";
 
-	int status = mkdirRecursive(dir.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+	int status = utils::file::mkdirRecursive(dir.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
 	if ((status != 0) && (errno != EEXIST))
 		throw SnapException("failed to create settings directory: \"" + dir + "\": " + cpt::to_string(errno));
 
 	filename_ = dir + "server.json";
 	SLOG(NOTICE) << "Settings file: \"" << filename_ << "\"\n";
+
+	if (!user.empty() && !group.empty())
+	{
+		try
+		{
+			utils::file::do_chown(dir, user, group);
+			utils::file::do_chown(filename_, user, group);
+		}
+		catch(const std::exception& e)
+		{
+			LOG(ERROR) << "Exception in chown: " << e.what() << "\n";
+		}
+	}
 
 	int fd;
 	if ((fd = open(filename_.c_str(), O_RDWR | O_CREAT, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH)) == -1)
@@ -88,14 +115,10 @@ Config::Config()
 }
 
 
-Config::~Config()
-{
-	save();
-}
-
-
 void Config::save()
 {
+	if (filename_.empty())
+		init();
 	std::ofstream ofs(filename_.c_str(), std::ofstream::out|std::ofstream::trunc);
 	json clients = {
 		{"ConfigVersion", 2},
