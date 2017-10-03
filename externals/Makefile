@@ -41,6 +41,7 @@ else ifeq ($(ARCH), mips)
 	$(eval CPPFLAGS:=-DLITTLE_ENDIAN=1234 -DBIG_ENDIAN=4321 -DBYTE_ORDER=BIG_ENDIAN)
 	$(eval PROGRAM_PREFIX:=$(NDK_DIR)/bin/mipsel-linux-android-)
 else
+	$(eval CPPFLAGS:=-U_ARM_ASSEM_)
 	$(eval PROGRAM_PREFIX:=$(NDK_DIR)/bin/arm-linux-androideabi-)
 endif
 	$(eval CC:=$(PROGRAM_PREFIX)clang)
@@ -49,6 +50,9 @@ endif
 
 flac: check-env
 	@cd flac; \
+	export CC="$(CC)"; \
+	export CXX="$(CXX)"; \
+	export CPPFLAGS="$(CPPFLAGS)"; \
 	./autogen.sh; \
 	./configure --host=$(ARCH) --disable-ogg --prefix=$(NDK_DIR); \
 	make; \
@@ -57,6 +61,9 @@ flac: check-env
 
 ogg: check-env
 	@cd ogg; \
+	export CC="$(CC)"; \
+	export CXX="$(CXX)"; \
+	export CPPFLAGS="$(CPPFLAGS)"; \
 	./autogen.sh; \
 	./configure --host=$(ARCH) --prefix=$(NDK_DIR); \
 	make; \
@@ -64,7 +71,10 @@ ogg: check-env
 	make clean;
 
 tremor:	check-env
-	cd tremor; \
+	@cd tremor; \
+	export CC="$(CC)"; \
+	export CXX="$(CXX)"; \
+	export CPPFLAGS="$(CPPFLAGS)"; \
 	./autogen.sh; \
 	./configure --host=$(ARCH) --prefix=$(NDK_DIR) --with-ogg=$(NDK_DIR); \
 	make; \
