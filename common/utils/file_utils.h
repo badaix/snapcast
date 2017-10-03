@@ -23,6 +23,7 @@
 #include <pwd.h>
 #include <stdexcept>
 #include <vector>
+#include <fstream>
 #include "common/utils/string_utils.h"
 
 
