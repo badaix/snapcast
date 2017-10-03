@@ -14,7 +14,7 @@
 #   You should have received a copy of the GNU General Public License
 #   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-VERSION = 0.11.1
+VERSION = 0.12.0
 TARGET  = snapclient
 ifeq ($(TARGET), FREEBSD)
 SHELL   = /usr/local/bin/bash

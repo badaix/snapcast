@@ -1,3 +1,14 @@
+snapserver (0.12.0) unstable; urgency=low
+
+  * Features
+    -TODO (PR #109, #150)
+  * Bugfixes
+    -TODO (Issue #109, #150)
+  * General
+    -TODO (PR #216, #218)
+
+ -- Johannes Pohl <johannes.pohl@badaix.de>  Tue, 21 Mar 2017 00:13:37 +0200
+
 snapserver (0.11.1) unstable; urgency=low
 
   * Bugfixes

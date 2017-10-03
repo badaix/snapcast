@@ -14,7 +14,7 @@
 #   You should have received a copy of the GNU General Public License
 #   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-VERSION = 0.11.1
+VERSION = 0.12.0
 TARGET  = snapserver
 ifeq ($(TARGET), FREEBSD)
 SHELL   = /usr/local/bin/bash
@@ -178,6 +178,7 @@ uninstall:
 	rm -f $(TARGET_DIR)/local/bin/$(BIN); \
 	rm -f $(TARGET_DIR)/local/man/man1/$(BIN).1; \
 	rm -f $(TARGET_DIR)/local/etc/rc.d/$(BIN); \
+	rm -rf /var/lib/snapserver; \
 
 else ifeq ($(TARGET), MACOS)
 
@@ -187,6 +188,7 @@ uninstall:
 	rm -f $(TARGET_DIR)/local/bin/$(BIN); \
 	rm -f $(TARGET_DIR)/local/share/man/man1/$(BIN).1; \
 	rm -f /Library/LaunchAgents/de.badaix.snapcast.$(BIN).plist; \
+	rm -rf /var/lib/snapserver; \
 
 else
 
@@ -202,6 +204,7 @@ uninstall:
 		echo cannot tell; \
 	fi; \
 	rm -rf /var/run/$(BIN)
+	rm -rf /var/lib/snapserver; \
 	$(MAKE) deluser
 
 endif
