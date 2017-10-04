@@ -30,7 +30,7 @@ else
 endif
 
 CXXFLAGS += $(ADD_CFLAGS) -std=c++0x -Wall -Wno-unused-function -O3 -DASIO_STANDALONE -DVERSION=\"$(VERSION)\" -I. -I.. -isystem ../externals/asio/asio/include -I../externals/popl/include -I../externals/aixlog/include -I../externals/jsonrpcpp/lib -I../externals
-LDFLAGS   = -lvorbis -lvorbisenc -logg -lFLAC
+LDFLAGS   = -lvorbis -lvorbisenc -logg -lFLAC -latomic
 OBJ       = snapServer.o config.o controlServer.o controlSession.o streamServer.o streamSession.o streamreader/streamUri.o streamreader/streamManager.o streamreader/pcmStream.o streamreader/pipeStream.o streamreader/fileStream.o streamreader/processStream.o streamreader/airplayStream.o streamreader/spotifyStream.o streamreader/watchdog.o encoder/encoderFactory.o encoder/flacEncoder.o encoder/pcmEncoder.o encoder/oggEncoder.o ../common/sampleFormat.o ../message/pcmChunk.o ../externals/jsonrpcpp/lib/jsonrp.o
 
 
@@ -49,7 +49,7 @@ else ifeq ($(TARGET), OPENWRT)
 
 STRIP     = echo
 CXXFLAGS += -DNO_CPP11_STRING -DHAS_AVAHI -DHAS_DAEMON -pthread
-LDFLAGS  += -lavahi-client -lavahi-common -latomic
+LDFLAGS  += -lavahi-client -lavahi-common
 OBJ      += ../common/daemon.o publishZeroConf/publishAvahi.o 
 
 else ifeq ($(TARGET), FREEBSD)
