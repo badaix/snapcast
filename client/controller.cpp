@@ -115,8 +115,7 @@ void Controller::onMessageReceived(ClientConnection* connection, const msg::Base
 			throw SnapException("codec not supported: \"" + headerChunk_->codec + "\"");
 
 		sampleFormat_ = decoder_->setHeader(headerChunk_.get());
-		/// TODO: read in Android client
-		LOG(INFO) << TAG("state") << "sampleformat: " << sampleFormat_.rate << ":" << sampleFormat_.bits << ":" << sampleFormat_.channels << "\n";
+		LOG(NOTICE) << TAG("state") << "sampleformat: " << sampleFormat_.rate << ":" << sampleFormat_.bits << ":" << sampleFormat_.channels << "\n";
 
 		stream_ = make_shared<Stream>(sampleFormat_);
 		stream_->setBufferLen(serverSettings_->getBufferMs() - latency_);
