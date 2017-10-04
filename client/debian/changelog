@@ -1,13 +1,22 @@
 snapclient (0.12.0) unstable; urgency=low
 
   * Features
-    -TODO (PR #109, #150)
+    -Support for IPv6 (PR #273, #279)
+    -Spotify plugin: onstart and onstop parameter (PR #225)
+    -Snapclient: configurable client id (Issue #249)
+    -Android: Snapclient support for ARM, MIPS and X86
   * Bugfixes
-    -TODO (Issue #109, #150)
+    -Snapclient: more reliable unique client id (Issue #249)
+    -Snapserver: fix config file permissions (Issue #251)
+	-Fix linker error (Issue #255, #274)
+	-Snapserver: fix crash on "bye" from control client (Issue #238)
   * General
-    -TODO (PR #216, #218)
+    -Improved logging: Use "--debug" for debug logging
+    -Log to file: Use "--debug=<filename>"
+    -Improved exception handling and error logging (Issue #276)
+    -Android: update to NDK r16 and clang++ 
 
- -- Johannes Pohl <johannes.pohl@badaix.de>  Tue, 21 Mar 2017 00:13:37 +0200
+ -- Johannes Pohl <johannes.pohl@badaix.de>  Tue, 04 Oct 2017 00:13:37 +0200
 
 snapclient (0.11.1) unstable; urgency=low
 
