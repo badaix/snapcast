@@ -26,7 +26,14 @@ using namespace std;
 namespace strutils = utils::string;
 
 
-StreamUri::StreamUri(const std::string& streamUri)
+StreamUri::StreamUri(const std::string& uri)
+{
+	parse(uri);
+}
+
+
+
+void StreamUri::parse(const std::string& streamUri)
 {
 // https://en.wikipedia.org/wiki/Uniform_Resource_Identifier
 // scheme:[//[user:password@]host[:port]][/]path[?query][#fragment]
@@ -92,13 +99,38 @@ StreamUri::StreamUri(const std::string& streamUri)
 			query[key] = value;
 		}
 	}
+	LOG(DEBUG) << "StreamUri.toString: " << toString() << "\n";
+}
+
+
+std::string StreamUri::toString() const
+{
+// scheme:[//[user:password@]host[:port]][/]path[?query][#fragment]
+	stringstream ss;
+	ss << scheme << "://" << host << "/" + path;
+	if (!query.empty())
+	{
+		ss << "?";
+		auto iter = query.begin();
+		while (true)
+		{
+			ss << iter->first << "=" << iter->second;
+			if (++iter == query.end())
+				break;
+			ss << "&";
+		}
+	}
+	if (!fragment.empty())
+		ss << "#" << fragment;
+
+	return ss.str();
 }
 
 
 json StreamUri::toJson() const
 {
 	json j = {
-		{"raw", uri},
+		{"raw", toString()},
 		{"scheme", scheme},
 		{"host", host},
 		{"path", path},

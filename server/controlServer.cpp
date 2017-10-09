@@ -109,19 +109,26 @@ void ControlServer::startAccept()
 
 void ControlServer::handleAccept(socket_ptr socket)
 {
-	struct timeval tv;
-	tv.tv_sec  = 5;
-	tv.tv_usec = 0;
-	setsockopt(socket->native_handle(), SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
-	setsockopt(socket->native_handle(), SOL_SOCKET, SO_SNDTIMEO, &tv, sizeof(tv));
-//	socket->set_option(boost::asio::ip::tcp::no_delay(false));
-	SLOG(NOTICE) << "ControlServer::NewConnection: " << socket->remote_endpoint().address().to_string() << endl;
-	shared_ptr<ControlSession> session = make_shared<ControlSession>(this, socket);
+	try
 	{
-		std::lock_guard<std::recursive_mutex> mlock(mutex_);
-		session->start();
-		sessions_.insert(session);
-		cleanup();
+		struct timeval tv;
+		tv.tv_sec  = 5;
+		tv.tv_usec = 0;
+		setsockopt(socket->native_handle(), SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
+		setsockopt(socket->native_handle(), SOL_SOCKET, SO_SNDTIMEO, &tv, sizeof(tv));
+	//	socket->set_option(boost::asio::ip::tcp::no_delay(false));
+		SLOG(NOTICE) << "ControlServer::NewConnection: " << socket->remote_endpoint().address().to_string() << endl;
+		shared_ptr<ControlSession> session = make_shared<ControlSession>(this, socket);
+		{
+			std::lock_guard<std::recursive_mutex> mlock(mutex_);
+			session->start();
+			sessions_.insert(session);
+			cleanup();
+		}
+	}
+	catch (const std::exception& e)
+	{
+		SLOG(ERROR) << "Exception in ControlServer::handleAccept: " << e.what() << endl;
 	}
 	startAccept();
 }
