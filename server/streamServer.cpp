@@ -576,24 +576,30 @@ void StreamServer::startAccept()
 
 void StreamServer::handleAccept(socket_ptr socket)
 {
-	struct timeval tv;
-	tv.tv_sec  = 5;
-	tv.tv_usec = 0;
-	setsockopt(socket->native_handle(), SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
-	setsockopt(socket->native_handle(), SOL_SOCKET, SO_SNDTIMEO, &tv, sizeof(tv));
+	try
+	{
+		struct timeval tv;
+		tv.tv_sec  = 5;
+		tv.tv_usec = 0;
+		setsockopt(socket->native_handle(), SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
+		setsockopt(socket->native_handle(), SOL_SOCKET, SO_SNDTIMEO, &tv, sizeof(tv));
 
-	/// experimental: turn on tcp::no_delay
-	socket->set_option(tcp::no_delay(true));
+		/// experimental: turn on tcp::no_delay
+		socket->set_option(tcp::no_delay(true));
 
-	SLOG(NOTICE) << "StreamServer::NewConnection: " << socket->remote_endpoint().address().to_string() << endl;
-	shared_ptr<StreamSession> session = make_shared<StreamSession>(this, socket);
+		SLOG(NOTICE) << "StreamServer::NewConnection: " << socket->remote_endpoint().address().to_string() << endl;
+		shared_ptr<StreamSession> session = make_shared<StreamSession>(this, socket);
 
-	session->setBufferMs(settings_.bufferMs);
-	session->start();
+		session->setBufferMs(settings_.bufferMs);
+		session->start();
 
-	std::lock_guard<std::recursive_mutex> mlock(sessionsMutex_);
-	sessions_.insert(session);
-
+		std::lock_guard<std::recursive_mutex> mlock(sessionsMutex_);
+		sessions_.insert(session);
+	}
+	catch (const std::exception& e)
+	{
+		SLOG(ERROR) << "Exception in StreamServer::handleAccept: " << e.what() << endl;
+	}
 	startAccept();
 }
 
