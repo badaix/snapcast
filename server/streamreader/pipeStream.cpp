@@ -73,7 +73,7 @@ void PipeStream::worker()
 		tvEncodedChunk_ = tvChunk;
 		long nextTick = chronos::getTickCount();
 		int idleFrames = 0;
-		int maxIdleFrames = sampleFormat_.rate*2;
+		int maxIdleFrames = sampleFormat_.rate*dryoutMs_/1000;
 		try
 		{
 			if (fd_ == -1)
