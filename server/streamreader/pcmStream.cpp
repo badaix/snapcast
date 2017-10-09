@@ -50,6 +50,11 @@ PcmStream::PcmStream(PcmListener* pcmListener, const StreamUri& uri) :
 
  	if (uri_.query.find("buffer_ms") != uri_.query.end())
 		pcmReadMs_ = cpt::stoul(uri_.query["buffer_ms"]);
+
+	if (uri_.query.find("dryout_ms") != uri_.query.end())
+		dryoutMs_ = cpt::stoul(uri_.query["dryout_ms"]);
+	else
+		dryoutMs_ = 2000;
 }
 
 
