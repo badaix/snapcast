@@ -5,12 +5,14 @@ snapserver (0.12.0) unstable; urgency=low
     -Spotify plugin: onstart and onstop parameter (PR #225)
     -Snapclient: configurable client id (Issue #249)
     -Android: Snapclient support for ARM, MIPS and X86
+    -Snapserver: Play some silence before going idle (#PR 284)
   * Bugfixes
     -Snapclient: more reliable unique client id (Issue #249)
     -Snapserver: fix config file permissions (Issue #251)
     -Fix linker error (Issue #255, #274)
     -Snapserver: fix crash on "bye" from control client (Issue #238)
     -Snapserver: fix crash on port scan (Issue #267)
+    -Snapserver: fix crash when a malformed message is received (Issue #264)
   * General
     -Improved logging: Use "--debug" for debug logging
     -Log to file: Use "--debug=<filename>"
