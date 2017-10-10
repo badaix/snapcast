@@ -181,12 +181,20 @@ void StreamSession::getNextMessage()
 	vector<char> buffer(baseMsgSize);
 	socketRead(&buffer[0], baseMsgSize);
 	baseMessage.deserialize(&buffer[0]);
-	if (baseMessage.size > msg::max_size)
+
+	if ((baseMessage.type > message_type::kLast) || (baseMessage.type < message_type::kFirst))
 	{
-		SLOG(ERROR) << "received message of type " << baseMessage.type << " to large: " << baseMessage.size << "\n";
-		stop();
-		return;
+		stringstream ss;
+		ss << "unknown message type received: " << baseMessage.type << ", size: " << baseMessage.size;
+		throw std::runtime_error(ss.str().c_str());
 	}
+	else if (baseMessage.size > msg::max_size)
+	{
+		stringstream ss;
+		ss << "received message of type " << baseMessage.type << " to large: " << baseMessage.size;
+		throw std::runtime_error(ss.str().c_str());
+	}
+	
 //	LOG(INFO) << "getNextMessage: " << baseMessage.type << ", size: " << baseMessage.size << ", id: " << baseMessage.id << ", refers: " << baseMessage.refersTo << "\n";
 	if (baseMessage.size > buffer.size())
 		buffer.resize(baseMessage.size);

@@ -56,7 +56,10 @@ enum message_type
 	kWireChunk = 2,
 	kServerSettings = 3,
 	kTime = 4,
-	kHello = 5
+	kHello = 5,
+
+	kFirst = kBase,
+	kLast = kHello
 };
 
 
