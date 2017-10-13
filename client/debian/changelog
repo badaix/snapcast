@@ -5,11 +5,11 @@ snapclient (0.12.0) unstable; urgency=low
     -Spotify plugin: onstart and onstop parameter (PR #225)
     -Snapclient: configurable client id (Issue #249)
     -Android: Snapclient support for ARM, MIPS and X86
-    -Snapserver: Play some silence before going idle (#PR 284)
+    -Snapserver: Play some silence before going idle (PR #284)
   * Bugfixes
-    -Snapclient: more reliable unique client id (Issue #249)
-    -Snapserver: fix config file permissions (Issue #251)
     -Fix linker error (Issue #255, #274)
+    -Snapclient: more reliable unique client id (Issue #249, #246)
+    -Snapserver: fix config file permissions (Issue #251)
     -Snapserver: fix crash on "bye" from control client (Issue #238)
     -Snapserver: fix crash on port scan (Issue #267)
     -Snapserver: fix crash when a malformed message is received (Issue #264)
@@ -20,7 +20,7 @@ snapclient (0.12.0) unstable; urgency=low
     -Android: update to NDK r16 and clang++ 
     -hide spotify credentials in json control message (Issue #282)
 
- -- Johannes Pohl <johannes.pohl@badaix.de>  Tue, 10 Oct 2017 00:13:37 +0200
+ -- Johannes Pohl <johannes.pohl@badaix.de>  Fri, 13 Oct 2017 00:13:37 +0200
 
 snapclient (0.11.1) unstable; urgency=low
 
