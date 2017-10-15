@@ -15,7 +15,8 @@
 #   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 VERSION = 0.12.0
-TARGET  = snapserver
+BIN = snapserver
+
 ifeq ($(TARGET), FREEBSD)
 SHELL   = /usr/local/bin/bash
 else
@@ -29,10 +30,15 @@ else
   TARGET_DIR ?= /usr
 endif
 
+
 CXXFLAGS += $(ADD_CFLAGS) -std=c++0x -Wall -Wno-unused-function -O3 -DASIO_STANDALONE -DVERSION=\"$(VERSION)\" -I. -I.. -isystem ../externals/asio/asio/include -I../externals/popl/include -I../externals/aixlog/include -I../externals/jsonrpcpp/lib -I../externals
 LDFLAGS   = -lvorbis -lvorbisenc -logg -lFLAC
 OBJ       = snapServer.o config.o controlServer.o controlSession.o streamServer.o streamSession.o streamreader/streamUri.o streamreader/streamManager.o streamreader/pcmStream.o streamreader/pipeStream.o streamreader/fileStream.o streamreader/processStream.o streamreader/airplayStream.o streamreader/spotifyStream.o streamreader/watchdog.o encoder/encoderFactory.o encoder/flacEncoder.o encoder/pcmEncoder.o encoder/oggEncoder.o ../common/sampleFormat.o ../message/pcmChunk.o ../externals/jsonrpcpp/lib/jsonrp.o
 
+
+ifneq (,$(TARGET))
+CXXFLAGS += -D$(TARGET)
+endif
 
 ifeq ($(ENDIAN), BIG)
 CXXFLAGS += -DIS_BIG_ENDIAN
@@ -42,7 +48,7 @@ ifeq ($(TARGET), ANDROID)
 
 CXX       = $(NDK_DIR)/bin/arm-linux-androideabi-g++
 STRIP     = $(NDK_DIR)/bin/arm-linux-androideabi-strip
-CXXFLAGS += -pthread -DANDROID -DNO_CPP11_STRING -fPIC -I$(NDK_DIR)/include
+CXXFLAGS += -pthread -DNO_CPP11_STRING -fPIC -I$(NDK_DIR)/include
 LDFLAGS  += -L$(NDK_DIR)/lib -pie -llog -latomic
 
 else ifeq ($(TARGET), OPENWRT)
@@ -56,7 +62,7 @@ else ifeq ($(TARGET), FREEBSD)
 
 CXX       = g++
 STRIP     = echo
-CXXFLAGS += -DNO_CPP11_STRING -DFREEBSD -DHAS_AVAHI -DHAS_DAEMON -pthread
+CXXFLAGS += -DNO_CPP11_STRING -DHAS_AVAHI -DHAS_DAEMON -pthread
 LDFLAGS  += -lrt -lavahi-client -lavahi-common -static-libgcc -static-libstdc++ -latomic
 OBJ      += ../common/daemon.o publishZeroConf/publishAvahi.o 
 
@@ -64,7 +70,7 @@ else ifeq ($(TARGET), MACOS)
 
 CXX       = g++
 STRIP     = strip
-CXXFLAGS += -DFREEBSD -DMACOS -DHAS_BONJOUR -DHAS_DAEMON -Wno-deprecated -I/usr/local/include
+CXXFLAGS += -DFREEBSD -DHAS_BONJOUR -DHAS_DAEMON -Wno-deprecated -I/usr/local/include
 LDFLAGS  += -L/usr/local/lib -framework CoreFoundation -framework IOKit
 OBJ      += ../common/daemon.o publishZeroConf/publishBonjour.o
 
@@ -79,12 +85,9 @@ OBJ      += ../common/daemon.o publishZeroConf/publishAvahi.o
 endif
 
 
-BIN = snapserver
+all:	$(BIN)
 
-
-all:	$(TARGET)
-
-$(TARGET): $(OBJ)
+$(BIN): $(OBJ)
 	$(CXX) $(CXXFLAGS) -o $(BIN) $(OBJ) $(LDFLAGS)
 	$(STRIP) $(BIN)
 

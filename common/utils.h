@@ -297,7 +297,12 @@ static std::string getMacAddress(int sock)
 static std::string getHostId(const std::string defaultId = "")
 {
 	std::string result = "";
-#ifdef MACOS
+#ifdef OPENWRT
+	/// on OpenWRT the dbus uid exists (/var/lib/dbus/machine-id), 
+	/// but seems to be recreated with every reboot
+	if (!defaultId.empty())
+		return defaultId;
+#elif MACOS
 	/// https://stackoverflow.com/questions/933460/unique-hardware-id-in-mac-os-x
 	/// About this Mac, Hardware-UUID
 	char buf[64];
@@ -310,6 +315,7 @@ static std::string getHostId(const std::string defaultId = "")
 #elif ANDROID
 	result = getProp("ro.serialno");
 #else
+	/// TODO: store the id somewhere and reuse it (see OpenWRT)
 	std::ifstream infile("/var/lib/dbus/machine-id");
 	if (infile.good())
 		std::getline(infile, result);

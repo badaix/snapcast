@@ -15,7 +15,8 @@
 #   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 VERSION = 0.12.0
-TARGET  = snapclient
+BIN = snapclient
+
 ifeq ($(TARGET), FREEBSD)
 SHELL   = /usr/local/bin/bash
 else
@@ -34,6 +35,11 @@ CXXFLAGS += $(ADD_CFLAGS) -std=c++0x -Wall -Wno-unused-function -O3 -DASIO_STAND
 LDFLAGS   = -logg -lFLAC
 OBJ       = snapClient.o stream.o clientConnection.o timeProvider.o player/player.o decoder/pcmDecoder.o decoder/oggDecoder.o decoder/flacDecoder.o controller.o ../message/pcmChunk.o ../common/sampleFormat.o
 
+
+ifneq (,$(TARGET))
+CXXFLAGS += -D$(TARGET)
+endif
+
 ifeq ($(ENDIAN), BIG)
 CXXFLAGS += -DIS_BIG_ENDIAN
 endif
@@ -42,7 +48,7 @@ ifeq ($(TARGET), ANDROID)
 
 CXX       = $(PROGRAM_PREFIX)clang++
 STRIP     = $(PROGRAM_PREFIX)strip
-CXXFLAGS += -pthread -DANDROID -DNO_CPP11_STRING -fPIC -DHAS_TREMOR -DHAS_OPENSL -I$(NDK_DIR)/include
+CXXFLAGS += -pthread -DNO_CPP11_STRING -fPIC -DHAS_TREMOR -DHAS_OPENSL -I$(NDK_DIR)/include
 LDFLAGS   = -L$(NDK_DIR)/lib -pie -lvorbisidec -logg -lFLAC -lOpenSLES -latomic -llog
 OBJ      += player/openslPlayer.o 
 
@@ -63,7 +69,7 @@ else ifeq ($(TARGET), MACOS)
 
 CXX       = g++
 STRIP     = strip
-CXXFLAGS += -DHAS_OGG -DHAS_COREAUDIO -DFREEBSD -DMACOS -DHAS_BONJOUR -DHAS_DAEMON -I/usr/local/include -Wno-unused-local-typedef -Wno-deprecated
+CXXFLAGS += -DHAS_OGG -DHAS_COREAUDIO -DFREEBSD -DHAS_BONJOUR -DHAS_DAEMON -I/usr/local/include -Wno-unused-local-typedef -Wno-deprecated
 LDFLAGS  += -lvorbis -lFLAC -L/usr/local/lib -framework AudioToolbox -framework CoreFoundation -framework IOKit
 OBJ      += ../common/daemon.o player/coreAudioPlayer.o browseZeroConf/browseBonjour.o
 
@@ -78,10 +84,7 @@ OBJ      += ../common/daemon.o player/alsaPlayer.o browseZeroConf/browseAvahi.o
 endif
 
 
-BIN = snapclient
-
-
-all:	check-env $(TARGET)
+all:	check-env $(BIN)
 
 check-env:
 ifeq ($(TARGET), ANDROID)
@@ -102,7 +105,7 @@ else
 endif
 endif
 
-$(TARGET): $(OBJ)
+$(BIN): $(OBJ)
 	$(CXX) $(CXXFLAGS) -o $(BIN) $(OBJ) $(LDFLAGS)
 	$(STRIP) $(BIN)
 
