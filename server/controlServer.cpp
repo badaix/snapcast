@@ -138,7 +138,21 @@ void ControlServer::start()
 {
 	asio::ip::address address = asio::ip::address::from_string("::");
 	tcp::endpoint endpoint(address, port_);
-	acceptor_ = make_shared<tcp::acceptor>(*io_service_, endpoint);
+	try
+	{
+		acceptor_ = make_shared<tcp::acceptor>(*io_service_, endpoint);
+	}
+	catch (const asio::system_error& e)
+	{
+		LOG(ERROR) << "error creating TCP acceptor: " << e.what() << ", code: " << e.code() << "\n";
+		if (e.code().value() == asio::error::address_family_not_supported)
+		{
+			endpoint = tcp::endpoint(tcp::v4(), port_);
+			acceptor_ = make_shared<tcp::acceptor>(*io_service_, endpoint);
+		}
+		else
+			throw;
+	}
 	if (endpoint.protocol() == tcp::v6())
 	{
 		error_code ec;
