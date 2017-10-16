@@ -158,8 +158,8 @@ void ProcessStream::worker()
 		chronos::systemtimeofday(&tvChunk);
 		tvEncodedChunk_ = tvChunk;
 		long nextTick = chronos::getTickCount();
-		int idleFrames = 0;
-		int maxIdleFrames = sampleFormat_.rate*dryoutMs_/1000;
+		int idleBytes = 0;
+		int maxIdleBytes = sampleFormat_.rate*sampleFormat_.frameSize*dryoutMs_/1000;
 		try
 		{
 			while (active_)
@@ -171,10 +171,10 @@ void ProcessStream::worker()
 				do
 				{
 					int count = read(process_->getStdout(), chunk->payload + len, toRead - len);
-					if (count < 0 && idleFrames < maxIdleFrames)
+					if (count < 0 && idleBytes < maxIdleBytes)
 					{
 						memset(chunk->payload + len, 0, toRead - len);
-						idleFrames += toRead - len;
+						idleBytes += toRead - len;
 						len += toRead - len;
 						continue;
 					}
@@ -186,9 +186,10 @@ void ProcessStream::worker()
 					}
 					else if (count == 0)
 						throw SnapException("end of file");
-					else {
+					else 
+					{
 						len += count;
-						idleFrames = 0;
+						idleBytes = 0;
 					}
 				}
 				while ((len < toRead) && active_);
