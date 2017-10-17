@@ -20,7 +20,7 @@ snapclient (0.12.0) unstable; urgency=low
     -Android: update to NDK r16 and clang++ 
     -hide spotify credentials in json control message (Issue #282)
 
- -- Johannes Pohl <johannes.pohl@badaix.de>  Fri, 13 Oct 2017 00:13:37 +0200
+ -- Johannes Pohl <johannes.pohl@badaix.de>  Tue, 17 Oct 2017 00:13:37 +0200
 
 snapclient (0.11.1) unstable; urgency=low
 
