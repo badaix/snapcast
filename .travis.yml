@@ -1,0 +1,28 @@
+language: cpp
+compiler:
+  - gcc
+matrix:
+  include:
+    # build on ubuntu
+    - os: linux
+      sudo: required
+      addons:
+        apt:
+          packages:
+            - build-essential libasound2-dev libvorbisidec-dev libvorbis-dev libflac-dev alsa-utils libavahi-client-dev avahi-daemon
+      env:
+        - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7"
+    # build on osx
+    - os: osx
+      osx_image: xcode9.1
+      env:
+        - MATRIX_EVAL="brew update && brew install flac libvorbis"
+  allow_failures:
+    - os: osx
+before_install:
+    - eval "${MATRIX_EVAL}"
+script:
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then BUILD_PARAMS="TARGET=MACOS"          ; fi
+  - make $BUILD_PARAMS
+  - sudo make installclient $BUILD_PARAMS
+  - sudo make installserver $BUILD_PARAMS
