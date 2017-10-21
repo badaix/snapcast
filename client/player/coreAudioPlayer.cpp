@@ -16,6 +16,8 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
+//#include <CoreServices/CoreServices.h>
+#include <CoreAudio/CoreAudio.h>
 #include "coreAudioPlayer.h"
 
 #define NUM_BUFFERS 2
@@ -41,6 +43,54 @@ CoreAudioPlayer::CoreAudioPlayer(const PcmDevice& pcmDevice, std::shared_ptr<Str
 
 CoreAudioPlayer::~CoreAudioPlayer()
 {
+}
+
+
+/// TODO: experimental. No output device can be configured yet.
+std::vector<PcmDevice> CoreAudioPlayer::pcm_list(void)
+{
+	UInt32 propsize;
+	
+	AudioObjectPropertyAddress theAddress = { kAudioHardwarePropertyDevices,
+											kAudioObjectPropertyScopeGlobal,
+											kAudioObjectPropertyElementMaster };
+	
+	AudioObjectGetPropertyDataSize(kAudioObjectSystemObject, &theAddress, 0, NULL, &propsize);
+	int nDevices = propsize / sizeof(AudioDeviceID);    
+	AudioDeviceID *devids = new AudioDeviceID[nDevices];
+	AudioObjectGetPropertyData(kAudioObjectSystemObject, &theAddress, 0, NULL, &propsize, devids);
+
+	std::vector<PcmDevice> result;
+	for (int i = 0; i < nDevices; ++i) 
+	{
+		if (devids[i] == kAudioDeviceUnknown)
+			continue;
+
+		UInt32 propSize;
+		AudioObjectPropertyAddress theAddress = { kAudioDevicePropertyStreamConfiguration, kAudioDevicePropertyScopeOutput, 0 };
+		if (AudioObjectGetPropertyDataSize(devids[i], &theAddress, 0, NULL, &propSize))
+			continue;
+
+		AudioBufferList *buflist = (AudioBufferList *)malloc(propSize);
+		if (AudioObjectGetPropertyData(devids[i], &theAddress, 0, NULL, &propSize, buflist))
+			continue;
+		int channels = 0;
+		for (UInt32 i = 0; i < buflist->mNumberBuffers; ++i)
+			channels += buflist->mBuffers[i].mNumberChannels;
+		free(buflist);
+		if (channels == 0)
+			continue;
+
+		UInt32 maxlen = 1024;
+		char buf[maxlen];
+		theAddress = { kAudioDevicePropertyDeviceName, kAudioDevicePropertyScopeOutput, 0 };
+		AudioObjectGetPropertyData(devids[i], &theAddress, 0, NULL, &maxlen, buf);
+		LOG(DEBUG) << "device: " << i << ", name: " << buf << ", channels: " << channels << "\n";
+
+		result.push_back(PcmDevice(i, buf));
+	}
+	delete[] devids;
+	return result;
 }
 
 

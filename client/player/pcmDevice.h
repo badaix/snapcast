@@ -24,7 +24,16 @@
 
 struct PcmDevice
 {
-	PcmDevice() : idx(-1){};
+	PcmDevice() : 
+		idx(-1)
+	{
+	};
+	
+	PcmDevice(int idx, const std::string& name, const std::string& description = "") : 
+		idx(idx), name(name), description(description) 
+	{
+	};
+
 	int idx;
 	std::string name;
 	std::string description;

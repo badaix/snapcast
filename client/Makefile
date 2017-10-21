@@ -70,7 +70,7 @@ else ifeq ($(TARGET), MACOS)
 CXX       = g++
 STRIP     = strip
 CXXFLAGS += -DHAS_OGG -DHAS_COREAUDIO -DFREEBSD -DHAS_BONJOUR -DHAS_DAEMON -I/usr/local/include -Wno-unused-local-typedef -Wno-deprecated
-LDFLAGS  += -lvorbis -lFLAC -L/usr/local/lib -framework AudioToolbox -framework CoreFoundation -framework IOKit
+LDFLAGS  += -lvorbis -lFLAC -L/usr/local/lib -framework AudioToolbox -framework CoreAudio -framework CoreFoundation -framework IOKit
 OBJ      += ../common/daemon.o player/coreAudioPlayer.o browseZeroConf/browseBonjour.o
 
 else

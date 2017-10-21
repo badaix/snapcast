@@ -41,6 +41,7 @@ public:
 	virtual ~CoreAudioPlayer();
 
 	void playerCallback(AudioQueueRef queue, AudioQueueBufferRef bufferRef);
+	static std::vector<PcmDevice> pcm_list(void);
 
 protected:
 	virtual void worker();
