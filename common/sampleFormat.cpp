@@ -22,8 +22,9 @@
 
 #include "sampleFormat.h"
 #include "common/strCompat.h"
+#include "common/utils/string_utils.h"
 #include "common/utils.h"
-#include "common/log.h"
+#include "aixlog.hpp"
 
 
 using namespace std;
@@ -57,7 +58,7 @@ string SampleFormat::getFormat() const
 void SampleFormat::setFormat(const std::string& format)
 {
 	std::vector<std::string> strs;
-	strs = split(format, ':');
+	strs = utils::string::split(format, ':');
 	if (strs.size() == 3)
 		setFormat(
 		    cpt::stoul(strs[0]),
@@ -78,7 +79,7 @@ void SampleFormat::setFormat(uint32_t rate, uint16_t bits, uint16_t channels)
 	if (bits == 24)
 		sampleSize = 4;
 	frameSize = channels*sampleSize;
-//	logD << "SampleFormat: " << rate << ":" << bits << ":" << channels << "\n";
+//	LOG(DEBUG) << "SampleFormat: " << rate << ":" << bits << ":" << channels << "\n";
 }
 
 

@@ -20,8 +20,8 @@
 #define UTILS_H
 
 #include "common/strCompat.h"
+#include "common/utils/string_utils.h"
 
-#include <algorithm>
 #include <functional>
 #include <cctype>
 #include <locale>
@@ -48,110 +48,13 @@
 #ifdef MACOS
 #include <ifaddrs.h>
 #include <net/if_dl.h>
+#include <IOKit/IOCFPlugIn.h>
+#include <IOKit/IOTypes.h>
 #endif
 
 
-// trim from start
-static inline std::string &ltrim(std::string &s)
-{
-	s.erase(s.begin(), std::find_if(s.begin(), s.end(), std::not1(std::ptr_fun<int, int>(std::isspace))));
-	return s;
-}
+namespace strutils = utils::string;
 
-// trim from end
-static inline std::string &rtrim(std::string &s)
-{
-	s.erase(std::find_if(s.rbegin(), s.rend(), std::not1(std::ptr_fun<int, int>(std::isspace))).base(), s.end());
-	return s;
-}
-
-// trim from both ends
-static inline std::string &trim(std::string &s)
-{
-	return ltrim(rtrim(s));
-}
-
-// trim from start
-static inline std::string ltrim_copy(const std::string &s)
-{
-	std::string str(s);
-	return ltrim(str);
-}
-
-// trim from end
-static inline std::string rtrim_copy(const std::string &s)
-{
-	std::string str(s);
-	return rtrim(str);
-}
-
-// trim from both ends
-static inline std::string trim_copy(const std::string &s)
-{
-	std::string str(s);
-	return trim(str);
-}
-
-// decode %xx to char
-static std::string uriDecode(const std::string& src) {
-	std::string ret;
-	char ch;
-	for (size_t i=0; i<src.length(); i++)
-	{
-		if (int(src[i]) == 37)
-		{
-			unsigned int ii;
-			sscanf(src.substr(i+1, 2).c_str(), "%x", &ii);
-			ch = static_cast<char>(ii);
-			ret += ch;
-			i += 2;
-		}
-		else
-		{
-			ret += src[i];
-		}
-	}
-	return (ret);
-}
-
-
-
-static std::vector<std::string> &split(const std::string &s, char delim, std::vector<std::string> &elems)
-{
-	std::stringstream ss(s);
-	std::string item;
-	while (std::getline(ss, item, delim))
-	{
-		elems.push_back(item);
-	}
-	return elems;
-}
-
-
-static std::vector<std::string> split(const std::string &s, char delim)
-{
-	std::vector<std::string> elems;
-	split(s, delim, elems);
-	return elems;
-}
-
-
-static int mkdirRecursive(const char *path, mode_t mode)
-{
-	std::vector<std::string> pathes = split(path, '/');
-	std::stringstream ss;
-	int res = 0;
-	for (const auto& p: pathes)
-	{
-		if (p.empty())
-			continue;
-		ss << "/" << p;
-		int res = mkdir(ss.str().c_str(), mode);
-		if ((res != 0) && (errno != EEXIST))
-			return res;
-	}
-	return res;
-}
 
 
 static std::string execGetOutput(const std::string& cmd)
@@ -166,7 +69,7 @@ static std::string execGetOutput(const std::string& cmd)
 		if (fgets(buffer, 1024, pipe.get()) != NULL)
 			result += buffer;
 	}
-	return trim(result);
+	return strutils::trim(result);
 }
 
 
@@ -182,18 +85,18 @@ static std::string getOS()
 {
 	std::string os;
 #ifdef ANDROID
-	os = trim_copy("Android " + getProp("ro.build.version.release"));
+	os = strutils::trim_copy("Android " + getProp("ro.build.version.release"));
 #else
 	os = execGetOutput("lsb_release -d");
 	if ((os.find(":") != std::string::npos) && (os.find("lsb_release") == std::string::npos))
-		os = trim_copy(os.substr(os.find(":") + 1));
+		os = strutils::trim_copy(os.substr(os.find(":") + 1));
 #endif
 	if (os.empty())
 	{
-		os = trim_copy(execGetOutput("grep /etc/os-release /etc/openwrt_release -e PRETTY_NAME -e DISTRIB_DESCRIPTION"));
+		os = strutils::trim_copy(execGetOutput("grep /etc/os-release /etc/openwrt_release -e PRETTY_NAME -e DISTRIB_DESCRIPTION"));
 		if (os.find("=") != std::string::npos)
 		{
-			os = trim_copy(os.substr(os.find("=") + 1));
+			os = strutils::trim_copy(os.substr(os.find("=") + 1));
 			os.erase(std::remove(os.begin(), os.end(), '"'), os.end());
 			os.erase(std::remove(os.begin(), os.end(), '\''), os.end());
 		}
@@ -204,7 +107,7 @@ static std::string getOS()
 		uname(&u);
 		os = u.sysname;
 	}
-	return trim_copy(os);
+	return strutils::trim_copy(os);
 }
 
 
@@ -235,7 +138,7 @@ static std::string getArch()
 		arch = execGetOutput("uname -i");
 	if (arch.empty() || (arch == "unknown"))
 		arch = execGetOutput("uname -m");
-	return trim_copy(arch);
+	return strutils::trim_copy(arch);
 }
 
 
@@ -249,7 +152,7 @@ static long uptime()
 	std::string uptime = execGetOutput("sysctl kern.boottime");
 	if ((uptime.find(" sec = ") != std::string::npos) && (uptime.find(",") != std::string::npos))
 	{
-		uptime = trim_copy(uptime.substr(uptime.find(" sec = ") + 7));
+		uptime = strutils::trim_copy(uptime.substr(uptime.find(" sec = ") + 7));
 		uptime.resize(uptime.find(","));
 		timeval now;
 		gettimeofday(&now, NULL);
@@ -361,7 +264,7 @@ static std::string getMacAddress(int sock)
 					std::string line;
 					if (infile.good() && std::getline(infile, line))
 					{
-						trim(line);
+						strutils::trim(line);
 						if ((line.size() == 17) && (line[2] == ':'))
 							return line;
 					}
@@ -388,6 +291,47 @@ static std::string getMacAddress(int sock)
 		(unsigned char)ifr.ifr_ifru.ifru_addr.sa_data[3], (unsigned char)ifr.ifr_ifru.ifru_addr.sa_data[4], (unsigned char)ifr.ifr_ifru.ifru_addr.sa_data[5]);
 #endif
 	return mac;
+}
+
+
+static std::string getHostId(const std::string defaultId = "")
+{
+	std::string result = "";
+#ifdef OPENWRT
+	/// on OpenWRT the dbus uid exists (/var/lib/dbus/machine-id), 
+	/// but seems to be recreated with every reboot
+	if (!defaultId.empty())
+		return defaultId;
+#elif MACOS
+	/// https://stackoverflow.com/questions/933460/unique-hardware-id-in-mac-os-x
+	/// About this Mac, Hardware-UUID
+	char buf[64];
+	io_registry_entry_t ioRegistryRoot = IORegistryEntryFromPath(kIOMasterPortDefault, "IOService:/");
+	CFStringRef uuidCf = (CFStringRef) IORegistryEntryCreateCFProperty(ioRegistryRoot, CFSTR(kIOPlatformUUIDKey), kCFAllocatorDefault, 0);
+	IOObjectRelease(ioRegistryRoot);
+	if (CFStringGetCString(uuidCf, buf, 64, kCFStringEncodingMacRoman))
+		result = buf;
+	CFRelease(uuidCf);
+#elif ANDROID
+	result = getProp("ro.serialno");
+#else
+	/// TODO: store the id somewhere and reuse it (see OpenWRT)
+	std::ifstream infile("/var/lib/dbus/machine-id");
+	if (infile.good())
+		std::getline(infile, result);
+#endif
+	strutils::trim(result);
+	if (!result.empty())
+		return result;
+
+	result = defaultId;
+	/// the Android API will return "02:00:00:00:00:00" for WifiInfo.getMacAddress(). 
+	/// Maybe this could also happen with native code
+	if (!result.empty() && (result != "02:00:00:00:00:00") && (result != "00:00:00:00:00:00"))
+		return result;
+
+	/// The host name should be unique enough in a LAN
+	return getHostName();
 }
 
 

@@ -35,7 +35,7 @@ public:
 	{
 	}
 
-	Hello(const std::string& macAddress, size_t instance) : JsonMessage(message_type::kHello)
+	Hello(const std::string& macAddress, const std::string& id, size_t instance) : JsonMessage(message_type::kHello)
 	{
 		msg["MAC"] = macAddress;
 		msg["HostName"] = ::getHostName();
@@ -44,6 +44,7 @@ public:
 		msg["OS"] = ::getOS();
 		msg["Arch"] = ::getArch();
 		msg["Instance"] = instance;
+		msg["ID"] = id;
 		msg["SnapStreamProtocolVersion"] = 2;
 	}
 
@@ -91,9 +92,14 @@ public:
 		return get("SnapStreamProtocolVersion", 1);
 	}
 
-	std::string getClientId() const
+	std::string getId() const
 	{
-		std::string id = getMacAddress();
+		return get("ID", getMacAddress());
+	}
+
+	std::string getUniqueId() const
+	{
+		std::string id = getId();
 		int instance = getInstance();
 		if (instance != 1)
 		{

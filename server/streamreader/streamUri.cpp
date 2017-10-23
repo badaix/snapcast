@@ -17,38 +17,46 @@
 ***/
 
 #include "streamUri.h"
-#include "common/utils.h"
+#include "common/utils/string_utils.h"
 #include "common/strCompat.h"
-#include "common/log.h"
+#include "aixlog.hpp"
 
 
 using namespace std;
+namespace strutils = utils::string;
 
 
-StreamUri::StreamUri(const std::string& streamUri)
+StreamUri::StreamUri(const std::string& uri)
+{
+	parse(uri);
+}
+
+
+
+void StreamUri::parse(const std::string& streamUri)
 {
 // https://en.wikipedia.org/wiki/Uniform_Resource_Identifier
 // scheme:[//[user:password@]host[:port]][/]path[?query][#fragment]
 // would be more elegant with regex. Not yet supported on my dev machine's gcc 4.8 :(
-	logD << "StreamUri: " << streamUri << "\n";
+	LOG(DEBUG) << "StreamUri: " << streamUri << "\n";
 	size_t pos;
-	uri = trim_copy(streamUri);
+	uri = strutils::trim_copy(streamUri);
 	while (!uri.empty() && ((uri[0] == '\'') || (uri[0] == '"')))
 		uri = uri.substr(1);
 	while (!uri.empty() && ((uri[uri.length()-1] == '\'') || (uri[uri.length()-1] == '"')))
 		uri = uri.substr(0, this->uri.length()-1);
 
-	string decodedUri = uriDecode(uri);
-	logD << "StreamUri: " << decodedUri << "\n";
+	string decodedUri = strutils::uriDecode(uri);
+	LOG(DEBUG) << "StreamUri: " << decodedUri << "\n";
 
 	string tmp(decodedUri);
 
 	pos = tmp.find(':');
 	if (pos == string::npos)
 		throw invalid_argument("missing ':'");
-	scheme = trim_copy(tmp.substr(0, pos));
+	scheme = strutils::trim_copy(tmp.substr(0, pos));
 	tmp = tmp.substr(pos + 1);
-	logD << "scheme: '" << scheme << "' tmp: '" << tmp << "'\n";
+	LOG(DEBUG) << "scheme: '" << scheme << "' tmp: '" << tmp << "'\n";
 
 	if (tmp.find("//") != 0)
 		throw invalid_argument("missing host separator: '//'");
@@ -57,47 +65,72 @@ StreamUri::StreamUri(const std::string& streamUri)
 	pos = tmp.find('/');
 	if (pos == string::npos)
 		throw invalid_argument("missing path separator: '/'");
-	host = trim_copy(tmp.substr(0, pos));
+	host = strutils::trim_copy(tmp.substr(0, pos));
 	tmp = tmp.substr(pos);
 	path = tmp;
-	logD << "host: '" << host << "' tmp: '" << tmp << "' path: '" << path << "'\n";
+	LOG(DEBUG) << "host: '" << host << "' tmp: '" << tmp << "' path: '" << path << "'\n";
 
 	pos = tmp.find('?');
 	if (pos == string::npos)
 		return;
 
-	path = trim_copy(tmp.substr(0, pos));
+	path = strutils::trim_copy(tmp.substr(0, pos));
 	tmp = tmp.substr(pos + 1);
 	string queryStr = tmp;
-	logD << "path: '" << path << "' tmp: '" << tmp << "' query: '" << queryStr << "'\n";
+	LOG(DEBUG) << "path: '" << path << "' tmp: '" << tmp << "' query: '" << queryStr << "'\n";
 
 	pos = tmp.find('#');
 	if (pos != string::npos)
 	{
 		queryStr = tmp.substr(0, pos);
 		tmp = tmp.substr(pos + 1);
-		fragment = trim_copy(tmp);
-		logD << "query: '" << queryStr << "' fragment: '" << fragment << "' tmp: '" << tmp << "'\n";
+		fragment = strutils::trim_copy(tmp);
+		LOG(DEBUG) << "query: '" << queryStr << "' fragment: '" << fragment << "' tmp: '" << tmp << "'\n";
 	}
 
-	vector<string> keyValueList = split(queryStr, '&');
+	vector<string> keyValueList = strutils::split(queryStr, '&');
 	for (auto& kv: keyValueList)
 	{
 		pos = kv.find('=');
 		if (pos != string::npos)
 		{
-			string key = trim_copy(kv.substr(0, pos));
-			string value = trim_copy(kv.substr(pos+1));
+			string key = strutils::trim_copy(kv.substr(0, pos));
+			string value = strutils::trim_copy(kv.substr(pos+1));
 			query[key] = value;
 		}
 	}
+	LOG(DEBUG) << "StreamUri.toString: " << toString() << "\n";
+}
+
+
+std::string StreamUri::toString() const
+{
+// scheme:[//[user:password@]host[:port]][/]path[?query][#fragment]
+	stringstream ss;
+	ss << scheme << "://" << host << "/" + path;
+	if (!query.empty())
+	{
+		ss << "?";
+		auto iter = query.begin();
+		while (true)
+		{
+			ss << iter->first << "=" << iter->second;
+			if (++iter == query.end())
+				break;
+			ss << "&";
+		}
+	}
+	if (!fragment.empty())
+		ss << "#" << fragment;
+
+	return ss.str();
 }
 
 
 json StreamUri::toJson() const
 {
 	json j = {
-		{"raw", uri},
+		{"raw", toString()},
 		{"scheme", scheme},
 		{"host", host},
 		{"path", path},

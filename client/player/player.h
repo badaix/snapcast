@@ -26,7 +26,7 @@
 #include "stream.h"
 #include "pcmDevice.h"
 #include "common/endian.h"
-#include "common/log.h"
+#include "aixlog.hpp"
 
 
 /// Audio Player

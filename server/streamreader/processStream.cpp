@@ -22,8 +22,9 @@
 #include <fcntl.h>
 #include "processStream.h"
 #include "common/snapException.h"
+#include "common/utils/string_utils.h"
 #include "common/utils.h"
-#include "common/log.h"
+#include "aixlog.hpp"
 
 
 using namespace std;
@@ -120,9 +121,9 @@ void ProcessStream::onStderrMsg(const char* buffer, size_t n)
 {
 	if (logStderr_)
 	{
-		string line = trim_copy(string(buffer, n));
+		string line = utils::string::trim_copy(string(buffer, n));
 		if ((line.find('\0') == string::npos) && !line.empty())
-			logO << "(" << getName() << ") " << line << "\n";
+			LOG(INFO) << "(" << getName() << ") " << line << "\n";
 	}
 }
 
@@ -157,6 +158,8 @@ void ProcessStream::worker()
 		chronos::systemtimeofday(&tvChunk);
 		tvEncodedChunk_ = tvChunk;
 		long nextTick = chronos::getTickCount();
+		int idleBytes = 0;
+		int maxIdleBytes = sampleFormat_.rate*sampleFormat_.frameSize*dryoutMs_/1000;
 		try
 		{
 			while (active_)
@@ -168,6 +171,13 @@ void ProcessStream::worker()
 				do
 				{
 					int count = read(process_->getStdout(), chunk->payload + len, toRead - len);
+					if (count < 0 && idleBytes < maxIdleBytes)
+					{
+						memset(chunk->payload + len, 0, toRead - len);
+						idleBytes += toRead - len;
+						len += toRead - len;
+						continue;
+					}
 					if (count < 0)
 					{
 						setState(kIdle);
@@ -176,8 +186,11 @@ void ProcessStream::worker()
 					}
 					else if (count == 0)
 						throw SnapException("end of file");
-					else
+					else 
+					{
 						len += count;
+						idleBytes = 0;
+					}
 				}
 				while ((len < toRead) && active_);
 
@@ -212,7 +225,7 @@ void ProcessStream::worker()
 		{
 			if (lastException != e.what())
 			{
-				logE << "(PipeStream) Exception: " << e.what() << std::endl;
+				LOG(ERROR) << "(PipeStream) Exception: " << e.what() << std::endl;
 				lastException = e.what();
 			}
 			process_->kill();

@@ -11,7 +11,7 @@
 #include <netdb.h>
 #endif
 
-#include "common/log.h"
+#include "aixlog.hpp"
 #include "common/snapException.h"
 
 using namespace std;
@@ -260,7 +260,7 @@ bool BrowseBonjour::browse(const string& serviceName, mDNSResult& result, int ti
 		return false;
 
 	if (resultCollection.size() != 1)
-		logO << "Multiple servers found.  Using first" << endl;
+		LOG(NOTICE) << "Multiple servers found.  Using first" << endl;
 
 	result = resultCollection[0];
 	

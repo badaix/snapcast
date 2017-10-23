@@ -19,7 +19,7 @@
 #include "streamServer.h"
 #include "message/time.h"
 #include "message/hello.h"
-#include "common/log.h"
+#include "aixlog.hpp"
 #include "config.h"
 #include <iostream>
 
@@ -41,8 +41,8 @@ StreamServer::~StreamServer()
 void StreamServer::onStateChanged(const PcmStream* pcmStream, const ReaderState& state)
 {
 	/// Notification: {"jsonrpc":"2.0","method":"Stream.OnUpdate","params":{"id":"stream 1","stream":{"id":"stream 1","status":"idle","uri":{"fragment":"","host":"","path":"/tmp/snapfifo","query":{"buffer_ms":"20","codec":"flac","name":"stream 1","sampleformat":"48000:16:2"},"raw":"pipe:///tmp/snapfifo?name=stream 1","scheme":"pipe"}}}}
-	logO << "onStateChanged (" << pcmStream->getName() << "): " << state << "\n";
-//	logO << pcmStream->toJson().dump(4);
+	LOG(INFO) << "onStateChanged (" << pcmStream->getName() << "): " << state << "\n";
+//	LOG(INFO) << pcmStream->toJson().dump(4);
 	json notification = jsonrpcpp::Notification("Stream.OnUpdate", jsonrpcpp::Parameter("id", pcmStream->getId(), "stream", pcmStream->toJson())).to_json();
 	controlServer_->send(notification.dump(), NULL);
 	////cout << "Notification: " << notification.dump() << "\n";
@@ -51,7 +51,7 @@ void StreamServer::onStateChanged(const PcmStream* pcmStream, const ReaderState&
 
 void StreamServer::onChunkRead(const PcmStream* pcmStream, const msg::PcmChunk* chunk, double duration)
 {
-//	logO << "onChunkRead (" << pcmStream->getName() << "): " << duration << "ms\n";
+//	LOG(INFO) << "onChunkRead (" << pcmStream->getName() << "): " << duration << "ms\n";
 	bool isDefaultStream(pcmStream == streamManager_->getDefaultStream().get());
 
 	std::shared_ptr<const msg::BaseMessage> shared_message(chunk);
@@ -82,7 +82,7 @@ void StreamServer::onChunkRead(const PcmStream* pcmStream, const msg::PcmChunk* 
 
 void StreamServer::onResync(const PcmStream* pcmStream, double ms)
 {
-	logO << "onResync (" << pcmStream->getName() << "): " << ms << "ms\n";
+	LOG(INFO) << "onResync (" << pcmStream->getName() << "): " << ms << "ms\n";
 }
 
 
@@ -94,15 +94,15 @@ void StreamServer::onDisconnect(StreamSession* streamSession)
 	if (session == nullptr)
 		return;
 
-	logO << "onDisconnect: " << session->clientId << "\n";
-	logD << "sessions: " << sessions_.size() << "\n";
+	LOG(INFO) << "onDisconnect: " << session->clientId << "\n";
+	LOG(DEBUG) << "sessions: " << sessions_.size() << "\n";
 	// don't block: remove StreamSession in a thread
 	auto func = [](shared_ptr<StreamSession> s)->void{s->stop();};
 	std::thread t(func, session);
 	t.detach();
 	sessions_.erase(session);
 
-	logD << "sessions: " << sessions_.size() << "\n";
+	LOG(DEBUG) << "sessions: " << sessions_.size() << "\n";
 
 	// notify controllers if not yet done
 	ClientInfoPtr clientInfo = Config::instance().getClientInfo(streamSession->clientId);
@@ -126,7 +126,7 @@ void StreamServer::ProcessRequest(const jsonrpcpp::request_ptr request, jsonrpcp
 {
 	try
 	{
-		////logO << "StreamServer::ProcessRequest method: " << request->method << ", " << "id: " << request->id << "\n";
+		////LOG(INFO) << "StreamServer::ProcessRequest method: " << request->method << ", " << "id: " << request->id << "\n";
 		Json result;
 
 		if (request->method.find("Client.") == 0)
@@ -366,12 +366,12 @@ void StreamServer::ProcessRequest(const jsonrpcpp::request_ptr request, jsonrpcp
 	}
 	catch (const jsonrpcpp::RequestException& e)
 	{
-		logE << "StreamServer::onMessageReceived JsonRequestException: " << e.to_json().dump() << ", message: " << request->to_json().dump() << "\n";
+		LOG(ERROR) << "StreamServer::onMessageReceived JsonRequestException: " << e.to_json().dump() << ", message: " << request->to_json().dump() << "\n";
 		response.reset(new jsonrpcpp::RequestException(e));
 	}
 	catch (const exception& e)
 	{
-		logE << "StreamServer::onMessageReceived exception: " << e.what() << ", message: " << request->to_json().dump() << "\n";
+		LOG(ERROR) << "StreamServer::onMessageReceived exception: " << e.what() << ", message: " << request->to_json().dump() << "\n";
 		response.reset(new jsonrpcpp::InternalErrorException(e.what(), request->id));
 	}
 }
@@ -379,7 +379,7 @@ void StreamServer::ProcessRequest(const jsonrpcpp::request_ptr request, jsonrpcp
 
 void StreamServer::onMessageReceived(ControlSession* controlSession, const std::string& message)
 {
-	logD << "onMessageReceived: " << message << "\n";
+	LOG(DEBUG) << "onMessageReceived: " << message << "\n";
 	jsonrpcpp::entity_ptr entity(nullptr);
 	try
 	{
@@ -445,14 +445,14 @@ void StreamServer::onMessageReceived(ControlSession* controlSession, const std::
 
 void StreamServer::onMessageReceived(StreamSession* connection, const msg::BaseMessage& baseMessage, char* buffer)
 {
-//	logD << "onMessageReceived: " << baseMessage.type << ", size: " << baseMessage.size << ", id: " << baseMessage.id << ", refers: " << baseMessage.refersTo << ", sent: " << baseMessage.sent.sec << "," << baseMessage.sent.usec << ", recv: " << baseMessage.received.sec << "," << baseMessage.received.usec << "\n";
+//	LOG(DEBUG) << "onMessageReceived: " << baseMessage.type << ", size: " << baseMessage.size << ", id: " << baseMessage.id << ", refers: " << baseMessage.refersTo << ", sent: " << baseMessage.sent.sec << "," << baseMessage.sent.usec << ", recv: " << baseMessage.received.sec << "," << baseMessage.received.usec << "\n";
 	if (baseMessage.type == message_type::kTime)
 	{
 		msg::Time* timeMsg = new msg::Time();
 		timeMsg->deserialize(baseMessage, buffer);
 		timeMsg->refersTo = timeMsg->id;
 		timeMsg->latency = timeMsg->received - timeMsg->sent;
-//		logO << "Latency sec: " << timeMsg.latency.sec << ", usec: " << timeMsg.latency.usec << ", refers to: " << timeMsg.refersTo << "\n";
+//		LOG(INFO) << "Latency sec: " << timeMsg.latency.sec << ", usec: " << timeMsg.latency.usec << ", refers to: " << timeMsg.refersTo << "\n";
 		connection->sendAsync(timeMsg, true);
 
 		// refresh connection state
@@ -467,12 +467,12 @@ void StreamServer::onMessageReceived(StreamSession* connection, const msg::BaseM
 	{
 		msg::Hello helloMsg;
 		helloMsg.deserialize(baseMessage, buffer);
-		connection->clientId = helloMsg.getClientId();
-		logO << "Hello from " << connection->clientId << ", host: " << helloMsg.getHostName() << ", v" << helloMsg.getVersion()
+		connection->clientId = helloMsg.getUniqueId();
+		LOG(INFO) << "Hello from " << connection->clientId << ", host: " << helloMsg.getHostName() << ", v" << helloMsg.getVersion()
 			<< ", ClientName: " << helloMsg.getClientName() << ", OS: " << helloMsg.getOS() << ", Arch: " << helloMsg.getArch()
 			<< ", Protocol version: " << helloMsg.getProtocolVersion() << "\n";
 
-		logD << "request kServerSettings: " << connection->clientId << "\n";
+		LOG(DEBUG) << "request kServerSettings: " << connection->clientId << "\n";
 //		std::lock_guard<std::mutex> mlock(mutex_);
 		bool newGroup(false);
 		GroupPtr group = Config::instance().getGroupFromClient(connection->clientId);
@@ -484,7 +484,7 @@ void StreamServer::onMessageReceived(StreamSession* connection, const msg::BaseM
 
 		ClientInfoPtr client = group->getClient(connection->clientId);
 
-		logD << "request kServerSettings\n";
+		LOG(DEBUG) << "request kServerSettings\n";
 		msg::ServerSettings* serverSettings = new msg::ServerSettings();
 		serverSettings->setVolume(client->config.volume.percent);
 		serverSettings->setMuted(client->config.volume.muted || group->muted);
@@ -512,7 +512,7 @@ void StreamServer::onMessageReceived(StreamSession* connection, const msg::BaseM
 			stream = streamManager_->getDefaultStream();
 			group->streamId = stream->getId();
 		}
-		logO << "Group: " << group->id << ", stream: " << group->streamId << "\n";
+		LOG(DEBUG) << "Group: " << group->id << ", stream: " << group->streamId << "\n";
 
 		Config::instance().save();
 
@@ -556,7 +556,7 @@ session_ptr StreamServer::getStreamSession(StreamSession* streamSession) const
 
 session_ptr StreamServer::getStreamSession(const std::string& clientId) const
 {
-//	logO << "getStreamSession: " << mac << "\n";
+//	LOG(INFO) << "getStreamSession: " << mac << "\n";
 	std::lock_guard<std::recursive_mutex> mlock(sessionsMutex_);
 	for (auto session: sessions_)
 	{
@@ -576,24 +576,30 @@ void StreamServer::startAccept()
 
 void StreamServer::handleAccept(socket_ptr socket)
 {
-	struct timeval tv;
-	tv.tv_sec  = 5;
-	tv.tv_usec = 0;
-	setsockopt(socket->native_handle(), SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
-	setsockopt(socket->native_handle(), SOL_SOCKET, SO_SNDTIMEO, &tv, sizeof(tv));
+	try
+	{
+		struct timeval tv;
+		tv.tv_sec  = 5;
+		tv.tv_usec = 0;
+		setsockopt(socket->native_handle(), SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
+		setsockopt(socket->native_handle(), SOL_SOCKET, SO_SNDTIMEO, &tv, sizeof(tv));
 
-	/// experimental: turn on tcp::no_delay
-	socket->set_option(tcp::no_delay(true));
+		/// experimental: turn on tcp::no_delay
+		socket->set_option(tcp::no_delay(true));
 
-	logS(kLogNotice) << "StreamServer::NewConnection: " << socket->remote_endpoint().address().to_string() << endl;
-	shared_ptr<StreamSession> session = make_shared<StreamSession>(this, socket);
+		SLOG(NOTICE) << "StreamServer::NewConnection: " << socket->remote_endpoint().address().to_string() << endl;
+		shared_ptr<StreamSession> session = make_shared<StreamSession>(this, socket);
 
-	session->setBufferMs(settings_.bufferMs);
-	session->start();
+		session->setBufferMs(settings_.bufferMs);
+		session->start();
 
-	std::lock_guard<std::recursive_mutex> mlock(sessionsMutex_);
-	sessions_.insert(session);
-
+		std::lock_guard<std::recursive_mutex> mlock(sessionsMutex_);
+		sessions_.insert(session);
+	}
+	catch (const std::exception& e)
+	{
+		SLOG(ERROR) << "Exception in StreamServer::handleAccept: " << e.what() << endl;
+	}
 	startAccept();
 }
 
@@ -611,16 +617,38 @@ void StreamServer::start()
 		{
 			PcmStreamPtr stream = streamManager_->addStream(streamUri);
 			if (stream)
-				logO << "Stream: " << stream->getUri().toJson() << "\n";
+				LOG(INFO) << "Stream: " << stream->getUri().toJson() << "\n";
 		}
 		streamManager_->start();
 
-		acceptor_ = make_shared<tcp::acceptor>(*io_service_, tcp::endpoint(tcp::v4(), settings_.port));
+		asio::ip::address address = asio::ip::address::from_string("::");
+		tcp::endpoint endpoint(address, settings_.port);
+		try
+		{
+			acceptor_ = make_shared<tcp::acceptor>(*io_service_, endpoint);
+		}
+		catch (const asio::system_error& e)
+		{
+			LOG(ERROR) << "error creating TCP acceptor: " << e.what() << ", code: " << e.code() << "\n";
+			if (e.code().value() == asio::error::address_family_not_supported)
+			{
+				endpoint = tcp::endpoint(tcp::v4(), settings_.port);
+				acceptor_ = make_shared<tcp::acceptor>(*io_service_, endpoint);
+			}
+			else
+				throw;
+		}
+
+		if (endpoint.protocol() == tcp::v6())
+		{
+			error_code ec;
+			acceptor_->set_option(asio::ip::v6_only(false), ec);
+		}
 		startAccept();
 	}
 	catch (const std::exception& e)
 	{
-		logS(kLogNotice) << "StreamServer::start: " << e.what() << endl;
+		SLOG(NOTICE) << "StreamServer::start: " << e.what() << endl;
 		stop();
 		throw;
 	}

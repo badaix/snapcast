@@ -18,8 +18,9 @@
 
 #include "spotifyStream.h"
 #include "common/snapException.h"
+#include "common/utils/string_utils.h"
 #include "common/utils.h"
-#include "common/log.h"
+#include "aixlog.hpp"
 
 
 using namespace std;
@@ -34,6 +35,7 @@ SpotifyStream::SpotifyStream(PcmListener* pcmListener, const StreamUri& uri) : P
 
 	string username = uri_.getQuery("username", "");
 	string password = uri_.getQuery("password", "");
+	string cache = uri_.getQuery("cache", "");
 	string bitrate = uri_.getQuery("bitrate", "320");
 	string devicename = uri_.getQuery("devicename", "Snapcast");
 	string onstart = uri_.getQuery("onstart", "");
@@ -46,11 +48,18 @@ SpotifyStream::SpotifyStream(PcmListener* pcmListener, const StreamUri& uri) : P
 	if (!username.empty() && !password.empty())
 		params_ += " --username \"" + username + "\" --password \"" + password + "\"";
 	params_ += " --bitrate " + bitrate + " --backend pipe";
+	if (!cache.empty())
+		params_ += " --cache \"" + cache + "\"";
 	if (!onstart.empty())
 		params_ += " --onstart \"" + onstart + "\"";
 	if (!onstop.empty())
 		params_ += " --onstop \"" + onstop + "\"";
-//	logO << "params: " << params << "\n";
+
+  if (uri_.query.find("username") != uri_.query.end())
+		uri_.query["username"] = "xxx";
+	if (uri_.query.find("password") != uri_.query.end())
+		uri_.query["password"] = "xxx";
+//	LOG(INFO) << "params: " << params << "\n";
 }
 
 
@@ -101,13 +110,13 @@ void SpotifyStream::onStderrMsg(const char* buffer, size_t n)
 	// 2016-11-03 09-00-18 [out] INFO:librespot::session: Connecting to AP lon3-accesspoint-a34.ap.spotify.com:443
 	// 2016-11-03 09-00-18 [out] INFO:librespot::session: Authenticated !
 	watchdog_->trigger();
-	string logmsg = trim_copy(string(buffer, n));
+	string logmsg = utils::string::trim_copy(string(buffer, n));
 	if ((logmsg.find("allocated stream") == string::npos) &&
 		(logmsg.find("Got channel") == string::npos) &&
 		(logmsg.find('\0') == string::npos) &&
 		(logmsg.size() > 4))
 	{
-		logO << "(" << getName() << ") " << logmsg << "\n";
+		LOG(INFO) << "(" << getName() << ") " << logmsg << "\n";
 	}
 }
 
@@ -123,7 +132,7 @@ void SpotifyStream::stderrReader()
 
 void SpotifyStream::onTimeout(const Watchdog* watchdog, size_t ms)
 {
-	logE << "Spotify timeout: " << ms / 1000 << "\n";
+	LOG(ERROR) << "Spotify timeout: " << ms / 1000 << "\n";
 	if (process_)
 		process_->kill();
 }

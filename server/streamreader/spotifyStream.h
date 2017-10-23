@@ -28,7 +28,7 @@
  * Implements EncoderListener to get the encoded data.
  * Data is passed to the PcmListener
  * usage:
- *   snapserver -s "spotify:///librespot?name=Spotify&username=<my username>&password=<my password>[&devicename=Snapcast][&bitrate=320]"
+ *   snapserver -s "spotify:///librespot?name=Spotify&username=<my username>&password=<my password>[&devicename=Snapcast][&bitrate=320][&cache=<cache dir>]"
  */
 class SpotifyStream : public ProcessStream, WatchdogListener
 {

@@ -22,7 +22,7 @@
 #include "flacDecoder.h"
 #include "common/snapException.h"
 #include "common/endian.h"
-#include "common/log.h"
+#include "aixlog.hpp"
 
 
 using namespace std;
@@ -76,7 +76,7 @@ bool FlacDecoder::decode(msg::PcmChunk* chunk)
 
 		if (lastError_)
 		{
-			logE << "FLAC decode error: " << FLAC__StreamDecoderErrorStatusString[*lastError_] << "\n";
+			LOG(ERROR) << "FLAC decode error: " << FLAC__StreamDecoderErrorStatusString[*lastError_] << "\n";
 			lastError_= nullptr;
 			return false;
 		}
@@ -88,7 +88,7 @@ bool FlacDecoder::decode(msg::PcmChunk* chunk)
 		int32_t s = (diffMs / 1000);
 		int32_t us = (diffMs * 1000);
 		us %= 1000000;
-		logD << "Cached: " << cacheInfo_.cachedBlocks_ << ", " << diffMs << "ms, " << s << "s, " << us << "us\n";
+		LOG(DEBUG) << "Cached: " << cacheInfo_.cachedBlocks_ << ", " << diffMs << "ms, " << s << "s, " << us << "us\n";
 		chunk->timestamp = chunk->timestamp - tv(s, us);
 	}
 	return true;
@@ -162,7 +162,7 @@ FLAC__StreamDecoderWriteStatus write_callback(const FLAC__StreamDecoder *decoder
 		{
 			if (buffer[channel] == NULL)
 			{
-				logS(kLogErr) << "ERROR: buffer[" << channel << "] is NULL\n";
+				SLOG(ERROR) << "ERROR: buffer[" << channel << "] is NULL\n";
 				return FLAC__STREAM_DECODER_WRITE_STATUS_ABORT;
 			}
 			
@@ -210,7 +210,7 @@ void metadata_callback(const FLAC__StreamDecoder *decoder, const FLAC__StreamMet
 void error_callback(const FLAC__StreamDecoder *decoder, FLAC__StreamDecoderErrorStatus status, void *client_data)
 {
 	(void)decoder, (void)client_data;
-	logS(kLogErr) << "Got error callback: " << FLAC__StreamDecoderErrorStatusString[status] << "\n";
+	SLOG(ERROR) << "Got error callback: " << FLAC__StreamDecoderErrorStatusString[status] << "\n";
 	static_cast<FlacDecoder*>(client_data)->lastError_ = std::unique_ptr<FLAC__StreamDecoderErrorStatus>(new FLAC__StreamDecoderErrorStatus(status));
 
 	/// TODO, see issue #120:

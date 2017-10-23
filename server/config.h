@@ -25,14 +25,18 @@
 #include <sys/time.h>
 
 #ifdef HAS_JSONRPCPP
-#include <jsonrpcpp/json.hpp>
+#include <jsonrpcpp/json.hpp>>>>>>> buildroot
+35
+#
 #else
 #include "externals/json.hpp"
 #endif
 
+#include "common/utils/string_utils.h"
 #include "common/utils.h"
 
 
+namespace strutils = utils::string;
 using json = nlohmann::json;
 
 struct ClientInfo;
@@ -99,11 +103,11 @@ struct Host
 
 	void fromJson(const json& j)
 	{
-		name = trim_copy(jGet<std::string>(j, "name", ""));
-		mac = trim_copy(jGet<std::string>(j, "mac", ""));
-		os = trim_copy(jGet<std::string>(j, "os", ""));
-		arch = trim_copy(jGet<std::string>(j, "arch", ""));
-		ip = trim_copy(jGet<std::string>(j, "ip", ""));
+		name = strutils::trim_copy(jGet<std::string>(j, "name", ""));
+		mac = strutils::trim_copy(jGet<std::string>(j, "mac", ""));
+		os = strutils::trim_copy(jGet<std::string>(j, "os", ""));
+		arch = strutils::trim_copy(jGet<std::string>(j, "arch", ""));
+		ip = strutils::trim_copy(jGet<std::string>(j, "ip", ""));
 	}
 
 	json toJson()
@@ -133,7 +137,7 @@ struct ClientConfig
 
 	void fromJson(const json& j)
 	{
-		name = trim_copy(jGet<std::string>(j, "name", ""));
+		name = strutils::trim_copy(jGet<std::string>(j, "name", ""));
 		volume.fromJson(j["volume"]);
 		latency = jGet<int32_t>(j, "latency", 0);
 		instance = jGet<size_t>(j, "instance", 1);
@@ -142,7 +146,7 @@ struct ClientConfig
 	json toJson()
 	{
 		json j;
-		j["name"] = trim_copy(name);
+		j["name"] = strutils::trim_copy(name);
 		j["volume"] = volume.toJson();
 		j["latency"] = latency;
 		j["instance"] = instance;
@@ -169,16 +173,16 @@ struct Snapcast
 
 	virtual void fromJson(const json& j)
 	{
-		name = trim_copy(jGet<std::string>(j, "name", ""));
-		version = trim_copy(jGet<std::string>(j, "version", ""));
+		name = strutils::trim_copy(jGet<std::string>(j, "name", ""));
+		version = strutils::trim_copy(jGet<std::string>(j, "version", ""));
 		protocolVersion = jGet<int>(j, "protocolVersion", 1);
 	}
 
 	virtual json toJson()
 	{
 		json j;
-		j["name"] = trim_copy(name);
-		j["version"] = trim_copy(version);
+		j["name"] = strutils::trim_copy(name);
+		j["version"] = strutils::trim_copy(version);
 		j["protocolVersion"] = protocolVersion;
 		return j;
 	}
@@ -272,9 +276,9 @@ struct Group
 
 	void fromJson(const json& j)
 	{
-		name = trim_copy(jGet<std::string>(j, "name", ""));
-		id = trim_copy(jGet<std::string>(j, "id", ""));
-		streamId = trim_copy(jGet<std::string>(j, "stream_id", ""));
+		name = strutils::trim_copy(jGet<std::string>(j, "name", ""));
+		id = strutils::trim_copy(jGet<std::string>(j, "id", ""));
+		streamId = strutils::trim_copy(jGet<std::string>(j, "stream_id", ""));
 		muted = jGet<bool>(j, "muted", false);
 		clients.clear();
 		if (j.count("clients"))
@@ -292,9 +296,9 @@ struct Group
 	json toJson()
 	{
 		json j;
-		j["name"] = trim_copy(name);
-		j["id"] = trim_copy(id);
-		j["stream_id"] = trim_copy(streamId);
+		j["name"] = strutils::trim_copy(name);
+		j["id"] = strutils::trim_copy(id);
+		j["stream_id"] = strutils::trim_copy(streamId);
 		j["muted"] = muted;
 
 		json jClients = json::array();
@@ -394,6 +398,8 @@ public:
 	json getServerStatus(const json& streams) const;
 
 	void save();
+
+	void init(const std::string& root_directory = "", const std::string& user = "", const std::string& group = "");
 
 	std::vector<GroupPtr> groups;
 

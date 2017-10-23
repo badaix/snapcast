@@ -22,8 +22,9 @@
 #include "oggEncoder.h"
 #include "common/snapException.h"
 #include "common/strCompat.h"
+#include "common/utils/string_utils.h"
 #include "common/utils.h"
-#include "common/log.h"
+#include "aixlog.hpp"
 
 using namespace std;
 
@@ -54,7 +55,7 @@ std::string OggEncoder::name() const
 void OggEncoder::encode(const msg::PcmChunk* chunk)
 {
 	double res = 0;
-	logD << "payload: " << chunk->payloadSize << "\tframes: " << chunk->getFrameCount() << "\tduration: " << chunk->duration<chronos::msec>().count() << "\n";
+	LOG(DEBUG) << "payload: " << chunk->payloadSize << "\tframes: " << chunk->getFrameCount() << "\tduration: " << chunk->duration<chronos::msec>().count() << "\n";
 	int frames = chunk->getFrameCount();
 	float **buffer=vorbis_analysis_buffer(&vd_, frames);
 
@@ -128,7 +129,7 @@ void OggEncoder::encode(const msg::PcmChunk* chunk)
 	if (res > 0)
 	{
 		res /= (sampleFormat_.rate / 1000.);
-		// logO << "res: " << res << "\n";
+		// LOG(INFO) << "res: " << res << "\n";
 		lastGranulepos_ = os_.granulepos;
 		// make oggChunk smaller
 		oggChunk->payload = (char*)realloc(oggChunk->payload, pos);
@@ -144,11 +145,11 @@ void OggEncoder::initEncoder()
 {
 	if (codecOptions_.find(":") == string::npos)
 		throw SnapException("Invalid codec options: \"" + codecOptions_ + "\"");
-	string mode = trim_copy(codecOptions_.substr(0, codecOptions_.find(":")));
+	string mode = utils::string::trim_copy(codecOptions_.substr(0, codecOptions_.find(":")));
 	if (mode != "VBR")
 		throw SnapException("Unsupported codec mode: \"" + mode + "\". Available: \"VBR\"");
 
-	string qual = trim_copy(codecOptions_.substr(codecOptions_.find(":") + 1));
+	string qual = utils::string::trim_copy(codecOptions_.substr(codecOptions_.find(":") + 1));
 	double quality = 1.0;
 	try
 	{
@@ -248,7 +249,7 @@ void OggEncoder::initEncoder()
 			break;
 		headerChunk_->payloadSize += og_.header_len + og_.body_len;
 		headerChunk_->payload = (char*)realloc(headerChunk_->payload, headerChunk_->payloadSize);
-		logD << "HeadLen: " << og_.header_len << ", bodyLen: " << og_.body_len << ", result: " << result << "\n";
+		LOG(DEBUG) << "HeadLen: " << og_.header_len << ", bodyLen: " << og_.body_len << ", result: " << result << "\n";
 		memcpy(headerChunk_->payload + pos, og_.header, og_.header_len);
 		pos += og_.header_len;
 		memcpy(headerChunk_->payload + pos, og_.body, og_.body_len);

@@ -39,13 +39,14 @@
 /// Forwards PCM data to the audio player
 /**
  * Sets up a connection to the server (using ClientConnection)
- * Sets up the audio decoder and player. Decodes audio feeds PCM to the audio stream buffer
+ * Sets up the audio decoder and player. 
+ * Decodes audio (message_type::kWireChunk) and feeds PCM to the audio stream buffer
  * Does timesync with the server
  */
 class Controller : public MessageReceiver
 {
 public:
-	Controller(size_t instance);
+	Controller(const std::string& clientId, size_t instance);
 	void start(const PcmDevice& pcmDevice, const std::string& host, size_t port, int latency);
 	void stop();
 
@@ -55,11 +56,12 @@ public:
 
 	/// Implementation of MessageReceiver.
 	/// Used for async exception reporting
-	virtual void onException(ClientConnection* connection, const std::exception& exception);
+	virtual void onException(ClientConnection* connection, shared_exception_ptr exception);
 
 private:
 	void worker();
 	bool sendTimeSyncMessage(long after = 1000);
+	std::string hostId_;
 	size_t instance_;
 	std::atomic<bool> active_;
 	std::thread controllerThread_;
@@ -74,8 +76,7 @@ private:
 	std::shared_ptr<msg::CodecHeader> headerChunk_;
 	std::mutex receiveMutex_;
 
-	std::string exception_;
-	bool asyncException_;
+	shared_exception_ptr async_exception_;
 };
 
 

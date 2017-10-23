@@ -1,5 +1,22 @@
-VERSION = 0.11.1
-TARGET  = snapserver
+#    This file is part of snapcast
+#   Copyright (C) 2014-2017  Johannes Pohl
+#
+#   This program is free software: you can redistribute it and/or modify
+#   it under the terms of the GNU General Public License as published by
+#   the Free Software Foundation, either version 3 of the License, or
+#   (at your option) any later version.
+#
+#   This program is distributed in the hope that it will be useful,
+#   but WITHOUT ANY WARRANTY; without even the implied warranty of
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#   GNU General Public License for more details.
+#
+#   You should have received a copy of the GNU General Public License
+#   along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+VERSION = 0.12.0
+BIN = snapserver
+
 ifeq ($(TARGET), FREEBSD)
 SHELL   = /usr/local/bin/bash
 else
@@ -13,10 +30,14 @@ else
   TARGET_DIR ?= /usr
 endif
 
-CXXFLAGS += $(ADD_CFLAGS) -std=c++0x -Wall -Wno-unused-function -O3 -DHAS_OGG -DHAS_VORBIS -DHAS_VORBIS_ENC -DHAS_FLAC -DASIO_STANDALONE -DVERSION=\"$(VERSION)\" -I. -I.. -isystem ../externals/asio/asio/include -I../externals/popl/include -I../externals/jsonrpcpp/lib -I../externals
+CXXFLAGS += $(ADD_CFLAGS) -std=c++0x -Wall -Wno-unused-function -O3 -DASIO_STANDALONE -DVERSION=\"$(VERSION)\" -I. -I.. -isystem ../externals/asio/asio/include -I../externals/popl/include -I../externals/aixlog/include -I../externals/jsonrpcpp/lib -I../externals
 LDFLAGS   = -lvorbis -lvorbisenc -logg -lFLAC
-OBJ       = snapServer.o config.o controlServer.o controlSession.o streamServer.o streamSession.o streamreader/streamUri.o streamreader/streamManager.o streamreader/pcmStream.o streamreader/pipeStream.o streamreader/fileStream.o streamreader/processStream.o streamreader/airplayStream.o streamreader/spotifyStream.o streamreader/watchdog.o encoder/encoderFactory.o encoder/flacEncoder.o encoder/pcmEncoder.o encoder/oggEncoder.o ../common/log.o ../common/sampleFormat.o ../message/pcmChunk.o ../externals/jsonrpcpp/lib/jsonrp.o
+OBJ       = snapServer.o config.o controlServer.o controlSession.o streamServer.o streamSession.o streamreader/streamUri.o streamreader/streamManager.o streamreader/pcmStream.o streamreader/pipeStream.o streamreader/fileStream.o streamreader/processStream.o streamreader/airplayStream.o streamreader/spotifyStream.o streamreader/watchdog.o encoder/encoderFactory.o encoder/flacEncoder.o encoder/pcmEncoder.o encoder/oggEncoder.o ../common/sampleFormat.o ../message/pcmChunk.o ../externals/jsonrpcpp/lib/jsonrp.o
 
+
+ifneq (,$(TARGET))
+CXXFLAGS += -D$(TARGET)
+endif
 
 ifeq ($(ENDIAN), BIG)
 CXXFLAGS += -DIS_BIG_ENDIAN
@@ -26,31 +47,31 @@ ifeq ($(TARGET), ANDROID)
 
 CXX       = $(NDK_DIR)/bin/arm-linux-androideabi-g++
 STRIP     = $(NDK_DIR)/bin/arm-linux-androideabi-strip
-CXXFLAGS += -pthread -DANDROID -DNO_CPP11_STRING -fPIC -I$(NDK_DIR)/include
-LDFLAGS  += -L$(NDK_DIR)/lib -pie 
+CXXFLAGS += -pthread -DNO_CPP11_STRING -fPIC -I$(NDK_DIR)/include
+LDFLAGS  += -L$(NDK_DIR)/lib -pie -llog -latomic
 
 else ifeq ($(TARGET), OPENWRT)
 
 STRIP     = echo
 CXXFLAGS += -DNO_CPP11_STRING -DHAS_AVAHI -DHAS_DAEMON -pthread
 LDFLAGS  += -lavahi-client -lavahi-common -latomic
-OBJ      += publishZeroConf/publishAvahi.o 
+OBJ      += ../common/daemon.o publishZeroConf/publishAvahi.o 
 
 else ifeq ($(TARGET), FREEBSD)
 
 CXX       = g++
 STRIP     = echo
-CXXFLAGS += -DNO_CPP11_STRING -DFREEBSD -DHAS_AVAHI -DHAS_DAEMON -pthread
-LDFLAGS  += -lrt -lavahi-client -lavahi-common -static-libgcc -static-libstdc++
-OBJ      += publishZeroConf/publishAvahi.o 
+CXXFLAGS += -DNO_CPP11_STRING -DHAS_AVAHI -DHAS_DAEMON -pthread
+LDFLAGS  += -lrt -lavahi-client -lavahi-common -static-libgcc -static-libstdc++ -latomic
+OBJ      += ../common/daemon.o publishZeroConf/publishAvahi.o 
 
 else ifeq ($(TARGET), MACOS)
 
 CXX       = g++
 STRIP     = strip
-CXXFLAGS += -DFREEBSD -DMACOS -DHAS_BONJOUR -DHAS_DAEMON -Wno-deprecated -I/usr/local/include
-LDFLAGS  += -L/usr/local/lib 
-OBJ      += publishZeroConf/publishBonjour.o
+CXXFLAGS += -DFREEBSD -DHAS_BONJOUR -DHAS_DAEMON -Wno-deprecated -I/usr/local/include
+LDFLAGS  += -L/usr/local/lib -framework CoreFoundation -framework IOKit
+OBJ      += ../common/daemon.o publishZeroConf/publishBonjour.o
 
 else
 
@@ -58,17 +79,14 @@ CXX       = g++
 STRIP     = strip
 CXXFLAGS += -DHAS_AVAHI -DHAS_DAEMON -pthread
 LDFLAGS   = -lrt -lvorbis -lvorbisenc -logg -lFLAC -lavahi-client -lavahi-common -static-libgcc -static-libstdc++
-OBJ      += publishZeroConf/publishAvahi.o 
+OBJ      += ../common/daemon.o publishZeroConf/publishAvahi.o 
 
 endif
 
 
-BIN = snapserver
+all:	$(BIN)
 
-
-all:	$(TARGET)
-
-$(TARGET): $(OBJ)
+$(BIN): $(OBJ)
 	$(CXX) $(CXXFLAGS) -o $(BIN) $(OBJ) $(LDFLAGS)
 	$(STRIP) $(BIN)
 
@@ -162,6 +180,7 @@ uninstall:
 	rm -f $(TARGET_DIR)/local/bin/$(BIN); \
 	rm -f $(TARGET_DIR)/local/man/man1/$(BIN).1; \
 	rm -f $(TARGET_DIR)/local/etc/rc.d/$(BIN); \
+	rm -rf /var/lib/snapserver; \
 
 else ifeq ($(TARGET), MACOS)
 
@@ -171,6 +190,7 @@ uninstall:
 	rm -f $(TARGET_DIR)/local/bin/$(BIN); \
 	rm -f $(TARGET_DIR)/local/share/man/man1/$(BIN).1; \
 	rm -f /Library/LaunchAgents/de.badaix.snapcast.$(BIN).plist; \
+	rm -rf /var/lib/snapserver; \
 
 else
 
@@ -186,6 +206,7 @@ uninstall:
 		echo cannot tell; \
 	fi; \
 	rm -rf /var/run/$(BIN)
+	rm -rf /var/lib/snapserver; \
 	$(MAKE) deluser
 
 endif

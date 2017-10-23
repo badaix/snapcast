@@ -29,7 +29,7 @@
 #ifdef HAS_DAEMON
 #include "common/daemon.h"
 #endif
-#include "common/log.h"
+#include "aixlog.hpp"
 #include "common/signalHandler.h"
 #include "common/strCompat.h"
 #include "common/utils.h"
@@ -54,34 +54,25 @@ int main (int argc, char **argv)
 		size_t port(1704);
 		int latency(0);
 		size_t instance(1);
-		int processPriority(-3);
-
-		Switch helpSwitch("", "help", "produce help message");
-		Switch versionSwitch("v", "version", "show version number");
-		Switch listSwitch("l", "list", "list pcm devices");
-		Value<string> hostValue("h", "host", "server hostname or ip address", "", &host);
-		Value<size_t> portValue("p", "port", "server port", 1704, &port);
-		Value<string> soundcardValue("s", "soundcard", "index or name of the soundcard", "default", &soundcard);
-		Implicit<int> daemonOption("d", "daemon", "daemonize, optional process priority [-20..19]", -3, &processPriority);
-		Value<int> latencyValue("", "latency", "latency of the soundcard", 0, &latency);
-		Value<size_t> instanceValue("i", "instance", "instance id", 1, &instance);
-		Value<string> userValue("", "user", "the user[:group] to run snapclient as when daemonized");
 
 		OptionParser op("Allowed options");
-		op.add(helpSwitch)
-		 .add(versionSwitch)
-		 .add(hostValue)
-		 .add(portValue)
+		auto helpSwitch =     op.add<Switch>("", "help", "produce help message");
+		auto debugOption =    op.add<Implicit<string>, Visibility::hidden>("", "debug", "enable debug logging", "");
+		auto versionSwitch =  op.add<Switch>("v", "version", "show version number");
 #if defined(HAS_ALSA)
-		 .add(listSwitch)
-		 .add(soundcardValue)
+		auto listSwitch =     op.add<Switch>("l", "list", "list pcm devices");
+		/*auto soundcardValue =*/ op.add<Value<string>>("s", "soundcard", "index or name of the soundcard", "default", &soundcard);
 #endif
+		/*auto hostValue =*/  op.add<Value<string>>("h", "host", "server hostname or ip address", "", &host);
+		/*auto portValue =*/  op.add<Value<size_t>>("p", "port", "server port", 1704, &port);
 #ifdef HAS_DAEMON
-		 .add(daemonOption)
-		 .add(userValue)
+		int processPriority(-3);
+		auto daemonOption =   op.add<Implicit<int>>("d", "daemon", "daemonize, optional process priority [-20..19]", -3, &processPriority);
+		auto userValue =      op.add<Value<string>>("", "user", "the user[:group] to run snapclient as when daemonized");
 #endif
-		 .add(latencyValue)
-		 .add(instanceValue);
+		/*auto latencyValue =*/   op.add<Value<int>>("", "latency", "latency of the soundcard", 0, &latency);
+		/*auto instanceValue =*/  op.add<Value<size_t>>("i", "instance", "instance id", 1, &instance);
+		auto hostIdValue =    op.add<Value<string>>("", "hostID", "unique host id", "");
 
 		try
 		{
@@ -89,12 +80,12 @@ int main (int argc, char **argv)
 		}
 		catch (const std::invalid_argument& e)
 		{
-			logS(kLogErr) << "Exception: " << e.what() << std::endl;
+			cerr << "Exception: " << e.what() << std::endl;
 			cout << "\n" << op << "\n";
 			exit(EXIT_FAILURE);
 		}
 
-		if (versionSwitch.isSet())
+		if (versionSwitch->is_set())
 		{
 			cout << "snapclient v" << VERSION << "\n"
 				<< "Copyright (C) 2014-2017 BadAix (snapcast@badaix.de).\n"
@@ -105,20 +96,20 @@ int main (int argc, char **argv)
 			exit(EXIT_SUCCESS);
 		}
 
-		if (listSwitch.isSet())
-		{
 #ifdef HAS_ALSA
+		if (listSwitch->is_set())
+		{
 			vector<PcmDevice> pcmDevices = AlsaPlayer::pcm_list();
 			for (auto dev: pcmDevices)
 			{
 				cout << dev.idx << ": " << dev.name << "\n"
 					<< dev.description << "\n\n";
 			}
-#endif
 			exit(EXIT_SUCCESS);
 		}
+#endif
 
-		if (helpSwitch.isSet())
+		if (helpSwitch->is_set())
 		{
 			cout << op << "\n";
 			exit(EXIT_SUCCESS);
@@ -127,41 +118,54 @@ int main (int argc, char **argv)
 		if (instance <= 0)
 			std::invalid_argument("instance id must be >= 1");
 
-		std::clog.rdbuf(new Log("snapclient", LOG_DAEMON));
+		AixLog::Log::init<AixLog::SinkNative>("snapclient", AixLog::Severity::trace, AixLog::Type::special);
+		if (debugOption->is_set())
+		{
+			AixLog::Log::instance().add_logsink<AixLog::SinkCout>(AixLog::Severity::trace, AixLog::Type::all, "%Y-%m-%d %H-%M-%S.#ms [#severity] (#tag_func)");
+			if (!debugOption->value().empty())
+				AixLog::Log::instance().add_logsink<AixLog::SinkFile>(AixLog::Severity::trace, AixLog::Type::all, debugOption->value(), "%Y-%m-%d %H-%M-%S.#ms [#severity] (#tag_func)");
+		}
+		else
+		{
+			AixLog::Log::instance().add_logsink<AixLog::SinkCout>(AixLog::Severity::info, AixLog::Type::all, "%Y-%m-%d %H-%M-%S [#severity]");
+		}
+
 
 		signal(SIGHUP, signal_handler);
 		signal(SIGTERM, signal_handler);
 		signal(SIGINT, signal_handler);
 
-		if (daemonOption.isSet())
-		{
 #ifdef HAS_DAEMON
+		std::unique_ptr<Daemon> daemon;
+		if (daemonOption->is_set())
+		{
 			string pidFile = "/var/run/snapclient/pid";
 			if (instance != 1)
 				pidFile += "." + cpt::to_string(instance);
 			string user = "";
 			string group = "";
 
-			if (userValue.isSet())
+			if (userValue->is_set())
 			{
-				if (userValue.getValue().empty())
+				if (userValue->value().empty())
 					std::invalid_argument("user must not be empty");
 
-				vector<string> user_group = split(userValue.getValue(), ':');
+				vector<string> user_group = utils::string::split(userValue->value(), ':');
 				user = user_group[0];
 				if (user_group.size() > 1)
 					group = user_group[1];
 			}
-			daemonize(user, group, pidFile);
+			daemon.reset(new Daemon(user, group, pidFile));
+			daemon->daemonize();
 			if (processPriority < -20)
 				processPriority = -20;
 			else if (processPriority > 19)
 				processPriority = 19;
 			if (processPriority != 0)
 				setpriority(PRIO_PROCESS, 0, processPriority);
-			logS(kLogNotice) << "daemon started" << std::endl;
-#endif
+			SLOG(NOTICE) << "daemon started" << std::endl;
 		}
+#endif
 
 		PcmDevice pcmDevice;
 		pcmDevice.idx = 1;
@@ -181,23 +185,23 @@ int main (int argc, char **argv)
 					{
 						host = avahiResult.ip_;
 						port = avahiResult.port_;
-						logO << "Found server " << host << ":" << port << "\n";
+						LOG(INFO) << "Found server " << host << ":" << port << "\n";
 						break;
 					}
 				}
 				catch (const std::exception& e)
 				{
-					logS(kLogErr) << "Exception: " << e.what() << std::endl;
+					SLOG(ERROR) << "Exception: " << e.what() << std::endl;
 				}
 				chronos::sleep(500);
 			}
 #endif
 		}
 
-		std::unique_ptr<Controller> controller(new Controller(instance));
+		std::unique_ptr<Controller> controller(new Controller(hostIdValue->value(), instance));
 		if (!g_terminated)
 		{
-			logO << "Latency: " << latency << "\n";
+			LOG(INFO) << "Latency: " << latency << "\n";
 			controller->start(pcmDevice, host, port, latency);
 			while(!g_terminated)
 				chronos::sleep(100);
@@ -206,14 +210,11 @@ int main (int argc, char **argv)
 	}
 	catch (const std::exception& e)
 	{
-		logS(kLogErr) << "Exception: " << e.what() << std::endl;
+		SLOG(ERROR) << "Exception: " << e.what() << std::endl;
 		exitcode = EXIT_FAILURE;
 	}
 
-	logS(kLogNotice) << "daemon terminated." << endl;
-#ifdef HAS_DAEMON
-	daemonShutdown();
-#endif
+	SLOG(NOTICE) << "daemon terminated." << endl;
 	exit(exitcode);
 }
 

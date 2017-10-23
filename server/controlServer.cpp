@@ -24,7 +24,7 @@
 
 #include "controlServer.h"
 #include "message/time.h"
-#include "common/log.h"
+#include "aixlog.hpp"
 #include "common/utils.h"
 #include "common/snapException.h"
 #include "config.h"
@@ -53,7 +53,7 @@ void ControlServer::cleanup()
 	{
 		if (!(*it)->active())
 		{
-			logS(kLogErr) << "Session inactive. Removing\n";
+			SLOG(ERROR) << "Session inactive. Removing\n";
 			// don't block: remove ClientSession in a thread
 			auto func = [](shared_ptr<ControlSession> s)->void{s->stop();};
 			std::thread t(func, *it);
@@ -81,14 +81,17 @@ void ControlServer::send(const std::string& message, const ControlSession* exclu
 void ControlServer::onMessageReceived(ControlSession* connection, const std::string& message)
 {
 	std::lock_guard<std::recursive_mutex> mlock(mutex_);
-	logD << "received: \"" << message << "\"\n";
+	LOG(DEBUG) << "received: \"" << message << "\"\n";
 	if ((message == "quit") || (message == "exit") || (message == "bye"))
 	{
 		for (auto it = sessions_.begin(); it != sessions_.end(); ++it)
 		{
 			if (it->get() == connection)
 			{
-				sessions_.erase(it);
+				/// delete in a thread to avoid deadlock
+				auto func = [&](std::shared_ptr<ControlSession> s)->void{sessions_.erase(s);};
+				std::thread t(func, *it);
+				t.detach();
 				break;
 			}
 		}
@@ -111,19 +114,26 @@ void ControlServer::startAccept()
 
 void ControlServer::handleAccept(socket_ptr socket)
 {
-	struct timeval tv;
-	tv.tv_sec  = 5;
-	tv.tv_usec = 0;
-	setsockopt(socket->native_handle(), SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
-	setsockopt(socket->native_handle(), SOL_SOCKET, SO_SNDTIMEO, &tv, sizeof(tv));
-//	socket->set_option(boost::asio::ip::tcp::no_delay(false));
-	logS(kLogNotice) << "ControlServer::NewConnection: " << socket->remote_endpoint().address().to_string() << endl;
-	shared_ptr<ControlSession> session = make_shared<ControlSession>(this, socket);
+	try
 	{
-		std::lock_guard<std::recursive_mutex> mlock(mutex_);
-		session->start();
-		sessions_.insert(session);
-		cleanup();
+		struct timeval tv;
+		tv.tv_sec  = 5;
+		tv.tv_usec = 0;
+		setsockopt(socket->native_handle(), SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
+		setsockopt(socket->native_handle(), SOL_SOCKET, SO_SNDTIMEO, &tv, sizeof(tv));
+	//	socket->set_option(boost::asio::ip::tcp::no_delay(false));
+		SLOG(NOTICE) << "ControlServer::NewConnection: " << socket->remote_endpoint().address().to_string() << endl;
+		shared_ptr<ControlSession> session = make_shared<ControlSession>(this, socket);
+		{
+			std::lock_guard<std::recursive_mutex> mlock(mutex_);
+			session->start();
+			sessions_.insert(session);
+			cleanup();
+		}
+	}
+	catch (const std::exception& e)
+	{
+		SLOG(ERROR) << "Exception in ControlServer::handleAccept: " << e.what() << endl;
 	}
 	startAccept();
 }
@@ -131,7 +141,28 @@ void ControlServer::handleAccept(socket_ptr socket)
 
 void ControlServer::start()
 {
-	acceptor_ = make_shared<tcp::acceptor>(*io_service_, tcp::endpoint(tcp::v4(), port_));
+	asio::ip::address address = asio::ip::address::from_string("::");
+	tcp::endpoint endpoint(address, port_);
+	try
+	{
+		acceptor_ = make_shared<tcp::acceptor>(*io_service_, endpoint);
+	}
+	catch (const asio::system_error& e)
+	{
+		LOG(ERROR) << "error creating TCP acceptor: " << e.what() << ", code: " << e.code() << "\n";
+		if (e.code().value() == asio::error::address_family_not_supported)
+		{
+			endpoint = tcp::endpoint(tcp::v4(), port_);
+			acceptor_ = make_shared<tcp::acceptor>(*io_service_, endpoint);
+		}
+		else
+			throw;
+	}
+	if (endpoint.protocol() == tcp::v6())
+	{
+		error_code ec;
+		acceptor_->set_option(asio::ip::v6_only(false), ec);
+	}
 	startAccept();
 }
 

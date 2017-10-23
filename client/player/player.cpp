@@ -20,7 +20,7 @@
 #include <cmath>
 
 #include "player.h"
-#include "common/log.h"
+#include "aixlog.hpp"
 
 
 using namespace std;
@@ -89,7 +89,7 @@ void Player::setVolume(double volume)
 	double base = M_E;
 //	double base = 10.;
 	volume_ = (pow(base, volume)-1) / (base-1);
-	logD << "setVolume: " << volume << " => " << volume_ << "\n";
+	LOG(DEBUG) << "setVolume: " << volume << " => " << volume_ << "\n";
 }
 
 

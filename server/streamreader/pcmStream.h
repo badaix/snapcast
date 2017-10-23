@@ -104,6 +104,7 @@ protected:
 	StreamUri uri_;
 	SampleFormat sampleFormat_;
 	size_t pcmReadMs_;
+	size_t dryoutMs_;
 	std::unique_ptr<Encoder> encoder_;
 	std::string name_;
 	ReaderState state_;

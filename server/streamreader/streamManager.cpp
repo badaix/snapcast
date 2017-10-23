@@ -24,7 +24,7 @@
 #include "fileStream.h"
 #include "common/utils.h"
 #include "common/strCompat.h"
-#include "common/log.h"
+#include "aixlog.hpp"
 #include "common/snapException.h"
 
 
@@ -49,11 +49,11 @@ PcmStreamPtr StreamManager::addStream(const std::string& uri)
 	if (streamUri.query.find("buffer_ms") == streamUri.query.end())
 		streamUri.query["buffer_ms"] = cpt::to_string(readBufferMs_);
 
-//	logD << "\nURI: " << streamUri.uri << "\nscheme: " << streamUri.scheme << "\nhost: "
+//	LOG(DEBUG) << "\nURI: " << streamUri.uri << "\nscheme: " << streamUri.scheme << "\nhost: "
 //		<< streamUri.host << "\npath: " << streamUri.path << "\nfragment: " << streamUri.fragment << "\n";
 
 //	for (auto kv: streamUri.query)
-//		logD << "key: '" << kv.first << "' value: '" << kv.second << "'\n";
+//		LOG(DEBUG) << "key: '" << kv.first << "' value: '" << kv.second << "'\n";
 	PcmStreamPtr stream(nullptr);
 
 	if (streamUri.scheme == "pipe")
