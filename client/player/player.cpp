@@ -83,12 +83,12 @@ void Player::adjustVolume(char* buffer, size_t frames)
 }
 
 
-//http://stackoverflow.com/questions/1165026/what-algorithms-could-i-use-for-audio-volume-level
+//https://cgit.freedesktop.org/pulseaudio/pulseaudio/tree/src/pulse/volume.c#n260
+//http://www.robotplanet.dk/audio/audio_gui_design/
+//https://lists.linuxaudio.org/pipermail/linux-audio-dev/2009-May/thread.html#22198
 void Player::setVolume(double volume)
 {
-	double base = M_E;
-//	double base = 10.;
-	volume_ = (pow(base, volume)-1) / (base-1);
+	volume_ = volume*volume*volume;
 	LOG(DEBUG) << "setVolume: " << volume << " => " << volume_ << "\n";
 }
 
