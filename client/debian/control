@@ -2,7 +2,7 @@ Source: snapclient
 Section: utils
 Priority: extra
 Maintainer: Johannes Pohl <johannes.pohl@badaix.de>
-Build-Depends: debhelper (>= 9.0.0), libc6-dev, dh-systemd, libavahi-client3 (>= 0.6.16), libflac8 (>= 1.3.0), libogg0 (>= 1.0rc3), libvorbis0a (>= 1.1.2)
+Build-Depends: debhelper (>= 9.0.0), libc6-dev, dh-systemd, libasound2-dev, libavahi-client-dev (>= 0.6.16), libflac-dev (>= 1.3.0), libogg-dev (>= 1.0rc3), libvorbis-dev (>= 1.1.2)
 Standards-Version: 3.8.4
 Homepage: https://github.com/badaix/snapcast
 
