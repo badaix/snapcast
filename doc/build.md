@@ -169,15 +169,22 @@ The binaries for `armeabi` and `mips` and `x86` will be copied into the Android'
 
 
 ## OpenWrt/LEDE (Cross compile)
-Cross compilation for OpenWrt is done with the [OpenWrt build system](https://wiki.openwrt.org/about/toolchain) on a Linux host machine.  
+Cross compilation for OpenWrt is done with the [OpenWrt build system](https://wiki.openwrt.org/about/toolchain) on a Linux host machine:  
 https://wiki.openwrt.org/doc/howto/build
 
-### OpenWrt build system setup
+For LEDE:
+https://lede-project.org/docs/guide-developer/quickstart-build-images
+
+### OpenWrt/LEDE build system setup
 https://wiki.openwrt.org/doc/howto/buildroot.exigence
 
 Clone OpenWrt to some place in your home directory (`<buildroot dir>`)
 
     $ git clone git://git.openwrt.org/15.05/openwrt.git
+    
+...LEDE
+
+    $ git clone https://git.lede-project.org/source.git
 
 Download and install available feeds
 
@@ -185,31 +192,27 @@ Download and install available feeds
     $ ./scripts/feeds update -a
     $ ./scripts/feeds install -a
 
-Build
-
-    $ make menuconfig
-    $ make
-
-Within the OpenWrt directory create symbolic links to the Snapcast source directory and to the OpenWrt Makefile:
+Within the `<buildroot dir>` directory create symbolic links to the Snapcast source directory `<snapcast source>` and to the OpenWrt Makefile:
 
     $ mkdir -p <buildroot dir>/package/sxx/snapcast
     $ cd <buildroot dir>/package/sxx/snapcast
-    $ git clone https://github.com/badaix/snapcast.git
-    $ mv snapcast src
-    $ ln -s src/openWrt/Makefile.openwrt Makefile
-    $ cd src/externals
-    $ git submodule update --init --recursive
+    $ ln -s <snapcast source> src
+    $ ln -s <snapcast source>/openWrt/Makefile.openwrt Makefile
+
+Build  
+in menuconfig in `sxx/snapcast` select `Compile snapserver` and/or `Compile snapclient`
+
     $ cd <buildroot dir>
+    $ make defconfig
     $ make menuconfig
+    $ make
 
-in menuconfig select the snapcast package to be installed
-
-Build Snapcast:
+Rebuild Snapcast:
 
     $ make package/sxx/snapcast/clean
     $ make package/sxx/snapcast/compile
 
-The packaged `ipk` files are in `<buildroot dir>/bin/ar71xx/packages/base/snap[client|server]_x.x.x_ar71xx.ipk`
+The packaged `ipk` files are for OpenWrt in `<buildroot dir>/bin/ar71xx/packages/base/snap[client|server]_x.x.x_ar71xx.ipk` and for LEDE `<buildroot dir>/bin/packages/mips_24kc/base/snap[client|server]_x.x.x_mips_24kc.ipk`
 
 ## Buildroot (Cross compile)
 This example will show you how to add snapcast to [Buildroot](https://buildroot.org/).
