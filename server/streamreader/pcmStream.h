@@ -51,7 +51,7 @@ class PcmListener
 {
 public:
 	virtual void onStateChanged(const PcmStream* pcmStream, const ReaderState& state) = 0;
-	virtual void onChunkRead(const PcmStream* pcmStream, const msg::PcmChunk* chunk, double duration) = 0;
+	virtual void onChunkRead(const PcmStream* pcmStream, msg::PcmChunk* chunk, double duration) = 0;
 	virtual void onResync(const PcmStream* pcmStream, double ms) = 0;
 };
 

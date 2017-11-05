@@ -111,6 +111,10 @@ namespace msg
 
 const size_t max_size = 1000000;
 
+struct BaseMessage;
+
+using message_ptr = std::shared_ptr<msg::BaseMessage>;
+
 struct BaseMessage
 {
 	BaseMessage() : type(kBase), id(0), refersTo(0)

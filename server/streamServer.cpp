@@ -49,12 +49,12 @@ void StreamServer::onStateChanged(const PcmStream* pcmStream, const ReaderState&
 }
 
 
-void StreamServer::onChunkRead(const PcmStream* pcmStream, const msg::PcmChunk* chunk, double duration)
+void StreamServer::onChunkRead(const PcmStream* pcmStream, msg::PcmChunk* chunk, double duration)
 {
 //	LOG(INFO) << "onChunkRead (" << pcmStream->getName() << "): " << duration << "ms\n";
 	bool isDefaultStream(pcmStream == streamManager_->getDefaultStream().get());
 
-	std::shared_ptr<const msg::BaseMessage> shared_message(chunk);
+	msg::message_ptr shared_message(chunk);
 	std::lock_guard<std::recursive_mutex> mlock(sessionsMutex_);
 	for (auto s : sessions_)
 	{
@@ -183,13 +183,13 @@ void StreamServer::ProcessRequest(const jsonrpcpp::request_ptr request, jsonrpcp
 				session_ptr session = getStreamSession(clientInfo->id);
 				if (session != nullptr)
 				{
-					msg::ServerSettings serverSettings;
-					serverSettings.setBufferMs(settings_.bufferMs);
-					serverSettings.setVolume(clientInfo->config.volume.percent);
+					auto serverSettings = make_shared<msg::ServerSettings>();
+					serverSettings->setBufferMs(settings_.bufferMs);
+					serverSettings->setVolume(clientInfo->config.volume.percent);
 					GroupPtr group = Config::instance().getGroupFromClient(clientInfo);
-					serverSettings.setMuted(clientInfo->config.volume.muted || group->muted);
-					serverSettings.setLatency(clientInfo->config.latency);
-					session->send(&serverSettings);
+					serverSettings->setMuted(clientInfo->config.volume.muted || group->muted);
+					serverSettings->setLatency(clientInfo->config.latency);
+					session->send(serverSettings);
 				}
 			}
 		}
@@ -219,13 +219,13 @@ void StreamServer::ProcessRequest(const jsonrpcpp::request_ptr request, jsonrpcp
 					session_ptr session = getStreamSession(client->id);
 					if (session != nullptr)
 					{
-						msg::ServerSettings serverSettings;
-						serverSettings.setBufferMs(settings_.bufferMs);
-						serverSettings.setVolume(client->config.volume.percent);
+						auto serverSettings = make_shared<msg::ServerSettings>();
+						serverSettings->setBufferMs(settings_.bufferMs);
+						serverSettings->setVolume(client->config.volume.percent);
 						GroupPtr group = Config::instance().getGroupFromClient(client);
-						serverSettings.setMuted(client->config.volume.muted || group->muted);
-						serverSettings.setLatency(client->config.latency);
-						session->send(&serverSettings);
+						serverSettings->setMuted(client->config.volume.muted || group->muted);
+						serverSettings->setLatency(client->config.latency);
+						session->send(serverSettings);
 					}
 				}
 
@@ -448,7 +448,7 @@ void StreamServer::onMessageReceived(StreamSession* connection, const msg::BaseM
 //	LOG(DEBUG) << "onMessageReceived: " << baseMessage.type << ", size: " << baseMessage.size << ", id: " << baseMessage.id << ", refers: " << baseMessage.refersTo << ", sent: " << baseMessage.sent.sec << "," << baseMessage.sent.usec << ", recv: " << baseMessage.received.sec << "," << baseMessage.received.usec << "\n";
 	if (baseMessage.type == message_type::kTime)
 	{
-		msg::Time* timeMsg = new msg::Time();
+		auto timeMsg = make_shared<msg::Time>();
 		timeMsg->deserialize(baseMessage, buffer);
 		timeMsg->refersTo = timeMsg->id;
 		timeMsg->latency = timeMsg->received - timeMsg->sent;
@@ -485,7 +485,7 @@ void StreamServer::onMessageReceived(StreamSession* connection, const msg::BaseM
 		ClientInfoPtr client = group->getClient(connection->clientId);
 
 		LOG(DEBUG) << "request kServerSettings\n";
-		msg::ServerSettings* serverSettings = new msg::ServerSettings();
+		auto serverSettings = make_shared<msg::ServerSettings>();
 		serverSettings->setVolume(client->config.volume.percent);
 		serverSettings->setMuted(client->config.volume.muted || group->muted);
 		serverSettings->setLatency(client->config.latency);
