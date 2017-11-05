@@ -118,14 +118,7 @@ void StreamSession::socketRead(void* _to, size_t _bytes)
 }
 
 
-void StreamSession::sendAsync(const msg::BaseMessage* message, bool sendNow)
-{
-	std::shared_ptr<const msg::BaseMessage> shared_message(message);
-	sendAsync(shared_message, sendNow);
-}
-
-
-void StreamSession::sendAsync(const shared_ptr<const msg::BaseMessage>& message, bool sendNow)
+void StreamSession::sendAsync(const msg::message_ptr& message, bool sendNow)
 {
 	if (!message)
 		return;
@@ -153,7 +146,7 @@ void StreamSession::setBufferMs(size_t bufferMs)
 }
 
 
-bool StreamSession::send(const msg::BaseMessage* message) const
+bool StreamSession::send(const msg::message_ptr& message) const
 {
 	//TODO on exception: set active = false
 //	LOG(INFO) << "send: " << message->type << ", size: " << message->getSize() << ", id: " << message->id << ", refers: " << message->refersTo << "\n";
@@ -235,7 +228,7 @@ void StreamSession::writer()
 	{
 		asio::streambuf streambuf;
 		std::ostream stream(&streambuf);
-		shared_ptr<const msg::BaseMessage> message;
+		shared_ptr<msg::BaseMessage> message;
 		while (active_)
 		{
 			if (messages_.try_pop(message, std::chrono::milliseconds(500)))
@@ -254,7 +247,7 @@ void StreamSession::writer()
 							continue;
 					}
 				}
-				send(message.get());
+				send(message);
 			}
 		}
 	}

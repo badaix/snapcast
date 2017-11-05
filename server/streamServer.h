@@ -93,7 +93,7 @@ public:
 
 	/// Implementation of PcmListener
 	virtual void onStateChanged(const PcmStream* pcmStream, const ReaderState& state);
-	virtual void onChunkRead(const PcmStream* pcmStream, const msg::PcmChunk* chunk, double duration);
+	virtual void onChunkRead(const PcmStream* pcmStream, msg::PcmChunk* chunk, double duration);
 	virtual void onResync(const PcmStream* pcmStream, double ms);
 
 private:

@@ -113,6 +113,7 @@ void PipeStream::worker()
 
 				if (!active_) break;
 
+				/// TODO: use less raw pointers, make this encoding more transparent
 				encoder_->encode(chunk.get());
 
 				if (!active_) break;

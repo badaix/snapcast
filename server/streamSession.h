@@ -63,11 +63,10 @@ public:
 	void stop();
 
 	/// Sends a message to the client (synchronous)
-	bool send(const msg::BaseMessage* message) const;
+	bool send(const msg::message_ptr& message) const;
 
 	/// Sends a message to the client (asynchronous)
-	void sendAsync(const std::shared_ptr<const msg::BaseMessage>& message, bool sendNow = false);
-	void sendAsync(const msg::BaseMessage* message, bool sendNow = false);
+	void sendAsync(const msg::message_ptr& message, bool sendNow = false);
 
 	bool active() const;
 
@@ -98,7 +97,7 @@ protected:
 	mutable std::mutex socketMutex_;
 	std::shared_ptr<tcp::socket> socket_;
 	MessageReceiver* messageReceiver_;
-	Queue<std::shared_ptr<const msg::BaseMessage>> messages_;
+	Queue<std::shared_ptr<msg::BaseMessage>> messages_;
 	size_t bufferMs_;
 	PcmStreamPtr pcmStream_;
 };
