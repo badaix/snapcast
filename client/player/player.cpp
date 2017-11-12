@@ -86,12 +86,27 @@ void Player::adjustVolume(char* buffer, size_t frames)
 //https://cgit.freedesktop.org/pulseaudio/pulseaudio/tree/src/pulse/volume.c#n260
 //http://www.robotplanet.dk/audio/audio_gui_design/
 //https://lists.linuxaudio.org/pipermail/linux-audio-dev/2009-May/thread.html#22198
-void Player::setVolume(double volume)
+void Player::setVolume_poly(double volume, double exp)
 {
-	volume_ = volume*volume*volume;
-	LOG(DEBUG) << "setVolume: " << volume << " => " << volume_ << "\n";
+	volume_ = std::pow(volume, exp);
+	LOG(DEBUG) << "setVolume poly: " << volume << " => " << volume_ << "\n";
 }
 
+
+//http://stackoverflow.com/questions/1165026/what-algorithms-could-i-use-for-audio-volume-level
+void Player::setVolume_exp(double volume, double base)
+{
+//	double base = M_E;
+//	double base = 10.;
+	volume_ = (pow(base, volume)-1) / (base-1);
+	LOG(DEBUG) << "setVolume exp: " << volume << " => " << volume_ << "\n";
+}
+
+
+void Player::setVolume(double volume)
+{
+	setVolume_exp(volume, 10.);
+}
 
 
 void Player::setMute(bool mute)

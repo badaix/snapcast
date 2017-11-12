@@ -48,6 +48,9 @@ public:
 protected:
 	virtual void worker() = 0;
 
+	void setVolume_poly(double volume, double exp);
+	void setVolume_exp(double volume, double base);
+
 	template <typename T>
 	void adjustVolume(char *buffer, size_t count, double volume)
 	{
