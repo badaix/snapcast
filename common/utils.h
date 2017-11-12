@@ -296,13 +296,14 @@ static std::string getMacAddress(int sock)
 
 static std::string getHostId(const std::string defaultId = "")
 {
-	std::string result = "";
-#ifdef OPENWRT
-	/// on OpenWRT the dbus uid exists (/var/lib/dbus/machine-id), 
-	/// but seems to be recreated with every reboot
-	if (!defaultId.empty())
-		return defaultId;
-#elif MACOS
+	std::string result = strutils::trim_copy(defaultId);
+
+	/// the Android API will return "02:00:00:00:00:00" for WifiInfo.getMacAddress(). 
+	/// Maybe this could also happen with native code
+	if (!result.empty() && (result != "02:00:00:00:00:00") && (result != "00:00:00:00:00:00"))
+		return result;
+
+#ifdef MACOS
 	/// https://stackoverflow.com/questions/933460/unique-hardware-id-in-mac-os-x
 	/// About this Mac, Hardware-UUID
 	char buf[64];
@@ -314,20 +315,19 @@ static std::string getHostId(const std::string defaultId = "")
 	CFRelease(uuidCf);
 #elif ANDROID
 	result = getProp("ro.serialno");
-#else
-	/// TODO: store the id somewhere and reuse it (see OpenWRT)
-	std::ifstream infile("/var/lib/dbus/machine-id");
-	if (infile.good())
-		std::getline(infile, result);
 #endif
+
+//#else
+//	// on embedded platforms it's
+//  // - either not there
+//  // - or not unique, or changes during boot
+//  // - or changes during boot
+//	std::ifstream infile("/var/lib/dbus/machine-id");
+//	if (infile.good())
+//		std::getline(infile, result);
+//#endif
 	strutils::trim(result);
 	if (!result.empty())
-		return result;
-
-	result = defaultId;
-	/// the Android API will return "02:00:00:00:00:00" for WifiInfo.getMacAddress(). 
-	/// Maybe this could also happen with native code
-	if (!result.empty() && (result != "02:00:00:00:00:00") && (result != "00:00:00:00:00:00"))
 		return result;
 
 	/// The host name should be unique enough in a LAN
