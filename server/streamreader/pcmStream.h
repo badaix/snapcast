@@ -30,6 +30,7 @@
 #include "externals/json.hpp"
 #include "common/sampleFormat.h"
 #include "message/codecHeader.h"
+#include "message/streamTags.h"
 
 
 class PcmStream;
@@ -84,6 +85,12 @@ public:
 	virtual ReaderState getState() const;
 	virtual json toJson() const;
 
+	//const msg::StreamTags *getMeta()
+        std::shared_ptr<msg::StreamTags> getMeta()
+	{
+		return meta_;
+	}
+
 
 protected:
 	std::condition_variable cv_;
@@ -104,6 +111,9 @@ protected:
 	std::unique_ptr<Encoder> encoder_;
 	std::string name_;
 	ReaderState state_;
+
+	// Stream metadata
+        std::shared_ptr<msg::StreamTags> meta_;
 };
 
 

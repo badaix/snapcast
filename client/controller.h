@@ -24,6 +24,7 @@
 #include "decoder/decoder.h"
 #include "message/message.h"
 #include "message/serverSettings.h"
+#include "message/streamTags.h"
 #include "player/pcmDevice.h"
 #ifdef HAS_ALSA
 #include "player/alsaPlayer.h"
@@ -73,6 +74,7 @@ private:
 	std::unique_ptr<Decoder> decoder_;
 	std::unique_ptr<Player> player_;
 	std::shared_ptr<msg::ServerSettings> serverSettings_;
+	std::shared_ptr<msg::StreamTags> streamTags_;
 	std::shared_ptr<msg::CodecHeader> headerChunk_;
 	std::mutex receiveMutex_;
 

@@ -55,6 +55,9 @@ PcmStream::PcmStream(PcmListener* pcmListener, const StreamUri& uri) :
 		dryoutMs_ = cpt::stoul(uri_.query["dryout_ms"]);
 	else
 		dryoutMs_ = 2000;
+
+	// meta_.reset(new msg::StreamTags);
+	meta_ = make_shared<msg::StreamTags>();
 }
 
 

@@ -133,6 +133,15 @@ void Controller::onMessageReceived(ClientConnection* connection, const msg::Base
 		player_->setMute(serverSettings_->isMuted());
 		player_->start();
 	}
+	else if (baseMessage.type == message_type::kStreamTags)
+        {
+		streamTags_.reset(new msg::StreamTags());
+		streamTags_->deserialize(baseMessage, buffer);
+
+		LOG(INFO) << "Tag received: artist = " << streamTags_->getArtist() << "\n";
+		LOG(INFO) << "Tag received: album = " << streamTags_->getAlbum() << "\n";
+		LOG(INFO) << "Tag received: track = " << streamTags_->getTrack() << "\n";
+        }
 
 	if (baseMessage.type != message_type::kTime)
 		if (sendTimeSyncMessage(1000))

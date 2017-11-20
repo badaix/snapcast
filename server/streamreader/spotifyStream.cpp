@@ -16,6 +16,7 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
+#include <regex>
 #include "spotifyStream.h"
 #include "common/snapException.h"
 #include "common/utils/string_utils.h"
@@ -92,6 +93,9 @@ void SpotifyStream::initExeAndPath(const std::string& filename)
 
 void SpotifyStream::onStderrMsg(const char* buffer, size_t n)
 {
+	// Watch stderr for 'Loading track' messages and set the stream metadata
+	// For more than track name check: https://github.com/plietar/librespot/issues/154
+
 	/// Watch will kill librespot if there was no message received for 130min
 	// 2016-11-02 22-05-15 [out] TRACE:librespot::stream: allocated stream 3580
 	// 2016-11-02 22-05-15 [Debug] DEBUG:librespot::audio_file2: Got channel 3580
@@ -117,6 +121,19 @@ void SpotifyStream::onStderrMsg(const char* buffer, size_t n)
 		(logmsg.size() > 4))
 	{
 		LOG(INFO) << "(" << getName() << ") " << logmsg << "\n";
+	}
+
+	// Check for metadata
+	if (logmsg.find("Loading track") != string::npos)
+	{
+		regex re("Loading track \"(.*)\"");
+		smatch m;
+
+		if (regex_search(logmsg, m, re))
+		{
+			LOG(INFO) << "Loading track (" << m[1] << ")\n";
+			getMeta()->setTrack(m[1]);
+		}
 	}
 }
 

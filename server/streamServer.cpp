@@ -19,6 +19,7 @@
 #include "streamServer.h"
 #include "message/time.h"
 #include "message/hello.h"
+#include "message/streamTags.h"
 #include "aixlog.hpp"
 #include "config.h"
 #include <iostream>
@@ -515,6 +516,14 @@ void StreamServer::onMessageReceived(StreamSession* connection, const msg::BaseM
 		LOG(DEBUG) << "Group: " << group->id << ", stream: " << group->streamId << "\n";
 
 		Config::instance().save();
+
+		// Send the group stream tags
+                LOG(INFO) << "request kStreamTags\n";
+		//auto metaTags = make_shared<msg::StreamTags>();
+		//metaTags->setArtist(stream->getMeta()->getArtist());
+		//connection->sendAsync(metaTags);
+		connection->sendAsync(stream->getMeta());
+                LOG(INFO) << "kStreamTags sent\n";
 
 		connection->setPcmStream(stream);
 		auto headerChunk = stream->getHeader();
