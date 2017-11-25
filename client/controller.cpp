@@ -138,9 +138,21 @@ void Controller::onMessageReceived(ClientConnection* connection, const msg::Base
 		streamTags_.reset(new msg::StreamTags());
 		streamTags_->deserialize(baseMessage, buffer);
 
-		LOG(INFO) << "Tag received: artist = " << streamTags_->getArtist() << "\n";
-		LOG(INFO) << "Tag received: album = " << streamTags_->getAlbum() << "\n";
-		LOG(INFO) << "Tag received: track = " << streamTags_->getTrack() << "\n";
+		LOG(INFO) << "Stream tags: artist = <" << streamTags_->getArtist() << ">, album = <" << streamTags_->getAlbum() << ">, track = <" << streamTags_->getTrack() << ">\n";
+
+		// And we should trigger the meta tags script if given
+	        struct stat buffer;
+        	if(stat(meta_callback_.c_str(), &buffer) == 0)
+		{
+			LOG(INFO) << "About to execute meta tag callback script!\n";
+
+			// Check if its there, set environment and execute it
+			// Probably can use the process thing from streamreader
+		}
+		else
+		{
+			LOG(INFO) << "Meta tag callback script not found!\n";
+		}
         }
 
 	if (baseMessage.type != message_type::kTime)
@@ -163,10 +175,11 @@ bool Controller::sendTimeSyncMessage(long after)
 }
 
 
-void Controller::start(const PcmDevice& pcmDevice, const std::string& host, size_t port, int latency)
+void Controller::start(const PcmDevice& pcmDevice, const std::string& host, size_t port, int latency, const std::string& meta_callback)
 {
 	pcmDevice_ = pcmDevice;
 	latency_ = latency;
+	meta_callback_ = meta_callback;
 	clientConnection_.reset(new ClientConnection(this, host, port));
 	controllerThread_ = thread(&Controller::worker, this);
 }

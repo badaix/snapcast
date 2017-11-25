@@ -171,7 +171,8 @@ json PcmStream::toJson() const
 	json j = {
 		{"uri", uri_.toJson()},
 		{"id", getId()},
-		{"status", state}
+		{"status", state},
+                {"meta", meta_->toJson()}
 	};
 	return j;
 }

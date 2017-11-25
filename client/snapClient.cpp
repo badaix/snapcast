@@ -73,6 +73,7 @@ int main (int argc, char **argv)
 	int exitcode = EXIT_SUCCESS;
 	try
 	{
+		string meta_callback("");
 		string soundcard("default");
 		string host("");
 		size_t port(1704);
@@ -87,6 +88,7 @@ int main (int argc, char **argv)
 		auto listSwitch =     op.add<Switch>("l", "list", "list pcm devices");
 		/*auto soundcardValue =*/ op.add<Value<string>>("s", "soundcard", "index or name of the soundcard", "default", &soundcard);
 #endif
+		/*auto metaValue =*/  op.add<Value<string>>("m", "meta", "script to call on meta tags", "", &meta_callback);
 		/*auto hostValue =*/  op.add<Value<string>>("h", "host", "server hostname or ip address", "", &host);
 		/*auto portValue =*/  op.add<Value<size_t>>("p", "port", "server port", 1704, &port);
 #ifdef HAS_DAEMON
@@ -230,7 +232,7 @@ int main (int argc, char **argv)
 		if (!g_terminated)
 		{
 			LOG(INFO) << "Latency: " << latency << "\n";
-			controller->start(pcmDevice, host, port, latency);
+			controller->start(pcmDevice, host, port, latency, meta_callback);
 			while(!g_terminated)
 				chronos::sleep(100);
 			controller->stop();

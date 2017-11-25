@@ -115,6 +115,7 @@ void SpotifyStream::onStderrMsg(const char* buffer, size_t n)
 	// 2016-11-03 09-00-18 [out] INFO:librespot::session: Authenticated !
 	watchdog_->trigger();
 	string logmsg = utils::string::trim_copy(string(buffer, n));
+
 	if ((logmsg.find("allocated stream") == string::npos) &&
 		(logmsg.find("Got channel") == string::npos) &&
 		(logmsg.find('\0') == string::npos) &&
@@ -123,16 +124,24 @@ void SpotifyStream::onStderrMsg(const char* buffer, size_t n)
 		LOG(INFO) << "(" << getName() << ") " << logmsg << "\n";
 	}
 
-	// Check for metadata
-	if (logmsg.find("Loading track") != string::npos)
+	// Track tags "Julia Michaels" "Issues - Acoustic"
+	if (logmsg.find("Track tags") != string::npos)
 	{
-		regex re("Loading track \"(.*)\"");
+		// Traditional Libreelec meta interface, only track name
+		regex re("Track tags \"(.*)\" \"(.*)\"");
 		smatch m;
 
 		if (regex_search(logmsg, m, re))
 		{
-			LOG(INFO) << "Loading track (" << m[1] << ")\n";
-			getMeta()->setTrack(m[1]);
+			// Create a new meta struct?
+			LOG(INFO) << "Loading track <" << m[1] << "> <" << m[2] << ">\n";
+			getMeta()->setArtist(m[1]);
+			getMeta()->setAlbum("");
+			getMeta()->setTrack(m[2]);
+
+			// Trigger a stream update
+			if (pcmListener_)
+				pcmListener_->onMetaChanged(this);
 		}
 	}
 }

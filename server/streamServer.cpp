@@ -39,6 +39,23 @@ StreamServer::~StreamServer()
 }
 
 
+void StreamServer::onMetaChanged(const PcmStream* pcmStream) 
+{
+	/// Notification: {"jsonrpc":"2.0","method":"Stream.OnMetadata","params":{"id":"stream 1", "meta": {"album": "some album", "artist": "some artist", "track": "some track"...}}
+
+	const auto meta = pcmStream->getMeta();
+	for (auto s : sessions_)
+	{
+		if (s->pcmStream().get() == pcmStream)
+			s->sendAsync(meta);
+	}
+
+	LOG(INFO) << "onMetaChanged (" << pcmStream->getName() << ")\n";
+	json notification = jsonrpcpp::Notification("Stream.OnMetadata", jsonrpcpp::Parameter("id", pcmStream->getId(), "meta", meta->toJson())).to_json();
+	controlServer_->send(notification.dump(), NULL);
+	cout << "Notification: " << notification.dump() << "\n";
+}
+
 void StreamServer::onStateChanged(const PcmStream* pcmStream, const ReaderState& state)
 {
 	/// Notification: {"jsonrpc":"2.0","method":"Stream.OnUpdate","params":{"id":"stream 1","stream":{"id":"stream 1","status":"idle","uri":{"fragment":"","host":"","path":"/tmp/snapfifo","query":{"buffer_ms":"20","codec":"flac","name":"stream 1","sampleformat":"48000:16:2"},"raw":"pipe:///tmp/snapfifo?name=stream 1","scheme":"pipe"}}}}
@@ -251,6 +268,7 @@ void StreamServer::ProcessRequest(const jsonrpcpp::request_ptr request, jsonrpcp
 					session_ptr session = getStreamSession(client->id);
 					if (session && (session->pcmStream() != stream))
 					{
+						session->sendAsync(stream->getMeta());
 						session->sendAsync(stream->getHeader());
 						session->setPcmStream(stream);
 					}
@@ -303,6 +321,7 @@ void StreamServer::ProcessRequest(const jsonrpcpp::request_ptr request, jsonrpcp
 					session_ptr session = getStreamSession(client->id);
 					if (session && stream && (session->pcmStream() != stream))
 					{
+						session->sendAsync(stream->getMeta());
 						session->sendAsync(stream->getHeader());
 						session->setPcmStream(stream);
 					}
@@ -517,14 +536,7 @@ void StreamServer::onMessageReceived(StreamSession* connection, const msg::BaseM
 
 		Config::instance().save();
 
-		// Send the group stream tags
-                LOG(INFO) << "request kStreamTags\n";
-		//auto metaTags = make_shared<msg::StreamTags>();
-		//metaTags->setArtist(stream->getMeta()->getArtist());
-		//connection->sendAsync(metaTags);
 		connection->sendAsync(stream->getMeta());
-                LOG(INFO) << "kStreamTags sent\n";
-
 		connection->setPcmStream(stream);
 		auto headerChunk = stream->getHeader();
 		connection->sendAsync(headerChunk);
