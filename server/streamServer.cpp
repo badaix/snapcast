@@ -42,8 +42,11 @@ StreamServer::~StreamServer()
 void StreamServer::onMetaChanged(const PcmStream* pcmStream) 
 {
 	/// Notification: {"jsonrpc":"2.0","method":"Stream.OnMetadata","params":{"id":"stream 1", "meta": {"album": "some album", "artist": "some artist", "track": "some track"...}}
-
+	
+	// Send meta to all connected clients
 	const auto meta = pcmStream->getMeta();
+	//cout << "metadata = " << meta->msg.dump(3) << "\n";
+
 	for (auto s : sessions_)
 	{
 		if (s->pcmStream().get() == pcmStream)
@@ -51,9 +54,9 @@ void StreamServer::onMetaChanged(const PcmStream* pcmStream)
 	}
 
 	LOG(INFO) << "onMetaChanged (" << pcmStream->getName() << ")\n";
-	json notification = jsonrpcpp::Notification("Stream.OnMetadata", jsonrpcpp::Parameter("id", pcmStream->getId(), "meta", meta->toJson())).to_json();
+	json notification = jsonrpcpp::Notification("Stream.OnMetadata", jsonrpcpp::Parameter("id", pcmStream->getId(), "meta", meta->msg)).to_json();
 	controlServer_->send(notification.dump(), NULL);
-	cout << "Notification: " << notification.dump() << "\n";
+	////cout << "Notification: " << notification.dump() << "\n";
 }
 
 void StreamServer::onStateChanged(const PcmStream* pcmStream, const ReaderState& state)
@@ -374,6 +377,33 @@ void StreamServer::ProcessRequest(const jsonrpcpp::request_ptr request, jsonrpcp
 
 				/// Notify others
 				notification.reset(new jsonrpcpp::Notification("Server.OnUpdate", jsonrpcpp::Parameter("server", server)));
+			}
+			else
+				throw jsonrpcpp::MethodNotFoundException(request->id);
+		}
+		else if (request->method.find("Stream.") == 0)
+		{
+			if (request->method.find("Stream.SetMeta") == 0)
+			{
+				/// Request:      {"id":4,"jsonrpc":"2.0","method":"Stream.SetMeta","params":{"id":"Spotify","meta": {"album": "some album", "artist": "some artist", "track": "some track"...}}}
+				/// Response:     {"id":4,"jsonrpc":"2.0","result":{"stream_id":"stream 1"}}
+				/// Call onMetaChanged(const PcmStream* pcmStream) for updates and notifications
+
+				// Find stream
+				string streamId = request->params.get("stream_id");
+				PcmStreamPtr stream = streamManager_->getStream(streamId);
+				if (stream == nullptr)
+					throw jsonrpcpp::InternalErrorException("Stream not found", request->id);
+
+				// Set metadata from request
+				// stream-> 
+
+				// Update clients 
+				// Setup response
+
+				// Trigger notifications
+				// onMetaChanged(stream);
+				// notification.reset(new jsonrpcpp::Notification("Client.OnLatencyChanged", jsonrpcpp::Parameter("id", clientInfo->id, "latency", clientInfo->config.latency)));
 			}
 			else
 				throw jsonrpcpp::MethodNotFoundException(request->id);

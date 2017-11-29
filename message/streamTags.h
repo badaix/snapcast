@@ -41,67 +41,32 @@ namespace msg
 class StreamTags : public JsonMessage
 {
 public:
+	/* 
+	Usage:
+		json jtag = {
+			{"artist", "Pink Floyd"},
+			{"album", "Dark Side of the Moon"},
+               		{"track", "Money"},
+			{"spotifyid", "akjhasi7wehke7698"},
+			{"musicbrainzid", "akjhasi7wehke7698"},
+		};
+		this->meta_.reset(new msg::StreamTags(jtag));
+
+		Stream input can decide on tags, IDK... but smart
+		to use some common naming scheme
+	*/
+
+	StreamTags(json j) : JsonMessage(message_type::kStreamTags)
+	{
+		msg = j;
+	}
+
 	StreamTags() : JsonMessage(message_type::kStreamTags)
 	{
-		msg["meta_artist"]    = "";
-		msg["meta_album"]     = "";
-		msg["meta_track"]     = "";
-		msg["meta_albumart"]  = "";
 	}
 
 	virtual ~StreamTags()
 	{
-	}
-
-	json toJson() const
-	{
-		json j = {
-			{"artist", getArtist()},
-			{"album", getAlbum()},
-			{"track", getTrack()},
-		};
-		return j;
-	}
-
-	std::string getArtist() const
-	{
-		return msg["meta_artist"];
-	}
-
-	std::string getAlbum() const
-	{
-		return msg["meta_album"];
-	}
-
-	std::string getTrack() const
-	{
-		return msg["meta_track"];
-	}
-
-	std::string getAlbumArt() const
-	{
-		return msg["meta_albumart"];
-	}
-
-	void setArtist(std::string artist)
-	{
-		msg["meta_artist"] = artist;
-	}
-
-	void setAlbum(std::string album)
-	{
-		msg["meta_album"] = album;
-	}
-
-	void setTrack(std::string track)
-	{
-		msg["meta_track"] = track;
-	}
-
-	// Ascii encoded image XXX: more details
-	void setAlbumArt(std::string art)
-	{
-		msg["meta_albumart"] = art;
 	}
 };
 

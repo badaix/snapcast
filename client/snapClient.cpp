@@ -33,6 +33,7 @@
 #include "common/signalHandler.h"
 #include "common/strCompat.h"
 #include "common/utils.h"
+#include "metadata.h"
 
 
 using namespace std;
@@ -73,7 +74,7 @@ int main (int argc, char **argv)
 	int exitcode = EXIT_SUCCESS;
 	try
 	{
-		string meta_callback("");
+		string meta_script("");
 		string soundcard("default");
 		string host("");
 		size_t port(1704);
@@ -88,7 +89,8 @@ int main (int argc, char **argv)
 		auto listSwitch =     op.add<Switch>("l", "list", "list pcm devices");
 		/*auto soundcardValue =*/ op.add<Value<string>>("s", "soundcard", "index or name of the soundcard", "default", &soundcard);
 #endif
-		/*auto metaValue =*/  op.add<Value<string>>("m", "meta", "script to call on meta tags", "", &meta_callback);
+		auto metaStderr =     op.add<Switch>("e", "mstderr", "send metadata to stderr");
+		//auto metaHook =       op.add<Value<string>>("m", "mhook", "script to call on meta tags", "", &meta_script);
 		/*auto hostValue =*/  op.add<Value<string>>("h", "host", "server hostname or ip address", "", &host);
 		/*auto portValue =*/  op.add<Value<size_t>>("p", "port", "server port", 1704, &port);
 #ifdef HAS_DAEMON
@@ -143,6 +145,9 @@ int main (int argc, char **argv)
 
 		if (instance <= 0)
 			std::invalid_argument("instance id must be >= 1");
+
+
+		// XXX: Only one metadata option must be set
 
 		AixLog::Log::init<AixLog::SinkNative>("snapclient", AixLog::Severity::trace, AixLog::Type::special);
 		if (debugOption->is_set())
@@ -228,11 +233,17 @@ int main (int argc, char **argv)
 #endif
 		}
 
-		std::unique_ptr<Controller> controller(new Controller(hostIdValue->value(), instance));
+		// Setup metadata handling
+		std::shared_ptr<MetadataAdapter> meta;
+		meta.reset(new MetadataAdapter);
+		if(metaStderr)
+			meta.reset(new MetaStderrAdapter);
+
+		std::unique_ptr<Controller> controller(new Controller(hostIdValue->value(), instance, meta));
 		if (!g_terminated)
 		{
 			LOG(INFO) << "Latency: " << latency << "\n";
-			controller->start(pcmDevice, host, port, latency, meta_callback);
+			controller->start(pcmDevice, host, port, latency);
 			while(!g_terminated)
 				chronos::sleep(100);
 			controller->stop();

@@ -30,9 +30,11 @@ else
   TARGET_DIR ?= /usr
 endif
 
+# Simplify building debuggable executables 'make DEBUG=-g STRIP=echo'
+DEBUG=-O3
 
-# Include the process.hpp for usage in meta tags callback
-CXXFLAGS += $(ADD_CFLAGS) -std=c++0x -Wall -Wno-unused-function -O3 -DASIO_STANDALONE -DVERSION=\"$(VERSION)\" -I. -I.. -isystem ../externals/asio/asio/include -I../externals/popl/include -I../externals/aixlog/include -I../server/streamreader
+
+CXXFLAGS += $(ADD_CFLAGS) -std=c++0x -Wall -Wno-unused-function $(DEBUG) -DASIO_STANDALONE -DVERSION=\"$(VERSION)\" -I. -I.. -isystem ../externals/asio/asio/include -I../externals/popl/include -I../externals/aixlog/include -I../externals
 LDFLAGS   = -logg -lFLAC
 OBJ       = snapClient.o stream.o clientConnection.o timeProvider.o player/player.o decoder/pcmDecoder.o decoder/oggDecoder.o decoder/flacDecoder.o controller.o ../message/pcmChunk.o ../common/sampleFormat.o
 

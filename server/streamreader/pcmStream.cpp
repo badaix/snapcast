@@ -56,8 +56,7 @@ PcmStream::PcmStream(PcmListener* pcmListener, const StreamUri& uri) :
 	else
 		dryoutMs_ = 2000;
 
-	// meta_.reset(new msg::StreamTags);
-	meta_ = make_shared<msg::StreamTags>();
+	meta_.reset(new msg::StreamTags());
 }
 
 
@@ -172,8 +171,11 @@ json PcmStream::toJson() const
 		{"uri", uri_.toJson()},
 		{"id", getId()},
 		{"status", state},
-                {"meta", meta_->toJson()}
 	};
+
+	if(meta_)
+		j["meta"] = meta_->msg;
+
 	return j;
 }
 

@@ -35,6 +35,7 @@
 #endif
 #include "clientConnection.h"
 #include "stream.h"
+#include "metadata.h"
 
 
 /// Forwards PCM data to the audio player
@@ -47,8 +48,8 @@
 class Controller : public MessageReceiver
 {
 public:
-	Controller(const std::string& clientId, size_t instance);
-	void start(const PcmDevice& pcmDevice, const std::string& host, size_t port, int latency, const std::string& meta_callback);
+	Controller(const std::string& clientId, size_t instance, std::shared_ptr<MetadataAdapter> meta);
+	void start(const PcmDevice& pcmDevice, const std::string& host, size_t port, int latency);
 	void stop();
 
 	/// Implementation of MessageReceiver.
@@ -74,6 +75,7 @@ private:
 	std::shared_ptr<Stream> stream_;
 	std::unique_ptr<Decoder> decoder_;
 	std::unique_ptr<Player> player_;
+	std::shared_ptr<MetadataAdapter> meta_;
 	std::shared_ptr<msg::ServerSettings> serverSettings_;
 	std::shared_ptr<msg::StreamTags> streamTags_;
 	std::shared_ptr<msg::CodecHeader> headerChunk_;

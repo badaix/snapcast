@@ -135,9 +135,12 @@ void SpotifyStream::onStderrMsg(const char* buffer, size_t n)
 		{
 			// Create a new meta struct?
 			LOG(INFO) << "Loading track <" << m[1] << "> <" << m[2] << ">\n";
-			getMeta()->setArtist(m[1]);
-			getMeta()->setAlbum("");
-			getMeta()->setTrack(m[2]);
+
+			json jtag = {
+				{"artist", (string)m[1]},
+                		{"track", (string)m[2]}
+			};
+			meta_.reset(new msg::StreamTags(jtag));
 
 			// Trigger a stream update
 			if (pcmListener_)
