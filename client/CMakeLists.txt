@@ -28,10 +28,10 @@ elseif (ANDROID)
   list(APPEND CLIENT_LIBRARIES OpenSLES ${CMAKE_ANDROID_STL_TYPE} atomic)
 elseif (WIN32)
   configure_file(snapclient.rc.in snapclient.rc)
-  list(APPEND CLIENT_SOURCES browseZeroConf/browseBonjour.cpp player/wasapiPlayer.cpp ${CMAKE_BINARY_DIR}/client/snapclient.rc)
+  list(APPEND CLIENT_SOURCES browseZeroConf/browseBonjour.cpp player/wasapiPlayer.cpp snapclient.rc)
   add_definitions(-DHAS_WASAPI -DHAS_BONJOUR)
-  list(APPEND CLIENT_LIBRARIES ${MDNSRESPONDER_LIBRARIES} wsock32 ws2_32 avrt ksuser iphlpapi)
-  list(APPEND CLIENT_INCLUDE ${MDNSRESPONDER_INCLUDE_DIR})
+  list(APPEND CLIENT_LIBRARIES ${FLAC_LIBRARIES} ${MDNSRESPONDER_LIBRARIES} wsock32 ws2_32 avrt ksuser iphlpapi)
+  list(APPEND CLIENT_INCLUDE ${MDNSRESPONDER_INCLUDE_DIRS})
 endif()
 
 include_directories(${CLIENT_INCLUDE})
@@ -69,14 +69,14 @@ elseif(WIN32)
   configure_file(${SOURCE_WXS} ${SOURCE_WIX_FILE})
   ADD_CUSTOM_COMMAND(
     OUTPUT    ${OUTPUT_WIXOBJ}
-    COMMAND   ${WIX_CANDLE}
+    COMMAND   ${CPACK_WIX_CANDLE_EXECUTABLE}
     ARGS      ${SOURCE_WIX_FILE} -ext WixBalExtension
     DEPENDS   ${SOURCE_WIX_FILE}
     COMMENT   "Compiling ${SOURCE_WIX_FILE} -> ${OUTPUT_WIXOBJ}"
   )
   ADD_CUSTOM_COMMAND( 
     OUTPUT    ${BUNDLE_OUTPUT}
-    COMMAND   ${WIX_LIGHT}
+    COMMAND   ${CPACK_WIX_LIGHT_EXECUTABLE}
     ARGS      -out ${BUNDLE_OUTPUT} -ext WixBalExtension ${OUTPUT_WIXOBJ}
     DEPENDS   ${OUTPUT_WIXOBJ}
     COMMENT   "Linking ${OUTPUT_WIXOBJ} -> ${BUNDLE_OUTPUT}"

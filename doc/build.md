@@ -227,6 +227,8 @@ Under `Linker\General`, modify `Additional Library Directories` to read `..\..\.
 
 Close the property sheet
 
+Copy `ogg` folder from `externals/ogg/include/ogg` to `externals/vorbis/include`
+
 Right click `libvorbis` and select `Build`
 
 ###Compiling Snapcast
@@ -235,7 +237,7 @@ Launch CMake GUI and generate a Visual Studio solution
 Open `snapcast.sln`.  Select release configuration.  Build the solution
 
 ###Packaging
-Windows packaging comes in two flavours: bundled and standalone.  The standalone installer produces an MSI that only installs snapclient.  Bundled produces a bootstrapped EXE that installs all prerequisites before snapclient.  Producing a bundled package requires the Bonjour SDK and a signed redistribution agreement.  If a bundled installer is required, ensure the Bonjour SDK is installed before proceeding with the bundle steps
+Windows packaging comes in two flavours: bundled and standalone.  The standalone installer produces an MSI that only installs snapclient.  Bundled produces a bootstrapped EXE that installs all prerequisites before snapclient.  Producing a bundled package requires the Bonjour SDK and a signed redistribution agreement.  If a bundled installer is required, ensure the Bonjour SDK is installed before proceeding with the bundle steps.  WiX toolset must be installed
 
 ####Standalone MSI
 Build the `PACKAGE` project.  The MSI will be created in the build directory.

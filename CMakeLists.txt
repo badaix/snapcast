@@ -1,6 +1,9 @@
 cmake_minimum_required(VERSION 3.2)
 project(snapcast VERSION 0.9.0.0)
 
+#set(CPACK_WIX_ROOT "C:\\Program Files (x86)\\WiX Toolset v3.11")
+include(CPackWIX)
+
 # Configure paths
 include_directories(${CMAKE_SOURCE_DIR})
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/")
@@ -116,7 +119,7 @@ set(CPACK_DEBIAN_SERVER_PACKAGE_CONTROL_EXTRA ${CMAKE_SOURCE_DIR}/platform/debia
 # WiX Specifics
 set(CPACK_WIX_UPGRADE_GUID 7D46CFF3-436E-4381-A34C-7D87274A7FB4)
 set(CPACK_WIX_PRODUCT_GUID 7D46CFF3-436E-4381-A34C-7D87274A7FB4)
-set(CPACK_WIX_LICENSE_RTF ${CMAKE_SOURCE_DIR}/LICENSE.txt)
+set(CPACK_RESOURCE_FILE_LICENSE ${CMAKE_SOURCE_DIR}/platform/windows/gpl-3.0.rtf)
 set(CPACK_WIX_PRODUCT_ICON ${CMAKE_SOURCE_DIR}/platform/windows/icon.ico)
 set(CPACK_WIX_UI_BANNER ${CMAKE_SOURCE_DIR}/platform/windows/banner.bmp)
 set(CPACK_WIX_UI_DIALOG ${CMAKE_SOURCE_DIR}/platform/windows/welcome.bmp)

@@ -7,10 +7,9 @@
 # FLAC_LIBRARIES
 #
 
-find_path(FLAC_INCLUDE_DIRS FLAC/all.h)
-find_path(FLAC_INCLUDE_DIRS FLAC/stream_decoder.h)
+find_path(FLAC_INCLUDE_DIRS FLAC/all.h HINTS ${CMAKE_SOURCE_DIR}/externals/flac/include)
 
-find_library(FLAC_LIBRARIES NAMES FLAC)
+find_library(FLAC_LIBRARIES NAMES FLAC libflac_dynamic HINTS ${CMAKE_SOURCE_DIR}/externals/flac/objs/x64/Release/lib ${CMAKE_SOURCE_DIR}/externals/flac/objs/win32/Release/lib)
 
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(FLAC DEFAULT_MSG FLAC_LIBRARIES FLAC_INCLUDE_DIRS)
