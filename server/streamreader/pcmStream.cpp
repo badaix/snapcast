@@ -179,3 +179,17 @@ json PcmStream::toJson() const
 	return j;
 }
 
+std::shared_ptr<msg::StreamTags> PcmStream::getMeta() const
+{
+	return meta_;
+}
+
+void PcmStream::setMeta(json jtag)
+{
+	meta_.reset(new msg::StreamTags(jtag));
+
+	// Trigger a stream update
+	if (pcmListener_)
+		pcmListener_->onMetaChanged(this);
+}
+

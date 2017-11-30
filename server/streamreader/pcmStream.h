@@ -83,14 +83,11 @@ public:
 	virtual const std::string& getId() const;
 	virtual const SampleFormat& getSampleFormat() const;
 
+	std::shared_ptr<msg::StreamTags> getMeta() const;
+	void setMeta(json j);
+
 	virtual ReaderState getState() const;
 	virtual json toJson() const;
-
-	//const msg::StreamTags *getMeta()
-        std::shared_ptr<msg::StreamTags> getMeta() const
-	{
-		return meta_;
-	}
 
 
 protected:
@@ -98,6 +95,7 @@ protected:
 	std::mutex mtx_;
 	std::thread thread_;
 	std::atomic<bool> active_;
+
 
 	virtual void worker() = 0;
 	virtual bool sleep(int32_t ms);
@@ -112,8 +110,6 @@ protected:
 	std::unique_ptr<Encoder> encoder_;
 	std::string name_;
 	ReaderState state_;
-
-	// Stream metadata
         std::shared_ptr<msg::StreamTags> meta_;
 };
 

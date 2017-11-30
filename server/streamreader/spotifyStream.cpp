@@ -93,6 +93,9 @@ void SpotifyStream::initExeAndPath(const std::string& filename)
 
 void SpotifyStream::onStderrMsg(const char* buffer, size_t n)
 {
+	static bool libreelec_patched = false;
+	smatch m;
+
 	// Watch stderr for 'Loading track' messages and set the stream metadata
 	// For more than track name check: https://github.com/plietar/librespot/issues/154
 
@@ -124,28 +127,36 @@ void SpotifyStream::onStderrMsg(const char* buffer, size_t n)
 		LOG(INFO) << "(" << getName() << ") " << logmsg << "\n";
 	}
 
-	// Track tags "Julia Michaels" "Issues - Acoustic"
-	if (logmsg.find("Track tags") != string::npos)
-	{
-		// Traditional Libreelec meta interface, only track name
-		regex re("Track tags \"(.*)\" \"(.*)\"");
-		smatch m;
+	// Librespot patch:
+	// 	info!("metadata:{{\"ARTIST\":\"{}\",\"TITLE\":\"{}\"}}", artist.name, track.name);
+	// non patched:
+	// 	info!("Track \"{}\" loaded", track.name);
 
-		if (regex_search(logmsg, m, re))
+	// If we detect a patched libreelec we don't want to bother with this anymoer
+	// to avoid duplicate metadata pushes
+	if (!libreelec_patched)
+	{
+		static regex re_nonpatched("Track \"(.*)\" loaded");
+ 		if(regex_search(logmsg, m, re_nonpatched))
 		{
-			// Create a new meta struct?
-			LOG(INFO) << "Loading track <" << m[1] << "> <" << m[2] << ">\n";
+			LOG(INFO) << "metadata: <" << m[1] << ">\n";
 
 			json jtag = {
-				{"artist", (string)m[1]},
-                		{"track", (string)m[2]}
+               			{"TITLE", (string)m[1]}
 			};
-			meta_.reset(new msg::StreamTags(jtag));
-
-			// Trigger a stream update
-			if (pcmListener_)
-				pcmListener_->onMetaChanged(this);
+			setMeta(jtag);
 		}
+	}
+
+	// Parse the patched version
+	static regex re_patched("metadata:(.*)");
+	if (regex_search(logmsg, m, re_patched)) 
+	{
+		LOG(INFO) << "metadata: <" << m[1] << ">\n";
+
+		json jtag;
+		setMeta(jtag.parse(m[1]));
+		libreelec_patched = true;
 	}
 }
 

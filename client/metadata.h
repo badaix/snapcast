@@ -55,7 +55,7 @@ public:
 
 	std::string serialize()
 	{
-		return METADATA + ":" + _msg->dump() + "\n";
+		return METADATA + ":" + _msg->dump();
 	}
 
 	void tag(std::string name, std::string value)
