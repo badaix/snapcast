@@ -35,7 +35,7 @@ DEBUG=-O3
 
 
 CXXFLAGS += $(ADD_CFLAGS) -std=c++0x -Wall -Wno-unused-function $(DEBUG) -DASIO_STANDALONE -DVERSION=\"$(VERSION)\" -I. -I.. -isystem ../externals/asio/asio/include -I../externals/popl/include -I../externals/aixlog/include -I../externals/jsonrpcpp/lib -I../externals
-LDFLAGS   = -lvorbis -lvorbisenc -logg -lFLAC
+LDFLAGS   = -lvorbis -lvorbisenc -logg -lFLAC 
 OBJ       = snapServer.o config.o controlServer.o controlSession.o streamServer.o streamSession.o streamreader/streamUri.o streamreader/streamManager.o streamreader/pcmStream.o streamreader/pipeStream.o streamreader/fileStream.o streamreader/processStream.o streamreader/airplayStream.o streamreader/spotifyStream.o streamreader/watchdog.o encoder/encoderFactory.o encoder/flacEncoder.o encoder/pcmEncoder.o encoder/oggEncoder.o ../common/sampleFormat.o ../message/pcmChunk.o ../externals/jsonrpcpp/lib/jsonrp.o
 
 
@@ -81,8 +81,8 @@ else
 
 CXX       = g++
 STRIP     = strip
-CXXFLAGS += -DHAS_AVAHI -DHAS_DAEMON -pthread
-LDFLAGS   = -lrt -lvorbis -lvorbisenc -logg -lFLAC -lavahi-client -lavahi-common -static-libgcc -static-libstdc++
+CXXFLAGS += -DHAS_AVAHI -DHAS_DAEMON -DHAS_EXPAT -pthread
+LDFLAGS   = -lrt -lexpat -lvorbis -lvorbisenc -logg -lFLAC -lavahi-client -lavahi-common -static-libgcc -static-libstdc++
 OBJ      += ../common/daemon.o publishZeroConf/publishAvahi.o 
 
 endif

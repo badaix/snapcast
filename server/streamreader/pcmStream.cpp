@@ -56,7 +56,9 @@ PcmStream::PcmStream(PcmListener* pcmListener, const StreamUri& uri) :
 	else
 		dryoutMs_ = 2000;
 
-	meta_.reset(new msg::StreamTags());
+	//meta_.reset(new msg::StreamTags());
+	//meta_->msg["stream"] = name_;
+	setMeta(json());
 }
 
 
@@ -187,6 +189,8 @@ std::shared_ptr<msg::StreamTags> PcmStream::getMeta() const
 void PcmStream::setMeta(json jtag)
 {
 	meta_.reset(new msg::StreamTags(jtag));
+	meta_->msg["STREAM"] = name_;
+	LOG(INFO) << "metadata=" << meta_->msg.dump(4) << "\n";
 
 	// Trigger a stream update
 	if (pcmListener_)

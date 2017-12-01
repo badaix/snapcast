@@ -96,7 +96,6 @@ protected:
 	std::thread thread_;
 	std::atomic<bool> active_;
 
-
 	virtual void worker() = 0;
 	virtual bool sleep(int32_t ms);
 	void setState(const ReaderState& newState);
