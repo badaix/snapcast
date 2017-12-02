@@ -20,11 +20,8 @@
 #include "common/snapException.h"
 #include "common/utils/string_utils.h"
 #include "common/utils.h"
+#include "common/base64.h"
 #include "aixlog.hpp"
-
-#ifdef HAS_EXPAT
-#include "base64.h"
-#endif
 
 using namespace std;
 
