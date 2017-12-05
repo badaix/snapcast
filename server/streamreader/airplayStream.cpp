@@ -46,7 +46,7 @@ AirplayStream::AirplayStream(PcmListener* pcmListener, const StreamUri& uri) : P
 	logStderr_ = true;
 
 	pipePath_ = "/tmp/shairmeta." + to_string(getpid());
-	cout << "Pipe [" << pipePath_ << "]\n";
+	//cout << "Pipe [" << pipePath_ << "]\n";
 
 	// XXX: Check if pipe exists, delete or throw error
 
@@ -67,10 +67,13 @@ AirplayStream::AirplayStream(PcmListener* pcmListener, const StreamUri& uri) : P
 
 AirplayStream::~AirplayStream()
 {
+#ifdef HAS_EXPAT
 	parse(string("</metatags>"));
 	XML_ParserFree(parser_);
+#endif
 }
 
+#ifdef HAS_EXPAT
 int AirplayStream::parse(string line)
 {
 	enum XML_Status result;
@@ -112,11 +115,13 @@ void AirplayStream::push()
 		setMeta(jtag_);
 	}
 }
-
+#endif
 
 void AirplayStream::pipeReader()
 {
+#ifdef HAS_EXPAT
 	createParser();
+#endif
 
 	while(true)
 	{
@@ -126,7 +131,9 @@ void AirplayStream::pipeReader()
 			string line;
 
 			while(getline(pipe, line)){
+#ifdef HAS_EXPAT
 				parse(line);
+#endif
 			}
 		}
 
