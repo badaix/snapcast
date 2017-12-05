@@ -29,3 +29,6 @@ supports it, at least Shairport-sync exports a ritch set of data.
 
 So, to get artist/album apply the patch to librespot and recompile, otherwise you will only get the 
 track title.
+
+Or, you can build librespot from https://github.com/frafall/librespot.git
+
