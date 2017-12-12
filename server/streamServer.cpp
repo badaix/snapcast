@@ -391,7 +391,7 @@ void StreamServer::ProcessRequest(const jsonrpcpp::request_ptr request, jsonrpcp
 				/// Response:     {"id":4,"jsonrpc":"2.0","result":{"stream_id":"Spotify"}}
 				/// Call onMetaChanged(const PcmStream* pcmStream) for updates and notifications
 
-				LOG(INFO) << "Stream.SetMeta(" << request->params.get("stream_id") << ")" << request->params.get("meta") <<"\n";
+				LOG(INFO) << "Stream.SetMeta(" << request->params.get("id") << ")" << request->params.get("meta") <<"\n";
 
 				// Find stream
 				string streamId = request->params.get("id");
