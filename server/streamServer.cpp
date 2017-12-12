@@ -394,7 +394,7 @@ void StreamServer::ProcessRequest(const jsonrpcpp::request_ptr request, jsonrpcp
 				LOG(INFO) << "Stream.SetMeta(" << request->params.get("stream_id") << ")" << request->params.get("meta") <<"\n";
 
 				// Find stream
-				string streamId = request->params.get("stream_id");
+				string streamId = request->params.get("id");
 				PcmStreamPtr stream = streamManager_->getStream(streamId);
 				if (stream == nullptr)
 					throw jsonrpcpp::InternalErrorException("Stream not found", request->id);
@@ -403,7 +403,7 @@ void StreamServer::ProcessRequest(const jsonrpcpp::request_ptr request, jsonrpcp
 				stream->setMeta(request->params.get("meta"));
 
 				// Setup response
-				result["stream_id"] = streamId;
+				result["id"] = streamId;
 			}
 			else
 				throw jsonrpcpp::MethodNotFoundException(request->id);
