@@ -117,6 +117,10 @@ void Daemon::daemonize()
 	if (user_uid != (uid_t)-1 && user_uid != getuid() && setuid(user_uid) == -1)
 		throw SnapException("Failed to set user " + user_);
 
+	/// Try to lock file
+	if (lockf(pidFilehandle_, F_TLOCK, 0) == -1)
+		throw SnapException("Could not lock PID lock file \"" + pidfile_ + "\"");
+
 	/// Our process ID and Session ID
 	pid_t pid, sid;
 
@@ -125,9 +129,20 @@ void Daemon::daemonize()
 	if (pid < 0)
 		exit(EXIT_FAILURE);
 
-	/// If we got a good PID, then we can exit the parent process.
+	/// If we got a good PID, then the parent process should only exit after
+	/// writing the pid else systemd is confused.
 	if (pid > 0)
+	{
+		char str[10];
+		/// Get and format PID
+		sprintf(str, "%d\n", pid);
+
+		/// write pid to lockfile
+		if (write(pidFilehandle_, str, strlen(str)) != (int)strlen(str))
+			throw SnapException("Could not write PID to lock file \"" + pidfile_ + "\"");
+
 		exit(EXIT_SUCCESS);
+	}
 
 	/// Change the file mode mask
 	umask(0);
@@ -148,18 +163,6 @@ void Daemon::daemonize()
 		/// Log the failure
 		exit(EXIT_FAILURE);
 	}
-
-	/// Try to lock file
-	if (lockf(pidFilehandle_, F_TLOCK, 0) == -1)
-		throw SnapException("Could not lock PID lock file \"" + pidfile_ + "\"");
-
-	char str[10];
-	/// Get and format PID
-	sprintf(str, "%d\n", getpid());
-
-	/// write pid to lockfile
-	if (write(pidFilehandle_, str, strlen(str)) != (int)strlen(str))
-		throw SnapException("Could not write PID to lock file \"" + pidfile_ + "\"");
 
 	/// Close out the standard file descriptors
 	close(STDIN_FILENO);
