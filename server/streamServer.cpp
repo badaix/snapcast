@@ -19,6 +19,7 @@
 #include "streamServer.h"
 #include "message/time.h"
 #include "message/hello.h"
+#include "message/streamTags.h"
 #include "aixlog.hpp"
 #include "config.h"
 #include <iostream>
@@ -37,6 +38,26 @@ StreamServer::~StreamServer()
 {
 }
 
+
+void StreamServer::onMetaChanged(const PcmStream* pcmStream) 
+{
+	/// Notification: {"jsonrpc":"2.0","method":"Stream.OnMetadata","params":{"id":"stream 1", "meta": {"album": "some album", "artist": "some artist", "track": "some track"...}}
+	
+	// Send meta to all connected clients
+	const auto meta = pcmStream->getMeta();
+	//cout << "metadata = " << meta->msg.dump(3) << "\n";
+
+	for (auto s : sessions_)
+	{
+		if (s->pcmStream().get() == pcmStream)
+			s->sendAsync(meta);
+	}
+
+	LOG(INFO) << "onMetaChanged (" << pcmStream->getName() << ")\n";
+	json notification = jsonrpcpp::Notification("Stream.OnMetadata", jsonrpcpp::Parameter("id", pcmStream->getId(), "meta", meta->msg)).to_json();
+	controlServer_->send(notification.dump(), NULL);
+	////cout << "Notification: " << notification.dump() << "\n";
+}
 
 void StreamServer::onStateChanged(const PcmStream* pcmStream, const ReaderState& state)
 {
@@ -250,6 +271,7 @@ void StreamServer::ProcessRequest(const jsonrpcpp::request_ptr request, jsonrpcp
 					session_ptr session = getStreamSession(client->id);
 					if (session && (session->pcmStream() != stream))
 					{
+						session->sendAsync(stream->getMeta());
 						session->sendAsync(stream->getHeader());
 						session->setPcmStream(stream);
 					}
@@ -302,6 +324,7 @@ void StreamServer::ProcessRequest(const jsonrpcpp::request_ptr request, jsonrpcp
 					session_ptr session = getStreamSession(client->id);
 					if (session && stream && (session->pcmStream() != stream))
 					{
+						session->sendAsync(stream->getMeta());
 						session->sendAsync(stream->getHeader());
 						session->setPcmStream(stream);
 					}
@@ -354,6 +377,33 @@ void StreamServer::ProcessRequest(const jsonrpcpp::request_ptr request, jsonrpcp
 
 				/// Notify others
 				notification.reset(new jsonrpcpp::Notification("Server.OnUpdate", jsonrpcpp::Parameter("server", server)));
+			}
+			else
+				throw jsonrpcpp::MethodNotFoundException(request->id);
+		}
+		else if (request->method.find("Stream.") == 0)
+		{
+			if (request->method.find("Stream.SetMeta") == 0)
+			{
+				/// Request:      {"id":4,"jsonrpc":"2.0","method":"Stream.SetMeta","params":{"stream_id":"Spotify",
+ 				///                "meta": {"album": "some album", "artist": "some artist", "track": "some track"...}}}
+				///
+				/// Response:     {"id":4,"jsonrpc":"2.0","result":{"stream_id":"Spotify"}}
+				/// Call onMetaChanged(const PcmStream* pcmStream) for updates and notifications
+
+				LOG(INFO) << "Stream.SetMeta(" << request->params.get("id") << ")" << request->params.get("meta") <<"\n";
+
+				// Find stream
+				string streamId = request->params.get("id");
+				PcmStreamPtr stream = streamManager_->getStream(streamId);
+				if (stream == nullptr)
+					throw jsonrpcpp::InternalErrorException("Stream not found", request->id);
+
+				// Set metadata from request
+				stream->setMeta(request->params.get("meta"));
+
+				// Setup response
+				result["id"] = streamId;
 			}
 			else
 				throw jsonrpcpp::MethodNotFoundException(request->id);
@@ -516,6 +566,7 @@ void StreamServer::onMessageReceived(StreamSession* connection, const msg::BaseM
 
 		Config::instance().save();
 
+		connection->sendAsync(stream->getMeta());
 		connection->setPcmStream(stream);
 		auto headerChunk = stream->getHeader();
 		connection->sendAsync(headerChunk);

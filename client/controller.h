@@ -24,6 +24,7 @@
 #include "decoder/decoder.h"
 #include "message/message.h"
 #include "message/serverSettings.h"
+#include "message/streamTags.h"
 #include "player/pcmDevice.h"
 #ifdef HAS_ALSA
 #include "player/alsaPlayer.h"
@@ -34,6 +35,7 @@
 #endif
 #include "clientConnection.h"
 #include "stream.h"
+#include "metadata.h"
 
 
 /// Forwards PCM data to the audio player
@@ -46,7 +48,7 @@
 class Controller : public MessageReceiver
 {
 public:
-	Controller(const std::string& clientId, size_t instance);
+	Controller(const std::string& clientId, size_t instance, std::shared_ptr<MetadataAdapter> meta);
 	void start(const PcmDevice& pcmDevice, const std::string& host, size_t port, int latency);
 	void stop();
 
@@ -62,6 +64,7 @@ private:
 	void worker();
 	bool sendTimeSyncMessage(long after = 1000);
 	std::string hostId_;
+	std::string meta_callback_;
 	size_t instance_;
 	std::atomic<bool> active_;
 	std::thread controllerThread_;
@@ -72,7 +75,9 @@ private:
 	std::shared_ptr<Stream> stream_;
 	std::unique_ptr<Decoder> decoder_;
 	std::unique_ptr<Player> player_;
+	std::shared_ptr<MetadataAdapter> meta_;
 	std::shared_ptr<msg::ServerSettings> serverSettings_;
+	std::shared_ptr<msg::StreamTags> streamTags_;
 	std::shared_ptr<msg::CodecHeader> headerChunk_;
 	std::mutex receiveMutex_;
 

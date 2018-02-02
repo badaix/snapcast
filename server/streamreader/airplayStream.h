@@ -21,7 +21,28 @@
 
 #include "processStream.h"
 
+/*
+ * Expat is used in metadata parsing from Shairport-sync.
+ * Without HAS_EXPAT defined no parsing will occur.
+ */
+#ifdef HAS_EXPAT
+#include <expat.h>
+#endif
+
+class TageEntry
+{
+public:
+        TageEntry(): isBase64(false), length(0) {}
+
+        std::string code;
+        std::string type;
+        std::string data;
+        bool isBase64;
+        int length;
+};
+
 /// Starts shairport-sync and reads PCM data from stdout
+
 /**
  * Starts librespot, reads PCM data from stdout, and passes the data to an encoder.
  * Implements EncoderListener to get the encoded data.
@@ -37,10 +58,32 @@ public:
 	virtual ~AirplayStream();
 
 protected:
+#ifdef HAS_EXPAT
+	XML_Parser parser_;
+#endif
+	std::unique_ptr<TageEntry> entry_;
+	std::string buf_;
+	json jtag_;
+
+	void pipeReader();
+#ifdef HAS_EXPAT
+	int parse(std::string line);
+	void createParser();
+	void push();
+#endif
+
 	virtual void onStderrMsg(const char* buffer, size_t n);
 	virtual void initExeAndPath(const std::string& filename);
 	size_t port_;
+	std::string pipePath_;
 	std::string params_wo_port_;
+	std::thread pipeReaderThread_;
+
+#ifdef HAS_EXPAT
+	static void XMLCALL element_start(void *userdata, const char *element_name, const char **attr);
+	static void XMLCALL element_end(void *userdata, const char *element_name);
+	static void XMLCALL data(void *userdata, const char *content, int length);
+#endif
 };
 
 

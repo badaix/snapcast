@@ -1,0 +1,31 @@
+*** librespot/src/player.rs	2017-11-30 08:16:40.865939287 +0100
+--- librespot.meta/src/player.rs	2017-11-30 08:14:39.232954039 +0100
+***************
+*** 13,19 ****
+  use audio_backend::Sink;
+  use audio::{AudioFile, AudioDecrypt};
+  use audio::{VorbisDecoder, VorbisPacket};
+! use metadata::{FileFormat, Track, Metadata};
+  use mixer::AudioFilter;
+  
+  #[derive(Clone)]
+--- 13,19 ----
+  use audio_backend::Sink;
+  use audio::{AudioFile, AudioDecrypt};
+  use audio::{VorbisDecoder, VorbisPacket};
+! use metadata::{Artist, FileFormat, Track, Metadata};
+  use mixer::AudioFilter;
+  
+  #[derive(Clone)]
+***************
+*** 384,389 ****
+--- 384,392 ----
+  
+          info!("Track \"{}\" loaded", track.name);
+  
++ 	let artist = Artist::get(&self.session, track.artists[0]).wait().unwrap();
++         info!("metadata:{{\"ARTIST\":\"{}\",\"TITLE\":\"{}\"}}", artist.name, track.name);
++ 
+          Some(decoder)
+      }
+  }

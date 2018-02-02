@@ -34,7 +34,7 @@
 using namespace std;
 
 
-Controller::Controller(const std::string& hostId, size_t instance) : MessageReceiver(), 
+Controller::Controller(const std::string& hostId, size_t instance, std::shared_ptr<MetadataAdapter> meta) : MessageReceiver(), 
 	hostId_(hostId),
 	instance_(instance),
 	active_(false),
@@ -42,6 +42,7 @@ Controller::Controller(const std::string& hostId, size_t instance) : MessageRece
 	stream_(nullptr),
 	decoder_(nullptr),
 	player_(nullptr),
+	meta_(meta),
 	serverSettings_(nullptr),
 	async_exception_(nullptr)
 {
@@ -133,6 +134,14 @@ void Controller::onMessageReceived(ClientConnection* connection, const msg::Base
 		player_->setMute(serverSettings_->isMuted());
 		player_->start();
 	}
+	else if (baseMessage.type == message_type::kStreamTags)
+        {
+		streamTags_.reset(new msg::StreamTags());
+		streamTags_->deserialize(baseMessage, buffer);
+		
+		if(meta_)
+			meta_->push(streamTags_->msg);
+        }
 
 	if (baseMessage.type != message_type::kTime)
 		if (sendTimeSyncMessage(1000))
