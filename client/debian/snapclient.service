@@ -2,6 +2,7 @@
 Description=Snapcast client
 After=network-online.target sound.target
 Requires=network-online.target
+Requires=avahi-daemon.service
 
 [Service]
 EnvironmentFile=-/etc/default/snapclient
