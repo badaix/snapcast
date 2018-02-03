@@ -23,6 +23,7 @@
 #endif
 #if defined(HAS_FLAC)
 #include "flacEncoder.h"
+#endif
 #include "common/utils/string_utils.h"
 #include "common/snapException.h"
 #include "aixlog.hpp"

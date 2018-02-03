@@ -63,7 +63,7 @@ int main (int argc, char **argv)
 		auto versionSwitch =  op.add<Switch>("v", "version", "show version number");
 #if defined(HAS_ALSA)
 		auto listSwitch =     op.add<Switch>("l", "list", "list pcm devices");
-		/*auto soundcardValue =*/ op.add<Value<string>>("s", "soundcard", "index or name of the soundcard", "default", &soundcard);
+		auto soundcardValue = op.add<Value<string>>("s", "soundcard", "index or name of the soundcard", "default", &soundcard);
 #endif
 		auto metaStderr =     op.add<Switch>("e", "mstderr", "send metadata to stderr");
 		//auto metaHook =       op.add<Value<string>>("m", "mhook", "script to call on meta tags", "", &meta_script);
@@ -176,7 +176,7 @@ int main (int argc, char **argv)
 
 		PcmDevice pcmDevice;
 		pcmDevice.idx = 1;
-		if (soundcardValue.isSet())
+		if (soundcardValue->is_set())
 			pcmDevice.name = soundcard;
 
 		if (host.empty())

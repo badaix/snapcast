@@ -50,13 +50,13 @@ ifeq ($(TARGET), ANDROID)
 
 CXX       = $(NDK_DIR)/bin/arm-linux-androideabi-g++
 STRIP     = $(NDK_DIR)/bin/arm-linux-androideabi-strip
-CXXFLAGS += -pthread -DNO_CPP11_STRING -fPIC -I$(NDK_DIR)/include
+CXXFLAGS += -pthread -DNO_CPP11_STRING -DHAS_FLAC -DHAS_OGG -DHAS_VORBIS -DHAS_VORBIS_ENC -fPIC -I$(NDK_DIR)/include
 LDFLAGS  += -L$(NDK_DIR)/lib -pie -llog -latomic
 
 else ifeq ($(TARGET), OPENWRT)
 
 STRIP     = echo
-CXXFLAGS += -DNO_CPP11_STRING -DHAS_AVAHI -DHAS_DAEMON -pthread
+CXXFLAGS += -DNO_CPP11_STRING -DHAS_AVAHI -DHAS_DAEMON -DHAS_FLAC -DHAS_OGG -DHAS_VORBIS -DHAS_VORBIS_ENC -pthread
 LDFLAGS  += -lavahi-client -lavahi-common -latomic
 OBJ      += ../common/daemon.o publishZeroConf/publishAvahi.o 
 
@@ -64,7 +64,7 @@ else ifeq ($(TARGET), FREEBSD)
 
 CXX       = g++
 STRIP     = echo
-CXXFLAGS += -DNO_CPP11_STRING -DHAS_AVAHI -DHAS_DAEMON -pthread
+CXXFLAGS += -DNO_CPP11_STRING -DHAS_AVAHI -DHAS_DAEMON -DHAS_FLAC -DHAS_OGG -DHAS_VORBIS -DHAS_VORBIS_ENC -pthread
 LDFLAGS  += -lrt -lavahi-client -lavahi-common -static-libgcc -static-libstdc++ -latomic
 OBJ      += ../common/daemon.o publishZeroConf/publishAvahi.o 
 
@@ -72,7 +72,7 @@ else ifeq ($(TARGET), MACOS)
 
 CXX       = g++
 STRIP     = strip
-CXXFLAGS += -DFREEBSD -DHAS_BONJOUR -DHAS_DAEMON -Wno-deprecated -I/usr/local/include
+CXXFLAGS += -DFREEBSD -DHAS_BONJOUR -DHAS_DAEMON -DHAS_FLAC -DHAS_OGG -DHAS_VORBIS -DHAS_VORBIS_ENC -Wno-deprecated -I/usr/local/include
 LDFLAGS  += -L/usr/local/lib -framework CoreFoundation -framework IOKit
 OBJ      += ../common/daemon.o publishZeroConf/publishBonjour.o
 
@@ -80,7 +80,7 @@ else
 
 CXX       = g++
 STRIP     = strip
-CXXFLAGS += -DHAS_AVAHI -DHAS_DAEMON -pthread
+CXXFLAGS += -DHAS_AVAHI -DHAS_DAEMON -DHAS_FLAC -pthread
 LDFLAGS   = -lrt -lvorbis -lvorbisenc -logg -lFLAC -lavahi-client -lavahi-common -static-libgcc -static-libstdc++
 OBJ      += ../common/daemon.o publishZeroConf/publishAvahi.o 
 

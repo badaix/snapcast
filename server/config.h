@@ -28,6 +28,7 @@
 #include <jsonrpcpp/json.hpp>
 #else
 #include "externals/json.hpp"
+#endif
 #include "common/utils/string_utils.h"
 #include "common/utils.h"
 
