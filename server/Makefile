@@ -60,6 +60,12 @@ CXXFLAGS += -DNO_CPP11_STRING -DHAS_AVAHI -DHAS_DAEMON -pthread
 LDFLAGS  += -lavahi-client -lavahi-common -latomic
 OBJ      += ../common/daemon.o publishZeroConf/publishAvahi.o 
 
+else ifeq ($(TARGET), BUILDROOT)
+
+CXXFLAGS += -DHAS_AVAHI -DHAS_DAEMON -pthread
+LDFLAGS   = -lrt -lvorbis -lvorbisenc -logg -lFLAC -lavahi-client -lavahi-common -static-libgcc -static-libstdc++
+OBJ      += publishZeroConf/publishAvahi.o 
+
 else ifeq ($(TARGET), FREEBSD)
 
 CXX       = g++
