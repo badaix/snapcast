@@ -41,6 +41,30 @@ using namespace popl;
 
 volatile sig_atomic_t g_terminated = false;
 
+PcmDevice getPcmDevice(const std::string& soundcard)
+{
+#ifdef HAS_ALSA
+	vector<PcmDevice> pcmDevices = AlsaPlayer::pcm_list();
+
+	try
+	{
+		int soundcardIdx = cpt::stoi(soundcard);
+		for (auto dev: pcmDevices)
+			if (dev.idx == soundcardIdx)
+				return dev;
+	}
+	catch(...)
+	{
+	}
+
+	for (auto dev: pcmDevices)
+		if (dev.name.find(soundcard) != string::npos)
+			return dev;
+#endif
+	PcmDevice pcmDevice;
+	return pcmDevice;
+}
+
 
 int main (int argc, char **argv)
 {
@@ -173,6 +197,17 @@ int main (int argc, char **argv)
 			SLOG(NOTICE) << "daemon started" << std::endl;
 		}
 #endif
+
+/* TODO: Merge
+		PcmDevice pcmDevice = getPcmDevice(soundcard);
+#if defined(HAS_ALSA)
+		if (pcmDevice.idx == -1)
+		{
+			cout << "soundcard \"" << soundcard << "\" not found\n";
+//			exit(EXIT_FAILURE);
+		}
+#endif
+*/
 
 		PcmDevice pcmDevice;
 		pcmDevice.idx = 1;
