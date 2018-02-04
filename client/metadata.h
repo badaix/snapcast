@@ -27,7 +27,11 @@
 //#include <cstring>
 //#include <iostream>
 //#include <streambuf>
-#include "json.hpp"
+#ifdef HAS_JSONRPCPP
+#include <jsonrpcpp/json.hpp>
+#else
+#include "externals/json.hpp"
+#endif
 
 // Prefix used in output
 #define METADATA	std::string("metadata")

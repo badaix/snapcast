@@ -154,8 +154,7 @@ void SpotifyStream::onStderrMsg(const char* buffer, size_t n)
 	{
 		LOG(INFO) << "metadata: <" << m[1] << ">\n";
 
-		json jtag;
-		setMeta(jtag.parse(m[1]));
+		setMeta(json::parse(m[1].str()));
 		libreelec_patched = true;
 	}
 }

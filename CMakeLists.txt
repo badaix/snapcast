@@ -43,6 +43,8 @@ set(CMAKE_CXX_STANDARD 11)
 include(${CMAKE_SOURCE_DIR}/cmake/TargetArch.cmake)
 target_architecture(ARCH)
 
+#set(THREADS_PTHREAD_ARG "2" CACHE STRING "Forcibly set by CMakeLists.txt." FORCE)
+
 # Check dependencies
 find_package(PkgConfig REQUIRED)
 find_package(Threads REQUIRED)
@@ -52,7 +54,7 @@ include(CheckIncludeFileCXX)
 
 cmake_push_check_state()
 set(CMAKE_REQUIRED_DEFINITIONS "-DASIO_STANDALONE")
-check_include_file_cxx(asio.hpp HAS_ASIO_HPP)
+check_include_file_cxx(asio.hpp HAS_ASIO_HPP -pthread)
 cmake_pop_check_state()
 if(HAS_ASIO_HPP)
     add_definitions("-DHAS_ASIO_HPP -DASIO_STANDALONE")
