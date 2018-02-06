@@ -141,15 +141,14 @@ Cross compilation for Android is done with the [Android NDK](http://developer.an
 
 ### Android NDK setup
 http://developer.android.com/ndk/guides/standalone_toolchain.html
- 1. Download NDK: `https://dl.google.com/android/repository/android-ndk-r16-beta1-linux-x86_64.zip`
- 2. Extract to: `/SOME/LOCAL/PATH/android-ndk-r16-beta1`
- 3. Setup toolchains for arm, mips and x86 somewhere in your home dir (`<android-ndk dir>`):
+ 1. Download NDK: `https://dl.google.com/android/repository/android-ndk-r16b-linux-x86_64.zip`
+ 2. Extract to: `/SOME/LOCAL/PATH/android-ndk-r16b`
+ 3. Setup toolchains for arm and x86 somewhere in your home dir (`<android-ndk dir>`):
 
 ```
 $ cd /SOME/LOCAL/PATH/android-ndk-r16-beta1/build/tools
-$ ./make_standalone_toolchain.py --arch arm --api 14 --install-dir <android-ndk dir>-arm
-$ ./make_standalone_toolchain.py --arch mips --api 14 --install-dir <android-ndk dir>-mips
-$ ./make_standalone_toolchain.py --arch x86 --api 14 --install-dir <android-ndk dir>-x86
+$ ./make_standalone_toolchain.py --arch arm --api 21 --install-dir <android-ndk dir>-arm
+$ ./make_standalone_toolchain.py --arch x86 --api 21 --install-dir <android-ndk dir>-x86
 ```
 
 ### Build Snapclient
@@ -157,7 +156,6 @@ Cross compile and install FLAC, ogg, and tremor (only needed once):
 
     $ cd <snapcast dir>/externals
     $ make NDK_DIR=<android-ndk dir>-arm ARCH=arm
-    $ make NDK_DIR=<android-ndk dir>-mips ARCH=mips
     $ make NDK_DIR=<android-ndk dir>-x86 ARCH=x86
    
 Compile the Snapclient:
@@ -165,7 +163,7 @@ Compile the Snapclient:
     $ cd <snapcast dir>/client
     $ ./build_android_all.sh <android-ndk dir>
 
-The binaries for `armeabi` and `mips` and `x86` will be copied into the Android's assets directory (`<snapcast dir>/android/Snapcast/src/main/assets/bin/`) and so will be bundled with the Snapcast App.
+The binaries for `armeabi` and `x86` will be copied into the Android's assets directory (`<snapcast dir>/android/Snapcast/src/main/assets/bin/`) and so will be bundled with the Snapcast App.
 
 
 ## OpenWrt/LEDE (Cross compile)
