@@ -28,14 +28,10 @@
 #include "streamUri.h"
 #include "encoder/encoder.h"
 #include "common/sampleFormat.h"
+#include "common/json.hpp"
 #include "message/codecHeader.h"
 #include "message/streamTags.h"
 
-#ifdef HAS_JSONRPCPP
-#include <jsonrpcpp/json.hpp>
-#else
-#include "externals/json.hpp"
-#endif
 
 class PcmStream;
 

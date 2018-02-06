@@ -19,11 +19,7 @@
 #ifndef METADATA_H
 #define METADATA_H
 
-#ifdef HAS_JSONRPCPP
-#include <jsonrpcpp/json.hpp>
-#else
-#include "externals/json.hpp"
-#endif
+#include "common/json.hpp"
 
 // Prefix used in output
 #define METADATA	std::string("metadata")

@@ -22,11 +22,8 @@
 #include <string>
 #include <map>
 
-#ifdef HAS_JSONRPCPP
-#include <jsonrpcpp/json.hpp>
-#else
-#include "externals/json.hpp"
-#endif
+#include "common/json.hpp"
+
 
 using json = nlohmann::json;
 
