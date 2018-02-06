@@ -1,4 +1,8 @@
 language: cpp
+dist: trusty
+sudo: required
+group: deprecated-2017Q4
+
 compiler:
   - gcc
 matrix:
