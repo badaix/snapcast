@@ -52,10 +52,10 @@ matrix:
       env:
         - MATRIX_EVAL="brew update && brew install flac libvorbis"
 
-    - os: osx
-      osx_image: xcode8
-      env:
-        - MATRIX_EVAL="brew update && brew install flac libvorbis"
+#    - os: osx
+#      osx_image: xcode8
+#      env:
+#        - MATRIX_EVAL="brew update && brew install flac libvorbis"
 
 before_install:
     - eval "${MATRIX_EVAL}"
