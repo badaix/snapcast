@@ -14,15 +14,35 @@ set(CLIENT_INCLUDE
     ${ASIO_INCLUDE_DIRS}
     ${POPL_INCLUDE_DIRS})
 
-# ALSA
-list(APPEND CLIENT_SOURCES player/alsaPlayer.cpp)
-list(APPEND CLIENT_LIBRARIES ${ALSA_LIBRARIES})
-list(APPEND CLIENT_INCLUDE ${ALSA_INCLUDE_DIRS})
 
-# Avahi
-list(APPEND CLIENT_SOURCES browseZeroConf/browseAvahi.cpp)
-list(APPEND CLIENT_LIBRARIES ${AVAHI_LIBRARIES})
-list(APPEND CLIENT_INCLUDE ${AVAHI_INCLUDE_DIRS})
+if(MACOSX)
+    # Bonjour
+    if (BONJOUR_FOUND)
+        list(APPEND CLIENT_SOURCES browseZeroConf/browseBonjour.cpp)
+    endif (BONJOUR_FOUND)
+
+    # CoreAudio
+    add_definitions(-DHAS_COREAUDIO)
+    list(APPEND CLIENT_SOURCES player/coreAudioPlayer.cpp)
+    find_library(COREAUDIO_LIB CoreAudio)
+    find_library(COREFOUNDATION_LIB CoreFoundation)
+    find_library(AUDIOTOOLBOX_LIB AudioToolbox)
+    list(APPEND CLIENT_LIBRARIES ${COREAUDIO_LIB} ${COREFOUNDATION_LIB} ${AUDIOTOOLBOX_LIB})
+else()
+    # Avahi
+    if (AVAHI_FOUND)
+        list(APPEND CLIENT_SOURCES browseZeroConf/browseAvahi.cpp)
+        list(APPEND CLIENT_LIBRARIES ${AVAHI_LIBRARIES})
+        list(APPEND CLIENT_INCLUDE ${AVAHI_INCLUDE_DIRS})
+    endif (AVAHI_FOUND)
+
+    # ALSA
+    if (ALSA_FOUND)
+        list(APPEND CLIENT_SOURCES player/alsaPlayer.cpp)
+        list(APPEND CLIENT_LIBRARIES ${ALSA_LIBRARIES})
+        list(APPEND CLIENT_INCLUDE ${ALSA_INCLUDE_DIRS})
+    endif (ALSA_FOUND)
+endif (MACOSX)
 
 # if OGG then tremor or vorbis
 if (OGG_FOUND)
@@ -45,8 +65,6 @@ if (FLAC_FOUND)
     list(APPEND CLIENT_LIBRARIES ${FLAC_LIBRARIES})
     list(APPEND CLIENT_INCLUDE ${FLAC_INCLUDE_DIRS})
 endif (FLAC_FOUND)
-
-add_definitions(-DHAS_DAEMON)
 
 include_directories(${CLIENT_INCLUDE})
 add_executable(snapclient ${CLIENT_SOURCES})
