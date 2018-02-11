@@ -32,7 +32,10 @@ if(NOT DEFINED CMAKE_INSTALL_INCLUDEDIR)
         PATH "Output directory for header files")
 endif()
 
-include_directories("${CMAKE_SOURCE_DIR}" "${CMAKE_SOURCE_DIR}/externals/asio/asio/include")
+include_directories("${CMAKE_SOURCE_DIR}"
+    "${CMAKE_SOURCE_DIR}/externals/asio/asio/include"
+)
+
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/")
 add_definitions(-DVERSION="${PROJECT_VERSION}")
 
@@ -57,7 +60,7 @@ include(CMakePushCheckState)
 include(CheckIncludeFileCXX)
 
 cmake_push_check_state()
-set (CMAKE_REQUIRED_INCLUDES "${CMAKE_REQUIRED_INCLUDES} ${CMAKE_SOURCE_DIR}/externals/asio/asio/include")
+set (CMAKE_REQUIRED_INCLUDES "${CMAKE_SOURCE_DIR}/externals/asio/asio/include")
 check_include_file_cxx(asio.hpp HAS_ASIO_HPP "-pthread -DASIO_STANDALONE -std=c++11")
 cmake_pop_check_state()
 if(HAS_ASIO_HPP)
@@ -67,10 +70,13 @@ else()
 endif()
 
 check_include_file_cxx(popl.hpp HAS_POPL_HPP -std=c++11)
-if(HAS_POPL_HPP)
-    add_definitions("-DHAS_POPL_HPP")
-else()
+if(NOT HAS_POPL_HPP)
     message(FATAL_ERROR "Need to have popl installed")
+endif()
+
+check_include_file_cxx(aixlog.hpp HAS_AIXLOG_HPP -std=c++11)
+if(NOT HAS_AIXLOG_HPP)
+    message(FATAL_ERROR "Need to have aixlog installed")
 endif()
 
 if(MACOSX)
