@@ -3,13 +3,21 @@
 
 #include <string>
 
+enum IPVersion
+{
+	IPv4 = 0,
+	IPv6 = 1
+};
+
+
 struct mDNSResult
 {
-	int proto_;
-	std::string ip_;
-	std::string host_;
-	uint16_t port_;
-	bool valid_;
+	IPVersion ip_version;
+	int iface_idx;
+	std::string ip;
+	std::string host;
+	uint16_t port;
+	bool valid;
 };
 
 class BrowsemDNS

@@ -90,11 +90,13 @@ void BrowseAvahi::resolve_callback(
 			LOG(INFO) << "Service '" << name << "' of type '" << type << "' in domain '" << domain << "':\n";
 
 			avahi_address_snprint(a, sizeof(a), address);
-			browseAvahi->result_.host_ = host_name;
-			browseAvahi->result_.ip_ = a;
-			browseAvahi->result_.port_ = port;
-			browseAvahi->result_.proto_ = protocol;
-			browseAvahi->result_.valid_ = true;
+			browseAvahi->result_.host = host_name;
+			browseAvahi->result_.ip = a;
+			browseAvahi->result_.port = port;
+			// protocol seems to be unreliable (0 for IPv4 and for IPv6)
+			browseAvahi->result_.ip_version = (browseAvahi->result_.ip.find(":") == std::string::npos)?(IPVersion::IPv4):(IPVersion::IPv6);
+			browseAvahi->result_.valid = true;
+			browseAvahi->result_.iface_idx = interface;
 
 			t = avahi_string_list_to_string(txt);
 			LOG(INFO) << "\t" << host_name << ":" << port << " (" << a << ")\n";
@@ -196,12 +198,12 @@ bool BrowseAvahi::browse(const std::string& serviceName, mDNSResult& result, int
 		if (!(sb_ = avahi_service_browser_new(client_, AVAHI_IF_UNSPEC, AVAHI_PROTO_INET, serviceName.c_str(), NULL, (AvahiLookupFlags)0, browse_callback, this)))
 			throw SnapException("BrowseAvahi - Failed to create service browser: " + std::string(avahi_strerror(avahi_client_errno(client_))));
 
-		result_.valid_ = false;
+		result_.valid = false;
 		while (timeout > 0)
 		{
 			avahi_simple_poll_iterate(simple_poll, 100);
 			timeout -= 100;
-			if (result_.valid_)
+			if (result_.valid)
 			{
 				result = result_;
 				cleanUp();

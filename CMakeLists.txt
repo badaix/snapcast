@@ -15,6 +15,9 @@ endif()
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     set(MACOSX TRUE)
+elseif (${CMAKE_SYSTEM_NAME} MATCHES "Android")
+    set (ANDROID TRUE)
+    message(FATAL_ERROR "Android not yet supported")
 endif()
 
 # Configure paths
@@ -87,6 +90,8 @@ if(MACOSX)
     endif (BONJOUR_FOUND)
 
     add_definitions(-DFREEBSD -DHAS_DAEMON)
+elseif(ANDROID)
+    add_definitions("-DNO_CPP11_STRING")
 else()
     pkg_search_module(ALSA REQUIRED alsa)
     if (ALSA_FOUND)
@@ -97,6 +102,8 @@ else()
     if (AVAHI_FOUND)
         add_definitions(-DHAS_AVAHI)
     endif (AVAHI_FOUND)
+
+    add_definitions(-DHAS_DAEMON)
 endif()
 
 pkg_search_module(FLAC flac)

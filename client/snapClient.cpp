@@ -218,8 +218,10 @@ int main (int argc, char **argv)
 				{
 					if (browser.browse("_snapcast._tcp", avahiResult, 5000))
 					{
-						host = avahiResult.ip_;
-						port = avahiResult.port_;
+						host = avahiResult.ip;
+						port = avahiResult.port;
+						if (avahiResult.ip_version == IPVersion::IPv6)
+							host += "%" + cpt::to_string(avahiResult.iface_idx);
 						LOG(INFO) << "Found server " << host << ":" << port << "\n";
 						break;
 					}
