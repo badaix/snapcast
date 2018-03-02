@@ -65,8 +65,6 @@ script:
   - cd build
   - cmake ../externals/aixlog && make && sudo make install
   - rm -rf *
-  - cmake ../externals/jsonrpcpp && make && sudo make install
-  - rm -rf *
   - cmake ../externals/popl && make && sudo make install
   - rm -rf *
   - cmake .. && make && sudo make install
