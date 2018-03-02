@@ -2,6 +2,7 @@ set(SERVER_SOURCES
     config.cpp
     controlServer.cpp
     controlSession.cpp
+    jsonrp.cpp
     snapServer.cpp
     streamServer.cpp
     streamSession.cpp
@@ -19,13 +20,11 @@ set(SERVER_SOURCES
 
 set(SERVER_LIBRARIES
     ${CMAKE_THREAD_LIBS_INIT}
-    ${JSONRPCPP_LIBRARIES}
     ${FLAC_LIBRARIES}
     common message)
 
 set(SERVER_INCLUDE
     ${CMAKE_SOURCE_DIR}/server
-    ${JSONRPCPP_INCLUDE_DIRS}
     ${FLAC_INCLUDE_DIRS})
 
 # Avahi

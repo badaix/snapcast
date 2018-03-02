@@ -144,11 +144,6 @@ if (VORBISENC_FOUND)
     add_definitions("-DHAS_VORBISENC")
 endif()
 
-pkg_search_module(JSONRPCPP REQUIRED jsonrpcpp)
-if (JSONRPCPP_FOUND)
-    add_definitions("-DHAS_JSONRPCPP")
-endif()
-
 
 add_subdirectory(common)
 add_subdirectory(message)
