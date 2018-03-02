@@ -9,7 +9,7 @@
 # Description:       Snapserver - Snapcast server
 ### END INIT INFO
 
-# Author: Johannes Pohl <johannes.pohl@badaix.de>
+# Author: Johannes Pohl <snapcast@badaix.de>
 
 # Do NOT "set -e"
 

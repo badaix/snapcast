@@ -1,8 +1,8 @@
-This work was written and packaged by Johannes Pohl <johannes.pohl@badaix.de>
+This work was written and packaged by Johannes Pohl <snapcast@badaix.de>
 
 It was downloaded from: <https://github.com/badaix/snapcast>
 
-Upstream Author: Johannes Pohl <johannes.pohl@badaix.de>
+Upstream Author: Johannes Pohl <snapcast@badaix.de>
 
 Copyright:
 
@@ -28,7 +28,7 @@ Public License version 3 can be found in "/usr/share/common-licenses/GPL-3".
 
 The Debian packaging is:
 
-    Copyright (C) 2014-2018 Johannes Pohl <johannes.pohl@badaix.de>
+    Copyright (C) 2014-2018 Johannes Pohl <snapcast@badaix.de>
 
 and is licensed under the GPL version 3, see above.
 

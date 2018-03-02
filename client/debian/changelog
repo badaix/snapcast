@@ -20,7 +20,7 @@ snapclient (0.12.0) unstable; urgency=low
     -Android: update to NDK r16 and clang++ 
     -hide spotify credentials in json control message (Issue #282)
 
- -- Johannes Pohl <johannes.pohl@badaix.de>  Tue, 17 Oct 2017 00:13:37 +0200
+ -- Johannes Pohl <snapcast@badaix.de>  Tue, 17 Oct 2017 00:13:37 +0200
 
 snapclient (0.11.1) unstable; urgency=low
 
@@ -30,7 +30,7 @@ snapclient (0.11.1) unstable; urgency=low
   * General
     -Updated Markdown files (PR #216, #218)
 
- -- Johannes Pohl <johannes.pohl@badaix.de>  Tue, 21 Mar 2017 00:13:37 +0200
+ -- Johannes Pohl <snapcast@badaix.de>  Tue, 21 Mar 2017 00:13:37 +0200
 
 snapclient (0.11.0) unstable; urgency=low
 
@@ -41,7 +41,7 @@ snapclient (0.11.0) unstable; urgency=low
     -Crash when frequently connecting to the control port (Issue #200)
     -Snapcast App crashes on Android 4.x (Issue #207)
 
- -- Johannes Pohl <johannes.pohl@badaix.de>  Thu, 16 Mar 2017 00:13:37 +0200
+ -- Johannes Pohl <snapcast@badaix.de>  Thu, 16 Mar 2017 00:13:37 +0200
 
 snapclient (0.11.0~beta-1) unstable; urgency=low
 
@@ -61,7 +61,7 @@ snapclient (0.11.0~beta-1) unstable; urgency=low
     -JSON RPC API is versionized (current version is 2.0.0)
     -Restructured Android App to support Groups
 
- -- Johannes Pohl <johannes.pohl@badaix.de>  Sat, 04 Mar 2017 00:13:37 +0200
+ -- Johannes Pohl <snapcast@badaix.de>  Sat, 04 Mar 2017 00:13:37 +0200
 
 snapclient (0.10.0) unstable; urgency=low
 
@@ -76,7 +76,7 @@ snapclient (0.10.0) unstable; urgency=low
   * General
     -Speed up client and server shutdown
 
- -- Johannes Pohl <johannes.pohl@badaix.de>  Wed, 16 Nov 2016 00:13:37 +0200
+ -- Johannes Pohl <snapcast@badaix.de>  Wed, 16 Nov 2016 00:13:37 +0200
 
 snapclient (0.9.0) unstable; urgency=low
 
@@ -91,7 +91,7 @@ snapclient (0.9.0) unstable; urgency=low
   * General
     -Updated Android NDK to revision 13 
 
- -- Johannes Pohl <johannes.pohl@badaix.de>  Sat, 22 Oct 2016 00:13:37 +0200
+ -- Johannes Pohl <snapcast@badaix.de>  Sat, 22 Oct 2016 00:13:37 +0200
 
 snapclient (0.8.0) unstable; urgency=low
 
@@ -102,7 +102,7 @@ snapclient (0.8.0) unstable; urgency=low
   * Bugfixes
     -OpenWRT: makefile automatically sets correct endian (Issue #91)
 
- -- Johannes Pohl <johannes.pohl@badaix.de>  Sun, 24 Jul 2016 00:13:37 +0200
+ -- Johannes Pohl <snapcast@badaix.de>  Sun, 24 Jul 2016 00:13:37 +0200
 
 snapclient (0.7.0) unstable; urgency=low
 
@@ -117,7 +117,7 @@ snapclient (0.7.0) unstable; urgency=low
     -Exceptions were not properly logged (e.g. unsupported sample rates)
     -Fixed default sound card detection on OpenWrt
 
- -- Johannes Pohl <johannes.pohl@badaix.de>  Sat, 07 May 2016 00:13:37 +0200
+ -- Johannes Pohl <snapcast@badaix.de>  Sat, 07 May 2016 00:13:37 +0200
 
 snapclient (0.6.0) unstable; urgency=low
 
@@ -130,7 +130,7 @@ snapclient (0.6.0) unstable; urgency=low
     -Endian-independent code
     -Cleaned up build process
 
- -- Johannes Pohl <johannes.pohl@badaix.de>  Sun, 10 Apr 2016 00:02:00 +0200
+ -- Johannes Pohl <snapcast@badaix.de>  Sun, 10 Apr 2016 00:02:00 +0200
 
 snapclient (0.5.0) unstable; urgency=low
 
@@ -141,7 +141,7 @@ snapclient (0.5.0) unstable; urgency=low
   * General
     -Source code cleanups
 
- -- Johannes Pohl <johannes.pohl@badaix.de>  Fri, 25 Mar 2016 00:02:00 +0200
+ -- Johannes Pohl <snapcast@badaix.de>  Fri, 25 Mar 2016 00:02:00 +0200
 
 snapclient (0.5.0~beta-2) unstable; urgency=low
 
@@ -159,7 +159,7 @@ snapclient (0.5.0~beta-2) unstable; urgency=low
   * General
     -README.md: Added resampling command to the Mopidy section (Issue #32)
 
- -- Johannes Pohl <johannes.pohl@badaix.de>  Wed, 09 Mar 2016 00:02:00 +0200
+ -- Johannes Pohl <snapcast@badaix.de>  Wed, 09 Mar 2016 00:02:00 +0200
 
 snapclient (0.5.0~beta-1) unstable; urgency=low
 
@@ -184,7 +184,7 @@ snapclient (0.5.0~beta-1) unstable; urgency=low
      Less messaging: SampleFormat, Command, Ack, String, not yet final
     -Removed dependency to boost
 
- -- Johannes Pohl <johannes.pohl@badaix.de>  Tue, 09 Feb 2016 13:25:00 +0200
+ -- Johannes Pohl <snapcast@badaix.de>  Tue, 09 Feb 2016 13:25:00 +0200
 
 snapclient (0.4.1) unstable; urgency=low
 
@@ -192,7 +192,7 @@ snapclient (0.4.1) unstable; urgency=low
     -Debian packages (.deb) are linked statically against libgcc and libstdc++
      to improve compatibility
 
- -- Johannes Pohl <johannes.pohl@badaix.de>  Sat, 12 Mar 2016 12:00:00 +0200
+ -- Johannes Pohl <snapcast@badaix.de>  Sat, 12 Mar 2016 12:00:00 +0200
 
 snapclient (0.4.0) unstable; urgency=low
 
@@ -206,21 +206,21 @@ snapclient (0.4.0) unstable; urgency=low
     -Snapserver is started with normal process priority
      (changed nice from -3 to 0)
 
- -- Johannes Pohl <johannes.pohl@badaix.de>  Mon, 28 Dec 2015 12:00:00 +0200
+ -- Johannes Pohl <snapcast@badaix.de>  Mon, 28 Dec 2015 12:00:00 +0200
 
 snapclient (0.3.4) unstable; urgency=low
 
   * Bugfixes
     -Fix synchronization bug in FLAC decoder that could cause audible dropouts
 
- -- Johannes Pohl <johannes.pohl@badaix.de>  Wed, 23 Dec 2015 12:00:00 +0200
+ -- Johannes Pohl <snapcast@badaix.de>  Wed, 23 Dec 2015 12:00:00 +0200
 
 snapclient (0.3.3) unstable; urgency=low
 
   * Bugfixes
     -Fix Segfault when ALSA device has no description
 
- -- Johannes Pohl <johannes.pohl@badaix.de>  Sun, 15 Nov 2015 12:00:00 +0200
+ -- Johannes Pohl <snapcast@badaix.de>  Sun, 15 Nov 2015 12:00:00 +0200
 
 snapclient (0.3.2) unstable; urgency=low
 
@@ -229,7 +229,7 @@ snapclient (0.3.2) unstable; urgency=low
   * Bugfixes
     -Time calculation for PCM chunk play-out was wrong on some gcc versions
 
- -- Johannes Pohl <johannes.pohl@badaix.de>  Wed, 30 Sep 2015 12:00:00 +0200
+ -- Johannes Pohl <snapcast@badaix.de>  Wed, 30 Sep 2015 12:00:00 +0200
 
 snapclient (0.3.1) unstable; urgency=low
 
@@ -239,7 +239,7 @@ snapclient (0.3.1) unstable; urgency=low
   * Bugfixes
     -Fixed a bug in avahi browser
 
- -- Johannes Pohl <johannes.pohl@badaix.de>  Wed, 26 Aug 2015 12:00:00 +0200
+ -- Johannes Pohl <snapcast@badaix.de>  Wed, 26 Aug 2015 12:00:00 +0200
 
 snapclient (0.3.0) unstable; urgency=low
 
@@ -260,12 +260,12 @@ snapclient (0.3.0) unstable; urgency=low
     -Code clean up
     -Refactored encoding for lower latency
 
- -- Johannes Pohl <johannes.pohl@badaix.de>  Sun, 16 Aug 2015 19:25:51 +0100
+ -- Johannes Pohl <snapcast@badaix.de>  Sun, 16 Aug 2015 19:25:51 +0100
 
 snapclient (0.2.1) unstable; urgency=low
 
   * Features
     -Arch Linux compatibility
 
- -- Johannes Pohl <johannes.pohl@badaix.de>  Fri, 24 Jul 2015 15:47:00 +0100
+ -- Johannes Pohl <snapcast@badaix.de>  Fri, 24 Jul 2015 15:47:00 +0100
 
