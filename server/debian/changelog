@@ -1,3 +1,21 @@
+snapserver (0.13.0) unstable; urgency=low
+
+  * Features
+    -Support "volume" parameter for Librespot (PR #273)
+    -Add support for metatags (PR #319)
+  * Bugfixes
+    -Fix overflow in timesync when the system time is many years off
+    -Zeroconf works with IPv6
+    -Snapclient unit file depends on avahi-daemon.service (PR #348)
+  * General
+    -Drop dependency to external "jsonrpc++"
+    -Move OpenWrt and Buildroot support into separate project "SnapOS"
+    -Add CMake support (not fully replacing Make yet) (PR #212)
+    -Remove MIPS support for Android (deprecated by Google)
+    -Use MAC address as default client id (override with "--hostID")
+
+ -- Johannes Pohl <snapcast@badaix.de>  Tue, 04 Mar 2018 00:13:37 +0200
+
 snapserver (0.12.0) unstable; urgency=low
 
   * Features
