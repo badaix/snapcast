@@ -19,6 +19,7 @@ START_SNAPSERVER=true
 #                                       Type codec:? to get codec specific options
 #   --streamBuffer arg (=20)            Default stream read buffer [ms]
 #   -b, --buffer arg (=1000)            Buffer [ms]
+#   --sendToMuted                       Send audio to muted clients
 #   -d, --daemon [=arg(=0)]             Daemonize
 #                                       optional process priority [-20..19]
 #   --user arg                          the user[:group] to run snapserver as when daemonized
