@@ -37,6 +37,7 @@ SpotifyStream::SpotifyStream(PcmListener* pcmListener, const StreamUri& uri) : P
 	string username = uri_.getQuery("username", "");
 	string password = uri_.getQuery("password", "");
 	string cache = uri_.getQuery("cache", "");
+	string volume = uri_.getQuery("volume", "");
 	string bitrate = uri_.getQuery("bitrate", "320");
 	string devicename = uri_.getQuery("devicename", "Snapcast");
 	string onstart = uri_.getQuery("onstart", "");
@@ -51,6 +52,8 @@ SpotifyStream::SpotifyStream(PcmListener* pcmListener, const StreamUri& uri) : P
 	params_ += " --bitrate " + bitrate + " --backend pipe";
 	if (!cache.empty())
 		params_ += " --cache \"" + cache + "\"";
+	if (!volume.empty())
+		params_ += " --initial-volume \"" + volume + "\"";
 	if (!onstart.empty())
 		params_ += " --onstart \"" + onstart + "\"";
 	if (!onstop.empty())
