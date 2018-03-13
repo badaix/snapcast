@@ -18,8 +18,9 @@
   -->
 
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content">
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <ImageButton
         android:id="@+id/ibOverflow"
@@ -28,7 +29,7 @@
         android:layout_alignParentRight="true"
         android:layout_centerVertical="true"
         android:background="@null"
-        android:src="@drawable/ic_menu_overflow_material"/>
+        app:srcCompat="@drawable/ic_menu_overflow_material"/>
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -42,9 +43,8 @@
             android:id="@+id/title"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:ellipsize="marquee"
+            android:singleLine="true"
             android:fadingEdge="horizontal"
-            android:maxLines="1"
             android:paddingBottom="1dp"
             android:paddingLeft="5dp"
             android:paddingTop="2dp"
