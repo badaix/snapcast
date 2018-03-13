@@ -1948,7 +1948,7 @@ class lexer
     /// return the locale-dependent decimal point
     static char get_decimal_point() noexcept
     {
-        const auto loc = localeconv();
+        const auto loc = cpt::localeconv();
         assert(loc != nullptr);
         return (loc->decimal_point == nullptr) ? '.' : *(loc->decimal_point);
     }
@@ -8247,7 +8247,7 @@ class serializer
     @param[in] ichar  indentation character to use
     */
     serializer(output_adapter_t<char> s, const char ichar)
-        : o(std::move(s)), loc(std::localeconv()),
+        : o(std::move(s)), loc(cpt::localeconv()),
           thousands_sep(loc->thousands_sep == nullptr ? '\0' : * (loc->thousands_sep)),
           decimal_point(loc->decimal_point == nullptr ? '\0' : * (loc->decimal_point)),
           indent_char(ichar), indent_string(512, indent_char)

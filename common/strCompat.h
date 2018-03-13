@@ -3,6 +3,7 @@
 
 
 #include <string>
+#include <clocale>
 
 #ifdef NO_CPP11_STRING
 #include <sstream>
@@ -16,6 +17,18 @@
 
 namespace cpt
 {
+	static struct lconv* localeconv()
+	{
+	#ifdef NO_CPP11_STRING
+		static struct lconv result;
+		result.decimal_point = nullptr;
+		result.thousands_sep = nullptr;
+		return &result;
+	#else
+		return std::localeconv();
+	#endif
+	}
+
 	template<typename T>
 	static std::string to_string(const T& t)
 	{
