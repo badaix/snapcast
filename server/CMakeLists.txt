@@ -25,6 +25,7 @@ set(SERVER_LIBRARIES
 
 set(SERVER_INCLUDE
     ${CMAKE_SOURCE_DIR}/server
+    ${CMAKE_SOURCE_DIR}/common
     ${FLAC_INCLUDE_DIRS})
 
 # Avahi

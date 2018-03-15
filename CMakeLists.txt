@@ -146,6 +146,5 @@ endif()
 
 
 add_subdirectory(common)
-add_subdirectory(message)
 add_subdirectory(server)
 add_subdirectory(client)

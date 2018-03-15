@@ -25,7 +25,7 @@
 #include <vector>
 #include "stream.h"
 #include "pcmDevice.h"
-#include "common/endian.h"
+#include "common/endian.hpp"
 #include "aixlog.hpp"
 
 

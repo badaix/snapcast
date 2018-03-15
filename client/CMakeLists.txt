@@ -11,6 +11,7 @@ set(CLIENT_LIBRARIES ${CMAKE_THREAD_LIBS_INIT} common message)
 
 set(CLIENT_INCLUDE
     ${CMAKE_SOURCE_DIR}/client
+    ${CMAKE_SOURCE_DIR}/common
     ${ASIO_INCLUDE_DIRS}
     ${POPL_INCLUDE_DIRS})
 

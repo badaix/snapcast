@@ -17,7 +17,7 @@
 ***/
 
 #include <memory>
-#include "common/endian.h"
+#include "common/endian.hpp"
 #include "pcmEncoder.h"
 
 
