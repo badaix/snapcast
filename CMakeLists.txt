@@ -58,12 +58,12 @@ target_architecture(ARCH)
 #message(STATUS "System processor: ${CMAKE_SYSTEM_PROCESSOR}")
 
 
-if (${CMAKE_SYSTEM_PROCESSOR} MATCHES "mips"
-    OR ${CMAKE_SYSTEM_PROCESSOR} MATCHES "armeb"
-    OR ${CMAKE_SYSTEM_PROCESSOR} MATCHES "powerpc")
+INCLUDE(TestBigEndian)
+TEST_BIG_ENDIAN(BIGENDIAN)
+IF(${BIGENDIAN})
     set(CMAKE_CXX_LINK_FLAGS "${CMAKE_CXX_LINK_FLAGS} -latomic")
-    add_definitions("-DIS_BIG_ENDIAN")    
-endif()
+    add_definitions("-DIS_BIG_ENDIAN")
+ENDIF(${BIGENDIAN})
 
 
 #set(THREADS_PTHREAD_ARG "2" CACHE STRING "Forcibly set by CMakeLists.txt." FORCE)
