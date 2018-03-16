@@ -1,6 +1,8 @@
 #ifndef ENDIAN_HPP
 #define ENDIAN_HPP
 
+#include <cstdint>
+
 #ifdef IS_BIG_ENDIAN
 #	define SWAP_16(x) (__builtin_bswap16(x))
 #	define SWAP_32(x) (__builtin_bswap32(x))

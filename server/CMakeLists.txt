@@ -8,6 +8,7 @@ set(SERVER_SOURCES
     streamSession.cpp
     encoder/encoderFactory.cpp
     encoder/pcmEncoder.cpp
+    streamreader/base64.cpp
     streamreader/streamUri.cpp
     streamreader/streamManager.cpp
     streamreader/pcmStream.cpp

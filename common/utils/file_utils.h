@@ -24,7 +24,7 @@
 #include <stdexcept>
 #include <vector>
 #include <fstream>
-#include "common/utils/string_utils.h"
+#include "string_utils.h"
 
 
 namespace utils

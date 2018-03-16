@@ -20,7 +20,7 @@
 #include "common/snapException.h"
 #include "common/utils/string_utils.h"
 #include "common/utils.h"
-#include "common/base64.h"
+#include "base64.h"
 #include "aixlog.hpp"
 
 using namespace std;

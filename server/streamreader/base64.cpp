@@ -24,7 +24,7 @@
    René Nyffenegger rene.nyffenegger@adp-gmbh.ch
 
 */
-#include <common/base64.h>
+#include "base64.h"
 
 static const std::string base64_chars = 
              "ABCDEFGHIJKLMNOPQRSTUVWXYZ"

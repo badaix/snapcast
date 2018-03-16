@@ -36,7 +36,7 @@ DEBUG=-O3
 
 CXXFLAGS += $(ADD_CFLAGS) -std=c++0x -Wall -Wno-unused-function $(DEBUG) -DHAS_FLAC -DHAS_OGG -DHAS_VORBIS -DHAS_VORBIS_ENC -DASIO_STANDALONE -DVERSION=\"$(VERSION)\" -I. -I.. -isystem ../externals/asio/asio/include -I../externals/popl/include -I../externals/aixlog/include -I../externals -I../common
 LDFLAGS   = -lvorbis -lvorbisenc -logg -lFLAC 
-OBJ       = snapServer.o config.o controlServer.o controlSession.o jsonrp.o streamServer.o streamSession.o streamreader/streamUri.o streamreader/streamManager.o streamreader/pcmStream.o streamreader/pipeStream.o streamreader/fileStream.o streamreader/processStream.o streamreader/airplayStream.o streamreader/spotifyStream.o streamreader/watchdog.o encoder/encoderFactory.o encoder/flacEncoder.o encoder/pcmEncoder.o encoder/oggEncoder.o ../common/sampleFormat.o ../common/base64.o
+OBJ       = snapServer.o config.o controlServer.o controlSession.o jsonrp.o streamServer.o streamSession.o streamreader/streamUri.o streamreader/base64.o streamreader/streamManager.o streamreader/pcmStream.o streamreader/pipeStream.o streamreader/fileStream.o streamreader/processStream.o streamreader/airplayStream.o streamreader/spotifyStream.o streamreader/watchdog.o encoder/encoderFactory.o encoder/flacEncoder.o encoder/pcmEncoder.o encoder/oggEncoder.o ../common/sampleFormat.o
 
 ifneq (,$(TARGET))
 CXXFLAGS += -D$(TARGET)
