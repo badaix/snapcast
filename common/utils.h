@@ -51,6 +51,9 @@
 #include <IOKit/IOCFPlugIn.h>
 #include <IOKit/IOTypes.h>
 #endif
+#ifdef ANDROID
+#include <sys/system_properties.h>
+#endif
 
 
 namespace strutils = utils::string;
@@ -74,9 +77,13 @@ static std::string execGetOutput(const std::string& cmd)
 
 
 #ifdef ANDROID
-static std::string getProp(const std::string& prop)
+static std::string getProp(const std::string& key, const std::string& def = "")
 {
-	return execGetOutput("getprop " + prop);
+    std::string result(def);
+    char cresult[PROP_VALUE_MAX+1];
+    if (__system_property_get(key.c_str(), cresult) > 0)
+        result = cresult;
+    return result;
 }
 #endif
 

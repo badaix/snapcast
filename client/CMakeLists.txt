@@ -7,7 +7,7 @@ set(CLIENT_SOURCES
     decoder/pcmDecoder.cpp
     player/player.cpp)
 
-set(CLIENT_LIBRARIES ${CMAKE_THREAD_LIBS_INIT} common message)
+set(CLIENT_LIBRARIES ${CMAKE_THREAD_LIBS_INIT} common)
 
 set(CLIENT_INCLUDE
     ${CMAKE_SOURCE_DIR}/client

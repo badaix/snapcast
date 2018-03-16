@@ -36,13 +36,56 @@ namespace msg
 class PcmChunk : public WireChunk
 {
 public:
-	PcmChunk(const SampleFormat& sampleFormat, size_t ms);
-	PcmChunk(const PcmChunk& pcmChunk);
-	PcmChunk();
-	virtual ~PcmChunk();
+	PcmChunk(const SampleFormat& sampleFormat, size_t ms) :
+		WireChunk(sampleFormat.rate*sampleFormat.frameSize*ms / 1000),
+		format(sampleFormat),
+		idx_(0)
+	{
+	}
 
-	int readFrames(void* outputBuffer, size_t frameCount);
-	int seek(int frames);
+	PcmChunk(const PcmChunk& pcmChunk) :
+		WireChunk(pcmChunk),
+		format(pcmChunk.format),
+		idx_(0)
+	{
+	}
+
+	PcmChunk() : WireChunk(), idx_(0)
+	{
+	}
+
+	virtual ~PcmChunk()
+	{
+	}
+
+	int readFrames(void* outputBuffer, size_t frameCount)
+	{
+	//logd << "read: " << frameCount << ", total: " << (wireChunk->length / format.frameSize) << ", idx: " << idx;// << std::endl;
+		int result = frameCount;
+		if (idx_ + frameCount > (payloadSize / format.frameSize))
+			result = (payloadSize / format.frameSize) - idx_;
+
+	//logd << ", from: " << format.frameSize*idx << ", to: " << format.frameSize*idx + format.frameSize*result;
+		if (outputBuffer != NULL)
+			memcpy((char*)outputBuffer, (char*)(payload) + format.frameSize*idx_, format.frameSize*result);
+
+		idx_ += result;
+	//logd << ", new idx: " << idx << ", result: " << result << ", wireChunk->length: " << wireChunk->length << ", format.frameSize: " << format.frameSize << "\n";//std::endl;
+		return result;
+	}
+	
+	int seek(int frames)
+	{
+		if ((frames < 0) && (-frames > (int)idx_))
+			frames = -idx_;
+			
+		idx_ += frames;
+		if (idx_ > getFrameCount())
+			idx_ = getFrameCount();
+
+		return idx_;
+	}
+
 
 	virtual chronos::time_point_clk start() const
 	{

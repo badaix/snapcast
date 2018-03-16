@@ -1,5 +1,5 @@
-#ifndef ENDIAN_H
-#define ENDIAN_H
+#ifndef ENDIAN_HPP
+#define ENDIAN_HPP
 
 #ifdef IS_BIG_ENDIAN
 #	define SWAP_16(x) (__builtin_bswap16(x))
@@ -16,7 +16,7 @@ namespace endian
 
 template <typename T>
 T swap(const T&);
-	
+
 template <>
 inline int8_t swap(const int8_t& val)
 {

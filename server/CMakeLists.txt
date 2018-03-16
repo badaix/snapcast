@@ -21,7 +21,7 @@ set(SERVER_SOURCES
 set(SERVER_LIBRARIES
     ${CMAKE_THREAD_LIBS_INIT}
     ${FLAC_LIBRARIES}
-    common message)
+    common)
 
 set(SERVER_INCLUDE
     ${CMAKE_SOURCE_DIR}/server
