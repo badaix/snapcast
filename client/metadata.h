@@ -22,7 +22,7 @@
 #include "common/json.hpp"
 
 // Prefix used in output
-#define METADATA	std::string("metadata")
+#define METADATA std::string("metadata")
 
 /*
  * Implement a generic metadata output handler
@@ -40,30 +40,31 @@ public:
 		reset();
 	}
 
-        void reset()
+	void reset()
 	{
-		_msg.reset(new json);
+		msg_.reset(new json);
 	}
 
 	std::string serialize()
 	{
-		return METADATA + ":" + _msg->dump();
+		return METADATA + ":" + msg_->dump();
 	}
 
 	void tag(std::string name, std::string value)
 	{
-		(*_msg)[name] = value;
+		(*msg_)[name] = value;
 	}
 
 	std::string operator[](std::string key)
 	{
-		try {
-			return (*_msg)[key];
+		try 
+		{
+			return (*msg_)[key];
 		}
-            	catch (std::domain_error&)
-            	{
+		catch (std::domain_error&)
+		{
 			return std::string();
-            	}
+		}
 	}
 
 	virtual int push()
@@ -74,12 +75,12 @@ public:
 
 	int push(json& jtag)
 	{
-		_msg.reset(new json(jtag));
+		msg_.reset(new json(jtag));
 		return push();
 	}
 
 protected:
-        std::shared_ptr<json> _msg;
+	std::shared_ptr<json> msg_;
 };
 
 /*
