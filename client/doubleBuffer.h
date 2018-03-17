@@ -43,6 +43,13 @@ public:
 			buffer.pop_front();
 	}
 
+	inline void add(T&& element)
+	{
+		buffer.push_back(std::move(element));
+		if (buffer.size() > bufferSize)
+			buffer.pop_front();
+	}
+
 	/// Median as mean over N values around the median
 	T median(unsigned int mean = 1) const
 	{
