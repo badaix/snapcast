@@ -57,11 +57,15 @@ target_architecture(ARCH)
 #message(STATUS "Architecture: ${ARCH}")
 #message(STATUS "System processor: ${CMAKE_SYSTEM_PROCESSOR}")
 
+INCLUDE(CheckLibraryExists)
+check_library_exists(atomic __atomic_fetch_add_4 "" HAS_LIBATOMIC)
+if(HAS_LIBATOMIC)
+    set(CMAKE_CXX_LINK_FLAGS "${CMAKE_CXX_LINK_FLAGS} -latomic")
+endif()
 
 INCLUDE(TestBigEndian)
 TEST_BIG_ENDIAN(BIGENDIAN)
 IF(${BIGENDIAN})
-    set(CMAKE_CXX_LINK_FLAGS "${CMAKE_CXX_LINK_FLAGS} -latomic")
     add_definitions("-DIS_BIG_ENDIAN")
 ENDIF(${BIGENDIAN})
 
