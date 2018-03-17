@@ -62,7 +62,11 @@ if (${CMAKE_SYSTEM_PROCESSOR} MATCHES "mips"
     OR ${CMAKE_SYSTEM_PROCESSOR} MATCHES "armeb"
     OR ${CMAKE_SYSTEM_PROCESSOR} MATCHES "powerpc")
     set(CMAKE_CXX_LINK_FLAGS "${CMAKE_CXX_LINK_FLAGS} -latomic")
-    add_definitions("-DIS_BIG_ENDIAN")    
+    INCLUDE(TestBigEndian)
+    TEST_BIG_ENDIAN(BIGENDIAN)
+    IF(${BIGENDIAN})
+        add_definitions("-DIS_BIG_ENDIAN")    
+    ENDIF(${BIGENDIAN})
 endif()
 
 
