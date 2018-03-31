@@ -45,7 +45,7 @@ AirplayStream::AirplayStream(PcmListener* pcmListener, const StreamUri& uri) : P
 {
 	logStderr_ = true;
 
-	pipePath_ = "/tmp/shairmeta." + to_string(getpid());
+        pipePath_ = "/tmp/shairmeta." + cpt::to_string(getpid());
 	//cout << "Pipe [" << pipePath_ << "]\n";
 
 	// XXX: Check if pipe exists, delete or throw error

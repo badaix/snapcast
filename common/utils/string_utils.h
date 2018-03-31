@@ -19,11 +19,11 @@
 #ifndef STRING_UTILS_H
 #define STRING_UTILS_H
 
+#include <stdio.h>
 #include <algorithm>
 #include <string>
 #include <sstream>
 #include <vector>
-
 
 namespace utils
 {
