@@ -136,8 +136,9 @@ void ControlServer::handleAccept(socket_ptr socket)
 
 void ControlServer::start()
 {
-	asio::ip::address address = asio::ip::address::from_string("::");
-	tcp::endpoint endpoint(address, port_);
+        tcp::endpoint endpoint(asio::ip::tcp::v4(), port_);
+        LOG(DEBUG) << "Control Server : " << endpoint.address().to_string() << ":" << endpoint.port() << "\n";
+
 	try
 	{
 		acceptor_ = make_shared<tcp::acceptor>(*io_service_, endpoint);

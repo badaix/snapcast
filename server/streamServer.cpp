@@ -385,7 +385,7 @@ void StreamServer::ProcessRequest(const jsonrpcpp::request_ptr request, jsonrpcp
 		{
 			if (request->method.find("Stream.SetMeta") == 0)
 			{
-				/// Request:      {"id":4,"jsonrpc":"2.0","method":"Stream.SetMeta","params":{"stream_id":"Spotify",
+				/// Request:      {"id":4,"jsonrpc":"2.0","method":"Stream.SetMeta","params":{"id":"Spotify",
  				///                "meta": {"album": "some album", "artist": "some artist", "track": "some track"...}}}
 				///
 				/// Response:     {"id":4,"jsonrpc":"2.0","result":{"stream_id":"Spotify"}}
@@ -672,8 +672,8 @@ void StreamServer::start()
 		}
 		streamManager_->start();
 
-		asio::ip::address address = asio::ip::address::from_string("::");
-		tcp::endpoint endpoint(address, settings_.port);
+                tcp::endpoint endpoint(asio::ip::tcp::v4(), settings_.port);
+                LOG(DEBUG) << "Stream Server : " << endpoint.address().to_string() << ":" << endpoint.port() << "\n";
 		try
 		{
 			acceptor_ = make_shared<tcp::acceptor>(*io_service_, endpoint);
