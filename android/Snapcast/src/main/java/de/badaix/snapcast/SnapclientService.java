@@ -70,10 +70,10 @@ public class SnapclientService extends Service {
         if (intent == null)
             return START_NOT_STICKY;
 
-        if (intent.getAction().equals(ACTION_STOP)) {
+        if (ACTION_STOP.equals(intent.getAction())) {
             stopService();
             return START_NOT_STICKY;
-        } else if (intent.getAction().equals(ACTION_START)) {
+        } else if (ACTION_START.equals(intent.getAction())) {
             String host = intent.getStringExtra(EXTRA_HOST);
             int port = intent.getIntExtra(EXTRA_PORT, 1704);
 
@@ -82,7 +82,7 @@ public class SnapclientService extends Service {
             PendingIntent piStop = PendingIntent.getService(this, 0, stopIntent, 0);
 
             NotificationCompat.Builder builder =
-                    new NotificationCompat.Builder(this)
+                    new NotificationCompat.Builder(this, "default_notification_channel_id")
                             .setSmallIcon(R.drawable.ic_media_play)
                             .setTicker(getText(R.string.ticker_text))
                             .setContentTitle(getText(R.string.notification_title))

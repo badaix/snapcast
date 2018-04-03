@@ -36,3 +36,5 @@ GRTAGS
 GTAGS
 build
 bin
+android/.idea
+android/Snapcast/release
