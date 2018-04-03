@@ -111,7 +111,7 @@ else()
         add_definitions(-DHAS_ALSA)
     endif (ALSA_FOUND)
 
-    pkg_search_module(AVAHI REQUIRED avahi-client)
+    pkg_search_module(AVAHI avahi-client)
     if (AVAHI_FOUND)
         add_definitions(-DHAS_AVAHI)
     endif (AVAHI_FOUND)
