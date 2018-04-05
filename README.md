@@ -111,6 +111,8 @@ There is a [snapcast component for Home Assistant](https://home-assistant.io/com
 
 For a webinterface in python, see [snapcastr](https://github.com/xkonni/snapcastr), based on [python-snapcast](https://github.com/happyleavesaoc/python-snapcast). This interface controls client volume and assigns streams to groups.
 
+Another webinterface running on any device, see [snapcast-websockets-ui](https://github.com/derglaus/snapcast-websockets-ui), running entirely in the browser, needs [websockify](https://github.com/novnc/websockify). No configuration needed, features almost all functions, still needs some tuning for the optics.
+
 Setup of audio players/server
 -----------------------------
 Snapcast can be used with a number of different audio players and servers, and so it can be integrated into your favorite audio-player solution and make it synced-multiroom capable.
