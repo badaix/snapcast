@@ -1,3 +1,17 @@
+snapserver (0.14.0) unstable; urgency=low
+
+  * Bugfixes
+    -cmake: fix check for big endian (Issue #367)
+    -cmake: fix linking against libatomic (PR #368)
+    -Snapclient compiles with Android NDK API level 16 (Issue #365)
+  * General
+    -cmake: make dependency on avahi optional (PR #378)
+    -Update external libs (JSON for modern C++, ASIO, AixLog)
+    -Restructured source tree
+    -Moved Android app into seperate project "snapdroid"
+
+ -- Johannes Pohl <snapcast@badaix.de>  Fri, 13 Apr 2018 00:13:37 +0200
+
 snapserver (0.13.0) unstable; urgency=low
 
   * Features
