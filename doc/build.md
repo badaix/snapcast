@@ -161,9 +161,9 @@ Cross compile and install FLAC, ogg, and tremor (only needed once):
 Compile the Snapclient:
 
     $ cd <snapcast dir>/client
-    $ ./build_android_all.sh <android-ndk dir>
+    $ ./build_android_all.sh <android-ndk dir> <snapdroid assets dir>
 
-The binaries for `armeabi` and `x86` will be copied into the Android's assets directory (`<snapcast dir>/android/Snapcast/src/main/assets/bin/`) and so will be bundled with the Snapcast App.
+The binaries for `armeabi` and `x86` will be copied into the Android's assets directory (`<snapdroid assets dir>/bin/`) and so will be bundled with the Snapcast App.
 
 
 ## OpenWrt/LEDE (Cross compile)

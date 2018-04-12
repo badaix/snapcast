@@ -97,7 +97,7 @@ Snapcast can be controlled using a [JSON-RPC API](doc/json_rpc_api/v2_0_0.md):
 * Assign a client to a stream
 * ...
 
-There is an Android client available in [Releases](https://github.com/badaix/snapcast/releases/latest) 
+There is an Android client [snapdroid](https://github.com/badaix/snapdroid) available in [Releases](https://github.com/badaix/snapdroid/releases/latest) 
 
 ![Snapcast for Android](https://raw.githubusercontent.com/badaix/snapcast/master/doc/snapcast_android_scaled.png)
 
