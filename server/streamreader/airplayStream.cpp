@@ -27,10 +27,10 @@ using namespace std;
 
 static string hex2str(string input)
 {
-        typedef unsigned char byte;
-        unsigned long x = strtoul(input.c_str(), 0, 16);
-        byte a[] = {byte(x >> 24), byte(x >> 16), byte(x >> 8), byte(x), 0};
-        return string((char *)a);
+	typedef unsigned char byte;
+	unsigned long x = strtoul(input.c_str(), 0, 16);
+	byte a[] = {byte(x >> 24), byte(x >> 16), byte(x >> 8), byte(x), 0};
+	return string((char *)a);
 }
 
 /*
@@ -45,7 +45,7 @@ AirplayStream::AirplayStream(PcmListener* pcmListener, const StreamUri& uri) : P
 {
 	logStderr_ = true;
 
-        pipePath_ = "/tmp/shairmeta." + cpt::to_string(getpid());
+	pipePath_ = "/tmp/shairmeta." + cpt::to_string(getpid());
 	//cout << "Pipe [" << pipePath_ << "]\n";
 
 	// XXX: Check if pipe exists, delete or throw error
