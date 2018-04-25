@@ -30,7 +30,12 @@ using namespace std;
 using json = nlohmann::json;
 
 
-ControlServer::ControlServer(asio::io_service* io_service, size_t port, ControlMessageReceiver* controlMessageReceiver) : io_service_(io_service), port_(port), controlMessageReceiver_(controlMessageReceiver)
+ControlServer::ControlServer(asio::io_service* io_service, size_t port, ControlMessageReceiver* controlMessageReceiver) : 
+	acceptor_v4_(nullptr),
+	acceptor_v6_(nullptr),
+	io_service_(io_service),
+	port_(port),
+	controlMessageReceiver_(controlMessageReceiver)
 {
 }
 
@@ -102,8 +107,16 @@ void ControlServer::onMessageReceived(ControlSession* connection, const std::str
 
 void ControlServer::startAccept()
 {
-	socket_ptr socket = make_shared<tcp::socket>(*io_service_);
-	acceptor_->async_accept(*socket, bind(&ControlServer::handleAccept, this, socket));
+	if (acceptor_v4_)
+	{
+		socket_ptr socket_v4 = make_shared<tcp::socket>(*io_service_);
+		acceptor_v4_->async_accept(*socket_v4, bind(&ControlServer::handleAccept, this, socket_v4));
+	}
+	if (acceptor_v6_)
+	{
+		socket_ptr socket_v6 = make_shared<tcp::socket>(*io_service_);
+		acceptor_v6_->async_accept(*socket_v6, bind(&ControlServer::handleAccept, this, socket_v6));
+	}
 }
 
 
@@ -136,36 +149,52 @@ void ControlServer::handleAccept(socket_ptr socket)
 
 void ControlServer::start()
 {
-	asio::ip::address address = asio::ip::address::from_string("::");
-	tcp::endpoint endpoint(address, port_);
+	bool is_v6_only(true);
+	tcp::endpoint endpoint_v6(tcp::v6(), port_);
 	try
 	{
-		acceptor_ = make_shared<tcp::acceptor>(*io_service_, endpoint);
+		acceptor_v6_ = make_shared<tcp::acceptor>(*io_service_, endpoint_v6);
+		error_code ec;
+		acceptor_v6_->set_option(asio::ip::v6_only(false), ec);
+		asio::ip::v6_only option;
+		acceptor_v6_->get_option(option);
+		is_v6_only = option.value();
+		LOG(DEBUG) << "IPv6 only: " << is_v6_only << "\n";
 	}
 	catch (const asio::system_error& e)
 	{
 		LOG(ERROR) << "error creating TCP acceptor: " << e.what() << ", code: " << e.code() << "\n";
-		if (e.code().value() == asio::error::address_family_not_supported)
-		{
-			endpoint = tcp::endpoint(tcp::v4(), port_);
-			acceptor_ = make_shared<tcp::acceptor>(*io_service_, endpoint);
-		}
-		else
-			throw;
 	}
-	if (endpoint.protocol() == tcp::v6())
+
+	if (!acceptor_v6_ || is_v6_only)
 	{
-		error_code ec;
-		acceptor_->set_option(asio::ip::v6_only(false), ec);
+		tcp::endpoint endpoint_v4(tcp::v4(), port_);
+		try
+		{
+			acceptor_v4_ = make_shared<tcp::acceptor>(*io_service_, endpoint_v4);
+		}
+		catch (const asio::system_error& e)
+		{
+			LOG(ERROR) << "error creating TCP acceptor: " << e.what() << ", code: " << e.code() << "\n";
+		}
 	}
+
 	startAccept();
 }
 
 
 void ControlServer::stop()
 {
-	if (acceptor_)	
-		acceptor_->cancel();
+	if (acceptor_v4_)
+	{
+		acceptor_v4_->cancel();
+		acceptor_v4_ = nullptr;
+	}
+	if (acceptor_v6_)
+	{
+		acceptor_v6_->cancel();
+		acceptor_v6_ = nullptr;
+	}
 	std::lock_guard<std::recursive_mutex> mlock(mutex_);
 	for (auto s: sessions_)
 		s->stop();

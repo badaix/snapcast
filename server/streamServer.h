@@ -106,7 +106,8 @@ private:
 	mutable std::recursive_mutex sessionsMutex_;
 	std::set<session_ptr> sessions_;
 	asio::io_service* io_service_;
-	std::shared_ptr<tcp::acceptor> acceptor_;
+	std::shared_ptr<tcp::acceptor> acceptor_v4_;
+	std::shared_ptr<tcp::acceptor> acceptor_v6_;
 
 	StreamServerSettings settings_;
 	Queue<std::shared_ptr<msg::BaseMessage>> messages_;

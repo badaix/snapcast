@@ -29,7 +29,11 @@ using namespace std;
 using json = nlohmann::json;
 
 
-StreamServer::StreamServer(asio::io_service* io_service, const StreamServerSettings& streamServerSettings) : io_service_(io_service), settings_(streamServerSettings)
+StreamServer::StreamServer(asio::io_service* io_service, const StreamServerSettings& streamServerSettings) : 
+	io_service_(io_service), 
+	acceptor_v4_(nullptr),
+	acceptor_v6_(nullptr),
+	settings_(streamServerSettings)
 {
 }
 
@@ -385,7 +389,7 @@ void StreamServer::ProcessRequest(const jsonrpcpp::request_ptr request, jsonrpcp
 		{
 			if (request->method.find("Stream.SetMeta") == 0)
 			{
-				/// Request:      {"id":4,"jsonrpc":"2.0","method":"Stream.SetMeta","params":{"stream_id":"Spotify",
+				/// Request:      {"id":4,"jsonrpc":"2.0","method":"Stream.SetMeta","params":{"id":"Spotify",
  				///                "meta": {"album": "some album", "artist": "some artist", "track": "some track"...}}}
 				///
 				/// Response:     {"id":4,"jsonrpc":"2.0","result":{"stream_id":"Spotify"}}
@@ -620,8 +624,16 @@ session_ptr StreamServer::getStreamSession(const std::string& clientId) const
 
 void StreamServer::startAccept()
 {
-	socket_ptr socket = make_shared<tcp::socket>(*io_service_);
-	acceptor_->async_accept(*socket, bind(&StreamServer::handleAccept, this, socket));
+	if (acceptor_v4_)
+	{
+		socket_ptr socket_v4 = make_shared<tcp::socket>(*io_service_);
+		acceptor_v4_->async_accept(*socket_v4, bind(&StreamServer::handleAccept, this, socket_v4));
+	}
+	if (acceptor_v6_)
+	{
+		socket_ptr socket_v6 = make_shared<tcp::socket>(*io_service_);
+		acceptor_v6_->async_accept(*socket_v6, bind(&StreamServer::handleAccept, this, socket_v6));
+	}
 }
 
 
@@ -672,29 +684,36 @@ void StreamServer::start()
 		}
 		streamManager_->start();
 
-		asio::ip::address address = asio::ip::address::from_string("::");
-		tcp::endpoint endpoint(address, settings_.port);
+		bool is_v6_only(true);
+		tcp::endpoint endpoint_v6(tcp::v6(), settings_.port);
 		try
 		{
-			acceptor_ = make_shared<tcp::acceptor>(*io_service_, endpoint);
+			acceptor_v6_ = make_shared<tcp::acceptor>(*io_service_, endpoint_v6);
+			error_code ec;
+			acceptor_v6_->set_option(asio::ip::v6_only(false), ec);
+			asio::ip::v6_only option;
+			acceptor_v6_->get_option(option);
+			is_v6_only = option.value();
+			LOG(DEBUG) << "IPv6 only: " << is_v6_only << "\n";
 		}
 		catch (const asio::system_error& e)
 		{
 			LOG(ERROR) << "error creating TCP acceptor: " << e.what() << ", code: " << e.code() << "\n";
-			if (e.code().value() == asio::error::address_family_not_supported)
-			{
-				endpoint = tcp::endpoint(tcp::v4(), settings_.port);
-				acceptor_ = make_shared<tcp::acceptor>(*io_service_, endpoint);
-			}
-			else
-				throw;
 		}
 
-		if (endpoint.protocol() == tcp::v6())
+		if (!acceptor_v6_ || is_v6_only)
 		{
-			error_code ec;
-			acceptor_->set_option(asio::ip::v6_only(false), ec);
+			tcp::endpoint endpoint_v4(tcp::v4(), settings_.port);
+			try
+			{
+				acceptor_v4_ = make_shared<tcp::acceptor>(*io_service_, endpoint_v4);
+			}
+			catch (const asio::system_error& e)
+			{
+				LOG(ERROR) << "error creating TCP acceptor: " << e.what() << ", code: " << e.code() << "\n";
+			}
 		}
+
 		startAccept();
 	}
 	catch (const std::exception& e)
@@ -733,10 +752,15 @@ void StreamServer::stop()
 		controlServer_ = nullptr;
 	}
 
-	if (acceptor_)
+	if (acceptor_v4_)
 	{
-		acceptor_->cancel();
-		acceptor_ = nullptr;
+		acceptor_v4_->cancel();
+		acceptor_v4_ = nullptr;
+	}
+	if (acceptor_v6_)
+	{
+		acceptor_v6_->cancel();
+		acceptor_v6_ = nullptr;
 	}
 }
 

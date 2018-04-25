@@ -65,7 +65,8 @@ private:
 //	void acceptor();
 	mutable std::recursive_mutex mutex_;
 	std::set<std::shared_ptr<ControlSession>> sessions_;
-	std::shared_ptr<tcp::acceptor> acceptor_;
+	std::shared_ptr<tcp::acceptor> acceptor_v4_;
+	std::shared_ptr<tcp::acceptor> acceptor_v6_;
 
 	Queue<std::shared_ptr<msg::BaseMessage>> messages_;
 	asio::io_service* io_service_;
