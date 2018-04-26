@@ -21,13 +21,11 @@ set(SERVER_SOURCES
 
 set(SERVER_LIBRARIES
     ${CMAKE_THREAD_LIBS_INIT}
-    ${FLAC_LIBRARIES}
     common)
 
 set(SERVER_INCLUDE
     ${CMAKE_SOURCE_DIR}/server
-    ${CMAKE_SOURCE_DIR}/common
-    ${FLAC_INCLUDE_DIRS})
+    ${CMAKE_SOURCE_DIR}/common)
 
 # Avahi
 if (AVAHI_FOUND)

@@ -8,13 +8,25 @@ option(BUILD_SHARED_LIBS "Build snapcast in a shared context" ON)
 option(BUILD_STATIC_LIBS "Build snapcast in a static context" ON)
 option(BUILD_TESTS "Build tests (run tests with make test)" ON)
 
+option(BUILD_SERVER "Build Snapserver" ON)
+option(BUILD_CLIENT "Build Snapclient" ON)
+
+
 if (NOT BUILD_SHARED_LIBS AND NOT BUILD_STATIC_LIBS)
-    message(FATAL_ERROR "One or both of BUILD_SHARED_LIBS or BUILD_STATIC_LIBS"
-                        "must be set to ON to build")
+    message(FATAL_ERROR "One or both of BUILD_SHARED_LIBS or BUILD_STATIC_LIBS must be set to ON to build")
+endif()
+
+if (NOT BUILD_CLIENT AND NOT BUILD_SERVER)
+    message(FATAL_ERROR "One or both of BUILD_CLIENT or BUILD_SERVER must be set to ON to build")
 endif()
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     set(MACOSX TRUE)
+elseif (${CMAKE_SYSTEM_NAME} MATCHES "FreeBSD")
+    set (FREEBSD TRUE)
+    if (BUILD_CLIENT)
+        message(FATAL_ERROR "Snapclient not yet supported for FreeBSD")
+    endif()
 elseif (${CMAKE_SYSTEM_NAME} MATCHES "Android")
     set (ANDROID TRUE)
     message(FATAL_ERROR "Android not yet supported")
@@ -37,6 +49,7 @@ endif()
 
 include_directories("${CMAKE_SOURCE_DIR}"
     "${CMAKE_SOURCE_DIR}/externals/asio/asio/include"
+    "/usr/local/include"
 )
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/")
@@ -89,6 +102,7 @@ else()
     message(FATAL_ERROR "Need to have asio installed")
 endif()
 
+list(APPEND CMAKE_REQUIRED_INCLUDES "/usr/local/include")
 check_include_file_cxx(popl.hpp HAS_POPL_HPP -std=c++11)
 if(NOT HAS_POPL_HPP)
     message(FATAL_ERROR "Need to have popl installed")
@@ -116,10 +130,12 @@ if(MACOSX)
 elseif(ANDROID)
 #    add_definitions("-DNO_CPP11_STRING")
 else()
-    pkg_search_module(ALSA REQUIRED alsa)
-    if (ALSA_FOUND)
-        add_definitions(-DHAS_ALSA)
-    endif (ALSA_FOUND)
+    if (BUILD_CLIENT)
+        pkg_search_module(ALSA REQUIRED alsa)
+        if (ALSA_FOUND)
+            add_definitions(-DHAS_ALSA)
+        endif (ALSA_FOUND)
+    endif()
 
     pkg_search_module(AVAHI avahi-client)
     if (AVAHI_FOUND)
@@ -127,6 +143,11 @@ else()
     endif (AVAHI_FOUND)
 
     add_definitions(-DHAS_DAEMON)
+
+    if(FREEBSD)
+        add_definitions(-DFREEBSD)
+        link_directories("/usr/local/lib")
+    endif()
 endif()
 
 pkg_search_module(FLAC flac)
@@ -156,5 +177,11 @@ endif()
 
 
 add_subdirectory(common)
-add_subdirectory(server)
-add_subdirectory(client)
+
+if (BUILD_SERVER)
+    add_subdirectory(server)
+endif()
+
+if (BUILD_CLIENT)
+    add_subdirectory(client)
+endif()
