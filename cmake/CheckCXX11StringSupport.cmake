@@ -34,8 +34,6 @@ See also: https://stackoverflow.com/questions/17950814/how-to-use-stdstoul-and-s
 #]=======================================================================]
 
 
-include_guard(GLOBAL)
-
 include(CheckCXXSourceCompiles)
 
 macro (CHECK_CXX11_STRING_SUPPORT _RESULT)
