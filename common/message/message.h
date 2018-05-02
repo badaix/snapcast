@@ -28,7 +28,7 @@
 #include "common/endian.hpp"
 #include "common/timeDefs.h"
 
-
+/*
 template<typename CharT, typename TraitsT = std::char_traits<CharT> >
 class vectorwrapbuf : public std::basic_streambuf<CharT, TraitsT>
 {
@@ -38,7 +38,7 @@ public:
 		this->setg(vec.data(), vec.data(), vec.data() + vec.size());
 	}
 };
-
+*/
 
 struct membuf : public std::basic_streambuf<char>
 {
