@@ -13,7 +13,7 @@ snapclient (0.14.0) unstable; urgency=low
     -cmake: works on FreeBSD
     -Update external libs (JSON for modern C++, ASIO, AixLog)
     -Restructured source tree
-    -Moved Android app into seperate project "snapdroid"
+    -Moved Android app into separate project "snapdroid"
 
  -- Johannes Pohl <snapcast@badaix.de>  Fri, 27 Apr 2018 00:13:37 +0200
 
