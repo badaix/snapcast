@@ -25,23 +25,32 @@ show version number
 \fB-l, --list\fR
 list pcm devices
 .TP
-\fB-h, --host\fR
-server hostname or ip address
-.TP
-\fB-p, --port\fR
-server port
-.TP
-\fB-s, --soundcard\fR
+\fB-s, --soundcard arg (=default)\fR
 index or name of the soundcard
 .TP
-\fB-d, --daemon\fR
+\fB-e, --mstderr\fR
+send metadata to stderr
+.TP
+\fB-h, --host arg\fR
+server hostname or ip address
+.TP
+\fB-p, --port arg (=1704)\fR
+server port
+.TP
+\fB-d, --daemon [=arg(=-3)]\fR
 daemonize, optional process priority [-20..19]
 .TP
-\fB--user\fR
+\fB--user arg\fR
 the user[:group] to run snapclient as when daemonized
 .TP
-\fB--latency\fR
+\fB--latency arg (=0)\fR
 latency of the soundcard
+.TP
+\fB-i, --instance arg (=1)\fR
+instance id
+.TP
+\fB--hostID arg\fR
+unique host id
 .SH FILES
 .TP
 \fI/etc/default/snapclient\fR

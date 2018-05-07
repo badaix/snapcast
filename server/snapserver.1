@@ -16,41 +16,45 @@ which can be configured to use a named pipe as audio output.
 .SS Options
 .TP
 \fB-h, --help\fR
-produce help message
+Produce help message
 .TP
 \fB-v, --version\fR
-show version number
+Show version number
 .TP
-\fB-p, --port\fR
-server port
+\fB-p, --port arg (=1704)\fR
+Server port
 .TP
-\fB--controlPort\fR
-Remote control port (default =1705)
+\fB--controlPort arg (=1705)\fR
+Remote control port
 .TP
-\fB-s, --stream\fR
-URI of the PCM input stream. Format:
-.br
-TYPE://host/path?name=NAME[&codec=CODEC][&sampleformat=SAMPLEFORMAT]
+\fB-s, --stream arg (=pipe:///tmp/snapfifo?name=default)\fR
+URI of the PCM input stream.
+Format: TYPE://host/path?name=NAME
+[&codec=CODEC]
+[&sampleformat=SAMPLEFORMAT]
 .TP
-\fB--sampleformat\fR
-default sample format (default = 48000:16:2)
+\fB--sampleformat arg (=48000:16:2)\fR
+Default sample format
 .TP
-\fB--codec\fR
-default transport codec [flac|ogg|pcm][:options]. Type codec:? to get codec specific options
+\fB-c, --codec arg (=flac)\fR
+Default transport codec
+(flac|ogg|pcm)[:options]
+Type codec:? to get codec specific options
 .TP
-\fB--streamBuffer\fR
-Default stream read buffer [ms] (default = 20)
+\fB--streamBuffer arg (=20)\fR
+Default stream read buffer [ms]
 .TP
-\fB-b, --buffer\fR
-buffer [ms] (default = 1000)
+\fB-b, --buffer arg (=1000)\fR
+Buffer [ms]
 .TP
-\fB-b, --sendToMuted\fR
+\fB--sendToMuted\fR
 Send audio to muted clients
 .TP
-\fB-d, --daemon\fR
-daemonize, optional process priority [-20..19]
+\fB-d, --daemon [=arg(=0)]\fR
+Daemonize
+optional process priority [-20..19]
 .TP
-\fB--user\fR
+\fB--user arg\fR
 the user[:group] to run snapserver as when daemonized
 .SH FILES
 .TP
