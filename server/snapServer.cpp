@@ -60,7 +60,8 @@ int main(int argc, char* argv[])
 
 		OptionParser op("Allowed options");
 		auto helpSwitch =        op.add<Switch>("h", "help", "Produce help message");
-		auto debugOption =       op.add<Implicit<string>, Visibility::hidden>("", "debug", "enable debug logging", "");
+		auto groffSwitch =       op.add<Switch, Attribute::hidden>("", "groff", "produce groff message");
+		auto debugOption =       op.add<Implicit<string>, Attribute::hidden>("", "debug", "enable debug logging", "");
 		auto versionSwitch =     op.add<Switch>("v", "version", "Show version number");
 		/*auto portValue =*/         op.add<Value<size_t>>("p", "port", "Server port", settings.port, &settings.port);
 		/*auto controlPortValue =*/  op.add<Value<size_t>>("", "controlPort", "Remote control port", settings.controlPort, &settings.controlPort);
@@ -102,6 +103,13 @@ int main(int argc, char* argv[])
 		if (helpSwitch->is_set())
 		{
 			cout << op << "\n";
+			exit(EXIT_SUCCESS);
+		}
+
+		if (groffSwitch->is_set())
+		{
+			GroffOptionPrinter option_printer(&op);
+			cout << option_printer.print();
 			exit(EXIT_SUCCESS);
 		}
 

@@ -83,7 +83,8 @@ int main (int argc, char **argv)
 
 		OptionParser op("Allowed options");
 		auto helpSwitch =     op.add<Switch>("", "help", "produce help message");
-		auto debugOption =    op.add<Implicit<string>, Visibility::hidden>("", "debug", "enable debug logging", "");
+		auto groffSwitch =    op.add<Switch, Attribute::hidden>("", "groff", "produce groff message");
+		auto debugOption =    op.add<Implicit<string>, Attribute::hidden>("", "debug", "enable debug logging", "");
 		auto versionSwitch =  op.add<Switch>("v", "version", "show version number");
 #if defined(HAS_ALSA)
 		auto listSwitch =     op.add<Switch>("l", "list", "list pcm devices");
@@ -140,6 +141,13 @@ int main (int argc, char **argv)
 		if (helpSwitch->is_set())
 		{
 			cout << op << "\n";
+			exit(EXIT_SUCCESS);
+		}
+
+		if (groffSwitch->is_set())
+		{
+			GroffOptionPrinter option_printer(&op);
+			cout << option_printer.print();
 			exit(EXIT_SUCCESS);
 		}
 
