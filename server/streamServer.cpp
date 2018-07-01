@@ -151,36 +151,36 @@ void StreamServer::ProcessRequest(const jsonrpcpp::request_ptr request, jsonrpcp
 {
 	try
 	{
-		////LOG(INFO) << "StreamServer::ProcessRequest method: " << request->method << ", " << "id: " << request->id << "\n";
+		////LOG(INFO) << "StreamServer::ProcessRequest method: " << request->method << ", " << "id: " << request->id() << "\n";
 		Json result;
 
-		if (request->method.find("Client.") == 0)
+		if (request->method().find("Client.") == 0)
 		{
-			ClientInfoPtr clientInfo = Config::instance().getClientInfo(request->params.get("id"));
+			ClientInfoPtr clientInfo = Config::instance().getClientInfo(request->params().get("id"));
 			if (clientInfo == nullptr)
-				throw jsonrpcpp::InternalErrorException("Client not found", request->id);
+				throw jsonrpcpp::InternalErrorException("Client not found", request->id());
 
-			if (request->method == "Client.GetStatus")
+			if (request->method() == "Client.GetStatus")
 			{
 				/// Request:      {"id":8,"jsonrpc":"2.0","method":"Client.GetStatus","params":{"id":"00:21:6a:7d:74:fc"}}
 				/// Response:     {"id":8,"jsonrpc":"2.0","result":{"client":{"config":{"instance":1,"latency":0,"name":"","volume":{"muted":false,"percent":74}},"connected":true,"host":{"arch":"x86_64","ip":"127.0.0.1","mac":"00:21:6a:7d:74:fc","name":"T400","os":"Linux Mint 17.3 Rosa"},"id":"00:21:6a:7d:74:fc","lastSeen":{"sec":1488026416,"usec":135973},"snapclient":{"name":"Snapclient","protocolVersion":2,"version":"0.10.0"}}}}
 				result["client"] = clientInfo->toJson();
 			}
-			else if (request->method == "Client.SetVolume")
+			else if (request->method() == "Client.SetVolume")
 			{
 				/// Request:      {"id":8,"jsonrpc":"2.0","method":"Client.SetVolume","params":{"id":"00:21:6a:7d:74:fc","volume":{"muted":false,"percent":74}}}
 				/// Response:     {"id":8,"jsonrpc":"2.0","result":{"volume":{"muted":false,"percent":74}}}
 				/// Notification: {"jsonrpc":"2.0","method":"Client.OnVolumeChanged","params":{"id":"00:21:6a:7d:74:fc","volume":{"muted":false,"percent":74}}}
-				clientInfo->config.volume.fromJson(request->params.get("volume"));
+				clientInfo->config.volume.fromJson(request->params().get("volume"));
 				result["volume"] = clientInfo->config.volume.toJson();
 				notification.reset(new jsonrpcpp::Notification("Client.OnVolumeChanged", jsonrpcpp::Parameter("id", clientInfo->id, "volume", clientInfo->config.volume.toJson())));
 			}
-			else if (request->method == "Client.SetLatency")
+			else if (request->method() == "Client.SetLatency")
 			{
 				/// Request:      {"id":7,"jsonrpc":"2.0","method":"Client.SetLatency","params":{"id":"00:21:6a:7d:74:fc#2","latency":10}}
 				/// Response:     {"id":7,"jsonrpc":"2.0","result":{"latency":10}}
 				/// Notification: {"jsonrpc":"2.0","method":"Client.OnLatencyChanged","params":{"id":"00:21:6a:7d:74:fc#2","latency":10}}
-				int latency = request->params.get("latency");
+				int latency = request->params().get("latency");
 				if (latency < -10000)
 					latency = -10000;
 				else if (latency > settings_.bufferMs)
@@ -189,20 +189,20 @@ void StreamServer::ProcessRequest(const jsonrpcpp::request_ptr request, jsonrpcp
 				result["latency"] = clientInfo->config.latency;
 				notification.reset(new jsonrpcpp::Notification("Client.OnLatencyChanged", jsonrpcpp::Parameter("id", clientInfo->id, "latency", clientInfo->config.latency)));
 			}
-			else if (request->method == "Client.SetName")
+			else if (request->method() == "Client.SetName")
 			{
 				/// Request:      {"id":6,"jsonrpc":"2.0","method":"Client.SetName","params":{"id":"00:21:6a:7d:74:fc#2","name":"Laptop"}}
 				/// Response:     {"id":6,"jsonrpc":"2.0","result":{"name":"Laptop"}}
 				/// Notification: {"jsonrpc":"2.0","method":"Client.OnNameChanged","params":{"id":"00:21:6a:7d:74:fc#2","name":"Laptop"}}
-				clientInfo->config.name = request->params.get("name");
+				clientInfo->config.name = request->params().get("name");
 				result["name"] = clientInfo->config.name;
 				notification.reset(new jsonrpcpp::Notification("Client.OnNameChanged", jsonrpcpp::Parameter("id", clientInfo->id, "name", clientInfo->config.name)));
 			}
 			else
-				throw jsonrpcpp::MethodNotFoundException(request->id);
+				throw jsonrpcpp::MethodNotFoundException(request->id());
 
 
-			if (request->method.find("Client.Set") == 0)
+			if (request->method().find("Client.Set") == 0)
 			{
 				/// Update client
 				session_ptr session = getStreamSession(clientInfo->id);
@@ -218,24 +218,24 @@ void StreamServer::ProcessRequest(const jsonrpcpp::request_ptr request, jsonrpcp
 				}
 			}
 		}
-		else if (request->method.find("Group.") == 0)
+		else if (request->method().find("Group.") == 0)
 		{
-			GroupPtr group = Config::instance().getGroup(request->params.get("id"));
+			GroupPtr group = Config::instance().getGroup(request->params().get("id"));
 			if (group == nullptr)
-				throw jsonrpcpp::InternalErrorException("Group not found", request->id);
+				throw jsonrpcpp::InternalErrorException("Group not found", request->id());
 
-			if (request->method == "Group.GetStatus")
+			if (request->method() == "Group.GetStatus")
 			{
 				/// Request:      {"id":5,"jsonrpc":"2.0","method":"Group.GetStatus","params":{"id":"4dcc4e3b-c699-a04b-7f0c-8260d23c43e1"}}
 				/// Response:     {"id":5,"jsonrpc":"2.0","result":{"group":{"clients":[{"config":{"instance":2,"latency":10,"name":"Laptop","volume":{"muted":false,"percent":48}},"connected":true,"host":{"arch":"x86_64","ip":"127.0.0.1","mac":"00:21:6a:7d:74:fc","name":"T400","os":"Linux Mint 17.3 Rosa"},"id":"00:21:6a:7d:74:fc#2","lastSeen":{"sec":1488026485,"usec":644997},"snapclient":{"name":"Snapclient","protocolVersion":2,"version":"0.10.0"}},{"config":{"instance":1,"latency":0,"name":"","volume":{"muted":false,"percent":74}},"connected":true,"host":{"arch":"x86_64","ip":"127.0.0.1","mac":"00:21:6a:7d:74:fc","name":"T400","os":"Linux Mint 17.3 Rosa"},"id":"00:21:6a:7d:74:fc","lastSeen":{"sec":1488026481,"usec":223747},"snapclient":{"name":"Snapclient","protocolVersion":2,"version":"0.10.0"}}],"id":"4dcc4e3b-c699-a04b-7f0c-8260d23c43e1","muted":true,"name":"","stream_id":"stream 1"}}}
 				result["group"] = group->toJson();
 			}
-			else if (request->method == "Group.SetMute")
+			else if (request->method() == "Group.SetMute")
 			{
 				/// Request:      {"id":5,"jsonrpc":"2.0","method":"Group.SetMute","params":{"id":"4dcc4e3b-c699-a04b-7f0c-8260d23c43e1","mute":true}}
 				/// Response:     {"id":5,"jsonrpc":"2.0","result":{"mute":true}}
 				/// Notification: {"jsonrpc":"2.0","method":"Group.OnMute","params":{"id":"4dcc4e3b-c699-a04b-7f0c-8260d23c43e1","mute":true}}
-				bool muted = request->params.get<bool>("mute");
+				bool muted = request->params().get<bool>("mute");
 				group->muted = muted;				
 
 				/// Update clients
@@ -257,15 +257,15 @@ void StreamServer::ProcessRequest(const jsonrpcpp::request_ptr request, jsonrpcp
 				result["mute"] = group->muted;
 				notification.reset(new jsonrpcpp::Notification("Group.OnMute", jsonrpcpp::Parameter("id", group->id, "mute", group->muted)));
 			}
-			else if (request->method == "Group.SetStream")
+			else if (request->method() == "Group.SetStream")
 			{
 				/// Request:      {"id":4,"jsonrpc":"2.0","method":"Group.SetStream","params":{"id":"4dcc4e3b-c699-a04b-7f0c-8260d23c43e1","stream_id":"stream 1"}}
 				/// Response:     {"id":4,"jsonrpc":"2.0","result":{"stream_id":"stream 1"}}
 				/// Notification: {"jsonrpc":"2.0","method":"Group.OnStreamChanged","params":{"id":"4dcc4e3b-c699-a04b-7f0c-8260d23c43e1","stream_id":"stream 1"}}
-				string streamId = request->params.get("stream_id");
+				string streamId = request->params().get("stream_id");
 				PcmStreamPtr stream = streamManager_->getStream(streamId);
 				if (stream == nullptr)
-					throw jsonrpcpp::InternalErrorException("Stream not found", request->id);
+					throw jsonrpcpp::InternalErrorException("Stream not found", request->id());
 
 				group->streamId = streamId;
 
@@ -285,12 +285,12 @@ void StreamServer::ProcessRequest(const jsonrpcpp::request_ptr request, jsonrpcp
 				result["stream_id"] = group->streamId;
 				notification.reset(new jsonrpcpp::Notification("Group.OnStreamChanged", jsonrpcpp::Parameter("id", group->id, "stream_id", group->streamId)));
 			}
-			else if (request->method == "Group.SetClients")
+			else if (request->method() == "Group.SetClients")
 			{
 				/// Request:      {"id":3,"jsonrpc":"2.0","method":"Group.SetClients","params":{"clients":["00:21:6a:7d:74:fc#2","00:21:6a:7d:74:fc"],"id":"4dcc4e3b-c699-a04b-7f0c-8260d23c43e1"}}
 				/// Response:     {"id":3,"jsonrpc":"2.0","result":{"server":{"groups":[{"clients":[{"config":{"instance":2,"latency":6,"name":"123 456","volume":{"muted":false,"percent":48}},"connected":true,"host":{"arch":"x86_64","ip":"127.0.0.1","mac":"00:21:6a:7d:74:fc","name":"T400","os":"Linux Mint 17.3 Rosa"},"id":"00:21:6a:7d:74:fc#2","lastSeen":{"sec":1488025901,"usec":864472},"snapclient":{"name":"Snapclient","protocolVersion":2,"version":"0.10.0"}},{"config":{"instance":1,"latency":0,"name":"","volume":{"muted":false,"percent":100}},"connected":true,"host":{"arch":"x86_64","ip":"127.0.0.1","mac":"00:21:6a:7d:74:fc","name":"T400","os":"Linux Mint 17.3 Rosa"},"id":"00:21:6a:7d:74:fc","lastSeen":{"sec":1488025905,"usec":45238},"snapclient":{"name":"Snapclient","protocolVersion":2,"version":"0.10.0"}}],"id":"4dcc4e3b-c699-a04b-7f0c-8260d23c43e1","muted":false,"name":"","stream_id":"stream 2"}],"server":{"host":{"arch":"x86_64","ip":"","mac":"","name":"T400","os":"Linux Mint 17.3 Rosa"},"snapserver":{"controlProtocolVersion":1,"name":"Snapserver","protocolVersion":1,"version":"0.10.0"}},"streams":[{"id":"stream 1","status":"idle","uri":{"fragment":"","host":"","path":"/tmp/snapfifo","query":{"buffer_ms":"20","codec":"flac","name":"stream 1","sampleformat":"48000:16:2"},"raw":"pipe:///tmp/snapfifo?name=stream 1","scheme":"pipe"}},{"id":"stream 2","status":"idle","uri":{"fragment":"","host":"","path":"/tmp/snapfifo","query":{"buffer_ms":"20","codec":"flac","name":"stream 2","sampleformat":"48000:16:2"},"raw":"pipe:///tmp/snapfifo?name=stream 2","scheme":"pipe"}}]}}}
 				/// Notification: {"jsonrpc":"2.0","method":"Server.OnUpdate","params":{"server":{"groups":[{"clients":[{"config":{"instance":2,"latency":6,"name":"123 456","volume":{"muted":false,"percent":48}},"connected":true,"host":{"arch":"x86_64","ip":"127.0.0.1","mac":"00:21:6a:7d:74:fc","name":"T400","os":"Linux Mint 17.3 Rosa"},"id":"00:21:6a:7d:74:fc#2","lastSeen":{"sec":1488025901,"usec":864472},"snapclient":{"name":"Snapclient","protocolVersion":2,"version":"0.10.0"}},{"config":{"instance":1,"latency":0,"name":"","volume":{"muted":false,"percent":100}},"connected":true,"host":{"arch":"x86_64","ip":"127.0.0.1","mac":"00:21:6a:7d:74:fc","name":"T400","os":"Linux Mint 17.3 Rosa"},"id":"00:21:6a:7d:74:fc","lastSeen":{"sec":1488025905,"usec":45238},"snapclient":{"name":"Snapclient","protocolVersion":2,"version":"0.10.0"}}],"id":"4dcc4e3b-c699-a04b-7f0c-8260d23c43e1","muted":false,"name":"","stream_id":"stream 2"}],"server":{"host":{"arch":"x86_64","ip":"","mac":"","name":"T400","os":"Linux Mint 17.3 Rosa"},"snapserver":{"controlProtocolVersion":1,"name":"Snapserver","protocolVersion":1,"version":"0.10.0"}},"streams":[{"id":"stream 1","status":"idle","uri":{"fragment":"","host":"","path":"/tmp/snapfifo","query":{"buffer_ms":"20","codec":"flac","name":"stream 1","sampleformat":"48000:16:2"},"raw":"pipe:///tmp/snapfifo?name=stream 1","scheme":"pipe"}},{"id":"stream 2","status":"idle","uri":{"fragment":"","host":"","path":"/tmp/snapfifo","query":{"buffer_ms":"20","codec":"flac","name":"stream 2","sampleformat":"48000:16:2"},"raw":"pipe:///tmp/snapfifo?name=stream 2","scheme":"pipe"}}]}}}
-				vector<string> clients = request->params.get("clients");
+				vector<string> clients = request->params().get("clients");
 				/// Remove clients from group
 				for (auto iter = group->clients.begin(); iter != group->clients.end();)
 				{
@@ -344,11 +344,11 @@ void StreamServer::ProcessRequest(const jsonrpcpp::request_ptr request, jsonrpcp
 				notification.reset(new jsonrpcpp::Notification("Server.OnUpdate", jsonrpcpp::Parameter("server", server)));
 			}
 			else
-				throw jsonrpcpp::MethodNotFoundException(request->id);
+				throw jsonrpcpp::MethodNotFoundException(request->id());
 		}
-		else if (request->method.find("Server.") == 0)
+		else if (request->method().find("Server.") == 0)
 		{
-			if (request->method.find("Server.GetRPCVersion") == 0)
+			if (request->method().find("Server.GetRPCVersion") == 0)
 			{
 				/// Request:      {"id":8,"jsonrpc":"2.0","method":"Server.GetRPCVersion"}
 				/// Response:     {"id":8,"jsonrpc":"2.0","result":{"major":2,"minor":0,"patch":0}}
@@ -359,20 +359,20 @@ void StreamServer::ProcessRequest(const jsonrpcpp::request_ptr request, jsonrpcp
 				// <patch>: bugfix release
 				result["patch"] = 0;
 			}
-			else if (request->method == "Server.GetStatus")
+			else if (request->method() == "Server.GetStatus")
 			{
 				/// Request:      {"id":1,"jsonrpc":"2.0","method":"Server.GetStatus"}
 				/// Response:     {"id":1,"jsonrpc":"2.0","result":{"server":{"groups":[{"clients":[{"config":{"instance":2,"latency":6,"name":"123 456","volume":{"muted":false,"percent":48}},"connected":true,"host":{"arch":"x86_64","ip":"127.0.0.1","mac":"00:21:6a:7d:74:fc","name":"T400","os":"Linux Mint 17.3 Rosa"},"id":"00:21:6a:7d:74:fc#2","lastSeen":{"sec":1488025696,"usec":578142},"snapclient":{"name":"Snapclient","protocolVersion":2,"version":"0.10.0"}},{"config":{"instance":1,"latency":0,"name":"","volume":{"muted":false,"percent":81}},"connected":true,"host":{"arch":"x86_64","ip":"192.168.0.54","mac":"00:21:6a:7d:74:fc","name":"T400","os":"Linux Mint 17.3 Rosa"},"id":"00:21:6a:7d:74:fc","lastSeen":{"sec":1488025696,"usec":611255},"snapclient":{"name":"Snapclient","protocolVersion":2,"version":"0.10.0"}}],"id":"4dcc4e3b-c699-a04b-7f0c-8260d23c43e1","muted":false,"name":"","stream_id":"stream 2"}],"server":{"host":{"arch":"x86_64","ip":"","mac":"","name":"T400","os":"Linux Mint 17.3 Rosa"},"snapserver":{"controlProtocolVersion":1,"name":"Snapserver","protocolVersion":1,"version":"0.10.0"}},"streams":[{"id":"stream 1","status":"idle","uri":{"fragment":"","host":"","path":"/tmp/snapfifo","query":{"buffer_ms":"20","codec":"flac","name":"stream 1","sampleformat":"48000:16:2"},"raw":"pipe:///tmp/snapfifo?name=stream 1","scheme":"pipe"}},{"id":"stream 2","status":"idle","uri":{"fragment":"","host":"","path":"/tmp/snapfifo","query":{"buffer_ms":"20","codec":"flac","name":"stream 2","sampleformat":"48000:16:2"},"raw":"pipe:///tmp/snapfifo?name=stream 2","scheme":"pipe"}}]}}}
 				result["server"] = Config::instance().getServerStatus(streamManager_->toJson());
 			}
-			else if (request->method == "Server.DeleteClient")
+			else if (request->method() == "Server.DeleteClient")
 			{
 				/// Request:      {"id":2,"jsonrpc":"2.0","method":"Server.DeleteClient","params":{"id":"00:21:6a:7d:74:fc"}}
 				/// Response:     {"id":2,"jsonrpc":"2.0","result":{"server":{"groups":[{"clients":[{"config":{"instance":2,"latency":6,"name":"123 456","volume":{"muted":false,"percent":48}},"connected":true,"host":{"arch":"x86_64","ip":"127.0.0.1","mac":"00:21:6a:7d:74:fc","name":"T400","os":"Linux Mint 17.3 Rosa"},"id":"00:21:6a:7d:74:fc#2","lastSeen":{"sec":1488025751,"usec":654777},"snapclient":{"name":"Snapclient","protocolVersion":2,"version":"0.10.0"}}],"id":"4dcc4e3b-c699-a04b-7f0c-8260d23c43e1","muted":false,"name":"","stream_id":"stream 2"}],"server":{"host":{"arch":"x86_64","ip":"","mac":"","name":"T400","os":"Linux Mint 17.3 Rosa"},"snapserver":{"controlProtocolVersion":1,"name":"Snapserver","protocolVersion":1,"version":"0.10.0"}},"streams":[{"id":"stream 1","status":"idle","uri":{"fragment":"","host":"","path":"/tmp/snapfifo","query":{"buffer_ms":"20","codec":"flac","name":"stream 1","sampleformat":"48000:16:2"},"raw":"pipe:///tmp/snapfifo?name=stream 1","scheme":"pipe"}},{"id":"stream 2","status":"idle","uri":{"fragment":"","host":"","path":"/tmp/snapfifo","query":{"buffer_ms":"20","codec":"flac","name":"stream 2","sampleformat":"48000:16:2"},"raw":"pipe:///tmp/snapfifo?name=stream 2","scheme":"pipe"}}]}}}
 				/// Notification: {"jsonrpc":"2.0","method":"Server.OnUpdate","params":{"server":{"groups":[{"clients":[{"config":{"instance":2,"latency":6,"name":"123 456","volume":{"muted":false,"percent":48}},"connected":true,"host":{"arch":"x86_64","ip":"127.0.0.1","mac":"00:21:6a:7d:74:fc","name":"T400","os":"Linux Mint 17.3 Rosa"},"id":"00:21:6a:7d:74:fc#2","lastSeen":{"sec":1488025751,"usec":654777},"snapclient":{"name":"Snapclient","protocolVersion":2,"version":"0.10.0"}}],"id":"4dcc4e3b-c699-a04b-7f0c-8260d23c43e1","muted":false,"name":"","stream_id":"stream 2"}],"server":{"host":{"arch":"x86_64","ip":"","mac":"","name":"T400","os":"Linux Mint 17.3 Rosa"},"snapserver":{"controlProtocolVersion":1,"name":"Snapserver","protocolVersion":1,"version":"0.10.0"}},"streams":[{"id":"stream 1","status":"idle","uri":{"fragment":"","host":"","path":"/tmp/snapfifo","query":{"buffer_ms":"20","codec":"flac","name":"stream 1","sampleformat":"48000:16:2"},"raw":"pipe:///tmp/snapfifo?name=stream 1","scheme":"pipe"}},{"id":"stream 2","status":"idle","uri":{"fragment":"","host":"","path":"/tmp/snapfifo","query":{"buffer_ms":"20","codec":"flac","name":"stream 2","sampleformat":"48000:16:2"},"raw":"pipe:///tmp/snapfifo?name=stream 2","scheme":"pipe"}}]}}}
-				ClientInfoPtr clientInfo = Config::instance().getClientInfo(request->params.get("id"));
+				ClientInfoPtr clientInfo = Config::instance().getClientInfo(request->params().get("id"));
 				if (clientInfo == nullptr)
-					throw jsonrpcpp::InternalErrorException("Client not found", request->id);
+					throw jsonrpcpp::InternalErrorException("Client not found", request->id());
 
 				Config::instance().remove(clientInfo);
 
@@ -383,11 +383,11 @@ void StreamServer::ProcessRequest(const jsonrpcpp::request_ptr request, jsonrpcp
 				notification.reset(new jsonrpcpp::Notification("Server.OnUpdate", jsonrpcpp::Parameter("server", server)));
 			}
 			else
-				throw jsonrpcpp::MethodNotFoundException(request->id);
+				throw jsonrpcpp::MethodNotFoundException(request->id());
 		}
-		else if (request->method.find("Stream.") == 0)
+		else if (request->method().find("Stream.") == 0)
 		{
-			if (request->method.find("Stream.SetMeta") == 0)
+			if (request->method().find("Stream.SetMeta") == 0)
 			{
 				/// Request:      {"id":4,"jsonrpc":"2.0","method":"Stream.SetMeta","params":{"id":"Spotify",
  				///                "meta": {"album": "some album", "artist": "some artist", "track": "some track"...}}}
@@ -395,25 +395,25 @@ void StreamServer::ProcessRequest(const jsonrpcpp::request_ptr request, jsonrpcp
 				/// Response:     {"id":4,"jsonrpc":"2.0","result":{"stream_id":"Spotify"}}
 				/// Call onMetaChanged(const PcmStream* pcmStream) for updates and notifications
 
-				LOG(INFO) << "Stream.SetMeta(" << request->params.get("id") << ")" << request->params.get("meta") <<"\n";
+				LOG(INFO) << "Stream.SetMeta(" << request->params().get("id") << ")" << request->params().get("meta") <<"\n";
 
 				// Find stream
-				string streamId = request->params.get("id");
+				string streamId = request->params().get("id");
 				PcmStreamPtr stream = streamManager_->getStream(streamId);
 				if (stream == nullptr)
-					throw jsonrpcpp::InternalErrorException("Stream not found", request->id);
+					throw jsonrpcpp::InternalErrorException("Stream not found", request->id());
 
 				// Set metadata from request
-				stream->setMeta(request->params.get("meta"));
+				stream->setMeta(request->params().get("meta"));
 
 				// Setup response
 				result["id"] = streamId;
 			}
 			else
-				throw jsonrpcpp::MethodNotFoundException(request->id);
+				throw jsonrpcpp::MethodNotFoundException(request->id());
 		}
 		else
-			throw jsonrpcpp::MethodNotFoundException(request->id);
+			throw jsonrpcpp::MethodNotFoundException(request->id());
 
 		Config::instance().save();
 		response.reset(new jsonrpcpp::Response(*request, result));
@@ -426,7 +426,7 @@ void StreamServer::ProcessRequest(const jsonrpcpp::request_ptr request, jsonrpcp
 	catch (const exception& e)
 	{
 		LOG(ERROR) << "StreamServer::onMessageReceived exception: " << e.what() << ", message: " << request->to_json().dump() << "\n";
-		response.reset(new jsonrpcpp::InternalErrorException(e.what(), request->id));
+		response.reset(new jsonrpcpp::InternalErrorException(e.what(), request->id()));
 	}
 }
 

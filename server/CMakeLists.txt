@@ -2,7 +2,6 @@ set(SERVER_SOURCES
     config.cpp
     controlServer.cpp
     controlSession.cpp
-    jsonrp.cpp
     snapServer.cpp
     streamServer.cpp
     streamSession.cpp

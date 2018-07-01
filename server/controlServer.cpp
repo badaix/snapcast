@@ -16,7 +16,7 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
-#include "jsonrp.hpp"
+#include "jsonrpcpp.hpp"
 #include "controlServer.h"
 #include "message/time.h"
 #include "aixlog.hpp"

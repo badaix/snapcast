@@ -27,7 +27,7 @@
 #include <sstream>
 #include <mutex>
 
-#include "jsonrp.hpp"
+#include "jsonrpcpp.hpp"
 #include "streamSession.h"
 #include "streamreader/streamManager.h"
 #include "common/queue.h"
