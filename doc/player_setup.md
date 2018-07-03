@@ -54,7 +54,7 @@ Make sure that the "format" setting is the same as the format setting of the Sna
 To test your mpd installation, you can add a radio station by
 
     $ sudo su
-    $ echo "http://1live.akacast.akamaistream.net/7/706/119434/v1/gnl.akacast.akamaistream.net/1live" > /var/lib/mpd/playlists/einslive.m3u
+    $ echo "http://wdr-1live-live.icecast.wdr.de/wdr/1live/live/mp3/128/stream.mp3" > /var/lib/mpd/playlists/einslive.m3u
 
 ### Mopidy
 [Mopidy](https://www.mopidy.com/) can stream the audio output into the Snapserver's fifo with a `filesink` as audio output in `mopidy.conf`:
