@@ -68,12 +68,12 @@ void ControlSession::stop()
 		}
 		if (readerThread_.joinable())
 		{
-			LOG(DEBUG) << "joining readerThread\n";
+			LOG(DEBUG) << "ControlSession joining readerThread\n";
 			readerThread_.join();
 		}
 		if (writerThread_.joinable())
 		{
-			LOG(DEBUG) << "joining writerThread\n";
+			LOG(DEBUG) << "ControlSession joining writerThread\n";
 			messages_.abort_wait();
 			writerThread_.join();
 		}
@@ -82,7 +82,7 @@ void ControlSession::stop()
 	{
 	}
 	socket_ = NULL;
-	LOG(DEBUG) << "ControlSession stopped\n";
+	LOG(DEBUG) << "ControlSession ControlSession stopped\n";
 }
 
 

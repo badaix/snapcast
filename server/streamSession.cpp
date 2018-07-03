@@ -86,12 +86,12 @@ void StreamSession::stop()
 		}
 		if (readerThread_ && readerThread_->joinable())
 		{
-			LOG(DEBUG) << "joining readerThread\n";
+			LOG(DEBUG) << "StreamSession joining readerThread\n";
 			readerThread_->join();
 		}
 		if (writerThread_ && writerThread_->joinable())
 		{
-			LOG(DEBUG) << "joining writerThread\n";
+			LOG(DEBUG) << "StreamSession joining writerThread\n";
 			messages_.abort_wait();
 			writerThread_->join();
 		}
