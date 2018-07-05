@@ -220,7 +220,7 @@ void StreamServer::ProcessRequest(const jsonrpcpp::request_ptr request, jsonrpcp
 					GroupPtr group = Config::instance().getGroupFromClient(clientInfo);
 					serverSettings->setMuted(clientInfo->config.volume.muted || group->muted);
 					serverSettings->setLatency(clientInfo->config.latency);
-					session->sendAsync(serverSettings, true);
+					session->sendAsync(serverSettings);
 				}
 			}
 		}
@@ -256,7 +256,7 @@ void StreamServer::ProcessRequest(const jsonrpcpp::request_ptr request, jsonrpcp
 						GroupPtr group = Config::instance().getGroupFromClient(client);
 						serverSettings->setMuted(client->config.volume.muted || group->muted);
 						serverSettings->setLatency(client->config.latency);
-						session->sendAsync(serverSettings, true);
+						session->sendAsync(serverSettings);
 					}
 				}
 
@@ -513,7 +513,7 @@ void StreamServer::onMessageReceived(StreamSession* streamSession, const msg::Ba
 		timeMsg->refersTo = timeMsg->id;
 		timeMsg->latency = timeMsg->received - timeMsg->sent;
 //		LOG(INFO) << "Latency sec: " << timeMsg.latency.sec << ", usec: " << timeMsg.latency.usec << ", refers to: " << timeMsg.refersTo << "\n";
-		streamSession->sendAsync(timeMsg, true);
+		streamSession->sendAsync(timeMsg);
 
 		// refresh streamSession state
 		ClientInfoPtr client = Config::instance().getClientInfo(streamSession->clientId);
