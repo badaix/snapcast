@@ -131,7 +131,7 @@ Snapserver supports [shairport-sync](https://github.com/mikebrady/shairport-sync
  
 
 ### Spotify
-Snapserver supports [librespot](https://github.com/plietar/librespot) with `pipe` backend.
+Snapserver supports [librespot](https://github.com/librespot-org/librespot) with `pipe` backend.
  1. Build and copy the `librespot` binary somewhere to your `PATH`, e.g. `/usr/local/bin/`
  2. Configure snapserver with `-s "spotify:///librespot?name=Spotify[&username=<my username>&password=<my password>][&devicename=Snapcast][&bitrate=320][&onstart=<start command>][&onstop=<stop command>][&volume=<volume in percent>][&cache=<cache dir>]"`
    * Valid bitrates are 96, 160, 320
