@@ -52,7 +52,7 @@ endif()
 
 include_directories("${CMAKE_SOURCE_DIR}"
     "${CMAKE_SOURCE_DIR}/externals/asio/asio/include"
-    "/usr/local/include"
+#    "/usr/local/include"
 )
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/")
@@ -105,7 +105,7 @@ else()
     message(FATAL_ERROR "Need to have asio installed")
 endif()
 
-list(APPEND CMAKE_REQUIRED_INCLUDES "/usr/local/include")
+#list(APPEND CMAKE_REQUIRED_INCLUDES "/usr/local/include")
 check_include_file_cxx(popl.hpp HAS_POPL_HPP -std=c++11)
 if(NOT HAS_POPL_HPP)
     message(FATAL_ERROR "Need to have popl installed")
