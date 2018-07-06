@@ -40,6 +40,8 @@ public:
 		reset();
 	}
 
+	virtual ~MetadataAdapter() = default;
+
 	void reset()
 	{
 		msg_.reset(new json);
