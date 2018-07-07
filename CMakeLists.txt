@@ -85,15 +85,44 @@ IF(${BIGENDIAN})
     add_definitions("-DIS_BIG_ENDIAN")
 ENDIF(${BIGENDIAN})
 
-
-#set(THREADS_PTHREAD_ARG "2" CACHE STRING "Forcibly set by CMakeLists.txt." FORCE)
-
 # Check dependencies
 find_package(PkgConfig REQUIRED)
 find_package(Threads REQUIRED)
 
 include(CMakePushCheckState)
 include(CheckIncludeFileCXX)
+
+if(MACOSX)
+    set(BONJOUR_FOUND true)
+    if (BONJOUR_FOUND)
+        add_definitions(-DHAS_BONJOUR)
+    endif (BONJOUR_FOUND)
+
+    add_definitions(-DFREEBSD -DHAS_DAEMON)
+elseif(ANDROID)
+#    add_definitions("-DNO_CPP11_STRING")
+else()
+    if (BUILD_CLIENT)
+        pkg_search_module(ALSA REQUIRED alsa)
+        if (ALSA_FOUND)
+            add_definitions(-DHAS_ALSA)
+        endif (ALSA_FOUND)
+    endif()
+
+    pkg_search_module(AVAHI avahi-client)
+    if (AVAHI_FOUND)
+        add_definitions(-DHAS_AVAHI)
+    endif (AVAHI_FOUND)
+
+    add_definitions(-DHAS_DAEMON)
+
+    if(FREEBSD)
+        add_definitions(-DFREEBSD)
+        link_directories("/usr/local/lib")
+        list(APPEND CMAKE_REQUIRED_INCLUDES "/usr/local/include")
+    endif()
+endif()
+
 
 cmake_push_check_state()
 set (CMAKE_REQUIRED_INCLUDES "${CMAKE_SOURCE_DIR}/externals/asio/asio/include")
@@ -121,37 +150,6 @@ include(${CMAKE_SOURCE_DIR}/cmake/CheckCXX11StringSupport.cmake)
 CHECK_CXX11_STRING_SUPPORT(HAS_CXX11_STRING_SUPPORT)
 if(NOT HAS_CXX11_STRING_SUPPORT)
     add_definitions("-DNO_CPP11_STRING")
-endif()
-
-if(MACOSX)
-    set(BONJOUR_FOUND true)
-#    pkg_search_module(BONJOUR REQUIRED bonjour)
-    if (BONJOUR_FOUND)
-        add_definitions(-DHAS_BONJOUR)
-    endif (BONJOUR_FOUND)
-
-    add_definitions(-DFREEBSD -DHAS_DAEMON)
-elseif(ANDROID)
-#    add_definitions("-DNO_CPP11_STRING")
-else()
-    if (BUILD_CLIENT)
-        pkg_search_module(ALSA REQUIRED alsa)
-        if (ALSA_FOUND)
-            add_definitions(-DHAS_ALSA)
-        endif (ALSA_FOUND)
-    endif()
-
-    pkg_search_module(AVAHI avahi-client)
-    if (AVAHI_FOUND)
-        add_definitions(-DHAS_AVAHI)
-    endif (AVAHI_FOUND)
-
-    add_definitions(-DHAS_DAEMON)
-
-    if(FREEBSD)
-        add_definitions(-DFREEBSD)
-        link_directories("/usr/local/lib")
-    endif()
 endif()
 
 pkg_search_module(FLAC flac)
