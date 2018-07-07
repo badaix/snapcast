@@ -147,8 +147,8 @@ http://developer.android.com/ndk/guides/standalone_toolchain.html
 
 ```
 $ cd /SOME/LOCAL/PATH/android-ndk-r17/build/tools
-$ ./make_standalone_toolchain.py --arch arm --api 16 --install-dir <android-ndk dir>-arm
-$ ./make_standalone_toolchain.py --arch x86 --api 16 --install-dir <android-ndk dir>-x86
+$ ./make_standalone_toolchain.py --arch arm --api 16 --stl libc++ --install-dir <android-ndk dir>-arm
+$ ./make_standalone_toolchain.py --arch x86 --api 16 --stl libc++ --install-dir <android-ndk dir>-x86
 ```
 
 ### Build Snapclient
