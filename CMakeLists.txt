@@ -50,10 +50,10 @@ if(NOT DEFINED CMAKE_INSTALL_INCLUDEDIR)
         PATH "Output directory for header files")
 endif()
 
-include_directories("${CMAKE_SOURCE_DIR}"
+set(INCLUDE_DIRS
+    "${CMAKE_SOURCE_DIR}"
     "${CMAKE_SOURCE_DIR}/externals/asio/asio/include"
-    "${CMAKE_INSTALL_INCLUDEDIR}"
-)
+    "${CMAKE_INSTALL_INCLUDEDIR}")
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/")
 add_definitions(-DVERSION="${PROJECT_VERSION}")
@@ -119,10 +119,12 @@ else()
     if(FREEBSD)
         add_definitions(-DFREEBSD)
         link_directories("/usr/local/lib")
-        list(APPEND CMAKE_REQUIRED_INCLUDES "/usr/local/include")
+        list(APPEND INCLUDE_DIRS "/usr/local/include")
+        list(APPEND CMAKE_REQUIRED_INCLUDES "${INCLUDE_DIRS}")
     endif()
 endif()
 
+include_directories(${INCLUDE_DIRS})
 
 cmake_push_check_state()
 set (CMAKE_REQUIRED_INCLUDES "${CMAKE_SOURCE_DIR}/externals/asio/asio/include")
@@ -134,7 +136,7 @@ else()
     message(FATAL_ERROR "Need to have asio installed")
 endif()
 
-list(APPEND CMAKE_REQUIRED_INCLUDES "${CMAKE_INSTALL_INCLUDEDIR}")
+list(APPEND CMAKE_REQUIRED_INCLUDES "${INCLUDE_DIRS}")
 
 check_include_file_cxx(popl.hpp HAS_POPL_HPP -std=c++11)
 if(NOT HAS_POPL_HPP)
