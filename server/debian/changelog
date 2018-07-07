@@ -1,21 +1,15 @@
-snapserver (0.14.0) unstable; urgency=low
+snapserver (0.15.0) unstable; urgency=low
 
-  * Features
-    -Snapserver supports IPv4v6 dual stack and IPv4 + IPv6
   * Bugfixes
-    -cmake: fix check for big endian (Issue #367)
-    -cmake: fix linking against libatomic (PR #368)
-    -Snapclient compiles with Android NDK API level 16 (Issue #365)
-    -Fix compilation errors on FreeBSD (Issue #374, PR #375)
+    -Snapclient: make systemd dependeny to avahi-daemon optional
+    -cmake: fix build on FreeBSD
+    -Snapserver: fix occasional deadlock
   * General
-    -cmake: make dependency on avahi optional (PR #378)
-    -cmake: Options to build snapserver and snapclient
-    -cmake: works on FreeBSD
-    -Update external libs (JSON for modern C++, ASIO, AixLog)
-    -Restructured source tree
-    -Moved Android app into separate project "snapdroid"
+    -additional linker flags "ADD_LDFLAGS" can be passed to makefile
+    -update man pages, fix lintian warning
+    -Support Android NDK r17
 
- -- Johannes Pohl <snapcast@badaix.de>  Fri, 27 Apr 2018 00:13:37 +0200
+ -- Johannes Pohl <snapcast@badaix.de>  Sat, 07 Jul 2018 00:13:37 +0200
 
 snapserver (0.13.0) unstable; urgency=low
 

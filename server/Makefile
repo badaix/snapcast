@@ -14,7 +14,7 @@
 #   You should have received a copy of the GNU General Public License
 #   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-VERSION = 0.14.0
+VERSION = 0.15.0
 BIN = snapserver
 
 ifeq ($(TARGET), FREEBSD)

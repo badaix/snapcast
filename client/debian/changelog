@@ -1,3 +1,16 @@
+snapclient (0.15.0) unstable; urgency=low
+
+  * Bugfixes
+    -Snapclient: make systemd dependeny to avahi-daemon optional
+    -cmake: fix build on FreeBSD
+    -Snapserver: fix occasional deadlock
+  * General
+    -additional linker flags "ADD_LDFLAGS" can be passed to makefile
+    -update man pages, fix lintian warning
+    -Support Android NDK r17
+
+ -- Johannes Pohl <snapcast@badaix.de>  Sat, 07 Jul 2018 00:13:37 +0200
+
 snapclient (0.14.0) unstable; urgency=low
 
   * Features
