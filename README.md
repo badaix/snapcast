@@ -42,8 +42,8 @@ Please follow this [guide](doc/build.md) to build Snapcast for
 * [Buildroot](doc/build.md#buildroot-cross-compile)
   * [Raspberry Pi](doc/build.md#raspberry-pi-cross-compile)
 
-### Install debian packages
-Download the debian package for your CPU architecture from the [latest release page](https://github.com/badaix/snapcast/releases/latest), e.g. for Raspberry pi `snapclient_0.x.x_armhf.deb`
+### Install linux packages
+For Debian download the package for your CPU architecture from the [latest release page](https://github.com/badaix/snapcast/releases/latest), e.g. for Raspberry pi `snapclient_0.x.x_armhf.deb`
 Install the package:
 
     $ sudo dpkg -i snapclient_0.x.x_armhf.deb
@@ -59,6 +59,10 @@ On OpenWrt do:
 On Alpine Linux (testing repository) do:
 
     $ apk add snapcast
+
+On Gentoo Linux do:
+
+    $ emerge --ask media-sound/snapcast
 
 Configuration
 -------------
