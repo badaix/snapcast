@@ -123,9 +123,9 @@ Snapcast is available under Gentoo's [Portage](https://wiki.gentoo.org/wiki/Port
 These can be set either in the [global configuration](https://wiki.gentoo.org/wiki//etc/portage/make.conf#USE) file `/etc/portage/make.conf` or on a per-package basis (as root):
 
     if [ ! -d "$DIRECTORY" ]; then
-	  mkdir /etc/portage/package.use/media-sound
-	fi
-	echo 'media-sound/snapcast client server flac
+      mkdir /etc/portage/package.use/media-sound
+    fi
+    echo 'media-sound/snapcast client server flac
 
 If for example you only wish to build the server and *not* the client then preceed the server `USE` flag with `-` i.e.
 
@@ -139,12 +139,12 @@ Once `USE` flags are configured emerge snapcast as root:
 Starting the client or server depends on whether you are using `systemd` or `openrc`.  To start using `openrc`:
 
     /etc/init.d/snapclient start
-	/etc/init.d/snapserver start
+    /etc/init.d/snapserver start
 
 To enable the serve and client to start under the default run-level:
 
     rc-update add snapserver default
-	rc-update add snapclient default
+    rc-update add snapclient default
 
 
 ## macOS (Native)
