@@ -90,7 +90,7 @@ Install Snapserver
 
     $ sudo gmake TARGET=FREEBSD install
 
-This will copy the server binary to `/usr/local/bin` and the startup script to `/usr/local/etc/rc.d/snapserver`. To enable the Snapserver, add this line to `/etc/rc.conf`: 
+This will copy the server binary to `/usr/local/bin` and the startup script to `/usr/local/etc/rc.d/snapserver`. To enable the Snapserver, add this line to `/etc/rc.conf`:  
 
     snapserver_enable="YES"
 
@@ -100,6 +100,53 @@ For additional command line arguments, add in `/etc/rc.conf`:
 
 Start and stop the server with `sudo service snapserver start` and `sudo service snapserver stop`.
 
+
+## Gentoo (native)
+
+Snapcast is available under Gentoo's [Portage](https://wiki.gentoo.org/wiki/Portage) package management system.  Portage utilises `USE` flags to determine what components are built on compilation.  The availabe options are...
+
+    equery u snapcast
+    [ Legend : U - final flag setting for installation]
+    [        : I - package is installed with flag     ]
+    [ Colors : set, unset                             ]
+     * Found these USE flags for media-sound/snapcast-9999:
+     U I
+     + - avahi       : Build with avahi support
+     + + client      : Build and install Snapcast client component
+     + - flac        : Build with FLAC compression support
+     + + server      : Build and install Snapcast server component
+     - - static-libs : Build static libs
+     - - tremor      : Build with TREMOR version of vorbis
+     + - vorbis      : Build with libvorbis support
+
+
+These can be set either in the [global configuration](https://wiki.gentoo.org/wiki//etc/portage/make.conf#USE) file `/etc/portage/make.conf` or on a per-package basis (as root):
+
+    if [ ! -d "$DIRECTORY" ]; then
+      mkdir /etc/portage/package.use/media-sound
+    fi
+    echo 'media-sound/snapcast client server flac
+
+If for example you only wish to build the server and *not* the client then preceed the server `USE` flag with `-` i.e.
+
+    echo 'media-sound/snapcast client -server
+
+Once `USE` flags are configured emerge snapcast as root:
+
+    $ emerge -av snapcast
+
+
+Starting the client or server depends on whether you are using `systemd` or `openrc`.  To start using `openrc`:
+
+    /etc/init.d/snapclient start
+    /etc/init.d/snapserver start
+
+To enable the serve and client to start under the default run-level:
+
+    rc-update add snapserver default
+    rc-update add snapclient default
+
+
 ## macOS (Native)
 
 *Warning: macOS support is experimental*
@@ -108,7 +155,7 @@ Start and stop the server with `sudo service snapserver start` and `sudo service
  2. Install [Homebrew](http://brew.sh)
  3. Install the required libs
 
-```    
+```   
 $ brew install flac libvorbis
 ```
 
@@ -137,7 +184,7 @@ Install Snapserver
 This will copy the server binary to `/usr/local/bin` and create a Launch Agent to start the server as a daemon.
 
 ## Android (Cross compile)
-Cross compilation for Android is done with the [Android NDK](http://developer.android.com/tools/sdk/ndk/index.html) on a Linux host machine.  
+Cross compilation for Android is done with the [Android NDK](http://developer.android.com/tools/sdk/ndk/index.html) on a Linux host machine. 
 
 ### Android NDK setup
 http://developer.android.com/ndk/guides/standalone_toolchain.html
@@ -157,7 +204,7 @@ Cross compile and install FLAC, ogg, and tremor (only needed once):
     $ cd <snapcast dir>/externals
     $ make NDK_DIR=<android-ndk dir>-arm ARCH=arm
     $ make NDK_DIR=<android-ndk dir>-x86 ARCH=x86
-   
+  
 Compile the Snapclient:
 
     $ cd <snapcast dir>/client
@@ -179,7 +226,7 @@ https://wiki.openwrt.org/doc/howto/buildroot.exigence
 Clone OpenWrt to some place in your home directory (`<buildroot dir>`)
 
     $ git clone git://git.openwrt.org/15.05/openwrt.git
-    
+  
 ...LEDE
 
     $ git clone https://git.lede-project.org/source.git
