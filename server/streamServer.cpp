@@ -648,8 +648,8 @@ void StreamServer::handleAccept(socket_ptr socket)
 	try
 	{
 		struct timeval tv;
-		tv.tv_sec  = 5;
-		tv.tv_usec = 0;
+		tv.tv_sec  = settings_.bufferMs / 1000;
+		tv.tv_usec = settings_.bufferMs % 1000;
 		setsockopt(socket->native_handle(), SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
 		setsockopt(socket->native_handle(), SOL_SOCKET, SO_SNDTIMEO, &tv, sizeof(tv));
 
