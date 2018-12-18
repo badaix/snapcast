@@ -654,7 +654,7 @@ void StreamServer::handleAccept(socket_ptr socket)
 		setsockopt(socket->native_handle(), SOL_SOCKET, SO_SNDTIMEO, &tv, sizeof(tv));
 
 		/// experimental: turn on tcp::no_delay
-		socket->set_option(tcp::no_delay(true));
+		//socket->set_option(tcp::no_delay(true));
 
 		SLOG(NOTICE) << "StreamServer::NewConnection: " << socket->remote_endpoint().address().to_string() << endl;
 		shared_ptr<StreamSession> session = make_shared<StreamSession>(this, socket);
