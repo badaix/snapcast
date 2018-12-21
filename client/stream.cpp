@@ -73,8 +73,6 @@ void Stream::clearChunks()
 
 void Stream::addChunk(msg::PcmChunk* chunk)
 {
-	while (chunks_.size() * chunk->duration<cs::msec>().count() > 10000)
-		chunks_.pop();
 	chunks_.push(shared_ptr<msg::PcmChunk>(chunk));
 //	LOG(DEBUG) << "new chunk: " << chunk->duration<cs::msec>().count() << ", Chunks: " << chunks_.size() << "\n";
 }
@@ -336,8 +334,8 @@ bool Stream::getPlayerChunk(void* outputBuffer, const cs::usec& outputBufferDacT
 
 		if (sleep_.count() != 0)
 		{
-			static int lastAge(0);
-			int msAge = cs::duration<cs::msec>(age);
+			static long long lastAge(0);
+			long long msAge = cs::duration<cs::msec>(age);
 			if (lastAge != msAge) 
 			{
 				lastAge = msAge;
