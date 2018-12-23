@@ -21,6 +21,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <cerrno>
+#include <sys/select.h>
 
 #include "pipeStream.h"
 #include "encoder/encoderFactory.h"
@@ -71,9 +72,6 @@ void PipeStream::worker()
 		fd_ = open(uri_.path.c_str(), O_RDONLY | O_NONBLOCK);
 		chronos::systemtimeofday(&tvChunk);
 		tvEncodedChunk_ = tvChunk;
-		long nextTick = chronos::getTickCount();
-		int idleBytes = 0;
-		int maxIdleBytes = sampleFormat_.rate*sampleFormat_.frameSize*dryoutMs_/1000;
 		try
 		{
 			if (fd_ == -1)
@@ -85,28 +83,50 @@ void PipeStream::worker()
 				chunk->timestamp.usec = tvChunk.tv_usec;
 				int toRead = chunk->payloadSize;
 				int len = 0;
+				bool data_in_this_cycle = false;
 				do
 				{
-					int count = read(fd_, chunk->payload + len, toRead - len);
-					if (count < 0 && idleBytes < maxIdleBytes)
-					{
-						memset(chunk->payload + len, 0, toRead - len);
-						idleBytes += toRead - len;
-						len += toRead - len;
-						continue;
+					fd_set rfds;
+					FD_ZERO(&rfds);
+					FD_SET(fd_, &rfds);
+					struct timeval tv = {
+						.tv_sec = 1,
+						.tv_usec = 0,
+					};
+
+					int select_ret = select(fd_ + 1, &rfds, NULL, NULL, &tv);
+
+					if (select_ret == -1) {
+						perror("select()");
+						throw SnapException("Error on select");
 					}
-					if (count < 0)
+					else if (select_ret)
+					{
+						int count = read(fd_, chunk->payload + len, toRead - len);
+						if (count == 0)
+						{
+							setState(kIdle);
+							throw SnapException("end of file");
+						}
+						else
+						{
+							len += count;
+							data_in_this_cycle = true;
+
+							if (getState() != kPlaying)
+							{
+								setState(kPlaying);
+								chronos::systemtimeofday(&tvChunk);
+								tvEncodedChunk_ = tvChunk;
+								pcmListener_->onResync(this, pcmReadMs_);
+							}
+						}
+					}
+					else
 					{
 						setState(kIdle);
-						if (!sleep(100))
-							break;
-					}
-					else if (count == 0)
-						throw SnapException("end of file");
-					else 
-					{
-						len += count;
-						idleBytes = 0;
+						memset(chunk->payload + len, 0, toRead - len);
+						len += toRead - len;
 					}
 				}
 				while ((len < toRead) && active_);
@@ -114,28 +134,11 @@ void PipeStream::worker()
 				if (!active_) break;
 
 				/// TODO: use less raw pointers, make this encoding more transparent
-				encoder_->encode(chunk.get());
-
-				if (!active_) break;
-
-				nextTick += pcmReadMs_;
-				chronos::addUs(tvChunk, pcmReadMs_ * 1000);
-				long currentTick = chronos::getTickCount();
-
-				if (nextTick >= currentTick)
-				{
-					setState(kPlaying);
-					if (!sleep(nextTick - currentTick))
-						break;
+				if (data_in_this_cycle) {
+					encoder_->encode(chunk.get());
+					if (!active_) break;
+					chronos::addUs(tvChunk, pcmReadMs_ * 1000);
 				}
-				else
-				{
-					chronos::systemtimeofday(&tvChunk);
-					tvEncodedChunk_ = tvChunk;
-					pcmListener_->onResync(this, currentTick - nextTick);
-					nextTick = currentTick;
-				}
-
 				lastException = "";
 			}
 		}
