@@ -61,6 +61,8 @@ PipeStream::~PipeStream()
 
 void PipeStream::worker()
 {
+	int bufferMs_= 15000; // TODO: do not hardcode this. this should correspond to the bufferMs for streamsession
+
 	timeval tvChunk;
 	std::unique_ptr<msg::PcmChunk> chunk(new msg::PcmChunk(sampleFormat_, pcmReadMs_));
 	string lastException = "";
@@ -90,8 +92,8 @@ void PipeStream::worker()
 					FD_ZERO(&rfds);
 					FD_SET(fd_, &rfds);
 					struct timeval tv = {
-						.tv_sec = 1,
-						.tv_usec = 0,
+						.tv_sec = bufferMs_ / 1000,
+						.tv_usec = bufferMs_ % 1000,
 					};
 
 					int select_ret = select(fd_ + 1, &rfds, NULL, NULL, &tv);
@@ -105,6 +107,7 @@ void PipeStream::worker()
 						int count = read(fd_, chunk->payload + len, toRead - len);
 						if (count == 0)
 						{
+							LOG(INFO) << "EOF on input buffer" << endl;
 							setState(kIdle);
 							throw SnapException("end of file");
 						}
@@ -124,6 +127,7 @@ void PipeStream::worker()
 					}
 					else
 					{
+						LOG(INFO) << "Did not receive data on input fifo -- timeout: " << bufferMs_  << "ms" << endl;
 						setState(kIdle);
 						memset(chunk->payload + len, 0, toRead - len);
 						len += toRead - len;
