@@ -26,8 +26,8 @@
 
 using namespace std;
 
-AlsaPlayer::AlsaPlayer(const PcmDevice& pcmDevice, std::shared_ptr<Stream> stream) : 
-	Player(pcmDevice, stream), handle_(NULL), buff_(NULL)
+AlsaPlayer::AlsaPlayer(const PcmDevice& pcmDevice, std::shared_ptr<Stream> stream, const int timeout) : 
+	Player(pcmDevice, stream), handle_(NULL), buff_(NULL), timeout_(timeout)
 {
 }
 
@@ -222,7 +222,6 @@ void AlsaPlayer::worker()
 
 		if (stream_->getPlayerChunk(buff_, delay, frames_))
 		{
-			lastChunkTick = chronos::getTickCount();
 			adjustVolume(buff_, frames_);
 			if ((pcm = snd_pcm_writei(handle_, buff_, frames_)) == -EPIPE)
 			{
@@ -234,6 +233,7 @@ void AlsaPlayer::worker()
 				LOG(ERROR) << "ERROR. Can't write to PCM device: " << snd_strerror(pcm) << "\n";
 				uninitAlsa();
 			}
+			lastChunkTick = chronos::getTickCount();
 		}
 		else
 		{
@@ -241,7 +241,7 @@ void AlsaPlayer::worker()
 			while (active_ && !stream_->waitForChunk(100))
 			{
 				LOG(DEBUG) << "Waiting for chunk\n";
-				if ((handle_ != NULL) && (chronos::getTickCount() - lastChunkTick > 5000))
+				if ((handle_ != NULL) && (chronos::getTickCount() - lastChunkTick > timeout_))
 				{
 					LOG(NOTICE) << "No chunk received for 5000ms. Closing ALSA.\n";
 					uninitAlsa();

@@ -126,7 +126,7 @@ void Controller::onMessageReceived(ClientConnection* connection, const msg::Base
 		stream_->setBufferLen(serverSettings_->getBufferMs() - latency_);
 
 #ifdef HAS_ALSA
-		player_.reset(new AlsaPlayer(pcmDevice_, stream_));
+		player_.reset(new AlsaPlayer(pcmDevice_, stream_, serverSettings_->getBufferMs()));
 #elif HAS_OPENSL
 		player_.reset(new OpenslPlayer(pcmDevice_, stream_));
 #elif HAS_COREAUDIO

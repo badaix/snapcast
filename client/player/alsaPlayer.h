@@ -30,7 +30,7 @@
 class AlsaPlayer : public Player
 {
 public:
-	AlsaPlayer(const PcmDevice& pcmDevice, std::shared_ptr<Stream> stream);
+	AlsaPlayer(const PcmDevice& pcmDevice, std::shared_ptr<Stream> stream, const int timeout);
 	virtual ~AlsaPlayer();
 
 	/// Set audio volume in range [0..1]
@@ -50,6 +50,7 @@ private:
 	snd_pcm_t* handle_;
 	snd_pcm_uframes_t frames_;
 	char *buff_;
+	int timeout_;
 };
 
 
