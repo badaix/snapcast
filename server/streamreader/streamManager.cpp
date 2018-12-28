@@ -58,7 +58,7 @@ PcmStreamPtr StreamManager::addStream(const std::string& uri)
 
 	if (streamUri.scheme == "pipe")
 	{
-		stream = make_shared<PipeStream>(pcmListener_, streamUri);
+		stream = make_shared<PipeStream>(pcmListener_, streamUri, readBufferMs_);
 	}
 	else if (streamUri.scheme == "file")
 	{

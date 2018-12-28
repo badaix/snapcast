@@ -35,7 +35,7 @@ using namespace std;
 
 
 
-PipeStream::PipeStream(PcmListener* pcmListener, const StreamUri& uri) : PcmStream(pcmListener, uri), fd_(-1)
+PipeStream::PipeStream(PcmListener* pcmListener, const StreamUri& uri, const long bufferMs) : PcmStream(pcmListener, uri), fd_(-1), bufferMs_(bufferMs)
 {
 	umask(0);
 	string mode = uri_.getQuery("mode", "create");
@@ -61,8 +61,6 @@ PipeStream::~PipeStream()
 
 void PipeStream::worker()
 {
-	int bufferMs_= 15000; // TODO: do not hardcode this. this should correspond to the bufferMs for streamsession
-
 	timeval tvChunk;
 	std::unique_ptr<msg::PcmChunk> chunk(new msg::PcmChunk(sampleFormat_, pcmReadMs_));
 	string lastException = "";
