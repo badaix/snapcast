@@ -141,8 +141,8 @@ void PipeStream::worker()
 				if (data_in_this_cycle) {
 					encoder_->encode(chunk.get());
 					if (!active_) break;
-					chronos::addUs(tvChunk, pcmReadMs_ * 1000);
 				}
+				chronos::addUs(tvChunk, pcmReadMs_ * 1000);
 				lastException = "";
 			}
 		}
