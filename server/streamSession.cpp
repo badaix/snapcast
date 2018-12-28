@@ -123,10 +123,6 @@ void StreamSession::sendAsync(const msg::message_ptr& message, bool sendNow)
 	if (!message)
 		return;
 
-	//the writer will take care about old messages
-	while (messages_.size() > 2000)// chunk->getDuration() > 10000)
-		messages_.pop();
-
 	if (sendNow)
 		messages_.push_front(message);
 	else	
@@ -232,23 +228,7 @@ void StreamSession::writer()
 		while (active_)
 		{
 			if (messages_.try_pop(message, std::chrono::milliseconds(500)))
-			{
-				if (bufferMs_ > 0)
-				{
-					const msg::WireChunk* wireChunk = dynamic_cast<const msg::WireChunk*>(message.get());
-					if (wireChunk != NULL)
-					{
-						chronos::time_point_clk now = chronos::clk::now();
-						size_t age = 0;
-						if (now > wireChunk->start())
-							age = std::chrono::duration_cast<chronos::msec>(now - wireChunk->start()).count();
-						//LOG(DEBUG) << "PCM chunk. Age: " << age << ", buffer: " << bufferMs_ << ", age > buffer: " << (age > bufferMs_) << "\n";
-						if (age > bufferMs_)
-							continue;
-					}
-				}
 				send(message);
-			}
 		}
 	}
 	catch (const std::exception& e)
