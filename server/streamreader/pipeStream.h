@@ -33,7 +33,7 @@ class PipeStream : public PcmStream
 {
 public:
 	/// ctor. Encoded PCM data is passed to the PipeListener
-	PipeStream(PcmListener* pcmListener, const StreamUri& uri, const long bufferMs);
+	PipeStream(PcmListener* pcmListener, const StreamUri& uri);
 	virtual ~PipeStream();
 
 protected:

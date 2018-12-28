@@ -27,6 +27,7 @@ private:
 	std::string sampleFormat_;
 	std::string codec_;
 	size_t readBufferMs_;
+	long timeout_;
 };
 
 

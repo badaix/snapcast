@@ -49,6 +49,9 @@ PcmStreamPtr StreamManager::addStream(const std::string& uri)
 	if (streamUri.query.find("buffer_ms") == streamUri.query.end())
 		streamUri.query["buffer_ms"] = cpt::to_string(readBufferMs_);
 
+	if (streamUri.query.find("timeout_ms") == streamUri.query.end())
+		streamUri.query["timeout_ms"] = cpt::to_string(1000);
+
 //	LOG(DEBUG) << "\nURI: " << streamUri.uri << "\nscheme: " << streamUri.scheme << "\nhost: "
 //		<< streamUri.host << "\npath: " << streamUri.path << "\nfragment: " << streamUri.fragment << "\n";
 
@@ -58,7 +61,7 @@ PcmStreamPtr StreamManager::addStream(const std::string& uri)
 
 	if (streamUri.scheme == "pipe")
 	{
-		stream = make_shared<PipeStream>(pcmListener_, streamUri, readBufferMs_);
+		stream = make_shared<PipeStream>(pcmListener_, streamUri);
 	}
 	else if (streamUri.scheme == "file")
 	{

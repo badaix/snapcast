@@ -35,10 +35,12 @@ using namespace std;
 
 
 
-PipeStream::PipeStream(PcmListener* pcmListener, const StreamUri& uri, const long bufferMs) : PcmStream(pcmListener, uri), fd_(-1), bufferMs_(bufferMs)
+PipeStream::PipeStream(PcmListener* pcmListener, const StreamUri& uri) : PcmStream(pcmListener, uri), fd_(-1)
 {
 	umask(0);
 	string mode = uri_.getQuery("mode", "create");
+	string timeout = uri_.getQuery("timeout_ms", "create");
+	bufferMs_ = cpt::stoul(timeout);
 		
 	LOG(INFO) << "PipeStream mode: " << mode << "\n";
 	if ((mode != "read") && (mode != "create"))
