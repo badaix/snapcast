@@ -96,6 +96,21 @@ PcmStreamPtr StreamManager::addStream(const std::string& uri)
 }
 
 
+void StreamManager::removeStream(const std::string& name)
+{
+	if (streams_.empty()) return;
+	for( std::vector<PcmStreamPtr>::iterator iter = streams_.begin(); iter != streams_.end(); ++iter )
+	{
+		auto s = *iter;
+		if( s->getName() == name )
+		{
+			s->stop();
+			streams_.erase( iter );
+			break;
+		}
+	}
+}
+
 const std::vector<PcmStreamPtr>& StreamManager::getStreams()
 {
     return streams_;
