@@ -19,6 +19,7 @@ public:
 	const std::vector<PcmStreamPtr>& getStreams();
 	const PcmStreamPtr getDefaultStream();
 	const PcmStreamPtr getStream(const std::string& id);
+	void removeStream(const std::string& name);
 	json toJson() const;
 
 private:
@@ -26,6 +27,7 @@ private:
 	PcmListener* pcmListener_;
 	std::string sampleFormat_;
 	std::string codec_;
+	std::string streamUri_;
 	size_t readBufferMs_;
 };
 

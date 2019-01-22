@@ -415,6 +415,39 @@ void StreamServer::ProcessRequest(const jsonrpcpp::request_ptr request, jsonrpcp
 				// Setup response
 				result["id"] = streamId;
 			}
+			else if (request->method() == "Stream.AddStream")
+			{
+				/// Request:      {"id":4,"jsonrpc":"2.0","method":"Stream.AddStream","params":{"streamUri":"uri"}}
+				///
+				/// Response:     {"id":4,"jsonrpc":"2.0","result":{"stream_id":"Spotify"}}
+				/// Call onMetaChanged(const PcmStream* pcmStream) for updates and notifications
+
+				LOG(INFO) << "Stream.AddStream(" << request->params().get("streamUri") << ")" << "\n";
+
+				// Find stream
+				string streamUri_ = request->params().get("streamUri");
+				PcmStreamPtr stream = streamManager_->addStream(streamUri_);
+				if (stream == nullptr)
+					throw jsonrpcpp::InternalErrorException("Stream not created", request->id());
+				stream->start(); // We start the stream, otherwise it would be silent
+				// Setup response
+				result["id"] = stream->getId();
+			}
+			else if (request->method() == "Stream.RemoveStream")
+			{
+				/// Request:      {"id":4,"jsonrpc":"2.0","method":"Stream.RemoveStream","params":{"id":"Spotify"}}
+				///
+				/// Response:     {"id":4,"jsonrpc":"2.0","result":{"stream_id":"Spotify"}}
+				/// Call onMetaChanged(const PcmStream* pcmStream) for updates and notifications
+
+				LOG(INFO) << "Stream.RemoveStream(" << request->params().get("id") << ")" << "\n";
+
+				// Find stream
+				string streamId = request->params().get("id");
+				streamManager_->removeStream(streamId);
+				// Setup response
+				result["id"] = streamId;
+			}
 			else
 				throw jsonrpcpp::MethodNotFoundException(request->id());
 		}
