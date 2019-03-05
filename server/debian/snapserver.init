@@ -27,7 +27,7 @@ USER_OPTS="--user snapserver:snapserver"
 
 # Read configuration variable file if it is present
 [ -r /etc/default/$NAME ] && . /etc/default/$NAME
-SNAPSERVER_OPTS="-d $USER_OPTS $SNAPSERVER_OPTS"
+SNAPSERVER_OPTS="$DAEMONIZE $USER_OPTS $SNAPSERVER_OPTS"
 
 if [ "$START_SNAPSERVER" != "true" ] ; then
   exit 0
