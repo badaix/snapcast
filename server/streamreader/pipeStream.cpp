@@ -72,8 +72,14 @@ void PipeStream::worker()
 		chronos::systemtimeofday(&tvChunk);
 		tvEncodedChunk_ = tvChunk;
 		long nextTick = chronos::getTickCount();
+		long lastDataTick = 0;
 		int idleBytes = 0;
-		int maxIdleBytes = sampleFormat_.rate*sampleFormat_.frameSize*dryoutMs_/1000;
+		int maxIdleBytes = sampleFormat_.rate * sampleFormat_.frameSize * dryoutMs_ / 1000;
+		
+		LOG(DEBUG) << "(PipeStream) maxIdleBytes: " << cpt::to_string(maxIdleBytes) << std::endl;
+		LOG(DEBUG) << "(PipeStream) dryout_ms: " << cpt::to_string(dryoutMs_) << std::endl;
+		LOG(DEBUG) << "(PipeStream) before_dryout_ms: " << cpt::to_string(beforeDryoutMs_) << std::endl;
+		
 		try
 		{
 			if (fd_ == -1)
@@ -81,6 +87,7 @@ void PipeStream::worker()
 
 			while (active_)
 			{
+				
 				chunk->timestamp.sec = tvChunk.tv_sec;
 				chunk->timestamp.usec = tvChunk.tv_usec;
 				int toRead = chunk->payloadSize;
@@ -88,15 +95,28 @@ void PipeStream::worker()
 				do
 				{
 					int count = read(fd_, chunk->payload + len, toRead - len);
-					if (count < 0 && idleBytes < maxIdleBytes)
+					if ((count < 0) && (idleBytes < maxIdleBytes))
 					{
-						memset(chunk->payload + len, 0, toRead - len);
-						idleBytes += toRead - len;
-						len += toRead - len;
-						continue;
+						if ((chronos::getTickCount() - lastDataTick) > beforeDryoutMs_)
+						{
+							LOG(DEBUG) << "(PipeStream) Inserting some silence into the stream for period of dryout_ms" << std::endl;
+							memset(chunk->payload + len, 0, toRead - len);
+							idleBytes += toRead - len;
+							long sleepy = ((1000 * (toRead - len)) / (sampleFormat_.rate * sampleFormat_.frameSize)) - 2;
+							if (sleepy > 0) sleep(sleepy);
+							len += toRead - len;
+							continue;
+						}
+						else
+						{
+							LOG(DEBUG) << "(PipeStream) Reading from stream error. Waiting for " << cpt::to_string(beforeDryoutMs_) << " milliseconds until considering this a problem." << std::endl;
+							if (!sleep(100))
+								break;
+						}
 					}
-					if (count < 0)
+					else if (count < 0)
 					{
+						LOG(DEBUG) << "(PipeStream) No data for (before_dryout_ms + dryout_ms) now, going to idle state." << std::endl;
 						setState(kIdle);
 						if (!sleep(100))
 							break;
@@ -107,6 +127,7 @@ void PipeStream::worker()
 					{
 						len += count;
 						idleBytes = 0;
+						lastDataTick = chronos::getTickCount();
 					}
 				}
 				while ((len < toRead) && active_);
@@ -128,13 +149,21 @@ void PipeStream::worker()
 					if (!sleep(nextTick - currentTick))
 						break;
 				}
-				else
+				else if ((currentTick - nextTick) > (beforeDryoutMs_ + dryoutMs_ + 5000))
 				{
+					LOG(WARNING) << "(PipeStream) Input from pipe got more than 10 seconds out of sync" << std::endl;
 					chronos::systemtimeofday(&tvChunk);
 					tvEncodedChunk_ = tvChunk;
 					pcmListener_->onResync(this, currentTick - nextTick);
 					nextTick = currentTick;
 				}
+				else
+				{
+					LOG(DEBUG) << "(PipeStream) Need to read more data from pipe" << std::endl;
+					if (!sleep(1))
+						break;
+				}
+				
 
 				lastException = "";
 			}

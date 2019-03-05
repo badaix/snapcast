@@ -170,15 +170,17 @@ int main(int argc, char* argv[])
 					group = user_group[1];
 			}
 
-			Config::instance().init("/var/lib/snapserver", user, group);
-			daemon.reset(new Daemon(user, group, "/var/run/snapserver/pid"));
-			daemon->daemonize();
+			// Update process priority if set on commandline
 			if (processPriority < -20)
 				processPriority = -20;
 			else if (processPriority > 19)
 				processPriority = 19;
 			if (processPriority != 0)
 				setpriority(PRIO_PROCESS, 0, processPriority);
+
+			Config::instance().init("/var/lib/snapserver", user, group);
+			daemon.reset(new Daemon(user, group, "/var/run/snapserver/pid"));
+			daemon->daemonize();
 			SLOG(NOTICE) << "daemon started" << std::endl;
 		}
 		else

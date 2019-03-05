@@ -56,6 +56,12 @@ PcmStream::PcmStream(PcmListener* pcmListener, const StreamUri& uri) :
 	else
 		dryoutMs_ = 2000;
 
+	// before_dryout_ms needs to be smaller than the Client Buffer. Leaving this to the user for now.
+	if (uri_.query.find("before_dryout_ms") != uri_.query.end())
+		beforeDryoutMs_ = cpt::stoul(uri_.query["before_dryout_ms"]);
+	else
+		beforeDryoutMs_ = 0;
+
 	//meta_.reset(new msg::StreamTags());
 	//meta_->msg["stream"] = name_;
 	setMeta(json());
