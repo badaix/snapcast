@@ -190,7 +190,11 @@ int main(int argc, char* argv[])
 
 #if defined(HAS_AVAHI) || defined(HAS_BONJOUR)
 		PublishZeroConf publishZeroConfg("Snapcast");
-		publishZeroConfg.publish({mDNSService("_snapcast._tcp", settings.port), mDNSService("_snapcast-jsonrpc._tcp", settings.controlPort)});
+		publishZeroConfg.publish({
+			mDNSService("_snapcast._tcp", settings.port),
+			mDNSService("_snapcast-jsonrpc._tcp", settings.controlPort),
+			mDNSService("_snapcastjsonrpc._tcp", settings.controlPort)
+		});
 #endif
 
 		if (settings.bufferMs < 400)
