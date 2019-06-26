@@ -40,8 +40,7 @@ SpotifyStream::SpotifyStream(PcmListener* pcmListener, const StreamUri& uri) : P
 	string volume = uri_.getQuery("volume", "");
 	string bitrate = uri_.getQuery("bitrate", "320");
 	string devicename = uri_.getQuery("devicename", "Snapcast");
-	string onstart = uri_.getQuery("onstart", "");
-	string onstop = uri_.getQuery("onstop", "");
+	string onevent = uri_.getQuery("onevent", "");
 
 	if (username.empty() != password.empty())
 		throw SnapException("missing parameter \"username\" or \"password\" (must provide both, or neither)");
@@ -54,10 +53,8 @@ SpotifyStream::SpotifyStream(PcmListener* pcmListener, const StreamUri& uri) : P
 		params_ += " --cache \"" + cache + "\"";
 	if (!volume.empty())
 		params_ += " --initial-volume \"" + volume + "\"";
-	if (!onstart.empty())
-		params_ += " --onstart \"" + onstart + "\"";
-	if (!onstop.empty())
-		params_ += " --onstop \"" + onstop + "\"";
+	if (!onevent.empty())
+		params_ += " --onevent \"" + onevent + "\"";
 
 	if (uri_.query.find("username") != uri_.query.end())
 		uri_.query["username"] = "xxx";
