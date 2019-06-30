@@ -250,6 +250,15 @@ void StreamServer::ProcessRequest(const jsonrpcpp::request_ptr request, jsonrpcp
                 /// 1"}}}
                 result["group"] = group->toJson();
             }
+            else if (request->method() == "Group.SetName")
+            {
+                /// Request:      {"id":6,"jsonrpc":"2.0","method":"Group.SetName","params":{"id":"4dcc4e3b-c699-a04b-7f0c-8260d23c43e1","name":"Laptop"}}
+                /// Response:     {"id":6,"jsonrpc":"2.0","result":{"name":"MediaPlayer"}}
+                /// Notification: {"jsonrpc":"2.0","method":"Group.OnNameChanged","params":{"id":"4dcc4e3b-c699-a04b-7f0c-8260d23c43e1","MediaPlayer":"Laptop"}}
+                group->name = request->params().get("name");
+                result["name"] = group->name;
+                notification.reset(new jsonrpcpp::Notification("Group.OnNameChanged", jsonrpcpp::Parameter("id", group->id, "name", group->name)));
+            }
             else if (request->method() == "Group.SetMute")
             {
                 /// Request:      {"id":5,"jsonrpc":"2.0","method":"Group.SetMute","params":{"id":"4dcc4e3b-c699-a04b-7f0c-8260d23c43e1","mute":true}}
