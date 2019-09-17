@@ -14,8 +14,8 @@
    viewBox="0 0 779.52756 779.52755"
    id="svg2"
    version="1.1"
-   inkscape:version="0.91 r"
-   sodipodi:docname="drawing.svg"
+   inkscape:version="0.91 r13725"
+   sodipodi:docname="snapcast_icon.svg"
    inkscape:export-filename="/home/adminuser/Desktop/drawing.png"
    inkscape:export-xdpi="90"
    inkscape:export-ydpi="90">
@@ -29,7 +29,7 @@
      inkscape:pageopacity="0"
      inkscape:pageshadow="2"
      inkscape:zoom="0.70710678"
-     inkscape:cx="396.01849"
+     inkscape:cx="435.61647"
      inkscape:cy="392.17607"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
@@ -38,11 +38,11 @@
      inkscape:snap-grids="true"
      inkscape:snap-object-midpoints="true"
      inkscape:snap-center="true"
-     inkscape:window-width="1192"
-     inkscape:window-height="952"
-     inkscape:window-x="416"
-     inkscape:window-y="63"
-     inkscape:window-maximized="0"
+     inkscape:window-width="1440"
+     inkscape:window-height="847"
+     inkscape:window-x="0"
+     inkscape:window-y="0"
+     inkscape:window-maximized="1"
      borderlayer="false"
      inkscape:showpageshadow="true" />
   <metadata
@@ -63,29 +63,29 @@
      id="layer1"
      transform="translate(0,-272.83465)">
     <polygon
-       transform="matrix(6.6666665,0,0,6.6666665,792.80803,-198.4693)"
+       transform="matrix(6.6666665,0,0,6.6666665,1419.3047,398.32882)"
        id="polygon1"
-       points="6,47.699 21.989,47.699 39.389,62.75 39.389,13.769 39.389,13.769 22.235,28.606 6,28.606 "
+       points="39.389,13.769 39.389,13.769 22.235,28.606 6,28.606 6,47.699 21.989,47.699 39.389,62.75 "
        style="fill:#111111;stroke:#111111;stroke-width:5;stroke-linejoin:round" />
     <path
        inkscape:connector-curvature="0"
        id="path1"
-       d="m 1113.6614,120.31614 c 12.86,-20.640003 20.4133,-44.926669 20.4133,-71.020002 0,-26.519999 -7.76,-51.1599989 -20.98,-71.999998"
+       d="m 1740.1581,717.11426 c 12.86,-20.64 20.4133,-44.92667 20.4133,-71.02 0,-26.52 -7.76,-51.16 -20.98,-72"
        style="fill:none;stroke:#111111;stroke-width:33.33333206;stroke-linecap:round" />
     <path
        inkscape:connector-curvature="0"
        id="path2"
-       d="m 1160.0214,-69.637193 c 24.6333,33.24 39.2266,74.3799986 39.2266,118.933331 0,44.139999 -14.34,84.920002 -38.5866,117.993332"
+       d="m 1786.5181,527.16093 c 24.6333,33.24 39.2266,74.38 39.2266,118.93333 0,44.14 -14.34,84.92 -38.5866,117.99333"
        style="fill:none;stroke:#111111;stroke-width:33.33333206;stroke-linecap:round" />
     <path
        inkscape:connector-curvature="0"
        id="path3342"
-       d="m 1204.208,210.85613 c 35.1134,-44.44 56.12,-100.53333 56.12,-161.553325 0,-61.446666 -21.28,-117.879998 -56.7933,-162.453325"
+       d="m 1830.7047,807.65425 c 35.1134,-44.44 56.12,-100.53333 56.12,-161.55332 0,-61.44667 -21.28,-117.88 -56.7933,-162.45333"
        style="fill:none;stroke:#111111;stroke-width:33.33333206;stroke-linecap:round" />
     <polygon
        id="polygon1-3"
        points="39.389,62.75 39.389,13.769 39.389,13.769 22.235,28.606 6,28.606 6,47.699 21.989,47.699 "
-       style="fill:#c8c8c8;stroke:#ffffff;stroke-width:5;stroke-linejoin:round;fill-opacity:1;stroke-opacity:1"
+       style="fill:#c8c8c8;stroke:#ffffff;stroke-width:5;stroke-linejoin:round;fill-opacity:1;stroke-opacity:1;stroke-linecap:round"
        transform="matrix(6.6666665,0,0,6.6666665,238.33076,406.26934)" />
     <path
        style="fill:#000000;fill-rule:evenodd;stroke:#ffffff;stroke-width:35;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;fill-opacity:0"
