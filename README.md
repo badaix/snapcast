@@ -12,7 +12,7 @@ https://travis-ci.org/badaix/snapcast.svg?branch=master)](https://travis-ci.org/
 Snapcast is a multi-room client-server audio player, where all clients are time synchronized with the server to play perfectly synced audio. It's not a standalone player, but an extension that turns your existing audio player into a Sonos-like multi-room solution.
 The server's audio input is a named pipe `/tmp/snapfifo`. All data that is fed into this file will be send to the connected clients. One of the most generic ways to use Snapcast is in conjunction with the music player daemon ([MPD](http://www.musicpd.org/)) or [Mopidy](https://www.mopidy.com/), which can be configured to use a named pipe as audio output.
 
-How does is work
+How does it work
 ----------------
 The Snapserver reads PCM chunks from the pipe `/tmp/snapfifo`. The chunk is encoded and tagged with the local time. Supported codecs are:
 * **PCM** lossless uncompressed
@@ -120,6 +120,8 @@ There is a [snapcast component for Home Assistant](https://home-assistant.io/com
 For a webinterface in python, see [snapcastr](https://github.com/xkonni/snapcastr), based on [python-snapcast](https://github.com/happyleavesaoc/python-snapcast). This interface controls client volume and assigns streams to groups.
 
 Another webinterface running on any device, see [snapcast-websockets-ui](https://github.com/derglaus/snapcast-websockets-ui), running entirely in the browser, needs [websockify](https://github.com/novnc/websockify). No configuration needed, features almost all functions, still needs some tuning for the optics.
+
+A webinterface called [HydraPlay](https://github.com/mariolukas/HydraPlay) which integrates Snapcast and multiple Mopidy instances. It is JavaScript based and uses Angular 7. A Snapcast websocket proxy server is needed to connect Snapcast to HydraPlay over web sockets.
 
 Setup of audio players/server
 -----------------------------

@@ -36,6 +36,11 @@ For Arch derivates:
 
     $ sudo pacman -S base-devel
     $ sudo pacman -S alsa-lib avahi libvorbis flac alsa-utils
+    
+For Fedora (and probably RHEL, CentOS & Scientific Linux, but untested):
+
+    $ sudo dnf install @development-tools
+    $ sudo dnf install alsa-lib-devel avahi-devel libvorbis-devel flac-devel libstdc++-static
 
 ### Build Snapclient and Snapserver
 `cd` into the Snapcast src-root directory:
