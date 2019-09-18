@@ -63,6 +63,10 @@ To test your mpd installation, you can add a radio station by
     #output = autoaudiosink
     output = audioresample ! audioconvert ! audio/x-raw,rate=48000,channels=2,format=S16LE ! wavenc ! filesink location=/tmp/snapfifo
 
+With newer kernels one might also have to change this sysctl-setting as default settings has changed recently: `sudo sysctl fs.protected_fifos=0`
+
+See https://unix.stackexchange.com/questions/503111/group-permissions-for-root-not-working-in-tmp for more details. You need to run this after each reboot or add it to /etc/sysctl.conf or /etc/sysctl.d/50-default.conf depending on distribution.
+
 ### FFmpeg
 Pipe FFmpeg's audio output to the snapfifo:
 
