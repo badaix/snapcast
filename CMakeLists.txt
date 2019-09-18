@@ -104,6 +104,8 @@ if(MACOSX)
     endif (BONJOUR_FOUND)
 
     add_definitions(-DFREEBSD -DHAS_DAEMON)
+    list(APPEND INCLUDE_DIRS "/usr/local/include")
+    list(APPEND CMAKE_REQUIRED_INCLUDES "${INCLUDE_DIRS}")
 elseif(ANDROID)
 #    add_definitions("-DNO_CPP11_STRING")
 else()
