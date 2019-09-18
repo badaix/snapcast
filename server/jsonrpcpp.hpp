@@ -3,11 +3,11 @@
      _(  )/ ___) /  \ (  ( \(  _ \(  _ \ / __)( )  ( )  
     / \) \\___ \(  O )/    / )   / ) __/( (__(_ _)(_ _) 
     \____/(____/ \__/ \_)__)(__\_)(__)   \___)(_)  (_)  
-    version 1.2.0
+    version 1.2.1
     https://github.com/badaix/jsonrpcpp
 
     This file is part of jsonrpc++
-    Copyright (C) 2017-2018 Johannes Pohl
+    Copyright (C) 2017-2019 Johannes Pohl
 
     This software may be modified and distributed under the terms
     of the MIT license.  See the LICENSE file for details.
@@ -869,7 +869,7 @@ inline void Error::parse_json(const Json& json)
 		code_ = json["code"];
 		if (json.count("message") == 0)
 			throw RpcException("message is missing");
-		message_ = json["message"];
+		message_ = json["message"].get<std::string>();
 		if (json.count("data") != 0u)
 			data_ = json["data"];
 		else
@@ -942,7 +942,7 @@ inline void Request::parse_json(const Json& json)
 			throw InvalidRequestException("method is missing", id_);
 		if (!json["method"].is_string())
 			throw InvalidRequestException("method must be a string value", id_);
-		method_ = json["method"];
+		method_ = json["method"].get<std::string>();
 		if (method_.empty())
 			throw InvalidRequestException("method must not be empty", id_);
 
@@ -1235,7 +1235,7 @@ inline void Notification::parse_json(const Json& json)
 			throw RpcException("method is missing");
 		if (!json["method"].is_string())
 			throw RpcException("method must be a string value");
-		method_ = json["method"];
+		method_ = json["method"].get<std::string>();
 		if (method_.empty())
 			throw RpcException("method must not be empty");
 
