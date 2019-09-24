@@ -578,8 +578,8 @@ void StreamServer::onMessageReceived(ControlSession* controlSession, const std::
 void StreamServer::onMessageReceived(StreamSession* streamSession, const msg::BaseMessage& baseMessage, char* buffer)
 {
     //	LOG(DEBUG) << "onMessageReceived: " << baseMessage.type << ", size: " << baseMessage.size << ", id: " << baseMessage.id << ", refers: " <<
-    //baseMessage.refersTo << ", sent: " << baseMessage.sent.sec << "," << baseMessage.sent.usec << ", recv: " << baseMessage.received.sec << "," <<
-    //baseMessage.received.usec << "\n";
+    // baseMessage.refersTo << ", sent: " << baseMessage.sent.sec << "," << baseMessage.sent.usec << ", recv: " << baseMessage.received.sec << "," <<
+    // baseMessage.received.usec << "\n";
     if (baseMessage.type == message_type::kTime)
     {
         auto timeMsg = make_shared<msg::Time>();

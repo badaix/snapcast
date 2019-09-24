@@ -190,7 +190,7 @@ void StreamSession::getNextMessage()
     }
 
     //	LOG(INFO) << "getNextMessage: " << baseMessage.type << ", size: " << baseMessage.size << ", id: " << baseMessage.id << ", refers: " <<
-    //baseMessage.refersTo << "\n";
+    // baseMessage.refersTo << "\n";
     if (baseMessage.size > buffer.size())
         buffer.resize(baseMessage.size);
     //	{

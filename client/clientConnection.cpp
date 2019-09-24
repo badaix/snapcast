@@ -178,7 +178,7 @@ void ClientConnection::getNextMessage()
     socketRead(&buffer[0], baseMsgSize);
     baseMessage.deserialize(&buffer[0]);
     //	LOG(DEBUG) << "getNextMessage: " << baseMessage.type << ", size: " << baseMessage.size << ", id: " << baseMessage.id << ", refers: " <<
-    //baseMessage.refersTo << "\n";
+    // baseMessage.refersTo << "\n";
     if (baseMessage.size > buffer.size())
         buffer.resize(baseMessage.size);
     //	{
@@ -191,7 +191,7 @@ void ClientConnection::getNextMessage()
     {
         std::unique_lock<std::mutex> lock(pendingRequestsMutex_);
         //		LOG(DEBUG) << "got lock - getNextMessage: " << baseMessage.type << ", size: " << baseMessage.size << ", id: " << baseMessage.id << ",
-        //refers: " << baseMessage.refersTo << "\n";
+        // refers: " << baseMessage.refersTo << "\n";
         {
             for (auto req : pendingRequests_)
             {

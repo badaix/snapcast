@@ -370,8 +370,8 @@ else if (miniBuffer_.full() && (cs::usec(abs(miniBuffer_.median())) > cs::msec(5
             shortMedian_ = shortBuffer_.median();
             LOG(INFO) << "Chunk: " << age.count() / 100 << "\t" << miniBuffer_.median() / 100 << "\t" << shortMedian_ / 100 << "\t" << median_ / 100 << "\t"
                       << buffer_.size() << "\t" << cs::duration<cs::msec>(outputBufferDacTime) << "\n";
-            //			LOG(INFO) << "Chunk: " << age.count()/1000 << "\t" << miniBuffer_.median()/1000 << "\t" << shortMedian_/1000 << "\t" << median_/1000 << "\t"
-            //<< buffer_.size() << "\t" << cs::duration<cs::msec>(outputBufferDacTime) << "\n";
+            // LOG(INFO) << "Chunk: " << age.count()/1000 << "\t" << miniBuffer_.median()/1000 << "\t" << shortMedian_/1000 << "\t" << median_/1000 << "\t" <<
+            // buffer_.size() << "\t" << cs::duration<cs::msec>(outputBufferDacTime) << "\n";
         }
         return (abs(cs::duration<cs::msec>(age)) < 500);
     }

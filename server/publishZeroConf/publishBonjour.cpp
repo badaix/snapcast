@@ -150,8 +150,8 @@ void PublishBonjour::publish(const std::vector<mDNSService>& services)
         DNSServiceFlags flags = 0;
         Opaque16 registerPort = {{static_cast<unsigned char>(service.port_ >> 8), static_cast<unsigned char>(service.port_ & 0xFF)}};
         DNSServiceRef client = NULL;
-        //		DNSServiceRegister(&client, flags, kDNSServiceInterfaceIndexAny, serviceName_.c_str(), service.name_.c_str(), NULL, NULL,
-        //registerPort.NotAnInteger, service.txt_.size(), service.txt_.empty()?NULL:service.txt_.c_str(), reg_reply, this);
+        // DNSServiceRegister(&client, flags, kDNSServiceInterfaceIndexAny, serviceName_.c_str(), service.name_.c_str(), NULL, NULL, registerPort.NotAnInteger,
+        // service.txt_.size(), service.txt_.empty()?NULL:service.txt_.c_str(), reg_reply, this);
         DNSServiceRegister(&client, flags, kDNSServiceInterfaceIndexAny, serviceName_.c_str(), service.name_.c_str(), NULL, NULL, registerPort.NotAnInteger, 0,
                            NULL, reg_reply, this);
         clients.push_back(client);

@@ -71,8 +71,8 @@ void FlacEncoder::encode(const msg::PcmChunk* chunk)
 {
     int samples = chunk->getSampleCount();
     int frames = chunk->getFrameCount();
-    //	LOG(INFO) << "payload: " << chunk->payloadSize << "\tframes: " << frames << "\tsamples: " << samples << "\tduration: " <<
-    //chunk->duration<chronos::msec>().count() << "\n";
+    // LOG(INFO) << "payload: " << chunk->payloadSize << "\tframes: " << frames << "\tsamples: " << samples << "\tduration: " <<
+    // chunk->duration<chronos::msec>().count() << "\n";
 
     if (pcmBufferSize_ < samples)
     {
