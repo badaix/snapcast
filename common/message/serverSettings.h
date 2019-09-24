@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2018  Johannes Pohl
+    Copyright (C) 2014-2019  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -28,64 +28,61 @@ namespace msg
 class ServerSettings : public JsonMessage
 {
 public:
-	ServerSettings() : JsonMessage(message_type::kServerSettings)
-	{
-		setBufferMs(0);
-		setLatency(0);
-		setVolume(100);
-		setMuted(false);
-	}
+    ServerSettings() : JsonMessage(message_type::kServerSettings)
+    {
+        setBufferMs(0);
+        setLatency(0);
+        setVolume(100);
+        setMuted(false);
+    }
 
-	virtual ~ServerSettings()
-	{
-	}
+    virtual ~ServerSettings()
+    {
+    }
 
-	int32_t getBufferMs()
-	{
-		return get("bufferMs", 0);
-	}
+    int32_t getBufferMs()
+    {
+        return get("bufferMs", 0);
+    }
 
-	int32_t getLatency()
-	{
-		return get("latency", 0);
-	}
+    int32_t getLatency()
+    {
+        return get("latency", 0);
+    }
 
-	uint16_t getVolume()
-	{
-		return get("volume", 100);
-	}
+    uint16_t getVolume()
+    {
+        return get("volume", 100);
+    }
 
-	bool isMuted()
-	{
-		return get("muted", false);
-	}
+    bool isMuted()
+    {
+        return get("muted", false);
+    }
 
 
 
-	void setBufferMs(int32_t bufferMs)
-	{
-		msg["bufferMs"] = bufferMs;
-	}
+    void setBufferMs(int32_t bufferMs)
+    {
+        msg["bufferMs"] = bufferMs;
+    }
 
-	void setLatency(int32_t latency)
-	{
-		msg["latency"] = latency;
-	}
+    void setLatency(int32_t latency)
+    {
+        msg["latency"] = latency;
+    }
 
-	void setVolume(uint16_t volume)
-	{
-		msg["volume"] = volume;
-	}
+    void setVolume(uint16_t volume)
+    {
+        msg["volume"] = volume;
+    }
 
-	void setMuted(bool muted)
-	{
-		msg["muted"] = muted;
-	}
+    void setMuted(bool muted)
+    {
+        msg["muted"] = muted;
+    }
 };
-
 }
 
 
 #endif
-
-

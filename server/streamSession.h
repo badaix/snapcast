@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2018  Johannes Pohl
+    Copyright (C) 2014-2019  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -19,17 +19,17 @@
 #ifndef STREAM_SESSION_H
 #define STREAM_SESSION_H
 
+#include "common/queue.h"
+#include "message/message.h"
+#include "streamreader/streamManager.h"
+#include <asio.hpp>
+#include <atomic>
+#include <condition_variable>
+#include <memory>
+#include <mutex>
+#include <set>
 #include <string>
 #include <thread>
-#include <atomic>
-#include <memory>
-#include <asio.hpp>
-#include <condition_variable>
-#include <set>
-#include <mutex>
-#include "message/message.h"
-#include "common/queue.h"
-#include "streamreader/streamManager.h"
 
 
 using asio::ip::tcp;
@@ -42,8 +42,8 @@ class StreamSession;
 class MessageReceiver
 {
 public:
-	virtual void onMessageReceived(StreamSession* connection, const msg::BaseMessage& baseMessage, char* buffer) = 0;
-	virtual void onDisconnect(StreamSession* connection) = 0;
+    virtual void onMessageReceived(StreamSession* connection, const msg::BaseMessage& baseMessage, char* buffer) = 0;
+    virtual void onDisconnect(StreamSession* connection) = 0;
 };
 
 
@@ -56,57 +56,52 @@ public:
 class StreamSession
 {
 public:
-	/// ctor. Received message from the client are passed to MessageReceiver
-	StreamSession(MessageReceiver* receiver, std::shared_ptr<tcp::socket> socket);
-	~StreamSession();
-	void start();
-	void stop();
+    /// ctor. Received message from the client are passed to MessageReceiver
+    StreamSession(MessageReceiver* receiver, std::shared_ptr<tcp::socket> socket);
+    ~StreamSession();
+    void start();
+    void stop();
 
-	/// Sends a message to the client (synchronous)
-	bool send(const msg::message_ptr& message) const;
+    /// Sends a message to the client (synchronous)
+    bool send(const msg::message_ptr& message) const;
 
-	/// Sends a message to the client (asynchronous)
-	void sendAsync(const msg::message_ptr& message, bool sendNow = false);
+    /// Sends a message to the client (asynchronous)
+    void sendAsync(const msg::message_ptr& message, bool sendNow = false);
 
-	bool active() const;
+    bool active() const;
 
-	/// Max playout latency. No need to send PCM data that is older than bufferMs
-	void setBufferMs(size_t bufferMs);
+    /// Max playout latency. No need to send PCM data that is older than bufferMs
+    void setBufferMs(size_t bufferMs);
 
-	std::string clientId;
+    std::string clientId;
 
-	std::string getIP()
-	{
-		return socket_->remote_endpoint().address().to_string();
-	}
+    std::string getIP()
+    {
+        return socket_->remote_endpoint().address().to_string();
+    }
 
-	void setPcmStream(PcmStreamPtr pcmStream);
-	const PcmStreamPtr pcmStream() const;
+    void setPcmStream(PcmStreamPtr pcmStream);
+    const PcmStreamPtr pcmStream() const;
 
 protected:
-	void socketRead(void* _to, size_t _bytes);
-	void getNextMessage();
-	void reader();
-	void writer();
+    void socketRead(void* _to, size_t _bytes);
+    void getNextMessage();
+    void reader();
+    void writer();
 
-	mutable std::mutex activeMutex_;
-	std::atomic<bool> active_;
+    mutable std::mutex activeMutex_;
+    std::atomic<bool> active_;
 
-	std::unique_ptr<std::thread> readerThread_;
-	std::unique_ptr<std::thread> writerThread_;
-	mutable std::mutex socketMutex_;
-	std::shared_ptr<tcp::socket> socket_;
-	MessageReceiver* messageReceiver_;
-	Queue<std::shared_ptr<msg::BaseMessage>> messages_;
-	size_t bufferMs_;
-	PcmStreamPtr pcmStream_;
+    std::unique_ptr<std::thread> readerThread_;
+    std::unique_ptr<std::thread> writerThread_;
+    mutable std::mutex socketMutex_;
+    std::shared_ptr<tcp::socket> socket_;
+    MessageReceiver* messageReceiver_;
+    Queue<std::shared_ptr<msg::BaseMessage>> messages_;
+    size_t bufferMs_;
+    PcmStreamPtr pcmStream_;
 };
 
 
 
-
 #endif
-
-
-
-

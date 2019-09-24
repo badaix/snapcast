@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2018  Johannes Pohl
+    Copyright (C) 2014-2019  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -25,17 +25,17 @@
 class Daemon
 {
 public:
-	Daemon(const std::string& user, const std::string& group, const std::string& pidfile);
-	virtual ~Daemon();
+    Daemon(const std::string& user, const std::string& group, const std::string& pidfile);
+    virtual ~Daemon();
 
-	void daemonize();
-	
+    void daemonize();
+
 private:
-	int pidFilehandle_;
-	std::string user_;
-	std::string group_;
-	std::string pidfile_;
+    int pidFilehandle_;
+    std::string user_;
+    std::string group_;
+    std::string pidfile_;
 };
 
 
-#endif  // DAEMON_H
+#endif // DAEMON_H

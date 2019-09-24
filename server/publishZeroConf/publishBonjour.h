@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2018  Johannes Pohl
+    Copyright (C) 2014-2019  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -20,8 +20,8 @@
 #ifndef PUBLISH_BONJOUR_H
 #define PUBLISH_BONJOUR_H
 
-#include <string>
 #include <dns_sd.h>
+#include <string>
 
 class PublishBonjour;
 
@@ -30,18 +30,16 @@ class PublishBonjour;
 class PublishBonjour : public PublishmDNS
 {
 public:
-	PublishBonjour(const std::string& serviceName);
-	virtual ~PublishBonjour();
-	virtual void publish(const std::vector<mDNSService>& services);
+    PublishBonjour(const std::string& serviceName);
+    virtual ~PublishBonjour();
+    virtual void publish(const std::vector<mDNSService>& services);
 
 private:
-	std::thread pollThread_;
-	void worker();
-	std::atomic<bool> active_;
+    std::thread pollThread_;
+    void worker();
+    std::atomic<bool> active_;
     std::vector<DNSServiceRef> clients;
 };
 
 
 #endif
-
-

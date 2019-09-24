@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2018  Johannes Pohl
+    Copyright (C) 2014-2019  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -19,8 +19,8 @@
 #ifndef READER_URI_H
 #define READER_URI_H
 
-#include <string>
 #include <map>
+#include <string>
 
 #include "common/json.hpp"
 
@@ -31,29 +31,29 @@ using json = nlohmann::json;
 // scheme:[//[user:password@]host[:port]][/]path[?query][#fragment]
 struct StreamUri
 {
-	StreamUri(const std::string& uri);
-	std::string uri;
-	std::string scheme;
-/*	struct Authority
-	{
-		std::string username;
-		std::string password;
-		std::string host;
-		size_t port;
-	};
-	Authority authority;
-*/
-	std::string host;
-	std::string path;
-	std::map<std::string, std::string> query;
-	std::string fragment;
+    StreamUri(const std::string& uri);
+    std::string uri;
+    std::string scheme;
+    /*	struct Authority
+            {
+                    std::string username;
+                    std::string password;
+                    std::string host;
+                    size_t port;
+            };
+            Authority authority;
+    */
+    std::string host;
+    std::string path;
+    std::map<std::string, std::string> query;
+    std::string fragment;
 
-	std::string id() const;
-	json toJson() const;
-	std::string getQuery(const std::string& key, const std::string& def = "") const;
+    std::string id() const;
+    json toJson() const;
+    std::string getQuery(const std::string& key, const std::string& def = "") const;
 
-	void parse(const std::string& streamUri);
-	std::string toString() const;
+    void parse(const std::string& streamUri);
+    std::string toString() const;
 };
 
 

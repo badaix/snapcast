@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2018  Johannes Pohl
+    Copyright (C) 2014-2019  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -19,28 +19,28 @@
 #ifndef PCM_STREAM_H
 #define PCM_STREAM_H
 
-#include <thread>
-#include <atomic>
-#include <string>
-#include <mutex>
-#include <condition_variable>
-#include <map>
-#include "streamUri.h"
-#include "encoder/encoder.h"
-#include "common/sampleFormat.h"
 #include "common/json.hpp"
+#include "common/sampleFormat.h"
+#include "encoder/encoder.h"
 #include "message/codecHeader.h"
 #include "message/streamTags.h"
+#include "streamUri.h"
+#include <atomic>
+#include <condition_variable>
+#include <map>
+#include <mutex>
+#include <string>
+#include <thread>
 
 
 class PcmStream;
 
 enum ReaderState
 {
-	kUnknown = 0,
-	kIdle = 1,
-	kPlaying = 2,
-	kDisabled = 3
+    kUnknown = 0,
+    kIdle = 1,
+    kPlaying = 2,
+    kDisabled = 3
 };
 
 
@@ -51,10 +51,10 @@ enum ReaderState
 class PcmListener
 {
 public:
-	virtual void onMetaChanged(const PcmStream* pcmStream) = 0;
-	virtual void onStateChanged(const PcmStream* pcmStream, const ReaderState& state) = 0;
-	virtual void onChunkRead(const PcmStream* pcmStream, msg::PcmChunk* chunk, double duration) = 0;
-	virtual void onResync(const PcmStream* pcmStream, double ms) = 0;
+    virtual void onMetaChanged(const PcmStream* pcmStream) = 0;
+    virtual void onStateChanged(const PcmStream* pcmStream, const ReaderState& state) = 0;
+    virtual void onChunkRead(const PcmStream* pcmStream, msg::PcmChunk* chunk, double duration) = 0;
+    virtual void onResync(const PcmStream* pcmStream, double ms) = 0;
 };
 
 
@@ -67,49 +67,49 @@ public:
 class PcmStream : public EncoderListener
 {
 public:
-	/// ctor. Encoded PCM data is passed to the PcmListener
-	PcmStream(PcmListener* pcmListener, const StreamUri& uri);
-	virtual ~PcmStream();
+    /// ctor. Encoded PCM data is passed to the PcmListener
+    PcmStream(PcmListener* pcmListener, const StreamUri& uri);
+    virtual ~PcmStream();
 
-	virtual void start();
-	virtual void stop();
+    virtual void start();
+    virtual void stop();
 
-	/// Implementation of EncoderListener::onChunkEncoded
-	virtual void onChunkEncoded(const Encoder* encoder, msg::PcmChunk* chunk, double duration);
-	virtual std::shared_ptr<msg::CodecHeader> getHeader();
+    /// Implementation of EncoderListener::onChunkEncoded
+    virtual void onChunkEncoded(const Encoder* encoder, msg::PcmChunk* chunk, double duration);
+    virtual std::shared_ptr<msg::CodecHeader> getHeader();
 
-	virtual const StreamUri& getUri() const;
-	virtual const std::string& getName() const;
-	virtual const std::string& getId() const;
-	virtual const SampleFormat& getSampleFormat() const;
+    virtual const StreamUri& getUri() const;
+    virtual const std::string& getName() const;
+    virtual const std::string& getId() const;
+    virtual const SampleFormat& getSampleFormat() const;
 
-	std::shared_ptr<msg::StreamTags> getMeta() const;
-	void setMeta(json j);
+    std::shared_ptr<msg::StreamTags> getMeta() const;
+    void setMeta(json j);
 
-	virtual ReaderState getState() const;
-	virtual json toJson() const;
+    virtual ReaderState getState() const;
+    virtual json toJson() const;
 
 
 protected:
-	std::condition_variable cv_;
-	std::mutex mtx_;
-	std::thread thread_;
-	std::atomic<bool> active_;
+    std::condition_variable cv_;
+    std::mutex mtx_;
+    std::thread thread_;
+    std::atomic<bool> active_;
 
-	virtual void worker() = 0;
-	virtual bool sleep(int32_t ms);
-	void setState(const ReaderState& newState);
+    virtual void worker() = 0;
+    virtual bool sleep(int32_t ms);
+    void setState(const ReaderState& newState);
 
-	timeval tvEncodedChunk_;
-	PcmListener* pcmListener_;
-	StreamUri uri_;
-	SampleFormat sampleFormat_;
-	size_t pcmReadMs_;
-	size_t dryoutMs_;
-	std::unique_ptr<Encoder> encoder_;
-	std::string name_;
-	ReaderState state_;
-        std::shared_ptr<msg::StreamTags> meta_;
+    timeval tvEncodedChunk_;
+    PcmListener* pcmListener_;
+    StreamUri uri_;
+    SampleFormat sampleFormat_;
+    size_t pcmReadMs_;
+    size_t dryoutMs_;
+    std::unique_ptr<Encoder> encoder_;
+    std::string name_;
+    ReaderState state_;
+    std::shared_ptr<msg::StreamTags> meta_;
 };
 
 

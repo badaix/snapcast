@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2018  Johannes Pohl
+    Copyright (C) 2014-2019  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -30,42 +30,39 @@ namespace msg
 class CodecHeader : public BaseMessage
 {
 public:
-	CodecHeader(const std::string& codecName = "", size_t size = 0) : BaseMessage(message_type::kCodecHeader), payloadSize(size), codec(codecName)
-	{
-		payload = (char*)malloc(size);
-	}
+    CodecHeader(const std::string& codecName = "", size_t size = 0) : BaseMessage(message_type::kCodecHeader), payloadSize(size), codec(codecName)
+    {
+        payload = (char*)malloc(size);
+    }
 
-	virtual ~CodecHeader()
-	{
-		free(payload);
-	}
+    virtual ~CodecHeader()
+    {
+        free(payload);
+    }
 
-	virtual void read(std::istream& stream)
-	{
-		readVal(stream, codec);
-		readVal(stream, &payload, payloadSize);
-	}
+    virtual void read(std::istream& stream)
+    {
+        readVal(stream, codec);
+        readVal(stream, &payload, payloadSize);
+    }
 
-	virtual uint32_t getSize() const
-	{
-		return sizeof(uint32_t) + codec.size() + sizeof(uint32_t) + payloadSize;
-	}
+    virtual uint32_t getSize() const
+    {
+        return sizeof(uint32_t) + codec.size() + sizeof(uint32_t) + payloadSize;
+    }
 
-	uint32_t payloadSize;
-	char* payload;
-	std::string codec;
+    uint32_t payloadSize;
+    char* payload;
+    std::string codec;
 
 protected:
-	virtual void doserialize(std::ostream& stream) const
-	{
-		writeVal(stream, codec);
-		writeVal(stream, payload, payloadSize);
-	}
+    virtual void doserialize(std::ostream& stream) const
+    {
+        writeVal(stream, codec);
+        writeVal(stream, payload, payloadSize);
+    }
 };
-
 }
 
 
 #endif
-
-

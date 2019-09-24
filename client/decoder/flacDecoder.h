@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2018  Johannes Pohl
+    Copyright (C) 2014-2019  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -29,36 +29,34 @@
 
 struct CacheInfo
 {
-	CacheInfo() : sampleRate_(0)
-	{
-		reset();
-	}
+    CacheInfo() : sampleRate_(0)
+    {
+        reset();
+    }
 
-	void reset()
-	{
-		isCachedChunk_ = true;
-		cachedBlocks_ = 0;
-	}
+    void reset()
+    {
+        isCachedChunk_ = true;
+        cachedBlocks_ = 0;
+    }
 
-	bool isCachedChunk_;
-	size_t cachedBlocks_;
-	size_t sampleRate_;
+    bool isCachedChunk_;
+    size_t cachedBlocks_;
+    size_t sampleRate_;
 };
 
 
 class FlacDecoder : public Decoder
 {
 public:
-	FlacDecoder();
-	virtual ~FlacDecoder();
-	virtual bool decode(msg::PcmChunk* chunk);
-	virtual SampleFormat setHeader(msg::CodecHeader* chunk);
+    FlacDecoder();
+    virtual ~FlacDecoder();
+    virtual bool decode(msg::PcmChunk* chunk);
+    virtual SampleFormat setHeader(msg::CodecHeader* chunk);
 
-	CacheInfo cacheInfo_;
-	std::unique_ptr<FLAC__StreamDecoderErrorStatus> lastError_;
+    CacheInfo cacheInfo_;
+    std::unique_ptr<FLAC__StreamDecoderErrorStatus> lastError_;
 };
 
 
 #endif
-
-

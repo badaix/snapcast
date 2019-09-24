@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2018  Johannes Pohl
+    Copyright (C) 2014-2019  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -32,13 +32,15 @@
 class TageEntry
 {
 public:
-        TageEntry(): isBase64(false), length(0) {}
+    TageEntry() : isBase64(false), length(0)
+    {
+    }
 
-        std::string code;
-        std::string type;
-        std::string data;
-        bool isBase64;
-        int length;
+    std::string code;
+    std::string type;
+    std::string data;
+    bool isBase64;
+    int length;
 };
 
 /// Starts shairport-sync and reads PCM data from stdout
@@ -53,36 +55,36 @@ public:
 class AirplayStream : public ProcessStream
 {
 public:
-	/// ctor. Encoded PCM data is passed to the PipeListener
-	AirplayStream(PcmListener* pcmListener, const StreamUri& uri);
-	virtual ~AirplayStream();
+    /// ctor. Encoded PCM data is passed to the PipeListener
+    AirplayStream(PcmListener* pcmListener, const StreamUri& uri);
+    virtual ~AirplayStream();
 
 protected:
 #ifdef HAS_EXPAT
-	XML_Parser parser_;
+    XML_Parser parser_;
 #endif
-	std::unique_ptr<TageEntry> entry_;
-	std::string buf_;
-	json jtag_;
+    std::unique_ptr<TageEntry> entry_;
+    std::string buf_;
+    json jtag_;
 
-	void pipeReader();
+    void pipeReader();
 #ifdef HAS_EXPAT
-	int parse(std::string line);
-	void createParser();
-	void push();
+    int parse(std::string line);
+    void createParser();
+    void push();
 #endif
 
-	virtual void onStderrMsg(const char* buffer, size_t n);
-	virtual void initExeAndPath(const std::string& filename);
-	size_t port_;
-	std::string pipePath_;
-	std::string params_wo_port_;
-	std::thread pipeReaderThread_;
+    virtual void onStderrMsg(const char* buffer, size_t n);
+    virtual void initExeAndPath(const std::string& filename);
+    size_t port_;
+    std::string pipePath_;
+    std::string params_wo_port_;
+    std::thread pipeReaderThread_;
 
 #ifdef HAS_EXPAT
-	static void XMLCALL element_start(void *userdata, const char *element_name, const char **attr);
-	static void XMLCALL element_end(void *userdata, const char *element_name);
-	static void XMLCALL data(void *userdata, const char *content, int length);
+    static void XMLCALL element_start(void* userdata, const char* element_name, const char** attr);
+    static void XMLCALL element_end(void* userdata, const char* element_name);
+    static void XMLCALL data(void* userdata, const char* content, int length);
 #endif
 };
 

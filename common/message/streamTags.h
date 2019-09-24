@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2018  Johannes Pohl
+    Copyright (C) 2014-2019  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -24,12 +24,12 @@
 /*
  * Due to the PCM pipe implementation of snapcast input we cannot know track start/end
  * it's all a long stream (although we detect idle situations)
- * 
+ *
  * So, we cannot push metadata on start of track as we don't know when that is.
- * 
+ *
  * I.E. we push metadata as we get an update, as we don't know when an update
  * is complete (different meta supported in different stream interfaces)
- * it is the streamreaders responsibility to update metadata and 
+ * it is the streamreaders responsibility to update metadata and
  * trigger a client notification.
  *
  * I.E. we need to suppply the client notification mechanism.
@@ -41,38 +41,35 @@ namespace msg
 class StreamTags : public JsonMessage
 {
 public:
-	/* 
-	Usage:
-		json jtag = {
-			{"artist", "Pink Floyd"},
-			{"album", "Dark Side of the Moon"},
-               		{"track", "Money"},
-			{"spotifyid", "akjhasi7wehke7698"},
-			{"musicbrainzid", "akjhasi7wehke7698"},
-		};
-		this->meta_.reset(new msg::StreamTags(jtag));
+    /*
+    Usage:
+            json jtag = {
+                    {"artist", "Pink Floyd"},
+                    {"album", "Dark Side of the Moon"},
+                    {"track", "Money"},
+                    {"spotifyid", "akjhasi7wehke7698"},
+                    {"musicbrainzid", "akjhasi7wehke7698"},
+            };
+            this->meta_.reset(new msg::StreamTags(jtag));
 
-		Stream input can decide on tags, IDK... but smart
-		to use some common naming scheme
-	*/
+            Stream input can decide on tags, IDK... but smart
+            to use some common naming scheme
+    */
 
-	StreamTags(json j) : JsonMessage(message_type::kStreamTags)
-	{
-		msg = j;
-	}
+    StreamTags(json j) : JsonMessage(message_type::kStreamTags)
+    {
+        msg = j;
+    }
 
-	StreamTags() : JsonMessage(message_type::kStreamTags)
-	{
-	}
+    StreamTags() : JsonMessage(message_type::kStreamTags)
+    {
+    }
 
-	virtual ~StreamTags()
-	{
-	}
+    virtual ~StreamTags()
+    {
+    }
 };
-
 }
 
 
 #endif
-
-

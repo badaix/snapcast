@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2018  Johannes Pohl
+    Copyright (C) 2014-2019  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -32,13 +32,13 @@
 class PipeStream : public PcmStream
 {
 public:
-	/// ctor. Encoded PCM data is passed to the PipeListener
-	PipeStream(PcmListener* pcmListener, const StreamUri& uri);
-	virtual ~PipeStream();
+    /// ctor. Encoded PCM data is passed to the PipeListener
+    PipeStream(PcmListener* pcmListener, const StreamUri& uri);
+    virtual ~PipeStream();
 
 protected:
-	virtual void worker();
-	int fd_;
+    virtual void worker();
+    int fd_;
 };
 
 

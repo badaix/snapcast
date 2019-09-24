@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2018  Johannes Pohl
+    Copyright (C) 2014-2019  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -19,10 +19,10 @@
 #ifndef PCM_CHUNK_H
 #define PCM_CHUNK_H
 
-#include <chrono>
+#include "common/sampleFormat.h"
 #include "message.h"
 #include "wireChunk.h"
-#include "common/sampleFormat.h"
+#include <chrono>
 
 
 namespace msg
@@ -36,106 +36,95 @@ namespace msg
 class PcmChunk : public WireChunk
 {
 public:
-	PcmChunk(const SampleFormat& sampleFormat, size_t ms) :
-		WireChunk(sampleFormat.rate*sampleFormat.frameSize*ms / 1000),
-		format(sampleFormat),
-		idx_(0)
-	{
-	}
+    PcmChunk(const SampleFormat& sampleFormat, size_t ms) : WireChunk(sampleFormat.rate * sampleFormat.frameSize * ms / 1000), format(sampleFormat), idx_(0)
+    {
+    }
 
-	PcmChunk(const PcmChunk& pcmChunk) :
-		WireChunk(pcmChunk),
-		format(pcmChunk.format),
-		idx_(0)
-	{
-	}
+    PcmChunk(const PcmChunk& pcmChunk) : WireChunk(pcmChunk), format(pcmChunk.format), idx_(0)
+    {
+    }
 
-	PcmChunk() : WireChunk(), idx_(0)
-	{
-	}
+    PcmChunk() : WireChunk(), idx_(0)
+    {
+    }
 
-	virtual ~PcmChunk()
-	{
-	}
+    virtual ~PcmChunk()
+    {
+    }
 
-	int readFrames(void* outputBuffer, size_t frameCount)
-	{
-	//logd << "read: " << frameCount << ", total: " << (wireChunk->length / format.frameSize) << ", idx: " << idx;// << std::endl;
-		int result = frameCount;
-		if (idx_ + frameCount > (payloadSize / format.frameSize))
-			result = (payloadSize / format.frameSize) - idx_;
+    int readFrames(void* outputBuffer, size_t frameCount)
+    {
+        // logd << "read: " << frameCount << ", total: " << (wireChunk->length / format.frameSize) << ", idx: " << idx;// << std::endl;
+        int result = frameCount;
+        if (idx_ + frameCount > (payloadSize / format.frameSize))
+            result = (payloadSize / format.frameSize) - idx_;
 
-	//logd << ", from: " << format.frameSize*idx << ", to: " << format.frameSize*idx + format.frameSize*result;
-		if (outputBuffer != NULL)
-			memcpy((char*)outputBuffer, (char*)(payload) + format.frameSize*idx_, format.frameSize*result);
+        // logd << ", from: " << format.frameSize*idx << ", to: " << format.frameSize*idx + format.frameSize*result;
+        if (outputBuffer != NULL)
+            memcpy((char*)outputBuffer, (char*)(payload) + format.frameSize * idx_, format.frameSize * result);
 
-		idx_ += result;
-	//logd << ", new idx: " << idx << ", result: " << result << ", wireChunk->length: " << wireChunk->length << ", format.frameSize: " << format.frameSize << "\n";//std::endl;
-		return result;
-	}
-	
-	int seek(int frames)
-	{
-		if ((frames < 0) && (-frames > (int)idx_))
-			frames = -idx_;
-			
-		idx_ += frames;
-		if (idx_ > getFrameCount())
-			idx_ = getFrameCount();
+        idx_ += result;
+        // logd << ", new idx: " << idx << ", result: " << result << ", wireChunk->length: " << wireChunk->length << ", format.frameSize: " << format.frameSize
+        // << "\n";//std::endl;
+        return result;
+    }
 
-		return idx_;
-	}
+    int seek(int frames)
+    {
+        if ((frames < 0) && (-frames > (int)idx_))
+            frames = -idx_;
+
+        idx_ += frames;
+        if (idx_ > getFrameCount())
+            idx_ = getFrameCount();
+
+        return idx_;
+    }
 
 
-	virtual chronos::time_point_clk start() const
-	{
-		return chronos::time_point_clk(
-				chronos::sec(timestamp.sec) +
-				chronos::usec(timestamp.usec) +
-				chronos::usec((chronos::usec::rep)(1000000. * ((double)idx_ / (double)format.rate)))
-				);
-	}
+    virtual chronos::time_point_clk start() const
+    {
+        return chronos::time_point_clk(chronos::sec(timestamp.sec) + chronos::usec(timestamp.usec) +
+                                       chronos::usec((chronos::usec::rep)(1000000. * ((double)idx_ / (double)format.rate))));
+    }
 
-	inline chronos::time_point_clk end() const
-	{
-		return start() + durationLeft<chronos::usec>();
-	}
+    inline chronos::time_point_clk end() const
+    {
+        return start() + durationLeft<chronos::usec>();
+    }
 
-	template<typename T>
-	inline T duration() const
-	{
-		return std::chrono::duration_cast<T>(chronos::nsec((chronos::nsec::rep)(1000000 * getFrameCount() / format.msRate())));
-	}
+    template <typename T>
+    inline T duration() const
+    {
+        return std::chrono::duration_cast<T>(chronos::nsec((chronos::nsec::rep)(1000000 * getFrameCount() / format.msRate())));
+    }
 
-	template<typename T>
-	inline T durationLeft() const
-	{
-		return std::chrono::duration_cast<T>(chronos::nsec((chronos::nsec::rep)(1000000 * (getFrameCount() - idx_) / format.msRate())));
-	}
+    template <typename T>
+    inline T durationLeft() const
+    {
+        return std::chrono::duration_cast<T>(chronos::nsec((chronos::nsec::rep)(1000000 * (getFrameCount() - idx_) / format.msRate())));
+    }
 
-	inline bool isEndOfChunk() const
-	{
-		return idx_ >= getFrameCount();
-	}
+    inline bool isEndOfChunk() const
+    {
+        return idx_ >= getFrameCount();
+    }
 
-	inline size_t getFrameCount() const
-	{
-		return (payloadSize / format.frameSize);
-	}
+    inline size_t getFrameCount() const
+    {
+        return (payloadSize / format.frameSize);
+    }
 
-	inline size_t getSampleCount() const
-	{
-		return (payloadSize / format.sampleSize);
-	}
+    inline size_t getSampleCount() const
+    {
+        return (payloadSize / format.sampleSize);
+    }
 
-	SampleFormat format;
+    SampleFormat format;
 
 private:
-	uint32_t idx_;
+    uint32_t idx_;
 };
-
 }
 
 #endif
-
-

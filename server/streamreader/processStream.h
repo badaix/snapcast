@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2018  Johannes Pohl
+    Copyright (C) 2014-2019  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -35,28 +35,28 @@
 class ProcessStream : public PcmStream
 {
 public:
-	/// ctor. Encoded PCM data is passed to the PipeListener
-	ProcessStream(PcmListener* pcmListener, const StreamUri& uri);
-	virtual ~ProcessStream();
+    /// ctor. Encoded PCM data is passed to the PipeListener
+    ProcessStream(PcmListener* pcmListener, const StreamUri& uri);
+    virtual ~ProcessStream();
 
-	virtual void start();
-	virtual void stop();
+    virtual void start();
+    virtual void stop();
 
 protected:
-	std::string exe_;
-	std::string path_;
-	std::string params_;
-	std::unique_ptr<Process> process_;
-	std::thread stderrReaderThread_;
-	bool logStderr_;
+    std::string exe_;
+    std::string path_;
+    std::string params_;
+    std::unique_ptr<Process> process_;
+    std::thread stderrReaderThread_;
+    bool logStderr_;
 
-	virtual void worker();
-	virtual void stderrReader();
-	virtual void onStderrMsg(const char* buffer, size_t n);
-	virtual void initExeAndPath(const std::string& filename);
+    virtual void worker();
+    virtual void stderrReader();
+    virtual void onStderrMsg(const char* buffer, size_t n);
+    virtual void initExeAndPath(const std::string& filename);
 
-	bool fileExists(const std::string& filename);
-	std::string findExe(const std::string& filename);
+    bool fileExists(const std::string& filename);
+    std::string findExe(const std::string& filename);
 };
 
 

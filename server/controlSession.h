@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2018  Johannes Pohl
+    Copyright (C) 2014-2019  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -19,16 +19,16 @@
 #ifndef CONTROL_SESSION_H
 #define CONTROL_SESSION_H
 
+#include "common/queue.h"
+#include "message/message.h"
+#include <asio.hpp>
+#include <atomic>
+#include <condition_variable>
+#include <memory>
+#include <mutex>
+#include <set>
 #include <string>
 #include <thread>
-#include <atomic>
-#include <mutex>
-#include <memory>
-#include <asio.hpp>
-#include <condition_variable>
-#include <set>
-#include "message/message.h"
-#include "common/queue.h"
 
 
 using asio::ip::tcp;
@@ -41,7 +41,7 @@ class ControlSession;
 class ControlMessageReceiver
 {
 public:
-	virtual void onMessageReceived(ControlSession* connection, const std::string& message) = 0;
+    virtual void onMessageReceived(ControlSession* connection, const std::string& message) = 0;
 };
 
 
@@ -54,42 +54,37 @@ public:
 class ControlSession
 {
 public:
-	/// ctor. Received message from the client are passed to MessageReceiver
-	ControlSession(ControlMessageReceiver* receiver, std::shared_ptr<tcp::socket> socket);
-	~ControlSession();
-	void start();
-	void stop();
+    /// ctor. Received message from the client are passed to MessageReceiver
+    ControlSession(ControlMessageReceiver* receiver, std::shared_ptr<tcp::socket> socket);
+    ~ControlSession();
+    void start();
+    void stop();
 
-	/// Sends a message to the client (synchronous)
-	bool send(const std::string& message) const;
+    /// Sends a message to the client (synchronous)
+    bool send(const std::string& message) const;
 
-	/// Sends a message to the client (asynchronous)
-	void sendAsync(const std::string& message);
+    /// Sends a message to the client (asynchronous)
+    void sendAsync(const std::string& message);
 
-	bool active() const
-	{
-		return active_;
-	}
+    bool active() const
+    {
+        return active_;
+    }
 
 protected:
-	void reader();
-	void writer();
+    void reader();
+    void writer();
 
-	std::atomic<bool> active_;
-	mutable std::recursive_mutex activeMutex_;
-	mutable std::recursive_mutex socketMutex_;
-	std::thread readerThread_;
-	std::thread writerThread_;
-	std::shared_ptr<tcp::socket> socket_;
-	ControlMessageReceiver* messageReceiver_;
-	Queue<std::string> messages_;
+    std::atomic<bool> active_;
+    mutable std::recursive_mutex activeMutex_;
+    mutable std::recursive_mutex socketMutex_;
+    std::thread readerThread_;
+    std::thread writerThread_;
+    std::shared_ptr<tcp::socket> socket_;
+    ControlMessageReceiver* messageReceiver_;
+    Queue<std::string> messages_;
 };
 
 
 
-
 #endif
-
-
-
-

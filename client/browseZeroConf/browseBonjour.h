@@ -10,6 +10,6 @@ class BrowseBonjour;
 class BrowseBonjour : public BrowsemDNS
 {
 public:
-	bool browse(const std::string& serviceName, mDNSResult& result, int timeout) override;
+    bool browse(const std::string& serviceName, mDNSResult& result, int timeout) override;
 };
 #endif

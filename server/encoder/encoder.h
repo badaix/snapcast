@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2018  Johannes Pohl
+    Copyright (C) 2014-2019  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -19,12 +19,12 @@
 #ifndef ENCODER_H
 #define ENCODER_H
 
-#include <string>
 #include <memory>
+#include <string>
 
-#include "message/pcmChunk.h"
-#include "message/codecHeader.h"
 #include "common/sampleFormat.h"
+#include "message/codecHeader.h"
+#include "message/pcmChunk.h"
 
 
 class Encoder;
@@ -36,7 +36,7 @@ class Encoder;
 class EncoderListener
 {
 public:
-	virtual void onChunkEncoded(const Encoder* encoder, msg::PcmChunk* chunk, double duration) = 0;
+    virtual void onChunkEncoded(const Encoder* encoder, msg::PcmChunk* chunk, double duration) = 0;
 };
 
 
@@ -49,56 +49,54 @@ public:
 class Encoder
 {
 public:
-	/// ctor. Codec options (E.g. compression level) are passed as string and are codec dependend
-	Encoder(const std::string& codecOptions = "") : headerChunk_(NULL), codecOptions_(codecOptions)
-	{
-	}
+    /// ctor. Codec options (E.g. compression level) are passed as string and are codec dependend
+    Encoder(const std::string& codecOptions = "") : headerChunk_(NULL), codecOptions_(codecOptions)
+    {
+    }
 
-	virtual ~Encoder()
-	{
-	}
+    virtual ~Encoder()
+    {
+    }
 
-	/// The listener will receive the encoded stream
-	virtual void init(EncoderListener* listener, const SampleFormat& format)
-	{
-		if (codecOptions_ == "")
-			codecOptions_ = getDefaultOptions();
-		listener_ = listener;
-		sampleFormat_ = format;
-		initEncoder();
-	}
+    /// The listener will receive the encoded stream
+    virtual void init(EncoderListener* listener, const SampleFormat& format)
+    {
+        if (codecOptions_ == "")
+            codecOptions_ = getDefaultOptions();
+        listener_ = listener;
+        sampleFormat_ = format;
+        initEncoder();
+    }
 
-	/// Here the work is done. Encoded data is passed to the EncoderListener.
-	virtual void encode(const msg::PcmChunk* chunk) = 0;
+    /// Here the work is done. Encoded data is passed to the EncoderListener.
+    virtual void encode(const msg::PcmChunk* chunk) = 0;
 
-	virtual std::string name() const = 0;
+    virtual std::string name() const = 0;
 
-	virtual std::string getAvailableOptions() const
-	{
-		return "No codec options supported";
-	}
+    virtual std::string getAvailableOptions() const
+    {
+        return "No codec options supported";
+    }
 
-	virtual std::string getDefaultOptions() const
-	{
-		return "";
-	}
+    virtual std::string getDefaultOptions() const
+    {
+        return "";
+    }
 
-	/// Header information needed to decode the data
-	virtual std::shared_ptr<msg::CodecHeader> getHeader() const
-	{
-		return headerChunk_;
-	}
+    /// Header information needed to decode the data
+    virtual std::shared_ptr<msg::CodecHeader> getHeader() const
+    {
+        return headerChunk_;
+    }
 
 protected:
-	virtual void initEncoder() = 0;
+    virtual void initEncoder() = 0;
 
-	SampleFormat sampleFormat_;
-	std::shared_ptr<msg::CodecHeader> headerChunk_;
-	EncoderListener* listener_;
-	std::string codecOptions_;
+    SampleFormat sampleFormat_;
+    std::shared_ptr<msg::CodecHeader> headerChunk_;
+    EncoderListener* listener_;
+    std::string codecOptions_;
 };
 
 
 #endif
-
-

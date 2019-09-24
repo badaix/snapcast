@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2018  Johannes Pohl
+    Copyright (C) 2014-2019  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -20,18 +20,18 @@
 #define CONTROL_SERVER_H
 
 #include <asio.hpp>
-#include <vector>
-#include <thread>
 #include <memory>
+#include <mutex>
 #include <set>
 #include <sstream>
-#include <mutex>
+#include <thread>
+#include <vector>
 
-#include "controlSession.h"
 #include "common/queue.h"
 #include "common/sampleFormat.h"
-#include "message/message.h"
+#include "controlSession.h"
 #include "message/codecHeader.h"
+#include "message/message.h"
 #include "message/serverSettings.h"
 
 
@@ -46,36 +46,34 @@ typedef std::shared_ptr<tcp::socket> socket_ptr;
 class ControlServer : public ControlMessageReceiver
 {
 public:
-	ControlServer(asio::io_service* io_service, size_t port, ControlMessageReceiver* controlMessageReceiver = NULL);
-	virtual ~ControlServer();
+    ControlServer(asio::io_service* io_service, size_t port, ControlMessageReceiver* controlMessageReceiver = NULL);
+    virtual ~ControlServer();
 
-	void start();
-	void stop();
+    void start();
+    void stop();
 
-	/// Send a message to all connceted clients
-	void send(const std::string& message, const ControlSession* excludeSession = NULL);
+    /// Send a message to all connceted clients
+    void send(const std::string& message, const ControlSession* excludeSession = NULL);
 
-	/// Clients call this when they receive a message. Implementation of MessageReceiver::onMessageReceived
-	virtual void onMessageReceived(ControlSession* connection, const std::string& message);
+    /// Clients call this when they receive a message. Implementation of MessageReceiver::onMessageReceived
+    virtual void onMessageReceived(ControlSession* connection, const std::string& message);
 
 private:
-	void startAccept();
-	void handleAccept(socket_ptr socket);
-	void cleanup();
-//	void acceptor();
-	mutable std::recursive_mutex mutex_;
-	std::set<std::shared_ptr<ControlSession>> sessions_;
-	std::shared_ptr<tcp::acceptor> acceptor_v4_;
-	std::shared_ptr<tcp::acceptor> acceptor_v6_;
+    void startAccept();
+    void handleAccept(socket_ptr socket);
+    void cleanup();
+    //	void acceptor();
+    mutable std::recursive_mutex mutex_;
+    std::set<std::shared_ptr<ControlSession>> sessions_;
+    std::shared_ptr<tcp::acceptor> acceptor_v4_;
+    std::shared_ptr<tcp::acceptor> acceptor_v6_;
 
-	Queue<std::shared_ptr<msg::BaseMessage>> messages_;
-	asio::io_service* io_service_;
-	size_t port_;
-	ControlMessageReceiver* controlMessageReceiver_;
+    Queue<std::shared_ptr<msg::BaseMessage>> messages_;
+    asio::io_service* io_service_;
+    size_t port_;
+    ControlMessageReceiver* controlMessageReceiver_;
 };
 
 
 
 #endif
-
-

@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2018  Johannes Pohl
+    Copyright (C) 2014-2019  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -35,70 +35,69 @@ using json = nlohmann::json;
 class MetadataAdapter
 {
 public:
-	MetadataAdapter()
-	{
-		reset();
-	}
+    MetadataAdapter()
+    {
+        reset();
+    }
 
-	virtual ~MetadataAdapter() = default;
+    virtual ~MetadataAdapter() = default;
 
-	void reset()
-	{
-		msg_.reset(new json);
-	}
+    void reset()
+    {
+        msg_.reset(new json);
+    }
 
-	std::string serialize()
-	{
-		return METADATA + ":" + msg_->dump();
-	}
+    std::string serialize()
+    {
+        return METADATA + ":" + msg_->dump();
+    }
 
-	void tag(std::string name, std::string value)
-	{
-		(*msg_)[name] = value;
-	}
+    void tag(std::string name, std::string value)
+    {
+        (*msg_)[name] = value;
+    }
 
-	std::string operator[](std::string key)
-	{
-		try 
-		{
-			return (*msg_)[key];
-		}
-		catch (std::domain_error&)
-		{
-			return std::string();
-		}
-	}
+    std::string operator[](std::string key)
+    {
+        try
+        {
+            return (*msg_)[key];
+        }
+        catch (std::domain_error&)
+        {
+            return std::string();
+        }
+    }
 
-	virtual int push()
-	{
-		std::cout << serialize() << "\n";
-		return 0;
-	}
+    virtual int push()
+    {
+        std::cout << serialize() << "\n";
+        return 0;
+    }
 
-	int push(json& jtag)
-	{
-		msg_.reset(new json(jtag));
-		return push();
-	}
+    int push(json& jtag)
+    {
+        msg_.reset(new json(jtag));
+        return push();
+    }
 
 protected:
-	std::shared_ptr<json> msg_;
+    std::shared_ptr<json> msg_;
 };
 
 /*
  * Send metadata to stderr as json
  */
-class MetaStderrAdapter: public MetadataAdapter
+class MetaStderrAdapter : public MetadataAdapter
 {
 public:
-	using MetadataAdapter::push;
+    using MetadataAdapter::push;
 
-	int push()
-	{
-		std::cerr << serialize() << "\n";
-		return 0;
-	}
-
+    int push()
+    {
+        std::cerr << serialize() << "\n";
+        return 0;
+    }
 };
 
 #endif

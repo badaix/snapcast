@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2018  Johannes Pohl
+    Copyright (C) 2014-2019  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -18,129 +18,128 @@
 
 #include "streamManager.h"
 #include "airplayStream.h"
-#include "spotifyStream.h"
-#include "processStream.h"
-#include "pipeStream.h"
-#include "fileStream.h"
-#include "common/utils.h"
-#include "common/strCompat.h"
 #include "aixlog.hpp"
 #include "common/snapException.h"
+#include "common/strCompat.h"
+#include "common/utils.h"
+#include "fileStream.h"
+#include "pipeStream.h"
+#include "processStream.h"
+#include "spotifyStream.h"
 
 
 using namespace std;
 
 
-StreamManager::StreamManager(PcmListener* pcmListener, const std::string& defaultSampleFormat, const std::string& defaultCodec, size_t defaultReadBufferMs) : pcmListener_(pcmListener), sampleFormat_(defaultSampleFormat), codec_(defaultCodec), readBufferMs_(defaultReadBufferMs)
+StreamManager::StreamManager(PcmListener* pcmListener, const std::string& defaultSampleFormat, const std::string& defaultCodec, size_t defaultReadBufferMs)
+    : pcmListener_(pcmListener), sampleFormat_(defaultSampleFormat), codec_(defaultCodec), readBufferMs_(defaultReadBufferMs)
 {
 }
 
 
 PcmStreamPtr StreamManager::addStream(const std::string& uri)
 {
-	StreamUri streamUri(uri);
+    StreamUri streamUri(uri);
 
-	if (streamUri.query.find("sampleformat") == streamUri.query.end())
-		streamUri.query["sampleformat"] = sampleFormat_;
+    if (streamUri.query.find("sampleformat") == streamUri.query.end())
+        streamUri.query["sampleformat"] = sampleFormat_;
 
-	if (streamUri.query.find("codec") == streamUri.query.end())
-		streamUri.query["codec"] = codec_;
+    if (streamUri.query.find("codec") == streamUri.query.end())
+        streamUri.query["codec"] = codec_;
 
-	if (streamUri.query.find("buffer_ms") == streamUri.query.end())
-		streamUri.query["buffer_ms"] = cpt::to_string(readBufferMs_);
+    if (streamUri.query.find("buffer_ms") == streamUri.query.end())
+        streamUri.query["buffer_ms"] = cpt::to_string(readBufferMs_);
 
-//	LOG(DEBUG) << "\nURI: " << streamUri.uri << "\nscheme: " << streamUri.scheme << "\nhost: "
-//		<< streamUri.host << "\npath: " << streamUri.path << "\nfragment: " << streamUri.fragment << "\n";
+    //	LOG(DEBUG) << "\nURI: " << streamUri.uri << "\nscheme: " << streamUri.scheme << "\nhost: "
+    //		<< streamUri.host << "\npath: " << streamUri.path << "\nfragment: " << streamUri.fragment << "\n";
 
-//	for (auto kv: streamUri.query)
-//		LOG(DEBUG) << "key: '" << kv.first << "' value: '" << kv.second << "'\n";
-	PcmStreamPtr stream(nullptr);
+    //	for (auto kv: streamUri.query)
+    //		LOG(DEBUG) << "key: '" << kv.first << "' value: '" << kv.second << "'\n";
+    PcmStreamPtr stream(nullptr);
 
-	if (streamUri.scheme == "pipe")
-	{
-		stream = make_shared<PipeStream>(pcmListener_, streamUri);
-	}
-	else if (streamUri.scheme == "file")
-	{
-		stream = make_shared<FileStream>(pcmListener_, streamUri);
-	}
-	else if (streamUri.scheme == "process")
-	{
-		stream = make_shared<ProcessStream>(pcmListener_, streamUri);
-	}
-	else if (streamUri.scheme == "spotify")
-	{
-		stream = make_shared<SpotifyStream>(pcmListener_, streamUri);
-	}
-	else if (streamUri.scheme == "airplay")
-	{
-		stream = make_shared<AirplayStream>(pcmListener_, streamUri);
-	}
-	else
-	{
-		throw SnapException("Unknown stream type: " + streamUri.scheme);
-	}
+    if (streamUri.scheme == "pipe")
+    {
+        stream = make_shared<PipeStream>(pcmListener_, streamUri);
+    }
+    else if (streamUri.scheme == "file")
+    {
+        stream = make_shared<FileStream>(pcmListener_, streamUri);
+    }
+    else if (streamUri.scheme == "process")
+    {
+        stream = make_shared<ProcessStream>(pcmListener_, streamUri);
+    }
+    else if (streamUri.scheme == "spotify")
+    {
+        stream = make_shared<SpotifyStream>(pcmListener_, streamUri);
+    }
+    else if (streamUri.scheme == "airplay")
+    {
+        stream = make_shared<AirplayStream>(pcmListener_, streamUri);
+    }
+    else
+    {
+        throw SnapException("Unknown stream type: " + streamUri.scheme);
+    }
 
-	if (stream) 
-	{
-		for (auto s: streams_)
-		{
-			if (s->getName() == stream->getName())
-				throw SnapException("Stream with name \"" + stream->getName() + "\" already exists");
-		}
-		streams_.push_back(stream);
-	}
+    if (stream)
+    {
+        for (auto s : streams_)
+        {
+            if (s->getName() == stream->getName())
+                throw SnapException("Stream with name \"" + stream->getName() + "\" already exists");
+        }
+        streams_.push_back(stream);
+    }
 
-	return stream;
+    return stream;
 }
 
 
 const std::vector<PcmStreamPtr>& StreamManager::getStreams()
 {
-	return streams_;
+    return streams_;
 }
 
 
 const PcmStreamPtr StreamManager::getDefaultStream()
 {
-	if (streams_.empty())
-		return nullptr;
+    if (streams_.empty())
+        return nullptr;
 
-	return streams_.front();
+    return streams_.front();
 }
 
 
 const PcmStreamPtr StreamManager::getStream(const std::string& id)
 {
-	for (auto stream: streams_)
-	{
-		if (stream->getId() == id)
-			return stream;
-	}
-	return nullptr;
+    for (auto stream : streams_)
+    {
+        if (stream->getId() == id)
+            return stream;
+    }
+    return nullptr;
 }
 
 
 void StreamManager::start()
 {
-	for (auto stream: streams_)
-		stream->start();
+    for (auto stream : streams_)
+        stream->start();
 }
 
 
 void StreamManager::stop()
 {
-	for (auto stream: streams_)
-		stream->stop();
+    for (auto stream : streams_)
+        stream->stop();
 }
 
 
 json StreamManager::toJson() const
 {
-	json result = json::array();
-	for (auto stream: streams_)
-		result.push_back(stream->toJson());
-	return result;
+    json result = json::array();
+    for (auto stream : streams_)
+        result.push_back(stream->toJson());
+    return result;
 }
-
-

@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2018  Johannes Pohl
+    Copyright (C) 2014-2019  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -19,14 +19,14 @@
 #ifndef WIRE_CHUNK_H
 #define WIRE_CHUNK_H
 
+#include "common/timeDefs.h"
+#include "message.h"
 #include <chrono>
 #include <cstdlib>
 #include <cstring>
 #include <iostream>
 #include <streambuf>
 #include <vector>
-#include "message.h"
-#include "common/timeDefs.h"
 
 
 namespace msg
@@ -39,55 +39,52 @@ namespace msg
 class WireChunk : public BaseMessage
 {
 public:
-	WireChunk(size_t size = 0) : BaseMessage(message_type::kWireChunk), payloadSize(size)
-	{
-		payload = (char*)malloc(size);
-	}
+    WireChunk(size_t size = 0) : BaseMessage(message_type::kWireChunk), payloadSize(size)
+    {
+        payload = (char*)malloc(size);
+    }
 
-	WireChunk(const WireChunk& wireChunk) : BaseMessage(message_type::kWireChunk), timestamp(wireChunk.timestamp), payloadSize(wireChunk.payloadSize)
-	{
-		payload = (char*)malloc(payloadSize);
-		memcpy(payload, wireChunk.payload, payloadSize);
-	}
+    WireChunk(const WireChunk& wireChunk) : BaseMessage(message_type::kWireChunk), timestamp(wireChunk.timestamp), payloadSize(wireChunk.payloadSize)
+    {
+        payload = (char*)malloc(payloadSize);
+        memcpy(payload, wireChunk.payload, payloadSize);
+    }
 
-	virtual ~WireChunk()
-	{
-		free(payload);
-	}
+    virtual ~WireChunk()
+    {
+        free(payload);
+    }
 
-	virtual void read(std::istream& stream)
-	{
-		readVal(stream, timestamp.sec);
-		readVal(stream, timestamp.usec);
-		readVal(stream, &payload, payloadSize);
-	}
+    virtual void read(std::istream& stream)
+    {
+        readVal(stream, timestamp.sec);
+        readVal(stream, timestamp.usec);
+        readVal(stream, &payload, payloadSize);
+    }
 
-	virtual uint32_t getSize() const
-	{
-		return sizeof(tv) + sizeof(int32_t) + payloadSize;
-	}
+    virtual uint32_t getSize() const
+    {
+        return sizeof(tv) + sizeof(int32_t) + payloadSize;
+    }
 
-	virtual chronos::time_point_clk start() const
-	{
-		return chronos::time_point_clk(chronos::sec(timestamp.sec) + chronos::usec(timestamp.usec));
-	}
+    virtual chronos::time_point_clk start() const
+    {
+        return chronos::time_point_clk(chronos::sec(timestamp.sec) + chronos::usec(timestamp.usec));
+    }
 
-	tv timestamp;
-	uint32_t payloadSize;
-	char* payload;
+    tv timestamp;
+    uint32_t payloadSize;
+    char* payload;
 
 protected:
-	virtual void doserialize(std::ostream& stream) const
-	{
-		writeVal(stream, timestamp.sec);
-		writeVal(stream, timestamp.usec);
-		writeVal(stream, payload, payloadSize);
-	}
+    virtual void doserialize(std::ostream& stream) const
+    {
+        writeVal(stream, timestamp.sec);
+        writeVal(stream, timestamp.usec);
+        writeVal(stream, payload, payloadSize);
+    }
 };
-
 }
 
 
 #endif
-
-

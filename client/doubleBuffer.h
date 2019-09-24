@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2018  Johannes Pohl
+    Copyright (C) 2014-2019  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -19,8 +19,8 @@
 #ifndef DOUBLE_BUFFER_H
 #define DOUBLE_BUFFER_H
 
-#include<deque>
-#include<algorithm>
+#include <algorithm>
+#include <deque>
 
 
 /// Size limited queue
@@ -32,105 +32,102 @@ template <class T>
 class DoubleBuffer
 {
 public:
-	DoubleBuffer(size_t size = 10) : bufferSize(size)
-	{
-	}
+    DoubleBuffer(size_t size = 10) : bufferSize(size)
+    {
+    }
 
-	inline void add(const T& element)
-	{
-		buffer.push_back(element);
-		if (buffer.size() > bufferSize)
-			buffer.pop_front();
-	}
+    inline void add(const T& element)
+    {
+        buffer.push_back(element);
+        if (buffer.size() > bufferSize)
+            buffer.pop_front();
+    }
 
-	inline void add(T&& element)
-	{
-		buffer.push_back(std::move(element));
-		if (buffer.size() > bufferSize)
-			buffer.pop_front();
-	}
+    inline void add(T&& element)
+    {
+        buffer.push_back(std::move(element));
+        if (buffer.size() > bufferSize)
+            buffer.pop_front();
+    }
 
-	/// Median as mean over N values around the median
-	T median(unsigned int mean = 1) const
-	{
-		if (buffer.empty())
-			return 0;
-		std::deque<T> tmpBuffer(buffer.begin(), buffer.end());
-		std::sort(tmpBuffer.begin(), tmpBuffer.end());
-		if ((mean <= 1) || (tmpBuffer.size() < mean))
-			return tmpBuffer[tmpBuffer.size() / 2];
-		else
-		{
-			unsigned int low = tmpBuffer.size() / 2;
-			unsigned int high = low;
-			low -= mean/2;
-			high += mean/2;
-			T result((T)0);
-			for (unsigned int i=low; i<=high; ++i)
-			{
-				result += tmpBuffer[i];
-			}
-			return result / mean;
-		}
-	}
+    /// Median as mean over N values around the median
+    T median(unsigned int mean = 1) const
+    {
+        if (buffer.empty())
+            return 0;
+        std::deque<T> tmpBuffer(buffer.begin(), buffer.end());
+        std::sort(tmpBuffer.begin(), tmpBuffer.end());
+        if ((mean <= 1) || (tmpBuffer.size() < mean))
+            return tmpBuffer[tmpBuffer.size() / 2];
+        else
+        {
+            unsigned int low = tmpBuffer.size() / 2;
+            unsigned int high = low;
+            low -= mean / 2;
+            high += mean / 2;
+            T result((T)0);
+            for (unsigned int i = low; i <= high; ++i)
+            {
+                result += tmpBuffer[i];
+            }
+            return result / mean;
+        }
+    }
 
-	double mean() const
-	{
-		if (buffer.empty())
-			return 0;
-		double mean = 0.;
-		for (size_t n=0; n<buffer.size(); ++n)
-			mean += (float)buffer[n] / (float)buffer.size();
-		return mean;
-	}
+    double mean() const
+    {
+        if (buffer.empty())
+            return 0;
+        double mean = 0.;
+        for (size_t n = 0; n < buffer.size(); ++n)
+            mean += (float)buffer[n] / (float)buffer.size();
+        return mean;
+    }
 
-	T percentile(unsigned int percentile) const
-	{
-		if (buffer.empty())
-			return 0;
-		std::deque<T> tmpBuffer(buffer.begin(), buffer.end());
-		std::sort(tmpBuffer.begin(), tmpBuffer.end());
-		return tmpBuffer[(size_t)(tmpBuffer.size() * ((float)percentile / (float)100))];
-	}
+    T percentile(unsigned int percentile) const
+    {
+        if (buffer.empty())
+            return 0;
+        std::deque<T> tmpBuffer(buffer.begin(), buffer.end());
+        std::sort(tmpBuffer.begin(), tmpBuffer.end());
+        return tmpBuffer[(size_t)(tmpBuffer.size() * ((float)percentile / (float)100))];
+    }
 
-	inline bool full() const
-	{
-		return (buffer.size() == bufferSize);
-	}
+    inline bool full() const
+    {
+        return (buffer.size() == bufferSize);
+    }
 
-	inline void clear()
-	{
-		buffer.clear();
-	}
+    inline void clear()
+    {
+        buffer.clear();
+    }
 
-	inline size_t size() const
-	{
-		return buffer.size();
-	}
+    inline size_t size() const
+    {
+        return buffer.size();
+    }
 
-	inline bool empty() const
-	{
-		return (buffer.size() == 0);
-	}
+    inline bool empty() const
+    {
+        return (buffer.size() == 0);
+    }
 
-	void setSize(size_t size)
-	{
-		bufferSize = size;
-	}
+    void setSize(size_t size)
+    {
+        bufferSize = size;
+    }
 
-	const std::deque<T>& getBuffer() const
-	{
-		return &buffer;
-	}
+    const std::deque<T>& getBuffer() const
+    {
+        return &buffer;
+    }
 
 private:
-	size_t bufferSize;
-	std::deque<T> buffer;
-
+    size_t bufferSize;
+    std::deque<T> buffer;
 };
 
 
 
 #endif
-
-

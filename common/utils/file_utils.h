@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2018  Johannes Pohl
+    Copyright (C) 2014-2019  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -19,12 +19,12 @@
 #ifndef FILE_UTILS_H
 #define FILE_UTILS_H
 
+#include "string_utils.h"
+#include <fstream>
 #include <grp.h>
 #include <pwd.h>
 #include <stdexcept>
 #include <vector>
-#include <fstream>
-#include "string_utils.h"
 
 
 namespace utils
@@ -42,55 +42,54 @@ static bool exists(const std::string& filename)
 
 static void do_chown(const std::string& file_path, const std::string& user_name, const std::string& group_name)
 {
-	if (user_name.empty() && group_name.empty())
-		return;
+    if (user_name.empty() && group_name.empty())
+        return;
 
-	if (!exists(file_path))
-		return;
+    if (!exists(file_path))
+        return;
 
-	uid_t uid = -1;
-	gid_t gid = -1;
+    uid_t uid = -1;
+    gid_t gid = -1;
 
-	if (!user_name.empty())
-	{
-		struct passwd *pwd = getpwnam(user_name.c_str());
-		if (pwd == NULL) 
-			throw std::runtime_error("Failed to get uid");
-		uid = pwd->pw_uid;
-	}
+    if (!user_name.empty())
+    {
+        struct passwd* pwd = getpwnam(user_name.c_str());
+        if (pwd == NULL)
+            throw std::runtime_error("Failed to get uid");
+        uid = pwd->pw_uid;
+    }
 
-	if (!group_name.empty())
-	{
-		struct group *grp = getgrnam(group_name.c_str());
-		if (grp == NULL)
-			throw std::runtime_error("Failed to get gid");
-		gid = grp->gr_gid;
-	}
+    if (!group_name.empty())
+    {
+        struct group* grp = getgrnam(group_name.c_str());
+        if (grp == NULL)
+            throw std::runtime_error("Failed to get gid");
+        gid = grp->gr_gid;
+    }
 
-	if (chown(file_path.c_str(), uid, gid) == -1)
-		throw std::runtime_error("chown failed");
+    if (chown(file_path.c_str(), uid, gid) == -1)
+        throw std::runtime_error("chown failed");
 }
 
 
-static int mkdirRecursive(const char *path, mode_t mode)
+static int mkdirRecursive(const char* path, mode_t mode)
 {
-	std::vector<std::string> pathes = utils::string::split(path, '/');
-	std::stringstream ss;
-	int res = 0;
-	for (const auto& p: pathes)
-	{
-		if (p.empty())
-			continue;
-		ss << "/" << p;
-		int res = mkdir(ss.str().c_str(), mode);
-		if ((res != 0) && (errno != EEXIST))
-			return res;
-	}
-	return res;
+    std::vector<std::string> pathes = utils::string::split(path, '/');
+    std::stringstream ss;
+    int res = 0;
+    for (const auto& p : pathes)
+    {
+        if (p.empty())
+            continue;
+        ss << "/" << p;
+        int res = mkdir(ss.str().c_str(), mode);
+        if ((res != 0) && (errno != EEXIST))
+            return res;
+    }
+    return res;
 }
 
 } // namespace file
 } // namespace utils
 
 #endif
-

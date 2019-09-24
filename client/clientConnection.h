@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2018  Johannes Pohl
+    Copyright (C) 2014-2019  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -19,16 +19,16 @@
 #ifndef CLIENT_CONNECTION_H
 #define CLIENT_CONNECTION_H
 
+#include "common/timeDefs.h"
+#include "message/message.h"
+#include <asio.hpp>
+#include <atomic>
+#include <condition_variable>
+#include <memory>
+#include <mutex>
+#include <set>
 #include <string>
 #include <thread>
-#include <atomic>
-#include <mutex>
-#include <memory>
-#include <asio.hpp>
-#include <condition_variable>
-#include <set>
-#include "message/message.h"
-#include "common/timeDefs.h"
 
 
 using asio::ip::tcp;
@@ -40,11 +40,11 @@ class ClientConnection;
 /// Used to synchronize server requests (wait for server response)
 struct PendingRequest
 {
-	PendingRequest(uint16_t reqId) : id(reqId), response(NULL) {};
+    PendingRequest(uint16_t reqId) : id(reqId), response(NULL){};
 
-	uint16_t id;
-	std::shared_ptr<msg::SerializedMessage> response;
-	std::condition_variable cv;
+    uint16_t id;
+    std::shared_ptr<msg::SerializedMessage> response;
+    std::condition_variable cv;
 };
 
 
@@ -56,9 +56,9 @@ typedef std::shared_ptr<std::exception> shared_exception_ptr;
 class MessageReceiver
 {
 public:
-	virtual ~MessageReceiver() = default;
-	virtual void onMessageReceived(ClientConnection* connection, const msg::BaseMessage& baseMessage, char* buffer) = 0;
-	virtual void onException(ClientConnection* connection, shared_exception_ptr exception) = 0;
+    virtual ~MessageReceiver() = default;
+    virtual void onMessageReceived(ClientConnection* connection, const msg::BaseMessage& baseMessage, char* buffer) = 0;
+    virtual void onException(ClientConnection* connection, shared_exception_ptr exception) = 0;
 };
 
 
@@ -71,66 +71,62 @@ public:
 class ClientConnection
 {
 public:
-	/// ctor. Received message from the server are passed to MessageReceiver
-	ClientConnection(MessageReceiver* receiver, const std::string& host, size_t port);
-	virtual ~ClientConnection();
-	virtual void start();
-	virtual void stop();
-	virtual bool send(const msg::BaseMessage* message) const;
+    /// ctor. Received message from the server are passed to MessageReceiver
+    ClientConnection(MessageReceiver* receiver, const std::string& host, size_t port);
+    virtual ~ClientConnection();
+    virtual void start();
+    virtual void stop();
+    virtual bool send(const msg::BaseMessage* message) const;
 
-	/// Send request to the server and wait for answer
-	virtual std::shared_ptr<msg::SerializedMessage> sendRequest(const msg::BaseMessage* message, const chronos::msec& timeout = chronos::msec(1000));
+    /// Send request to the server and wait for answer
+    virtual std::shared_ptr<msg::SerializedMessage> sendRequest(const msg::BaseMessage* message, const chronos::msec& timeout = chronos::msec(1000));
 
-	/// Send request to the server and wait for answer of type T
-	template <typename T>
-	std::shared_ptr<T> sendReq(const msg::BaseMessage* message, const chronos::msec& timeout = chronos::msec(1000))
-	{
-		std::shared_ptr<msg::SerializedMessage> reply = sendRequest(message, timeout);
-		if (!reply)
-			return NULL;
-		std::shared_ptr<T> msg(new T);
-		msg->deserialize(reply->message, reply->buffer);
-		return msg;
-	}
+    /// Send request to the server and wait for answer of type T
+    template <typename T>
+    std::shared_ptr<T> sendReq(const msg::BaseMessage* message, const chronos::msec& timeout = chronos::msec(1000))
+    {
+        std::shared_ptr<msg::SerializedMessage> reply = sendRequest(message, timeout);
+        if (!reply)
+            return NULL;
+        std::shared_ptr<T> msg(new T);
+        msg->deserialize(reply->message, reply->buffer);
+        return msg;
+    }
 
-	std::string getMacAddress() const;
+    std::string getMacAddress() const;
 
-	virtual bool active() const
-	{
-		return active_;
-	}
+    virtual bool active() const
+    {
+        return active_;
+    }
 
-	virtual bool connected() const
-	{
-		return (socket_ != nullptr);
-//		return (connected_ && socket);
-	}
+    virtual bool connected() const
+    {
+        return (socket_ != nullptr);
+        //		return (connected_ && socket);
+    }
 
 protected:
-	virtual void reader();
+    virtual void reader();
 
-	void socketRead(void* to, size_t bytes);
-	void getNextMessage();
+    void socketRead(void* to, size_t bytes);
+    void getNextMessage();
 
-	asio::io_service io_service_;
-	mutable std::mutex socketMutex_;
-	std::shared_ptr<tcp::socket> socket_;
-	std::atomic<bool> active_;
-	std::atomic<bool> connected_;
-	MessageReceiver* messageReceiver_;
-	mutable std::mutex pendingRequestsMutex_;
-	std::set<std::shared_ptr<PendingRequest>> pendingRequests_;
-	uint16_t reqId_;
-	std::string host_;
-	size_t port_;
-	std::thread* readerThread_;
-	chronos::msec sumTimeout_;
+    asio::io_service io_service_;
+    mutable std::mutex socketMutex_;
+    std::shared_ptr<tcp::socket> socket_;
+    std::atomic<bool> active_;
+    std::atomic<bool> connected_;
+    MessageReceiver* messageReceiver_;
+    mutable std::mutex pendingRequestsMutex_;
+    std::set<std::shared_ptr<PendingRequest>> pendingRequests_;
+    uint16_t reqId_;
+    std::string host_;
+    size_t port_;
+    std::thread* readerThread_;
+    chronos::msec sumTimeout_;
 };
 
 
 
 #endif
-
-
-
-

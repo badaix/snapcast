@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2018  Johannes Pohl
+    Copyright (C) 2014-2019  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -31,46 +31,46 @@
  * 1 frame represents 1 analog sample from all channels; here we have 2 channels, and so:
  * 1 frame = (num_channels) * (1 sample in bytes) = (2 channels) * (2 bytes (16 bits) per sample) = 4 bytes (32 bits)
  * To sustain 2x 44.1 KHz analog rate - the system must be capable of data transfer rate, in Bytes/sec:
- * Bps_rate = (num_channels) * (1 sample in bytes) * (analog_rate) = (1 frame) * (analog_rate) = ( 2 channels ) * (2 bytes/sample) * (44100 samples/sec) = 2*2*44100 = 176400 Bytes/sec (link to formula img)
+ * Bps_rate = (num_channels) * (1 sample in bytes) * (analog_rate) = (1 frame) * (analog_rate) = ( 2 channels ) * (2 bytes/sample) * (44100 samples/sec) =
+ * 2*2*44100 = 176400 Bytes/sec (link to formula img)
  */
 class SampleFormat
 {
 public:
-	SampleFormat();
-	SampleFormat(const std::string& format);
-	SampleFormat(uint32_t rate, uint16_t bits, uint16_t channels);
+    SampleFormat();
+    SampleFormat(const std::string& format);
+    SampleFormat(uint32_t rate, uint16_t bits, uint16_t channels);
 
-	std::string getFormat() const;
+    std::string getFormat() const;
 
-	void setFormat(const std::string& format);
-	void setFormat(uint32_t rate, uint16_t bits, uint16_t channels);
+    void setFormat(const std::string& format);
+    void setFormat(uint32_t rate, uint16_t bits, uint16_t channels);
 
-	uint32_t rate;
-	uint16_t bits;
-	uint16_t channels;
+    uint32_t rate;
+    uint16_t bits;
+    uint16_t channels;
 
-	// size in [bytes] of a single mono sample, e.g. 2 bytes (= 16 bits)
-	uint16_t sampleSize;
+    // size in [bytes] of a single mono sample, e.g. 2 bytes (= 16 bits)
+    uint16_t sampleSize;
 
-	// size in [bytes] of a frame (sum of sample sizes = #channel*sampleSize), e.g. 4 bytes (= 2 channel * 16 bit)
-	uint16_t frameSize;
+    // size in [bytes] of a frame (sum of sample sizes = #channel*sampleSize), e.g. 4 bytes (= 2 channel * 16 bit)
+    uint16_t frameSize;
 
-	inline double msRate() const
-	{
-		return (double)rate/1000.;
-	}
+    inline double msRate() const
+    {
+        return (double)rate / 1000.;
+    }
 
-	inline double usRate() const
-	{
-		return (double)rate/1000000.;
-	}
+    inline double usRate() const
+    {
+        return (double)rate / 1000000.;
+    }
 
-	inline double nsRate() const
-	{
-		return (double)rate/1000000000.;
-	}
+    inline double nsRate() const
+    {
+        return (double)rate / 1000000000.;
+    }
 };
 
 
 #endif
-

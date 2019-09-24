@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2018  Johannes Pohl
+    Copyright (C) 2014-2019  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -24,22 +24,20 @@
 class PcmEncoder : public Encoder
 {
 public:
-	PcmEncoder(const std::string& codecOptions = "");
-	virtual void encode(const msg::PcmChunk* chunk);
-	virtual std::string name() const;
+    PcmEncoder(const std::string& codecOptions = "");
+    virtual void encode(const msg::PcmChunk* chunk);
+    virtual std::string name() const;
 
 protected:
     virtual void initEncoder();
 
-	template<typename T>
-	void assign(void* pointer, T val)
-	{
-		T* p = (T*)pointer;
-		*p = val;
-	}
+    template <typename T>
+    void assign(void* pointer, T val)
+    {
+        T* p = (T*)pointer;
+        *p = val;
+    }
 };
 
 
 #endif
-
-

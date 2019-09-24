@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2018  Johannes Pohl
+    Copyright (C) 2014-2019  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -25,7 +25,7 @@
 
 #include "player.h"
 
-typedef int (*AndroidAudioCallback)(short *buffer, int num_samples);
+typedef int (*AndroidAudioCallback)(short* buffer, int num_samples);
 
 
 /// OpenSL Audio Player
@@ -35,43 +35,42 @@ typedef int (*AndroidAudioCallback)(short *buffer, int num_samples);
 class OpenslPlayer : public Player
 {
 public:
-	OpenslPlayer(const PcmDevice& pcmDevice, std::shared_ptr<Stream> stream);
-	virtual ~OpenslPlayer();
+    OpenslPlayer(const PcmDevice& pcmDevice, std::shared_ptr<Stream> stream);
+    virtual ~OpenslPlayer();
 
-	virtual void start();
-	virtual void stop();
+    virtual void start();
+    virtual void stop();
 
-	void playerCallback(SLAndroidSimpleBufferQueueItf bq);
+    void playerCallback(SLAndroidSimpleBufferQueueItf bq);
 
 protected:
-	void initOpensl();
-	void uninitOpensl();
+    void initOpensl();
+    void uninitOpensl();
 
-	virtual void worker();
-	void throwUnsuccess(const std::string& what, SLresult result);
-	std::string resultToString(SLresult result) const;
+    virtual void worker();
+    void throwUnsuccess(const std::string& what, SLresult result);
+    std::string resultToString(SLresult result) const;
 
-	// engine interfaces
-	SLObjectItf engineObject;
-	SLEngineItf engineEngine;
-	SLObjectItf outputMixObject;
+    // engine interfaces
+    SLObjectItf engineObject;
+    SLEngineItf engineEngine;
+    SLObjectItf outputMixObject;
 
-	// buffer queue player interfaces
-	SLObjectItf bqPlayerObject;
-	SLPlayItf bqPlayerPlay;
-	SLAndroidSimpleBufferQueueItf bqPlayerBufferQueue;
-	SLVolumeItf bqPlayerVolume;
+    // buffer queue player interfaces
+    SLObjectItf bqPlayerObject;
+    SLPlayItf bqPlayerPlay;
+    SLAndroidSimpleBufferQueueItf bqPlayerBufferQueue;
+    SLVolumeItf bqPlayerVolume;
 
-	// Double buffering.
-	int curBuffer;
-	char *buffer[2];
+    // Double buffering.
+    int curBuffer;
+    char* buffer[2];
 
-	size_t ms_;
-	size_t frames_;
-	size_t buff_size;
-	std::shared_ptr<Stream> pubStream_;
+    size_t ms_;
+    size_t frames_;
+    size_t buff_size;
+    std::shared_ptr<Stream> pubStream_;
 };
 
 
 #endif
-

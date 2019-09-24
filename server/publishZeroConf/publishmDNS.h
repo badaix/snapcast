@@ -7,30 +7,30 @@
 
 struct mDNSService
 {
-	mDNSService(const std::string& name, size_t port) : name_(name), port_(port)
-	{
-	}
+    mDNSService(const std::string& name, size_t port) : name_(name), port_(port)
+    {
+    }
 
-	std::string name_;
-	size_t port_;
+    std::string name_;
+    size_t port_;
 };
 
 
 class PublishmDNS
 {
 public:
-	PublishmDNS(const std::string& serviceName) : serviceName_(serviceName)
-	{
-	}
+    PublishmDNS(const std::string& serviceName) : serviceName_(serviceName)
+    {
+    }
 
-	virtual ~PublishmDNS()
-	{
-	}
+    virtual ~PublishmDNS()
+    {
+    }
 
-	virtual void publish(const std::vector<mDNSService>& services) = 0;
+    virtual void publish(const std::vector<mDNSService>& services) = 0;
 
 protected:
-	std::string serviceName_;
+    std::string serviceName_;
 };
 
 #if defined(HAS_AVAHI)

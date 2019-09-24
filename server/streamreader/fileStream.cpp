@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2018  Johannes Pohl
+    Copyright (C) 2014-2019  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -16,97 +16,97 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
+#include <fcntl.h>
 #include <memory>
 #include <sys/stat.h>
-#include <fcntl.h>
 
-#include "fileStream.h"
-#include "encoder/encoderFactory.h"
 #include "aixlog.hpp"
 #include "common/snapException.h"
+#include "encoder/encoderFactory.h"
+#include "fileStream.h"
 
 
 using namespace std;
 
 
 
-
 FileStream::FileStream(PcmListener* pcmListener, const StreamUri& uri) : PcmStream(pcmListener, uri)
 {
-	ifs.open(uri_.path.c_str(), std::ifstream::in|std::ifstream::binary);
-	if (!ifs.good())
-	{
-		LOG(ERROR) << "failed to open PCM file: \"" + uri_.path + "\"\n";
-		throw SnapException("failed to open PCM file: \"" + uri_.path + "\"");
-	}
+    ifs.open(uri_.path.c_str(), std::ifstream::in | std::ifstream::binary);
+    if (!ifs.good())
+    {
+        LOG(ERROR) << "failed to open PCM file: \"" + uri_.path + "\"\n";
+        throw SnapException("failed to open PCM file: \"" + uri_.path + "\"");
+    }
 }
 
 
 FileStream::~FileStream()
 {
-	ifs.close();
+    ifs.close();
 }
 
 
 void FileStream::worker()
 {
-	timeval tvChunk;
-	std::unique_ptr<msg::PcmChunk> chunk(new msg::PcmChunk(sampleFormat_, pcmReadMs_));
+    timeval tvChunk;
+    std::unique_ptr<msg::PcmChunk> chunk(new msg::PcmChunk(sampleFormat_, pcmReadMs_));
 
-	ifs.seekg (0, ifs.end);
-	size_t length = ifs.tellg();
-	ifs.seekg (0, ifs.beg);
+    ifs.seekg(0, ifs.end);
+    size_t length = ifs.tellg();
+    ifs.seekg(0, ifs.beg);
 
-	setState(kPlaying);
+    setState(kPlaying);
 
-	while (active_)
-	{
-		chronos::systemtimeofday(&tvChunk);
-		tvEncodedChunk_ = tvChunk;
-		long nextTick = chronos::getTickCount();
-		try
-		{
-			while (active_)
-			{
-				chunk->timestamp.sec = tvChunk.tv_sec;
-				chunk->timestamp.usec = tvChunk.tv_usec;
-				size_t toRead = chunk->payloadSize;
-				size_t count = 0;
+    while (active_)
+    {
+        chronos::systemtimeofday(&tvChunk);
+        tvEncodedChunk_ = tvChunk;
+        long nextTick = chronos::getTickCount();
+        try
+        {
+            while (active_)
+            {
+                chunk->timestamp.sec = tvChunk.tv_sec;
+                chunk->timestamp.usec = tvChunk.tv_usec;
+                size_t toRead = chunk->payloadSize;
+                size_t count = 0;
 
-				size_t pos = ifs.tellg();
-				size_t left = length - pos;
-				if (left < toRead)
-				{
-					ifs.read(chunk->payload, left);
-					ifs.seekg (0, ifs.beg);
-					count = left;
-				}
-				ifs.read(chunk->payload + count, toRead - count);
+                size_t pos = ifs.tellg();
+                size_t left = length - pos;
+                if (left < toRead)
+                {
+                    ifs.read(chunk->payload, left);
+                    ifs.seekg(0, ifs.beg);
+                    count = left;
+                }
+                ifs.read(chunk->payload + count, toRead - count);
 
-				encoder_->encode(chunk.get());
-				if (!active_) break;
-				nextTick += pcmReadMs_;
-				chronos::addUs(tvChunk, pcmReadMs_ * 1000);
-				long currentTick = chronos::getTickCount();
+                encoder_->encode(chunk.get());
+                if (!active_)
+                    break;
+                nextTick += pcmReadMs_;
+                chronos::addUs(tvChunk, pcmReadMs_ * 1000);
+                long currentTick = chronos::getTickCount();
 
-				if (nextTick >= currentTick)
-				{
-//					LOG(INFO) << "sleep: " << nextTick - currentTick << "\n";
-					if (!sleep(nextTick - currentTick))
-						break;
-				}
-				else
-				{
-					chronos::systemtimeofday(&tvChunk);
-					tvEncodedChunk_ = tvChunk;
-					pcmListener_->onResync(this, currentTick - nextTick);
-					nextTick = currentTick;
-				}
-			}
-		}
-		catch(const std::exception& e)
-		{
-			LOG(ERROR) << "(FileStream) Exception: " << e.what() << std::endl;
-		}
-	}
+                if (nextTick >= currentTick)
+                {
+                    //					LOG(INFO) << "sleep: " << nextTick - currentTick << "\n";
+                    if (!sleep(nextTick - currentTick))
+                        break;
+                }
+                else
+                {
+                    chronos::systemtimeofday(&tvChunk);
+                    tvEncodedChunk_ = tvChunk;
+                    pcmListener_->onResync(this, currentTick - nextTick);
+                    nextTick = currentTick;
+                }
+            }
+        }
+        catch (const std::exception& e)
+        {
+            LOG(ERROR) << "(FileStream) Exception: " << e.what() << std::endl;
+        }
+    }
 }

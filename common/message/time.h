@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2018  Johannes Pohl
+    Copyright (C) 2014-2019  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -27,38 +27,35 @@ namespace msg
 class Time : public BaseMessage
 {
 public:
-	Time() : BaseMessage(message_type::kTime)
-	{
-	}
+    Time() : BaseMessage(message_type::kTime)
+    {
+    }
 
-	virtual ~Time()
-	{
-	}
+    virtual ~Time()
+    {
+    }
 
-	virtual void read(std::istream& stream)
-	{
-		readVal(stream, latency.sec);
-		readVal(stream, latency.usec);
-	}
+    virtual void read(std::istream& stream)
+    {
+        readVal(stream, latency.sec);
+        readVal(stream, latency.usec);
+    }
 
-	virtual uint32_t getSize() const
-	{
-		return sizeof(tv);
-	}
+    virtual uint32_t getSize() const
+    {
+        return sizeof(tv);
+    }
 
-	tv latency;
+    tv latency;
 
 protected:
-	virtual void doserialize(std::ostream& stream) const
-	{
-		writeVal(stream, latency.sec);
-		writeVal(stream, latency.usec);
-	}
+    virtual void doserialize(std::ostream& stream) const
+    {
+        writeVal(stream, latency.sec);
+        writeVal(stream, latency.usec);
+    }
 };
-
 }
 
 
 #endif
-
-

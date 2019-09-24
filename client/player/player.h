@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2018  Johannes Pohl
+    Copyright (C) 2014-2019  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -19,14 +19,14 @@
 #ifndef PLAYER_H
 #define PLAYER_H
 
+#include "aixlog.hpp"
+#include "common/endian.hpp"
+#include "pcmDevice.h"
+#include "stream.h"
+#include <atomic>
 #include <string>
 #include <thread>
-#include <atomic>
 #include <vector>
-#include "stream.h"
-#include "pcmDevice.h"
-#include "common/endian.hpp"
-#include "aixlog.hpp"
 
 
 /// Audio Player
@@ -36,40 +36,39 @@
 class Player
 {
 public:
-	Player(const PcmDevice& pcmDevice, std::shared_ptr<Stream> stream);
-	virtual ~Player();
+    Player(const PcmDevice& pcmDevice, std::shared_ptr<Stream> stream);
+    virtual ~Player();
 
-	/// Set audio volume in range [0..1]
-	virtual void setVolume(double volume);
-	virtual void setMute(bool mute);
-	virtual void start();
-	virtual void stop();
+    /// Set audio volume in range [0..1]
+    virtual void setVolume(double volume);
+    virtual void setMute(bool mute);
+    virtual void start();
+    virtual void stop();
 
 protected:
-	virtual void worker() = 0;
+    virtual void worker() = 0;
 
-	void setVolume_poly(double volume, double exp);
-	void setVolume_exp(double volume, double base);
+    void setVolume_poly(double volume, double exp);
+    void setVolume_exp(double volume, double base);
 
-	template <typename T>
-	void adjustVolume(char *buffer, size_t count, double volume)
-	{
-		T* bufferT = (T*)buffer;
-		for (size_t n=0; n<count; ++n)
-			bufferT[n] = endian::swap<T>(endian::swap<T>(bufferT[n]) * volume);
-	}
+    template <typename T>
+    void adjustVolume(char* buffer, size_t count, double volume)
+    {
+        T* bufferT = (T*)buffer;
+        for (size_t n = 0; n < count; ++n)
+            bufferT[n] = endian::swap<T>(endian::swap<T>(bufferT[n]) * volume);
+    }
 
-	void adjustVolume(char* buffer, size_t frames);
+    void adjustVolume(char* buffer, size_t frames);
 
-	std::atomic<bool> active_;
-	std::shared_ptr<Stream> stream_;
-	std::thread playerThread_;
-	PcmDevice pcmDevice_;
-	double volume_;
-	bool muted_;
-	double volCorrection_;
+    std::atomic<bool> active_;
+    std::shared_ptr<Stream> stream_;
+    std::thread playerThread_;
+    PcmDevice pcmDevice_;
+    double volume_;
+    bool muted_;
+    double volCorrection_;
 };
 
 
 #endif
-

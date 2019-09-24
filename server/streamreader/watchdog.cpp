@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2018  Johannes Pohl
+    Copyright (C) 2014-2019  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -30,54 +30,53 @@ Watchdog::Watchdog(WatchdogListener* listener) : listener_(listener), thread_(nu
 
 Watchdog::~Watchdog()
 {
-	stop();
+    stop();
 }
 
 
 void Watchdog::start(size_t timeoutMs)
 {
-	timeoutMs_ = timeoutMs;
-	if (!thread_ || !active_)
-	{
-		active_ = true;
-		thread_.reset(new thread(&Watchdog::worker, this));
-	}
-	else
-		trigger();
+    timeoutMs_ = timeoutMs;
+    if (!thread_ || !active_)
+    {
+        active_ = true;
+        thread_.reset(new thread(&Watchdog::worker, this));
+    }
+    else
+        trigger();
 }
 
 
 void Watchdog::stop()
 {
-	active_ = false;
-	trigger();
-	if (thread_ && thread_->joinable())
-		thread_->join();
-	thread_ = nullptr;
+    active_ = false;
+    trigger();
+    if (thread_ && thread_->joinable())
+        thread_->join();
+    thread_ = nullptr;
 }
 
 
 void Watchdog::trigger()
 {
-//	std::unique_lock<std::mutex> lck(mtx_);
-	cv_.notify_one();
+    //	std::unique_lock<std::mutex> lck(mtx_);
+    cv_.notify_one();
 }
 
 
 void Watchdog::worker()
 {
-	while (active_)
-	{
-		std::unique_lock<std::mutex> lck(mtx_);
-		if (cv_.wait_for(lck, std::chrono::milliseconds(timeoutMs_)) == std::cv_status::timeout)
-		{
-			if (listener_)
-			{
-				listener_->onTimeout(this, timeoutMs_);
-				break;
-			}
-		}
-	}
-	active_ = false;
+    while (active_)
+    {
+        std::unique_lock<std::mutex> lck(mtx_);
+        if (cv_.wait_for(lck, std::chrono::milliseconds(timeoutMs_)) == std::cv_status::timeout)
+        {
+            if (listener_)
+            {
+                listener_->onTimeout(this, timeoutMs_);
+                break;
+            }
+        }
+    }
+    active_ = false;
 }
-

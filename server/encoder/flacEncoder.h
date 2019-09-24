@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2018  Johannes Pohl
+    Copyright (C) 2014-2019  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -33,19 +33,20 @@ public:
     FlacEncoder(const std::string& codecOptions = "");
     ~FlacEncoder();
     virtual void encode(const msg::PcmChunk* chunk);
-   	virtual std::string getAvailableOptions() const;
-	virtual std::string getDefaultOptions() const;
-	virtual std::string name() const;
+    virtual std::string getAvailableOptions() const;
+    virtual std::string getDefaultOptions() const;
+    virtual std::string name() const;
 
-    FLAC__StreamEncoderWriteStatus write_callback(const FLAC__StreamEncoder *encoder, const FLAC__byte buffer[], size_t bytes, unsigned samples, unsigned current_frame);
+    FLAC__StreamEncoderWriteStatus write_callback(const FLAC__StreamEncoder* encoder, const FLAC__byte buffer[], size_t bytes, unsigned samples,
+                                                  unsigned current_frame);
 
 protected:
     virtual void initEncoder();
 
-    FLAC__StreamEncoder *encoder_;
-    FLAC__StreamMetadata *metadata_[2];
+    FLAC__StreamEncoder* encoder_;
+    FLAC__StreamMetadata* metadata_[2];
 
-    FLAC__int32 *pcmBuffer_;
+    FLAC__int32* pcmBuffer_;
     int pcmBufferSize_;
 
     msg::PcmChunk* flacChunk_;
@@ -54,5 +55,3 @@ protected:
 
 
 #endif
-
-

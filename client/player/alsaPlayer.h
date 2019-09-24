@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2018  Johannes Pohl
+    Copyright (C) 2014-2019  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -30,28 +30,27 @@
 class AlsaPlayer : public Player
 {
 public:
-	AlsaPlayer(const PcmDevice& pcmDevice, std::shared_ptr<Stream> stream);
-	virtual ~AlsaPlayer();
+    AlsaPlayer(const PcmDevice& pcmDevice, std::shared_ptr<Stream> stream);
+    virtual ~AlsaPlayer();
 
-	/// Set audio volume in range [0..1]
-	virtual void start();
-	virtual void stop();
+    /// Set audio volume in range [0..1]
+    virtual void start();
+    virtual void stop();
 
-	/// List the system's audio output devices
-	static std::vector<PcmDevice> pcm_list(void);
+    /// List the system's audio output devices
+    static std::vector<PcmDevice> pcm_list(void);
 
 protected:
-	virtual void worker();
+    virtual void worker();
 
 private:
-	void initAlsa();
-	void uninitAlsa();
+    void initAlsa();
+    void uninitAlsa();
 
-	snd_pcm_t* handle_;
-	snd_pcm_uframes_t frames_;
-	char *buff_;
+    snd_pcm_t* handle_;
+    snd_pcm_uframes_t frames_;
+    char* buff_;
 };
 
 
 #endif
-

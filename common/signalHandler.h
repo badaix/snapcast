@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2018  Johannes Pohl
+    Copyright (C) 2014-2019  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -27,25 +27,23 @@ extern volatile sig_atomic_t g_terminated;
 void signal_handler(int sig)
 {
 
-	switch(sig)
-	{
-	case SIGHUP:
-		syslog(LOG_WARNING, "Received SIGHUP signal.");
-		break;
-	case SIGTERM:
-		syslog(LOG_WARNING, "Received SIGTERM signal.");
-		g_terminated = true;
-		break;
-	case SIGINT:
-		syslog(LOG_WARNING, "Received SIGINT signal.");
-		g_terminated = true;
-		break;
-	default:
-		syslog(LOG_WARNING, "Unhandled signal ");
-		break;
-	}
+    switch (sig)
+    {
+        case SIGHUP:
+            syslog(LOG_WARNING, "Received SIGHUP signal.");
+            break;
+        case SIGTERM:
+            syslog(LOG_WARNING, "Received SIGTERM signal.");
+            g_terminated = true;
+            break;
+        case SIGINT:
+            syslog(LOG_WARNING, "Received SIGINT signal.");
+            g_terminated = true;
+            break;
+        default:
+            syslog(LOG_WARNING, "Unhandled signal ");
+            break;
+    }
 }
 
 #endif
-
-

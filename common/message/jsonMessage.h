@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2018  Johannes Pohl
+    Copyright (C) 2014-2019  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -19,8 +19,8 @@
 #ifndef JSON_MESSAGE_H
 #define JSON_MESSAGE_H
 
-#include "message.h"
 #include "common/json.hpp"
+#include "message.h"
 
 
 using json = nlohmann::json;
@@ -32,54 +32,51 @@ namespace msg
 class JsonMessage : public BaseMessage
 {
 public:
-	JsonMessage(message_type msgType) : BaseMessage(msgType)
-	{
-	}
+    JsonMessage(message_type msgType) : BaseMessage(msgType)
+    {
+    }
 
-	virtual ~JsonMessage()
-	{
-	}
+    virtual ~JsonMessage()
+    {
+    }
 
-	virtual void read(std::istream& stream)
-	{
-		std::string s;
-		readVal(stream, s);
-		msg = json::parse(s);
-	}
+    virtual void read(std::istream& stream)
+    {
+        std::string s;
+        readVal(stream, s);
+        msg = json::parse(s);
+    }
 
-	virtual uint32_t getSize() const
-	{
-		return sizeof(uint32_t) + msg.dump().size();
-	}
+    virtual uint32_t getSize() const
+    {
+        return sizeof(uint32_t) + msg.dump().size();
+    }
 
-	json msg;
+    json msg;
 
 
 protected:
-	virtual void doserialize(std::ostream& stream) const
-	{
-		writeVal(stream, msg.dump());
-	}
+    virtual void doserialize(std::ostream& stream) const
+    {
+        writeVal(stream, msg.dump());
+    }
 
-	template<typename T>
-	T get(const std::string& what, const T& def) const
-	{
-		try
-		{
-			if (!msg.count(what))
-				return def;
-			return msg[what].get<T>();
-		}
-		catch(...)
-		{
-			return def;
-		}
-	}
+    template <typename T>
+    T get(const std::string& what, const T& def) const
+    {
+        try
+        {
+            if (!msg.count(what))
+                return def;
+            return msg[what].get<T>();
+        }
+        catch (...)
+        {
+            return def;
+        }
+    }
 };
-
 }
 
 
 #endif
-
-

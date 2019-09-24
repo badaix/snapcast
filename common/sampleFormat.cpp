@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2018  Johannes Pohl
+    Copyright (C) 2014-2019  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -16,15 +16,15 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
-#include <vector>
 #include <iostream>
 #include <sstream>
+#include <vector>
 
-#include "sampleFormat.h"
-#include "common/strCompat.h"
-#include "common/utils/string_utils.h"
-#include "common/utils.h"
 #include "aixlog.hpp"
+#include "common/strCompat.h"
+#include "common/utils.h"
+#include "common/utils/string_utils.h"
+#include "sampleFormat.h"
 
 
 using namespace std;
@@ -37,49 +37,44 @@ SampleFormat::SampleFormat()
 
 SampleFormat::SampleFormat(const std::string& format)
 {
-	setFormat(format);
+    setFormat(format);
 }
 
 
 SampleFormat::SampleFormat(uint32_t sampleRate, uint16_t bitsPerSample, uint16_t channelCount)
 {
-	setFormat(sampleRate, bitsPerSample, channelCount);
+    setFormat(sampleRate, bitsPerSample, channelCount);
 }
 
 
 string SampleFormat::getFormat() const
 {
-	stringstream ss;
-	ss << rate << ":" << bits << ":" << channels;
-	return ss.str();
+    stringstream ss;
+    ss << rate << ":" << bits << ":" << channels;
+    return ss.str();
 }
 
 
 void SampleFormat::setFormat(const std::string& format)
 {
-	std::vector<std::string> strs;
-	strs = utils::string::split(format, ':');
-	if (strs.size() == 3)
-		setFormat(
-		    cpt::stoul(strs[0]),
-		    cpt::stoul(strs[1]),
-		    cpt::stoul(strs[2]));
+    std::vector<std::string> strs;
+    strs = utils::string::split(format, ':');
+    if (strs.size() == 3)
+        setFormat(cpt::stoul(strs[0]), cpt::stoul(strs[1]), cpt::stoul(strs[2]));
 }
 
 
 void SampleFormat::setFormat(uint32_t rate, uint16_t bits, uint16_t channels)
 {
-	//needs something like:
-	// 24_4 = 3 bytes, padded to 4
-	// 32 = 4 bytes
-	this->rate = rate;
-	this->bits = bits;
-	this->channels = channels;
-	sampleSize = bits / 8;
-	if (bits == 24)
-		sampleSize = 4;
-	frameSize = channels*sampleSize;
-//	LOG(DEBUG) << "SampleFormat: " << rate << ":" << bits << ":" << channels << "\n";
+    // needs something like:
+    // 24_4 = 3 bytes, padded to 4
+    // 32 = 4 bytes
+    this->rate = rate;
+    this->bits = bits;
+    this->channels = channels;
+    sampleSize = bits / 8;
+    if (bits == 24)
+        sampleSize = 4;
+    frameSize = channels * sampleSize;
+    //	LOG(DEBUG) << "SampleFormat: " << rate << ":" << bits << ":" << channels << "\n";
 }
-
-

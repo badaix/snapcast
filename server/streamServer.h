@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2018  Johannes Pohl
+    Copyright (C) 2014-2019  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -20,22 +20,22 @@
 #define STREAM_SERVER_H
 
 #include <asio.hpp>
-#include <vector>
-#include <thread>
 #include <memory>
+#include <mutex>
 #include <set>
 #include <sstream>
-#include <mutex>
+#include <thread>
+#include <vector>
 
-#include "jsonrpcpp.hpp"
-#include "streamSession.h"
-#include "streamreader/streamManager.h"
 #include "common/queue.h"
 #include "common/sampleFormat.h"
-#include "message/message.h"
-#include "message/codecHeader.h"
-#include "message/serverSettings.h"
 #include "controlServer.h"
+#include "jsonrpcpp.hpp"
+#include "message/codecHeader.h"
+#include "message/message.h"
+#include "message/serverSettings.h"
+#include "streamSession.h"
+#include "streamreader/streamManager.h"
 
 
 using asio::ip::tcp;
@@ -44,24 +44,18 @@ typedef std::shared_ptr<StreamSession> session_ptr;
 
 struct StreamServerSettings
 {
-	StreamServerSettings() :
-		port(1704),
-		controlPort(1705),
-		codec("flac"),
-		bufferMs(1000),
-		sampleFormat("48000:16:2"),
-		streamReadMs(20),
-		sendAudioToMutedClients(false)
-	{
-	}
-	size_t port;
-	size_t controlPort;
-	std::vector<std::string> pcmStreams;
-	std::string codec;
-	int32_t bufferMs;
-	std::string sampleFormat;
-	size_t streamReadMs;
-	bool sendAudioToMutedClients;
+    StreamServerSettings()
+        : port(1704), controlPort(1705), codec("flac"), bufferMs(1000), sampleFormat("48000:16:2"), streamReadMs(20), sendAudioToMutedClients(false)
+    {
+    }
+    size_t port;
+    size_t controlPort;
+    std::vector<std::string> pcmStreams;
+    std::string codec;
+    int32_t bufferMs;
+    std::string sampleFormat;
+    size_t streamReadMs;
+    bool sendAudioToMutedClients;
 };
 
 
@@ -75,48 +69,46 @@ struct StreamServerSettings
 class StreamServer : public MessageReceiver, ControlMessageReceiver, PcmListener
 {
 public:
-	StreamServer(asio::io_service* io_service, const StreamServerSettings& streamServerSettings);
-	virtual ~StreamServer();
+    StreamServer(asio::io_service* io_service, const StreamServerSettings& streamServerSettings);
+    virtual ~StreamServer();
 
-	void start();
-	void stop();
+    void start();
+    void stop();
 
-	/// Send a message to all connceted clients
-//	void send(const msg::BaseMessage* message);
+    /// Send a message to all connceted clients
+    //	void send(const msg::BaseMessage* message);
 
-	/// Clients call this when they receive a message. Implementation of MessageReceiver::onMessageReceived
-	virtual void onMessageReceived(StreamSession* connection, const msg::BaseMessage& baseMessage, char* buffer);
-	virtual void onDisconnect(StreamSession* connection);
+    /// Clients call this when they receive a message. Implementation of MessageReceiver::onMessageReceived
+    virtual void onMessageReceived(StreamSession* connection, const msg::BaseMessage& baseMessage, char* buffer);
+    virtual void onDisconnect(StreamSession* connection);
 
-	/// Implementation of ControllMessageReceiver::onMessageReceived, called by ControlServer::onMessageReceived
-	virtual void onMessageReceived(ControlSession* connection, const std::string& message);
+    /// Implementation of ControllMessageReceiver::onMessageReceived, called by ControlServer::onMessageReceived
+    virtual void onMessageReceived(ControlSession* connection, const std::string& message);
 
-	/// Implementation of PcmListener
-	virtual void onMetaChanged(const PcmStream* pcmStream);
-	virtual void onStateChanged(const PcmStream* pcmStream, const ReaderState& state);
-	virtual void onChunkRead(const PcmStream* pcmStream, msg::PcmChunk* chunk, double duration);
-	virtual void onResync(const PcmStream* pcmStream, double ms);
+    /// Implementation of PcmListener
+    virtual void onMetaChanged(const PcmStream* pcmStream);
+    virtual void onStateChanged(const PcmStream* pcmStream, const ReaderState& state);
+    virtual void onChunkRead(const PcmStream* pcmStream, msg::PcmChunk* chunk, double duration);
+    virtual void onResync(const PcmStream* pcmStream, double ms);
 
 private:
-	void startAccept();
-	void handleAccept(socket_ptr socket);
-	session_ptr getStreamSession(const std::string& mac) const;
-	session_ptr getStreamSession(StreamSession* session) const;
-	void ProcessRequest(const jsonrpcpp::request_ptr request, jsonrpcpp::entity_ptr& response, jsonrpcpp::notification_ptr& notification) const;
-	mutable std::recursive_mutex sessionsMutex_;
-	std::set<session_ptr> sessions_;
-	asio::io_service* io_service_;
-	std::shared_ptr<tcp::acceptor> acceptor_v4_;
-	std::shared_ptr<tcp::acceptor> acceptor_v6_;
+    void startAccept();
+    void handleAccept(socket_ptr socket);
+    session_ptr getStreamSession(const std::string& mac) const;
+    session_ptr getStreamSession(StreamSession* session) const;
+    void ProcessRequest(const jsonrpcpp::request_ptr request, jsonrpcpp::entity_ptr& response, jsonrpcpp::notification_ptr& notification) const;
+    mutable std::recursive_mutex sessionsMutex_;
+    std::set<session_ptr> sessions_;
+    asio::io_service* io_service_;
+    std::shared_ptr<tcp::acceptor> acceptor_v4_;
+    std::shared_ptr<tcp::acceptor> acceptor_v6_;
 
-	StreamServerSettings settings_;
-	Queue<std::shared_ptr<msg::BaseMessage>> messages_;
-	std::unique_ptr<ControlServer> controlServer_;
-	std::unique_ptr<StreamManager> streamManager_;
+    StreamServerSettings settings_;
+    Queue<std::shared_ptr<msg::BaseMessage>> messages_;
+    std::unique_ptr<ControlServer> controlServer_;
+    std::unique_ptr<StreamManager> streamManager_;
 };
 
 
 
 #endif
-
-

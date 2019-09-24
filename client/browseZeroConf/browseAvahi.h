@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2018  Johannes Pohl
+    Copyright (C) 2014-2019  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -21,9 +21,9 @@
 #include <avahi-client/client.h>
 #include <avahi-client/lookup.h>
 
-#include <avahi-common/simple-watch.h>
-#include <avahi-common/malloc.h>
 #include <avahi-common/error.h>
+#include <avahi-common/malloc.h>
+#include <avahi-common/simple-watch.h>
 
 class BrowseAvahi;
 
@@ -32,18 +32,22 @@ class BrowseAvahi;
 class BrowseAvahi : public BrowsemDNS
 {
 public:
-	BrowseAvahi();
-	~BrowseAvahi();
-	bool browse(const std::string& serviceName, mDNSResult& result, int timeout) override;
+    BrowseAvahi();
+    ~BrowseAvahi();
+    bool browse(const std::string& serviceName, mDNSResult& result, int timeout) override;
 
 private:
-	void cleanUp();
-	static void resolve_callback(AvahiServiceResolver *r, AVAHI_GCC_UNUSED AvahiIfIndex interface, AVAHI_GCC_UNUSED AvahiProtocol protocol, AvahiResolverEvent event, const char *name, const char *type, const char *domain, const char *host_name, const AvahiAddress *address, uint16_t port, AvahiStringList *txt, AvahiLookupResultFlags flags, AVAHI_GCC_UNUSED void* userdata);
-	static void browse_callback(AvahiServiceBrowser *b, AvahiIfIndex interface, AvahiProtocol protocol, AvahiBrowserEvent event, const char *name, const char *type, const char *domain, AVAHI_GCC_UNUSED AvahiLookupResultFlags flags, void* userdata);
-	static void client_callback(AvahiClient *c, AvahiClientState state, AVAHI_GCC_UNUSED void * userdata);
-	AvahiClient* client_;
-	mDNSResult result_;
-	AvahiServiceBrowser* sb_;
+    void cleanUp();
+    static void resolve_callback(AvahiServiceResolver* r, AVAHI_GCC_UNUSED AvahiIfIndex interface, AVAHI_GCC_UNUSED AvahiProtocol protocol,
+                                 AvahiResolverEvent event, const char* name, const char* type, const char* domain, const char* host_name,
+                                 const AvahiAddress* address, uint16_t port, AvahiStringList* txt, AvahiLookupResultFlags flags,
+                                 AVAHI_GCC_UNUSED void* userdata);
+    static void browse_callback(AvahiServiceBrowser* b, AvahiIfIndex interface, AvahiProtocol protocol, AvahiBrowserEvent event, const char* name,
+                                const char* type, const char* domain, AVAHI_GCC_UNUSED AvahiLookupResultFlags flags, void* userdata);
+    static void client_callback(AvahiClient* c, AvahiClientState state, AVAHI_GCC_UNUSED void* userdata);
+    AvahiClient* client_;
+    mDNSResult result_;
+    AvahiServiceBrowser* sb_;
 };
 
 #endif

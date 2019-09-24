@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2018  Johannes Pohl
+    Copyright (C) 2014-2019  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -23,15 +23,15 @@
 #include <avahi-client/client.h>
 #include <avahi-client/publish.h>
 
+#include <atomic>
 #include <avahi-common/alternative.h>
-#include <avahi-common/simple-watch.h>
-#include <avahi-common/malloc.h>
 #include <avahi-common/error.h>
+#include <avahi-common/malloc.h>
+#include <avahi-common/simple-watch.h>
 #include <avahi-common/timeval.h>
 #include <string>
-#include <vector>
 #include <thread>
-#include <atomic>
+#include <vector>
 
 class PublishAvahi;
 
@@ -40,22 +40,20 @@ class PublishAvahi;
 class PublishAvahi : public PublishmDNS
 {
 public:
-	PublishAvahi(const std::string& serviceName);
-	virtual ~PublishAvahi();
-	virtual void publish(const std::vector<mDNSService>& services);
+    PublishAvahi(const std::string& serviceName);
+    virtual ~PublishAvahi();
+    virtual void publish(const std::vector<mDNSService>& services);
 
 private:
-	static void entry_group_callback(AvahiEntryGroup *g, AvahiEntryGroupState state, AVAHI_GCC_UNUSED void *userdata);
-	static void client_callback(AvahiClient *c, AvahiClientState state, AVAHI_GCC_UNUSED void * userdata);
-	void create_services(AvahiClient *c);
-	void worker();
-	AvahiClient* client_;
-	std::thread pollThread_;
-	std::atomic<bool> active_;
-	std::vector<mDNSService> services_;
+    static void entry_group_callback(AvahiEntryGroup* g, AvahiEntryGroupState state, AVAHI_GCC_UNUSED void* userdata);
+    static void client_callback(AvahiClient* c, AvahiClientState state, AVAHI_GCC_UNUSED void* userdata);
+    void create_services(AvahiClient* c);
+    void worker();
+    AvahiClient* client_;
+    std::thread pollThread_;
+    std::atomic<bool> active_;
+    std::vector<mDNSService> services_;
 };
 
 
 #endif
-
-

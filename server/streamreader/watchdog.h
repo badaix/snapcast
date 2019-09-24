@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2018  Johannes Pohl
+    Copyright (C) 2014-2019  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -19,11 +19,11 @@
 #ifndef WATCH_DOG_H
 #define WATCH_DOG_H
 
-#include <mutex>
-#include <thread>
-#include <memory>
 #include <atomic>
 #include <condition_variable>
+#include <memory>
+#include <mutex>
+#include <thread>
 
 
 class Watchdog;
@@ -32,7 +32,7 @@ class Watchdog;
 class WatchdogListener
 {
 public:
-	virtual void onTimeout(const Watchdog* watchdog, size_t ms) = 0;
+    virtual void onTimeout(const Watchdog* watchdog, size_t ms) = 0;
 };
 
 
@@ -40,24 +40,23 @@ public:
 class Watchdog
 {
 public:
-	Watchdog(WatchdogListener* listener = nullptr);
-	virtual ~Watchdog();
+    Watchdog(WatchdogListener* listener = nullptr);
+    virtual ~Watchdog();
 
-	void start(size_t timeoutMs);
-	void stop();
-	void trigger();
+    void start(size_t timeoutMs);
+    void stop();
+    void trigger();
 
 private:
-	WatchdogListener* listener_;
-	std::condition_variable cv_;
-	std::mutex mtx_;
-	std::unique_ptr<std::thread> thread_;
-	size_t timeoutMs_;
-	std::atomic<bool> active_;
+    WatchdogListener* listener_;
+    std::condition_variable cv_;
+    std::mutex mtx_;
+    std::unique_ptr<std::thread> thread_;
+    size_t timeoutMs_;
+    std::atomic<bool> active_;
 
-	void worker();
+    void worker();
 };
 
 
 #endif
-

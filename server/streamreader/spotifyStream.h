@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2018  Johannes Pohl
+    Copyright (C) 2014-2019  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -28,23 +28,24 @@
  * Implements EncoderListener to get the encoded data.
  * Data is passed to the PcmListener
  * usage:
- *   snapserver -s "spotify:///librespot?name=Spotify&username=<my username>&password=<my password>[&devicename=Snapcast][&bitrate=320][&volume=<volume in percent>][&cache=<cache dir>]"
+ *   snapserver -s "spotify:///librespot?name=Spotify&username=<my username>&password=<my password>[&devicename=Snapcast][&bitrate=320][&volume=<volume in
+ * percent>][&cache=<cache dir>]"
  */
 class SpotifyStream : public ProcessStream, WatchdogListener
 {
 public:
-	/// ctor. Encoded PCM data is passed to the PipeListener
-	SpotifyStream(PcmListener* pcmListener, const StreamUri& uri);
-	virtual ~SpotifyStream();
+    /// ctor. Encoded PCM data is passed to the PipeListener
+    SpotifyStream(PcmListener* pcmListener, const StreamUri& uri);
+    virtual ~SpotifyStream();
 
 protected:
-	std::unique_ptr<Watchdog> watchdog_;
+    std::unique_ptr<Watchdog> watchdog_;
 
-	virtual void stderrReader();
-	virtual void onStderrMsg(const char* buffer, size_t n);
-	virtual void initExeAndPath(const std::string& filename);
+    virtual void stderrReader();
+    virtual void onStderrMsg(const char* buffer, size_t n);
+    virtual void initExeAndPath(const std::string& filename);
 
-	virtual void onTimeout(const Watchdog* watchdog, size_t ms);
+    virtual void onTimeout(const Watchdog* watchdog, size_t ms);
 };
 
 
