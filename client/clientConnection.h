@@ -40,7 +40,7 @@ class ClientConnection;
 /// Used to synchronize server requests (wait for server response)
 struct PendingRequest
 {
-    PendingRequest(uint16_t reqId) : id(reqId), response(NULL){};
+    PendingRequest(uint16_t reqId) : id(reqId), response(nullptr){};
 
     uint16_t id;
     std::shared_ptr<msg::SerializedMessage> response;
@@ -87,7 +87,7 @@ public:
     {
         std::shared_ptr<msg::SerializedMessage> reply = sendRequest(message, timeout);
         if (!reply)
-            return NULL;
+            return nullptr;
         std::shared_ptr<T> msg(new T);
         msg->deserialize(reply->message, reply->buffer);
         return msg;

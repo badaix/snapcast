@@ -27,10 +27,10 @@
 #include <time.h>
 
 
-static AvahiSimplePoll* simple_poll = NULL;
+static AvahiSimplePoll* simple_poll = nullptr;
 
 
-BrowseAvahi::BrowseAvahi() : client_(NULL), sb_(NULL)
+BrowseAvahi::BrowseAvahi() : client_(nullptr), sb_(nullptr)
 {
 }
 
@@ -45,15 +45,15 @@ void BrowseAvahi::cleanUp()
 {
     if (sb_)
         avahi_service_browser_free(sb_);
-    sb_ = NULL;
+    sb_ = nullptr;
 
     if (client_)
         avahi_client_free(client_);
-    client_ = NULL;
+    client_ = nullptr;
 
     if (simple_poll)
         avahi_simple_poll_free(simple_poll);
-    simple_poll = NULL;
+    simple_poll = nullptr;
 }
 
 
@@ -180,7 +180,7 @@ bool BrowseAvahi::browse(const std::string& serviceName, mDNSResult& result, int
 
         /* Create the service browser */
         if (!(sb_ =
-                  avahi_service_browser_new(client_, AVAHI_IF_UNSPEC, AVAHI_PROTO_INET, serviceName.c_str(), NULL, (AvahiLookupFlags)0, browse_callback, this)))
+                  avahi_service_browser_new(client_, AVAHI_IF_UNSPEC, AVAHI_PROTO_INET, serviceName.c_str(), nullptr, (AvahiLookupFlags)0, browse_callback, this)))
             throw SnapException("BrowseAvahi - Failed to create service browser: " + std::string(avahi_strerror(avahi_client_errno(client_))));
 
         result_.valid = false;

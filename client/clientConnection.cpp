@@ -29,7 +29,7 @@ using namespace std;
 
 
 ClientConnection::ClientConnection(MessageReceiver* receiver, const std::string& host, size_t port)
-    : socket_(nullptr), active_(false), connected_(false), messageReceiver_(receiver), reqId_(1), host_(host), port_(port), readerThread_(NULL),
+    : socket_(nullptr), active_(false), connected_(false), messageReceiver_(receiver), reqId_(1), host_(host), port_(port), readerThread_(nullptr),
       sumTimeout_(chronos::msec(0))
 {
 }
@@ -116,7 +116,7 @@ void ClientConnection::stop()
     catch (...)
     {
     }
-    readerThread_ = NULL;
+    readerThread_ = nullptr;
     socket_.reset();
     LOG(DEBUG) << "readerThread terminated\n";
 }
@@ -142,7 +142,7 @@ bool ClientConnection::send(const msg::BaseMessage* message) const
 
 shared_ptr<msg::SerializedMessage> ClientConnection::sendRequest(const msg::BaseMessage* message, const chronos::msec& timeout)
 {
-    shared_ptr<msg::SerializedMessage> response(NULL);
+    shared_ptr<msg::SerializedMessage> response(nullptr);
     if (++reqId_ >= 10000)
         reqId_ = 1;
     message->id = reqId_;
@@ -209,7 +209,7 @@ void ClientConnection::getNextMessage()
         }
     }
 
-    if (messageReceiver_ != NULL)
+    if (messageReceiver_ != nullptr)
         messageReceiver_->onMessageReceived(this, baseMessage, &buffer[0]);
 }
 
@@ -226,7 +226,7 @@ void ClientConnection::reader()
     }
     catch (const std::exception& e)
     {
-        if (messageReceiver_ != NULL)
+        if (messageReceiver_ != nullptr)
             messageReceiver_->onException(this, make_shared<SnapException>(e.what()));
     }
     catch (...)

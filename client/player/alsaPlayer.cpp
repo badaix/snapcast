@@ -26,7 +26,7 @@
 
 using namespace std;
 
-AlsaPlayer::AlsaPlayer(const PcmDevice& pcmDevice, std::shared_ptr<Stream> stream) : Player(pcmDevice, stream), handle_(NULL), buff_(NULL)
+AlsaPlayer::AlsaPlayer(const PcmDevice& pcmDevice, std::shared_ptr<Stream> stream) : Player(pcmDevice, stream), handle_(nullptr), buff_(nullptr)
 {
 }
 
@@ -105,18 +105,18 @@ void AlsaPlayer::initAlsa()
     if ((pcm = snd_pcm_hw_params_set_channels(handle_, params, channels)) < 0)
         throw SnapException("Can't set channels number: " + string(snd_strerror(pcm)));
 
-    if ((pcm = snd_pcm_hw_params_set_rate_near(handle_, params, &rate, 0)) < 0)
+    if ((pcm = snd_pcm_hw_params_set_rate_near(handle_, params, &rate, nullptr)) < 0)
         throw SnapException("Can't set rate: " + string(snd_strerror(pcm)));
 
     unsigned int period_time;
-    snd_pcm_hw_params_get_period_time_max(params, &period_time, 0);
+    snd_pcm_hw_params_get_period_time_max(params, &period_time, nullptr);
     if (period_time > PERIOD_TIME)
         period_time = PERIOD_TIME;
 
     unsigned int buffer_time = 4 * period_time;
 
-    snd_pcm_hw_params_set_period_time_near(handle_, params, &period_time, 0);
-    snd_pcm_hw_params_set_buffer_time_near(handle_, params, &buffer_time, 0);
+    snd_pcm_hw_params_set_period_time_near(handle_, params, &period_time, nullptr);
+    snd_pcm_hw_params_set_buffer_time_near(handle_, params, &buffer_time, nullptr);
 
     //	long unsigned int periodsize = stream_->format.msRate() * 50;//2*rate/50;
     //	if ((pcm = snd_pcm_hw_params_set_buffer_size_near(pcm_handle, params, &periodsize)) < 0)
@@ -132,17 +132,17 @@ void AlsaPlayer::initAlsa()
     snd_pcm_hw_params_get_channels(params, &tmp);
     LOG(DEBUG) << "channels: " << tmp << "\n";
 
-    snd_pcm_hw_params_get_rate(params, &tmp, 0);
+    snd_pcm_hw_params_get_rate(params, &tmp, nullptr);
     LOG(DEBUG) << "rate: " << tmp << " bps\n";
 
     /* Allocate buffer to hold single period */
-    snd_pcm_hw_params_get_period_size(params, &frames_, 0);
+    snd_pcm_hw_params_get_period_size(params, &frames_, nullptr);
     LOG(INFO) << "frames: " << frames_ << "\n";
 
     buff_size = frames_ * format.frameSize; // channels * 2 /* 2 -> sample size */;
     buff_ = (char*)malloc(buff_size);
 
-    snd_pcm_hw_params_get_period_time(params, &tmp, NULL);
+    snd_pcm_hw_params_get_period_time(params, &tmp, nullptr);
     LOG(DEBUG) << "period time: " << tmp << "\n";
 
     snd_pcm_sw_params_t* swparams;
@@ -158,17 +158,17 @@ void AlsaPlayer::initAlsa()
 
 void AlsaPlayer::uninitAlsa()
 {
-    if (handle_ != NULL)
+    if (handle_ != nullptr)
     {
         snd_pcm_drain(handle_);
         snd_pcm_close(handle_);
-        handle_ = NULL;
+        handle_ = nullptr;
     }
 
-    if (buff_ != NULL)
+    if (buff_ != nullptr)
     {
         free(buff_);
-        buff_ = NULL;
+        buff_ = nullptr;
     }
 }
 
@@ -201,7 +201,7 @@ void AlsaPlayer::worker()
 
     while (active_)
     {
-        if (handle_ == NULL)
+        if (handle_ == nullptr)
         {
             try
             {
@@ -240,7 +240,7 @@ void AlsaPlayer::worker()
             while (active_ && !stream_->waitForChunk(100))
             {
                 LOG(DEBUG) << "Waiting for chunk\n";
-                if ((handle_ != NULL) && (chronos::getTickCount() - lastChunkTick > 5000))
+                if ((handle_ != nullptr) && (chronos::getTickCount() - lastChunkTick > 5000))
                 {
                     LOG(NOTICE) << "No chunk received for 5000ms. Closing ALSA.\n";
                     uninitAlsa();
@@ -253,7 +253,7 @@ void AlsaPlayer::worker()
 
 
 
-vector<PcmDevice> AlsaPlayer::pcm_list(void)
+vector<PcmDevice> AlsaPlayer::pcm_list()
 {
     void **hints, **n;
     char *name, *descr, *io;
@@ -264,15 +264,15 @@ vector<PcmDevice> AlsaPlayer::pcm_list(void)
         return result;
     n = hints;
     size_t idx(0);
-    while (*n != NULL)
+    while (*n != nullptr)
     {
         name = snd_device_name_get_hint(*n, "NAME");
         descr = snd_device_name_get_hint(*n, "DESC");
         io = snd_device_name_get_hint(*n, "IOID");
-        if (io != NULL && strcmp(io, "Output") != 0)
+        if (io != nullptr && strcmp(io, "Output") != 0)
             goto __end;
         pcmDevice.name = name;
-        if (descr == NULL)
+        if (descr == nullptr)
         {
             pcmDevice.description = "";
         }
@@ -284,11 +284,11 @@ vector<PcmDevice> AlsaPlayer::pcm_list(void)
         result.push_back(pcmDevice);
 
     __end:
-        if (name != NULL)
+        if (name != nullptr)
             free(name);
-        if (descr != NULL)
+        if (descr != nullptr)
             free(descr);
-        if (io != NULL)
+        if (io != nullptr)
             free(io);
         n++;
     }

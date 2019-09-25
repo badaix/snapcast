@@ -34,10 +34,10 @@ class PipeStream : public PcmStream
 public:
     /// ctor. Encoded PCM data is passed to the PipeListener
     PipeStream(PcmListener* pcmListener, const StreamUri& uri);
-    virtual ~PipeStream();
+    ~PipeStream() override;
 
 protected:
-    virtual void worker();
+    void worker() override;
     int fd_;
 };
 

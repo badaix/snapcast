@@ -200,7 +200,7 @@ void StreamSession::getNextMessage()
     tv t;
     baseMessage.received = t;
 
-    if (active_ && (messageReceiver_ != NULL))
+    if (active_ && (messageReceiver_ != nullptr))
         messageReceiver_->onMessageReceived(this, baseMessage, &buffer[0]);
 }
 
@@ -219,7 +219,7 @@ void StreamSession::reader()
         SLOG(ERROR) << "Exception in StreamSession::reader(): " << e.what() << endl;
     }
 
-    if (active_ && (messageReceiver_ != NULL))
+    if (active_ && (messageReceiver_ != nullptr))
         messageReceiver_->onDisconnect(this);
 }
 
@@ -238,7 +238,7 @@ void StreamSession::writer()
                 if (bufferMs_ > 0)
                 {
                     const msg::WireChunk* wireChunk = dynamic_cast<const msg::WireChunk*>(message.get());
-                    if (wireChunk != NULL)
+                    if (wireChunk != nullptr)
                     {
                         chronos::time_point_clk now = chronos::clk::now();
                         size_t age = 0;
@@ -258,6 +258,6 @@ void StreamSession::writer()
         SLOG(ERROR) << "Exception in StreamSession::writer(): " << e.what() << endl;
     }
 
-    if (active_ && (messageReceiver_ != NULL))
+    if (active_ && (messageReceiver_ != nullptr))
         messageReceiver_->onDisconnect(this);
 }

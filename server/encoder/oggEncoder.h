@@ -26,13 +26,13 @@ class OggEncoder : public Encoder
 {
 public:
     OggEncoder(const std::string& codecOptions = "");
-    virtual void encode(const msg::PcmChunk* chunk);
-    virtual std::string getAvailableOptions() const;
-    virtual std::string getDefaultOptions() const;
-    virtual std::string name() const;
+    void encode(const msg::PcmChunk* chunk) override;
+    std::string getAvailableOptions() const override;
+    std::string getDefaultOptions() const override;
+    std::string name() const override;
 
 protected:
-    virtual void initEncoder();
+    void initEncoder() override;
 
 private:
     ogg_stream_state os_; /// take physical pages, weld into a logical stream of packets

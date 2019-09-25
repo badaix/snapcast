@@ -48,9 +48,8 @@ public:
         msg["SnapStreamProtocolVersion"] = 2;
     }
 
-    virtual ~Hello()
-    {
-    }
+    ~Hello() override
+    = default;
 
     std::string getMacAddress() const
     {

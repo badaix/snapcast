@@ -36,18 +36,17 @@ public:
     {
     }
 
-    virtual ~JsonMessage()
-    {
-    }
+    ~JsonMessage() override
+    = default;
 
-    virtual void read(std::istream& stream)
+    void read(std::istream& stream) override
     {
         std::string s;
         readVal(stream, s);
         msg = json::parse(s);
     }
 
-    virtual uint32_t getSize() const
+    uint32_t getSize() const override
     {
         return sizeof(uint32_t) + msg.dump().size();
     }
@@ -56,7 +55,7 @@ public:
 
 
 protected:
-    virtual void doserialize(std::ostream& stream) const
+    void doserialize(std::ostream& stream) const override
     {
         writeVal(stream, msg.dump());
     }

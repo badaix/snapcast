@@ -43,12 +43,12 @@ public:
     {
     }
 
-    virtual ~SnapException() throw()
+    ~SnapException() throw() override
     {
         delete[] text_;
     }
 
-    virtual const char* what() const noexcept
+    const char* what() const noexcept override
     {
         return text_;
     }
@@ -72,9 +72,8 @@ public:
     }
 
 
-    virtual ~AsyncSnapException() throw()
-    {
-    }
+    ~AsyncSnapException() throw() override
+    = default;
 };
 
 

@@ -79,17 +79,17 @@ public:
     //	void send(const msg::BaseMessage* message);
 
     /// Clients call this when they receive a message. Implementation of MessageReceiver::onMessageReceived
-    virtual void onMessageReceived(StreamSession* connection, const msg::BaseMessage& baseMessage, char* buffer);
-    virtual void onDisconnect(StreamSession* connection);
+    void onMessageReceived(StreamSession* connection, const msg::BaseMessage& baseMessage, char* buffer) override;
+    void onDisconnect(StreamSession* connection) override;
 
     /// Implementation of ControllMessageReceiver::onMessageReceived, called by ControlServer::onMessageReceived
-    virtual void onMessageReceived(ControlSession* connection, const std::string& message);
+    void onMessageReceived(ControlSession* connection, const std::string& message) override;
 
     /// Implementation of PcmListener
-    virtual void onMetaChanged(const PcmStream* pcmStream);
-    virtual void onStateChanged(const PcmStream* pcmStream, const ReaderState& state);
-    virtual void onChunkRead(const PcmStream* pcmStream, msg::PcmChunk* chunk, double duration);
-    virtual void onResync(const PcmStream* pcmStream, double ms);
+    void onMetaChanged(const PcmStream* pcmStream) override;
+    void onStateChanged(const PcmStream* pcmStream, const ReaderState& state) override;
+    void onChunkRead(const PcmStream* pcmStream, msg::PcmChunk* chunk, double duration) override;
+    void onResync(const PcmStream* pcmStream, double ms) override;
 
 private:
     void startAccept();

@@ -50,13 +50,12 @@ class Encoder
 {
 public:
     /// ctor. Codec options (E.g. compression level) are passed as string and are codec dependend
-    Encoder(const std::string& codecOptions = "") : headerChunk_(NULL), codecOptions_(codecOptions)
+    Encoder(const std::string& codecOptions = "") : headerChunk_(nullptr), codecOptions_(codecOptions)
     {
     }
 
     virtual ~Encoder()
-    {
-    }
+    = default;
 
     /// The listener will receive the encoded stream
     virtual void init(EncoderListener* listener, const SampleFormat& format)

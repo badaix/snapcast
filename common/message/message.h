@@ -127,8 +127,7 @@ struct BaseMessage
     }
 
     virtual ~BaseMessage()
-    {
-    }
+    = default;
 
     virtual void read(std::istream& stream)
     {

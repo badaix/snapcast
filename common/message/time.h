@@ -31,17 +31,16 @@ public:
     {
     }
 
-    virtual ~Time()
-    {
-    }
+    ~Time() override
+    = default;
 
-    virtual void read(std::istream& stream)
+    void read(std::istream& stream) override
     {
         readVal(stream, latency.sec);
         readVal(stream, latency.usec);
     }
 
-    virtual uint32_t getSize() const
+    uint32_t getSize() const override
     {
         return sizeof(tv);
     }
@@ -49,7 +48,7 @@ public:
     tv latency;
 
 protected:
-    virtual void doserialize(std::ostream& stream) const
+    void doserialize(std::ostream& stream) const override
     {
         writeVal(stream, latency.sec);
         writeVal(stream, latency.usec);

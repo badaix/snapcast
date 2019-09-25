@@ -27,10 +27,10 @@ static AvahiEntryGroup* group;
 static AvahiSimplePoll* simple_poll;
 static char* name;
 
-PublishAvahi::PublishAvahi(const std::string& serviceName) : PublishmDNS(serviceName), client_(NULL), active_(false)
+PublishAvahi::PublishAvahi(const std::string& serviceName) : PublishmDNS(serviceName), client_(nullptr), active_(false)
 {
-    group = NULL;
-    simple_poll = NULL;
+    group = nullptr;
+    simple_poll = nullptr;
     name = avahi_strdup(serviceName_.c_str());
 }
 
@@ -85,7 +85,7 @@ PublishAvahi::~PublishAvahi()
 
 void PublishAvahi::entry_group_callback(AvahiEntryGroup* g, AvahiEntryGroupState state, AVAHI_GCC_UNUSED void* userdata)
 {
-    assert(g == group || group == NULL);
+    assert(g == group || group == nullptr);
     group = g;
 
     /// Called whenever the entry group state changes
@@ -149,7 +149,7 @@ void PublishAvahi::create_services(AvahiClient* c)
         /// We will now add two services and one subtype to the entry group
         for (const auto& service : services_)
         {
-            if ((ret = avahi_entry_group_add_service(group, AVAHI_IF_UNSPEC, AVAHI_PROTO_UNSPEC, AvahiPublishFlags(0), name, service.name_.c_str(), NULL, NULL,
+            if ((ret = avahi_entry_group_add_service(group, AVAHI_IF_UNSPEC, AVAHI_PROTO_UNSPEC, AvahiPublishFlags(0), name, service.name_.c_str(), nullptr, nullptr,
                                                      service.port_, NULL)) < 0)
             {
                 if (ret == AVAHI_ERR_COLLISION)

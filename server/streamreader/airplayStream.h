@@ -57,7 +57,7 @@ class AirplayStream : public ProcessStream
 public:
     /// ctor. Encoded PCM data is passed to the PipeListener
     AirplayStream(PcmListener* pcmListener, const StreamUri& uri);
-    virtual ~AirplayStream();
+    ~AirplayStream() override;
 
 protected:
 #ifdef HAS_EXPAT
@@ -74,8 +74,8 @@ protected:
     void push();
 #endif
 
-    virtual void onStderrMsg(const char* buffer, size_t n);
-    virtual void initExeAndPath(const std::string& filename);
+    void onStderrMsg(const char* buffer, size_t n) override;
+    void initExeAndPath(const std::string& filename) override;
     size_t port_;
     std::string pipePath_;
     std::string params_wo_port_;

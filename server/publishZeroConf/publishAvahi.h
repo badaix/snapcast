@@ -41,8 +41,8 @@ class PublishAvahi : public PublishmDNS
 {
 public:
     PublishAvahi(const std::string& serviceName);
-    virtual ~PublishAvahi();
-    virtual void publish(const std::vector<mDNSService>& services);
+    ~PublishAvahi() override;
+    void publish(const std::vector<mDNSService>& services) override;
 
 private:
     static void entry_group_callback(AvahiEntryGroup* g, AvahiEntryGroupState state, AVAHI_GCC_UNUSED void* userdata);

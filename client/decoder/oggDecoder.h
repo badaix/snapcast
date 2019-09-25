@@ -30,9 +30,9 @@ class OggDecoder : public Decoder
 {
 public:
     OggDecoder();
-    virtual ~OggDecoder();
-    virtual bool decode(msg::PcmChunk* chunk);
-    virtual SampleFormat setHeader(msg::CodecHeader* chunk);
+    ~OggDecoder() override;
+    bool decode(msg::PcmChunk* chunk) override;
+    SampleFormat setHeader(msg::CodecHeader* chunk) override;
 
 private:
     bool decodePayload(msg::PcmChunk* chunk);

@@ -37,10 +37,10 @@ class ProcessStream : public PcmStream
 public:
     /// ctor. Encoded PCM data is passed to the PipeListener
     ProcessStream(PcmListener* pcmListener, const StreamUri& uri);
-    virtual ~ProcessStream();
+    ~ProcessStream() override;
 
-    virtual void start();
-    virtual void stop();
+    void start() override;
+    void stop() override;
 
 protected:
     std::string exe_;
@@ -50,7 +50,7 @@ protected:
     std::thread stderrReaderThread_;
     bool logStderr_;
 
-    virtual void worker();
+    void worker() override;
     virtual void stderrReader();
     virtual void onStderrMsg(const char* buffer, size_t n);
     virtual void initExeAndPath(const std::string& filename);

@@ -86,7 +86,7 @@ void OggEncoder::encode(const msg::PcmChunk* chunk)
     /* tell the library how much we actually submitted */
     vorbis_analysis_wrote(&vd_, frames);
 
-    msg::PcmChunk* oggChunk = new msg::PcmChunk(chunk->format, 0);
+    auto* oggChunk = new msg::PcmChunk(chunk->format, 0);
 
     /* vorbis does some data preanalysis, then divvies up blocks for
     more involved (potentially parallel) processing.  Get a single
@@ -95,7 +95,7 @@ void OggEncoder::encode(const msg::PcmChunk* chunk)
     while (vorbis_analysis_blockout(&vd_, &vb_) == 1)
     {
         /* analysis, assume we want to use bitrate management */
-        vorbis_analysis(&vb_, NULL);
+        vorbis_analysis(&vb_, nullptr);
         vorbis_bitrate_addblock(&vb_);
 
         while (vorbis_bitrate_flushpacket(&vd_, &op_))
@@ -219,7 +219,7 @@ void OggEncoder::initEncoder()
     /* set up our packet->stream encoder */
     /* pick a random serial number; that way we can more likely build
      chained streams just by concatenation */
-    srand(time(NULL));
+    srand(time(nullptr));
     ogg_stream_init(&os_, rand());
 
     /* Vorbis streams begin with three headers; the initial header (with

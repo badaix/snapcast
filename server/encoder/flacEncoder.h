@@ -31,17 +31,17 @@ class FlacEncoder : public Encoder
 {
 public:
     FlacEncoder(const std::string& codecOptions = "");
-    ~FlacEncoder();
-    virtual void encode(const msg::PcmChunk* chunk);
-    virtual std::string getAvailableOptions() const;
-    virtual std::string getDefaultOptions() const;
-    virtual std::string name() const;
+    ~FlacEncoder() override;
+    void encode(const msg::PcmChunk* chunk) override;
+    std::string getAvailableOptions() const override;
+    std::string getDefaultOptions() const override;
+    std::string name() const override;
 
     FLAC__StreamEncoderWriteStatus write_callback(const FLAC__StreamEncoder* encoder, const FLAC__byte buffer[], size_t bytes, unsigned samples,
                                                   unsigned current_frame);
 
 protected:
-    virtual void initEncoder();
+    void initEncoder() override;
 
     FLAC__StreamEncoder* encoder_;
     FLAC__StreamMetadata* metadata_[2];

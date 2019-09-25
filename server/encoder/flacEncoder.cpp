@@ -26,7 +26,7 @@
 using namespace std;
 
 
-FlacEncoder::FlacEncoder(const std::string& codecOptions) : Encoder(codecOptions), encoder_(NULL), pcmBufferSize_(0), encodedSamples_(0)
+FlacEncoder::FlacEncoder(const std::string& codecOptions) : Encoder(codecOptions), encoder_(nullptr), pcmBufferSize_(0), encodedSamples_(0)
 {
     flacChunk_ = new msg::PcmChunk();
     headerChunk_.reset(new msg::CodecHeader("flac"));
@@ -36,7 +36,7 @@ FlacEncoder::FlacEncoder(const std::string& codecOptions) : Encoder(codecOptions
 
 FlacEncoder::~FlacEncoder()
 {
-    if (encoder_ != NULL)
+    if (encoder_ != nullptr)
     {
         FLAC__stream_encoder_finish(encoder_);
         FLAC__metadata_object_delete(metadata_[0]);
@@ -163,7 +163,7 @@ void FlacEncoder::initEncoder()
     FLAC__StreamMetadata_VorbisComment_Entry entry;
 
     // allocate the encoder
-    if ((encoder_ = FLAC__stream_encoder_new()) == NULL)
+    if ((encoder_ = FLAC__stream_encoder_new()) == nullptr)
         throw SnapException("error allocating encoder");
 
     ok &= FLAC__stream_encoder_set_verify(encoder_, true);
@@ -181,8 +181,8 @@ void FlacEncoder::initEncoder()
         throw SnapException("error setting up encoder");
 
     // now add some metadata; we'll add some tags and a padding block
-    if ((metadata_[0] = FLAC__metadata_object_new(FLAC__METADATA_TYPE_VORBIS_COMMENT)) == NULL ||
-        (metadata_[1] = FLAC__metadata_object_new(FLAC__METADATA_TYPE_PADDING)) == NULL ||
+    if ((metadata_[0] = FLAC__metadata_object_new(FLAC__METADATA_TYPE_VORBIS_COMMENT)) == nullptr ||
+        (metadata_[1] = FLAC__metadata_object_new(FLAC__METADATA_TYPE_PADDING)) == nullptr ||
         // there are many tag (vorbiscomment) functions but these are convenient for this particular use:
         !FLAC__metadata_object_vorbiscomment_entry_from_name_value_pair(&entry, "TITLE", "SnapStream") ||
         !FLAC__metadata_object_vorbiscomment_append_comment(metadata_[0], entry, false) ||
@@ -196,7 +196,7 @@ void FlacEncoder::initEncoder()
         throw SnapException("error setting meta data");
 
     // initialize encoder
-    init_status = FLAC__stream_encoder_init_stream(encoder_, ::write_callback, NULL, NULL, NULL, this);
+    init_status = FLAC__stream_encoder_init_stream(encoder_, ::write_callback, nullptr, nullptr, nullptr, this);
     if (init_status != FLAC__STREAM_ENCODER_INIT_STATUS_OK)
         throw SnapException("ERROR: initializing encoder: " + string(FLAC__StreamEncoderInitStatusString[init_status]));
 }

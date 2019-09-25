@@ -34,10 +34,10 @@ class FileStream : public PcmStream
 public:
     /// ctor. Encoded PCM data is passed to the PipeListener
     FileStream(PcmListener* pcmListener, const StreamUri& uri);
-    virtual ~FileStream();
+    ~FileStream() override;
 
 protected:
-    virtual void worker();
+    void worker() override;
     std::ifstream ifs;
 };
 

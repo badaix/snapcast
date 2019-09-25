@@ -262,7 +262,7 @@ bool Stream::getPlayerChunk(void* outputBuffer, const cs::usec& outputBufferDacT
                     if (!chunks_.try_pop(chunk_, outputBufferDacTime))
                     {
                         LOG(INFO) << "no chunks available\n";
-                        chunk_ = NULL;
+                        chunk_ = nullptr;
                         sleep_ = cs::usec(0);
                         return false;
                     }
@@ -362,7 +362,7 @@ else if (miniBuffer_.full() && (cs::usec(abs(miniBuffer_.median())) > cs::msec(5
         updateBuffers(age.count());
 
         // print sync stats
-        time_t now = time(NULL);
+        time_t now = time(nullptr);
         if (now != lastUpdate_)
         {
             lastUpdate_ = now;

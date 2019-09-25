@@ -93,7 +93,7 @@ class MetaStderrAdapter : public MetadataAdapter
 public:
     using MetadataAdapter::push;
 
-    int push()
+    int push() override
     {
         std::cerr << serialize() << "\n";
         return 0;

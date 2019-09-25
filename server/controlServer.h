@@ -46,17 +46,17 @@ typedef std::shared_ptr<tcp::socket> socket_ptr;
 class ControlServer : public ControlMessageReceiver
 {
 public:
-    ControlServer(asio::io_service* io_service, size_t port, ControlMessageReceiver* controlMessageReceiver = NULL);
+    ControlServer(asio::io_service* io_service, size_t port, ControlMessageReceiver* controlMessageReceiver = nullptr);
     virtual ~ControlServer();
 
     void start();
     void stop();
 
     /// Send a message to all connceted clients
-    void send(const std::string& message, const ControlSession* excludeSession = NULL);
+    void send(const std::string& message, const ControlSession* excludeSession = nullptr);
 
     /// Clients call this when they receive a message. Implementation of MessageReceiver::onMessageReceived
-    virtual void onMessageReceived(ControlSession* connection, const std::string& message);
+    void onMessageReceived(ControlSession* connection, const std::string& message) override;
 
 private:
     void startAccept();

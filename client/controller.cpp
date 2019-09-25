@@ -57,7 +57,7 @@ void Controller::onMessageReceived(ClientConnection* connection, const msg::Base
     {
         if (stream_ && decoder_)
         {
-            msg::PcmChunk* pcmChunk = new msg::PcmChunk(sampleFormat_, 0);
+            auto* pcmChunk = new msg::PcmChunk(sampleFormat_, 0);
             pcmChunk->deserialize(baseMessage, buffer);
             //			LOG(DEBUG) << "chunk: " << pcmChunk->payloadSize << ", sampleFormat: " << sampleFormat_.rate << "\n";
             if (decoder_->decode(pcmChunk))

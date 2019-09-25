@@ -35,18 +35,18 @@ public:
         payload = (char*)malloc(size);
     }
 
-    virtual ~CodecHeader()
+    ~CodecHeader() override
     {
         free(payload);
     }
 
-    virtual void read(std::istream& stream)
+    void read(std::istream& stream) override
     {
         readVal(stream, codec);
         readVal(stream, &payload, payloadSize);
     }
 
-    virtual uint32_t getSize() const
+    uint32_t getSize() const override
     {
         return sizeof(uint32_t) + codec.size() + sizeof(uint32_t) + payloadSize;
     }
@@ -56,7 +56,7 @@ public:
     std::string codec;
 
 protected:
-    virtual void doserialize(std::ostream& stream) const
+    void doserialize(std::ostream& stream) const override
     {
         writeVal(stream, codec);
         writeVal(stream, payload, payloadSize);

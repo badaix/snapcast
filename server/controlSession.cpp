@@ -82,7 +82,7 @@ void ControlSession::stop()
     catch (...)
     {
     }
-    socket_ = NULL;
+    socket_ = nullptr;
     LOG(DEBUG) << "ControlSession ControlSession stopped\n";
 }
 
@@ -137,7 +137,7 @@ void ControlSession::reader()
                 if ((len >= 2) && line[len - 2] == '\r')
                     --len;
                 line.resize(len);
-                if ((messageReceiver_ != NULL) && !line.empty())
+                if ((messageReceiver_ != nullptr) && !line.empty())
                     messageReceiver_->onMessageReceived(this, line);
             }
             message.str("");

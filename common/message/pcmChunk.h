@@ -48,9 +48,8 @@ public:
     {
     }
 
-    virtual ~PcmChunk()
-    {
-    }
+    ~PcmChunk() override
+    = default;
 
     int readFrames(void* outputBuffer, size_t frameCount)
     {
@@ -60,7 +59,7 @@ public:
             result = (payloadSize / format.frameSize) - idx_;
 
         // logd << ", from: " << format.frameSize*idx << ", to: " << format.frameSize*idx + format.frameSize*result;
-        if (outputBuffer != NULL)
+        if (outputBuffer != nullptr)
             memcpy((char*)outputBuffer, (char*)(payload) + format.frameSize * idx_, format.frameSize * result);
 
         idx_ += result;
@@ -82,7 +81,7 @@ public:
     }
 
 
-    virtual chronos::time_point_clk start() const
+    chronos::time_point_clk start() const override
     {
         return chronos::time_point_clk(chronos::sec(timestamp.sec) + chronos::usec(timestamp.usec) +
                                        chronos::usec((chronos::usec::rep)(1000000. * ((double)idx_ / (double)format.rate))));

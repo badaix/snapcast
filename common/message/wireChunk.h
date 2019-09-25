@@ -50,19 +50,19 @@ public:
         memcpy(payload, wireChunk.payload, payloadSize);
     }
 
-    virtual ~WireChunk()
+    ~WireChunk() override
     {
         free(payload);
     }
 
-    virtual void read(std::istream& stream)
+    void read(std::istream& stream) override
     {
         readVal(stream, timestamp.sec);
         readVal(stream, timestamp.usec);
         readVal(stream, &payload, payloadSize);
     }
 
-    virtual uint32_t getSize() const
+    uint32_t getSize() const override
     {
         return sizeof(tv) + sizeof(int32_t) + payloadSize;
     }
@@ -77,7 +77,7 @@ public:
     char* payload;
 
 protected:
-    virtual void doserialize(std::ostream& stream) const
+    void doserialize(std::ostream& stream) const override
     {
         writeVal(stream, timestamp.sec);
         writeVal(stream, timestamp.usec);

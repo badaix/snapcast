@@ -35,7 +35,7 @@ PcmEncoder::PcmEncoder(const std::string& codecOptions) : Encoder(codecOptions)
 
 void PcmEncoder::encode(const msg::PcmChunk* chunk)
 {
-    msg::PcmChunk* pcmChunk = new msg::PcmChunk(*chunk);
+    auto* pcmChunk = new msg::PcmChunk(*chunk);
     listener_->onChunkEncoded(this, pcmChunk, pcmChunk->duration<chronos::msec>().count());
 }
 

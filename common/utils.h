@@ -69,7 +69,7 @@ static std::string execGetOutput(const std::string& cmd)
     std::string result = "";
     while (!feof(pipe.get()))
     {
-        if (fgets(buffer, 1024, pipe.get()) != NULL)
+        if (fgets(buffer, 1024, pipe.get()) != nullptr)
             result += buffer;
     }
     return strutils::trim(result);
@@ -182,7 +182,7 @@ static std::string generateUUID()
     static bool initialized(false);
     if (!initialized)
     {
-        std::srand(std::time(0));
+        std::srand(std::time(nullptr));
         initialized = true;
     }
     std::stringstream ss;

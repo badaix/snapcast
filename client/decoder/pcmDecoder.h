@@ -25,8 +25,8 @@ class PcmDecoder : public Decoder
 {
 public:
     PcmDecoder();
-    virtual bool decode(msg::PcmChunk* chunk);
-    virtual SampleFormat setHeader(msg::CodecHeader* chunk);
+    bool decode(msg::PcmChunk* chunk) override;
+    SampleFormat setHeader(msg::CodecHeader* chunk) override;
 };
 
 

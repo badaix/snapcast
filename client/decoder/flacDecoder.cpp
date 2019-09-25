@@ -35,11 +35,11 @@ static void metadata_callback(const FLAC__StreamDecoder* decoder, const FLAC__St
 static void error_callback(const FLAC__StreamDecoder* decoder, FLAC__StreamDecoderErrorStatus status, void* client_data);
 
 
-static msg::CodecHeader* flacHeader = NULL;
-static msg::PcmChunk* flacChunk = NULL;
-static msg::PcmChunk* pcmChunk = NULL;
+static msg::CodecHeader* flacHeader = nullptr;
+static msg::PcmChunk* flacChunk = nullptr;
+static msg::PcmChunk* pcmChunk = nullptr;
 static SampleFormat sampleFormat;
-static FLAC__StreamDecoder* decoder = NULL;
+static FLAC__StreamDecoder* decoder = nullptr;
 
 
 
@@ -101,11 +101,11 @@ SampleFormat FlacDecoder::setHeader(msg::CodecHeader* chunk)
     flacHeader = chunk;
     FLAC__StreamDecoderInitStatus init_status;
 
-    if ((decoder = FLAC__stream_decoder_new()) == NULL)
+    if ((decoder = FLAC__stream_decoder_new()) == nullptr)
         throw SnapException("ERROR: allocating decoder");
 
     //	(void)FLAC__stream_decoder_set_md5_checking(decoder, true);
-    init_status = FLAC__stream_decoder_init_stream(decoder, read_callback, NULL, NULL, NULL, NULL, write_callback, metadata_callback, error_callback, this);
+    init_status = FLAC__stream_decoder_init_stream(decoder, read_callback, nullptr, nullptr, nullptr, nullptr, write_callback, metadata_callback, error_callback, this);
     if (init_status != FLAC__STREAM_DECODER_INIT_STATUS_OK)
         throw SnapException("ERROR: initializing decoder: " + string(FLAC__StreamDecoderInitStatusString[init_status]));
 
@@ -120,13 +120,13 @@ SampleFormat FlacDecoder::setHeader(msg::CodecHeader* chunk)
 
 FLAC__StreamDecoderReadStatus read_callback(const FLAC__StreamDecoder* decoder, FLAC__byte buffer[], size_t* bytes, void* client_data)
 {
-    if (flacHeader != NULL)
+    if (flacHeader != nullptr)
     {
         *bytes = flacHeader->payloadSize;
         memcpy(buffer, flacHeader->payload, *bytes);
-        flacHeader = NULL;
+        flacHeader = nullptr;
     }
-    else if (flacChunk != NULL)
+    else if (flacChunk != nullptr)
     {
         //		cerr << "read_callback: " << *bytes << ", avail: " << flacChunk->payloadSize << "\n";
         static_cast<FlacDecoder*>(client_data)->cacheInfo_.isCachedChunk_ = false;
@@ -150,7 +150,7 @@ FLAC__StreamDecoderWriteStatus write_callback(const FLAC__StreamDecoder* decoder
 {
     (void)decoder;
 
-    if (pcmChunk != NULL)
+    if (pcmChunk != nullptr)
     {
         size_t bytes = frame->header.blocksize * sampleFormat.frameSize;
 
@@ -162,7 +162,7 @@ FLAC__StreamDecoderWriteStatus write_callback(const FLAC__StreamDecoder* decoder
 
         for (size_t channel = 0; channel < sampleFormat.channels; ++channel)
         {
-            if (buffer[channel] == NULL)
+            if (buffer[channel] == nullptr)
             {
                 SLOG(ERROR) << "ERROR: buffer[" << channel << "] is NULL\n";
                 return FLAC__STREAM_DECODER_WRITE_STATUS_ABORT;

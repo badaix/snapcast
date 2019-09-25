@@ -161,8 +161,7 @@ struct Snapcast
     }
 
     virtual ~Snapcast()
-    {
-    }
+    = default;
 
     virtual void fromJson(const json& j)
     {
@@ -200,13 +199,13 @@ struct Snapserver : public Snapcast
     {
     }
 
-    virtual void fromJson(const json& j)
+    void fromJson(const json& j) override
     {
         Snapcast::fromJson(j);
         controlProtocolVersion = jGet<int>(j, "controlProtocolVersion", 1);
     }
 
-    virtual json toJson()
+    json toJson() override
     {
         json j = Snapcast::toJson();
         j["controlProtocolVersion"] = controlProtocolVersion;

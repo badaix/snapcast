@@ -94,7 +94,7 @@ void ControlServer::onMessageReceived(ControlSession* connection, const std::str
     }
     else
     {
-        if (controlMessageReceiver_ != NULL)
+        if (controlMessageReceiver_ != nullptr)
             controlMessageReceiver_->onMessageReceived(connection, message);
     }
 }

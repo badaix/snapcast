@@ -25,11 +25,11 @@ class PcmEncoder : public Encoder
 {
 public:
     PcmEncoder(const std::string& codecOptions = "");
-    virtual void encode(const msg::PcmChunk* chunk);
-    virtual std::string name() const;
+    void encode(const msg::PcmChunk* chunk) override;
+    std::string name() const override;
 
 protected:
-    virtual void initEncoder();
+    void initEncoder() override;
 
     template <typename T>
     void assign(void* pointer, T val)

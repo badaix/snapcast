@@ -65,9 +65,8 @@ public:
     {
     }
 
-    virtual ~StreamTags()
-    {
-    }
+    ~StreamTags() override
+    = default;
 };
 }
 

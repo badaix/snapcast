@@ -47,7 +47,7 @@ inline static void timeofday(struct timeval* tv)
 
 inline static void systemtimeofday(struct timeval* tv)
 {
-    gettimeofday(tv, NULL);
+    gettimeofday(tv, nullptr);
     // timeofday<std::chrono::system_clock>(tv);
 }
 

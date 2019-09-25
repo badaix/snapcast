@@ -54,11 +54,11 @@ public:
 
     /// Implementation of MessageReceiver.
     /// ClientConnection passes messages from the server through these callbacks
-    virtual void onMessageReceived(ClientConnection* connection, const msg::BaseMessage& baseMessage, char* buffer);
+    void onMessageReceived(ClientConnection* connection, const msg::BaseMessage& baseMessage, char* buffer) override;
 
     /// Implementation of MessageReceiver.
     /// Used for async exception reporting
-    virtual void onException(ClientConnection* connection, shared_exception_ptr exception);
+    void onException(ClientConnection* connection, shared_exception_ptr exception) override;
 
 private:
     void worker();

@@ -36,9 +36,8 @@ public:
         setMuted(false);
     }
 
-    virtual ~ServerSettings()
-    {
-    }
+    ~ServerSettings() override
+    = default;
 
     int32_t getBufferMs()
     {

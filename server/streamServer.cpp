@@ -36,8 +36,7 @@ StreamServer::StreamServer(asio::io_service* io_service, const StreamServerSetti
 
 
 StreamServer::~StreamServer()
-{
-}
+= default;
 
 
 void StreamServer::onMetaChanged(const PcmStream* pcmStream)
@@ -57,7 +56,7 @@ void StreamServer::onMetaChanged(const PcmStream* pcmStream)
 
     LOG(INFO) << "onMetaChanged (" << pcmStream->getName() << ")\n";
     json notification = jsonrpcpp::Notification("Stream.OnMetadata", jsonrpcpp::Parameter("id", pcmStream->getId(), "meta", meta->msg)).to_json();
-    controlServer_->send(notification.dump(), NULL);
+    controlServer_->send(notification.dump(), nullptr);
     ////cout << "Notification: " << notification.dump() << "\n";
 }
 
@@ -69,7 +68,7 @@ void StreamServer::onStateChanged(const PcmStream* pcmStream, const ReaderState&
     LOG(INFO) << "onStateChanged (" << pcmStream->getName() << "): " << state << "\n";
     //	LOG(INFO) << pcmStream->toJson().dump(4);
     json notification = jsonrpcpp::Notification("Stream.OnUpdate", jsonrpcpp::Parameter("id", pcmStream->getId(), "stream", pcmStream->toJson())).to_json();
-    controlServer_->send(notification.dump(), NULL);
+    controlServer_->send(notification.dump(), nullptr);
     ////cout << "Notification: " << notification.dump() << "\n";
 }
 

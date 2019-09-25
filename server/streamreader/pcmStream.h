@@ -75,7 +75,7 @@ public:
     virtual void stop();
 
     /// Implementation of EncoderListener::onChunkEncoded
-    virtual void onChunkEncoded(const Encoder* encoder, msg::PcmChunk* chunk, double duration);
+    void onChunkEncoded(const Encoder* encoder, msg::PcmChunk* chunk, double duration) override;
     virtual std::shared_ptr<msg::CodecHeader> getHeader();
 
     virtual const StreamUri& getUri() const;

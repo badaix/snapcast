@@ -50,9 +50,9 @@ class FlacDecoder : public Decoder
 {
 public:
     FlacDecoder();
-    virtual ~FlacDecoder();
-    virtual bool decode(msg::PcmChunk* chunk);
-    virtual SampleFormat setHeader(msg::CodecHeader* chunk);
+    ~FlacDecoder() override;
+    bool decode(msg::PcmChunk* chunk) override;
+    SampleFormat setHeader(msg::CodecHeader* chunk) override;
 
     CacheInfo cacheInfo_;
     std::unique_ptr<FLAC__StreamDecoderErrorStatus> lastError_;

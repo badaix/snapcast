@@ -36,16 +36,16 @@ class SpotifyStream : public ProcessStream, WatchdogListener
 public:
     /// ctor. Encoded PCM data is passed to the PipeListener
     SpotifyStream(PcmListener* pcmListener, const StreamUri& uri);
-    virtual ~SpotifyStream();
+    ~SpotifyStream() override;
 
 protected:
     std::unique_ptr<Watchdog> watchdog_;
 
-    virtual void stderrReader();
-    virtual void onStderrMsg(const char* buffer, size_t n);
-    virtual void initExeAndPath(const std::string& filename);
+    void stderrReader() override;
+    void onStderrMsg(const char* buffer, size_t n) override;
+    void initExeAndPath(const std::string& filename) override;
 
-    virtual void onTimeout(const Watchdog* watchdog, size_t ms);
+    void onTimeout(const Watchdog* watchdog, size_t ms) override;
 };
 
 

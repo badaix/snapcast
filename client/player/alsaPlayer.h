@@ -31,17 +31,17 @@ class AlsaPlayer : public Player
 {
 public:
     AlsaPlayer(const PcmDevice& pcmDevice, std::shared_ptr<Stream> stream);
-    virtual ~AlsaPlayer();
+    ~AlsaPlayer() override;
 
     /// Set audio volume in range [0..1]
-    virtual void start();
-    virtual void stop();
+    void start() override;
+    void stop() override;
 
     /// List the system's audio output devices
     static std::vector<PcmDevice> pcm_list(void);
 
 protected:
-    virtual void worker();
+    void worker() override;
 
 private:
     void initAlsa();

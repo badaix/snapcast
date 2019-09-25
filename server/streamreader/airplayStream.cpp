@@ -28,7 +28,7 @@ using namespace std;
 static string hex2str(string input)
 {
     typedef unsigned char byte;
-    unsigned long x = strtoul(input.c_str(), 0, 16);
+    unsigned long x = strtoul(input.c_str(), nullptr, 16);
     byte a[] = {byte(x >> 24), byte(x >> 16), byte(x >> 8), byte(x), 0};
     return string((char*)a);
 }

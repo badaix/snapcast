@@ -46,7 +46,7 @@ void Config::init(const std::string& root_directory, const std::string& user, co
     string dir;
     if (!root_directory.empty())
         dir = root_directory;
-    else if (getenv("HOME") == NULL)
+    else if (getenv("HOME") == nullptr)
         dir = "/var/lib/snapserver/";
     else
         dir = getenv("HOME");
@@ -97,10 +97,10 @@ void Config::init(const std::string& root_directory, const std::string& user, co
             if (j.count("ConfigVersion"))
             {
                 json jGroups = j["Groups"];
-                for (auto it = jGroups.begin(); it != jGroups.end(); ++it)
+                for (auto & jGroup : jGroups)
                 {
                     GroupPtr group = make_shared<Group>();
-                    group->fromJson(*it);
+                    group->fromJson(jGroup);
                     //					if (client->id.empty() || getClientInfo(client->id))
                     //						continue;
                     groups.push_back(group);
