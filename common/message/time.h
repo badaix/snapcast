@@ -31,8 +31,7 @@ public:
     {
     }
 
-    ~Time() override
-    = default;
+    ~Time() override = default;
 
     void read(std::istream& stream) override
     {

@@ -105,7 +105,8 @@ SampleFormat FlacDecoder::setHeader(msg::CodecHeader* chunk)
         throw SnapException("ERROR: allocating decoder");
 
     //	(void)FLAC__stream_decoder_set_md5_checking(decoder, true);
-    init_status = FLAC__stream_decoder_init_stream(decoder, read_callback, nullptr, nullptr, nullptr, nullptr, write_callback, metadata_callback, error_callback, this);
+    init_status =
+        FLAC__stream_decoder_init_stream(decoder, read_callback, nullptr, nullptr, nullptr, nullptr, write_callback, metadata_callback, error_callback, this);
     if (init_status != FLAC__STREAM_DECODER_INIT_STATUS_OK)
         throw SnapException("ERROR: initializing decoder: " + string(FLAC__StreamDecoderInitStatusString[init_status]));
 

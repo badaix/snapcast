@@ -23,8 +23,7 @@ public:
     {
     }
 
-    virtual ~PublishmDNS()
-    = default;
+    virtual ~PublishmDNS() = default;
 
     virtual void publish(const std::vector<mDNSService>& services) = 0;
 

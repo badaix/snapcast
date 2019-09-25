@@ -97,7 +97,7 @@ void Config::init(const std::string& root_directory, const std::string& user, co
             if (j.count("ConfigVersion"))
             {
                 json jGroups = j["Groups"];
-                for (auto & jGroup : jGroups)
+                for (auto& jGroup : jGroups)
                 {
                     GroupPtr group = make_shared<Group>();
                     group->fromJson(jGroup);

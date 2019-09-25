@@ -63,8 +63,7 @@ SpotifyStream::SpotifyStream(PcmListener* pcmListener, const StreamUri& uri) : P
 }
 
 
-SpotifyStream::~SpotifyStream()
-= default;
+SpotifyStream::~SpotifyStream() = default;
 
 
 void SpotifyStream::initExeAndPath(const std::string& filename)

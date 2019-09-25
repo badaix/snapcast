@@ -36,8 +36,7 @@ public:
         setMuted(false);
     }
 
-    ~ServerSettings() override
-    = default;
+    ~ServerSettings() override = default;
 
     int32_t getBufferMs()
     {

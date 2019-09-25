@@ -28,7 +28,8 @@ class Decoder
 {
 public:
     Decoder(){};
-    virtual ~Decoder()= default;;
+    virtual ~Decoder() = default;
+
     virtual bool decode(msg::PcmChunk* chunk) = 0;
     virtual SampleFormat setHeader(msg::CodecHeader* chunk) = 0;
 

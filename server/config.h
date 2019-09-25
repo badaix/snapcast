@@ -160,8 +160,7 @@ struct Snapcast
     {
     }
 
-    virtual ~Snapcast()
-    = default;
+    virtual ~Snapcast() = default;
 
     virtual void fromJson(const json& j)
     {

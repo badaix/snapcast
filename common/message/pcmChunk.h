@@ -48,8 +48,7 @@ public:
     {
     }
 
-    ~PcmChunk() override
-    = default;
+    ~PcmChunk() override = default;
 
     int readFrames(void* outputBuffer, size_t frameCount)
     {

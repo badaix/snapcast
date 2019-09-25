@@ -36,8 +36,7 @@ public:
     {
     }
 
-    ~JsonMessage() override
-    = default;
+    ~JsonMessage() override = default;
 
     void read(std::istream& stream) override
     {

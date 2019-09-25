@@ -54,8 +54,7 @@ public:
     {
     }
 
-    virtual ~Encoder()
-    = default;
+    virtual ~Encoder() = default;
 
     /// The listener will receive the encoded stream
     virtual void init(EncoderListener* listener, const SampleFormat& format)

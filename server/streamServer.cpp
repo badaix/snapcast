@@ -35,8 +35,7 @@ StreamServer::StreamServer(asio::io_service* io_service, const StreamServerSetti
 }
 
 
-StreamServer::~StreamServer()
-= default;
+StreamServer::~StreamServer() = default;
 
 
 void StreamServer::onMetaChanged(const PcmStream* pcmStream)

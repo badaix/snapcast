@@ -72,8 +72,7 @@ public:
     }
 
 
-    ~AsyncSnapException() throw() override
-    = default;
+    ~AsyncSnapException() throw() override = default;
 };
 
 
