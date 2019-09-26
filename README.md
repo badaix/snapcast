@@ -63,6 +63,10 @@ On Alpine Linux (testing repository) do:
 On Gentoo Linux do:
 
     $ emerge --ask media-sound/snapcast
+    
+SnapOS
+------
+For the brave of you, there is a guide with buildfiles available to build [SnapOS](https://github.com/badaix/snapos), a small and fast-booting OS to run Snapcast, comming in two flavors: [Buildroot](https://github.com/badaix/snapos/blob/master/buildroot-external/README.md) based, or [OpenWrt](https://github.com/badaix/snapos/tree/master/openwrt) based. Please note that there are no pre-build firmware packages available.
 
 Configuration
 -------------
