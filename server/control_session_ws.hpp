@@ -35,7 +35,7 @@ namespace net = boost::asio;            // from <boost/asio.hpp>
  * Messages are sent to the client with the "send" method.
  * Received messages from the client are passed to the ControlMessageReceiver callback
  */
-class ControlSessionWs : public ControlSession
+class ControlSessionWs : public ControlSession, public std::enable_shared_from_this<ControlSession>
 {
 public:
     /// ctor. Received message from the client are passed to MessageReceiver
@@ -51,9 +51,13 @@ public:
     void sendAsync(const std::string& message) override;
 
 protected:
+    void on_accept(beast::error_code ec);
+    void do_read();
+    void on_read(beast::error_code ec, std::size_t bytes_transferred);
+
     websocket::stream<beast::tcp_stream> ws_;
-    // beast::flat_buffer buffer_;
-    // beast::multi_buffer b;
+    beast::flat_buffer buffer_;
+    beast::multi_buffer b;
 };
 
 

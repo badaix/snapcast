@@ -27,7 +27,7 @@
  * Messages are sent to the client with the "send" method.
  * Received messages from the client are passed to the ControlMessageReceiver callback
  */
-class ControlSessionTcp : public ControlSession
+class ControlSessionTcp : public ControlSession, public std::enable_shared_from_this<ControlSession>
 {
 public:
     /// ctor. Received message from the client are passed to MessageReceiver

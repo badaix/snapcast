@@ -22,8 +22,8 @@
 #include "common/queue.h"
 #include "message/message.h"
 #include "streamreader/streamManager.h"
-#include <boost/asio.hpp>
 #include <atomic>
+#include <boost/asio.hpp>
 #include <condition_variable>
 #include <memory>
 #include <mutex>

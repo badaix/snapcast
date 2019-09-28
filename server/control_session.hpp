@@ -21,8 +21,8 @@
 
 #include "common/queue.h"
 #include "message/message.h"
-#include <boost/asio.hpp>
 #include <atomic>
+#include <boost/asio.hpp>
 #include <condition_variable>
 #include <memory>
 #include <mutex>
@@ -51,7 +51,7 @@ public:
  * Messages are sent to the client with the "send" method.
  * Received messages from the client are passed to the ControlMessageReceiver callback
  */
-class ControlSession : public std::enable_shared_from_this<ControlSession>
+class ControlSession
 {
 public:
     /// ctor. Received message from the client are passed to MessageReceiver

@@ -21,8 +21,8 @@
 
 #include "common/timeDefs.h"
 #include "message/message.h"
-#include <boost/asio.hpp>
 #include <atomic>
+#include <boost/asio.hpp>
 #include <condition_variable>
 #include <memory>
 #include <mutex>

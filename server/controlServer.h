@@ -29,7 +29,7 @@
 
 #include "common/queue.h"
 #include "common/sampleFormat.h"
-#include "control_session_tcp.hpp"
+#include "control_session.hpp"
 #include "message/codecHeader.h"
 #include "message/message.h"
 #include "message/serverSettings.h"
@@ -57,13 +57,16 @@ public:
 
 private:
     void startAccept();
-    void handleAccept(tcp::socket socket);
+    void handleAcceptTcp(tcp::socket socket);
+    void handleAcceptWs(tcp::socket socket);
     void cleanup();
 
     mutable std::recursive_mutex session_mutex_;
     std::vector<std::weak_ptr<ControlSession>> sessions_;
-    std::shared_ptr<tcp::acceptor> acceptor_v4_;
-    std::shared_ptr<tcp::acceptor> acceptor_v6_;
+    std::shared_ptr<tcp::acceptor> acceptor_tcp_v4_;
+    std::shared_ptr<tcp::acceptor> acceptor_tcp_v6_;
+    std::shared_ptr<tcp::acceptor> acceptor_ws_v4_;
+    std::shared_ptr<tcp::acceptor> acceptor_ws_v6_;
 
     boost::asio::io_context* io_context_;
     size_t port_;

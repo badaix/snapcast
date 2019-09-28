@@ -35,8 +35,66 @@ ControlSessionWs::~ControlSessionWs()
     stop();
 }
 
+
 void ControlSessionWs::start()
 {
+    // Set suggested timeout settings for the websocket
+    ws_.set_option(websocket::stream_base::timeout::suggested(beast::role_type::server));
+
+    // Set a decorator to change the Server of the handshake
+    ws_.set_option(websocket::stream_base::decorator(
+        [](websocket::response_type& res) { res.set(http::field::server, std::string(BOOST_BEAST_VERSION_STRING) + " websocket-server-async"); }));
+
+    // Accept the websocket handshake
+    auto self(shared_from_this());
+    ws_.async_accept([this, self](beast::error_code ec) { on_accept(ec); });
+}
+
+
+void ControlSessionWs::on_accept(beast::error_code ec)
+{
+    if (ec)
+    {
+        LOG(ERROR) << "ControlSessionWs::on_accept, error: " << ec.message() << "\n";
+        return;
+    }
+
+    // Read a message
+    do_read();
+}
+
+
+void ControlSessionWs::do_read()
+{
+    // Read a message into our buffer
+    auto self(shared_from_this());
+    ws_.async_read(buffer_, [this, self](beast::error_code ec, std::size_t bytes_transferred) { on_read(ec, bytes_transferred); });
+}
+
+
+void ControlSessionWs::on_read(beast::error_code ec, std::size_t bytes_transferred)
+{
+    boost::ignore_unused(bytes_transferred);
+
+    // This indicates that the session was closed
+    if (ec == websocket::error::closed)
+        return;
+
+    if (ec)
+    {
+        LOG(ERROR) << "ControlSessionWs::on_read error: " << ec.message() << "\n";
+        return;
+    }
+
+    std::string line{boost::beast::buffers_to_string(buffer_.data())};
+    if (!line.empty())
+    {
+        LOG(INFO) << "received: " << line << "\n";
+        if ((message_receiver_ != nullptr) && !line.empty())
+            message_receiver_->onMessageReceived(this, line);
+    }
+    buffer_.consume(bytes_transferred);
+    do_read();
 }
 
 
@@ -47,10 +105,23 @@ void ControlSessionWs::stop()
 
 void ControlSessionWs::sendAsync(const std::string& message)
 {
+    auto self(shared_from_this());
+    ws_.async_write(boost::asio::buffer(message), [this, self](std::error_code ec, std::size_t length) {
+        if (ec)
+        {
+            LOG(ERROR) << "Error while writing to control socket: " << ec.message() << "\n";
+        }
+        else
+        {
+            LOG(DEBUG) << "Wrote " << length << " bytes to control socket\n";
+        }
+    });
 }
 
 
 bool ControlSessionWs::send(const std::string& message)
 {
-    return true;
+    boost::system::error_code ec;
+    ws_.write(boost::asio::buffer(message), ec);
+    return !ec;
 }
