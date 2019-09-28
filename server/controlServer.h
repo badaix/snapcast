@@ -34,10 +34,7 @@
 #include "message/message.h"
 #include "message/serverSettings.h"
 
-
 using asio::ip::tcp;
-typedef std::shared_ptr<tcp::socket> socket_ptr;
-
 
 /// Telnet like remote control
 /**
@@ -60,7 +57,7 @@ public:
 
 private:
     void startAccept();
-    void handleAccept(socket_ptr socket);
+    void handleAccept(tcp::socket socket);
     void cleanup();
 
     mutable std::recursive_mutex session_mutex_;

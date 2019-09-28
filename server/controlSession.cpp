@@ -26,9 +26,8 @@ using namespace std;
 
 
 
-ControlSession::ControlSession(ControlMessageReceiver* receiver, std::shared_ptr<tcp::socket> socket) : messageReceiver_(receiver)
+ControlSession::ControlSession(ControlMessageReceiver* receiver, tcp::socket&& socket) : messageReceiver_(receiver), socket_(std::move(socket))
 {
-    socket_ = socket;
 }
 
 
@@ -43,7 +42,7 @@ void ControlSession::do_read()
 {
     const std::string delimiter = "\n";
     auto self(shared_from_this());
-    asio::async_read_until(*socket_, streambuf_, delimiter, [this, self, delimiter](const std::error_code& ec, std::size_t bytes_transferred) {
+    asio::async_read_until(socket_, streambuf_, delimiter, [this, self, delimiter](const std::error_code& ec, std::size_t bytes_transferred) {
         if (ec)
         {
             LOG(ERROR) << "Error while reading from control socket: " << ec.message() << "\n";
@@ -75,25 +74,20 @@ void ControlSession::stop()
 {
     LOG(DEBUG) << "ControlSession::stop\n";
     std::error_code ec;
-    if (socket_)
-    {
-        socket_->shutdown(asio::ip::tcp::socket::shutdown_both, ec);
-        if (ec)
-            LOG(ERROR) << "Error in socket shutdown: " << ec.message() << "\n";
-        socket_->close(ec);
-        if (ec)
-            LOG(ERROR) << "Error in socket close: " << ec.message() << "\n";
-    }
-    socket_ = nullptr;
+    socket_.shutdown(asio::ip::tcp::socket::shutdown_both, ec);
+    if (ec)
+        LOG(ERROR) << "Error in socket shutdown: " << ec.message() << "\n";
+    socket_.close(ec);
+    if (ec)
+        LOG(ERROR) << "Error in socket close: " << ec.message() << "\n";
     LOG(DEBUG) << "ControlSession ControlSession stopped\n";
 }
-
 
 
 void ControlSession::sendAsync(const std::string& message)
 {
     auto self(shared_from_this());
-    asio::async_write(*socket_, asio::buffer(message + "\r\n"), [this, self](std::error_code ec, std::size_t length) {
+    asio::async_write(socket_, asio::buffer(message + "\r\n"), [this, self](std::error_code ec, std::size_t length) {
         if (ec)
         {
             LOG(ERROR) << "Error while writing to control socket: " << ec.message() << "\n";
@@ -106,9 +100,9 @@ void ControlSession::sendAsync(const std::string& message)
 }
 
 
-bool ControlSession::send(const std::string& message) const
+bool ControlSession::send(const std::string& message)
 {
     error_code ec;
-    asio::write(*socket_, asio::buffer(message + "\r\n"), ec);
+    asio::write(socket_, asio::buffer(message + "\r\n"), ec);
     return !ec;
 }

@@ -76,59 +76,45 @@ void ControlServer::onMessageReceived(ControlSession* connection, const std::str
 {
     std::lock_guard<std::recursive_mutex> mlock(session_mutex_);
     LOG(DEBUG) << "received: \"" << message << "\"\n";
-    // if ((message == "quit") || (message == "exit") || (message == "bye"))
-    // {
-    //     for (auto it = sessions_.begin(); it != sessions_.end(); ++it)
-    //     {
-    //         auto session = it->lock();
-    //         if (!session)
-    //             continue;
-    //         if (session.get() == connection)
-    //         {
-    //             /// delete in a thread to avoid deadlock
-    //             auto func = [&](std::shared_ptr<ControlSession> s) -> void { sessions_.erase(s); };
-    //             std::thread t(func, *it);
-    //             t.detach();
-    //             break;
-    //         }
-    //     }
-    // }
-    // else
-    // {
-        if (controlMessageReceiver_ != nullptr)
-            controlMessageReceiver_->onMessageReceived(connection, message);
-    // }
+    if (controlMessageReceiver_ != nullptr)
+        controlMessageReceiver_->onMessageReceived(connection, message);
 }
-
 
 
 void ControlServer::startAccept()
 {
+    auto accept_handler = [this](error_code ec, tcp::socket socket) {
+        if (!ec)
+            handleAccept(std::move(socket));
+        else
+            LOG(ERROR) << "Error while accepting socket connection: " << ec.message() << "\n";
+    };
+
     if (acceptor_v4_)
     {
-        socket_ptr socket_v4 = make_shared<tcp::socket>(*io_context_);
-        acceptor_v4_->async_accept(*socket_v4, bind(&ControlServer::handleAccept, this, socket_v4));
+        tcp::socket socket_v4(*io_context_);
+        acceptor_v4_->async_accept(accept_handler);
     }
     if (acceptor_v6_)
     {
-        socket_ptr socket_v6 = make_shared<tcp::socket>(*io_context_);
-        acceptor_v6_->async_accept(*socket_v6, bind(&ControlServer::handleAccept, this, socket_v6));
+        tcp::socket socket_v6(*io_context_);
+        acceptor_v6_->async_accept(accept_handler);
     }
 }
 
 
-void ControlServer::handleAccept(socket_ptr socket)
+void ControlServer::handleAccept(tcp::socket socket)
 {
     try
     {
         struct timeval tv;
         tv.tv_sec = 5;
         tv.tv_usec = 0;
-        setsockopt(socket->native_handle(), SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
-        setsockopt(socket->native_handle(), SOL_SOCKET, SO_SNDTIMEO, &tv, sizeof(tv));
+        setsockopt(socket.native_handle(), SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
+        setsockopt(socket.native_handle(), SOL_SOCKET, SO_SNDTIMEO, &tv, sizeof(tv));
         //	socket->set_option(boost::asio::ip::tcp::no_delay(false));
-        SLOG(NOTICE) << "ControlServer::NewConnection: " << socket->remote_endpoint().address().to_string() << endl;
-        shared_ptr<ControlSession> session = make_shared<ControlSession>(this, socket);
+        SLOG(NOTICE) << "ControlServer::NewConnection: " << socket.remote_endpoint().address().to_string() << endl;
+        shared_ptr<ControlSession> session = make_shared<ControlSession>(this, std::move(socket));
         {
             std::lock_guard<std::recursive_mutex> mlock(session_mutex_);
             session->start();
