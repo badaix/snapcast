@@ -26,7 +26,7 @@ using namespace std;
 
 
 
-ControlSession::ControlSession(ControlMessageReceiver* receiver, std::shared_ptr<tcp::socket> socket) : active_(false), messageReceiver_(receiver)
+ControlSession::ControlSession(ControlMessageReceiver* receiver, std::shared_ptr<tcp::socket> socket) : messageReceiver_(receiver)
 {
     socket_ = socket;
 }
@@ -34,53 +34,55 @@ ControlSession::ControlSession(ControlMessageReceiver* receiver, std::shared_ptr
 
 ControlSession::~ControlSession()
 {
+    LOG(DEBUG) << "ControlSession::~ControlSession()\n";
     stop();
 }
 
 
+void ControlSession::do_read()
+{
+    const std::string delimiter = "\n";
+    auto self(shared_from_this());
+    asio::async_read_until(*socket_, streambuf_, delimiter, [this, self, delimiter](const std::error_code& ec, std::size_t bytes_transferred) {
+        if (ec)
+        {
+            LOG(ERROR) << "Error while reading from control socket: " << ec.message() << "\n";
+            return;
+        }
+
+        // Extract up to the first delimiter.
+        std::string line{buffers_begin(streambuf_.data()), buffers_begin(streambuf_.data()) + bytes_transferred - delimiter.length()};
+        if (!line.empty())
+        {
+            if (line.back() == '\r')
+                line.resize(line.size() - 1);
+            LOG(INFO) << "received: " << line << "\n";
+            if ((messageReceiver_ != nullptr) && !line.empty())
+                messageReceiver_->onMessageReceived(this, line);
+        }
+        streambuf_.consume(bytes_transferred);
+        do_read();
+    });
+}
+
 void ControlSession::start()
 {
-    {
-        std::lock_guard<std::recursive_mutex> activeLock(activeMutex_);
-        active_ = true;
-    }
-    readerThread_ = thread(&ControlSession::reader, this);
-    writerThread_ = thread(&ControlSession::writer, this);
+    do_read();
 }
 
 
 void ControlSession::stop()
 {
     LOG(DEBUG) << "ControlSession::stop\n";
-    std::lock_guard<std::recursive_mutex> activeLock(activeMutex_);
-    active_ = false;
-    try
+    std::error_code ec;
+    if (socket_)
     {
-        std::error_code ec;
-        if (socket_)
-        {
-            std::lock_guard<std::recursive_mutex> socketLock(socketMutex_);
-            socket_->shutdown(asio::ip::tcp::socket::shutdown_both, ec);
-            if (ec)
-                LOG(ERROR) << "Error in socket shutdown: " << ec.message() << "\n";
-            socket_->close(ec);
-            if (ec)
-                LOG(ERROR) << "Error in socket close: " << ec.message() << "\n";
-        }
-        if (readerThread_.joinable())
-        {
-            LOG(DEBUG) << "ControlSession joining readerThread\n";
-            readerThread_.join();
-        }
-        if (writerThread_.joinable())
-        {
-            LOG(DEBUG) << "ControlSession joining writerThread\n";
-            messages_.abort_wait();
-            writerThread_.join();
-        }
-    }
-    catch (...)
-    {
+        socket_->shutdown(asio::ip::tcp::socket::shutdown_both, ec);
+        if (ec)
+            LOG(ERROR) << "Error in socket shutdown: " << ec.message() << "\n";
+        socket_->close(ec);
+        if (ec)
+            LOG(ERROR) << "Error in socket close: " << ec.message() << "\n";
     }
     socket_ = nullptr;
     LOG(DEBUG) << "ControlSession ControlSession stopped\n";
@@ -90,84 +92,23 @@ void ControlSession::stop()
 
 void ControlSession::sendAsync(const std::string& message)
 {
-    messages_.push(message);
+    auto self(shared_from_this());
+    asio::async_write(*socket_, asio::buffer(message + "\r\n"), [this, self](std::error_code ec, std::size_t length) {
+        if (ec)
+        {
+            LOG(ERROR) << "Error while writing to control socket: " << ec.message() << "\n";
+        }
+        else
+        {
+            LOG(DEBUG) << "Wrote " << length << " bytes to control socket\n";
+        }
+    });
 }
 
 
 bool ControlSession::send(const std::string& message) const
 {
-    // LOG(INFO) << "send: " << message << ", size: " << message.length() << "\n";
-    std::lock_guard<std::recursive_mutex> socketLock(socketMutex_);
-    {
-        std::lock_guard<std::recursive_mutex> activeLock(activeMutex_);
-        if (!socket_ || !active_)
-            return false;
-    }
-    asio::streambuf streambuf;
-    std::ostream request_stream(&streambuf);
-    request_stream << message << "\r\n";
-    asio::write(*socket_.get(), streambuf);
-    // LOG(INFO) << "done\n";
-    return true;
-}
-
-
-void ControlSession::reader()
-{
-    try
-    {
-        std::stringstream message;
-        while (active_)
-        {
-            asio::streambuf response;
-            asio::read_until(*socket_, response, "\n");
-
-            std::string s((istreambuf_iterator<char>(&response)), istreambuf_iterator<char>());
-            message << s;
-            if (s.empty() || (s.back() != '\n'))
-                continue;
-
-            string line;
-            while (std::getline(message, line, '\n'))
-            {
-                if (line.empty())
-                    continue;
-
-                size_t len = line.length() - 1;
-                if ((len >= 2) && line[len - 2] == '\r')
-                    --len;
-                line.resize(len);
-                if ((messageReceiver_ != nullptr) && !line.empty())
-                    messageReceiver_->onMessageReceived(this, line);
-            }
-            message.str("");
-            message.clear();
-        }
-    }
-    catch (const std::exception& e)
-    {
-        SLOG(ERROR) << "Exception in ControlSession::reader(): " << e.what() << endl;
-    }
-    active_ = false;
-}
-
-
-void ControlSession::writer()
-{
-    try
-    {
-        asio::streambuf streambuf;
-        std::ostream stream(&streambuf);
-        string message;
-        while (active_)
-        {
-            if (messages_.try_pop(message, std::chrono::milliseconds(500)))
-                send(message);
-        }
-    }
-    catch (const std::exception& e)
-    {
-        SLOG(ERROR) << "Exception in ControlSession::writer(): " << e.what() << endl;
-    }
-    active_ = false;
+    error_code ec;
+    asio::write(*socket_, asio::buffer(message + "\r\n"), ec);
+    return !ec;
 }

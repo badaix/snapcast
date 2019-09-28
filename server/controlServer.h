@@ -62,13 +62,12 @@ private:
     void startAccept();
     void handleAccept(socket_ptr socket);
     void cleanup();
-    //	void acceptor();
-    mutable std::recursive_mutex mutex_;
-    std::set<std::shared_ptr<ControlSession>> sessions_;
+
+    mutable std::recursive_mutex session_mutex_;
+    std::vector<std::weak_ptr<ControlSession>> sessions_;
     std::shared_ptr<tcp::acceptor> acceptor_v4_;
     std::shared_ptr<tcp::acceptor> acceptor_v6_;
 
-    Queue<std::shared_ptr<msg::BaseMessage>> messages_;
     asio::io_service* io_service_;
     size_t port_;
     ControlMessageReceiver* controlMessageReceiver_;

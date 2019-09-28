@@ -44,17 +44,12 @@ ControlServer::~ControlServer()
 
 void ControlServer::cleanup()
 {
-    std::lock_guard<std::recursive_mutex> mlock(mutex_);
+    std::lock_guard<std::recursive_mutex> mlock(session_mutex_);
     for (auto it = sessions_.begin(); it != sessions_.end();)
     {
-        if (!(*it)->active())
+        if (it->expired())
         {
             SLOG(ERROR) << "Session inactive. Removing\n";
-            // don't block: remove ClientSession in a thread
-            auto func = [](shared_ptr<ControlSession> s) -> void { s->stop(); };
-            std::thread t(func, *it);
-            t.detach();
-            //(*it)->stop();
             sessions_.erase(it++);
         }
         else
@@ -68,35 +63,41 @@ void ControlServer::send(const std::string& message, const ControlSession* exclu
     cleanup();
     for (auto s : sessions_)
     {
-        if (s.get() != excludeSession)
-            s->sendAsync(message);
+        if (auto session = s.lock())
+        {
+            if (session.get() != excludeSession)
+                session->sendAsync(message);
+        }
     }
 }
 
 
 void ControlServer::onMessageReceived(ControlSession* connection, const std::string& message)
 {
-    std::lock_guard<std::recursive_mutex> mlock(mutex_);
+    std::lock_guard<std::recursive_mutex> mlock(session_mutex_);
     LOG(DEBUG) << "received: \"" << message << "\"\n";
-    if ((message == "quit") || (message == "exit") || (message == "bye"))
-    {
-        for (auto it = sessions_.begin(); it != sessions_.end(); ++it)
-        {
-            if (it->get() == connection)
-            {
-                /// delete in a thread to avoid deadlock
-                auto func = [&](std::shared_ptr<ControlSession> s) -> void { sessions_.erase(s); };
-                std::thread t(func, *it);
-                t.detach();
-                break;
-            }
-        }
-    }
-    else
-    {
+    // if ((message == "quit") || (message == "exit") || (message == "bye"))
+    // {
+    //     for (auto it = sessions_.begin(); it != sessions_.end(); ++it)
+    //     {
+    //         auto session = it->lock();
+    //         if (!session)
+    //             continue;
+    //         if (session.get() == connection)
+    //         {
+    //             /// delete in a thread to avoid deadlock
+    //             auto func = [&](std::shared_ptr<ControlSession> s) -> void { sessions_.erase(s); };
+    //             std::thread t(func, *it);
+    //             t.detach();
+    //             break;
+    //         }
+    //     }
+    // }
+    // else
+    // {
         if (controlMessageReceiver_ != nullptr)
             controlMessageReceiver_->onMessageReceived(connection, message);
-    }
+    // }
 }
 
 
@@ -129,9 +130,9 @@ void ControlServer::handleAccept(socket_ptr socket)
         SLOG(NOTICE) << "ControlServer::NewConnection: " << socket->remote_endpoint().address().to_string() << endl;
         shared_ptr<ControlSession> session = make_shared<ControlSession>(this, socket);
         {
-            std::lock_guard<std::recursive_mutex> mlock(mutex_);
+            std::lock_guard<std::recursive_mutex> mlock(session_mutex_);
             session->start();
-            sessions_.insert(session);
+            sessions_.emplace_back(session);
             cleanup();
         }
     }
@@ -191,7 +192,10 @@ void ControlServer::stop()
         acceptor_v6_->cancel();
         acceptor_v6_ = nullptr;
     }
-    std::lock_guard<std::recursive_mutex> mlock(mutex_);
+    std::lock_guard<std::recursive_mutex> mlock(session_mutex_);
     for (auto s : sessions_)
-        s->stop();
+    {
+        if (auto session = s.lock())
+            session->stop();
+    }
 }

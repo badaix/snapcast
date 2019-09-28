@@ -51,7 +51,7 @@ public:
  * Messages are sent to the client with the "send" method.
  * Received messages from the client are passed to the ControlMessageReceiver callback
  */
-class ControlSession
+class ControlSession : public std::enable_shared_from_this<ControlSession>
 {
 public:
     /// ctor. Received message from the client are passed to MessageReceiver
@@ -66,23 +66,12 @@ public:
     /// Sends a message to the client (asynchronous)
     void sendAsync(const std::string& message);
 
-    bool active() const
-    {
-        return active_;
-    }
-
 protected:
-    void reader();
-    void writer();
+    void do_read();
 
-    std::atomic<bool> active_;
-    mutable std::recursive_mutex activeMutex_;
-    mutable std::recursive_mutex socketMutex_;
-    std::thread readerThread_;
-    std::thread writerThread_;
     std::shared_ptr<tcp::socket> socket_;
     ControlMessageReceiver* messageReceiver_;
-    Queue<std::string> messages_;
+    asio::streambuf streambuf_;
 };
 
 
