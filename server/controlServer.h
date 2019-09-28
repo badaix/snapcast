@@ -29,7 +29,7 @@
 
 #include "common/queue.h"
 #include "common/sampleFormat.h"
-#include "controlSession.h"
+#include "control_session_tcp.hpp"
 #include "message/codecHeader.h"
 #include "message/message.h"
 #include "message/serverSettings.h"

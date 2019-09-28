@@ -55,23 +55,22 @@ class ControlSession : public std::enable_shared_from_this<ControlSession>
 {
 public:
     /// ctor. Received message from the client are passed to MessageReceiver
-    ControlSession(ControlMessageReceiver* receiver, tcp::socket&& socket);
-    ~ControlSession();
-    void start();
-    void stop();
+    ControlSession(ControlMessageReceiver* receiver, tcp::socket&& socket) : message_receiver_(receiver), socket_(std::move(socket))
+    {
+    }
+    virtual ~ControlSession() = default;
+    virtual void start() = 0;
+    virtual void stop() = 0;
 
     /// Sends a message to the client (synchronous)
-    bool send(const std::string& message);
+    virtual bool send(const std::string& message) = 0;
 
     /// Sends a message to the client (asynchronous)
-    void sendAsync(const std::string& message);
+    virtual void sendAsync(const std::string& message) = 0;
 
 protected:
-    void do_read();
-
     tcp::socket socket_;
-    ControlMessageReceiver* messageReceiver_;
-    asio::streambuf streambuf_;
+    ControlMessageReceiver* message_receiver_;
 };
 
 

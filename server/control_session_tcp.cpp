@@ -16,7 +16,7 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
-#include "controlSession.h"
+#include "control_session_tcp.hpp"
 #include "aixlog.hpp"
 #include "message/pcmChunk.h"
 #include <iostream>
@@ -26,19 +26,19 @@ using namespace std;
 
 
 
-ControlSession::ControlSession(ControlMessageReceiver* receiver, tcp::socket&& socket) : messageReceiver_(receiver), socket_(std::move(socket))
+ControlSessionTcp::ControlSessionTcp(ControlMessageReceiver* receiver, tcp::socket&& socket) : ControlSession(receiver, std::move(socket))
 {
 }
 
 
-ControlSession::~ControlSession()
+ControlSessionTcp::~ControlSessionTcp()
 {
-    LOG(DEBUG) << "ControlSession::~ControlSession()\n";
+    LOG(DEBUG) << "ControlSessionTcp::~ControlSessionTcp()\n";
     stop();
 }
 
 
-void ControlSession::do_read()
+void ControlSessionTcp::do_read()
 {
     const std::string delimiter = "\n";
     auto self(shared_from_this());
@@ -56,21 +56,21 @@ void ControlSession::do_read()
             if (line.back() == '\r')
                 line.resize(line.size() - 1);
             LOG(INFO) << "received: " << line << "\n";
-            if ((messageReceiver_ != nullptr) && !line.empty())
-                messageReceiver_->onMessageReceived(this, line);
+            if ((message_receiver_ != nullptr) && !line.empty())
+                message_receiver_->onMessageReceived(this, line);
         }
         streambuf_.consume(bytes_transferred);
         do_read();
     });
 }
 
-void ControlSession::start()
+void ControlSessionTcp::start()
 {
     do_read();
 }
 
 
-void ControlSession::stop()
+void ControlSessionTcp::stop()
 {
     LOG(DEBUG) << "ControlSession::stop\n";
     std::error_code ec;
@@ -84,7 +84,7 @@ void ControlSession::stop()
 }
 
 
-void ControlSession::sendAsync(const std::string& message)
+void ControlSessionTcp::sendAsync(const std::string& message)
 {
     auto self(shared_from_this());
     asio::async_write(socket_, asio::buffer(message + "\r\n"), [this, self](std::error_code ec, std::size_t length) {
@@ -100,7 +100,7 @@ void ControlSession::sendAsync(const std::string& message)
 }
 
 
-bool ControlSession::send(const std::string& message)
+bool ControlSessionTcp::send(const std::string& message)
 {
     error_code ec;
     asio::write(socket_, asio::buffer(message + "\r\n"), ec);

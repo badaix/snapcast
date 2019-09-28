@@ -114,7 +114,7 @@ void ControlServer::handleAccept(tcp::socket socket)
         setsockopt(socket.native_handle(), SOL_SOCKET, SO_SNDTIMEO, &tv, sizeof(tv));
         //	socket->set_option(boost::asio::ip::tcp::no_delay(false));
         SLOG(NOTICE) << "ControlServer::NewConnection: " << socket.remote_endpoint().address().to_string() << endl;
-        shared_ptr<ControlSession> session = make_shared<ControlSession>(this, std::move(socket));
+        shared_ptr<ControlSessionTcp> session = make_shared<ControlSessionTcp>(this, std::move(socket));
         {
             std::lock_guard<std::recursive_mutex> mlock(session_mutex_);
             session->start();

@@ -1,7 +1,8 @@
 set(SERVER_SOURCES
     config.cpp
     controlServer.cpp
-    controlSession.cpp
+    control_session_tcp.cpp
+    control_session_ws.cpp
     snapServer.cpp
     streamServer.cpp
     streamSession.cpp
