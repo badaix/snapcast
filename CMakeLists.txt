@@ -199,6 +199,8 @@ if(BUILD_WITH_VORBIS)
     endif(VORBISENC_FOUND)
 endif()
 
+# TODO: if (BUILD_WITH_WEBSOCKETS)
+find_package(Boost 1.66 REQUIRED)
 
 add_subdirectory(common)
 

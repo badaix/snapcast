@@ -58,6 +58,9 @@ if (FLAC_FOUND)
     list(APPEND SERVER_INCLUDE ${FLAC_INCLUDE_DIRS})
 endif (FLAC_FOUND)
 
+# TODO: if (BUILD_WITH_WEBSOCKETS)
+list(APPEND SERVER_LIBRARIES Boost::boost)
+
 include_directories(${SERVER_INCLUDE})
 add_executable(snapserver ${SERVER_SOURCES})
 target_link_libraries(snapserver ${SERVER_LIBRARIES})

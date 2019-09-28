@@ -19,14 +19,12 @@
 #include "control_session_tcp.hpp"
 #include "aixlog.hpp"
 #include "message/pcmChunk.h"
-#include <iostream>
-#include <mutex>
 
 using namespace std;
 
 
 
-ControlSessionTcp::ControlSessionTcp(ControlMessageReceiver* receiver, tcp::socket&& socket) : ControlSession(receiver, std::move(socket))
+ControlSessionTcp::ControlSessionTcp(ControlMessageReceiver* receiver, tcp::socket&& socket) : ControlSession(receiver), socket_(std::move(socket))
 {
 }
 
@@ -42,7 +40,7 @@ void ControlSessionTcp::do_read()
 {
     const std::string delimiter = "\n";
     auto self(shared_from_this());
-    asio::async_read_until(socket_, streambuf_, delimiter, [this, self, delimiter](const std::error_code& ec, std::size_t bytes_transferred) {
+    boost::asio::async_read_until(socket_, streambuf_, delimiter, [this, self, delimiter](const std::error_code& ec, std::size_t bytes_transferred) {
         if (ec)
         {
             LOG(ERROR) << "Error while reading from control socket: " << ec.message() << "\n";
@@ -73,8 +71,8 @@ void ControlSessionTcp::start()
 void ControlSessionTcp::stop()
 {
     LOG(DEBUG) << "ControlSession::stop\n";
-    std::error_code ec;
-    socket_.shutdown(asio::ip::tcp::socket::shutdown_both, ec);
+    boost::system::error_code ec;
+    socket_.shutdown(boost::asio::ip::tcp::socket::shutdown_both, ec);
     if (ec)
         LOG(ERROR) << "Error in socket shutdown: " << ec.message() << "\n";
     socket_.close(ec);
@@ -87,7 +85,7 @@ void ControlSessionTcp::stop()
 void ControlSessionTcp::sendAsync(const std::string& message)
 {
     auto self(shared_from_this());
-    asio::async_write(socket_, asio::buffer(message + "\r\n"), [this, self](std::error_code ec, std::size_t length) {
+    boost::asio::async_write(socket_, boost::asio::buffer(message + "\r\n"), [this, self](std::error_code ec, std::size_t length) {
         if (ec)
         {
             LOG(ERROR) << "Error while writing to control socket: " << ec.message() << "\n";
@@ -102,7 +100,7 @@ void ControlSessionTcp::sendAsync(const std::string& message)
 
 bool ControlSessionTcp::send(const std::string& message)
 {
-    error_code ec;
-    asio::write(socket_, asio::buffer(message + "\r\n"), ec);
+    boost::system::error_code ec;
+    boost::asio::write(socket_, boost::asio::buffer(message + "\r\n"), ec);
     return !ec;
 }

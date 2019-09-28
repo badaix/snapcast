@@ -21,7 +21,7 @@
 
 #include "common/timeDefs.h"
 #include "message/message.h"
-#include <asio.hpp>
+#include <boost/asio.hpp>
 #include <atomic>
 #include <condition_variable>
 #include <memory>
@@ -31,7 +31,7 @@
 #include <thread>
 
 
-using asio::ip::tcp;
+using boost::asio::ip::tcp;
 
 
 class ClientConnection;
@@ -112,7 +112,7 @@ protected:
     void socketRead(void* to, size_t bytes);
     void getNextMessage();
 
-    asio::io_context io_context_;
+    boost::asio::io_context io_context_;
     mutable std::mutex socketMutex_;
     std::shared_ptr<tcp::socket> socket_;
     std::atomic<bool> active_;

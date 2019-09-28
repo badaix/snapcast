@@ -75,11 +75,11 @@ void StreamSession::stop()
 
     try
     {
-        std::error_code ec;
+        boost::system::error_code ec;
         if (socket_)
         {
             std::lock_guard<std::mutex> socketLock(socketMutex_);
-            socket_->shutdown(asio::ip::tcp::socket::shutdown_both, ec);
+            socket_->shutdown(boost::asio::ip::tcp::socket::shutdown_both, ec);
             if (ec)
                 LOG(ERROR) << "Error in socket shutdown: " << ec.message() << "\n";
             socket_->close(ec);
@@ -114,7 +114,7 @@ void StreamSession::socketRead(void* _to, size_t _bytes)
     size_t read = 0;
     do
     {
-        read += socket_->read_some(asio::buffer((char*)_to + read, _bytes - read));
+        read += socket_->read_some(boost::asio::buffer((char*)_to + read, _bytes - read));
     } while (active_ && (read < _bytes));
 }
 
@@ -157,12 +157,12 @@ bool StreamSession::send(const msg::message_ptr& message) const
         if (!socket_ || !active_)
             return false;
     }
-    asio::streambuf streambuf;
+    boost::asio::streambuf streambuf;
     std::ostream stream(&streambuf);
     tv t;
     message->sent = t;
     message->serialize(stream);
-    asio::write(*socket_.get(), streambuf);
+    boost::asio::write(*socket_.get(), streambuf);
     //	LOG(INFO) << "done: " << message->type << ", size: " << message->size << ", id: " << message->id << ", refers: " << message->refersTo << "\n";
     return true;
 }
@@ -228,7 +228,7 @@ void StreamSession::writer()
 {
     try
     {
-        asio::streambuf streambuf;
+        boost::asio::streambuf streambuf;
         std::ostream stream(&streambuf);
         shared_ptr<msg::BaseMessage> message;
         while (active_)

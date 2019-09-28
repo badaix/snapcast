@@ -21,7 +21,7 @@
 
 #include "common/queue.h"
 #include "message/message.h"
-#include <asio.hpp>
+#include <boost/asio.hpp>
 #include <atomic>
 #include <condition_variable>
 #include <memory>
@@ -31,7 +31,7 @@
 #include <thread>
 
 
-using asio::ip::tcp;
+using boost::asio::ip::tcp;
 
 
 class ControlSession;
@@ -55,7 +55,7 @@ class ControlSession : public std::enable_shared_from_this<ControlSession>
 {
 public:
     /// ctor. Received message from the client are passed to MessageReceiver
-    ControlSession(ControlMessageReceiver* receiver, tcp::socket&& socket) : message_receiver_(receiver), socket_(std::move(socket))
+    ControlSession(ControlMessageReceiver* receiver) : message_receiver_(receiver)
     {
     }
     virtual ~ControlSession() = default;
@@ -69,7 +69,6 @@ public:
     virtual void sendAsync(const std::string& message) = 0;
 
 protected:
-    tcp::socket socket_;
     ControlMessageReceiver* message_receiver_;
 };
 

@@ -201,11 +201,11 @@ int main(int argc, char* argv[])
         if (settings.bufferMs < 400)
             settings.bufferMs = 400;
 
-        asio::io_context io_context;
+        boost::asio::io_context io_context;
         std::unique_ptr<StreamServer> streamServer(new StreamServer(&io_context, settings));
         streamServer->start();
 
-        auto func = [](asio::io_context* ioservice) -> void { ioservice->run(); };
+        auto func = [](boost::asio::io_context* ioservice) -> void { ioservice->run(); };
         std::thread t(func, &io_context);
 
         while (!g_terminated)

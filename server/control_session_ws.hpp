@@ -20,6 +20,14 @@
 #define CONTROL_SESSION_WS_HPP
 
 #include "control_session.hpp"
+#include <boost/beast/core.hpp>
+#include <boost/beast/websocket.hpp>
+
+namespace beast = boost::beast;         // from <boost/beast.hpp>
+namespace http = beast::http;           // from <boost/beast/http.hpp>
+namespace websocket = beast::websocket; // from <boost/beast/websocket.hpp>
+namespace net = boost::asio;            // from <boost/asio.hpp>
+
 
 /// Endpoint for a connected control client.
 /**
@@ -41,6 +49,11 @@ public:
 
     /// Sends a message to the client (asynchronous)
     void sendAsync(const std::string& message) override;
+
+protected:
+    websocket::stream<beast::tcp_stream> ws_;
+    // beast::flat_buffer buffer_;
+    // beast::multi_buffer b;
 };
 
 

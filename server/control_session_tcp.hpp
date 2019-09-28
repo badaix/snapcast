@@ -44,7 +44,8 @@ public:
 
 protected:
     void do_read();
-    asio::streambuf streambuf_;
+    tcp::socket socket_;
+    boost::asio::streambuf streambuf_;
 };
 
 

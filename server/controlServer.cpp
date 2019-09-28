@@ -30,7 +30,7 @@ using namespace std;
 using json = nlohmann::json;
 
 
-ControlServer::ControlServer(asio::io_context* io_context, size_t port, ControlMessageReceiver* controlMessageReceiver)
+ControlServer::ControlServer(boost::asio::io_context* io_context, size_t port, ControlMessageReceiver* controlMessageReceiver)
     : acceptor_v4_(nullptr), acceptor_v6_(nullptr), io_context_(io_context), port_(port), controlMessageReceiver_(controlMessageReceiver)
 {
 }
@@ -137,14 +137,14 @@ void ControlServer::start()
     try
     {
         acceptor_v6_ = make_shared<tcp::acceptor>(*io_context_, endpoint_v6);
-        error_code ec;
-        acceptor_v6_->set_option(asio::ip::v6_only(false), ec);
-        asio::ip::v6_only option;
+        boost::system::error_code ec;
+        acceptor_v6_->set_option(boost::asio::ip::v6_only(false), ec);
+        boost::asio::ip::v6_only option;
         acceptor_v6_->get_option(option);
         is_v6_only = option.value();
         LOG(DEBUG) << "IPv6 only: " << is_v6_only << "\n";
     }
-    catch (const asio::system_error& e)
+    catch (const boost::system::system_error& e)
     {
         LOG(ERROR) << "error creating TCP acceptor: " << e.what() << ", code: " << e.code() << "\n";
     }
@@ -156,7 +156,7 @@ void ControlServer::start()
         {
             acceptor_v4_ = make_shared<tcp::acceptor>(*io_context_, endpoint_v4);
         }
-        catch (const asio::system_error& e)
+        catch (const boost::system::system_error& e)
         {
             LOG(ERROR) << "error creating TCP acceptor: " << e.what() << ", code: " << e.code() << "\n";
         }

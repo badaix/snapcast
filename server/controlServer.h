@@ -19,7 +19,7 @@
 #ifndef CONTROL_SERVER_H
 #define CONTROL_SERVER_H
 
-#include <asio.hpp>
+#include <boost/asio.hpp>
 #include <memory>
 #include <mutex>
 #include <set>
@@ -34,7 +34,7 @@
 #include "message/message.h"
 #include "message/serverSettings.h"
 
-using asio::ip::tcp;
+using boost::asio::ip::tcp;
 
 /// Telnet like remote control
 /**
@@ -43,7 +43,7 @@ using asio::ip::tcp;
 class ControlServer : public ControlMessageReceiver
 {
 public:
-    ControlServer(asio::io_context* io_context, size_t port, ControlMessageReceiver* controlMessageReceiver = nullptr);
+    ControlServer(boost::asio::io_context* io_context, size_t port, ControlMessageReceiver* controlMessageReceiver = nullptr);
     virtual ~ControlServer();
 
     void start();
@@ -65,7 +65,7 @@ private:
     std::shared_ptr<tcp::acceptor> acceptor_v4_;
     std::shared_ptr<tcp::acceptor> acceptor_v6_;
 
-    asio::io_context* io_context_;
+    boost::asio::io_context* io_context_;
     size_t port_;
     ControlMessageReceiver* controlMessageReceiver_;
 };

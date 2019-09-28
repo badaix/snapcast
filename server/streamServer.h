@@ -19,7 +19,7 @@
 #ifndef STREAM_SERVER_H
 #define STREAM_SERVER_H
 
-#include <asio.hpp>
+#include <boost/asio.hpp>
 #include <memory>
 #include <mutex>
 #include <set>
@@ -38,7 +38,7 @@
 #include "streamreader/streamManager.h"
 
 
-using asio::ip::tcp;
+using boost::asio::ip::tcp;
 typedef std::shared_ptr<tcp::socket> socket_ptr;
 typedef std::shared_ptr<StreamSession> session_ptr;
 
@@ -69,7 +69,7 @@ struct StreamServerSettings
 class StreamServer : public MessageReceiver, ControlMessageReceiver, PcmListener
 {
 public:
-    StreamServer(asio::io_context* io_context, const StreamServerSettings& streamServerSettings);
+    StreamServer(boost::asio::io_context* io_context, const StreamServerSettings& streamServerSettings);
     virtual ~StreamServer();
 
     void start();
@@ -99,7 +99,7 @@ private:
     void ProcessRequest(const jsonrpcpp::request_ptr request, jsonrpcpp::entity_ptr& response, jsonrpcpp::notification_ptr& notification) const;
     mutable std::recursive_mutex sessionsMutex_;
     std::set<session_ptr> sessions_;
-    asio::io_context* io_context_;
+    boost::asio::io_context* io_context_;
     std::shared_ptr<tcp::acceptor> acceptor_v4_;
     std::shared_ptr<tcp::acceptor> acceptor_v6_;
 

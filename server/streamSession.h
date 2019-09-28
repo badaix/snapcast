@@ -22,7 +22,7 @@
 #include "common/queue.h"
 #include "message/message.h"
 #include "streamreader/streamManager.h"
-#include <asio.hpp>
+#include <boost/asio.hpp>
 #include <atomic>
 #include <condition_variable>
 #include <memory>
@@ -32,7 +32,7 @@
 #include <thread>
 
 
-using asio::ip::tcp;
+using boost::asio::ip::tcp;
 
 
 class StreamSession;

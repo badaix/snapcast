@@ -20,13 +20,11 @@
 #include "aixlog.hpp"
 #include "message/pcmChunk.h"
 #include <iostream>
-#include <mutex>
 
 using namespace std;
 
 
-
-ControlSessionWs::ControlSessionWs(ControlMessageReceiver* receiver, tcp::socket&& socket) : ControlSession(receiver, std::move(socket))
+ControlSessionWs::ControlSessionWs(ControlMessageReceiver* receiver, tcp::socket&& socket) : ControlSession(receiver), ws_(std::move(socket))
 {
 }
 
