@@ -69,7 +69,7 @@ struct StreamServerSettings
 class StreamServer : public MessageReceiver, ControlMessageReceiver, PcmListener
 {
 public:
-    StreamServer(asio::io_service* io_service, const StreamServerSettings& streamServerSettings);
+    StreamServer(asio::io_context* io_context, const StreamServerSettings& streamServerSettings);
     virtual ~StreamServer();
 
     void start();
@@ -99,7 +99,7 @@ private:
     void ProcessRequest(const jsonrpcpp::request_ptr request, jsonrpcpp::entity_ptr& response, jsonrpcpp::notification_ptr& notification) const;
     mutable std::recursive_mutex sessionsMutex_;
     std::set<session_ptr> sessions_;
-    asio::io_service* io_service_;
+    asio::io_context* io_context_;
     std::shared_ptr<tcp::acceptor> acceptor_v4_;
     std::shared_ptr<tcp::acceptor> acceptor_v6_;
 

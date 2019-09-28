@@ -46,7 +46,7 @@ typedef std::shared_ptr<tcp::socket> socket_ptr;
 class ControlServer : public ControlMessageReceiver
 {
 public:
-    ControlServer(asio::io_service* io_service, size_t port, ControlMessageReceiver* controlMessageReceiver = nullptr);
+    ControlServer(asio::io_context* io_context, size_t port, ControlMessageReceiver* controlMessageReceiver = nullptr);
     virtual ~ControlServer();
 
     void start();
@@ -68,7 +68,7 @@ private:
     std::shared_ptr<tcp::acceptor> acceptor_v4_;
     std::shared_ptr<tcp::acceptor> acceptor_v6_;
 
-    asio::io_service* io_service_;
+    asio::io_context* io_context_;
     size_t port_;
     ControlMessageReceiver* controlMessageReceiver_;
 };

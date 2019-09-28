@@ -112,7 +112,7 @@ protected:
     void socketRead(void* to, size_t bytes);
     void getNextMessage();
 
-    asio::io_service io_service_;
+    asio::io_context io_context_;
     mutable std::mutex socketMutex_;
     std::shared_ptr<tcp::socket> socket_;
     std::atomic<bool> active_;

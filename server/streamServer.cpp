@@ -29,8 +29,8 @@ using namespace std;
 using json = nlohmann::json;
 
 
-StreamServer::StreamServer(asio::io_service* io_service, const StreamServerSettings& streamServerSettings)
-    : io_service_(io_service), acceptor_v4_(nullptr), acceptor_v6_(nullptr), settings_(streamServerSettings)
+StreamServer::StreamServer(asio::io_context* io_context, const StreamServerSettings& streamServerSettings)
+    : io_context_(io_context), acceptor_v4_(nullptr), acceptor_v6_(nullptr), settings_(streamServerSettings)
 {
 }
 
@@ -721,12 +721,12 @@ void StreamServer::startAccept()
 {
     if (acceptor_v4_)
     {
-        socket_ptr socket_v4 = make_shared<tcp::socket>(*io_service_);
+        socket_ptr socket_v4 = make_shared<tcp::socket>(*io_context_);
         acceptor_v4_->async_accept(*socket_v4, bind(&StreamServer::handleAccept, this, socket_v4));
     }
     if (acceptor_v6_)
     {
-        socket_ptr socket_v6 = make_shared<tcp::socket>(*io_service_);
+        socket_ptr socket_v6 = make_shared<tcp::socket>(*io_context_);
         acceptor_v6_->async_accept(*socket_v6, bind(&StreamServer::handleAccept, this, socket_v6));
     }
 }
@@ -766,7 +766,7 @@ void StreamServer::start()
 {
     try
     {
-        controlServer_.reset(new ControlServer(io_service_, settings_.controlPort, this));
+        controlServer_.reset(new ControlServer(io_context_, settings_.controlPort, this));
         controlServer_->start();
 
         streamManager_.reset(new StreamManager(this, settings_.sampleFormat, settings_.codec, settings_.streamReadMs));
@@ -783,7 +783,7 @@ void StreamServer::start()
         tcp::endpoint endpoint_v6(tcp::v6(), settings_.port);
         try
         {
-            acceptor_v6_ = make_shared<tcp::acceptor>(*io_service_, endpoint_v6);
+            acceptor_v6_ = make_shared<tcp::acceptor>(*io_context_, endpoint_v6);
             error_code ec;
             acceptor_v6_->set_option(asio::ip::v6_only(false), ec);
             asio::ip::v6_only option;
@@ -801,7 +801,7 @@ void StreamServer::start()
             tcp::endpoint endpoint_v4(tcp::v4(), settings_.port);
             try
             {
-                acceptor_v4_ = make_shared<tcp::acceptor>(*io_service_, endpoint_v4);
+                acceptor_v4_ = make_shared<tcp::acceptor>(*io_context_, endpoint_v4);
             }
             catch (const asio::system_error& e)
             {

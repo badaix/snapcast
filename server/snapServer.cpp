@@ -201,17 +201,17 @@ int main(int argc, char* argv[])
         if (settings.bufferMs < 400)
             settings.bufferMs = 400;
 
-        asio::io_service io_service;
-        std::unique_ptr<StreamServer> streamServer(new StreamServer(&io_service, settings));
+        asio::io_context io_context;
+        std::unique_ptr<StreamServer> streamServer(new StreamServer(&io_context, settings));
         streamServer->start();
 
-        auto func = [](asio::io_service* ioservice) -> void { ioservice->run(); };
-        std::thread t(func, &io_service);
+        auto func = [](asio::io_context* ioservice) -> void { ioservice->run(); };
+        std::thread t(func, &io_context);
 
         while (!g_terminated)
             chronos::sleep(100);
 
-        io_service.stop();
+        io_context.stop();
         t.join();
 
         LOG(INFO) << "Stopping streamServer" << endl;

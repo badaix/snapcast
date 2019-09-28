@@ -30,8 +30,8 @@ using namespace std;
 using json = nlohmann::json;
 
 
-ControlServer::ControlServer(asio::io_service* io_service, size_t port, ControlMessageReceiver* controlMessageReceiver)
-    : acceptor_v4_(nullptr), acceptor_v6_(nullptr), io_service_(io_service), port_(port), controlMessageReceiver_(controlMessageReceiver)
+ControlServer::ControlServer(asio::io_context* io_context, size_t port, ControlMessageReceiver* controlMessageReceiver)
+    : acceptor_v4_(nullptr), acceptor_v6_(nullptr), io_context_(io_context), port_(port), controlMessageReceiver_(controlMessageReceiver)
 {
 }
 
@@ -106,12 +106,12 @@ void ControlServer::startAccept()
 {
     if (acceptor_v4_)
     {
-        socket_ptr socket_v4 = make_shared<tcp::socket>(*io_service_);
+        socket_ptr socket_v4 = make_shared<tcp::socket>(*io_context_);
         acceptor_v4_->async_accept(*socket_v4, bind(&ControlServer::handleAccept, this, socket_v4));
     }
     if (acceptor_v6_)
     {
-        socket_ptr socket_v6 = make_shared<tcp::socket>(*io_service_);
+        socket_ptr socket_v6 = make_shared<tcp::socket>(*io_context_);
         acceptor_v6_->async_accept(*socket_v6, bind(&ControlServer::handleAccept, this, socket_v6));
     }
 }
@@ -150,7 +150,7 @@ void ControlServer::start()
     tcp::endpoint endpoint_v6(tcp::v6(), port_);
     try
     {
-        acceptor_v6_ = make_shared<tcp::acceptor>(*io_service_, endpoint_v6);
+        acceptor_v6_ = make_shared<tcp::acceptor>(*io_context_, endpoint_v6);
         error_code ec;
         acceptor_v6_->set_option(asio::ip::v6_only(false), ec);
         asio::ip::v6_only option;
@@ -168,7 +168,7 @@ void ControlServer::start()
         tcp::endpoint endpoint_v4(tcp::v4(), port_);
         try
         {
-            acceptor_v4_ = make_shared<tcp::acceptor>(*io_service_, endpoint_v4);
+            acceptor_v4_ = make_shared<tcp::acceptor>(*io_context_, endpoint_v4);
         }
         catch (const asio::system_error& e)
         {
