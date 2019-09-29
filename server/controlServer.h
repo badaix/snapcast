@@ -35,6 +35,7 @@
 #include "message/serverSettings.h"
 
 using boost::asio::ip::tcp;
+using acceptor_ptr = std::unique_ptr<tcp::acceptor>;
 
 /// Telnet like remote control
 /**
@@ -57,16 +58,18 @@ public:
 
 private:
     void startAccept();
-    void handleAcceptTcp(tcp::socket socket);
-    void handleAcceptWs(tcp::socket socket);
+    std::pair<acceptor_ptr, acceptor_ptr> createAcceptors(size_t port);
+
+    template <typename SessionType>
+    void handleAccept(tcp::socket socket);
+    // void handleAcceptWs(tcp::socket socket);
     void cleanup();
 
     mutable std::recursive_mutex session_mutex_;
     std::vector<std::weak_ptr<ControlSession>> sessions_;
-    std::shared_ptr<tcp::acceptor> acceptor_tcp_v4_;
-    std::shared_ptr<tcp::acceptor> acceptor_tcp_v6_;
-    std::shared_ptr<tcp::acceptor> acceptor_ws_v4_;
-    std::shared_ptr<tcp::acceptor> acceptor_ws_v6_;
+
+    std::pair<acceptor_ptr, acceptor_ptr> acceptor_tcp_;
+    std::pair<acceptor_ptr, acceptor_ptr> acceptor_ws_;
 
     boost::asio::io_context* io_context_;
     size_t port_;

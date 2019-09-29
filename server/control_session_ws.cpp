@@ -42,8 +42,7 @@ void ControlSessionWs::start()
     ws_.set_option(websocket::stream_base::timeout::suggested(beast::role_type::server));
 
     // Set a decorator to change the Server of the handshake
-    ws_.set_option(websocket::stream_base::decorator(
-        [](websocket::response_type& res) { res.set(http::field::server, std::string(BOOST_BEAST_VERSION_STRING) + " websocket-server-async"); }));
+    ws_.set_option(websocket::stream_base::decorator([](websocket::response_type& res) { res.set(http::field::server, "Snapcast websocket-server"); }));
 
     // Accept the websocket handshake
     auto self(shared_from_this());
@@ -78,7 +77,10 @@ void ControlSessionWs::on_read(beast::error_code ec, std::size_t bytes_transferr
 
     // This indicates that the session was closed
     if (ec == websocket::error::closed)
+    {
+        LOG(INFO) << "ControlSessionWs session closed\n";
         return;
+    }
 
     if (ec)
     {
