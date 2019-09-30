@@ -21,8 +21,8 @@
 #include "common/snapException.h"
 #include "common/utils.h"
 #include "config.h"
+#include "control_session_http.hpp"
 #include "control_session_tcp.hpp"
-#include "control_session_ws.hpp"
 #include "jsonrpcpp.hpp"
 #include "message/time.h"
 
@@ -74,12 +74,13 @@ void ControlServer::send(const std::string& message, const ControlSession* exclu
 }
 
 
-void ControlServer::onMessageReceived(ControlSession* connection, const std::string& message)
+std::string ControlServer::onMessageReceived(ControlSession* connection, const std::string& message)
 {
     std::lock_guard<std::recursive_mutex> mlock(session_mutex_);
     LOG(DEBUG) << "received: \"" << message << "\"\n";
     if (controlMessageReceiver_ != nullptr)
-        controlMessageReceiver_->onMessageReceived(connection, message);
+        return controlMessageReceiver_->onMessageReceived(connection, message);
+    return "";
 }
 
 
@@ -92,9 +93,9 @@ void ControlServer::startAccept()
             LOG(ERROR) << "Error while accepting socket connection: " << ec.message() << "\n";
     };
 
-    auto accept_handler_ws = [this](error_code ec, tcp::socket socket) {
+    auto accept_handler_http = [this](error_code ec, tcp::socket socket) {
         if (!ec)
-            handleAccept<ControlSessionWs>(std::move(socket));
+            handleAccept<ControlSessionHttp>(std::move(socket));
         else
             LOG(ERROR) << "Error while accepting socket connection: " << ec.message() << "\n";
     };
@@ -105,11 +106,11 @@ void ControlServer::startAccept()
     if (acceptor_tcp_.second)
         acceptor_tcp_.second->async_accept(accept_handler_tcp);
 
-    if (acceptor_ws_.first)
-        acceptor_ws_.first->async_accept(accept_handler_ws);
+    if (acceptor_http_.first)
+        acceptor_http_.first->async_accept(accept_handler_http);
 
-    if (acceptor_ws_.second)
-        acceptor_ws_.second->async_accept(accept_handler_ws);
+    if (acceptor_http_.second)
+        acceptor_http_.second->async_accept(accept_handler_http);
 }
 
 
@@ -179,7 +180,7 @@ std::pair<acceptor_ptr, acceptor_ptr> ControlServer::createAcceptors(size_t port
 void ControlServer::start()
 {
     acceptor_tcp_ = createAcceptors(port_);
-    acceptor_ws_ = createAcceptors(8080);
+    acceptor_http_ = createAcceptors(8080);
     startAccept();
 }
 
@@ -196,8 +197,8 @@ void ControlServer::stop()
 
     cancel_accept(acceptor_tcp_.first.get());
     cancel_accept(acceptor_tcp_.second.get());
-    cancel_accept(acceptor_ws_.first.get());
-    cancel_accept(acceptor_ws_.second.get());
+    cancel_accept(acceptor_http_.first.get());
+    cancel_accept(acceptor_http_.second.get());
     std::lock_guard<std::recursive_mutex> mlock(session_mutex_);
     for (auto s : sessions_)
     {

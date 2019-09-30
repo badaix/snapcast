@@ -507,7 +507,7 @@ void StreamServer::ProcessRequest(const jsonrpcpp::request_ptr request, jsonrpcp
 }
 
 
-void StreamServer::onMessageReceived(ControlSession* controlSession, const std::string& message)
+std::string StreamServer::onMessageReceived(ControlSession* controlSession, const std::string& message)
 {
     LOG(DEBUG) << "onMessageReceived: " << message << "\n";
     jsonrpcpp::entity_ptr entity(nullptr);
@@ -515,17 +515,15 @@ void StreamServer::onMessageReceived(ControlSession* controlSession, const std::
     {
         entity = jsonrpcpp::Parser::do_parse(message);
         if (!entity)
-            return;
+            return "";
     }
     catch (const jsonrpcpp::ParseErrorException& e)
     {
-        controlSession->send(e.to_json().dump());
-        return;
+        return e.to_json().dump();
     }
     catch (const std::exception& e)
     {
-        controlSession->send(jsonrpcpp::ParseErrorException(e.what()).to_json().dump());
-        return;
+        return jsonrpcpp::ParseErrorException(e.what()).to_json().dump();
     }
 
     jsonrpcpp::entity_ptr response(nullptr);
@@ -535,16 +533,17 @@ void StreamServer::onMessageReceived(ControlSession* controlSession, const std::
         jsonrpcpp::request_ptr request = dynamic_pointer_cast<jsonrpcpp::Request>(entity);
         ProcessRequest(request, response, notification);
         ////cout << "Request:      " << request->to_json().dump() << "\n";
-        if (response)
-        {
-            ////cout << "Response:     " << response->to_json().dump() << "\n";
-            controlSession->send(response->to_json().dump());
-        }
         if (notification)
         {
             ////cout << "Notification: " << notification->to_json().dump() << "\n";
             controlServer_->send(notification->to_json().dump(), controlSession);
         }
+        if (response)
+        {
+            ////cout << "Response:     " << response->to_json().dump() << "\n";
+            return response->to_json().dump();
+        }
+        return "";
     }
     else if (entity->is_batch())
     {
@@ -564,11 +563,13 @@ void StreamServer::onMessageReceived(ControlSession* controlSession, const std::
                     notificationBatch.add_ptr(notification);
             }
         }
-        if (!responseBatch.entities.empty())
-            controlSession->send(responseBatch.to_json().dump());
         if (!notificationBatch.entities.empty())
             controlServer_->send(notificationBatch.to_json().dump(), controlSession);
+        if (!responseBatch.entities.empty())
+            return responseBatch.to_json().dump();
+        return "";
     }
+    return "";
 }
 
 

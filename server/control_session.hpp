@@ -41,7 +41,8 @@ class ControlSession;
 class ControlMessageReceiver
 {
 public:
-    virtual void onMessageReceived(ControlSession* connection, const std::string& message) = 0;
+    // TODO: rename, error handling
+    virtual std::string onMessageReceived(ControlSession* connection, const std::string& message) = 0;
 };
 
 

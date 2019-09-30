@@ -55,12 +55,17 @@ void ControlSessionTcp::do_read()
                 line.resize(line.size() - 1);
             LOG(INFO) << "received: " << line << "\n";
             if ((message_receiver_ != nullptr) && !line.empty())
-                message_receiver_->onMessageReceived(this, line);
+            {
+                string response = message_receiver_->onMessageReceived(this, line);
+                if (!response.empty())
+                    sendAsync(response);
+            }
         }
         streambuf_.consume(bytes_transferred);
         do_read();
     });
 }
+
 
 void ControlSessionTcp::start()
 {

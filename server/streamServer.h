@@ -83,7 +83,7 @@ public:
     void onDisconnect(StreamSession* connection) override;
 
     /// Implementation of ControllMessageReceiver::onMessageReceived, called by ControlServer::onMessageReceived
-    void onMessageReceived(ControlSession* connection, const std::string& message) override;
+    std::string onMessageReceived(ControlSession* connection, const std::string& message) override;
 
     /// Implementation of PcmListener
     void onMetaChanged(const PcmStream* pcmStream) override;

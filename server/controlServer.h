@@ -54,7 +54,7 @@ public:
     void send(const std::string& message, const ControlSession* excludeSession = nullptr);
 
     /// Clients call this when they receive a message. Implementation of MessageReceiver::onMessageReceived
-    void onMessageReceived(ControlSession* connection, const std::string& message) override;
+    std::string onMessageReceived(ControlSession* connection, const std::string& message) override;
 
 private:
     void startAccept();
@@ -69,7 +69,7 @@ private:
     std::vector<std::weak_ptr<ControlSession>> sessions_;
 
     std::pair<acceptor_ptr, acceptor_ptr> acceptor_tcp_;
-    std::pair<acceptor_ptr, acceptor_ptr> acceptor_ws_;
+    std::pair<acceptor_ptr, acceptor_ptr> acceptor_http_;
 
     boost::asio::io_context* io_context_;
     size_t port_;

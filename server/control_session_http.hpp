@@ -16,8 +16,8 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
-#ifndef CONTROL_SESSION_WS_HPP
-#define CONTROL_SESSION_WS_HPP
+#ifndef CONTROL_SESSION_HTTP_HPP
+#define CONTROL_SESSION_HTTP_HPP
 
 #include "control_session.hpp"
 #include <boost/beast/core.hpp>
@@ -35,12 +35,12 @@ namespace net = boost::asio;            // from <boost/asio.hpp>
  * Messages are sent to the client with the "send" method.
  * Received messages from the client are passed to the ControlMessageReceiver callback
  */
-class ControlSessionWs : public ControlSession, public std::enable_shared_from_this<ControlSession>
+class ControlSessionHttp : public ControlSession, public std::enable_shared_from_this<ControlSession>
 {
 public:
     /// ctor. Received message from the client are passed to MessageReceiver
-    ControlSessionWs(ControlMessageReceiver* receiver, tcp::socket&& socket);
-    ~ControlSessionWs() override;
+    ControlSessionHttp(ControlMessageReceiver* receiver, tcp::socket&& socket);
+    ~ControlSessionHttp() override;
     void start() override;
     void stop() override;
 
@@ -51,13 +51,26 @@ public:
     void sendAsync(const std::string& message) override;
 
 protected:
-    void on_accept(beast::error_code ec);
-    void do_read();
+    // HTTP methods
     void on_read(beast::error_code ec, std::size_t bytes_transferred);
+    void on_write(beast::error_code ec, std::size_t, bool close);
 
-    websocket::stream<beast::tcp_stream> ws_;
+    template <class Body, class Allocator, class Send>
+    void handle_request(http::request<Body, http::basic_fields<Allocator>>&& req, Send&& send);
+
+    http::request<http::string_body> req_;
+
+protected:
+    // Websocket methods
+    void on_accept_ws(beast::error_code ec);
+    void on_read_ws(beast::error_code ec, std::size_t bytes_transferred);
+    void do_read_ws();
+
+    std::unique_ptr<websocket::stream<beast::tcp_stream>> ws_;
+
+protected:
+    tcp::socket socket_;
     beast::flat_buffer buffer_;
-    beast::multi_buffer b;
 };
 
 
