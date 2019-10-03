@@ -27,7 +27,6 @@ private:
 	PcmListener* pcmListener_;
 	std::string sampleFormat_;
 	std::string codec_;
-	std::string streamUri_;
 	size_t readBufferMs_;
 };
 

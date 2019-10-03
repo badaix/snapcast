@@ -434,8 +434,8 @@ void StreamServer::ProcessRequest(const jsonrpcpp::request_ptr request, jsonrpcp
 				LOG(INFO) << "Stream.AddStream(" << request->params().get("streamUri") << ")" << "\n";
 
 				// Find stream
-				string streamUri_ = request->params().get("streamUri");
-				PcmStreamPtr stream = streamManager_->addStream(streamUri_);
+				string streamUri = request->params().get("streamUri");
+				PcmStreamPtr stream = streamManager_->addStream(streamUri);
 				if (stream == nullptr)
 					throw jsonrpcpp::InternalErrorException("Stream not created", request->id());
 				stream->start(); // We start the stream, otherwise it would be silent
