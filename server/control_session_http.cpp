@@ -24,6 +24,79 @@
 
 using namespace std;
 
+static constexpr const char* HTTP_SERVER_NAME = "Snapcast";
+
+namespace
+{
+// Return a reasonable mime type based on the extension of a file.
+boost::beast::string_view mime_type(boost::beast::string_view path)
+{
+    using boost::beast::iequals;
+    auto const ext = [&path] {
+        auto const pos = path.rfind(".");
+        if (pos == boost::beast::string_view::npos)
+            return boost::beast::string_view{};
+        return path.substr(pos);
+    }();
+    if (iequals(ext, ".htm"))
+        return "text/html";
+    if (iequals(ext, ".html"))
+        return "text/html";
+    if (iequals(ext, ".php"))
+        return "text/html";
+    if (iequals(ext, ".css"))
+        return "text/css";
+    if (iequals(ext, ".txt"))
+        return "text/plain";
+    if (iequals(ext, ".js"))
+        return "application/javascript";
+    if (iequals(ext, ".json"))
+        return "application/json";
+    if (iequals(ext, ".xml"))
+        return "application/xml";
+    if (iequals(ext, ".swf"))
+        return "application/x-shockwave-flash";
+    if (iequals(ext, ".flv"))
+        return "video/x-flv";
+    if (iequals(ext, ".png"))
+        return "image/png";
+    if (iequals(ext, ".jpe"))
+        return "image/jpeg";
+    if (iequals(ext, ".jpeg"))
+        return "image/jpeg";
+    if (iequals(ext, ".jpg"))
+        return "image/jpeg";
+    if (iequals(ext, ".gif"))
+        return "image/gif";
+    if (iequals(ext, ".bmp"))
+        return "image/bmp";
+    if (iequals(ext, ".ico"))
+        return "image/vnd.microsoft.icon";
+    if (iequals(ext, ".tiff"))
+        return "image/tiff";
+    if (iequals(ext, ".tif"))
+        return "image/tiff";
+    if (iequals(ext, ".svg"))
+        return "image/svg+xml";
+    if (iequals(ext, ".svgz"))
+        return "image/svg+xml";
+    return "application/text";
+}
+
+// Append an HTTP rel-path to a local filesystem path.
+// The returned path is normalized for the platform.
+std::string path_cat(boost::beast::string_view base, boost::beast::string_view path)
+{
+    if (base.empty())
+        return path.to_string();
+    std::string result = base.to_string();
+    char constexpr path_separator = '/';
+    if (result.back() == path_separator)
+        result.resize(result.size() - 1);
+    result.append(path.data(), path.size());
+    return result;
+}
+} // namespace
 
 ControlSessionHttp::ControlSessionHttp(ControlMessageReceiver* receiver, tcp::socket&& socket) : ControlSession(receiver), socket_(std::move(socket))
 {
@@ -55,7 +128,8 @@ void ControlSessionHttp::handle_request(http::request<Body, http::basic_fields<A
     // Returns a bad request response
     auto const bad_request = [&req](boost::beast::string_view why) {
         http::response<http::string_body> res{http::status::bad_request, req.version()};
-        res.set(http::field::server, BOOST_BEAST_VERSION_STRING);
+        // TODO: Server: Snapcast/VERSION
+        res.set(http::field::server, HTTP_SERVER_NAME);
         res.set(http::field::content_type, "text/html");
         res.keep_alive(req.keep_alive());
         res.body() = why.to_string();
@@ -66,7 +140,7 @@ void ControlSessionHttp::handle_request(http::request<Body, http::basic_fields<A
     // Returns a not found response
     auto const not_found = [&req](boost::beast::string_view target) {
         http::response<http::string_body> res{http::status::not_found, req.version()};
-        res.set(http::field::server, BOOST_BEAST_VERSION_STRING);
+        res.set(http::field::server, HTTP_SERVER_NAME);
         res.set(http::field::content_type, "text/html");
         res.keep_alive(req.keep_alive());
         res.body() = "The resource '" + target.to_string() + "' was not found.";
@@ -77,7 +151,7 @@ void ControlSessionHttp::handle_request(http::request<Body, http::basic_fields<A
     // Returns a server error response
     auto const server_error = [&req](boost::beast::string_view what) {
         http::response<http::string_body> res{http::status::internal_server_error, req.version()};
-        res.set(http::field::server, BOOST_BEAST_VERSION_STRING);
+        res.set(http::field::server, HTTP_SERVER_NAME);
         res.set(http::field::content_type, "text/html");
         res.keep_alive(req.keep_alive());
         res.body() = "An error occurred: '" + what.to_string() + "'";
@@ -86,25 +160,70 @@ void ControlSessionHttp::handle_request(http::request<Body, http::basic_fields<A
     };
 
     // Make sure we can handle the method
-    if (req.method() != http::verb::post)
+    if ((req.method() != http::verb::get) && (req.method() != http::verb::head) && (req.method() != http::verb::post))
         return send(bad_request("Unknown HTTP-method"));
 
+    // handle json rpc requests
+    if (req.method() == http::verb::post)
+    {
+        if (req.target() != "/jsonrpc")
+            return send(bad_request("Illegal request-target"));
+
+        string response = message_receiver_->onMessageReceived(this, req.body());
+        http::response<http::string_body> res{http::status::ok, req.version()};
+        res.set(http::field::server, HTTP_SERVER_NAME);
+        res.set(http::field::content_type, "application/json");
+        res.keep_alive(req.keep_alive());
+        res.body() = response;
+        res.prepare_payload();
+        return send(std::move(res));
+    }
+
     // Request path must be absolute and not contain "..".
-    // if (req.target().empty() || req.target()[0] != '/' || req.target().find("..") != boost::beast::string_view::npos)
-    //     return send(bad_request("Illegal request-target"));
+    if (req.target().empty() || req.target()[0] != '/' || req.target().find("..") != beast::string_view::npos)
+        return send(bad_request("Illegal request-target"));
 
-    LOG(DEBUG) << "content type: " << req[beast::http::field::content_type] << "\n";
-    LOG(DEBUG) << "body: " << req.body() << "\n";
+    // TODO: configurable, enable/disable
+    std::string doc_root = "../control";
+    // Build the path to the requested file
+    std::string path = path_cat(doc_root, req.target());
+    if (req.target().back() == '/')
+        path.append("index.html");
 
-    // TODO: error handling: bad request, ...
-    string response = message_receiver_->onMessageReceived(this, req.body());
+    LOG(DEBUG) << "path: " << path << "\n";
+    // Attempt to open the file
+    beast::error_code ec;
+    http::file_body::value_type body;
+    body.open(path.c_str(), beast::file_mode::scan, ec);
 
-    http::response<http::string_body> res{http::status::ok, req.version()};
-    res.set(http::field::server, BOOST_BEAST_VERSION_STRING);
-    res.set(http::field::content_type, "application/json");
+    // Handle the case where the file doesn't exist
+    if (ec == boost::system::errc::no_such_file_or_directory)
+        return send(not_found(req.target()));
+
+    // Handle an unknown error
+    if (ec)
+        return send(server_error(ec.message()));
+
+    // Cache the size since we need it after the move
+    auto const size = body.size();
+
+    // Respond to HEAD request
+    if (req.method() == http::verb::head)
+    {
+        http::response<http::empty_body> res{http::status::ok, req.version()};
+        res.set(http::field::server, HTTP_SERVER_NAME);
+        res.set(http::field::content_type, mime_type(path));
+        res.content_length(size);
+        res.keep_alive(req.keep_alive());
+        return send(std::move(res));
+    }
+
+    // Respond to GET request
+    http::response<http::file_body> res{std::piecewise_construct, std::make_tuple(std::move(body)), std::make_tuple(http::status::ok, req.version())};
+    res.set(http::field::server, HTTP_SERVER_NAME);
+    res.set(http::field::content_type, mime_type(path));
+    res.content_length(size);
     res.keep_alive(req.keep_alive());
-    res.body() = response; // R"({"jsonrpc": "2.0", "id": 1, "result": "stopped"})";
-    res.prepare_payload();
     return send(std::move(res));
 }
 
@@ -124,13 +243,11 @@ void ControlSessionHttp::on_read(beast::error_code ec, std::size_t bytes_transfe
         return;
     }
 
-    // TODO: error handling
-    // urls should be:
-    //  http://<host>/snapcast/rpc
-    //  ws://<host>/snapcast/ws or ws://<host>/snapcast/rpc?
+    LOG(DEBUG) << "method: " << req_.method_string() << ", content type: " << req_[beast::http::field::content_type] << ", target: " << req_.target()
+               << ", body: " << req_.body() << "\n";
 
     // See if it is a WebSocket Upgrade
-    if (websocket::is_upgrade(req_))
+    if (websocket::is_upgrade(req_) && (req_.target() == "/jsonrpc"))
     {
         // Create a WebSocket session by transferring the socket
         // std::make_shared<websocket_session>(std::move(socket_), state_)->run(std::move(req_));

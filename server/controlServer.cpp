@@ -179,7 +179,9 @@ std::pair<acceptor_ptr, acceptor_ptr> ControlServer::createAcceptors(size_t port
 
 void ControlServer::start()
 {
+    // TODO: should be possible to be disabled
     acceptor_tcp_ = createAcceptors(port_);
+    // TODO: make port configurable, should be possible to be disabled
     acceptor_http_ = createAcceptors(8080);
     startAccept();
 }

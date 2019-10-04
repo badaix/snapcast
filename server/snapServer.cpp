@@ -63,18 +63,18 @@ int main(int argc, char* argv[])
         auto groffSwitch = op.add<Switch, Attribute::hidden>("", "groff", "produce groff message");
         auto debugOption = op.add<Implicit<string>, Attribute::hidden>("", "debug", "enable debug logging", "");
         auto versionSwitch = op.add<Switch>("v", "version", "Show version number");
-        /*auto portValue =*/op.add<Value<size_t>>("p", "port", "Server port", settings.port, &settings.port);
-        /*auto controlPortValue =*/op.add<Value<size_t>>("", "controlPort", "Remote control port", settings.controlPort, &settings.controlPort);
+        op.add<Value<size_t>>("p", "port", "Server port", settings.port, &settings.port);
+        op.add<Value<size_t>>("", "controlPort", "Remote control port", settings.controlPort, &settings.controlPort);
         auto streamValue = op.add<Value<string>>(
             "s", "stream", "URI of the PCM input stream.\nFormat: TYPE://host/path?name=NAME\n[&codec=CODEC]\n[&sampleformat=SAMPLEFORMAT]", pcmStream,
             &pcmStream);
 
-        /*auto sampleFormatValue =*/op.add<Value<string>>("", "sampleformat", "Default sample format", settings.sampleFormat, &settings.sampleFormat);
-        /*auto codecValue =*/op.add<Value<string>>(
-            "c", "codec", "Default transport codec\n(flac|ogg|pcm)[:options]\nType codec:? to get codec specific options", settings.codec, &settings.codec);
-        /*auto streamBufferValue =*/op.add<Value<size_t>>("", "streamBuffer", "Default stream read buffer [ms]", settings.streamReadMs, &settings.streamReadMs);
-        /*auto bufferValue =*/op.add<Value<int>>("b", "buffer", "Buffer [ms]", settings.bufferMs, &settings.bufferMs);
-        /*auto muteSwitch =*/op.add<Switch>("", "sendToMuted", "Send audio to muted clients", &settings.sendAudioToMutedClients);
+        op.add<Value<string>>("", "sampleformat", "Default sample format", settings.sampleFormat, &settings.sampleFormat);
+        op.add<Value<string>>("c", "codec", "Default transport codec\n(flac|ogg|pcm)[:options]\nType codec:? to get codec specific options", settings.codec,
+                              &settings.codec);
+        op.add<Value<size_t>>("", "streamBuffer", "Default stream read buffer [ms]", settings.streamReadMs, &settings.streamReadMs);
+        op.add<Value<int>>("b", "buffer", "Buffer [ms]", settings.bufferMs, &settings.bufferMs);
+        op.add<Switch>("", "sendToMuted", "Send audio to muted clients", &settings.sendAudioToMutedClients);
 #ifdef HAS_DAEMON
         int processPriority(0);
         auto daemonOption = op.add<Implicit<int>>("d", "daemon", "Daemonize\noptional process priority [-20..19]", 0, &processPriority);
@@ -95,7 +95,7 @@ int main(int argc, char* argv[])
         if (versionSwitch->is_set())
         {
             cout << "snapserver v" << VERSION << "\n"
-                 << "Copyright (C) 2014-2018 BadAix (snapcast@badaix.de).\n"
+                 << "Copyright (C) 2014-2019 BadAix (snapcast@badaix.de).\n"
                  << "License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>.\n"
                  << "This is free software: you are free to change and redistribute it.\n"
                  << "There is NO WARRANTY, to the extent permitted by law.\n\n"
