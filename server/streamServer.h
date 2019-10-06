@@ -34,6 +34,7 @@
 #include "message/codecHeader.h"
 #include "message/message.h"
 #include "message/serverSettings.h"
+#include "server_settings.hpp"
 #include "streamSession.h"
 #include "streamreader/streamManager.h"
 
@@ -41,22 +42,6 @@
 using boost::asio::ip::tcp;
 typedef std::shared_ptr<tcp::socket> socket_ptr;
 typedef std::shared_ptr<StreamSession> session_ptr;
-
-struct StreamServerSettings
-{
-    StreamServerSettings()
-        : port(1704), controlPort(1705), codec("flac"), bufferMs(1000), sampleFormat("48000:16:2"), streamReadMs(20), sendAudioToMutedClients(false)
-    {
-    }
-    size_t port;
-    size_t controlPort;
-    std::vector<std::string> pcmStreams;
-    std::string codec;
-    int32_t bufferMs;
-    std::string sampleFormat;
-    size_t streamReadMs;
-    bool sendAudioToMutedClients;
-};
 
 
 /// Forwars PCM data to the connected clients
@@ -69,7 +54,7 @@ struct StreamServerSettings
 class StreamServer : public MessageReceiver, ControlMessageReceiver, PcmListener
 {
 public:
-    StreamServer(boost::asio::io_context* io_context, const StreamServerSettings& streamServerSettings);
+    StreamServer(boost::asio::io_context* io_context, const ServerSettings& serverSettings);
     virtual ~StreamServer();
 
     void start();
@@ -103,7 +88,7 @@ private:
     std::shared_ptr<tcp::acceptor> acceptor_v4_;
     std::shared_ptr<tcp::acceptor> acceptor_v6_;
 
-    StreamServerSettings settings_;
+    ServerSettings settings_;
     Queue<std::shared_ptr<msg::BaseMessage>> messages_;
     std::unique_ptr<ControlServer> controlServer_;
     std::unique_ptr<StreamManager> streamManager_;

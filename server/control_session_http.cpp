@@ -98,7 +98,8 @@ std::string path_cat(boost::beast::string_view base, boost::beast::string_view p
 }
 } // namespace
 
-ControlSessionHttp::ControlSessionHttp(ControlMessageReceiver* receiver, tcp::socket&& socket) : ControlSession(receiver), socket_(std::move(socket))
+ControlSessionHttp::ControlSessionHttp(ControlMessageReceiver* receiver, tcp::socket&& socket, const ServerSettings::HttpSettings& settings)
+    : ControlSession(receiver), socket_(std::move(socket)), settings_(settings)
 {
     LOG(DEBUG) << "ControlSessionHttp\n";
 }
@@ -183,10 +184,11 @@ void ControlSessionHttp::handle_request(http::request<Body, http::basic_fields<A
     if (req.target().empty() || req.target()[0] != '/' || req.target().find("..") != beast::string_view::npos)
         return send(bad_request("Illegal request-target"));
 
-    // TODO: configurable, enable/disable
-    std::string doc_root = "../control";
+    if (settings_.doc_root.empty())
+        return send(not_found(req.target()));
+
     // Build the path to the requested file
-    std::string path = path_cat(doc_root, req.target());
+    std::string path = path_cat(settings_.doc_root, req.target());
     if (req.target().back() == '/')
         path.append("index.html");
 

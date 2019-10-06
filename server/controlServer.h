@@ -33,6 +33,7 @@
 #include "message/codecHeader.h"
 #include "message/message.h"
 #include "message/serverSettings.h"
+#include "server_settings.hpp"
 
 using boost::asio::ip::tcp;
 using acceptor_ptr = std::unique_ptr<tcp::acceptor>;
@@ -44,7 +45,8 @@ using acceptor_ptr = std::unique_ptr<tcp::acceptor>;
 class ControlServer : public ControlMessageReceiver
 {
 public:
-    ControlServer(boost::asio::io_context* io_context, size_t port, ControlMessageReceiver* controlMessageReceiver = nullptr);
+    ControlServer(boost::asio::io_context* io_context, const ServerSettings::TcpSettings& tcp_settings, const ServerSettings::HttpSettings& http_settings,
+                  ControlMessageReceiver* controlMessageReceiver = nullptr);
     virtual ~ControlServer();
 
     void start();
@@ -60,9 +62,8 @@ private:
     void startAccept();
     std::pair<acceptor_ptr, acceptor_ptr> createAcceptors(size_t port);
 
-    template <typename SessionType>
-    void handleAccept(tcp::socket socket);
-    // void handleAcceptWs(tcp::socket socket);
+    template <typename SessionType, typename... Args>
+    void handleAccept(tcp::socket socket, Args&&... args);
     void cleanup();
 
     mutable std::recursive_mutex session_mutex_;
@@ -72,7 +73,8 @@ private:
     std::pair<acceptor_ptr, acceptor_ptr> acceptor_http_;
 
     boost::asio::io_context* io_context_;
-    size_t port_;
+    ServerSettings::TcpSettings tcp_settings_;
+    ServerSettings::HttpSettings http_settings_;
     ControlMessageReceiver* controlMessageReceiver_;
 };
 

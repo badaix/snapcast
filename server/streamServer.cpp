@@ -29,8 +29,8 @@ using namespace std;
 using json = nlohmann::json;
 
 
-StreamServer::StreamServer(boost::asio::io_context* io_context, const StreamServerSettings& streamServerSettings)
-    : io_context_(io_context), acceptor_v4_(nullptr), acceptor_v6_(nullptr), settings_(streamServerSettings)
+StreamServer::StreamServer(boost::asio::io_context* io_context, const ServerSettings& serverSettings)
+    : io_context_(io_context), acceptor_v4_(nullptr), acceptor_v6_(nullptr), settings_(serverSettings)
 {
 }
 
@@ -81,7 +81,7 @@ void StreamServer::onChunkRead(const PcmStream* pcmStream, msg::PcmChunk* chunk,
     std::lock_guard<std::recursive_mutex> mlock(sessionsMutex_);
     for (auto s : sessions_)
     {
-        if (!settings_.sendAudioToMutedClients)
+        if (!settings_.stream.sendAudioToMutedClients)
         {
             GroupPtr group = Config::instance().getGroupFromClient(s->clientId);
             if (group)
@@ -195,9 +195,9 @@ void StreamServer::ProcessRequest(const jsonrpcpp::request_ptr request, jsonrpcp
                 int latency = request->params().get("latency");
                 if (latency < -10000)
                     latency = -10000;
-                else if (latency > settings_.bufferMs)
-                    latency = settings_.bufferMs;
-                clientInfo->config.latency = latency; //, -10000, settings_.bufferMs);
+                else if (latency > settings_.stream.bufferMs)
+                    latency = settings_.stream.bufferMs;
+                clientInfo->config.latency = latency; //, -10000, settings_.stream.bufferMs);
                 result["latency"] = clientInfo->config.latency;
                 notification.reset(
                     new jsonrpcpp::Notification("Client.OnLatencyChanged", jsonrpcpp::Parameter("id", clientInfo->id, "latency", clientInfo->config.latency)));
@@ -223,7 +223,7 @@ void StreamServer::ProcessRequest(const jsonrpcpp::request_ptr request, jsonrpcp
                 if (session != nullptr)
                 {
                     auto serverSettings = make_shared<msg::ServerSettings>();
-                    serverSettings->setBufferMs(settings_.bufferMs);
+                    serverSettings->setBufferMs(settings_.stream.bufferMs);
                     serverSettings->setVolume(clientInfo->config.volume.percent);
                     GroupPtr group = Config::instance().getGroupFromClient(clientInfo);
                     serverSettings->setMuted(clientInfo->config.volume.muted || group->muted);
@@ -274,7 +274,7 @@ void StreamServer::ProcessRequest(const jsonrpcpp::request_ptr request, jsonrpcp
                     if (session != nullptr)
                     {
                         auto serverSettings = make_shared<msg::ServerSettings>();
-                        serverSettings->setBufferMs(settings_.bufferMs);
+                        serverSettings->setBufferMs(settings_.stream.bufferMs);
                         serverSettings->setVolume(client->config.volume.percent);
                         GroupPtr group = Config::instance().getGroupFromClient(client);
                         serverSettings->setMuted(client->config.volume.muted || group->muted);
@@ -667,7 +667,7 @@ void StreamServer::onMessageReceived(StreamSession* streamSession, const msg::Ba
         serverSettings->setVolume(client->config.volume.percent);
         serverSettings->setMuted(client->config.volume.muted || group->muted);
         serverSettings->setLatency(client->config.latency);
-        serverSettings->setBufferMs(settings_.bufferMs);
+        serverSettings->setBufferMs(settings_.stream.bufferMs);
         serverSettings->refersTo = helloMsg.id;
         streamSession->sendAsync(serverSettings);
 
@@ -793,7 +793,7 @@ void StreamServer::handleAccept(socket_ptr socket)
         SLOG(NOTICE) << "StreamServer::NewConnection: " << socket->remote_endpoint().address().to_string() << endl;
         shared_ptr<StreamSession> session = make_shared<StreamSession>(this, socket);
 
-        session->setBufferMs(settings_.bufferMs);
+        session->setBufferMs(settings_.stream.bufferMs);
         session->start();
 
         std::lock_guard<std::recursive_mutex> mlock(sessionsMutex_);
@@ -811,12 +811,12 @@ void StreamServer::start()
 {
     try
     {
-        controlServer_.reset(new ControlServer(io_context_, settings_.controlPort, this));
+        controlServer_.reset(new ControlServer(io_context_, settings_.tcp, settings_.http, this));
         controlServer_->start();
 
-        streamManager_.reset(new StreamManager(this, settings_.sampleFormat, settings_.codec, settings_.streamReadMs));
+        streamManager_.reset(new StreamManager(this, settings_.stream.sampleFormat, settings_.stream.codec, settings_.stream.streamReadMs));
         //	throw SnapException("xxx");
-        for (const auto& streamUri : settings_.pcmStreams)
+        for (const auto& streamUri : settings_.stream.pcmStreams)
         {
             PcmStreamPtr stream = streamManager_->addStream(streamUri);
             if (stream)
@@ -825,7 +825,7 @@ void StreamServer::start()
         streamManager_->start();
 
         bool is_v6_only(true);
-        tcp::endpoint endpoint_v6(tcp::v6(), settings_.port);
+        tcp::endpoint endpoint_v6(tcp::v6(), settings_.stream.port);
         try
         {
             acceptor_v6_ = make_shared<tcp::acceptor>(*io_context_, endpoint_v6);
@@ -843,7 +843,7 @@ void StreamServer::start()
 
         if (!acceptor_v6_ || is_v6_only)
         {
-            tcp::endpoint endpoint_v4(tcp::v4(), settings_.port);
+            tcp::endpoint endpoint_v4(tcp::v4(), settings_.stream.port);
             try
             {
                 acceptor_v4_ = make_shared<tcp::acceptor>(*io_context_, endpoint_v4);

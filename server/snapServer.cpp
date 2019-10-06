@@ -20,7 +20,7 @@
 #include <memory>
 #include <sys/resource.h>
 
-#include "popl.hpp"
+#include "../externals/popl/include/popl.hpp"
 #ifdef HAS_DAEMON
 #include "common/daemon.h"
 #endif
@@ -31,6 +31,7 @@
 #include "common/utils/string_utils.h"
 #include "encoder/encoderFactory.h"
 #include "message/message.h"
+#include "server_settings.hpp"
 #include "streamServer.h"
 #if defined(HAS_AVAHI) || defined(HAS_BONJOUR)
 #include "publishZeroConf/publishmDNS.h"
@@ -55,35 +56,57 @@ int main(int argc, char* argv[])
     int exitcode = EXIT_SUCCESS;
     try
     {
-        StreamServerSettings settings;
+        ServerSettings settings;
         std::string pcmStream = "pipe:///tmp/snapfifo?name=default";
+        std::string config_file = "/etc/snapserver.conf";
 
         OptionParser op("Allowed options");
         auto helpSwitch = op.add<Switch>("h", "help", "Produce help message");
         auto groffSwitch = op.add<Switch, Attribute::hidden>("", "groff", "produce groff message");
-        auto debugOption = op.add<Implicit<string>, Attribute::hidden>("", "debug", "enable debug logging", "");
         auto versionSwitch = op.add<Switch>("v", "version", "Show version number");
-        op.add<Value<size_t>>("p", "port", "Server port", settings.port, &settings.port);
-        op.add<Value<size_t>>("", "controlPort", "Remote control port", settings.controlPort, &settings.controlPort);
-        auto streamValue = op.add<Value<string>>(
-            "s", "stream", "URI of the PCM input stream.\nFormat: TYPE://host/path?name=NAME\n[&codec=CODEC]\n[&sampleformat=SAMPLEFORMAT]", pcmStream,
-            &pcmStream);
-
-        op.add<Value<string>>("", "sampleformat", "Default sample format", settings.sampleFormat, &settings.sampleFormat);
-        op.add<Value<string>>("c", "codec", "Default transport codec\n(flac|ogg|pcm)[:options]\nType codec:? to get codec specific options", settings.codec,
-                              &settings.codec);
-        op.add<Value<size_t>>("", "streamBuffer", "Default stream read buffer [ms]", settings.streamReadMs, &settings.streamReadMs);
-        op.add<Value<int>>("b", "buffer", "Buffer [ms]", settings.bufferMs, &settings.bufferMs);
-        op.add<Switch>("", "sendToMuted", "Send audio to muted clients", &settings.sendAudioToMutedClients);
 #ifdef HAS_DAEMON
         int processPriority(0);
         auto daemonOption = op.add<Implicit<int>>("d", "daemon", "Daemonize\noptional process priority [-20..19]", 0, &processPriority);
         auto userValue = op.add<Value<string>>("", "user", "the user[:group] to run snapserver as when daemonized", "");
 #endif
 
+        op.add<Value<string>>("c", "config", "path to the configuration file", config_file, &config_file);
+
+        // debug settings
+        OptionParser conf("");
+        conf.add<Switch>("", "logging.debug", "enable debug logging", &settings.logging.debug);
+        conf.add<Value<string>>("", "logging.debug_logfile", "log file name for the debug logs (debug must be enabled)", settings.logging.debug_logfile,
+                                &settings.logging.debug_logfile);
+
+        // stream settings
+        conf.add<Value<size_t>>("p", "stream.port", "Server port", settings.stream.port, &settings.stream.port);
+        conf.add<Value<size_t>>("", "stream.controlPort", "Remote control port", settings.tcp.port, &settings.tcp.port);
+        auto streamValue = conf.add<Value<string>>(
+            "s", "stream.stream", "URI of the PCM input stream.\nFormat: TYPE://host/path?name=NAME\n[&codec=CODEC]\n[&sampleformat=SAMPLEFORMAT]", pcmStream,
+            &pcmStream);
+
+        conf.add<Value<string>>("", "stream.sampleformat", "Default sample format", settings.stream.sampleFormat, &settings.stream.sampleFormat);
+        conf.add<Value<string>>("c", "stream.codec", "Default transport codec\n(flac|ogg|pcm)[:options]\nType codec:? to get codec specific options",
+                                settings.stream.codec, &settings.stream.codec);
+        conf.add<Value<size_t>>("", "stream.streamBuffer", "Default stream read buffer [ms]", settings.stream.streamReadMs, &settings.stream.streamReadMs);
+        conf.add<Value<int>>("b", "stream.buffer", "Buffer [ms]", settings.stream.bufferMs, &settings.stream.bufferMs);
+        conf.add<Switch>("", "stream.sendToMuted", "Send audio to muted clients", &settings.stream.sendAudioToMutedClients);
+
+        // HTTP RPC settings
+        conf.add<Switch>("", "http.enabled", "enable HTTP Json RPC (HTTP POST and websockets)", &settings.http.enabled);
+        conf.add<Value<size_t>>("", "http.port", "which port the server should listen to", settings.http.port, &settings.http.port);
+        conf.add<Value<string>>("", "http.doc_root", "serve a website from the doc_root location", settings.http.doc_root, &settings.http.doc_root);
+
+        // TCP RPC settings
+        conf.add<Switch>("", "tcp.enabled", "enable TCP Json RPC)", &settings.tcp.enabled);
+        conf.add<Value<size_t>>("", "tcp.port", "which port the server should listen to", settings.tcp.port, &settings.tcp.port);
+
+        // TODO: Should be possible to override settings on command line
+
         try
         {
             op.parse(argc, argv);
+            conf.parse(config_file);
         }
         catch (const std::invalid_argument& e)
         {
@@ -116,34 +139,25 @@ int main(int argc, char* argv[])
             exit(EXIT_SUCCESS);
         }
 
-        if (!streamValue->is_set())
-            settings.pcmStreams.push_back(streamValue->value());
-
-        for (size_t n = 0; n < streamValue->count(); ++n)
-        {
-            cout << streamValue->value(n) << "\n";
-            settings.pcmStreams.push_back(streamValue->value(n));
-        }
-
-        if (settings.codec.find(":?") != string::npos)
+        if (settings.stream.codec.find(":?") != string::npos)
         {
             EncoderFactory encoderFactory;
-            std::unique_ptr<Encoder> encoder(encoderFactory.createEncoder(settings.codec));
+            std::unique_ptr<Encoder> encoder(encoderFactory.createEncoder(settings.stream.codec));
             if (encoder)
             {
                 cout << "Options for codec \"" << encoder->name() << "\":\n"
                      << "  " << encoder->getAvailableOptions() << "\n"
                      << "  Default: \"" << encoder->getDefaultOptions() << "\"\n";
             }
-            return 1;
+            exit(EXIT_SUCCESS);
         }
 
         AixLog::Log::init<AixLog::SinkNative>("snapserver", AixLog::Severity::trace, AixLog::Type::special);
-        if (debugOption->is_set())
+        if (settings.logging.debug)
         {
             AixLog::Log::instance().add_logsink<AixLog::SinkCout>(AixLog::Severity::trace, AixLog::Type::all, "%Y-%m-%d %H-%M-%S.#ms [#severity] (#tag_func)");
-            if (!debugOption->value().empty())
-                AixLog::Log::instance().add_logsink<AixLog::SinkFile>(AixLog::Severity::trace, AixLog::Type::all, debugOption->value(),
+            if (!settings.logging.debug_logfile.empty())
+                AixLog::Log::instance().add_logsink<AixLog::SinkFile>(AixLog::Severity::trace, AixLog::Type::all, settings.logging.debug_logfile,
                                                                       "%Y-%m-%d %H-%M-%S.#ms [#severity] (#tag_func)");
         }
         else
@@ -151,6 +165,14 @@ int main(int argc, char* argv[])
             AixLog::Log::instance().add_logsink<AixLog::SinkCout>(AixLog::Severity::info, AixLog::Type::all, "%Y-%m-%d %H-%M-%S [#severity]");
         }
 
+        if (!streamValue->is_set())
+            settings.stream.pcmStreams.push_back(streamValue->value());
+
+        for (size_t n = 0; n < streamValue->count(); ++n)
+        {
+            LOG(INFO) << "Adding stream: " << streamValue->value(n) << "\n";
+            settings.stream.pcmStreams.push_back(streamValue->value(n));
+        }
 
         signal(SIGHUP, signal_handler);
         signal(SIGTERM, signal_handler);
@@ -194,12 +216,26 @@ int main(int argc, char* argv[])
 
 #if defined(HAS_AVAHI) || defined(HAS_BONJOUR)
         PublishZeroConf publishZeroConfg("Snapcast");
-        publishZeroConfg.publish({mDNSService("_snapcast._tcp", settings.port), mDNSService("_snapcast-jsonrpc._tcp", settings.controlPort),
-                                  mDNSService("_snapcastjsonrpc._tcp", settings.controlPort)});
+        vector<mDNSService> dns_services;
+        dns_services.emplace_back("_snapcast._tcp", settings.stream.port);
+        dns_services.emplace_back("_snapcast-stream._tcp", settings.stream.port);
+        if (settings.tcp.enabled)
+        {
+            dns_services.emplace_back("_snapcast-jsonrpc._tcp", settings.tcp.port);
+            dns_services.emplace_back("_snapcast-tcp._tcp", settings.tcp.port);
+        }
+        if (settings.http.enabled)
+        {
+            dns_services.emplace_back("_snapcast-http._tcp", settings.http.port);
+        }
+        publishZeroConfg.publish(dns_services);
 #endif
 
-        if (settings.bufferMs < 400)
-            settings.bufferMs = 400;
+        if (settings.stream.bufferMs < 400)
+        {
+            LOG(WARNING) << "Buffer is less than 400ms, changing to 400ms\n";
+            settings.stream.bufferMs = 400;
+        }
 
         boost::asio::io_context io_context;
         std::unique_ptr<StreamServer> streamServer(new StreamServer(&io_context, settings));

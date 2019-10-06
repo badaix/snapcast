@@ -21,6 +21,7 @@
 
 #include "common/queue.h"
 #include "message/message.h"
+#include "server_settings.hpp"
 #include <atomic>
 #include <boost/asio.hpp>
 #include <condition_variable>
@@ -29,7 +30,6 @@
 #include <set>
 #include <string>
 #include <thread>
-
 
 using boost::asio::ip::tcp;
 

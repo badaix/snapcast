@@ -32,8 +32,9 @@ using namespace std;
 using json = nlohmann::json;
 
 
-ControlServer::ControlServer(boost::asio::io_context* io_context, size_t port, ControlMessageReceiver* controlMessageReceiver)
-    : io_context_(io_context), port_(port), controlMessageReceiver_(controlMessageReceiver)
+ControlServer::ControlServer(boost::asio::io_context* io_context, const ServerSettings::TcpSettings& tcp_settings,
+                             const ServerSettings::HttpSettings& http_settings, ControlMessageReceiver* controlMessageReceiver)
+    : io_context_(io_context), controlMessageReceiver_(controlMessageReceiver), tcp_settings_(tcp_settings), http_settings_(http_settings)
 {
 }
 
@@ -95,7 +96,7 @@ void ControlServer::startAccept()
 
     auto accept_handler_http = [this](error_code ec, tcp::socket socket) {
         if (!ec)
-            handleAccept<ControlSessionHttp>(std::move(socket));
+            handleAccept<ControlSessionHttp>(std::move(socket), http_settings_);
         else
             LOG(ERROR) << "Error while accepting socket connection: " << ec.message() << "\n";
     };
@@ -114,8 +115,8 @@ void ControlServer::startAccept()
 }
 
 
-template <typename SessionType>
-void ControlServer::handleAccept(tcp::socket socket)
+template <typename SessionType, typename... Args>
+void ControlServer::handleAccept(tcp::socket socket, Args&&... args)
 {
     try
     {
@@ -126,7 +127,7 @@ void ControlServer::handleAccept(tcp::socket socket)
         setsockopt(socket.native_handle(), SOL_SOCKET, SO_SNDTIMEO, &tv, sizeof(tv));
         //	socket->set_option(boost::asio::ip::tcp::no_delay(false));
         SLOG(NOTICE) << "ControlServer::NewConnection: " << socket.remote_endpoint().address().to_string() << endl;
-        shared_ptr<SessionType> session = make_shared<SessionType>(this, std::move(socket));
+        shared_ptr<SessionType> session = make_shared<SessionType>(this, std::move(socket), std::forward<Args>(args)...);
         {
             std::lock_guard<std::recursive_mutex> mlock(session_mutex_);
             session->start();
@@ -179,10 +180,10 @@ std::pair<acceptor_ptr, acceptor_ptr> ControlServer::createAcceptors(size_t port
 
 void ControlServer::start()
 {
-    // TODO: should be possible to be disabled
-    acceptor_tcp_ = createAcceptors(port_);
-    // TODO: make port configurable, should be possible to be disabled
-    acceptor_http_ = createAcceptors(8080);
+    if (tcp_settings_.enabled)
+        acceptor_tcp_ = createAcceptors(tcp_settings_.port);
+    if (http_settings_.enabled)
+        acceptor_http_ = createAcceptors(http_settings_.port);
     startAccept();
 }
 
