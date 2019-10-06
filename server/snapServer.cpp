@@ -80,7 +80,6 @@ int main(int argc, char* argv[])
 
         // stream settings
         conf.add<Value<size_t>>("p", "stream.port", "Server port", settings.stream.port, &settings.stream.port);
-        conf.add<Value<size_t>>("", "stream.controlPort", "Remote control port", settings.tcp.port, &settings.tcp.port);
         auto streamValue = conf.add<Value<string>>(
             "s", "stream.stream", "URI of the PCM input stream.\nFormat: TYPE://host/path?name=NAME\n[&codec=CODEC]\n[&sampleformat=SAMPLEFORMAT]", pcmStream,
             &pcmStream);
@@ -88,9 +87,9 @@ int main(int argc, char* argv[])
         conf.add<Value<string>>("", "stream.sampleformat", "Default sample format", settings.stream.sampleFormat, &settings.stream.sampleFormat);
         conf.add<Value<string>>("c", "stream.codec", "Default transport codec\n(flac|ogg|pcm)[:options]\nType codec:? to get codec specific options",
                                 settings.stream.codec, &settings.stream.codec);
-        conf.add<Value<size_t>>("", "stream.streamBuffer", "Default stream read buffer [ms]", settings.stream.streamReadMs, &settings.stream.streamReadMs);
+        conf.add<Value<size_t>>("", "stream.stream_buffer", "Default stream read buffer [ms]", settings.stream.streamReadMs, &settings.stream.streamReadMs);
         conf.add<Value<int>>("b", "stream.buffer", "Buffer [ms]", settings.stream.bufferMs, &settings.stream.bufferMs);
-        conf.add<Switch>("", "stream.sendToMuted", "Send audio to muted clients", &settings.stream.sendAudioToMutedClients);
+        conf.add<Switch>("", "stream.send_to_muted", "Send audio to muted clients", &settings.stream.sendAudioToMutedClients);
 
         // HTTP RPC settings
         conf.add<Switch>("", "http.enabled", "enable HTTP Json RPC (HTTP POST and websockets)", &settings.http.enabled);
