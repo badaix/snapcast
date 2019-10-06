@@ -20,7 +20,7 @@
 #include <memory>
 #include <sys/resource.h>
 
-#include "../externals/popl/include/popl.hpp"
+#include "popl.hpp"
 #ifdef HAS_DAEMON
 #include "common/daemon.h"
 #endif
