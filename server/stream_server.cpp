@@ -16,7 +16,7 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
-#include "streamServer.h"
+#include "stream_server.hpp"
 #include "aixlog.hpp"
 #include "config.h"
 #include "message/hello.h"

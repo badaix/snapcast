@@ -16,7 +16,7 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
-#include "streamSession.h"
+#include "stream_session.hpp"
 
 #include "aixlog.hpp"
 #include "message/pcmChunk.h"

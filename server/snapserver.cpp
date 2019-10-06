@@ -32,7 +32,7 @@
 #include "encoder/encoderFactory.h"
 #include "message/message.h"
 #include "server_settings.hpp"
-#include "streamServer.h"
+#include "stream_server.hpp"
 #if defined(HAS_AVAHI) || defined(HAS_BONJOUR)
 #include "publishZeroConf/publishmDNS.h"
 #endif

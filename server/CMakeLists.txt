@@ -1,11 +1,11 @@
 set(SERVER_SOURCES
     config.cpp
-    controlServer.cpp
+    control_server.cpp
     control_session_tcp.cpp
     control_session_http.cpp
-    snapServer.cpp
-    streamServer.cpp
-    streamSession.cpp
+    snapserver.cpp
+    stream_server.cpp
+    stream_session.cpp
     encoder/encoderFactory.cpp
     encoder/pcmEncoder.cpp
     streamreader/base64.cpp

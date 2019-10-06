@@ -16,7 +16,7 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
-#include "controlServer.h"
+#include "control_server.hpp"
 #include "aixlog.hpp"
 #include "common/snapException.h"
 #include "common/utils.h"

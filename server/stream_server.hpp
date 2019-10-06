@@ -29,13 +29,13 @@
 
 #include "common/queue.h"
 #include "common/sampleFormat.h"
-#include "controlServer.h"
+#include "control_server.hpp"
 #include "jsonrpcpp.hpp"
 #include "message/codecHeader.h"
 #include "message/message.h"
 #include "message/serverSettings.h"
 #include "server_settings.hpp"
-#include "streamSession.h"
+#include "stream_session.hpp"
 #include "streamreader/streamManager.h"
 
 
