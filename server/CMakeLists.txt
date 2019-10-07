@@ -24,6 +24,7 @@ set(SERVER_LIBRARIES
     common)
 
 set(SERVER_INCLUDE
+    ${Boost_INCLUDE_DIR}
     ${CMAKE_SOURCE_DIR}/server
     ${CMAKE_SOURCE_DIR}/common)
 
