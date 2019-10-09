@@ -78,7 +78,7 @@ public:
 
 private:
     void startAccept();
-    void handleAccept(socket_ptr socket);
+    void handleAccept(tcp::socket socket);
     session_ptr getStreamSession(const std::string& mac) const;
     session_ptr getStreamSession(StreamSession* session) const;
     void ProcessRequest(const jsonrpcpp::request_ptr request, jsonrpcpp::entity_ptr& response, jsonrpcpp::notification_ptr& notification) const;

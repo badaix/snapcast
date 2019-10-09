@@ -57,13 +57,13 @@ class StreamSession
 {
 public:
     /// ctor. Received message from the client are passed to MessageReceiver
-    StreamSession(MessageReceiver* receiver, std::shared_ptr<tcp::socket> socket);
+    StreamSession(MessageReceiver* receiver, tcp::socket&& socket);
     ~StreamSession();
     void start();
     void stop();
 
     /// Sends a message to the client (synchronous)
-    bool send(const msg::message_ptr& message) const;
+    bool send(const msg::message_ptr& message);
 
     /// Sends a message to the client (asynchronous)
     void sendAsync(const msg::message_ptr& message, bool sendNow = false);
@@ -77,7 +77,7 @@ public:
 
     std::string getIP()
     {
-        return socket_->remote_endpoint().address().to_string();
+        return socket_.remote_endpoint().address().to_string();
     }
 
     void setPcmStream(PcmStreamPtr pcmStream);
@@ -95,7 +95,7 @@ protected:
     std::unique_ptr<std::thread> readerThread_;
     std::unique_ptr<std::thread> writerThread_;
     mutable std::mutex socketMutex_;
-    std::shared_ptr<tcp::socket> socket_;
+    tcp::socket socket_;
     MessageReceiver* messageReceiver_;
     Queue<std::shared_ptr<msg::BaseMessage>> messages_;
     size_t bufferMs_;

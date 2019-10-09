@@ -764,34 +764,39 @@ session_ptr StreamServer::getStreamSession(const std::string& clientId) const
 
 void StreamServer::startAccept()
 {
+    auto accept_handler = [this](error_code ec, tcp::socket socket) {
+        if (!ec)
+            handleAccept(std::move(socket));
+        else
+            LOG(ERROR) << "Error while accepting socket connection: " << ec.message() << "\n";
+    };
+
     if (acceptor_v4_)
     {
-        socket_ptr socket_v4 = make_shared<tcp::socket>(*io_context_);
-        acceptor_v4_->async_accept(*socket_v4, bind(&StreamServer::handleAccept, this, socket_v4));
+        acceptor_v4_->async_accept(accept_handler);
     }
     if (acceptor_v6_)
     {
-        socket_ptr socket_v6 = make_shared<tcp::socket>(*io_context_);
-        acceptor_v6_->async_accept(*socket_v6, bind(&StreamServer::handleAccept, this, socket_v6));
+        acceptor_v6_->async_accept(accept_handler);
     }
 }
 
 
-void StreamServer::handleAccept(socket_ptr socket)
+void StreamServer::handleAccept(tcp::socket socket)
 {
     try
     {
         struct timeval tv;
         tv.tv_sec = 5;
         tv.tv_usec = 0;
-        setsockopt(socket->native_handle(), SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
-        setsockopt(socket->native_handle(), SOL_SOCKET, SO_SNDTIMEO, &tv, sizeof(tv));
+        setsockopt(socket.native_handle(), SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
+        setsockopt(socket.native_handle(), SOL_SOCKET, SO_SNDTIMEO, &tv, sizeof(tv));
 
         /// experimental: turn on tcp::no_delay
-        socket->set_option(tcp::no_delay(true));
+        socket.set_option(tcp::no_delay(true));
 
-        SLOG(NOTICE) << "StreamServer::NewConnection: " << socket->remote_endpoint().address().to_string() << endl;
-        shared_ptr<StreamSession> session = make_shared<StreamSession>(this, socket);
+        SLOG(NOTICE) << "StreamServer::NewConnection: " << socket.remote_endpoint().address().to_string() << endl;
+        shared_ptr<StreamSession> session = make_shared<StreamSession>(this, std::move(socket));
 
         session->setBufferMs(settings_.stream.bufferMs);
         session->start();
