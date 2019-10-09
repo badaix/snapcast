@@ -27,7 +27,7 @@
 #if defined(HAS_FLAC)
 #include "decoder/flacDecoder.h"
 #endif
-#include "aixlog.hpp"
+#include "common/aixlog.hpp"
 #include "common/snapException.h"
 #include "message/hello.h"
 #include "message/time.h"

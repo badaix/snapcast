@@ -17,7 +17,7 @@
 ***/
 
 #include "stream.h"
-#include "aixlog.hpp"
+#include "common/aixlog.hpp"
 #include "timeProvider.h"
 #include <cmath>
 #include <iostream>

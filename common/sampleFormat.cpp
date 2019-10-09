@@ -20,7 +20,7 @@
 #include <sstream>
 #include <vector>
 
-#include "aixlog.hpp"
+#include "common/aixlog.hpp"
 #include "common/strCompat.h"
 #include "common/utils.h"
 #include "common/utils/string_utils.h"

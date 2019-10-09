@@ -20,7 +20,7 @@
 #include <memory>
 #include <sys/resource.h>
 
-#include "popl.hpp"
+#include "common/popl.hpp"
 #ifdef HAS_DAEMON
 #include "common/daemon.h"
 #endif
@@ -36,7 +36,7 @@
 #if defined(HAS_AVAHI) || defined(HAS_BONJOUR)
 #include "publishZeroConf/publishmDNS.h"
 #endif
-#include "aixlog.hpp"
+#include "common/aixlog.hpp"
 #include "config.h"
 
 

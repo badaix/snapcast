@@ -20,7 +20,7 @@
 #include <memory>
 #include <sys/stat.h>
 
-#include "aixlog.hpp"
+#include "common/aixlog.hpp"
 #include "common/snapException.h"
 #include "encoder/encoderFactory.h"
 #include "fileStream.h"

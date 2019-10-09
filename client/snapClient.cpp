@@ -20,8 +20,8 @@
 #include <sys/resource.h>
 
 #include "browseZeroConf/browsemDNS.h"
+#include "common/popl.hpp"
 #include "controller.h"
-#include "popl.hpp"
 
 #ifdef HAS_ALSA
 #include "player/alsaPlayer.h"
@@ -29,7 +29,7 @@
 #ifdef HAS_DAEMON
 #include "common/daemon.h"
 #endif
-#include "aixlog.hpp"
+#include "common/aixlog.hpp"
 #include "common/signalHandler.h"
 #include "common/strCompat.h"
 #include "common/utils.h"

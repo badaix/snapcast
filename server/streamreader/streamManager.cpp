@@ -18,7 +18,7 @@
 
 #include "streamManager.h"
 #include "airplayStream.h"
-#include "aixlog.hpp"
+#include "common/aixlog.hpp"
 #include "common/snapException.h"
 #include "common/strCompat.h"
 #include "common/utils.h"

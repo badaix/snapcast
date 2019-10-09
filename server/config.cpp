@@ -17,7 +17,7 @@
 ***/
 
 #include "config.h"
-#include "aixlog.hpp"
+#include "common/aixlog.hpp"
 #include "common/snapException.h"
 #include "common/strCompat.h"
 #include "common/utils/file_utils.h"

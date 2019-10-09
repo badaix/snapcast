@@ -18,7 +18,7 @@
 ***/
 
 #include "browseAvahi.h"
-#include "aixlog.hpp"
+#include "common/aixlog.hpp"
 #include "common/snapException.h"
 #include <assert.h>
 #include <iostream>

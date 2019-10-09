@@ -19,7 +19,7 @@
 #include <cstdlib>
 #include <thread>
 
-#include "aixlog.hpp"
+#include "common/aixlog.hpp"
 #include "publishBonjour.h"
 
 typedef union {

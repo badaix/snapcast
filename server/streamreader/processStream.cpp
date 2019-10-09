@@ -18,7 +18,7 @@
 
 
 #include "processStream.h"
-#include "aixlog.hpp"
+#include "common/aixlog.hpp"
 #include "common/snapException.h"
 #include "common/utils.h"
 #include "common/utils/string_utils.h"

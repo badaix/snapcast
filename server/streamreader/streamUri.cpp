@@ -17,7 +17,7 @@
 ***/
 
 #include "streamUri.h"
-#include "aixlog.hpp"
+#include "common/aixlog.hpp"
 #include "common/strCompat.h"
 #include "common/utils/string_utils.h"
 

@@ -11,7 +11,7 @@
 #include <sys/socket.h>
 #endif
 
-#include "aixlog.hpp"
+#include "common/aixlog.hpp"
 #include "common/snapException.h"
 
 using namespace std;

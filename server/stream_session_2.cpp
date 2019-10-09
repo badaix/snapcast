@@ -21,15 +21,16 @@
 #include "common/aixlog.hpp"
 #include "message/pcmChunk.h"
 #include <iostream>
-#include <mutex>
 
 using namespace std;
 
 
 
 StreamSession::StreamSession(MessageReceiver* receiver, tcp::socket&& socket)
-    : active_(false), readerThread_(nullptr), writerThread_(nullptr), socket_(std::move(socket)), messageReceiver_(receiver), pcmStream_(nullptr)
+    : active_(false), writerThread_(nullptr), socket_(std::move(socket)), messageReceiver_(receiver), pcmStream_(nullptr)
 {
+    base_msg_size_ = baseMessage_.getSize();
+    buffer_.resize(base_msg_size_);
 }
 
 
@@ -51,26 +52,84 @@ const PcmStreamPtr StreamSession::pcmStream() const
 }
 
 
+void StreamSession::read_message()
+{
+    auto self(shared_from_this());
+    socket_.async_read_some(boost::asio::buffer(&buffer_[buffer_pos_], baseMessage_.size - buffer_pos_),
+                            [this, self](boost::system::error_code ec, std::size_t length) {
+                                if (!ec)
+                                {
+                                    buffer_pos_ += length;
+                                    if (buffer_pos_ + 1 < baseMessage_.size)
+                                        read_message();
+                                    else
+                                    {
+                                        tv t;
+                                        baseMessage_.received = t;
+                                        if (messageReceiver_ != nullptr)
+                                            messageReceiver_->onMessageReceived(this, baseMessage_, &buffer_[0]);
+                                        buffer_pos_ = 0;
+                                        read_header();
+                                    }
+                                }
+                            });
+}
+
+void StreamSession::read_header()
+{
+    auto self(shared_from_this());
+    socket_.async_read_some(boost::asio::buffer(&buffer_[buffer_pos_], base_msg_size_ - buffer_pos_),
+                            [this, self](boost::system::error_code ec, std::size_t length) {
+                                if (!ec)
+                                {
+                                    buffer_pos_ += length;
+                                    if (buffer_pos_ + 1 < base_msg_size_)
+                                        read_header();
+                                    else
+                                    {
+                                        baseMessage_.deserialize(&buffer_[0]);
+
+                                        if ((baseMessage_.type > message_type::kLast) || (baseMessage_.type < message_type::kFirst))
+                                        {
+                                            stringstream ss;
+                                            ss << "unknown message type received: " << baseMessage_.type << ", size: " << baseMessage_.size;
+                                            throw std::runtime_error(ss.str().c_str());
+                                        }
+                                        else if (baseMessage_.size > msg::max_size)
+                                        {
+                                            stringstream ss;
+                                            ss << "received message of type " << baseMessage_.type << " to large: " << baseMessage_.size;
+                                            throw std::runtime_error(ss.str().c_str());
+                                        }
+
+                                        //	LOG(INFO) << "getNextMessage: " << baseMessage.type << ", size: " << baseMessage.size << ", id: " <<
+                                        // baseMessage.id << ", refers: " <<
+                                        // baseMessage.refersTo << "\n";
+                                        if (baseMessage_.size > buffer_.size())
+                                            buffer_.resize(baseMessage_.size);
+                                        buffer_pos_ = 0;
+                                        read_message();
+                                    }
+                                }
+                            });
+}
+
+
 void StreamSession::start()
 {
-    {
-        std::lock_guard<std::mutex> activeLock(activeMutex_);
-        active_ = true;
-    }
-    readerThread_.reset(new thread(&StreamSession::reader, this));
+    active_ = true;
+    //   readerThread_.reset(new thread(&StreamSession::reader, this));
+    read_header();
     writerThread_.reset(new thread(&StreamSession::writer, this));
 }
 
 
 void StreamSession::stop()
 {
-    {
-        std::lock_guard<std::mutex> activeLock(activeMutex_);
-        if (!active_)
-            return;
+    if (!active_)
+        return;
 
-        active_ = false;
-    }
+    active_ = false;
 
     try
     {
@@ -81,11 +140,6 @@ void StreamSession::stop()
         socket_.close(ec);
         if (ec)
             LOG(ERROR) << "Error in socket close: " << ec.message() << "\n";
-        if (readerThread_ && readerThread_->joinable())
-        {
-            LOG(DEBUG) << "StreamSession joining readerThread\n";
-            readerThread_->join();
-        }
         if (writerThread_ && writerThread_->joinable())
         {
             LOG(DEBUG) << "StreamSession joining writerThread\n";
@@ -97,19 +151,8 @@ void StreamSession::stop()
     {
     }
 
-    readerThread_ = nullptr;
     writerThread_ = nullptr;
     LOG(DEBUG) << "StreamSession stopped\n";
-}
-
-
-void StreamSession::socketRead(void* _to, size_t _bytes)
-{
-    size_t read = 0;
-    do
-    {
-        read += socket_.read_some(boost::asio::buffer((char*)_to + read, _bytes - read));
-    } while (active_ && (read < _bytes));
 }
 
 
@@ -145,7 +188,6 @@ bool StreamSession::send(const msg::message_ptr& message)
 {
     // TODO on exception: set active = false
     //	LOG(INFO) << "send: " << message->type << ", size: " << message->getSize() << ", id: " << message->id << ", refers: " << message->refersTo << "\n";
-    std::lock_guard<std::mutex> activeLock(activeMutex_);
     if (!active_)
         return false;
 
@@ -159,59 +201,6 @@ bool StreamSession::send(const msg::message_ptr& message)
     return true;
 }
 
-
-void StreamSession::getNextMessage()
-{
-    msg::BaseMessage baseMessage;
-    size_t baseMsgSize = baseMessage.getSize();
-    vector<char> buffer(baseMsgSize);
-    socketRead(&buffer[0], baseMsgSize);
-    baseMessage.deserialize(&buffer[0]);
-
-    if ((baseMessage.type > message_type::kLast) || (baseMessage.type < message_type::kFirst))
-    {
-        stringstream ss;
-        ss << "unknown message type received: " << baseMessage.type << ", size: " << baseMessage.size;
-        throw std::runtime_error(ss.str().c_str());
-    }
-    else if (baseMessage.size > msg::max_size)
-    {
-        stringstream ss;
-        ss << "received message of type " << baseMessage.type << " to large: " << baseMessage.size;
-        throw std::runtime_error(ss.str().c_str());
-    }
-
-    //	LOG(INFO) << "getNextMessage: " << baseMessage.type << ", size: " << baseMessage.size << ", id: " << baseMessage.id << ", refers: " <<
-    // baseMessage.refersTo << "\n";
-    if (baseMessage.size > buffer.size())
-        buffer.resize(baseMessage.size);
-
-    socketRead(&buffer[0], baseMessage.size);
-    tv t;
-    baseMessage.received = t;
-
-    if (active_ && (messageReceiver_ != nullptr))
-        messageReceiver_->onMessageReceived(this, baseMessage, &buffer[0]);
-}
-
-
-void StreamSession::reader()
-{
-    try
-    {
-        while (active_)
-        {
-            getNextMessage();
-        }
-    }
-    catch (const std::exception& e)
-    {
-        SLOG(ERROR) << "Exception in StreamSession::reader(): " << e.what() << endl;
-    }
-
-    if (active_ && (messageReceiver_ != nullptr))
-        messageReceiver_->onDisconnect(this);
-}
 
 
 void StreamSession::writer()

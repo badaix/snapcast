@@ -18,7 +18,7 @@
 ***/
 
 #include "publishAvahi.h"
-#include "aixlog.hpp"
+#include "common/aixlog.hpp"
 #include <cstdio>
 #include <cstdlib>
 

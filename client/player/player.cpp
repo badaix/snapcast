@@ -19,7 +19,7 @@
 #include <cmath>
 #include <iostream>
 
-#include "aixlog.hpp"
+#include "common/aixlog.hpp"
 #include "player.h"
 
 

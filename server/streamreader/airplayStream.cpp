@@ -17,8 +17,8 @@
 ***/
 
 #include "airplayStream.h"
-#include "aixlog.hpp"
 #include "base64.h"
+#include "common/aixlog.hpp"
 #include "common/snapException.h"
 #include "common/utils.h"
 #include "common/utils/string_utils.h"

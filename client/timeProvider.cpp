@@ -17,7 +17,7 @@
 ***/
 
 #include "timeProvider.h"
-#include "aixlog.hpp"
+#include "common/aixlog.hpp"
 
 
 TimeProvider::TimeProvider() : diffToServer_(0)

@@ -19,7 +19,7 @@
 #ifndef PLAYER_H
 #define PLAYER_H
 
-#include "aixlog.hpp"
+#include "common/aixlog.hpp"
 #include "common/endian.hpp"
 #include "pcmDevice.h"
 #include "stream.h"

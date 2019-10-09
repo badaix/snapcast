@@ -17,7 +17,7 @@
 ***/
 
 #include "clientConnection.h"
-#include "aixlog.hpp"
+#include "common/aixlog.hpp"
 #include "common/snapException.h"
 #include "common/strCompat.h"
 #include "message/hello.h"

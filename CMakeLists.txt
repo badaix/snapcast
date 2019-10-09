@@ -136,27 +136,6 @@ endif()
 
 include_directories(${INCLUDE_DIRS})
 
-cmake_push_check_state()
-set (CMAKE_REQUIRED_INCLUDES "${CMAKE_SOURCE_DIR}/externals/asio/asio/include")
-check_include_file_cxx(asio.hpp HAS_ASIO_HPP "-pthread -DASIO_STANDALONE -DASIO_DISABLE_STD_FUTURE -std=c++11")
-cmake_pop_check_state()
-if(HAS_ASIO_HPP)
-    add_definitions("-DHAS_ASIO_HPP -DASIO_STANDALONE")
-else()
-    message(FATAL_ERROR "Need to have asio installed")
-endif()
-
-list(APPEND CMAKE_REQUIRED_INCLUDES "${INCLUDE_DIRS}")
-
-check_include_file_cxx(popl.hpp HAS_POPL_HPP -std=c++11)
-if(NOT HAS_POPL_HPP)
-    message(FATAL_ERROR "Need to have popl installed")
-endif()
-
-check_include_file_cxx(aixlog.hpp HAS_AIXLOG_HPP -std=c++11)
-if(NOT HAS_AIXLOG_HPP)
-    message(FATAL_ERROR "Need to have aixlog installed")
-endif()
 
 include(${CMAKE_SOURCE_DIR}/cmake/CheckCXX11StringSupport.cmake)
 CHECK_CXX11_STRING_SUPPORT(HAS_CXX11_STRING_SUPPORT)

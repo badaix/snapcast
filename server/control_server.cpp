@@ -17,7 +17,7 @@
 ***/
 
 #include "control_server.hpp"
-#include "aixlog.hpp"
+#include "common/aixlog.hpp"
 #include "common/snapException.h"
 #include "common/utils.h"
 #include "config.h"

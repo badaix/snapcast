@@ -20,7 +20,7 @@
 #include <cstring>
 #include <iostream>
 
-#include "aixlog.hpp"
+#include "common/aixlog.hpp"
 #include "common/endian.hpp"
 #include "common/snapException.h"
 #include "oggDecoder.h"

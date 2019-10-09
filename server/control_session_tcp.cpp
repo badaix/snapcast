@@ -17,7 +17,7 @@
 ***/
 
 #include "control_session_tcp.hpp"
-#include "aixlog.hpp"
+#include "common/aixlog.hpp"
 #include "message/pcmChunk.h"
 
 using namespace std;
