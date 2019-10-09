@@ -34,7 +34,7 @@ endif
 DEBUG=-O3
 
 
-CXXFLAGS += $(ADD_CFLAGS) -std=c++0x -Wall -Wno-unused-function $(DEBUG) -DHAS_FLAC -DHAS_OGG -DASIO_STANDALONE -DVERSION=\"$(VERSION)\" -I. -I.. -isystem ../externals/asio/asio/include -I../externals/popl/include -I../externals/aixlog/include -I../externals -I../common
+CXXFLAGS += $(ADD_CFLAGS) -std=c++0x -Wall -Wpedantic -Wno-unused-function $(DEBUG) -DHAS_FLAC -DHAS_OGG -DASIO_STANDALONE -DVERSION=\"$(VERSION)\" -I. -I.. -isystem ../externals/asio/asio/include -I../externals/popl/include -I../externals/aixlog/include -I../externals -I../common
 LDFLAGS   = $(ADD_LDFLAGS) -logg -lFLAC
 OBJ       = snapClient.o stream.o clientConnection.o timeProvider.o player/player.o decoder/pcmDecoder.o decoder/oggDecoder.o decoder/flacDecoder.o controller.o ../common/sampleFormat.o
 
