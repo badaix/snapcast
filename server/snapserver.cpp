@@ -74,7 +74,7 @@ int main(int argc, char* argv[])
 
         // debug settings
         OptionParser conf("");
-        conf.add<Switch>("", "logging.debug", "enable debug logging", &settings.logging.debug);
+        conf.add<Value<bool>>("", "logging.debug", "enable debug logging", settings.logging.debug, &settings.logging.debug);
         conf.add<Value<string>>("", "logging.debug_logfile", "log file name for the debug logs (debug must be enabled)", settings.logging.debug_logfile,
                                 &settings.logging.debug_logfile);
 
@@ -89,15 +89,16 @@ int main(int argc, char* argv[])
                                 settings.stream.codec, &settings.stream.codec);
         conf.add<Value<size_t>>("", "stream.stream_buffer", "Default stream read buffer [ms]", settings.stream.streamReadMs, &settings.stream.streamReadMs);
         conf.add<Value<int>>("b", "stream.buffer", "Buffer [ms]", settings.stream.bufferMs, &settings.stream.bufferMs);
-        conf.add<Switch>("", "stream.send_to_muted", "Send audio to muted clients", &settings.stream.sendAudioToMutedClients);
+        conf.add<Value<bool>>("", "stream.send_to_muted", "Send audio to muted clients", settings.stream.sendAudioToMutedClients,
+                              &settings.stream.sendAudioToMutedClients);
 
         // HTTP RPC settings
-        conf.add<Switch>("", "http.enabled", "enable HTTP Json RPC (HTTP POST and websockets)", &settings.http.enabled);
+        conf.add<Value<bool>>("", "http.enabled", "enable HTTP Json RPC (HTTP POST and websockets)", settings.http.enabled, &settings.http.enabled);
         conf.add<Value<size_t>>("", "http.port", "which port the server should listen to", settings.http.port, &settings.http.port);
         conf.add<Value<string>>("", "http.doc_root", "serve a website from the doc_root location", settings.http.doc_root, &settings.http.doc_root);
 
         // TCP RPC settings
-        conf.add<Switch>("", "tcp.enabled", "enable TCP Json RPC)", &settings.tcp.enabled);
+        conf.add<Value<bool>>("", "tcp.enabled", "enable TCP Json RPC)", settings.tcp.enabled, &settings.tcp.enabled);
         conf.add<Value<size_t>>("", "tcp.port", "which port the server should listen to", settings.tcp.port, &settings.tcp.port);
 
         // TODO: Should be possible to override settings on command line
