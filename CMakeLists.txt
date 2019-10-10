@@ -57,7 +57,6 @@ endif()
 
 set(INCLUDE_DIRS
     "${CMAKE_SOURCE_DIR}"
-    "${CMAKE_SOURCE_DIR}/externals/asio/asio/include"
     "${CMAKE_INSTALL_INCLUDEDIR}")
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/")
