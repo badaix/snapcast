@@ -31,11 +31,12 @@ else
 endif
 
 # Simplify building debuggable executables 'make DEBUG=-g STRIP=echo'
-DEBUG=-O3
+DEBUG=-O2
+SANITIZE=
+#-fsanitize=thread
 
-
-CXXFLAGS += $(ADD_CFLAGS) -std=c++14 -Wall -Wpedantic -Wno-unused-function $(DEBUG) -DHAS_FLAC -DHAS_OGG -DHAS_VORBIS -DHAS_VORBIS_ENC -DVERSION=\"$(VERSION)\" -I. -I.. -I../common
-LDFLAGS   = $(ADD_LDFLAGS) -lvorbis -lvorbisenc -logg -lFLAC 
+CXXFLAGS += $(ADD_CFLAGS) $(SANITIZE) -std=c++14 -Wall -Wpedantic -Wno-unused-function $(DEBUG) -DHAS_FLAC -DHAS_OGG -DHAS_VORBIS -DHAS_VORBIS_ENC -DVERSION=\"$(VERSION)\" -I. -I.. -I../common
+LDFLAGS   = $(ADD_LDFLAGS) $(SANITIZE) -lvorbis -lvorbisenc -logg -lFLAC 
 OBJ       = snapserver.o config.o control_server.o control_session_tcp.o control_session_http.o stream_server.o stream_session.o streamreader/streamUri.o streamreader/base64.o streamreader/streamManager.o streamreader/pcmStream.o streamreader/pipeStream.o streamreader/fileStream.o streamreader/processStream.o streamreader/airplayStream.o streamreader/spotifyStream.o streamreader/watchdog.o encoder/encoderFactory.o encoder/flacEncoder.o encoder/pcmEncoder.o encoder/oggEncoder.o ../common/sampleFormat.o
 
 ifneq (,$(TARGET))

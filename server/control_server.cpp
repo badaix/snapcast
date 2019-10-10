@@ -47,23 +47,19 @@ ControlServer::~ControlServer()
 
 void ControlServer::cleanup()
 {
-    std::lock_guard<std::recursive_mutex> mlock(session_mutex_);
-    for (auto it = sessions_.begin(); it != sessions_.end();)
+    auto new_end = std::remove_if(sessions_.begin(), sessions_.end(), [](std::weak_ptr<ControlSession> session) { return session.expired(); });
+    auto count = distance(new_end, sessions_.end());
+    if (count > 0)
     {
-        if (it->expired())
-        {
-            SLOG(ERROR) << "Session inactive. Removing\n";
-            sessions_.erase(it++);
-        }
-        else
-            ++it;
+        SLOG(ERROR) << "Removing " << count << " inactive session(s), active sessions: " << sessions_.size() - count << "\n";
+        sessions_.erase(new_end, sessions_.end());
     }
 }
 
 
 void ControlServer::send(const std::string& message, const ControlSession* excludeSession)
 {
-    cleanup();
+    std::lock_guard<std::recursive_mutex> mlock(session_mutex_);
     for (auto s : sessions_)
     {
         if (auto session = s.lock())
@@ -72,6 +68,7 @@ void ControlServer::send(const std::string& message, const ControlSession* exclu
                 session->sendAsync(message);
         }
     }
+    cleanup();
 }
 
 
@@ -203,6 +200,7 @@ void ControlServer::stop()
     cancel_accept(acceptor_http_.first.get());
     cancel_accept(acceptor_http_.second.get());
     std::lock_guard<std::recursive_mutex> mlock(session_mutex_);
+    cleanup();
     for (auto s : sessions_)
     {
         if (auto session = s.lock())

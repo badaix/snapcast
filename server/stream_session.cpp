@@ -75,12 +75,15 @@ void StreamSession::stop()
     try
     {
         boost::system::error_code ec;
-        socket_.shutdown(boost::asio::ip::tcp::socket::shutdown_both, ec);
-        if (ec)
-            LOG(ERROR) << "Error in socket shutdown: " << ec.message() << "\n";
-        socket_.close(ec);
-        if (ec)
-            LOG(ERROR) << "Error in socket close: " << ec.message() << "\n";
+        {
+            std::lock_guard<std::mutex> socketLock(socketMutex_);
+            socket_.shutdown(boost::asio::ip::tcp::socket::shutdown_both, ec);
+            if (ec)
+                LOG(ERROR) << "Error in socket shutdown: " << ec.message() << "\n";
+            socket_.close(ec);
+            if (ec)
+                LOG(ERROR) << "Error in socket close: " << ec.message() << "\n";
+        }
         if (readerThread_ && readerThread_->joinable())
         {
             LOG(DEBUG) << "StreamSession joining readerThread\n";
@@ -145,10 +148,12 @@ bool StreamSession::send(const msg::message_ptr& message)
 {
     // TODO on exception: set active = false
     //	LOG(INFO) << "send: " << message->type << ", size: " << message->getSize() << ", id: " << message->id << ", refers: " << message->refersTo << "\n";
-    std::lock_guard<std::mutex> activeLock(activeMutex_);
-    if (!active_)
-        return false;
-
+    std::lock_guard<std::mutex> socketLock(socketMutex_);
+    {
+        std::lock_guard<std::mutex> activeLock(activeMutex_);
+        if (!active_)
+            return false;
+    }
     boost::asio::streambuf streambuf;
     std::ostream stream(&streambuf);
     tv t;
