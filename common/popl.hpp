@@ -716,7 +716,7 @@ template <>
 inline void Value<bool>::parse(OptionName what_name, const char* value)
 {
     bool val =
-        ((value != nullptr) && (strcmp(value, "1") == 0) || (strcmp(value, "true") == 0) || (strcmp(value, "True") == 0) || (strcmp(value, "TRUE") == 0));
+        ((value != nullptr) && ((strcmp(value, "1") == 0) || (strcmp(value, "true") == 0) || (strcmp(value, "True") == 0) || (strcmp(value, "TRUE") == 0)));
     add_value(val);
 }
 
