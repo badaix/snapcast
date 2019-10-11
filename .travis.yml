@@ -11,8 +11,9 @@ matrix:
         apt:
           sources:
             - ubuntu-toolchain-r-test
+            - sourceline: 'ppa:mhier/libboost-latest'
           packages:
-            - g++-4.9 libasound2-dev libvorbisidec-dev libvorbis-dev libflac-dev alsa-utils libavahi-client-dev avahi-daemon
+            - g++-4.9 boost1.70 libasound2-dev libvorbisidec-dev libvorbis-dev libflac-dev alsa-utils libavahi-client-dev avahi-daemon
       env:
         - MATRIX_EVAL="CC=gcc-4.9 && CXX=g++-4.9"
 
@@ -21,8 +22,9 @@ matrix:
         apt:
           sources:
             - ubuntu-toolchain-r-test
+            - sourceline: 'ppa:mhier/libboost-latest'
           packages:
-            - g++-5 libasound2-dev libvorbisidec-dev libvorbis-dev libflac-dev alsa-utils libavahi-client-dev avahi-daemon
+            - g++-5 boost1.70 libasound2-dev libvorbisidec-dev libvorbis-dev libflac-dev alsa-utils libavahi-client-dev avahi-daemon
       env:
          - MATRIX_EVAL="CC=gcc-5 && CXX=g++-5"
 
@@ -31,8 +33,9 @@ matrix:
         apt:
           sources:
             - ubuntu-toolchain-r-test
+            - sourceline: 'ppa:mhier/libboost-latest'
           packages:
-            - g++-6 libasound2-dev libvorbisidec-dev libvorbis-dev libflac-dev alsa-utils libavahi-client-dev avahi-daemon
+            - g++-6 boost1.70 libasound2-dev libvorbisidec-dev libvorbis-dev libflac-dev alsa-utils libavahi-client-dev avahi-daemon
       env:
         - MATRIX_EVAL="CC=gcc-6 && CXX=g++-6"
 
@@ -41,8 +44,9 @@ matrix:
         apt:
           sources:
             - ubuntu-toolchain-r-test
+            - sourceline: 'ppa:mhier/libboost-latest'
           packages:
-            - g++-7 libasound2-dev libvorbisidec-dev libvorbis-dev libflac-dev alsa-utils libavahi-client-dev avahi-daemon
+            - g++-7 boost1.70 libasound2-dev libvorbisidec-dev libvorbis-dev libflac-dev alsa-utils libavahi-client-dev avahi-daemon
       env:
         - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7"
 
@@ -52,8 +56,9 @@ matrix:
         apt:
           sources:
             - llvm-toolchain-trusty-3.9
+            - sourceline: 'ppa:mhier/libboost-latest'
           packages:
-            - clang-3.9 libasound2-dev libvorbisidec-dev libvorbis-dev libflac-dev alsa-utils libavahi-client-dev avahi-daemon
+            - clang-3.9 boost1.70 libasound2-dev libvorbisidec-dev libvorbis-dev libflac-dev alsa-utils libavahi-client-dev avahi-daemon
       env:
         - MATRIX_EVAL="CC=clang-3.9 && CXX=clang++-3.9"
 
@@ -63,8 +68,9 @@ matrix:
         apt:
           sources:
             - llvm-toolchain-trusty-4.0
+            - sourceline: 'ppa:mhier/libboost-latest'
           packages:
-            - clang-4.0 libasound2-dev libvorbisidec-dev libvorbis-dev libflac-dev alsa-utils libavahi-client-dev avahi-daemon
+            - clang-4.0 boost1.70 libasound2-dev libvorbisidec-dev libvorbis-dev libflac-dev alsa-utils libavahi-client-dev avahi-daemon
       env:
         - MATRIX_EVAL="CC=clang-4.0 && CXX=clang++-4.0"
 
@@ -74,8 +80,9 @@ matrix:
         apt:
           sources:
             - llvm-toolchain-trusty-5.0
+            - sourceline: 'ppa:mhier/libboost-latest'
           packages:
-            - clang-5.0 libasound2-dev libvorbisidec-dev libvorbis-dev libflac-dev alsa-utils libavahi-client-dev avahi-daemon
+            - clang-5.0 boost1.70 libasound2-dev libvorbisidec-dev libvorbis-dev libflac-dev alsa-utils libavahi-client-dev avahi-daemon
       env:
         - MATRIX_EVAL="CC=clang-5.0 && CXX=clang++-5.0"
 
@@ -83,17 +90,17 @@ matrix:
     - os: osx
       osx_image: xcode9.4
       env:
-        - MATRIX_EVAL="brew update && brew install flac libvorbis"
+        - MATRIX_EVAL="brew update && brew install flac libvorbis boost"
 
     - os: osx
       osx_image: xcode10.3
       env:
-        - MATRIX_EVAL="brew update && brew install flac libvorbis"
+        - MATRIX_EVAL="brew update && brew install flac libvorbis boost"
 
     - os: osx
       osx_image: xcode11
       env:
-        - MATRIX_EVAL="brew update && brew install flac libvorbis"
+        - MATRIX_EVAL="brew update && brew install flac libvorbis boost"
 
 #    - os: osx
 #      osx_image: xcode8
@@ -106,8 +113,4 @@ before_install:
 script:
   - mkdir build
   - cd build
-  - cmake ../externals/aixlog && make && sudo make install
-  - rm -rf *
-  - cmake ../externals/popl && make && sudo make install
-  - rm -rf *
   - cmake .. && make && sudo make install

@@ -98,17 +98,11 @@ void ControlServer::startAccept()
             LOG(ERROR) << "Error while accepting socket connection: " << ec.message() << "\n";
     };
 
-    if (acceptor_tcp_.first)
-        acceptor_tcp_.first->async_accept(accept_handler_tcp);
+    for (auto& acceptor : acceptor_tcp_)
+        acceptor->async_accept(accept_handler_tcp);
 
-    if (acceptor_tcp_.second)
-        acceptor_tcp_.second->async_accept(accept_handler_tcp);
-
-    if (acceptor_http_.first)
-        acceptor_http_.first->async_accept(accept_handler_http);
-
-    if (acceptor_http_.second)
-        acceptor_http_.second->async_accept(accept_handler_http);
+    for (auto& acceptor : acceptor_http_)
+        acceptor->async_accept(accept_handler_http);
 }
 
 
@@ -139,66 +133,35 @@ void ControlServer::handleAccept(tcp::socket socket, Args&&... args)
     startAccept();
 }
 
-std::pair<acceptor_ptr, acceptor_ptr> ControlServer::createAcceptors(size_t port)
-{
-    bool is_v6_only(true);
-    tcp::endpoint endpoint_tcp_v6(tcp::v6(), port);
-    acceptor_ptr acceptor_v4;
-    acceptor_ptr acceptor_v6;
-    try
-    {
-        acceptor_v6 = make_unique<tcp::acceptor>(*io_context_, endpoint_tcp_v6);
-        boost::system::error_code ec;
-        acceptor_v6->set_option(boost::asio::ip::v6_only(true), ec);
-        boost::asio::ip::v6_only option;
-        acceptor_v6->get_option(option);
-        is_v6_only = option.value();
-        LOG(DEBUG) << "IPv6 only: " << is_v6_only << "\n";
-    }
-    catch (const boost::system::system_error& e)
-    {
-        LOG(ERROR) << "error creating TCP acceptor: " << e.what() << ", code: " << e.code() << "\n";
-    }
 
-    if (!acceptor_v6 || is_v6_only)
-    {
-        tcp::endpoint endpoint_v4(tcp::v4(), port);
-        try
-        {
-            acceptor_v4 = make_unique<tcp::acceptor>(*io_context_, endpoint_v4);
-        }
-        catch (const boost::system::system_error& e)
-        {
-            LOG(ERROR) << "error creating TCP acceptor: " << e.what() << ", code: " << e.code() << "\n";
-        }
-    }
-    return make_pair<acceptor_ptr, acceptor_ptr>(std::move(acceptor_v4), std::move(acceptor_v6));
-}
 
 void ControlServer::start()
 {
     if (tcp_settings_.enabled)
-        acceptor_tcp_ = createAcceptors(tcp_settings_.port);
+    {
+        for (const auto& address : tcp_settings_.bind_to_address)
+            acceptor_tcp_.emplace_back(
+                make_unique<tcp::acceptor>(*io_context_, tcp::endpoint(boost::asio::ip::address::from_string(address), tcp_settings_.port)));
+    }
     if (http_settings_.enabled)
-        acceptor_http_ = createAcceptors(http_settings_.port);
+    {
+        for (const auto& address : http_settings_.bind_to_address)
+            acceptor_http_.emplace_back(
+                make_unique<tcp::acceptor>(*io_context_, tcp::endpoint(boost::asio::ip::address::from_string(address), http_settings_.port)));
+    }
+
     startAccept();
 }
 
 
 void ControlServer::stop()
 {
-    auto cancel_accept = [](tcp::acceptor* acceptor) {
-        if (acceptor)
-        {
-            acceptor->cancel();
-            acceptor = nullptr;
-        }
-    };
+    for (auto& acceptor : acceptor_tcp_)
+        acceptor->cancel();
 
-    cancel_accept(acceptor_tcp_.first.get());
-    cancel_accept(acceptor_tcp_.second.get());
-    cancel_accept(acceptor_http_.first.get());
-    cancel_accept(acceptor_http_.second.get());
+    for (auto& acceptor : acceptor_http_)
+        acceptor->cancel();
+
     std::lock_guard<std::recursive_mutex> mlock(session_mutex_);
     cleanup();
     for (auto s : sessions_)

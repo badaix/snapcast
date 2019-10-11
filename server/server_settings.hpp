@@ -28,6 +28,7 @@ struct ServerSettings
     {
         bool enabled{true};
         size_t port{1780};
+        std::vector<std::string> bind_to_address{{"0.0.0.0"}};
         std::string doc_root{""};
     };
 
@@ -35,6 +36,7 @@ struct ServerSettings
     {
         bool enabled{true};
         size_t port{1705};
+        std::vector<std::string> bind_to_address{{"0.0.0.0"}};
     };
 
     struct StreamSettings

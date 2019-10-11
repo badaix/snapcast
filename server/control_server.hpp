@@ -60,7 +60,6 @@ public:
 
 private:
     void startAccept();
-    std::pair<acceptor_ptr, acceptor_ptr> createAcceptors(size_t port);
 
     template <typename SessionType, typename... Args>
     void handleAccept(tcp::socket socket, Args&&... args);
@@ -69,8 +68,8 @@ private:
     mutable std::recursive_mutex session_mutex_;
     std::vector<std::weak_ptr<ControlSession>> sessions_;
 
-    std::pair<acceptor_ptr, acceptor_ptr> acceptor_tcp_;
-    std::pair<acceptor_ptr, acceptor_ptr> acceptor_http_;
+    std::vector<acceptor_ptr> acceptor_tcp_;
+    std::vector<acceptor_ptr> acceptor_http_;
 
     boost::asio::io_context* io_context_;
     ServerSettings::TcpSettings tcp_settings_;

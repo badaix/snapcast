@@ -95,11 +95,15 @@ int main(int argc, char* argv[])
         // HTTP RPC settings
         conf.add<Value<bool>>("", "http.enabled", "enable HTTP Json RPC (HTTP POST and websockets)", settings.http.enabled, &settings.http.enabled);
         conf.add<Value<size_t>>("", "http.port", "which port the server should listen to", settings.http.port, &settings.http.port);
+        auto http_bind_to_address = conf.add<Value<string>>("", "http.bind_to_address", "address for the server to listen on",
+                                                            settings.http.bind_to_address.front(), &settings.http.bind_to_address[0]);
         conf.add<Value<string>>("", "http.doc_root", "serve a website from the doc_root location", settings.http.doc_root, &settings.http.doc_root);
 
         // TCP RPC settings
         conf.add<Value<bool>>("", "tcp.enabled", "enable TCP Json RPC)", settings.tcp.enabled, &settings.tcp.enabled);
         conf.add<Value<size_t>>("", "tcp.port", "which port the server should listen to", settings.tcp.port, &settings.tcp.port);
+        auto tcp_bind_to_address = conf.add<Value<string>>("", "tcp.bind_to_address", "address for the server to listen on",
+                                                           settings.tcp.bind_to_address.front(), &settings.tcp.bind_to_address[0]);
 
         // TODO: Should be possible to override settings on command line
 
@@ -107,6 +111,18 @@ int main(int argc, char* argv[])
         {
             op.parse(argc, argv);
             conf.parse(config_file);
+            if (tcp_bind_to_address->is_set())
+            {
+                settings.tcp.bind_to_address.clear();
+                for (size_t n = 0; n < tcp_bind_to_address->count(); ++n)
+                    settings.tcp.bind_to_address.push_back(tcp_bind_to_address->value(n));
+            }
+            if (http_bind_to_address->is_set())
+            {
+                settings.http.bind_to_address.clear();
+                for (size_t n = 0; n < http_bind_to_address->count(); ++n)
+                    settings.http.bind_to_address.push_back(http_bind_to_address->value(n));
+            }
         }
         catch (const std::invalid_argument& e)
         {
