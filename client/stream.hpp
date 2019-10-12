@@ -27,7 +27,7 @@
 
 #include "common/queue.h"
 #include "common/sampleFormat.h"
-#include "doubleBuffer.h"
+#include "double_buffer.hpp"
 #include "message/message.h"
 #include "message/pcmChunk.h"
 #include <deque>

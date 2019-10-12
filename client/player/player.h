@@ -22,7 +22,7 @@
 #include "common/aixlog.hpp"
 #include "common/endian.hpp"
 #include "pcmDevice.h"
-#include "stream.h"
+#include "stream.hpp"
 #include <atomic>
 #include <string>
 #include <thread>

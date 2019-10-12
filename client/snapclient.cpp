@@ -21,7 +21,7 @@
 
 #include "browseZeroConf/browsemDNS.h"
 #include "common/popl.hpp"
-#include "controller.h"
+#include "controller.hpp"
 
 #ifdef HAS_ALSA
 #include "player/alsaPlayer.h"
@@ -33,7 +33,7 @@
 #include "common/signalHandler.h"
 #include "common/strCompat.h"
 #include "common/utils.h"
-#include "metadata.h"
+#include "metadata.hpp"
 
 
 using namespace std;
@@ -117,7 +117,7 @@ int main(int argc, char** argv)
         if (versionSwitch->is_set())
         {
             cout << "snapclient v" << VERSION << "\n"
-                 << "Copyright (C) 2014-2018 BadAix (snapcast@badaix.de).\n"
+                 << "Copyright (C) 2014-2019 BadAix (snapcast@badaix.de).\n"
                  << "License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>.\n"
                  << "This is free software: you are free to change and redistribute it.\n"
                  << "There is NO WARRANTY, to the extent permitted by law.\n\n"

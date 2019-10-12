@@ -1,9 +1,9 @@
 set(CLIENT_SOURCES
-    clientConnection.cpp
+    client_connection.cpp
     controller.cpp
-    snapClient.cpp
+    snapclient.cpp
     stream.cpp
-    timeProvider.cpp
+    time_provider.cpp
     decoder/pcmDecoder.cpp
     player/player.cpp)
 

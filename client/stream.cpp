@@ -16,9 +16,9 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
-#include "stream.h"
+#include "stream.hpp"
 #include "common/aixlog.hpp"
-#include "timeProvider.h"
+#include "time_provider.hpp"
 #include <cmath>
 #include <iostream>
 #include <string.h>

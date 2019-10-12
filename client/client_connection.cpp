@@ -16,7 +16,7 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
-#include "clientConnection.h"
+#include "client_connection.hpp"
 #include "common/aixlog.hpp"
 #include "common/snapException.h"
 #include "common/strCompat.h"

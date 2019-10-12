@@ -33,9 +33,9 @@
 #elif HAS_COREAUDIO
 #include "player/coreAudioPlayer.h"
 #endif
-#include "clientConnection.h"
-#include "metadata.h"
-#include "stream.h"
+#include "client_connection.hpp"
+#include "metadata.hpp"
+#include "stream.hpp"
 
 
 /// Forwards PCM data to the audio player

@@ -16,7 +16,7 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
-#include "controller.h"
+#include "controller.hpp"
 #include "decoder/pcmDecoder.h"
 #include <iostream>
 #include <memory>
@@ -31,7 +31,7 @@
 #include "common/snapException.h"
 #include "message/hello.h"
 #include "message/time.h"
-#include "timeProvider.h"
+#include "time_provider.hpp"
 
 using namespace std;
 

@@ -36,7 +36,7 @@ DEBUG=-O3
 
 CXXFLAGS += $(ADD_CFLAGS) -std=c++0x -Wall -Wpedantic -Wno-unused-function $(DEBUG) -DHAS_FLAC -DHAS_OGG -DVERSION=\"$(VERSION)\" -I. -I.. -I../common
 LDFLAGS   = $(ADD_LDFLAGS) -logg -lFLAC
-OBJ       = snapClient.o stream.o clientConnection.o timeProvider.o player/player.o decoder/pcmDecoder.o decoder/oggDecoder.o decoder/flacDecoder.o controller.o ../common/sampleFormat.o
+OBJ       = snapclient.o stream.o client_connection.o time_provider.o player/player.o decoder/pcmDecoder.o decoder/oggDecoder.o decoder/flacDecoder.o controller.o ../common/sampleFormat.o
 
 
 ifneq (,$(TARGET))
