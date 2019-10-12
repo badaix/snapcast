@@ -9,6 +9,7 @@ matrix:
     - os: linux
       addons:
         apt:
+          update: true
           sources:
             - sourceline: 'ppa:mhier/libboost-latest'
             - ubuntu-toolchain-r-test
@@ -20,6 +21,7 @@ matrix:
     - os: linux
       addons:
         apt:
+          update: true
           sources:
             - sourceline: 'ppa:mhier/libboost-latest'
             - ubuntu-toolchain-r-test
@@ -31,6 +33,7 @@ matrix:
     - os: linux
       addons:
         apt:
+          update: true
           sources:
             - sourceline: 'ppa:mhier/libboost-latest'
             - ubuntu-toolchain-r-test
@@ -42,6 +45,7 @@ matrix:
     - os: linux
       addons:
         apt:
+          update: true
           sources:
             - sourceline: 'ppa:mhier/libboost-latest'
             - ubuntu-toolchain-r-test
@@ -54,6 +58,7 @@ matrix:
     - os: linux
       addons:
         apt:
+          update: true
           sources:
             - sourceline: 'ppa:mhier/libboost-latest'
             - llvm-toolchain-trusty-3.9
@@ -66,6 +71,7 @@ matrix:
     - os: linux
       addons:
         apt:
+          update: true
           sources:
             - sourceline: 'ppa:mhier/libboost-latest'
             - llvm-toolchain-trusty-4.0
@@ -78,6 +84,7 @@ matrix:
     - os: linux
       addons:
         apt:
+          update: true
           sources:
             - sourceline: 'ppa:mhier/libboost-latest'
             - llvm-toolchain-trusty-5.0
@@ -90,17 +97,17 @@ matrix:
     - os: osx
       osx_image: xcode9.4
       env:
-        - MATRIX_EVAL="brew update && brew install flac libvorbis boost"
+        - MATRIX_EVAL="brew update && brew upgrade boost && brew install flac libvorbis"
 
     - os: osx
       osx_image: xcode10.3
       env:
-        - MATRIX_EVAL="brew update && brew install flac libvorbis boost"
+        - MATRIX_EVAL="brew update && brew upgrade boost && brew install flac libvorbis"
 
     - os: osx
       osx_image: xcode11
       env:
-        - MATRIX_EVAL="brew update && brew install flac libvorbis boost"
+        - MATRIX_EVAL="brew update && brew upgrade boost && brew install flac libvorbis"
 
 #    - os: osx
 #      osx_image: xcode8
