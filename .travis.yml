@@ -10,8 +10,8 @@ matrix:
       addons:
         apt:
           sources:
-            - ubuntu-toolchain-r-test
             - sourceline: 'ppa:mhier/libboost-latest'
+            - ubuntu-toolchain-r-test
           packages:
             - g++-4.9 boost1.70 libasound2-dev libvorbisidec-dev libvorbis-dev libflac-dev alsa-utils libavahi-client-dev avahi-daemon
       env:
@@ -21,8 +21,8 @@ matrix:
       addons:
         apt:
           sources:
-            - ubuntu-toolchain-r-test
             - sourceline: 'ppa:mhier/libboost-latest'
+            - ubuntu-toolchain-r-test
           packages:
             - g++-5 boost1.70 libasound2-dev libvorbisidec-dev libvorbis-dev libflac-dev alsa-utils libavahi-client-dev avahi-daemon
       env:
@@ -32,8 +32,8 @@ matrix:
       addons:
         apt:
           sources:
-            - ubuntu-toolchain-r-test
             - sourceline: 'ppa:mhier/libboost-latest'
+            - ubuntu-toolchain-r-test
           packages:
             - g++-6 boost1.70 libasound2-dev libvorbisidec-dev libvorbis-dev libflac-dev alsa-utils libavahi-client-dev avahi-daemon
       env:
@@ -43,8 +43,8 @@ matrix:
       addons:
         apt:
           sources:
-            - ubuntu-toolchain-r-test
             - sourceline: 'ppa:mhier/libboost-latest'
+            - ubuntu-toolchain-r-test
           packages:
             - g++-7 boost1.70 libasound2-dev libvorbisidec-dev libvorbis-dev libflac-dev alsa-utils libavahi-client-dev avahi-daemon
       env:
@@ -55,8 +55,8 @@ matrix:
       addons:
         apt:
           sources:
-            - llvm-toolchain-trusty-3.9
             - sourceline: 'ppa:mhier/libboost-latest'
+            - llvm-toolchain-trusty-3.9
           packages:
             - clang-3.9 boost1.70 libasound2-dev libvorbisidec-dev libvorbis-dev libflac-dev alsa-utils libavahi-client-dev avahi-daemon
       env:
@@ -67,8 +67,8 @@ matrix:
       addons:
         apt:
           sources:
-            - llvm-toolchain-trusty-4.0
             - sourceline: 'ppa:mhier/libboost-latest'
+            - llvm-toolchain-trusty-4.0
           packages:
             - clang-4.0 boost1.70 libasound2-dev libvorbisidec-dev libvorbis-dev libflac-dev alsa-utils libavahi-client-dev avahi-daemon
       env:
@@ -79,8 +79,8 @@ matrix:
       addons:
         apt:
           sources:
-            - llvm-toolchain-trusty-5.0
             - sourceline: 'ppa:mhier/libboost-latest'
+            - llvm-toolchain-trusty-5.0
           packages:
             - clang-5.0 boost1.70 libasound2-dev libvorbisidec-dev libvorbis-dev libflac-dev alsa-utils libavahi-client-dev avahi-daemon
       env:
