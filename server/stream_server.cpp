@@ -29,8 +29,7 @@ using namespace std;
 using json = nlohmann::json;
 
 
-StreamServer::StreamServer(boost::asio::io_context* io_context, const ServerSettings& serverSettings)
-    : io_context_(io_context), acceptor_v4_(nullptr), acceptor_v6_(nullptr), settings_(serverSettings)
+StreamServer::StreamServer(boost::asio::io_context* io_context, const ServerSettings& serverSettings) : io_context_(io_context), settings_(serverSettings)
 {
 }
 
@@ -771,14 +770,8 @@ void StreamServer::startAccept()
             LOG(ERROR) << "Error while accepting socket connection: " << ec.message() << "\n";
     };
 
-    if (acceptor_v4_)
-    {
-        acceptor_v4_->async_accept(accept_handler);
-    }
-    if (acceptor_v6_)
-    {
-        acceptor_v6_->async_accept(accept_handler);
-    }
+    for (auto& acceptor : acceptor_)
+        acceptor->async_accept(accept_handler);
 }
 
 
@@ -829,29 +822,13 @@ void StreamServer::start()
         }
         streamManager_->start();
 
-        bool is_v6_only(true);
-        tcp::endpoint endpoint_v6(tcp::v6(), settings_.stream.port);
-        try
+        for (const auto& address : settings_.stream.bind_to_address)
         {
-            acceptor_v6_ = make_shared<tcp::acceptor>(*io_context_, endpoint_v6);
-            boost::system::error_code ec;
-            acceptor_v6_->set_option(boost::asio::ip::v6_only(false), ec);
-            boost::asio::ip::v6_only option;
-            acceptor_v6_->get_option(option);
-            is_v6_only = option.value();
-            LOG(DEBUG) << "IPv6 only: " << is_v6_only << "\n";
-        }
-        catch (const boost::system::system_error& e)
-        {
-            LOG(ERROR) << "error creating TCP acceptor: " << e.what() << ", code: " << e.code() << "\n";
-        }
-
-        if (!acceptor_v6_ || is_v6_only)
-        {
-            tcp::endpoint endpoint_v4(tcp::v4(), settings_.stream.port);
             try
             {
-                acceptor_v4_ = make_shared<tcp::acceptor>(*io_context_, endpoint_v4);
+                LOG(INFO) << "Creating stream acceptor for address: " << address << ", port: " << settings_.stream.port << "\n";
+                acceptor_.emplace_back(
+                    make_unique<tcp::acceptor>(*io_context_, tcp::endpoint(boost::asio::ip::address::from_string(address), settings_.stream.port)));
             }
             catch (const boost::system::system_error& e)
             {
@@ -880,13 +857,10 @@ void StreamServer::stop()
 
     {
         std::lock_guard<std::recursive_mutex> mlock(sessionsMutex_);
-        for (auto session : sessions_) // it = sessions_.begin(); it != sessions_.end(); ++it)
+        for (auto session : sessions_)
         {
             if (session)
-            {
                 session->stop();
-                session = nullptr;
-            }
         }
         sessions_.clear();
     }
@@ -897,14 +871,7 @@ void StreamServer::stop()
         controlServer_ = nullptr;
     }
 
-    if (acceptor_v4_)
-    {
-        acceptor_v4_->cancel();
-        acceptor_v4_ = nullptr;
-    }
-    if (acceptor_v6_)
-    {
-        acceptor_v6_->cancel();
-        acceptor_v6_ = nullptr;
-    }
+    for (auto& acceptor : acceptor_)
+        acceptor->cancel();
+    acceptor_.clear();
 }

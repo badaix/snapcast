@@ -40,8 +40,9 @@
 
 
 using boost::asio::ip::tcp;
-typedef std::shared_ptr<tcp::socket> socket_ptr;
-typedef std::shared_ptr<StreamSession> session_ptr;
+using acceptor_ptr = std::unique_ptr<tcp::acceptor>;
+using socket_ptr = std::shared_ptr<tcp::socket>;
+using session_ptr = std::shared_ptr<StreamSession>;
 
 
 /// Forwars PCM data to the connected clients
@@ -85,8 +86,7 @@ private:
     mutable std::recursive_mutex sessionsMutex_;
     std::set<session_ptr> sessions_;
     boost::asio::io_context* io_context_;
-    std::shared_ptr<tcp::acceptor> acceptor_v4_;
-    std::shared_ptr<tcp::acceptor> acceptor_v6_;
+    std::vector<acceptor_ptr> acceptor_;
 
     ServerSettings settings_;
     Queue<std::shared_ptr<msg::BaseMessage>> messages_;

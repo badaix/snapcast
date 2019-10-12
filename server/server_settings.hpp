@@ -48,6 +48,7 @@ struct ServerSettings
         std::string sampleFormat{"48000:16:2"};
         size_t streamReadMs{20};
         bool sendAudioToMutedClients{false};
+        std::vector<std::string> bind_to_address{{"0.0.0.0"}};
     };
 
     struct LoggingSettings

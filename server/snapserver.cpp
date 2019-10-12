@@ -91,6 +91,8 @@ int main(int argc, char* argv[])
         conf.add<Value<int>>("b", "stream.buffer", "Buffer [ms]", settings.stream.bufferMs, &settings.stream.bufferMs);
         conf.add<Value<bool>>("", "stream.send_to_muted", "Send audio to muted clients", settings.stream.sendAudioToMutedClients,
                               &settings.stream.sendAudioToMutedClients);
+        auto stream_bind_to_address = conf.add<Value<string>>("", "stream.bind_to_address", "address for the server to listen on",
+                                                              settings.stream.bind_to_address.front(), &settings.stream.bind_to_address[0]);
 
         // HTTP RPC settings
         conf.add<Value<bool>>("", "http.enabled", "enable HTTP Json RPC (HTTP POST and websockets)", settings.http.enabled, &settings.http.enabled);
@@ -122,6 +124,12 @@ int main(int argc, char* argv[])
                 settings.http.bind_to_address.clear();
                 for (size_t n = 0; n < http_bind_to_address->count(); ++n)
                     settings.http.bind_to_address.push_back(http_bind_to_address->value(n));
+            }
+            if (stream_bind_to_address->is_set())
+            {
+                settings.stream.bind_to_address.clear();
+                for (size_t n = 0; n < stream_bind_to_address->count(); ++n)
+                    settings.stream.bind_to_address.push_back(stream_bind_to_address->value(n));
             }
         }
         catch (const std::invalid_argument& e)
