@@ -19,7 +19,7 @@
 #ifndef TIME_PROVIDER_H
 #define TIME_PROVIDER_H
 
-#include "common/timeDefs.h"
+#include "common/time_defs.hpp"
 #include "double_buffer.hpp"
 #include "message/message.h"
 #include <atomic>

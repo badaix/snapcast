@@ -4,7 +4,7 @@ set(CLIENT_SOURCES
     snapclient.cpp
     stream.cpp
     time_provider.cpp
-    decoder/pcmDecoder.cpp
+    decoder/pcm_decoder.cpp
     player/player.cpp)
 
 set(CLIENT_LIBRARIES ${CMAKE_THREAD_LIBS_INIT} common)
@@ -20,12 +20,12 @@ set(CLIENT_INCLUDE
 if(MACOSX)
     # Bonjour
     if (BONJOUR_FOUND)
-        list(APPEND CLIENT_SOURCES browseZeroConf/browseBonjour.cpp)
+        list(APPEND CLIENT_SOURCES browseZeroConf/browse_bonjour.cpp)
     endif (BONJOUR_FOUND)
 
     # CoreAudio
     add_definitions(-DHAS_COREAUDIO)
-    list(APPEND CLIENT_SOURCES player/coreAudioPlayer.cpp)
+    list(APPEND CLIENT_SOURCES player/coreaudio_player.cpp)
     find_library(COREAUDIO_LIB CoreAudio)
     find_library(COREFOUNDATION_LIB CoreFoundation)
     find_library(AUDIOTOOLBOX_LIB AudioToolbox)
@@ -33,14 +33,14 @@ if(MACOSX)
 else()
     # Avahi
     if (AVAHI_FOUND)
-        list(APPEND CLIENT_SOURCES browseZeroConf/browseAvahi.cpp)
+        list(APPEND CLIENT_SOURCES browseZeroConf/browse_avahi.cpp)
         list(APPEND CLIENT_LIBRARIES ${AVAHI_LIBRARIES})
         list(APPEND CLIENT_INCLUDE ${AVAHI_INCLUDE_DIRS})
     endif (AVAHI_FOUND)
 
     # ALSA
     if (ALSA_FOUND)
-        list(APPEND CLIENT_SOURCES player/alsaPlayer.cpp)
+        list(APPEND CLIENT_SOURCES player/alsa_player.cpp)
         list(APPEND CLIENT_LIBRARIES ${ALSA_LIBRARIES})
         list(APPEND CLIENT_INCLUDE ${ALSA_INCLUDE_DIRS})
     endif (ALSA_FOUND)
@@ -48,7 +48,7 @@ endif (MACOSX)
 
 # if OGG then tremor or vorbis
 if (OGG_FOUND)
-    list(APPEND CLIENT_SOURCES decoder/oggDecoder.cpp)
+    list(APPEND CLIENT_SOURCES decoder/ogg_decoder.cpp)
     list(APPEND CLIENT_LIBRARIES ${OGG_LIBRARIES})
     list(APPEND CLIENT_INCLUDE ${OGG_INCLUDE_DIRS})
 endif (OGG_FOUND)
@@ -63,7 +63,7 @@ elseif (VORBIS_FOUND)
 endif (TREMOR_FOUND)
 
 if (FLAC_FOUND)
-    list(APPEND CLIENT_SOURCES decoder/flacDecoder.cpp)
+    list(APPEND CLIENT_SOURCES decoder/flac_decoder.cpp)
     list(APPEND CLIENT_LIBRARIES ${FLAC_LIBRARIES})
     list(APPEND CLIENT_INCLUDE ${FLAC_INCLUDE_DIRS})
 endif (FLAC_FOUND)

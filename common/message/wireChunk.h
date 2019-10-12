@@ -19,7 +19,7 @@
 #ifndef WIRE_CHUNK_H
 #define WIRE_CHUNK_H
 
-#include "common/timeDefs.h"
+#include "common/time_defs.hpp"
 #include "message.h"
 #include <chrono>
 #include <cstdlib>

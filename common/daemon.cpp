@@ -16,12 +16,12 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
-#include "daemon.h"
+#include "daemon.hpp"
 
-#include "common/snapException.h"
-#include "common/strCompat.h"
-#include "common/utils.h"
-#include "common/utils/file_utils.h"
+#include "common/snap_exception.hpp"
+#include "common/str_compat.hpp"
+#include "common/utils.hpp"
+#include "common/utils/file_utils.hpp"
 #include <fcntl.h>
 #include <grp.h>
 #include <iostream>

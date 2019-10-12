@@ -28,7 +28,7 @@
 #include <vector>
 
 #include "common/queue.h"
-#include "common/sampleFormat.h"
+#include "common/sample_format.hpp"
 #include "control_server.hpp"
 #include "jsonrpcpp.hpp"
 #include "message/codecHeader.h"
@@ -36,7 +36,7 @@
 #include "message/serverSettings.h"
 #include "server_settings.hpp"
 #include "stream_session.hpp"
-#include "streamreader/streamManager.h"
+#include "streamreader/stream_manager.hpp"
 
 
 using boost::asio::ip::tcp;

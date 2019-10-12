@@ -19,8 +19,8 @@
 #ifndef HELLO_MSG_H
 #define HELLO_MSG_H
 
-#include "common/strCompat.h"
-#include "common/utils.h"
+#include "common/str_compat.hpp"
+#include "common/utils.hpp"
 #include "jsonMessage.h"
 #include <string>
 

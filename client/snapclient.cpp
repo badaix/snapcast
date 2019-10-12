@@ -19,20 +19,20 @@
 #include <iostream>
 #include <sys/resource.h>
 
-#include "browseZeroConf/browsemDNS.h"
+#include "browseZeroConf/browse_mdns.hpp"
 #include "common/popl.hpp"
 #include "controller.hpp"
 
 #ifdef HAS_ALSA
-#include "player/alsaPlayer.h"
+#include "player/alsa_player.hpp"
 #endif
 #ifdef HAS_DAEMON
-#include "common/daemon.h"
+#include "common/daemon.hpp"
 #endif
 #include "common/aixlog.hpp"
-#include "common/signalHandler.h"
-#include "common/strCompat.h"
-#include "common/utils.h"
+#include "common/signal_handler.hpp"
+#include "common/str_compat.hpp"
+#include "common/utils.hpp"
 #include "metadata.hpp"
 
 

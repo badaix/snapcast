@@ -19,7 +19,7 @@
 #ifndef PCM_CHUNK_H
 #define PCM_CHUNK_H
 
-#include "common/sampleFormat.h"
+#include "common/sample_format.hpp"
 #include "message.h"
 #include "wireChunk.h"
 #include <chrono>

@@ -25,8 +25,8 @@
 #include <vector>
 
 #include "common/json.hpp"
-#include "common/utils.h"
-#include "common/utils/string_utils.h"
+#include "common/utils.hpp"
+#include "common/utils/string_utils.hpp"
 
 
 namespace strutils = utils::string;

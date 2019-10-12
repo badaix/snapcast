@@ -18,9 +18,9 @@
 
 #include "config.h"
 #include "common/aixlog.hpp"
-#include "common/snapException.h"
-#include "common/strCompat.h"
-#include "common/utils/file_utils.h"
+#include "common/snap_exception.hpp"
+#include "common/str_compat.hpp"
+#include "common/utils/file_utils.hpp"
 #include <cerrno>
 #include <fcntl.h>
 #include <fstream>

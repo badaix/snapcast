@@ -18,8 +18,8 @@
 
 #include "control_server.hpp"
 #include "common/aixlog.hpp"
-#include "common/snapException.h"
-#include "common/utils.h"
+#include "common/snap_exception.hpp"
+#include "common/utils.hpp"
 #include "config.h"
 #include "control_session_http.hpp"
 #include "control_session_tcp.hpp"

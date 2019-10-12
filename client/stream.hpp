@@ -26,7 +26,7 @@
 //#include "common/timeUtils.h"
 
 #include "common/queue.h"
-#include "common/sampleFormat.h"
+#include "common/sample_format.hpp"
 #include "double_buffer.hpp"
 #include "message/message.h"
 #include "message/pcmChunk.h"

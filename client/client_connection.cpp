@@ -18,8 +18,8 @@
 
 #include "client_connection.hpp"
 #include "common/aixlog.hpp"
-#include "common/snapException.h"
-#include "common/strCompat.h"
+#include "common/snap_exception.hpp"
+#include "common/str_compat.hpp"
 #include "message/hello.h"
 #include <iostream>
 #include <mutex>

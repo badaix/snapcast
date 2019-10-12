@@ -55,7 +55,7 @@ SOFTWARE.
 #include <string>  // string
 #include <vector>  // vector
 
-#include "strCompat.h"
+#include "str_compat.hpp"
 
 
 /*!

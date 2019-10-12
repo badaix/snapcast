@@ -23,11 +23,11 @@
 #include "message/message.h"
 #include "message/serverSettings.h"
 #include "message/streamTags.h"
-#include "player/pcmDevice.h"
+#include "player/pcm_device.hpp"
 #include <atomic>
 #include <thread>
 #ifdef HAS_ALSA
-#include "player/alsaPlayer.h"
+#include "player/alsa_player.hpp"
 #elif HAS_OPENSL
 #include "player/openslPlayer.h"
 #elif HAS_COREAUDIO

@@ -17,18 +17,18 @@
 ***/
 
 #include "controller.hpp"
-#include "decoder/pcmDecoder.h"
+#include "decoder/pcm_decoder.hpp"
 #include <iostream>
 #include <memory>
 #include <string>
 #if defined(HAS_OGG) && (defined(HAS_TREMOR) || defined(HAS_VORBIS))
-#include "decoder/oggDecoder.h"
+#include "decoder/ogg_decoder.hpp"
 #endif
 #if defined(HAS_FLAC)
-#include "decoder/flacDecoder.h"
+#include "decoder/flac_decoder.hpp"
 #endif
 #include "common/aixlog.hpp"
-#include "common/snapException.h"
+#include "common/snap_exception.hpp"
 #include "message/hello.h"
 #include "message/time.h"
 #include "time_provider.hpp"

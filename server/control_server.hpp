@@ -28,7 +28,7 @@
 #include <vector>
 
 #include "common/queue.h"
-#include "common/sampleFormat.h"
+#include "common/sample_format.hpp"
 #include "control_session.hpp"
 #include "message/codecHeader.h"
 #include "message/message.h"

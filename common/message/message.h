@@ -20,7 +20,7 @@
 #define MESSAGE_H
 
 #include "common/endian.hpp"
-#include "common/timeDefs.h"
+#include "common/time_defs.hpp"
 #include <cstdlib>
 #include <cstring>
 #include <iostream>

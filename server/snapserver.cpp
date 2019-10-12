@@ -22,19 +22,19 @@
 
 #include "common/popl.hpp"
 #ifdef HAS_DAEMON
-#include "common/daemon.h"
+#include "common/daemon.hpp"
 #endif
-#include "common/sampleFormat.h"
-#include "common/signalHandler.h"
-#include "common/snapException.h"
-#include "common/timeDefs.h"
-#include "common/utils/string_utils.h"
-#include "encoder/encoderFactory.h"
+#include "common/sample_format.hpp"
+#include "common/signal_handler.hpp"
+#include "common/snap_exception.hpp"
+#include "common/time_defs.hpp"
+#include "common/utils/string_utils.hpp"
+#include "encoder/encoder_factory.hpp"
 #include "message/message.h"
 #include "server_settings.hpp"
 #include "stream_server.hpp"
 #if defined(HAS_AVAHI) || defined(HAS_BONJOUR)
-#include "publishZeroConf/publishmDNS.h"
+#include "publishZeroConf/publish_mdns.hpp"
 #endif
 #include "common/aixlog.hpp"
 #include "config.h"

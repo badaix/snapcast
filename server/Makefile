@@ -31,13 +31,13 @@ else
 endif
 
 # Simplify building debuggable executables 'make DEBUG=-g STRIP=echo'
-DEBUG=-O2
+DEBUG=-g
 SANITIZE=
 #-fsanitize=thread
 
 CXXFLAGS += $(ADD_CFLAGS) $(SANITIZE) -std=c++14 -Wall -Wpedantic -Wno-unused-function $(DEBUG) -DHAS_FLAC -DHAS_OGG -DHAS_VORBIS -DHAS_VORBIS_ENC -DVERSION=\"$(VERSION)\" -I. -I.. -I../common
 LDFLAGS   = $(ADD_LDFLAGS) $(SANITIZE) -lvorbis -lvorbisenc -logg -lFLAC 
-OBJ       = snapserver.o config.o control_server.o control_session_tcp.o control_session_http.o stream_server.o stream_session.o streamreader/streamUri.o streamreader/base64.o streamreader/streamManager.o streamreader/pcmStream.o streamreader/pipeStream.o streamreader/fileStream.o streamreader/processStream.o streamreader/airplayStream.o streamreader/spotifyStream.o streamreader/watchdog.o encoder/encoderFactory.o encoder/flacEncoder.o encoder/pcmEncoder.o encoder/oggEncoder.o ../common/sampleFormat.o
+OBJ       = snapserver.o config.o control_server.o control_session_tcp.o control_session_http.o stream_server.o stream_session.o streamreader/stream_uri.o streamreader/base64.o streamreader/stream_manager.o streamreader/pcm_stream.o streamreader/pipe_stream.o streamreader/file_stream.o streamreader/process_stream.o streamreader/airplay_stream.o streamreader/librespot_stream.o streamreader/watchdog.o encoder/encoder_factory.o encoder/flac_encoder.o encoder/pcm_encoder.o encoder/ogg_encoder.o ../common/sample_format.o
 
 ifneq (,$(TARGET))
 CXXFLAGS += -D$(TARGET)
@@ -59,13 +59,13 @@ else ifeq ($(TARGET), OPENWRT)
 STRIP     = echo
 CXXFLAGS += -DNO_CPP11_STRING -DHAS_AVAHI -DHAS_DAEMON -pthread
 LDFLAGS  += -lavahi-client -lavahi-common -latomic
-OBJ      += ../common/daemon.o publishZeroConf/publishAvahi.o 
+OBJ      += ../common/daemon.o publishZeroConf/publish_avahi.o 
 
 else ifeq ($(TARGET), BUILDROOT)
 
 CXXFLAGS += -DHAS_AVAHI -DHAS_DAEMON -pthread
 LDFLAGS  += -lrt -lavahi-client -lavahi-common -static-libgcc -static-libstdc++
-OBJ      += publishZeroConf/publishAvahi.o 
+OBJ      += publishZeroConf/publish_avahi.o 
 
 else ifeq ($(TARGET), FREEBSD)
 
@@ -73,7 +73,7 @@ CXX       = g++
 STRIP     = echo
 CXXFLAGS += -DFREEBSD -DNO_CPP11_STRING -DHAS_AVAHI -DHAS_DAEMON -pthread
 LDFLAGS  += -lrt -lavahi-client -lavahi-common -static-libgcc -static-libstdc++ -latomic
-OBJ      += ../common/daemon.o publishZeroConf/publishAvahi.o 
+OBJ      += ../common/daemon.o publishZeroConf/publish_avahi.o 
 
 else ifeq ($(TARGET), MACOS)
 
@@ -81,15 +81,15 @@ CXX       = g++
 STRIP     = strip
 CXXFLAGS += -DFREEBSD -DHAS_BONJOUR -DHAS_DAEMON -Wno-deprecated -I/usr/local/include
 LDFLAGS  += -L/usr/local/lib -framework CoreFoundation -framework IOKit
-OBJ      += ../common/daemon.o publishZeroConf/publishBonjour.o
+OBJ      += ../common/daemon.o publishZeroConf/publish_bonjour.o
 
 else
 
 CXX       = g++
-STRIP     = strip
+STRIP     = echo
 CXXFLAGS += -DHAS_AVAHI -DHAS_DAEMON -pthread
 LDFLAGS  += -lrt -lavahi-client -lavahi-common -static-libgcc -static-libstdc++
-OBJ      += ../common/daemon.o publishZeroConf/publishAvahi.o 
+OBJ      += ../common/daemon.o publishZeroConf/publish_avahi.o 
 
 endif
 
