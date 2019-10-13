@@ -1,4 +1,4 @@
-.TH SNAPSERVER 1 "July 2018"
+.TH SNAPSERVER 1 "October 2019"
 .SH NAME
 snapserver - Snapcast server
 .SH SYNOPSIS
@@ -13,7 +13,7 @@ The server's audio input is a named pipe `/tmp/snapfifo`. All data that is fed
 into this file will be send to the connected clients. One of the most generic
 ways to use Snapcast is in conjunction with the music player daemon or Mopidy,
 which can be configured to use a named pipe as audio output.
-.SS Options
+.SS Allowed options:
 .TP
 \fB-h, --help\fR
 Produce help message
@@ -21,41 +21,15 @@ Produce help message
 \fB-v, --version\fR
 Show version number
 .TP
-\fB-p, --port arg (=1704)\fR
-Server port
-.TP
-\fB--controlPort arg (=1705)\fR
-Remote control port
-.TP
-\fB-s, --stream arg (=pipe:///tmp/snapfifo?name=default)\fR
-URI of the PCM input stream.
-Format: TYPE://host/path?name=NAME
-[&codec=CODEC]
-[&sampleformat=SAMPLEFORMAT]
-.TP
-\fB--sampleformat arg (=48000:16:2)\fR
-Default sample format
-.TP
-\fB-c, --codec arg (=flac)\fR
-Default transport codec
-(flac|ogg|pcm)[:options]
-Type codec:? to get codec specific options
-.TP
-\fB--streamBuffer arg (=20)\fR
-Default stream read buffer [ms]
-.TP
-\fB-b, --buffer arg (=1000)\fR
-Buffer [ms]
-.TP
-\fB--sendToMuted\fR
-Send audio to muted clients
-.TP
 \fB-d, --daemon [=arg(=0)]\fR
 Daemonize
 optional process priority [-20..19]
 .TP
 \fB--user arg\fR
 the user[:group] to run snapserver as when daemonized
+.TP
+\fB-c, --config arg (=/etc/snapserver.conf)\fR
+path to the configuration file
 .SH FILES
 .TP
 \fI/tmp/snapfifo\fR
