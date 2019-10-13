@@ -130,6 +130,7 @@ matrix:
           sources:
             - sourceline: 'ppa:mhier/libboost-latest'
             - llvm-toolchain-trusty-6.0
+            - ubuntu-toolchain-r-test
           packages:
             - clang-6.0 boost1.70 libasound2-dev libvorbisidec-dev libvorbis-dev libflac-dev alsa-utils libavahi-client-dev avahi-daemon
 
@@ -143,6 +144,7 @@ matrix:
           sources:
             - sourceline: 'ppa:mhier/libboost-latest'
             - llvm-toolchain-trusty-7
+            - ubuntu-toolchain-r-test
           packages:
             - clang-7 boost1.70 libasound2-dev libvorbisidec-dev libvorbis-dev libflac-dev alsa-utils libavahi-client-dev avahi-daemon
 
@@ -165,14 +167,14 @@ matrix:
     - os: osx
       osx_image: xcode11
       env:
-        - MATRIX_EVAL="brew update && brew upgrade boost && brew install flac libvorbis"
+        - MATRIX_EVAL="brew update && brew install flac libvorbis"
 
 before_install:
     - eval "${MATRIX_EVAL}"
 
 script:
   # make sure CXX is correctly set
-  - if [[ "${COMPILER}" != "" ]]; then export CXX=${COMPILER}; fi
+  - if [[ "${COMPILER}" != "" ]] && [[ "${TRAVIS_COMPILER}" == "gcc" ]]; then export CXX=${COMPILER}; fi
 
   - mkdir build
   - cd build
