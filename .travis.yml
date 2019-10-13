@@ -1,99 +1,167 @@
 language: cpp
 dist: trusty
 sudo: required
-group: deprecated-2017Q4
+group: edge
 
 matrix:
   include:
     # build on ubuntu
     - os: linux
+      compiler: gcc
+      env:
+        - COMPILER=g++-4.8
       addons:
         apt:
-          update: true
+          sources:
+            - sourceline: 'ppa:mhier/libboost-latest'
+            - ubuntu-toolchain-r-test
+          packages:
+            - g++-4.8 boost1.70 libasound2-dev libvorbisidec-dev libvorbis-dev libflac-dev alsa-utils libavahi-client-dev avahi-daemon
+
+    - os: linux
+      compiler: gcc
+      env:
+        - COMPILER=g++-4.9
+      addons:
+        apt:
           sources:
             - sourceline: 'ppa:mhier/libboost-latest'
             - ubuntu-toolchain-r-test
           packages:
             - g++-4.9 boost1.70 libasound2-dev libvorbisidec-dev libvorbis-dev libflac-dev alsa-utils libavahi-client-dev avahi-daemon
-      env:
-        - MATRIX_EVAL="CC=gcc-4.9 && CXX=g++-4.9"
 
     - os: linux
+      compiler: gcc
+      env:
+        - COMPILER=g++-5
       addons:
         apt:
-          update: true
           sources:
             - sourceline: 'ppa:mhier/libboost-latest'
             - ubuntu-toolchain-r-test
           packages:
             - g++-5 boost1.70 libasound2-dev libvorbisidec-dev libvorbis-dev libflac-dev alsa-utils libavahi-client-dev avahi-daemon
-      env:
-         - MATRIX_EVAL="CC=gcc-5 && CXX=g++-5"
 
     - os: linux
+      compiler: gcc
+      env:
+        - COMPILER=g++-6
       addons:
         apt:
-          update: true
           sources:
             - sourceline: 'ppa:mhier/libboost-latest'
             - ubuntu-toolchain-r-test
           packages:
             - g++-6 boost1.70 libasound2-dev libvorbisidec-dev libvorbis-dev libflac-dev alsa-utils libavahi-client-dev avahi-daemon
-      env:
-        - MATRIX_EVAL="CC=gcc-6 && CXX=g++-6"
 
     - os: linux
+      compiler: gcc
+      env:
+        - COMPILER=g++-7
       addons:
         apt:
-          update: true
           sources:
             - sourceline: 'ppa:mhier/libboost-latest'
             - ubuntu-toolchain-r-test
           packages:
             - g++-7 boost1.70 libasound2-dev libvorbisidec-dev libvorbis-dev libflac-dev alsa-utils libavahi-client-dev avahi-daemon
-      env:
-        - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7"
 
-    # works on Trusty
     - os: linux
+      compiler: gcc
+      env:
+        - COMPILER=g++-8
       addons:
         apt:
-          update: true
+          sources:
+            - sourceline: 'ppa:mhier/libboost-latest'
+            - ubuntu-toolchain-r-test
+          packages:
+            - g++-8 boost1.70 libasound2-dev libvorbisidec-dev libvorbis-dev libflac-dev alsa-utils libavahi-client-dev avahi-daemon
+
+    - os: linux
+      compiler: gcc
+      env:
+        - COMPILER=g++-9
+      addons:
+        apt:
+          sources:
+            - sourceline: 'ppa:mhier/libboost-latest'
+            - ubuntu-toolchain-r-test
+          packages:
+            - g++-9 boost1.70 libasound2-dev libvorbisidec-dev libvorbis-dev libflac-dev alsa-utils libavahi-client-dev avahi-daemon
+
+
+    - os: linux
+      compiler: clang
+      env:
+        - COMPILER=clang++-3.9
+        - CXXFLAGS=-stdlib=libc++
+      addons:
+        apt:
           sources:
             - sourceline: 'ppa:mhier/libboost-latest'
             - llvm-toolchain-trusty-3.9
           packages:
             - clang-3.9 boost1.70 libasound2-dev libvorbisidec-dev libvorbis-dev libflac-dev alsa-utils libavahi-client-dev avahi-daemon
-      env:
-        - MATRIX_EVAL="CC=clang-3.9 && CXX=clang++-3.9"
 
-    # works on Trusty
     - os: linux
+      compiler: clang
+      env:
+        - COMPILER=clang++-4.0
+        - CXXFLAGS=-stdlib=libc++
       addons:
         apt:
-          update: true
           sources:
             - sourceline: 'ppa:mhier/libboost-latest'
             - llvm-toolchain-trusty-4.0
           packages:
             - clang-4.0 boost1.70 libasound2-dev libvorbisidec-dev libvorbis-dev libflac-dev alsa-utils libavahi-client-dev avahi-daemon
-      env:
-        - MATRIX_EVAL="CC=clang-4.0 && CXX=clang++-4.0"
 
-    # works on Trusty
     - os: linux
+      compiler: clang
+      env:
+        - COMPILER=clang++-5.0
+        - CXXFLAGS=-stdlib=libc++
       addons:
         apt:
-          update: true
           sources:
             - sourceline: 'ppa:mhier/libboost-latest'
             - llvm-toolchain-trusty-5.0
           packages:
             - clang-5.0 boost1.70 libasound2-dev libvorbisidec-dev libvorbis-dev libflac-dev alsa-utils libavahi-client-dev avahi-daemon
+
+    - os: linux
+      compiler: clang
       env:
-        - MATRIX_EVAL="CC=clang-5.0 && CXX=clang++-5.0"
+        - COMPILER=clang++-6.0
+        - CXXFLAGS=-stdlib=libc++
+      addons:
+        apt:
+          sources:
+            - sourceline: 'ppa:mhier/libboost-latest'
+            - llvm-toolchain-trusty-6.0
+          packages:
+            - clang-6.0 boost1.70 libasound2-dev libvorbisidec-dev libvorbis-dev libflac-dev alsa-utils libavahi-client-dev avahi-daemon
+
+    - os: linux
+      compiler: clang
+      env:
+        - COMPILER=clang++-7
+        - CXXFLAGS=-stdlib=libc++
+      addons:
+        apt:
+          sources:
+            - sourceline: 'ppa:mhier/libboost-latest'
+            - llvm-toolchain-trusty-7
+          packages:
+            - clang-7 boost1.70 libasound2-dev libvorbisidec-dev libvorbis-dev libflac-dev alsa-utils libavahi-client-dev avahi-daemon
 
     # build on osx
+    - os: osx
+      osx_image: xcode8.3
+      env:
+        - MATRIX_EVAL="brew update && brew upgrade boost && brew install flac libvorbis"
+
     - os: osx
       osx_image: xcode9.4
       env:
@@ -108,11 +176,6 @@ matrix:
       osx_image: xcode11
       env:
         - MATRIX_EVAL="brew update && brew upgrade boost && brew install flac libvorbis"
-
-#    - os: osx
-#      osx_image: xcode8
-#      env:
-#        - MATRIX_EVAL="brew update && brew install flac libvorbis"
 
 before_install:
     - eval "${MATRIX_EVAL}"
