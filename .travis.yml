@@ -5,19 +5,6 @@ group: edge
 
 matrix:
   include:
-    # build on ubuntu
-    - os: linux
-      compiler: gcc
-      env:
-        - COMPILER=g++-4.8
-      addons:
-        apt:
-          sources:
-            - sourceline: 'ppa:mhier/libboost-latest'
-            - ubuntu-toolchain-r-test
-          packages:
-            - g++-4.8 boost1.70 libasound2-dev libvorbisidec-dev libvorbis-dev libflac-dev alsa-utils libavahi-client-dev avahi-daemon
-
     - os: linux
       compiler: gcc
       env:
@@ -96,6 +83,7 @@ matrix:
       env:
         - COMPILER=clang++-3.9
         - CXXFLAGS=-stdlib=libc++
+        - CC=clang-3.9
       addons:
         apt:
           sources:
@@ -109,6 +97,7 @@ matrix:
       env:
         - COMPILER=clang++-4.0
         - CXXFLAGS=-stdlib=libc++
+        - CC=clang-4.0
       addons:
         apt:
           sources:
@@ -122,6 +111,7 @@ matrix:
       env:
         - COMPILER=clang++-5.0
         - CXXFLAGS=-stdlib=libc++
+        - CC=clang-5.0
       addons:
         apt:
           sources:
