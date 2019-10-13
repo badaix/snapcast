@@ -25,7 +25,7 @@
 
 #ifdef __APPLE__
 #ifdef __MAC_OS_X_VERSION_MAX_ALLOWED
-#ifdef __MAC_OS_X_VERSION_MAX_ALLOWED >= 1012
+#if __MAC_OS_X_VERSION_MAX_ALLOWED >= 1012
 #define HAS_APPLE_UNIFIED_LOG_ 1
 #endif
 #endif
