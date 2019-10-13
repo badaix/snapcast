@@ -20,7 +20,7 @@
 #include <thread>
 
 #include "common/aixlog.hpp"
-#include "publishBonjour.h"
+#include "publish_bonjour.hpp"
 
 typedef union {
     unsigned char b[2];

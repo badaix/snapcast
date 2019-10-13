@@ -35,7 +35,7 @@ protected:
 #include "publish_avahi.hpp"
 typedef PublishAvahi PublishZeroConf;
 #elif defined(HAS_BONJOUR)
-#include "publishBonjour.h"
+#include "publish_bonjour.hpp"
 typedef PublishBonjour PublishZeroConf;
 #endif
 

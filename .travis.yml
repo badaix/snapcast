@@ -181,6 +181,9 @@ before_install:
     - eval "${MATRIX_EVAL}"
 
 script:
+  # make sure CXX is correctly set
+  - if [[ "${COMPILER}" != "" ]]; then export CXX=${COMPILER}; fi
+
   - mkdir build
   - cd build
   - cmake .. && make && sudo make install
