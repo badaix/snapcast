@@ -22,8 +22,8 @@
 #include "common/json.hpp"
 #include "common/sample_format.hpp"
 #include "encoder/encoder.hpp"
-#include "message/codecHeader.h"
-#include "message/streamTags.h"
+#include "message/codec_header.hpp"
+#include "message/stream_tags.hpp"
 #include "stream_uri.hpp"
 #include <atomic>
 #include <condition_variable>

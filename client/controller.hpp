@@ -20,9 +20,9 @@
 #define CONTROLLER_H
 
 #include "decoder/decoder.hpp"
-#include "message/message.h"
-#include "message/serverSettings.h"
-#include "message/streamTags.h"
+#include "message/message.hpp"
+#include "message/server_settings.hpp"
+#include "message/stream_tags.hpp"
 #include "player/pcm_device.hpp"
 #include <atomic>
 #include <thread>

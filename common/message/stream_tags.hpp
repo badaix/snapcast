@@ -19,7 +19,7 @@
 #ifndef STREAMTAGS_H
 #define STREAMTAGS_H
 
-#include "jsonMessage.h"
+#include "json_message.hpp"
 
 /*
  * Due to the PCM pipe implementation of snapcast input we cannot know track start/end

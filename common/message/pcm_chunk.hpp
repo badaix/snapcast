@@ -20,8 +20,8 @@
 #define PCM_CHUNK_H
 
 #include "common/sample_format.hpp"
-#include "message.h"
-#include "wireChunk.h"
+#include "message.hpp"
+#include "wire_chunk.hpp"
 #include <chrono>
 
 

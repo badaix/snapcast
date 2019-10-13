@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2018  Johannes Pohl
+    Copyright (C) 2014-2019  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -19,9 +19,9 @@
 #include "stream_server.hpp"
 #include "common/aixlog.hpp"
 #include "config.h"
-#include "message/hello.h"
-#include "message/streamTags.h"
-#include "message/time.h"
+#include "message/hello.hpp"
+#include "message/stream_tags.hpp"
+#include "message/time.hpp"
 #include <iostream>
 
 using namespace std;

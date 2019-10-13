@@ -19,7 +19,7 @@
 #ifndef SERVER_SETTINGS_H
 #define SERVER_SETTINGS_H
 
-#include "jsonMessage.h"
+#include "json_message.hpp"
 
 
 namespace msg

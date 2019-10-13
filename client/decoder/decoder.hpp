@@ -19,8 +19,8 @@
 #ifndef DECODER_H
 #define DECODER_H
 #include "common/sample_format.hpp"
-#include "message/codecHeader.h"
-#include "message/pcmChunk.h"
+#include "message/codec_header.hpp"
+#include "message/pcm_chunk.hpp"
 #include <mutex>
 
 

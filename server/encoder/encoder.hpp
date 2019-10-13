@@ -23,8 +23,8 @@
 #include <string>
 
 #include "common/sample_format.hpp"
-#include "message/codecHeader.h"
-#include "message/pcmChunk.h"
+#include "message/codec_header.hpp"
+#include "message/pcm_chunk.hpp"
 
 
 class Encoder;

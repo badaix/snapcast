@@ -21,7 +21,7 @@
 
 #include "common/time_defs.hpp"
 #include "double_buffer.hpp"
-#include "message/message.h"
+#include "message/message.hpp"
 #include <atomic>
 #include <chrono>
 

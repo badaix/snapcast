@@ -19,7 +19,7 @@
 #ifndef CODEC_HEADER_MESSAGE_H
 #define CODEC_HEADER_MESSAGE_H
 
-#include "message.h"
+#include "message.hpp"
 
 namespace msg
 {

@@ -30,9 +30,9 @@
 #include "common/queue.h"
 #include "common/sample_format.hpp"
 #include "control_session.hpp"
-#include "message/codecHeader.h"
-#include "message/message.h"
-#include "message/serverSettings.h"
+#include "message/codec_header.hpp"
+#include "message/message.hpp"
+#include "message/server_settings.hpp"
 #include "server_settings.hpp"
 
 using boost::asio::ip::tcp;

@@ -20,7 +20,7 @@
 #define CLIENT_CONNECTION_H
 
 #include "common/time_defs.hpp"
-#include "message/message.h"
+#include "message/message.hpp"
 #include <atomic>
 #include <boost/asio.hpp>
 #include <condition_variable>

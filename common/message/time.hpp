@@ -16,62 +16,41 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
-#ifndef JSON_MESSAGE_H
-#define JSON_MESSAGE_H
+#ifndef TIME_MSG_H
+#define TIME_MSG_H
 
-#include "common/json.hpp"
-#include "message.h"
-
-
-using json = nlohmann::json;
-
+#include "message.hpp"
 
 namespace msg
 {
 
-class JsonMessage : public BaseMessage
+class Time : public BaseMessage
 {
 public:
-    JsonMessage(message_type msgType) : BaseMessage(msgType)
+    Time() : BaseMessage(message_type::kTime)
     {
     }
 
-    ~JsonMessage() override = default;
+    ~Time() override = default;
 
     void read(std::istream& stream) override
     {
-        std::string s;
-        readVal(stream, s);
-        msg = json::parse(s);
+        readVal(stream, latency.sec);
+        readVal(stream, latency.usec);
     }
 
     uint32_t getSize() const override
     {
-        return sizeof(uint32_t) + msg.dump().size();
+        return sizeof(tv);
     }
 
-    json msg;
-
+    tv latency;
 
 protected:
     void doserialize(std::ostream& stream) const override
     {
-        writeVal(stream, msg.dump());
-    }
-
-    template <typename T>
-    T get(const std::string& what, const T& def) const
-    {
-        try
-        {
-            if (!msg.count(what))
-                return def;
-            return msg[what].get<T>();
-        }
-        catch (...)
-        {
-            return def;
-        }
+        writeVal(stream, latency.sec);
+        writeVal(stream, latency.usec);
     }
 };
 }

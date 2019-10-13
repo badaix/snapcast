@@ -20,7 +20,7 @@
 #include "common/aixlog.hpp"
 #include "common/snap_exception.hpp"
 #include "common/str_compat.hpp"
-#include "message/hello.h"
+#include "message/hello.hpp"
 #include <iostream>
 #include <mutex>
 

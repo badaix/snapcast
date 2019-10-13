@@ -22,8 +22,8 @@
 #include "common/queue.h"
 #include "common/sample_format.hpp"
 #include "double_buffer.hpp"
-#include "message/message.h"
-#include "message/pcmChunk.h"
+#include "message/message.hpp"
+#include "message/pcm_chunk.hpp"
 #include <deque>
 #include <memory>
 

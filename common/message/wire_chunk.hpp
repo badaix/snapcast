@@ -20,7 +20,7 @@
 #define WIRE_CHUNK_H
 
 #include "common/time_defs.hpp"
-#include "message.h"
+#include "message.hpp"
 #include <chrono>
 #include <cstdlib>
 #include <cstring>

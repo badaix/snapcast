@@ -24,7 +24,7 @@
 #include "control_session_http.hpp"
 #include "control_session_tcp.hpp"
 #include "jsonrpcpp.hpp"
-#include "message/time.h"
+#include "message/time.hpp"
 
 #include <iostream>
 

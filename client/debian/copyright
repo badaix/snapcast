@@ -6,7 +6,7 @@ Upstream Author: Johannes Pohl <snapcast@badaix.de>
 
 Copyright:
 
-    <Copyright (C) 2014-2018 Johannes Pohl>
+    <Copyright (C) 2014-2019 Johannes Pohl>
 
 License:
 
@@ -28,7 +28,7 @@ Public License version 3 can be found in "/usr/share/common-licenses/GPL-3".
 
 The Debian packaging is:
 
-    Copyright (C) 2014-2018 Johannes Pohl <snapcast@badaix.de>
+    Copyright (C) 2014-2019 Johannes Pohl <snapcast@badaix.de>
 
 and is licensed under the GPL version 3, see above.
 

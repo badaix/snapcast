@@ -20,7 +20,7 @@
 #define CONTROL_SESSION_H
 
 #include "common/queue.h"
-#include "message/message.h"
+#include "message/message.hpp"
 #include "server_settings.hpp"
 #include <atomic>
 #include <boost/asio.hpp>

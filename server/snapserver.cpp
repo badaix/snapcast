@@ -30,7 +30,7 @@
 #include "common/time_defs.hpp"
 #include "common/utils/string_utils.hpp"
 #include "encoder/encoder_factory.hpp"
-#include "message/message.h"
+#include "message/message.hpp"
 #include "server_settings.hpp"
 #include "stream_server.hpp"
 #if defined(HAS_AVAHI) || defined(HAS_BONJOUR)

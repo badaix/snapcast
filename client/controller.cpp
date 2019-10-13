@@ -29,8 +29,8 @@
 #endif
 #include "common/aixlog.hpp"
 #include "common/snap_exception.hpp"
-#include "message/hello.h"
-#include "message/time.h"
+#include "message/hello.hpp"
+#include "message/time.hpp"
 #include "time_provider.hpp"
 
 using namespace std;
