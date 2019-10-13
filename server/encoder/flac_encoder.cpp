@@ -113,7 +113,7 @@ void FlacEncoder::encode(const msg::PcmChunk* chunk)
 }
 
 
-FLAC__StreamEncoderWriteStatus FlacEncoder::write_callback(const FLAC__StreamEncoder* encoder, const FLAC__byte buffer[], size_t bytes, unsigned samples,
+FLAC__StreamEncoderWriteStatus FlacEncoder::write_callback(const FLAC__StreamEncoder* /*encoder*/, const FLAC__byte buffer[], size_t bytes, unsigned samples,
                                                            unsigned current_frame)
 {
     //	LOG(INFO) << "write_callback: " << bytes << ", " << samples << ", " << current_frame << "\n";

@@ -162,7 +162,7 @@ void SpotifyStream::stderrReader()
 }
 
 
-void SpotifyStream::onTimeout(const Watchdog* watchdog, size_t ms)
+void SpotifyStream::onTimeout(const Watchdog* /*watchdog*/, size_t ms)
 {
     LOG(ERROR) << "Spotify timeout: " << ms / 1000 << "\n";
     if (process_)

@@ -288,7 +288,7 @@ protected:
     }
 
 
-    virtual void doserialize(std::ostream& stream) const {};
+    virtual void doserialize(std::ostream& /*stream*/) const {};
 };
 
 

@@ -58,7 +58,7 @@ PcmDecoder::PcmDecoder() : Decoder()
 }
 
 
-bool PcmDecoder::decode(msg::PcmChunk* chunk)
+bool PcmDecoder::decode(msg::PcmChunk* /*chunk*/)
 {
     return true;
 }

@@ -119,7 +119,7 @@ SampleFormat FlacDecoder::setHeader(msg::CodecHeader* chunk)
 }
 
 
-FLAC__StreamDecoderReadStatus read_callback(const FLAC__StreamDecoder* decoder, FLAC__byte buffer[], size_t* bytes, void* client_data)
+FLAC__StreamDecoderReadStatus read_callback(const FLAC__StreamDecoder* /*decoder*/, FLAC__byte buffer[], size_t* bytes, void* client_data)
 {
     if (flacHeader != nullptr)
     {

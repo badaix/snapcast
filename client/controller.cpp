@@ -43,14 +43,14 @@ Controller::Controller(const std::string& hostId, size_t instance, std::shared_p
 }
 
 
-void Controller::onException(ClientConnection* connection, shared_exception_ptr exception)
+void Controller::onException(ClientConnection* /*connection*/, shared_exception_ptr exception)
 {
     LOG(ERROR) << "Controller::onException: " << exception->what() << "\n";
     async_exception_ = exception;
 }
 
 
-void Controller::onMessageReceived(ClientConnection* connection, const msg::BaseMessage& baseMessage, char* buffer)
+void Controller::onMessageReceived(ClientConnection* /*connection*/, const msg::BaseMessage& baseMessage, char* buffer)
 {
     std::lock_guard<std::mutex> lock(receiveMutex_);
     if (baseMessage.type == message_type::kWireChunk)

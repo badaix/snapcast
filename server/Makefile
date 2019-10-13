@@ -35,7 +35,7 @@ DEBUG=-g
 SANITIZE=
 #-fsanitize=thread
 
-CXXFLAGS += $(ADD_CFLAGS) $(SANITIZE) -std=c++14 -Wall -Wpedantic -Wno-unused-function $(DEBUG) -DHAS_FLAC -DHAS_OGG -DHAS_VORBIS -DHAS_VORBIS_ENC -DVERSION=\"$(VERSION)\" -I. -I.. -I../common
+CXXFLAGS += $(ADD_CFLAGS) $(SANITIZE) -std=c++14 -Wall -Wextra -Wpedantic -Wno-unused-function $(DEBUG) -DHAS_FLAC -DHAS_OGG -DHAS_VORBIS -DHAS_VORBIS_ENC -DVERSION=\"$(VERSION)\" -I. -I.. -I../common
 LDFLAGS   = $(ADD_LDFLAGS) $(SANITIZE) -lvorbis -lvorbisenc -logg -lFLAC 
 OBJ       = snapserver.o config.o control_server.o control_session_tcp.o control_session_http.o stream_server.o stream_session.o streamreader/stream_uri.o streamreader/base64.o streamreader/stream_manager.o streamreader/pcm_stream.o streamreader/pipe_stream.o streamreader/file_stream.o streamreader/process_stream.o streamreader/airplay_stream.o streamreader/librespot_stream.o streamreader/watchdog.o encoder/encoder_factory.o encoder/flac_encoder.o encoder/pcm_encoder.o encoder/ogg_encoder.o ../common/sample_format.o
 

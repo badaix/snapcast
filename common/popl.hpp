@@ -713,7 +713,7 @@ inline void Value<std::string>::parse(OptionName what_name, const char* value)
 
 
 template <>
-inline void Value<bool>::parse(OptionName what_name, const char* value)
+inline void Value<bool>::parse(OptionName /*what_name*/, const char* value)
 {
     bool val =
         ((value != nullptr) && ((strcmp(value, "1") == 0) || (strcmp(value, "true") == 0) || (strcmp(value, "True") == 0) || (strcmp(value, "TRUE") == 0)));
@@ -819,7 +819,7 @@ inline Switch::Switch(const std::string& short_name, const std::string& long_nam
 }
 
 
-inline void Switch::parse(OptionName /*what_name*/, const char* value)
+inline void Switch::parse(OptionName /*what_name*/, const char* /*value*/)
 {
     add_value(true);
 }

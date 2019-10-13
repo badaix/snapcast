@@ -245,8 +245,8 @@ void ControlSessionHttp::on_read(beast::error_code ec, std::size_t bytes_transfe
         return;
     }
 
-    LOG(DEBUG) << "method: " << req_.method_string() << ", content type: " << req_[beast::http::field::content_type] << ", target: " << req_.target()
-               << ", body: " << req_.body() << "\n";
+    LOG(DEBUG) << "read: " << bytes_transferred << ", method: " << req_.method_string() << ", content type: " << req_[beast::http::field::content_type]
+               << ", target: " << req_.target() << ", body: " << req_.body() << "\n";
 
     // See if it is a WebSocket Upgrade
     if (websocket::is_upgrade(req_) && (req_.target() == "/jsonrpc"))
@@ -297,7 +297,7 @@ void ControlSessionHttp::on_write(beast::error_code ec, std::size_t, bool close)
     req_ = {};
 
     // Read another request
-    http::async_read(socket_, buffer_, req_, [ this, self = shared_from_this() ](beast::error_code ec, std::size_t bytes) { on_read(ec, bytes); });
+    http::async_read(socket_, buffer_, req_, [this, self = shared_from_this()](beast::error_code ec, std::size_t bytes) { on_read(ec, bytes); });
 }
 
 
