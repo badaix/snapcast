@@ -963,7 +963,7 @@ inline void OptionParser::parse(const std::string& ini_filename)
             continue;
         if (line.front() == '#')
             continue;
-        std::cout << " line: " << line << "\n";
+
         if ((line.front() == '[') && (line.back() == ']'))
         {
             section = trim_copy(line.substr(1, line.size() - 2));
@@ -974,7 +974,6 @@ inline void OptionParser::parse(const std::string& ini_filename)
             continue;
 
         std::string key = section.empty() ? key_value.first : section + "." + key_value.first;
-        std::cout << "key: " << key << ", value: " << key_value.second << ", section: " << section << "\n";
         Option_ptr option = find_option(key);
         if (option && (option->attribute() == Attribute::inactive))
             option = nullptr;
