@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.2)
 
-project(snapcast LANGUAGES CXX VERSION 0.15.0)
+project(snapcast LANGUAGES CXX VERSION 0.16.0)
 set(PROJECT_DESCRIPTION "Multi-room client-server audio player")
 set(PROJECT_URL "https://github.com/badaix/snapcast")
 

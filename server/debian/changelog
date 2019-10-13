@@ -1,3 +1,23 @@
+snapserver (0.16.0) unstable; urgency=low
+
+  * Features
+    -Control server: websocket support for JSON RPC
+    -Control server: simple webserver integrated to host web UIs
+    -Control server: bind-to addresses are configurable
+    -Control server: streams can be added and Removed (PR #443)
+    -Control server: group names can be changed (PR #467)
+    -Librespot: add onevent parameter (PR #465)
+  * Bugfixes
+    -Fix build on macOS (Issue #474)
+  * General
+    -Control server uses less threads (one in total, instead of 1+2n)
+    -Snapserver: Configuration is moved into a file
+    -Removed submodules "popl" and "aixlog" to ease build
+    -Snapcast depends on boost::asio and boost::beast (header only)
+    -Tidy up code base
+
+ -- Johannes Pohl <snapcast@badaix.de>  Sat, 13 Oct 2018 00:13:37 +0200
+
 snapserver (0.15.0) unstable; urgency=low
 
   * Bugfixes
