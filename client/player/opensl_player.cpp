@@ -22,7 +22,7 @@
 #include "common/aixlog.hpp"
 #include "common/snap_exception.hpp"
 #include "common/str_compat.hpp"
-#include "openslPlayer.h"
+#include "opensl_player.hpp"
 
 using namespace std;
 

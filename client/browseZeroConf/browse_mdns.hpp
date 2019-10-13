@@ -30,7 +30,7 @@ public:
 #include "browse_avahi.hpp"
 typedef BrowseAvahi BrowseZeroConf;
 #elif defined(HAS_BONJOUR)
-#include "browseBonjour.h"
+#include "browse_bonjour.hpp"
 typedef BrowseBonjour BrowseZeroConf;
 #endif
 

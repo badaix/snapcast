@@ -19,12 +19,6 @@
 #ifndef STREAM_H
 #define STREAM_H
 
-//#include <mutex>
-//#include <condition_variable>
-//#include <vector>
-//#include <chrono>
-//#include "common/timeUtils.h"
-
 #include "common/queue.h"
 #include "common/sample_format.hpp"
 #include "double_buffer.hpp"

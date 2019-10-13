@@ -19,7 +19,7 @@
 #ifndef CONTROLLER_H
 #define CONTROLLER_H
 
-#include "decoder/decoder.h"
+#include "decoder/decoder.hpp"
 #include "message/message.h"
 #include "message/serverSettings.h"
 #include "message/streamTags.h"
@@ -29,9 +29,9 @@
 #ifdef HAS_ALSA
 #include "player/alsa_player.hpp"
 #elif HAS_OPENSL
-#include "player/openslPlayer.h"
+#include "player/opensl_player.hpp"
 #elif HAS_COREAUDIO
-#include "player/coreAudioPlayer.h"
+#include "player/coreaudio_player.hpp"
 #endif
 #include "client_connection.hpp"
 #include "metadata.hpp"

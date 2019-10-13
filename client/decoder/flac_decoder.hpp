@@ -19,7 +19,7 @@
 #ifndef FLAC_DECODER_H
 #define FLAC_DECODER_H
 
-#include "decoder.h"
+#include "decoder.hpp"
 
 #include <FLAC/stream_decoder.h>
 #include <atomic>

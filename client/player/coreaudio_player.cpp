@@ -16,8 +16,7 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
-//#include <CoreServices/CoreServices.h>
-#include "coreAudioPlayer.h"
+#include "coreaudio_player.hpp"
 #include <CoreAudio/CoreAudio.h>
 
 #define NUM_BUFFERS 2

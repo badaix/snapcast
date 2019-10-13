@@ -23,9 +23,9 @@
 #include "common/str_compat.hpp"
 #include "common/utils.hpp"
 #include "file_stream.hpp"
+#include "librespot_stream.hpp"
 #include "pipe_stream.hpp"
 #include "process_stream.hpp"
-#include "librespot_stream.hpp"
 
 
 using namespace std;
