@@ -297,7 +297,7 @@ void ControlSessionHttp::on_write(beast::error_code ec, std::size_t, bool close)
     req_ = {};
 
     // Read another request
-    http::async_read(socket_, buffer_, req_, [this, self = shared_from_this()](beast::error_code ec, std::size_t bytes) { on_read(ec, bytes); });
+    http::async_read(socket_, buffer_, req_, [ this, self = shared_from_this() ](beast::error_code ec, std::size_t bytes) { on_read(ec, bytes); });
 }
 
 

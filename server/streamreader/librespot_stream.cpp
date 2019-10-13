@@ -28,7 +28,7 @@ using namespace std;
 
 
 
-SpotifyStream::SpotifyStream(PcmListener* pcmListener, const StreamUri& uri) : ProcessStream(pcmListener, uri)
+LibrespotStream::LibrespotStream(PcmListener* pcmListener, const StreamUri& uri) : ProcessStream(pcmListener, uri)
 {
     sampleFormat_ = SampleFormat("44100:16:2");
     uri_.query["sampleformat"] = sampleFormat_.getFormat();
@@ -63,10 +63,10 @@ SpotifyStream::SpotifyStream(PcmListener* pcmListener, const StreamUri& uri) : P
 }
 
 
-SpotifyStream::~SpotifyStream() = default;
+LibrespotStream::~LibrespotStream() = default;
 
 
-void SpotifyStream::initExeAndPath(const std::string& filename)
+void LibrespotStream::initExeAndPath(const std::string& filename)
 {
     path_ = "";
     exe_ = findExe(filename);
@@ -88,7 +88,7 @@ void SpotifyStream::initExeAndPath(const std::string& filename)
 }
 
 
-void SpotifyStream::onStderrMsg(const char* buffer, size_t n)
+void LibrespotStream::onStderrMsg(const char* buffer, size_t n)
 {
     static bool libreelec_patched = false;
     smatch m;
@@ -153,7 +153,7 @@ void SpotifyStream::onStderrMsg(const char* buffer, size_t n)
 }
 
 
-void SpotifyStream::stderrReader()
+void LibrespotStream::stderrReader()
 {
     watchdog_.reset(new Watchdog(this));
     /// 130min
@@ -162,7 +162,7 @@ void SpotifyStream::stderrReader()
 }
 
 
-void SpotifyStream::onTimeout(const Watchdog* /*watchdog*/, size_t ms)
+void LibrespotStream::onTimeout(const Watchdog* /*watchdog*/, size_t ms)
 {
     LOG(ERROR) << "Spotify timeout: " << ms / 1000 << "\n";
     if (process_)

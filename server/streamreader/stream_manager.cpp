@@ -69,9 +69,9 @@ PcmStreamPtr StreamManager::addStream(const std::string& uri)
     {
         stream = make_shared<ProcessStream>(pcmListener_, streamUri);
     }
-    else if (streamUri.scheme == "spotify")
+    else if ((streamUri.scheme == "spotify") || (streamUri.scheme == "librespot"))
     {
-        stream = make_shared<SpotifyStream>(pcmListener_, streamUri);
+        stream = make_shared<LibrespotStream>(pcmListener_, streamUri);
     }
     else if (streamUri.scheme == "airplay")
     {

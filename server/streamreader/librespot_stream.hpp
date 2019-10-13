@@ -31,12 +31,12 @@
  *   snapserver -s "spotify:///librespot?name=Spotify&username=<my username>&password=<my password>[&devicename=Snapcast][&bitrate=320][&volume=<volume in
  * percent>][&cache=<cache dir>]"
  */
-class SpotifyStream : public ProcessStream, WatchdogListener
+class LibrespotStream : public ProcessStream, WatchdogListener
 {
 public:
     /// ctor. Encoded PCM data is passed to the PipeListener
-    SpotifyStream(PcmListener* pcmListener, const StreamUri& uri);
-    ~SpotifyStream() override;
+    LibrespotStream(PcmListener* pcmListener, const StreamUri& uri);
+    ~LibrespotStream() override;
 
 protected:
     std::unique_ptr<Watchdog> watchdog_;
