@@ -64,7 +64,7 @@ OBJ      += ../common/daemon.o publishZeroConf/publish_avahi.o
 else ifeq ($(TARGET), BUILDROOT)
 
 CXXFLAGS += -DHAS_AVAHI -DHAS_DAEMON -pthread
-LDFLAGS  += -lrt -lavahi-client -lavahi-common -static-libgcc -static-libstdc++
+LDFLAGS  += -lrt -lavahi-client -lavahi-common
 OBJ      += publishZeroConf/publish_avahi.o 
 
 else ifeq ($(TARGET), FREEBSD)
@@ -72,7 +72,7 @@ else ifeq ($(TARGET), FREEBSD)
 CXX       = g++
 STRIP     = echo
 CXXFLAGS += -DFREEBSD -DNO_CPP11_STRING -DHAS_AVAHI -DHAS_DAEMON -pthread
-LDFLAGS  += -lrt -lavahi-client -lavahi-common -static-libgcc -static-libstdc++ -latomic
+LDFLAGS  += -lrt -lavahi-client -lavahi-common -latomic
 OBJ      += ../common/daemon.o publishZeroConf/publish_avahi.o 
 
 else ifeq ($(TARGET), MACOS)
@@ -88,7 +88,7 @@ else
 CXX       = g++
 STRIP     = echo
 CXXFLAGS += -DHAS_AVAHI -DHAS_DAEMON -pthread
-LDFLAGS  += -lrt -lavahi-client -lavahi-common -static-libgcc -static-libstdc++
+LDFLAGS  += -lrt -lavahi-client -lavahi-common
 OBJ      += ../common/daemon.o publishZeroConf/publish_avahi.o 
 
 endif

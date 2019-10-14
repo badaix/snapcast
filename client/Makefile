@@ -81,7 +81,7 @@ else
 CXX       = g++
 STRIP     = strip
 CXXFLAGS += -pthread -DHAS_VORBIS -DHAS_ALSA -DHAS_AVAHI -DHAS_DAEMON
-LDFLAGS  += -lrt -lasound -lvorbis -lavahi-client -lavahi-common -static-libgcc -static-libstdc++ -latomic
+LDFLAGS  += -lrt -lasound -lvorbis -lavahi-client -lavahi-common -latomic
 OBJ      += ../common/daemon.o player/alsa_player.o browseZeroConf/browse_avahi.o
 
 endif
