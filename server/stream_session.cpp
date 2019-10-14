@@ -173,7 +173,7 @@ void StreamSession::getNextMessage()
     socketRead(&buffer[0], baseMsgSize);
     baseMessage.deserialize(&buffer[0]);
 
-    if ((baseMessage.type > message_type::kLast) || (baseMessage.type < message_type::kFirst))
+    if (baseMessage.type > message_type::kLast)
     {
         stringstream ss;
         ss << "unknown message type received: " << baseMessage.type << ", size: " << baseMessage.size;
