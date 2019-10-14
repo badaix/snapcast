@@ -1,0 +1,24 @@
+snapcast (0.15.0-1) unstable; urgency=medium
+
+  * New upstream release.
+  * Drop add_ldflags.patch, fixed upstream.
+  * Disable statically linking libgcc and libstdc++
+    - Add disable_static_linking.patch
+  * Enable all hardening compiler flags.
+
+ -- Felix Geyer <fgeyer@debian.org>  Sat, 28 Jul 2018 11:48:26 +0200
+
+snapcast (0.14.0-1) unstable; urgency=medium
+
+  * New upstream release.
+  * Install the documentation.
+  * Stop repackaging the main tarball and add the aixlog and popl libraries
+    as additional upstream tarballs.
+
+ -- Felix Geyer <fgeyer@debian.org>  Sun, 01 Jul 2018 20:01:05 +0200
+
+snapcast (0.13.0-1) unstable; urgency=medium
+
+  * Initial package. (Closes: #895241)
+
+ -- Felix Geyer <fgeyer@debian.org>  Sun, 08 Apr 2018 22:05:46 +0200
