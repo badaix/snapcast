@@ -15,6 +15,7 @@ snapclient (0.16.0) unstable; urgency=low
     -Removed submodules "popl" and "aixlog" to ease build
     -Snapcast depends on boost::asio and boost::beast (header only)
     -Tidy up code base
+    -Makefile doesn't statically link libgcc and libstdc++
 
  -- Johannes Pohl <snapcast@badaix.de>  Sat, 13 Oct 2018 00:13:37 +0200
 
