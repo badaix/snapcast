@@ -3,7 +3,7 @@
      _(  )/ ___) /  \ (  ( \(  _ \(  _ \ / __)( )  ( )
     / \) \\___ \(  O )/    / )   / ) __/( (__(_ _)(_ _)
     \____/(____/ \__/ \_)__)(__\_)(__)   \___)(_)  (_)
-    version 1.2.1
+    version 1.2.2
     https://github.com/badaix/jsonrpcpp
 
     This file is part of jsonrpc++
@@ -71,6 +71,8 @@ public:
 
     Entity(entity_t type);
     virtual ~Entity() = default;
+    Entity(const Entity&) = default;
+    Entity& operator=(const Entity&) = default;
 
     bool is_exception();
     bool is_id();
@@ -99,7 +101,6 @@ class NullableEntity : public Entity
 public:
     NullableEntity(entity_t type);
     NullableEntity(entity_t type, std::nullptr_t);
-    ~NullableEntity() override = default;
 #ifdef _MSC_VER
     virtual operator bool() const
 #else
@@ -301,7 +302,6 @@ public:
     RpcException(const char* text);
     RpcException(const std::string& text);
 
-    ~RpcException() override = default;
     const char* what() const noexcept override;
 
 protected:
