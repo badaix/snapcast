@@ -84,8 +84,8 @@ This will copy the server binary to `/usr/bin` and update init.d/systemd to star
 Debian packages can be made with
 
     $ sudo apt-get install dh-systemd
-    $ fakeroot make -C server -f debian/rules binary
-    $ fakeroot make -C client -f debian/rules binary
+    $ cd <snapcast dir>
+    $ fakeroot make -f debian/rules binary
 
 ## FreeBSD (Native)
 Install the build tools and required libs:  
