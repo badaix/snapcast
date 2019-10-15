@@ -118,12 +118,6 @@ $(BIN): $(OBJ)
 clean:
 	rm -rf $(BIN) $(OBJ) *~ player/*.o
 
-.PHONY: dpkg
-#sudo apt-get install build-essential debhelper dh-make dh-systemd quilt fakeroot lintian
-dpkg:
-	dpkg-buildpackage -rfakeroot -b -uc -us
-	dh_clean
-
 ifdef DESTDIR
 
 install:

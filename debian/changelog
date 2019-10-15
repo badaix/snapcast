@@ -1,3 +1,9 @@
+snapcast (0.16.0-1) unstable; urgency=medium
+
+  * See changelog.md
+
+ -- Johannes Pohl <snapcast@badaix.de>  Tue, 15 Oct 2018 00:13:37 +0200
+
 snapcast (0.15.0-1) unstable; urgency=medium
 
   * New upstream release.

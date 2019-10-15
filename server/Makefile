@@ -111,12 +111,6 @@ $(BIN): $(OBJ)
 clean:
 	rm -rf $(BIN) $(OBJ) *~
 
-.PHONY: dpkg
-#sudo apt-get install build-essential debhelper dh-make dh-systemd quilt fakeroot lintian
-dpkg:
-	dpkg-buildpackage -rfakeroot -b -uc -us
-	dh_clean
-
 ifdef DESTDIR
 
 install:
@@ -129,7 +123,6 @@ install:
 	install -g wheel -o root -m 555 $(BIN) $(TARGET_DIR)/local/bin/$(BIN)
 	install -g wheel -o root -m 555 $(BIN).1 $(TARGET_DIR)/local/man/man1/$(BIN).1
 	install -g wheel -o root -m 555 debian/$(BIN).bsd $(TARGET_DIR)/local/etc/rc.d/$(BIN)
-	install -g wheel -o root -m 555 $(BIN).conf /etc/$(BIN).conf
 
 else ifeq ($(TARGET), MACOS)
 
@@ -138,7 +131,6 @@ install:
 	install -g wheel -o root $(BIN) $(TARGET_DIR)/local/bin/$(BIN)
 	install -g wheel -o root $(BIN).1 $(TARGET_DIR)/local/share/man/man1/$(BIN).1
 	install -g wheel -o root debian/$(BIN).plist /Library/LaunchAgents/de.badaix.snapcast.$(BIN).plist
-	install -g wheel -o root $(BIN).conf /etc/$(BIN).conf
 	launchctl load /Library/LaunchAgents/de.badaix.snapcast.$(BIN).plist
 
 else
@@ -163,12 +155,12 @@ endif
 installfiles:
 	install -D -g root -o root $(BIN) $(TARGET_DIR)/bin/$(BIN)
 	install -D -g root -o root $(BIN).1 $(TARGET_DIR)/share/man/man1/$(BIN).1
-	install -D -g root -o root $(BIN).conf /etc/$(BIN).conf
 
 installsystemd:
 	@echo using systemd; \
 	cp debian/$(BIN).service /lib/systemd/system/$(BIN).service; \
 	cp -n debian/$(BIN).default /etc/default/$(BIN); \
+	cp -n server/etc/$(BIN).conf /etc/default/$(BIN).conf; \
 	systemctl daemon-reload; \
 	systemctl enable $(BIN); \
 	systemctl start $(BIN); \
@@ -177,6 +169,7 @@ installsysv:
 	@echo using sysv; \
 	cp debian/$(BIN).init /etc/init.d/$(BIN); \
 	cp -n debian/$(BIN).default /etc/default/$(BIN); \
+	cp -n server/etc/$(BIN).conf /etc/default/$(BIN).conf; \
 	update-rc.d $(BIN) defaults; \
 	/etc/init.d/$(BIN) start; \
 
@@ -199,7 +192,7 @@ uninstall:
 	rm -f $(TARGET_DIR)/local/man/man1/$(BIN).1; \
 	rm -f $(TARGET_DIR)/local/etc/rc.d/$(BIN); \
  	rm -f /etc/$(BIN).conf; \
- 	rm -rf /var/lib/snapserver; \
+ 	rm -f /var/lib/snapserver; \
 
 else ifeq ($(TARGET), MACOS)
 
@@ -210,7 +203,7 @@ uninstall:
 	rm -f $(TARGET_DIR)/local/share/man/man1/$(BIN).1; \
 	rm -f /Library/LaunchAgents/de.badaix.snapcast.$(BIN).plist; \
  	rm -f /etc/$(BIN).conf; \
-	rm -rf /var/lib/snapserver; \
+	rm -f /var/lib/snapserver; \
 
 else
 
@@ -226,8 +219,8 @@ uninstall:
 		echo cannot tell; \
 	fi; \
  	rm -f /etc/$(BIN).conf; \
-	rm -rf /var/run/$(BIN); \
-	rm -rf /var/lib/snapserver; \
+	rm -f /var/run/$(BIN); \
+	rm -f /var/lib/snapserver; \
 	$(MAKE) deluser
 
 endif
