@@ -1,0 +1,45 @@
+snapcast (0.16.0-1) unstable; urgency=medium
+
+  * Features
+    -Control server: websocket support for JSON RPC
+    -Control server: simple webserver integrated to host web UIs
+    -Control server: bind-to addresses are configurable
+    -Control server: streams can be added and Removed (PR #443)
+    -Control server: group names can be changed (PR #467)
+    -Librespot: add onevent parameter (PR #465)
+  * Bugfixes
+    -Fix build on macOS (Issue #474)
+  * General
+    -Control server uses less threads (one in total, instead of 1+2n)
+    -Snapserver: Configuration is moved into a file
+    -Removed submodules "popl" and "aixlog" to ease build
+    -Snapcast depends on boost::asio and boost::beast (header only)
+    -Tidy up code base
+    -Makefile doesn't statically link libgcc and libstdc++
+
+ -- Johannes Pohl <snapcast@badaix.de>  Tue, 15 Oct 2018 00:13:37 +0200
+
+snapcast (0.15.0-1) unstable; urgency=medium
+
+  * New upstream release.
+  * Drop add_ldflags.patch, fixed upstream.
+  * Disable statically linking libgcc and libstdc++
+    - Add disable_static_linking.patch
+  * Enable all hardening compiler flags.
+
+ -- Felix Geyer <fgeyer@debian.org>  Sat, 28 Jul 2018 11:48:26 +0200
+
+snapcast (0.14.0-1) unstable; urgency=medium
+
+  * New upstream release.
+  * Install the documentation.
+  * Stop repackaging the main tarball and add the aixlog and popl libraries
+    as additional upstream tarballs.
+
+ -- Felix Geyer <fgeyer@debian.org>  Sun, 01 Jul 2018 20:01:05 +0200
+
+snapcast (0.13.0-1) unstable; urgency=medium
+
+  * Initial package. (Closes: #895241)
+
+ -- Felix Geyer <fgeyer@debian.org>  Sun, 08 Apr 2018 22:05:46 +0200

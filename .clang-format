@@ -1,0 +1,20 @@
+﻿---
+AccessModifierOffset: '-4'
+AllowShortBlocksOnASingleLine: 'false'
+AllowShortCaseLabelsOnASingleLine: 'false'
+AllowShortFunctionsOnASingleLine: None
+AllowShortIfStatementsOnASingleLine: 'false'
+AllowShortLoopsOnASingleLine: 'false'
+AlwaysBreakTemplateDeclarations: 'true'
+BreakBeforeBraces: Allman
+ColumnLimit: '160'
+IndentCaseLabels: 'true'
+IndentWidth: '4'
+Language: Cpp
+MaxEmptyLinesToKeep: '3'
+PenaltyBreakComment: '100000'
+PointerAlignment: Left
+Standard: Cpp11
+UseTab: Never
+
+...

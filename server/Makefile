@@ -1,5 +1,5 @@
 #    This file is part of snapcast
-#   Copyright (C) 2014-2018  Johannes Pohl
+#   Copyright (C) 2014-2019  Johannes Pohl
 #
 #   This program is free software: you can redistribute it and/or modify
 #   it under the terms of the GNU General Public License as published by
@@ -14,7 +14,7 @@
 #   You should have received a copy of the GNU General Public License
 #   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-VERSION = 0.15.0
+VERSION = 0.16.0
 BIN = snapserver
 
 ifeq ($(TARGET), FREEBSD)
@@ -31,12 +31,13 @@ else
 endif
 
 # Simplify building debuggable executables 'make DEBUG=-g STRIP=echo'
-DEBUG=-O3
+DEBUG=-g
+SANITIZE=
+#-fsanitize=thread
 
-
-CXXFLAGS += $(ADD_CFLAGS) -std=c++0x -Wall -Wno-unused-function $(DEBUG) -DHAS_FLAC -DHAS_OGG -DHAS_VORBIS -DHAS_VORBIS_ENC -DASIO_STANDALONE -DVERSION=\"$(VERSION)\" -I. -I.. -isystem ../externals/asio/asio/include -I../externals/popl/include -I../externals/aixlog/include -I../externals -I../common
-LDFLAGS   = $(ADD_LDFLAGS) -lvorbis -lvorbisenc -logg -lFLAC 
-OBJ       = snapServer.o config.o controlServer.o controlSession.o streamServer.o streamSession.o streamreader/streamUri.o streamreader/base64.o streamreader/streamManager.o streamreader/pcmStream.o streamreader/pipeStream.o streamreader/fileStream.o streamreader/processStream.o streamreader/airplayStream.o streamreader/spotifyStream.o streamreader/watchdog.o encoder/encoderFactory.o encoder/flacEncoder.o encoder/pcmEncoder.o encoder/oggEncoder.o ../common/sampleFormat.o
+CXXFLAGS += $(ADD_CFLAGS) $(SANITIZE) -std=c++14 -Wall -Wextra -Wpedantic -Wno-unused-function $(DEBUG) -DHAS_FLAC -DHAS_OGG -DHAS_VORBIS -DHAS_VORBIS_ENC -DVERSION=\"$(VERSION)\" -I. -I.. -I../common
+LDFLAGS   = $(ADD_LDFLAGS) $(SANITIZE) -lvorbis -lvorbisenc -logg -lFLAC 
+OBJ       = snapserver.o config.o control_server.o control_session_tcp.o control_session_http.o stream_server.o stream_session.o streamreader/stream_uri.o streamreader/base64.o streamreader/stream_manager.o streamreader/pcm_stream.o streamreader/pipe_stream.o streamreader/file_stream.o streamreader/process_stream.o streamreader/airplay_stream.o streamreader/librespot_stream.o streamreader/watchdog.o encoder/encoder_factory.o encoder/flac_encoder.o encoder/pcm_encoder.o encoder/ogg_encoder.o ../common/sample_format.o
 
 ifneq (,$(TARGET))
 CXXFLAGS += -D$(TARGET)
@@ -58,21 +59,21 @@ else ifeq ($(TARGET), OPENWRT)
 STRIP     = echo
 CXXFLAGS += -DNO_CPP11_STRING -DHAS_AVAHI -DHAS_DAEMON -pthread
 LDFLAGS  += -lavahi-client -lavahi-common -latomic
-OBJ      += ../common/daemon.o publishZeroConf/publishAvahi.o 
+OBJ      += ../common/daemon.o publishZeroConf/publish_avahi.o 
 
 else ifeq ($(TARGET), BUILDROOT)
 
 CXXFLAGS += -DHAS_AVAHI -DHAS_DAEMON -pthread
-LDFLAGS  += -lrt -lavahi-client -lavahi-common -static-libgcc -static-libstdc++
-OBJ      += publishZeroConf/publishAvahi.o 
+LDFLAGS  += -lrt -lavahi-client -lavahi-common
+OBJ      += publishZeroConf/publish_avahi.o 
 
 else ifeq ($(TARGET), FREEBSD)
 
 CXX       = g++
 STRIP     = echo
 CXXFLAGS += -DFREEBSD -DNO_CPP11_STRING -DHAS_AVAHI -DHAS_DAEMON -pthread
-LDFLAGS  += -lrt -lavahi-client -lavahi-common -static-libgcc -static-libstdc++ -latomic
-OBJ      += ../common/daemon.o publishZeroConf/publishAvahi.o 
+LDFLAGS  += -lrt -lavahi-client -lavahi-common -latomic
+OBJ      += ../common/daemon.o publishZeroConf/publish_avahi.o 
 
 else ifeq ($(TARGET), MACOS)
 
@@ -80,15 +81,15 @@ CXX       = g++
 STRIP     = strip
 CXXFLAGS += -DFREEBSD -DHAS_BONJOUR -DHAS_DAEMON -Wno-deprecated -I/usr/local/include
 LDFLAGS  += -L/usr/local/lib -framework CoreFoundation -framework IOKit
-OBJ      += ../common/daemon.o publishZeroConf/publishBonjour.o
+OBJ      += ../common/daemon.o publishZeroConf/publish_bonjour.o
 
 else
 
 CXX       = g++
-STRIP     = strip
+STRIP     = echo
 CXXFLAGS += -DHAS_AVAHI -DHAS_DAEMON -pthread
-LDFLAGS  += -lrt -lavahi-client -lavahi-common -static-libgcc -static-libstdc++
-OBJ      += ../common/daemon.o publishZeroConf/publishAvahi.o 
+LDFLAGS  += -lrt -lavahi-client -lavahi-common
+OBJ      += ../common/daemon.o publishZeroConf/publish_avahi.o 
 
 endif
 
@@ -109,12 +110,6 @@ $(BIN): $(OBJ)
 
 clean:
 	rm -rf $(BIN) $(OBJ) *~
-
-.PHONY: dpkg
-#sudo apt-get install build-essential debhelper dh-make dh-systemd quilt fakeroot lintian
-dpkg:
-	dpkg-buildpackage -rfakeroot -b -uc -us
-	dh_clean
 
 ifdef DESTDIR
 
@@ -165,6 +160,7 @@ installsystemd:
 	@echo using systemd; \
 	cp debian/$(BIN).service /lib/systemd/system/$(BIN).service; \
 	cp -n debian/$(BIN).default /etc/default/$(BIN); \
+	cp -n server/etc/$(BIN).conf /etc/default/$(BIN).conf; \
 	systemctl daemon-reload; \
 	systemctl enable $(BIN); \
 	systemctl start $(BIN); \
@@ -173,6 +169,7 @@ installsysv:
 	@echo using sysv; \
 	cp debian/$(BIN).init /etc/init.d/$(BIN); \
 	cp -n debian/$(BIN).default /etc/default/$(BIN); \
+	cp -n server/etc/$(BIN).conf /etc/default/$(BIN).conf; \
 	update-rc.d $(BIN) defaults; \
 	/etc/init.d/$(BIN) start; \
 
@@ -194,7 +191,8 @@ uninstall:
 	rm -f $(TARGET_DIR)/local/bin/$(BIN); \
 	rm -f $(TARGET_DIR)/local/man/man1/$(BIN).1; \
 	rm -f $(TARGET_DIR)/local/etc/rc.d/$(BIN); \
-	rm -rf /var/lib/snapserver; \
+ 	rm -f /etc/$(BIN).conf; \
+ 	rm -f /var/lib/snapserver; \
 
 else ifeq ($(TARGET), MACOS)
 
@@ -204,7 +202,8 @@ uninstall:
 	rm -f $(TARGET_DIR)/local/bin/$(BIN); \
 	rm -f $(TARGET_DIR)/local/share/man/man1/$(BIN).1; \
 	rm -f /Library/LaunchAgents/de.badaix.snapcast.$(BIN).plist; \
-	rm -rf /var/lib/snapserver; \
+ 	rm -f /etc/$(BIN).conf; \
+	rm -f /var/lib/snapserver; \
 
 else
 
@@ -219,8 +218,9 @@ uninstall:
 	else \
 		echo cannot tell; \
 	fi; \
-	rm -rf /var/run/$(BIN)
-	rm -rf /var/lib/snapserver; \
+ 	rm -f /etc/$(BIN).conf; \
+	rm -f /var/run/$(BIN); \
+	rm -f /var/lib/snapserver; \
 	$(MAKE) deluser
 
 endif

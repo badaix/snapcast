@@ -73,13 +73,17 @@ Configuration
 After installation, Snapserver and Snapclient are started with the command line arguments that are configured in `/etc/default/snapserver` and `/etc/default/snapclient`.
 Allowed options are listed in the man pages (`man snapserver`, `man snapclient`) or by invoking the snapserver or snapclient with the `-h` option.
 
-Different streams can by configured with a list of `-s` options, e.g.:
+The server configuration is done in `/etc/snapserver.conf`. Different streams can by configured in the `[stream]` section with a list of `stream` options, e.g.:
 
-    SNAPSERVER_OPTS="-d -s pipe:///tmp/snapfifo?name=Radio&sampleformat=48000:16:2&codec=flac -s file:///home/user/Musik/Some%20wave%20file.wav?name=File"
+```
+[stream]
+stream = pipe:///tmp/snapfifo?name=Radio&sampleformat=48000:16:2&codec=flac
+stream = file:///home/user/Musik/Some%20wave%20file.wav?name=File
+```
 
-The pipe stream (`-s pipe`) will per default create the pipe. Sometimes your audio source might insist in creating the pipe itself. So the pipe creation mode can by changed to "not create, but only read mode", using the `mode` option set to `create` or `read`:
+The pipe stream (`stream = pipe`) will per default create the pipe. Sometimes your audio source might insist in creating the pipe itself. So the pipe creation mode can by changed to "not create, but only read mode", using the `mode` option set to `create` or `read`:
     
-    SNAPSERVER_OPTS="-d -s pipe:///tmp/snapfifo?name=Radio&mode=read"
+    stream = pipe:///tmp/snapfifo?name=Radio&mode=read"
     
 Test
 ----
@@ -88,9 +92,12 @@ You can test your installation by copying random data into the server's fifo fil
     $ sudo cat /dev/urandom > /tmp/snapfifo
 
 All connected clients should play random noise now. You might raise the client's volume with "alsamixer".
-It's also possible to let the server play a wave file. Simply configure a `file` stream in `/etc/default/snapserver`, and restart the server:
+It's also possible to let the server play a wave file. Simply configure a `file` stream in `/etc/snapserver.conf`, and restart the server:
 
-    SNAPSERVER_OPTS="-d -s file:///home/user/Musik/Some%20wave%20file.wav?name=test"
+```
+[stream]
+stream = file:///home/user/Musik/Some%20wave%20file.wav?name=test
+```
 
 When you are using a Raspberry pi, you might have to change your audio output to the 3.5mm jack:
 

@@ -79,6 +79,13 @@ Install Snapserver
 
 This will copy the server binary to `/usr/bin` and update init.d/systemd to start the server as a daemon.
 
+### Debian packages
+
+Debian packages can be made with
+
+    $ sudo apt-get install dh-systemd
+    $ cd <snapcast dir>
+    $ fakeroot make -f debian/rules binary
 
 ## FreeBSD (Native)
 Install the build tools and required libs:  

@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2018  Johannes Pohl
+    Copyright (C) 2014-2019  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -19,14 +19,14 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
-#include <string>
 #include <memory>
-#include <vector>
+#include <string>
 #include <sys/time.h>
+#include <vector>
 
 #include "common/json.hpp"
-#include "common/utils/string_utils.h"
-#include "common/utils.h"
+#include "common/utils.hpp"
+#include "common/utils/string_utils.hpp"
 
 
 namespace strutils = utils::string;
@@ -39,367 +39,365 @@ typedef std::shared_ptr<ClientInfo> ClientInfoPtr;
 typedef std::shared_ptr<Group> GroupPtr;
 
 
-template<typename T>
+template <typename T>
 T jGet(const json& j, const std::string& what, const T& def)
 {
-	try
-	{
-		if (!j.count(what))
-			return def;
-		return j[what].get<T>();
-	}
-	catch(...)
-	{
-		return def;
-	}
+    try
+    {
+        if (!j.count(what))
+            return def;
+        return j[what].get<T>();
+    }
+    catch (...)
+    {
+        return def;
+    }
 }
 
 
 struct Volume
 {
-	Volume(uint16_t _percent = 100, bool _muted = false) : percent(_percent), muted(_muted)
-	{
-	}
+    Volume(uint16_t _percent = 100, bool _muted = false) : percent(_percent), muted(_muted)
+    {
+    }
 
-	void fromJson(const json& j)
-	{
-		percent = jGet<uint16_t>(j, "percent", percent);
-		muted = jGet<bool>(j, "muted", muted);
-	}
+    void fromJson(const json& j)
+    {
+        percent = jGet<uint16_t>(j, "percent", percent);
+        muted = jGet<bool>(j, "muted", muted);
+    }
 
-	json toJson()
-	{
-		json j;
-		j["percent"] = percent;
-		j["muted"] = muted;
-		return j;
-	}
+    json toJson()
+    {
+        json j;
+        j["percent"] = percent;
+        j["muted"] = muted;
+        return j;
+    }
 
-	uint16_t percent;
-	bool muted;
+    uint16_t percent;
+    bool muted;
 };
 
 
 
 struct Host
 {
-	Host() : name(""), mac(""), os(""), arch(""), ip("")
-	{
-	}
+    Host() : name(""), mac(""), os(""), arch(""), ip("")
+    {
+    }
 
-	void update() 
-	{
-		name = getHostName();
-		os = getOS();
-		arch = getArch();
-	}
+    void update()
+    {
+        name = getHostName();
+        os = getOS();
+        arch = getArch();
+    }
 
-	void fromJson(const json& j)
-	{
-		name = strutils::trim_copy(jGet<std::string>(j, "name", ""));
-		mac = strutils::trim_copy(jGet<std::string>(j, "mac", ""));
-		os = strutils::trim_copy(jGet<std::string>(j, "os", ""));
-		arch = strutils::trim_copy(jGet<std::string>(j, "arch", ""));
-		ip = strutils::trim_copy(jGet<std::string>(j, "ip", ""));
-	}
+    void fromJson(const json& j)
+    {
+        name = strutils::trim_copy(jGet<std::string>(j, "name", ""));
+        mac = strutils::trim_copy(jGet<std::string>(j, "mac", ""));
+        os = strutils::trim_copy(jGet<std::string>(j, "os", ""));
+        arch = strutils::trim_copy(jGet<std::string>(j, "arch", ""));
+        ip = strutils::trim_copy(jGet<std::string>(j, "ip", ""));
+    }
 
-	json toJson()
-	{
-		json j;
-		j["name"] = name;
-		j["mac"] = mac;
-		j["os"] = os;
-		j["arch"] = arch;
-		j["ip"] = ip;
-		return j;
-	}
+    json toJson()
+    {
+        json j;
+        j["name"] = name;
+        j["mac"] = mac;
+        j["os"] = os;
+        j["arch"] = arch;
+        j["ip"] = ip;
+        return j;
+    }
 
-	std::string name;
-	std::string mac;
-	std::string os;
-	std::string arch;
-	std::string ip;
+    std::string name;
+    std::string mac;
+    std::string os;
+    std::string arch;
+    std::string ip;
 };
 
 
 struct ClientConfig
 {
-	ClientConfig() : name(""), volume(100), latency(0), instance(1)
-	{
-	}
+    ClientConfig() : name(""), volume(100), latency(0), instance(1)
+    {
+    }
 
-	void fromJson(const json& j)
-	{
-		name = strutils::trim_copy(jGet<std::string>(j, "name", ""));
-		volume.fromJson(j["volume"]);
-		latency = jGet<int32_t>(j, "latency", 0);
-		instance = jGet<size_t>(j, "instance", 1);
-	}
-	
-	json toJson()
-	{
-		json j;
-		j["name"] = strutils::trim_copy(name);
-		j["volume"] = volume.toJson();
-		j["latency"] = latency;
-		j["instance"] = instance;
-		return j;
-	}
+    void fromJson(const json& j)
+    {
+        name = strutils::trim_copy(jGet<std::string>(j, "name", ""));
+        volume.fromJson(j["volume"]);
+        latency = jGet<int32_t>(j, "latency", 0);
+        instance = jGet<size_t>(j, "instance", 1);
+    }
 
-	std::string name;
-	Volume volume;
-	int32_t latency;
-	size_t instance;
+    json toJson()
+    {
+        json j;
+        j["name"] = strutils::trim_copy(name);
+        j["volume"] = volume.toJson();
+        j["latency"] = latency;
+        j["instance"] = instance;
+        return j;
+    }
+
+    std::string name;
+    Volume volume;
+    int32_t latency;
+    size_t instance;
 };
 
 
 
 struct Snapcast
 {
-	Snapcast(const std::string& _name = "", const std::string& _version = "") : name(_name), version(_version), protocolVersion(1)
-	{
-	}
+    Snapcast(const std::string& _name = "", const std::string& _version = "") : name(_name), version(_version), protocolVersion(1)
+    {
+    }
 
-	virtual ~Snapcast()
-	{
-	}
+    virtual ~Snapcast() = default;
 
-	virtual void fromJson(const json& j)
-	{
-		name = strutils::trim_copy(jGet<std::string>(j, "name", ""));
-		version = strutils::trim_copy(jGet<std::string>(j, "version", ""));
-		protocolVersion = jGet<int>(j, "protocolVersion", 1);
-	}
+    virtual void fromJson(const json& j)
+    {
+        name = strutils::trim_copy(jGet<std::string>(j, "name", ""));
+        version = strutils::trim_copy(jGet<std::string>(j, "version", ""));
+        protocolVersion = jGet<int>(j, "protocolVersion", 1);
+    }
 
-	virtual json toJson()
-	{
-		json j;
-		j["name"] = strutils::trim_copy(name);
-		j["version"] = strutils::trim_copy(version);
-		j["protocolVersion"] = protocolVersion;
-		return j;
-	}
+    virtual json toJson()
+    {
+        json j;
+        j["name"] = strutils::trim_copy(name);
+        j["version"] = strutils::trim_copy(version);
+        j["protocolVersion"] = protocolVersion;
+        return j;
+    }
 
-	std::string name;
-	std::string version;
-	int protocolVersion;
+    std::string name;
+    std::string version;
+    int protocolVersion;
 };
 
 
 struct Snapclient : public Snapcast
 {
-	Snapclient(const std::string& _name = "", const std::string& _version = "") : Snapcast(_name, _version)
-	{
-	}
+    Snapclient(const std::string& _name = "", const std::string& _version = "") : Snapcast(_name, _version)
+    {
+    }
 };
 
 
 struct Snapserver : public Snapcast
 {
-	Snapserver(const std::string& _name = "", const std::string& _version = "") : Snapcast(_name, _version), controlProtocolVersion(1)
-	{
-	}
+    Snapserver(const std::string& _name = "", const std::string& _version = "") : Snapcast(_name, _version), controlProtocolVersion(1)
+    {
+    }
 
-	virtual void fromJson(const json& j)
-	{
-		Snapcast::fromJson(j);
-		controlProtocolVersion = jGet<int>(j, "controlProtocolVersion", 1);
-	}
+    void fromJson(const json& j) override
+    {
+        Snapcast::fromJson(j);
+        controlProtocolVersion = jGet<int>(j, "controlProtocolVersion", 1);
+    }
 
-	virtual json toJson()
-	{
-		json j = Snapcast::toJson();
-		j["controlProtocolVersion"] = controlProtocolVersion;
-		return j;
-	}
+    json toJson() override
+    {
+        json j = Snapcast::toJson();
+        j["controlProtocolVersion"] = controlProtocolVersion;
+        return j;
+    }
 
-	int controlProtocolVersion;
+    int controlProtocolVersion;
 };
 
 
 struct ClientInfo
 {
-	ClientInfo(const std::string& _clientId = "") : id(_clientId), connected(false)
-	{
-		lastSeen.tv_sec = 0;
-		lastSeen.tv_usec = 0;
-	}
+    ClientInfo(const std::string& _clientId = "") : id(_clientId), connected(false)
+    {
+        lastSeen.tv_sec = 0;
+        lastSeen.tv_usec = 0;
+    }
 
-	void fromJson(const json& j)
-	{
-		host.fromJson(j["host"]);
-		id = jGet<std::string>(j, "id", host.mac);
-		snapclient.fromJson(j["snapclient"]);
-		config.fromJson(j["config"]);
-		lastSeen.tv_sec = jGet<int32_t>(j["lastSeen"], "sec", 0);
-		lastSeen.tv_usec = jGet<int32_t>(j["lastSeen"], "usec", 0);
-		connected = jGet<bool>(j, "connected", true);
-	}
+    void fromJson(const json& j)
+    {
+        host.fromJson(j["host"]);
+        id = jGet<std::string>(j, "id", host.mac);
+        snapclient.fromJson(j["snapclient"]);
+        config.fromJson(j["config"]);
+        lastSeen.tv_sec = jGet<int32_t>(j["lastSeen"], "sec", 0);
+        lastSeen.tv_usec = jGet<int32_t>(j["lastSeen"], "usec", 0);
+        connected = jGet<bool>(j, "connected", true);
+    }
 
-	json toJson()
-	{
-		json j;
-		j["id"] = id;
-		j["host"] = host.toJson();
-		j["snapclient"] = snapclient.toJson();
-		j["config"] = config.toJson();
-		j["lastSeen"]["sec"] = lastSeen.tv_sec;
-		j["lastSeen"]["usec"] = lastSeen.tv_usec;
-		j["connected"] = connected;
-		return j;
-	}
+    json toJson()
+    {
+        json j;
+        j["id"] = id;
+        j["host"] = host.toJson();
+        j["snapclient"] = snapclient.toJson();
+        j["config"] = config.toJson();
+        j["lastSeen"]["sec"] = lastSeen.tv_sec;
+        j["lastSeen"]["usec"] = lastSeen.tv_usec;
+        j["connected"] = connected;
+        return j;
+    }
 
-	std::string id;
-	Host host;
-	Snapclient snapclient;
-	ClientConfig config;
-	timeval lastSeen;
-	bool connected;
+    std::string id;
+    Host host;
+    Snapclient snapclient;
+    ClientConfig config;
+    timeval lastSeen;
+    bool connected;
 };
 
 
 struct Group
 {
-	Group(const ClientInfoPtr client = nullptr) : muted(false)
-	{
-		if (client)
-			id = client->id;
-		id = generateUUID();
-	}
+    Group(const ClientInfoPtr client = nullptr) : muted(false)
+    {
+        if (client)
+            id = client->id;
+        id = generateUUID();
+    }
 
-	void fromJson(const json& j)
-	{
-		name = strutils::trim_copy(jGet<std::string>(j, "name", ""));
-		id = strutils::trim_copy(jGet<std::string>(j, "id", ""));
-		streamId = strutils::trim_copy(jGet<std::string>(j, "stream_id", ""));
-		muted = jGet<bool>(j, "muted", false);
-		clients.clear();
-		if (j.count("clients"))
-		{
-			for (auto& jClient : j["clients"])
-			{
-				ClientInfoPtr client = std::make_shared<ClientInfo>();
-				client->fromJson(jClient);
-				client->connected = false;
-				addClient(client);
-			}
-		}
-	}
-	
-	json toJson()
-	{
-		json j;
-		j["name"] = strutils::trim_copy(name);
-		j["id"] = strutils::trim_copy(id);
-		j["stream_id"] = strutils::trim_copy(streamId);
-		j["muted"] = muted;
+    void fromJson(const json& j)
+    {
+        name = strutils::trim_copy(jGet<std::string>(j, "name", ""));
+        id = strutils::trim_copy(jGet<std::string>(j, "id", ""));
+        streamId = strutils::trim_copy(jGet<std::string>(j, "stream_id", ""));
+        muted = jGet<bool>(j, "muted", false);
+        clients.clear();
+        if (j.count("clients"))
+        {
+            for (auto& jClient : j["clients"])
+            {
+                ClientInfoPtr client = std::make_shared<ClientInfo>();
+                client->fromJson(jClient);
+                client->connected = false;
+                addClient(client);
+            }
+        }
+    }
 
-		json jClients = json::array();
-		for (auto client: clients)
-			jClients.push_back(client->toJson());
-		j["clients"] = jClients;
-		return j;
-	}
+    json toJson()
+    {
+        json j;
+        j["name"] = strutils::trim_copy(name);
+        j["id"] = strutils::trim_copy(id);
+        j["stream_id"] = strutils::trim_copy(streamId);
+        j["muted"] = muted;
 
-	ClientInfoPtr removeClient(const std::string& clientId)
-	{
-		for (auto iter = clients.begin(); iter != clients.end(); ++iter)
-		{
-			if ((*iter)->id == clientId)
-			{
-				clients.erase(iter);
-				return (*iter);
-			}
-		}
-		return nullptr;
-	}
+        json jClients = json::array();
+        for (auto client : clients)
+            jClients.push_back(client->toJson());
+        j["clients"] = jClients;
+        return j;
+    }
 
-	ClientInfoPtr removeClient(ClientInfoPtr client)
-	{
-		if (!client)
-			return nullptr;
+    ClientInfoPtr removeClient(const std::string& clientId)
+    {
+        for (auto iter = clients.begin(); iter != clients.end(); ++iter)
+        {
+            if ((*iter)->id == clientId)
+            {
+                clients.erase(iter);
+                return (*iter);
+            }
+        }
+        return nullptr;
+    }
 
-		return removeClient(client->id);
-	}
+    ClientInfoPtr removeClient(ClientInfoPtr client)
+    {
+        if (!client)
+            return nullptr;
 
-	ClientInfoPtr getClient(const std::string& clientId)
-	{
-		for (auto client: clients)
-		{
-			if (client->id == clientId)
-				return client;
-		}
-		return nullptr;		
-	}
+        return removeClient(client->id);
+    }
 
-	void addClient(ClientInfoPtr client)
-	{
-		if (!client)
-			return;
+    ClientInfoPtr getClient(const std::string& clientId)
+    {
+        for (auto client : clients)
+        {
+            if (client->id == clientId)
+                return client;
+        }
+        return nullptr;
+    }
 
-		for (auto c: clients)
-		{
-			if (c->id == client->id)
-				return;
-		}
+    void addClient(ClientInfoPtr client)
+    {
+        if (!client)
+            return;
 
-		clients.push_back(client);
-/*		sort(clients.begin(), clients.end(), 
-			[](const ClientInfoPtr a, const ClientInfoPtr b) -> bool
-			{ 
-				return a.name > b.name; 
-			});
-*/
-	}
+        for (auto c : clients)
+        {
+            if (c->id == client->id)
+                return;
+        }
 
-	bool empty() const
-	{
-		return clients.empty();
-	}
+        clients.push_back(client);
+        /*		sort(clients.begin(), clients.end(),
+                                [](const ClientInfoPtr a, const ClientInfoPtr b) -> bool
+                                {
+                                        return a.name > b.name;
+                                });
+        */
+    }
 
-	std::string name;
-	std::string id;
-	std::string streamId;
-	bool muted;
-	std::vector<ClientInfoPtr> clients;
+    bool empty() const
+    {
+        return clients.empty();
+    }
+
+    std::string name;
+    std::string id;
+    std::string streamId;
+    bool muted;
+    std::vector<ClientInfoPtr> clients;
 };
 
 
 class Config
 {
 public:
-	static Config& instance()
-	{
-		static Config instance_;
-		return instance_;
-	}
+    static Config& instance()
+    {
+        static Config instance_;
+        return instance_;
+    }
 
-	ClientInfoPtr getClientInfo(const std::string& clientId) const;
-	GroupPtr addClientInfo(const std::string& clientId);
-	GroupPtr addClientInfo(ClientInfoPtr client);
-	void remove(ClientInfoPtr client);
-	void remove(GroupPtr group, bool force = false);
+    ClientInfoPtr getClientInfo(const std::string& clientId) const;
+    GroupPtr addClientInfo(const std::string& clientId);
+    GroupPtr addClientInfo(ClientInfoPtr client);
+    void remove(ClientInfoPtr client);
+    void remove(GroupPtr group, bool force = false);
 
-//	GroupPtr removeFromGroup(const std::string& groupId, const std::string& clientId);
-//	GroupPtr setGroupForClient(const std::string& groupId, const std::string& clientId);
+    //	GroupPtr removeFromGroup(const std::string& groupId, const std::string& clientId);
+    //	GroupPtr setGroupForClient(const std::string& groupId, const std::string& clientId);
 
-	GroupPtr getGroupFromClient(const std::string& clientId);
-	GroupPtr getGroupFromClient(ClientInfoPtr client);
-	GroupPtr getGroup(const std::string& groupId) const;
+    GroupPtr getGroupFromClient(const std::string& clientId);
+    GroupPtr getGroupFromClient(ClientInfoPtr client);
+    GroupPtr getGroup(const std::string& groupId) const;
 
-	json getGroups() const;
-	json getServerStatus(const json& streams) const;
+    json getGroups() const;
+    json getServerStatus(const json& streams) const;
 
-	void save();
+    void save();
 
-	void init(const std::string& root_directory = "", const std::string& user = "", const std::string& group = "");
+    void init(const std::string& root_directory = "", const std::string& user = "", const std::string& group = "");
 
-	std::vector<GroupPtr> groups;
+    std::vector<GroupPtr> groups;
 
 private:
-	Config();
-	~Config();
-	std::string filename_;
+    Config();
+    ~Config();
+    std::string filename_;
 };
 
 
