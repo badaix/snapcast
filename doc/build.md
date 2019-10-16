@@ -83,7 +83,7 @@ This will copy the server binary to `/usr/bin` and update init.d/systemd to star
 
 Debian packages can be made with
 
-    $ sudo apt-get install dh-systemd
+    $ sudo apt-get install debhelper
     $ cd <snapcast dir>
     $ fakeroot make -f debian/rules binary
 
