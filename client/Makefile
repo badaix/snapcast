@@ -34,7 +34,7 @@ endif
 DEBUG=-O3
 
 
-CXXFLAGS += $(ADD_CFLAGS) -std=c++0x -Wall -Wextra -Wpedantic -Wno-unused-function $(DEBUG) -DHAS_FLAC -DHAS_OGG -DVERSION=\"$(VERSION)\" -I. -I.. -I../common
+CXXFLAGS += $(ADD_CFLAGS) -std=c++0x -Wall -Wextra -Wpedantic -Wno-unused-function $(DEBUG) -DBOOST_ERROR_CODE_HEADER_ONLY -DHAS_FLAC -DHAS_OGG -DVERSION=\"$(VERSION)\" -I. -I.. -I../common
 LDFLAGS   = $(ADD_LDFLAGS) -logg -lFLAC
 OBJ       = snapclient.o stream.o client_connection.o time_provider.o player/player.o decoder/pcm_decoder.o decoder/ogg_decoder.o decoder/flac_decoder.o controller.o ../common/sample_format.o
 

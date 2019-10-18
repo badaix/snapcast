@@ -177,7 +177,8 @@ if(BUILD_WITH_VORBIS)
     endif(VORBISENC_FOUND)
 endif()
 
-find_package(Boost 1.66 REQUIRED)
+find_package(Boost 1.70 REQUIRED)
+add_definitions("-DBOOST_ERROR_CODE_HEADER_ONLY")
 
 add_subdirectory(common)
 
