@@ -3,7 +3,7 @@
      / _\ (  )( \/ )(  )   /  \  / __)
     /    \ )(  )  ( / (_/\(  O )( (_ \
     \_/\_/(__)(_/\_)\____/ \__/  \___/
-    version 1.2.2
+    version 1.2.3
     https://github.com/badaix/aixlog
 
     This file is part of aixlog
@@ -284,7 +284,7 @@ struct Timestamp
         {
             int ms_part = std::chrono::time_point_cast<std::chrono::milliseconds>(time_point).time_since_epoch().count() % 1000;
             char ms_str[4];
-            sprintf(&ms_str[0], "%03d", ms_part);
+            snprintf(ms_str, 4, "%03d", ms_part);
             result.replace(pos, 3, ms_str);
         }
         return result;
