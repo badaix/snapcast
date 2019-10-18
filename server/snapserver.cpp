@@ -189,6 +189,9 @@ int main(int argc, char* argv[])
             AixLog::Log::instance().add_logsink<AixLog::SinkCout>(AixLog::Severity::info, AixLog::Type::all, "%Y-%m-%d %H-%M-%S [#severity]");
         }
 
+        for (const auto& opt : conf.unknown_options())
+            LOG(WARNING) << "unknown configuration option: " << opt << "\n";
+
         if (!streamValue->is_set())
             settings.stream.pcmStreams.push_back(streamValue->value());
 
