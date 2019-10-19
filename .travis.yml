@@ -173,4 +173,4 @@ script:
 
   - mkdir build
   - cd build
-  - cmake -DCMAKE_CXX_FLAGS="-Werror -Wall -Wextra -pedantic -O2" .. && make && sudo make install
+  - cmake -DCMAKE_CXX_FLAGS="-Werror -Wall -Wextra -pedantic -Wno-unused-function -O2" .. && make && sudo make install
