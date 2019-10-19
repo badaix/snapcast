@@ -312,7 +312,7 @@ void ControlSessionHttp::sendAsync(const std::string& message)
         return;
 
     auto self(shared_from_this());
-    ws_->async_write(boost::asio::buffer(message), [this, self](std::error_code ec, std::size_t length) {
+    ws_->async_write(boost::asio::buffer(message), [self](std::error_code ec, std::size_t length) {
         if (ec)
         {
             LOG(ERROR) << "Error while writing to control socket: " << ec.message() << "\n";

@@ -90,7 +90,7 @@ void ControlSessionTcp::stop()
 void ControlSessionTcp::sendAsync(const std::string& message)
 {
     auto self(shared_from_this());
-    boost::asio::async_write(socket_, boost::asio::buffer(message + "\r\n"), [this, self](std::error_code ec, std::size_t length) {
+    boost::asio::async_write(socket_, boost::asio::buffer(message + "\r\n"), [self](std::error_code ec, std::size_t length) {
         if (ec)
         {
             LOG(ERROR) << "Error while writing to control socket: " << ec.message() << "\n";
