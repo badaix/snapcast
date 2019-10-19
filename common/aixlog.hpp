@@ -284,8 +284,8 @@ struct Timestamp
         {
             int ms_part = std::chrono::time_point_cast<std::chrono::milliseconds>(time_point).time_since_epoch().count() % 1000;
             char ms_str[4];
-            snprintf(ms_str, 4, "%03d", ms_part);
-            result.replace(pos, 3, ms_str);
+            if (snprintf(ms_str, 4, "%03d", ms_part) >= 0)
+                result.replace(pos, 3, ms_str);
         }
         return result;
     }
