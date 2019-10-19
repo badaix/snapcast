@@ -31,7 +31,7 @@ else
 endif
 
 # Simplify building debuggable executables 'make DEBUG=-g STRIP=echo'
-DEBUG=-g
+DEBUG=-O3
 SANITIZE=
 #-fsanitize=thread
 
@@ -86,7 +86,7 @@ OBJ      += ../common/daemon.o publishZeroConf/publish_bonjour.o
 else
 
 CXX       = g++
-STRIP     = echo
+STRIP     = strip
 CXXFLAGS += -DHAS_AVAHI -DHAS_DAEMON -pthread
 LDFLAGS  += -lrt -lavahi-client -lavahi-common
 OBJ      += ../common/daemon.o publishZeroConf/publish_avahi.o 
