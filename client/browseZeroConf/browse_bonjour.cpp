@@ -167,7 +167,7 @@ void runService(const DNSServiceHandle& service)
     }
 }
 
-bool BrowseBonjour::browse(const string& serviceName, mDNSResult& result, int timeout)
+bool BrowseBonjour::browse(const string& serviceName, mDNSResult& result, int /*timeout*/)
 {
     result.valid = false;
     // Discover
@@ -175,7 +175,7 @@ bool BrowseBonjour::browse(const string& serviceName, mDNSResult& result, int ti
     {
         DNSServiceHandle service(new DNSServiceRef(NULL));
         CHECKED(DNSServiceBrowse(service.get(), 0, 0, serviceName.c_str(), "local.",
-                                 [](DNSServiceRef service, DNSServiceFlags flags, uint32_t interfaceIndex, DNSServiceErrorType errorCode,
+                                 [](DNSServiceRef /*service*/, DNSServiceFlags /*flags*/, uint32_t /*interfaceIndex*/, DNSServiceErrorType errorCode,
                                     const char* serviceName, const char* regtype, const char* replyDomain, void* context) {
                                      auto replyCollection = static_cast<deque<mDNSReply>*>(context);
 
@@ -194,8 +194,8 @@ bool BrowseBonjour::browse(const string& serviceName, mDNSResult& result, int ti
         for (auto& reply : replyCollection)
             CHECKED(
                 DNSServiceResolve(service.get(), 0, 0, reply.name.c_str(), reply.regtype.c_str(), reply.domain.c_str(),
-                                  [](DNSServiceRef service, DNSServiceFlags flags, uint32_t interfaceIndex, DNSServiceErrorType errorCode, const char* fullName,
-                                     const char* hosttarget, uint16_t port, uint16_t txtLen, const unsigned char* txtRecord, void* context) {
+                                  [](DNSServiceRef /*service*/, DNSServiceFlags /*flags*/, uint32_t /*interfaceIndex*/, DNSServiceErrorType errorCode, const char* /*fullName*/,
+                                     const char* hosttarget, uint16_t port, uint16_t /*txtLen*/, const unsigned char* /*txtRecord*/, void* context) {
                                       auto resultCollection = static_cast<deque<mDNSResolve>*>(context);
 
                                       CHECKED(errorCode);
@@ -215,8 +215,8 @@ bool BrowseBonjour::browse(const string& serviceName, mDNSResult& result, int ti
         {
             resultCollection[i].port = resolve.port;
             CHECKED(DNSServiceGetAddrInfo(service.get(), kDNSServiceFlagsLongLivedQuery, 0, kDNSServiceProtocol_IPv4, resolve.fullName.c_str(),
-                                          [](DNSServiceRef service, DNSServiceFlags flags, uint32_t interfaceIndex, DNSServiceErrorType errorCode,
-                                             const char* hostname, const sockaddr* address, uint32_t ttl, void* context) {
+                                          [](DNSServiceRef /*service*/, DNSServiceFlags /*flags*/, uint32_t interfaceIndex, DNSServiceErrorType /*errorCode*/,
+                                             const char* hostname, const sockaddr* address, uint32_t /*ttl*/, void* context) {
                                               auto result = static_cast<mDNSResult*>(context);
 
                                               result->host = string(hostname);

@@ -76,7 +76,7 @@ std::vector<PcmDevice> CoreAudioPlayer::pcm_list(void)
             continue;
 
         UInt32 maxlen = 1024;
-        char buf[maxlen];
+        char buf[1024];
         theAddress = {kAudioDevicePropertyDeviceName, kAudioDevicePropertyScopeOutput, 0};
         AudioObjectGetPropertyData(devids[i], &theAddress, 0, NULL, &maxlen, buf);
         LOG(DEBUG) << "device: " << i << ", name: " << buf << ", channels: " << channels << "\n";
