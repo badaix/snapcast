@@ -60,7 +60,10 @@ PcmDevice getPcmDevice(const std::string& soundcard)
     for (auto dev : pcmDevices)
         if (dev.name.find(soundcard) != string::npos)
             return dev;
+#else
+    std::ignore = soundcard;
 #endif
+
     PcmDevice pcmDevice;
     return pcmDevice;
 }
