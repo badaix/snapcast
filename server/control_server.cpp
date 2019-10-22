@@ -32,7 +32,7 @@ using namespace std;
 using json = nlohmann::json;
 
 
-ControlServer::ControlServer(boost::asio::io_context* io_context, const ServerSettings::TcpSettings& tcp_settings,
+ControlServer::ControlServer(boost::asio::io_context& io_context, const ServerSettings::TcpSettings& tcp_settings,
                              const ServerSettings::HttpSettings& http_settings, ControlMessageReceiver* controlMessageReceiver)
     : io_context_(io_context), tcp_settings_(tcp_settings), http_settings_(http_settings), controlMessageReceiver_(controlMessageReceiver)
 {
@@ -145,7 +145,7 @@ void ControlServer::start()
             {
                 LOG(INFO) << "Creating TCP acceptor for address: " << address << ", port: " << tcp_settings_.port << "\n";
                 acceptor_tcp_.emplace_back(
-                    make_unique<tcp::acceptor>(*io_context_, tcp::endpoint(boost::asio::ip::address::from_string(address), tcp_settings_.port)));
+                    make_unique<tcp::acceptor>(io_context_, tcp::endpoint(boost::asio::ip::address::from_string(address), tcp_settings_.port)));
             }
             catch (const boost::system::system_error& e)
             {
@@ -161,7 +161,7 @@ void ControlServer::start()
             {
                 LOG(INFO) << "Creating HTTP acceptor for address: " << address << ", port: " << http_settings_.port << "\n";
                 acceptor_http_.emplace_back(
-                    make_unique<tcp::acceptor>(*io_context_, tcp::endpoint(boost::asio::ip::address::from_string(address), http_settings_.port)));
+                    make_unique<tcp::acceptor>(io_context_, tcp::endpoint(boost::asio::ip::address::from_string(address), http_settings_.port)));
             }
             catch (const boost::system::system_error& e)
             {

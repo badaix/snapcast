@@ -25,11 +25,14 @@
 #include <atomic>
 #include <boost/asio.hpp>
 #include <condition_variable>
+#include <deque>
 #include <memory>
 #include <mutex>
 #include <set>
+#include <sstream>
 #include <string>
 #include <thread>
+#include <vector>
 
 
 using boost::asio::ip::tcp;
@@ -47,28 +50,58 @@ public:
 };
 
 
+// A reference-counted non-modifiable buffer class.
+class shared_const_buffer
+{
+public:
+    // Construct from a std::string.
+    explicit shared_const_buffer(const std::string& data) : data_(new std::vector<char>(data.begin(), data.end())), buffer_(boost::asio::buffer(*data_))
+    {
+    }
+
+    // Implement the ConstBufferSequence requirements.
+    typedef boost::asio::const_buffer value_type;
+    typedef const boost::asio::const_buffer* const_iterator;
+    const boost::asio::const_buffer* begin() const
+    {
+        return &buffer_;
+    }
+    const boost::asio::const_buffer* end() const
+    {
+        return &buffer_ + 1;
+    }
+
+private:
+    std::shared_ptr<std::vector<char>> data_;
+    boost::asio::const_buffer buffer_;
+};
+
+
 /// Endpoint for a connected client.
 /**
  * Endpoint for a connected client.
  * Messages are sent to the client with the "send" method.
  * Received messages from the client are passed to the MessageReceiver callback
  */
-class StreamSession
+class StreamSession : public std::enable_shared_from_this<StreamSession>
 {
 public:
     /// ctor. Received message from the client are passed to MessageReceiver
-    StreamSession(MessageReceiver* receiver, tcp::socket&& socket);
+    StreamSession(boost::asio::io_context& ioc, MessageReceiver* receiver, tcp::socket&& socket);
     ~StreamSession();
     void start();
     void stop();
 
     /// Sends a message to the client (synchronous)
-    bool send(const msg::message_ptr& message);
+    bool send(msg::message_ptr message);
 
     /// Sends a message to the client (asynchronous)
-    void sendAsync(const msg::message_ptr& message, bool sendNow = false);
+    void sendAsync(msg::message_ptr message, bool sendNow = false);
 
-    bool active() const;
+    /// Sends a message to the client (asynchronous)
+    // void sendAsync(std::shared_ptr<boost::asio::streambuf> sb);
+
+    void sendAsync(shared_const_buffer const_buf);
 
     /// Max playout latency. No need to send PCM data that is older than bufferMs
     void setBufferMs(size_t bufferMs);
@@ -84,22 +117,19 @@ public:
     const PcmStreamPtr pcmStream() const;
 
 protected:
-    void socketRead(void* _to, size_t _bytes);
-    void getNextMessage();
-    void reader();
-    void writer();
+    void read_next();
+    void send_next();
 
-    mutable std::mutex activeMutex_;
-    std::atomic<bool> active_;
-
-    std::unique_ptr<std::thread> readerThread_;
-    std::unique_ptr<std::thread> writerThread_;
-    mutable std::mutex socketMutex_;
+    msg::BaseMessage baseMessage_;
+    std::vector<char> buffer_;
+    size_t buffer_pos_;
+    size_t base_msg_size_;
     tcp::socket socket_;
     MessageReceiver* messageReceiver_;
-    Queue<std::shared_ptr<msg::BaseMessage>> messages_;
     size_t bufferMs_;
     PcmStreamPtr pcmStream_;
+    boost::asio::io_context::strand strand_;
+    std::deque<shared_const_buffer> messages_;
 };
 
 

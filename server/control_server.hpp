@@ -45,7 +45,7 @@ using acceptor_ptr = std::unique_ptr<tcp::acceptor>;
 class ControlServer : public ControlMessageReceiver
 {
 public:
-    ControlServer(boost::asio::io_context* io_context, const ServerSettings::TcpSettings& tcp_settings, const ServerSettings::HttpSettings& http_settings,
+    ControlServer(boost::asio::io_context& io_context, const ServerSettings::TcpSettings& tcp_settings, const ServerSettings::HttpSettings& http_settings,
                   ControlMessageReceiver* controlMessageReceiver = nullptr);
     virtual ~ControlServer();
 
@@ -71,7 +71,7 @@ private:
     std::vector<acceptor_ptr> acceptor_tcp_;
     std::vector<acceptor_ptr> acceptor_http_;
 
-    boost::asio::io_context* io_context_;
+    boost::asio::io_context& io_context_;
     ServerSettings::TcpSettings tcp_settings_;
     ServerSettings::HttpSettings http_settings_;
     ControlMessageReceiver* controlMessageReceiver_;

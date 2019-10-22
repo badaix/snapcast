@@ -192,16 +192,16 @@ bool BrowseBonjour::browse(const string& serviceName, mDNSResult& result, int /*
     {
         DNSServiceHandle service(new DNSServiceRef(NULL));
         for (auto& reply : replyCollection)
-            CHECKED(
-                DNSServiceResolve(service.get(), 0, 0, reply.name.c_str(), reply.regtype.c_str(), reply.domain.c_str(),
-                                  [](DNSServiceRef /*service*/, DNSServiceFlags /*flags*/, uint32_t /*interfaceIndex*/, DNSServiceErrorType errorCode, const char* /*fullName*/,
-                                     const char* hosttarget, uint16_t port, uint16_t /*txtLen*/, const unsigned char* /*txtRecord*/, void* context) {
-                                      auto resultCollection = static_cast<deque<mDNSResolve>*>(context);
+            CHECKED(DNSServiceResolve(service.get(), 0, 0, reply.name.c_str(), reply.regtype.c_str(), reply.domain.c_str(),
+                                      [](DNSServiceRef /*service*/, DNSServiceFlags /*flags*/, uint32_t /*interfaceIndex*/, DNSServiceErrorType errorCode,
+                                         const char* /*fullName*/, const char* hosttarget, uint16_t port, uint16_t /*txtLen*/,
+                                         const unsigned char* /*txtRecord*/, void* context) {
+                                          auto resultCollection = static_cast<deque<mDNSResolve>*>(context);
 
-                                      CHECKED(errorCode);
-                                      resultCollection->push_back(mDNSResolve{string(hosttarget), ntohs(port)});
-                                  },
-                                  &resolveCollection));
+                                          CHECKED(errorCode);
+                                          resultCollection->push_back(mDNSResolve{string(hosttarget), ntohs(port)});
+                                      },
+                                      &resolveCollection));
 
         runService(service);
     }
