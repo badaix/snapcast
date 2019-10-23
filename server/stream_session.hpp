@@ -92,16 +92,11 @@ public:
     void start();
     void stop();
 
-    /// Sends a message to the client (synchronous)
-    bool send(msg::message_ptr message);
+    /// Sends a message to the client (asynchronous)
+    void sendAsync(msg::message_ptr message, bool send_now = false);
 
     /// Sends a message to the client (asynchronous)
-    void sendAsync(msg::message_ptr message, bool sendNow = false);
-
-    /// Sends a message to the client (asynchronous)
-    // void sendAsync(std::shared_ptr<boost::asio::streambuf> sb);
-
-    void sendAsync(shared_const_buffer const_buf);
+    void sendAsync(shared_const_buffer const_buf, bool send_now = false);
 
     /// Max playout latency. No need to send PCM data that is older than bufferMs
     void setBufferMs(size_t bufferMs);
