@@ -104,7 +104,8 @@ const PcmStreamPtr StreamSession::pcmStream() const
 
 void StreamSession::start()
 {
-    strand_.post([this]() { read_next(); });
+    read_next();
+    // strand_.post([this]() { read_next(); });
 }
 
 
@@ -163,6 +164,7 @@ void StreamSession::sendAsync(msg::message_ptr message, bool send_now)
     if (!message)
         return;
 
+    //sendAsync(shared_const_buffer(*message), send_now);
     tv t;
     message->sent = t;
     std::ostringstream oss;

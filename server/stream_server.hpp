@@ -41,7 +41,6 @@
 
 using boost::asio::ip::tcp;
 using acceptor_ptr = std::unique_ptr<tcp::acceptor>;
-using socket_ptr = std::shared_ptr<tcp::socket>;
 using session_ptr = std::shared_ptr<StreamSession>;
 
 
@@ -83,8 +82,10 @@ private:
     session_ptr getStreamSession(const std::string& mac) const;
     session_ptr getStreamSession(StreamSession* session) const;
     void ProcessRequest(const jsonrpcpp::request_ptr request, jsonrpcpp::entity_ptr& response, jsonrpcpp::notification_ptr& notification) const;
+    void cleanup();
+
     mutable std::recursive_mutex sessionsMutex_;
-    std::set<session_ptr> sessions_;
+    std::vector<std::weak_ptr<StreamSession>> sessions_;
     boost::asio::io_context& io_context_;
     std::vector<acceptor_ptr> acceptor_;
 

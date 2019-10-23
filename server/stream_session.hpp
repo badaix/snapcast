@@ -51,6 +51,7 @@ public:
 
 
 // A reference-counted non-modifiable buffer class.
+// TODO: add overload for messages
 class shared_const_buffer
 {
 public:
@@ -58,6 +59,18 @@ public:
     explicit shared_const_buffer(const std::string& data) : data_(new std::vector<char>(data.begin(), data.end())), buffer_(boost::asio::buffer(*data_))
     {
     }
+
+    // // Construct from a message.
+    // explicit shared_const_buffer(const msg::BaseMessage& message)
+    // {
+    //     std::ostringstream oss;
+    //     message.serialize(oss);
+
+    //     data_ = std::shared_ptr<std::vector<char>>(new std::vector<char>(oss.str().begin(), oss.str().end()));
+    //     //std::make_shared<std::vector<char>>(oss.str().begin(), oss.str().end());
+    //     buffer_ = boost::asio::buffer(*data_);
+    // }
+
 
     // Implement the ConstBufferSequence requirements.
     typedef boost::asio::const_buffer value_type;
