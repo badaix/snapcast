@@ -46,7 +46,7 @@ void StreamSession::read_next()
                             boost::asio::bind_executor(strand_, [this, self](boost::system::error_code ec, std::size_t length) mutable {
                                 if (ec)
                                 {
-                                    LOG(ERROR) << "Error reading message header: " << ec.message() << "\n";
+                                    LOG(ERROR) << "Error reading message header of length " << length << ": " << ec.message() << "\n";
                                     messageReceiver_->onDisconnect(this);
                                     return;
                                 }
@@ -75,7 +75,7 @@ void StreamSession::read_next()
                                     boost::asio::bind_executor(strand_, [this, self](boost::system::error_code ec, std::size_t length) mutable {
                                         if (ec)
                                         {
-                                            LOG(ERROR) << "Error reading message body: " << ec.message() << "\n";
+                                            LOG(ERROR) << "Error reading message body of length " << length << ": " << ec.message() << "\n";
                                             messageReceiver_->onDisconnect(this);
                                             return;
                                         }
@@ -131,7 +131,7 @@ void StreamSession::send_next()
                                  messages_.pop_front();
                                  if (ec)
                                  {
-                                     LOG(ERROR) << "StreamSession write error: " << ec.message() << "\n";
+                                     LOG(ERROR) << "StreamSession write error (msg lenght: " << length << "): " << ec.message() << "\n";
                                      messageReceiver_->onDisconnect(this);
                                      return;
                                  }
@@ -158,7 +158,7 @@ void StreamSession::sendAsync(shared_const_buffer const_buf, bool send_now)
 }
 
 
-void StreamSession::sendAsync(msg::message_ptr message, bool sendNow)
+void StreamSession::sendAsync(msg::message_ptr message, bool send_now)
 {
     if (!message)
         return;
@@ -167,7 +167,7 @@ void StreamSession::sendAsync(msg::message_ptr message, bool sendNow)
     message->sent = t;
     std::ostringstream oss;
     message->serialize(oss);
-    sendAsync(shared_const_buffer(oss.str()));
+    sendAsync(shared_const_buffer(oss.str()), send_now);
 }
 
 
