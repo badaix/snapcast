@@ -80,10 +80,10 @@ target_architecture(ARCH)
 INCLUDE(CheckLibraryExists)
 check_library_exists(atomic __atomic_fetch_add_4 "" HAS_LIBATOMIC)
 if(NOT HAS_LIBATOMIC)
-    check_library_exists(atomic __atomic_load_8 "" HAS_LIBATOMIC)
+    check_library_exists(atomic __atomic_load_8 "" HAS_LIBATOMIC_64)
 endif()
 
-if(HAS_LIBATOMIC)
+if(HAS_LIBATOMIC OR HAS_LIBATOMIC_64)
     set(CMAKE_CXX_LINK_FLAGS "${CMAKE_CXX_LINK_FLAGS} -latomic")
 endif()
 
