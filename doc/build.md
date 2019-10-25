@@ -35,8 +35,8 @@ Compilation requires gcc 4.8 or higher, so it's highly recommended to use Debian
 For Arch derivates:
 
     $ sudo pacman -S base-devel
-    $ sudo pacman -S alsa-lib avahi libvorbis flac alsa-utils
-    
+    $ sudo pacman -S alsa-lib avahi libvorbis flac alsa-utils boost
+
 For Fedora (and probably RHEL, CentOS & Scientific Linux, but untested):
 
     $ sudo dnf install @development-tools
