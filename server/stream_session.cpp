@@ -26,7 +26,7 @@ using namespace std;
 
 
 StreamSession::StreamSession(boost::asio::io_context& ioc, MessageReceiver* receiver, tcp::socket&& socket)
-    : buffer_pos_(0), socket_(std::move(socket)), messageReceiver_(receiver), pcmStream_(nullptr), strand_(ioc)
+    : socket_(std::move(socket)), messageReceiver_(receiver), pcmStream_(nullptr), strand_(ioc)
 {
     base_msg_size_ = baseMessage_.getSize();
     buffer_.resize(base_msg_size_);
@@ -164,7 +164,7 @@ void StreamSession::sendAsync(msg::message_ptr message, bool send_now)
     if (!message)
         return;
 
-    //sendAsync(shared_const_buffer(*message), send_now);
+    // sendAsync(shared_const_buffer(*message), send_now);
     tv t;
     message->sent = t;
     std::ostringstream oss;

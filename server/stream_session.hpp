@@ -130,7 +130,6 @@ protected:
 
     msg::BaseMessage baseMessage_;
     std::vector<char> buffer_;
-    size_t buffer_pos_;
     size_t base_msg_size_;
     tcp::socket socket_;
     MessageReceiver* messageReceiver_;
