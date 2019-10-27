@@ -40,9 +40,6 @@
 #include "config.h"
 
 
-volatile sig_atomic_t g_terminated = false;
-std::condition_variable terminateSignaled;
-
 using namespace std;
 using namespace popl;
 
@@ -201,10 +198,6 @@ int main(int argc, char* argv[])
             settings.stream.pcmStreams.push_back(streamValue->value(n));
         }
 
-        signal(SIGHUP, signal_handler);
-        signal(SIGTERM, signal_handler);
-        signal(SIGINT, signal_handler);
-
 #ifdef HAS_DAEMON
         std::unique_ptr<Daemon> daemon;
         if (daemonOption->is_set())
@@ -270,9 +263,8 @@ int main(int argc, char* argv[])
 
         std::thread t([&] { io_context.run(); });
 
-        while (!g_terminated)
-            chronos::sleep(100);
-
+        auto sig = install_signal_handler({SIGHUP, SIGTERM, SIGINT}).get();
+        SLOG(INFO) << "Received signal " << sig << ": " << strsignal(sig) << "\n";
         io_context.stop();
         t.join();
 

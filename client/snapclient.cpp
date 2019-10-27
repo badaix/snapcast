@@ -16,6 +16,7 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
+#include <chrono>
 #include <iostream>
 #include <sys/resource.h>
 
@@ -39,7 +40,7 @@
 using namespace std;
 using namespace popl;
 
-volatile sig_atomic_t g_terminated = false;
+using namespace std::chrono_literals;
 
 PcmDevice getPcmDevice(const std::string& soundcard)
 {
@@ -172,11 +173,6 @@ int main(int argc, char** argv)
             AixLog::Log::instance().add_logsink<AixLog::SinkCout>(AixLog::Severity::info, AixLog::Type::all, "%Y-%m-%d %H-%M-%S [#severity]");
         }
 
-
-        signal(SIGHUP, signal_handler);
-        signal(SIGTERM, signal_handler);
-        signal(SIGINT, signal_handler);
-
 #ifdef HAS_DAEMON
         std::unique_ptr<Daemon> daemon;
         if (daemonOption->is_set())
@@ -218,13 +214,24 @@ int main(int argc, char** argv)
         }
 #endif
 
+        auto signal_handler = install_signal_handler({SIGHUP, SIGTERM, SIGINT});
+        bool active = true;
         if (host.empty())
         {
 #if defined(HAS_AVAHI) || defined(HAS_BONJOUR)
             BrowseZeroConf browser;
             mDNSResult avahiResult;
-            while (!g_terminated)
+            while (true)
             {
+                auto status = signal_handler.wait_for(500ms);
+                if (status == future_status::ready)
+                {
+                    active = false;
+                    int sig = signal_handler.get();
+                    SLOG(INFO) << "Received signal " << sig << ": " << strsignal(sig) << "\n";
+                    break;
+                }
+                cerr << "valid: " << signal_handler.valid() << ", status: " << (int)status << "\n";
                 try
                 {
                     if (browser.browse("_snapcast._tcp", avahiResult, 5000))
@@ -241,24 +248,25 @@ int main(int argc, char** argv)
                 {
                     SLOG(ERROR) << "Exception: " << e.what() << std::endl;
                 }
-                chronos::sleep(500);
             }
 #endif
         }
 
-        // Setup metadata handling
-        std::shared_ptr<MetadataAdapter> meta;
-        meta.reset(new MetadataAdapter);
-        if (metaStderr)
-            meta.reset(new MetaStderrAdapter);
-
-        std::unique_ptr<Controller> controller(new Controller(hostIdValue->value(), instance, meta));
-        if (!g_terminated)
+        if (active)
         {
+            // Setup metadata handling
+            std::shared_ptr<MetadataAdapter> meta;
+            meta.reset(new MetadataAdapter);
+            if (metaStderr)
+                meta.reset(new MetaStderrAdapter);
+
+            std::unique_ptr<Controller> controller(new Controller(hostIdValue->value(), instance, meta));
             LOG(INFO) << "Latency: " << latency << "\n";
             controller->start(pcmDevice, host, port, latency);
-            while (!g_terminated)
-                chronos::sleep(100);
+            signal_handler.wait();
+            int sig = signal_handler.get();
+            SLOG(INFO) << "Received signal " << sig << ": " << strsignal(sig) << "\n";
+
             controller->stop();
         }
     }

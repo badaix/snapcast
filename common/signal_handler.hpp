@@ -16,34 +16,27 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
-#ifndef SIGNAL_HANDLER_H
-#define SIGNAL_HANDLER_H
+#ifndef SIGNAL_HANDLER_HPP
+#define SIGNAL_HANDLER_HPP
 
+#include <future>
+#include <set>
 #include <signal.h>
-#include <syslog.h>
 
-extern volatile sig_atomic_t g_terminated;
 
-void signal_handler(int sig)
+static std::future<int> install_signal_handler(std::set<int> signals)
 {
+    static std::promise<int> promise;
+    std::future<int> future = promise.get_future();
 
-    switch (sig)
+    for (auto signal : signals)
     {
-        case SIGHUP:
-            syslog(LOG_WARNING, "Received SIGHUP signal.");
-            break;
-        case SIGTERM:
-            syslog(LOG_WARNING, "Received SIGTERM signal.");
-            g_terminated = true;
-            break;
-        case SIGINT:
-            syslog(LOG_WARNING, "Received SIGINT signal.");
-            g_terminated = true;
-            break;
-        default:
-            syslog(LOG_WARNING, "Unhandled signal ");
-            break;
+        ::signal(signal, [](int sig) {
+            std::cerr << "signal: " << sig << "\n";
+            promise.set_value(sig);
+        });
     }
+    return future;
 }
 
 #endif
