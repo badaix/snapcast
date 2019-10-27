@@ -74,8 +74,7 @@ void ControlServer::send(const std::string& message, const ControlSession* exclu
 
 std::string ControlServer::onMessageReceived(ControlSession* connection, const std::string& message)
 {
-    std::lock_guard<std::recursive_mutex> mlock(session_mutex_);
-    LOG(DEBUG) << "received: \"" << message << "\"\n";
+    // LOG(DEBUG) << "received: \"" << message << "\"\n";
     if (controlMessageReceiver_ != nullptr)
         return controlMessageReceiver_->onMessageReceived(connection, message);
     return "";
