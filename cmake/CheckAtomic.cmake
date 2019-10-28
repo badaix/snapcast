@@ -105,49 +105,47 @@ set(CMAKE_REQUIRED_FLAGS ${OLD_CMAKE_REQUIRED_FLAGS})
 endfunction(check_working_cxx_atomics64_2args)
 
 
-# This isn't necessary on MSVC, so avoid command-line switch annoyance
-# by only running on GCC-like hosts.
-if (LLVM_COMPILER_IS_GCC_COMPATIBLE)
-  # First check if atomics work without the library.
-  check_working_cxx_atomics(HAVE_CXX_ATOMICS_WITHOUT_LIB)
-  # If not, check if the library exists, and atomics work with it.
-  if(NOT HAVE_CXX_ATOMICS_WITHOUT_LIB)
-    check_library_exists(atomic __atomic_fetch_add_4 "" HAVE_LIBATOMIC)
-    if( NOT HAVE_LIBATOMIC )
-		check_working_cxx_atomics_2args(HAVE_LIBATOMIC_2ARGS)
-	endif()
-    if( HAVE_LIBATOMIC OR HAVE_LIBATOMIC_2ARGS )
-      list(APPEND CMAKE_REQUIRED_LIBRARIES "atomic")
-      check_working_cxx_atomics(HAVE_CXX_ATOMICS_WITH_LIB)
-      if (NOT HAVE_CXX_ATOMICS_WITH_LIB)
-        message(FATAL_ERROR "Host compiler must support std::atomic!")
-      endif()
-    else()
-      message(FATAL_ERROR "Host compiler appears to require libatomic, but cannot find it.")
-    endif()
-  endif()
-endif()
-# Check for 64 bit atomic operations.
-if(MSVC)
-  set(HAVE_CXX_ATOMICS64_WITHOUT_LIB True)
-else()
-  check_working_cxx_atomics64(HAVE_CXX_ATOMICS64_WITHOUT_LIB)
-endif()
+# First check if atomics work without the library.
+check_working_cxx_atomics(HAVE_CXX_ATOMICS_WITHOUT_LIB)
 
 # If not, check if the library exists, and atomics work with it.
-if( NOT HAVE_CXX_ATOMICS64_WITHOUT_LIB )
-  check_library_exists(atomic __atomic_load_8 "" HAVE_CXX_LIBATOMICS64)
-  if( NOT HAVE_CXX_LIBATOMICS64 )
-    check_working_cxx_atomics_2args(HAVE_CXX_LIBATOMICS64_2ARGS)
+if(NOT HAVE_CXX_ATOMICS_WITHOUT_LIB)
+  check_library_exists(atomic __atomic_fetch_add_4 "" HAVE_LIBATOMIC)
+  if( NOT HAVE_LIBATOMIC )
+    check_working_cxx_atomics_2args(HAVE_LIBATOMIC_2ARGS)
   endif()
-  if( HAVE_CXX_LIBATOMICS64 OR HAVE_CXX_LIBATOMICS64_2ARGS )
+  if( HAVE_LIBATOMIC OR HAVE_LIBATOMIC_2ARGS )
     list(APPEND CMAKE_REQUIRED_LIBRARIES "atomic")
-    check_working_cxx_atomics64(HAVE_CXX_ATOMICS64_WITH_LIB)
-    if (NOT HAVE_CXX_ATOMICS64_WITH_LIB)
+    check_working_cxx_atomics(HAVE_CXX_ATOMICS_WITH_LIB)
+    if (NOT HAVE_CXX_ATOMICS_WITH_LIB)
       message(FATAL_ERROR "Host compiler must support std::atomic!")
     endif()
   else()
-    message(FATAL_ERROR "Host compiler appears to require libatomic, but cannot find it.")
+    # Check for 64 bit atomic operations.
+    if(MSVC)
+      set(HAVE_CXX_ATOMICS64_WITHOUT_LIB True)
+    else()
+      check_working_cxx_atomics64(HAVE_CXX_ATOMICS64_WITHOUT_LIB)
+    endif()
+
+    # If not, check if the library exists, and atomics work with it.
+    if( NOT HAVE_CXX_ATOMICS64_WITHOUT_LIB )
+      check_library_exists(atomic __atomic_load_8 "" HAVE_CXX_LIBATOMICS64)
+      if( NOT HAVE_CXX_LIBATOMICS64 )
+        check_working_cxx_atomics_2args(HAVE_CXX_LIBATOMICS64_2ARGS)
+      endif()
+      if( HAVE_CXX_LIBATOMICS64 OR HAVE_CXX_LIBATOMICS64_2ARGS )
+        list(APPEND CMAKE_REQUIRED_LIBRARIES "atomic")
+        check_working_cxx_atomics64(HAVE_CXX_ATOMICS64_WITH_LIB)
+        if (NOT HAVE_CXX_ATOMICS64_WITH_LIB)
+          message(FATAL_ERROR "Host compiler must support std::atomic!")
+        endif()
+      else()
+        message(FATAL_ERROR "Host compiler appears to require libatomic, but cannot find it.")
+      endif()
+    endif()
+
   endif()
 endif()
+
 
