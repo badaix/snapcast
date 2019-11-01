@@ -18,7 +18,7 @@
 
 #include "stream_server.hpp"
 #include "common/aixlog.hpp"
-#include "config.h"
+#include "config.hpp"
 #include "message/hello.hpp"
 #include "message/stream_tags.hpp"
 #include "message/time.hpp"

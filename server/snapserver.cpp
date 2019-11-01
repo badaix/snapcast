@@ -37,7 +37,7 @@
 #include "publishZeroConf/publish_mdns.hpp"
 #endif
 #include "common/aixlog.hpp"
-#include "config.h"
+#include "config.hpp"
 
 
 using namespace std;
@@ -283,7 +283,7 @@ int main(int argc, char* argv[])
         SLOG(ERROR) << "Exception: " << e.what() << std::endl;
         exitcode = EXIT_FAILURE;
     }
-
+    Config::instance().save();
     SLOG(NOTICE) << "daemon terminated." << endl;
     exit(exitcode);
 }

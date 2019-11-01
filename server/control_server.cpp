@@ -20,7 +20,7 @@
 #include "common/aixlog.hpp"
 #include "common/snap_exception.hpp"
 #include "common/utils.hpp"
-#include "config.h"
+#include "config.hpp"
 #include "control_session_http.hpp"
 #include "control_session_tcp.hpp"
 #include "jsonrpcpp.hpp"
