@@ -121,7 +121,8 @@ void Config::save()
         init();
     std::ofstream ofs(filename_.c_str(), std::ofstream::out | std::ofstream::trunc);
     json clients = {{"ConfigVersion", 2}, {"Groups", getGroups()}};
-    ofs << std::setw(4) << clients;
+    // ofs << std::setw(4) << clients;
+    ofs << clients;
     ofs.close();
 }
 
