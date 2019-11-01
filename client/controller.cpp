@@ -27,6 +27,9 @@
 #if defined(HAS_FLAC)
 #include "decoder/flac_decoder.hpp"
 #endif
+#if defined(HAS_OPUS)
+#include "decoder/opus_decoder.hpp"
+#endif
 #include "common/aixlog.hpp"
 #include "common/snap_exception.hpp"
 #include "message/hello.hpp"
@@ -109,6 +112,10 @@ void Controller::onMessageReceived(ClientConnection* /*connection*/, const msg::
 #if defined(HAS_FLAC)
         else if (headerChunk_->codec == "flac")
             decoder_.reset(new FlacDecoder());
+#endif
+#if defined(HAS_OPUS)
+        else if (headerChunk_->codec == "opus")
+            decoder_.reset(new OpusDecoderWrapper());
 #endif
         else
             throw SnapException("codec not supported: \"" + headerChunk_->codec + "\"");
