@@ -29,7 +29,7 @@ using namespace std;
 
 
 ClientConnection::ClientConnection(MessageReceiver* receiver, const std::string& host, size_t port)
-    : socket_(nullptr), active_(false), connected_(false), messageReceiver_(receiver), reqId_(1), host_(host), port_(port), readerThread_(nullptr),
+    : socket_(io_context_), active_(false), messageReceiver_(receiver), reqId_(1), host_(host), port_(port), readerThread_(nullptr),
       sumTimeout_(chronos::msec(0))
 {
 }
@@ -48,22 +48,19 @@ void ClientConnection::socketRead(void* _to, size_t _bytes)
     size_t len = 0;
     do
     {
-        len += socket_->read_some(boost::asio::buffer((char*)_to + len, toRead));
+        len += socket_.read_some(boost::asio::buffer((char*)_to + len, toRead));
         // cout << "len: " << len << ", error: " << error << endl;
         toRead = _bytes - len;
     } while (toRead > 0);
 }
 
 
-std::string ClientConnection::getMacAddress() const
+std::string ClientConnection::getMacAddress()
 {
-    if (socket_ == nullptr)
-        throw SnapException("socket not connected");
-
-    std::string mac = ::getMacAddress(socket_->native_handle());
+    std::string mac = ::getMacAddress(socket_.native_handle());
     if (mac.empty())
         mac = "00:00:00:00:00:00";
-    LOG(INFO) << "My MAC: \"" << mac << "\", socket: " << socket_->native_handle() << "\n";
+    LOG(INFO) << "My MAC: \"" << mac << "\", socket: " << socket_.native_handle() << "\n";
     return mac;
 }
 
@@ -74,16 +71,14 @@ void ClientConnection::start()
     tcp::resolver::query query(host_, cpt::to_string(port_), boost::asio::ip::resolver_query_base::numeric_service);
     auto iterator = resolver.resolve(query);
     LOG(DEBUG) << "Connecting\n";
-    socket_.reset(new tcp::socket(io_context_));
     //	struct timeval tv;
     //	tv.tv_sec  = 5;
     //	tv.tv_usec = 0;
     //	cout << "socket: " << socket->native_handle() << "\n";
     //	setsockopt(socket->native_handle(), SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
     //	setsockopt(socket->native_handle(), SOL_SOCKET, SO_SNDTIMEO, &tv, sizeof(tv));
-    socket_->connect(*iterator);
-    connected_ = true;
-    SLOG(NOTICE) << "Connected to " << socket_->remote_endpoint().address().to_string() << endl;
+    socket_.connect(*iterator);
+    SLOG(NOTICE) << "Connected to " << socket_.remote_endpoint().address().to_string() << endl;
     active_ = true;
     sumTimeout_ = chronos::msec(0);
     readerThread_ = new thread(&ClientConnection::reader, this);
@@ -92,20 +87,16 @@ void ClientConnection::start()
 
 void ClientConnection::stop()
 {
-    connected_ = false;
     active_ = false;
     try
     {
         boost::system::error_code ec;
-        if (socket_)
-        {
-            socket_->shutdown(boost::asio::ip::tcp::socket::shutdown_both, ec);
-            if (ec)
-                LOG(ERROR) << "Error in socket shutdown: " << ec.message() << endl;
-            socket_->close(ec);
-            if (ec)
-                LOG(ERROR) << "Error in socket close: " << ec.message() << endl;
-        }
+        socket_.shutdown(boost::asio::ip::tcp::socket::shutdown_both, ec);
+        if (ec)
+            LOG(ERROR) << "Error in socket shutdown: " << ec.message() << endl;
+        socket_.close(ec);
+        if (ec)
+            LOG(ERROR) << "Error in socket close: " << ec.message() << endl;
         if (readerThread_)
         {
             LOG(DEBUG) << "joining readerThread\n";
@@ -117,17 +108,16 @@ void ClientConnection::stop()
     {
     }
     readerThread_ = nullptr;
-    socket_.reset();
     LOG(DEBUG) << "readerThread terminated\n";
 }
 
 
-bool ClientConnection::send(const msg::BaseMessage* message) const
+bool ClientConnection::send(const msg::BaseMessage* message)
 {
     //	std::unique_lock<std::mutex> mlock(mutex_);
     // LOG(DEBUG) << "send: " << message->type << ", size: " << message->getSize() << "\n";
     std::lock_guard<std::mutex> socketLock(socketMutex_);
-    if (!connected())
+    if (!socket_.is_open())
         return false;
     // LOG(DEBUG) << "send: " << message->type << ", size: " << message->getSize() << "\n";
     boost::asio::streambuf streambuf;
@@ -135,7 +125,7 @@ bool ClientConnection::send(const msg::BaseMessage* message) const
     tv t;
     message->sent = t;
     message->serialize(stream);
-    boost::asio::write(*socket_.get(), streambuf);
+    boost::asio::write(socket_, streambuf);
     return true;
 }
 
@@ -232,6 +222,5 @@ void ClientConnection::reader()
     catch (...)
     {
     }
-    connected_ = false;
     active_ = false;
 }

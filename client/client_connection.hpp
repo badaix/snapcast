@@ -76,7 +76,7 @@ public:
     virtual ~ClientConnection();
     virtual void start();
     virtual void stop();
-    virtual bool send(const msg::BaseMessage* message) const;
+    virtual bool send(const msg::BaseMessage* message);
 
     /// Send request to the server and wait for answer
     virtual std::shared_ptr<msg::SerializedMessage> sendRequest(const msg::BaseMessage* message, const chronos::msec& timeout = chronos::msec(1000));
@@ -93,17 +93,11 @@ public:
         return msg;
     }
 
-    std::string getMacAddress() const;
+    std::string getMacAddress();
 
     virtual bool active() const
     {
         return active_;
-    }
-
-    virtual bool connected() const
-    {
-        return (socket_ != nullptr);
-        //		return (connected_ && socket);
     }
 
 protected:
@@ -114,9 +108,8 @@ protected:
 
     boost::asio::io_context io_context_;
     mutable std::mutex socketMutex_;
-    std::shared_ptr<tcp::socket> socket_;
+    tcp::socket socket_;
     std::atomic<bool> active_;
-    std::atomic<bool> connected_;
     MessageReceiver* messageReceiver_;
     mutable std::mutex pendingRequestsMutex_;
     std::set<std::shared_ptr<PendingRequest>> pendingRequests_;
