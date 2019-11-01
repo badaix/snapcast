@@ -265,7 +265,7 @@ int main(int argc, char* argv[])
 
         LOG(DEBUG) << "number of threads: " << num_threads << ", hw threads: " << std::thread::hardware_concurrency() << "\n";
         std::vector<std::thread> threads;
-        for (auto n = 0; n < num_threads; ++n)
+        for (size_t n = 0; n < num_threads; ++n)
             threads.emplace_back([&] { io_context.run(); });
 
         auto sig = install_signal_handler({SIGHUP, SIGTERM, SIGINT}).get();
