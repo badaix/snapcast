@@ -30,13 +30,20 @@ else
   TARGET_DIR ?= /usr
 endif
 
-# Simplify building debuggable executables 'make DEBUG=-g STRIP=echo'
-DEBUG=-O3
-SANITIZE=
-#-fsanitize=thread
+DEBUG ?= 0
+ifeq ($(DEBUG), 1)
+    CXXFLAGS += -g
+else
+    CXXFLAGS += -O2
+endif
 
-CXXFLAGS += $(ADD_CFLAGS) $(SANITIZE) -std=c++14 -Wall -Wextra -Wpedantic -Wno-unused-function $(DEBUG) -DBOOST_ERROR_CODE_HEADER_ONLY -DHAS_FLAC -DHAS_OGG -DHAS_VORBIS -DHAS_VORBIS_ENC -DVERSION=\"$(VERSION)\" -I. -I.. -I../common
-LDFLAGS  += $(ADD_LDFLAGS) $(SANITIZE) -lvorbis -lvorbisenc -logg -lFLAC 
+ifneq ($(SANITIZE), )
+	CXXFLAGS += -fsanitize=$(SANITIZE) -g
+	LDFLAGS += -fsanitize=$(SANITIZE)
+endif
+
+CXXFLAGS += $(ADD_CFLAGS) -std=c++14 -Wall -Wextra -Wpedantic -Wno-unused-function -DBOOST_ERROR_CODE_HEADER_ONLY -DHAS_FLAC -DHAS_OGG -DHAS_VORBIS -DHAS_VORBIS_ENC -DVERSION=\"$(VERSION)\" -I. -I.. -I../common
+LDFLAGS  += $(ADD_LDFLAGS) -lvorbis -lvorbisenc -logg -lFLAC 
 OBJ       = snapserver.o config.o control_server.o control_session_tcp.o control_session_http.o stream_server.o stream_session.o streamreader/stream_uri.o streamreader/base64.o streamreader/stream_manager.o streamreader/pcm_stream.o streamreader/pipe_stream.o streamreader/file_stream.o streamreader/process_stream.o streamreader/airplay_stream.o streamreader/librespot_stream.o streamreader/watchdog.o encoder/encoder_factory.o encoder/flac_encoder.o encoder/pcm_encoder.o encoder/ogg_encoder.o ../common/sample_format.o
 
 ifneq (,$(TARGET))
@@ -50,13 +57,11 @@ endif
 ifeq ($(TARGET), ANDROID)
 
 CXX       = $(NDK_DIR)/bin/arm-linux-androideabi-g++
-STRIP     = $(NDK_DIR)/bin/arm-linux-androideabi-strip
 CXXFLAGS += -pthread -DNO_CPP11_STRING -fPIC -I$(NDK_DIR)/include
 LDFLAGS  += -L$(NDK_DIR)/lib -pie -llog -latomic
 
 else ifeq ($(TARGET), OPENWRT)
 
-STRIP     = echo
 CXXFLAGS += -DNO_CPP11_STRING -DHAS_AVAHI -DHAS_DAEMON -pthread
 LDFLAGS  += -lavahi-client -lavahi-common -latomic
 OBJ      += ../common/daemon.o publishZeroConf/publish_avahi.o 
@@ -70,7 +75,6 @@ OBJ      += publishZeroConf/publish_avahi.o
 else ifeq ($(TARGET), FREEBSD)
 
 CXX       = g++
-STRIP     = echo
 CXXFLAGS += -DFREEBSD -DNO_CPP11_STRING -DHAS_AVAHI -DHAS_DAEMON -pthread
 LDFLAGS  += -lrt -lavahi-client -lavahi-common -latomic
 OBJ      += ../common/daemon.o publishZeroConf/publish_avahi.o 
@@ -78,7 +82,6 @@ OBJ      += ../common/daemon.o publishZeroConf/publish_avahi.o
 else ifeq ($(TARGET), MACOS)
 
 CXX       = g++
-STRIP     = strip
 CXXFLAGS += -DFREEBSD -DHAS_BONJOUR -DHAS_DAEMON -Wno-deprecated -I/usr/local/include
 LDFLAGS  += -L/usr/local/lib -framework CoreFoundation -framework IOKit
 OBJ      += ../common/daemon.o publishZeroConf/publish_bonjour.o
@@ -86,7 +89,6 @@ OBJ      += ../common/daemon.o publishZeroConf/publish_bonjour.o
 else
 
 CXX       = g++
-STRIP     = strip
 CXXFLAGS += -DHAS_AVAHI -DHAS_DAEMON -pthread
 LDFLAGS  += -lrt -lavahi-client -lavahi-common
 OBJ      += ../common/daemon.o publishZeroConf/publish_avahi.o 
@@ -103,7 +105,6 @@ all:	$(BIN)
 
 $(BIN): $(OBJ)
 	$(CXX) $(CXXFLAGS) -o $(BIN) $(OBJ) $(LDFLAGS)
-	$(STRIP) $(BIN)
 
 %.o: %.cpp
 	$(CXX) $(CXXFLAGS) -c $< -o $@
@@ -120,7 +121,7 @@ else ifeq ($(TARGET), FREEBSD)
 
 install:
 	echo BSD
-	install -g wheel -o root -m 555 $(BIN) $(TARGET_DIR)/local/bin/$(BIN)
+	install --strip -g wheel -o root -m 555 $(BIN) $(TARGET_DIR)/local/bin/$(BIN)
 	install -g wheel -o root -m 555 $(BIN).1 $(TARGET_DIR)/local/man/man1/$(BIN).1
 	install -g wheel -o root -m 555 debian/$(BIN).bsd $(TARGET_DIR)/local/etc/rc.d/$(BIN)
 
@@ -128,7 +129,7 @@ else ifeq ($(TARGET), MACOS)
 
 install:
 	echo macOS
-	install -g wheel -o root $(BIN) $(TARGET_DIR)/local/bin/$(BIN)
+	install --strip -g wheel -o root $(BIN) $(TARGET_DIR)/local/bin/$(BIN)
 	install -g wheel -o root $(BIN).1 $(TARGET_DIR)/local/share/man/man1/$(BIN).1
 	install -g wheel -o root debian/$(BIN).plist /Library/LaunchAgents/de.badaix.snapcast.$(BIN).plist
 	launchctl load /Library/LaunchAgents/de.badaix.snapcast.$(BIN).plist
@@ -153,7 +154,7 @@ install:
 endif
 
 installfiles:
-	install -D -g root -o root $(BIN) $(TARGET_DIR)/bin/$(BIN)
+	install --strip -D -g root -o root $(BIN) $(TARGET_DIR)/bin/$(BIN)
 	install -D -g root -o root $(BIN).1 $(TARGET_DIR)/share/man/man1/$(BIN).1
 
 installsystemd:
