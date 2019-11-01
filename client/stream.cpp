@@ -312,32 +312,32 @@ bool Stream::getPlayerChunk(void* outputBuffer, const cs::usec& outputBufferDacT
                     LOG(INFO) << "pBuffer->full() && (abs(median_) > 1): " << median_ << "\n";
                     sleep_ = cs::usec(median_);
                 }
-/*				else if (cs::usec(median_) > cs::usec(300))
-				{
-					setRealSampleRate(format_.rate - format_.rate / 1000);
-				}
-				else if (cs::usec(median_) < -cs::usec(300))
-				{
-					setRealSampleRate(format_.rate + format_.rate / 1000);
-				}
-*/			}
-else if (shortBuffer_.full())
-{
-    if (cs::usec(abs(shortMedian_)) > cs::msec(5))
-    {
-        LOG(INFO) << "pShortBuffer->full() && (abs(shortMedian_) > 5): " << shortMedian_ << "\n";
-        sleep_ = cs::usec(shortMedian_);
-    }
-/*				else
-				{
-					setRealSampleRate(format_.rate + -shortMedian_ / 100);
-				}
-*/			}
-else if (miniBuffer_.full() && (cs::usec(abs(miniBuffer_.median())) > cs::msec(50)))
-{
-    LOG(INFO) << "pMiniBuffer->full() && (abs(pMiniBuffer->mean()) > 50): " << miniBuffer_.median() << "\n";
-    sleep_ = cs::usec((cs::msec::rep)miniBuffer_.mean());
-}
+                // else if (cs::usec(median_) > cs::usec(300))
+                // {
+                //     setRealSampleRate(format_.rate - format_.rate / 1000);
+                // }
+                // else if (cs::usec(median_) < -cs::usec(300))
+                // {
+                //     setRealSampleRate(format_.rate + format_.rate / 1000);
+                // }
+            }
+            else if (shortBuffer_.full())
+            {
+                if (cs::usec(abs(shortMedian_)) > cs::msec(5))
+                {
+                    LOG(INFO) << "pShortBuffer->full() && (abs(shortMedian_) > 5): " << shortMedian_ << "\n";
+                    sleep_ = cs::usec(shortMedian_);
+                }
+                // else
+                // {
+                //     setRealSampleRate(format_.rate + -shortMedian_ / 100);
+                // }
+            }
+            else if (miniBuffer_.full() && (cs::usec(abs(miniBuffer_.median())) > cs::msec(50)))
+            {
+                LOG(INFO) << "pMiniBuffer->full() && (abs(pMiniBuffer->mean()) > 50): " << miniBuffer_.median() << "\n";
+                sleep_ = cs::usec((cs::msec::rep)miniBuffer_.mean());
+            }
         }
 
         if (sleep_.count() != 0)
