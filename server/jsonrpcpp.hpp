@@ -141,7 +141,7 @@ public:
         return out;
     }
 
-    value_t type() const
+    const value_t& type() const
     {
         return type_;
     }
@@ -151,7 +151,7 @@ public:
         return int_id_;
     }
 
-    std::string string_id() const
+    const std::string& string_id() const
     {
         return string_id_;
     }
@@ -241,12 +241,12 @@ public:
         return code_;
     }
 
-    std::string message() const
+    const std::string& message() const
     {
         return message_;
     }
 
-    Json data() const
+    const Json& data() const
     {
         return data_;
     }
@@ -273,17 +273,17 @@ public:
     Json to_json() const override;
     void parse_json(const Json& json) override;
 
-    std::string method() const
+    const std::string& method() const
     {
         return method_;
     }
 
-    Parameter params() const
+    const Parameter& params() const
     {
         return params_;
     }
 
-    Id id() const
+    const Id& id() const
     {
         return id_;
     }
@@ -317,7 +317,7 @@ public:
     RpcEntityException(const std::string& text);
     Json to_json() const override = 0;
 
-    Error error() const
+    const Error& error() const
     {
         return error_;
     }
@@ -351,7 +351,7 @@ public:
     RequestException(const RequestException& e) = default;
     Json to_json() const override;
 
-    Id id() const
+    const Id& id() const
     {
         return id_;
     }
@@ -419,17 +419,17 @@ public:
     Json to_json() const override;
     void parse_json(const Json& json) override;
 
-    Id id() const
+    const Id& id() const
     {
         return id_;
     }
 
-    Json result() const
+    const Json& result() const
     {
         return result_;
     }
 
-    Error error() const
+    const Error& error() const
     {
         return error_;
     }
@@ -452,12 +452,12 @@ public:
     Json to_json() const override;
     void parse_json(const Json& json) override;
 
-    std::string method() const
+    const std::string& method() const
     {
         return method_;
     }
 
-    Parameter params() const
+    const Parameter& params() const
     {
         return params_;
     }
