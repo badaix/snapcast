@@ -92,8 +92,6 @@ void StreamServer::onChunkRead(const PcmStream* pcmStream, msg::PcmChunk* chunk,
 {
     //	LOG(INFO) << "onChunkRead (" << pcmStream->getName() << "): " << duration << "ms\n";
     bool isDefaultStream(pcmStream == streamManager_->getDefaultStream().get());
-
-    std::lock_guard<std::recursive_mutex> mlock(sessionsMutex_);
     unique_ptr<msg::PcmChunk> chunk_ptr(chunk);
 
     std::ostringstream oss;
@@ -102,7 +100,13 @@ void StreamServer::onChunkRead(const PcmStream* pcmStream, msg::PcmChunk* chunk,
     chunk_ptr->serialize(oss);
     shared_const_buffer buffer(oss.str());
 
-    for (auto session : sessions_)
+    std::vector<std::weak_ptr<StreamSession>> sessions;
+    {
+        std::lock_guard<std::recursive_mutex> mlock(sessionsMutex_);
+        sessions = sessions_;
+    }
+
+    for (auto session : sessions)
     {
         if (auto s = session.lock())
         {
@@ -112,11 +116,16 @@ void StreamServer::onChunkRead(const PcmStream* pcmStream, msg::PcmChunk* chunk,
                 if (group)
                 {
                     if (group->muted)
+                    {
                         continue;
-
-                    ClientInfoPtr client = group->getClient(s->clientId);
-                    if (client && client->config.volume.muted)
-                        continue;
+                    }
+                    else
+                    {
+                        std::lock_guard<std::recursive_mutex> lock(clientMutex_);
+                        ClientInfoPtr client = group->getClient(s->clientId);
+                        if (client && client->config.volume.muted)
+                            continue;
+                    }
                 }
             }
 
@@ -210,6 +219,8 @@ void StreamServer::ProcessRequest(const jsonrpcpp::request_ptr request, jsonrpcp
                 // Response:     {"id":8,"jsonrpc":"2.0","result":{"volume":{"muted":false,"percent":74}}}
                 // Notification: {"jsonrpc":"2.0","method":"Client.OnVolumeChanged","params":{"id":"00:21:6a:7d:74:fc","volume":{"muted":false,"percent":74}}}
                 // clang-format on
+
+                std::lock_guard<std::recursive_mutex> lock(clientMutex_);
                 clientInfo->config.volume.fromJson(request->params().get("volume"));
                 result["volume"] = clientInfo->config.volume.toJson();
                 notification.reset(new jsonrpcpp::Notification("Client.OnVolumeChanged",
@@ -521,7 +532,6 @@ void StreamServer::ProcessRequest(const jsonrpcpp::request_ptr request, jsonrpcp
         else
             throw jsonrpcpp::MethodNotFoundException(request->id());
 
-        Config::instance().save();
         response.reset(new jsonrpcpp::Response(*request, result));
     }
     catch (const jsonrpcpp::RequestException& e)
@@ -539,7 +549,7 @@ void StreamServer::ProcessRequest(const jsonrpcpp::request_ptr request, jsonrpcp
 
 std::string StreamServer::onMessageReceived(ControlSession* controlSession, const std::string& message)
 {
-    LOG(DEBUG) << "onMessageReceived: " << message << "\n";
+    // LOG(DEBUG) << "onMessageReceived: " << message << "\n";
     jsonrpcpp::entity_ptr entity(nullptr);
     try
     {
@@ -562,6 +572,7 @@ std::string StreamServer::onMessageReceived(ControlSession* controlSession, cons
     {
         jsonrpcpp::request_ptr request = dynamic_pointer_cast<jsonrpcpp::Request>(entity);
         ProcessRequest(request, response, notification);
+        Config::instance().save();
         ////cout << "Request:      " << request->to_json().dump() << "\n";
         if (notification)
         {
@@ -593,6 +604,7 @@ std::string StreamServer::onMessageReceived(ControlSession* controlSession, cons
                     notificationBatch.add_ptr(notification);
             }
         }
+        Config::instance().save();
         if (!notificationBatch.entities.empty())
             controlServer_->send(notificationBatch.to_json().dump(), controlSession);
         if (!responseBatch.entities.empty())
