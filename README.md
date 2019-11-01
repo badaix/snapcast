@@ -18,6 +18,7 @@ The Snapserver reads PCM chunks from the pipe `/tmp/snapfifo`. The chunk is enco
 * **PCM** lossless uncompressed
 * **FLAC** lossless compressed [default]
 * **Vorbis** lossy compression
+* **Opus** lossy low-latency compression
 
 The encoded chunk is sent via a TCP connection to the Snapclients.
 Each client does continuos time synchronization with the server, so that the client is always aware of the local server time.

@@ -24,6 +24,9 @@
 #if defined(HAS_FLAC)
 #include "flac_encoder.hpp"
 #endif
+#if defined(HAS_OPUS)
+#include "opus_encoder.hpp"
+#endif
 #include "common/aixlog.hpp"
 #include "common/snap_exception.hpp"
 #include "common/utils/string_utils.hpp"

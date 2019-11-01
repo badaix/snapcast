@@ -84,7 +84,7 @@ int main(int argc, char* argv[])
         conf.add<Value<size_t>>("", "stream.threads", "number of streaming threads", num_threads, &num_threads);
 
         conf.add<Value<string>>("", "stream.sampleformat", "Default sample format", settings.stream.sampleFormat, &settings.stream.sampleFormat);
-        conf.add<Value<string>>("c", "stream.codec", "Default transport codec\n(flac|ogg|pcm)[:options]\nType codec:? to get codec specific options",
+        conf.add<Value<string>>("c", "stream.codec", "Default transport codec\n(flac|ogg|opus|pcm)[:options]\nType codec:? to get codec specific options",
                                 settings.stream.codec, &settings.stream.codec);
         conf.add<Value<size_t>>("", "stream.stream_buffer", "Default stream read buffer [ms]", settings.stream.streamReadMs, &settings.stream.streamReadMs);
         conf.add<Value<int>>("b", "stream.buffer", "Buffer [ms]", settings.stream.bufferMs, &settings.stream.bufferMs);
