@@ -53,7 +53,7 @@ void ControlSessionTcp::do_read()
         {
             if (line.back() == '\r')
                 line.resize(line.size() - 1);
-            LOG(DEBUG) << "received: " << line << "\n";
+            // LOG(DEBUG) << "received: " << line << "\n";
             if ((message_receiver_ != nullptr) && !line.empty())
             {
                 string response = message_receiver_->onMessageReceived(this, line);

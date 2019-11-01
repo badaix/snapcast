@@ -372,7 +372,7 @@ void ControlSessionHttp::on_read_ws(beast::error_code ec, std::size_t bytes_tran
     std::string line{boost::beast::buffers_to_string(buffer_.data())};
     if (!line.empty())
     {
-        LOG(DEBUG) << "received: " << line << "\n";
+        // LOG(DEBUG) << "received: " << line << "\n";
         if ((message_receiver_ != nullptr) && !line.empty())
         {
             string response = message_receiver_->onMessageReceived(this, line);
