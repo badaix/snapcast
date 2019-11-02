@@ -59,6 +59,12 @@ if (FLAC_FOUND)
     list(APPEND SERVER_INCLUDE ${FLAC_INCLUDE_DIRS})
 endif (FLAC_FOUND)
 
+if (OPUS_FOUND)
+    list(APPEND SERVER_SOURCES encoder/opus_encoder.cpp)
+    list(APPEND SERVER_LIBRARIES ${OPUS_LIBRARIES})
+    list(APPEND SERVER_INCLUDE ${OPUS_INCLUDE_DIRS})
+endif (OPUS_FOUND)
+
 #list(APPEND SERVER_LIBRARIES Boost::boost)
 
 include_directories(${SERVER_INCLUDE})

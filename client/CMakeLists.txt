@@ -68,6 +68,12 @@ if (FLAC_FOUND)
     list(APPEND CLIENT_INCLUDE ${FLAC_INCLUDE_DIRS})
 endif (FLAC_FOUND)
 
+if (OPUS_FOUND)
+    list(APPEND CLIENT_SOURCES decoder/opus_decoder.cpp)
+    list(APPEND CLIENT_LIBRARIES ${OPUS_LIBRARIES})
+    list(APPEND CLIENT_INCLUDE ${OPUS_INCLUDE_DIRS})
+endif (OPUS_FOUND)
+
 include_directories(${CLIENT_INCLUDE})
 add_executable(snapclient ${CLIENT_SOURCES})
 target_link_libraries(snapclient ${CLIENT_LIBRARIES})

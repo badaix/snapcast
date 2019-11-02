@@ -14,6 +14,7 @@ option(BUILD_CLIENT "Build Snapclient" ON)
 option(BUILD_WITH_FLAC "Build with FLAC support" ON)
 option(BUILD_WITH_VORBIS "Build with VORBIS support" ON)
 option(BUILD_WITH_TREMOR "Build with vorbis using TREMOR" ON)
+option(BUILD_WITH_OPUS "Build with OPUS support" ON)
 option(BUILD_WITH_AVAHI "Build with AVAHI support" ON)
 
 
@@ -171,6 +172,13 @@ if(BUILD_WITH_VORBIS)
     if (VORBISENC_FOUND)
         add_definitions("-DHAS_VORBISENC")
     endif(VORBISENC_FOUND)
+endif()
+
+if(BUILD_WITH_OPUS)
+    pkg_search_module(OPUS opus)
+    if (OPUS_FOUND)
+        add_definitions("-DHAS_OPUS")
+    endif (OPUS_FOUND)
 endif()
 
 find_package(Boost 1.70 REQUIRED)
