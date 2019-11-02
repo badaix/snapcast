@@ -132,7 +132,7 @@ install:
 	echo macOS
 	install --strip -g wheel -o root $(BIN) $(TARGET_DIR)/local/bin/$(BIN)
 	install -g wheel -o root $(BIN).1 $(TARGET_DIR)/local/share/man/man1/$(BIN).1
-	install -g wheel -o root debian/$(BIN).plist /Library/LaunchAgents/de.badaix.snapcast.$(BIN).plist
+	install -g wheel -o root ../debian/$(BIN).plist /Library/LaunchAgents/de.badaix.snapcast.$(BIN).plist
 	launchctl load /Library/LaunchAgents/de.badaix.snapcast.$(BIN).plist
 
 else
@@ -160,16 +160,16 @@ installfiles:
 
 installsystemd:
 	@echo using systemd; \
-	cp debian/$(BIN).service /lib/systemd/system/$(BIN).service; \
-	cp -n debian/$(BIN).default /etc/default/$(BIN); \
+	cp ../debian/$(BIN).service /lib/systemd/system/$(BIN).service; \
+	cp -n ../debian/$(BIN).default /etc/default/$(BIN); \
 	systemctl daemon-reload; \
 	systemctl enable $(BIN); \
 	systemctl start $(BIN); \
 
 installsysv:
 	@echo using sysv; \
-	cp debian/$(BIN).init /etc/init.d/$(BIN); \
-	cp -n debian/$(BIN).default /etc/default/$(BIN); \
+	cp ../debian/$(BIN).init /etc/init.d/$(BIN); \
+	cp -n ../debian/$(BIN).default /etc/default/$(BIN); \
 	update-rc.d $(BIN) defaults; \
 	/etc/init.d/$(BIN) start; \
 
