@@ -62,7 +62,7 @@ void Controller::onMessageReceived(ClientConnection* /*connection*/, const msg::
         {
             auto* pcmChunk = new msg::PcmChunk(sampleFormat_, 0);
             pcmChunk->deserialize(baseMessage, buffer);
-            //			LOG(DEBUG) << "chunk: " << pcmChunk->payloadSize << ", sampleFormat: " << sampleFormat_.rate << "\n";
+            // LOG(DEBUG) << "chunk: " << pcmChunk->payloadSize << ", sampleFormat: " << sampleFormat_.rate << "\n";
             if (decoder_->decode(pcmChunk))
             {
                 // TODO: do decoding in thread?
@@ -115,7 +115,7 @@ void Controller::onMessageReceived(ClientConnection* /*connection*/, const msg::
 #endif
 #if defined(HAS_OPUS)
         else if (headerChunk_->codec == "opus")
-            decoder_.reset(new OpusDecoderWrapper());
+            decoder_.reset(new OpusDecoder());
 #endif
         else
             throw SnapException("codec not supported: \"" + headerChunk_->codec + "\"");

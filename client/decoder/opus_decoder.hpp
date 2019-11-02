@@ -22,14 +22,15 @@
 #include <opus/opus.h>
 
 
-class OpusDecoderWrapper : public Decoder
+class OpusDecoder : public Decoder
 {
 public:
-    OpusDecoderWrapper();
-    ~OpusDecoderWrapper();
+    OpusDecoder();
+    ~OpusDecoder();
     bool decode(msg::PcmChunk* chunk) override;
     SampleFormat setHeader(msg::CodecHeader* chunk) override;
 
 private:
-    OpusDecoder* dec;
+    OpusDecoder* dec_;
+    std::vector<opus_int16> pcm_;
 };

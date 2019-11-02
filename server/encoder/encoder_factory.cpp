@@ -55,6 +55,10 @@ Encoder* EncoderFactory::createEncoder(const std::string& codecSettings) const
     else if (codec == "flac")
         encoder = new FlacEncoder(codecOptions);
 #endif
+#if defined(HAS_OPUS)
+    else if (codec == "opus")
+        encoder = new OpusEncoder(codecOptions);
+#endif
     else
     {
         throw SnapException("unknown codec: " + codec);

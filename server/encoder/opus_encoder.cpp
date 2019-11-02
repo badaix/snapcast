@@ -18,52 +18,62 @@
 
 #include "opus_encoder.hpp"
 #include "common/aixlog.hpp"
+#include "common/snap_exception.hpp"
+#include "common/str_compat.hpp"
 
 
 // const msg::SampleFormat& format);
-OpusEncoderWrapper::OpusEncoderWrapper(const std::string& codecOptions) : Encoder(codecOptions)
+OpusEncoder::OpusEncoder(const std::string& codecOptions) : Encoder(codecOptions), enc_(nullptr)
 {
-    headerChunk_.reset(new msg::CodecHeader("opus"));
-    // int error;
-    // enc = opus_encoder_create(format.rate, format.channels, OPUS_APPLICATION_RESTRICTED_LOWDELAY, &error);
-    // if (error != 0)
-    // {
-    //     LOG(ERROR) << "Failed to initialize opus encoder: " << error << '\n'
-    //                << " Rate:     " << format.rate << '\n'
-    //                << " Channels: " << format.channels << '\n';
-    // }
 }
 
 
-void OpusEncoderWrapper::encode(const msg::PcmChunk* /*chunk*/)
+OpusEncoder::~OpusEncoder()
 {
-    // int samples = chunk->payloadSize / 4;
-    // opus_int16 pcm[samples * 2];
+    if (enc_ != nullptr)
+        opus_encoder_destroy(enc_);
+}
 
-    // unsigned char encoded[chunk->payloadSize];
 
-    // // get 16 bit samples
-    // for (int i = 0; i < samples * 2; i++)
-    // {
-    //     pcm[i] = (opus_int16)(((opus_int16)chunk->payload[2 * i + 1] << 8) | (0x00ff & (opus_int16)chunk->payload[2 * i]));
-    // }
+std::string OpusEncoder::name() const
+{
+    return "opus";
+}
 
-    // // encode
-    // int len = opus_encode(enc, pcm, samples, encoded, chunk->payloadSize);
-    // // logD << "Encoded: size " << chunk->payloadSize << " bytes, encoded: " << len << " bytes" << '\n';
 
-    // if (len > 0)
-    // {
-    //     // copy encoded data to chunk
-    //     chunk->payloadSize = len;
-    //     chunk->payload = (char*)realloc(chunk->payload, chunk->payloadSize);
-    //     memcpy(chunk->payload, encoded, len);
-    // }
-    // else
-    // {
-    //     LOG(ERROR) << "Failed to encode chunk: " << len << '\n' << " Frame size: " << samples / 2 << '\n' << " Max bytes:  " << chunk->payloadSize << '\n';
-    // }
+void OpusEncoder::initEncoder()
+{
+    int error;
+    enc_ = opus_encoder_create(sampleFormat_.rate, sampleFormat_.channels, OPUS_APPLICATION_RESTRICTED_LOWDELAY, &error);
+    if (error != 0)
+    {
+        throw SnapException("Failed to initialize opus encoder: " + cpt::to_string(error));
+    }
+    headerChunk_.reset(new msg::CodecHeader("opus"));
+}
 
-    // // return chunk duration
-    // return (double)samples / ((double)sampleFormat.rate / 1000.);
+
+void OpusEncoder::encode(const msg::PcmChunk* chunk)
+{
+    int samples = chunk->payloadSize / 4;
+    if (encoded_.size() < chunk->payloadSize)
+        encoded_.resize(chunk->payloadSize);
+
+    // encode
+    opus_int32 len = opus_encode(enc_, (opus_int16*)chunk->payload, samples, encoded_.data(), chunk->payloadSize);
+    LOG(DEBUG) << "Encoded: size " << chunk->payloadSize << " bytes, encoded: " << len << " bytes" << '\n';
+
+    if (len > 0)
+    {
+        // copy encoded data to chunk
+        auto* opusChunk = new msg::PcmChunk(chunk->format, 0);
+        opusChunk->payloadSize = len;
+        opusChunk->payload = (char*)realloc(opusChunk->payload, opusChunk->payloadSize);
+        memcpy(opusChunk->payload, encoded_.data(), len);
+        listener_->onChunkEncoded(this, opusChunk, (double)samples / ((double)sampleFormat_.rate / 1000.));
+    }
+    else
+    {
+        LOG(ERROR) << "Failed to encode chunk: " << len << '\n' << " Frame size: " << samples / 2 << '\n' << " Max bytes:  " << chunk->payloadSize << '\n';
+    }
 }

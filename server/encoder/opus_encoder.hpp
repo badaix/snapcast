@@ -22,12 +22,17 @@
 #include <opus/opus.h>
 
 
-class OpusEncoderWrapper : public Encoder
+class OpusEncoder : public Encoder
 {
 public:
-    OpusEncoderWrapper(const std::string& codecOptions = "");
-    void encode(const msg::PcmChunk* chunk) override;
+    OpusEncoder(const std::string& codecOptions = "");
+    ~OpusEncoder() override;
 
-private:
-    OpusEncoder* enc;
+    void encode(const msg::PcmChunk* chunk) override;
+    std::string name() const override;
+
+protected:
+    void initEncoder() override;
+    OpusEncoder* enc_;
+    std::vector<u_char> encoded_;
 };

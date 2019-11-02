@@ -20,10 +20,10 @@
 #include "common/aixlog.hpp"
 
 
-OpusDecoderWrapper::OpusDecoderWrapper() : Decoder()
+OpusDecoder::OpusDecoder() : Decoder()
 {
     int error;
-    dec = opus_decoder_create(48000, 2, &error); // fixme
+    dec_ = opus_decoder_create(48000, 2, &error); // fixme
     if (error != 0)
     {
         LOG(ERROR) << "Failed to initialize opus decoder: " << error << '\n' << " Rate:     " << 48000 << '\n' << " Channels: " << 2 << '\n';
@@ -31,50 +31,41 @@ OpusDecoderWrapper::OpusDecoderWrapper() : Decoder()
 }
 
 
-OpusDecoderWrapper::~OpusDecoderWrapper()
+OpusDecoder::~OpusDecoder()
 {
+    if (dec_ != nullptr)
+        opus_decoder_destroy(dec_);
 }
 
 
-bool OpusDecoderWrapper::decode(msg::PcmChunk* /*chunk*/)
+bool OpusDecoder::decode(msg::PcmChunk* chunk)
 {
-    // int samples = 480;
-    // // reserve space for decoded audio
-    // opus_int16 pcm[samples * 2];
+    size_t samples = 480;
+    // reserve space for decoded audio
+    if (pcm_.size() < samples * 2)
+        pcm_.resize(samples * 2);
 
-    // msg::PcmChunk* decodedChunk = new msg::PcmChunk();
-    // decodedChunk->payloadSize = samples * 4;
-    // decodedChunk->payload = (char*)realloc(decodedChunk->payload, decodedChunk->payloadSize);
+    // decode
+    int frame_size = opus_decode(dec_, (unsigned char*)chunk->payload, chunk->payloadSize, pcm_.data(), samples, 0);
+    if (frame_size < 0)
+    {
+        LOG(ERROR) << "Failed to decode chunk: " << frame_size << '\n' << " IN size:  " << chunk->payloadSize << '\n' << " OUT size: " << samples * 4 << '\n';
+        return false;
+    }
+    else
+    {
+        LOG(DEBUG) << "Decoded chunk: size " << chunk->payloadSize << " bytes, decoded " << frame_size << " bytes" << '\n';
 
-    // // decode
-    // int frame_size = opus_decode(dec, (unsigned char*)chunk->payload, chunk->payloadSize, pcm, samples, 0);
-    // if (frame_size < 0)
-    // {
-    //     LOG(ERROR) << "Failed to decode chunk: " << frame_size << '\n'
-    //                << " IN size:  " << chunk->payloadSize << '\n'
-    //                << " OUT size: " << decodedChunk->payloadSize << '\n';
-    // }
-    // else
-    // {
-    //     // logD << "Decoded chunk: size " << chunk->payloadSize << " bytes, decoded " << frame_size << " bytes" << '\n';
-
-    //     // copy encoded data to chunk
-    //     chunk->payloadSize = samples * 4;
-    //     chunk->payload = (char*)realloc(chunk->payload, chunk->payloadSize);
-
-    //     // uninterleave audio
-    //     for (int i = 0; i < samples * 2; i++)
-    //     {
-    //         chunk->payload[2 * i + 1] = (char)(pcm[i] >> 8);
-    //         chunk->payload[2 * i] = (char)(pcm[i] & 0x00ff);
-    //     }
-    // }
-
-    return true;
+        // copy encoded data to chunk
+        chunk->payloadSize = samples * 4;
+        chunk->payload = (char*)realloc(chunk->payload, chunk->payloadSize);
+        memcpy(chunk->payload, (char*)pcm_.data(), samples * 4);
+        return true;
+    }
 }
 
 
-SampleFormat OpusDecoderWrapper::setHeader(msg::CodecHeader* /*chunk*/)
+SampleFormat OpusDecoder::setHeader(msg::CodecHeader* /*chunk*/)
 {
     return {48000, 16, 2};
 }
