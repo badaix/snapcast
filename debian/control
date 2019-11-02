@@ -6,6 +6,7 @@ Build-Depends: debhelper (>= 10~),
                libasound2-dev,
                libvorbis-dev,
                libflac-dev,
+               libopus-dev,
                libavahi-client-dev,
                libasio-dev
 Standards-Version: 4.1.4
