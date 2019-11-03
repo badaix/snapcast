@@ -61,7 +61,7 @@ bool OpusDecoder::decode(msg::PcmChunk* chunk)
 
     if (frame_size < 0)
     {
-        LOG(ERROR) << "Failed to decode chunk: " << frame_size << '\n' << " IN size:  " << chunk->payloadSize << '\n' << " OUT size: " << pcm_.size() << '\n';
+        LOG(ERROR) << "Failed to decode chunk: " << opus_strerror(frame_size) << ", IN size:  " << chunk->payloadSize << ", OUT size: " << pcm_.size() << '\n';
         return false;
     }
     else
@@ -98,13 +98,13 @@ SampleFormat OpusDecoder::setHeader(msg::CodecHeader* chunk)
     memcpy(&channels, chunk->payload + 10, sizeof(channels));
 
     sample_format_.setFormat(SWAP_32(rate), SWAP_16(bits), SWAP_16(channels));
-    LOG(INFO) << "Opus sampleformat: " << sample_format_.getFormat() << "\n";
+    LOG(DEBUG) << "Opus sampleformat: " << sample_format_.getFormat() << "\n";
 
     // create the decoder
     int error;
     dec_ = opus_decoder_create(sample_format_.rate, sample_format_.channels, &error);
     if (error != 0)
-        throw SnapException("Failed to initialize Opus decoder: " + cpt::to_string(error));
+        throw SnapException("Failed to initialize Opus decoder: " + std::string(opus_strerror(error)));
 
     return sample_format_;
 }
