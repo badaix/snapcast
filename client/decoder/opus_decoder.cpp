@@ -18,16 +18,21 @@
 
 #include "opus_decoder.hpp"
 #include "common/aixlog.hpp"
+#include "common/snap_exception.hpp"
+#include "common/str_compat.hpp"
+
+#define ID_OPUS 0x4F505553
+
+/// int: Number of samples per channel in the input signal.
+/// This must be an Opus frame size for the encoder's sampling rate. For example, at 48 kHz the
+/// permitted values are 120, 240, 480, 960, 1920, and 2880.
+/// Passing in a duration of less than 10 ms (480 samples at 48 kHz) will prevent the encoder from using the LPC or hybrid modes.
+static constexpr int const_max_frame_size = 2880;
 
 
-OpusDecoder::OpusDecoder() : Decoder()
+OpusDecoder::OpusDecoder() : Decoder(), dec_(nullptr)
 {
-    int error;
-    dec_ = opus_decoder_create(48000, 2, &error); // fixme
-    if (error != 0)
-    {
-        LOG(ERROR) << "Failed to initialize opus decoder: " << error << '\n' << " Rate:     " << 48000 << '\n' << " Channels: " << 2 << '\n';
-    }
+    pcm_.resize(120);
 }
 
 
@@ -40,32 +45,66 @@ OpusDecoder::~OpusDecoder()
 
 bool OpusDecoder::decode(msg::PcmChunk* chunk)
 {
-    size_t samples = 480;
-    // reserve space for decoded audio
-    if (pcm_.size() < samples * 2)
-        pcm_.resize(samples * 2);
+    int frame_size = 0;
 
-    // decode
-    int frame_size = opus_decode(dec_, (unsigned char*)chunk->payload, chunk->payloadSize, pcm_.data(), samples, 0);
+    while ((frame_size = opus_decode(dec_, (unsigned char*)chunk->payload, chunk->payloadSize, pcm_.data(), pcm_.size() / sample_format_.channels, 0)) ==
+           OPUS_BUFFER_TOO_SMALL)
+    {
+        if (pcm_.size() < const_max_frame_size * sample_format_.channels)
+        {
+            pcm_.resize(pcm_.size() * 2);
+            LOG(INFO) << "OPUS encoding buffer too small, resizing to " << pcm_.size() / sample_format_.channels << " samples per channel\n";
+        }
+        else
+            break;
+    }
+
     if (frame_size < 0)
     {
-        LOG(ERROR) << "Failed to decode chunk: " << frame_size << '\n' << " IN size:  " << chunk->payloadSize << '\n' << " OUT size: " << samples * 4 << '\n';
+        LOG(ERROR) << "Failed to decode chunk: " << frame_size << '\n' << " IN size:  " << chunk->payloadSize << '\n' << " OUT size: " << pcm_.size() << '\n';
         return false;
     }
     else
     {
-        LOG(DEBUG) << "Decoded chunk: size " << chunk->payloadSize << " bytes, decoded " << frame_size << " bytes" << '\n';
+        LOG(DEBUG) << "Decoded chunk: size " << chunk->payloadSize << " bytes, decoded " << frame_size << " samples" << '\n';
 
         // copy encoded data to chunk
-        chunk->payloadSize = samples * 4;
+        chunk->payloadSize = frame_size * sample_format_.channels * sizeof(opus_int16);
         chunk->payload = (char*)realloc(chunk->payload, chunk->payloadSize);
-        memcpy(chunk->payload, (char*)pcm_.data(), samples * 4);
+        memcpy(chunk->payload, (char*)pcm_.data(), chunk->payloadSize);
         return true;
     }
 }
 
 
-SampleFormat OpusDecoder::setHeader(msg::CodecHeader* /*chunk*/)
+SampleFormat OpusDecoder::setHeader(msg::CodecHeader* chunk)
 {
-    return {48000, 16, 2};
+    // decode the opus pseudo header
+    if (chunk->payloadSize < 12)
+        throw SnapException("OPUS header too small");
+
+    // decode the "opus id" magic number, this is our constant part that must match
+    uint32_t id_opus;
+    memcpy(&id_opus, chunk->payload, sizeof(id_opus));
+    if (SWAP_32(id_opus) != ID_OPUS)
+        throw SnapException("Not an Opus pseudo header");
+
+    // decode the sampleformat
+    uint32_t rate;
+    memcpy(&rate, chunk->payload + 4, sizeof(id_opus));
+    uint16_t bits;
+    memcpy(&bits, chunk->payload + 8, sizeof(bits));
+    uint16_t channels;
+    memcpy(&channels, chunk->payload + 10, sizeof(channels));
+
+    sample_format_.setFormat(SWAP_32(rate), SWAP_16(bits), SWAP_16(channels));
+    LOG(INFO) << "Opus sampleformat: " << sample_format_.getFormat() << "\n";
+
+    // create the decoder
+    int error;
+    dec_ = opus_decoder_create(sample_format_.rate, sample_format_.channels, &error);
+    if (error != 0)
+        throw SnapException("Failed to initialize Opus decoder: " + cpt::to_string(error));
+
+    return sample_format_;
 }

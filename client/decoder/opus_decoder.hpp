@@ -33,4 +33,5 @@ public:
 private:
     OpusDecoder* dec_;
     std::vector<opus_int16> pcm_;
+    SampleFormat sample_format_;
 };

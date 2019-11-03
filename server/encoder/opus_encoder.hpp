@@ -29,6 +29,8 @@ public:
     ~OpusEncoder() override;
 
     void encode(const msg::PcmChunk* chunk) override;
+    std::string getAvailableOptions() const override;
+    std::string getDefaultOptions() const override;
     std::string name() const override;
 
 protected:
