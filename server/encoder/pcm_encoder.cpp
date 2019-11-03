@@ -27,6 +27,17 @@
 #define ID_DATA 0x61746164
 
 
+namespace
+{
+template <typename T>
+void assign(void* pointer, T val)
+{
+    T* p = (T*)pointer;
+    *p = val;
+}
+} // namespace
+
+
 PcmEncoder::PcmEncoder(const std::string& codecOptions) : Encoder(codecOptions)
 {
     headerChunk_.reset(new msg::CodecHeader("pcm"));

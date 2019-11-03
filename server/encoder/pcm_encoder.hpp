@@ -30,13 +30,6 @@ public:
 
 protected:
     void initEncoder() override;
-
-    template <typename T>
-    void assign(void* pointer, T val)
-    {
-        T* p = (T*)pointer;
-        *p = val;
-    }
 };
 
 
