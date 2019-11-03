@@ -33,7 +33,13 @@ static std::future<int> install_signal_handler(std::set<int> signals)
     {
         ::signal(signal, [](int sig) {
             std::cerr << "signal: " << sig << "\n";
-            promise.set_value(sig);
+            try
+            {
+                promise.set_value(sig);
+            }
+            catch (const std::future_error&)
+            {
+            }
         });
     }
     return future;
