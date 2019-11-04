@@ -215,10 +215,11 @@ int main(int argc, char** argv)
 #endif
 
         bool active = true;
-        auto signal_handler = install_signal_handler({SIGHUP, SIGTERM, SIGINT}, [&active](int signal, const std::string& strsignal) {
-            SLOG(INFO) << "Received signal " << signal << ": " << strsignal << "\n";
-            active = false;
-        });
+        auto signal_handler = install_signal_handler({SIGHUP, SIGTERM, SIGINT},
+                                                     [&active](int signal, const std::string& strsignal) {
+                                                         SLOG(INFO) << "Received signal " << signal << ": " << strsignal << "\n";
+                                                         active = false;
+                                                     });
         if (host.empty())
         {
 #if defined(HAS_AVAHI) || defined(HAS_BONJOUR)
