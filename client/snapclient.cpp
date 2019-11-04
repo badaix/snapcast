@@ -215,23 +215,20 @@ int main(int argc, char** argv)
 #endif
 
         bool active = true;
-        auto signal_handler = install_signal_handler({SIGHUP, SIGTERM, SIGINT}, [&active](int /*signal*/) { active = false; });
+        auto signal_handler = install_signal_handler({SIGHUP, SIGTERM, SIGINT}, [&active](int signal, const std::string& strsignal) {
+            SLOG(INFO) << "Received signal " << signal << ": " << strsignal << "\n";
+            active = false;
+        });
         if (host.empty())
         {
 #if defined(HAS_AVAHI) || defined(HAS_BONJOUR)
             BrowseZeroConf browser;
             mDNSResult avahiResult;
-            while (true)
+            while (active)
             {
-                auto status = signal_handler.wait_for(500ms);
-                if (status == future_status::ready)
-                {
-                    active = false;
-                    int sig = signal_handler.get();
-                    SLOG(INFO) << "Received signal " << sig << ": " << strsignal(sig) << "\n";
+                signal_handler.wait_for(500ms);
+                if (!active)
                     break;
-                }
-                cerr << "valid: " << signal_handler.valid() << ", status: " << (int)status << "\n";
                 try
                 {
                     if (browser.browse("_snapcast._tcp", avahiResult, 5000))
@@ -264,9 +261,6 @@ int main(int argc, char** argv)
             LOG(INFO) << "Latency: " << latency << "\n";
             controller->start(pcmDevice, host, port, latency);
             signal_handler.wait();
-            int sig = signal_handler.get();
-            SLOG(INFO) << "Received signal " << sig << ": " << strsignal(sig) << "\n";
-
             controller->stop();
         }
     }
