@@ -15,7 +15,7 @@ matrix:
             - sourceline: 'ppa:mhier/libboost-latest'
             - ubuntu-toolchain-r-test
           packages:
-            - g++-4.9 boost1.70 libasound2-dev libvorbisidec-dev libvorbis-dev libflac-dev alsa-utils libavahi-client-dev avahi-daemon
+            - g++-4.9 boost1.70 libasound2-dev libvorbisidec-dev libvorbis-dev libflac-dev libopus-dev alsa-utils libavahi-client-dev avahi-daemon
 
     - os: linux
       compiler: gcc
@@ -27,7 +27,7 @@ matrix:
             - sourceline: 'ppa:mhier/libboost-latest'
             - ubuntu-toolchain-r-test
           packages:
-            - g++-5 boost1.70 libasound2-dev libvorbisidec-dev libvorbis-dev libflac-dev alsa-utils libavahi-client-dev avahi-daemon
+            - g++-5 boost1.70 libasound2-dev libvorbisidec-dev libvorbis-dev libflac-dev libopus-dev alsa-utils libavahi-client-dev avahi-daemon
 
     - os: linux
       compiler: gcc
@@ -39,7 +39,7 @@ matrix:
             - sourceline: 'ppa:mhier/libboost-latest'
             - ubuntu-toolchain-r-test
           packages:
-            - g++-6 boost1.70 libasound2-dev libvorbisidec-dev libvorbis-dev libflac-dev alsa-utils libavahi-client-dev avahi-daemon
+            - g++-6 boost1.70 libasound2-dev libvorbisidec-dev libvorbis-dev libflac-dev libopus-dev alsa-utils libavahi-client-dev avahi-daemon
 
     - os: linux
       compiler: gcc
@@ -51,7 +51,7 @@ matrix:
             - sourceline: 'ppa:mhier/libboost-latest'
             - ubuntu-toolchain-r-test
           packages:
-            - g++-7 boost1.70 libasound2-dev libvorbisidec-dev libvorbis-dev libflac-dev alsa-utils libavahi-client-dev avahi-daemon
+            - g++-7 boost1.70 libasound2-dev libvorbisidec-dev libvorbis-dev libflac-dev libopus-dev alsa-utils libavahi-client-dev avahi-daemon
 
     - os: linux
       compiler: gcc
@@ -63,7 +63,7 @@ matrix:
             - sourceline: 'ppa:mhier/libboost-latest'
             - ubuntu-toolchain-r-test
           packages:
-            - g++-8 boost1.70 libasound2-dev libvorbisidec-dev libvorbis-dev libflac-dev alsa-utils libavahi-client-dev avahi-daemon
+            - g++-8 boost1.70 libasound2-dev libvorbisidec-dev libvorbis-dev libflac-dev libopus-dev alsa-utils libavahi-client-dev avahi-daemon
 
     - os: linux
       compiler: gcc
@@ -75,7 +75,7 @@ matrix:
             - sourceline: 'ppa:mhier/libboost-latest'
             - ubuntu-toolchain-r-test
           packages:
-            - g++-9 boost1.70 libasound2-dev libvorbisidec-dev libvorbis-dev libflac-dev alsa-utils libavahi-client-dev avahi-daemon
+            - g++-9 boost1.70 libasound2-dev libvorbisidec-dev libvorbis-dev libflac-dev libopus-dev alsa-utils libavahi-client-dev avahi-daemon
 
 
     - os: linux
@@ -90,7 +90,7 @@ matrix:
             - sourceline: 'ppa:mhier/libboost-latest'
             - llvm-toolchain-trusty-3.9
           packages:
-            - clang-3.9 boost1.70 libasound2-dev libvorbisidec-dev libvorbis-dev libflac-dev alsa-utils libavahi-client-dev avahi-daemon
+            - clang-3.9 boost1.70 libasound2-dev libvorbisidec-dev libvorbis-dev libflac-dev libopus-dev alsa-utils libavahi-client-dev avahi-daemon
 
     - os: linux
       compiler: clang
@@ -104,7 +104,7 @@ matrix:
             - sourceline: 'ppa:mhier/libboost-latest'
             - llvm-toolchain-trusty-4.0
           packages:
-            - clang-4.0 boost1.70 libasound2-dev libvorbisidec-dev libvorbis-dev libflac-dev alsa-utils libavahi-client-dev avahi-daemon
+            - clang-4.0 boost1.70 libasound2-dev libvorbisidec-dev libvorbis-dev libflac-dev libopus-dev alsa-utils libavahi-client-dev avahi-daemon
 
     - os: linux
       compiler: clang
@@ -118,7 +118,7 @@ matrix:
             - sourceline: 'ppa:mhier/libboost-latest'
             - llvm-toolchain-trusty-5.0
           packages:
-            - clang-5.0 boost1.70 libasound2-dev libvorbisidec-dev libvorbis-dev libflac-dev alsa-utils libavahi-client-dev avahi-daemon
+            - clang-5.0 boost1.70 libasound2-dev libvorbisidec-dev libvorbis-dev libflac-dev libopus-dev alsa-utils libavahi-client-dev avahi-daemon
 
     - os: linux
       compiler: clang
@@ -132,7 +132,7 @@ matrix:
             - llvm-toolchain-trusty-6.0
             - ubuntu-toolchain-r-test
           packages:
-            - clang-6.0 boost1.70 libasound2-dev libvorbisidec-dev libvorbis-dev libflac-dev alsa-utils libavahi-client-dev avahi-daemon
+            - clang-6.0 boost1.70 libasound2-dev libvorbisidec-dev libvorbis-dev libflac-dev libopus-dev alsa-utils libavahi-client-dev avahi-daemon
 
     - os: linux
       compiler: clang
@@ -146,23 +146,23 @@ matrix:
             - llvm-toolchain-trusty-7
             - ubuntu-toolchain-r-test
           packages:
-            - clang-7 boost1.70 libasound2-dev libvorbisidec-dev libvorbis-dev libflac-dev alsa-utils libavahi-client-dev avahi-daemon
+            - clang-7 boost1.70 libasound2-dev libvorbisidec-dev libvorbis-dev libflac-dev libopus-dev alsa-utils libavahi-client-dev avahi-daemon
 
     # build on osx
     - os: osx
       osx_image: xcode9.4
       env:
-        - MATRIX_EVAL="brew update && brew upgrade boost && brew install flac libvorbis"
+        - MATRIX_EVAL="brew update && brew upgrade boost && brew install flac opus libvorbis"
 
     - os: osx
       osx_image: xcode10.3
       env:
-        - MATRIX_EVAL="brew update && brew upgrade boost && brew install flac libvorbis"
+        - MATRIX_EVAL="brew update && brew upgrade boost && brew install flac opus libvorbis"
 
     - os: osx
       osx_image: xcode11
       env:
-        - MATRIX_EVAL="brew update && brew install flac libvorbis"
+        - MATRIX_EVAL="brew update && brew install flac opus libvorbis"
 
 before_install:
     - eval "${MATRIX_EVAL}"
