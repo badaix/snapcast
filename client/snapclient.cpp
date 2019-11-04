@@ -214,8 +214,8 @@ int main(int argc, char** argv)
         }
 #endif
 
-        auto signal_handler = install_signal_handler({SIGHUP, SIGTERM, SIGINT});
         bool active = true;
+        auto signal_handler = install_signal_handler({SIGHUP, SIGTERM, SIGINT}, [&active](int /*signal*/) { active = false; });
         if (host.empty())
         {
 #if defined(HAS_AVAHI) || defined(HAS_BONJOUR)

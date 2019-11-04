@@ -19,20 +19,24 @@
 #ifndef SIGNAL_HANDLER_HPP
 #define SIGNAL_HANDLER_HPP
 
+#include <functional>
 #include <future>
 #include <set>
 #include <signal.h>
 
 
-static std::future<int> install_signal_handler(std::set<int> signals)
+static std::future<int> install_signal_handler(std::set<int> signals, const std::function<void(int)>& on_signal = nullptr)
 {
     static std::promise<int> promise;
     std::future<int> future = promise.get_future();
+    static std::function<void(int)> callback = on_signal;
 
     for (auto signal : signals)
     {
         ::signal(signal, [](int sig) {
             std::cerr << "signal: " << sig << "\n";
+            if (callback)
+                callback(sig);
             try
             {
                 promise.set_value(sig);
