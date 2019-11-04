@@ -28,6 +28,8 @@
 
 using namespace std;
 
+namespace encoder
+{
 
 OggEncoder::OggEncoder(const std::string& codecOptions) : Encoder(codecOptions), lastGranulepos_(0)
 {
@@ -257,3 +259,5 @@ void OggEncoder::initEncoder()
         pos += og_.body_len;
     }
 }
+
+} // namespace encoder

@@ -22,6 +22,9 @@
 #include <opus/opus.h>
 
 
+namespace encoder
+{
+
 class OpusEncoder : public Encoder
 {
 public:
@@ -35,6 +38,8 @@ public:
 
 protected:
     void initEncoder() override;
-    OpusEncoder* enc_;
+    ::OpusEncoder* enc_;
     std::vector<u_char> encoded_;
 };
+
+} // namespace encoder

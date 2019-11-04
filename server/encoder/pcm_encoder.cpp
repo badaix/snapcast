@@ -21,6 +21,9 @@
 #include <memory>
 
 
+namespace encoder
+{
+
 #define ID_RIFF 0x46464952
 #define ID_WAVE 0x45564157
 #define ID_FMT 0x20746d66
@@ -76,3 +79,5 @@ std::string PcmEncoder::name() const
 {
     return "pcm";
 }
+
+} // namespace encoder

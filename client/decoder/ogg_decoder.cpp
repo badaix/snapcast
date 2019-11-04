@@ -28,6 +28,8 @@
 
 using namespace std;
 
+namespace decoder
+{
 
 OggDecoder::OggDecoder() : Decoder()
 {
@@ -238,3 +240,5 @@ SampleFormat OggDecoder::setHeader(msg::CodecHeader* chunk)
 
     return sampleFormat_;
 }
+
+} // namespace decoder

@@ -26,6 +26,9 @@
 #endif
 #include <ogg/ogg.h>
 
+namespace decoder
+{
+
 class OggDecoder : public Decoder
 {
 public:
@@ -59,5 +62,6 @@ private:
     SampleFormat sampleFormat_;
 };
 
+} // namespace decoder
 
 #endif

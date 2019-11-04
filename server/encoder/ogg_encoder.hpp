@@ -22,6 +22,9 @@
 #include <ogg/ogg.h>
 #include <vorbis/vorbisenc.h>
 
+namespace encoder
+{
+
 class OggEncoder : public Encoder
 {
 public:
@@ -48,5 +51,6 @@ private:
     ogg_int64_t lastGranulepos_;
 };
 
+} // namespace encoder
 
 #endif

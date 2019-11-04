@@ -25,6 +25,8 @@
 
 using namespace std;
 
+namespace encoder
+{
 
 FlacEncoder::FlacEncoder(const std::string& codecOptions) : Encoder(codecOptions), encoder_(nullptr), pcmBufferSize_(0), encodedSamples_(0)
 {
@@ -133,14 +135,15 @@ FLAC__StreamEncoderWriteStatus FlacEncoder::write_callback(const FLAC__StreamEnc
     return FLAC__STREAM_ENCODER_WRITE_STATUS_OK;
 }
 
-
+namespace callback
+{
 FLAC__StreamEncoderWriteStatus write_callback(const FLAC__StreamEncoder* encoder, const FLAC__byte buffer[], size_t bytes, unsigned samples,
                                               unsigned current_frame, void* client_data)
 {
     FlacEncoder* flacEncoder = (FlacEncoder*)client_data;
     return flacEncoder->write_callback(encoder, buffer, bytes, samples, current_frame);
 }
-
+} // namespace callback
 
 void FlacEncoder::initEncoder()
 {
@@ -196,7 +199,9 @@ void FlacEncoder::initEncoder()
         throw SnapException("error setting meta data");
 
     // initialize encoder
-    init_status = FLAC__stream_encoder_init_stream(encoder_, ::write_callback, nullptr, nullptr, nullptr, this);
+    init_status = FLAC__stream_encoder_init_stream(encoder_, callback::write_callback, nullptr, nullptr, nullptr, this);
     if (init_status != FLAC__STREAM_ENCODER_INIT_STATUS_OK)
         throw SnapException("ERROR: initializing encoder: " + string(FLAC__StreamEncoderInitStatusString[init_status]));
 }
+
+} // namespace encoder

@@ -23,6 +23,8 @@
 #include "message/pcm_chunk.hpp"
 #include <mutex>
 
+namespace decoder
+{
 
 class Decoder
 {
@@ -37,5 +39,6 @@ protected:
     std::mutex mutex_;
 };
 
+} // namespace decoder
 
 #endif

@@ -64,7 +64,7 @@ public:
  * Implements EncoderListener to get the encoded data.
  * Data is passed to the PcmListener
  */
-class PcmStream : public EncoderListener
+class PcmStream : public encoder::EncoderListener
 {
 public:
     /// ctor. Encoded PCM data is passed to the PcmListener
@@ -75,7 +75,7 @@ public:
     virtual void stop();
 
     /// Implementation of EncoderListener::onChunkEncoded
-    void onChunkEncoded(const Encoder* encoder, msg::PcmChunk* chunk, double duration) override;
+    void onChunkEncoded(const encoder::Encoder* encoder, msg::PcmChunk* chunk, double duration) override;
     virtual std::shared_ptr<msg::CodecHeader> getHeader();
 
     virtual const StreamUri& getUri() const;
@@ -106,7 +106,7 @@ protected:
     SampleFormat sampleFormat_;
     size_t pcmReadMs_;
     size_t dryoutMs_;
-    std::unique_ptr<Encoder> encoder_;
+    std::unique_ptr<encoder::Encoder> encoder_;
     std::string name_;
     ReaderState state_;
     std::shared_ptr<msg::StreamTags> meta_;

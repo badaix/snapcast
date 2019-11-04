@@ -4,6 +4,9 @@
 #include "encoder.hpp"
 #include <string>
 
+namespace encoder
+{
+
 class EncoderFactory
 {
 public:
@@ -11,5 +14,6 @@ public:
     Encoder* createEncoder(const std::string& codecSettings) const;
 };
 
+} // namespace encoder
 
 #endif

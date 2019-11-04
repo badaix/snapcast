@@ -33,7 +33,7 @@ using namespace std;
 
 PcmStream::PcmStream(PcmListener* pcmListener, const StreamUri& uri) : active_(false), pcmListener_(pcmListener), uri_(uri), pcmReadMs_(20), state_(kIdle)
 {
-    EncoderFactory encoderFactory;
+    encoder::EncoderFactory encoderFactory;
     if (uri_.query.find("codec") == uri_.query.end())
         throw SnapException("Stream URI must have a codec");
     encoder_.reset(encoderFactory.createEncoder(uri_.query["codec"]));
@@ -144,7 +144,7 @@ void PcmStream::setState(const ReaderState& newState)
 }
 
 
-void PcmStream::onChunkEncoded(const Encoder* /*encoder*/, msg::PcmChunk* chunk, double duration)
+void PcmStream::onChunkEncoded(const encoder::Encoder* /*encoder*/, msg::PcmChunk* chunk, double duration)
 {
     //	LOG(INFO) << "onChunkEncoded: " << duration << " us\n";
     if (duration <= 0)

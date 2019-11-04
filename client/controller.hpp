@@ -73,7 +73,7 @@ private:
     int latency_;
     std::unique_ptr<ClientConnection> clientConnection_;
     std::shared_ptr<Stream> stream_;
-    std::unique_ptr<Decoder> decoder_;
+    std::unique_ptr<decoder::Decoder> decoder_;
     std::unique_ptr<Player> player_;
     std::shared_ptr<MetadataAdapter> meta_;
     std::shared_ptr<msg::ServerSettings> serverSettings_;

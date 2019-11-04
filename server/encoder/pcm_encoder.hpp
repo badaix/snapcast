@@ -20,6 +20,8 @@
 #define PCM_ENCODER_H
 #include "encoder.hpp"
 
+namespace encoder
+{
 
 class PcmEncoder : public Encoder
 {
@@ -32,5 +34,6 @@ protected:
     void initEncoder() override;
 };
 
+} // namespace encoder
 
 #endif

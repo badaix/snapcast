@@ -21,6 +21,8 @@
 #include "decoder/decoder.hpp"
 #include <opus/opus.h>
 
+namespace decoder
+{
 
 class OpusDecoder : public Decoder
 {
@@ -31,7 +33,9 @@ public:
     SampleFormat setHeader(msg::CodecHeader* chunk) override;
 
 private:
-    OpusDecoder* dec_;
+    ::OpusDecoder* dec_;
     std::vector<opus_int16> pcm_;
     SampleFormat sample_format_;
 };
+
+} // namespace decoder

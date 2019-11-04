@@ -21,6 +21,9 @@
 #include "common/snap_exception.hpp"
 #include "common/str_compat.hpp"
 
+namespace decoder
+{
+
 #define ID_OPUS 0x4F505553
 
 /// int: Number of samples per channel in the input signal.
@@ -108,3 +111,5 @@ SampleFormat OpusDecoder::setHeader(msg::CodecHeader* chunk)
 
     return sample_format_;
 }
+
+} // namespace decoder

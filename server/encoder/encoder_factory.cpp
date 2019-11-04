@@ -34,6 +34,8 @@
 
 using namespace std;
 
+namespace encoder
+{
 
 Encoder* EncoderFactory::createEncoder(const std::string& codecSettings) const
 {
@@ -76,3 +78,5 @@ Encoder* EncoderFactory::createEncoder(const std::string& codecSettings) const
             }
     */
 }
+
+} // namespace encoder

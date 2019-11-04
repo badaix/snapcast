@@ -25,7 +25,8 @@
 #include <atomic>
 #include <memory>
 
-
+namespace decoder
+{
 
 struct CacheInfo
 {
@@ -58,5 +59,6 @@ public:
     std::unique_ptr<FLAC__StreamDecoderErrorStatus> lastError_;
 };
 
+} // namespace decoder
 
 #endif

@@ -104,18 +104,18 @@ void Controller::onMessageReceived(ClientConnection* /*connection*/, const msg::
         player_.reset(nullptr);
 
         if (headerChunk_->codec == "pcm")
-            decoder_.reset(new PcmDecoder());
+            decoder_ = make_unique<decoder::PcmDecoder>();
 #if defined(HAS_OGG) && (defined(HAS_TREMOR) || defined(HAS_VORBIS))
         else if (headerChunk_->codec == "ogg")
-            decoder_.reset(new OggDecoder());
+            decoder_ = make_unique<decoder::OggDecoder>();
 #endif
 #if defined(HAS_FLAC)
         else if (headerChunk_->codec == "flac")
-            decoder_.reset(new FlacDecoder());
+            decoder_ = make_unique<decoder::FlacDecoder>();
 #endif
 #if defined(HAS_OPUS)
         else if (headerChunk_->codec == "opus")
-            decoder_.reset(new OpusDecoder());
+            decoder_ = make_unique<decoder::OpusDecoder>();
 #endif
         else
             throw SnapException("codec not supported: \"" + headerChunk_->codec + "\"");
@@ -127,11 +127,11 @@ void Controller::onMessageReceived(ClientConnection* /*connection*/, const msg::
         stream_->setBufferLen(serverSettings_->getBufferMs() - latency_);
 
 #ifdef HAS_ALSA
-        player_.reset(new AlsaPlayer(pcmDevice_, stream_));
+        player_ = make_unique<AlsaPlayer>(pcmDevice_, stream_);
 #elif HAS_OPENSL
-        player_.reset(new OpenslPlayer(pcmDevice_, stream_));
+        player_ = make_unique<OpenslPlayer>(pcmDevice_, stream_);
 #elif HAS_COREAUDIO
-        player_.reset(new CoreAudioPlayer(pcmDevice_, stream_));
+        player_ = make_unique<CoreAudioPlayer>(pcmDevice_, stream_);
 #else
         throw SnapException("No audio player support");
 #endif

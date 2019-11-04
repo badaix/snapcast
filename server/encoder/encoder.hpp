@@ -26,6 +26,8 @@
 #include "message/codec_header.hpp"
 #include "message/pcm_chunk.hpp"
 
+namespace encoder
+{
 
 class Encoder;
 
@@ -96,5 +98,6 @@ protected:
     std::string codecOptions_;
 };
 
+} // namespace encoder
 
 #endif

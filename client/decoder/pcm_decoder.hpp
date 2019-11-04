@@ -21,6 +21,9 @@
 #include "decoder.hpp"
 
 
+namespace decoder
+{
+
 class PcmDecoder : public Decoder
 {
 public:
@@ -29,5 +32,6 @@ public:
     SampleFormat setHeader(msg::CodecHeader* chunk) override;
 };
 
+} // namespace decoder
 
 #endif

@@ -27,20 +27,26 @@
 
 using namespace std;
 
+namespace decoder
+{
 
-static FLAC__StreamDecoderReadStatus read_callback(const FLAC__StreamDecoder* decoder, FLAC__byte buffer[], size_t* bytes, void* client_data);
-static FLAC__StreamDecoderWriteStatus write_callback(const FLAC__StreamDecoder* decoder, const FLAC__Frame* frame, const FLAC__int32* const buffer[],
-                                                     void* client_data);
-static void metadata_callback(const FLAC__StreamDecoder* decoder, const FLAC__StreamMetadata* metadata, void* client_data);
-static void error_callback(const FLAC__StreamDecoder* decoder, FLAC__StreamDecoderErrorStatus status, void* client_data);
+namespace callback
+{
+FLAC__StreamDecoderReadStatus read_callback(const FLAC__StreamDecoder* decoder, FLAC__byte buffer[], size_t* bytes, void* client_data);
+FLAC__StreamDecoderWriteStatus write_callback(const FLAC__StreamDecoder* decoder, const FLAC__Frame* frame, const FLAC__int32* const buffer[],
+                                              void* client_data);
+void metadata_callback(const FLAC__StreamDecoder* decoder, const FLAC__StreamMetadata* metadata, void* client_data);
+void error_callback(const FLAC__StreamDecoder* decoder, FLAC__StreamDecoderErrorStatus status, void* client_data);
+} // namespace callback
 
-
-static msg::CodecHeader* flacHeader = nullptr;
-static msg::PcmChunk* flacChunk = nullptr;
-static msg::PcmChunk* pcmChunk = nullptr;
-static SampleFormat sampleFormat;
-static FLAC__StreamDecoder* decoder = nullptr;
-
+namespace
+{
+msg::CodecHeader* flacHeader = nullptr;
+msg::PcmChunk* flacChunk = nullptr;
+msg::PcmChunk* pcmChunk = nullptr;
+SampleFormat sampleFormat;
+FLAC__StreamDecoder* decoder = nullptr;
+} // namespace
 
 
 FlacDecoder::FlacDecoder() : Decoder(), lastError_(nullptr)
@@ -105,8 +111,8 @@ SampleFormat FlacDecoder::setHeader(msg::CodecHeader* chunk)
         throw SnapException("ERROR: allocating decoder");
 
     //	(void)FLAC__stream_decoder_set_md5_checking(decoder, true);
-    init_status =
-        FLAC__stream_decoder_init_stream(decoder, read_callback, nullptr, nullptr, nullptr, nullptr, write_callback, metadata_callback, error_callback, this);
+    init_status = FLAC__stream_decoder_init_stream(decoder, callback::read_callback, nullptr, nullptr, nullptr, nullptr, callback::write_callback,
+                                                   callback::metadata_callback, callback::error_callback, this);
     if (init_status != FLAC__STREAM_DECODER_INIT_STATUS_OK)
         throw SnapException("ERROR: initializing decoder: " + string(FLAC__StreamDecoderInitStatusString[init_status]));
 
@@ -118,7 +124,8 @@ SampleFormat FlacDecoder::setHeader(msg::CodecHeader* chunk)
     return sampleFormat;
 }
 
-
+namespace callback
+{
 FLAC__StreamDecoderReadStatus read_callback(const FLAC__StreamDecoder* /*decoder*/, FLAC__byte buffer[], size_t* bytes, void* client_data)
 {
     if (flacHeader != nullptr)
@@ -213,3 +220,6 @@ void error_callback(const FLAC__StreamDecoder* decoder, FLAC__StreamDecoderError
     SLOG(ERROR) << "Got error callback: " << FLAC__StreamDecoderErrorStatusString[status] << "\n";
     static_cast<FlacDecoder*>(client_data)->lastError_ = std::unique_ptr<FLAC__StreamDecoderErrorStatus>(new FLAC__StreamDecoderErrorStatus(status));
 }
+} // namespace callback
+
+} // namespace decoder

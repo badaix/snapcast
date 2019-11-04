@@ -21,6 +21,8 @@
 #include "common/endian.hpp"
 #include "common/snap_exception.hpp"
 
+namespace decoder
+{
 
 #define ID_RIFF 0x46464952
 #define ID_WAVE 0x45564157
@@ -118,3 +120,5 @@ SampleFormat PcmDecoder::setHeader(msg::CodecHeader* chunk)
 
     return sampleFormat;
 }
+
+} // namespace decoder

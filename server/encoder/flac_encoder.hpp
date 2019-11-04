@@ -26,6 +26,8 @@
 #include "FLAC/metadata.h"
 #include "FLAC/stream_encoder.h"
 
+namespace encoder
+{
 
 class FlacEncoder : public Encoder
 {
@@ -53,5 +55,6 @@ protected:
     size_t encodedSamples_;
 };
 
+} // namespace encoder
 
 #endif

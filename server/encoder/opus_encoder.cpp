@@ -22,6 +22,9 @@
 #include "common/str_compat.hpp"
 #include "common/utils/string_utils.hpp"
 
+namespace encoder
+{
+
 #define ID_OPUS 0x4F505553
 static constexpr opus_int32 const_min_bitrate = 6000;
 static constexpr opus_int32 const_max_bitrate = 512000;
@@ -36,8 +39,6 @@ void assign(void* pointer, T val)
 }
 } // namespace
 
-// TODO:
-// - handle variable chunk durations (now it's fixed to 10ms)
 
 OpusEncoder::OpusEncoder(const std::string& codecOptions) : Encoder(codecOptions), enc_(nullptr)
 {
@@ -152,6 +153,9 @@ void OpusEncoder::initEncoder()
 }
 
 
+// TODO:
+// handle variable chunk durations, now it's fixed to a "stream_buffer" value of
+// 5, 10, 20, 40, 60
 void OpusEncoder::encode(const msg::PcmChunk* chunk)
 {
     int samples_per_channel = chunk->getFrameCount();
@@ -179,3 +183,5 @@ void OpusEncoder::encode(const msg::PcmChunk* chunk)
                    << '\n';
     }
 }
+
+} // namespace encoder
