@@ -3,7 +3,7 @@
      _(  )/ ___) /  \ (  ( \(  _ \(  _ \ / __)( )  ( )
     / \) \\___ \(  O )/    / )   / ) __/( (__(_ _)(_ _)
     \____/(____/ \__/ \_)__)(__\_)(__)   \___)(_)  (_)
-    version 1.2.2
+    version 1.3.0
     https://github.com/badaix/jsonrpcpp
 
     This file is part of jsonrpc++
@@ -19,8 +19,8 @@
 /// run-clang-tidy-3.8.py -header-filter='jsonrpcpp.hpp'
 /// -checks='*,-misc-definitions-in-headers,-google-readability-braces-around-statements,-readability-braces-around-statements,-cppcoreguidelines-pro-bounds-pointer-arithmetic,-google-build-using-namespace,-google-build-using-namespace,-modernize-pass-by-value,-google-explicit-constructor'
 
-#ifndef JSON_RPC_H
-#define JSON_RPC_H
+#ifndef JSON_RPC_HPP
+#define JSON_RPC_HPP
 
 #include "json.hpp"
 #include <cstring>
@@ -34,7 +34,6 @@ using Json = nlohmann::json;
 namespace jsonrpcpp
 {
 
-
 class Entity;
 class Request;
 class Notification;
@@ -43,15 +42,13 @@ class Response;
 class Error;
 class Batch;
 
-
-typedef std::shared_ptr<Entity> entity_ptr;
-typedef std::shared_ptr<Request> request_ptr;
-typedef std::shared_ptr<Notification> notification_ptr;
-typedef std::shared_ptr<Parameter> parameter_ptr;
-typedef std::shared_ptr<Response> response_ptr;
-typedef std::shared_ptr<Error> error_ptr;
-typedef std::shared_ptr<Batch> batch_ptr;
-
+using entity_ptr = std::shared_ptr<Entity>;
+using request_ptr = std::shared_ptr<Request>;
+using notification_ptr = std::shared_ptr<Notification>;
+using parameter_ptr = std::shared_ptr<Parameter>;
+using response_ptr = std::shared_ptr<Response>;
+using error_ptr = std::shared_ptr<Error>;
+using batch_ptr = std::shared_ptr<Batch>;
 
 
 class Entity
@@ -74,13 +71,13 @@ public:
     Entity(const Entity&) = default;
     Entity& operator=(const Entity&) = default;
 
-    bool is_exception();
-    bool is_id();
-    bool is_error();
-    bool is_response();
-    bool is_request();
-    bool is_notification();
-    bool is_batch();
+    bool is_exception() const;
+    bool is_id() const;
+    bool is_error() const;
+    bool is_response() const;
+    bool is_request() const;
+    bool is_notification() const;
+    bool is_batch() const;
 
     virtual std::string type_str() const;
 
@@ -93,7 +90,6 @@ public:
 protected:
     entity_t entity;
 };
-
 
 
 class NullableEntity : public Entity
@@ -113,7 +109,6 @@ public:
 protected:
     bool isNull;
 };
-
 
 
 class Id : public Entity
@@ -161,7 +156,6 @@ protected:
     int int_id_;
     std::string string_id_;
 };
-
 
 
 class Parameter : public NullableEntity
@@ -225,7 +219,6 @@ public:
 };
 
 
-
 class Error : public NullableEntity
 {
 public:
@@ -256,7 +249,6 @@ protected:
     std::string message_;
     Json data_;
 };
-
 
 
 /// JSON-RPC 2.0 request
@@ -295,7 +287,6 @@ protected:
 };
 
 
-
 class RpcException : public std::exception
 {
 public:
@@ -307,7 +298,6 @@ public:
 protected:
     std::runtime_error m_;
 };
-
 
 
 class RpcEntityException : public RpcException, public Entity
@@ -328,7 +318,6 @@ protected:
 };
 
 
-
 class ParseErrorException : public RpcEntityException
 {
 public:
@@ -336,7 +325,6 @@ public:
     ParseErrorException(const std::string& data);
     Json to_json() const override;
 };
-
 
 
 //	-32600	Invalid Request	The JSON sent is not a valid Request object.
@@ -361,7 +349,6 @@ protected:
 };
 
 
-
 class InvalidRequestException : public RequestException
 {
 public:
@@ -370,7 +357,6 @@ public:
     InvalidRequestException(const char* data, const Id& requestId = Id());
     InvalidRequestException(const std::string& data, const Id& requestId = Id());
 };
-
 
 
 class MethodNotFoundException : public RequestException
@@ -383,7 +369,6 @@ public:
 };
 
 
-
 class InvalidParamsException : public RequestException
 {
 public:
@@ -394,7 +379,6 @@ public:
 };
 
 
-
 class InternalErrorException : public RequestException
 {
 public:
@@ -403,7 +387,6 @@ public:
     InternalErrorException(const char* data, const Id& requestId = Id());
     InternalErrorException(const std::string& data, const Id& requestId = Id());
 };
-
 
 
 class Response : public Entity
@@ -441,7 +424,6 @@ protected:
 };
 
 
-
 class Notification : public Entity
 {
 public:
@@ -468,10 +450,8 @@ protected:
 };
 
 
-
 typedef std::function<void(const Parameter& params)> notification_callback;
 typedef std::function<jsonrpcpp::response_ptr(const Id& id, const Parameter& params)> request_callback;
-
 
 class Parser
 {
@@ -500,7 +480,6 @@ private:
     std::map<std::string, notification_callback> notification_callbacks_;
     std::map<std::string, request_callback> request_callbacks_;
 };
-
 
 
 class Batch : public Entity
@@ -533,48 +512,40 @@ inline Entity::Entity(entity_t type) : entity(type)
 {
 }
 
-
-inline bool Entity::is_exception()
+inline bool Entity::is_exception() const
 {
     return (entity == entity_t::exception);
 }
 
-
-inline bool Entity::is_id()
+inline bool Entity::is_id() const
 {
     return (entity == entity_t::id);
 }
 
-
-inline bool Entity::is_error()
+inline bool Entity::is_error() const
 {
     return (entity == entity_t::error);
 }
 
-
-inline bool Entity::is_response()
+inline bool Entity::is_response() const
 {
     return (entity == entity_t::response);
 }
 
-
-inline bool Entity::is_request()
+inline bool Entity::is_request() const
 {
     return (entity == entity_t::request);
 }
 
-
-inline bool Entity::is_notification()
+inline bool Entity::is_notification() const
 {
     return (entity == entity_t::notification);
 }
 
-
-inline bool Entity::is_batch()
+inline bool Entity::is_batch() const
 {
     return (entity == entity_t::batch);
 }
-
 
 inline void Entity::parse(const char* json_str)
 {
@@ -600,12 +571,10 @@ inline void Entity::parse(const char* json_str)
     }
 }
 
-
 inline void Entity::parse(const std::string& json_str)
 {
     parse(json_str.c_str());
 }
-
 
 inline std::string Entity::type_str() const
 {
@@ -633,18 +602,15 @@ inline std::string Entity::type_str() const
 }
 
 
-
 /////////////////////////// NullableEntity implementation /////////////////////
 
 inline NullableEntity::NullableEntity(entity_t type) : Entity(type), isNull(false)
 {
 }
 
-
 inline NullableEntity::NullableEntity(entity_t type, std::nullptr_t) : Entity(type), isNull(true)
 {
 }
-
 
 
 /////////////////////////// Id implementation /////////////////////////////////
@@ -653,27 +619,22 @@ inline Id::Id() : Entity(entity_t::id), type_(value_t::null), int_id_(0), string
 {
 }
 
-
 inline Id::Id(int id) : Entity(entity_t::id), type_(value_t::integer), int_id_(id), string_id_("")
 {
 }
-
 
 inline Id::Id(const char* id) : Entity(entity_t::id), type_(value_t::string), int_id_(0), string_id_(id)
 {
 }
 
-
 inline Id::Id(const std::string& id) : Id(id.c_str())
 {
 }
-
 
 inline Id::Id(const Json& json_id) : Entity(entity_t::id), type_(value_t::null)
 {
     Id::parse_json(json_id);
 }
-
 
 inline void Id::parse_json(const Json& json)
 {
@@ -695,7 +656,6 @@ inline void Id::parse_json(const Json& json)
         throw std::invalid_argument("id must be integer, string or null");
 }
 
-
 inline Json Id::to_json() const
 {
     if (type_ == value_t::null)
@@ -709,20 +669,17 @@ inline Json Id::to_json() const
 }
 
 
-
 //////////////////////// Error implementation /////////////////////////////////
 
 inline Parameter::Parameter(std::nullptr_t) : NullableEntity(entity_t::id, nullptr), type(value_t::null)
 {
 }
 
-
 inline Parameter::Parameter(const Json& json) : NullableEntity(entity_t::id), type(value_t::null)
 {
     if (json != nullptr)
         Parameter::parse_json(json);
 }
-
 
 inline Parameter::Parameter(const std::string& key1, const Json& value1, const std::string& key2, const Json& value2, const std::string& key3,
                             const Json& value3, const std::string& key4, const Json& value4)
@@ -736,7 +693,6 @@ inline Parameter::Parameter(const std::string& key1, const Json& value1, const s
     if (!key4.empty())
         param_map[key4] = value4;
 }
-
 
 inline void Parameter::parse_json(const Json& json)
 {
@@ -754,7 +710,6 @@ inline void Parameter::parse_json(const Json& json)
     }
 }
 
-
 inline Json Parameter::to_json() const
 {
     if (type == value_t::array)
@@ -765,24 +720,20 @@ inline Json Parameter::to_json() const
     return nullptr;
 }
 
-
 inline bool Parameter::is_array() const
 {
     return type == value_t::array;
 }
-
 
 inline bool Parameter::is_map() const
 {
     return type == value_t::map;
 }
 
-
 inline bool Parameter::is_null() const
 {
     return isNull;
 }
-
 
 inline bool Parameter::has(const std::string& key) const
 {
@@ -791,12 +742,10 @@ inline bool Parameter::has(const std::string& key) const
     return (param_map.find(key) != param_map.end());
 }
 
-
 inline Json Parameter::get(const std::string& key) const
 {
     return param_map.at(key);
 }
-
 
 inline bool Parameter::has(size_t idx) const
 {
@@ -805,12 +754,10 @@ inline bool Parameter::has(size_t idx) const
     return (param_array.size() > idx);
 }
 
-
 inline Json Parameter::get(size_t idx) const
 {
     return param_array.at(idx);
 }
-
 
 
 //////////////////////// Error implementation /////////////////////////////////
@@ -821,16 +768,13 @@ inline Error::Error(const Json& json) : Error("Internal error", -32603, nullptr)
         Error::parse_json(json);
 }
 
-
 inline Error::Error(std::nullptr_t) : NullableEntity(entity_t::error, nullptr), code_(0), message_(""), data_(nullptr)
 {
 }
 
-
 inline Error::Error(const std::string& message, int code, const Json& data) : NullableEntity(entity_t::error), code_(code), message_(message), data_(data)
 {
 }
-
 
 inline void Error::parse_json(const Json& json)
 {
@@ -857,7 +801,6 @@ inline void Error::parse_json(const Json& json)
     }
 }
 
-
 inline Json Error::to_json() const
 {
     Json j = {
@@ -870,7 +813,6 @@ inline Json Error::to_json() const
 }
 
 
-
 ////////////////////// Request implementation /////////////////////////////////
 
 inline Request::Request(const Json& json) : Entity(entity_t::request), method_(""), id_()
@@ -879,11 +821,9 @@ inline Request::Request(const Json& json) : Entity(entity_t::request), method_("
         Request::parse_json(json);
 }
 
-
 inline Request::Request(const Id& id, const std::string& method, const Parameter& params) : Entity(entity_t::request), method_(method), params_(params), id_(id)
 {
 }
-
 
 inline void Request::parse_json(const Json& json)
 {
@@ -930,7 +870,6 @@ inline void Request::parse_json(const Json& json)
     }
 }
 
-
 inline Json Request::to_json() const
 {
     Json json = {{"jsonrpc", "2.0"}, {"method", method_}, {"id", id_.to_json()}};
@@ -940,7 +879,6 @@ inline Json Request::to_json() const
 
     return json;
 }
-
 
 
 inline RpcException::RpcException(const char* text) : m_(text)
@@ -957,7 +895,6 @@ inline const char* RpcException::what() const noexcept
 }
 
 
-
 inline RpcEntityException::RpcEntityException(const Error& error) : RpcException(error.message()), Entity(entity_t::exception), error_(error)
 {
 }
@@ -965,7 +902,6 @@ inline RpcEntityException::RpcEntityException(const Error& error) : RpcException
 inline void RpcEntityException::parse_json(const Json& /*json*/)
 {
 }
-
 
 
 inline ParseErrorException::ParseErrorException(const Error& error) : RpcEntityException(error)
@@ -984,7 +920,6 @@ inline Json ParseErrorException::to_json() const
 }
 
 
-
 inline RequestException::RequestException(const Error& error, const Id& requestId) : RpcEntityException(error), id_(requestId)
 {
 }
@@ -995,7 +930,6 @@ inline Json RequestException::to_json() const
 
     return response;
 }
-
 
 
 inline InvalidRequestException::InvalidRequestException(const Id& requestId) : RequestException(Error("Invalid request", -32600), requestId)
@@ -1016,7 +950,6 @@ inline InvalidRequestException::InvalidRequestException(const std::string& data,
 }
 
 
-
 inline MethodNotFoundException::MethodNotFoundException(const Id& requestId) : RequestException(Error("Method not found", -32601), requestId)
 {
 }
@@ -1033,7 +966,6 @@ inline MethodNotFoundException::MethodNotFoundException(const char* data, const 
 inline MethodNotFoundException::MethodNotFoundException(const std::string& data, const Id& requestId) : MethodNotFoundException(data.c_str(), requestId)
 {
 }
-
 
 
 inline InvalidParamsException::InvalidParamsException(const Id& requestId) : RequestException(Error("Invalid params", -32602), requestId)
@@ -1054,7 +986,6 @@ inline InvalidParamsException::InvalidParamsException(const std::string& data, c
 }
 
 
-
 inline InternalErrorException::InternalErrorException(const Id& requestId) : RequestException(Error("Internal error", -32603), requestId)
 {
 }
@@ -1073,7 +1004,6 @@ inline InternalErrorException::InternalErrorException(const std::string& data, c
 }
 
 
-
 ///////////////////// Response implementation /////////////////////////////////
 
 inline Response::Response(const Json& json) : Entity(entity_t::response)
@@ -1082,31 +1012,25 @@ inline Response::Response(const Json& json) : Entity(entity_t::response)
         Response::parse_json(json);
 }
 
-
 inline Response::Response(const Id& id, const Json& result) : Entity(entity_t::response), id_(id), result_(result), error_(nullptr)
 {
 }
-
 
 inline Response::Response(const Id& id, const Error& error) : Entity(entity_t::response), id_(id), result_(), error_(error)
 {
 }
 
-
 inline Response::Response(const Request& request, const Json& result) : Response(request.id(), result)
 {
 }
-
 
 inline Response::Response(const Request& request, const Error& error) : Response(request.id(), error)
 {
 }
 
-
 inline Response::Response(const RequestException& exception) : Response(exception.id(), exception.error())
 {
 }
-
 
 inline void Response::parse_json(const Json& json)
 {
@@ -1125,7 +1049,7 @@ inline void Response::parse_json(const Json& json)
         if (json.count("result") != 0u)
             result_ = json["result"];
         else if (json.count("error") != 0u)
-            error_.parse_json(json["error"]);
+            error_ = json["error"];
         else
             throw RpcException("response must contain result or error");
     }
@@ -1138,7 +1062,6 @@ inline void Response::parse_json(const Json& json)
         throw RpcException(e.what());
     }
 }
-
 
 inline Json Response::to_json() const
 {
@@ -1155,7 +1078,6 @@ inline Json Response::to_json() const
 }
 
 
-
 ///////////////// Notification implementation /////////////////////////////////
 
 inline Notification::Notification(const Json& json) : Entity(entity_t::notification)
@@ -1164,16 +1086,13 @@ inline Notification::Notification(const Json& json) : Entity(entity_t::notificat
         Notification::parse_json(json);
 }
 
-
 inline Notification::Notification(const char* method, const Parameter& params) : Entity(entity_t::notification), method_(method), params_(params)
 {
 }
 
-
 inline Notification::Notification(const std::string& method, const Parameter& params) : Notification(method.c_str(), params)
 {
 }
-
 
 inline void Notification::parse_json(const Json& json)
 {
@@ -1208,7 +1127,6 @@ inline void Notification::parse_json(const Json& json)
     }
 }
 
-
 inline Json Notification::to_json() const
 {
     Json json = {
@@ -1222,7 +1140,6 @@ inline Json Notification::to_json() const
 }
 
 
-
 //////////////////////// Batch implementation /////////////////////////////////
 
 inline Batch::Batch(const Json& json) : Entity(entity_t::batch)
@@ -1230,7 +1147,6 @@ inline Batch::Batch(const Json& json) : Entity(entity_t::batch)
     if (json != nullptr)
         Batch::parse_json(json);
 }
-
 
 inline void Batch::parse_json(const Json& json)
 {
@@ -1260,7 +1176,6 @@ inline void Batch::parse_json(const Json& json)
         throw InvalidRequestException();
 }
 
-
 inline Json Batch::to_json() const
 {
     Json result;
@@ -1268,14 +1183,6 @@ inline Json Batch::to_json() const
         result.push_back(j->to_json());
     return result;
 }
-
-
-/*void Batch::add(const entity_ptr entity)
-{
-        entities.push_back(entity);
-}
-*/
-
 
 
 //////////////////////// Parser implementation ////////////////////////////////
@@ -1286,13 +1193,11 @@ inline void Parser::register_notification_callback(const std::string& notificati
         notification_callbacks_[notification] = callback;
 }
 
-
 inline void Parser::register_request_callback(const std::string& request, request_callback callback)
 {
     if (callback)
         request_callbacks_[request] = callback;
 }
-
 
 inline entity_ptr Parser::parse(const std::string& json_str)
 {
@@ -1325,12 +1230,10 @@ inline entity_ptr Parser::parse(const std::string& json_str)
     return entity;
 }
 
-
 inline entity_ptr Parser::parse_json(const Json& json)
 {
     return do_parse_json(json);
 }
-
 
 inline entity_ptr Parser::do_parse(const std::string& json_str)
 {
@@ -1349,7 +1252,6 @@ inline entity_ptr Parser::do_parse(const std::string& json_str)
 
     return nullptr;
 }
-
 
 inline entity_ptr Parser::do_parse_json(const Json& json)
 {
@@ -1376,7 +1278,6 @@ inline entity_ptr Parser::do_parse_json(const Json& json)
     return nullptr;
 }
 
-
 inline bool Parser::is_request(const std::string& json_str)
 {
     try
@@ -1389,12 +1290,10 @@ inline bool Parser::is_request(const std::string& json_str)
     }
 }
 
-
 inline bool Parser::is_request(const Json& json)
 {
     return ((json.count("method") != 0u) && (json.count("id") != 0u));
 }
-
 
 inline bool Parser::is_notification(const std::string& json_str)
 {
@@ -1408,12 +1307,10 @@ inline bool Parser::is_notification(const std::string& json_str)
     }
 }
 
-
 inline bool Parser::is_notification(const Json& json)
 {
     return ((json.count("method") != 0u) && (json.count("id") == 0));
 }
-
 
 inline bool Parser::is_response(const std::string& json_str)
 {
@@ -1427,12 +1324,10 @@ inline bool Parser::is_response(const std::string& json_str)
     }
 }
 
-
 inline bool Parser::is_response(const Json& json)
 {
-    return ((json.count("result") != 0u) && (json.count("id") != 0u));
+    return (((json.count("result") != 0u) || (json.count("error") != 0u)) && (json.count("id") != 0u));
 }
-
 
 inline bool Parser::is_batch(const std::string& json_str)
 {
@@ -1446,15 +1341,11 @@ inline bool Parser::is_batch(const std::string& json_str)
     }
 }
 
-
 inline bool Parser::is_batch(const Json& json)
 {
     return (json.is_array());
 }
 
-
 } // namespace jsonrpcpp
-
-
 
 #endif
