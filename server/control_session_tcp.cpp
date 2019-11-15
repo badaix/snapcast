@@ -24,7 +24,8 @@ using namespace std;
 
 
 
-ControlSessionTcp::ControlSessionTcp(ControlMessageReceiver* receiver, tcp::socket&& socket) : ControlSession(receiver), socket_(std::move(socket))
+ControlSessionTcp::ControlSessionTcp(ControlMessageReceiver* receiver, boost::asio::io_context& ioc, tcp::socket&& socket)
+    : ControlSession(receiver), socket_(std::move(socket)), strand_(ioc)
 {
 }
 
@@ -40,30 +41,31 @@ void ControlSessionTcp::do_read()
 {
     const std::string delimiter = "\n";
     auto self(shared_from_this());
-    boost::asio::async_read_until(socket_, streambuf_, delimiter, [this, self, delimiter](const std::error_code& ec, std::size_t bytes_transferred) {
-        if (ec)
-        {
-            LOG(ERROR) << "Error while reading from control socket: " << ec.message() << "\n";
-            return;
-        }
-
-        // Extract up to the first delimiter.
-        std::string line{buffers_begin(streambuf_.data()), buffers_begin(streambuf_.data()) + bytes_transferred - delimiter.length()};
-        if (!line.empty())
-        {
-            if (line.back() == '\r')
-                line.resize(line.size() - 1);
-            // LOG(DEBUG) << "received: " << line << "\n";
-            if ((message_receiver_ != nullptr) && !line.empty())
+    boost::asio::async_read_until(
+        socket_, streambuf_, delimiter, boost::asio::bind_executor(strand_, [this, self, delimiter](const std::error_code& ec, std::size_t bytes_transferred) {
+            if (ec)
             {
-                string response = message_receiver_->onMessageReceived(this, line);
-                if (!response.empty())
-                    sendAsync(response);
+                LOG(ERROR) << "Error while reading from control socket: " << ec.message() << "\n";
+                return;
             }
-        }
-        streambuf_.consume(bytes_transferred);
-        do_read();
-    });
+
+            // Extract up to the first delimiter.
+            std::string line{buffers_begin(streambuf_.data()), buffers_begin(streambuf_.data()) + bytes_transferred - delimiter.length()};
+            if (!line.empty())
+            {
+                if (line.back() == '\r')
+                    line.resize(line.size() - 1);
+                // LOG(DEBUG) << "received: " << line << "\n";
+                if ((message_receiver_ != nullptr) && !line.empty())
+                {
+                    string response = message_receiver_->onMessageReceived(this, line);
+                    if (!response.empty())
+                        sendAsync(response);
+                }
+            }
+            streambuf_.consume(bytes_transferred);
+            do_read();
+        }));
 }
 
 
@@ -89,19 +91,36 @@ void ControlSessionTcp::stop()
 
 void ControlSessionTcp::sendAsync(const std::string& message)
 {
-    auto self(shared_from_this());
-    boost::asio::async_write(socket_, boost::asio::buffer(message + "\r\n"), [self](std::error_code ec, std::size_t length) {
-        if (ec)
+    strand_.post([this, message]() {
+        messages_.emplace_back(message);
+        if (messages_.size() > 1)
         {
-            LOG(ERROR) << "Error while writing to control socket: " << ec.message() << "\n";
+            LOG(DEBUG) << "TCP session outstanding async_writes: " << messages_.size() << "\n";
+            return;
         }
-        else
-        {
-            LOG(DEBUG) << "Wrote " << length << " bytes to control socket\n";
-        }
+        send_next();
     });
 }
 
+void ControlSessionTcp::send_next()
+{
+    auto self(shared_from_this());
+    auto message = messages_.front();
+    boost::asio::async_write(socket_, boost::asio::buffer(message + "\r\n"),
+                             boost::asio::bind_executor(strand_, [this, self](std::error_code ec, std::size_t length) {
+                                 messages_.pop_front();
+                                 if (ec)
+                                 {
+                                     LOG(ERROR) << "Error while writing to control socket: " << ec.message() << "\n";
+                                 }
+                                 else
+                                 {
+                                     LOG(DEBUG) << "Wrote " << length << " bytes to control socket\n";
+                                 }
+                                 if (!messages_.empty())
+                                     send_next();
+                             }));
+}
 
 bool ControlSessionTcp::send(const std::string& message)
 {

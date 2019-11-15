@@ -22,6 +22,7 @@
 #include "control_session.hpp"
 #include <boost/beast/core.hpp>
 #include <boost/beast/websocket.hpp>
+#include <deque>
 
 namespace beast = boost::beast;         // from <boost/beast.hpp>
 namespace http = beast::http;           // from <boost/beast/http.hpp>
@@ -39,7 +40,7 @@ class ControlSessionHttp : public ControlSession, public std::enable_shared_from
 {
 public:
     /// ctor. Received message from the client are passed to MessageReceiver
-    ControlSessionHttp(ControlMessageReceiver* receiver, tcp::socket&& socket, const ServerSettings::HttpSettings& settings);
+    ControlSessionHttp(ControlMessageReceiver* receiver, boost::asio::io_context& ioc, tcp::socket&& socket, const ServerSettings::HttpSettings& settings);
     ~ControlSessionHttp() override;
     void start() override;
     void stop() override;
@@ -58,6 +59,8 @@ protected:
     template <class Body, class Allocator, class Send>
     void handle_request(http::request<Body, http::basic_fields<Allocator>>&& req, Send&& send);
 
+    void send_next();
+
     http::request<http::string_body> req_;
 
 protected:
@@ -72,6 +75,8 @@ protected:
     tcp::socket socket_;
     beast::flat_buffer buffer_;
     ServerSettings::HttpSettings settings_;
+    boost::asio::io_context::strand strand_;
+    std::deque<std::string> messages_;
 };
 
 

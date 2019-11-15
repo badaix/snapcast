@@ -20,6 +20,7 @@
 #define CONTROL_SESSION_TCP_HPP
 
 #include "control_session.hpp"
+#include <deque>
 
 /// Endpoint for a connected control client.
 /**
@@ -31,7 +32,7 @@ class ControlSessionTcp : public ControlSession, public std::enable_shared_from_
 {
 public:
     /// ctor. Received message from the client are passed to MessageReceiver
-    ControlSessionTcp(ControlMessageReceiver* receiver, tcp::socket&& socket);
+    ControlSessionTcp(ControlMessageReceiver* receiver, boost::asio::io_context& ioc, tcp::socket&& socket);
     ~ControlSessionTcp() override;
     void start() override;
     void stop() override;
@@ -44,8 +45,12 @@ public:
 
 protected:
     void do_read();
+    void send_next();
+
     tcp::socket socket_;
     boost::asio::streambuf streambuf_;
+    boost::asio::io_context::strand strand_;
+    std::deque<std::string> messages_;
 };
 
 
