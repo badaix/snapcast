@@ -81,7 +81,7 @@ int main(int argc, char* argv[])
             "s", "stream.stream", "URI of the PCM input stream.\nFormat: TYPE://host/path?name=NAME\n[&codec=CODEC]\n[&sampleformat=SAMPLEFORMAT]", pcmStream,
             &pcmStream);
         size_t num_threads = 2;
-        conf.add<Value<size_t>>("", "stream.threads", "number of streaming threads", num_threads, &num_threads);
+        conf.add<Value<size_t>>("", "server.threads", "number of server threads", num_threads, &num_threads);
 
         conf.add<Value<string>>("", "stream.sampleformat", "Default sample format", settings.stream.sampleFormat, &settings.stream.sampleFormat);
         conf.add<Value<string>>("c", "stream.codec", "Default transport codec\n(flac|ogg|opus|pcm)[:options]\nType codec:? to get codec specific options",
@@ -252,11 +252,16 @@ int main(int argc, char* argv[])
         }
         publishZeroConfg.publish(dns_services);
 #endif
-
-        if (settings.stream.bufferMs < 400)
+        if (settings.stream.streamReadMs < 10)
         {
-            LOG(WARNING) << "Buffer is less than 400ms, changing to 400ms\n";
-            settings.stream.bufferMs = 400;
+            LOG(WARNING) << "Stream read buffer is less than 10ms, changing to 10ms\n";
+            settings.stream.streamReadMs = 10;
+        }
+
+        if (settings.stream.bufferMs < 100)
+        {
+            LOG(WARNING) << "Buffer is less than 100ms, changing to 100ms\n";
+            settings.stream.bufferMs = 100;
         }
 
         boost::asio::io_context io_context;
