@@ -258,10 +258,10 @@ int main(int argc, char* argv[])
             settings.stream.streamReadMs = 10;
         }
 
-        if (settings.stream.bufferMs < 100)
+        if (settings.stream.bufferMs < 400)
         {
-            LOG(WARNING) << "Buffer is less than 100ms, changing to 100ms\n";
-            settings.stream.bufferMs = 100;
+            LOG(WARNING) << "Buffer is less than 400ms, changing to 400ms\n";
+            settings.stream.bufferMs = 400;
         }
 
         boost::asio::io_context io_context;

@@ -50,6 +50,7 @@ public:
 
     ~PcmChunk() override = default;
 
+#if 0
     template <class Rep, class Period>
     int readFrames(void* outputBuffer, const std::chrono::duration<Rep, Period>& duration)
     {
@@ -58,6 +59,7 @@ public:
         // return readFrames(outputBuffer, (us * 48000) / std::micro::den);
         return frames;
     }
+#endif
 
     int readFrames(void* outputBuffer, size_t frameCount)
     {
