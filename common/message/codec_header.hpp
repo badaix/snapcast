@@ -30,9 +30,11 @@ namespace msg
 class CodecHeader : public BaseMessage
 {
 public:
-    CodecHeader(const std::string& codecName = "", size_t size = 0) : BaseMessage(message_type::kCodecHeader), payloadSize(size), codec(codecName)
+    CodecHeader(const std::string& codecName = "", size_t size = 0)
+        : BaseMessage(message_type::kCodecHeader), payloadSize(size), payload(nullptr), codec(codecName)
     {
-        payload = (char*)malloc(size);
+        if (size > 0)
+            payload = (char*)malloc(size * sizeof(char));
     }
 
     ~CodecHeader() override
@@ -62,7 +64,7 @@ protected:
         writeVal(stream, payload, payloadSize);
     }
 };
-}
+} // namespace msg
 
 
 #endif

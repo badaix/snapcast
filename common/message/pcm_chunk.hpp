@@ -50,6 +50,15 @@ public:
 
     ~PcmChunk() override = default;
 
+    template <class Rep, class Period>
+    int readFrames(void* outputBuffer, const std::chrono::duration<Rep, Period>& duration)
+    {
+        auto us = std::chrono::microseconds(duration).count();
+        auto frames = (us * 48000) / std::micro::den;
+        // return readFrames(outputBuffer, (us * 48000) / std::micro::den);
+        return frames;
+    }
+
     int readFrames(void* outputBuffer, size_t frameCount)
     {
         // logd << "read: " << frameCount << ", total: " << (wireChunk->length / format.frameSize) << ", idx: " << idx;// << std::endl;
@@ -123,6 +132,6 @@ public:
 private:
     uint32_t idx_;
 };
-}
+} // namespace msg
 
 #endif

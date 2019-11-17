@@ -39,9 +39,10 @@ namespace msg
 class WireChunk : public BaseMessage
 {
 public:
-    WireChunk(size_t size = 0) : BaseMessage(message_type::kWireChunk), payloadSize(size)
+    WireChunk(size_t size = 0) : BaseMessage(message_type::kWireChunk), payloadSize(size), payload(nullptr)
     {
-        payload = (char*)malloc(size);
+        if (size > 0)
+            payload = (char*)malloc(size * sizeof(char));
     }
 
     WireChunk(const WireChunk& wireChunk) : BaseMessage(message_type::kWireChunk), timestamp(wireChunk.timestamp), payloadSize(wireChunk.payloadSize)
@@ -84,7 +85,7 @@ protected:
         writeVal(stream, payload, payloadSize);
     }
 };
-}
+} // namespace msg
 
 
 #endif
