@@ -17,7 +17,7 @@ snapcast (0.17.0-1) unstable; urgency=medium
     -Unknown snapserver.conf options are logged as warning (Issue #487)
     -debian scripts: change usernames back to snapclient and snapserver
 
- -- Johannes Pohl <snapcast@badaix.de>  Wed, 20 Nov 2018 00:13:37 +0200
+ -- Johannes Pohl <snapcast@badaix.de>  Wed, 20 Nov 2019 00:13:37 +0200
 
 snapcast (0.16.0-1) unstable; urgency=medium
 
@@ -38,7 +38,7 @@ snapcast (0.16.0-1) unstable; urgency=medium
     -Tidy up code base
     -Makefile doesn't statically link libgcc and libstdc++
 
- -- Johannes Pohl <snapcast@badaix.de>  Tue, 15 Oct 2018 00:13:37 +0200
+ -- Johannes Pohl <snapcast@badaix.de>  Tue, 15 Oct 2019 00:13:37 +0200
 
 snapcast (0.15.0-1) unstable; urgency=medium
 
