@@ -7,6 +7,19 @@ The goal is to build the following chain:
 
     audio player software -> snapfifo -> snapserver -> network -> snapclient -> alsa
 
+#### Streams
+Snapserver can read audio from several input streams, which are configured in the `snapserver.conf` file (default location is `/etc/snapserver.conf`), the config file can be changed the `-c` parameter.  
+Within the config file a list of input streams can be configures in the `[stream]` section:
+
+```
+[stream]
+...
+# stream URI of the PCM input stream, can be configured multiple times
+# Format: TYPE://host/path?name=NAME[&codec=CODEC][&sampleformat=SAMPLEFORMAT] 
+stream = pipe:///tmp/snapfifo?name=default
+...
+```
+
 #### About the notation
 In this document some expressions are in brackets:
 * `<angle brackets>`: the whole expression must be replaced with you specific setting
@@ -15,14 +28,14 @@ In this document some expressions are in brackets:
 
 For example:
 ```
--s "spotify:///librespot?name=Spotify[&username=<my username>&password=<my password>][&devicename=Snapcast][&bitrate=320]"
+stream = spotify:///librespot?name=Spotify[&username=<my username>&password=<my password>][&devicename=Snapcast][&bitrate=320]
 ```
 * `username` and `password` are both optional in this case. You need to specify none of both of them
 * `bitrate` is optional. If not configured, 320 will be used. Same for `devicename` 
 
 A valid usage would be for instance:
 ```
--s "spotify:///librespot?name=Spotify&bitrate=160"
+stream = spotify:///librespot?name=Spotify&bitrate=160
 ```
 
 ### MPD
@@ -131,13 +144,13 @@ It might be neccessary to set the pulse audio latency environment variable to 60
 Snapserver supports [shairport-sync](https://github.com/mikebrady/shairport-sync) with `stdout` backend.
  1. Build shairport-sync with `stdout` backend: `./configure --with-stdout --with-avahi --with-ssl=openssl --with-metadata`
  2. Copy the `shairport-sync` binary somewhere to your `PATH`, e.g. `/usr/local/bin/`
- 3. Configure snapserver with `-s "airplay:///shairport-sync?name=Airplay[&devicename=Snapcast][&port=5000]"`
+ 3. Configure snapserver with `stream = airplay:///shairport-sync?name=Airplay[&devicename=Snapcast][&port=5000]`
  
 
 ### Spotify
 Snapserver supports [librespot](https://github.com/librespot-org/librespot) with `pipe` backend.
  1. Build and copy the `librespot` binary somewhere to your `PATH`, e.g. `/usr/local/bin/`
- 2. Configure snapserver with `-s "spotify:///librespot?name=Spotify[&username=<my username>&password=<my password>][&devicename=Snapcast][&bitrate=320][&onstart=<start command>][&onstop=<stop command>][&volume=<volume in percent>][&cache=<cache dir>]"`
+ 2. Configure snapserver with `stream = spotify:///librespot?name=Spotify[&username=<my username>&password=<my password>][&devicename=Snapcast][&bitrate=320][&onstart=<start command>][&onstop=<stop command>][&volume=<volume in percent>][&cache=<cache dir>]`
    * Valid bitrates are 96, 160, 320
    * `start command` and `stop command` are executed by Librespot at start/stop
      * For example: `onstart=/usr/bin/logger -t Snapcast Starting spotify...`
@@ -146,7 +159,7 @@ Snapserver supports [librespot](https://github.com/librespot-org/librespot) with
 ### Process
 Snapserver can start any process and read PCM data from the stdout of the process: 
 
-Configure snapserver with `-s "process:///path/to/process?name=Process[&params=<--my list --of params>][&logStderr=false]"`
+Configure snapserver with `stream = process:///path/to/process?name=Process[&params=<--my list --of params>][&logStderr=false]`
 
 
 ### Line-in
