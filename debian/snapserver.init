@@ -16,6 +16,7 @@
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
 DESC="Snapcast server"
 NAME=snapserver
+USERNAME=snapserver
 DAEMON=/usr/bin/$NAME
 PIDFILE=/var/run/$NAME/pid
 SCRIPTNAME=/etc/init.d/$NAME
@@ -47,15 +48,15 @@ do_start()
 	PIDDIR=$(dirname "$PIDFILE")
 	if [ ! -d "$PIDDIR" ]; then
 			mkdir -m 0755 $PIDDIR
-			chown _snapserver:_snapserver $PIDDIR
+			chown $USERNAME:$USERNAME $PIDDIR
 	fi
 
 	# Return
 	#   0 if daemon has been started
 	#   1 if daemon was already running
 	#   2 if daemon could not be started
-	start-stop-daemon --start --quiet --pidfile "$PIDFILE" --chuid "_snapclient:_snapclient" --exec "$DAEMON" --test > /dev/null || return 1
-	start-stop-daemon --start --quiet --pidfile "$PIDFILE" --chuid "_snapclient:_snapclient" --exec "$DAEMON" -- $SNAPSERVER_OPTS || return 2
+	start-stop-daemon --start --quiet --pidfile "$PIDFILE" --chuid "$USERNAME:$USERNAME" --exec "$DAEMON" --test > /dev/null || return 1
+	start-stop-daemon --start --quiet --pidfile "$PIDFILE" --chuid "$USERNAME:$USERNAME" --exec "$DAEMON" -- $SNAPSERVER_OPTS || return 2
 	# Add code here, if necessary, that waits for the process to be ready
 	# to handle requests from services started subsequently which depend
 	# on this one.  As a last resort, sleep for some time.

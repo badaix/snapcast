@@ -2,11 +2,11 @@
 
 set -e
 
-USERNAME=_snapserver
+USERNAME=snapserver
 HOMEDIR=/var/lib/snapserver
 
 if [ "$1" = configure ]; then
-  adduser --system --quiet --group --home /var/lib/snapserver --no-create-home --force-badname $USERNAME
+  adduser --system --quiet --group --home $HOMEDIR --no-create-home --force-badname $USERNAME
 
   if [ ! -d $HOMEDIR ]; then
     mkdir -m 0750 $HOMEDIR

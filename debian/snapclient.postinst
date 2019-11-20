@@ -2,12 +2,12 @@
 
 set -e
 
-USERNAME=_snapclient
+USERNAME=snapclient
 HOMEDIR=/var/lib/snapclient
 
 if [ "$1" = configure ]; then
-  if ! getent passwd _snapclient >/dev/null; then
-    adduser --system --quiet --group --home /var/lib/snapclient --no-create-home --force-badname $USERNAME
+  if ! getent passwd $USERNAME >/dev/null; then
+    adduser --system --quiet --group --home $HOMEDIR --no-create-home --force-badname $USERNAME
     adduser $USERNAME audio
   fi
 

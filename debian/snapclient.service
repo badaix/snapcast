@@ -7,8 +7,8 @@ After=network.target time-sync.target sound.target avahi-daemon.service
 [Service]
 EnvironmentFile=-/etc/default/snapclient
 ExecStart=/usr/bin/snapclient $SNAPCLIENT_OPTS
-User=_snapclient
-Group=_snapclient
+User=snapclient
+Group=snapclient
 # very noisy on stdout
 StandardOutput=null
 Restart=on-failure

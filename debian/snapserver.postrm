@@ -4,7 +4,7 @@ set -e
 
 #DEBHELPER#
 
-USERNAME=_snapserver
+USERNAME=snapserver
 HOMEDIR=/var/lib/snapserver
 
 if [ "$1" = "purge" ]; then
