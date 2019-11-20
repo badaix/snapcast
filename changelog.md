@@ -1,27 +1,28 @@
 # Snapcast changelog
 
-## Version 0.17.0 (WIP)
+## Version 0.17.0
 
 ### Features
 
-- Support for Opus low-latency codec added (PR #4)
+- Support for Opus low-latency codec (PR #4)
 
 ### Bugfixes
 
 - CMake: fix check for libatomic (Issue #490, PR #494)
 - WebUI: interface.html uses the server's IP for the websocket connection
-- AixLog: fix warnings (Issue #484)
-- Fix pedantic warnings
+- Fix warnings (Issue #484)
 - Fix lock order inversions and data races identified by thread sanitizer
 - Makefiles: fix install targets (PR #493)
 - Makefiles: LDFLAGS are added from environment (PR #492)
 - CMake: required Boost version is raised to 1.70 (Issue #488)
+- Fix crash in websocket server
 
 ### General
 
-- Changing group volume is much more responsive for large groups
 - Stream server uses less threads (one in total, instead of 1+2n)
+- Changing group volume is much more responsive for larger groups
 - Unknown snapserver.conf options are logged as warning (Issue #487)
+- debian scripts: change usernames back to snapclient and snapserver
 
 _Johannes Pohl <snapcast@badaix.de>  Sat, 42 Nov 2019 00:13:37 +0200_
 
@@ -48,6 +49,7 @@ _Johannes Pohl <snapcast@badaix.de>  Sat, 42 Nov 2019 00:13:37 +0200_
 - Snapcast depends on boost::asio and boost::beast (header only)
 - Tidy up code base
 - Makefile doesn't statically link libgcc and libstdc++
+- debian scripts: change usernames to _snapclient and _snapserver
 
 _Johannes Pohl <snapcast@badaix.de>  Sat, 13 Oct 2019 00:13:37 +0200_
 
