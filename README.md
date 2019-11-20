@@ -57,9 +57,17 @@ On OpenWrt do:
 
     $ opkg install snapclient_0.x.x_ar71xx.ipk
 
-On Alpine Linux (testing repository) do:
+On Alpine Linux do:
 
     $ apk add snapcast
+
+	# Or for just the client:
+
+	$ apk add snapcast-client
+
+	# Or for just the server:
+
+	$ apk add snapcast-server
 
 On Gentoo Linux do:
 
