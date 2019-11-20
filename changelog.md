@@ -24,7 +24,7 @@
 - Unknown snapserver.conf options are logged as warning (Issue #487)
 - debian scripts: change usernames back to snapclient and snapserver
 
-_Johannes Pohl <snapcast@badaix.de>  Sat, 42 Nov 2019 00:13:37 +0200_
+_Johannes Pohl <snapcast@badaix.de>  Wed, 20 Nov 2019 00:13:37 +0200_
 
 ## Version 0.16.0
 
