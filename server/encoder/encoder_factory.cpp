@@ -18,7 +18,7 @@
 
 #include "encoder_factory.hpp"
 #include "pcm_encoder.hpp"
-#if defined(HAS_OGG) && defined(HAS_VORBIS) && defined(HAS_VORBISENC)
+#if defined(HAS_OGG) && defined(HAS_VORBIS) && defined(HAS_VORBIS_ENC)
 #include "ogg_encoder.hpp"
 #endif
 #if defined(HAS_FLAC)
@@ -49,7 +49,7 @@ Encoder* EncoderFactory::createEncoder(const std::string& codecSettings) const
     }
     if (codec == "pcm")
         encoder = new PcmEncoder(codecOptions);
-#if defined(HAS_OGG) && defined(HAS_VORBIS) && defined(HAS_VORBISENC)
+#if defined(HAS_OGG) && defined(HAS_VORBIS) && defined(HAS_VORBIS_ENC)
     else if (codec == "ogg")
         encoder = new OggEncoder(codecOptions);
 #endif

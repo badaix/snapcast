@@ -170,7 +170,7 @@ endif()
 if(BUILD_WITH_VORBIS)
     pkg_search_module(VORBISENC vorbisenc)
     if (VORBISENC_FOUND)
-        add_definitions("-DHAS_VORBISENC")
+        add_definitions("-DHAS_VORBIS_ENC")
     endif(VORBISENC_FOUND)
 endif()
 
