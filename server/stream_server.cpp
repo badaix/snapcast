@@ -100,40 +100,39 @@ void StreamServer::onChunkRead(const PcmStream* pcmStream, msg::PcmChunk* chunk,
     chunk_ptr->serialize(oss);
     shared_const_buffer buffer(oss.str());
 
-    std::vector<std::weak_ptr<StreamSession>> sessions;
+    std::vector<std::shared_ptr<StreamSession>> sessions;
     {
         std::lock_guard<std::recursive_mutex> mlock(sessionsMutex_);
-        sessions = sessions_;
+        for (auto session : sessions_)
+            if (auto s = session.lock())
+                sessions.push_back(s);
     }
 
     for (auto session : sessions)
     {
-        if (auto s = session.lock())
+        if (!settings_.stream.sendAudioToMutedClients)
         {
-            if (!settings_.stream.sendAudioToMutedClients)
+            GroupPtr group = Config::instance().getGroupFromClient(session->clientId);
+            if (group)
             {
-                GroupPtr group = Config::instance().getGroupFromClient(s->clientId);
-                if (group)
+                if (group->muted)
                 {
-                    if (group->muted)
-                    {
+                    continue;
+                }
+                else
+                {
+                    std::lock_guard<std::recursive_mutex> lock(clientMutex_);
+                    ClientInfoPtr client = group->getClient(session->clientId);
+                    if (client && client->config.volume.muted)
                         continue;
-                    }
-                    else
-                    {
-                        std::lock_guard<std::recursive_mutex> lock(clientMutex_);
-                        ClientInfoPtr client = group->getClient(s->clientId);
-                        if (client && client->config.volume.muted)
-                            continue;
-                    }
                 }
             }
-
-            if (!s->pcmStream() && isDefaultStream) //->getName() == "default")
-                s->sendAsync(buffer);
-            else if (s->pcmStream().get() == pcmStream)
-                s->sendAsync(buffer);
         }
+
+        if (!session->pcmStream() && isDefaultStream) //->getName() == "default")
+            session->sendAsync(buffer);
+        else if (session->pcmStream().get() == pcmStream)
+            session->sendAsync(buffer);
     }
 }
 
