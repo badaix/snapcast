@@ -4,8 +4,8 @@
 
 ### Bugfixes
 
-- Fix compile error if u_char is not defined
-- Fix error "exception unknown codec ogg"
+- Fix compile error if u_char is not defined (Issue #506)
+- Fix error "exception unknown codec ogg" (Issue #504)
 - Fix random crash during client disconnect
 
 _Johannes Pohl <snapcast@badaix.de>  Sat, 23 Nov 2019 00:13:37 +0200_
