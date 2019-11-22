@@ -40,7 +40,7 @@ protected:
     void encode(const SampleFormat& format, const char* data, size_t size);
     void initEncoder() override;
     ::OpusEncoder* enc_;
-    std::vector<u_char> encoded_;
+    std::vector<unsigned char> encoded_;
     std::unique_ptr<msg::PcmChunk> remainder_;
     size_t remainder_max_size_;
 };
