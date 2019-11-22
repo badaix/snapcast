@@ -1,5 +1,15 @@
 # Snapcast changelog
 
+## Version 0.17.1
+
+### Bugfixes
+
+- Fix compile error if u_char is not defined
+- Fix error "exception unknown codec ogg"
+- Fix random crash during client disconnect
+
+_Johannes Pohl <snapcast@badaix.de>  Sat, 23 Nov 2019 00:13:37 +0200_
+
 ## Version 0.17.0
 
 ### Features
