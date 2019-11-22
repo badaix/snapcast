@@ -41,7 +41,17 @@ StreamSession::~StreamSession()
 
 void StreamSession::read_next()
 {
-    auto self(shared_from_this());
+    shared_ptr<StreamSession> self;
+    try
+    {
+        self = shared_from_this();
+    }
+    catch (const std::bad_weak_ptr& e)
+    {
+        LOG(ERROR) << "read_next: Error getting shared from this\n";
+        return;
+    }
+
     boost::asio::async_read(socket_, boost::asio::buffer(buffer_, base_msg_size_),
                             boost::asio::bind_executor(strand_, [this, self](boost::system::error_code ec, std::size_t length) mutable {
                                 if (ec)
@@ -125,7 +135,17 @@ void StreamSession::stop()
 
 void StreamSession::send_next()
 {
-    auto self(shared_from_this());
+    shared_ptr<StreamSession> self;
+    try
+    {
+        self = shared_from_this();
+    }
+    catch (const std::bad_weak_ptr& e)
+    {
+        LOG(ERROR) << "send_next: Error getting shared from this\n";
+        return;
+    }
+
     auto buffer = messages_.front();
 
     boost::asio::async_write(socket_, buffer, boost::asio::bind_executor(strand_, [this, self, buffer](boost::system::error_code ec, std::size_t length) {
@@ -144,7 +164,8 @@ void StreamSession::send_next()
 
 void StreamSession::sendAsync(shared_const_buffer const_buf, bool send_now)
 {
-    strand_.post([this, const_buf, send_now]() {
+    auto self = shared_from_this();
+    strand_.post([this, self, const_buf, send_now]() {
         if (send_now)
             messages_.push_front(const_buf);
         else
