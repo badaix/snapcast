@@ -26,6 +26,7 @@
 #include "message/stream_tags.hpp"
 #include "stream_uri.hpp"
 #include <atomic>
+#include <boost/asio/io_context.hpp>
 #include <condition_variable>
 #include <map>
 #include <mutex>
@@ -68,7 +69,7 @@ class PcmStream : public encoder::EncoderListener
 {
 public:
     /// ctor. Encoded PCM data is passed to the PcmListener
-    PcmStream(PcmListener* pcmListener, const StreamUri& uri);
+    PcmStream(PcmListener* pcmListener, boost::asio::io_context& ioc, const StreamUri& uri);
     virtual ~PcmStream();
 
     virtual void start();
@@ -110,6 +111,7 @@ protected:
     std::string name_;
     ReaderState state_;
     std::shared_ptr<msg::StreamTags> meta_;
+    boost::asio::io_context& ioc_;
 };
 
 

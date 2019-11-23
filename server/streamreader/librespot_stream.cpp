@@ -28,7 +28,7 @@ using namespace std;
 
 
 
-LibrespotStream::LibrespotStream(PcmListener* pcmListener, const StreamUri& uri) : ProcessStream(pcmListener, uri)
+LibrespotStream::LibrespotStream(PcmListener* pcmListener, boost::asio::io_context& ioc, const StreamUri& uri) : ProcessStream(pcmListener, ioc, uri)
 {
     sampleFormat_ = SampleFormat("44100:16:2");
     uri_.query["sampleformat"] = sampleFormat_.getFormat();

@@ -31,7 +31,8 @@ using namespace std;
 
 
 
-ProcessStream::ProcessStream(PcmListener* pcmListener, const StreamUri& uri) : PcmStream(pcmListener, uri), path_(""), process_(nullptr)
+ProcessStream::ProcessStream(PcmListener* pcmListener, boost::asio::io_context& ioc, const StreamUri& uri)
+    : PcmStream(pcmListener, ioc, uri), path_(""), process_(nullptr)
 {
     params_ = uri_.getQuery("params");
     logStderr_ = (uri_.getQuery("logStderr", "false") == "true");

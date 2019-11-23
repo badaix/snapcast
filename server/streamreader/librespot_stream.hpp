@@ -35,7 +35,7 @@ class LibrespotStream : public ProcessStream, WatchdogListener
 {
 public:
     /// ctor. Encoded PCM data is passed to the PipeListener
-    LibrespotStream(PcmListener* pcmListener, const StreamUri& uri);
+    LibrespotStream(PcmListener* pcmListener, boost::asio::io_context& ioc, const StreamUri& uri);
     ~LibrespotStream() override;
 
 protected:

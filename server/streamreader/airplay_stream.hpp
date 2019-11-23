@@ -56,7 +56,7 @@ class AirplayStream : public ProcessStream
 {
 public:
     /// ctor. Encoded PCM data is passed to the PipeListener
-    AirplayStream(PcmListener* pcmListener, const StreamUri& uri);
+    AirplayStream(PcmListener* pcmListener, boost::asio::io_context& ioc, const StreamUri& uri);
     ~AirplayStream() override;
 
 protected:

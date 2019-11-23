@@ -41,7 +41,7 @@ static string hex2str(string input)
  * move to Makefile?
  */
 
-AirplayStream::AirplayStream(PcmListener* pcmListener, const StreamUri& uri) : ProcessStream(pcmListener, uri), port_(5000)
+AirplayStream::AirplayStream(PcmListener* pcmListener, boost::asio::io_context& ioc, const StreamUri& uri) : ProcessStream(pcmListener, ioc, uri), port_(5000)
 {
     logStderr_ = true;
 

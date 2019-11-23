@@ -30,7 +30,7 @@ using namespace std;
 
 
 
-FileStream::FileStream(PcmListener* pcmListener, const StreamUri& uri) : PcmStream(pcmListener, uri)
+FileStream::FileStream(PcmListener* pcmListener, boost::asio::io_context& ioc, const StreamUri& uri) : PcmStream(pcmListener, ioc, uri)
 {
     ifs.open(uri_.path.c_str(), std::ifstream::in | std::ifstream::binary);
     if (!ifs.good())

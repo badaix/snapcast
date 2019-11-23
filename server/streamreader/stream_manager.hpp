@@ -5,13 +5,14 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <boost/asio/io_context.hpp>
 
 typedef std::shared_ptr<PcmStream> PcmStreamPtr;
 
 class StreamManager
 {
 public:
-    StreamManager(PcmListener* pcmListener, const std::string& defaultSampleFormat, const std::string& defaultCodec, size_t defaultReadBufferMs = 20);
+    StreamManager(PcmListener* pcmListener, boost::asio::io_context& ioc, const std::string& defaultSampleFormat, const std::string& defaultCodec, size_t defaultReadBufferMs = 20);
 
     PcmStreamPtr addStream(const std::string& uri);
     void removeStream(const std::string& name);
@@ -28,6 +29,7 @@ private:
     std::string sampleFormat_;
     std::string codec_;
     size_t readBufferMs_;
+    boost::asio::io_context& ioc_;
 };
 
 

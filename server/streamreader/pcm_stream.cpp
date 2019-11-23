@@ -31,7 +31,8 @@ using namespace std;
 
 
 
-PcmStream::PcmStream(PcmListener* pcmListener, const StreamUri& uri) : active_(false), pcmListener_(pcmListener), uri_(uri), pcmReadMs_(20), state_(kIdle)
+PcmStream::PcmStream(PcmListener* pcmListener, boost::asio::io_context& ioc, const StreamUri& uri)
+    : active_(false), pcmListener_(pcmListener), uri_(uri), pcmReadMs_(20), state_(kIdle), ioc_(ioc)
 {
     encoder::EncoderFactory encoderFactory;
     if (uri_.query.find("codec") == uri_.query.end())
@@ -169,7 +170,9 @@ json PcmStream::toJson() const
         state = "disabled";
 
     json j = {
-        {"uri", uri_.toJson()}, {"id", getId()}, {"status", state},
+        {"uri", uri_.toJson()},
+        {"id", getId()},
+        {"status", state},
     };
 
     if (meta_)

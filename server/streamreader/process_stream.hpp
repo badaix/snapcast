@@ -36,7 +36,7 @@ class ProcessStream : public PcmStream
 {
 public:
     /// ctor. Encoded PCM data is passed to the PipeListener
-    ProcessStream(PcmListener* pcmListener, const StreamUri& uri);
+    ProcessStream(PcmListener* pcmListener, boost::asio::io_context& ioc, const StreamUri& uri);
     ~ProcessStream() override;
 
     void start() override;

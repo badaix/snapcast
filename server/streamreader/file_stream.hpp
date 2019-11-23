@@ -33,7 +33,7 @@ class FileStream : public PcmStream
 {
 public:
     /// ctor. Encoded PCM data is passed to the PipeListener
-    FileStream(PcmListener* pcmListener, const StreamUri& uri);
+    FileStream(PcmListener* pcmListener, boost::asio::io_context& ioc, const StreamUri& uri);
     ~FileStream() override;
 
 protected:

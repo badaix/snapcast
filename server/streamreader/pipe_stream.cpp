@@ -33,7 +33,7 @@ using namespace std;
 
 
 
-PipeStream::PipeStream(PcmListener* pcmListener, const StreamUri& uri) : PcmStream(pcmListener, uri), fd_(-1)
+PipeStream::PipeStream(PcmListener* pcmListener, boost::asio::io_context& ioc, const StreamUri& uri) : PcmStream(pcmListener, ioc, uri), fd_(-1)
 {
     umask(0);
     string mode = uri_.getQuery("mode", "create");

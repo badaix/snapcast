@@ -801,7 +801,7 @@ void StreamServer::start()
         controlServer_.reset(new ControlServer(io_context_, settings_.tcp, settings_.http, this));
         controlServer_->start();
 
-        streamManager_.reset(new StreamManager(this, settings_.stream.sampleFormat, settings_.stream.codec, settings_.stream.streamReadMs));
+        streamManager_.reset(new StreamManager(this, io_context_, settings_.stream.sampleFormat, settings_.stream.codec, settings_.stream.streamReadMs));
         //	throw SnapException("xxx");
         for (const auto& streamUri : settings_.stream.pcmStreams)
         {

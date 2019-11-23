@@ -31,8 +31,8 @@
 using namespace std;
 
 
-StreamManager::StreamManager(PcmListener* pcmListener, const std::string& defaultSampleFormat, const std::string& defaultCodec, size_t defaultReadBufferMs)
-    : pcmListener_(pcmListener), sampleFormat_(defaultSampleFormat), codec_(defaultCodec), readBufferMs_(defaultReadBufferMs)
+StreamManager::StreamManager(PcmListener* pcmListener, boost::asio::io_context& ioc, const std::string& defaultSampleFormat, const std::string& defaultCodec, size_t defaultReadBufferMs)
+    : pcmListener_(pcmListener), sampleFormat_(defaultSampleFormat), codec_(defaultCodec), readBufferMs_(defaultReadBufferMs), ioc_(ioc)
 {
 }
 
@@ -59,23 +59,23 @@ PcmStreamPtr StreamManager::addStream(const std::string& uri)
 
     if (streamUri.scheme == "pipe")
     {
-        stream = make_shared<PipeStream>(pcmListener_, streamUri);
+        stream = make_shared<PipeStream>(pcmListener_, ioc_, streamUri);
     }
     else if (streamUri.scheme == "file")
     {
-        stream = make_shared<FileStream>(pcmListener_, streamUri);
+        stream = make_shared<FileStream>(pcmListener_, ioc_, streamUri);
     }
     else if (streamUri.scheme == "process")
     {
-        stream = make_shared<ProcessStream>(pcmListener_, streamUri);
+        stream = make_shared<ProcessStream>(pcmListener_, ioc_, streamUri);
     }
     else if ((streamUri.scheme == "spotify") || (streamUri.scheme == "librespot"))
     {
-        stream = make_shared<LibrespotStream>(pcmListener_, streamUri);
+        stream = make_shared<LibrespotStream>(pcmListener_, ioc_, streamUri);
     }
     else if (streamUri.scheme == "airplay")
     {
-        stream = make_shared<AirplayStream>(pcmListener_, streamUri);
+        stream = make_shared<AirplayStream>(pcmListener_, ioc_, streamUri);
     }
     else
     {
