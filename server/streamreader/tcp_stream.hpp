@@ -42,10 +42,11 @@ public:
     void start() override;
 
 protected:
-    void do_accept() override;
-    void do_read() override;
+    void do_accept();
+    void do_read();
     std::unique_ptr<tcp::acceptor> acceptor_;
     std::unique_ptr<tcp::socket> socket_;
+    std::unique_ptr<msg::PcmChunk> chunk_;
     timeval tv_chunk_;
     bool first_;
     long nextTick_;
