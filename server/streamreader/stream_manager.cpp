@@ -26,12 +26,15 @@
 #include "librespot_stream.hpp"
 #include "pipe_stream.hpp"
 #include "process_stream.hpp"
+#include "tcp_stream.hpp"
+#include "udp_stream.hpp"
 
 
 using namespace std;
 
 
-StreamManager::StreamManager(PcmListener* pcmListener, boost::asio::io_context& ioc, const std::string& defaultSampleFormat, const std::string& defaultCodec, size_t defaultReadBufferMs)
+StreamManager::StreamManager(PcmListener* pcmListener, boost::asio::io_context& ioc, const std::string& defaultSampleFormat, const std::string& defaultCodec,
+                             size_t defaultReadBufferMs)
     : pcmListener_(pcmListener), sampleFormat_(defaultSampleFormat), codec_(defaultCodec), readBufferMs_(defaultReadBufferMs), ioc_(ioc)
 {
 }
@@ -76,6 +79,14 @@ PcmStreamPtr StreamManager::addStream(const std::string& uri)
     else if (streamUri.scheme == "airplay")
     {
         stream = make_shared<AirplayStream>(pcmListener_, ioc_, streamUri);
+    }
+    else if (streamUri.scheme == "experimental.tcp")
+    {
+        stream = make_shared<TcpStream>(pcmListener_, ioc_, streamUri);
+    }
+    else if (streamUri.scheme == "experimental.udp")
+    {
+        stream = make_shared<UdpStream>(pcmListener_, ioc_, streamUri);
     }
     else
     {

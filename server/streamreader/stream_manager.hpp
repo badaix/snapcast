@@ -2,17 +2,18 @@
 #define PCM_READER_FACTORY_H
 
 #include "pcm_stream.hpp"
+#include <boost/asio/io_context.hpp>
 #include <memory>
 #include <string>
 #include <vector>
-#include <boost/asio/io_context.hpp>
 
 typedef std::shared_ptr<PcmStream> PcmStreamPtr;
 
 class StreamManager
 {
 public:
-    StreamManager(PcmListener* pcmListener, boost::asio::io_context& ioc, const std::string& defaultSampleFormat, const std::string& defaultCodec, size_t defaultReadBufferMs = 20);
+    StreamManager(PcmListener* pcmListener, boost::asio::io_context& ioc, const std::string& defaultSampleFormat, const std::string& defaultCodec,
+                  size_t defaultReadBufferMs = 20);
 
     PcmStreamPtr addStream(const std::string& uri);
     void removeStream(const std::string& name);

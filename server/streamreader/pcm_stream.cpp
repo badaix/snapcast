@@ -170,9 +170,7 @@ json PcmStream::toJson() const
         state = "disabled";
 
     json j = {
-        {"uri", uri_.toJson()},
-        {"id", getId()},
-        {"status", state},
+        {"uri", uri_.toJson()}, {"id", getId()}, {"status", state},
     };
 
     if (meta_)
