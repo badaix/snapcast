@@ -80,8 +80,8 @@ int main(int argc, char* argv[])
         auto streamValue = conf.add<Value<string>>(
             "s", "stream.stream", "URI of the PCM input stream.\nFormat: TYPE://host/path?name=NAME\n[&codec=CODEC]\n[&sampleformat=SAMPLEFORMAT]", pcmStream,
             &pcmStream);
-        size_t num_threads = 2;
-        conf.add<Value<size_t>>("", "server.threads", "number of server threads", num_threads, &num_threads);
+        int num_threads = -1;
+        conf.add<Value<int>>("", "server.threads", "number of server threads", num_threads, &num_threads);
 
         conf.add<Value<string>>("", "stream.sampleformat", "Default sample format", settings.stream.sampleFormat, &settings.stream.sampleFormat);
         conf.add<Value<string>>("c", "stream.codec", "Default transport codec\n(flac|ogg|opus|pcm)[:options]\nType codec:? to get codec specific options",
@@ -267,9 +267,11 @@ int main(int argc, char* argv[])
         std::unique_ptr<StreamServer> streamServer(new StreamServer(io_context, settings));
         streamServer->start();
 
-        LOG(DEBUG) << "number of threads: " << num_threads << ", hw threads: " << std::thread::hardware_concurrency() << "\n";
+        if (num_threads <= 0)
+            num_threads = std::max(2, std::min(4, static_cast<int>(std::thread::hardware_concurrency())));
+        LOG(INFO) << "number of threads: " << num_threads << ", hw threads: " << std::thread::hardware_concurrency() << "\n";
         std::vector<std::thread> threads;
-        for (size_t n = 0; n < num_threads; ++n)
+        for (int n = 0; n < num_threads; ++n)
             threads.emplace_back([&] { io_context.run(); });
 
         auto sig = install_signal_handler({SIGHUP, SIGTERM, SIGINT}).get();
