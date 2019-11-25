@@ -30,7 +30,7 @@ class PublishBonjour;
 class PublishBonjour : public PublishmDNS
 {
 public:
-    PublishBonjour(const std::string& serviceName);
+    PublishBonjour(const std::string& serviceName, boost::asio::io_context& ioc);
     virtual ~PublishBonjour();
     virtual void publish(const std::vector<mDNSService>& services);
 

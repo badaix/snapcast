@@ -27,7 +27,7 @@ static AvahiEntryGroup* group;
 static AvahiSimplePoll* simple_poll;
 static char* name;
 
-PublishAvahi::PublishAvahi(const std::string& serviceName) : PublishmDNS(serviceName), client_(nullptr), active_(false)
+PublishAvahi::PublishAvahi(const std::string& serviceName, boost::asio::io_context& ioc) : PublishmDNS(serviceName, ioc), client_(nullptr), timer_(ioc)
 {
     group = nullptr;
     simple_poll = nullptr;
@@ -56,22 +56,24 @@ void PublishAvahi::publish(const std::vector<mDNSService>& services)
         LOG(ERROR) << "Failed to create client: " << avahi_strerror(error) << "\n";
     }
 
-    active_ = true;
-    pollThread_ = std::thread(&PublishAvahi::worker, this);
+    poll();
 }
 
 
-void PublishAvahi::worker()
+void PublishAvahi::poll()
 {
-    while (active_ && (avahi_simple_poll_iterate(simple_poll, 100) == 0))
-        ;
+    auto self = shared_from_this();
+    timer_.expires_from_now(boost::posix_time::milliseconds(50));
+    timer_.async_wait([self, this](const boost::system::error_code& ec) {
+        if (!ec && (avahi_simple_poll_iterate(simple_poll, 0) == 0))
+            poll();
+    });
 }
 
 
 PublishAvahi::~PublishAvahi()
 {
-    active_ = false;
-    pollThread_.join();
+    timer_.cancel();
 
     if (client_)
         avahi_client_free(client_);

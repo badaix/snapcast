@@ -28,7 +28,7 @@ typedef union {
 } Opaque16;
 
 
-PublishBonjour::PublishBonjour(const std::string& serviceName) : PublishmDNS(serviceName), active_(false)
+PublishBonjour::PublishBonjour(const std::string& serviceName, boost::asio::io_context& ioc) : PublishmDNS(serviceName, ioc), active_(false)
 {
     ///	dns-sd -R Snapcast _snapcast._tcp local 1704
     ///	dns-sd -R Snapcast _snapcast-jsonrpc._tcp local 1705

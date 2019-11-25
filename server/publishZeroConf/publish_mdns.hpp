@@ -1,6 +1,7 @@
 #ifndef PUBLISH_MDNS_H
 #define PUBLISH_MDNS_H
 
+#include <boost/asio.hpp>
 #include <string>
 #include <vector>
 
@@ -19,7 +20,7 @@ struct mDNSService
 class PublishmDNS
 {
 public:
-    PublishmDNS(const std::string& serviceName) : serviceName_(serviceName)
+    PublishmDNS(const std::string& serviceName, boost::asio::io_context& ioc) : serviceName_(serviceName), ioc_(ioc)
     {
     }
 
@@ -29,6 +30,7 @@ public:
 
 protected:
     std::string serviceName_;
+    boost::asio::io_context& ioc_;
 };
 
 #if defined(HAS_AVAHI)

@@ -235,9 +235,9 @@ int main(int argc, char* argv[])
         Config::instance().init();
 #endif
 
-
+        boost::asio::io_context io_context;
 #if defined(HAS_AVAHI) || defined(HAS_BONJOUR)
-        PublishZeroConf publishZeroConfg("Snapcast");
+        auto publishZeroConfg = std::make_shared<PublishZeroConf>("Snapcast", io_context);
         vector<mDNSService> dns_services;
         dns_services.emplace_back("_snapcast._tcp", settings.stream.port);
         dns_services.emplace_back("_snapcast-stream._tcp", settings.stream.port);
@@ -250,7 +250,7 @@ int main(int argc, char* argv[])
         {
             dns_services.emplace_back("_snapcast-http._tcp", settings.http.port);
         }
-        publishZeroConfg.publish(dns_services);
+        publishZeroConfg->publish(dns_services);
 #endif
         if (settings.stream.streamReadMs < 10)
         {
@@ -264,7 +264,6 @@ int main(int argc, char* argv[])
             settings.stream.bufferMs = 400;
         }
 
-        boost::asio::io_context io_context;
         std::unique_ptr<StreamServer> streamServer(new StreamServer(io_context, settings));
         streamServer->start();
 

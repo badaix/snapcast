@@ -37,10 +37,10 @@ class PublishAvahi;
 
 #include "publish_mdns.hpp"
 
-class PublishAvahi : public PublishmDNS
+class PublishAvahi : public PublishmDNS, public std::enable_shared_from_this<PublishAvahi>
 {
 public:
-    PublishAvahi(const std::string& serviceName);
+    PublishAvahi(const std::string& serviceName, boost::asio::io_context& ioc);
     ~PublishAvahi() override;
     void publish(const std::vector<mDNSService>& services) override;
 
@@ -48,11 +48,10 @@ private:
     static void entry_group_callback(AvahiEntryGroup* g, AvahiEntryGroupState state, AVAHI_GCC_UNUSED void* userdata);
     static void client_callback(AvahiClient* c, AvahiClientState state, AVAHI_GCC_UNUSED void* userdata);
     void create_services(AvahiClient* c);
-    void worker();
+    void poll();
     AvahiClient* client_;
-    std::thread pollThread_;
-    std::atomic<bool> active_;
     std::vector<mDNSService> services_;
+    boost::asio::deadline_timer timer_;
 };
 
 

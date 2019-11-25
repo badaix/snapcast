@@ -20,7 +20,7 @@
 #define PIPE_STREAM_H
 
 #include "pcm_stream.hpp"
-
+#include <boost/asio.hpp>
 
 
 /// Reads and decodes PCM data from a named pipe
@@ -29,16 +29,24 @@
  * Implements EncoderListener to get the encoded data.
  * Data is passed to the PcmListener
  */
-class PipeStream : public PcmStream
+class PipeStream : public PcmStream, public std::enable_shared_from_this<PipeStream>
 {
 public:
     /// ctor. Encoded PCM data is passed to the PipeListener
     PipeStream(PcmListener* pcmListener, boost::asio::io_context& ioc, const StreamUri& uri);
     ~PipeStream() override;
 
+    void start() override;
+
 protected:
-    void worker() override;
-    int fd_;
+    void do_accept();
+    void do_read();
+    std::unique_ptr<msg::PcmChunk> chunk_;
+    timeval tv_chunk_;
+    bool first_;
+    long nextTick_;
+    boost::asio::deadline_timer timer_;
+    std::unique_ptr<boost::asio::posix::stream_descriptor> fifo_;
 };
 
 
