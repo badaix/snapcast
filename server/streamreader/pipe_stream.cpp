@@ -25,7 +25,6 @@
 #include "common/aixlog.hpp"
 #include "common/snap_exception.hpp"
 #include "common/str_compat.hpp"
-#include "encoder/encoder_factory.hpp"
 #include "pipe_stream.hpp"
 
 
@@ -33,8 +32,7 @@ using namespace std;
 
 
 
-PipeStream::PipeStream(PcmListener* pcmListener, boost::asio::io_context& ioc, const StreamUri& uri)
-    : AsioStream<boost::asio::posix::stream_descriptor>(pcmListener, ioc, uri)
+PipeStream::PipeStream(PcmListener* pcmListener, boost::asio::io_context& ioc, const StreamUri& uri) : AsioStream<stream_descriptor>(pcmListener, ioc, uri)
 {
     umask(0);
     string mode = uri_.getQuery("mode", "create");

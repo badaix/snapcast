@@ -138,6 +138,7 @@ void PcmStream::setState(const ReaderState& newState)
 {
     if (newState != state_)
     {
+        LOG(DEBUG) << "State changed: " << state_ << " => " << newState << "\n";
         state_ = newState;
         if (pcmListener_)
             pcmListener_->onStateChanged(this, newState);

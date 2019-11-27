@@ -20,7 +20,9 @@
 #define ASIO_STREAM_HPP
 
 #include "pcm_stream.hpp"
+#include <atomic>
 #include <boost/asio.hpp>
+
 
 
 template <typename ReadStream>
@@ -38,20 +40,45 @@ protected:
     virtual void disconnect() = 0;
     virtual void on_connect();
     virtual void do_read();
+    void check_state();
     std::unique_ptr<msg::PcmChunk> chunk_;
     timeval tv_chunk_;
     bool first_;
     long nextTick_;
     boost::asio::deadline_timer timer_;
+    boost::asio::deadline_timer idle_timer_;
     std::unique_ptr<ReadStream> stream_;
+    std::atomic<std::uint64_t> bytes_read_;
 };
 
 
 
 template <typename ReadStream>
-AsioStream<ReadStream>::AsioStream(PcmListener* pcmListener, boost::asio::io_context& ioc, const StreamUri& uri) : PcmStream(pcmListener, ioc, uri), timer_(ioc)
+AsioStream<ReadStream>::AsioStream(PcmListener* pcmListener, boost::asio::io_context& ioc, const StreamUri& uri)
+    : PcmStream(pcmListener, ioc, uri), timer_(ioc), idle_timer_(ioc)
 {
     chunk_ = std::make_unique<msg::PcmChunk>(sampleFormat_, pcmReadMs_);
+    bytes_read_ = 0;
+}
+
+
+template <typename ReadStream>
+void AsioStream<ReadStream>::check_state()
+{
+    uint64_t last_read = bytes_read_;
+    auto self = this->shared_from_this();
+    idle_timer_.expires_from_now(boost::posix_time::milliseconds(500 + pcmReadMs_));
+    idle_timer_.async_wait([self, this, last_read](const boost::system::error_code& ec) {
+        if (!ec)
+        {
+            LOG(DEBUG) << "check state last: " << last_read << ", read: " << bytes_read_ << "\n";
+            if (bytes_read_ != last_read)
+                setState(kPlaying);
+            else
+                setState(kIdle);
+            check_state();
+        }
+    });
 }
 
 
@@ -59,6 +86,7 @@ template <typename ReadStream>
 void AsioStream<ReadStream>::start()
 {
     encoder_->init(this, sampleFormat_);
+    check_state();
     connect();
 }
 
@@ -67,6 +95,7 @@ template <typename ReadStream>
 void AsioStream<ReadStream>::stop()
 {
     timer_.cancel();
+    idle_timer_.cancel();
     disconnect();
 }
 
@@ -97,6 +126,8 @@ void AsioStream<ReadStream>::do_read()
                                     connect();
                                     return;
                                 }
+
+                                bytes_read_ += length;
                                 // LOG(DEBUG) << "Read: " << length << " bytes\n";
                                 if (first_)
                                 {
@@ -114,7 +145,6 @@ void AsioStream<ReadStream>::do_read()
 
                                 if (nextTick_ >= currentTick)
                                 {
-                                    setState(kPlaying);
                                     timer_.expires_from_now(boost::posix_time::milliseconds(nextTick_ - currentTick));
                                     timer_.async_wait([self, this](const boost::system::error_code& ec) {
                                         if (ec)
