@@ -33,7 +33,7 @@ using namespace std;
 
 
 
-TcpStream::TcpStream(PcmListener* pcmListener, boost::asio::io_context& ioc, const StreamUri& uri) : PcmStream(pcmListener, ioc, uri), timer_(ioc)
+TcpStream::TcpStream(PcmListener* pcmListener, boost::asio::io_context& ioc, const StreamUri& uri) : AsioStream<tcp::socket>(pcmListener, ioc, uri)
 {
     size_t port = 4953;
     try
@@ -46,35 +46,18 @@ TcpStream::TcpStream(PcmListener* pcmListener, boost::asio::io_context& ioc, con
 
     LOG(INFO) << "TcpStream port: " << port << "\n";
     acceptor_ = make_unique<tcp::acceptor>(ioc_, tcp::endpoint(tcp::v4(), port));
-    chunk_ = make_unique<msg::PcmChunk>(sampleFormat_, pcmReadMs_);
-    LOG(DEBUG) << "Chunk size: " << chunk_->payloadSize << "\n";
 }
 
 
-TcpStream::~TcpStream()
-{
-}
-
-
-void TcpStream::start()
-{
-    encoder_->init(this, sampleFormat_);
-    active_ = true;
-    do_accept();
-}
-
-
-void TcpStream::do_accept()
+void TcpStream::connect()
 {
     auto self = shared_from_this();
     acceptor_->async_accept([this, self](boost::system::error_code ec, tcp::socket socket) {
         if (!ec)
         {
             LOG(DEBUG) << "New client connection\n";
-            socket_ = make_unique<tcp::socket>(move(socket));
-            tv_chunk_.tv_sec = 0;
-            first_ = true;
-            do_read();
+            stream_ = make_unique<tcp::socket>(move(socket));
+            on_connect();
         }
         else
         {
@@ -84,57 +67,7 @@ void TcpStream::do_accept()
 }
 
 
-void TcpStream::do_read()
+void TcpStream::disconnect()
 {
-    auto self = shared_from_this();
-    chunk_->timestamp.sec = tv_chunk_.tv_sec;
-    chunk_->timestamp.usec = tv_chunk_.tv_usec;
-    boost::asio::async_read(*socket_, boost::asio::buffer(chunk_->payload, chunk_->payloadSize),
-                            [this, self](boost::system::error_code ec, std::size_t length) mutable {
-                                if (ec)
-                                {
-                                    LOG(ERROR) << "Error reading message: " << ec.message() << "\n";
-                                    do_accept();
-                                    return;
-                                }
-                                LOG(DEBUG) << "Read: " << length << " bytes\n";
-                                if (first_)
-                                {
-                                    first_ = false;
-                                    chronos::systemtimeofday(&tv_chunk_);
-                                    chunk_->timestamp.sec = tv_chunk_.tv_sec;
-                                    chunk_->timestamp.usec = tv_chunk_.tv_usec;
-                                    tvEncodedChunk_ = tv_chunk_;
-                                    nextTick_ = chronos::getTickCount();
-                                }
-                                encoder_->encode(chunk_.get());
-                                nextTick_ += pcmReadMs_;
-                                chronos::addUs(tv_chunk_, pcmReadMs_ * 1000);
-                                long currentTick = chronos::getTickCount();
-
-                                if (nextTick_ >= currentTick)
-                                {
-                                    setState(kPlaying);
-                                    timer_.expires_from_now(boost::posix_time::milliseconds(nextTick_ - currentTick));
-                                    timer_.async_wait([self, this](const boost::system::error_code& ec) {
-                                        if (ec)
-                                        {
-                                            LOG(ERROR) << "Error during async wait: " << ec.message() << "\n";
-                                        }
-                                        else
-                                        {
-                                            do_read();
-                                        }
-                                    });
-                                    return;
-                                }
-                                else
-                                {
-                                    chronos::systemtimeofday(&tv_chunk_);
-                                    tvEncodedChunk_ = tv_chunk_;
-                                    pcmListener_->onResync(this, currentTick - nextTick_);
-                                    nextTick_ = currentTick;
-                                    do_read();
-                                }
-                            });
+    stream_->close();
 }

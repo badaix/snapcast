@@ -33,7 +33,8 @@ using namespace std;
 
 
 
-PipeStream::PipeStream(PcmListener* pcmListener, boost::asio::io_context& ioc, const StreamUri& uri) : PcmStream(pcmListener, ioc, uri), timer_(ioc)
+PipeStream::PipeStream(PcmListener* pcmListener, boost::asio::io_context& ioc, const StreamUri& uri)
+    : AsioStream<boost::asio::posix::stream_descriptor>(pcmListener, ioc, uri)
 {
     umask(0);
     string mode = uri_.getQuery("mode", "create");
@@ -51,91 +52,20 @@ PipeStream::PipeStream(PcmListener* pcmListener, boost::asio::io_context& ioc, c
 }
 
 
-PipeStream::~PipeStream()
+void PipeStream::connect()
 {
-    fifo_->close();
-}
-
-
-void PipeStream::start()
-{
-    encoder_->init(this, sampleFormat_);
-    active_ = true;
-    do_accept();
-}
-
-
-void PipeStream::do_accept()
-{
-    LOG(DEBUG) << "do_accept\n";
+    LOG(DEBUG) << "connect\n";
     auto self = shared_from_this();
     auto fd = open(uri_.path.c_str(), O_RDONLY | O_NONBLOCK);
-    fifo_ = std::make_unique<boost::asio::posix::stream_descriptor>(ioc_, fd);
-    chronos::systemtimeofday(&tv_chunk_);
-    tvEncodedChunk_ = tv_chunk_;
-    nextTick_ = chronos::getTickCount();
-    first_ = true;
-    do_read();
+    stream_ = std::make_unique<boost::asio::posix::stream_descriptor>(ioc_, fd);
+    on_connect();
 }
 
 
-void PipeStream::do_read()
+void PipeStream::disconnect()
 {
-    // LOG(DEBUG) << "do_read\n";
-    auto self = shared_from_this();
-    chunk_->timestamp.sec = tv_chunk_.tv_sec;
-    chunk_->timestamp.usec = tv_chunk_.tv_usec;
-    boost::asio::async_read(*fifo_, boost::asio::buffer(chunk_->payload, chunk_->payloadSize),
-                            [this, self](boost::system::error_code ec, std::size_t length) mutable {
-                                if (ec)
-                                {
-                                    LOG(ERROR) << "Error reading message: " << ec.message() << ", length: " << length << "\n";
-                                    do_accept();
-                                    return;
-                                }
-                                // LOG(DEBUG) << "Read: " << length << " bytes\n";
-                                if (first_)
-                                {
-                                    first_ = false;
-                                    chronos::systemtimeofday(&tv_chunk_);
-                                    chunk_->timestamp.sec = tv_chunk_.tv_sec;
-                                    chunk_->timestamp.usec = tv_chunk_.tv_usec;
-                                    tvEncodedChunk_ = tv_chunk_;
-                                    nextTick_ = chronos::getTickCount();
-                                }
-                                encoder_->encode(chunk_.get());
-                                nextTick_ += pcmReadMs_;
-                                chronos::addUs(tv_chunk_, pcmReadMs_ * 1000);
-                                long currentTick = chronos::getTickCount();
-
-                                if (nextTick_ >= currentTick)
-                                {
-                                    setState(kPlaying);
-                                    timer_.expires_from_now(boost::posix_time::milliseconds(nextTick_ - currentTick));
-                                    timer_.async_wait([self, this](const boost::system::error_code& ec) {
-                                        if (ec)
-                                        {
-                                            LOG(ERROR) << "Error during async wait: " << ec.message() << "\n";
-                                        }
-                                        else
-                                        {
-                                            do_read();
-                                        }
-                                    });
-                                    return;
-                                }
-                                else
-                                {
-                                    chronos::systemtimeofday(&tv_chunk_);
-                                    tvEncodedChunk_ = tv_chunk_;
-                                    pcmListener_->onResync(this, currentTick - nextTick_);
-                                    nextTick_ = currentTick;
-                                    do_read();
-                                }
-                            });
+    stream_->close();
 }
-
-
 
 // void PipeStream::worker()
 // {

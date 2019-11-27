@@ -19,9 +19,7 @@
 #ifndef TCP_STREAM_H
 #define TCP_STREAM_H
 
-#include "pcm_stream.hpp"
-#include <boost/asio.hpp>
-#include <memory>
+#include "asio_stream.hpp"
 
 using boost::asio::ip::tcp;
 
@@ -32,25 +30,16 @@ using boost::asio::ip::tcp;
  * Implements EncoderListener to get the encoded data.
  * Data is passed to the PcmListener
  */
-class TcpStream : public PcmStream, public std::enable_shared_from_this<TcpStream>
+class TcpStream : public AsioStream<tcp::socket>
 {
 public:
     /// ctor. Encoded PCM data is passed to the PipeListener
     TcpStream(PcmListener* pcmListener, boost::asio::io_context& ioc, const StreamUri& uri);
-    ~TcpStream() override;
-
-    void start() override;
 
 protected:
-    void do_accept();
-    void do_read();
+    void connect() override;
+    void disconnect() override;
     std::unique_ptr<tcp::acceptor> acceptor_;
-    std::unique_ptr<tcp::socket> socket_;
-    std::unique_ptr<msg::PcmChunk> chunk_;
-    timeval tv_chunk_;
-    bool first_;
-    long nextTick_;
-    boost::asio::deadline_timer timer_;
 };
 
 
