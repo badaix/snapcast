@@ -27,7 +27,6 @@
 #include "pipe_stream.hpp"
 #include "process_stream.hpp"
 #include "tcp_stream.hpp"
-#include "udp_stream.hpp"
 
 
 using namespace std;
@@ -83,10 +82,6 @@ PcmStreamPtr StreamManager::addStream(const std::string& uri)
     else if (streamUri.scheme == "experimental.tcp")
     {
         stream = make_shared<TcpStream>(pcmListener_, ioc_, streamUri);
-    }
-    else if (streamUri.scheme == "experimental.udp")
-    {
-        stream = make_shared<UdpStream>(pcmListener_, ioc_, streamUri);
     }
     else
     {

@@ -13,7 +13,6 @@ set(SERVER_SOURCES
     streamreader/stream_manager.cpp
     streamreader/pcm_stream.cpp
     streamreader/tcp_stream.cpp
-    streamreader/udp_stream.cpp
     streamreader/pipe_stream.cpp
     streamreader/file_stream.cpp
     streamreader/airplay_stream.cpp
