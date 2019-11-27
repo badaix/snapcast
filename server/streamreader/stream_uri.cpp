@@ -64,7 +64,12 @@ void StreamUri::parse(const std::string& streamUri)
 
     pos = tmp.find('/');
     if (pos == string::npos)
-        throw invalid_argument("missing path separator: '/'");
+    {
+        pos = tmp.find('?');
+        if (pos == string::npos)
+            pos = tmp.length();
+    }
+
     host = strutils::trim_copy(tmp.substr(0, pos));
     tmp = tmp.substr(pos);
     path = tmp;
