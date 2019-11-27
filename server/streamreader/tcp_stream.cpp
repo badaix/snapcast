@@ -45,7 +45,7 @@ TcpStream::TcpStream(PcmListener* pcmListener, boost::asio::io_context& ioc, con
     }
 
     LOG(INFO) << "TcpStream port: " << port << "\n";
-    acceptor_ = make_unique<tcp::acceptor>(ioc_, tcp::endpoint(tcp::v4(), port));
+    acceptor_ = make_unique<tcp::acceptor>(ioc_, tcp::endpoint(boost::asio::ip::address::from_string(uri_.host), port));
 }
 
 
@@ -69,5 +69,6 @@ void TcpStream::connect()
 
 void TcpStream::disconnect()
 {
-    stream_->close();
+    if (stream_)
+        stream_->close();
 }
