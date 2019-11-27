@@ -157,7 +157,7 @@ matrix:
     - os: osx
       osx_image: xcode10.3
       env:
-        - MATRIX_EVAL="brew update && brew upgrade boost && brew install flac opus libvorbis"
+        - MATRIX_EVAL="brew update && brew install flac opus libvorbis"
 
     - os: osx
       osx_image: xcode11
