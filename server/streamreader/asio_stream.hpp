@@ -96,6 +96,7 @@ template <typename ReadStream>
 void AsioStream<ReadStream>::start()
 {
     encoder_->init(this, sampleFormat_);
+    active_ = true;
     check_state();
     connect();
 }
@@ -104,6 +105,7 @@ void AsioStream<ReadStream>::start()
 template <typename ReadStream>
 void AsioStream<ReadStream>::stop()
 {
+    active_ = false;
     timer_.cancel();
     idle_timer_.cancel();
     disconnect();

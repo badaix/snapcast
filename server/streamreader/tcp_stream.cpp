@@ -64,6 +64,9 @@ TcpStream::TcpStream(PcmListener* pcmListener, boost::asio::io_context& ioc, con
 
 void TcpStream::connect()
 {
+    if (!active_)
+        return;
+
     auto self = shared_from_this();
 
     if (is_server_)
@@ -109,4 +112,7 @@ void TcpStream::disconnect()
 {
     if (stream_)
         stream_->close();
+    if (acceptor_)
+        acceptor_->cancel();
+    reconnect_timer_.cancel();
 }

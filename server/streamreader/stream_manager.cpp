@@ -79,7 +79,7 @@ PcmStreamPtr StreamManager::addStream(const std::string& uri)
     {
         stream = make_shared<AirplayStream>(pcmListener_, ioc_, streamUri);
     }
-    else if (streamUri.scheme == "experimental.tcp")
+    else if (streamUri.scheme == "tcp")
     {
         stream = make_shared<TcpStream>(pcmListener_, ioc_, streamUri);
     }
