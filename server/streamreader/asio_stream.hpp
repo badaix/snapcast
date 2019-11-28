@@ -45,6 +45,7 @@ protected:
     timeval tv_chunk_;
     bool first_;
     long nextTick_;
+    uint32_t buffer_ms_;
     boost::asio::deadline_timer timer_;
     boost::asio::deadline_timer idle_timer_;
     std::unique_ptr<ReadStream> stream_;
@@ -59,6 +60,15 @@ AsioStream<ReadStream>::AsioStream(PcmListener* pcmListener, boost::asio::io_con
 {
     chunk_ = std::make_unique<msg::PcmChunk>(sampleFormat_, pcmReadMs_);
     bytes_read_ = 0;
+
+    buffer_ms_ = 50;
+    try
+    {
+        buffer_ms_ = cpt::stoi(uri_.getQuery("bufferms", cpt::to_string(buffer_ms_)));
+    }
+    catch (...)
+    {
+    }
 }
 
 
@@ -136,7 +146,7 @@ void AsioStream<ReadStream>::do_read()
                                     chunk_->timestamp.sec = tv_chunk_.tv_sec;
                                     chunk_->timestamp.usec = tv_chunk_.tv_usec;
                                     tvEncodedChunk_ = tv_chunk_;
-                                    nextTick_ = chronos::getTickCount();
+                                    nextTick_ = chronos::getTickCount() + buffer_ms_;
                                 }
                                 encoder_->encode(chunk_.get());
                                 nextTick_ += pcmReadMs_;
@@ -163,7 +173,7 @@ void AsioStream<ReadStream>::do_read()
                                     chronos::systemtimeofday(&tv_chunk_);
                                     tvEncodedChunk_ = tv_chunk_;
                                     pcmListener_->onResync(this, currentTick - nextTick_);
-                                    nextTick_ = currentTick;
+                                    nextTick_ = currentTick + buffer_ms_;
                                     do_read();
                                 }
                             });
