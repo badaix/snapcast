@@ -66,6 +66,18 @@ static int stoi(const std::string& str)
 #endif
 }
 
+static int stoi(const std::string& str, int def)
+{
+    try
+    {
+        return cpt::stoi(str);
+    }
+    catch(...)
+    {
+        return def;
+    }
+}
+
 static double stod(const std::string& str)
 {
 #ifdef NO_CPP11_STRING
