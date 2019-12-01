@@ -64,4 +64,3 @@ void PipeStream::disconnect()
 {
     stream_->close();
 }
-

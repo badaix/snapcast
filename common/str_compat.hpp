@@ -72,7 +72,7 @@ static int stoi(const std::string& str, int def)
     {
         return cpt::stoi(str);
     }
-    catch(...)
+    catch (...)
     {
         return def;
     }
