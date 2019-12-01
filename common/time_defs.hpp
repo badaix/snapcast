@@ -51,6 +51,20 @@ inline static void systemtimeofday(struct timeval* tv)
     // timeofday<std::chrono::system_clock>(tv);
 }
 
+template <class ToDuration>
+inline ToDuration diff(const timeval& tv1, const timeval& tv2)
+{
+    auto sec = tv1.tv_sec - tv2.tv_sec;
+    auto usec = tv1.tv_usec - tv2.tv_usec;
+    while (usec < 0)
+    {
+        sec -= 1;
+        usec += 1000000;
+    }
+    return std::chrono::duration_cast<ToDuration>(std::chrono::seconds(sec) + std::chrono::microseconds(usec));
+}
+
+
 inline static void addUs(timeval& tv, int us)
 {
     if (us < 0)
@@ -115,7 +129,7 @@ inline void usleep(const int32_t& microseconds)
         return;
     sleep(usec(microseconds));
 }
-}
+} // namespace chronos
 
 
 #endif

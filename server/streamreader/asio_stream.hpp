@@ -138,12 +138,14 @@ void AsioStream<ReadStream>::do_read()
                                 // First read after connect. Set the initial read timestamp
                                 // the timestamp will be incremented after encoding,
                                 // since we do not know how much the encoder actually encoded
+
+
                                 timeval now;
                                 chronos::systemtimeofday(&now);
-                                size_t stream2systime_diff = abs(now.tv_sec - tvEncodedChunk_.tv_sec);
-                                if (stream2systime_diff > 5 + pcmReadMs_ / 1000)
+                                auto stream2systime_diff = chronos::diff<std::chrono::milliseconds>(now, tvEncodedChunk_);
+                                if (stream2systime_diff > chronos::sec(5) + chronos::msec(pcmReadMs_))
                                 {
-                                    LOG(WARNING) << "Stream and system time out of sync: " << stream2systime_diff << "s, resetting stream time.\n";
+                                    LOG(WARNING) << "Stream and system time out of sync: " << stream2systime_diff.count() << "ms, resetting stream time.\n";
                                     first_ = true;
                                 }
                                 if (first_)

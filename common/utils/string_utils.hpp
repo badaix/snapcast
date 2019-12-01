@@ -95,6 +95,22 @@ static std::string uriDecode(const std::string& src)
 }
 
 
+static void split_left(const std::string& s, char delim, std::string& left, std::string& right)
+{
+    auto pos = s.find(delim);
+    if (pos != std::string::npos)
+    {
+        left = s.substr(0, pos);
+        right = s.substr(pos + 1);
+    }
+    else
+    {
+        left = s;
+        right = "";
+    }
+}
+
+
 
 static std::vector<std::string>& split(const std::string& s, char delim, std::vector<std::string>& elems)
 {

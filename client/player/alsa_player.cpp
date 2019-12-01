@@ -225,7 +225,7 @@ void AlsaPlayer::worker()
             adjustVolume(buff_, frames_);
             if ((pcm = snd_pcm_writei(handle_, buff_, frames_)) == -EPIPE)
             {
-                LOG(ERROR) << "XRUN\n";
+                LOG(ERROR) << "XRUN: " << snd_strerror(pcm) << "\n";
                 snd_pcm_prepare(handle_);
             }
             else if (pcm < 0)
