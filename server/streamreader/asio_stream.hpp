@@ -60,11 +60,10 @@ AsioStream<ReadStream>::AsioStream(PcmListener* pcmListener, boost::asio::io_con
 {
     chunk_ = std::make_unique<msg::PcmChunk>(sampleFormat_, pcmReadMs_);
     bytes_read_ = 0;
-
     buffer_ms_ = 50;
     try
     {
-        buffer_ms_ = cpt::stoi(uri_.getQuery("bufferms", cpt::to_string(buffer_ms_)));
+        buffer_ms_ = cpt::stoi(uri_.getQuery("buffer_ms", cpt::to_string(buffer_ms_)));
     }
     catch (...)
     {
@@ -136,6 +135,17 @@ void AsioStream<ReadStream>::do_read()
 
                                 bytes_read_ += length;
                                 // LOG(DEBUG) << "Read: " << length << " bytes\n";
+                                // First read after connect. Set the initial read timestamp
+                                // the timestamp will be incremented after encoding,
+                                // since we do not know how much the encoder actually encoded
+                                timeval now;
+                                chronos::systemtimeofday(&now);
+                                size_t stream2systime_diff = abs(now.tv_sec - tvEncodedChunk_.tv_sec);
+                                if (stream2systime_diff > 5 + pcmReadMs_ / 1000)
+                                {
+                                    LOG(WARNING) << "Stream and system time out of sync: " << stream2systime_diff << "s, resetting stream time.\n";
+                                    first_ = true;
+                                }
                                 if (first_)
                                 {
                                     first_ = false;
@@ -146,6 +156,7 @@ void AsioStream<ReadStream>::do_read()
                                 nextTick_ += pcmReadMs_;
                                 long currentTick = chronos::getTickCount();
 
+                                // Synchronize read to pcmReadMs_
                                 if (nextTick_ >= currentTick)
                                 {
                                     read_timer_.expires_from_now(boost::posix_time::milliseconds(nextTick_ - currentTick));
@@ -161,6 +172,7 @@ void AsioStream<ReadStream>::do_read()
                                     });
                                     return;
                                 }
+                                // Read took longer, wait for the buffer to fill up
                                 else
                                 {
                                     pcmListener_->onResync(this, currentTick - nextTick_);
