@@ -32,7 +32,7 @@ using namespace std;
 
 
 PcmStream::PcmStream(PcmListener* pcmListener, boost::asio::io_context& ioc, const StreamUri& uri)
-    : active_(false), pcmListener_(pcmListener), uri_(uri), pcmReadMs_(20), state_(kIdle), ioc_(ioc)
+    : active_(false), pcmListener_(pcmListener), uri_(uri), pcmReadMs_(20), state_(ReaderState::kIdle), ioc_(ioc)
 {
     encoder::EncoderFactory encoderFactory;
     if (uri_.query.find("codec") == uri_.query.end())
@@ -50,11 +50,6 @@ PcmStream::PcmStream(PcmListener* pcmListener, boost::asio::io_context& ioc, con
 
     if (uri_.query.find("buffer_ms") != uri_.query.end())
         pcmReadMs_ = cpt::stoul(uri_.query["buffer_ms"]);
-
-    if (uri_.query.find("dryout_ms") != uri_.query.end())
-        dryoutMs_ = cpt::stoul(uri_.query["dryout_ms"]);
-    else
-        dryoutMs_ = 2000;
 
     // meta_.reset(new msg::StreamTags());
     // meta_->msg["stream"] = name_;
@@ -138,7 +133,7 @@ void PcmStream::setState(const ReaderState& newState)
 {
     if (newState != state_)
     {
-        LOG(DEBUG) << "State changed: " << state_ << " => " << newState << "\n";
+        LOG(DEBUG) << "State changed: " << static_cast<int>(state_) << " => " << static_cast<int>(newState) << "\n";
         state_ = newState;
         if (pcmListener_)
             pcmListener_->onStateChanged(this, newState);
@@ -163,15 +158,17 @@ void PcmStream::onChunkEncoded(const encoder::Encoder* /*encoder*/, msg::PcmChun
 json PcmStream::toJson() const
 {
     string state("unknown");
-    if (state_ == kIdle)
+    if (state_ == ReaderState::kIdle)
         state = "idle";
-    else if (state_ == kPlaying)
+    else if (state_ == ReaderState::kPlaying)
         state = "playing";
-    else if (state_ == kDisabled)
+    else if (state_ == ReaderState::kDisabled)
         state = "disabled";
 
     json j = {
-        {"uri", uri_.toJson()}, {"id", getId()}, {"status", state},
+        {"uri", uri_.toJson()},
+        {"id", getId()},
+        {"status", state},
     };
 
     if (meta_)
@@ -185,7 +182,7 @@ std::shared_ptr<msg::StreamTags> PcmStream::getMeta() const
     return meta_;
 }
 
-void PcmStream::setMeta(json jtag)
+void PcmStream::setMeta(const json& jtag)
 {
     meta_.reset(new msg::StreamTags(jtag));
     meta_->msg["STREAM"] = name_;

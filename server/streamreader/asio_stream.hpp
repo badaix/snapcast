@@ -46,8 +46,8 @@ protected:
     bool first_;
     long nextTick_;
     uint32_t buffer_ms_;
-    boost::asio::deadline_timer timer_;
-    boost::asio::deadline_timer idle_timer_;
+    boost::asio::deadline_timer read_timer_;
+    boost::asio::deadline_timer state_timer_;
     std::unique_ptr<ReadStream> stream_;
     std::atomic<std::uint64_t> bytes_read_;
 };
@@ -56,7 +56,7 @@ protected:
 
 template <typename ReadStream>
 AsioStream<ReadStream>::AsioStream(PcmListener* pcmListener, boost::asio::io_context& ioc, const StreamUri& uri)
-    : PcmStream(pcmListener, ioc, uri), timer_(ioc), idle_timer_(ioc)
+    : PcmStream(pcmListener, ioc, uri), read_timer_(ioc), state_timer_(ioc)
 {
     chunk_ = std::make_unique<msg::PcmChunk>(sampleFormat_, pcmReadMs_);
     bytes_read_ = 0;
@@ -77,15 +77,15 @@ void AsioStream<ReadStream>::check_state()
 {
     uint64_t last_read = bytes_read_;
     auto self = this->shared_from_this();
-    idle_timer_.expires_from_now(boost::posix_time::milliseconds(500 + pcmReadMs_));
-    idle_timer_.async_wait([self, this, last_read](const boost::system::error_code& ec) {
+    state_timer_.expires_from_now(boost::posix_time::milliseconds(500 + pcmReadMs_));
+    state_timer_.async_wait([self, this, last_read](const boost::system::error_code& ec) {
         if (!ec)
         {
             LOG(DEBUG) << "check state last: " << last_read << ", read: " << bytes_read_ << "\n";
             if (bytes_read_ != last_read)
-                setState(kPlaying);
+                setState(ReaderState::kPlaying);
             else
-                setState(kIdle);
+                setState(ReaderState::kIdle);
             check_state();
         }
     });
@@ -106,8 +106,8 @@ template <typename ReadStream>
 void AsioStream<ReadStream>::stop()
 {
     active_ = false;
-    timer_.cancel();
-    idle_timer_.cancel();
+    read_timer_.cancel();
+    state_timer_.cancel();
     disconnect();
 }
 
@@ -115,9 +115,6 @@ void AsioStream<ReadStream>::stop()
 template <typename ReadStream>
 void AsioStream<ReadStream>::on_connect()
 {
-    chronos::systemtimeofday(&tv_chunk_);
-    tvEncodedChunk_ = tv_chunk_;
-    nextTick_ = chronos::getTickCount();
     first_ = true;
     do_read();
 }
@@ -128,8 +125,6 @@ void AsioStream<ReadStream>::do_read()
 {
     // LOG(DEBUG) << "do_read\n";
     auto self = this->shared_from_this();
-    chunk_->timestamp.sec = tv_chunk_.tv_sec;
-    chunk_->timestamp.usec = tv_chunk_.tv_usec;
     boost::asio::async_read(*stream_, boost::asio::buffer(chunk_->payload, chunk_->payloadSize),
                             [this, self](boost::system::error_code ec, std::size_t length) mutable {
                                 if (ec)
@@ -144,21 +139,17 @@ void AsioStream<ReadStream>::do_read()
                                 if (first_)
                                 {
                                     first_ = false;
-                                    chronos::systemtimeofday(&tv_chunk_);
-                                    chunk_->timestamp.sec = tv_chunk_.tv_sec;
-                                    chunk_->timestamp.usec = tv_chunk_.tv_usec;
-                                    tvEncodedChunk_ = tv_chunk_;
+                                    chronos::systemtimeofday(&tvEncodedChunk_);
                                     nextTick_ = chronos::getTickCount() + buffer_ms_;
                                 }
                                 encoder_->encode(chunk_.get());
                                 nextTick_ += pcmReadMs_;
-                                chronos::addUs(tv_chunk_, pcmReadMs_ * 1000);
                                 long currentTick = chronos::getTickCount();
 
                                 if (nextTick_ >= currentTick)
                                 {
-                                    timer_.expires_from_now(boost::posix_time::milliseconds(nextTick_ - currentTick));
-                                    timer_.async_wait([self, this](const boost::system::error_code& ec) {
+                                    read_timer_.expires_from_now(boost::posix_time::milliseconds(nextTick_ - currentTick));
+                                    read_timer_.async_wait([self, this](const boost::system::error_code& ec) {
                                         if (ec)
                                         {
                                             LOG(ERROR) << "Error during async wait: " << ec.message() << "\n";
@@ -172,8 +163,6 @@ void AsioStream<ReadStream>::do_read()
                                 }
                                 else
                                 {
-                                    chronos::systemtimeofday(&tv_chunk_);
-                                    tvEncodedChunk_ = tv_chunk_;
                                     pcmListener_->onResync(this, currentTick - nextTick_);
                                     nextTick_ = currentTick + buffer_ms_;
                                     do_read();

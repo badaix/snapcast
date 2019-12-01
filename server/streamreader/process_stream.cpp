@@ -36,6 +36,11 @@ ProcessStream::ProcessStream(PcmListener* pcmListener, boost::asio::io_context& 
 {
     params_ = uri_.getQuery("params");
     logStderr_ = (uri_.getQuery("logStderr", "false") == "true");
+
+    if (uri_.query.find("dryout_ms") != uri_.query.end())
+        dryoutMs_ = cpt::stoul(uri_.query["dryout_ms"]);
+    else
+        dryoutMs_ = 2000;
 }
 
 
@@ -143,7 +148,7 @@ void ProcessStream::worker()
 {
     timeval tvChunk;
     std::unique_ptr<msg::PcmChunk> chunk(new msg::PcmChunk(sampleFormat_, pcmReadMs_));
-    setState(kPlaying);
+    setState(ReaderState::kPlaying);
     string lastException = "";
 
     while (active_)
@@ -180,7 +185,7 @@ void ProcessStream::worker()
                     }
                     if (count < 0)
                     {
-                        setState(kIdle);
+                        setState(ReaderState::kIdle);
                         if (!sleep(100))
                             break;
                     }
@@ -207,7 +212,7 @@ void ProcessStream::worker()
 
                 if (nextTick >= currentTick)
                 {
-                    setState(kPlaying);
+                    setState(ReaderState::kPlaying);
                     if (!sleep(nextTick - currentTick))
                         break;
                 }

@@ -25,6 +25,7 @@
 #include "pcm_stream.hpp"
 #include "process.hpp"
 
+// TODO: switch to AsioStream, maybe use boost::process library
 
 /// Starts an external process and reads and PCM data from stdout
 /**
@@ -49,6 +50,7 @@ protected:
     std::unique_ptr<Process> process_;
     std::thread stderrReaderThread_;
     bool logStderr_;
+    size_t dryoutMs_;
 
     void worker() override;
     virtual void stderrReader();

@@ -56,7 +56,7 @@ void FileStream::worker()
     size_t length = ifs.tellg();
     ifs.seekg(0, ifs.beg);
 
-    setState(kPlaying);
+    setState(ReaderState::kPlaying);
 
     while (active_)
     {

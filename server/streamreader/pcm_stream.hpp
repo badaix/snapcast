@@ -36,7 +36,7 @@
 
 class PcmStream;
 
-enum ReaderState
+enum class ReaderState
 {
     kUnknown = 0,
     kIdle = 1,
@@ -85,7 +85,7 @@ public:
     virtual const SampleFormat& getSampleFormat() const;
 
     std::shared_ptr<msg::StreamTags> getMeta() const;
-    void setMeta(json j);
+    void setMeta(const json& j);
 
     virtual ReaderState getState() const;
     virtual json toJson() const;
@@ -106,7 +106,6 @@ protected:
     StreamUri uri_;
     SampleFormat sampleFormat_;
     size_t pcmReadMs_;
-    size_t dryoutMs_;
     std::unique_ptr<encoder::Encoder> encoder_;
     std::string name_;
     ReaderState state_;
