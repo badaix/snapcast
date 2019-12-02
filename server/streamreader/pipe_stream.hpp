@@ -39,6 +39,9 @@ public:
 protected:
     void connect() override;
     void disconnect() override;
+    void do_read() override;
+    std::string lastException_;
+    int fd_;
 };
 
 

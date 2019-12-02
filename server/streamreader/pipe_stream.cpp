@@ -54,8 +54,8 @@ void PipeStream::connect()
 {
     LOG(DEBUG) << "connect\n";
     auto self = shared_from_this();
-    auto fd = open(uri_.path.c_str(), O_RDONLY | O_NONBLOCK);
-    stream_ = std::make_unique<boost::asio::posix::stream_descriptor>(ioc_, fd);
+    fd_ = open(uri_.path.c_str(), O_RDONLY | O_NONBLOCK);
+    stream_ = std::make_unique<boost::asio::posix::stream_descriptor>(ioc_, fd_);
     on_connect();
 }
 
@@ -63,4 +63,83 @@ void PipeStream::connect()
 void PipeStream::disconnect()
 {
     stream_->close();
+}
+
+
+void PipeStream::do_read()
+{
+    auto self = this->shared_from_this();
+    try
+    {
+        if (fd_ == -1)
+            throw SnapException("failed to open fifo: \"" + uri_.path + "\"");
+
+        int toRead = chunk_->payloadSize;
+        int len = 0;
+        do
+        {
+            int count = read(fd_, chunk_->payload + len, toRead - len);
+            if (count < 0)
+            {
+                LOG(DEBUG) << "count < 0: " << errno << " && idleBytes < maxIdleBytes, ms: " << 1000 * chunk_->payloadSize / (sampleFormat_.rate * sampleFormat_.frameSize) << "\n";
+                memset(chunk_->payload + len, 0, toRead - len);
+                len += toRead - len;
+                break;
+            }
+            else if (count == 0)
+            {
+                throw SnapException("end of file");
+            }
+            else
+            {
+                // LOG(DEBUG) << "count: " << count << "\n";
+                len += count;
+                bytes_read_ += len;
+            }
+        } while (len < toRead);
+
+        if (first_)
+        {
+            first_ = false;
+            chronos::systemtimeofday(&tvEncodedChunk_);
+            nextTick_ = chronos::getTickCount() + buffer_ms_;
+        }
+        encoder_->encode(chunk_.get());
+        nextTick_ += pcmReadMs_;
+        long currentTick = chronos::getTickCount();
+
+        if (nextTick_ >= currentTick)
+        {
+            read_timer_.expires_from_now(boost::posix_time::milliseconds(nextTick_ - currentTick));
+            read_timer_.async_wait([self, this](const boost::system::error_code& ec) {
+                if (ec)
+                {
+                    LOG(ERROR) << "Error during async wait: " << ec.message() << "\n";
+                }
+                else
+                {
+                    do_read();
+                }
+            });
+            return;
+        }
+        else
+        {
+            pcmListener_->onResync(this, currentTick - nextTick_);
+            nextTick_ = currentTick + buffer_ms_;
+            first_ = true;
+            do_read();
+        }
+
+        lastException_ = "";
+    }
+    catch (const std::exception& e)
+    {
+        if (lastException_ != e.what())
+        {
+            LOG(ERROR) << "(PipeStream) Exception: " << e.what() << std::endl;
+            lastException_ = e.what();
+        }
+        connect();
+    }
 }
