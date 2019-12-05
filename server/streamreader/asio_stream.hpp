@@ -46,8 +46,8 @@ protected:
     bool first_;
     long nextTick_;
     uint32_t buffer_ms_;
-    boost::asio::deadline_timer read_timer_;
-    boost::asio::deadline_timer state_timer_;
+    boost::asio::steady_timer read_timer_;
+    boost::asio::steady_timer state_timer_;
     std::unique_ptr<ReadStream> stream_;
     std::atomic<std::uint64_t> bytes_read_;
 };
@@ -76,7 +76,7 @@ void AsioStream<ReadStream>::check_state()
 {
     uint64_t last_read = bytes_read_;
     auto self = this->shared_from_this();
-    state_timer_.expires_from_now(boost::posix_time::milliseconds(500 + pcmReadMs_));
+    state_timer_.expires_after(std::chrono::milliseconds(500 + pcmReadMs_));
     state_timer_.async_wait([self, this, last_read](const boost::system::error_code& ec) {
         if (!ec)
         {
@@ -139,7 +139,6 @@ void AsioStream<ReadStream>::do_read()
                                 // the timestamp will be incremented after encoding,
                                 // since we do not know how much the encoder actually encoded
 
-
                                 timeval now;
                                 chronos::systemtimeofday(&now);
                                 auto stream2systime_diff = chronos::diff<std::chrono::milliseconds>(now, tvEncodedChunk_);
@@ -161,7 +160,7 @@ void AsioStream<ReadStream>::do_read()
                                 // Synchronize read to pcmReadMs_
                                 if (nextTick_ >= currentTick)
                                 {
-                                    read_timer_.expires_from_now(boost::posix_time::milliseconds(nextTick_ - currentTick));
+                                    read_timer_.expires_after(std::chrono::milliseconds(nextTick_ - currentTick));
                                     read_timer_.async_wait([self, this](const boost::system::error_code& ec) {
                                         if (ec)
                                         {
@@ -179,6 +178,7 @@ void AsioStream<ReadStream>::do_read()
                                 {
                                     pcmListener_->onResync(this, currentTick - nextTick_);
                                     nextTick_ = currentTick + buffer_ms_;
+                                    first_ = true;
                                     do_read();
                                 }
                             });

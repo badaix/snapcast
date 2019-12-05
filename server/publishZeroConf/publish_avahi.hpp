@@ -51,7 +51,7 @@ private:
     void poll();
     AvahiClient* client_;
     std::vector<mDNSService> services_;
-    boost::asio::deadline_timer timer_;
+    boost::asio::steady_timer timer_;
 };
 
 

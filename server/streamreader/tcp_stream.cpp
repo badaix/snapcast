@@ -97,7 +97,7 @@ void TcpStream::connect()
             else
             {
                 LOG(DEBUG) << "Connect failed: " << ec.message() << "\n";
-                reconnect_timer_.expires_from_now(boost::posix_time::milliseconds(1000));
+                reconnect_timer_.expires_after(std::chrono::milliseconds(1000));
                 reconnect_timer_.async_wait([self, this](const boost::system::error_code& ec) {
                     if (!ec)
                         connect();

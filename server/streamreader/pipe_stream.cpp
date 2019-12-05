@@ -110,7 +110,7 @@ void PipeStream::do_read()
 
         if (nextTick_ >= currentTick)
         {
-            read_timer_.expires_from_now(boost::posix_time::milliseconds(nextTick_ - currentTick));
+            read_timer_.expires_after(std::chrono::milliseconds(nextTick_ - currentTick));
             read_timer_.async_wait([self, this](const boost::system::error_code& ec) {
                 if (ec)
                 {

@@ -43,7 +43,7 @@ protected:
     std::string host_;
     size_t port_;
     bool is_server_;
-    boost::asio::deadline_timer reconnect_timer_;
+    boost::asio::steady_timer reconnect_timer_;
 };
 
 
