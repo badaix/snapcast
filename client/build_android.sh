@@ -13,11 +13,11 @@ fi
 if [ -n "$NDK_DIR_ARM" ]; then
 	export NDK_DIR="$NDK_DIR_ARM"
 	export ARCH=arm
-	make clean; make TARGET=ANDROID -j 4; mv ./snapclient "$ASSETS_DIR/bin/armeabi/"
+	make clean; make TARGET=ANDROID -j 4; $NDK_DIR/bin/arm-linux-android-strip ./snapclient; mv ./snapclient "$ASSETS_DIR/bin/armeabi/"
 fi
 
 if [ -n "$NDK_DIR_X86" ]; then
 	export NDK_DIR="$NDK_DIR_X86"
 	export ARCH=x86
-	make clean; make TARGET=ANDROID -j 4; mv ./snapclient "$ASSETS_DIR/bin/x86/"
+	make clean; make TARGET=ANDROID -j 4; $NDK_DIR/bin/i686-linux-android-strip ./snapclient; mv ./snapclient "$ASSETS_DIR/bin/x86/"
 fi

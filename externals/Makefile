@@ -14,9 +14,9 @@
 #   You should have received a copy of the GNU General Public License
 #   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-.PHONY: all check-env flac ogg tremor
+.PHONY: all check-env flac ogg opus tremor
 
-all: flac ogg tremor
+all: flac ogg opus tremor
 
 check-env:
 #	if [ ! -d "flac" ]; then \
@@ -60,6 +60,17 @@ flac: check-env
 
 ogg: check-env
 	@cd ogg; \
+	export CC="$(CC)"; \
+	export CXX="$(CXX)"; \
+	export CPPFLAGS="$(CPPFLAGS)"; \
+	./autogen.sh; \
+	./configure --host=$(ARCH) --prefix=$(NDK_DIR); \
+	make; \
+	make install; \
+	make clean;
+
+opus: check-env
+	@cd opus; \
 	export CC="$(CC)"; \
 	export CXX="$(CXX)"; \
 	export CPPFLAGS="$(CPPFLAGS)"; \

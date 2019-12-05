@@ -59,7 +59,7 @@ ifeq ($(TARGET), ANDROID)
 
 CXX       = $(PROGRAM_PREFIX)clang++
 CXXFLAGS += -pthread -fPIC -DHAS_TREMOR -DHAS_OPENSL -I$(NDK_DIR)/include
-LDFLAGS   = -L$(NDK_DIR)/lib -pie -lvorbisidec -logg -lFLAC -lOpenSLES -latomic -llog -static-libstdc++
+LDFLAGS   = -L$(NDK_DIR)/lib -pie -lvorbisidec -logg -lopus -lFLAC -lOpenSLES -latomic -llog -static-libstdc++
 OBJ      += player/opensl_player.o 
 
 else ifeq ($(TARGET), OPENWRT)

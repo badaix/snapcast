@@ -7,3 +7,6 @@
 [submodule "externals/tremor"]
 	path = externals/tremor
 	url = https://git.xiph.org/tremor.git
+[submodule "externals/opus"]
+	path = externals/opus
+	url = https://git.xiph.org/opus.git
