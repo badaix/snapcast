@@ -267,16 +267,21 @@ int main(int argc, char* argv[])
         std::unique_ptr<StreamServer> streamServer(new StreamServer(io_context, settings));
         streamServer->start();
 
-        if (num_threads <= 0)
-            num_threads = std::max(2, std::min(4, static_cast<int>(std::thread::hardware_concurrency())));
+        if (num_threads < 0)
+            num_threads = std::max(1, std::min(4, static_cast<int>(std::thread::hardware_concurrency())));
         LOG(INFO) << "number of threads: " << num_threads << ", hw threads: " << std::thread::hardware_concurrency() << "\n";
+
+        auto sig = install_signal_handler({SIGHUP, SIGTERM, SIGINT}, [&io_context](int signal, const std::string& name) {
+            SLOG(INFO) << "Received signal " << signal << ": " << name << "\n";
+            io_context.stop();
+        });
+
         std::vector<std::thread> threads;
         for (int n = 0; n < num_threads; ++n)
             threads.emplace_back([&] { io_context.run(); });
 
-        auto sig = install_signal_handler({SIGHUP, SIGTERM, SIGINT}).get();
-        SLOG(INFO) << "Received signal " << sig << ": " << strsignal(sig) << "\n";
-        io_context.stop();
+        io_context.run();
+
         for (auto& t : threads)
             t.join();
 
