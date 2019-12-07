@@ -86,7 +86,10 @@ int main(int argc, char* argv[])
         conf.add<Value<string>>("", "stream.sampleformat", "Default sample format", settings.stream.sampleFormat, &settings.stream.sampleFormat);
         conf.add<Value<string>>("c", "stream.codec", "Default transport codec\n(flac|ogg|opus|pcm)[:options]\nType codec:? to get codec specific options",
                                 settings.stream.codec, &settings.stream.codec);
-        conf.add<Value<size_t>>("", "stream.stream_buffer", "Default stream read buffer [ms]", settings.stream.streamReadMs, &settings.stream.streamReadMs);
+        // deprecated: stream_buffer, use chunk_ms instead
+        conf.add<Value<size_t>>("", "stream.stream_buffer", "Default stream read chunk size [ms]", settings.stream.streamChunkMs,
+                                &settings.stream.streamChunkMs);
+        conf.add<Value<size_t>>("", "stream.chunk_ms", "Default stream read chunk size [ms]", settings.stream.streamChunkMs, &settings.stream.streamChunkMs);
         conf.add<Value<int>>("b", "stream.buffer", "Buffer [ms]", settings.stream.bufferMs, &settings.stream.bufferMs);
         conf.add<Value<bool>>("", "stream.send_to_muted", "Send audio to muted clients", settings.stream.sendAudioToMutedClients,
                               &settings.stream.sendAudioToMutedClients);
@@ -252,10 +255,10 @@ int main(int argc, char* argv[])
         }
         publishZeroConfg->publish(dns_services);
 #endif
-        if (settings.stream.streamReadMs < 10)
+        if (settings.stream.streamChunkMs < 10)
         {
-            LOG(WARNING) << "Stream read buffer is less than 10ms, changing to 10ms\n";
-            settings.stream.streamReadMs = 10;
+            LOG(WARNING) << "Stream read chunk size is less than 10ms, changing to 10ms\n";
+            settings.stream.streamChunkMs = 10;
         }
 
         if (settings.stream.bufferMs < 400)
@@ -271,10 +274,11 @@ int main(int argc, char* argv[])
             num_threads = std::max(1, std::min(4, static_cast<int>(std::thread::hardware_concurrency())));
         LOG(INFO) << "number of threads: " << num_threads << ", hw threads: " << std::thread::hardware_concurrency() << "\n";
 
-        auto sig = install_signal_handler({SIGHUP, SIGTERM, SIGINT}, [&io_context](int signal, const std::string& name) {
-            SLOG(INFO) << "Received signal " << signal << ": " << name << "\n";
-            io_context.stop();
-        });
+        auto sig = install_signal_handler({SIGHUP, SIGTERM, SIGINT},
+                                          [&io_context](int signal, const std::string& name) {
+                                              SLOG(INFO) << "Received signal " << signal << ": " << name << "\n";
+                                              io_context.stop();
+                                          });
 
         std::vector<std::thread> threads;
         for (int n = 0; n < num_threads; ++n)

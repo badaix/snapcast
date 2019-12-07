@@ -46,7 +46,7 @@ PipeStream::PipeStream(PcmListener* pcmListener, boost::asio::io_context& ioc, c
         if ((mkfifo(uri_.path.c_str(), 0666) != 0) && (errno != EEXIST))
             throw SnapException("failed to make fifo \"" + uri_.path + "\": " + cpt::to_string(errno));
     }
-    chunk_ = make_unique<msg::PcmChunk>(sampleFormat_, pcmReadMs_);
+    chunk_ = make_unique<msg::PcmChunk>(sampleFormat_, chunk_ms_);
 }
 
 
@@ -81,7 +81,8 @@ void PipeStream::do_read()
             int count = read(fd_, chunk_->payload + len, toRead - len);
             if (count < 0)
             {
-                LOG(DEBUG) << "count < 0: " << errno << " && idleBytes < maxIdleBytes, ms: " << 1000 * chunk_->payloadSize / (sampleFormat_.rate * sampleFormat_.frameSize) << "\n";
+                LOG(DEBUG) << "count < 0: " << errno
+                           << " && idleBytes < maxIdleBytes, ms: " << 1000 * chunk_->payloadSize / (sampleFormat_.rate * sampleFormat_.frameSize) << "\n";
                 memset(chunk_->payload + len, 0, toRead - len);
                 len += toRead - len;
                 break;
@@ -105,7 +106,7 @@ void PipeStream::do_read()
             nextTick_ = chronos::getTickCount() + buffer_ms_;
         }
         encoder_->encode(chunk_.get());
-        nextTick_ += pcmReadMs_;
+        nextTick_ += chunk_ms_;
         long currentTick = chronos::getTickCount();
 
         if (nextTick_ >= currentTick)

@@ -58,7 +58,7 @@ template <typename ReadStream>
 AsioStream<ReadStream>::AsioStream(PcmListener* pcmListener, boost::asio::io_context& ioc, const StreamUri& uri)
     : PcmStream(pcmListener, ioc, uri), read_timer_(ioc), state_timer_(ioc)
 {
-    chunk_ = std::make_unique<msg::PcmChunk>(sampleFormat_, pcmReadMs_);
+    chunk_ = std::make_unique<msg::PcmChunk>(sampleFormat_, chunk_ms_);
     bytes_read_ = 0;
     buffer_ms_ = 50;
     try
@@ -76,7 +76,7 @@ void AsioStream<ReadStream>::check_state()
 {
     uint64_t last_read = bytes_read_;
     auto self = this->shared_from_this();
-    state_timer_.expires_after(std::chrono::milliseconds(500 + pcmReadMs_));
+    state_timer_.expires_after(std::chrono::milliseconds(500 + chunk_ms_));
     state_timer_.async_wait([self, this, last_read](const boost::system::error_code& ec) {
         if (!ec)
         {
@@ -142,7 +142,7 @@ void AsioStream<ReadStream>::do_read()
                                 timeval now;
                                 chronos::systemtimeofday(&now);
                                 auto stream2systime_diff = chronos::diff<std::chrono::milliseconds>(now, tvEncodedChunk_);
-                                if (stream2systime_diff > chronos::sec(5) + chronos::msec(pcmReadMs_))
+                                if (stream2systime_diff > chronos::sec(5) + chronos::msec(chunk_ms_))
                                 {
                                     LOG(WARNING) << "Stream and system time out of sync: " << stream2systime_diff.count() << "ms, resetting stream time.\n";
                                     first_ = true;
@@ -154,10 +154,10 @@ void AsioStream<ReadStream>::do_read()
                                     nextTick_ = chronos::getTickCount() + buffer_ms_;
                                 }
                                 encoder_->encode(chunk_.get());
-                                nextTick_ += pcmReadMs_;
+                                nextTick_ += chunk_ms_;
                                 long currentTick = chronos::getTickCount();
 
-                                // Synchronize read to pcmReadMs_
+                                // Synchronize read to chunk_ms_
                                 if (nextTick_ >= currentTick)
                                 {
                                     read_timer_.expires_after(std::chrono::milliseconds(nextTick_ - currentTick));

@@ -45,6 +45,12 @@ enum class ReaderState
 };
 
 
+static constexpr auto kUriCodec = "codec";
+static constexpr auto kUriName = "name";
+static constexpr auto kUriSampleFormat = "sampleformat";
+static constexpr auto kUriChunkMs = "chunk_ms";
+
+
 /// Callback interface for users of PcmStream
 /**
  * Users of PcmStream should implement this to get the data
@@ -105,7 +111,7 @@ protected:
     PcmListener* pcmListener_;
     StreamUri uri_;
     SampleFormat sampleFormat_;
-    size_t pcmReadMs_;
+    size_t chunk_ms_;
     std::unique_ptr<encoder::Encoder> encoder_;
     std::string name_;
     ReaderState state_;

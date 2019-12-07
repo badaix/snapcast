@@ -147,7 +147,7 @@ void ProcessStream::stderrReader()
 void ProcessStream::worker()
 {
     timeval tvChunk;
-    std::unique_ptr<msg::PcmChunk> chunk(new msg::PcmChunk(sampleFormat_, pcmReadMs_));
+    std::unique_ptr<msg::PcmChunk> chunk(new msg::PcmChunk(sampleFormat_, chunk_ms_));
     setState(ReaderState::kPlaying);
     string lastException = "";
 
@@ -206,8 +206,8 @@ void ProcessStream::worker()
                 if (!active_)
                     break;
 
-                nextTick += pcmReadMs_;
-                chronos::addUs(tvChunk, pcmReadMs_ * 1000);
+                nextTick += chunk_ms_;
+                chronos::addUs(tvChunk, chunk_ms_ * 1000);
                 long currentTick = chronos::getTickCount();
 
                 if (nextTick >= currentTick)

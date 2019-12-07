@@ -32,24 +32,24 @@ using namespace std;
 
 
 PcmStream::PcmStream(PcmListener* pcmListener, boost::asio::io_context& ioc, const StreamUri& uri)
-    : active_(false), pcmListener_(pcmListener), uri_(uri), pcmReadMs_(20), state_(ReaderState::kIdle), ioc_(ioc)
+    : active_(false), pcmListener_(pcmListener), uri_(uri), chunk_ms_(20), state_(ReaderState::kIdle), ioc_(ioc)
 {
     encoder::EncoderFactory encoderFactory;
-    if (uri_.query.find("codec") == uri_.query.end())
+    if (uri_.query.find(kUriCodec) == uri_.query.end())
         throw SnapException("Stream URI must have a codec");
-    encoder_.reset(encoderFactory.createEncoder(uri_.query["codec"]));
+    encoder_.reset(encoderFactory.createEncoder(uri_.query[kUriCodec]));
 
-    if (uri_.query.find("name") == uri_.query.end())
+    if (uri_.query.find(kUriName) == uri_.query.end())
         throw SnapException("Stream URI must have a name");
-    name_ = uri_.query["name"];
+    name_ = uri_.query[kUriName];
 
-    if (uri_.query.find("sampleformat") == uri_.query.end())
+    if (uri_.query.find(kUriSampleFormat) == uri_.query.end())
         throw SnapException("Stream URI must have a sampleformat");
-    sampleFormat_ = SampleFormat(uri_.query["sampleformat"]);
+    sampleFormat_ = SampleFormat(uri_.query[kUriSampleFormat]);
     LOG(INFO) << "PcmStream sampleFormat: " << sampleFormat_.getFormat() << "\n";
 
-    if (uri_.query.find("buffer_ms") != uri_.query.end())
-        pcmReadMs_ = cpt::stoul(uri_.query["buffer_ms"]);
+    if (uri_.query.find(kUriChunkMs) != uri_.query.end())
+        chunk_ms_ = cpt::stoul(uri_.query[kUriChunkMs]);
 
     // meta_.reset(new msg::StreamTags());
     // meta_->msg["stream"] = name_;

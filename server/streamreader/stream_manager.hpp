@@ -13,7 +13,7 @@ class StreamManager
 {
 public:
     StreamManager(PcmListener* pcmListener, boost::asio::io_context& ioc, const std::string& defaultSampleFormat, const std::string& defaultCodec,
-                  size_t defaultReadBufferMs = 20);
+                  size_t defaultChunkBufferMs = 20);
 
     PcmStreamPtr addStream(const std::string& uri);
     void removeStream(const std::string& name);
@@ -29,7 +29,7 @@ private:
     PcmListener* pcmListener_;
     std::string sampleFormat_;
     std::string codec_;
-    size_t readBufferMs_;
+    size_t chunkBufferMs_;
     boost::asio::io_context& ioc_;
 };
 

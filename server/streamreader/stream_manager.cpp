@@ -25,6 +25,7 @@
 #include "file_stream.hpp"
 #include "librespot_stream.hpp"
 #include "pipe_stream.hpp"
+// #include "pipe_stream_old.hpp"
 #include "process_stream.hpp"
 #include "tcp_stream.hpp"
 
@@ -33,8 +34,8 @@ using namespace std;
 
 
 StreamManager::StreamManager(PcmListener* pcmListener, boost::asio::io_context& ioc, const std::string& defaultSampleFormat, const std::string& defaultCodec,
-                             size_t defaultReadBufferMs)
-    : pcmListener_(pcmListener), sampleFormat_(defaultSampleFormat), codec_(defaultCodec), readBufferMs_(defaultReadBufferMs), ioc_(ioc)
+                             size_t defaultChunkBufferMs)
+    : pcmListener_(pcmListener), sampleFormat_(defaultSampleFormat), codec_(defaultCodec), chunkBufferMs_(defaultChunkBufferMs), ioc_(ioc)
 {
 }
 
@@ -43,14 +44,14 @@ PcmStreamPtr StreamManager::addStream(const std::string& uri)
 {
     StreamUri streamUri(uri);
 
-    if (streamUri.query.find("sampleformat") == streamUri.query.end())
-        streamUri.query["sampleformat"] = sampleFormat_;
+    if (streamUri.query.find(kUriSampleFormat) == streamUri.query.end())
+        streamUri.query[kUriSampleFormat] = sampleFormat_;
 
-    if (streamUri.query.find("codec") == streamUri.query.end())
-        streamUri.query["codec"] = codec_;
+    if (streamUri.query.find(kUriCodec) == streamUri.query.end())
+        streamUri.query[kUriCodec] = codec_;
 
-    if (streamUri.query.find("buffer_ms") == streamUri.query.end())
-        streamUri.query["buffer_ms"] = cpt::to_string(readBufferMs_);
+    if (streamUri.query.find(kUriChunkMs) == streamUri.query.end())
+        streamUri.query[kUriChunkMs] = cpt::to_string(chunkBufferMs_);
 
     //	LOG(DEBUG) << "\nURI: " << streamUri.uri << "\nscheme: " << streamUri.scheme << "\nhost: "
     //		<< streamUri.host << "\npath: " << streamUri.path << "\nfragment: " << streamUri.fragment << "\n";
@@ -63,6 +64,10 @@ PcmStreamPtr StreamManager::addStream(const std::string& uri)
     {
         stream = make_shared<PipeStream>(pcmListener_, ioc_, streamUri);
     }
+    // else if (streamUri.scheme == "pipe.old")
+    // {
+    //     stream = make_shared<PipeStreamOld>(pcmListener_, ioc_, streamUri);
+    // }
     else if (streamUri.scheme == "file")
     {
         stream = make_shared<FileStream>(pcmListener_, ioc_, streamUri);

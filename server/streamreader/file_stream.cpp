@@ -50,7 +50,7 @@ FileStream::~FileStream()
 void FileStream::worker()
 {
     timeval tvChunk;
-    std::unique_ptr<msg::PcmChunk> chunk(new msg::PcmChunk(sampleFormat_, pcmReadMs_));
+    std::unique_ptr<msg::PcmChunk> chunk(new msg::PcmChunk(sampleFormat_, chunk_ms_));
 
     ifs.seekg(0, ifs.end);
     size_t length = ifs.tellg();
@@ -85,8 +85,8 @@ void FileStream::worker()
                 encoder_->encode(chunk.get());
                 if (!active_)
                     break;
-                nextTick += pcmReadMs_;
-                chronos::addUs(tvChunk, pcmReadMs_ * 1000);
+                nextTick += chunk_ms_;
+                chronos::addUs(tvChunk, chunk_ms_ * 1000);
                 long currentTick = chronos::getTickCount();
 
                 if (nextTick >= currentTick)
