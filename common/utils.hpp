@@ -124,6 +124,9 @@ static std::string getHostName()
     std::string result = getProp("net.hostname");
     if (!result.empty())
         return result;
+    result = getProp("ro.product.model");
+    if (!result.empty())
+        return result;
 #endif
     char hostname[1024];
     hostname[1023] = '\0';
