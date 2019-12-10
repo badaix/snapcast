@@ -168,7 +168,7 @@ To enable the serve and client to start under the default run-level:
  3. Install the required libs
 
 ```   
-$ brew install flac libvorbis
+$ brew install flac libvorbis boost opus
 ```
 
 ### Build Snapclient
