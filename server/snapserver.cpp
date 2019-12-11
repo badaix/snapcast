@@ -271,7 +271,7 @@ int main(int argc, char* argv[])
         streamServer->start();
 
         if (num_threads < 0)
-            num_threads = std::max(1, std::min(4, static_cast<int>(std::thread::hardware_concurrency())));
+            num_threads = std::max(2, std::min(4, static_cast<int>(std::thread::hardware_concurrency())));
         LOG(INFO) << "number of threads: " << num_threads << ", hw threads: " << std::thread::hardware_concurrency() << "\n";
 
         auto sig = install_signal_handler({SIGHUP, SIGTERM, SIGINT},
