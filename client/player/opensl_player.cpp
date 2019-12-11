@@ -26,6 +26,12 @@
 
 using namespace std;
 
+
+static constexpr auto kPhaseInit = "Init";
+static constexpr auto kPhaseStart = "Start";
+static constexpr auto kPhaseStop = "Stop";
+
+
 // http://stackoverflow.com/questions/35730050/android-with-nexus-6-how-to-avoid-decreased-opensl-audio-thread-priority-rela?rq=1
 
 // source: https://github.com/hrydgard/native/blob/master/android/native-audio-so.cpp
@@ -165,12 +171,12 @@ std::string OpenslPlayer::resultToString(SLresult result) const
 
 
 
-void OpenslPlayer::throwUnsuccess(const std::string& what, SLresult result)
+void OpenslPlayer::throwUnsuccess(const std::string& phase, const std::string& what, SLresult result)
 {
     if (SL_RESULT_SUCCESS == result)
         return;
     stringstream ss;
-    ss << what << " failed: " << resultToString(result) << "(" << result << ")";
+    ss << phase << " failed, operation: " << what << ", result: " << resultToString(result) << "(" << result << ")";
     throw SnapException(ss.str());
 }
 
@@ -192,15 +198,15 @@ void OpenslPlayer::initOpensl()
     // create engine
     SLEngineOption engineOption[] = {{(SLuint32)SL_ENGINEOPTION_THREADSAFE, (SLuint32)SL_BOOLEAN_TRUE}};
     result = slCreateEngine(&engineObject, 1, engineOption, 0, NULL, NULL);
-    throwUnsuccess("slCreateEngine", result);
+    throwUnsuccess(kPhaseInit, "slCreateEngine", result);
     result = (*engineObject)->Realize(engineObject, SL_BOOLEAN_FALSE);
-    throwUnsuccess("EngineObject::Realize", result);
+    throwUnsuccess(kPhaseInit, "EngineObject::Realize", result);
     result = (*engineObject)->GetInterface(engineObject, SL_IID_ENGINE, &engineEngine);
-    throwUnsuccess("EngineObject::GetInterface", result);
+    throwUnsuccess(kPhaseInit, "EngineObject::GetInterface", result);
     result = (*engineEngine)->CreateOutputMix(engineEngine, &outputMixObject, 0, 0, 0);
-    throwUnsuccess("EngineEngine::CreateOutputMix", result);
+    throwUnsuccess(kPhaseInit, "EngineEngine::CreateOutputMix", result);
     result = (*outputMixObject)->Realize(outputMixObject, SL_BOOLEAN_FALSE);
-    throwUnsuccess("OutputMixObject::Realize", result);
+    throwUnsuccess(kPhaseInit, "OutputMixObject::Realize", result);
 
     SLuint32 samplesPerSec = SL_SAMPLINGRATE_48;
     switch (format.rate)
@@ -285,28 +291,28 @@ void OpenslPlayer::initOpensl()
     const SLInterfaceID ids[3] = {SL_IID_ANDROIDCONFIGURATION, SL_IID_PLAY, SL_IID_BUFFERQUEUE}; //, SL_IID_VOLUME};
     const SLboolean req[3] = {SL_BOOLEAN_TRUE, SL_BOOLEAN_TRUE, SL_BOOLEAN_TRUE};                //, SL_BOOLEAN_TRUE};
     result = (*engineEngine)->CreateAudioPlayer(engineEngine, &bqPlayerObject, &audioSrc, &audioSnk, 3, ids, req);
-    throwUnsuccess("Engine::CreateAudioPlayer", result);
+    throwUnsuccess(kPhaseInit, "Engine::CreateAudioPlayer", result);
 
     SLAndroidConfigurationItf playerConfig;
     result = (*bqPlayerObject)->GetInterface(bqPlayerObject, SL_IID_ANDROIDCONFIGURATION, &playerConfig);
-    throwUnsuccess("PlayerObject::GetInterface", result);
+    throwUnsuccess(kPhaseInit, "PlayerObject::GetInterface", result);
     SLint32 streamType = SL_ANDROID_STREAM_MEDIA;
     ////	SLint32 streamType = SL_ANDROID_STREAM_VOICE;
     result = (*playerConfig)->SetConfiguration(playerConfig, SL_ANDROID_KEY_STREAM_TYPE, &streamType, sizeof(SLint32));
-    throwUnsuccess("PlayerConfig::SetConfiguration", result);
+    throwUnsuccess(kPhaseInit, "PlayerConfig::SetConfiguration", result);
 
     result = (*bqPlayerObject)->Realize(bqPlayerObject, SL_BOOLEAN_FALSE);
-    throwUnsuccess("PlayerObject::Realize", result);
+    throwUnsuccess(kPhaseInit, "PlayerObject::Realize", result);
     result = (*bqPlayerObject)->GetInterface(bqPlayerObject, SL_IID_PLAY, &bqPlayerPlay);
-    throwUnsuccess("PlayerObject::GetInterface", result);
+    throwUnsuccess(kPhaseInit, "PlayerObject::GetInterface", result);
     result = (*bqPlayerObject)->GetInterface(bqPlayerObject, SL_IID_BUFFERQUEUE, &bqPlayerBufferQueue);
-    throwUnsuccess("PlayerObject::GetInterface", result);
+    throwUnsuccess(kPhaseInit, "PlayerObject::GetInterface", result);
     result = (*bqPlayerBufferQueue)->RegisterCallback(bqPlayerBufferQueue, bqPlayerCallback, this);
-    throwUnsuccess("PlayerBufferQueue::RegisterCallback", result);
+    throwUnsuccess(kPhaseInit, "PlayerBufferQueue::RegisterCallback", result);
     //	result = (*bqPlayerObject)->GetInterface(bqPlayerObject, SL_IID_VOLUME, &bqPlayerVolume);
     //	throwUnsuccess("PlayerObject::GetInterface", result);
     result = (*bqPlayerPlay)->SetPlayState(bqPlayerPlay, SL_PLAYSTATE_PAUSED);
-    throwUnsuccess("PlayerPlay::SetPlayState", result);
+    throwUnsuccess(kPhaseInit, "PlayerPlay::SetPlayState", result);
 
     // Render and enqueue a first buffer. (or should we just play the buffer empty?)
     curBuffer = 0;
@@ -317,7 +323,7 @@ void OpenslPlayer::initOpensl()
 
     memset(buffer[curBuffer], 0, buff_size);
     result = (*bqPlayerBufferQueue)->Enqueue(bqPlayerBufferQueue, buffer[curBuffer], sizeof(buffer[curBuffer]));
-    throwUnsuccess("PlayerBufferQueue::Enqueue", result);
+    throwUnsuccess(kPhaseInit, "PlayerBufferQueue::Enqueue", result);
     curBuffer ^= 1;
 }
 
@@ -379,14 +385,15 @@ void OpenslPlayer::uninitOpensl()
 void OpenslPlayer::start()
 {
     SLresult result = (*bqPlayerPlay)->SetPlayState(bqPlayerPlay, SL_PLAYSTATE_PLAYING);
-    throwUnsuccess("PlayerPlay::SetPlayState", result);
+    throwUnsuccess(kPhaseStart, "PlayerPlay::SetPlayState", result);
 }
 
 
 void OpenslPlayer::stop()
 {
     SLresult result = (*bqPlayerPlay)->SetPlayState(bqPlayerPlay, SL_PLAYSTATE_STOPPED);
-    throwUnsuccess("PlayerPlay::SetPlayState", result);
+    (*bqPlayerBufferQueue)->Clear(bqPlayerBufferQueue);
+    throwUnsuccess(kPhaseStop, "PlayerPlay::SetPlayState", result);
 }
 
 
