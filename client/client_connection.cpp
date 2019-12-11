@@ -130,21 +130,23 @@ bool ClientConnection::send(const msg::BaseMessage* message)
 }
 
 
-shared_ptr<msg::SerializedMessage> ClientConnection::sendRequest(const msg::BaseMessage* message, const chronos::msec& timeout)
+unique_ptr<msg::SerializedMessage> ClientConnection::sendRequest(const msg::BaseMessage* message, const chronos::msec& timeout)
 {
-    shared_ptr<msg::SerializedMessage> response(nullptr);
+    unique_ptr<msg::SerializedMessage> response(nullptr);
     if (++reqId_ >= 10000)
         reqId_ = 1;
     message->id = reqId_;
     //	LOG(INFO) << "Req: " << message->id << "\n";
-    shared_ptr<PendingRequest> pendingRequest(new PendingRequest(reqId_));
+    shared_ptr<PendingRequest> pendingRequest = make_shared<PendingRequest>(reqId_);
 
-    std::unique_lock<std::mutex> lock(pendingRequestsMutex_);
-    pendingRequests_.insert(pendingRequest);
-    send(message);
-    if (pendingRequest->cv.wait_for(lock, std::chrono::milliseconds(timeout)) == std::cv_status::no_timeout)
+    { // scope for lock
+        std::unique_lock<std::mutex> lock(pendingRequestsMutex_);
+        pendingRequests_.insert(pendingRequest);
+        send(message);
+    }
+
+    if ((response = pendingRequest->waitForResponse(std::chrono::milliseconds(timeout))) != nullptr)
     {
-        response = pendingRequest->response;
         sumTimeout_ = chronos::msec(0);
         //		LOG(INFO) << "Resp: " << pendingRequest->id << "\n";
     }
@@ -155,7 +157,11 @@ shared_ptr<msg::SerializedMessage> ClientConnection::sendRequest(const msg::Base
         if (sumTimeout_ > chronos::sec(10))
             throw SnapException("sum timeout exceeded 10s");
     }
-    pendingRequests_.erase(pendingRequest);
+
+    { // scope for lock
+        std::unique_lock<std::mutex> lock(pendingRequestsMutex_);
+        pendingRequests_.erase(pendingRequest);
+    }
     return response;
 }
 
@@ -174,27 +180,22 @@ void ClientConnection::getNextMessage()
     //	{
     //		std::lock_guard<std::mutex> socketLock(socketMutex_);
     socketRead(&buffer[0], baseMessage.size);
-    //	}
     tv t;
     baseMessage.received = t;
+    //	}
 
-    {
+    { // scope for lock
         std::unique_lock<std::mutex> lock(pendingRequestsMutex_);
-        //		LOG(DEBUG) << "got lock - getNextMessage: " << baseMessage.type << ", size: " << baseMessage.size << ", id: " << baseMessage.id << ",
-        // refers: " << baseMessage.refersTo << "\n";
+        for (auto req : pendingRequests_)
         {
-            for (auto req : pendingRequests_)
+            if (req->id() == baseMessage.refersTo)
             {
-                if (req->id == baseMessage.refersTo)
-                {
-                    req->response.reset(new msg::SerializedMessage());
-                    req->response->message = baseMessage;
-                    req->response->buffer = (char*)malloc(baseMessage.size);
-                    memcpy(req->response->buffer, &buffer[0], baseMessage.size);
-                    lock.unlock();
-                    req->cv.notify_one();
-                    return;
-                }
+                auto response = make_unique<msg::SerializedMessage>();
+                response->message = baseMessage;
+                response->buffer = (char*)malloc(baseMessage.size);
+                memcpy(response->buffer, &buffer[0], baseMessage.size);
+                req->setValue(std::move(response));
+                return;
             }
         }
     }

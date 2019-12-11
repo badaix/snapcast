@@ -38,13 +38,43 @@ class ClientConnection;
 
 
 /// Used to synchronize server requests (wait for server response)
-struct PendingRequest
+class PendingRequest
 {
-    PendingRequest(uint16_t reqId) : id(reqId), response(nullptr){};
+public:
+    PendingRequest(uint16_t reqId) : id_(reqId)
+    {
+        future_ = promise_.get_future();
+    };
 
-    uint16_t id;
-    std::shared_ptr<msg::SerializedMessage> response;
-    std::condition_variable cv;
+    template <typename Rep, typename Period>
+    std::unique_ptr<msg::SerializedMessage> waitForResponse(const std::chrono::duration<Rep, Period>& timeout)
+    {
+        try
+        {
+            if (future_.wait_for(timeout) == std::future_status::ready)
+                return future_.get();
+        }
+        catch (...)
+        {
+        }
+        return nullptr;
+    }
+
+    void setValue(std::unique_ptr<msg::SerializedMessage> value)
+    {
+        promise_.set_value(std::move(value));
+    }
+
+    uint16_t id() const
+    {
+        return id_;
+    }
+
+private:
+    uint16_t id_;
+
+    std::promise<std::unique_ptr<msg::SerializedMessage>> promise_;
+    std::future<std::unique_ptr<msg::SerializedMessage>> future_;
 };
 
 
@@ -79,16 +109,16 @@ public:
     virtual bool send(const msg::BaseMessage* message);
 
     /// Send request to the server and wait for answer
-    virtual std::shared_ptr<msg::SerializedMessage> sendRequest(const msg::BaseMessage* message, const chronos::msec& timeout = chronos::msec(1000));
+    virtual std::unique_ptr<msg::SerializedMessage> sendRequest(const msg::BaseMessage* message, const chronos::msec& timeout = chronos::msec(1000));
 
     /// Send request to the server and wait for answer of type T
     template <typename T>
-    std::shared_ptr<T> sendReq(const msg::BaseMessage* message, const chronos::msec& timeout = chronos::msec(1000))
+    std::unique_ptr<T> sendReq(const msg::BaseMessage* message, const chronos::msec& timeout = chronos::msec(1000))
     {
-        std::shared_ptr<msg::SerializedMessage> reply = sendRequest(message, timeout);
+        std::unique_ptr<msg::SerializedMessage> reply = sendRequest(message, timeout);
         if (!reply)
             return nullptr;
-        std::shared_ptr<T> msg(new T);
+        std::unique_ptr<T> msg(new T);
         msg->deserialize(reply->message, reply->buffer);
         return msg;
     }
