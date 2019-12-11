@@ -82,7 +82,7 @@ void Controller::onMessageReceived(ClientConnection* /*connection*/, const msg::
     }
     else if (baseMessage.type == message_type::kServerSettings)
     {
-        serverSettings_.reset(new msg::ServerSettings());
+        serverSettings_ = make_unique<msg::ServerSettings>();
         serverSettings_->deserialize(baseMessage, buffer);
         LOG(INFO) << "ServerSettings - buffer: " << serverSettings_->getBufferMs() << ", latency: " << serverSettings_->getLatency()
                   << ", volume: " << serverSettings_->getVolume() << ", muted: " << serverSettings_->isMuted() << "\n";
@@ -95,7 +95,7 @@ void Controller::onMessageReceived(ClientConnection* /*connection*/, const msg::
     }
     else if (baseMessage.type == message_type::kCodecHeader)
     {
-        headerChunk_.reset(new msg::CodecHeader());
+        headerChunk_ = make_unique<msg::CodecHeader>();
         headerChunk_->deserialize(baseMessage, buffer);
 
         LOG(INFO) << "Codec: " << headerChunk_->codec << "\n";
@@ -141,11 +141,12 @@ void Controller::onMessageReceived(ClientConnection* /*connection*/, const msg::
     }
     else if (baseMessage.type == message_type::kStreamTags)
     {
-        streamTags_.reset(new msg::StreamTags());
-        streamTags_->deserialize(baseMessage, buffer);
-
         if (meta_)
-            meta_->push(streamTags_->msg);
+        {
+            msg::StreamTags streamTags_;
+            streamTags_.deserialize(baseMessage, buffer);
+            meta_->push(streamTags_.msg);
+        }
     }
 
     if (baseMessage.type != message_type::kTime)
@@ -214,7 +215,7 @@ void Controller::worker()
                     throw SnapException(async_exception_->what());
                 }
 
-                shared_ptr<msg::Time> reply = clientConnection_->sendReq<msg::Time>(&timeReq, chronos::msec(2000));
+                auto reply = clientConnection_->sendReq<msg::Time>(&timeReq, chronos::msec(2000));
                 if (reply)
                 {
                     TimeProvider::getInstance().setDiff(reply->latency, reply->received - reply->sent);

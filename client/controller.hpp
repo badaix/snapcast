@@ -76,9 +76,8 @@ private:
     std::unique_ptr<decoder::Decoder> decoder_;
     std::unique_ptr<Player> player_;
     std::shared_ptr<MetadataAdapter> meta_;
-    std::shared_ptr<msg::ServerSettings> serverSettings_;
-    std::shared_ptr<msg::StreamTags> streamTags_;
-    std::shared_ptr<msg::CodecHeader> headerChunk_;
+    std::unique_ptr<msg::ServerSettings> serverSettings_;
+    std::unique_ptr<msg::CodecHeader> headerChunk_;
     std::mutex receiveMutex_;
 
     shared_exception_ptr async_exception_;
