@@ -121,7 +121,7 @@ else ifeq ($(TARGET), FREEBSD)
 
 install:
 	echo BSD
-	install --strip -g wheel -o root -m 555 $(BIN) $(TARGET_DIR)/local/bin/$(BIN)
+	install -s -g wheel -o root -m 555 $(BIN) $(TARGET_DIR)/local/bin/$(BIN)
 	install -g wheel -o root -m 555 $(BIN).1 $(TARGET_DIR)/local/man/man1/$(BIN).1
 	install -g wheel -o root -m 555 ../debian/$(BIN).bsd $(TARGET_DIR)/local/etc/rc.d/$(BIN)
 
@@ -129,9 +129,10 @@ else ifeq ($(TARGET), MACOS)
 
 install:
 	echo macOS
-	install --strip -g wheel -o root $(BIN) $(TARGET_DIR)/local/bin/$(BIN)
+	install -s -g wheel -o root $(BIN) $(TARGET_DIR)/local/bin/$(BIN)
 	install -g wheel -o root $(BIN).1 $(TARGET_DIR)/local/share/man/man1/$(BIN).1
-	install -g wheel -o root ../debian/$(BIN).plist /Library/LaunchAgents/de.badaix.snapcast.$(BIN).plist
+	install -g wheel -o root etc/$(BIN).plist /Library/LaunchAgents/de.badaix.snapcast.$(BIN).plist
+	install -g wheel -o root etc/$(BIN).conf /etc/$(BIN).conf
 	launchctl load /Library/LaunchAgents/de.badaix.snapcast.$(BIN).plist
 
 else
@@ -154,14 +155,14 @@ install:
 endif
 
 installfiles:
-	install --strip -D -g root -o root $(BIN) $(TARGET_DIR)/bin/$(BIN)
+	install -s -D -g root -o root $(BIN) $(TARGET_DIR)/bin/$(BIN)
 	install -D -g root -o root $(BIN).1 $(TARGET_DIR)/share/man/man1/$(BIN).1
 
 installsystemd:
 	@echo using systemd; \
 	cp ../debian/$(BIN).service /lib/systemd/system/$(BIN).service; \
 	cp -n ../debian/$(BIN).default /etc/default/$(BIN); \
-	cp -n ../server/etc/$(BIN).conf /etc/default/$(BIN).conf; \
+	cp -n etc/$(BIN).conf /etc/$(BIN).conf; \
 	systemctl daemon-reload; \
 	systemctl enable $(BIN); \
 	systemctl start $(BIN); \
@@ -170,7 +171,7 @@ installsysv:
 	@echo using sysv; \
 	cp ../debian/$(BIN).init /etc/init.d/$(BIN); \
 	cp -n ../debian/$(BIN).default /etc/default/$(BIN); \
-	cp -n ../server/etc/$(BIN).conf /etc/default/$(BIN).conf; \
+	cp -n etc/$(BIN).conf /etc/$(BIN).conf; \
 	update-rc.d $(BIN) defaults; \
 	/etc/init.d/$(BIN) start; \
 

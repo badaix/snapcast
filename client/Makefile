@@ -130,9 +130,9 @@ else ifeq ($(TARGET), MACOS)
 
 install:
 	echo macOS
-	install --strip -g wheel -o root $(BIN) $(TARGET_DIR)/local/bin/$(BIN)
+	install -s -g wheel -o root $(BIN) $(TARGET_DIR)/local/bin/$(BIN)
 	install -g wheel -o root $(BIN).1 $(TARGET_DIR)/local/share/man/man1/$(BIN).1
-	install -g wheel -o root ../debian/$(BIN).plist /Library/LaunchAgents/de.badaix.snapcast.$(BIN).plist
+	install -g wheel -o root etc/$(BIN).plist /Library/LaunchAgents/de.badaix.snapcast.$(BIN).plist
 	launchctl load /Library/LaunchAgents/de.badaix.snapcast.$(BIN).plist
 
 else
@@ -155,7 +155,7 @@ install:
 endif
 
 installfiles:
-	install --strip -D -g root -o root $(BIN) $(TARGET_DIR)/bin/$(BIN)
+	install -s -D -g root -o root $(BIN) $(TARGET_DIR)/bin/$(BIN)
 	install -D -g root -o root $(BIN).1 $(TARGET_DIR)/share/man/man1/$(BIN).1
 
 installsystemd:
