@@ -50,6 +50,7 @@ class Controller : public MessageReceiver
 public:
     Controller(const std::string& clientId, size_t instance, std::shared_ptr<MetadataAdapter> meta);
     void start(const PcmDevice& pcmDevice, const std::string& host, size_t port, int latency);
+    void run(const PcmDevice& pcmDevice, const std::string& host, size_t port, int latency);
     void stop();
 
     /// Implementation of MessageReceiver.

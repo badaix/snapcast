@@ -291,17 +291,6 @@ protected:
     virtual void doserialize(std::ostream& /*stream*/) const {};
 };
 
-
-struct SerializedMessage
-{
-    ~SerializedMessage()
-    {
-        free(buffer);
-    }
-
-    BaseMessage message;
-    char* buffer;
-};
-}
+} // namespace msg
 
 #endif

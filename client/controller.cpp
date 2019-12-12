@@ -178,6 +178,16 @@ void Controller::start(const PcmDevice& pcmDevice, const std::string& host, size
 }
 
 
+void Controller::run(const PcmDevice& pcmDevice, const std::string& host, size_t port, int latency)
+{
+    pcmDevice_ = pcmDevice;
+    latency_ = latency;
+    clientConnection_.reset(new ClientConnection(this, host, port));
+    worker();
+    // controllerThread_ = thread(&Controller::worker, this);
+}
+
+
 void Controller::stop()
 {
     LOG(DEBUG) << "Stopping Controller" << endl;

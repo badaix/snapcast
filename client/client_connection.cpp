@@ -20,6 +20,7 @@
 #include "common/aixlog.hpp"
 #include "common/snap_exception.hpp"
 #include "common/str_compat.hpp"
+#include "message/factory.hpp"
 #include "message/hello.hpp"
 #include <iostream>
 #include <mutex>
@@ -32,6 +33,8 @@ ClientConnection::ClientConnection(MessageReceiver* receiver, const std::string&
     : socket_(io_context_), active_(false), messageReceiver_(receiver), reqId_(1), host_(host), port_(port), readerThread_(nullptr),
       sumTimeout_(chronos::msec(0))
 {
+    base_msg_size_ = base_message_.getSize();
+    buffer_.resize(base_msg_size_);
 }
 
 
@@ -130,9 +133,10 @@ bool ClientConnection::send(const msg::BaseMessage* message)
 }
 
 
-unique_ptr<msg::SerializedMessage> ClientConnection::sendRequest(const msg::BaseMessage* message, const chronos::msec& timeout)
+
+unique_ptr<msg::BaseMessage> ClientConnection::sendRequest(const msg::BaseMessage* message, const chronos::msec& timeout)
 {
-    unique_ptr<msg::SerializedMessage> response(nullptr);
+    unique_ptr<msg::BaseMessage> response(nullptr);
     if (++reqId_ >= 10000)
         reqId_ = 1;
     message->id = reqId_;
@@ -168,32 +172,26 @@ unique_ptr<msg::SerializedMessage> ClientConnection::sendRequest(const msg::Base
 
 void ClientConnection::getNextMessage()
 {
-    msg::BaseMessage baseMessage;
-    size_t baseMsgSize = baseMessage.getSize();
-    vector<char> buffer(baseMsgSize);
-    socketRead(&buffer[0], baseMsgSize);
-    baseMessage.deserialize(&buffer[0]);
+    socketRead(&buffer_[0], base_msg_size_);
+    base_message_.deserialize(buffer_.data());
     //	LOG(DEBUG) << "getNextMessage: " << baseMessage.type << ", size: " << baseMessage.size << ", id: " << baseMessage.id << ", refers: " <<
     // baseMessage.refersTo << "\n";
-    if (baseMessage.size > buffer.size())
-        buffer.resize(baseMessage.size);
+    if (base_message_.size > buffer_.size())
+        buffer_.resize(base_message_.size);
     //	{
     //		std::lock_guard<std::mutex> socketLock(socketMutex_);
-    socketRead(&buffer[0], baseMessage.size);
+    socketRead(buffer_.data(), base_message_.size);
     tv t;
-    baseMessage.received = t;
+    base_message_.received = t;
     //	}
 
     { // scope for lock
         std::unique_lock<std::mutex> lock(pendingRequestsMutex_);
         for (auto req : pendingRequests_)
         {
-            if (req->id() == baseMessage.refersTo)
+            if (req->id() == base_message_.refersTo)
             {
-                auto response = make_unique<msg::SerializedMessage>();
-                response->message = baseMessage;
-                response->buffer = (char*)malloc(baseMessage.size);
-                memcpy(response->buffer, &buffer[0], baseMessage.size);
+                auto response = msg::factory::createMessage(base_message_, buffer_.data());
                 req->setValue(std::move(response));
                 return;
             }
@@ -201,7 +199,7 @@ void ClientConnection::getNextMessage()
     }
 
     if (messageReceiver_ != nullptr)
-        messageReceiver_->onMessageReceived(this, baseMessage, &buffer[0]);
+        messageReceiver_->onMessageReceived(this, base_message_, buffer_.data());
 }
 
 

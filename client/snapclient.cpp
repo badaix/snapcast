@@ -215,10 +215,16 @@ int main(int argc, char** argv)
 #endif
 
         bool active = true;
+        std::shared_ptr<Controller> controller;
         auto signal_handler = install_signal_handler({SIGHUP, SIGTERM, SIGINT},
-                                                     [&active](int signal, const std::string& strsignal) {
+                                                     [&active, &controller](int signal, const std::string& strsignal) {
                                                          SLOG(INFO) << "Received signal " << signal << ": " << strsignal << "\n";
                                                          active = false;
+                                                         if (controller)
+                                                         {
+                                                             LOG(INFO) << "Stopping controller\n";
+                                                             controller->stop();
+                                                         }
                                                      });
         if (host.empty())
         {
@@ -258,11 +264,11 @@ int main(int argc, char** argv)
             if (metaStderr)
                 meta.reset(new MetaStderrAdapter);
 
-            std::unique_ptr<Controller> controller(new Controller(hostIdValue->value(), instance, meta));
+            controller = make_shared<Controller>(hostIdValue->value(), instance, meta);
             LOG(INFO) << "Latency: " << latency << "\n";
-            controller->start(pcmDevice, host, port, latency);
-            signal_handler.wait();
-            controller->stop();
+            controller->run(pcmDevice, host, port, latency);
+            // signal_handler.wait();
+            // controller->stop();
         }
     }
     catch (const std::exception& e)

@@ -47,7 +47,7 @@ public:
     };
 
     template <typename Rep, typename Period>
-    std::unique_ptr<msg::SerializedMessage> waitForResponse(const std::chrono::duration<Rep, Period>& timeout)
+    std::unique_ptr<msg::BaseMessage> waitForResponse(const std::chrono::duration<Rep, Period>& timeout)
     {
         try
         {
@@ -60,7 +60,7 @@ public:
         return nullptr;
     }
 
-    void setValue(std::unique_ptr<msg::SerializedMessage> value)
+    void setValue(std::unique_ptr<msg::BaseMessage> value)
     {
         promise_.set_value(std::move(value));
     }
@@ -73,8 +73,8 @@ public:
 private:
     uint16_t id_;
 
-    std::promise<std::unique_ptr<msg::SerializedMessage>> promise_;
-    std::future<std::unique_ptr<msg::SerializedMessage>> future_;
+    std::promise<std::unique_ptr<msg::BaseMessage>> promise_;
+    std::future<std::unique_ptr<msg::BaseMessage>> future_;
 };
 
 
@@ -109,18 +109,24 @@ public:
     virtual bool send(const msg::BaseMessage* message);
 
     /// Send request to the server and wait for answer
-    virtual std::unique_ptr<msg::SerializedMessage> sendRequest(const msg::BaseMessage* message, const chronos::msec& timeout = chronos::msec(1000));
+    virtual std::unique_ptr<msg::BaseMessage> sendRequest(const msg::BaseMessage* message, const chronos::msec& timeout = chronos::msec(1000));
 
     /// Send request to the server and wait for answer of type T
     template <typename T>
     std::unique_ptr<T> sendReq(const msg::BaseMessage* message, const chronos::msec& timeout = chronos::msec(1000))
     {
-        std::unique_ptr<msg::SerializedMessage> reply = sendRequest(message, timeout);
-        if (!reply)
+        std::unique_ptr<msg::BaseMessage> response = sendRequest(message, timeout);
+        if (!response)
             return nullptr;
-        std::unique_ptr<T> msg(new T);
-        msg->deserialize(reply->message, reply->buffer);
-        return msg;
+
+        T* tmp = dynamic_cast<T*>(response.get());
+        std::unique_ptr<T> result;
+        if (tmp != nullptr)
+        {
+            response.release();
+            result.reset(tmp);
+        }
+        return result;
     }
 
     std::string getMacAddress();
@@ -135,6 +141,10 @@ protected:
 
     void socketRead(void* to, size_t bytes);
     void getNextMessage();
+
+    msg::BaseMessage base_message_;
+    std::vector<char> buffer_;
+    size_t base_msg_size_;
 
     boost::asio::io_context io_context_;
     mutable std::mutex socketMutex_;
