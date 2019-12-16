@@ -39,8 +39,8 @@
 using namespace std;
 
 
-Controller::Controller(const std::string& hostId, size_t instance, std::shared_ptr<MetadataAdapter> meta)
-    : MessageReceiver(), hostId_(hostId), instance_(instance), active_(false), latency_(0), stream_(nullptr), decoder_(nullptr), player_(nullptr), meta_(meta),
+Controller::Controller(const std::string& hostId, size_t instance, std::shared_ptr<MetadataAdapter> meta, const std::string& hostName = "")
+    : MessageReceiver(), hostId_(hostId), hostName_(hostName), instance_(instance), active_(false), latency_(0), stream_(nullptr), decoder_(nullptr), player_(nullptr), meta_(meta),
       serverSettings_(nullptr), async_exception_(nullptr)
 {
 }
@@ -201,8 +201,10 @@ void Controller::worker()
                 hostId_ = ::getHostId(macAddress);
 
             /// Say hello to the server
-            msg::Hello hello(macAddress, hostId_, instance_);
+            msg::Hello hello(macAddress, hostId_, instance_, hostName_);
             clientConnection_->send(&hello);
+
+            LOG(INFO) << "My NAME: \"" << hello.getHostName() << "\n";
 
             /// Do initial time sync with the server
             msg::Time timeReq;

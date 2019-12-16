@@ -106,6 +106,7 @@ int main(int argc, char** argv)
         /*auto latencyValue =*/op.add<Value<int>>("", "latency", "latency of the soundcard", 0, &latency);
         /*auto instanceValue =*/op.add<Value<size_t>>("i", "instance", "instance id", 1, &instance);
         auto hostIdValue = op.add<Value<string>>("", "hostID", "unique host id", "");
+        auto hostNameValue = op.add<Value<string>>("n", "hostName", "host name", "");
 
         try
         {
@@ -258,7 +259,7 @@ int main(int argc, char** argv)
             if (metaStderr)
                 meta.reset(new MetaStderrAdapter);
 
-            std::unique_ptr<Controller> controller(new Controller(hostIdValue->value(), instance, meta));
+            std::unique_ptr<Controller> controller(new Controller(hostIdValue->value(), instance, meta, hostNameValue->value()));
             LOG(INFO) << "Latency: " << latency << "\n";
             controller->start(pcmDevice, host, port, latency);
             signal_handler.wait();

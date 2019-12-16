@@ -48,7 +48,7 @@
 class Controller : public MessageReceiver
 {
 public:
-    Controller(const std::string& clientId, size_t instance, std::shared_ptr<MetadataAdapter> meta);
+    Controller(const std::string& clientId, size_t instance, std::shared_ptr<MetadataAdapter> meta, const std::string& hostName);
     void start(const PcmDevice& pcmDevice, const std::string& host, size_t port, int latency);
     void stop();
 
@@ -64,6 +64,7 @@ private:
     void worker();
     bool sendTimeSyncMessage(long after = 1000);
     std::string hostId_;
+    std::string hostName_;
     std::string meta_callback_;
     size_t instance_;
     std::atomic<bool> active_;

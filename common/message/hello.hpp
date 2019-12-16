@@ -35,10 +35,14 @@ public:
     {
     }
 
-    Hello(const std::string& macAddress, const std::string& id, size_t instance) : JsonMessage(message_type::kHello)
+    Hello(const std::string& macAddress, const std::string& id, size_t instance, std::string hostname = "") : JsonMessage(message_type::kHello)
     {
         msg["MAC"] = macAddress;
-        msg["HostName"] = ::getHostName();
+        if(hostname.empty()) {
+            msg["HostName"] = ::getHostName();
+        } else {
+            msg["HostName"] = hostname;
+        }
         msg["Version"] = VERSION;
         msg["ClientName"] = "Snapclient";
         msg["OS"] = ::getOS();
