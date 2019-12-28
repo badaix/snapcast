@@ -28,19 +28,19 @@ Install the build tools and required libs:
 For Debian derivates (e.g. Raspbian, Debian, Ubuntu, Mint):
 
     $ sudo apt-get install build-essential
-    $ sudo apt-get install libasound2-dev libvorbisidec-dev libvorbis-dev libflac-dev alsa-utils libavahi-client-dev avahi-daemon
+    $ sudo apt-get install libasound2-dev libvorbisidec-dev libvorbis-dev libopus-dev libflac-dev alsa-utils libavahi-client-dev avahi-daemon
 
 Compilation requires gcc 4.8 or higher, so it's highly recommended to use Debian (Raspbian) Jessie.
 
 For Arch derivates:
 
     $ sudo pacman -S base-devel
-    $ sudo pacman -S alsa-lib avahi libvorbis flac alsa-utils boost
+    $ sudo pacman -S alsa-lib avahi libvorbis opus-dev flac alsa-utils boost
 
 For Fedora (and probably RHEL, CentOS & Scientific Linux, but untested):
 
     $ sudo dnf install @development-tools
-    $ sudo dnf install alsa-lib-devel avahi-devel libvorbis-devel flac-devel libstdc++-static
+    $ sudo dnf install alsa-lib-devel avahi-devel libvorbis-devel opus-devel flac-devel libstdc++-static
 
 ### Build Snapclient and Snapserver
 `cd` into the Snapcast src-root directory:
