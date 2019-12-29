@@ -2,6 +2,7 @@
 #define ENCODER_FACTORY_H
 
 #include "encoder.hpp"
+#include <memory>
 #include <string>
 
 namespace encoder
@@ -11,7 +12,7 @@ class EncoderFactory
 {
 public:
     //	EncoderFactory(const std::string& codecSettings);
-    Encoder* createEncoder(const std::string& codecSettings) const;
+    std::unique_ptr<Encoder> createEncoder(const std::string& codecSettings) const;
 };
 
 } // namespace encoder

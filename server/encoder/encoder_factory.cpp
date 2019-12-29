@@ -37,9 +37,8 @@ using namespace std;
 namespace encoder
 {
 
-Encoder* EncoderFactory::createEncoder(const std::string& codecSettings) const
+std::unique_ptr<Encoder> EncoderFactory::createEncoder(const std::string& codecSettings) const
 {
-    Encoder* encoder;
     std::string codec(codecSettings);
     std::string codecOptions;
     if (codec.find(":") != std::string::npos)
@@ -48,35 +47,21 @@ Encoder* EncoderFactory::createEncoder(const std::string& codecSettings) const
         codec = utils::string::trim_copy(codec.substr(0, codec.find(":")));
     }
     if (codec == "pcm")
-        encoder = new PcmEncoder(codecOptions);
+        return std::make_unique<PcmEncoder>(codecOptions);
 #if defined(HAS_OGG) && defined(HAS_VORBIS) && defined(HAS_VORBIS_ENC)
     else if (codec == "ogg")
-        encoder = new OggEncoder(codecOptions);
+        return std::make_unique<OggEncoder>(codecOptions);
 #endif
 #if defined(HAS_FLAC)
     else if (codec == "flac")
-        encoder = new FlacEncoder(codecOptions);
+        return std::make_unique<FlacEncoder>(codecOptions);
 #endif
 #if defined(HAS_OPUS)
     else if (codec == "opus")
-        encoder = new OpusEncoder(codecOptions);
+        return std::make_unique<OpusEncoder>(codecOptions);
 #endif
-    else
-    {
-        throw SnapException("unknown codec: " + codec);
-    }
 
-    return encoder;
-    /*	try
-            {
-                    encoder->init(NULL, format, codecOptions);
-            }
-            catch (const std::exception& e)
-            {
-                    cout << "Error: " << e.what() << "\n";
-                    return 1;
-            }
-    */
+    throw SnapException("unknown codec: " + codec);
 }
 
 } // namespace encoder
