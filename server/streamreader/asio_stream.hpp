@@ -19,6 +19,7 @@
 #ifndef ASIO_STREAM_HPP
 #define ASIO_STREAM_HPP
 
+#include "common/aixlog.hpp"
 #include "pcm_stream.hpp"
 #include <atomic>
 #include <boost/asio.hpp>
@@ -41,6 +42,7 @@ protected:
     virtual void on_connect();
     virtual void do_read();
     void check_state();
+
     std::unique_ptr<msg::PcmChunk> chunk_;
     timeval tv_chunk_;
     bool first_;
@@ -61,6 +63,7 @@ AsioStream<ReadStream>::AsioStream(PcmListener* pcmListener, boost::asio::io_con
     chunk_ = std::make_unique<msg::PcmChunk>(sampleFormat_, chunk_ms_);
     bytes_read_ = 0;
     buffer_ms_ = 50;
+
     try
     {
         buffer_ms_ = cpt::stoi(uri_.getQuery("buffer_ms", cpt::to_string(buffer_ms_)));
@@ -115,6 +118,7 @@ template <typename ReadStream>
 void AsioStream<ReadStream>::on_connect()
 {
     first_ = true;
+    chronos::systemtimeofday(&tvEncodedChunk_);
     do_read();
 }
 
@@ -139,13 +143,16 @@ void AsioStream<ReadStream>::do_read()
                                 // the timestamp will be incremented after encoding,
                                 // since we do not know how much the encoder actually encoded
 
-                                timeval now;
-                                chronos::systemtimeofday(&now);
-                                auto stream2systime_diff = chronos::diff<std::chrono::milliseconds>(now, tvEncodedChunk_);
-                                if (stream2systime_diff > chronos::sec(5) + chronos::msec(chunk_ms_))
+                                if (!first_)
                                 {
-                                    LOG(WARNING) << "Stream and system time out of sync: " << stream2systime_diff.count() << "ms, resetting stream time.\n";
-                                    first_ = true;
+                                    timeval now;
+                                    chronos::systemtimeofday(&now);
+                                    auto stream2systime_diff = chronos::diff<std::chrono::milliseconds>(now, tvEncodedChunk_);
+                                    if (stream2systime_diff > chronos::sec(5) + chronos::msec(chunk_ms_))
+                                    {
+                                        LOG(WARNING) << "Stream and system time out of sync: " << stream2systime_diff.count() << "ms, resetting stream time.\n";
+                                        first_ = true;
+                                    }
                                 }
                                 if (first_)
                                 {
@@ -153,6 +160,7 @@ void AsioStream<ReadStream>::do_read()
                                     chronos::systemtimeofday(&tvEncodedChunk_);
                                     nextTick_ = chronos::getTickCount() + buffer_ms_;
                                 }
+
                                 encoder_->encode(chunk_.get());
                                 nextTick_ += chunk_ms_;
                                 long currentTick = chronos::getTickCount();
