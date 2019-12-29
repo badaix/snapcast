@@ -37,7 +37,7 @@ PcmStream::PcmStream(PcmListener* pcmListener, boost::asio::io_context& ioc, con
     encoder::EncoderFactory encoderFactory;
     if (uri_.query.find(kUriCodec) == uri_.query.end())
         throw SnapException("Stream URI must have a codec");
-    encoder_.reset(encoderFactory.createEncoder(uri_.query[kUriCodec]));
+    encoder_ = encoderFactory.createEncoder(uri_.query[kUriCodec]);
 
     if (uri_.query.find(kUriName) == uri_.query.end())
         throw SnapException("Stream URI must have a name");
@@ -51,8 +51,6 @@ PcmStream::PcmStream(PcmListener* pcmListener, boost::asio::io_context& ioc, con
     if (uri_.query.find(kUriChunkMs) != uri_.query.end())
         chunk_ms_ = cpt::stoul(uri_.query[kUriChunkMs]);
 
-    // meta_.reset(new msg::StreamTags());
-    // meta_->msg["stream"] = name_;
     setMeta(json());
 }
 
