@@ -3,7 +3,7 @@
      / _\ (  )( \/ )(  )   /  \  / __)
     /    \ )(  )  ( / (_/\(  O )( (_ \
     \_/\_/(__)(_/\_)\____/ \__/  \___/
-    version 1.2.3
+    version 1.2.4
     https://github.com/badaix/aixlog
 
     This file is part of aixlog
@@ -275,9 +275,9 @@ struct Timestamp
     std::string to_string(const std::string& format = "%Y-%m-%d %H-%M-%S.#ms") const
     {
         std::time_t now_c = std::chrono::system_clock::to_time_t(time_point);
-        struct ::tm* now_tm = std::localtime(&now_c);
+        struct ::tm now_tm = localtime_xp(now_c);
         char buffer[256];
-        strftime(buffer, sizeof buffer, format.c_str(), now_tm);
+        strftime(buffer, sizeof buffer, format.c_str(), &now_tm);
         std::string result(buffer);
         size_t pos = result.find("#ms");
         if (pos != std::string::npos)
@@ -294,6 +294,21 @@ struct Timestamp
 
 private:
     bool is_null_;
+
+    inline std::tm localtime_xp(std::time_t timer) const
+    {
+        std::tm bt;
+#if defined(__unix__)
+        localtime_r(&timer, &bt);
+#elif defined(_MSC_VER)
+        localtime_s(&bt, &timer);
+#else
+        static std::mutex mtx;
+        std::lock_guard<std::mutex> lock(mtx);
+        bt = *std::localtime(&timer);
+#endif
+        return bt;
+    }
 };
 
 /**
@@ -500,7 +515,7 @@ public:
             case Severity::warning:
                 return "Warn";
             case Severity::error:
-                return "Err";
+                return "Error";
             case Severity::fatal:
                 return "Fatal";
             default:
