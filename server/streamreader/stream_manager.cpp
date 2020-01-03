@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2019  Johannes Pohl
+    Copyright (C) 2014-2020  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -25,13 +25,14 @@
 #include "file_stream.hpp"
 #include "librespot_stream.hpp"
 #include "pipe_stream.hpp"
-// #include "pipe_stream_old.hpp"
 #include "process_stream.hpp"
 #include "tcp_stream.hpp"
 
 
 using namespace std;
 
+namespace streamreader
+{
 
 StreamManager::StreamManager(PcmListener* pcmListener, boost::asio::io_context& ioc, const std::string& defaultSampleFormat, const std::string& defaultCodec,
                              size_t defaultChunkBufferMs)
@@ -64,10 +65,6 @@ PcmStreamPtr StreamManager::addStream(const std::string& uri)
     {
         stream = make_shared<PipeStream>(pcmListener_, ioc_, streamUri);
     }
-    // else if (streamUri.scheme == "pipe.old")
-    // {
-    //     stream = make_shared<PipeStreamOld>(pcmListener_, ioc_, streamUri);
-    // }
     else if (streamUri.scheme == "file")
     {
         stream = make_shared<FileStream>(pcmListener_, ioc_, streamUri);
@@ -95,7 +92,7 @@ PcmStreamPtr StreamManager::addStream(const std::string& uri)
 
     if (stream)
     {
-        for (auto s : streams_)
+        for (const auto& s : streams_)
         {
             if (s->getName() == stream->getName())
                 throw SnapException("Stream with name \"" + stream->getName() + "\" already exists");
@@ -165,3 +162,5 @@ json StreamManager::toJson() const
         result.push_back(stream->toJson());
     return result;
 }
+
+} // namespace streamreader

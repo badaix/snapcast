@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2019  Johannes Pohl
+    Copyright (C) 2014-2020  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -16,14 +16,16 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
-#include "watchdog.h"
+#include "watchdog.hpp"
 #include <chrono>
 
 
 using namespace std;
 
+namespace streamreader
+{
 
-Watchdog::Watchdog(WatchdogListener* listener) : listener_(listener), thread_(nullptr), active_(false)
+Watchdog::Watchdog(boost::asio::io_context& ioc, WatchdogListener* listener) : timer_(ioc), listener_(listener)
 {
 }
 
@@ -34,49 +36,29 @@ Watchdog::~Watchdog()
 }
 
 
-void Watchdog::start(size_t timeoutMs)
+void Watchdog::start(const std::chrono::milliseconds& timeout)
 {
-    timeoutMs_ = timeoutMs;
-    if (!thread_ || !active_)
-    {
-        active_ = true;
-        thread_.reset(new thread(&Watchdog::worker, this));
-    }
-    else
-        trigger();
+    timeout_ms_ = timeout;
+    trigger();
 }
 
 
 void Watchdog::stop()
 {
-    active_ = false;
-    trigger();
-    if (thread_ && thread_->joinable())
-        thread_->join();
-    thread_ = nullptr;
+    timer_.cancel();
 }
 
 
 void Watchdog::trigger()
 {
-    //	std::unique_lock<std::mutex> lck(mtx_);
-    cv_.notify_one();
-}
-
-
-void Watchdog::worker()
-{
-    while (active_)
-    {
-        std::unique_lock<std::mutex> lck(mtx_);
-        if (cv_.wait_for(lck, std::chrono::milliseconds(timeoutMs_)) == std::cv_status::timeout)
+    timer_.cancel();
+    timer_.expires_after(timeout_ms_);
+    timer_.async_wait([this](const boost::system::error_code& ec) {
+        if (!ec)
         {
-            if (listener_)
-            {
-                listener_->onTimeout(this, timeoutMs_);
-                break;
-            }
+            listener_->onTimeout(*this, timeout_ms_);
         }
-    }
-    active_ = false;
+    });
 }
+
+} // namespace streamreader

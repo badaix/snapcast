@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2019  Johannes Pohl
+    Copyright (C) 2014-2020  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -25,13 +25,21 @@
 
 using namespace std;
 
-static string hex2str(string input)
+namespace streamreader
+{
+
+static constexpr auto LOG_TAG = "AirplayStream";
+
+namespace
+{
+string hex2str(string input)
 {
     typedef unsigned char byte;
     unsigned long x = strtoul(input.c_str(), nullptr, 16);
     byte a[] = {byte(x >> 24), byte(x >> 16), byte(x >> 8), byte(x), 0};
     return string((char*)a);
 }
+} // namespace
 
 /*
  * Expat is used in metadata parsing from Shairport-sync.
@@ -115,7 +123,7 @@ void AirplayStream::push()
 
     if (entry_->type == "ssnc" && entry_->code == "mden")
     {
-        // LOG(INFO) << "metadata=" << jtag_.dump(4) << "\n";
+        // LOG(INFO, LOG_TAG) << "metadata=" << jtag_.dump(4) << "\n";
         setMeta(jtag_);
     }
 }
@@ -167,22 +175,21 @@ void AirplayStream::initExeAndPath(const string& filename)
 }
 
 
-void AirplayStream::onStderrMsg(const char* buffer, size_t n)
+void AirplayStream::onStderrMsg(const std::string& line)
 {
-    string logmsg = utils::string::trim_copy(string(buffer, n));
-    if (logmsg.empty())
+    if (line.empty())
         return;
-    LOG(INFO) << "(" << getName() << ") " << logmsg << "\n";
-    if (logmsg.find("Is another Shairport Sync running on this device") != string::npos)
+    LOG(INFO, LOG_TAG) << "(" << getName() << ") " << line << "\n";
+    if (line.find("Is another Shairport Sync running on this device") != string::npos)
     {
-        LOG(ERROR) << "Seem there is another Shairport Sync runnig on port " << port_ << ", switching to port " << port_ + 1 << "\n";
+        LOG(ERROR, LOG_TAG) << "Seem there is another Shairport Sync runnig on port " << port_ << ", switching to port " << port_ + 1 << "\n";
         ++port_;
         params_ = params_wo_port_ + " --port=" + cpt::to_string(port_);
     }
-    else if (logmsg.find("Invalid audio output specified") != string::npos)
+    else if (line.find("Invalid audio output specified") != string::npos)
     {
-        LOG(ERROR) << "shairport sync compiled without stdout audio backend\n";
-        LOG(ERROR) << "build with: \"./configure --with-stdout --with-avahi --with-ssl=openssl --with-metadata\"\n";
+        LOG(ERROR, LOG_TAG) << "shairport sync compiled without stdout audio backend\n";
+        LOG(ERROR, LOG_TAG) << "build with: \"./configure --with-stdout --with-avahi --with-ssl=openssl --with-metadata\"\n";
     }
 }
 
@@ -237,4 +244,7 @@ void XMLCALL AirplayStream::data(void* userdata, const char* content, int length
     string value(content, (size_t)length);
     self->buf_.append(value);
 }
+
 #endif
+
+} // namespace streamreader

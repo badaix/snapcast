@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2019  Johannes Pohl
+    Copyright (C) 2014-2020  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -29,6 +29,8 @@
 
 using namespace std;
 
+namespace streamreader
+{
 
 
 PcmStream::PcmStream(PcmListener* pcmListener, boost::asio::io_context& ioc, const StreamUri& uri)
@@ -96,28 +98,12 @@ void PcmStream::start()
     LOG(DEBUG) << "PcmStream start: " << sampleFormat_.getFormat() << "\n";
     encoder_->init(this, sampleFormat_);
     active_ = true;
-    thread_ = thread(&PcmStream::worker, this);
 }
 
 
 void PcmStream::stop()
 {
-    if (!active_ && !thread_.joinable())
-        return;
-
     active_ = false;
-    cv_.notify_one();
-    if (thread_.joinable())
-        thread_.join();
-}
-
-
-bool PcmStream::sleep(int32_t ms)
-{
-    if (ms < 0)
-        return true;
-    std::unique_lock<std::mutex> lck(mtx_);
-    return (!cv_.wait_for(lck, std::chrono::milliseconds(ms), [this] { return !active_; }));
 }
 
 
@@ -188,3 +174,5 @@ void PcmStream::setMeta(const json& jtag)
     if (pcmListener_)
         pcmListener_->onMetaChanged(this);
 }
+
+} // namespace streamreader

@@ -16,28 +16,35 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
-#ifndef FILE_STREAM_HPP
-#define FILE_STREAM_HPP
+#ifndef POSIX_STREAM_HPP
+#define POSIX_STREAM_HPP
 
-#include "posix_stream.hpp"
+#include "asio_stream.hpp"
 
 namespace streamreader
 {
 
-/// Reads and decodes PCM data from a file
+using boost::asio::posix::stream_descriptor;
+
+
+/// Reads and decodes PCM data from a file descriptor
 /**
- * Reads PCM from a file and passes the data to an encoder.
+ * Reads PCM from a file descriptor and passes the data to an encoder.
  * Implements EncoderListener to get the encoded data.
  * Data is passed to the PcmListener
  */
-class FileStream : public PosixStream
+class PosixStream : public AsioStream<stream_descriptor>
 {
 public:
     /// ctor. Encoded PCM data is passed to the PipeListener
-    FileStream(PcmListener* pcmListener, boost::asio::io_context& ioc, const StreamUri& uri);
+    PosixStream(PcmListener* pcmListener, boost::asio::io_context& ioc, const StreamUri& uri);
 
 protected:
-    void do_connect() override;
+    void connect() override;
+    void do_disconnect() override;
+    void do_read() override;
+    std::string lastException_;
+    size_t dryout_ms_;
 };
 
 } // namespace streamreader

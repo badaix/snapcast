@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2019  Johannes Pohl
+    Copyright (C) 2014-2020  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -16,8 +16,8 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
-#ifndef AIRPLAY_STREAM_H
-#define AIRPLAY_STREAM_H
+#ifndef AIRPLAY_STREAM_HPP
+#define AIRPLAY_STREAM_HPP
 
 #include "process_stream.hpp"
 
@@ -28,6 +28,9 @@
 #ifdef HAS_EXPAT
 #include <expat.h>
 #endif
+
+namespace streamreader
+{
 
 class TageEntry
 {
@@ -74,7 +77,7 @@ protected:
     void push();
 #endif
 
-    void onStderrMsg(const char* buffer, size_t n) override;
+    void onStderrMsg(const std::string& line) override;
     void initExeAndPath(const std::string& filename) override;
     size_t port_;
     std::string pipePath_;
@@ -88,5 +91,6 @@ protected:
 #endif
 };
 
+} // namespace streamreader
 
 #endif

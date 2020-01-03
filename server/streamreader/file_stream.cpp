@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2019  Johannes Pohl
+    Copyright (C) 2014-2020  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -28,85 +28,32 @@
 
 using namespace std;
 
-
-
-FileStream::FileStream(PcmListener* pcmListener, boost::asio::io_context& ioc, const StreamUri& uri) : PcmStream(pcmListener, ioc, uri)
+namespace streamreader
 {
-    ifs.open(uri_.path.c_str(), std::ifstream::in | std::ifstream::binary);
-    if (!ifs.good())
+
+static constexpr auto LOG_TAG = "FileStream";
+
+
+FileStream::FileStream(PcmListener* pcmListener, boost::asio::io_context& ioc, const StreamUri& uri) : PosixStream(pcmListener, ioc, uri)
+{
+    struct stat buffer;
+    if (stat(uri_.path.c_str(), &buffer) != 0)
     {
-        LOG(ERROR) << "failed to open PCM file: \"" + uri_.path + "\"\n";
-        throw SnapException("failed to open PCM file: \"" + uri_.path + "\"");
+        throw SnapException("Failed to open PCM file: \"" + uri_.path + "\"");
+    }
+    else if ((buffer.st_mode & S_IFMT) != S_IFREG)
+    {
+        throw SnapException("Not a regular file: \"" + uri_.path + "\"");
     }
 }
 
 
-FileStream::~FileStream()
+void FileStream::do_connect()
 {
-    ifs.close();
+    LOG(DEBUG, LOG_TAG) << "connect\n";
+    int fd = open(uri_.path.c_str(), O_RDONLY | O_NONBLOCK);
+    stream_ = std::make_unique<boost::asio::posix::stream_descriptor>(ioc_, fd);
+    on_connect();
 }
 
-
-void FileStream::worker()
-{
-    timeval tvChunk;
-    std::unique_ptr<msg::PcmChunk> chunk(new msg::PcmChunk(sampleFormat_, chunk_ms_));
-
-    ifs.seekg(0, ifs.end);
-    size_t length = ifs.tellg();
-    ifs.seekg(0, ifs.beg);
-
-    setState(ReaderState::kPlaying);
-
-    while (active_)
-    {
-        chronos::systemtimeofday(&tvChunk);
-        tvEncodedChunk_ = tvChunk;
-        long nextTick = chronos::getTickCount();
-        try
-        {
-            while (active_)
-            {
-                chunk->timestamp.sec = tvChunk.tv_sec;
-                chunk->timestamp.usec = tvChunk.tv_usec;
-                size_t toRead = chunk->payloadSize;
-                size_t count = 0;
-
-                size_t pos = ifs.tellg();
-                size_t left = length - pos;
-                if (left < toRead)
-                {
-                    ifs.read(chunk->payload, left);
-                    ifs.seekg(0, ifs.beg);
-                    count = left;
-                }
-                ifs.read(chunk->payload + count, toRead - count);
-
-                encoder_->encode(chunk.get());
-                if (!active_)
-                    break;
-                nextTick += chunk_ms_;
-                chronos::addUs(tvChunk, chunk_ms_ * 1000);
-                long currentTick = chronos::getTickCount();
-
-                if (nextTick >= currentTick)
-                {
-                    //					LOG(INFO) << "sleep: " << nextTick - currentTick << "\n";
-                    if (!sleep(nextTick - currentTick))
-                        break;
-                }
-                else
-                {
-                    chronos::systemtimeofday(&tvChunk);
-                    tvEncodedChunk_ = tvChunk;
-                    pcmListener_->onResync(this, currentTick - nextTick);
-                    nextTick = currentTick;
-                }
-            }
-        }
-        catch (const std::exception& e)
-        {
-            LOG(ERROR) << "(FileStream) Exception: " << e.what() << std::endl;
-        }
-    }
-}
+} // namespace streamreader

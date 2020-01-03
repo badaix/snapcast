@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2019  Johannes Pohl
+    Copyright (C) 2014-2020  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -16,15 +16,14 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
-#ifndef WATCH_DOG_H
-#define WATCH_DOG_H
+#ifndef WATCH_DOG_HPP
+#define WATCH_DOG_HPP
 
-#include <atomic>
-#include <condition_variable>
+#include <boost/asio.hpp>
 #include <memory>
-#include <mutex>
-#include <thread>
 
+namespace streamreader
+{
 
 class Watchdog;
 
@@ -32,7 +31,7 @@ class Watchdog;
 class WatchdogListener
 {
 public:
-    virtual void onTimeout(const Watchdog* watchdog, size_t ms) = 0;
+    virtual void onTimeout(const Watchdog& watchdog, std::chrono::milliseconds ms) = 0;
 };
 
 
@@ -40,23 +39,19 @@ public:
 class Watchdog
 {
 public:
-    Watchdog(WatchdogListener* listener = nullptr);
+    Watchdog(boost::asio::io_context& ioc, WatchdogListener* listener = nullptr);
     virtual ~Watchdog();
 
-    void start(size_t timeoutMs);
+    void start(const std::chrono::milliseconds& timeout);
     void stop();
     void trigger();
 
 private:
+    boost::asio::steady_timer timer_;
     WatchdogListener* listener_;
-    std::condition_variable cv_;
-    std::mutex mtx_;
-    std::unique_ptr<std::thread> thread_;
-    size_t timeoutMs_;
-    std::atomic<bool> active_;
-
-    void worker();
+    std::chrono::milliseconds timeout_ms_;
 };
 
+} // namespace streamreader
 
 #endif

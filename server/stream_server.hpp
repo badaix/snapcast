@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2019  Johannes Pohl
+    Copyright (C) 2014-2020  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -16,8 +16,8 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
-#ifndef STREAM_SERVER_H
-#define STREAM_SERVER_H
+#ifndef STREAM_SERVER_HPP
+#define STREAM_SERVER_HPP
 
 #include <boost/asio.hpp>
 #include <memory>
@@ -38,6 +38,7 @@
 #include "stream_session.hpp"
 #include "streamreader/stream_manager.hpp"
 
+using namespace streamreader;
 
 using boost::asio::ip::tcp;
 using acceptor_ptr = std::unique_ptr<tcp::acceptor>;

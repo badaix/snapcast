@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2019  Johannes Pohl
+    Copyright (C) 2014-2020  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -16,13 +16,15 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
-#ifndef TCP_STREAM_H
-#define TCP_STREAM_H
+#ifndef TCP_STREAM_HPP
+#define TCP_STREAM_HPP
 
 #include "asio_stream.hpp"
 
 using boost::asio::ip::tcp;
 
+namespace streamreader
+{
 
 /// Reads and decodes PCM data from a named pipe
 /**
@@ -37,8 +39,8 @@ public:
     TcpStream(PcmListener* pcmListener, boost::asio::io_context& ioc, const StreamUri& uri);
 
 protected:
-    void connect() override;
-    void disconnect() override;
+    void do_connect() override;
+    void do_disconnect() override;
     std::unique_ptr<tcp::acceptor> acceptor_;
     std::string host_;
     size_t port_;
@@ -46,5 +48,6 @@ protected:
     boost::asio::steady_timer reconnect_timer_;
 };
 
+} // namespace streamreader
 
 #endif

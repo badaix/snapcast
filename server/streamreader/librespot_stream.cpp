@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2019  Johannes Pohl
+    Copyright (C) 2014-2020  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -26,20 +26,26 @@
 
 using namespace std;
 
+namespace streamreader
+{
+
+static constexpr auto LOG_TAG = "LibrespotStream";
 
 
 LibrespotStream::LibrespotStream(PcmListener* pcmListener, boost::asio::io_context& ioc, const StreamUri& uri) : ProcessStream(pcmListener, ioc, uri)
 {
     sampleFormat_ = SampleFormat("44100:16:2");
     uri_.query["sampleformat"] = sampleFormat_.getFormat();
+    wd_timeout_sec_ = cpt::stoul(uri_.getQuery("wd_timeout", "7800")); ///< 130min
 
     string username = uri_.getQuery("username", "");
     string password = uri_.getQuery("password", "");
     string cache = uri_.getQuery("cache", "");
-    string volume = uri_.getQuery("volume", "");
+    string volume = uri_.getQuery("volume", "100");
     string bitrate = uri_.getQuery("bitrate", "320");
     string devicename = uri_.getQuery("devicename", "Snapcast");
     string onevent = uri_.getQuery("onevent", "");
+    bool normalize = (uri_.getQuery("normalize", "false") == "true");
 
     if (username.empty() != password.empty())
         throw SnapException("missing parameter \"username\" or \"password\" (must provide both, or neither)");
@@ -54,16 +60,16 @@ LibrespotStream::LibrespotStream(PcmListener* pcmListener, boost::asio::io_conte
         params_ += " --initial-volume \"" + volume + "\"";
     if (!onevent.empty())
         params_ += " --onevent \"" + onevent + "\"";
+    if (normalize)
+        params_ += " --enable-volume-normalisation";
+    params_ += " --verbose";
 
     if (uri_.query.find("username") != uri_.query.end())
         uri_.query["username"] = "xxx";
     if (uri_.query.find("password") != uri_.query.end())
         uri_.query["password"] = "xxx";
-    //	LOG(INFO) << "params: " << params << "\n";
+    //	LOG(INFO, LOG_TAG) << "params: " << params << "\n";
 }
-
-
-LibrespotStream::~LibrespotStream() = default;
 
 
 void LibrespotStream::initExeAndPath(const std::string& filename)
@@ -88,7 +94,7 @@ void LibrespotStream::initExeAndPath(const std::string& filename)
 }
 
 
-void LibrespotStream::onStderrMsg(const char* buffer, size_t n)
+void LibrespotStream::onStderrMsg(const std::string& line)
 {
     static bool libreelec_patched = false;
     smatch m;
@@ -113,13 +119,10 @@ void LibrespotStream::onStderrMsg(const char* buffer, size_t n)
     // 2016-11-03 09-00-18 [out] INFO:librespot::main_helper: librespot 6fa4e4d (2016-09-21). Built on 2016-10-27.
     // 2016-11-03 09-00-18 [out] INFO:librespot::session: Connecting to AP lon3-accesspoint-a34.ap.spotify.com:443
     // 2016-11-03 09-00-18 [out] INFO:librespot::session: Authenticated !
-    watchdog_->trigger();
-    string logmsg = utils::string::trim_copy(string(buffer, n));
 
-    if ((logmsg.find("allocated stream") == string::npos) && (logmsg.find("Got channel") == string::npos) && (logmsg.find('\0') == string::npos) &&
-        (logmsg.size() > 4))
+    if ((line.find("allocated stream") == string::npos) && (line.find("Got channel") == string::npos) && (line.find('\0') == string::npos) && (line.size() > 4))
     {
-        LOG(INFO) << "(" << getName() << ") " << logmsg << "\n";
+        LOG(INFO, LOG_TAG) << "(" << getName() << ") " << line << "\n";
     }
 
     // Librespot patch:
@@ -132,9 +135,9 @@ void LibrespotStream::onStderrMsg(const char* buffer, size_t n)
     if (!libreelec_patched)
     {
         static regex re_nonpatched("Track \"(.*)\" loaded");
-        if (regex_search(logmsg, m, re_nonpatched))
+        if (regex_search(line, m, re_nonpatched))
         {
-            LOG(INFO) << "metadata: <" << m[1] << ">\n";
+            LOG(INFO, LOG_TAG) << "metadata: <" << m[1] << ">\n";
 
             json jtag = {{"TITLE", (string)m[1]}};
             setMeta(jtag);
@@ -143,28 +146,13 @@ void LibrespotStream::onStderrMsg(const char* buffer, size_t n)
 
     // Parse the patched version
     static regex re_patched("metadata:(.*)");
-    if (regex_search(logmsg, m, re_patched))
+    if (regex_search(line, m, re_patched))
     {
-        LOG(INFO) << "metadata: <" << m[1] << ">\n";
+        LOG(INFO, LOG_TAG) << "metadata: <" << m[1] << ">\n";
 
         setMeta(json::parse(m[1].str()));
         libreelec_patched = true;
     }
 }
 
-
-void LibrespotStream::stderrReader()
-{
-    watchdog_.reset(new Watchdog(this));
-    /// 130min
-    watchdog_->start(130 * 60 * 1000);
-    ProcessStream::stderrReader();
-}
-
-
-void LibrespotStream::onTimeout(const Watchdog* /*watchdog*/, size_t ms)
-{
-    LOG(ERROR) << "Spotify timeout: " << ms / 1000 << "\n";
-    if (process_)
-        process_->kill();
-}
+} // namespace streamreader

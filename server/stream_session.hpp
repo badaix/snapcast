@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2019  Johannes Pohl
+    Copyright (C) 2014-2020  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -16,8 +16,8 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
-#ifndef STREAM_SESSION_H
-#define STREAM_SESSION_H
+#ifndef STREAM_SESSION_HPP
+#define STREAM_SESSION_HPP
 
 #include "common/queue.h"
 #include "message/message.hpp"
@@ -121,8 +121,8 @@ public:
         return socket_.remote_endpoint().address().to_string();
     }
 
-    void setPcmStream(PcmStreamPtr pcmStream);
-    const PcmStreamPtr pcmStream() const;
+    void setPcmStream(streamreader::PcmStreamPtr pcmStream);
+    const streamreader::PcmStreamPtr pcmStream() const;
 
 protected:
     void read_next();
@@ -134,7 +134,7 @@ protected:
     tcp::socket socket_;
     MessageReceiver* messageReceiver_;
     size_t bufferMs_;
-    PcmStreamPtr pcmStream_;
+    streamreader::PcmStreamPtr pcmStream_;
     boost::asio::io_context::strand strand_;
     std::deque<shared_const_buffer> messages_;
 };

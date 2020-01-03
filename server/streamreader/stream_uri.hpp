@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2019  Johannes Pohl
+    Copyright (C) 2014-2020  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -16,8 +16,8 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
-#ifndef READER_URI_H
-#define READER_URI_H
+#ifndef STREAM_URI_HPP
+#define STREAM_URI_HPP
 
 #include <map>
 #include <string>
@@ -27,6 +27,8 @@
 
 using json = nlohmann::json;
 
+namespace streamreader
+{
 
 // scheme:[//[user:password@]host[:port]][/]path[?query][#fragment]
 struct StreamUri
@@ -56,5 +58,6 @@ struct StreamUri
     std::string toString() const;
 };
 
+} // namespace streamreader
 
 #endif

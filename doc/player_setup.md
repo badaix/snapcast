@@ -159,7 +159,7 @@ Snapserver supports [librespot](https://github.com/librespot-org/librespot) with
 ### Process
 Snapserver can start any process and read PCM data from the stdout of the process: 
 
-Configure snapserver with `stream = process:///path/to/process?name=Process[&params=<--my list --of params>][&logStderr=false]`
+Configure snapserver with `stream = process:///path/to/process?name=Process[&params=<--my list --of params>][&log_stderr=false]`
 
 
 ### Line-in

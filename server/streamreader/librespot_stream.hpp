@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2019  Johannes Pohl
+    Copyright (C) 2014-2020  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -16,11 +16,13 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
-#ifndef SPOTIFY_STREAM_H
-#define SPOTIFY_STREAM_H
+#ifndef SPOTIFY_STREAM_HPP
+#define SPOTIFY_STREAM_HPP
 
 #include "process_stream.hpp"
-#include "watchdog.h"
+
+namespace streamreader
+{
 
 /// Starts librespot and reads PCM data from stdout
 /**
@@ -31,22 +33,17 @@
  *   snapserver -s "spotify:///librespot?name=Spotify&username=<my username>&password=<my password>[&devicename=Snapcast][&bitrate=320][&volume=<volume in
  * percent>][&cache=<cache dir>]"
  */
-class LibrespotStream : public ProcessStream, WatchdogListener
+class LibrespotStream : public ProcessStream
 {
 public:
     /// ctor. Encoded PCM data is passed to the PipeListener
     LibrespotStream(PcmListener* pcmListener, boost::asio::io_context& ioc, const StreamUri& uri);
-    ~LibrespotStream() override;
 
 protected:
-    std::unique_ptr<Watchdog> watchdog_;
-
-    void stderrReader() override;
-    void onStderrMsg(const char* buffer, size_t n) override;
+    void onStderrMsg(const std::string& line) override;
     void initExeAndPath(const std::string& filename) override;
-
-    void onTimeout(const Watchdog* watchdog, size_t ms) override;
 };
 
+} // namespace streamreader
 
 #endif

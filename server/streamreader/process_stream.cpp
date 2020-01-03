@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2019  Johannes Pohl
+    Copyright (C) 2014-2020  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -29,25 +29,19 @@
 
 using namespace std;
 
+namespace streamreader
+{
+
+static constexpr auto LOG_TAG = "ProcessStream";
 
 
 ProcessStream::ProcessStream(PcmListener* pcmListener, boost::asio::io_context& ioc, const StreamUri& uri)
-    : PcmStream(pcmListener, ioc, uri), path_(""), process_(nullptr)
+    : PosixStream(pcmListener, ioc, uri), path_(""), process_(nullptr)
 {
     params_ = uri_.getQuery("params");
-    logStderr_ = (uri_.getQuery("logStderr", "false") == "true");
-
-    if (uri_.query.find("dryout_ms") != uri_.query.end())
-        dryoutMs_ = cpt::stoul(uri_.query["dryout_ms"]);
-    else
-        dryoutMs_ = 2000;
-}
-
-
-ProcessStream::~ProcessStream()
-{
-    if (process_)
-        process_->kill();
+    wd_timeout_sec_ = cpt::stoul(uri_.getQuery("wd_timeout", "0"));
+    LOG(DEBUG, LOG_TAG) << "Watchdog timeout: " << wd_timeout_sec_ << "\n";
+    logStderr_ = (uri_.getQuery("log_stderr", "false") == "true");
 }
 
 
@@ -103,140 +97,81 @@ void ProcessStream::initExeAndPath(const std::string& filename)
 }
 
 
-void ProcessStream::start()
+void ProcessStream::do_connect()
 {
+    if (!active_)
+        return;
     initExeAndPath(uri_.path);
-    PcmStream::start();
+    LOG(DEBUG, LOG_TAG) << "Launching: '" << path_ + exe_ << "', with params: '" << params_ << "', in path: '" << path_ << "'\n";
+    process_.reset(new Process(path_ + exe_ + " " + params_, path_));
+    int flags = fcntl(process_->getStdout(), F_GETFL, 0);
+    fcntl(process_->getStdout(), F_SETFL, flags | O_NONBLOCK);
+    stream_ = make_unique<stream_descriptor>(ioc_, process_->getStdout());
+    stream_stderr_ = make_unique<stream_descriptor>(ioc_, process_->getStderr());
+    on_connect();
+    if (wd_timeout_sec_ > 0)
+    {
+        watchdog_ = make_unique<Watchdog>(ioc_, this);
+        watchdog_->start(std::chrono::seconds(wd_timeout_sec_));
+    }
+    else
+    {
+        watchdog_ = nullptr;
+    }
+    stderrReadLine();
 }
 
 
-void ProcessStream::stop()
+void ProcessStream::do_disconnect()
 {
     if (process_)
         process_->kill();
-    PcmStream::stop();
-
-    /// thread is detached, so it is not joinable
-    if (stderrReaderThread_.joinable())
-        stderrReaderThread_.join();
 }
 
 
-void ProcessStream::onStderrMsg(const char* buffer, size_t n)
+void ProcessStream::onStderrMsg(const std::string& line)
 {
     if (logStderr_)
     {
-        string line = utils::string::trim_copy(string(buffer, n));
-        if ((line.find('\0') == string::npos) && !line.empty())
-            LOG(INFO) << "(" << getName() << ") " << line << "\n";
+        LOG(INFO, LOG_TAG) << "(" << getName() << ") " << line << "\n";
     }
 }
 
 
-void ProcessStream::stderrReader()
+void ProcessStream::stderrReadLine()
 {
-    size_t buffer_size = 8192;
-    auto buffer = std::unique_ptr<char[]>(new char[buffer_size]);
-    ssize_t n;
-    stringstream message;
-    while (active_ && (n = read(process_->getStderr(), buffer.get(), buffer_size)) > 0)
-        onStderrMsg(buffer.get(), n);
+    const std::string delimiter = "\n";
+    auto self(shared_from_this());
+    boost::asio::async_read_until(
+        *stream_stderr_, streambuf_stderr_, delimiter, [this, self, delimiter](const std::error_code& ec, std::size_t bytes_transferred) {
+            if (ec)
+            {
+                LOG(ERROR, LOG_TAG) << "Error while reading from control socket: " << ec.message() << "\n";
+                return;
+            }
+
+            if (watchdog_)
+                watchdog_->trigger();
+
+            // Extract up to the first delimiter.
+            std::string line{buffers_begin(streambuf_stderr_.data()), buffers_begin(streambuf_stderr_.data()) + bytes_transferred - delimiter.length()};
+            if (!line.empty())
+            {
+                if (line.back() == '\r')
+                    line.resize(line.size() - 1);
+                onStderrMsg(line);
+            }
+            streambuf_stderr_.consume(bytes_transferred);
+            stderrReadLine();
+        });
 }
 
 
-void ProcessStream::worker()
+void ProcessStream::onTimeout(const Watchdog& /*watchdog*/, std::chrono::milliseconds ms)
 {
-    timeval tvChunk;
-    std::unique_ptr<msg::PcmChunk> chunk(new msg::PcmChunk(sampleFormat_, chunk_ms_));
-    setState(ReaderState::kPlaying);
-    string lastException = "";
-
-    while (active_)
-    {
-        process_.reset(new Process(path_ + exe_ + " " + params_, path_));
-        int flags = fcntl(process_->getStdout(), F_GETFL, 0);
-        fcntl(process_->getStdout(), F_SETFL, flags | O_NONBLOCK);
-
-        stderrReaderThread_ = thread(&ProcessStream::stderrReader, this);
-        stderrReaderThread_.detach();
-
-        chronos::systemtimeofday(&tvChunk);
-        tvEncodedChunk_ = tvChunk;
-        long nextTick = chronos::getTickCount();
-        int idleBytes = 0;
-        int maxIdleBytes = sampleFormat_.rate * sampleFormat_.frameSize * dryoutMs_ / 1000;
-        try
-        {
-            while (active_)
-            {
-                chunk->timestamp.sec = tvChunk.tv_sec;
-                chunk->timestamp.usec = tvChunk.tv_usec;
-                int toRead = chunk->payloadSize;
-                int len = 0;
-                do
-                {
-                    int count = read(process_->getStdout(), chunk->payload + len, toRead - len);
-                    if (count < 0 && idleBytes < maxIdleBytes)
-                    {
-                        memset(chunk->payload + len, 0, toRead - len);
-                        idleBytes += toRead - len;
-                        len += toRead - len;
-                        continue;
-                    }
-                    if (count < 0)
-                    {
-                        setState(ReaderState::kIdle);
-                        if (!sleep(100))
-                            break;
-                    }
-                    else if (count == 0)
-                        throw SnapException("end of file");
-                    else
-                    {
-                        len += count;
-                        idleBytes = 0;
-                    }
-                } while ((len < toRead) && active_);
-
-                if (!active_)
-                    break;
-
-                encoder_->encode(chunk.get());
-
-                if (!active_)
-                    break;
-
-                nextTick += chunk_ms_;
-                chronos::addUs(tvChunk, chunk_ms_ * 1000);
-                long currentTick = chronos::getTickCount();
-
-                if (nextTick >= currentTick)
-                {
-                    setState(ReaderState::kPlaying);
-                    if (!sleep(nextTick - currentTick))
-                        break;
-                }
-                else
-                {
-                    chronos::systemtimeofday(&tvChunk);
-                    tvEncodedChunk_ = tvChunk;
-                    pcmListener_->onResync(this, currentTick - nextTick);
-                    nextTick = currentTick;
-                }
-
-                lastException = "";
-            }
-        }
-        catch (const std::exception& e)
-        {
-            if (lastException != e.what())
-            {
-                LOG(ERROR) << "(PipeStream) Exception: " << e.what() << std::endl;
-                lastException = e.what();
-            }
-            process_->kill();
-            if (!sleep(30000))
-                break;
-        }
-    }
+    LOG(ERROR, LOG_TAG) << "Watchdog timeout: " << ms.count() / 1000 << "s\n";
+    if (process_)
+        process_->kill();
 }
+
+} // namespace streamreader

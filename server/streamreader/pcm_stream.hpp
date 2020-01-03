@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2019  Johannes Pohl
+    Copyright (C) 2014-2020  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -16,8 +16,8 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
-#ifndef PCM_STREAM_H
-#define PCM_STREAM_H
+#ifndef PCM_STREAM_HPP
+#define PCM_STREAM_HPP
 
 #include "common/json.hpp"
 #include "common/sample_format.hpp"
@@ -33,6 +33,9 @@
 #include <string>
 #include <thread>
 
+
+namespace streamreader
+{
 
 class PcmStream;
 
@@ -98,13 +101,8 @@ public:
 
 
 protected:
-    std::condition_variable cv_;
-    std::mutex mtx_;
-    std::thread thread_;
     std::atomic<bool> active_;
 
-    virtual void worker(){};
-    virtual bool sleep(int32_t ms);
     void setState(const ReaderState& newState);
 
     timeval tvEncodedChunk_;
@@ -119,5 +117,6 @@ protected:
     boost::asio::io_context& ioc_;
 };
 
+} // namespace streamreader
 
 #endif

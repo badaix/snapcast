@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2019  Johannes Pohl
+    Copyright (C) 2014-2020  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -23,6 +23,10 @@
 #include <iostream>
 
 using namespace std;
+using namespace streamreader;
+
+
+static constexpr auto LOG_TAG = "StreamSession";
 
 
 StreamSession::StreamSession(boost::asio::io_context& ioc, MessageReceiver* receiver, tcp::socket&& socket)
@@ -48,7 +52,7 @@ void StreamSession::read_next()
     }
     catch (const std::bad_weak_ptr& e)
     {
-        LOG(ERROR) << "read_next: Error getting shared from this\n";
+        LOG(ERROR, LOG_TAG) << "read_next: Error getting shared from this\n";
         return;
     }
 
@@ -56,23 +60,23 @@ void StreamSession::read_next()
                             boost::asio::bind_executor(strand_, [this, self](boost::system::error_code ec, std::size_t length) mutable {
                                 if (ec)
                                 {
-                                    LOG(ERROR) << "Error reading message header of length " << length << ": " << ec.message() << "\n";
+                                    LOG(ERROR, LOG_TAG) << "Error reading message header of length " << length << ": " << ec.message() << "\n";
                                     messageReceiver_->onDisconnect(this);
                                     return;
                                 }
 
                                 baseMessage_.deserialize(buffer_.data());
-                                LOG(DEBUG) << "getNextMessage: " << baseMessage_.type << ", size: " << baseMessage_.size << ", id: " << baseMessage_.id
-                                           << ", refers: " << baseMessage_.refersTo << "\n";
+                                LOG(DEBUG, LOG_TAG) << "getNextMessage: " << baseMessage_.type << ", size: " << baseMessage_.size << ", id: " << baseMessage_.id
+                                                    << ", refers: " << baseMessage_.refersTo << "\n";
                                 if (baseMessage_.type > message_type::kLast)
                                 {
-                                    LOG(ERROR) << "unknown message type received: " << baseMessage_.type << ", size: " << baseMessage_.size << "\n";
+                                    LOG(ERROR, LOG_TAG) << "unknown message type received: " << baseMessage_.type << ", size: " << baseMessage_.size << "\n";
                                     messageReceiver_->onDisconnect(this);
                                     return;
                                 }
                                 else if (baseMessage_.size > msg::max_size)
                                 {
-                                    LOG(ERROR) << "received message of type " << baseMessage_.type << " to large: " << baseMessage_.size << "\n";
+                                    LOG(ERROR, LOG_TAG) << "received message of type " << baseMessage_.type << " to large: " << baseMessage_.size << "\n";
                                     messageReceiver_->onDisconnect(this);
                                     return;
                                 }
@@ -85,7 +89,7 @@ void StreamSession::read_next()
                                     boost::asio::bind_executor(strand_, [this, self](boost::system::error_code ec, std::size_t length) mutable {
                                         if (ec)
                                         {
-                                            LOG(ERROR) << "Error reading message body of length " << length << ": " << ec.message() << "\n";
+                                            LOG(ERROR, LOG_TAG) << "Error reading message body of length " << length << ": " << ec.message() << "\n";
                                             messageReceiver_->onDisconnect(this);
                                             return;
                                         }
@@ -121,15 +125,15 @@ void StreamSession::start()
 
 void StreamSession::stop()
 {
-    LOG(DEBUG) << "StreamSession::stop\n";
+    LOG(DEBUG, LOG_TAG) << "StreamSession::stop\n";
     boost::system::error_code ec;
     socket_.shutdown(boost::asio::ip::tcp::socket::shutdown_both, ec);
     if (ec)
-        LOG(ERROR) << "Error in socket shutdown: " << ec.message() << "\n";
+        LOG(ERROR, LOG_TAG) << "Error in socket shutdown: " << ec.message() << "\n";
     socket_.close(ec);
     if (ec)
-        LOG(ERROR) << "Error in socket close: " << ec.message() << "\n";
-    LOG(DEBUG) << "StreamSession stopped\n";
+        LOG(ERROR, LOG_TAG) << "Error in socket close: " << ec.message() << "\n";
+    LOG(DEBUG, LOG_TAG) << "StreamSession stopped\n";
 }
 
 
@@ -142,7 +146,7 @@ void StreamSession::send_next()
     }
     catch (const std::bad_weak_ptr& e)
     {
-        LOG(ERROR) << "send_next: Error getting shared from this\n";
+        LOG(ERROR, LOG_TAG) << "send_next: Error getting shared from this\n";
         return;
     }
 
@@ -152,7 +156,7 @@ void StreamSession::send_next()
                                  messages_.pop_front();
                                  if (ec)
                                  {
-                                     LOG(ERROR) << "StreamSession write error (msg lenght: " << length << "): " << ec.message() << "\n";
+                                     LOG(ERROR, LOG_TAG) << "StreamSession write error (msg lenght: " << length << "): " << ec.message() << "\n";
                                      messageReceiver_->onDisconnect(this);
                                      return;
                                  }
@@ -172,7 +176,7 @@ void StreamSession::sendAsync(shared_const_buffer const_buf, bool send_now)
             messages_.push_back(const_buf);
         if (messages_.size() > 1)
         {
-            LOG(DEBUG) << "outstanding async_write\n";
+            LOG(DEBUG, LOG_TAG) << "outstanding async_write\n";
             return;
         }
         send_next();

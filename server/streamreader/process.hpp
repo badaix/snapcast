@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2019  Johannes Pohl
+    Copyright (C) 2014-2020  Johannes Pohl
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
     the Free Software Foundation, either version 3 of the License, or
@@ -26,6 +26,9 @@
 // Forked from: https://github.com/eidheim/tiny-process-library
 // Copyright (c) 2015-2016 Ole Christian Eidheim
 // Thanks, Christian :-)
+
+namespace streamreader
+{
 
 /// Create a new process given command and run path.
 /// Thus, at the moment, if read_stdout==nullptr, read_stderr==nullptr and open_stdin==false,
@@ -238,5 +241,7 @@ private:
         }
     }
 };
+
+} // namespace streamreader
 
 #endif // TINY_PROCESS_LIBRARY_HPP_
