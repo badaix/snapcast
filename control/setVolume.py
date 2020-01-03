@@ -2,8 +2,6 @@
 import sys
 import telnetlib
 import json
-import threading
-import time
 
 telnet = telnetlib.Telnet(sys.argv[1], 1705)
 requestId = 1
