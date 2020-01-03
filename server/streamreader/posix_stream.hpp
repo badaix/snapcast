@@ -45,6 +45,8 @@ protected:
     void do_read() override;
     std::string lastException_;
     size_t dryout_ms_;
+    int idle_bytes_;
+    int max_idle_bytes_;
 };
 
 } // namespace streamreader

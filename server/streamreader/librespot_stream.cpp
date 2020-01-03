@@ -36,6 +36,10 @@ LibrespotStream::LibrespotStream(PcmListener* pcmListener, boost::asio::io_conte
 {
     sampleFormat_ = SampleFormat("44100:16:2");
     uri_.query["sampleformat"] = sampleFormat_.getFormat();
+    // chunk is created in PcmStream ctor, using the (possibly wrongly) configured sample format
+    // we have to recreate it using spotify's native sample format
+    chunk_ = std::make_unique<msg::PcmChunk>(sampleFormat_, chunk_ms_);
+
     wd_timeout_sec_ = cpt::stoul(uri_.getQuery("wd_timeout", "7800")); ///< 130min
 
     string username = uri_.getQuery("username", "");

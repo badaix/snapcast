@@ -50,6 +50,9 @@ void PosixStream::connect()
     if (!active_)
         return;
 
+    idle_bytes_ = 0;
+    max_idle_bytes_ = sampleFormat_.rate * sampleFormat_.frameSize * dryout_ms_ / 1000;
+
     try
     {
         do_connect();
@@ -92,14 +95,33 @@ void PosixStream::do_read()
         do
         {
             int count = read(stream_->native_handle(), chunk_->payload + len, toRead - len);
-            if (count < 0)
+            if (count < 0 && idle_bytes_ < max_idle_bytes_)
             {
+                // nothing to read for a longer time now, set the chunk to silent
                 LOG(DEBUG, LOG_TAG) << "count < 0: " << errno
                                     << " && idleBytes < maxIdleBytes, ms: " << 1000 * chunk_->payloadSize / (sampleFormat_.rate * sampleFormat_.frameSize)
                                     << "\n";
                 memset(chunk_->payload + len, 0, toRead - len);
+                idle_bytes_ += toRead - len;
                 len += toRead - len;
                 break;
+            }
+            else if (count < 0)
+            {
+                // nothing to read, try again (chunk_ms_ / 2) later
+                auto self = this->shared_from_this();
+                read_timer_.expires_after(std::chrono::milliseconds(chunk_ms_ / 2));
+                read_timer_.async_wait([self, this](const boost::system::error_code& ec) {
+                    if (ec)
+                    {
+                        LOG(ERROR, LOG_TAG) << "Error during async wait: " << ec.message() << "\n";
+                    }
+                    else
+                    {
+                        do_read();
+                    }
+                });
+                return;
             }
             else if (count == 0)
             {
@@ -110,6 +132,7 @@ void PosixStream::do_read()
                 // LOG(DEBUG) << "count: " << count << "\n";
                 len += count;
                 bytes_read_ += len;
+                idle_bytes_ = 0;
             }
         } while (len < toRead);
 
@@ -125,6 +148,7 @@ void PosixStream::do_read()
 
         if (nextTick_ >= currentTick)
         {
+            // synchronize reads to an interval of chunk_ms_
             auto self = this->shared_from_this();
             read_timer_.expires_after(std::chrono::milliseconds(nextTick_ - currentTick));
             read_timer_.async_wait([self, this](const boost::system::error_code& ec) {
@@ -141,6 +165,7 @@ void PosixStream::do_read()
         }
         else
         {
+            // reading chunk_ms_ took longer than chunk_ms_
             pcmListener_->onResync(this, currentTick - nextTick_);
             nextTick_ = currentTick + buffer_ms_;
             first_ = true;
