@@ -70,19 +70,23 @@ protected:
     std::string buf_;
     json jtag_;
 
-    void pipeReader();
+    void pipeReadLine();
 #ifdef HAS_EXPAT
     int parse(std::string line);
     void createParser();
     void push();
 #endif
 
+    void do_connect() override;
     void onStderrMsg(const std::string& line) override;
     void initExeAndPath(const std::string& filename) override;
+
     size_t port_;
     std::string pipePath_;
     std::string params_wo_port_;
-    std::thread pipeReaderThread_;
+    std::unique_ptr<boost::asio::posix::stream_descriptor> pipe_fd_;
+    boost::asio::steady_timer pipe_open_timer_;
+    boost::asio::streambuf streambuf_pipe_;
 
 #ifdef HAS_EXPAT
     static void XMLCALL element_start(void* userdata, const char* element_name, const char** attr);
