@@ -61,7 +61,7 @@ LibrespotStream::LibrespotStream(PcmListener* pcmListener, boost::asio::io_conte
     if (!cache.empty())
         params_ += " --cache \"" + cache + "\"";
     if (!volume.empty())
-        params_ += " --initial-volume \"" + volume + "\"";
+        params_ += " --initial-volume " + volume;
     if (!onevent.empty())
         params_ += " --onevent \"" + onevent + "\"";
     if (normalize)

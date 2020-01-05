@@ -170,7 +170,7 @@ void AirplayStream::pipeReadLine()
     boost::asio::async_read_until(*pipe_fd_, streambuf_pipe_, delimiter, [this, self, delimiter](const std::error_code& ec, std::size_t bytes_transferred) {
         if (ec)
         {
-            LOG(ERROR, LOG_TAG) << "Error while reading from control socket: " << ec.message() << "\n";
+            LOG(ERROR, LOG_TAG) << "Error while reading from pipe: " << ec.message() << "\n";
             return;
         }
 

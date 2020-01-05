@@ -68,7 +68,7 @@ void AsioStream<ReadStream>::wait(Timer& timer, const std::chrono::duration<Rep,
 {
     auto self = this->shared_from_this();
     timer.expires_after(duration);
-    timer.async_wait([self, handler = std::move(handler)](const boost::system::error_code& ec) {
+    timer.async_wait([ self, handler = std::move(handler) ](const boost::system::error_code& ec) {
         if (ec)
         {
             LOG(ERROR, "AsioStream") << "Error during async wait: " << ec.message() << "\n";
