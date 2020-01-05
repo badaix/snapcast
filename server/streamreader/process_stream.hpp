@@ -54,12 +54,11 @@ protected:
     std::string path_;
     std::string params_;
     bp::pipe pipe_stdout_;
-    bp::pipe pipe_stderr_;
+    bp::async_pipe pipe_stderr_;
     bp::child process_;
 
     bool logStderr_;
     boost::asio::streambuf streambuf_stderr_;
-    std::unique_ptr<stream_descriptor> stream_stderr_;
 
     // void worker() override;
     virtual void stderrReadLine();
