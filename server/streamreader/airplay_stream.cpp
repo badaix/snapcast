@@ -160,18 +160,7 @@ void AirplayStream::pipeReadLine()
         {
             LOG(ERROR, LOG_TAG) << "Error opening pipe: " << e.what() << "\n";
             pipe_fd_ = nullptr;
-            auto self = this->shared_from_this();
-            pipe_open_timer_.expires_after(std::chrono::milliseconds(500));
-            pipe_open_timer_.async_wait([self, this](const boost::system::error_code& ec) {
-                if (ec)
-                {
-                    LOG(ERROR, LOG_TAG) << "Error during async wait: " << ec.message() << "\n";
-                }
-                else
-                {
-                    pipeReadLine();
-                }
-            });
+            wait(pipe_open_timer_, 500ms, [this] { pipeReadLine(); });
             return;
         }
     }

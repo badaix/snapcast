@@ -31,7 +31,6 @@
 #include <map>
 #include <mutex>
 #include <string>
-#include <thread>
 
 
 namespace streamreader

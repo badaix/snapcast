@@ -98,11 +98,7 @@ void TcpStream::do_connect()
             else
             {
                 LOG(DEBUG) << "Connect failed: " << ec.message() << "\n";
-                reconnect_timer_.expires_after(std::chrono::milliseconds(1000));
-                reconnect_timer_.async_wait([self, this](const boost::system::error_code& ec) {
-                    if (!ec)
-                        connect();
-                });
+                wait(reconnect_timer_, 1s, [this] { connect(); });
             }
         });
     }
@@ -117,4 +113,4 @@ void TcpStream::do_disconnect()
         acceptor_->cancel();
     reconnect_timer_.cancel();
 }
-}
+} // namespace streamreader

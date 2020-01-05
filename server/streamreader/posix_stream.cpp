@@ -29,6 +29,7 @@
 
 
 using namespace std;
+using namespace std::chrono_literals;
 
 namespace streamreader
 {
@@ -60,18 +61,7 @@ void PosixStream::connect()
     catch (const std::exception& e)
     {
         LOG(ERROR, LOG_TAG) << "Connect exception: " << e.what() << "\n";
-        auto self = this->shared_from_this();
-        read_timer_.expires_after(std::chrono::milliseconds(100));
-        read_timer_.async_wait([self, this](const boost::system::error_code& ec) {
-            if (ec)
-            {
-                LOG(ERROR, LOG_TAG) << "Error during async wait: " << ec.message() << "\n";
-            }
-            else
-            {
-                connect();
-            }
-        });
+        wait(read_timer_, 100ms, [this] { connect(); });
     }
 }
 
@@ -109,18 +99,7 @@ void PosixStream::do_read()
             else if (count < 0)
             {
                 // nothing to read, try again (chunk_ms_ / 2) later
-                auto self = this->shared_from_this();
-                read_timer_.expires_after(std::chrono::milliseconds(chunk_ms_ / 2));
-                read_timer_.async_wait([self, this](const boost::system::error_code& ec) {
-                    if (ec)
-                    {
-                        LOG(ERROR, LOG_TAG) << "Error during async wait: " << ec.message() << "\n";
-                    }
-                    else
-                    {
-                        do_read();
-                    }
-                });
+                wait(read_timer_, std::chrono::milliseconds(chunk_ms_ / 2), [this] { do_read(); });
                 return;
             }
             else if (count == 0)
@@ -149,18 +128,7 @@ void PosixStream::do_read()
         if (nextTick_ >= currentTick)
         {
             // synchronize reads to an interval of chunk_ms_
-            auto self = this->shared_from_this();
-            read_timer_.expires_after(std::chrono::milliseconds(nextTick_ - currentTick));
-            read_timer_.async_wait([self, this](const boost::system::error_code& ec) {
-                if (ec)
-                {
-                    LOG(ERROR, LOG_TAG) << "Error during async wait: " << ec.message() << "\n";
-                }
-                else
-                {
-                    do_read();
-                }
-            });
+            wait(read_timer_, std::chrono::milliseconds(nextTick_ - currentTick), [this] { do_read(); });
             return;
         }
         else
@@ -182,7 +150,7 @@ void PosixStream::do_read()
             lastException_ = e.what();
         }
         disconnect();
-        connect();
+        wait(read_timer_, 100ms, [this] { connect(); });
     }
 }
 

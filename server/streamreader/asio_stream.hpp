@@ -47,6 +47,9 @@ protected:
     virtual void do_read();
     void check_state();
 
+    template <typename Timer, typename Rep, typename Period>
+    void wait(Timer& timer, const std::chrono::duration<Rep, Period>& duration, std::function<void()> handler);
+
     std::unique_ptr<msg::PcmChunk> chunk_;
     timeval tv_chunk_;
     bool first_;
@@ -58,6 +61,24 @@ protected:
     std::atomic<std::uint64_t> bytes_read_;
 };
 
+
+template <typename ReadStream>
+template <typename Timer, typename Rep, typename Period>
+void AsioStream<ReadStream>::wait(Timer& timer, const std::chrono::duration<Rep, Period>& duration, std::function<void()> handler)
+{
+    auto self = this->shared_from_this();
+    timer.expires_after(duration);
+    timer.async_wait([self, handler = std::move(handler)](const boost::system::error_code& ec) {
+        if (ec)
+        {
+            LOG(ERROR, "AsioStream") << "Error during async wait: " << ec.message() << "\n";
+        }
+        else
+        {
+            handler();
+        }
+    });
+}
 
 
 template <typename ReadStream>
@@ -82,18 +103,13 @@ template <typename ReadStream>
 void AsioStream<ReadStream>::check_state()
 {
     uint64_t last_read = bytes_read_;
-    auto self = this->shared_from_this();
-    state_timer_.expires_after(std::chrono::milliseconds(500 + chunk_ms_));
-    state_timer_.async_wait([self, this, last_read](const boost::system::error_code& ec) {
-        if (!ec)
-        {
-            LOG(DEBUG, "AsioStream") << "check state last: " << last_read << ", read: " << bytes_read_ << "\n";
-            if (bytes_read_ != last_read)
-                setState(ReaderState::kPlaying);
-            else
-                setState(ReaderState::kIdle);
-            check_state();
-        }
+    wait(state_timer_, std::chrono::milliseconds(500 + chunk_ms_), [this, last_read] {
+        LOG(DEBUG, "AsioStream") << "check state last: " << last_read << ", read: " << bytes_read_ << "\n";
+        if (bytes_read_ != last_read)
+            setState(ReaderState::kPlaying);
+        else
+            setState(ReaderState::kIdle);
+        check_state();
     });
 }
 
