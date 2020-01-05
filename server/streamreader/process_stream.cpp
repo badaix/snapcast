@@ -35,8 +35,7 @@ namespace streamreader
 static constexpr auto LOG_TAG = "ProcessStream";
 
 
-ProcessStream::ProcessStream(PcmListener* pcmListener, boost::asio::io_context& ioc, const StreamUri& uri)
-    : PosixStream(pcmListener, ioc, uri), pipe_stderr_(ioc)
+ProcessStream::ProcessStream(PcmListener* pcmListener, boost::asio::io_context& ioc, const StreamUri& uri) : PosixStream(pcmListener, ioc, uri)
 {
     params_ = uri_.getQuery("params");
     wd_timeout_sec_ = cpt::stoul(uri_.getQuery("wd_timeout", "0"));
@@ -105,13 +104,16 @@ void ProcessStream::do_connect()
     LOG(DEBUG, LOG_TAG) << "Launching: '" << path_ + exe_ << "', with params: '" << params_ << "', in path: '" << path_ << "'\n";
 
     pipe_stdout_ = bp::pipe();
-    pipe_stderr_ = bp::async_pipe(ioc_);
+    // could use bp::async_pipe, but this is broken in boost 1.72:
+    // https://github.com/boostorg/process/issues/116
+    pipe_stderr_ = bp::pipe();
     // stdout pipe should not block
     int flags = fcntl(pipe_stdout_.native_source(), F_GETFL, 0);
     fcntl(pipe_stdout_.native_source(), F_SETFL, flags | O_NONBLOCK);
 
     process_ = bp::child(path_ + exe_ + " " + params_, bp::std_out > pipe_stdout_, bp::std_err > pipe_stderr_, bp::start_dir = path_);
     stream_ = make_unique<stream_descriptor>(ioc_, pipe_stdout_.native_source());
+    stream_stderr_ = make_unique<stream_descriptor>(ioc_, pipe_stderr_.native_source());
     on_connect();
     if (wd_timeout_sec_ > 0)
     {
@@ -147,7 +149,7 @@ void ProcessStream::stderrReadLine()
     const std::string delimiter = "\n";
     auto self(shared_from_this());
     boost::asio::async_read_until(
-        pipe_stderr_, streambuf_stderr_, delimiter, [this, self, delimiter](const std::error_code& ec, std::size_t bytes_transferred) {
+        *stream_stderr_, streambuf_stderr_, delimiter, [this, self, delimiter](const std::error_code& ec, std::size_t bytes_transferred) {
             if (ec)
             {
                 LOG(ERROR, LOG_TAG) << "Error while reading from stderr: " << ec.message() << "\n";
