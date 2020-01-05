@@ -23,8 +23,6 @@
 #include <memory>
 #include <mutex>
 #include <set>
-#include <sstream>
-#include <thread>
 #include <vector>
 
 #include "common/queue.h"

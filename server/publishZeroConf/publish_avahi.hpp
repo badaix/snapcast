@@ -30,7 +30,6 @@
 #include <avahi-common/simple-watch.h>
 #include <avahi-common/timeval.h>
 #include <string>
-#include <thread>
 #include <vector>
 
 class PublishAvahi;

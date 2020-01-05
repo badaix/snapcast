@@ -29,7 +29,6 @@
 #include <mutex>
 #include <set>
 #include <string>
-#include <thread>
 
 using boost::asio::ip::tcp;
 
