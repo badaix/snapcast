@@ -799,10 +799,11 @@ void StreamServer::start()
 {
     try
     {
-        controlServer_.reset(new ControlServer(io_context_, settings_.tcp, settings_.http, this));
+        controlServer_ = std::make_unique<ControlServer>(io_context_, settings_.tcp, settings_.http, this);
         controlServer_->start();
 
-        streamManager_.reset(new StreamManager(this, io_context_, settings_.stream.sampleFormat, settings_.stream.codec, settings_.stream.streamChunkMs));
+        streamManager_ =
+            std::make_unique<StreamManager>(this, io_context_, settings_.stream.sampleFormat, settings_.stream.codec, settings_.stream.streamChunkMs);
         //	throw SnapException("xxx");
         for (const auto& streamUri : settings_.stream.pcmStreams)
         {

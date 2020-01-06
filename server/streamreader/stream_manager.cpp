@@ -143,15 +143,16 @@ const PcmStreamPtr StreamManager::getStream(const std::string& id)
 
 void StreamManager::start()
 {
-    for (auto stream : streams_)
+    for (const auto& stream : streams_)
         stream->start();
 }
 
 
 void StreamManager::stop()
 {
-    for (auto stream : streams_)
-        stream->stop();
+    for (const auto& stream : streams_)
+        if (stream)
+            stream->stop();
 }
 
 

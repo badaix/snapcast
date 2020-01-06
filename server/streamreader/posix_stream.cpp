@@ -68,7 +68,7 @@ void PosixStream::connect()
 
 void PosixStream::do_disconnect()
 {
-    if (stream_->is_open())
+    if (stream_ && stream_->is_open())
         stream_->close();
 }
 

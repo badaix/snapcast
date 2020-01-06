@@ -51,7 +51,7 @@ using session_ptr = std::shared_ptr<StreamSession>;
  * Receives (via the MessageReceiver interface) and answers messages from the clients
  * Forwards PCM data to the clients
  */
-class StreamServer : public MessageReceiver, ControlMessageReceiver, PcmListener
+class StreamServer : public MessageReceiver, public ControlMessageReceiver, public PcmListener
 {
 public:
     StreamServer(boost::asio::io_context& io_context, const ServerSettings& serverSettings);
