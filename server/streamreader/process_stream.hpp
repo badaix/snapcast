@@ -19,16 +19,12 @@
 #ifndef PROCESS_STREAM_HPP
 #define PROCESS_STREAM_HPP
 
-#include <boost/process.hpp>
 #include <memory>
 #include <string>
 
 #include "posix_stream.hpp"
+#include "process.hpp"
 #include "watchdog.hpp"
-
-
-namespace bp = boost::process;
-
 
 namespace streamreader
 {
@@ -53,9 +49,7 @@ protected:
     std::string exe_;
     std::string path_;
     std::string params_;
-    bp::pipe pipe_stdout_;
-    bp::pipe pipe_stderr_;
-    bp::child process_;
+    std::unique_ptr<Process> process_;
 
     bool logStderr_;
     boost::asio::streambuf streambuf_stderr_;
