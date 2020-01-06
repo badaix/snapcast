@@ -22,13 +22,15 @@ Next clone the external submodules:
     $ cd <snapcast dir>/externals
     $ git submodule update --init --recursive
 
+Snapcast depends on boost 1.70 or higher. Since it depends on header only boost libs, boost does not need to be installed, but the boost include path must be set properly: download and extract the latest boost version and add the include path, e.g. calling `make` with prepended `ADD_CFLAGS`: `ADD_CFLAGS="-I/path/to/boost_1_7x_0/" make`.  
+For `cmake` you must add the path to the `-DBOOST_ROOT` flag: `cmake -DBOOST_ROOT=/path/to/boost_1_7x_0`
 
 ## Linux (Native)
 Install the build tools and required libs:  
 For Debian derivates (e.g. Raspbian, Debian, Ubuntu, Mint):
 
     $ sudo apt-get install build-essential
-    $ sudo apt-get install libasound2-dev libvorbisidec-dev libvorbis-dev libflac-dev alsa-utils libavahi-client-dev avahi-daemon
+    $ sudo apt-get install libasound2-dev libvorbisidec-dev libvorbis-dev libflac-dev libopus-devalsa-utils libavahi-client-dev avahi-daemon
 
 Compilation requires gcc 4.8 or higher, so it's highly recommended to use Debian (Raspbian) Jessie.
 
@@ -86,6 +88,10 @@ Debian packages can be made with
     $ sudo apt-get install debhelper
     $ cd <snapcast dir>
     $ fakeroot make -f debian/rules binary
+
+If you don't have boost installed or in your standard include paths, you can call
+    
+    $ fakeroot make -f debian/rules CPPFLAGS="-I/path/to/boost_1_7x_0" binary
 
 ## FreeBSD (Native)
 Install the build tools and required libs:  
