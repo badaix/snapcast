@@ -25,7 +25,6 @@
 #include "common/daemon.hpp"
 #endif
 #include "common/sample_format.hpp"
-#include "common/signal_handler.hpp"
 #include "common/snap_exception.hpp"
 #include "common/time_defs.hpp"
 #include "common/utils/string_utils.hpp"
@@ -274,11 +273,15 @@ int main(int argc, char* argv[])
             num_threads = std::max(2, std::min(4, static_cast<int>(std::thread::hardware_concurrency())));
         LOG(INFO) << "number of threads: " << num_threads << ", hw threads: " << std::thread::hardware_concurrency() << "\n";
 
-        auto sig = install_signal_handler({SIGHUP, SIGTERM, SIGINT},
-                                          [&io_context](int signal, const std::string& name) {
-                                              SLOG(INFO) << "Received signal " << signal << ": " << name << "\n";
-                                              io_context.stop();
-                                          });
+        // Construct a signal set registered for process termination.
+        boost::asio::signal_set signals(io_context, SIGHUP, SIGINT, SIGTERM);
+        signals.async_wait([&io_context](const boost::system::error_code& ec, int signal) {
+            if (!ec)
+                SLOG(INFO) << "Received signal " << signal << ": " << strsignal(signal) << "\n";
+            else
+                SLOG(INFO) << "Failed to wait for signal: " << ec << "\n";
+            io_context.stop();
+        });
 
         std::vector<std::thread> threads;
         for (int n = 0; n < num_threads; ++n)
