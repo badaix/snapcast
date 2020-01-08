@@ -168,8 +168,7 @@ void StreamSession::send_next()
 
 void StreamSession::sendAsync(shared_const_buffer const_buf, bool send_now)
 {
-    auto self = shared_from_this();
-    strand_.post([this, self, const_buf, send_now]() {
+    strand_.post([this, const_buf, send_now]() {
         if (send_now)
             messages_.push_front(const_buf);
         else

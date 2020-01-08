@@ -239,7 +239,7 @@ int main(int argc, char* argv[])
 
         boost::asio::io_context io_context;
 #if defined(HAS_AVAHI) || defined(HAS_BONJOUR)
-        auto publishZeroConfg = std::make_shared<PublishZeroConf>("Snapcast", io_context);
+        auto publishZeroConfg = std::make_unique<PublishZeroConf>("Snapcast", io_context);
         vector<mDNSService> dns_services;
         dns_services.emplace_back("_snapcast._tcp", settings.stream.port);
         dns_services.emplace_back("_snapcast-stream._tcp", settings.stream.port);

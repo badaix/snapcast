@@ -147,29 +147,27 @@ void ProcessStream::onStderrMsg(const std::string& line)
 void ProcessStream::stderrReadLine()
 {
     const std::string delimiter = "\n";
-    auto self(shared_from_this());
-    boost::asio::async_read_until(
-        *stream_stderr_, streambuf_stderr_, delimiter, [this, self, delimiter](const std::error_code& ec, std::size_t bytes_transferred) {
-            if (ec)
-            {
-                LOG(ERROR, LOG_TAG) << "Error while reading from stderr: " << ec.message() << "\n";
-                return;
-            }
+    boost::asio::async_read_until(*stream_stderr_, streambuf_stderr_, delimiter, [this, delimiter](const std::error_code& ec, std::size_t bytes_transferred) {
+        if (ec)
+        {
+            LOG(ERROR, LOG_TAG) << "Error while reading from stderr: " << ec.message() << "\n";
+            return;
+        }
 
-            if (watchdog_)
-                watchdog_->trigger();
+        if (watchdog_)
+            watchdog_->trigger();
 
-            // Extract up to the first delimiter.
-            std::string line{buffers_begin(streambuf_stderr_.data()), buffers_begin(streambuf_stderr_.data()) + bytes_transferred - delimiter.length()};
-            if (!line.empty())
-            {
-                if (line.back() == '\r')
-                    line.resize(line.size() - 1);
-                onStderrMsg(line);
-            }
-            streambuf_stderr_.consume(bytes_transferred);
-            stderrReadLine();
-        });
+        // Extract up to the first delimiter.
+        std::string line{buffers_begin(streambuf_stderr_.data()), buffers_begin(streambuf_stderr_.data()) + bytes_transferred - delimiter.length()};
+        if (!line.empty())
+        {
+            if (line.back() == '\r')
+                line.resize(line.size() - 1);
+            onStderrMsg(line);
+        }
+        streambuf_stderr_.consume(bytes_transferred);
+        stderrReadLine();
+    });
 }
 
 

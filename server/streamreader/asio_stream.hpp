@@ -28,7 +28,7 @@ namespace streamreader
 {
 
 template <typename ReadStream>
-class AsioStream : public PcmStream, public std::enable_shared_from_this<AsioStream<ReadStream>>
+class AsioStream : public PcmStream
 {
 public:
     /// ctor. Encoded PCM data is passed to the PipeListener
@@ -66,9 +66,8 @@ template <typename ReadStream>
 template <typename Timer, typename Rep, typename Period>
 void AsioStream<ReadStream>::wait(Timer& timer, const std::chrono::duration<Rep, Period>& duration, std::function<void()> handler)
 {
-    auto self = this->shared_from_this();
     timer.expires_after(duration);
-    timer.async_wait([ self, handler = std::move(handler) ](const boost::system::error_code& ec) {
+    timer.async_wait([handler = std::move(handler)](const boost::system::error_code& ec) {
         if (ec)
         {
             LOG(ERROR, "AsioStream") << "Error during async wait: " << ec.message() << "\n";
@@ -161,9 +160,8 @@ template <typename ReadStream>
 void AsioStream<ReadStream>::do_read()
 {
     // LOG(DEBUG, "AsioStream") << "do_read\n";
-    auto self = this->shared_from_this();
     boost::asio::async_read(
-        *stream_, boost::asio::buffer(chunk_->payload, chunk_->payloadSize), [this, self](boost::system::error_code ec, std::size_t length) mutable {
+        *stream_, boost::asio::buffer(chunk_->payload, chunk_->payloadSize), [this](boost::system::error_code ec, std::size_t length) mutable {
             if (ec)
             {
                 LOG(ERROR, "AsioStream") << "Error reading message: " << ec.message() << ", length: " << length << "\n";
@@ -203,7 +201,7 @@ void AsioStream<ReadStream>::do_read()
             if (nextTick_ >= currentTick)
             {
                 read_timer_.expires_after(std::chrono::milliseconds(nextTick_ - currentTick));
-                read_timer_.async_wait([self, this](const boost::system::error_code& ec) {
+                read_timer_.async_wait([this](const boost::system::error_code& ec) {
                     if (ec)
                     {
                         LOG(ERROR, "AsioStream") << "Error during async wait: " << ec.message() << "\n";

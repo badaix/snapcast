@@ -68,11 +68,9 @@ void TcpStream::do_connect()
     if (!active_)
         return;
 
-    auto self = shared_from_this();
-
     if (is_server_)
     {
-        acceptor_->async_accept([this, self](boost::system::error_code ec, tcp::socket socket) {
+        acceptor_->async_accept([this](boost::system::error_code ec, tcp::socket socket) {
             if (!ec)
             {
                 LOG(DEBUG) << "New client connection\n";
@@ -89,7 +87,7 @@ void TcpStream::do_connect()
     {
         stream_ = make_unique<tcp::socket>(ioc_);
         boost::asio::ip::tcp::endpoint endpoint(boost::asio::ip::address::from_string(host_), port_);
-        stream_->async_connect(endpoint, [self, this](const boost::system::error_code& ec) {
+        stream_->async_connect(endpoint, [this](const boost::system::error_code& ec) {
             if (!ec)
             {
                 LOG(DEBUG) << "Connected\n";

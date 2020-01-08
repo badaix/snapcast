@@ -36,7 +36,7 @@ class PublishAvahi;
 
 #include "publish_mdns.hpp"
 
-class PublishAvahi : public PublishmDNS, public std::enable_shared_from_this<PublishAvahi>
+class PublishAvahi : public PublishmDNS
 {
 public:
     PublishAvahi(const std::string& serviceName, boost::asio::io_context& ioc);
