@@ -90,7 +90,7 @@ else
 
 CXX       = g++
 CXXFLAGS += -DHAS_AVAHI -DHAS_DAEMON -pthread
-LDFLAGS  += -lrt -lavahi-client -lavahi-common
+LDFLAGS  += -lrt -lavahi-client -lavahi-common -latomic
 OBJ      += ../common/daemon.o publishZeroConf/publish_avahi.o 
 
 endif
