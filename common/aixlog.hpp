@@ -3,11 +3,11 @@
      / _\ (  )( \/ )(  )   /  \  / __)
     /    \ )(  )  ( / (_/\(  O )( (_ \
     \_/\_/(__)(_/\_)\____/ \__/  \___/
-    version 1.2.4
+    version 1.2.5
     https://github.com/badaix/aixlog
 
     This file is part of aixlog
-    Copyright (C) 2017-2019 Johannes Pohl
+    Copyright (C) 2017-2020 Johannes Pohl
 
     This software may be modified and distributed under the terms
     of the MIT license.  See the LICENSE file for details.
@@ -79,7 +79,7 @@
 #endif
 
 /// Internal helper macros (exposed, but shouldn't be used directly)
-#define AIXLOG_INTERNAL__LOG_SEVERITY(SEVERITY_) std::clog << static_cast<AixLog::Severity>(SEVERITY_)
+#define AIXLOG_INTERNAL__LOG_SEVERITY(SEVERITY_) std::clog << static_cast<AixLog::Severity>(SEVERITY_) << TAG()
 #define AIXLOG_INTERNAL__LOG_SEVERITY_TAG(SEVERITY_, TAG_) std::clog << static_cast<AixLog::Severity>(SEVERITY_) << TAG(TAG_)
 
 #define AIXLOG_INTERNAL__ONE_COLOR(FG_) AixLog::Color::FG_

@@ -17,7 +17,11 @@
 ***/
 
 #include "watchdog.hpp"
+#include "common/aixlog.hpp"
 #include <chrono>
+
+
+static constexpr auto LOG_TAG = "Watchdog";
 
 
 using namespace std;
@@ -38,6 +42,7 @@ Watchdog::~Watchdog()
 
 void Watchdog::start(const std::chrono::milliseconds& timeout)
 {
+    LOG(INFO, LOG_TAG) << "Starting watchdog, timeout: " << std::chrono::duration_cast<std::chrono::seconds>(timeout).count() << "s\n";
     timeout_ms_ = timeout;
     trigger();
 }
@@ -56,6 +61,7 @@ void Watchdog::trigger()
     timer_.async_wait([this](const boost::system::error_code& ec) {
         if (!ec)
         {
+            LOG(INFO, LOG_TAG) << "Timed out: " << std::chrono::duration_cast<std::chrono::seconds>(timeout_ms_).count() << "s\n";
             listener_->onTimeout(*this, timeout_ms_);
         }
     });
