@@ -153,11 +153,9 @@ FLAC__StreamDecoderReadStatus read_callback(const FLAC__StreamDecoder* /*decoder
 }
 
 
-FLAC__StreamDecoderWriteStatus write_callback(const FLAC__StreamDecoder* decoder, const FLAC__Frame* frame, const FLAC__int32* const buffer[],
+FLAC__StreamDecoderWriteStatus write_callback(const FLAC__StreamDecoder* /*decoder*/, const FLAC__Frame* frame, const FLAC__int32* const buffer[],
                                               void* client_data)
 {
-    (void)decoder;
-
     if (pcmChunk != nullptr)
     {
         size_t bytes = frame->header.blocksize * sampleFormat.frameSize;
@@ -202,9 +200,8 @@ FLAC__StreamDecoderWriteStatus write_callback(const FLAC__StreamDecoder* decoder
 }
 
 
-void metadata_callback(const FLAC__StreamDecoder* decoder, const FLAC__StreamMetadata* metadata, void* client_data)
+void metadata_callback(const FLAC__StreamDecoder* /*decoder*/, const FLAC__StreamMetadata* metadata, void* client_data)
 {
-    (void)decoder;
     /* print some stats */
     if (metadata->type == FLAC__METADATA_TYPE_STREAMINFO)
     {
@@ -214,9 +211,8 @@ void metadata_callback(const FLAC__StreamDecoder* decoder, const FLAC__StreamMet
 }
 
 
-void error_callback(const FLAC__StreamDecoder* decoder, FLAC__StreamDecoderErrorStatus status, void* client_data)
+void error_callback(const FLAC__StreamDecoder* /*decoder*/, FLAC__StreamDecoderErrorStatus status, void* client_data)
 {
-    (void)decoder, (void)client_data;
     SLOG(ERROR) << "Got error callback: " << FLAC__StreamDecoderErrorStatusString[status] << "\n";
     static_cast<FlacDecoder*>(client_data)->lastError_ = std::unique_ptr<FLAC__StreamDecoderErrorStatus>(new FLAC__StreamDecoderErrorStatus(status));
 }

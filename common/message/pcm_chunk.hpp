@@ -40,10 +40,6 @@ public:
     {
     }
 
-    PcmChunk(const PcmChunk& pcmChunk) : WireChunk(pcmChunk), format(pcmChunk.format), idx_(0)
-    {
-    }
-
     PcmChunk() : WireChunk(), idx_(0)
     {
     }

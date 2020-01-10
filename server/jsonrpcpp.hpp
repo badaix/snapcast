@@ -3,7 +3,7 @@
      _(  )/ ___) /  \ (  ( \(  _ \(  _ \ / __)( )  ( )
     / \) \\___ \(  O )/    / )   / ) __/( (__(_ _)(_ _)
     \____/(____/ \__/ \_)__)(__\_)(__)   \___)(_)  (_)
-    version 1.3.0
+    version 1.3.1
     https://github.com/badaix/jsonrpcpp
 
     This file is part of jsonrpc++
@@ -336,7 +336,6 @@ class RequestException : public RpcEntityException
 {
 public:
     RequestException(const Error& error, const Id& requestId = Id());
-    RequestException(const RequestException& e) = default;
     Json to_json() const override;
 
     const Id& id() const

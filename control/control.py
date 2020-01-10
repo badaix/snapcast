@@ -20,7 +20,6 @@ def doRequest( j, requestId ):
 			if jResponse['id'] == requestId:
 				print("recv: " + response)
 				return jResponse;
-	return;
 
 def setVolume(client, volume):
 	global requestId

@@ -266,7 +266,7 @@ int main(int argc, char* argv[])
             settings.stream.bufferMs = 400;
         }
 
-        std::unique_ptr<StreamServer> streamServer(new StreamServer(io_context, settings));
+        auto streamServer = std::make_unique<StreamServer>(io_context, settings);
         streamServer->start();
 
         if (num_threads < 0)

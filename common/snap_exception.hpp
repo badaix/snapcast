@@ -26,31 +26,22 @@
 // text_exception uses a dynamically-allocated internal c-string for what():
 class SnapException : public std::exception
 {
-    char* text_;
+    std::string text_;
 
 public:
-    SnapException(const char* text)
+    SnapException(const char* text) : text_(text)
     {
-        text_ = new char[std::strlen(text) + 1];
-        std::strcpy(text_, text);
     }
 
     SnapException(const std::string& text) : SnapException(text.c_str())
     {
     }
 
-    SnapException(const SnapException& e) : SnapException(e.what())
-    {
-    }
-
-    ~SnapException() throw() override
-    {
-        delete[] text_;
-    }
+    ~SnapException() throw() override = default;
 
     const char* what() const noexcept override
     {
-        return text_;
+        return text_.c_str();
     }
 };
 
@@ -66,11 +57,6 @@ public:
     AsyncSnapException(const std::string& text) : SnapException(text)
     {
     }
-
-    AsyncSnapException(const AsyncSnapException& e) : SnapException(e.what())
-    {
-    }
-
 
     ~AsyncSnapException() throw() override = default;
 };
