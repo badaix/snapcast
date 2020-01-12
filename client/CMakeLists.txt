@@ -46,6 +46,12 @@ else()
     endif (ALSA_FOUND)
 endif (MACOSX)
 
+pkg_search_module(SOXR soxr)
+if (SOXR_FOUND)
+    list(APPEND CLIENT_LIBRARIES ${SOXR_LIBRARIES})
+    list(APPEND CLIENT_INCLUDE ${SOXR_INCLUDE_DIRS})
+endif (SOXR_FOUND)
+
 # if OGG then tremor or vorbis
 if (OGG_FOUND)
     list(APPEND CLIENT_SOURCES decoder/ogg_decoder.cpp)

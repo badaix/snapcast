@@ -36,6 +36,8 @@ Stream::Stream(const SampleFormat& sampleFormat)
     miniBuffer_.setSize(20);
     //	cardBuffer_.setSize(50);
 
+    input_rate_ = format_.rate;
+    format_.rate = 48000;
     /*
     48000     x
     ------- = -----
@@ -43,7 +45,14 @@ Stream::Stream(const SampleFormat& sampleFormat)
 
     x = 1,000016667 / (1,000016667 - 1)
     */
-    setRealSampleRate(format_.rate);
+    // setRealSampleRate(format_.rate);
+
+    // double const irate = 48000.;
+    // double const orate = 44100.;
+    // soxr_error_t error;
+    // soxr_io_spec_t iospec = soxr_io_spec(SOXR_INT16_I, SOXR_INT16_I);
+    // soxr_t soxr = soxr_create(static_cast<double>(format_.rate), orate, format_.channels, &error, /* To report any error during creation. */
+    //                           &iospec, NULL, NULL);
 }
 
 
@@ -76,7 +85,20 @@ void Stream::addChunk(msg::PcmChunk* chunk)
 {
     while (chunks_.size() * chunk->duration<cs::msec>().count() > 10000)
         chunks_.pop();
-    chunks_.push(shared_ptr<msg::PcmChunk>(chunk));
+
+    size_t idone;
+    size_t odone;
+    auto out = new msg::PcmChunk(format_, 0);
+    out->timestamp = chunk->timestamp;
+    out->payloadSize = ceil(chunk->payloadSize * static_cast<double>(format_.rate) / static_cast<double>(input_rate_));
+    out->payload = (char*)malloc(out->payloadSize);
+    soxr_io_spec_t iospec = soxr_io_spec(SOXR_INT16_I, SOXR_INT16_I);
+    soxr_quality_spec_t q_spec = soxr_quality_spec(SOXR_HQ, 0);
+    auto error = soxr_oneshot(static_cast<double>(input_rate_), static_cast<double>(format_.rate), format_.channels, chunk->payload, chunk->getFrameCount(), &idone, out->payload, out->payloadSize, &odone, &iospec, &q_spec, nullptr);
+    out->payloadSize = odone * out->format.frameSize;
+    //LOG(INFO) << "Resample idone: " << idone << "/" << chunk->getFrameCount() << ", odone: " << odone << "/" << out->payloadSize / out->format.frameSize << "\n";
+    delete chunk;
+    chunks_.push(shared_ptr<msg::PcmChunk>(out));
     //	LOG(DEBUG) << "new chunk: " << chunk->duration<cs::msec>().count() << ", Chunks: " << chunks_.size() << "\n";
 }
 
