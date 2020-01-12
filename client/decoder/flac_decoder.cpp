@@ -58,8 +58,8 @@ FlacDecoder::FlacDecoder() : Decoder(), lastError_(nullptr)
 FlacDecoder::~FlacDecoder()
 {
     std::lock_guard<std::mutex> lock(mutex_);
+    FLAC__stream_decoder_delete(decoder);
     delete flacChunk;
-    delete decoder;
 }
 
 
