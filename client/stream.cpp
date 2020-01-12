@@ -38,6 +38,7 @@ Stream::Stream(const SampleFormat& sampleFormat)
 
     input_rate_ = format_.rate;
     format_.rate = 48000;
+    output_rate_ = static_cast<double>(format_.rate);
     /*
     48000     x
     ------- = -----
@@ -47,12 +48,14 @@ Stream::Stream(const SampleFormat& sampleFormat)
     */
     // setRealSampleRate(format_.rate);
 
-    // double const irate = 48000.;
-    // double const orate = 44100.;
-    // soxr_error_t error;
-    // soxr_io_spec_t iospec = soxr_io_spec(SOXR_INT16_I, SOXR_INT16_I);
-    // soxr_t soxr = soxr_create(static_cast<double>(format_.rate), orate, format_.channels, &error, /* To report any error during creation. */
-    //                           &iospec, NULL, NULL);
+    soxr_error_t error;
+    soxr_io_spec_t iospec = soxr_io_spec(SOXR_INT16_I, SOXR_INT16_I);
+    soxr_quality_spec_t q_spec = soxr_quality_spec(SOXR_HQ, 0);
+    soxr_ = soxr_create(static_cast<double>(input_rate_), static_cast<double>(format_.rate), format_.channels, &error, &iospec, &q_spec, NULL);
+    if (error)
+    {
+        LOG(ERROR) << "Error soxr_create: " << error << "\n";
+    }
 }
 
 
@@ -86,20 +89,39 @@ void Stream::addChunk(msg::PcmChunk* chunk)
     while (chunks_.size() * chunk->duration<cs::msec>().count() > 10000)
         chunks_.pop();
 
-    size_t idone;
-    size_t odone;
-    auto out = new msg::PcmChunk(format_, 0);
-    out->timestamp = chunk->timestamp;
-    out->payloadSize = ceil(chunk->payloadSize * static_cast<double>(format_.rate) / static_cast<double>(input_rate_));
-    out->payload = (char*)malloc(out->payloadSize);
-    soxr_io_spec_t iospec = soxr_io_spec(SOXR_INT16_I, SOXR_INT16_I);
-    soxr_quality_spec_t q_spec = soxr_quality_spec(SOXR_HQ, 0);
-    auto error = soxr_oneshot(static_cast<double>(input_rate_), static_cast<double>(format_.rate), format_.channels, chunk->payload, chunk->getFrameCount(), &idone, out->payload, out->payloadSize, &odone, &iospec, &q_spec, nullptr);
-    out->payloadSize = odone * out->format.frameSize;
-    //LOG(INFO) << "Resample idone: " << idone << "/" << chunk->getFrameCount() << ", odone: " << odone << "/" << out->payloadSize / out->format.frameSize << "\n";
-    delete chunk;
-    chunks_.push(shared_ptr<msg::PcmChunk>(out));
-    //	LOG(DEBUG) << "new chunk: " << chunk->duration<cs::msec>().count() << ", Chunks: " << chunks_.size() << "\n";
+    if (std::abs(input_rate_ - output_rate_) <= 0.0000001)
+    {
+        chunks_.push(shared_ptr<msg::PcmChunk>(chunk));
+    }
+    else
+    {
+        size_t idone;
+        size_t odone;
+        auto out = new msg::PcmChunk(format_, 0);
+        out->timestamp = chunk->timestamp;
+        out->payloadSize = ceil(chunk->payloadSize * static_cast<double>(output_rate_) / static_cast<double>(input_rate_));
+        out->payload = (char*)malloc(out->payloadSize);
+
+        soxr_io_spec_t iospec = soxr_io_spec(SOXR_INT16_I, SOXR_INT16_I);
+        soxr_quality_spec_t q_spec = soxr_quality_spec(SOXR_HQ, 0);
+        // auto error = soxr_oneshot(static_cast<double>(input_rate_), output_rate_, format_.channels, chunk->payload, chunk->getFrameCount(), &idone,
+        // out->payload, out->payloadSize, &odone, &iospec, &q_spec, nullptr);
+        auto error = soxr_process(soxr_, chunk->payload, chunk->getFrameCount(), &idone, out->payload, out->getFrameCount(), &odone);
+        if (error)
+        {
+            LOG(ERROR) << "Error soxr_process: " << error << "\n";
+            delete out;
+        }
+        else
+        {
+            out->payloadSize = odone * out->format.frameSize;
+            LOG(TRACE) << "Resample idone: " << idone << "/" << chunk->getFrameCount() << ", odone: " << odone << "/"
+                       << out->payloadSize / out->format.frameSize << "\n";
+            chunks_.push(shared_ptr<msg::PcmChunk>(out));
+        }
+        delete chunk;
+    }
+    LOG(TRACE) << "new chunk: " << chunk->duration<cs::msec>().count() << ", Chunks: " << chunks_.size() << "\n";
 }
 
 

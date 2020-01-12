@@ -85,7 +85,8 @@ private:
     long correctAfterXFrames_;
     chronos::msec bufferMs_;
     size_t input_rate_;
-    //soxr_t soxr_;
+    double output_rate_;
+    soxr_t soxr_;
 };
 
 
