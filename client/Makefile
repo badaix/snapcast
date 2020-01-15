@@ -106,9 +106,11 @@ ifeq ($(ARCH), x86)
 else ifeq ($(ARCH), mips)
 	$(eval CXXFLAGS:=$(CXXFLAGS) -DIS_BIG_ENDIAN)
 	$(eval PROGRAM_PREFIX:=$(NDK_DIR)/bin/mipsel-linux-android-)
-else
+else ifeq ($(ARCH), arm)
 	$(eval CXXFLAGS:=$(CXXFLAGS) -march=armv7)
 	$(eval PROGRAM_PREFIX:=$(NDK_DIR)/bin/arm-linux-androideabi-)
+else ifeq ($(ARCH), arm64)
+	$(eval PROGRAM_PREFIX:=$(NDK_DIR)/bin/aarch64-linux-android-)
 endif
 endif
 

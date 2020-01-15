@@ -96,7 +96,7 @@ If you don't have boost installed or in your standard include paths, you can cal
 ## FreeBSD (Native)
 Install the build tools and required libs:  
 
-    $ sudo pkg install gmake gcc bash avahi libogg libvorbis flac
+    $ sudo pkg install gmake gcc bash avahi libogg libvorbis libopus flac
 
 ### Build Snapserver
 `cd` into the Snapserver src-root directory:
@@ -213,22 +213,24 @@ http://developer.android.com/ndk/guides/standalone_toolchain.html
 ```
 $ cd /SOME/LOCAL/PATH/android-ndk-r17/build/tools
 $ ./make_standalone_toolchain.py --arch arm --api 16 --stl libc++ --install-dir <android-ndk dir>-arm
+$ ./make_standalone_toolchain.py --arch arm64 --api 21 --stl libc++ --install-dir <android-ndk dir>-arm64
 $ ./make_standalone_toolchain.py --arch x86 --api 16 --stl libc++ --install-dir <android-ndk dir>-x86
 ```
 
 ### Build Snapclient
-Cross compile and install FLAC, ogg, and tremor (only needed once):
+Cross compile and install FLAC, opus, ogg, and tremor (only needed once):
 
     $ cd <snapcast dir>/externals
     $ make NDK_DIR=<android-ndk dir>-arm ARCH=arm
+    $ make NDK_DIR=<android-ndk dir>-arm64 ARCH=aarch64
     $ make NDK_DIR=<android-ndk dir>-x86 ARCH=x86
   
 Compile the Snapclient:
 
     $ cd <snapcast dir>/client
-    $ ./build_android_all.sh <android-ndk dir> <snapdroid assets dir>
+    $ ./build_android_all.sh <android-ndk dir> <snapdroid jniLibs dir>
 
-The binaries for `armeabi` and `x86` will be copied into the Android's assets directory (`<snapdroid assets dir>/bin/`) and so will be bundled with the Snapcast App.
+The binaries for `armeabi`, `arm64-v8a` and `x86` will be copied into the Android's jniLibs directory (`<snapdroid jniLibs dir>/`) and so will be bundled with the Snapcast App.
 
 
 ## OpenWrt/LEDE (Cross compile)
