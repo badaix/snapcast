@@ -137,7 +137,7 @@ There is an Android client [snapdroid](https://github.com/badaix/snapdroid) avai
 ![Snapcast for Android](https://raw.githubusercontent.com/badaix/snapcast/master/doc/snapcast_android_scaled.png)
 
 There is also an unofficial WebApp from @atoomic [atoomic/snapcast-volume-ui](https://github.com/atoomic/snapcast-volume-ui).
-This app lists all clients connected to a server and allow you to control individually the volume of each client.
+This app lists all clients connected to a server and allows you to control individually the volume of each client.
 Once installed, you can use any mobile device, laptop, desktop, or browser.
 
 There is also an [unofficial FHEM module](https://forum.fhem.de/index.php/topic,62389.0.html) from @unimatrix27 which integrates a snapcast controller into the [FHEM](https://fhem.de/fhem.html) home automation system.
