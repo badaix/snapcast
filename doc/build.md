@@ -37,7 +37,7 @@ For Arch derivates:
     $ sudo pacman -S base-devel
     $ sudo pacman -S alsa-lib avahi libvorbis opus-dev flac alsa-utils boost
 
-For Fedora (and probably RHEL, CentOS & Scientific Linux, but untested):
+For Fedora (and probably RHEL, CentOS, & Scientific Linux, but untested):
 
     $ sudo dnf install @development-tools
     $ sudo dnf install alsa-lib-devel avahi-devel libvorbis-devel opus-devel flac-devel libstdc++-static
@@ -139,7 +139,7 @@ These can be set either in the [global configuration](https://wiki.gentoo.org/wi
     fi
     echo 'media-sound/snapcast client server flac
 
-If for example you only wish to build the server and *not* the client then preceed the server `USE` flag with `-` i.e.
+If for example you only wish to build the server and *not* the client then precede the server `USE` flag with `-` i.e.
 
     echo 'media-sound/snapcast client -server
 
@@ -282,7 +282,7 @@ Clone Buildroot to some place in your home directory (`<buildroot dir>`):
     $ BUILDROOT_VERSION=2016.11.2
     $ git clone --branch $BUILDROOT_VERSION --depth=1 git://git.buildroot.net/buildroot
 
-The `<snapcast dir>/buildroot` is currently setup as an external Buildroot folder following the [recommended structure](https://buildroot.org/downloads/manual/manual.html#customize-dir-structure). As of [Buildroot 2016.11](https://git.buildroot.net/buildroot/tag/?h=2016.11) you may specify multiple BR2_EXTERNAL trees. If you are using a version of Buildroot prior to this, then you will need to manually merge `<snapcast dir>/buildroot` with your existing Buildroot external tree.
+The `<snapcast dir>/buildroot` is currently set up as an external Buildroot folder following the [recommended structure](https://buildroot.org/downloads/manual/manual.html#customize-dir-structure). As of [Buildroot 2016.11](https://git.buildroot.net/buildroot/tag/?h=2016.11) you may specify multiple BR2_EXTERNAL trees. If you are using a version of Buildroot prior to this, then you will need to manually merge `<snapcast dir>/buildroot` with your existing Buildroot external tree.
 
 Now configure buildroot with the [required packages](/buildroot/configs/snapcast_defconfig) (you can also manually add them to your project's existing defconfig):
 
