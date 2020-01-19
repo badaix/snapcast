@@ -3,8 +3,8 @@ Snapcast
 
 ![Snapcast](https://raw.githubusercontent.com/badaix/snapcast/master/doc/Snapcast_800.png)
 
-**S**y**n**chronous **a**udio **p**layer  
-  
+**S**y**n**chronous **a**udio **p**layer
+
 [![Build Status](
 https://travis-ci.org/badaix/snapcast.svg?branch=master)](https://travis-ci.org/badaix/snapcast)
 [![Github Releases](https://img.shields.io/github/release/badaix/snapcast.svg)](https://github.com/badaix/snapcast/releases)
@@ -29,6 +29,8 @@ Every received chunk is first decoded and added to the client's chunk-buffer. Kn
 * playing faster/slower
 
 Typically the deviation is smaller than 1ms.
+
+For more information on the binary protocol, please see the [documentation](doc/binary_protocol.md).
 
 Installation
 ------------
@@ -98,9 +100,9 @@ stream = file:///home/user/Musik/Some%20wave%20file.wav?name=File
 ```
 
 The pipe stream (`stream = pipe`) will per default create the pipe. Sometimes your audio source might insist in creating the pipe itself. So the pipe creation mode can by changed to "not create, but only read mode", using the `mode` option set to `create` or `read`:
-    
+
     stream = pipe:///tmp/snapfifo?name=Radio&mode=read"
-    
+
 Test
 ----
 You can test your installation by copying random data into the server's fifo file
