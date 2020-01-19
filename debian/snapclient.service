@@ -2,7 +2,7 @@
 Description=Snapcast client
 Documentation=man:snapclient(1)
 Wants=avahi-daemon.service
-After=network.target time-sync.target sound.target avahi-daemon.service
+After=network-online.target time-sync.target sound.target avahi-daemon.service
 
 [Service]
 EnvironmentFile=-/etc/default/snapclient
