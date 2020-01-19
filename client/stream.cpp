@@ -178,7 +178,33 @@ cs::time_point_clk Stream::getNextPlayerChunk(void* outputBuffer, const cs::usec
     return tp;
 }
 
+/*
+2020-01-12 20-25-26 [Info] Chunk: 7	7	11	15	179	120
+2020-01-12 20-25-27 [Info] Chunk: 6	6	8	15	212	122
+2020-01-12 20-25-28 [Info] Chunk: 6	6	7	12	245	123
+2020-01-12 20-25-29 [Info] Chunk: 5	6	6	9	279	117
+2020-01-12 20-25-30 [Info] Chunk: 4	5	6	8	312	117
+2020-01-12 20-25-30 [Error] Controller::onException: read_some: End of file
+2020-01-12 20-25-30 [Error] Exception in Controller::worker(): read_some: End of file
+2020-01-12 20-25-31 [Error] Exception in Controller::worker(): connect: Connection refused
+2020-01-12 20-25-31 [Error] Error in socket shutdown: Transport endpoint is not connected
+2020-01-12 20-25-32 [Error] Exception in Controller::worker(): connect: Connection refused
+2020-01-12 20-25-32 [Error] Error in socket shutdown: Transport endpoint is not connected
+^C2020-01-12 20-25-32 [Info] Received signal 2: Interrupt
+2020-01-12 20-25-32 [Info] Stopping controller
+2020-01-12 20-25-32 [Error] Error in socket shutdown: Bad file descriptor
+2020-01-12 20-25-32 [Error] Exception: Invalid argument
+2020-01-12 20-25-32 [Notice] daemon terminated.
 
+=================================================================
+==22383==ERROR: LeakSanitizer: detected memory leaks
+
+Direct leak of 5756 byte(s) in 1 object(s) allocated from:
+    #0 0x7f3d60635602 in malloc (/usr/lib/x86_64-linux-gnu/libasan.so.2+0x98602)
+    #1 0x448fc2 in Stream::getNextPlayerChunk(void*, std::chrono::duration<long, std::ratio<1l, 1000000l> > const&, unsigned long, long) /home/johannes/Develop/snapcast/client/stream.cpp:163
+
+SUMMARY: AddressSanitizer: 5756 byte(s) leaked in 1 allocation(s).
+*/
 
 void Stream::updateBuffers(int age)
 {
