@@ -36,6 +36,16 @@ OggEncoder::OggEncoder(const std::string& codecOptions) : Encoder(codecOptions),
 }
 
 
+OggEncoder::~OggEncoder()
+{
+    ogg_stream_clear(&os_);
+    vorbis_block_clear(&vb_);
+    vorbis_dsp_clear(&vd_);
+    vorbis_comment_clear(&vc_);
+    vorbis_info_clear(&vi_);
+}
+
+
 std::string OggEncoder::getAvailableOptions() const
 {
     return "VBR:[-0.1 - 1.0]";
