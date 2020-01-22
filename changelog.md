@@ -1,5 +1,27 @@
 # Snapcast changelog
 
+## Version 0.18.0
+
+### Features
+
+- Add TCP stream reader
+
+### Bugfixes
+
+- Client: fix hostname reporting on Android
+- Fix some small memory leaks
+- Fix Librespot stream causing zombie processes (Issue #530)
+- Process stream watchdog is configurable (Issue #517)
+- Fix Makefile for macOS (Issues #510, #514)
+
+### General
+
+- Refactored stream readers
+- Server can run on a single thread
+- Configurable number of server worker threads
+
+_Johannes Pohl <snapcast@badaix.de>  Wed, 22 Jan 2020 00:13:37 +0200_
+
 ## Version 0.17.1
 
 ### Bugfixes
