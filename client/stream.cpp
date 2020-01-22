@@ -201,7 +201,8 @@ cs::time_point_clk Stream::getNextPlayerChunk(void* outputBuffer, const cs::usec
 
 Direct leak of 5756 byte(s) in 1 object(s) allocated from:
     #0 0x7f3d60635602 in malloc (/usr/lib/x86_64-linux-gnu/libasan.so.2+0x98602)
-    #1 0x448fc2 in Stream::getNextPlayerChunk(void*, std::chrono::duration<long, std::ratio<1l, 1000000l> > const&, unsigned long, long) /home/johannes/Develop/snapcast/client/stream.cpp:163
+    #1 0x448fc2 in Stream::getNextPlayerChunk(void*, std::chrono::duration<long, std::ratio<1l, 1000000l> > const&, unsigned long, long)
+/home/johannes/Develop/snapcast/client/stream.cpp:163
 
 SUMMARY: AddressSanitizer: 5756 byte(s) leaked in 1 allocation(s).
 */
