@@ -14,9 +14,9 @@
 #   You should have received a copy of the GNU General Public License
 #   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-.PHONY: all check-env flac ogg opus tremor
+.PHONY: all check-env flac ogg opus tremor oboe
 
-all: flac ogg opus tremor
+all: flac ogg opus tremor oboe
 
 check-env:
 #	if [ ! -d "flac" ]; then \
@@ -115,4 +115,14 @@ tremor:	check-env
 	rm stamp-h1; \
 	rm vorbisidec.pc;
 
+oboe: check-env
+	@cd oboe; \
+	export CC="$(CC)"; \
+	export CXX="$(CXX)"; \
+	export CPPFLAGS="$(CPPFLAGS)"; \
+	mkdir build; \
+	cd build; \
+	cmake ..; \
+	make; \
+	make DESTDIR=$(NDK_DIR) install;
 

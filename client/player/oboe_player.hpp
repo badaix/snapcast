@@ -16,12 +16,10 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
-#ifndef OPEN_SL_PLAYER_HPP
-#define OPEN_SL_PLAYER_HPP
+#ifndef OBOE_PLAYER_HPP
+#define OBOE_PLAYER_HPP
 
-#include <SLES/OpenSLES.h>
-#include <SLES/OpenSLES_Android.h>
-#include <string>
+#include <oboe/Oboe.h>
 
 #include "player.hpp"
 
@@ -30,41 +28,23 @@ typedef int (*AndroidAudioCallback)(short* buffer, int num_samples);
 
 /// OpenSL Audio Player
 /**
- * Player implementation for OpenSL (e.g. Android)
+ * Player implementation for Oboe
  */
-class OpenslPlayer : public Player
+class OboePlayer : public Player, public oboe::AudioStreamCallback
 {
 public:
-    OpenslPlayer(const PcmDevice& pcmDevice, std::shared_ptr<Stream> stream);
-    virtual ~OpenslPlayer();
+    OboePlayer(const PcmDevice& pcmDevice, std::shared_ptr<Stream> stream);
+    virtual ~OboePlayer();
 
     void start() override;
     void stop() override;
 
-    void playerCallback(SLAndroidSimpleBufferQueueItf bq);
-
 protected:
-    void initOpensl();
-    void uninitOpensl();
+    oboe::DataCallbackResult onAudioReady(oboe::AudioStream *oboeStream, void *audioData, int32_t numFrames) override;
 
     void worker() override;
-    void throwUnsuccess(const std::string& phase, const std::string& what, SLresult result);
-    std::string resultToString(SLresult result) const;
 
-    // engine interfaces
-    SLObjectItf engineObject;
-    SLEngineItf engineEngine;
-    SLObjectItf outputMixObject;
-
-    // buffer queue player interfaces
-    SLObjectItf bqPlayerObject;
-    SLPlayItf bqPlayerPlay;
-    SLAndroidSimpleBufferQueueItf bqPlayerBufferQueue;
-    SLVolumeItf bqPlayerVolume;
-
-    // Double buffering.
-    int curBuffer;
-    char* buffer[2];
+    oboe::ManagedStream out_stream_;
 
     size_t ms_;
     size_t frames_;
