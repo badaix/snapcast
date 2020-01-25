@@ -40,16 +40,12 @@ public:
     void stop() override;
 
 protected:
-    oboe::DataCallbackResult onAudioReady(oboe::AudioStream *oboeStream, void *audioData, int32_t numFrames) override;
+    oboe::DataCallbackResult onAudioReady(oboe::AudioStream* oboeStream, void* audioData, int32_t numFrames) override;
+    double getCurrentOutputLatencyMillis() const;
 
     void worker() override;
 
     oboe::ManagedStream out_stream_;
-
-    size_t ms_;
-    size_t frames_;
-    size_t buff_size;
-    std::shared_ptr<Stream> pubStream_;
 };
 
 
