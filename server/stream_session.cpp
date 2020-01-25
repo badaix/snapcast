@@ -45,19 +45,8 @@ StreamSession::~StreamSession()
 
 void StreamSession::read_next()
 {
-    shared_ptr<StreamSession> self;
-    try
-    {
-        self = shared_from_this();
-    }
-    catch (const std::bad_weak_ptr& e)
-    {
-        LOG(ERROR, LOG_TAG) << "read_next: Error getting shared from this\n";
-        return;
-    }
-
     boost::asio::async_read(socket_, boost::asio::buffer(buffer_, base_msg_size_),
-                            boost::asio::bind_executor(strand_, [this, self](boost::system::error_code ec, std::size_t length) mutable {
+                            boost::asio::bind_executor(strand_, [ this, self = shared_from_this() ](boost::system::error_code ec, std::size_t length) mutable {
                                 if (ec)
                                 {
                                     LOG(ERROR, LOG_TAG) << "Error reading message header of length " << length << ": " << ec.message() << "\n";
@@ -139,20 +128,9 @@ void StreamSession::stop()
 
 void StreamSession::send_next()
 {
-    shared_ptr<StreamSession> self;
-    try
-    {
-        self = shared_from_this();
-    }
-    catch (const std::bad_weak_ptr& e)
-    {
-        LOG(ERROR, LOG_TAG) << "send_next: Error getting shared from this\n";
-        return;
-    }
-
     auto buffer = messages_.front();
-
-    boost::asio::async_write(socket_, buffer, boost::asio::bind_executor(strand_, [this, self, buffer](boost::system::error_code ec, std::size_t length) {
+    boost::asio::async_write(socket_, buffer,
+                             boost::asio::bind_executor(strand_, [ this, self = shared_from_this(), buffer ](boost::system::error_code ec, std::size_t length) {
                                  messages_.pop_front();
                                  if (ec)
                                  {
@@ -168,7 +146,7 @@ void StreamSession::send_next()
 
 void StreamSession::sendAsync(shared_const_buffer const_buf, bool send_now)
 {
-    strand_.post([this, const_buf, send_now]() {
+    strand_.post([ this, self = shared_from_this(), const_buf, send_now ]() {
         if (send_now)
             messages_.push_front(const_buf);
         else
