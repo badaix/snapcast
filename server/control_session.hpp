@@ -26,7 +26,6 @@
 #include <boost/asio.hpp>
 #include <condition_variable>
 #include <memory>
-#include <mutex>
 #include <set>
 #include <string>
 
