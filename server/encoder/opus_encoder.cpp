@@ -166,7 +166,7 @@ void OpusEncoder::initEncoder()
 // and encode the buffer content in the next iteration
 void OpusEncoder::encode(const msg::PcmChunk* chunk)
 {
-    LOG(DEBUG) << "encode " << chunk->duration<std::chrono::milliseconds>().count() << "ms\n";
+    // LOG(TRACE) << "encode " << chunk->duration<std::chrono::milliseconds>().count() << "ms\n";
     uint32_t offset = 0;
 
     // check if there is something left from the last call to encode and fill the remainder buffer to
@@ -175,7 +175,7 @@ void OpusEncoder::encode(const msg::PcmChunk* chunk)
     {
         offset = std::min(static_cast<uint32_t>(remainder_max_size_ - remainder_->payloadSize), chunk->payloadSize);
         memcpy(remainder_->payload + remainder_->payloadSize, chunk->payload, offset);
-        LOG(DEBUG) << "remainder buffer size: " << remainder_->payloadSize << "/" << remainder_max_size_ << ", appending " << offset << " bytes\n";
+        // LOG(TRACE) << "remainder buffer size: " << remainder_->payloadSize << "/" << remainder_max_size_ << ", appending " << offset << " bytes\n";
         remainder_->payloadSize += offset;
 
         if (remainder_->payloadSize < remainder_max_size_)
@@ -196,7 +196,7 @@ void OpusEncoder::encode(const msg::PcmChunk* chunk)
         uint32_t bytes = ms2bytes(duration);
         while (chunk->payloadSize - offset >= bytes)
         {
-            LOG(DEBUG) << "encoding " << duration << "ms (" << bytes << "), offset: " << offset << ", chunk size: " << chunk->payloadSize - offset << "\n";
+            // LOG(TRACE) << "encoding " << duration << "ms (" << bytes << "), offset: " << offset << ", chunk size: " << chunk->payloadSize - offset << "\n";
             encode(chunk->format, chunk->payload + offset, bytes);
             offset += bytes;
         }
@@ -222,7 +222,7 @@ void OpusEncoder::encode(const SampleFormat& format, const char* data, size_t si
         encoded_.resize(size);
 
     opus_int32 len = opus_encode(enc_, (opus_int16*)data, samples_per_channel, encoded_.data(), size);
-    LOG(DEBUG) << "Encode " << samples_per_channel << " frames, size " << size << " bytes, encoded: " << len << " bytes" << '\n';
+    // LOG(TRACE) << "Encode " << samples_per_channel << " frames, size " << size << " bytes, encoded: " << len << " bytes" << '\n';
 
     if (len > 0)
     {
