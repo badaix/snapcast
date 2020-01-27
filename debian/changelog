@@ -1,7 +1,16 @@
+snapcast (0.18.1-1) unstable; urgency=medium
+
+  * Bugfixes
+    -Fix random server crash or deadlock during stream client disconnect
+    -Fix random server crash or deadlock during control client disconnect
+
+ -- Johannes Pohl <snapcast@badaix.de>  Tue, 28 Jan 2020 00:13:37 +0200
+
 snapcast (0.18.0-1) unstable; urgency=medium
 
   * Features
     -Add TCP stream reader
+    -Configurable number of server worker threads
   * Bugfixes
     -Client: fix hostname reporting on Android
     -Fix some small memory leaks
@@ -11,7 +20,6 @@ snapcast (0.18.0-1) unstable; urgency=medium
   * General
     -Refactored stream readers
     -Server can run on a single thread
-    -Configurable number of server worker threads
 
  -- Johannes Pohl <snapcast@badaix.de>  Wed, 22 Jan 2020 00:13:37 +0200
 

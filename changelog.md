@@ -1,10 +1,20 @@
 # Snapcast changelog
 
+## Version 0.18.1
+
+### Bugfixes
+
+- Fix random server crash or deadlock during stream client disconnect
+- Fix random server crash or deadlock during control client disconnect
+
+_Johannes Pohl <snapcast@badaix.de>  Tue, 28 Jan 2020 00:13:37 +0200_
+
 ## Version 0.18.0
 
 ### Features
 
 - Add TCP stream reader
+- Configurable number of server worker threads
 
 ### Bugfixes
 
@@ -18,7 +28,6 @@
 
 - Refactored stream readers
 - Server can run on a single thread
-- Configurable number of server worker threads
 
 _Johannes Pohl <snapcast@badaix.de>  Wed, 22 Jan 2020 00:13:37 +0200_
 
