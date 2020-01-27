@@ -103,7 +103,7 @@ void AsioStream<ReadStream>::check_state()
 {
     uint64_t last_read = bytes_read_;
     wait(state_timer_, std::chrono::milliseconds(500 + chunk_ms_), [this, last_read] {
-        LOG(DEBUG, "AsioStream") << "check state last: " << last_read << ", read: " << bytes_read_ << "\n";
+        LOG(TRACE, "AsioStream") << "check state last: " << last_read << ", read: " << bytes_read_ << "\n";
         if (bytes_read_ != last_read)
             setState(ReaderState::kPlaying);
         else
