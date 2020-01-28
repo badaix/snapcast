@@ -59,9 +59,6 @@ AirplayStream::AirplayStream(PcmListener* pcmListener, boost::asio::io_context& 
 
     // XXX: Check if pipe exists, delete or throw error
 
-    sampleFormat_ = SampleFormat("44100:16:2");
-    uri_.query["sampleformat"] = sampleFormat_.getFormat();
-
     port_ = cpt::stoul(uri_.getQuery("port", "5000"));
 
     string devicename = uri_.getQuery("devicename", "Snapcast");
