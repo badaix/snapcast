@@ -6,6 +6,7 @@
 
 - Fix random server crash or deadlock during stream client disconnect
 - Fix random server crash or deadlock during control client disconnect
+- Fix airplay stream buffer allocation (PR #536)
 
 _Johannes Pohl <snapcast@badaix.de>  Tue, 28 Jan 2020 00:13:37 +0200_
 
