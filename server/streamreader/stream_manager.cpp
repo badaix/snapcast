@@ -75,10 +75,18 @@ PcmStreamPtr StreamManager::addStream(const std::string& uri)
     }
     else if ((streamUri.scheme == "spotify") || (streamUri.scheme == "librespot"))
     {
+        // Overwrite sample format here instead of inside the constructor, to make sure
+        // that all constructors of all parent classes also use the overwritten sample
+        // format.
+        streamUri.query[kUriSampleFormat] = "44100:16:2";
         stream = make_shared<LibrespotStream>(pcmListener_, ioc_, streamUri);
     }
     else if (streamUri.scheme == "airplay")
     {
+        // Overwrite sample format here instead of inside the constructor, to make sure
+        // that all constructors of all parent classes also use the overwritten sample
+        // format.
+        streamUri.query[kUriSampleFormat] = "44100:16:2";
         stream = make_shared<AirplayStream>(pcmListener_, ioc_, streamUri);
     }
     else if (streamUri.scheme == "tcp")
