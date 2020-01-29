@@ -54,17 +54,11 @@ AirplayStream::AirplayStream(PcmListener* pcmListener, boost::asio::io_context& 
 {
     logStderr_ = true;
 
-    pipePath_ = "/tmp/shairmeta." + cpt::to_string(getpid());
-    // cout << "Pipe [" << pipePath_ << "]\n";
-
-    // XXX: Check if pipe exists, delete or throw error
-
-    port_ = cpt::stoul(uri_.getQuery("port", "5000"));
-
     string devicename = uri_.getQuery("devicename", "Snapcast");
     params_wo_port_ = "--name=\"" + devicename + "\" --output=stdout --use-stderr";
-    params_wo_port_ += " --metadata-pipename " + pipePath_;
-    params_ = params_wo_port_ + " --port=" + cpt::to_string(port_);
+
+    port_ = cpt::stoul(uri_.getQuery("port", "5000"));
+    setParamsAndPipePathFromPort();
 
 #ifdef HAS_EXPAT
     createParser();
@@ -137,6 +131,13 @@ void AirplayStream::push()
 #endif
 
 
+void AirplayStream::setParamsAndPipePathFromPort()
+{
+    pipePath_ = "/tmp/shairmeta." + cpt::to_string(getpid()) + "." + cpt::to_string(port_);
+    params_ = params_wo_port_ + " --metadata-pipename " + pipePath_ + " --port=" + cpt::to_string(port_);
+}
+
+
 void AirplayStream::do_connect()
 {
     ProcessStream::do_connect();
@@ -152,7 +153,7 @@ void AirplayStream::pipeReadLine()
         {
             int fd = open(pipePath_.c_str(), O_RDONLY | O_NONBLOCK);
             pipe_fd_ = std::make_unique<boost::asio::posix::stream_descriptor>(ioc_, fd);
-            LOG(INFO, LOG_TAG) << "Metadata pipe opened\n";
+            LOG(INFO, LOG_TAG) << "Metadata pipe opened:" + pipePath_ + "\n";
         }
         catch (const std::exception& e)
         {
@@ -246,7 +247,7 @@ void AirplayStream::onStderrMsg(const std::string& line)
     {
         LOG(ERROR, LOG_TAG) << "It seems there is another Shairport Sync runnig on port " << port_ << ", switching to port " << port_ + 1 << "\n";
         ++port_;
-        params_ = params_wo_port_ + " --port=" + cpt::to_string(port_);
+        setParamsAndPipePathFromPort();
     }
     else if (line.find("Invalid audio output specified") != string::npos)
     {

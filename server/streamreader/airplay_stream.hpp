@@ -77,6 +77,8 @@ protected:
     void push();
 #endif
 
+    void setParamsAndPipePathFromPort();
+
     void do_connect() override;
     void onStderrMsg(const std::string& line) override;
     void initExeAndPath(const std::string& filename) override;
