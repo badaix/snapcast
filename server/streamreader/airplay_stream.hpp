@@ -65,10 +65,10 @@ public:
 protected:
 #ifdef HAS_EXPAT
     XML_Parser parser_;
-#endif
     std::unique_ptr<TageEntry> entry_;
     std::string buf_;
     json jtag_;
+#endif
 
     void pipeReadLine();
 #ifdef HAS_EXPAT

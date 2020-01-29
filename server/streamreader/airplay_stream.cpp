@@ -44,9 +44,6 @@ string hex2str(string input)
 /*
  * Expat is used in metadata parsing from Shairport-sync.
  * Without HAS_EXPAT defined no parsing will occur.
- *
- * This is currently defined in airplayStream.h, prolly should
- * move to Makefile?
  */
 
 AirplayStream::AirplayStream(PcmListener* pcmListener, boost::asio::io_context& ioc, const StreamUri& uri)
@@ -62,14 +59,8 @@ AirplayStream::AirplayStream(PcmListener* pcmListener, boost::asio::io_context& 
 
 #ifdef HAS_EXPAT
     createParser();
-#endif
-
-#if 0
-    // This thread is replaced with asio based "pipeReadLine".
-    // Also seems that this thread was leaking.
-    // The new implementation is _not tested_
-    pipeReaderThread_ = thread(&AirplayStream::pipeReader, this);
-    pipeReaderThread_.detach();
+#else
+    LOG(INFO, LOG_TAG) << "Metadata support not enabled (HAS_EXPAT not defined)" << "\n";
 #endif
 }
 
@@ -134,7 +125,7 @@ void AirplayStream::push()
 void AirplayStream::setParamsAndPipePathFromPort()
 {
     pipePath_ = "/tmp/shairmeta." + cpt::to_string(getpid()) + "." + cpt::to_string(port_);
-    params_ = params_wo_port_ + " --metadata-pipename " + pipePath_ + " --port=" + cpt::to_string(port_);
+    params_ = params_wo_port_ + " \"--metadata-pipename=" + pipePath_ + "\" --port=" + cpt::to_string(port_);
 }
 
 
@@ -153,7 +144,7 @@ void AirplayStream::pipeReadLine()
         {
             int fd = open(pipePath_.c_str(), O_RDONLY | O_NONBLOCK);
             pipe_fd_ = std::make_unique<boost::asio::posix::stream_descriptor>(ioc_, fd);
-            LOG(INFO, LOG_TAG) << "Metadata pipe opened:" + pipePath_ + "\n";
+            LOG(INFO, LOG_TAG) << "Metadata pipe opened: " << pipePath_ << "\n";
         }
         catch (const std::exception& e)
         {
@@ -168,7 +159,14 @@ void AirplayStream::pipeReadLine()
     boost::asio::async_read_until(*pipe_fd_, streambuf_pipe_, delimiter, [this, delimiter](const std::error_code& ec, std::size_t bytes_transferred) {
         if (ec)
         {
-            LOG(ERROR, LOG_TAG) << "Error while reading from metadata pipe: " << ec.message() << "\n";
+            if (ec.value() == boost::asio::error::eof) {
+                // For some reason, EOF is returned until the first metadata is written to the pipe.
+                // Is this a boost bug?
+                LOG(INFO, LOG_TAG) << "Waiting for metadata, retrying in 2500ms" << "\n";
+                wait(pipe_open_timer_, 2500ms, [this] { pipeReadLine(); });
+            } else {
+                LOG(ERROR, LOG_TAG) << "Error while reading from metadata pipe: " << ec.message() << "\n";
+            }
             return;
         }
 
@@ -186,38 +184,6 @@ void AirplayStream::pipeReadLine()
         pipeReadLine();
     });
 }
-
-#if 0
-    // This thread is replaced with asio based "pipeReadLine".
-    // Also seems that this thread was leaking.
-    // The new implementation is _not tested_
-void AirplayStream::pipeReader()
-{
-#ifdef HAS_EXPAT
-    createParser();
-#endif
-
-    while (true)
-    {
-        ifstream pipe(pipePath_);
-
-        if (pipe)
-        {
-            string line;
-
-            while (getline(pipe, line))
-            {
-#ifdef HAS_EXPAT
-                parse(line);
-#endif
-            }
-        }
-
-        // Wait a little until we try to open it again
-        this_thread::sleep_for(chrono::milliseconds(500));
-    }
-}
-#endif
 
 void AirplayStream::initExeAndPath(const string& filename)
 {
