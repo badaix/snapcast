@@ -52,13 +52,19 @@ AirplayStream::AirplayStream(PcmListener* pcmListener, boost::asio::io_context& 
     logStderr_ = true;
 
     string devicename = uri_.getQuery("devicename", "Snapcast");
-    params_wo_port_ = "\"--name=" + devicename + "\" --output=stdout --use-stderr";
+    params_wo_port_ = "\"--name=" + devicename + "\" --output=stdout --use-stderr --get-coverart";
 
     port_ = cpt::stoul(uri_.getQuery("port", "5000"));
     setParamsAndPipePathFromPort();
 
 #ifdef HAS_EXPAT
     createParser();
+    metadata_dirty_ = false;
+    metadata_ = json();
+    metadata_["ALBUM"] = "";
+    metadata_["ARTIST"] = "";
+    metadata_["TITLE"] = "";
+    metadata_["COVER"] = "";
 #else
     LOG(INFO, LOG_TAG) << "Metadata support not enabled (HAS_EXPAT not defined)" << "\n";
 #endif
@@ -99,24 +105,90 @@ void AirplayStream::createParser()
 
 void AirplayStream::push()
 {
+    // The metadata we collect consists of two parts:
+    // (1) ALBUM, ARTIST, TITLE
+    // (2) COVER
+    //
+    // This stems from the Airplay protocol, which treats cover art differently from the rest of the metadata.
+    // 
+    // The process for (1) is as follows:
+    // - The ssnc->mdst message is sent ("metadata start")
+    // - core->asal|asar|minm messages are sent
+    // - The ssnc->mden message is sent ("metadata end")
+    // This process can repeat multiple times *for the same song*, with *the same metadata*.
+    //
+    // The process for (2) is as follows:
+    // - The ssnc->pcst message is sent ("picture start")
+    // - The ssnc->PICT message is sent (picture contents)
+    // - The ssnc->pcen message is sent ("picture end")
+    // If no cover art is available, the PICT message's data has a length of 0 *or* none of the messages are sent.
+    //
+    // Here is an example from an older iPad:
+    //
+    // User plays song without cover art
+    // - empty cover art message (2) 
+    // - empty cover art message (2) 
+    // - metadata message (1)
+    // - metadata message (1)
+    // - metadata message (1)
+    // User selects next song without cover art
+    // - metadata message (1)
+    // - metadata message (1)
+    // User selects next song with cover art
+    // - metadata message (1)
+    // - metadata message (1)
+    // - cover art message (2)
+    // - metadata message (1)
+    // User selects next song with cover art
+    // - metadata message (1)
+    // - metadata message (1)
+    // - empty cover art message (2) (!)
+    // - metadata message (1)
+    // - cover art message (2)
+    //
+    // As can be seen, the order of metadata (1) and cover (2) messages is non-deterministic.
+    // That is why we call setMeta() on both end of message (1) and (2).
     string data = entry_->data;
-    if (entry_->isBase64 && entry_->length > 0)
+
+    // Do not base64 decode cover art
+    const bool is_cover = entry_->type == "ssnc" && entry_->code == "PICT";
+    if (!is_cover && entry_->isBase64 && entry_->length > 0)
         data = base64_decode(data);
 
-    if (entry_->type == "ssnc" && entry_->code == "mdst")
-        jtag_ = json();
-
-    if (entry_->code == "asal")
-        jtag_["ALBUM"] = data;
-    if (entry_->code == "asar")
-        jtag_["ARTIST"] = data;
-    if (entry_->code == "minm")
-        jtag_["TITLE"] = data;
-
-    if (entry_->type == "ssnc" && entry_->code == "mden")
+    if (is_cover)
     {
-        // LOG(INFO, LOG_TAG) << "metadata=" << jtag_.dump(4) << "\n";
-        setMeta(jtag_);
+        setMetaData("COVER", data);
+        // LOG(INFO, LOG_TAG) << "Metadata type: " << entry_->type << " code: " << entry_->code << " data length: " << data.length() << "\n";
+    }
+    else
+    {
+        // LOG(INFO, LOG_TAG) << "Metadata type: " << entry_->type << " code: " << entry_->code << " data: " << data << "\n";
+    }
+
+    if (entry_->type == "core" && entry_->code == "asal")
+        setMetaData("ALBUM", data);
+    if (entry_->type == "core" && entry_->code == "asar")
+        setMetaData("ARTIST", data);
+    if (entry_->type == "core" && entry_->code == "minm")
+        setMetaData("TITLE", data);
+
+    // mden = metadata end, pcen == picture end
+    if (metadata_dirty_ && entry_->type == "ssnc" && (entry_->code == "mden" || entry_->code == "pcen"))
+    {
+        setMeta(metadata_);
+        metadata_dirty_ = false;
+    }
+}
+
+void AirplayStream::setMetaData(const string& key, const string& newValue)
+{
+    // Only overwrite metadata and set metadata_dirty_ if the metadata has changed.
+    // This avoids multiple unnecessary transmissions of the same metadata.
+    const auto& oldValue = metadata_[key];
+    if (oldValue != newValue)
+    {
+        metadata_[key] = newValue;
+        metadata_dirty_ = true;
     }
 }
 #endif
