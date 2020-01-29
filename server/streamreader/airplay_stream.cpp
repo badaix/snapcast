@@ -62,7 +62,7 @@ AirplayStream::AirplayStream(PcmListener* pcmListener, boost::asio::io_context& 
     port_ = cpt::stoul(uri_.getQuery("port", "5000"));
 
     string devicename = uri_.getQuery("devicename", "Snapcast");
-    params_wo_port_ = "--name=\"" + devicename + "\" --output=stdout";
+    params_wo_port_ = "--name=\"" + devicename + "\" --output=stdout --use-stderr";
     params_wo_port_ += " --metadata-pipename " + pipePath_;
     params_ = params_wo_port_ + " --port=" + cpt::to_string(port_);
 
@@ -152,10 +152,11 @@ void AirplayStream::pipeReadLine()
         {
             int fd = open(pipePath_.c_str(), O_RDONLY | O_NONBLOCK);
             pipe_fd_ = std::make_unique<boost::asio::posix::stream_descriptor>(ioc_, fd);
+            LOG(INFO, LOG_TAG) << "Metadata pipe opened\n";
         }
         catch (const std::exception& e)
         {
-            LOG(ERROR, LOG_TAG) << "Error opening pipe: " << e.what() << "\n";
+            LOG(ERROR, LOG_TAG) << "Error opening metadata pipe, retrying in 500ms. Error: " << e.what() << "\n";
             pipe_fd_ = nullptr;
             wait(pipe_open_timer_, 500ms, [this] { pipeReadLine(); });
             return;
@@ -166,7 +167,7 @@ void AirplayStream::pipeReadLine()
     boost::asio::async_read_until(*pipe_fd_, streambuf_pipe_, delimiter, [this, delimiter](const std::error_code& ec, std::size_t bytes_transferred) {
         if (ec)
         {
-            LOG(ERROR, LOG_TAG) << "Error while reading from pipe: " << ec.message() << "\n";
+            LOG(ERROR, LOG_TAG) << "Error while reading from metadata pipe: " << ec.message() << "\n";
             return;
         }
 
@@ -241,9 +242,9 @@ void AirplayStream::onStderrMsg(const std::string& line)
     if (line.empty())
         return;
     LOG(INFO, LOG_TAG) << "(" << getName() << ") " << line << "\n";
-    if (line.find("Is another Shairport Sync running on this device") != string::npos)
+    if (line.find("Is another instance of Shairport Sync running on this device") != string::npos)
     {
-        LOG(ERROR, LOG_TAG) << "Seem there is another Shairport Sync runnig on port " << port_ << ", switching to port " << port_ + 1 << "\n";
+        LOG(ERROR, LOG_TAG) << "It seems there is another Shairport Sync runnig on port " << port_ << ", switching to port " << port_ + 1 << "\n";
         ++port_;
         params_ = params_wo_port_ + " --port=" + cpt::to_string(port_);
     }
