@@ -52,7 +52,7 @@ AirplayStream::AirplayStream(PcmListener* pcmListener, boost::asio::io_context& 
     logStderr_ = true;
 
     string devicename = uri_.getQuery("devicename", "Snapcast");
-    params_wo_port_ = "--name=\"" + devicename + "\" --output=stdout --use-stderr";
+    params_wo_port_ = "\"--name=" + devicename + "\" --output=stdout --use-stderr";
 
     port_ = cpt::stoul(uri_.getQuery("port", "5000"));
     setParamsAndPipePathFromPort();
