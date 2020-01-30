@@ -105,8 +105,20 @@ void ControlSessionTcp::sendAsync(const std::string& message)
 
 void ControlSessionTcp::send_next()
 {
-    auto message = messages_.front();
-    boost::asio::async_write(socket_, boost::asio::buffer(message + "\r\n"),
+    // We cannot simply do boost::asio::buffer(message + "\r\n"), because 'message + "\r\n"' becomes invalid
+    // after leaving this method, leading to a 'Bad address' error.
+    // Instead, we need to mutate the string before passing it to boost::asio::buffer.
+    //
+    // From the boost reference:
+    //
+    // A buffer object does not have any ownership of the memory it refers to. It is the responsibility of
+    // the application to ensure the memory region remains valid until it is no longer required for an I/O
+    // operation. When the memory is no longer available, the buffer is said to have been invalidated.
+    // https://www.boost.org/doc/libs/1_72_0/doc/html/boost_asio/reference/buffer.html#boost_asio.reference.buffer.buffer_invalidation
+
+    string& message = messages_.front();
+    message += "\r\n";
+    boost::asio::async_write(socket_, boost::asio::buffer(message),
                              boost::asio::bind_executor(strand_, [ this, self = shared_from_this() ](std::error_code ec, std::size_t length) {
                                  messages_.pop_front();
                                  if (ec)
