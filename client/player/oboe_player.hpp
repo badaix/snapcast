@@ -19,6 +19,7 @@
 #ifndef OBOE_PLAYER_HPP
 #define OBOE_PLAYER_HPP
 
+#include <oboe/LatencyTuner.h>
 #include <oboe/Oboe.h>
 
 #include "player.hpp"
@@ -44,8 +45,9 @@ protected:
     double getCurrentOutputLatencyMillis() const;
 
     void worker() override;
-
     oboe::ManagedStream out_stream_;
+
+    std::unique_ptr<oboe::LatencyTuner> mLatencyTuner;
 };
 
 

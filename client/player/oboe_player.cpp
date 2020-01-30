@@ -32,16 +32,41 @@ static constexpr double kDefaultLatency = 50;
 OboePlayer::OboePlayer(const PcmDevice& pcmDevice, std::shared_ptr<Stream> stream) : Player(pcmDevice, stream)
 {
     LOG(DEBUG, LOG_TAG) << "Contructor\n";
-    oboe::AudioStreamBuilder builder;
+    char* env = getenv("SAMPLE_RATE");
+    if (env)
+        oboe::DefaultStreamValues::SampleRate = cpt::stoi(env, oboe::DefaultStreamValues::SampleRate);
+    env = getenv("FRAMES_PER_BUFFER");
+    if (env)
+        oboe::DefaultStreamValues::FramesPerBurst = cpt::stoi(env, oboe::DefaultStreamValues::FramesPerBurst);
+
+    LOG(INFO) << "DefaultStreamValues::SampleRate: " << oboe::DefaultStreamValues::SampleRate
+              << ", DefaultStreamValues::FramesPerBurst: " << oboe::DefaultStreamValues::FramesPerBurst << "\n";
+
     // The builder set methods can be chained for convenience.
-    builder.setSharingMode(oboe::SharingMode::Exclusive)
-        ->setPerformanceMode(oboe::PerformanceMode::LowLatency)
-        ->setChannelCount(stream->getFormat().channels)
-        ->setSampleRate(stream->getFormat().rate)
-        ->setFormat(oboe::AudioFormat::I16)
-        ->setCallback(this)
-        //->setFramesPerCallback((20 * stream->getFormat().rate) / 1000)
-        ->openManagedStream(out_stream_);
+    oboe::AudioStreamBuilder builder;
+    auto result = builder.setSharingMode(oboe::SharingMode::Exclusive)
+                      ->setPerformanceMode(oboe::PerformanceMode::LowLatency)
+                      ->setChannelCount(stream->getFormat().channels)
+                      ->setSampleRate(stream->getFormat().rate)
+                      ->setFormat(oboe::AudioFormat::I16)
+                      ->setCallback(this)
+                      ->setDirection(oboe::Direction::Output)
+                      ->setFramesPerCallback((16 * stream->getFormat().rate) / 1000)
+                      //->setFramesPerCallback(2 * oboe::DefaultStreamValues::FramesPerBurst)
+                      //->setFramesPerCallback(960) // 2*192)
+                      ->openManagedStream(out_stream_);
+    LOG(INFO) << "BufferSizeInFrames: " << out_stream_->getBufferSizeInFrames() << ", FramesPerBurst: " << out_stream_->getFramesPerBurst() << "\n";
+    if (result != oboe::Result::OK)
+        LOG(ERROR, LOG_TAG) << "Error building AudioStream: " << oboe::convertToText(result) << "\n";
+
+    if (out_stream_->getAudioApi() == oboe::AudioApi::AAudio)
+    {
+        mLatencyTuner = std::make_unique<oboe::LatencyTuner>(*out_stream_);
+    }
+    else
+    {
+        out_stream_->setBufferSizeInFrames(4 * out_stream_->getFramesPerBurst());
+    }
 }
 
 
@@ -49,7 +74,9 @@ OboePlayer::~OboePlayer()
 {
     LOG(DEBUG, LOG_TAG) << "Destructor\n";
     stop();
-    out_stream_->stop(std::chrono::nanoseconds(100ms).count());
+    auto result = out_stream_->stop(std::chrono::nanoseconds(100ms).count());
+    if (result != oboe::Result::OK)
+        LOG(ERROR, LOG_TAG) << "Error in AudioStream::stop: " << oboe::convertToText(result) << "\n";
 }
 
 
@@ -87,14 +114,11 @@ double OboePlayer::getCurrentOutputLatencyMillis() const
 
 oboe::DataCallbackResult OboePlayer::onAudioReady(oboe::AudioStream* /*oboeStream*/, void* audioData, int32_t numFrames)
 {
+    if (mLatencyTuner)
+        mLatencyTuner->tune();
 
-    // int32_t buffer_fill_size = oboeStream->getBufferCapacityInFrames() - numFrames;
-    // double delay_ms = static_cast<double>(oboeStream->getBufferCapacityInFrames()) / stream_->getFormat().msRate();
-
-    // LOG(INFO, LOG_TAG) << "onAudioReady frames: " << numFrames << ", capacity: " << oboeStream->getBufferCapacityInFrames() << ", size: " <<
-    // oboeStream->getBufferSizeInFrames() << ", available: " << oboeStream->getAvailableFrames() << ", delay ms: " << delay_ms << "\n";
     double output_latency = getCurrentOutputLatencyMillis();
-    // LOG(INFO, LOG_TAG) << "getCurrentOutputLatencyMillis: " << output_latency << "\n";
+    // LOG(INFO, LOG_TAG) << "getCurrentOutputLatencyMillis: " << output_latency << ", frames: " << numFrames << "\n";
     chronos::usec delay(static_cast<int>(output_latency * 1000.));
 
     if (!stream_->getPlayerChunk(audioData, delay, numFrames))
@@ -115,14 +139,18 @@ void OboePlayer::start()
 {
     // Typically, start the stream after querying some stream information, as well as some input from the user
     LOG(INFO, LOG_TAG) << "Start\n";
-    out_stream_->requestStart();
+    auto result = out_stream_->requestStart();
+    if (result != oboe::Result::OK)
+        LOG(ERROR, LOG_TAG) << "Error in requestStart: " << oboe::convertToText(result) << "\n";
 }
 
 
 void OboePlayer::stop()
 {
     LOG(INFO, LOG_TAG) << "Stop\n";
-    out_stream_->requestStop();
+    auto result = out_stream_->requestStop();
+    if (result != oboe::Result::OK)
+        LOG(ERROR, LOG_TAG) << "Error in requestStop: " << oboe::convertToText(result) << "\n";
 }
 
 
