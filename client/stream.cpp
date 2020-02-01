@@ -380,9 +380,10 @@ bool Stream::getPlayerChunk(void* outputBuffer, const cs::usec& outputBufferDacT
         }
         else if (shortBuffer_.full())
         {
-            if (cs::usec(shortMedian_) > cs::usec(100))
+            auto miniMedian = miniBuffer_.median();
+            if ((cs::usec(shortMedian_) > cs::usec(100)) && (cs::usec(miniMedian) > cs::usec(50)) && (cs::usec(age) > cs::usec(50)))
                 setRealSampleRate(format_.rate * 0.9999);
-            else if (cs::usec(shortMedian_) < -cs::usec(100))
+            else if ((cs::usec(shortMedian_) < -cs::usec(100)) && (cs::usec(miniMedian) < -cs::usec(50)) && (cs::usec(age) < -cs::usec(50)))
                 setRealSampleRate(format_.rate * 1.0001);
         }
 
