@@ -222,11 +222,18 @@ void AlsaPlayer::worker()
             continue;
         }
 
-        snd_pcm_avail_delay(handle_, &framesAvail, &framesDelay);
-        chronos::usec delay((chronos::usec::rep)(1000 * (double)framesDelay / format.msRate()));
-        //		LOG(INFO) << "delay: " << framesDelay << ", delay[ms]: " << delay.count() / 1000 << "\n";
+        int result = snd_pcm_avail_delay(handle_, &framesAvail, &framesDelay);
+        if (result < 0)
+        {
+            LOG(WARNING) << "snd_pcm_avail_delay failed: " << snd_strerror(result) << "\n";
+            this_thread::sleep_for(10ms);
+            continue;
+        }
 
-        if (buffer_.size() < framesAvail * format.frameSize)
+        chronos::usec delay((chronos::usec::rep)(1000 * (double)framesDelay / format.msRate()));
+        // LOG(TRACE) << "delay: " << framesDelay << ", delay[ms]: " << delay.count() / 1000 << ", avail: " << framesAvail << "\n";
+
+        if (buffer_.size() < static_cast<size_t>(framesAvail * format.frameSize))
             buffer_.resize(framesAvail * format.frameSize);
         if (stream_->getPlayerChunk(buffer_.data(), delay, framesAvail))
         {
