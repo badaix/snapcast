@@ -124,7 +124,7 @@ void AlsaPlayer::initAlsa()
 
     /* Write parameters */
     if ((pcm = snd_pcm_hw_params(handle_, params)) < 0)
-        throw SnapException("Can't set harware parameters: " + string(snd_strerror(pcm)));
+        throw SnapException("Can't set hardware parameters: " + string(snd_strerror(pcm)));
 
     /* Resume information */
     LOG(DEBUG) << "PCM name: " << snd_pcm_name(handle_) << "\n";
