@@ -80,28 +80,28 @@ endfunction(check_working_cxx_atomics64)
 
 
 function(check_working_cxx_atomics_2args varname)
-set(OLD_CMAKE_REQUIRED_FLAGS ${CMAKE_REQUIRED_FLAGS})
-set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} -latomic")
+set(OLD_CMAKE_REQUIRED_LIBRARIES ${CMAKE_REQUIRED_LIBRARIES})
+list(APPEND CMAKE_REQUIRED_LIBRARIES "atomic")
 CHECK_CXX_SOURCE_COMPILES("
 int main() {
   __atomic_load(nullptr, 0);
   return 0;
 }
 " ${varname})
-set(CMAKE_REQUIRED_FLAGS ${OLD_CMAKE_REQUIRED_FLAGS})
+set(CMAKE_REQUIRED_LIBRARIES ${OLD_CMAKE_REQUIRED_LIBRARIES})
 endfunction(check_working_cxx_atomics_2args)
 
 
 function(check_working_cxx_atomics64_2args varname)
-set(OLD_CMAKE_REQUIRED_FLAGS ${CMAKE_REQUIRED_FLAGS})
-set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} -latomic")
+set(OLD_CMAKE_REQUIRED_LIBRARIES ${CMAKE_REQUIRED_LIBRARIES})
+list(APPEND CMAKE_REQUIRED_LIBRARIES "atomic")
 CHECK_CXX_SOURCE_COMPILES("
 int main() {
   __atomic_load_8(nullptr, 0);
   return 0;
 }
 " ${varname})
-set(CMAKE_REQUIRED_FLAGS ${OLD_CMAKE_REQUIRED_FLAGS})
+set(CMAKE_REQUIRED_LIBRARIES ${OLD_CMAKE_REQUIRED_LIBRARIES})
 endfunction(check_working_cxx_atomics64_2args)
 
 
