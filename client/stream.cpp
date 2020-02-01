@@ -53,7 +53,7 @@ void Stream::setRealSampleRate(double sampleRate)
         correctAfterXFrames_ = 0;
     else
         correctAfterXFrames_ = round((format_.rate / sampleRate) / (format_.rate / sampleRate - 1.));
-    //	LOG(DEBUG) << "Correct after X: " << correctAfterXFrames_ << " (Real rate: " << sampleRate << ", rate: " << format_.rate << ")\n";
+    // LOG(DEBUG) << "Correct after X: " << correctAfterXFrames_ << " (Real rate: " << sampleRate << ", rate: " << format_.rate << ")\n";
 }
 
 
@@ -163,16 +163,55 @@ cs::time_point_clk Stream::getNextPlayerChunk(void* outputBuffer, const cs::usec
     char* buffer = (char*)malloc(toRead * format_.frameSize);
     cs::time_point_clk tp = getNextPlayerChunk(buffer, timeout, toRead);
 
-    float factor = (float)toRead / framesPerBuffer; //(float)(framesPerBuffer*channels_);
-                                                    //	if (abs(framesCorrection) > 1)
-                                                    //		LOG(INFO) << "correction: " << framesCorrection << ", factor: " << factor << "\n";
-    float idx = 0;
-    for (size_t n = 0; n < framesPerBuffer; ++n)
+    // float factor = (float)toRead / framesPerBuffer;
+    //	if (abs(framesCorrection) > 1)
+    //		LOG(INFO) << "correction: " << framesCorrection << ", factor: " << factor << "\n";
+
+    size_t slices = (abs(framesCorrection) + 1);
+    size_t pos = 0;
+    int idx = 0;
+    if (framesCorrection < 0)
     {
-        size_t index(floor(idx)); // = (int)(ceil(n*factor));
-        memcpy((char*)outputBuffer + n * format_.frameSize, buffer + index * format_.frameSize, format_.frameSize);
-        idx += factor;
+        int size = framesPerBuffer / slices;
+        // LOG(TRACE) << "getNextPlayerChunk, frames: " << framesPerBuffer << ", correction: " << framesCorrection << " (" << toRead << "), slices: " << slices
+        // << "\n";
+
+        for (size_t n = 0; n < slices; ++n)
+        {
+            if (n + 1 == slices)
+                size = framesPerBuffer - pos;
+
+            // LOG(TRACE) << "slice: " << n << ", size: " << size << ", out pos: " << pos << ", source pos: " << pos + idx << "\n";
+            memcpy((char*)outputBuffer + pos * format_.frameSize, buffer + (pos + idx) * format_.frameSize, size * format_.frameSize);
+            pos += size;
+            idx -= 1;
+        }
     }
+    else
+    {
+        int size = toRead / slices;
+        // LOG(TRACE) << "getNextPlayerChunk, frames: " << framesPerBuffer << ", correction: " << framesCorrection << " (" << toRead << "), slices: " << slices
+        // << "\n";
+
+        for (size_t n = 0; n < slices; ++n)
+        {
+            if (n + 1 == slices)
+                size = toRead - pos;
+
+            // LOG(TRACE) << "slice: " << n << ", size: " << size << ", out pos: " << pos + idx << ", source pos: " << pos << "\n";
+            memcpy((char*)outputBuffer + (pos + idx) * format_.frameSize, buffer + pos * format_.frameSize, size * format_.frameSize);
+            pos += size;
+            idx -= 1;
+        }
+    }
+
+    // float idx = 0;
+    // for (size_t n = 0; n < framesPerBuffer; ++n)
+    // {
+    //     size_t index(floor(idx)); // = (int)(ceil(n*factor));
+    //     memcpy((char*)outputBuffer + n * format_.frameSize, buffer + index * format_.frameSize, format_.frameSize);
+    //     idx += factor;
+    // }
     free(buffer);
 
     return tp;
