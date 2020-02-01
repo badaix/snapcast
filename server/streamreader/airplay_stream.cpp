@@ -243,7 +243,7 @@ void AirplayStream::onStderrMsg(const std::string& line)
     LOG(INFO, LOG_TAG) << "(" << getName() << ") " << line << "\n";
     if (line.find("Is another Shairport Sync running on this device") != string::npos)
     {
-        LOG(ERROR, LOG_TAG) << "Seem there is another Shairport Sync runnig on port " << port_ << ", switching to port " << port_ + 1 << "\n";
+        LOG(ERROR, LOG_TAG) << "Seem there is another Shairport Sync running on port " << port_ << ", switching to port " << port_ + 1 << "\n";
         ++port_;
         params_ = params_wo_port_ + " --port=" + cpt::to_string(port_);
     }
