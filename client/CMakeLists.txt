@@ -7,7 +7,7 @@ set(CLIENT_SOURCES
     decoder/pcm_decoder.cpp
     player/player.cpp)
 
-set(CLIENT_LIBRARIES ${CMAKE_THREAD_LIBS_INIT} common)
+set(CLIENT_LIBRARIES ${CMAKE_THREAD_LIBS_INIT} ${ATOMIC_LIBRARY} common)
 
 set(CLIENT_INCLUDE
     ${Boost_INCLUDE_DIR}
