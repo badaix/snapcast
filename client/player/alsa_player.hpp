@@ -48,8 +48,8 @@ private:
     void uninitAlsa();
 
     snd_pcm_t* handle_;
+    std::vector<char> buffer_;
     snd_pcm_uframes_t frames_;
-    char* buff_;
 };
 
 

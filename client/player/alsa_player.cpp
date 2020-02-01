@@ -26,7 +26,7 @@
 
 using namespace std;
 
-AlsaPlayer::AlsaPlayer(const PcmDevice& pcmDevice, std::shared_ptr<Stream> stream) : Player(pcmDevice, stream), handle_(nullptr), buff_(nullptr)
+AlsaPlayer::AlsaPlayer(const PcmDevice& pcmDevice, std::shared_ptr<Stream> stream) : Player(pcmDevice, stream), handle_(nullptr)
 {
 }
 
@@ -36,7 +36,6 @@ void AlsaPlayer::initAlsa()
     unsigned int tmp, rate;
     int pcm, channels;
     snd_pcm_hw_params_t* params;
-    int buff_size;
 
     const SampleFormat& format = stream_->getFormat();
     rate = format.rate;
@@ -139,9 +138,6 @@ void AlsaPlayer::initAlsa()
     snd_pcm_hw_params_get_period_size(params, &frames_, nullptr);
     LOG(INFO) << "frames: " << frames_ << "\n";
 
-    buff_size = frames_ * format.frameSize; // channels * 2 /* 2 -> sample size */;
-    buff_ = (char*)malloc(buff_size);
-
     snd_pcm_hw_params_get_period_time(params, &tmp, nullptr);
     LOG(DEBUG) << "period time: " << tmp << "\n";
 
@@ -163,12 +159,6 @@ void AlsaPlayer::uninitAlsa()
         snd_pcm_drain(handle_);
         snd_pcm_close(handle_);
         handle_ = nullptr;
-    }
-
-    if (buff_ != nullptr)
-    {
-        free(buff_);
-        buff_ = nullptr;
     }
 }
 
@@ -197,7 +187,9 @@ void AlsaPlayer::worker()
 {
     snd_pcm_sframes_t pcm;
     snd_pcm_sframes_t framesDelay;
+    snd_pcm_sframes_t framesAvail;
     long lastChunkTick = chronos::getTickCount();
+    const SampleFormat& format = stream_->getFormat();
 
     while (active_)
     {
@@ -214,16 +206,33 @@ void AlsaPlayer::worker()
             }
         }
 
-        //		snd_pcm_avail_delay(handle_, &framesAvail, &framesDelay);
-        snd_pcm_delay(handle_, &framesDelay);
-        chronos::usec delay((chronos::usec::rep)(1000 * (double)framesDelay / stream_->getFormat().msRate()));
+        int wait_result = snd_pcm_wait(handle_, 100);
+        if (wait_result == -EPIPE)
+        {
+            LOG(ERROR) << "XRUN: " << snd_strerror(wait_result) << "\n";
+            snd_pcm_prepare(handle_);
+        }
+        else if (wait_result < 0)
+        {
+            LOG(ERROR) << "ERROR. Can't wait for PCM to become ready: " << snd_strerror(wait_result) << "\n";
+            uninitAlsa();
+        }
+        else if (wait_result == 0)
+        {
+            continue;
+        }
+
+        snd_pcm_avail_delay(handle_, &framesAvail, &framesDelay);
+        chronos::usec delay((chronos::usec::rep)(1000 * (double)framesDelay / format.msRate()));
         //		LOG(INFO) << "delay: " << framesDelay << ", delay[ms]: " << delay.count() / 1000 << "\n";
 
-        if (stream_->getPlayerChunk(buff_, delay, frames_))
+        if (buffer_.size() < framesAvail * format.frameSize)
+            buffer_.resize(framesAvail * format.frameSize);
+        if (stream_->getPlayerChunk(buffer_.data(), delay, framesAvail))
         {
             lastChunkTick = chronos::getTickCount();
-            adjustVolume(buff_, frames_);
-            if ((pcm = snd_pcm_writei(handle_, buff_, frames_)) == -EPIPE)
+            adjustVolume(buffer_.data(), framesAvail);
+            if ((pcm = snd_pcm_writei(handle_, buffer_.data(), framesAvail)) == -EPIPE)
             {
                 LOG(ERROR) << "XRUN: " << snd_strerror(pcm) << "\n";
                 snd_pcm_prepare(handle_);
