@@ -80,33 +80,35 @@ endfunction(check_working_cxx_atomics64)
 
 
 function(check_working_cxx_atomics_2args varname)
-set(OLD_CMAKE_REQUIRED_FLAGS ${CMAKE_REQUIRED_FLAGS})
-set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} -latomic")
+set(OLD_CMAKE_REQUIRED_LIBRARIES ${CMAKE_REQUIRED_LIBRARIES})
+list(APPEND CMAKE_REQUIRED_LIBRARIES "atomic")
 CHECK_CXX_SOURCE_COMPILES("
 int main() {
   __atomic_load(nullptr, 0);
   return 0;
 }
 " ${varname})
-set(CMAKE_REQUIRED_FLAGS ${OLD_CMAKE_REQUIRED_FLAGS})
+set(CMAKE_REQUIRED_LIBRARIES ${OLD_CMAKE_REQUIRED_LIBRARIES})
 endfunction(check_working_cxx_atomics_2args)
 
 
 function(check_working_cxx_atomics64_2args varname)
-set(OLD_CMAKE_REQUIRED_FLAGS ${CMAKE_REQUIRED_FLAGS})
-set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} -latomic")
+set(OLD_CMAKE_REQUIRED_LIBRARIES ${CMAKE_REQUIRED_LIBRARIES})
+list(APPEND CMAKE_REQUIRED_LIBRARIES "atomic")
 CHECK_CXX_SOURCE_COMPILES("
 int main() {
   __atomic_load_8(nullptr, 0);
   return 0;
 }
 " ${varname})
-set(CMAKE_REQUIRED_FLAGS ${OLD_CMAKE_REQUIRED_FLAGS})
+set(CMAKE_REQUIRED_LIBRARIES ${OLD_CMAKE_REQUIRED_LIBRARIES})
 endfunction(check_working_cxx_atomics64_2args)
 
 
 # First check if atomics work without the library.
 check_working_cxx_atomics(HAVE_CXX_ATOMICS_WITHOUT_LIB)
+
+set(ATOMIC_LIBRARY "")
 
 # If not, check if the library exists, and atomics work with it.
 if(NOT HAVE_CXX_ATOMICS_WITHOUT_LIB)
@@ -116,7 +118,7 @@ if(NOT HAVE_CXX_ATOMICS_WITHOUT_LIB)
   endif()
   if( HAVE_LIBATOMIC OR HAVE_LIBATOMIC_2ARGS )
     list(APPEND CMAKE_REQUIRED_LIBRARIES "atomic")
-    set(CMAKE_CXX_LINK_FLAGS "${CMAKE_CXX_LINK_FLAGS} -latomic")
+    set(ATOMIC_LIBRARY "atomic")
     check_working_cxx_atomics(HAVE_CXX_ATOMICS_WITH_LIB)
     if (NOT HAVE_CXX_ATOMICS_WITH_LIB)
       message(FATAL_ERROR "Host compiler must support std::atomic!")
@@ -137,7 +139,7 @@ if(NOT HAVE_CXX_ATOMICS_WITHOUT_LIB)
       endif()
       if( HAVE_CXX_LIBATOMICS64 OR HAVE_CXX_LIBATOMICS64_2ARGS )
         list(APPEND CMAKE_REQUIRED_LIBRARIES "atomic")
-        set(CMAKE_CXX_LINK_FLAGS "${CMAKE_CXX_LINK_FLAGS} -latomic")
+        set(ATOMIC_LIBRARY "atomic")
         check_working_cxx_atomics64(HAVE_CXX_ATOMICS64_WITH_LIB)
         if (NOT HAVE_CXX_ATOMICS64_WITH_LIB)
           message(FATAL_ERROR "Host compiler must support std::atomic!")

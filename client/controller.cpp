@@ -130,6 +130,8 @@ void Controller::onMessageReceived(ClientConnection* /*connection*/, const msg::
         player_ = make_unique<AlsaPlayer>(pcmDevice_, stream_);
 #elif HAS_OPENSL
         player_ = make_unique<OpenslPlayer>(pcmDevice_, stream_);
+#elif HAS_OBOE
+        player_ = make_unique<OboePlayer>(pcmDevice_, stream_);
 #elif HAS_COREAUDIO
         player_ = make_unique<CoreAudioPlayer>(pcmDevice_, stream_);
 #else

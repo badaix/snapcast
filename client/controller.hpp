@@ -30,6 +30,8 @@
 #include "player/alsa_player.hpp"
 #elif HAS_OPENSL
 #include "player/opensl_player.hpp"
+#elif HAS_OBOE
+#include "player/oboe_player.hpp"
 #elif HAS_COREAUDIO
 #include "player/coreaudio_player.hpp"
 #endif

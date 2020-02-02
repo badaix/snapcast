@@ -47,7 +47,9 @@ Please follow this [guide](doc/build.md) to build Snapcast for
 * [Raspberry Pi](doc/build.md#raspberry-pi-cross-compile)
 
 ### Install Linux packages
-For Debian download the package for your CPU architecture from the [latest release page](https://github.com/badaix/snapcast/releases/latest), e.g. for Raspberry Pi `snapclient_0.x.x_armhf.deb`
+#### Debian
+Download the package for your CPU architecture from the [latest release page](https://github.com/badaix/snapcast/releases/latest), e.g. for Raspberry Pi `snapclient_0.x.x_armhf.deb`
+
 Install the package:
 
     $ sudo dpkg -i snapclient_0.x.x_armhf.deb
@@ -56,31 +58,41 @@ Install missing dependencies:
 
     $ sudo apt-get -f install
 
-On OpenWrt do:
+#### OpenWrt
 
     $ opkg install snapclient_0.x.x_ar71xx.ipk
 
-On Alpine Linux do:
+#### Alpine Linux
 
     $ apk add snapcast
 
-	# Or for just the client:
+Or for just the client:
 
-	$ apk add snapcast-client
+    $ apk add snapcast-client
 
-	# Or for just the server:
+Or for just the server:
 
-	$ apk add snapcast-server
+    $ apk add snapcast-server
 
-On Gentoo Linux do:
+#### Gentoo Linux:
 
     $ emerge --ask media-sound/snapcast
 
-On Archlinux, snapcast is available through the AUR.  To install, use your favorite AUR helper, or do:
+#### Arch Linux
+Snapcast is available through the AUR. To install, use your favorite AUR helper, or do:
 
     $ git clone https://aur.archlinux.org/snapcast
     $ cd snapcast
     $ makepkg -si
+
+#### Void Linux
+To install the client:
+
+    # xbps-install snapclient
+
+To install the server:
+
+    # xbps-install snapserver
 
 SnapOS
 ------
