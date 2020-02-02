@@ -261,7 +261,6 @@ void Stream::resetBuffers()
 }
 
 
-
 bool Stream::getPlayerChunk(void* outputBuffer, const cs::usec& outputBufferDacTime, unsigned long framesPerBuffer)
 {
     if (outputBufferDacTime > bufferMs_)
@@ -420,9 +419,19 @@ bool Stream::getPlayerChunk(void* outputBuffer, const cs::usec& outputBufferDacT
         {
             auto miniMedian = miniBuffer_.median();
             if ((cs::usec(shortMedian_) > cs::usec(100)) && (cs::usec(miniMedian) > cs::usec(50)) && (cs::usec(age) > cs::usec(50)))
-                setRealSampleRate(format_.rate * 0.9999);
+            {
+                double rate = (shortMedian_ / 100) * 0.00005;
+                rate = 1.0 - std::min(rate, 0.0005);
+                // LOG(INFO) << "Rate: " << rate << "\n";
+                setRealSampleRate(format_.rate * rate); // 0.9999);
+            }
             else if ((cs::usec(shortMedian_) < -cs::usec(100)) && (cs::usec(miniMedian) < -cs::usec(50)) && (cs::usec(age) < -cs::usec(50)))
-                setRealSampleRate(format_.rate * 1.0001);
+            {
+                double rate = (-shortMedian_ / 100) * 0.00005;
+                rate = 1.0 + std::min(rate, 0.0005);
+                // LOG(INFO) << "Rate: " << rate << "\n";
+                setRealSampleRate(format_.rate * rate); // 1.0001);
+            }
         }
 
         updateBuffers(age.count());
