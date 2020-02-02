@@ -163,9 +163,8 @@ cs::time_point_clk Stream::getNextPlayerChunk(void* outputBuffer, const cs::usec
     char* buffer = (char*)malloc(toRead * format_.frameSize);
     cs::time_point_clk tp = getNextPlayerChunk(buffer, timeout, toRead);
 
-    // float factor = (float)toRead / framesPerBuffer;
-    //	if (abs(framesCorrection) > 1)
-    //		LOG(INFO) << "correction: " << framesCorrection << ", factor: " << factor << "\n";
+    // if (abs(framesCorrection) > 0)
+    //     LOG(DEBUG) << "getNextPlayerChunk, frames: " << framesPerBuffer << ", correction: " << framesCorrection << " (" << toRead << ")\n";
 
     size_t slices = (abs(framesCorrection) + 1);
     size_t pos = 0;
@@ -361,7 +360,7 @@ bool Stream::getPlayerChunk(void* outputBuffer, const cs::usec& outputBufferDacT
         if ((correctAfterXFrames_ != 0) && (playedFrames_ >= (unsigned long)abs(correctAfterXFrames_)))
         {
             framesCorrection += (correctAfterXFrames_ > 0) ? 1 : -1;
-            playedFrames_ -= abs(correctAfterXFrames_);
+            playedFrames_ = 0; //-= abs(correctAfterXFrames_);
         }
 
         age = std::chrono::duration_cast<cs::usec>(TimeProvider::serverNow() -
@@ -373,9 +372,9 @@ bool Stream::getPlayerChunk(void* outputBuffer, const cs::usec& outputBufferDacT
         {
             if (buffer_.full())
             {
-                if (cs::usec(abs(median_)) > cs::msec(1))
+                if (cs::usec(abs(median_)) > cs::msec(2))
                 {
-                    LOG(INFO) << "pBuffer->full() && (abs(median_) > 1): " << median_ << "\n";
+                    LOG(INFO) << "pBuffer->full() && (abs(median_) > 2): " << median_ << "\n";
                     sleep_ = cs::usec(median_);
                 }
                 // else if (cs::usec(median_) > cs::usec(300))
