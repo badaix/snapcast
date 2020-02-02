@@ -29,7 +29,7 @@
 
 namespace chronos
 {
-typedef std::chrono::steady_clock clk;
+typedef std::chrono::system_clock clk;
 typedef std::chrono::time_point<clk> time_point_clk;
 typedef std::chrono::seconds sec;
 typedef std::chrono::milliseconds msec;
@@ -47,8 +47,8 @@ inline static void timeofday(struct timeval* tv)
 
 inline static void systemtimeofday(struct timeval* tv)
 {
-    // gettimeofday(tv, nullptr);
-    timeofday<clk>(tv);
+    gettimeofday(tv, nullptr);
+    // timeofday<std::chrono::system_clock>(tv);
 }
 
 template <class ToDuration>
@@ -85,7 +85,7 @@ inline static long getTickCount()
 #ifdef MACOS
     clock_serv_t cclock;
     mach_timespec_t mts;
-    host_get_clock_service(mach_host_self(), SYSTEM_CLOCK, &cclock);
+    host_get_clock_service(mach_host_self(), CALENDAR_CLOCK, &cclock);
     clock_get_time(cclock, &mts);
     mach_port_deallocate(mach_task_self(), cclock);
     return mts.tv_sec * 1000 + mts.tv_nsec / 1000000;
