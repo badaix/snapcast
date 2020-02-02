@@ -16,6 +16,7 @@ option(BUILD_WITH_VORBIS "Build with VORBIS support" ON)
 option(BUILD_WITH_TREMOR "Build with vorbis using TREMOR" ON)
 option(BUILD_WITH_OPUS "Build with OPUS support" ON)
 option(BUILD_WITH_AVAHI "Build with AVAHI support" ON)
+option(BUILD_WITH_EXPAT "Build with EXPAT support" ON)
 
 
 if (NOT BUILD_SHARED_LIBS AND NOT BUILD_STATIC_LIBS)
@@ -179,6 +180,13 @@ if(BUILD_WITH_OPUS)
     if (OPUS_FOUND)
         add_definitions("-DHAS_OPUS")
     endif (OPUS_FOUND)
+endif()
+
+if(BUILD_WITH_EXPAT)
+    pkg_search_module(EXPAT expat)
+    if (EXPAT_FOUND)
+        add_definitions("-DHAS_EXPAT")
+    endif (EXPAT_FOUND)
 endif()
 
 find_package(Boost 1.70 REQUIRED)
