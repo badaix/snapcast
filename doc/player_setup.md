@@ -151,11 +151,11 @@ Snapserver supports [shairport-sync](https://github.com/mikebrady/shairport-sync
 ### Spotify
 Snapserver supports [librespot](https://github.com/librespot-org/librespot) with the `pipe` backend.
  1. Build and copy the `librespot` binary somewhere to your `PATH`, e.g. `/usr/local/bin/`
- 2. Configure snapserver with `stream = spotify:///librespot?name=Spotify[&username=<my username>&password=<my password>][&devicename=Snapcast][&bitrate=320][&onstart=<start command>][&onstop=<stop command>][&volume=<volume in percent>][&cache=<cache dir>]`
+ 2. Configure snapserver with `stream = spotify:///librespot?name=Spotify[&username=<my username>&password=<my password>][&devicename=Snapcast][&bitrate=320][&onstart=<start command>][&onstop=<stop command>][&volume=<volume in percent>][&cache=<cache dir>][&killall=true]`
    * Valid bitrates are 96, 160, 320
    * `start command` and `stop command` are executed by Librespot at start/stop
      * For example: `onstart=/usr/bin/logger -t Snapcast Starting spotify...`
-
+   * If `killall` is `true` (default), all running instances of Librespot will be killed. This MUST be disabled on all spotify streams by setting it to `false` if you want to use multiple spotify streams.
 
 ### Process
 Snapserver can start any process and read PCM data from the stdout of the process: 

@@ -40,6 +40,8 @@ public:
     LibrespotStream(PcmListener* pcmListener, boost::asio::io_context& ioc, const StreamUri& uri);
 
 protected:
+    bool killall_;
+
     void onStderrMsg(const std::string& line) override;
     void initExeAndPath(const std::string& filename) override;
 };

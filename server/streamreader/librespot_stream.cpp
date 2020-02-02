@@ -44,6 +44,7 @@ LibrespotStream::LibrespotStream(PcmListener* pcmListener, boost::asio::io_conte
     string devicename = uri_.getQuery("devicename", "Snapcast");
     string onevent = uri_.getQuery("onevent", "");
     bool normalize = (uri_.getQuery("normalize", "false") == "true");
+    killall_ = (uri_.getQuery("killall", "true") == "true");
 
     if (username.empty() != password.empty())
         throw SnapException("missing parameter \"username\" or \"password\" (must provide both, or neither)");
@@ -87,8 +88,11 @@ void LibrespotStream::initExeAndPath(const std::string& filename)
         exe_ = exe_.substr(exe_.find_last_of("/") + 1);
     }
 
-    /// kill if it's already running
-    execGetOutput("killall " + exe_);
+    if (killall_)
+    {
+        /// kill if it's already running
+        execGetOutput("killall " + exe_);
+    }
 }
 
 
