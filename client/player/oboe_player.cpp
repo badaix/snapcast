@@ -51,7 +51,7 @@ OboePlayer::OboePlayer(const PcmDevice& pcmDevice, std::shared_ptr<Stream> strea
                       ->setFormat(oboe::AudioFormat::I16)
                       ->setCallback(this)
                       ->setDirection(oboe::Direction::Output)
-                      ->setFramesPerCallback((16 * stream->getFormat().rate) / 1000)
+                      //->setFramesPerCallback((8 * stream->getFormat().rate) / 1000)
                       //->setFramesPerCallback(2 * oboe::DefaultStreamValues::FramesPerBurst)
                       //->setFramesPerCallback(960) // 2*192)
                       ->openManagedStream(out_stream_);
