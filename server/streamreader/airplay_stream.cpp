@@ -60,7 +60,8 @@ AirplayStream::AirplayStream(PcmListener* pcmListener, boost::asio::io_context& 
 #ifdef HAS_EXPAT
     createParser();
 #else
-    LOG(INFO, LOG_TAG) << "Metadata support not enabled (HAS_EXPAT not defined)" << "\n";
+    LOG(INFO, LOG_TAG) << "Metadata support not enabled (HAS_EXPAT not defined)"
+                       << "\n";
 #endif
 }
 
@@ -159,12 +160,16 @@ void AirplayStream::pipeReadLine()
     boost::asio::async_read_until(*pipe_fd_, streambuf_pipe_, delimiter, [this, delimiter](const std::error_code& ec, std::size_t bytes_transferred) {
         if (ec)
         {
-            if (ec.value() == boost::asio::error::eof) {
+            if (ec.value() == boost::asio::error::eof)
+            {
                 // For some reason, EOF is returned until the first metadata is written to the pipe.
                 // Is this a boost bug?
-                LOG(INFO, LOG_TAG) << "Waiting for metadata, retrying in 2500ms" << "\n";
+                LOG(INFO, LOG_TAG) << "Waiting for metadata, retrying in 2500ms"
+                                   << "\n";
                 wait(pipe_open_timer_, 2500ms, [this] { pipeReadLine(); });
-            } else {
+            }
+            else
+            {
                 LOG(ERROR, LOG_TAG) << "Error while reading from metadata pipe: " << ec.message() << "\n";
             }
             return;
