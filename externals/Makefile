@@ -56,7 +56,7 @@ flac: check-env
 	export CXX="$(CXX)"; \
 	export CPPFLAGS="$(CPPFLAGS)"; \
 	./autogen.sh; \
-	./configure --host=$(ARCH) --disable-ogg --prefix=$(NDK_DIR); \
+	./configure --host=$(ARCH) --disable-ogg --prefix=$(NDK_DIR)/usr/local/; \
 	make; \
 	make install; \
 	make clean;
@@ -67,7 +67,7 @@ ogg: check-env
 	export CXX="$(CXX)"; \
 	export CPPFLAGS="$(CPPFLAGS)"; \
 	./autogen.sh; \
-	./configure --host=$(ARCH) --prefix=$(NDK_DIR); \
+	./configure --host=$(ARCH) --prefix=$(NDK_DIR)/usr/local/; \
 	make; \
 	make install; \
 	make clean;
@@ -78,7 +78,7 @@ opus: check-env
 	export CXX="$(CXX)"; \
 	export CPPFLAGS="$(CPPFLAGS)"; \
 	./autogen.sh; \
-	./configure --host=$(ARCH) --prefix=$(NDK_DIR); \
+	./configure --host=$(ARCH) --prefix=$(NDK_DIR)/usr/local/; \
 	make; \
 	make install; \
 	make clean;
@@ -89,7 +89,7 @@ tremor:	check-env
 	export CXX="$(CXX)"; \
 	export CPPFLAGS="$(CPPFLAGS)"; \
 	./autogen.sh; \
-	./configure --host=$(ARCH) --prefix=$(NDK_DIR) --with-ogg=$(NDK_DIR); \
+	./configure --host=$(ARCH) --prefix=$(NDK_DIR)/usr/local/ --with-ogg=$(NDK_DIR)/usr/local/; \
 	make; \
 	make install; \
 	make clean; \
@@ -124,5 +124,7 @@ oboe: check-env
 	cd build; \
 	cmake ..; \
 	make; \
-	make DESTDIR=$(NDK_DIR) install;
-
+	make DESTDIR=$(NDK_DIR) install; \
+	make clean; \
+	cd ..; \
+	rm -rf build;
