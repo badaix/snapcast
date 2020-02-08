@@ -722,11 +722,11 @@ void StreamServer::onMessageReceived(StreamSession* streamSession, const msg::Ba
 }
 
 
-void StreamServer::saveConfig()
+void StreamServer::saveConfig(const std::chrono::milliseconds& deferred)
 {
     config_timer_.cancel();
-    config_timer_.expires_after(2s);
-    config_timer_.async_wait([this](const boost::system::error_code& ec) {
+    config_timer_.expires_after(deferred);
+    config_timer_.async_wait([](const boost::system::error_code& ec) {
         if (!ec)
         {
             LOG(DEBUG) << "Saving config\n";
