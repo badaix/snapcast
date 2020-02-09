@@ -628,9 +628,8 @@ void StreamServer::onMessageReceived(StreamSession* streamSession, const msg::Ba
         timeMsg->deserialize(baseMessage, buffer);
         timeMsg->refersTo = timeMsg->id;
         timeMsg->latency = timeMsg->received - timeMsg->sent;
-        //		LOG(INFO) << "Latency sec: " << timeMsg.latency.sec << ", usec: " << timeMsg.latency.usec << ", refers to: " << timeMsg.refersTo <<
-        //"\n";
-        streamSession->sendAsync(timeMsg, true);
+        // LOG(INFO) << "Latency sec: " << timeMsg.latency.sec << ", usec: " << timeMsg.latency.usec << ", refers to: " << timeMsg.refersTo << "\n";
+        streamSession->sendAsync(timeMsg);
 
         // refresh streamSession state
         ClientInfoPtr client = Config::instance().getClientInfo(streamSession->clientId);

@@ -166,8 +166,8 @@ void StreamSession::sendAsync(msg::message_ptr message, bool send_now)
     if (!message)
         return;
 
-    // sendAsync(shared_const_buffer(*message), send_now);
     tv t;
+    // TODO: better set the timestamp in send_next for more accurate time sync
     message->sent = t;
     std::ostringstream oss;
     message->serialize(oss);
