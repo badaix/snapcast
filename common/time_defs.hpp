@@ -29,7 +29,8 @@
 
 namespace chronos
 {
-typedef std::chrono::system_clock clk;
+typedef std::chrono::steady_clock clk;
+//typedef std::chrono::system_clock clk;
 typedef std::chrono::time_point<clk> time_point_clk;
 typedef std::chrono::seconds sec;
 typedef std::chrono::milliseconds msec;
@@ -40,15 +41,15 @@ template <class Clock>
 inline static void timeofday(struct timeval* tv)
 {
     auto now = Clock::now();
-    auto millisecs = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch());
-    tv->tv_sec = millisecs.count() / 1000;
-    tv->tv_usec = (millisecs.count() % 1000) * 1000;
+    auto microsecs = std::chrono::duration_cast<std::chrono::microseconds>(now.time_since_epoch());
+    tv->tv_sec = microsecs.count() / 1000000;
+    tv->tv_usec = microsecs.count() % 1000000;
 }
 
 inline static void systemtimeofday(struct timeval* tv)
 {
     gettimeofday(tv, nullptr);
-    // timeofday<std::chrono::system_clock>(tv);
+    timeofday<clk>(tv);
 }
 
 template <class ToDuration>
@@ -85,7 +86,7 @@ inline static long getTickCount()
 #ifdef MACOS
     clock_serv_t cclock;
     mach_timespec_t mts;
-    host_get_clock_service(mach_host_self(), CALENDAR_CLOCK, &cclock);
+    host_get_clock_service(mach_host_self(), SYSTEM_CLOCK, &cclock);
     clock_get_time(cclock, &mts);
     mach_port_deallocate(mach_task_self(), cclock);
     return mts.tv_sec * 1000 + mts.tv_nsec / 1000000;
