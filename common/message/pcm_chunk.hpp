@@ -90,7 +90,7 @@ public:
     chronos::time_point_clk start() const override
     {
         return chronos::time_point_clk(chronos::sec(timestamp.sec) + chronos::usec(timestamp.usec) +
-                                       chronos::usec((chronos::usec::rep)(1000000. * ((double)idx_ / (double)format.rate))));
+                                       chronos::usec(static_cast<chronos::usec::rep>(1000000. * ((double)idx_ / (double)format.rate))));
     }
 
     inline chronos::time_point_clk end() const
@@ -101,13 +101,13 @@ public:
     template <typename T>
     inline T duration() const
     {
-        return std::chrono::duration_cast<T>(chronos::nsec((chronos::nsec::rep)(1000000 * getFrameCount() / format.msRate())));
+        return std::chrono::duration_cast<T>(chronos::nsec(static_cast<chronos::nsec::rep>(1000000 * getFrameCount() / format.msRate())));
     }
 
     template <typename T>
     inline T durationLeft() const
     {
-        return std::chrono::duration_cast<T>(chronos::nsec((chronos::nsec::rep)(1000000 * (getFrameCount() - idx_) / format.msRate())));
+        return std::chrono::duration_cast<T>(chronos::nsec(static_cast<chronos::nsec::rep>(1000000 * (getFrameCount() - idx_) / format.msRate())));
     }
 
     inline bool isEndOfChunk() const

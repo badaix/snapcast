@@ -230,7 +230,7 @@ void AlsaPlayer::worker()
             continue;
         }
 
-        chronos::usec delay((chronos::usec::rep)(1000 * (double)framesDelay / format.msRate()));
+        chronos::usec delay(static_cast<chronos::usec::rep>(1000 * (double)framesDelay / format.msRate()));
         // LOG(TRACE) << "delay: " << framesDelay << ", delay[ms]: " << delay.count() / 1000 << ", avail: " << framesAvail << "\n";
 
         if (buffer_.size() < static_cast<size_t>(framesAvail * format.frameSize))

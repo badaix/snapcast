@@ -296,7 +296,7 @@ bool Stream::getPlayerChunk(void* outputBuffer, const cs::usec& outputBufferDacT
     {
 
         // LOG(DEBUG) << "framesPerBuffer: " << framesPerBuffer << "\tms: " << framesPerBuffer*2 / PLAYER_CHUNK_MS_SIZE << "\t" << PLAYER_CHUNK_SIZE << "\n";
-        cs::nsec bufferDuration = cs::nsec(cs::nsec::rep(framesPerBuffer / format_.nsRate()));
+        cs::nsec bufferDuration = cs::nsec(static_cast<cs::nsec::rep>(framesPerBuffer / format_.nsRate()));
         //		LOG(DEBUG) << "buffer duration: " << bufferDuration.count() << "\n";
 
         cs::usec correction = cs::usec(0);
@@ -400,7 +400,7 @@ bool Stream::getPlayerChunk(void* outputBuffer, const cs::usec& outputBufferDacT
             else if (miniBuffer_.full() && (cs::usec(abs(miniBuffer_.median())) > cs::msec(50)))
             {
                 LOG(INFO) << "pMiniBuffer->full() && (abs(pMiniBuffer->mean()) > 50): " << miniBuffer_.median() << "\n";
-                sleep_ = cs::usec((cs::msec::rep)miniBuffer_.mean());
+                sleep_ = cs::usec(static_cast<cs::msec::rep>(miniBuffer_.mean()));
             }
         }
 
