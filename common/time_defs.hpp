@@ -30,7 +30,7 @@
 namespace chronos
 {
 typedef std::chrono::steady_clock clk;
-//typedef std::chrono::system_clock clk;
+// typedef std::chrono::system_clock clk;
 typedef std::chrono::time_point<clk> time_point_clk;
 typedef std::chrono::seconds sec;
 typedef std::chrono::milliseconds msec;
@@ -48,7 +48,7 @@ inline static void timeofday(struct timeval* tv)
 
 inline static void systemtimeofday(struct timeval* tv)
 {
-    gettimeofday(tv, nullptr);
+    // gettimeofday(tv, nullptr);
     timeofday<clk>(tv);
 }
 
