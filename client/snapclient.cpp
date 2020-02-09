@@ -30,6 +30,7 @@
 #ifdef HAS_DAEMON
 #include "common/daemon.hpp"
 #endif
+#include "client_settings.hpp"
 #include "common/aixlog.hpp"
 #include "common/signal_handler.hpp"
 #include "common/str_compat.hpp"
@@ -66,6 +67,7 @@ PcmDevice getPcmDevice(const std::string& soundcard)
 #endif
 
     PcmDevice pcmDevice;
+    pcmDevice.name = soundcard;
     return pcmDevice;
 }
 
@@ -79,33 +81,31 @@ int main(int argc, char** argv)
     try
     {
         string meta_script("");
-        string soundcard("default");
-        string host("");
-        size_t port(1704);
-        int latency(0);
-        size_t instance(1);
+        ClientSettings settings;
+        string pcm_device("default");
+
 
         OptionParser op("Allowed options");
         auto helpSwitch = op.add<Switch>("", "help", "produce help message");
         auto groffSwitch = op.add<Switch, Attribute::hidden>("", "groff", "produce groff message");
-        auto debugOption = op.add<Implicit<string>, Attribute::hidden>("", "debug", "enable debug logging", "");
+        auto debugOption = op.add<Implicit<string>, Attribute::hidden>("", "debug", "enable debug logging", ""); // TODO: &settings.logging.debug);
         auto versionSwitch = op.add<Switch>("v", "version", "show version number");
 #if defined(HAS_ALSA)
-        auto listSwitch = op.add<Switch>("l", "list", "list pcm devices");
-        /*auto soundcardValue =*/op.add<Value<string>>("s", "soundcard", "index or name of the soundcard", "default", &soundcard);
+        auto listSwitch = op.add<Switch>("l", "list", "list PCM devices");
+        /*auto soundcardValue =*/op.add<Value<string>>("s", "soundcard", "index or name of the pcm device", "default", &pcm_device);
 #endif
         auto metaStderr = op.add<Switch>("e", "mstderr", "send metadata to stderr");
-        // auto metaHook =       op.add<Value<string>>("m", "mhook", "script to call on meta tags", "", &meta_script);
-        /*auto hostValue =*/op.add<Value<string>>("h", "host", "server hostname or ip address", "", &host);
-        /*auto portValue =*/op.add<Value<size_t>>("p", "port", "server port", 1704, &port);
+        /*auto hostValue =*/op.add<Value<string>>("h", "host", "server hostname or ip address", "", &settings.server.host);
+        /*auto portValue =*/op.add<Value<size_t>>("p", "port", "server port", 1704, &settings.server.port);
 #ifdef HAS_DAEMON
         int processPriority(-3);
-        auto daemonOption = op.add<Implicit<int>>("d", "daemon", "daemonize, optional process priority [-20..19]", -3, &processPriority);
+        auto daemonOption = op.add<Implicit<int>>("d", "daemon", "daemonize, optional process priority [-20..19]", processPriority, &processPriority);
         auto userValue = op.add<Value<string>>("", "user", "the user[:group] to run snapclient as when daemonized");
 #endif
-        /*auto latencyValue =*/op.add<Value<int>>("", "latency", "latency of the soundcard", 0, &latency);
-        /*auto instanceValue =*/op.add<Value<size_t>>("i", "instance", "instance id", 1, &instance);
-        auto hostIdValue = op.add<Value<string>>("", "hostID", "unique host id", "");
+        /*auto latencyValue =*/op.add<Value<int>>("", "latency", "latency of the PCM device", 0, &settings.player.latency);
+        /*auto instanceValue =*/op.add<Value<size_t>>("i", "instance", "instance id", 1, &settings.instance);
+        /*auto hostIdValue =*/op.add<Value<string>>("", "hostID", "unique host id", "", &settings.host_id);
+        op.add<Value<string>>("", "player", "audio backend", "", &settings.player.player_name);
 
         try
         {
@@ -154,10 +154,6 @@ int main(int argc, char** argv)
             exit(EXIT_SUCCESS);
         }
 
-        if (instance <= 0)
-            std::invalid_argument("instance id must be >= 1");
-
-
         // XXX: Only one metadata option must be set
 
         AixLog::Log::init<AixLog::SinkNative>("snapclient", AixLog::Severity::trace, AixLog::Type::special);
@@ -170,7 +166,7 @@ int main(int argc, char** argv)
         }
         else
         {
-            AixLog::Log::instance().add_logsink<AixLog::SinkCout>(AixLog::Severity::info, AixLog::Type::all, "%Y-%m-%d %H-%M-%S [#severity]");
+            AixLog::Log::instance().add_logsink<AixLog::SinkCout>(AixLog::Severity::info, AixLog::Type::all, "%Y-%m-%d %H-%M-%S [#severity] (#tag_func)");
         }
 
 #ifdef HAS_DAEMON
@@ -178,8 +174,8 @@ int main(int argc, char** argv)
         if (daemonOption->is_set())
         {
             string pidFile = "/var/run/snapclient/pid";
-            if (instance != 1)
-                pidFile += "." + cpt::to_string(instance);
+            if (settings.instance != 1)
+                pidFile += "." + cpt::to_string(settings.instance);
             string user = "";
             string group = "";
 
@@ -205,11 +201,11 @@ int main(int argc, char** argv)
         }
 #endif
 
-        PcmDevice pcmDevice = getPcmDevice(soundcard);
+        settings.player.pcm_device = getPcmDevice(pcm_device);
 #if defined(HAS_ALSA)
-        if (pcmDevice.idx == -1)
+        if (settings.player.pcm_device.idx == -1)
         {
-            cout << "soundcard \"" << soundcard << "\" not found\n";
+            cout << "PCM device \"" << pcm_device << "\" not found\n";
             //			exit(EXIT_FAILURE);
         }
 #endif
@@ -226,7 +222,7 @@ int main(int argc, char** argv)
                                                              controller->stop();
                                                          }
                                                      });
-        if (host.empty())
+        if (settings.server.host.empty())
         {
 #if defined(HAS_AVAHI) || defined(HAS_BONJOUR)
             BrowseZeroConf browser;
@@ -240,11 +236,11 @@ int main(int argc, char** argv)
                 {
                     if (browser.browse("_snapcast._tcp", avahiResult, 5000))
                     {
-                        host = avahiResult.ip;
-                        port = avahiResult.port;
+                        settings.server.host = avahiResult.ip;
+                        settings.server.port = avahiResult.port;
                         if (avahiResult.ip_version == IPVersion::IPv6)
-                            host += "%" + cpt::to_string(avahiResult.iface_idx);
-                        LOG(INFO) << "Found server " << host << ":" << port << "\n";
+                            settings.server.host += "%" + cpt::to_string(avahiResult.iface_idx);
+                        LOG(INFO) << "Found server " << settings.server.host << ":" << settings.server.port << "\n";
                         break;
                     }
                 }
@@ -264,9 +260,9 @@ int main(int argc, char** argv)
             if (metaStderr)
                 meta.reset(new MetaStderrAdapter);
 
-            controller = make_shared<Controller>(hostIdValue->value(), instance, meta);
-            LOG(INFO) << "Latency: " << latency << "\n";
-            controller->run(pcmDevice, host, port, latency);
+            controller = make_shared<Controller>(settings, meta);
+            LOG(INFO) << "Latency: " << settings.player.latency << "\n";
+            controller->run();
             // signal_handler.wait();
             // controller->stop();
         }

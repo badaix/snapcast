@@ -58,9 +58,9 @@ endif
 ifeq ($(TARGET), ANDROID)
 
 CXX       = $(PROGRAM_PREFIX)clang++
-CXXFLAGS += -pthread -fPIC -DHAS_TREMOR -DHAS_OBOE -I$(NDK_DIR)/usr/local/include
+CXXFLAGS += -pthread -fPIC -DHAS_TREMOR -DHAS_OPENSL -DHAS_OBOE -I$(NDK_DIR)/usr/local/include
 LDFLAGS   = -L$(NDK_DIR)/usr/local/lib -pie -lvorbisidec -logg -lopus -lFLAC -lOpenSLES -loboe -latomic -llog -static-libstdc++
-OBJ      += player/oboe_player.o 
+OBJ      += player/opensl_player.o player/oboe_player.o
 
 else ifeq ($(TARGET), OPENWRT)
 

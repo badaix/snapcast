@@ -39,9 +39,9 @@
 using namespace std;
 
 
-Controller::Controller(const std::string& hostId, size_t instance, std::shared_ptr<MetadataAdapter> meta)
-    : MessageReceiver(), hostId_(hostId), instance_(instance), active_(false), latency_(0), stream_(nullptr), decoder_(nullptr), player_(nullptr), meta_(meta),
-      serverSettings_(nullptr), async_exception_(nullptr)
+Controller::Controller(const ClientSettings& settings, std::shared_ptr<MetadataAdapter> meta)
+    : MessageReceiver(), settings_(settings), active_(false), stream_(nullptr), decoder_(nullptr), player_(nullptr), meta_(meta), serverSettings_(nullptr),
+      async_exception_(nullptr)
 {
 }
 
@@ -124,19 +124,29 @@ void Controller::onMessageReceived(ClientConnection* /*connection*/, const msg::
         LOG(NOTICE) << TAG("state") << "sampleformat: " << sampleFormat_.rate << ":" << sampleFormat_.bits << ":" << sampleFormat_.channels << "\n";
 
         stream_ = make_shared<Stream>(sampleFormat_);
-        stream_->setBufferLen(serverSettings_->getBufferMs() - latency_);
+        stream_->setBufferLen(serverSettings_->getBufferMs() - settings_.player.latency);
 
+        const auto& pcm_device = settings_.player.pcm_device;
+        const auto& player_name = settings_.player.player_name;
+        player_ = nullptr;
 #ifdef HAS_ALSA
-        player_ = make_unique<AlsaPlayer>(pcmDevice_, stream_);
-#elif HAS_OPENSL
-        player_ = make_unique<OpenslPlayer>(pcmDevice_, stream_);
-#elif HAS_OBOE
-        player_ = make_unique<OboePlayer>(pcmDevice_, stream_);
-#elif HAS_COREAUDIO
-        player_ = make_unique<CoreAudioPlayer>(pcmDevice_, stream_);
-#else
-        throw SnapException("No audio player support");
+        if (!player_ && (player_name.empty() || (player_name == "alsa")))
+            player_ = make_unique<AlsaPlayer>(pcm_device, stream_);
 #endif
+#ifdef HAS_OBOE
+        if (!player_ && (player_name.empty() || (player_name == "oboe")))
+            player_ = make_unique<OboePlayer>(pcm_device, stream_);
+#endif
+#ifdef HAS_OPENSL
+        if (!player_ && (player_name.empty() || (player_name == "opensl")))
+            player_ = make_unique<OpenslPlayer>(pcm_device, stream_);
+#endif
+#ifdef HAS_COREAUDIO
+        if (!player_ && (player_name.empty() || (player_name == "coreaudio")))
+            player_ = make_unique<CoreAudioPlayer>(pcm_device, stream_);
+#endif
+        if (!player_)
+            throw SnapException("No audio player support");
         player_->setVolume(serverSettings_->getVolume() / 100.);
         player_->setMute(serverSettings_->isMuted());
         player_->start();
@@ -171,20 +181,16 @@ bool Controller::sendTimeSyncMessage(long after)
 }
 
 
-void Controller::start(const PcmDevice& pcmDevice, const std::string& host, size_t port, int latency)
+void Controller::start()
 {
-    pcmDevice_ = pcmDevice;
-    latency_ = latency;
-    clientConnection_.reset(new ClientConnection(this, host, port));
+    clientConnection_.reset(new ClientConnection(this, settings_.server.host, settings_.server.port));
     controllerThread_ = thread(&Controller::worker, this);
 }
 
 
-void Controller::run(const PcmDevice& pcmDevice, const std::string& host, size_t port, int latency)
+void Controller::run()
 {
-    pcmDevice_ = pcmDevice;
-    latency_ = latency;
-    clientConnection_.reset(new ClientConnection(this, host, port));
+    clientConnection_.reset(new ClientConnection(this, settings_.server.host, settings_.server.port));
     worker();
     // controllerThread_ = thread(&Controller::worker, this);
 }
@@ -210,11 +216,11 @@ void Controller::worker()
             clientConnection_->start();
 
             string macAddress = clientConnection_->getMacAddress();
-            if (hostId_.empty())
-                hostId_ = ::getHostId(macAddress);
+            if (settings_.host_id.empty())
+                settings_.host_id = ::getHostId(macAddress);
 
             /// Say hello to the server
-            msg::Hello hello(macAddress, hostId_, instance_);
+            msg::Hello hello(macAddress, settings_.host_id, settings_.instance);
             clientConnection_->send(&hello);
 
             /// Do initial time sync with the server
