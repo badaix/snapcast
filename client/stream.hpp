@@ -26,6 +26,7 @@
 #include "message/pcm_chunk.hpp"
 #include <deque>
 #include <memory>
+#include <soxr.h>
 
 
 /// Time synchronized audio stream
@@ -83,6 +84,9 @@ private:
     unsigned long playedFrames_;
     long correctAfterXFrames_;
     chronos::msec bufferMs_;
+    size_t input_rate_;
+    double output_rate_;
+    soxr_t soxr_;
 };
 
 
