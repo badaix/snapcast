@@ -39,9 +39,9 @@
 using namespace std;
 
 
-Controller::Controller(const ClientSettings& settings, std::shared_ptr<MetadataAdapter> meta)
-    : MessageReceiver(), settings_(settings), active_(false), stream_(nullptr), decoder_(nullptr), player_(nullptr), meta_(meta), serverSettings_(nullptr),
-      async_exception_(nullptr)
+Controller::Controller(const ClientSettings& settings, std::unique_ptr<MetadataAdapter> meta)
+    : MessageReceiver(), settings_(settings), active_(false), stream_(nullptr), decoder_(nullptr), player_(nullptr), meta_(std::move(meta)),
+      serverSettings_(nullptr), async_exception_(nullptr)
 {
 }
 
@@ -60,18 +60,16 @@ void Controller::onMessageReceived(ClientConnection* /*connection*/, const msg::
     {
         if (stream_ && decoder_)
         {
-            auto* pcmChunk = new msg::PcmChunk(sampleFormat_, 0);
+            auto pcmChunk = make_unique<msg::PcmChunk>(sampleFormat_, 0);
             pcmChunk->deserialize(baseMessage, buffer);
             // LOG(DEBUG) << "chunk: " << pcmChunk->payloadSize << ", sampleFormat: " << sampleFormat_.rate << "\n";
-            if (decoder_->decode(pcmChunk))
+            if (decoder_->decode(pcmChunk.get()))
             {
                 // TODO: do decoding in thread?
-                stream_->addChunk(pcmChunk);
+                stream_->addChunk(move(pcmChunk));
                 // LOG(DEBUG) << ", decoded: " << pcmChunk->payloadSize << ", Duration: " << pcmChunk->getDuration() << ", sec: " << pcmChunk->timestamp.sec <<
                 // ", usec: " << pcmChunk->timestamp.usec/1000 << ", type: " << pcmChunk->type << "\n";
             }
-            else
-                delete pcmChunk;
         }
     }
     else if (baseMessage.type == message_type::kTime)
@@ -183,14 +181,14 @@ bool Controller::sendTimeSyncMessage(long after)
 
 void Controller::start()
 {
-    clientConnection_.reset(new ClientConnection(this, settings_.server.host, settings_.server.port));
+    clientConnection_ = make_unique<ClientConnection>(this, settings_.server.host, settings_.server.port);
     controllerThread_ = thread(&Controller::worker, this);
 }
 
 
 void Controller::run()
 {
-    clientConnection_.reset(new ClientConnection(this, settings_.server.host, settings_.server.port));
+    clientConnection_ = make_unique<ClientConnection>(this, settings_.server.host, settings_.server.port);
     worker();
     // controllerThread_ = thread(&Controller::worker, this);
 }

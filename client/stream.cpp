@@ -84,12 +84,12 @@ void Stream::clearChunks()
 }
 
 
-void Stream::addChunk(msg::PcmChunk* chunk)
+void Stream::addChunk(unique_ptr<msg::PcmChunk> chunk)
 {
     while (chunks_.size() * chunk->duration<cs::msec>().count() > 10000)
         chunks_.pop();
 
-    chunks_.push(shared_ptr<msg::PcmChunk>(chunk));
+    chunks_.push(move(chunk));
     //	LOG(DEBUG) << "new chunk: " << chunk->duration<cs::msec>().count() << ", Chunks: " << chunks_.size() << "\n";
 
     // if (std::abs(input_rate_ - output_rate_) <= 0.0000001)
@@ -188,11 +188,10 @@ cs::time_point_clk Stream::getNextPlayerChunk(void* outputBuffer, const cs::usec
         throw 0;
 
     cs::time_point_clk tp = chunk_->start();
-    char* buffer = (char*)outputBuffer;
     unsigned long read = 0;
     while (read < framesPerBuffer)
     {
-        read += chunk_->readFrames(buffer + read * format_.frameSize, framesPerBuffer - read);
+        read += chunk_->readFrames(static_cast<char*>(outputBuffer) + read * format_.frameSize, framesPerBuffer - read);
         if (chunk_->isEndOfChunk() && !chunks_.try_pop(chunk_, timeout))
             throw 0;
     }
@@ -206,7 +205,7 @@ cs::time_point_clk Stream::getNextPlayerChunk(void* outputBuffer, const cs::usec
         return getNextPlayerChunk(outputBuffer, timeout, framesPerBuffer);
 
     long toRead = framesPerBuffer + framesCorrection;
-    char* buffer = (char*)malloc(toRead * format_.frameSize);
+    char* buffer = new char[toRead * format_.frameSize];
     cs::time_point_clk tp = getNextPlayerChunk(buffer, timeout, toRead);
 
     // if (abs(framesCorrection) > 0)
@@ -257,7 +256,7 @@ cs::time_point_clk Stream::getNextPlayerChunk(void* outputBuffer, const cs::usec
     //     memcpy((char*)outputBuffer + n * format_.frameSize, buffer + index * format_.frameSize, format_.frameSize);
     //     idx += factor;
     // }
-    free(buffer);
+    delete[] buffer;
 
     return tp;
 }

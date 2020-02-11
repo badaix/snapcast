@@ -156,7 +156,7 @@ protected:
     uint16_t reqId_;
     std::string host_;
     size_t port_;
-    std::thread* readerThread_;
+    std::unique_ptr<std::thread> readerThread_;
     chronos::msec sumTimeout_;
 };
 
