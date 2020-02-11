@@ -214,7 +214,7 @@ void metadata_callback(const FLAC__StreamDecoder* /*decoder*/, const FLAC__Strea
 void error_callback(const FLAC__StreamDecoder* /*decoder*/, FLAC__StreamDecoderErrorStatus status, void* client_data)
 {
     SLOG(ERROR) << "Got error callback: " << FLAC__StreamDecoderErrorStatusString[status] << "\n";
-    static_cast<FlacDecoder*>(client_data)->lastError_ = std::unique_ptr<FLAC__StreamDecoderErrorStatus>(new FLAC__StreamDecoderErrorStatus(status));
+    static_cast<FlacDecoder*>(client_data)->lastError_ = std::make_unique<FLAC__StreamDecoderErrorStatus>(status);
 }
 } // namespace callback
 

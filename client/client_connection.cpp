@@ -84,7 +84,7 @@ void ClientConnection::start()
     SLOG(NOTICE) << "Connected to " << socket_.remote_endpoint().address().to_string() << endl;
     active_ = true;
     sumTimeout_ = chronos::msec(0);
-    readerThread_ = new thread(&ClientConnection::reader, this);
+    readerThread_ = make_unique<thread>(&ClientConnection::reader, this);
 }
 
 
@@ -104,7 +104,6 @@ void ClientConnection::stop()
         {
             LOG(DEBUG) << "joining readerThread\n";
             readerThread_->join();
-            delete readerThread_;
         }
     }
     catch (...)

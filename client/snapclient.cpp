@@ -189,7 +189,7 @@ int main(int argc, char** argv)
                 if (user_group.size() > 1)
                     group = user_group[1];
             }
-            daemon.reset(new Daemon(user, group, pidFile));
+            daemon = std::make_unique<Daemon>(user, group, pidFile);
             daemon->daemonize();
             if (processPriority < -20)
                 processPriority = -20;
@@ -255,12 +255,9 @@ int main(int argc, char** argv)
         if (active)
         {
             // Setup metadata handling
-            std::shared_ptr<MetadataAdapter> meta;
-            meta.reset(new MetadataAdapter);
-            if (metaStderr)
-                meta.reset(new MetaStderrAdapter);
+            auto meta(metaStderr ? std::make_unique<MetaStderrAdapter>() : std::make_unique<MetadataAdapter>());
 
-            controller = make_shared<Controller>(settings, meta);
+            controller = make_shared<Controller>(settings, std::move(meta));
             LOG(INFO) << "Latency: " << settings.player.latency << "\n";
             controller->run();
             // signal_handler.wait();

@@ -65,13 +65,13 @@ std::vector<PcmDevice> CoreAudioPlayer::pcm_list(void)
         if (AudioObjectGetPropertyDataSize(devids[i], &theAddress, 0, NULL, &propSize))
             continue;
 
-        AudioBufferList* buflist = (AudioBufferList*)malloc(propSize);
+        AudioBufferList* buflist = new AudioBufferList[propSize];
         if (AudioObjectGetPropertyData(devids[i], &theAddress, 0, NULL, &propSize, buflist))
             continue;
         int channels = 0;
         for (UInt32 i = 0; i < buflist->mNumberBuffers; ++i)
             channels += buflist->mBuffers[i].mNumberChannels;
-        free(buflist);
+        delete[] buflist;
         if (channels == 0)
             continue;
 

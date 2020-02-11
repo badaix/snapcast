@@ -40,7 +40,7 @@ public:
     Stream(const SampleFormat& format);
 
     /// Adds PCM data to the queue
-    void addChunk(msg::PcmChunk* chunk);
+    void addChunk(std::unique_ptr<msg::PcmChunk> chunk);
     void clearChunks();
 
     /// Get PCM data, which will be played out in "outputBufferDacTime" time

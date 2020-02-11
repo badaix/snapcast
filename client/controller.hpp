@@ -53,7 +53,7 @@
 class Controller : public MessageReceiver
 {
 public:
-    Controller(const ClientSettings& settings, std::shared_ptr<MetadataAdapter> meta);
+    Controller(const ClientSettings& settings, std::unique_ptr<MetadataAdapter> meta);
     void start();
     void run();
     void stop();
@@ -78,7 +78,7 @@ private:
     std::shared_ptr<Stream> stream_;
     std::unique_ptr<decoder::Decoder> decoder_;
     std::unique_ptr<Player> player_;
-    std::shared_ptr<MetadataAdapter> meta_;
+    std::unique_ptr<MetadataAdapter> meta_;
     std::unique_ptr<msg::ServerSettings> serverSettings_;
     std::unique_ptr<msg::CodecHeader> headerChunk_;
     std::mutex receiveMutex_;
