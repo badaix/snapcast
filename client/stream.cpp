@@ -201,6 +201,12 @@ cs::time_point_clk Stream::getNextPlayerChunk(void* outputBuffer, const cs::usec
 
 cs::time_point_clk Stream::getNextPlayerChunk(void* outputBuffer, const cs::usec& timeout, unsigned long framesPerBuffer, long framesCorrection)
 {
+    if (framesCorrection < 0 && framesPerBuffer + framesCorrection <= 0)
+    {
+        // Avoid underflow in new char[] constructor.
+        framesCorrection = -framesPerBuffer + 1;
+    }
+
     if (framesCorrection == 0)
         return getNextPlayerChunk(outputBuffer, timeout, framesPerBuffer);
 
@@ -208,45 +214,45 @@ cs::time_point_clk Stream::getNextPlayerChunk(void* outputBuffer, const cs::usec
     char* buffer = new char[toRead * format_.frameSize];
     cs::time_point_clk tp = getNextPlayerChunk(buffer, timeout, toRead);
 
-    // if (abs(framesCorrection) > 0)
-    //     LOG(DEBUG) << "getNextPlayerChunk, frames: " << framesPerBuffer << ", correction: " << framesCorrection << " (" << toRead << ")\n";
-
-    size_t slices = (abs(framesCorrection) + 1);
-    size_t pos = 0;
-    int idx = 0;
-    if (framesCorrection < 0)
+    const auto max = framesCorrection < 0 ? framesPerBuffer : toRead;
+    // Divide the buffer into one more slice than frames that need to be dropped.
+    // We will drop/repeat 0 frames from the first slice, 1 frame from the second, ..., and framesCorrection frames from the last slice.
+    size_t slices = abs(framesCorrection) + 1;
+    if (slices > max)
     {
-        int size = framesPerBuffer / slices;
-        // LOG(TRACE) << "getNextPlayerChunk, frames: " << framesPerBuffer << ", correction: " << framesCorrection << " (" << toRead << "), slices: " << slices
-        // << "\n";
-
-        for (size_t n = 0; n < slices; ++n)
-        {
-            if (n + 1 == slices)
-                size = framesPerBuffer - pos;
-
-            // LOG(TRACE) << "slice: " << n << ", size: " << size << ", out pos: " << pos << ", source pos: " << pos + idx << "\n";
-            memcpy((char*)outputBuffer + pos * format_.frameSize, buffer + (pos + idx) * format_.frameSize, size * format_.frameSize);
-            pos += size;
-            idx -= 1;
-        }
+        // We cannot have more slices than frames, because that would cause
+        // size = 0 -> pos = 0 -> pos - n < 0 in the loop below
+        // Overwriting slices effectively corrects less frames than asked for in framesCorrection.
+        slices = max;
     }
-    else
+    // Size of each slice. The last slice may be smaller.
+    int size = max / slices;
+
+    // LOG(TRACE) << "getNextPlayerChunk, frames: " << framesPerBuffer << ", correction: " << framesCorrection << " (" << toRead << "), slices: " << slices
+    // << "\n";
+
+    size_t pos = 0;
+    for (size_t n = 0; n < slices; ++n)
     {
-        int size = toRead / slices;
-        // LOG(TRACE) << "getNextPlayerChunk, frames: " << framesPerBuffer << ", correction: " << framesCorrection << " (" << toRead << "), slices: " << slices
-        // << "\n";
+        if (n + 1 == slices)
+            // Adjust size in the last iteration, because the last slice may be smaller
+            size = max - pos;
 
-        for (size_t n = 0; n < slices; ++n)
+        if (framesCorrection < 0)
         {
-            if (n + 1 == slices)
-                size = toRead - pos;
+            // Read one frame less per slice from the input, but write a duplicated frame per slice to the output
 
-            // LOG(TRACE) << "slice: " << n << ", size: " << size << ", out pos: " << pos + idx << ", source pos: " << pos << "\n";
-            memcpy((char*)outputBuffer + (pos + idx) * format_.frameSize, buffer + pos * format_.frameSize, size * format_.frameSize);
-            pos += size;
-            idx -= 1;
+            // LOG(TRACE) << "slice: " << n << ", size: " << size << ", out pos: " << pos << ", source pos: " << pos - n << "\n";
+            memcpy(static_cast<char*>(outputBuffer) + pos * format_.frameSize, buffer + (pos - n) * format_.frameSize, size * format_.frameSize);
         }
+        else
+        {
+            // Read all input frames, but skip a frame per slice when writing to the output.
+
+            // LOG(TRACE) << "slice: " << n << ", size: " << size << ", out pos: " << pos - n << ", source pos: " << pos << "\n";
+            memcpy(static_cast<char*>(outputBuffer) + (pos - n) * format_.frameSize, buffer + pos * format_.frameSize, size * format_.frameSize);
+        }
+        pos += size;
     }
 
     // float idx = 0;
