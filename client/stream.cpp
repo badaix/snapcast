@@ -225,7 +225,7 @@ cs::time_point_clk Stream::getNextPlayerChunk(void* outputBuffer, const cs::usec
         // Overwriting slices effectively corrects less frames than asked for in framesCorrection.
         slices = max;
     }
-    // Size of each slice. The last slice may be smaller.
+    // Size of each slice. The last slice may be bigger.
     int size = max / slices;
 
     // LOG(TRACE) << "getNextPlayerChunk, frames: " << framesPerBuffer << ", correction: " << framesCorrection << " (" << toRead << "), slices: " << slices
@@ -235,7 +235,7 @@ cs::time_point_clk Stream::getNextPlayerChunk(void* outputBuffer, const cs::usec
     for (size_t n = 0; n < slices; ++n)
     {
         if (n + 1 == slices)
-            // Adjust size in the last iteration, because the last slice may be smaller
+            // Adjust size in the last iteration, because the last slice may be bigger
             size = max - pos;
 
         if (framesCorrection < 0)
