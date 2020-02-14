@@ -26,6 +26,7 @@
 
 using namespace std;
 
+static constexpr auto LOG_TAG = "OpenSlPlayer";
 
 static constexpr auto kPhaseInit = "Init";
 static constexpr auto kPhaseStart = "Start";
@@ -48,7 +49,6 @@ static void bqPlayerCallback(SLAndroidSimpleBufferQueueItf bq, void* context)
 }
 
 
-
 OpenslPlayer::OpenslPlayer(const PcmDevice& pcmDevice, std::shared_ptr<Stream> stream)
     : Player(pcmDevice, stream), engineObject(NULL), engineEngine(NULL), outputMixObject(NULL), bqPlayerObject(NULL), bqPlayerPlay(NULL),
       bqPlayerBufferQueue(NULL), bqPlayerVolume(NULL), curBuffer(0), ms_(50), buff_size(0), pubStream_(stream)
@@ -67,37 +67,9 @@ void OpenslPlayer::playerCallback(SLAndroidSimpleBufferQueueItf bq)
 {
     if (bq != bqPlayerBufferQueue)
     {
-        LOG(ERROR) << "Wrong bq!\n";
+        LOG(ERROR, LOG_TAG) << "Wrong bq!\n";
         return;
     }
-
-    /*	static long lastTick = 0;
-            long now = chronos::getTickCount();
-            int diff = 0;
-            if (lastTick != 0)
-            {
-                    diff = now - lastTick;
-    //		LOG(ERROR) << "diff: " << diff << ", frames: " << player->frames_  / 44.1 << "\n";
-    //		if (diff <= 50)
-    //		{
-    //			usleep(1000 * (50 - diff));
-    //			diff = 50;
-    //		}
-            }
-            lastTick = chronos::getTickCount();
-    */
-
-    //	size_t d = player->frames_ / 0.48d;
-    //	LOG(ERROR) << "Delay: " << d << "\n";
-    //	SLAndroidSimpleBufferQueueState state;
-    //	(*bq)->GetState(bq, &state);
-    //	cout << "bqPlayerCallback count: " << state.count << ", idx: " << state.index << "\n";
-
-    //	diff = 0;
-    //	chronos::usec delay((250 - diff) * 1000);
-
-    //	while (active_ && !stream_->waitForChunk(100))
-    //		LOG(INFO) << "Waiting for chunk\n";
 
     if (!active_)
         return;
@@ -105,7 +77,7 @@ void OpenslPlayer::playerCallback(SLAndroidSimpleBufferQueueItf bq)
     chronos::usec delay(ms_ * 1000);
     if (!pubStream_->getPlayerChunk(buffer[curBuffer], delay, frames_))
     {
-        //		LOG(INFO) << "Failed to get chunk. Playing silence.\n";
+        // LOG(INFO, LOG_TAG) << "Failed to get chunk. Playing silence.\n";
         memset(buffer[curBuffer], 0, buff_size);
     }
     else
@@ -192,7 +164,7 @@ void OpenslPlayer::initOpensl()
     frames_ = format.rate / (1000 / ms_); // * format.channels; // 1920; // 48000 * 2 / 50  // => 50ms
 
     buff_size = frames_ * format.frameSize /* 2 -> sample size */;
-    LOG(INFO) << "frames: " << frames_ << ", channels: " << format.channels << ", rate: " << format.rate << ", buff: " << buff_size << "\n";
+    LOG(INFO, LOG_TAG) << "frames: " << frames_ << ", channels: " << format.channels << ", rate: " << format.rate << ", buff: " << buff_size << "\n";
 
     SLresult result;
     // create engine
@@ -333,17 +305,17 @@ void OpenslPlayer::uninitOpensl()
     //	if (!active_)
     //		return;
 
-    LOG(INFO) << "uninitOpensl\n";
+    LOG(INFO, LOG_TAG) << "uninitOpensl\n";
     SLresult result;
-    LOG(INFO) << "OpenSLWrap_Shutdown - stopping playback\n";
+    LOG(INFO, LOG_TAG) << "OpenSLWrap_Shutdown - stopping playback\n";
     if (bqPlayerPlay != NULL)
     {
         result = (*bqPlayerPlay)->SetPlayState(bqPlayerPlay, SL_PLAYSTATE_STOPPED);
         if (SL_RESULT_SUCCESS != result)
-            LOG(ERROR) << "SetPlayState failed\n";
+            LOG(ERROR, LOG_TAG) << "SetPlayState failed\n";
     }
 
-    LOG(INFO) << "OpenSLWrap_Shutdown - deleting player object\n";
+    LOG(INFO, LOG_TAG) << "OpenSLWrap_Shutdown - deleting player object\n";
 
     if (bqPlayerObject != NULL)
     {
@@ -354,7 +326,7 @@ void OpenslPlayer::uninitOpensl()
         bqPlayerVolume = NULL;
     }
 
-    LOG(INFO) << "OpenSLWrap_Shutdown - deleting mix object\n";
+    LOG(INFO, LOG_TAG) << "OpenSLWrap_Shutdown - deleting mix object\n";
 
     if (outputMixObject != NULL)
     {
@@ -362,7 +334,7 @@ void OpenslPlayer::uninitOpensl()
         outputMixObject = NULL;
     }
 
-    LOG(INFO) << "OpenSLWrap_Shutdown - deleting engine object\n";
+    LOG(INFO, LOG_TAG) << "OpenSLWrap_Shutdown - deleting engine object\n";
 
     if (engineObject != NULL)
     {
@@ -377,7 +349,7 @@ void OpenslPlayer::uninitOpensl()
     delete[] buffer[1];
     buffer[1] = NULL;
 
-    LOG(INFO) << "OpenSLWrap_Shutdown - finished\n";
+    LOG(INFO, LOG_TAG) << "OpenSLWrap_Shutdown - finished\n";
     active_ = false;
 }
 

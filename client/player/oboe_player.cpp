@@ -39,8 +39,8 @@ OboePlayer::OboePlayer(const PcmDevice& pcmDevice, std::shared_ptr<Stream> strea
     if (env)
         oboe::DefaultStreamValues::FramesPerBurst = cpt::stoi(env, oboe::DefaultStreamValues::FramesPerBurst);
 
-    LOG(INFO) << "DefaultStreamValues::SampleRate: " << oboe::DefaultStreamValues::SampleRate
-              << ", DefaultStreamValues::FramesPerBurst: " << oboe::DefaultStreamValues::FramesPerBurst << "\n";
+    LOG(INFO, LOG_TAG) << "DefaultStreamValues::SampleRate: " << oboe::DefaultStreamValues::SampleRate
+                       << ", DefaultStreamValues::FramesPerBurst: " << oboe::DefaultStreamValues::FramesPerBurst << "\n";
 
     // The builder set methods can be chained for convenience.
     oboe::AudioStreamBuilder builder;
@@ -55,7 +55,7 @@ OboePlayer::OboePlayer(const PcmDevice& pcmDevice, std::shared_ptr<Stream> strea
                       //->setFramesPerCallback(2 * oboe::DefaultStreamValues::FramesPerBurst)
                       //->setFramesPerCallback(960) // 2*192)
                       ->openManagedStream(out_stream_);
-    LOG(INFO) << "BufferSizeInFrames: " << out_stream_->getBufferSizeInFrames() << ", FramesPerBurst: " << out_stream_->getFramesPerBurst() << "\n";
+    LOG(INFO, LOG_TAG) << "BufferSizeInFrames: " << out_stream_->getBufferSizeInFrames() << ", FramesPerBurst: " << out_stream_->getFramesPerBurst() << "\n";
     if (result != oboe::Result::OK)
         LOG(ERROR, LOG_TAG) << "Error building AudioStream: " << oboe::convertToText(result) << "\n";
 
@@ -75,6 +75,9 @@ OboePlayer::~OboePlayer()
     LOG(DEBUG, LOG_TAG) << "Destructor\n";
     stop();
     auto result = out_stream_->stop(std::chrono::nanoseconds(100ms).count());
+    if (result != oboe::Result::OK)
+        LOG(ERROR, LOG_TAG) << "Error in AudioStream::stop: " << oboe::convertToText(result) << "\n";
+    result = out_stream_->close();
     if (result != oboe::Result::OK)
         LOG(ERROR, LOG_TAG) << "Error in AudioStream::stop: " << oboe::convertToText(result) << "\n";
 }

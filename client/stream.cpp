@@ -24,8 +24,10 @@
 #include <string.h>
 
 using namespace std;
-// using namespace chronos;
 namespace cs = chronos;
+
+static constexpr auto LOG_TAG = "Stream";
+static constexpr auto kCorrectionBegin = 100us;
 
 
 Stream::Stream(const SampleFormat& in_format, const SampleFormat& out_format)
@@ -34,7 +36,6 @@ Stream::Stream(const SampleFormat& in_format, const SampleFormat& out_format)
     buffer_.setSize(500);
     shortBuffer_.setSize(100);
     miniBuffer_.setSize(20);
-    //	cardBuffer_.setSize(50);
 
     if (out_format.rate != 0)
         format_ = out_format;
@@ -52,7 +53,7 @@ Stream::Stream(const SampleFormat& in_format, const SampleFormat& out_format)
 
     if ((format_.rate != in_format_.rate) || (format_.bits != in_format_.bits))
     {
-        LOG(INFO) << "Resampling from " << in_format_.getFormat() << " to " << format_.getFormat() << "\n";
+        LOG(INFO, LOG_TAG) << "Resampling from " << in_format_.getFormat() << " to " << format_.getFormat() << "\n";
         soxr_error_t error;
 
         soxr_datatype_t in_type = SOXR_INT16_I;
@@ -67,7 +68,7 @@ Stream::Stream(const SampleFormat& in_format, const SampleFormat& out_format)
         soxr_ = soxr_create(static_cast<double>(in_format_.rate), static_cast<double>(format_.rate), format_.channels, &error, &iospec, &q_spec, NULL);
         if (error)
         {
-            LOG(ERROR) << "Error soxr_create: " << error << "\n";
+            LOG(ERROR, LOG_TAG) << "Error soxr_create: " << error << "\n";
         }
         // initialize the buffer with 20ms (~latency of the reampler)
         resample_buffer_.resize(format_.frameSize * ceil(format_.msRate()) * 20);
@@ -88,7 +89,7 @@ void Stream::setRealSampleRate(double sampleRate)
         correctAfterXFrames_ = 0;
     else
         correctAfterXFrames_ = round((format_.rate / sampleRate) / (format_.rate / sampleRate - 1.));
-    // LOG(DEBUG) << "Correct after X: " << correctAfterXFrames_ << " (Real rate: " << sampleRate << ", rate: " << format_.rate << ")\n";
+    // LOG(DEBUG, LOG_TAG) << "Correct after X: " << correctAfterXFrames_ << " (Real rate: " << sampleRate << ", rate: " << format_.rate << ")\n";
 }
 
 
@@ -112,7 +113,7 @@ void Stream::addChunk(unique_ptr<msg::PcmChunk> chunk)
         chunks_.pop();
 
     // chunks_.push(move(chunk));
-    // LOG(DEBUG) << "new chunk: " << chunk->duration<cs::msec>().count() << ", Chunks: " << chunks_.size() << "\n";
+    // LOG(DEBUG, LOG_TAG) << "new chunk: " << chunk->duration<cs::msec>().count() << ", Chunks: " << chunks_.size() << "\n";
 
     if (soxr_ == nullptr)
     {
@@ -120,9 +121,6 @@ void Stream::addChunk(unique_ptr<msg::PcmChunk> chunk)
     }
     else
     {
-        size_t idone;
-        size_t odone;
-
         if (in_format_.bits == 24)
         {
             // sox expects 32 bit input, shift 8 bits left
@@ -131,17 +129,19 @@ void Stream::addChunk(unique_ptr<msg::PcmChunk> chunk)
                 frames[n] = frames[n] << 8;
         }
 
+        size_t idone;
+        size_t odone;
         auto resample_buffer_framesize = resample_buffer_.size() / format_.frameSize;
         auto error = soxr_process(soxr_, chunk->payload, chunk->getFrameCount(), &idone, resample_buffer_.data(), resample_buffer_framesize, &odone);
         if (error)
         {
-            LOG(ERROR) << "Error soxr_process: " << error << "\n";
+            LOG(ERROR, LOG_TAG) << "Error soxr_process: " << error << "\n";
             // delete out;
         }
         else
         {
-            LOG(TRACE) << "Resample idone: " << idone << "/" << chunk->getFrameCount() << ", odone: " << odone << "/"
-                       << resample_buffer_.size() / format_.frameSize << ", delay: " << soxr_delay(soxr_) << "\n";
+            LOG(TRACE, LOG_TAG) << "Resample idone: " << idone << "/" << chunk->getFrameCount() << ", odone: " << odone << "/"
+                                << resample_buffer_.size() / format_.frameSize << ", delay: " << soxr_delay(soxr_) << "\n";
 
             // some data has been resampled (odone frames) and some is still in the pipe (soxr_delay frames)
             if (odone > 0)
@@ -180,12 +180,13 @@ void Stream::addChunk(unique_ptr<msg::PcmChunk> chunk)
                 {
                     // buffer for resampled data too small, add space for 5ms
                     resample_buffer_.resize(resample_buffer_.size() + format_.frameSize * ceil(format_.msRate()) * 5);
-                    LOG(INFO) << "Resample buffer completely filled, adding space for 5ms; new buffer size: " << resample_buffer_.size() << " bytes\n";
+                    LOG(INFO, LOG_TAG) << "Resample buffer completely filled, adding space for 5ms; new buffer size: " << resample_buffer_.size() << " bytes\n";
                 }
 
-                // //LOG(TRACE) << "ts: " << out->timestamp.sec << "s, " << out->timestamp.usec/1000.f << " ms, duration: " << odone / format_.msRate() << "\n";
+                // //LOG(TRACE, LOG_TAG) << "ts: " << out->timestamp.sec << "s, " << out->timestamp.usec/1000.f << " ms, duration: " << odone / format_.msRate()
+                // << "\n";
                 // int64_t next_us = us + static_cast<int64_t>(odone / format_.msRate() * 1000);
-                // LOG(TRACE) << "ts: " << us << ", next: " << next_us << ", diff: " << next_us_ - us << "\n";
+                // LOG(TRACE, LOG_TAG) << "ts: " << us << ", next: " << next_us << ", diff: " << next_us_ - us << "\n";
                 // next_us_ = next_us;
             }
         }
@@ -197,7 +198,6 @@ bool Stream::waitForChunk(size_t ms) const
 {
     return chunks_.wait_for(std::chrono::milliseconds(ms));
 }
-
 
 
 cs::time_point_clk Stream::getSilentPlayerChunk(void* outputBuffer, unsigned long frames)
@@ -219,8 +219,8 @@ time_point_ms Stream::seekTo(const time_point_ms& to)
         while (to > chunk_->timePoint())// + std::chrono::milliseconds((long int)chunk_->getDuration()))//
         {
                 chunk_ = chunks_.pop();
-                LOG(DEBUG) << "\nto: " << Chunk::getAge(to) << "\t chunk: " << Chunk::getAge(chunk_->timePoint()) << "\n";
-                LOG(DEBUG) << "diff: " << std::chrono::duration_cast<std::chrono::milliseconds>((to - chunk_->timePoint())).count() << "\n";
+                LOG(DEBUG, LOG_TAG) << "\nto: " << Chunk::getAge(to) << "\t chunk: " << Chunk::getAge(chunk_->timePoint()) << "\n";
+                LOG(DEBUG, LOG_TAG) << "diff: " << std::chrono::duration_cast<std::chrono::milliseconds>((to - chunk_->timePoint())).count() << "\n";
         }
         chunk_->seek(std::chrono::duration_cast<std::chrono::milliseconds>(to - chunk_->timePoint()).count() * format_.msRate());
         return chunk_->timePoint();
@@ -296,7 +296,7 @@ cs::time_point_clk Stream::getNextPlayerChunk(void* outputBuffer, const cs::usec
     // Size of each slice. The last slice may be bigger.
     int size = max / slices;
 
-    // LOG(TRACE) << "getNextPlayerChunk, frames: " << frames << ", correction: " << framesCorrection << " (" << toRead << "), slices: " << slices
+    // LOG(TRACE, LOG_TAG) << "getNextPlayerChunk, frames: " << frames << ", correction: " << framesCorrection << " (" << toRead << "), slices: " << slices
     // << "\n";
 
     size_t pos = 0;
@@ -309,14 +309,16 @@ cs::time_point_clk Stream::getNextPlayerChunk(void* outputBuffer, const cs::usec
         if (framesCorrection < 0)
         {
             // Read one frame less per slice from the input, but write a duplicated frame per slice to the output
-            // LOG(TRACE) << "duplicate - requested: " << frames << ", read: " << toRead << ", slice: " << n << ", size: " << size << ", out pos: " << pos << ",
+            // LOG(TRACE, LOG_TAG) << "duplicate - requested: " << frames << ", read: " << toRead << ", slice: " << n << ", size: " << size << ", out pos: " <<
+            // pos << ",
             // source pos: " << pos - n << "\n";
             memcpy(static_cast<char*>(outputBuffer) + pos * format_.frameSize, buffer + (pos - n) * format_.frameSize, size * format_.frameSize);
         }
         else
         {
             // Read all input frames, but skip a frame per slice when writing to the output.
-            // LOG(TRACE) << "remove - requested: " << frames << ", read: " << toRead << ", slice: " << n << ", size: " << size << ", out pos: " << pos - n <<
+            // LOG(TRACE, LOG_TAG) << "remove - requested: " << frames << ", read: " << toRead << ", slice: " << n << ", size: " << size << ", out pos: " << pos
+            // - n <<
             // ", source pos: " << pos << "\n";
             memcpy(static_cast<char*>(outputBuffer) + (pos - n) * format_.frameSize, buffer + pos * format_.frameSize, size * format_.frameSize);
         }
@@ -376,14 +378,15 @@ bool Stream::getPlayerChunk(void* outputBuffer, const cs::usec& outputBufferDacT
 {
     if (outputBufferDacTime > bufferMs_)
     {
-        LOG(INFO) << "outputBufferDacTime > bufferMs: " << cs::duration<cs::msec>(outputBufferDacTime) << " > " << cs::duration<cs::msec>(bufferMs_) << "\n";
+        LOG(INFO, LOG_TAG) << "outputBufferDacTime > bufferMs: " << cs::duration<cs::msec>(outputBufferDacTime) << " > " << cs::duration<cs::msec>(bufferMs_)
+                           << "\n";
         sleep_ = cs::usec(0);
         return false;
     }
 
     if (!chunk_ && !chunks_.try_pop(chunk_, outputBufferDacTime))
     {
-        // LOG(INFO) << "no chunks available\n";
+        // LOG(INFO, LOG_TAG) << "no chunks available\n";
         sleep_ = cs::usec(0);
         return false;
     }
@@ -396,19 +399,19 @@ bool Stream::getPlayerChunk(void* outputBuffer, const cs::usec& outputBufferDacT
     /// age < 0 => play in -age
     /// age > 0 => too old
     cs::usec age = std::chrono::duration_cast<cs::usec>(TimeProvider::serverNow() - chunk_->start()) - bufferMs_ + outputBufferDacTime;
-    //	LOG(INFO) << "age: " << age.count() / 1000 << "\n";
+    //	LOG(INFO, LOG_TAG) << "age: " << age.count() / 1000 << "\n";
     if ((sleep_.count() == 0) && (cs::abs(age) > cs::msec(200)))
     {
-        LOG(INFO) << "age > 200: " << cs::duration<cs::msec>(age) << "\n";
+        LOG(INFO, LOG_TAG) << "age > 200: " << cs::duration<cs::msec>(age) << "\n";
         sleep_ = age;
     }
 
     try
     {
 
-        // LOG(DEBUG) << "frames: " << frames << "\tms: " << frames*2 / PLAYER_CHUNK_MS_SIZE << "\t" << PLAYER_CHUNK_SIZE << "\n";
+        // LOG(DEBUG, LOG_TAG) << "frames: " << frames << "\tms: " << frames*2 / PLAYER_CHUNK_MS_SIZE << "\t" << PLAYER_CHUNK_SIZE << "\n";
         cs::nsec bufferDuration = cs::nsec(static_cast<cs::nsec::rep>(frames / format_.nsRate()));
-        //		LOG(DEBUG) << "buffer duration: " << bufferDuration.count() << "\n";
+        //		LOG(DEBUG, LOG_TAG) << "buffer duration: " << bufferDuration.count() << "\n";
 
         cs::usec correction = cs::usec(0);
         if (sleep_.count() != 0)
@@ -416,27 +419,29 @@ bool Stream::getPlayerChunk(void* outputBuffer, const cs::usec& outputBufferDacT
             resetBuffers();
             if (sleep_ < -bufferDuration / 2)
             {
-                LOG(INFO) << "sleep < -bufferDuration/2: " << cs::duration<cs::msec>(sleep_) << " < " << -cs::duration<cs::msec>(bufferDuration) / 2 << ", ";
+                LOG(INFO, LOG_TAG) << "sleep < -bufferDuration/2: " << cs::duration<cs::msec>(sleep_) << " < " << -cs::duration<cs::msec>(bufferDuration) / 2
+                                   << ", ";
                 // We're early: not enough chunks_. play silence. Reference chunk_ is the oldest (front) one
                 sleep_ =
                     chrono::duration_cast<cs::usec>(TimeProvider::serverNow() - getSilentPlayerChunk(outputBuffer, frames) - bufferMs_ + outputBufferDacTime);
-                LOG(INFO) << "sleep: " << cs::duration<cs::msec>(sleep_) << "\n";
+                LOG(INFO, LOG_TAG) << "sleep: " << cs::duration<cs::msec>(sleep_) << "\n";
                 if (sleep_ < -bufferDuration / 2)
                     return true;
             }
             else if (sleep_ > bufferDuration / 2)
             {
-                LOG(INFO) << "sleep > bufferDuration/2: " << cs::duration<cs::msec>(sleep_) << " > " << cs::duration<cs::msec>(bufferDuration) / 2 << "\n";
+                LOG(INFO, LOG_TAG) << "sleep > bufferDuration/2: " << cs::duration<cs::msec>(sleep_) << " > " << cs::duration<cs::msec>(bufferDuration) / 2
+                                   << "\n";
                 // We're late: discard oldest chunks
                 while (sleep_ > chunk_->duration<cs::usec>())
                 {
-                    LOG(INFO) << "sleep > chunkDuration: " << cs::duration<cs::msec>(sleep_) << " > " << chunk_->duration<cs::msec>().count()
-                              << ", chunks: " << chunks_.size() << ", out: " << cs::duration<cs::msec>(outputBufferDacTime)
-                              << ", needed: " << cs::duration<cs::msec>(bufferDuration) << "\n";
+                    LOG(INFO, LOG_TAG) << "sleep > chunkDuration: " << cs::duration<cs::msec>(sleep_) << " > " << chunk_->duration<cs::msec>().count()
+                                       << ", chunks: " << chunks_.size() << ", out: " << cs::duration<cs::msec>(outputBufferDacTime)
+                                       << ", needed: " << cs::duration<cs::msec>(bufferDuration) << "\n";
                     sleep_ = std::chrono::duration_cast<cs::usec>(TimeProvider::serverNow() - chunk_->start() - bufferMs_ + outputBufferDacTime);
                     if (!chunks_.try_pop(chunk_, outputBufferDacTime))
                     {
-                        LOG(INFO) << "no chunks available\n";
+                        LOG(INFO, LOG_TAG) << "no chunks available\n";
                         chunk_ = nullptr;
                         sleep_ = cs::usec(0);
                         return false;
@@ -457,7 +462,7 @@ bool Stream::getPlayerChunk(void* outputBuffer, const cs::usec& outputBufferDacT
             }
             else
             {
-                LOG(INFO) << "Sleep " << cs::duration<cs::msec>(sleep_) << "\n";
+                LOG(INFO, LOG_TAG) << "Sleep " << cs::duration<cs::msec>(sleep_) << "\n";
                 correction = sleep_;
                 sleep_ = cs::usec(0);
             }
@@ -483,7 +488,7 @@ bool Stream::getPlayerChunk(void* outputBuffer, const cs::usec& outputBufferDacT
             {
                 if (cs::usec(abs(median_)) > cs::msec(2))
                 {
-                    LOG(INFO) << "pBuffer->full() && (abs(median_) > 2): " << median_ << "\n";
+                    LOG(INFO, LOG_TAG) << "pBuffer->full() && (abs(median_) > 2): " << median_ << "\n";
                     sleep_ = cs::usec(median_);
                 }
                 // else if (cs::usec(median_) > cs::usec(300))
@@ -499,7 +504,7 @@ bool Stream::getPlayerChunk(void* outputBuffer, const cs::usec& outputBufferDacT
             {
                 if (cs::usec(abs(shortMedian_)) > cs::msec(5))
                 {
-                    LOG(INFO) << "pShortBuffer->full() && (abs(shortMedian_) > 5): " << shortMedian_ << "\n";
+                    LOG(INFO, LOG_TAG) << "pShortBuffer->full() && (abs(shortMedian_) > 5): " << shortMedian_ << "\n";
                     sleep_ = cs::usec(shortMedian_);
                 }
                 // else
@@ -509,7 +514,7 @@ bool Stream::getPlayerChunk(void* outputBuffer, const cs::usec& outputBufferDacT
             }
             else if (miniBuffer_.full() && (cs::usec(abs(miniBuffer_.median())) > cs::msec(50)))
             {
-                LOG(INFO) << "pMiniBuffer->full() && (abs(pMiniBuffer->mean()) > 50): " << miniBuffer_.median() << "\n";
+                LOG(INFO, LOG_TAG) << "pMiniBuffer->full() && (abs(pMiniBuffer->mean()) > 50): " << miniBuffer_.median() << "\n";
                 sleep_ = cs::usec(static_cast<cs::msec::rep>(miniBuffer_.mean()));
             }
         }
@@ -521,25 +526,25 @@ bool Stream::getPlayerChunk(void* outputBuffer, const cs::usec& outputBufferDacT
             if (lastAge != msAge)
             {
                 lastAge = msAge;
-                LOG(INFO) << "Sleep " << cs::duration<cs::msec>(sleep_) << ", age: " << msAge << ", bufferDuration: " << cs::duration<cs::msec>(bufferDuration)
-                          << "\n";
+                LOG(INFO, LOG_TAG) << "Sleep " << cs::duration<cs::msec>(sleep_) << ", age: " << msAge
+                                   << ", bufferDuration: " << cs::duration<cs::msec>(bufferDuration) << "\n";
             }
         }
         else if (shortBuffer_.full())
         {
             auto miniMedian = miniBuffer_.median();
-            if ((cs::usec(shortMedian_) > cs::usec(100)) && (cs::usec(miniMedian) > cs::usec(50)) && (cs::usec(age) > cs::usec(50)))
+            if ((cs::usec(shortMedian_) > kCorrectionBegin) && (cs::usec(miniMedian) > cs::usec(50)) && (cs::usec(age) > cs::usec(50)))
             {
                 double rate = (shortMedian_ / 100) * 0.00005;
                 rate = 1.0 - std::min(rate, 0.0005);
-                // LOG(INFO) << "Rate: " << rate << "\n";
+                // LOG(INFO, LOG_TAG) << "Rate: " << rate << "\n";
                 setRealSampleRate(format_.rate * rate); // 0.9999);
             }
-            else if ((cs::usec(shortMedian_) < -cs::usec(100)) && (cs::usec(miniMedian) < -cs::usec(50)) && (cs::usec(age) < -cs::usec(50)))
+            else if ((cs::usec(shortMedian_) < -kCorrectionBegin) && (cs::usec(miniMedian) < -cs::usec(50)) && (cs::usec(age) < -cs::usec(50)))
             {
                 double rate = (-shortMedian_ / 100) * 0.00005;
                 rate = 1.0 + std::min(rate, 0.0005);
-                // LOG(INFO) << "Rate: " << rate << "\n";
+                // LOG(INFO, LOG_TAG) << "Rate: " << rate << "\n";
                 setRealSampleRate(format_.rate * rate); // 1.0001);
             }
         }
@@ -553,9 +558,10 @@ bool Stream::getPlayerChunk(void* outputBuffer, const cs::usec& outputBufferDacT
             lastUpdate_ = now;
             median_ = buffer_.median();
             shortMedian_ = shortBuffer_.median();
-            LOG(INFO) << "Chunk: " << age.count() / 100 << "\t" << miniBuffer_.median() / 100 << "\t" << shortMedian_ / 100 << "\t" << median_ / 100 << "\t"
-                      << buffer_.size() << "\t" << cs::duration<cs::msec>(outputBufferDacTime) << "\t" << frame_delta_ << "\n";
-            // LOG(INFO) << "Chunk: " << age.count()/1000 << "\t" << miniBuffer_.median()/1000 << "\t" << shortMedian_/1000 << "\t" << median_/1000 << "\t" <<
+            LOG(INFO, LOG_TAG) << "Chunk: " << age.count() / 100 << "\t" << miniBuffer_.median() / 100 << "\t" << shortMedian_ / 100 << "\t" << median_ / 100
+                               << "\t" << buffer_.size() << "\t" << cs::duration<cs::msec>(outputBufferDacTime) << "\t" << frame_delta_ << "\n";
+            // LOG(INFO, LOG_TAG) << "Chunk: " << age.count()/1000 << "\t" << miniBuffer_.median()/1000 << "\t" << shortMedian_/1000 << "\t" << median_/1000 <<
+            // "\t" <<
             // buffer_.size() << "\t" << cs::duration<cs::msec>(outputBufferDacTime) << "\n";
             frame_delta_ = 0;
         }
