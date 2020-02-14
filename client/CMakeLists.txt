@@ -7,14 +7,15 @@ set(CLIENT_SOURCES
     decoder/pcm_decoder.cpp
     player/player.cpp)
 
-set(CLIENT_LIBRARIES ${CMAKE_THREAD_LIBS_INIT} ${ATOMIC_LIBRARY} common)
+set(CLIENT_LIBRARIES ${CMAKE_THREAD_LIBS_INIT} ${ATOMIC_LIBRARY} ${SOXR_LIBRARIES} common)
 
 set(CLIENT_INCLUDE
     ${Boost_INCLUDE_DIR}
     ${CMAKE_SOURCE_DIR}/client
     ${CMAKE_SOURCE_DIR}/common
     ${ASIO_INCLUDE_DIRS}
-    ${POPL_INCLUDE_DIRS})
+    ${POPL_INCLUDE_DIRS}
+	${SOXR_INCLUDE_DIR})
 
 
 if(MACOSX)

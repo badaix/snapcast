@@ -199,5 +199,6 @@ if (BUILD_SERVER)
 endif()
 
 if (BUILD_CLIENT)
+    find_package(soxr REQUIRED)
     add_subdirectory(client)
 endif()
