@@ -57,7 +57,7 @@ void PcmEncoder::encode(const msg::PcmChunk* chunk)
 void PcmEncoder::initEncoder()
 {
     headerChunk_->payloadSize = 44;
-    headerChunk_->payload = (char*)malloc(headerChunk_->payloadSize);
+    headerChunk_->payload = (char*)realloc(headerChunk_->payload, headerChunk_->payloadSize);
     char* payload = headerChunk_->payload;
     assign(payload, SWAP_32(ID_RIFF));
     assign(payload + 4, SWAP_32(36));

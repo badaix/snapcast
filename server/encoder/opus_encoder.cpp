@@ -146,7 +146,7 @@ void OpusEncoder::initEncoder()
 
     // create some opus pseudo header to let the decoder know about the sample format
     headerChunk_->payloadSize = 12;
-    headerChunk_->payload = (char*)malloc(headerChunk_->payloadSize);
+    headerChunk_->payload = (char*)realloc(headerChunk_->payload, headerChunk_->payloadSize);
     char* payload = headerChunk_->payload;
     assign(payload, SWAP_32(ID_OPUS));
     assign(payload + 4, SWAP_32(sampleFormat_.rate));
