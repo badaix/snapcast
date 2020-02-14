@@ -26,7 +26,7 @@
 #include "message/pcm_chunk.hpp"
 #include <deque>
 #include <memory>
-// #include <soxr.h>
+#include <soxr.h>
 
 
 /// Time synchronized audio stream
@@ -37,7 +37,8 @@
 class Stream
 {
 public:
-    Stream(const SampleFormat& format);
+    Stream(const SampleFormat& in_format, const SampleFormat& out_format);
+    virtual ~Stream();
 
     /// Adds PCM data to the queue
     void addChunk(std::unique_ptr<msg::PcmChunk> chunk);
@@ -58,9 +59,9 @@ public:
     bool waitForChunk(size_t ms) const;
 
 private:
-    chronos::time_point_clk getNextPlayerChunk(void* outputBuffer, const chronos::usec& timeout, unsigned long framesPerBuffer);
-    chronos::time_point_clk getNextPlayerChunk(void* outputBuffer, const chronos::usec& timeout, unsigned long framesPerBuffer, long framesCorrection);
-    chronos::time_point_clk getSilentPlayerChunk(void* outputBuffer, unsigned long framesPerBuffer);
+    chronos::time_point_clk getNextPlayerChunk(void* outputBuffer, const chronos::usec& timeout, unsigned long frames);
+    chronos::time_point_clk getNextPlayerChunk(void* outputBuffer, const chronos::usec& timeout, unsigned long frames, long framesCorrection);
+    chronos::time_point_clk getSilentPlayerChunk(void* outputBuffer, unsigned long frames);
     chronos::time_point_clk seek(long ms);
     //	time_point_ms seekTo(const time_point_ms& to);
     void updateBuffers(int age);
@@ -68,6 +69,7 @@ private:
     void setRealSampleRate(double sampleRate);
 
     SampleFormat format_;
+    SampleFormat in_format_;
 
     chronos::usec sleep_;
 
@@ -84,9 +86,11 @@ private:
     unsigned long playedFrames_;
     long correctAfterXFrames_;
     chronos::msec bufferMs_;
-    // size_t input_rate_;
-    // double output_rate_;
-    // soxr_t soxr_;
+
+    soxr_t soxr_;
+    std::vector<char> resample_buffer_;
+    int frame_delta_;
+    // int64_t next_us_;
 };
 
 

@@ -28,17 +28,19 @@ using namespace std;
 namespace cs = chronos;
 
 
-Stream::Stream(const SampleFormat& sampleFormat)
-    : format_(sampleFormat), sleep_(0), median_(0), shortMedian_(0), lastUpdate_(0), playedFrames_(0), bufferMs_(cs::msec(500))
+Stream::Stream(const SampleFormat& in_format, const SampleFormat& out_format)
+    : in_format_(in_format), sleep_(0), median_(0), shortMedian_(0), lastUpdate_(0), playedFrames_(0), bufferMs_(cs::msec(500)), soxr_(nullptr), frame_delta_(0)
 {
     buffer_.setSize(500);
     shortBuffer_.setSize(100);
     miniBuffer_.setSize(20);
     //	cardBuffer_.setSize(50);
 
-    // input_rate_ = format_.rate;
-    // format_.rate = 48000;
-    // output_rate_ = static_cast<double>(format_.rate);
+    if (out_format.rate != 0)
+        format_ = out_format;
+    else
+        format_ = in_format_;
+
     /*
     48000     x
     ------- = -----
@@ -46,16 +48,37 @@ Stream::Stream(const SampleFormat& sampleFormat)
 
     x = 1,000016667 / (1,000016667 - 1)
     */
-    setRealSampleRate(format_.rate);
+    // setRealSampleRate(format_.rate);
 
-    // soxr_error_t error;
-    // soxr_io_spec_t iospec = soxr_io_spec(SOXR_INT16_I, SOXR_INT16_I);
-    // soxr_quality_spec_t q_spec = soxr_quality_spec(SOXR_HQ, 0);
-    // soxr_ = soxr_create(static_cast<double>(input_rate_), static_cast<double>(format_.rate), format_.channels, &error, &iospec, &q_spec, NULL);
-    // if (error)
-    // {
-    //     LOG(ERROR) << "Error soxr_create: " << error << "\n";
-    // }
+    if ((format_.rate != in_format_.rate) || (format_.bits != in_format_.bits))
+    {
+        LOG(INFO) << "Resampling from " << in_format_.getFormat() << " to " << format_.getFormat() << "\n";
+        soxr_error_t error;
+
+        soxr_datatype_t in_type = SOXR_INT16_I;
+        soxr_datatype_t out_type = SOXR_INT16_I;
+        if (in_format_.sampleSize > 2)
+            in_type = SOXR_INT32_I;
+        if (format_.sampleSize > 2)
+            out_type = SOXR_INT32_I;
+        soxr_io_spec_t iospec = soxr_io_spec(in_type, out_type);
+        // HQ should be fine: http://sox.sourceforge.net/Docs/FAQ
+        soxr_quality_spec_t q_spec = soxr_quality_spec(SOXR_HQ, 0);
+        soxr_ = soxr_create(static_cast<double>(in_format_.rate), static_cast<double>(format_.rate), format_.channels, &error, &iospec, &q_spec, NULL);
+        if (error)
+        {
+            LOG(ERROR) << "Error soxr_create: " << error << "\n";
+        }
+        // initialize the buffer with 20ms (~latency of the reampler)
+        resample_buffer_.resize(format_.frameSize * ceil(format_.msRate()) * 20);
+    }
+}
+
+
+Stream::~Stream()
+{
+    if (soxr_)
+        soxr_delete(soxr_);
 }
 
 
@@ -75,7 +98,6 @@ void Stream::setBufferLen(size_t bufferLenMs)
 }
 
 
-
 void Stream::clearChunks()
 {
     while (chunks_.size() > 0)
@@ -89,41 +111,85 @@ void Stream::addChunk(unique_ptr<msg::PcmChunk> chunk)
     while (chunks_.size() * chunk->duration<cs::msec>().count() > 10000)
         chunks_.pop();
 
-    chunks_.push(move(chunk));
-    //	LOG(DEBUG) << "new chunk: " << chunk->duration<cs::msec>().count() << ", Chunks: " << chunks_.size() << "\n";
+    // chunks_.push(move(chunk));
+    // LOG(DEBUG) << "new chunk: " << chunk->duration<cs::msec>().count() << ", Chunks: " << chunks_.size() << "\n";
 
-    // if (std::abs(input_rate_ - output_rate_) <= 0.0000001)
-    // {
-    //     chunks_.push(shared_ptr<msg::PcmChunk>(chunk));
-    // }
-    // else
-    // {
-    //     size_t idone;
-    //     size_t odone;
-    //     auto out = new msg::PcmChunk(format_, 0);
-    //     out->timestamp = chunk->timestamp;
-    //     out->payloadSize = ceil(chunk->payloadSize * static_cast<double>(output_rate_) / static_cast<double>(input_rate_));
-    //     out->payload = (char*)malloc(out->payloadSize);
+    if (soxr_ == nullptr)
+    {
+        chunks_.push(move(chunk));
+    }
+    else
+    {
+        size_t idone;
+        size_t odone;
 
-    //     soxr_io_spec_t iospec = soxr_io_spec(SOXR_INT16_I, SOXR_INT16_I);
-    //     soxr_quality_spec_t q_spec = soxr_quality_spec(SOXR_HQ, 0);
-    //     // auto error = soxr_oneshot(static_cast<double>(input_rate_), output_rate_, format_.channels, chunk->payload, chunk->getFrameCount(), &idone,
-    //     // out->payload, out->payloadSize, &odone, &iospec, &q_spec, nullptr);
-    //     auto error = soxr_process(soxr_, chunk->payload, chunk->getFrameCount(), &idone, out->payload, out->getFrameCount(), &odone);
-    //     if (error)
-    //     {
-    //         LOG(ERROR) << "Error soxr_process: " << error << "\n";
-    //         delete out;
-    //     }
-    //     else
-    //     {
-    //         out->payloadSize = odone * out->format.frameSize;
-    //         LOG(TRACE) << "Resample idone: " << idone << "/" << chunk->getFrameCount() << ", odone: " << odone << "/"
-    //                    << out->payloadSize / out->format.frameSize << "\n";
-    //         chunks_.push(shared_ptr<msg::PcmChunk>(out));
-    //     }
-    //     delete chunk;
-    // }
+        if (in_format_.bits == 24)
+        {
+            // sox expects 32 bit input, shift 8 bits left
+            int32_t* frames = (int32_t*)chunk->payload;
+            for (size_t n = 0; n < chunk->getSampleCount(); ++n)
+                frames[n] = frames[n] << 8;
+        }
+
+        auto resample_buffer_framesize = resample_buffer_.size() / format_.frameSize;
+        auto error = soxr_process(soxr_, chunk->payload, chunk->getFrameCount(), &idone, resample_buffer_.data(), resample_buffer_framesize, &odone);
+        if (error)
+        {
+            LOG(ERROR) << "Error soxr_process: " << error << "\n";
+            // delete out;
+        }
+        else
+        {
+            LOG(TRACE) << "Resample idone: " << idone << "/" << chunk->getFrameCount() << ", odone: " << odone << "/"
+                       << resample_buffer_.size() / format_.frameSize << ", delay: " << soxr_delay(soxr_) << "\n";
+
+            // some data has been resampled (odone frames) and some is still in the pipe (soxr_delay frames)
+            if (odone > 0)
+            {
+                // get the resamples ts from the input ts
+                auto input_end_ts = chunk->start() + chunk->duration<std::chrono::microseconds>();
+                double resampled_ms = (odone + soxr_delay(soxr_)) / format_.msRate();
+                auto resampled_start = input_end_ts - std::chrono::microseconds(static_cast<int>(resampled_ms * 1000.));
+
+                auto resampled_chunk = new msg::PcmChunk(format_, 0);
+                auto us = chrono::duration_cast<chrono::microseconds>(resampled_start.time_since_epoch()).count();
+                resampled_chunk->timestamp.sec = us / 1000000;
+                resampled_chunk->timestamp.usec = us % 1000000;
+
+                // copy from the resample_buffer to the resampled chunk
+                resampled_chunk->payloadSize = odone * format_.frameSize;
+                resampled_chunk->payload = (char*)realloc(resampled_chunk->payload, resampled_chunk->payloadSize);
+                memcpy(resampled_chunk->payload, resample_buffer_.data(), resampled_chunk->payloadSize);
+
+                if (format_.bits == 24)
+                {
+                    // sox has quantized to 32 bit, shift 8 bits right
+                    int32_t* frames = (int32_t*)resampled_chunk->payload;
+                    for (size_t n = 0; n < resampled_chunk->getSampleCount(); ++n)
+                    {
+                        // +128 to round to the nearest so that quantisation steps are distributed evenly
+                        frames[n] = (frames[n] + 128) >> 8;
+                        if (frames[n] > 0x7fffffff)
+                            frames[n] = 0x7fffffff;
+                    }
+                }
+                chunks_.push(shared_ptr<msg::PcmChunk>(resampled_chunk));
+
+                // check if the resample_buffer is large enough, or if soxr was using all available space
+                if (odone == resample_buffer_framesize)
+                {
+                    // buffer for resampled data too small, add space for 5ms
+                    resample_buffer_.resize(resample_buffer_.size() + format_.frameSize * ceil(format_.msRate()) * 5);
+                    LOG(INFO) << "Resample buffer completely filled, adding space for 5ms; new buffer size: " << resample_buffer_.size() << " bytes\n";
+                }
+
+                // //LOG(TRACE) << "ts: " << out->timestamp.sec << "s, " << out->timestamp.usec/1000.f << " ms, duration: " << odone / format_.msRate() << "\n";
+                // int64_t next_us = us + static_cast<int64_t>(odone / format_.msRate() * 1000);
+                // LOG(TRACE) << "ts: " << us << ", next: " << next_us << ", diff: " << next_us_ - us << "\n";
+                // next_us_ = next_us;
+            }
+        }
+    }
 }
 
 
@@ -134,12 +200,12 @@ bool Stream::waitForChunk(size_t ms) const
 
 
 
-cs::time_point_clk Stream::getSilentPlayerChunk(void* outputBuffer, unsigned long framesPerBuffer)
+cs::time_point_clk Stream::getSilentPlayerChunk(void* outputBuffer, unsigned long frames)
 {
     if (!chunk_)
         chunk_ = chunks_.pop();
     cs::time_point_clk tp = chunk_->start();
-    memset(outputBuffer, 0, framesPerBuffer * format_.frameSize);
+    memset(outputBuffer, 0, frames * format_.frameSize);
     return tp;
 }
 
@@ -182,16 +248,16 @@ time_point_clk Stream::seek(long ms)
 */
 
 
-cs::time_point_clk Stream::getNextPlayerChunk(void* outputBuffer, const cs::usec& timeout, unsigned long framesPerBuffer)
+cs::time_point_clk Stream::getNextPlayerChunk(void* outputBuffer, const cs::usec& timeout, unsigned long frames)
 {
     if (!chunk_ && !chunks_.try_pop(chunk_, timeout))
         throw 0;
 
     cs::time_point_clk tp = chunk_->start();
     unsigned long read = 0;
-    while (read < framesPerBuffer)
+    while (read < frames)
     {
-        read += chunk_->readFrames(static_cast<char*>(outputBuffer) + read * format_.frameSize, framesPerBuffer - read);
+        read += chunk_->readFrames(static_cast<char*>(outputBuffer) + read * format_.frameSize, frames - read);
         if (chunk_->isEndOfChunk() && !chunks_.try_pop(chunk_, timeout))
             throw 0;
     }
@@ -199,22 +265,24 @@ cs::time_point_clk Stream::getNextPlayerChunk(void* outputBuffer, const cs::usec
 }
 
 
-cs::time_point_clk Stream::getNextPlayerChunk(void* outputBuffer, const cs::usec& timeout, unsigned long framesPerBuffer, long framesCorrection)
+cs::time_point_clk Stream::getNextPlayerChunk(void* outputBuffer, const cs::usec& timeout, unsigned long frames, long framesCorrection)
 {
-    if (framesCorrection < 0 && framesPerBuffer + framesCorrection <= 0)
+    if (framesCorrection < 0 && frames + framesCorrection <= 0)
     {
         // Avoid underflow in new char[] constructor.
-        framesCorrection = -framesPerBuffer + 1;
+        framesCorrection = -frames + 1;
     }
 
-    if (framesCorrection == 0)
-        return getNextPlayerChunk(outputBuffer, timeout, framesPerBuffer);
+    frame_delta_ -= framesCorrection;
 
-    long toRead = framesPerBuffer + framesCorrection;
+    if (framesCorrection == 0)
+        return getNextPlayerChunk(outputBuffer, timeout, frames);
+
+    long toRead = frames + framesCorrection;
     char* buffer = new char[toRead * format_.frameSize];
     cs::time_point_clk tp = getNextPlayerChunk(buffer, timeout, toRead);
 
-    const auto max = framesCorrection < 0 ? framesPerBuffer : toRead;
+    const auto max = framesCorrection < 0 ? frames : toRead;
     // Divide the buffer into one more slice than frames that need to be dropped.
     // We will drop/repeat 0 frames from the first slice, 1 frame from the second, ..., and framesCorrection frames from the last slice.
     size_t slices = abs(framesCorrection) + 1;
@@ -228,42 +296,34 @@ cs::time_point_clk Stream::getNextPlayerChunk(void* outputBuffer, const cs::usec
     // Size of each slice. The last slice may be bigger.
     int size = max / slices;
 
-    // LOG(TRACE) << "getNextPlayerChunk, frames: " << framesPerBuffer << ", correction: " << framesCorrection << " (" << toRead << "), slices: " << slices
+    // LOG(TRACE) << "getNextPlayerChunk, frames: " << frames << ", correction: " << framesCorrection << " (" << toRead << "), slices: " << slices
     // << "\n";
 
     size_t pos = 0;
     for (size_t n = 0; n < slices; ++n)
     {
+        // Adjust size in the last iteration, because the last slice may be bigger
         if (n + 1 == slices)
-            // Adjust size in the last iteration, because the last slice may be bigger
             size = max - pos;
 
         if (framesCorrection < 0)
         {
             // Read one frame less per slice from the input, but write a duplicated frame per slice to the output
-
-            // LOG(TRACE) << "slice: " << n << ", size: " << size << ", out pos: " << pos << ", source pos: " << pos - n << "\n";
+            // LOG(TRACE) << "duplicate - requested: " << frames << ", read: " << toRead << ", slice: " << n << ", size: " << size << ", out pos: " << pos << ",
+            // source pos: " << pos - n << "\n";
             memcpy(static_cast<char*>(outputBuffer) + pos * format_.frameSize, buffer + (pos - n) * format_.frameSize, size * format_.frameSize);
         }
         else
         {
             // Read all input frames, but skip a frame per slice when writing to the output.
-
-            // LOG(TRACE) << "slice: " << n << ", size: " << size << ", out pos: " << pos - n << ", source pos: " << pos << "\n";
+            // LOG(TRACE) << "remove - requested: " << frames << ", read: " << toRead << ", slice: " << n << ", size: " << size << ", out pos: " << pos - n <<
+            // ", source pos: " << pos << "\n";
             memcpy(static_cast<char*>(outputBuffer) + (pos - n) * format_.frameSize, buffer + pos * format_.frameSize, size * format_.frameSize);
         }
         pos += size;
     }
 
-    // float idx = 0;
-    // for (size_t n = 0; n < framesPerBuffer; ++n)
-    // {
-    //     size_t index(floor(idx)); // = (int)(ceil(n*factor));
-    //     memcpy((char*)outputBuffer + n * format_.frameSize, buffer + index * format_.frameSize, format_.frameSize);
-    //     idx += factor;
-    // }
     delete[] buffer;
-
     return tp;
 }
 
@@ -312,7 +372,7 @@ void Stream::resetBuffers()
 }
 
 
-bool Stream::getPlayerChunk(void* outputBuffer, const cs::usec& outputBufferDacTime, unsigned long framesPerBuffer)
+bool Stream::getPlayerChunk(void* outputBuffer, const cs::usec& outputBufferDacTime, unsigned long frames)
 {
     if (outputBufferDacTime > bufferMs_)
     {
@@ -328,7 +388,7 @@ bool Stream::getPlayerChunk(void* outputBuffer, const cs::usec& outputBufferDacT
         return false;
     }
 
-    playedFrames_ += framesPerBuffer;
+    playedFrames_ += frames;
 
     /// we have a chunk
     /// age = chunk age (server now - rec time: some positive value) - buffer (e.g. 1000ms) + time to DAC
@@ -346,8 +406,8 @@ bool Stream::getPlayerChunk(void* outputBuffer, const cs::usec& outputBufferDacT
     try
     {
 
-        // LOG(DEBUG) << "framesPerBuffer: " << framesPerBuffer << "\tms: " << framesPerBuffer*2 / PLAYER_CHUNK_MS_SIZE << "\t" << PLAYER_CHUNK_SIZE << "\n";
-        cs::nsec bufferDuration = cs::nsec(static_cast<cs::nsec::rep>(framesPerBuffer / format_.nsRate()));
+        // LOG(DEBUG) << "frames: " << frames << "\tms: " << frames*2 / PLAYER_CHUNK_MS_SIZE << "\t" << PLAYER_CHUNK_SIZE << "\n";
+        cs::nsec bufferDuration = cs::nsec(static_cast<cs::nsec::rep>(frames / format_.nsRate()));
         //		LOG(DEBUG) << "buffer duration: " << bufferDuration.count() << "\n";
 
         cs::usec correction = cs::usec(0);
@@ -358,8 +418,8 @@ bool Stream::getPlayerChunk(void* outputBuffer, const cs::usec& outputBufferDacT
             {
                 LOG(INFO) << "sleep < -bufferDuration/2: " << cs::duration<cs::msec>(sleep_) << " < " << -cs::duration<cs::msec>(bufferDuration) / 2 << ", ";
                 // We're early: not enough chunks_. play silence. Reference chunk_ is the oldest (front) one
-                sleep_ = chrono::duration_cast<cs::usec>(TimeProvider::serverNow() - getSilentPlayerChunk(outputBuffer, framesPerBuffer) - bufferMs_ +
-                                                         outputBufferDacTime);
+                sleep_ =
+                    chrono::duration_cast<cs::usec>(TimeProvider::serverNow() - getSilentPlayerChunk(outputBuffer, frames) - bufferMs_ + outputBufferDacTime);
                 LOG(INFO) << "sleep: " << cs::duration<cs::msec>(sleep_) << "\n";
                 if (sleep_ < -bufferDuration / 2)
                     return true;
@@ -413,9 +473,8 @@ bool Stream::getPlayerChunk(void* outputBuffer, const cs::usec& outputBufferDacT
             playedFrames_ = 0; //-= abs(correctAfterXFrames_);
         }
 
-        age = std::chrono::duration_cast<cs::usec>(TimeProvider::serverNow() -
-                                                   getNextPlayerChunk(outputBuffer, outputBufferDacTime, framesPerBuffer, framesCorrection) - bufferMs_ +
-                                                   outputBufferDacTime);
+        age = std::chrono::duration_cast<cs::usec>(TimeProvider::serverNow() - getNextPlayerChunk(outputBuffer, outputBufferDacTime, frames, framesCorrection) -
+                                                   bufferMs_ + outputBufferDacTime);
 
         setRealSampleRate(format_.rate);
         if (sleep_.count() == 0)
@@ -495,9 +554,10 @@ bool Stream::getPlayerChunk(void* outputBuffer, const cs::usec& outputBufferDacT
             median_ = buffer_.median();
             shortMedian_ = shortBuffer_.median();
             LOG(INFO) << "Chunk: " << age.count() / 100 << "\t" << miniBuffer_.median() / 100 << "\t" << shortMedian_ / 100 << "\t" << median_ / 100 << "\t"
-                      << buffer_.size() << "\t" << cs::duration<cs::msec>(outputBufferDacTime) << "\n";
+                      << buffer_.size() << "\t" << cs::duration<cs::msec>(outputBufferDacTime) << "\t" << frame_delta_ << "\n";
             // LOG(INFO) << "Chunk: " << age.count()/1000 << "\t" << miniBuffer_.median()/1000 << "\t" << shortMedian_/1000 << "\t" << median_/1000 << "\t" <<
             // buffer_.size() << "\t" << cs::duration<cs::msec>(outputBufferDacTime) << "\n";
+            frame_delta_ = 0;
         }
         return (abs(cs::duration<cs::msec>(age)) < 500);
     }

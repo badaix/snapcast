@@ -30,7 +30,10 @@
 using namespace std;
 
 
-SampleFormat::SampleFormat() = default;
+SampleFormat::SampleFormat()
+{
+    setFormat(0, 0, 0);
+}
 
 
 SampleFormat::SampleFormat(const std::string& format)

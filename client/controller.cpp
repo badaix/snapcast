@@ -121,7 +121,7 @@ void Controller::onMessageReceived(ClientConnection* /*connection*/, const msg::
         sampleFormat_ = decoder_->setHeader(headerChunk_.get());
         LOG(NOTICE) << TAG("state") << "sampleformat: " << sampleFormat_.rate << ":" << sampleFormat_.bits << ":" << sampleFormat_.channels << "\n";
 
-        stream_ = make_shared<Stream>(sampleFormat_);
+        stream_ = make_shared<Stream>(sampleFormat_, settings_.player.sample_format);
         stream_->setBufferLen(serverSettings_->getBufferMs() - settings_.player.latency);
 
         const auto& pcm_device = settings_.player.pcm_device;

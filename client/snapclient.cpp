@@ -84,7 +84,6 @@ int main(int argc, char** argv)
         ClientSettings settings;
         string pcm_device("default");
 
-
         OptionParser op("Allowed options");
         auto helpSwitch = op.add<Switch>("", "help", "produce help message");
         auto groffSwitch = op.add<Switch, Attribute::hidden>("", "groff", "produce groff message");
@@ -106,6 +105,7 @@ int main(int argc, char** argv)
         /*auto instanceValue =*/op.add<Value<size_t>>("i", "instance", "instance id", 1, &settings.instance);
         /*auto hostIdValue =*/op.add<Value<string>>("", "hostID", "unique host id", "", &settings.host_id);
         op.add<Value<string>>("", "player", "audio backend", "", &settings.player.player_name);
+        auto sample_format = op.add<Value<string>>("", "sampleformat", "resample audio stream to sampleformat", "");
 
         try
         {
@@ -209,6 +209,11 @@ int main(int argc, char** argv)
             //			exit(EXIT_FAILURE);
         }
 #endif
+
+        if (sample_format->is_set())
+        {
+            settings.player.sample_format = SampleFormat(sample_format->value());
+        }
 
         bool active = true;
         std::shared_ptr<Controller> controller;

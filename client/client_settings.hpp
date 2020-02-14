@@ -38,6 +38,7 @@ struct ClientSettings
         std::string player_name{""};
         int latency{0};
         PcmDevice pcm_device;
+        SampleFormat sample_format;
     };
 
     struct LoggingSettings
