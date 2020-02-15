@@ -20,6 +20,7 @@
 #define ASIO_STREAM_HPP
 
 #include "common/aixlog.hpp"
+#include "common/str_compat.hpp"
 #include "pcm_stream.hpp"
 #include <atomic>
 #include <boost/asio.hpp>
