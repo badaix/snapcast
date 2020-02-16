@@ -134,7 +134,7 @@ void CoreAudioPlayer::worker()
 {
     while (active_)
     {
-        if (pubStream_->waitForChunk(100))
+        if (pubStream_->waitForChunk(100ms))
         {
             try
             {

@@ -56,12 +56,12 @@ public:
         return format_;
     }
 
-    bool waitForChunk(size_t ms) const;
+    bool waitForChunk(const std::chrono::milliseconds& timeout) const;
 
 private:
-    chronos::time_point_clk getNextPlayerChunk(void* outputBuffer, const chronos::usec& timeout, unsigned long frames);
-    chronos::time_point_clk getNextPlayerChunk(void* outputBuffer, const chronos::usec& timeout, unsigned long frames, long framesCorrection);
-    chronos::time_point_clk getSilentPlayerChunk(void* outputBuffer, unsigned long frames);
+    chronos::time_point_clk getNextPlayerChunk(void* outputBuffer, unsigned long frames);
+    chronos::time_point_clk getNextPlayerChunk(void* outputBuffer, unsigned long frames, long framesCorrection);
+    void getSilentPlayerChunk(void* outputBuffer, unsigned long frames) const;
 
     void updateBuffers(int age);
     void resetBuffers();
@@ -72,8 +72,8 @@ private:
 
     Queue<std::shared_ptr<msg::PcmChunk>> chunks_;
     DoubleBuffer<chronos::usec::rep> miniBuffer_;
-    DoubleBuffer<chronos::usec::rep> buffer_;
     DoubleBuffer<chronos::usec::rep> shortBuffer_;
+    DoubleBuffer<chronos::usec::rep> buffer_;
     std::shared_ptr<msg::PcmChunk> chunk_;
 
     int median_;
