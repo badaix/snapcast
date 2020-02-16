@@ -62,8 +62,7 @@ private:
     chronos::time_point_clk getNextPlayerChunk(void* outputBuffer, const chronos::usec& timeout, unsigned long frames);
     chronos::time_point_clk getNextPlayerChunk(void* outputBuffer, const chronos::usec& timeout, unsigned long frames, long framesCorrection);
     chronos::time_point_clk getSilentPlayerChunk(void* outputBuffer, unsigned long frames);
-    chronos::time_point_clk seek(long ms);
-    //	time_point_ms seekTo(const time_point_ms& to);
+
     void updateBuffers(int age);
     void resetBuffers();
     void setRealSampleRate(double sampleRate);
@@ -71,10 +70,7 @@ private:
     SampleFormat format_;
     SampleFormat in_format_;
 
-    chronos::usec sleep_;
-
     Queue<std::shared_ptr<msg::PcmChunk>> chunks_;
-    //	DoubleBuffer<chronos::usec::rep> cardBuffer;
     DoubleBuffer<chronos::usec::rep> miniBuffer_;
     DoubleBuffer<chronos::usec::rep> buffer_;
     DoubleBuffer<chronos::usec::rep> shortBuffer_;
@@ -91,6 +87,8 @@ private:
     std::vector<char> resample_buffer_;
     int frame_delta_;
     // int64_t next_us_;
+
+    bool hard_sync_;
 };
 
 
