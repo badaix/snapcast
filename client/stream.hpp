@@ -46,7 +46,7 @@ public:
 
     /// Get PCM data, which will be played out in "outputBufferDacTime" time
     /// frame = (num_channels) * (1 sample in bytes) = (2 channels) * (2 bytes (16 bits) per sample) = 4 bytes (32 bits)
-    bool getPlayerChunk(void* outputBuffer, const chronos::usec& outputBufferDacTime, unsigned long framesPerBuffer);
+    bool getPlayerChunk(void* outputBuffer, const chronos::usec& outputBufferDacTime, uint32_t frames);
 
     /// "Server buffer": playout latency, e.g. 1000ms
     void setBufferLen(size_t bufferLenMs);
@@ -59,9 +59,9 @@ public:
     bool waitForChunk(const std::chrono::milliseconds& timeout) const;
 
 private:
-    chronos::time_point_clk getNextPlayerChunk(void* outputBuffer, unsigned long frames);
-    chronos::time_point_clk getNextPlayerChunk(void* outputBuffer, unsigned long frames, long framesCorrection);
-    void getSilentPlayerChunk(void* outputBuffer, unsigned long frames) const;
+    chronos::time_point_clk getNextPlayerChunk(void* outputBuffer, uint32_t frames);
+    chronos::time_point_clk getNextPlayerChunk(void* outputBuffer, uint32_t frames, int32_t framesCorrection);
+    void getSilentPlayerChunk(void* outputBuffer, uint32_t frames) const;
 
     void updateBuffers(int age);
     void resetBuffers();
@@ -79,8 +79,8 @@ private:
     int median_;
     int shortMedian_;
     time_t lastUpdate_;
-    unsigned long playedFrames_;
-    long correctAfterXFrames_;
+    uint32_t playedFrames_;
+    int32_t correctAfterXFrames_;
     chronos::msec bufferMs_;
 
     soxr_t soxr_;

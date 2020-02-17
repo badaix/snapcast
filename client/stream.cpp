@@ -214,19 +214,19 @@ bool Stream::waitForChunk(const std::chrono::milliseconds& timeout) const
 }
 
 
-void Stream::getSilentPlayerChunk(void* outputBuffer, unsigned long frames) const
+void Stream::getSilentPlayerChunk(void* outputBuffer, uint32_t frames) const
 {
     memset(outputBuffer, 0, frames * format_.frameSize);
 }
 
 
-cs::time_point_clk Stream::getNextPlayerChunk(void* outputBuffer, unsigned long frames)
+cs::time_point_clk Stream::getNextPlayerChunk(void* outputBuffer, uint32_t frames)
 {
     if (!chunk_ && !chunks_.try_pop(chunk_))
         throw 0;
 
     cs::time_point_clk tp = chunk_->start();
-    unsigned long read = 0;
+    uint32_t read = 0;
     while (read < frames)
     {
         read += chunk_->readFrames(static_cast<char*>(outputBuffer) + read * format_.frameSize, frames - read);
@@ -237,7 +237,7 @@ cs::time_point_clk Stream::getNextPlayerChunk(void* outputBuffer, unsigned long 
 }
 
 
-cs::time_point_clk Stream::getNextPlayerChunk(void* outputBuffer, unsigned long frames, long framesCorrection)
+cs::time_point_clk Stream::getNextPlayerChunk(void* outputBuffer, uint32_t frames, int32_t framesCorrection)
 {
     if (framesCorrection < 0 && frames + framesCorrection <= 0)
     {
@@ -250,7 +250,7 @@ cs::time_point_clk Stream::getNextPlayerChunk(void* outputBuffer, unsigned long 
 
     frame_delta_ -= framesCorrection;
 
-    long toRead = frames + framesCorrection;
+    uint32_t toRead = frames + framesCorrection;
     if (toRead * format_.frameSize > read_buffer_.size())
         read_buffer_.resize(toRead * format_.frameSize);
     cs::time_point_clk tp = getNextPlayerChunk(read_buffer_.data(), toRead);
@@ -316,7 +316,7 @@ void Stream::resetBuffers()
 }
 
 
-bool Stream::getPlayerChunk(void* outputBuffer, const cs::usec& outputBufferDacTime, unsigned long frames)
+bool Stream::getPlayerChunk(void* outputBuffer, const cs::usec& outputBufferDacTime, uint32_t frames)
 {
     if (outputBufferDacTime > bufferMs_)
     {
@@ -375,7 +375,7 @@ bool Stream::getPlayerChunk(void* outputBuffer, const cs::usec& outputBufferDacT
                     // e.g. age = -20ms (=> should be played in 20ms)
                     // and the current chunk duration is 50ms, so we need to play 20ms silence (as we don't have data)
                     // and can play 30ms of the stream
-                    size_t silent_frames = static_cast<size_t>(-chunk_->format.nsRate() * std::chrono::duration_cast<cs::nsec>(age).count());
+                    uint32_t silent_frames = static_cast<size_t>(-chunk_->format.nsRate() * std::chrono::duration_cast<cs::nsec>(age).count());
                     bool result = (silent_frames <= frames);
                     silent_frames = std::min(silent_frames, frames);
                     LOG(DEBUG, LOG_TAG) << "Silent frames: " << silent_frames << ", frames: " << frames
@@ -396,13 +396,13 @@ bool Stream::getPlayerChunk(void* outputBuffer, const cs::usec& outputBufferDacT
 
         // sample rate correction
         // framesCorrection = number of frames to be read more or less to get in-sync
-        long framesCorrection = 0;
+        int32_t framesCorrection = 0;
         if (correctAfterXFrames_ != 0)
         {
             playedFrames_ += frames;
-            if (playedFrames_ >= (unsigned long)abs(correctAfterXFrames_))
+            if (playedFrames_ >= (uint32_t)abs(correctAfterXFrames_))
             {
-                framesCorrection = static_cast<long>(playedFrames_) / correctAfterXFrames_;
+                framesCorrection = static_cast<int32_t>(playedFrames_) / correctAfterXFrames_;
                 playedFrames_ %= abs(correctAfterXFrames_);
             }
         }
