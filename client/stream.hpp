@@ -85,6 +85,7 @@ private:
 
     soxr_t soxr_;
     std::vector<char> resample_buffer_;
+    std::vector<char> read_buffer_;
     int frame_delta_;
     // int64_t next_us_;
 

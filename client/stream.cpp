@@ -1,20 +1,20 @@
 /***
-     This file is part of snapcast
-     Copyright (C) 2014-2020  Johannes Pohl
+    This file is part of snapcast
+    Copyright (C) 2014-2020  Johannes Pohl
 
-     This program is free software: you can redistribute it and/or modify
-     it under the terms of the GNU General Public License as published by
-     the Free Software Foundation, either version 3 of the License, or
-     (at your option) any later version.
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
 
-     This program is distributed in the hope that it will be useful,
-     but WITHOUT ANY WARRANTY; without even the implied warranty of
-     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-     GNU General Public License for more details.
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
 
-     You should have received a copy of the GNU General Public License
-     along with this program.  If not, see <http://www.gnu.org/licenses/>.
- ***/
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+***/
 
 #include "stream.hpp"
 #include "common/aixlog.hpp"
@@ -251,8 +251,9 @@ cs::time_point_clk Stream::getNextPlayerChunk(void* outputBuffer, unsigned long 
     frame_delta_ -= framesCorrection;
 
     long toRead = frames + framesCorrection;
-    char* buffer = new char[toRead * format_.frameSize];
-    cs::time_point_clk tp = getNextPlayerChunk(buffer, toRead);
+    if (toRead * format_.frameSize > read_buffer_.size())
+        read_buffer_.resize(toRead * format_.frameSize);
+    cs::time_point_clk tp = getNextPlayerChunk(read_buffer_.data(), toRead);
 
     const auto max = framesCorrection < 0 ? frames : toRead;
     // Divide the buffer into one more slice than frames that need to be dropped.
@@ -282,22 +283,19 @@ cs::time_point_clk Stream::getNextPlayerChunk(void* outputBuffer, unsigned long 
         {
             // Read one frame less per slice from the input, but write a duplicated frame per slice to the output
             // LOG(TRACE, LOG_TAG) << "duplicate - requested: " << frames << ", read: " << toRead << ", slice: " << n << ", size: " << size << ", out pos: " <<
-            // pos << ",
-            // source pos: " << pos - n << "\n";
-            memcpy(static_cast<char*>(outputBuffer) + pos * format_.frameSize, buffer + (pos - n) * format_.frameSize, size * format_.frameSize);
+            // pos << ", source pos: " << pos - n << "\n";
+            memcpy(static_cast<char*>(outputBuffer) + pos * format_.frameSize, read_buffer_.data() + (pos - n) * format_.frameSize, size * format_.frameSize);
         }
         else
         {
             // Read all input frames, but skip a frame per slice when writing to the output.
             // LOG(TRACE, LOG_TAG) << "remove - requested: " << frames << ", read: " << toRead << ", slice: " << n << ", size: " << size << ", out pos: " << pos
-            // - n <<
-            // ", source pos: " << pos << "\n";
-            memcpy(static_cast<char*>(outputBuffer) + (pos - n) * format_.frameSize, buffer + pos * format_.frameSize, size * format_.frameSize);
+            // - n << ", source pos: " << pos << "\n";
+            memcpy(static_cast<char*>(outputBuffer) + (pos - n) * format_.frameSize, read_buffer_.data() + pos * format_.frameSize, size * format_.frameSize);
         }
         pos += size;
     }
 
-    delete[] buffer;
     return tp;
 }
 
@@ -378,13 +376,18 @@ bool Stream::getPlayerChunk(void* outputBuffer, const cs::usec& outputBufferDacT
                     // and the current chunk duration is 50ms, so we need to play 20ms silence (as we don't have data)
                     // and can play 30ms of the stream
                     size_t silent_frames = static_cast<size_t>(-chunk_->format.nsRate() * std::chrono::duration_cast<cs::nsec>(age).count());
+                    bool result = (silent_frames <= frames);
+                    silent_frames = std::min(silent_frames, frames);
                     LOG(DEBUG, LOG_TAG) << "Silent frames: " << silent_frames << ", frames: " << frames
                                         << ", age: " << std::chrono::duration_cast<cs::usec>(age).count() / 1000. << "\n";
                     getSilentPlayerChunk(outputBuffer, silent_frames);
                     getNextPlayerChunk((char*)outputBuffer + (chunk_->format.frameSize * silent_frames), frames - silent_frames);
 
-                    hard_sync_ = false;
-                    resetBuffers();
+                    if (result)
+                    {
+                        hard_sync_ = false;
+                        resetBuffers();
+                    }
                     return true;
                 }
                 return false;
@@ -472,6 +475,7 @@ bool Stream::getPlayerChunk(void* outputBuffer, const cs::usec& outputBufferDacT
     catch (int e)
     {
         LOG(INFO) << "Exception\n";
+        hard_sync_ = true;
         return false;
     }
 }
