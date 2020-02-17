@@ -134,7 +134,7 @@ void CoreAudioPlayer::worker()
 {
     while (active_)
     {
-        if (pubStream_->waitForChunk(100ms))
+        if (pubStream_->waitForChunk(std::chrono::milliseconds(100)))
         {
             try
             {
