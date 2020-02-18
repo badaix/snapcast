@@ -34,57 +34,83 @@ For more information on the binary protocol, please see the [documentation](doc/
 
 Installation
 ------------
-You can either build and install snapcast from source, or on Debian systems install a prebuilt .deb package
+You can either install Snapcast from a prebuilt package (recommended for new users), or build and install snapcast from source.
 
-### Installation from source
-Please follow this [guide](doc/build.md) to build Snapcast for
-* [Linux](doc/build.md#linux-native)
-* [FreeBSD](doc/build.md#freebsd-native)
-* [macOS](doc/build.md#macos-native)
-* [Android](doc/build.md#android-cross-compile)
-* [OpenWrt](doc/build.md#openwrtlede-cross-compile)
-* [Buildroot](doc/build.md#buildroot-cross-compile)
-* [Raspberry Pi](doc/build.md#raspberry-pi-cross-compile)
+### Install Linux packages (recommended for beginners)
+Snapcast packages are available for several Linux distributions.
 
-### Install Linux packages
-For Debian download the package for your CPU architecture from the [latest release page](https://github.com/badaix/snapcast/releases/latest), e.g. for Raspberry Pi `snapclient_0.x.x_armhf.deb`
+#### Debian
+For Debian (and Debian-based systems, such as Ubuntu, Linux Mint, ElementaryOS) download the package for your CPU architecture from the [latest release page](https://github.com/badaix/snapcast/releases/latest).
+
+e.g. for Raspberry Pi `snapclient_0.x.x_armhf.deb`, for laptops `snapclient_0.x.x_amd64.deb`
+
 Install the package:
 
     $ sudo dpkg -i snapclient_0.x.x_armhf.deb
+or
+    $ sudo dpkg -i snapclient_0.x.x_amd64.deb
 
 Install missing dependencies:
 
     $ sudo apt-get -f install
 
+#### OpenWrt
 On OpenWrt do:
 
     $ opkg install snapclient_0.x.x_ar71xx.ipk
 
+#### Alpine Linux
 On Alpine Linux do:
 
     $ apk add snapcast
 
-	# Or for just the client:
+Or, for just the client:
 
-	$ apk add snapcast-client
+    $ apk add snapcast-client
 
-	# Or for just the server:
+Or, for just the server:
 
-	$ apk add snapcast-server
+    $ apk add snapcast-server
 
+#### Gentoo Linux
 On Gentoo Linux do:
 
     $ emerge --ask media-sound/snapcast
 
-On Archlinux, snapcast is available through the AUR.  To install, use your favorite AUR helper, or do:
+#### Archlinux
+On Archlinux, Snapcast is available through the AUR.  To install, use your favorite AUR helper, or do:
 
     $ git clone https://aur.archlinux.org/snapcast
     $ cd snapcast
     $ makepkg -si
+    
+### Installation from source
+
+Please follow this [guide](doc/build.md) to build Snapcast for
+
+* [Linux](doc/build.md#linux-native)
+
+* [FreeBSD](doc/build.md#freebsd-native)
+
+* [macOS](doc/build.md#macos-native)
+
+* [Android](doc/build.md#android-cross-compile)
+
+* [OpenWrt](doc/build.md#openwrtlede-cross-compile)
+
+* [Buildroot](doc/build.md#buildroot-cross-compile)
+
+* [Raspberry Pi](doc/build.md#raspberry-pi-cross-compile)
 
 SnapOS
 ------
-For the brave of you, there is a guide with buildfiles available to build [SnapOS](https://github.com/badaix/snapos), a small and fast-booting OS to run Snapcast, coming in two flavors: [Buildroot](https://github.com/badaix/snapos/blob/master/buildroot-external/README.md) based, or [OpenWrt](https://github.com/badaix/snapos/tree/master/openwrt) based. Please note that there are no pre-built firmware packages available.
+The bravest among you may be interested in [SnapOS](https://github.com/badaix/snapos), a small and fast-booting "just enough" OS to run Snapcast as an appliance.
+
+There is a guide (with the necessary buildfiles) available to build SnapOS, which comes in two flavors:
+- [Buildroot](https://github.com/badaix/snapos/blob/master/buildroot-external/README.md) based, or
+- [OpenWrt](https://github.com/badaix/snapos/tree/master/openwrt) based.
+
+Please note that there are no pre-built firmware packages available.
 
 Configuration
 -------------
@@ -142,9 +168,9 @@ There is also an unofficial WebApp from @atoomic [atoomic/snapcast-volume-ui](ht
 This app lists all clients connected to a server and allows you to control individually the volume of each client.
 Once installed, you can use any mobile device, laptop, desktop, or browser.
 
-There is also an [unofficial FHEM module](https://forum.fhem.de/index.php/topic,62389.0.html) from @unimatrix27 which integrates a snapcast controller into the [FHEM](https://fhem.de/fhem.html) home automation system.
+There is also an [unofficial FHEM module](https://forum.fhem.de/index.php/topic,62389.0.html) from @unimatrix27 which integrates a Snapcast controller into the [FHEM](https://fhem.de/fhem.html) home automation system.
 
-There is a [snapcast component for Home Assistant](https://home-assistant.io/components/media_player.snapcast/) which integrates a snapcast controller in to the [Home Assistant](https://home-assistant.io/) home automation system.
+There is a [snapcast component for Home Assistant](https://home-assistant.io/components/media_player.snapcast/) which integrates a Snapcast controller in to the [Home Assistant](https://home-assistant.io/) home automation system.
 
 For a web interface in Python, see [snapcastr](https://github.com/xkonni/snapcastr), based on [python-snapcast](https://github.com/happyleavesaoc/python-snapcast). This interface controls client volume and assigns streams to groups.
 
