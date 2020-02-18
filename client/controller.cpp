@@ -62,7 +62,7 @@ void Controller::onMessageReceived(ClientConnection* /*connection*/, const msg::
         {
             auto pcmChunk = make_unique<msg::PcmChunk>(sampleFormat_, 0);
             pcmChunk->deserialize(baseMessage, buffer);
-            // LOG(DEBUG) << "chunk: " << pcmChunk->payloadSize << ", sampleFormat: " << sampleFormat_.rate << "\n";
+            // LOG(DEBUG) << "chunk: " << pcmChunk->payloadSize << ", sampleFormat: " << sampleFormat_.getFormat() << "\n";
             if (decoder_->decode(pcmChunk.get()))
             {
                 // TODO: do decoding in thread?
@@ -119,7 +119,7 @@ void Controller::onMessageReceived(ClientConnection* /*connection*/, const msg::
             throw SnapException("codec not supported: \"" + headerChunk_->codec + "\"");
 
         sampleFormat_ = decoder_->setHeader(headerChunk_.get());
-        LOG(NOTICE) << TAG("state") << "sampleformat: " << sampleFormat_.rate << ":" << sampleFormat_.bits << ":" << sampleFormat_.channels << "\n";
+        LOG(NOTICE) << TAG("state") << "sampleformat: " << sampleFormat_.getFormat() << "\n";
 
         stream_ = make_shared<Stream>(sampleFormat_, settings_.player.sample_format);
         stream_->setBufferLen(serverSettings_->getBufferMs() - settings_.player.latency);

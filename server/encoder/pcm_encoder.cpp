@@ -65,11 +65,11 @@ void PcmEncoder::initEncoder()
     assign(payload + 12, SWAP_32(ID_FMT));
     assign(payload + 16, SWAP_32(16));
     assign(payload + 20, SWAP_16(1));
-    assign(payload + 22, SWAP_16(sampleFormat_.channels));
-    assign(payload + 24, SWAP_32(sampleFormat_.rate));
-    assign(payload + 28, SWAP_32(sampleFormat_.rate * sampleFormat_.bits * sampleFormat_.channels / 8));
-    assign(payload + 32, SWAP_16(sampleFormat_.channels * ((sampleFormat_.bits + 7) / 8)));
-    assign(payload + 34, SWAP_16(sampleFormat_.bits));
+    assign(payload + 22, SWAP_16(sampleFormat_.channels()));
+    assign(payload + 24, SWAP_32(sampleFormat_.rate()));
+    assign(payload + 28, SWAP_32(sampleFormat_.rate() * sampleFormat_.bits() * sampleFormat_.channels() / 8));
+    assign(payload + 32, SWAP_16(sampleFormat_.channels() * ((sampleFormat_.bits() + 7) / 8)));
+    assign(payload + 34, SWAP_16(sampleFormat_.bits()));
     assign(payload + 36, SWAP_32(ID_DATA));
     assign(payload + 40, SWAP_32(0));
 }

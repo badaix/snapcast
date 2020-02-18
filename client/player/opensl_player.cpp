@@ -161,10 +161,10 @@ void OpenslPlayer::initOpensl()
     const SampleFormat& format = stream_->getFormat();
 
 
-    frames_ = format.rate / (1000 / ms_); // * format.channels; // 1920; // 48000 * 2 / 50  // => 50ms
+    frames_ = format.rate() / (1000 / ms_); // * format.channels(); // 1920; // 48000 * 2 / 50  // => 50ms
 
-    buff_size = frames_ * format.frameSize /* 2 -> sample size */;
-    LOG(INFO, LOG_TAG) << "frames: " << frames_ << ", channels: " << format.channels << ", rate: " << format.rate << ", buff: " << buff_size << "\n";
+    buff_size = frames_ * format.frameSize() /* 2 -> sample size */;
+    LOG(INFO, LOG_TAG) << "frames: " << frames_ << ", channels: " << format.channels() << ", rate: " << format.rate() << ", buff: " << buff_size << "\n";
 
     SLresult result;
     // create engine
@@ -181,7 +181,7 @@ void OpenslPlayer::initOpensl()
     throwUnsuccess(kPhaseInit, "OutputMixObject::Realize", result);
 
     SLuint32 samplesPerSec = SL_SAMPLINGRATE_48;
-    switch (format.rate)
+    switch (format.rate())
     {
         case 8000:
             samplesPerSec = SL_SAMPLINGRATE_8;
@@ -250,7 +250,7 @@ void OpenslPlayer::initOpensl()
 
     SLDataLocator_AndroidSimpleBufferQueue loc_bufq = {SL_DATALOCATOR_ANDROIDSIMPLEBUFFERQUEUE, 2};
     SLDataFormat_PCM format_pcm = {
-        SL_DATAFORMAT_PCM,        format.channels, samplesPerSec, bitsPerSample, containerSize, SL_SPEAKER_FRONT_LEFT | SL_SPEAKER_FRONT_RIGHT,
+        SL_DATAFORMAT_PCM,        format.channels(), samplesPerSec, bitsPerSample, containerSize, SL_SPEAKER_FRONT_LEFT | SL_SPEAKER_FRONT_RIGHT,
         SL_BYTEORDER_LITTLEENDIAN};
 
     SLDataSource audioSrc = {&loc_bufq, &format_pcm};

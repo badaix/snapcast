@@ -38,7 +38,7 @@ Stream::Stream(const SampleFormat& in_format, const SampleFormat& out_format)
     shortBuffer_.setSize(100);
     miniBuffer_.setSize(20);
 
-    if (out_format.rate != 0)
+    if (out_format.rate() != 0)
         format_ = out_format;
     else
         format_ = in_format_;
@@ -50,30 +50,30 @@ Stream::Stream(const SampleFormat& in_format, const SampleFormat& out_format)
 
     x = 1,000016667 / (1,000016667 - 1)
     */
-    // setRealSampleRate(format_.rate);
+    // setRealSampleRate(format_.rate());
 
-    if ((format_.rate != in_format_.rate) || (format_.bits != in_format_.bits))
+    if ((format_.rate() != in_format_.rate()) || (format_.bits() != in_format_.bits()))
     {
         LOG(INFO, LOG_TAG) << "Resampling from " << in_format_.getFormat() << " to " << format_.getFormat() << "\n";
         soxr_error_t error;
 
         soxr_datatype_t in_type = SOXR_INT16_I;
         soxr_datatype_t out_type = SOXR_INT16_I;
-        if (in_format_.sampleSize > 2)
+        if (in_format_.sampleSize() > 2)
             in_type = SOXR_INT32_I;
-        if (format_.sampleSize > 2)
+        if (format_.sampleSize() > 2)
             out_type = SOXR_INT32_I;
         soxr_io_spec_t iospec = soxr_io_spec(in_type, out_type);
         // HQ should be fine: http://sox.sourceforge.net/Docs/FAQ
         soxr_quality_spec_t q_spec = soxr_quality_spec(SOXR_HQ, 0);
-        soxr_ = soxr_create(static_cast<double>(in_format_.rate), static_cast<double>(format_.rate), format_.channels, &error, &iospec, &q_spec, NULL);
+        soxr_ = soxr_create(static_cast<double>(in_format_.rate()), static_cast<double>(format_.rate()), format_.channels(), &error, &iospec, &q_spec, NULL);
         if (error)
         {
             LOG(ERROR, LOG_TAG) << "Error soxr_create: " << error << "\n";
             soxr_ = nullptr;
         }
         // initialize the buffer with 20ms (~latency of the reampler)
-        resample_buffer_.resize(format_.frameSize * ceil(format_.msRate()) * 20);
+        resample_buffer_.resize(format_.frameSize() * ceil(format_.msRate()) * 20);
     }
 }
 
@@ -87,14 +87,14 @@ Stream::~Stream()
 
 void Stream::setRealSampleRate(double sampleRate)
 {
-    if (sampleRate == format_.rate)
+    if (sampleRate == format_.rate())
     {
         correctAfterXFrames_ = 0;
     }
     else
     {
-        correctAfterXFrames_ = round((format_.rate / sampleRate) / (format_.rate / sampleRate - 1.));
-        // LOG(TRACE, LOG_TAG) << "Correct after X: " << correctAfterXFrames_ << " (Real rate: " << sampleRate << ", rate: " << format_.rate << ")\n";
+        correctAfterXFrames_ = round((format_.rate() / sampleRate) / (format_.rate() / sampleRate - 1.));
+        // LOG(TRACE, LOG_TAG) << "Correct after X: " << correctAfterXFrames_ << " (Real rate: " << sampleRate << ", rate: " << format_.rate() << ")\n";
     }
 }
 
@@ -135,7 +135,7 @@ void Stream::addChunk(unique_ptr<msg::PcmChunk> chunk)
     }
     else
     {
-        if (in_format_.bits == 24)
+        if (in_format_.bits() == 24)
         {
             // sox expects 32 bit input, shift 8 bits left
             int32_t* frames = (int32_t*)chunk->payload;
@@ -145,7 +145,7 @@ void Stream::addChunk(unique_ptr<msg::PcmChunk> chunk)
 
         size_t idone;
         size_t odone;
-        auto resample_buffer_framesize = resample_buffer_.size() / format_.frameSize;
+        auto resample_buffer_framesize = resample_buffer_.size() / format_.frameSize();
         auto error = soxr_process(soxr_, chunk->payload, chunk->getFrameCount(), &idone, resample_buffer_.data(), resample_buffer_framesize, &odone);
         if (error)
         {
@@ -154,7 +154,7 @@ void Stream::addChunk(unique_ptr<msg::PcmChunk> chunk)
         else
         {
             LOG(TRACE, LOG_TAG) << "Resample idone: " << idone << "/" << chunk->getFrameCount() << ", odone: " << odone << "/"
-                                << resample_buffer_.size() / format_.frameSize << ", delay: " << soxr_delay(soxr_) << "\n";
+                                << resample_buffer_.size() / format_.frameSize() << ", delay: " << soxr_delay(soxr_) << "\n";
 
             // some data has been resampled (odone frames) and some is still in the pipe (soxr_delay frames)
             if (odone > 0)
@@ -170,11 +170,11 @@ void Stream::addChunk(unique_ptr<msg::PcmChunk> chunk)
                 resampled_chunk->timestamp.usec = us % 1000000;
 
                 // copy from the resample_buffer to the resampled chunk
-                resampled_chunk->payloadSize = odone * format_.frameSize;
+                resampled_chunk->payloadSize = odone * format_.frameSize();
                 resampled_chunk->payload = (char*)realloc(resampled_chunk->payload, resampled_chunk->payloadSize);
                 memcpy(resampled_chunk->payload, resample_buffer_.data(), resampled_chunk->payloadSize);
 
-                if (format_.bits == 24)
+                if (format_.bits() == 24)
                 {
                     // sox has quantized to 32 bit, shift 8 bits right
                     int32_t* frames = (int32_t*)resampled_chunk->payload;
@@ -192,7 +192,7 @@ void Stream::addChunk(unique_ptr<msg::PcmChunk> chunk)
                 if (odone == resample_buffer_framesize)
                 {
                     // buffer for resampled data too small, add space for 5ms
-                    resample_buffer_.resize(resample_buffer_.size() + format_.frameSize * ceil(format_.msRate()) * 5);
+                    resample_buffer_.resize(resample_buffer_.size() + format_.frameSize() * ceil(format_.msRate()) * 5);
                     LOG(DEBUG, LOG_TAG) << "Resample buffer completely filled, adding space for 5ms; new buffer size: " << resample_buffer_.size()
                                         << " bytes\n";
                 }
@@ -216,7 +216,7 @@ bool Stream::waitForChunk(const std::chrono::milliseconds& timeout) const
 
 void Stream::getSilentPlayerChunk(void* outputBuffer, uint32_t frames) const
 {
-    memset(outputBuffer, 0, frames * format_.frameSize);
+    memset(outputBuffer, 0, frames * format_.frameSize());
 }
 
 
@@ -229,7 +229,7 @@ cs::time_point_clk Stream::getNextPlayerChunk(void* outputBuffer, uint32_t frame
     uint32_t read = 0;
     while (read < frames)
     {
-        read += chunk_->readFrames(static_cast<char*>(outputBuffer) + read * format_.frameSize, frames - read);
+        read += chunk_->readFrames(static_cast<char*>(outputBuffer) + read * format_.frameSize(), frames - read);
         if (chunk_->isEndOfChunk() && !chunks_.try_pop(chunk_))
             throw 0;
     }
@@ -251,8 +251,8 @@ cs::time_point_clk Stream::getNextPlayerChunk(void* outputBuffer, uint32_t frame
     frame_delta_ -= framesCorrection;
 
     uint32_t toRead = frames + framesCorrection;
-    if (toRead * format_.frameSize > read_buffer_.size())
-        read_buffer_.resize(toRead * format_.frameSize);
+    if (toRead * format_.frameSize() > read_buffer_.size())
+        read_buffer_.resize(toRead * format_.frameSize());
     cs::time_point_clk tp = getNextPlayerChunk(read_buffer_.data(), toRead);
 
     const auto max = framesCorrection < 0 ? frames : toRead;
@@ -284,14 +284,16 @@ cs::time_point_clk Stream::getNextPlayerChunk(void* outputBuffer, uint32_t frame
             // Read one frame less per slice from the input, but write a duplicated frame per slice to the output
             // LOG(TRACE, LOG_TAG) << "duplicate - requested: " << frames << ", read: " << toRead << ", slice: " << n << ", size: " << size << ", out pos: " <<
             // pos << ", source pos: " << pos - n << "\n";
-            memcpy(static_cast<char*>(outputBuffer) + pos * format_.frameSize, read_buffer_.data() + (pos - n) * format_.frameSize, size * format_.frameSize);
+            memcpy(static_cast<char*>(outputBuffer) + pos * format_.frameSize(), read_buffer_.data() + (pos - n) * format_.frameSize(),
+                   size * format_.frameSize());
         }
         else
         {
             // Read all input frames, but skip a frame per slice when writing to the output.
             // LOG(TRACE, LOG_TAG) << "remove - requested: " << frames << ", read: " << toRead << ", slice: " << n << ", size: " << size << ", out pos: " << pos
             // - n << ", source pos: " << pos << "\n";
-            memcpy(static_cast<char*>(outputBuffer) + (pos - n) * format_.frameSize, read_buffer_.data() + pos * format_.frameSize, size * format_.frameSize);
+            memcpy(static_cast<char*>(outputBuffer) + (pos - n) * format_.frameSize(), read_buffer_.data() + pos * format_.frameSize(),
+                   size * format_.frameSize());
         }
         pos += size;
     }
@@ -381,7 +383,7 @@ bool Stream::getPlayerChunk(void* outputBuffer, const cs::usec& outputBufferDacT
                     LOG(DEBUG, LOG_TAG) << "Silent frames: " << silent_frames << ", frames: " << frames
                                         << ", age: " << std::chrono::duration_cast<cs::usec>(age).count() / 1000. << "\n";
                     getSilentPlayerChunk(outputBuffer, silent_frames);
-                    getNextPlayerChunk((char*)outputBuffer + (chunk_->format.frameSize * silent_frames), frames - silent_frames);
+                    getNextPlayerChunk((char*)outputBuffer + (chunk_->format.frameSize() * silent_frames), frames - silent_frames);
 
                     if (result)
                     {
@@ -410,7 +412,7 @@ bool Stream::getPlayerChunk(void* outputBuffer, const cs::usec& outputBufferDacT
         cs::usec age = std::chrono::duration_cast<cs::usec>(TimeProvider::serverNow() - getNextPlayerChunk(outputBuffer, frames, framesCorrection) - bufferMs_ +
                                                             outputBufferDacTime);
 
-        setRealSampleRate(format_.rate);
+        setRealSampleRate(format_.rate());
         // check if we need a hard sync
         if (buffer_.full() && (cs::usec(abs(median_)) > cs::msec(2)))
         {
@@ -444,7 +446,7 @@ bool Stream::getPlayerChunk(void* outputBuffer, const cs::usec& outputBufferDacT
                 // LOG(INFO, LOG_TAG) << "Rate: " << rate << "\n";
                 // we are late (age > 0), this means we are not playing fast enough
                 // => the real sample rate seems to be lower, we have to drop some frames
-                setRealSampleRate(format_.rate * rate); // 0.9999);
+                setRealSampleRate(format_.rate() * rate); // 0.9999);
             }
             else if ((cs::usec(shortMedian_) < -kCorrectionBegin) && (cs::usec(miniMedian) < -cs::usec(50)) && (cs::usec(age) < -cs::usec(50)))
             {
@@ -453,7 +455,7 @@ bool Stream::getPlayerChunk(void* outputBuffer, const cs::usec& outputBufferDacT
                 // LOG(INFO, LOG_TAG) << "Rate: " << rate << "\n";
                 // we are early (age > 0), this means we are playing too fast
                 // => the real sample rate seems to be higher, we have to insert some frames
-                setRealSampleRate(format_.rate * rate); // 1.0001);
+                setRealSampleRate(format_.rate() * rate); // 1.0001);
             }
         }
 

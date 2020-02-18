@@ -38,8 +38,8 @@ void AlsaPlayer::initAlsa()
     snd_pcm_hw_params_t* params;
 
     const SampleFormat& format = stream_->getFormat();
-    rate = format.rate;
-    channels = format.channels;
+    rate = format.rate();
+    channels = format.channels();
 
     /* Open the PCM device in playback mode */
     if ((pcm = snd_pcm_open(&handle_, pcmDevice_.name.c_str(), SND_PCM_STREAM_PLAYBACK, 0)) < 0)
@@ -61,16 +61,16 @@ void AlsaPlayer::initAlsa()
         throw SnapException("Can't set interleaved mode: " + string(snd_strerror(pcm)));
 
     snd_pcm_format_t snd_pcm_format;
-    if (format.bits == 8)
+    if (format.bits() == 8)
         snd_pcm_format = SND_PCM_FORMAT_S8;
-    else if (format.bits == 16)
+    else if (format.bits() == 16)
         snd_pcm_format = SND_PCM_FORMAT_S16_LE;
-    else if ((format.bits == 24) && (format.sampleSize == 4))
+    else if ((format.bits() == 24) && (format.sampleSize() == 4))
         snd_pcm_format = SND_PCM_FORMAT_S24_LE;
-    else if (format.bits == 32)
+    else if (format.bits() == 32)
         snd_pcm_format = SND_PCM_FORMAT_S32_LE;
     else
-        throw SnapException("Unsupported sample format: " + cpt::to_string(format.bits));
+        throw SnapException("Unsupported sample format: " + cpt::to_string(format.bits()));
 
     pcm = snd_pcm_hw_params_set_format(handle_, params, snd_pcm_format);
     if (pcm == -EINVAL)
@@ -233,8 +233,8 @@ void AlsaPlayer::worker()
         chronos::usec delay(static_cast<chronos::usec::rep>(1000 * (double)framesDelay / format.msRate()));
         // LOG(TRACE) << "delay: " << framesDelay << ", delay[ms]: " << delay.count() / 1000 << ", avail: " << framesAvail << "\n";
 
-        if (buffer_.size() < static_cast<size_t>(framesAvail * format.frameSize))
-            buffer_.resize(framesAvail * format.frameSize);
+        if (buffer_.size() < static_cast<size_t>(framesAvail * format.frameSize()))
+            buffer_.resize(framesAvail * format.frameSize());
         if (stream_->getPlayerChunk(buffer_.data(), delay, framesAvail))
         {
             lastChunkTick = chronos::getTickCount();

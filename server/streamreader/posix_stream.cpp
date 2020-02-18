@@ -52,7 +52,7 @@ void PosixStream::connect()
         return;
 
     idle_bytes_ = 0;
-    max_idle_bytes_ = sampleFormat_.rate * sampleFormat_.frameSize * dryout_ms_ / 1000;
+    max_idle_bytes_ = sampleFormat_.rate() * sampleFormat_.frameSize() * dryout_ms_ / 1000;
 
     try
     {
@@ -89,7 +89,7 @@ void PosixStream::do_read()
             {
                 // nothing to read for a longer time now, set the chunk to silent
                 LOG(DEBUG, LOG_TAG) << "count < 0: " << errno
-                                    << " && idleBytes < maxIdleBytes, ms: " << 1000 * chunk_->payloadSize / (sampleFormat_.rate * sampleFormat_.frameSize)
+                                    << " && idleBytes < maxIdleBytes, ms: " << 1000 * chunk_->payloadSize / (sampleFormat_.rate() * sampleFormat_.frameSize())
                                     << "\n";
                 memset(chunk_->payload + len, 0, toRead - len);
                 idle_bytes_ += toRead - len;

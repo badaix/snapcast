@@ -73,25 +73,25 @@ void OggEncoder::encode(const msg::PcmChunk* chunk)
     float** buffer = vorbis_analysis_buffer(&vd_, frames);
 
     /* uninterleave samples */
-    for (size_t channel = 0; channel < sampleFormat_.channels; ++channel)
+    for (size_t channel = 0; channel < sampleFormat_.channels(); ++channel)
     {
-        if (sampleFormat_.sampleSize == 1)
+        if (sampleFormat_.sampleSize() == 1)
         {
             int8_t* chunkBuffer = (int8_t*)chunk->payload;
             for (int i = 0; i < frames; i++)
-                buffer[channel][i] = chunkBuffer[sampleFormat_.channels * i + channel] / 128.f;
+                buffer[channel][i] = chunkBuffer[sampleFormat_.channels() * i + channel] / 128.f;
         }
-        else if (sampleFormat_.sampleSize == 2)
+        else if (sampleFormat_.sampleSize() == 2)
         {
             int16_t* chunkBuffer = (int16_t*)chunk->payload;
             for (int i = 0; i < frames; i++)
-                buffer[channel][i] = chunkBuffer[sampleFormat_.channels * i + channel] / 32768.f;
+                buffer[channel][i] = chunkBuffer[sampleFormat_.channels() * i + channel] / 32768.f;
         }
-        else if (sampleFormat_.sampleSize == 4)
+        else if (sampleFormat_.sampleSize() == 4)
         {
             int32_t* chunkBuffer = (int32_t*)chunk->payload;
             for (int i = 0; i < frames; i++)
-                buffer[channel][i] = chunkBuffer[sampleFormat_.channels * i + channel] / 2147483648.f;
+                buffer[channel][i] = chunkBuffer[sampleFormat_.channels() * i + channel] / 2147483648.f;
         }
     }
 
@@ -141,7 +141,7 @@ void OggEncoder::encode(const msg::PcmChunk* chunk)
 
     if (res > 0)
     {
-        res /= (sampleFormat_.rate / 1000.);
+        res /= sampleFormat_.msRate();
         // LOG(INFO) << "res: " << res << "\n";
         lastGranulepos_ = os_.granulepos;
         // make oggChunk smaller
@@ -209,7 +209,7 @@ void OggEncoder::initEncoder()
 
     *********************************************************************/
 
-    int ret = vorbis_encode_init_vbr(&vi_, sampleFormat_.channels, sampleFormat_.rate, quality);
+    int ret = vorbis_encode_init_vbr(&vi_, sampleFormat_.channels(), sampleFormat_.rate(), quality);
 
     /* do not continue if setup failed; this can happen if we ask for a
      mode that libVorbis does not support (eg, too low a bitrate, etc,

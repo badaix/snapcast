@@ -51,7 +51,7 @@ SampleFormat::SampleFormat(uint32_t sampleRate, uint16_t bitsPerSample, uint16_t
 string SampleFormat::getFormat() const
 {
     stringstream ss;
-    ss << rate << ":" << bits << ":" << channels;
+    ss << rate_ << ":" << bits_ << ":" << channels_;
     return ss.str();
 }
 
@@ -70,12 +70,12 @@ void SampleFormat::setFormat(uint32_t rate, uint16_t bits, uint16_t channels)
     // needs something like:
     // 24_4 = 3 bytes, padded to 4
     // 32 = 4 bytes
-    this->rate = rate;
-    this->bits = bits;
-    this->channels = channels;
-    sampleSize = bits / 8;
-    if (bits == 24)
-        sampleSize = 4;
-    frameSize = channels * sampleSize;
+    rate_ = rate;
+    bits_ = bits;
+    channels_ = channels;
+    sample_size_ = bits / 8;
+    if (bits_ == 24)
+        sample_size_ = 4;
+    frame_size_ = channels_ * sample_size_;
     //	LOG(DEBUG) << "SampleFormat: " << rate << ":" << bits << ":" << channels << "\n";
 }

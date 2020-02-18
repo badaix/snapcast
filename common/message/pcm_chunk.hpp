@@ -36,7 +36,7 @@ namespace msg
 class PcmChunk : public WireChunk
 {
 public:
-    PcmChunk(const SampleFormat& sampleFormat, size_t ms) : WireChunk(sampleFormat.rate * sampleFormat.frameSize * ms / 1000), format(sampleFormat), idx_(0)
+    PcmChunk(const SampleFormat& sampleFormat, size_t ms) : WireChunk(sampleFormat.rate() * sampleFormat.frameSize() * ms / 1000), format(sampleFormat), idx_(0)
     {
     }
 
@@ -59,18 +59,18 @@ public:
 
     int readFrames(void* outputBuffer, size_t frameCount)
     {
-        // logd << "read: " << frameCount << ", total: " << (wireChunk->length / format.frameSize) << ", idx: " << idx;// << std::endl;
+        // logd << "read: " << frameCount << ", total: " << (wireChunk->length / format.frameSize()) << ", idx: " << idx;// << std::endl;
         int result = frameCount;
-        if (idx_ + frameCount > (payloadSize / format.frameSize))
-            result = (payloadSize / format.frameSize) - idx_;
+        if (idx_ + frameCount > (payloadSize / format.frameSize()))
+            result = (payloadSize / format.frameSize()) - idx_;
 
-        // logd << ", from: " << format.frameSize*idx << ", to: " << format.frameSize*idx + format.frameSize*result;
+        // logd << ", from: " << format.frameSize()*idx << ", to: " << format.frameSize()*idx + format.frameSize()*result;
         if (outputBuffer != nullptr)
-            memcpy((char*)outputBuffer, (char*)(payload) + format.frameSize * idx_, format.frameSize * result);
+            memcpy((char*)outputBuffer, (char*)(payload) + format.frameSize() * idx_, format.frameSize() * result);
 
         idx_ += result;
-        // logd << ", new idx: " << idx << ", result: " << result << ", wireChunk->length: " << wireChunk->length << ", format.frameSize: " << format.frameSize
-        // << "\n";//std::endl;
+        // logd << ", new idx: " << idx << ", result: " << result << ", wireChunk->length: " << wireChunk->length << ", format.frameSize(): " <<
+        // format.frameSize() << "\n";
         return result;
     }
 
@@ -90,7 +90,7 @@ public:
     chronos::time_point_clk start() const override
     {
         return chronos::time_point_clk(chronos::sec(timestamp.sec) + chronos::usec(timestamp.usec) +
-                                       chronos::usec(static_cast<chronos::usec::rep>(1000000. * ((double)idx_ / (double)format.rate))));
+                                       chronos::usec(static_cast<chronos::usec::rep>(1000000. * ((double)idx_ / (double)format.rate()))));
     }
 
     inline chronos::time_point_clk end() const
@@ -117,12 +117,12 @@ public:
 
     inline size_t getFrameCount() const
     {
-        return (payloadSize / format.frameSize);
+        return (payloadSize / format.frameSize());
     }
 
     inline size_t getSampleCount() const
     {
-        return (payloadSize / format.sampleSize);
+        return (payloadSize / format.sampleSize());
     }
 
     SampleFormat format;

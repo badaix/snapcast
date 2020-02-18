@@ -155,12 +155,12 @@ void CoreAudioPlayer::initAudioQueue()
     const SampleFormat& sampleFormat = pubStream_->getFormat();
 
     AudioStreamBasicDescription format;
-    format.mSampleRate = sampleFormat.rate;
+    format.mSampleRate = sampleFormat.rate();
     format.mFormatID = kAudioFormatLinearPCM;
     format.mFormatFlags = kLinearPCMFormatFlagIsSignedInteger; // | kAudioFormatFlagIsPacked;
     format.mBitsPerChannel = sampleFormat.bits;
-    format.mChannelsPerFrame = sampleFormat.channels;
-    format.mBytesPerFrame = sampleFormat.frameSize;
+    format.mChannelsPerFrame = sampleFormat.channels();
+    format.mBytesPerFrame = sampleFormat.frameSize();
     format.mFramesPerPacket = 1;
     format.mBytesPerPacket = format.mBytesPerFrame * format.mFramesPerPacket;
     format.mReserved = 0;
@@ -176,9 +176,9 @@ void CoreAudioPlayer::initAudioQueue()
     //
     // For 100ms @ 48000:16:2 we have 19.2K
     // frames: 4800, ms: 100, buffer size: 19200
-    frames_ = (sampleFormat.rate * ms_) / 1000;
-    ms_ = frames_ * 1000 / sampleFormat.rate;
-    buff_size_ = frames_ * sampleFormat.frameSize;
+    frames_ = (sampleFormat.rate() * ms_) / 1000;
+    ms_ = frames_ * 1000 / sampleFormat.rate();
+    buff_size_ = frames_ * sampleFormat.frameSize();
     LOG(INFO) << "frames: " << frames_ << ", ms: " << ms_ << ", buffer size: " << buff_size_ << "\n";
 
     AudioQueueBufferRef buffers[NUM_BUFFERS];

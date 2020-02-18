@@ -46,30 +46,54 @@ public:
     void setFormat(const std::string& format);
     void setFormat(uint32_t rate, uint16_t bits, uint16_t channels);
 
-    uint32_t rate;
-    uint16_t bits;
-    uint16_t channels;
+    uint32_t rate() const
+    {
+        return rate_;
+    }
+
+    uint16_t bits() const
+    {
+        return bits_;
+    }
+
+    uint16_t channels() const
+    {
+        return channels_;
+    }
 
     // size in [bytes] of a single mono sample, e.g. 2 bytes (= 16 bits)
-    uint16_t sampleSize;
+    uint16_t sampleSize() const
+    {
+        return sample_size_;
+    }
 
     // size in [bytes] of a frame (sum of sample sizes = #channel*sampleSize), e.g. 4 bytes (= 2 channel * 16 bit)
-    uint16_t frameSize;
+    uint16_t frameSize() const
+    {
+        return frame_size_;
+    }
 
     inline double msRate() const
     {
-        return (double)rate / 1000.;
+        return (double)rate_ / 1000.;
     }
 
     inline double usRate() const
     {
-        return (double)rate / 1000000.;
+        return (double)rate_ / 1000000.;
     }
 
     inline double nsRate() const
     {
-        return (double)rate / 1000000000.;
+        return (double)rate_ / 1000000000.;
     }
+
+private:
+    uint16_t sample_size_;
+    uint16_t frame_size_;
+    uint32_t rate_;
+    uint16_t bits_;
+    uint16_t channels_;
 };
 
 

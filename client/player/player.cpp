@@ -68,12 +68,12 @@ void Player::adjustVolume(char* buffer, size_t frames)
     if ((volume < 1.0) || (volCorrection_ != 1.))
     {
         volume *= volCorrection_;
-        if (sampleFormat.sampleSize == 1)
-            adjustVolume<int8_t>(buffer, frames * sampleFormat.channels, volume);
-        else if (sampleFormat.sampleSize == 2)
-            adjustVolume<int16_t>(buffer, frames * sampleFormat.channels, volume);
-        else if (sampleFormat.sampleSize == 4)
-            adjustVolume<int32_t>(buffer, frames * sampleFormat.channels, volume);
+        if (sampleFormat.sampleSize() == 1)
+            adjustVolume<int8_t>(buffer, frames * sampleFormat.channels(), volume);
+        else if (sampleFormat.sampleSize() == 2)
+            adjustVolume<int16_t>(buffer, frames * sampleFormat.channels(), volume);
+        else if (sampleFormat.sampleSize() == 4)
+            adjustVolume<int32_t>(buffer, frames * sampleFormat.channels(), volume);
     }
 }
 

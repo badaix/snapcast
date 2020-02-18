@@ -77,7 +77,7 @@ void OpusEncoder::initEncoder()
 {
     // Opus is quite restrictive in sample rate and bit depth
     // It can handle mono signals, but we will check for stereo
-    if ((sampleFormat_.rate != 48000) || (sampleFormat_.bits != 16) || (sampleFormat_.channels != 2))
+    if ((sampleFormat_.rate() != 48000) || (sampleFormat_.bits() != 16) || (sampleFormat_.channels() != 2))
         throw SnapException("Opus sampleformat must be 48000:16:2");
 
     opus_int32 bitrate = 192000;
@@ -135,7 +135,7 @@ void OpusEncoder::initEncoder()
     LOG(INFO) << "Opus bitrate: " << bitrate << " bps, complexity: " << complexity << "\n";
 
     int error;
-    enc_ = opus_encoder_create(sampleFormat_.rate, sampleFormat_.channels, OPUS_APPLICATION_RESTRICTED_LOWDELAY, &error);
+    enc_ = opus_encoder_create(sampleFormat_.rate(), sampleFormat_.channels(), OPUS_APPLICATION_RESTRICTED_LOWDELAY, &error);
     if (error != 0)
     {
         throw SnapException("Failed to initialize Opus encoder: " + std::string(opus_strerror(error)));
@@ -149,9 +149,9 @@ void OpusEncoder::initEncoder()
     headerChunk_->payload = (char*)realloc(headerChunk_->payload, headerChunk_->payloadSize);
     char* payload = headerChunk_->payload;
     assign(payload, SWAP_32(ID_OPUS));
-    assign(payload + 4, SWAP_32(sampleFormat_.rate));
-    assign(payload + 8, SWAP_16(sampleFormat_.bits));
-    assign(payload + 10, SWAP_16(sampleFormat_.channels));
+    assign(payload + 4, SWAP_32(sampleFormat_.rate()));
+    assign(payload + 8, SWAP_16(sampleFormat_.bits()));
+    assign(payload + 10, SWAP_16(sampleFormat_.channels()));
 
     remainder_ = std::make_unique<msg::PcmChunk>(sampleFormat_, 10);
     remainder_max_size_ = remainder_->payloadSize;
@@ -192,7 +192,7 @@ void OpusEncoder::encode(const msg::PcmChunk* chunk)
     std::vector<size_t> chunk_durations{60, 40, 20, 10};
     for (const auto duration : chunk_durations)
     {
-        auto ms2bytes = [this](size_t ms) { return (ms * sampleFormat_.msRate() * sampleFormat_.frameSize); };
+        auto ms2bytes = [this](size_t ms) { return (ms * sampleFormat_.msRate() * sampleFormat_.frameSize()); };
         uint32_t bytes = ms2bytes(duration);
         while (chunk->payloadSize - offset >= bytes)
         {
@@ -217,7 +217,7 @@ void OpusEncoder::encode(const SampleFormat& format, const char* data, size_t si
 {
     // void* buffer;
     // LOG(INFO) << "frames: " << chunk->readFrames(buffer, std::chrono::milliseconds(10)) << "\n";
-    int samples_per_channel = size / format.frameSize;
+    int samples_per_channel = size / format.frameSize();
     if (encoded_.size() < size)
         encoded_.resize(size);
 
@@ -231,7 +231,7 @@ void OpusEncoder::encode(const SampleFormat& format, const char* data, size_t si
         opusChunk->payloadSize = len;
         opusChunk->payload = (char*)realloc(opusChunk->payload, opusChunk->payloadSize);
         memcpy(opusChunk->payload, encoded_.data(), len);
-        listener_->onChunkEncoded(this, opusChunk, (double)samples_per_channel / ((double)sampleFormat_.rate / 1000.));
+        listener_->onChunkEncoded(this, opusChunk, (double)samples_per_channel / sampleFormat_.msRate());
     }
     else
     {
