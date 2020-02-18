@@ -95,7 +95,7 @@ void CoreAudioPlayer::playerCallback(AudioQueueRef queue, AudioQueueBufferRef bu
     AudioTimeStamp timestamp;
     AudioQueueGetCurrentTime(queue, timeLine_, &timestamp, NULL);
     size_t bufferedFrames = (frames_ - ((uint64_t)timestamp.mSampleTime % frames_)) % frames_;
-    size_t bufferedMs = bufferedFrames * 1000 / pubStream_->getFormat().rate + (ms_ * (NUM_BUFFERS - 1));
+    size_t bufferedMs = bufferedFrames * 1000 / pubStream_->getFormat().rate() + (ms_ * (NUM_BUFFERS - 1));
     /// 15ms DAC delay. Based on trying.
     bufferedMs += 15;
     //    LOG(INFO) << "buffered: " << bufferedFrames << ", ms: " << bufferedMs << ", mSampleTime: " << timestamp.mSampleTime << "\n";
@@ -158,7 +158,7 @@ void CoreAudioPlayer::initAudioQueue()
     format.mSampleRate = sampleFormat.rate();
     format.mFormatID = kAudioFormatLinearPCM;
     format.mFormatFlags = kLinearPCMFormatFlagIsSignedInteger; // | kAudioFormatFlagIsPacked;
-    format.mBitsPerChannel = sampleFormat.bits;
+    format.mBitsPerChannel = sampleFormat.bits();
     format.mChannelsPerFrame = sampleFormat.channels();
     format.mBytesPerFrame = sampleFormat.frameSize();
     format.mFramesPerPacket = 1;
