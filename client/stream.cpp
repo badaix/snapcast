@@ -38,10 +38,12 @@ Stream::Stream(const SampleFormat& in_format, const SampleFormat& out_format)
     shortBuffer_.setSize(100);
     miniBuffer_.setSize(20);
 
-    if (out_format.rate() != 0)
-        format_ = out_format;
-    else
-        format_ = in_format_;
+    format_ = in_format_;
+    if (out_format.isInitialized())
+    {
+        format_.setFormat(out_format.rate() != 0 ? out_format.rate() : format_.rate(), out_format.bits() != 0 ? out_format.bits() : format_.bits(),
+                          out_format.channels() != 0 ? out_format.channels() : format_.channels());
+    }
 
     /*
     48000     x

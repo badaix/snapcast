@@ -46,6 +46,11 @@ public:
     void setFormat(const std::string& format);
     void setFormat(uint32_t rate, uint16_t bits, uint16_t channels);
 
+    bool isInitialized() const
+    {
+        return ((rate_ != 0) || (bits_ != 0) || (channels_ != 0));
+    }
+    
     uint32_t rate() const
     {
         return rate_;

@@ -21,6 +21,7 @@
 #include <vector>
 
 #include "common/aixlog.hpp"
+#include "common/snap_exception.hpp"
 #include "common/str_compat.hpp"
 #include "common/utils.hpp"
 #include "common/utils/string_utils.hpp"
@@ -61,7 +62,9 @@ void SampleFormat::setFormat(const std::string& format)
     std::vector<std::string> strs;
     strs = utils::string::split(format, ':');
     if (strs.size() == 3)
-        setFormat(cpt::stoul(strs[0]), cpt::stoul(strs[1]), cpt::stoul(strs[2]));
+        setFormat(strs[0] == "*" ? 0 : cpt::stoul(strs[0]), strs[1] == "*" ? 0 : cpt::stoul(strs[1]), strs[2] == "*" ? 0 : cpt::stoul(strs[2]));
+    else
+        throw SnapException("sampleformat must be <rate>:<bits>:<channels>");
 }
 
 

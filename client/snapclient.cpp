@@ -33,6 +33,7 @@
 #include "client_settings.hpp"
 #include "common/aixlog.hpp"
 #include "common/signal_handler.hpp"
+#include "common/snap_exception.hpp"
 #include "common/str_compat.hpp"
 #include "common/utils.hpp"
 #include "metadata.hpp"
@@ -105,7 +106,7 @@ int main(int argc, char** argv)
         /*auto instanceValue =*/op.add<Value<size_t>>("i", "instance", "instance id", 1, &settings.instance);
         /*auto hostIdValue =*/op.add<Value<string>>("", "hostID", "unique host id", "", &settings.host_id);
         op.add<Value<string>>("", "player", "audio backend", "", &settings.player.player_name);
-        auto sample_format = op.add<Value<string>>("", "sampleformat", "resample audio stream to sampleformat", "");
+        auto sample_format = op.add<Value<string>>("", "sampleformat", "resample audio stream to <rate>:<bits>:<channels>", "");
 
         try
         {
@@ -213,6 +214,11 @@ int main(int argc, char** argv)
         if (sample_format->is_set())
         {
             settings.player.sample_format = SampleFormat(sample_format->value());
+            if (settings.player.sample_format.channels() != 2)
+                throw SnapException("sampleformat channels must be 2");
+            auto bits = settings.player.sample_format.bits();
+            if ((bits != 0) && (bits != 16) && (bits != 24) && (bits != 32))
+                throw SnapException("sampleformat bits must be 0, 16, 24, 32");
         }
 
         bool active = true;
