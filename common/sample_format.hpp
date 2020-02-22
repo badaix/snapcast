@@ -50,7 +50,7 @@ public:
     {
         return ((rate_ != 0) || (bits_ != 0) || (channels_ != 0));
     }
-    
+
     uint32_t rate() const
     {
         return rate_;
