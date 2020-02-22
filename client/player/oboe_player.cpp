@@ -29,9 +29,11 @@ using namespace std;
 static constexpr auto LOG_TAG = "OboePlayer";
 static constexpr double kDefaultLatency = 50;
 
+
 OboePlayer::OboePlayer(const PcmDevice& pcmDevice, std::shared_ptr<Stream> stream) : Player(pcmDevice, stream)
 {
     LOG(DEBUG, LOG_TAG) << "Contructor\n";
+    LOG(INFO, LOG_TAG) << "Init start\n";
     char* env = getenv("SAMPLE_RATE");
     if (env)
         oboe::DefaultStreamValues::SampleRate = cpt::stoi(env, oboe::DefaultStreamValues::SampleRate);
@@ -46,8 +48,8 @@ OboePlayer::OboePlayer(const PcmDevice& pcmDevice, std::shared_ptr<Stream> strea
     oboe::AudioStreamBuilder builder;
     auto result = builder.setSharingMode(oboe::SharingMode::Exclusive)
                       ->setPerformanceMode(oboe::PerformanceMode::LowLatency)
-                      ->setChannelCount(stream->getFormat().channels)
-                      ->setSampleRate(stream->getFormat().rate)
+                      ->setChannelCount(stream->getFormat().channels())
+                      ->setSampleRate(stream->getFormat().rate())
                       ->setFormat(oboe::AudioFormat::I16)
                       ->setCallback(this)
                       ->setDirection(oboe::Direction::Output)
@@ -67,6 +69,7 @@ OboePlayer::OboePlayer(const PcmDevice& pcmDevice, std::shared_ptr<Stream> strea
     {
         out_stream_->setBufferSizeInFrames(4 * out_stream_->getFramesPerBurst());
     }
+    LOG(INFO, LOG_TAG) << "Init done\n";
 }
 
 
@@ -85,8 +88,6 @@ OboePlayer::~OboePlayer()
 
 double OboePlayer::getCurrentOutputLatencyMillis() const
 {
-    //    if (!mIsLatencyDetectionSupported)
-    //        return -1;
     // Get the time that a known audio frame was presented for playing
     auto result = out_stream_->getTimestamp(CLOCK_MONOTONIC);
     double outputLatencyMillis = kDefaultLatency;

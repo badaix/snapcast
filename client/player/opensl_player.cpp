@@ -158,6 +158,8 @@ void OpenslPlayer::initOpensl()
     if (active_)
         return;
 
+    LOG(INFO, LOG_TAG) << "Init start\n";
+
     const SampleFormat& format = stream_->getFormat();
 
 
@@ -225,7 +227,7 @@ void OpenslPlayer::initOpensl()
 
     SLuint32 bitsPerSample = SL_PCMSAMPLEFORMAT_FIXED_16;
     SLuint32 containerSize = SL_PCMSAMPLEFORMAT_FIXED_16;
-    switch (format.bits)
+    switch (format.bits())
     {
         case 8:
             bitsPerSample = SL_PCMSAMPLEFORMAT_FIXED_8;
@@ -244,7 +246,7 @@ void OpenslPlayer::initOpensl()
             containerSize = SL_PCMSAMPLEFORMAT_FIXED_32;
             break;
         default:
-            throw SnapException("Unsupported sample format: " + cpt::to_string(format.bits));
+            throw SnapException("Unsupported sample format: " + cpt::to_string(format.bits()));
     }
 
 
@@ -297,6 +299,7 @@ void OpenslPlayer::initOpensl()
     result = (*bqPlayerBufferQueue)->Enqueue(bqPlayerBufferQueue, buffer[curBuffer], sizeof(buffer[curBuffer]));
     throwUnsuccess(kPhaseInit, "PlayerBufferQueue::Enqueue", result);
     curBuffer ^= 1;
+    LOG(INFO, LOG_TAG) << "Init done\n";
 }
 
 
