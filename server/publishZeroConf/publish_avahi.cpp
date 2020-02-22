@@ -151,7 +151,7 @@ void PublishAvahi::create_services(AvahiClient* c)
         for (const auto& service : services_)
         {
             if ((ret = avahi_entry_group_add_service(group, AVAHI_IF_UNSPEC, AVAHI_PROTO_UNSPEC, AvahiPublishFlags(0), name, service.name_.c_str(), nullptr,
-                                                     nullptr, service.port_, NULL)) < 0)
+                                                     nullptr, service.port_, static_cast<char*>(NULL))) < 0)
             {
                 if (ret == AVAHI_ERR_COLLISION)
                     goto collision;
