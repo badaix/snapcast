@@ -100,7 +100,7 @@ int main(int argc, char* argv[])
         conf.add<Value<size_t>>("", "http.port", "which port the server should listen to", settings.http.port, &settings.http.port);
         auto http_bind_to_address = conf.add<Value<string>>("", "http.bind_to_address", "address for the server to listen on",
                                                             settings.http.bind_to_address.front(), &settings.http.bind_to_address[0]);
-        conf.add<Value<string>>("", "http.doc_root", "serve a website from the doc_root location", settings.http.doc_root, &settings.http.doc_root);
+        conf.add<Implicit<string>>("", "http.doc_root", "serve a website from the doc_root location", settings.http.doc_root, &settings.http.doc_root);
 
         // TCP RPC settings
         conf.add<Value<bool>>("", "tcp.enabled", "enable TCP Json RPC)", settings.tcp.enabled, &settings.tcp.enabled);
