@@ -22,6 +22,8 @@
 #include "common/aixlog.hpp"
 #include "publish_bonjour.hpp"
 
+static constexpr auto LOG_TAG = "Bonjour";
+
 typedef union {
     unsigned char b[2];
     unsigned short NotAnInteger;
@@ -93,7 +95,7 @@ void PublishBonjour::worker()
                     DNSServiceErrorType err = DNSServiceProcessResult(clients[n]);
                     if (err)
                     {
-                        LOG(ERROR) << "DNSServiceProcessResult returned " << err << "\n";
+                        LOG(ERROR, LOG_TAG) << "DNSServiceProcessResult returned " << err << "\n";
                         active_ = false;
                     }
                 }
@@ -103,7 +105,7 @@ void PublishBonjour::worker()
         //			myTimerCallBack();
         else if (result < 0)
         {
-            LOG(ERROR) << "select() returned " << result << " errno " << errno << " " << strerror(errno) << "\n";
+            LOG(ERROR, LOG_TAG) << "select() returned " << result << " errno " << errno << " " << strerror(errno) << "\n";
             if (errno != EINTR)
                 active_ = false;
         }
@@ -120,23 +122,23 @@ static void DNSSD_API reg_reply(DNSServiceRef sdref, const DNSServiceFlags flags
     PublishBonjour* publishBonjour = (PublishBonjour*)context;
     (void)publishBonjour; // unused
 
-    LOG(INFO) << "Got a reply for service " << name << "." << regtype << domain << "\n";
+    LOG(INFO, LOG_TAG) << "Got a reply for service " << name << "." << regtype << domain << "\n";
 
     if (errorCode == kDNSServiceErr_NoError)
     {
         if (flags & kDNSServiceFlagsAdd)
-            LOG(INFO) << "Name now registered and active\n";
+            LOG(INFO, LOG_TAG) << "Name now registered and active\n";
         else
-            LOG(INFO) << "Name registration removed\n";
+            LOG(INFO, LOG_TAG) << "Name registration removed\n";
     }
     else if (errorCode == kDNSServiceErr_NameConflict)
     {
         /// TODO: Error handling
-        LOG(INFO) << "Name in use, please choose another\n";
+        LOG(INFO, LOG_TAG) << "Name in use, please choose another\n";
         exit(-1);
     }
     else
-        LOG(INFO) << "Error " << errorCode << "\n";
+        LOG(INFO, LOG_TAG) << "Error " << errorCode << "\n";
 
     if (!(flags & kDNSServiceFlagsMoreComing))
         fflush(stdout);
