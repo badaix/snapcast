@@ -26,6 +26,7 @@
 #include "message/pcm_chunk.hpp"
 #include <deque>
 #include <memory>
+#include <soxr.h>
 
 
 /// Time synchronized audio stream
@@ -36,15 +37,16 @@
 class Stream
 {
 public:
-    Stream(const SampleFormat& format);
+    Stream(const SampleFormat& in_format, const SampleFormat& out_format);
+    virtual ~Stream();
 
     /// Adds PCM data to the queue
-    void addChunk(msg::PcmChunk* chunk);
+    void addChunk(std::unique_ptr<msg::PcmChunk> chunk);
     void clearChunks();
 
     /// Get PCM data, which will be played out in "outputBufferDacTime" time
     /// frame = (num_channels) * (1 sample in bytes) = (2 channels) * (2 bytes (16 bits) per sample) = 4 bytes (32 bits)
-    bool getPlayerChunk(void* outputBuffer, const chronos::usec& outputBufferDacTime, unsigned long framesPerBuffer);
+    bool getPlayerChunk(void* outputBuffer, const chronos::usec& outputBufferDacTime, uint32_t frames);
 
     /// "Server buffer": playout latency, e.g. 1000ms
     void setBufferLen(size_t bufferLenMs);
@@ -54,35 +56,40 @@ public:
         return format_;
     }
 
-    bool waitForChunk(size_t ms) const;
+    bool waitForChunk(const std::chrono::milliseconds& timeout) const;
 
 private:
-    chronos::time_point_clk getNextPlayerChunk(void* outputBuffer, const chronos::usec& timeout, unsigned long framesPerBuffer);
-    chronos::time_point_clk getNextPlayerChunk(void* outputBuffer, const chronos::usec& timeout, unsigned long framesPerBuffer, long framesCorrection);
-    chronos::time_point_clk getSilentPlayerChunk(void* outputBuffer, unsigned long framesPerBuffer);
-    chronos::time_point_clk seek(long ms);
-    //	time_point_ms seekTo(const time_point_ms& to);
+    chronos::time_point_clk getNextPlayerChunk(void* outputBuffer, uint32_t frames);
+    chronos::time_point_clk getNextPlayerChunk(void* outputBuffer, uint32_t frames, int32_t framesCorrection);
+    void getSilentPlayerChunk(void* outputBuffer, uint32_t frames) const;
+
     void updateBuffers(int age);
     void resetBuffers();
     void setRealSampleRate(double sampleRate);
 
     SampleFormat format_;
-
-    chronos::usec sleep_;
+    SampleFormat in_format_;
 
     Queue<std::shared_ptr<msg::PcmChunk>> chunks_;
-    //	DoubleBuffer<chronos::usec::rep> cardBuffer;
     DoubleBuffer<chronos::usec::rep> miniBuffer_;
-    DoubleBuffer<chronos::usec::rep> buffer_;
     DoubleBuffer<chronos::usec::rep> shortBuffer_;
+    DoubleBuffer<chronos::usec::rep> buffer_;
     std::shared_ptr<msg::PcmChunk> chunk_;
 
     int median_;
     int shortMedian_;
     time_t lastUpdate_;
-    unsigned long playedFrames_;
-    long correctAfterXFrames_;
+    uint32_t playedFrames_;
+    int32_t correctAfterXFrames_;
     chronos::msec bufferMs_;
+
+    soxr_t soxr_;
+    std::vector<char> resample_buffer_;
+    std::vector<char> read_buffer_;
+    int frame_delta_;
+    // int64_t next_us_;
+
+    bool hard_sync_;
 };
 
 

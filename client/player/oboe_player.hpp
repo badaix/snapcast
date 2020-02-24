@@ -16,40 +16,38 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
-#ifndef ALSA_PLAYER_H
-#define ALSA_PLAYER_H
+#ifndef OBOE_PLAYER_HPP
+#define OBOE_PLAYER_HPP
+
+#include <oboe/LatencyTuner.h>
+#include <oboe/Oboe.h>
 
 #include "player.hpp"
-#include <alsa/asoundlib.h>
+
+typedef int (*AndroidAudioCallback)(short* buffer, int num_samples);
 
 
-/// Audio Player
+/// OpenSL Audio Player
 /**
- * Audio player implementation using Alsa
+ * Player implementation for Oboe
  */
-class AlsaPlayer : public Player
+class OboePlayer : public Player, public oboe::AudioStreamCallback
 {
 public:
-    AlsaPlayer(const PcmDevice& pcmDevice, std::shared_ptr<Stream> stream);
-    ~AlsaPlayer() override;
+    OboePlayer(const PcmDevice& pcmDevice, std::shared_ptr<Stream> stream);
+    virtual ~OboePlayer();
 
-    /// Set audio volume in range [0..1]
     void start() override;
     void stop() override;
 
-    /// List the system's audio output devices
-    static std::vector<PcmDevice> pcm_list(void);
-
 protected:
+    oboe::DataCallbackResult onAudioReady(oboe::AudioStream* oboeStream, void* audioData, int32_t numFrames) override;
+    double getCurrentOutputLatencyMillis() const;
+
     void worker() override;
+    oboe::ManagedStream out_stream_;
 
-private:
-    void initAlsa();
-    void uninitAlsa();
-
-    snd_pcm_t* handle_;
-    std::vector<char> buffer_;
-    snd_pcm_uframes_t frames_;
+    std::unique_ptr<oboe::LatencyTuner> mLatencyTuner;
 };
 
 

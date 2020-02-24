@@ -14,9 +14,9 @@
 #   You should have received a copy of the GNU General Public License
 #   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-.PHONY: all check-env flac ogg opus tremor
+.PHONY: all check-env flac ogg opus tremor oboe soxr
 
-all: flac ogg opus tremor
+all: flac ogg opus tremor oboe soxr
 
 check-env:
 #	if [ ! -d "flac" ]; then \
@@ -56,7 +56,7 @@ flac: check-env
 	export CXX="$(CXX)"; \
 	export CPPFLAGS="$(CPPFLAGS)"; \
 	./autogen.sh; \
-	./configure --host=$(ARCH) --disable-ogg --prefix=$(NDK_DIR); \
+	./configure --host=$(ARCH) --disable-ogg --prefix=$(NDK_DIR)/usr/local/; \
 	make; \
 	make install; \
 	make clean;
@@ -67,7 +67,7 @@ ogg: check-env
 	export CXX="$(CXX)"; \
 	export CPPFLAGS="$(CPPFLAGS)"; \
 	./autogen.sh; \
-	./configure --host=$(ARCH) --prefix=$(NDK_DIR); \
+	./configure --host=$(ARCH) --prefix=$(NDK_DIR)/usr/local/; \
 	make; \
 	make install; \
 	make clean;
@@ -78,7 +78,7 @@ opus: check-env
 	export CXX="$(CXX)"; \
 	export CPPFLAGS="$(CPPFLAGS)"; \
 	./autogen.sh; \
-	./configure --host=$(ARCH) --prefix=$(NDK_DIR); \
+	./configure --host=$(ARCH) --prefix=$(NDK_DIR)/usr/local/; \
 	make; \
 	make install; \
 	make clean;
@@ -89,7 +89,7 @@ tremor:	check-env
 	export CXX="$(CXX)"; \
 	export CPPFLAGS="$(CPPFLAGS)"; \
 	./autogen.sh; \
-	./configure --host=$(ARCH) --prefix=$(NDK_DIR) --with-ogg=$(NDK_DIR); \
+	./configure --host=$(ARCH) --prefix=$(NDK_DIR)/usr/local/ --with-ogg=$(NDK_DIR)/usr/local/; \
 	make; \
 	make install; \
 	make clean; \
@@ -115,4 +115,30 @@ tremor:	check-env
 	rm stamp-h1; \
 	rm vorbisidec.pc;
 
+oboe: check-env
+	@cd oboe; \
+	export CC="$(CC)"; \
+	export CXX="$(CXX)"; \
+	export CPPFLAGS="$(CPPFLAGS)"; \
+	mkdir build; \
+	cd build; \
+	cmake ..; \
+	make; \
+	make DESTDIR=$(NDK_DIR) install; \
+	make clean; \
+	cd ..; \
+	rm -rf build;
 
+soxr: check-env
+	@cd /home/johannes/Develop/soxr; \
+	export CC="$(CC)"; \
+	export CXX="$(CXX)"; \
+	export CPPFLAGS="$(CPPFLAGS)"; \
+	mkdir build; \
+	cd build; \
+	cmake -DBUILD_SHARED_LIBS=OFF -DBUILD_TESTS=OFF -DWITH_OPENMP=OFF ..; \
+	make; \
+	make DESTDIR=$(NDK_DIR) install; \
+	make clean; \
+	cd ..; \
+	rm -rf build;

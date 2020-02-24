@@ -82,19 +82,19 @@ void FlacEncoder::encode(const msg::PcmChunk* chunk)
         pcmBuffer_ = (FLAC__int32*)realloc(pcmBuffer_, pcmBufferSize_ * sizeof(FLAC__int32));
     }
 
-    if (sampleFormat_.sampleSize == 1)
+    if (sampleFormat_.sampleSize() == 1)
     {
         FLAC__int8* buffer = (FLAC__int8*)chunk->payload;
         for (int i = 0; i < samples; i++)
             pcmBuffer_[i] = (FLAC__int32)(buffer[i]);
     }
-    else if (sampleFormat_.sampleSize == 2)
+    else if (sampleFormat_.sampleSize() == 2)
     {
         FLAC__int16* buffer = (FLAC__int16*)chunk->payload;
         for (int i = 0; i < samples; i++)
             pcmBuffer_[i] = (FLAC__int32)(buffer[i]);
     }
-    else if (sampleFormat_.sampleSize == 4)
+    else if (sampleFormat_.sampleSize() == 4)
     {
         FLAC__int32* buffer = (FLAC__int32*)chunk->payload;
         for (int i = 0; i < samples; i++)
@@ -106,7 +106,7 @@ void FlacEncoder::encode(const msg::PcmChunk* chunk)
 
     if (encodedSamples_ > 0)
     {
-        double resMs = encodedSamples_ / ((double)sampleFormat_.rate / 1000.);
+        double resMs = encodedSamples_ / sampleFormat_.msRate();
         //		LOG(INFO) << "encoded: " << chunk->payloadSize << "\tframes: " << encodedSamples_ << "\tres: " << resMs << "\n";
         encodedSamples_ = 0;
         listener_->onChunkEncoded(this, flacChunk_, resMs);
@@ -176,9 +176,9 @@ void FlacEncoder::initEncoder()
     // 0-2: 1152 frames, ~26.1224ms
     // 3-8: 4096 frames, ~92.8798ms
     ok &= FLAC__stream_encoder_set_compression_level(encoder_, quality);
-    ok &= FLAC__stream_encoder_set_channels(encoder_, sampleFormat_.channels);
-    ok &= FLAC__stream_encoder_set_bits_per_sample(encoder_, sampleFormat_.bits);
-    ok &= FLAC__stream_encoder_set_sample_rate(encoder_, sampleFormat_.rate);
+    ok &= FLAC__stream_encoder_set_channels(encoder_, sampleFormat_.channels());
+    ok &= FLAC__stream_encoder_set_bits_per_sample(encoder_, sampleFormat_.bits());
+    ok &= FLAC__stream_encoder_set_sample_rate(encoder_, sampleFormat_.rate());
 
     if (!ok)
         throw SnapException("error setting up encoder");

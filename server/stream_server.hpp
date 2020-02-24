@@ -83,12 +83,16 @@ private:
     session_ptr getStreamSession(StreamSession* session) const;
     void ProcessRequest(const jsonrpcpp::request_ptr request, jsonrpcpp::entity_ptr& response, jsonrpcpp::notification_ptr& notification) const;
     void cleanup();
+    /// Save the server state deferred to prevent blocking and lower disk io
+    /// @param deferred the delay after the last call to saveConfig
+    void saveConfig(const std::chrono::milliseconds& deferred = std::chrono::seconds(2));
 
     mutable std::recursive_mutex sessionsMutex_;
     mutable std::recursive_mutex clientMutex_;
     std::vector<std::weak_ptr<StreamSession>> sessions_;
     boost::asio::io_context& io_context_;
     std::vector<acceptor_ptr> acceptor_;
+    boost::asio::steady_timer config_timer_;
 
     ServerSettings settings_;
     Queue<std::shared_ptr<msg::BaseMessage>> messages_;

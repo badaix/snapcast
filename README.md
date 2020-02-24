@@ -102,6 +102,15 @@ Please follow this [guide](doc/build.md) to build Snapcast for
 
 * [Raspberry Pi](doc/build.md#raspberry-pi-cross-compile)
 
+#### Void Linux
+To install the client:
+
+    # xbps-install snapclient
+
+To install the server:
+
+    # xbps-install snapserver
+
 SnapOS
 ------
 The bravest among you may be interested in [SnapOS](https://github.com/badaix/snapos), a small and fast-booting "just enough" OS to run Snapcast as an appliance.

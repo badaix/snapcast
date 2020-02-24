@@ -59,7 +59,7 @@ public:
         cond_.notify_one();
     }
 
-    bool wait_for(std::chrono::milliseconds timeout) const
+    bool wait_for(const std::chrono::microseconds& timeout) const
     {
         std::unique_lock<std::mutex> mlock(mutex_);
         abort_ = false;
@@ -69,12 +69,15 @@ public:
         return !queue_.empty() && !abort_;
     }
 
-    bool try_pop(T& item, std::chrono::microseconds timeout)
+    bool try_pop(T& item, const std::chrono::microseconds& timeout = std::chrono::microseconds(0))
     {
         std::unique_lock<std::mutex> mlock(mutex_);
         abort_ = false;
-        if (!cond_.wait_for(mlock, timeout, [this] { return (!queue_.empty() || abort_); }))
-            return false;
+        if (timeout.count() > 0)
+        {
+            if (!cond_.wait_for(mlock, timeout, [this] { return (!queue_.empty() || abort_); }))
+                return false;
+        }
 
         if (queue_.empty() || abort_)
             return false;
@@ -83,11 +86,6 @@ public:
         queue_.pop_front();
 
         return true;
-    }
-
-    bool try_pop(T& item, std::chrono::milliseconds timeout)
-    {
-        return try_pop(item, std::chrono::duration_cast<std::chrono::microseconds>(timeout));
     }
 
     void pop(T& item)

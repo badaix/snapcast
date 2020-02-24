@@ -16,41 +16,43 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
-#ifndef ALSA_PLAYER_H
-#define ALSA_PLAYER_H
+#ifndef CLIENT_SETTINGS_HPP
+#define CLIENT_SETTINGS_HPP
 
-#include "player.hpp"
-#include <alsa/asoundlib.h>
+#include <string>
+#include <vector>
+
+#include "player/pcm_device.hpp"
 
 
-/// Audio Player
-/**
- * Audio player implementation using Alsa
- */
-class AlsaPlayer : public Player
+struct ClientSettings
 {
-public:
-    AlsaPlayer(const PcmDevice& pcmDevice, std::shared_ptr<Stream> stream);
-    ~AlsaPlayer() override;
+    struct ServerSettings
+    {
+        std::string host{""};
+        size_t port{1704};
+    };
 
-    /// Set audio volume in range [0..1]
-    void start() override;
-    void stop() override;
+    struct PlayerSettings
+    {
+        std::string player_name{""};
+        int latency{0};
+        PcmDevice pcm_device;
+        SampleFormat sample_format;
+    };
 
-    /// List the system's audio output devices
-    static std::vector<PcmDevice> pcm_list(void);
+    struct LoggingSettings
+    {
+        bool debug{false};
+        std::string debug_logfile{""};
+    };
 
-protected:
-    void worker() override;
+    size_t instance{1};
+    std::string host_id;
 
-private:
-    void initAlsa();
-    void uninitAlsa();
-
-    snd_pcm_t* handle_;
-    std::vector<char> buffer_;
-    snd_pcm_uframes_t frames_;
+    ServerSettings server;
+    PlayerSettings player;
+    LoggingSettings logging;
 };
-
 
 #endif

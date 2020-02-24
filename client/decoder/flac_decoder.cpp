@@ -91,12 +91,11 @@ bool FlacDecoder::decode(msg::PcmChunk* chunk)
 
     if ((cacheInfo_.cachedBlocks_ > 0) && (cacheInfo_.sampleRate_ != 0))
     {
-        double diffMs = cacheInfo_.cachedBlocks_ / ((double)cacheInfo_.sampleRate_ / 1000.);
-        int32_t s = (diffMs / 1000);
-        int32_t us = (diffMs * 1000);
-        us %= 1000000;
-        LOG(DEBUG) << "Cached: " << cacheInfo_.cachedBlocks_ << ", " << diffMs << "ms, " << s << "s, " << us << "us\n";
-        chunk->timestamp = chunk->timestamp - tv(s, us);
+        double diffMs = static_cast<double>(cacheInfo_.cachedBlocks_) / (static_cast<double>(cacheInfo_.sampleRate_) / 1000.);
+        auto us = static_cast<uint64_t>(diffMs * 1000.);
+        tv diff(us / 1000000, us % 1000000);
+        LOG(DEBUG) << "Cached: " << cacheInfo_.cachedBlocks_ << ", " << diffMs << "ms, " << diff.sec << "s, " << diff.usec << "us\n";
+        chunk->timestamp = chunk->timestamp - diff;
     }
     return true;
 }
@@ -116,9 +115,8 @@ SampleFormat FlacDecoder::setHeader(msg::CodecHeader* chunk)
     if (init_status != FLAC__STREAM_DECODER_INIT_STATUS_OK)
         throw SnapException("ERROR: initializing decoder: " + string(FLAC__StreamDecoderInitStatusString[init_status]));
 
-    sampleFormat.rate = 0;
     FLAC__stream_decoder_process_until_end_of_metadata(decoder);
-    if (sampleFormat.rate == 0)
+    if (sampleFormat.rate() == 0)
         throw SnapException("Sample format not found");
 
     return sampleFormat;
@@ -158,7 +156,7 @@ FLAC__StreamDecoderWriteStatus write_callback(const FLAC__StreamDecoder* /*decod
 {
     if (pcmChunk != nullptr)
     {
-        size_t bytes = frame->header.blocksize * sampleFormat.frameSize;
+        size_t bytes = frame->header.blocksize * sampleFormat.frameSize();
 
         FlacDecoder* flacDecoder = static_cast<FlacDecoder*>(client_data);
         if (flacDecoder->cacheInfo_.isCachedChunk_)
@@ -166,7 +164,7 @@ FLAC__StreamDecoderWriteStatus write_callback(const FLAC__StreamDecoder* /*decod
 
         pcmChunk->payload = (char*)realloc(pcmChunk->payload, pcmChunk->payloadSize + bytes);
 
-        for (size_t channel = 0; channel < sampleFormat.channels; ++channel)
+        for (size_t channel = 0; channel < sampleFormat.channels(); ++channel)
         {
             if (buffer[channel] == nullptr)
             {
@@ -174,23 +172,23 @@ FLAC__StreamDecoderWriteStatus write_callback(const FLAC__StreamDecoder* /*decod
                 return FLAC__STREAM_DECODER_WRITE_STATUS_ABORT;
             }
 
-            if (sampleFormat.sampleSize == 1)
+            if (sampleFormat.sampleSize() == 1)
             {
                 int8_t* chunkBuffer = (int8_t*)(pcmChunk->payload + pcmChunk->payloadSize);
                 for (size_t i = 0; i < frame->header.blocksize; i++)
-                    chunkBuffer[sampleFormat.channels * i + channel] = (int8_t)(buffer[channel][i]);
+                    chunkBuffer[sampleFormat.channels() * i + channel] = (int8_t)(buffer[channel][i]);
             }
-            else if (sampleFormat.sampleSize == 2)
+            else if (sampleFormat.sampleSize() == 2)
             {
                 int16_t* chunkBuffer = (int16_t*)(pcmChunk->payload + pcmChunk->payloadSize);
                 for (size_t i = 0; i < frame->header.blocksize; i++)
-                    chunkBuffer[sampleFormat.channels * i + channel] = SWAP_16((int16_t)(buffer[channel][i]));
+                    chunkBuffer[sampleFormat.channels() * i + channel] = SWAP_16((int16_t)(buffer[channel][i]));
             }
-            else if (sampleFormat.sampleSize == 4)
+            else if (sampleFormat.sampleSize() == 4)
             {
                 int32_t* chunkBuffer = (int32_t*)(pcmChunk->payload + pcmChunk->payloadSize);
                 for (size_t i = 0; i < frame->header.blocksize; i++)
-                    chunkBuffer[sampleFormat.channels * i + channel] = SWAP_32((int32_t)(buffer[channel][i]));
+                    chunkBuffer[sampleFormat.channels() * i + channel] = SWAP_32((int32_t)(buffer[channel][i]));
             }
         }
         pcmChunk->payloadSize += bytes;
@@ -214,7 +212,7 @@ void metadata_callback(const FLAC__StreamDecoder* /*decoder*/, const FLAC__Strea
 void error_callback(const FLAC__StreamDecoder* /*decoder*/, FLAC__StreamDecoderErrorStatus status, void* client_data)
 {
     SLOG(ERROR) << "Got error callback: " << FLAC__StreamDecoderErrorStatusString[status] << "\n";
-    static_cast<FlacDecoder*>(client_data)->lastError_ = std::unique_ptr<FLAC__StreamDecoderErrorStatus>(new FLAC__StreamDecoderErrorStatus(status));
+    static_cast<FlacDecoder*>(client_data)->lastError_ = std::make_unique<FLAC__StreamDecoderErrorStatus>(status);
 }
 } // namespace callback
 

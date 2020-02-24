@@ -65,13 +65,13 @@ std::vector<PcmDevice> CoreAudioPlayer::pcm_list(void)
         if (AudioObjectGetPropertyDataSize(devids[i], &theAddress, 0, NULL, &propSize))
             continue;
 
-        AudioBufferList* buflist = (AudioBufferList*)malloc(propSize);
+        AudioBufferList* buflist = new AudioBufferList[propSize];
         if (AudioObjectGetPropertyData(devids[i], &theAddress, 0, NULL, &propSize, buflist))
             continue;
         int channels = 0;
         for (UInt32 i = 0; i < buflist->mNumberBuffers; ++i)
             channels += buflist->mBuffers[i].mNumberChannels;
-        free(buflist);
+        delete[] buflist;
         if (channels == 0)
             continue;
 
@@ -95,7 +95,7 @@ void CoreAudioPlayer::playerCallback(AudioQueueRef queue, AudioQueueBufferRef bu
     AudioTimeStamp timestamp;
     AudioQueueGetCurrentTime(queue, timeLine_, &timestamp, NULL);
     size_t bufferedFrames = (frames_ - ((uint64_t)timestamp.mSampleTime % frames_)) % frames_;
-    size_t bufferedMs = bufferedFrames * 1000 / pubStream_->getFormat().rate + (ms_ * (NUM_BUFFERS - 1));
+    size_t bufferedMs = bufferedFrames * 1000 / pubStream_->getFormat().rate() + (ms_ * (NUM_BUFFERS - 1));
     /// 15ms DAC delay. Based on trying.
     bufferedMs += 15;
     //    LOG(INFO) << "buffered: " << bufferedFrames << ", ms: " << bufferedMs << ", mSampleTime: " << timestamp.mSampleTime << "\n";
@@ -134,7 +134,7 @@ void CoreAudioPlayer::worker()
 {
     while (active_)
     {
-        if (pubStream_->waitForChunk(100))
+        if (pubStream_->waitForChunk(std::chrono::milliseconds(100)))
         {
             try
             {
@@ -155,12 +155,12 @@ void CoreAudioPlayer::initAudioQueue()
     const SampleFormat& sampleFormat = pubStream_->getFormat();
 
     AudioStreamBasicDescription format;
-    format.mSampleRate = sampleFormat.rate;
+    format.mSampleRate = sampleFormat.rate();
     format.mFormatID = kAudioFormatLinearPCM;
     format.mFormatFlags = kLinearPCMFormatFlagIsSignedInteger; // | kAudioFormatFlagIsPacked;
-    format.mBitsPerChannel = sampleFormat.bits;
-    format.mChannelsPerFrame = sampleFormat.channels;
-    format.mBytesPerFrame = sampleFormat.frameSize;
+    format.mBitsPerChannel = sampleFormat.bits();
+    format.mChannelsPerFrame = sampleFormat.channels();
+    format.mBytesPerFrame = sampleFormat.frameSize();
     format.mFramesPerPacket = 1;
     format.mBytesPerPacket = format.mBytesPerFrame * format.mFramesPerPacket;
     format.mReserved = 0;
@@ -176,9 +176,9 @@ void CoreAudioPlayer::initAudioQueue()
     //
     // For 100ms @ 48000:16:2 we have 19.2K
     // frames: 4800, ms: 100, buffer size: 19200
-    frames_ = (sampleFormat.rate * ms_) / 1000;
-    ms_ = frames_ * 1000 / sampleFormat.rate;
-    buff_size_ = frames_ * sampleFormat.frameSize;
+    frames_ = (sampleFormat.rate() * ms_) / 1000;
+    ms_ = frames_ * 1000 / sampleFormat.rate();
+    buff_size_ = frames_ * sampleFormat.frameSize();
     LOG(INFO) << "frames: " << frames_ << ", ms: " << ms_ << ", buffer size: " << buff_size_ << "\n";
 
     AudioQueueBufferRef buffers[NUM_BUFFERS];

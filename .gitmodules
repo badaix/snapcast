@@ -10,3 +10,6 @@
 [submodule "externals/opus"]
 	path = externals/opus
 	url = https://git.xiph.org/opus.git
+[submodule "externals/oboe"]
+	path = externals/oboe
+	url = https://github.com/google/oboe.git

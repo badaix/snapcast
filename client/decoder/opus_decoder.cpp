@@ -50,13 +50,13 @@ bool OpusDecoder::decode(msg::PcmChunk* chunk)
 {
     int frame_size = 0;
 
-    while ((frame_size = opus_decode(dec_, (unsigned char*)chunk->payload, chunk->payloadSize, pcm_.data(), pcm_.size() / sample_format_.channels, 0)) ==
+    while ((frame_size = opus_decode(dec_, (unsigned char*)chunk->payload, chunk->payloadSize, pcm_.data(), pcm_.size() / sample_format_.channels(), 0)) ==
            OPUS_BUFFER_TOO_SMALL)
     {
-        if (pcm_.size() < const_max_frame_size * sample_format_.channels)
+        if (pcm_.size() < const_max_frame_size * sample_format_.channels())
         {
             pcm_.resize(pcm_.size() * 2);
-            LOG(INFO) << "OPUS encoding buffer too small, resizing to " << pcm_.size() / sample_format_.channels << " samples per channel\n";
+            LOG(INFO) << "OPUS encoding buffer too small, resizing to " << pcm_.size() / sample_format_.channels() << " samples per channel\n";
         }
         else
             break;
@@ -72,7 +72,7 @@ bool OpusDecoder::decode(msg::PcmChunk* chunk)
         LOG(DEBUG) << "Decoded chunk: size " << chunk->payloadSize << " bytes, decoded " << frame_size << " samples" << '\n';
 
         // copy encoded data to chunk
-        chunk->payloadSize = frame_size * sample_format_.channels * sizeof(opus_int16);
+        chunk->payloadSize = frame_size * sample_format_.channels() * sizeof(opus_int16);
         chunk->payload = (char*)realloc(chunk->payload, chunk->payloadSize);
         memcpy(chunk->payload, (char*)pcm_.data(), chunk->payloadSize);
         return true;
@@ -105,7 +105,7 @@ SampleFormat OpusDecoder::setHeader(msg::CodecHeader* chunk)
 
     // create the decoder
     int error;
-    dec_ = opus_decoder_create(sample_format_.rate, sample_format_.channels, &error);
+    dec_ = opus_decoder_create(sample_format_.rate(), sample_format_.channels(), &error);
     if (error != 0)
         throw SnapException("Failed to initialize Opus decoder: " + std::string(opus_strerror(error)));
 

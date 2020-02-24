@@ -44,7 +44,6 @@ ClientConnection::~ClientConnection()
 }
 
 
-
 void ClientConnection::socketRead(void* _to, size_t _bytes)
 {
     size_t toRead = _bytes;
@@ -84,7 +83,7 @@ void ClientConnection::start()
     SLOG(NOTICE) << "Connected to " << socket_.remote_endpoint().address().to_string() << endl;
     active_ = true;
     sumTimeout_ = chronos::msec(0);
-    readerThread_ = new thread(&ClientConnection::reader, this);
+    readerThread_ = make_unique<thread>(&ClientConnection::reader, this);
 }
 
 
@@ -104,7 +103,6 @@ void ClientConnection::stop()
         {
             LOG(DEBUG) << "joining readerThread\n";
             readerThread_->join();
-            delete readerThread_;
         }
     }
     catch (...)
@@ -174,8 +172,8 @@ void ClientConnection::getNextMessage()
 {
     socketRead(&buffer_[0], base_msg_size_);
     base_message_.deserialize(buffer_.data());
-    //	LOG(DEBUG) << "getNextMessage: " << baseMessage.type << ", size: " << baseMessage.size << ", id: " << baseMessage.id << ", refers: " <<
-    // baseMessage.refersTo << "\n";
+    // LOG(DEBUG) << "getNextMessage: " << base_message_.type << ", size: " << base_message_.size << ", id: " << base_message_.id
+    //            << ", refers: " << base_message_.refersTo << "\n";
     if (base_message_.size > buffer_.size())
         buffer_.resize(base_message_.size);
     //	{

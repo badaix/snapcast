@@ -30,7 +30,8 @@ using namespace streamreader;
 using json = nlohmann::json;
 
 
-StreamServer::StreamServer(boost::asio::io_context& io_context, const ServerSettings& serverSettings) : io_context_(io_context), settings_(serverSettings)
+StreamServer::StreamServer(boost::asio::io_context& io_context, const ServerSettings& serverSettings)
+    : io_context_(io_context), config_timer_(io_context), settings_(serverSettings)
 {
 }
 
@@ -169,7 +170,7 @@ void StreamServer::onDisconnect(StreamSession* streamSession)
 
     clientInfo->connected = false;
     chronos::systemtimeofday(&clientInfo->lastSeen);
-    Config::instance().save();
+    saveConfig();
     if (controlServer_ != nullptr)
     {
         // Check if there is no session of this client is left
@@ -572,7 +573,7 @@ std::string StreamServer::onMessageReceived(ControlSession* controlSession, cons
     {
         jsonrpcpp::request_ptr request = dynamic_pointer_cast<jsonrpcpp::Request>(entity);
         ProcessRequest(request, response, notification);
-        Config::instance().save();
+        saveConfig();
         ////cout << "Request:      " << request->to_json().dump() << "\n";
         if (notification)
         {
@@ -604,7 +605,7 @@ std::string StreamServer::onMessageReceived(ControlSession* controlSession, cons
                     notificationBatch.add_ptr(notification);
             }
         }
-        Config::instance().save();
+        saveConfig();
         if (!notificationBatch.entities.empty())
             controlServer_->send(notificationBatch.to_json().dump(), controlSession);
         if (!responseBatch.entities.empty())
@@ -627,8 +628,7 @@ void StreamServer::onMessageReceived(StreamSession* streamSession, const msg::Ba
         timeMsg->deserialize(baseMessage, buffer);
         timeMsg->refersTo = timeMsg->id;
         timeMsg->latency = timeMsg->received - timeMsg->sent;
-        //		LOG(INFO) << "Latency sec: " << timeMsg.latency.sec << ", usec: " << timeMsg.latency.usec << ", refers to: " << timeMsg.refersTo <<
-        //"\n";
+        // LOG(INFO) << "Latency sec: " << timeMsg.latency.sec << ", usec: " << timeMsg.latency.usec << ", refers to: " << timeMsg.refersTo << "\n";
         streamSession->sendAsync(timeMsg);
 
         // refresh streamSession state
@@ -690,7 +690,7 @@ void StreamServer::onMessageReceived(StreamSession* streamSession, const msg::Ba
         }
         LOG(DEBUG) << "Group: " << group->id << ", stream: " << group->streamId << "\n";
 
-        Config::instance().save();
+        saveConfig();
 
         streamSession->sendAsync(stream->getMeta());
         streamSession->setPcmStream(stream);
@@ -720,6 +720,19 @@ void StreamServer::onMessageReceived(StreamSession* streamSession, const msg::Ba
     }
 }
 
+
+void StreamServer::saveConfig(const std::chrono::milliseconds& deferred)
+{
+    config_timer_.cancel();
+    config_timer_.expires_after(deferred);
+    config_timer_.async_wait([](const boost::system::error_code& ec) {
+        if (!ec)
+        {
+            LOG(DEBUG) << "Saving config\n";
+            Config::instance().save();
+        }
+    });
+}
 
 
 session_ptr StreamServer::getStreamSession(StreamSession* streamSession) const

@@ -104,16 +104,16 @@ bool OggDecoder::decode(msg::PcmChunk* chunk)
             (-1.<=range<=1.) to whatever PCM format and write it out */
             while ((samples = vorbis_synthesis_pcmout(&vd, &pcm)) > 0)
             {
-                size_t bytes = sampleFormat_.sampleSize * vi.channels * samples;
+                size_t bytes = sampleFormat_.sampleSize() * vi.channels * samples;
                 chunk->payload = (char*)realloc(chunk->payload, chunk->payloadSize + bytes);
                 for (int channel = 0; channel < vi.channels; ++channel)
                 {
-                    if (sampleFormat_.sampleSize == 1)
+                    if (sampleFormat_.sampleSize() == 1)
                     {
                         int8_t* chunkBuffer = (int8_t*)(chunk->payload + chunk->payloadSize);
                         for (int i = 0; i < samples; i++)
                         {
-                            int8_t& val = chunkBuffer[sampleFormat_.channels * i + channel];
+                            int8_t& val = chunkBuffer[sampleFormat_.channels() * i + channel];
 #ifdef HAS_TREMOR
                             val = clip<int8_t>(pcm[channel][i], -128, 127);
 #else
@@ -121,12 +121,12 @@ bool OggDecoder::decode(msg::PcmChunk* chunk)
 #endif
                         }
                     }
-                    else if (sampleFormat_.sampleSize == 2)
+                    else if (sampleFormat_.sampleSize() == 2)
                     {
                         int16_t* chunkBuffer = (int16_t*)(chunk->payload + chunk->payloadSize);
                         for (int i = 0; i < samples; i++)
                         {
-                            int16_t& val = chunkBuffer[sampleFormat_.channels * i + channel];
+                            int16_t& val = chunkBuffer[sampleFormat_.channels() * i + channel];
 #ifdef HAS_TREMOR
                             val = SWAP_16(clip<int16_t>(pcm[channel][i] >> 9, -32768, 32767));
 #else
@@ -134,12 +134,12 @@ bool OggDecoder::decode(msg::PcmChunk* chunk)
 #endif
                         }
                     }
-                    else if (sampleFormat_.sampleSize == 4)
+                    else if (sampleFormat_.sampleSize() == 4)
                     {
                         int32_t* chunkBuffer = (int32_t*)(chunk->payload + chunk->payloadSize);
                         for (int i = 0; i < samples; i++)
                         {
-                            int32_t& val = chunkBuffer[sampleFormat_.channels * i + channel];
+                            int32_t& val = chunkBuffer[sampleFormat_.channels() * i + channel];
 #ifdef HAS_TREMOR
                             val = SWAP_32(clip<int32_t>(pcm[channel][i] << 7, -2147483648, 2147483647));
 #else
