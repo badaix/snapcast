@@ -23,12 +23,9 @@ The Snapserver reads PCM chunks from the pipe `/tmp/snapfifo`. The chunk is enco
 
 The encoded chunk is sent via a TCP connection to the Snapclients.
 Each client does continuous time synchronization with the server, so that the client is always aware of the local server time.
-Every received chunk is first decoded and added to the client's chunk-buffer. Knowing the server's time, the chunk is played out using ALSA at the appropriate time. Time deviations are corrected by
-* skipping parts or whole chunks
-* playing silence
-* playing faster/slower
+Every received chunk is first decoded and added to the client's chunk-buffer. Knowing the server's time, the chunk is played out using a system dependend low level audio API (e.g. ALSA) at the appropriate time. Time deviations are corrected by playing faster/slower, which is done by removing/duplicating single samples (a sample at 48kHz has a duration of ~0.02ms).
 
-Typically the deviation is smaller than 1ms.
+Typically the deviation is below 0.2ms.
 
 For more information on the binary protocol, please see the [documentation](doc/binary_protocol.md).
 
