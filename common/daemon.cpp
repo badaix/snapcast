@@ -148,7 +148,7 @@ void Daemon::daemonize()
 
     /// Try to lock file
     if (lockf(pidFilehandle_, F_TLOCK, 0) == -1)
-        throw SnapException("Could not lock PID lock file \"" + pidfile_ + "\"");
+        throw SnapException("Could not lock PID lock file \"" + pidfile_ + "\". Is the daemon already running?");
 
     char str[10];
     /// Get and format PID

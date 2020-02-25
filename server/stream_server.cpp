@@ -94,6 +94,7 @@ void StreamServer::onChunkRead(const PcmStream* pcmStream, msg::PcmChunk* chunk,
 {
     //	LOG(INFO) << "onChunkRead (" << pcmStream->getName() << "): " << duration << "ms\n";
     bool isDefaultStream(pcmStream == streamManager_->getDefaultStream().get());
+    // wrap it into a unique_ptr to ensure that the memory will be freed
     unique_ptr<msg::PcmChunk> chunk_ptr(chunk);
 
     std::ostringstream oss;

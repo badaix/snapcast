@@ -338,6 +338,9 @@ public:
     /// @param argv command line arguments
     void parse(int argc, const char* const argv[]);
 
+    /// Delete all parsed options
+    void reset();
+
     /// Produce a help message
     /// @param max_attribute show options up to this level (optional, advanced, expert)
     /// @return the help message
@@ -989,11 +992,6 @@ inline void OptionParser::parse(const std::string& ini_filename)
 
 inline void OptionParser::parse(int argc, const char* const argv[])
 {
-    unknown_options_.clear();
-    non_option_args_.clear();
-    for (auto& opt : options_)
-        opt->clear();
-
     for (int n = 1; n < argc; ++n)
     {
         const std::string arg(argv[n]);
@@ -1091,6 +1089,15 @@ inline void OptionParser::parse(int argc, const char* const argv[])
             throw invalid_option(opt.get(), invalid_option::Error::missing_option, "option \"" + option + "\" is required");
         }
     }
+}
+
+
+inline void OptionParser::reset()
+{
+    unknown_options_.clear();
+    non_option_args_.clear();
+    for (auto& opt : options_)
+        opt->clear();
 }
 
 

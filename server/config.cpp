@@ -49,13 +49,13 @@ void Config::init(const std::string& root_directory, const std::string& user, co
     else if (getenv("HOME") == nullptr)
         dir = "/var/lib/snapserver/";
     else
-        dir = getenv("HOME");
+        dir = string(getenv("HOME")) + "/.config/snapserver/";
 
     if (!dir.empty() && (dir.back() != '/'))
         dir += "/";
 
-    if (dir.find("/var/lib/snapserver") == string::npos)
-        dir += ".config/snapserver/";
+    // if (dir.find("/var/lib/snapserver") == string::npos)
+    //     dir += ".config/snapserver/";
 
     int status = utils::file::mkdirRecursive(dir.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
     if ((status != 0) && (errno != EEXIST))

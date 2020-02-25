@@ -48,7 +48,7 @@ void StreamUri::parse(const std::string& streamUri)
         uri = uri.substr(0, this->uri.length() - 1);
 
     string decodedUri = strutils::uriDecode(uri);
-    LOG(DEBUG) << "StreamUri: " << decodedUri << "\n";
+    LOG(DEBUG) << "StreamUri decoded: " << decodedUri << "\n";
 
     string tmp(decodedUri);
 

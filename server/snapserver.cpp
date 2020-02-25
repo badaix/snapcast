@@ -75,21 +75,25 @@ int main(int argc, char* argv[])
                                 &settings.logging.debug_logfile);
 
         // stream settings
-        conf.add<Value<size_t>>("p", "stream.port", "Server port", settings.stream.port, &settings.stream.port);
+        conf.add<Value<size_t>>("", "stream.port", "Server port", settings.stream.port, &settings.stream.port);
         auto streamValue = conf.add<Value<string>>(
-            "s", "stream.stream", "URI of the PCM input stream.\nFormat: TYPE://host/path?name=NAME\n[&codec=CODEC]\n[&sampleformat=SAMPLEFORMAT]", pcmStream,
+            "", "stream.stream", "URI of the PCM input stream.\nFormat: TYPE://host/path?name=NAME\n[&codec=CODEC]\n[&sampleformat=SAMPLEFORMAT]", pcmStream,
             &pcmStream);
         int num_threads = -1;
         conf.add<Value<int>>("", "server.threads", "number of server threads", num_threads, &num_threads);
+        std::string pid_file = "/var/run/snapserver/pid";
+        conf.add<Value<string>>("", "server.pidfile", "pid file when running as daemon", pid_file, &pid_file);
+        std::string data_dir;
+        conf.add<Implicit<string>>("", "server.datadir", "directory where persistent data is stored", data_dir, &data_dir);
 
         conf.add<Value<string>>("", "stream.sampleformat", "Default sample format", settings.stream.sampleFormat, &settings.stream.sampleFormat);
-        conf.add<Value<string>>("c", "stream.codec", "Default transport codec\n(flac|ogg|opus|pcm)[:options]\nType codec:? to get codec specific options",
+        conf.add<Value<string>>("", "stream.codec", "Default transport codec\n(flac|ogg|opus|pcm)[:options]\nType codec:? to get codec specific options",
                                 settings.stream.codec, &settings.stream.codec);
         // deprecated: stream_buffer, use chunk_ms instead
         conf.add<Value<size_t>>("", "stream.stream_buffer", "Default stream read chunk size [ms]", settings.stream.streamChunkMs,
                                 &settings.stream.streamChunkMs);
         conf.add<Value<size_t>>("", "stream.chunk_ms", "Default stream read chunk size [ms]", settings.stream.streamChunkMs, &settings.stream.streamChunkMs);
-        conf.add<Value<int>>("b", "stream.buffer", "Buffer [ms]", settings.stream.bufferMs, &settings.stream.bufferMs);
+        conf.add<Value<int>>("", "stream.buffer", "Buffer [ms]", settings.stream.bufferMs, &settings.stream.bufferMs);
         conf.add<Value<bool>>("", "stream.send_to_muted", "Send audio to muted clients", settings.stream.sendAudioToMutedClients,
                               &settings.stream.sendAudioToMutedClients);
         auto stream_bind_to_address = conf.add<Value<string>>("", "stream.bind_to_address", "address for the server to listen on",
@@ -108,12 +112,11 @@ int main(int argc, char* argv[])
         auto tcp_bind_to_address = conf.add<Value<string>>("", "tcp.bind_to_address", "address for the server to listen on",
                                                            settings.tcp.bind_to_address.front(), &settings.tcp.bind_to_address[0]);
 
-        // TODO: Should be possible to override settings on command line
-
         try
         {
             op.parse(argc, argv);
             conf.parse(config_file);
+            conf.parse(argc, argv);
             if (tcp_bind_to_address->is_set())
             {
                 settings.tcp.bind_to_address.clear();
@@ -219,9 +222,11 @@ int main(int argc, char* argv[])
                 if (user_group.size() > 1)
                     group = user_group[1];
             }
-
-            Config::instance().init("/var/lib/snapserver", user, group);
-            daemon.reset(new Daemon(user, group, "/var/run/snapserver/pid"));
+            if (data_dir.empty())
+                data_dir = "/var/lib/snapserver";
+            Config::instance().init(data_dir, user, group);
+            daemon.reset(new Daemon(user, group, pid_file));
+            SLOG(NOTICE) << "daemonizing" << std::endl;
             daemon->daemonize();
             if (processPriority < -20)
                 processPriority = -20;
@@ -232,7 +237,7 @@ int main(int argc, char* argv[])
             SLOG(NOTICE) << "daemon started" << std::endl;
         }
         else
-            Config::instance().init();
+            Config::instance().init(data_dir);
 #else
         Config::instance().init();
 #endif
