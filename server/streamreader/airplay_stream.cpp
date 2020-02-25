@@ -111,7 +111,7 @@ void AirplayStream::push()
     // (2) COVER
     //
     // This stems from the Airplay protocol, which treats cover art differently from the rest of the metadata.
-    // 
+    //
     // The process for (1) is as follows:
     // - The ssnc->mdst message is sent ("metadata start")
     // - core->asal|asar|minm messages are sent
@@ -127,8 +127,8 @@ void AirplayStream::push()
     // Here is an example from an older iPad:
     //
     // User plays song without cover art
-    // - empty cover art message (2) 
-    // - empty cover art message (2) 
+    // - empty cover art message (2)
+    // - empty cover art message (2)
     // - metadata message (1)
     // - metadata message (1)
     // - metadata message (1)

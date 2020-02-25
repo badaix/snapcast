@@ -68,7 +68,7 @@ protected:
     std::unique_ptr<TageEntry> entry_;
     std::string buf_;
     json metadata_;
-    // set whenever metadata_ has changed
+    /// set whenever metadata_ has changed
     bool metadata_dirty_;
 #endif
 
@@ -77,7 +77,7 @@ protected:
     int parse(std::string line);
     void createParser();
     void push();
-    void setMetaData(const std::string&, const std::string&);
+    void setMetaData(const string& key, const string& newValue);
 #endif
 
     void setParamsAndPipePathFromPort();
