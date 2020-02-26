@@ -97,11 +97,7 @@ void StreamServer::onChunkRead(const PcmStream* pcmStream, msg::PcmChunk* chunk,
     // wrap it into a unique_ptr to ensure that the memory will be freed
     unique_ptr<msg::PcmChunk> chunk_ptr(chunk);
 
-    std::ostringstream oss;
-    tv t;
-    chunk_ptr->sent = t;
-    chunk_ptr->serialize(oss);
-    shared_const_buffer buffer(oss.str());
+    shared_const_buffer buffer(*chunk_ptr);
 
     std::vector<std::shared_ptr<StreamSession>> sessions;
     {

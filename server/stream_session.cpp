@@ -147,10 +147,22 @@ void StreamSession::send_next()
 void StreamSession::sendAsync(shared_const_buffer const_buf, bool send_now)
 {
     strand_.post([ this, self = shared_from_this(), const_buf, send_now ]() {
+        // delete PCM chunks that are older than the overall buffer duration
+        messages_.erase(std::remove_if(messages_.begin(), messages_.end(),
+                                       [this](const shared_const_buffer& buffer) {
+                                           const auto& msg = buffer.message();
+                                           if (!msg.is_pcm_chunk)
+                                               return false;
+                                           auto age = chronos::clk::now() - msg.rec_time;
+                                           return (age > std::chrono::milliseconds(bufferMs_) + 100ms);
+                                       }),
+                        messages_.end());
+
         if (send_now)
             messages_.push_front(const_buf);
         else
             messages_.push_back(const_buf);
+
         if (messages_.size() > 1)
         {
             LOG(DEBUG, LOG_TAG) << "outstanding async_write\n";
@@ -166,12 +178,8 @@ void StreamSession::sendAsync(msg::message_ptr message, bool send_now)
     if (!message)
         return;
 
-    tv t;
     // TODO: better set the timestamp in send_next for more accurate time sync
-    message->sent = t;
-    std::ostringstream oss;
-    message->serialize(oss);
-    sendAsync(shared_const_buffer(oss.str()), send_now);
+    sendAsync(shared_const_buffer(*message), send_now);
 }
 
 
