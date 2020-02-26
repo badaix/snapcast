@@ -77,7 +77,7 @@ protected:
     int parse(std::string line);
     void createParser();
     void push();
-    void setMetaData(const string& key, const string& newValue);
+    void setMetaData(const std::string& key, const std::string& newValue);
 #endif
 
     void setParamsAndPipePathFromPort();
