@@ -59,7 +59,7 @@ class shared_const_buffer
     };
 
 public:
-    shared_const_buffer(msg::BaseMessage& message)
+    shared_const_buffer(msg::BaseMessage& message) : on_air(false)
     {
         tv t;
         message.sent = t;
@@ -93,6 +93,8 @@ public:
     {
         return *message_;
     }
+
+    bool on_air;
 
 private:
     std::shared_ptr<Message> message_;

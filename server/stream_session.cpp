@@ -129,6 +129,7 @@ void StreamSession::stop()
 void StreamSession::send_next()
 {
     auto& buffer = messages_.front();
+    buffer.on_air = true;
     boost::asio::async_write(socket_, buffer,
                              boost::asio::bind_executor(strand_, [ this, self = shared_from_this(), buffer ](boost::system::error_code ec, std::size_t length) {
                                  messages_.pop_front();
@@ -148,19 +149,15 @@ void StreamSession::sendAsync(shared_const_buffer const_buf, bool send_now)
 {
     strand_.post([ this, self = shared_from_this(), const_buf, send_now ]() {
         // delete PCM chunks that are older than the overall buffer duration
-        if (messages_.size() > 1)
-        {
-            // don't remove the first message as it might beeing sent already
-            messages_.erase(std::remove_if(messages_.begin() + 1, messages_.end(),
-                                           [this](const shared_const_buffer& buffer) {
-                                               const auto& msg = buffer.message();
-                                               if (!msg.is_pcm_chunk)
-                                                   return false;
-                                               auto age = chronos::clk::now() - msg.rec_time;
-                                               return (age > std::chrono::milliseconds(bufferMs_) + 100ms);
-                                           }),
-                            messages_.end());
-        }
+        messages_.erase(std::remove_if(messages_.begin() + 1, messages_.end(),
+                                       [this](const shared_const_buffer& buffer) {
+                                           const auto& msg = buffer.message();
+                                           if (!msg.is_pcm_chunk || buffer.on_air)
+                                               return false;
+                                           auto age = chronos::clk::now() - msg.rec_time;
+                                           return (age > std::chrono::milliseconds(bufferMs_) + 100ms);
+                                       }),
+                        messages_.end());
 
         if (send_now)
             messages_.push_front(const_buf);
