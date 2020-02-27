@@ -1,5 +1,35 @@
 # Snapcast changelog
 
+## Version 0.19.0
+
+### Features
+
+- Option to not kill all running librespot instances (PR #539)
+- Add Airplay cover art to metadata (PR #543)
+- Anroid: add support for Oboe audio backend
+- Server: configurable PID file (Issue #554)
+- Server: configurable persistant storage directory (Issue #554)
+- Server: config file options can be overwritten on command line
+- Client: PCM stream can be resampled "--sampleformat" option
+
+### Bugfixes
+
+- Fix Airplay metadata, port selection and device names (PR #537)
+- Fix cmake build when libatomic is needed (PR #540)
+- Control: fix random crash (PR #543)
+
+### General
+
+- ALSA: improved latency estimation for better sync
+- Improved audio synchronization
+- Faster initial sync after client start and reconnect
+- Less playback tempo adaptions and jitter (Issue #525)
+- Playback is robust against system time changes (Issue #522)
+- Control: quicker response to group volume changes
+- Server uses less memory when sending PCM data to a stalled connection
+
+_Johannes Pohl <snapcast@badaix.de>  Tue, 28 Jan 2020 00:13:37 +0200_
+
 ## Version 0.18.1
 
 ### Bugfixes
