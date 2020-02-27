@@ -128,10 +128,10 @@ void StreamSession::stop()
 
 void StreamSession::send_next()
 {
-    auto buffer = messages_.front();
+    shared_const_buffer buffer = messages_.front();
+    messages_.pop_front();
     boost::asio::async_write(socket_, buffer,
                              boost::asio::bind_executor(strand_, [ this, self = shared_from_this(), buffer ](boost::system::error_code ec, std::size_t length) {
-                                 messages_.pop_front();
                                  if (ec)
                                  {
                                      LOG(ERROR, LOG_TAG) << "StreamSession write error (msg length: " << length << "): " << ec.message() << "\n";
