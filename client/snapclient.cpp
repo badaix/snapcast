@@ -215,11 +215,11 @@ int main(int argc, char** argv)
         if (sample_format->is_set())
         {
             settings.player.sample_format = SampleFormat(sample_format->value());
-            if (settings.player.sample_format.channels() != 2)
-                throw SnapException("sampleformat channels must be 2");
+            if (settings.player.sample_format.channels() != 0)
+                throw SnapException("sampleformat channels must be * (= same as the source)");
             auto bits = settings.player.sample_format.bits();
             if ((bits != 0) && (bits != 16) && (bits != 24) && (bits != 32))
-                throw SnapException("sampleformat bits must be 0, 16, 24, 32");
+                throw SnapException("sampleformat bits must be 16, 24, 32, * (= same as the source)");
         }
 
         bool active = true;
