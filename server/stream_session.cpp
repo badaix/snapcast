@@ -149,7 +149,7 @@ void StreamSession::sendAsync(shared_const_buffer const_buf, bool send_now)
 {
     strand_.post([ this, self = shared_from_this(), const_buf, send_now ]() {
         // delete PCM chunks that are older than the overall buffer duration
-        messages_.erase(std::remove_if(messages_.begin() + 1, messages_.end(),
+        messages_.erase(std::remove_if(messages_.begin(), messages_.end(),
                                        [this](const shared_const_buffer& buffer) {
                                            const auto& msg = buffer.message();
                                            if (!msg.is_pcm_chunk || buffer.on_air)
