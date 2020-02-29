@@ -28,8 +28,9 @@ using namespace std;
 namespace encoder
 {
 
-FlacEncoder::FlacEncoder(const std::string& codecOptions) : Encoder(codecOptions), encoder_(nullptr), pcmBufferSize_(0), encodedSamples_(0), flacChunk_(nullptr)
+FlacEncoder::FlacEncoder(const std::string& codecOptions) : Encoder(codecOptions), encoder_(nullptr), pcmBufferSize_(0), encodedSamples_(0)
 {
+    flacChunk_ = new msg::PcmChunk();
     headerChunk_.reset(new msg::CodecHeader("flac"));
     pcmBuffer_ = (FLAC__int32*)malloc(pcmBufferSize_ * sizeof(FLAC__int32));
 }
@@ -45,8 +46,7 @@ FlacEncoder::~FlacEncoder()
         FLAC__stream_encoder_delete(encoder_);
     }
 
-    if (flacChunk_ != nullptr)
-        delete flacChunk_;
+    delete flacChunk_;
     free(pcmBuffer_);
 }
 
@@ -71,8 +71,8 @@ std::string FlacEncoder::name() const
 
 void FlacEncoder::encode(const msg::PcmChunk* chunk)
 {
-    if (flacChunk_ == nullptr)
-        flacChunk_ = new msg::PcmChunk(chunk->format, 0);
+    if (!flacChunk_->format.isInitialized())
+        flacChunk_->format = chunk->format;
 
     int samples = chunk->getSampleCount();
     int frames = chunk->getFrameCount();
@@ -113,7 +113,7 @@ void FlacEncoder::encode(const msg::PcmChunk* chunk)
         //		LOG(INFO) << "encoded: " << chunk->payloadSize << "\tframes: " << encodedSamples_ << "\tres: " << resMs << "\n";
         encodedSamples_ = 0;
         listener_->onChunkEncoded(this, flacChunk_, resMs);
-        flacChunk_ = nullptr;
+        flacChunk_ = new msg::PcmChunk(chunk->format, 0);
     }
 }
 
