@@ -67,8 +67,8 @@ std::string OggEncoder::name() const
 void OggEncoder::encode(const msg::PcmChunk* chunk)
 {
     double res = 0;
-    LOG(DEBUG) << "payload: " << chunk->payloadSize << "\tframes: " << chunk->getFrameCount() << "\tduration: " << chunk->duration<chronos::msec>().count()
-               << "\n";
+    // LOG(TRACE) << "payload: " << chunk->payloadSize << "\tframes: " << chunk->getFrameCount() << "\tduration: " << chunk->duration<chronos::msec>().count()
+    // << "\n";
     int frames = chunk->getFrameCount();
     float** buffer = vorbis_analysis_buffer(&vd_, frames);
 

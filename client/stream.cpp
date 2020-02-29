@@ -128,8 +128,7 @@ void Stream::addChunk(unique_ptr<msg::PcmChunk> chunk)
             break;
     }
 
-    // chunks_.push(move(chunk));
-    // LOG(DEBUG, LOG_TAG) << "new chunk: " << chunk->duration<cs::msec>().count() << ", Chunks: " << chunks_.size() << "\n";
+    // LOG(DEBUG, LOG_TAG) << "new chunk: " << chunk->durationMs() << " ms, Chunks: " << chunks_.size() << "\n";
 
     if (soxr_ == nullptr)
     {
@@ -345,11 +344,11 @@ bool Stream::getPlayerChunk(void* outputBuffer, const cs::usec& outputBufferDacT
     {
         if (hard_sync_)
         {
-            cs::nsec chunk_duration = cs::nsec(static_cast<cs::nsec::rep>(frames / format_.nsRate()));
+            cs::nsec req_chunk_duration = cs::nsec(static_cast<cs::nsec::rep>(frames / format_.nsRate()));
             cs::usec age = std::chrono::duration_cast<cs::usec>(TimeProvider::serverNow() - chunk_->start()) - bufferMs_ + outputBufferDacTime;
             // LOG(INFO, LOG_TAG) << "age: " << age.count() / 1000 << ", buffer: " << std::chrono::duration_cast<chrono::milliseconds>(chunk_duration).count()
             // << "\n";
-            if (age < -chunk_duration)
+            if (age < -req_chunk_duration)
             {
                 // the oldest chunk (top of the stream) is too young for the buffer
                 // e.g. age = -100ms (=> should be played in 100ms)
@@ -365,8 +364,8 @@ bool Stream::getPlayerChunk(void* outputBuffer, const cs::usec& outputBufferDacT
                     while (chunks_.try_pop(chunk_))
                     {
                         age = std::chrono::duration_cast<cs::usec>(TimeProvider::serverNow() - chunk_->start()) - bufferMs_ + outputBufferDacTime;
-                        LOG(DEBUG, LOG_TAG) << "age: " << age.count() / 1000
-                                            << ", chunk_duration: " << -std::chrono::duration_cast<std::chrono::milliseconds>(chunk_duration).count()
+                        LOG(DEBUG, LOG_TAG) << "age: " << age.count() / 1000 << ", requested chunk_duration: "
+                                            << std::chrono::duration_cast<std::chrono::milliseconds>(req_chunk_duration).count()
                                             << ", duration: " << chunk_->duration<std::chrono::milliseconds>().count() << "\n";
                         if (age.count() <= 0)
                             break;

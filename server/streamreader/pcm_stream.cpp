@@ -32,6 +32,8 @@ using namespace std;
 namespace streamreader
 {
 
+static constexpr auto LOG_TAG = "PcmStream";
+
 
 PcmStream::PcmStream(PcmListener* pcmListener, boost::asio::io_context& ioc, const StreamUri& uri)
     : active_(false), pcmListener_(pcmListener), uri_(uri), chunk_ms_(20), state_(ReaderState::kIdle), ioc_(ioc)
@@ -48,7 +50,7 @@ PcmStream::PcmStream(PcmListener* pcmListener, boost::asio::io_context& ioc, con
     if (uri_.query.find(kUriSampleFormat) == uri_.query.end())
         throw SnapException("Stream URI must have a sampleformat");
     sampleFormat_ = SampleFormat(uri_.query[kUriSampleFormat]);
-    LOG(INFO) << "PcmStream sampleFormat: " << sampleFormat_.getFormat() << "\n";
+    LOG(INFO, LOG_TAG) << "PcmStream sampleFormat: " << sampleFormat_.getFormat() << "\n";
 
     if (uri_.query.find(kUriChunkMs) != uri_.query.end())
         chunk_ms_ = cpt::stoul(uri_.query[kUriChunkMs]);
@@ -95,7 +97,7 @@ const SampleFormat& PcmStream::getSampleFormat() const
 
 void PcmStream::start()
 {
-    LOG(DEBUG) << "PcmStream start: " << sampleFormat_.getFormat() << "\n";
+    LOG(DEBUG, LOG_TAG) << "Start, sampleformat: " << sampleFormat_.getFormat() << "\n";
     encoder_->init(this, sampleFormat_);
     active_ = true;
 }
@@ -117,7 +119,7 @@ void PcmStream::setState(const ReaderState& newState)
 {
     if (newState != state_)
     {
-        LOG(DEBUG) << "State changed: " << static_cast<int>(state_) << " => " << static_cast<int>(newState) << "\n";
+        LOG(DEBUG, LOG_TAG) << "State changed: " << static_cast<int>(state_) << " => " << static_cast<int>(newState) << "\n";
         state_ = newState;
         if (pcmListener_)
             pcmListener_->onStateChanged(this, newState);
@@ -127,7 +129,7 @@ void PcmStream::setState(const ReaderState& newState)
 
 void PcmStream::onChunkEncoded(const encoder::Encoder* /*encoder*/, msg::PcmChunk* chunk, double duration)
 {
-    //	LOG(INFO) << "onChunkEncoded: " << duration << " us\n";
+    // LOG(TRACE, LOG_TAG) << "onChunkEncoded: " << duration << " ms, compression ratio: " << 100 - ceil(100 * (chunk->durationMs() / duration)) << "%\n";
     if (duration <= 0)
         return;
 
@@ -168,7 +170,7 @@ void PcmStream::setMeta(const json& jtag)
 {
     meta_.reset(new msg::StreamTags(jtag));
     meta_->msg["STREAM"] = name_;
-    LOG(INFO) << "metadata=" << meta_->msg.dump(4) << "\n";
+    LOG(INFO, LOG_TAG) << "metadata=" << meta_->msg.dump(4) << "\n";
 
     // Trigger a stream update
     if (pcmListener_)

@@ -36,7 +36,8 @@ namespace msg
 class PcmChunk : public WireChunk
 {
 public:
-    PcmChunk(const SampleFormat& sampleFormat, size_t ms) : WireChunk(sampleFormat.rate() * sampleFormat.frameSize() * ms / 1000), format(sampleFormat), idx_(0)
+    PcmChunk(const SampleFormat& sampleFormat, size_t ms)
+        : WireChunk((sampleFormat.rate() * ms / 1000) * sampleFormat.frameSize()), format(sampleFormat), idx_(0)
     {
     }
 
@@ -102,6 +103,11 @@ public:
     inline T duration() const
     {
         return std::chrono::duration_cast<T>(chronos::nsec(static_cast<chronos::nsec::rep>(1000000 * getFrameCount() / format.msRate())));
+    }
+
+    double durationMs() const
+    {
+        return static_cast<double>(getFrameCount()) / format.msRate();
     }
 
     template <typename T>

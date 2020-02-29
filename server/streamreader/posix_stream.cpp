@@ -119,23 +119,23 @@ void PosixStream::do_read()
         {
             first_ = false;
             chronos::systemtimeofday(&tvEncodedChunk_);
-            nextTick_ = chronos::getTickCount() + buffer_ms_;
+            nextTick_ = std::chrono::steady_clock::now() + std::chrono::milliseconds(buffer_ms_);
         }
         encoder_->encode(chunk_.get());
-        nextTick_ += chunk_ms_;
-        long currentTick = chronos::getTickCount();
+        nextTick_ += chunk_->duration<std::chrono::nanoseconds>();
+        auto currentTick = std::chrono::steady_clock::now();
 
         if (nextTick_ >= currentTick)
         {
             // synchronize reads to an interval of chunk_ms_
-            wait(read_timer_, std::chrono::milliseconds(nextTick_ - currentTick), [this] { do_read(); });
+            wait(read_timer_, nextTick_ - currentTick, [this] { do_read(); });
             return;
         }
         else
         {
             // reading chunk_ms_ took longer than chunk_ms_
-            pcmListener_->onResync(this, currentTick - nextTick_);
-            nextTick_ = currentTick + buffer_ms_;
+            pcmListener_->onResync(this, std::chrono::duration_cast<std::chrono::milliseconds>(currentTick - nextTick_).count());
+            nextTick_ = currentTick + std::chrono::milliseconds(buffer_ms_);
             first_ = true;
             do_read();
         }

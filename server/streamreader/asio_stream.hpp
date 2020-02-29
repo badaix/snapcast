@@ -54,7 +54,7 @@ protected:
     std::unique_ptr<msg::PcmChunk> chunk_;
     timeval tv_chunk_;
     bool first_;
-    long nextTick_;
+    std::chrono::time_point<std::chrono::steady_clock> nextTick_;
     uint32_t buffer_ms_;
     boost::asio::steady_timer read_timer_;
     boost::asio::steady_timer state_timer_;
@@ -86,6 +86,8 @@ AsioStream<ReadStream>::AsioStream(PcmListener* pcmListener, boost::asio::io_con
     : PcmStream(pcmListener, ioc, uri), read_timer_(ioc), state_timer_(ioc)
 {
     chunk_ = std::make_unique<msg::PcmChunk>(sampleFormat_, chunk_ms_);
+    LOG(DEBUG) << "Chunk duration: " << chunk_->durationMs() << " ms, frames: " << chunk_->getFrameCount() << ", size: " << chunk_->payloadSize << "\n";
+
     bytes_read_ = 0;
     buffer_ms_ = 50;
 
@@ -191,17 +193,17 @@ void AsioStream<ReadStream>::do_read()
             {
                 first_ = false;
                 chronos::systemtimeofday(&tvEncodedChunk_);
-                nextTick_ = chronos::getTickCount() + buffer_ms_;
+                nextTick_ = std::chrono::steady_clock::now() + std::chrono::milliseconds(buffer_ms_);
             }
 
             encoder_->encode(chunk_.get());
-            nextTick_ += chunk_ms_;
-            long currentTick = chronos::getTickCount();
+            nextTick_ += chunk_->duration<std::chrono::nanoseconds>();
+            auto currentTick = std::chrono::steady_clock::now();
 
             // Synchronize read to chunk_ms_
             if (nextTick_ >= currentTick)
             {
-                read_timer_.expires_after(std::chrono::milliseconds(nextTick_ - currentTick));
+                read_timer_.expires_after(nextTick_ - currentTick);
                 read_timer_.async_wait([this](const boost::system::error_code& ec) {
                     if (ec)
                     {
@@ -217,8 +219,8 @@ void AsioStream<ReadStream>::do_read()
             // Read took longer, wait for the buffer to fill up
             else
             {
-                pcmListener_->onResync(this, currentTick - nextTick_);
-                nextTick_ = currentTick + buffer_ms_;
+                pcmListener_->onResync(this, std::chrono::duration_cast<std::chrono::milliseconds>(currentTick - nextTick_).count());
+                nextTick_ = currentTick + std::chrono::milliseconds(buffer_ms_);
                 first_ = true;
                 do_read();
             }
