@@ -227,7 +227,7 @@ void OpusEncoder::encode(const SampleFormat& format, const char* data, size_t si
     if (len > 0)
     {
         // copy encoded data to chunk
-        auto* opusChunk = new msg::PcmChunk(format, 0);
+        auto opusChunk = make_shared<msg::PcmChunk>(format, 0);
         opusChunk->payloadSize = len;
         opusChunk->payload = (char*)realloc(opusChunk->payload, opusChunk->payloadSize);
         memcpy(opusChunk->payload, encoded_.data(), len);

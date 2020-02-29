@@ -98,7 +98,7 @@ void OggEncoder::encode(const msg::PcmChunk* chunk)
     /* tell the library how much we actually submitted */
     vorbis_analysis_wrote(&vd_, frames);
 
-    auto* oggChunk = new msg::PcmChunk(chunk->format, 0);
+    auto oggChunk = make_shared<msg::PcmChunk>(chunk->format, 0);
 
     /* vorbis does some data preanalysis, then divvies up blocks for
     more involved (potentially parallel) processing.  Get a single
@@ -149,8 +149,6 @@ void OggEncoder::encode(const msg::PcmChunk* chunk)
         oggChunk->payloadSize = pos;
         listener_->onChunkEncoded(this, oggChunk, res);
     }
-    else
-        delete oggChunk;
 }
 
 

@@ -38,7 +38,7 @@ class Encoder;
 class EncoderListener
 {
 public:
-    virtual void onChunkEncoded(const Encoder* encoder, msg::PcmChunk* chunk, double duration) = 0;
+    virtual void onChunkEncoded(const Encoder* encoder, std::shared_ptr<msg::PcmChunk> chunk, double duration) = 0;
 };
 
 

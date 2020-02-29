@@ -90,14 +90,12 @@ void StreamServer::onStateChanged(const PcmStream* pcmStream, const ReaderState&
 }
 
 
-void StreamServer::onChunkRead(const PcmStream* pcmStream, msg::PcmChunk* chunk, double /*duration*/)
+void StreamServer::onChunkRead(const PcmStream* pcmStream, std::shared_ptr<msg::PcmChunk> chunk, double /*duration*/)
 {
     //	LOG(INFO) << "onChunkRead (" << pcmStream->getName() << "): " << duration << "ms\n";
     bool isDefaultStream(pcmStream == streamManager_->getDefaultStream().get());
-    // wrap it into a unique_ptr to ensure that the memory will be freed
-    unique_ptr<msg::PcmChunk> chunk_ptr(chunk);
 
-    shared_const_buffer buffer(*chunk_ptr);
+    shared_const_buffer buffer(*chunk);
 
     std::vector<std::shared_ptr<StreamSession>> sessions;
     {
