@@ -51,8 +51,8 @@ protected:
     FLAC__int32* pcmBuffer_;
     int pcmBufferSize_;
 
-    std::shared_ptr<msg::PcmChunk> flacChunk_;
     size_t encodedSamples_;
+    std::shared_ptr<msg::PcmChunk> flacChunk_;
 };
 
 } // namespace encoder
