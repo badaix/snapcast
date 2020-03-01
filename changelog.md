@@ -25,10 +25,11 @@
 - Faster initial sync after client start and reconnect
 - Less playback tempo adaptions and jitter (Issue #525)
 - Playback is robust against system time changes (Issue #522)
+- Less "resyncs" in stream reader that were causing audio dropouts
 - Control: quicker response to group volume changes
 - Server uses less memory when sending PCM data to a stalled connection
 
-_Johannes Pohl <snapcast@badaix.de>  Tue, 28 Jan 2020 00:13:37 +0200_
+_Johannes Pohl <snapcast@badaix.de>  Tue, 03 Mar 2020 00:13:37 +0200_
 
 ## Version 0.18.1
 
