@@ -415,17 +415,17 @@ bool Stream::getPlayerChunk(void* outputBuffer, const cs::usec& outputBufferDacT
 
         setRealSampleRate(format_.rate());
         // check if we need a hard sync
-        if (buffer_.full() && (cs::usec(abs(median_)) > cs::msec(2)))
+        if (buffer_.full() && (cs::usec(abs(median_)) > cs::msec(2)) && (cs::abs(age) > cs::usec(500)))
         {
             LOG(INFO, LOG_TAG) << "pBuffer->full() && (abs(median_) > 2): " << median_ << "\n";
             hard_sync_ = true;
         }
-        else if (shortBuffer_.full() && (cs::usec(abs(shortMedian_)) > cs::msec(5)))
+        else if (shortBuffer_.full() && (cs::usec(abs(shortMedian_)) > cs::msec(5)) && (cs::abs(age) > cs::usec(500)))
         {
             LOG(INFO, LOG_TAG) << "pShortBuffer->full() && (abs(shortMedian_) > 5): " << shortMedian_ << "\n";
             hard_sync_ = true;
         }
-        else if (miniBuffer_.full() && (cs::usec(abs(miniBuffer_.median())) > cs::msec(50)))
+        else if (miniBuffer_.full() && (cs::usec(abs(miniBuffer_.median())) > cs::msec(50)) && (cs::abs(age) > cs::usec(500)))
         {
             LOG(INFO, LOG_TAG) << "pMiniBuffer->full() && (abs(pMiniBuffer->mean()) > 50): " << miniBuffer_.median() << "\n";
             hard_sync_ = true;
