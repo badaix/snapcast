@@ -133,9 +133,11 @@ void PcmStream::onChunkEncoded(const encoder::Encoder* /*encoder*/, std::shared_
     if (duration <= 0)
         return;
 
-    chunk->timestamp.sec = tvEncodedChunk_.tv_sec;
-    chunk->timestamp.usec = tvEncodedChunk_.tv_usec;
-    chronos::addUs(tvEncodedChunk_, duration * 1000);
+    auto microsecs = std::chrono::duration_cast<std::chrono::microseconds>(tvEncodedChunk_.time_since_epoch()).count();
+    chunk->timestamp.sec = microsecs / 1000000;
+    chunk->timestamp.usec = microsecs % 1000000;
+
+    tvEncodedChunk_ += std::chrono::nanoseconds(static_cast<std::chrono::nanoseconds::rep>(duration * 1000000));
     if (pcmListener_)
         pcmListener_->onChunkRead(this, chunk, duration);
 }

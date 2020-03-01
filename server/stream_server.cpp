@@ -136,7 +136,7 @@ void StreamServer::onChunkRead(const PcmStream* pcmStream, std::shared_ptr<msg::
 
 void StreamServer::onResync(const PcmStream* pcmStream, double ms)
 {
-    LOG(INFO) << "onResync (" << pcmStream->getName() << "): " << ms << "ms\n";
+    LOG(INFO) << "onResync (" << pcmStream->getName() << "): " << ms << " ms\n";
 }
 
 

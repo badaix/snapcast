@@ -35,7 +35,7 @@ namespace streamreader
 {
 
 static constexpr auto LOG_TAG = "PosixStream";
-
+static constexpr auto kResyncTolerance = 50ms;
 
 PosixStream::PosixStream(PcmListener* pcmListener, boost::asio::io_context& ioc, const StreamUri& uri) : AsioStream<stream_descriptor>(pcmListener, ioc, uri)
 {
@@ -80,27 +80,24 @@ void PosixStream::do_read()
         if (!stream_->is_open())
             throw SnapException("failed to open stream: \"" + uri_.path + "\"");
 
+        if (first_)
+        {
+            LOG(DEBUG, LOG_TAG) << "First read, initializing nextTick to now\n";
+            nextTick_ = std::chrono::steady_clock::now();
+        }
+
         int toRead = chunk_->payloadSize;
+        auto duration = chunk_->duration<std::chrono::nanoseconds>();
         int len = 0;
         do
         {
             int count = read(stream_->native_handle(), chunk_->payload + len, toRead - len);
-            if (count < 0 && idle_bytes_ < max_idle_bytes_)
+            if (count < 0)
             {
-                // nothing to read for a longer time now, set the chunk to silent
-                LOG(DEBUG, LOG_TAG) << "count < 0: " << errno
-                                    << " && idleBytes < maxIdleBytes, ms: " << 1000 * chunk_->payloadSize / (sampleFormat_.rate() * sampleFormat_.frameSize())
-                                    << "\n";
+                // no data available, fill with silence
                 memset(chunk_->payload + len, 0, toRead - len);
                 idle_bytes_ += toRead - len;
-                len += toRead - len;
                 break;
-            }
-            else if (count < 0)
-            {
-                // nothing to read, try again (chunk_ms_ / 2) later
-                wait(read_timer_, std::chrono::milliseconds(chunk_ms_ / 2), [this] { do_read(); });
-                return;
             }
             else if (count == 0)
             {
@@ -115,29 +112,46 @@ void PosixStream::do_read()
             }
         } while (len < toRead);
 
+        // LOG(DEBUG, LOG_TAG) << "Received " << len << "/" << toRead << " bytes\n";
         if (first_)
         {
             first_ = false;
-            chronos::systemtimeofday(&tvEncodedChunk_);
-            nextTick_ = std::chrono::steady_clock::now() + std::chrono::milliseconds(buffer_ms_);
+            // initialize the stream's base timestamp to now minus the chunk's duration
+            tvEncodedChunk_ = std::chrono::steady_clock::now() - duration;
         }
-        encoder_->encode(chunk_.get());
-        nextTick_ += chunk_->duration<std::chrono::nanoseconds>();
-        auto currentTick = std::chrono::steady_clock::now();
 
-        if (nextTick_ >= currentTick)
+        if ((idle_bytes_ == 0) || (idle_bytes_ <= max_idle_bytes_))
+        {
+            // the encoder will update the tvEncodedChunk when a chunk is encoded
+            encoder_->encode(chunk_.get());
+        }
+        else
+        {
+            // no data available
+            // set first_ = true will cause the timestamps to be updated without encoding
+            first_ = true;
+        }
+
+        nextTick_ += duration;
+        auto currentTick = std::chrono::steady_clock::now();
+        auto next_read = nextTick_ - currentTick;
+        if (next_read >= 0ms)
         {
             // synchronize reads to an interval of chunk_ms_
             wait(read_timer_, nextTick_ - currentTick, [this] { do_read(); });
             return;
         }
+        else if (next_read >= -kResyncTolerance)
+        {
+            LOG(INFO) << "next read < 0 (" << getName() << "): " << std::chrono::duration_cast<std::chrono::microseconds>(next_read).count() / 1000. << " ms\n";
+            do_read();
+        }
         else
         {
             // reading chunk_ms_ took longer than chunk_ms_
-            pcmListener_->onResync(this, std::chrono::duration_cast<std::chrono::milliseconds>(currentTick - nextTick_).count());
-            nextTick_ = currentTick + std::chrono::milliseconds(buffer_ms_);
+            pcmListener_->onResync(this, std::chrono::duration_cast<std::chrono::milliseconds>(-next_read).count());
             first_ = true;
-            do_read();
+            wait(read_timer_, duration + kResyncTolerance, [this] { do_read(); });
         }
 
         lastException_ = "";

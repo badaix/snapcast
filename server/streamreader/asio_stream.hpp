@@ -154,7 +154,7 @@ template <typename ReadStream>
 void AsioStream<ReadStream>::on_connect()
 {
     first_ = true;
-    chronos::systemtimeofday(&tvEncodedChunk_);
+    tvEncodedChunk_ = std::chrono::steady_clock::now();
     do_read();
 }
 
@@ -163,68 +163,69 @@ template <typename ReadStream>
 void AsioStream<ReadStream>::do_read()
 {
     // LOG(DEBUG, "AsioStream") << "do_read\n";
-    boost::asio::async_read(
-        *stream_, boost::asio::buffer(chunk_->payload, chunk_->payloadSize), [this](boost::system::error_code ec, std::size_t length) mutable {
-            if (ec)
-            {
-                LOG(ERROR, "AsioStream") << "Error reading message: " << ec.message() << ", length: " << length << "\n";
-                connect();
-                return;
-            }
+    boost::asio::async_read(*stream_, boost::asio::buffer(chunk_->payload, chunk_->payloadSize),
+                            [this](boost::system::error_code ec, std::size_t length) mutable {
+                                if (ec)
+                                {
+                                    LOG(ERROR, "AsioStream") << "Error reading message: " << ec.message() << ", length: " << length << "\n";
+                                    connect();
+                                    return;
+                                }
 
-            bytes_read_ += length;
-            // LOG(DEBUG, "AsioStream") << "Read: " << length << " bytes\n";
-            // First read after connect. Set the initial read timestamp
-            // the timestamp will be incremented after encoding,
-            // since we do not know how much the encoder actually encoded
+                                bytes_read_ += length;
+                                // LOG(DEBUG, "AsioStream") << "Read: " << length << " bytes\n";
+                                // First read after connect. Set the initial read timestamp
+                                // the timestamp will be incremented after encoding,
+                                // since we do not know how much the encoder actually encoded
 
-            if (!first_)
-            {
-                timeval now;
-                chronos::systemtimeofday(&now);
-                auto stream2systime_diff = chronos::diff<std::chrono::milliseconds>(now, tvEncodedChunk_);
-                if (stream2systime_diff > chronos::sec(5) + chronos::msec(chunk_ms_))
-                {
-                    LOG(WARNING, "AsioStream") << "Stream and system time out of sync: " << stream2systime_diff.count() << "ms, resetting stream time.\n";
-                    first_ = true;
-                }
-            }
-            if (first_)
-            {
-                first_ = false;
-                chronos::systemtimeofday(&tvEncodedChunk_);
-                nextTick_ = std::chrono::steady_clock::now() + std::chrono::milliseconds(buffer_ms_);
-            }
+                                if (!first_)
+                                {
+                                    auto now = std::chrono::steady_clock::now();
+                                    auto stream2systime_diff = now - tvEncodedChunk_;
+                                    if (stream2systime_diff > chronos::sec(5) + chronos::msec(chunk_ms_))
+                                    {
+                                        LOG(WARNING, "AsioStream") << "Stream and system time out of sync: "
+                                                                   << std::chrono::duration_cast<std::chrono::microseconds>(stream2systime_diff).count() / 1000.
+                                                                   << " ms, resetting stream time.\n";
+                                        first_ = true;
+                                    }
+                                }
+                                if (first_)
+                                {
+                                    first_ = false;
+                                    tvEncodedChunk_ = std::chrono::steady_clock::now() - chunk_->duration<std::chrono::nanoseconds>();
+                                    nextTick_ = std::chrono::steady_clock::now();
+                                }
 
-            encoder_->encode(chunk_.get());
-            nextTick_ += chunk_->duration<std::chrono::nanoseconds>();
-            auto currentTick = std::chrono::steady_clock::now();
+                                encoder_->encode(chunk_.get());
+                                nextTick_ += chunk_->duration<std::chrono::nanoseconds>();
+                                auto currentTick = std::chrono::steady_clock::now();
 
-            // Synchronize read to chunk_ms_
-            if (nextTick_ >= currentTick)
-            {
-                read_timer_.expires_after(nextTick_ - currentTick);
-                read_timer_.async_wait([this](const boost::system::error_code& ec) {
-                    if (ec)
-                    {
-                        LOG(ERROR, "AsioStream") << "Error during async wait: " << ec.message() << "\n";
-                    }
-                    else
-                    {
-                        do_read();
-                    }
-                });
-                return;
-            }
-            // Read took longer, wait for the buffer to fill up
-            else
-            {
-                pcmListener_->onResync(this, std::chrono::duration_cast<std::chrono::milliseconds>(currentTick - nextTick_).count());
-                nextTick_ = currentTick + std::chrono::milliseconds(buffer_ms_);
-                first_ = true;
-                do_read();
-            }
-        });
+                                // Synchronize read to chunk_ms_
+                                if (nextTick_ >= currentTick)
+                                {
+                                    read_timer_.expires_after(nextTick_ - currentTick);
+                                    read_timer_.async_wait([this](const boost::system::error_code& ec) {
+                                        if (ec)
+                                        {
+                                            LOG(ERROR, "AsioStream") << "Error during async wait: " << ec.message() << "\n";
+                                        }
+                                        else
+                                        {
+                                            do_read();
+                                        }
+                                    });
+                                    return;
+                                }
+                                // Read took longer, wait for the buffer to fill up
+                                else
+                                {
+                                    pcmListener_->onResync(this, std::chrono::duration_cast<std::chrono::milliseconds>(currentTick - nextTick_).count());
+                                    nextTick_ = currentTick + std::chrono::milliseconds(buffer_ms_);
+                                    first_ = true;
+                                    do_read();
+                                }
+                            });
 }
 
 } // namespace streamreader

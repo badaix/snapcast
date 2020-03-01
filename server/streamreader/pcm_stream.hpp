@@ -103,7 +103,7 @@ protected:
 
     void setState(const ReaderState& newState);
 
-    timeval tvEncodedChunk_;
+    std::chrono::time_point<std::chrono::steady_clock> tvEncodedChunk_;
     PcmListener* pcmListener_;
     StreamUri uri_;
     SampleFormat sampleFormat_;
