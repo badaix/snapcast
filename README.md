@@ -80,6 +80,15 @@ On Archlinux, Snapcast is available through the AUR.  To install, use your favor
     $ git clone https://aur.archlinux.org/snapcast
     $ cd snapcast
     $ makepkg -si
+
+#### Void Linux
+To install the client:
+
+    # xbps-install snapclient
+
+To install the server:
+
+    # xbps-install snapserver
     
 ### Installation from source
 
@@ -98,15 +107,6 @@ Please follow this [guide](doc/build.md) to build Snapcast for
 * [Buildroot](doc/build.md#buildroot-cross-compile)
 
 * [Raspberry Pi](doc/build.md#raspberry-pi-cross-compile)
-
-#### Void Linux
-To install the client:
-
-    # xbps-install snapclient
-
-To install the server:
-
-    # xbps-install snapserver
 
 SnapOS
 ------
