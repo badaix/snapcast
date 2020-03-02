@@ -44,6 +44,7 @@ LibrespotStream::LibrespotStream(PcmListener* pcmListener, boost::asio::io_conte
     string devicename = uri_.getQuery("devicename", "Snapcast");
     string onevent = uri_.getQuery("onevent", "");
     bool normalize = (uri_.getQuery("normalize", "false") == "true");
+    bool autoplay = (uri_.getQuery("autoplay", "false") == "true");
     killall_ = (uri_.getQuery("killall", "true") == "true");
 
     if (username.empty() != password.empty())
@@ -61,6 +62,8 @@ LibrespotStream::LibrespotStream(PcmListener* pcmListener, boost::asio::io_conte
         params_ += " --onevent \"" + onevent + "\"";
     if (normalize)
         params_ += " --enable-volume-normalisation";
+    if (autoplay)
+        params_ += " --autoplay";
     params_ += " --verbose";
 
     if (uri_.query.find("username") != uri_.query.end())
