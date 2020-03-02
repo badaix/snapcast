@@ -630,7 +630,7 @@ inline Id::Id(const std::string& id) : Id(id.c_str())
 {
 }
 
-inline Id::Id(const Json& json_id) : Entity(entity_t::id), type_(value_t::null)
+inline Id::Id(const Json& json_id) : Id()
 {
     Id::parse_json(json_id);
 }
