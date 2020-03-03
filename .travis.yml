@@ -152,7 +152,7 @@ matrix:
     - os: osx
       osx_image: xcode9.4
       env:
-        - MATRIX_EVAL="brew update && brew upgrade boost && brew install flac opus libvorbis libsoxr"
+        - MATRIX_EVAL="brew update && brew unlink python@2 && brew upgrade boost && brew install flac opus libvorbis libsoxr"
 
     - os: osx
       osx_image: xcode10.3
