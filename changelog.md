@@ -10,7 +10,8 @@
 - Server: configurable PID file (Issue #554)
 - Server: configurable persistant storage directory (Issue #554)
 - Server: config file options can be overwritten on command line
-- Client: PCM stream can be resampled "--sampleformat" option
+- Client: PCM stream can be resampled using the "--sampleformat" option
+- Librespot: add option "autoplay=[false|true]"
 
 ### Bugfixes
 
