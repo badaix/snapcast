@@ -4,6 +4,7 @@ TODO
 General
 -------
 
+- JsonRPC documentation
 - Server ping client?
 - LastSeen: relative time [s] or [ms]?
 - Android crash: Empty latency => app restart => empty client list
