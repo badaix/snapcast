@@ -135,7 +135,7 @@ PulseAudio will create the pipe file for itself and will fail if it already exis
 
 Load the module `pipe-sink` like this:
 
-    pacmd load-module module-pipe-sink file=/tmp/snapfifo sink_name=Snapcast rate=48000
+    pacmd load-module module-pipe-sink file=/tmp/snapfifo sink_name=Snapcast format=s16le rate=48000
     pacmd update-sink-proplist Snapcast device.description=Snapcast
 
 It might be neccessary to set the PulseAudio latency environment variable to 60 msec: `PULSE_LATENCY_MSEC=60`
