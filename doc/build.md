@@ -167,13 +167,16 @@ To enable the serve and client to start under the default run-level:
 
 ## macOS (Native)
 
-*Warning: macOS support is experimental*
+ 1. Install Xcode from the App Store or use:
 
- 1. Install Xcode from the App Store
+```
+$ xcode-select --install
+```
+
  2. Install [Homebrew](http://brew.sh)
- 3. Install the required libs
+ 3. Install the required libs:
 
-```   
+```
 $ brew install flac libvorbis boost opus
 ```
 
