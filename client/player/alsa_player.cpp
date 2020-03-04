@@ -225,8 +225,13 @@ void AlsaPlayer::worker()
         int result = snd_pcm_avail_delay(handle_, &framesAvail, &framesDelay);
         if (result < 0)
         {
-            LOG(WARNING) << "snd_pcm_avail_delay failed: " << snd_strerror(result) << "\n";
-            this_thread::sleep_for(10ms);
+            LOG(WARNING) << "snd_pcm_avail_delay failed: " << snd_strerror(result) << ", avail: " << framesAvail << ", delay: " << framesDelay <<"\n";
+            snd_pcm_prepare(handle_);
+            // if (result == -EPIPE)
+            //     snd_pcm_prepare(handle_);
+            // else
+            //     uninitAlsa();
+            this_thread::sleep_for(50ms);
             continue;
         }
 
