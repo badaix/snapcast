@@ -57,7 +57,7 @@ int main(int argc, char* argv[])
         std::string config_file = "/etc/snapserver.conf";
 
         OptionParser op("Allowed options");
-        auto helpSwitch = op.add<Switch>("h", "help", "Produce help message");
+        auto helpSwitch = op.add<Switch>("h", "help", "Produce help message, use -hh to show options from config file");
         auto groffSwitch = op.add<Switch, Attribute::hidden>("", "groff", "produce groff message");
         auto versionSwitch = op.add<Switch>("v", "version", "Show version number");
 #ifdef HAS_DAEMON
@@ -157,6 +157,8 @@ int main(int argc, char* argv[])
         if (helpSwitch->is_set())
         {
             cout << op << "\n";
+            if (helpSwitch->count() > 1)
+                cout << conf << "\n";
             exit(EXIT_SUCCESS);
         }
 
