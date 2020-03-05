@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.2)
 
 project(snapcast LANGUAGES CXX VERSION 0.19.0)
-set(PROJECT_DESCRIPTION "Multi-room client-server audio player")
+set(PROJECT_DESCRIPTION "Multiroom client-server audio player")
 set(PROJECT_URL "https://github.com/badaix/snapcast")
 
 option(BUILD_SHARED_LIBS "Build snapcast in a shared context" ON)
