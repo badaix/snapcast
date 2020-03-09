@@ -63,10 +63,13 @@ OboePlayer::OboePlayer(const PcmDevice& pcmDevice, std::shared_ptr<Stream> strea
 
     if (out_stream_->getAudioApi() == oboe::AudioApi::AAudio)
     {
-        mLatencyTuner = std::make_unique<oboe::LatencyTuner>(*out_stream_);
+        LOG(INFO, LOG_TAG) << "AudioApi: AAudio\n";
+        // mLatencyTuner = std::make_unique<oboe::LatencyTuner>(*out_stream_);
+        mLatencyTuner = nullptr;
     }
     else
     {
+        LOG(INFO, LOG_TAG) << "AudioApi: OpenSL\n";
         out_stream_->setBufferSizeInFrames(4 * out_stream_->getFramesPerBurst());
     }
     LOG(INFO, LOG_TAG) << "Init done\n";
@@ -127,8 +130,8 @@ oboe::DataCallbackResult OboePlayer::onAudioReady(oboe::AudioStream* /*oboeStrea
 
     if (!stream_->getPlayerChunk(audioData, delay, numFrames))
     {
-        //		LOG(INFO) << "Failed to get chunk. Playing silence.\n";
-        memset(audioData, 0, numFrames);
+        // LOG(INFO) << "Failed to get chunk. Playing silence.\n";
+        memset(audioData, 0, numFrames * stream_->getFormat().frameSize());
     }
     else
     {
