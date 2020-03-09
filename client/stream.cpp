@@ -328,9 +328,14 @@ bool Stream::getPlayerChunk(void* outputBuffer, const cs::usec& outputBufferDacT
         return false;
     }
 
+    time_t now = time(nullptr);
     if (!chunk_ && !chunks_.try_pop(chunk_))
     {
-        LOG(INFO, LOG_TAG) << "no chunks available\n";
+        if (now != lastUpdate_)
+        {
+            lastUpdate_ = now;
+            LOG(INFO, LOG_TAG) << "no chunks available\n";
+        }
         return false;
     }
 
@@ -346,8 +351,8 @@ bool Stream::getPlayerChunk(void* outputBuffer, const cs::usec& outputBufferDacT
         {
             cs::nsec req_chunk_duration = cs::nsec(static_cast<cs::nsec::rep>(frames / format_.nsRate()));
             cs::usec age = std::chrono::duration_cast<cs::usec>(TimeProvider::serverNow() - chunk_->start()) - bufferMs_ + outputBufferDacTime;
-            // LOG(INFO, LOG_TAG) << "age: " << age.count() / 1000 << ", buffer: " << std::chrono::duration_cast<chrono::milliseconds>(chunk_duration).count()
-            // << "\n";
+            // LOG(INFO, LOG_TAG) << "age: " << age.count() / 1000 << ", buffer: " <<
+            // std::chrono::duration_cast<chrono::milliseconds>(req_chunk_duration).count() << "\n";
             if (age < -req_chunk_duration)
             {
                 // the oldest chunk (top of the stream) is too young for the buffer
@@ -360,7 +365,10 @@ bool Stream::getPlayerChunk(void* outputBuffer, const cs::usec& outputBufferDacT
             {
                 if (age.count() > 0)
                 {
+                    LOG(DEBUG, LOG_TAG) << "age > 0: " << age.count() / 1000 << "ms\n";
                     // age > 0: the top of the stream is too old. We must fast foward.
+                    // delete the current chunk, it's too old. This will avoid an endless loop if there is no chunk in the queue.
+                    chunk_ = nullptr;
                     while (chunks_.try_pop(chunk_))
                     {
                         age = std::chrono::duration_cast<cs::usec>(TimeProvider::serverNow() - chunk_->start()) - bufferMs_ + outputBufferDacTime;
@@ -463,7 +471,6 @@ bool Stream::getPlayerChunk(void* outputBuffer, const cs::usec& outputBufferDacT
         updateBuffers(age.count());
 
         // print sync stats
-        time_t now = time(nullptr);
         if (now != lastUpdate_)
         {
             lastUpdate_ = now;
