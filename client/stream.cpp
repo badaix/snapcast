@@ -32,7 +32,7 @@ static constexpr auto kCorrectionBegin = 100us;
 
 Stream::Stream(const SampleFormat& in_format, const SampleFormat& out_format)
     : in_format_(in_format), median_(0), shortMedian_(0), lastUpdate_(0), playedFrames_(0), bufferMs_(cs::msec(500)), soxr_(nullptr), frame_delta_(0),
-      hard_sync_(true)
+      hard_sync_(true), correctAfterXFrames_(0)
 {
     buffer_.setSize(500);
     shortBuffer_.setSize(100);
