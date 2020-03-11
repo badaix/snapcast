@@ -6,22 +6,23 @@ General
 
 - JsonRPC documentation
 - Server ping client?
-- LastSeen: relative time [s] or [ms]?
-- Android crash: Empty latency => app restart => empty client list
-- Android clean data structures after changing the Server
 - UDP based audio streaming
 
 Server
 ------
 
-- Provide io_context to stream-readers
 - [fd stream](https://gstreamer.freedesktop.org/data/doc/gstreamer/head/gstreamer-plugins/html/gstreamer-plugins-fdsink.html)
-- UDP/TCP stream
 - gstreamer snapcast sink plugin?
 - "sync" option for streams (realtime reading vs read as much as available)
-- Override conf file settings on command line
+- #402: Add meta stream that reads the input of other streams (in some fallback hierarchy manner: when the first one plays, use this signal, else if the second is playing, take this, ...).
 
 Client
 ------
 
-- revise asio stuff
+- Add option to not play in sync, i.e. not change the tempo
+
+Issues
+------
+
+- Android crash: Empty latency => app restart => empty client list
+- Android clean data structures after changing the Server
