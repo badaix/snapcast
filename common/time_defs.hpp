@@ -29,13 +29,12 @@
 
 namespace chronos
 {
-typedef std::chrono::steady_clock clk;
-// typedef std::chrono::system_clock clk;
-typedef std::chrono::time_point<clk> time_point_clk;
-typedef std::chrono::seconds sec;
-typedef std::chrono::milliseconds msec;
-typedef std::chrono::microseconds usec;
-typedef std::chrono::nanoseconds nsec;
+using clk = std::chrono::steady_clock;
+using time_point_clk = std::chrono::time_point<clk>;
+using sec = std::chrono::seconds;
+using msec = std::chrono::milliseconds;
+using usec = std::chrono::microseconds;
+using nsec = std::chrono::nanoseconds;
 
 template <class Clock>
 inline static void timeofday(struct timeval* tv)
@@ -46,10 +45,14 @@ inline static void timeofday(struct timeval* tv)
     tv->tv_usec = microsecs.count() % 1000000;
 }
 
+inline static void steadytimeofday(struct timeval* tv)
+{
+    timeofday<clk>(tv);
+}
+
 inline static void systemtimeofday(struct timeval* tv)
 {
-    // gettimeofday(tv, nullptr);
-    timeofday<clk>(tv);
+    timeofday<std::chrono::system_clock>(tv);
 }
 
 template <class ToDuration>

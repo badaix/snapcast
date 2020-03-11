@@ -64,13 +64,12 @@ enum message_type
 };
 
 
-
 struct tv
 {
     tv()
     {
         timeval t;
-        chronos::systemtimeofday(&t);
+        chronos::steadytimeofday(&t);
         sec = t.tv_sec;
         usec = t.tv_usec;
     }
