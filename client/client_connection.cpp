@@ -211,13 +211,10 @@ void ClientConnection::reader()
             getNextMessage();
         }
     }
-    catch (const std::exception& e)
-    {
-        if (messageReceiver_ != nullptr)
-            messageReceiver_->onException(this, make_shared<SnapException>(e.what()));
-    }
     catch (...)
     {
+        if (messageReceiver_ != nullptr)
+            messageReceiver_->onException(this, std::current_exception());
     }
     active_ = false;
 }

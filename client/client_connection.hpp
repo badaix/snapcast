@@ -78,17 +78,13 @@ private:
 };
 
 
-/// would be nicer to use std::exception_ptr
-/// but not supported on all plattforms
-typedef std::shared_ptr<std::exception> shared_exception_ptr;
-
 /// Interface: callback for a received message and error reporting
 class MessageReceiver
 {
 public:
     virtual ~MessageReceiver() = default;
     virtual void onMessageReceived(ClientConnection* connection, const msg::BaseMessage& baseMessage, char* buffer) = 0;
-    virtual void onException(ClientConnection* connection, shared_exception_ptr exception) = 0;
+    virtual void onException(ClientConnection* connection, std::exception_ptr exception) = 0;
 };
 
 

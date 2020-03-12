@@ -117,16 +117,10 @@ void Stream::clearChunks()
 
 void Stream::addChunk(unique_ptr<msg::PcmChunk> chunk)
 {
-    // drop chunks that should have been played 10s before. Just in case, this shouldn't happen.
-    while (!chunks_.empty())
-    {
-        auto first_chunk = chunks_.front();
-        cs::usec age = std::chrono::duration_cast<cs::usec>(TimeProvider::serverNow() - first_chunk->start());
-        if (age > 10s + bufferMs_)
-            chunks_.pop();
-        else
-            break;
-    }
+    // drop chunk if it's too old. Just in case, this shouldn't happen.
+    cs::usec age = std::chrono::duration_cast<cs::usec>(TimeProvider::serverNow() - chunk->start());
+    if (age > 5s + bufferMs_)
+        return;
 
     // LOG(DEBUG, LOG_TAG) << "new chunk: " << chunk->durationMs() << " ms, Chunks: " << chunks_.size() << "\n";
 

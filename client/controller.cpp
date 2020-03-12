@@ -46,9 +46,9 @@ Controller::Controller(const ClientSettings& settings, std::unique_ptr<MetadataA
 }
 
 
-void Controller::onException(ClientConnection* /*connection*/, shared_exception_ptr exception)
+void Controller::onException(ClientConnection* /*connection*/, std::exception_ptr exception)
 {
-    LOG(ERROR) << "Controller::onException: " << exception->what() << "\n";
+    LOG(ERROR) << "Controller::onException\n";
     async_exception_ = exception;
 }
 
@@ -159,16 +159,16 @@ void Controller::onMessageReceived(ClientConnection* /*connection*/, const msg::
         }
     }
 
-    if (baseMessage.type != message_type::kTime)
-        if (sendTimeSyncMessage(1000))
-            LOG(DEBUG) << "time sync onMessageReceived\n";
+    // if (baseMessage.type != message_type::kTime)
+    //     if (sendTimeSyncMessage(1000))
+    //         LOG(DEBUG) << "time sync onMessageReceived\n";
 }
 
 
-bool Controller::sendTimeSyncMessage(long after)
+bool Controller::sendTimeSyncMessage(const std::chrono::milliseconds& after)
 {
-    static long lastTimeSync(0);
-    long now = chronos::getTickCount();
+    static chronos::time_point_clk lastTimeSync(chronos::clk::now());
+    auto now = chronos::clk::now();
     if (lastTimeSync + after > now)
         return false;
 
@@ -227,8 +227,8 @@ void Controller::worker()
             {
                 if (async_exception_)
                 {
-                    LOG(DEBUG) << "Async exception: " << async_exception_->what() << "\n";
-                    throw SnapException(async_exception_->what());
+                    LOG(DEBUG) << "Async exception\n";
+                    std::rethrow_exception(async_exception_);
                 }
 
                 auto reply = clientConnection_->sendReq<msg::Time>(&timeReq, chronos::msec(2000));
@@ -249,12 +249,12 @@ void Controller::worker()
                     chronos::sleep(100);
                     if (async_exception_)
                     {
-                        LOG(DEBUG) << "Async exception: " << async_exception_->what() << "\n";
-                        throw SnapException(async_exception_->what());
+                        LOG(DEBUG) << "Async exception\n";
+                        std::rethrow_exception(async_exception_);
                     }
                 }
 
-                if (sendTimeSyncMessage(5000))
+                if (sendTimeSyncMessage(1000ms))
                     LOG(DEBUG) << "time sync main loop\n";
             }
         }

@@ -42,6 +42,7 @@
 #include "metadata.hpp"
 #include "stream.hpp"
 
+using namespace std::chrono_literals;
 
 /// Forwards PCM data to the audio player
 /**
@@ -64,11 +65,11 @@ public:
 
     /// Implementation of MessageReceiver.
     /// Used for async exception reporting
-    void onException(ClientConnection* connection, shared_exception_ptr exception) override;
+    void onException(ClientConnection* connection, std::exception_ptr exception) override;
 
 private:
     void worker();
-    bool sendTimeSyncMessage(long after = 1000);
+    bool sendTimeSyncMessage(const std::chrono::milliseconds& after = 1000ms);
     ClientSettings settings_;
     std::string meta_callback_;
     std::atomic<bool> active_;
@@ -83,7 +84,7 @@ private:
     std::unique_ptr<msg::CodecHeader> headerChunk_;
     std::mutex receiveMutex_;
 
-    shared_exception_ptr async_exception_;
+    std::exception_ptr async_exception_;
 };
 
 
