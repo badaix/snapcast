@@ -227,14 +227,30 @@ void AlsaPlayer::worker()
         int result = snd_pcm_avail_delay(handle_, &framesAvail, &framesDelay);
         if (result < 0)
         {
-            LOG(WARNING, LOG_TAG) << "snd_pcm_avail_delay failed: " << snd_strerror(result) << ", avail: " << framesAvail << ", delay: " << framesDelay << "\n";
-            snd_pcm_prepare(handle_);
             // if (result == -EPIPE)
             //     snd_pcm_prepare(handle_);
             // else
             //     uninitAlsa();
-            this_thread::sleep_for(100ms);
-            continue;
+            LOG(WARNING, LOG_TAG) << "snd_pcm_avail_delay failed: " << snd_strerror(result) << ", avail: " << framesAvail << ", delay: " << framesDelay
+                                  << ", retrying.\n";
+            this_thread::sleep_for(5ms);
+            int result = snd_pcm_avail_delay(handle_, &framesAvail, &framesDelay);
+            if (result < 0)
+            {
+                this_thread::sleep_for(5ms);
+                LOG(WARNING, LOG_TAG) << "snd_pcm_avail_delay failed again: " << snd_strerror(result) << ", avail: " << framesAvail
+                                      << ", delay: " << framesDelay << ", using snd_pcm_avail and snd_pcm_delay.\n";
+                framesAvail = snd_pcm_avail(handle_);
+                result = snd_pcm_delay(handle_, &framesDelay);
+                if ((result < 0) || (framesAvail <= 0) || (framesDelay <= 0))
+                {
+                    LOG(WARNING, LOG_TAG) << "snd_pcm_avail and snd_pcm_delay failed: " << snd_strerror(result) << ", avail: " << framesAvail
+                                          << ", delay: " << framesDelay << "\n";
+                    this_thread::sleep_for(10ms);
+                    snd_pcm_prepare(handle_);
+                    continue;
+                }
+            }
         }
 
         chronos::usec delay(static_cast<chronos::usec::rep>(1000 * (double)framesDelay / format.msRate()));
