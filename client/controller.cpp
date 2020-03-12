@@ -243,19 +243,15 @@ void Controller::worker()
             /// Main loop
             while (active_)
             {
-                LOG(DEBUG) << "Main loop\n";
-                for (size_t n = 0; n < 10 && active_; ++n)
+                if (async_exception_)
                 {
-                    chronos::sleep(100);
-                    if (async_exception_)
-                    {
-                        LOG(DEBUG) << "Async exception\n";
-                        std::rethrow_exception(async_exception_);
-                    }
+                    LOG(DEBUG) << "Async exception\n";
+                    std::rethrow_exception(async_exception_);
                 }
 
                 if (sendTimeSyncMessage(1000ms))
                     LOG(DEBUG) << "time sync main loop\n";
+                this_thread::sleep_for(100ms);
             }
         }
         catch (const std::exception& e)
