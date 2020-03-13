@@ -30,7 +30,7 @@
 - Control: quicker response to group volume changes
 - Server uses less memory when sending PCM data to a stalled connection
 
-_Johannes Pohl <snapcast@badaix.de>  Tue, 03 Mar 2020 00:13:37 +0200_
+_Johannes Pohl <snapcast@badaix.de>  Sat, 14 Mar 2020 00:13:37 +0200_
 
 ## Version 0.18.1
 
