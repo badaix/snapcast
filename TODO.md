@@ -4,6 +4,7 @@ TODO
 General
 -------
 
+- Update Readme.md
 - JsonRPC documentation
 - Server ping client?
 - UDP based audio streaming
@@ -24,5 +25,4 @@ Client
 Issues
 ------
 
-- Android crash: Empty latency => app restart => empty client list
 - Android clean data structures after changing the Server
