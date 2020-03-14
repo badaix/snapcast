@@ -45,14 +45,14 @@ Stream::Stream(const SampleFormat& in_format, const SampleFormat& out_format)
                           out_format.channels() != 0 ? out_format.channels() : format_.channels());
     }
 
-    /*
-    48000     x
-    ------- = -----
-    47999,2   x - 1
+/*
+48000     x
+------- = -----
+47999,2   x - 1
 
-    x = 1,000016667 / (1,000016667 - 1)
-    */
-    // setRealSampleRate(format_.rate());
+x = 1,000016667 / (1,000016667 - 1)
+*/
+// setRealSampleRate(format_.rate());
 #ifdef HAS_SOXR
     soxr_ = nullptr;
     if ((format_.rate() != in_format_.rate()) || (format_.bits() != in_format_.bits()))
@@ -126,7 +126,7 @@ void Stream::addChunk(unique_ptr<msg::PcmChunk> chunk)
     if (age > 5s + bufferMs_)
         return;
 
-        // LOG(DEBUG, LOG_TAG) << "new chunk: " << chunk->durationMs() << " ms, Chunks: " << chunks_.size() << "\n";
+// LOG(DEBUG, LOG_TAG) << "new chunk: " << chunk->durationMs() << " ms, Chunks: " << chunks_.size() << "\n";
 
 #ifndef HAS_SOXR
     chunks_.push(move(chunk));

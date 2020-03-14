@@ -60,7 +60,7 @@ public:
     bool waitForChunk(const std::chrono::milliseconds& timeout) const;
 
 private:
-    /// Request an audio chunk from the front of the stream. 
+    /// Request an audio chunk from the front of the stream.
     /// @param outputBuffer will be filled with the chunk
     /// @param frames the number of requested frames
     /// @return the timepoint when this chunk should be audible
@@ -69,10 +69,10 @@ private:
     /// Request an audio chunk from the front of the stream with a tempo adaption
     /// @param outputBuffer will be filled with the chunk
     /// @param frames the number of requested frames
-    /// @param framesCorrection number of frames that should be added or removed. 
+    /// @param framesCorrection number of frames that should be added or removed.
     ///        The function will allways return "frames" frames, but will fit "frames + framesCorrection" frames into "frames"
     ///        so if frames is 100 and framesCorrection is 2, 102 frames will be read from the stream and 2 frames will be removed.
-    ///        This makes us "fast-forward" by 2 frames, or if framesCorrection is -3, 97 frames will be read from the stream and 
+    ///        This makes us "fast-forward" by 2 frames, or if framesCorrection is -3, 97 frames will be read from the stream and
     ///        filled with 3 frames (simply by dublication), this makes us effectively slower
     /// @return the timepoint when this chunk should be audible
     chronos::time_point_clk getNextPlayerChunk(void* outputBuffer, uint32_t frames, int32_t framesCorrection);
