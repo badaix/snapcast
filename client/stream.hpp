@@ -26,8 +26,9 @@
 #include "message/pcm_chunk.hpp"
 #include <deque>
 #include <memory>
+#ifdef HAS_SOXR
 #include <soxr.h>
-
+#endif
 
 /// Time synchronized audio stream
 /**
@@ -101,7 +102,9 @@ private:
     int32_t correctAfterXFrames_;
     chronos::msec bufferMs_;
 
+#ifdef HAS_SOXR
     soxr_t soxr_;
+#endif
     std::vector<char> resample_buffer_;
     std::vector<char> read_buffer_;
     int frame_delta_;

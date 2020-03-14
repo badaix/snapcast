@@ -7,15 +7,14 @@ set(CLIENT_SOURCES
     decoder/pcm_decoder.cpp
     player/player.cpp)
 
-set(CLIENT_LIBRARIES ${CMAKE_THREAD_LIBS_INIT} ${ATOMIC_LIBRARY} ${SOXR_LIBRARIES} common)
+set(CLIENT_LIBRARIES ${CMAKE_THREAD_LIBS_INIT} ${ATOMIC_LIBRARY} common)
 
 set(CLIENT_INCLUDE
     ${Boost_INCLUDE_DIR}
     ${CMAKE_SOURCE_DIR}/client
     ${CMAKE_SOURCE_DIR}/common
     ${ASIO_INCLUDE_DIRS}
-    ${POPL_INCLUDE_DIRS}
-	${SOXR_INCLUDE_DIR})
+    ${POPL_INCLUDE_DIRS})
 
 
 if(MACOSX)
@@ -47,8 +46,10 @@ else()
     endif (ALSA_FOUND)
 endif (MACOSX)
 
-pkg_search_module(SOXR soxr)
+#pkg_search_module(SOXR soxr)
+find_package(soxr)
 if (SOXR_FOUND)
+    add_definitions("-DHAS_SOXR")
     list(APPEND CLIENT_LIBRARIES ${SOXR_LIBRARIES})
     list(APPEND CLIENT_INCLUDE ${SOXR_INCLUDE_DIRS})
 endif (SOXR_FOUND)

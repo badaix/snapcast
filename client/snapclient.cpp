@@ -106,7 +106,9 @@ int main(int argc, char** argv)
         /*auto instanceValue =*/op.add<Value<size_t>>("i", "instance", "instance id", 1, &settings.instance);
         /*auto hostIdValue =*/op.add<Value<string>>("", "hostID", "unique host id", "", &settings.host_id);
         op.add<Value<string>>("", "player", "audio backend", "", &settings.player.player_name);
+#ifdef HAS_SOXR
         auto sample_format = op.add<Value<string>>("", "sampleformat", "resample audio stream to <rate>:<bits>:<channels>", "");
+#endif
 
         try
         {
@@ -212,6 +214,7 @@ int main(int argc, char** argv)
         }
 #endif
 
+#ifdef HAS_SOXR
         if (sample_format->is_set())
         {
             settings.player.sample_format = SampleFormat(sample_format->value());
@@ -221,6 +224,7 @@ int main(int argc, char** argv)
             if ((bits != 0) && (bits != 16) && (bits != 24) && (bits != 32))
                 throw SnapException("sampleformat bits must be 16, 24, 32, * (= same as the source)");
         }
+#endif
 
         bool active = true;
         std::shared_ptr<Controller> controller;

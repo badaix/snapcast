@@ -64,27 +64,27 @@ OBJ      += player/opensl_player.o player/oboe_player.o
 
 else ifeq ($(TARGET), OPENWRT)
 
-CXXFLAGS += -pthread -DNO_CPP11_STRING -DHAS_TREMOR -DHAS_ALSA -DHAS_AVAHI -DHAS_DAEMON
+CXXFLAGS += -pthread -DNO_CPP11_STRING -DHAS_TREMOR -DHAS_ALSA -DHAS_AVAHI -DHAS_DAEMON -DHAS_SOXR
 LDFLAGS  += -lasound -lvorbisidec -lavahi-client -lavahi-common -latomic
 OBJ      += ../common/daemon.o player/alsa_player.o browseZeroConf/browse_avahi.o
 
 else ifeq ($(TARGET), BUILDROOT)
 
-CXXFLAGS += -pthread -DNO_CPP11_STRING -DHAS_TREMOR -DHAS_ALSA -DHAS_AVAHI -DHAS_DAEMON
+CXXFLAGS += -pthread -DNO_CPP11_STRING -DHAS_TREMOR -DHAS_ALSA -DHAS_AVAHI -DHAS_DAEMON -DHAS_SOXR
 LDFLAGS  += -lasound -lvorbisidec -lavahi-client -lavahi-common -latomic
 OBJ      += ../common/daemon.o player/alsa_player.o browseZeroConf/browse_avahi.o
 
 else ifeq ($(TARGET), MACOS)
 
 CXX       = g++
-CXXFLAGS += -DHAS_COREAUDIO -DHAS_VORBIS -DFREEBSD -DHAS_BONJOUR -DHAS_DAEMON -I/usr/local/include -Wno-unused-local-typedef -Wno-deprecated
+CXXFLAGS += -DHAS_COREAUDIO -DHAS_VORBIS -DFREEBSD -DHAS_BONJOUR -DHAS_DAEMON -DHAS_SOXR -I/usr/local/include -Wno-unused-local-typedef -Wno-deprecated
 LDFLAGS  += -lvorbis -lFLAC -L/usr/local/lib -framework AudioToolbox -framework CoreAudio -framework CoreFoundation -framework IOKit
 OBJ      += ../common/daemon.o player/coreaudio_player.o browseZeroConf/browse_bonjour.o
 
 else
 
 CXX       = g++
-CXXFLAGS += -pthread -DHAS_VORBIS -DHAS_ALSA -DHAS_AVAHI -DHAS_DAEMON
+CXXFLAGS += -pthread -DHAS_VORBIS -DHAS_ALSA -DHAS_AVAHI -DHAS_DAEMON -DHAS_SOXR
 LDFLAGS  += -lrt -lasound -lvorbis -lavahi-client -lavahi-common -latomic
 OBJ      += ../common/daemon.o player/alsa_player.o browseZeroConf/browse_avahi.o
 

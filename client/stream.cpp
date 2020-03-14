@@ -31,8 +31,8 @@ static constexpr auto kCorrectionBegin = 100us;
 
 
 Stream::Stream(const SampleFormat& in_format, const SampleFormat& out_format)
-    : in_format_(in_format), median_(0), shortMedian_(0), lastUpdate_(0), playedFrames_(0), correctAfterXFrames_(0), bufferMs_(cs::msec(500)), soxr_(nullptr),
-      frame_delta_(0), hard_sync_(true)
+    : in_format_(in_format), median_(0), shortMedian_(0), lastUpdate_(0), playedFrames_(0), correctAfterXFrames_(0), bufferMs_(cs::msec(500)), frame_delta_(0),
+      hard_sync_(true)
 {
     buffer_.setSize(500);
     shortBuffer_.setSize(100);
@@ -53,7 +53,8 @@ Stream::Stream(const SampleFormat& in_format, const SampleFormat& out_format)
     x = 1,000016667 / (1,000016667 - 1)
     */
     // setRealSampleRate(format_.rate());
-
+#ifdef HAS_SOXR
+    soxr_ = nullptr;
     if ((format_.rate() != in_format_.rate()) || (format_.bits() != in_format_.bits()))
     {
         LOG(INFO, LOG_TAG) << "Resampling from " << in_format_.getFormat() << " to " << format_.getFormat() << "\n";
@@ -77,13 +78,16 @@ Stream::Stream(const SampleFormat& in_format, const SampleFormat& out_format)
         // initialize the buffer with 20ms (~latency of the reampler)
         resample_buffer_.resize(format_.frameSize() * ceil(format_.msRate()) * 20);
     }
+#endif
 }
 
 
 Stream::~Stream()
 {
+#ifdef HAS_SOXR
     if (soxr_)
         soxr_delete(soxr_);
+#endif
 }
 
 
@@ -122,8 +126,11 @@ void Stream::addChunk(unique_ptr<msg::PcmChunk> chunk)
     if (age > 5s + bufferMs_)
         return;
 
-    // LOG(DEBUG, LOG_TAG) << "new chunk: " << chunk->durationMs() << " ms, Chunks: " << chunks_.size() << "\n";
+        // LOG(DEBUG, LOG_TAG) << "new chunk: " << chunk->durationMs() << " ms, Chunks: " << chunks_.size() << "\n";
 
+#ifndef HAS_SOXR
+    chunks_.push(move(chunk));
+#else
     if (soxr_ == nullptr)
     {
         chunks_.push(move(chunk));
@@ -200,6 +207,7 @@ void Stream::addChunk(unique_ptr<msg::PcmChunk> chunk)
             }
         }
     }
+#endif
 }
 
 

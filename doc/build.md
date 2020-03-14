@@ -30,19 +30,19 @@ Install the build tools and required libs:
 For Debian derivates (e.g. Raspbian, Debian, Ubuntu, Mint):
 
     $ sudo apt-get install build-essential
-    $ sudo apt-get install libasound2-dev libvorbisidec-dev libvorbis-dev libopus-dev libflac-dev alsa-utils libavahi-client-dev avahi-daemon expat
+    $ sudo apt-get install libasound2-dev libvorbisidec-dev libvorbis-dev libopus-dev libflac-dev libsoxr-dev alsa-utils libavahi-client-dev avahi-daemon expat
 
 Compilation requires gcc 4.8 or higher, so it's highly recommended to use Debian (Raspbian) Jessie.
 
 For Arch derivates:
 
     $ sudo pacman -S base-devel
-    $ sudo pacman -S alsa-lib avahi libvorbis opus-dev flac alsa-utils boost expat
+    $ sudo pacman -S alsa-lib avahi libvorbis opus-dev flac libsoxr alsa-utils boost expat
 
 For Fedora (and probably RHEL, CentOS, & Scientific Linux, but untested):
 
     $ sudo dnf install @development-tools
-    $ sudo dnf install alsa-lib-devel avahi-devel libvorbis-devel opus-devel flac-devel libstdc++-static expat
+    $ sudo dnf install alsa-lib-devel avahi-devel libvorbis-devel opus-devel flac-devel soxr-devel libstdc++-static expat
 
 ### Build Snapclient and Snapserver
 `cd` into the Snapcast src-root directory:
@@ -96,7 +96,7 @@ If you don't have boost installed or in your standard include paths, you can cal
 ## FreeBSD (Native)
 Install the build tools and required libs:  
 
-    $ sudo pkg install gmake gcc bash avahi libogg libvorbis libopus flac
+    $ sudo pkg install gmake gcc bash avahi libogg libvorbis libopus flac libsoxr
 
 ### Build Snapserver
 `cd` into the Snapserver src-root directory:
@@ -174,7 +174,7 @@ To enable the serve and client to start under the default run-level:
  3. Install the required libs
 
 ```   
-$ brew install flac libvorbis boost opus
+$ brew install flac libsoxr libvorbis boost opus
 ```
 
 ### Build Snapclient
