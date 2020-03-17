@@ -46,7 +46,9 @@ e.g. for Raspberry Pi `snapclient_0.x.x_armhf.deb`, for laptops `snapclient_0.x.
 Install the package:
 
     sudo dpkg -i snapclient_0.x.x_armhf.deb
+
 or
+
     sudo dpkg -i snapclient_0.x.x_amd64.deb
 
 Install missing dependencies:
