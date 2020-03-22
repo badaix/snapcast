@@ -90,7 +90,11 @@ static std::string getProp(const std::string& key, const std::string& def = "")
 
 static std::string getOS()
 {
-    std::string os;
+    static std::string os("");
+
+    if (!os.empty())
+        return os;
+
 #ifdef ANDROID
     os = strutils::trim_copy("Android " + getProp("ro.build.version.release"));
 #else
@@ -114,7 +118,8 @@ static std::string getOS()
         uname(&u);
         os = u.sysname;
     }
-    return strutils::trim_copy(os);
+    strutils::trim(os);
+    return os;
 }
 
 
