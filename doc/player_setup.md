@@ -89,7 +89,7 @@ Pipe FFmpeg's audio output to the snapfifo:
 ### mpv
 Pipe mpv's audio output to the snapfifo:
 
-    mpv http://wms-15.streamsrus.com:11630 --audio-display=no --audio-channels=stereo --audio-samplerate=48000 --audio-format=s16 --ao=pcm --ao-pcm-file=/tmp/snapfifo
+    mpv http://wms-15.streamsrus.com:11630 --audio-display=no --audio-channels=stereo --audio-samplerate=48000 --audio-format=s16 --ao=pcm --ao=pcm:file=/tmp/snapfifo
 
 ### MPlayer
 Use `-novideo` and `-ao` to pipe MPlayer's audio output to the snapfifo:
