@@ -22,6 +22,7 @@
 #include <boost/process.hpp>
 #include <memory>
 #include <string>
+#include <vector>
 
 #include "posix_stream.hpp"
 #include "watchdog.hpp"
@@ -66,8 +67,8 @@ protected:
     virtual void onStderrMsg(const std::string& line);
     virtual void initExeAndPath(const std::string& filename);
 
-    bool fileExists(const std::string& filename);
-    std::string findExe(const std::string& filename);
+    bool fileExists(const std::string& filename) const;
+    std::string findExe(const std::string& filename) const;
 
     size_t wd_timeout_sec_;
     std::unique_ptr<Watchdog> watchdog_;
