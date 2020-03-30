@@ -3,7 +3,7 @@
      / _\ (  )( \/ )(  )   /  \  / __)
     /    \ )(  )  ( / (_/\(  O )( (_ \
     \_/\_/(__)(_/\_)\____/ \__/  \___/
-    version 1.2.5
+    version 1.3.0
     https://github.com/badaix/aixlog
 
     This file is part of aixlog
@@ -40,6 +40,8 @@
 #include <iostream>
 #include <memory>
 #include <mutex>
+#include <map>
+#include <thread>
 #include <sstream>
 #include <vector>
 
@@ -526,7 +528,7 @@ public:
     }
 
 protected:
-    Log() noexcept
+    Log() noexcept : last_id_(-1), last_buffer_(nullptr)
     {
         std::clog.rdbuf(this);
         std::clog << Severity() << Type::normal << Tag() << Function() << Conditional() << AixLog::Color::NONE << std::flush;
@@ -540,7 +542,7 @@ protected:
     int sync() override
     {
         std::lock_guard<std::recursive_mutex> lock(mutex_);
-        if (!buffer_.str().empty())
+        if (!get_stream().str().empty())
         {
             if (conditional_.is_true())
             {
@@ -548,11 +550,11 @@ protected:
                 {
                     if ((metadata_.type == Type::all) || (sink->get_type() == Type::all) || (metadata_.type == sink->get_type()))
                         if (metadata_.severity >= sink->severity)
-                            sink->log(metadata_, buffer_.str());
+                            sink->log(metadata_, get_stream().str());
                 }
             }
-            buffer_.str("");
-            buffer_.clear();
+            get_stream().str("");
+            get_stream().clear();
         }
 
         return 0;
@@ -566,7 +568,7 @@ protected:
             if (c == '\n')
                 sync();
             else
-                buffer_ << static_cast<char>(c);
+                get_stream() << static_cast<char>(c);
         }
         else
         {
@@ -583,7 +585,20 @@ private:
     friend std::ostream& operator<<(std::ostream& os, const Function& function);
     friend std::ostream& operator<<(std::ostream& os, const Conditional& conditional);
 
-    std::stringstream buffer_;
+    std::stringstream& get_stream()
+    {
+        auto id = std::this_thread::get_id();
+        if ((last_buffer_ == nullptr) || (last_id_ != id))
+        {
+            last_id_ = id;
+            last_buffer_ = &(buffer_[id]);
+        }
+        return *last_buffer_;
+    }
+
+    std::map<std::thread::id, std::stringstream> buffer_;
+    std::thread::id last_id_;
+    std::stringstream* last_buffer_ = nullptr;
     Metadata metadata_;
     Conditional conditional_;
     std::vector<log_sink_ptr> log_sinks_;
@@ -627,6 +642,14 @@ protected:
         size_t pos = result.find("#severity");
         if (pos != std::string::npos)
             result.replace(pos, 9, Log::to_string(metadata.severity));
+
+        pos = result.find("#color_severity");
+        if (pos != std::string::npos)
+        {
+            std::stringstream ss;
+            ss << TextColor(Color::RED) << Log::to_string(metadata.severity) << TextColor(Color::NONE);
+            result.replace(pos, 15, ss.str());
+        }
 
         pos = result.find("#tag_func");
         if (pos != std::string::npos)
