@@ -20,16 +20,72 @@
 #define TIME_DEFS_H
 
 #include <chrono>
-#include <sys/time.h>
 #include <thread>
 #ifdef MACOS
 #include <mach/clock.h>
 #include <mach/mach.h>
 #endif
 
+#ifndef WINDOWS
+#include <sys/time.h>
+#else // from the GNU C library implementation of sys/time.h
+
+#include <winsock2.h>
+
+#define timersub(a, b, result)                                                                                                                                 \
+    do                                                                                                                                                         \
+    {                                                                                                                                                          \
+        (result)->tv_sec = (a)->tv_sec - (b)->tv_sec;                                                                                                          \
+        (result)->tv_usec = (a)->tv_usec - (b)->tv_usec;                                                                                                       \
+        if ((result)->tv_usec < 0)                                                                                                                             \
+        {                                                                                                                                                      \
+            --(result)->tv_sec;                                                                                                                                \
+            (result)->tv_usec += 1000000;                                                                                                                      \
+        }                                                                                                                                                      \
+    } while (0)
+
+#define CLOCK_MONOTONIC 42 // discarded on windows plaforms
+
+// from http://stackoverflow.com/a/38212960/2510022
+#define BILLION (1E9)
+
+static BOOL g_first_time = 1;
+static LARGE_INTEGER g_counts_per_sec;
+
+inline static int clock_gettime(int dummy, struct timespec* ct)
+{
+    LARGE_INTEGER count;
+
+    if (g_first_time)
+    {
+        g_first_time = 0;
+
+        if (0 == QueryPerformanceFrequency(&g_counts_per_sec))
+        {
+            g_counts_per_sec.QuadPart = 0;
+        }
+    }
+
+    if ((NULL == ct) || (g_counts_per_sec.QuadPart <= 0) || (0 == QueryPerformanceCounter(&count)))
+    {
+        return -1;
+    }
+
+    ct->tv_sec = count.QuadPart / g_counts_per_sec.QuadPart;
+    ct->tv_nsec = ((count.QuadPart % g_counts_per_sec.QuadPart) * BILLION) / g_counts_per_sec.QuadPart;
+
+    return 0;
+}
+#endif
+
 namespace chronos
 {
-using clk = std::chrono::steady_clock;
+using clk = 
+#ifndef WINDOWS
+    std::chrono::steady_clock;
+#else
+    std::chrono::system_clock;
+#endif
 using time_point_clk = std::chrono::time_point<clk>;
 using sec = std::chrono::seconds;
 using msec = std::chrono::milliseconds;

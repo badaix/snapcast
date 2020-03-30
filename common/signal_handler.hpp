@@ -24,6 +24,25 @@
 #include <set>
 #include <signal.h>
 
+#ifdef WINDOWS
+const char* strsignal(int sig)
+{
+    switch (sig)
+    {
+        case SIGTERM:
+            return "SIGTERM";
+        case SIGINT:
+            return "SIGINT";
+        case SIGBREAK:
+            return "SIGBREAK";
+        case SIGABRT:
+            return "SIGABRT";
+        default:
+            return "Unhandled";
+    }
+}
+#endif
+
 using signal_callback = std::function<void(int signal, const std::string& name)>;
 
 static std::future<int> install_signal_handler(std::set<int> signals, const signal_callback& on_signal = nullptr)

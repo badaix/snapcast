@@ -18,7 +18,9 @@
 
 #include <chrono>
 #include <iostream>
+#ifndef WINDOWS
 #include <sys/resource.h>
+#endif
 
 #include "browseZeroConf/browse_mdns.hpp"
 #include "common/popl.hpp"
@@ -46,8 +48,13 @@ using namespace std::chrono_literals;
 
 PcmDevice getPcmDevice(const std::string& soundcard)
 {
+#if defined(HAS_ALSA) || defined(WINDOWS)
+    vector<PcmDevice> pcmDevices =
 #ifdef HAS_ALSA
-    vector<PcmDevice> pcmDevices = AlsaPlayer::pcm_list();
+        AlsaPlayer::pcm_list();
+#else
+        WASAPIPlayer::pcm_list();
+#endif
 
     try
     {
@@ -63,7 +70,6 @@ PcmDevice getPcmDevice(const std::string& soundcard)
     for (auto dev : pcmDevices)
         if (dev.name.find(soundcard) != string::npos)
             return dev;
-#else
     std::ignore = soundcard;
 #endif
 
@@ -90,7 +96,7 @@ int main(int argc, char** argv)
         auto groffSwitch = op.add<Switch, Attribute::hidden>("", "groff", "produce groff message");
         auto debugOption = op.add<Implicit<string>, Attribute::hidden>("", "debug", "enable debug logging", ""); // TODO: &settings.logging.debug);
         auto versionSwitch = op.add<Switch>("v", "version", "show version number");
-#if defined(HAS_ALSA)
+#if defined(HAS_ALSA) || defined(WINDOWS)
         auto listSwitch = op.add<Switch>("l", "list", "list PCM devices");
         /*auto soundcardValue =*/op.add<Value<string>>("s", "soundcard", "index or name of the pcm device", "default", &pcm_device);
 #endif
@@ -132,10 +138,15 @@ int main(int argc, char** argv)
             exit(EXIT_SUCCESS);
         }
 
-#ifdef HAS_ALSA
+#if defined(HAS_ALSA) || defined(WINDOWS)
         if (listSwitch->is_set())
         {
-            vector<PcmDevice> pcmDevices = AlsaPlayer::pcm_list();
+            vector<PcmDevice> pcmDevices =
+#ifdef HAS_ALSA
+                AlsaPlayer::pcm_list();
+#else
+                WASAPIPlayer::pcm_list();
+#endif
             for (auto dev : pcmDevices)
             {
                 cout << dev.idx << ": " << dev.name << "\n" << dev.description << "\n\n";
@@ -214,6 +225,10 @@ int main(int argc, char** argv)
         }
 #endif
 
+#if defined(HAS_WASAPI)
+        settings.player.player_name = "wasapi";
+#endif
+
 #ifdef HAS_SOXR
         if (sample_format->is_set())
         {
@@ -228,7 +243,11 @@ int main(int argc, char** argv)
 
         bool active = true;
         std::shared_ptr<Controller> controller;
-        auto signal_handler = install_signal_handler({SIGHUP, SIGTERM, SIGINT},
+        auto signal_handler = install_signal_handler({
+#ifndef WINDOWS // no sighup on windows
+            SIGHUP, 
+#endif
+            SIGTERM, SIGINT},
                                                      [&active, &controller](int signal, const std::string& strsignal) {
                                                          SLOG(INFO) << "Received signal " << signal << ": " << strsignal << "\n";
                                                          active = false;

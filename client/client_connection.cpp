@@ -59,7 +59,12 @@ void ClientConnection::socketRead(void* _to, size_t _bytes)
 
 std::string ClientConnection::getMacAddress()
 {
-    std::string mac = ::getMacAddress(socket_.native_handle());
+    std::string mac = 
+#ifndef WINDOWS
+        ::getMacAddress(socket_.native_handle());
+#else
+        ::getMacAddress(socket_.local_endpoint().address().to_string());
+#endif
     if (mac.empty())
         mac = "00:00:00:00:00:00";
     LOG(INFO) << "My MAC: \"" << mac << "\", socket: " << socket_.native_handle() << "\n";

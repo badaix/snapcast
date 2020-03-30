@@ -14,7 +14,7 @@ set(CLIENT_INCLUDE
     ${CMAKE_SOURCE_DIR}/client
     ${CMAKE_SOURCE_DIR}/common
     ${ASIO_INCLUDE_DIRS}
-    ${POPL_INCLUDE_DIRS})
+    ${POPL_INCLUDE_DIRS})    
 
 
 if(MACOSX)
@@ -30,6 +30,11 @@ if(MACOSX)
     find_library(COREFOUNDATION_LIB CoreFoundation)
     find_library(AUDIOTOOLBOX_LIB AudioToolbox)
     list(APPEND CLIENT_LIBRARIES ${COREAUDIO_LIB} ${COREFOUNDATION_LIB} ${AUDIOTOOLBOX_LIB})
+elseif (WIN32)
+      list(REMOVE_ITEM CLIENT_INCLUDE "common/daemon.cpp")
+      list(APPEND CLIENT_SOURCES player/wasapi_player.cpp decoder/ogg_decoder.cpp)
+      list(APPEND CLIENT_LIBRARIES ${FLAC_LIBRARIES} ${OGG_LIBRARIES} ${VORBIS_LIBRARIES} ${OGG_LIBRARIES} wsock32 ws2_32 avrt ksuser iphlpapi)
+      list(APPEND CLIENT_INCLUDE ${FLAC_INCLUDE_DIRS} ${OGG_INCLUDE_DIRS} ${VORBIS_INCLUDE_DIRS})
 else()
     # Avahi
     if (AVAHI_FOUND)

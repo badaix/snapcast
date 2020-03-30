@@ -21,8 +21,10 @@
 
 #include "string_utils.hpp"
 #include <fstream>
+#ifndef WINDOWS
 #include <grp.h>
 #include <pwd.h>
+#endif
 #include <stdexcept>
 #include <vector>
 
@@ -39,7 +41,7 @@ static bool exists(const std::string& filename)
     return infile.good();
 }
 
-
+#ifndef WINDOWS
 static void do_chown(const std::string& file_path, const std::string& user_name, const std::string& group_name)
 {
     if (user_name.empty() && group_name.empty())
@@ -88,7 +90,7 @@ static int mkdirRecursive(const char* path, mode_t mode)
     }
     return res;
 }
-
+#endif
 } // namespace file
 } // namespace utils
 

@@ -106,6 +106,21 @@
 #define SPECIAL AixLog::Type::special
 #define TIMESTAMP AixLog::Timestamp(std::chrono::system_clock::now())
 
+
+// stijnvdb: sorry! :) LOG(SEV, "tag") was not working for Windows and I couldn't figure out how to fix it for windows without potentially breaking everything else...
+// https://stackoverflow.com/questions/3046889/optional-parameters-with-c-macros (Jason Deng)
+#ifdef WIN32 
+#define LOG_2(severity, tag) AIXLOG_INTERNAL__LOG_SEVERITY_TAG(severity, tag)
+#define LOG_1(severity) AIXLOG_INTERNAL__LOG_SEVERITY(severity)
+#define LOG_0() LOG_1(0)
+
+#define FUNC_CHOOSER(_f1, _f2, _f3, ...) _f3
+#define FUNC_RECOMPOSER(argsWithParentheses) FUNC_CHOOSER argsWithParentheses
+#define CHOOSE_FROM_ARG_COUNT(...) FUNC_RECOMPOSER((__VA_ARGS__, LOG_2, LOG_1, ))
+#define MACRO_CHOOSER(...) CHOOSE_FROM_ARG_COUNT(__VA_ARGS__())
+#define LOG(...) MACRO_CHOOSER(__VA_ARGS__)(__VA_ARGS__)
+#endif
+
 /**
  * @brief
  * Severity of the log message
@@ -731,7 +746,8 @@ struct SinkOutputDebugString : public Sink
 
     void log(const Metadata& metadata, const std::string& message) override
     {
-        OutputDebugString(message.c_str());
+        std::wstring wide = std::wstring(message.begin(), message.end());
+        OutputDebugString(wide.c_str());
     }
 };
 #endif
@@ -891,7 +907,8 @@ struct SinkEventLog : public Sink
 {
     SinkEventLog(const std::string& ident, Severity severity, Type type = Type::all) : Sink(severity, type)
     {
-        event_log = RegisterEventSource(NULL, ident.c_str());
+        std::wstring wide = std::wstring(ident.begin(), ident.end()); // stijnvdb: RegisterEventSource expands to RegisterEventSourceW which takes wchar_t
+        event_log = RegisterEventSource(NULL, wide.c_str());
     }
 
     WORD get_type(Severity severity) const
@@ -917,8 +934,10 @@ struct SinkEventLog : public Sink
 
     void log(const Metadata& metadata, const std::string& message) override
     {
+        std::wstring wide = std::wstring(message.begin(), message.end());
         // We need this temp variable because we cannot take address of rValue
-        const char* c_str = message.c_str();
+        const wchar_t* c_str = wide.c_str();
+
         ReportEvent(event_log, get_type(metadata.severity), 0, 0, NULL, 1, 0, &c_str, NULL);
     }
 
