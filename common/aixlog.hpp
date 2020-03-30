@@ -528,7 +528,7 @@ public:
     }
 
 protected:
-    Log() noexcept : last_id_(-1), last_buffer_(nullptr)
+    Log() noexcept : last_buffer_(nullptr)
     {
         std::clog.rdbuf(this);
         std::clog << Severity() << Type::normal << Tag() << Function() << Conditional() << AixLog::Color::NONE << std::flush;
