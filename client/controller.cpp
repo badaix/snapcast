@@ -143,6 +143,10 @@ void Controller::onMessageReceived(ClientConnection* /*connection*/, const msg::
         if (!player_ && (player_name.empty() || (player_name == "coreaudio")))
             player_ = make_unique<CoreAudioPlayer>(pcm_device, stream_);
 #endif
+#ifdef HAS_WASAPI
+        if (!player_ && (player_name.empty() || (player_name == "wasapi")))
+            player_ = make_unique<WASAPIPlayer>(pcm_device, stream_);
+#endif
         if (!player_)
             throw SnapException("No audio player support");
         player_->setVolume(serverSettings_->getVolume() / 100.);
