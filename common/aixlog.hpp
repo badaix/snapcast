@@ -116,9 +116,9 @@
 
 #define FUNC_CHOOSER(_f1, _f2, _f3, ...) _f3
 #define FUNC_RECOMPOSER(argsWithParentheses) FUNC_CHOOSER argsWithParentheses
-#define CHOOSE_FROM_ARG_COUNT(...) FUNC_RECOMPOSER((__VA_ARGS__, LOG_2, LOG_1, ))
+#define CHOOSE_FROM_ARG_COUNT(...) FUNC_RECOMPOSER((__VA_ARGS__, LOG_2, LOG_1, FUNC_, ...))
 #define MACRO_CHOOSER(...) CHOOSE_FROM_ARG_COUNT(__VA_ARGS__())
-#define LOG(...) MACRO_CHOOSER(__VA_ARGS__)(__VA_ARGS__)
+#define LOG(...) MACRO_CHOOSER(__VA_ARGS__)(__VA_ARGS__) << TIMESTAMP << FUNC
 #endif
 
 /**
