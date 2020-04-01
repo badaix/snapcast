@@ -113,11 +113,11 @@ vector<PcmDevice> WASAPIPlayer::pcm_list()
 	
 	hr = CoCreateInstance(
 		CLSID_MMDeviceEnumerator, NULL,
-		CLSCTX_ALL, IID_IMMDeviceEnumerator,
+		CLSCTX_SERVER, IID_IMMDeviceEnumerator,
 		(void**)&deviceEnumerator);
 	CHECK_HR(hr);
 
-	hr = deviceEnumerator->EnumAudioEndpoints(eRender, DEVICE_STATE_ACTIVE | DEVICE_STATE_UNPLUGGED, &devices);
+	hr = deviceEnumerator->EnumAudioEndpoints(eRender, DEVICE_STATE_ACTIVE, &devices);
 	CHECK_HR(hr);
 
 	UINT deviceCount;
@@ -144,7 +144,6 @@ vector<PcmDevice> WASAPIPlayer::pcm_list()
 
 		hr = devices->Item(i, &device);
 		CHECK_HR(hr);
-
 		deviceList.push_back(convertToDevice(i + 1, device));
 	}
 
@@ -177,11 +176,12 @@ void WASAPIPlayer::worker()
 	waveformatExtended->dwChannelMask               = SPEAKER_FRONT_LEFT | SPEAKER_FRONT_RIGHT;
 	waveformatExtended->SubFormat                   = KSDATAFORMAT_SUBTYPE_PCM;
 
+
 	// Retrieve the device enumerator
 	IMMDeviceEnumeratorPtr deviceEnumerator = nullptr;
 	hr = CoCreateInstance(
-		CLSID_MMDeviceEnumerator, NULL,
-		CLSCTX_ALL, IID_IMMDeviceEnumerator,
+		CLSID_MMDeviceEnumerator, NULL, 
+		CLSCTX_SERVER, IID_IMMDeviceEnumerator,
 		(void**)&deviceEnumerator);
 	CHECK_HR(hr);
 
@@ -195,15 +195,15 @@ void WASAPIPlayer::worker()
 	else
 	{
 		IMMDeviceCollectionPtr devices = nullptr;
-		hr = deviceEnumerator->EnumAudioEndpoints(eRender, DEVICE_STATE_ACTIVE | DEVICE_STATE_UNPLUGGED, &devices);
+		hr = deviceEnumerator->EnumAudioEndpoints(eRender, DEVICE_STATE_ACTIVE, &devices);
 		CHECK_HR(hr);
 
-		devices->Item(pcmDevice_.idx, &device);
+		devices->Item(pcmDevice_.idx-1, &device); // 1: device passed by user is EnumAudioEndpoints -1 (we add "default" at the top when showing the list)
 	}
 
 	// Activate the device
 	IAudioClientPtr audioClient = nullptr;
-	hr = device->Activate(IID_IAudioClient, CLSCTX_ALL, NULL, (void**)&audioClient);
+	hr = device->Activate(IID_IAudioClient, CLSCTX_SERVER, NULL, (void**)&audioClient);
 	CHECK_HR(hr);
 
 	hr = audioClient->IsFormatSupported(
@@ -232,7 +232,7 @@ void WASAPIPlayer::worker()
 		CHECK_HR(hr);
 		audioClient.Attach(NULL, false);
 		hnsRequestedDuration = (REFERENCE_TIME)((10000.0 * 1000 / waveformatExtended->Format.nSamplesPerSec * alignedBufferSize) + 0.5);
-		hr = device->Activate(IID_IAudioClient, CLSCTX_ALL, NULL, (void**)&audioClient);
+		hr = device->Activate(IID_IAudioClient, CLSCTX_SERVER, NULL, (void**)&audioClient);
 		CHECK_HR(hr);
 		hr = audioClient->Initialize(
 			AUDCLNT_SHAREMODE_EXCLUSIVE,
@@ -292,8 +292,22 @@ void WASAPIPlayer::worker()
 	  DWORD returnVal = WaitForSingleObject(eventHandle.get(), 2000);
 		if (returnVal != WAIT_OBJECT_0)
 		{
-			stop();
-			CHECK_HR(ERROR_TIMEOUT);
+            //stop();
+            LOG(INFO, LOG_TAG) << "Got timeout waiting for audio device callback\n";
+            CHECK_HR(ERROR_TIMEOUT);
+			
+			hr = audioClient->Stop();
+            CHECK_HR(hr);
+            hr = audioClient->Reset();
+            CHECK_HR(hr);
+
+            while (active_ && !stream_->waitForChunk(std::chrono::milliseconds(100)))
+                LOG(INFO, LOG_TAG) << "Waiting for chunk\n";
+
+            hr = audioClient->Start();
+            CHECK_HR(hr);
+            bufferPosition = 0;
+            break;
 		}
 
 		// Thread was sleeping above, double check that we are still running
