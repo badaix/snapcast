@@ -50,6 +50,8 @@ _COM_SMARTPTR_TYPEDEF(IMMDeviceCollection,__uuidof(IMMDeviceCollection));
 _COM_SMARTPTR_TYPEDEF(IMMDeviceEnumerator,__uuidof(IMMDeviceEnumerator));
 _COM_SMARTPTR_TYPEDEF(IAudioClient,__uuidof(IAudioClient));
 _COM_SMARTPTR_TYPEDEF(IPropertyStore,__uuidof(IPropertyStore));
+_COM_SMARTPTR_TYPEDEF(IAudioSessionManager, __uuidof(IAudioSessionManager));
+_COM_SMARTPTR_TYPEDEF(IAudioSessionControl, __uuidof(IAudioSessionControl));
 
 #define REFTIMES_PER_SEC  10000000
 #define REFTIMES_PER_MILLISEC  10000
@@ -58,13 +60,14 @@ EXTERN_C const PROPERTYKEY DECLSPEC_SELECTANY PKEY_Device_FriendlyName = { { 0xa
 
 #define CHECK_HR(hres) if(FAILED(hres)){stringstream ss;ss<<"HRESULT fault status: "<<hex<<(hres)<<" line "<<dec<<__LINE__<<endl;throw SnapException(ss.str());}
 
-WASAPIPlayer::WASAPIPlayer(const PcmDevice& pcmDevice, std::shared_ptr<Stream> stream)
-	: Player(pcmDevice, stream)
+WASAPIPlayer::WASAPIPlayer(const PcmDevice& pcmDevice, std::shared_ptr<Stream> stream) : Player(pcmDevice, stream)
 {
 	HRESULT hr = CoInitializeEx(
 		NULL,
 		COINIT_MULTITHREADED);
 	CHECK_HR(hr);
+
+	audioEventListener_ = new AudioSessionEventListener();
 }
 
 WASAPIPlayer::~WASAPIPlayer()
@@ -144,7 +147,7 @@ vector<PcmDevice> WASAPIPlayer::pcm_list()
 
 		hr = devices->Item(i, &device);
 		CHECK_HR(hr);
-		deviceList.push_back(convertToDevice(i + 1, device));
+		deviceList.push_back(convertToDevice(i, device));
 	}
 
 	return deviceList;
@@ -198,7 +201,7 @@ void WASAPIPlayer::worker()
 		hr = deviceEnumerator->EnumAudioEndpoints(eRender, DEVICE_STATE_ACTIVE, &devices);
 		CHECK_HR(hr);
 
-		devices->Item(pcmDevice_.idx-1, &device); // 1: device passed by user is EnumAudioEndpoints -1 (we add "default" at the top when showing the list)
+		devices->Item(pcmDevice_.idx, &device);
 	}
 
 	// Activate the device
@@ -211,6 +214,23 @@ void WASAPIPlayer::worker()
 		&(waveformatExtended->Format),
 		NULL);
 	CHECK_HR(hr);
+
+	IAudioSessionManagerPtr sessionManager = nullptr;
+    // Get the session manager for the endpoint device.
+    hr = device->Activate(__uuidof(IAudioSessionManager), CLSCTX_INPROC_SERVER, NULL, (void**)&sessionManager);
+    CHECK_HR(hr);
+
+    // Get the control interface for the process-specific audio
+    // session with session GUID = GUID_NULL. This is the session
+    // that an audio stream for a DirectSound, DirectShow, waveOut,
+    // or PlaySound application stream belongs to by default.
+    IAudioSessionControlPtr control = nullptr;
+    hr = sessionManager->GetAudioSessionControl(NULL, 0, &control);
+    CHECK_HR(hr);
+
+    // register
+    hr = control->RegisterAudioSessionNotification(audioEventListener_);
+    CHECK_HR(hr);
 	
 	// Get the device period
 	REFERENCE_TIME hnsRequestedDuration = REFTIMES_PER_SEC;
@@ -314,6 +334,9 @@ void WASAPIPlayer::worker()
 		if (!active_)
 			break;
 
+		// update our volume from IAudioControl
+        volCorrection_ = audioEventListener_->getVolume();
+
 		clock->GetPosition(&position, NULL);
 
 		if (stream_->getPlayerChunk(queueBuffer.get(), microseconds(
@@ -348,4 +371,87 @@ void WASAPIPlayer::worker()
 			bufferPosition = 0;
 		}
 	}
+}
+
+HRESULT STDMETHODCALLTYPE AudioSessionEventListener::QueryInterface(REFIID riid, VOID** ppvInterface)
+{
+    if (IID_IUnknown == riid)
+    {
+        AddRef();
+        *ppvInterface = (IUnknown*)this;
+    }
+    else if (__uuidof(IAudioSessionEvents) == riid)
+    {
+        AddRef();
+        *ppvInterface = (IAudioSessionEvents*)this;
+    }
+    else
+    {
+        *ppvInterface = NULL;
+        return E_NOINTERFACE;
+    }
+    return S_OK;
+}
+
+HRESULT STDMETHODCALLTYPE AudioSessionEventListener::OnSimpleVolumeChanged(float NewVolume, BOOL NewMute, LPCGUID EventContext)
+{
+    volume_ = NewVolume;
+    if (NewMute)
+    {
+        LOG(DEBUG, LOG_TAG) << ("MUTE\n");
+    }
+    else
+    {
+        LOG(DEBUG, LOG_TAG) << "Volume = " << (UINT32)(100 * NewVolume + 0.5) << " percent\n";
+    }
+
+    return S_OK;
+}
+
+HRESULT STDMETHODCALLTYPE AudioSessionEventListener::OnStateChanged(AudioSessionState NewState)
+{
+    char* pszState = "?????";
+
+    switch (NewState)
+    {
+        case AudioSessionStateActive:
+            pszState = "active";
+            break;
+        case AudioSessionStateInactive:
+            pszState = "inactive";
+            break;
+    }
+    LOG(DEBUG, LOG_TAG) << "New session state = " << pszState << "\n";
+
+    return S_OK;
+}
+
+HRESULT STDMETHODCALLTYPE AudioSessionEventListener::OnSessionDisconnected(AudioSessionDisconnectReason DisconnectReason)
+{
+    char* pszReason = "?????";
+
+    switch (DisconnectReason)
+    {
+        case DisconnectReasonDeviceRemoval:
+            pszReason = "device removed";
+            break;
+        case DisconnectReasonServerShutdown:
+            pszReason = "server shut down";
+            break;
+        case DisconnectReasonFormatChanged:
+            pszReason = "format changed";
+            break;
+        case DisconnectReasonSessionLogoff:
+            pszReason = "user logged off";
+            break;
+        case DisconnectReasonSessionDisconnected:
+            pszReason = "session disconnected";
+            break;
+        case DisconnectReasonExclusiveModeOverride:
+            pszReason = "exclusive-mode override";
+            break;
+    }
+    LOG(INFO, LOG_TAG) << "Audio session disconnected (reason: " << pszReason << ")";
+
+    return S_OK;
 }

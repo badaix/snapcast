@@ -20,6 +20,75 @@
 #define WASAPI_PLAYER_H
 
 #include "player.hpp"
+#include <audiopolicy.h>
+
+class AudioSessionEventListener : public IAudioSessionEvents
+{
+    LONG _cRef;
+
+    float volume_ = 1.f;
+
+public:
+    AudioSessionEventListener() : _cRef(1)
+    {
+    }
+
+    float getVolume()
+    {
+        return volume_;
+    }
+
+    ~AudioSessionEventListener()
+    {
+    }
+
+    // IUnknown methods -- AddRef, Release, and QueryInterface
+
+    ULONG STDMETHODCALLTYPE AddRef()
+    {
+        return InterlockedIncrement(&_cRef);
+    }
+
+    ULONG STDMETHODCALLTYPE Release()
+    {
+        ULONG ulRef = InterlockedDecrement(&_cRef);
+        if (0 == ulRef)
+        {
+            delete this;
+        }
+        return ulRef;
+    }
+
+    HRESULT STDMETHODCALLTYPE QueryInterface(REFIID riid, VOID** ppvInterface);
+
+    // Notification methods for audio session events
+
+    HRESULT STDMETHODCALLTYPE OnDisplayNameChanged(LPCWSTR NewDisplayName, LPCGUID EventContext)
+    {
+        return S_OK;
+    }
+
+    HRESULT STDMETHODCALLTYPE OnIconPathChanged(LPCWSTR NewIconPath, LPCGUID EventContext)
+    {
+        return S_OK;
+    }
+
+    HRESULT STDMETHODCALLTYPE OnSimpleVolumeChanged(float NewVolume, BOOL NewMute, LPCGUID EventContext);
+
+    HRESULT STDMETHODCALLTYPE OnChannelVolumeChanged(DWORD ChannelCount, float NewChannelVolumeArray[], DWORD ChangedChannel, LPCGUID EventContext)
+    {
+        return S_OK;
+    }
+
+    HRESULT STDMETHODCALLTYPE OnGroupingParamChanged(LPCGUID NewGroupingParam, LPCGUID EventContext)
+    {
+        return S_OK;
+    }
+
+    HRESULT STDMETHODCALLTYPE OnStateChanged(AudioSessionState NewState);
+
+    HRESULT STDMETHODCALLTYPE OnSessionDisconnected(AudioSessionDisconnectReason DisconnectReason);
+};
 
 class WASAPIPlayer : public Player
 {
@@ -30,6 +99,9 @@ public:
 	static std::vector<PcmDevice> pcm_list(void);
 protected:
 	virtual void worker();
+
+private:
+    AudioSessionEventListener* audioEventListener_;
 };
 
 #endif
