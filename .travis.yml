@@ -164,8 +164,26 @@ matrix:
       env:
         - MATRIX_EVAL="brew update && brew install flac opus libvorbis libsoxr"
 
+    # build on windows
+    - os: windows
+
 before_install:
     - eval "${MATRIX_EVAL}"
+    - |
+      (
+        if [ "$TRAVIS_OS_NAME" = 'windows' ]; then
+          curl -LfsS -o /tmp/travis-wait-enhanced.zip "https://github.com/crazy-max/travis-wait-enhanced/releases/download/v1.1.0/travis-wait-enhanced_1.1.0_windows_x86_64.zip"
+          7z x /tmp/travis-wait-enhanced.zip -y -o/usr/bin/ travis-wait-enhanced.exe -r
+          travis-wait-enhanced --version
+          if [ ! -f "vcpkg/vcpkg.exe" ]; then # if not in cache from a previous run            
+            git clone https://github.com/Microsoft/vcpkg.git
+            cd vcpkg
+            ./bootstrap-vcpkg.bat
+            cd ..
+          fi
+          travis-wait-enhanced --interval=1m --timeout=30m -- ./vcpkg/vcpkg.exe install libflac libvorbis soxr opus boost-asio --triplet x64-windows          
+        fi
+      )
 
 script:
   # make sure CXX is correctly set
@@ -173,4 +191,15 @@ script:
 
   - mkdir build
   - cd build
-  - cmake -DCMAKE_CXX_FLAGS="$CXXFLAGS -Werror -Wall -Wextra -pedantic -Wno-unused-parameter -Wno-unused-function -O2" .. && make && sudo make install
+  - |
+    (
+      if [ "$TRAVIS_OS_NAME" != 'windows' ]; then
+        cmake -DCMAKE_CXX_FLAGS="$CXXFLAGS -Werror -Wall -Wextra -pedantic -Wno-unused-parameter -Wno-unused-function -O2" .. && make && sudo make install
+      else
+        cmake -G "Visual Studio 15 2017 Win64" -DCMAKE_TOOLCHAIN_FILE=../vcpkg/scripts/buildsystems/vcpkg.cmake -DVCPKG_TARGET_TRIPLET=x64-windows ..
+        cmake --build . --config Release
+      fi
+     )
+cache:
+  directories:
+  - vcpkg
