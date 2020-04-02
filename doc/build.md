@@ -314,7 +314,7 @@ This example will show you how to add snapcast to [Buildroot](https://buildroot.
 Prerequisites:
 
  * CMake 
- * Visual Studio 2019 with C++
+ * Visual Studio 2017 or 2019 with C++
 
 Set up [vcpkg](https://github.com/Microsoft/vcpkg)
 
