@@ -33,6 +33,9 @@
 #include <sstream>
 #include <stdexcept>
 #include <vector>
+#ifdef WINDOWS
+#include <cctype>
+#endif
 
 
 namespace popl

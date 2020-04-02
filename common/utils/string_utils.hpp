@@ -24,6 +24,9 @@
 #include <stdio.h>
 #include <string>
 #include <vector>
+#ifdef WINDOWS
+#include <cctype>
+#endif
 
 namespace utils
 {
