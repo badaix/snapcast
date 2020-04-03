@@ -61,7 +61,7 @@ EXTERN_C const PROPERTYKEY DECLSPEC_SELECTANY PKEY_Device_FriendlyName = { { 0xa
 
 #define CHECK_HR(hres) if(FAILED(hres)){stringstream ss;ss<<"HRESULT fault status: "<<hex<<(hres)<<" line "<<dec<<__LINE__<<endl; LOG(FATAL, LOG_TAG) << ss.str();throw SnapException(ss.str());}
 
-WASAPIPlayer::WASAPIPlayer(const PcmDevice& pcmDevice, std::shared_ptr<Stream> stream) : Player(pcmDevice, stream)
+WASAPIPlayer::WASAPIPlayer(const PcmDevice& pcmDevice, std::shared_ptr<Stream> stream, ClientSettings::WasapiMode mode) : Player(pcmDevice, stream), mode_(mode)
 {
 	HRESULT hr = CoInitializeEx(
 		NULL,
@@ -92,7 +92,7 @@ inline PcmDevice convertToDevice(int idx, IMMDevicePtr& device)
 	PropVariantInit(&deviceName);
 
 	hr = properties->GetValue(PKEY_Device_FriendlyName, &deviceName);
-	CHECK_HR(hr);  
+	CHECK_HR(hr);
 
 	desc.idx = idx;
 	desc.name = wstring_convert<codecvt_utf8<wchar_t>, wchar_t>().to_bytes(id);
@@ -214,18 +214,20 @@ void WASAPIPlayer::worker()
 	CHECK_HR(hr);
 
 	PWAVEFORMATEX formatEx = (PWAVEFORMATEX)format.blob.pBlobData;
-	LOG(INFO, LOG_TAG) << "Device accepts format: " << formatEx->nSamplesPerSec << ":" << formatEx->wBitsPerSample << ":" << formatEx->nChannels << "\n";
-
+	LOG(INFO, LOG_TAG) << "Device accepts format: " << formatEx->nSamplesPerSec << ":" << formatEx->wBitsPerSample << ":" << formatEx->nChannels << "\n";    
 	// Activate the device
 	IAudioClientPtr audioClient = nullptr;
 	hr = device->Activate(IID_IAudioClient, CLSCTX_SERVER, NULL, (void**)&audioClient);
 	CHECK_HR(hr);
 
-	hr = audioClient->IsFormatSupported(
-		AUDCLNT_SHAREMODE_EXCLUSIVE,
-		&(waveformatExtended->Format),
-		NULL);
-	CHECK_HR(hr);
+	if(mode_ == ClientSettings::WasapiMode::EXCLUSIVE)
+	{
+		hr = audioClient->IsFormatSupported(
+			AUDCLNT_SHAREMODE_EXCLUSIVE,
+			&(waveformatExtended->Format),
+			NULL);
+		CHECK_HR(hr);
+	}
 
 	IAudioSessionManagerPtr sessionManager = nullptr;
     // Get the session manager for the endpoint device.
@@ -249,14 +251,22 @@ void WASAPIPlayer::worker()
 	hr = audioClient->GetDevicePeriod(NULL, &hnsRequestedDuration);
 	CHECK_HR(hr);
 	
+	LOG(INFO, LOG_TAG) << "Initializing WASAPI in " << (mode_ == ClientSettings::WasapiMode::SHARED ? "shared" : "exclusive") << " mode\n";
+
+	_AUDCLNT_SHAREMODE share_mode = mode_ == ClientSettings::WasapiMode::SHARED ? AUDCLNT_SHAREMODE_SHARED : AUDCLNT_SHAREMODE_EXCLUSIVE;
+    DWORD stream_flags = mode_ == ClientSettings::WasapiMode::SHARED
+                                 ? AUDCLNT_STREAMFLAGS_EVENTCALLBACK | AUDCLNT_STREAMFLAGS_AUTOCONVERTPCM | AUDCLNT_STREAMFLAGS_SRC_DEFAULT_QUALITY
+                                 : AUDCLNT_STREAMFLAGS_EVENTCALLBACK;
+
 	// Initialize the client at minimum latency
 	hr = audioClient->Initialize(
-		AUDCLNT_SHAREMODE_EXCLUSIVE,
-		AUDCLNT_STREAMFLAGS_EVENTCALLBACK,
+		share_mode,
+		stream_flags,
 		hnsRequestedDuration,
 		hnsRequestedDuration,
 		&(waveformatExtended->Format),
 		NULL);
+
 	if (hr == AUDCLNT_E_BUFFER_SIZE_NOT_ALIGNED)
 	{
 		UINT32 alignedBufferSize;
@@ -267,8 +277,8 @@ void WASAPIPlayer::worker()
 		hr = device->Activate(IID_IAudioClient, CLSCTX_SERVER, NULL, (void**)&audioClient);
 		CHECK_HR(hr);
 		hr = audioClient->Initialize(
-			AUDCLNT_SHAREMODE_EXCLUSIVE,
-			AUDCLNT_STREAMFLAGS_EVENTCALLBACK,
+			share_mode,
+			stream_flags,
 			hnsRequestedDuration,
 			hnsRequestedDuration,
 			&(waveformatExtended->Format),
@@ -350,20 +360,32 @@ void WASAPIPlayer::worker()
         volCorrection_ = audioEventListener_->getVolume();
 
 		clock->GetPosition(&position, NULL);
+        
+		UINT32 padding = 0;
+		if(mode_ == ClientSettings::WasapiMode::SHARED)
+        {
+			hr = audioClient->GetCurrentPadding(&padding);
+			CHECK_HR(hr);
+		}
+
+		int available = bufferFrameCount - padding;
 
 		if (stream_->getPlayerChunk(queueBuffer.get(), microseconds(
 		                                                      ((bufferPosition * 1000000) / waveformat->nSamplesPerSec) -
 		                                                      ((position * 1000000) / frequency)),
-		                            bufferFrameCount))
+                                            available))
 		{
-			adjustVolume(queueBuffer.get(), bufferFrameCount);
-			hr = renderClient->GetBuffer(bufferFrameCount, &buffer);
-			CHECK_HR(hr);
-			memcpy(buffer, queueBuffer.get(), bufferSize);
-			hr = renderClient->ReleaseBuffer(bufferFrameCount, 0);
-			CHECK_HR(hr);
+			if (available > 0)
+			{
+				adjustVolume(queueBuffer.get(), available);
+				hr = renderClient->GetBuffer(available, &buffer);
+				CHECK_HR(hr);
+				memcpy(buffer, queueBuffer.get(), bufferSize);
+				hr = renderClient->ReleaseBuffer(available, 0);
+				CHECK_HR(hr);
 			
-			bufferPosition += bufferFrameCount;
+				bufferPosition += available;
+			}
 		}
 		else
 		{

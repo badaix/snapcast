@@ -115,6 +115,9 @@ int main(int argc, char** argv)
 #ifdef HAS_SOXR
         auto sample_format = op.add<Value<string>>("", "sampleformat", "resample audio stream to <rate>:<bits>:<channels>", "");
 #endif
+#ifdef HAS_WASAPI
+        auto wasapi_mode = op.add<Value<string>>("", "wasapimode", "WASAPI mode to use [shared/exclusive]", "shared");
+#endif
 
         try
         {
@@ -225,10 +228,6 @@ int main(int argc, char** argv)
         }
 #endif
 
-#if defined(HAS_WASAPI)
-        settings.player.player_name = "wasapi";
-#endif
-
 #ifdef HAS_SOXR
         if (sample_format->is_set())
         {
@@ -238,6 +237,15 @@ int main(int argc, char** argv)
             auto bits = settings.player.sample_format.bits();
             if ((bits != 0) && (bits != 16) && (bits != 24) && (bits != 32))
                 throw SnapException("sampleformat bits must be 16, 24, 32, * (= same as the source)");
+        }
+#endif
+
+#ifdef HAS_WASAPI
+        settings.player.player_name = "wasapi";
+        if (wasapi_mode->is_set())
+        {
+            settings.player.wasapi_mode = (strcmp(wasapi_mode->value().c_str(), "exclusive") == 0) ? 
+                ClientSettings::WasapiMode::EXCLUSIVE : ClientSettings::WasapiMode::SHARED;
         }
 #endif
 
