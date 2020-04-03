@@ -1,5 +1,7 @@
 #include "wasapi_player.h"
-
+#include <initguid.h>
+#include <mmdeviceapi.h>
+//#include <functiondiscoverykeys_devpkey.h>
 #include <functional>
 #include <audioclient.h>
 #include <mmdeviceapi.h>
@@ -9,7 +11,6 @@
 #include <ksmedia.h>
 #include <chrono>
 #include <assert.h>
-#include <functiondiscoverykeys_devpkey.h>
 #include <codecvt>
 #include <locale>
 #include "common/snap_exception.hpp"
@@ -91,12 +92,12 @@ inline PcmDevice convertToDevice(int idx, IMMDevicePtr& device)
 	PropVariantInit(&deviceName);
 
 	hr = properties->GetValue(PKEY_Device_FriendlyName, &deviceName);
-	CHECK_HR(hr);
+	CHECK_HR(hr);  
 
 	desc.idx = idx;
 	desc.name = wstring_convert<codecvt_utf8<wchar_t>, wchar_t>().to_bytes(id);
 	desc.description = wstring_convert<codecvt_utf8<wchar_t>, wchar_t>().to_bytes(deviceName.pwszVal);
-	
+
 	CoTaskMemFree(id);
 	
 	return desc;
@@ -203,6 +204,17 @@ void WASAPIPlayer::worker()
 
 		devices->Item(pcmDevice_.idx, &device);
 	}
+
+	IPropertyStorePtr properties = nullptr;
+	hr = device->OpenPropertyStore(STGM_READ, &properties);
+	CHECK_HR(hr);
+
+	PROPVARIANT format;
+	hr = properties->GetValue(PKEY_AudioEngine_DeviceFormat, &format);
+	CHECK_HR(hr);
+
+	PWAVEFORMATEX formatEx = (PWAVEFORMATEX)format.blob.pBlobData;
+	LOG(INFO, LOG_TAG) << "Device accepts format: " << formatEx->nSamplesPerSec << ":" << formatEx->wBitsPerSample << ":" << formatEx->nChannels << "\n";
 
 	// Activate the device
 	IAudioClientPtr audioClient = nullptr;
