@@ -145,7 +145,7 @@ void Controller::onMessageReceived(ClientConnection* /*connection*/, const msg::
 #endif
 #ifdef HAS_WASAPI
         if (!player_ && (player_name.empty() || (player_name == "wasapi")))
-            player_ = make_unique<WASAPIPlayer>(pcm_device, stream_);
+            player_ = make_unique<WASAPIPlayer>(pcm_device, stream_, settings_.player.wasapi_mode);
 #endif
         if (!player_)
             throw SnapException("No audio player support");

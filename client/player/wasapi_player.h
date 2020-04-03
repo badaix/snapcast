@@ -18,9 +18,9 @@
 
 #ifndef WASAPI_PLAYER_H
 #define WASAPI_PLAYER_H
-
 #include "player.hpp"
 #include <audiopolicy.h>
+#include "client_settings.hpp"
 
 class AudioSessionEventListener : public IAudioSessionEvents
 {
@@ -93,7 +93,7 @@ public:
 class WASAPIPlayer : public Player
 {
 public:
-    WASAPIPlayer(const PcmDevice& pcmDevice, std::shared_ptr<Stream> stream);
+    WASAPIPlayer(const PcmDevice& pcmDevice, std::shared_ptr<Stream> stream, ClientSettings::WasapiMode mode);
 	virtual ~WASAPIPlayer();
 	
 	static std::vector<PcmDevice> pcm_list(void);
@@ -102,6 +102,7 @@ protected:
 
 private:
     AudioSessionEventListener* audioEventListener_;
+    ClientSettings::WasapiMode mode_;
 };
 
 #endif
