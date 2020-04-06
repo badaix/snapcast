@@ -111,7 +111,9 @@ int main(int argc, char** argv)
         /*auto latencyValue =*/op.add<Value<int>>("", "latency", "latency of the PCM device", 0, &settings.player.latency);
         /*auto instanceValue =*/op.add<Value<size_t>>("i", "instance", "instance id", 1, &settings.instance);
         /*auto hostIdValue =*/op.add<Value<string>>("", "hostID", "unique host id", "", &settings.host_id);
+#ifdef ANDROID
         op.add<Value<string>>("", "player", "audio backend", "", &settings.player.player_name);
+#endif
 #ifdef HAS_SOXR
         auto sample_format = op.add<Value<string>>("", "sampleformat", "resample audio stream to <rate>:<bits>:<channels>", "");
 #endif
@@ -241,7 +243,6 @@ int main(int argc, char** argv)
 #endif
 
 #ifdef HAS_WASAPI
-        settings.player.player_name = "wasapi";
         if (wasapi_mode->is_set())
         {
             settings.player.wasapi_mode = (strcmp(wasapi_mode->value().c_str(), "exclusive") == 0) ? 
