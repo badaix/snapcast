@@ -29,7 +29,8 @@
 #ifndef WINDOWS
 #include <sys/time.h>
 #else // from the GNU C library implementation of sys/time.h
-
+#include <Windows.h>
+#include <stdint.h>
 #include <winsock2.h>
 
 #define timersub(a, b, result)                                                                                                                                 \
@@ -45,37 +46,6 @@
     } while (0)
 
 #define CLOCK_MONOTONIC 42 // discarded on windows plaforms
-
-// from http://stackoverflow.com/a/38212960/2510022
-#define BILLION (1E9)
-
-static BOOL g_first_time = 1;
-static LARGE_INTEGER g_counts_per_sec;
-
-inline static int clock_gettime(int dummy, struct timespec* ct)
-{
-    LARGE_INTEGER count;
-
-    if (g_first_time)
-    {
-        g_first_time = 0;
-
-        if (0 == QueryPerformanceFrequency(&g_counts_per_sec))
-        {
-            g_counts_per_sec.QuadPart = 0;
-        }
-    }
-
-    if ((NULL == ct) || (g_counts_per_sec.QuadPart <= 0) || (0 == QueryPerformanceCounter(&count)))
-    {
-        return -1;
-    }
-
-    ct->tv_sec = count.QuadPart / g_counts_per_sec.QuadPart;
-    ct->tv_nsec = ((count.QuadPart % g_counts_per_sec.QuadPart) * BILLION) / g_counts_per_sec.QuadPart;
-
-    return 0;
-}
 #endif
 
 namespace chronos
@@ -101,9 +71,35 @@ inline static void timeofday(struct timeval* tv)
     tv->tv_usec = microsecs.count() % 1000000;
 }
 
+#ifdef WINDOWS
+// Implementation from http://stackoverflow.com/a/26085827/2510022
+inline static int gettimeofday(struct timeval* tp, struct timezone* tzp)
+{
+    // Note: some broken versions only have 8 trailing zero's, the correct epoch has 9 trailing zero's
+    static const uint64_t EPOCH = ((uint64_t)116444736000000000ULL);
+
+    SYSTEMTIME system_time;
+    FILETIME file_time;
+    uint64_t time;
+
+    GetSystemTime(&system_time);
+    SystemTimeToFileTime(&system_time, &file_time);
+    time = ((uint64_t)file_time.dwLowDateTime);
+    time += ((uint64_t)file_time.dwHighDateTime) << 32;
+
+    tp->tv_sec = (long)((time - EPOCH) / 10000000L);
+    tp->tv_usec = (long)(system_time.wMilliseconds * 1000);
+    return 0;
+}
+#endif
+
 inline static void steadytimeofday(struct timeval* tv)
 {
+#ifndef WINDOWS
     timeofday<clk>(tv);
+#else
+    gettimeofday(tv, NULL);
+#endif
 }
 
 inline static void systemtimeofday(struct timeval* tv)
@@ -142,13 +138,15 @@ inline static void addUs(timeval& tv, int us)
 
 inline static long getTickCount()
 {
-#ifdef MACOS
+#if defined (MACOS)
     clock_serv_t cclock;
     mach_timespec_t mts;
     host_get_clock_service(mach_host_self(), SYSTEM_CLOCK, &cclock);
     clock_get_time(cclock, &mts);
     mach_port_deallocate(mach_task_self(), cclock);
     return mts.tv_sec * 1000 + mts.tv_nsec / 1000000;
+#elif defined(WINDOWS)
+    return getTickCount();
 #else
     struct timespec now;
     clock_gettime(CLOCK_MONOTONIC, &now);

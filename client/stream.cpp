@@ -16,6 +16,8 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
+#define NOMINMAX
+
 #include "stream.hpp"
 #include "common/aixlog.hpp"
 #include "time_provider.hpp"
@@ -390,7 +392,7 @@ bool Stream::getPlayerChunk(void* outputBuffer, const cs::usec& outputBufferDacT
                     // and can play 30ms of the stream
                     uint32_t silent_frames = static_cast<size_t>(-chunk_->format.nsRate() * std::chrono::duration_cast<cs::nsec>(age).count());
                     bool result = (silent_frames <= frames);
-                    silent_frames = (std::min)(silent_frames, frames);
+                    silent_frames = std::min(silent_frames, frames);
                     LOG(DEBUG, LOG_TAG) << "Silent frames: " << silent_frames << ", frames: " << frames
                                         << ", age: " << std::chrono::duration_cast<cs::usec>(age).count() / 1000. << "\n";
                     getSilentPlayerChunk(outputBuffer, silent_frames);
@@ -453,7 +455,7 @@ bool Stream::getPlayerChunk(void* outputBuffer, const cs::usec& outputBufferDacT
             if ((cs::usec(shortMedian_) > kCorrectionBegin) && (cs::usec(miniMedian) > cs::usec(50)) && (cs::usec(age) > cs::usec(50)))
             {
                 double rate = (shortMedian_ / 100) * 0.00005;
-                rate = 1.0 - (std::min)(rate, 0.0005);
+                rate = 1.0 - std::min(rate, 0.0005);
                 // LOG(INFO, LOG_TAG) << "Rate: " << rate << "\n";
                 // we are late (age > 0), this means we are not playing fast enough
                 // => the real sample rate seems to be lower, we have to drop some frames
@@ -462,7 +464,7 @@ bool Stream::getPlayerChunk(void* outputBuffer, const cs::usec& outputBufferDacT
             else if ((cs::usec(shortMedian_) < -kCorrectionBegin) && (cs::usec(miniMedian) < -cs::usec(50)) && (cs::usec(age) < -cs::usec(50)))
             {
                 double rate = (-shortMedian_ / 100) * 0.00005;
-                rate = 1.0 + (std::min)(rate, 0.0005);
+                rate = 1.0 + std::min(rate, 0.0005);
                 // LOG(INFO, LOG_TAG) << "Rate: " << rate << "\n";
                 // we are early (age > 0), this means we are playing too fast
                 // => the real sample rate seems to be higher, we have to insert some frames
