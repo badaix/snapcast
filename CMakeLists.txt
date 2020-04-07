@@ -204,12 +204,26 @@ find_package(Boost 1.70 REQUIRED)
 add_definitions("-DBOOST_ERROR_CODE_HEADER_ONLY")
 
 if(WIN32)
-    find_package(FLAC REQUIRED)
-    find_package(Ogg REQUIRED)
-    find_package(Vorbis REQUIRED)
-    find_package(Opus REQUIRED)    
-    add_definitions(-DNTDDI_VERSION=0x06020000 -D_WIN32_WINNT=0x0602 -DWINVER=0x0602 -DWINDOWS -DWIN32_LEAN_AND_MEAN -DUNICODE -D_UNICODE -D_CRT_SECURE_NO_WARNINGS )
-    add_definitions(-DHAS_OGG -DHAS_VORBIS -DHAS_FLAC -DHAS_VORBIS_ENC -DHAS_WASAPI -DHAS_OPUS)
+	include(FindPackageHandleStandardArgs)
+
+	find_path(FLAC_INCLUDE_DIRS FLAC/all.h)
+	find_library(FLAC_LIBRARIES FLAC)
+	find_package_handle_standard_args(FLAC DEFAULT_MSG FLAC_INCLUDE_DIRS FLAC_LIBRARIES)
+
+	find_path(OGG_INCLUDE_DIRS ogg/ogg.h)
+	find_library(OGG_LIBRARIES ogg)
+	find_package_handle_standard_args(Ogg DEFAULT_MSG OGG_INCLUDE_DIRS OGG_LIBRARIES)
+
+	find_path(VORBIS_INCLUDE_DIRS vorbis/vorbisenc.h)
+	find_library(VORBIS_LIBRARIES vorbis)
+	find_package_handle_standard_args(Vorbis DEFAULT_MSG VORBIS_INCLUDE_DIRS VORBIS_LIBRARIES)
+
+	find_path(OPUS_INCLUDE_DIRS opus/opus.h)
+	find_library(OPUS_LIBRARIES opus)
+	find_package_handle_standard_args(Opus REQUIRED OPUS_INCLUDE_DIRS OPUS_LIBRARIES)
+
+	add_definitions(-DNTDDI_VERSION=0x06020000 -D_WIN32_WINNT=0x0602 -DWINVER=0x0602 -DWINDOWS -DWIN32_LEAN_AND_MEAN -DUNICODE -D_UNICODE -D_CRT_SECURE_NO_WARNINGS )
+	add_definitions(-DHAS_OGG -DHAS_VORBIS -DHAS_FLAC -DHAS_VORBIS_ENC -DHAS_OPUS -DHAS_WASAPI)
 endif()
 
 add_subdirectory(common)

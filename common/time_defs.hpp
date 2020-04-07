@@ -28,24 +28,10 @@
 
 #ifndef WINDOWS
 #include <sys/time.h>
-#else // from the GNU C library implementation of sys/time.h
+#else
 #include <Windows.h>
 #include <stdint.h>
 #include <winsock2.h>
-
-#define timersub(a, b, result)                                                                                                                                 \
-    do                                                                                                                                                         \
-    {                                                                                                                                                          \
-        (result)->tv_sec = (a)->tv_sec - (b)->tv_sec;                                                                                                          \
-        (result)->tv_usec = (a)->tv_usec - (b)->tv_usec;                                                                                                       \
-        if ((result)->tv_usec < 0)                                                                                                                             \
-        {                                                                                                                                                      \
-            --(result)->tv_sec;                                                                                                                                \
-            (result)->tv_usec += 1000000;                                                                                                                      \
-        }                                                                                                                                                      \
-    } while (0)
-
-#define CLOCK_MONOTONIC 42 // discarded on windows plaforms
 #endif
 
 namespace chronos
@@ -118,22 +104,6 @@ inline ToDuration diff(const timeval& tv1, const timeval& tv2)
         usec += 1000000;
     }
     return std::chrono::duration_cast<ToDuration>(std::chrono::seconds(sec) + std::chrono::microseconds(usec));
-}
-
-
-inline static void addUs(timeval& tv, int us)
-{
-    if (us < 0)
-    {
-        timeval t;
-        t.tv_sec = -us / 1000000;
-        t.tv_usec = (-us % 1000000);
-        timersub(&tv, &t, &tv);
-        return;
-    }
-    tv.tv_usec += us;
-    tv.tv_sec += (tv.tv_usec / 1000000);
-    tv.tv_usec %= 1000000;
 }
 
 inline static long getTickCount()
