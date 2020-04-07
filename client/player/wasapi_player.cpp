@@ -148,7 +148,7 @@ vector<PcmDevice> WASAPIPlayer::pcm_list()
 
 		hr = devices->Item(i, &device);
 		CHECK_HR(hr);
-		deviceList.push_back(convertToDevice(i, device));
+		deviceList.push_back(convertToDevice(i+1, device));
 	}
 
 	return deviceList;
@@ -202,7 +202,7 @@ void WASAPIPlayer::worker()
 		hr = deviceEnumerator->EnumAudioEndpoints(eRender, DEVICE_STATE_ACTIVE, &devices);
 		CHECK_HR(hr);
 
-		devices->Item(pcmDevice_.idx, &device);
+		devices->Item(pcmDevice_.idx-1, &device);
 	}
 
 	IPropertyStorePtr properties = nullptr;
