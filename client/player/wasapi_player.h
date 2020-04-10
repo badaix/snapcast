@@ -93,7 +93,7 @@ public:
 class WASAPIPlayer : public Player
 {
 public:
-    WASAPIPlayer(const PcmDevice& pcmDevice, std::shared_ptr<Stream> stream, ClientSettings::WasapiMode mode);
+    WASAPIPlayer(const PcmDevice& pcmDevice, std::shared_ptr<Stream> stream, ClientSettings::SharingMode mode);
     virtual ~WASAPIPlayer();
 
     static std::vector<PcmDevice> pcm_list(void);
@@ -103,7 +103,7 @@ protected:
 
 private:
     AudioSessionEventListener* audioEventListener_;
-    ClientSettings::WasapiMode mode_;
+    ClientSettings::SharingMode mode_;
 };
 
 #endif

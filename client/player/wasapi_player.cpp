@@ -68,7 +68,7 @@ EXTERN_C const PROPERTYKEY DECLSPEC_SELECTANY PKEY_Device_FriendlyName = {{0xa45
         throw SnapException(ss.str());                                                                                                                         \
     }
 
-WASAPIPlayer::WASAPIPlayer(const PcmDevice& pcmDevice, std::shared_ptr<Stream> stream, ClientSettings::WasapiMode mode) : Player(pcmDevice, stream), mode_(mode)
+WASAPIPlayer::WASAPIPlayer(const PcmDevice& pcmDevice, std::shared_ptr<Stream> stream, ClientSettings::SharingMode mode) : Player(pcmDevice, stream), mode_(mode)
 {
     HRESULT hr = CoInitializeEx(NULL, COINIT_MULTITHREADED);
     CHECK_HR(hr);
@@ -217,7 +217,7 @@ void WASAPIPlayer::worker()
     hr = device->Activate(IID_IAudioClient, CLSCTX_SERVER, NULL, (void**)&audioClient);
     CHECK_HR(hr);
 
-    if (mode_ == ClientSettings::WasapiMode::EXCLUSIVE)
+    if (mode_ == ClientSettings::SharingMode::exclusive)
     {
         hr = audioClient->IsFormatSupported(AUDCLNT_SHAREMODE_EXCLUSIVE, &(waveformatExtended->Format), NULL);
         CHECK_HR(hr);
@@ -245,10 +245,10 @@ void WASAPIPlayer::worker()
     hr = audioClient->GetDevicePeriod(NULL, &hnsRequestedDuration);
     CHECK_HR(hr);
 
-    LOG(INFO, LOG_TAG) << "Initializing WASAPI in " << (mode_ == ClientSettings::WasapiMode::SHARED ? "shared" : "exclusive") << " mode\n";
+    LOG(INFO, LOG_TAG) << "Initializing WASAPI in " << (mode_ == ClientSettings::SharingMode::shared ? "shared" : "exclusive") << " mode\n";
 
-    _AUDCLNT_SHAREMODE share_mode = mode_ == ClientSettings::WasapiMode::SHARED ? AUDCLNT_SHAREMODE_SHARED : AUDCLNT_SHAREMODE_EXCLUSIVE;
-    DWORD stream_flags = mode_ == ClientSettings::WasapiMode::SHARED
+    _AUDCLNT_SHAREMODE share_mode = mode_ == ClientSettings::SharingMode::shared ? AUDCLNT_SHAREMODE_SHARED : AUDCLNT_SHAREMODE_EXCLUSIVE;
+    DWORD stream_flags = mode_ == ClientSettings::SharingMode::shared
                              ? AUDCLNT_STREAMFLAGS_EVENTCALLBACK | AUDCLNT_STREAMFLAGS_AUTOCONVERTPCM | AUDCLNT_STREAMFLAGS_SRC_DEFAULT_QUALITY
                              : AUDCLNT_STREAMFLAGS_EVENTCALLBACK;
 
@@ -339,7 +339,7 @@ void WASAPIPlayer::worker()
         clock->GetPosition(&position, NULL);
 
         UINT32 padding = 0;
-        if (mode_ == ClientSettings::WasapiMode::SHARED)
+        if (mode_ == ClientSettings::SharingMode::shared)
         {
             hr = audioClient->GetCurrentPadding(&padding);
             CHECK_HR(hr);

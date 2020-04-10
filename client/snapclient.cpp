@@ -118,7 +118,7 @@ int main(int argc, char** argv)
         auto sample_format = op.add<Value<string>>("", "sampleformat", "resample audio stream to <rate>:<bits>:<channels>", "");
 #endif
 #ifdef HAS_WASAPI
-        auto wasapi_mode = op.add<Value<string>>("", "wasapimode", "WASAPI mode to use [shared/exclusive]", "shared");
+        auto sharing_mode = op.add<Value<string>>("", "sharingmode", "audio mode to use [shared/exclusive]", "shared");
 #endif
 
         try
@@ -243,10 +243,10 @@ int main(int argc, char** argv)
 #endif
 
 #ifdef HAS_WASAPI
-        if (wasapi_mode->is_set())
+        if (sharing_mode->is_set())
         {
-            settings.player.wasapi_mode =
-                (strcmp(wasapi_mode->value().c_str(), "exclusive") == 0) ? ClientSettings::WasapiMode::EXCLUSIVE : ClientSettings::WasapiMode::SHARED;
+            settings.player.sharing_mode =
+                (sharing_mode->value() == "exclusive") ? ClientSettings::SharingMode::exclusive : ClientSettings::SharingMode::shared;
         }
 #endif
 

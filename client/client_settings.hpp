@@ -27,13 +27,11 @@
 
 struct ClientSettings
 {
-#ifdef HAS_WASAPI
-    enum class WasapiMode
+    enum class SharingMode
     {
-        SHARED,
-        EXCLUSIVE
+        exclusive,
+        shared
     };
-#endif
 
     struct ServerSettings
     {
@@ -47,9 +45,7 @@ struct ClientSettings
         int latency{0};
         PcmDevice pcm_device;
         SampleFormat sample_format;
-#ifdef HAS_WASAPI
-        WasapiMode wasapi_mode{WasapiMode::SHARED};
-#endif
+        SharingMode sharing_mode{SharingMode::shared};
     };
 
     struct LoggingSettings
