@@ -5,164 +5,164 @@ group: edge
 
 matrix:
   include:
-    # - os: linux
-    #   compiler: gcc
-    #   env:
-    #     - COMPILER=g++-4.9
-    #   addons:
-    #     apt:
-    #       sources:
-    #         - sourceline: 'ppa:mhier/libboost-latest'
-    #         - ubuntu-toolchain-r-test
-    #       packages:
-    #         - g++-4.9 boost1.70 libasound2-dev libsoxr-dev libvorbisidec-dev libvorbis-dev libflac-dev libopus-dev alsa-utils libavahi-client-dev avahi-daemon
+    - os: linux
+      compiler: gcc
+      env:
+        - COMPILER=g++-4.9
+      addons:
+        apt:
+          sources:
+            - sourceline: 'ppa:mhier/libboost-latest'
+            - ubuntu-toolchain-r-test
+          packages:
+            - g++-4.9 boost1.70 libasound2-dev libsoxr-dev libvorbisidec-dev libvorbis-dev libflac-dev libopus-dev alsa-utils libavahi-client-dev avahi-daemon
 
-    # - os: linux
-    #   compiler: gcc
-    #   env:
-    #     - COMPILER=g++-5
-    #   addons:
-    #     apt:
-    #       sources:
-    #         - sourceline: 'ppa:mhier/libboost-latest'
-    #         - ubuntu-toolchain-r-test
-    #       packages:
-    #         - g++-5 boost1.70 libasound2-dev libsoxr-dev libvorbisidec-dev libvorbis-dev libflac-dev libopus-dev alsa-utils libavahi-client-dev avahi-daemon
+    - os: linux
+      compiler: gcc
+      env:
+        - COMPILER=g++-5
+      addons:
+        apt:
+          sources:
+            - sourceline: 'ppa:mhier/libboost-latest'
+            - ubuntu-toolchain-r-test
+          packages:
+            - g++-5 boost1.70 libasound2-dev libsoxr-dev libvorbisidec-dev libvorbis-dev libflac-dev libopus-dev alsa-utils libavahi-client-dev avahi-daemon
 
-    # - os: linux
-    #   compiler: gcc
-    #   env:
-    #     - COMPILER=g++-6
-    #   addons:
-    #     apt:
-    #       sources:
-    #         - sourceline: 'ppa:mhier/libboost-latest'
-    #         - ubuntu-toolchain-r-test
-    #       packages:
-    #         - g++-6 boost1.70 libasound2-dev libsoxr-dev libvorbisidec-dev libvorbis-dev libflac-dev libopus-dev alsa-utils libavahi-client-dev avahi-daemon
+    - os: linux
+      compiler: gcc
+      env:
+        - COMPILER=g++-6
+      addons:
+        apt:
+          sources:
+            - sourceline: 'ppa:mhier/libboost-latest'
+            - ubuntu-toolchain-r-test
+          packages:
+            - g++-6 boost1.70 libasound2-dev libsoxr-dev libvorbisidec-dev libvorbis-dev libflac-dev libopus-dev alsa-utils libavahi-client-dev avahi-daemon
 
-    # - os: linux
-    #   compiler: gcc
-    #   env:
-    #     - COMPILER=g++-7
-    #   addons:
-    #     apt:
-    #       sources:
-    #         - sourceline: 'ppa:mhier/libboost-latest'
-    #         - ubuntu-toolchain-r-test
-    #       packages:
-    #         - g++-7 boost1.70 libasound2-dev libsoxr-dev libvorbisidec-dev libvorbis-dev libflac-dev libopus-dev alsa-utils libavahi-client-dev avahi-daemon
+    - os: linux
+      compiler: gcc
+      env:
+        - COMPILER=g++-7
+      addons:
+        apt:
+          sources:
+            - sourceline: 'ppa:mhier/libboost-latest'
+            - ubuntu-toolchain-r-test
+          packages:
+            - g++-7 boost1.70 libasound2-dev libsoxr-dev libvorbisidec-dev libvorbis-dev libflac-dev libopus-dev alsa-utils libavahi-client-dev avahi-daemon
 
-    # - os: linux
-    #   compiler: gcc
-    #   env:
-    #     - COMPILER=g++-8
-    #   addons:
-    #     apt:
-    #       sources:
-    #         - sourceline: 'ppa:mhier/libboost-latest'
-    #         - ubuntu-toolchain-r-test
-    #       packages:
-    #         - g++-8 boost1.70 libasound2-dev libsoxr-dev libvorbisidec-dev libvorbis-dev libflac-dev libopus-dev alsa-utils libavahi-client-dev avahi-daemon
+    - os: linux
+      compiler: gcc
+      env:
+        - COMPILER=g++-8
+      addons:
+        apt:
+          sources:
+            - sourceline: 'ppa:mhier/libboost-latest'
+            - ubuntu-toolchain-r-test
+          packages:
+            - g++-8 boost1.70 libasound2-dev libsoxr-dev libvorbisidec-dev libvorbis-dev libflac-dev libopus-dev alsa-utils libavahi-client-dev avahi-daemon
 
-    # - os: linux
-    #   compiler: gcc
-    #   env:
-    #     - COMPILER=g++-9
-    #   addons:
-    #     apt:
-    #       sources:
-    #         - sourceline: 'ppa:mhier/libboost-latest'
-    #         - ubuntu-toolchain-r-test
-    #       packages:
-    #         - g++-9 boost1.70 libasound2-dev libsoxr-dev libvorbisidec-dev libvorbis-dev libflac-dev libopus-dev alsa-utils libavahi-client-dev avahi-daemon
+    - os: linux
+      compiler: gcc
+      env:
+        - COMPILER=g++-9
+      addons:
+        apt:
+          sources:
+            - sourceline: 'ppa:mhier/libboost-latest'
+            - ubuntu-toolchain-r-test
+          packages:
+            - g++-9 boost1.70 libasound2-dev libsoxr-dev libvorbisidec-dev libvorbis-dev libflac-dev libopus-dev alsa-utils libavahi-client-dev avahi-daemon
 
 
-    # - os: linux
-    #   compiler: clang
-    #   env:
-    #     - COMPILER=clang++-3.9
-    #     - CXXFLAGS=-stdlib=libc++
-    #     - CC=clang-3.9
-    #   addons:
-    #     apt:
-    #       sources:
-    #         - sourceline: 'ppa:mhier/libboost-latest'
-    #         - llvm-toolchain-trusty-3.9
-    #       packages:
-    #         - clang-3.9 boost1.70 libasound2-dev libsoxr-dev libvorbisidec-dev libvorbis-dev libflac-dev libopus-dev alsa-utils libavahi-client-dev avahi-daemon
+    - os: linux
+      compiler: clang
+      env:
+        - COMPILER=clang++-3.9
+        - CXXFLAGS=-stdlib=libc++
+        - CC=clang-3.9
+      addons:
+        apt:
+          sources:
+            - sourceline: 'ppa:mhier/libboost-latest'
+            - llvm-toolchain-trusty-3.9
+          packages:
+            - clang-3.9 boost1.70 libasound2-dev libsoxr-dev libvorbisidec-dev libvorbis-dev libflac-dev libopus-dev alsa-utils libavahi-client-dev avahi-daemon
 
-    # - os: linux
-    #   compiler: clang
-    #   env:
-    #     - COMPILER=clang++-4.0
-    #     - CXXFLAGS=-stdlib=libc++
-    #     - CC=clang-4.0
-    #   addons:
-    #     apt:
-    #       sources:
-    #         - sourceline: 'ppa:mhier/libboost-latest'
-    #         - llvm-toolchain-trusty-4.0
-    #       packages:
-    #         - clang-4.0 boost1.70 libasound2-dev libsoxr-dev libvorbisidec-dev libvorbis-dev libflac-dev libopus-dev alsa-utils libavahi-client-dev avahi-daemon
+    - os: linux
+      compiler: clang
+      env:
+        - COMPILER=clang++-4.0
+        - CXXFLAGS=-stdlib=libc++
+        - CC=clang-4.0
+      addons:
+        apt:
+          sources:
+            - sourceline: 'ppa:mhier/libboost-latest'
+            - llvm-toolchain-trusty-4.0
+          packages:
+            - clang-4.0 boost1.70 libasound2-dev libsoxr-dev libvorbisidec-dev libvorbis-dev libflac-dev libopus-dev alsa-utils libavahi-client-dev avahi-daemon
 
-    # - os: linux
-    #   compiler: clang
-    #   env:
-    #     - COMPILER=clang++-5.0
-    #     - CXXFLAGS=-stdlib=libc++
-    #     - CC=clang-5.0
-    #   addons:
-    #     apt:
-    #       sources:
-    #         - sourceline: 'ppa:mhier/libboost-latest'
-    #         - llvm-toolchain-trusty-5.0
-    #       packages:
-    #         - clang-5.0 boost1.70 libasound2-dev libsoxr-dev libvorbisidec-dev libvorbis-dev libflac-dev libopus-dev alsa-utils libavahi-client-dev avahi-daemon
+    - os: linux
+      compiler: clang
+      env:
+        - COMPILER=clang++-5.0
+        - CXXFLAGS=-stdlib=libc++
+        - CC=clang-5.0
+      addons:
+        apt:
+          sources:
+            - sourceline: 'ppa:mhier/libboost-latest'
+            - llvm-toolchain-trusty-5.0
+          packages:
+            - clang-5.0 boost1.70 libasound2-dev libsoxr-dev libvorbisidec-dev libvorbis-dev libflac-dev libopus-dev alsa-utils libavahi-client-dev avahi-daemon
 
-    # - os: linux
-    #   compiler: clang
-    #   env:
-    #     - COMPILER=clang++-6.0
-    #     - CXXFLAGS=-stdlib=libc++
-    #   addons:
-    #     apt:
-    #       sources:
-    #         - sourceline: 'ppa:mhier/libboost-latest'
-    #         - llvm-toolchain-trusty-6.0
-    #         - ubuntu-toolchain-r-test
-    #       packages:
-    #         - clang-6.0 boost1.70 libasound2-dev libsoxr-dev libvorbisidec-dev libvorbis-dev libflac-dev libopus-dev alsa-utils libavahi-client-dev avahi-daemon
+    - os: linux
+      compiler: clang
+      env:
+        - COMPILER=clang++-6.0
+        - CXXFLAGS=-stdlib=libc++
+      addons:
+        apt:
+          sources:
+            - sourceline: 'ppa:mhier/libboost-latest'
+            - llvm-toolchain-trusty-6.0
+            - ubuntu-toolchain-r-test
+          packages:
+            - clang-6.0 boost1.70 libasound2-dev libsoxr-dev libvorbisidec-dev libvorbis-dev libflac-dev libopus-dev alsa-utils libavahi-client-dev avahi-daemon
 
-    # - os: linux
-    #   compiler: clang
-    #   env:
-    #     - COMPILER=clang++-7
-    #     - CXXFLAGS=-stdlib=libc++
-    #   addons:
-    #     apt:
-    #       sources:
-    #         - sourceline: 'ppa:mhier/libboost-latest'
-    #         - llvm-toolchain-trusty-7
-    #         - ubuntu-toolchain-r-test
-    #       packages:
-    #         - clang-7 boost1.70 libasound2-dev libsoxr-dev libvorbisidec-dev libvorbis-dev libflac-dev libopus-dev alsa-utils libavahi-client-dev avahi-daemon
+    - os: linux
+      compiler: clang
+      env:
+        - COMPILER=clang++-7
+        - CXXFLAGS=-stdlib=libc++
+      addons:
+        apt:
+          sources:
+            - sourceline: 'ppa:mhier/libboost-latest'
+            - llvm-toolchain-trusty-7
+            - ubuntu-toolchain-r-test
+          packages:
+            - clang-7 boost1.70 libasound2-dev libsoxr-dev libvorbisidec-dev libvorbis-dev libflac-dev libopus-dev alsa-utils libavahi-client-dev avahi-daemon
 
-    # # build on osx
-    # - os: osx
-    #   osx_image: xcode9.4
-    #   env:
-    #     - MATRIX_EVAL="brew update && brew unlink python@2 && brew upgrade boost && brew install flac opus libvorbis libsoxr"
+    # build on osx
+    - os: osx
+      osx_image: xcode9.4
+      env:
+        - MATRIX_EVAL="brew update && brew unlink python@2 && brew upgrade boost && brew install flac opus libvorbis libsoxr"
 
-    # - os: osx
-    #   osx_image: xcode10.3
-    #   env:
-    #     - MATRIX_EVAL="brew update && brew install flac opus libvorbis libsoxr"
+    - os: osx
+      osx_image: xcode10.3
+      env:
+        - MATRIX_EVAL="brew update && brew install flac opus libvorbis libsoxr"
 
-    # - os: osx
-    #   osx_image: xcode11
-    #   env:
-    #     - MATRIX_EVAL="brew update && brew install flac opus libvorbis libsoxr"
+    - os: osx
+      osx_image: xcode11
+      env:
+        - MATRIX_EVAL="brew update && brew install flac opus libvorbis libsoxr"
 
     # build on windows
     - os: windows

@@ -17,6 +17,7 @@
 ***/
 
 #include <cmath>
+#include <cstdint>
 #include <cstring>
 #include <iostream>
 
@@ -115,9 +116,9 @@ bool OggDecoder::decode(msg::PcmChunk* chunk)
                         {
                             int8_t& val = chunkBuffer[sampleFormat_.channels() * i + channel];
 #ifdef HAS_TREMOR
-                            val = clip<int8_t>(pcm[channel][i], -128, 127);
+                            val = clip<int8_t>(pcm[channel][i], INT8_MIN, INT8_MAX);
 #else
-                            val = clip<int8_t>(floor(pcm[channel][i] * 127.f + .5f), -128, 127);
+                            val = clip<int8_t>(floor(pcm[channel][i] * 127.f + .5f), INT8_MIN, INT8_MAX);
 #endif
                         }
                     }
@@ -128,9 +129,9 @@ bool OggDecoder::decode(msg::PcmChunk* chunk)
                         {
                             int16_t& val = chunkBuffer[sampleFormat_.channels() * i + channel];
 #ifdef HAS_TREMOR
-                            val = SWAP_16(clip<int16_t>(pcm[channel][i] >> 9, -32768, 32767));
+                            val = SWAP_16(clip<int16_t>(pcm[channel][i] >> 9, INT16_MIN, INT16_MAX));
 #else
-                            val = SWAP_16(clip<int16_t>(floor(pcm[channel][i] * 32767.f + .5f), -32768, 32767));
+                            val = SWAP_16(clip<int16_t>(floor(pcm[channel][i] * 32767.f + .5f), INT16_MIN, INT16_MAX));
 #endif
                         }
                     }
@@ -141,9 +142,9 @@ bool OggDecoder::decode(msg::PcmChunk* chunk)
                         {
                             int32_t& val = chunkBuffer[sampleFormat_.channels() * i + channel];
 #ifdef HAS_TREMOR
-                            val = SWAP_32(clip<int32_t>(pcm[channel][i] << 7, -2147483648, 2147483647));
+                            val = SWAP_32(clip<int32_t>(pcm[channel][i] << 7, INT32_MIN, INT32_MAX));
 #else
-                            val = SWAP_32(clip<int32_t>(floor(pcm[channel][i] * 2147483647.f + .5f), -2147483648, 2147483647));
+                            val = SWAP_32(clip<int32_t>(floor(pcm[channel][i] * 2147483647.f + .5f), INT32_MIN, INT32_MAX));
 #endif
                         }
                     }

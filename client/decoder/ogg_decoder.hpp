@@ -42,12 +42,12 @@ private:
     template <typename T, typename IN_TYPE>
     T clip(const IN_TYPE& value, const T& lower, const T& upper) const
     {
-        auto val = static_cast<T>(value);
+        auto val = static_cast<int64_t>(value);
         if (val > upper)
             return upper;
         if (val < lower)
             return lower;
-        return val;
+        return static_cast<T>(value);
     }
 
     ogg_sync_state oy;   /// sync and verify incoming physical bitstream
