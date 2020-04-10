@@ -22,7 +22,7 @@
 
 TimeProvider::TimeProvider() : diffToServer_(0)
 {
-    diffBuffer_.setSize(100);
+    diffBuffer_.setSize(200);
 }
 
 
@@ -45,7 +45,7 @@ void TimeProvider::setDiffToServer(double ms)
     if (!diffBuffer_.empty() && (std::abs(now.tv_sec - lastTimeSync) > 60))
     {
         LOG(INFO) << "Last time sync older than a minute. Clearing time buffer\n";
-        diffToServer_ = ms * 1000;
+        diffToServer_ = static_cast<chronos::usec::rep>(ms * 1000);
         diffBuffer_.clear();
     }
     lastTimeSync = now.tv_sec;

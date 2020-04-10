@@ -231,7 +231,7 @@ protected:
 
     void writeVal(std::ostream& stream, const std::string& val) const
     {
-        uint32_t size = val.size();
+        uint32_t size = static_cast<uint32_t>(val.size());
         writeVal(stream, val.c_str(), size);
     }
 

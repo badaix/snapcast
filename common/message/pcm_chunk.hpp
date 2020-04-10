@@ -58,7 +58,7 @@ public:
     }
 #endif
 
-    int readFrames(void* outputBuffer, size_t frameCount)
+    int readFrames(void* outputBuffer, uint32_t frameCount)
     {
         // logd << "read: " << frameCount << ", total: " << (wireChunk->length / format.frameSize()) << ", idx: " << idx;// << std::endl;
         int result = frameCount;
@@ -77,8 +77,8 @@ public:
 
     int seek(int frames)
     {
-        if ((frames < 0) && (-frames > (int)idx_))
-            frames = -idx_;
+        if ((frames < 0) && (-frames > static_cast<int>(idx_)))
+            frames = -static_cast<int>(idx_);
 
         idx_ += frames;
         if (idx_ > getFrameCount())
@@ -121,12 +121,12 @@ public:
         return idx_ >= getFrameCount();
     }
 
-    inline size_t getFrameCount() const
+    inline uint32_t getFrameCount() const
     {
         return (payloadSize / format.frameSize());
     }
 
-    inline size_t getSampleCount() const
+    inline uint32_t getSampleCount() const
     {
         return (payloadSize / format.sampleSize());
     }

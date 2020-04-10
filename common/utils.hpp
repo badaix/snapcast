@@ -24,10 +24,10 @@
 
 #include <cctype>
 #include <cerrno>
+// #include <chrono>
 #include <cstring>
 #include <fstream>
 #include <functional>
-#include <iomanip>
 #include <iomanip>
 #include <iterator>
 #include <locale>
@@ -225,36 +225,36 @@ static std::string getArch()
     return strutils::trim_copy(arch);
 }
 
-
-static long uptime()
-{
-#ifndef WINDOWS
-#ifndef FREEBSD
-    struct sysinfo info;
-    sysinfo(&info);
-    return info.uptime;
-#else
-    std::string uptime = execGetOutput("sysctl kern.boottime");
-    if ((uptime.find(" sec = ") != std::string::npos) && (uptime.find(",") != std::string::npos))
-    {
-        uptime = strutils::trim_copy(uptime.substr(uptime.find(" sec = ") + 7));
-        uptime.resize(uptime.find(","));
-        timeval now;
-        gettimeofday(&now, NULL);
-        try
-        {
-            return now.tv_sec - cpt::stoul(uptime);
-        }
-        catch (...)
-        {
-        }
-    }
-    return 0;
-#endif
-#else
-    return std::chrono::duration_cast<std::chrono::seconds>(std::chrono::milliseconds(GetTickCount())).count();
-#endif
-}
+// Seems not to be used
+// static std::chrono::seconds uptime()
+// {
+// #ifndef WINDOWS
+// #ifndef FREEBSD
+//     struct sysinfo info;
+//     sysinfo(&info);
+//     return std::chrono::seconds(info.uptime);
+// #else
+//     std::string uptime = execGetOutput("sysctl kern.boottime");
+//     if ((uptime.find(" sec = ") != std::string::npos) && (uptime.find(",") != std::string::npos))
+//     {
+//         uptime = strutils::trim_copy(uptime.substr(uptime.find(" sec = ") + 7));
+//         uptime.resize(uptime.find(","));
+//         timeval now;
+//         gettimeofday(&now, NULL);
+//         try
+//         {
+//             return std::chrono::seconds(now.tv_sec - cpt::stoul(uptime));
+//         }
+//         catch (...)
+//         {
+//         }
+//     }
+//     return 0s;
+// #endif
+// #else
+//     return std::chrono::duration_cast<std::chrono::seconds>(std::chrono::milliseconds(GetTickCount()));
+// #endif
+// }
 
 
 /// http://stackoverflow.com/questions/2174768/generating-random-uuids-in-linux
@@ -263,7 +263,7 @@ static std::string generateUUID()
     static bool initialized(false);
     if (!initialized)
     {
-        std::srand(std::time(nullptr));
+        std::srand(static_cast<unsigned int>(std::time(nullptr)));
         initialized = true;
     }
     std::stringstream ss;

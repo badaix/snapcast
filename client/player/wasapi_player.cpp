@@ -68,7 +68,8 @@ EXTERN_C const PROPERTYKEY DECLSPEC_SELECTANY PKEY_Device_FriendlyName = {{0xa45
         throw SnapException(ss.str());                                                                                                                         \
     }
 
-WASAPIPlayer::WASAPIPlayer(const PcmDevice& pcmDevice, std::shared_ptr<Stream> stream, ClientSettings::SharingMode mode) : Player(pcmDevice, stream), mode_(mode)
+WASAPIPlayer::WASAPIPlayer(const PcmDevice& pcmDevice, std::shared_ptr<Stream> stream, ClientSettings::SharingMode mode)
+    : Player(pcmDevice, stream), mode_(mode)
 {
     HRESULT hr = CoInitializeEx(NULL, COINIT_MULTITHREADED);
     CHECK_HR(hr);

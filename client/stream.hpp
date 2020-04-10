@@ -82,7 +82,7 @@ private:
     /// @param frames the number of requested frames
     void getSilentPlayerChunk(void* outputBuffer, uint32_t frames) const;
 
-    void updateBuffers(int age);
+    void updateBuffers(chronos::usec::rep age);
     void resetBuffers();
     void setRealSampleRate(double sampleRate);
 
@@ -95,8 +95,8 @@ private:
     DoubleBuffer<chronos::usec::rep> buffer_;
     std::shared_ptr<msg::PcmChunk> chunk_;
 
-    int median_;
-    int shortMedian_;
+    chronos::usec::rep median_;
+    chronos::usec::rep shortMedian_;
     time_t lastUpdate_;
     uint32_t playedFrames_;
     int32_t correctAfterXFrames_;

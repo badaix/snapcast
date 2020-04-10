@@ -50,7 +50,7 @@ public:
 
     uint32_t getSize() const override
     {
-        return sizeof(uint32_t) + codec.size() + sizeof(uint32_t) + payloadSize;
+        return static_cast<uint32_t>(sizeof(uint32_t) + codec.size() + sizeof(uint32_t) + payloadSize);
     }
 
     uint32_t payloadSize;

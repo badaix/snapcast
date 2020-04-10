@@ -47,7 +47,7 @@ public:
 
     uint32_t getSize() const override
     {
-        return sizeof(uint32_t) + msg.dump().size();
+        return static_cast<uint32_t>(sizeof(uint32_t) + msg.dump().size());
     }
 
     json msg;
@@ -74,7 +74,7 @@ protected:
         }
     }
 };
-}
+} // namespace msg
 
 
 #endif
