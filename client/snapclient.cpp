@@ -245,27 +245,28 @@ int main(int argc, char** argv)
 #ifdef HAS_WASAPI
         if (wasapi_mode->is_set())
         {
-            settings.player.wasapi_mode = (strcmp(wasapi_mode->value().c_str(), "exclusive") == 0) ? 
-                ClientSettings::WasapiMode::EXCLUSIVE : ClientSettings::WasapiMode::SHARED;
+            settings.player.wasapi_mode =
+                (strcmp(wasapi_mode->value().c_str(), "exclusive") == 0) ? ClientSettings::WasapiMode::EXCLUSIVE : ClientSettings::WasapiMode::SHARED;
         }
 #endif
 
         bool active = true;
         std::shared_ptr<Controller> controller;
-        auto signal_handler = install_signal_handler({
+        auto signal_handler = install_signal_handler(
+            {
 #ifndef WINDOWS // no sighup on windows
-            SIGHUP, 
+                SIGHUP,
 #endif
-            SIGTERM, SIGINT},
-                                                     [&active, &controller](int signal, const std::string& strsignal) {
-                                                         SLOG(INFO) << "Received signal " << signal << ": " << strsignal << "\n";
-                                                         active = false;
-                                                         if (controller)
-                                                         {
-                                                             LOG(INFO) << "Stopping controller\n";
-                                                             controller->stop();
-                                                         }
-                                                     });
+                SIGTERM, SIGINT},
+            [&active, &controller](int signal, const std::string& strsignal) {
+                SLOG(INFO) << "Received signal " << signal << ": " << strsignal << "\n";
+                active = false;
+                if (controller)
+                {
+                    LOG(INFO) << "Stopping controller\n";
+                    controller->stop();
+                }
+            });
         if (settings.server.host.empty())
         {
 #if defined(HAS_AVAHI) || defined(HAS_BONJOUR)

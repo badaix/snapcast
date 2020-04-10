@@ -48,8 +48,8 @@ struct ClientSettings
         PcmDevice pcm_device;
         SampleFormat sample_format;
 #ifdef HAS_WASAPI
-        WasapiMode wasapi_mode{ WasapiMode::SHARED };
-#endif  
+        WasapiMode wasapi_mode{WasapiMode::SHARED};
+#endif
     };
 
     struct LoggingSettings

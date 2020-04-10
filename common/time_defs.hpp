@@ -36,7 +36,7 @@
 
 namespace chronos
 {
-using clk = 
+using clk =
 #ifndef WINDOWS
     std::chrono::steady_clock;
 #else
@@ -108,7 +108,7 @@ inline ToDuration diff(const timeval& tv1, const timeval& tv2)
 
 inline static long getTickCount()
 {
-#if defined (MACOS)
+#if defined(MACOS)
     clock_serv_t cclock;
     mach_timespec_t mts;
     host_get_clock_service(mach_host_self(), SYSTEM_CLOCK, &cclock);

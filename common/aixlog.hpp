@@ -38,11 +38,11 @@
 #include <fstream>
 #include <functional>
 #include <iostream>
+#include <map>
 #include <memory>
 #include <mutex>
-#include <map>
-#include <thread>
 #include <sstream>
+#include <thread>
 #include <vector>
 
 #ifdef __ANDROID__
@@ -109,9 +109,10 @@
 #define TIMESTAMP AixLog::Timestamp(std::chrono::system_clock::now())
 
 
-// stijnvdb: sorry! :) LOG(SEV, "tag") was not working for Windows and I couldn't figure out how to fix it for windows without potentially breaking everything else...
+// stijnvdb: sorry! :) LOG(SEV, "tag") was not working for Windows and I couldn't figure out how to fix it for windows without potentially breaking everything
+// else...
 // https://stackoverflow.com/questions/3046889/optional-parameters-with-c-macros (Jason Deng)
-#ifdef WIN32 
+#ifdef WIN32
 #define LOG_2(severity, tag) AIXLOG_INTERNAL__LOG_SEVERITY_TAG(severity, tag)
 #define LOG_1(severity) AIXLOG_INTERNAL__LOG_SEVERITY(severity)
 #define LOG_0() LOG_1(0)

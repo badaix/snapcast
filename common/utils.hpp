@@ -36,8 +36,8 @@
 #include <net/if.h>
 #include <netinet/in.h>
 #include <sys/ioctl.h>
-#include <unistd.h>
 #include <sys/utsname.h>
+#include <unistd.h>
 #endif
 #include <sstream>
 #include <string>
@@ -58,11 +58,11 @@
 #endif
 #ifdef WINDOWS
 #include <chrono>
-#include <windows.h>
 #include <direct.h>
-#include <winsock2.h>
 #include <iphlpapi.h>
 #include <versionhelpers.h>
+#include <windows.h>
+#include <winsock2.h>
 #endif
 
 
