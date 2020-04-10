@@ -36,7 +36,7 @@ namespace msg
 class PcmChunk : public WireChunk
 {
 public:
-    PcmChunk(const SampleFormat& sampleFormat, size_t ms)
+    PcmChunk(const SampleFormat& sampleFormat, uint32_t ms)
         : WireChunk((sampleFormat.rate() * ms / 1000) * sampleFormat.frameSize()), format(sampleFormat), idx_(0)
     {
     }

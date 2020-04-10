@@ -22,6 +22,7 @@
 #include <string>
 #include <vector>
 
+#include "common/sample_format.hpp"
 #include "player/pcm_device.hpp"
 
 

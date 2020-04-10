@@ -53,8 +53,8 @@ inline static void timeofday(struct timeval* tv)
 {
     auto now = Clock::now();
     auto microsecs = std::chrono::duration_cast<std::chrono::microseconds>(now.time_since_epoch());
-    tv->tv_sec = static_cast<time_t>(microsecs.count() / 1000000);
-    tv->tv_usec = static_cast<suseconds_t>(microsecs.count() % 1000000);
+    tv->tv_sec = static_cast<long>(microsecs.count() / 1000000);
+    tv->tv_usec = static_cast<long>(microsecs.count() % 1000000);
 }
 
 #ifdef WINDOWS

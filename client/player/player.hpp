@@ -56,7 +56,7 @@ protected:
     {
         T* bufferT = (T*)buffer;
         for (size_t n = 0; n < count; ++n)
-            bufferT[n] = endian::swap<T>(endian::swap<T>(bufferT[n]) * volume);
+            bufferT[n] = endian::swap<T>(static_cast<T>(endian::swap<T>(bufferT[n]) * volume));
     }
 
     void adjustVolume(char* buffer, size_t frames);

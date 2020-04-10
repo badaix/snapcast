@@ -50,7 +50,7 @@ void TimeProvider::setDiffToServer(double ms)
     }
     lastTimeSync = now.tv_sec;
 
-    diffBuffer_.add(ms * 1000);
+    diffBuffer_.add(static_cast<chronos::usec::rep>(ms * 1000));
     diffToServer_ = diffBuffer_.median();
     // LOG(INFO) << "setDiffToServer: " << ms << ", diff: " << diffToServer_ / 1000000 << " s, " << (diffToServer_ / 1000) % 1000 << "." << diffToServer_ % 1000
     // << " ms\n";

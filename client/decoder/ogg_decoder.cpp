@@ -104,7 +104,7 @@ bool OggDecoder::decode(msg::PcmChunk* chunk)
             (-1.<=range<=1.) to whatever PCM format and write it out */
             while ((samples = vorbis_synthesis_pcmout(&vd, &pcm)) > 0)
             {
-                size_t bytes = sampleFormat_.sampleSize() * vi.channels * samples;
+                uint32_t bytes = sampleFormat_.sampleSize() * vi.channels * samples;
                 chunk->payload = (char*)realloc(chunk->payload, chunk->payloadSize + bytes);
                 for (int channel = 0; channel < vi.channels; ++channel)
                 {

@@ -50,8 +50,8 @@ bool OpusDecoder::decode(msg::PcmChunk* chunk)
 {
     int frame_size = 0;
 
-    while ((frame_size = opus_decode(dec_, (unsigned char*)chunk->payload, chunk->payloadSize, pcm_.data(), pcm_.size() / sample_format_.channels(), 0)) ==
-           OPUS_BUFFER_TOO_SMALL)
+    while ((frame_size = opus_decode(dec_, (unsigned char*)chunk->payload, chunk->payloadSize, pcm_.data(),
+                                     static_cast<int>(pcm_.size()) / sample_format_.channels(), 0)) == OPUS_BUFFER_TOO_SMALL)
     {
         if (pcm_.size() < const_max_frame_size * sample_format_.channels())
         {
