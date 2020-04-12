@@ -109,10 +109,16 @@ ffmpeg -y -i http://wms-15.streamsrus.com:11630 -f u16le -acodec pcm_s16le -ac 2
 
 ### mpv
 
-Pipe mpv's audio output to the snapfifo:
+Pipe mpv's audio output to the snapfifo. For version < 0.21.0:
 
 ```sh
 mpv http://wms-15.streamsrus.com:11630 --audio-display=no --audio-channels=stereo --audio-samplerate=48000 --audio-format=s16 --ao=pcm:file=/tmp/snapfifo
+```
+
+For version >= 0.21.0:
+
+```sh
+mpv http://wms-15.streamsrus.com:11630 --audio-display=no --audio-channels=stereo --audio-samplerate=48000 --audio-format=s16 --ao=pcm --ao-pcm-file=/tmp/snapfifo
 ```
 
 ### MPlayer
