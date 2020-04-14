@@ -42,7 +42,7 @@ For Arch derivates:
 For Fedora (and probably RHEL, CentOS, & Scientific Linux, but untested):
 
     $ sudo dnf install @development-tools
-    $ sudo dnf install alsa-lib-devel avahi-devel libvorbis-devel opus-devel flac-devel soxr-devel libstdc++-static expat
+    $ sudo dnf install alsa-lib-devel avahi-devel libvorbis-devel opus-devel flac-devel soxr-devel libstdc++-static expat boost-devel
 
 ### Build Snapclient and Snapserver
 `cd` into the Snapcast src-root directory:
