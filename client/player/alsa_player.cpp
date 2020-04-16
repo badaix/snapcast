@@ -206,6 +206,8 @@ void AlsaPlayer::worker()
                 LOG(ERROR, LOG_TAG) << "Exception in initAlsa: " << e.what() << endl;
                 chronos::sleep(100);
             }
+            if (handle_ == nullptr)
+                continue;
         }
 
         int wait_result = snd_pcm_wait(handle_, 100);
