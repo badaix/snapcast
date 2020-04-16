@@ -85,7 +85,7 @@ void ClientConnection::start()
     //	setsockopt(socket->native_handle(), SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
     //	setsockopt(socket->native_handle(), SOL_SOCKET, SO_SNDTIMEO, &tv, sizeof(tv));
     socket_.connect(*iterator);
-    SLOG(NOTICE) << "Connected to " << socket_.remote_endpoint().address().to_string() << endl;
+    LOG(NOTICE) << "Connected to " << socket_.remote_endpoint().address().to_string() << endl;
     active_ = true;
     sumTimeout_ = chronos::msec(0);
     readerThread_ = make_unique<thread>(&ClientConnection::reader, this);

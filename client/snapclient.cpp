@@ -175,17 +175,17 @@ int main(int argc, char** argv)
 
         // XXX: Only one metadata option must be set
 
-        AixLog::Log::init<AixLog::SinkNative>("snapclient", AixLog::Severity::trace, AixLog::Type::special);
+        // TODO: AixLog::Log::init<AixLog::SinkNative>("snapclient", AixLog::Severity::trace, AixLog::Type::special);
         if (debugOption->is_set())
         {
-            AixLog::Log::instance().add_logsink<AixLog::SinkCout>(AixLog::Severity::trace, AixLog::Type::all, "%Y-%m-%d %H-%M-%S.#ms [#severity] (#tag_func)");
+            AixLog::Log::instance().add_logsink<AixLog::SinkCout>(AixLog::Severity::trace, "%Y-%m-%d %H-%M-%S.#ms [#severity] (#tag_func)");
             if (!debugOption->value().empty())
-                AixLog::Log::instance().add_logsink<AixLog::SinkFile>(AixLog::Severity::trace, AixLog::Type::all, debugOption->value(),
+                AixLog::Log::instance().add_logsink<AixLog::SinkFile>(AixLog::Severity::trace, debugOption->value(),
                                                                       "%Y-%m-%d %H-%M-%S.#ms [#severity] (#tag_func)");
         }
         else
         {
-            AixLog::Log::instance().add_logsink<AixLog::SinkCout>(AixLog::Severity::info, AixLog::Type::all, "%Y-%m-%d %H-%M-%S [#severity] (#tag_func)");
+            AixLog::Log::instance().add_logsink<AixLog::SinkCout>(AixLog::Severity::info, "%Y-%m-%d %H-%M-%S [#severity] (#tag_func)");
         }
 
 #ifdef HAS_DAEMON
@@ -209,7 +209,7 @@ int main(int argc, char** argv)
                     group = user_group[1];
             }
             daemon = std::make_unique<Daemon>(user, group, pidFile);
-            SLOG(NOTICE) << "daemonizing" << std::endl;
+            LOG(NOTICE) << "daemonizing" << std::endl;
             daemon->daemonize();
             if (processPriority < -20)
                 processPriority = -20;
@@ -217,7 +217,7 @@ int main(int argc, char** argv)
                 processPriority = 19;
             if (processPriority != 0)
                 setpriority(PRIO_PROCESS, 0, processPriority);
-            SLOG(NOTICE) << "daemon started" << std::endl;
+            LOG(NOTICE) << "daemon started" << std::endl;
         }
 #endif
 
@@ -259,7 +259,7 @@ int main(int argc, char** argv)
 #endif
                 SIGTERM, SIGINT},
             [&active, &controller](int signal, const std::string& strsignal) {
-                SLOG(INFO) << "Received signal " << signal << ": " << strsignal << "\n";
+                LOG(INFO) << "Received signal " << signal << ": " << strsignal << "\n";
                 active = false;
                 if (controller)
                 {
@@ -291,7 +291,7 @@ int main(int argc, char** argv)
                 }
                 catch (const std::exception& e)
                 {
-                    SLOG(ERROR) << "Exception: " << e.what() << std::endl;
+                    LOG(ERROR) << "Exception: " << e.what() << std::endl;
                 }
             }
 #endif
@@ -311,10 +311,10 @@ int main(int argc, char** argv)
     }
     catch (const std::exception& e)
     {
-        SLOG(ERROR) << "Exception: " << e.what() << std::endl;
+        LOG(ERROR) << "Exception: " << e.what() << std::endl;
         exitcode = EXIT_FAILURE;
     }
 
-    SLOG(NOTICE) << "daemon terminated." << endl;
+    LOG(NOTICE) << "daemon terminated." << endl;
     exit(exitcode);
 }

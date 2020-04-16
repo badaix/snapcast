@@ -261,7 +261,7 @@ void Controller::worker()
         catch (const std::exception& e)
         {
             async_exception_ = nullptr;
-            SLOG(ERROR) << "Exception in Controller::worker(): " << e.what() << endl;
+            LOG(ERROR) << "Exception in Controller::worker(): " << e.what() << endl;
             clientConnection_->stop();
             player_.reset();
             stream_.reset();

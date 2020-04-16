@@ -138,7 +138,7 @@ int main(int argc, char* argv[])
         }
         catch (const std::invalid_argument& e)
         {
-            SLOG(ERROR) << "Exception: " << e.what() << std::endl;
+            LOG(ERROR) << "Exception: " << e.what() << std::endl;
             cout << "\n" << op << "\n";
             exit(EXIT_FAILURE);
         }
@@ -182,17 +182,17 @@ int main(int argc, char* argv[])
             exit(EXIT_SUCCESS);
         }
 
-        AixLog::Log::init<AixLog::SinkNative>("snapserver", AixLog::Severity::trace, AixLog::Type::special);
+        // TODO: AixLog::Log::init<AixLog::SinkNative>("snapserver", AixLog::Severity::trace, AixLog::Type::special);
         if (settings.logging.debug)
         {
-            AixLog::Log::instance().add_logsink<AixLog::SinkCout>(AixLog::Severity::trace, AixLog::Type::all, "%Y-%m-%d %H-%M-%S.#ms [#severity] (#tag_func)");
+            AixLog::Log::instance().add_logsink<AixLog::SinkCout>(AixLog::Severity::trace, "%Y-%m-%d %H-%M-%S.#ms [#severity] (#tag_func)");
             if (!settings.logging.debug_logfile.empty())
-                AixLog::Log::instance().add_logsink<AixLog::SinkFile>(AixLog::Severity::trace, AixLog::Type::all, settings.logging.debug_logfile,
+                AixLog::Log::instance().add_logsink<AixLog::SinkFile>(AixLog::Severity::trace, settings.logging.debug_logfile,
                                                                       "%Y-%m-%d %H-%M-%S.#ms [#severity] (#tag_func)");
         }
         else
         {
-            AixLog::Log::instance().add_logsink<AixLog::SinkCout>(AixLog::Severity::info, AixLog::Type::all, "%Y-%m-%d %H-%M-%S [#severity] (#tag_func)");
+            AixLog::Log::instance().add_logsink<AixLog::SinkCout>(AixLog::Severity::info, "%Y-%m-%d %H-%M-%S [#severity] (#tag_func)");
         }
 
         for (const auto& opt : conf.unknown_options())
@@ -228,7 +228,7 @@ int main(int argc, char* argv[])
                 data_dir = "/var/lib/snapserver";
             Config::instance().init(data_dir, user, group);
             daemon.reset(new Daemon(user, group, pid_file));
-            SLOG(NOTICE) << "daemonizing" << std::endl;
+            LOG(NOTICE) << "daemonizing" << std::endl;
             daemon->daemonize();
             if (processPriority < -20)
                 processPriority = -20;
@@ -236,7 +236,7 @@ int main(int argc, char* argv[])
                 processPriority = 19;
             if (processPriority != 0)
                 setpriority(PRIO_PROCESS, 0, processPriority);
-            SLOG(NOTICE) << "daemon started" << std::endl;
+            LOG(NOTICE) << "daemon started" << std::endl;
         }
         else
             Config::instance().init(data_dir);
@@ -284,9 +284,9 @@ int main(int argc, char* argv[])
         boost::asio::signal_set signals(io_context, SIGHUP, SIGINT, SIGTERM);
         signals.async_wait([&io_context](const boost::system::error_code& ec, int signal) {
             if (!ec)
-                SLOG(INFO) << "Received signal " << signal << ": " << strsignal(signal) << "\n";
+                LOG(INFO) << "Received signal " << signal << ": " << strsignal(signal) << "\n";
             else
-                SLOG(INFO) << "Failed to wait for signal: " << ec << "\n";
+                LOG(INFO) << "Failed to wait for signal: " << ec << "\n";
             io_context.stop();
         });
 
@@ -305,10 +305,10 @@ int main(int argc, char* argv[])
     }
     catch (const std::exception& e)
     {
-        SLOG(ERROR) << "Exception: " << e.what() << std::endl;
+        LOG(ERROR) << "Exception: " << e.what() << std::endl;
         exitcode = EXIT_FAILURE;
     }
     Config::instance().save();
-    SLOG(NOTICE) << "daemon terminated." << endl;
+    LOG(NOTICE) << "daemon terminated." << endl;
     exit(exitcode);
 }
