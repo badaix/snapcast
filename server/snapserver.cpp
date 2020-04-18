@@ -215,7 +215,7 @@ int main(int argc, char* argv[])
         else if (settings.logging.sink == "stderr")
             AixLog::Log::init<AixLog::SinkCerr>(logfilter, logformat);
         else if (settings.logging.sink == "system")
-            AixLog::Log::init<AixLog::SinkNative>("snapclient", logfilter);
+            AixLog::Log::init<AixLog::SinkNative>("snapserver", logfilter);
         else if (settings.logging.sink == "null")
             AixLog::Log::init<AixLog::SinkNull>();
         else
