@@ -49,10 +49,10 @@ struct ClientSettings
         SharingMode sharing_mode{SharingMode::shared};
     };
 
-    struct LoggingSettings
+    struct Logging
     {
-        bool debug{false};
-        std::string debug_logfile{""};
+        std::string sink{""};
+        std::string filter{"*:info"};
     };
 
     size_t instance{1};
@@ -60,7 +60,7 @@ struct ClientSettings
 
     ServerSettings server;
     PlayerSettings player;
-    LoggingSettings logging;
+    Logging logging;
 };
 
 #endif

@@ -51,16 +51,16 @@ struct ServerSettings
         std::vector<std::string> bind_to_address{{"0.0.0.0"}};
     };
 
-    struct LoggingSettings
+    struct Logging
     {
-        bool debug{false};
-        std::string debug_logfile{""};
+        std::string sink{""};
+        std::string filter{"*:info"};
     };
 
     HttpSettings http;
     TcpSettings tcp;
     StreamSettings stream;
-    LoggingSettings logging;
+    Logging logging;
 };
 
 #endif

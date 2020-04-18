@@ -3,7 +3,7 @@
      / _\ (  )( \/ )(  )   /  \  / __)
     /    \ )(  )  ( / (_/\(  O )( (_ \
     \_/\_/(__)(_/\_)\____/ \__/  \___/
-    version 1.3.0
+    version 1.4.0
     https://github.com/badaix/aixlog
 
     This file is part of aixlog
@@ -175,6 +175,53 @@ enum class Severity : std::int8_t
 };
 
 
+static Severity to_severity(std::string severity, Severity def = Severity::info)
+{
+    std::transform(severity.begin(), severity.end(), severity.begin(), [](unsigned char c) { return std::tolower(c); });
+    if (severity == "trace")
+        return Severity::trace;
+    else if (severity == "debug")
+        return Severity::debug;
+    else if (severity == "info")
+        return Severity::info;
+    else if (severity == "notice")
+        return Severity::notice;
+    else if (severity == "warning")
+        return Severity::warning;
+    else if (severity == "error")
+        return Severity::error;
+    else if (severity == "fatal")
+        return Severity::fatal;
+    else
+        return def;
+}
+
+
+static std::string to_string(Severity logSeverity)
+{
+    switch (logSeverity)
+    {
+        case Severity::trace:
+            return "Trace";
+        case Severity::debug:
+            return "Debug";
+        case Severity::info:
+            return "Info";
+        case Severity::notice:
+            return "Notice";
+        case Severity::warning:
+            return "Warn";
+        case Severity::error:
+            return "Error";
+        case Severity::fatal:
+            return "Fatal";
+        default:
+            std::stringstream ss;
+            ss << static_cast<int>(logSeverity);
+            return ss.str();
+    }
+}
+
 /**
  * @brief
  * Color constants used for console colors
@@ -330,6 +377,10 @@ struct Tag
     {
     }
 
+    Tag(const char* text) : text(text), is_null_(false)
+    {
+    }
+
     Tag(const std::string& text) : text(text), is_null_(false)
     {
     }
@@ -343,6 +394,11 @@ struct Tag
     explicit operator bool() const
     {
         return !is_null_;
+    }
+
+    bool operator<(const Tag& other) const
+    {
+        return (text < other.text);
     }
 
     std::string text;
@@ -404,6 +460,59 @@ struct Metadata
     Timestamp timestamp;
 };
 
+
+class Filter
+{
+public:
+    Filter()
+    {
+    }
+
+    Filter(Severity severity)
+    {
+        add_filter(severity);
+    }
+
+    bool match(const Metadata& metadata) const
+    {
+        if (tag_filter_.empty())
+            return true;
+
+        auto iter = tag_filter_.find(metadata.tag);
+        if (iter != tag_filter_.end())
+            return (metadata.severity >= iter->second);
+
+        iter = tag_filter_.find("*");
+        if (iter != tag_filter_.end())
+            return (metadata.severity >= iter->second);
+
+        return false;
+    }
+
+    void add_filter(const Tag& tag, Severity severity)
+    {
+        tag_filter_[tag] = severity;
+    }
+
+    void add_filter(Severity severity)
+    {
+        tag_filter_["*"] = severity;
+    }
+
+    void add_filter(const std::string& filter)
+    {
+        auto pos = filter.find(":");
+        if (pos != std::string::npos)
+            add_filter(filter.substr(0, pos), to_severity(filter.substr(pos + 1)));
+        else
+            add_filter(to_severity(filter));
+    }
+
+private:
+    std::map<Tag, Severity> tag_filter_;
+};
+
+
 /**
  * @brief
  * Abstract log sink
@@ -412,7 +521,7 @@ struct Metadata
  */
 struct Sink
 {
-    Sink(Severity severity) : severity(severity)
+    Sink(const Filter& filter) : filter(filter)
     {
     }
 
@@ -420,7 +529,7 @@ struct Sink
 
     virtual void log(const Metadata& metadata, const std::string& message) = 0;
 
-    Severity severity;
+    Filter filter;
 };
 
 /// ostream operators << for the meta data structs
@@ -490,31 +599,6 @@ public:
         log_sinks_.erase(std::remove(log_sinks_.begin(), log_sinks_.end(), sink), log_sinks_.end());
     }
 
-    static std::string to_string(Severity logSeverity)
-    {
-        switch (logSeverity)
-        {
-            case Severity::trace:
-                return "Trace";
-            case Severity::debug:
-                return "Debug";
-            case Severity::info:
-                return "Info";
-            case Severity::notice:
-                return "Notice";
-            case Severity::warning:
-                return "Warn";
-            case Severity::error:
-                return "Error";
-            case Severity::fatal:
-                return "Fatal";
-            default:
-                std::stringstream ss;
-                ss << logSeverity;
-                return ss.str();
-        }
-    }
-
 protected:
     Log() noexcept : last_buffer_(nullptr)
     {
@@ -536,7 +620,7 @@ protected:
             {
                 for (const auto& sink : log_sinks_)
                 {
-                    if (metadata_.severity >= sink->severity)
+                    if (sink->filter.match(metadata_))
                         sink->log(metadata_, get_stream().str());
                 }
             }
@@ -593,6 +677,24 @@ private:
 
 /**
  * @brief
+ * Null log sink
+ *
+ * Discards all log messages
+ */
+struct SinkNull : public Sink
+{
+    SinkNull() : Sink(Filter())
+    {
+    }
+
+    void log(const Metadata& metadata, const std::string& message) override
+    {
+    }
+};
+
+
+/**
+ * @brief
  * Abstract log sink with support for formatting log message
  *
  * "format" in the c'tor defines a log pattern.
@@ -607,7 +709,7 @@ private:
  */
 struct SinkFormat : public Sink
 {
-    SinkFormat(Severity severity, const std::string& format) : Sink(severity), format_(format)
+    SinkFormat(const Filter& filter, const std::string& format) : Sink(filter), format_(format)
     {
     }
 
@@ -627,13 +729,13 @@ protected:
 
         size_t pos = result.find("#severity");
         if (pos != std::string::npos)
-            result.replace(pos, 9, Log::to_string(metadata.severity));
+            result.replace(pos, 9, to_string(metadata.severity));
 
         pos = result.find("#color_severity");
         if (pos != std::string::npos)
         {
             std::stringstream ss;
-            ss << TextColor(Color::RED) << Log::to_string(metadata.severity) << TextColor(Color::NONE);
+            ss << TextColor(Color::RED) << to_string(metadata.severity) << TextColor(Color::NONE);
             result.replace(pos, 15, ss.str());
         }
 
@@ -673,7 +775,7 @@ protected:
  */
 struct SinkCout : public SinkFormat
 {
-    SinkCout(Severity severity, const std::string& format = "%Y-%m-%d %H-%M-%S.#ms [#severity] (#tag_func)") : SinkFormat(severity, format)
+    SinkCout(const Filter& filter, const std::string& format = "%Y-%m-%d %H-%M-%S.#ms [#severity] (#tag_func)") : SinkFormat(filter, format)
     {
     }
 
@@ -689,7 +791,7 @@ struct SinkCout : public SinkFormat
  */
 struct SinkCerr : public SinkFormat
 {
-    SinkCerr(Severity severity, const std::string& format = "%Y-%m-%d %H-%M-%S.#ms [#severity] (#tag_func)") : SinkFormat(severity, format)
+    SinkCerr(const Filter& filter, const std::string& format = "%Y-%m-%d %H-%M-%S.#ms [#severity] (#tag_func)") : SinkFormat(filter, format)
     {
     }
 
@@ -705,8 +807,8 @@ struct SinkCerr : public SinkFormat
  */
 struct SinkFile : public SinkFormat
 {
-    SinkFile(Severity severity, const std::string& filename, const std::string& format = "%Y-%m-%d %H-%M-%S.#ms [#severity] (#tag_func)")
-        : SinkFormat(severity, format)
+    SinkFile(const Filter& filter, const std::string& filename, const std::string& format = "%Y-%m-%d %H-%M-%S.#ms [#severity] (#tag_func)")
+        : SinkFormat(filter, format)
     {
         ofs.open(filename.c_str(), std::ofstream::out | std::ofstream::trunc);
     }
@@ -734,7 +836,7 @@ protected:
  */
 struct SinkOutputDebugString : public Sink
 {
-    SinkOutputDebugString(Severity severity) : Sink(severity)
+    SinkOutputDebugString(const Filter& filter) : Sink(filter)
     {
     }
 
@@ -753,7 +855,7 @@ struct SinkOutputDebugString : public Sink
  */
 struct SinkUnifiedLogging : public Sink
 {
-    SinkUnifiedLogging(Severity severity) : Sink(severity)
+    SinkUnifiedLogging(const Filter& filter) : Sink(filter)
     {
     }
 
@@ -793,7 +895,7 @@ struct SinkUnifiedLogging : public Sink
  */
 struct SinkSyslog : public Sink
 {
-    SinkSyslog(const char* ident, Severity severity) : Sink(severity)
+    SinkSyslog(const char* ident, const Filter& filter) : Sink(filter)
     {
         openlog(ident, LOG_PID, LOG_USER);
     }
@@ -842,7 +944,7 @@ struct SinkSyslog : public Sink
  */
 struct SinkAndroid : public Sink
 {
-    SinkAndroid(const std::string& ident, Severity severity) : Sink(severity), ident_(ident)
+    SinkAndroid(const std::string& ident, const Filter& filter) : Sink(filter), ident_(ident)
     {
     }
 
@@ -899,7 +1001,7 @@ protected:
  */
 struct SinkEventLog : public Sink
 {
-    SinkEventLog(const std::string& ident, Severity severity) : Sink(severity)
+    SinkEventLog(const std::string& ident, const Filter& filter) : Sink(filter)
     {
         std::wstring wide = std::wstring(ident.begin(), ident.end()); // stijnvdb: RegisterEventSource expands to RegisterEventSourceW which takes wchar_t
         event_log = RegisterEventSource(NULL, wide.c_str());
@@ -951,16 +1053,16 @@ protected:
  */
 struct SinkNative : public Sink
 {
-    SinkNative(const std::string& ident, Severity severity) : Sink(severity), log_sink_(nullptr), ident_(ident)
+    SinkNative(const std::string& ident, const Filter& filter) : Sink(filter), log_sink_(nullptr), ident_(ident)
     {
 #ifdef __ANDROID__
-        log_sink_ = std::make_shared<SinkAndroid>(ident_, severity);
+        log_sink_ = std::make_shared<SinkAndroid>(ident_, filter);
 #elif HAS_APPLE_UNIFIED_LOG_
-        log_sink_ = std::make_shared<SinkUnifiedLogging>(severity);
+        log_sink_ = std::make_shared<SinkUnifiedLogging>(filter);
 #elif _WIN32
-        log_sink_ = std::make_shared<SinkEventLog>(ident, severity);
+        log_sink_ = std::make_shared<SinkEventLog>(ident, filter);
 #elif HAS_SYSLOG_
-        log_sink_ = std::make_shared<SinkSyslog>(ident_.c_str(), severity);
+        log_sink_ = std::make_shared<SinkSyslog>(ident_.c_str(), filter);
 #else
         /// will not throw or something. Use "get_logger()" to check for success
         log_sink_ = nullptr;
@@ -995,7 +1097,7 @@ struct SinkCallback : public Sink
 {
     using callback_fun = std::function<void(const Metadata& metadata, const std::string& message)>;
 
-    SinkCallback(Severity severity, callback_fun callback) : Sink(severity), callback_(callback)
+    SinkCallback(const Filter& filter, callback_fun callback) : Sink(filter), callback_(callback)
     {
     }
 
@@ -1033,7 +1135,7 @@ static std::ostream& operator<<(std::ostream& os, const Severity& log_severity)
     }
     else
     {
-        os << Log::to_string(log_severity);
+        os << to_string(log_severity);
     }
     return os;
 }

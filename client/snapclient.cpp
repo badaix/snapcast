@@ -94,7 +94,10 @@ int main(int argc, char** argv)
         OptionParser op("Allowed options");
         auto helpSwitch = op.add<Switch>("", "help", "produce help message");
         auto groffSwitch = op.add<Switch, Attribute::hidden>("", "groff", "produce groff message");
-        auto debugOption = op.add<Implicit<string>, Attribute::hidden>("", "debug", "enable debug logging", ""); // TODO: &settings.logging.debug);
+        op.add<Value<string>>("", "logsink", "log sink [null,system,stdout,stderr,file:<filename>]", settings.logging.sink, &settings.logging.sink);
+        auto logfilterOption = op.add<Value<string>>(
+            "", "logfilter", "log filter <tag>:<level>[,<tag>:<level>]* with tag = * or <log tag> and level = [trace,debug,info,notice,warning,error,fatal]",
+            settings.logging.filter);
         auto versionSwitch = op.add<Switch>("v", "version", "show version number");
 #if defined(HAS_ALSA) || defined(WINDOWS)
         auto listSwitch = op.add<Switch>("l", "list", "list PCM devices");
@@ -175,18 +178,42 @@ int main(int argc, char** argv)
 
         // XXX: Only one metadata option must be set
 
-        // TODO: AixLog::Log::init<AixLog::SinkNative>("snapclient", AixLog::Severity::trace, AixLog::Type::special);
-        if (debugOption->is_set())
+        settings.logging.filter = logfilterOption->value();
+        if (logfilterOption->is_set())
         {
-            AixLog::Log::instance().add_logsink<AixLog::SinkCout>(AixLog::Severity::trace, "%Y-%m-%d %H-%M-%S.#ms [#severity] (#tag_func)");
-            if (!debugOption->value().empty())
-                AixLog::Log::instance().add_logsink<AixLog::SinkFile>(AixLog::Severity::trace, debugOption->value(),
-                                                                      "%Y-%m-%d %H-%M-%S.#ms [#severity] (#tag_func)");
+            for (size_t n = 1; n < logfilterOption->count(); ++n)
+                settings.logging.filter += "," + logfilterOption->value(n);
         }
+
+        if (settings.logging.sink.empty())
+        {
+            settings.logging.sink = "stdout";
+#ifdef HAS_DAEMON
+            if (daemonOption->is_set())
+                settings.logging.sink = "system";
+#endif
+        }
+        AixLog::Filter logfilter;
+        auto filters = utils::string::split(settings.logging.filter, ',');
+        for (const auto& filter : filters)
+            logfilter.add_filter(filter);
+
+        string logformat = "%Y-%m-%d %H-%M-%S.#ms [#severity] (#tag_func)";
+        if (settings.logging.sink.find("file:") != string::npos)
+        {
+            string logfile = settings.logging.sink.substr(settings.logging.sink.find(":") + 1);
+            AixLog::Log::init<AixLog::SinkFile>(logfilter, logfile, logformat);
+        }
+        else if (settings.logging.sink == "stdout")
+            AixLog::Log::init<AixLog::SinkCout>(logfilter, logformat);
+        else if (settings.logging.sink == "stderr")
+            AixLog::Log::init<AixLog::SinkCerr>(logfilter, logformat);
+        else if (settings.logging.sink == "system")
+            AixLog::Log::init<AixLog::SinkNative>("snapclient", logfilter);
+        else if (settings.logging.sink == "null")
+            AixLog::Log::init<AixLog::SinkNull>();
         else
-        {
-            AixLog::Log::instance().add_logsink<AixLog::SinkCout>(AixLog::Severity::info, "%Y-%m-%d %H-%M-%S [#severity] (#tag_func)");
-        }
+            throw SnapException("Invalid log sink: " + settings.logging.sink);
 
 #ifdef HAS_DAEMON
         std::unique_ptr<Daemon> daemon;
@@ -311,7 +338,7 @@ int main(int argc, char** argv)
     }
     catch (const std::exception& e)
     {
-        LOG(ERROR) << "Exception: " << e.what() << std::endl;
+        LOG(FATAL) << "Exception: " << e.what() << std::endl;
         exitcode = EXIT_FAILURE;
     }
 
