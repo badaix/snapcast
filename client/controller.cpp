@@ -88,7 +88,7 @@ void Controller::onMessageReceived(ClientConnection* /*connection*/, const msg::
         {
             player_->setVolume(serverSettings_->getVolume() / 100.);
             player_->setMute(serverSettings_->isMuted());
-            stream_->setBufferLen(serverSettings_->getBufferMs() - serverSettings_->getLatency());
+            stream_->setBufferLen(std::max(0, serverSettings_->getBufferMs() - serverSettings_->getLatency() - settings_.player.latency));
         }
     }
     else if (baseMessage.type == message_type::kCodecHeader)
@@ -122,7 +122,7 @@ void Controller::onMessageReceived(ClientConnection* /*connection*/, const msg::
         LOG(NOTICE) << TAG("state") << "sampleformat: " << sampleFormat_.getFormat() << "\n";
 
         stream_ = make_shared<Stream>(sampleFormat_, settings_.player.sample_format);
-        stream_->setBufferLen(serverSettings_->getBufferMs() - settings_.player.latency);
+        stream_->setBufferLen(std::max(0, serverSettings_->getBufferMs() - serverSettings_->getLatency() - settings_.player.latency));
 
         const auto& pcm_device = settings_.player.pcm_device;
         const auto& player_name = settings_.player.player_name;
