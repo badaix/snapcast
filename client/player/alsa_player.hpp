@@ -39,6 +39,7 @@ public:
 
     /// List the system's audio output devices
     static std::vector<PcmDevice> pcm_list(void);
+    void setVolume(double volume) override;
 
 protected:
     void worker() override;
@@ -46,8 +47,15 @@ protected:
 private:
     void initAlsa();
     void uninitAlsa();
+    void initMixer();
+    bool getVolume(double& volume, bool& muted);
+    void openMixer(snd_mixer_elem_t** elem, snd_mixer_t** mixer);
 
     snd_pcm_t* handle_;
+
+    snd_ctl_t* ctl_;
+
+    pollfd* fd_;
     std::vector<char> buffer_;
     snd_pcm_uframes_t frames_;
 };
