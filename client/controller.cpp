@@ -16,11 +16,12 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif // NOMINMAX
+
 #include "controller.hpp"
 #include "decoder/pcm_decoder.hpp"
-#include <iostream>
-#include <memory>
-#include <string>
 #if defined(HAS_OGG) && (defined(HAS_TREMOR) || defined(HAS_VORBIS))
 #include "decoder/ogg_decoder.hpp"
 #endif
@@ -35,6 +36,11 @@
 #include "message/hello.hpp"
 #include "message/time.hpp"
 #include "time_provider.hpp"
+
+#include <algorithm>
+#include <iostream>
+#include <memory>
+#include <string>
 
 using namespace std;
 
