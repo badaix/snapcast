@@ -206,6 +206,13 @@ Snapserver can start any process and read PCM data from the stdout of the proces
 
 Configure snapserver with `stream = process:///path/to/process?name=Process[&params=<--my list --of params>][&log_stderr=false]`
 
+For example, you could install the minimalist **mpv** media player to pick up WebRadio from a given url ...
+
+```ini
+[stream]
+stream = process:///usr/bin/mpv?name=Webradio&sampleformat=48000:16:2&params=http://129.122.92.10:88/broadwavehigh.mp3 --no-terminal --audio-display=no --audio-channels=stereo --audio-samplerate=48000 --audio-format=s16 --ao=pcm:file=/dev/stdout
+```
+
 ### Line-in
 
 Audio captured from line-in can be redirected to the snapserver's pipe, e.g. by using:
