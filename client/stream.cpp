@@ -16,7 +16,9 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
+#ifndef NOMINMAX
 #define NOMINMAX
+#endif // NOMINMAX
 
 #include "stream.hpp"
 #include "common/aixlog.hpp"
