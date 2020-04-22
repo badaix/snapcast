@@ -202,6 +202,8 @@ endif()
 
 find_package(Boost 1.70 REQUIRED)
 add_definitions("-DBOOST_ERROR_CODE_HEADER_ONLY")
+include_directories(${Boost_INCLUDE_DIRS})
+link_directories(${BOOST_LIBRARY_DIRS})
 
 if(WIN32)
 	include(FindPackageHandleStandardArgs)
