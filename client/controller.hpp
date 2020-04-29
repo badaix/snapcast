@@ -74,7 +74,6 @@ private:
     boost::asio::steady_timer timer_;
     ClientSettings settings_;
     std::string meta_callback_;
-    std::atomic<bool> active_;
     SampleFormat sampleFormat_;
     std::unique_ptr<ClientConnection> clientConnection_;
     std::shared_ptr<Stream> stream_;
