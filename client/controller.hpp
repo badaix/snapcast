@@ -54,29 +54,27 @@ using namespace std::chrono_literals;
  * Decodes audio (message_type::kWireChunk) and feeds PCM to the audio stream buffer
  * Does timesync with the server
  */
-class Controller : public MessageReceiver
+class Controller
 {
 public:
-    Controller(const ClientSettings& settings, std::unique_ptr<MetadataAdapter> meta);
+    Controller(boost::asio::io_context& io_context, const ClientSettings& settings, std::unique_ptr<MetadataAdapter> meta);
     void start();
-    void run();
-    void stop();
-
-    /// Implementation of MessageReceiver.
-    /// ClientConnection passes messages from the server through these callbacks
-    void onMessageReceived(ClientConnection* connection, const msg::BaseMessage& baseMessage, char* buffer) override;
-
-    /// Implementation of MessageReceiver.
-    /// Used for async exception reporting
-    void onException(ClientConnection* connection, std::exception_ptr exception) override;
+    // void stop();
 
 private:
+    using MdnsHandler = std::function<void(const boost::system::error_code&, const std::string&, uint16_t)>;
     void worker();
-    bool sendTimeSyncMessage(const std::chrono::milliseconds& after = 1000ms);
+    void reconnect();
+    void browseMdns(const MdnsHandler& handler);
+
+    void getNextMessage();
+    void sendTimeSyncMessage(int quick_syncs);
+
+    boost::asio::io_context& io_context_;
+    boost::asio::steady_timer timer_;
     ClientSettings settings_;
     std::string meta_callback_;
     std::atomic<bool> active_;
-    std::thread controllerThread_;
     SampleFormat sampleFormat_;
     std::unique_ptr<ClientConnection> clientConnection_;
     std::shared_ptr<Stream> stream_;
@@ -85,9 +83,6 @@ private:
     std::unique_ptr<MetadataAdapter> meta_;
     std::unique_ptr<msg::ServerSettings> serverSettings_;
     std::unique_ptr<msg::CodecHeader> headerChunk_;
-    std::mutex receiveMutex_;
-
-    std::exception_ptr async_exception_;
 };
 
 

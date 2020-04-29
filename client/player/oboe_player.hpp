@@ -34,7 +34,7 @@ typedef int (*AndroidAudioCallback)(short* buffer, int num_samples);
 class OboePlayer : public Player, public oboe::AudioStreamCallback
 {
 public:
-    OboePlayer(const PcmDevice& pcmDevice, std::shared_ptr<Stream> stream);
+    OboePlayer(boost::asio::io_context& io_context, const ClientSettings::Player& settings, std::shared_ptr<Stream> stream);
     virtual ~OboePlayer();
 
     void start() override;
@@ -44,7 +44,7 @@ protected:
     oboe::DataCallbackResult onAudioReady(oboe::AudioStream* oboeStream, void* audioData, int32_t numFrames) override;
     double getCurrentOutputLatencyMillis() const;
 
-    void worker() override;
+    bool needsThread() const override;
     oboe::ManagedStream out_stream_;
 
     std::unique_ptr<oboe::LatencyTuner> mLatencyTuner;

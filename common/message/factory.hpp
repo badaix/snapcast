@@ -19,12 +19,13 @@
 #ifndef MESSAGE_FACTORY_HPP
 #define MESSAGE_FACTORY_HPP
 
+#include "client_settings.hpp"
 #include "codec_header.hpp"
 #include "hello.hpp"
 #include "server_settings.hpp"
 #include "stream_tags.hpp"
 #include "time.hpp"
-#include "wire_chunk.hpp"
+#include "pcm_chunk.hpp"
 
 #include "common/str_compat.hpp"
 #include "common/utils.hpp"
@@ -34,6 +35,21 @@
 
 namespace msg
 {
+
+template <typename ToType>
+static std::unique_ptr<ToType> message_cast(std::unique_ptr<msg::BaseMessage> message)
+{
+    ToType* tmp = dynamic_cast<ToType*>(message.get());
+    std::unique_ptr<ToType> result;
+    if (tmp != nullptr)
+    {
+        message.release();
+        result.reset(tmp);
+        return result;
+    }
+    return nullptr;
+}
+
 namespace factory
 {
 
@@ -46,7 +62,6 @@ static std::unique_ptr<T> createMessage(const BaseMessage& base_message, char* b
     result->deserialize(base_message, buffer);
     return result;
 }
-
 
 static std::unique_ptr<BaseMessage> createMessage(const BaseMessage& base_message, char* buffer)
 {
@@ -64,7 +79,11 @@ static std::unique_ptr<BaseMessage> createMessage(const BaseMessage& base_messag
         case kTime:
             return createMessage<Time>(base_message, buffer);
         case kWireChunk:
-            return createMessage<WireChunk>(base_message, buffer);
+        // this is kind of cheated to safe the convertion from WireChunk to PcmChunk
+        // the user of the factory must be aware that a PcmChunk will be created
+            return createMessage<PcmChunk>(base_message, buffer);
+        case kClientSettings:
+            return createMessage<ClientSettings>(base_message, buffer);
         default:
             return nullptr;
     }

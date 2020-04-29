@@ -93,17 +93,20 @@ public:
 class WASAPIPlayer : public Player
 {
 public:
-    WASAPIPlayer(const PcmDevice& pcmDevice, std::shared_ptr<Stream> stream, ClientSettings::SharingMode mode);
+    WASAPIPlayer(boost::asio::io_context& io_context, const ClientSettings::Player& settings, std::shared_ptr<Stream> stream);
     virtual ~WASAPIPlayer();
 
     static std::vector<PcmDevice> pcm_list(void);
 
 protected:
     virtual void worker();
+    virtual bool needsThread() const override
+    {
+        return true;
+    }
 
 private:
     AudioSessionEventListener* audioEventListener_;
-    ClientSettings::SharingMode mode_;
 };
 
 #endif

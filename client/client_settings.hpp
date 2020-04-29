@@ -34,19 +34,33 @@ struct ClientSettings
         shared
     };
 
-    struct ServerSettings
+    struct Mixer
+    {
+        enum class Mode
+        {
+            hardware,
+            software,
+            script
+        };
+
+        Mode mode{Mode::software};
+        std::string parameter{""};
+    };
+
+    struct Server
     {
         std::string host{""};
         size_t port{1704};
     };
 
-    struct PlayerSettings
+    struct Player
     {
         std::string player_name{""};
         int latency{0};
         PcmDevice pcm_device;
         SampleFormat sample_format;
         SharingMode sharing_mode{SharingMode::shared};
+        Mixer mixer;
     };
 
     struct Logging
@@ -58,8 +72,8 @@ struct ClientSettings
     size_t instance{1};
     std::string host_id;
 
-    ServerSettings server;
-    PlayerSettings player;
+    Server server;
+    Player player;
     Logging logging;
 };
 

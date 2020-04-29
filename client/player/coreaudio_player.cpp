@@ -32,7 +32,8 @@ void callback(void* custom_data, AudioQueueRef queue, AudioQueueBufferRef buffer
 }
 
 
-CoreAudioPlayer::CoreAudioPlayer(const PcmDevice& pcmDevice, std::shared_ptr<Stream> stream) : Player(pcmDevice, stream), ms_(100), pubStream_(stream)
+CoreAudioPlayer::CoreAudioPlayer(boost::asio::io_context& io_context, const ClientSettings::Player& settings, std::shared_ptr<Stream> stream)
+    : Player(io_context, settings, stream), ms_(100), pubStream_(stream)
 {
 }
 
@@ -127,6 +128,12 @@ void CoreAudioPlayer::playerCallback(AudioQueueRef queue, AudioQueueBufferRef bu
     {
         uninitAudioQueue(queue);
     }
+}
+
+
+bool CoreAudioPlayer::needsThread() const
+{
+    return true;
 }
 
 
