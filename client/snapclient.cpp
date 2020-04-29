@@ -19,10 +19,10 @@
 #include <chrono>
 #include <iostream>
 #ifndef WINDOWS
+#include <signal.h>
 #include <sys/resource.h>
 #endif
 
-#include "browseZeroConf/browse_mdns.hpp"
 #include "common/popl.hpp"
 #include "controller.hpp"
 
@@ -34,7 +34,6 @@
 #endif
 #include "client_settings.hpp"
 #include "common/aixlog.hpp"
-#include "common/signal_handler.hpp"
 #include "common/snap_exception.hpp"
 #include "common/str_compat.hpp"
 #include "common/utils.hpp"
@@ -45,6 +44,8 @@ using namespace std;
 using namespace popl;
 
 using namespace std::chrono_literals;
+
+static constexpr auto LOG_TAG = "Snapclient";
 
 PcmDevice getPcmDevice(const std::string& soundcard)
 {
@@ -78,6 +79,26 @@ PcmDevice getPcmDevice(const std::string& soundcard)
     return pcmDevice;
 }
 
+#ifdef WINDOWS
+// hack to avoid case destinction in the signal handler
+#define SIGHUP SIGINT
+const char* strsignal(int sig)
+{
+    switch (sig)
+    {
+        case SIGTERM:
+            return "SIGTERM";
+        case SIGINT:
+            return "SIGINT";
+        case SIGBREAK:
+            return "SIGBREAK";
+        case SIGABRT:
+            return "SIGABRT";
+        default:
+            return "Unhandled";
+    }
+}
+#endif
 
 int main(int argc, char** argv)
 {
@@ -236,7 +257,7 @@ int main(int argc, char** argv)
                     group = user_group[1];
             }
             daemon = std::make_unique<Daemon>(user, group, pidFile);
-            LOG(NOTICE) << "daemonizing" << std::endl;
+            LOG(NOTICE, LOG_TAG) << "daemonizing" << std::endl;
             daemon->daemonize();
             if (processPriority < -20)
                 processPriority = -20;
@@ -244,7 +265,7 @@ int main(int argc, char** argv)
                 processPriority = 19;
             if (processPriority != 0)
                 setpriority(PRIO_PROCESS, 0, processPriority);
-            LOG(NOTICE) << "daemon started" << std::endl;
+            LOG(NOTICE, LOG_TAG) << "daemon started" << std::endl;
         }
 #endif
 
@@ -277,71 +298,31 @@ int main(int argc, char** argv)
         }
 #endif
 
-        bool active = true;
-        std::shared_ptr<Controller> controller;
-        auto signal_handler = install_signal_handler(
-            {
-#ifndef WINDOWS // no sighup on windows
-                SIGHUP,
-#endif
-                SIGTERM, SIGINT},
-            [&active, &controller](int signal, const std::string& strsignal) {
-                LOG(INFO) << "Received signal " << signal << ": " << strsignal << "\n";
-                active = false;
-                if (controller)
-                {
-                    LOG(INFO) << "Stopping controller\n";
-                    controller->stop();
-                }
-            });
-        if (settings.server.host.empty())
-        {
-#if defined(HAS_AVAHI) || defined(HAS_BONJOUR)
-            BrowseZeroConf browser;
-            mDNSResult avahiResult;
-            while (active)
-            {
-                signal_handler.wait_for(500ms);
-                if (!active)
-                    break;
-                try
-                {
-                    if (browser.browse("_snapcast._tcp", avahiResult, 5000))
-                    {
-                        settings.server.host = avahiResult.ip;
-                        settings.server.port = avahiResult.port;
-                        if (avahiResult.ip_version == IPVersion::IPv6)
-                            settings.server.host += "%" + cpt::to_string(avahiResult.iface_idx);
-                        LOG(INFO) << "Found server " << settings.server.host << ":" << settings.server.port << "\n";
-                        break;
-                    }
-                }
-                catch (const std::exception& e)
-                {
-                    LOG(ERROR) << "Exception: " << e.what() << std::endl;
-                }
-            }
-#endif
-        }
+        boost::asio::io_context io_context;
+        // Construct a signal set registered for process termination.
+        boost::asio::signal_set signals(io_context, SIGHUP, SIGINT, SIGTERM);
+        signals.async_wait([&](const boost::system::error_code& ec, int signal) {
+            if (!ec)
+                LOG(INFO, LOG_TAG) << "Received signal " << signal << ": " << strsignal(signal) << "\n";
+            else
+                LOG(INFO, LOG_TAG) << "Failed to wait for signal, error: " << ec.message() << "\n";
+            io_context.stop();
+        });
 
-        if (active)
-        {
-            // Setup metadata handling
-            auto meta(metaStderr ? std::make_unique<MetaStderrAdapter>() : std::make_unique<MetadataAdapter>());
-
-            controller = make_shared<Controller>(settings, std::move(meta));
-            LOG(INFO) << "Latency: " << settings.player.latency << "\n";
-            controller->run();
-            // signal_handler.wait();
-            // controller->stop();
-        }
+        // Setup metadata handling
+        auto meta(metaStderr ? std::make_unique<MetaStderrAdapter>() : std::make_unique<MetadataAdapter>());
+        auto controller = make_shared<Controller>(io_context, settings, std::move(meta));
+        controller->start();
+        // std::thread t([&] { io_context.run(); });
+        io_context.run();
+        // t.join();
     }
     catch (const std::exception& e)
     {
-        LOG(FATAL) << "Exception: " << e.what() << std::endl;
+        LOG(FATAL, LOG_TAG) << "Exception: " << e.what() << std::endl;
         exitcode = EXIT_FAILURE;
     }
 
-    LOG(NOTICE) << "daemon terminated." << endl;
+    LOG(NOTICE, LOG_TAG) << "daemon terminated." << endl;
     exit(exitcode);
 }

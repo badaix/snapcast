@@ -19,11 +19,15 @@
 #ifndef PLAYER_H
 #define PLAYER_H
 
+#include "client_settings.hpp"
 #include "common/aixlog.hpp"
 #include "common/endian.hpp"
-#include "pcm_device.hpp"
 #include "stream.hpp"
+
+#include <boost/asio.hpp>
+
 #include <atomic>
+#include <functional>
 #include <string>
 #include <thread>
 #include <vector>
@@ -35,8 +39,10 @@
  */
 class Player
 {
+    using volume_callback = std::function<void(double volume, bool muted)>;
+
 public:
-    Player(const PcmDevice& pcmDevice, std::shared_ptr<Stream> stream);
+    Player(boost::asio::io_context& io_context, const ClientSettings::Player& settings, std::shared_ptr<Stream> stream);
     virtual ~Player();
 
     /// Set audio volume in range [0..1]
@@ -44,13 +50,36 @@ public:
     virtual void setMute(bool mute);
     virtual void start();
     virtual void stop();
+    void setVolumeCallback(const volume_callback& callback)
+    {
+        onVolumeChanged_ = callback;
+    }
 
 protected:
-    virtual void worker() = 0;
+    virtual void worker();
+    virtual bool needsThread() const = 0;
 
     void setVolume_poly(double volume, double exp);
     void setVolume_exp(double volume, double base);
 
+    void adjustVolume(char* buffer, size_t frames);
+    void notifyVolumeChange(double volume, bool muted) const
+    {
+        if (onVolumeChanged_)
+            onVolumeChanged_(volume, muted);
+    }
+
+    boost::asio::io_context& io_context_;
+    std::atomic<bool> active_;
+    std::shared_ptr<Stream> stream_;
+    std::thread playerThread_;
+    ClientSettings::Player settings_;
+    double volume_;
+    bool muted_;
+    double volCorrection_;
+    volume_callback onVolumeChanged_;
+
+private:
     template <typename T>
     void adjustVolume(char* buffer, size_t count, double volume)
     {
@@ -58,16 +87,6 @@ protected:
         for (size_t n = 0; n < count; ++n)
             bufferT[n] = endian::swap<T>(static_cast<T>(endian::swap<T>(bufferT[n]) * volume));
     }
-
-    void adjustVolume(char* buffer, size_t frames);
-
-    std::atomic<bool> active_;
-    std::shared_ptr<Stream> stream_;
-    std::thread playerThread_;
-    PcmDevice pcmDevice_;
-    double volume_;
-    bool muted_;
-    double volCorrection_;
 };
 
 

@@ -30,7 +30,8 @@ static constexpr auto LOG_TAG = "OboePlayer";
 static constexpr double kDefaultLatency = 50;
 
 
-OboePlayer::OboePlayer(const PcmDevice& pcmDevice, std::shared_ptr<Stream> stream) : Player(pcmDevice, stream)
+OboePlayer::OboePlayer(boost::asio::io_context& io_context, const ClientSettings::Player& settings, std::shared_ptr<Stream> stream)
+    : Player(io_context, settings, stream)
 {
     LOG(DEBUG, LOG_TAG) << "Contructor\n";
     LOG(INFO, LOG_TAG) << "Init start\n";
@@ -86,6 +87,12 @@ OboePlayer::~OboePlayer()
     result = out_stream_->close();
     if (result != oboe::Result::OK)
         LOG(ERROR, LOG_TAG) << "Error in AudioStream::stop: " << oboe::convertToText(result) << "\n";
+}
+
+
+bool OboePlayer::needsThread() const
+{
+    return false;
 }
 
 
@@ -158,9 +165,4 @@ void OboePlayer::stop()
     auto result = out_stream_->requestStop();
     if (result != oboe::Result::OK)
         LOG(ERROR, LOG_TAG) << "Error in requestStop: " << oboe::convertToText(result) << "\n";
-}
-
-
-void OboePlayer::worker()
-{
 }

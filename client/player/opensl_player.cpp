@@ -49,8 +49,8 @@ static void bqPlayerCallback(SLAndroidSimpleBufferQueueItf bq, void* context)
 }
 
 
-OpenslPlayer::OpenslPlayer(const PcmDevice& pcmDevice, std::shared_ptr<Stream> stream)
-    : Player(pcmDevice, stream), engineObject(NULL), engineEngine(NULL), outputMixObject(NULL), bqPlayerObject(NULL), bqPlayerPlay(NULL),
+OpenslPlayer::OpenslPlayer(boost::asio::io_context& io_context, const ClientSettings::Player& settings, std::shared_ptr<Stream> stream)
+    : Player(io_context, settings, stream), engineObject(NULL), engineEngine(NULL), outputMixObject(NULL), bqPlayerObject(NULL), bqPlayerPlay(NULL),
       bqPlayerBufferQueue(NULL), bqPlayerVolume(NULL), curBuffer(0), ms_(50), buff_size(0), pubStream_(stream)
 {
     initOpensl();
@@ -141,6 +141,11 @@ std::string OpenslPlayer::resultToString(SLresult result) const
     }
 }
 
+
+bool OpenslPlayer::needsThread() const
+{
+    return false;
+}
 
 
 void OpenslPlayer::throwUnsuccess(const std::string& phase, const std::string& what, SLresult result)
@@ -369,9 +374,4 @@ void OpenslPlayer::stop()
     SLresult result = (*bqPlayerPlay)->SetPlayState(bqPlayerPlay, SL_PLAYSTATE_STOPPED);
     (*bqPlayerBufferQueue)->Clear(bqPlayerBufferQueue);
     throwUnsuccess(kPhaseStop, "PlayerPlay::SetPlayState", result);
-}
-
-
-void OpenslPlayer::worker()
-{
 }

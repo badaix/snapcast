@@ -26,17 +26,9 @@
 using namespace std;
 
 
-Player::Player(const PcmDevice& pcmDevice, std::shared_ptr<Stream> stream)
-    : active_(false), stream_(stream), pcmDevice_(pcmDevice), volume_(1.0), muted_(false), volCorrection_(1.0)
+Player::Player(boost::asio::io_context& io_context, const ClientSettings::Player& settings, std::shared_ptr<Stream> stream)
+    : io_context_(io_context), active_(false), stream_(stream), settings_(settings), volume_(1.0), muted_(false), volCorrection_(1.0)
 {
-}
-
-
-
-void Player::start()
-{
-    active_ = true;
-    playerThread_ = thread(&Player::worker, this);
 }
 
 
@@ -46,19 +38,35 @@ Player::~Player()
 }
 
 
+void Player::start()
+{
+    active_ = true;
+    if (needsThread())
+        playerThread_ = thread(&Player::worker, this);
+}
+
 
 void Player::stop()
 {
     if (active_)
     {
         active_ = false;
-        playerThread_.join();
+        if (playerThread_.joinable())
+            playerThread_.join();
     }
+}
+
+
+void Player::worker()
+{
 }
 
 
 void Player::adjustVolume(char* buffer, size_t frames)
 {
+    // if (settings_.mixer.mode != ClientSettings::Mixer::Mode::software)
+    //     return;
+
     double volume = volume_;
     if (muted_)
         volume = 0.;
