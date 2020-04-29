@@ -312,7 +312,7 @@ int main(int argc, char* argv[])
             if (!ec)
                 LOG(INFO) << "Received signal " << signal << ": " << strsignal(signal) << "\n";
             else
-                LOG(INFO) << "Failed to wait for signal: " << ec << "\n";
+                LOG(INFO) << "Failed to wait for signal, error: " << ec.message() << "\n";
             io_context.stop();
         });
 

@@ -94,7 +94,7 @@ bool FlacDecoder::decode(msg::PcmChunk* chunk)
         double diffMs = static_cast<double>(cacheInfo_.cachedBlocks_) / (static_cast<double>(cacheInfo_.sampleRate_) / 1000.);
         auto us = static_cast<uint64_t>(diffMs * 1000.);
         tv diff(static_cast<int32_t>(us / 1000000), static_cast<int32_t>(us % 1000000));
-        LOG(DEBUG) << "Cached: " << cacheInfo_.cachedBlocks_ << ", " << diffMs << "ms, " << diff.sec << "s, " << diff.usec << "us\n";
+        LOG(TRACE) << "Cached: " << cacheInfo_.cachedBlocks_ << ", " << diffMs << "ms, " << diff.sec << "s, " << diff.usec << "us\n";
         chunk->timestamp = chunk->timestamp - diff;
     }
     return true;
