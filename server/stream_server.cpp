@@ -19,7 +19,7 @@
 #include "stream_server.hpp"
 #include "common/aixlog.hpp"
 #include "config.hpp"
-#include "message/client_settings.hpp"
+#include "message/client_info.hpp"
 #include "message/hello.hpp"
 #include "message/stream_tags.hpp"
 #include "message/time.hpp"
@@ -635,7 +635,7 @@ void StreamServer::onMessageReceived(StreamSession* streamSession, const msg::Ba
             client->connected = true;
         }
     }
-    else if (baseMessage.type == message_type::kClientSettings)
+    else if (baseMessage.type == message_type::kClientInfo)
     {
         ClientInfoPtr clientInfo = Config::instance().getClientInfo(streamSession->clientId);
         if (clientInfo == nullptr)
@@ -643,11 +643,11 @@ void StreamServer::onMessageReceived(StreamSession* streamSession, const msg::Ba
             LOG(ERROR) << "client not found: " << streamSession->clientId << "\n";
             return;
         }
-        msg::ClientSettings settingsMsg;
-        settingsMsg.deserialize(baseMessage, buffer);
+        msg::ClientInfo infoMsg;
+        infoMsg.deserialize(baseMessage, buffer);
 
-        clientInfo->config.volume.percent = settingsMsg.getVolume();
-        clientInfo->config.volume.muted = settingsMsg.isMuted();
+        clientInfo->config.volume.percent = infoMsg.getVolume();
+        clientInfo->config.volume.muted = infoMsg.isMuted();
         jsonrpcpp::notification_ptr notification = make_shared<jsonrpcpp::Notification>(
             "Client.OnVolumeChanged", jsonrpcpp::Parameter("id", streamSession->clientId, "volume", clientInfo->config.volume.toJson()));
         controlServer_->send(notification->to_json().dump());

@@ -16,8 +16,8 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
-#ifndef CLIENT_SETTINGS_H
-#define CLIENT_SETTINGS_H
+#ifndef CLIENT_INFO_H
+#define CLIENT_INFO_H
 
 #include "json_message.hpp"
 
@@ -25,16 +25,18 @@
 namespace msg
 {
 
-class ClientSettings : public JsonMessage
+/// Client information sent from client to server
+/// Might also be used for sync stats and latency estimations
+class ClientInfo : public JsonMessage
 {
 public:
-    ClientSettings() : JsonMessage(message_type::kClientSettings)
+    ClientInfo() : JsonMessage(message_type::kClientInfo)
     {
         setVolume(100);
         setMuted(false);
     }
 
-    ~ClientSettings() override = default;
+    ~ClientInfo() override = default;
 
     uint16_t getVolume()
     {
