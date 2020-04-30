@@ -120,7 +120,7 @@ int main(int argc, char** argv)
             "", "logfilter", "log filter <tag>:<level>[,<tag>:<level>]* with tag = * or <log tag> and level = [trace,debug,info,notice,warning,error,fatal]",
             settings.logging.filter);
         auto versionSwitch = op.add<Switch>("v", "version", "show version number");
-#if defined(HAS_ALSA) || defined(WINDOWS)
+#if defined(HAS_ALSA) || defined(HAS_WASAPI)
         auto listSwitch = op.add<Switch>("l", "list", "list PCM devices");
         /*auto soundcardValue =*/op.add<Value<string>>("s", "soundcard", "index or name of the pcm device", "default", &pcm_device);
 #endif
@@ -135,15 +135,18 @@ int main(int argc, char** argv)
         /*auto latencyValue =*/op.add<Value<int>>("", "latency", "latency of the PCM device", 0, &settings.player.latency);
         /*auto instanceValue =*/op.add<Value<size_t>>("i", "instance", "instance id", 1, &settings.instance);
         /*auto hostIdValue =*/op.add<Value<string>>("", "hostID", "unique host id", "", &settings.host_id);
-#ifdef ANDROID
+#if defined(HAS_OBOE) && defined(HAS_OPENSL)
         op.add<Value<string>>("", "player", "audio backend", "", &settings.player.player_name);
 #endif
 #ifdef HAS_SOXR
         auto sample_format = op.add<Value<string>>("", "sampleformat", "resample audio stream to <rate>:<bits>:<channels>", "");
 #endif
 #ifdef HAS_WASAPI
-        auto sharing_mode = op.add<Value<string>>("", "sharingmode", "audio mode to use [shared/exclusive]", "shared");
+        auto sharing_mode = op.add<Value<string>>("", "sharingmode", "audio mode to use [shared|exclusive]", "shared");
 #endif
+
+        // TODO: hardcoded
+        settings.player.mixer.mode = ClientSettings::Mixer::Mode::hardware;
 
         try
         {

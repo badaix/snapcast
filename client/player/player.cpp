@@ -25,6 +25,7 @@
 
 using namespace std;
 
+static constexpr auto LOG_TAG = "Player";
 
 Player::Player(boost::asio::io_context& io_context, const ClientSettings::Player& settings, std::shared_ptr<Stream> stream)
     : io_context_(io_context), active_(false), stream_(stream), settings_(settings), volume_(1.0), muted_(false), volCorrection_(1.0)
@@ -43,6 +44,19 @@ void Player::start()
     active_ = true;
     if (needsThread())
         playerThread_ = thread(&Player::worker, this);
+
+    // If hardware mixer is used, send the initial volume to the server, because this is
+    // the volume that is configured by the user on his local device
+    if (settings_.mixer.mode == ClientSettings::Mixer::Mode::hardware)
+    {
+        double volume;
+        bool muted;
+        if (getVolume(volume, muted))
+        {
+            LOG(DEBUG, LOG_TAG) << "Volume: " << volume << ", muted: " << muted << "\n";
+            notifyVolumeChange(volume, muted);
+        }
+    }
 }
 
 
@@ -59,6 +73,12 @@ void Player::stop()
 
 void Player::worker()
 {
+}
+
+
+bool Player::getVolume(double& volume, bool& muted)
+{
+    return false;
 }
 
 
@@ -92,7 +112,7 @@ void Player::adjustVolume(char* buffer, size_t frames)
 void Player::setVolume_poly(double volume, double exp)
 {
     volume_ = std::pow(volume, exp);
-    LOG(DEBUG) << "setVolume poly: " << volume << " => " << volume_ << "\n";
+    LOG(DEBUG, LOG_TAG) << "setVolume poly: " << volume << " => " << volume_ << "\n";
 }
 
 
@@ -102,7 +122,7 @@ void Player::setVolume_exp(double volume, double base)
     //	double base = M_E;
     //	double base = 10.;
     volume_ = (pow(base, volume) - 1) / (base - 1);
-    LOG(DEBUG) << "setVolume exp: " << volume << " => " << volume_ << "\n";
+    LOG(DEBUG, LOG_TAG) << "setVolume exp: " << volume << " => " << volume_ << "\n";
 }
 
 

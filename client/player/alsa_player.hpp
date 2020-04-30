@@ -49,12 +49,15 @@ private:
     void initAlsa();
     void uninitAlsa();
     void initMixer();
-    bool getVolume(double& volume, bool& muted);
-    void openMixer(snd_mixer_elem_t** elem, snd_mixer_t** mixer);
+
+    bool getVolume(double& volume, bool& muted) override;
     void waitForEvent();
 
     snd_pcm_t* handle_;
     snd_ctl_t* ctl_;
+
+    snd_mixer_t* mixer_;
+    snd_mixer_elem_t* elem_;
 
     std::unique_ptr<pollfd> fd_;
     std::vector<char> buffer_;

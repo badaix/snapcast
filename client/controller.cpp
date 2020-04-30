@@ -157,21 +157,33 @@ void Controller::getNextMessage()
                     throw SnapException("No audio player support");
 
                 player_->setVolumeCallback([this](double volume, bool muted) {
-                    auto settings = std::make_shared<msg::ClientSettings>();
-                    settings->setVolume(static_cast<uint16_t>(volume * 100.));
-                    settings->setMuted(muted);
-                    clientConnection_->send(settings, [this](const boost::system::error_code& ec) {
-                        if (ec)
-                        {
-                            LOG(ERROR, LOG_TAG) << "Failed to send client settings, error: " << ec.message() << "\n";
-                            reconnect();
-                            return;
-                        }
-                    });
+                    static double last_volume(-1);
+                    static bool last_muted(true);
+                    if ((volume != last_volume) || (last_muted != muted))
+                    {
+                        last_volume = volume;
+                        last_muted = muted;
+                        auto settings = std::make_shared<msg::ClientSettings>();
+                        settings->setVolume(static_cast<uint16_t>(volume * 100.));
+                        settings->setMuted(muted);
+                        clientConnection_->send(settings, [this](const boost::system::error_code& ec) {
+                            if (ec)
+                            {
+                                LOG(ERROR, LOG_TAG) << "Failed to send client settings, error: " << ec.message() << "\n";
+                                reconnect();
+                                return;
+                            }
+                        });
+                    }
                 });
-                player_->setVolume(serverSettings_->getVolume() / 100.);
-                player_->setMute(serverSettings_->isMuted());
                 player_->start();
+                // Don't change the initial hardware mixer volume on the user's device.
+                // The player class will send the device's volume to the server instead
+                if (settings_.player.mixer.mode != ClientSettings::Mixer::Mode::hardware)
+                {
+                    player_->setVolume(serverSettings_->getVolume() / 100.);
+                    player_->setMute(serverSettings_->isMuted());
+                }
             }
             else if (response->type == message_type::kStreamTags)
             {
@@ -194,35 +206,34 @@ void Controller::getNextMessage()
 void Controller::sendTimeSyncMessage(int quick_syncs)
 {
     auto timeReq = std::make_shared<msg::Time>();
-    clientConnection_->sendRequest<msg::Time>(
-        timeReq, 2s, [this, quick_syncs](const boost::system::error_code& ec, const std::unique_ptr<msg::Time>& response) mutable {
-            if (ec)
-            {
-                LOG(ERROR, LOG_TAG) << "Time sync request failed: " << ec.message() << "\n";
-                reconnect();
-                return;
-            }
-            else
-            {
-                TimeProvider::getInstance().setDiff(response->latency, response->received - response->sent);
-            }
+    clientConnection_->sendRequest<msg::Time>(timeReq, 2s, [this, quick_syncs](const boost::system::error_code& ec,
+                                                                               const std::unique_ptr<msg::Time>& response) mutable {
+        if (ec)
+        {
+            LOG(ERROR, LOG_TAG) << "Time sync request failed: " << ec.message() << "\n";
+            reconnect();
+            return;
+        }
+        else
+        {
+            TimeProvider::getInstance().setDiff(response->latency, response->received - response->sent);
+        }
 
-            std::chrono::microseconds next = 1s;
-            if (quick_syncs > 0)
+        std::chrono::microseconds next = 1s;
+        if (quick_syncs > 0)
+        {
+            if (--quick_syncs == 0)
+                LOG(INFO, LOG_TAG) << "diff to server [ms]: " << (float)TimeProvider::getInstance().getDiffToServer<chronos::usec>().count() / 1000.f << "\n";
+            next = 100us;
+        }
+        timer_.expires_after(next);
+        timer_.async_wait([this, quick_syncs](const boost::system::error_code& ec) {
+            if (!ec)
             {
-                if (--quick_syncs == 0)
-                    LOG(INFO, LOG_TAG) << "diff to server [ms]: " << (float)TimeProvider::getInstance().getDiffToServer<chronos::usec>().count() / 1000.f
-                                       << "\n";
-                next = 100us;
+                sendTimeSyncMessage(quick_syncs);
             }
-            timer_.expires_after(next);
-            timer_.async_wait([this, quick_syncs](const boost::system::error_code& ec) {
-                if (!ec)
-                {
-                    sendTimeSyncMessage(quick_syncs);
-                }
-            });
         });
+    });
 }
 
 void Controller::browseMdns(const MdnsHandler& handler)
