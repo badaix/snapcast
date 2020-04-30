@@ -22,10 +22,10 @@
 #include "client_settings.hpp"
 #include "codec_header.hpp"
 #include "hello.hpp"
+#include "pcm_chunk.hpp"
 #include "server_settings.hpp"
 #include "stream_tags.hpp"
 #include "time.hpp"
-#include "pcm_chunk.hpp"
 
 #include "common/str_compat.hpp"
 #include "common/utils.hpp"
@@ -79,8 +79,8 @@ static std::unique_ptr<BaseMessage> createMessage(const BaseMessage& base_messag
         case kTime:
             return createMessage<Time>(base_message, buffer);
         case kWireChunk:
-        // this is kind of cheated to safe the convertion from WireChunk to PcmChunk
-        // the user of the factory must be aware that a PcmChunk will be created
+            // this is kind of cheated to safe the convertion from WireChunk to PcmChunk
+            // the user of the factory must be aware that a PcmChunk will be created
             return createMessage<PcmChunk>(base_message, buffer);
         case kClientSettings:
             return createMessage<ClientSettings>(base_message, buffer);

@@ -62,6 +62,7 @@ protected:
     void setVolume_poly(double volume, double exp);
     void setVolume_exp(double volume, double base);
 
+    virtual bool getVolume(double& volume, bool& muted);
     void adjustVolume(char* buffer, size_t frames);
     void notifyVolumeChange(double volume, bool muted) const
     {
