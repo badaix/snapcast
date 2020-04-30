@@ -34,7 +34,7 @@
 #include "browseZeroConf/browse_mdns.hpp"
 #include "common/aixlog.hpp"
 #include "common/snap_exception.hpp"
-#include "message/client_settings.hpp"
+#include "message/client_info.hpp"
 #include "message/hello.hpp"
 #include "message/time.hpp"
 #include "time_provider.hpp"
@@ -163,13 +163,13 @@ void Controller::getNextMessage()
                     {
                         last_volume = volume;
                         last_muted = muted;
-                        auto settings = std::make_shared<msg::ClientSettings>();
-                        settings->setVolume(static_cast<uint16_t>(volume * 100.));
-                        settings->setMuted(muted);
-                        clientConnection_->send(settings, [this](const boost::system::error_code& ec) {
+                        auto info = std::make_shared<msg::ClientInfo>();
+                        info->setVolume(static_cast<uint16_t>(volume * 100.));
+                        info->setMuted(muted);
+                        clientConnection_->send(info, [this](const boost::system::error_code& ec) {
                             if (ec)
                             {
-                                LOG(ERROR, LOG_TAG) << "Failed to send client settings, error: " << ec.message() << "\n";
+                                LOG(ERROR, LOG_TAG) << "Failed to send client info, error: " << ec.message() << "\n";
                                 reconnect();
                                 return;
                             }

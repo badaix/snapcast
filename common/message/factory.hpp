@@ -19,7 +19,7 @@
 #ifndef MESSAGE_FACTORY_HPP
 #define MESSAGE_FACTORY_HPP
 
-#include "client_settings.hpp"
+#include "client_info.hpp"
 #include "codec_header.hpp"
 #include "hello.hpp"
 #include "pcm_chunk.hpp"
@@ -82,8 +82,8 @@ static std::unique_ptr<BaseMessage> createMessage(const BaseMessage& base_messag
             // this is kind of cheated to safe the convertion from WireChunk to PcmChunk
             // the user of the factory must be aware that a PcmChunk will be created
             return createMessage<PcmChunk>(base_message, buffer);
-        case kClientSettings:
-            return createMessage<ClientSettings>(base_message, buffer);
+        case kClientInfo:
+            return createMessage<ClientInfo>(base_message, buffer);
         default:
             return nullptr;
     }

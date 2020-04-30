@@ -18,7 +18,6 @@
 
 #ifndef WASAPI_PLAYER_H
 #define WASAPI_PLAYER_H
-#include "client_settings.hpp"
 #include "player.hpp"
 #include <audiopolicy.h>
 
