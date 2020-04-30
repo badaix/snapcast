@@ -81,7 +81,7 @@ void ClientConnection::connect(const ResultHandler& handler)
     }
     LOG(NOTICE, LOG_TAG) << "Connected to " << socket_.remote_endpoint().address().to_string() << endl;
     handler(ec);
-    // getNextMessage();
+// getNextMessage();
 
 #if 0
     resolver_.async_resolve(query, host_, cpt::to_string(port_), [this, handler](const boost::system::error_code& ec, tcp::resolver::results_type results) {
@@ -138,9 +138,14 @@ void ClientConnection::sendNext()
     tv t;
     message.msg->sent = t;
     message.msg->serialize(stream);
-    boost::asio::async_write(socket_, streambuf, boost::asio::bind_executor(strand_, [this](boost::system::error_code ec, std::size_t length) {
-                                 std::ignore = length;
-                                 auto handler = messages_.front().handler;
+    auto handler = message.handler;
+
+    boost::asio::async_write(socket_, streambuf, boost::asio::bind_executor(strand_, [this, handler](boost::system::error_code ec, std::size_t length) {
+                                 if (ec)
+                                     LOG(ERROR, LOG_TAG) << "Failed to send message, error: " << ec.message() << "\n";
+                                 else
+                                     LOG(TRACE, LOG_TAG) << "Wrote " << length << " bytes to socket\n";
+
                                  messages_.pop_front();
                                  if (handler)
                                      handler(ec);
@@ -152,8 +157,8 @@ void ClientConnection::sendNext()
 
 void ClientConnection::send(const msg::message_ptr& message, const ResultHandler& handler)
 {
-    boost::asio::post(strand_, [this, message, handler]() {
-        messages_.push_back({message, handler});
+    strand_.post([this, message, handler]() {
+        messages_.emplace_back(message, handler);
         if (messages_.size() > 1)
         {
             LOG(DEBUG, LOG_TAG) << "outstanding async_write\n";

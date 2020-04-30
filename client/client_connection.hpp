@@ -123,7 +123,6 @@ public:
     /// @param message the message
     /// @param timeout the send timeout
     /// @param handler async result handler with the response message or error
-    //template <>
     void sendRequest(const msg::message_ptr& message, const chronos::usec& timeout, const MessageHandler<msg::BaseMessage>& handler);
 
     /// @sa sendRequest with templated response message
@@ -161,6 +160,9 @@ protected:
     boost::asio::io_context::strand strand_;
     struct PendingMessage
     {
+        PendingMessage(const msg::message_ptr& msg, ResultHandler handler) : msg(msg), handler(handler)
+        {
+        }
         msg::message_ptr msg;
         ResultHandler handler;
     };
