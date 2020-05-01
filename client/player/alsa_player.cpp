@@ -23,6 +23,7 @@
 
 //#define BUFFER_TIME 120000
 #define PERIOD_TIME 30000
+#define exp10(x) (exp((x)*log(10)))
 
 using namespace std;
 
@@ -56,13 +57,26 @@ void AlsaPlayer::setVolume(double volume)
     {
         int err = 0;
         long minv, maxv;
-        if ((err = snd_mixer_selem_get_playback_volume_range(elem_, &minv, &maxv)) < 0)
-            throw SnapException(std::string("Failed to get playback volume range, error: ") + snd_strerror(err));
+        if ((err = snd_mixer_selem_get_playback_dB_range(elem_, &minv, &maxv)) < 0)
+        {
+            if ((err = snd_mixer_selem_get_playback_volume_range(elem_, &minv, &maxv)) < 0)
+                throw SnapException(std::string("Failed to get playback volume range, error: ") + snd_strerror(err));
 
-        auto mixer_volume = volume * (maxv - minv) + minv;
-        LOG(DEBUG, LOG_TAG) << "Mixer volume range [" << minv << ", " << maxv << "], volume: " << volume << ", mixer volume: " << mixer_volume << "\n";
-        if ((err = snd_mixer_selem_set_playback_volume_all(elem_, mixer_volume)) < 0)
-            throw SnapException(std::string("Failed to set playback volume, error: ") + snd_strerror(err));
+            auto mixer_volume = volume * (maxv - minv) + minv;
+            LOG(DEBUG, LOG_TAG) << "Mixer volume range [" << minv << ", " << maxv << "], volume: " << volume << ", mixer volume: " << mixer_volume << "\n";
+            if ((err = snd_mixer_selem_set_playback_volume_all(elem_, mixer_volume)) < 0)
+                throw SnapException(std::string("Failed to set playback volume, error: ") + snd_strerror(err));
+        }
+        else
+        {
+            double min_norm = exp10((minv - maxv) / 6000.0);
+            volume = volume * (1 - min_norm) + min_norm;
+            double mixer_volume = 6000.0 * log10(volume) + maxv;
+
+            LOG(DEBUG, LOG_TAG) << "Mixer volume range [" << minv << ", " << maxv << "], volume: " << volume << ", mixer volume: " << mixer_volume << "\n";
+            if ((err = snd_mixer_selem_set_playback_dB_all(elem_, mixer_volume, 0)) < 0)
+                throw SnapException(std::string("Failed to set playback volume, error: ") + snd_strerror(err));
+        }
     }
     catch (const std::exception& e)
     {
@@ -191,7 +205,7 @@ void AlsaPlayer::initMixer()
         throw SnapException(std::string("Failed to load mixer, error: ") + snd_strerror(err));
     elem_ = snd_mixer_find_selem(mixer_, sid);
     if (!elem_)
-        throw SnapException(std::string("Failed to find selem, error: ") + snd_strerror(err));
+        throw SnapException("Failed to find mixer simple element");
 
     sd_ = boost::asio::posix::stream_descriptor(io_context_, fd_->fd);
     waitForEvent();
