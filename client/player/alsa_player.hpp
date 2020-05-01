@@ -40,6 +40,7 @@ public:
     /// List the system's audio output devices
     static std::vector<PcmDevice> pcm_list(void);
     void setVolume(double volume) override;
+    void setMute(bool mute) override;
 
 protected:
     void worker() override;
@@ -49,6 +50,7 @@ private:
     void initAlsa();
     void uninitAlsa();
     void initMixer();
+    void uninitMixer();
 
     bool getVolume(double& volume, bool& muted) override;
     void waitForEvent();
@@ -65,6 +67,7 @@ private:
     boost::asio::posix::stream_descriptor sd_;
     std::chrono::time_point<std::chrono::steady_clock> last_change_;
     std::mutex mutex_;
+    boost::asio::steady_timer timer_;
 };
 
 
