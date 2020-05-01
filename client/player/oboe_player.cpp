@@ -137,7 +137,7 @@ oboe::DataCallbackResult OboePlayer::onAudioReady(oboe::AudioStream* /*oboeStrea
 
     if (!stream_->getPlayerChunk(audioData, delay, numFrames))
     {
-        // LOG(INFO) << "Failed to get chunk. Playing silence.\n";
+        // LOG(INFO, LOG_TAG) << "Failed to get chunk. Playing silence.\n";
         memset(audioData, 0, numFrames * stream_->getFormat().frameSize());
     }
     else
