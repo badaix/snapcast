@@ -16,6 +16,8 @@
 
 using namespace std;
 
+static constexpr auto LOG_TAG = "Bonjour";
+
 struct DNSServiceRefDeleter
 {
     void operator()(DNSServiceRef* ref)
@@ -241,7 +243,7 @@ bool BrowseBonjour::browse(const string& serviceName, mDNSResult& result, int /*
         return false;
 
     if (resultCollection.size() != 1)
-        LOG(NOTICE) << "Multiple servers found.  Using first" << endl;
+        LOG(NOTICE, LOG_TAG) << "Multiple servers found.  Using first" << endl;
 
     result = resultCollection[0];
 

@@ -29,6 +29,8 @@
 
 static AvahiSimplePoll* simple_poll = nullptr;
 
+static constexpr auto LOG_TAG = "Avahi";
+
 
 BrowseAvahi::BrowseAvahi() : client_(nullptr), sb_(nullptr)
 {
@@ -70,15 +72,15 @@ void BrowseAvahi::resolve_callback(AvahiServiceResolver* r, AVAHI_GCC_UNUSED Ava
     switch (event)
     {
         case AVAHI_RESOLVER_FAILURE:
-            LOG(ERROR) << "(Resolver) Failed to resolve service '" << name << "' of type '" << type << "' in domain '" << domain
-                       << "': " << avahi_strerror(avahi_client_errno(avahi_service_resolver_get_client(r))) << "\n";
+            LOG(ERROR, LOG_TAG) << "(Resolver) Failed to resolve service '" << name << "' of type '" << type << "' in domain '" << domain
+                                << "': " << avahi_strerror(avahi_client_errno(avahi_service_resolver_get_client(r))) << "\n";
             break;
 
         case AVAHI_RESOLVER_FOUND:
         {
             char a[AVAHI_ADDRESS_STR_MAX], *t;
 
-            LOG(INFO) << "Service '" << name << "' of type '" << type << "' in domain '" << domain << "':\n";
+            LOG(INFO, LOG_TAG) << "Service '" << name << "' of type '" << type << "' in domain '" << domain << "':\n";
 
             avahi_address_snprint(a, sizeof(a), address);
             browseAvahi->result_.host = host_name;
@@ -90,15 +92,15 @@ void BrowseAvahi::resolve_callback(AvahiServiceResolver* r, AVAHI_GCC_UNUSED Ava
             browseAvahi->result_.iface_idx = interface;
 
             t = avahi_string_list_to_string(txt);
-            LOG(INFO) << "\t" << host_name << ":" << port << " (" << a << ")\n";
-            LOG(DEBUG) << "\tTXT=" << t << "\n";
-            LOG(DEBUG) << "\tProto=" << (int)protocol << "\n";
-            LOG(DEBUG) << "\tcookie is " << avahi_string_list_get_service_cookie(txt) << "\n";
-            LOG(DEBUG) << "\tis_local: " << !!(flags & AVAHI_LOOKUP_RESULT_LOCAL) << "\n";
-            LOG(DEBUG) << "\tour_own: " << !!(flags & AVAHI_LOOKUP_RESULT_OUR_OWN) << "\n";
-            LOG(DEBUG) << "\twide_area: " << !!(flags & AVAHI_LOOKUP_RESULT_WIDE_AREA) << "\n";
-            LOG(DEBUG) << "\tmulticast: " << !!(flags & AVAHI_LOOKUP_RESULT_MULTICAST) << "\n";
-            LOG(DEBUG) << "\tcached: " << !!(flags & AVAHI_LOOKUP_RESULT_CACHED) << "\n";
+            LOG(INFO, LOG_TAG) << "\t" << host_name << ":" << port << " (" << a << ")\n";
+            LOG(DEBUG, LOG_TAG) << "\tTXT=" << t << "\n";
+            LOG(DEBUG, LOG_TAG) << "\tProto=" << (int)protocol << "\n";
+            LOG(DEBUG, LOG_TAG) << "\tcookie is " << avahi_string_list_get_service_cookie(txt) << "\n";
+            LOG(DEBUG, LOG_TAG) << "\tis_local: " << !!(flags & AVAHI_LOOKUP_RESULT_LOCAL) << "\n";
+            LOG(DEBUG, LOG_TAG) << "\tour_own: " << !!(flags & AVAHI_LOOKUP_RESULT_OUR_OWN) << "\n";
+            LOG(DEBUG, LOG_TAG) << "\twide_area: " << !!(flags & AVAHI_LOOKUP_RESULT_WIDE_AREA) << "\n";
+            LOG(DEBUG, LOG_TAG) << "\tmulticast: " << !!(flags & AVAHI_LOOKUP_RESULT_MULTICAST) << "\n";
+            LOG(DEBUG, LOG_TAG) << "\tcached: " << !!(flags & AVAHI_LOOKUP_RESULT_CACHED) << "\n";
             avahi_free(t);
         }
     }
@@ -120,12 +122,12 @@ void BrowseAvahi::browse_callback(AvahiServiceBrowser* b, AvahiIfIndex interface
     switch (event)
     {
         case AVAHI_BROWSER_FAILURE:
-            LOG(ERROR) << "(Browser) " << avahi_strerror(avahi_client_errno(avahi_service_browser_get_client(b))) << "\n";
+            LOG(ERROR, LOG_TAG) << "(Browser) " << avahi_strerror(avahi_client_errno(avahi_service_browser_get_client(b))) << "\n";
             avahi_simple_poll_quit(simple_poll);
             return;
 
         case AVAHI_BROWSER_NEW:
-            LOG(INFO) << "(Browser) NEW: service '" << name << "' of type '" << type << "' in domain '" << domain << "'\n";
+            LOG(INFO, LOG_TAG) << "(Browser) NEW: service '" << name << "' of type '" << type << "' in domain '" << domain << "'\n";
 
             /* We ignore the returned resolver object. In the callback
                function we free it. If the server is terminated before
@@ -134,17 +136,17 @@ void BrowseAvahi::browse_callback(AvahiServiceBrowser* b, AvahiIfIndex interface
 
             if (!(avahi_service_resolver_new(browseAvahi->client_, interface, protocol, name, type, domain, AVAHI_PROTO_UNSPEC, (AvahiLookupFlags)0,
                                              resolve_callback, userdata)))
-                LOG(ERROR) << "Failed to resolve service '" << name << "': " << avahi_strerror(avahi_client_errno(browseAvahi->client_)) << "\n";
+                LOG(ERROR, LOG_TAG) << "Failed to resolve service '" << name << "': " << avahi_strerror(avahi_client_errno(browseAvahi->client_)) << "\n";
 
             break;
 
         case AVAHI_BROWSER_REMOVE:
-            LOG(INFO) << "(Browser) REMOVE: service '" << name << "' of type '" << type << "' in domain '" << domain << "'\n";
+            LOG(INFO, LOG_TAG) << "(Browser) REMOVE: service '" << name << "' of type '" << type << "' in domain '" << domain << "'\n";
             break;
 
         case AVAHI_BROWSER_ALL_FOR_NOW:
         case AVAHI_BROWSER_CACHE_EXHAUSTED:
-            LOG(INFO) << "(Browser) " << (event == AVAHI_BROWSER_CACHE_EXHAUSTED ? "CACHE_EXHAUSTED" : "ALL_FOR_NOW") << "\n";
+            LOG(INFO, LOG_TAG) << "(Browser) " << (event == AVAHI_BROWSER_CACHE_EXHAUSTED ? "CACHE_EXHAUSTED" : "ALL_FOR_NOW") << "\n";
             break;
     }
 }
@@ -159,7 +161,7 @@ void BrowseAvahi::client_callback(AvahiClient* c, AvahiClientState state, AVAHI_
 
     if (state == AVAHI_CLIENT_FAILURE)
     {
-        LOG(ERROR) << "Server connection failure: " << avahi_strerror(avahi_client_errno(c)) << "\n";
+        LOG(ERROR, LOG_TAG) << "Server connection failure: " << avahi_strerror(avahi_client_errno(c)) << "\n";
         avahi_simple_poll_quit(simple_poll);
     }
 }

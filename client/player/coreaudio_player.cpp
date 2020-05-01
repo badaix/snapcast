@@ -21,6 +21,7 @@
 
 #define NUM_BUFFERS 2
 
+static constexpr auto LOG_TAG = "CoreAudioPlayer";
 
 // http://stackoverflow.com/questions/4863811/how-to-use-audioqueue-to-play-a-sound-for-mac-osx-in-c
 // https://gist.github.com/andormade/1360885
@@ -80,7 +81,7 @@ std::vector<PcmDevice> CoreAudioPlayer::pcm_list(void)
         char buf[1024];
         theAddress = {kAudioDevicePropertyDeviceName, kAudioDevicePropertyScopeOutput, 0};
         AudioObjectGetPropertyData(devids[i], &theAddress, 0, NULL, &maxlen, buf);
-        LOG(DEBUG) << "device: " << i << ", name: " << buf << ", channels: " << channels << "\n";
+        LOG(DEBUG, LOG_TAG) << "device: " << i << ", name: " << buf << ", channels: " << channels << "\n";
 
         result.push_back(PcmDevice(i, buf));
     }
@@ -99,7 +100,7 @@ void CoreAudioPlayer::playerCallback(AudioQueueRef queue, AudioQueueBufferRef bu
     size_t bufferedMs = bufferedFrames * 1000 / pubStream_->getFormat().rate() + (ms_ * (NUM_BUFFERS - 1));
     /// 15ms DAC delay. Based on trying.
     bufferedMs += 15;
-    //    LOG(INFO) << "buffered: " << bufferedFrames << ", ms: " << bufferedMs << ", mSampleTime: " << timestamp.mSampleTime << "\n";
+    //    LOG(INFO, LOG_TAG) << "buffered: " << bufferedFrames << ", ms: " << bufferedMs << ", mSampleTime: " << timestamp.mSampleTime << "\n";
 
     /// TODO: sometimes this bufferedMS or AudioTimeStamp wraps around 1s (i.e. we're 1s out of sync (behind)) and recovers later on
     chronos::usec delay(bufferedMs * 1000);
@@ -108,11 +109,11 @@ void CoreAudioPlayer::playerCallback(AudioQueueRef queue, AudioQueueBufferRef bu
     {
         if (chronos::getTickCount() - lastChunkTick > 5000)
         {
-            LOG(NOTICE) << "No chunk received for 5000ms. Closing Audio Queue.\n";
+            LOG(NOTICE, LOG_TAG) << "No chunk received for 5000ms. Closing Audio Queue.\n";
             uninitAudioQueue(queue);
             return;
         }
-        //		LOG(INFO) << "Failed to get chunk. Playing silence.\n";
+        // LOG(INFO, LOG_TAG) << "Failed to get chunk. Playing silence.\n";
         memset(buffer, 0, buff_size_);
     }
     else
@@ -149,7 +150,7 @@ void CoreAudioPlayer::worker()
             }
             catch (const std::exception& e)
             {
-                LOG(ERROR) << "Exception in worker: " << e.what() << "\n";
+                LOG(ERROR, LOG_TAG) << "Exception in worker: " << e.what() << "\n";
                 chronos::sleep(100);
             }
         }
@@ -186,7 +187,7 @@ void CoreAudioPlayer::initAudioQueue()
     frames_ = (sampleFormat.rate() * ms_) / 1000;
     ms_ = frames_ * 1000 / sampleFormat.rate();
     buff_size_ = frames_ * sampleFormat.frameSize();
-    LOG(INFO) << "frames: " << frames_ << ", ms: " << ms_ << ", buffer size: " << buff_size_ << "\n";
+    LOG(INFO, LOG_TAG) << "frames: " << frames_ << ", ms: " << ms_ << ", buffer size: " << buff_size_ << "\n";
 
     AudioQueueBufferRef buffers[NUM_BUFFERS];
     for (int i = 0; i < NUM_BUFFERS; i++)
@@ -196,7 +197,7 @@ void CoreAudioPlayer::initAudioQueue()
         callback(this, queue, buffers[i]);
     }
 
-    LOG(ERROR) << "CoreAudioPlayer::worker\n";
+    LOG(ERROR, LOG_TAG) << "CoreAudioPlayer::worker\n";
     AudioQueueCreateTimeline(queue, &timeLine_);
     AudioQueueStart(queue, NULL);
     CFRunLoopRun();

@@ -29,6 +29,8 @@
 
 using namespace std;
 
+static constexpr auto LOG_TAG = "OpusDecoder";
+
 namespace decoder
 {
 
@@ -74,7 +76,7 @@ bool OggDecoder::decode(msg::PcmChunk* chunk)
         if (result < 0)
         {
             /* missing or corrupt data at this page position */
-            LOG(ERROR) << "Corrupt or missing data in bitstream; continuing...\n";
+            LOG(ERROR, LOG_TAG) << "Corrupt or missing data in bitstream; continuing...\n";
             continue;
         }
 
@@ -232,12 +234,12 @@ SampleFormat OggDecoder::setHeader(msg::CodecHeader* chunk)
         std::string comment(*ptr);
         if (comment.find("SAMPLE_FORMAT=") == 0)
             sampleFormat_.setFormat(comment.substr(comment.find("=") + 1));
-        LOG(INFO) << "comment: " << comment << "\n";
+        LOG(INFO, LOG_TAG) << "comment: " << comment << "\n";
         ;
         ++ptr;
     }
 
-    LOG(INFO) << "Encoded by: " << vc.vendor << "\n";
+    LOG(INFO, LOG_TAG) << "Encoded by: " << vc.vendor << "\n";
 
     return sampleFormat_;
 }
