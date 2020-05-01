@@ -133,7 +133,7 @@ void ClientConnection::disconnect()
 void ClientConnection::sendNext()
 {
     auto& message = messages_.front();
-    boost::asio::streambuf streambuf;
+    static boost::asio::streambuf streambuf;
     std::ostream stream(&streambuf);
     tv t;
     message.msg->sent = t;
