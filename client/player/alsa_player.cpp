@@ -29,8 +29,17 @@ using namespace std;
 static constexpr auto LOG_TAG = "Alsa";
 
 AlsaPlayer::AlsaPlayer(boost::asio::io_context& io_context, const ClientSettings::Player& settings, std::shared_ptr<Stream> stream)
-    : Player(io_context, settings, stream), handle_(nullptr), ctl_(nullptr), mixer_(nullptr), elem_(nullptr), sd_(io_context)
+    : Player(io_context, settings, stream), handle_(nullptr), ctl_(nullptr), mixer_(nullptr), elem_(nullptr), sd_(io_context), timer_(io_context)
 {
+}
+
+
+void AlsaPlayer::setMute(bool mute)
+{
+    int val = mute ? 0 : 1;
+    int err = snd_mixer_selem_set_playback_switch(elem_, SND_MIXER_SCHN_MONO, val);
+    if (err < 0)
+        LOG(ERROR, LOG_TAG) << "Failed to mute, error: " << snd_strerror(err) << "\n";
 }
 
 
@@ -75,7 +84,8 @@ bool AlsaPlayer::getVolume(double& volume, bool& muted)
 
     try
     {
-        snd_mixer_handle_events(mixer_);
+        while (snd_mixer_handle_events(mixer_) > 0)
+            this_thread::sleep_for(1us);
         if ((err = snd_mixer_selem_get_playback_volume(elem_, SND_MIXER_SCHN_MONO, &vol)) < 0)
             throw SnapException(std::string("Failed to get playback volume, error: ") + snd_strerror(err));
 
@@ -92,6 +102,7 @@ bool AlsaPlayer::getVolume(double& volume, bool& muted)
             return false;
         muted = (val == 0);
         LOG(DEBUG, LOG_TAG) << "Get volume, mixer volume range [" << minv << ", " << maxv << "], volume: " << volume << ", muted: " << muted << "\n";
+        snd_mixer_handle_events(mixer_);
         return true;
     }
     catch (const std::exception& e)
@@ -129,14 +140,22 @@ void AlsaPlayer::waitForEvent()
                     waitForEvent();
                     return;
                 }
-
-                double volume;
-                bool muted;
-                if (getVolume(volume, muted))
-                {
-                    LOG(DEBUG, LOG_TAG) << "Volume: " << volume << ", muted: " << muted << "\n";
-                    notifyVolumeChange(volume, muted);
-                }
+                // Sometimes the old volume is reported after this event has been raised.
+                // As workaround we defer getting the volume by 20ms.
+                timer_.cancel();
+                timer_.expires_after(20ms);
+                timer_.async_wait([this](const boost::system::error_code& ec) {
+                    if (!ec)
+                    {
+                        double volume;
+                        bool muted;
+                        if (getVolume(volume, muted))
+                        {
+                            LOG(DEBUG, LOG_TAG) << "Volume: " << volume << ", muted: " << muted << "\n";
+                            notifyVolumeChange(volume, muted);
+                        }
+                    }
+                });
             }
         }
         waitForEvent();
@@ -296,8 +315,6 @@ void AlsaPlayer::initAlsa()
     snd_pcm_sw_params_set_start_threshold(handle_, swparams, frames_);
     //	snd_pcm_sw_params_set_stop_threshold(pcm_handle, swparams, frames_);
     snd_pcm_sw_params(handle_, swparams);
-
-    initMixer();
 }
 
 
@@ -309,18 +326,36 @@ void AlsaPlayer::uninitAlsa()
         snd_pcm_close(handle_);
         handle_ = nullptr;
     }
+}
+
+
+void AlsaPlayer::uninitMixer()
+{
+    if (sd_.is_open())
+    {
+        boost::system::error_code ec;
+        sd_.cancel(ec);
+    }
+
     std::lock_guard<std::mutex> lock(mutex_);
     if (ctl_ != nullptr)
     {
         snd_ctl_close(ctl_);
         ctl_ = nullptr;
     }
+    if (mixer_ != nullptr)
+    {
+        snd_mixer_close(mixer_);
+        mixer_ = nullptr;
+    }
+    elem_ = nullptr;
 }
 
 
 void AlsaPlayer::start()
 {
     initAlsa();
+    initMixer();
     Player::start();
 }
 
@@ -333,12 +368,8 @@ AlsaPlayer::~AlsaPlayer()
 
 void AlsaPlayer::stop()
 {
-    if (sd_.is_open())
-    {
-        boost::system::error_code ec;
-        sd_.cancel(ec);
-    }
     Player::stop();
+    uninitMixer();
     uninitAlsa();
 }
 
