@@ -48,22 +48,37 @@ public:
     /// Set audio volume in range [0..1]
     virtual void setVolume(double volume);
     virtual void setMute(bool mute);
+    /// Called on start, before the first audio sample is sent or any other function is called.
+    /// In case of hardware mixer, it will call getVolume and notify the server about the current volume
     virtual void start();
+    /// Called on stop
     virtual void stop();
+    /// Sets the hardware volume change callback
     void setVolumeCallback(const volume_callback& callback)
     {
         onVolumeChanged_ = callback;
     }
 
 protected:
+    /// will be run in a thread if needsThread is true
     virtual void worker();
+    /// @return true if the worker function should be started in a thread
     virtual bool needsThread() const = 0;
+
+    /// get the hardware mixer volume
+    /// @param[out] volume the volume on range [0..1]
+    /// @param[out] muted muted or not
+    /// @return true on success
+    virtual bool getVolume(double& volume, bool& muted);
 
     void setVolume_poly(double volume, double exp);
     void setVolume_exp(double volume, double base);
 
-    virtual bool getVolume(double& volume, bool& muted);
     void adjustVolume(char* buffer, size_t frames);
+
+    /// Notify the server about hardware volume changes
+    /// @param volume the volume in range [0..1]
+    /// @param muted if muted or not
     void notifyVolumeChange(double volume, bool muted) const
     {
         if (onVolumeChanged_)

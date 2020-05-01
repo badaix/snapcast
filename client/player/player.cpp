@@ -78,6 +78,8 @@ void Player::worker()
 
 bool Player::getVolume(double& volume, bool& muted)
 {
+    std::ignore = volume;
+    std::ignore = muted;
     return false;
 }
 
