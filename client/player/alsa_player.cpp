@@ -157,7 +157,7 @@ void AlsaPlayer::waitForEvent()
             snd_ctl_event_t* event;
             snd_ctl_event_alloca(&event);
 
-            if ((snd_ctl_read(ctl_, event) >= 0) && (snd_ctl_event_get_type(event) == SND_CTL_EVENT_ELEM) || (revents == 0))
+            if (((snd_ctl_read(ctl_, event) >= 0) && (snd_ctl_event_get_type(event) == SND_CTL_EVENT_ELEM)) || (revents == 0))
             {
                 auto now = std::chrono::steady_clock::now();
                 if (now - last_change_ < 1s)
@@ -203,7 +203,7 @@ void AlsaPlayer::initMixer()
 
     snd_mixer_selem_id_t* sid;
     snd_mixer_selem_id_alloca(&sid);
-    std::string mix_name = "Digital";
+    std::string mix_name = "Master";
     int mix_index = 0;
     // sets simple-mixer index and name
     snd_mixer_selem_id_set_index(sid, mix_index);
