@@ -57,17 +57,7 @@ void AlsaPlayer::setVolume(double volume)
     {
         int err = 0;
         long minv, maxv;
-        if ((err = snd_mixer_selem_get_playback_dB_range(elem_, &minv, &maxv)) < 0)
-        {
-            if ((err = snd_mixer_selem_get_playback_volume_range(elem_, &minv, &maxv)) < 0)
-                throw SnapException(std::string("Failed to get playback volume range, error: ") + snd_strerror(err));
-
-            auto mixer_volume = volume * (maxv - minv) + minv;
-            LOG(DEBUG, LOG_TAG) << "Mixer volume range [" << minv << ", " << maxv << "], volume: " << volume << ", mixer volume: " << mixer_volume << "\n";
-            if ((err = snd_mixer_selem_set_playback_volume_all(elem_, mixer_volume)) < 0)
-                throw SnapException(std::string("Failed to set playback volume, error: ") + snd_strerror(err));
-        }
-        else
+        if ((err = snd_mixer_selem_get_playback_dB_range(elem_, &minv, &maxv)) == 0)
         {
             double min_norm = exp10((minv - maxv) / 6000.0);
             volume = volume * (1 - min_norm) + min_norm;
@@ -75,6 +65,16 @@ void AlsaPlayer::setVolume(double volume)
 
             LOG(DEBUG, LOG_TAG) << "Mixer volume range [" << minv << ", " << maxv << "], volume: " << volume << ", mixer volume: " << mixer_volume << "\n";
             if ((err = snd_mixer_selem_set_playback_dB_all(elem_, mixer_volume, 0)) < 0)
+                throw SnapException(std::string("Failed to set playback volume, error: ") + snd_strerror(err));
+        }
+        else
+        {
+            if ((err = snd_mixer_selem_get_playback_volume_range(elem_, &minv, &maxv)) < 0)
+                throw SnapException(std::string("Failed to get playback volume range, error: ") + snd_strerror(err));
+
+            auto mixer_volume = volume * (maxv - minv) + minv;
+            LOG(DEBUG, LOG_TAG) << "Mixer volume range [" << minv << ", " << maxv << "], volume: " << volume << ", mixer volume: " << mixer_volume << "\n";
+            if ((err = snd_mixer_selem_set_playback_volume_all(elem_, mixer_volume)) < 0)
                 throw SnapException(std::string("Failed to set playback volume, error: ") + snd_strerror(err));
         }
     }
@@ -100,17 +100,30 @@ bool AlsaPlayer::getVolume(double& volume, bool& muted)
     {
         while (snd_mixer_handle_events(mixer_) > 0)
             this_thread::sleep_for(1us);
-        if ((err = snd_mixer_selem_get_playback_volume(elem_, SND_MIXER_SCHN_MONO, &vol)) < 0)
-            throw SnapException(std::string("Failed to get playback volume, error: ") + snd_strerror(err));
-
-        // make the value bound to 1
         long minv, maxv;
-        if ((err = snd_mixer_selem_get_playback_volume_range(elem_, &minv, &maxv)) < 0)
-            throw SnapException(std::string("Failed to get playback volume range, error: ") + snd_strerror(err));
-        vol -= minv;
-        maxv = maxv - minv;
-        volume = static_cast<double>(vol) / static_cast<double>(maxv);
+        if ((err = snd_mixer_selem_get_playback_dB_range(elem_, &minv, &maxv)) == 0)
+        {
+            if ((err = snd_mixer_selem_get_playback_dB(elem_, SND_MIXER_SCHN_MONO, &vol)) < 0)
+                throw SnapException(std::string("Failed to get playback volume, error: ") + snd_strerror(err));
 
+            volume = pow(10, (vol - maxv) / 6000.0);
+            if (minv != SND_CTL_TLV_DB_GAIN_MUTE)
+            {
+                double min_norm = pow(10, (minv - maxv) / 6000.0);
+                volume = (volume - min_norm) / (1 - min_norm);
+            }
+        }
+        else
+        {
+            if ((err = snd_mixer_selem_get_playback_volume_range(elem_, &minv, &maxv)) < 0)
+                throw SnapException(std::string("Failed to get playback volume range, error: ") + snd_strerror(err));
+            if ((err = snd_mixer_selem_get_playback_volume(elem_, SND_MIXER_SCHN_MONO, &vol)) < 0)
+                throw SnapException(std::string("Failed to get playback volume, error: ") + snd_strerror(err));
+
+            vol -= minv;
+            maxv = maxv - minv;
+            volume = static_cast<double>(vol) / static_cast<double>(maxv);
+        }
         int val;
         if ((err = snd_mixer_selem_get_playback_switch(elem_, SND_MIXER_SCHN_MONO, &val)) < 0)
             return false;
@@ -139,12 +152,12 @@ void AlsaPlayer::waitForEvent()
         std::lock_guard<std::mutex> lock(mutex_);
         unsigned short revents;
         snd_ctl_poll_descriptors_revents(ctl_, fd_.get(), 1, &revents);
-        if (revents & POLLIN)
+        if (revents & POLLIN || (revents == 0))
         {
             snd_ctl_event_t* event;
             snd_ctl_event_alloca(&event);
 
-            if ((snd_ctl_read(ctl_, event) >= 0) && (snd_ctl_event_get_type(event) == SND_CTL_EVENT_ELEM))
+            if ((snd_ctl_read(ctl_, event) >= 0) && (snd_ctl_event_get_type(event) == SND_CTL_EVENT_ELEM) || (revents == 0))
             {
                 auto now = std::chrono::steady_clock::now();
                 if (now - last_change_ < 1s)
@@ -185,11 +198,12 @@ void AlsaPlayer::initMixer()
     if ((err = snd_ctl_subscribe_events(ctl_, 1)) < 0)
         throw SnapException("Can't subscribe for events for " + settings_.pcm_device.name + ", error: " + snd_strerror(err));
     fd_ = std::make_unique<pollfd>();
-    snd_ctl_poll_descriptors(ctl_, fd_.get(), 1);
+    err = snd_ctl_poll_descriptors(ctl_, fd_.get(), 1);
+    LOG(DEBUG, LOG_TAG) << "Filled " << err << " poll descriptors, poll descriptor count: " << snd_ctl_poll_descriptors_count(ctl_) << "\n";
 
     snd_mixer_selem_id_t* sid;
     snd_mixer_selem_id_alloca(&sid);
-    std::string mix_name = "Master";
+    std::string mix_name = "Digital";
     int mix_index = 0;
     // sets simple-mixer index and name
     snd_mixer_selem_id_set_index(sid, mix_index);
