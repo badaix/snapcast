@@ -43,6 +43,19 @@ StreamSession::~StreamSession()
 }
 
 
+std::string StreamSession::getIP()
+{
+    try
+    {
+        return socket_.remote_endpoint().address().to_string();
+    }
+    catch (...)
+    {
+        return "0.0.0.0";
+    }
+}
+
+
 void StreamSession::read_next()
 {
     boost::asio::async_read(socket_, boost::asio::buffer(buffer_, base_msg_size_),
