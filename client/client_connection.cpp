@@ -125,7 +125,7 @@ void ClientConnection::disconnect()
     socket_.close(ec);
     if (ec)
         LOG(ERROR, LOG_TAG) << "Error in socket close: " << ec.message() << endl;
-    pendingRequests_.clear();
+    boost::asio::post(strand_, [this]() { pendingRequests_.clear(); });
     LOG(DEBUG, LOG_TAG) << "Disconnected\n";
 }
 
@@ -171,13 +171,17 @@ void ClientConnection::send(const msg::message_ptr& message, const ResultHandler
 
 void ClientConnection::sendRequest(const msg::message_ptr& message, const chronos::usec& timeout, const MessageHandler<msg::BaseMessage>& handler)
 {
-    //	LOG(INFO, LOG_TAG) << "Req: " << message->id << "\n";
     boost::asio::post(strand_, [this, message, timeout, handler]() {
+        pendingRequests_.erase(
+            std::remove_if(pendingRequests_.begin(), pendingRequests_.end(), [](std::weak_ptr<PendingRequest> request) { return request.expired(); }),
+            pendingRequests_.end());
         unique_ptr<msg::BaseMessage> response(nullptr);
         if (++reqId_ >= 10000)
             reqId_ = 1;
         message->id = reqId_;
-        pendingRequests_.insert(make_unique<PendingRequest>(io_context_, strand_, reqId_, timeout, handler));
+        auto request = make_shared<PendingRequest>(io_context_, strand_, reqId_, handler);
+        pendingRequests_.push_back(request);
+        request->startTimer(timeout);
         send(message, [handler](const boost::system::error_code& ec) {
             if (ec)
                 handler(ec, nullptr);
@@ -232,16 +236,18 @@ void ClientConnection::getNextMessage(const MessageHandler<msg::BaseMessage>& ha
                                             return;
                                         }
 
-                                        auto iter = std::find_if(
-                                            pendingRequests_.begin(), pendingRequests_.end(),
-                                            [this](const std::unique_ptr<PendingRequest>& request) { return request->id() == base_message_.refersTo; });
                                         auto response = msg::factory::createMessage(base_message_, buffer_.data());
-                                        if (iter != pendingRequests_.end())
+                                        for (const auto& request : pendingRequests_)
                                         {
-                                            (*iter)->setValue(std::move(response));
-                                            pendingRequests_.erase(iter);
-                                            getNextMessage(handler);
-                                            return;
+                                            if (auto req = request.lock())
+                                            {
+                                                if (req->id() == base_message_.refersTo)
+                                                {
+                                                    req->setValue(std::move(response));
+                                                    getNextMessage(handler);
+                                                    return;
+                                                }
+                                            }
                                         }
 
                                         if (handler)

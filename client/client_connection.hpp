@@ -44,26 +44,12 @@ template <typename Message>
 using MessageHandler = std::function<void(const boost::system::error_code&, std::unique_ptr<Message>)>;
 
 /// Used to synchronize server requests (wait for server response)
-class PendingRequest
+class PendingRequest : public std::enable_shared_from_this<PendingRequest>
 {
 public:
-    PendingRequest(boost::asio::io_context& io_context, boost::asio::io_context::strand& strand, uint16_t reqId, const chronos::usec& timeout,
+    PendingRequest(boost::asio::io_context& io_context, boost::asio::io_context::strand& strand, uint16_t reqId,
                    const MessageHandler<msg::BaseMessage>& handler)
-        : id_(reqId), timer_(io_context), strand_(strand), handler_(handler)
-    {
-        timer_.expires_after(timeout);
-        timer_.async_wait(boost::asio::bind_executor(strand_, [this](boost::system::error_code ec) {
-            if (!handler_)
-                return;
-            if (!ec)
-            {
-                handler_(boost::asio::error::timed_out, nullptr);
-                handler_ = nullptr;
-            }
-            else if (ec != boost::asio::error::operation_aborted)
-                handler_(ec, nullptr);
-        }));
-    };
+        : id_(reqId), timer_(io_context), strand_(strand), handler_(handler){};
 
     virtual ~PendingRequest()
     {
@@ -82,6 +68,28 @@ public:
     {
         return id_;
     }
+
+    void startTimer(const chronos::usec& timeout)
+    {
+        timer_.expires_after(timeout);
+        timer_.async_wait(boost::asio::bind_executor(strand_, [ this, self = shared_from_this() ](boost::system::error_code ec) {
+            if (!handler_)
+                return;
+            if (!ec)
+            {
+                handler_(boost::asio::error::timed_out, nullptr);
+                handler_ = nullptr;
+            }
+            else if (ec != boost::asio::error::operation_aborted)
+                handler_(ec, nullptr);
+        }));
+    }
+
+    bool operator<(const PendingRequest& other) const
+    {
+        return (id_ < other.id());
+    }
+
 
 private:
     uint16_t id_;
@@ -153,7 +161,7 @@ protected:
     boost::asio::io_context& io_context_;
     tcp::resolver resolver_;
     tcp::socket socket_;
-    std::set<std::unique_ptr<PendingRequest>> pendingRequests_;
+    std::vector<std::weak_ptr<PendingRequest>> pendingRequests_;
     uint16_t reqId_;
     ClientSettings::Server server_;
 

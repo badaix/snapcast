@@ -316,9 +316,14 @@ int main(int argc, char** argv)
         auto meta(metaStderr ? std::make_unique<MetaStderrAdapter>() : std::make_unique<MetadataAdapter>());
         auto controller = make_shared<Controller>(io_context, settings, std::move(meta));
         controller->start();
-        // std::thread t([&] { io_context.run(); });
+
+        int num_threads = 0;
+        std::vector<std::thread> threads;
+        for (int n = 0; n < num_threads; ++n)
+            threads.emplace_back([&] { io_context.run(); });
         io_context.run();
-        // t.join();
+        for (auto& t : threads)
+            t.join();
     }
     catch (const std::exception& e)
     {
