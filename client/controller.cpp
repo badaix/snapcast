@@ -16,11 +16,12 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif // NOMINMAX
+
 #include "controller.hpp"
 #include "decoder/pcm_decoder.hpp"
-#include <iostream>
-#include <memory>
-#include <string>
 #if defined(HAS_OGG) && (defined(HAS_TREMOR) || defined(HAS_VORBIS))
 #include "decoder/ogg_decoder.hpp"
 #endif
@@ -35,6 +36,11 @@
 #include "message/hello.hpp"
 #include "message/time.hpp"
 #include "time_provider.hpp"
+
+#include <algorithm>
+#include <iostream>
+#include <memory>
+#include <string>
 
 using namespace std;
 
@@ -88,7 +94,7 @@ void Controller::onMessageReceived(ClientConnection* /*connection*/, const msg::
         {
             player_->setVolume(serverSettings_->getVolume() / 100.);
             player_->setMute(serverSettings_->isMuted());
-            stream_->setBufferLen(serverSettings_->getBufferMs() - serverSettings_->getLatency());
+            stream_->setBufferLen(std::max(0, serverSettings_->getBufferMs() - serverSettings_->getLatency() - settings_.player.latency));
         }
     }
     else if (baseMessage.type == message_type::kCodecHeader)
@@ -122,7 +128,7 @@ void Controller::onMessageReceived(ClientConnection* /*connection*/, const msg::
         LOG(NOTICE) << TAG("state") << "sampleformat: " << sampleFormat_.getFormat() << "\n";
 
         stream_ = make_shared<Stream>(sampleFormat_, settings_.player.sample_format);
-        stream_->setBufferLen(serverSettings_->getBufferMs() - settings_.player.latency);
+        stream_->setBufferLen(std::max(0, serverSettings_->getBufferMs() - serverSettings_->getLatency() - settings_.player.latency));
 
         const auto& pcm_device = settings_.player.pcm_device;
         const auto& player_name = settings_.player.player_name;
@@ -142,6 +148,10 @@ void Controller::onMessageReceived(ClientConnection* /*connection*/, const msg::
 #ifdef HAS_COREAUDIO
         if (!player_ && (player_name.empty() || (player_name == "coreaudio")))
             player_ = make_unique<CoreAudioPlayer>(pcm_device, stream_);
+#endif
+#ifdef HAS_WASAPI
+        if (!player_ && (player_name.empty() || (player_name == "wasapi")))
+            player_ = make_unique<WASAPIPlayer>(pcm_device, stream_, settings_.player.sharing_mode);
 #endif
         if (!player_)
             throw SnapException("No audio player support");
@@ -257,7 +267,7 @@ void Controller::worker()
         catch (const std::exception& e)
         {
             async_exception_ = nullptr;
-            SLOG(ERROR) << "Exception in Controller::worker(): " << e.what() << endl;
+            LOG(ERROR) << "Exception in Controller::worker(): " << e.what() << endl;
             clientConnection_->stop();
             player_.reset();
             stream_.reset();

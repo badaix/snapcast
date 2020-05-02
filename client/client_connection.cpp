@@ -59,7 +59,12 @@ void ClientConnection::socketRead(void* _to, size_t _bytes)
 
 std::string ClientConnection::getMacAddress()
 {
-    std::string mac = ::getMacAddress(socket_.native_handle());
+    std::string mac =
+#ifndef WINDOWS
+        ::getMacAddress(socket_.native_handle());
+#else
+        ::getMacAddress(socket_.local_endpoint().address().to_string());
+#endif
     if (mac.empty())
         mac = "00:00:00:00:00:00";
     LOG(INFO) << "My MAC: \"" << mac << "\", socket: " << socket_.native_handle() << "\n";
@@ -80,7 +85,7 @@ void ClientConnection::start()
     //	setsockopt(socket->native_handle(), SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
     //	setsockopt(socket->native_handle(), SOL_SOCKET, SO_SNDTIMEO, &tv, sizeof(tv));
     socket_.connect(*iterator);
-    SLOG(NOTICE) << "Connected to " << socket_.remote_endpoint().address().to_string() << endl;
+    LOG(NOTICE) << "Connected to " << socket_.remote_endpoint().address().to_string() << endl;
     active_ = true;
     sumTimeout_ = chronos::msec(0);
     readerThread_ = make_unique<thread>(&ClientConnection::reader, this);

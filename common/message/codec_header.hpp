@@ -30,7 +30,7 @@ namespace msg
 class CodecHeader : public BaseMessage
 {
 public:
-    CodecHeader(const std::string& codecName = "", size_t size = 0)
+    CodecHeader(const std::string& codecName = "", uint32_t size = 0)
         : BaseMessage(message_type::kCodecHeader), payloadSize(size), payload(nullptr), codec(codecName)
     {
         if (size > 0)
@@ -50,7 +50,7 @@ public:
 
     uint32_t getSize() const override
     {
-        return sizeof(uint32_t) + codec.size() + sizeof(uint32_t) + payloadSize;
+        return static_cast<uint32_t>(sizeof(uint32_t) + codec.size() + sizeof(uint32_t) + payloadSize);
     }
 
     uint32_t payloadSize;

@@ -42,7 +42,7 @@ For Arch derivates:
 For Fedora (and probably RHEL, CentOS, & Scientific Linux, but untested):
 
     $ sudo dnf install @development-tools
-    $ sudo dnf install alsa-lib-devel avahi-devel libvorbis-devel opus-devel flac-devel soxr-devel libstdc++-static expat
+    $ sudo dnf install alsa-lib-devel avahi-devel libvorbis-devel opus-devel flac-devel soxr-devel libstdc++-static expat boost-devel
 
 ### Build Snapclient and Snapserver
 `cd` into the Snapcast src-root directory:
@@ -308,3 +308,23 @@ And finally run the build:
 This example will show you how to add snapcast to [Buildroot](https://buildroot.org/) and compile for Raspberry Pi.
 
 * https://github.com/nickaknudson/snapcast-pi
+
+## Windows (vcpkg)
+
+Prerequisites:
+
+ * CMake 
+ * Visual Studio 2017 or 2019 with C++
+
+Set up [vcpkg](https://github.com/Microsoft/vcpkg)
+
+Install dependencies
+
+    $ vcpkg.exe install libflac libvorbis soxr opus boost-asio --triplet x64-windows
+
+Build
+
+    $ cd <snapcast dir>
+    $ mkdir build
+    $ cd build && cmake .. -DCMAKE_TOOLCHAIN_FILE=<vcpkg_dir>/scripts/buildsystems/vcpkg.cmake
+    $ cmake --build . --config Release

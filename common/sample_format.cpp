@@ -62,7 +62,8 @@ void SampleFormat::setFormat(const std::string& format)
     std::vector<std::string> strs;
     strs = utils::string::split(format, ':');
     if (strs.size() == 3)
-        setFormat(strs[0] == "*" ? 0 : cpt::stoul(strs[0]), strs[1] == "*" ? 0 : cpt::stoul(strs[1]), strs[2] == "*" ? 0 : cpt::stoul(strs[2]));
+        setFormat(strs[0] == "*" ? 0 : cpt::stoul(strs[0]), strs[1] == "*" ? 0 : static_cast<uint16_t>(cpt::stoul(strs[1])),
+                  strs[2] == "*" ? 0 : static_cast<uint16_t>(cpt::stoul(strs[2])));
     else
         throw SnapException("sampleformat must be <rate>:<bits>:<channels>");
 }

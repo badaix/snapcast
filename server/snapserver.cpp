@@ -70,9 +70,11 @@ int main(int argc, char* argv[])
 
         // debug settings
         OptionParser conf("");
-        conf.add<Value<bool>>("", "logging.debug", "enable debug logging", settings.logging.debug, &settings.logging.debug);
-        conf.add<Value<string>>("", "logging.debug_logfile", "log file name for the debug logs (debug must be enabled)", settings.logging.debug_logfile,
-                                &settings.logging.debug_logfile);
+        op.add<Value<string>>("", "logging.sink", "log sink [null,system,stdout,stderr,file:<filename>]", settings.logging.sink, &settings.logging.sink);
+        auto logfilterOption = op.add<Value<string>>(
+            "", "logging.filter",
+            "log filter <tag>:<level>[,<tag>:<level>]* with tag = * or <log tag> and level = [trace,debug,info,notice,warning,error,fatal]",
+            settings.logging.filter);
 
         // stream settings
         conf.add<Value<size_t>>("", "stream.port", "Server port", settings.stream.port, &settings.stream.port);
@@ -138,7 +140,7 @@ int main(int argc, char* argv[])
         }
         catch (const std::invalid_argument& e)
         {
-            SLOG(ERROR) << "Exception: " << e.what() << std::endl;
+            LOG(ERROR) << "Exception: " << e.what() << std::endl;
             cout << "\n" << op << "\n";
             exit(EXIT_FAILURE);
         }
@@ -182,18 +184,42 @@ int main(int argc, char* argv[])
             exit(EXIT_SUCCESS);
         }
 
-        AixLog::Log::init<AixLog::SinkNative>("snapserver", AixLog::Severity::trace, AixLog::Type::special);
-        if (settings.logging.debug)
+        settings.logging.filter = logfilterOption->value();
+        if (logfilterOption->is_set())
         {
-            AixLog::Log::instance().add_logsink<AixLog::SinkCout>(AixLog::Severity::trace, AixLog::Type::all, "%Y-%m-%d %H-%M-%S.#ms [#severity] (#tag_func)");
-            if (!settings.logging.debug_logfile.empty())
-                AixLog::Log::instance().add_logsink<AixLog::SinkFile>(AixLog::Severity::trace, AixLog::Type::all, settings.logging.debug_logfile,
-                                                                      "%Y-%m-%d %H-%M-%S.#ms [#severity] (#tag_func)");
+            for (size_t n = 1; n < logfilterOption->count(); ++n)
+                settings.logging.filter += "," + logfilterOption->value(n);
         }
+
+        if (settings.logging.sink.empty())
+        {
+            settings.logging.sink = "stdout";
+#ifdef HAS_DAEMON
+            if (daemonOption->is_set())
+                settings.logging.sink = "system";
+#endif
+        }
+        AixLog::Filter logfilter;
+        auto filters = utils::string::split(settings.logging.filter, ',');
+        for (const auto& filter : filters)
+            logfilter.add_filter(filter);
+
+        string logformat = "%Y-%m-%d %H-%M-%S.#ms [#severity] (#tag_func)";
+        if (settings.logging.sink.find("file:") != string::npos)
+        {
+            string logfile = settings.logging.sink.substr(settings.logging.sink.find(":") + 1);
+            AixLog::Log::init<AixLog::SinkFile>(logfilter, logfile, logformat);
+        }
+        else if (settings.logging.sink == "stdout")
+            AixLog::Log::init<AixLog::SinkCout>(logfilter, logformat);
+        else if (settings.logging.sink == "stderr")
+            AixLog::Log::init<AixLog::SinkCerr>(logfilter, logformat);
+        else if (settings.logging.sink == "system")
+            AixLog::Log::init<AixLog::SinkNative>("snapserver", logfilter);
+        else if (settings.logging.sink == "null")
+            AixLog::Log::init<AixLog::SinkNull>();
         else
-        {
-            AixLog::Log::instance().add_logsink<AixLog::SinkCout>(AixLog::Severity::info, AixLog::Type::all, "%Y-%m-%d %H-%M-%S [#severity] (#tag_func)");
-        }
+            throw SnapException("Invalid log sink: " + settings.logging.sink);
 
         for (const auto& opt : conf.unknown_options())
             LOG(WARNING) << "unknown configuration option: " << opt << "\n";
@@ -228,7 +254,7 @@ int main(int argc, char* argv[])
                 data_dir = "/var/lib/snapserver";
             Config::instance().init(data_dir, user, group);
             daemon.reset(new Daemon(user, group, pid_file));
-            SLOG(NOTICE) << "daemonizing" << std::endl;
+            LOG(NOTICE) << "daemonizing" << std::endl;
             daemon->daemonize();
             if (processPriority < -20)
                 processPriority = -20;
@@ -236,7 +262,7 @@ int main(int argc, char* argv[])
                 processPriority = 19;
             if (processPriority != 0)
                 setpriority(PRIO_PROCESS, 0, processPriority);
-            SLOG(NOTICE) << "daemon started" << std::endl;
+            LOG(NOTICE) << "daemon started" << std::endl;
         }
         else
             Config::instance().init(data_dir);
@@ -284,9 +310,9 @@ int main(int argc, char* argv[])
         boost::asio::signal_set signals(io_context, SIGHUP, SIGINT, SIGTERM);
         signals.async_wait([&io_context](const boost::system::error_code& ec, int signal) {
             if (!ec)
-                SLOG(INFO) << "Received signal " << signal << ": " << strsignal(signal) << "\n";
+                LOG(INFO) << "Received signal " << signal << ": " << strsignal(signal) << "\n";
             else
-                SLOG(INFO) << "Failed to wait for signal: " << ec << "\n";
+                LOG(INFO) << "Failed to wait for signal: " << ec << "\n";
             io_context.stop();
         });
 
@@ -305,10 +331,10 @@ int main(int argc, char* argv[])
     }
     catch (const std::exception& e)
     {
-        SLOG(ERROR) << "Exception: " << e.what() << std::endl;
+        LOG(ERROR) << "Exception: " << e.what() << std::endl;
         exitcode = EXIT_FAILURE;
     }
     Config::instance().save();
-    SLOG(NOTICE) << "daemon terminated." << endl;
+    LOG(NOTICE) << "daemon terminated." << endl;
     exit(exitcode);
 }

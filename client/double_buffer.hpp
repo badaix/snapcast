@@ -51,7 +51,7 @@ public:
     }
 
     /// Median as mean over N values around the median
-    T median(unsigned int mean = 1) const
+    T median(uint16_t mean = 1) const
     {
         if (buffer.empty())
             return 0;
@@ -61,12 +61,12 @@ public:
             return tmpBuffer[tmpBuffer.size() / 2];
         else
         {
-            unsigned int low = tmpBuffer.size() / 2;
-            unsigned int high = low;
+            uint16_t low = static_cast<uint16_t>(tmpBuffer.size()) / 2;
+            uint16_t high = low;
             low -= mean / 2;
             high += mean / 2;
             T result((T)0);
-            for (unsigned int i = low; i <= high; ++i)
+            for (uint16_t i = low; i <= high; ++i)
             {
                 result += tmpBuffer[i];
             }

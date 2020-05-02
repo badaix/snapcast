@@ -44,14 +44,14 @@ ProcessStream::ProcessStream(PcmListener* pcmListener, boost::asio::io_context& 
 }
 
 
-bool ProcessStream::fileExists(const std::string& filename)
+bool ProcessStream::fileExists(const std::string& filename) const
 {
     struct stat buffer;
     return (stat(filename.c_str(), &buffer) == 0);
 }
 
 
-std::string ProcessStream::findExe(const std::string& filename)
+std::string ProcessStream::findExe(const std::string& filename) const
 {
     /// check if filename exists
     if (fileExists(filename))

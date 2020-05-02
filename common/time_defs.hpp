@@ -20,16 +20,28 @@
 #define TIME_DEFS_H
 
 #include <chrono>
-#include <sys/time.h>
 #include <thread>
 #ifdef MACOS
 #include <mach/clock.h>
 #include <mach/mach.h>
 #endif
 
+#ifndef WINDOWS
+#include <sys/time.h>
+#else
+#include <Windows.h>
+#include <stdint.h>
+#include <winsock2.h>
+#endif
+
 namespace chronos
 {
-using clk = std::chrono::steady_clock;
+using clk =
+#ifndef WINDOWS
+    std::chrono::steady_clock;
+#else
+    std::chrono::system_clock;
+#endif
 using time_point_clk = std::chrono::time_point<clk>;
 using sec = std::chrono::seconds;
 using msec = std::chrono::milliseconds;
@@ -41,13 +53,39 @@ inline static void timeofday(struct timeval* tv)
 {
     auto now = Clock::now();
     auto microsecs = std::chrono::duration_cast<std::chrono::microseconds>(now.time_since_epoch());
-    tv->tv_sec = microsecs.count() / 1000000;
-    tv->tv_usec = microsecs.count() % 1000000;
+    tv->tv_sec = static_cast<long>(microsecs.count() / 1000000);
+    tv->tv_usec = static_cast<long>(microsecs.count() % 1000000);
 }
+
+#ifdef WINDOWS
+// Implementation from http://stackoverflow.com/a/26085827/2510022
+inline static int gettimeofday(struct timeval* tp, struct timezone* tzp)
+{
+    // Note: some broken versions only have 8 trailing zero's, the correct epoch has 9 trailing zero's
+    static const uint64_t EPOCH = ((uint64_t)116444736000000000ULL);
+
+    SYSTEMTIME system_time;
+    FILETIME file_time;
+    uint64_t time;
+
+    GetSystemTime(&system_time);
+    SystemTimeToFileTime(&system_time, &file_time);
+    time = ((uint64_t)file_time.dwLowDateTime);
+    time += ((uint64_t)file_time.dwHighDateTime) << 32;
+
+    tp->tv_sec = (long)((time - EPOCH) / 10000000L);
+    tp->tv_usec = (long)(system_time.wMilliseconds * 1000);
+    return 0;
+}
+#endif
 
 inline static void steadytimeofday(struct timeval* tv)
 {
+#ifndef WINDOWS
     timeofday<clk>(tv);
+#else
+    gettimeofday(tv, NULL);
+#endif
 }
 
 inline static void systemtimeofday(struct timeval* tv)
@@ -68,31 +106,17 @@ inline ToDuration diff(const timeval& tv1, const timeval& tv2)
     return std::chrono::duration_cast<ToDuration>(std::chrono::seconds(sec) + std::chrono::microseconds(usec));
 }
 
-
-inline static void addUs(timeval& tv, int us)
-{
-    if (us < 0)
-    {
-        timeval t;
-        t.tv_sec = -us / 1000000;
-        t.tv_usec = (-us % 1000000);
-        timersub(&tv, &t, &tv);
-        return;
-    }
-    tv.tv_usec += us;
-    tv.tv_sec += (tv.tv_usec / 1000000);
-    tv.tv_usec %= 1000000;
-}
-
 inline static long getTickCount()
 {
-#ifdef MACOS
+#if defined(MACOS)
     clock_serv_t cclock;
     mach_timespec_t mts;
     host_get_clock_service(mach_host_self(), SYSTEM_CLOCK, &cclock);
     clock_get_time(cclock, &mts);
     mach_port_deallocate(mach_task_self(), cclock);
     return mts.tv_sec * 1000 + mts.tv_nsec / 1000000;
+#elif defined(WINDOWS)
+    return getTickCount();
 #else
     struct timespec now;
     clock_gettime(CLOCK_MONOTONIC, &now);

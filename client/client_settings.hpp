@@ -22,11 +22,18 @@
 #include <string>
 #include <vector>
 
+#include "common/sample_format.hpp"
 #include "player/pcm_device.hpp"
 
 
 struct ClientSettings
 {
+    enum class SharingMode
+    {
+        exclusive,
+        shared
+    };
+
     struct ServerSettings
     {
         std::string host{""};
@@ -39,12 +46,13 @@ struct ClientSettings
         int latency{0};
         PcmDevice pcm_device;
         SampleFormat sample_format;
+        SharingMode sharing_mode{SharingMode::shared};
     };
 
-    struct LoggingSettings
+    struct Logging
     {
-        bool debug{false};
-        std::string debug_logfile{""};
+        std::string sink{""};
+        std::string filter{"*:info"};
     };
 
     size_t instance{1};
@@ -52,7 +60,7 @@ struct ClientSettings
 
     ServerSettings server;
     PlayerSettings player;
-    LoggingSettings logging;
+    Logging logging;
 };
 
 #endif

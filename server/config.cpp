@@ -62,7 +62,7 @@ void Config::init(const std::string& root_directory, const std::string& user, co
         throw SnapException("failed to create settings directory: \"" + dir + "\": " + cpt::to_string(errno));
 
     filename_ = dir + "server.json";
-    SLOG(NOTICE) << "Settings file: \"" << filename_ << "\"\n";
+    LOG(NOTICE) << "Settings file: \"" << filename_ << "\"\n";
 
     int fd;
     if ((fd = open(filename_.c_str(), O_RDWR | O_CREAT, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH)) == -1)
@@ -83,7 +83,7 @@ void Config::init(const std::string& root_directory, const std::string& user, co
         }
         catch (const std::exception& e)
         {
-            SLOG(ERROR) << "Exception in chown: " << e.what() << "\n";
+            LOG(ERROR) << "Exception in chown: " << e.what() << "\n";
         }
     }
 

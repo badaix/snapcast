@@ -45,7 +45,7 @@ void StreamServer::cleanup()
     auto count = distance(new_end, sessions_.end());
     if (count > 0)
     {
-        SLOG(ERROR) << "Removing " << count << " inactive session(s), active sessions: " << sessions_.size() - count << "\n";
+        LOG(ERROR) << "Removing " << count << " inactive session(s), active sessions: " << sessions_.size() - count << "\n";
         sessions_.erase(new_end, sessions_.end());
     }
 }
@@ -785,7 +785,7 @@ void StreamServer::handleAccept(tcp::socket socket)
         /// experimental: turn on tcp::no_delay
         socket.set_option(tcp::no_delay(true));
 
-        SLOG(NOTICE) << "StreamServer::NewConnection: " << socket.remote_endpoint().address().to_string() << endl;
+        LOG(NOTICE) << "StreamServer::NewConnection: " << socket.remote_endpoint().address().to_string() << endl;
         shared_ptr<StreamSession> session = make_shared<StreamSession>(io_context_, this, std::move(socket));
 
         session->setBufferMs(settings_.stream.bufferMs);
@@ -797,7 +797,7 @@ void StreamServer::handleAccept(tcp::socket socket)
     }
     catch (const std::exception& e)
     {
-        SLOG(ERROR) << "Exception in StreamServer::handleAccept: " << e.what() << endl;
+        LOG(ERROR) << "Exception in StreamServer::handleAccept: " << e.what() << endl;
     }
     startAccept();
 }
@@ -839,7 +839,7 @@ void StreamServer::start()
     }
     catch (const std::exception& e)
     {
-        SLOG(NOTICE) << "StreamServer::start: " << e.what() << endl;
+        LOG(NOTICE) << "StreamServer::start: " << e.what() << endl;
         stop();
         throw;
     }

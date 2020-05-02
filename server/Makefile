@@ -123,7 +123,8 @@ install:
 	echo BSD
 	install -s -g wheel -o root -m 555 $(BIN) $(TARGET_DIR)/local/bin/$(BIN)
 	install -g wheel -o root -m 555 $(BIN).1 $(TARGET_DIR)/local/man/man1/$(BIN).1
-	install -g wheel -o root -m 555 ../debian/$(BIN).bsd $(TARGET_DIR)/local/etc/rc.d/$(BIN)
+	install -g wheel -o root -m 555 etc/$(BIN).bsd $(TARGET_DIR)/local/etc/rc.d/$(BIN)
+	install -g wheel -o root etc/$(BIN).conf /etc/$(BIN).conf
 
 else ifeq ($(TARGET), MACOS)
 
@@ -174,10 +175,6 @@ installsysv:
 	cp -n etc/$(BIN).conf /etc/$(BIN).conf; \
 	update-rc.d $(BIN) defaults; \
 	/etc/init.d/$(BIN) start; \
-
-installbsd:
-	@echo using bsd; \
-	cp ../debian/$(BIN).bsd /usr/local/etc/rc.d/$(BIN); \
 
 adduser:
 	@if ! getent passwd snapserver >/dev/null; then \

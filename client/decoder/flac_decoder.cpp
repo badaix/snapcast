@@ -93,7 +93,7 @@ bool FlacDecoder::decode(msg::PcmChunk* chunk)
     {
         double diffMs = static_cast<double>(cacheInfo_.cachedBlocks_) / (static_cast<double>(cacheInfo_.sampleRate_) / 1000.);
         auto us = static_cast<uint64_t>(diffMs * 1000.);
-        tv diff(us / 1000000, us % 1000000);
+        tv diff(static_cast<int32_t>(us / 1000000), static_cast<int32_t>(us % 1000000));
         LOG(DEBUG) << "Cached: " << cacheInfo_.cachedBlocks_ << ", " << diffMs << "ms, " << diff.sec << "s, " << diff.usec << "us\n";
         chunk->timestamp = chunk->timestamp - diff;
     }
@@ -144,7 +144,7 @@ FLAC__StreamDecoderReadStatus read_callback(const FLAC__StreamDecoder* /*decoder
 
         memcpy(buffer, flacChunk->payload, *bytes);
         memmove(flacChunk->payload, flacChunk->payload + *bytes, flacChunk->payloadSize - *bytes);
-        flacChunk->payloadSize = flacChunk->payloadSize - *bytes;
+        flacChunk->payloadSize = flacChunk->payloadSize - static_cast<uint32_t>(*bytes);
         flacChunk->payload = (char*)realloc(flacChunk->payload, flacChunk->payloadSize);
     }
     return FLAC__STREAM_DECODER_READ_STATUS_CONTINUE;
@@ -168,7 +168,7 @@ FLAC__StreamDecoderWriteStatus write_callback(const FLAC__StreamDecoder* /*decod
         {
             if (buffer[channel] == nullptr)
             {
-                SLOG(ERROR) << "ERROR: buffer[" << channel << "] is NULL\n";
+                LOG(ERROR) << "ERROR: buffer[" << channel << "] is NULL\n";
                 return FLAC__STREAM_DECODER_WRITE_STATUS_ABORT;
             }
 
@@ -191,7 +191,7 @@ FLAC__StreamDecoderWriteStatus write_callback(const FLAC__StreamDecoder* /*decod
                     chunkBuffer[sampleFormat.channels() * i + channel] = SWAP_32((int32_t)(buffer[channel][i]));
             }
         }
-        pcmChunk->payloadSize += bytes;
+        pcmChunk->payloadSize += static_cast<uint32_t>(bytes);
     }
 
     return FLAC__STREAM_DECODER_WRITE_STATUS_CONTINUE;
@@ -211,7 +211,7 @@ void metadata_callback(const FLAC__StreamDecoder* /*decoder*/, const FLAC__Strea
 
 void error_callback(const FLAC__StreamDecoder* /*decoder*/, FLAC__StreamDecoderErrorStatus status, void* client_data)
 {
-    SLOG(ERROR) << "Got error callback: " << FLAC__StreamDecoderErrorStatusString[status] << "\n";
+    LOG(ERROR) << "Got error callback: " << FLAC__StreamDecoderErrorStatusString[status] << "\n";
     static_cast<FlacDecoder*>(client_data)->lastError_ = std::make_unique<FLAC__StreamDecoderErrorStatus>(status);
 }
 } // namespace callback

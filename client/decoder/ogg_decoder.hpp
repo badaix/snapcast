@@ -39,14 +39,15 @@ public:
 
 private:
     bool decodePayload(msg::PcmChunk* chunk);
-    template <typename T>
-    T clip(const T& value, const T& lower, const T& upper) const
+    template <typename T, typename IN_TYPE>
+    T clip(const IN_TYPE& value, const T& lower, const T& upper) const
     {
-        if (value > upper)
+        auto val = static_cast<int64_t>(value);
+        if (val > upper)
             return upper;
-        if (value < lower)
+        if (val < lower)
             return lower;
-        return value;
+        return static_cast<T>(value);
     }
 
     ogg_sync_state oy;   /// sync and verify incoming physical bitstream

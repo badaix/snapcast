@@ -37,6 +37,9 @@
 #ifdef HAS_COREAUDIO
 #include "player/coreaudio_player.hpp"
 #endif
+#ifdef WINDOWS
+#include "player/wasapi_player.h"
+#endif
 #include "client_connection.hpp"
 #include "client_settings.hpp"
 #include "metadata.hpp"

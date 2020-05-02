@@ -39,7 +39,7 @@ namespace msg
 class WireChunk : public BaseMessage
 {
 public:
-    WireChunk(size_t size = 0) : BaseMessage(message_type::kWireChunk), payloadSize(size), payload(nullptr)
+    WireChunk(uint32_t size = 0) : BaseMessage(message_type::kWireChunk), payloadSize(size), payload(nullptr)
     {
         if (size > 0)
             payload = (char*)malloc(size * sizeof(char));

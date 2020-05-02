@@ -19,10 +19,12 @@
 #include "time_provider.hpp"
 #include "common/aixlog.hpp"
 
+#include <chrono>
+
 
 TimeProvider::TimeProvider() : diffToServer_(0)
 {
-    diffBuffer_.setSize(100);
+    diffBuffer_.setSize(200);
 }
 
 
@@ -37,20 +39,21 @@ void TimeProvider::setDiff(const tv& c2s, const tv& s2c)
 
 void TimeProvider::setDiffToServer(double ms)
 {
-    static int32_t lastTimeSync = 0;
-    timeval now;
-    chronos::steadytimeofday(&now);
+    using namespace std::chrono_literals;
+    auto now = std::chrono::system_clock::now();
+    static auto lastTimeSync = now;
+    auto diff = chronos::abs(now - lastTimeSync);
 
     /// clear diffBuffer if last update is older than a minute
-    if (!diffBuffer_.empty() && (std::abs(now.tv_sec - lastTimeSync) > 60))
+    if (!diffBuffer_.empty() && (diff > 60s))
     {
         LOG(INFO) << "Last time sync older than a minute. Clearing time buffer\n";
-        diffToServer_ = ms * 1000;
+        diffToServer_ = static_cast<chronos::usec::rep>(ms * 1000);
         diffBuffer_.clear();
     }
-    lastTimeSync = now.tv_sec;
+    lastTimeSync = now;
 
-    diffBuffer_.add(ms * 1000);
+    diffBuffer_.add(static_cast<chronos::usec::rep>(ms * 1000));
     diffToServer_ = diffBuffer_.median();
     // LOG(INFO) << "setDiffToServer: " << ms << ", diff: " << diffToServer_ / 1000000 << " s, " << (diffToServer_ / 1000) % 1000 << "." << diffToServer_ % 1000
     // << " ms\n";

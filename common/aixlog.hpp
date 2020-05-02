@@ -3,7 +3,7 @@
      / _\ (  )( \/ )(  )   /  \  / __)
     /    \ )(  )  ( / (_/\(  O )( (_ \
     \_/\_/(__)(_/\_)\____/ \__/  \___/
-    version 1.2.5
+    version 1.4.0
     https://github.com/badaix/aixlog
 
     This file is part of aixlog
@@ -32,15 +32,18 @@
 #endif
 
 #include <algorithm>
+#include <cctype>
 #include <chrono>
 #include <cstdio>
 #include <ctime>
 #include <fstream>
 #include <functional>
 #include <iostream>
+#include <map>
 #include <memory>
 #include <mutex>
 #include <sstream>
+#include <thread>
 #include <vector>
 
 #ifdef __ANDROID__
@@ -93,8 +96,9 @@
 /// External logger macros
 // usage: LOG(SEVERITY) or LOG(SEVERITY, TAG)
 // e.g.: LOG(NOTICE) or LOG(NOTICE, "my tag")
+#ifndef WIN32
 #define LOG(...) AIXLOG_INTERNAL__LOG_MACRO_CHOOSER(__VA_ARGS__)(__VA_ARGS__) << TIMESTAMP << FUNC
-#define SLOG(...) AIXLOG_INTERNAL__LOG_MACRO_CHOOSER(__VA_ARGS__)(__VA_ARGS__) << TIMESTAMP << SPECIAL << FUNC
+#endif
 
 // usage: COLOR(TEXT_COLOR, BACKGROUND_COLOR) or COLOR(TEXT_COLOR)
 // e.g.: COLOR(yellow, blue) or COLOR(red)
@@ -103,8 +107,23 @@
 #define FUNC AixLog::Function(AIXLOG_INTERNAL__FUNC, __FILE__, __LINE__)
 #define TAG AixLog::Tag
 #define COND AixLog::Conditional
-#define SPECIAL AixLog::Type::special
 #define TIMESTAMP AixLog::Timestamp(std::chrono::system_clock::now())
+
+
+// stijnvdb: sorry! :) LOG(SEV, "tag") was not working for Windows and I couldn't figure out how to fix it for windows without potentially breaking everything
+// else...
+// https://stackoverflow.com/questions/3046889/optional-parameters-with-c-macros (Jason Deng)
+#ifdef WIN32
+#define LOG_2(severity, tag) AIXLOG_INTERNAL__LOG_SEVERITY_TAG(severity, tag)
+#define LOG_1(severity) AIXLOG_INTERNAL__LOG_SEVERITY(severity)
+#define LOG_0() LOG_1(0)
+
+#define FUNC_CHOOSER(_f1, _f2, _f3, ...) _f3
+#define FUNC_RECOMPOSER(argsWithParentheses) FUNC_CHOOSER argsWithParentheses
+#define CHOOSE_FROM_ARG_COUNT(...) FUNC_RECOMPOSER((__VA_ARGS__, LOG_2, LOG_1, FUNC_, ...))
+#define MACRO_CHOOSER(...) CHOOSE_FROM_ARG_COUNT(__VA_ARGS__())
+#define LOG(...) MACRO_CHOOSER(__VA_ARGS__)(__VA_ARGS__) << TIMESTAMP << FUNC
+#endif
 
 /**
  * @brief
@@ -156,19 +175,53 @@ enum class Severity : std::int8_t
     fatal = SEVERITY::FATAL
 };
 
-/**
- * @brief
- * Type of the log message or Sink
- *
- * "normal" messages will be logged by "normal" or "all" Sinks
- * "special" ones by "special" or "all" Sinks
- */
-enum class Type
+
+static Severity to_severity(std::string severity, Severity def = Severity::info)
 {
-    normal,
-    special,
-    all
-};
+    std::transform(severity.begin(), severity.end(), severity.begin(), [](unsigned char c) { return std::tolower(c); });
+    if (severity == "trace")
+        return Severity::trace;
+    else if (severity == "debug")
+        return Severity::debug;
+    else if (severity == "info")
+        return Severity::info;
+    else if (severity == "notice")
+        return Severity::notice;
+    else if (severity == "warning")
+        return Severity::warning;
+    else if (severity == "error")
+        return Severity::error;
+    else if (severity == "fatal")
+        return Severity::fatal;
+    else
+        return def;
+}
+
+
+static std::string to_string(Severity logSeverity)
+{
+    switch (logSeverity)
+    {
+        case Severity::trace:
+            return "Trace";
+        case Severity::debug:
+            return "Debug";
+        case Severity::info:
+            return "Info";
+        case Severity::notice:
+            return "Notice";
+        case Severity::warning:
+            return "Warn";
+        case Severity::error:
+            return "Error";
+        case Severity::fatal:
+            return "Fatal";
+        default:
+            std::stringstream ss;
+            ss << static_cast<int>(logSeverity);
+            return ss.str();
+    }
+}
 
 /**
  * @brief
@@ -325,6 +378,10 @@ struct Tag
     {
     }
 
+    Tag(const char* text) : text(text), is_null_(false)
+    {
+    }
+
     Tag(const std::string& text) : text(text), is_null_(false)
     {
     }
@@ -338,6 +395,11 @@ struct Tag
     explicit operator bool() const
     {
         return !is_null_;
+    }
+
+    bool operator<(const Tag& other) const
+    {
+        return (text < other.text);
     }
 
     std::string text;
@@ -389,16 +451,68 @@ private:
  */
 struct Metadata
 {
-    Metadata() : severity(Severity::trace), tag(nullptr), type(Type::normal), function(nullptr), timestamp(nullptr)
+    Metadata() : severity(Severity::trace), tag(nullptr), function(nullptr), timestamp(nullptr)
     {
     }
 
     Severity severity;
     Tag tag;
-    Type type;
     Function function;
     Timestamp timestamp;
 };
+
+
+class Filter
+{
+public:
+    Filter()
+    {
+    }
+
+    Filter(Severity severity)
+    {
+        add_filter(severity);
+    }
+
+    bool match(const Metadata& metadata) const
+    {
+        if (tag_filter_.empty())
+            return true;
+
+        auto iter = tag_filter_.find(metadata.tag);
+        if (iter != tag_filter_.end())
+            return (metadata.severity >= iter->second);
+
+        iter = tag_filter_.find("*");
+        if (iter != tag_filter_.end())
+            return (metadata.severity >= iter->second);
+
+        return false;
+    }
+
+    void add_filter(const Tag& tag, Severity severity)
+    {
+        tag_filter_[tag] = severity;
+    }
+
+    void add_filter(Severity severity)
+    {
+        tag_filter_["*"] = severity;
+    }
+
+    void add_filter(const std::string& filter)
+    {
+        auto pos = filter.find(":");
+        if (pos != std::string::npos)
+            add_filter(filter.substr(0, pos), to_severity(filter.substr(pos + 1)));
+        else
+            add_filter(to_severity(filter));
+    }
+
+private:
+    std::map<Tag, Severity> tag_filter_;
+};
+
 
 /**
  * @brief
@@ -408,33 +522,19 @@ struct Metadata
  */
 struct Sink
 {
-    Sink(Severity severity, Type type) : severity(severity), sink_type_(type)
+    Sink(const Filter& filter) : filter(filter)
     {
     }
 
     virtual ~Sink() = default;
 
     virtual void log(const Metadata& metadata, const std::string& message) = 0;
-    virtual Type get_type() const
-    {
-        return sink_type_;
-    }
 
-    virtual Sink& set_type(Type sink_type)
-    {
-        sink_type_ = sink_type;
-        return *this;
-    }
-
-    Severity severity;
-
-protected:
-    Type sink_type_;
+    Filter filter;
 };
 
 /// ostream operators << for the meta data structs
 static std::ostream& operator<<(std::ostream& os, const Severity& log_severity);
-static std::ostream& operator<<(std::ostream& os, const Type& log_type);
 static std::ostream& operator<<(std::ostream& os, const Timestamp& timestamp);
 static std::ostream& operator<<(std::ostream& os, const Tag& tag);
 static std::ostream& operator<<(std::ostream& os, const Function& function);
@@ -500,36 +600,11 @@ public:
         log_sinks_.erase(std::remove(log_sinks_.begin(), log_sinks_.end(), sink), log_sinks_.end());
     }
 
-    static std::string to_string(Severity logSeverity)
-    {
-        switch (logSeverity)
-        {
-            case Severity::trace:
-                return "Trace";
-            case Severity::debug:
-                return "Debug";
-            case Severity::info:
-                return "Info";
-            case Severity::notice:
-                return "Notice";
-            case Severity::warning:
-                return "Warn";
-            case Severity::error:
-                return "Error";
-            case Severity::fatal:
-                return "Fatal";
-            default:
-                std::stringstream ss;
-                ss << logSeverity;
-                return ss.str();
-        }
-    }
-
 protected:
-    Log() noexcept
+    Log() noexcept : last_buffer_(nullptr)
     {
         std::clog.rdbuf(this);
-        std::clog << Severity() << Type::normal << Tag() << Function() << Conditional() << AixLog::Color::NONE << std::flush;
+        std::clog << Severity() << Tag() << Function() << Conditional() << AixLog::Color::NONE << std::flush;
     }
 
     virtual ~Log()
@@ -540,19 +615,18 @@ protected:
     int sync() override
     {
         std::lock_guard<std::recursive_mutex> lock(mutex_);
-        if (!buffer_.str().empty())
+        if (!get_stream().str().empty())
         {
             if (conditional_.is_true())
             {
                 for (const auto& sink : log_sinks_)
                 {
-                    if ((metadata_.type == Type::all) || (sink->get_type() == Type::all) || (metadata_.type == sink->get_type()))
-                        if (metadata_.severity >= sink->severity)
-                            sink->log(metadata_, buffer_.str());
+                    if (sink->filter.match(metadata_))
+                        sink->log(metadata_, get_stream().str());
                 }
             }
-            buffer_.str("");
-            buffer_.clear();
+            get_stream().str("");
+            get_stream().clear();
         }
 
         return 0;
@@ -566,7 +640,7 @@ protected:
             if (c == '\n')
                 sync();
             else
-                buffer_ << static_cast<char>(c);
+                get_stream() << static_cast<char>(c);
         }
         else
         {
@@ -577,18 +651,48 @@ protected:
 
 private:
     friend std::ostream& operator<<(std::ostream& os, const Severity& log_severity);
-    friend std::ostream& operator<<(std::ostream& os, const Type& log_type);
     friend std::ostream& operator<<(std::ostream& os, const Timestamp& timestamp);
     friend std::ostream& operator<<(std::ostream& os, const Tag& tag);
     friend std::ostream& operator<<(std::ostream& os, const Function& function);
     friend std::ostream& operator<<(std::ostream& os, const Conditional& conditional);
 
-    std::stringstream buffer_;
+    std::stringstream& get_stream()
+    {
+        auto id = std::this_thread::get_id();
+        if ((last_buffer_ == nullptr) || (last_id_ != id))
+        {
+            last_id_ = id;
+            last_buffer_ = &(buffer_[id]);
+        }
+        return *last_buffer_;
+    }
+
+    std::map<std::thread::id, std::stringstream> buffer_;
+    std::thread::id last_id_;
+    std::stringstream* last_buffer_ = nullptr;
     Metadata metadata_;
     Conditional conditional_;
     std::vector<log_sink_ptr> log_sinks_;
     std::recursive_mutex mutex_;
 };
+
+/**
+ * @brief
+ * Null log sink
+ *
+ * Discards all log messages
+ */
+struct SinkNull : public Sink
+{
+    SinkNull() : Sink(Filter())
+    {
+    }
+
+    void log(const Metadata& /*metadata*/, const std::string& /*message*/) override
+    {
+    }
+};
+
 
 /**
  * @brief
@@ -606,7 +710,7 @@ private:
  */
 struct SinkFormat : public Sink
 {
-    SinkFormat(Severity severity, Type type, const std::string& format) : Sink(severity, type), format_(format)
+    SinkFormat(const Filter& filter, const std::string& format) : Sink(filter), format_(format)
     {
     }
 
@@ -626,7 +730,15 @@ protected:
 
         size_t pos = result.find("#severity");
         if (pos != std::string::npos)
-            result.replace(pos, 9, Log::to_string(metadata.severity));
+            result.replace(pos, 9, to_string(metadata.severity));
+
+        pos = result.find("#color_severity");
+        if (pos != std::string::npos)
+        {
+            std::stringstream ss;
+            ss << TextColor(Color::RED) << to_string(metadata.severity) << TextColor(Color::NONE);
+            result.replace(pos, 15, ss.str());
+        }
 
         pos = result.find("#tag_func");
         if (pos != std::string::npos)
@@ -664,7 +776,7 @@ protected:
  */
 struct SinkCout : public SinkFormat
 {
-    SinkCout(Severity severity, Type type, const std::string& format = "%Y-%m-%d %H-%M-%S.#ms [#severity] (#tag_func)") : SinkFormat(severity, type, format)
+    SinkCout(const Filter& filter, const std::string& format = "%Y-%m-%d %H-%M-%S.#ms [#severity] (#tag_func)") : SinkFormat(filter, format)
     {
     }
 
@@ -680,7 +792,7 @@ struct SinkCout : public SinkFormat
  */
 struct SinkCerr : public SinkFormat
 {
-    SinkCerr(Severity severity, Type type, const std::string& format = "%Y-%m-%d %H-%M-%S.#ms [#severity] (#tag_func)") : SinkFormat(severity, type, format)
+    SinkCerr(const Filter& filter, const std::string& format = "%Y-%m-%d %H-%M-%S.#ms [#severity] (#tag_func)") : SinkFormat(filter, format)
     {
     }
 
@@ -696,8 +808,8 @@ struct SinkCerr : public SinkFormat
  */
 struct SinkFile : public SinkFormat
 {
-    SinkFile(Severity severity, Type type, const std::string& filename, const std::string& format = "%Y-%m-%d %H-%M-%S.#ms [#severity] (#tag_func)")
-        : SinkFormat(severity, type, format)
+    SinkFile(const Filter& filter, const std::string& filename, const std::string& format = "%Y-%m-%d %H-%M-%S.#ms [#severity] (#tag_func)")
+        : SinkFormat(filter, format)
     {
         ofs.open(filename.c_str(), std::ofstream::out | std::ofstream::trunc);
     }
@@ -725,13 +837,14 @@ protected:
  */
 struct SinkOutputDebugString : public Sink
 {
-    SinkOutputDebugString(Severity severity, Type type = Type::all) : Sink(severity, type)
+    SinkOutputDebugString(const Filter& filter) : Sink(filter)
     {
     }
 
     void log(const Metadata& metadata, const std::string& message) override
     {
-        OutputDebugString(message.c_str());
+        std::wstring wide = std::wstring(message.begin(), message.end());
+        OutputDebugString(wide.c_str());
     }
 };
 #endif
@@ -743,7 +856,7 @@ struct SinkOutputDebugString : public Sink
  */
 struct SinkUnifiedLogging : public Sink
 {
-    SinkUnifiedLogging(Severity severity, Type type = Type::all) : Sink(severity, type)
+    SinkUnifiedLogging(const Filter& filter) : Sink(filter)
     {
     }
 
@@ -783,7 +896,7 @@ struct SinkUnifiedLogging : public Sink
  */
 struct SinkSyslog : public Sink
 {
-    SinkSyslog(const char* ident, Severity severity, Type type) : Sink(severity, type)
+    SinkSyslog(const char* ident, const Filter& filter) : Sink(filter)
     {
         openlog(ident, LOG_PID, LOG_USER);
     }
@@ -832,7 +945,7 @@ struct SinkSyslog : public Sink
  */
 struct SinkAndroid : public Sink
 {
-    SinkAndroid(const std::string& ident, Severity severity, Type type = Type::all) : Sink(severity, type), ident_(ident)
+    SinkAndroid(const std::string& ident, const Filter& filter) : Sink(filter), ident_(ident)
     {
     }
 
@@ -889,9 +1002,10 @@ protected:
  */
 struct SinkEventLog : public Sink
 {
-    SinkEventLog(const std::string& ident, Severity severity, Type type = Type::all) : Sink(severity, type)
+    SinkEventLog(const std::string& ident, const Filter& filter) : Sink(filter)
     {
-        event_log = RegisterEventSource(NULL, ident.c_str());
+        std::wstring wide = std::wstring(ident.begin(), ident.end()); // stijnvdb: RegisterEventSource expands to RegisterEventSourceW which takes wchar_t
+        event_log = RegisterEventSource(NULL, wide.c_str());
     }
 
     WORD get_type(Severity severity) const
@@ -917,8 +1031,10 @@ struct SinkEventLog : public Sink
 
     void log(const Metadata& metadata, const std::string& message) override
     {
+        std::wstring wide = std::wstring(message.begin(), message.end());
         // We need this temp variable because we cannot take address of rValue
-        const char* c_str = message.c_str();
+        const wchar_t* c_str = wide.c_str();
+
         ReportEvent(event_log, get_type(metadata.severity), 0, 0, NULL, 1, 0, &c_str, NULL);
     }
 
@@ -938,16 +1054,16 @@ protected:
  */
 struct SinkNative : public Sink
 {
-    SinkNative(const std::string& ident, Severity severity, Type type = Type::all) : Sink(severity, type), log_sink_(nullptr), ident_(ident)
+    SinkNative(const std::string& ident, const Filter& filter) : Sink(filter), log_sink_(nullptr), ident_(ident)
     {
 #ifdef __ANDROID__
-        log_sink_ = std::make_shared<SinkAndroid>(ident_, severity, type);
+        log_sink_ = std::make_shared<SinkAndroid>(ident_, filter);
 #elif HAS_APPLE_UNIFIED_LOG_
-        log_sink_ = std::make_shared<SinkUnifiedLogging>(severity, type);
+        log_sink_ = std::make_shared<SinkUnifiedLogging>(filter);
 #elif _WIN32
-        log_sink_ = std::make_shared<SinkEventLog>(ident, severity, type);
+        log_sink_ = std::make_shared<SinkEventLog>(ident, filter);
 #elif HAS_SYSLOG_
-        log_sink_ = std::make_shared<SinkSyslog>(ident_.c_str(), severity, type);
+        log_sink_ = std::make_shared<SinkSyslog>(ident_.c_str(), filter);
 #else
         /// will not throw or something. Use "get_logger()" to check for success
         log_sink_ = nullptr;
@@ -982,7 +1098,7 @@ struct SinkCallback : public Sink
 {
     using callback_fun = std::function<void(const Metadata& metadata, const std::string& message)>;
 
-    SinkCallback(Severity severity, Type type, callback_fun callback) : Sink(severity, type), callback_(callback)
+    SinkCallback(const Filter& filter, callback_fun callback) : Sink(filter), callback_(callback)
     {
     }
 
@@ -1012,7 +1128,6 @@ static std::ostream& operator<<(std::ostream& os, const Severity& log_severity)
         {
             log->sync();
             log->metadata_.severity = log_severity;
-            log->metadata_.type = Type::normal;
             log->metadata_.timestamp = nullptr;
             log->metadata_.tag = nullptr;
             log->metadata_.function = nullptr;
@@ -1021,18 +1136,7 @@ static std::ostream& operator<<(std::ostream& os, const Severity& log_severity)
     }
     else
     {
-        os << Log::to_string(log_severity);
-    }
-    return os;
-}
-
-static std::ostream& operator<<(std::ostream& os, const Type& log_type)
-{
-    Log* log = dynamic_cast<Log*>(os.rdbuf());
-    if (log != nullptr)
-    {
-        std::lock_guard<std::recursive_mutex> lock(log->mutex_);
-        log->metadata_.type = log_type;
+        os << to_string(log_severity);
     }
     return os;
 }

@@ -24,27 +24,29 @@
 
 #include <cctype>
 #include <cerrno>
+// #include <chrono>
 #include <cstring>
 #include <fstream>
 #include <functional>
 #include <iomanip>
-#include <iomanip>
 #include <iterator>
 #include <locale>
 #include <memory>
+#ifndef WINDOWS
 #include <net/if.h>
 #include <netinet/in.h>
+#include <sys/ioctl.h>
+#include <sys/utsname.h>
+#include <unistd.h>
+#endif
 #include <sstream>
 #include <string>
-#include <sys/ioctl.h>
 #include <sys/stat.h>
 #include <sys/types.h>
-#include <unistd.h>
 #include <vector>
-#ifndef FREEBSD
+#if !defined(WINDOWS) && !defined(FREEBSD)
 #include <sys/sysinfo.h>
 #endif
-#include <sys/utsname.h>
 #ifdef MACOS
 #include <IOKit/IOCFPlugIn.h>
 #include <IOKit/IOTypes.h>
@@ -54,12 +56,20 @@
 #ifdef ANDROID
 #include <sys/system_properties.h>
 #endif
+#ifdef WINDOWS
+#include <chrono>
+#include <direct.h>
+#include <iphlpapi.h>
+#include <versionhelpers.h>
+#include <windows.h>
+#include <winsock2.h>
+#endif
 
 
 namespace strutils = utils::string;
 
 
-
+#ifndef WINDOWS
 static std::string execGetOutput(const std::string& cmd)
 {
     std::shared_ptr<FILE> pipe(popen((cmd + " 2> /dev/null").c_str(), "r"), pclose);
@@ -74,6 +84,7 @@ static std::string execGetOutput(const std::string& cmd)
     }
     return strutils::trim(result);
 }
+#endif
 
 
 #ifdef ANDROID
@@ -90,14 +101,47 @@ static std::string getProp(const std::string& key, const std::string& def = "")
 
 static std::string getOS()
 {
-    std::string os;
+    static std::string os("");
+
+    if (!os.empty())
+        return os;
+
 #ifdef ANDROID
     os = strutils::trim_copy("Android " + getProp("ro.build.version.release"));
+#elif WINDOWS
+    if (/*IsWindows10OrGreater()*/ FALSE)
+        os = "Windows 10";
+    else if (IsWindows8Point1OrGreater())
+        os = "Windows 8.1";
+    else if (IsWindows8OrGreater())
+        os = "Windows 8";
+    else if (IsWindows7SP1OrGreater())
+        os = "Windows 7 SP1";
+    else if (IsWindows7OrGreater())
+        os = "Windows 7";
+    else if (IsWindowsVistaSP2OrGreater())
+        os = "Windows Vista SP2";
+    else if (IsWindowsVistaSP1OrGreater())
+        os = "Windows Vista SP1";
+    else if (IsWindowsVistaOrGreater())
+        os = "Windows Vista";
+    else if (IsWindowsXPSP3OrGreater())
+        os = "Windows XP SP3";
+    else if (IsWindowsXPSP2OrGreater())
+        os = "Windows XP SP2";
+    else if (IsWindowsXPSP1OrGreater())
+        os = "Windows XP SP1";
+    else if (IsWindowsXPOrGreater())
+        os = "Windows XP";
+    else
+        os = "Unknown Windows";
 #else
     os = execGetOutput("lsb_release -d");
     if ((os.find(":") != std::string::npos) && (os.find("lsb_release") == std::string::npos))
         os = strutils::trim_copy(os.substr(os.find(":") + 1));
 #endif
+
+#ifndef WINDOWS
     if (os.empty())
     {
         os = strutils::trim_copy(execGetOutput("grep /etc/os-release /etc/openwrt_release -e PRETTY_NAME -e DISTRIB_DESCRIPTION"));
@@ -114,7 +158,9 @@ static std::string getOS()
         uname(&u);
         os = u.sysname;
     }
-    return strutils::trim_copy(os);
+#endif
+    strutils::trim(os);
+    return os;
 }
 
 
@@ -143,40 +189,72 @@ static std::string getArch()
     if (!arch.empty())
         return arch;
 #endif
+#ifndef WINDOWS
     arch = execGetOutput("arch");
     if (arch.empty())
         arch = execGetOutput("uname -i");
     if (arch.empty() || (arch == "unknown"))
         arch = execGetOutput("uname -m");
+#else
+    SYSTEM_INFO sysInfo;
+    GetSystemInfo(&sysInfo);
+    switch (sysInfo.wProcessorArchitecture)
+    {
+        case PROCESSOR_ARCHITECTURE_AMD64:
+            arch = "amd64";
+            break;
+
+        case PROCESSOR_ARCHITECTURE_ARM:
+            arch = "arm";
+            break;
+
+        case PROCESSOR_ARCHITECTURE_IA64:
+            arch = "ia64";
+            break;
+
+        case PROCESSOR_ARCHITECTURE_INTEL:
+            arch = "intel";
+            break;
+
+        default:
+        case PROCESSOR_ARCHITECTURE_UNKNOWN:
+            arch = "unknown";
+            break;
+    }
+#endif
     return strutils::trim_copy(arch);
 }
 
-
-static long uptime()
-{
-#ifndef FREEBSD
-    struct sysinfo info;
-    sysinfo(&info);
-    return info.uptime;
-#else
-    std::string uptime = execGetOutput("sysctl kern.boottime");
-    if ((uptime.find(" sec = ") != std::string::npos) && (uptime.find(",") != std::string::npos))
-    {
-        uptime = strutils::trim_copy(uptime.substr(uptime.find(" sec = ") + 7));
-        uptime.resize(uptime.find(","));
-        timeval now;
-        gettimeofday(&now, NULL);
-        try
-        {
-            return now.tv_sec - cpt::stoul(uptime);
-        }
-        catch (...)
-        {
-        }
-    }
-    return 0;
-#endif
-}
+// Seems not to be used
+// static std::chrono::seconds uptime()
+// {
+// #ifndef WINDOWS
+// #ifndef FREEBSD
+//     struct sysinfo info;
+//     sysinfo(&info);
+//     return std::chrono::seconds(info.uptime);
+// #else
+//     std::string uptime = execGetOutput("sysctl kern.boottime");
+//     if ((uptime.find(" sec = ") != std::string::npos) && (uptime.find(",") != std::string::npos))
+//     {
+//         uptime = strutils::trim_copy(uptime.substr(uptime.find(" sec = ") + 7));
+//         uptime.resize(uptime.find(","));
+//         timeval now;
+//         gettimeofday(&now, NULL);
+//         try
+//         {
+//             return std::chrono::seconds(now.tv_sec - cpt::stoul(uptime));
+//         }
+//         catch (...)
+//         {
+//         }
+//     }
+//     return 0s;
+// #endif
+// #else
+//     return std::chrono::duration_cast<std::chrono::seconds>(std::chrono::milliseconds(GetTickCount()));
+// #endif
+// }
 
 
 /// http://stackoverflow.com/questions/2174768/generating-random-uuids-in-linux
@@ -185,7 +263,7 @@ static std::string generateUUID()
     static bool initialized(false);
     if (!initialized)
     {
-        std::srand(std::time(nullptr));
+        std::srand(static_cast<unsigned int>(std::time(nullptr)));
         initialized = true;
     }
     std::stringstream ss;
@@ -196,6 +274,7 @@ static std::string generateUUID()
 }
 
 
+#ifndef WINDOWS
 /// https://gist.github.com/OrangeTide/909204
 static std::string getMacAddress(int sock)
 {
@@ -301,7 +380,42 @@ static std::string getMacAddress(int sock)
 #endif
     return mac;
 }
+#else
+static std::string getMacAddress(const std::string& address)
+{
+    IP_ADAPTER_INFO* first;
+    IP_ADAPTER_INFO* pos;
+    ULONG bufferLength = sizeof(IP_ADAPTER_INFO);
+    first = (IP_ADAPTER_INFO*)malloc(bufferLength);
 
+    if (GetAdaptersInfo(first, &bufferLength) == ERROR_BUFFER_OVERFLOW)
+    {
+        free(first);
+        first = (IP_ADAPTER_INFO*)malloc(bufferLength);
+    }
+
+    char mac[19];
+    if (GetAdaptersInfo(first, &bufferLength) == NO_ERROR)
+        for (pos = first; pos != NULL; pos = pos->Next)
+        {
+            IP_ADDR_STRING* firstAddr = &pos->IpAddressList;
+            IP_ADDR_STRING* posAddr;
+            for (posAddr = firstAddr; posAddr != NULL; posAddr = posAddr->Next)
+                if (_stricmp(posAddr->IpAddress.String, address.c_str()) == 0)
+                {
+                    sprintf(mac, "%02x:%02x:%02x:%02x:%02x:%02x", pos->Address[0], pos->Address[1], pos->Address[2], pos->Address[3], pos->Address[4],
+                            pos->Address[5]);
+
+                    free(first);
+                    return mac;
+                }
+        }
+    else
+        free(first);
+
+    return mac;
+}
+#endif
 
 static std::string getHostId(const std::string defaultId = "")
 {

@@ -18,7 +18,9 @@
 
 #include <chrono>
 #include <iostream>
+#ifndef WINDOWS
 #include <sys/resource.h>
+#endif
 
 #include "browseZeroConf/browse_mdns.hpp"
 #include "common/popl.hpp"
@@ -46,8 +48,13 @@ using namespace std::chrono_literals;
 
 PcmDevice getPcmDevice(const std::string& soundcard)
 {
+#if defined(HAS_ALSA) || defined(WINDOWS)
+    vector<PcmDevice> pcmDevices =
 #ifdef HAS_ALSA
-    vector<PcmDevice> pcmDevices = AlsaPlayer::pcm_list();
+        AlsaPlayer::pcm_list();
+#else
+        WASAPIPlayer::pcm_list();
+#endif
 
     try
     {
@@ -63,7 +70,6 @@ PcmDevice getPcmDevice(const std::string& soundcard)
     for (auto dev : pcmDevices)
         if (dev.name.find(soundcard) != string::npos)
             return dev;
-#else
     std::ignore = soundcard;
 #endif
 
@@ -88,9 +94,12 @@ int main(int argc, char** argv)
         OptionParser op("Allowed options");
         auto helpSwitch = op.add<Switch>("", "help", "produce help message");
         auto groffSwitch = op.add<Switch, Attribute::hidden>("", "groff", "produce groff message");
-        auto debugOption = op.add<Implicit<string>, Attribute::hidden>("", "debug", "enable debug logging", ""); // TODO: &settings.logging.debug);
+        op.add<Value<string>>("", "logsink", "log sink [null,system,stdout,stderr,file:<filename>]", settings.logging.sink, &settings.logging.sink);
+        auto logfilterOption = op.add<Value<string>>(
+            "", "logfilter", "log filter <tag>:<level>[,<tag>:<level>]* with tag = * or <log tag> and level = [trace,debug,info,notice,warning,error,fatal]",
+            settings.logging.filter);
         auto versionSwitch = op.add<Switch>("v", "version", "show version number");
-#if defined(HAS_ALSA)
+#if defined(HAS_ALSA) || defined(WINDOWS)
         auto listSwitch = op.add<Switch>("l", "list", "list PCM devices");
         /*auto soundcardValue =*/op.add<Value<string>>("s", "soundcard", "index or name of the pcm device", "default", &pcm_device);
 #endif
@@ -105,9 +114,14 @@ int main(int argc, char** argv)
         /*auto latencyValue =*/op.add<Value<int>>("", "latency", "latency of the PCM device", 0, &settings.player.latency);
         /*auto instanceValue =*/op.add<Value<size_t>>("i", "instance", "instance id", 1, &settings.instance);
         /*auto hostIdValue =*/op.add<Value<string>>("", "hostID", "unique host id", "", &settings.host_id);
+#ifdef ANDROID
         op.add<Value<string>>("", "player", "audio backend", "", &settings.player.player_name);
+#endif
 #ifdef HAS_SOXR
         auto sample_format = op.add<Value<string>>("", "sampleformat", "resample audio stream to <rate>:<bits>:<channels>", "");
+#endif
+#ifdef HAS_WASAPI
+        auto sharing_mode = op.add<Value<string>>("", "sharingmode", "audio mode to use [shared/exclusive]", "shared");
 #endif
 
         try
@@ -132,10 +146,15 @@ int main(int argc, char** argv)
             exit(EXIT_SUCCESS);
         }
 
-#ifdef HAS_ALSA
+#if defined(HAS_ALSA) || defined(WINDOWS)
         if (listSwitch->is_set())
         {
-            vector<PcmDevice> pcmDevices = AlsaPlayer::pcm_list();
+            vector<PcmDevice> pcmDevices =
+#ifdef HAS_ALSA
+                AlsaPlayer::pcm_list();
+#else
+                WASAPIPlayer::pcm_list();
+#endif
             for (auto dev : pcmDevices)
             {
                 cout << dev.idx << ": " << dev.name << "\n" << dev.description << "\n\n";
@@ -159,18 +178,42 @@ int main(int argc, char** argv)
 
         // XXX: Only one metadata option must be set
 
-        AixLog::Log::init<AixLog::SinkNative>("snapclient", AixLog::Severity::trace, AixLog::Type::special);
-        if (debugOption->is_set())
+        settings.logging.filter = logfilterOption->value();
+        if (logfilterOption->is_set())
         {
-            AixLog::Log::instance().add_logsink<AixLog::SinkCout>(AixLog::Severity::trace, AixLog::Type::all, "%Y-%m-%d %H-%M-%S.#ms [#severity] (#tag_func)");
-            if (!debugOption->value().empty())
-                AixLog::Log::instance().add_logsink<AixLog::SinkFile>(AixLog::Severity::trace, AixLog::Type::all, debugOption->value(),
-                                                                      "%Y-%m-%d %H-%M-%S.#ms [#severity] (#tag_func)");
+            for (size_t n = 1; n < logfilterOption->count(); ++n)
+                settings.logging.filter += "," + logfilterOption->value(n);
         }
+
+        if (settings.logging.sink.empty())
+        {
+            settings.logging.sink = "stdout";
+#ifdef HAS_DAEMON
+            if (daemonOption->is_set())
+                settings.logging.sink = "system";
+#endif
+        }
+        AixLog::Filter logfilter;
+        auto filters = utils::string::split(settings.logging.filter, ',');
+        for (const auto& filter : filters)
+            logfilter.add_filter(filter);
+
+        string logformat = "%Y-%m-%d %H-%M-%S.#ms [#severity] (#tag_func)";
+        if (settings.logging.sink.find("file:") != string::npos)
+        {
+            string logfile = settings.logging.sink.substr(settings.logging.sink.find(":") + 1);
+            AixLog::Log::init<AixLog::SinkFile>(logfilter, logfile, logformat);
+        }
+        else if (settings.logging.sink == "stdout")
+            AixLog::Log::init<AixLog::SinkCout>(logfilter, logformat);
+        else if (settings.logging.sink == "stderr")
+            AixLog::Log::init<AixLog::SinkCerr>(logfilter, logformat);
+        else if (settings.logging.sink == "system")
+            AixLog::Log::init<AixLog::SinkNative>("snapclient", logfilter);
+        else if (settings.logging.sink == "null")
+            AixLog::Log::init<AixLog::SinkNull>();
         else
-        {
-            AixLog::Log::instance().add_logsink<AixLog::SinkCout>(AixLog::Severity::info, AixLog::Type::all, "%Y-%m-%d %H-%M-%S [#severity] (#tag_func)");
-        }
+            throw SnapException("Invalid log sink: " + settings.logging.sink);
 
 #ifdef HAS_DAEMON
         std::unique_ptr<Daemon> daemon;
@@ -193,7 +236,7 @@ int main(int argc, char** argv)
                     group = user_group[1];
             }
             daemon = std::make_unique<Daemon>(user, group, pidFile);
-            SLOG(NOTICE) << "daemonizing" << std::endl;
+            LOG(NOTICE) << "daemonizing" << std::endl;
             daemon->daemonize();
             if (processPriority < -20)
                 processPriority = -20;
@@ -201,7 +244,7 @@ int main(int argc, char** argv)
                 processPriority = 19;
             if (processPriority != 0)
                 setpriority(PRIO_PROCESS, 0, processPriority);
-            SLOG(NOTICE) << "daemon started" << std::endl;
+            LOG(NOTICE) << "daemon started" << std::endl;
         }
 #endif
 
@@ -226,18 +269,31 @@ int main(int argc, char** argv)
         }
 #endif
 
+#ifdef HAS_WASAPI
+        if (sharing_mode->is_set())
+        {
+            settings.player.sharing_mode =
+                (sharing_mode->value() == "exclusive") ? ClientSettings::SharingMode::exclusive : ClientSettings::SharingMode::shared;
+        }
+#endif
+
         bool active = true;
         std::shared_ptr<Controller> controller;
-        auto signal_handler = install_signal_handler({SIGHUP, SIGTERM, SIGINT},
-                                                     [&active, &controller](int signal, const std::string& strsignal) {
-                                                         SLOG(INFO) << "Received signal " << signal << ": " << strsignal << "\n";
-                                                         active = false;
-                                                         if (controller)
-                                                         {
-                                                             LOG(INFO) << "Stopping controller\n";
-                                                             controller->stop();
-                                                         }
-                                                     });
+        auto signal_handler = install_signal_handler(
+            {
+#ifndef WINDOWS // no sighup on windows
+                SIGHUP,
+#endif
+                SIGTERM, SIGINT},
+            [&active, &controller](int signal, const std::string& strsignal) {
+                LOG(INFO) << "Received signal " << signal << ": " << strsignal << "\n";
+                active = false;
+                if (controller)
+                {
+                    LOG(INFO) << "Stopping controller\n";
+                    controller->stop();
+                }
+            });
         if (settings.server.host.empty())
         {
 #if defined(HAS_AVAHI) || defined(HAS_BONJOUR)
@@ -262,7 +318,7 @@ int main(int argc, char** argv)
                 }
                 catch (const std::exception& e)
                 {
-                    SLOG(ERROR) << "Exception: " << e.what() << std::endl;
+                    LOG(ERROR) << "Exception: " << e.what() << std::endl;
                 }
             }
 #endif
@@ -282,10 +338,10 @@ int main(int argc, char** argv)
     }
     catch (const std::exception& e)
     {
-        SLOG(ERROR) << "Exception: " << e.what() << std::endl;
+        LOG(FATAL) << "Exception: " << e.what() << std::endl;
         exitcode = EXIT_FAILURE;
     }
 
-    SLOG(NOTICE) << "daemon terminated." << endl;
+    LOG(NOTICE) << "daemon terminated." << endl;
     exit(exitcode);
 }
