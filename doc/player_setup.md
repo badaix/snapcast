@@ -92,7 +92,7 @@ echo "http://wdr-1live-live.icecast.wdr.de/wdr/1live/live/mp3/128/stream.mp3" > 
 ```ini
 [audio]
 #output = autoaudiosink
-output = audioresample ! audioconvert ! audio/x-raw,rate=48000,channels=2,format=S16LE ! wavenc ! filesink location=/tmp/snapfifo
+output = audioresample ! audioconvert ! audio/x-raw,rate=48000,channels=2,format=S16LE ! filesink location=/tmp/snapfifo
 ```
 
 With newer kernels one might also have to change this sysctl-setting, as default settings have changed recently: `sudo sysctl fs.protected_fifos=0`
