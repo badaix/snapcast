@@ -20,6 +20,7 @@
 #include "common/aixlog.hpp"
 #include "common/snap_exception.hpp"
 #include "common/str_compat.hpp"
+#include "common/utils/string_utils.hpp"
 
 //#define BUFFER_TIME 120000
 #define PERIOD_TIME 30000
@@ -32,11 +33,30 @@ static constexpr auto LOG_TAG = "Alsa";
 AlsaPlayer::AlsaPlayer(boost::asio::io_context& io_context, const ClientSettings::Player& settings, std::shared_ptr<Stream> stream)
     : Player(io_context, settings, stream), handle_(nullptr), ctl_(nullptr), mixer_(nullptr), elem_(nullptr), sd_(io_context), timer_(io_context)
 {
+    if (settings_.mixer.mode == ClientSettings::Mixer::Mode::hardware)
+    {
+        if (settings_.mixer.parameter.empty())
+        {
+            mixer_name_ = "Master";
+        }
+        else
+        {
+            string tmp;
+            utils::string::split_left(settings_.mixer.parameter, ':', mixer_name_, tmp);
+        }
+        LOG(DEBUG, LOG_TAG) << "Mixer: " << mixer_name_ << "\n";
+    }
 }
 
 
 void AlsaPlayer::setMute(bool mute)
 {
+    if (settings_.mixer.mode != ClientSettings::Mixer::Mode::hardware)
+    {
+        Player::setMute(mute);
+        return;
+    }
+
     int val = mute ? 0 : 1;
     int err = snd_mixer_selem_set_playback_switch(elem_, SND_MIXER_SCHN_MONO, val);
     if (err < 0)
@@ -46,6 +66,12 @@ void AlsaPlayer::setMute(bool mute)
 
 void AlsaPlayer::setVolume(double volume)
 {
+    if (settings_.mixer.mode != ClientSettings::Mixer::Mode::hardware)
+    {
+        Player::setVolume(volume);
+        return;
+    }
+
     std::lock_guard<std::mutex> lock(mutex_);
     // boost::system::error_code ec;
     // sd_.cancel(ec);
@@ -203,11 +229,11 @@ void AlsaPlayer::initMixer()
 
     snd_mixer_selem_id_t* sid;
     snd_mixer_selem_id_alloca(&sid);
-    std::string mix_name = "Master";
+    // TODO: make configurable
     int mix_index = 0;
     // sets simple-mixer index and name
     snd_mixer_selem_id_set_index(sid, mix_index);
-    snd_mixer_selem_id_set_name(sid, mix_name.c_str());
+    snd_mixer_selem_id_set_name(sid, mixer_name_.c_str());
 
     if ((err = snd_mixer_open(&mixer_, 0)) < 0)
         throw SnapException(std::string("Failed to open mixer, error: ") + snd_strerror(err));
@@ -219,7 +245,7 @@ void AlsaPlayer::initMixer()
         throw SnapException(std::string("Failed to load mixer, error: ") + snd_strerror(err));
     elem_ = snd_mixer_find_selem(mixer_, sid);
     if (!elem_)
-        throw SnapException("Failed to find mixer simple element");
+        throw SnapException("Failed to find mixer: " + mixer_name_);
 
     sd_ = boost::asio::posix::stream_descriptor(io_context_, fd_->fd);
     waitForEvent();
@@ -383,7 +409,8 @@ void AlsaPlayer::uninitMixer()
 void AlsaPlayer::start()
 {
     initAlsa();
-    initMixer();
+    if (settings_.mixer.mode == ClientSettings::Mixer::Mode::hardware)
+        initMixer();
     Player::start();
 }
 

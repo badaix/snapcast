@@ -60,6 +60,7 @@ private:
 
     snd_mixer_t* mixer_;
     snd_mixer_elem_t* elem_;
+    std::string mixer_name_;
 
     std::unique_ptr<pollfd> fd_;
     std::vector<char> buffer_;

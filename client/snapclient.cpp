@@ -144,9 +144,15 @@ int main(int argc, char** argv)
 #ifdef HAS_WASAPI
         auto sharing_mode = op.add<Value<string>>("", "sharingmode", "audio mode to use [shared|exclusive]", "shared");
 #endif
-
-        // TODO: hardcoded
-        settings.player.mixer.mode = ClientSettings::Mixer::Mode::hardware;
+        bool hw_mixer_supported = false;
+#if defined(HAS_ALSA)
+        hw_mixer_supported = true;
+#endif
+        std::shared_ptr<popl::Value<std::string>> mixer_mode;
+        if (hw_mixer_supported)
+            mixer_mode = op.add<Value<string>>("", "mixer", "<software|hardware|script>[:<options>]", "software");
+        else
+            mixer_mode = op.add<Value<string>>("", "mixer", "<software|script>[:<options>]", "software");
 
         try
         {
@@ -300,6 +306,21 @@ int main(int argc, char** argv)
                 (sharing_mode->value() == "exclusive") ? ClientSettings::SharingMode::exclusive : ClientSettings::SharingMode::shared;
         }
 #endif
+
+        settings.player.mixer.mode = ClientSettings::Mixer::Mode::software;
+        if (mixer_mode->is_set())
+        {
+            string mode;
+            utils::string::split_left(mixer_mode->value(), ':', mode, settings.player.mixer.parameter);
+            if (mode == "software")
+                settings.player.mixer.mode = ClientSettings::Mixer::Mode::software;
+            else if ((mode == "hardware") && hw_mixer_supported)
+                settings.player.mixer.mode = ClientSettings::Mixer::Mode::hardware;
+            else if (mode == "script")
+                settings.player.mixer.mode = ClientSettings::Mixer::Mode::script;
+            else
+                throw SnapException("Mixer mode not supported: " + mode);
+        }
 
         boost::asio::io_context io_context;
         // Construct a signal set registered for process termination.
