@@ -29,22 +29,23 @@
 using namespace std;
 
 static constexpr auto LOG_TAG = "Alsa";
+static constexpr auto DEFAULT_MIXER = "PCM";
+
 
 AlsaPlayer::AlsaPlayer(boost::asio::io_context& io_context, const ClientSettings::Player& settings, std::shared_ptr<Stream> stream)
     : Player(io_context, settings, stream), handle_(nullptr), ctl_(nullptr), mixer_(nullptr), elem_(nullptr), sd_(io_context), timer_(io_context)
 {
     if (settings_.mixer.mode == ClientSettings::Mixer::Mode::hardware)
     {
+        string tmp;
         if (settings_.mixer.parameter.empty())
-        {
-            mixer_name_ = "Master";
-        }
+            mixer_name_ = DEFAULT_MIXER;
         else
-        {
-            string tmp;
             utils::string::split_left(settings_.mixer.parameter, ':', mixer_name_, tmp);
-        }
-        LOG(DEBUG, LOG_TAG) << "Mixer: " << mixer_name_ << "\n";
+
+        // default:CARD=ALSA => default
+        utils::string::split_left(settings_.pcm_device.name, ':', mixer_device_, tmp);
+        LOG(DEBUG, LOG_TAG) << "Mixer: " << mixer_name_ << ", device: " << mixer_device_ << "\n";
     }
 }
 
@@ -219,10 +220,10 @@ void AlsaPlayer::initMixer()
 {
     std::lock_guard<std::mutex> lock(mutex_);
     int err;
-    if ((err = snd_ctl_open(&ctl_, settings_.pcm_device.name.c_str(), SND_CTL_READONLY)) < 0)
-        throw SnapException("Can't open control for " + settings_.pcm_device.name + ", error: " + snd_strerror(err));
+    if ((err = snd_ctl_open(&ctl_, mixer_device_.c_str(), SND_CTL_READONLY)) < 0)
+        throw SnapException("Can't open control for " + mixer_device_ + ", error: " + snd_strerror(err));
     if ((err = snd_ctl_subscribe_events(ctl_, 1)) < 0)
-        throw SnapException("Can't subscribe for events for " + settings_.pcm_device.name + ", error: " + snd_strerror(err));
+        throw SnapException("Can't subscribe for events for " + mixer_device_ + ", error: " + snd_strerror(err));
     fd_ = std::make_unique<pollfd>();
     err = snd_ctl_poll_descriptors(ctl_, fd_.get(), 1);
     LOG(DEBUG, LOG_TAG) << "Filled " << err << " poll descriptors, poll descriptor count: " << snd_ctl_poll_descriptors_count(ctl_) << "\n";
@@ -237,8 +238,8 @@ void AlsaPlayer::initMixer()
 
     if ((err = snd_mixer_open(&mixer_, 0)) < 0)
         throw SnapException(std::string("Failed to open mixer, error: ") + snd_strerror(err));
-    if ((err = snd_mixer_attach(mixer_, settings_.pcm_device.name.c_str())) < 0)
-        throw SnapException("Failed to attach mixer to " + settings_.pcm_device.name + ", error: " + snd_strerror(err));
+    if ((err = snd_mixer_attach(mixer_, mixer_device_.c_str())) < 0)
+        throw SnapException("Failed to attach mixer to " + mixer_device_ + ", error: " + snd_strerror(err));
     if ((err = snd_mixer_selem_register(mixer_, NULL, NULL)) < 0)
         throw SnapException(std::string("Failed to register selem, error: ") + snd_strerror(err));
     if ((err = snd_mixer_load(mixer_)) < 0)
