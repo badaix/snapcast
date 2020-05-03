@@ -46,8 +46,10 @@ public:
     virtual ~Player();
 
     /// Set audio volume in range [0..1]
-    virtual void setVolume(double volume);
-    virtual void setMute(bool mute);
+    /// @param volume the volume on range [0..1]
+    /// @param muted muted or not
+    virtual void setVolume(double volume, bool mute);
+
     /// Called on start, before the first audio sample is sent or any other function is called.
     /// In case of hardware mixer, it will call getVolume and notify the server about the current volume
     virtual void start();
@@ -68,8 +70,13 @@ protected:
     /// get the hardware mixer volume
     /// @param[out] volume the volume on range [0..1]
     /// @param[out] muted muted or not
-    /// @return true on success
-    virtual bool getVolume(double& volume, bool& muted);
+    /// @return success or not
+    virtual bool getHardwareVolume(double& volume, bool& muted);
+
+    /// set the hardware mixer volume
+    /// @param volume the volume on range [0..1]
+    /// @param muted muted or not
+    virtual void setHardwareVolume(double volume, bool muted);
 
     void setVolume_poly(double volume, double exp);
     void setVolume_exp(double volume, double base);

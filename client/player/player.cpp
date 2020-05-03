@@ -19,11 +19,16 @@
 #include <cmath>
 #include <iostream>
 
+#include <boost/process.hpp>
+
 #include "common/aixlog.hpp"
+#include "common/snap_exception.hpp"
+#include "common/str_compat.hpp"
 #include "player.hpp"
 
 
 using namespace std;
+using namespace boost::process;
 
 static constexpr auto LOG_TAG = "Player";
 
@@ -51,7 +56,7 @@ void Player::start()
     {
         double volume;
         bool muted;
-        if (getVolume(volume, muted))
+        if (getHardwareVolume(volume, muted))
         {
             LOG(DEBUG, LOG_TAG) << "Volume: " << volume << ", muted: " << muted << "\n";
             notifyVolumeChange(volume, muted);
@@ -76,28 +81,33 @@ void Player::worker()
 }
 
 
-bool Player::getVolume(double& volume, bool& muted)
+void Player::setHardwareVolume(double volume, bool muted)
 {
-    std::ignore = volume;
-    std::ignore = muted;
+    throw SnapException("Failed to set hardware mixer volume: not supported");
+}
+
+
+bool Player::getHardwareVolume(double& volume, bool& muted)
+{
+    throw SnapException("Failed to get hardware mixer volume: not supported");
     return false;
 }
 
 
 void Player::adjustVolume(char* buffer, size_t frames)
 {
-    // if (settings_.mixer.mode != ClientSettings::Mixer::Mode::software)
-    //     return;
-
-    double volume = volume_;
-    if (muted_)
-        volume = 0.;
-
-    const SampleFormat& sampleFormat = stream_->getFormat();
-
-    if ((volume < 1.0) || (volCorrection_ != 1.))
+    double volume = volCorrection_;
+    // apply volume changes only for software mixer
+    // for any other mixer, we might still have to apply the volCorrection_
+    if (settings_.mixer.mode == ClientSettings::Mixer::Mode::software)
     {
+        volume = muted_ ? 0. : volume_;
         volume *= volCorrection_;
+    }
+
+    if (volume != 1.0)
+    {
+        const SampleFormat& sampleFormat = stream_->getFormat();
         if (sampleFormat.sampleSize() == 1)
             adjustVolume<int8_t>(buffer, frames * sampleFormat.channels(), volume);
         else if (sampleFormat.sampleSize() == 2)
@@ -128,13 +138,31 @@ void Player::setVolume_exp(double volume, double base)
 }
 
 
-void Player::setVolume(double volume)
+void Player::setVolume(double volume, bool mute)
 {
-    setVolume_exp(volume, 10.);
-}
-
-
-void Player::setMute(bool mute)
-{
+    volume_ = volume;
     muted_ = mute;
+    if (settings_.mixer.mode == ClientSettings::Mixer::Mode::hardware)
+    {
+        setHardwareVolume(volume, muted_);
+    }
+    else if (settings_.mixer.mode == ClientSettings::Mixer::Mode::software)
+    {
+        if (settings_.mixer.parameter == "poly")
+            setVolume_poly(volume, 3.);
+        else
+            setVolume_exp(volume, 10.);
+    }
+    else if (settings_.mixer.mode == ClientSettings::Mixer::Mode::script)
+    {
+        try
+        {
+            child c(exe = settings_.mixer.parameter, args = {"--volume", cpt::to_string(volume), "--mute", mute ? "true" : "false"});
+            c.detach();
+        }
+        catch (const std::exception& e)
+        {
+            LOG(ERROR, LOG_TAG) << "Failed to run script '" + settings_.mixer.parameter + "', error: " << e.what() << "\n";
+        }
+    }
 }

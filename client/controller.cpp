@@ -64,20 +64,18 @@ void Controller::getNextMessage()
             {
                 if (stream_ && decoder_)
                 {
-                    // auto wireChunk = msg::message_cast<msg::WireChunk>(std::move(response));
+                    // execute on the io_context to do the (costly) decoding on another thread (if more than one thread is used)
+                    // boost::asio::post(io_context_, [this, response = std::move(response)]() mutable {
                     auto pcmChunk = msg::message_cast<msg::PcmChunk>(std::move(response));
                     pcmChunk->format = sampleFormat_;
-                    // std::make_unique<msg::PcmChunk>(sampleFormat_, *wireChunk);
-                    // pcmChunk->deserialize(baseMessage, buffer);
                     // LOG(TRACE, LOG_TAG) << "chunk: " << pcmChunk->payloadSize << ", sampleFormat: " << sampleFormat_.getFormat() << "\n";
                     if (decoder_->decode(pcmChunk.get()))
                     {
-                        // LOG(TRACE, LOG_TAG) << ", decoded: " << pcmChunk->payloadSize << ", Duration: " << pcmChunk->durationMs()
-                        //                     << ", sec: " << pcmChunk->timestamp.sec << ", usec: " << pcmChunk->timestamp.usec / 1000 << ", type: " <<
-                        //                     pcmChunk->type
-                        //                     << "\n";
+                        // LOG(TRACE, LOG_TAG) << ", decoded: " << pcmChunk->payloadSize << ", Duration: " << pcmChunk->durationMs() << ", sec: " <<
+                        // pcmChunk->timestamp.sec << ", usec: " << pcmChunk->timestamp.usec / 1000 << ", type: " << pcmChunk->type << "\n";
                         stream_->addChunk(std::move(pcmChunk));
                     }
+                    // });
                 }
             }
             else if (response->type == message_type::kTime)
@@ -94,8 +92,7 @@ void Controller::getNextMessage()
                                    << ", volume: " << serverSettings_->getVolume() << ", muted: " << serverSettings_->isMuted() << "\n";
                 if (stream_ && player_)
                 {
-                    player_->setVolume(serverSettings_->getVolume() / 100.);
-                    player_->setMute(serverSettings_->isMuted());
+                    player_->setVolume(serverSettings_->getVolume() / 100., serverSettings_->isMuted());
                     stream_->setBufferLen(std::max(0, serverSettings_->getBufferMs() - serverSettings_->getLatency() - settings_.player.latency));
                 }
             }
@@ -181,8 +178,7 @@ void Controller::getNextMessage()
                 // The player class will send the device's volume to the server instead
                 if (settings_.player.mixer.mode != ClientSettings::Mixer::Mode::hardware)
                 {
-                    player_->setVolume(serverSettings_->getVolume() / 100.);
-                    player_->setMute(serverSettings_->isMuted());
+                    player_->setVolume(serverSettings_->getVolume() / 100., serverSettings_->isMuted());
                 }
             }
             else if (response->type == message_type::kStreamTags)

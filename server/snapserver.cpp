@@ -221,6 +221,7 @@ int main(int argc, char* argv[])
         else
             throw SnapException("Invalid log sink: " + settings.logging.sink);
 
+        // TODO: op vs conf
         for (const auto& opt : conf.unknown_options())
             LOG(WARNING) << "unknown configuration option: " << opt << "\n";
 

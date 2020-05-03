@@ -50,39 +50,17 @@ AlsaPlayer::AlsaPlayer(boost::asio::io_context& io_context, const ClientSettings
 }
 
 
-void AlsaPlayer::setMute(bool mute)
+void AlsaPlayer::setHardwareVolume(double volume, bool muted)
 {
-    if (settings_.mixer.mode != ClientSettings::Mixer::Mode::hardware)
-    {
-        Player::setMute(mute);
-        return;
-    }
-
-    int val = mute ? 0 : 1;
-    int err = snd_mixer_selem_set_playback_switch(elem_, SND_MIXER_SCHN_MONO, val);
-    if (err < 0)
-        LOG(ERROR, LOG_TAG) << "Failed to mute, error: " << snd_strerror(err) << "\n";
-}
-
-
-void AlsaPlayer::setVolume(double volume)
-{
-    if (settings_.mixer.mode != ClientSettings::Mixer::Mode::hardware)
-    {
-        Player::setVolume(volume);
-        return;
-    }
-
     std::lock_guard<std::mutex> lock(mutex_);
-    // boost::system::error_code ec;
-    // sd_.cancel(ec);
-    // if (ctl_)
-    //     snd_ctl_subscribe_events(ctl_, 0);
-
     last_change_ = std::chrono::steady_clock::now();
     try
     {
-        int err = 0;
+        int val = muted ? 0 : 1;
+        int err = snd_mixer_selem_set_playback_switch(elem_, SND_MIXER_SCHN_MONO, val);
+        if (err < 0)
+            LOG(ERROR, LOG_TAG) << "Failed to mute, error: " << snd_strerror(err) << "\n";
+
         long minv, maxv;
         if ((err = snd_mixer_selem_get_playback_dB_range(elem_, &minv, &maxv)) == 0)
         {
@@ -90,7 +68,7 @@ void AlsaPlayer::setVolume(double volume)
             volume = volume * (1 - min_norm) + min_norm;
             double mixer_volume = 6000.0 * log10(volume) + maxv;
 
-            LOG(DEBUG, LOG_TAG) << "Mixer volume range [" << minv << ", " << maxv << "], volume: " << volume << ", mixer volume: " << mixer_volume << "\n";
+            LOG(DEBUG, LOG_TAG) << "Mixer playback dB range [" << minv << ", " << maxv << "], volume: " << volume << ", mixer volume: " << mixer_volume << "\n";
             if ((err = snd_mixer_selem_set_playback_dB_all(elem_, mixer_volume, 0)) < 0)
                 throw SnapException(std::string("Failed to set playback volume, error: ") + snd_strerror(err));
         }
@@ -100,7 +78,8 @@ void AlsaPlayer::setVolume(double volume)
                 throw SnapException(std::string("Failed to get playback volume range, error: ") + snd_strerror(err));
 
             auto mixer_volume = volume * (maxv - minv) + minv;
-            LOG(DEBUG, LOG_TAG) << "Mixer volume range [" << minv << ", " << maxv << "], volume: " << volume << ", mixer volume: " << mixer_volume << "\n";
+            LOG(DEBUG, LOG_TAG) << "Mixer playback volume range [" << minv << ", " << maxv << "], volume: " << volume << ", mixer volume: " << mixer_volume
+                                << "\n";
             if ((err = snd_mixer_selem_set_playback_volume_all(elem_, mixer_volume)) < 0)
                 throw SnapException(std::string("Failed to set playback volume, error: ") + snd_strerror(err));
         }
@@ -109,20 +88,15 @@ void AlsaPlayer::setVolume(double volume)
     {
         LOG(ERROR, LOG_TAG) << "Exception: " << e.what() << "\n";
     }
-
-    // if (ctl_)
-    // {
-    //     snd_ctl_subscribe_events(ctl_, 1);
-    //     waitForEvent();
-    // }
 }
 
 
-bool AlsaPlayer::getVolume(double& volume, bool& muted)
+bool AlsaPlayer::getHardwareVolume(double& volume, bool& muted)
 {
     long vol;
     int err = 0;
 
+    std::lock_guard<std::mutex> lock(mutex_);
     try
     {
         while (snd_mixer_handle_events(mixer_) > 0)
@@ -153,7 +127,7 @@ bool AlsaPlayer::getVolume(double& volume, bool& muted)
         }
         int val;
         if ((err = snd_mixer_selem_get_playback_switch(elem_, SND_MIXER_SCHN_MONO, &val)) < 0)
-            return false;
+            throw SnapException(std::string("Failed to get mute state, error: ") + snd_strerror(err));
         muted = (val == 0);
         LOG(DEBUG, LOG_TAG) << "Get volume, mixer volume range [" << minv << ", " << maxv << "], volume: " << volume << ", muted: " << muted << "\n";
         snd_mixer_handle_events(mixer_);
@@ -203,7 +177,7 @@ void AlsaPlayer::waitForEvent()
                     {
                         double volume;
                         bool muted;
-                        if (getVolume(volume, muted))
+                        if (getHardwareVolume(volume, muted))
                         {
                             LOG(DEBUG, LOG_TAG) << "Volume: " << volume << ", muted: " << muted << "\n";
                             notifyVolumeChange(volume, muted);

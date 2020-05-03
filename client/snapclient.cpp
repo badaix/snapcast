@@ -150,9 +150,9 @@ int main(int argc, char** argv)
 #endif
         std::shared_ptr<popl::Value<std::string>> mixer_mode;
         if (hw_mixer_supported)
-            mixer_mode = op.add<Value<string>>("", "mixer", "<software|hardware|script>[:<options>]", "software");
+            mixer_mode = op.add<Value<string>>("", "mixer", "<software|hardware|script|none>[:<options>]", "software");
         else
-            mixer_mode = op.add<Value<string>>("", "mixer", "<software|script>[:<options>]", "software");
+            mixer_mode = op.add<Value<string>>("", "mixer", "<software|script|none>[:<options>]", "software");
 
         try
         {
@@ -318,6 +318,8 @@ int main(int argc, char** argv)
                 settings.player.mixer.mode = ClientSettings::Mixer::Mode::hardware;
             else if (mode == "script")
                 settings.player.mixer.mode = ClientSettings::Mixer::Mode::script;
+            else if (mode == "none")
+                settings.player.mixer.mode = ClientSettings::Mixer::Mode::none;
             else
                 throw SnapException("Mixer mode not supported: " + mode);
         }

@@ -40,7 +40,8 @@ struct ClientSettings
         {
             hardware,
             software,
-            script
+            script,
+            none
         };
 
         Mode mode{Mode::software};
