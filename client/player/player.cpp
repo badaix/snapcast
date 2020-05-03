@@ -83,12 +83,16 @@ void Player::worker()
 
 void Player::setHardwareVolume(double volume, bool muted)
 {
+    std::ignore = volume;
+    std::ignore = muted;
     throw SnapException("Failed to set hardware mixer volume: not supported");
 }
 
 
 bool Player::getHardwareVolume(double& volume, bool& muted)
 {
+    std::ignore = volume;
+    std::ignore = muted;
     throw SnapException("Failed to get hardware mixer volume: not supported");
     return false;
 }
