@@ -49,7 +49,7 @@ e.g. for Raspberry Pi `snapclient_0.x.x_armhf.deb`, for laptops `snapclient_0.x.
 
 or
 
-    sudo apt install </path/to/snapclient_0.x.x_armhf.deb>
+    sudo apt install </path/to/snapserver_0.x.x_armhf.deb>
 
 ##### using dpkg
 
