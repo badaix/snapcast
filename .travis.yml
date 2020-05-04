@@ -178,7 +178,7 @@ before_install:
           if [ ! -f "vcpkg/vcpkg.exe" ]; then # if not in cache from a previous run
             git clone https://github.com/Microsoft/vcpkg.git
             ./vcpkg/bootstrap-vcpkg.bat
-            travis-wait-enhanced --interval=1m --timeout=30m -- ./vcpkg/vcpkg.exe install libflac libvorbis soxr opus boost-asio --triplet x64-windows
+            travis-wait-enhanced --interval=1m --timeout=30m -- ./vcpkg/vcpkg.exe install libflac libvorbis soxr opus boost-asio boost-process --triplet x64-windows
           else
             ./vcpkg/vcpkg.exe update # make sure dependencies are up to date
           fi          

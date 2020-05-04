@@ -365,7 +365,6 @@ void WASAPIPlayer::worker()
         }
         else
         {
-            std::clog << static_cast<AixLog::Severity>(INFO) << AixLog::Tag(LOG_TAG);
             LOG(INFO, LOG_TAG) << "Failed to get chunk\n";
 
             hr = audioClient->Stop();
