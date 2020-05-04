@@ -310,8 +310,7 @@ int main(int argc, char** argv)
         settings.player.mixer.mode = ClientSettings::Mixer::Mode::software;
         if (mixer_mode->is_set())
         {
-            string mode;
-            utils::string::split_left(mixer_mode->value(), ':', mode, settings.player.mixer.parameter);
+            string mode = utils::string::split_left(mixer_mode->value(), ':', settings.player.mixer.parameter);
             if (mode == "software")
                 settings.player.mixer.mode = ClientSettings::Mixer::Mode::software;
             else if ((mode == "hardware") && hw_mixer_supported)

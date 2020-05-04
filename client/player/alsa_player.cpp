@@ -41,10 +41,10 @@ AlsaPlayer::AlsaPlayer(boost::asio::io_context& io_context, const ClientSettings
         if (settings_.mixer.parameter.empty())
             mixer_name_ = DEFAULT_MIXER;
         else
-            utils::string::split_left(settings_.mixer.parameter, ':', mixer_name_, tmp);
+            mixer_name_ = utils::string::split_left(settings_.mixer.parameter, ':', tmp);
 
         // default:CARD=ALSA => default
-        utils::string::split_left(settings_.pcm_device.name, ':', mixer_device_, tmp);
+        mixer_device_ = utils::string::split_left(settings_.pcm_device.name, ':', tmp);
         LOG(DEBUG, LOG_TAG) << "Mixer: " << mixer_name_ << ", device: " << mixer_device_ << "\n";
     }
 }
@@ -229,6 +229,7 @@ void AlsaPlayer::initMixer()
 
 void AlsaPlayer::initAlsa()
 {
+    std::lock_guard<std::mutex> lock(mutex_);
     unsigned int tmp, rate;
     int err, channels;
     snd_pcm_hw_params_t* params;

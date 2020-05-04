@@ -114,6 +114,14 @@ static void split_left(const std::string& s, char delim, std::string& left, std:
 }
 
 
+static std::string split_left(const std::string& s, char delim, std::string& right)
+{
+    std::string left;
+    split_left(s, delim, left, right);
+    return left;
+}
+
+
 
 static std::vector<std::string>& split(const std::string& s, char delim, std::vector<std::string>& elems)
 {

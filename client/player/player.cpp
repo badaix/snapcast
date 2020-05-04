@@ -24,6 +24,7 @@
 #include "common/aixlog.hpp"
 #include "common/snap_exception.hpp"
 #include "common/str_compat.hpp"
+#include "common/utils/string_utils.hpp"
 #include "player.hpp"
 
 
@@ -51,7 +52,8 @@ void Player::start()
         playerThread_ = thread(&Player::worker, this);
 
     // If hardware mixer is used, send the initial volume to the server, because this is
-    // the volume that is configured by the user on his local device
+    // the volume that is configured by the user on his local device, so we shouldn't change it
+    // on client start up
     if (settings_.mixer.mode == ClientSettings::Mixer::Mode::hardware)
     {
         double volume;
@@ -128,7 +130,7 @@ void Player::adjustVolume(char* buffer, size_t frames)
 void Player::setVolume_poly(double volume, double exp)
 {
     volume_ = std::pow(volume, exp);
-    LOG(DEBUG, LOG_TAG) << "setVolume poly: " << volume << " => " << volume_ << "\n";
+    LOG(DEBUG, LOG_TAG) << "setVolume poly with exp " << exp << ": " << volume << " => " << volume_ << "\n";
 }
 
 
@@ -138,7 +140,7 @@ void Player::setVolume_exp(double volume, double base)
     //	double base = M_E;
     //	double base = 10.;
     volume_ = (pow(base, volume) - 1) / (base - 1);
-    LOG(DEBUG, LOG_TAG) << "setVolume exp: " << volume << " => " << volume_ << "\n";
+    LOG(DEBUG, LOG_TAG) << "setVolume exp with base " << base << ": " << volume << " => " << volume_ << "\n";
 }
 
 
@@ -152,10 +154,22 @@ void Player::setVolume(double volume, bool mute)
     }
     else if (settings_.mixer.mode == ClientSettings::Mixer::Mode::software)
     {
-        if (settings_.mixer.parameter == "poly")
-            setVolume_poly(volume, 3.);
+        string param;
+        string mode = utils::string::split_left(settings_.mixer.parameter, ':', param);
+        double dparam;
+        try
+        {
+            if (!param.empty())
+                dparam = cpt::stod(param);
+        }
+        catch(...)
+        {
+            throw SnapException("Invalid mixer param: " + param);
+        }
+        if (mode == "poly")
+            setVolume_poly(volume, param.empty() ? 3. : dparam);
         else
-            setVolume_exp(volume, 10.);
+            setVolume_exp(volume, param.empty() ? 10. : dparam);
     }
     else if (settings_.mixer.mode == ClientSettings::Mixer::Mode::script)
     {
