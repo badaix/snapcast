@@ -33,7 +33,6 @@
 
 
 using namespace std;
-using namespace boost::process;
 
 static constexpr auto LOG_TAG = "Player";
 
@@ -187,6 +186,7 @@ void Player::setVolume(double volume, bool mute)
             string cmd = settings_.mixer.parameter + " --volume " + cpt::to_string(volume) + " --mute " + (mute ? "true" : "false");
             std::system(cmd.c_str());
 #else
+            using namespace boost::process;
             child c(exe = settings_.mixer.parameter, args = {"--volume", cpt::to_string(volume), "--mute", mute ? "true" : "false"});
             c.detach();
 #endif
