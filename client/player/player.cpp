@@ -19,7 +19,11 @@
 #include <cmath>
 #include <iostream>
 
+#ifdef WINDOWS
+#include <cstdlib>
+#else
 #include <boost/process.hpp>
+#endif
 
 #include "common/aixlog.hpp"
 #include "common/snap_exception.hpp"
@@ -156,27 +160,36 @@ void Player::setVolume(double volume, bool mute)
     {
         string param;
         string mode = utils::string::split_left(settings_.mixer.parameter, ':', param);
-        double dparam;
-        try
+        double dparam = -1.;
+        if (!param.empty())
         {
-            if (!param.empty())
+            try
+            {
                 dparam = cpt::stod(param);
-        }
-        catch(...)
-        {
-            throw SnapException("Invalid mixer param: " + param);
+                if (dparam < 0)
+                    throw SnapException("must be a positive number");
+            }
+            catch (const std::exception& e)
+            {
+                throw SnapException("Invalid mixer param: " + param + ", error: " + string(e.what()));
+            }
         }
         if (mode == "poly")
-            setVolume_poly(volume, param.empty() ? 3. : dparam);
+            setVolume_poly(volume, (dparam < 0) ? 3. : dparam);
         else
-            setVolume_exp(volume, param.empty() ? 10. : dparam);
+            setVolume_exp(volume, (dparam < 0) ? 10. : dparam);
     }
     else if (settings_.mixer.mode == ClientSettings::Mixer::Mode::script)
     {
         try
         {
+#ifdef WINDOWS
+            string cmd = settings_.mixer.parameter + " --volume " + cpt::to_string(volume) + " --mute " + (mute ? "true" : "false");
+            std::system(cmd.c_str());
+#else
             child c(exe = settings_.mixer.parameter, args = {"--volume", cpt::to_string(volume), "--mute", mute ? "true" : "false"});
             c.detach();
+#endif
         }
         catch (const std::exception& e)
         {
