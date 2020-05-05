@@ -19,7 +19,12 @@
 #ifndef PROCESS_STREAM_HPP
 #define PROCESS_STREAM_HPP
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-result"
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#pragma GCC diagnostic ignored "-Wmissing-braces"
 #include <boost/process.hpp>
+#pragma GCC diagnostic pop
 #include <memory>
 #include <string>
 #include <vector>

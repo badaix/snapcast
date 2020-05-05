@@ -22,7 +22,14 @@
 #ifdef WINDOWS
 #include <cstdlib>
 #else
-#include <boost/process.hpp>
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-result"
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#pragma GCC diagnostic ignored "-Wmissing-braces"
+#include <boost/process/child.hpp>
+#include <boost/process/args.hpp>
+#include <boost/process/exe.hpp>
+#pragma GCC diagnostic pop
 #endif
 
 #include "common/aixlog.hpp"

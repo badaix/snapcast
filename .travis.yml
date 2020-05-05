@@ -194,7 +194,7 @@ script:
   - |
     (
       if [ "$TRAVIS_OS_NAME" != 'windows' ]; then
-        cmake -DCMAKE_CXX_FLAGS="$CXXFLAGS -Werror -Wall -Wextra -pedantic -Wno-unused-parameter -Wno-unused-function -O2" .. && make && sudo make install
+        cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_FLAGS="$CXXFLAGS -Werror -Wall -Wextra -pedantic -Wno-unused-function" .. && make && sudo make install
       else
         cmake -G "Visual Studio 15 2017 Win64" -DCMAKE_TOOLCHAIN_FILE=../vcpkg/scripts/buildsystems/vcpkg.cmake -DVCPKG_TARGET_TRIPLET=x64-windows ..
         cmake --build . --config Release
