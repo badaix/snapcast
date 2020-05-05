@@ -332,7 +332,7 @@ void AlsaPlayer::initAlsa()
 
     /* Allocate buffer to hold single period */
     snd_pcm_hw_params_get_period_size(params, &frames_, nullptr);
-    LOG(INFO, LOG_TAG) << "frames: " << frames_ << "\n";
+    LOG(DEBUG, LOG_TAG) << "frames: " << frames_ << "\n";
 
     snd_pcm_hw_params_get_period_time(params, &tmp, nullptr);
     LOG(DEBUG, LOG_TAG) << "period time: " << tmp << "\n";

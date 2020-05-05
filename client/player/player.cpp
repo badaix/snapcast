@@ -39,6 +39,49 @@ static constexpr auto LOG_TAG = "Player";
 Player::Player(boost::asio::io_context& io_context, const ClientSettings::Player& settings, std::shared_ptr<Stream> stream)
     : io_context_(io_context), active_(false), stream_(stream), settings_(settings), volume_(1.0), muted_(false), volCorrection_(1.0)
 {
+    string sharing_mode;
+    switch (settings_.sharing_mode)
+    {
+        case ClientSettings::SharingMode::unspecified:
+            sharing_mode = "unspecified";
+            break;
+        case ClientSettings::SharingMode::exclusive:
+            sharing_mode = "exclusive";
+            break;
+        case ClientSettings::SharingMode::shared:
+            sharing_mode = "shared";
+            break;
+    }
+
+    auto coalesce = [](const std::string& value, const std::string& fallback = "<none>") {
+        if (!value.empty())
+            return value;
+        else
+            return fallback;
+    };
+    LOG(INFO, LOG_TAG) << "Player name: " << coalesce(settings_.player_name) << ", device: " << coalesce(settings_.pcm_device.name)
+                       << ", description: " << coalesce(settings_.pcm_device.description) << ", idx: " << settings_.pcm_device.idx
+                       << ", sharing mode: " << sharing_mode << "\n";
+
+    string mixer;
+    switch (settings_.mixer.mode)
+    {
+        case ClientSettings::Mixer::Mode::hardware:
+            mixer = "hardware";
+            break;
+        case ClientSettings::Mixer::Mode::software:
+            mixer = "software";
+            break;
+        case ClientSettings::Mixer::Mode::script:
+            mixer = "script";
+            break;
+        case ClientSettings::Mixer::Mode::none:
+            mixer = "none";
+            break;
+    }
+    LOG(INFO, LOG_TAG) << "Mixer mode: " << mixer << ", parameters: " << coalesce(settings_.mixer.parameter) << "\n";
+    LOG(INFO, LOG_TAG) << "Sampleformat: " << (settings_.sample_format.isInitialized() ? settings_.sample_format.toString() : stream->getFormat().toString())
+                       << ", stream: " << stream->getFormat().toString() << "\n";
 }
 
 

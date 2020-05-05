@@ -141,7 +141,7 @@ int main(int argc, char** argv)
 #ifdef HAS_SOXR
         auto sample_format = op.add<Value<string>>("", "sampleformat", "resample audio stream to <rate>:<bits>:<channels>", "");
 #endif
-#ifdef HAS_WASAPI
+#if defined(HAS_OBOE) || defined(HAS_WASAPI)
         auto sharing_mode = op.add<Value<string>>("", "sharingmode", "audio mode to use [shared|exclusive]", "shared");
 #endif
         bool hw_mixer_supported = false;
@@ -299,29 +299,21 @@ int main(int argc, char** argv)
         }
 #endif
 
-#ifdef HAS_WASAPI
-        if (sharing_mode->is_set())
-        {
-            settings.player.sharing_mode =
-                (sharing_mode->value() == "exclusive") ? ClientSettings::SharingMode::exclusive : ClientSettings::SharingMode::shared;
-        }
+#if defined(HAS_OBOE) || defined(HAS_WASAPI)
+        settings.player.sharing_mode = (sharing_mode->value() == "exclusive") ? ClientSettings::SharingMode::exclusive : ClientSettings::SharingMode::shared;
 #endif
 
-        settings.player.mixer.mode = ClientSettings::Mixer::Mode::software;
-        if (mixer_mode->is_set())
-        {
-            string mode = utils::string::split_left(mixer_mode->value(), ':', settings.player.mixer.parameter);
-            if (mode == "software")
-                settings.player.mixer.mode = ClientSettings::Mixer::Mode::software;
-            else if ((mode == "hardware") && hw_mixer_supported)
-                settings.player.mixer.mode = ClientSettings::Mixer::Mode::hardware;
-            else if (mode == "script")
-                settings.player.mixer.mode = ClientSettings::Mixer::Mode::script;
-            else if (mode == "none")
-                settings.player.mixer.mode = ClientSettings::Mixer::Mode::none;
-            else
-                throw SnapException("Mixer mode not supported: " + mode);
-        }
+        string mode = utils::string::split_left(mixer_mode->value(), ':', settings.player.mixer.parameter);
+        if (mode == "software")
+            settings.player.mixer.mode = ClientSettings::Mixer::Mode::software;
+        else if ((mode == "hardware") && hw_mixer_supported)
+            settings.player.mixer.mode = ClientSettings::Mixer::Mode::hardware;
+        else if (mode == "script")
+            settings.player.mixer.mode = ClientSettings::Mixer::Mode::script;
+        else if (mode == "none")
+            settings.player.mixer.mode = ClientSettings::Mixer::Mode::none;
+        else
+            throw SnapException("Mixer mode not supported: " + mode);
 
         boost::asio::io_context io_context;
         // Construct a signal set registered for process termination.

@@ -61,7 +61,7 @@ x = 1,000016667 / (1,000016667 - 1)
     soxr_ = nullptr;
     if ((format_.rate() != in_format_.rate()) || (format_.bits() != in_format_.bits()))
     {
-        LOG(INFO, LOG_TAG) << "Resampling from " << in_format_.getFormat() << " to " << format_.getFormat() << "\n";
+        LOG(INFO, LOG_TAG) << "Resampling from " << in_format_.toString() << " to " << format_.toString() << "\n";
         soxr_error_t error;
 
         soxr_datatype_t in_type = SOXR_INT16_I;

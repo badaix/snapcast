@@ -33,7 +33,6 @@ public:
     AlsaPlayer(boost::asio::io_context& io_context, const ClientSettings::Player& settings, std::shared_ptr<Stream> stream);
     ~AlsaPlayer() override;
 
-    /// Set audio volume in range [0..1]
     void start() override;
     void stop() override;
 

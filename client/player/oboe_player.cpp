@@ -45,9 +45,13 @@ OboePlayer::OboePlayer(boost::asio::io_context& io_context, const ClientSettings
     LOG(INFO, LOG_TAG) << "DefaultStreamValues::SampleRate: " << oboe::DefaultStreamValues::SampleRate
                        << ", DefaultStreamValues::FramesPerBurst: " << oboe::DefaultStreamValues::FramesPerBurst << "\n";
 
+    oboe::SharingMode sharing_mode = oboe::SharingMode::Shared;
+    if (settings.sharing_mode == ClientSettings::SharingMode::exclusive)
+        sharing_mode = oboe::SharingMode::Exclusive;
+
     // The builder set methods can be chained for convenience.
     oboe::AudioStreamBuilder builder;
-    auto result = builder.setSharingMode(oboe::SharingMode::Exclusive)
+    auto result = builder.setSharingMode(sharing_mode)
                       ->setPerformanceMode(oboe::PerformanceMode::LowLatency)
                       ->setChannelCount(stream->getFormat().channels())
                       ->setSampleRate(stream->getFormat().rate())

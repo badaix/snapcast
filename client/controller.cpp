@@ -55,6 +55,18 @@ Controller::Controller(boost::asio::io_context& io_context, const ClientSettings
 }
 
 
+template <typename PlayerType>
+std::unique_ptr<Player> Controller::createPlayer(ClientSettings::Player& settings, const std::string& player_name)
+{
+    if (settings.player_name.empty() || settings.player_name == player_name)
+    {
+        settings.player_name = player_name;
+        return make_unique<AlsaPlayer>(io_context_, settings, stream_);
+    }
+    return nullptr;
+}
+
+
 void Controller::getNextMessage()
 {
     clientConnection_->getNextMessage([this](const boost::system::error_code& ec, std::unique_ptr<msg::BaseMessage> response) {
@@ -68,7 +80,7 @@ void Controller::getNextMessage()
                     // boost::asio::post(io_context_, [this, response = std::move(response)]() mutable {
                     auto pcmChunk = msg::message_cast<msg::PcmChunk>(std::move(response));
                     pcmChunk->format = sampleFormat_;
-                    // LOG(TRACE, LOG_TAG) << "chunk: " << pcmChunk->payloadSize << ", sampleFormat: " << sampleFormat_.getFormat() << "\n";
+                    // LOG(TRACE, LOG_TAG) << "chunk: " << pcmChunk->payloadSize << ", sampleFormat: " << sampleFormat_.toString() << "\n";
                     if (decoder_->decode(pcmChunk.get()))
                     {
                         // LOG(TRACE, LOG_TAG) << ", decoded: " << pcmChunk->payloadSize << ", Duration: " << pcmChunk->durationMs() << ", sec: " <<
@@ -99,7 +111,6 @@ void Controller::getNextMessage()
             else if (response->type == message_type::kCodecHeader)
             {
                 headerChunk_ = msg::message_cast<msg::CodecHeader>(std::move(response));
-                LOG(INFO, LOG_TAG) << "Codec: " << headerChunk_->codec << "\n";
                 decoder_.reset(nullptr);
                 stream_ = nullptr;
                 player_.reset(nullptr);
@@ -122,33 +133,32 @@ void Controller::getNextMessage()
                     throw SnapException("codec not supported: \"" + headerChunk_->codec + "\"");
 
                 sampleFormat_ = decoder_->setHeader(headerChunk_.get());
-                LOG(NOTICE, LOG_TAG) << TAG("state") << "sampleformat: " << sampleFormat_.getFormat() << "\n";
+                LOG(INFO, LOG_TAG) << "Codec: " << headerChunk_->codec << ", sampleformat: " << sampleFormat_.toString() << "\n";
+                LOG(NOTICE, LOG_TAG) << TAG("state") << "sampleformat: " << sampleFormat_.toString() << "\n";
 
                 stream_ = make_shared<Stream>(sampleFormat_, settings_.player.sample_format);
                 stream_->setBufferLen(std::max(0, serverSettings_->getBufferMs() - serverSettings_->getLatency() - settings_.player.latency));
 
-                const auto& player_settings = settings_.player;
-                const auto& player_name = settings_.player.player_name;
-                player_ = nullptr;
+                auto& player_settings = settings_.player;
 #ifdef HAS_ALSA
-                if (!player_ && (player_name.empty() || (player_name == "alsa")))
-                    player_ = make_unique<AlsaPlayer>(io_context_, player_settings, stream_);
+                if (!player_)
+                    player_ = createPlayer<AlsaPlayer>(settings_.player, "alsa");
 #endif
 #ifdef HAS_OBOE
-                if (!player_ && (player_name.empty() || (player_name == "oboe")))
-                    player_ = make_unique<OboePlayer>(io_context_, player_settings, stream_);
+                if (!player_)
+                    player_ = createPlayer<OboePlayer>(settings_.player, "oboe");
 #endif
 #ifdef HAS_OPENSL
-                if (!player_ && (player_name.empty() || (player_name == "opensl")))
-                    player_ = make_unique<OpenslPlayer>(io_context_, player_settings, stream_);
+                if (!player_)
+                    player_ = createPlayer<OpenslPlayer>(settings_.player, "opensl");
 #endif
 #ifdef HAS_COREAUDIO
-                if (!player_ && (player_name.empty() || (player_name == "coreaudio")))
-                    player_ = make_unique<CoreAudioPlayer>(io_context_, player_settings, stream_);
+                if (!player_)
+                    player_ = createPlayer<CoreAudioPlayer>(settings_.player, "coreaudio");
 #endif
 #ifdef HAS_WASAPI
-                if (!player_ && (player_name.empty() || (player_name == "wasapi")))
-                    player_ = make_unique<WASAPIPlayer>(io_context_, player_settings, stream_);
+                if (!player_)
+                    player_ = createPlayer<WASAPIPlayer>(settings_.player, "wasapi");
 #endif
                 if (!player_)
                     throw SnapException("No audio player support");

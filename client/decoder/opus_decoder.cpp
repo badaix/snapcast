@@ -103,7 +103,7 @@ SampleFormat OpusDecoder::setHeader(msg::CodecHeader* chunk)
     memcpy(&channels, chunk->payload + 10, sizeof(channels));
 
     sample_format_.setFormat(SWAP_32(rate), SWAP_16(bits), SWAP_16(channels));
-    LOG(DEBUG, LOG_TAG) << "Opus sampleformat: " << sample_format_.getFormat() << "\n";
+    LOG(DEBUG, LOG_TAG) << "Opus sampleformat: " << sample_format_.toString() << "\n";
 
     // create the decoder
     int error;

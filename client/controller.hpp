@@ -67,6 +67,9 @@ private:
     void reconnect();
     void browseMdns(const MdnsHandler& handler);
 
+    template <typename PlayerType>
+    std::unique_ptr<Player> createPlayer(ClientSettings::Player& settings, const std::string& player_name);
+
     void getNextMessage();
     void sendTimeSyncMessage(int quick_syncs);
 
