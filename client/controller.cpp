@@ -139,7 +139,6 @@ void Controller::getNextMessage()
                 stream_ = make_shared<Stream>(sampleFormat_, settings_.player.sample_format);
                 stream_->setBufferLen(std::max(0, serverSettings_->getBufferMs() - serverSettings_->getLatency() - settings_.player.latency));
 
-                auto& player_settings = settings_.player;
 #ifdef HAS_ALSA
                 if (!player_)
                     player_ = createPlayer<AlsaPlayer>(settings_.player, "alsa");
