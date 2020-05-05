@@ -61,7 +61,7 @@ std::unique_ptr<Player> Controller::createPlayer(ClientSettings::Player& setting
     if (settings.player_name.empty() || settings.player_name == player_name)
     {
         settings.player_name = player_name;
-        return make_unique<AlsaPlayer>(io_context_, settings, stream_);
+        return make_unique<PlayerType>(io_context_, settings, stream_);
     }
     return nullptr;
 }

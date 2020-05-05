@@ -26,8 +26,8 @@
 #pragma GCC diagnostic ignored "-Wunused-result"
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 #pragma GCC diagnostic ignored "-Wmissing-braces"
-#include <boost/process/child.hpp>
 #include <boost/process/args.hpp>
+#include <boost/process/child.hpp>
 #include <boost/process/exe.hpp>
 #pragma GCC diagnostic pop
 #endif
@@ -60,14 +60,14 @@ Player::Player(boost::asio::io_context& io_context, const ClientSettings::Player
             break;
     }
 
-    auto coalesce = [](const std::string& value, const std::string& fallback = "<none>") {
+    auto not_empty = [](const std::string& value) -> std::string {
         if (!value.empty())
             return value;
         else
-            return fallback;
+            return "<none>";
     };
-    LOG(INFO, LOG_TAG) << "Player name: " << coalesce(settings_.player_name) << ", device: " << coalesce(settings_.pcm_device.name)
-                       << ", description: " << coalesce(settings_.pcm_device.description) << ", idx: " << settings_.pcm_device.idx
+    LOG(INFO, LOG_TAG) << "Player name: " << not_empty(settings_.player_name) << ", device: " << not_empty(settings_.pcm_device.name)
+                       << ", description: " << not_empty(settings_.pcm_device.description) << ", idx: " << settings_.pcm_device.idx
                        << ", sharing mode: " << sharing_mode << "\n";
 
     string mixer;
@@ -86,7 +86,7 @@ Player::Player(boost::asio::io_context& io_context, const ClientSettings::Player
             mixer = "none";
             break;
     }
-    LOG(INFO, LOG_TAG) << "Mixer mode: " << mixer << ", parameters: " << coalesce(settings_.mixer.parameter) << "\n";
+    LOG(INFO, LOG_TAG) << "Mixer mode: " << mixer << ", parameters: " << not_empty(settings_.mixer.parameter) << "\n";
     LOG(INFO, LOG_TAG) << "Sampleformat: " << (settings_.sample_format.isInitialized() ? settings_.sample_format.toString() : stream->getFormat().toString())
                        << ", stream: " << stream->getFormat().toString() << "\n";
 }
