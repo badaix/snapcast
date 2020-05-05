@@ -3,6 +3,9 @@ dist: trusty
 sudo: required
 group: edge
 
+git:
+  submodules: false
+
 matrix:
   include:
     - os: linux
