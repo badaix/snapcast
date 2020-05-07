@@ -445,6 +445,7 @@ void AlsaPlayer::worker()
         {
             LOG(ERROR, LOG_TAG) << "ERROR. Can't wait for PCM to become ready: " << snd_strerror(wait_result) << "\n";
             uninitAlsa();
+            continue;
         }
         else if (wait_result == 0)
         {
