@@ -44,7 +44,7 @@
 #ifdef HAS_COREAUDIO
 #include "player/coreaudio_player.hpp"
 #endif
-#ifdef WINDOWS
+#ifdef HAS_WASAPI
 #include "player/wasapi_player.h"
 #endif
 

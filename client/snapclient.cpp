@@ -29,6 +29,9 @@
 #ifdef HAS_ALSA
 #include "player/alsa_player.hpp"
 #endif
+#ifdef HAS_WASAPI
+#include "player/wasapi_player.h"
+#endif
 #ifdef HAS_DAEMON
 #include "common/daemon.hpp"
 #endif
@@ -49,7 +52,7 @@ static constexpr auto LOG_TAG = "Snapclient";
 
 PcmDevice getPcmDevice(const std::string& soundcard)
 {
-#if defined(HAS_ALSA) || defined(WINDOWS)
+#if defined(HAS_ALSA) || defined(HAS_WASAPI)
     vector<PcmDevice> pcmDevices =
 #ifdef HAS_ALSA
         AlsaPlayer::pcm_list();
@@ -176,7 +179,7 @@ int main(int argc, char** argv)
             exit(EXIT_SUCCESS);
         }
 
-#if defined(HAS_ALSA) || defined(WINDOWS)
+#if defined(HAS_ALSA) || defined(HAS_WASAPI)
         if (listSwitch->is_set())
         {
             vector<PcmDevice> pcmDevices =
