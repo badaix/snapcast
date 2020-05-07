@@ -31,6 +31,24 @@
 #if defined(HAS_OPUS)
 #include "decoder/opus_decoder.hpp"
 #endif
+
+#ifdef HAS_ALSA
+#include "player/alsa_player.hpp"
+#include "player/alsa_player_test.hpp"
+#endif
+#ifdef HAS_OPENSL
+#include "player/opensl_player.hpp"
+#endif
+#ifdef HAS_OBOE
+#include "player/oboe_player.hpp"
+#endif
+#ifdef HAS_COREAUDIO
+#include "player/coreaudio_player.hpp"
+#endif
+#ifdef WINDOWS
+#include "player/wasapi_player.h"
+#endif
+
 #include "browseZeroConf/browse_mdns.hpp"
 #include "common/aixlog.hpp"
 #include "common/snap_exception.hpp"

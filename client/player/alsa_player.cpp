@@ -494,6 +494,13 @@ void AlsaPlayer::worker()
             }
         }
 
+        if (framesAvail < static_cast<snd_pcm_sframes_t>(frames_))
+        {
+            this_thread::sleep_for(10ms);
+            continue;
+        }
+
+        // LOG(TRACE, LOG_TAG) << "res: " << result << ", framesAvail: " << framesAvail << ", delay: " << framesDelay << ", frames: " << frames_ << "\n";
         chronos::usec delay(static_cast<chronos::usec::rep>(1000 * (double)framesDelay / format.msRate()));
         // LOG(TRACE, LOG_TAG) << "delay: " << framesDelay << ", delay[ms]: " << delay.count() / 1000 << ", avail: " << framesAvail << "\n";
 

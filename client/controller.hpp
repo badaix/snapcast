@@ -19,31 +19,17 @@
 #ifndef CONTROLLER_H
 #define CONTROLLER_H
 
+#include "client_connection.hpp"
+#include "client_settings.hpp"
 #include "decoder/decoder.hpp"
 #include "message/message.hpp"
 #include "message/server_settings.hpp"
 #include "message/stream_tags.hpp"
+#include "metadata.hpp"
+#include "player/player.hpp"
+#include "stream.hpp"
 #include <atomic>
 #include <thread>
-#ifdef HAS_ALSA
-#include "player/alsa_player.hpp"
-#endif
-#ifdef HAS_OPENSL
-#include "player/opensl_player.hpp"
-#endif
-#ifdef HAS_OBOE
-#include "player/oboe_player.hpp"
-#endif
-#ifdef HAS_COREAUDIO
-#include "player/coreaudio_player.hpp"
-#endif
-#ifdef WINDOWS
-#include "player/wasapi_player.h"
-#endif
-#include "client_connection.hpp"
-#include "client_settings.hpp"
-#include "metadata.hpp"
-#include "stream.hpp"
 
 using namespace std::chrono_literals;
 
