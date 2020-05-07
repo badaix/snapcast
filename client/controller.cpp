@@ -34,7 +34,6 @@
 
 #ifdef HAS_ALSA
 #include "player/alsa_player.hpp"
-#include "player/alsa_player_test.hpp"
 #endif
 #ifdef HAS_OPENSL
 #include "player/opensl_player.hpp"
