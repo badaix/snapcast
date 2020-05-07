@@ -43,8 +43,22 @@ AlsaPlayer::AlsaPlayer(boost::asio::io_context& io_context, const ClientSettings
         else
             mixer_name_ = utils::string::split_left(settings_.mixer.parameter, ':', tmp);
 
-        // default:CARD=ALSA => default
-        mixer_device_ = utils::string::split_left(settings_.pcm_device.name, ':', tmp);
+        string card;
+        // default:CARD=ALSA[,DEV=x] => default
+        mixer_device_ = utils::string::split_left(settings_.pcm_device.name, ':', card);
+        if (!card.empty())
+        {
+            auto pos = card.find("CARD=");
+            if (pos != string::npos)
+            {
+                card = card.substr(pos + 5);
+                card = utils::string::split_left(card, ',', tmp);
+                int card_idx = snd_card_get_index(card.c_str());
+                if ((card_idx >= 0) && (card_idx < 32))
+                    mixer_device_ = "hw:" + std::to_string(card_idx);
+            }
+        }
+
         LOG(DEBUG, LOG_TAG) << "Mixer: " << mixer_name_ << ", device: " << mixer_device_ << "\n";
     }
 }
@@ -204,7 +218,6 @@ void AlsaPlayer::initMixer()
 
     snd_mixer_selem_id_t* sid;
     snd_mixer_selem_id_alloca(&sid);
-    // TODO: make configurable
     int mix_index = 0;
     // sets simple-mixer index and name
     snd_mixer_selem_id_set_index(sid, mix_index);
