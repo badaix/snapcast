@@ -23,6 +23,9 @@ stream = pipe:///tmp/snapfifo?name=default
 ...
 ```
 
+The sampleformat is a triple of `<samplerate>:<bit depth>:<channels>`, e.g. `44100:16:2`.  
+The PCM samples (bit depth) must be encoded signed, little endian in 8, 16, 24, or 32 bit, where 24 is expected to be encoded in the lower three bytes of a 32 bit word.
+
 ## About the notation
 
 In this document some expressions are in brackets:
