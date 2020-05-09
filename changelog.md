@@ -1,5 +1,31 @@
 # Snapcast changelog
 
+## Version 0.20.0
+
+### Features
+
+- Client: Windows support (Issue #24)
+- Client: Add hardware mixer (Issue #318)
+- Client: Add "script" and "none" mixer (Issue #302)
+- Client: Add sharingmode for audio device (if supported)
+- Logging: configurable sink and filters (Issue #30, #561, #122, #559)
+- Librespot: add option "disable-audio-cache=[false|true]"
+
+### Bugfixes
+
+- Fix build failure on FreeBSD (Issue #565)
+- Fix calling lsb_release multiple times (Issue #470)
+- Client: high CPU load and crash during playback (Issue #609)
+- Client: improved handling of USB audio disconnects (Issue #64)
+- Client: latency is forgotten (Issue #476, #588)
+- Server: fix crash if client disconnects during connect
+
+### General
+
+- Client: use less threads and thus less ressources
+
+_Johannes Pohl <snapcast@badaix.de>  TODO, 14 May 2020 00:13:37 +0200_
+
 ## Version 0.19.0
 
 ### Features
