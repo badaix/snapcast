@@ -367,8 +367,9 @@ void Controller::worker()
                 }
             });
 
-            // // Do initial time sync with the server
+            // Do initial time sync with the server
             sendTimeSyncMessage(50);
+            // Start receiver loop
             getNextMessage();
         }
         else

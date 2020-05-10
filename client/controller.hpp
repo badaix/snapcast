@@ -48,7 +48,7 @@ public:
     // void stop();
 
 private:
-    using MdnsHandler = std::function<void(const boost::system::error_code&, const std::string&, uint16_t)>;
+    using MdnsHandler = std::function<void(const boost::system::error_code& ec, const std::string& host, uint16_t port)>;
     void worker();
     void reconnect();
     void browseMdns(const MdnsHandler& handler);
