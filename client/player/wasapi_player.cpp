@@ -335,7 +335,8 @@ void WASAPIPlayer::worker()
             break;
 
         // update our volume from IAudioControl
-        volCorrection_ = audioEventListener_->getVolume();
+        if (mode_ == ClientSettings::SharingMode::exclusive)
+            volCorrection_ = audioEventListener_->getVolume();
 
         clock->GetPosition(&position, NULL);
 
