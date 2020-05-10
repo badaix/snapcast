@@ -365,7 +365,7 @@ void AlsaPlayer::uninitAlsa()
 {
     if (handle_ != nullptr)
     {
-        snd_pcm_drain(handle_);
+        snd_pcm_drop(handle_);
         snd_pcm_close(handle_);
         handle_ = nullptr;
     }
