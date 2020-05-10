@@ -30,10 +30,9 @@
 class AlsaPlayer : public Player
 {
 public:
-    AlsaPlayer(const PcmDevice& pcmDevice, std::shared_ptr<Stream> stream);
+    AlsaPlayer(boost::asio::io_context& io_context, const ClientSettings::Player& settings, std::shared_ptr<Stream> stream);
     ~AlsaPlayer() override;
 
-    /// Set audio volume in range [0..1]
     void start() override;
     void stop() override;
 
@@ -42,14 +41,34 @@ public:
 
 protected:
     void worker() override;
+    bool needsThread() const override;
 
 private:
     void initAlsa();
     void uninitAlsa();
+    void initMixer();
+    void uninitMixer();
+
+    bool getHardwareVolume(double& volume, bool& muted) override;
+    void setHardwareVolume(double volume, bool muted) override;
+
+    void waitForEvent();
 
     snd_pcm_t* handle_;
+    snd_ctl_t* ctl_;
+
+    snd_mixer_t* mixer_;
+    snd_mixer_elem_t* elem_;
+    std::string mixer_name_;
+    std::string mixer_device_;
+
+    std::unique_ptr<pollfd> fd_;
     std::vector<char> buffer_;
     snd_pcm_uframes_t frames_;
+    boost::asio::posix::stream_descriptor sd_;
+    std::chrono::time_point<std::chrono::steady_clock> last_change_;
+    std::mutex mutex_;
+    boost::asio::steady_timer timer_;
 };
 
 

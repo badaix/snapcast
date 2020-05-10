@@ -19,22 +19,24 @@
 #include <chrono>
 #include <iostream>
 #ifndef WINDOWS
+#include <signal.h>
 #include <sys/resource.h>
 #endif
 
-#include "browseZeroConf/browse_mdns.hpp"
 #include "common/popl.hpp"
 #include "controller.hpp"
 
 #ifdef HAS_ALSA
 #include "player/alsa_player.hpp"
 #endif
+#ifdef HAS_WASAPI
+#include "player/wasapi_player.h"
+#endif
 #ifdef HAS_DAEMON
 #include "common/daemon.hpp"
 #endif
 #include "client_settings.hpp"
 #include "common/aixlog.hpp"
-#include "common/signal_handler.hpp"
 #include "common/snap_exception.hpp"
 #include "common/str_compat.hpp"
 #include "common/utils.hpp"
@@ -46,9 +48,11 @@ using namespace popl;
 
 using namespace std::chrono_literals;
 
+static constexpr auto LOG_TAG = "Snapclient";
+
 PcmDevice getPcmDevice(const std::string& soundcard)
 {
-#if defined(HAS_ALSA) || defined(WINDOWS)
+#if defined(HAS_ALSA) || defined(HAS_WASAPI)
     vector<PcmDevice> pcmDevices =
 #ifdef HAS_ALSA
         AlsaPlayer::pcm_list();
@@ -78,6 +82,26 @@ PcmDevice getPcmDevice(const std::string& soundcard)
     return pcmDevice;
 }
 
+#ifdef WINDOWS
+// hack to avoid case destinction in the signal handler
+#define SIGHUP SIGINT
+const char* strsignal(int sig)
+{
+    switch (sig)
+    {
+        case SIGTERM:
+            return "SIGTERM";
+        case SIGINT:
+            return "SIGINT";
+        case SIGBREAK:
+            return "SIGBREAK";
+        case SIGABRT:
+            return "SIGABRT";
+        default:
+            return "Unhandled";
+    }
+}
+#endif
 
 int main(int argc, char** argv)
 {
@@ -99,7 +123,7 @@ int main(int argc, char** argv)
             "", "logfilter", "log filter <tag>:<level>[,<tag>:<level>]* with tag = * or <log tag> and level = [trace,debug,info,notice,warning,error,fatal]",
             settings.logging.filter);
         auto versionSwitch = op.add<Switch>("v", "version", "show version number");
-#if defined(HAS_ALSA) || defined(WINDOWS)
+#if defined(HAS_ALSA) || defined(HAS_WASAPI)
         auto listSwitch = op.add<Switch>("l", "list", "list PCM devices");
         /*auto soundcardValue =*/op.add<Value<string>>("s", "soundcard", "index or name of the pcm device", "default", &pcm_device);
 #endif
@@ -114,15 +138,24 @@ int main(int argc, char** argv)
         /*auto latencyValue =*/op.add<Value<int>>("", "latency", "latency of the PCM device", 0, &settings.player.latency);
         /*auto instanceValue =*/op.add<Value<size_t>>("i", "instance", "instance id", 1, &settings.instance);
         /*auto hostIdValue =*/op.add<Value<string>>("", "hostID", "unique host id", "", &settings.host_id);
-#ifdef ANDROID
+#if defined(HAS_OBOE) && defined(HAS_OPENSL)
         op.add<Value<string>>("", "player", "audio backend", "", &settings.player.player_name);
 #endif
 #ifdef HAS_SOXR
         auto sample_format = op.add<Value<string>>("", "sampleformat", "resample audio stream to <rate>:<bits>:<channels>", "");
 #endif
-#ifdef HAS_WASAPI
-        auto sharing_mode = op.add<Value<string>>("", "sharingmode", "audio mode to use [shared/exclusive]", "shared");
+#if defined(HAS_OBOE) || defined(HAS_WASAPI)
+        auto sharing_mode = op.add<Value<string>>("", "sharingmode", "audio mode to use [shared|exclusive]", "shared");
 #endif
+        bool hw_mixer_supported = false;
+#if defined(HAS_ALSA)
+        hw_mixer_supported = true;
+#endif
+        std::shared_ptr<popl::Value<std::string>> mixer_mode;
+        if (hw_mixer_supported)
+            mixer_mode = op.add<Value<string>>("", "mixer", "<software|hardware|script|none>[:<options>]", "software");
+        else
+            mixer_mode = op.add<Value<string>>("", "mixer", "<software|script|none>[:<options>]", "software");
 
         try
         {
@@ -146,7 +179,7 @@ int main(int argc, char** argv)
             exit(EXIT_SUCCESS);
         }
 
-#if defined(HAS_ALSA) || defined(WINDOWS)
+#if defined(HAS_ALSA) || defined(HAS_WASAPI)
         if (listSwitch->is_set())
         {
             vector<PcmDevice> pcmDevices =
@@ -236,7 +269,7 @@ int main(int argc, char** argv)
                     group = user_group[1];
             }
             daemon = std::make_unique<Daemon>(user, group, pidFile);
-            LOG(NOTICE) << "daemonizing" << std::endl;
+            LOG(NOTICE, LOG_TAG) << "daemonizing" << std::endl;
             daemon->daemonize();
             if (processPriority < -20)
                 processPriority = -20;
@@ -244,7 +277,7 @@ int main(int argc, char** argv)
                 processPriority = 19;
             if (processPriority != 0)
                 setpriority(PRIO_PROCESS, 0, processPriority);
-            LOG(NOTICE) << "daemon started" << std::endl;
+            LOG(NOTICE, LOG_TAG) << "daemon started" << std::endl;
         }
 #endif
 
@@ -269,79 +302,52 @@ int main(int argc, char** argv)
         }
 #endif
 
-#ifdef HAS_WASAPI
-        if (sharing_mode->is_set())
-        {
-            settings.player.sharing_mode =
-                (sharing_mode->value() == "exclusive") ? ClientSettings::SharingMode::exclusive : ClientSettings::SharingMode::shared;
-        }
+#if defined(HAS_OBOE) || defined(HAS_WASAPI)
+        settings.player.sharing_mode = (sharing_mode->value() == "exclusive") ? ClientSettings::SharingMode::exclusive : ClientSettings::SharingMode::shared;
 #endif
 
-        bool active = true;
-        std::shared_ptr<Controller> controller;
-        auto signal_handler = install_signal_handler(
-            {
-#ifndef WINDOWS // no sighup on windows
-                SIGHUP,
-#endif
-                SIGTERM, SIGINT},
-            [&active, &controller](int signal, const std::string& strsignal) {
-                LOG(INFO) << "Received signal " << signal << ": " << strsignal << "\n";
-                active = false;
-                if (controller)
-                {
-                    LOG(INFO) << "Stopping controller\n";
-                    controller->stop();
-                }
-            });
-        if (settings.server.host.empty())
-        {
-#if defined(HAS_AVAHI) || defined(HAS_BONJOUR)
-            BrowseZeroConf browser;
-            mDNSResult avahiResult;
-            while (active)
-            {
-                signal_handler.wait_for(500ms);
-                if (!active)
-                    break;
-                try
-                {
-                    if (browser.browse("_snapcast._tcp", avahiResult, 5000))
-                    {
-                        settings.server.host = avahiResult.ip;
-                        settings.server.port = avahiResult.port;
-                        if (avahiResult.ip_version == IPVersion::IPv6)
-                            settings.server.host += "%" + cpt::to_string(avahiResult.iface_idx);
-                        LOG(INFO) << "Found server " << settings.server.host << ":" << settings.server.port << "\n";
-                        break;
-                    }
-                }
-                catch (const std::exception& e)
-                {
-                    LOG(ERROR) << "Exception: " << e.what() << std::endl;
-                }
-            }
-#endif
-        }
+        string mode = utils::string::split_left(mixer_mode->value(), ':', settings.player.mixer.parameter);
+        if (mode == "software")
+            settings.player.mixer.mode = ClientSettings::Mixer::Mode::software;
+        else if ((mode == "hardware") && hw_mixer_supported)
+            settings.player.mixer.mode = ClientSettings::Mixer::Mode::hardware;
+        else if (mode == "script")
+            settings.player.mixer.mode = ClientSettings::Mixer::Mode::script;
+        else if (mode == "none")
+            settings.player.mixer.mode = ClientSettings::Mixer::Mode::none;
+        else
+            throw SnapException("Mixer mode not supported: " + mode);
 
-        if (active)
-        {
-            // Setup metadata handling
-            auto meta(metaStderr ? std::make_unique<MetaStderrAdapter>() : std::make_unique<MetadataAdapter>());
+        boost::asio::io_context io_context;
+        // Construct a signal set registered for process termination.
+        boost::asio::signal_set signals(io_context, SIGHUP, SIGINT, SIGTERM);
+        signals.async_wait([&](const boost::system::error_code& ec, int signal) {
+            if (!ec)
+                LOG(INFO, LOG_TAG) << "Received signal " << signal << ": " << strsignal(signal) << "\n";
+            else
+                LOG(INFO, LOG_TAG) << "Failed to wait for signal, error: " << ec.message() << "\n";
+            io_context.stop();
+        });
 
-            controller = make_shared<Controller>(settings, std::move(meta));
-            LOG(INFO) << "Latency: " << settings.player.latency << "\n";
-            controller->run();
-            // signal_handler.wait();
-            // controller->stop();
-        }
+        // Setup metadata handling
+        auto meta(metaStderr ? std::make_unique<MetaStderrAdapter>() : std::make_unique<MetadataAdapter>());
+        auto controller = make_shared<Controller>(io_context, settings, std::move(meta));
+        controller->start();
+
+        int num_threads = 0;
+        std::vector<std::thread> threads;
+        for (int n = 0; n < num_threads; ++n)
+            threads.emplace_back([&] { io_context.run(); });
+        io_context.run();
+        for (auto& t : threads)
+            t.join();
     }
     catch (const std::exception& e)
     {
-        LOG(FATAL) << "Exception: " << e.what() << std::endl;
+        LOG(FATAL, LOG_TAG) << "Exception: " << e.what() << std::endl;
         exitcode = EXIT_FAILURE;
     }
 
-    LOG(NOTICE) << "daemon terminated." << endl;
+    LOG(NOTICE, LOG_TAG) << "daemon terminated." << endl;
     exit(exitcode);
 }

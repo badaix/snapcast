@@ -128,10 +128,7 @@ public:
 
     std::string clientId;
 
-    std::string getIP()
-    {
-        return socket_.remote_endpoint().address().to_string();
-    }
+    std::string getIP();
 
     void setPcmStream(streamreader::PcmStreamPtr pcmStream);
     const streamreader::PcmStreamPtr pcmStream() const;

@@ -50,7 +50,7 @@ PcmStream::PcmStream(PcmListener* pcmListener, boost::asio::io_context& ioc, con
     if (uri_.query.find(kUriSampleFormat) == uri_.query.end())
         throw SnapException("Stream URI must have a sampleformat");
     sampleFormat_ = SampleFormat(uri_.query[kUriSampleFormat]);
-    LOG(INFO, LOG_TAG) << "PcmStream sampleFormat: " << sampleFormat_.getFormat() << "\n";
+    LOG(INFO, LOG_TAG) << "PcmStream sampleFormat: " << sampleFormat_.toString() << "\n";
 
     if (uri_.query.find(kUriChunkMs) != uri_.query.end())
         chunk_ms_ = cpt::stoul(uri_.query[kUriChunkMs]);
@@ -97,7 +97,7 @@ const SampleFormat& PcmStream::getSampleFormat() const
 
 void PcmStream::start()
 {
-    LOG(DEBUG, LOG_TAG) << "Start, sampleformat: " << sampleFormat_.getFormat() << "\n";
+    LOG(DEBUG, LOG_TAG) << "Start, sampleformat: " << sampleFormat_.toString() << "\n";
     encoder_->init(this, sampleFormat_);
     active_ = true;
 }

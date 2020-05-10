@@ -41,15 +41,6 @@ public:
         return val;
     }
 
-    T front()
-    {
-        std::unique_lock<std::mutex> mlock(mutex_);
-        while (queue_.empty())
-            cond_.wait(mlock);
-
-        return queue_.front();
-    }
-
     void abort_wait()
     {
         {

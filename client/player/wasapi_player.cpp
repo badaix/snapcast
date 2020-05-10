@@ -69,8 +69,8 @@ EXTERN_C const PROPERTYKEY DECLSPEC_SELECTANY PKEY_Device_FriendlyName = {{0xa45
         throw SnapException(ss.str());                                                                                                                         \
     }
 
-WASAPIPlayer::WASAPIPlayer(const PcmDevice& pcmDevice, std::shared_ptr<Stream> stream, ClientSettings::SharingMode mode)
-    : Player(pcmDevice, stream), mode_(mode)
+WASAPIPlayer::WASAPIPlayer(boost::asio::io_context& io_context, const ClientSettings::Player& settings, std::shared_ptr<Stream> stream)
+    : Player(io_context, settings, stream)
 {
     HRESULT hr = CoInitializeEx(NULL, COINIT_MULTITHREADED);
     CHECK_HR(hr);
@@ -190,7 +190,7 @@ void WASAPIPlayer::worker()
 
     // Register the default playback device (eRender for playback)
     IMMDevicePtr device = nullptr;
-    if (pcmDevice_.idx == 0)
+    if (settings_.pcm_device.idx == 0)
     {
         hr = deviceEnumerator->GetDefaultAudioEndpoint(eRender, eConsole, &device);
         CHECK_HR(hr);
@@ -201,7 +201,7 @@ void WASAPIPlayer::worker()
         hr = deviceEnumerator->EnumAudioEndpoints(eRender, DEVICE_STATE_ACTIVE, &devices);
         CHECK_HR(hr);
 
-        devices->Item(pcmDevice_.idx - 1, &device);
+        devices->Item(settings_.pcm_device.idx - 1, &device);
     }
 
     IPropertyStorePtr properties = nullptr;
@@ -219,7 +219,7 @@ void WASAPIPlayer::worker()
     hr = device->Activate(IID_IAudioClient, CLSCTX_SERVER, NULL, (void**)&audioClient);
     CHECK_HR(hr);
 
-    if (mode_ == ClientSettings::SharingMode::exclusive)
+    if (settings_.sharing_mode == ClientSettings::SharingMode::exclusive)
     {
         hr = audioClient->IsFormatSupported(AUDCLNT_SHAREMODE_EXCLUSIVE, &(waveformatExtended->Format), NULL);
         CHECK_HR(hr);
@@ -254,10 +254,10 @@ void WASAPIPlayer::worker()
     hr = audioClient->GetDevicePeriod(NULL, &hnsRequestedDuration);
     CHECK_HR(hr);
 
-    LOG(INFO, LOG_TAG) << "Initializing WASAPI in " << (mode_ == ClientSettings::SharingMode::shared ? "shared" : "exclusive") << " mode\n";
+    LOG(INFO, LOG_TAG) << "Initializing WASAPI in " << (settings_.sharing_mode == ClientSettings::SharingMode::shared ? "shared" : "exclusive") << " mode\n";
 
-    _AUDCLNT_SHAREMODE share_mode = mode_ == ClientSettings::SharingMode::shared ? AUDCLNT_SHAREMODE_SHARED : AUDCLNT_SHAREMODE_EXCLUSIVE;
-    DWORD stream_flags = mode_ == ClientSettings::SharingMode::shared
+    _AUDCLNT_SHAREMODE share_mode = settings_.sharing_mode == ClientSettings::SharingMode::shared ? AUDCLNT_SHAREMODE_SHARED : AUDCLNT_SHAREMODE_EXCLUSIVE;
+    DWORD stream_flags = settings_.sharing_mode == ClientSettings::SharingMode::shared
                              ? AUDCLNT_STREAMFLAGS_EVENTCALLBACK | AUDCLNT_STREAMFLAGS_AUTOCONVERTPCM | AUDCLNT_STREAMFLAGS_SRC_DEFAULT_QUALITY
                              : AUDCLNT_STREAMFLAGS_EVENTCALLBACK;
 
@@ -353,11 +353,10 @@ void WASAPIPlayer::worker()
         // float deviceVolume = audioEndpointVolumeCallback.getVolume(); // system volume (for this audio device)
         // bool deviceMuted = audioEndpointVolumeCallback.getMuted(); // system mute (for this audio device)
 
-
         clock->GetPosition(&position, NULL);
 
         UINT32 padding = 0;
-        if (mode_ == ClientSettings::SharingMode::shared)
+        if (settings_.sharing_mode == ClientSettings::SharingMode::shared)
         {
             hr = audioClient->GetCurrentPadding(&padding);
             CHECK_HR(hr);
@@ -382,7 +381,6 @@ void WASAPIPlayer::worker()
         }
         else
         {
-            std::clog << static_cast<AixLog::Severity>(INFO) << AixLog::Tag(LOG_TAG);
             LOG(INFO, LOG_TAG) << "Failed to get chunk\n";
 
             hr = audioClient->Stop();

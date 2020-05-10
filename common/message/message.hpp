@@ -60,9 +60,10 @@ enum message_type
     kTime = 4,
     kHello = 5,
     kStreamTags = 6,
+    kClientInfo = 7,
 
     kFirst = kBase,
-    kLast = kStreamTags
+    kLast = kClientInfo
 };
 
 

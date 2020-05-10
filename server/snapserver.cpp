@@ -221,6 +221,7 @@ int main(int argc, char* argv[])
         else
             throw SnapException("Invalid log sink: " + settings.logging.sink);
 
+        // TODO: op vs conf
         for (const auto& opt : conf.unknown_options())
             LOG(WARNING) << "unknown configuration option: " << opt << "\n";
 
@@ -312,7 +313,7 @@ int main(int argc, char* argv[])
             if (!ec)
                 LOG(INFO) << "Received signal " << signal << ": " << strsignal(signal) << "\n";
             else
-                LOG(INFO) << "Failed to wait for signal: " << ec << "\n";
+                LOG(INFO) << "Failed to wait for signal, error: " << ec.message() << "\n";
             io_context.stop();
         });
 

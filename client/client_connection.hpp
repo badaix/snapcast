@@ -19,11 +19,15 @@
 #ifndef CLIENT_CONNECTION_H
 #define CLIENT_CONNECTION_H
 
+#include "client_settings.hpp"
 #include "common/time_defs.hpp"
+#include "message/factory.hpp"
 #include "message/message.hpp"
+
 #include <atomic>
 #include <boost/asio.hpp>
 #include <condition_variable>
+#include <deque>
 #include <memory>
 #include <mutex>
 #include <set>
@@ -36,33 +40,28 @@ using boost::asio::ip::tcp;
 
 class ClientConnection;
 
+template <typename Message>
+using MessageHandler = std::function<void(const boost::system::error_code&, std::unique_ptr<Message>)>;
 
 /// Used to synchronize server requests (wait for server response)
-class PendingRequest
+class PendingRequest : public std::enable_shared_from_this<PendingRequest>
 {
 public:
-    PendingRequest(uint16_t reqId) : id_(reqId)
-    {
-        future_ = promise_.get_future();
-    };
+    PendingRequest(boost::asio::io_context& io_context, boost::asio::io_context::strand& strand, uint16_t reqId,
+                   const MessageHandler<msg::BaseMessage>& handler)
+        : id_(reqId), timer_(io_context), strand_(strand), handler_(handler){};
 
-    template <typename Rep, typename Period>
-    std::unique_ptr<msg::BaseMessage> waitForResponse(const std::chrono::duration<Rep, Period>& timeout)
+    virtual ~PendingRequest()
     {
-        try
-        {
-            if (future_.wait_for(timeout) == std::future_status::ready)
-                return future_.get();
-        }
-        catch (...)
-        {
-        }
-        return nullptr;
+        handler_ = nullptr;
+        timer_.cancel();
     }
 
     void setValue(std::unique_ptr<msg::BaseMessage> value)
     {
-        promise_.set_value(std::move(value));
+        timer_.cancel();
+        if (handler_)
+            handler_({}, std::move(value));
     }
 
     uint16_t id() const
@@ -70,22 +69,35 @@ public:
         return id_;
     }
 
+    void startTimer(const chronos::usec& timeout)
+    {
+        timer_.expires_after(timeout);
+        timer_.async_wait(boost::asio::bind_executor(strand_, [ this, self = shared_from_this() ](boost::system::error_code ec) {
+            if (!handler_)
+                return;
+            if (!ec)
+            {
+                handler_(boost::asio::error::timed_out, nullptr);
+                handler_ = nullptr;
+            }
+            else if (ec != boost::asio::error::operation_aborted)
+                handler_(ec, nullptr);
+        }));
+    }
+
+    bool operator<(const PendingRequest& other) const
+    {
+        return (id_ < other.id());
+    }
+
+
 private:
     uint16_t id_;
-
-    std::promise<std::unique_ptr<msg::BaseMessage>> promise_;
-    std::future<std::unique_ptr<msg::BaseMessage>> future_;
+    boost::asio::steady_timer timer_;
+    boost::asio::io_context::strand& strand_;
+    MessageHandler<msg::BaseMessage> handler_;
 };
 
-
-/// Interface: callback for a received message and error reporting
-class MessageReceiver
-{
-public:
-    virtual ~MessageReceiver() = default;
-    virtual void onMessageReceived(ClientConnection* connection, const msg::BaseMessage& baseMessage, char* buffer) = 0;
-    virtual void onException(ClientConnection* connection, std::exception_ptr exception) = 0;
-};
 
 
 /// Endpoint of the server connection
@@ -97,63 +109,72 @@ public:
 class ClientConnection
 {
 public:
-    /// ctor. Received message from the server are passed to MessageReceiver
-    ClientConnection(MessageReceiver* receiver, const std::string& host, size_t port);
+    using ResultHandler = std::function<void(const boost::system::error_code&)>;
+
+    /// c'tor
+    ClientConnection(boost::asio::io_context& io_context, const ClientSettings::Server& server);
+    /// d'tor
     virtual ~ClientConnection();
-    virtual void start();
-    virtual void stop();
-    virtual bool send(const msg::BaseMessage* message);
+
+    /// async connect
+    /// @param handler async result handler
+    void connect(const ResultHandler& handler);
+    /// disconnect the socket
+    void disconnect();
+
+    /// async send a message
+    /// @param message the message
+    /// @param handler the result handler
+    void send(const msg::message_ptr& message, const ResultHandler& handler);
 
     /// Send request to the server and wait for answer
-    virtual std::unique_ptr<msg::BaseMessage> sendRequest(const msg::BaseMessage* message, const chronos::msec& timeout = chronos::msec(1000));
+    /// @param message the message
+    /// @param timeout the send timeout
+    /// @param handler async result handler with the response message or error
+    void sendRequest(const msg::message_ptr& message, const chronos::usec& timeout, const MessageHandler<msg::BaseMessage>& handler);
 
-    /// Send request to the server and wait for answer of type T
-    template <typename T>
-    std::unique_ptr<T> sendReq(const msg::BaseMessage* message, const chronos::msec& timeout = chronos::msec(1000))
+    /// @sa sendRequest with templated response message
+    template <typename Message>
+    void sendRequest(const msg::message_ptr& message, const chronos::usec& timeout, const MessageHandler<Message>& handler)
     {
-        std::unique_ptr<msg::BaseMessage> response = sendRequest(message, timeout);
-        if (!response)
-            return nullptr;
-
-        T* tmp = dynamic_cast<T*>(response.get());
-        std::unique_ptr<T> result;
-        if (tmp != nullptr)
-        {
-            response.release();
-            result.reset(tmp);
-        }
-        return result;
+        sendRequest(message, timeout, [handler](const boost::system::error_code& ec, std::unique_ptr<msg::BaseMessage> response) {
+            if (ec)
+                handler(ec, nullptr);
+            else
+                handler(ec, msg::message_cast<Message>(std::move(response)));
+        });
     }
 
     std::string getMacAddress();
 
-    virtual bool active() const
-    {
-        return active_;
-    }
+    /// async get the next message
+    /// @param handler the next received message or error
+    void getNextMessage(const MessageHandler<msg::BaseMessage>& handler);
 
 protected:
-    virtual void reader();
-
-    void socketRead(void* to, size_t bytes);
-    void getNextMessage();
+    void sendNext();
 
     msg::BaseMessage base_message_;
     std::vector<char> buffer_;
     size_t base_msg_size_;
 
-    boost::asio::io_context io_context_;
-    mutable std::mutex socketMutex_;
+    boost::asio::io_context& io_context_;
+    tcp::resolver resolver_;
     tcp::socket socket_;
-    std::atomic<bool> active_;
-    MessageReceiver* messageReceiver_;
-    mutable std::mutex pendingRequestsMutex_;
-    std::set<std::shared_ptr<PendingRequest>> pendingRequests_;
+    std::vector<std::weak_ptr<PendingRequest>> pendingRequests_;
     uint16_t reqId_;
-    std::string host_;
-    size_t port_;
-    std::unique_ptr<std::thread> readerThread_;
-    chronos::msec sumTimeout_;
+    ClientSettings::Server server_;
+
+    boost::asio::io_context::strand strand_;
+    struct PendingMessage
+    {
+        PendingMessage(const msg::message_ptr& msg, ResultHandler handler) : msg(msg), handler(handler)
+        {
+        }
+        msg::message_ptr msg;
+        ResultHandler handler;
+    };
+    std::deque<PendingMessage> messages_;
 };
 
 

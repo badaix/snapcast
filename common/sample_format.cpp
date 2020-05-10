@@ -49,7 +49,7 @@ SampleFormat::SampleFormat(uint32_t sampleRate, uint16_t bitsPerSample, uint16_t
 }
 
 
-string SampleFormat::getFormat() const
+string SampleFormat::toString() const
 {
     stringstream ss;
     ss << rate_ << ":" << bits_ << ":" << channels_;

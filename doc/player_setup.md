@@ -23,6 +23,9 @@ stream = pipe:///tmp/snapfifo?name=default
 ...
 ```
 
+The sampleformat is a triple of `<samplerate>:<bit depth>:<channels>`, e.g. `44100:16:2`.  
+The PCM samples (bit depth) must be encoded signed, little endian in 8, 16, 24, or 32 bit, where 24 is expected to be encoded in the lower three bytes of a 32 bit word.
+
 ## About the notation
 
 In this document some expressions are in brackets:
@@ -92,7 +95,7 @@ echo "http://wdr-1live-live.icecast.wdr.de/wdr/1live/live/mp3/128/stream.mp3" > 
 ```ini
 [audio]
 #output = autoaudiosink
-output = audioresample ! audioconvert ! audio/x-raw,rate=48000,channels=2,format=S16LE ! wavenc ! filesink location=/tmp/snapfifo
+output = audioresample ! audioconvert ! audio/x-raw,rate=48000,channels=2,format=S16LE ! filesink location=/tmp/snapfifo
 ```
 
 With newer kernels one might also have to change this sysctl-setting, as default settings have changed recently: `sudo sysctl fs.protected_fifos=0`
@@ -194,11 +197,12 @@ Snapserver supports [shairport-sync](https://github.com/mikebrady/shairport-sync
 Snapserver supports [librespot](https://github.com/librespot-org/librespot) with the `pipe` backend.
 
  1. Build and copy the `librespot` binary somewhere to your `PATH`, e.g. `/usr/local/bin/`
- 2. Configure snapserver with `stream = spotify:///librespot?name=Spotify[&username=<my username>&password=<my password>][&devicename=Snapcast][&bitrate=320][&onstart=<start command>][&onstop=<stop command>][&volume=<volume in percent>][&cache=<cache dir>][&killall=true]`
+ 2. Configure snapserver with `stream = spotify:///librespot?name=Spotify[&username=<my username>&password=<my password>][&devicename=Snapcast][&bitrate=320][&onstart=<start command>][&onstop=<stop command>][&volume=<volume in percent>][&cache=<cache dir>][&disable_audio_cache=false][&killall=true]`
     * Valid bitrates are 96, 160, 320
     * `start command` and `stop command` are executed by Librespot at start/stop
         * For example: `onstart=/usr/bin/logger -t Snapcast Starting spotify...`
     * If `killall` is `true` (default), all running instances of Librespot will be killed. This MUST be disabled on all spotify streams by setting it to `false` if you want to use multiple spotify streams.
+    * If `disable_audio_cache` is `false` (default), downloaded audio files are cached in `<cache dir>`. If set to `true` audio files will not be cached on disk.
 
 ### Process
 

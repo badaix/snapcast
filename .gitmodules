@@ -1,15 +1,15 @@
 [submodule "externals/flac"]
 	path = externals/flac
-	url = https://git.xiph.org/flac.git
+	url = https://gitlab.xiph.org/xiph/flac.git
 [submodule "externals/ogg"]
 	path = externals/ogg
-	url = https://git.xiph.org/ogg.git
+	url = https://gitlab.xiph.org/xiph/ogg.git
 [submodule "externals/tremor"]
 	path = externals/tremor
-	url = https://git.xiph.org/tremor.git
+	url = https://github.com/badaix/tremor.git
 [submodule "externals/opus"]
 	path = externals/opus
-	url = https://git.xiph.org/opus.git
+	url = https://gitlab.xiph.org/xiph/opus.git
 [submodule "externals/oboe"]
 	path = externals/oboe
 	url = https://github.com/google/oboe.git

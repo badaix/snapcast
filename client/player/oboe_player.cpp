@@ -30,7 +30,8 @@ static constexpr auto LOG_TAG = "OboePlayer";
 static constexpr double kDefaultLatency = 50;
 
 
-OboePlayer::OboePlayer(const PcmDevice& pcmDevice, std::shared_ptr<Stream> stream) : Player(pcmDevice, stream)
+OboePlayer::OboePlayer(boost::asio::io_context& io_context, const ClientSettings::Player& settings, std::shared_ptr<Stream> stream)
+    : Player(io_context, settings, stream)
 {
     LOG(DEBUG, LOG_TAG) << "Contructor\n";
     LOG(INFO, LOG_TAG) << "Init start\n";
@@ -44,9 +45,13 @@ OboePlayer::OboePlayer(const PcmDevice& pcmDevice, std::shared_ptr<Stream> strea
     LOG(INFO, LOG_TAG) << "DefaultStreamValues::SampleRate: " << oboe::DefaultStreamValues::SampleRate
                        << ", DefaultStreamValues::FramesPerBurst: " << oboe::DefaultStreamValues::FramesPerBurst << "\n";
 
+    oboe::SharingMode sharing_mode = oboe::SharingMode::Shared;
+    if (settings.sharing_mode == ClientSettings::SharingMode::exclusive)
+        sharing_mode = oboe::SharingMode::Exclusive;
+
     // The builder set methods can be chained for convenience.
     oboe::AudioStreamBuilder builder;
-    auto result = builder.setSharingMode(oboe::SharingMode::Exclusive)
+    auto result = builder.setSharingMode(sharing_mode)
                       ->setPerformanceMode(oboe::PerformanceMode::LowLatency)
                       ->setChannelCount(stream->getFormat().channels())
                       ->setSampleRate(stream->getFormat().rate())
@@ -86,6 +91,12 @@ OboePlayer::~OboePlayer()
     result = out_stream_->close();
     if (result != oboe::Result::OK)
         LOG(ERROR, LOG_TAG) << "Error in AudioStream::stop: " << oboe::convertToText(result) << "\n";
+}
+
+
+bool OboePlayer::needsThread() const
+{
+    return false;
 }
 
 
@@ -130,7 +141,7 @@ oboe::DataCallbackResult OboePlayer::onAudioReady(oboe::AudioStream* /*oboeStrea
 
     if (!stream_->getPlayerChunk(audioData, delay, numFrames))
     {
-        // LOG(INFO) << "Failed to get chunk. Playing silence.\n";
+        // LOG(INFO, LOG_TAG) << "Failed to get chunk. Playing silence.\n";
         memset(audioData, 0, numFrames * stream_->getFormat().frameSize());
     }
     else
@@ -158,9 +169,4 @@ void OboePlayer::stop()
     auto result = out_stream_->requestStop();
     if (result != oboe::Result::OK)
         LOG(ERROR, LOG_TAG) << "Error in requestStop: " << oboe::convertToText(result) << "\n";
-}
-
-
-void OboePlayer::worker()
-{
 }
