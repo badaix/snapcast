@@ -45,6 +45,7 @@ const IID IID_IMMDeviceEnumerator = __uuidof(IMMDeviceEnumerator);
 const IID IID_IAudioClient = __uuidof(IAudioClient);
 const IID IID_IAudioRenderClient = __uuidof(IAudioRenderClient);
 const IID IID_IAudioClock = __uuidof(IAudioClock);
+const IID IID_IAudioEndpointVolume = _uuidof(IAudioEndpointVolume);
 
 _COM_SMARTPTR_TYPEDEF(IMMDevice, __uuidof(IMMDevice));
 _COM_SMARTPTR_TYPEDEF(IMMDeviceCollection, __uuidof(IMMDeviceCollection));
@@ -229,6 +230,8 @@ void WASAPIPlayer::worker()
     hr = device->Activate(__uuidof(IAudioSessionManager), CLSCTX_INPROC_SERVER, NULL, (void**)&sessionManager);
     CHECK_HR(hr);
 
+    
+
     // Get the control interface for the process-specific audio
     // session with session GUID = GUID_NULL. This is the session
     // that an audio stream for a DirectSound, DirectShow, waveOut,
@@ -240,6 +243,11 @@ void WASAPIPlayer::worker()
     // register
     hr = control->RegisterAudioSessionNotification(audioEventListener_);
     CHECK_HR(hr);
+
+    AudioEndpointVolumeCallback audioEndpointVolumeCallback;
+    hr = device->Activate(IID_IAudioEndpointVolume, CLSCTX_ALL, NULL, (void**)&audioEndpointListener_);
+
+    audioEndpointListener_->RegisterControlChangeNotify((IAudioEndpointVolumeCallback*)&audioEndpointVolumeCallback);
 
     // Get the device period
     REFERENCE_TIME hnsRequestedDuration = REFTIMES_PER_SEC;
@@ -336,7 +344,14 @@ void WASAPIPlayer::worker()
 
         // update our volume from IAudioControl
         if (mode_ == ClientSettings::SharingMode::exclusive)
+        {
             volCorrection_ = audioEventListener_->getVolume();
+            // muteOverride = audioEventListener_->getMuted(); // use this for also applying audio mixer mute state
+        }
+        
+        // get audio device volume from IAudioEndpointVolume
+        // float deviceVolume = audioEndpointVolumeCallback.getVolume(); // system volume (for this audio device)
+        // bool deviceMuted = audioEndpointVolumeCallback.getMuted(); // system mute (for this audio device)
 
         clock->GetPosition(&position, NULL);
 
@@ -406,6 +421,8 @@ HRESULT STDMETHODCALLTYPE AudioSessionEventListener::QueryInterface(REFIID riid,
 HRESULT STDMETHODCALLTYPE AudioSessionEventListener::OnSimpleVolumeChanged(float NewVolume, BOOL NewMute, LPCGUID EventContext)
 {
     volume_ = NewVolume;
+    muted_ = NewMute;
+
     if (NewMute)
     {
         LOG(DEBUG, LOG_TAG) << ("MUTE\n");
@@ -462,6 +479,28 @@ HRESULT STDMETHODCALLTYPE AudioSessionEventListener::OnSessionDisconnected(Audio
             break;
     }
     LOG(INFO, LOG_TAG) << "Audio session disconnected (reason: " << pszReason << ")";
+
+    return S_OK;
+}
+
+
+
+HRESULT STDMETHODCALLTYPE AudioEndpointVolumeCallback::OnNotify(PAUDIO_VOLUME_NOTIFICATION_DATA pNotify)
+{
+    if (pNotify == NULL)
+    {
+        return E_INVALIDARG;
+    }
+
+    if (pNotify->bMuted)
+    {
+        LOG(DEBUG, LOG_TAG) << ("MASTER MUTE\n");
+    }
+
+    LOG(DEBUG, LOG_TAG) << "Volume = " << (UINT32)(100 * pNotify->fMasterVolume + 0.5) << " percent\n";
+
+    volume_ = pNotify->fMasterVolume;
+    muted_ = pNotify->bMuted;
 
     return S_OK;
 }
