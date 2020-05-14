@@ -66,7 +66,10 @@ AlsaPlayer::AlsaPlayer(boost::asio::io_context& io_context, const ClientSettings
 
 void AlsaPlayer::setHardwareVolume(double volume, bool muted)
 {
-    std::lock_guard<std::mutex> lock(mutex_);
+    std::lock_guard<std::recursive_mutex> lock(mutex_);
+    if (elem_ == nullptr)
+        return;
+
     last_change_ = std::chrono::steady_clock::now();
     try
     {
@@ -110,7 +113,7 @@ bool AlsaPlayer::getHardwareVolume(double& volume, bool& muted)
     long vol;
     int err = 0;
 
-    std::lock_guard<std::mutex> lock(mutex_);
+    std::lock_guard<std::recursive_mutex> lock(mutex_);
     try
     {
         while (snd_mixer_handle_events(mixer_) > 0)
@@ -164,7 +167,7 @@ void AlsaPlayer::waitForEvent()
             return;
         }
 
-        std::lock_guard<std::mutex> lock(mutex_);
+        std::lock_guard<std::recursive_mutex> lock(mutex_);
         unsigned short revents;
         snd_ctl_poll_descriptors_revents(ctl_, fd_.get(), 1, &revents);
         if (revents & POLLIN || (revents == 0))
@@ -206,7 +209,10 @@ void AlsaPlayer::waitForEvent()
 
 void AlsaPlayer::initMixer()
 {
-    std::lock_guard<std::mutex> lock(mutex_);
+    if (settings_.mixer.mode != ClientSettings::Mixer::Mode::hardware)
+        return;
+
+    // std::lock_guard<std::mutex> lock(mutex_);
     int err;
     if ((err = snd_ctl_open(&ctl_, mixer_device_.c_str(), SND_CTL_READONLY)) < 0)
         throw SnapException("Can't open control for " + mixer_device_ + ", error: " + snd_strerror(err));
@@ -242,7 +248,7 @@ void AlsaPlayer::initMixer()
 
 void AlsaPlayer::initAlsa()
 {
-    std::lock_guard<std::mutex> lock(mutex_);
+    std::lock_guard<std::recursive_mutex> lock(mutex_);
     unsigned int tmp, rate;
     int err, channels;
     snd_pcm_hw_params_t* params;
@@ -358,11 +364,16 @@ void AlsaPlayer::initAlsa()
     snd_pcm_sw_params_set_start_threshold(handle_, swparams, frames_);
     //	snd_pcm_sw_params_set_stop_threshold(pcm_handle, swparams, frames_);
     snd_pcm_sw_params(handle_, swparams);
+
+    initMixer();
 }
 
 
 void AlsaPlayer::uninitAlsa()
 {
+    std::lock_guard<std::recursive_mutex> lock(mutex_);
+    uninitMixer();
+
     if (handle_ != nullptr)
     {
         snd_pcm_drop(handle_);
@@ -380,7 +391,7 @@ void AlsaPlayer::uninitMixer()
         sd_.cancel(ec);
     }
 
-    std::lock_guard<std::mutex> lock(mutex_);
+    // std::lock_guard<std::mutex> lock(mutex_);
     if (ctl_ != nullptr)
     {
         snd_ctl_close(ctl_);
@@ -398,8 +409,6 @@ void AlsaPlayer::uninitMixer()
 void AlsaPlayer::start()
 {
     initAlsa();
-    if (settings_.mixer.mode == ClientSettings::Mixer::Mode::hardware)
-        initMixer();
     Player::start();
 }
 
@@ -413,7 +422,6 @@ AlsaPlayer::~AlsaPlayer()
 void AlsaPlayer::stop()
 {
     Player::stop();
-    uninitMixer();
     uninitAlsa();
 }
 
@@ -438,6 +446,8 @@ void AlsaPlayer::worker()
             try
             {
                 initAlsa();
+                // set the hardware volume. It might have changed when we were not initialized
+                setHardwareVolume(volume_, muted_);
             }
             catch (const std::exception& e)
             {
