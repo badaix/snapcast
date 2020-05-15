@@ -62,7 +62,7 @@ void ClientConnection::connect(const ResultHandler& handler)
 {
     tcp::resolver::query query(server_.host, cpt::to_string(server_.port), boost::asio::ip::resolver_query_base::numeric_service);
     boost::system::error_code ec;
-    LOG(DEBUG, LOG_TAG) << "Resolving host IP\n";
+    LOG(INFO, LOG_TAG) << "Resolving host IP\n";
     auto iterator = resolver_.resolve(query, ec);
     if (ec)
     {
@@ -71,7 +71,7 @@ void ClientConnection::connect(const ResultHandler& handler)
         return;
     }
 
-    LOG(DEBUG, LOG_TAG) << "Connecting\n";
+    LOG(INFO, LOG_TAG) << "Connecting\n";
     socket_.connect(*iterator, ec);
     if (ec)
     {

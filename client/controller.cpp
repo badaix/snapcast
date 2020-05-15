@@ -107,13 +107,6 @@ void Controller::getNextMessage()
                     // });
                 }
             }
-            else if (response->type == message_type::kTime)
-            {
-                // should not be called, because timeSync messages are sent as request, so that the response will go there
-                LOG(DEBUG, LOG_TAG) << "Received time sync message\n";
-                auto reply = msg::message_cast<msg::Time>(std::move(response));
-                TimeProvider::getInstance().setDiff(reply->latency, reply->received - reply->sent); // ToServer(diff / 2);
-            }
             else if (response->type == message_type::kServerSettings)
             {
                 serverSettings_ = msg::message_cast<msg::ServerSettings>(std::move(response));
@@ -151,7 +144,6 @@ void Controller::getNextMessage()
 
                 sampleFormat_ = decoder_->setHeader(headerChunk_.get());
                 LOG(INFO, LOG_TAG) << "Codec: " << headerChunk_->codec << ", sampleformat: " << sampleFormat_.toString() << "\n";
-                LOG(NOTICE, LOG_TAG) << TAG("state") << "sampleformat: " << sampleFormat_.toString() << "\n";
 
                 stream_ = make_shared<Stream>(sampleFormat_, settings_.player.sample_format);
                 stream_->setBufferLen(std::max(0, serverSettings_->getBufferMs() - serverSettings_->getLatency() - settings_.player.latency));
@@ -214,6 +206,10 @@ void Controller::getNextMessage()
                     auto stream_tags = msg::message_cast<msg::StreamTags>(std::move(response));
                     meta_->push(stream_tags->msg);
                 }
+            }
+            else
+            {
+                LOG(WARNING, LOG_TAG) << "Unexpected message received, type: " << response->type << "\n";
             }
             getNextMessage();
         }
@@ -350,22 +346,28 @@ void Controller::worker()
     clientConnection_->connect([this](const boost::system::error_code& ec) {
         if (!ec)
         {
-            LOG(INFO, LOG_TAG) << "Connected!\n";
-
+            // LOG(INFO, LOG_TAG) << "Connected!\n";
             string macAddress = clientConnection_->getMacAddress();
             if (settings_.host_id.empty())
                 settings_.host_id = ::getHostId(macAddress);
 
             // Say hello to the server
             auto hello = std::make_shared<msg::Hello>(macAddress, settings_.host_id, settings_.instance);
-            clientConnection_->send(hello, [this](const boost::system::error_code& ec) {
-                if (ec)
-                {
-                    LOG(ERROR, LOG_TAG) << "Failed to send hello, error: " << ec.message() << "\n";
-                    reconnect();
-                    return;
-                }
-            });
+            clientConnection_->sendRequest<msg::ServerSettings>(
+                hello, 2s, [this](const boost::system::error_code& ec, std::unique_ptr<msg::ServerSettings> response) mutable {
+                    if (ec)
+                    {
+                        LOG(ERROR, LOG_TAG) << "Failed to send hello request, error: " << ec.message() << "\n";
+                        reconnect();
+                        return;
+                    }
+                    else
+                    {
+                        serverSettings_ = std::move(response);
+                        LOG(INFO, LOG_TAG) << "ServerSettings - buffer: " << serverSettings_->getBufferMs() << ", latency: " << serverSettings_->getLatency()
+                                           << ", volume: " << serverSettings_->getVolume() << ", muted: " << serverSettings_->isMuted() << "\n";
+                    }
+                });
 
             // Do initial time sync with the server
             sendTimeSyncMessage(50);
