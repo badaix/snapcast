@@ -70,8 +70,8 @@ int main(int argc, char* argv[])
 
         // debug settings
         OptionParser conf("");
-        op.add<Value<string>>("", "logging.sink", "log sink [null,system,stdout,stderr,file:<filename>]", settings.logging.sink, &settings.logging.sink);
-        auto logfilterOption = op.add<Value<string>>(
+        conf.add<Value<string>>("", "logging.sink", "log sink [null,system,stdout,stderr,file:<filename>]", settings.logging.sink, &settings.logging.sink);
+        auto logfilterOption = conf.add<Value<string>>(
             "", "logging.filter",
             "log filter <tag>:<level>[,<tag>:<level>]* with tag = * or <log tag> and level = [trace,debug,info,notice,warning,error,fatal]",
             settings.logging.filter);

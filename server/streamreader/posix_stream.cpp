@@ -82,7 +82,7 @@ void PosixStream::do_read()
 
         if (first_)
         {
-            LOG(DEBUG, LOG_TAG) << "First read, initializing nextTick to now\n";
+            LOG(TRACE, LOG_TAG) << "First read, initializing nextTick to now\n";
             nextTick_ = std::chrono::steady_clock::now();
         }
 
