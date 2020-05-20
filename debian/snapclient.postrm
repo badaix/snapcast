@@ -1,0 +1,18 @@
+#!/bin/sh
+
+set -e
+
+#DEBHELPER#
+
+USERNAME=snapclient
+HOMEDIR=/var/lib/snapclient
+
+if [ "$1" = "purge" ]; then
+  rm -r $HOMEDIR
+
+  if [ -x "$(command -v deluser)" ]; then
+    deluser --quiet --system $USERNAME > /dev/null || true
+  else
+    echo >&2 "not removing $USERNAME system account because deluser command was not found"
+  fi
+fi

@@ -2,8 +2,6 @@
 import sys
 import telnetlib
 import json
-import threading
-import time
 
 telnet = telnetlib.Telnet(sys.argv[1], 1705)
 requestId = 1
@@ -18,7 +16,6 @@ def doRequest( j, requestId ):
 			if jResponse['id'] == requestId:
 #				print("recv: " + response)
 				return jResponse;
-	return;
 
 def setVolume(client, volume):
 	global requestId

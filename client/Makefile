@@ -1,5 +1,5 @@
 #    This file is part of snapcast
-#   Copyright (C) 2014-2018  Johannes Pohl
+#   Copyright (C) 2014-2020  Johannes Pohl
 #
 #   This program is free software: you can redistribute it and/or modify
 #   it under the terms of the GNU General Public License as published by
@@ -14,7 +14,7 @@
 #   You should have received a copy of the GNU General Public License
 #   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-VERSION = 0.13.0
+VERSION = 0.19.0
 BIN = snapclient
 
 ifeq ($(TARGET), FREEBSD)
@@ -30,13 +30,21 @@ else
   TARGET_DIR ?= /usr
 endif
 
-# Simplify building debuggable executables 'make DEBUG=-g STRIP=echo'
-DEBUG=-O3
+DEBUG ?= 0
+ifeq ($(DEBUG), 1)
+    CXXFLAGS += -g
+else
+    CXXFLAGS += -O2
+endif
 
+ifneq ($(SANITIZE), )
+	CXXFLAGS += -fsanitize=$(SANITIZE) -g
+	LDFLAGS += -fsanitize=$(SANITIZE)
+endif
 
-CXXFLAGS += $(ADD_CFLAGS) -std=c++0x -Wall -Wno-unused-function $(DEBUG) -DHAS_FLAC -DHAS_OGG -DASIO_STANDALONE -DVERSION=\"$(VERSION)\" -I. -I.. -isystem ../externals/asio/asio/include -I../externals/popl/include -I../externals/aixlog/include -I../externals
-LDFLAGS   = -logg -lFLAC
-OBJ       = snapClient.o stream.o clientConnection.o timeProvider.o player/player.o decoder/pcmDecoder.o decoder/oggDecoder.o decoder/flacDecoder.o controller.o ../message/pcmChunk.o ../common/sampleFormat.o
+CXXFLAGS += $(ADD_CFLAGS) -std=c++14 -Wall -Wextra -Wpedantic -Wno-unused-function -DBOOST_ERROR_CODE_HEADER_ONLY -DHAS_FLAC -DHAS_OGG -DHAS_OPUS -DVERSION=\"$(VERSION)\" -I. -I.. -I../common
+LDFLAGS  += $(ADD_LDFLAGS) -logg -lFLAC -lopus -lsoxr
+OBJ       = snapclient.o stream.o client_connection.o time_provider.o player/player.o decoder/pcm_decoder.o decoder/ogg_decoder.o decoder/flac_decoder.o decoder/opus_decoder.o controller.o ../common/sample_format.o
 
 
 ifneq (,$(TARGET))
@@ -50,39 +58,35 @@ endif
 ifeq ($(TARGET), ANDROID)
 
 CXX       = $(PROGRAM_PREFIX)clang++
-STRIP     = $(PROGRAM_PREFIX)strip
-CXXFLAGS += -pthread -DNO_CPP11_STRING -fPIC -DHAS_TREMOR -DHAS_OPENSL -I$(NDK_DIR)/include
-LDFLAGS   = -L$(NDK_DIR)/lib -pie -lvorbisidec -logg -lFLAC -lOpenSLES -latomic -llog
-OBJ      += player/openslPlayer.o 
+CXXFLAGS += -pthread -fPIC -DHAS_TREMOR -DHAS_OPENSL -DHAS_OBOE -I$(NDK_DIR)/usr/local/include
+LDFLAGS   = -L$(NDK_DIR)/usr/local/lib -pie -lvorbisidec -logg -lopus -lFLAC -lOpenSLES -loboe -latomic -llog -lsoxr -static-libstdc++
+OBJ      += player/opensl_player.o player/oboe_player.o
 
 else ifeq ($(TARGET), OPENWRT)
 
-STRIP     = echo
-CXXFLAGS += -pthread -DNO_CPP11_STRING -DHAS_TREMOR -DHAS_ALSA -DHAS_AVAHI -DHAS_DAEMON
+CXXFLAGS += -pthread -DNO_CPP11_STRING -DHAS_TREMOR -DHAS_ALSA -DHAS_AVAHI -DHAS_DAEMON -DHAS_SOXR
 LDFLAGS  += -lasound -lvorbisidec -lavahi-client -lavahi-common -latomic
-OBJ      += ../common/daemon.o player/alsaPlayer.o browseZeroConf/browseAvahi.o
+OBJ      += ../common/daemon.o player/alsa_player.o browseZeroConf/browse_avahi.o
 
 else ifeq ($(TARGET), BUILDROOT)
 
-CXXFLAGS += -pthread -DNO_CPP11_STRING -DHAS_TREMOR -DHAS_ALSA -DHAS_AVAHI -DHAS_DAEMON
+CXXFLAGS += -pthread -DNO_CPP11_STRING -DHAS_TREMOR -DHAS_ALSA -DHAS_AVAHI -DHAS_DAEMON -DHAS_SOXR
 LDFLAGS  += -lasound -lvorbisidec -lavahi-client -lavahi-common -latomic
-OBJ      += ../common/daemon.o player/alsaPlayer.o browseZeroConf/browseAvahi.o
+OBJ      += ../common/daemon.o player/alsa_player.o browseZeroConf/browse_avahi.o
 
 else ifeq ($(TARGET), MACOS)
 
 CXX       = g++
-STRIP     = strip
-CXXFLAGS += -DHAS_COREAUDIO -DHAS_VORBIS -DFREEBSD -DHAS_BONJOUR -DHAS_DAEMON -I/usr/local/include -Wno-unused-local-typedef -Wno-deprecated
+CXXFLAGS += -DHAS_COREAUDIO -DHAS_VORBIS -DFREEBSD -DHAS_BONJOUR -DHAS_DAEMON -DHAS_SOXR -I/usr/local/include -Wno-unused-local-typedef -Wno-deprecated
 LDFLAGS  += -lvorbis -lFLAC -L/usr/local/lib -framework AudioToolbox -framework CoreAudio -framework CoreFoundation -framework IOKit
-OBJ      += ../common/daemon.o player/coreAudioPlayer.o browseZeroConf/browseBonjour.o
+OBJ      += ../common/daemon.o player/coreaudio_player.o browseZeroConf/browse_bonjour.o
 
 else
 
 CXX       = g++
-STRIP     = strip
-CXXFLAGS += -pthread -DHAS_VORBIS -DHAS_ALSA -DHAS_AVAHI -DHAS_DAEMON
-LDFLAGS  += -lrt -lasound -lvorbis -lavahi-client -lavahi-common -static-libgcc -static-libstdc++ -latomic
-OBJ      += ../common/daemon.o player/alsaPlayer.o browseZeroConf/browseAvahi.o
+CXXFLAGS += -pthread -DHAS_VORBIS -DHAS_ALSA -DHAS_AVAHI -DHAS_DAEMON -DHAS_SOXR
+LDFLAGS  += -lrt -lasound -lvorbis -lavahi-client -lavahi-common -latomic
+OBJ      += ../common/daemon.o player/alsa_player.o browseZeroConf/browse_avahi.o
 
 endif
 
@@ -102,27 +106,22 @@ ifeq ($(ARCH), x86)
 else ifeq ($(ARCH), mips)
 	$(eval CXXFLAGS:=$(CXXFLAGS) -DIS_BIG_ENDIAN)
 	$(eval PROGRAM_PREFIX:=$(NDK_DIR)/bin/mipsel-linux-android-)
-else
+else ifeq ($(ARCH), arm)
 	$(eval CXXFLAGS:=$(CXXFLAGS) -march=armv7)
 	$(eval PROGRAM_PREFIX:=$(NDK_DIR)/bin/arm-linux-androideabi-)
+else ifeq ($(ARCH), arm64)
+	$(eval PROGRAM_PREFIX:=$(NDK_DIR)/bin/aarch64-linux-android-)
 endif
 endif
 
 $(BIN): $(OBJ)
 	$(CXX) $(CXXFLAGS) -o $(BIN) $(OBJ) $(LDFLAGS)
-	$(STRIP) $(BIN)
 
 %.o: %.cpp
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 clean:
 	rm -rf $(BIN) $(OBJ) *~ player/*.o
-
-.PHONY: dpkg
-#sudo apt-get install build-essential debhelper dh-make dh-systemd quilt fakeroot lintian
-dpkg:
-	dpkg-buildpackage -rfakeroot -b -uc -us
-	dh_clean
 
 ifdef DESTDIR
 
@@ -133,9 +132,9 @@ else ifeq ($(TARGET), MACOS)
 
 install:
 	echo macOS
-	install -g wheel -o root $(BIN) $(TARGET_DIR)/local/bin/$(BIN)
+	install -s -g wheel -o root $(BIN) $(TARGET_DIR)/local/bin/$(BIN)
 	install -g wheel -o root $(BIN).1 $(TARGET_DIR)/local/share/man/man1/$(BIN).1
-	install -g wheel -o root debian/$(BIN).plist /Library/LaunchAgents/de.badaix.snapcast.$(BIN).plist
+	install -g wheel -o root etc/$(BIN).plist /Library/LaunchAgents/de.badaix.snapcast.$(BIN).plist
 	launchctl load /Library/LaunchAgents/de.badaix.snapcast.$(BIN).plist
 
 else
@@ -158,21 +157,21 @@ install:
 endif
 
 installfiles:
-	install -D -g root -o root $(BIN) $(TARGET_DIR)/bin/$(BIN)
+	install -s -D -g root -o root $(BIN) $(TARGET_DIR)/bin/$(BIN)
 	install -D -g root -o root $(BIN).1 $(TARGET_DIR)/share/man/man1/$(BIN).1
 
 installsystemd:
 	@echo using systemd; \
-	cp debian/$(BIN).service /lib/systemd/system/$(BIN).service; \
-	cp -n debian/$(BIN).default /etc/default/$(BIN); \
+	cp ../debian/$(BIN).service /lib/systemd/system/$(BIN).service; \
+	cp -n ../debian/$(BIN).default /etc/default/$(BIN); \
 	systemctl daemon-reload; \
 	systemctl enable $(BIN); \
 	systemctl start $(BIN); \
 
 installsysv:
 	@echo using sysv; \
-	cp debian/$(BIN).init /etc/init.d/$(BIN); \
-	cp -n debian/$(BIN).default /etc/default/$(BIN); \
+	cp ../debian/$(BIN).init /etc/init.d/$(BIN); \
+	cp -n ../debian/$(BIN).default /etc/default/$(BIN); \
 	update-rc.d $(BIN) defaults; \
 	/etc/init.d/$(BIN) start; \
 

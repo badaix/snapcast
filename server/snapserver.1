@@ -1,57 +1,35 @@
-.TH SNAPSERVER 1 "December 2015"
+.TH SNAPSERVER 1 "January 2020"
 .SH NAME
 snapserver - Snapcast server
 .SH SYNOPSIS
 \fBsnapserver\fR [\fIOPTION\fR]...
 .SH DESCRIPTION
-Snapcast is a multi-room client-server audio player, where all clients are
+Snapcast is a multiroom client-server audio player, where all clients are
 time synchronized with the server to play perfectly synced audio. It's not a
 standalone player, but an extension that turns your existing audio player into
-a Sonos-like multi-room solution.
+a Sonos-like multiroom solution.
 .br
 The server's audio input is a named pipe `/tmp/snapfifo`. All data that is fed
 into this file will be send to the connected clients. One of the most generic
 ways to use Snapcast is in conjunction with the music player daemon or Mopidy,
 which can be configured to use a named pipe as audio output.
-.SS Options
+.SS Allowed options:
 .TP
 \fB-h, --help\fR
-produce help message
+Produce help message, use -hh to show options from config file
 .TP
 \fB-v, --version\fR
-show version number
+Show version number
 .TP
-\fB-p, --port\fR
-server port
+\fB-d, --daemon [=arg(=0)]\fR
+Daemonize
+optional process priority [-20..19]
 .TP
-\fB--controlPort\fR
-Remote control port (default =1705)
-.TP
-\fB-s, --stream\fR
-URI of the PCM input stream. Format:
-.br
-TYPE://host/path?name=NAME[&codec=CODEC][&sampleformat=SAMPLEFORMAT]
-.TP
-\fB--sampleformat\fR
-default sample format (default = 48000:16:2)
-.TP
-\fB--codec\fR
-default transport codec [flac|ogg|pcm][:options]. Type codec:? to get codec specific options
-.TP
-\fB--streamBuffer\fR
-Default stream read buffer [ms] (default = 20)
-.TP
-\fB-b, --buffer\fR
-buffer [ms] (default = 1000)
-.TP
-\fB-b, --sendToMuted\fR
-Send audio to muted clients
-.TP
-\fB-d, --daemon\fR
-daemonize, optional process priority [-20..19]
-.TP
-\fB--user\fR
+\fB--user arg\fR
 the user[:group] to run snapserver as when daemonized
+.TP
+\fB-c, --config arg (=/etc/snapserver.conf)\fR
+path to the configuration file
 .SH FILES
 .TP
 \fI/tmp/snapfifo\fR
@@ -60,10 +38,13 @@ PCM input fifo file
 \fI/etc/default/snapserver\fR
 the daemon default configuration file
 .TP
+\fI/etc/snapserver.conf\fR
+the snapserver configuration file
+.TP
 \fI~/.config/snapcast/server.json\fR or (if $HOME is not set) \fI/var/lib/snapcast/server.json\fR
 persistent server data file
 .SH "COPYRIGHT"
-Copyright (C) 2014-2018 Johannes Pohl (snapcast@badaix.de).
+Copyright (C) 2014-2020 Johannes Pohl (snapcast@badaix.de).
 License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>.
 This is free software: you are free to change and redistribute it.
 There is NO WARRANTY, to the extent permitted by law.

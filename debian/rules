@@ -1,0 +1,15 @@
+#!/usr/bin/make -f
+
+export DEB_BUILD_MAINT_OPTIONS = hardening=+all
+export DEB_LDFLAGS_MAINT_APPEND = -Wl,--as-needed
+include /usr/share/dpkg/buildflags.mk
+
+%:
+	dh $@
+
+override_dh_auto_build:
+	dh_auto_build -- STRIP=: DEBUG= ADD_CFLAGS="$(CXXFLAGS) $(CPPFLAGS)" ADD_LDFLAGS="$(LDFLAGS)"
+
+override_dh_auto_install:
+	dh_auto_install --sourcedir=client --destdir=debian/snapclient/
+	dh_auto_install --sourcedir=server --destdir=debian/snapserver/

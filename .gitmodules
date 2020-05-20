@@ -1,9 +1,3 @@
-[submodule "externals/popl"]
-	path = externals/popl
-	url = https://github.com/badaix/popl.git
-[submodule "externals/asio"]
-	path = externals/asio
-	url = https://github.com/chriskohlhoff/asio.git
 [submodule "externals/flac"]
 	path = externals/flac
 	url = https://git.xiph.org/flac.git
@@ -13,6 +7,9 @@
 [submodule "externals/tremor"]
 	path = externals/tremor
 	url = https://git.xiph.org/tremor.git
-[submodule "externals/aixlog"]
-	path = externals/aixlog
-	url = https://github.com/badaix/aixlog.git
+[submodule "externals/opus"]
+	path = externals/opus
+	url = https://git.xiph.org/opus.git
+[submodule "externals/oboe"]
+	path = externals/oboe
+	url = https://github.com/google/oboe.git

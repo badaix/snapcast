@@ -36,3 +36,22 @@ GRTAGS
 GTAGS
 build
 bin
+android/.idea
+android/Snapcast/release
+
+# debian packages
+debian/.debhelper
+debian/snapclient
+debian/snapserver
+debian/debhelper-build-stamp
+debian/snapclient.debhelper.log
+debian/snapserver.debhelper.log
+debian/files
+debian/snapclient.postinst.debhelper
+debian/snapclient.postrm.debhelper
+debian/snapclient.prerm.debhelper
+debian/snapclient.substvars
+debian/snapserver.postinst.debhelper
+debian/snapserver.postrm.debhelper
+debian/snapserver.prerm.debhelper
+debian/snapserver.substvars
