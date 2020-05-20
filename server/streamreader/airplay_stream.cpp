@@ -250,7 +250,7 @@ void AirplayStream::pipeReadLine()
             }
             else
             {
-		LOG(ERROR, LOG_TAG) << "Error while reading from metadata pipe: " << ec.category().name() << "\n" << ec.value() << ":\t" << ec.message() << "\n";
+		LOG(ERROR, LOG_TAG) << "Error while reading from metadata pipe: " << ec.message() << "\n";
             }
             return;
         }
