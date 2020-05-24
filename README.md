@@ -170,6 +170,8 @@ There is an Android client [snapdroid](https://github.com/badaix/snapdroid) avai
 
 ![Snapcast for Android](https://raw.githubusercontent.com/badaix/snapcast/master/doc/snapcast_android_scaled.png)
 
+An experimental WebApp is availble here: [Snapweb](https://github.com/badaix/snapweb)
+
 There is also an unofficial WebApp from @atoomic [atoomic/snapcast-volume-ui](https://github.com/atoomic/snapcast-volume-ui).
 This app lists all clients connected to a server and allows you to control individually the volume of each client.
 Once installed, you can use any mobile device, laptop, desktop, or browser.
