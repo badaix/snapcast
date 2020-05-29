@@ -74,7 +74,7 @@ void AlsaPlayer::setHardwareVolume(double volume, bool muted)
     try
     {
         int val = muted ? 0 : 1;
-        int err = snd_mixer_selem_set_playback_switch(elem_, SND_MIXER_SCHN_MONO, val);
+        int err = snd_mixer_selem_set_playback_switch_all(elem_, val);
         if (err < 0)
             LOG(ERROR, LOG_TAG) << "Failed to mute, error: " << snd_strerror(err) << "\n";
 
