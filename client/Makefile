@@ -44,7 +44,7 @@ endif
 
 CXXFLAGS += $(ADD_CFLAGS) -std=c++14 -Wall -Wextra -Wpedantic -Wno-unused-function -DBOOST_ERROR_CODE_HEADER_ONLY -DHAS_FLAC -DHAS_OGG -DHAS_OPUS -DVERSION=\"$(VERSION)\" -I. -I.. -I../common
 LDFLAGS  += $(ADD_LDFLAGS) -logg -lFLAC -lopus -lsoxr
-OBJ       = snapclient.o stream.o client_connection.o time_provider.o player/player.o player/file_player.o ecoder/pcm_decoder.o decoder/ogg_decoder.o decoder/flac_decoder.o decoder/opus_decoder.o controller.o ../common/sample_format.o
+OBJ       = snapclient.o stream.o client_connection.o time_provider.o player/player.o player/file_player.o decoder/pcm_decoder.o decoder/ogg_decoder.o decoder/flac_decoder.o decoder/opus_decoder.o controller.o ../common/sample_format.o
 
 
 ifneq (,$(TARGET))
