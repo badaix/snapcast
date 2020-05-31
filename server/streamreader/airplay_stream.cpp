@@ -240,9 +240,17 @@ void AirplayStream::pipeReadLine()
                                    << "\n";
                 wait(pipe_open_timer_, 2500ms, [this] { pipeReadLine(); });
             }
+            if (ec.value() == boost::asio::error::bad_descriptor)
+            {
+                // If shairport-sync has not finished setting up the pipe, bad file descriptor is returned. 
+                // retry in a few seconds
+		LOG(INFO, LOG_TAG) << "Waiting for metadata, retrying in 2500ms"
+                                   << "\n";
+                wait(pipe_open_timer_, 2500ms, [this] { pipeReadLine(); });
+            }
             else
             {
-                LOG(ERROR, LOG_TAG) << "Error while reading from metadata pipe: " << ec.message() << "\n";
+		LOG(ERROR, LOG_TAG) << "Error while reading from metadata pipe: " << ec.message() << "\n";
             }
             return;
         }
