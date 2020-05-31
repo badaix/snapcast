@@ -47,6 +47,7 @@
 #ifdef HAS_WASAPI
 #include "player/wasapi_player.h"
 #endif
+#include "player/file_player.hpp"
 
 #include "browseZeroConf/browse_mdns.hpp"
 #include "common/aixlog.hpp"
@@ -168,6 +169,9 @@ void Controller::getNextMessage()
                 if (!player_)
                     player_ = createPlayer<WASAPIPlayer>(settings_.player, "wasapi");
 #endif
+                if (!player_ && (settings_.player.player_name == "file"))
+                    player_ = createPlayer<FilePlayer>(settings_.player, "file");
+
                 if (!player_)
                     throw SnapException("No audio player support");
 

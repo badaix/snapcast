@@ -139,7 +139,9 @@ int main(int argc, char** argv)
         /*auto instanceValue =*/op.add<Value<size_t>>("i", "instance", "instance id", 1, &settings.instance);
         /*auto hostIdValue =*/op.add<Value<string>>("", "hostID", "unique host id", "", &settings.host_id);
 #if defined(HAS_OBOE) && defined(HAS_OPENSL)
-        op.add<Value<string>>("", "player", "audio backend", "", &settings.player.player_name);
+        op.add<Value<string>>("", "player", "audio backend (oboe, opensl)", "oboe", &settings.player.player_name);
+#else
+        op.add<Value<string>, Attribute::hidden>("", "player", "audio backend (<empty>, file)", "", &settings.player.player_name);
 #endif
 #ifdef HAS_SOXR
         auto sample_format = op.add<Value<string>>("", "sampleformat", "resample audio stream to <rate>:<bits>:<channels>", "");
