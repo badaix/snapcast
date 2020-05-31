@@ -212,7 +212,7 @@ void AlsaPlayer::initMixer()
     if (settings_.mixer.mode != ClientSettings::Mixer::Mode::hardware)
         return;
 
-    // std::lock_guard<std::mutex> lock(mutex_);
+    std::lock_guard<std::recursive_mutex> lock(mutex_);
     int err;
     if ((err = snd_ctl_open(&ctl_, mixer_device_.c_str(), SND_CTL_READONLY)) < 0)
         throw SnapException("Can't open control for " + mixer_device_ + ", error: " + snd_strerror(err));
@@ -365,14 +365,16 @@ void AlsaPlayer::initAlsa()
     //	snd_pcm_sw_params_set_stop_threshold(pcm_handle, swparams, frames_);
     snd_pcm_sw_params(handle_, swparams);
 
-    initMixer();
+    if (ctl_ == nullptr)
+        initMixer();
 }
 
 
-void AlsaPlayer::uninitAlsa()
+void AlsaPlayer::uninitAlsa(bool uninit_mixer)
 {
     std::lock_guard<std::recursive_mutex> lock(mutex_);
-    uninitMixer();
+    if (uninit_mixer)
+        uninitMixer();
 
     if (handle_ != nullptr)
     {
@@ -385,6 +387,7 @@ void AlsaPlayer::uninitAlsa()
 
 void AlsaPlayer::uninitMixer()
 {
+    std::lock_guard<std::recursive_mutex> lock(mutex_);
     if (sd_.is_open())
     {
         boost::system::error_code ec;
@@ -422,7 +425,7 @@ AlsaPlayer::~AlsaPlayer()
 void AlsaPlayer::stop()
 {
     Player::stop();
-    uninitAlsa();
+    uninitAlsa(true);
 }
 
 
@@ -467,7 +470,7 @@ void AlsaPlayer::worker()
         else if (wait_result < 0)
         {
             LOG(ERROR, LOG_TAG) << "ERROR. Can't wait for PCM to become ready: " << snd_strerror(wait_result) << "\n";
-            uninitAlsa();
+            uninitAlsa(true);
             continue;
         }
         else if (wait_result == 0)
@@ -531,7 +534,7 @@ void AlsaPlayer::worker()
             else if (pcm < 0)
             {
                 LOG(ERROR, LOG_TAG) << "ERROR. Can't write to PCM device: " << snd_strerror(pcm) << "\n";
-                uninitAlsa();
+                uninitAlsa(true);
             }
         }
         else
@@ -543,7 +546,7 @@ void AlsaPlayer::worker()
                 if ((handle_ != nullptr) && (chronos::getTickCount() - lastChunkTick > 5000))
                 {
                     LOG(NOTICE, LOG_TAG) << "No chunk received for 5000ms. Closing ALSA.\n";
-                    uninitAlsa();
+                    uninitAlsa(false);
                     stream_->clearChunks();
                 }
             }

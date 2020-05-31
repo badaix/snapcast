@@ -44,8 +44,12 @@ protected:
     bool needsThread() const override;
 
 private:
+    /// initialize alsa and the mixer (if neccessary)
     void initAlsa();
-    void uninitAlsa();
+    /// free alsa and optionally the mixer
+    /// @param uninit_mixer free the mixer
+    void uninitAlsa(bool uninit_mixer);
+
     void initMixer();
     void uninitMixer();
 
