@@ -230,7 +230,6 @@ void WASAPIPlayer::worker()
     hr = device->Activate(__uuidof(IAudioSessionManager), CLSCTX_INPROC_SERVER, NULL, (void**)&sessionManager);
     CHECK_HR(hr);
 
-    
 
     // Get the control interface for the process-specific audio
     // session with session GUID = GUID_NULL. This is the session
@@ -348,7 +347,7 @@ void WASAPIPlayer::worker()
             volCorrection_ = audioEventListener_->getVolume();
             // muteOverride = audioEventListener_->getMuted(); // use this for also applying audio mixer mute state
         }
-        
+
         // get audio device volume from IAudioEndpointVolume
         // float deviceVolume = audioEndpointVolumeCallback.getVolume(); // system volume (for this audio device)
         // bool deviceMuted = audioEndpointVolumeCallback.getMuted(); // system mute (for this audio device)
