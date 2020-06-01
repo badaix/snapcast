@@ -319,8 +319,7 @@ int main(int argc, char** argv)
             cout << "mixer can be one of 'software', " << (hw_mixer_supported ? "'hardware', " : "") << "'script', 'none'\n"
                  << "followed by optional parameters:\n"
                  << " * software[:poly[:<exponent>]|exp[:<base>]]\n"
-                 << (hw_mixer_supported ? " * hardware[:<mixer name>]\n":"")
-                 << " * script[:<script filename>]\n";
+                 << (hw_mixer_supported ? " * hardware[:<mixer name>]\n" : "") << " * script[:<script filename>]\n";
             exit(EXIT_SUCCESS);
         }
         else
