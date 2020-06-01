@@ -221,10 +221,6 @@ int main(int argc, char* argv[])
         else
             throw SnapException("Invalid log sink: " + settings.logging.sink);
 
-        // TODO: op vs conf
-        for (const auto& opt : conf.unknown_options())
-            LOG(WARNING) << "unknown configuration option: " << opt << "\n";
-
         if (!streamValue->is_set())
             settings.stream.pcmStreams.push_back(streamValue->value());
 
