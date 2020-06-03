@@ -239,7 +239,7 @@ bool BrowseBonjour::browse(const string& serviceName, mDNSResult& result, int /*
         runService(service);
     }
 
-    resultCollection.erase(std::remove_if(resultCollection.begin(), resultCollection.end(), [this](const mDNSResult& res) { return res.ip.empty(); }),
+    resultCollection.erase(std::remove_if(resultCollection.begin(), resultCollection.end(), [](const mDNSResult& res) { return res.ip.empty(); }),
                            resultCollection.end());
 
     if (resultCollection.empty())
