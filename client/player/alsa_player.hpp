@@ -66,7 +66,7 @@ private:
     std::string mixer_name_;
     std::string mixer_device_;
 
-    std::unique_ptr<pollfd> fd_;
+    std::unique_ptr<pollfd, std::function<void(pollfd*)>> fd_;
     std::vector<char> buffer_;
     snd_pcm_uframes_t frames_;
     boost::asio::posix::stream_descriptor sd_;

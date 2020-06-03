@@ -104,18 +104,21 @@ void AlsaPlayer::setHardwareVolume(double volume, bool muted)
     catch (const std::exception& e)
     {
         LOG(ERROR, LOG_TAG) << "Exception: " << e.what() << "\n";
+        uninitMixer();
     }
 }
 
 
 bool AlsaPlayer::getHardwareVolume(double& volume, bool& muted)
 {
-    long vol;
-    int err = 0;
-
-    std::lock_guard<std::recursive_mutex> lock(mutex_);
     try
     {
+        std::lock_guard<std::recursive_mutex> lock(mutex_);
+        if (elem_ == nullptr)
+            throw SnapException("Mixer not initialized");
+
+        long vol;
+        int err = 0;
         while (snd_mixer_handle_events(mixer_) > 0)
             this_thread::sleep_for(1us);
         long minv, maxv;
@@ -163,11 +166,15 @@ void AlsaPlayer::waitForEvent()
     sd_.async_wait(boost::asio::posix::stream_descriptor::wait_read, [this](const boost::system::error_code& ec) {
         if (ec)
         {
+            // TODO: fd is "Bad" after unplugging/plugging USB DAC, i.e. after init/uninit/init cycle
             LOG(DEBUG, LOG_TAG) << "waitForEvent error: " << ec.message() << "\n";
             return;
         }
 
         std::lock_guard<std::recursive_mutex> lock(mutex_);
+        if (ctl_ == nullptr)
+            return;
+
         unsigned short revents;
         snd_ctl_poll_descriptors_revents(ctl_, fd_.get(), 1, &revents);
         if (revents & POLLIN || (revents == 0))
@@ -212,15 +219,20 @@ void AlsaPlayer::initMixer()
     if (settings_.mixer.mode != ClientSettings::Mixer::Mode::hardware)
         return;
 
+    LOG(DEBUG, LOG_TAG) << "initMixer\n";
     std::lock_guard<std::recursive_mutex> lock(mutex_);
     int err;
     if ((err = snd_ctl_open(&ctl_, mixer_device_.c_str(), SND_CTL_READONLY)) < 0)
         throw SnapException("Can't open control for " + mixer_device_ + ", error: " + snd_strerror(err));
     if ((err = snd_ctl_subscribe_events(ctl_, 1)) < 0)
         throw SnapException("Can't subscribe for events for " + mixer_device_ + ", error: " + snd_strerror(err));
-    fd_ = std::make_unique<pollfd>();
+    fd_ = std::unique_ptr<pollfd, std::function<void(pollfd*)>>(new pollfd(), [](pollfd* p) {
+        close(p->fd);
+        delete p;
+    });
     err = snd_ctl_poll_descriptors(ctl_, fd_.get(), 1);
-    LOG(DEBUG, LOG_TAG) << "Filled " << err << " poll descriptors, poll descriptor count: " << snd_ctl_poll_descriptors_count(ctl_) << "\n";
+    LOG(DEBUG, LOG_TAG) << "Filled " << err << " poll descriptors, poll descriptor count: " << snd_ctl_poll_descriptors_count(ctl_) << ", fd: " << fd_->fd
+                        << "\n";
 
     snd_mixer_selem_id_t* sid;
     snd_mixer_selem_id_alloca(&sid);
@@ -387,14 +399,16 @@ void AlsaPlayer::uninitAlsa(bool uninit_mixer)
 
 void AlsaPlayer::uninitMixer()
 {
+    if (settings_.mixer.mode != ClientSettings::Mixer::Mode::hardware)
+        return;
+
+    LOG(DEBUG, LOG_TAG) << "uninitMixer\n";
     std::lock_guard<std::recursive_mutex> lock(mutex_);
     if (sd_.is_open())
     {
         boost::system::error_code ec;
         sd_.cancel(ec);
     }
-
-    // std::lock_guard<std::mutex> lock(mutex_);
     if (ctl_ != nullptr)
     {
         snd_ctl_close(ctl_);
@@ -405,6 +419,7 @@ void AlsaPlayer::uninitMixer()
         snd_mixer_close(mixer_);
         mixer_ = nullptr;
     }
+    fd_ = nullptr;
     elem_ = nullptr;
 }
 
