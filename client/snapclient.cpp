@@ -118,37 +118,35 @@ int main(int argc, char** argv)
         OptionParser op("Allowed options");
         auto helpSwitch = op.add<Switch>("", "help", "produce help message");
         auto groffSwitch = op.add<Switch, Attribute::hidden>("", "groff", "produce groff message");
-        op.add<Value<string>>("", "logsink", "log sink [null,system,stdout,stderr,file:<filename>]", settings.logging.sink, &settings.logging.sink);
-        auto logfilterOption = op.add<Value<string>>(
-            "", "logfilter", "log filter <tag>:<level>[,<tag>:<level>]* with tag = * or <log tag> and level = [trace,debug,info,notice,warning,error,fatal]",
-            settings.logging.filter);
         auto versionSwitch = op.add<Switch>("v", "version", "show version number");
+        op.add<Value<string>>("h", "host", "server hostname or ip address", "", &settings.server.host);
+        op.add<Value<size_t>>("p", "port", "server port", 1704, &settings.server.port);
+        op.add<Value<size_t>>("i", "instance", "instance id when running multiple instances on the same host", 1, &settings.instance);
+        op.add<Value<string>>("", "hostID", "unique host id, default is MAC address", "", &settings.host_id);
+
+// PCM device specific
 #if defined(HAS_ALSA) || defined(HAS_WASAPI)
         auto listSwitch = op.add<Switch>("l", "list", "list PCM devices");
         /*auto soundcardValue =*/op.add<Value<string>>("s", "soundcard", "index or name of the pcm device", "default", &pcm_device);
 #endif
-        auto metaStderr = op.add<Switch>("e", "mstderr", "send metadata to stderr");
-        /*auto hostValue =*/op.add<Value<string>>("h", "host", "server hostname or ip address", "", &settings.server.host);
-        /*auto portValue =*/op.add<Value<size_t>>("p", "port", "server port", 1704, &settings.server.port);
-#ifdef HAS_DAEMON
-        int processPriority(-3);
-        auto daemonOption = op.add<Implicit<int>>("d", "daemon", "daemonize, optional process priority [-20..19]", processPriority, &processPriority);
-        auto userValue = op.add<Value<string>>("", "user", "the user[:group] to run snapclient as when daemonized");
-#endif
         /*auto latencyValue =*/op.add<Value<int>>("", "latency", "latency of the PCM device", 0, &settings.player.latency);
-        /*auto instanceValue =*/op.add<Value<size_t>>("i", "instance", "instance id", 1, &settings.instance);
-        /*auto hostIdValue =*/op.add<Value<string>>("", "hostID", "unique host id", "", &settings.host_id);
+#ifdef HAS_SOXR
+        auto sample_format = op.add<Value<string>>("", "sampleformat", "resample audio stream to <rate>:<bits>:<channels>", "");
+#endif
+
+// audio backend
 #if defined(HAS_OBOE) && defined(HAS_OPENSL)
         op.add<Value<string>>("", "player", "audio backend (oboe, opensl)", "oboe", &settings.player.player_name);
 #else
         op.add<Value<string>, Attribute::hidden>("", "player", "audio backend (<empty>, file)", "", &settings.player.player_name);
 #endif
-#ifdef HAS_SOXR
-        auto sample_format = op.add<Value<string>>("", "sampleformat", "resample audio stream to <rate>:<bits>:<channels>", "");
-#endif
+
+// sharing mode
 #if defined(HAS_OBOE) || defined(HAS_WASAPI)
         auto sharing_mode = op.add<Value<string>>("", "sharingmode", "audio mode to use [shared|exclusive]", "shared");
 #endif
+
+        // mixer
         bool hw_mixer_supported = false;
 #if defined(HAS_ALSA)
         hw_mixer_supported = true;
@@ -158,6 +156,21 @@ int main(int argc, char** argv)
             mixer_mode = op.add<Value<string>>("", "mixer", "software|hardware|script|none|?[:<options>]", "software");
         else
             mixer_mode = op.add<Value<string>>("", "mixer", "software|script|none|?[:<options>]", "software");
+
+        auto metaStderr = op.add<Switch>("e", "mstderr", "send metadata to stderr");
+
+// daemon settings
+#ifdef HAS_DAEMON
+        int processPriority(-3);
+        auto daemonOption = op.add<Implicit<int>>("d", "daemon", "daemonize, optional process priority [-20..19]", processPriority, &processPriority);
+        auto userValue = op.add<Value<string>>("", "user", "the user[:group] to run snapclient as when daemonized");
+#endif
+
+        // logging
+        op.add<Value<string>>("", "logsink", "log sink [null,system,stdout,stderr,file:<filename>]", settings.logging.sink, &settings.logging.sink);
+        auto logfilterOption = op.add<Value<string>>(
+            "", "logfilter", "log filter <tag>:<level>[,<tag>:<level>]* with tag = * or <log tag> and level = [trace,debug,info,notice,warning,error,fatal]",
+            settings.logging.filter);
 
         try
         {
