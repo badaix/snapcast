@@ -17,9 +17,14 @@
 - Fix calling lsb_release multiple times (Issue #470)
 - Client: high CPU load and crash during playback (Issue #609)
 - Client: improved handling of USB audio disconnects (Issue #64)
-- Client: latency is forgotten (Issue #476, #588)
+- Client: latency is forgotten (Issue #476, #588, Snapdroid #11)
 - Client: fix segfault on mac when playback is paused (Issue #560)
+- Client: fix bonjour on mac reports empty IP (Issue #632)
+- Client: fix buzzing tone on Android (Issue #23, #24)
 - Server: fix crash if client disconnects during connect
+- Server: fix reading metadata from shairport-sync (Issue #624)
+- Server: fix crash on FreeBSD if settings.json is empty (Issue #620)
+- Readme: openWrt documentation (Issue #633)
 
 ### General
 
