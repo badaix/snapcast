@@ -65,6 +65,7 @@
 using namespace std;
 
 static constexpr auto LOG_TAG = "Controller";
+static constexpr auto TIME_SYNC_INTERVAL = 1s;
 
 Controller::Controller(boost::asio::io_context& io_context, const ClientSettings& settings, std::unique_ptr<MetadataAdapter> meta)
     : io_context_(io_context), timer_(io_context), settings_(settings), stream_(nullptr), decoder_(nullptr), player_(nullptr), meta_(std::move(meta)),
@@ -88,139 +89,138 @@ std::unique_ptr<Player> Controller::createPlayer(ClientSettings::Player& setting
 void Controller::getNextMessage()
 {
     clientConnection_->getNextMessage([this](const boost::system::error_code& ec, std::unique_ptr<msg::BaseMessage> response) {
-        if (!ec)
+        if (ec)
         {
-            if (response->type == message_type::kWireChunk)
-            {
-                if (stream_ && decoder_)
-                {
-                    // execute on the io_context to do the (costly) decoding on another thread (if more than one thread is used)
-                    // boost::asio::post(io_context_, [this, response = std::move(response)]() mutable {
-                    auto pcmChunk = msg::message_cast<msg::PcmChunk>(std::move(response));
-                    pcmChunk->format = sampleFormat_;
-                    // LOG(TRACE, LOG_TAG) << "chunk: " << pcmChunk->payloadSize << ", sampleFormat: " << sampleFormat_.toString() << "\n";
-                    if (decoder_->decode(pcmChunk.get()))
-                    {
-                        // LOG(TRACE, LOG_TAG) << ", decoded: " << pcmChunk->payloadSize << ", Duration: " << pcmChunk->durationMs() << ", sec: " <<
-                        // pcmChunk->timestamp.sec << ", usec: " << pcmChunk->timestamp.usec / 1000 << ", type: " << pcmChunk->type << "\n";
-                        stream_->addChunk(std::move(pcmChunk));
-                    }
-                    // });
-                }
-            }
-            else if (response->type == message_type::kServerSettings)
-            {
-                serverSettings_ = msg::message_cast<msg::ServerSettings>(std::move(response));
-                LOG(INFO, LOG_TAG) << "ServerSettings - buffer: " << serverSettings_->getBufferMs() << ", latency: " << serverSettings_->getLatency()
-                                   << ", volume: " << serverSettings_->getVolume() << ", muted: " << serverSettings_->isMuted() << "\n";
-                if (stream_ && player_)
-                {
-                    player_->setVolume(serverSettings_->getVolume() / 100., serverSettings_->isMuted());
-                    stream_->setBufferLen(std::max(0, serverSettings_->getBufferMs() - serverSettings_->getLatency() - settings_.player.latency));
-                }
-            }
-            else if (response->type == message_type::kCodecHeader)
-            {
-                headerChunk_ = msg::message_cast<msg::CodecHeader>(std::move(response));
-                decoder_.reset(nullptr);
-                stream_ = nullptr;
-                player_.reset(nullptr);
+            reconnect();
+            return;
+        }
 
-                if (headerChunk_->codec == "pcm")
-                    decoder_ = make_unique<decoder::PcmDecoder>();
+        if (response->type == message_type::kWireChunk)
+        {
+            if (stream_ && decoder_)
+            {
+                // execute on the io_context to do the (costly) decoding on another thread (if more than one thread is used)
+                // boost::asio::post(io_context_, [this, response = std::move(response)]() mutable {
+                auto pcmChunk = msg::message_cast<msg::PcmChunk>(std::move(response));
+                pcmChunk->format = sampleFormat_;
+                // LOG(TRACE, LOG_TAG) << "chunk: " << pcmChunk->payloadSize << ", sampleFormat: " << sampleFormat_.toString() << "\n";
+                if (decoder_->decode(pcmChunk.get()))
+                {
+                    // LOG(TRACE, LOG_TAG) << ", decoded: " << pcmChunk->payloadSize << ", Duration: " << pcmChunk->durationMs() << ", sec: " <<
+                    // pcmChunk->timestamp.sec << ", usec: " << pcmChunk->timestamp.usec / 1000 << ", type: " << pcmChunk->type << "\n";
+                    stream_->addChunk(std::move(pcmChunk));
+                }
+                // });
+            }
+        }
+        else if (response->type == message_type::kServerSettings)
+        {
+            serverSettings_ = msg::message_cast<msg::ServerSettings>(std::move(response));
+            LOG(INFO, LOG_TAG) << "ServerSettings - buffer: " << serverSettings_->getBufferMs() << ", latency: " << serverSettings_->getLatency()
+                               << ", volume: " << serverSettings_->getVolume() << ", muted: " << serverSettings_->isMuted() << "\n";
+            if (stream_ && player_)
+            {
+                player_->setVolume(serverSettings_->getVolume() / 100., serverSettings_->isMuted());
+                stream_->setBufferLen(std::max(0, serverSettings_->getBufferMs() - serverSettings_->getLatency() - settings_.player.latency));
+            }
+        }
+        else if (response->type == message_type::kCodecHeader)
+        {
+            headerChunk_ = msg::message_cast<msg::CodecHeader>(std::move(response));
+            decoder_.reset(nullptr);
+            stream_ = nullptr;
+            player_.reset(nullptr);
+
+            if (headerChunk_->codec == "pcm")
+                decoder_ = make_unique<decoder::PcmDecoder>();
 #if defined(HAS_OGG) && (defined(HAS_TREMOR) || defined(HAS_VORBIS))
-                else if (headerChunk_->codec == "ogg")
-                    decoder_ = make_unique<decoder::OggDecoder>();
+            else if (headerChunk_->codec == "ogg")
+                decoder_ = make_unique<decoder::OggDecoder>();
 #endif
 #if defined(HAS_FLAC)
-                else if (headerChunk_->codec == "flac")
-                    decoder_ = make_unique<decoder::FlacDecoder>();
+            else if (headerChunk_->codec == "flac")
+                decoder_ = make_unique<decoder::FlacDecoder>();
 #endif
 #if defined(HAS_OPUS)
-                else if (headerChunk_->codec == "opus")
-                    decoder_ = make_unique<decoder::OpusDecoder>();
+            else if (headerChunk_->codec == "opus")
+                decoder_ = make_unique<decoder::OpusDecoder>();
 #endif
-                else
-                    throw SnapException("codec not supported: \"" + headerChunk_->codec + "\"");
+            else
+                throw SnapException("codec not supported: \"" + headerChunk_->codec + "\"");
 
-                sampleFormat_ = decoder_->setHeader(headerChunk_.get());
-                LOG(INFO, LOG_TAG) << "Codec: " << headerChunk_->codec << ", sampleformat: " << sampleFormat_.toString() << "\n";
+            sampleFormat_ = decoder_->setHeader(headerChunk_.get());
+            LOG(INFO, LOG_TAG) << "Codec: " << headerChunk_->codec << ", sampleformat: " << sampleFormat_.toString() << "\n";
 
-                stream_ = make_shared<Stream>(sampleFormat_, settings_.player.sample_format);
-                stream_->setBufferLen(std::max(0, serverSettings_->getBufferMs() - serverSettings_->getLatency() - settings_.player.latency));
+            stream_ = make_shared<Stream>(sampleFormat_, settings_.player.sample_format);
+            stream_->setBufferLen(std::max(0, serverSettings_->getBufferMs() - serverSettings_->getLatency() - settings_.player.latency));
 
 #ifdef HAS_ALSA
-                if (!player_)
-                    player_ = createPlayer<AlsaPlayer>(settings_.player, "alsa");
+            if (!player_)
+                player_ = createPlayer<AlsaPlayer>(settings_.player, "alsa");
 #endif
 #ifdef HAS_OBOE
-                if (!player_)
-                    player_ = createPlayer<OboePlayer>(settings_.player, "oboe");
+            if (!player_)
+                player_ = createPlayer<OboePlayer>(settings_.player, "oboe");
 #endif
 #ifdef HAS_OPENSL
-                if (!player_)
-                    player_ = createPlayer<OpenslPlayer>(settings_.player, "opensl");
+            if (!player_)
+                player_ = createPlayer<OpenslPlayer>(settings_.player, "opensl");
 #endif
 #ifdef HAS_COREAUDIO
-                if (!player_)
-                    player_ = createPlayer<CoreAudioPlayer>(settings_.player, "coreaudio");
+            if (!player_)
+                player_ = createPlayer<CoreAudioPlayer>(settings_.player, "coreaudio");
 #endif
 #ifdef HAS_WASAPI
-                if (!player_)
-                    player_ = createPlayer<WASAPIPlayer>(settings_.player, "wasapi");
+            if (!player_)
+                player_ = createPlayer<WASAPIPlayer>(settings_.player, "wasapi");
 #endif
-                if (!player_ && (settings_.player.player_name == "file"))
-                    player_ = createPlayer<FilePlayer>(settings_.player, "file");
+            if (!player_ && (settings_.player.player_name == "file"))
+                player_ = createPlayer<FilePlayer>(settings_.player, "file");
 
-                if (!player_)
-                    throw SnapException("No audio player support");
+            if (!player_)
+                throw SnapException("No audio player support");
 
-                player_->setVolumeCallback([this](double volume, bool muted) {
-                    static double last_volume(-1);
-                    static bool last_muted(true);
-                    if ((volume != last_volume) || (last_muted != muted))
-                    {
-                        last_volume = volume;
-                        last_muted = muted;
-                        auto info = std::make_shared<msg::ClientInfo>();
-                        info->setVolume(static_cast<uint16_t>(volume * 100.));
-                        info->setMuted(muted);
-                        clientConnection_->send(info, [this](const boost::system::error_code& ec) {
-                            if (ec)
-                            {
-                                LOG(ERROR, LOG_TAG) << "Failed to send client info, error: " << ec.message() << "\n";
-                                reconnect();
-                                return;
-                            }
-                        });
-                    }
-                });
-                player_->start();
-                // Don't change the initial hardware mixer volume on the user's device.
-                // The player class will send the device's volume to the server instead
-                if (settings_.player.mixer.mode != ClientSettings::Mixer::Mode::hardware)
+            player_->setVolumeCallback([this](double volume, bool muted) {
+                static double last_volume(-1);
+                static bool last_muted(true);
+                if ((volume != last_volume) || (last_muted != muted))
                 {
-                    player_->setVolume(serverSettings_->getVolume() / 100., serverSettings_->isMuted());
+                    last_volume = volume;
+                    last_muted = muted;
+                    auto info = std::make_shared<msg::ClientInfo>();
+                    info->setVolume(static_cast<uint16_t>(volume * 100.));
+                    info->setMuted(muted);
+                    clientConnection_->send(info, [this](const boost::system::error_code& ec) {
+                        if (ec)
+                        {
+                            LOG(ERROR, LOG_TAG) << "Failed to send client info, error: " << ec.message() << "\n";
+                            reconnect();
+                            return;
+                        }
+                    });
                 }
-            }
-            else if (response->type == message_type::kStreamTags)
+            });
+            player_->start();
+            // Don't change the initial hardware mixer volume on the user's device.
+            // The player class will send the device's volume to the server instead
+            if (settings_.player.mixer.mode != ClientSettings::Mixer::Mode::hardware)
             {
-                if (meta_)
-                {
-                    auto stream_tags = msg::message_cast<msg::StreamTags>(std::move(response));
-                    meta_->push(stream_tags->msg);
-                }
+                player_->setVolume(serverSettings_->getVolume() / 100., serverSettings_->isMuted());
             }
-            else
+        }
+        else if (response->type == message_type::kStreamTags)
+        {
+            if (meta_)
             {
-                LOG(WARNING, LOG_TAG) << "Unexpected message received, type: " << response->type << "\n";
+                auto stream_tags = msg::message_cast<msg::StreamTags>(std::move(response));
+                meta_->push(stream_tags->msg);
             }
-            getNextMessage();
         }
         else
         {
-            reconnect();
+            LOG(WARNING, LOG_TAG) << "Unexpected message received, type: " << response->type << "\n";
         }
+        getNextMessage();
     });
 }
 
@@ -241,7 +241,7 @@ void Controller::sendTimeSyncMessage(int quick_syncs)
             TimeProvider::getInstance().setDiff(response->latency, response->received - response->sent);
         }
 
-        std::chrono::microseconds next = 1s;
+        std::chrono::microseconds next = TIME_SYNC_INTERVAL;
         if (quick_syncs > 0)
         {
             if (--quick_syncs == 0)

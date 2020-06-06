@@ -155,6 +155,7 @@ void ClientConnection::sendNext()
                              }));
 }
 
+
 void ClientConnection::send(const msg::message_ptr& message, const ResultHandler& handler)
 {
     strand_.post([this, message, handler]() {
