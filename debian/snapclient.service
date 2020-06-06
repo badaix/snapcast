@@ -9,8 +9,6 @@ EnvironmentFile=-/etc/default/snapclient
 ExecStart=/usr/bin/snapclient $SNAPCLIENT_OPTS
 User=snapclient
 Group=snapclient
-# very noisy on stdout
-StandardOutput=null
 Restart=on-failure
 
 [Install]
