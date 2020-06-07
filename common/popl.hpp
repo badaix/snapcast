@@ -767,8 +767,10 @@ inline void Value<T>::update_reference()
 {
     if (this->assign_to_)
     {
-        if (this->is_set() || default_)
-            *this->assign_to_ = value();
+        if (!this->is_set() && default_)
+            *this->assign_to_ = *default_;
+        else if (this->is_set())
+            *this->assign_to_ = values_.back();
     }
 }
 

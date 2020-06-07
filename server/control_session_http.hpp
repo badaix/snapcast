@@ -40,7 +40,7 @@ class ControlSessionHttp : public ControlSession, public std::enable_shared_from
 {
 public:
     /// ctor. Received message from the client are passed to MessageReceiver
-    ControlSessionHttp(ControlMessageReceiver* receiver, boost::asio::io_context& ioc, tcp::socket&& socket, const ServerSettings::HttpSettings& settings);
+    ControlSessionHttp(ControlMessageReceiver* receiver, boost::asio::io_context& ioc, tcp::socket&& socket, const ServerSettings::Http& settings);
     ~ControlSessionHttp() override;
     void start() override;
     void stop() override;
@@ -74,7 +74,7 @@ protected:
 protected:
     tcp::socket socket_;
     beast::flat_buffer buffer_;
-    ServerSettings::HttpSettings settings_;
+    ServerSettings::Http settings_;
     boost::asio::io_context::strand strand_;
     std::deque<std::string> messages_;
 };

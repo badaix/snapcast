@@ -99,7 +99,7 @@ std::string path_cat(boost::beast::string_view base, boost::beast::string_view p
 } // namespace
 
 ControlSessionHttp::ControlSessionHttp(ControlMessageReceiver* receiver, boost::asio::io_context& ioc, tcp::socket&& socket,
-                                       const ServerSettings::HttpSettings& settings)
+                                       const ServerSettings::Http& settings)
     : ControlSession(receiver), socket_(std::move(socket)), settings_(settings), strand_(ioc)
 {
     LOG(DEBUG) << "ControlSessionHttp\n";
