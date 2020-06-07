@@ -1,0 +1,2 @@
+START_SNAPCLIENT=true
+SNAPCLIENT_OPTS="--logging.sink=system"

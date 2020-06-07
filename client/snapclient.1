@@ -1,14 +1,14 @@
 .\"groff -Tascii -man snapclient.1
-.TH SNAPCLIENT 1 "December 2015"
+.TH SNAPCLIENT 1 "January 2020"
 .SH NAME
 snapclient - Snapcast client
 .SH SYNOPSIS
 \fBsnapclient\fR [\fIOPTION\fR]...
 .SH DESCRIPTION
-Snapcast is a multi-room client-server audio player, where all clients are
+Snapcast is a multiroom client-server audio player, where all clients are
 time synchronized with the server to play perfectly synced audio. It's not a
 standalone player, but an extension that turns your existing audio player into
-a Sonos-like multi-room solution.
+a Sonos-like multiroom solution.
 .br
 The server's audio input is a named pipe `/tmp/snapfifo`. All data that is fed
 into this file will be send to the connected clients. One of the most generic
@@ -25,29 +25,38 @@ show version number
 \fB-l, --list\fR
 list pcm devices
 .TP
-\fB-h, --host\fR
-server hostname or ip address
-.TP
-\fB-p, --port\fR
-server port
-.TP
-\fB-s, --soundcard\fR
+\fB-s, --soundcard arg (=default)\fR
 index or name of the soundcard
 .TP
-\fB-d, --daemon\fR
+\fB-e, --mstderr\fR
+send metadata to stderr
+.TP
+\fB-h, --host arg\fR
+server hostname or ip address
+.TP
+\fB-p, --port arg (=1704)\fR
+server port
+.TP
+\fB-d, --daemon [=arg(=-3)]\fR
 daemonize, optional process priority [-20..19]
 .TP
-\fB--user\fR
+\fB--user arg\fR
 the user[:group] to run snapclient as when daemonized
 .TP
-\fB--latency\fR
+\fB--latency arg (=0)\fR
 latency of the soundcard
+.TP
+\fB-i, --instance arg (=1)\fR
+instance id
+.TP
+\fB--hostID arg\fR
+unique host id
 .SH FILES
 .TP
 \fI/etc/default/snapclient\fR
 the daemon default configuration file
 .SH "COPYRIGHT"
-Copyright (C) 2014-2017 Johannes Pohl (johannes.pohl@badaix.de).
+Copyright (C) 2014-2020 Johannes Pohl (snapcast@badaix.de).
 License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>.
 This is free software: you are free to change and redistribute it.
 There is NO WARRANTY, to the extent permitted by law.

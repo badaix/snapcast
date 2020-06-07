@@ -2,8 +2,6 @@
 import sys
 import telnetlib
 import json
-import threading
-import time
 
 if len(sys.argv) < 3:
 	print("usage: control.py <SERVER HOST> [setVolume|setName]")
@@ -22,7 +20,6 @@ def doRequest( j, requestId ):
 			if jResponse['id'] == requestId:
 				print("recv: " + response)
 				return jResponse;
-	return;
 
 def setVolume(client, volume):
 	global requestId

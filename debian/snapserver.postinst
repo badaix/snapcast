@@ -1,0 +1,17 @@
+#!/bin/sh
+
+set -e
+
+USERNAME=snapserver
+HOMEDIR=/var/lib/snapserver
+
+if [ "$1" = configure ]; then
+  adduser --system --quiet --group --home $HOMEDIR --no-create-home --force-badname $USERNAME
+
+  if [ ! -d $HOMEDIR ]; then
+    mkdir -m 0750 $HOMEDIR
+    chown $USERNAME:$USERNAME $HOMEDIR
+  fi
+fi
+
+#DEBHELPER#

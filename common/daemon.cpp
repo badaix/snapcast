@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2017  Johannes Pohl
+    Copyright (C) 2014-2020  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -16,39 +16,36 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
-#include "daemon.h"
+#include "daemon.hpp"
 
-#include <sys/types.h>
-#include <sys/stat.h>
+#include "common/snap_exception.hpp"
+#include "common/str_compat.hpp"
+#include "common/utils.hpp"
+#include "common/utils/file_utils.hpp"
 #include <fcntl.h>
-#include <syslog.h>
-#include <unistd.h>
-#include <string.h>
-#include <stdlib.h>
-#include <pwd.h>
 #include <grp.h>
 #include <iostream>
-#include "common/snapException.h"
-#include "common/strCompat.h"
-#include "common/utils/file_utils.h"
-#include "common/utils.h"
+#include <pwd.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <syslog.h>
+#include <unistd.h>
 
 
-Daemon::Daemon(const std::string& user, const std::string& group, const std::string& pidfile) :
-	pidFilehandle_(-1),
-	user_(user), 
-	group_(group),
-	pidfile_(pidfile)
+Daemon::Daemon(const std::string& user, const std::string& group, const std::string& pidfile)
+    : pidFilehandle_(-1), user_(user), group_(group), pidfile_(pidfile)
 {
-	if (pidfile.empty() || pidfile.find('/') == std::string::npos)
-		throw SnapException("invalid pid file \"" + pidfile + "\"");
+    if (pidfile.empty() || pidfile.find('/') == std::string::npos)
+        throw SnapException("invalid pid file \"" + pidfile + "\"");
 }
 
 
 Daemon::~Daemon()
 {
-	if (pidFilehandle_ != -1)
-		close(pidFilehandle_);
+    if (pidFilehandle_ != -1)
+        close(pidFilehandle_);
 }
 
 
@@ -169,6 +166,3 @@ void Daemon::daemonize()
 	close(STDOUT_FILENO);
 	close(STDERR_FILENO);
 }
-
-
-

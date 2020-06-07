@@ -1,0 +1,2 @@
+START_SNAPSERVER=true
+SNAPSERVER_OPTS="--logging.sink=system"
