@@ -51,115 +51,118 @@ Daemon::~Daemon()
 
 void Daemon::daemonize()
 {
-    std::string pidfileDir(pidfile_.substr(0, pidfile_.find_last_of('/')));
-    utils::file::mkdirRecursive(pidfileDir.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+	std::string pidfileDir(pidfile_.substr(0, pidfile_.find_last_of('/')));
+	utils::file::mkdirRecursive(pidfileDir.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
 
-    /// Ensure only one copy
-    pidFilehandle_ = open(pidfile_.c_str(), O_RDWR | O_CREAT, 0644);
-    if (pidFilehandle_ == -1)
-    {
-        /// Couldn't open lock file
-        throw SnapException("Could not open PID lock file \"" + pidfile_ + "\"");
-    }
+	/// Ensure only one copy
+	pidFilehandle_ = open(pidfile_.c_str(), O_RDWR|O_CREAT, 0644);
+	if (pidFilehandle_ == -1 )
+	{
+		/// Couldn't open lock file
+		throw SnapException("Could not open PID lock file \"" + pidfile_ + "\"");
+	}
 
-    uid_t user_uid = (uid_t)-1;
-    gid_t user_gid = (gid_t)-1;
-    std::string user_name;
-    //#ifdef FREEBSD
-    //	bool had_group = false;
-    //#endif
+	uid_t user_uid = (uid_t)-1;
+	gid_t user_gid = (gid_t)-1;
+	std::string user_name;
+#ifdef FREEBSD
+	bool had_group = false;
+#endif
 
-    if (!user_.empty())
-    {
-        struct passwd* pwd = getpwnam(user_.c_str());
-        if (pwd == nullptr)
-            throw SnapException("no such user \"" + user_ + "\"");
-        user_uid = pwd->pw_uid;
-        user_gid = pwd->pw_gid;
-        user_name = strdup(user_.c_str());
-        /// this is needed by libs such as arts
-        setenv("HOME", pwd->pw_dir, true);
-    }
+	if (!user_.empty())
+	{
+		struct passwd *pwd = getpwnam(user_.c_str());
+		if (pwd == nullptr)
+			throw SnapException("no such user \"" + user_ + "\"");
+		user_uid = pwd->pw_uid;
+		user_gid = pwd->pw_gid;
+		user_name = strdup(user_.c_str());
+		/// this is needed by libs such as arts
+		setenv("HOME", pwd->pw_dir, true);
+	}
 
-    if (!group_.empty())
-    {
-        struct group* grp = getgrnam(group_.c_str());
-        if (grp == nullptr)
-            throw SnapException("no such group \"" + group_ + "\"");
-        user_gid = grp->gr_gid;
-        //#ifdef FREEBSD
-        //		had_group = true;
-        //#endif
-    }
+	if (!group_.empty()) 
+	{
+		struct group *grp = getgrnam(group_.c_str());
+		if (grp == nullptr)
+			throw SnapException("no such group \"" + group_ + "\"");
+		user_gid = grp->gr_gid;
+#ifdef FREEBSD
+		had_group = true;
+#endif
+	}
 
-    if (chown(pidfile_.c_str(), user_uid, user_gid) == -1)
-    {
-        /// Couldn't open lock file
-        throw SnapException("Could not chown PID lock file \"" + pidfile_ + "\"");
-    }
+	if (chown(pidfile_.c_str(), user_uid, user_gid) == -1)
+	{
+		/// Couldn't open lock file
+		throw SnapException("Could not chown PID lock file \"" + pidfile_ + "\"");
+	}
 
-    /// set gid
-    if (user_gid != (gid_t)-1 && user_gid != getgid() && setgid(user_gid) == -1)
-        throw SnapException("Failed to set group " + cpt::to_string((int)user_gid));
+	/// set gid
+	if (user_gid != (gid_t)-1 && user_gid != getgid() && setgid(user_gid) == -1)
+		throw SnapException("Failed to set group " + cpt::to_string((int)user_gid));
 
-    //#if defined(FREEBSD) && !defined(MACOS)
-    //#ifdef FREEBSD
-    /// init supplementary groups
-    /// (must be done before we change our uid)
-    /// no need to set the new user's supplementary groups if we are already this user
-    //	if (!had_group && user_uid != getuid() && initgroups(user_name, user_gid) == -1)
-    //		throw SnapException("Failed to set supplementary groups of user \"" + user + "\"");
-    //#endif
-    /// set uid
-    if (user_uid != (uid_t)-1 && user_uid != getuid() && setuid(user_uid) == -1)
-        throw SnapException("Failed to set user " + user_);
+//#if defined(FREEBSD) && !defined(MACOS)
+//#ifdef FREEBSD
+	/// init supplementary groups
+	/// (must be done before we change our uid)
+	/// no need to set the new user's supplementary groups if we are already this user
+//	if (!had_group && user_uid != getuid() && initgroups(user_name, user_gid) == -1)
+//		throw SnapException("Failed to set supplementary groups of user \"" + user + "\"");
+//#endif
+	/// set uid
+	if (user_uid != (uid_t)-1 && user_uid != getuid() && setuid(user_uid) == -1)
+		throw SnapException("Failed to set user " + user_);
 
-    /// Our process ID and Session ID
-    pid_t pid, sid;
+	/// Try to lock file
+	if (lockf(pidFilehandle_, F_TLOCK, 0) == -1)
+		throw SnapException("Could not lock PID lock file \"" + pidfile_ + "\"");
 
-    /// Fork off the parent process
-    pid = fork();
-    if (pid < 0)
-        exit(EXIT_FAILURE);
+	/// Our process ID and Session ID
+	pid_t pid, sid;
 
-    /// If we got a good PID, then we can exit the parent process.
-    if (pid > 0)
-        exit(EXIT_SUCCESS);
+	/// Fork off the parent process
+	pid = fork();
+	if (pid < 0)
+		exit(EXIT_FAILURE);
 
-    /// Change the file mode mask
-    umask(0);
+	/// If we got a good PID, then the parent process should only exit after
+	/// writing the pid else systemd is confused.
+	if (pid > 0)
+	{
+		char str[10];
+		/// Get and format PID
+		sprintf(str, "%d\n", pid);
 
-    /// Open any logs here
+		/// write pid to lockfile
+		if (write(pidFilehandle_, str, strlen(str)) != (int)strlen(str))
+			throw SnapException("Could not write PID to lock file \"" + pidfile_ + "\"");
 
-    /// Create a new SID for the child process
-    sid = setsid();
-    if (sid < 0)
-    {
-        /// Log the failure
-        exit(EXIT_FAILURE);
-    }
+		exit(EXIT_SUCCESS);
+	}
 
-    /// Change the current working directory
-    if ((chdir("/")) < 0)
-    {
-        /// Log the failure
-        exit(EXIT_FAILURE);
-    }
+	/// Change the file mode mask
+	umask(0);
 
-    /// Try to lock file
-    if (lockf(pidFilehandle_, F_TLOCK, 0) == -1)
-        throw SnapException("Could not lock PID lock file \"" + pidfile_ + "\". Is the daemon already running?");
+	/// Open any logs here
 
-    char str[10];
-    /// Get and format PID
-    sprintf(str, "%d\n", getpid());
+	/// Create a new SID for the child process
+	sid = setsid();
+	if (sid < 0)
+	{
+		/// Log the failure
+		exit(EXIT_FAILURE);
+	}
 
-    /// write pid to lockfile
-    if (write(pidFilehandle_, str, strlen(str)) != (int)strlen(str))
-        throw SnapException("Could not write PID to lock file \"" + pidfile_ + "\"");
+	/// Change the current working directory
+	if ((chdir("/")) < 0)
+	{
+		/// Log the failure
+		exit(EXIT_FAILURE);
+	}
 
-    /// Close out the standard file descriptors
-    close(STDIN_FILENO);
-    close(STDOUT_FILENO);
-    close(STDERR_FILENO);
+	/// Close out the standard file descriptors
+	close(STDIN_FILENO);
+	close(STDOUT_FILENO);
+	close(STDERR_FILENO);
 }
