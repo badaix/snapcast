@@ -284,11 +284,11 @@ int main(int argc, char** argv)
                     group = user_group[1];
             }
             daemon = std::make_unique<Daemon>(user, group, pidFile);
-            LOG(NOTICE, LOG_TAG) << "daemonizing" << std::endl;
-            daemon->daemonize();
             processPriority = std::min(std::max(-20, processPriority), 19);
             if (processPriority != 0)
                 setpriority(PRIO_PROCESS, 0, processPriority);
+            LOG(NOTICE, LOG_TAG) << "daemonizing" << std::endl;
+            daemon->daemonize();
             LOG(NOTICE, LOG_TAG) << "daemon started" << std::endl;
         }
 #endif
