@@ -10,7 +10,7 @@
 # snapserver_enable=YES
 # Add snapserver_opts=<options> to configure command line arguments
 
-snapserver_opts="-d"
+snapserver_opts="-d --logging.sink=system"
 
 . /etc/rc.subr
 

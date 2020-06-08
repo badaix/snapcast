@@ -7,6 +7,7 @@
 		<key>ProgramArguments</key>
 		<array>
 			<string>/usr/local/bin/snapserver</string>
+			<string>--logging.sink=system</string>
 <!--			<string>-d</string> -->
 		</array>
 		<key>RunAtLoad</key>
