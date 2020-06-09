@@ -6,7 +6,7 @@
 	url = https://gitlab.xiph.org/xiph/ogg.git
 [submodule "externals/tremor"]
 	path = externals/tremor
-	url = https://github.com/badaix/tremor.git
+	url = https://gitlab.xiph.org/xiph/tremor.git
 [submodule "externals/opus"]
 	path = externals/opus
 	url = https://gitlab.xiph.org/xiph/opus.git
