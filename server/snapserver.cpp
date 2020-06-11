@@ -63,56 +63,56 @@ int main(int argc, char* argv[])
 #ifdef HAS_DAEMON
         int processPriority(0);
         auto daemonOption = op.add<Implicit<int>>("d", "daemon", "Daemonize\noptional process priority [-20..19]", 0, &processPriority);
-        auto userValue = op.add<Value<string>>("", "user", "the user[:group] to run snapserver as when daemonized", "");
 #endif
-
         op.add<Value<string>>("c", "config", "path to the configuration file", config_file, &config_file);
 
-        // debug settings
-        OptionParser conf("");
-        op.add<Value<string>>("", "logging.sink", "log sink [null,system,stdout,stderr,file:<filename>]", settings.logging.sink, &settings.logging.sink);
-        auto logfilterOption = op.add<Value<string>>(
-            "", "logging.filter",
-            "log filter <tag>:<level>[,<tag>:<level>]* with tag = * or <log tag> and level = [trace,debug,info,notice,warning,error,fatal]",
-            settings.logging.filter);
+        OptionParser conf("Overridable config file options");
 
-        // stream settings
-        conf.add<Value<size_t>>("", "stream.port", "Server port", settings.stream.port, &settings.stream.port);
-        auto streamValue = conf.add<Value<string>>(
-            "", "stream.stream", "URI of the PCM input stream.\nFormat: TYPE://host/path?name=NAME\n[&codec=CODEC]\n[&sampleformat=SAMPLEFORMAT]", pcmStream,
-            &pcmStream);
-        int num_threads = -1;
-        conf.add<Value<int>>("", "server.threads", "number of server threads", num_threads, &num_threads);
-        std::string pid_file = "/var/run/snapserver/pid";
-        conf.add<Value<string>>("", "server.pidfile", "pid file when running as daemon", pid_file, &pid_file);
-        std::string data_dir;
-        conf.add<Implicit<string>>("", "server.datadir", "directory where persistent data is stored", data_dir, &data_dir);
-
-        conf.add<Value<string>>("", "stream.sampleformat", "Default sample format", settings.stream.sampleFormat, &settings.stream.sampleFormat);
-        conf.add<Value<string>>("", "stream.codec", "Default transport codec\n(flac|ogg|opus|pcm)[:options]\nType codec:? to get codec specific options",
-                                settings.stream.codec, &settings.stream.codec);
-        // deprecated: stream_buffer, use chunk_ms instead
-        conf.add<Value<size_t>>("", "stream.stream_buffer", "Default stream read chunk size [ms]", settings.stream.streamChunkMs,
-                                &settings.stream.streamChunkMs);
-        conf.add<Value<size_t>>("", "stream.chunk_ms", "Default stream read chunk size [ms]", settings.stream.streamChunkMs, &settings.stream.streamChunkMs);
-        conf.add<Value<int>>("", "stream.buffer", "Buffer [ms]", settings.stream.bufferMs, &settings.stream.bufferMs);
-        conf.add<Value<bool>>("", "stream.send_to_muted", "Send audio to muted clients", settings.stream.sendAudioToMutedClients,
-                              &settings.stream.sendAudioToMutedClients);
-        auto stream_bind_to_address = conf.add<Value<string>>("", "stream.bind_to_address", "address for the server to listen on",
-                                                              settings.stream.bind_to_address.front(), &settings.stream.bind_to_address[0]);
+        // server settings
+        conf.add<Value<int>>("", "server.threads", "number of server threads", settings.server.threads, &settings.server.threads);
+        conf.add<Value<string>>("", "server.pidfile", "pid file when running as daemon", settings.server.pid_file, &settings.server.pid_file);
+        conf.add<Value<string>>("", "server.user", "the user to run as when daemonized", settings.server.user, &settings.server.user);
+        conf.add<Implicit<string>>("", "server.group", "the group to run as when daemonized", settings.server.group, &settings.server.group);
+        conf.add<Implicit<string>>("", "server.datadir", "directory where persistent data is stored", settings.server.data_dir, &settings.server.data_dir);
 
         // HTTP RPC settings
         conf.add<Value<bool>>("", "http.enabled", "enable HTTP Json RPC (HTTP POST and websockets)", settings.http.enabled, &settings.http.enabled);
-        conf.add<Value<size_t>>("", "http.port", "which port the server should listen to", settings.http.port, &settings.http.port);
+        conf.add<Value<size_t>>("", "http.port", "which port the server should listen on", settings.http.port, &settings.http.port);
         auto http_bind_to_address = conf.add<Value<string>>("", "http.bind_to_address", "address for the server to listen on",
                                                             settings.http.bind_to_address.front(), &settings.http.bind_to_address[0]);
         conf.add<Implicit<string>>("", "http.doc_root", "serve a website from the doc_root location", settings.http.doc_root, &settings.http.doc_root);
 
         // TCP RPC settings
         conf.add<Value<bool>>("", "tcp.enabled", "enable TCP Json RPC)", settings.tcp.enabled, &settings.tcp.enabled);
-        conf.add<Value<size_t>>("", "tcp.port", "which port the server should listen to", settings.tcp.port, &settings.tcp.port);
+        conf.add<Value<size_t>>("", "tcp.port", "which port the server should listen on", settings.tcp.port, &settings.tcp.port);
         auto tcp_bind_to_address = conf.add<Value<string>>("", "tcp.bind_to_address", "address for the server to listen on",
                                                            settings.tcp.bind_to_address.front(), &settings.tcp.bind_to_address[0]);
+
+        // stream settings
+        auto stream_bind_to_address = conf.add<Value<string>>("", "stream.bind_to_address", "address for the server to listen on",
+                                                              settings.stream.bind_to_address.front(), &settings.stream.bind_to_address[0]);
+        conf.add<Value<size_t>>("", "stream.port", "which port the server should listen on", settings.stream.port, &settings.stream.port);
+        auto streamValue = conf.add<Value<string>>(
+            "", "stream.stream", "URI of the PCM input stream.\nFormat: TYPE://host/path?name=NAME\n[&codec=CODEC]\n[&sampleformat=SAMPLEFORMAT]", pcmStream,
+            &pcmStream);
+
+        conf.add<Value<string>>("", "stream.sampleformat", "Default sample format", settings.stream.sampleFormat, &settings.stream.sampleFormat);
+        conf.add<Value<string>>("", "stream.codec", "Default transport codec\n(flac|ogg|opus|pcm)[:options]\nType codec:? to get codec specific options",
+                                settings.stream.codec, &settings.stream.codec);
+        // deprecated: stream_buffer, use chunk_ms instead
+        conf.add<Value<size_t>>("", "stream.stream_buffer", "Default stream read chunk size [ms], deprecated, use stream.chunk_ms instead",
+                                settings.stream.streamChunkMs, &settings.stream.streamChunkMs);
+        conf.add<Value<size_t>>("", "stream.chunk_ms", "Default stream read chunk size [ms]", settings.stream.streamChunkMs, &settings.stream.streamChunkMs);
+        conf.add<Value<int>>("", "stream.buffer", "Buffer [ms]", settings.stream.bufferMs, &settings.stream.bufferMs);
+        conf.add<Value<bool>>("", "stream.send_to_muted", "Send audio to muted clients", settings.stream.sendAudioToMutedClients,
+                              &settings.stream.sendAudioToMutedClients);
+
+        // logging settings
+        conf.add<Value<string>>("", "logging.sink", "log sink [null,system,stdout,stderr,file:<filename>]", settings.logging.sink, &settings.logging.sink);
+        auto logfilterOption = conf.add<Value<string>>(
+            "", "logging.filter",
+            "log filter <tag>:<level>[,<tag>:<level>]* with tag = * or <log tag> and level = [trace,debug,info,notice,warning,error,fatal]",
+            settings.logging.filter);
 
         try
         {
@@ -140,7 +140,7 @@ int main(int argc, char* argv[])
         }
         catch (const std::invalid_argument& e)
         {
-            LOG(ERROR) << "Exception: " << e.what() << std::endl;
+            cerr << "Exception: " << e.what() << std::endl;
             cout << "\n" << op << "\n";
             exit(EXIT_FAILURE);
         }
@@ -221,9 +221,6 @@ int main(int argc, char* argv[])
         else
             throw SnapException("Invalid log sink: " + settings.logging.sink);
 
-        for (const auto& opt : conf.unknown_options())
-            LOG(WARNING) << "unknown configuration option: " << opt << "\n";
-
         if (!streamValue->is_set())
             settings.stream.pcmStreams.push_back(streamValue->value());
 
@@ -237,35 +234,23 @@ int main(int argc, char* argv[])
         std::unique_ptr<Daemon> daemon;
         if (daemonOption->is_set())
         {
-            string user = "";
-            string group = "";
+            if (settings.server.user.empty())
+                std::invalid_argument("user must not be empty");
 
-            if (userValue->is_set())
-            {
-                if (userValue->value().empty())
-                    std::invalid_argument("user must not be empty");
+            if (settings.server.data_dir.empty())
+                settings.server.data_dir = "/var/lib/snapserver";
+            Config::instance().init(settings.server.data_dir, settings.server.user, settings.server.group);
 
-                vector<string> user_group = utils::string::split(userValue->value(), ':');
-                user = user_group[0];
-                if (user_group.size() > 1)
-                    group = user_group[1];
-            }
-            if (data_dir.empty())
-                data_dir = "/var/lib/snapserver";
-            Config::instance().init(data_dir, user, group);
-            daemon.reset(new Daemon(user, group, pid_file));
-            LOG(NOTICE) << "daemonizing" << std::endl;
-            daemon->daemonize();
-            if (processPriority < -20)
-                processPriority = -20;
-            else if (processPriority > 19)
-                processPriority = 19;
+            daemon = std::make_unique<Daemon>(settings.server.user, settings.server.group, settings.server.pid_file);
+            processPriority = std::min(std::max(-20, processPriority), 19);
             if (processPriority != 0)
                 setpriority(PRIO_PROCESS, 0, processPriority);
+            LOG(NOTICE) << "daemonizing" << std::endl;
+            daemon->daemonize();
             LOG(NOTICE) << "daemon started" << std::endl;
         }
         else
-            Config::instance().init(data_dir);
+            Config::instance().init(settings.server.data_dir);
 #else
         Config::instance().init();
 #endif
@@ -302,9 +287,9 @@ int main(int argc, char* argv[])
         auto streamServer = std::make_unique<StreamServer>(io_context, settings);
         streamServer->start();
 
-        if (num_threads < 0)
-            num_threads = std::max(2, std::min(4, static_cast<int>(std::thread::hardware_concurrency())));
-        LOG(INFO) << "number of threads: " << num_threads << ", hw threads: " << std::thread::hardware_concurrency() << "\n";
+        if (settings.server.threads < 0)
+            settings.server.threads = std::max(2, std::min(4, static_cast<int>(std::thread::hardware_concurrency())));
+        LOG(INFO) << "number of threads: " << settings.server.threads << ", hw threads: " << std::thread::hardware_concurrency() << "\n";
 
         // Construct a signal set registered for process termination.
         boost::asio::signal_set signals(io_context, SIGHUP, SIGINT, SIGTERM);
@@ -312,12 +297,12 @@ int main(int argc, char* argv[])
             if (!ec)
                 LOG(INFO) << "Received signal " << signal << ": " << strsignal(signal) << "\n";
             else
-                LOG(INFO) << "Failed to wait for signal: " << ec << "\n";
+                LOG(INFO) << "Failed to wait for signal, error: " << ec.message() << "\n";
             io_context.stop();
         });
 
         std::vector<std::thread> threads;
-        for (int n = 0; n < num_threads; ++n)
+        for (int n = 0; n < settings.server.threads; ++n)
             threads.emplace_back([&] { io_context.run(); });
 
         io_context.run();

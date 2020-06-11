@@ -220,7 +220,7 @@ void OggEncoder::initEncoder()
     vorbis_comment_init(&vc_);
     vorbis_comment_add_tag(&vc_, "TITLE", "SnapStream");
     vorbis_comment_add_tag(&vc_, "VERSION", VERSION);
-    vorbis_comment_add_tag(&vc_, "SAMPLE_FORMAT", sampleFormat_.getFormat().c_str());
+    vorbis_comment_add_tag(&vc_, "SAMPLE_FORMAT", sampleFormat_.toString().c_str());
 
     /* set up the analysis state and auxiliary encoding storage */
     vorbis_analysis_init(&vd_, &vi_);

@@ -43,14 +43,14 @@ using acceptor_ptr = std::unique_ptr<tcp::acceptor>;
 class ControlServer : public ControlMessageReceiver
 {
 public:
-    ControlServer(boost::asio::io_context& io_context, const ServerSettings::TcpSettings& tcp_settings, const ServerSettings::HttpSettings& http_settings,
+    ControlServer(boost::asio::io_context& io_context, const ServerSettings::Tcp& tcp_settings, const ServerSettings::Http& http_settings,
                   ControlMessageReceiver* controlMessageReceiver = nullptr);
     virtual ~ControlServer();
 
     void start();
     void stop();
 
-    /// Send a message to all connceted clients
+    /// Send a message to all connected clients
     void send(const std::string& message, const ControlSession* excludeSession = nullptr);
 
     /// Clients call this when they receive a message. Implementation of MessageReceiver::onMessageReceived
@@ -70,8 +70,8 @@ private:
     std::vector<acceptor_ptr> acceptor_http_;
 
     boost::asio::io_context& io_context_;
-    ServerSettings::TcpSettings tcp_settings_;
-    ServerSettings::HttpSettings http_settings_;
+    ServerSettings::Tcp tcp_settings_;
+    ServerSettings::Http http_settings_;
     ControlMessageReceiver* controlMessageReceiver_;
 };
 

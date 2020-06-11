@@ -26,7 +26,7 @@ SCRIPTNAME=/etc/init.d/$NAME
 
 # Read configuration variable file if it is present
 [ -r /etc/default/$NAME ] && . /etc/default/$NAME
-SNAPCLIENT_OPTS="--daemon $SNAPCLIENT_OPTS"
+SNAPCLIENT_OPTS="--daemon --logsink=system --user $USERNAME:$USERNAME $SNAPCLIENT_OPTS"
 
 if [ "$START_SNAPCLIENT" != "true" ] ; then
   exit 0

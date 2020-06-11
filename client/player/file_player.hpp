@@ -16,38 +16,31 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
-#ifndef OBOE_PLAYER_HPP
-#define OBOE_PLAYER_HPP
-
-#include <oboe/LatencyTuner.h>
-#include <oboe/Oboe.h>
+#ifndef FILE_PLAYER_HPP
+#define FILE_PLAYER_HPP
 
 #include "player.hpp"
 
-typedef int (*AndroidAudioCallback)(short* buffer, int num_samples);
 
-
-/// OpenSL Audio Player
-/**
- * Player implementation for Oboe
- */
-class OboePlayer : public Player, public oboe::AudioStreamCallback
+/// File Player
+/// Used for testing and doesn't even write the received audio to file at the moment,
+/// but just discards it
+class FilePlayer : public Player
 {
 public:
-    OboePlayer(boost::asio::io_context& io_context, const ClientSettings::Player& settings, std::shared_ptr<Stream> stream);
-    virtual ~OboePlayer();
+    FilePlayer(boost::asio::io_context& io_context, const ClientSettings::Player& settings, std::shared_ptr<Stream> stream);
+    virtual ~FilePlayer();
 
     void start() override;
     void stop() override;
 
 protected:
-    oboe::DataCallbackResult onAudioReady(oboe::AudioStream* oboeStream, void* audioData, int32_t numFrames) override;
-    double getCurrentOutputLatencyMillis() const;
-
+    void requestAudio();
+    void loop();
     bool needsThread() const override;
-    oboe::ManagedStream out_stream_;
-
-    std::unique_ptr<oboe::LatencyTuner> mLatencyTuner;
+    boost::asio::steady_timer timer_;
+    std::vector<char> buffer_;
+    std::chrono::time_point<std::chrono::steady_clock> next_request_;
 };
 
 

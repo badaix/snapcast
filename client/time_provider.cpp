@@ -21,6 +21,7 @@
 
 #include <chrono>
 
+static constexpr auto LOG_TAG = "TimeProvider";
 
 TimeProvider::TimeProvider() : diffToServer_(0)
 {
@@ -47,7 +48,7 @@ void TimeProvider::setDiffToServer(double ms)
     /// clear diffBuffer if last update is older than a minute
     if (!diffBuffer_.empty() && (diff > 60s))
     {
-        LOG(INFO) << "Last time sync older than a minute. Clearing time buffer\n";
+        LOG(INFO, LOG_TAG) << "Last time sync older than a minute. Clearing time buffer\n";
         diffToServer_ = static_cast<chronos::usec::rep>(ms * 1000);
         diffBuffer_.clear();
     }
@@ -55,8 +56,8 @@ void TimeProvider::setDiffToServer(double ms)
 
     diffBuffer_.add(static_cast<chronos::usec::rep>(ms * 1000));
     diffToServer_ = diffBuffer_.median();
-    // LOG(INFO) << "setDiffToServer: " << ms << ", diff: " << diffToServer_ / 1000000 << " s, " << (diffToServer_ / 1000) % 1000 << "." << diffToServer_ % 1000
-    // << " ms\n";
+    // LOG(INFO, LOG_TAG) << "setDiffToServer: " << ms << ", diff: " << diffToServer_ / 1000000 << " s, " << (diffToServer_ / 1000) % 1000 << "." <<
+    // diffToServer_ % 1000 << " ms\n";
 }
 
 /*

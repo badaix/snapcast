@@ -35,7 +35,7 @@ typedef int (*AndroidAudioCallback)(short* buffer, int num_samples);
 class OpenslPlayer : public Player
 {
 public:
-    OpenslPlayer(const PcmDevice& pcmDevice, std::shared_ptr<Stream> stream);
+    OpenslPlayer(boost::asio::io_context& io_context, const ClientSettings::Player& settings, std::shared_ptr<Stream> stream);
     virtual ~OpenslPlayer();
 
     void start() override;
@@ -47,7 +47,7 @@ protected:
     void initOpensl();
     void uninitOpensl();
 
-    void worker() override;
+    bool needsThread() const override;
     void throwUnsuccess(const std::string& phase, const std::string& what, SLresult result);
     std::string resultToString(SLresult result) const;
 

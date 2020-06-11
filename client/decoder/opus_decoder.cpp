@@ -32,6 +32,7 @@ namespace decoder
 /// Passing in a duration of less than 10 ms (480 samples at 48 kHz) will prevent the encoder from using the LPC or hybrid modes.
 static constexpr int const_max_frame_size = 2880;
 
+static constexpr auto LOG_TAG = "OpusDecoder";
 
 OpusDecoder::OpusDecoder() : Decoder(), dec_(nullptr)
 {
@@ -56,7 +57,7 @@ bool OpusDecoder::decode(msg::PcmChunk* chunk)
         if (pcm_.size() < const_max_frame_size * sample_format_.channels())
         {
             pcm_.resize(pcm_.size() * 2);
-            LOG(INFO) << "OPUS encoding buffer too small, resizing to " << pcm_.size() / sample_format_.channels() << " samples per channel\n";
+            LOG(DEBUG, LOG_TAG) << "OPUS encoding buffer too small, resizing to " << pcm_.size() / sample_format_.channels() << " samples per channel\n";
         }
         else
             break;
@@ -64,12 +65,13 @@ bool OpusDecoder::decode(msg::PcmChunk* chunk)
 
     if (frame_size < 0)
     {
-        LOG(ERROR) << "Failed to decode chunk: " << opus_strerror(frame_size) << ", IN size:  " << chunk->payloadSize << ", OUT size: " << pcm_.size() << '\n';
+        LOG(ERROR, LOG_TAG) << "Failed to decode chunk: " << opus_strerror(frame_size) << ", IN size:  " << chunk->payloadSize << ", OUT size: " << pcm_.size()
+                            << '\n';
         return false;
     }
     else
     {
-        LOG(DEBUG) << "Decoded chunk: size " << chunk->payloadSize << " bytes, decoded " << frame_size << " samples" << '\n';
+        LOG(DEBUG, LOG_TAG) << "Decoded chunk: size " << chunk->payloadSize << " bytes, decoded " << frame_size << " samples" << '\n';
 
         // copy encoded data to chunk
         chunk->payloadSize = frame_size * sample_format_.channels() * sizeof(opus_int16);
@@ -101,7 +103,7 @@ SampleFormat OpusDecoder::setHeader(msg::CodecHeader* chunk)
     memcpy(&channels, chunk->payload + 10, sizeof(channels));
 
     sample_format_.setFormat(SWAP_32(rate), SWAP_16(bits), SWAP_16(channels));
-    LOG(DEBUG) << "Opus sampleformat: " << sample_format_.getFormat() << "\n";
+    LOG(DEBUG, LOG_TAG) << "Opus sampleformat: " << sample_format_.toString() << "\n";
 
     // create the decoder
     int error;

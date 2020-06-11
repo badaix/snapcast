@@ -232,10 +232,10 @@ void AirplayStream::pipeReadLine()
     boost::asio::async_read_until(*pipe_fd_, streambuf_pipe_, delimiter, [this, delimiter](const std::error_code& ec, std::size_t bytes_transferred) {
         if (ec)
         {
-            if (ec.value() == boost::asio::error::eof)
+            if ((ec.value() == boost::asio::error::eof) || (ec.value() == boost::asio::error::bad_descriptor))
             {
                 // For some reason, EOF is returned until the first metadata is written to the pipe.
-                // Is this a boost bug?
+                // If shairport-sync has not finished setting up the pipe, bad file descriptor is returned.
                 LOG(INFO, LOG_TAG) << "Waiting for metadata, retrying in 2500ms"
                                    << "\n";
                 wait(pipe_open_timer_, 2500ms, [this] { pipeReadLine(); });

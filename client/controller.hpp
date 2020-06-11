@@ -19,31 +19,17 @@
 #ifndef CONTROLLER_H
 #define CONTROLLER_H
 
+#include "client_connection.hpp"
+#include "client_settings.hpp"
 #include "decoder/decoder.hpp"
 #include "message/message.hpp"
 #include "message/server_settings.hpp"
 #include "message/stream_tags.hpp"
+#include "metadata.hpp"
+#include "player/player.hpp"
+#include "stream.hpp"
 #include <atomic>
 #include <thread>
-#ifdef HAS_ALSA
-#include "player/alsa_player.hpp"
-#endif
-#ifdef HAS_OPENSL
-#include "player/opensl_player.hpp"
-#endif
-#ifdef HAS_OBOE
-#include "player/oboe_player.hpp"
-#endif
-#ifdef HAS_COREAUDIO
-#include "player/coreaudio_player.hpp"
-#endif
-#ifdef WINDOWS
-#include "player/wasapi_player.h"
-#endif
-#include "client_connection.hpp"
-#include "client_settings.hpp"
-#include "metadata.hpp"
-#include "stream.hpp"
 
 using namespace std::chrono_literals;
 
@@ -54,29 +40,29 @@ using namespace std::chrono_literals;
  * Decodes audio (message_type::kWireChunk) and feeds PCM to the audio stream buffer
  * Does timesync with the server
  */
-class Controller : public MessageReceiver
+class Controller
 {
 public:
-    Controller(const ClientSettings& settings, std::unique_ptr<MetadataAdapter> meta);
+    Controller(boost::asio::io_context& io_context, const ClientSettings& settings, std::unique_ptr<MetadataAdapter> meta);
     void start();
-    void run();
-    void stop();
-
-    /// Implementation of MessageReceiver.
-    /// ClientConnection passes messages from the server through these callbacks
-    void onMessageReceived(ClientConnection* connection, const msg::BaseMessage& baseMessage, char* buffer) override;
-
-    /// Implementation of MessageReceiver.
-    /// Used for async exception reporting
-    void onException(ClientConnection* connection, std::exception_ptr exception) override;
+    // void stop();
 
 private:
+    using MdnsHandler = std::function<void(const boost::system::error_code& ec, const std::string& host, uint16_t port)>;
     void worker();
-    bool sendTimeSyncMessage(const std::chrono::milliseconds& after = 1000ms);
+    void reconnect();
+    void browseMdns(const MdnsHandler& handler);
+
+    template <typename PlayerType>
+    std::unique_ptr<Player> createPlayer(ClientSettings::Player& settings, const std::string& player_name);
+
+    void getNextMessage();
+    void sendTimeSyncMessage(int quick_syncs);
+
+    boost::asio::io_context& io_context_;
+    boost::asio::steady_timer timer_;
     ClientSettings settings_;
     std::string meta_callback_;
-    std::atomic<bool> active_;
-    std::thread controllerThread_;
     SampleFormat sampleFormat_;
     std::unique_ptr<ClientConnection> clientConnection_;
     std::shared_ptr<Stream> stream_;
@@ -85,9 +71,6 @@ private:
     std::unique_ptr<MetadataAdapter> meta_;
     std::unique_ptr<msg::ServerSettings> serverSettings_;
     std::unique_ptr<msg::CodecHeader> headerChunk_;
-    std::mutex receiveMutex_;
-
-    std::exception_ptr async_exception_;
 };
 
 

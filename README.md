@@ -43,6 +43,16 @@ For Debian (and Debian-based systems, such as Ubuntu, Linux Mint, ElementaryOS) 
 
 e.g. for Raspberry Pi `snapclient_0.x.x_armhf.deb`, for laptops `snapclient_0.x.x_amd64.deb`
 
+##### using apt 1.1 or later
+
+    sudo apt install </path/to/snapclient_0.x.x_armhf.deb>
+
+or
+
+    sudo apt install </path/to/snapserver_0.x.x_armhf.deb>
+
+##### using dpkg
+
 Install the package:
 
     sudo dpkg -i snapclient_0.x.x_armhf.deb

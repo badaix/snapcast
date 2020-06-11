@@ -99,7 +99,7 @@ std::string path_cat(boost::beast::string_view base, boost::beast::string_view p
 } // namespace
 
 ControlSessionHttp::ControlSessionHttp(ControlMessageReceiver* receiver, boost::asio::io_context& ioc, tcp::socket&& socket,
-                                       const ServerSettings::HttpSettings& settings)
+                                       const ServerSettings::Http& settings)
     : ControlSession(receiver), socket_(std::move(socket)), settings_(settings), strand_(ioc)
 {
     LOG(DEBUG) << "ControlSessionHttp\n";
@@ -313,8 +313,8 @@ void ControlSessionHttp::sendAsync(const std::string& message)
     if (!ws_)
         return;
 
-    strand_.post([ this, self = shared_from_this(), message ]() {
-        messages_.emplace_back(message);
+    strand_.post([ this, self = shared_from_this(), msg = message ]() {
+        messages_.push_back(std::move(msg));
         if (messages_.size() > 1)
         {
             LOG(DEBUG) << "HTTP session outstanding async_writes: " << messages_.size() << "\n";
@@ -329,7 +329,7 @@ void ControlSessionHttp::send_next()
     if (!ws_)
         return;
 
-    auto message = messages_.front();
+    const std::string& message = messages_.front();
     ws_->async_write(boost::asio::buffer(message),
                      boost::asio::bind_executor(strand_, [ this, self = shared_from_this() ](std::error_code ec, std::size_t length) {
                          messages_.pop_front();

@@ -19,11 +19,15 @@
 #ifndef PLAYER_H
 #define PLAYER_H
 
+#include "client_settings.hpp"
 #include "common/aixlog.hpp"
 #include "common/endian.hpp"
-#include "pcm_device.hpp"
 #include "stream.hpp"
+
+#include <boost/asio.hpp>
+
 #include <atomic>
+#include <functional>
 #include <string>
 #include <thread>
 #include <vector>
@@ -35,22 +39,70 @@
  */
 class Player
 {
+    using volume_callback = std::function<void(double volume, bool muted)>;
+
 public:
-    Player(const PcmDevice& pcmDevice, std::shared_ptr<Stream> stream);
+    Player(boost::asio::io_context& io_context, const ClientSettings::Player& settings, std::shared_ptr<Stream> stream);
     virtual ~Player();
 
     /// Set audio volume in range [0..1]
-    virtual void setVolume(double volume);
-    virtual void setMute(bool mute);
+    /// @param volume the volume on range [0..1]
+    /// @param muted muted or not
+    virtual void setVolume(double volume, bool mute);
+
+    /// Called on start, before the first audio sample is sent or any other function is called.
+    /// In case of hardware mixer, it will call getVolume and notify the server about the current volume
     virtual void start();
+    /// Called on stop
     virtual void stop();
+    /// Sets the hardware volume change callback
+    void setVolumeCallback(const volume_callback& callback)
+    {
+        onVolumeChanged_ = callback;
+    }
 
 protected:
-    virtual void worker() = 0;
+    /// will be run in a thread if needsThread is true
+    virtual void worker();
+    /// @return true if the worker function should be started in a thread
+    virtual bool needsThread() const = 0;
+
+    /// get the hardware mixer volume
+    /// @param[out] volume the volume on range [0..1]
+    /// @param[out] muted muted or not
+    /// @return success or not
+    virtual bool getHardwareVolume(double& volume, bool& muted);
+
+    /// set the hardware mixer volume
+    /// @param volume the volume on range [0..1]
+    /// @param muted muted or not
+    virtual void setHardwareVolume(double volume, bool muted);
 
     void setVolume_poly(double volume, double exp);
     void setVolume_exp(double volume, double base);
 
+    void adjustVolume(char* buffer, size_t frames);
+
+    /// Notify the server about hardware volume changes
+    /// @param volume the volume in range [0..1]
+    /// @param muted if muted or not
+    void notifyVolumeChange(double volume, bool muted) const
+    {
+        if (onVolumeChanged_)
+            onVolumeChanged_(volume, muted);
+    }
+
+    boost::asio::io_context& io_context_;
+    std::atomic<bool> active_;
+    std::shared_ptr<Stream> stream_;
+    std::thread playerThread_;
+    ClientSettings::Player settings_;
+    double volume_;
+    bool muted_;
+    double volCorrection_;
+    volume_callback onVolumeChanged_;
+
+private:
     template <typename T>
     void adjustVolume(char* buffer, size_t count, double volume)
     {
@@ -58,16 +110,6 @@ protected:
         for (size_t n = 0; n < count; ++n)
             bufferT[n] = endian::swap<T>(static_cast<T>(endian::swap<T>(bufferT[n]) * volume));
     }
-
-    void adjustVolume(char* buffer, size_t frames);
-
-    std::atomic<bool> active_;
-    std::shared_ptr<Stream> stream_;
-    std::thread playerThread_;
-    PcmDevice pcmDevice_;
-    double volume_;
-    bool muted_;
-    double volCorrection_;
 };
 
 

@@ -65,9 +65,9 @@ void Daemon::daemonize()
     uid_t user_uid = (uid_t)-1;
     gid_t user_gid = (gid_t)-1;
     std::string user_name;
-    //#ifdef FREEBSD
-    //	bool had_group = false;
-    //#endif
+    // #ifdef FREEBSD
+    //     bool had_group = false;
+    // #endif
 
     if (!user_.empty())
     {
@@ -87,9 +87,9 @@ void Daemon::daemonize()
         if (grp == nullptr)
             throw SnapException("no such group \"" + group_ + "\"");
         user_gid = grp->gr_gid;
-        //#ifdef FREEBSD
-        //		had_group = true;
-        //#endif
+        // #ifdef FREEBSD
+        //         had_group = true;
+        // #endif
     }
 
     if (chown(pidfile_.c_str(), user_uid, user_gid) == -1)

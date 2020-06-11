@@ -1,5 +1,40 @@
 # Snapcast changelog
 
+## Version 0.20.0
+
+### Features
+
+- Client: Windows support (Issue #24)
+- Client: add hardware mixer (Issue #318)
+- Client: add "script" and "none" mixer (Issue #302)
+- Client: add sharingmode for audio device (if supported)
+- Logging: configurable sink and filters (Issue #30, #561, #122, #559)
+- Librespot: add option "disable-audio-cache=[false|true]"
+
+### Bugfixes
+
+- Fix build failure on FreeBSD (Issue #565)
+- Fix calling lsb_release multiple times (Issue #470)
+- Client: high CPU load and crash during playback (Issue #609, #628)
+- Client: improved handling of USB audio disconnects (Issue #64)
+- Client: latency is forgotten (Issue #476, #588, Snapdroid #11)
+- Client: fix segfault on mac when playback is paused (Issue #560)
+- Client: fix bonjour on mac reports empty IP (Issue #632)
+- Client: fix buzzing tone on Android (Issue #23, #24)
+- Server: fix crash if client disconnects during connect
+- Server: fix reading metadata from shairport-sync (Issue #624)
+- Server: fix crash on FreeBSD if settings.json is empty (Issue #620)
+- Server: fix warning about unknown command line options (Issue #635)
+- Readme: openWrt documentation (Issue #633)
+- Fix setting the daemon's process priority (PR #448)
+
+### General
+
+- Client: use less threads and thus less ressources
+- Update links to xiph externals (Issue #637, PR #616)
+
+_Johannes Pohl <snapcast@badaix.de>  Sat, 13 Jun 2020 00:13:37 +0200_
+
 ## Version 0.19.0
 
 ### Features

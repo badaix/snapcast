@@ -37,14 +37,16 @@
 class CoreAudioPlayer : public Player
 {
 public:
-    CoreAudioPlayer(const PcmDevice& pcmDevice, std::shared_ptr<Stream> stream);
+    CoreAudioPlayer(boost::asio::io_context& io_context, const ClientSettings::Player& settings, std::shared_ptr<Stream> stream);
     virtual ~CoreAudioPlayer();
 
     void playerCallback(AudioQueueRef queue, AudioQueueBufferRef bufferRef);
     static std::vector<PcmDevice> pcm_list(void);
 
 protected:
-    virtual void worker();
+    void worker() override;
+    bool needsThread() const override;
+
     void initAudioQueue();
     void uninitAudioQueue(AudioQueueRef queue);
 

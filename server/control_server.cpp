@@ -32,8 +32,8 @@ using namespace std;
 using json = nlohmann::json;
 
 
-ControlServer::ControlServer(boost::asio::io_context& io_context, const ServerSettings::TcpSettings& tcp_settings,
-                             const ServerSettings::HttpSettings& http_settings, ControlMessageReceiver* controlMessageReceiver)
+ControlServer::ControlServer(boost::asio::io_context& io_context, const ServerSettings::Tcp& tcp_settings, const ServerSettings::Http& http_settings,
+                             ControlMessageReceiver* controlMessageReceiver)
     : io_context_(io_context), tcp_settings_(tcp_settings), http_settings_(http_settings), controlMessageReceiver_(controlMessageReceiver)
 {
 }

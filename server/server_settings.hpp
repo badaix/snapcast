@@ -24,7 +24,16 @@
 
 struct ServerSettings
 {
-    struct HttpSettings
+    struct Server
+    {
+        int threads{-1};
+        std::string pid_file{"/var/run/snapserver/pid"};
+        std::string user{"snapserver"};
+        std::string group{""};
+        std::string data_dir{""};
+    };
+
+    struct Http
     {
         bool enabled{true};
         size_t port{1780};
@@ -32,14 +41,14 @@ struct ServerSettings
         std::string doc_root{""};
     };
 
-    struct TcpSettings
+    struct Tcp
     {
         bool enabled{true};
         size_t port{1705};
         std::vector<std::string> bind_to_address{{"0.0.0.0"}};
     };
 
-    struct StreamSettings
+    struct Stream
     {
         size_t port{1704};
         std::vector<std::string> pcmStreams;
@@ -57,9 +66,10 @@ struct ServerSettings
         std::string filter{"*:info"};
     };
 
-    HttpSettings http;
-    TcpSettings tcp;
-    StreamSettings stream;
+    Server server;
+    Http http;
+    Tcp tcp;
+    Stream stream;
     Logging logging;
 };
 

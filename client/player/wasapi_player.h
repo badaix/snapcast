@@ -18,15 +18,16 @@
 
 #ifndef WASAPI_PLAYER_H
 #define WASAPI_PLAYER_H
-#include "client_settings.hpp"
 #include "player.hpp"
 #include <audiopolicy.h>
+#include <endpointvolume.h>
 
 class AudioSessionEventListener : public IAudioSessionEvents
 {
     LONG _cRef;
 
     float volume_ = 1.f;
+    bool muted_ = false;
 
 public:
     AudioSessionEventListener() : _cRef(1)
@@ -36,6 +37,11 @@ public:
     float getVolume()
     {
         return volume_;
+    }
+
+    bool getMuted()
+    {
+        return muted_;
     }
 
     ~AudioSessionEventListener()
@@ -90,19 +96,93 @@ public:
     HRESULT STDMETHODCALLTYPE OnSessionDisconnected(AudioSessionDisconnectReason DisconnectReason);
 };
 
+
+class AudioEndpointVolumeCallback : public IAudioEndpointVolumeCallback
+{
+    LONG _cRef;
+    float volume_ = 1.f;
+    bool muted_ = false;
+
+public:
+    AudioEndpointVolumeCallback() : _cRef(1)
+    {
+    }
+
+    ~AudioEndpointVolumeCallback()
+    {
+    }
+
+    float getVolume()
+    {
+        return volume_;
+    }
+
+    bool getMuted()
+    {
+        return muted_;
+    }
+
+    // IUnknown methods -- AddRef, Release, and QueryInterface
+
+    ULONG STDMETHODCALLTYPE AddRef()
+    {
+        return InterlockedIncrement(&_cRef);
+    }
+
+    ULONG STDMETHODCALLTYPE Release()
+    {
+        ULONG ulRef = InterlockedDecrement(&_cRef);
+        if (0 == ulRef)
+        {
+            delete this;
+        }
+        return ulRef;
+    }
+
+    HRESULT STDMETHODCALLTYPE QueryInterface(REFIID riid, VOID** ppvInterface)
+    {
+        if (IID_IUnknown == riid)
+        {
+            AddRef();
+            *ppvInterface = (IUnknown*)this;
+        }
+        else if (__uuidof(IAudioEndpointVolumeCallback) == riid)
+        {
+            AddRef();
+            *ppvInterface = (IAudioEndpointVolumeCallback*)this;
+        }
+        else
+        {
+            *ppvInterface = NULL;
+            return E_NOINTERFACE;
+        }
+
+        return S_OK;
+    }
+
+    // Callback method for endpoint-volume-change notifications.
+
+    HRESULT STDMETHODCALLTYPE OnNotify(PAUDIO_VOLUME_NOTIFICATION_DATA pNotify);
+};
+
 class WASAPIPlayer : public Player
 {
 public:
-    WASAPIPlayer(const PcmDevice& pcmDevice, std::shared_ptr<Stream> stream, ClientSettings::SharingMode mode);
+    WASAPIPlayer(boost::asio::io_context& io_context, const ClientSettings::Player& settings, std::shared_ptr<Stream> stream);
     virtual ~WASAPIPlayer();
 
     static std::vector<PcmDevice> pcm_list(void);
 
 protected:
     virtual void worker();
+    virtual bool needsThread() const override
+    {
+        return true;
+    }
 
 private:
     AudioSessionEventListener* audioEventListener_;
+    IAudioEndpointVolume* audioEndpointListener_;
     ClientSettings::SharingMode mode_;
 };
 

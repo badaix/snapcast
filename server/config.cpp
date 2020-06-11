@@ -90,7 +90,7 @@ void Config::init(const std::string& root_directory, const std::string& user, co
     try
     {
         ifstream ifs(filename_, std::ifstream::in);
-        if (ifs.good())
+        if (ifs.good() && (ifs.peek() != std::ifstream::traits_type::eof()))
         {
             json j;
             ifs >> j;
@@ -101,8 +101,8 @@ void Config::init(const std::string& root_directory, const std::string& user, co
                 {
                     GroupPtr group = make_shared<Group>();
                     group->fromJson(jGroup);
-                    //					if (client->id.empty() || getClientInfo(client->id))
-                    //						continue;
+                    // if (client->id.empty() || getClientInfo(client->id))
+                    //     continue;
                     groups.push_back(group);
                 }
             }
