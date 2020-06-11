@@ -15,7 +15,7 @@
 
 - Fix build failure on FreeBSD (Issue #565)
 - Fix calling lsb_release multiple times (Issue #470)
-- Client: high CPU load and crash during playback (Issue #609)
+- Client: high CPU load and crash during playback (Issue #609, #628)
 - Client: improved handling of USB audio disconnects (Issue #64)
 - Client: latency is forgotten (Issue #476, #588, Snapdroid #11)
 - Client: fix segfault on mac when playback is paused (Issue #560)
@@ -24,13 +24,16 @@
 - Server: fix crash if client disconnects during connect
 - Server: fix reading metadata from shairport-sync (Issue #624)
 - Server: fix crash on FreeBSD if settings.json is empty (Issue #620)
+- Server: fix warning about unknown command line options (Issue #635)
 - Readme: openWrt documentation (Issue #633)
+- Fix setting the daemon's process priority (PR #448)
 
 ### General
 
 - Client: use less threads and thus less ressources
+- Update links to xiph externals (Issue #637, PR #616)
 
-_Johannes Pohl <snapcast@badaix.de>  TODO, 14 May 2020 00:13:37 +0200_
+_Johannes Pohl <snapcast@badaix.de>  Sat, 13 Jun 2020 00:13:37 +0200_
 
 ## Version 0.19.0
 
