@@ -465,7 +465,8 @@ void AlsaPlayer::worker()
             {
                 initAlsa();
                 // set the hardware volume. It might have changed when we were not initialized
-                setHardwareVolume(volume_, muted_);
+                if (settings_.mixer.mode == ClientSettings::Mixer::Mode::hardware)
+                    setHardwareVolume(volume_, muted_);
             }
             catch (const std::exception& e)
             {
