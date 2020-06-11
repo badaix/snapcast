@@ -26,7 +26,7 @@ SCRIPTNAME=/etc/init.d/$NAME
 
 # Read configuration variable file if it is present
 [ -r /etc/default/$NAME ] && . /etc/default/$NAME
-SNAPSERVER_OPTS="--daemon --logging.sink=system $SNAPSERVER_OPTS"
+SNAPSERVER_OPTS="--daemon --logging.sink=system --server.datadir=$USERNAME $SNAPSERVER_OPTS"
 
 if [ "$START_SNAPSERVER" != "true" ] ; then
   exit 0
