@@ -145,7 +145,7 @@ The server configuration is done in `/etc/snapserver.conf`. Different streams ca
 
 The pipe stream (`stream = pipe`) will per default create the pipe. Sometimes your audio source might insist in creating the pipe itself. So the pipe creation mode can by changed to "not create, but only read mode", using the `mode` option set to `create` or `read`:
 
-    stream = pipe:///tmp/snapfifo?name=Radio&mode=read"
+    stream = pipe:///tmp/snapfifo?name=Radio&mode=read
 
 ## Test
 
