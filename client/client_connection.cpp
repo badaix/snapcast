@@ -62,7 +62,7 @@ void ClientConnection::connect(const ResultHandler& handler)
 {
     tcp::resolver::query query(server_.host, cpt::to_string(server_.port), boost::asio::ip::resolver_query_base::numeric_service);
     boost::system::error_code ec;
-    LOG(INFO, LOG_TAG) << "Resolving host IP\n";
+    LOG(INFO, LOG_TAG) << "Resolving host IP for: " << server_.host << "\n";
     auto iterator = resolver_.resolve(query, ec);
     if (ec)
     {
@@ -81,7 +81,6 @@ void ClientConnection::connect(const ResultHandler& handler)
     }
     LOG(NOTICE, LOG_TAG) << "Connected to " << socket_.remote_endpoint().address().to_string() << endl;
     handler(ec);
-// getNextMessage();
 
 #if 0
     resolver_.async_resolve(query, host_, cpt::to_string(port_), [this, handler](const boost::system::error_code& ec, tcp::resolver::results_type results) {
@@ -206,8 +205,8 @@ void ClientConnection::getNextMessage(const MessageHandler<msg::BaseMessage>& ha
                                 base_message_.deserialize(buffer_.data());
                                 tv t;
                                 base_message_.received = t;
-                                // LOG(DEBUG, LOG_TAG) << "getNextMessage: " << base_message_.type << ", size: " << base_message_.size
-                                //                     << ", id: " << base_message_.id << ", refers: " << base_message_.refersTo << "\n";
+                                LOG(TRACE, LOG_TAG) << "getNextMessage: " << base_message_.type << ", size: " << base_message_.size
+                                                    << ", id: " << base_message_.id << ", refers: " << base_message_.refersTo << "\n";
                                 if (base_message_.type > message_type::kLast)
                                 {
                                     LOG(ERROR, LOG_TAG) << "unknown message type received: " << base_message_.type << ", size: " << base_message_.size << "\n";
@@ -238,13 +237,15 @@ void ClientConnection::getNextMessage(const MessageHandler<msg::BaseMessage>& ha
                                         }
 
                                         auto response = msg::factory::createMessage(base_message_, buffer_.data());
-                                        for (const auto& request : pendingRequests_)
+                                        for (auto iter = pendingRequests_.begin(); iter != pendingRequests_.end(); ++iter)
                                         {
+                                            auto request = *iter;
                                             if (auto req = request.lock())
                                             {
                                                 if (req->id() == base_message_.refersTo)
                                                 {
                                                     req->setValue(std::move(response));
+                                                    pendingRequests_.erase(iter);
                                                     getNextMessage(handler);
                                                     return;
                                                 }

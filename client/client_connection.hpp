@@ -57,34 +57,47 @@ public:
         timer_.cancel();
     }
 
+    /// Set the response for the pending request and passes it to the handler
+    /// @param value the response message
     void setValue(std::unique_ptr<msg::BaseMessage> value)
     {
-        timer_.cancel();
-        if (handler_)
-            handler_({}, std::move(value));
+        boost::asio::post(strand_, [this, self = shared_from_this(), val = std::move(value)]() mutable {
+            timer_.cancel();
+            if (handler_)
+                handler_({}, std::move(val));
+        });
     }
 
+    /// @return the id of the request
     uint16_t id() const
     {
         return id_;
     }
 
+    /// Start the timer for the request
+    /// @param timeout the timeout to wait for the reception of the response
     void startTimer(const chronos::usec& timeout)
     {
         timer_.expires_after(timeout);
-        timer_.async_wait(boost::asio::bind_executor(strand_, [ this, self = shared_from_this() ](boost::system::error_code ec) {
+        timer_.async_wait(boost::asio::bind_executor(strand_, [this, self = shared_from_this()](boost::system::error_code ec) {
             if (!handler_)
                 return;
             if (!ec)
             {
+                // !ec => expired => timeout
                 handler_(boost::asio::error::timed_out, nullptr);
                 handler_ = nullptr;
             }
             else if (ec != boost::asio::error::operation_aborted)
+            {
+                // ec != aborted => not cancelled (in setValue)
+                //   => should not happen, but who knows => pass the error to the handler
                 handler_(ec, nullptr);
+            }
         }));
     }
 
+    /// Needed to put the requests in a container
     bool operator<(const PendingRequest& other) const
     {
         return (id_ < other.id());
