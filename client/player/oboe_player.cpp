@@ -61,7 +61,7 @@ OboePlayer::OboePlayer(boost::asio::io_context& io_context, const ClientSettings
                       //->setFramesPerCallback((8 * stream->getFormat().rate) / 1000)
                       //->setFramesPerCallback(2 * oboe::DefaultStreamValues::FramesPerBurst)
                       //->setFramesPerCallback(960) // 2*192)
-                      ->openManagedStream(out_stream_);
+                      ->openStream(out_stream_);
     LOG(INFO, LOG_TAG) << "BufferSizeInFrames: " << out_stream_->getBufferSizeInFrames() << ", FramesPerBurst: " << out_stream_->getFramesPerBurst() << "\n";
     if (result != oboe::Result::OK)
         LOG(ERROR, LOG_TAG) << "Error building AudioStream: " << oboe::convertToText(result) << "\n";

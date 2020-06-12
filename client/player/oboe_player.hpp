@@ -45,7 +45,7 @@ protected:
     double getCurrentOutputLatencyMillis() const;
 
     bool needsThread() const override;
-    oboe::ManagedStream out_stream_;
+    std::shared_ptr<oboe::AudioStream> out_stream_;
 
     std::unique_ptr<oboe::LatencyTuner> mLatencyTuner;
 };
