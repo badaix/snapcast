@@ -34,21 +34,28 @@ endif
 ifndef ARCH
 	$(error ARCH is not set ("arm" or "aarch64" or "x86"))
 endif
+
+	$(eval TOOLCHAIN:=$(NDK_DIR)/toolchains/llvm/prebuilt/linux-x86_64)
+
 ifeq ($(ARCH), x86)
 	$(eval CPPFLAGS:=-DLITTLE_ENDIAN=1234 -DBIG_ENDIAN=4321 -DBYTE_ORDER=LITTLE_ENDIAN)
-	$(eval PROGRAM_PREFIX:=$(NDK_DIR)/bin/i686-linux-android-)
+	$(eval TARGET:=x86_64-linux-android)
+	$(eval API:=21)
 else ifeq ($(ARCH), arm)
 	$(eval CPPFLAGS:=-U_ARM_ASSEM_)
-	$(eval PROGRAM_PREFIX:=$(NDK_DIR)/bin/arm-linux-androideabi-)
+	$(eval TARGET:=armv7a-linux-androideabi)
+	$(eval API:=16)
 else ifeq ($(ARCH), aarch64)
 	$(eval CPPFLAGS:=-U_ARM_ASSEM_ -DLITTLE_ENDIAN=1234 -DBIG_ENDIAN=4321 -DBYTE_ORDER=LITTLE_ENDIAN)
-	$(eval PROGRAM_PREFIX:=$(NDK_DIR)/bin/aarch64-linux-android-)
+	$(eval TARGET:=aarch64-linux-android)
+	$(eval API:=21)
 else
 	$(error ARCH must be "arm" or "aarch64" or "x86")
 endif
-	$(eval CC:=$(PROGRAM_PREFIX)clang)
-	$(eval CXX:=$(PROGRAM_PREFIX)clang++)
-	$(eval CPPFLAGS:=-I$(NDK_DIR)/include $(CPPFLAGS))
+	$(eval CC:=$(TOOLCHAIN)/bin/$(TARGET)$(API)-clang)
+	$(eval CXX:=$(TOOLCHAIN)/bin/$(TARGET)$(API)-clang++)
+	$(eval SYSROOT:=$(TOOLCHAIN)/sysroot/$(TARGET))
+	$(eval CPPFLAGS:=-I$(TOOLCHAIN)/sysroot/usr/include -I$(SYSROOT)/usr/local/include $(CPPFLAGS))
 
 flac: check-env
 	@cd flac; \
@@ -56,7 +63,7 @@ flac: check-env
 	export CXX="$(CXX)"; \
 	export CPPFLAGS="$(CPPFLAGS)"; \
 	./autogen.sh; \
-	./configure --host=$(ARCH) --disable-ogg --prefix=$(NDK_DIR)/usr/local/; \
+	./configure --host=$(ARCH) --disable-ogg --prefix=$(SYSROOT)/usr/local/; \
 	make; \
 	make install; \
 	make clean;
@@ -67,7 +74,7 @@ ogg: check-env
 	export CXX="$(CXX)"; \
 	export CPPFLAGS="$(CPPFLAGS)"; \
 	./autogen.sh; \
-	./configure --host=$(ARCH) --prefix=$(NDK_DIR)/usr/local/; \
+	./configure --host=$(ARCH) --prefix=$(SYSROOT)/usr/local/; \
 	make; \
 	make install; \
 	make clean;
@@ -78,7 +85,7 @@ opus: check-env
 	export CXX="$(CXX)"; \
 	export CPPFLAGS="$(CPPFLAGS)"; \
 	./autogen.sh; \
-	./configure --host=$(ARCH) --prefix=$(NDK_DIR)/usr/local/; \
+	./configure --host=$(ARCH) --prefix=$(SYSROOT)/usr/local/; \
 	make; \
 	make install; \
 	make clean;
@@ -89,7 +96,7 @@ tremor:	check-env
 	export CXX="$(CXX)"; \
 	export CPPFLAGS="$(CPPFLAGS)"; \
 	./autogen.sh; \
-	./configure --host=$(ARCH) --prefix=$(NDK_DIR)/usr/local/ --with-ogg=$(NDK_DIR)/usr/local/; \
+	./configure --host=$(ARCH) --prefix=$(SYSROOT)/usr/local/ --with-ogg=$(SYSROOT)/usr/local/; \
 	make; \
 	make install; \
 	make clean; \
@@ -124,7 +131,7 @@ oboe: check-env
 	cd build; \
 	cmake ..; \
 	make; \
-	make DESTDIR=$(NDK_DIR) install; \
+	make DESTDIR=$(SYSROOT) install; \
 	make clean; \
 	cd ..; \
 	rm -rf build;
@@ -138,7 +145,7 @@ soxr: check-env
 	cd build; \
 	cmake -DBUILD_SHARED_LIBS=OFF -DBUILD_TESTS=OFF -DWITH_OPENMP=OFF ..; \
 	make; \
-	make DESTDIR=$(NDK_DIR) install; \
+	make DESTDIR=$(SYSROOT) install; \
 	make clean; \
 	cd ..; \
 	rm -rf build;

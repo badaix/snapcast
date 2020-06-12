@@ -58,8 +58,8 @@ endif
 ifeq ($(TARGET), ANDROID)
 
 CXX       = $(PROGRAM_PREFIX)clang++
-CXXFLAGS += -pthread -fPIC -DHAS_TREMOR -DHAS_OPENSL -DHAS_OBOE -I$(NDK_DIR)/usr/local/include
-LDFLAGS   = -L$(NDK_DIR)/usr/local/lib -pie -lvorbisidec -logg -lopus -lFLAC -lOpenSLES -loboe -latomic -llog -lsoxr -static-libstdc++
+CXXFLAGS += -pthread -fPIC -DHAS_TREMOR -DHAS_OPENSL -DHAS_OBOE -I$(TOOLCHAIN)/sysroot/usr/include -I$(TOOLCHAIN)/sysroot/$(NDK_TARGET)/usr/local/include
+LDFLAGS   = -L$(TOOLCHAIN)/sysroot/$(NDK_TARGET)/usr/local/lib -pie -lvorbisidec -logg -lopus -lFLAC -lOpenSLES -loboe -latomic -llog -lsoxr -static-libstdc++
 OBJ      += player/opensl_player.o player/oboe_player.o
 
 else ifeq ($(TARGET), OPENWRT)
@@ -95,23 +95,25 @@ all:	check-env $(BIN)
 
 check-env:
 ifeq ($(TARGET), ANDROID)
+	$(eval TOOLCHAIN:=$(NDK_DIR)/toolchains/llvm/prebuilt/linux-x86_64)
 ifndef NDK_DIR
 	$(error android NDK_DIR is not set)
 endif
 ifndef ARCH
-	$(error ARCH is not set (arm, mips, x86))
+	$(error ARCH is not set (arm, aarch64, x86))
 endif
 ifeq ($(ARCH), x86)
-	$(eval PROGRAM_PREFIX:=$(NDK_DIR)/bin/i686-linux-android-)
-else ifeq ($(ARCH), mips)
-	$(eval CXXFLAGS:=$(CXXFLAGS) -DIS_BIG_ENDIAN)
-	$(eval PROGRAM_PREFIX:=$(NDK_DIR)/bin/mipsel-linux-android-)
+	$(eval NDK_TARGET:=x86_64-linux-android)
+	$(eval API:=21)
 else ifeq ($(ARCH), arm)
+	$(eval NDK_TARGET:=armv7a-linux-androideabi)
+	$(eval API:=16)
 	$(eval CXXFLAGS:=$(CXXFLAGS) -march=armv7)
-	$(eval PROGRAM_PREFIX:=$(NDK_DIR)/bin/arm-linux-androideabi-)
-else ifeq ($(ARCH), arm64)
-	$(eval PROGRAM_PREFIX:=$(NDK_DIR)/bin/aarch64-linux-android-)
+else ifeq ($(ARCH), aarch64)
+	$(eval NDK_TARGET:=aarch64-linux-android)
+	$(eval API:=21)
 endif
+	$(eval PROGRAM_PREFIX:=$(TOOLCHAIN)/bin/$(NDK_TARGET)$(API)-)
 endif
 
 $(BIN): $(OBJ)

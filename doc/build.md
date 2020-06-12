@@ -276,16 +276,8 @@ Cross compilation for Android is done with the [Android NDK](http://developer.an
 
 Install the Android [NDK toolchain](http://developer.android.com/ndk/guides/standalone_toolchain.html)
 
- 1. Download NDK: `https://dl.google.com/android/repository/android-ndk-r17b-linux-x86_64.zip`
- 2. Extract to: `/SOME/LOCAL/PATH/android-ndk-r17b`
- 3. Setup toolchains for arm and x86 somewhere in your home dir (`<android-ndk dir>`):
-
-```sh
-cd /SOME/LOCAL/PATH/android-ndk-r17/build/tools
-./make_standalone_toolchain.py --arch arm --api 16 --stl libc++ --install-dir <android-ndk dir>-arm
-./make_standalone_toolchain.py --arch arm64 --api 21 --stl libc++ --install-dir <android-ndk dir>-arm64
-./make_standalone_toolchain.py --arch x86 --api 16 --stl libc++ --install-dir <android-ndk dir>-x86
-```
+ 1. Download NDK: `https://dl.google.com/android/repository/android-ndk-r21d-linux-x86_64.zip`
+ 2. Extract to: `/SOME/LOCAL/PATH/android-ndk-r21d`
 
 ### Build Snapclient
 
@@ -293,16 +285,16 @@ Cross compile and install FLAC, opus, ogg, and tremor (only needed once):
 
 ```sh
 cd <snapcast dir>/externals
-make NDK_DIR=<android-ndk dir>-arm ARCH=arm
-make NDK_DIR=<android-ndk dir>-arm64 ARCH=aarch64
-make NDK_DIR=<android-ndk dir>-x86 ARCH=x86
+make NDK_DIR=<android-ndk dir> ARCH=arm
+make NDK_DIR=<android-ndk dir> ARCH=aarch64
+make NDK_DIR=<android-ndk dir> ARCH=x86
 ```
-  
+
 Compile the Snapclient:
 
 ```sh
 cd <snapcast dir>/client
-./build_android_all.sh <android-ndk dir> <snapdroid jniLibs dir>
+./build_android.sh <android-ndk dir> <snapdroid jniLibs dir>
 ```
 
 The binaries for `armeabi`, `arm64-v8a` and `x86` will be copied into the Android's jniLibs directory (`<snapdroid jniLibs dir>/`) and so will be bundled with the Snapcast App.
