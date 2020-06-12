@@ -1,32 +1,17 @@
 #/bin/sh
 
-if [ -z "$NDK_DIR_ARM" ] && [ -z "$NDK_DIR_ARM64" ] && [ -z "$NDK_DIR_X86" ]; then
-	echo "Specify at least one NDK_DIR_[ARM|ARM64|X86]"
-	exit
-fi
+export NDK_DIR="$1"
+export JNI_LIBS_DIR="$2"
+export TOOLCHAIN="$NDK_DIR/toolchains/llvm/prebuilt/linux-x86_64"
 
-if [ -z "$JNI_LIBS_DIR" ]; then
-	echo "Specify the snapdroid jniLibs dir JNI_LIBS_DIR"
-	exit
-fi
+export ARCH=x86
+make clean; 
+make TARGET=ANDROID -j 4; $TOOLCHAIN/x86_64-linux-android/bin/strip ./snapclient; cp ./snapclient "$JNI_LIBS_DIR/x86_64/libsnapclient.so"; mv ./snapclient "$JNI_LIBS_DIR/x86/libsnapclient.so"
 
-if [ -n "$NDK_DIR_ARM" ]; then
-	export NDK_DIR="$NDK_DIR_ARM"
-	export ARCH=arm
-	make clean; 
-	make TARGET=ANDROID -j 4; $NDK_DIR/bin/arm-linux-androideabi-strip ./snapclient; mv ./snapclient "$JNI_LIBS_DIR/armeabi-v7a/libsnapclient.so"
-fi
+export ARCH=arm
+make clean; 
+make TARGET=ANDROID -j 4; $TOOLCHAIN/arm-linux-androideabi/bin/strip ./snapclient; mv ./snapclient "$JNI_LIBS_DIR/armeabi-v7a/libsnapclient.so"
 
-if [ -n "$NDK_DIR_ARM64" ]; then
-	export NDK_DIR="$NDK_DIR_ARM64"
-	export ARCH=arm64
-	make clean; 
-	make TARGET=ANDROID -j 4; $NDK_DIR/bin/aarch64-linux-android-strip ./snapclient; mv ./snapclient "$JNI_LIBS_DIR/arm64-v8a/libsnapclient.so"
-fi
-
-if [ -n "$NDK_DIR_X86" ]; then
-	export NDK_DIR="$NDK_DIR_X86"
-	export ARCH=x86
-	make clean; 
-	make TARGET=ANDROID -j 4; $NDK_DIR/bin/i686-linux-android-strip ./snapclient; mv ./snapclient "$JNI_LIBS_DIR/x86/libsnapclient.so"
-fi
+export ARCH=aarch64
+make clean; 
+make TARGET=ANDROID -j 4; $TOOLCHAIN/aarch64-linux-android/bin/strip ./snapclient; mv ./snapclient "$JNI_LIBS_DIR/arm64-v8a/libsnapclient.so"
