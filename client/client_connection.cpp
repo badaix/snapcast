@@ -205,8 +205,8 @@ void ClientConnection::getNextMessage(const MessageHandler<msg::BaseMessage>& ha
                                 base_message_.deserialize(buffer_.data());
                                 tv t;
                                 base_message_.received = t;
-                                LOG(TRACE, LOG_TAG) << "getNextMessage: " << base_message_.type << ", size: " << base_message_.size
-                                                    << ", id: " << base_message_.id << ", refers: " << base_message_.refersTo << "\n";
+                                // LOG(TRACE, LOG_TAG) << "getNextMessage: " << base_message_.type << ", size: " << base_message_.size << ", id: " <<
+                                // base_message_.id << ", refers: " << base_message_.refersTo << "\n";
                                 if (base_message_.type > message_type::kLast)
                                 {
                                     LOG(ERROR, LOG_TAG) << "unknown message type received: " << base_message_.type << ", size: " << base_message_.size << "\n";
