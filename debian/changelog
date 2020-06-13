@@ -16,7 +16,7 @@ snapcast (0.20.0-1) unstable; urgency=medium
     -Client: fix segfault on mac when playback is paused (Issue #560)
     -Client: fix bonjour on mac reports empty IP (Issue #632)
     -Client: fix buzzing tone on Android (Issue #23, #24)
-    -Server: fix crash if client disconnects during connect
+    -Server: fix crash if client disconnects during connect (Issue #639)
     -Server: fix reading metadata from shairport-sync (Issue #624)
     -Server: fix crash on FreeBSD if settings.json is empty (Issue #620)
     -Server: fix warning about unknown command line options (Issue #635)
