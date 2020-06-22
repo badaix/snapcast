@@ -1,0 +1,15 @@
+[Unit]
+Description=Change all Snapcast groups to play current stream
+After=network.target time-sync.target sound.target avahi-daemon.service
+
+[Service]
+ExecStart=/usr/local/bin/snapswitch.py
+User=_snapclient
+Group=_snapclient
+# very noisy on stdout
+StandardOutput=null
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
+
