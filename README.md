@@ -120,6 +120,7 @@ Please follow this [guide](doc/build.md) to build Snapcast for
 - [OpenWrt](doc/build.md#openwrtlede-cross-compile)
 - [Buildroot](doc/build.md#buildroot-cross-compile)
 - [Raspberry Pi](doc/build.md#raspberry-pi-cross-compile)
+- [Windows](doc/build.md#windows-vcpkg)
 
 ## SnapOS
 
@@ -180,7 +181,7 @@ There is an Android client [snapdroid](https://github.com/badaix/snapdroid) avai
 
 ![Snapcast for Android](https://raw.githubusercontent.com/badaix/snapcast/master/doc/snapcast_android_scaled.png)
 
-An experimental WebApp is availble here: [Snapweb](https://github.com/badaix/snapweb)
+An experimental WebApp is available here: [Snapweb](https://github.com/badaix/snapweb)
 
 There is also an unofficial WebApp from @atoomic [atoomic/snapcast-volume-ui](https://github.com/atoomic/snapcast-volume-ui).
 This app lists all clients connected to a server and allows you to control individually the volume of each client.
@@ -195,6 +196,8 @@ For a web interface in Python, see [snapcastr](https://github.com/xkonni/snapcas
 Another web interface running on any device is [snapcast-websockets-ui](https://github.com/derglaus/snapcast-websockets-ui), running entirely in the browser, which needs [websockify](https://github.com/novnc/websockify). No configuration needed; features almost all functions; still needs some tuning for the optics.
 
 A web interface called [HydraPlay](https://github.com/mariolukas/HydraPlay) integrates Snapcast and multiple Mopidy instances. It is JavaScript based and uses Angular 7. A Snapcast web socket proxy server is needed to connect Snapcast to HydraPlay over web sockets.
+
+For Windows, there's [Snap.Net](https://github.com/stijnvdb88/snap.net), a control client and player. It runs in the tray and lets you adjust client volumes with just a few clicks. The player simplifies setting up snapclient to play your music through multiple Windows sound devices simultaneously: pc speakers, hdmi audio, any usb audio devices you may have, etc. Snap.Net also runs on Android, and has limited support for iOS.
 
 ## Setup of audio players/server
 
