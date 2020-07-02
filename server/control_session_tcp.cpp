@@ -22,6 +22,8 @@
 
 using namespace std;
 
+static constexpr auto LOG_TAG = "ControlSessionTCP";
+
 // https://stackoverflow.com/questions/7754695/boost-asio-async-write-how-to-not-interleaving-async-write-calls/7756894
 
 
@@ -33,7 +35,7 @@ ControlSessionTcp::ControlSessionTcp(ControlMessageReceiver* receiver, boost::as
 
 ControlSessionTcp::~ControlSessionTcp()
 {
-    LOG(DEBUG) << "ControlSessionTcp::~ControlSessionTcp()\n";
+    LOG(DEBUG, LOG_TAG) << "ControlSessionTcp::~ControlSessionTcp()\n";
     stop();
 }
 
@@ -46,7 +48,7 @@ void ControlSessionTcp::do_read()
         boost::asio::bind_executor(strand_, [ this, self = shared_from_this(), delimiter ](const std::error_code& ec, std::size_t bytes_transferred) {
             if (ec)
             {
-                LOG(ERROR) << "Error while reading from control socket: " << ec.message() << "\n";
+                LOG(ERROR, LOG_TAG) << "Error while reading from control socket: " << ec.message() << "\n";
                 return;
             }
 
@@ -56,7 +58,7 @@ void ControlSessionTcp::do_read()
             {
                 if (line.back() == '\r')
                     line.resize(line.size() - 1);
-                // LOG(DEBUG) << "received: " << line << "\n";
+                // LOG(DEBUG, LOG_TAG) << "received: " << line << "\n";
                 if ((message_receiver_ != nullptr) && !line.empty())
                 {
                     string response = message_receiver_->onMessageReceived(this, line);
@@ -78,15 +80,15 @@ void ControlSessionTcp::start()
 
 void ControlSessionTcp::stop()
 {
-    LOG(DEBUG) << "ControlSession::stop\n";
+    LOG(DEBUG, LOG_TAG) << "ControlSession::stop\n";
     boost::system::error_code ec;
     socket_.shutdown(boost::asio::ip::tcp::socket::shutdown_both, ec);
     if (ec)
-        LOG(ERROR) << "Error in socket shutdown: " << ec.message() << "\n";
+        LOG(ERROR, LOG_TAG) << "Error in socket shutdown: " << ec.message() << "\n";
     socket_.close(ec);
     if (ec)
-        LOG(ERROR) << "Error in socket close: " << ec.message() << "\n";
-    LOG(DEBUG) << "ControlSession ControlSession stopped\n";
+        LOG(ERROR, LOG_TAG) << "Error in socket close: " << ec.message() << "\n";
+    LOG(DEBUG, LOG_TAG) << "ControlSession ControlSession stopped\n";
 }
 
 
@@ -96,7 +98,7 @@ void ControlSessionTcp::sendAsync(const std::string& message)
         messages_.emplace_back(message + "\r\n");
         if (messages_.size() > 1)
         {
-            LOG(DEBUG) << "TCP session outstanding async_writes: " << messages_.size() << "\n";
+            LOG(DEBUG, LOG_TAG) << "TCP session outstanding async_writes: " << messages_.size() << "\n";
             return;
         }
         send_next();
@@ -110,20 +112,13 @@ void ControlSessionTcp::send_next()
                                  messages_.pop_front();
                                  if (ec)
                                  {
-                                     LOG(ERROR) << "Error while writing to control socket: " << ec.message() << "\n";
+                                     LOG(ERROR, LOG_TAG) << "Error while writing to control socket: " << ec.message() << "\n";
                                  }
                                  else
                                  {
-                                     LOG(DEBUG) << "Wrote " << length << " bytes to control socket\n";
+                                     LOG(DEBUG, LOG_TAG) << "Wrote " << length << " bytes to control socket\n";
                                  }
                                  if (!messages_.empty())
                                      send_next();
                              }));
-}
-
-bool ControlSessionTcp::send(const std::string& message)
-{
-    boost::system::error_code ec;
-    boost::asio::write(socket_, boost::asio::buffer(message + "\r\n"), ec);
-    return !ec;
 }

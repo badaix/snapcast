@@ -16,38 +16,36 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
-#ifndef CONTROL_SESSION_TCP_HPP
-#define CONTROL_SESSION_TCP_HPP
+#ifndef STREAM_SESSION_TCP_HPP
+#define STREAM_SESSION_TCP_HPP
 
-#include "control_session.hpp"
-#include <deque>
+#include "stream_session.hpp"
 
-/// Endpoint for a connected control client.
+using boost::asio::ip::tcp;
+
+
+/// Endpoint for a connected client.
 /**
- * Endpoint for a connected control client.
+ * Endpoint for a connected client.
  * Messages are sent to the client with the "send" method.
- * Received messages from the client are passed to the ControlMessageReceiver callback
+ * Received messages from the client are passed to the MessageReceiver callback
  */
-class ControlSessionTcp : public ControlSession
+class StreamSessionTcp : public StreamSession
 {
 public:
     /// ctor. Received message from the client are passed to MessageReceiver
-    ControlSessionTcp(ControlMessageReceiver* receiver, boost::asio::io_context& ioc, tcp::socket&& socket);
-    ~ControlSessionTcp() override;
+    StreamSessionTcp(boost::asio::io_context& ioc, MessageReceiver* receiver, tcp::socket&& socket);
+    ~StreamSessionTcp() override;
     void start() override;
     void stop() override;
-
-    /// Sends a message to the client (asynchronous)
-    void sendAsync(const std::string& message) override;
+    std::string getIP() override;
 
 protected:
-    void do_read();
-    void send_next();
+    void read_next();
+    void sendAsync(const shared_const_buffer& buffer, const WriteHandler& handler) override;
 
+private:
     tcp::socket socket_;
-    boost::asio::streambuf streambuf_;
-    boost::asio::io_context::strand strand_;
-    std::deque<std::string> messages_;
 };
 
 

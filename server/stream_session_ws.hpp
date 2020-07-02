@@ -16,11 +16,19 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
-#ifndef CONTROL_SESSION_TCP_HPP
-#define CONTROL_SESSION_TCP_HPP
+#ifndef STREAM_SESSION_WS_HPP
+#define STREAM_SESSION_WS_HPP
 
-#include "control_session.hpp"
+#include "stream_session.hpp"
+#include <boost/beast/core.hpp>
+#include <boost/beast/websocket.hpp>
 #include <deque>
+
+namespace beast = boost::beast;         // from <boost/beast.hpp>
+namespace http = beast::http;           // from <boost/beast/http.hpp>
+namespace websocket = beast::websocket; // from <boost/beast/websocket.hpp>
+namespace net = boost::asio;            // from <boost/asio.hpp>
+
 
 /// Endpoint for a connected control client.
 /**
@@ -28,26 +36,26 @@
  * Messages are sent to the client with the "send" method.
  * Received messages from the client are passed to the ControlMessageReceiver callback
  */
-class ControlSessionTcp : public ControlSession
+class StreamSessionWebsocket : public StreamSession
 {
 public:
     /// ctor. Received message from the client are passed to MessageReceiver
-    ControlSessionTcp(ControlMessageReceiver* receiver, boost::asio::io_context& ioc, tcp::socket&& socket);
-    ~ControlSessionTcp() override;
+    StreamSessionWebsocket(boost::asio::io_context& ioc, MessageReceiver* receiver, websocket::stream<beast::tcp_stream>&& socket);
+    ~StreamSessionWebsocket() override;
     void start() override;
     void stop() override;
-
-    /// Sends a message to the client (asynchronous)
-    void sendAsync(const std::string& message) override;
+    std::string getIP() override;
 
 protected:
-    void do_read();
-    void send_next();
+    // Websocket methods
+    void sendAsync(const shared_const_buffer& buffer, const WriteHandler& handler) override;
+    void on_read_ws(beast::error_code ec, std::size_t bytes_transferred);
+    void do_read_ws();
 
-    tcp::socket socket_;
-    boost::asio::streambuf streambuf_;
-    boost::asio::io_context::strand strand_;
-    std::deque<std::string> messages_;
+    websocket::stream<beast::tcp_stream> ws_;
+
+protected:
+    beast::flat_buffer buffer_;
 };
 
 
