@@ -33,14 +33,16 @@ using boost::asio::ip::tcp;
 
 
 class ControlSession;
-
+class StreamSession;
 
 /// Interface: callback for a received message.
 class ControlMessageReceiver
 {
 public:
     // TODO: rename, error handling
-    virtual std::string onMessageReceived(ControlSession* connection, const std::string& message) = 0;
+    virtual std::string onMessageReceived(ControlSession* session, const std::string& message) = 0;
+    virtual void onNewSession(const std::shared_ptr<ControlSession>& session) = 0;
+    virtual void onNewSession(const std::shared_ptr<StreamSession>& session) = 0;
 };
 
 
@@ -50,7 +52,7 @@ public:
  * Messages are sent to the client with the "send" method.
  * Received messages from the client are passed to the ControlMessageReceiver callback
  */
-class ControlSession
+class ControlSession : public std::enable_shared_from_this<ControlSession>
 {
 public:
     /// ctor. Received message from the client are passed to MessageReceiver
@@ -60,9 +62,6 @@ public:
     virtual ~ControlSession() = default;
     virtual void start() = 0;
     virtual void stop() = 0;
-
-    /// Sends a message to the client (synchronous)
-    virtual bool send(const std::string& message) = 0;
 
     /// Sends a message to the client (asynchronous)
     virtual void sendAsync(const std::string& message) = 0;

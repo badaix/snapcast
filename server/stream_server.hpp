@@ -69,11 +69,17 @@ public:
 
     /// Implementation of ControllMessageReceiver::onMessageReceived, called by ControlServer::onMessageReceived
     std::string onMessageReceived(ControlSession* connection, const std::string& message) override;
+    // TODO Refactor: ControlServer implements ControlMessageReceiver, calling this one.
+    void onNewSession(const std::shared_ptr<ControlSession>& session) override
+    {
+        std::ignore = session;
+    };
+    void onNewSession(const std::shared_ptr<StreamSession>& session) override;
 
     /// Implementation of PcmListener
     void onMetaChanged(const PcmStream* pcmStream) override;
     void onStateChanged(const PcmStream* pcmStream, const ReaderState& state) override;
-    void onChunkRead(const PcmStream* pcmStream, std::shared_ptr<msg::PcmChunk> chunk, double duration) override;
+    void onNewChunk(const PcmStream* pcmStream, std::shared_ptr<msg::PcmChunk> chunk, double duration) override;
     void onResync(const PcmStream* pcmStream, double ms) override;
 
 private:

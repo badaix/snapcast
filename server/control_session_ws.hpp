@@ -16,11 +16,19 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
-#ifndef CONTROL_SESSION_TCP_HPP
-#define CONTROL_SESSION_TCP_HPP
+#ifndef CONTROL_SESSION_WS_HPP
+#define CONTROL_SESSION_WS_HPP
 
 #include "control_session.hpp"
+#include <boost/beast/core.hpp>
+#include <boost/beast/websocket.hpp>
 #include <deque>
+
+namespace beast = boost::beast;         // from <boost/beast.hpp>
+namespace http = beast::http;           // from <boost/beast/http.hpp>
+namespace websocket = beast::websocket; // from <boost/beast/websocket.hpp>
+namespace net = boost::asio;            // from <boost/asio.hpp>
+
 
 /// Endpoint for a connected control client.
 /**
@@ -28,12 +36,12 @@
  * Messages are sent to the client with the "send" method.
  * Received messages from the client are passed to the ControlMessageReceiver callback
  */
-class ControlSessionTcp : public ControlSession
+class ControlSessionWebsocket : public ControlSession
 {
 public:
     /// ctor. Received message from the client are passed to MessageReceiver
-    ControlSessionTcp(ControlMessageReceiver* receiver, boost::asio::io_context& ioc, tcp::socket&& socket);
-    ~ControlSessionTcp() override;
+    ControlSessionWebsocket(ControlMessageReceiver* receiver, boost::asio::io_context& ioc, websocket::stream<beast::tcp_stream>&& socket);
+    ~ControlSessionWebsocket() override;
     void start() override;
     void stop() override;
 
@@ -41,11 +49,15 @@ public:
     void sendAsync(const std::string& message) override;
 
 protected:
-    void do_read();
+    // Websocket methods
+    void on_read_ws(beast::error_code ec, std::size_t bytes_transferred);
+    void do_read_ws();
     void send_next();
 
-    tcp::socket socket_;
-    boost::asio::streambuf streambuf_;
+    websocket::stream<beast::tcp_stream> ws_;
+
+protected:
+    beast::flat_buffer buffer_;
     boost::asio::io_context::strand strand_;
     std::deque<std::string> messages_;
 };

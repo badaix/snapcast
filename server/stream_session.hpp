@@ -55,6 +55,7 @@ class shared_const_buffer
     {
         std::vector<char> data;
         bool is_pcm_chunk;
+        uint16_t type;
         chronos::time_point_clk rec_time;
     };
 
@@ -65,6 +66,7 @@ public:
         message.sent = t;
         const msg::PcmChunk* pcm_chunk = dynamic_cast<const msg::PcmChunk*>(&message);
         message_ = std::make_shared<Message>();
+        message_->type = message.type;
         message_->is_pcm_chunk = (pcm_chunk != nullptr);
         if (message_->is_pcm_chunk)
             message_->rec_time = pcm_chunk->start();
@@ -102,6 +104,8 @@ private:
 };
 
 
+using WriteHandler = std::function<void(boost::system::error_code ec, std::size_t length)>;
+
 /// Endpoint for a connected client.
 /**
  * Endpoint for a connected client.
@@ -112,35 +116,43 @@ class StreamSession : public std::enable_shared_from_this<StreamSession>
 {
 public:
     /// ctor. Received message from the client are passed to MessageReceiver
-    StreamSession(boost::asio::io_context& ioc, MessageReceiver* receiver, tcp::socket&& socket);
-    ~StreamSession();
-    void start();
-    void stop();
+    StreamSession(boost::asio::io_context& ioc, MessageReceiver* receiver);
+    virtual ~StreamSession() = default;
+
+    virtual std::string getIP() = 0;
+
+    virtual void start() = 0;
+    virtual void stop() = 0;
+
+    void setMessageReceiver(MessageReceiver* receiver)
+    {
+        messageReceiver_ = receiver;
+    }
+
+protected:
+    virtual void sendAsync(const shared_const_buffer& buffer, const WriteHandler& handler) = 0;
+
+public:
+    /// Sends a message to the client (asynchronous)
+    void send(msg::message_ptr message);
 
     /// Sends a message to the client (asynchronous)
-    void sendAsync(msg::message_ptr message, bool send_now = false);
-
-    /// Sends a message to the client (asynchronous)
-    void sendAsync(shared_const_buffer const_buf, bool send_now = false);
+    void send(shared_const_buffer const_buf);
 
     /// Max playout latency. No need to send PCM data that is older than bufferMs
     void setBufferMs(size_t bufferMs);
 
     std::string clientId;
 
-    std::string getIP();
-
     void setPcmStream(streamreader::PcmStreamPtr pcmStream);
     const streamreader::PcmStreamPtr pcmStream() const;
 
 protected:
-    void read_next();
     void send_next();
 
     msg::BaseMessage baseMessage_;
     std::vector<char> buffer_;
     size_t base_msg_size_;
-    tcp::socket socket_;
     MessageReceiver* messageReceiver_;
     size_t bufferMs_;
     streamreader::PcmStreamPtr pcmStream_;

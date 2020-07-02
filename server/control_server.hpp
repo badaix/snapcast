@@ -54,7 +54,9 @@ public:
     void send(const std::string& message, const ControlSession* excludeSession = nullptr);
 
     /// Clients call this when they receive a message. Implementation of MessageReceiver::onMessageReceived
-    std::string onMessageReceived(ControlSession* connection, const std::string& message) override;
+    std::string onMessageReceived(ControlSession* session, const std::string& message) override;
+    void onNewSession(const std::shared_ptr<ControlSession>& session) override;
+    void onNewSession(const std::shared_ptr<StreamSession>& session) override;
 
 private:
     void startAccept();

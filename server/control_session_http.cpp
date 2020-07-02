@@ -18,11 +18,16 @@
 
 #include "control_session_http.hpp"
 #include "common/aixlog.hpp"
+#include "control_session_ws.hpp"
 #include "message/pcm_chunk.hpp"
+#include "stream_session_ws.hpp"
 #include <boost/beast/http/file_body.hpp>
 #include <iostream>
 
 using namespace std;
+
+static constexpr auto LOG_TAG = "ControlSessionHTTP";
+
 
 static constexpr const char* HTTP_SERVER_NAME = "Snapcast";
 
@@ -102,13 +107,13 @@ ControlSessionHttp::ControlSessionHttp(ControlMessageReceiver* receiver, boost::
                                        const ServerSettings::Http& settings)
     : ControlSession(receiver), socket_(std::move(socket)), settings_(settings), strand_(ioc)
 {
-    LOG(DEBUG) << "ControlSessionHttp\n";
+    LOG(DEBUG, LOG_TAG) << "ControlSessionHttp\n";
 }
 
 
 ControlSessionHttp::~ControlSessionHttp()
 {
-    LOG(DEBUG) << "ControlSessionHttp::~ControlSessionHttp()\n";
+    LOG(DEBUG, LOG_TAG) << "ControlSessionHttp::~ControlSessionHttp()\n";
     stop();
 }
 
@@ -193,7 +198,7 @@ void ControlSessionHttp::handle_request(http::request<Body, http::basic_fields<A
     if (req.target().back() == '/')
         path.append("index.html");
 
-    LOG(DEBUG) << "path: " << path << "\n";
+    LOG(DEBUG, LOG_TAG) << "path: " << path << "\n";
     // Attempt to open the file
     beast::error_code ec;
     http::file_body::value_type body;
@@ -242,21 +247,37 @@ void ControlSessionHttp::on_read(beast::error_code ec, std::size_t bytes_transfe
     // Handle the error, if any
     if (ec)
     {
-        LOG(ERROR) << "ControlSessionHttp::on_read error: " << ec.message() << "\n";
+        LOG(ERROR, LOG_TAG) << "ControlSessionHttp::on_read error: " << ec.message() << "\n";
         return;
     }
 
-    LOG(DEBUG) << "read: " << bytes_transferred << ", method: " << req_.method_string() << ", content type: " << req_[beast::http::field::content_type]
+    LOG(DEBUG, LOG_TAG) << "read: " << bytes_transferred << ", method: " << req_.method_string() << ", content type: " << req_[beast::http::field::content_type]
                << ", target: " << req_.target() << ", body: " << req_.body() << "\n";
 
     // See if it is a WebSocket Upgrade
-    if (websocket::is_upgrade(req_) && (req_.target() == "/jsonrpc"))
+    if (websocket::is_upgrade(req_))
     {
-        // Create a WebSocket session by transferring the socket
-        // std::make_shared<websocket_session>(std::move(socket_), state_)->run(std::move(req_));
-        ws_ = make_unique<websocket::stream<beast::tcp_stream>>(std::move(socket_));
-        ws_->async_accept(req_, [ this, self = shared_from_this() ](beast::error_code ec) { on_accept_ws(ec); });
-        LOG(DEBUG) << "websocket upgrade\n";
+        LOG(DEBUG, LOG_TAG) << "websocket upgrade, target: " << req_.target() << "\n";
+        if (req_.target() == "/jsonrpc")
+        {
+            // Create a WebSocket session by transferring the socket
+            // std::make_shared<websocket_session>(std::move(socket_), state_)->run(std::move(req_));
+            auto ws = std::make_shared<websocket::stream<beast::tcp_stream>>(std::move(socket_));
+            ws->async_accept(req_, [ this, ws, self = shared_from_this() ](beast::error_code ec) {
+                auto ws_session = make_shared<ControlSessionWebsocket>(message_receiver_, strand_.context(), std::move(*ws));
+                message_receiver_->onNewSession(ws_session);
+            });
+        }
+        else if (req_.target() == "/stream")
+        {
+            // Create a WebSocket session by transferring the socket
+            // std::make_shared<websocket_session>(std::move(socket_), state_)->run(std::move(req_));
+            auto ws = std::make_shared<websocket::stream<beast::tcp_stream>>(std::move(socket_));
+            ws->async_accept(req_, [ this, ws, self = shared_from_this() ](beast::error_code ec) {
+                auto ws_session = make_shared<StreamSessionWebsocket>(strand_.context(), nullptr, std::move(*ws));
+                message_receiver_->onNewSession(ws_session);
+            });
+        }
         return;
     }
 
@@ -282,7 +303,7 @@ void ControlSessionHttp::on_write(beast::error_code ec, std::size_t, bool close)
     // Handle the error, if any
     if (ec)
     {
-        LOG(ERROR) << "ControlSessionHttp::on_write, error: " << ec.message() << "\n";
+        LOG(ERROR, LOG_TAG) << "ControlSessionHttp::on_write, error: " << ec.message() << "\n";
         return;
     }
 
@@ -308,103 +329,7 @@ void ControlSessionHttp::stop()
 {
 }
 
+
 void ControlSessionHttp::sendAsync(const std::string& message)
 {
-    if (!ws_)
-        return;
-
-    strand_.post([ this, self = shared_from_this(), msg = message ]() {
-        messages_.push_back(std::move(msg));
-        if (messages_.size() > 1)
-        {
-            LOG(DEBUG) << "HTTP session outstanding async_writes: " << messages_.size() << "\n";
-            return;
-        }
-        send_next();
-    });
-}
-
-void ControlSessionHttp::send_next()
-{
-    if (!ws_)
-        return;
-
-    const std::string& message = messages_.front();
-    ws_->async_write(boost::asio::buffer(message),
-                     boost::asio::bind_executor(strand_, [ this, self = shared_from_this() ](std::error_code ec, std::size_t length) {
-                         messages_.pop_front();
-                         if (ec)
-                         {
-                             LOG(ERROR) << "Error while writing to web socket: " << ec.message() << "\n";
-                         }
-                         else
-                         {
-                             LOG(DEBUG) << "Wrote " << length << " bytes to web socket\n";
-                         }
-                         if (!messages_.empty())
-                             send_next();
-                     }));
-}
-
-
-bool ControlSessionHttp::send(const std::string& message)
-{
-    if (!ws_)
-        return false;
-
-    boost::system::error_code ec;
-    ws_->write(boost::asio::buffer(message), ec);
-    return !ec;
-}
-
-void ControlSessionHttp::on_accept_ws(beast::error_code ec)
-{
-    if (ec)
-    {
-        LOG(ERROR) << "ControlSessionWs::on_accept, error: " << ec.message() << "\n";
-        return;
-    }
-
-    // Read a message
-    do_read_ws();
-}
-
-void ControlSessionHttp::do_read_ws()
-{
-    // Read a message into our buffer
-    ws_->async_read(buffer_, boost::asio::bind_executor(strand_, [ this, self = shared_from_this() ](beast::error_code ec, std::size_t bytes_transferred) {
-                        on_read_ws(ec, bytes_transferred);
-                    }));
-}
-
-
-void ControlSessionHttp::on_read_ws(beast::error_code ec, std::size_t bytes_transferred)
-{
-    boost::ignore_unused(bytes_transferred);
-
-    // This indicates that the session was closed
-    if (ec == websocket::error::closed)
-        return;
-
-    if (ec)
-    {
-        LOG(ERROR) << "ControlSessionHttp::on_read_ws error: " << ec.message() << "\n";
-        return;
-    }
-
-    std::string line{boost::beast::buffers_to_string(buffer_.data())};
-    if (!line.empty())
-    {
-        // LOG(DEBUG) << "received: " << line << "\n";
-        if ((message_receiver_ != nullptr) && !line.empty())
-        {
-            string response = message_receiver_->onMessageReceived(this, line);
-            if (!response.empty())
-            {
-                sendAsync(response);
-            }
-        }
-    }
-    buffer_.consume(bytes_transferred);
-    do_read_ws();
 }
