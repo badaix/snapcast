@@ -134,7 +134,7 @@ public:
     SampleFormat format;
 
 private:
-    uint32_t idx_;
+    uint32_t idx_ = 0;
 };
 } // namespace msg
 

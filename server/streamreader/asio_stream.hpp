@@ -197,7 +197,7 @@ void AsioStream<ReadStream>::do_read()
                                     nextTick_ = std::chrono::steady_clock::now();
                                 }
 
-                                encoder_->encode(chunk_.get());
+                                onChunkRead(chunk_.get());
                                 nextTick_ += chunk_->duration<std::chrono::nanoseconds>();
                                 auto currentTick = std::chrono::steady_clock::now();
 
