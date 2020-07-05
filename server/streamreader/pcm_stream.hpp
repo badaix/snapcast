@@ -61,7 +61,7 @@ class PcmListener
 public:
     virtual void onMetaChanged(const PcmStream* pcmStream) = 0;
     virtual void onStateChanged(const PcmStream* pcmStream, const ReaderState& state) = 0;
-    virtual void onChunkRead(const PcmStream* pcmStream, std::shared_ptr<msg::PcmChunk> chunk, double duration) = 0;
+    virtual void onNewChunk(const PcmStream* pcmStream, std::shared_ptr<msg::PcmChunk> chunk, double duration) = 0;
     virtual void onResync(const PcmStream* pcmStream, double ms) = 0;
 };
 
@@ -102,6 +102,7 @@ protected:
     std::atomic<bool> active_;
 
     void setState(const ReaderState& newState);
+    virtual void onChunkRead(const msg::PcmChunk* chunk);
 
     std::chrono::time_point<std::chrono::steady_clock> tvEncodedChunk_;
     PcmListener* pcmListener_;

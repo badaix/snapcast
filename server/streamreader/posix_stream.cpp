@@ -123,7 +123,7 @@ void PosixStream::do_read()
         if ((idle_bytes_ == 0) || (idle_bytes_ <= max_idle_bytes_))
         {
             // the encoder will update the tvEncodedChunk when a chunk is encoded
-            encoder_->encode(chunk_.get());
+            onChunkRead(chunk_.get());
         }
         else
         {
