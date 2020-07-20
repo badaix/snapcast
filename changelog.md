@@ -1,5 +1,17 @@
 # Snapcast changelog
 
+## Version 0.21.0
+
+### Features
+
+- Server: Support for WebSocket streaming clients
+
+### Bugfixes
+
+### General
+
+_Johannes Pohl <snapcast@badaix.de>  Sat, 13 Jun 2020 00:13:37 +0200_
+
 ## Version 0.20.0
 
 ### Features

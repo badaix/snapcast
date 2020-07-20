@@ -16,8 +16,8 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
-#ifndef STREAM_SERVER_HPP
-#define STREAM_SERVER_HPP
+#ifndef SERVER_HPP
+#define SERVER_HPP
 
 #include <boost/asio.hpp>
 #include <memory>
@@ -29,6 +29,7 @@
 #include "common/queue.h"
 #include "common/sample_format.hpp"
 #include "control_server.hpp"
+#include "stream_server.hpp"
 #include "jsonrpcpp.hpp"
 #include "message/codec_header.hpp"
 #include "message/message.hpp"
@@ -51,11 +52,11 @@ using session_ptr = std::shared_ptr<StreamSession>;
  * Receives (via the MessageReceiver interface) and answers messages from the clients
  * Forwards PCM data to the clients
  */
-class StreamServer : public MessageReceiver
+class Server : public MessageReceiver, public ControlMessageReceiver, public PcmListener
 {
 public:
-    StreamServer(boost::asio::io_context& io_context, const ServerSettings& serverSettings, MessageReceiver* messageReceiver = nullptr);
-    virtual ~StreamServer();
+    Server(boost::asio::io_context& io_context, const ServerSettings& serverSettings);
+    virtual ~Server();
 
     void start();
     void stop();
@@ -63,32 +64,41 @@ public:
     /// Send a message to all connceted clients
     //	void send(const msg::BaseMessage* message);
 
-    void addSession(const std::shared_ptr<StreamSession>& session);
-    void onMetaChanged(const PcmStream* pcmStream, std::shared_ptr<msg::StreamTags> meta);
-    void onNewChunk(const PcmStream* pcmStream, bool isDefaultStream, std::shared_ptr<msg::PcmChunk> chunk, double duration);
-
-    session_ptr getStreamSession(const std::string& mac) const;
-    session_ptr getStreamSession(StreamSession* session) const;
-
-private:
-    void startAccept();
-    void handleAccept(tcp::socket socket);
-    void cleanup();
-
     /// Clients call this when they receive a message. Implementation of MessageReceiver::onMessageReceived
     void onMessageReceived(StreamSession* connection, const msg::BaseMessage& baseMessage, char* buffer) override;
     void onDisconnect(StreamSession* connection) override;
 
+    /// Implementation of ControllMessageReceiver::onMessageReceived, called by ControlServer::onMessageReceived
+    std::string onMessageReceived(ControlSession* connection, const std::string& message) override;
+    // TODO Refactor: ControlServer implements ControlMessageReceiver, calling this one.
+    void onNewSession(const std::shared_ptr<ControlSession>& session) override
+    {
+        std::ignore = session;
+    };
+    void onNewSession(const std::shared_ptr<StreamSession>& session) override;
+
+    /// Implementation of PcmListener
+    void onMetaChanged(const PcmStream* pcmStream) override;
+    void onStateChanged(const PcmStream* pcmStream, const ReaderState& state) override;
+    void onNewChunk(const PcmStream* pcmStream, std::shared_ptr<msg::PcmChunk> chunk, double duration) override;
+    void onResync(const PcmStream* pcmStream, double ms) override;
+
+private:
+    void processRequest(const jsonrpcpp::request_ptr request, jsonrpcpp::entity_ptr& response, jsonrpcpp::notification_ptr& notification) const;
+    /// Save the server state deferred to prevent blocking and lower disk io
+    /// @param deferred the delay after the last call to saveConfig
+    void saveConfig(const std::chrono::milliseconds& deferred = std::chrono::seconds(2));
+
     mutable std::recursive_mutex sessionsMutex_;
     mutable std::recursive_mutex clientMutex_;
-    std::vector<std::weak_ptr<StreamSession>> sessions_;
     boost::asio::io_context& io_context_;
-    std::vector<acceptor_ptr> acceptor_;
     boost::asio::steady_timer config_timer_;
 
     ServerSettings settings_;
     Queue<std::shared_ptr<msg::BaseMessage>> messages_;
-    MessageReceiver* messageReceiver_;
+    std::unique_ptr<ControlServer> controlServer_;
+    std::unique_ptr<StreamServer> streamServer_;
+    std::unique_ptr<StreamManager> streamManager_;
 };
 
 

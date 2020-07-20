@@ -49,13 +49,13 @@ void ControlSessionWebsocket::start()
 
 void ControlSessionWebsocket::stop()
 {
-    if (ws_.is_open())
-    {
-        boost::beast::error_code ec;
-        ws_.close(beast::websocket::close_code::normal, ec);
-        if (ec)
-            LOG(ERROR, LOG_TAG) << "Error in socket close: " << ec.message() << "\n";
-    }
+    // if (ws_.is_open())
+    // {
+    //     boost::beast::error_code ec;
+    //     ws_.close(beast::websocket::close_code::normal, ec);
+    //     if (ec)
+    //         LOG(ERROR, LOG_TAG) << "Error in socket close: " << ec.message() << "\n";
+    // }
 }
 
 

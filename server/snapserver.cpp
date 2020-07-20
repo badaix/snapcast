@@ -31,7 +31,7 @@
 #include "encoder/encoder_factory.hpp"
 #include "message/message.hpp"
 #include "server_settings.hpp"
-#include "stream_server.hpp"
+#include "server.hpp"
 #if defined(HAS_AVAHI) || defined(HAS_BONJOUR)
 #include "publishZeroConf/publish_mdns.hpp"
 #endif
@@ -284,8 +284,8 @@ int main(int argc, char* argv[])
             settings.stream.bufferMs = 400;
         }
 
-        auto streamServer = std::make_unique<StreamServer>(io_context, settings);
-        streamServer->start();
+        auto server = std::make_unique<Server>(io_context, settings);
+        server->start();
 
         if (settings.server.threads < 0)
             settings.server.threads = std::max(2, std::min(4, static_cast<int>(std::thread::hardware_concurrency())));
@@ -311,7 +311,7 @@ int main(int argc, char* argv[])
             t.join();
 
         LOG(INFO) << "Stopping streamServer" << endl;
-        streamServer->stop();
+        server->stop();
         LOG(INFO) << "done" << endl;
     }
     catch (const std::exception& e)
