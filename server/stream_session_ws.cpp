@@ -77,8 +77,8 @@ std::string StreamSessionWebsocket::getIP()
 void StreamSessionWebsocket::sendAsync(const shared_const_buffer& buffer, const WriteHandler& handler)
 {
     LOG(TRACE, LOG_TAG) << "sendAsync: " << buffer.message().type << "\n";
-    ws_.async_write(buffer, boost::asio::bind_executor(strand_, [ this, self = shared_from_this(), buffer,
-                                                                  handler ](boost::system::error_code ec, std::size_t length) { handler(ec, length); }));
+    ws_.async_write(buffer, boost::asio::bind_executor(strand_, [ self = shared_from_this(), buffer, handler ](boost::system::error_code ec,
+                                                                                                               std::size_t length) { handler(ec, length); }));
 }
 
 
