@@ -131,6 +131,6 @@ void StreamSessionTcp::read_next()
 void StreamSessionTcp::sendAsync(const shared_const_buffer& buffer, const WriteHandler& handler)
 {
     boost::asio::async_write(socket_, buffer,
-                             boost::asio::bind_executor(strand_, [ this, self = shared_from_this(), buffer,
-                                                                   handler ](boost::system::error_code ec, std::size_t length) { handler(ec, length); }));
+                             boost::asio::bind_executor(strand_, [ self = shared_from_this(), buffer, handler ](boost::system::error_code ec,
+                                                                                                                std::size_t length) { handler(ec, length); }));
 }
