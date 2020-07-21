@@ -264,8 +264,15 @@ void ControlSessionHttp::on_read(beast::error_code ec, std::size_t bytes_transfe
             // std::make_shared<websocket_session>(std::move(socket_), state_)->run(std::move(req_));
             auto ws = std::make_shared<websocket::stream<beast::tcp_stream>>(std::move(socket_));
             ws->async_accept(req_, [ this, ws, self = shared_from_this() ](beast::error_code ec) {
-                auto ws_session = make_shared<ControlSessionWebsocket>(message_receiver_, strand_.context(), std::move(*ws));
-                message_receiver_->onNewSession(ws_session);
+                if (ec)
+                {
+                    LOG(ERROR, LOG_TAG) << "Error during WebSocket handshake (control): " << ec.message() << "\n";
+                }
+                else
+                {
+                    auto ws_session = make_shared<ControlSessionWebsocket>(message_receiver_, strand_.context(), std::move(*ws));
+                    message_receiver_->onNewSession(ws_session);
+                }
             });
         }
         else if (req_.target() == "/stream")
@@ -274,8 +281,15 @@ void ControlSessionHttp::on_read(beast::error_code ec, std::size_t bytes_transfe
             // std::make_shared<websocket_session>(std::move(socket_), state_)->run(std::move(req_));
             auto ws = std::make_shared<websocket::stream<beast::tcp_stream>>(std::move(socket_));
             ws->async_accept(req_, [ this, ws, self = shared_from_this() ](beast::error_code ec) {
-                auto ws_session = make_shared<StreamSessionWebsocket>(strand_.context(), nullptr, std::move(*ws));
-                message_receiver_->onNewSession(ws_session);
+                if (ec)
+                {
+                    LOG(ERROR, LOG_TAG) << "Error during WebSocket handshake (stream): " << ec.message() << "\n";
+                }
+                else
+                {
+                    auto ws_session = make_shared<StreamSessionWebsocket>(strand_.context(), nullptr, std::move(*ws));
+                    message_receiver_->onNewSession(ws_session);
+                }
             });
         }
         return;
@@ -330,6 +344,6 @@ void ControlSessionHttp::stop()
 }
 
 
-void ControlSessionHttp::sendAsync(const std::string& message)
+void ControlSessionHttp::sendAsync(const std::string& /*message*/)
 {
 }
