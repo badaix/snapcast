@@ -40,7 +40,7 @@ class StreamSession;
 
 
 /// Interface: callback for a received message.
-class MessageReceiver
+class StreamMessageReceiver
 {
 public:
     virtual void onMessageReceived(StreamSession* connection, const msg::BaseMessage& baseMessage, char* buffer) = 0;
@@ -110,13 +110,13 @@ using WriteHandler = std::function<void(boost::system::error_code ec, std::size_
 /**
  * Endpoint for a connected client.
  * Messages are sent to the client with the "send" method.
- * Received messages from the client are passed to the MessageReceiver callback
+ * Received messages from the client are passed to the StreamMessageReceiver callback
  */
 class StreamSession : public std::enable_shared_from_this<StreamSession>
 {
 public:
-    /// ctor. Received message from the client are passed to MessageReceiver
-    StreamSession(boost::asio::io_context& ioc, MessageReceiver* receiver);
+    /// ctor. Received message from the client are passed to StreamMessageReceiver
+    StreamSession(boost::asio::io_context& ioc, StreamMessageReceiver* receiver);
     virtual ~StreamSession() = default;
 
     virtual std::string getIP() = 0;
@@ -124,7 +124,7 @@ public:
     virtual void start() = 0;
     virtual void stop() = 0;
 
-    void setMessageReceiver(MessageReceiver* receiver)
+    void setMessageReceiver(StreamMessageReceiver* receiver)
     {
         messageReceiver_ = receiver;
     }
@@ -153,7 +153,7 @@ protected:
     msg::BaseMessage baseMessage_;
     std::vector<char> buffer_;
     size_t base_msg_size_;
-    MessageReceiver* messageReceiver_;
+    StreamMessageReceiver* messageReceiver_;
     size_t bufferMs_;
     streamreader::PcmStreamPtr pcmStream_;
     boost::asio::io_context::strand strand_;

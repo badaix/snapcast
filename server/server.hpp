@@ -29,12 +29,12 @@
 #include "common/queue.h"
 #include "common/sample_format.hpp"
 #include "control_server.hpp"
-#include "stream_server.hpp"
 #include "jsonrpcpp.hpp"
 #include "message/codec_header.hpp"
 #include "message/message.hpp"
 #include "message/server_settings.hpp"
 #include "server_settings.hpp"
+#include "stream_server.hpp"
 #include "stream_session.hpp"
 #include "streamreader/stream_manager.hpp"
 
@@ -49,10 +49,10 @@ using session_ptr = std::shared_ptr<StreamSession>;
 /**
  * Reads PCM data using PipeStream, implements PcmListener to get the (encoded) PCM stream.
  * Accepts and holds client connections (StreamSession)
- * Receives (via the MessageReceiver interface) and answers messages from the clients
+ * Receives (via the StreamMessageReceiver interface) and answers messages from the clients
  * Forwards PCM data to the clients
  */
-class Server : public MessageReceiver, public ControlMessageReceiver, public PcmListener
+class Server : public StreamMessageReceiver, public ControlMessageReceiver, public PcmListener
 {
 public:
     Server(boost::asio::io_context& io_context, const ServerSettings& serverSettings);
@@ -61,16 +61,13 @@ public:
     void start();
     void stop();
 
-    /// Send a message to all connceted clients
-    //	void send(const msg::BaseMessage* message);
-
-    /// Clients call this when they receive a message. Implementation of MessageReceiver::onMessageReceived
+private:
+    /// Implementation of StreamMessageReceiver
     void onMessageReceived(StreamSession* connection, const msg::BaseMessage& baseMessage, char* buffer) override;
     void onDisconnect(StreamSession* connection) override;
 
-    /// Implementation of ControllMessageReceiver::onMessageReceived, called by ControlServer::onMessageReceived
+    /// Implementation of ControllMessageReceiver
     std::string onMessageReceived(ControlSession* connection, const std::string& message) override;
-    // TODO Refactor: ControlServer implements ControlMessageReceiver, calling this one.
     void onNewSession(const std::shared_ptr<ControlSession>& session) override
     {
         std::ignore = session;

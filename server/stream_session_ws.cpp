@@ -26,7 +26,7 @@ using namespace std;
 static constexpr auto LOG_TAG = "StreamSessionWS";
 
 
-StreamSessionWebsocket::StreamSessionWebsocket(boost::asio::io_context& ioc, MessageReceiver* receiver, websocket::stream<beast::tcp_stream>&& socket)
+StreamSessionWebsocket::StreamSessionWebsocket(boost::asio::io_context& ioc, StreamMessageReceiver* receiver, websocket::stream<beast::tcp_stream>&& socket)
     : StreamSession(ioc, receiver), ws_(std::move(socket))
 {
     LOG(DEBUG, LOG_TAG) << "StreamSessionWS\n";

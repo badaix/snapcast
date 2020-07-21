@@ -30,8 +30,8 @@
 #include "common/utils/string_utils.hpp"
 #include "encoder/encoder_factory.hpp"
 #include "message/message.hpp"
-#include "server_settings.hpp"
 #include "server.hpp"
+#include "server_settings.hpp"
 #if defined(HAS_AVAHI) || defined(HAS_BONJOUR)
 #include "publishZeroConf/publish_mdns.hpp"
 #endif

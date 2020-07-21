@@ -33,7 +33,7 @@ using json = nlohmann::json;
 
 static constexpr auto LOG_TAG = "StreamServer";
 
-StreamServer::StreamServer(boost::asio::io_context& io_context, const ServerSettings& serverSettings, MessageReceiver* messageReceiver)
+StreamServer::StreamServer(boost::asio::io_context& io_context, const ServerSettings& serverSettings, StreamMessageReceiver* messageReceiver)
     : io_context_(io_context), config_timer_(io_context), settings_(serverSettings), messageReceiver_(messageReceiver)
 {
 }

@@ -252,7 +252,7 @@ void ControlSessionHttp::on_read(beast::error_code ec, std::size_t bytes_transfe
     }
 
     LOG(DEBUG, LOG_TAG) << "read: " << bytes_transferred << ", method: " << req_.method_string() << ", content type: " << req_[beast::http::field::content_type]
-               << ", target: " << req_.target() << ", body: " << req_.body() << "\n";
+                        << ", target: " << req_.target() << ", body: " << req_.body() << "\n";
 
     // See if it is a WebSocket Upgrade
     if (websocket::is_upgrade(req_))

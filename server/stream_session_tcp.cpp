@@ -29,7 +29,7 @@ using namespace streamreader;
 static constexpr auto LOG_TAG = "StreamSessionTCP";
 
 
-StreamSessionTcp::StreamSessionTcp(boost::asio::io_context& ioc, MessageReceiver* receiver, tcp::socket&& socket)
+StreamSessionTcp::StreamSessionTcp(boost::asio::io_context& ioc, StreamMessageReceiver* receiver, tcp::socket&& socket)
     : StreamSession(ioc, receiver), socket_(std::move(socket))
 {
 }

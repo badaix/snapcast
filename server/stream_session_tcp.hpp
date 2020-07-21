@@ -28,13 +28,13 @@ using boost::asio::ip::tcp;
 /**
  * Endpoint for a connected client.
  * Messages are sent to the client with the "send" method.
- * Received messages from the client are passed to the MessageReceiver callback
+ * Received messages from the client are passed to the StreamMessageReceiver callback
  */
 class StreamSessionTcp : public StreamSession
 {
 public:
-    /// ctor. Received message from the client are passed to MessageReceiver
-    StreamSessionTcp(boost::asio::io_context& ioc, MessageReceiver* receiver, tcp::socket&& socket);
+    /// ctor. Received message from the client are passed to StreamMessageReceiver
+    StreamSessionTcp(boost::asio::io_context& ioc, StreamMessageReceiver* receiver, tcp::socket&& socket);
     ~StreamSessionTcp() override;
     void start() override;
     void stop() override;

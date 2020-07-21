@@ -39,8 +39,8 @@ namespace net = boost::asio;            // from <boost/asio.hpp>
 class StreamSessionWebsocket : public StreamSession
 {
 public:
-    /// ctor. Received message from the client are passed to MessageReceiver
-    StreamSessionWebsocket(boost::asio::io_context& ioc, MessageReceiver* receiver, websocket::stream<beast::tcp_stream>&& socket);
+    /// ctor. Received message from the client are passed to StreamMessageReceiver
+    StreamSessionWebsocket(boost::asio::io_context& ioc, StreamMessageReceiver* receiver, websocket::stream<beast::tcp_stream>&& socket);
     ~StreamSessionWebsocket() override;
     void start() override;
     void stop() override;

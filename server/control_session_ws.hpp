@@ -39,7 +39,7 @@ namespace net = boost::asio;            // from <boost/asio.hpp>
 class ControlSessionWebsocket : public ControlSession
 {
 public:
-    /// ctor. Received message from the client are passed to MessageReceiver
+    /// ctor. Received message from the client are passed to ControlMessageReceiver
     ControlSessionWebsocket(ControlMessageReceiver* receiver, boost::asio::io_context& ioc, websocket::stream<beast::tcp_stream>&& socket);
     ~ControlSessionWebsocket() override;
     void start() override;

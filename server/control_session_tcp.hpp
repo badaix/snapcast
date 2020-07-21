@@ -31,7 +31,7 @@
 class ControlSessionTcp : public ControlSession
 {
 public:
-    /// ctor. Received message from the client are passed to MessageReceiver
+    /// ctor. Received message from the client are passed to ControlMessageReceiver
     ControlSessionTcp(ControlMessageReceiver* receiver, boost::asio::io_context& ioc, tcp::socket&& socket);
     ~ControlSessionTcp() override;
     void start() override;

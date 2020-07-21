@@ -48,13 +48,13 @@ using session_ptr = std::shared_ptr<StreamSession>;
 /**
  * Reads PCM data using PipeStream, implements PcmListener to get the (encoded) PCM stream.
  * Accepts and holds client connections (StreamSession)
- * Receives (via the MessageReceiver interface) and answers messages from the clients
+ * Receives (via the StreamMessageReceiver interface) and answers messages from the clients
  * Forwards PCM data to the clients
  */
-class StreamServer : public MessageReceiver
+class StreamServer : public StreamMessageReceiver
 {
 public:
-    StreamServer(boost::asio::io_context& io_context, const ServerSettings& serverSettings, MessageReceiver* messageReceiver = nullptr);
+    StreamServer(boost::asio::io_context& io_context, const ServerSettings& serverSettings, StreamMessageReceiver* messageReceiver = nullptr);
     virtual ~StreamServer();
 
     void start();
@@ -75,7 +75,7 @@ private:
     void handleAccept(tcp::socket socket);
     void cleanup();
 
-    /// Clients call this when they receive a message. Implementation of MessageReceiver::onMessageReceived
+    /// Implementation of StreamMessageReceiver
     void onMessageReceived(StreamSession* connection, const msg::BaseMessage& baseMessage, char* buffer) override;
     void onDisconnect(StreamSession* connection) override;
 
@@ -88,7 +88,7 @@ private:
 
     ServerSettings settings_;
     Queue<std::shared_ptr<msg::BaseMessage>> messages_;
-    MessageReceiver* messageReceiver_;
+    StreamMessageReceiver* messageReceiver_;
 };
 
 

@@ -29,7 +29,7 @@ using namespace streamreader;
 static constexpr auto LOG_TAG = "StreamSession";
 
 
-StreamSession::StreamSession(boost::asio::io_context& ioc, MessageReceiver* receiver) : messageReceiver_(receiver), pcmStream_(nullptr), strand_(ioc)
+StreamSession::StreamSession(boost::asio::io_context& ioc, StreamMessageReceiver* receiver) : messageReceiver_(receiver), pcmStream_(nullptr), strand_(ioc)
 {
     base_msg_size_ = baseMessage_.getSize();
     buffer_.resize(base_msg_size_);

@@ -53,17 +53,17 @@ public:
     /// Send a message to all connected clients
     void send(const std::string& message, const ControlSession* excludeSession = nullptr);
 
-    /// Clients call this when they receive a message. Implementation of MessageReceiver::onMessageReceived
-    std::string onMessageReceived(ControlSession* session, const std::string& message) override;
-    void onNewSession(const std::shared_ptr<ControlSession>& session) override;
-    void onNewSession(const std::shared_ptr<StreamSession>& session) override;
-
 private:
     void startAccept();
 
     template <typename SessionType, typename... Args>
     void handleAccept(tcp::socket socket, Args&&... args);
     void cleanup();
+
+    /// Implementation of ControlMessageReceiver
+    std::string onMessageReceived(ControlSession* session, const std::string& message) override;
+    void onNewSession(const std::shared_ptr<ControlSession>& session) override;
+    void onNewSession(const std::shared_ptr<StreamSession>& session) override;
 
     mutable std::recursive_mutex session_mutex_;
     std::vector<std::weak_ptr<ControlSession>> sessions_;

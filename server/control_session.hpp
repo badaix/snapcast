@@ -55,7 +55,7 @@ public:
 class ControlSession : public std::enable_shared_from_this<ControlSession>
 {
 public:
-    /// ctor. Received message from the client are passed to MessageReceiver
+    /// ctor. Received message from the client are passed to ControlMessageReceiver
     ControlSession(ControlMessageReceiver* receiver) : message_receiver_(receiver)
     {
     }

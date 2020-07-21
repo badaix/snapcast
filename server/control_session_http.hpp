@@ -39,7 +39,7 @@ namespace net = boost::asio;            // from <boost/asio.hpp>
 class ControlSessionHttp : public ControlSession
 {
 public:
-    /// ctor. Received message from the client are passed to MessageReceiver
+    /// ctor. Received message from the client are passed to ControlMessageReceiver
     ControlSessionHttp(ControlMessageReceiver* receiver, boost::asio::io_context& ioc, tcp::socket&& socket, const ServerSettings::Http& settings);
     ~ControlSessionHttp() override;
     void start() override;
