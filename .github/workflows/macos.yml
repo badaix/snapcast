@@ -10,7 +10,7 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: dependencies
-      run: brew update && brew install pkgconfig flac opus libvorbis libsoxr
+      run: brew install pkgconfig libsoxr
     - name: cache boost
       id: cache-boost
       uses: actions/cache@v2

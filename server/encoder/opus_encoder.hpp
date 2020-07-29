@@ -19,7 +19,7 @@
 #pragma once
 
 #include "encoder.hpp"
-#include <opus/opus.h>
+#include <opus.h>
 
 
 namespace encoder
