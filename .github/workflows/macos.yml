@@ -10,7 +10,7 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: dependencies
-      run: brew update && brew install pkgconfig flac opus libvorbis libsoxr
+      run: brew install pkgconfig libsoxr
     - name: cache boost
       id: cache-boost
       uses: actions/cache@v2
@@ -23,4 +23,4 @@ jobs:
     - name: cmake build
       run: cmake -S . -B build -DBOOST_ROOT=boost_1_73_0 -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_FLAGS="$CXXFLAGS -Werror -Wall -Wextra -pedantic -Wno-unused-function"
     - name: cmake make
-      run: cmake --build build
+      run: cmake --build build --parallel 3
