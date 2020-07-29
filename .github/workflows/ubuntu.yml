@@ -21,6 +21,6 @@ jobs:
       if: steps.cache-boost.outputs.cache-hit != 'true'
       run: wget https://dl.bintray.com/boostorg/release/1.73.0/source/boost_1_73_0.tar.bz2 && tar xjf boost_1_73_0.tar.bz2
     - name: cmake build
-      run: cmake -S . -B build -DBOOST_ROOT=boost_1_73_0
+      run: cmake -S . -B build -DBOOST_ROOT=boost_1_73_0 -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_FLAGS="$CXXFLAGS -Werror -Wall -Wextra -pedantic -Wno-unused-function"
     - name: cmake make
       run: cmake --build build
