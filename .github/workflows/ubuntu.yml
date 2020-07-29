@@ -11,7 +11,14 @@ jobs:
     - uses: actions/checkout@v2
     - name: dependencies
       run: sudo apt-get update && sudo apt-get install -yq libasound2-dev libsoxr-dev libvorbisidec-dev libvorbis-dev libflac-dev libopus-dev alsa-utils libavahi-client-dev avahi-daemon
+    - name: cache boost
+      id: cache-boost
+      uses: actions/cache@v2
+      with:
+        path: boost_1_73_0
+        key: ${{ runner.os }}-boost
     - name: get boost
+      if: steps.cache-boost.outputs.cache-hit != 'true'
       run: wget https://dl.bintray.com/boostorg/release/1.73.0/source/boost_1_73_0.tar.bz2 && tar xjf boost_1_73_0.tar.bz2
     - name: cmake build
       run: cmake -S . -B build -DBOOST_ROOT=boost_1_73_0
