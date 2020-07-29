@@ -10,7 +10,7 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: dependencies
-      run: brew install pkgconfig libsoxr
+      run: brew install pkgconfig opus libsoxr
     - name: cache boost
       id: cache-boost
       uses: actions/cache@v2
