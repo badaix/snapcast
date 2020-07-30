@@ -19,7 +19,7 @@
 #pragma once
 
 #include "decoder/decoder.hpp"
-#include <opus.h>
+#include <opus/opus.h>
 
 namespace decoder
 {
