@@ -10,7 +10,19 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: dependencies
-      run: vcpkg.exe install libflac libvorbis soxr opus boost-asio --triplet x64-windows
+      run: vcpkg.exe install libflac libvorbis soxr opus --triplet x64-windows
+    - name: cache boost
+      id: cache-boost
+      uses: actions/cache@v2
+      with:
+        path: boost_1_73_0
+        key: ${{ runner.os }}-boost
+    - name: get boost
+      if: steps.cache-boost.outputs.cache-hit != 'true'
+      run: curl -LfsS "https://dl.bintray.com/boostorg/release/1.73.0/source/boost_1_73_0.7z"
+    - name: extract boost
+      if: steps.cache-boost.outputs.cache-hit != 'true'
+      run: 7z x boost_1_73_0.7z
     - name: cmake build
       run: cmake -S . -B build -G "Visual Studio 16 2019" -DCMAKE_BUILD_TYPE=Release
     - name: cmake make
