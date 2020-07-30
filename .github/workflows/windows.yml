@@ -13,14 +13,15 @@ jobs:
       id: cache-dependencies
       uses: actions/cache@v2
       with:
-        path: ${VCPKG_INSTALLATION_ROOT}\installed
+        #path: ${VCPKG_INSTALLATION_ROOT}\installed
+        path: c:\vcpkg\installed
         key: ${{ runner.os }}-dependencies
     - name: dependencies
       if: steps.cache-dependencies.outputs.cache-hit != 'true'
       run: vcpkg.exe install libflac libvorbis soxr opus boost-asio --triplet x64-windows
     - name: cmake build
       run: |
-        echo vcpkg installation root: ${VCPKG_INSTALLATION_ROOT}
+        echo vcpkg installation root: ${env:VCPKG_INSTALLATION_ROOT}
         cmake -S . -B build -G "Visual Studio 16 2019" -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake" -DVCPKG_TARGET_TRIPLET="x64-windows" -DCMAKE_BUILD_TYPE="Release"
     - name: cmake make
       run: cmake --build build --parallel 3
