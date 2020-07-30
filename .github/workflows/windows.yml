@@ -12,7 +12,7 @@ jobs:
     - name: dependencies
       run: vcpkg.exe install libflac libvorbis soxr opus boost-asio --triplet x64-windows
     - name: cmake build
-      run: cmake -S . -B build -G "Visual Studio 16 2019" -DCMAKE_TOOLCHAIN_FILE=vcpkg/scripts/buildsystems/vcpkg.cmake -DVCPKG_TARGET_TRIPLET=x64-windows -DBOOST_ROOT=boost_1_73_0 -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_FLAGS="$CXXFLAGS -Werror -Wall -Wextra -pedantic -Wno-unused-function" 
+      run: cmake -S . -B build -G "Visual Studio 16 2019" -DCMAKE_BUILD_TYPE=Release
     - name: cmake make
       run: cmake --build build --parallel 3
  
