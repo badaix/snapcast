@@ -83,4 +83,6 @@ include_directories(${SERVER_INCLUDE})
 add_executable(snapserver ${SERVER_SOURCES})
 target_link_libraries(snapserver ${SERVER_LIBRARIES})
 
-install(TARGETS snapserver COMPONENT server DESTINATION "${CMAKE_INSTALL_BINDIR}")
+install(TARGETS snapserver COMPONENT server DESTINATION ${CMAKE_INSTALL_BINDIR})
+install(FILES snapserver.1 COMPONENT server DESTINATION ${CMAKE_INSTALL_MANDIR}/man1)
+install(FILES etc/snapserver.conf COMPONENT server DESTINATION ${CMAKE_INSTALL_SYSCONFDIR})

@@ -8,6 +8,8 @@ option(BUILD_SHARED_LIBS "Build snapcast in a shared context" ON)
 option(BUILD_STATIC_LIBS "Build snapcast in a static context" ON)
 option(BUILD_TESTS "Build tests (run tests with make test)" ON)
 
+include(GNUInstallDirs)
+
 if(NOT WIN32)
     option(BUILD_SERVER "Build Snapserver" ON) # no Windows server for now
 endif()

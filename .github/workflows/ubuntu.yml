@@ -10,7 +10,7 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: dependencies
-      run: sudo apt-get update && sudo apt-get install -yq libasound2-dev libsoxr-dev libvorbisidec-dev libvorbis-dev libflac-dev libopus-dev alsa-utils libavahi-client-dev avahi-daemon
+      run: sudo apt-get update && sudo apt-get install -yq libasound2-dev libsoxr-dev libvorbisidec-dev libvorbis-dev libflac-dev libopus-dev alsa-utils libavahi-client-dev avahi-daemon debhelper
     - name: cache boost
       id: cache-boost
       uses: actions/cache@v2
@@ -24,3 +24,5 @@ jobs:
       run: cmake -S . -B build -DBOOST_ROOT=boost_1_73_0 -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_FLAGS="$CXXFLAGS -Werror -Wall -Wextra -pedantic -Wno-unused-function"
     - name: cmake make
       run: cmake --build build --parallel 3
+    - name: debian package
+      run: fakeroot make -f debian/rules CMAKEFLAGS="-DBOOST_ROOT=boost_1_73_0" binary

@@ -13,9 +13,7 @@ set(CLIENT_LIBRARIES ${CMAKE_THREAD_LIBS_INIT} ${ATOMIC_LIBRARY} common)
 set(CLIENT_INCLUDE
     ${Boost_INCLUDE_DIR}
     ${CMAKE_SOURCE_DIR}/client
-    ${CMAKE_SOURCE_DIR}/common
-    ${ASIO_INCLUDE_DIRS}
-    ${POPL_INCLUDE_DIRS})
+    ${CMAKE_SOURCE_DIR}/common)
 
 
 if(MACOSX)
@@ -91,3 +89,5 @@ add_executable(snapclient ${CLIENT_SOURCES})
 target_link_libraries(snapclient ${CLIENT_LIBRARIES})
 
 install(TARGETS snapclient COMPONENT client DESTINATION "${CMAKE_INSTALL_BINDIR}")
+install(FILES snapclient.1 COMPONENT client DESTINATION "${CMAKE_INSTALL_MANDIR}/man1")
+
