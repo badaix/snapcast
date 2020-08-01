@@ -1,0 +1,40 @@
+name: Ubuntu
+
+on: [push, pull_request]
+
+jobs:
+  build:
+
+    runs-on: self-hosted-rpi4
+    #ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: dependencies
+      run: sudo apt-get update && sudo apt-get install -yq libasound2-dev libsoxr-dev libvorbisidec-dev libvorbis-dev libflac-dev libopus-dev alsa-utils libavahi-client-dev avahi-daemon debhelper ccache
+    - name: cache boost
+      id: cache-boost
+      uses: actions/cache@v2
+      with:
+        path: boost_1_73_0
+        key: ${{ runner.os }}-boost
+    - name: get boost
+      if: steps.cache-boost.outputs.cache-hit != 'true'
+      run: wget https://dl.bintray.com/boostorg/release/1.73.0/source/boost_1_73_0.tar.bz2 && tar xjf boost_1_73_0.tar.bz2
+    - name: cache ccache
+      id: cache-ccache
+      uses: actions/cache@v2
+      with:
+        path: ~/.ccache
+        key: ${{ runner.os }}-ccache
+    - name: cmake build
+      run: cmake -S . -B build -DBOOST_ROOT=boost_1_73_0 -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_FLAGS="$CXXFLAGS -Werror -Wall -Wextra -pedantic -Wno-unused-function"
+    - name: cmake make
+      run: cmake --build build --parallel 3
+    - name: debian package
+      run: fakeroot make -f debian/rules CMAKEFLAGS="-DBOOST_ROOT=boost_1_73_0 -DCMAKE_CXX_COMPILER_LAUNCHER=ccache" binary
+    - name: Archive artifacts
+      uses: actions/upload-artifact@v2
+      with:
+        name: develop_snapshot_amd64
+        path: /home/runner/work/snapcast/snap*_amd64.deb
