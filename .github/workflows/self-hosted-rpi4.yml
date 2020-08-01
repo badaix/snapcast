@@ -1,4 +1,4 @@
-name: Ubuntu
+name: self-hosted
 
 on: [push, pull_request]
 
