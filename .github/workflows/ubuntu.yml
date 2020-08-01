@@ -35,5 +35,5 @@ jobs:
     - name: Archive artifacts
       uses: actions/upload-artifact@v2
       with:
-        name: develop_snapshot_amd64.deb
+        name: develop_snapshot_amd64
         path: ../snap*_amd64.deb
