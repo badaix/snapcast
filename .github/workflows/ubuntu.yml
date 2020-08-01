@@ -32,3 +32,8 @@ jobs:
       run: cmake --build build --parallel 3
     - name: debian package
       run: fakeroot make -f debian/rules CMAKEFLAGS="-DBOOST_ROOT=boost_1_73_0 -DCMAKE_CXX_COMPILER_LAUNCHER=ccache" binary
+    - name: Archive artifacts
+      uses: actions/upload-artifact@v2
+      with:
+        name: develop_snapshot_amd64.deb
+        path: ../snap*_amd64.deb
