@@ -36,4 +36,4 @@ jobs:
       uses: actions/upload-artifact@v2
       with:
         name: develop_snapshot_armhf
-        path: /home/pi/actions-runner/_work/snapcast/snap*_armhf.deb
+        path: /home/pi/actions-runner/_work/snapcast/snap??????_*_armhf.deb
