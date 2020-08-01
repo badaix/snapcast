@@ -29,5 +29,5 @@ jobs:
       uses: actions/upload-artifact@v2
       with:
         name: develop_snapshot_win64
-        path: bin\Debug\snapclient.exe
+        path: bin\Release\snapclient.exe
  
