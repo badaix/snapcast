@@ -5,7 +5,8 @@ on: [push, pull_request]
 jobs:
   build:
 
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-16.04
+    #ubuntu-latest
 
     steps:
     - uses: actions/checkout@v2
