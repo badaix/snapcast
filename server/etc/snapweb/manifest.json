@@ -1,0 +1,16 @@
+{
+    "short_name": "Snapweb",
+    "name": "Snapcast WebApp",
+    "icons": [
+        {
+            "src": "launcher-icon.png",
+            "sizes": "192x192",
+            "type": "image/png"
+        }
+    ],
+    "start_url": "/index.html",
+    "display": "standalone",
+    "categories": ["music"],
+    "description": "Snapcast web client",
+    "theme_color": "#455A64"
+}
