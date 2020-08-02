@@ -26,7 +26,7 @@ jobs:
       uses: actions/cache@v2
       with:
         path: ~/.ccache
-        key: ${{ runner.os }}-ccache-${{ hashFiles('**/stats') }}
+        key: ${{ runner.os }}-ccache-${{ hashFiles('~/.ccache/**/stats') }}
         restore-keys: ${{ runner.os }}-ccache-
     - name: cmake build
       run: cmake -S . -B build -DBOOST_ROOT=boost_1_73_0 -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_FLAGS="$CXXFLAGS -Werror -Wall -Wextra -pedantic -Wno-unused-function"
