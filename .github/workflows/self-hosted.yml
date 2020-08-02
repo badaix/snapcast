@@ -10,9 +10,9 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: cmake build
-      run: cmake -S . -B build -DBOOST_ROOT=/home/pi/Develop/boost_1_73_0 -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_FLAGS="$CXXFLAGS -Wall -Wextra -pedantic -Wno-unused-function"
+      run: mkdir build && cd build && cmake -DBOOST_ROOT=/home/pi/Develop/boost_1_73_0 -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_FLAGS="$CXXFLAGS -Wall -Wextra -pedantic -Wno-unused-function" .. && cd ..
     - name: cmake make
-      run: cmake --build build --parallel 2
+      run: cmake --build build
     - name: debian package
       run: fakeroot make -f debian/rules CMAKEFLAGS="-DBOOST_ROOT=/home/pi/Develop/boost_1_73_0 -DCMAKE_CXX_COMPILER_LAUNCHER=ccache" binary
     - name: Archive artifacts
