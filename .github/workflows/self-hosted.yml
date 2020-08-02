@@ -5,14 +5,14 @@ on: [push, pull_request]
 jobs:
   build:
 
-    runs-on: self-hosted-rpi4
+    runs-on: self-hosted-rpi3
 
     steps:
     - uses: actions/checkout@v2
     - name: cmake build
       run: cmake -S . -B build -DBOOST_ROOT=/home/pi/Develop/boost_1_73_0 -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_FLAGS="$CXXFLAGS -Wall -Wextra -pedantic -Wno-unused-function"
     - name: cmake make
-      run: cmake --build build --parallel 4
+      run: cmake --build build --parallel 2
     - name: debian package
       run: fakeroot make -f debian/rules CMAKEFLAGS="-DBOOST_ROOT=/home/pi/Develop/boost_1_73_0 -DCMAKE_CXX_COMPILER_LAUNCHER=ccache" binary
     - name: Archive artifacts
