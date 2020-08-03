@@ -16,8 +16,10 @@
         along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
-#pragma once
+#ifndef OPUS_ENCODER_HPP
+#define OPUS_ENCODER_HPP
 
+#include "common/resampler.hpp"
 #include "encoder.hpp"
 #include <opus/opus.h>
 
@@ -43,6 +45,9 @@ protected:
     std::vector<unsigned char> encoded_;
     std::unique_ptr<msg::PcmChunk> remainder_;
     size_t remainder_max_size_;
+    std::unique_ptr<Resampler> resampler_;
 };
 
 } // namespace encoder
+
+#endif

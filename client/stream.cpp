@@ -50,49 +50,20 @@ Stream::Stream(const SampleFormat& in_format, const SampleFormat& out_format)
                           out_format.channels() != 0 ? out_format.channels() : format_.channels());
     }
 
-/*
-48000     x
-------- = -----
-47999,2   x - 1
+    /*
+    48000     x
+    ------- = -----
+    47999,2   x - 1
 
-x = 1,000016667 / (1,000016667 - 1)
-*/
-// setRealSampleRate(format_.rate());
-#ifdef HAS_SOXR
-    soxr_ = nullptr;
-    if ((format_.rate() != in_format_.rate()) || (format_.bits() != in_format_.bits()))
-    {
-        LOG(INFO, LOG_TAG) << "Resampling from " << in_format_.toString() << " to " << format_.toString() << "\n";
-        soxr_error_t error;
-
-        soxr_datatype_t in_type = SOXR_INT16_I;
-        soxr_datatype_t out_type = SOXR_INT16_I;
-        if (in_format_.sampleSize() > 2)
-            in_type = SOXR_INT32_I;
-        if (format_.sampleSize() > 2)
-            out_type = SOXR_INT32_I;
-        soxr_io_spec_t iospec = soxr_io_spec(in_type, out_type);
-        // HQ should be fine: http://sox.sourceforge.net/Docs/FAQ
-        soxr_quality_spec_t q_spec = soxr_quality_spec(SOXR_HQ, 0);
-        soxr_ = soxr_create(static_cast<double>(in_format_.rate()), static_cast<double>(format_.rate()), format_.channels(), &error, &iospec, &q_spec, NULL);
-        if (error)
-        {
-            LOG(ERROR, LOG_TAG) << "Error soxr_create: " << error << "\n";
-            soxr_ = nullptr;
-        }
-        // initialize the buffer with 20ms (~latency of the reampler)
-        resample_buffer_.resize(format_.frameSize() * static_cast<uint16_t>(ceil(format_.msRate() * 20)));
-    }
-#endif
+    x = 1,000016667 / (1,000016667 - 1)
+    */
+    // setRealSampleRate(format_.rate());
+    resampler_ = std::make_unique<Resampler>(in_format_, format_);
 }
 
 
 Stream::~Stream()
 {
-#ifdef HAS_SOXR
-    if (soxr_)
-        soxr_delete(soxr_);
-#endif
 }
 
 
@@ -127,92 +98,15 @@ void Stream::clearChunks()
 void Stream::addChunk(unique_ptr<msg::PcmChunk> chunk)
 {
     // drop chunk if it's too old. Just in case, this shouldn't happen.
-    cs::usec age = std::chrono::duration_cast<cs::usec>(TimeProvider::serverNow() - chunk->start());
+    auto age = std::chrono::duration_cast<cs::msec>(TimeProvider::serverNow() - chunk->start());
     if (age > 5s + bufferMs_)
         return;
 
-// LOG(DEBUG, LOG_TAG) << "new chunk: " << chunk->durationMs() << " ms, Chunks: " << chunks_.size() << "\n";
+    LOG(DEBUG, LOG_TAG) << "new chunk: " << chunk->durationMs() << " ms, age: " << age.count() << " ms, Chunks: " << chunks_.size() << "\n";
 
-#ifndef HAS_SOXR
-    chunks_.push(move(chunk));
-#else
-    if (soxr_ == nullptr)
-    {
-        chunks_.push(move(chunk));
-    }
-    else
-    {
-        if (in_format_.bits() == 24)
-        {
-            // sox expects 32 bit input, shift 8 bits left
-            int32_t* frames = (int32_t*)chunk->payload;
-            for (size_t n = 0; n < chunk->getSampleCount(); ++n)
-                frames[n] = frames[n] << 8;
-        }
-
-        size_t idone;
-        size_t odone;
-        auto resample_buffer_framesize = resample_buffer_.size() / format_.frameSize();
-        auto error = soxr_process(soxr_, chunk->payload, chunk->getFrameCount(), &idone, resample_buffer_.data(), resample_buffer_framesize, &odone);
-        if (error)
-        {
-            LOG(ERROR, LOG_TAG) << "Error soxr_process: " << error << "\n";
-        }
-        else
-        {
-            LOG(TRACE, LOG_TAG) << "Resample idone: " << idone << "/" << chunk->getFrameCount() << ", odone: " << odone << "/"
-                                << resample_buffer_.size() / format_.frameSize() << ", delay: " << soxr_delay(soxr_) << "\n";
-
-            // some data has been resampled (odone frames) and some is still in the pipe (soxr_delay frames)
-            if (odone > 0)
-            {
-                // get the resamples ts from the input ts
-                auto input_end_ts = chunk->start() + chunk->duration<std::chrono::microseconds>();
-                double resampled_ms = (odone + soxr_delay(soxr_)) / format_.msRate();
-                auto resampled_start = input_end_ts - std::chrono::microseconds(static_cast<int>(resampled_ms * 1000.));
-
-                auto resampled_chunk = new msg::PcmChunk(format_, 0);
-                auto us = chrono::duration_cast<chrono::microseconds>(resampled_start.time_since_epoch()).count();
-                resampled_chunk->timestamp.sec = static_cast<int32_t>(us / 1000000);
-                resampled_chunk->timestamp.usec = static_cast<int32_t>(us % 1000000);
-
-                // copy from the resample_buffer to the resampled chunk
-                resampled_chunk->payloadSize = static_cast<uint32_t>(odone * format_.frameSize());
-                resampled_chunk->payload = (char*)realloc(resampled_chunk->payload, resampled_chunk->payloadSize);
-                memcpy(resampled_chunk->payload, resample_buffer_.data(), resampled_chunk->payloadSize);
-
-                if (format_.bits() == 24)
-                {
-                    // sox has quantized to 32 bit, shift 8 bits right
-                    int32_t* frames = (int32_t*)resampled_chunk->payload;
-                    for (size_t n = 0; n < resampled_chunk->getSampleCount(); ++n)
-                    {
-                        // +128 to round to the nearest so that quantisation steps are distributed evenly
-                        frames[n] = (frames[n] + 128) >> 8;
-                        if (frames[n] > 0x7fffffff)
-                            frames[n] = 0x7fffffff;
-                    }
-                }
-                chunks_.push(shared_ptr<msg::PcmChunk>(resampled_chunk));
-
-                // check if the resample_buffer is large enough, or if soxr was using all available space
-                if (odone == resample_buffer_framesize)
-                {
-                    // buffer for resampled data too small, add space for 5ms
-                    resample_buffer_.resize(resample_buffer_.size() + format_.frameSize() * static_cast<uint16_t>(ceil(format_.msRate() * 5)));
-                    LOG(DEBUG, LOG_TAG) << "Resample buffer completely filled, adding space for 5ms; new buffer size: " << resample_buffer_.size()
-                                        << " bytes\n";
-                }
-
-                // //LOG(TRACE, LOG_TAG) << "ts: " << out->timestamp.sec << "s, " << out->timestamp.usec/1000.f << " ms, duration: " << odone / format_.msRate()
-                // << "\n";
-                // int64_t next_us = us + static_cast<int64_t>(odone / format_.msRate() * 1000);
-                // LOG(TRACE, LOG_TAG) << "ts: " << us << ", next: " << next_us << ", diff: " << next_us_ - us << "\n";
-                // next_us_ = next_us;
-            }
-        }
-    }
-#endif
+    auto resampled = resampler_->resample(std::move(chunk));
+    if (resampled)
+        chunks_.push(move(resampled));
 }
 
 
@@ -372,6 +266,9 @@ bool Stream::getPlayerChunk(void* outputBuffer, const cs::usec& outputBufferDacT
             {
                 if (age.count() > 0)
                 {
+                    // TODO: should be enough to check if "age.count() > chunk->duration"
+                    // if "age.count > 0 && age.count < chunk->duration" then
+                    // the current chunk could be fast forwarded by age.count, instead of dropping the whole chunk
                     LOG(DEBUG, LOG_TAG) << "age > 0: " << age.count() / 1000 << "ms\n";
                     // age > 0: the top of the stream is too old. We must fast foward.
                     // delete the current chunk, it's too old. This will avoid an endless loop if there is no chunk in the queue.

@@ -1,5 +1,17 @@
+set(SOURCES
+    resampler.cpp
+    sample_format.cpp)
+
 if(NOT WIN32)
-	add_library(common STATIC daemon.cpp sample_format.cpp)
-else()
-	add_library(common STATIC sample_format.cpp)
+	list(APPEND SOURCES daemon.cpp)
 endif()
+
+if (SOXR_FOUND)
+    include_directories(${SOXR_INCLUDE_DIRS})
+endif (SOXR_FOUND)
+
+add_library(common STATIC ${SOURCES})
+
+if (SOXR_FOUND)
+    target_link_libraries(common ${SOXR_LIBRARIES})
+endif (SOXR_FOUND)

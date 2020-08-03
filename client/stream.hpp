@@ -16,14 +16,15 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
-#ifndef STREAM_H
-#define STREAM_H
+#ifndef STREAM_HPP
+#define STREAM_HPP
 
 #include "common/queue.h"
 #include "common/sample_format.hpp"
 #include "double_buffer.hpp"
 #include "message/message.hpp"
 #include "message/pcm_chunk.hpp"
+#include "resampler.hpp"
 #include <deque>
 #include <memory>
 #ifdef HAS_SOXR
@@ -102,9 +103,8 @@ private:
     int32_t correctAfterXFrames_;
     chronos::msec bufferMs_;
 
-#ifdef HAS_SOXR
-    soxr_t soxr_;
-#endif
+    std::unique_ptr<Resampler> resampler_;
+
     std::vector<char> resample_buffer_;
     std::vector<char> read_buffer_;
     int frame_delta_;

@@ -31,6 +31,8 @@ namespace encoder
 static constexpr opus_int32 const_min_bitrate = 6000;
 static constexpr opus_int32 const_max_bitrate = 512000;
 
+static constexpr auto LOG_TAG = "OpusEncoder";
+
 namespace
 {
 template <typename T>
@@ -77,8 +79,16 @@ void OpusEncoder::initEncoder()
 {
     // Opus is quite restrictive in sample rate and bit depth
     // It can handle mono signals, but we will check for stereo
-    if ((sampleFormat_.rate() != 48000) || (sampleFormat_.bits() != 16) || (sampleFormat_.channels() != 2))
-        throw SnapException("Opus sampleformat must be 48000:16:2");
+    // if ((sampleFormat_.rate() != 48000) || (sampleFormat_.bits() != 16) || (sampleFormat_.channels() != 2))
+    //     throw SnapException("Opus sampleformat must be 48000:16:2");
+    if (sampleFormat_.channels() != 2)
+        throw SnapException("Opus requires a stereo signal");
+    SampleFormat out{48000, 16, 2};
+    if ((sampleFormat_.rate() != 48000) || (sampleFormat_.bits() != 16))
+        LOG(INFO, LOG_TAG) << "Resampling input from " << sampleFormat_.toString() << " to " << out.toString() << " as required by Opus\n";
+
+    resampler_ = make_unique<Resampler>(sampleFormat_, out);
+    sampleFormat_ = out;
 
     opus_int32 bitrate = 192000;
     opus_int32 complexity = 10;
@@ -132,7 +142,7 @@ void OpusEncoder::initEncoder()
             throw SnapException("Opus error parsing options: " + codecOptions_);
     }
 
-    LOG(INFO) << "Opus bitrate: " << bitrate << " bps, complexity: " << complexity << "\n";
+    LOG(INFO, LOG_TAG) << "Opus bitrate: " << bitrate << " bps, complexity: " << complexity << "\n";
 
     int error;
     enc_ = opus_encoder_create(sampleFormat_.rate(), sampleFormat_.channels(), OPUS_APPLICATION_RESTRICTED_LOWDELAY, &error);
@@ -166,7 +176,15 @@ void OpusEncoder::initEncoder()
 // and encode the buffer content in the next iteration
 void OpusEncoder::encode(const msg::PcmChunk* chunk)
 {
-    // LOG(TRACE) << "encode " << chunk->duration<std::chrono::milliseconds>().count() << "ms\n";
+    // chunk =
+    // resampler_->resample(std::make_shared<msg::PcmChunk>(chunk)).get();
+    auto in = std::make_shared<msg::PcmChunk>(*chunk);
+    auto out = resampler_->resample(in); //, std::chrono::milliseconds(20));
+    if (out == nullptr)
+        return;
+    chunk = out.get();
+
+    // LOG(TRACE, LOG_TAG) << "encode " << chunk->duration<std::chrono::milliseconds>().count() << "ms\n";
     uint32_t offset = 0;
 
     // check if there is something left from the last call to encode and fill the remainder buffer to
@@ -175,13 +193,13 @@ void OpusEncoder::encode(const msg::PcmChunk* chunk)
     {
         offset = std::min(static_cast<uint32_t>(remainder_max_size_ - remainder_->payloadSize), chunk->payloadSize);
         memcpy(remainder_->payload + remainder_->payloadSize, chunk->payload, offset);
-        // LOG(TRACE) << "remainder buffer size: " << remainder_->payloadSize << "/" << remainder_max_size_ << ", appending " << offset << " bytes\n";
+        // LOG(TRACE, LOG_TAG) << "remainder buffer size: " << remainder_->payloadSize << "/" << remainder_max_size_ << ", appending " << offset << " bytes\n";
         remainder_->payloadSize += offset;
 
         if (remainder_->payloadSize < remainder_max_size_)
         {
-            LOG(DEBUG) << "not enough data to encode (" << remainder_->payloadSize << " of " << remainder_max_size_ << " bytes)"
-                       << "\n";
+            LOG(DEBUG, LOG_TAG) << "not enough data to encode (" << remainder_->payloadSize << " of " << remainder_max_size_ << " bytes)"
+                                << "\n";
             return;
         }
         encode(chunk->format, remainder_->payload, remainder_->payloadSize);
@@ -196,7 +214,8 @@ void OpusEncoder::encode(const msg::PcmChunk* chunk)
         uint32_t bytes = ms2bytes(duration);
         while (chunk->payloadSize - offset >= bytes)
         {
-            // LOG(TRACE) << "encoding " << duration << "ms (" << bytes << "), offset: " << offset << ", chunk size: " << chunk->payloadSize - offset << "\n";
+            // LOG(TRACE, LOG_TAG) << "encoding " << duration << "ms (" << bytes << "), offset: " << offset << ", chunk size: " << chunk->payloadSize - offset
+            // << "\n";
             encode(chunk->format, chunk->payload + offset, bytes);
             offset += bytes;
         }
@@ -216,13 +235,13 @@ void OpusEncoder::encode(const msg::PcmChunk* chunk)
 void OpusEncoder::encode(const SampleFormat& format, const char* data, size_t size)
 {
     // void* buffer;
-    // LOG(INFO) << "frames: " << chunk->readFrames(buffer, std::chrono::milliseconds(10)) << "\n";
+    // LOG(INFO, LOG_TAG) << "frames: " << chunk->readFrames(buffer, std::chrono::milliseconds(10)) << "\n";
     int samples_per_channel = size / format.frameSize();
     if (encoded_.size() < size)
         encoded_.resize(size);
 
     opus_int32 len = opus_encode(enc_, (opus_int16*)data, samples_per_channel, encoded_.data(), size);
-    // LOG(TRACE) << "Encode " << samples_per_channel << " frames, size " << size << " bytes, encoded: " << len << " bytes" << '\n';
+    LOG(TRACE, LOG_TAG) << "Encode " << samples_per_channel << " frames, size " << size << " bytes, encoded: " << len << " bytes" << '\n';
 
     if (len > 0)
     {
@@ -235,7 +254,8 @@ void OpusEncoder::encode(const SampleFormat& format, const char* data, size_t si
     }
     else
     {
-        LOG(ERROR) << "Failed to encode chunk: " << opus_strerror(len) << ", samples / channel: " << samples_per_channel << ", bytes:  " << size << '\n';
+        LOG(ERROR, LOG_TAG) << "Failed to encode chunk: " << opus_strerror(len) << ", samples / channel: " << samples_per_channel << ", bytes:  " << size
+                            << '\n';
     }
 }
 

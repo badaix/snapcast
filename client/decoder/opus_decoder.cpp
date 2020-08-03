@@ -49,10 +49,10 @@ OpusDecoder::~OpusDecoder()
 
 bool OpusDecoder::decode(msg::PcmChunk* chunk)
 {
-    int frame_size = 0;
+    int decoded_frames = 0;
 
-    while ((frame_size = opus_decode(dec_, (unsigned char*)chunk->payload, chunk->payloadSize, pcm_.data(),
-                                     static_cast<int>(pcm_.size()) / sample_format_.channels(), 0)) == OPUS_BUFFER_TOO_SMALL)
+    while ((decoded_frames = opus_decode(dec_, (unsigned char*)chunk->payload, chunk->payloadSize, pcm_.data(),
+                                         static_cast<int>(pcm_.size()) / sample_format_.channels(), 0)) == OPUS_BUFFER_TOO_SMALL)
     {
         if (pcm_.size() < const_max_frame_size * sample_format_.channels())
         {
@@ -63,18 +63,19 @@ bool OpusDecoder::decode(msg::PcmChunk* chunk)
             break;
     }
 
-    if (frame_size < 0)
+    if (decoded_frames < 0)
     {
-        LOG(ERROR, LOG_TAG) << "Failed to decode chunk: " << opus_strerror(frame_size) << ", IN size:  " << chunk->payloadSize << ", OUT size: " << pcm_.size()
-                            << '\n';
+        LOG(ERROR, LOG_TAG) << "Failed to decode chunk: " << opus_strerror(decoded_frames) << ", IN size:  " << chunk->payloadSize
+                            << ", OUT size: " << pcm_.size() << '\n';
         return false;
     }
     else
     {
-        LOG(DEBUG, LOG_TAG) << "Decoded chunk: size " << chunk->payloadSize << " bytes, decoded " << frame_size << " samples" << '\n';
+        LOG(DEBUG, LOG_TAG) << "Decode chunk: " << decoded_frames << " frames, size: " << chunk->payloadSize
+                            << " bytes, decoded: " << decoded_frames * sample_format_.frameSize() << " bytes\n";
 
         // copy encoded data to chunk
-        chunk->payloadSize = frame_size * sample_format_.channels() * sizeof(opus_int16);
+        chunk->payloadSize = decoded_frames * sample_format_.frameSize(); // decoded_frames * sample_format_.channels() * sizeof(opus_int16);
         chunk->payload = (char*)realloc(chunk->payload, chunk->payloadSize);
         memcpy(chunk->payload, (char*)pcm_.data(), chunk->payloadSize);
         return true;
@@ -96,7 +97,7 @@ SampleFormat OpusDecoder::setHeader(msg::CodecHeader* chunk)
 
     // decode the sampleformat
     uint32_t rate;
-    memcpy(&rate, chunk->payload + 4, sizeof(id_opus));
+    memcpy(&rate, chunk->payload + 4, sizeof(rate));
     uint16_t bits;
     memcpy(&bits, chunk->payload + 8, sizeof(bits));
     uint16_t channels;

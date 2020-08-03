@@ -48,22 +48,6 @@ else()
     endif (ALSA_FOUND)
 endif (MACOSX)
 
-#pkg_search_module(SOXR soxr)
-if(WIN32)
-	find_path(SOXR_INCLUDE_DIRS soxr.h)
-	find_library(SOXR_LIBRARIES soxr)
-	find_package_handle_standard_args(Soxr DEFAULT_MSG SOXR_INCLUDE_DIRS SOXR_LIBRARIES)
-    add_definitions("-DHAS_SOXR")
-else()
-    find_package(soxr)
-endif()
-
-if (SOXR_FOUND)
-    add_definitions("-DHAS_SOXR")
-    list(APPEND CLIENT_LIBRARIES ${SOXR_LIBRARIES})
-    list(APPEND CLIENT_INCLUDE ${SOXR_INCLUDE_DIRS})
-endif (SOXR_FOUND)
-
 # if OGG then tremor or vorbis
 if (OGG_FOUND)
     list(APPEND CLIENT_SOURCES decoder/ogg_decoder.cpp)

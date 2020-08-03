@@ -58,6 +58,19 @@ public:
     }
 #endif
 
+    // std::unique_ptr<PcmChunk> consume(uint32_t frameCount)
+    // {
+    //     auto result = std::make_unique<PcmChunk>(format, 0);
+    //     if (frameCount * format.frameSize() > payloadSize)
+    //         frameCount = payloadSize / format.frameSize();
+    //     result->payload = payload;
+    //     result->payloadSize = frameCount * format.frameSize();
+    //     payloadSize -= result->payloadSize;
+    //     payload = (char*)realloc(payload + result->payloadSize, payloadSize);
+    //     // payload += result->payloadSize;
+    //     return result;
+    // }
+
     int readFrames(void* outputBuffer, uint32_t frameCount)
     {
         // logd << "read: " << frameCount << ", total: " << (wireChunk->length / format.frameSize()) << ", idx: " << idx;// << std::endl;
@@ -87,7 +100,6 @@ public:
         return idx_;
     }
 
-
     chronos::time_point_clk start() const override
     {
         return chronos::time_point_clk(chronos::sec(timestamp.sec) + chronos::usec(timestamp.usec) +
@@ -104,6 +116,14 @@ public:
     {
         return std::chrono::duration_cast<T>(chronos::nsec(static_cast<chronos::nsec::rep>(1000000 * getFrameCount() / format.msRate())));
     }
+
+    // void append(const PcmChunk& chunk)
+    // {
+    //     auto newSize = payloadSize + chunk.payloadSize;
+    //     payload = (char*)realloc(payload, newSize);
+    //     memcpy(payload + payloadSize, chunk.payload, chunk.payloadSize);
+    //     payloadSize = newSize;
+    // }
 
     double durationMs() const
     {
