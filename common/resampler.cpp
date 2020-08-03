@@ -18,6 +18,7 @@
 
 #include "resampler.hpp"
 #include "common/aixlog.hpp"
+#include <cmath>
 
 using namespace std;
 
