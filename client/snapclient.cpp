@@ -30,7 +30,7 @@
 #include "player/alsa_player.hpp"
 #endif
 #ifdef HAS_WASAPI
-#include "player/wasapi_player.h"
+#include "player/wasapi_player.hpp"
 #endif
 #ifdef HAS_DAEMON
 #include "common/daemon.hpp"

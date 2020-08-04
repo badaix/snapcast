@@ -262,3 +262,24 @@ endif()
 if (BUILD_CLIENT)
     add_subdirectory(client)
 endif()
+
+
+FIND_PROGRAM(CLANG_FORMAT "clang-format")
+IF(CLANG_FORMAT)
+    FILE(GLOB_RECURSE
+        CHECK_CXX_SOURCE_FILES
+        common/*.[ch]pp
+        client/*.[ch]pp
+        server/*.[ch]pp
+    )
+    
+    ADD_CUSTOM_TARGET(
+        reformat
+        COMMAND
+        ${CLANG_FORMAT}
+        -i
+        -style=file
+        ${CHECK_CXX_SOURCE_FILES}
+        COMMENT "Auto formatting of all source files"
+    )
+ENDIF()

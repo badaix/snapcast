@@ -1,4 +1,4 @@
-#include "wasapi_player.h"
+#include "wasapi_player.hpp"
 #include <initguid.h>
 #include <mmdeviceapi.h>
 //#include <functiondiscoverykeys_devpkey.h>

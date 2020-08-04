@@ -16,8 +16,9 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
-#ifndef WASAPI_PLAYER_H
-#define WASAPI_PLAYER_H
+#ifndef WASAPI_PLAYER_HPP
+#define WASAPI_PLAYER_HPP
+
 #include "player.hpp"
 #include <audiopolicy.h>
 #include <endpointvolume.h>
