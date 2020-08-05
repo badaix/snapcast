@@ -253,6 +253,8 @@ endif()
 
 list(APPEND CMAKE_REQUIRED_INCLUDES "${INCLUDE_DIRS}")
 
+#include(${CMAKE_SOURCE_DIR}/cmake/SystemdService.cmake)
+
 add_subdirectory(common)
 
 if (BUILD_SERVER)
