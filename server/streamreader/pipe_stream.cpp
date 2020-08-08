@@ -55,9 +55,9 @@ PipeStream::PipeStream(PcmListener* pcmListener, boost::asio::io_context& ioc, c
 
 void PipeStream::do_connect()
 {
-    LOG(DEBUG, LOG_TAG) << "connect\n";
     int fd = open(uri_.path.c_str(), O_RDONLY | O_NONBLOCK);
+    LOG(INFO, LOG_TAG) << "Connect fd: " << fd << ", pipe size: " << fcntl(fd, F_GETPIPE_SZ) << "\n";
     stream_ = std::make_unique<boost::asio::posix::stream_descriptor>(ioc_, fd);
     on_connect();
 }
-}
+} // namespace streamreader
