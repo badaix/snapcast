@@ -5,6 +5,8 @@
 ### Features
 
 - Server: Support for WebSocket streaming clients
+- Server: Resample input to 48000:16:2 when using opus codec
+- Server: Install Snapweb web client
 
 ### Bugfixes
 

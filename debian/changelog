@@ -1,3 +1,14 @@
+snapcast (0.21.0-1) unstable; urgency=medium
+
+  * Features
+    -Server: Support for WebSocket streaming clients
+    -Server: Resample input to 48000:16:2 when using opus codec
+    -Server: Install Snapweb web client
+  * Bugfixes
+  * General
+
+ -- Johannes Pohl <snapcast@badaix.de>  Sat, 13 Jun 2020 00:13:37 +0200
+
 snapcast (0.20.0-1) unstable; urgency=medium
 
   * Features
