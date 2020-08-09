@@ -24,7 +24,7 @@ jobs:
       id: cache-ccache
       uses: actions/cache@v2
       with:
-        path: ~/.ccache
+        path: /Users/runner/.ccache
         key: ${{ runner.os }}-ccache-${{ github.sha }}
         restore-keys: ${{ runner.os }}-ccache-
     - name: ccache dump config
