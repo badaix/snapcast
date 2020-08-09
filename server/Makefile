@@ -82,7 +82,7 @@ OBJ      += ../common/daemon.o publishZeroConf/publish_avahi.o
 else ifeq ($(TARGET), MACOS)
 
 CXX       = g++
-CXXFLAGS += -DFREEBSD -DHAS_BONJOUR -DHAS_DAEMON -Wno-deprecated -I/usr/local/include
+CXXFLAGS += -DFREEBSD -DMACOS -DHAS_BONJOUR -DHAS_DAEMON -Wno-deprecated -I/usr/local/include
 LDFLAGS  += -L/usr/local/lib -framework CoreFoundation -framework IOKit
 OBJ      += ../common/daemon.o publishZeroConf/publish_bonjour.o
 

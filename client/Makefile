@@ -77,7 +77,7 @@ OBJ      += ../common/daemon.o player/alsa_player.o browseZeroConf/browse_avahi.
 else ifeq ($(TARGET), MACOS)
 
 CXX       = g++
-CXXFLAGS += -DHAS_COREAUDIO -DHAS_VORBIS -DFREEBSD -DHAS_BONJOUR -DHAS_DAEMON -DHAS_SOXR -I/usr/local/include -Wno-unused-local-typedef -Wno-deprecated
+CXXFLAGS += -DHAS_COREAUDIO -DHAS_VORBIS -DFREEBSD -DMACOS -DHAS_BONJOUR -DHAS_DAEMON -DHAS_SOXR -I/usr/local/include -Wno-unused-local-typedef -Wno-deprecated
 LDFLAGS  += -lvorbis -lFLAC -L/usr/local/lib -framework AudioToolbox -framework CoreAudio -framework CoreFoundation -framework IOKit
 OBJ      += ../common/daemon.o player/coreaudio_player.o browseZeroConf/browse_bonjour.o
 

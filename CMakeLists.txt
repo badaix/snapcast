@@ -120,7 +120,7 @@ if(NOT WIN32)
             add_definitions(-DHAS_BONJOUR)
         endif (BONJOUR_FOUND)
 
-        add_definitions(-DFREEBSD -DHAS_DAEMON)
+        add_definitions(-DFREEBSD -DMACOS -DHAS_DAEMON)
         link_directories("/usr/local/lib")
         list(APPEND INCLUDE_DIRS "/usr/local/include")
     elseif(ANDROID)
