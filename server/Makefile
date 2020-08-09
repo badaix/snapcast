@@ -158,12 +158,12 @@ endif
 installfiles:
 	install -s -D -g root -o root $(BIN) $(TARGET_DIR)/bin/$(BIN)
 	install -D -g root -o root $(BIN).1 $(TARGET_DIR)/share/man/man1/$(BIN).1
+	install -g root -o root etc/$(BIN).conf /etc/$(BIN).conf;
 
 installsystemd:
 	@echo using systemd; \
 	cp ../debian/$(BIN).service /lib/systemd/system/$(BIN).service; \
 	cp -n ../debian/$(BIN).default /etc/default/$(BIN); \
-	cp -n etc/$(BIN).conf /etc/$(BIN).conf; \
 	systemctl daemon-reload; \
 	systemctl enable $(BIN); \
 	systemctl start $(BIN); \
@@ -172,15 +172,11 @@ installsysv:
 	@echo using sysv; \
 	cp ../debian/$(BIN).init /etc/init.d/$(BIN); \
 	cp -n ../debian/$(BIN).default /etc/default/$(BIN); \
-	cp -n etc/$(BIN).conf /etc/$(BIN).conf; \
 	update-rc.d $(BIN) defaults; \
 	/etc/init.d/$(BIN) start; \
 
 adduser:
-	@if ! getent passwd snapserver >/dev/null; then \
-		useradd --user-group --system --home-dir /var/lib/snapserver snapserver; \
-	fi; \
-
+	sh ../debian/snapserver.postinst configure
 
 ifeq ($(TARGET), FREEBSD)
 
@@ -242,6 +238,5 @@ uninstallsystemd:
 	systemctl daemon-reload; \
 
 deluser:
-	@userdel --force snapserver > /dev/null || true; \
-	groupdel snapserver > /dev/null || true; \
+	sh ../debian/snapserver.postrm purge
 
