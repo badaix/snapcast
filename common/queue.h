@@ -98,6 +98,16 @@ public:
         cond_.notify_one();
     }
 
+    bool back_copy(T& copy)
+    {
+        std::lock_guard<std::mutex> mlock(mutex_);
+        if (queue_.empty())
+            return false;
+        T t = queue_.back();
+        copy = t;
+        return true;
+    }
+
     void push_front(T&& item)
     {
         {

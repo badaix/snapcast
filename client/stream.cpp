@@ -102,7 +102,7 @@ void Stream::addChunk(unique_ptr<msg::PcmChunk> chunk)
     if (age > 5s + bufferMs_)
         return;
 
-    LOG(DEBUG, LOG_TAG) << "new chunk: " << chunk->durationMs() << " ms, age: " << age.count() << " ms, Chunks: " << chunks_.size() << "\n";
+    LOG(TRACE, LOG_TAG) << "new chunk: " << chunk->durationMs() << " ms, age: " << age.count() << " ms, Chunks: " << chunks_.size() << "\n";
 
     auto resampled = resampler_->resample(std::move(chunk));
     if (resampled)
@@ -238,6 +238,21 @@ bool Stream::getPlayerChunk(void* outputBuffer, const cs::usec& outputBufferDacT
             LOG(INFO, LOG_TAG) << "no chunks available\n";
         }
         return false;
+    }
+
+    static int64_t min_buffer = 0;
+    std::shared_ptr<msg::PcmChunk> recent_;
+    if (chunks_.back_copy(recent_))
+    {
+        cs::nsec req_chunk_duration = cs::nsec(static_cast<cs::nsec::rep>(frames / format_.nsRate()));
+        auto youngest = recent_->end() - req_chunk_duration;
+        cs::msec age = std::chrono::duration_cast<cs::msec>(TimeProvider::serverNow() - youngest + outputBufferDacTime);
+        min_buffer = std::max(min_buffer, age.count());
+        if (now != lastUpdate_)
+        {
+            LOG(TRACE, LOG_TAG) << "getPlayerChunk duration: " << std::chrono::duration_cast<std::chrono::milliseconds>(req_chunk_duration).count() << ", min buffer: " << min_buffer << "\n";
+            min_buffer = 0;
+        }
     }
 
     /// we have a chunk
