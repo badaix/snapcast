@@ -125,6 +125,8 @@ install:
 	install -g wheel -o root -m 555 $(BIN).1 $(TARGET_DIR)/local/man/man1/$(BIN).1
 	install -g wheel -o root -m 555 etc/$(BIN).bsd $(TARGET_DIR)/local/etc/rc.d/$(BIN)
 	install -g wheel -o root etc/$(BIN).conf /etc/$(BIN).conf
+	for file in etc/snapweb/*\.*; do install -g wheel -o root -m 644 $${file} -Dt "/usr/share/snapserver/snapweb/"; done
+	for file in etc/snapweb/3rd-party/*\.*; do install -g wheel -o root -m 644 $${file} -Dt "/usr/share/snapserver/snapweb/3rd-party/"; done
 
 else ifeq ($(TARGET), MACOS)
 
@@ -134,6 +136,8 @@ install:
 	install -g wheel -o root $(BIN).1 $(TARGET_DIR)/local/share/man/man1/$(BIN).1
 	install -g wheel -o root etc/$(BIN).plist /Library/LaunchAgents/de.badaix.snapcast.$(BIN).plist
 	install -g wheel -o root etc/$(BIN).conf /etc/$(BIN).conf
+	for file in etc/snapweb/*\.*; do install -g wheel -o root -m 644 $${file} -Dt "/usr/share/snapserver/snapweb/"; done
+	for file in etc/snapweb/3rd-party/*\.*; do install -g wheel -o root -m 644 $${file} -Dt "/usr/share/snapserver/snapweb/3rd-party/"; done
 	launchctl load /Library/LaunchAgents/de.badaix.snapcast.$(BIN).plist
 
 else
@@ -159,6 +163,8 @@ installfiles:
 	install -s -D -g root -o root $(BIN) $(TARGET_DIR)/bin/$(BIN)
 	install -D -g root -o root $(BIN).1 $(TARGET_DIR)/share/man/man1/$(BIN).1
 	install -g root -o root etc/$(BIN).conf /etc/$(BIN).conf;
+	for file in etc/snapweb/*\.*; do install -g root -o root -m 644 $${file} -Dt "/usr/share/snapserver/snapweb/"; done
+	for file in etc/snapweb/3rd-party/*\.*; do install -g root -o root -m 644 $${file} -Dt "/usr/share/snapserver/snapweb/3rd-party/"; done
 
 installsystemd:
 	@echo using systemd; \
@@ -187,7 +193,8 @@ uninstall:
 	rm -f $(TARGET_DIR)/local/man/man1/$(BIN).1; \
 	rm -f $(TARGET_DIR)/local/etc/rc.d/$(BIN); \
  	rm -f /etc/$(BIN).conf; \
- 	rm -f /var/lib/snapserver; \
+ 	rm -rf /var/lib/snapserver; \
+	rm -rf /usr/share/snapserver; \
 
 else ifeq ($(TARGET), MACOS)
 
@@ -198,7 +205,8 @@ uninstall:
 	rm -f $(TARGET_DIR)/local/share/man/man1/$(BIN).1; \
 	rm -f /Library/LaunchAgents/de.badaix.snapcast.$(BIN).plist; \
  	rm -f /etc/$(BIN).conf; \
-	rm -f /var/lib/snapserver; \
+	rm -rf /var/lib/snapserver; \
+	rm -rf /usr/share/snapserver; \
 
 else
 
@@ -214,8 +222,9 @@ uninstall:
 		echo cannot tell; \
 	fi; \
  	rm -f /etc/$(BIN).conf; \
-	rm -f /var/run/$(BIN); \
-	rm -f /var/lib/snapserver; \
+	rm -rf /var/run/$(BIN); \
+	rm -rf /var/lib/snapserver; \
+	rm -rf /usr/share/snapserver; \
 	$(MAKE) deluser
 
 endif
