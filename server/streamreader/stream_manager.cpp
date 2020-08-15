@@ -18,6 +18,7 @@
 
 #include "stream_manager.hpp"
 #include "airplay_stream.hpp"
+#include "alsa_stream.hpp"
 #include "common/aixlog.hpp"
 #include "common/snap_exception.hpp"
 #include "common/str_compat.hpp"
@@ -72,6 +73,10 @@ PcmStreamPtr StreamManager::addStream(const std::string& uri)
     else if (streamUri.scheme == "process")
     {
         stream = make_shared<ProcessStream>(pcmListener_, ioc_, streamUri);
+    }
+    else if (streamUri.scheme == "alsa")
+    {
+        stream = make_shared<AlsaStream>(pcmListener_, ioc_, streamUri);
     }
     else if ((streamUri.scheme == "spotify") || (streamUri.scheme == "librespot"))
     {
