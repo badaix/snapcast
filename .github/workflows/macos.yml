@@ -10,7 +10,7 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: dependencies
-      run: brew install pkgconfig libsoxr ccache
+      run: brew install pkgconfig libsoxr ccache expat
     - name: cache boost
       id: cache-boost
       uses: actions/cache@v2

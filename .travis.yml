@@ -18,7 +18,7 @@ matrix:
             - sourceline: 'ppa:mhier/libboost-latest'
             - ubuntu-toolchain-r-test
           packages:
-            - g++-4.9 boost1.70 libasound2-dev libsoxr-dev libvorbisidec-dev libvorbis-dev libflac-dev libopus-dev alsa-utils libavahi-client-dev avahi-daemon
+            - g++-4.9 boost1.70 libasound2-dev libsoxr-dev libvorbisidec-dev libvorbis-dev libflac-dev libopus-dev alsa-utils libavahi-client-dev avahi-daemon expat
 
     - os: linux
       compiler: gcc
@@ -30,7 +30,7 @@ matrix:
             - sourceline: 'ppa:mhier/libboost-latest'
             - ubuntu-toolchain-r-test
           packages:
-            - g++-5 boost1.70 libasound2-dev libsoxr-dev libvorbisidec-dev libvorbis-dev libflac-dev libopus-dev alsa-utils libavahi-client-dev avahi-daemon
+            - g++-5 boost1.70 libasound2-dev libsoxr-dev libvorbisidec-dev libvorbis-dev libflac-dev libopus-dev alsa-utils libavahi-client-dev avahi-daemon expat
 
     - os: linux
       compiler: gcc
@@ -42,7 +42,7 @@ matrix:
             - sourceline: 'ppa:mhier/libboost-latest'
             - ubuntu-toolchain-r-test
           packages:
-            - g++-6 boost1.70 libasound2-dev libsoxr-dev libvorbisidec-dev libvorbis-dev libflac-dev libopus-dev alsa-utils libavahi-client-dev avahi-daemon
+            - g++-6 boost1.70 libasound2-dev libsoxr-dev libvorbisidec-dev libvorbis-dev libflac-dev libopus-dev alsa-utils libavahi-client-dev avahi-daemon expat
 
     - os: linux
       compiler: gcc
@@ -54,7 +54,7 @@ matrix:
             - sourceline: 'ppa:mhier/libboost-latest'
             - ubuntu-toolchain-r-test
           packages:
-            - g++-7 boost1.70 libasound2-dev libsoxr-dev libvorbisidec-dev libvorbis-dev libflac-dev libopus-dev alsa-utils libavahi-client-dev avahi-daemon
+            - g++-7 boost1.70 libasound2-dev libsoxr-dev libvorbisidec-dev libvorbis-dev libflac-dev libopus-dev alsa-utils libavahi-client-dev avahi-daemon expat
 
     - os: linux
       compiler: gcc
@@ -66,7 +66,7 @@ matrix:
             - sourceline: 'ppa:mhier/libboost-latest'
             - ubuntu-toolchain-r-test
           packages:
-            - g++-8 boost1.70 libasound2-dev libsoxr-dev libvorbisidec-dev libvorbis-dev libflac-dev libopus-dev alsa-utils libavahi-client-dev avahi-daemon
+            - g++-8 boost1.70 libasound2-dev libsoxr-dev libvorbisidec-dev libvorbis-dev libflac-dev libopus-dev alsa-utils libavahi-client-dev avahi-daemon expat
 
     - os: linux
       compiler: gcc
@@ -78,7 +78,7 @@ matrix:
             - sourceline: 'ppa:mhier/libboost-latest'
             - ubuntu-toolchain-r-test
           packages:
-            - g++-9 boost1.70 libasound2-dev libsoxr-dev libvorbisidec-dev libvorbis-dev libflac-dev libopus-dev alsa-utils libavahi-client-dev avahi-daemon
+            - g++-9 boost1.70 libasound2-dev libsoxr-dev libvorbisidec-dev libvorbis-dev libflac-dev libopus-dev alsa-utils libavahi-client-dev avahi-daemon expat
 
 
     - os: linux
@@ -93,7 +93,7 @@ matrix:
             - sourceline: 'ppa:mhier/libboost-latest'
             - llvm-toolchain-trusty-3.9
           packages:
-            - clang-3.9 boost1.70 libasound2-dev libsoxr-dev libvorbisidec-dev libvorbis-dev libflac-dev libopus-dev alsa-utils libavahi-client-dev avahi-daemon
+            - clang-3.9 boost1.70 libasound2-dev libsoxr-dev libvorbisidec-dev libvorbis-dev libflac-dev libopus-dev alsa-utils libavahi-client-dev avahi-daemon expat
 
     - os: linux
       compiler: clang
@@ -107,7 +107,7 @@ matrix:
             - sourceline: 'ppa:mhier/libboost-latest'
             - llvm-toolchain-trusty-4.0
           packages:
-            - clang-4.0 boost1.70 libasound2-dev libsoxr-dev libvorbisidec-dev libvorbis-dev libflac-dev libopus-dev alsa-utils libavahi-client-dev avahi-daemon
+            - clang-4.0 boost1.70 libasound2-dev libsoxr-dev libvorbisidec-dev libvorbis-dev libflac-dev libopus-dev alsa-utils libavahi-client-dev avahi-daemon expat
 
     - os: linux
       compiler: clang
@@ -121,7 +121,7 @@ matrix:
             - sourceline: 'ppa:mhier/libboost-latest'
             - llvm-toolchain-trusty-5.0
           packages:
-            - clang-5.0 boost1.70 libasound2-dev libsoxr-dev libvorbisidec-dev libvorbis-dev libflac-dev libopus-dev alsa-utils libavahi-client-dev avahi-daemon
+            - clang-5.0 boost1.70 libasound2-dev libsoxr-dev libvorbisidec-dev libvorbis-dev libflac-dev libopus-dev alsa-utils libavahi-client-dev avahi-daemon expat
 
     - os: linux
       compiler: clang
@@ -135,7 +135,7 @@ matrix:
             - llvm-toolchain-trusty-6.0
             - ubuntu-toolchain-r-test
           packages:
-            - clang-6.0 boost1.70 libasound2-dev libsoxr-dev libvorbisidec-dev libvorbis-dev libflac-dev libopus-dev alsa-utils libavahi-client-dev avahi-daemon
+            - clang-6.0 boost1.70 libasound2-dev libsoxr-dev libvorbisidec-dev libvorbis-dev libflac-dev libopus-dev alsa-utils libavahi-client-dev avahi-daemon expat
 
     - os: linux
       compiler: clang
@@ -149,23 +149,23 @@ matrix:
             - llvm-toolchain-trusty-7
             - ubuntu-toolchain-r-test
           packages:
-            - clang-7 boost1.70 libasound2-dev libsoxr-dev libvorbisidec-dev libvorbis-dev libflac-dev libopus-dev alsa-utils libavahi-client-dev avahi-daemon
+            - clang-7 boost1.70 libasound2-dev libsoxr-dev libvorbisidec-dev libvorbis-dev libflac-dev libopus-dev alsa-utils libavahi-client-dev avahi-daemon expat
 
     # build on osx
     - os: osx
       osx_image: xcode9.4
       env:
-        - MATRIX_EVAL="brew update && brew unlink python@2 && brew upgrade boost && brew install flac opus libvorbis libsoxr"
+        - MATRIX_EVAL="brew update && brew unlink python@2 && brew upgrade boost && brew install flac opus libvorbis libsoxr expat"
 
     - os: osx
       osx_image: xcode10.3
       env:
-        - MATRIX_EVAL="brew update && brew install flac opus libvorbis libsoxr"
+        - MATRIX_EVAL="brew update && brew install flac opus libvorbis libsoxr expat"
 
     - os: osx
       osx_image: xcode11
       env:
-        - MATRIX_EVAL="brew update && brew install flac opus libvorbis libsoxr"
+        - MATRIX_EVAL="brew update && brew install flac opus libvorbis libsoxr expat"
 
     # build on windows
     - os: windows
