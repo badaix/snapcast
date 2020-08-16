@@ -71,7 +71,7 @@ bool OpusDecoder::decode(msg::PcmChunk* chunk)
     }
     else
     {
-        LOG(DEBUG, LOG_TAG) << "Decode chunk: " << decoded_frames << " frames, size: " << chunk->payloadSize
+        LOG(TRACE, LOG_TAG) << "Decode chunk: " << decoded_frames << " frames, size: " << chunk->payloadSize
                             << " bytes, decoded: " << decoded_frames * sample_format_.frameSize() << " bytes\n";
 
         // copy encoded data to chunk

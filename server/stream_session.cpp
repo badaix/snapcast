@@ -86,7 +86,7 @@ void StreamSession::send(shared_const_buffer const_buf)
 
         if (messages_.size() > 1)
         {
-            LOG(DEBUG, LOG_TAG) << "outstanding async_write\n";
+            LOG(TRACE, LOG_TAG) << "outstanding async_write\n";
             return;
         }
         send_next();

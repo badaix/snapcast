@@ -329,7 +329,7 @@ void AlsaPlayer::initAlsa()
     }
 
     if ((err = snd_pcm_hw_params_set_channels(handle_, params, channels)) < 0)
-        throw SnapException("Can't set channels number: " + string(snd_strerror(err)));
+        throw SnapException("Can't set channel count: " + string(snd_strerror(err)));
 
     if ((err = snd_pcm_hw_params_set_rate_near(handle_, params, &rate, nullptr)) < 0)
         throw SnapException("Can't set rate: " + string(snd_strerror(err)));
