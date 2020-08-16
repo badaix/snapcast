@@ -43,7 +43,7 @@ For Debian derivates (e.g. Raspbian, Debian, Ubuntu, Mint):
 
 ```sh
 sudo apt-get install build-essential
-sudo apt-get install libasound2-dev libvorbisidec-dev libvorbis-dev libopus-dev libflac-dev libsoxr-dev alsa-utils libavahi-client-dev avahi-daemon expat
+sudo apt-get install libasound2-dev libvorbisidec-dev libvorbis-dev libopus-dev libflac-dev libsoxr-dev alsa-utils libavahi-client-dev avahi-daemon libexpat1-dev
 ```
 
 Compilation requires gcc 4.8 or higher, so it's highly recommended to use Debian (Raspbian) Jessie.
