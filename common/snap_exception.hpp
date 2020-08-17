@@ -16,8 +16,8 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
-#ifndef SNAP_EXCEPTION_H
-#define SNAP_EXCEPTION_H
+#ifndef SNAP_EXCEPTION_HPP
+#define SNAP_EXCEPTION_HPP
 
 #include <cstring> // std::strlen, std::strcpy
 #include <exception>
@@ -27,40 +27,29 @@
 class SnapException : public std::exception
 {
     std::string text_;
+    int error_code_;
 
 public:
-    SnapException(const char* text) : text_(text)
+    SnapException(const char* text, int error_code = 0) : text_(text), error_code_(error_code)
     {
     }
 
-    SnapException(const std::string& text) : SnapException(text.c_str())
+    SnapException(const std::string& text, int error_code = 0) : SnapException(text.c_str(), error_code)
     {
     }
 
     ~SnapException() throw() override = default;
+
+    int code() const noexcept
+    {
+        return error_code_;
+    }
 
     const char* what() const noexcept override
     {
         return text_.c_str();
     }
 };
-
-
-
-class AsyncSnapException : public SnapException
-{
-public:
-    AsyncSnapException(const char* text) : SnapException(text)
-    {
-    }
-
-    AsyncSnapException(const std::string& text) : SnapException(text)
-    {
-    }
-
-    ~AsyncSnapException() throw() override = default;
-};
-
 
 
 #endif

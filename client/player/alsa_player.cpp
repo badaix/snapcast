@@ -271,7 +271,7 @@ void AlsaPlayer::initAlsa()
 
     /* Open the PCM device in playback mode */
     if ((err = snd_pcm_open(&handle_, settings_.pcm_device.name.c_str(), SND_PCM_STREAM_PLAYBACK, 0)) < 0)
-        throw SnapException("Can't open " + settings_.pcm_device.name + ", error: " + snd_strerror(err));
+        throw SnapException("Can't open " + settings_.pcm_device.name + ", error: " + snd_strerror(err), err);
 
     /*	struct snd_pcm_playback_info_t pinfo;
      if ( (pcm = snd_pcm_playback_info( pcm_handle, &pinfo )) < 0 )
@@ -426,7 +426,18 @@ void AlsaPlayer::uninitMixer()
 
 void AlsaPlayer::start()
 {
-    initAlsa();
+    try
+    {
+        initAlsa();
+    }
+    catch (const SnapException& e)
+    {
+        LOG(ERROR, LOG_TAG) << "Exception: " << e.what() << ", code: " << e.code() << "\n";
+        // Accept "Device or ressource busy", the worker loop will retry
+        if (e.code() != -EBUSY)
+            throw;
+    }
+
     Player::start();
 }
 
