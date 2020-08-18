@@ -28,7 +28,7 @@ using namespace std;
 namespace encoder
 {
 
-static constexpr auto LOG_TAG = "FlacEnc";
+// static constexpr auto LOG_TAG = "FlacEnc";
 
 FlacEncoder::FlacEncoder(const std::string& codecOptions) : Encoder(codecOptions), encoder_(nullptr), pcmBufferSize_(0), encodedSamples_(0), flacChunk_(nullptr)
 {
