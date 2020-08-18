@@ -105,7 +105,7 @@ void PosixStream::do_read()
             }
             else
             {
-                // LOG(DEBUG) << "count: " << count << "\n";
+                // LOG(DEBUG, LOG_TAG) << "count: " << count << "\n";
                 len += count;
                 bytes_read_ += len;
                 idle_bytes_ = 0;
@@ -123,7 +123,7 @@ void PosixStream::do_read()
         if ((idle_bytes_ == 0) || (idle_bytes_ <= max_idle_bytes_))
         {
             // the encoder will update the tvEncodedChunk when a chunk is encoded
-            onChunkRead(chunk_.get());
+            onChunkRead(*chunk_);
         }
         else
         {
@@ -143,7 +143,8 @@ void PosixStream::do_read()
         }
         else if (next_read >= -kResyncTolerance)
         {
-            LOG(INFO) << "next read < 0 (" << getName() << "): " << std::chrono::duration_cast<std::chrono::microseconds>(next_read).count() / 1000. << " ms\n";
+            LOG(INFO, LOG_TAG) << "next read < 0 (" << getName() << "): " << std::chrono::duration_cast<std::chrono::microseconds>(next_read).count() / 1000.
+                               << " ms\n";
             do_read();
         }
         else

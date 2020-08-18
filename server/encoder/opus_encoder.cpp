@@ -30,8 +30,9 @@ namespace encoder
 #define ID_OPUS 0x4F505553
 static constexpr opus_int32 const_min_bitrate = 6000;
 static constexpr opus_int32 const_max_bitrate = 512000;
+static constexpr int min_chunk_size = 10;
 
-static constexpr auto LOG_TAG = "OpusEncoder";
+static constexpr auto LOG_TAG = "OpusEnc";
 
 namespace
 {
@@ -163,7 +164,7 @@ void OpusEncoder::initEncoder()
     assign(payload + 8, SWAP_16(sampleFormat_.bits()));
     assign(payload + 10, SWAP_16(sampleFormat_.channels()));
 
-    remainder_ = std::make_unique<msg::PcmChunk>(sampleFormat_, 10);
+    remainder_ = std::make_unique<msg::PcmChunk>(sampleFormat_, min_chunk_size);
     remainder_max_size_ = remainder_->payloadSize;
     remainder_->payloadSize = 0;
 }
@@ -174,25 +175,25 @@ void OpusEncoder::initEncoder()
 // 240, 480, 960, 1920, 2880 frames
 // We will split the chunk into encodable sizes and store any remaining data in the remainder_ buffer
 // and encode the buffer content in the next iteration
-void OpusEncoder::encode(const msg::PcmChunk* chunk)
+void OpusEncoder::encode(const msg::PcmChunk& chunk)
 {
     // chunk =
     // resampler_->resample(std::make_shared<msg::PcmChunk>(chunk)).get();
-    auto in = std::make_shared<msg::PcmChunk>(*chunk);
+    auto in = std::make_shared<msg::PcmChunk>(chunk);
     auto out = resampler_->resample(in); //, std::chrono::milliseconds(20));
     if (out == nullptr)
         return;
-    chunk = out.get();
+    // chunk = out.get();
 
     // LOG(TRACE, LOG_TAG) << "encode " << chunk->duration<std::chrono::milliseconds>().count() << "ms\n";
     uint32_t offset = 0;
 
     // check if there is something left from the last call to encode and fill the remainder buffer to
-    // an encodable size of 10ms
+    // an encodable size of 10ms (min_chunk_size)
     if (remainder_->payloadSize > 0)
     {
-        offset = std::min(static_cast<uint32_t>(remainder_max_size_ - remainder_->payloadSize), chunk->payloadSize);
-        memcpy(remainder_->payload + remainder_->payloadSize, chunk->payload, offset);
+        offset = std::min(static_cast<uint32_t>(remainder_max_size_ - remainder_->payloadSize), out->payloadSize);
+        memcpy(remainder_->payload + remainder_->payloadSize, out->payload, offset);
         // LOG(TRACE, LOG_TAG) << "remainder buffer size: " << remainder_->payloadSize << "/" << remainder_max_size_ << ", appending " << offset << " bytes\n";
         remainder_->payloadSize += offset;
 
@@ -202,32 +203,32 @@ void OpusEncoder::encode(const msg::PcmChunk* chunk)
                                 << "\n";
             return;
         }
-        encode(chunk->format, remainder_->payload, remainder_->payloadSize);
+        encode(out->format, remainder_->payload, remainder_->payloadSize);
         remainder_->payloadSize = 0;
     }
 
     // encode greedy 60ms, 40ms, 20ms, 10ms chunks
-    std::vector<size_t> chunk_durations{60, 40, 20, 10};
+    std::vector<size_t> chunk_durations{60, 40, 20, min_chunk_size};
     for (const auto duration : chunk_durations)
     {
         auto ms2bytes = [this](size_t ms) { return (ms * sampleFormat_.msRate() * sampleFormat_.frameSize()); };
         uint32_t bytes = ms2bytes(duration);
-        while (chunk->payloadSize - offset >= bytes)
+        while (out->payloadSize - offset >= bytes)
         {
             // LOG(TRACE, LOG_TAG) << "encoding " << duration << "ms (" << bytes << "), offset: " << offset << ", chunk size: " << chunk->payloadSize - offset
             // << "\n";
-            encode(chunk->format, chunk->payload + offset, bytes);
+            encode(out->format, out->payload + offset, bytes);
             offset += bytes;
         }
-        if (chunk->payloadSize == offset)
+        if (out->payloadSize == offset)
             break;
     }
 
-    // something is left (must be less than 10ms)
-    if (chunk->payloadSize > offset)
+    // something is left (must be less than min_chunk_size (10ms))
+    if (out->payloadSize > offset)
     {
-        memcpy(remainder_->payload + remainder_->payloadSize, chunk->payload + offset, chunk->payloadSize - offset);
-        remainder_->payloadSize = chunk->payloadSize - offset;
+        memcpy(remainder_->payload + remainder_->payloadSize, out->payload + offset, out->payloadSize - offset);
+        remainder_->payloadSize = out->payloadSize - offset;
     }
 }
 

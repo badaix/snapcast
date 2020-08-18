@@ -16,8 +16,8 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
-#ifndef ENCODER_H
-#define ENCODER_H
+#ifndef ENCODER_HPP
+#define ENCODER_HPP
 
 #include <memory>
 #include <string>
@@ -69,7 +69,7 @@ public:
     }
 
     /// Here the work is done. Encoded data is passed to the EncoderListener.
-    virtual void encode(const msg::PcmChunk* chunk) = 0;
+    virtual void encode(const msg::PcmChunk& chunk) = 0;
 
     virtual std::string name() const = 0;
 

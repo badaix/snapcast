@@ -16,8 +16,8 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
-#ifndef PCM_ENCODER_H
-#define PCM_ENCODER_H
+#ifndef PCM_ENCODER_HPP
+#define PCM_ENCODER_HPP
 #include "encoder.hpp"
 
 namespace encoder
@@ -27,7 +27,7 @@ class PcmEncoder : public Encoder
 {
 public:
     PcmEncoder(const std::string& codecOptions = "");
-    void encode(const msg::PcmChunk* chunk) override;
+    void encode(const msg::PcmChunk& chunk) override;
     std::string name() const override;
 
 protected:

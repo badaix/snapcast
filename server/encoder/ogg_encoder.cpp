@@ -31,6 +31,8 @@ using namespace std;
 namespace encoder
 {
 
+static constexpr auto LOG_TAG = "OggEnc";
+
 OggEncoder::OggEncoder(const std::string& codecOptions) : Encoder(codecOptions), lastGranulepos_(0)
 {
 }
@@ -64,12 +66,13 @@ std::string OggEncoder::name() const
 }
 
 
-void OggEncoder::encode(const msg::PcmChunk* chunk)
+void OggEncoder::encode(const msg::PcmChunk& chunk)
 {
     double res = 0;
-    // LOG(TRACE) << "payload: " << chunk->payloadSize << "\tframes: " << chunk->getFrameCount() << "\tduration: " << chunk->duration<chronos::msec>().count()
+    // LOG(TRACE, LOG_TAG) << "payload: " << chunk->payloadSize << "\tframes: " << chunk->getFrameCount() << "\tduration: " <<
+    // chunk->duration<chronos::msec>().count()
     // << "\n";
-    int frames = chunk->getFrameCount();
+    int frames = chunk.getFrameCount();
     float** buffer = vorbis_analysis_buffer(&vd_, frames);
 
     /* uninterleave samples */
@@ -77,19 +80,19 @@ void OggEncoder::encode(const msg::PcmChunk* chunk)
     {
         if (sampleFormat_.sampleSize() == 1)
         {
-            int8_t* chunkBuffer = (int8_t*)chunk->payload;
+            int8_t* chunkBuffer = (int8_t*)chunk.payload;
             for (int i = 0; i < frames; i++)
                 buffer[channel][i] = chunkBuffer[sampleFormat_.channels() * i + channel] / 128.f;
         }
         else if (sampleFormat_.sampleSize() == 2)
         {
-            int16_t* chunkBuffer = (int16_t*)chunk->payload;
+            int16_t* chunkBuffer = (int16_t*)chunk.payload;
             for (int i = 0; i < frames; i++)
                 buffer[channel][i] = chunkBuffer[sampleFormat_.channels() * i + channel] / 32768.f;
         }
         else if (sampleFormat_.sampleSize() == 4)
         {
-            int32_t* chunkBuffer = (int32_t*)chunk->payload;
+            int32_t* chunkBuffer = (int32_t*)chunk.payload;
             for (int i = 0; i < frames; i++)
                 buffer[channel][i] = chunkBuffer[sampleFormat_.channels() * i + channel] / 2147483648.f;
         }
@@ -98,7 +101,7 @@ void OggEncoder::encode(const msg::PcmChunk* chunk)
     /* tell the library how much we actually submitted */
     vorbis_analysis_wrote(&vd_, frames);
 
-    auto oggChunk = make_shared<msg::PcmChunk>(chunk->format, 0);
+    auto oggChunk = make_shared<msg::PcmChunk>(chunk.format, 0);
 
     /* vorbis does some data preanalysis, then divvies up blocks for
     more involved (potentially parallel) processing.  Get a single
@@ -142,7 +145,7 @@ void OggEncoder::encode(const msg::PcmChunk* chunk)
     if (res > 0)
     {
         res /= sampleFormat_.msRate();
-        // LOG(INFO) << "res: " << res << "\n";
+        // LOG(INFO, LOG_TAG) << "res: " << res << "\n";
         lastGranulepos_ = os_.granulepos;
         // make oggChunk smaller
         oggChunk->payload = (char*)realloc(oggChunk->payload, pos);
@@ -260,7 +263,7 @@ void OggEncoder::initEncoder()
             break;
         headerChunk_->payloadSize += og_.header_len + og_.body_len;
         headerChunk_->payload = (char*)realloc(headerChunk_->payload, headerChunk_->payloadSize);
-        LOG(DEBUG) << "HeadLen: " << og_.header_len << ", bodyLen: " << og_.body_len << ", result: " << result << "\n";
+        LOG(DEBUG, LOG_TAG) << "HeadLen: " << og_.header_len << ", bodyLen: " << og_.body_len << ", result: " << result << "\n";
         memcpy(headerChunk_->payload + pos, og_.header, og_.header_len);
         pos += og_.header_len;
         memcpy(headerChunk_->payload + pos, og_.body, og_.body_len);

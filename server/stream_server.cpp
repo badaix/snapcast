@@ -175,7 +175,7 @@ session_ptr StreamServer::getStreamSession(StreamSession* streamSession) const
 
 session_ptr StreamServer::getStreamSession(const std::string& clientId) const
 {
-    //	LOG(INFO) << "getStreamSession: " << mac << "\n";
+    //	LOG(INFO, LOG_TAG) << "getStreamSession: " << mac << "\n";
     std::lock_guard<std::recursive_mutex> mlock(sessionsMutex_);
     for (auto session : sessions_)
     {

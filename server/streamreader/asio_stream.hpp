@@ -86,7 +86,8 @@ AsioStream<ReadStream>::AsioStream(PcmListener* pcmListener, boost::asio::io_con
     : PcmStream(pcmListener, ioc, uri), read_timer_(ioc), state_timer_(ioc)
 {
     chunk_ = std::make_unique<msg::PcmChunk>(sampleFormat_, chunk_ms_);
-    LOG(DEBUG) << "Chunk duration: " << chunk_->durationMs() << " ms, frames: " << chunk_->getFrameCount() << ", size: " << chunk_->payloadSize << "\n";
+    LOG(DEBUG, "AsioStream") << "Chunk duration: " << chunk_->durationMs() << " ms, frames: " << chunk_->getFrameCount() << ", size: " << chunk_->payloadSize
+                             << "\n";
 
     bytes_read_ = 0;
     buffer_ms_ = 50;
@@ -197,7 +198,7 @@ void AsioStream<ReadStream>::do_read()
                                     nextTick_ = std::chrono::steady_clock::now();
                                 }
 
-                                onChunkRead(chunk_.get());
+                                onChunkRead(*chunk_);
                                 nextTick_ += chunk_->duration<std::chrono::nanoseconds>();
                                 auto currentTick = std::chrono::steady_clock::now();
 

@@ -16,8 +16,8 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
-#ifndef FLAC_ENCODER_H
-#define FLAC_ENCODER_H
+#ifndef FLAC_ENCODER_HPP
+#define FLAC_ENCODER_HPP
 #include "encoder.hpp"
 #include <stdio.h>
 #include <stdlib.h>
@@ -34,7 +34,7 @@ class FlacEncoder : public Encoder
 public:
     FlacEncoder(const std::string& codecOptions = "");
     ~FlacEncoder() override;
-    void encode(const msg::PcmChunk* chunk) override;
+    void encode(const msg::PcmChunk& chunk) override;
     std::string getAvailableOptions() const override;
     std::string getDefaultOptions() const override;
     std::string name() const override;

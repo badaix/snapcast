@@ -224,7 +224,7 @@ void AlsaStream::do_read()
             tvEncodedChunk_ = std::chrono::steady_clock::now() - duration;
         }
 
-        onChunkRead(chunk_.get());
+        onChunkRead(*chunk_);
 
         nextTick_ += duration;
         auto currentTick = std::chrono::steady_clock::now();

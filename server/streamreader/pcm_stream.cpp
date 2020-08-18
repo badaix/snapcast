@@ -145,7 +145,7 @@ void PcmStream::onChunkEncoded(const encoder::Encoder* /*encoder*/, std::shared_
 }
 
 
-void PcmStream::onChunkRead(const msg::PcmChunk* chunk)
+void PcmStream::onChunkRead(const msg::PcmChunk& chunk)
 {
     encoder_->encode(chunk);
 }

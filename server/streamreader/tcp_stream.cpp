@@ -35,6 +35,8 @@ using namespace std;
 namespace streamreader
 {
 
+static constexpr auto LOG_TAG = "TcpStream";
+
 TcpStream::TcpStream(PcmListener* pcmListener, boost::asio::io_context& ioc, const StreamUri& uri)
     : AsioStream<tcp::socket>(pcmListener, ioc, uri), reconnect_timer_(ioc)
 {
@@ -57,7 +59,7 @@ TcpStream::TcpStream(PcmListener* pcmListener, boost::asio::io_context& ioc, con
 
     port_ = cpt::stoi(uri_.getQuery("port", cpt::to_string(port_)), port_);
 
-    LOG(INFO) << "TcpStream host: " << host_ << ", port: " << port_ << ", is server: " << is_server_ << "\n";
+    LOG(INFO, LOG_TAG) << "TcpStream host: " << host_ << ", port: " << port_ << ", is server: " << is_server_ << "\n";
     if (is_server_)
         acceptor_ = make_unique<tcp::acceptor>(ioc_, tcp::endpoint(boost::asio::ip::address::from_string(host_), port_));
 }
@@ -73,13 +75,13 @@ void TcpStream::do_connect()
         acceptor_->async_accept([this](boost::system::error_code ec, tcp::socket socket) {
             if (!ec)
             {
-                LOG(DEBUG) << "New client connection\n";
+                LOG(DEBUG, LOG_TAG) << "New client connection\n";
                 stream_ = make_unique<tcp::socket>(move(socket));
                 on_connect();
             }
             else
             {
-                LOG(ERROR) << "Accept failed: " << ec.message() << "\n";
+                LOG(ERROR, LOG_TAG) << "Accept failed: " << ec.message() << "\n";
             }
         });
     }
@@ -90,12 +92,12 @@ void TcpStream::do_connect()
         stream_->async_connect(endpoint, [this](const boost::system::error_code& ec) {
             if (!ec)
             {
-                LOG(DEBUG) << "Connected\n";
+                LOG(DEBUG, LOG_TAG) << "Connected\n";
                 on_connect();
             }
             else
             {
-                LOG(DEBUG) << "Connect failed: " << ec.message() << "\n";
+                LOG(DEBUG, LOG_TAG) << "Connect failed: " << ec.message() << "\n";
                 wait(reconnect_timer_, 1s, [this] { connect(); });
             }
         });

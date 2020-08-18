@@ -16,8 +16,8 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
-#ifndef OGG_ENCODER_H
-#define OGG_ENCODER_H
+#ifndef OGG_ENCODER_HPP
+#define OGG_ENCODER_HPP
 #include "encoder.hpp"
 #include <ogg/ogg.h>
 #include <vorbis/vorbisenc.h>
@@ -31,7 +31,7 @@ public:
     OggEncoder(const std::string& codecOptions = "");
     ~OggEncoder() override;
 
-    void encode(const msg::PcmChunk* chunk) override;
+    void encode(const msg::PcmChunk& chunk) override;
     std::string getAvailableOptions() const override;
     std::string getDefaultOptions() const override;
     std::string name() const override;

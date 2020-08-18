@@ -47,10 +47,10 @@ PcmEncoder::PcmEncoder(const std::string& codecOptions) : Encoder(codecOptions)
 }
 
 
-void PcmEncoder::encode(const msg::PcmChunk* chunk)
+void PcmEncoder::encode(const msg::PcmChunk& chunk)
 {
     // copy the chunk into a shared_ptr
-    auto pcmChunk = std::make_shared<msg::PcmChunk>(*chunk);
+    auto pcmChunk = std::make_shared<msg::PcmChunk>(chunk);
     listener_->onChunkEncoded(this, pcmChunk, pcmChunk->durationMs());
 }
 

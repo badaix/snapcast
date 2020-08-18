@@ -102,7 +102,7 @@ protected:
     std::atomic<bool> active_;
 
     void setState(const ReaderState& newState);
-    virtual void onChunkRead(const msg::PcmChunk* chunk);
+    virtual void onChunkRead(const msg::PcmChunk& chunk);
 
     std::chrono::time_point<std::chrono::steady_clock> tvEncodedChunk_;
     PcmListener* pcmListener_;

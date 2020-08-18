@@ -105,7 +105,7 @@ void StreamSessionWebsocket::on_read_ws(beast::error_code ec, std::size_t bytes_
 
     if (ec)
     {
-        LOG(ERROR) << "ControlSessionWebsocket::on_read_ws error: " << ec.message() << "\n";
+        LOG(ERROR, LOG_TAG) << "ControlSessionWebsocket::on_read_ws error: " << ec.message() << "\n";
         messageReceiver_->onDisconnect(this);
         return;
     }
