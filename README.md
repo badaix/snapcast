@@ -22,7 +22,7 @@ The Snapserver reads PCM chunks from several stream sources:
 - **Named pipe**, e.g. `/tmp/snapfifo`
 - **ALSA** to capture line-in, microphone, audio from other players by using the alsa-loop
 - **TCP**
-- **stdout** of a processes
+- **stdout** of a process
 - Many more
 
 The chunks are encoded and tagged with the local time. Supported codecs are:
