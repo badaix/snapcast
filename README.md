@@ -10,20 +10,29 @@ https://travis-ci.org/badaix/snapcast.svg?branch=master)](https://travis-ci.org/
 [![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://www.paypal.me/badaix)
 
 Snapcast is a multiroom client-server audio player, where all clients are time synchronized with the server to play perfectly synced audio. It's not a standalone player, but an extension that turns your existing audio player into a Sonos-like multiroom solution.
-The server's audio input is a named pipe `/tmp/snapfifo`. All data that is fed into this file will be sent to the connected clients. One of the most generic ways to use Snapcast is in conjunction with the music player daemon ([MPD](http://www.musicpd.org/)) or [Mopidy](https://www.mopidy.com/), which can be configured to use a named pipe as audio output.
+Audio is captured by the server and routed to the connected clients. Many players can feed the server in parallel and clients can be grouped together to play the same audio stream.
+One of the most generic ways to use Snapcast is in conjunction with the music player daemon ([MPD](http://www.musicpd.org/)) or [Mopidy](https://www.mopidy.com/).
 
 ![Overview](https://raw.githubusercontent.com/badaix/snapcast/develop/doc/Overview.png)
 
 ## How does it work
 
-The Snapserver reads PCM chunks from the pipe `/tmp/snapfifo`. The chunk is encoded and tagged with the local time. Supported codecs are:
+The Snapserver reads PCM chunks from several stream sources:
+
+- **Named pipe**, e.g. `/tmp/snapfifo`
+- **ALSA** to capture line-in, microphone, audio from other players by using the alsa-loop
+- **TCP**
+- **stdout** of a processes
+- Many more
+
+The chunks are encoded and tagged with the local time. Supported codecs are:
 
 - **PCM** lossless uncompressed
 - **FLAC** lossless compressed [default]
 - **Vorbis** lossy compression
 - **Opus** lossy low-latency compression
 
-The encoded chunk is sent via a TCP connection to the Snapclients.
+The encoded chunks are sent via a TCP connection to the Snapclients.
 Each client does continuous time synchronization with the server, so that the client is always aware of the local server time.
 Every received chunk is first decoded and added to the client's chunk-buffer. Knowing the server's time, the chunk is played out using a system dependend low level audio API (e.g. ALSA) at the appropriate time. Time deviations are corrected by playing faster/slower, which is done by removing/duplicating single samples (a sample at 48kHz has a duration of ~0.02ms).
 
