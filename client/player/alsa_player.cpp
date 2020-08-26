@@ -23,7 +23,7 @@
 #include "common/utils/string_utils.hpp"
 
 //#define BUFFER_TIME 120000
-#define PERIOD_TIME 30000
+#define PERIOD_TIME 15000
 #define exp10(x) (exp((x)*log(10)))
 
 using namespace std;

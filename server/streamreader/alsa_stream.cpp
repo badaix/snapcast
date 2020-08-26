@@ -96,6 +96,7 @@ void AlsaStream::start()
 
 void AlsaStream::stop()
 {
+    PcmStream::stop();
     uninitAlsa();
 }
 
