@@ -13,14 +13,14 @@ Snapcast is a multiroom client-server audio player, where all clients are time s
 Audio is captured by the server and routed to the connected clients. Several players can feed audio to the server in parallel and clients can be grouped to play the same audio stream.  
 One of the most generic ways to use Snapcast is in conjunction with the music player daemon ([MPD](http://www.musicpd.org/)) or [Mopidy](https://www.mopidy.com/).
 
-![Overview](https://raw.githubusercontent.com/badaix/snapcast/develop/doc/Overview.png)
+![Overview](https://raw.githubusercontent.com/badaix/snapcast/master/doc/Overview.png)
 
 ## How does it work
 
-The Snapserver reads PCM chunks from several stream sources:
+The Snapserver reads PCM chunks from configurable stream sources:
 
 - **Named pipe**, e.g. `/tmp/snapfifo`
-- **ALSA** to capture line-in, microphone, audio from other players by using the alsa-loop
+- **ALSA** to capture line-in, microphone, alsa-loop (to capture audio from other players)
 - **TCP**
 - **stdout** of a process
 - Many more
@@ -159,6 +159,17 @@ The pipe stream (`stream = pipe`) will per default create the pipe. Sometimes yo
 
     stream = pipe:///tmp/snapfifo?name=Radio&mode=read
 
+Available stream sources are:
+
+- **pipe**: read audio from a named pipe
+- **alsa**: read audio from an alsa device
+- **librespot**: launches librespot and reads audio from stdout
+- **airplay**: launches airplay and read audio from stdout
+- **file**: read PCM audio from a file
+- **tcp**: receives audio from a TCP socket, can act as client or server
+
+Configuration options for the stream sources can be found in `/etc/snapserver.conf`.
+
 ## Test
 
 You can test your installation by copying random data into the server's fifo file
@@ -186,13 +197,16 @@ Snapcast can be controlled using a [JSON-RPC API](doc/json_rpc_api/v2_0_0.md) ov
 - Mute clients
 - Rename clients
 - Assign a client to a stream
+- Manage groups
 - ...
+
+The server is shipped with [Snapweb](https://github.com/badaix/snapweb), this WebApp can be reached under `http://<snapserver host>:1780`.
 
 There is an Android client [snapdroid](https://github.com/badaix/snapdroid) available in [Releases](https://github.com/badaix/snapdroid/releases/latest) and on [Google Play](https://play.google.com/store/apps/details?id=de.badaix.snapcast)
 
 ![Snapcast for Android](https://raw.githubusercontent.com/badaix/snapcast/master/doc/snapcast_android_scaled.png)
 
-An experimental WebApp is available here: [Snapweb](https://github.com/badaix/snapweb)
+### Contributions
 
 There is also an unofficial WebApp from @atoomic [atoomic/snapcast-volume-ui](https://github.com/atoomic/snapcast-volume-ui).
 This app lists all clients connected to a server and allows you to control individually the volume of each client.
