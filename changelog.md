@@ -5,19 +5,21 @@
 ### Features
 
 - Server: Support for WebSocket streaming clients
+- Server: Install Snapweb web client (Issue #579)
 - Server: Resample input to 48000:16:2 when using opus codec
-- Server: Install Snapweb web client
 - Server: Add Alsa stream source
 
 ### Bugfixes
 
 - make install will setup the snapserver home dir (Issue #643)
+- Client retries to open a blocked alsa device (Issue #652)
 
 ### General
 
 - debian packag generation switched from make to CMake buildsystem
 - Reintroduce MACOS define, hopefully not breaking anything on macOS
 - Snapcast uses GitHub actions for automated CI/CD
+- CMake installs man files (Issue #507)
 
 _Johannes Pohl <snapcast@badaix.de>  Sat, 13 Jun 2020 00:13:37 +0200_
 
