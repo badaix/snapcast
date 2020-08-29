@@ -232,6 +232,7 @@ This [guide](doc/player_setup.md) shows how to configure different players/audio
 - [Spotify](doc/player_setup.md#spotify)
 - [Process](doc/player_setup.md#process)
 - [Line-in](doc/player_setup.md#line-in)
+- [VLC](doc/player_setup.md#vlc)
 
 ## Roadmap
 
