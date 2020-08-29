@@ -228,3 +228,11 @@ Audio captured from line-in can be redirected to the snapserver's pipe, e.g. by 
 #### PulseAudio
 
 `parec >/tmp/snapfifo` (defaults to 44.1kHz, 16bit, stereo)
+
+### VLC
+
+Use `--aout afile` and `--audiofile-file` to pipe VLC's audio output to the snapfifo:
+
+```sh
+vlc --no-video --aout afile --audiofile-file /tmp/snapfifo
+```
