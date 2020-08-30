@@ -4,13 +4,16 @@
 
 source URI of the PCM input stream, can be configured multiple times
 The following notation is used in this paragraph:
+
 - `<angle brackets>`: the whole expression must be replaced with your specific setting
 - `[square brackets]`: the whole expression is optional and can be left out
 - `[key=value]`: if you leave this option out, "value" will be the default for "key"
 
 Format:
 
-    TYPE://host/path?name=<name>[&codec=<codec>][&sampleformat=<sampleformat>][&chunk_ms=<chunk ms>]
+```sh
+TYPE://host/path?name=<name>[&codec=<codec>][&sampleformat=<sampleformat>][&chunk_ms=<chunk ms>]
+```
 
 parameters have the form `key=value`, they are concatenated with an `&` character
 parameter `name` is mandatory for all sources, while `codec`, `sampleformat` and `chunk_ms` are optional
@@ -21,65 +24,85 @@ Available types are:
 
 ### pipe
 
-    pipe:///<path/to/pipe>?name=<name>[&mode=create][&dryout_ms=2000], mode can be "create" or "read"
+```sh
+pipe:///<path/to/pipe>?name=<name>[&mode=create][&dryout_ms=2000], mode can be "create" or "read"
+```
 
 ### librespot
 
-    librespot:///<path/to/librespot>?name=<name>[&dryout_ms=2000][&username=<my username>&password=<my password>][&devicename=Snapcast][&bitrate=320][&wd_timeout=7800][&volume=100][&onevent=""][&nomalize=false][&autoplay=false]
+```sh
+librespot:///<path/to/librespot>?name=<name>[&dryout_ms=2000][&username=<my username>&password=<my password>][&devicename=Snapcast][&bitrate=320][&wd_timeout=7800][&volume=100][&onevent=""][&normalize=false][&autoplay=false]
+```
 
 note that you need to have the librespot binary on your machine
-sampleformat will be set to "44100:16:2"
+sampleformat will be set to `44100:16:2`
 
 ### file
 
-    file:///<path/to/PCM/file>?name=<name>
+```sh
+file:///<path/to/PCM/file>?name=<name>
+```
 
 ### process
 
-    process:///<path/to/process>?name=<name>[&dryout_ms=2000][&wd_timeout=0][&log_stderr=false][&params=<process arguments>]
+```sh
+process:///<path/to/process>?name=<name>[&dryout_ms=2000][&wd_timeout=0][&log_stderr=false][&params=<process arguments>]
+```
 
 ### airplay
 
-    airplay:///<path/to/airplay>?name=<name>[&dryout_ms=2000][&port=5000]
+```sh
+airplay:///<path/to/airplay>?name=<name>[&dryout_ms=2000][&port=5000]
+```
 
 note that you need to have the airplay binary on your machine
-sampleformat will be set to "44100:16:2"
+sampleformat will be set to `44100:16:2`
 
 ### tcp server
 
-    tcp://<listen IP, e.g. 127.0.0.1>:<port>?name=<name>[&mode=server]
+```sh
+tcp://<listen IP, e.g. 127.0.0.1>:<port>?name=<name>[&mode=server]
+```
 
 default for `port` (if omitted) is 4953, default for `mode` is `server`
 
 mopidy.conf (running GStreamer in [client mode](https://www.freedesktop.org/software/gstreamer-sdk/data/docs/latest/gst-plugins-base-plugins-0.10/gst-plugins-base-plugins-tcpclientsink.html))
 
-    [audio]
-    output = audioresample ! audioconvert ! audio/x-raw,rate=48000,channels=2,format=S16LE ! wavenc ! tcpclientsink
+```sh
+[audio]
+output = audioresample ! audioconvert ! audio/x-raw,rate=48000,channels=2,format=S16LE ! wavenc ! tcpclientsink
+```
 
 ### tcp client
 
-    tcp://<server IP, e.g. 127.0.0.1>:<port>?name=<name>&mode=client
+```sh
+tcp://<server IP, e.g. 127.0.0.1>:<port>?name=<name>&mode=client
+```
 
 mopidy.conf (running GStreamer in [server mode](https://www.freedesktop.org/software/gstreamer-sdk/data/docs/latest/gst-plugins-base-plugins-0.10/gst-plugins-base-plugins-tcpserversink.html))
 
-    [audio]
-    output = audioresample ! audioconvert ! audio/x-raw,rate=48000,channels=2,format=S16LE ! wavenc ! tcpserversink
+```sh
+[audio]
+output = audioresample ! audioconvert ! audio/x-raw,rate=48000,channels=2,format=S16LE ! wavenc ! tcpserversink
+```
 
 ### alsa
 
-    alsa://?name=<name>&device=<alsa device>
+```sh
+alsa://?name=<name>&device=<alsa device>
+```
 
 Snapcast v0.21 can capture audio from alsa, and to capture the output of a player, an alsa loopback device can be used:
 
 1. setup the alsa loopback device by loading the kernel module:
 
-    ```
+    ```sh
     sudo modprobe snd-aloop
     ```
 
 2. the loopback device should show up in `aplay -l`
 
-    ```
+    ```sh
     aplay -l
     **** List of PLAYBACK Hardware Devices ****
     card 0: Loopback [Loopback], device 0: Loopback PCM [Loopback PCM]
@@ -120,13 +143,13 @@ Snapcast v0.21 can capture audio from alsa, and to capture the output of a playe
 
     For mopidy (gstreamer) it should be something like this (not tested):
 
-    ```
+    ```sh
     output = audioresample ! audioconvert ! audio/x-raw,rate=48000,channels=2,format=S16LE ! wavenc ! alsasink device=hw:0,0,0
     ```
 
     For mpd: in mpd.conf
 
-    ```
+    ```sh
     audio_output_format            "48000:16:2"
     audio_output {
             type            "alsa"
@@ -142,7 +165,7 @@ Snapcast v0.21 can capture audio from alsa, and to capture the output of a playe
 
 4. Configure Snapserver to capture the loopback device:
 
-    ```
+    ```sh
     [stream]
     stream = alsa://?name=SomeName&sampleformat=48000:16:2&device=hw:0,1,0
     ```
