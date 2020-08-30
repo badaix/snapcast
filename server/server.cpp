@@ -692,9 +692,9 @@ void Server::start()
         streamManager_ =
             std::make_unique<StreamManager>(this, io_context_, settings_.stream.sampleFormat, settings_.stream.codec, settings_.stream.streamChunkMs);
         //	throw SnapException("xxx");
-        for (const auto& streamUri : settings_.stream.pcmStreams)
+        for (const auto& sourceUri : settings_.stream.sources)
         {
-            PcmStreamPtr stream = streamManager_->addStream(streamUri);
+            PcmStreamPtr stream = streamManager_->addStream(sourceUri);
             if (stream)
                 LOG(INFO, LOG_TAG) << "Stream: " << stream->getUri().toJson() << "\n";
         }

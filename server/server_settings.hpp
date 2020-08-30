@@ -51,7 +51,7 @@ struct ServerSettings
     struct Stream
     {
         size_t port{1704};
-        std::vector<std::string> pcmStreams;
+        std::vector<std::string> sources;
         std::string codec{"flac"};
         int32_t bufferMs{1000};
         std::string sampleFormat{"48000:16:2"};

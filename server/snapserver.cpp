@@ -53,7 +53,7 @@ int main(int argc, char* argv[])
     try
     {
         ServerSettings settings;
-        std::string pcmStream = "pipe:///tmp/snapfifo?name=default";
+        std::string pcmSource = "pipe:///tmp/snapfifo?name=default";
         std::string config_file = "/etc/snapserver.conf";
 
         OptionParser op("Allowed options");
@@ -92,9 +92,11 @@ int main(int argc, char* argv[])
         auto stream_bind_to_address = conf.add<Value<string>>("", "stream.bind_to_address", "address for the server to listen on",
                                                               settings.stream.bind_to_address.front(), &settings.stream.bind_to_address[0]);
         conf.add<Value<size_t>>("", "stream.port", "which port the server should listen on", settings.stream.port, &settings.stream.port);
-        auto streamValue = conf.add<Value<string>>(
-            "", "stream.stream", "URI of the PCM input stream.\nFormat: TYPE://host/path?name=NAME\n[&codec=CODEC]\n[&sampleformat=SAMPLEFORMAT]", pcmStream,
-            &pcmStream);
+        // deprecated: stream.stream, use stream.source instead
+        auto streamValue = conf.add<Value<string>>("", "stream.stream", "Deprecated: use stream.source", pcmSource, &pcmSource);
+        auto sourceValue = conf.add<Value<string>>(
+            "", "stream.source", "URI of the PCM input stream.\nFormat: TYPE://host/path?name=NAME\n[&codec=CODEC]\n[&sampleformat=SAMPLEFORMAT]", pcmSource,
+            &pcmSource);
 
         conf.add<Value<string>>("", "stream.sampleformat", "Default sample format", settings.stream.sampleFormat, &settings.stream.sampleFormat);
         conf.add<Value<string>>("", "stream.codec", "Default transport codec\n(flac|ogg|opus|pcm)[:options]\nType codec:? to get codec specific options",
@@ -221,13 +223,18 @@ int main(int argc, char* argv[])
         else
             throw SnapException("Invalid log sink: " + settings.logging.sink);
 
-        if (!streamValue->is_set())
-            settings.stream.pcmStreams.push_back(streamValue->value());
+        if (!streamValue->is_set() && !sourceValue->is_set())
+            settings.stream.sources.push_back(sourceValue->value());
 
         for (size_t n = 0; n < streamValue->count(); ++n)
         {
             LOG(INFO) << "Adding stream: " << streamValue->value(n) << "\n";
-            settings.stream.pcmStreams.push_back(streamValue->value(n));
+            settings.stream.sources.push_back(streamValue->value(n));
+        }
+        for (size_t n = 0; n < sourceValue->count(); ++n)
+        {
+            LOG(INFO) << "Adding source: " << sourceValue->value(n) << "\n";
+            settings.stream.sources.push_back(sourceValue->value(n));
         }
 
 #ifdef HAS_DAEMON
