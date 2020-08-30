@@ -95,14 +95,12 @@ The pipe stream (`stream = pipe`) will per default create the pipe. Sometimes yo
 
 Available stream sources are:
 
-- **pipe**: read audio from a named pipe
-- **alsa**: read audio from an alsa device
-- **librespot**: launches librespot and reads audio from stdout
-- **airplay**: launches airplay and read audio from stdout
-- **file**: read PCM audio from a file
-- **tcp**: receives audio from a TCP socket, can act as client or server
-
-Configuration options for the stream sources can be found in `/etc/snapserver.conf`.
+- [pipe](doc/configuration.md#pipe): read audio from a named pipe
+- [alsa](doc/configuration.md#alsa): read audio from an alsa device
+- [librespot](doc/configuration.md#librespot): launches librespot and reads audio from stdout
+- [airplay](doc/configuration.md#airplay): launches airplay and read audio from stdout
+- [file](doc/configuration.md#file): read PCM audio from a file
+- [tcp](doc/configuration.md#tcp-server): receives audio from a TCP socket, can act as client or server
 
 ## Test
 
@@ -194,6 +192,6 @@ Unordered list of features that should make it into the v1.0
 - [X] **OpenWrt** port Snapclient to OpenWrt
 - [X] **Hi-Res audio** support (like 96kHz 24bit)
 - [X] **Groups** support multiple Groups of clients ("Zones")
+- [X] **Ports** Snapclient for Windows, Mac OS X,...
 - [ ] **JSON-RPC** Possibility to add, remove, rename streams
 - [ ] **Protocol specification** Snapcast binary streaming protocol, JSON-RPC protocol
-- [ ] **Ports** Snapclient for Windows, ~~Mac OS X~~,...
