@@ -2,14 +2,15 @@
 
 ## Sources
 
-source URI of the PCM input stream, can be configured multiple times
+Audio sources are added to the server as `source` in the `[stream]` section of the configuration file `/etc/snapserver.conf`. Every source must be fed with a fixed sample format, that can be configured per stream (e.g. `48000:16:2`).  
+
 The following notation is used in this paragraph:
 
 - `<angle brackets>`: the whole expression must be replaced with your specific setting
 - `[square brackets]`: the whole expression is optional and can be left out
 - `[key=value]`: if you leave this option out, "value" will be the default for "key"
 
-Format:
+The general format of an audio source is:
 
 ```sh
 TYPE://host/path?name=<name>[&codec=<codec>][&sampleformat=<sampleformat>][&chunk_ms=<chunk ms>]
@@ -20,9 +21,11 @@ parameter `name` is mandatory for all sources, while `codec`, `sampleformat` and
 and will override the default `codec`, `sampleformat` or `chunk_ms` settings.
 Non blocking sources support the `dryout_ms` parameter: when no new data is read from the source, send silence to the clients
 
-Available types are:
+Available audio source types are:
 
 ### pipe
+
+Captures audio from a named pipe
 
 ```sh
 pipe:///<path/to/pipe>?name=<name>[&mode=create][&dryout_ms=2000]
@@ -32,24 +35,39 @@ pipe:///<path/to/pipe>?name=<name>[&mode=create][&dryout_ms=2000]
 
 ### librespot
 
+Launches librespot and reads audio from stdout
+
 ```sh
 librespot:///<path/to/librespot>?name=<name>[&dryout_ms=2000][&username=<my username>&password=<my password>][&devicename=Snapcast][&bitrate=320][&wd_timeout=7800][&volume=100][&onevent=""][&normalize=false][&autoplay=false]
 ```
 
-note that you need to have the librespot binary on your machine
-sampleformat will be set to `44100:16:2`
+Note that you need to have the librespot binary on your machine and the sampleformat will be set to `44100:16:2`
+
+TODO: description of the parameters
+
+### airplay
+
+Launches airplay and reads audio from stdout
+
+```sh
+airplay:///<path/to/airplay>?name=<name>[&dryout_ms=2000][&port=5000]
+```
+
+Note that you need to have the airplay binary on your machine and the sampleformat will be set to `44100:16:2`
 
 TODO: description of the parameters
 
 ### file
 
+Reads PCM audio from a file
+
 ```sh
 file:///<path/to/PCM/file>?name=<name>
 ```
 
-TODO: description of the parameters
-
 ### process
+
+Launches a process and reads audio from stdout
 
 ```sh
 process:///<path/to/process>?name=<name>[&dryout_ms=2000][&wd_timeout=0][&log_stderr=false][&params=<process arguments>]
@@ -57,18 +75,9 @@ process:///<path/to/process>?name=<name>[&dryout_ms=2000][&wd_timeout=0][&log_st
 
 TODO: description of the parameters
 
-### airplay
-
-```sh
-airplay:///<path/to/airplay>?name=<name>[&dryout_ms=2000][&port=5000]
-```
-
-note that you need to have the airplay binary on your machine
-sampleformat will be set to `44100:16:2`
-
-TODO: description of the parameters
-
 ### tcp server
+
+Receives audio from a TCP socket (acting as server)
 
 ```sh
 tcp://<listen IP, e.g. 127.0.0.1>:<port>?name=<name>[&mode=server]
@@ -76,7 +85,7 @@ tcp://<listen IP, e.g. 127.0.0.1>:<port>?name=<name>[&mode=server]
 
 default for `port` (if omitted) is 4953, default for `mode` is `server`
 
-mopidy.conf (running GStreamer in [client mode](https://www.freedesktop.org/software/gstreamer-sdk/data/docs/latest/gst-plugins-base-plugins-0.10/gst-plugins-base-plugins-tcpclientsink.html))
+Mopdiy configuration would look like this (running GStreamer in [client mode](https://www.freedesktop.org/software/gstreamer-sdk/data/docs/latest/gst-plugins-base-plugins-0.10/gst-plugins-base-plugins-tcpclientsink.html))
 
 ```sh
 [audio]
@@ -85,11 +94,13 @@ output = audioresample ! audioconvert ! audio/x-raw,rate=48000,channels=2,format
 
 ### tcp client
 
+Receives audio from a TCP socket (acting as client)
+
 ```sh
 tcp://<server IP, e.g. 127.0.0.1>:<port>?name=<name>&mode=client
 ```
 
-mopidy.conf (running GStreamer in [server mode](https://www.freedesktop.org/software/gstreamer-sdk/data/docs/latest/gst-plugins-base-plugins-0.10/gst-plugins-base-plugins-tcpserversink.html))
+Mopdiy configuration would look like this (running GStreamer in [server mode](https://www.freedesktop.org/software/gstreamer-sdk/data/docs/latest/gst-plugins-base-plugins-0.10/gst-plugins-base-plugins-tcpserversink.html)):
 
 ```sh
 [audio]
@@ -98,17 +109,23 @@ output = audioresample ! audioconvert ! audio/x-raw,rate=48000,channels=2,format
 
 ### alsa
 
+Captures audio from an alsa device
+
 ```sh
 alsa://?name=<name>&device=<alsa device>
 ```
 
-Snapcast v0.21 can capture audio from alsa, and to capture the output of a player, an alsa loopback device can be used:
+`device` is an alsa device name or identifier, e.g. `default` or `hw:0,0`
+
+The output of any audio player using alsa can be redirected to Snapcast with help of an alsa loopback device:
 
 1. setup the alsa loopback device by loading the kernel module:
 
     ```sh
     sudo modprobe snd-aloop
     ```
+
+    The loopback device can be created during boot by adding `snd-aloop` to `/etc/modules`
 
 2. the loopback device should show up in `aplay -l`
 
@@ -146,10 +163,10 @@ Snapcast v0.21 can capture audio from alsa, and to capture the output of a playe
     Subdevice #0: subdevice #0
     ```
 
-    On my system it's card 0 with devices 0 and 1, each having 8 subdevices. You can address them with `hw:<card idx>,<device idx>,<subdevice num>`, i.e. `hw:0,0,0`.
-    If a process plays audio using `hw:0,0,x`, then this audio is looped back to `hw:0,1,x`, so
+    In this example the loopback device is card 0 with devices 0 and 1, each having 8 subdevices. They are addressed with `hw:<card idx>,<device idx>,<subdevice num>`, e.g. `hw:0,0,0`.
+    If a process plays audio using `hw:0,0,x`, then this audio is looped back to `hw:0,1,x`
 
-3. Configure your player to use a loopback device.
+3. Configure your player to use a loopback device
 
     For mopidy (gstreamer) it should be something like this (not tested):
 

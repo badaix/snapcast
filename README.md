@@ -96,6 +96,7 @@ Available stream sources are:
 - [librespot](doc/configuration.md#librespot): launches librespot and reads audio from stdout
 - [airplay](doc/configuration.md#airplay): launches airplay and read audio from stdout
 - [file](doc/configuration.md#file): read PCM audio from a file
+- [process](doc/configuration.md#process): launches a process and reads audio from stdout
 - [tcp](doc/configuration.md#tcp-server): receives audio from a TCP socket, can act as client or server
 
 ## Test
