@@ -16,8 +16,8 @@ The general format of an audio source is:
 TYPE://host/path?name=<name>[&codec=<codec>][&sampleformat=<sampleformat>][&chunk_ms=<chunk ms>]
 ```
 
-parameters have the form `key=value`, they are concatenated with an `&` character
-parameter `name` is mandatory for all sources, while `codec`, `sampleformat` and `chunk_ms` are optional
+parameters have the form `key=value`, they are concatenated with an `&` character.
+Parameter `name` is mandatory for all sources, while `codec`, `sampleformat` and `chunk_ms` are optional
 and will override the default `codec`, `sampleformat` or `chunk_ms` settings.
 Non blocking sources support the `dryout_ms` parameter: when no new data is read from the source, send silence to the clients
 
@@ -117,9 +117,9 @@ alsa://?name=<name>&device=<alsa device>
 
 `device` is an alsa device name or identifier, e.g. `default` or `hw:0,0`
 
-The output of any audio player using alsa can be redirected to Snapcast with help of an alsa loopback device:
+The output of any audio player that uses alsa can be redirected to Snapcast by using an alsa loopback device:
 
-1. setup the alsa loopback device by loading the kernel module:
+1. Setup the alsa loopback device by loading the kernel module:
 
     ```sh
     sudo modprobe snd-aloop
@@ -127,7 +127,7 @@ The output of any audio player using alsa can be redirected to Snapcast with hel
 
     The loopback device can be created during boot by adding `snd-aloop` to `/etc/modules`
 
-2. the loopback device should show up in `aplay -l`
+2. The loopback device should show up in `aplay -l`
 
     ```sh
     aplay -l
@@ -163,8 +163,9 @@ The output of any audio player using alsa can be redirected to Snapcast with hel
     Subdevice #0: subdevice #0
     ```
 
-    In this example the loopback device is card 0 with devices 0 and 1, each having 8 subdevices. They are addressed with `hw:<card idx>,<device idx>,<subdevice num>`, e.g. `hw:0,0,0`.
-    If a process plays audio using `hw:0,0,x`, then this audio is looped back to `hw:0,1,x`
+    In this example the loopback device is card 0 with devices 0 and 1, each having 8 subdevices.  
+    The devices are addressed with `hw:<card idx>,<device idx>,<subdevice num>`, e.g. `hw:0,0,0`.  
+    If a process plays audio using `hw:0,0,x`, then the audio will be looped back to `hw:0,1,x`
 
 3. Configure your player to use a loopback device
 
@@ -174,7 +175,7 @@ The output of any audio player using alsa can be redirected to Snapcast with hel
     output = audioresample ! audioconvert ! audio/x-raw,rate=48000,channels=2,format=S16LE ! wavenc ! alsasink device=hw:0,0,0
     ```
 
-    For mpd: in mpd.conf
+    For mpd: in `mpd.conf`
 
     ```sh
     audio_output_format            "48000:16:2"
