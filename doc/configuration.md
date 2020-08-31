@@ -25,8 +25,10 @@ Available types are:
 ### pipe
 
 ```sh
-pipe:///<path/to/pipe>?name=<name>[&mode=create][&dryout_ms=2000], mode can be "create" or "read"
+pipe:///<path/to/pipe>?name=<name>[&mode=create][&dryout_ms=2000]
 ```
+
+`mode` can be `create` or `read`. Sometimes your audio source might insist in creating the pipe itself. So the pipe creation mode can by changed to "not create, but only read mode", using the `mode` option set to `read`
 
 ### librespot
 
@@ -37,17 +39,23 @@ librespot:///<path/to/librespot>?name=<name>[&dryout_ms=2000][&username=<my user
 note that you need to have the librespot binary on your machine
 sampleformat will be set to `44100:16:2`
 
+TODO: description of the parameters
+
 ### file
 
 ```sh
 file:///<path/to/PCM/file>?name=<name>
 ```
 
+TODO: description of the parameters
+
 ### process
 
 ```sh
 process:///<path/to/process>?name=<name>[&dryout_ms=2000][&wd_timeout=0][&log_stderr=false][&params=<process arguments>]
 ```
+
+TODO: description of the parameters
 
 ### airplay
 
@@ -57,6 +65,8 @@ airplay:///<path/to/airplay>?name=<name>[&dryout_ms=2000][&port=5000]
 
 note that you need to have the airplay binary on your machine
 sampleformat will be set to `44100:16:2`
+
+TODO: description of the parameters
 
 ### tcp server
 
