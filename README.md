@@ -83,15 +83,11 @@ Please note that there are no pre-built firmware packages available.
 After installation, Snapserver and Snapclient are started with the command line arguments that are configured in `/etc/default/snapserver` and `/etc/default/snapclient`.
 Allowed options are listed in the man pages (`man snapserver`, `man snapclient`) or by invoking the snapserver or snapclient with the `-h` option.
 
-The server configuration is done in `/etc/snapserver.conf`. Different streams can by configured in the `[stream]` section with a list of `stream` options, e.g.:
+The server configuration is done in `/etc/snapserver.conf`. Different audio sources can by configured in the `[stream]` section with a list of `source` options, e.g.:
 
     [stream]
-    stream = pipe:///tmp/snapfifo?name=Radio&sampleformat=48000:16:2&codec=flac
-    stream = file:///home/user/Musik/Some%20wave%20file.wav?name=File
-
-The pipe stream (`stream = pipe`) will per default create the pipe. Sometimes your audio source might insist in creating the pipe itself. So the pipe creation mode can by changed to "not create, but only read mode", using the `mode` option set to `create` or `read`:
-
-    stream = pipe:///tmp/snapfifo?name=Radio&mode=read
+    source = pipe:///tmp/snapfifo?name=Radio&sampleformat=48000:16:2&codec=flac
+    source = file:///home/user/Musik/Some%20wave%20file.wav?name=File
 
 Available stream sources are:
 
