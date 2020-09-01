@@ -38,7 +38,7 @@ pipe:///<path/to/pipe>?name=<name>[&mode=create][&dryout_ms=2000]
 Launches librespot and reads audio from stdout
 
 ```sh
-librespot:///<path/to/librespot>?name=<name>[&dryout_ms=2000][&username=<my username>&password=<my password>][&devicename=Snapcast][&bitrate=320][&wd_timeout=7800][&volume=100][&onevent=""][&normalize=false][&autoplay=false][&cache=""][&disable_audio_cache=false][&killall=true]
+librespot:///<path/to/librespot>?name=<name>[&dryout_ms=2000][&username=<my username>&password=<my password>][&devicename=Snapcast][&bitrate=320][&wd_timeout=7800][&volume=100][&onevent=""][&normalize=false][&autoplay=false][&cache=""][&disable_audio_cache=false][&killall=true][&params=extra-params]
 ```
 
 Note that you need to have the librespot binary on your machine and the sampleformat will be set to `44100:16:2`
@@ -57,6 +57,7 @@ Parameters used to configure the librespot binary ([see librespot-org options](h
 - `autoplay`: Autoplay similar songs when your music ends
 - `cache`: Path to a directory where files will be cached
 - `disable_audio_cache`: Disable caching of the audio data
+- `params`: Optional string appended to the librespot invocation. This allows for arbitrary flags to be passed to librespot, for instance `params=--device-type%20avr`. The value has to be properly URL-encoded.
 
 Parameters introduced by Snapclient:
 
