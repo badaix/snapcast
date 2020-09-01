@@ -65,6 +65,7 @@ void FilePlayer::requestAudio()
     {
         adjustVolume(static_cast<char*>(buffer_.data()), numFrames);
     }
+    fwrite(buffer_.data(), 1, needed, stdout);
     loop();
 }
 
