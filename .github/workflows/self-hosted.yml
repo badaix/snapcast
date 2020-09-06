@@ -9,7 +9,9 @@ jobs:
 
     steps:
     - name: clean-up
-      run: rm -rf /home/pi/actions-runner/_work/snapcast
+      run: |
+        rm -rf /home/pi/actions-runner/_work/snapcast
+        mkdir -p /home/pi/actions-runner/_work/snapcast
     - uses: actions/checkout@v2
     - name: cmake build
       run: mkdir build && cd build && cmake -DBOOST_ROOT=/home/pi/Develop/boost_1_73_0 -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_FLAGS="$CXXFLAGS -Wall -Wextra -pedantic -Wno-unused-function" .. && cd ..
