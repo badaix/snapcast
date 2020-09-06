@@ -90,8 +90,8 @@ else
 
 CXX       = g++
 CXXFLAGS += -DHAS_AVAHI -DHAS_DAEMON -pthread
-LDFLAGS  += -lrt -lavahi-client -lavahi-common -latomic
-OBJ      += ../common/daemon.o publishZeroConf/publish_avahi.o 
+LDFLAGS  += -lrt -lasound -lavahi-client -lavahi-common -latomic
+OBJ      += ../common/daemon.o publishZeroConf/publish_avahi.o streamreader/alsa_stream.o
 
 endif
 
