@@ -20,8 +20,9 @@
 - Reintroduce MACOS define, hopefully not breaking anything on macOS
 - Snapcast uses GitHub actions for automated CI/CD
 - CMake installs man files (Issue #507)
+- Update documentation (Issue #615, #617)
 
-_Johannes Pohl <snapcast@badaix.de>  Sat, 13 Jun 2020 00:13:37 +0200_
+_Johannes Pohl <snapcast@badaix.de>  Sun, 06 Sep 2020 00:13:37 +0200_
 
 ## Version 0.20.0
 
