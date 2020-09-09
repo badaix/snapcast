@@ -8,17 +8,17 @@ git:
 
 matrix:
   include:
-    - os: linux
-      compiler: gcc
-      env:
-        - COMPILER=g++-4.9
-      addons:
-        apt:
-          sources:
-            - sourceline: 'ppa:mhier/libboost-latest'
-            - ubuntu-toolchain-r-test
-          packages:
-            - g++-4.9 boost1.74 libasound2-dev libsoxr-dev libvorbisidec-dev libvorbis-dev libflac-dev libopus-dev alsa-utils libavahi-client-dev avahi-daemon expat
+    # - os: linux
+    #   compiler: gcc
+    #   env:
+    #     - COMPILER=g++-4.9
+    #   addons:
+    #     apt:
+    #       sources:
+    #         - sourceline: 'ppa:mhier/libboost-latest'
+    #         - ubuntu-toolchain-r-test
+    #       packages:
+    #         - g++-4.9 boost1.74 libasound2-dev libsoxr-dev libvorbisidec-dev libvorbis-dev libflac-dev libopus-dev alsa-utils libavahi-client-dev avahi-daemon expat
 
     - os: linux
       compiler: gcc
