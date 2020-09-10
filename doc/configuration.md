@@ -169,10 +169,10 @@ The output of any audio player that uses alsa can be redirected to Snapcast by u
 
 3. Configure your player to use a loopback device
 
-    For mopidy (gstreamer) it should be something like this (not tested):
+    For mopidy (gstreamer) in `mopidy.conf`:
 
     ```sh
-    output = audioresample ! audioconvert ! audio/x-raw,rate=48000,channels=2,format=S16LE ! wavenc ! alsasink device=hw:0,0,0
+    output = audioresample ! audioconvert ! audio/x-raw,rate=48000,channels=2,format=S16LE ! alsasink device=hw:0,0,0
     ```
 
     For mpd: in `mpd.conf`
