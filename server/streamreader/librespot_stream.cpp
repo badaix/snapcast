@@ -68,8 +68,7 @@ LibrespotStream::LibrespotStream(PcmListener* pcmListener, boost::asio::io_conte
         params_ += " --enable-volume-normalisation";
     if (autoplay)
         params_ += " --autoplay";
-    if (volumectrl)
-        params_ += " --volume-ctrl" + volumectrl;
+    params_ += " --volume-ctrl" + volumectrl;
     params_ += " --verbose";
     
 
