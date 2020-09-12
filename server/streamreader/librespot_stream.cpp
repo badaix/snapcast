@@ -47,6 +47,7 @@ LibrespotStream::LibrespotStream(PcmListener* pcmListener, boost::asio::io_conte
     bool normalize = (uri_.getQuery("normalize", "false") == "true");
     bool autoplay = (uri_.getQuery("autoplay", "false") == "true");
     killall_ = (uri_.getQuery("killall", "true") == "true");
+    string volumectrl = uri_.getQuery("volumectrl", "log");
 
     if (username.empty() != password.empty())
         throw SnapException("missing parameter \"username\" or \"password\" (must provide both, or neither)");
@@ -67,7 +68,10 @@ LibrespotStream::LibrespotStream(PcmListener* pcmListener, boost::asio::io_conte
         params_ += " --enable-volume-normalisation";
     if (autoplay)
         params_ += " --autoplay";
+    if (volumectrl)
+        params_ += " --volume-ctrl" + volumectrl;
     params_ += " --verbose";
+    
 
     if (uri_.query.find("username") != uri_.query.end())
         uri_.query["username"] = "xxx";
