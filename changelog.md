@@ -22,7 +22,7 @@
 - CMake installs man files (Issue #507)
 - Update documentation (Issue #615, #617)
 
-_Johannes Pohl <snapcast@badaix.de>  Sun, 06 Sep 2020 00:13:37 +0200_
+_Johannes Pohl <snapcast@badaix.de>  Sun, 13 Sep 2020 00:13:37 +0200_
 
 ## Version 0.20.0
 
