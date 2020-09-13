@@ -8,8 +8,9 @@ HOMEDIR=/var/lib/snapserver
 if [ "$1" = configure ]; then
   if ! getent passwd $USERNAME >/dev/null; then
     adduser --system --quiet --group --home $HOMEDIR --no-create-home --force-badname $USERNAME
-    adduser $USERNAME audio
+    # adduser $USERNAME audio
   fi
+  adduser --quiet $USERNAME audio > /dev/null || true
 
   if [ ! -d $HOMEDIR ]; then
     mkdir -m 0750 $HOMEDIR
