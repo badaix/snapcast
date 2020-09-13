@@ -20,5 +20,5 @@ jobs:
     - name: Archive artifacts
       uses: actions/upload-artifact@v2
       with:
-        name: develop_snapshot_armhf
+        name: develop_snapshot_armhf-${{github.sha}}
         path: /home/pi/actions-runner/_work/snapcast/snap??????_*_armhf.deb
