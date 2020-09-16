@@ -129,7 +129,13 @@ Snapcast can be controlled using a [JSON-RPC API](doc/json_rpc_api/v2_0_0.md) ov
 - Manage groups
 - ...
 
+### WebApp
+
 The server is shipped with [Snapweb](https://github.com/badaix/snapweb), this WebApp can be reached under `http://<snapserver host>:1780`.
+
+![Snapweb](https://raw.githubusercontent.com/badaix/snapweb/master/snapweb.png)
+
+### Android client
 
 There is an Android client [snapdroid](https://github.com/badaix/snapdroid) available in [Releases](https://github.com/badaix/snapdroid/releases/latest) and on [Google Play](https://play.google.com/store/apps/details?id=de.badaix.snapcast)
 
