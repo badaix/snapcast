@@ -62,15 +62,15 @@ LDFLAGS  += -L$(NDK_DIR)/lib -pie -llog -latomic
 
 else ifeq ($(TARGET), OPENWRT)
 
-CXXFLAGS += -DNO_CPP11_STRING -DHAS_AVAHI -DHAS_DAEMON -pthread
+CXXFLAGS += -DNO_CPP11_STRING -DHAS_AVAHI -DHAS_DAEMON -DHAS_ALSA -pthread
 LDFLAGS  += -lavahi-client -lavahi-common -latomic
-OBJ      += ../common/daemon.o publishZeroConf/publish_avahi.o 
+OBJ      += ../common/daemon.o publishZeroConf/publish_avahi.o streamreader/alsa_stream.o
 
 else ifeq ($(TARGET), BUILDROOT)
 
-CXXFLAGS += -DHAS_AVAHI -DHAS_DAEMON -pthread
+CXXFLAGS += -DHAS_AVAHI -DHAS_DAEMON -DHAS_ALSA -pthread
 LDFLAGS  += -lrt -lavahi-client -lavahi-common
-OBJ      += publishZeroConf/publish_avahi.o 
+OBJ      += publishZeroConf/publish_avahi.o streamreader/alsa_stream.o
 
 else ifeq ($(TARGET), FREEBSD)
 
@@ -89,7 +89,7 @@ OBJ      += ../common/daemon.o publishZeroConf/publish_bonjour.o
 else
 
 CXX       = g++
-CXXFLAGS += -DHAS_AVAHI -DHAS_DAEMON -pthread
+CXXFLAGS += -DHAS_AVAHI -DHAS_DAEMON -DHAS_ALSA -pthread
 LDFLAGS  += -lrt -lasound -lavahi-client -lavahi-common -latomic
 OBJ      += ../common/daemon.o publishZeroConf/publish_avahi.o streamreader/alsa_stream.o
 
