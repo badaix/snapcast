@@ -28,10 +28,10 @@ public:
 
 #if defined(HAS_AVAHI)
 #include "browse_avahi.hpp"
-typedef BrowseAvahi BrowseZeroConf;
+using BrowseZeroConf = BrowseAvahi;
 #elif defined(HAS_BONJOUR)
 #include "browse_bonjour.hpp"
-typedef BrowseBonjour BrowseZeroConf;
+using BrowseZeroConf = BrowseBonjour;
 #endif
 
 #endif

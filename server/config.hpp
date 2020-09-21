@@ -35,8 +35,8 @@ using json = nlohmann::json;
 struct ClientInfo;
 struct Group;
 
-typedef std::shared_ptr<ClientInfo> ClientInfoPtr;
-typedef std::shared_ptr<Group> GroupPtr;
+using ClientInfoPtr = std::shared_ptr<ClientInfo>;
+using GroupPtr = std::shared_ptr<Group>;
 
 
 template <typename T>

@@ -24,12 +24,10 @@
 
 #include "player.hpp"
 
-typedef int (*AndroidAudioCallback)(short* buffer, int num_samples);
 
-
-/// OpenSL Audio Player
+/// Android Oboe Audio Player
 /**
- * Player implementation for Oboe
+ * Player implementation for Android Oboe
  */
 class OboePlayer : public Player, public oboe::AudioStreamCallback
 {

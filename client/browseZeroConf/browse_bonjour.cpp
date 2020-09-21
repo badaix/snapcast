@@ -27,7 +27,7 @@ struct DNSServiceRefDeleter
     }
 };
 
-typedef std::unique_ptr<DNSServiceRef, DNSServiceRefDeleter> DNSServiceHandle;
+using DNSServiceHandle = std::unique_ptr<DNSServiceRef, DNSServiceRefDeleter>;
 
 string BonjourGetError(DNSServiceErrorType error)
 {

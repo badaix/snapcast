@@ -35,10 +35,10 @@ protected:
 
 #if defined(HAS_AVAHI)
 #include "publish_avahi.hpp"
-typedef PublishAvahi PublishZeroConf;
+using PublishZeroConf = PublishAvahi;
 #elif defined(HAS_BONJOUR)
 #include "publish_bonjour.hpp"
-typedef PublishBonjour PublishZeroConf;
+using PublishZeroConf = PublishBonjour;
 #endif
 
 #endif

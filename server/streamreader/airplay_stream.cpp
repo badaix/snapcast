@@ -34,7 +34,7 @@ namespace
 {
 string hex2str(string input)
 {
-    typedef unsigned char byte;
+    using byte = unsigned char;
     unsigned long x = strtoul(input.c_str(), nullptr, 16);
     byte a[] = {byte(x >> 24), byte(x >> 16), byte(x >> 8), byte(x), 0};
     return string((char*)a);
