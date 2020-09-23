@@ -88,6 +88,15 @@ protected:
     /// @param muted muted or not
     virtual void setHardwareVolume(double volume);
 
+    /// get the hardware mixer muting
+    /// @param[out] muted muted or not
+    /// @return success or not
+    virtual bool getHardwareMute(bool& muted);
+
+    /// set the hardware mixer muting
+    /// @param muted muted or not
+    virtual void setHardwareMute(bool muted);
+
     void setVolume_poly(double volume, double exp);
     void setVolume_exp(double volume, double base);
 

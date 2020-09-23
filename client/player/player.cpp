@@ -178,6 +178,20 @@ bool Player::getHardwareVolume(double& volume)
     return false;
 }
 
+void Player::setHardwareMute(bool muted)
+{
+    std::ignore = muted;
+    throw SnapException("Failed to set hardware mixer mute: not supported");
+}
+
+
+bool Player::getHardwareMute(bool& muted)
+{
+    std::ignore = muted;
+    throw SnapException("Failed to get hardware mixer mute: not supported");
+    return false;
+}
+
 
 void Player::adjustVolume(char* buffer, size_t frames)
 {

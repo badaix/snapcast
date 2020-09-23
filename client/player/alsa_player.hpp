@@ -57,6 +57,8 @@ private:
     void setHardwareVolume(double volume, bool muted) override;
     bool getHardwareVolume(double& volume) override;
     void setHardwareVolume(double volume) override;
+    bool getHardwareMute(bool& muted) override;
+    void setHardwareMute(bool muted) override;
 
     void waitForEvent();
 
