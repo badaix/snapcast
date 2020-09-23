@@ -44,8 +44,15 @@ struct ClientSettings
             script,
             none
         };
-
+        enum class HWmute
+        {
+            bidir,
+            client2server,
+            server2client,
+            off
+        };
         Mode mode{Mode::software};
+        HWmute hwmute{HWmute::bidir};
         std::string parameter{""};
     };
 

@@ -49,6 +49,17 @@ resample audio stream to <rate>:<bits>:<channels>
 \fB--mixer arg (=software)\fR
 software|hardware|script|none|?[:<options>]
 .TP
+\fB--hwmute arg (=bidir) \fR
+Configuration of muting (and unmuting) if hardware mixer is used: bidir|client2server|server2client|off|?
+.br
+bidir: default setting, server mutes audio device and audio device mutes server/stream
+.br
+client2server: Muting the audio device mutes the stream, but muting the stream not the device (for other applications)
+.br
+server2client: Muting the stream mutes the client, but muting the client not the stream (for fast playing)  
+.br
+off: Muting information is not communicated between audio device and server/stream
+.TP
 \fB-e, --mstderr\fR
 send metadata to stderr
 .TP

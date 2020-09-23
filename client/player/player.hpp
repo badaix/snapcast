@@ -67,16 +67,26 @@ protected:
     /// @return true if the worker function should be started in a thread
     virtual bool needsThread() const = 0;
 
-    /// get the hardware mixer volume
+    /// get the hardware mixer volume and muting
     /// @param[out] volume the volume on range [0..1]
     /// @param[out] muted muted or not
     /// @return success or not
     virtual bool getHardwareVolume(double& volume, bool& muted);
 
-    /// set the hardware mixer volume
+    /// set the hardware mixer volume and muting
     /// @param volume the volume on range [0..1]
     /// @param muted muted or not
     virtual void setHardwareVolume(double volume, bool muted);
+
+    /// get the hardware mixer volume and ignore muting
+    /// @param[out] volume the volume on range [0..1]
+    /// @return success or not
+    virtual bool getHardwareVolume(double& volume);
+
+    /// set the hardware mixer volume and ignore muting
+    /// @param volume the volume on range [0..1]
+    /// @param muted muted or not
+    virtual void setHardwareVolume(double volume);
 
     void setVolume_poly(double volume, double exp);
     void setVolume_exp(double volume, double base);

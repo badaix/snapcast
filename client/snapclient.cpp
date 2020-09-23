@@ -152,8 +152,12 @@ int main(int argc, char** argv)
         hw_mixer_supported = true;
 #endif
         std::shared_ptr<popl::Value<std::string>> mixer_mode;
+        std::shared_ptr<popl::Value<std::string>> hwmute;
         if (hw_mixer_supported)
+        {
             mixer_mode = op.add<Value<string>>("", "mixer", "software|hardware|script|none|?[:<options>]", "software");
+            hwmute = op.add<Value<string>>("", "hwmute", "hardware mixer muting: bidir|client2server|server2client|off|?","bidir");
+        }
         else
             mixer_mode = op.add<Value<string>>("", "mixer", "software|script|none|?[:<options>]", "software");
 
@@ -337,6 +341,27 @@ int main(int argc, char** argv)
         }
         else
             throw SnapException("Mixer mode not supported: " + mode);
+
+        LOG(DEBUG, LOG_TAG) << "HWmute: " << hwmute->value() << "\n";
+        if (hwmute->value() == "bidir")
+            settings.player.mixer.hwmute = ClientSettings::Mixer::HWmute::bidir;
+        else if ((hwmute->value() == "client2server"))
+            settings.player.mixer.hwmute = ClientSettings::Mixer::HWmute::client2server;
+        else if (hwmute->value() == "server2client")
+            settings.player.mixer.hwmute = ClientSettings::Mixer::HWmute::server2client;
+        else if (hwmute->value() == "off")
+            settings.player.mixer.hwmute = ClientSettings::Mixer::HWmute::off;
+        else if ((hwmute->value() == "?") || (mode == "help"))
+        {
+            cout << "Configuration of muting (and unmuting) if hardware mixer is used: bidir|client2server|server2client|off|?\n"
+                 << "bidir: default setting, server mutes audio device and audio device mutes server/stream\n"
+                 << "client2server: Muting the audio device mutes the stream, but muting the stream not the device (for other applications)\n"
+                 << "server2client: Muting the stream mutes the client, but muting the client not the stream (for fast playing)\n"    
+                 << "off: Muting information is not communicated between audio device and server/stream\n";    
+            exit(EXIT_SUCCESS);
+        }
+        else
+            throw SnapException("Hardware Mute mode not supported: " + hwmute->value());
 
         boost::asio::io_context io_context;
         // Construct a signal set registered for process termination.

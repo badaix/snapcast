@@ -160,6 +160,94 @@ bool AlsaPlayer::getHardwareVolume(double& volume, bool& muted)
     }
 }
 
+void AlsaPlayer::setHardwareVolume(double volume)
+{
+    std::lock_guard<std::recursive_mutex> lock(mutex_);
+    if (elem_ == nullptr)
+        return;
+
+    last_change_ = std::chrono::steady_clock::now();
+    try
+    {
+        int err;
+        long minv, maxv;
+        if ((err = snd_mixer_selem_get_playback_dB_range(elem_, &minv, &maxv)) == 0)
+        {
+            double min_norm = exp10((minv - maxv) / 6000.0);
+            volume = volume * (1 - min_norm) + min_norm;
+            double mixer_volume = 6000.0 * log10(volume) + maxv;
+
+            LOG(DEBUG, LOG_TAG) << "Mixer playback dB range [" << minv << ", " << maxv << "], volume: " << volume << ", mixer volume: " << mixer_volume << "\n";
+            if ((err = snd_mixer_selem_set_playback_dB_all(elem_, mixer_volume, 0)) < 0)
+                throw SnapException(std::string("Failed to set playback volume, error: ") + snd_strerror(err));
+        }
+        else
+        {
+            if ((err = snd_mixer_selem_get_playback_volume_range(elem_, &minv, &maxv)) < 0)
+                throw SnapException(std::string("Failed to get playback volume range, error: ") + snd_strerror(err));
+
+            auto mixer_volume = volume * (maxv - minv) + minv;
+            LOG(DEBUG, LOG_TAG) << "Mixer playback volume range [" << minv << ", " << maxv << "], volume: " << volume << ", mixer volume: " << mixer_volume
+                                << "\n";
+            if ((err = snd_mixer_selem_set_playback_volume_all(elem_, mixer_volume)) < 0)
+                throw SnapException(std::string("Failed to set playback volume, error: ") + snd_strerror(err));
+        }
+    }
+    catch (const std::exception& e)
+    {
+        LOG(ERROR, LOG_TAG) << "Exception: " << e.what() << "\n";
+        uninitMixer();
+    }
+}
+
+
+bool AlsaPlayer::getHardwareVolume(double& volume)
+{
+    try
+    {
+        std::lock_guard<std::recursive_mutex> lock(mutex_);
+        if (elem_ == nullptr)
+            throw SnapException("Mixer not initialized");
+
+        long vol;
+        int err = 0;
+        while (snd_mixer_handle_events(mixer_) > 0)
+            this_thread::sleep_for(1us);
+        long minv, maxv;
+        if ((err = snd_mixer_selem_get_playback_dB_range(elem_, &minv, &maxv)) == 0)
+        {
+            if ((err = snd_mixer_selem_get_playback_dB(elem_, SND_MIXER_SCHN_MONO, &vol)) < 0)
+                throw SnapException(std::string("Failed to get playback volume, error: ") + snd_strerror(err));
+
+            volume = pow(10, (vol - maxv) / 6000.0);
+            if (minv != SND_CTL_TLV_DB_GAIN_MUTE)
+            {
+                double min_norm = pow(10, (minv - maxv) / 6000.0);
+                volume = (volume - min_norm) / (1 - min_norm);
+            }
+        }
+        else
+        {
+            if ((err = snd_mixer_selem_get_playback_volume_range(elem_, &minv, &maxv)) < 0)
+                throw SnapException(std::string("Failed to get playback volume range, error: ") + snd_strerror(err));
+            if ((err = snd_mixer_selem_get_playback_volume(elem_, SND_MIXER_SCHN_MONO, &vol)) < 0)
+                throw SnapException(std::string("Failed to get playback volume, error: ") + snd_strerror(err));
+
+            vol -= minv;
+            maxv = maxv - minv;
+            volume = static_cast<double>(vol) / static_cast<double>(maxv);
+        }
+        LOG(DEBUG, LOG_TAG) << "Get volume, mixer volume range [" << minv << ", " << maxv << "], volume: " << volume << "\n";
+        snd_mixer_handle_events(mixer_);
+        return true;
+    }
+    catch (const std::exception& e)
+    {
+        LOG(ERROR, LOG_TAG) << "Exception: " << e.what() << "\n";
+        return false;
+    }
+}
+
 
 void AlsaPlayer::waitForEvent()
 {
@@ -200,11 +288,22 @@ void AlsaPlayer::waitForEvent()
                     if (!ec)
                     {
                         double volume;
-                        bool muted;
-                        if (getHardwareVolume(volume, muted))
+                        if (settings_.mixer.hwmute == ClientSettings::Mixer::HWmute::bidir || settings_.mixer.hwmute == ClientSettings::Mixer::HWmute::client2server)
+                        {   
+                            bool muted;
+                            if (getHardwareVolume(volume, muted))
+                            {
+                                LOG(DEBUG, LOG_TAG) << "Volume: " << volume << ", muted: " << muted << "\n";
+                                notifyVolumeChange(volume, muted);
+                            }
+                        }
+                        else
                         {
-                            LOG(DEBUG, LOG_TAG) << "Volume: " << volume << ", muted: " << muted << "\n";
-                            notifyVolumeChange(volume, muted);
+                            if (getHardwareVolume(volume))
+                            {
+                                LOG(DEBUG, LOG_TAG) << "Volume: " << volume << ", muted: ignored" << "\n";
+                                notifyVolumeChange(volume, 0);
+                            }
                         }
                     }
                 });

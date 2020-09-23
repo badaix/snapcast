@@ -111,11 +111,23 @@ void Player::start()
     {
         double volume;
         bool muted;
-        if (getHardwareVolume(volume, muted))
+        if (settings_.mixer.hwmute == ClientSettings::Mixer::HWmute::bidir || settings_.mixer.hwmute == ClientSettings::Mixer::HWmute::client2server)
         {
-            LOG(DEBUG, LOG_TAG) << "Volume: " << volume << ", muted: " << muted << "\n";
-            notifyVolumeChange(volume, muted);
+            if (getHardwareVolume(volume, muted))
+            {
+                LOG(DEBUG, LOG_TAG) << "Volume: " << volume << ", muted: " << muted << "\n";
+                notifyVolumeChange(volume, muted);
+            }
         }
+        else
+        {
+            if (getHardwareVolume(volume))
+            {
+                LOG(DEBUG, LOG_TAG) << "Volume: " << volume << ", muted: ignored "<< "\n";
+                notifyVolumeChange(volume, false);
+            }
+        }
+        
     }
 }
 
@@ -148,6 +160,20 @@ bool Player::getHardwareVolume(double& volume, bool& muted)
 {
     std::ignore = volume;
     std::ignore = muted;
+    throw SnapException("Failed to get hardware mixer volume: not supported");
+    return false;
+}
+
+void Player::setHardwareVolume(double volume)
+{
+    std::ignore = volume;
+    throw SnapException("Failed to set hardware mixer volume: not supported");
+}
+
+
+bool Player::getHardwareVolume(double& volume)
+{
+    std::ignore = volume;
     throw SnapException("Failed to get hardware mixer volume: not supported");
     return false;
 }
@@ -203,7 +229,14 @@ void Player::setVolume(double volume, bool mute)
     muted_ = mute;
     if (settings_.mixer.mode == ClientSettings::Mixer::Mode::hardware)
     {
-        setHardwareVolume(volume, muted_);
+        if (settings_.mixer.hwmute == ClientSettings::Mixer::HWmute::bidir || settings_.mixer.hwmute == ClientSettings::Mixer::HWmute::server2client)
+        {
+            setHardwareVolume(volume, muted_);
+        }
+        else
+        {
+            setHardwareVolume(volume);
+        }
     }
     else if (settings_.mixer.mode == ClientSettings::Mixer::Mode::software)
     {
