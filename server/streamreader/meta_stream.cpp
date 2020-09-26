@@ -16,11 +16,11 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
+#include "meta_stream.hpp"
 #include "common/aixlog.hpp"
 #include "common/snap_exception.hpp"
 #include "common/utils/string_utils.hpp"
 #include "encoder/encoder_factory.hpp"
-#include "meta_stream.hpp"
 
 
 using namespace std;
@@ -62,7 +62,10 @@ MetaStream::MetaStream(PcmListener* pcmListener, std::vector<std::shared_ptr<Pcm
     if (!streams_.empty())
     {
         active_stream_ = streams_.front();
-        resampler_ = make_unique<Resampler>(active_stream_->getSampleFormat(), sampleFormat_);
+        if ((sampleFormat_.rate() != active_stream_->getSampleFormat().rate()) || (sampleFormat_.bits() != active_stream_->getSampleFormat().bits()))
+            resampler_ = make_unique<Resampler>(active_stream_->getSampleFormat(), sampleFormat_);
+        else
+            resampler_ = nullptr;
     }
 }
 
@@ -109,7 +112,10 @@ void MetaStream::onStateChanged(const PcmStream* pcmStream, ReaderState state)
             if (active_stream_ != stream)
             {
                 active_stream_ = stream;
-                resampler_ = make_unique<Resampler>(active_stream_->getSampleFormat(), sampleFormat_);
+                if ((sampleFormat_.rate() != active_stream_->getSampleFormat().rate()) || (sampleFormat_.bits() != active_stream_->getSampleFormat().bits()))
+                    resampler_ = make_unique<Resampler>(active_stream_->getSampleFormat(), sampleFormat_);
+                else
+                    resampler_ = nullptr;
             }
 
             setState(ReaderState::kPlaying);
@@ -158,10 +164,14 @@ void MetaStream::onChunkRead(const PcmStream* pcmStream, const msg::PcmChunk& ch
         }
     }
 
-    auto resampled_chunk = resampler_->resample(std::make_shared<msg::PcmChunk>(chunk));
-    if (resampled_chunk)
-        chunkRead(*resampled_chunk);
-    // chunkRead(chunk);
+    if (resampler_)
+    {
+        auto resampled_chunk = resampler_->resample(std::make_shared<msg::PcmChunk>(chunk));
+        if (resampled_chunk)
+            chunkRead(*resampled_chunk);
+    }
+    else
+        chunkRead(chunk);
 }
 
 
