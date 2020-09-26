@@ -19,6 +19,7 @@
 #ifndef ENCODER_HPP
 #define ENCODER_HPP
 
+#include <functional>
 #include <memory>
 #include <string>
 
