@@ -27,6 +27,7 @@
 #include "common/utils.hpp"
 #include "file_stream.hpp"
 #include "librespot_stream.hpp"
+#include "meta_stream.hpp"
 #include "pipe_stream.hpp"
 #include "process_stream.hpp"
 #include "tcp_stream.hpp"
@@ -47,7 +48,12 @@ StreamManager::StreamManager(PcmListener* pcmListener, boost::asio::io_context& 
 PcmStreamPtr StreamManager::addStream(const std::string& uri)
 {
     StreamUri streamUri(uri);
+    return addStream(uri);
+}
 
+
+PcmStreamPtr StreamManager::addStream(StreamUri& streamUri)
+{
     if (streamUri.query.find(kUriSampleFormat) == streamUri.query.end())
         streamUri.query[kUriSampleFormat] = sampleFormat_;
 
@@ -101,6 +107,10 @@ PcmStreamPtr StreamManager::addStream(const std::string& uri)
     else if (streamUri.scheme == "tcp")
     {
         stream = make_shared<TcpStream>(pcmListener_, ioc_, streamUri);
+    }
+    else if (streamUri.scheme == "meta")
+    {
+        stream = make_shared<MetaStream>(pcmListener_, streams_, ioc_, streamUri);
     }
     else
     {
@@ -160,15 +170,26 @@ const PcmStreamPtr StreamManager::getStream(const std::string& id)
 
 void StreamManager::start()
 {
+    // Start meta streams first
     for (const auto& stream : streams_)
-        stream->start();
+        if (stream->getUri().scheme == "meta")
+            stream->start();
+    // Start normal streams second
+    for (const auto& stream : streams_)
+        if (stream->getUri().scheme != "meta")
+            stream->start();
 }
 
 
 void StreamManager::stop()
 {
+    // Stop normal streams first
     for (const auto& stream : streams_)
-        if (stream)
+        if (stream && (stream->getUri().scheme != "meta"))
+            stream->stop();
+    // Stop meta streams second
+    for (const auto& stream : streams_)
+        if (stream && (stream->getUri().scheme == "meta"))
             stream->stop();
 }
 

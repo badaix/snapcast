@@ -251,7 +251,7 @@ void OpusEncoder::encode(const SampleFormat& format, const char* data, size_t si
         opusChunk->payloadSize = len;
         opusChunk->payload = (char*)realloc(opusChunk->payload, opusChunk->payloadSize);
         memcpy(opusChunk->payload, encoded_.data(), len);
-        listener_->onChunkEncoded(this, opusChunk, (double)samples_per_channel / sampleFormat_.msRate());
+        encoded_callback_(*this, opusChunk, (double)samples_per_channel / sampleFormat_.msRate());
     }
     else
     {

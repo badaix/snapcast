@@ -28,7 +28,7 @@
 namespace streamreader
 {
 
-typedef std::shared_ptr<PcmStream> PcmStreamPtr;
+using PcmStreamPtr = std::shared_ptr<PcmStream>;
 
 class StreamManager
 {
@@ -37,6 +37,7 @@ public:
                   size_t defaultChunkBufferMs = 20);
 
     PcmStreamPtr addStream(const std::string& uri);
+    PcmStreamPtr addStream(StreamUri& streamUri);
     void removeStream(const std::string& name);
     void start();
     void stop();

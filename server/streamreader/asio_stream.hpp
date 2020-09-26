@@ -120,8 +120,7 @@ void AsioStream<ReadStream>::check_state()
 template <typename ReadStream>
 void AsioStream<ReadStream>::start()
 {
-    encoder_->init(this, sampleFormat_);
-    active_ = true;
+    PcmStream::start();
     check_state();
     connect();
 }
@@ -198,7 +197,7 @@ void AsioStream<ReadStream>::do_read()
                                     nextTick_ = std::chrono::steady_clock::now();
                                 }
 
-                                onChunkRead(*chunk_);
+                                chunkRead(*chunk_);
                                 nextTick_ += chunk_->duration<std::chrono::nanoseconds>();
                                 auto currentTick = std::chrono::steady_clock::now();
 
@@ -221,7 +220,7 @@ void AsioStream<ReadStream>::do_read()
                                 // Read took longer, wait for the buffer to fill up
                                 else
                                 {
-                                    pcmListener_->onResync(this, std::chrono::duration_cast<std::chrono::milliseconds>(currentTick - nextTick_).count());
+                                    resync(std::chrono::duration_cast<std::chrono::nanoseconds>(currentTick - nextTick_));
                                     nextTick_ = currentTick + std::chrono::milliseconds(buffer_ms_);
                                     first_ = true;
                                     do_read();

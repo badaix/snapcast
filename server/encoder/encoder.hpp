@@ -29,20 +29,6 @@
 namespace encoder
 {
 
-class Encoder;
-
-/// Callback interface for users of Encoder
-/**
- * Users of Encoder should implement this to get the encoded PCM data
- */
-class EncoderListener
-{
-public:
-    virtual void onChunkEncoded(const Encoder* encoder, std::shared_ptr<msg::PcmChunk> chunk, double duration) = 0;
-};
-
-
-
 /// Abstract Encoder class
 /**
  * Stream encoder. PCM chunks are fed into the encoder.
@@ -51,6 +37,8 @@ public:
 class Encoder
 {
 public:
+    using OnEncodedCallback = std::function<void(const Encoder&, std::shared_ptr<msg::PcmChunk>, double)>;
+
     /// ctor. Codec options (E.g. compression level) are passed as string and are codec dependend
     Encoder(const std::string& codecOptions = "") : headerChunk_(nullptr), codecOptions_(codecOptions)
     {
@@ -59,11 +47,11 @@ public:
     virtual ~Encoder() = default;
 
     /// The listener will receive the encoded stream
-    virtual void init(EncoderListener* listener, const SampleFormat& format)
+    virtual void init(OnEncodedCallback callback, const SampleFormat& format)
     {
         if (codecOptions_ == "")
             codecOptions_ = getDefaultOptions();
-        listener_ = listener;
+        encoded_callback_ = callback;
         sampleFormat_ = format;
         initEncoder();
     }
@@ -94,8 +82,8 @@ protected:
 
     SampleFormat sampleFormat_;
     std::shared_ptr<msg::CodecHeader> headerChunk_;
-    EncoderListener* listener_;
     std::string codecOptions_;
+    OnEncodedCallback encoded_callback_;
 };
 
 } // namespace encoder

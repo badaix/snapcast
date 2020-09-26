@@ -76,7 +76,6 @@ AlsaStream::AlsaStream(PcmListener* pcmListener, boost::asio::io_context& ioc, c
 void AlsaStream::start()
 {
     LOG(DEBUG, LOG_TAG) << "Start, sampleformat: " << sampleFormat_.toString() << "\n";
-    encoder_->init(this, sampleFormat_);
 
     // idle_bytes_ = 0;
     // max_idle_bytes_ = sampleFormat_.rate() * sampleFormat_.frameSize() * dryout_ms_ / 1000;
@@ -88,7 +87,7 @@ void AlsaStream::start()
     first_ = true;
     tvEncodedChunk_ = std::chrono::steady_clock::now();
     initAlsa();
-    active_ = true;
+    PcmStream::start();
     // wait(read_timer_, std::chrono::milliseconds(chunk_ms_), [this] { do_read(); });
     do_read();
 }
@@ -225,7 +224,7 @@ void AlsaStream::do_read()
             tvEncodedChunk_ = std::chrono::steady_clock::now() - duration;
         }
 
-        onChunkRead(*chunk_);
+        chunkRead(*chunk_);
 
         nextTick_ += duration;
         auto currentTick = std::chrono::steady_clock::now();
@@ -246,7 +245,7 @@ void AlsaStream::do_read()
         else
         {
             // reading chunk_ms_ took longer than chunk_ms_
-            pcmListener_->onResync(this, std::chrono::duration_cast<std::chrono::milliseconds>(-next_read).count());
+            resync(-next_read);
             first_ = true;
             wait(read_timer_, nextTick_ - currentTick, [this] { do_read(); });
         }

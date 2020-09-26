@@ -76,8 +76,9 @@ private:
 
     /// Implementation of PcmListener
     void onMetaChanged(const PcmStream* pcmStream) override;
-    void onStateChanged(const PcmStream* pcmStream, const ReaderState& state) override;
-    void onNewChunk(const PcmStream* pcmStream, std::shared_ptr<msg::PcmChunk> chunk, double duration) override;
+    void onStateChanged(const PcmStream* pcmStream, ReaderState state) override;
+    void onChunkRead(const PcmStream* pcmStream, const msg::PcmChunk& chunk) override;
+    void onChunkEncoded(const PcmStream* pcmStream, std::shared_ptr<msg::PcmChunk> chunk, double duration) override;
     void onResync(const PcmStream* pcmStream, double ms) override;
 
 private:

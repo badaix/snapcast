@@ -123,7 +123,7 @@ void PosixStream::do_read()
         if ((idle_bytes_ == 0) || (idle_bytes_ <= max_idle_bytes_))
         {
             // the encoder will update the tvEncodedChunk when a chunk is encoded
-            onChunkRead(*chunk_);
+            chunkRead(*chunk_);
         }
         else
         {
@@ -150,7 +150,7 @@ void PosixStream::do_read()
         else
         {
             // reading chunk_ms_ took longer than chunk_ms_
-            pcmListener_->onResync(this, std::chrono::duration_cast<std::chrono::milliseconds>(-next_read).count());
+            resync(-next_read);
             first_ = true;
             wait(read_timer_, duration + kResyncTolerance, [this] { do_read(); });
         }

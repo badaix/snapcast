@@ -65,7 +65,7 @@ public:
 
     void addSession(const std::shared_ptr<StreamSession>& session);
     void onMetaChanged(const PcmStream* pcmStream, std::shared_ptr<msg::StreamTags> meta);
-    void onNewChunk(const PcmStream* pcmStream, bool isDefaultStream, std::shared_ptr<msg::PcmChunk> chunk, double duration);
+    void onChunkEncoded(const PcmStream* pcmStream, bool isDefaultStream, std::shared_ptr<msg::PcmChunk> chunk, double duration);
 
     session_ptr getStreamSession(const std::string& mac) const;
     session_ptr getStreamSession(StreamSession* session) const;

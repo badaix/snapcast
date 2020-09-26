@@ -112,7 +112,7 @@ void FlacEncoder::encode(const msg::PcmChunk& chunk)
         double resMs = static_cast<double>(encodedSamples_) / sampleFormat_.msRate();
         //		LOG(INFO, LOG_TAG) << "encoded: " << chunk->payloadSize << "\tframes: " << encodedSamples_ << "\tres: " << resMs << "\n";
         encodedSamples_ = 0;
-        listener_->onChunkEncoded(this, flacChunk_, resMs);
+        encoded_callback_(*this, flacChunk_, resMs);
         flacChunk_ = make_shared<msg::PcmChunk>(chunk.format, 0);
     }
 }

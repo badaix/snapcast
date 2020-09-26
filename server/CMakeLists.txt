@@ -22,6 +22,7 @@ set(SERVER_SOURCES
     streamreader/file_stream.cpp
     streamreader/airplay_stream.cpp
     streamreader/librespot_stream.cpp
+    streamreader/meta_stream.cpp
     streamreader/watchdog.cpp
     streamreader/process_stream.cpp)
 

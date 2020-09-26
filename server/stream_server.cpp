@@ -86,9 +86,9 @@ void StreamServer::onMetaChanged(const PcmStream* pcmStream, std::shared_ptr<msg
 }
 
 
-void StreamServer::onNewChunk(const PcmStream* pcmStream, bool isDefaultStream, std::shared_ptr<msg::PcmChunk> chunk, double /*duration*/)
+void StreamServer::onChunkEncoded(const PcmStream* pcmStream, bool isDefaultStream, std::shared_ptr<msg::PcmChunk> chunk, double /*duration*/)
 {
-    //	LOG(INFO, LOG_TAG) << "onChunkRead (" << pcmStream->getName() << "): " << duration << "ms\n";
+    // LOG(TRACE, LOG_TAG) << "onChunkRead (" << pcmStream->getName() << "): " << duration << "ms\n";
     shared_const_buffer buffer(*chunk);
 
     // make a copy of the sessions to avoid that a session get's deleted
