@@ -16,10 +16,6 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
-#include <fcntl.h>
-#include <memory>
-#include <sys/stat.h>
-
 #include "common/aixlog.hpp"
 #include "common/snap_exception.hpp"
 #include "common/utils/string_utils.hpp"
@@ -33,6 +29,7 @@ namespace streamreader
 {
 
 static constexpr auto LOG_TAG = "MetaStream";
+static constexpr auto kResyncTolerance = 50ms;
 
 
 MetaStream::MetaStream(PcmListener* pcmListener, std::vector<std::shared_ptr<PcmStream>> streams, boost::asio::io_context& ioc, const StreamUri& uri)
@@ -106,7 +103,7 @@ void MetaStream::onStateChanged(const PcmStream* pcmStream, ReaderState state)
     {
         if (stream->getState() == ReaderState::kPlaying)
         {
-            if ((state_ != ReaderState::kPlaying) || (active_stream_ != stream))
+            if (state_ != ReaderState::kPlaying) // || (active_stream_ != stream))
                 first_read_ = true;
 
             if (active_stream_ != stream)
@@ -137,7 +134,28 @@ void MetaStream::onChunkRead(const PcmStream* pcmStream, const msg::PcmChunk& ch
     {
         first_read_ = false;
         LOG(INFO, LOG_TAG) << "first read, updating timestamp\n";
-        tvEncodedChunk_ = std::chrono::steady_clock::now() - chunk.duration<std::chrono::microseconds>();
+        tvEncodedChunk_ = std::chrono::steady_clock::now() - chunk.duration<std::chrono::nanoseconds>();
+        next_tick_ = std::chrono::steady_clock::now();
+    }
+
+
+    next_tick_ += chunk.duration<std::chrono::nanoseconds>();
+    auto currentTick = std::chrono::steady_clock::now();
+    auto next_read = next_tick_ - currentTick;
+
+    // Read took longer, wait for the buffer to fill up
+    if (next_read < 0ms)
+    {
+        if (next_read >= -kResyncTolerance)
+        {
+            LOG(INFO, LOG_TAG) << "next read < 0 (" << getName() << "): " << std::chrono::duration_cast<std::chrono::microseconds>(next_read).count() / 1000.
+                               << " ms\n";
+        }
+        else
+        {
+            resync(-next_read);
+            first_read_ = true;
+        }
     }
 
     auto resampled_chunk = resampler_->resample(std::make_shared<msg::PcmChunk>(chunk));

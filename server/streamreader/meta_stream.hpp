@@ -57,6 +57,7 @@ protected:
     std::mutex mutex_;
     std::unique_ptr<Resampler> resampler_;
     bool first_read_;
+    std::chrono::time_point<std::chrono::steady_clock> next_tick_;
 };
 
 } // namespace streamreader
