@@ -48,7 +48,7 @@ StreamManager::StreamManager(PcmListener* pcmListener, boost::asio::io_context& 
 PcmStreamPtr StreamManager::addStream(const std::string& uri)
 {
     StreamUri streamUri(uri);
-    return addStream(uri);
+    return addStream(streamUri);
 }
 
 
