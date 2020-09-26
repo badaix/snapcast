@@ -40,8 +40,8 @@ public:
     MetaStream(PcmListener* pcmListener, std::vector<std::shared_ptr<PcmStream>> streams, boost::asio::io_context& ioc, const StreamUri& uri);
     virtual ~MetaStream();
 
-    virtual void start();
-    virtual void stop();
+    void start() override;
+    void stop() override;
 
 protected:
     /// Implementation of PcmListener
