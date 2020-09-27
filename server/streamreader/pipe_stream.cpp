@@ -60,8 +60,9 @@ void PipeStream::do_connect()
 #if !defined(MACOS)
     pipe_size = fcntl(fd, F_GETPIPE_SZ);
 #endif
-    LOG(INFO, LOG_TAG) << "Stream: " << name_ << ", connect to pipe: " << uri_.path << ", fd: " << fd << ", pipe size: " << pipe_size << "\n";
+    LOG(TRACE, LOG_TAG) << "Stream: " << name_ << ", connect to pipe: " << uri_.path << ", fd: " << fd << ", pipe size: " << pipe_size << "\n";
     stream_ = std::make_unique<boost::asio::posix::stream_descriptor>(ioc_, fd);
     on_connect();
 }
+
 } // namespace streamreader
