@@ -153,7 +153,12 @@ const PcmStreamPtr StreamManager::getDefaultStream()
     if (streams_.empty())
         return nullptr;
 
-    return streams_.front();
+    for (const auto stream: streams_)
+    {
+        if (stream->getCodec() != "null")
+            return stream;
+    }
+    return nullptr;
 }
 
 
@@ -198,7 +203,8 @@ json StreamManager::toJson() const
 {
     json result = json::array();
     for (auto stream : streams_)
-        result.push_back(stream->toJson());
+        if (stream->getCodec() != "null")
+            result.push_back(stream->toJson());
     return result;
 }
 

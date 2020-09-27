@@ -90,6 +90,7 @@ public:
     virtual const std::string& getName() const;
     virtual const std::string& getId() const;
     virtual const SampleFormat& getSampleFormat() const;
+    virtual std::string getCodec() const;
 
     std::shared_ptr<msg::StreamTags> getMeta() const;
     void setMeta(const json& j);

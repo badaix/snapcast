@@ -98,6 +98,7 @@ Available stream sources are:
 - [file](doc/configuration.md#file): read PCM audio from a file
 - [process](doc/configuration.md#process): launches a process and reads audio from stdout
 - [tcp](doc/configuration.md#tcp-server): receives audio from a TCP socket, can act as client or server
+- [meta](doc/configuration.md#meta): read and mix audio from other stream sources
 
 ## Test
 

@@ -17,6 +17,7 @@
 ***/
 
 #include "encoder_factory.hpp"
+#include "null_encoder.hpp"
 #include "pcm_encoder.hpp"
 #if defined(HAS_OGG) && defined(HAS_VORBIS) && defined(HAS_VORBIS_ENC)
 #include "ogg_encoder.hpp"
@@ -48,6 +49,8 @@ std::unique_ptr<Encoder> EncoderFactory::createEncoder(const std::string& codecS
     }
     if (codec == "pcm")
         return std::make_unique<PcmEncoder>(codecOptions);
+    else if (codec == "null")
+        return std::make_unique<NullEncoder>(codecOptions);
 #if defined(HAS_OGG) && defined(HAS_VORBIS) && defined(HAS_VORBIS_ENC)
     else if (codec == "ogg")
         return std::make_unique<OggEncoder>(codecOptions);

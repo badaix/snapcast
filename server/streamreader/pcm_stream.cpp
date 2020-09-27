@@ -50,7 +50,7 @@ PcmStream::PcmStream(PcmListener* pcmListener, boost::asio::io_context& ioc, con
     if (uri_.query.find(kUriSampleFormat) == uri_.query.end())
         throw SnapException("Stream URI must have a sampleformat");
     sampleFormat_ = SampleFormat(uri_.query[kUriSampleFormat]);
-    LOG(INFO, LOG_TAG) << "PcmStream sampleFormat: " << sampleFormat_.toString() << "\n";
+    LOG(INFO, LOG_TAG) << "PcmStream: " << name_ << ", sampleFormat: " << sampleFormat_.toString() << "\n";
 
     if (uri_.query.find(kUriChunkMs) != uri_.query.end())
         chunk_ms_ = cpt::stoul(uri_.query[kUriChunkMs]);
@@ -95,9 +95,15 @@ const SampleFormat& PcmStream::getSampleFormat() const
 }
 
 
+std::string PcmStream::getCodec() const
+{
+    return encoder_->name();
+}
+
+
 void PcmStream::start()
 {
-    LOG(DEBUG, LOG_TAG) << "Start, sampleformat: " << sampleFormat_.toString() << "\n";
+    LOG(DEBUG, LOG_TAG) << "Start: " << name_ << ", sampleformat: " << sampleFormat_.toString() << "\n";
     encoder_->init([this](const encoder::Encoder& encoder, std::shared_ptr<msg::PcmChunk> chunk, double duration) { chunkEncoded(encoder, chunk, duration); },
                    sampleFormat_);
     active_ = true;
@@ -120,7 +126,7 @@ void PcmStream::setState(ReaderState newState)
 {
     if (newState != state_)
     {
-        LOG(INFO, LOG_TAG) << "State changed: " << static_cast<int>(state_) << " => " << static_cast<int>(newState) << "\n";
+        LOG(INFO, LOG_TAG) << "State changed: " << name_ << ", state: " << static_cast<int>(state_) << " => " << static_cast<int>(newState) << "\n";
         state_ = newState;
         for (auto* listener : pcmListeners_)
         {
@@ -212,7 +218,7 @@ void PcmStream::setMeta(const json& jtag)
 {
     meta_.reset(new msg::StreamTags(jtag));
     meta_->msg["STREAM"] = name_;
-    LOG(INFO, LOG_TAG) << "metadata=" << meta_->msg.dump(4) << "\n";
+    LOG(INFO, LOG_TAG) << "Stream: " << name_ << ", metadata=" << meta_->msg.dump(4) << "\n";
 
     // Trigger a stream update
     for (auto* listener : pcmListeners_)

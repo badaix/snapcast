@@ -12,6 +12,7 @@ set(SERVER_SOURCES
     stream_session_ws.cpp
     encoder/encoder_factory.cpp
     encoder/pcm_encoder.cpp
+    encoder/null_encoder.cpp
     streamreader/base64.cpp
     streamreader/stream_uri.cpp
     streamreader/stream_manager.cpp

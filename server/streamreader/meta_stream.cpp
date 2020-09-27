@@ -29,7 +29,7 @@ namespace streamreader
 {
 
 static constexpr auto LOG_TAG = "MetaStream";
-static constexpr auto kResyncTolerance = 50ms;
+// static constexpr auto kResyncTolerance = 50ms;
 
 
 MetaStream::MetaStream(PcmListener* pcmListener, std::vector<std::shared_ptr<PcmStream>> streams, boost::asio::io_context& ioc, const StreamUri& uri)
@@ -40,7 +40,7 @@ MetaStream::MetaStream(PcmListener* pcmListener, std::vector<std::shared_ptr<Pcm
     {
         if (component.empty())
             continue;
-        LOG(INFO, LOG_TAG) << "Stream: " << component << "\n";
+
         bool found = false;
         for (const auto stream : streams)
         {
@@ -55,9 +55,6 @@ MetaStream::MetaStream(PcmListener* pcmListener, std::vector<std::shared_ptr<Pcm
         if (!found)
             throw SnapException("Unknown stream: \"" + component + "\"");
     }
-
-    for (const auto stream : streams_)
-        LOG(INFO, LOG_TAG) << "Stream: " << stream->getName() << ", " << stream->getUri().toString() << "\n";
 
     if (!streams_.empty())
     {
@@ -108,6 +105,7 @@ void MetaStream::onStateChanged(const PcmStream* pcmStream, ReaderState state)
 
             if (active_stream_ != stream)
             {
+                LOG(INFO, LOG_TAG) << "Stream: " << name_ << ", switching active stream: " << (active_stream_?active_stream_->getName():"<null>") << " => " << stream->getName() << "\n";
                 active_stream_ = stream;
                 resampler_ = make_unique<Resampler>(active_stream_->getSampleFormat(), sampleFormat_);
             }
@@ -146,16 +144,16 @@ void MetaStream::onChunkRead(const PcmStream* pcmStream, const msg::PcmChunk& ch
     // Read took longer, wait for the buffer to fill up
     if (next_read < 0ms)
     {
-        if (next_read >= -kResyncTolerance)
-        {
-            LOG(INFO, LOG_TAG) << "next read < 0 (" << getName() << "): " << std::chrono::duration_cast<std::chrono::microseconds>(next_read).count() / 1000.
-                               << " ms\n";
-        }
-        else
-        {
-            resync(-next_read);
-            first_read_ = true;
-        }
+        // if (next_read >= -kResyncTolerance)
+        // {
+        //     LOG(INFO, LOG_TAG) << "next read < 0 (" << getName() << "): " << std::chrono::duration_cast<std::chrono::microseconds>(next_read).count() / 1000.
+        //                        << " ms\n";
+        // }
+        // else
+        // {
+        resync(-next_read);
+        first_read_ = true;
+        // }
     }
 
     if (resampler_ && resampler_->resamplingNeeded())

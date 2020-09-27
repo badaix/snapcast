@@ -197,3 +197,14 @@ The output of any audio player that uses alsa can be redirected to Snapcast by u
     [stream]
     stream = alsa://?name=SomeName&sampleformat=48000:16:2&device=hw:0,1,0
     ```
+
+### meta
+
+Read and mix audio from other stream sources
+
+```sh
+meta:///<name of source#1>/<name of source#2>/.../<name of source#N>?name=<name>
+```
+
+Plays audio from the active source with the highest priority, with `source#1` having the highest priority and `source#N` the lowest.  
+Use `codec=null` for stream sources that should only serve as input for meta streams
