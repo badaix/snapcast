@@ -57,6 +57,16 @@ Resampler::Resampler(const SampleFormat& in_format, const SampleFormat& out_form
 }
 
 
+bool Resampler::resamplingNeeded() const
+{
+#ifdef HAS_SOXR
+    return soxr_ != nullptr;
+#else
+    return false;
+#endif
+}
+
+
 // std::shared_ptr<msg::PcmChunk> Resampler::resample(std::shared_ptr<msg::PcmChunk> chunk, chronos::usec duration)
 // {
 //     auto resampled_chunk = resample(chunk);
@@ -85,43 +95,44 @@ Resampler::Resampler(const SampleFormat& in_format, const SampleFormat& out_form
 //     // }
 // }
 
-shared_ptr<msg::PcmChunk> Resampler::resample(shared_ptr<msg::PcmChunk> chunk)
+
+std::shared_ptr<msg::PcmChunk> Resampler::resample(const msg::PcmChunk& chunk)
 {
 #ifndef HAS_SOXR
-    return chunk;
+    return std::make_shared<msg::PcmChunk>(chunk);
 #else
-    if (soxr_ == nullptr)
+    if (!resamplingNeeded())
     {
-        return chunk;
+        return std::make_shared<msg::PcmChunk>(chunk);
     }
     else
     {
         if (in_format_.bits() == 24)
         {
             // sox expects 32 bit input, shift 8 bits left
-            int32_t* frames = (int32_t*)chunk->payload;
-            for (size_t n = 0; n < chunk->getSampleCount(); ++n)
+            int32_t* frames = (int32_t*)chunk.payload;
+            for (size_t n = 0; n < chunk.getSampleCount(); ++n)
                 frames[n] = frames[n] << 8;
         }
 
         size_t idone;
         size_t odone;
         auto resample_buffer_framesize = resample_buffer_.size() / out_format_.frameSize();
-        auto error = soxr_process(soxr_, chunk->payload, chunk->getFrameCount(), &idone, resample_buffer_.data(), resample_buffer_framesize, &odone);
+        auto error = soxr_process(soxr_, chunk.payload, chunk.getFrameCount(), &idone, resample_buffer_.data(), resample_buffer_framesize, &odone);
         if (error)
         {
             LOG(ERROR, LOG_TAG) << "Error soxr_process: " << error << "\n";
         }
         else
         {
-            LOG(TRACE, LOG_TAG) << "Resample idone: " << idone << "/" << chunk->getFrameCount() << ", odone: " << odone << "/"
+            LOG(TRACE, LOG_TAG) << "Resample idone: " << idone << "/" << chunk.getFrameCount() << ", odone: " << odone << "/"
                                 << resample_buffer_.size() / out_format_.frameSize() << ", delay: " << soxr_delay(soxr_) << "\n";
 
             // some data has been resampled (odone frames) and some is still in the pipe (soxr_delay frames)
             if (odone > 0)
             {
                 // get the resampled ts from the input ts
-                auto input_end_ts = chunk->start() + chunk->duration<std::chrono::microseconds>();
+                auto input_end_ts = chunk.start() + chunk.duration<std::chrono::microseconds>();
                 double resampled_ms = (odone + soxr_delay(soxr_)) / out_format_.msRate();
                 auto resampled_start = input_end_ts - std::chrono::microseconds(static_cast<int>(resampled_ms * 1000.));
 
@@ -168,6 +179,23 @@ shared_ptr<msg::PcmChunk> Resampler::resample(shared_ptr<msg::PcmChunk> chunk)
         }
     }
     return nullptr;
+#endif
+}
+
+
+shared_ptr<msg::PcmChunk> Resampler::resample(shared_ptr<msg::PcmChunk> chunk)
+{
+#ifndef HAS_SOXR
+    return chunk;
+#else
+    if (!resamplingNeeded())
+    {
+        return chunk;
+    }
+    else
+    {
+        return resample(*chunk);
+    }
 #endif
 }
 

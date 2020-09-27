@@ -62,10 +62,7 @@ MetaStream::MetaStream(PcmListener* pcmListener, std::vector<std::shared_ptr<Pcm
     if (!streams_.empty())
     {
         active_stream_ = streams_.front();
-        if ((sampleFormat_.rate() != active_stream_->getSampleFormat().rate()) || (sampleFormat_.bits() != active_stream_->getSampleFormat().bits()))
-            resampler_ = make_unique<Resampler>(active_stream_->getSampleFormat(), sampleFormat_);
-        else
-            resampler_ = nullptr;
+        resampler_ = make_unique<Resampler>(active_stream_->getSampleFormat(), sampleFormat_);
     }
 }
 
@@ -112,10 +109,7 @@ void MetaStream::onStateChanged(const PcmStream* pcmStream, ReaderState state)
             if (active_stream_ != stream)
             {
                 active_stream_ = stream;
-                if ((sampleFormat_.rate() != active_stream_->getSampleFormat().rate()) || (sampleFormat_.bits() != active_stream_->getSampleFormat().bits()))
-                    resampler_ = make_unique<Resampler>(active_stream_->getSampleFormat(), sampleFormat_);
-                else
-                    resampler_ = nullptr;
+                resampler_ = make_unique<Resampler>(active_stream_->getSampleFormat(), sampleFormat_);
             }
 
             setState(ReaderState::kPlaying);
@@ -164,9 +158,9 @@ void MetaStream::onChunkRead(const PcmStream* pcmStream, const msg::PcmChunk& ch
         }
     }
 
-    if (resampler_)
+    if (resampler_ && resampler_->resamplingNeeded())
     {
-        auto resampled_chunk = resampler_->resample(std::make_shared<msg::PcmChunk>(chunk));
+        auto resampled_chunk = resampler_->resample(chunk);
         if (resampled_chunk)
             chunkRead(*resampled_chunk);
     }

@@ -36,6 +36,8 @@ public:
 
     // std::shared_ptr<msg::PcmChunk> resample(std::shared_ptr<msg::PcmChunk> chunk, chronos::usec duration);
     std::shared_ptr<msg::PcmChunk> resample(std::shared_ptr<msg::PcmChunk> chunk);
+    std::shared_ptr<msg::PcmChunk> resample(const msg::PcmChunk& chunk);
+    bool resamplingNeeded() const;
 
 private:
     std::vector<char> resample_buffer_;
