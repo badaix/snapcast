@@ -1,5 +1,22 @@
 # Snapcast changelog
 
+## Version 0.22.0
+
+### Features
+
+- Server: Add Meta stream source (Issue #402, #569, #666)
+
+### Bugfixes
+
+- Add missing define for alsa stream to makefile (Issue #692)
+
+### General
+
+- Less verbose logging during pipe reconnects (Issue #696)
+- Add null encoder for streams used only as input for meta streams
+
+_Johannes Pohl <snapcast@badaix.de>  Sun, 13 Sep 2020 00:13:37 +0200_
+
 ## Version 0.21.0
 
 ### Features
