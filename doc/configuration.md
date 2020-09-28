@@ -38,24 +38,45 @@ pipe:///<path/to/pipe>?name=<name>[&mode=create][&dryout_ms=2000]
 Launches librespot and reads audio from stdout
 
 ```sh
-librespot:///<path/to/librespot>?name=<name>[&dryout_ms=2000][&username=<my username>&password=<my password>][&devicename=Snapcast][&bitrate=320][&wd_timeout=7800][&volume=100][&onevent=""][&normalize=false][&autoplay=false]
+librespot:///<path/to/librespot>?name=<name>[&dryout_ms=2000][&username=<my username>&password=<my password>][&devicename=Snapcast][&bitrate=320][&wd_timeout=7800][&volume=100][&onevent=""][&normalize=false][&autoplay=false][&cache=""][&disable_audio_cache=false][&killall=true]
 ```
 
 Note that you need to have the librespot binary on your machine and the sampleformat will be set to `44100:16:2`
 
-TODO: description of the parameters
+#### Available parameters
+
+Parameters used to configure the librespot binary ([see librespot-org options](https://github.com/librespot-org/librespot/wiki/Options)):
+
+- `username`: Username to sign in with
+- `password`: Password
+- `devicename`: Device name
+- `bitrate`: Bitrate (96, 160 or 320). Defaults to 320
+- `volume`: Initial volume in %, once connected [0-100]
+- `onevent`: The path to a script that gets run when one of librespot's events is triggered
+- `normalize`: Enables volume normalisation for librespot
+- `autoplay`: Autoplay similar songs when your music ends
+- `cache`: Path to a directory where files will be cached
+- `disable_audio_cache`: Disable caching of the audio data
+
+Parameters introduced by Snapclient:
+
+- `killall`: Kill all running librespot instances before launching librespot
+- `wd_timeout`: Restart librespot if it doesn't create log messages for x seconds
 
 ### airplay
 
-Launches airplay and reads audio from stdout
+Launches [shairport-sync](https://github.com/mikebrady/shairport-sync) and reads audio from stdout
 
 ```sh
-airplay:///<path/to/airplay>?name=<name>[&dryout_ms=2000][&port=5000]
+airplay:///<path/to/shairport-sync>?name=<name>[&dryout_ms=2000][&devicename=Snapcast][&port=5000]
 ```
 
-Note that you need to have the airplay binary on your machine and the sampleformat will be set to `44100:16:2`
+Note that you need to have the shairport-sync binary on your machine and the sampleformat will be set to `44100:16:2`
 
-TODO: description of the parameters
+#### Available parameters
+
+- `devicename`: Advertised name
+- `port`: RTSP listening port
 
 ### file
 
@@ -73,7 +94,11 @@ Launches a process and reads audio from stdout
 process:///<path/to/process>?name=<name>[&dryout_ms=2000][&wd_timeout=0][&log_stderr=false][&params=<process arguments>]
 ```
 
-TODO: description of the parameters
+#### Available parameters
+
+- `wd_timeout`: kill and restart the process if there was no message logged for x seconds to stderr (0 = disabled)
+- `log_stderr`: Forward stderr log messages to Snapclient logging
+- `params`: Params to start the process with
 
 ### tcp server
 
