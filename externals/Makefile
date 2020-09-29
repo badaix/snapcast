@@ -137,7 +137,7 @@ oboe: check-env
 	rm -rf build;
 
 soxr: check-env
-	@cd /home/johannes/Develop/soxr; \
+	@cd soxr; \
 	export CC="$(CC)"; \
 	export CXX="$(CXX)"; \
 	export CPPFLAGS="$(CPPFLAGS)"; \

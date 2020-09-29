@@ -52,6 +52,8 @@ Resampler::Resampler(const SampleFormat& in_format, const SampleFormat& out_form
         // initialize the buffer with 20ms (~latency of the reampler)
         resample_buffer_.resize(out_format_.frameSize() * static_cast<uint16_t>(ceil(out_format_.msRate() * 20)));
     }
+#else
+    LOG(WARNING, LOG_TAG) << "Soxr not available, resampling not supported\n";
 #endif
     // resampled_chunk_ = std::make_unique<msg::PcmChunk>(out_format_, 0);
 }

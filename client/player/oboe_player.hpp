@@ -39,7 +39,13 @@ public:
     void stop() override;
 
 protected:
+    // AudioStreamCallback overrides
     oboe::DataCallbackResult onAudioReady(oboe::AudioStream* oboeStream, void* audioData, int32_t numFrames) override;
+    void onErrorBeforeClose(oboe::AudioStream* oboeStream, oboe::Result error) override;
+    void onErrorAfterClose(oboe::AudioStream* oboeStream, oboe::Result error) override;
+
+protected:
+    oboe::Result openStream();
     double getCurrentOutputLatencyMillis() const;
 
     bool needsThread() const override;
