@@ -13,3 +13,6 @@
 [submodule "externals/oboe"]
 	path = externals/oboe
 	url = https://github.com/google/oboe.git
+[submodule "externals/soxr"]
+	path = externals/soxr
+	url = git://git.code.sf.net/p/soxr/code
