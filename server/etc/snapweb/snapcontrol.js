@@ -408,7 +408,7 @@ function show() {
     content += "        <label for='client-name'>Name</label>";
     content += "        <input type='text' class='client-input' id='client-name' name='client-name' placeholder='Client name..'>";
     content += "        <label for='client-latency'>Latency</label>";
-    content += "        <input type='number' class='client-input' min='-1000' max='1000' id='client-latency' name='client-latency' placeholder='Latency in ms..'>";
+    content += "        <input type='number' class='client-input' min='-10000' max='10000' id='client-latency' name='client-latency' placeholder='Latency in ms..'>";
     content += "        <label for='client-group'>Group</label>";
     content += "        <select id='client-group' class='client-input' name='client-group'>";
     content += "        </select>";
