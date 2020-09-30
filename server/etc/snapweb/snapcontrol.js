@@ -276,20 +276,29 @@ class SnapControl {
 let snapcontrol;
 let snapstream = null;
 let hide_offline = true;
+let autostarted_once = false;
 function show() {
     // Render the page
     let play_img;
+    let autostart_now = false;
     if (snapstream) {
         play_img = 'stop.png';
     }
     else {
         play_img = 'play.png';
+        if (!autostarted_once && document.location.hash.match(/autoplay/)) {
+            autostarted_once = true;
+            autostart_now = true;
+        }
     }
     let content = "";
     content += "<div class='navbar'>Snapcast";
     let serverVersion = snapcontrol.server.server.snapserver.version.split('.');
     if ((serverVersion.length >= 2) && (+serverVersion[1] >= 21)) {
         content += "    <a href=\"javascript:play();\"><img src='" + play_img + "' class='play-button'></a>";
+        if (autostart_now) {
+            play();
+        }
     }
     content += "</div>";
     content += "<div class='content'>";
