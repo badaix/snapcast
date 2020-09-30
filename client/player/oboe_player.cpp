@@ -172,6 +172,8 @@ void OboePlayer::onErrorBeforeClose(oboe::AudioStream* oboeStream, oboe::Result 
 
 void OboePlayer::onErrorAfterClose(oboe::AudioStream* oboeStream, oboe::Result error)
 {
+    // Tech Note: Disconnected Streams and Plugin Issues
+    // https://github.com/google/oboe/blob/master/docs/notes/disconnect.md
     std::ignore = oboeStream;
     LOG(INFO, LOG_TAG) << "onErrorAfterClose: " << oboe::convertToText(error) << "\n";
     auto result = openStream();
