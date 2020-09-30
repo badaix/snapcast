@@ -452,8 +452,6 @@ class TimeProvider {
         if (ctx) {
             this.setAudioContext(ctx);
         }
-        let userAgent = navigator.userAgent.toLowerCase();
-        this.isFirefoxMobile = (userAgent.indexOf('firefox') > -1) && (userAgent.indexOf('android') > -1);
     }
     setAudioContext(ctx) {
         this.ctx = ctx;
@@ -478,16 +476,13 @@ class TimeProvider {
         // console.log("now: " + this.now() + "\t" + this.now() + "\t" + this.now());
     }
     now() {
+        // No context yet. Fallback to performance.now().
         if (!this.ctx) {
             return window.performance.now();
         }
         else {
-            if (this.isFirefoxMobile) {
-                return this.ctx.currentTime * 1000;
-            }
-            else {
-                return (this.ctx.getOutputTimestamp().contextTime || this.ctx.currentTime) * 1000;
-            }
+            // getOutputTimestamp is experimental, fallback to ctx.currentTime if not available.
+            return (!!this.ctx.getOutputTimestamp ? this.ctx.getOutputTimestamp().contextTime : this.ctx.currentTime) * 1000;
         }
     }
     nowSec() {
@@ -727,7 +722,12 @@ class SnapStream {
                             this.bufferFrameCount = Math.floor(this.bufferDurationMs * this.sampleFormat.msRate());
                         }
                         this.stopAudio();
-                        this.ctx = new AudioContext({ latencyHint: "playback", sampleRate: this.sampleFormat.rate });
+                        let options = { latencyHint: "playback", sampleRate: this.sampleFormat.rate };
+                        if (navigator.userAgent.match(/Chrome\/53\.0\./)) {
+                            // Some older browsers won't decode the stream if options are provided.
+                            options = undefined;
+                        }
+                        this.ctx = new AudioContext(options);
                         this.timeProvider.setAudioContext(this.ctx);
                         this.gainNode = this.ctx.createGain();
                         this.gainNode.connect(this.ctx.destination);
