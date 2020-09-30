@@ -9,13 +9,15 @@
 ### Bugfixes
 
 - Add missing define for alsa stream to makefile (Issue #692)
+- Fix playback when plugging the headset on Android (Issue #699)
 
 ### General
 
 - Less verbose logging during pipe reconnects (Issue #696)
 - Add null encoder for streams used only as input for meta streams
+- Snapweb: Change latency range to [-10s, 10s] (Issue #695)
 
-_Johannes Pohl <snapcast@badaix.de>  Sun, 13 Sep 2020 00:13:37 +0200_
+_Johannes Pohl <snapcast@badaix.de>  Wed, 30 Sep 2020 00:13:37 +0200_
 
 ## Version 0.21.0
 
