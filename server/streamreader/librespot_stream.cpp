@@ -51,6 +51,8 @@ LibrespotStream::LibrespotStream(PcmListener* pcmListener, boost::asio::io_conte
     if (username.empty() != password.empty())
         throw SnapException("missing parameter \"username\" or \"password\" (must provide both, or neither)");
 
+    if (!params_.empty())
+        params_ += " ";
     params_ += "--name \"" + devicename + "\"";
     if (!username.empty() && !password.empty())
         params_ += " --username \"" + username + "\" --password \"" + password + "\"";
