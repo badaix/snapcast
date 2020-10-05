@@ -100,6 +100,9 @@ Available stream sources are:
 - [tcp](doc/configuration.md#tcp-server): receives audio from a TCP socket, can act as client or server
 - [meta](doc/configuration.md#meta): read and mix audio from other stream sources
 
+The client will use as audio backend the system's low level audio API to have the best possible control and most precise timing to achieve perfectly synced playback. On Linux `alsa` is used, on Android `oboe` or `opensl`, on macOS `coreaudio` and on Windows `wasapi`.  
+There is also a `file` backend available that will write the raw PCM data to a file (or stdout, stderr). The backend can be configured using the `--player` command line parameter.
+
 ## Test
 
 You can test your installation by copying random data into the server's fifo file

@@ -134,12 +134,11 @@ int main(int argc, char** argv)
         auto sample_format = op.add<Value<string>>("", "sampleformat", "resample audio stream to <rate>:<bits>:<channels>", "");
 #endif
 
-// audio backend
-#if defined(HAS_OBOE) && defined(HAS_OPENSL)
-        op.add<Value<string>>("", "player", "audio backend (oboe, opensl)", "oboe", &settings.player.player_name);
-#else
-        op.add<Value<string>, Attribute::hidden>("", "player", "audio backend (<empty>, file)", "", &settings.player.player_name);
-#endif
+        auto supported_players = Controller::getSupportedPlayerNames();
+        string supported_players_str;
+        for (const auto& supported_player : supported_players)
+            supported_players_str += (!supported_players_str.empty() ? "|" : "") + supported_player;
+        op.add<Value<string>>("", "player", supported_players_str + "[:<options>|?]", supported_players.front(), &settings.player.player_name);
 
 // sharing mode
 #if defined(HAS_OBOE) || defined(HAS_WASAPI)
@@ -317,6 +316,22 @@ int main(int argc, char** argv)
 #if defined(HAS_OBOE) || defined(HAS_WASAPI)
         settings.player.sharing_mode = (sharing_mode->value() == "exclusive") ? ClientSettings::SharingMode::exclusive : ClientSettings::SharingMode::shared;
 #endif
+
+        settings.player.player_name = utils::string::split_left(settings.player.player_name, ':', settings.player.parameter);
+        if (settings.player.parameter == "?")
+        {
+            if (settings.player.player_name == "file")
+            {
+                cout << "Options are a comma separated list of:\n"
+                     << " \"filename:<filename>\" - with <filename> = \"stdout\", \"stderr\" or a filename\n"
+                     << " \"mode:[w|a]\" - w: write (discarding the content), a: append (keeping the content)\n";
+            }
+            else
+            {
+                cout << "No options available for \"" << settings.player.player_name << "\n";
+            }
+            exit(EXIT_SUCCESS);
+        }
 
         string mode = utils::string::split_left(mixer_mode->value(), ':', settings.player.mixer.parameter);
         if (mode == "software")

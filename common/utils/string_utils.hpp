@@ -20,6 +20,7 @@
 #define STRING_UTILS_H
 
 #include <algorithm>
+#include <map>
 #include <sstream>
 #include <stdio.h>
 #include <string>
@@ -141,6 +142,25 @@ static std::vector<std::string> split(const std::string& s, char delim)
     split(s, delim, elems);
     return elems;
 }
+
+
+static std::map<std::string, std::string> split_pairs(const std::string& s, char pair_delim, char key_value_delim)
+{
+    std::map<std::string, std::string> result;
+    auto keyValueList = split(s, pair_delim);
+    for (auto& kv : keyValueList)
+    {
+        auto pos = kv.find(key_value_delim);
+        if (pos != std::string::npos)
+        {
+            std::string key = trim_copy(kv.substr(0, pos));
+            std::string value = trim_copy(kv.substr(pos + 1));
+            result[key] = value;
+        }
+    }
+    return result;
+}
+
 
 } // namespace string
 } // namespace utils

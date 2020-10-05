@@ -5,6 +5,7 @@
 ### Features
 
 - Server: Add Meta stream source (Issue #402, #569, #666)
+- Client: Add file audio backend (Issue #681)
 
 ### Bugfixes
 
@@ -17,7 +18,7 @@
 - Add null encoder for streams used only as input for meta streams
 - Snapweb: Change latency range to [-10s, 10s] (Issue #695)
 
-_Johannes Pohl <snapcast@badaix.de>  Wed, 30 Sep 2020 00:13:37 +0200_
+_Johannes Pohl <snapcast@badaix.de>  Sun, 11 Oct 2020 00:13:37 +0200_
 
 ## Version 0.21.0
 

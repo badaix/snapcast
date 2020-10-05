@@ -68,7 +68,7 @@ Player::Player(boost::asio::io_context& io_context, const ClientSettings::Player
     };
     LOG(INFO, LOG_TAG) << "Player name: " << not_empty(settings_.player_name) << ", device: " << not_empty(settings_.pcm_device.name)
                        << ", description: " << not_empty(settings_.pcm_device.description) << ", idx: " << settings_.pcm_device.idx
-                       << ", sharing mode: " << sharing_mode << "\n";
+                       << ", sharing mode: " << sharing_mode << ", parameters: " << not_empty(settings.parameter) << "\n";
 
     string mixer;
     switch (settings_.mixer.mode)

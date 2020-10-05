@@ -85,6 +85,28 @@ std::unique_ptr<Player> Controller::createPlayer(ClientSettings::Player& setting
     return nullptr;
 }
 
+std::vector<std::string> Controller::getSupportedPlayerNames()
+{
+    std::vector<std::string> result;
+#ifdef HAS_ALSA
+    result.emplace_back("alsa");
+#endif
+#ifdef HAS_OBOE
+    result.emplace_back("oboe");
+#endif
+#ifdef HAS_OPENSL
+    result.emplace_back("opensl");
+#endif
+#ifdef HAS_COREAUDIO
+    result.emplace_back("coreaudio");
+#endif
+#ifdef HAS_WASAPI
+    result.emplace_back("wasapi");
+#endif
+    result.emplace_back("file");
+    return result;
+}
+
 
 void Controller::getNextMessage()
 {

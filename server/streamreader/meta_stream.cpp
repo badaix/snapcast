@@ -105,7 +105,8 @@ void MetaStream::onStateChanged(const PcmStream* pcmStream, ReaderState state)
 
             if (active_stream_ != stream)
             {
-                LOG(INFO, LOG_TAG) << "Stream: " << name_ << ", switching active stream: " << (active_stream_?active_stream_->getName():"<null>") << " => " << stream->getName() << "\n";
+                LOG(INFO, LOG_TAG) << "Stream: " << name_ << ", switching active stream: " << (active_stream_ ? active_stream_->getName() : "<null>") << " => "
+                                   << stream->getName() << "\n";
                 active_stream_ = stream;
                 resampler_ = make_unique<Resampler>(active_stream_->getSampleFormat(), sampleFormat_);
             }

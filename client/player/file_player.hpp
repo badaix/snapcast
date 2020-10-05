@@ -20,7 +20,8 @@
 #define FILE_PLAYER_HPP
 
 #include "player.hpp"
-
+#include <cstdio>
+#include <memory>
 
 /// File Player
 /// Used for testing and doesn't even write the received audio to file at the moment,
@@ -41,6 +42,7 @@ protected:
     boost::asio::steady_timer timer_;
     std::vector<char> buffer_;
     std::chrono::time_point<std::chrono::steady_clock> next_request_;
+    std::shared_ptr<FILE> file_;
 };
 
 

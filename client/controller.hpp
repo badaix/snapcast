@@ -46,6 +46,7 @@ public:
     Controller(boost::asio::io_context& io_context, const ClientSettings& settings, std::unique_ptr<MetadataAdapter> meta);
     void start();
     // void stop();
+    static std::vector<std::string> getSupportedPlayerNames();
 
 private:
     using MdnsHandler = std::function<void(const boost::system::error_code& ec, const std::string& host, uint16_t port)>;
