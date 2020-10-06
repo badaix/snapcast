@@ -54,6 +54,10 @@ Resampler::Resampler(const SampleFormat& in_format, const SampleFormat& out_form
     }
 #else
     LOG(WARNING, LOG_TAG) << "Soxr not available, resampling not supported\n";
+    if ((out_format_.rate() != in_format_.rate()) || (out_format_.bits() != in_format_.bits()))
+    {
+        throw SnapException("Resampling requested, but not supported");
+    }
 #endif
     // resampled_chunk_ = std::make_unique<msg::PcmChunk>(out_format_, 0);
 }
