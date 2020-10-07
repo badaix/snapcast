@@ -17,7 +17,7 @@
 - Less verbose logging during pipe reconnects (Issue #696)
 - Add null encoder for streams used only as input for meta streams
 - Snapweb: Change latency range to [-10s, 10s] (Issue #695)
-- Update Snapweb, including PR #11, #12, #13
+- Update Snapweb, including PR #11, #12, #13, Issues #16, #17
 
 _Johannes Pohl <snapcast@badaix.de>  Sun, 11 Oct 2020 00:13:37 +0200_
 
