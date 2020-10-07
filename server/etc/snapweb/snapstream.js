@@ -130,7 +130,7 @@ class TimeMessage extends BaseMessage {
         let buffer = super.serialize();
         let view = new DataView(buffer);
         view.setInt32(26, this.latency.sec, true);
-        view.setInt32(30, this.latency.sec, true);
+        view.setInt32(30, this.latency.usec, true);
         return buffer;
     }
     getSize() {
@@ -147,9 +147,9 @@ class JsonMessage extends BaseMessage {
     deserialize(buffer) {
         super.deserialize(buffer);
         let view = new DataView(buffer);
-        let size = view.getInt32(26, true);
+        let size = view.getUint32(26, true);
         let decoder = new TextDecoder();
-        this.json = JSON.parse(decoder.decode(buffer.slice(30)));
+        this.json = JSON.parse(decoder.decode(buffer.slice(30, 30 + size)));
     }
     serialize() {
         let buffer = super.serialize();
