@@ -200,7 +200,7 @@ void Controller::getNextMessage()
                 player_ = createPlayer<FilePlayer>(settings_.player, "file");
 
             if (!player_)
-                throw SnapException("No audio player support");
+                throw SnapException("No audio player support" + (settings_.player.player_name.empty() ? "" : " for: " + settings_.player.player_name));
 
             player_->setVolumeCallback([this](double volume, bool muted) {
                 static double last_volume(-1);
