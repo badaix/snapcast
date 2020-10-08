@@ -283,10 +283,7 @@ bool Stream::getPlayerChunk(void* outputBuffer, const cs::usec& outputBufferDacT
             {
                 if (age.count() > 0)
                 {
-                    // TODO: should be enough to check if "age.count() > chunk->duration"
-                    // if "age.count > 0 && age.count < chunk->duration" then
-                    // the current chunk could be fast forwarded by age.count, instead of dropping the whole chunk
-                    LOG(DEBUG, LOG_TAG) << "age > 0: " << age.count() / 1000 << "ms\n";
+                    LOG(DEBUG, LOG_TAG) << "age > 0: " << age.count() / 1000 << "ms, dropping old chunks\n";
                     // age > 0: the top of the stream is too old. We must fast foward.
                     // delete the current chunk, it's too old. This will avoid an endless loop if there is no chunk in the queue.
                     chunk_ = nullptr;
@@ -296,6 +293,13 @@ bool Stream::getPlayerChunk(void* outputBuffer, const cs::usec& outputBufferDacT
                         LOG(DEBUG, LOG_TAG) << "age: " << age.count() / 1000 << ", requested chunk_duration: "
                                             << std::chrono::duration_cast<std::chrono::milliseconds>(req_chunk_duration).count()
                                             << ", duration: " << chunk_->duration<std::chrono::milliseconds>().count() << "\n";
+                        // check if the current chunk's end is older than age => can be player
+                        if ((age.count() > 0) && (age < chunk_->duration<cs::usec>()))
+                        {
+                            // fast forward by "age" to get in sync, i.e. age = 0
+                            chunk_->seek(static_cast<uint32_t>(chunk_->format.nsRate() * std::chrono::duration_cast<cs::nsec>(age).count()));
+                            age = 0s;
+                        }
                         if (age.count() <= 0)
                             break;
                     }
@@ -310,9 +314,12 @@ bool Stream::getPlayerChunk(void* outputBuffer, const cs::usec& outputBufferDacT
                     uint32_t silent_frames = static_cast<uint32_t>(-chunk_->format.nsRate() * std::chrono::duration_cast<cs::nsec>(age).count());
                     bool result = (silent_frames <= frames);
                     silent_frames = std::min(silent_frames, frames);
-                    LOG(DEBUG, LOG_TAG) << "Silent frames: " << silent_frames << ", frames: " << frames
-                                        << ", age: " << std::chrono::duration_cast<cs::usec>(age).count() / 1000. << "\n";
-                    getSilentPlayerChunk(outputBuffer, silent_frames);
+                    if (silent_frames > 0)
+                    {
+                        LOG(DEBUG, LOG_TAG) << "Silent frames: " << silent_frames << ", frames: " << frames
+                                            << ", age: " << std::chrono::duration_cast<cs::usec>(age).count() / 1000. << "\n";
+                        getSilentPlayerChunk(outputBuffer, silent_frames);
+                    }
                     getNextPlayerChunk((char*)outputBuffer + (chunk_->format.frameSize() * silent_frames), frames - silent_frames);
 
                     if (result)
