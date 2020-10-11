@@ -110,6 +110,8 @@ private:
     int frame_delta_;
     // int64_t next_us_;
 
+    mutable std::mutex mutex_;
+
     bool hard_sync_;
 };
 

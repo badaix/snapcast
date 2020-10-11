@@ -103,8 +103,16 @@ public:
         std::lock_guard<std::mutex> mlock(mutex_);
         if (queue_.empty())
             return false;
-        T t = queue_.back();
-        copy = t;
+        copy = queue_.back();
+        return true;
+    }
+
+    bool front_copy(T& copy)
+    {
+        std::lock_guard<std::mutex> mlock(mutex_);
+        if (queue_.empty())
+            return false;
+        copy = queue_.front();
         return true;
     }
 

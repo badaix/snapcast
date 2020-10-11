@@ -89,6 +89,7 @@ void Stream::setBufferLen(size_t bufferLenMs)
 
 void Stream::clearChunks()
 {
+    std::lock_guard<std::mutex> lock(mutex_);
     while (chunks_.size() > 0)
         chunks_.pop();
     resetBuffers();
@@ -102,11 +103,24 @@ void Stream::addChunk(unique_ptr<msg::PcmChunk> chunk)
     if (age > 5s + bufferMs_)
         return;
 
-    // LOG(TRACE, LOG_TAG) << "new chunk: " << chunk->durationMs() << " ms, age: " << age.count() << " ms, Chunks: " << chunks_.size() << "\n";
-
     auto resampled = resampler_->resample(std::move(chunk));
     if (resampled)
-        chunks_.push(move(resampled));
+    {
+        std::lock_guard<std::mutex> lock(mutex_);
+        recent_ = resampled;
+        chunks_.push(resampled);
+
+        std::shared_ptr<msg::PcmChunk> front_;
+        while (chunks_.front_copy(front_))
+        {
+            auto age = std::chrono::duration_cast<cs::msec>(TimeProvider::serverNow() - front_->start());
+            if ((age > 5s + bufferMs_) && chunks_.try_pop(front_))
+                LOG(TRACE, LOG_TAG) << "Oldest chunk too old: " << age.count() << " ms, removing. Chunks in queue left: " << chunks_.size() << "\n";
+            else
+                break;
+        }
+    }
+    // LOG(TRACE, LOG_TAG) << "new chunk: " << chunk->durationMs() << " ms, age: " << age.count() << " ms, Chunks: " << chunks_.size() << "\n";
 }
 
 
@@ -229,6 +243,7 @@ bool Stream::getPlayerChunk(void* outputBuffer, const cs::usec& outputBufferDacT
         return false;
     }
 
+    std::lock_guard<std::mutex> lock(mutex_);
     time_t now = time(nullptr);
     if (!chunk_ && !chunks_.try_pop(chunk_))
     {
