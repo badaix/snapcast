@@ -34,6 +34,7 @@ namespace cs = chronos;
 static constexpr auto LOG_TAG = "Stream";
 static constexpr auto kCorrectionBegin = 100us;
 
+// #define LOG_LATENCIES
 
 Stream::Stream(const SampleFormat& in_format, const SampleFormat& out_format)
     : in_format_(in_format), median_(0), shortMedian_(0), lastUpdate_(0), playedFrames_(0), correctAfterXFrames_(0), bufferMs_(cs::msec(500)), frame_delta_(0),
@@ -42,6 +43,7 @@ Stream::Stream(const SampleFormat& in_format, const SampleFormat& out_format)
     buffer_.setSize(500);
     shortBuffer_.setSize(100);
     miniBuffer_.setSize(20);
+    latencies_.setSize(100);
 
     format_ = in_format_;
     if (out_format.isInitialized())
@@ -255,22 +257,16 @@ bool Stream::getPlayerChunk(void* outputBuffer, const cs::usec& outputBufferDacT
         return false;
     }
 
-    // calculate and log the estimated end to end latency
-    // static int64_t min_buffer = 0;
-    // std::shared_ptr<msg::PcmChunk> recent_;
-    // if (chunks_.back_copy(recent_))
-    // {
-    //     cs::nsec req_chunk_duration = cs::nsec(static_cast<cs::nsec::rep>(frames / format_.nsRate()));
-    //     auto youngest = recent_->end() - req_chunk_duration;
-    //     cs::msec age = std::chrono::duration_cast<cs::msec>(TimeProvider::serverNow() - youngest + outputBufferDacTime);
-    //     min_buffer = std::max(min_buffer, age.count());
-    //     if (now != lastUpdate_)
-    //     {
-    //         LOG(TRACE, LOG_TAG) << "getPlayerChunk duration: " << std::chrono::duration_cast<std::chrono::milliseconds>(req_chunk_duration).count()
-    //                             << ", min buffer: " << min_buffer << "\n";
-    //         min_buffer = 0;
-    //     }
-    // }
+#ifdef LOG_LATENCIES
+    // calculate the estimated end to end latency
+    if (recent_)
+    {
+        cs::nsec req_chunk_duration = cs::nsec(static_cast<cs::nsec::rep>(frames / format_.nsRate()));
+        auto youngest = recent_->end() - req_chunk_duration;
+        cs::msec age = std::chrono::duration_cast<cs::msec>(TimeProvider::serverNow() - youngest + outputBufferDacTime);
+        latencies_.add(age.count());
+    }
+#endif
 
     /// we have a chunk
     /// age = chunk age (server now - rec time: some positive value) - buffer (e.g. 1000ms) + time to DAC
@@ -416,12 +412,23 @@ bool Stream::getPlayerChunk(void* outputBuffer, const cs::usec& outputBufferDacT
         // update median_ and shortMedian_ and print sync stats
         if (now != lastUpdate_)
         {
+            // log buffer stats
             lastUpdate_ = now;
             median_ = buffer_.median();
             shortMedian_ = shortBuffer_.median();
             LOG(DEBUG, "Stats") << "Chunk: " << age.count() / 100 << "\t" << miniBuffer_.median() / 100 << "\t" << shortMedian_ / 100 << "\t" << median_ / 100
                                 << "\t" << buffer_.size() << "\t" << cs::duration<cs::msec>(outputBufferDacTime) << "\t" << frame_delta_ << "\n";
             frame_delta_ = 0;
+
+#ifdef LOG_LATENCIES
+            // log latencies
+            std::array<uint8_t, 5> percents = {100, 99, 95, 50, 5};
+            auto percentiles = latencies_.percentiles(percents);
+            std::stringstream ss;
+            for (std::size_t n = 0; n < percents.size(); ++n)
+                ss << ((n > 0) ? ", " : "") << (int)percents[n] << "%: " << percentiles[n];
+            LOG(DEBUG, "Latency") << ss.str() << "\n";
+#endif
         }
         return (abs(cs::duration<cs::msec>(age)) < 500);
     }

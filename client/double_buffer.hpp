@@ -20,6 +20,7 @@
 #define DOUBLE_BUFFER_H
 
 #include <algorithm>
+#include <array>
 #include <deque>
 
 
@@ -90,7 +91,22 @@ public:
             return 0;
         std::deque<T> tmpBuffer(buffer.begin(), buffer.end());
         std::sort(tmpBuffer.begin(), tmpBuffer.end());
-        return tmpBuffer[(size_t)(tmpBuffer.size() * ((float)percentile / (float)100))];
+        return tmpBuffer[(size_t)((tmpBuffer.size() - 1) * ((float)percentile / (float)100))];
+    }
+
+    template <std::size_t Size>
+    std::array<T, Size> percentiles(std::array<uint8_t, Size> percentiles) const
+    {
+        std::array<T, Size> result;
+        result.fill(0);
+        if (buffer.empty())
+            return result;
+        std::deque<T> tmpBuffer(buffer.begin(), buffer.end());
+        std::sort(tmpBuffer.begin(), tmpBuffer.end());
+        for (std::size_t i = 0; i < Size; ++i)
+            result[i] = tmpBuffer[(size_t)((tmpBuffer.size() - 1) * ((float)percentiles[i] / (float)100))];
+
+        return result;
     }
 
     inline bool full() const

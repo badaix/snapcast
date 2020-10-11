@@ -94,7 +94,11 @@ private:
     DoubleBuffer<chronos::usec::rep> miniBuffer_;
     DoubleBuffer<chronos::usec::rep> shortBuffer_;
     DoubleBuffer<chronos::usec::rep> buffer_;
+    /// current chunk (oldest, to be played)
     std::shared_ptr<msg::PcmChunk> chunk_;
+    /// most recent chunk (newly queued)
+    std::shared_ptr<msg::PcmChunk> recent_;
+    DoubleBuffer<chronos::msec::rep> latencies_;
 
     chronos::usec::rep median_;
     chronos::usec::rep shortMedian_;
