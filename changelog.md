@@ -11,6 +11,7 @@
 
 - Add missing define for alsa stream to makefile (Issue #692)
 - Fix playback when plugging the headset on Android (Issue #699)
+- Server discards old chunks if not consumed (Issue #708)
 
 ### General
 
@@ -19,7 +20,7 @@
 - Snapweb: Change latency range to [-10s, 10s] (Issue #695)
 - Update Snapweb, including PR #11, #12, #13, Issues #16, #17
 
-_Johannes Pohl <snapcast@badaix.de>  Sun, 11 Oct 2020 00:13:37 +0200_
+_Johannes Pohl <snapcast@badaix.de>  Sun, 18 Oct 2020 00:13:37 +0200_
 
 ## Version 0.21.0
 
