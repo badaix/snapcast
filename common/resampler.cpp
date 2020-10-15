@@ -18,6 +18,8 @@
 
 #include "resampler.hpp"
 #include "common/aixlog.hpp"
+#include "common/snap_exception.hpp"
+
 #include <cmath>
 
 using namespace std;
