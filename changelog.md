@@ -20,7 +20,7 @@
 - Snapweb: Change latency range to [-10s, 10s] (Issue #695)
 - Update Snapweb, including PR #11, #12, #13, Issues #16, #17
 
-_Johannes Pohl <snapcast@badaix.de>  Sun, 18 Oct 2020 00:13:37 +0200_
+_Johannes Pohl <snapcast@badaix.de>  Thu, 15 Oct 2020 00:13:37 +0200_
 
 ## Version 0.21.0
 
