@@ -2,6 +2,18 @@
 
 ## Engaging in Our Project
 
+You can contribute in several ways:
+
+* Contribute code for new features, bugfixes, or documentation (see below)
+
+* Help testing the latest features. Nightly builds are available in [Actions](https://github.com/badaix/snapcast/actions)
+
+* Star the project
+
+* Donate on [PayPal](https://www.paypal.me/badaix)
+
+* Spread the word: blog about Snapcast, tell your friends ...
+
 We use GitHub to manage reviews of pull requests.
 
 * If you are a new contributor, see: [Steps to Contribute](#steps-to-contribute)
