@@ -155,6 +155,17 @@ void ControlSessionHttp::handle_request(http::request<Body, http::basic_fields<A
         return res;
     };
 
+    // Returns a configuration help
+    auto const unconfigured = [&req]() {
+        http::response<http::string_body> res{http::status::ok, req.version()};
+        res.set(http::field::server, HTTP_SERVER_NAME);
+        res.set(http::field::content_type, "text/html");
+        res.keep_alive(req.keep_alive());
+        res.body() = "<html><head><title>Snapcast Default Page</title></head><body>TODO: description how to configure the doc_root</body></html>";
+        res.prepare_payload();
+        return res;
+    };
+
     // Returns a server error response
     auto const server_error = [&req](boost::beast::string_view what) {
         http::response<http::string_body> res{http::status::internal_server_error, req.version()};
@@ -190,13 +201,20 @@ void ControlSessionHttp::handle_request(http::request<Body, http::basic_fields<A
     if (req.target().empty() || req.target()[0] != '/' || req.target().find("..") != beast::string_view::npos)
         return send(bad_request("Illegal request-target"));
 
-    if (settings_.doc_root.empty())
-        return send(not_found(req.target()));
-
     // Build the path to the requested file
     std::string path = path_cat(settings_.doc_root, req.target());
     if (req.target().back() == '/')
         path.append("index.html");
+
+    if (settings_.doc_root.empty())
+    {
+        std::string default_page = "/usr/share/snapserver/index.html";
+        struct stat buffer;
+        if (stat(default_page.c_str(), &buffer) == 0)
+            path = default_page;
+        else
+            return send(unconfigured());
+    }
 
     LOG(DEBUG, LOG_TAG) << "path: " << path << "\n";
     // Attempt to open the file

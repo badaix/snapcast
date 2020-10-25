@@ -125,6 +125,7 @@ install:
 	install -g wheel -o root -m 555 $(BIN).1 $(TARGET_DIR)/local/man/man1/$(BIN).1
 	install -g wheel -o root -m 555 etc/$(BIN).bsd $(TARGET_DIR)/local/etc/rc.d/$(BIN)
 	install -g wheel -o root etc/$(BIN).conf /etc/$(BIN).conf
+	install -g wheel -o root -m 644 etc/index.html -Dt /usr/share/snapserver/
 	for file in etc/snapweb/*\.*; do install -g wheel -o root -m 644 $${file} -Dt "/usr/share/snapserver/snapweb/"; done
 	for file in etc/snapweb/3rd-party/*\.*; do install -g wheel -o root -m 644 $${file} -Dt "/usr/share/snapserver/snapweb/3rd-party/"; done
 
@@ -136,6 +137,7 @@ install:
 	install -g wheel -o root $(BIN).1 $(TARGET_DIR)/local/share/man/man1/$(BIN).1
 	install -g wheel -o root etc/$(BIN).plist /Library/LaunchAgents/de.badaix.snapcast.$(BIN).plist
 	install -g wheel -o root etc/$(BIN).conf /etc/$(BIN).conf
+	install -g wheel -o root -m 644 etc/index.html -Dt /usr/share/snapserver/
 	for file in etc/snapweb/*\.*; do install -g wheel -o root -m 644 $${file} -Dt "/usr/share/snapserver/snapweb/"; done
 	for file in etc/snapweb/3rd-party/*\.*; do install -g wheel -o root -m 644 $${file} -Dt "/usr/share/snapserver/snapweb/3rd-party/"; done
 	launchctl load /Library/LaunchAgents/de.badaix.snapcast.$(BIN).plist
@@ -163,6 +165,7 @@ installfiles:
 	install -s -D -g root -o root $(BIN) $(TARGET_DIR)/bin/$(BIN)
 	install -D -g root -o root $(BIN).1 $(TARGET_DIR)/share/man/man1/$(BIN).1
 	install -g root -o root etc/$(BIN).conf /etc/$(BIN).conf;
+	install -g root -o root -m 644 etc/index.html -Dt /usr/share/snapserver/
 	for file in etc/snapweb/*\.*; do install -g root -o root -m 644 $${file} -Dt "/usr/share/snapserver/snapweb/"; done
 	for file in etc/snapweb/3rd-party/*\.*; do install -g root -o root -m 644 $${file} -Dt "/usr/share/snapserver/snapweb/3rd-party/"; done
 
