@@ -30,6 +30,38 @@ static constexpr auto LOG_TAG = "ControlSessionHTTP";
 
 
 static constexpr const char* HTTP_SERVER_NAME = "Snapcast";
+static constexpr const char* UNCONFIGURED =
+    "<html><head><title>Snapcast Default Page</title></head>"
+    "<body>"
+    "  <h1>Snapcast Default Page</h1>"
+    "  <p>"
+    "    This is the default welcome page used to test the correct operation of the Snapcast built-in webserver."
+    "  </p>"
+    "  <p>"
+    "    This webserver is a websocket endpoint for control clients (ws://<i>host</i>:1780/jsonrpc) and streaming clients"
+    "    (ws://<i>host</i>:1780/stream), but it can also host simple web pages. To serve a web page, you must configure the"
+    "    document root in the snapserver configuration file <b>snapserver.conf</b>, usually located in"
+    "    <b>/etc/snapserver.conf</b>"
+    "  </p>"
+    "  <p>"
+    "    The Snapserver installation should include a copy of <a href=\"https://github.com/badaix/snapweb\">Snapweb</a>,"
+    "    located in <b>/usr/share/snapserver/snapweb/</b><br>"
+    "    To activate it, please configure the <b>doc_root</b> as follows, and restart Snapserver to activate the changes:"
+    "  </p>"
+    "  <pre>"
+    "# HTTP RPC #####################################\n"
+    "#\n"
+    "[http]\n"
+    "\n"
+    "...\n"
+    "\n"
+    "# serve a website from the doc_root location\n"
+    "doc_root = /usr/share/snapserver/snapweb/\n"
+    "\n"
+    "#\n"
+    "################################################</pre>"
+    "</body>"
+    "</html>";
 
 namespace
 {
@@ -161,7 +193,7 @@ void ControlSessionHttp::handle_request(http::request<Body, http::basic_fields<A
         res.set(http::field::server, HTTP_SERVER_NAME);
         res.set(http::field::content_type, "text/html");
         res.keep_alive(req.keep_alive());
-        res.body() = "<html><head><title>Snapcast Default Page</title></head><body>TODO: description how to configure the doc_root</body></html>";
+        res.body() = UNCONFIGURED;
         res.prepare_payload();
         return res;
     };
