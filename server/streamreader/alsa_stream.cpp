@@ -80,13 +80,13 @@ void AlsaStream::start()
     // idle_bytes_ = 0;
     // max_idle_bytes_ = sampleFormat_.rate() * sampleFormat_.frameSize() * dryout_ms_ / 1000;
 
+    initAlsa();
     chunk_ = std::make_unique<msg::PcmChunk>(sampleFormat_, chunk_ms_);
     silent_chunk_ = std::vector<char>(chunk_->payloadSize, 0);
     LOG(DEBUG, LOG_TAG) << "Chunk duration: " << chunk_->durationMs() << " ms, frames: " << chunk_->getFrameCount() << ", size: " << chunk_->payloadSize
                         << "\n";
     first_ = true;
     tvEncodedChunk_ = std::chrono::steady_clock::now();
-    initAlsa();
     PcmStream::start();
     // wait(read_timer_, std::chrono::milliseconds(chunk_ms_), [this] { do_read(); });
     do_read();
@@ -133,7 +133,17 @@ void AlsaStream::initAlsa()
         throw SnapException("Can't set sample format: " + string(snd_strerror(err)));
 
     if ((err = snd_pcm_hw_params_set_rate_near(handle_, hw_params, &rate, 0)) < 0)
+    {
         throw SnapException("Can't set rate: " + string(snd_strerror(err)));
+    }
+    else
+    {
+        if (rate != sampleFormat_.rate())
+        {
+            LOG(WARNING, LOG_TAG) << "Rate is not accurate (requested: " << sampleFormat_.rate() << ", got: " << rate << "), using: " << rate << "\n";
+            sampleFormat_.setFormat(rate, sampleFormat_.bits(), sampleFormat_.channels());
+        }
+    }
 
     if ((err = snd_pcm_hw_params_set_channels(handle_, hw_params, sampleFormat_.channels())) < 0)
         throw SnapException("Can't set channel count: " + string(snd_strerror(err)));
