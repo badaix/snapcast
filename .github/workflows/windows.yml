@@ -14,7 +14,7 @@ jobs:
       uses: actions/cache@v2
       with:
         #path: ${VCPKG_INSTALLATION_ROOT}\installed
-        path: c:\vcpkg\installed
+        path: $env:VCPKG_INSTALLATION_ROOT\installed
         key: ${{ runner.os }}-dependencies
     - name: dependencies
       if: steps.cache-dependencies.outputs.cache-hit != 'true'
@@ -27,12 +27,12 @@ jobs:
       run: cmake --build build --config Release --parallel 3 --verbose
     - name: installer
       run: |
-        copy c:\vcpkg\installed\x64-windows\bin\FLAC.dll bin\Release\
-        copy c:\vcpkg\installed\x64-windows\bin\ogg.dll bin\Release\
-        copy c:\vcpkg\installed\x64-windows\bin\opus.dll bin\Release\
-        copy c:\vcpkg\installed\x64-windows\bin\vorbis.dll bin\Release\
-        copy c:\vcpkg\installed\x64-windows\bin\soxr.dll bin\Release\
-        copy %VCINSTALLDIR%Redist\MSVC\v142\vc_redist.x64.exe bin\Release\
+        copy $env:VCPKG_INSTALLATION_ROOT\installed\x64-windows\bin\FLAC.dll bin\Release\
+        copy $env:VCPKG_INSTALLATION_ROOT\installed\x64-windows\bin\ogg.dll bin\Release\
+        copy $env:VCPKG_INSTALLATION_ROOT\installed\x64-windows\bin\opus.dll bin\Release\
+        copy $env:VCPKG_INSTALLATION_ROOT\installed\x64-windows\bin\vorbis.dll bin\Release\
+        copy $env:VCPKG_INSTALLATION_ROOT\installed\x64-windows\bin\soxr.dll bin\Release\
+        copy $env:VCINSTALLDIR\Redist\MSVC\v142\vc_redist.x64.exe bin\Release\
     - name: Archive artifacts
       uses: actions/upload-artifact@v2
       with:
