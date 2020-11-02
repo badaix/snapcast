@@ -262,6 +262,12 @@ int main(int argc, char** argv)
         else
             throw SnapException("Invalid log sink: " + settings.logging.sink);
 
+#if !defined(HAS_AVAHI) && !defined(HAS_BONJOUR)
+        if (settings.server.host.empty())
+            throw SnapException("Snapserver host not configured and mDNS not available, please configure with \"--host\".");
+#endif
+
+
 #ifdef HAS_DAEMON
         std::unique_ptr<Daemon> daemon;
         if (daemonOption->is_set())
@@ -383,6 +389,6 @@ int main(int argc, char** argv)
         exitcode = EXIT_FAILURE;
     }
 
-    LOG(NOTICE, LOG_TAG) << "daemon terminated." << endl;
+    LOG(NOTICE, LOG_TAG) << "Snapclient terminated." << endl;
     exit(exitcode);
 }

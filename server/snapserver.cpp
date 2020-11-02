@@ -327,6 +327,6 @@ int main(int argc, char* argv[])
         exitcode = EXIT_FAILURE;
     }
     Config::instance().save();
-    LOG(NOTICE) << "daemon terminated." << endl;
+    LOG(NOTICE) << "Snapserver terminated." << endl;
     exit(exitcode);
 }
