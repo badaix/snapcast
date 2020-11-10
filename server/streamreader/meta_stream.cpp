@@ -42,7 +42,7 @@ MetaStream::MetaStream(PcmListener* pcmListener, std::vector<std::shared_ptr<Pcm
             continue;
 
         bool found = false;
-        for (const auto stream : streams)
+        for (const auto& stream : streams)
         {
             if (stream->getName() == component)
             {
@@ -96,7 +96,7 @@ void MetaStream::onStateChanged(const PcmStream* pcmStream, ReaderState state)
 {
     LOG(DEBUG, LOG_TAG) << "onStateChanged: " << pcmStream->getName() << ", state: " << static_cast<int>(state) << "\n";
     std::lock_guard<std::mutex> lock(mutex_);
-    for (const auto stream : streams_)
+    for (const auto& stream : streams_)
     {
         if (stream->getState() == ReaderState::kPlaying)
         {

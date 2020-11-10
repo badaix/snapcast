@@ -153,7 +153,7 @@ const PcmStreamPtr StreamManager::getDefaultStream()
     if (streams_.empty())
         return nullptr;
 
-    for (const auto stream : streams_)
+    for (const auto& stream : streams_)
     {
         if (stream->getCodec() != "null")
             return stream;
