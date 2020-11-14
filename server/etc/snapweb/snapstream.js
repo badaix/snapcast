@@ -703,7 +703,12 @@ class SnapStream {
         this.audioBufferCount = 3;
         this.bufferMs = 1000;
         this.bufferNum = 0;
-        this.streamsocket = new WebSocket('ws://' + host + ':' + port + '/stream');
+        this.proto = 'ws' + ('https:' == document.location.protocol ? 's' : '') + '://';
+        if (port === null) {
+            this.streamsocket = new WebSocket(this.proto + host + '/stream');
+        } else {
+            this.streamsocket = new WebSocket(this.proto + host + ':' + port + '/stream');
+        }
         this.streamsocket.binaryType = "arraybuffer";
         this.streamsocket.onmessage = (msg) => {
             let view = new DataView(msg.data);

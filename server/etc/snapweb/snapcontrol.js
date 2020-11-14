@@ -115,7 +115,12 @@ class Server {
 class SnapControl {
     constructor(host, port) {
         this.server = new Server();
-        this.connection = new WebSocket('ws://' + host + ':' + port + '/jsonrpc');
+        this.proto = 'ws' + ('https:' == document.location.protocol ? 's' : '') + '://';
+        if (port === null) {
+            this.connection = new WebSocket(this.proto + host + '/jsonrpc');
+        } else {
+            this.connection = new WebSocket(this.proto + host + ':' + port + '/jsonrpc');
+        }
         this.msg_id = 0;
         this.status_req_id = -1;
         // console.log(navigator);
@@ -505,7 +510,7 @@ function play() {
         snapstream = null;
     }
     else {
-        snapstream = new SnapStream(window.location.hostname, 1780);
+        snapstream = new SnapStream(window.location.hostname, getPortNumber());
     }
     show();
 }
@@ -605,8 +610,16 @@ function deleteClient(id) {
         snapcontrol.deleteClient(id);
     }
 }
+function getPortNumber() {
+    let port = null;
+    let colon_idx = document.location.host.indexOf(':');
+    if (colon_idx > -1) {
+        port = parseInt(document.location.host.slice(colon_idx+1));
+    }
+    return port;
+}
 window.onload = function (event) {
-    snapcontrol = new SnapControl(window.location.hostname, 1780);
+    snapcontrol = new SnapControl(window.location.hostname, getPortNumber());
 };
 // When the user clicks anywhere outside of the modal, close it
 window.onclick = function (event) {
