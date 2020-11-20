@@ -35,6 +35,9 @@
 #ifdef HAS_ALSA
 #include "player/alsa_player.hpp"
 #endif
+#ifdef HAS_PULSE
+#include "player/pulse_player.hpp"
+#endif
 #ifdef HAS_OPENSL
 #include "player/opensl_player.hpp"
 #endif
@@ -90,6 +93,9 @@ std::vector<std::string> Controller::getSupportedPlayerNames()
     std::vector<std::string> result;
 #ifdef HAS_ALSA
     result.emplace_back("alsa");
+#endif
+#ifdef HAS_PULSE
+    result.emplace_back("pulse");
 #endif
 #ifdef HAS_OBOE
     result.emplace_back("oboe");
@@ -179,6 +185,10 @@ void Controller::getNextMessage()
 #ifdef HAS_ALSA
             if (!player_)
                 player_ = createPlayer<AlsaPlayer>(settings_.player, "alsa");
+#endif
+#ifdef HAS_PULSE
+            if (!player_)
+                player_ = createPlayer<PulsePlayer>(settings_.player, "pulse");
 #endif
 #ifdef HAS_OBOE
             if (!player_)

@@ -132,6 +132,11 @@ if(NOT WIN32)
             add_definitions(-DHAS_ALSA)
         endif (ALSA_FOUND)
 
+        pkg_search_module(PULSE libpulse)
+        if (PULSE_FOUND)
+            add_definitions(-DHAS_PULSE)
+        endif (PULSE_FOUND)
+
         if(BUILD_WITH_AVAHI)
             pkg_search_module(AVAHI avahi-client)
             if (AVAHI_FOUND)

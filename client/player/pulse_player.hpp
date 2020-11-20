@@ -1,0 +1,61 @@
+/***
+    This file is part of snapcast
+    Copyright (C) 2014-2020  Johannes Pohl
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+***/
+
+#ifndef PULSE_PLAYER_HPP
+#define PULSE_PLAYER_HPP
+
+#include "player.hpp"
+#include <cstdio>
+#include <memory>
+#include <pulse/pulseaudio.h>
+
+/// File Player
+/// Used for testing and doesn't even write the received audio to file at the moment,
+/// but just discards it
+class PulsePlayer : public Player
+{
+public:
+    PulsePlayer(boost::asio::io_context& io_context, const ClientSettings::Player& settings, std::shared_ptr<Stream> stream);
+    virtual ~PulsePlayer();
+
+    void start() override;
+    void stop() override;
+
+protected:
+    bool needsThread() const override;
+    void worker() override;
+
+    void underflowCallback(pa_stream* s);
+    void stateCallback(pa_context* c);
+    void writeCallback(pa_stream* p, size_t nbytes);
+
+    std::vector<char> buffer_;
+
+    int latency_; //< start latency in micro seconds
+    pa_buffer_attr bufattr_;
+    int underflows_ = 0;
+    pa_sample_spec ss_;
+
+    pa_mainloop* pa_ml_;
+    pa_context* pa_ctx_;
+    pa_stream* playstream_;
+    int pa_ready_ = 0;
+};
+
+
+#endif

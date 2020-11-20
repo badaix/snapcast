@@ -47,6 +47,12 @@ else()
         list(APPEND CLIENT_LIBRARIES ${ALSA_LIBRARIES})
         list(APPEND CLIENT_INCLUDE ${ALSA_INCLUDE_DIRS})
     endif (ALSA_FOUND)
+
+    if (PULSE_FOUND)
+        list(APPEND CLIENT_SOURCES player/pulse_player.cpp)
+        list(APPEND CLIENT_LIBRARIES ${PULSE_LIBRARIES})
+        list(APPEND CLIENT_INCLUDE ${PULSE_INCLUDE_DIRS})
+    endif (PULSE_FOUND)
 endif (MACOSX)
 
 # if OGG then tremor or vorbis
