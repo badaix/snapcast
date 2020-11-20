@@ -58,7 +58,73 @@ void PulsePlayer::worker()
 }
 
 
-void PulsePlayer::underflowCallback(pa_stream* s)
+void PulsePlayer::setHardwareVolume(double volume, bool muted)
+{
+    last_change_ = std::chrono::steady_clock::now();
+    pa_cvolume cvolume;
+    if (muted)
+        pa_cvolume_set(&cvolume, stream_->getFormat().channels(), PA_VOLUME_MUTED);
+    else
+        pa_cvolume_set(&cvolume, stream_->getFormat().channels(), volume * PA_VOLUME_NORM);
+    pa_context_set_sink_input_volume(pa_ctx_, pa_stream_get_index(playstream_), &cvolume, nullptr, nullptr);
+}
+
+
+bool PulsePlayer::getHardwareVolume(double& volume, bool& muted)
+{
+    // This is called during start to send the initial volume to the server
+    // Because getting the volume works async, we return false here
+    // and instead trigger volume notification in pa_context_subscribe
+    std::ignore = volume;
+    std::ignore = muted;
+    return false;
+}
+
+
+void PulsePlayer::triggerVolumeUpdate()
+{
+    pa_context_get_sink_input_info(
+        pa_ctx_, pa_stream_get_index(playstream_),
+        [](pa_context* ctx, const pa_sink_input_info* info, int eol, void* userdata) {
+            std::ignore = ctx;
+            LOG(DEBUG, LOG_TAG) << "pa_context_get_sink_info_by_index info: " << (info != nullptr) << ", eol: " << eol << "\n";
+            if (info)
+            {
+                auto self = static_cast<PulsePlayer*>(userdata);
+                auto volume = (double)pa_cvolume_avg(&(info->volume)) / (double)PA_VOLUME_NORM;
+                bool muted = (info->mute != 0);
+                LOG(DEBUG, LOG_TAG) << "volume changed: " << volume << ", muted: " << muted << "\n";
+
+                auto now = std::chrono::steady_clock::now();
+                if (now - self->last_change_ < 1s)
+                {
+                    LOG(DEBUG, LOG_TAG) << "Last volume change by server: "
+                                        << std::chrono::duration_cast<std::chrono::milliseconds>(now - self->last_change_).count()
+                                        << " ms => ignoring volume change\n";
+                    return;
+                }
+                self->notifyVolumeChange(volume, muted);
+            }
+        },
+        this);
+}
+
+void PulsePlayer::subscribeCallback(pa_context* ctx, pa_subscription_event_type_t event_type, uint32_t idx)
+{
+    std::ignore = ctx;
+    LOG(DEBUG, LOG_TAG) << "subscribeCallback, event type: " << event_type << ", idx: " << idx << "\n";
+    unsigned facility = event_type & PA_SUBSCRIPTION_EVENT_FACILITY_MASK;
+    event_type = static_cast<pa_subscription_event_type_t>(static_cast<int>(event_type) & PA_SUBSCRIPTION_EVENT_TYPE_MASK);
+    if (facility == PA_SUBSCRIPTION_EVENT_SINK_INPUT)
+    {
+        LOG(DEBUG, LOG_TAG) << "event_type: " << event_type << ", facility: " << facility << "\n";
+        if (playstream_ && (idx == pa_stream_get_index(playstream_)))
+            triggerVolumeUpdate();
+    }
+}
+
+
+void PulsePlayer::underflowCallback(pa_stream* stream)
 {
     // We increase the latency by 50% if we get 6 underflows and latency is under 2s
     // This is very useful for over the network playback that can't handle low latencies
@@ -67,19 +133,19 @@ void PulsePlayer::underflowCallback(pa_stream* s)
     if (underflows_ >= 6 && latency_ < 2000000)
     {
         latency_ = (latency_ * 3) / 2;
-        bufattr_.maxlength = pa_usec_to_bytes(latency_, &ss_);
-        bufattr_.tlength = pa_usec_to_bytes(latency_, &ss_);
-        pa_stream_set_buffer_attr(s, &bufattr_, nullptr, nullptr);
+        bufattr_.maxlength = pa_usec_to_bytes(latency_, &ps_ss_);
+        bufattr_.tlength = pa_usec_to_bytes(latency_, &ps_ss_);
+        pa_stream_set_buffer_attr(stream, &bufattr_, nullptr, nullptr);
         underflows_ = 0;
         LOG(INFO, LOG_TAG) << "latency increased to " << latency_ << " ms\n";
     }
 }
 
 
-void PulsePlayer::stateCallback(pa_context* c)
+void PulsePlayer::stateCallback(pa_context* ctx)
 {
     pa_context_state_t state;
-    state = pa_context_get_state(c);
+    state = pa_context_get_state(ctx);
     switch (state)
     {
             // These are just here for reference
@@ -100,15 +166,11 @@ void PulsePlayer::stateCallback(pa_context* c)
 }
 
 
-void PulsePlayer::writeCallback(pa_stream* p, size_t nbytes)
+void PulsePlayer::writeCallback(pa_stream* stream, size_t nbytes)
 {
     pa_usec_t usec;
     int neg;
-    pa_stream_get_latency(p, &usec, &neg);
-
-    auto rest = nbytes % stream_->getFormat().frameSize();
-    if (rest != 0)
-        LOG(INFO, LOG_TAG) << "Rest: " << rest << "\n";
+    pa_stream_get_latency(stream, &usec, &neg);
 
     auto numFrames = nbytes / stream_->getFormat().frameSize();
     if (buffer_.size() < nbytes)
@@ -124,7 +186,7 @@ void PulsePlayer::writeCallback(pa_stream* p, size_t nbytes)
         adjustVolume(static_cast<char*>(buffer_.data()), numFrames);
     }
 
-    pa_stream_write(p, buffer_.data(), nbytes, nullptr, 0LL, PA_SEEK_RELATIVE);
+    pa_stream_write(stream, buffer_.data(), nbytes, nullptr, 0LL, PA_SEEK_RELATIVE);
 }
 
 
@@ -158,46 +220,70 @@ void PulsePlayer::start()
         throw SnapException("PulseAudio is not ready");
 
     const SampleFormat& format = stream_->getFormat();
-    ss_.rate = format.rate();
-    ss_.channels = format.channels();
+    ps_ss_.rate = format.rate();
+    ps_ss_.channels = format.channels();
     if (format.bits() == 8)
-        ss_.format = PA_SAMPLE_U8;
+        ps_ss_.format = PA_SAMPLE_U8;
     else if (format.bits() == 16)
-        ss_.format = PA_SAMPLE_S16LE;
+        ps_ss_.format = PA_SAMPLE_S16LE;
     else if ((format.bits() == 24) && (format.sampleSize() == 3))
-        ss_.format = PA_SAMPLE_S24LE;
+        ps_ss_.format = PA_SAMPLE_S24LE;
     else if ((format.bits() == 24) && (format.sampleSize() == 4))
-        ss_.format = PA_SAMPLE_S24_32LE;
+        ps_ss_.format = PA_SAMPLE_S24_32LE;
     else if (format.bits() == 32)
-        ss_.format = PA_SAMPLE_S32LE;
+        ps_ss_.format = PA_SAMPLE_S32LE;
     else
         throw SnapException("Unsupported sample format: " + cpt::to_string(format.bits()));
 
-    playstream_ = pa_stream_new(pa_ctx_, "Playback", &ss_, nullptr);
+    playstream_ = pa_stream_new(pa_ctx_, "Playback", &ps_ss_, nullptr);
     if (!playstream_)
         throw SnapException("Failed to create PulseAudio stream");
 
+    if (settings_.mixer.mode == ClientSettings::Mixer::Mode::hardware)
+    {
+        pa_context_set_subscribe_callback(
+            pa_ctx_,
+            [](pa_context* ctx, pa_subscription_event_type_t event_type, uint32_t idx, void* userdata) {
+                auto self = static_cast<PulsePlayer*>(userdata);
+                self->subscribeCallback(ctx, event_type, idx);
+            },
+            this);
+        const pa_subscription_mask_t mask = static_cast<pa_subscription_mask_t>(PA_SUBSCRIPTION_MASK_SINK_INPUT);
+
+        pa_context_subscribe(
+            pa_ctx_, mask,
+            [](pa_context* ctx, int success, void* userdata) {
+                std::ignore = ctx;
+                if (success)
+                {
+                    auto self = static_cast<PulsePlayer*>(userdata);
+                    self->triggerVolumeUpdate();
+                }
+            },
+            this);
+    }
+
     pa_stream_set_write_callback(
         playstream_,
-        [](pa_stream* s, size_t length, void* userdata) {
+        [](pa_stream* stream, size_t length, void* userdata) {
             auto self = static_cast<PulsePlayer*>(userdata);
-            self->writeCallback(s, length);
+            self->writeCallback(stream, length);
         },
         this);
 
     pa_stream_set_underflow_callback(
         playstream_,
-        [](pa_stream* s, void* userdata) {
+        [](pa_stream* stream, void* userdata) {
             auto self = static_cast<PulsePlayer*>(userdata);
-            self->underflowCallback(s);
+            self->underflowCallback(stream);
         },
         this);
 
     bufattr_.fragsize = (uint32_t)-1;
-    bufattr_.maxlength = pa_usec_to_bytes(latency_, &ss_);
-    bufattr_.minreq = pa_usec_to_bytes(0, &ss_);
+    bufattr_.maxlength = pa_usec_to_bytes(latency_, &ps_ss_);
+    bufattr_.minreq = pa_usec_to_bytes(0, &ps_ss_);
     bufattr_.prebuf = (uint32_t)-1;
-    bufattr_.tlength = pa_usec_to_bytes(latency_, &ss_);
+    bufattr_.tlength = pa_usec_to_bytes(latency_, &ps_ss_);
 
     int result = pa_stream_connect_playback(
         playstream_, nullptr, &bufattr_, static_cast<pa_stream_flags>(PA_STREAM_INTERPOLATE_TIMING | PA_STREAM_ADJUST_LATENCY | PA_STREAM_AUTO_TIMING_UPDATE),

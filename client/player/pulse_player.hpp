@@ -40,21 +40,30 @@ protected:
     bool needsThread() const override;
     void worker() override;
 
-    void underflowCallback(pa_stream* s);
-    void stateCallback(pa_context* c);
-    void writeCallback(pa_stream* p, size_t nbytes);
+    bool getHardwareVolume(double& volume, bool& muted) override;
+    void setHardwareVolume(double volume, bool muted) override;
+
+    void triggerVolumeUpdate();
+
+    void underflowCallback(pa_stream* stream);
+    void stateCallback(pa_context* ctx);
+    void writeCallback(pa_stream* stream, size_t nbytes);
+    void subscribeCallback(pa_context* ctx, pa_subscription_event_type_t event_type, uint32_t idx);
 
     std::vector<char> buffer_;
 
     int latency_; //< start latency in micro seconds
     pa_buffer_attr bufattr_;
     int underflows_ = 0;
-    pa_sample_spec ss_;
+    pa_sample_spec ps_ss_;
 
     pa_mainloop* pa_ml_;
     pa_context* pa_ctx_;
     pa_stream* playstream_;
     int pa_ready_ = 0;
+
+    // cache of the last volume change
+    std::chrono::time_point<std::chrono::steady_clock> last_change_;
 };
 
 
