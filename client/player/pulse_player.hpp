@@ -52,7 +52,7 @@ protected:
 
     std::vector<char> buffer_;
 
-    int latency_; //< start latency in micro seconds
+    std::chrono::microseconds latency_;
     int underflows_ = 0;
     int pa_ready_ = 0;
 
