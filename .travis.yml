@@ -152,10 +152,12 @@ matrix:
             - clang-7 boost1.74 libasound2-dev libsoxr-dev libvorbisidec-dev libvorbis-dev libflac-dev libopus-dev alsa-utils libpulse-dev libavahi-client-dev avahi-daemon expat
 
     # build on osx
-    - os: osx
-      osx_image: xcode9.4
-      env:
-        - MATRIX_EVAL="brew update && brew unlink python@2 && brew upgrade boost && brew install flac opus libvorbis libsoxr expat"
+    
+    # xcode 9 is running into a timeout
+    # - os: osx
+    #  osx_image: xcode9.4
+    #  env:
+    #    - MATRIX_EVAL="brew update && brew unlink python@2 && brew upgrade boost && brew install flac opus libvorbis libsoxr expat"
 
     - os: osx
       osx_image: xcode10.3
