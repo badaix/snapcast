@@ -4,6 +4,7 @@ Priority: optional
 Maintainer: Felix Geyer <fgeyer@debian.org>
 Build-Depends: debhelper (>= 10~),
                libasound2-dev,
+               libpulse-dev,
                libvorbis-dev,
                libflac-dev,
                libopus-dev,

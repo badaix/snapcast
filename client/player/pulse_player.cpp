@@ -109,6 +109,7 @@ void PulsePlayer::triggerVolumeUpdate()
         this);
 }
 
+
 void PulsePlayer::subscribeCallback(pa_context* ctx, pa_subscription_event_type_t event_type, uint32_t idx)
 {
     std::ignore = ctx;
@@ -133,8 +134,8 @@ void PulsePlayer::underflowCallback(pa_stream* stream)
     if (underflows_ >= 6 && latency_ < 2000000)
     {
         latency_ = (latency_ * 3) / 2;
-        bufattr_.maxlength = pa_usec_to_bytes(latency_, &ps_ss_);
-        bufattr_.tlength = pa_usec_to_bytes(latency_, &ps_ss_);
+        bufattr_.maxlength = pa_usec_to_bytes(latency_, &pa_ss_);
+        bufattr_.tlength = pa_usec_to_bytes(latency_, &pa_ss_);
         pa_stream_set_buffer_attr(stream, &bufattr_, nullptr, nullptr);
         underflows_ = 0;
         LOG(INFO, LOG_TAG) << "latency increased to " << latency_ << " ms\n";
@@ -220,22 +221,22 @@ void PulsePlayer::start()
         throw SnapException("PulseAudio is not ready");
 
     const SampleFormat& format = stream_->getFormat();
-    ps_ss_.rate = format.rate();
-    ps_ss_.channels = format.channels();
+    pa_ss_.rate = format.rate();
+    pa_ss_.channels = format.channels();
     if (format.bits() == 8)
-        ps_ss_.format = PA_SAMPLE_U8;
+        pa_ss_.format = PA_SAMPLE_U8;
     else if (format.bits() == 16)
-        ps_ss_.format = PA_SAMPLE_S16LE;
+        pa_ss_.format = PA_SAMPLE_S16LE;
     else if ((format.bits() == 24) && (format.sampleSize() == 3))
-        ps_ss_.format = PA_SAMPLE_S24LE;
+        pa_ss_.format = PA_SAMPLE_S24LE;
     else if ((format.bits() == 24) && (format.sampleSize() == 4))
-        ps_ss_.format = PA_SAMPLE_S24_32LE;
+        pa_ss_.format = PA_SAMPLE_S24_32LE;
     else if (format.bits() == 32)
-        ps_ss_.format = PA_SAMPLE_S32LE;
+        pa_ss_.format = PA_SAMPLE_S32LE;
     else
         throw SnapException("Unsupported sample format: " + cpt::to_string(format.bits()));
 
-    playstream_ = pa_stream_new(pa_ctx_, "Playback", &ps_ss_, nullptr);
+    playstream_ = pa_stream_new(pa_ctx_, "Playback", &pa_ss_, nullptr);
     if (!playstream_)
         throw SnapException("Failed to create PulseAudio stream");
 
@@ -280,10 +281,10 @@ void PulsePlayer::start()
         this);
 
     bufattr_.fragsize = (uint32_t)-1;
-    bufattr_.maxlength = pa_usec_to_bytes(latency_, &ps_ss_);
-    bufattr_.minreq = pa_usec_to_bytes(0, &ps_ss_);
+    bufattr_.maxlength = pa_usec_to_bytes(latency_, &pa_ss_);
+    bufattr_.minreq = pa_usec_to_bytes(0, &pa_ss_);
     bufattr_.prebuf = (uint32_t)-1;
-    bufattr_.tlength = pa_usec_to_bytes(latency_, &ps_ss_);
+    bufattr_.tlength = pa_usec_to_bytes(latency_, &pa_ss_);
 
     int result = pa_stream_connect_playback(
         playstream_, nullptr, &bufattr_, static_cast<pa_stream_flags>(PA_STREAM_INTERPOLATE_TIMING | PA_STREAM_ADJUST_LATENCY | PA_STREAM_AUTO_TIMING_UPDATE),

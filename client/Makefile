@@ -84,9 +84,9 @@ OBJ      += ../common/daemon.o player/coreaudio_player.o browseZeroConf/browse_b
 else
 
 CXX       = g++
-CXXFLAGS += -pthread -DHAS_VORBIS -DHAS_ALSA -DHAS_AVAHI -DHAS_DAEMON
-LDFLAGS  += -lrt -lasound -lvorbis -lavahi-client -lavahi-common -latomic
-OBJ      += ../common/daemon.o player/alsa_player.o browseZeroConf/browse_avahi.o
+CXXFLAGS += -pthread -DHAS_VORBIS -DHAS_ALSA -DHAS_PULSE -DHAS_AVAHI -DHAS_DAEMON
+LDFLAGS  += -lrt -lasound -lpulse -lvorbis -lavahi-client -lavahi-common -latomic
+OBJ      += ../common/daemon.o player/alsa_player.o player/pulse_player.o browseZeroConf/browse_avahi.o
 
 endif
 

@@ -53,14 +53,14 @@ protected:
     std::vector<char> buffer_;
 
     int latency_; //< start latency in micro seconds
-    pa_buffer_attr bufattr_;
     int underflows_ = 0;
-    pa_sample_spec ps_ss_;
+    int pa_ready_ = 0;
 
+    pa_buffer_attr bufattr_;
+    pa_sample_spec pa_ss_;
     pa_mainloop* pa_ml_;
     pa_context* pa_ctx_;
     pa_stream* playstream_;
-    int pa_ready_ = 0;
 
     // cache of the last volume change
     std::chrono::time_point<std::chrono::steady_clock> last_change_;
