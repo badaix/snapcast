@@ -25,7 +25,10 @@
 #include "common/utils/string_utils.hpp"
 #include "pulse_player.hpp"
 
+using namespace std::chrono_literals;
 using namespace std;
+
+static constexpr std::chrono::milliseconds BUFFER_TIME = 80ms;
 
 static constexpr auto LOG_TAG = "PulsePlayer";
 
@@ -36,14 +39,13 @@ static constexpr auto LOG_TAG = "PulsePlayer";
 
 
 PulsePlayer::PulsePlayer(boost::asio::io_context& io_context, const ClientSettings::Player& settings, std::shared_ptr<Stream> stream)
-    : Player(io_context, settings, stream), latency_(100ms), pa_ml_(nullptr), pa_ctx_(nullptr), playstream_(nullptr)
+    : Player(io_context, settings, stream), latency_(BUFFER_TIME), pa_ml_(nullptr), pa_ctx_(nullptr), playstream_(nullptr)
 {
     auto params = utils::string::split_pairs(settings.parameter, ',', '=');
-    if (params.find("latency") != params.end())
-    {
-        latency_ = std::chrono::milliseconds(std::max(cpt::stoi(params["latency"]), 10));
-    }
-    LOG(INFO, LOG_TAG) << "Using latency: " << latency_.count() / 1000 << " ms\n";
+    if (params.find("buffer_time") != params.end())
+        latency_ = std::chrono::milliseconds(std::max(cpt::stoi(params["buffer_time"]), 10));
+
+    LOG(INFO, LOG_TAG) << "Using buffer_time: " << latency_.count() / 1000 << " ms\n";
 }
 
 

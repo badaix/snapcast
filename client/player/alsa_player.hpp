@@ -20,7 +20,9 @@
 #define ALSA_PLAYER_H
 
 #include "player.hpp"
+
 #include <alsa/asoundlib.h>
+#include <chrono>
 
 
 /// Audio Player
@@ -73,6 +75,9 @@ private:
     std::chrono::time_point<std::chrono::steady_clock> last_change_;
     std::recursive_mutex mutex_;
     boost::asio::steady_timer timer_;
+
+    std::chrono::microseconds buffer_time_;
+    unsigned int periods_;
 };
 
 

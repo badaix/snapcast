@@ -20,6 +20,7 @@
 #define PULSE_PLAYER_HPP
 
 #include "player.hpp"
+
 #include <cstdio>
 #include <memory>
 #include <pulse/pulseaudio.h>

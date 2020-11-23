@@ -22,11 +22,14 @@
 #include "common/str_compat.hpp"
 #include "common/utils/string_utils.hpp"
 
-//#define BUFFER_TIME 120000
-#define PERIOD_TIME 30000
+using namespace std::chrono_literals;
+using namespace std;
+
+static constexpr std::chrono::milliseconds BUFFER_TIME = 80ms;
+static constexpr int PERIODS = 4;
+
 #define exp10(x) (exp((x)*log(10)))
 
-using namespace std;
 
 static constexpr auto LOG_TAG = "Alsa";
 static constexpr auto DEFAULT_MIXER = "PCM";
@@ -61,6 +64,16 @@ AlsaPlayer::AlsaPlayer(boost::asio::io_context& io_context, const ClientSettings
 
         LOG(DEBUG, LOG_TAG) << "Mixer: " << mixer_name_ << ", device: " << mixer_device_ << "\n";
     }
+
+    buffer_time_ = BUFFER_TIME;
+    periods_ = PERIODS;
+    auto params = utils::string::split_pairs(settings.parameter, ',', '=');
+    if (params.find("buffer_time") != params.end())
+        buffer_time_ = std::chrono::milliseconds(std::max(cpt::stoi(params["buffer_time"]), 10));
+    if (params.find("fragments") != params.end())
+        periods_ = std::max(cpt::stoi(params["fragments"]), 2);
+
+    LOG(INFO, LOG_TAG) << "Using buffer_time: " << buffer_time_.count() / 1000 << " ms, fragments: " << periods_ << "\n";
 }
 
 
@@ -334,15 +347,12 @@ void AlsaPlayer::initAlsa()
     if ((err = snd_pcm_hw_params_set_rate_near(handle_, params, &rate, nullptr)) < 0)
         throw SnapException("Can't set rate: " + string(snd_strerror(err)));
 
-    unsigned int period_time;
-    snd_pcm_hw_params_get_period_time_max(params, &period_time, nullptr);
-    if (period_time > PERIOD_TIME)
-        period_time = PERIOD_TIME;
+    unsigned int buffer_time = buffer_time_.count();
+    if ((err = snd_pcm_hw_params_set_buffer_time_near(handle_, params, &buffer_time, nullptr)) < 0)
+        throw SnapException("Can't set buffer time: " + string(snd_strerror(err)));
 
-    unsigned int buffer_time = 4 * period_time;
-
-    snd_pcm_hw_params_set_period_time_near(handle_, params, &period_time, nullptr);
-    snd_pcm_hw_params_set_buffer_time_near(handle_, params, &buffer_time, nullptr);
+    if ((err = snd_pcm_hw_params_set_periods(handle_, params, periods_, 0)) < 0)
+        throw SnapException("Can't set periods: " + string(snd_strerror(err)));
 
     //	long unsigned int periodsize = stream_->format.msRate() * 50;//2*rate/50;
     //	if ((pcm = snd_pcm_hw_params_set_buffer_size_near(pcm_handle, params, &periodsize)) < 0)
@@ -365,8 +375,14 @@ void AlsaPlayer::initAlsa()
     snd_pcm_hw_params_get_period_size(params, &frames_, nullptr);
     LOG(DEBUG, LOG_TAG) << "frames: " << frames_ << "\n";
 
+    snd_pcm_hw_params_get_buffer_time(params, &tmp, nullptr);
+    LOG(DEBUG, LOG_TAG) << "buffer time: " << tmp << "\n";
+
     snd_pcm_hw_params_get_period_time(params, &tmp, nullptr);
     LOG(DEBUG, LOG_TAG) << "period time: " << tmp << "\n";
+
+    snd_pcm_hw_params_get_periods(params, &tmp, nullptr);
+    LOG(DEBUG, LOG_TAG) << "periods: " << tmp << "\n";
 
     snd_pcm_sw_params_t* swparams;
     snd_pcm_sw_params_alloca(&swparams);

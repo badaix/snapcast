@@ -335,7 +335,13 @@ int main(int argc, char** argv)
             else if (settings.player.player_name == "pulse")
             {
                 cout << "Options are a comma separated list of:\n"
-                     << " \"latency=<device latency [ms]>\" - default 100, min 10\n";
+                     << " \"buffer_time=<buffer size [ms]>\" - default 80, min 10\n";
+            }
+            else if (settings.player.player_name == "alsa")
+            {
+                cout << "Options are a comma separated list of:\n"
+                     << " \"buffer_time=<total buffer size [ms]>\" - default 80, min 10\n"
+                     << " \"fragments=<number of buffers>\" - default 4, min 2\n";
             }
             else
             {
