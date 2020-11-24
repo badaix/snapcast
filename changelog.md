@@ -1,5 +1,21 @@
 # Snapcast changelog
 
+## Version 0.23.0
+
+### Features
+
+- Client: TODO
+
+### Bugfixes
+
+- TODO
+
+### General
+
+- TODO
+
+_Johannes Pohl <snapcast@badaix.de>  Thu, 24 Dec 2020 00:13:37 +0200_
+
 ## Version 0.22.0
 
 ### Features
