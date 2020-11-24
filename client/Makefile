@@ -178,9 +178,7 @@ installsysv:
 	/etc/init.d/$(BIN) start; \
 
 adduser:
-	@if ! getent passwd snapclient >/dev/null; then \
-		useradd --gid audio --system snapclient; \
-	fi; \
+	sh ../debian/snapclient.postinst configure
 
 ifeq ($(TARGET), MACOS)
 
@@ -227,5 +225,5 @@ uninstallsystemd:
 	systemctl daemon-reload; \
 
 deluser:
-	@userdel --force snapclient > /dev/null || true; \
+	sh ../debian/snapclient.postrm purge
 
