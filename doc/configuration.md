@@ -138,10 +138,14 @@ output = audioresample ! audioconvert ! audio/x-raw,rate=48000,channels=2,format
 Captures audio from an alsa device
 
 ```sh
-alsa://?name=<name>&device=<alsa device>
+alsa://?name=<name>&device=<alsa device>[&send_silence=false][&idle_threshold=100]
 ```
 
-`device` is an alsa device name or identifier, e.g. `default` or `hw:0,0`
+#### Available parameters
+
+- `device`: alsa device name or identifier, e.g. `default` or `hw:0,0` or `hw:0,0,0`
+- `idle_threshold`: switch stream state from playing to idle after receiving `idle_threshold` milliseconds of silence
+- `send_silence`: forward silence to clients when stream state is `idle`
 
 The output of any audio player that uses alsa can be redirected to Snapcast by using an alsa loopback device:
 

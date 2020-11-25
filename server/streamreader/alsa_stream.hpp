@@ -56,6 +56,11 @@ protected:
     std::vector<char> silent_chunk_;
     std::chrono::microseconds silence_;
     std::string lastException_;
+
+    /// send silent chunks to clients
+    bool send_silence_;
+    /// silence duration before switching the stream to idle
+    std::chrono::milliseconds idle_threshold_;
 };
 
 } // namespace streamreader

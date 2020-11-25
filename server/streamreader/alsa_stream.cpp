@@ -69,6 +69,8 @@ AlsaStream::AlsaStream(PcmListener* pcmListener, boost::asio::io_context& ioc, c
     : PcmStream(pcmListener, ioc, uri), handle_(nullptr), read_timer_(ioc), silence_(0ms)
 {
     device_ = uri_.getQuery("device", "hw:0");
+    send_silence_ = (uri_.getQuery("send_silence", "false") == "true");
+    idle_threshold_ = std::chrono::milliseconds(std::max(cpt::stoi(uri_.getQuery("idle_threshold", "100")), 10));
     LOG(DEBUG, LOG_TAG) << "Device: " << device_ << "\n";
 }
 
@@ -215,7 +217,7 @@ void AlsaStream::do_read()
         if (std::memcmp(chunk_->payload, silent_chunk_.data(), silent_chunk_.size()) == 0)
         {
             silence_ += chunk_->duration<std::chrono::microseconds>();
-            if (silence_ > 100ms)
+            if (silence_ > idle_threshold_)
             {
                 setState(ReaderState::kIdle);
             }
@@ -223,6 +225,8 @@ void AlsaStream::do_read()
         else
         {
             silence_ = 0ms;
+            if ((state_ == ReaderState::kIdle) && !send_silence_)
+                first_ = true;
             setState(ReaderState::kPlaying);
         }
 
@@ -234,7 +238,10 @@ void AlsaStream::do_read()
             tvEncodedChunk_ = std::chrono::steady_clock::now() - duration;
         }
 
-        chunkRead(*chunk_);
+        if ((state_ == ReaderState::kPlaying) || ((state_ == ReaderState::kIdle) && send_silence_))
+        {
+            chunkRead(*chunk_);
+        }
 
         nextTick_ += duration;
         auto currentTick = std::chrono::steady_clock::now();
