@@ -239,7 +239,8 @@ void PulsePlayer::start()
     pa_ml_ = pa_mainloop_new();
     pa_mainloop_api* pa_mlapi = pa_mainloop_get_api(pa_ml_);
     pa_ctx_ = pa_context_new(pa_mlapi, "Snapcast");
-    pa_context_connect(pa_ctx_, nullptr, PA_CONTEXT_NOFLAGS, nullptr);
+    if (pa_context_connect(pa_ctx_, nullptr, PA_CONTEXT_NOFLAGS, nullptr) < 0)
+        throw SnapException("Failed to connect to PulseAudio context: " + std::string(pa_strerror(pa_context_errno(pa_ctx_))));
 
     // This function defines a callback so the server will tell us it's state.
     // Our callback will wait for the state to be ready.  The callback will
@@ -255,8 +256,15 @@ void PulsePlayer::start()
 
     // We can't do anything until PA is ready, so just iterate the mainloop
     // and continue
+    auto wait_start = std::chrono::steady_clock::now();
     while (pa_ready_ == 0)
-        pa_mainloop_iterate(pa_ml_, 1, nullptr);
+    {
+        auto now = std::chrono::steady_clock::now();
+        if (now - wait_start > 5s)
+            throw SnapException("Timeout while waiting for PulseAudio to become ready");
+        if (pa_mainloop_iterate(pa_ml_, 1, nullptr) < 0)
+            throw SnapException("Error while waiting for PulseAudio to become ready: " + std::string(pa_strerror(pa_context_errno(pa_ctx_))));
+    }
 
     if (pa_ready_ == 2)
         throw SnapException("PulseAudio is not ready");
