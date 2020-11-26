@@ -264,6 +264,7 @@ void PulsePlayer::start()
             throw SnapException("Timeout while waiting for PulseAudio to become ready");
         if (pa_mainloop_iterate(pa_ml_, 1, nullptr) < 0)
             throw SnapException("Error while waiting for PulseAudio to become ready: " + std::string(pa_strerror(pa_context_errno(pa_ctx_))));
+        this_thread::sleep_for(1ms);
     }
 
     if (pa_ready_ == 2)

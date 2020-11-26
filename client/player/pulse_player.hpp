@@ -21,6 +21,7 @@
 
 #include "player.hpp"
 
+#include <atomic>
 #include <cstdio>
 #include <memory>
 #include <pulse/pulseaudio.h>
@@ -55,7 +56,7 @@ protected:
 
     std::chrono::microseconds latency_;
     int underflows_ = 0;
-    int pa_ready_ = 0;
+    std::atomic<int> pa_ready_;
 
     pa_buffer_attr bufattr_;
     pa_sample_spec pa_ss_;
