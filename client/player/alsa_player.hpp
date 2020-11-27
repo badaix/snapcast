@@ -51,6 +51,7 @@ private:
     /// free alsa and optionally the mixer
     /// @param uninit_mixer free the mixer
     void uninitAlsa(bool uninit_mixer);
+    bool getAvailDelay(snd_pcm_sframes_t& avail, snd_pcm_sframes_t& delay);
 
     void initMixer();
     void uninitMixer();

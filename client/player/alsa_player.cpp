@@ -465,6 +465,35 @@ bool AlsaPlayer::needsThread() const
 }
 
 
+bool AlsaPlayer::getAvailDelay(snd_pcm_sframes_t& avail, snd_pcm_sframes_t& delay)
+{
+    int result = snd_pcm_avail_delay(handle_, &avail, &delay);
+    if (result < 0)
+    {
+        LOG(WARNING, LOG_TAG) << "snd_pcm_avail_delay failed: " << snd_strerror(result) << ", avail: " << avail << ", delay: " << delay
+                              << ", using snd_pcm_avail amd snd_pcm_delay.\n";
+        this_thread::sleep_for(1ms);
+        avail = snd_pcm_avail(handle_);
+        result = snd_pcm_delay(handle_, &delay);
+        if ((result < 0) || (delay < 0))
+        {
+            LOG(WARNING, LOG_TAG) << "snd_pcm_avail and snd_pcm_delay failed: " << snd_strerror(result) << ", avail: " << avail << ", delay: " << delay << "\n";
+            this_thread::sleep_for(10ms);
+            snd_pcm_prepare(handle_);
+            return false;
+        }
+    }
+
+    if (avail < 0)
+    {
+        LOG(DEBUG, LOG_TAG) << "snd_pcm_avail < 0: " << avail << ", using " << frames_ << "\n";
+        avail = frames_;
+    }
+
+    return true;
+}
+
+
 void AlsaPlayer::worker()
 {
     snd_pcm_sframes_t pcm;
@@ -509,38 +538,16 @@ void AlsaPlayer::worker()
             continue;
         }
 
-        int result = snd_pcm_avail_delay(handle_, &framesAvail, &framesDelay);
-        if (result < 0)
+        if (!getAvailDelay(framesAvail, framesDelay))
         {
-            // if (result == -EPIPE)
-            //     snd_pcm_prepare(handle_);
-            // else
-            //     uninitAlsa();
-            LOG(WARNING, LOG_TAG) << "snd_pcm_avail_delay failed: " << snd_strerror(result) << ", avail: " << framesAvail << ", delay: " << framesDelay
-                                  << ", retrying.\n";
-            this_thread::sleep_for(5ms);
-            int result = snd_pcm_avail_delay(handle_, &framesAvail, &framesDelay);
-            if (result < 0)
-            {
-                this_thread::sleep_for(5ms);
-                LOG(WARNING, LOG_TAG) << "snd_pcm_avail_delay failed again: " << snd_strerror(result) << ", avail: " << framesAvail
-                                      << ", delay: " << framesDelay << ", using snd_pcm_avail and snd_pcm_delay.\n";
-                framesAvail = snd_pcm_avail(handle_);
-                result = snd_pcm_delay(handle_, &framesDelay);
-                if ((result < 0) || (framesAvail <= 0) || (framesDelay <= 0))
-                {
-                    LOG(WARNING, LOG_TAG) << "snd_pcm_avail and snd_pcm_delay failed: " << snd_strerror(result) << ", avail: " << framesAvail
-                                          << ", delay: " << framesDelay << "\n";
-                    this_thread::sleep_for(10ms);
-                    snd_pcm_prepare(handle_);
-                    continue;
-                }
-            }
+            this_thread::sleep_for(10ms);
+            snd_pcm_prepare(handle_);
+            continue;
         }
 
         if (framesAvail < static_cast<snd_pcm_sframes_t>(frames_))
         {
-            this_thread::sleep_for(10ms);
+            this_thread::sleep_for(5ms);
             continue;
         }
 
