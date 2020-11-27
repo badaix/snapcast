@@ -274,30 +274,28 @@ void AlsaPlayer::initMixer()
 void AlsaPlayer::initAlsa()
 {
     std::lock_guard<std::recursive_mutex> lock(mutex_);
-    unsigned int tmp, rate;
-    int err, channels;
-    snd_pcm_hw_params_t* params;
 
     const SampleFormat& format = stream_->getFormat();
-    rate = format.rate();
-    channels = format.channels();
+    unsigned int rate = format.rate();
+    int channels = format.channels();
+    int err;
 
-    /* Open the PCM device in playback mode */
+    // Open the PCM device in playback mode
     if ((err = snd_pcm_open(&handle_, settings_.pcm_device.name.c_str(), SND_PCM_STREAM_PLAYBACK, 0)) < 0)
         throw SnapException("Can't open " + settings_.pcm_device.name + ", error: " + snd_strerror(err), err);
 
-    /*	struct snd_pcm_playback_info_t pinfo;
-     if ( (pcm = snd_pcm_playback_info( pcm_handle, &pinfo )) < 0 )
-     fprintf( stderr, "Error: playback info error: %s\n", snd_strerror( err ) );
-     printf("buffer: '%d'\n", pinfo.buffer_size);
-     */
-    /* Allocate parameters object and fill it with default values*/
+    // struct snd_pcm_playback_info_t pinfo;
+    // if ((pcm = snd_pcm_playback_info( pcm_handle, &pinfo)) < 0)
+    //     fprintf(stderr, "Error: playback info error: %s\n", snd_strerror(err));
+    // printf("buffer: '%d'\n", pinfo.buffer_size);
+   
+    // Allocate parameters object and fill it with default values
+    snd_pcm_hw_params_t* params;
     snd_pcm_hw_params_alloca(&params);
-
     if ((err = snd_pcm_hw_params_any(handle_, params)) < 0)
         throw SnapException("Can't fill params: " + string(snd_strerror(err)));
 
-    /* Set parameters */
+    // Set parameters
     if ((err = snd_pcm_hw_params_set_access(handle_, params, SND_PCM_ACCESS_RW_INTERLEAVED)) < 0)
         throw SnapException("Can't set interleaved mode: " + string(snd_strerror(err)));
 
@@ -351,39 +349,28 @@ void AlsaPlayer::initAlsa()
     if ((err = snd_pcm_hw_params_set_buffer_time_near(handle_, params, &buffer_time, nullptr)) < 0)
         throw SnapException("Can't set buffer time: " + string(snd_strerror(err)));
 
-    if ((err = snd_pcm_hw_params_set_periods(handle_, params, periods_, 0)) < 0)
+    unsigned int periods = periods_;
+    if ((err = snd_pcm_hw_params_set_periods_near(handle_, params, &periods, 0)) < 0)
         throw SnapException("Can't set periods: " + string(snd_strerror(err)));
 
     //	long unsigned int periodsize = stream_->format.msRate() * 50;//2*rate/50;
     //	if ((pcm = snd_pcm_hw_params_set_buffer_size_near(pcm_handle, params, &periodsize)) < 0)
     //		LOG(ERROR, LOG_TAG) << "Unable to set buffer size " << (long int)periodsize << ": " <<  snd_strerror(pcm) << "\n";
 
-    /* Write parameters */
+    // Write parameters
     if ((err = snd_pcm_hw_params(handle_, params)) < 0)
         throw SnapException("Can't set hardware parameters: " + string(snd_strerror(err)));
 
-    /* Resume information */
-    LOG(DEBUG, LOG_TAG) << "PCM name: " << snd_pcm_name(handle_) << "\n";
-    LOG(DEBUG, LOG_TAG) << "PCM state: " << snd_pcm_state_name(snd_pcm_state(handle_)) << "\n";
-    snd_pcm_hw_params_get_channels(params, &tmp);
-    LOG(DEBUG, LOG_TAG) << "channels: " << tmp << "\n";
+    // Resume information
+    LOG(INFO, LOG_TAG) << "PCM name: " << snd_pcm_name(handle_) << ", ";
+    LOG(INFO, LOG_TAG) << "PCM state: " << snd_pcm_state_name(snd_pcm_state(handle_)) << ", ";
 
-    snd_pcm_hw_params_get_rate(params, &tmp, nullptr);
-    LOG(DEBUG, LOG_TAG) << "rate: " << tmp << " bps\n";
-
-    /* Allocate buffer to hold single period */
+    unsigned int period_time;
+    snd_pcm_hw_params_get_period_time(params, &period_time, nullptr);
     snd_pcm_hw_params_get_period_size(params, &frames_, nullptr);
-    LOG(DEBUG, LOG_TAG) << "frames: " << frames_ << "\n";
+    LOG(INFO, LOG_TAG) << "rate: " << rate << ", channels: " << channels << ", buffer time: " << buffer_time << " us, periods: " << periods << ", period time: " << period_time << " us, period frames: " << frames_ << "\n";
 
-    snd_pcm_hw_params_get_buffer_time(params, &tmp, nullptr);
-    LOG(DEBUG, LOG_TAG) << "buffer time: " << tmp << "\n";
-
-    snd_pcm_hw_params_get_period_time(params, &tmp, nullptr);
-    LOG(DEBUG, LOG_TAG) << "period time: " << tmp << "\n";
-
-    snd_pcm_hw_params_get_periods(params, &tmp, nullptr);
-    LOG(DEBUG, LOG_TAG) << "periods: " << tmp << "\n";
-
+    // Allocate buffer to hold single period
     snd_pcm_sw_params_t* swparams;
     snd_pcm_sw_params_alloca(&swparams);
     snd_pcm_sw_params_current(handle_, swparams);
