@@ -310,10 +310,10 @@ void PulsePlayer::start()
                                      },
                                      this);
 
-    bufattr_.fragsize = (uint32_t)-1;
+    bufattr_.fragsize = pa_usec_to_bytes(latency_.count(), &pa_ss_);
     bufattr_.maxlength = pa_usec_to_bytes(latency_.count(), &pa_ss_);
-    bufattr_.minreq = pa_usec_to_bytes(0, &pa_ss_);
-    bufattr_.prebuf = (uint32_t)-1;
+    bufattr_.minreq = static_cast<uint32_t>(-1);
+    bufattr_.prebuf = static_cast<uint32_t>(-1);
     bufattr_.tlength = pa_usec_to_bytes(latency_.count(), &pa_ss_);
 
     int result = pa_stream_connect_playback(
