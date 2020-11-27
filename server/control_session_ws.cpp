@@ -61,7 +61,7 @@ void ControlSessionWebsocket::stop()
 
 void ControlSessionWebsocket::sendAsync(const std::string& message)
 {
-    strand_.post([ this, self = shared_from_this(), msg = message ]() {
+    strand_.post([this, self = shared_from_this(), msg = message]() {
         messages_.push_back(std::move(msg));
         if (messages_.size() > 1)
         {
@@ -77,7 +77,7 @@ void ControlSessionWebsocket::send_next()
 {
     const std::string& message = messages_.front();
     ws_.async_write(boost::asio::buffer(message),
-                    boost::asio::bind_executor(strand_, [ this, self = shared_from_this() ](std::error_code ec, std::size_t length) {
+                    boost::asio::bind_executor(strand_, [this, self = shared_from_this()](std::error_code ec, std::size_t length) {
                         messages_.pop_front();
                         if (ec)
                         {
@@ -96,7 +96,7 @@ void ControlSessionWebsocket::send_next()
 void ControlSessionWebsocket::do_read_ws()
 {
     // Read a message into our buffer
-    ws_.async_read(buffer_, boost::asio::bind_executor(strand_, [ this, self = shared_from_this() ](beast::error_code ec, std::size_t bytes_transferred) {
+    ws_.async_read(buffer_, boost::asio::bind_executor(strand_, [this, self = shared_from_this()](beast::error_code ec, std::size_t bytes_transferred) {
                        on_read_ws(ec, bytes_transferred);
                    }));
 }

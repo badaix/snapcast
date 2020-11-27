@@ -24,7 +24,8 @@
 
 static constexpr auto LOG_TAG = "Bonjour";
 
-typedef union {
+typedef union
+{
     unsigned char b[2];
     unsigned short NotAnInteger;
 } Opaque16;

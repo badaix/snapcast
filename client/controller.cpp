@@ -260,34 +260,35 @@ void Controller::getNextMessage()
 void Controller::sendTimeSyncMessage(int quick_syncs)
 {
     auto timeReq = std::make_shared<msg::Time>();
-    clientConnection_->sendRequest<msg::Time>(timeReq, 2s, [this, quick_syncs](const boost::system::error_code& ec,
-                                                                               const std::unique_ptr<msg::Time>& response) mutable {
-        if (ec)
-        {
-            LOG(ERROR, LOG_TAG) << "Time sync request failed: " << ec.message() << "\n";
-            reconnect();
-            return;
-        }
-        else
-        {
-            TimeProvider::getInstance().setDiff(response->latency, response->received - response->sent);
-        }
-
-        std::chrono::microseconds next = TIME_SYNC_INTERVAL;
-        if (quick_syncs > 0)
-        {
-            if (--quick_syncs == 0)
-                LOG(INFO, LOG_TAG) << "diff to server [ms]: " << (float)TimeProvider::getInstance().getDiffToServer<chronos::usec>().count() / 1000.f << "\n";
-            next = 100us;
-        }
-        timer_.expires_after(next);
-        timer_.async_wait([this, quick_syncs](const boost::system::error_code& ec) {
-            if (!ec)
+    clientConnection_->sendRequest<msg::Time>(
+        timeReq, 2s, [this, quick_syncs](const boost::system::error_code& ec, const std::unique_ptr<msg::Time>& response) mutable {
+            if (ec)
             {
-                sendTimeSyncMessage(quick_syncs);
+                LOG(ERROR, LOG_TAG) << "Time sync request failed: " << ec.message() << "\n";
+                reconnect();
+                return;
             }
+            else
+            {
+                TimeProvider::getInstance().setDiff(response->latency, response->received - response->sent);
+            }
+
+            std::chrono::microseconds next = TIME_SYNC_INTERVAL;
+            if (quick_syncs > 0)
+            {
+                if (--quick_syncs == 0)
+                    LOG(INFO, LOG_TAG) << "diff to server [ms]: " << (float)TimeProvider::getInstance().getDiffToServer<chronos::usec>().count() / 1000.f
+                                       << "\n";
+                next = 100us;
+            }
+            timer_.expires_after(next);
+            timer_.async_wait([this, quick_syncs](const boost::system::error_code& ec) {
+                if (!ec)
+                {
+                    sendTimeSyncMessage(quick_syncs);
+                }
+            });
         });
-    });
 }
 
 void Controller::browseMdns(const MdnsHandler& handler)

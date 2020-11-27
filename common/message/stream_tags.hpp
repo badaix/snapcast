@@ -67,7 +67,7 @@ public:
 
     ~StreamTags() override = default;
 };
-}
+} // namespace msg
 
 
 #endif

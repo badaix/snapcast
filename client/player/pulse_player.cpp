@@ -93,29 +93,30 @@ bool PulsePlayer::getHardwareVolume(double& volume, bool& muted)
 
 void PulsePlayer::triggerVolumeUpdate()
 {
-    pa_context_get_sink_input_info(pa_ctx_, pa_stream_get_index(playstream_),
-                                   [](pa_context* ctx, const pa_sink_input_info* info, int eol, void* userdata) {
-                                       std::ignore = ctx;
-                                       LOG(DEBUG, LOG_TAG) << "pa_context_get_sink_info_by_index info: " << (info != nullptr) << ", eol: " << eol << "\n";
-                                       if (info)
-                                       {
-                                           auto self = static_cast<PulsePlayer*>(userdata);
-                                           auto volume = (double)pa_cvolume_avg(&(info->volume)) / (double)PA_VOLUME_NORM;
-                                           bool muted = (info->mute != 0);
-                                           LOG(DEBUG, LOG_TAG) << "volume changed: " << volume << ", muted: " << muted << "\n";
+    pa_context_get_sink_input_info(
+        pa_ctx_, pa_stream_get_index(playstream_),
+        [](pa_context* ctx, const pa_sink_input_info* info, int eol, void* userdata) {
+            std::ignore = ctx;
+            LOG(DEBUG, LOG_TAG) << "pa_context_get_sink_info_by_index info: " << (info != nullptr) << ", eol: " << eol << "\n";
+            if (info)
+            {
+                auto self = static_cast<PulsePlayer*>(userdata);
+                auto volume = (double)pa_cvolume_avg(&(info->volume)) / (double)PA_VOLUME_NORM;
+                bool muted = (info->mute != 0);
+                LOG(DEBUG, LOG_TAG) << "volume changed: " << volume << ", muted: " << muted << "\n";
 
-                                           auto now = std::chrono::steady_clock::now();
-                                           if (now - self->last_change_ < 1s)
-                                           {
-                                               LOG(DEBUG, LOG_TAG) << "Last volume change by server: "
-                                                                   << std::chrono::duration_cast<std::chrono::milliseconds>(now - self->last_change_).count()
-                                                                   << " ms => ignoring volume change\n";
-                                               return;
-                                           }
-                                           self->notifyVolumeChange(volume, muted);
-                                       }
-                                   },
-                                   this);
+                auto now = std::chrono::steady_clock::now();
+                if (now - self->last_change_ < 1s)
+                {
+                    LOG(DEBUG, LOG_TAG) << "Last volume change by server: "
+                                        << std::chrono::duration_cast<std::chrono::milliseconds>(now - self->last_change_).count()
+                                        << " ms => ignoring volume change\n";
+                    return;
+                }
+                self->notifyVolumeChange(volume, muted);
+            }
+        },
+        this);
 }
 
 
@@ -247,12 +248,13 @@ void PulsePlayer::start()
     // modify the variable to 1 so we know when we have a connection and it's
     // ready.
     // If there's an error, the callback will set pa_ready to 2
-    pa_context_set_state_callback(pa_ctx_,
-                                  [](pa_context* c, void* userdata) {
-                                      auto self = static_cast<PulsePlayer*>(userdata);
-                                      self->stateCallback(c);
-                                  },
-                                  this);
+    pa_context_set_state_callback(
+        pa_ctx_,
+        [](pa_context* c, void* userdata) {
+            auto self = static_cast<PulsePlayer*>(userdata);
+            self->stateCallback(c);
+        },
+        this);
 
     // We can't do anything until PA is ready, so just iterate the mainloop
     // and continue
@@ -276,39 +278,43 @@ void PulsePlayer::start()
 
     if (settings_.mixer.mode == ClientSettings::Mixer::Mode::hardware)
     {
-        pa_context_set_subscribe_callback(pa_ctx_,
-                                          [](pa_context* ctx, pa_subscription_event_type_t event_type, uint32_t idx, void* userdata) {
-                                              auto self = static_cast<PulsePlayer*>(userdata);
-                                              self->subscribeCallback(ctx, event_type, idx);
-                                          },
-                                          this);
+        pa_context_set_subscribe_callback(
+            pa_ctx_,
+            [](pa_context* ctx, pa_subscription_event_type_t event_type, uint32_t idx, void* userdata) {
+                auto self = static_cast<PulsePlayer*>(userdata);
+                self->subscribeCallback(ctx, event_type, idx);
+            },
+            this);
         const pa_subscription_mask_t mask = static_cast<pa_subscription_mask_t>(PA_SUBSCRIPTION_MASK_SINK_INPUT);
 
-        pa_context_subscribe(pa_ctx_, mask,
-                             [](pa_context* ctx, int success, void* userdata) {
-                                 std::ignore = ctx;
-                                 if (success)
-                                 {
-                                     auto self = static_cast<PulsePlayer*>(userdata);
-                                     self->triggerVolumeUpdate();
-                                 }
-                             },
-                             this);
+        pa_context_subscribe(
+            pa_ctx_, mask,
+            [](pa_context* ctx, int success, void* userdata) {
+                std::ignore = ctx;
+                if (success)
+                {
+                    auto self = static_cast<PulsePlayer*>(userdata);
+                    self->triggerVolumeUpdate();
+                }
+            },
+            this);
     }
 
-    pa_stream_set_write_callback(playstream_,
-                                 [](pa_stream* stream, size_t length, void* userdata) {
-                                     auto self = static_cast<PulsePlayer*>(userdata);
-                                     self->writeCallback(stream, length);
-                                 },
-                                 this);
+    pa_stream_set_write_callback(
+        playstream_,
+        [](pa_stream* stream, size_t length, void* userdata) {
+            auto self = static_cast<PulsePlayer*>(userdata);
+            self->writeCallback(stream, length);
+        },
+        this);
 
-    pa_stream_set_underflow_callback(playstream_,
-                                     [](pa_stream* stream, void* userdata) {
-                                         auto self = static_cast<PulsePlayer*>(userdata);
-                                         self->underflowCallback(stream);
-                                     },
-                                     this);
+    pa_stream_set_underflow_callback(
+        playstream_,
+        [](pa_stream* stream, void* userdata) {
+            auto self = static_cast<PulsePlayer*>(userdata);
+            self->underflowCallback(stream);
+        },
+        this);
 
     bufattr_.fragsize = pa_usec_to_bytes(latency_.count(), &pa_ss_);
     bufattr_.maxlength = pa_usec_to_bytes(latency_.count(), &pa_ss_);

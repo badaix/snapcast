@@ -147,4 +147,4 @@ std::string StreamUri::getQuery(const std::string& key, const std::string& def) 
         return iter->second;
     return def;
 }
-}
+} // namespace streamreader

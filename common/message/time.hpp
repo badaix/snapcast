@@ -53,7 +53,7 @@ protected:
         writeVal(stream, latency.usec);
     }
 };
-}
+} // namespace msg
 
 
 #endif

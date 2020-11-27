@@ -803,7 +803,8 @@ inline void Error::parse_json(const Json& json)
 inline Json Error::to_json() const
 {
     Json j = {
-        {"code", code_}, {"message", message_},
+        {"code", code_},
+        {"message", message_},
     };
 
     if (!data_.is_null())
@@ -1065,7 +1066,8 @@ inline void Response::parse_json(const Json& json)
 inline Json Response::to_json() const
 {
     Json j = {
-        {"jsonrpc", "2.0"}, {"id", id_.to_json()},
+        {"jsonrpc", "2.0"},
+        {"id", id_.to_json()},
     };
 
     if (error_)
@@ -1129,7 +1131,8 @@ inline void Notification::parse_json(const Json& json)
 inline Json Notification::to_json() const
 {
     Json json = {
-        {"jsonrpc", "2.0"}, {"method", method_},
+        {"jsonrpc", "2.0"},
+        {"method", method_},
     };
 
     if (params_)

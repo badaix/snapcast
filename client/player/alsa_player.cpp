@@ -288,7 +288,7 @@ void AlsaPlayer::initAlsa()
     // if ((pcm = snd_pcm_playback_info( pcm_handle, &pinfo)) < 0)
     //     fprintf(stderr, "Error: playback info error: %s\n", snd_strerror(err));
     // printf("buffer: '%d'\n", pinfo.buffer_size);
-   
+
     // Allocate parameters object and fill it with default values
     snd_pcm_hw_params_t* params;
     snd_pcm_hw_params_alloca(&params);
@@ -368,7 +368,8 @@ void AlsaPlayer::initAlsa()
     unsigned int period_time;
     snd_pcm_hw_params_get_period_time(params, &period_time, nullptr);
     snd_pcm_hw_params_get_period_size(params, &frames_, nullptr);
-    LOG(INFO, LOG_TAG) << "rate: " << rate << ", channels: " << channels << ", buffer time: " << buffer_time << " us, periods: " << periods << ", period time: " << period_time << " us, period frames: " << frames_ << "\n";
+    LOG(INFO, LOG_TAG) << "rate: " << rate << ", channels: " << channels << ", buffer time: " << buffer_time << " us, periods: " << periods
+                       << ", period time: " << period_time << " us, period frames: " << frames_ << "\n";
 
     // Allocate buffer to hold single period
     snd_pcm_sw_params_t* swparams;

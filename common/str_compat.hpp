@@ -111,7 +111,7 @@ static float strtof(const char* str, char** endptr)
     return std::strtof(str, endptr);
 #endif
 }
-}
+} // namespace cpt
 
 
 #endif

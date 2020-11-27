@@ -280,7 +280,9 @@ IF(CLANG_FORMAT)
         client/*.[ch]pp
         server/*.[ch]pp
     )
-    
+
+    list(REMOVE_ITEM CHECK_CXX_SOURCE_FILES "${CMAKE_SOURCE_DIR}/common/json.hpp")
+
     ADD_CUSTOM_TARGET(
         reformat
         COMMAND

@@ -80,7 +80,7 @@ public:
         msg["muted"] = muted;
     }
 };
-}
+} // namespace msg
 
 
 #endif

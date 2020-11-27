@@ -152,8 +152,9 @@ ControlSessionHttp::~ControlSessionHttp()
 
 void ControlSessionHttp::start()
 {
-    http::async_read(socket_, buffer_, req_, boost::asio::bind_executor(strand_, [ this, self = shared_from_this() ](
-                                                                                     boost::system::error_code ec, std::size_t bytes) { on_read(ec, bytes); }));
+    http::async_read(
+        socket_, buffer_, req_,
+        boost::asio::bind_executor(strand_, [this, self = shared_from_this()](boost::system::error_code ec, std::size_t bytes) { on_read(ec, bytes); }));
 }
 
 
@@ -313,7 +314,7 @@ void ControlSessionHttp::on_read(beast::error_code ec, std::size_t bytes_transfe
             // Create a WebSocket session by transferring the socket
             // std::make_shared<websocket_session>(std::move(socket_), state_)->run(std::move(req_));
             auto ws = std::make_shared<websocket::stream<beast::tcp_stream>>(std::move(socket_));
-            ws->async_accept(req_, [ this, ws, self = shared_from_this() ](beast::error_code ec) {
+            ws->async_accept(req_, [this, ws, self = shared_from_this()](beast::error_code ec) {
                 if (ec)
                 {
                     LOG(ERROR, LOG_TAG) << "Error during WebSocket handshake (control): " << ec.message() << "\n";
@@ -330,7 +331,7 @@ void ControlSessionHttp::on_read(beast::error_code ec, std::size_t bytes_transfe
             // Create a WebSocket session by transferring the socket
             // std::make_shared<websocket_session>(std::move(socket_), state_)->run(std::move(req_));
             auto ws = std::make_shared<websocket::stream<beast::tcp_stream>>(std::move(socket_));
-            ws->async_accept(req_, [ this, ws, self = shared_from_this() ](beast::error_code ec) {
+            ws->async_accept(req_, [this, ws, self = shared_from_this()](beast::error_code ec) {
                 if (ec)
                 {
                     LOG(ERROR, LOG_TAG) << "Error during WebSocket handshake (stream): " << ec.message() << "\n";
@@ -355,7 +356,7 @@ void ControlSessionHttp::on_read(beast::error_code ec, std::size_t bytes_transfe
 
         // Write the response
         http::async_write(this->socket_, *sp,
-                          boost::asio::bind_executor(strand_, [ this, self = this->shared_from_this(), sp ](beast::error_code ec, std::size_t bytes) {
+                          boost::asio::bind_executor(strand_, [this, self = this->shared_from_this(), sp](beast::error_code ec, std::size_t bytes) {
                               this->on_write(ec, bytes, sp->need_eof());
                           }));
     });
@@ -385,7 +386,7 @@ void ControlSessionHttp::on_write(beast::error_code ec, std::size_t, bool close)
 
     // Read another request
     http::async_read(socket_, buffer_, req_,
-                     boost::asio::bind_executor(strand_, [ this, self = shared_from_this() ](beast::error_code ec, std::size_t bytes) { on_read(ec, bytes); }));
+                     boost::asio::bind_executor(strand_, [this, self = shared_from_this()](beast::error_code ec, std::size_t bytes) { on_read(ec, bytes); }));
 }
 
 

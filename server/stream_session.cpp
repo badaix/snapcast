@@ -52,7 +52,7 @@ void StreamSession::send_next()
 {
     auto& buffer = messages_.front();
     buffer.on_air = true;
-    strand_.post([ this, self = shared_from_this(), buffer ]() {
+    strand_.post([this, self = shared_from_this(), buffer]() {
         sendAsync(buffer, [this](boost::system::error_code ec, std::size_t length) {
             messages_.pop_front();
             if (ec)
@@ -70,7 +70,7 @@ void StreamSession::send_next()
 
 void StreamSession::send(shared_const_buffer const_buf)
 {
-    strand_.post([ this, self = shared_from_this(), const_buf ]() {
+    strand_.post([this, self = shared_from_this(), const_buf]() {
         // delete PCM chunks that are older than the overall buffer duration
         messages_.erase(std::remove_if(messages_.begin(), messages_.end(),
                                        [this](const shared_const_buffer& buffer) {

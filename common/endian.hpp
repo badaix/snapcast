@@ -42,6 +42,6 @@ inline int64_t swap(const int64_t& val)
 {
     return SWAP_64(val);
 }
-}
+} // namespace endian
 
 #endif

@@ -45,7 +45,7 @@ void ControlSessionTcp::do_read()
     const std::string delimiter = "\n";
     boost::asio::async_read_until(
         socket_, streambuf_, delimiter,
-        boost::asio::bind_executor(strand_, [ this, self = shared_from_this(), delimiter ](const std::error_code& ec, std::size_t bytes_transferred) {
+        boost::asio::bind_executor(strand_, [this, self = shared_from_this(), delimiter](const std::error_code& ec, std::size_t bytes_transferred) {
             if (ec)
             {
                 LOG(ERROR, LOG_TAG) << "Error while reading from control socket: " << ec.message() << "\n";
@@ -94,7 +94,7 @@ void ControlSessionTcp::stop()
 
 void ControlSessionTcp::sendAsync(const std::string& message)
 {
-    strand_.post([ this, self = shared_from_this(), message ]() {
+    strand_.post([this, self = shared_from_this(), message]() {
         messages_.emplace_back(message + "\r\n");
         if (messages_.size() > 1)
         {
@@ -108,7 +108,7 @@ void ControlSessionTcp::sendAsync(const std::string& message)
 void ControlSessionTcp::send_next()
 {
     boost::asio::async_write(socket_, boost::asio::buffer(messages_.front()),
-                             boost::asio::bind_executor(strand_, [ this, self = shared_from_this() ](std::error_code ec, std::size_t length) {
+                             boost::asio::bind_executor(strand_, [this, self = shared_from_this()](std::error_code ec, std::size_t length) {
                                  messages_.pop_front();
                                  if (ec)
                                  {

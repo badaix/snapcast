@@ -222,8 +222,8 @@ void PublishAvahi::client_callback(AvahiClient* c, AvahiClientState state, AVAHI
 
         case AVAHI_CLIENT_S_COLLISION:
 
-        /// Let's drop our registered services. When the server is back
-        /// in AVAHI_SERVER_RUNNING state we will register them again with the new host name.
+            /// Let's drop our registered services. When the server is back
+            /// in AVAHI_SERVER_RUNNING state we will register them again with the new host name.
 
         case AVAHI_CLIENT_S_REGISTERING:
 

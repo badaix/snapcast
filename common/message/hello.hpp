@@ -106,7 +106,7 @@ public:
         return id;
     }
 };
-}
+} // namespace msg
 
 
 #endif
