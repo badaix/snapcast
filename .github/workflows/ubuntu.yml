@@ -31,7 +31,7 @@ jobs:
     #- name: ccache dump config
     #  run: ccache -p
     - name: cmake build
-      run: cmake -S . -B build -DBOOST_ROOT=boost_1_74_0 -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_FLAGS="$CXXFLAGS -Werror -Wall -Wextra -pedantic -Wno-unused-function"
+      run: cmake -S . -B build -DBOOST_ROOT=boost_1_74_0 -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
     - name: cmake make
       run: cmake --build build --parallel 3
     - name: debian package
