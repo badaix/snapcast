@@ -225,7 +225,7 @@ SampleFormat OggDecoder::setHeader(msg::CodecHeader* chunk)
     /// local state for most of the decode so multiple block decodes can proceed
     /// in parallel. We could init multiple vorbis_block structures for vd here
 
-    sampleFormat_.setFormat(vi.rate, 16, vi.channels);
+    sampleFormat_.setFormat(vi.rate, 16, static_cast<uint16_t>(vi.channels));
 
     /* Throw the comments plus a few lines about the bitstream we're decoding */
     char** ptr = vc.user_comments;

@@ -124,7 +124,7 @@ struct BaseMessage
     {
     }
 
-    BaseMessage(message_type type_) : type(type_), id(0), refersTo(0)
+    BaseMessage(message_type type_) : type(static_cast<uint16_t>(type_)), id(0), refersTo(0)
     {
     }
 

@@ -178,7 +178,7 @@ enum class Severity : std::int8_t
 
 static Severity to_severity(std::string severity, Severity def = Severity::info)
 {
-    std::transform(severity.begin(), severity.end(), severity.begin(), [](unsigned char c) { return std::tolower(c); });
+    std::transform(severity.begin(), severity.end(), severity.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
     if (severity == "trace")
         return Severity::trace;
     else if (severity == "debug")
@@ -841,7 +841,7 @@ struct SinkOutputDebugString : public Sink
     {
     }
 
-    void log(const Metadata& metadata, const std::string& message) override
+    void log(const Metadata& /*metadata*/, const std::string& message) override
     {
         std::wstring wide = std::wstring(message.begin(), message.end());
         OutputDebugString(wide.c_str());

@@ -149,7 +149,6 @@ bool Player::getHardwareVolume(double& volume, bool& muted)
     std::ignore = volume;
     std::ignore = muted;
     throw SnapException("Failed to get hardware mixer volume: not supported");
-    return false;
 }
 
 

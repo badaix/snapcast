@@ -156,6 +156,8 @@ vector<PcmDevice> WASAPIPlayer::pcm_list()
     return deviceList;
 }
 
+#pragma warning(push)
+#pragma warning(disable : 4127)
 void WASAPIPlayer::worker()
 {
     assert(sizeof(char) == sizeof(BYTE));
@@ -396,6 +398,7 @@ void WASAPIPlayer::worker()
         }
     }
 }
+#pragma warning(pop)
 
 HRESULT STDMETHODCALLTYPE AudioSessionEventListener::QueryInterface(REFIID riid, VOID** ppvInterface)
 {
@@ -419,6 +422,7 @@ HRESULT STDMETHODCALLTYPE AudioSessionEventListener::QueryInterface(REFIID riid,
 
 HRESULT STDMETHODCALLTYPE AudioSessionEventListener::OnSimpleVolumeChanged(float NewVolume, BOOL NewMute, LPCGUID EventContext)
 {
+    std::ignore = EventContext;
     volume_ = NewVolume;
     muted_ = NewMute;
 

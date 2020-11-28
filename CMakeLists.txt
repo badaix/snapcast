@@ -10,7 +10,9 @@ option(BUILD_TESTS "Build tests (run tests with make test)" ON)
 
 if (MSVC)
     # warning level 4 and all warnings as errors
-    add_compile_options(/W4 /WX)
+    # warning C4505: 'getArch': unreferenced local function has been removed
+    # warning C4458: declaration of 'size' hides class member
+    add_compile_options(/W4 /WX /wd4458 /wd4505)
 else()
     # lots of warnings and all warnings as errors
     add_compile_options(-Wall -Wextra -pedantic -Werror -Wno-unused-function)

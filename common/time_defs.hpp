@@ -61,6 +61,7 @@ inline static void timeofday(struct timeval* tv)
 // Implementation from http://stackoverflow.com/a/26085827/2510022
 inline static int gettimeofday(struct timeval* tp, struct timezone* tzp)
 {
+    std::ignore = tzp;
     // Note: some broken versions only have 8 trailing zero's, the correct epoch has 9 trailing zero's
     static const uint64_t EPOCH = ((uint64_t)116444736000000000ULL);
 

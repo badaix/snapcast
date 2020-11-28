@@ -19,6 +19,9 @@
 #ifndef WASAPI_PLAYER_HPP
 #define WASAPI_PLAYER_HPP
 
+#pragma warning(push)
+#pragma warning(disable : 4100)
+
 #include "player.hpp"
 #include <audiopolicy.h>
 #include <endpointvolume.h>
@@ -186,5 +189,7 @@ private:
     IAudioEndpointVolume* audioEndpointListener_;
     ClientSettings::SharingMode mode_;
 };
+
+#pragma warning(pop)
 
 #endif

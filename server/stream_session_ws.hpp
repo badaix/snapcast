@@ -21,7 +21,10 @@
 
 #include "stream_session.hpp"
 #include <boost/beast/core.hpp>
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wuninitialized"
 #include <boost/beast/websocket.hpp>
+#pragma GCC diagnostic pop
 #include <deque>
 
 namespace beast = boost::beast;         // from <boost/beast.hpp>

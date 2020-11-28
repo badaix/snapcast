@@ -50,7 +50,7 @@ public:
 
     uint16_t getVolume()
     {
-        return get("volume", 100);
+        return get("volume", static_cast<uint16_t>(100));
     }
 
     bool isMuted()

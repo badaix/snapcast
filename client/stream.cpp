@@ -115,7 +115,7 @@ void Stream::addChunk(unique_ptr<msg::PcmChunk> chunk)
         std::shared_ptr<msg::PcmChunk> front_;
         while (chunks_.front_copy(front_))
         {
-            auto age = std::chrono::duration_cast<cs::msec>(TimeProvider::serverNow() - front_->start());
+            age = std::chrono::duration_cast<cs::msec>(TimeProvider::serverNow() - front_->start());
             if ((age > 5s + bufferMs_) && chunks_.try_pop(front_))
                 LOG(TRACE, LOG_TAG) << "Oldest chunk too old: " << age.count() << " ms, removing. Chunks in queue left: " << chunks_.size() << "\n";
             else

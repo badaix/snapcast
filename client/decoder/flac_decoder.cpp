@@ -206,7 +206,8 @@ void metadata_callback(const FLAC__StreamDecoder* /*decoder*/, const FLAC__Strea
     if (metadata->type == FLAC__METADATA_TYPE_STREAMINFO)
     {
         static_cast<FlacDecoder*>(client_data)->cacheInfo_.sampleRate_ = metadata->data.stream_info.sample_rate;
-        sampleFormat.setFormat(metadata->data.stream_info.sample_rate, metadata->data.stream_info.bits_per_sample, metadata->data.stream_info.channels);
+        sampleFormat.setFormat(metadata->data.stream_info.sample_rate, static_cast<uint16_t>(metadata->data.stream_info.bits_per_sample),
+                               static_cast<uint16_t>(metadata->data.stream_info.channels));
     }
 }
 
