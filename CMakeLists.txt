@@ -7,15 +7,22 @@ set(PROJECT_URL "https://github.com/badaix/snapcast")
 option(BUILD_SHARED_LIBS "Build snapcast in a shared context" ON)
 option(BUILD_STATIC_LIBS "Build snapcast in a static context" ON)
 option(BUILD_TESTS "Build tests (run tests with make test)" ON)
+option(WERROR "Treat warnings as errors" OFF)
 
 if (MSVC)
     # warning level 4 and all warnings as errors
     # warning C4505: 'getArch': unreferenced local function has been removed
     # warning C4458: declaration of 'size' hides class member
-    add_compile_options(/W4 /WX /wd4458 /wd4505)
+    add_compile_options(/W4 /wd4458 /wd4505)
+    if (WERROR)
+        add_compile_options(/WX)
+    endif()
 else()
     # lots of warnings and all warnings as errors
-    add_compile_options(-Wall -Wextra -pedantic -Werror -Wno-unused-function)
+    add_compile_options(-Wall -Wextra -pedantic -Wno-unused-function)
+    if (WERROR)
+        add_compile_options(-Werror)
+    endif()
 endif()
 
 include(GNUInstallDirs)
