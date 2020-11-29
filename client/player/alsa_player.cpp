@@ -344,6 +344,8 @@ void AlsaPlayer::initAlsa()
 
     if ((err = snd_pcm_hw_params_set_rate_near(handle_, params, &rate, nullptr)) < 0)
         throw SnapException("Can't set rate: " + string(snd_strerror(err)));
+    if (rate != format.rate())
+        LOG(WARNING, LOG_TAG) << "Could not set sample rate to " << format.rate() << " Hz, using: " << rate << " Hz\n";
 
     unsigned int buffer_time = buffer_time_.count();
     if ((err = snd_pcm_hw_params_set_buffer_time_near(handle_, params, &buffer_time, nullptr)) < 0)
@@ -362,14 +364,12 @@ void AlsaPlayer::initAlsa()
         throw SnapException("Can't set hardware parameters: " + string(snd_strerror(err)));
 
     // Resume information
-    LOG(INFO, LOG_TAG) << "PCM name: " << snd_pcm_name(handle_) << ", ";
-    LOG(INFO, LOG_TAG) << "PCM state: " << snd_pcm_state_name(snd_pcm_state(handle_)) << ", ";
-
     unsigned int period_time;
     snd_pcm_hw_params_get_period_time(params, &period_time, nullptr);
     snd_pcm_hw_params_get_period_size(params, &frames_, nullptr);
-    LOG(INFO, LOG_TAG) << "rate: " << rate << ", channels: " << channels << ", buffer time: " << buffer_time << " us, periods: " << periods
-                       << ", period time: " << period_time << " us, period frames: " << frames_ << "\n";
+    LOG(INFO, LOG_TAG) << "PCM name: " << snd_pcm_name(handle_) << ", sample rate: " << rate << " Hz, channels: " << channels
+                       << ", buffer time: " << buffer_time << " us, periods: " << periods << ", period time: " << period_time
+                       << " us, period frames: " << frames_ << "\n";
 
     // Allocate buffer to hold single period
     snd_pcm_sw_params_t* swparams;
@@ -477,7 +477,7 @@ bool AlsaPlayer::getAvailDelay(snd_pcm_sframes_t& avail, snd_pcm_sframes_t& dela
         result = snd_pcm_delay(handle_, &delay);
         if ((result < 0) || (delay < 0))
         {
-            LOG(WARNING, LOG_TAG) << "snd_pcm_avail and snd_pcm_delay failed: " << snd_strerror(result) << ", avail: " << avail << ", delay: " << delay << "\n";
+            LOG(WARNING, LOG_TAG) << "snd_pcm_delay failed: " << snd_strerror(result) << ", avail: " << avail << ", delay: " << delay << "\n";
             this_thread::sleep_for(10ms);
             snd_pcm_prepare(handle_);
             return false;
@@ -524,7 +524,7 @@ void AlsaPlayer::worker()
         int wait_result = snd_pcm_wait(handle_, 100);
         if (wait_result == -EPIPE)
         {
-            LOG(ERROR, LOG_TAG) << "XRUN: " << snd_strerror(wait_result) << "\n";
+            LOG(ERROR, LOG_TAG) << "XRUN while waiting for PCM: " << snd_strerror(wait_result) << "\n";
             snd_pcm_prepare(handle_);
         }
         else if (wait_result < 0)
@@ -566,7 +566,7 @@ void AlsaPlayer::worker()
             adjustVolume(buffer_.data(), framesAvail);
             if ((pcm = snd_pcm_writei(handle_, buffer_.data(), framesAvail)) == -EPIPE)
             {
-                LOG(ERROR, LOG_TAG) << "XRUN: " << snd_strerror(pcm) << "\n";
+                LOG(ERROR, LOG_TAG) << "XRUN while writing to PCM: " << snd_strerror(pcm) << "\n";
                 snd_pcm_prepare(handle_);
             }
             else if (pcm < 0)
