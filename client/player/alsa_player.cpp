@@ -470,23 +470,23 @@ bool AlsaPlayer::getAvailDelay(snd_pcm_sframes_t& avail, snd_pcm_sframes_t& dela
     int result = snd_pcm_avail_delay(handle_, &avail, &delay);
     if (result < 0)
     {
-        LOG(WARNING, LOG_TAG) << "snd_pcm_avail_delay failed: " << snd_strerror(result) << ", avail: " << avail << ", delay: " << delay
+        LOG(WARNING, LOG_TAG) << "snd_pcm_avail_delay failed: " << snd_strerror(result) << " (" << result << "), avail: " << avail << ", delay: " << delay
                               << ", using snd_pcm_avail amd snd_pcm_delay.\n";
         this_thread::sleep_for(1ms);
         avail = snd_pcm_avail(handle_);
         result = snd_pcm_delay(handle_, &delay);
         if ((result < 0) || (delay < 0))
         {
-            LOG(WARNING, LOG_TAG) << "snd_pcm_delay failed: " << snd_strerror(result) << ", avail: " << avail << ", delay: " << delay << "\n";
-            this_thread::sleep_for(10ms);
-            snd_pcm_prepare(handle_);
+            LOG(WARNING, LOG_TAG) << "snd_pcm_delay failed: " << snd_strerror(result) << " (" << result << "), avail: " << avail << ", delay: " << delay
+                                  << "\n";
             return false;
         }
+        // LOG(DEBUG, LOG_TAG) << "snd_pcm_delay: " << delay << ", snd_pcm_avail: " << avail << "\n";
     }
 
     if (avail < 0)
     {
-        LOG(DEBUG, LOG_TAG) << "snd_pcm_avail < 0: " << avail << ", using " << frames_ << "\n";
+        LOG(DEBUG, LOG_TAG) << "snd_pcm_avail failed: " << snd_strerror(avail) << " (" << avail << "), using " << frames_ << "\n";
         avail = frames_;
     }
 
