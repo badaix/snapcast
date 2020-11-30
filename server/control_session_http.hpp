@@ -21,10 +21,14 @@
 
 #include "control_session.hpp"
 #include <boost/beast/core.hpp>
+#if defined(__GNUC__) && !defined(__clang__)
 #pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wuninitialized"
+#pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
 #include <boost/beast/websocket.hpp>
 #pragma GCC diagnostic pop
+#else
+#include <boost/beast/websocket.hpp>
+#endif
 #include <deque>
 
 namespace beast = boost::beast;         // from <boost/beast.hpp>
