@@ -9,6 +9,10 @@ option(BUILD_STATIC_LIBS "Build snapcast in a static context" ON)
 option(BUILD_TESTS "Build tests (run tests with make test)" ON)
 option(WERROR "Treat warnings as errors" OFF)
 
+option(ASAN "Enable AddressSanitizer" OFF)
+option(TSAN "Enable ThreadSanitizer" OFF)
+option(UBSAN "Enable UndefinedBehaviorSanitizer" OFF)
+
 if (MSVC)
     # warning level 4 and all warnings as errors
     # warning C4505: 'getArch': unreferenced local function has been removed
@@ -22,6 +26,21 @@ else()
     add_compile_options(-Wall -Wextra -pedantic -Wno-unused-function)
     if (WERROR)
         add_compile_options(-Werror)
+    endif()
+
+    if (ASAN)
+        add_compile_options(-fsanitize=address)
+        add_link_options(-fsanitize=address)
+    endif()
+
+    if (TSAN)
+        add_compile_options(-fsanitize=thread)
+        add_link_options(-fsanitize=thread)
+    endif()
+
+    if (UBSAN)
+        add_compile_options(-fsanitize=undefined)
+        add_link_options(-fsanitize=undefined)
     endif()
 endif()
 
