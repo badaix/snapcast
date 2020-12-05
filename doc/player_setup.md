@@ -186,11 +186,14 @@ It might be neccessary to set the PulseAudio latency environment variable to 60 
 
 ### AirPlay
 
-Snapserver supports [shairport-sync](https://github.com/mikebrady/shairport-sync) with the `stdout` backend.
+Snapserver supports [shairport-sync](https://github.com/mikebrady/shairport-sync) with the `stdout` backend and metadata support.
 
- 1. Build shairport-sync (version 3.3 or later) with `stdout` backend: `./configure --with-stdout --with-avahi --with-ssl=openssl --with-metadata`
- 2. Copy the `shairport-sync` binary somewhere to your `PATH`, e.g. `/usr/local/bin/`
- 3. Configure snapserver with `stream = airplay:///shairport-sync?name=Airplay[&devicename=Snapcast][&port=5000]`
+ 1. Install dependencies. For debian derivates: `apt-get install autoconf libpopt-dev libconfig-dev libssl-dev`  
+ 2. Build shairport-sync (version 3.3 or later) with `stdout` backend: 
+    - `autoreconf -i -f` 
+    - `./configure --with-stdout --with-avahi --with-ssl=openssl --with-metadata`
+ 3. Copy the `shairport-sync` binary somewhere to your `PATH`, e.g. `/usr/local/bin/`
+ 4. Configure snapserver with `stream = airplay:///shairport-sync?name=Airplay[&devicename=Snapcast][&port=5000]`
 
 ### Spotify
 

@@ -83,6 +83,7 @@ protected:
     void setParamsAndPipePathFromPort();
 
     void do_connect() override;
+    void do_disconnect() override;
     void onStderrMsg(const std::string& line) override;
     void initExeAndPath(const std::string& filename) override;
 

@@ -37,8 +37,15 @@ namespace file
 
 static bool exists(const std::string& filename)
 {
-    std::ifstream infile(filename.c_str());
-    return infile.good();
+    if (filename.empty())
+        return false;
+#ifdef WINDOWS
+    DWORD dwAttrib = GetFileAttributes(filename.c_str());
+    return (dwAttrib != INVALID_FILE_ATTRIBUTES);
+#else
+    struct stat buffer;
+    return (stat(filename.c_str(), &buffer) == 0);
+#endif
 }
 
 #ifndef WINDOWS

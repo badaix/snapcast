@@ -21,6 +21,7 @@
 #include "common/aixlog.hpp"
 #include "common/snap_exception.hpp"
 #include "common/utils.hpp"
+#include "common/utils/file_utils.hpp"
 #include "common/utils/string_utils.hpp"
 
 using namespace std;
@@ -209,6 +210,15 @@ void AirplayStream::do_connect()
 }
 
 
+void AirplayStream::do_disconnect()
+{
+    ProcessStream::do_disconnect();
+    // Shairpot-sync created but does not remove the pipe
+    if (utils::file::exists(pipePath_) && (remove(pipePath_.c_str()) != 0))
+        LOG(INFO, LOG_TAG) << "Failed to remove metadata pipe \"" << pipePath_ << "\": " << errno << "\n";
+}
+
+
 void AirplayStream::pipeReadLine()
 {
     if (!pipe_fd_ || !pipe_fd_->is_open())
@@ -236,8 +246,7 @@ void AirplayStream::pipeReadLine()
             {
                 // For some reason, EOF is returned until the first metadata is written to the pipe.
                 // If shairport-sync has not finished setting up the pipe, bad file descriptor is returned.
-                LOG(INFO, LOG_TAG) << "Waiting for metadata, retrying in 2500ms"
-                                   << "\n";
+                LOG(INFO, LOG_TAG) << "Waiting for metadata, retrying in 2500ms\n";
                 wait(pipe_open_timer_, 2500ms, [this] { pipeReadLine(); });
             }
             else
