@@ -384,7 +384,7 @@ void AlsaPlayer::initAlsa()
     if (snd_pcm_state(handle_) == SND_PCM_STATE_PREPARED)
     {
         if ((err = snd_pcm_start(handle_)) < 0)
-            throw SnapException("Failed to start PCM: " + string(snd_strerror(err)));
+            LOG(DEBUG, LOG_TAG) << "Failed to start PCM: " << snd_strerror(err) << "\n";
     }
 
     if (ctl_ == nullptr)
