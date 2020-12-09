@@ -335,7 +335,7 @@ int main(int argc, char** argv)
             if (settings.player.player_name == "file")
             {
                 cout << "Options are a comma separated list of:\n"
-                     << " \"filename=<filename>\" - with <filename> = \"stdout\", \"stderr\" or a filename\n"
+                     << " \"filename=<filename>\" - with <filename> = \"stdout\", \"stderr\", \"null\" or a filename\n"
                      << " \"mode=[w|a]\" - w: write (discarding the content), a: append (keeping the content)\n";
             }
             else if (settings.player.player_name == "pulse")

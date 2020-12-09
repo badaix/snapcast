@@ -47,7 +47,7 @@ FilePlayer::FilePlayer(boost::asio::io_context& io_context, const ClientSettings
     {
         file_.reset(stderr, [](auto p) { std::ignore = p; });
     }
-    else
+    else if (filename != "null")
     {
         std::string mode = "w";
         if (params.find("mode") != params.end())
@@ -91,8 +91,11 @@ void FilePlayer::requestAudio()
     {
         adjustVolume(static_cast<char*>(buffer_.data()), numFrames);
     }
-    fwrite(buffer_.data(), 1, needed, file_.get());
-    fflush(file_.get());
+    if (file_)
+    {
+        fwrite(buffer_.data(), 1, needed, file_.get());
+        fflush(file_.get());
+    }
     loop();
 }
 
