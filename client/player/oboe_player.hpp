@@ -29,7 +29,7 @@
 /**
  * Player implementation for Android Oboe
  */
-class OboePlayer : public Player, public oboe::AudioStreamCallback
+class OboePlayer : public Player, public oboe::AudioStreamDataCallback, public oboe::AudioStreamErrorCallback
 {
 public:
     OboePlayer(boost::asio::io_context& io_context, const ClientSettings::Player& settings, std::shared_ptr<Stream> stream);
@@ -39,8 +39,10 @@ public:
     void stop() override;
 
 protected:
-    // AudioStreamCallback overrides
+    // AudioStreamDataCallback overrides
     oboe::DataCallbackResult onAudioReady(oboe::AudioStream* oboeStream, void* audioData, int32_t numFrames) override;
+
+    // AudioStreamErrorCallback overrides
     void onErrorBeforeClose(oboe::AudioStream* oboeStream, oboe::Result error) override;
     void onErrorAfterClose(oboe::AudioStream* oboeStream, oboe::Result error) override;
 
