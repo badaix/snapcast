@@ -32,12 +32,16 @@ ifndef NDK_DIR
 	$(error android NDK_DIR is not set)
 endif
 ifndef ARCH
-	$(error ARCH is not set ("arm" or "aarch64" or "x86"))
+	$(error ARCH is not set ("arm" or "aarch64" or "x86" or "x86_64"))
 endif
 
 	$(eval TOOLCHAIN:=$(NDK_DIR)/toolchains/llvm/prebuilt/linux-x86_64)
 
 ifeq ($(ARCH), x86)
+	$(eval CPPFLAGS:=-DLITTLE_ENDIAN=1234 -DBIG_ENDIAN=4321 -DBYTE_ORDER=LITTLE_ENDIAN)
+	$(eval TARGET:=i686-linux-android)
+	$(eval API:=16)
+else ifeq ($(ARCH), x86_64)
 	$(eval CPPFLAGS:=-DLITTLE_ENDIAN=1234 -DBIG_ENDIAN=4321 -DBYTE_ORDER=LITTLE_ENDIAN)
 	$(eval TARGET:=x86_64-linux-android)
 	$(eval API:=21)
@@ -50,7 +54,7 @@ else ifeq ($(ARCH), aarch64)
 	$(eval TARGET:=aarch64-linux-android)
 	$(eval API:=21)
 else
-	$(error ARCH must be "arm" or "aarch64" or "x86")
+	$(error ARCH must be "arm" or "aarch64" or "x86" or "x86_64")
 endif
 	$(eval CC:=$(TOOLCHAIN)/bin/$(TARGET)$(API)-clang)
 	$(eval CXX:=$(TOOLCHAIN)/bin/$(TARGET)$(API)-clang++)
@@ -64,7 +68,7 @@ flac: check-env
 	export CPPFLAGS="$(CPPFLAGS)"; \
 	./autogen.sh; \
 	./configure --host=$(ARCH) --disable-ogg --prefix=$(SYSROOT)/usr/local/; \
-	make; \
+	make -j 10; \
 	make install; \
 	make clean;
 
@@ -74,8 +78,8 @@ ogg: check-env
 	export CXX="$(CXX)"; \
 	export CPPFLAGS="$(CPPFLAGS)"; \
 	./autogen.sh; \
-	./configure --host=$(ARCH) --prefix=$(SYSROOT)/usr/local/; \
-	make; \
+	./configure --host=$(ARCH) --with-pic --prefix=$(SYSROOT)/usr/local/; \
+	make -j 10; \
 	make install; \
 	make clean;
 
@@ -86,7 +90,7 @@ opus: check-env
 	export CPPFLAGS="$(CPPFLAGS)"; \
 	./autogen.sh; \
 	./configure --host=$(ARCH) --prefix=$(SYSROOT)/usr/local/; \
-	make; \
+	make -j 10; \
 	make install; \
 	make clean;
 
@@ -96,8 +100,8 @@ tremor:	check-env
 	export CXX="$(CXX)"; \
 	export CPPFLAGS="$(CPPFLAGS)"; \
 	./autogen.sh; \
-	./configure --host=$(ARCH) --prefix=$(SYSROOT)/usr/local/ --with-ogg=$(SYSROOT)/usr/local/; \
-	make; \
+	./configure --host=$(ARCH) --with-pic --prefix=$(SYSROOT)/usr/local/ --with-ogg=$(SYSROOT)/usr/local/; \
+	make -j 10; \
 	make install; \
 	make clean; \
 	rm -rf .deps/; \
@@ -130,7 +134,7 @@ oboe: check-env
 	mkdir build; \
 	cd build; \
 	cmake ..; \
-	make; \
+	make -j 10; \
 	make DESTDIR=$(SYSROOT) install; \
 	make clean; \
 	cd ..; \
@@ -144,7 +148,7 @@ soxr: check-env
 	mkdir build; \
 	cd build; \
 	cmake -DBUILD_SHARED_LIBS=OFF -DBUILD_TESTS=OFF -DWITH_OPENMP=OFF ..; \
-	make; \
+	make -j 10; \
 	make DESTDIR=$(SYSROOT) install; \
 	make clean; \
 	cd ..; \
