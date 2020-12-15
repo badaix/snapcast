@@ -46,7 +46,7 @@ LibrespotStream::LibrespotStream(PcmListener* pcmListener, boost::asio::io_conte
     string onevent = uri_.getQuery("onevent", "");
     bool normalize = (uri_.getQuery("normalize", "false") == "true");
     bool autoplay = (uri_.getQuery("autoplay", "false") == "true");
-    killall_ = (uri_.getQuery("killall", "true") == "true");
+    killall_ = (uri_.getQuery("killall", "false") == "true");
 
     if (username.empty() != password.empty())
         throw SnapException("missing parameter \"username\" or \"password\" (must provide both, or neither)");

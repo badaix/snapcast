@@ -200,11 +200,11 @@ Snapserver supports [shairport-sync](https://github.com/mikebrady/shairport-sync
 Snapserver supports [librespot](https://github.com/librespot-org/librespot) with the `pipe` backend.
 
  1. Build and copy the `librespot` binary somewhere to your `PATH`, e.g. `/usr/local/bin/`
- 2. Configure snapserver with `stream = spotify:///librespot?name=Spotify[&username=<my username>&password=<my password>][&devicename=Snapcast][&bitrate=320][&onstart=<start command>][&onstop=<stop command>][&volume=<volume in percent>][&cache=<cache dir>][&disable_audio_cache=false][&killall=true]`
+ 2. Configure snapserver with `stream = spotify:///librespot?name=Spotify[&username=<my username>&password=<my password>][&devicename=Snapcast][&bitrate=320][&onstart=<start command>][&onstop=<stop command>][&volume=<volume in percent>][&cache=<cache dir>][&disable_audio_cache=false][&killall=false]`
     * Valid bitrates are 96, 160, 320
     * `start command` and `stop command` are executed by Librespot at start/stop
         * For example: `onstart=/usr/bin/logger -t Snapcast Starting spotify...`
-    * If `killall` is `true` (default), all running instances of Librespot will be killed. This MUST be disabled on all spotify streams by setting it to `false` if you want to use multiple spotify streams.
+    * If `killall` is `true`, all running instances of Librespot will be killed. This MUST be disabled on all spotify streams by setting it to `false` if you want to use multiple spotify streams.
     * If `disable_audio_cache` is `false` (default), downloaded audio files are cached in `<cache dir>`. If set to `true` audio files will not be cached on disk.
 
 ### Process
