@@ -102,7 +102,7 @@ inline PcmDevice convertToDevice(int idx, IMMDevicePtr& device)
     CHECK_HR(hr);
 
     desc.idx = idx;
-    
+
     using converter = wstring_convert<codecvt_utf8_utf16<wchar_t>, wchar_t>;
     desc.name = converter{}.to_bytes(id);
     desc.description = converter{}.to_bytes(deviceName.pwszVal);
