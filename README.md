@@ -118,7 +118,7 @@ All connected clients should play random noise now. You might raise the client's
 It's also possible to let the server play a WAV file. Simply configure a `file` stream in `/etc/snapserver.conf`, and restart the server:
 
     [stream]
-    stream = file:///home/user/Musik/Some%20wave%20file.wav?name=test
+    source = file:///home/user/Musik/Some%20wave%20file.wav?name=test
 
 When you are using a Raspberry Pi, you might have to change your audio output to the 3.5mm jack:
 

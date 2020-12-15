@@ -225,7 +225,7 @@ The output of any audio player that uses alsa can be redirected to Snapcast by u
 
     ```sh
     [stream]
-    stream = alsa://?name=SomeName&sampleformat=48000:16:2&device=hw:0,1,0
+    source = alsa://?name=SomeName&sampleformat=48000:16:2&device=hw:0,1,0
     ```
 
 ### meta

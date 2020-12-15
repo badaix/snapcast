@@ -11,15 +11,15 @@ audio player software -> snapfifo -> snapserver -> network -> snapclient -> alsa
 
 ## Streams
 
-Snapserver can read audio from several input streams, which are configured in the `snapserver.conf` file (default location is `/etc/snapserver.conf`); the config file can be changed with the `-c` parameter.  
-Within the config file a list of input streams can be configured in the `[stream]` section:
+Snapserver can read audio from several sources, which are configured in the `snapserver.conf` file (default location is `/etc/snapserver.conf`); the config file can be changed with the `-c` parameter.  
+Within the config file a list of pcm sources can be configured in the `[stream]` section:
 
 ```ini
 [stream]
 ...
 # stream URI of the PCM input stream, can be configured multiple times
 # Format: TYPE://host/path?name=NAME[&codec=CODEC][&sampleformat=SAMPLEFORMAT]
-stream = pipe:///tmp/snapfifo?name=default
+source = pipe:///tmp/snapfifo?name=default
 ...
 ```
 
@@ -37,7 +37,7 @@ In this document some expressions are in brackets:
 For example:
 
 ```ini
-stream = spotify:///librespot?name=Spotify[&username=<my username>&password=<my password>][&devicename=Snapcast][&bitrate=320]
+source = spotify:///librespot?name=Spotify[&username=<my username>&password=<my password>][&devicename=Snapcast][&bitrate=320]
 ```
 
 * `username` and `password` are both optional in this case. You need to specify neither or both of them.
@@ -47,7 +47,7 @@ stream = spotify:///librespot?name=Spotify[&username=<my username>&password=<my 
 For instance, a valid usage would be:
 
 ```ini
-stream = spotify:///librespot?name=Spotify&bitrate=160
+source = spotify:///librespot?name=Spotify&bitrate=160
 ```
 
 ### MPD
@@ -193,14 +193,14 @@ Snapserver supports [shairport-sync](https://github.com/mikebrady/shairport-sync
     - `autoreconf -i -f` 
     - `./configure --with-stdout --with-avahi --with-ssl=openssl --with-metadata`
  3. Copy the `shairport-sync` binary somewhere to your `PATH`, e.g. `/usr/local/bin/`
- 4. Configure snapserver with `stream = airplay:///shairport-sync?name=Airplay[&devicename=Snapcast][&port=5000]`
+ 4. Configure snapserver with `source = airplay:///shairport-sync?name=Airplay[&devicename=Snapcast][&port=5000]`
 
 ### Spotify
 
 Snapserver supports [librespot](https://github.com/librespot-org/librespot) with the `pipe` backend.
 
  1. Build and copy the `librespot` binary somewhere to your `PATH`, e.g. `/usr/local/bin/`
- 2. Configure snapserver with `stream = spotify:///librespot?name=Spotify[&username=<my username>&password=<my password>][&devicename=Snapcast][&bitrate=320][&onstart=<start command>][&onstop=<stop command>][&volume=<volume in percent>][&cache=<cache dir>][&disable_audio_cache=false][&killall=false]`
+ 2. Configure snapserver with `source = spotify:///librespot?name=Spotify[&username=<my username>&password=<my password>][&devicename=Snapcast][&bitrate=320][&onstart=<start command>][&onstop=<stop command>][&volume=<volume in percent>][&cache=<cache dir>][&disable_audio_cache=false][&killall=false]`
     * Valid bitrates are 96, 160, 320
     * `start command` and `stop command` are executed by Librespot at start/stop
         * For example: `onstart=/usr/bin/logger -t Snapcast Starting spotify...`
@@ -211,13 +211,13 @@ Snapserver supports [librespot](https://github.com/librespot-org/librespot) with
 
 Snapserver can start any process and read PCM data from the stdout of the process:
 
-Configure snapserver with `stream = process:///path/to/process?name=Process[&params=<--my list --of params>][&log_stderr=false]`
+Configure snapserver with `source = process:///path/to/process?name=Process[&params=<--my list --of params>][&log_stderr=false]`
 
 For example, you could install the minimalist **mpv** media player to pick up WebRadio from a given url ...
 
 ```ini
 [stream]
-stream = process:///usr/bin/mpv?name=Webradio&sampleformat=48000:16:2&params=http://129.122.92.10:88/broadwavehigh.mp3 --no-terminal --audio-display=no --audio-channels=stereo --audio-samplerate=48000 --audio-format=s16 --ao=pcm:file=/dev/stdout
+source = process:///usr/bin/mpv?name=Webradio&sampleformat=48000:16:2&params=http://129.122.92.10:88/broadwavehigh.mp3 --no-terminal --audio-display=no --audio-channels=stereo --audio-samplerate=48000 --audio-format=s16 --ao=pcm:file=/dev/stdout
 ```
 
 ### Line-in
