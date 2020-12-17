@@ -14,7 +14,7 @@ jobs:
     - name: cmake build
       run: mkdir build && cd build && cmake -DBOOST_ROOT=/home/pi/Develop/boost_1_75_0 -DCMAKE_BUILD_TYPE=Release -DWERROR=ON -DCMAKE_CXX_FLAGS="$CXXFLAGS -Wno-psabi" -DCMAKE_CXX_COMPILER_LAUNCHER=ccache .. && cd ..
     - name: cmake make
-      run: cmake --build build
+      run: cmake --build build -- -j 2
     - name: debian package
       run: fakeroot make -f debian/rules CMAKEFLAGS="-DBOOST_ROOT=/home/pi/Develop/boost_1_75_0 -DCMAKE_CXX_COMPILER_LAUNCHER=ccache" binary
     - name: Archive artifacts
