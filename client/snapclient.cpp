@@ -29,6 +29,9 @@
 #ifdef HAS_ALSA
 #include "player/alsa_player.hpp"
 #endif
+#ifdef HAS_PULSE
+#include "player/pulse_player.hpp"
+#endif
 #ifdef HAS_WASAPI
 #include "player/wasapi_player.hpp"
 #endif
@@ -50,20 +53,25 @@ using namespace std::chrono_literals;
 
 static constexpr auto LOG_TAG = "Snapclient";
 
-PcmDevice getPcmDevice(const std::string& soundcard)
+PcmDevice getPcmDevice(const std::string& player, const std::string& soundcard)
 {
-#if defined(HAS_ALSA) || defined(HAS_WASAPI)
-    vector<PcmDevice> pcmDevices =
-#ifdef HAS_ALSA
-        AlsaPlayer::pcm_list();
-#else
-        WASAPIPlayer::pcm_list();
+#if defined(HAS_ALSA) || defined(HAS_PULSE) || defined(HAS_WASAPI)
+    vector<PcmDevice> pcm_devices;
+#if defined(HAS_ALSA)
+    if (player == "alsa")
+        pcm_devices = AlsaPlayer::pcm_list();
 #endif
-
+#if defined(HAS_PULSE)
+    if (player == "pulse")
+        pcm_devices = PulsePlayer::pcm_list();
+#endif
+#if defined(HAS_WASAPI)
+    pcm_devices = WASAPIPlayer::pcm_list();
+#endif
     try
     {
         int soundcardIdx = cpt::stoi(soundcard);
-        for (auto dev : pcmDevices)
+        for (auto dev : pcm_devices)
             if (dev.idx == soundcardIdx)
                 return dev;
     }
@@ -71,15 +79,14 @@ PcmDevice getPcmDevice(const std::string& soundcard)
     {
     }
 
-    for (auto dev : pcmDevices)
+    for (auto dev : pcm_devices)
         if (dev.name.find(soundcard) != string::npos)
             return dev;
-    std::ignore = soundcard;
 #endif
-
-    PcmDevice pcmDevice;
-    pcmDevice.name = soundcard;
-    return pcmDevice;
+    std::ignore = player;
+    PcmDevice pcm_device;
+    pcm_device.name = soundcard;
+    return pcm_device;
 }
 
 #ifdef WINDOWS
@@ -113,7 +120,7 @@ int main(int argc, char** argv)
     {
         string meta_script("");
         ClientSettings settings;
-        string pcm_device("default");
+        string pcm_device(DEFAULT_DEVICE);
 
         OptionParser op("Allowed options");
         auto helpSwitch = op.add<Switch>("", "help", "produce help message");
@@ -127,7 +134,7 @@ int main(int argc, char** argv)
 // PCM device specific
 #if defined(HAS_ALSA) || defined(HAS_WASAPI)
         auto listSwitch = op.add<Switch>("l", "list", "list PCM devices");
-        /*auto soundcardValue =*/op.add<Value<string>>("s", "soundcard", "index or name of the pcm device", "default", &pcm_device);
+        /*auto soundcardValue =*/op.add<Value<string>>("s", "soundcard", "index or name of the pcm device", pcm_device, &pcm_device);
 #endif
         /*auto latencyValue =*/op.add<Value<int>>("", "latency", "latency of the PCM device", 0, &settings.player.latency);
 #ifdef HAS_SOXR
@@ -193,14 +200,22 @@ int main(int argc, char** argv)
             exit(EXIT_SUCCESS);
         }
 
-#if defined(HAS_ALSA) || defined(HAS_WASAPI)
+        settings.player.player_name = utils::string::split_left(settings.player.player_name, ':', settings.player.parameter);
+
+#if defined(HAS_ALSA) || defined(HAS_WASAPI) || defined(HAS_PULSE)
         if (listSwitch->is_set())
         {
-            vector<PcmDevice> pcmDevices =
-#ifdef HAS_ALSA
-                AlsaPlayer::pcm_list();
-#else
-                WASAPIPlayer::pcm_list();
+            vector<PcmDevice> pcmDevices;
+#if defined(HAS_PULSE)
+            if (settings.player.player_name == "pulse")
+                pcmDevices = PulsePlayer::pcm_list();
+#endif
+#if defined(HAS_ALSA)
+            if (settings.player.player_name == "alsa")
+                pcmDevices = AlsaPlayer::pcm_list();
+#endif
+#if defined(HAS_WASAPI)
+            pcmDevices = WASAPIPlayer::pcm_list();
 #endif
 #ifdef WINDOWS
             // Set console code page to UTF-8 so console known how to interpret string data
@@ -304,7 +319,7 @@ int main(int argc, char** argv)
         }
 #endif
 
-        settings.player.pcm_device = getPcmDevice(pcm_device);
+        settings.player.pcm_device = getPcmDevice(settings.player.player_name, pcm_device);
 #if defined(HAS_ALSA)
         if (settings.player.pcm_device.idx == -1)
         {
@@ -329,7 +344,6 @@ int main(int argc, char** argv)
         settings.player.sharing_mode = (sharing_mode->value() == "exclusive") ? ClientSettings::SharingMode::exclusive : ClientSettings::SharingMode::shared;
 #endif
 
-        settings.player.player_name = utils::string::split_left(settings.player.player_name, ':', settings.player.parameter);
         if (settings.player.parameter == "?")
         {
             if (settings.player.player_name == "file")

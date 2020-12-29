@@ -38,6 +38,85 @@ static constexpr auto LOG_TAG = "PulsePlayer";
 // https://www.freedesktop.org/wiki/Software/PulseAudio/Documentation/Developer/Clients/Samples/AsyncPlayback/
 
 
+vector<PcmDevice> PulsePlayer::pcm_list()
+{
+    auto pa_ml = std::shared_ptr<pa_mainloop>(pa_mainloop_new(), [](pa_mainloop* pa_ml) { pa_mainloop_free(pa_ml); });
+    pa_mainloop_api* pa_mlapi = pa_mainloop_get_api(pa_ml.get());
+    auto pa_ctx = std::shared_ptr<pa_context>(pa_context_new(pa_mlapi, "Snapcast"), [](pa_context* pa_ctx) {
+        pa_context_disconnect(pa_ctx);
+        pa_context_unref(pa_ctx);
+    });
+    if (pa_context_connect(pa_ctx.get(), nullptr, PA_CONTEXT_NOFLAGS, nullptr) < 0)
+        throw SnapException("Failed to connect to PulseAudio context: " + std::string(pa_strerror(pa_context_errno(pa_ctx.get()))));
+
+    static int pa_ready = 0;
+    pa_context_set_state_callback(
+        pa_ctx.get(),
+        [](pa_context* c, void* userdata) {
+            std::ignore = userdata;
+            pa_context_state_t state = pa_context_get_state(c);
+            switch (state)
+            {
+                case PA_CONTEXT_FAILED:
+                case PA_CONTEXT_TERMINATED:
+                    pa_ready = 2;
+                    break;
+                case PA_CONTEXT_READY:
+                    pa_ready = 1;
+                    break;
+                default:
+                    break;
+            }
+        },
+        nullptr);
+
+    // We can't do anything until PA is ready, so just iterate the mainloop
+    // and continue
+    auto wait_start = std::chrono::steady_clock::now();
+    while (pa_ready == 0)
+    {
+        auto now = std::chrono::steady_clock::now();
+        if (now - wait_start > 5s)
+            throw SnapException("Timeout while waiting for PulseAudio to become ready");
+        if (pa_mainloop_iterate(pa_ml.get(), 1, nullptr) < 0)
+            throw SnapException("Error while waiting for PulseAudio to become ready: " + std::string(pa_strerror(pa_context_errno(pa_ctx.get()))));
+        this_thread::sleep_for(1ms);
+    }
+
+    static std::vector<PcmDevice> devices;
+    auto op = pa_context_get_sink_info_list(
+        pa_ctx.get(),
+        [](pa_context* ctx, const pa_sink_info* i, int eol, void* userdata) mutable {
+            std::ignore = ctx;
+            std::ignore = userdata;
+            // auto self = static_cast<PulsePlayer*>(userdata);
+            // If eol is set to a positive number, you're at the end of the list
+            if (eol <= 0)
+                devices.emplace_back(i->index, i->name, i->description);
+        },
+        nullptr);
+
+    wait_start = std::chrono::steady_clock::now();
+
+    while (pa_operation_get_state(op) != PA_OPERATION_DONE)
+    {
+        if (pa_operation_get_state(op) == PA_OPERATION_CANCELED)
+            throw SnapException("PulseAudio operation canceled");
+
+        auto now = std::chrono::steady_clock::now();
+        if (now - wait_start > 2s)
+            break;
+        pa_mainloop_iterate(pa_ml.get(), 1, nullptr);
+    }
+    int max_idx = -1;
+    for (const auto& device : devices)
+        max_idx = std::max(max_idx, device.idx);
+
+    devices.emplace(devices.begin(), max_idx + 1, DEFAULT_DEVICE, "Let PulseAudio server choose the device");
+    return devices;
+}
+
+
 PulsePlayer::PulsePlayer(boost::asio::io_context& io_context, const ClientSettings::Player& settings, std::shared_ptr<Stream> stream)
     : Player(io_context, settings, stream), latency_(BUFFER_TIME), pa_ml_(nullptr), pa_ctx_(nullptr), playstream_(nullptr)
 {
@@ -219,6 +298,9 @@ void PulsePlayer::writeCallback(pa_stream* stream, size_t nbytes)
 
 void PulsePlayer::start()
 {
+    if (settings_.pcm_device.idx == -1)
+        throw SnapException("Can't open " + settings_.pcm_device.name + ", error: No such device");
+
     const SampleFormat& format = stream_->getFormat();
     pa_ss_.rate = format.rate();
     pa_ss_.channels = format.channels();
@@ -322,13 +404,17 @@ void PulsePlayer::start()
     bufattr_.prebuf = static_cast<uint32_t>(-1);
     bufattr_.tlength = pa_usec_to_bytes(latency_.count(), &pa_ss_);
 
+    const char* device = nullptr;
+    if (settings_.pcm_device.name.compare(DEFAULT_DEVICE) != 0)
+        device = settings_.pcm_device.name.c_str();
+
     int result = pa_stream_connect_playback(
-        playstream_, nullptr, &bufattr_, static_cast<pa_stream_flags>(PA_STREAM_INTERPOLATE_TIMING | PA_STREAM_ADJUST_LATENCY | PA_STREAM_AUTO_TIMING_UPDATE),
+        playstream_, device, &bufattr_, static_cast<pa_stream_flags>(PA_STREAM_INTERPOLATE_TIMING | PA_STREAM_ADJUST_LATENCY | PA_STREAM_AUTO_TIMING_UPDATE),
         nullptr, nullptr);
     if (result < 0)
     {
         // Old pulse audio servers don't like the ADJUST_LATENCY flag, so retry without that
-        result = pa_stream_connect_playback(playstream_, nullptr, &bufattr_,
+        result = pa_stream_connect_playback(playstream_, device, &bufattr_,
                                             static_cast<pa_stream_flags>(PA_STREAM_INTERPOLATE_TIMING | PA_STREAM_AUTO_TIMING_UPDATE), nullptr, nullptr);
     }
     if (result < 0)

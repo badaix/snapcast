@@ -21,10 +21,11 @@
 
 #include <string>
 
+static constexpr char DEFAULT_DEVICE[] = "default";
 
 struct PcmDevice
 {
-    PcmDevice() : idx(-1), name("default"){};
+    PcmDevice() : idx(-1), name(DEFAULT_DEVICE){};
 
     PcmDevice(int idx, const std::string& name, const std::string& description = "") : idx(idx), name(name), description(description){};
 

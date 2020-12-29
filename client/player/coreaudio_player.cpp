@@ -45,7 +45,7 @@ CoreAudioPlayer::~CoreAudioPlayer()
 
 
 /// TODO: experimental. No output device can be configured yet.
-std::vector<PcmDevice> CoreAudioPlayer::pcm_list(void)
+std::vector<PcmDevice> CoreAudioPlayer::pcm_list()
 {
     UInt32 propsize;
 

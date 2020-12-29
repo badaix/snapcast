@@ -142,7 +142,7 @@ vector<PcmDevice> WASAPIPlayer::pcm_list()
         CHECK_HR(hr);
 
         auto dev = convertToDevice(0, defaultDevice);
-        dev.name = "default";
+        dev.name = DEFAULT_DEVICE;
         deviceList.push_back(dev);
     }
 

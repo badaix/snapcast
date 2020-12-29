@@ -38,6 +38,9 @@ public:
     void start() override;
     void stop() override;
 
+    /// List the system's audio output devices
+    static std::vector<PcmDevice> pcm_list();
+
 protected:
     bool needsThread() const override;
     void worker() override;

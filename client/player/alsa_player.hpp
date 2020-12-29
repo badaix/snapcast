@@ -39,7 +39,7 @@ public:
     void stop() override;
 
     /// List the system's audio output devices
-    static std::vector<PcmDevice> pcm_list(void);
+    static std::vector<PcmDevice> pcm_list();
 
 protected:
     void worker() override;
