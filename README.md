@@ -88,6 +88,8 @@ Please note that there are no pre-built firmware packages available.
 After installation, Snapserver and Snapclient are started with the command line arguments that are configured in `/etc/default/snapserver` and `/etc/default/snapclient`.
 Allowed options are listed in the man pages (`man snapserver`, `man snapclient`) or by invoking the snapserver or snapclient with the `-h` option.
 
+### Server
+
 The server configuration is done in `/etc/snapserver.conf`. Different audio sources can by configured in the `[stream]` section with a list of `source` options, e.g.:
 
     [stream]
@@ -105,8 +107,24 @@ Available stream sources are:
 - [tcp](doc/configuration.md#tcp-server): receives audio from a TCP socket, can act as client or server
 - [meta](doc/configuration.md#meta): read and mix audio from other stream sources
 
-The client will use as audio backend the system's low level audio API to have the best possible control and most precise timing to achieve perfectly synced playback. On Linux `alsa` is used, on Android `oboe` or `opensl`, on macOS `coreaudio` and on Windows `wasapi`.  
-There is also a `file` backend available that will write the raw PCM data to a file (or stdout, stderr). The backend can be configured using the `--player` command line parameter.
+### Client
+
+The client will use as audio backend the system's low level audio API to have the best possible control and most precise timing to achieve perfectly synced playback. 
+
+Available audio backends are configured using the `--player` command line parameter:
+
+| Backend   | OS      | Description  | Parameters |
+| --------- | ------- | ------------ | ---------- |
+| alsa      | Linux   | ALSA | `buffer_time=<total buffer size [ms]>` (default 80, min 10)<br />`fragments=<number of buffers>` (default 4, min 2) |
+| pulse     | Linux   | PulseAudio | `buffer_time=<buffer size [ms]>` (default 80, min 10) |
+| oboe      | Android | Oboe, using OpenSL ES on Android 4.1 and AAudio on 8.1 | |
+| opensl    | Android | OpenSL ES | |
+| coreaudio | macOS   | Core Audio | |
+| wasapi    | Windows | Windows Audio Session API | |
+| file      | All     | Write audio to file | `filename=<filename>` (`<filename>` = `stdout`, `stderr`, `null` or a filename)<br />`mode=[w|a]` (`w`: write (discarding the content), `a`: append (keeping the content) |
+
+Parameters are appended to the player name, e.g. `--player alsa:buffer_time=100`. Use `--player <name>:?` to get a list of available options.  
+For some audio backends you can configure the PCM device using the `-s` or `--soundcard` parameter, the device is choosen by index or name. Available PCM devices can be listed with `-l` or `--list`
 
 ## Test
 
