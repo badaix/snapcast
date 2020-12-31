@@ -357,17 +357,21 @@ int main(int argc, char** argv)
                      << " \"filename=<filename>\" - with <filename> = \"stdout\", \"stderr\", \"null\" or a filename\n"
                      << " \"mode=[w|a]\" - w: write (discarding the content), a: append (keeping the content)\n";
             }
+#ifdef HAS_PULSE
             else if (settings.player.player_name == player::PULSE)
             {
                 cout << "Options are a comma separated list of:\n"
                      << " \"buffer_time=<buffer size [ms]>\" - default 80, min 10\n";
             }
+#endif
+#ifdef HAS_ALSA
             else if (settings.player.player_name == player::ALSA)
             {
                 cout << "Options are a comma separated list of:\n"
                      << " \"buffer_time=<total buffer size [ms]>\" - default 80, min 10\n"
                      << " \"fragments=<number of buffers>\" - default 4, min 2\n";
             }
+#endif
             else
             {
                 cout << "No options available for \"" << settings.player.player_name << "\n";
