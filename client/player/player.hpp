@@ -16,8 +16,8 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
-#ifndef PLAYER_H
-#define PLAYER_H
+#ifndef PLAYER_HPP
+#define PLAYER_HPP
 
 #include "client_settings.hpp"
 #include "common/aixlog.hpp"
@@ -32,6 +32,8 @@
 #include <thread>
 #include <vector>
 
+namespace player
+{
 
 /// Audio Player
 /**
@@ -112,5 +114,6 @@ private:
     }
 };
 
+} // namespace player
 
 #endif

@@ -25,6 +25,9 @@
 using namespace std::chrono_literals;
 using namespace std;
 
+namespace player
+{
+
 static constexpr std::chrono::milliseconds BUFFER_TIME = 80ms;
 static constexpr int PERIODS = 4;
 
@@ -642,3 +645,5 @@ vector<PcmDevice> AlsaPlayer::pcm_list()
     snd_device_name_free_hint(hints);
     return result;
 }
+
+} // namespace player

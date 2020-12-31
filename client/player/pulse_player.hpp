@@ -26,6 +26,11 @@
 #include <memory>
 #include <pulse/pulseaudio.h>
 
+namespace player
+{
+
+static constexpr auto PULSE = "pulse";
+
 /// File Player
 /// Used for testing and doesn't even write the received audio to file at the moment,
 /// but just discards it
@@ -71,5 +76,6 @@ protected:
     std::chrono::time_point<std::chrono::steady_clock> last_change_;
 };
 
+} // namespace player
 
 #endif

@@ -35,6 +35,7 @@
 #ifdef HAS_WASAPI
 #include "player/wasapi_player.hpp"
 #endif
+#include "player/file_player.hpp"
 #ifdef HAS_DAEMON
 #include "common/daemon.hpp"
 #endif
@@ -48,6 +49,7 @@
 
 using namespace std;
 using namespace popl;
+using namespace player;
 
 using namespace std::chrono_literals;
 
@@ -58,15 +60,16 @@ PcmDevice getPcmDevice(const std::string& player, const std::string& soundcard)
 #if defined(HAS_ALSA) || defined(HAS_PULSE) || defined(HAS_WASAPI)
     vector<PcmDevice> pcm_devices;
 #if defined(HAS_ALSA)
-    if (player == "alsa")
+    if (player == player::ALSA)
         pcm_devices = AlsaPlayer::pcm_list();
 #endif
 #if defined(HAS_PULSE)
-    if (player == "pulse")
+    if (player == player::PULSE)
         pcm_devices = PulsePlayer::pcm_list();
 #endif
 #if defined(HAS_WASAPI)
-    pcm_devices = WASAPIPlayer::pcm_list();
+    if (player == player::WASAPI)
+        pcm_devices = WASAPIPlayer::pcm_list();
 #endif
     try
     {
@@ -120,7 +123,7 @@ int main(int argc, char** argv)
     {
         string meta_script("");
         ClientSettings settings;
-        string pcm_device(DEFAULT_DEVICE);
+        string pcm_device(player::DEFAULT_DEVICE);
 
         OptionParser op("Allowed options");
         auto helpSwitch = op.add<Switch>("", "help", "produce help message");
@@ -132,7 +135,7 @@ int main(int argc, char** argv)
         op.add<Value<string>>("", "hostID", "unique host id, default is MAC address", "", &settings.host_id);
 
 // PCM device specific
-#if defined(HAS_ALSA) || defined(HAS_WASAPI)
+#if defined(HAS_ALSA) || defined(HAS_PULSE) || defined(HAS_WASAPI)
         auto listSwitch = op.add<Switch>("l", "list", "list PCM devices");
         /*auto soundcardValue =*/op.add<Value<string>>("s", "soundcard", "index or name of the pcm device", pcm_device, &pcm_device);
 #endif
@@ -202,20 +205,21 @@ int main(int argc, char** argv)
 
         settings.player.player_name = utils::string::split_left(settings.player.player_name, ':', settings.player.parameter);
 
-#if defined(HAS_ALSA) || defined(HAS_WASAPI) || defined(HAS_PULSE)
+#if defined(HAS_ALSA) || defined(HAS_PULSE) || defined(HAS_WASAPI)
         if (listSwitch->is_set())
         {
-            vector<PcmDevice> pcmDevices;
-#if defined(HAS_PULSE)
-            if (settings.player.player_name == "pulse")
-                pcmDevices = PulsePlayer::pcm_list();
-#endif
+            vector<PcmDevice> pcm_devices;
 #if defined(HAS_ALSA)
-            if (settings.player.player_name == "alsa")
-                pcmDevices = AlsaPlayer::pcm_list();
+            if (settings.player.player_name == player::ALSA)
+                pcm_devices = AlsaPlayer::pcm_list();
+#endif
+#if defined(HAS_PULSE)
+            if (settings.player.player_name == player::PULSE)
+                pcm_devices = PulsePlayer::pcm_list();
 #endif
 #if defined(HAS_WASAPI)
-            pcmDevices = WASAPIPlayer::pcm_list();
+            if (settings.player.player_name == player::WASAPI)
+                pcm_devices = WASAPIPlayer::pcm_list();
 #endif
 #ifdef WINDOWS
             // Set console code page to UTF-8 so console known how to interpret string data
@@ -223,10 +227,11 @@ int main(int argc, char** argv)
             // Enable buffering to prevent VS from chopping up UTF-8 byte sequences
             setvbuf(stdout, nullptr, _IOFBF, 1000);
 #endif
-            for (auto dev : pcmDevices)
-            {
+            for (const auto& dev : pcm_devices)
                 cout << dev.idx << ": " << dev.name << "\n" << dev.description << "\n\n";
-            }
+
+            if (pcm_devices.empty())
+                cout << "No PCM device available for audio backend \"" << settings.player.player_name << "\"\n";
             exit(EXIT_SUCCESS);
         }
 #endif
@@ -346,18 +351,18 @@ int main(int argc, char** argv)
 
         if (settings.player.parameter == "?")
         {
-            if (settings.player.player_name == "file")
+            if (settings.player.player_name == player::FILE)
             {
                 cout << "Options are a comma separated list of:\n"
                      << " \"filename=<filename>\" - with <filename> = \"stdout\", \"stderr\", \"null\" or a filename\n"
                      << " \"mode=[w|a]\" - w: write (discarding the content), a: append (keeping the content)\n";
             }
-            else if (settings.player.player_name == "pulse")
+            else if (settings.player.player_name == player::PULSE)
             {
                 cout << "Options are a comma separated list of:\n"
                      << " \"buffer_time=<buffer size [ms]>\" - default 80, min 10\n";
             }
-            else if (settings.player.player_name == "alsa")
+            else if (settings.player.player_name == player::ALSA)
             {
                 cout << "Options are a comma separated list of:\n"
                      << " \"buffer_time=<total buffer size [ms]>\" - default 80, min 10\n"

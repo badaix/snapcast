@@ -16,10 +16,13 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
-#ifndef PCM_DEVICE_H
-#define PCM_DEVICE_H
+#ifndef PCM_DEVICE_HPP
+#define PCM_DEVICE_HPP
 
 #include <string>
+
+namespace player
+{
 
 static constexpr char DEFAULT_DEVICE[] = "default";
 
@@ -34,5 +37,6 @@ struct PcmDevice
     std::string description;
 };
 
+} // namespace player
 
 #endif

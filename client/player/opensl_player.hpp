@@ -25,6 +25,11 @@
 
 #include "player.hpp"
 
+namespace player
+{
+
+static constexpr auto OPENSL = "opensl";
+
 typedef int (*AndroidAudioCallback)(short* buffer, int num_samples);
 
 
@@ -72,5 +77,6 @@ protected:
     std::shared_ptr<Stream> pubStream_;
 };
 
+} // namespace player
 
 #endif

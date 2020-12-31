@@ -24,6 +24,10 @@
 
 #include "player.hpp"
 
+namespace player
+{
+
+static constexpr auto OBOE = "oboe";
 
 /// Android Oboe Audio Player
 /**
@@ -56,5 +60,6 @@ protected:
     std::unique_ptr<oboe::LatencyTuner> mLatencyTuner;
 };
 
+} // namespace player
 
 #endif

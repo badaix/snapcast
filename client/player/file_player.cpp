@@ -27,6 +27,9 @@
 
 using namespace std;
 
+namespace player
+{
+
 static constexpr auto LOG_TAG = "FilePlayer";
 static constexpr auto kDefaultBuffer = 50ms;
 
@@ -128,3 +131,5 @@ void FilePlayer::stop()
     LOG(INFO, LOG_TAG) << "Stop\n";
     timer_.cancel();
 }
+
+} // namespace player

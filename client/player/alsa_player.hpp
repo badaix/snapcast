@@ -16,14 +16,19 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
-#ifndef ALSA_PLAYER_H
-#define ALSA_PLAYER_H
+#ifndef ALSA_PLAYER_HPP
+#define ALSA_PLAYER_HPP
 
 #include "player.hpp"
 
 #include <alsa/asoundlib.h>
 #include <chrono>
 
+
+namespace player
+{
+
+static constexpr auto ALSA = "alsa";
 
 /// Audio Player
 /**
@@ -81,5 +86,6 @@ private:
     unsigned int periods_;
 };
 
+} // namespace player
 
 #endif

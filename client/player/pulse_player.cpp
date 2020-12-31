@@ -28,6 +28,9 @@
 using namespace std::chrono_literals;
 using namespace std;
 
+namespace player
+{
+
 static constexpr std::chrono::milliseconds BUFFER_TIME = 80ms;
 
 static constexpr auto LOG_TAG = "PulsePlayer";
@@ -405,7 +408,7 @@ void PulsePlayer::start()
     bufattr_.tlength = pa_usec_to_bytes(latency_.count(), &pa_ss_);
 
     const char* device = nullptr;
-    if (settings_.pcm_device.name.compare(DEFAULT_DEVICE) != 0)
+    if (settings_.pcm_device.name == DEFAULT_DEVICE)
         device = settings_.pcm_device.name.c_str();
 
     int result = pa_stream_connect_playback(
@@ -459,3 +462,5 @@ void PulsePlayer::stop()
         playstream_ = nullptr;
     }
 }
+
+} // namespace player

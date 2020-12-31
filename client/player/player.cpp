@@ -41,6 +41,9 @@
 
 using namespace std;
 
+namespace player
+{
+
 static constexpr auto LOG_TAG = "Player";
 
 Player::Player(boost::asio::io_context& io_context, const ClientSettings::Player& settings, std::shared_ptr<Stream> stream)
@@ -246,3 +249,5 @@ void Player::setVolume(double volume, bool mute)
         }
     }
 }
+
+} // namespace player

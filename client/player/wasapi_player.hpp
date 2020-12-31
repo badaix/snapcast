@@ -26,6 +26,9 @@
 #include <audiopolicy.h>
 #include <endpointvolume.h>
 
+namespace player
+{
+
 class AudioSessionEventListener : public IAudioSessionEvents
 {
     LONG _cRef;
@@ -169,6 +172,8 @@ public:
     HRESULT STDMETHODCALLTYPE OnNotify(PAUDIO_VOLUME_NOTIFICATION_DATA pNotify);
 };
 
+static constexpr auto WASAPI = "wasapi";
+
 class WASAPIPlayer : public Player
 {
 public:
@@ -191,5 +196,7 @@ private:
 };
 
 #pragma warning(pop)
+
+} // namespace player
 
 #endif

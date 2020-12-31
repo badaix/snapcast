@@ -60,7 +60,7 @@ struct ClientSettings
         std::string player_name{""};
         std::string parameter{""};
         int latency{0};
-        PcmDevice pcm_device;
+        player::PcmDevice pcm_device;
         SampleFormat sample_format;
         SharingMode sharing_mode{SharingMode::unspecified};
         Mixer mixer;

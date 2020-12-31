@@ -23,6 +23,11 @@
 #include <cstdio>
 #include <memory>
 
+namespace player
+{
+
+static constexpr auto FILE = "file";
+
 /// File Player
 /// Used for testing and doesn't even write the received audio to file at the moment,
 /// but just discards it
@@ -42,8 +47,9 @@ protected:
     boost::asio::steady_timer timer_;
     std::vector<char> buffer_;
     std::chrono::time_point<std::chrono::steady_clock> next_request_;
-    std::shared_ptr<FILE> file_;
+    std::shared_ptr<::FILE> file_;
 };
 
+} // namespace player
 
 #endif

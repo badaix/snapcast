@@ -66,6 +66,7 @@
 #include <string>
 
 using namespace std;
+using namespace player;
 
 static constexpr auto LOG_TAG = "Controller";
 static constexpr auto TIME_SYNC_INTERVAL = 1s;
@@ -92,24 +93,24 @@ std::vector<std::string> Controller::getSupportedPlayerNames()
 {
     std::vector<std::string> result;
 #ifdef HAS_ALSA
-    result.emplace_back("alsa");
+    result.emplace_back(player::ALSA);
 #endif
 #ifdef HAS_PULSE
-    result.emplace_back("pulse");
+    result.emplace_back(player::PULSE);
 #endif
 #ifdef HAS_OBOE
-    result.emplace_back("oboe");
+    result.emplace_back(player::OBOE);
 #endif
 #ifdef HAS_OPENSL
-    result.emplace_back("opensl");
+    result.emplace_back(player::OPENSL);
 #endif
 #ifdef HAS_COREAUDIO
-    result.emplace_back("coreaudio");
+    result.emplace_back(player::COREAUDIO);
 #endif
 #ifdef HAS_WASAPI
-    result.emplace_back("wasapi");
+    result.emplace_back(player::WASAPI);
 #endif
-    result.emplace_back("file");
+    result.emplace_back(player::FILE);
     return result;
 }
 
@@ -184,30 +185,30 @@ void Controller::getNextMessage()
 
 #ifdef HAS_ALSA
             if (!player_)
-                player_ = createPlayer<AlsaPlayer>(settings_.player, "alsa");
+                player_ = createPlayer<AlsaPlayer>(settings_.player, player::ALSA);
 #endif
 #ifdef HAS_PULSE
             if (!player_)
-                player_ = createPlayer<PulsePlayer>(settings_.player, "pulse");
+                player_ = createPlayer<PulsePlayer>(settings_.player, player::PULSE);
 #endif
 #ifdef HAS_OBOE
             if (!player_)
-                player_ = createPlayer<OboePlayer>(settings_.player, "oboe");
+                player_ = createPlayer<OboePlayer>(settings_.player, player::OBOE);
 #endif
 #ifdef HAS_OPENSL
             if (!player_)
-                player_ = createPlayer<OpenslPlayer>(settings_.player, "opensl");
+                player_ = createPlayer<OpenslPlayer>(settings_.player, player::OPENSL);
 #endif
 #ifdef HAS_COREAUDIO
             if (!player_)
-                player_ = createPlayer<CoreAudioPlayer>(settings_.player, "coreaudio");
+                player_ = createPlayer<CoreAudioPlayer>(settings_.player, player::COREAUDIO);
 #endif
 #ifdef HAS_WASAPI
             if (!player_)
-                player_ = createPlayer<WASAPIPlayer>(settings_.player, "wasapi");
+                player_ = createPlayer<WASAPIPlayer>(settings_.player, player::WASAPI);
 #endif
-            if (!player_ && (settings_.player.player_name == "file"))
-                player_ = createPlayer<FilePlayer>(settings_.player, "file");
+            if (!player_ && (settings_.player.player_name == player::FILE))
+                player_ = createPlayer<FilePlayer>(settings_.player, player::FILE);
 
             if (!player_)
                 throw SnapException("No audio player support" + (settings_.player.player_name.empty() ? "" : " for: " + settings_.player.player_name));

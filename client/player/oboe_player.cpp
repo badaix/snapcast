@@ -26,6 +26,9 @@
 
 using namespace std;
 
+namespace player
+{
+
 static constexpr auto LOG_TAG = "OboePlayer";
 static constexpr double kDefaultLatency = 50;
 
@@ -201,3 +204,5 @@ void OboePlayer::stop()
     if (result != oboe::Result::OK)
         LOG(ERROR, LOG_TAG) << "Error in requestStop: " << oboe::convertToText(result) << "\n";
 }
+
+} // namespace player

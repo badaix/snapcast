@@ -19,6 +19,9 @@
 #include "coreaudio_player.hpp"
 #include <CoreAudio/CoreAudio.h>
 
+namespace player
+{
+
 #define NUM_BUFFERS 2
 
 static constexpr auto LOG_TAG = "CoreAudioPlayer";
@@ -210,3 +213,5 @@ void CoreAudioPlayer::uninitAudioQueue(AudioQueueRef queue)
     pubStream_->clearChunks();
     CFRunLoopStop(CFRunLoopGetCurrent());
 }
+
+} // namespace player

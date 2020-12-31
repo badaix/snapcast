@@ -26,6 +26,9 @@
 
 using namespace std;
 
+namespace player
+{
+
 static constexpr auto LOG_TAG = "OpenSlPlayer";
 
 static constexpr auto kPhaseInit = "Init";
@@ -375,3 +378,5 @@ void OpenslPlayer::stop()
     (*bqPlayerBufferQueue)->Clear(bqPlayerBufferQueue);
     throwUnsuccess(kPhaseStop, "PlayerPlay::SetPlayState", result);
 }
+
+} // namespace player
