@@ -4,17 +4,26 @@
 
 ### Features
 
-- Client: TODO
+- Client: Add PulseAudio player backend (Issue #722)
+- Client: Configurable buffer time for alsa and pulse players
+- Server: If docroot is not configured, a default page is served (Issue #711)
+- Server: airplay source supports "password" parameter (Issue #754)
 
 ### Bugfixes
 
-- TODO
+- Server: airplay source deletes Shairport's meta pipe on exit (Issue #672)
+- Server: alsa source will not send silece when going idle (Issue #729)
+- Client: "make install" will set correct user/group for snapclient (Issue #728)
+- Client: Fix printing UTF-8 device names on Windows (Issue #732)
+- Client: Fix stuttering on alsa player backend (Issue #722, #727)
 
 ### General
 
-- TODO
+- Server: Change librespot parameter "killall" default to false (Issue #746, #724)
+- Snapweb: Update to v0.1.0
+- Build: Update CMakeLists.txt to build Snapclient on Android
 
-_Johannes Pohl <snapcast@badaix.de>  Thu, 24 Dec 2020 00:13:37 +0200_
+_Johannes Pohl <snapcast@badaix.de>  Sun, 10 Jan 2021 00:13:37 +0200_
 
 ## Version 0.22.0
 

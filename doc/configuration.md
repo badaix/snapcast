@@ -69,15 +69,19 @@ Parameters introduced by Snapclient:
 Launches [shairport-sync](https://github.com/mikebrady/shairport-sync) and reads audio from stdout
 
 ```sh
-airplay:///<path/to/shairport-sync>?name=<name>[&dryout_ms=2000][&devicename=Snapcast][&port=5000]
+airplay:///<path/to/shairport-sync>?name=<name>[&dryout_ms=2000][&devicename=Snapcast][&port=5000][&password=<my password>]
 ```
 
 Note that you need to have the shairport-sync binary on your machine and the sampleformat will be set to `44100:16:2`
 
 #### Available parameters
 
+Parameters used to configure the shairport-sync binary:
+
 - `devicename`: Advertised name
 - `port`: RTSP listening port
+- `password`: Password
+- `params`: Optional string appended to the shairport-sync invocation. This allows for arbitrary flags to be passed to shairport-sync, for instance `params=--on-start=start.sh%20--on-stop=stop.sh`. The value has to be properly URL-encoded.
 
 ### file
 
