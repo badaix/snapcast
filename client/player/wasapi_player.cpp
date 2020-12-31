@@ -20,6 +20,9 @@ using namespace std;
 using namespace std::chrono;
 using namespace std::chrono_literals;
 
+namespace player
+{
+
 static constexpr auto LOG_TAG = "WASAPI";
 
 template <typename T>
@@ -509,3 +512,5 @@ HRESULT STDMETHODCALLTYPE AudioEndpointVolumeCallback::OnNotify(PAUDIO_VOLUME_NO
 
     return S_OK;
 }
+
+} // namespace player
