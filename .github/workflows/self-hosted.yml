@@ -1,4 +1,4 @@
-name: self-hosted
+name: Raspbian-armhf
 
 on: [push, pull_request]
 

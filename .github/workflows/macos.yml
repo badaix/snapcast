@@ -1,4 +1,4 @@
-name: macOS
+name: macOS-x86_64
 
 on: [push, pull_request]
 

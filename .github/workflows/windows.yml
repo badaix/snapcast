@@ -1,4 +1,4 @@
-name: Windows
+name: Windows-win64
 
 on: [push, pull_request]
 
