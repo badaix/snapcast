@@ -22,7 +22,7 @@ jobs:
     - name: cmake build
       run: |
         echo vcpkg installation root: ${env:VCPKG_INSTALLATION_ROOT}
-        cmake -S . -B build -G "Visual Studio 16 2019" -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake" -DVCPKG_TARGET_TRIPLET="x64-windows" -DCMAKE_BUILD_TYPE="Release"
+        cmake -S . -B build -G "Visual Studio 16 2019" -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake" -DVCPKG_TARGET_TRIPLET="x64-windows" -DCMAKE_BUILD_TYPE="Release" -DWERROR=ON
     - name: cmake make
       run: cmake --build build --config Release --parallel 3 --verbose
     - name: installer
