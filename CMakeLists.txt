@@ -17,7 +17,8 @@ if (MSVC)
     # warning level 4 and all warnings as errors
     # warning C4505: 'getArch': unreferenced local function has been removed
     # warning C4458: declaration of 'size' hides class member
-    add_compile_options(/W4 /wd4458 /wd4505)
+    # warning C4459: declaration of 'query' hides global declaration
+    add_compile_options(/W4 /wd4458 /wd4459 /wd4505)
     if (WERROR)
         add_compile_options(/WX)
     endif()
