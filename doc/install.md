@@ -16,21 +16,21 @@ e.g. for Raspberry Pi `snapclient_0.x.x_armhf.deb`, for laptops `snapclient_0.x.
 
 ### using apt 1.1 or later
 
-    sudo apt install </path/to/snapclient_0.x.x_armhf.deb>
+    sudo apt install </path/to/snapclient_0.x.x_[arch].deb>
 
 or
 
-    sudo apt install </path/to/snapserver_0.x.x_armhf.deb>
+    sudo apt install </path/to/snapserver_0.x.x_[arch].deb>
 
 ### using dpkg
 
 Install the package:
 
-    sudo dpkg -i snapclient_0.x.x_armhf.deb
+    sudo dpkg -i </path/to/snapclient_0.x.x_[arch].deb>
 
 or
 
-    sudo dpkg -i snapclient_0.x.x_amd64.deb
+    sudo dpkg -i </path/to/snapserver_0.x.x_[arch].deb>
 
 Install missing dependencies:
 
