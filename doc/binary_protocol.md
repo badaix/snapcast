@@ -4,6 +4,8 @@ Each message sent with the Snapcast binary protocol is split up into two parts:
 - A base message that provides general information like time sent/received, type of the message, message size, etc
 - A typed message that carries the rest of the information
 
+The protocol is using little endian.
+
 ## Client joining process
 
 When a client joins a server, the following exchanges happen
@@ -16,6 +18,10 @@ When a client joins a server, the following exchanges happen
     1. Until the server sends this, the client shouldn't play any [Wire Chunk](#wire-chunk) messages
 1. The server will now send [Wire Chunk](#wire-chunk) messages, which can be fed to the audio decoder.
 1. When it comes time for the client to disconnect, the socket can just be closed.
+1. Client periodically sends a [Time](#time) message, carrying a sent timestamp `t_client-sent`
+    1. Receives a Time response containing the client to server time delta `latency_c2s = t_server-recv - t_client-sent + t_network-latency` and the server sent timestamp `t_server-sent`
+    1. Calculates `latency_s2c = t_client-recv - t_server-sent + t_network_latency`
+    1. Calcutates the time diff between server and client as `(latency_c2s - latency_s2c) / 2`, eliminating the network latency (assumed to be symmetric)
 
 ## Messages
 
@@ -58,7 +64,7 @@ When a client joins a server, the following exchanges happen
 | timestamp.sec  | int32   | The second value of the timestamp when this part of the stream was recorded           |
 | timestamp.usec | int32   | The microsecond value of the timestamp when this part of the stream was recorded      |
 | size           | uint32  | Size of the following payload                                                         |
-| payload        | char[]  | Buffer of data containing the codec header                                            |
+| payload        | char[]  | Buffer of data containing the encoded PCM data (a decodable chunk per message)        |
 
 ### Server Settings
 
