@@ -22,6 +22,8 @@
 
 #include "stream.hpp"
 #include "common/aixlog.hpp"
+#include "common/snap_exception.hpp"
+#include "common/str_compat.hpp"
 #include "time_provider.hpp"
 #include <cmath>
 #include <iostream>
@@ -141,15 +143,15 @@ void Stream::getSilentPlayerChunk(void* outputBuffer, uint32_t frames) const
 cs::time_point_clk Stream::getNextPlayerChunk(void* outputBuffer, uint32_t frames)
 {
     if (!chunk_ && !chunks_.try_pop(chunk_))
-        throw 0;
+        throw SnapException("No chunks available, requested frames: " + cpt::to_string(frames));
 
     cs::time_point_clk tp = chunk_->start();
     uint32_t read = 0;
     while (read < frames)
     {
         read += chunk_->readFrames(static_cast<char*>(outputBuffer) + read * format_.frameSize(), frames - read);
-        if (chunk_->isEndOfChunk() && !chunks_.try_pop(chunk_))
-            throw 0;
+        if ((read < frames) && chunk_->isEndOfChunk() && !chunks_.try_pop(chunk_))
+            throw SnapException("Not enough frames available, requested frames: " + cpt::to_string(frames) + ", available: " + cpt::to_string(read));
     }
     return tp;
 }
@@ -252,7 +254,7 @@ bool Stream::getPlayerChunk(void* outputBuffer, const cs::usec& outputBufferDacT
         if (now != lastUpdate_)
         {
             lastUpdate_ = now;
-            LOG(INFO, LOG_TAG) << "no chunks available\n";
+            LOG(INFO, LOG_TAG) << "No chunks available\n";
         }
         return false;
     }
@@ -432,9 +434,9 @@ bool Stream::getPlayerChunk(void* outputBuffer, const cs::usec& outputBufferDacT
         }
         return (abs(cs::duration<cs::msec>(age)) < 500);
     }
-    catch (int e)
+    catch (const std::exception& e)
     {
-        LOG(INFO, LOG_TAG) << "Exception: " << e << "\n";
+        LOG(INFO, LOG_TAG) << "Exception: " << e.what() << "\n";
         hard_sync_ = true;
         return false;
     }
