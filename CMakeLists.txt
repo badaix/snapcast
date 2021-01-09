@@ -276,6 +276,7 @@ else()
     find_package(boost REQUIRED CONFIG)
 
     add_definitions("-DHAS_OBOE")
+    add_definitions("-DHAS_OPENSL")
     add_definitions("-DHAS_FLAC")
     add_definitions("-DHAS_OGG")
     add_definitions("-DHAS_SOXR")
