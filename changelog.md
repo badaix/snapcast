@@ -23,6 +23,7 @@
 ### General
 
 - Server: Change librespot parameter "killall" default to false (Issue #746, #724)
+- Client: Android uses performance mode "none" to allow effects (Issue #766)
 - Snapweb: Update to v0.1.0
 - Build: Update CMakeLists.txt to build Snapclient on Android
 
