@@ -79,7 +79,7 @@ oboe::Result OboePlayer::openStream()
     // The builder set methods can be chained for convenience.
     oboe::AudioStreamBuilder builder;
     auto result = builder.setSharingMode(sharing_mode)
-                      ->setPerformanceMode(oboe::PerformanceMode::LowLatency)
+                      ->setPerformanceMode(oboe::PerformanceMode::None)
                       ->setChannelCount(stream_->getFormat().channels())
                       ->setSampleRate(stream_->getFormat().rate())
                       ->setFormat(oboe::AudioFormat::I16)

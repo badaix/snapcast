@@ -282,6 +282,9 @@ void OpenslPlayer::initOpensl()
     ////	SLint32 streamType = SL_ANDROID_STREAM_VOICE;
     result = (*playerConfig)->SetConfiguration(playerConfig, SL_ANDROID_KEY_STREAM_TYPE, &streamType, sizeof(SLint32));
     throwUnsuccess(kPhaseInit, "PlayerConfig::SetConfiguration", result);
+    // Set the performance mode.
+    SLuint32 performanceMode = SL_ANDROID_PERFORMANCE_NONE;
+    result = (*playerConfig)->SetConfiguration(playerConfig, SL_ANDROID_KEY_PERFORMANCE_MODE, &performanceMode, sizeof(performanceMode));
 
     result = (*bqPlayerObject)->Realize(bqPlayerObject, SL_BOOLEAN_FALSE);
     throwUnsuccess(kPhaseInit, "PlayerObject::Realize", result);
