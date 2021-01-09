@@ -1,7 +1,7 @@
 Source: snapcast
 Section: sound
 Priority: optional
-Maintainer: Felix Geyer <fgeyer@debian.org>
+Maintainer: Johannes Pohl <snapcast@badaix.de>
 Build-Depends: debhelper (>= 10~),
                libasound2-dev,
                libpulse-dev,

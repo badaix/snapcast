@@ -13,9 +13,12 @@
 
 - Server: airplay source deletes Shairport's meta pipe on exit (Issue #672)
 - Server: alsa source will not send silece when going idle (Issue #729)
+- Server: pipe source will not send silence after 3h idle (Issue #741)
+- Server: Fix build error on FreeBSD (Issue #752)
 - Client: "make install" will set correct user/group for snapclient (Issue #728)
 - Client: Fix printing UTF-8 device names on Windows (Issue #732)
 - Client: Fix stuttering on alsa player backend (Issue #722, #727)
+- Client: Terminate if host is not configured and mDNS is unavailable
 
 ### General
 
