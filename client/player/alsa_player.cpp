@@ -350,25 +350,48 @@ void AlsaPlayer::initAlsa()
     if (rate != format.rate())
         LOG(WARNING, LOG_TAG) << "Could not set sample rate to " << format.rate() << " Hz, using: " << rate << " Hz\n";
 
-    unsigned int buffer_time = buffer_time_.count();
-    if ((err = snd_pcm_hw_params_set_buffer_time_near(handle_, params, &buffer_time, nullptr)) < 0)
-        throw SnapException("Can't set buffer time: " + string(snd_strerror(err)));
+    unsigned int period_time = buffer_time_.count() / periods_;
+    unsigned int max_period_time = period_time;
+    if ((err = snd_pcm_hw_params_get_period_time_max(params, &max_period_time, nullptr)) < 0)
+    {
+        LOG(ERROR, LOG_TAG) << "Can't get max period time: " << snd_strerror(err) << "\n";
+    }
+    else
+    {
+        if (period_time > max_period_time)
+        {
+            LOG(INFO, LOG_TAG) << "Period time too large, changing from " << period_time << " to " << max_period_time << "\n";
+            period_time = max_period_time;
+        }
+    }
+    unsigned int min_period_time = period_time;
+    if ((err = snd_pcm_hw_params_get_period_time_min(params, &min_period_time, nullptr)) < 0)
+    {
+        LOG(ERROR, LOG_TAG) << "Can't get min period time: " << snd_strerror(err) << "\n";
+    }
+    else
+    {
+        if (period_time < min_period_time)
+        {
+            LOG(INFO, LOG_TAG) << "Period time too small, changing from " << period_time << " to " << min_period_time << "\n";
+            period_time = min_period_time;
+        }
+    }
+
+    if ((err = snd_pcm_hw_params_set_period_time_near(handle_, params, &period_time, nullptr)) < 0)
+        throw SnapException("Can't set period time: " + string(snd_strerror(err)));
 
     unsigned int periods = periods_;
     if ((err = snd_pcm_hw_params_set_periods_near(handle_, params, &periods, 0)) < 0)
         throw SnapException("Can't set periods: " + string(snd_strerror(err)));
-
-    //	long unsigned int periodsize = stream_->format.msRate() * 50;//2*rate/50;
-    //	if ((pcm = snd_pcm_hw_params_set_buffer_size_near(pcm_handle, params, &periodsize)) < 0)
-    //		LOG(ERROR, LOG_TAG) << "Unable to set buffer size " << (long int)periodsize << ": " <<  snd_strerror(pcm) << "\n";
 
     // Write parameters
     if ((err = snd_pcm_hw_params(handle_, params)) < 0)
         throw SnapException("Can't set hardware parameters: " + string(snd_strerror(err)));
 
     // Resume information
-    unsigned int period_time;
-    snd_pcm_hw_params_get_period_time(params, &period_time, nullptr);
+    unsigned int buffer_time;
+    snd_pcm_hw_params_get_buffer_time(params, &buffer_time, nullptr);
     snd_pcm_hw_params_get_period_size(params, &frames_, nullptr);
     LOG(INFO, LOG_TAG) << "PCM name: " << snd_pcm_name(handle_) << ", sample rate: " << rate << " Hz, channels: " << channels
                        << ", buffer time: " << buffer_time << " us, periods: " << periods << ", period time: " << period_time
