@@ -1,4 +1,17 @@
-snapcast (0.23.0-1) unstable; urgency=medium
+snapcast (0.23.100-1) unstable; urgency=medium
+
+  * Features
+    -Client: Lorem ipsum
+
+  * Bugfixes
+    -Server: Lorem ipsum
+
+  * General
+    -Snapweb: Lorem ipsum
+
+ -- Johannes Pohl <snapcast@badaix.de>  Sun, 07 Mar 2021 00:13:37 +0200
+ 
+ snapcast (0.23.0-1) unstable; urgency=medium
 
   * Features
     -Client: Add PulseAudio player backend (Issue #722)

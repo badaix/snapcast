@@ -1,5 +1,21 @@
 # Snapcast changelog
 
+## Version 0.23.100
+
+### Features
+
+- Client: Lorem ipsum
+
+### Bugfixes
+
+- Server: Lorem ipsum
+
+### General
+
+- Snapweb: Lorem ipsum
+
+_Johannes Pohl <snapcast@badaix.de>  Sun, 07 Mar 2021 00:13:37 +0200_
+
 ## Version 0.23.0
 
 ### Features
