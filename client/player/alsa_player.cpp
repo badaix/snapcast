@@ -298,6 +298,18 @@ void AlsaPlayer::initAlsa()
     if ((err = snd_pcm_hw_params_any(handle_, params)) < 0)
         throw SnapException("Can't fill params: " + string(snd_strerror(err)));
 
+    snd_output_t* output;
+    if (snd_output_buffer_open(&output) == 0)
+    {
+        if (snd_pcm_hw_params_dump(params, output) == 0)
+        {
+            char* str;
+            size_t len = snd_output_buffer_string(output, &str);
+            LOG(DEBUG, LOG_TAG) << std::string(str, len) << "\n";
+        }
+        snd_output_close(output);
+    }
+
     // Set parameters
     if ((err = snd_pcm_hw_params_set_access(handle_, params, SND_PCM_ACCESS_RW_INTERLEAVED)) < 0)
         throw SnapException("Can't set interleaved mode: " + string(snd_strerror(err)));
