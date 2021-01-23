@@ -16,11 +16,13 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
-#ifndef ALSA_PLAYER_H
-#define ALSA_PLAYER_H
+#ifndef ALSA_PLAYER_HPP
+#define ALSA_PLAYER_HPP
 
 #include "player.hpp"
+
 #include <alsa/asoundlib.h>
+#include <chrono>
 
 
 namespace player
@@ -38,24 +40,50 @@ public:
     AlsaPlayer(boost::asio::io_context& io_context, const ClientSettings::Player& settings, std::shared_ptr<Stream> stream);
     ~AlsaPlayer() override;
 
-    /// Set audio volume in range [0..1]
     void start() override;
     void stop() override;
 
     /// List the system's audio output devices
-    static std::vector<PcmDevice> pcm_list(void);
+    static std::vector<PcmDevice> pcm_list();
 
 protected:
     void worker() override;
     bool needsThread() const override;
 
 private:
+    /// initialize alsa and the mixer (if neccessary)
     void initAlsa();
-    void uninitAlsa();
+    /// free alsa and optionally the mixer
+    /// @param uninit_mixer free the mixer
+    void uninitAlsa(bool uninit_mixer);
+    bool getAvailDelay(snd_pcm_sframes_t& avail, snd_pcm_sframes_t& delay);
+
+    void initMixer();
+    void uninitMixer();
+
+    bool getHardwareVolume(double& volume, bool& muted) override;
+    void setHardwareVolume(double volume, bool muted) override;
+
+    void waitForEvent();
 
     snd_pcm_t* handle_;
+    snd_ctl_t* ctl_;
+
+    snd_mixer_t* mixer_;
+    snd_mixer_elem_t* elem_;
+    std::string mixer_name_;
+    std::string mixer_device_;
+
+    std::unique_ptr<pollfd, std::function<void(pollfd*)>> fd_;
     std::vector<char> buffer_;
     snd_pcm_uframes_t frames_;
+    boost::asio::posix::stream_descriptor sd_;
+    std::chrono::time_point<std::chrono::steady_clock> last_change_;
+    std::recursive_mutex mutex_;
+    boost::asio::steady_timer timer_;
+
+    std::chrono::microseconds buffer_time_;
+    unsigned int periods_;
 };
 
 } // namespace player
