@@ -16,7 +16,7 @@ jobs:
     - name: cmake make
       run: cmake --build build -- -j 2
     - name: debian package
-      run: fakeroot make -f debian/rules CMAKEFLAGS="-DBOOST_ROOT=/home/pi/Develop/boost_1_75_0 -DCMAKE_CXX_COMPILER_LAUNCHER=ccache" binary
+      run: fakeroot make -f debian/rules CMAKEFLAGS="-DBOOST_ROOT=/home/pi/Develop/boost_1_75_0" binary
     - name: Archive artifacts
       uses: actions/upload-artifact@v2
       with:
