@@ -30,6 +30,7 @@ namespace player
 
 static constexpr std::chrono::milliseconds BUFFER_TIME = 80ms;
 static constexpr int PERIODS = 4;
+static constexpr int MIN_PERIODS = 3;
 
 #define exp10(x) (exp((x)*log(10)))
 
@@ -68,15 +69,15 @@ AlsaPlayer::AlsaPlayer(boost::asio::io_context& io_context, const ClientSettings
         LOG(DEBUG, LOG_TAG) << "Mixer: " << mixer_name_ << ", device: " << mixer_device_ << "\n";
     }
 
-    buffer_time_ = BUFFER_TIME;
-    periods_ = PERIODS;
     auto params = utils::string::split_pairs(settings.parameter, ',', '=');
     if (params.find("buffer_time") != params.end())
         buffer_time_ = std::chrono::milliseconds(std::max(cpt::stoi(params["buffer_time"]), 10));
     if (params.find("fragments") != params.end())
         periods_ = std::max(cpt::stoi(params["fragments"]), 2);
 
-    LOG(INFO, LOG_TAG) << "Using buffer_time: " << buffer_time_.count() / 1000 << " ms, fragments: " << periods_ << "\n";
+    LOG(INFO, LOG_TAG) << "Using " << (buffer_time_.has_value() ? "configured" : "default")
+                       << " buffer_time: " << buffer_time_.value_or(BUFFER_TIME).count() / 1000 << " ms, " << (periods_.has_value() ? "configured" : "default")
+                       << " fragments: " << periods_.value_or(PERIODS) << "\n";
 }
 
 
@@ -279,7 +280,7 @@ void AlsaPlayer::initAlsa()
     std::lock_guard<std::recursive_mutex> lock(mutex_);
 
     const SampleFormat& format = stream_->getFormat();
-    unsigned int rate = format.rate();
+    uint32_t rate = format.rate();
     int channels = format.channels();
     int err;
 
@@ -362,8 +363,8 @@ void AlsaPlayer::initAlsa()
     if (rate != format.rate())
         LOG(WARNING, LOG_TAG) << "Could not set sample rate to " << format.rate() << " Hz, using: " << rate << " Hz\n";
 
-    unsigned int period_time = buffer_time_.count() / periods_;
-    unsigned int max_period_time = period_time;
+    uint32_t period_time = buffer_time_.value_or(BUFFER_TIME).count() / periods_.value_or(PERIODS);
+    uint32_t max_period_time = period_time;
     if ((err = snd_pcm_hw_params_get_period_time_max(params, &max_period_time, nullptr)) < 0)
     {
         LOG(ERROR, LOG_TAG) << "Can't get max period time: " << snd_strerror(err) << "\n";
@@ -376,7 +377,7 @@ void AlsaPlayer::initAlsa()
             period_time = max_period_time;
         }
     }
-    unsigned int min_period_time = period_time;
+    uint32_t min_period_time = period_time;
     if ((err = snd_pcm_hw_params_get_period_time_min(params, &min_period_time, nullptr)) < 0)
     {
         LOG(ERROR, LOG_TAG) << "Can't get min period time: " << snd_strerror(err) << "\n";
@@ -393,9 +394,18 @@ void AlsaPlayer::initAlsa()
     if ((err = snd_pcm_hw_params_set_period_time_near(handle_, params, &period_time, nullptr)) < 0)
         throw SnapException("Can't set period time: " + string(snd_strerror(err)));
 
-    unsigned int buffer_time = buffer_time_.count();
+    uint32_t buffer_time = buffer_time_.value_or(BUFFER_TIME).count();
+    if (!periods_.has_value())
+    {
+        if (buffer_time < period_time * MIN_PERIODS)
+        {
+            LOG(INFO, LOG_TAG) << "Buffer time smaller than " << MIN_PERIODS << " * periods: " << buffer_time << " \u03BCs < " << period_time * MIN_PERIODS
+                               << " us, raising buffer time\n";
+            buffer_time = period_time * MIN_PERIODS;
+        }
+    }
     if ((err = snd_pcm_hw_params_set_buffer_time_near(handle_, params, &buffer_time, 0)) < 0)
-        throw SnapException("Can't set periods: " + string(snd_strerror(err)));
+        throw SnapException("Can't set buffer time to " + cpt::to_string(buffer_time) + " us : " + string(snd_strerror(err)));
 
     // unsigned int periods = periods_;
     // if ((err = snd_pcm_hw_params_set_periods_near(handle_, params, &periods, 0)) < 0)
@@ -406,7 +416,7 @@ void AlsaPlayer::initAlsa()
         throw SnapException("Can't set hardware parameters: " + string(snd_strerror(err)));
 
     // Resume information
-    unsigned int periods;
+    uint32_t periods;
     if (snd_pcm_hw_params_get_periods(params, &periods, nullptr) < 0)
         periods = round((double)buffer_time / (double)period_time);
     snd_pcm_hw_params_get_period_size(params, &frames_, nullptr);
@@ -424,11 +434,11 @@ void AlsaPlayer::initAlsa()
     //	snd_pcm_sw_params_set_stop_threshold(pcm_handle, swparams, frames_);
     snd_pcm_sw_params(handle_, swparams);
 
-    // if (snd_pcm_state(handle_) == SND_PCM_STATE_PREPARED)
-    // {
-    //     if ((err = snd_pcm_start(handle_)) < 0)
-    //         LOG(DEBUG, LOG_TAG) << "Failed to start PCM: " << snd_strerror(err) << "\n";
-    // }
+    if (snd_pcm_state(handle_) == SND_PCM_STATE_PREPARED)
+    {
+        if ((err = snd_pcm_start(handle_)) < 0)
+            LOG(DEBUG, LOG_TAG) << "Failed to start PCM: " << snd_strerror(err) << "\n";
+    }
 
     if (ctl_ == nullptr)
         initMixer();

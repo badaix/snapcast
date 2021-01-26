@@ -23,6 +23,7 @@
 
 #include <alsa/asoundlib.h>
 #include <chrono>
+#include <boost/optional.hpp>
 
 
 namespace player
@@ -82,8 +83,8 @@ private:
     std::recursive_mutex mutex_;
     boost::asio::steady_timer timer_;
 
-    std::chrono::microseconds buffer_time_;
-    unsigned int periods_;
+    boost::optional<std::chrono::microseconds> buffer_time_;
+    boost::optional<uint32_t> periods_;
 };
 
 } // namespace player
