@@ -395,15 +395,14 @@ void AlsaPlayer::initAlsa()
         throw SnapException("Can't set period time: " + string(snd_strerror(err)));
 
     uint32_t buffer_time = buffer_time_.value_or(BUFFER_TIME).count();
-    if (!periods_.has_value())
+    uint32_t periods = periods_.value_or(MIN_PERIODS);
+    if (buffer_time < period_time * periods)
     {
-        if (buffer_time < period_time * MIN_PERIODS)
-        {
-            LOG(INFO, LOG_TAG) << "Buffer time smaller than " << MIN_PERIODS << " * periods: " << buffer_time << " \u03BCs < " << period_time * MIN_PERIODS
-                               << " us, raising buffer time\n";
-            buffer_time = period_time * MIN_PERIODS;
-        }
+        LOG(INFO, LOG_TAG) << "Buffer time smaller than " << periods << " * periods: " << buffer_time << " us < " << period_time * periods
+                           << " us, raising buffer time\n";
+        buffer_time = period_time * periods;
     }
+
     if ((err = snd_pcm_hw_params_set_buffer_time_near(handle_, params, &buffer_time, 0)) < 0)
         throw SnapException("Can't set buffer time to " + cpt::to_string(buffer_time) + " us : " + string(snd_strerror(err)));
 
@@ -416,7 +415,7 @@ void AlsaPlayer::initAlsa()
         throw SnapException("Can't set hardware parameters: " + string(snd_strerror(err)));
 
     // Resume information
-    uint32_t periods;
+    // uint32_t periods;
     if (snd_pcm_hw_params_get_periods(params, &periods, nullptr) < 0)
         periods = round((double)buffer_time / (double)period_time);
     snd_pcm_hw_params_get_period_size(params, &frames_, nullptr);
@@ -611,8 +610,8 @@ void AlsaPlayer::worker()
         // }
         if (framesAvail == 0)
         {
-            auto frame_time = std::chrono::microseconds(static_cast<int>(frames_ / settings_.sample_format.usRate()));
-            std::chrono::microseconds wait = std::min(frame_time / 5, std::chrono::microseconds(10ms));
+            auto frame_time = std::chrono::microseconds(static_cast<int>(frames_ / format.usRate()));
+            std::chrono::microseconds wait = std::min(frame_time / 2, std::chrono::microseconds(10ms));
             LOG(DEBUG, LOG_TAG) << "No frames available, waiting for " << wait.count() << " us\n";
             this_thread::sleep_for(wait);
             continue;

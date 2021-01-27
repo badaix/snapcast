@@ -22,8 +22,8 @@
 #include "player.hpp"
 
 #include <alsa/asoundlib.h>
-#include <chrono>
 #include <boost/optional.hpp>
+#include <chrono>
 
 
 namespace player
