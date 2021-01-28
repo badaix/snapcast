@@ -97,7 +97,7 @@ void PosixStream::do_read()
                 // no data available, fill with silence
                 memset(chunk_->payload + len, 0, toRead - len);
 
-                // avoid overflow after 186min 24s silence (at 48000:16:2) 
+                // avoid overflow after 186min 24s silence (at 48000:16:2)
                 if (idle_bytes_ <= max_idle_bytes_)
                     idle_bytes_ += toRead - len;
                 break;

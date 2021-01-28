@@ -149,7 +149,7 @@ int main(int argc, char* argv[])
 
         if (versionSwitch->is_set())
         {
-            cout << "snapserver v" << VERSION << ", built " << __DATE__ << "\n"
+            cout << "snapserver v" << VERSION << "\n"
                  << "Copyright (C) 2014-2021 BadAix (snapcast@badaix.de).\n"
                  << "License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>.\n"
                  << "This is free software: you are free to change and redistribute it.\n"
