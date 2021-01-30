@@ -209,19 +209,17 @@ void AlsaPlayer::waitForEvent()
                     waitForEvent();
                     return;
                 }
-                // Sometimes the old volume is reported after this event has been raised.
+                // Sometimes the old volume is reported by getHardwareVolume after this event has been raised.
                 // As workaround we defer getting the volume by 20ms.
                 timer_.cancel();
                 timer_.expires_after(20ms);
                 timer_.async_wait([this](const boost::system::error_code& ec) {
                     if (!ec)
                     {
-                        double volume;
-                        bool muted;
-                        if (getHardwareVolume(volume, muted))
+                        if (getHardwareVolume(volume_, muted_))
                         {
-                            LOG(DEBUG, LOG_TAG) << "Volume: " << volume << ", muted: " << muted << "\n";
-                            notifyVolumeChange(volume, muted);
+                            LOG(DEBUG, LOG_TAG) << "Volume changed: " << volume_ << ", muted: " << muted_ << "\n";
+                            notifyVolumeChange(volume_, muted_);
                         }
                     }
                 });

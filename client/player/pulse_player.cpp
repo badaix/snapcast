@@ -183,9 +183,9 @@ void PulsePlayer::triggerVolumeUpdate()
             if (info)
             {
                 auto self = static_cast<PulsePlayer*>(userdata);
-                auto volume = (double)pa_cvolume_avg(&(info->volume)) / (double)PA_VOLUME_NORM;
-                bool muted = (info->mute != 0);
-                LOG(DEBUG, LOG_TAG) << "volume changed: " << volume << ", muted: " << muted << "\n";
+                self->volume_ = (double)pa_cvolume_avg(&(info->volume)) / (double)PA_VOLUME_NORM;
+                self->muted_ = (info->mute != 0);
+                LOG(DEBUG, LOG_TAG) << "Volume changed: " << self->volume_ << ", muted: " << self->muted_ << "\n";
 
                 auto now = std::chrono::steady_clock::now();
                 if (now - self->last_change_ < 1s)
@@ -195,7 +195,7 @@ void PulsePlayer::triggerVolumeUpdate()
                                         << " ms => ignoring volume change\n";
                     return;
                 }
-                self->notifyVolumeChange(volume, muted);
+                self->notifyVolumeChange(self->volume_, self->muted_);
             }
         },
         this);

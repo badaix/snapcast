@@ -236,10 +236,10 @@ void Controller::getNextMessage()
             player_->start();
             // Don't change the initial hardware mixer volume on the user's device.
             // The player class will send the device's volume to the server instead
-            if (settings_.player.mixer.mode != ClientSettings::Mixer::Mode::hardware)
-            {
-                player_->setVolume(serverSettings_->getVolume() / 100., serverSettings_->isMuted());
-            }
+            // if (settings_.player.mixer.mode != ClientSettings::Mixer::Mode::hardware)
+            // {
+            player_->setVolume(serverSettings_->getVolume() / 100., serverSettings_->isMuted());
+            // }
         }
         else if (response->type == message_type::kStreamTags)
         {
