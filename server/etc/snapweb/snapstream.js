@@ -55,7 +55,7 @@ class Tv {
     }
 }
 class BaseMessage {
-    constructor(buffer) {
+    constructor(_buffer) {
         this.type = 0;
         this.id = 0;
         this.refersTo = 0;
@@ -310,7 +310,7 @@ class AudioStream {
         this.lastLog = 0;
     }
     setVolume(percent, muted) {
-        let base = 10;
+        // let base = 10;
         this.volume = percent / 100; // (Math.pow(base, percent / 100) - 1) / (base - 1);
         console.log("setVolume: " + percent + " => " + this.volume + ", muted: " + this.muted);
         this.muted = muted;
@@ -454,8 +454,9 @@ class AudioStream {
             left.fill(0, pos);
             right.fill(0, pos);
         }
-        buffer.copyToChannel(left, 0, 0);
-        buffer.copyToChannel(right, 1, 0);
+        // copyToChannel is not supported by Safari
+        buffer.getChannelData(0).set(left);
+        buffer.getChannelData(1).set(right);
     }
 }
 class TimeProvider {
@@ -534,17 +535,14 @@ class SampleFormat {
     }
 }
 class Decoder {
-    setHeader(buffer) {
+    setHeader(_buffer) {
         return new SampleFormat();
     }
-    decode(chunk) {
+    decode(_chunk) {
         return null;
     }
 }
 class OpusDecoder extends Decoder {
-    constructor() {
-        super();
-    }
     setHeader(buffer) {
         let view = new DataView(buffer);
         let ID_OPUS = 0x4F505553;
@@ -563,7 +561,7 @@ class OpusDecoder extends Decoder {
         console.log("Opus samplerate: " + format.toString());
         return format;
     }
-    decode(chunk) {
+    decode(_chunk) {
         return null;
     }
 }
@@ -593,7 +591,8 @@ class FlacDecoder extends Decoder {
         this.cacheInfo = { cachedBlocks: 0, isCachedChunk: true };
         // console.log("Flac len: " + this.flacChunk.byteLength);
         while (this.flacChunk.byteLength && Flac.FLAC__stream_decoder_process_single(this.decoder)) {
-            let state = Flac.FLAC__stream_decoder_get_state(this.decoder);
+            Flac.FLAC__stream_decoder_get_state(this.decoder);
+            // let state = Flac.FLAC__stream_decoder_get_state(this.decoder);
             // console.log("State: " + state);
         }
         // console.log("Pcm payload: " + this.pcmChunk!.payloadSize());
@@ -667,10 +666,10 @@ class PlayBuffer {
         this.source = source;
         this.source.buffer = this.buffer;
         this.source.connect(destination);
-        this.onended = (playBuffer) => { };
+        this.onended = (_playBuffer) => { };
     }
     start() {
-        this.source.onended = (ev) => {
+        this.source.onended = () => {
             this.onended(this);
         };
         this.source.start(this.playTime);
@@ -690,7 +689,7 @@ class PcmDecoder extends Decoder {
     }
 }
 class SnapStream {
-    constructor(host, port) {
+    constructor(baseUrl) {
         this.playTime = 0;
         this.msgId = 0;
         this.bufferDurationMs = 80; // 0;
@@ -703,85 +702,29 @@ class SnapStream {
         this.audioBufferCount = 3;
         this.bufferMs = 1000;
         this.bufferNum = 0;
-        this.streamsocket = new WebSocket('ws://' + host + ':' + port + '/stream');
+        this.latency = 0;
+        this.baseUrl = baseUrl;
+        this.timeProvider = new TimeProvider();
+        let AudioContext = window.AudioContext // Default
+            || window.webkitAudioContext // Safari and old versions of Chrome
+            || false;
+        if (AudioContext) {
+            this.ctx = new AudioContext;
+            this.gainNode = this.ctx.createGain();
+            this.gainNode.connect(this.ctx.destination);
+            this.connect();
+        }
+        else {
+            // Web Audio API is not supported
+            // Alert the user
+            alert("Sorry, but the Web Audio API is not supported by your browser");
+        }
+    }
+    connect() {
+        this.streamsocket = new WebSocket(this.baseUrl + '/stream');
         this.streamsocket.binaryType = "arraybuffer";
-        this.streamsocket.onmessage = (msg) => {
-            let view = new DataView(msg.data);
-            let type = view.getUint16(0, true);
-            if (type == 1) {
-                let codec = new CodecMessage(msg.data);
-                console.log("Codec: " + codec.codec);
-                if (codec.codec == "flac") {
-                    this.decoder = new FlacDecoder();
-                }
-                else if (codec.codec == "pcm") {
-                    this.decoder = new PcmDecoder();
-                }
-                else if (codec.codec == "opus") {
-                    this.decoder = new OpusDecoder();
-                    alert("Codec not supported: " + codec.codec);
-                }
-                else {
-                    alert("Codec not supported: " + codec.codec);
-                }
-                if (this.decoder) {
-                    this.sampleFormat = this.decoder.setHeader(codec.payload);
-                    console.log("Sampleformat: " + this.sampleFormat.toString());
-                    if ((this.sampleFormat.channels != 2) || (this.sampleFormat.bits != 16)) {
-                        alert("Stream must be stereo with 16 bit depth, actual format: " + this.sampleFormat.toString());
-                    }
-                    else {
-                        if (this.bufferDurationMs != 0) {
-                            this.bufferFrameCount = Math.floor(this.bufferDurationMs * this.sampleFormat.msRate());
-                        }
-                        this.stopAudio();
-                        let options = { latencyHint: "playback", sampleRate: this.sampleFormat.rate };
-                        const chromeVersion = getChromeVersion();
-                        if (chromeVersion !== null && chromeVersion < 55) {
-                            // Some older browsers won't decode the stream if options are provided.
-                            options = undefined;
-                        }
-                        this.ctx = new AudioContext(options);
-                        this.timeProvider.setAudioContext(this.ctx);
-                        this.gainNode = this.ctx.createGain();
-                        this.gainNode.connect(this.ctx.destination);
-                        this.gainNode.gain.value = this.serverSettings.muted ? 0 : this.serverSettings.volumePercent / 100;
-                        // this.timeProvider = new TimeProvider(this.ctx);
-                        this.stream = new AudioStream(this.timeProvider, this.sampleFormat, this.bufferMs);
-                        console.log("Base latency: " + this.ctx.baseLatency + ", output latency: " + this.ctx.outputLatency);
-                        this.play();
-                    }
-                }
-            }
-            else if (type == 2) {
-                let pcmChunk = new PcmChunkMessage(msg.data, this.sampleFormat);
-                if (this.decoder) {
-                    let decoded = this.decoder.decode(pcmChunk);
-                    if (decoded) {
-                        this.stream.addChunk(decoded);
-                    }
-                }
-            }
-            else if (type == 3) {
-                this.serverSettings = new ServerSettingsMessage(msg.data);
-                if (this.gainNode) {
-                    this.gainNode.gain.value = this.serverSettings.muted ? 0 : this.serverSettings.volumePercent / 100;
-                }
-                this.bufferMs = this.serverSettings.bufferMs - this.serverSettings.latency;
-                console.log("ServerSettings bufferMs: " + this.serverSettings.bufferMs + ", latency: " + this.serverSettings.latency + ", volume: " + this.serverSettings.volumePercent + ", muted: " + this.serverSettings.muted);
-            }
-            else if (type == 4) {
-                if (this.timeProvider) {
-                    let time = new TimeMessage(msg.data);
-                    this.timeProvider.setDiff(time.latency.getMilliseconds(), this.timeProvider.now() - time.sent.getMilliseconds());
-                }
-                // console.log("Time sec: " + time.latency.sec + ", usec: " + time.latency.usec + ", diff: " + this.timeProvider.diff);
-            }
-            else {
-                console.info("Message not handled, type: " + type);
-            }
-        };
-        this.streamsocket.onopen = (ev) => {
+        this.streamsocket.onmessage = (ev) => this.onMessage(ev);
+        this.streamsocket.onopen = () => {
             console.log("on open");
             let hello = new HelloMessage();
             hello.mac = "00:00:00:00:00:00";
@@ -793,21 +736,91 @@ class SnapStream {
             this.syncTime();
             this.syncHandle = window.setInterval(() => this.syncTime(), 1000);
         };
-        this.streamsocket.onerror = (ev) => { alert("error: " + ev.type); }; //this.onError(ev);
-        this.streamsocket.onclose = (ev) => {
-            stop();
+        this.streamsocket.onerror = (ev) => { console.error('error:', ev); };
+        this.streamsocket.onclose = () => {
+            window.clearInterval(this.syncHandle);
+            console.info('connection lost, reconnecting in 1s');
+            setTimeout(() => this.connect(), 1000);
         };
-        // this.ageBuffer = new Array<number>();
-        this.timeProvider = new TimeProvider();
+    }
+    onMessage(msg) {
+        let view = new DataView(msg.data);
+        let type = view.getUint16(0, true);
+        if (type == 1) {
+            let codec = new CodecMessage(msg.data);
+            console.log("Codec: " + codec.codec);
+            if (codec.codec == "flac") {
+                this.decoder = new FlacDecoder();
+            }
+            else if (codec.codec == "pcm") {
+                this.decoder = new PcmDecoder();
+            }
+            else if (codec.codec == "opus") {
+                this.decoder = new OpusDecoder();
+                alert("Codec not supported: " + codec.codec);
+            }
+            else {
+                alert("Codec not supported: " + codec.codec);
+            }
+            if (this.decoder) {
+                this.sampleFormat = this.decoder.setHeader(codec.payload);
+                console.log("Sampleformat: " + this.sampleFormat.toString());
+                if ((this.sampleFormat.channels != 2) || (this.sampleFormat.bits != 16)) {
+                    alert("Stream must be stereo with 16 bit depth, actual format: " + this.sampleFormat.toString());
+                }
+                else {
+                    if (this.bufferDurationMs != 0) {
+                        this.bufferFrameCount = Math.floor(this.bufferDurationMs * this.sampleFormat.msRate());
+                    }
+                    // this.stopAudio();
+                    // let options: object | undefined = { latencyHint: "playback", sampleRate: this.sampleFormat.rate };
+                    // const chromeVersion = getChromeVersion();
+                    // if (chromeVersion !== null && chromeVersion < 55) {
+                    //     // Some older browsers won't decode the stream if options are provided.
+                    //     options = undefined;
+                    // }
+                    this.ctx.resume();
+                    this.timeProvider.setAudioContext(this.ctx);
+                    this.gainNode.gain.value = this.serverSettings.muted ? 0 : this.serverSettings.volumePercent / 100;
+                    // this.timeProvider = new TimeProvider(this.ctx);
+                    this.stream = new AudioStream(this.timeProvider, this.sampleFormat, this.bufferMs);
+                    this.latency = (this.ctx.baseLatency !== undefined ? this.ctx.baseLatency : 0) + (this.ctx.outputLatency !== undefined ? this.ctx.outputLatency : 0);
+                    console.log("Base latency: " + this.ctx.baseLatency + ", output latency: " + this.ctx.outputLatency + ", latency: " + this.latency);
+                    this.play();
+                }
+            }
+        }
+        else if (type == 2) {
+            let pcmChunk = new PcmChunkMessage(msg.data, this.sampleFormat);
+            if (this.decoder) {
+                let decoded = this.decoder.decode(pcmChunk);
+                if (decoded) {
+                    this.stream.addChunk(decoded);
+                }
+            }
+        }
+        else if (type == 3) {
+            this.serverSettings = new ServerSettingsMessage(msg.data);
+            this.gainNode.gain.value = this.serverSettings.muted ? 0 : this.serverSettings.volumePercent / 100;
+            this.bufferMs = this.serverSettings.bufferMs - this.serverSettings.latency;
+            console.log("ServerSettings bufferMs: " + this.serverSettings.bufferMs + ", latency: " + this.serverSettings.latency + ", volume: " + this.serverSettings.volumePercent + ", muted: " + this.serverSettings.muted);
+        }
+        else if (type == 4) {
+            if (this.timeProvider) {
+                let time = new TimeMessage(msg.data);
+                this.timeProvider.setDiff(time.latency.getMilliseconds(), this.timeProvider.now() - time.sent.getMilliseconds());
+            }
+            // console.log("Time sec: " + time.latency.sec + ", usec: " + time.latency.usec + ", diff: " + this.timeProvider.diff);
+        }
+        else {
+            console.info("Message not handled, type: " + type);
+        }
     }
     sendMessage(msg) {
         msg.sent = new Tv(0, 0);
         msg.sent.setMilliseconds(this.timeProvider.now());
         msg.id = ++this.msgId;
-        if (this.streamsocket.readyState != this.streamsocket.OPEN) {
-            stop();
-        }
-        else {
+        if (this.streamsocket.readyState == this.streamsocket.OPEN) {
             this.streamsocket.send(msg.serialize());
         }
     }
@@ -818,12 +831,13 @@ class SnapStream {
         // console.log("prepareSource median: " + Math.round(this.median * 10) / 10);
     }
     stopAudio() {
-        if (this.ctx) {
-            this.ctx.close();
-        }
+        // if (this.ctx) {
+        //     this.ctx.close();
+        // }
+        this.ctx.suspend();
         while (this.audioBuffers.length > 0) {
             let buffer = this.audioBuffers.pop();
-            buffer.onended = (playBuffer) => { };
+            buffer.onended = () => { };
             buffer.source.stop();
         }
         while (this.freeBuffers.length > 0) {
@@ -834,6 +848,7 @@ class SnapStream {
         window.clearInterval(this.syncHandle);
         this.stopAudio();
         if ([WebSocket.OPEN, WebSocket.CONNECTING].includes(this.streamsocket.readyState)) {
+            this.streamsocket.onclose = () => { };
             this.streamsocket.close();
         }
     }
@@ -845,14 +860,14 @@ class SnapStream {
     }
     playNext() {
         let buffer = this.freeBuffers.pop() || this.ctx.createBuffer(this.sampleFormat.channels, this.bufferFrameCount, this.sampleFormat.rate);
-        let playTimeMs = (this.playTime + this.ctx.baseLatency) * 1000 - this.bufferMs;
+        let playTimeMs = (this.playTime + this.latency) * 1000 - this.bufferMs;
         this.stream.getNextBuffer(buffer, playTimeMs);
         let source = this.ctx.createBufferSource();
         let playBuffer = new PlayBuffer(buffer, this.playTime, source, this.gainNode);
         this.audioBuffers.push(playBuffer);
         playBuffer.num = ++this.bufferNum;
         playBuffer.onended = (buffer) => {
-            let diff = this.timeProvider.nowSec() - buffer.playTime;
+            // let diff = this.timeProvider.nowSec() - buffer.playTime;
             this.freeBuffers.push(this.audioBuffers.splice(this.audioBuffers.indexOf(buffer), 1)[0].buffer);
             // console.debug("PlayBuffer " + playBuffer.num + " ended after: " + (diff * 1000) + ", in flight: " + this.audioBuffers.length);
             this.playNext();

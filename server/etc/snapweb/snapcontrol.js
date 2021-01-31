@@ -113,15 +113,22 @@ class Server {
     }
 }
 class SnapControl {
-    constructor(host, port) {
+    constructor(baseUrl) {
         this.server = new Server();
-        this.connection = new WebSocket('ws://' + host + ':' + port + '/jsonrpc');
+        this.baseUrl = baseUrl;
         this.msg_id = 0;
         this.status_req_id = -1;
-        // console.log(navigator);
+        this.connect();
+    }
+    connect() {
+        this.connection = new WebSocket(this.baseUrl + '/jsonrpc');
         this.connection.onmessage = (msg) => this.onMessage(msg.data);
-        this.connection.onopen = (ev) => { this.status_req_id = this.sendRequest('Server.GetStatus'); };
-        this.connection.onerror = (ev) => { alert("error: " + ev.type); }; //this.onError(ev);
+        this.connection.onopen = () => { this.status_req_id = this.sendRequest('Server.GetStatus'); };
+        this.connection.onerror = (ev) => { console.error('error:', ev); };
+        this.connection.onclose = () => {
+            console.info('connection lost, reconnecting in 1s');
+            setTimeout(() => this.connect(), 1000);
+        };
     }
     action(answer) {
         switch (answer.method) {
@@ -157,10 +164,18 @@ class SnapControl {
         }
     }
     getClient(client_id) {
-        return this.server.getClient(client_id);
+        let client = this.server.getClient(client_id);
+        if (client == null) {
+            throw new Error(`client ${client_id} was null`);
+        }
+        return client;
     }
     getGroup(group_id) {
-        return this.server.getGroup(group_id);
+        let group = this.server.getGroup(group_id);
+        if (group == null) {
+            throw new Error(`group ${group_id} was null`);
+        }
+        return group;
     }
     getGroupVolume(group, online) {
         if (group.clients.length == 0)
@@ -182,10 +197,14 @@ class SnapControl {
             for (let client of group.clients)
                 if (client.id == client_id)
                     return group;
-        return null;
+        throw new Error(`group for client ${client_id} was null`);
     }
     getStream(stream_id) {
-        return this.server.getStream(stream_id);
+        let stream = this.server.getStream(stream_id);
+        if (stream == null) {
+            throw new Error(`stream ${stream_id} was null`);
+        }
+        return stream;
     }
     setVolume(client_id, percent, mute) {
         percent = Math.max(0, Math.min(100, percent));
@@ -193,13 +212,13 @@ class SnapControl {
         client.config.volume.percent = percent;
         if (mute != undefined)
             client.config.volume.muted = mute;
-        this.sendRequest('Client.SetVolume', '{"id":"' + client_id + '","volume":{"muted":' + (client.config.volume.muted ? "true" : "false") + ',"percent":' + client.config.volume.percent + '}}');
+        this.sendRequest('Client.SetVolume', { id: client_id, volume: { muted: client.config.volume.muted, percent: client.config.volume.percent } });
     }
     setClientName(client_id, name) {
         let client = this.getClient(client_id);
         let current_name = (client.config.name != "") ? client.config.name : client.host.name;
         if (name != current_name) {
-            this.sendRequest('Client.SetName', '{"id":"' + client_id + '","name":"' + name + '"}');
+            this.sendRequest('Client.SetName', { id: client_id, name: name });
             client.config.name = name;
         }
     }
@@ -207,13 +226,12 @@ class SnapControl {
         let client = this.getClient(client_id);
         let current_latency = client.config.latency;
         if (latency != current_latency) {
-            this.sendRequest('Client.SetLatency', '{"id":"' + client_id + '","latency":' + latency + '}');
+            this.sendRequest('Client.SetLatency', { id: client_id, latency: latency });
             client.config.latency = latency;
         }
     }
     deleteClient(client_id) {
-        let client = this.getClient(client_id);
-        this.sendRequest('Server.DeleteClient', '{"id": "' + client_id + '"}');
+        this.sendRequest('Server.DeleteClient', { id: client_id });
         this.server.groups.forEach((g, gi) => {
             g.clients.forEach((c, ci) => {
                 if (c.id == client_id) {
@@ -230,22 +248,26 @@ class SnapControl {
     }
     setStream(group_id, stream_id) {
         this.getGroup(group_id).stream_id = stream_id;
-        this.sendRequest('Group.SetStream', '{"id":"' + group_id + '","stream_id":"' + stream_id + '"}');
+        this.sendRequest('Group.SetStream', { id: group_id, stream_id: stream_id });
     }
     setClients(group_id, clients) {
-        this.status_req_id = this.sendRequest('Group.SetClients', '{"clients":' + JSON.stringify(clients) + ',"id":"' + group_id + '"}');
+        this.status_req_id = this.sendRequest('Group.SetClients', { id: group_id, clients: clients });
     }
     muteGroup(group_id, mute) {
         this.getGroup(group_id).muted = mute;
-        this.sendRequest('Group.SetMute', '{"id":"' + group_id + '","mute":' + (mute ? "true" : "false") + '}');
+        this.sendRequest('Group.SetMute', { id: group_id, mute: mute });
     }
     sendRequest(method, params) {
-        let msg = '{"id": ' + (++this.msg_id) + ',"jsonrpc":"2.0","method":"' + method + '"';
+        let msg = {
+            id: ++this.msg_id,
+            jsonrpc: '2.0',
+            method: method
+        };
         if (params)
-            msg += ',"params": ' + params;
-        msg += '}';
-        console.log("Sending: " + msg);
-        this.connection.send(msg);
+            msg.params = params;
+        let msgJson = JSON.stringify(msg);
+        console.log("Sending: " + msgJson);
+        this.connection.send(msgJson);
         return this.msg_id;
     }
     onMessage(msg) {
@@ -282,6 +304,8 @@ function autoplayRequested() {
 }
 function show() {
     // Render the page
+    const versionElem = document.getElementsByTagName("meta").namedItem("version");
+    console.log("Snapweb version " + versionElem?.content);
     let play_img;
     if (snapstream) {
         play_img = 'stop.png';
@@ -293,7 +317,7 @@ function show() {
     content += "<div class='navbar'>Snapcast";
     let serverVersion = snapcontrol.server.server.snapserver.version.split('.');
     if ((serverVersion.length >= 2) && (+serverVersion[1] >= 21)) {
-        content += "    <a href=\"javascript:play();\"><img src='" + play_img + "' class='play-button'></a>";
+        content += "    <img src='" + play_img + "' class='play-button' id='play-button'></a>";
         // Stream became ready and was not playing. If autoplay is requested, start playing.
         if (!snapstream && !autoplay_done && autoplayRequested()) {
             autoplay_done = true;
@@ -428,12 +452,16 @@ function show() {
     // Pad then update page
     content = content + "<br><br>";
     document.getElementById('show').innerHTML = content;
+    let playElem = document.getElementById('play-button');
+    playElem.onclick = () => {
+        play();
+    };
     for (let group of snapcontrol.server.groups) {
         if (group.clients.length > 1) {
             let slider = document.getElementById("vol_" + group.id);
             if (slider == null)
                 continue;
-            slider.addEventListener('pointerdown', function (ev) {
+            slider.addEventListener('pointerdown', function () {
                 groupVolumeEnter(group.id);
             });
             slider.addEventListener('touchstart', function () {
@@ -505,7 +533,7 @@ function play() {
         snapstream = null;
     }
     else {
-        snapstream = new SnapStream(window.location.hostname, 1780);
+        snapstream = new SnapStream(config.baseUrl);
     }
     show();
 }
@@ -605,8 +633,8 @@ function deleteClient(id) {
         snapcontrol.deleteClient(id);
     }
 }
-window.onload = function (event) {
-    snapcontrol = new SnapControl(window.location.hostname, 1780);
+window.onload = function () {
+    snapcontrol = new SnapControl(config.baseUrl);
 };
 // When the user clicks anywhere outside of the modal, close it
 window.onclick = function (event) {
