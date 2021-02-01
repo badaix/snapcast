@@ -22,9 +22,11 @@
 #include "player.hpp"
 
 #include <atomic>
+#include <boost/optional.hpp>
 #include <cstdio>
 #include <memory>
 #include <pulse/pulseaudio.h>
+
 
 namespace player
 {
@@ -44,7 +46,7 @@ public:
     void stop() override;
 
     /// List the system's audio output devices
-    static std::vector<PcmDevice> pcm_list();
+    static std::vector<PcmDevice> pcm_list(const std::string& parameter);
 
 protected:
     bool needsThread() const override;
@@ -71,6 +73,7 @@ protected:
     pa_mainloop* pa_ml_;
     pa_context* pa_ctx_;
     pa_stream* playstream_;
+    boost::optional<std::string> server_;
 
     // cache of the last volume change
     std::chrono::time_point<std::chrono::steady_clock> last_change_;

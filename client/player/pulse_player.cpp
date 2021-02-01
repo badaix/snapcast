@@ -31,7 +31,7 @@ using namespace std;
 namespace player
 {
 
-static constexpr std::chrono::milliseconds BUFFER_TIME = 80ms;
+static constexpr std::chrono::milliseconds BUFFER_TIME = 100ms;
 
 static constexpr auto LOG_TAG = "PulsePlayer";
 
@@ -41,7 +41,7 @@ static constexpr auto LOG_TAG = "PulsePlayer";
 // https://www.freedesktop.org/wiki/Software/PulseAudio/Documentation/Developer/Clients/Samples/AsyncPlayback/
 
 
-vector<PcmDevice> PulsePlayer::pcm_list()
+vector<PcmDevice> PulsePlayer::pcm_list(const std::string& parameter)
 {
     auto pa_ml = std::shared_ptr<pa_mainloop>(pa_mainloop_new(), [](pa_mainloop* pa_ml) { pa_mainloop_free(pa_ml); });
     pa_mainloop_api* pa_mlapi = pa_mainloop_get_api(pa_ml.get());
@@ -49,8 +49,14 @@ vector<PcmDevice> PulsePlayer::pcm_list()
         pa_context_disconnect(pa_ctx);
         pa_context_unref(pa_ctx);
     });
-    if (pa_context_connect(pa_ctx.get(), nullptr, PA_CONTEXT_NOFLAGS, nullptr) < 0)
-        throw SnapException("Failed to connect to PulseAudio context: " + std::string(pa_strerror(pa_context_errno(pa_ctx.get()))));
+
+    std::string pa_server;
+    auto params = utils::string::split_pairs(parameter, ',', '=');
+    if (params.find("server") != params.end())
+        pa_server = params["server"];
+
+    if (pa_context_connect(pa_ctx.get(), pa_server.empty() ? nullptr : pa_server.c_str(), PA_CONTEXT_NOFLAGS, nullptr) < 0)
+        throw SnapException("Failed to connect to PulseAudio context, error: " + std::string(pa_strerror(pa_context_errno(pa_ctx.get()))));
 
     static int pa_ready = 0;
     pa_context_set_state_callback(
@@ -82,9 +88,12 @@ vector<PcmDevice> PulsePlayer::pcm_list()
         if (now - wait_start > 5s)
             throw SnapException("Timeout while waiting for PulseAudio to become ready");
         if (pa_mainloop_iterate(pa_ml.get(), 1, nullptr) < 0)
-            throw SnapException("Error while waiting for PulseAudio to become ready: " + std::string(pa_strerror(pa_context_errno(pa_ctx.get()))));
+            throw SnapException("Error while waiting for PulseAudio to become ready, error: " + std::string(pa_strerror(pa_context_errno(pa_ctx.get()))));
         this_thread::sleep_for(1ms);
     }
+
+    if (pa_ready == 2)
+        throw SnapException("PulseAudio context failed, error: " + std::string(pa_strerror(pa_context_errno(pa_ctx.get()))));
 
     static std::vector<PcmDevice> devices;
     auto op = pa_context_get_sink_info_list(
@@ -98,6 +107,9 @@ vector<PcmDevice> PulsePlayer::pcm_list()
                 devices.emplace_back(i->index, i->name, i->description);
         },
         nullptr);
+
+    if (op == nullptr)
+        throw SnapException("PulseAudio get sink info list failed, error: " + std::string(pa_strerror(pa_context_errno(pa_ctx.get()))));
 
     wait_start = std::chrono::steady_clock::now();
 
@@ -121,13 +133,15 @@ vector<PcmDevice> PulsePlayer::pcm_list()
 
 
 PulsePlayer::PulsePlayer(boost::asio::io_context& io_context, const ClientSettings::Player& settings, std::shared_ptr<Stream> stream)
-    : Player(io_context, settings, stream), latency_(BUFFER_TIME), pa_ml_(nullptr), pa_ctx_(nullptr), playstream_(nullptr)
+    : Player(io_context, settings, stream), latency_(BUFFER_TIME), pa_ml_(nullptr), pa_ctx_(nullptr), playstream_(nullptr), server_(boost::none)
 {
     auto params = utils::string::split_pairs(settings.parameter, ',', '=');
     if (params.find("buffer_time") != params.end())
         latency_ = std::chrono::milliseconds(std::max(cpt::stoi(params["buffer_time"]), 10));
+    if (params.find("server") != params.end())
+        server_ = params["server"];
 
-    LOG(INFO, LOG_TAG) << "Using buffer_time: " << latency_.count() / 1000 << " ms\n";
+    LOG(INFO, LOG_TAG) << "Using buffer_time: " << latency_.count() / 1000 << " ms, server: " << server_.value_or("default") << "\n";
 }
 
 
@@ -318,15 +332,17 @@ void PulsePlayer::start()
     else if (format.bits() == 32)
         pa_ss_.format = PA_SAMPLE_S32LE;
     else
-        throw SnapException("Unsupported sample format: " + cpt::to_string(format.bits()));
+        throw SnapException("Unsupported sample format \"" + cpt::to_string(format.bits()) + "\"");
 
     // Create a mainloop API and connection to the default server
     pa_ready_ = 0;
     pa_ml_ = pa_mainloop_new();
     pa_mainloop_api* pa_mlapi = pa_mainloop_get_api(pa_ml_);
     pa_ctx_ = pa_context_new(pa_mlapi, "Snapcast");
-    if (pa_context_connect(pa_ctx_, nullptr, PA_CONTEXT_NOFLAGS, nullptr) < 0)
-        throw SnapException("Failed to connect to PulseAudio context: " + std::string(pa_strerror(pa_context_errno(pa_ctx_))));
+
+    const char* server = server_.has_value() ? server_.value().c_str() : nullptr;
+    if (pa_context_connect(pa_ctx_, server, PA_CONTEXT_NOFLAGS, nullptr) < 0)
+        throw SnapException("Failed to connect to PulseAudio context, error: " + std::string(pa_strerror(pa_context_errno(pa_ctx_))));
 
     // This function defines a callback so the server will tell us it's state.
     // Our callback will wait for the state to be ready.  The callback will
@@ -350,12 +366,12 @@ void PulsePlayer::start()
         if (now - wait_start > 5s)
             throw SnapException("Timeout while waiting for PulseAudio to become ready");
         if (pa_mainloop_iterate(pa_ml_, 1, nullptr) < 0)
-            throw SnapException("Error while waiting for PulseAudio to become ready: " + std::string(pa_strerror(pa_context_errno(pa_ctx_))));
+            throw SnapException("Error while waiting for PulseAudio to become ready, error: " + std::string(pa_strerror(pa_context_errno(pa_ctx_))));
         this_thread::sleep_for(1ms);
     }
 
     if (pa_ready_ == 2)
-        throw SnapException("PulseAudio is not ready");
+        throw SnapException("PulseAudio is not ready, error: " + std::string(pa_strerror(pa_context_errno(pa_ctx_))));
 
     playstream_ = pa_stream_new(pa_ctx_, "Playback", &pa_ss_, nullptr);
     if (!playstream_)

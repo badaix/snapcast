@@ -116,7 +116,7 @@ Available audio backends are configured using the `--player` command line parame
 | Backend   | OS      | Description  | Parameters |
 | --------- | ------- | ------------ | ---------- |
 | alsa      | Linux   | ALSA | `buffer_time=<total buffer size [ms]>` (default 80, min 10)<br />`fragments=<number of buffers>` (default 4, min 2) |
-| pulse     | Linux   | PulseAudio | `buffer_time=<buffer size [ms]>` (default 80, min 10) |
+| pulse     | Linux   | PulseAudio | `buffer_time=<buffer size [ms]>` (default 100, min 10)<br />`server=<PulseAudio server>` - default not-set: use the default server |
 | oboe      | Android | Oboe, using OpenSL ES on Android 4.1 and AAudio on 8.1 | |
 | opensl    | Android | OpenSL ES | |
 | coreaudio | macOS   | Core Audio | |
