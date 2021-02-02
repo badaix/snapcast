@@ -332,15 +332,6 @@ int main(int argc, char** argv)
         }
 #endif
 
-        settings.player.pcm_device = getPcmDevice(settings.player.player_name, settings.player.parameter, pcm_device);
-#if defined(HAS_ALSA)
-        if (settings.player.pcm_device.idx == -1)
-        {
-            cout << "PCM device \"" << pcm_device << "\" not found\n";
-            //			exit(EXIT_FAILURE);
-        }
-#endif
-
 #ifdef HAS_SOXR
         if (sample_format->is_set())
         {
@@ -387,6 +378,15 @@ int main(int argc, char** argv)
             }
             exit(EXIT_SUCCESS);
         }
+
+        settings.player.pcm_device = getPcmDevice(settings.player.player_name, settings.player.parameter, pcm_device);
+#if defined(HAS_ALSA)
+        if (settings.player.pcm_device.idx == -1)
+        {
+            cout << "PCM device \"" << pcm_device << "\" not found\n";
+            //			exit(EXIT_FAILURE);
+        }
+#endif
 
         string mode = utils::string::split_left(mixer_mode->value(), ':', settings.player.mixer.parameter);
         if (mode == "software")
