@@ -20,6 +20,7 @@
 #include "common/aixlog.hpp"
 #include "common/snap_exception.hpp"
 #include "common/str_compat.hpp"
+#include "common/utils/logging.hpp"
 #include "common/utils/string_utils.hpp"
 
 using namespace std::chrono_literals;
@@ -644,7 +645,8 @@ void AlsaPlayer::worker()
             LOG(INFO, LOG_TAG) << "Failed to get chunk\n";
             while (active_ && !stream_->waitForChunk(100ms))
             {
-                LOG(DEBUG, LOG_TAG) << "Waiting for chunk\n";
+                static utils::logging::TimeConditional cond(2s);
+                LOG(DEBUG, LOG_TAG) << cond << "Waiting for chunk\n";
                 if ((handle_ != nullptr) && (chronos::getTickCount() - lastChunkTick > 5000))
                 {
                     LOG(NOTICE, LOG_TAG) << "No chunk received for 5000ms. Closing ALSA.\n";
