@@ -302,7 +302,7 @@ void PulsePlayer::writeCallback(pa_stream* stream, size_t nbytes)
     if (!stream_->getPlayerChunk(buffer_.data(), std::chrono::microseconds(usec), numFrames))
     {
         // LOG(INFO, LOG_TAG) << "Failed to get chunk. Playing silence.\n";
-        memset(buffer_.data(), 0, numFrames);
+        memset(buffer_.data(), 0, buffer_.size());
     }
     else
     {
