@@ -152,10 +152,9 @@ oboe::DataCallbackResult OboePlayer::onAudioReady(oboe::AudioStream* /*oboeStrea
     // LOG(INFO, LOG_TAG) << "getCurrentOutputLatencyMillis: " << output_latency << ", frames: " << numFrames << "\n";
     chronos::usec delay(static_cast<int>(output_latency * 1000.));
 
-    if (!stream_->getPlayerChunk(audioData, delay, numFrames))
+    if (!stream_->getPlayerChunkOrSilence(audioData, delay, numFrames))
     {
         // LOG(INFO, LOG_TAG) << "Failed to get chunk. Playing silence.\n";
-        memset(audioData, 0, numFrames * stream_->getFormat().frameSize());
     }
     else
     {

@@ -299,10 +299,9 @@ void PulsePlayer::writeCallback(pa_stream* stream, size_t nbytes)
     if (buffer_.size() < nbytes)
         buffer_.resize(nbytes);
     // LOG(TRACE, LOG_TAG) << "writeCallback latency " << usec << " us, frames: " << numFrames << "\n";
-    if (!stream_->getPlayerChunk(buffer_.data(), std::chrono::microseconds(usec), numFrames))
+    if (!stream_->getPlayerChunkOrSilence(buffer_.data(), std::chrono::microseconds(usec), numFrames))
     {
-        // LOG(INFO, LOG_TAG) << "Failed to get chunk. Playing silence.\n";
-        memset(buffer_.data(), 0, buffer_.size());
+        // LOG(TRACE, LOG_TAG) << "Failed to get chunk. Playing silence.\n";
     }
     else
     {

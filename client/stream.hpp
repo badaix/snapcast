@@ -48,7 +48,16 @@ public:
 
     /// Get PCM data, which will be played out in "outputBufferDacTime" time
     /// frame = (num_channels) * (1 sample in bytes) = (2 channels) * (2 bytes (16 bits) per sample) = 4 bytes (32 bits)
+    /// @param[out] outputBuffer the buffer to be filled with PCM data
+    /// @param outputBufferDacTime the duration until the PCM chunk will be audible
+    /// @param frames the number of requested frames to be copied into outputBuffer
+    /// @return true if a chunk was available and successfully copied to outputBuffer
     bool getPlayerChunk(void* outputBuffer, const chronos::usec& outputBufferDacTime, uint32_t frames);
+
+    /// Try to get a player chunk and fill the buffer with silence if it fails
+    /// @sa getPlayerChunk
+    /// @return true if a chunk was available and successfully copied to outputBuffer, else false and outputBuffer is filled with silence
+    bool getPlayerChunkOrSilence(void* outputBuffer, const chronos::usec& outputBufferDacTime, uint32_t frames);
 
     /// "Server buffer": playout latency, e.g. 1000ms
     void setBufferLen(size_t bufferLenMs);

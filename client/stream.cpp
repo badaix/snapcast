@@ -24,6 +24,7 @@
 #include "common/aixlog.hpp"
 #include "common/snap_exception.hpp"
 #include "common/str_compat.hpp"
+#include "common/utils/logging.hpp"
 #include "time_provider.hpp"
 #include <cmath>
 #include <iostream>
@@ -440,4 +441,17 @@ bool Stream::getPlayerChunk(void* outputBuffer, const cs::usec& outputBufferDacT
         hard_sync_ = true;
         return false;
     }
+}
+
+
+bool Stream::getPlayerChunkOrSilence(void* outputBuffer, const chronos::usec& outputBufferDacTime, uint32_t frames)
+{
+    bool result = getPlayerChunk(outputBuffer, outputBufferDacTime, frames);
+    if (!result)
+    {
+        static utils::logging::TimeConditional cond(1s);
+        LOG(DEBUG, LOG_TAG) << cond << "Failed to get chunk, returning silence\n";
+        getSilentPlayerChunk(outputBuffer, frames);
+    }
+    return result;
 }

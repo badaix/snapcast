@@ -78,10 +78,9 @@ void OpenslPlayer::playerCallback(SLAndroidSimpleBufferQueueItf bq)
         return;
 
     chronos::usec delay(ms_ * 1000);
-    if (!pubStream_->getPlayerChunk(buffer[curBuffer], delay, frames_))
+    if (!pubStream_->getPlayerChunkOrSilence(buffer[curBuffer], delay, frames_))
     {
         // LOG(INFO, LOG_TAG) << "Failed to get chunk. Playing silence.\n";
-        memset(buffer[curBuffer], 0, buff_size);
     }
     else
     {

@@ -108,7 +108,7 @@ void CoreAudioPlayer::playerCallback(AudioQueueRef queue, AudioQueueBufferRef bu
     /// TODO: sometimes this bufferedMS or AudioTimeStamp wraps around 1s (i.e. we're 1s out of sync (behind)) and recovers later on
     chronos::usec delay(bufferedMs * 1000);
     char* buffer = (char*)bufferRef->mAudioData;
-    if (!pubStream_->getPlayerChunk(buffer, delay, frames_))
+    if (!pubStream_->getPlayerChunkOrSilence(buffer, delay, frames_))
     {
         if (chronos::getTickCount() - lastChunkTick > 5000)
         {
@@ -117,7 +117,6 @@ void CoreAudioPlayer::playerCallback(AudioQueueRef queue, AudioQueueBufferRef bu
             return;
         }
         // LOG(INFO, LOG_TAG) << "Failed to get chunk. Playing silence.\n";
-        memset(buffer, 0, buff_size_);
     }
     else
     {

@@ -85,20 +85,21 @@ void FilePlayer::requestAudio()
     if (buffer_.size() < needed)
         buffer_.resize(needed);
 
-    if (!stream_->getPlayerChunk(buffer_.data(), 10ms, numFrames))
+    if (!stream_->getPlayerChunkOrSilence(buffer_.data(), 10ms, numFrames))
     {
         // LOG(INFO, LOG_TAG) << "Failed to get chunk. Playing silence.\n";
-        memset(buffer_.data(), 0, needed);
     }
     else
     {
         adjustVolume(static_cast<char*>(buffer_.data()), numFrames);
     }
+
     if (file_)
     {
         fwrite(buffer_.data(), 1, needed, file_.get());
         fflush(file_.get());
     }
+
     loop();
 }
 
