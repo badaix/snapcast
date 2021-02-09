@@ -25,14 +25,6 @@ Clone Snapcast:
 git clone https://github.com/badaix/snapcast.git
 ```
 
-this creates a directory `snapcast`, in the following referred to as `<snapcast dir>`.  
-Next clone the external submodules:
-
-```sh
-cd <snapcast dir>/externals
-git submodule update --init --recursive
-```
-
 Snapcast depends on boost 1.70 or higher. Since it depends on header only boost libs, boost does not need to be installed, but the boost include path must be set properly: download and extract the latest boost version and add the include path, e.g. calling `make` with prepended `ADD_CFLAGS`: `ADD_CFLAGS="-I/path/to/boost_1_7x_0/" make`.  
 For `cmake` you must add the path to the `-DBOOST_ROOT` flag: `cmake -DBOOST_ROOT=/path/to/boost_1_7x_0`
 
@@ -270,34 +262,13 @@ This will copy the server binary to `/usr/local/bin` and create a Launch Agent t
 
 ## Android (Cross compile)
 
-Cross compilation for Android is done with the [Android NDK](http://developer.android.com/tools/sdk/ndk/index.html) on a Linux host machine.
-
-### Android NDK setup
-
-Install the Android [NDK toolchain](http://developer.android.com/ndk/guides/standalone_toolchain.html)
-
- 1. Download NDK: `https://dl.google.com/android/repository/android-ndk-r21d-linux-x86_64.zip`
- 2. Extract to: `/SOME/LOCAL/PATH/android-ndk-r21d`
-
-### Build Snapclient
-
-Cross compile and install FLAC, opus, ogg, and tremor (only needed once):
-
+Clone [Snapdroid](https://github.com/badaix/snapdroid), which includes Snapclient as submodule:
 ```sh
-cd <snapcast dir>/externals
-make NDK_DIR=<android-ndk dir> ARCH=arm
-make NDK_DIR=<android-ndk dir> ARCH=aarch64
-make NDK_DIR=<android-ndk dir> ARCH=x86
+git clone https://github.com/badaix/snapdroid.git
+cd snapdroid
+git submodule update --init --recursive
 ```
-
-Compile the Snapclient:
-
-```sh
-cd <snapcast dir>/client
-./build_android.sh <android-ndk dir> <snapdroid jniLibs dir>
-```
-
-The binaries for `armeabi`, `arm64-v8a` and `x86` will be copied into the Android's jniLibs directory (`<snapdroid jniLibs dir>/`) and so will be bundled with the Snapcast App.
+and execute `./gradlew build`, which will cross compile Snapclient and bundle it into the Snapdroid App.
 
 ## OpenWrt/LEDE (Cross compile)
 
