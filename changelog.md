@@ -1,18 +1,22 @@
 # Snapcast changelog
 
-## Version 0.23.100
+## Version 0.24.0
 
 ### Features
 
-- Client: Lorem ipsum
+- Client: Configurable server for Pulseaudio backend (Issue #729)
 
 ### Bugfixes
 
-- Server: Lorem ipsum
+- Client: Fix dropouts in alsa player backend (Issue #774)
+- Client: Fix alsa player volume resetting to max (Issue #735)  
+- Client: Fix noise while muted for Pulseaudio (Issue #785) 
+- Client: Android support for opus readded (Issue #789)
 
 ### General
 
-- Snapweb: Lorem ipsum
+- Snapweb: Update to v0.2.0
+- Remove submodules with external libs from the git repository
 
 _Johannes Pohl <snapcast@badaix.de>  Sun, 07 Mar 2021 00:13:37 +0200_
 
