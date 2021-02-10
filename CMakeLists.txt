@@ -13,6 +13,15 @@ option(ASAN "Enable AddressSanitizer" OFF)
 option(TSAN "Enable ThreadSanitizer" OFF)
 option(UBSAN "Enable UndefinedBehaviorSanitizer" OFF)
 
+option(TIDY "Enable clang tidy" OFF)
+
+IF (TIDY)
+    FIND_PROGRAM(CLANG_TIDY "clang-tidy")
+    IF(CLANG_TIDY)
+        set(CMAKE_CXX_CLANG_TIDY "clang-tidy;-checks=*,-readability-braces-around-statements,-hicpp-braces-around-statements,-google-readability-braces-around-statements,-hicpp-no-array-decay,-fuchsia-default-arguments-calls,-modernize-use-trailing-return-type,-cppcoreguidelines-pro-bounds-array-to-pointer-decay,-cppcoreguidelines-avoid-magic-numbers,-readability-magic-numbers,-bugprone-lambda-function-name,-hicpp-signed-bitwise,-cert-err60-cpp,-cppcoreguidelines-pro-type-reinterpret-cast,-cppcoreguidelines-pro-bounds-pointer-arithmetic")
+    ENDIF()
+ENDIF()
+
 if (MSVC)
     # warning level 4 and all warnings as errors
     # warning C4505: 'getArch': unreferenced local function has been removed
@@ -350,3 +359,4 @@ IF(CLANG_FORMAT)
         COMMENT "Auto formatting of all source files"
     )
 ENDIF()
+
