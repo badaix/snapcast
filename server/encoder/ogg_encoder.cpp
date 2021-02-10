@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2020  Johannes Pohl
+    Copyright (C) 2014-2021  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -80,19 +80,19 @@ void OggEncoder::encode(const msg::PcmChunk& chunk)
     {
         if (sampleFormat_.sampleSize() == 1)
         {
-            int8_t* chunkBuffer = (int8_t*)chunk.payload;
+            auto* chunkBuffer = reinterpret_cast<int8_t*>(chunk.payload);
             for (int i = 0; i < frames; i++)
                 buffer[channel][i] = chunkBuffer[sampleFormat_.channels() * i + channel] / 128.f;
         }
         else if (sampleFormat_.sampleSize() == 2)
         {
-            int16_t* chunkBuffer = (int16_t*)chunk.payload;
+            auto* chunkBuffer = reinterpret_cast<int16_t*>(chunk.payload);
             for (int i = 0; i < frames; i++)
                 buffer[channel][i] = chunkBuffer[sampleFormat_.channels() * i + channel] / 32768.f;
         }
         else if (sampleFormat_.sampleSize() == 4)
         {
-            int32_t* chunkBuffer = (int32_t*)chunk.payload;
+            auto* chunkBuffer = reinterpret_cast<int32_t*>(chunk.payload);
             for (int i = 0; i < frames; i++)
                 buffer[channel][i] = chunkBuffer[sampleFormat_.channels() * i + channel] / 2147483648.f;
         }
@@ -113,7 +113,7 @@ void OggEncoder::encode(const msg::PcmChunk& chunk)
         vorbis_analysis(&vb_, nullptr);
         vorbis_bitrate_addblock(&vb_);
 
-        while (vorbis_bitrate_flushpacket(&vd_, &op_))
+        while (vorbis_bitrate_flushpacket(&vd_, &op_) != 0)
         {
             /* weld the packet into the bitstream */
             ogg_stream_packetin(&os_, &op_);
@@ -129,14 +129,14 @@ void OggEncoder::encode(const msg::PcmChunk& chunk)
                 size_t nextLen = pos + og_.header_len + og_.body_len;
                 // make chunk larger
                 if (oggChunk->payloadSize < nextLen)
-                    oggChunk->payload = (char*)realloc(oggChunk->payload, nextLen);
+                    oggChunk->payload = static_cast<char*>(realloc(oggChunk->payload, nextLen));
 
                 memcpy(oggChunk->payload + pos, og_.header, og_.header_len);
                 pos += og_.header_len;
                 memcpy(oggChunk->payload + pos, og_.body, og_.body_len);
                 pos += og_.body_len;
 
-                if (ogg_page_eos(&og_))
+                if (ogg_page_eos(&og_) != 0)
                     break;
             }
         }
@@ -148,7 +148,7 @@ void OggEncoder::encode(const msg::PcmChunk& chunk)
         // LOG(INFO, LOG_TAG) << "res: " << res << "\n";
         lastGranulepos_ = os_.granulepos;
         // make oggChunk smaller
-        oggChunk->payload = (char*)realloc(oggChunk->payload, pos);
+        oggChunk->payload = static_cast<char*>(realloc(oggChunk->payload, pos));
         oggChunk->payloadSize = pos;
         encoded_callback_(*this, oggChunk, res);
     }
@@ -157,13 +157,13 @@ void OggEncoder::encode(const msg::PcmChunk& chunk)
 
 void OggEncoder::initEncoder()
 {
-    if (codecOptions_.find(":") == string::npos)
+    if (codecOptions_.find(':') == string::npos)
         throw SnapException("Invalid codec options: \"" + codecOptions_ + "\"");
-    string mode = utils::string::trim_copy(codecOptions_.substr(0, codecOptions_.find(":")));
+    string mode = utils::string::trim_copy(codecOptions_.substr(0, codecOptions_.find(':')));
     if (mode != "VBR")
-        throw SnapException("Unsupported codec mode: \"" + mode + "\". Available: \"VBR\"");
+        throw SnapException("Unsupported codec mode: \"" + mode + R"(". Available: "VBR")");
 
-    string qual = utils::string::trim_copy(codecOptions_.substr(codecOptions_.find(":") + 1));
+    string qual = utils::string::trim_copy(codecOptions_.substr(codecOptions_.find(':') + 1));
     double quality = 1.0;
     try
     {
@@ -216,7 +216,7 @@ void OggEncoder::initEncoder()
      mode that libVorbis does not support (eg, too low a bitrate, etc,
      will return 'OV_EIMPL') */
 
-    if (ret)
+    if (ret != 0)
         throw SnapException("failed to init encoder");
 
     /* add a comment */
@@ -262,7 +262,7 @@ void OggEncoder::initEncoder()
         if (result == 0)
             break;
         headerChunk_->payloadSize += og_.header_len + og_.body_len;
-        headerChunk_->payload = (char*)realloc(headerChunk_->payload, headerChunk_->payloadSize);
+        headerChunk_->payload = static_cast<char*>(realloc(headerChunk_->payload, headerChunk_->payloadSize));
         LOG(DEBUG, LOG_TAG) << "HeadLen: " << og_.header_len << ", bodyLen: " << og_.body_len << ", result: " << result << "\n";
         memcpy(headerChunk_->payload + pos, og_.header, og_.header_len);
         pos += og_.header_len;

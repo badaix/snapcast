@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2020  Johannes Pohl
+    Copyright (C) 2014-2021  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -27,8 +27,8 @@
 #include "common/utils/logging.hpp"
 #include "time_provider.hpp"
 #include <cmath>
+#include <cstring>
 #include <iostream>
-#include <string.h>
 
 
 using namespace std;
@@ -334,7 +334,7 @@ bool Stream::getPlayerChunk(void* outputBuffer, const cs::usec& outputBufferDacT
                                             << ", age: " << std::chrono::duration_cast<cs::usec>(age).count() / 1000. << "\n";
                         getSilentPlayerChunk(outputBuffer, silent_frames);
                     }
-                    getNextPlayerChunk((char*)outputBuffer + (chunk_->format.frameSize() * silent_frames), frames - silent_frames);
+                    getNextPlayerChunk(static_cast<char*>(outputBuffer) + (chunk_->format.frameSize() * silent_frames), frames - silent_frames);
 
                     if (result)
                     {
@@ -353,7 +353,7 @@ bool Stream::getPlayerChunk(void* outputBuffer, const cs::usec& outputBufferDacT
         if (correctAfterXFrames_ != 0)
         {
             playedFrames_ += frames;
-            if (playedFrames_ >= (uint32_t)abs(correctAfterXFrames_))
+            if (playedFrames_ >= static_cast<uint32_t>(abs(correctAfterXFrames_)))
             {
                 framesCorrection = static_cast<int32_t>(playedFrames_) / correctAfterXFrames_;
                 playedFrames_ %= abs(correctAfterXFrames_);

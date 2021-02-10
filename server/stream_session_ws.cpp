@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2020  Johannes Pohl
+    Copyright (C) 2014-2021  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -111,7 +111,7 @@ void StreamSessionWebsocket::on_read_ws(beast::error_code ec, std::size_t bytes_
         return;
     }
 
-    auto data = boost::asio::buffer_cast<char*>(buffer_.data());
+    auto* data = boost::asio::buffer_cast<char*>(buffer_.data());
     baseMessage_.deserialize(data);
     LOG(DEBUG, LOG_TAG) << "getNextMessage: " << baseMessage_.type << ", size: " << baseMessage_.size << ", id: " << baseMessage_.id
                         << ", refers: " << baseMessage_.refersTo << "\n";

@@ -1,30 +1,29 @@
 /***
-  This file is part of avahi.
+    This file is part of snapcast
+    Copyright (C) 2014-2021  Johannes Pohl
 
-  avahi is free software; you can redistribute it and/or modify it
-  under the terms of the GNU Lesser General Public License as
-  published by the Free Software Foundation; either version 2.1 of the
-  License, or (at your option) any later version.
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
 
-  avahi is distributed in the hope that it will be useful, but WITHOUT
-  ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-  or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General
-  Public License for more details.
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
 
-  You should have received a copy of the GNU Lesser General Public
-  License along with avahi; if not, write to the Free Software
-  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
-  USA.
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
 #include "browse_avahi.hpp"
 #include "common/aixlog.hpp"
 #include "common/snap_exception.hpp"
-#include <assert.h>
+#include <cassert>
+#include <cstdio>
+#include <cstdlib>
+#include <ctime>
 #include <iostream>
-#include <stdio.h>
-#include <stdlib.h>
-#include <time.h>
 
 
 static AvahiSimplePoll* simple_poll = nullptr;
@@ -45,15 +44,15 @@ BrowseAvahi::~BrowseAvahi()
 
 void BrowseAvahi::cleanUp()
 {
-    if (sb_)
+    if (sb_ != nullptr)
         avahi_service_browser_free(sb_);
     sb_ = nullptr;
 
-    if (client_)
+    if (client_ != nullptr)
         avahi_client_free(client_);
     client_ = nullptr;
 
-    if (simple_poll)
+    if (simple_poll != nullptr)
         avahi_simple_poll_free(simple_poll);
     simple_poll = nullptr;
 }
@@ -64,7 +63,7 @@ void BrowseAvahi::resolve_callback(AvahiServiceResolver* r, AVAHI_GCC_UNUSED Ava
                                    const AvahiAddress* address, uint16_t port, AvahiStringList* txt, AvahiLookupResultFlags flags,
                                    AVAHI_GCC_UNUSED void* userdata)
 {
-    BrowseAvahi* browseAvahi = static_cast<BrowseAvahi*>(userdata);
+    auto* browseAvahi = static_cast<BrowseAvahi*>(userdata);
     assert(r);
 
     /* Called whenever a service has been resolved successfully or timed out */
@@ -87,20 +86,20 @@ void BrowseAvahi::resolve_callback(AvahiServiceResolver* r, AVAHI_GCC_UNUSED Ava
             browseAvahi->result_.ip = a;
             browseAvahi->result_.port = port;
             // protocol seems to be unreliable (0 for IPv4 and for IPv6)
-            browseAvahi->result_.ip_version = (browseAvahi->result_.ip.find(":") == std::string::npos) ? (IPVersion::IPv4) : (IPVersion::IPv6);
+            browseAvahi->result_.ip_version = (browseAvahi->result_.ip.find(':') == std::string::npos) ? (IPVersion::IPv4) : (IPVersion::IPv6);
             browseAvahi->result_.valid = true;
             browseAvahi->result_.iface_idx = interface;
 
             t = avahi_string_list_to_string(txt);
             LOG(INFO, LOG_TAG) << "\t" << host_name << ":" << port << " (" << a << ")\n";
             LOG(DEBUG, LOG_TAG) << "\tTXT=" << t << "\n";
-            LOG(DEBUG, LOG_TAG) << "\tProto=" << (int)protocol << "\n";
+            LOG(DEBUG, LOG_TAG) << "\tProto=" << static_cast<int>(protocol) << "\n";
             LOG(DEBUG, LOG_TAG) << "\tcookie is " << avahi_string_list_get_service_cookie(txt) << "\n";
-            LOG(DEBUG, LOG_TAG) << "\tis_local: " << !!(flags & AVAHI_LOOKUP_RESULT_LOCAL) << "\n";
-            LOG(DEBUG, LOG_TAG) << "\tour_own: " << !!(flags & AVAHI_LOOKUP_RESULT_OUR_OWN) << "\n";
-            LOG(DEBUG, LOG_TAG) << "\twide_area: " << !!(flags & AVAHI_LOOKUP_RESULT_WIDE_AREA) << "\n";
-            LOG(DEBUG, LOG_TAG) << "\tmulticast: " << !!(flags & AVAHI_LOOKUP_RESULT_MULTICAST) << "\n";
-            LOG(DEBUG, LOG_TAG) << "\tcached: " << !!(flags & AVAHI_LOOKUP_RESULT_CACHED) << "\n";
+            LOG(DEBUG, LOG_TAG) << "\tis_local: " << !((flags & AVAHI_LOOKUP_RESULT_LOCAL) == 0) << "\n";
+            LOG(DEBUG, LOG_TAG) << "\tour_own: " << !((flags & AVAHI_LOOKUP_RESULT_OUR_OWN) == 0) << "\n";
+            LOG(DEBUG, LOG_TAG) << "\twide_area: " << !((flags & AVAHI_LOOKUP_RESULT_WIDE_AREA) == 0) << "\n";
+            LOG(DEBUG, LOG_TAG) << "\tmulticast: " << !((flags & AVAHI_LOOKUP_RESULT_MULTICAST) == 0) << "\n";
+            LOG(DEBUG, LOG_TAG) << "\tcached: " << !((flags & AVAHI_LOOKUP_RESULT_CACHED) == 0) << "\n";
             avahi_free(t);
         }
     }
@@ -114,7 +113,7 @@ void BrowseAvahi::browse_callback(AvahiServiceBrowser* b, AvahiIfIndex interface
 {
 
     //    AvahiClient* client = (AvahiClient*)userdata;
-    BrowseAvahi* browseAvahi = static_cast<BrowseAvahi*>(userdata);
+    auto* browseAvahi = static_cast<BrowseAvahi*>(userdata);
     assert(b);
 
     /* Called whenever a new services becomes available on the LAN or is removed from the LAN */
@@ -134,8 +133,8 @@ void BrowseAvahi::browse_callback(AvahiServiceBrowser* b, AvahiIfIndex interface
                the callback function is called the server will free
                the resolver for us. */
 
-            if (!(avahi_service_resolver_new(browseAvahi->client_, interface, protocol, name, type, domain, AVAHI_PROTO_UNSPEC, (AvahiLookupFlags)0,
-                                             resolve_callback, userdata)))
+            if ((avahi_service_resolver_new(browseAvahi->client_, interface, protocol, name, type, domain, AVAHI_PROTO_UNSPEC, static_cast<AvahiLookupFlags>(0),
+                                            resolve_callback, userdata)) == nullptr)
                 LOG(ERROR, LOG_TAG) << "Failed to resolve service '" << name << "': " << avahi_strerror(avahi_client_errno(browseAvahi->client_)) << "\n";
 
             break;
@@ -172,17 +171,17 @@ bool BrowseAvahi::browse(const std::string& serviceName, mDNSResult& result, int
     try
     {
         /* Allocate main loop object */
-        if (!(simple_poll = avahi_simple_poll_new()))
+        if ((simple_poll = avahi_simple_poll_new()) == nullptr)
             throw SnapException("BrowseAvahi - Failed to create simple poll object");
 
         /* Allocate a new client */
         int error;
-        if (!(client_ = avahi_client_new(avahi_simple_poll_get(simple_poll), (AvahiClientFlags)0, client_callback, this, &error)))
+        if ((client_ = avahi_client_new(avahi_simple_poll_get(simple_poll), static_cast<AvahiClientFlags>(0), client_callback, this, &error)) == nullptr)
             throw SnapException("BrowseAvahi - Failed to create client: " + std::string(avahi_strerror(error)));
 
         /* Create the service browser */
-        if (!(sb_ = avahi_service_browser_new(client_, AVAHI_IF_UNSPEC, AVAHI_PROTO_INET, serviceName.c_str(), nullptr, (AvahiLookupFlags)0, browse_callback,
-                                              this)))
+        if ((sb_ = avahi_service_browser_new(client_, AVAHI_IF_UNSPEC, AVAHI_PROTO_INET, serviceName.c_str(), nullptr, static_cast<AvahiLookupFlags>(0),
+                                             browse_callback, this)) == nullptr)
             throw SnapException("BrowseAvahi - Failed to create service browser: " + std::string(avahi_strerror(avahi_client_errno(client_))));
 
         result_.valid = false;

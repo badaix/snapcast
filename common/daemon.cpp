@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2020  Johannes Pohl
+    Copyright (C) 2014-2021  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -22,12 +22,12 @@
 #include "common/str_compat.hpp"
 #include "common/utils.hpp"
 #include "common/utils/file_utils.hpp"
+#include <cstdlib>
+#include <cstring>
 #include <fcntl.h>
 #include <grp.h>
 #include <iostream>
 #include <pwd.h>
-#include <stdlib.h>
-#include <string.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <syslog.h>
@@ -62,8 +62,8 @@ void Daemon::daemonize()
         throw SnapException("Could not open PID lock file \"" + pidfile_ + "\"");
     }
 
-    uid_t user_uid = (uid_t)-1;
-    gid_t user_gid = (gid_t)-1;
+    auto user_uid = static_cast<uid_t>(-1);
+    auto user_gid = static_cast<gid_t>(-1);
     std::string user_name;
     // #ifdef FREEBSD
     //     bool had_group = false;
@@ -78,7 +78,7 @@ void Daemon::daemonize()
         user_gid = pwd->pw_gid;
         user_name = strdup(user_.c_str());
         /// this is needed by libs such as arts
-        setenv("HOME", pwd->pw_dir, true);
+        setenv("HOME", pwd->pw_dir, 1);
     }
 
     if (!group_.empty())
@@ -99,8 +99,8 @@ void Daemon::daemonize()
     }
 
     /// set gid
-    if (user_gid != (gid_t)-1 && user_gid != getgid() && setgid(user_gid) == -1)
-        throw SnapException("Failed to set group " + cpt::to_string((int)user_gid));
+    if (user_gid != static_cast<gid_t>(-1) && user_gid != getgid() && setgid(user_gid) == -1)
+        throw SnapException("Failed to set group " + cpt::to_string(static_cast<int>(user_gid)));
 
     //#if defined(FREEBSD) && !defined(MACOS)
     //#ifdef FREEBSD
@@ -111,7 +111,7 @@ void Daemon::daemonize()
     //		throw SnapException("Failed to set supplementary groups of user \"" + user + "\"");
     //#endif
     /// set uid
-    if (user_uid != (uid_t)-1 && user_uid != getuid() && setuid(user_uid) == -1)
+    if (user_uid != static_cast<uid_t>(-1) && user_uid != getuid() && setuid(user_uid) == -1)
         throw SnapException("Failed to set user " + user_);
 
     /// Our process ID and Session ID
@@ -155,7 +155,7 @@ void Daemon::daemonize()
     sprintf(str, "%d\n", getpid());
 
     /// write pid to lockfile
-    if (write(pidFilehandle_, str, strlen(str)) != (int)strlen(str))
+    if (write(pidFilehandle_, str, strlen(str)) != static_cast<int>(strlen(str)))
         throw SnapException("Could not write PID to lock file \"" + pidfile_ + "\"");
 
     /// Close out the standard file descriptors

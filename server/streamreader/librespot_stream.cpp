@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2020  Johannes Pohl
+    Copyright (C) 2014-2021  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -49,7 +49,7 @@ LibrespotStream::LibrespotStream(PcmListener* pcmListener, boost::asio::io_conte
     killall_ = (uri_.getQuery("killall", "false") == "true");
 
     if (username.empty() != password.empty())
-        throw SnapException("missing parameter \"username\" or \"password\" (must provide both, or neither)");
+        throw SnapException(R"(missing parameter "username" or "password" (must provide both, or neither))");
 
     if (!params_.empty())
         params_ += " ";
@@ -90,10 +90,10 @@ void LibrespotStream::initExeAndPath(const std::string& filename)
             throw SnapException("librespot not found");
     }
 
-    if (exe_.find("/") != string::npos)
+    if (exe_.find('/') != string::npos)
     {
-        path_ = exe_.substr(0, exe_.find_last_of("/") + 1);
-        exe_ = exe_.substr(exe_.find_last_of("/") + 1);
+        path_ = exe_.substr(0, exe_.find_last_of('/') + 1);
+        exe_ = exe_.substr(exe_.find_last_of('/') + 1);
     }
 
     if (killall_)
@@ -149,7 +149,7 @@ void LibrespotStream::onStderrMsg(const std::string& line)
         {
             LOG(INFO, LOG_TAG) << "metadata: <" << m[1] << ">\n";
 
-            json jtag = {{"TITLE", (string)m[1]}};
+            json jtag = {{"TITLE", string(m[1])}};
             setMeta(jtag);
         }
     }

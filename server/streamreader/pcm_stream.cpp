@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2020  Johannes Pohl
+    Copyright (C) 2014-2021  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -130,7 +130,7 @@ void PcmStream::setState(ReaderState newState)
         state_ = newState;
         for (auto* listener : pcmListeners_)
         {
-            if (listener)
+            if (listener != nullptr)
                 listener->onStateChanged(this, newState);
         }
     }
@@ -154,7 +154,7 @@ void PcmStream::chunkEncoded(const encoder::Encoder& encoder, std::shared_ptr<ms
     tvEncodedChunk_ += std::chrono::nanoseconds(static_cast<std::chrono::nanoseconds::rep>(duration * 1000000));
     for (auto* listener : pcmListeners_)
     {
-        if (listener)
+        if (listener != nullptr)
             listener->onChunkEncoded(this, chunk, duration);
     }
 }
@@ -164,7 +164,7 @@ void PcmStream::chunkRead(const msg::PcmChunk& chunk)
 {
     for (auto* listener : pcmListeners_)
     {
-        if (listener)
+        if (listener != nullptr)
             listener->onChunkRead(this, chunk);
     }
     encoder_->encode(chunk);
@@ -175,7 +175,7 @@ void PcmStream::resync(const std::chrono::nanoseconds& duration)
 {
     for (auto* listener : pcmListeners_)
     {
-        if (listener)
+        if (listener != nullptr)
             listener->onResync(this, duration.count() / 1000000.);
     }
 }
@@ -225,7 +225,7 @@ void PcmStream::setMeta(const json& jtag)
     // Trigger a stream update
     for (auto* listener : pcmListeners_)
     {
-        if (listener)
+        if (listener != nullptr)
             listener->onMetaChanged(this);
     }
 }

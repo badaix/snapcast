@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2020  Johannes Pohl
+    Copyright (C) 2014-2021  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -202,7 +202,7 @@ void StreamManager::stop()
 json StreamManager::toJson() const
 {
     json result = json::array();
-    for (auto stream : streams_)
+    for (const auto& stream : streams_)
         if (stream->getCodec() != "null")
             result.push_back(stream->toJson());
     return result;

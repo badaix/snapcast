@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2020  Johannes Pohl
+    Copyright (C) 2014-2021  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -38,7 +38,7 @@ string hex2str(string input)
     using byte = unsigned char;
     unsigned long x = strtoul(input.c_str(), nullptr, 16);
     byte a[] = {byte(x >> 24), byte(x >> 16), byte(x >> 8), byte(x), 0};
-    return string((char*)a);
+    return string(reinterpret_cast<char*>(a));
 }
 } // namespace
 
@@ -92,7 +92,7 @@ int AirplayStream::parse(string line)
 {
     enum XML_Status result;
 
-    if ((result = XML_Parse(parser_, line.c_str(), line.length(), false)) == XML_STATUS_ERROR)
+    if ((result = XML_Parse(parser_, line.c_str(), line.length(), 0)) == XML_STATUS_ERROR)
     {
         XML_ParserFree(parser_);
         createParser();
@@ -288,10 +288,10 @@ void AirplayStream::initExeAndPath(const string& filename)
             throw SnapException("shairport-sync not found");
     }
 
-    if (exe_.find("/") != string::npos)
+    if (exe_.find('/') != string::npos)
     {
-        path_ = exe_.substr(0, exe_.find_last_of("/") + 1);
-        exe_ = exe_.substr(exe_.find_last_of("/") + 1);
+        path_ = exe_.substr(0, exe_.find_last_of('/') + 1);
+        exe_ = exe_.substr(exe_.find_last_of('/') + 1);
     }
 }
 
@@ -317,14 +317,14 @@ void AirplayStream::onStderrMsg(const std::string& line)
 #ifdef HAS_EXPAT
 void XMLCALL AirplayStream::element_start(void* userdata, const char* element_name, const char** attr)
 {
-    AirplayStream* self = (AirplayStream*)userdata;
+    auto* self = static_cast<AirplayStream*>(userdata);
     string name(element_name);
 
     self->buf_.assign("");
     if (name == "item")
         self->entry_.reset(new TageEntry);
 
-    for (int i = 0; attr[i]; i += 2)
+    for (int i = 0; attr[i] != nullptr; i += 2)
     {
         string name(attr[i]);
         string value(attr[i + 1]);
@@ -335,7 +335,7 @@ void XMLCALL AirplayStream::element_start(void* userdata, const char* element_na
 
 void XMLCALL AirplayStream::element_end(void* userdata, const char* element_name)
 {
-    AirplayStream* self = (AirplayStream*)userdata;
+    auto* self = static_cast<AirplayStream*>(userdata);
     string name(element_name);
 
     if (name == "code")
@@ -361,8 +361,8 @@ void XMLCALL AirplayStream::element_end(void* userdata, const char* element_name
 
 void XMLCALL AirplayStream::data(void* userdata, const char* content, int length)
 {
-    AirplayStream* self = (AirplayStream*)userdata;
-    string value(content, (size_t)length);
+    auto* self = static_cast<AirplayStream*>(userdata);
+    string value(content, static_cast<size_t>(length));
     self->buf_.append(value);
 }
 

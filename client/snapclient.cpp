@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2020  Johannes Pohl
+    Copyright (C) 2014-2021  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
 #include <chrono>
 #include <iostream>
 #ifndef WINDOWS
-#include <signal.h>
+#include <csignal>
 #include <sys/resource.h>
 #endif
 
@@ -282,7 +282,7 @@ int main(int argc, char** argv)
         string logformat = "%Y-%m-%d %H-%M-%S.#ms [#severity] (#tag_func)";
         if (settings.logging.sink.find("file:") != string::npos)
         {
-            string logfile = settings.logging.sink.substr(settings.logging.sink.find(":") + 1);
+            string logfile = settings.logging.sink.substr(settings.logging.sink.find(':') + 1);
             AixLog::Log::init<AixLog::SinkFile>(logfilter, logfile, logformat);
         }
         else if (settings.logging.sink == "stdout")
@@ -315,7 +315,7 @@ int main(int argc, char** argv)
             if (userValue->is_set())
             {
                 if (userValue->value().empty())
-                    std::invalid_argument("user must not be empty");
+                    throw std::invalid_argument("user must not be empty");
 
                 vector<string> user_group = utils::string::split(userValue->value(), ':');
                 user = user_group[0];

@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2020  Johannes Pohl
+    Copyright (C) 2014-2021  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -195,7 +195,7 @@ void AlsaPlayer::waitForEvent()
 
         unsigned short revents;
         snd_ctl_poll_descriptors_revents(ctl_, fd_.get(), 1, &revents);
-        if (revents & POLLIN || (revents == 0))
+        if (((revents & POLLIN) != 0) || (revents == 0))
         {
             snd_ctl_event_t* event;
             snd_ctl_event_alloca(&event);
@@ -266,7 +266,7 @@ void AlsaPlayer::initMixer()
     if ((err = snd_mixer_load(mixer_)) < 0)
         throw SnapException(std::string("Failed to load mixer, error: ") + snd_strerror(err));
     elem_ = snd_mixer_find_selem(mixer_, sid);
-    if (!elem_)
+    if (elem_ == nullptr)
         throw SnapException("Failed to find mixer: " + mixer_name_);
 
     sd_ = boost::asio::posix::stream_descriptor(io_context_, fd_->fd);
@@ -345,9 +345,9 @@ void AlsaPlayer::initAlsa()
     {
         stringstream ss;
         ss << "Can't set format: " << string(snd_strerror(err)) << ", supported: ";
-        for (int format = 0; format <= (int)SND_PCM_FORMAT_LAST; format++)
+        for (int format = 0; format <= static_cast<int>(SND_PCM_FORMAT_LAST); format++)
         {
-            snd_pcm_format_t snd_pcm_format = static_cast<snd_pcm_format_t>(format);
+            auto snd_pcm_format = static_cast<snd_pcm_format_t>(format);
             if (snd_pcm_hw_params_test_format(handle_, params, snd_pcm_format) == 0)
                 ss << snd_pcm_format_name(snd_pcm_format) << " ";
         }
@@ -416,7 +416,7 @@ void AlsaPlayer::initAlsa()
     // Resume information
     // uint32_t periods;
     if (snd_pcm_hw_params_get_periods(params, &periods, nullptr) < 0)
-        periods = round((double)buffer_time / (double)period_time);
+        periods = round(static_cast<double>(buffer_time) / static_cast<double>(period_time));
     snd_pcm_hw_params_get_period_size(params, &frames_, nullptr);
     LOG(INFO, LOG_TAG) << "PCM name: " << snd_pcm_name(handle_) << ", sample rate: " << rate << " Hz, channels: " << channels
                        << ", buffer time: " << buffer_time << " us, periods: " << periods << ", period time: " << period_time
@@ -617,7 +617,7 @@ void AlsaPlayer::worker()
         }
 
         // LOG(TRACE, LOG_TAG) << "res: " << result << ", framesAvail: " << framesAvail << ", delay: " << framesDelay << ", frames: " << frames_ << "\n";
-        chronos::usec delay(static_cast<chronos::usec::rep>(1000 * (double)framesDelay / format.msRate()));
+        chronos::usec delay(static_cast<chronos::usec::rep>(1000 * static_cast<double>(framesDelay) / format.msRate()));
         // LOG(TRACE, LOG_TAG) << "delay: " << framesDelay << ", delay[ms]: " << delay.count() / 1000 << ", avail: " << framesAvail << "\n";
 
         if (buffer_.size() < static_cast<size_t>(framesAvail * format.frameSize()))

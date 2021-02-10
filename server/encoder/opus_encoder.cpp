@@ -1,19 +1,20 @@
 /***
-        This file is part of snapcast
-        Copyright (C) 2015  Hannes Ellinger
+    This file is part of snapcast
+    Copyright (C) 2015  Hannes Ellinger
+    Copyright (C) 2016-2021  Johannes Pohl
 
-        This program is free software: you can redistribute it and/or modify
-        it under the terms of the GNU General Public License as published by
-        the Free Software Foundation, either version 3 of the License, or
-        (at your option) any later version.
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
 
-        This program is distributed in the hope that it will be useful,
-        but WITHOUT ANY WARRANTY; without even the implied warranty of
-        MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-        GNU General Public License for more details.
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
 
-        You should have received a copy of the GNU General Public License
-        along with this program.  If not, see <http://www.gnu.org/licenses/>.
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
 #include "opus_encoder.hpp"
@@ -157,7 +158,7 @@ void OpusEncoder::initEncoder()
 
     // create some opus pseudo header to let the decoder know about the sample format
     headerChunk_->payloadSize = 12;
-    headerChunk_->payload = (char*)realloc(headerChunk_->payload, headerChunk_->payloadSize);
+    headerChunk_->payload = static_cast<char*>(realloc(headerChunk_->payload, headerChunk_->payloadSize));
     char* payload = headerChunk_->payload;
     assign(payload, SWAP_32(ID_OPUS));
     assign(payload + 4, SWAP_32(sampleFormat_.rate()));
@@ -249,9 +250,9 @@ void OpusEncoder::encode(const SampleFormat& format, const char* data, size_t si
         // copy encoded data to chunk
         auto opusChunk = make_shared<msg::PcmChunk>(format, 0);
         opusChunk->payloadSize = len;
-        opusChunk->payload = (char*)realloc(opusChunk->payload, opusChunk->payloadSize);
+        opusChunk->payload = static_cast<char*>(realloc(opusChunk->payload, opusChunk->payloadSize));
         memcpy(opusChunk->payload, encoded_.data(), len);
-        encoded_callback_(*this, opusChunk, (double)samples_per_channel / sampleFormat_.msRate());
+        encoded_callback_(*this, opusChunk, static_cast<double>(samples_per_channel) / sampleFormat_.msRate());
     }
     else
     {

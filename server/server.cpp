@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2020  Johannes Pohl
+    Copyright (C) 2014-2021  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -250,7 +250,7 @@ void Server::processRequest(const jsonrpcpp::request_ptr request, jsonrpcpp::ent
                 group->muted = muted;
 
                 /// Update clients
-                for (auto client : group->clients)
+                for (const auto& client : group->clients)
                 {
                     session_ptr session = streamServer_->getStreamSession(client->id);
                     if (session != nullptr)
@@ -283,7 +283,7 @@ void Server::processRequest(const jsonrpcpp::request_ptr request, jsonrpcpp::ent
                 group->streamId = streamId;
 
                 // Update clients
-                for (auto client : group->clients)
+                for (const auto& client : group->clients)
                 {
                     session_ptr session = streamServer_->getStreamSession(client->id);
                     if (session && (session->pcmStream() != stream))

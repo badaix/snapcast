@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2020  Johannes Pohl
+    Copyright (C) 2014-2021  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -16,7 +16,7 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
-#include <assert.h>
+#include <cassert>
 #include <iostream>
 
 #include "common/aixlog.hpp"
@@ -96,7 +96,7 @@ vector<PcmDevice> PulsePlayer::pcm_list(const std::string& parameter)
         throw SnapException("PulseAudio context failed, error: " + std::string(pa_strerror(pa_context_errno(pa_ctx.get()))));
 
     static std::vector<PcmDevice> devices;
-    auto op = pa_context_get_sink_info_list(
+    auto* op = pa_context_get_sink_info_list(
         pa_ctx.get(),
         [](pa_context* ctx, const pa_sink_info* i, int eol, void* userdata) mutable {
             std::ignore = ctx;
@@ -194,10 +194,10 @@ void PulsePlayer::triggerVolumeUpdate()
         [](pa_context* ctx, const pa_sink_input_info* info, int eol, void* userdata) {
             std::ignore = ctx;
             LOG(DEBUG, LOG_TAG) << "pa_context_get_sink_info_by_index info: " << (info != nullptr) << ", eol: " << eol << "\n";
-            if (info)
+            if (info != nullptr)
             {
-                auto self = static_cast<PulsePlayer*>(userdata);
-                self->volume_ = (double)pa_cvolume_avg(&(info->volume)) / (double)PA_VOLUME_NORM;
+                auto* self = static_cast<PulsePlayer*>(userdata);
+                self->volume_ = static_cast<double>(pa_cvolume_avg(&(info->volume))) / static_cast<double>(PA_VOLUME_NORM);
                 self->muted_ = (info->mute != 0);
                 LOG(DEBUG, LOG_TAG) << "Volume changed: " << self->volume_ << ", muted: " << self->muted_ << "\n";
 
@@ -225,7 +225,7 @@ void PulsePlayer::subscribeCallback(pa_context* ctx, pa_subscription_event_type_
     if (facility == PA_SUBSCRIPTION_EVENT_SINK_INPUT)
     {
         LOG(DEBUG, LOG_TAG) << "event_type: " << event_type << ", facility: " << facility << "\n";
-        if (playstream_ && (idx == pa_stream_get_index(playstream_)))
+        if ((playstream_ != nullptr) && (idx == pa_stream_get_index(playstream_)))
             triggerVolumeUpdate();
     }
 }
@@ -351,7 +351,7 @@ void PulsePlayer::start()
     pa_context_set_state_callback(
         pa_ctx_,
         [](pa_context* c, void* userdata) {
-            auto self = static_cast<PulsePlayer*>(userdata);
+            auto* self = static_cast<PulsePlayer*>(userdata);
             self->stateCallback(c);
         },
         this);
@@ -373,7 +373,7 @@ void PulsePlayer::start()
         throw SnapException("PulseAudio is not ready, error: " + std::string(pa_strerror(pa_context_errno(pa_ctx_))));
 
     playstream_ = pa_stream_new(pa_ctx_, "Playback", &pa_ss_, nullptr);
-    if (!playstream_)
+    if (playstream_ == nullptr)
         throw SnapException("Failed to create PulseAudio stream");
 
     if (settings_.mixer.mode == ClientSettings::Mixer::Mode::hardware)
@@ -381,19 +381,19 @@ void PulsePlayer::start()
         pa_context_set_subscribe_callback(
             pa_ctx_,
             [](pa_context* ctx, pa_subscription_event_type_t event_type, uint32_t idx, void* userdata) {
-                auto self = static_cast<PulsePlayer*>(userdata);
+                auto* self = static_cast<PulsePlayer*>(userdata);
                 self->subscribeCallback(ctx, event_type, idx);
             },
             this);
-        const pa_subscription_mask_t mask = static_cast<pa_subscription_mask_t>(PA_SUBSCRIPTION_MASK_SINK_INPUT);
+        const auto mask = static_cast<pa_subscription_mask_t>(PA_SUBSCRIPTION_MASK_SINK_INPUT);
 
         pa_context_subscribe(
             pa_ctx_, mask,
             [](pa_context* ctx, int success, void* userdata) {
                 std::ignore = ctx;
-                if (success)
+                if (success != 0)
                 {
-                    auto self = static_cast<PulsePlayer*>(userdata);
+                    auto* self = static_cast<PulsePlayer*>(userdata);
                     self->triggerVolumeUpdate();
                 }
             },
@@ -403,7 +403,7 @@ void PulsePlayer::start()
     pa_stream_set_write_callback(
         playstream_,
         [](pa_stream* stream, size_t length, void* userdata) {
-            auto self = static_cast<PulsePlayer*>(userdata);
+            auto* self = static_cast<PulsePlayer*>(userdata);
             self->writeCallback(stream, length);
         },
         this);
@@ -411,7 +411,7 @@ void PulsePlayer::start()
     pa_stream_set_underflow_callback(
         playstream_,
         [](pa_stream* stream, void* userdata) {
-            auto self = static_cast<PulsePlayer*>(userdata);
+            auto* self = static_cast<PulsePlayer*>(userdata);
             self->underflowCallback(stream);
         },
         this);
@@ -445,27 +445,27 @@ void PulsePlayer::start()
 void PulsePlayer::stop()
 {
     LOG(INFO, LOG_TAG) << "Stop\n";
-    if (pa_ml_)
+    if (pa_ml_ != nullptr)
     {
         pa_mainloop_quit(pa_ml_, 0);
     }
 
     Player::stop();
 
-    if (pa_ctx_)
+    if (pa_ctx_ != nullptr)
     {
         pa_context_disconnect(pa_ctx_);
         pa_context_unref(pa_ctx_);
         pa_ctx_ = nullptr;
     }
 
-    if (pa_ml_)
+    if (pa_ml_ != nullptr)
     {
         pa_mainloop_free(pa_ml_);
         pa_ml_ = nullptr;
     }
 
-    if (playstream_)
+    if (playstream_ != nullptr)
     {
         pa_stream_set_state_callback(playstream_, nullptr, nullptr);
         pa_stream_set_read_callback(playstream_, nullptr, nullptr);

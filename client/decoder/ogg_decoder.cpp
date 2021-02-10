@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2020  Johannes Pohl
+    Copyright (C) 2014-2021  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -81,7 +81,7 @@ bool OggDecoder::decode(msg::PcmChunk* chunk)
         }
 
         ogg_stream_pagein(&os, &og); /* can safely ignore errors at this point */
-        while (1)
+        while (true)
         {
             result = ogg_stream_packetout(&os, &op);
 
@@ -108,12 +108,12 @@ bool OggDecoder::decode(msg::PcmChunk* chunk)
             while ((samples = vorbis_synthesis_pcmout(&vd, &pcm)) > 0)
             {
                 uint32_t bytes = sampleFormat_.sampleSize() * vi.channels * samples;
-                chunk->payload = (char*)realloc(chunk->payload, chunk->payloadSize + bytes);
+                chunk->payload = static_cast<char*>(realloc(chunk->payload, chunk->payloadSize + bytes));
                 for (int channel = 0; channel < vi.channels; ++channel)
                 {
                     if (sampleFormat_.sampleSize() == 1)
                     {
-                        int8_t* chunkBuffer = (int8_t*)(chunk->payload + chunk->payloadSize);
+                        auto* chunkBuffer = reinterpret_cast<int8_t*>(chunk->payload + chunk->payloadSize);
                         for (int i = 0; i < samples; i++)
                         {
                             int8_t& val = chunkBuffer[sampleFormat_.channels() * i + channel];
@@ -126,7 +126,7 @@ bool OggDecoder::decode(msg::PcmChunk* chunk)
                     }
                     else if (sampleFormat_.sampleSize() == 2)
                     {
-                        int16_t* chunkBuffer = (int16_t*)(chunk->payload + chunk->payloadSize);
+                        auto* chunkBuffer = reinterpret_cast<int16_t*>(chunk->payload + chunk->payloadSize);
                         for (int i = 0; i < samples; i++)
                         {
                             int16_t& val = chunkBuffer[sampleFormat_.channels() * i + channel];
@@ -139,7 +139,7 @@ bool OggDecoder::decode(msg::PcmChunk* chunk)
                     }
                     else if (sampleFormat_.sampleSize() == 4)
                     {
-                        int32_t* chunkBuffer = (int32_t*)(chunk->payload + chunk->payloadSize);
+                        auto* chunkBuffer = reinterpret_cast<int32_t*>(chunk->payload + chunk->payloadSize);
                         for (int i = 0; i < samples; i++)
                         {
                             int32_t& val = chunkBuffer[sampleFormat_.channels() * i + channel];
@@ -229,11 +229,11 @@ SampleFormat OggDecoder::setHeader(msg::CodecHeader* chunk)
 
     /* Throw the comments plus a few lines about the bitstream we're decoding */
     char** ptr = vc.user_comments;
-    while (*ptr)
+    while (*ptr != nullptr)
     {
         std::string comment(*ptr);
         if (comment.find("SAMPLE_FORMAT=") == 0)
-            sampleFormat_.setFormat(comment.substr(comment.find("=") + 1));
+            sampleFormat_.setFormat(comment.substr(comment.find('=') + 1));
         LOG(INFO, LOG_TAG) << "comment: " << comment << "\n";
         ;
         ++ptr;

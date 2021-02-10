@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2020  Johannes Pohl
+    Copyright (C) 2014-2021  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -209,7 +209,7 @@ int main(int argc, char* argv[])
         string logformat = "%Y-%m-%d %H-%M-%S.#ms [#severity] (#tag_func)";
         if (settings.logging.sink.find("file:") != string::npos)
         {
-            string logfile = settings.logging.sink.substr(settings.logging.sink.find(":") + 1);
+            string logfile = settings.logging.sink.substr(settings.logging.sink.find(':') + 1);
             AixLog::Log::init<AixLog::SinkFile>(logfilter, logfile, logformat);
         }
         else if (settings.logging.sink == "stdout")

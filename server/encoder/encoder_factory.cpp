@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2020  Johannes Pohl
+    Copyright (C) 2014-2021  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -42,10 +42,10 @@ std::unique_ptr<Encoder> EncoderFactory::createEncoder(const std::string& codecS
 {
     std::string codec(codecSettings);
     std::string codecOptions;
-    if (codec.find(":") != std::string::npos)
+    if (codec.find(':') != std::string::npos)
     {
-        codecOptions = utils::string::trim_copy(codec.substr(codec.find(":") + 1));
-        codec = utils::string::trim_copy(codec.substr(0, codec.find(":")));
+        codecOptions = utils::string::trim_copy(codec.substr(codec.find(':') + 1));
+        codec = utils::string::trim_copy(codec.substr(0, codec.find(':')));
     }
     if (codec == "pcm")
         return std::make_unique<PcmEncoder>(codecOptions);

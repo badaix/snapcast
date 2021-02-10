@@ -1,20 +1,19 @@
 /***
-  This file is part of avahi.
+    This file is part of snapcast
+    Copyright (C) 2014-2021  Johannes Pohl
 
-  avahi is free software; you can redistribute it and/or modify it
-  under the terms of the GNU Lesser General Public License as
-  published by the Free Software Foundation; either version 2.1 of the
-  License, or (at your option) any later version.
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
 
-  avahi is distributed in the hope that it will be useful, but WITHOUT
-  ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-  or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General
-  Public License for more details.
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
 
-  You should have received a copy of the GNU Lesser General Public
-  License along with avahi; if not, write to the Free Software
-  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
-  USA.
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
 #include "publish_avahi.hpp"
@@ -42,7 +41,7 @@ void PublishAvahi::publish(const std::vector<mDNSService>& services)
     services_ = services;
 
     /// Allocate main loop object
-    if (!(simple_poll = avahi_simple_poll_new()))
+    if ((simple_poll = avahi_simple_poll_new()) == nullptr)
     {
         /// TODO: error handling
         LOG(ERROR, LOG_TAG) << "Failed to create simple poll object.\n";
@@ -53,7 +52,7 @@ void PublishAvahi::publish(const std::vector<mDNSService>& services)
     client_ = avahi_client_new(avahi_simple_poll_get(simple_poll), AVAHI_CLIENT_IGNORE_USER_CONFIG, client_callback, this, &error);
 
     /// Check wether creating the client object succeeded
-    if (!client_)
+    if (client_ == nullptr)
     {
         LOG(ERROR, LOG_TAG) << "Failed to create client: " << avahi_strerror(error) << "\n";
     }
@@ -76,10 +75,10 @@ PublishAvahi::~PublishAvahi()
 {
     timer_.cancel();
 
-    if (client_)
+    if (client_ != nullptr)
         avahi_client_free(client_);
 
-    if (simple_poll)
+    if (simple_poll != nullptr)
         avahi_simple_poll_free(simple_poll);
 
     avahi_free(name);
@@ -134,9 +133,9 @@ void PublishAvahi::create_services(AvahiClient* c)
     char* n;
 
     /// If this is the first time we're called, let's create a new entry group if necessary
-    if (!group)
+    if (group == nullptr)
     {
-        if (!(group = avahi_entry_group_new(c, entry_group_callback, this)))
+        if ((group = avahi_entry_group_new(c, entry_group_callback, this)) == nullptr)
         {
             LOG(ERROR, LOG_TAG) << "avahi_entry_group_new() failed: " << avahi_strerror(avahi_client_errno(c)) << "\n";
             goto fail;
@@ -145,7 +144,7 @@ void PublishAvahi::create_services(AvahiClient* c)
 
     /// If the group is empty (either because it was just created, or because it was reset previously, add our entries.
     int ret;
-    if (avahi_entry_group_is_empty(group))
+    if (avahi_entry_group_is_empty(group) != 0)
     {
         LOG(INFO, LOG_TAG) << "Adding service '" << name << "'\n";
 
@@ -230,7 +229,7 @@ void PublishAvahi::client_callback(AvahiClient* c, AvahiClientState state, AVAHI
             /// The server records are now being established. This might be caused by a host name change. We need to wait
             /// for our own records to register until the host name is properly esatblished.
 
-            if (group)
+            if (group != nullptr)
                 avahi_entry_group_reset(group);
             break;
 

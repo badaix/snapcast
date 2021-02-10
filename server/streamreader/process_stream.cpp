@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2020  Johannes Pohl
+    Copyright (C) 2014-2021  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -22,8 +22,8 @@
 #include "common/snap_exception.hpp"
 #include "common/utils.hpp"
 #include "common/utils/string_utils.hpp"
+#include <climits>
 #include <fcntl.h>
-#include <limits.h>
 #include <sys/stat.h>
 
 
@@ -58,8 +58,8 @@ std::string ProcessStream::findExe(const std::string& filename) const
         return filename;
 
     std::string exe = filename;
-    if (exe.find("/") != string::npos)
-        exe = exe.substr(exe.find_last_of("/") + 1);
+    if (exe.find('/') != string::npos)
+        exe = exe.substr(exe.find_last_of('/') + 1);
 
     /// check with "which"
     string which = execGetOutput("which " + exe);
@@ -85,10 +85,10 @@ void ProcessStream::initExeAndPath(const std::string& filename)
 {
     path_ = "";
     exe_ = findExe(filename);
-    if (exe_.find("/") != string::npos)
+    if (exe_.find('/') != string::npos)
     {
-        path_ = exe_.substr(0, exe_.find_last_of("/") + 1);
-        exe_ = exe_.substr(exe_.find_last_of("/") + 1);
+        path_ = exe_.substr(0, exe_.find_last_of('/') + 1);
+        exe_ = exe_.substr(exe_.find_last_of('/') + 1);
     }
 
     if (!fileExists(path_ + exe_))

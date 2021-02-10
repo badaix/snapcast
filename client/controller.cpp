@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2020  Johannes Pohl
+    Copyright (C) 2014-2021  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -278,8 +278,8 @@ void Controller::sendTimeSyncMessage(int quick_syncs)
             if (quick_syncs > 0)
             {
                 if (--quick_syncs == 0)
-                    LOG(INFO, LOG_TAG) << "diff to server [ms]: " << (float)TimeProvider::getInstance().getDiffToServer<chronos::usec>().count() / 1000.f
-                                       << "\n";
+                    LOG(INFO, LOG_TAG) << "diff to server [ms]: "
+                                       << static_cast<float>(TimeProvider::getInstance().getDiffToServer<chronos::usec>().count()) / 1000.f << "\n";
                 next = 100us;
             }
             timer_.expires_after(next);

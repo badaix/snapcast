@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2020  Johannes Pohl
+    Copyright (C) 2014-2021  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -70,15 +70,15 @@ bool FlacDecoder::decode(msg::PcmChunk* chunk)
     std::lock_guard<std::mutex> lock(mutex_);
     cacheInfo_.reset();
     pcmChunk = chunk;
-    flacChunk->payload = (char*)realloc(flacChunk->payload, chunk->payloadSize);
+    flacChunk->payload = static_cast<char*>(realloc(flacChunk->payload, chunk->payloadSize));
     memcpy(flacChunk->payload, chunk->payload, chunk->payloadSize);
     flacChunk->payloadSize = chunk->payloadSize;
 
-    pcmChunk->payload = (char*)realloc(pcmChunk->payload, 0);
+    pcmChunk->payload = static_cast<char*>(realloc(pcmChunk->payload, 0));
     pcmChunk->payloadSize = 0;
     while (flacChunk->payloadSize > 0)
     {
-        if (!FLAC__stream_decoder_process_single(decoder))
+        if (FLAC__stream_decoder_process_single(decoder) == 0)
         {
             return false;
         }
@@ -147,7 +147,7 @@ FLAC__StreamDecoderReadStatus read_callback(const FLAC__StreamDecoder* /*decoder
         memcpy(buffer, flacChunk->payload, *bytes);
         memmove(flacChunk->payload, flacChunk->payload + *bytes, flacChunk->payloadSize - *bytes);
         flacChunk->payloadSize = flacChunk->payloadSize - static_cast<uint32_t>(*bytes);
-        flacChunk->payload = (char*)realloc(flacChunk->payload, flacChunk->payloadSize);
+        flacChunk->payload = static_cast<char*>(realloc(flacChunk->payload, flacChunk->payloadSize));
     }
     return FLAC__STREAM_DECODER_READ_STATUS_CONTINUE;
 }
@@ -160,11 +160,11 @@ FLAC__StreamDecoderWriteStatus write_callback(const FLAC__StreamDecoder* /*decod
     {
         size_t bytes = frame->header.blocksize * sampleFormat.frameSize();
 
-        FlacDecoder* flacDecoder = static_cast<FlacDecoder*>(client_data);
+        auto* flacDecoder = static_cast<FlacDecoder*>(client_data);
         if (flacDecoder->cacheInfo_.isCachedChunk_)
             flacDecoder->cacheInfo_.cachedBlocks_ += frame->header.blocksize;
 
-        pcmChunk->payload = (char*)realloc(pcmChunk->payload, pcmChunk->payloadSize + bytes);
+        pcmChunk->payload = static_cast<char*>(realloc(pcmChunk->payload, pcmChunk->payloadSize + bytes));
 
         for (size_t channel = 0; channel < sampleFormat.channels(); ++channel)
         {
@@ -176,19 +176,19 @@ FLAC__StreamDecoderWriteStatus write_callback(const FLAC__StreamDecoder* /*decod
 
             if (sampleFormat.sampleSize() == 1)
             {
-                int8_t* chunkBuffer = (int8_t*)(pcmChunk->payload + pcmChunk->payloadSize);
+                auto* chunkBuffer = reinterpret_cast<int8_t*>(pcmChunk->payload + pcmChunk->payloadSize);
                 for (size_t i = 0; i < frame->header.blocksize; i++)
-                    chunkBuffer[sampleFormat.channels() * i + channel] = (int8_t)(buffer[channel][i]);
+                    chunkBuffer[sampleFormat.channels() * i + channel] = static_cast<int8_t>(buffer[channel][i]);
             }
             else if (sampleFormat.sampleSize() == 2)
             {
-                int16_t* chunkBuffer = (int16_t*)(pcmChunk->payload + pcmChunk->payloadSize);
+                auto* chunkBuffer = reinterpret_cast<int16_t*>(pcmChunk->payload + pcmChunk->payloadSize);
                 for (size_t i = 0; i < frame->header.blocksize; i++)
                     chunkBuffer[sampleFormat.channels() * i + channel] = SWAP_16((int16_t)(buffer[channel][i]));
             }
             else if (sampleFormat.sampleSize() == 4)
             {
-                int32_t* chunkBuffer = (int32_t*)(pcmChunk->payload + pcmChunk->payloadSize);
+                auto* chunkBuffer = reinterpret_cast<int32_t*>(pcmChunk->payload + pcmChunk->payloadSize);
                 for (size_t i = 0; i < frame->header.blocksize; i++)
                     chunkBuffer[sampleFormat.channels() * i + channel] = SWAP_32((int32_t)(buffer[channel][i]));
             }

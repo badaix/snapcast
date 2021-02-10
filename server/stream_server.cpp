@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2020  Johannes Pohl
+    Copyright (C) 2014-2021  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -75,7 +75,7 @@ void StreamServer::onMetaChanged(const PcmStream* pcmStream, std::shared_ptr<msg
     // Send meta to all connected clients
 
     std::lock_guard<std::recursive_mutex> mlock(sessionsMutex_);
-    for (auto s : sessions_)
+    for (const auto& s : sessions_)
     {
         if (auto session = s.lock())
         {
@@ -95,12 +95,12 @@ void StreamServer::onChunkEncoded(const PcmStream* pcmStream, bool isDefaultStre
     std::vector<std::shared_ptr<StreamSession>> sessions;
     {
         std::lock_guard<std::recursive_mutex> mlock(sessionsMutex_);
-        for (auto session : sessions_)
+        for (const auto& session : sessions_)
             if (auto s = session.lock())
                 sessions.push_back(s);
     }
 
-    for (auto session : sessions)
+    for (const auto& session : sessions)
     {
         if (!settings_.stream.sendAudioToMutedClients)
         {
@@ -131,7 +131,7 @@ void StreamServer::onChunkEncoded(const PcmStream* pcmStream, bool isDefaultStre
 
 void StreamServer::onMessageReceived(StreamSession* streamSession, const msg::BaseMessage& baseMessage, char* buffer)
 {
-    if (messageReceiver_)
+    if (messageReceiver_ != nullptr)
         messageReceiver_->onMessageReceived(streamSession, baseMessage, buffer);
 }
 
@@ -153,7 +153,7 @@ void StreamServer::onDisconnect(StreamSession* streamSession)
                                    }),
                     sessions_.end());
     LOG(DEBUG, LOG_TAG) << "sessions: " << sessions_.size() << "\n";
-    if (messageReceiver_)
+    if (messageReceiver_ != nullptr)
         messageReceiver_->onDisconnect(streamSession);
     cleanup();
 }
@@ -163,7 +163,7 @@ session_ptr StreamServer::getStreamSession(StreamSession* streamSession) const
 {
     std::lock_guard<std::recursive_mutex> mlock(sessionsMutex_);
 
-    for (auto session : sessions_)
+    for (const auto& session : sessions_)
     {
         if (auto s = session.lock())
             if (s.get() == streamSession)
@@ -177,7 +177,7 @@ session_ptr StreamServer::getStreamSession(const std::string& clientId) const
 {
     //	LOG(INFO, LOG_TAG) << "getStreamSession: " << mac << "\n";
     std::lock_guard<std::recursive_mutex> mlock(sessionsMutex_);
-    for (auto session : sessions_)
+    for (const auto& session : sessions_)
     {
         if (auto s = session.lock())
             if (s->clientId == clientId)
@@ -254,7 +254,7 @@ void StreamServer::stop()
 
     std::lock_guard<std::recursive_mutex> mlock(sessionsMutex_);
     cleanup();
-    for (auto s : sessions_)
+    for (const auto& s : sessions_)
     {
         if (auto session = s.lock())
             session->stop();

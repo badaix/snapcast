@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2020  Johannes Pohl
+    Copyright (C) 2014-2021  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -62,7 +62,7 @@ void ControlServer::cleanup()
 void ControlServer::send(const std::string& message, const ControlSession* excludeSession)
 {
     std::lock_guard<std::recursive_mutex> mlock(session_mutex_);
-    for (auto s : sessions_)
+    for (const auto& s : sessions_)
     {
         if (auto session = s.lock())
         {
@@ -199,7 +199,7 @@ void ControlServer::stop()
 
     std::lock_guard<std::recursive_mutex> mlock(session_mutex_);
     cleanup();
-    for (auto s : sessions_)
+    for (const auto& s : sessions_)
     {
         if (auto session = s.lock())
             session->stop();

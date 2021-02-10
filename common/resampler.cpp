@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2020  Johannes Pohl
+    Copyright (C) 2014-2021  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -46,7 +46,7 @@ Resampler::Resampler(const SampleFormat& in_format, const SampleFormat& out_form
         soxr_quality_spec_t q_spec = soxr_quality_spec(SOXR_HQ, 0);
         soxr_ =
             soxr_create(static_cast<double>(in_format_.rate()), static_cast<double>(out_format_.rate()), in_format_.channels(), &error, &iospec, &q_spec, NULL);
-        if (error)
+        if (error != nullptr)
         {
             LOG(ERROR, LOG_TAG) << "Error soxr_create: " << error << "\n";
             soxr_ = nullptr;
@@ -118,7 +118,7 @@ std::shared_ptr<msg::PcmChunk> Resampler::resample(const msg::PcmChunk& chunk)
         if (in_format_.bits() == 24)
         {
             // sox expects 32 bit input, shift 8 bits left
-            int32_t* frames = (int32_t*)chunk.payload;
+            auto* frames = reinterpret_cast<int32_t*>(chunk.payload);
             for (size_t n = 0; n < chunk.getSampleCount(); ++n)
                 frames[n] = frames[n] << 8;
         }
@@ -126,8 +126,8 @@ std::shared_ptr<msg::PcmChunk> Resampler::resample(const msg::PcmChunk& chunk)
         size_t idone;
         size_t odone;
         auto resample_buffer_framesize = resample_buffer_.size() / out_format_.frameSize();
-        auto error = soxr_process(soxr_, chunk.payload, chunk.getFrameCount(), &idone, resample_buffer_.data(), resample_buffer_framesize, &odone);
-        if (error)
+        const auto* error = soxr_process(soxr_, chunk.payload, chunk.getFrameCount(), &idone, resample_buffer_.data(), resample_buffer_framesize, &odone);
+        if (error != nullptr)
         {
             LOG(ERROR, LOG_TAG) << "Error soxr_process: " << error << "\n";
         }
@@ -151,13 +151,13 @@ std::shared_ptr<msg::PcmChunk> Resampler::resample(const msg::PcmChunk& chunk)
 
                 // copy from the resample_buffer to the resampled chunk
                 resampled_chunk->payloadSize = static_cast<uint32_t>(odone * out_format_.frameSize());
-                resampled_chunk->payload = (char*)realloc(resampled_chunk->payload, resampled_chunk->payloadSize);
+                resampled_chunk->payload = static_cast<char*>(realloc(resampled_chunk->payload, resampled_chunk->payloadSize));
                 memcpy(resampled_chunk->payload, resample_buffer_.data(), resampled_chunk->payloadSize);
 
                 if (out_format_.bits() == 24)
                 {
                     // sox has quantized to 32 bit, shift 8 bits right
-                    int32_t* frames = (int32_t*)resampled_chunk->payload;
+                    auto* frames = reinterpret_cast<int32_t*>(resampled_chunk->payload);
                     for (size_t n = 0; n < resampled_chunk->getSampleCount(); ++n)
                     {
                         // +128 to round to the nearest so that quantisation steps are distributed evenly
@@ -211,7 +211,7 @@ shared_ptr<msg::PcmChunk> Resampler::resample(shared_ptr<msg::PcmChunk> chunk)
 Resampler::~Resampler()
 {
 #ifdef HAS_SOXR
-    if (soxr_)
+    if (soxr_ != nullptr)
         soxr_delete(soxr_);
 #endif
 }

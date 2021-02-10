@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2020  Johannes Pohl
+    Copyright (C) 2014-2021  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -58,7 +58,7 @@ void PcmEncoder::encode(const msg::PcmChunk& chunk)
 void PcmEncoder::initEncoder()
 {
     headerChunk_->payloadSize = 44;
-    headerChunk_->payload = (char*)realloc(headerChunk_->payload, headerChunk_->payloadSize);
+    headerChunk_->payload = static_cast<char*>(realloc(headerChunk_->payload, headerChunk_->payloadSize));
     char* payload = headerChunk_->payload;
     assign(payload, SWAP_32(ID_RIFF));
     assign(payload + 4, SWAP_32(36));

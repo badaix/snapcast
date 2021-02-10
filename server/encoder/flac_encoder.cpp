@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2020  Johannes Pohl
+    Copyright (C) 2014-2021  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -33,7 +33,7 @@ namespace encoder
 FlacEncoder::FlacEncoder(const std::string& codecOptions) : Encoder(codecOptions), encoder_(nullptr), pcmBufferSize_(0), encodedSamples_(0), flacChunk_(nullptr)
 {
     headerChunk_.reset(new msg::CodecHeader("flac"));
-    pcmBuffer_ = (FLAC__int32*)malloc(pcmBufferSize_ * sizeof(FLAC__int32));
+    pcmBuffer_ = static_cast<FLAC__int32*>(malloc(pcmBufferSize_ * sizeof(FLAC__int32)));
 }
 
 
@@ -82,26 +82,26 @@ void FlacEncoder::encode(const msg::PcmChunk& chunk)
     if (pcmBufferSize_ < samples)
     {
         pcmBufferSize_ = samples;
-        pcmBuffer_ = (FLAC__int32*)realloc(pcmBuffer_, pcmBufferSize_ * sizeof(FLAC__int32));
+        pcmBuffer_ = static_cast<FLAC__int32*>(realloc(pcmBuffer_, pcmBufferSize_ * sizeof(FLAC__int32)));
     }
 
     if (sampleFormat_.sampleSize() == 1)
     {
-        FLAC__int8* buffer = (FLAC__int8*)chunk.payload;
+        auto* buffer = reinterpret_cast<FLAC__int8*>(chunk.payload);
         for (int i = 0; i < samples; i++)
-            pcmBuffer_[i] = (FLAC__int32)(buffer[i]);
+            pcmBuffer_[i] = static_cast<FLAC__int32>(buffer[i]);
     }
     else if (sampleFormat_.sampleSize() == 2)
     {
-        FLAC__int16* buffer = (FLAC__int16*)chunk.payload;
+        auto* buffer = reinterpret_cast<FLAC__int16*>(chunk.payload);
         for (int i = 0; i < samples; i++)
-            pcmBuffer_[i] = (FLAC__int32)(buffer[i]);
+            pcmBuffer_[i] = static_cast<FLAC__int32>(buffer[i]);
     }
     else if (sampleFormat_.sampleSize() == 4)
     {
-        FLAC__int32* buffer = (FLAC__int32*)chunk.payload;
+        auto* buffer = reinterpret_cast<FLAC__int32*>(chunk.payload);
         for (int i = 0; i < samples; i++)
-            pcmBuffer_[i] = (FLAC__int32)(buffer[i]);
+            pcmBuffer_[i] = buffer[i];
     }
 
 
@@ -124,13 +124,13 @@ FLAC__StreamEncoderWriteStatus FlacEncoder::write_callback(const FLAC__StreamEnc
     //	LOG(INFO, LOG_TAG) << "write_callback: " << bytes << ", " << samples << ", " << current_frame << "\n";
     if ((current_frame == 0) && (bytes > 0) && (samples == 0))
     {
-        headerChunk_->payload = (char*)realloc(headerChunk_->payload, headerChunk_->payloadSize + bytes);
+        headerChunk_->payload = static_cast<char*>(realloc(headerChunk_->payload, headerChunk_->payloadSize + bytes));
         memcpy(headerChunk_->payload + headerChunk_->payloadSize, buffer, bytes);
         headerChunk_->payloadSize += bytes;
     }
     else
     {
-        flacChunk_->payload = (char*)realloc(flacChunk_->payload, flacChunk_->payloadSize + bytes);
+        flacChunk_->payload = static_cast<char*>(realloc(flacChunk_->payload, flacChunk_->payloadSize + bytes));
         memcpy(flacChunk_->payload + flacChunk_->payloadSize, buffer, bytes);
         flacChunk_->payloadSize += bytes;
         encodedSamples_ += samples;
@@ -143,7 +143,7 @@ namespace callback
 FLAC__StreamEncoderWriteStatus write_callback(const FLAC__StreamEncoder* encoder, const FLAC__byte buffer[], size_t bytes, unsigned samples,
                                               unsigned current_frame, void* client_data)
 {
-    FlacEncoder* flacEncoder = (FlacEncoder*)client_data;
+    auto* flacEncoder = static_cast<FlacEncoder*>(client_data);
     return flacEncoder->write_callback(encoder, buffer, bytes, samples, current_frame);
 }
 } // namespace callback
@@ -164,7 +164,7 @@ void FlacEncoder::initEncoder()
         throw SnapException("compression level has to be between 0 and 8");
     }
 
-    FLAC__bool ok = true;
+    FLAC__bool ok = 1;
     FLAC__StreamEncoderInitStatus init_status;
     FLAC__StreamMetadata_VorbisComment_Entry entry;
 
@@ -172,7 +172,7 @@ void FlacEncoder::initEncoder()
     if ((encoder_ = FLAC__stream_encoder_new()) == nullptr)
         throw SnapException("error allocating encoder");
 
-    ok &= FLAC__stream_encoder_set_verify(encoder_, true);
+    ok &= FLAC__stream_encoder_set_verify(encoder_, 1);
     // compression levels (0-8):
     // https://xiph.org/flac/api/group__flac__stream__encoder.html#gae49cf32f5256cb47eecd33779493ac85
     // latency:
@@ -183,22 +183,22 @@ void FlacEncoder::initEncoder()
     ok &= FLAC__stream_encoder_set_bits_per_sample(encoder_, sampleFormat_.bits());
     ok &= FLAC__stream_encoder_set_sample_rate(encoder_, sampleFormat_.rate());
 
-    if (!ok)
+    if (ok == 0)
         throw SnapException("error setting up encoder");
 
     // now add some metadata; we'll add some tags and a padding block
     if ((metadata_[0] = FLAC__metadata_object_new(FLAC__METADATA_TYPE_VORBIS_COMMENT)) == nullptr ||
         (metadata_[1] = FLAC__metadata_object_new(FLAC__METADATA_TYPE_PADDING)) == nullptr ||
         // there are many tag (vorbiscomment) functions but these are convenient for this particular use:
-        !FLAC__metadata_object_vorbiscomment_entry_from_name_value_pair(&entry, "TITLE", "SnapStream") ||
-        !FLAC__metadata_object_vorbiscomment_append_comment(metadata_[0], entry, false) ||
-        !FLAC__metadata_object_vorbiscomment_entry_from_name_value_pair(&entry, "VERSION", VERSION) ||
-        !FLAC__metadata_object_vorbiscomment_append_comment(metadata_[0], entry, false))
+        (FLAC__metadata_object_vorbiscomment_entry_from_name_value_pair(&entry, "TITLE", "SnapStream") == 0) ||
+        (FLAC__metadata_object_vorbiscomment_append_comment(metadata_[0], entry, 0) == 0) ||
+        (FLAC__metadata_object_vorbiscomment_entry_from_name_value_pair(&entry, "VERSION", VERSION) == 0) ||
+        (FLAC__metadata_object_vorbiscomment_append_comment(metadata_[0], entry, 0) == 0))
         throw SnapException("out of memory or tag error");
 
     metadata_[1]->length = 1234; // set the padding length
     ok = FLAC__stream_encoder_set_metadata(encoder_, metadata_, 2);
-    if (!ok)
+    if (ok == 0)
         throw SnapException("error setting meta data");
 
     // initialize encoder
