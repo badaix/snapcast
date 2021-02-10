@@ -230,8 +230,13 @@ rc-update add snapclient default
  2. Install [Homebrew](http://brew.sh)
  3. Install the required libs
 
-```ssh
+```sh
 brew install flac libsoxr libvorbis boost opus
+```
+
+Alternatively, install [Macports](https://www.macports.org) and required libraries:
+```sh
+sudo port install flac soxr libvorbis boost libopus libogg
 ```
 
 ### Build Snapclient
