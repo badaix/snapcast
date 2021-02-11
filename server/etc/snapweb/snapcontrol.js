@@ -305,7 +305,7 @@ function autoplayRequested() {
 function show() {
     // Render the page
     const versionElem = document.getElementsByTagName("meta").namedItem("version");
-    console.log("Snapweb version " + versionElem?.content);
+    console.log("Snapweb version " + (versionElem ? versionElem.content : "null"));
     let play_img;
     if (snapstream) {
         play_img = 'stop.png';
