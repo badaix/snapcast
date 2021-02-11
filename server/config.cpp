@@ -30,10 +30,6 @@
 using namespace std;
 
 
-Config::Config()
-{
-}
-
 
 Config::~Config()
 {

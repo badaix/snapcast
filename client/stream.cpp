@@ -67,11 +67,6 @@ Stream::Stream(const SampleFormat& in_format, const SampleFormat& out_format)
 }
 
 
-Stream::~Stream()
-{
-}
-
-
 void Stream::setRealSampleRate(double sampleRate)
 {
     if (sampleRate == format_.rate())
@@ -95,7 +90,7 @@ void Stream::setBufferLen(size_t bufferLenMs)
 void Stream::clearChunks()
 {
     std::lock_guard<std::mutex> lock(mutex_);
-    while (chunks_.size() > 0)
+    while (!chunks_.empty())
         chunks_.pop();
     resetBuffers();
 }

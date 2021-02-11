@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2020  Johannes Pohl
+    Copyright (C) 2014-2021  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -363,8 +363,10 @@ void ControlSessionHttp::on_read(beast::error_code ec, std::size_t bytes_transfe
 }
 
 
-void ControlSessionHttp::on_write(beast::error_code ec, std::size_t, bool close)
+void ControlSessionHttp::on_write(beast::error_code ec, std::size_t bytes, bool close)
 {
+    std::ignore = bytes;
+
     // Handle the error, if any
     if (ec)
     {

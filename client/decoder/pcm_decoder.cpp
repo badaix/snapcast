@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2020  Johannes Pohl
+    Copyright (C) 2014-2021  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -24,10 +24,10 @@
 namespace decoder
 {
 
-#define ID_RIFF 0x46464952
-#define ID_WAVE 0x45564157
-#define ID_FMT 0x20746d66
-#define ID_DATA 0x61746164
+static constexpr auto ID_RIFF = 0x46464952;
+static constexpr auto ID_WAVE = 0x45564157;
+static constexpr auto ID_FMT = 0x20746d66;
+static constexpr auto ID_DATA = 0x61746164;
 
 struct riff_wave_header
 {

@@ -44,8 +44,8 @@ Resampler::Resampler(const SampleFormat& in_format, const SampleFormat& out_form
         soxr_io_spec_t iospec = soxr_io_spec(in_type, out_type);
         // HQ should be fine: http://sox.sourceforge.net/Docs/FAQ
         soxr_quality_spec_t q_spec = soxr_quality_spec(SOXR_HQ, 0);
-        soxr_ =
-            soxr_create(static_cast<double>(in_format_.rate()), static_cast<double>(out_format_.rate()), in_format_.channels(), &error, &iospec, &q_spec, NULL);
+        soxr_ = soxr_create(static_cast<double>(in_format_.rate()), static_cast<double>(out_format_.rate()), in_format_.channels(), &error, &iospec, &q_spec,
+                            nullptr);
         if (error != nullptr)
         {
             LOG(ERROR, LOG_TAG) << "Error soxr_create: " << error << "\n";

@@ -134,17 +134,13 @@ void AlsaStream::initAlsa()
     if ((err = snd_pcm_hw_params_set_format(handle_, hw_params, snd_pcm_format)) < 0)
         throw SnapException("Can't set sample format: " + string(snd_strerror(err)));
 
-    if ((err = snd_pcm_hw_params_set_rate_near(handle_, hw_params, &rate, 0)) < 0)
-    {
+    if ((err = snd_pcm_hw_params_set_rate_near(handle_, hw_params, &rate, nullptr)) < 0)
         throw SnapException("Can't set rate: " + string(snd_strerror(err)));
-    }
-    else
+
+    if (rate != sampleFormat_.rate())
     {
-        if (rate != sampleFormat_.rate())
-        {
-            LOG(WARNING, LOG_TAG) << "Rate is not accurate (requested: " << sampleFormat_.rate() << ", got: " << rate << "), using: " << rate << "\n";
-            sampleFormat_.setFormat(rate, sampleFormat_.bits(), sampleFormat_.channels());
-        }
+        LOG(WARNING, LOG_TAG) << "Rate is not accurate (requested: " << sampleFormat_.rate() << ", got: " << rate << "), using: " << rate << "\n";
+        sampleFormat_.setFormat(rate, sampleFormat_.bits(), sampleFormat_.channels());
     }
 
     if ((err = snd_pcm_hw_params_set_channels(handle_, hw_params, sampleFormat_.channels())) < 0)

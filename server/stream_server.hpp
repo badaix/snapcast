@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2020  Johannes Pohl
+    Copyright (C) 2014-2021  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -67,7 +67,7 @@ public:
     void onMetaChanged(const PcmStream* pcmStream, std::shared_ptr<msg::StreamTags> meta);
     void onChunkEncoded(const PcmStream* pcmStream, bool isDefaultStream, std::shared_ptr<msg::PcmChunk> chunk, double duration);
 
-    session_ptr getStreamSession(const std::string& mac) const;
+    session_ptr getStreamSession(const std::string& clientId) const;
     session_ptr getStreamSession(StreamSession* session) const;
 
 private:
@@ -76,8 +76,8 @@ private:
     void cleanup();
 
     /// Implementation of StreamMessageReceiver
-    void onMessageReceived(StreamSession* connection, const msg::BaseMessage& baseMessage, char* buffer) override;
-    void onDisconnect(StreamSession* connection) override;
+    void onMessageReceived(StreamSession* streamSession, const msg::BaseMessage& baseMessage, char* buffer) override;
+    void onDisconnect(StreamSession* streamSession) override;
 
     mutable std::recursive_mutex sessionsMutex_;
     mutable std::recursive_mutex clientMutex_;

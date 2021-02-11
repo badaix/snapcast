@@ -261,7 +261,7 @@ void AlsaPlayer::initMixer()
         throw SnapException(std::string("Failed to open mixer, error: ") + snd_strerror(err));
     if ((err = snd_mixer_attach(mixer_, mixer_device_.c_str())) < 0)
         throw SnapException("Failed to attach mixer to " + mixer_device_ + ", error: " + snd_strerror(err));
-    if ((err = snd_mixer_selem_register(mixer_, NULL, NULL)) < 0)
+    if ((err = snd_mixer_selem_register(mixer_, nullptr, nullptr)) < 0)
         throw SnapException(std::string("Failed to register selem, error: ") + snd_strerror(err));
     if ((err = snd_mixer_load(mixer_)) < 0)
         throw SnapException(std::string("Failed to load mixer, error: ") + snd_strerror(err));
@@ -402,7 +402,7 @@ void AlsaPlayer::initAlsa()
         buffer_time = period_time * periods;
     }
 
-    if ((err = snd_pcm_hw_params_set_buffer_time_near(handle_, params, &buffer_time, 0)) < 0)
+    if ((err = snd_pcm_hw_params_set_buffer_time_near(handle_, params, &buffer_time, nullptr)) < 0)
         throw SnapException("Can't set buffer time to " + cpt::to_string(buffer_time) + " us : " + string(snd_strerror(err)));
 
     // unsigned int periods = periods_;

@@ -24,10 +24,10 @@
 namespace encoder
 {
 
-#define ID_RIFF 0x46464952
-#define ID_WAVE 0x45564157
-#define ID_FMT 0x20746d66
-#define ID_DATA 0x61746164
+static constexpr auto ID_RIFF = 0x46464952;
+static constexpr auto ID_WAVE = 0x45564157;
+static constexpr auto ID_FMT = 0x20746d66;
+static constexpr auto ID_DATA = 0x61746164;
 
 
 namespace

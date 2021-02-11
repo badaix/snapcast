@@ -33,7 +33,7 @@ static constexpr auto LOG_TAG = "AirplayStream";
 
 namespace
 {
-string hex2str(string input)
+string hex2str(const string& input)
 {
     using byte = unsigned char;
     unsigned long x = strtoul(input.c_str(), nullptr, 16);
@@ -88,7 +88,7 @@ AirplayStream::~AirplayStream()
 }
 
 #ifdef HAS_EXPAT
-int AirplayStream::parse(string line)
+int AirplayStream::parse(const string& line)
 {
     enum XML_Status result;
 
@@ -345,7 +345,7 @@ void XMLCALL AirplayStream::element_end(void* userdata, const char* element_name
         self->entry_->type.assign(hex2str(self->buf_));
 
     else if (name == "length")
-        self->entry_->length = strtoul(self->buf_.c_str(), 0, 10);
+        self->entry_->length = strtoul(self->buf_.c_str(), nullptr, 10);
 
     else if (name == "data")
         self->entry_->data = self->buf_;

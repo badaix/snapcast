@@ -122,7 +122,7 @@ int main(int argc, char** argv)
     int exitcode = EXIT_SUCCESS;
     try
     {
-        string meta_script("");
+        string meta_script;
         ClientSettings settings;
         string pcm_device(player::DEFAULT_DEVICE);
 
@@ -309,8 +309,8 @@ int main(int argc, char** argv)
             string pidFile = "/var/run/snapclient/pid";
             if (settings.instance != 1)
                 pidFile += "." + cpt::to_string(settings.instance);
-            string user = "";
-            string group = "";
+            string user;
+            string group;
 
             if (userValue->is_set())
             {

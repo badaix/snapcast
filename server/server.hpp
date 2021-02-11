@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2020  Johannes Pohl
+    Copyright (C) 2014-2021  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -63,11 +63,11 @@ public:
 
 private:
     /// Implementation of StreamMessageReceiver
-    void onMessageReceived(StreamSession* connection, const msg::BaseMessage& baseMessage, char* buffer) override;
-    void onDisconnect(StreamSession* connection) override;
+    void onMessageReceived(StreamSession* streamSession, const msg::BaseMessage& baseMessage, char* buffer) override;
+    void onDisconnect(StreamSession* streamSession) override;
 
     /// Implementation of ControllMessageReceiver
-    std::string onMessageReceived(ControlSession* connection, const std::string& message) override;
+    std::string onMessageReceived(ControlSession* controlSession, const std::string& message) override;
     void onNewSession(const std::shared_ptr<ControlSession>& session) override
     {
         std::ignore = session;

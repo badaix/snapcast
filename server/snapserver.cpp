@@ -242,7 +242,7 @@ int main(int argc, char* argv[])
         if (daemonOption->is_set())
         {
             if (settings.server.user.empty())
-                std::invalid_argument("user must not be empty");
+                throw std::invalid_argument("user must not be empty");
 
             if (settings.server.data_dir.empty())
                 settings.server.data_dir = "/var/lib/snapserver";
