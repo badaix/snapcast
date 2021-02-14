@@ -421,7 +421,7 @@ int main(int argc, char** argv)
             io_context.stop();
         });
 
-        LOG(INFO, LOG_TAG) << "Snapclient v" << version::code << (!version::rev().empty() ? (", revision " + version::rev(8)) : ("")) << " started\n";
+        LOG(INFO, LOG_TAG) << "Version " << version::code << (!version::rev().empty() ? (", revision " + version::rev(8)) : ("")) << "\n";
 
         // Setup metadata handling
         auto meta(metaStderr ? std::make_unique<MetaStderrAdapter>() : std::make_unique<MetadataAdapter>());

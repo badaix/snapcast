@@ -16,7 +16,8 @@ option(UBSAN "Enable UndefinedBehaviorSanitizer" OFF)
 option(TIDY "Enable clang tidy" OFF)
 
 IF (REVISION)
-    add_compile_definitions(REVISION=\"${REVISION}\")
+    # add_compile_definitions(REVISION=\"${REVISION}\")
+    add_definitions(-DREVISION=\"${REVISION}\")
 ENDIF()
 
 IF (TIDY)

@@ -226,7 +226,7 @@ int main(int argc, char* argv[])
         else
             throw SnapException("Invalid log sink: " + settings.logging.sink);
 
-        LOG(INFO, LOG_TAG) << "Snapserver v" << version::code << (!version::rev().empty() ? (", revision " + version::rev(8)) : ("")) << " started\n";
+        LOG(INFO, LOG_TAG) << "Version " << version::code << (!version::rev().empty() ? (", revision " + version::rev(8)) : ("")) << "\n";
 
         if (!streamValue->is_set() && !sourceValue->is_set())
             settings.stream.sources.push_back(sourceValue->value());
