@@ -15,6 +15,10 @@ option(UBSAN "Enable UndefinedBehaviorSanitizer" OFF)
 
 option(TIDY "Enable clang tidy" OFF)
 
+IF (REVISION)
+    add_compile_definitions(REVISION=\"${REVISION}\")
+ENDIF()
+
 IF (TIDY)
     FIND_PROGRAM(CLANG_TIDY "clang-tidy")
     IF(CLANG_TIDY)

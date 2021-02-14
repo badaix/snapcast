@@ -44,6 +44,7 @@
 #include "common/snap_exception.hpp"
 #include "common/str_compat.hpp"
 #include "common/utils.hpp"
+#include "common/version.hpp"
 #include "metadata.hpp"
 
 
@@ -54,6 +55,7 @@ using namespace player;
 using namespace std::chrono_literals;
 
 static constexpr auto LOG_TAG = "Snapclient";
+
 
 PcmDevice getPcmDevice(const std::string& player, const std::string& parameter, const std::string& soundcard)
 {
@@ -195,7 +197,7 @@ int main(int argc, char** argv)
 
         if (versionSwitch->is_set())
         {
-            cout << "snapclient v" << VERSION << "\n"
+            cout << "snapclient v" << version::code << (!version::rev().empty() ? (" (rev " + version::rev(8) + ")") : ("")) << "\n"
                  << "Copyright (C) 2014-2021 BadAix (snapcast@badaix.de).\n"
                  << "License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>.\n"
                  << "This is free software: you are free to change and redistribute it.\n"
@@ -418,6 +420,8 @@ int main(int argc, char** argv)
                 LOG(INFO, LOG_TAG) << "Failed to wait for signal, error: " << ec.message() << "\n";
             io_context.stop();
         });
+
+        LOG(INFO, LOG_TAG) << "Snapclient v" << version::code << (!version::rev().empty() ? (", revision " + version::rev(8)) : ("")) << " started\n";
 
         // Setup metadata handling
         auto meta(metaStderr ? std::make_unique<MetaStderrAdapter>() : std::make_unique<MetadataAdapter>());

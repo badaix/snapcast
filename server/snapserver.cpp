@@ -28,6 +28,7 @@
 #include "common/snap_exception.hpp"
 #include "common/time_defs.hpp"
 #include "common/utils/string_utils.hpp"
+#include "common/version.hpp"
 #include "encoder/encoder_factory.hpp"
 #include "message/message.hpp"
 #include "server.hpp"
@@ -41,6 +42,8 @@
 
 using namespace std;
 using namespace popl;
+
+static constexpr auto LOG_TAG = "Snapserver";
 
 
 int main(int argc, char* argv[])
@@ -149,7 +152,7 @@ int main(int argc, char* argv[])
 
         if (versionSwitch->is_set())
         {
-            cout << "snapserver v" << VERSION << "\n"
+            cout << "snapserver v" << version::code << (!version::rev().empty() ? (" (rev " + version::rev(8) + ")") : ("")) << "\n"
                  << "Copyright (C) 2014-2021 BadAix (snapcast@badaix.de).\n"
                  << "License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>.\n"
                  << "This is free software: you are free to change and redistribute it.\n"
@@ -223,17 +226,19 @@ int main(int argc, char* argv[])
         else
             throw SnapException("Invalid log sink: " + settings.logging.sink);
 
+        LOG(INFO, LOG_TAG) << "Snapserver v" << version::code << (!version::rev().empty() ? (", revision " + version::rev(8)) : ("")) << " started\n";
+
         if (!streamValue->is_set() && !sourceValue->is_set())
             settings.stream.sources.push_back(sourceValue->value());
 
         for (size_t n = 0; n < streamValue->count(); ++n)
         {
-            LOG(INFO) << "Adding stream: " << streamValue->value(n) << "\n";
+            LOG(INFO, LOG_TAG) << "Adding stream: " << streamValue->value(n) << "\n";
             settings.stream.sources.push_back(streamValue->value(n));
         }
         for (size_t n = 0; n < sourceValue->count(); ++n)
         {
-            LOG(INFO) << "Adding source: " << sourceValue->value(n) << "\n";
+            LOG(INFO, LOG_TAG) << "Adding source: " << sourceValue->value(n) << "\n";
             settings.stream.sources.push_back(sourceValue->value(n));
         }
 
@@ -252,9 +257,9 @@ int main(int argc, char* argv[])
             processPriority = std::min(std::max(-20, processPriority), 19);
             if (processPriority != 0)
                 setpriority(PRIO_PROCESS, 0, processPriority);
-            LOG(NOTICE) << "daemonizing" << std::endl;
+            LOG(NOTICE, LOG_TAG) << "daemonizing" << std::endl;
             daemon->daemonize();
-            LOG(NOTICE) << "daemon started" << std::endl;
+            LOG(NOTICE, LOG_TAG) << "daemon started" << std::endl;
         }
         else
             Config::instance().init(settings.server.data_dir);
@@ -281,13 +286,13 @@ int main(int argc, char* argv[])
 #endif
         if (settings.stream.streamChunkMs < 10)
         {
-            LOG(WARNING) << "Stream read chunk size is less than 10ms, changing to 10ms\n";
+            LOG(WARNING, LOG_TAG) << "Stream read chunk size is less than 10ms, changing to 10ms\n";
             settings.stream.streamChunkMs = 10;
         }
 
         if (settings.stream.bufferMs < 400)
         {
-            LOG(WARNING) << "Buffer is less than 400ms, changing to 400ms\n";
+            LOG(WARNING, LOG_TAG) << "Buffer is less than 400ms, changing to 400ms\n";
             settings.stream.bufferMs = 400;
         }
 
@@ -296,15 +301,15 @@ int main(int argc, char* argv[])
 
         if (settings.server.threads < 0)
             settings.server.threads = std::max(2, std::min(4, static_cast<int>(std::thread::hardware_concurrency())));
-        LOG(INFO) << "number of threads: " << settings.server.threads << ", hw threads: " << std::thread::hardware_concurrency() << "\n";
+        LOG(INFO, LOG_TAG) << "Number of threads: " << settings.server.threads << ", hw threads: " << std::thread::hardware_concurrency() << "\n";
 
         // Construct a signal set registered for process termination.
         boost::asio::signal_set signals(io_context, SIGHUP, SIGINT, SIGTERM);
         signals.async_wait([&io_context](const boost::system::error_code& ec, int signal) {
             if (!ec)
-                LOG(INFO) << "Received signal " << signal << ": " << strsignal(signal) << "\n";
+                LOG(INFO, LOG_TAG) << "Received signal " << signal << ": " << strsignal(signal) << "\n";
             else
-                LOG(INFO) << "Failed to wait for signal, error: " << ec.message() << "\n";
+                LOG(INFO, LOG_TAG) << "Failed to wait for signal, error: " << ec.message() << "\n";
             io_context.stop();
         });
 
@@ -317,16 +322,16 @@ int main(int argc, char* argv[])
         for (auto& t : threads)
             t.join();
 
-        LOG(INFO) << "Stopping streamServer" << endl;
+        LOG(INFO, LOG_TAG) << "Stopping streamServer" << endl;
         server->stop();
-        LOG(INFO) << "done" << endl;
+        LOG(INFO, LOG_TAG) << "done" << endl;
     }
     catch (const std::exception& e)
     {
-        LOG(ERROR) << "Exception: " << e.what() << std::endl;
+        LOG(ERROR, LOG_TAG) << "Exception: " << e.what() << std::endl;
         exitcode = EXIT_FAILURE;
     }
     Config::instance().save();
-    LOG(NOTICE) << "Snapserver terminated." << endl;
+    LOG(NOTICE, LOG_TAG) << "Snapserver terminated." << endl;
     exit(exitcode);
 }

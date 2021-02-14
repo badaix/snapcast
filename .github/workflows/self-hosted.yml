@@ -12,16 +12,16 @@ jobs:
       run: rm -rf /home/pi/actions-runner/_work/snapcast/snap*_armhf.deb
     - uses: actions/checkout@v2
     - name: cmake build
-      run: mkdir build && cd build && cmake -DBOOST_ROOT=/home/pi/Develop/boost_1_75_0 -DCMAKE_BUILD_TYPE=Release -DWERROR=ON -DCMAKE_CXX_FLAGS="$CXXFLAGS -Wno-psabi" -DCMAKE_CXX_COMPILER_LAUNCHER=ccache .. && cd ..
+      run: mkdir build && cd build && cmake -DBOOST_ROOT=/home/pi/Develop/boost_1_75_0 -DCMAKE_BUILD_TYPE=Release -DWERROR=ON -DCMAKE_CXX_FLAGS="$CXXFLAGS -Wno-psabi" -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DREVISION=${{ github.sha }} .. && cd ..
     - name: cmake make
       run: cmake --build build -- -j 2
     - name: debian package
       run: |
-        fakeroot make -f debian/rules CMAKEFLAGS="-DBOOST_ROOT=/home/pi/Develop/boost_1_75_0 -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DBUILD_WITH_PULSE=OFF" binary
+        fakeroot make -f debian/rules CMAKEFLAGS="-DBOOST_ROOT=/home/pi/Develop/boost_1_75_0 -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DREVISION=${{ github.sha }} -DBUILD_WITH_PULSE=OFF" binary
         rename 's/_armhf/_without-pulse_armhf/g' ../snapclient*_armhf.deb
         rm ../snapserver*_armhf.deb
         fakeroot make -f debian/rules clean
-        fakeroot make -f debian/rules CMAKEFLAGS="-DBOOST_ROOT=/home/pi/Develop/boost_1_75_0 -DCMAKE_CXX_COMPILER_LAUNCHER=ccache" binary
+        fakeroot make -f debian/rules CMAKEFLAGS="-DBOOST_ROOT=/home/pi/Develop/boost_1_75_0 -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DREVISION=${{ github.sha }}" binary
     - name: Archive artifacts
       uses: actions/upload-artifact@v2
       with:
