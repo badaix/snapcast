@@ -18,6 +18,7 @@
 - Snapweb: Update to v0.2.0
 - Remove submodules with external libs from the git repository
 - Write version and revision (git sha) to log 
+- Add documentation to the default files (Issue #791)
 
 _Johannes Pohl <snapcast@badaix.de>  Sun, 07 Mar 2021 00:13:37 +0200_
 
