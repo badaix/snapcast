@@ -57,6 +57,14 @@ When a client joins a server, the following exchanges happen
 | size       | uint32  | Size of the following payload                               |
 | payload    | char[]  | Buffer of data containing the codec header                  |
 
+The payload depends on the used codec:
+
+- Flac: the FLAC audio file header, as described [here](https://www.the-roberts-family.net/metadata/flac.html#:~:text=Overall%20Structure&text=It%20has%20four%20parts%3A%20a,and%20the%20actual%20audio%20data.). The decoder must be initialized with this header.
+- Ogg: the vorbis stream header, as described [here](https://xiph.org/vorbis/doc/Vorbis_I_spec.html#x1-610004.2). The decoder must be initialized with this header.
+- PCM: a RIFF WAVE header, as described [here](https://de.wikipedia.org/wiki/RIFF_WAVE). PCM is not encoded, but the decoder must know the samplerate, bit depth and number of channels, which is encoded into the header
+- Opus: a dummy header is sent, containing a 4 byte ID (0x4F505553, ascii for "OPUS"), 4 byte samplerate, 2 byte bit depth, 2 byte channel count (all little endian)
+
+
 ### Wire Chunk
 
 | Field          | Type    | Description                                                                           |
