@@ -153,8 +153,10 @@ public:
         sendRequest(message, timeout, [handler](const boost::system::error_code& ec, std::unique_ptr<msg::BaseMessage> response) {
             if (ec)
                 handler(ec, nullptr);
+            else if (auto casted_response = msg::message_cast<Message>(std::move(response)))
+                handler(ec, std::move(casted_response));
             else
-                handler(ec, msg::message_cast<Message>(std::move(response)));
+                handler(boost::system::errc::make_error_code(boost::system::errc::bad_message), nullptr);
         });
     }
 
