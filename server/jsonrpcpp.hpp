@@ -3,11 +3,11 @@
      _(  )/ ___) /  \ (  ( \(  _ \(  _ \ / __)( )  ( )
     / \) \\___ \(  O )/    / )   / ) __/( (__(_ _)(_ _)
     \____/(____/ \__/ \_)__)(__\_)(__)   \___)(_)  (_)
-    version 1.3.1
+    version 1.3.3
     https://github.com/badaix/jsonrpcpp
 
     This file is part of jsonrpc++
-    Copyright (C) 2017-2019 Johannes Pohl
+    Copyright (C) 2017-2021 Johannes Pohl
 
     This software may be modified and distributed under the terms
     of the MIT license.  See the LICENSE file for details.
@@ -560,7 +560,7 @@ inline void Entity::parse(const char* json_str)
     {
         parse_json(Json::parse(json_str));
     }
-    catch (const RpcException& e)
+    catch (const RpcException&)
     {
         throw;
     }
@@ -695,7 +695,14 @@ inline Parameter::Parameter(const std::string& key1, const Json& value1, const s
 
 inline void Parameter::parse_json(const Json& json)
 {
-    if (json.is_array())
+    if (json.is_null())
+    {
+        param_array.clear();
+        param_map.clear();
+        type = value_t::null;
+        isNull = true;
+    }
+    else if (json.is_array())
     {
         param_array = json.get<std::vector<Json>>();
         param_map.clear();
@@ -731,7 +738,7 @@ inline bool Parameter::is_map() const
 
 inline bool Parameter::is_null() const
 {
-    return isNull;
+    return type == value_t::null;
 }
 
 inline bool Parameter::has(const std::string& key) const
@@ -790,7 +797,7 @@ inline void Error::parse_json(const Json& json)
         else
             data_ = nullptr;
     }
-    catch (const RpcException& e)
+    catch (const RpcException&)
     {
         throw;
     }
@@ -802,10 +809,7 @@ inline void Error::parse_json(const Json& json)
 
 inline Json Error::to_json() const
 {
-    Json j = {
-        {"code", code_},
-        {"message", message_},
-    };
+    Json j = {{"code", code_}, {"message", message_}};
 
     if (!data_.is_null())
         j["data"] = data_;
@@ -860,7 +864,7 @@ inline void Request::parse_json(const Json& json)
         else
             params_ = nullptr;
     }
-    catch (const RequestException& e)
+    catch (const RequestException&)
     {
         throw;
     }
@@ -1053,7 +1057,7 @@ inline void Response::parse_json(const Json& json)
         else
             throw RpcException("response must contain result or error");
     }
-    catch (const RpcException& e)
+    catch (const RpcException&)
     {
         throw;
     }
@@ -1065,10 +1069,7 @@ inline void Response::parse_json(const Json& json)
 
 inline Json Response::to_json() const
 {
-    Json j = {
-        {"jsonrpc", "2.0"},
-        {"id", id_.to_json()},
-    };
+    Json j = {{"jsonrpc", "2.0"}, {"id", id_.to_json()}};
 
     if (error_)
         j["error"] = error_.to_json();
@@ -1118,7 +1119,7 @@ inline void Notification::parse_json(const Json& json)
         else
             params_ = nullptr;
     }
-    catch (const RpcException& e)
+    catch (const RpcException&)
     {
         throw;
     }
@@ -1130,10 +1131,7 @@ inline void Notification::parse_json(const Json& json)
 
 inline Json Notification::to_json() const
 {
-    Json json = {
-        {"jsonrpc", "2.0"},
-        {"method", method_},
-    };
+    Json json = {{"jsonrpc", "2.0"}, {"method", method_}};
 
     if (params_)
         json["params"] = params_.to_json();
@@ -1243,7 +1241,7 @@ inline entity_ptr Parser::do_parse(const std::string& json_str)
     {
         return do_parse_json(Json::parse(json_str));
     }
-    catch (const RpcException& e)
+    catch (const RpcException&)
     {
         throw;
     }
@@ -1268,7 +1266,7 @@ inline entity_ptr Parser::do_parse_json(const Json& json)
         if (is_batch(json))
             return std::make_shared<Batch>(json);
     }
-    catch (const RpcException& e)
+    catch (const RpcException&)
     {
         throw;
     }
@@ -1286,7 +1284,7 @@ inline bool Parser::is_request(const std::string& json_str)
     {
         return is_request(Json::parse(json_str));
     }
-    catch (const std::exception& e)
+    catch (const std::exception&)
     {
         return false;
     }
@@ -1303,7 +1301,7 @@ inline bool Parser::is_notification(const std::string& json_str)
     {
         return is_notification(Json::parse(json_str));
     }
-    catch (const std::exception& e)
+    catch (const std::exception&)
     {
         return false;
     }
@@ -1320,7 +1318,7 @@ inline bool Parser::is_response(const std::string& json_str)
     {
         return is_response(Json::parse(json_str));
     }
-    catch (const std::exception& e)
+    catch (const std::exception&)
     {
         return false;
     }
@@ -1337,7 +1335,7 @@ inline bool Parser::is_batch(const std::string& json_str)
     {
         return is_batch(Json::parse(json_str));
     }
-    catch (const std::exception& e)
+    catch (const std::exception&)
     {
         return false;
     }
