@@ -12,6 +12,7 @@
 - Client: Fix alsa player volume resetting to max (Issue #735)  
 - Client: Fix noise while muted for Pulseaudio (Issue #785) 
 - Client: Android support for opus readded (Issue #789)
+- Client: Fix host id for MacBook Pro (later 2016) (Issue #807)
 
 ### General
 
@@ -20,7 +21,7 @@
 - Write version and revision (git sha) to log 
 - Add documentation to the default files (Issue #791)
 
-_Johannes Pohl <snapcast@badaix.de>  Sun, 07 Mar 2021 00:13:37 +0200_
+_Johannes Pohl <snapcast@badaix.de>  Sat, 27 Feb 2021 00:13:37 +0200_
 
 ## Version 0.23.0
 
