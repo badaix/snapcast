@@ -42,10 +42,10 @@ When a client joins a server, the following exchanges happen
 | type                  | uint16 | Should be one of the typed message IDs                                                            |
 | id                    | uint16 | Used in requests to identify the message (not always used)                                        |
 | refersTo              | uint16 | Used in responses to identify which request message ID this is responding to                      |
-| received.sec          | int32  | The second value of the timestamp when this message was received. Filled in by the receiver.      |
-| received.usec         | int32  | The microsecond value of the timestamp when this message was received. Filled in by the receiver. |
 | sent.sec              | int32  | The second value of the timestamp when this message was sent. Filled in by the sender.            |
 | sent.usec             | int32  | The microsecond value of the timestamp when this message was sent. Filled in by the sender.       |
+| received.sec          | int32  | The second value of the timestamp when this message was received. Filled in by the receiver.      |
+| received.usec         | int32  | The microsecond value of the timestamp when this message was received. Filled in by the receiver. |
 | size                  | uint32 | Total number of bytes of the following typed message                                              |
 
 ### Codec Header
