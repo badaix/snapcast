@@ -224,6 +224,44 @@ source = process:///usr/bin/mpv?name=Webradio&sampleformat=48000:16:2&params=htt
 
 Audio captured from line-in can be redirected to the snapserver's pipe, e.g. by using:
 
+#### Sox
+
+1. Install sox: `sudo apt update && sudo apt install sox`
+2. Add fifo input to /etc/snapserver.conf: `stream = pipe:///tmp/snapfifo?name=soxfifo&sampleformat=$RATE:$BITS:$CHANNELS`
+3. Test configuration with: `sox -V2 -q -r $RATE -b $BITS -c $CHANNELS -t alsa $DEVICE -t raw -L -r $RATE -b $BITS -c $CHANNELS - silence 1 0.2 0.05% -1 0.2 0.05% > /tmp/soxfifo
+
+Replace $RATE with sample rate (e.g. 44100), $DEVICE with alsa device - find with `arecord -l` (e.g. hw:1,0), $BITS with bits (e.g. 16), $CHANNELS with the amount of channels - for line in use 2, for your microphone jack use 1. The default would need you to put `stream = pipe:///tmp/snapfifo?name=soxfifo&sampleformat=44100:16:2` in /etc/snapserver.conf and run the following command:
+
+```
+sox -V2 -q -r 44100 -b 16 -c 2 -t alsa hw:1,0 -t raw -L -r 44100 -b 16 -c 2 - silence 1 0.2 0.05% -1 0.2 0.05% > /tmp/soxfifo
+```
+When this works, create a service in /etc/systemd/system/sox.service:
+
+```
+[Unit]
+Description=Sox stream from line in/microphone input to /tmp/soxfifo to be picked up by Snapcast
+After=sound.target
+
+[Service]
+Type=normal
+User=$USER
+ExecStart=/usr/bin/sox -V2 -q -r $RATE -b $BITS -c $CHANNELS -t alsa $DEVICE -t raw -L -r $RATE -b $BITS -c $CHANNELS - silence 1 0.2 0.05% -1 0.2 0.05% 
+Restart=always
+StandardOutput=file:/tmp/soxfifo
+
+[Install]
+WantedBy=multi-user.target
+```
+
+Replace $USER with the username whom can run the preceding command succesfully. Finally run:
+```
+sudo systemctl daemon-reload
+sudo service sox start
+sudo service sox enable
+sudo service sox status
+```
+to start the service, automatically start it at boot and check if it is working.
+
 #### cpiped
 
 [cpipe](https://github.com/b-fitzpatrick/cpiped)
