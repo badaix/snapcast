@@ -127,7 +127,7 @@ fakeroot make -f debian/rules CPPFLAGS="-I/path/to/boost_1_7x_0" binary
 Install the build tools and required libs:  
 
 ```sh
-sudo pkg install gmake gcc bash avahi libogg libvorbis libopus flac libsoxr
+sudo pkg install gmake gcc bash avahi libogg libvorbis opus flac libsoxr
 ```
 
 ### Build Snapserver
