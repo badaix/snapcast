@@ -1,7 +1,7 @@
 snapcast (0.24.0-1) unstable; urgency=medium
 
   * Features
-    -Client: Configurable server for Pulseaudio backend (Issue #729)
+    -Client: Configurable server for Pulseaudio backend (Issue #779)
 
   * Bugfixes
     -Client: Fix dropouts in alsa player backend (Issue #774)

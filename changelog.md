@@ -4,7 +4,7 @@
 
 ### Features
 
-- Client: Configurable server for Pulseaudio backend (Issue #729)
+- Client: Configurable server for Pulseaudio backend (Issue #779)
 
 ### Bugfixes
 
