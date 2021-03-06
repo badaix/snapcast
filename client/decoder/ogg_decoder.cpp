@@ -29,7 +29,7 @@
 
 using namespace std;
 
-static constexpr auto LOG_TAG = "OpusDecoder";
+static constexpr auto LOG_TAG = "OggDecoder";
 
 namespace decoder
 {
