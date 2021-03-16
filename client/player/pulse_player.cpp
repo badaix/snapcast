@@ -19,6 +19,8 @@
 #include <cassert>
 #include <iostream>
 
+#include <pulse/proplist.h>
+
 #include "common/aixlog.hpp"
 #include "common/snap_exception.hpp"
 #include "common/str_compat.hpp"
@@ -133,13 +135,30 @@ vector<PcmDevice> PulsePlayer::pcm_list(const std::string& parameter)
 
 
 PulsePlayer::PulsePlayer(boost::asio::io_context& io_context, const ClientSettings::Player& settings, std::shared_ptr<Stream> stream)
-    : Player(io_context, settings, stream), latency_(BUFFER_TIME), pa_ml_(nullptr), pa_ctx_(nullptr), playstream_(nullptr), server_(boost::none)
+    : Player(io_context, settings, stream), latency_(BUFFER_TIME), pa_ml_(nullptr), pa_ctx_(nullptr), playstream_(nullptr), proplist_(nullptr),
+      server_(boost::none)
 {
-    auto params = utils::string::split_pairs(settings.parameter, ',', '=');
+    auto params = utils::string::split_pairs_to_container<std::vector<std::string>>(settings.parameter, ',', '=');
     if (params.find("buffer_time") != params.end())
-        latency_ = std::chrono::milliseconds(std::max(cpt::stoi(params["buffer_time"]), 10));
+        latency_ = std::chrono::milliseconds(std::max(cpt::stoi(params["buffer_time"].front()), 10));
     if (params.find("server") != params.end())
-        server_ = params["server"];
+        server_ = params["server"].front();
+    properties_[PA_PROP_MEDIA_ROLE] = "music";
+    if (params.find("property") != params.end())
+    {
+        for (const auto& p : params["property"])
+        {
+            std::string value;
+            std::string key = utils::string::split_left(p, '=', value);
+            if (!key.empty())
+                properties_[key] = value;
+        }
+    }
+    for (const auto& property : properties_)
+    {
+        if (!property.second.empty())
+            LOG(INFO, LOG_TAG) << "Setting property \"" << property.first << "\" to \"" << property.second << "\"\n";
+    }
 
     LOG(INFO, LOG_TAG) << "Using buffer_time: " << latency_.count() / 1000 << " ms, server: " << server_.value_or("default") << "\n";
 }
@@ -337,7 +356,15 @@ void PulsePlayer::start()
     pa_ready_ = 0;
     pa_ml_ = pa_mainloop_new();
     pa_mainloop_api* pa_mlapi = pa_mainloop_get_api(pa_ml_);
-    pa_ctx_ = pa_context_new(pa_mlapi, "Snapcast");
+
+    proplist_ = pa_proplist_new();
+    for (const auto& property : properties_)
+    {
+        if (!property.second.empty())
+            pa_proplist_sets(proplist_, property.first.c_str(), property.second.c_str());
+    }
+
+    pa_ctx_ = pa_context_new_with_proplist(pa_mlapi, "Snapcast", proplist_);
 
     const char* server = server_.has_value() ? server_.value().c_str() : nullptr;
     if (pa_context_connect(pa_ctx_, server, PA_CONTEXT_NOFLAGS, nullptr) < 0)
@@ -475,6 +502,12 @@ void PulsePlayer::stop()
         pa_stream_disconnect(playstream_);
         pa_stream_unref(playstream_);
         playstream_ = nullptr;
+    }
+
+    if (proplist_ != nullptr)
+    {
+        pa_proplist_free(proplist_);
+        proplist_ = nullptr;
     }
 }
 

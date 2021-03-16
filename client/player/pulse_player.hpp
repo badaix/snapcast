@@ -73,7 +73,9 @@ protected:
     pa_mainloop* pa_ml_;
     pa_context* pa_ctx_;
     pa_stream* playstream_;
+    pa_proplist* proplist_;
     boost::optional<std::string> server_;
+    std::map<std::string, std::string> properties_;
 
     // cache of the last volume change
     std::chrono::time_point<std::chrono::steady_clock> last_change_;

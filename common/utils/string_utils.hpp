@@ -143,10 +143,10 @@ static std::vector<std::string> split(const std::string& s, char delim)
     return elems;
 }
 
-
-static std::map<std::string, std::string> split_pairs(const std::string& s, char pair_delim, char key_value_delim)
+template <typename T>
+static std::map<std::string, T> split_pairs_to_container(const std::string& s, char pair_delim, char key_value_delim)
 {
-    std::map<std::string, std::string> result;
+    std::map<std::string, T> result;
     auto keyValueList = split(s, pair_delim);
     for (auto& kv : keyValueList)
     {
@@ -155,9 +155,19 @@ static std::map<std::string, std::string> split_pairs(const std::string& s, char
         {
             std::string key = trim_copy(kv.substr(0, pos));
             std::string value = trim_copy(kv.substr(pos + 1));
-            result[key] = value;
+            result[key].push_back(std::move(value));
         }
     }
+    return result;
+}
+
+
+static std::map<std::string, std::string> split_pairs(const std::string& s, char pair_delim, char key_value_delim)
+{
+    std::map<std::string, std::string> result;
+    auto pairs = split_pairs_to_container<std::vector<std::string>>(s, pair_delim, key_value_delim);
+    for (auto& pair : pairs)
+        result[pair.first] = *pair.second.begin();
     return result;
 }
 

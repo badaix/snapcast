@@ -363,7 +363,8 @@ int main(int argc, char** argv)
             {
                 cout << "Options are a comma separated list of:\n"
                      << " \"buffer_time=<buffer size [ms]>\" - default 100, min 10\n"
-                     << " \"server=<PulseAudio server>\" - default not-set: use the default server\n";
+                     << " \"server=<PulseAudio server>\" - default not-set: use the default server\n"
+                     << " \"property=<key>=<value>\" - can be set multiple times, default 'media.role=music'\n";
             }
 #endif
 #ifdef HAS_ALSA
