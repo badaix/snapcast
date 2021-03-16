@@ -144,6 +144,7 @@ PulsePlayer::PulsePlayer(boost::asio::io_context& io_context, const ClientSettin
     if (params.find("server") != params.end())
         server_ = params["server"].front();
     properties_[PA_PROP_MEDIA_ROLE] = "music";
+    properties_[PA_PROP_APPLICATION_ICON_NAME] = "applications-multimedia";
     if (params.find("property") != params.end())
     {
         for (const auto& p : params["property"])
