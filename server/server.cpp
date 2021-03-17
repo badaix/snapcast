@@ -52,7 +52,7 @@ void Server::onNewSession(const std::shared_ptr<StreamSession>& session)
 void Server::onMetaChanged(const PcmStream* pcmStream)
 {
     // clang-format off
-    // Notification: {"jsonrpc":"2.0","method":"Stream.OnMetadata","params":{"id":"stream 1", "meta": {"album": "some album", "artist": "some artist", "track": "some track"...}}
+    // Notification: {"jsonrpc":"2.0","method":"Stream.OnMetadata","params":{"id":"stream 1", "meta": {"album": "some album", "artist": "some artist", "track": "some track"...}}}
     // clang-format on
 
     const auto meta = pcmStream->getMeta();
@@ -411,7 +411,6 @@ void Server::processRequest(const jsonrpcpp::request_ptr request, jsonrpcpp::ent
                 // clang-format off
                 // Request:      {"id":4,"jsonrpc":"2.0","method":"Stream.SetMeta","params":{"id":"Spotify", "meta": {"album": "some album", "artist": "some artist", "track": "some track"...}}}
                 // Response:     {"id":4,"jsonrpc":"2.0","result":{"stream_id":"Spotify"}}
-                // Call onMetaChanged(const PcmStream* pcmStream) for updates and notifications
                 // clang-format on
 
                 LOG(INFO, LOG_TAG) << "Stream.SetMeta(" << request->params().get<std::string>("id") << ")" << request->params().get("meta") << "\n";
@@ -433,7 +432,6 @@ void Server::processRequest(const jsonrpcpp::request_ptr request, jsonrpcpp::ent
                 // clang-format off
                 // Request:      {"id":4,"jsonrpc":"2.0","method":"Stream.AddStream","params":{"streamUri":"uri"}}
                 // Response:     {"id":4,"jsonrpc":"2.0","result":{"stream_id":"Spotify"}}
-                // Call onMetaChanged(const PcmStream* pcmStream) for updates and notifications
                 // clang-format on
 
                 LOG(INFO, LOG_TAG) << "Stream.AddStream(" << request->params().get("streamUri") << ")"
@@ -453,7 +451,6 @@ void Server::processRequest(const jsonrpcpp::request_ptr request, jsonrpcpp::ent
                 // clang-format off
                 // Request:      {"id":4,"jsonrpc":"2.0","method":"Stream.RemoveStream","params":{"id":"Spotify"}}
                 // Response:     {"id":4,"jsonrpc":"2.0","result":{"stream_id":"Spotify"}}
-                // Call onMetaChanged(const PcmStream* pcmStream) for updates and notifications
                 // clang-format on
 
                 LOG(INFO, LOG_TAG) << "Stream.RemoveStream(" << request->params().get("id") << ")"

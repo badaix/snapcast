@@ -68,10 +68,6 @@ void StreamServer::addSession(const std::shared_ptr<StreamSession>& session)
 
 void StreamServer::onMetaChanged(const PcmStream* pcmStream, std::shared_ptr<msg::StreamTags> meta)
 {
-    // clang-format off
-    // Notification: {"jsonrpc":"2.0","method":"Stream.OnMetadata","params":{"id":"stream 1", "meta": {"album": "some album", "artist": "some artist", "track": "some track"...}}
-    // clang-format on
-
     // Send meta to all connected clients
 
     std::lock_guard<std::recursive_mutex> mlock(sessionsMutex_);
