@@ -83,6 +83,7 @@ WASAPIPlayer::WASAPIPlayer(boost::asio::io_context& io_context, const ClientSett
 
 WASAPIPlayer::~WASAPIPlayer()
 {
+    audioEndpointListener_->UnregisterControlChangeNotify(&audioEndpointVolumeCallback_);
     WASAPIPlayer::stop();
 }
 
@@ -250,10 +251,9 @@ void WASAPIPlayer::worker()
     hr = control->RegisterAudioSessionNotification(audioEventListener_);
     CHECK_HR(hr);
 
-    AudioEndpointVolumeCallback audioEndpointVolumeCallback;
     hr = device->Activate(IID_IAudioEndpointVolume, CLSCTX_ALL, NULL, (void**)&audioEndpointListener_);
 
-    audioEndpointListener_->RegisterControlChangeNotify((IAudioEndpointVolumeCallback*)&audioEndpointVolumeCallback);
+    audioEndpointListener_->RegisterControlChangeNotify((IAudioEndpointVolumeCallback*)&audioEndpointVolumeCallback_);
 
     // Get the device period
     REFERENCE_TIME hnsRequestedDuration = REFTIMES_PER_SEC;

@@ -192,6 +192,7 @@ protected:
 private:
     AudioSessionEventListener* audioEventListener_;
     IAudioEndpointVolume* audioEndpointListener_;
+    AudioEndpointVolumeCallback audioEndpointVolumeCallback_;
     ClientSettings::SharingMode mode_;
 };
 
