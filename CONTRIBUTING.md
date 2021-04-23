@@ -84,6 +84,6 @@ The following rule governs documentation contributions:
 
 * Please provide as much context as possible when you open an issue. The information you provide must be comprehensive enough to reproduce that issue for the assignee.
 
-* Attach a log file (preferably inline as code block) if neccessary. Use `debug` log level (`snapclient --logfilter debug`, `snapserver --logging.filter debug`).
+* Attach a log file (preferably inline as code block) if necessary. Use `debug` log level (`snapclient --logfilter debug`, `snapserver --logging.filter debug`).
 
 * Please apply one or more applicable [labels](https://github.com/badaix/snapcast/labels) to your issue so that all community members are able to cluster the issues better.

@@ -161,7 +161,7 @@ Start and stop the server with `sudo service snapserver start` and `sudo service
 
 ## Gentoo (native)
 
-Snapcast is available under Gentoo's [Portage](https://wiki.gentoo.org/wiki/Portage) package management system.  Portage utilises `USE` flags to determine what components are built on compilation.  The availabe options are...
+Snapcast is available under Gentoo's [Portage](https://wiki.gentoo.org/wiki/Portage) package management system.  Portage utilises `USE` flags to determine what components are built on compilation.  The available options are...
 
 ```sh
 equery u snapcast

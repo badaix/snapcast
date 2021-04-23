@@ -124,7 +124,7 @@ Available audio backends are configured using the `--player` command line parame
 | file      | All     | Write audio to file | `filename=<filename>` (`<filename>` = `stdout`, `stderr`, `null` or a filename)<br />`mode=[w|a]` (`w`: write (discarding the content), `a`: append (keeping the content) |
 
 Parameters are appended to the player name, e.g. `--player alsa:buffer_time=100`. Use `--player <name>:?` to get a list of available options.  
-For some audio backends you can configure the PCM device using the `-s` or `--soundcard` parameter, the device is choosen by index or name. Available PCM devices can be listed with `-l` or `--list`
+For some audio backends you can configure the PCM device using the `-s` or `--soundcard` parameter, the device is chosen by index or name. Available PCM devices can be listed with `-l` or `--list`
 
 ## Test
 
