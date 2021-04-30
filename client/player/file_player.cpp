@@ -33,6 +33,19 @@ namespace player
 static constexpr auto LOG_TAG = "FilePlayer";
 static constexpr auto kDefaultBuffer = 50ms;
 
+static constexpr auto kDescription = "Raw PCM file output";
+
+std::vector<PcmDevice> FilePlayer::pcm_list(const std::string& parameter)
+{
+    auto params = utils::string::split_pairs(parameter, ',', '=');
+    string filename;
+    if (params.find("filename") != params.end())
+        filename = params["filename"];
+    if (filename.empty())
+        filename = "stdout";
+    return {PcmDevice{0, filename, kDescription}};
+}
+
 
 FilePlayer::FilePlayer(boost::asio::io_context& io_context, const ClientSettings::Player& settings, std::shared_ptr<Stream> stream)
     : Player(io_context, settings, stream), timer_(io_context), file_(nullptr)

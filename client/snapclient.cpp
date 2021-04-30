@@ -59,6 +59,8 @@ static constexpr auto LOG_TAG = "Snapclient";
 
 PcmDevice getPcmDevice(const std::string& player, const std::string& parameter, const std::string& soundcard)
 {
+    LOG(DEBUG, LOG_TAG) << "Trying to get PCM device for player: " << player << ", parameter: "
+                        << ", card: " << soundcard << "\n";
 #if defined(HAS_ALSA) || defined(HAS_PULSE) || defined(HAS_WASAPI)
     vector<PcmDevice> pcm_devices;
 #if defined(HAS_ALSA)
@@ -73,6 +75,8 @@ PcmDevice getPcmDevice(const std::string& player, const std::string& parameter, 
     if (player == player::WASAPI)
         pcm_devices = WASAPIPlayer::pcm_list();
 #endif
+    if (player == player::FILE)
+        return FilePlayer::pcm_list(parameter).front();
     try
     {
         int soundcardIdx = cpt::stoi(soundcard);
@@ -386,8 +390,8 @@ int main(int argc, char** argv)
 #if defined(HAS_ALSA)
         if (settings.player.pcm_device.idx == -1)
         {
-            cout << "PCM device \"" << pcm_device << "\" not found\n";
-            //			exit(EXIT_FAILURE);
+            LOG(ERROR, LOG_TAG) << "PCM device \"" << pcm_device << "\" not found\n";
+            // exit(EXIT_FAILURE);
         }
 #endif
 

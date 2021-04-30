@@ -40,6 +40,9 @@ public:
     void start() override;
     void stop() override;
 
+    /// List the dummy file PCM device
+    static std::vector<PcmDevice> pcm_list(const std::string& parameter);
+
 protected:
     void requestAudio();
     void loop();
