@@ -55,7 +55,7 @@ AirplayStream::AirplayStream(PcmListener* pcmListener, boost::asio::io_context& 
     string devicename = uri_.getQuery("devicename", "Snapcast");
     string password = uri_.getQuery("password", "");
 
-    params_wo_port_ = "--name=\"" + devicename + "\" --output=stdout --use-stderr --get-coverart";
+    params_wo_port_ = "\"--name=" + devicename + "\" --output=stdout --use-stderr --get-coverart";
     if (!password.empty())
         params_wo_port_ += " --password \"" + password + "\"";
     if (!params_.empty())
