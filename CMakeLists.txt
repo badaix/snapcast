@@ -6,7 +6,7 @@ set(PROJECT_URL "https://github.com/badaix/snapcast")
 
 option(BUILD_SHARED_LIBS "Build snapcast in a shared context" ON)
 option(BUILD_STATIC_LIBS "Build snapcast in a static context" ON)
-option(BUILD_TESTS "Build tests (run tests with make test)" ON)
+option(BUILD_TESTS "Build tests (in test/snapcast_test)" ON)
 option(WERROR "Treat warnings as errors" OFF)
 
 option(ASAN "Enable AddressSanitizer" OFF)
@@ -19,6 +19,10 @@ IF (REVISION)
     # add_compile_definitions(REVISION=\"${REVISION}\")
     add_definitions(-DREVISION=\"${REVISION}\")
 ENDIF()
+
+if (BUILD_TESTS)
+    add_subdirectory(test)
+endif (BUILD_TESTS)
 
 IF (TIDY)
     FIND_PROGRAM(CLANG_TIDY "clang-tidy")
