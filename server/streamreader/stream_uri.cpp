@@ -16,6 +16,10 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif // NOMINMAX
+
 #include "stream_uri.hpp"
 #include "common/aixlog.hpp"
 #include "common/str_compat.hpp"
