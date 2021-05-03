@@ -109,5 +109,6 @@ else()
 
     install(TARGETS snapclient COMPONENT client DESTINATION "${CMAKE_INSTALL_BINDIR}")
     install(FILES snapclient.1 COMPONENT client DESTINATION "${CMAKE_INSTALL_MANDIR}/man1")
+    install(FILES etc/snapcast.svg COMPONENT client DESTINATION ${CMAKE_INSTALL_DATADIR}/pixmaps)
 endif()
 
