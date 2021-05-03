@@ -20,10 +20,6 @@ IF (REVISION)
     add_definitions(-DREVISION=\"${REVISION}\")
 ENDIF()
 
-if (BUILD_TESTS)
-    add_subdirectory(test)
-endif (BUILD_TESTS)
-
 IF (TIDY)
     FIND_PROGRAM(CLANG_TIDY "clang-tidy")
     IF(CLANG_TIDY)
@@ -347,6 +343,9 @@ if (BUILD_CLIENT)
     add_subdirectory(client)
 endif()
 
+if (BUILD_TESTS)
+    add_subdirectory(test)
+endif (BUILD_TESTS)
 
 FIND_PROGRAM(CLANG_FORMAT "clang-format")
 IF(CLANG_FORMAT)
