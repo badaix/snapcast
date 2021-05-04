@@ -46,6 +46,25 @@ enum class ReaderState
     kDisabled = 3
 };
 
+static std::ostream& operator<<(std::ostream& os, const ReaderState& reader_state)
+{
+    switch (reader_state)
+    {
+        case ReaderState::kIdle:
+            os << "idle";
+            break;
+        case ReaderState::kPlaying:
+            os << "playing";
+            break;
+        case ReaderState::kDisabled:
+            os << "disabled";
+            break;
+        case ReaderState::kUnknown:
+        default:
+            os << "unknown";
+    }
+    return os;
+}
 
 static constexpr auto kUriCodec = "codec";
 static constexpr auto kUriName = "name";

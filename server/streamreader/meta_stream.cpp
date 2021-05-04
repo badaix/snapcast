@@ -94,7 +94,7 @@ void MetaStream::onMetaChanged(const PcmStream* pcmStream)
 
 void MetaStream::onStateChanged(const PcmStream* pcmStream, ReaderState state)
 {
-    LOG(DEBUG, LOG_TAG) << "onStateChanged: " << pcmStream->getName() << ", state: " << static_cast<int>(state) << "\n";
+    LOG(DEBUG, LOG_TAG) << "onStateChanged: " << pcmStream->getName() << ", state: " << state << "\n";
     std::lock_guard<std::mutex> lock(mutex_);
     for (const auto& stream : streams_)
     {

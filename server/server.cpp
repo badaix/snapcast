@@ -73,7 +73,7 @@ void Server::onStateChanged(const PcmStream* pcmStream, ReaderState state)
     // clang-format off
     // Notification: {"jsonrpc":"2.0","method":"Stream.OnUpdate","params":{"id":"stream 1","stream":{"id":"stream 1","status":"idle","uri":{"fragment":"","host":"","path":"/tmp/snapfifo","query":{"chunk_ms":"20","codec":"flac","name":"stream 1","sampleformat":"48000:16:2"},"raw":"pipe:///tmp/snapfifo?name=stream 1","scheme":"pipe"}}}}
     // clang-format on
-    LOG(INFO, LOG_TAG) << "onStateChanged (" << pcmStream->getName() << "): " << static_cast<int>(state) << "\n";
+    LOG(INFO, LOG_TAG) << "onStateChanged (" << pcmStream->getName() << "): " << state << "\n";
     //	LOG(INFO, LOG_TAG) << pcmStream->toJson().dump(4);
     json notification = jsonrpcpp::Notification("Stream.OnUpdate", jsonrpcpp::Parameter("id", pcmStream->getId(), "stream", pcmStream->toJson())).to_json();
     controlServer_->send(notification.dump(), nullptr);

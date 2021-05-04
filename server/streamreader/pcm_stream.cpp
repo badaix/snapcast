@@ -103,7 +103,8 @@ std::string PcmStream::getCodec() const
 
 void PcmStream::start()
 {
-    LOG(DEBUG, LOG_TAG) << "Start: " << name_ << ", sampleformat: " << sampleFormat_.toString() << "\n";
+    LOG(DEBUG, LOG_TAG) << "Start: " << name_ << ", type: " << uri_.scheme << ", sampleformat: " << sampleFormat_.toString() << ", codec: " << getCodec()
+                        << "\n";
     encoder_->init([this](const encoder::Encoder& encoder, std::shared_ptr<msg::PcmChunk> chunk, double duration) { chunkEncoded(encoder, chunk, duration); },
                    sampleFormat_);
     active_ = true;
@@ -126,7 +127,7 @@ void PcmStream::setState(ReaderState newState)
 {
     if (newState != state_)
     {
-        LOG(INFO, LOG_TAG) << "State changed: " << name_ << ", state: " << static_cast<int>(state_) << " => " << static_cast<int>(newState) << "\n";
+        LOG(INFO, LOG_TAG) << "State changed: " << name_ << ", state: " << state_ << " => " << newState << "\n";
         state_ = newState;
         for (auto* listener : pcmListeners_)
         {
