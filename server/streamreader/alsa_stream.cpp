@@ -71,7 +71,18 @@ AlsaStream::AlsaStream(PcmListener* pcmListener, boost::asio::io_context& ioc, c
     device_ = uri_.getQuery("device", "hw:0");
     send_silence_ = (uri_.getQuery("send_silence", "false") == "true");
     idle_threshold_ = std::chrono::milliseconds(std::max(cpt::stoi(uri_.getQuery("idle_threshold", "100")), 10));
-    LOG(DEBUG, LOG_TAG) << "Device: " << device_ << "\n";
+    double silence_threshold_percent = 0.;
+    try
+    {
+        silence_threshold_percent = cpt::stod(uri_.getQuery("silence_threshold_percent", "0"));
+    }
+    catch (...)
+    {
+    }
+    int32_t max_amplitude = std::pow(2, sampleFormat_.bits() - 1) - 1;
+    silence_threshold_ = max_amplitude * (silence_threshold_percent / 100.);
+    LOG(DEBUG, LOG_TAG) << "Device: " << device_ << ", silence threshold percent: " << silence_threshold_percent
+                        << ", silence threshold amplitude: " << silence_threshold_ << "\n";
 }
 
 
@@ -166,6 +177,41 @@ void AlsaStream::uninitAlsa()
 }
 
 
+bool AlsaStream::isSilent(const msg::PcmChunk& chunk) const
+{
+    if (silence_threshold_ == 0)
+        return (std::memcmp(chunk.payload, silent_chunk_.data(), silent_chunk_.size()) == 0);
+
+    if (sampleFormat_.sampleSize() == 1)
+    {
+        auto payload = chunk.getPayload<int8_t>();
+        for (size_t n = 0; n < payload.second; ++n)
+        {
+            if (abs(payload.first[n]) > silence_threshold_)
+                return false;
+        }
+    }
+    else if (sampleFormat_.sampleSize() == 2)
+    {
+        auto payload = chunk.getPayload<int16_t>();
+        for (size_t n = 0; n < payload.second; ++n)
+        {
+            if (abs(payload.first[n]) > silence_threshold_)
+                return false;
+        }
+    }
+    else if (sampleFormat_.sampleSize() == 4)
+    {
+        auto payload = chunk.getPayload<int32_t>();
+        for (size_t n = 0; n < payload.second; ++n)
+        {
+            if (abs(payload.first[n]) > silence_threshold_)
+                return false;
+        }
+    }
+    return true;
+}
+
 void AlsaStream::do_read()
 {
     try
@@ -210,7 +256,7 @@ void AlsaStream::do_read()
             }
         } while (len < toRead);
 
-        if (std::memcmp(chunk_->payload, silent_chunk_.data(), silent_chunk_.size()) == 0)
+        if (isSilent(*chunk_))
         {
             silence_ += chunk_->duration<std::chrono::microseconds>();
             if (silence_ > idle_threshold_)

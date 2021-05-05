@@ -77,6 +77,12 @@ public:
     uint32_t payloadSize;
     char* payload;
 
+    template <typename T>
+    std::pair<T*, size_t> getPayload() const
+    {
+        return std::make_pair<T*, size_t>(reinterpret_cast<T*>(payload), payloadSize / sizeof(T));
+    }
+
 protected:
     void doserialize(std::ostream& stream) const override
     {

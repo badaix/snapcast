@@ -47,6 +47,9 @@ protected:
     void initAlsa();
     void uninitAlsa();
 
+    /// check if the chunk's volume is below the silence threshold
+    bool isSilent(const msg::PcmChunk& chunk) const;
+
     snd_pcm_t* handle_;
     std::unique_ptr<msg::PcmChunk> chunk_;
     bool first_;
@@ -61,6 +64,7 @@ protected:
     bool send_silence_;
     /// silence duration before switching the stream to idle
     std::chrono::milliseconds idle_threshold_;
+    int32_t silence_threshold_ = 0;
 };
 
 } // namespace streamreader
