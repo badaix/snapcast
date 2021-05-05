@@ -28,7 +28,7 @@ using namespace std;
 namespace encoder
 {
 
-// static constexpr auto LOG_TAG = "FlacEnc";
+static constexpr auto LOG_TAG = "FlacEnc";
 
 FlacEncoder::FlacEncoder(const std::string& codecOptions) : Encoder(codecOptions), encoder_(nullptr), pcmBufferSize_(0), encodedSamples_(0), flacChunk_(nullptr)
 {
@@ -76,8 +76,8 @@ void FlacEncoder::encode(const msg::PcmChunk& chunk)
 
     int samples = chunk.getSampleCount();
     int frames = chunk.getFrameCount();
-    // LOG(INFO, LOG_TAG) << "payload: " << chunk->payloadSize << "\tframes: " << frames << "\tsamples: " << samples << "\tduration: " <<
-    // chunk->duration<chronos::msec>().count() << "\n";
+    // LOG(TRACE, LOG_TAG) << "payload: " << chunk.payloadSize << "\tframes: " << frames << "\tsamples: " << samples
+    //                     << "\tduration: " << chunk.duration<chronos::msec>().count() << ", format: " << chunk.format.toString() << "\n";
 
     if (pcmBufferSize_ < samples)
     {
@@ -85,23 +85,39 @@ void FlacEncoder::encode(const msg::PcmChunk& chunk)
         pcmBuffer_ = static_cast<FLAC__int32*>(realloc(pcmBuffer_, pcmBufferSize_ * sizeof(FLAC__int32)));
     }
 
+    auto clip = [](int32_t min, int32_t max, int32_t value) -> int32_t {
+        if (value < min)
+            return min;
+        if (value > max)
+            return max;
+        return value;
+    };
+
     if (sampleFormat_.sampleSize() == 1)
     {
         auto* buffer = reinterpret_cast<FLAC__int8*>(chunk.payload);
         for (int i = 0; i < samples; i++)
-            pcmBuffer_[i] = static_cast<FLAC__int32>(buffer[i]);
+            pcmBuffer_[i] = clip(-128, 127, static_cast<FLAC__int32>(buffer[i]));
     }
     else if (sampleFormat_.sampleSize() == 2)
     {
         auto* buffer = reinterpret_cast<FLAC__int16*>(chunk.payload);
         for (int i = 0; i < samples; i++)
-            pcmBuffer_[i] = static_cast<FLAC__int32>(buffer[i]);
+            pcmBuffer_[i] = clip(-32768, 32767, static_cast<FLAC__int32>(buffer[i]));
     }
     else if (sampleFormat_.sampleSize() == 4)
     {
         auto* buffer = reinterpret_cast<FLAC__int32*>(chunk.payload);
-        for (int i = 0; i < samples; i++)
-            pcmBuffer_[i] = buffer[i];
+        if (sampleFormat_.bits() == 24)
+        {
+            for (int i = 0; i < samples; i++)
+                pcmBuffer_[i] = clip(-8388608, 8388607, buffer[i]);
+        }
+        else
+        {
+            for (int i = 0; i < samples; i++)
+                pcmBuffer_[i] = buffer[i];
+        }
     }
 
 
@@ -150,19 +166,21 @@ FLAC__StreamEncoderWriteStatus write_callback(const FLAC__StreamEncoder* encoder
 
 void FlacEncoder::initEncoder()
 {
-    int quality(2);
+    int compression_level(2);
     try
     {
-        quality = cpt::stoi(codecOptions_);
+        compression_level = cpt::stoi(codecOptions_);
     }
     catch (...)
     {
         throw SnapException("Invalid codec option: \"" + codecOptions_ + "\"");
     }
-    if ((quality < 0) || (quality > 8))
+    if ((compression_level < 0) || (compression_level > 8))
     {
         throw SnapException("compression level has to be between 0 and 8");
     }
+
+    LOG(INFO, LOG_TAG) << "Init - compression level: " << compression_level << "\n";
 
     FLAC__bool ok = 1;
     FLAC__StreamEncoderInitStatus init_status;
@@ -178,7 +196,7 @@ void FlacEncoder::initEncoder()
     // latency:
     // 0-2: 1152 frames, ~26.1224ms
     // 3-8: 4096 frames, ~92.8798ms
-    ok &= FLAC__stream_encoder_set_compression_level(encoder_, quality);
+    ok &= FLAC__stream_encoder_set_compression_level(encoder_, compression_level);
     ok &= FLAC__stream_encoder_set_channels(encoder_, sampleFormat_.channels());
     ok &= FLAC__stream_encoder_set_bits_per_sample(encoder_, sampleFormat_.bits());
     ok &= FLAC__stream_encoder_set_sample_rate(encoder_, sampleFormat_.rate());

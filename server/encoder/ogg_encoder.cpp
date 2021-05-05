@@ -178,6 +178,8 @@ void OggEncoder::initEncoder()
         throw SnapException("compression level has to be between -0.1 and 1.0");
     }
 
+    LOG(INFO, LOG_TAG) << "Init - quality: " << quality << "\n";
+
     /********** Encode setup ************/
     vorbis_info_init(&vi_);
 

@@ -17,11 +17,13 @@
 ***/
 
 #include "null_encoder.hpp"
+#include "common/aixlog.hpp"
 
 
 namespace encoder
 {
 
+static constexpr auto LOG_TAG = "NullEnc";
 
 NullEncoder::NullEncoder(const std::string& codecOptions) : Encoder(codecOptions)
 {
@@ -37,6 +39,7 @@ void NullEncoder::encode(const msg::PcmChunk& chunk)
 
 void NullEncoder::initEncoder()
 {
+    LOG(INFO, LOG_TAG) << "Init\n";
 }
 
 

@@ -17,6 +17,7 @@
 ***/
 
 #include "pcm_encoder.hpp"
+#include "common/aixlog.hpp"
 #include "common/endian.hpp"
 #include <memory>
 
@@ -29,6 +30,7 @@ static constexpr auto ID_WAVE = 0x45564157;
 static constexpr auto ID_FMT = 0x20746d66;
 static constexpr auto ID_DATA = 0x61746164;
 
+static constexpr auto LOG_TAG = "PcmEnc";
 
 namespace
 {
@@ -57,6 +59,7 @@ void PcmEncoder::encode(const msg::PcmChunk& chunk)
 
 void PcmEncoder::initEncoder()
 {
+    LOG(INFO, LOG_TAG) << "Init\n";
     headerChunk_->payloadSize = 44;
     headerChunk_->payload = static_cast<char*>(realloc(headerChunk_->payload, headerChunk_->payloadSize));
     char* payload = headerChunk_->payload;

@@ -144,7 +144,7 @@ void OpusEncoder::initEncoder()
             throw SnapException("Opus error parsing options: " + codecOptions_);
     }
 
-    LOG(INFO, LOG_TAG) << "Opus bitrate: " << bitrate << " bps, complexity: " << complexity << "\n";
+    LOG(INFO, LOG_TAG) << "Init - bitrate: " << bitrate << " bps, complexity: " << complexity << "\n";
 
     int error;
     enc_ = opus_encoder_create(sampleFormat_.rate(), sampleFormat_.channels(), OPUS_APPLICATION_RESTRICTED_LOWDELAY, &error);
