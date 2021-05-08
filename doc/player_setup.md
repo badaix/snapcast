@@ -256,9 +256,8 @@ WantedBy=multi-user.target
 Replace $USER with the username whom can run the preceding command succesfully. Finally run:
 ```
 sudo systemctl daemon-reload
-sudo service sox start
-sudo service sox enable
-sudo service sox status
+sudo systemctl enable --now sox
+sudo systemctl status sox
 ```
 to start the service, automatically start it at boot and check if it is working.
 
