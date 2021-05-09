@@ -107,33 +107,47 @@ void LibrespotStream::initExeAndPath(const std::string& filename)
 void LibrespotStream::onStderrMsg(const std::string& line)
 {
     static bool libreelec_patched = false;
-    smatch m;
-
     // Watch stderr for 'Loading track' messages and set the stream metadata
     // For more than track name check: https://github.com/plietar/librespot/issues/154
 
     /// Watch will kill librespot if there was no message received for 130min
-    // 2016-11-02 22-05-15 [out] TRACE:librespot::stream: allocated stream 3580
-    // 2016-11-02 22-05-15 [Debug] DEBUG:librespot::audio_file2: Got channel 3580
-    // 2016-11-02 22-06-39 [out] DEBUG:librespot::spirc: kMessageTypeHello "SM-G901F" 5e1ffdd73f0d1741c4a173d5b238826464ca8e2f 1 0
-    // 2016-11-02 22-06-39 [out] DEBUG:librespot::spirc: kMessageTypeNotify "Snapcast" 68724ecccd67781303655c49a73b74c5968667b1 123 1478120652755
-    // 2016-11-02 22-06-40 [out] DEBUG:librespot::spirc: kMessageTypeNotify "SM-G901F" 5e1ffdd73f0d1741c4a173d5b238826464ca8e2f 1 0
-    // 2016-11-02 22-06-41 [out] DEBUG:librespot::spirc: kMessageTypePause "SM-G901F" 5e1ffdd73f0d1741c4a173d5b238826464ca8e2f 2 0
-    // 2016-11-02 22-06-42 [out] DEBUG:librespot::spirc: kMessageTypeNotify "Snapcast" 68724ecccd67781303655c49a73b74c5968667b1 124 1478120801615
-    // 2016-11-02 22-06-47 [out] DEBUG:librespot::spirc: kMessageTypeNotify "SM-G901F" 5e1ffdd73f0d1741c4a173d5b238826464ca8e2f 2 1478120801615
-    // 2016-11-02 22-35-10 [out] DEBUG:librespot::spirc: kMessageTypeNotify "Snapcast" 68724ecccd67781303655c49a73b74c5968667b1 125 1478120801615
-    // 2016-11-02 23-36-06 [out] DEBUG:librespot::spirc: kMessageTypeNotify "Snapcast" 68724ecccd67781303655c49a73b74c5968667b1 126 1478120801615
-    // 2016-11-03 01-37-08 [out] DEBUG:librespot::spirc: kMessageTypeNotify "Snapcast" 68724ecccd67781303655c49a73b74c5968667b1 127 1478120801615
-    // 2016-11-03 02-38-13 [out] DEBUG:librespot::spirc: kMessageTypeNotify "Snapcast" 68724ecccd67781303655c49a73b74c5968667b1 128 1478120801615
-    // killall librespot
-    // 2016-11-03 09-00-18 [out] INFO:librespot::main_helper: librespot 6fa4e4d (2016-09-21). Built on 2016-10-27.
-    // 2016-11-03 09-00-18 [out] INFO:librespot::session: Connecting to AP lon3-accesspoint-a34.ap.spotify.com:443
-    // 2016-11-03 09-00-18 [out] INFO:librespot::session: Authenticated !
+    // 2021-05-09 09-25-48.651 [Info] (LibrespotStream) (Spotify) [2021-05-09T07:25:48Z DEBUG librespot_playback::player] command=Load(SpotifyId
+    // 2021-05-09 09-25-48.651 [Info] (LibrespotStream) (Spotify) [2021-05-09T07:25:48Z TRACE librespot_connect::spirc] Sending status to server
+    // 2021-05-09 09-25-48.746 [Info] (LibrespotStream) (Spotify) [2021-05-09T07:25:48Z WARN  librespot_connect::spirc] No autoplay_uri found
+    // 2021-05-09 09-25-48.747 [Info] (LibrespotStream) (Spotify) [2021-05-09T07:25:48Z ERROR librespot_connect::spirc] AutoplayError: MercuryError
+    // 2021-05-09 09-25-48.750 [Info] (LibrespotStream) (Spotify) [2021-05-09T07:25:48Z INFO  librespot_playback::player] Loading <Big Gangsta>
 
-    if ((line.find("allocated stream") == string::npos) && (line.find("Got channel") == string::npos) && (line.find('\0') == string::npos) && (line.size() > 4))
-    {
+    // Parse log level, source and message from the log line
+    // Format: [2021-05-09T08:31:08Z DEBUG librespot_playback::player] new Player[0]
+    std::string level;
+    std::string source;
+    std::string message;
+    level = utils::string::split_left(line, ' ', source);
+    level = utils::string::split_left(source, ' ', source);
+    source = utils::string::split_left(source, ']', message);
+    utils::string::trim(level);
+    utils::string::trim(source);
+    utils::string::trim(message);
+
+    AixLog::Severity severity = AixLog::Severity::info;
+    bool parsed = true;
+    if (level == "TRACE")
+        severity = AixLog::Severity::trace;
+    else if (level == "DEBUG")
+        severity = AixLog::Severity::debug;
+    else if (level == "INFO")
+        severity = AixLog::Severity::info;
+    else if (level == "WARN")
+        severity = AixLog::Severity::warning;
+    else if (level == "ERROR")
+        severity = AixLog::Severity::error;
+    else
+        parsed = false;
+
+    if (parsed)
+        LOG(severity, source) << message << "\n";
+    else
         LOG(INFO, LOG_TAG) << "(" << getName() << ") " << line << "\n";
-    }
 
     // Librespot patch:
     // 	info!("metadata:{{\"ARTIST\":\"{}\",\"TITLE\":\"{}\"}}", artist.name, track.name);
@@ -142,6 +156,7 @@ void LibrespotStream::onStderrMsg(const std::string& line)
 
     // If we detect a patched libreelec we don't want to bother with this anymoer
     // to avoid duplicate metadata pushes
+    smatch m;
     if (!libreelec_patched)
     {
         static regex re_nonpatched("Track \"(.*)\" loaded");
