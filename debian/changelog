@@ -1,3 +1,23 @@
+snapcast (0.25.0-1) unstable; urgency=medium
+
+  * Features
+    -Client: Editable PulseAudio properties, e.g. media.role=music (Issue #829)
+    -Server: Configurable amplitute for silence detection in alsa stream (Issue #846)
+
+  * Bugfixes
+    -Client: Fix crash on Windows when  system volume changes (PR #838)
+    -Client: Removed a log message to stdout for file player backend (Issue #681)
+    -Server: Fix percent-decoding for stream URIs (Issue #850)
+    -Server: Fix double quotes in Airplay device names (Issue #851)
+    -Server: Fix crash when feeding a 16 bit signal into 24 bit flac (Issue #866)  
+
+  * General
+    -Server: less verbose librespot logging (Issue #874)
+    -Snapweb: Update to v0.3.0
+    -Add unit tests to the project
+
+-- Johannes Pohl <snapcast@badaix.de>  Sat, 15 May 2021 00:13:37 +0200
+
 snapcast (0.24.0-1) unstable; urgency=medium
 
   * Features
