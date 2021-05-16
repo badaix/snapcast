@@ -29,6 +29,7 @@
 #include <sys/time.h>
 #endif
 #include <vector>
+#include <memory>
 
 /*
 template<typename CharT, typename TraitsT = std::char_traits<CharT> >
