@@ -28,8 +28,8 @@
 #ifndef WINDOWS
 #include <sys/time.h>
 #endif
-#include <vector>
 #include <memory>
+#include <vector>
 
 /*
 template<typename CharT, typename TraitsT = std::char_traits<CharT> >
@@ -52,7 +52,7 @@ struct membuf : public std::basic_streambuf<char>
 };
 
 
-enum message_type
+enum class message_type : uint16_t
 {
     kBase = 0,
     kCodecHeader = 1,
@@ -67,6 +67,39 @@ enum message_type
     kLast = kClientInfo
 };
 
+static std::ostream& operator<<(std::ostream& os, const message_type& msg_type)
+{
+    switch (msg_type)
+    {
+        case message_type::kBase:
+            os << "Base";
+            break;
+        case message_type::kCodecHeader:
+            os << "CodecHeader";
+            break;
+        case message_type::kWireChunk:
+            os << "WireChunk";
+            break;
+        case message_type::kServerSettings:
+            os << "ServerSettings";
+            break;
+        case message_type::kTime:
+            os << "Time";
+            break;
+        case message_type::kHello:
+            os << "Hello";
+            break;
+        case message_type::kStreamTags:
+            os << "StreamTags";
+            break;
+        case message_type::kClientInfo:
+            os << "ClientInfo";
+            break;
+        default:
+            os << "Unknown";
+    }
+    return os;
+}
 
 struct tv
 {
@@ -121,11 +154,11 @@ using message_ptr = std::shared_ptr<msg::BaseMessage>;
 
 struct BaseMessage
 {
-    BaseMessage() : type(kBase), id(0), refersTo(0)
+    BaseMessage() : type(message_type::kBase), id(0), refersTo(0)
     {
     }
 
-    BaseMessage(message_type type_) : type(static_cast<uint16_t>(type_)), id(0), refersTo(0)
+    BaseMessage(message_type type_) : type(type_), id(0), refersTo(0)
     {
     }
 
@@ -182,7 +215,7 @@ struct BaseMessage
         return 3 * sizeof(uint16_t) + 2 * sizeof(tv) + sizeof(uint32_t);
     };
 
-    uint16_t type;
+    message_type type;
     mutable uint16_t id;
     uint16_t refersTo;
     tv received;
@@ -204,6 +237,12 @@ protected:
     void writeVal(std::ostream& stream, const uint16_t& val) const
     {
         uint16_t v = SWAP_16(val);
+        stream.write(reinterpret_cast<const char*>(&v), sizeof(uint16_t));
+    }
+
+    void writeVal(std::ostream& stream, const message_type& val) const
+    {
+        uint16_t v = static_cast<uint16_t>(SWAP_16(val));
         stream.write(reinterpret_cast<const char*>(&v), sizeof(uint16_t));
     }
 
@@ -255,6 +294,12 @@ protected:
     {
         stream.read(reinterpret_cast<char*>(&val), sizeof(uint16_t));
         val = SWAP_16(val);
+    }
+
+    void readVal(std::istream& stream, message_type& val) const
+    {
+        stream.read(reinterpret_cast<char*>(&val), sizeof(uint16_t));
+        val = static_cast<message_type>(SWAP_16(val));
     }
 
     void readVal(std::istream& stream, int16_t& val) const

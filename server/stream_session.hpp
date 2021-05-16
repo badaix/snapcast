@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2020  Johannes Pohl
+    Copyright (C) 2014-2021  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -55,7 +55,7 @@ class shared_const_buffer
     {
         std::vector<char> data;
         bool is_pcm_chunk;
-        uint16_t type;
+        message_type type;
         chronos::time_point_clk rec_time;
     };
 
