@@ -38,7 +38,6 @@ import tempfile
 import base64
 import musicbrainzngs
 import requests
-import json
 
 __version__ = "@version@"
 __git_version__ = "@gitversion@"
@@ -136,6 +135,50 @@ allowed_tags = {
     'xesam:url': str,
     'xesam:useCount': int,
     'xesam:userRating': float,
+}
+
+
+# MPD to Snapcast tag mapping
+tag_mapping = {
+    'album': ['album', str, False],
+    'albumsort': ['albumSort', str, False],
+    'albumartist': ['albumArtist', str, True],
+    'albumartistsort': ['albumArtistSort', str, True],
+    'artist': ['artist', str, True],
+    'artistsort': ['artistSort', str, True],
+    'astext': ['asText', str, True],
+    'audiobpm': ['audioBPM', int, False],
+    'autorating': ['autoRating', float, False],
+    'comment': ['comment', str, True],
+    'composer': ['composer', str, True],
+    'date': ['contentCreated', str, False],
+    'disc': ['discNumber', int, False],
+    'firstused': ['firstUsed', str, False],
+    'genre': ['genre', str, True],
+    'lastused': ['lastUsed', str, False],
+    'lyricist': ['lyricist', str, True],
+    'title': ['title', str, False],
+    'track': ['trackNumber', int, False],
+    'file': ['file', str, False],
+    'url': ['url', str, False],
+    'usecount': ['useCount', int, False],
+    'userating': ['useRating', float, False],
+
+    'duration': ['duration', float, False],
+    'track': ['track', int, False],
+    'name': ['name', str, False],
+    'originaldate': ['originalDate', str, False],
+    'performer': ['performer', str, True],
+    'conductor': ['conductor', str, True],
+    'work': ['work', str, False],
+    'grouping': ['grouping', str, False],
+    'label': ['label', str, False],
+    'musicbrainz_artistid': ['musicbrainzArtistId', str, False],
+    'musicbrainz_albumid': ['musicbrainzAlbumId', str, False],
+    'musicbrainz_albumartistid': ['musicbrainzAlbumArtistId', str, False],
+    'musicbrainz_trackid': ['musicbrainzTrackId', str, False],
+    'musicbrainz_releasetrackid': ['musicbrainzReleasetrackId', str, False],
+    'musicbrainz_workid': ['musicbrainzWorkId', str, False],
 }
 
 # python dbus bindings don't include annotations and properties
@@ -513,6 +556,36 @@ class MPDWrapper(object):
 
         mpd_meta = self.last_currentsong()
         print(mpd_meta)
+        snapmeta = {}
+        for key, values in mpd_meta.items():
+            try:
+                value = {}
+                if type(values) == list:
+                    if len(values) == 0:
+                        continue
+                    if tag_mapping[key][2]:
+                        value = list(map(type(tag_mapping[key][1]), values))
+                    else:
+                        value = tag_mapping[key][1](values[0])
+                else:
+                    if tag_mapping[key][2]:
+                        print('cast')
+                        value = [tag_mapping[key][1](values)]
+                    else:
+                        value = tag_mapping[key][1](values)
+                snapmeta[tag_mapping[key][0]] = value
+                print(
+                    f'key: {key}, value: {value}, mapped key: {tag_mapping[key][0]}, mapped value: {snapmeta[tag_mapping[key][0]]}')
+            except KeyError:
+                print(f'tag "{key}" not supported')
+            except (ValueError, TypeError):
+                print("Can't cast value %r to %s" %
+                      (value, tag_mapping[key][1]))
+
+        r = requests.post('http://127.0.0.1:1780/jsonrpc', json={"id": 4, "jsonrpc": "2.0", "method": "Stream.SetMeta", "params": {
+            "id": "Spotify", "meta": snapmeta}})
+        print(r)
+
         self._metadata = {}
 
         for tag in ('album', 'title'):
@@ -593,13 +666,13 @@ class MPDWrapper(object):
                 logger.error("Can't cast value %r to %s" %
                              (value, allowed_tags[key]))
 
-        if 'xesam:title' in self._metadata and 'xesam:album' in self._metadata:
-            result = musicbrainzngs.search_releases(artist=self._metadata['xesam:title'], release=self._metadata['xesam:album'],
-                                                    limit=1)
-            if result['release-list']:
-                self._metadata[
-                    'mpris:artUrl'] = f"http://coverartarchive.org/release/{result['release-list'][0]['id']}/front-250"
-                print(self._metadata['mpris:artUrl'])
+        # if 'xesam:title' in self._metadata and 'xesam:album' in self._metadata:
+        #     result = musicbrainzngs.search_releases(artist=self._metadata['xesam:title'], release=self._metadata['xesam:album'],
+        #                                             limit=1)
+        #     if result['release-list']:
+        #         self._metadata[
+        #             'mpris:artUrl'] = f"http://coverartarchive.org/release/{result['release-list'][0]['id']}/front-250"
+        #         print(self._metadata['mpris:artUrl'])
 
     def notify_about_track(self, meta, state='play'):
         uri = 'sound'
@@ -623,9 +696,6 @@ class MPDWrapper(object):
             body += ' (%s)' % _('Paused')
 
         notification.notify(title, body, uri)
-        r = requests.post('http://127.0.0.1:1780/jsonrpc', json={"id": 4, "jsonrpc": "2.0", "method": "Stream.SetMeta", "params": {
-            "id": "Spotify", "meta": meta}})
-        print(r)
 
     def notify_about_state(self, state):
         if state == 'stop':
