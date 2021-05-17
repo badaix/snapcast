@@ -37,6 +37,8 @@ import time
 import tempfile
 import base64
 import musicbrainzngs
+import requests
+import json
 
 __version__ = "@version@"
 __git_version__ = "@gitversion@"
@@ -339,7 +341,7 @@ class MPDWrapper(object):
                 self._dbus_service = MPRISInterface(self._params)
             else:
                 # Add our service to the session bus
-                #self._dbus_service.add_to_connection(dbus.SessionBus(),
+                # self._dbus_service.add_to_connection(dbus.SessionBus(),
                 #    '/org/mpris/MediaPlayer2')
                 self._dbus_service.acquire_name()
 
@@ -383,7 +385,7 @@ class MPDWrapper(object):
         # Release the DBus name and disconnect from bus
         if self._dbus_service is not None:
             self._dbus_service.release_name()
-        #self._dbus_service.remove_from_connection()
+        # self._dbus_service.remove_from_connection()
 
         # Stop monitoring
         if self._poll_id:
@@ -412,7 +414,7 @@ class MPDWrapper(object):
 
     def init_state(self):
         # Get current state
-        self._status = self.status()
+        self._status = self.client.status()
         # Invalid some fields to throw events at start
         self._status['state'] = 'invalid'
         self._status['songid'] = '-1'
@@ -444,7 +446,7 @@ class MPDWrapper(object):
         else:
             return False
 
-    ## Events
+    # Events
 
     def timer_callback(self):
         try:
@@ -483,17 +485,17 @@ class MPDWrapper(object):
         logger.debug('Got GNOME mmkey "%s" for "%s"' % (key, appname))
         if key == 'Play':
             if self._status['state'] == 'play':
-                self.pause(1)
+                self.client.pause(1)
                 self.notify_about_state('pause')
             else:
                 self.play()
                 self.notify_about_state('play')
         elif key == 'Next':
-            self.next()
+            self.client.next()
         elif key == 'Previous':
-            self.previous()
+            self.client.previous()
         elif key == 'Stop':
-            self.stop()
+            self.client.stop()
             self.notify_about_state('stop')
 
     def last_currentsong(self):
@@ -510,6 +512,7 @@ class MPDWrapper(object):
         """
 
         mpd_meta = self.last_currentsong()
+        print(mpd_meta)
         self._metadata = {}
 
         for tag in ('album', 'title'):
@@ -592,9 +595,10 @@ class MPDWrapper(object):
 
         if 'xesam:title' in self._metadata and 'xesam:album' in self._metadata:
             result = musicbrainzngs.search_releases(artist=self._metadata['xesam:title'], release=self._metadata['xesam:album'],
-                                            limit=1)
+                                                    limit=1)
             if result['release-list']:
-                self._metadata['mpris:artUrl'] = f"http://coverartarchive.org/release/{result['release-list'][0]['id']}/front-250"
+                self._metadata[
+                    'mpris:artUrl'] = f"http://coverartarchive.org/release/{result['release-list'][0]['id']}/front-250"
                 print(self._metadata['mpris:artUrl'])
 
     def notify_about_track(self, meta, state='play'):
@@ -619,10 +623,14 @@ class MPDWrapper(object):
             body += ' (%s)' % _('Paused')
 
         notification.notify(title, body, uri)
+        r = requests.post('http://127.0.0.1:1780/jsonrpc', json={"id": 4, "jsonrpc": "2.0", "method": "Stream.SetMeta", "params": {
+            "id": "Spotify", "meta": meta}})
+        print(r)
 
     def notify_about_state(self, state):
         if state == 'stop':
-            notification.notify(identity, _('Stopped'), 'media-playback-stop-symbolic')
+            notification.notify(identity, _('Stopped'),
+                                'media-playback-stop-symbolic')
         else:
             self.notify_about_track(self.metadata, state)
 
@@ -634,10 +642,12 @@ class MPDWrapper(object):
             # Try existing temporary file
             if self._temp_cover:
                 if song_url == self._temp_song_url:
-                    logger.debug("find_cover: Reusing old image at %r" % self._temp_cover.name)
+                    logger.debug("find_cover: Reusing old image at %r" %
+                                 self._temp_cover.name)
                     return 'file://' + self._temp_cover.name
                 else:
-                    logger.debug("find_cover: Cleaning up old image at %r" % self._temp_cover.name)
+                    logger.debug(
+                        "find_cover: Cleaning up old image at %r" % self._temp_cover.name)
                     self._temp_song_url = None
                     self._temp_cover.close()
 
@@ -647,7 +657,8 @@ class MPDWrapper(object):
                 try:
                     song = mutagen.File(song_path)
                 except mutagen.MutagenError as e:
-                    logger.error("Can't extract covers from %r: %r" % (song_path, e))
+                    logger.error("Can't extract covers from %r: %r" %
+                                 (song_path, e))
             if song is not None:
                 if song.tags:
                     # present but null for some file types
@@ -655,8 +666,8 @@ class MPDWrapper(object):
                         if tag.startswith("APIC:"):
                             for pic in song.tags.getall(tag):
                                 if pic.type == mutagen.id3.PictureType.COVER_FRONT:
-                                     self._temp_song_url = song_url
-                                     return self._create_temp_cover(pic)
+                                    self._temp_song_url = song_url
+                                    return self._create_temp_cover(pic)
                 if hasattr(song, "pictures"):
                     # FLAC
                     for pic in song.pictures:
@@ -704,10 +715,12 @@ class MPDWrapper(object):
                      'image/png': '.png',
                      'image/gif': '.gif'}
 
-        self._temp_cover = tempfile.NamedTemporaryFile(prefix='cover-', suffix=extension.get(pic.mime, '.jpg'))
+        self._temp_cover = tempfile.NamedTemporaryFile(
+            prefix='cover-', suffix=extension.get(pic.mime, '.jpg'))
         self._temp_cover.write(pic.data)
         self._temp_cover.flush()
-        logger.debug("find_cover: Storing embedded image at %r" % self._temp_cover.name)
+        logger.debug("find_cover: Storing embedded image at %r" %
+                     self._temp_cover.name)
         return 'file://' + self._temp_cover.name
 
     def last_status(self):
@@ -719,8 +732,8 @@ class MPDWrapper(object):
         old_status = self._status
         old_position = self._position
         old_time = self._time
-        self._currentsong = self.currentsong()
-        new_status = self.status()
+        self._currentsong = self.client.currentsong()
+        new_status = self.client.status()
         self._time = new_time = int(time.time())
 
         if not new_status:
@@ -728,7 +741,8 @@ class MPDWrapper(object):
             return
 
         self._status = new_status
-        logger.debug("_update_properties: current song = %r" % self._currentsong)
+        logger.debug("_update_properties: current song = %r" %
+                     self._currentsong)
         logger.debug("_update_properties: current status = %r" % self._status)
 
         if 'elapsed' in new_status:
@@ -772,9 +786,9 @@ class MPDWrapper(object):
 
             if self._params['notify'] and new_status['state'] != 'stop':
                 if old_meta.get('xesam:artist', None) != new_meta.get('xesam:artist', None) \
-                    or old_meta.get('xesam:album', None) != new_meta.get('xesam:album', None) \
-                    or old_meta.get('xesam:title', None) != new_meta.get('xesam:title', None) \
-                    or old_meta.get('xesam:url', None) != new_meta.get('xesam:url', None):
+                        or old_meta.get('xesam:album', None) != new_meta.get('xesam:album', None) \
+                        or old_meta.get('xesam:title', None) != new_meta.get('xesam:title', None) \
+                        or old_meta.get('xesam:url', None) != new_meta.get('xesam:url', None):
                     self.notify_about_track(new_meta, new_status['state'])
 
         # "mixer" subsystem
@@ -798,15 +812,15 @@ class MPDWrapper(object):
             self._dbus_service.update_property('org.mpris.MediaPlayer2.Player',
                                                'CanGoNext')
 
-    ## Media keys
+    # Media keys
 
     def setup_mediakeys(self):
-            self.register_mediakeys()
-            self._dbus_obj = self._bus.get_object("org.freedesktop.DBus",
-                                                  "/org/freedesktop/DBus")
-            self._dbus_obj.connect_to_signal("NameOwnerChanged",
-                                             self.gsd_name_owner_changed_callback,
-                                             arg0="org.gnome.SettingsDaemon")
+        self.register_mediakeys()
+        self._dbus_obj = self._bus.get_object("org.freedesktop.DBus",
+                                              "/org/freedesktop/DBus")
+        self._dbus_obj.connect_to_signal("NameOwnerChanged",
+                                         self.gsd_name_owner_changed_callback,
+                                         arg0="org.gnome.SettingsDaemon")
 
     def register_mediakeys(self):
         try:
@@ -820,21 +834,24 @@ class MPDWrapper(object):
             gsd_object.GrabMediaPlayerKeys("mpDris2", 0,
                                            dbus_interface="org.gnome.SettingsDaemon.MediaKeys")
         except:
-            logger.warning("Failed to connect to GNOME Settings Daemon. Media keys won't work.")
+            logger.warning(
+                "Failed to connect to GNOME Settings Daemon. Media keys won't work.")
         else:
             self._bus.remove_signal_receiver(self.mediakey_callback)
-            gsd_object.connect_to_signal("MediaPlayerKeyPressed", self.mediakey_callback)
+            gsd_object.connect_to_signal(
+                "MediaPlayerKeyPressed", self.mediakey_callback)
 
     def gsd_name_owner_changed_callback(self, bus_name, old_owner, new_owner):
         if bus_name == "org.gnome.SettingsDaemon" and new_owner != "":
             def reregister():
-                logger.debug("Re-registering with GNOME Settings Daemon (owner %s)" % new_owner)
+                logger.debug(
+                    "Re-registering with GNOME Settings Daemon (owner %s)" % new_owner)
                 self.register_mediakeys()
                 return False
             # Timeout is necessary since g-s-d takes some time to load all plugins.
             GLib.timeout_add(600, reregister)
 
-    ## Compatibility functions
+    # Compatibility functions
 
     # Fedora 17 still has python-mpd 0.2, which lacks fileno().
     if hasattr(mpd.MPDClient, "fileno"):
@@ -846,7 +863,7 @@ class MPDWrapper(object):
                 raise mpd.ConnectionError("Not connected")
             return self.client._sock.fileno()
 
-    ## Access to python-mpd internal APIs
+    # Access to python-mpd internal APIs
 
     # We use _write_command("idle") to manually enter idle mode, as it has no
     # immediate response to fetch.
@@ -899,7 +916,8 @@ class MPDWrapper(object):
         fn = getattr(self.client, command)
         try:
             was_idle = self.idle_leave()
-            logger.debug("Sending command %r (was idle? %r)" % (command, was_idle))
+            logger.debug("Sending command %r (was idle? %r)" %
+                         (command, was_idle))
             r = fn(*args)
             if was_idle:
                 self.idle_enter()
@@ -919,7 +937,8 @@ class NotifyWrapper(object):
         if params["notify"]:
             self._notification = self._bootstrap_notifications()
             if not self._notification:
-                logger.error("No notification service provider could be found; disabling notifications")
+                logger.error(
+                    "No notification service provider could be found; disabling notifications")
         else:
             self._enabled = False
 
@@ -941,7 +960,8 @@ class NotifyWrapper(object):
                 notif.set_hint("desktop-entry", GLib.Variant("s", "mpdris2"))
                 notif.set_hint("transient", GLib.Variant("b", True))
             else:
-                logger.error("Failed to init libnotify; disabling notifications")
+                logger.error(
+                    "Failed to init libnotify; disabling notifications")
         elif using_old_notify:
             logger.debug("Initializing old pynotify")
             if pynotify.init(identity):
@@ -949,22 +969,24 @@ class NotifyWrapper(object):
                 notif.set_hint("desktop-entry", "mpdris2")
                 notif.set_hint("transient", True)
             else:
-                logger.error("Failed to init libnotify; disabling notifications")
+                logger.error(
+                    "Failed to init libnotify; disabling notifications")
 
         return notif
 
     def notify(self, title, body, uri=''):
         if not self._enabled:
             return
-        
+
         # If we did not yet manage to get a notification service,
         # try again
         if not self._notification:
-            logger.info('Retrying to acquire a notification service provider...')
+            logger.info(
+                'Retrying to acquire a notification service provider...')
             self._notification = self._bootstrap_notifications()
             if self._notification:
                 logger.info('Notification service provider acquired!')
-        
+
         if self._notification:
             try:
                 self._notification.set_urgency(params['notify_urgency'])
@@ -987,7 +1009,8 @@ class MPRISInterface(dbus.service.Object):
         self._params = params or {}
         self._name = self._params["bus_name"] or "org.mpris.MediaPlayer2.mpd"
         if not self._name.startswith("org.mpris.MediaPlayer2."):
-            logger.warn("Configured bus name %r is outside MPRIS2 namespace" % self._name)
+            logger.warn(
+                "Configured bus name %r is outside MPRIS2 namespace" % self._name)
 
         self._bus = dbus.SessionBus()
         self._uname = self._bus.get_unique_name()
@@ -1005,7 +1028,8 @@ class MPRISInterface(dbus.service.Object):
                 pid = self._dbus_obj.GetConnectionUnixProcessID(new_owner)
             except:
                 pid = None
-            logger.info("Replaced by %s (PID %s)" % (new_owner, pid or "unknown"))
+            logger.info("Replaced by %s (PID %s)" %
+                        (new_owner, pid or "unknown"))
             loop.quit()
 
     def acquire_name(self):
@@ -1252,6 +1276,7 @@ class MPRISInterface(dbus.service.Object):
         # TODO
         return
 
+
 def each_xdg_config(suffix):
     """
     Return each location matching XDG_CONFIG_DIRS/suffix in descending
@@ -1324,6 +1349,7 @@ Usage: %(progname)s [OPTION]...
 Environment variables MPD_HOST and MPD_PORT can be used.
 
 Report bugs to https://github.com/eonpatapon/mpDris2/issues""" % params)
+
 
 if __name__ == '__main__':
     DBusGMainLoop(set_as_default=True)
@@ -1458,7 +1484,8 @@ if __name__ == '__main__':
         if music_dir.startswith('file://'):
             music_dir = music_dir[:7] + os.path.expanduser(music_dir[7:])
             if not os.path.exists(music_dir[7:]):
-                logger.error('Music library path %s does not exist!' % music_dir)
+                logger.error(
+                    'Music library path %s does not exist!' % music_dir)
         # Non-local URLs can still be useful to MPRIS clients, so accept them.
         params['music_dir'] = music_dir
         logger.info('Using %s as music library path.' % music_dir)
@@ -1477,7 +1504,8 @@ if __name__ == '__main__':
     if mutagen:
         logger.info('Using Mutagen to read covers from music files.')
     else:
-        logger.info('Mutagen not available, covers in music files will be ignored.')
+        logger.info(
+            'Mutagen not available, covers in music files will be ignored.')
 
     # Set up the main loop
     if using_gi_glib:
