@@ -178,7 +178,7 @@ tag_mapping = {
     'musicbrainz_albumid': ['musicbrainzAlbumId', str, False],
     'musicbrainz_albumartistid': ['musicbrainzAlbumArtistId', str, False],
     'musicbrainz_trackid': ['musicbrainzTrackId', str, False],
-    'musicbrainz_releasetrackid': ['musicbrainzReleasetrackId', str, False],
+    'musicbrainz_releasetrackid': ['musicbrainzReleaseTrackId', str, False],
     'musicbrainz_workid': ['musicbrainzWorkId', str, False],
 }
 
