@@ -161,8 +161,9 @@ tag_mapping = {
     'track': ['trackNumber', int, False],
     'file': ['file', str, False],
     'url': ['url', str, False],
+    'arturl': ['artUrl', str, False],
     'usecount': ['useCount', int, False],
-    'userating': ['useRating', float, False],
+    'userrating': ['userRating', float, False],
 
     'duration': ['duration', float, False],
     'track': ['track', int, False],
