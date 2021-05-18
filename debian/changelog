@@ -16,7 +16,7 @@ snapcast (0.25.0-1) unstable; urgency=medium
     -Snapweb: Update to v0.3.0
     -Add unit tests to the project
 
--- Johannes Pohl <snapcast@badaix.de>  Sat, 15 May 2021 00:13:37 +0200
+ -- Johannes Pohl <snapcast@badaix.de>  Sat, 15 May 2021 00:13:37 +0200
 
 snapcast (0.24.0-1) unstable; urgency=medium
 
