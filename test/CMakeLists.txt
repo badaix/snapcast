@@ -1,7 +1,7 @@
 # Prepare "Catch" library for other executables
 set(CATCH_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 add_library(Catch INTERFACE)
-target_include_directories(Catch INTERFACE ${CATCH_INCLUDE_DIR} ${CMAKE_SOURCE_DIR})
+target_include_directories(Catch INTERFACE ${CATCH_INCLUDE_DIR} ${CMAKE_SOURCE_DIR} ${Boost_INCLUDE_DIR})
 
 set(TEST_LIBRARIES Catch)
 if (ANDROID)
