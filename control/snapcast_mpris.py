@@ -256,6 +256,32 @@ class SnapcastRpcListener:
         pass
 
 
+tag_mapping = {
+    'trackId': 'mpris:trackid',
+    'artUrl': 'mpris:artUrl',
+    'duration': 'mpris:length',
+    'album': 'xesam:album',
+    'albumArtist': 'xesam:albumArtist',
+    'artist': 'xesam:artist',
+    'asText': 'xesam:asText',
+    'audioBPM': 'xesam:audioBPM',
+    'autoRating': 'xesam:autoRating',
+    'comment': 'xesam:comment',
+    'composer': 'xesam:composer',
+    'contentCreated': 'xesam:contentCreated',
+    'discNumber': 'xesam:discNumber',
+    'firstUsed': 'xesam:firstUsed',
+    'genre': 'xesam:genre',
+    'lastUsed': 'xesam:lastUsed',
+    'lyricist': 'xesam:lyricist',
+    'title': 'xesam:title',
+    'trackNumber': 'xesam:trackNumber',
+    'url': 'xesam:url',
+    'useCount': 'xesam:useCount',
+    'userRating': 'xesam:userRating',
+}
+
+
 class MPDWrapper(object):
     """ Wrapper of mpd.MPDClient to handle socket
         errors and similar
@@ -318,28 +344,26 @@ class MPDWrapper(object):
             logger.info(f'Meta: "{meta}"')
 
             self._metadata = {}
-            self._metadata['xesam:artist'] = self.__getValue(
-                meta, 'artist', ['Unknown Artist'])
-            self._metadata['xesam:title'] = self.__getValue(
-                meta, 'title', 'Unknown Title')
-            if 'artUrl' in meta:
-                self._metadata['mpris:artUrl'] = meta['artUrl']
+            self._metadata['xesam:artist'] = ['Unknown Artist']
+            self._metadata['xesam:title'] = 'Unknown Title'
+
+            for key, value in meta.items():
+                if key in tag_mapping:
+                    self._metadata[tag_mapping[key]] = value
+
+            if 'mpris:length' in self._metadata:
+                self._metadata['mpris:length'] = int(1000 * 1000 *
+                                                     self._metadata['mpris:length'])
+            if 'mpris:trackid' in self._metadata:
+                self._metadata[
+                    'mpris:trackid'] = f'/org/mpris/MediaPlayer2/Track/{self._metadata["mpris:trackid"]}'
+
+            logger.info(f'mpris meta: {self._metadata}')
 
             self.notify_about_track(self._metadata)
-
             new_meta = self._dbus_service.update_property('org.mpris.MediaPlayer2.Player',
                                                           'Metadata')
             logger.info(f'new meta {new_meta}')
-
-    def __getValue(self, map, keys, default):
-        if type(keys) == list:
-            for k in keys:
-                if (k in map):
-                    return map[k]
-        else:
-            if (keys in map):
-                return map[keys]
-        return default
 
     def on_ws_error(self, ws, error):
         logger.error("Snapcast RPC websocket error")
@@ -440,95 +464,6 @@ class MPDWrapper(object):
     @property
     def metadata(self):
         return self._metadata
-
-    # def update_metadata(self):
-    #     """
-    #     Translate metadata returned by MPD to the MPRIS v2 syntax.
-    #     http://www.freedesktop.org/wiki/Specifications/mpris-spec/metadata
-    #     """
-
-    #     mpd_meta = self.last_currentsong()
-    #     print(mpd_meta)
-
-    #     self._metadata = {}
-
-    #     for tag in ('album', 'title'):
-    #         if tag in mpd_meta:
-    #             self._metadata['xesam:%s' % tag] = mpd_meta[tag]
-
-    #     if 'id' in mpd_meta:
-    #         self._metadata['mpris:trackid'] = "/org/mpris/MediaPlayer2/Track/%s" % \
-    #                                           mpd_meta['id']
-
-    #     if 'time' in mpd_meta:
-    #         self._metadata['mpris:length'] = int(mpd_meta['time']) * 1000000
-
-    #     if 'date' in mpd_meta:
-    #         self._metadata['xesam:contentCreated'] = mpd_meta['date'][0:4]
-
-    #     if 'track' in mpd_meta:
-    #         # TODO: Is it even *possible* for mpd_meta['track'] to be a list?
-    #         if type(mpd_meta['track']) == list and len(mpd_meta['track']) > 0:
-    #             track = str(mpd_meta['track'][0])
-    #         else:
-    #             track = str(mpd_meta['track'])
-
-    #         m = re.match('^([0-9]+)', track)
-    #         if m:
-    #             self._metadata['xesam:trackNumber'] = int(m.group(1))
-    #             # Ensure the integer is signed 32bit
-    #             if self._metadata['xesam:trackNumber'] & 0x80000000:
-    #                 self._metadata['xesam:trackNumber'] += -0x100000000
-    #         else:
-    #             self._metadata['xesam:trackNumber'] = 0
-
-    #     if 'disc' in mpd_meta:
-    #         # TODO: Same as above. When is it a list?
-    #         if type(mpd_meta['disc']) == list and len(mpd_meta['disc']) > 0:
-    #             disc = str(mpd_meta['disc'][0])
-    #         else:
-    #             disc = str(mpd_meta['disc'])
-
-    #         m = re.match('^([0-9]+)', disc)
-    #         if m:
-    #             self._metadata['xesam:discNumber'] = int(m.group(1))
-
-    #     if 'artist' in mpd_meta:
-    #         if type(mpd_meta['artist']) == list:
-    #             self._metadata['xesam:artist'] = mpd_meta['artist']
-    #         else:
-    #             self._metadata['xesam:artist'] = [mpd_meta['artist']]
-
-    #     if 'composer' in mpd_meta:
-    #         if type(mpd_meta['composer']) == list:
-    #             self._metadata['xesam:composer'] = mpd_meta['composer']
-    #         else:
-    #             self._metadata['xesam:composer'] = [mpd_meta['composer']]
-
-    #     # Stream: populate some missings tags with stream's name
-    #     if 'name' in mpd_meta:
-    #         if 'xesam:title' not in self._metadata:
-    #             self._metadata['xesam:title'] = mpd_meta['name']
-    #         elif 'xesam:album' not in self._metadata:
-    #             self._metadata['xesam:album'] = mpd_meta['name']
-
-    #     if 'file' in mpd_meta:
-    #         song_url = mpd_meta['file']
-    #         if not any([song_url.startswith(prefix) for prefix in urlhandlers]):
-    #             song_url = os.path.join(self._params['music_dir'], song_url)
-    #         self._metadata['xesam:url'] = song_url
-    #         cover = self.find_cover(song_url)
-    #         if cover:
-    #             self._metadata['mpris:artUrl'] = cover
-
-    #     # Cast self._metadata to the correct type, or discard it
-    #     for key, value in self._metadata.items():
-    #         try:
-    #             self._metadata[key] = allowed_tags[key](value)
-    #         except ValueError:
-    #             del self._metadata[key]
-    #             logger.error("Can't cast value %r to %s" %
-    #                          (value, allowed_tags[key]))
 
     def notify_about_track(self, meta, state='play'):
         uri = 'sound'
