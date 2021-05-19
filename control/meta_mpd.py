@@ -397,6 +397,14 @@ class MPDWrapper(object):
                 print("Can't cast value %r to %s" %
                       (value, tag_mapping[key][1]))
 
+        if 'title' in mpd_meta and 'album' in mpd_meta:
+            result = musicbrainzngs.search_releases(artist=mpd_meta['title'], release=mpd_meta['album'],
+                                                    limit=1)
+            if result['release-list']:
+                snapmeta['artUrl'] = f"http://coverartarchive.org/release/{result['release-list'][0]['id']}/front-250"
+                print(snapmeta['artUrl'])
+
+
         r = requests.post('http://127.0.0.1:1780/jsonrpc', json={"id": 4, "jsonrpc": "2.0", "method": "Stream.SetMeta", "params": {
             "id": "Spotify", "meta": snapmeta}})
         print(r)

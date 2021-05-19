@@ -407,6 +407,9 @@ class MPDWrapper(object):
             self._metadata = {}
             self._metadata['xesam:artist'] = self.__getValue(meta, 'artist', 'Unknown Artist')
             self._metadata['xesam:title'] = self.__getValue(meta, 'title', 'Unknown Title')
+            if 'artUrl' in meta:
+                self._metadata['mpris:artUrl'] = meta['artUrl']
+
             self.notify_about_track(self._metadata)
 
             new_meta = self._dbus_service.update_property('org.mpris.MediaPlayer2.Player',
