@@ -350,7 +350,7 @@ class MPDWrapper(object):
         """
 
         mpd_meta = self.last_currentsong()
-        print(mpd_meta)
+        logger.debug(f'mpd meta: {mpd_meta}')
         snapmeta = {}
         for key, values in mpd_meta.items():
             try:
@@ -364,21 +364,20 @@ class MPDWrapper(object):
                         value = tag_mapping[key][1](values[0])
                 else:
                     if tag_mapping[key][2]:
-                        print('cast')
                         value = [tag_mapping[key][1](values)]
                     else:
                         value = tag_mapping[key][1](values)
                 snapmeta[tag_mapping[key][0]] = value
-                print(
+                logger.debug(
                     f'key: {key}, value: {value}, mapped key: {tag_mapping[key][0]}, mapped value: {snapmeta[tag_mapping[key][0]]}')
             except KeyError:
-                print(f'tag "{key}" not supported')
+                logger.warn(f'tag "{key}" not supported')
             except (ValueError, TypeError):
-                print("Can't cast value %r to %s" %
-                      (value, tag_mapping[key][1]))
+                logger.warn("Can't cast value %r to %s" %
+                            (value, tag_mapping[key][1]))
 
                 # Stream: populate some missings tags with stream's name
-        print(snapmeta)
+        logger.debug(f'snapcast meta: {snapmeta}')
 
         album_key = 'musicbrainzAlbumId'
         try:
@@ -397,7 +396,8 @@ class MPDWrapper(object):
                         mbrelease = fields[1]
 
                 if mbartist is not None and mbrelease is not None:
-                    logger.info(f'Querying album art for artist "{mbartist}", release: "{mbrelease}"')
+                    logger.info(
+                        f'Querying album art for artist "{mbartist}", release: "{mbrelease}"')
                     result = musicbrainzngs.search_releases(artist=mbartist, release=mbrelease,
                                                             limit=1)
                     if result['release-list']:
@@ -408,15 +408,16 @@ class MPDWrapper(object):
                 for image in data["images"]:
                     if "Front" in image["types"] and image["approved"]:
                         snapmeta['artUrl'] = image["thumbnails"]["small"]
-                        print("%s is an approved front image!" % snapmeta['artUrl'])
+                        logger.debug(
+                            f'{snapmeta["artUrl"]} is an approved front image')
                         break
 
         except musicbrainzngs.musicbrainz.ResponseError as e:
-                logger.error(f'Error while getting cover for {snapmeta[album_key]}: {e}')
+            logger.error(
+                f'Error while getting cover for {snapmeta[album_key]}: {e}')
 
-        r = requests.post('http://127.0.0.1:1780/jsonrpc', json={"id": 4, "jsonrpc": "2.0", "method": "Stream.SetMeta", "params": {
+        requests.post('http://127.0.0.1:1780/jsonrpc', json={"id": 4, "jsonrpc": "2.0", "method": "Stream.SetMeta", "params": {
             "id": "Spotify", "meta": snapmeta}})
-        print(r)
 
     def find_cover(self, song_url):
         if song_url.startswith('file://'):

@@ -238,6 +238,7 @@ MPRIS2_INTROSPECTION = """<node name="/org/mpris/MediaPlayer2">
 urlhandlers = ['http://']
 downloaded_covers = ['~/.covers/%s-%s.jpg']
 
+
 class SnapcastRpcListener:
     def on_snapserver_stream_pause(self):
         pass
@@ -253,8 +254,6 @@ class SnapcastRpcListener:
 
     def on_snapserver_unmute(self):
         pass
-
-
 
 
 class MPDWrapper(object):
@@ -315,12 +314,14 @@ class MPDWrapper(object):
         jmsg = json.loads(message)
         if jmsg["method"] == "Stream.OnMetadata":
             logger.info(f'Stream meta changed for "{jmsg["params"]["id"]}"')
-            meta = jmsg["params"]["meta"];
+            meta = jmsg["params"]["meta"]
             logger.info(f'Meta: "{meta}"')
 
             self._metadata = {}
-            self._metadata['xesam:artist'] = self.__getValue(meta, 'artist', ['Unknown Artist'])
-            self._metadata['xesam:title'] = self.__getValue(meta, 'title', 'Unknown Title')
+            self._metadata['xesam:artist'] = self.__getValue(
+                meta, 'artist', ['Unknown Artist'])
+            self._metadata['xesam:title'] = self.__getValue(
+                meta, 'title', 'Unknown Title')
             if 'artUrl' in meta:
                 self._metadata['mpris:artUrl'] = meta['artUrl']
 
@@ -383,8 +384,6 @@ class MPDWrapper(object):
     # @property
     # def connected(self):
     #     return self.client._sock is not None
-
-
 
     # def init_state(self):
     #     # Get current state
@@ -1222,7 +1221,6 @@ if __name__ == '__main__':
     if config.has_option('Bling', 'notify_urgency'):
         params['notify_urgency'] = int(config.get('Bling', 'notify_urgency'))
 
-
     logger.debug('Parameters: %r' % params)
 
     if mutagen:
@@ -1260,4 +1258,3 @@ if __name__ == '__main__':
     #     logger.debug('Exiting')
     # except mpd.ConnectionError:
     #     logger.error('Failed to disconnect properly')
-
