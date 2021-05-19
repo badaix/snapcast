@@ -88,6 +88,7 @@ defaults = {
 
 # MPD to Snapcast tag mapping
 tag_mapping = {
+    'id': ['trackId', str, False],
     'album': ['album', str, False],
     'albumsort': ['albumSort', str, False],
     'albumartist': ['albumArtist', str, True],

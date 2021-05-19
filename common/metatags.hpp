@@ -30,6 +30,12 @@ using json = nlohmann::json;
 class Metatags
 {
 public:
+    Metatags() = default;
+    Metatags(const json& j)
+    {
+        fromJson(j);
+    }
+
     /// https://www.musicpd.org/doc/html/protocol.html#tags
     /// the song file.
     boost::optional<std::string> file;
@@ -90,6 +96,8 @@ public:
     boost::optional<std::string> musicbrainz_work_id;
 
     /// https://www.freedesktop.org/wiki/Specifications/mpris-spec/metadata/
+    /// A unique identity for this track within the context of an MPRIS object (eg: tracklist).
+    boost::optional<std::string> track_id;
     /// URI: The location of an image representing the track or album. Clients should not assume this will continue to exist when the media player stops giving
     /// out the URL
     boost::optional<std::string> art_url;
@@ -126,9 +134,15 @@ public:
     /// Float: A user-specified rating. This should be in the range 0.0 to 1.0.
     boost::optional<float> user_rating;
 
+    /// Spotify artist id
+    boost::optional<std::string> spotify_artist_id;
+    /// Spotify track id
+    boost::optional<std::string> spotify_track_id;
 
-    void fromJson(const json& j)
+    json toJson() const
     {
+        json j;
+        addTag(j, "trackId", track_id);
         addTag(j, "file", file);
         addTag(j, "duration", duration);
         addTag(j, "artist", artist);
@@ -153,7 +167,7 @@ public:
         addTag(j, "musicbrainzArtistId", musicbrainz_artist_id);
         addTag(j, "musicbrainzAlbumId", musicbrainz_album_id);
         addTag(j, "musicbrainzAlbumArtistId", musicbrainz_album_artist_id);
-        addTag(j, "musicbrainzTrackTd", musicbrainz_track_id);
+        addTag(j, "musicbrainzTrackId", musicbrainz_track_id);
         addTag(j, "musicbrainzReleaseTrackId", musicbrainz_release_track_id);
         addTag(j, "musicbrainzWorkId", musicbrainz_work_id);
         addTag(j, "art_url", art_url);
@@ -174,11 +188,66 @@ public:
         addTag(j, "artUrl", art_url);
         addTag(j, "useCount", use_count);
         addTag(j, "userRating", user_rating);
+        addTag(j, "spotifyArtistId", spotify_artist_id);
+        addTag(j, "spotifyTrackId", spotify_track_id);
+        return j;
+    }
+
+    void fromJson(const json& j)
+    {
+        readTag(j, "trackId", track_id);
+        readTag(j, "file", file);
+        readTag(j, "duration", duration);
+        readTag(j, "artist", artist);
+        readTag(j, "artistSort", artist_sort);
+        readTag(j, "album", album);
+        readTag(j, "albumSort", album_sort);
+        readTag(j, "albumArtist", album_artist);
+        readTag(j, "albumArtistSort", album_artist_sort);
+        readTag(j, "title", title);
+        readTag(j, "name", name);
+        readTag(j, "genre", genre);
+        readTag(j, "date", date);
+        readTag(j, "originalDate", original_date);
+        readTag(j, "composer", composer);
+        readTag(j, "performer", performer);
+        readTag(j, "conductor", conductor);
+        readTag(j, "work", work);
+        readTag(j, "grouping", grouping);
+        readTag(j, "comment", comment);
+        readTag(j, "discNumber", disc_number);
+        readTag(j, "label", label);
+        readTag(j, "musicbrainzArtistId", musicbrainz_artist_id);
+        readTag(j, "musicbrainzAlbumId", musicbrainz_album_id);
+        readTag(j, "musicbrainzAlbumArtistId", musicbrainz_album_artist_id);
+        readTag(j, "musicbrainzTrackId", musicbrainz_track_id);
+        readTag(j, "musicbrainzReleaseTrackId", musicbrainz_release_track_id);
+        readTag(j, "musicbrainzWorkId", musicbrainz_work_id);
+        readTag(j, "art_url", art_url);
+        readTag(j, "lyrics", lyrics);
+        readTag(j, "bpm", bpm);
+        readTag(j, "autoRating", auto_rating);
+        readTag(j, "comment", comment);
+        readTag(j, "composer", composer);
+        readTag(j, "contentCreated", content_created);
+        readTag(j, "discNumber", disc_number);
+        readTag(j, "firstUsed", first_used);
+        readTag(j, "genre", genre);
+        readTag(j, "lastUsed", last_used);
+        readTag(j, "lyricist", lyricist);
+        readTag(j, "title", title);
+        readTag(j, "trackNumber", track_number);
+        readTag(j, "url", url);
+        readTag(j, "artUrl", art_url);
+        readTag(j, "useCount", use_count);
+        readTag(j, "userRating", user_rating);
+        readTag(j, "spotifyArtistId", spotify_artist_id);
+        readTag(j, "spotifyTrackId", spotify_track_id);
     }
 
 private:
     template <typename T>
-    void addTag(const json& j, const std::string& tag, boost::optional<T>& dest)
+    void readTag(const json& j, const std::string& tag, boost::optional<T>& dest) const
     {
         try
         {
@@ -190,6 +259,22 @@ private:
         catch (const std::exception& e)
         {
             LOG(ERROR) << "failed to read tag: '" << tag << "': " << e.what() << '\n';
+        }
+    }
+
+    template <typename T>
+    void addTag(json& j, const std::string& tag, const boost::optional<T>& source) const
+    {
+        try
+        {
+            if (!source.has_value())
+                j.erase(tag);
+            else
+                j[tag] = source.value();
+        }
+        catch (const std::exception& e)
+        {
+            LOG(ERROR) << "failed to add tag: '" << tag << "': " << e.what() << '\n';
         }
     }
 };
