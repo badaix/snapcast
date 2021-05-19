@@ -104,7 +104,6 @@ defaults = {
 }
 
 
-
 # MPD to Snapcast tag mapping
 tag_mapping = {
     'album': ['album', str, False],
@@ -355,7 +354,6 @@ class MPDWrapper(object):
                 self.idle_enter()
         return True
 
-
     def last_currentsong(self):
         return self._currentsong.copy()
 
@@ -397,18 +395,46 @@ class MPDWrapper(object):
                 print("Can't cast value %r to %s" %
                       (value, tag_mapping[key][1]))
 
-        if 'title' in mpd_meta and 'album' in mpd_meta:
-            result = musicbrainzngs.search_releases(artist=mpd_meta['title'], release=mpd_meta['album'],
-                                                    limit=1)
-            if result['release-list']:
-                snapmeta['artUrl'] = f"http://coverartarchive.org/release/{result['release-list'][0]['id']}/front-250"
-                print(snapmeta['artUrl'])
+                # Stream: populate some missings tags with stream's name
+        print(snapmeta)
 
+        album_key = 'musicbrainzAlbumId'
+        try:
+            if not album_key in snapmeta:
+                mbartist = None
+                mbrelease = None
+                if 'title' in mpd_meta:
+                    mbartist = mpd_meta['title']
+                if 'album' in mpd_meta:
+                    mbrelease = mpd_meta['album']
+
+                if 'name' in mpd_meta and mbartist is not None and mbrelease is None:
+                    fields = mbartist.split(' - ', 1)
+                    if len(fields) == 2:
+                        mbartist = fields[0]
+                        mbrelease = fields[1]
+
+                if mbartist is not None and mbrelease is not None:
+                    logger.info(f'Querying album art for artist "{mbartist}", release: "{mbrelease}"')
+                    result = musicbrainzngs.search_releases(artist=mbartist, release=mbrelease,
+                                                            limit=1)
+                    if result['release-list']:
+                        snapmeta[album_key] = result['release-list'][0]['id']
+
+            if album_key in snapmeta:
+                data = musicbrainzngs.get_image_list(snapmeta[album_key])
+                for image in data["images"]:
+                    if "Front" in image["types"] and image["approved"]:
+                        snapmeta['artUrl'] = image["thumbnails"]["small"]
+                        print("%s is an approved front image!" % snapmeta['artUrl'])
+                        break
+
+        except musicbrainzngs.musicbrainz.ResponseError as e:
+                logger.error(f'Error while getting cover for {snapmeta[album_key]}: {e}')
 
         r = requests.post('http://127.0.0.1:1780/jsonrpc', json={"id": 4, "jsonrpc": "2.0", "method": "Stream.SetMeta", "params": {
             "id": "Spotify", "meta": snapmeta}})
         print(r)
-
 
     def find_cover(self, song_url):
         if song_url.startswith('file://'):
