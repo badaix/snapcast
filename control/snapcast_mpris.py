@@ -23,7 +23,6 @@
 import websocket
 import logging
 import threading
-import time
 import json
 
 from configparser import ConfigParser
@@ -31,16 +30,12 @@ import os
 import sys
 import re
 import shlex
-import socket
 import getopt
 import dbus
 import dbus.service
 from dbus.mainloop.glib import DBusGMainLoop
 import logging
 import gettext
-import time
-import tempfile
-import base64
 
 __version__ = "@version@"
 __git_version__ = "@gitversion@"
@@ -89,9 +84,6 @@ params = {
     'port': None,
     'password': None,
     'bus_name': None,
-    # Library
-    'music_dir': '',
-    'cover_regex': None,
     # Bling
     'mmkeys': True,
     'notify': (using_gi_notify or using_old_notify),
@@ -104,8 +96,6 @@ defaults = {
     'port': 1780,
     'password': None,
     'bus_name': None,
-    # Library
-    'cover_regex': r'^(album|cover|\.?folder|front).*\.(gif|jpeg|jpg|png)$',
 }
 
 notification = None
@@ -265,82 +255,6 @@ class SnapcastRpcListener:
         pass
 
 
-class SnapcastRpcWebsocketWrapper:
-    def __init__(self, server_address: str, server_control_port, client_id, listener: SnapcastRpcListener):
-        self.websocket = websocket.WebSocketApp("ws://" + server_address + ":" + str(server_control_port) + "/jsonrpc",
-                                                on_message=self.on_ws_message,
-                                                on_error=self.on_ws_error,
-                                                on_open=self.on_ws_open,
-                                                on_close=self.on_ws_close)
-
-        self.websocket_thread = threading.Thread(
-            target=self.websocket_loop, args=())
-        self.websocket_thread.name = "SnapcastRpcWebsocketWrapper"
-        self.websocket_thread.start()
-
-    def websocket_loop(self):
-        logger.info("Started SnapcastRpcWebsocketWrapper loop")
-        self.websocket.run_forever()
-        logger.info("Ending SnapcastRpcWebsocketWrapper loop")
-
-    def on_ws_message(self, ws, message):
-        logger.debug("Snapcast RPC websocket message received")
-        logger.debug(message)
-        jmsg = json.loads(message)
-        if jmsg["method"] == "Stream.OnMetadata":
-            logger.info(f'Stream meta changed for "{jmsg["params"]["id"]}"')
-            meta = jmsg["params"]["meta"];
-            logger.info(f'Meta: "{meta}"')
-
-            uri = 'sound'
-            # if 'mpris:artUrl' in meta:
-            #     uri = meta['mpris:artUrl']
-
-            # title = 'Unknown Title'
-            # if 'xesam:title' in meta:
-            #     title = meta['xesam:title']
-            # elif 'xesam:url' in meta:
-            #     title = meta['xesam:url'].split('/')[-1]
-
-            # artist = 'Unknown Artist'
-            # if 'xesam:artist' in meta:
-            #     artist = ", ".join(meta['xesam:artist'])
-
-            # body = _('by %s') % artist
-
-            # if state == 'pause':
-            #     uri = 'media-playback-pause-symbolic'
-            #     body += ' (%s)' % _('Paused')
-
-            title = meta['title']
-            artist = 'Unknown Artist'
-            if 'artist' in meta:
-                artist = ", ".join(meta['artist'])
-            body = _('by %s') % artist
-            notification.notify(title, body, uri)
-
-        # json_data = json.loads(message)
-        # handlers = self.get_event_handlers_mapping()
-        # event = json_data["method"]
-        # handlers[event](json_data["params"])
-
-    def on_ws_error(self, ws, error):
-        logger.error("Snapcast RPC websocket error")
-        logger.error(error)
-
-    def on_ws_open(self, ws):
-        logger.info("Snapcast RPC websocket opened")
-        # self.websocket.send(json.dumps(
-        #     {"id": 1, "jsonrpc": "2.0", "method": "Server.GetStatus"}))
-
-    def on_ws_close(self, ws):
-        logger.info("Snapcast RPC websocket closed")
-        self.healthy = False
-
-    def stop(self):
-        self.websocket.keep_running = False
-        logger.info("Waiting for websocket thread to exit")
-        # self.websocket_thread.join()
 
 
 class MPDWrapper(object):
@@ -405,7 +319,7 @@ class MPDWrapper(object):
             logger.info(f'Meta: "{meta}"')
 
             self._metadata = {}
-            self._metadata['xesam:artist'] = self.__getValue(meta, 'artist', 'Unknown Artist')
+            self._metadata['xesam:artist'] = self.__getValue(meta, 'artist', ['Unknown Artist'])
             self._metadata['xesam:title'] = self.__getValue(meta, 'title', 'Unknown Title')
             if 'artUrl' in meta:
                 self._metadata['mpris:artUrl'] = meta['artUrl']
@@ -470,116 +384,7 @@ class MPDWrapper(object):
     # def connected(self):
     #     return self.client._sock is not None
 
-    # def my_connect(self):
-    #     """ Init MPD connection """
-    #     try:
-    #         self._idling = False
-    #         self._can_idle = False
-    #         self._can_single = False
 
-    #         self.client.connect(self._params['host'], self._params['port'])
-    #         if self._params['password']:
-    #             try:
-    #                 self.client.password(self._params['password'])
-    #             except mpd.CommandError as e:
-    #                 logger.error(e)
-    #                 sys.exit(1)
-
-    #         commands = self.commands()
-    #         # added in 0.11
-    #         if 'urlhandlers' in commands:
-    #             global urlhandlers
-    #             urlhandlers = self.urlhandlers()
-    #         # added in 0.14
-    #         if 'idle' in commands:
-    #             self._can_idle = True
-    #         # added in 0.15
-    #         if 'single' in commands:
-    #             self._can_single = True
-
-    #         if self._errors > 0:
-    #             notification.notify(identity, _('Reconnected'))
-    #             logger.info('Reconnected to MPD server.')
-    #         else:
-    #             logger.debug('Connected to MPD server.')
-
-    #         # Make the socket non blocking to detect deconnections
-    #         self.client._sock.settimeout(5.0)
-    #         # Export our DBUS service
-    #         if not self._dbus_service:
-    #             self._dbus_service = MPRISInterface(self._params)
-    #         else:
-    #             # Add our service to the session bus
-    #             # self._dbus_service.add_to_connection(dbus.SessionBus(),
-    #             #    '/org/mpris/MediaPlayer2')
-    #             self._dbus_service.acquire_name()
-
-    #         # Init internal state to throw events at start
-    #         self.init_state()
-
-    #         # Add periodic status check for sending MPRIS events
-    #         if not self._poll_id:
-    #             interval = 15 if self._can_idle else 1
-    #             self._poll_id = GLib.timeout_add_seconds(interval,
-    #                                                      self.timer_callback)
-    #         if self._can_idle and not self._watch_id:
-    #             if using_gi_glib:
-    #                 self._watch_id = GLib.io_add_watch(self,
-    #                                                    GLib.PRIORITY_DEFAULT,
-    #                                                    GLib.IO_IN | GLib.IO_HUP,
-    #                                                    self.socket_callback)
-    #             else:
-    #                 self._watch_id = GLib.io_add_watch(self,
-    #                                                    GLib.IO_IN | GLib.IO_HUP,
-    #                                                    self.socket_callback)
-    #         # Reset error counter
-    #         self._errors = 0
-
-    #         self.timer_callback()
-    #         self.idle_enter()
-    #         # Return False to stop trying to connect
-    #         return False
-    #     except socket.error as e:
-    #         self._errors += 1
-    #         if self._errors < 6:
-    #             logger.error('Could not connect to MPD: %s' % e)
-    #         if self._errors == 6:
-    #             logger.info('Continue to connect but going silent')
-    #         return True
-
-    # def reconnect(self):
-    #     logger.warning("Disconnected")
-    #     notification.notify(identity, _('Disconnected'), 'error')
-
-    #     # Release the DBus name and disconnect from bus
-    #     if self._dbus_service is not None:
-    #         self._dbus_service.release_name()
-    #     # self._dbus_service.remove_from_connection()
-
-    #     # Stop monitoring
-    #     if self._poll_id:
-    #         GLib.source_remove(self._poll_id)
-    #         self._poll_id = None
-    #     if self._watch_id:
-    #         GLib.source_remove(self._watch_id)
-    #         self._watch_id = None
-
-    #     # Clean mpd client state
-    #     try:
-    #         self.disconnect()
-    #     except:
-    #         self.disconnect()
-
-    #     # Try to reconnect
-    #     self.run()
-
-    # def disconnect(self):
-    #     self._temp_song_url = None
-    #     if self._temp_cover:
-    #         self._temp_cover.close()
-    #         self._temp_cover = None
-
-    #     self.client.disconnect()
 
     # def init_state(self):
     #     # Get current state
@@ -589,44 +394,7 @@ class MPDWrapper(object):
     #     self._status['songid'] = '-1'
     #     self._position = 0
 
-    # def idle_enter(self):
-    #     if not self._can_idle:
-    #         return False
-    #     if not self._idling:
-    #         # NOTE: do not use MPDClient.idle(), which waits for an event
-    #         self._write_command("idle", [])
-    #         self._idling = True
-    #         logger.debug("Entered idle")
-    #         return True
-    #     else:
-    #         logger.warning("Nested idle_enter()!")
-    #         return False
-
-    # def idle_leave(self):
-    #     if not self._can_idle:
-    #         return False
-    #     if self._idling:
-    #         # NOTE: don't use noidle() or _execute() to avoid infinite recursion
-    #         self._write_command("noidle", [])
-    #         self._fetch_object()
-    #         self._idling = False
-    #         logger.debug("Left idle")
-    #         return True
-    #     else:
-    #         return False
-
     # Events
-
-    # def timer_callback(self):
-    #     try:
-    #         was_idle = self.idle_leave()
-    #     except (socket.error, mpd.MPDError, socket.timeout):
-    #         self.reconnect()
-    #         return False
-    #     self._update_properties(force=False)
-    #     if was_idle:
-    #         self.idle_enter()
-    #     return True
 
     # def socket_callback(self, fd, event):
     #     logger.debug("Socket event %r on fd %r" % (event, fd))
@@ -774,7 +542,7 @@ class MPDWrapper(object):
         elif 'xesam:url' in meta:
             title = meta['xesam:url'].split('/')[-1]
 
-        artist = 'Unknown Artist'
+        artist = ['Unknown Artist']
         if 'xesam:artist' in meta:
             artist = ", ".join(meta['xesam:artist'])
 
@@ -792,100 +560,6 @@ class MPDWrapper(object):
                                 'media-playback-stop-symbolic')
         else:
             self.notify_about_track(self.metadata, state)
-
-    # def find_cover(self, song_url):
-    #     if song_url.startswith('file://'):
-    #         song_path = song_url[7:]
-    #         song_dir = os.path.dirname(song_path)
-
-    #         # Try existing temporary file
-    #         if self._temp_cover:
-    #             if song_url == self._temp_song_url:
-    #                 logger.debug("find_cover: Reusing old image at %r" %
-    #                              self._temp_cover.name)
-    #                 return 'file://' + self._temp_cover.name
-    #             else:
-    #                 logger.debug(
-    #                     "find_cover: Cleaning up old image at %r" % self._temp_cover.name)
-    #                 self._temp_song_url = None
-    #                 self._temp_cover.close()
-
-    #         # Search for embedded cover art
-    #         song = None
-    #         if mutagen and os.path.exists(song_path):
-    #             try:
-    #                 song = mutagen.File(song_path)
-    #             except mutagen.MutagenError as e:
-    #                 logger.error("Can't extract covers from %r: %r" %
-    #                              (song_path, e))
-    #         if song is not None:
-    #             if song.tags:
-    #                 # present but null for some file types
-    #                 for tag in song.tags.keys():
-    #                     if tag.startswith("APIC:"):
-    #                         for pic in song.tags.getall(tag):
-    #                             if pic.type == mutagen.id3.PictureType.COVER_FRONT:
-    #                                 self._temp_song_url = song_url
-    #                                 return self._create_temp_cover(pic)
-    #             if hasattr(song, "pictures"):
-    #                 # FLAC
-    #                 for pic in song.pictures:
-    #                     if pic.type == mutagen.id3.PictureType.COVER_FRONT:
-    #                         self._temp_song_url = song_url
-    #                         return self._create_temp_cover(pic)
-    #             elif song.tags and 'metadata_block_picture' in song.tags:
-    #                 # OGG
-    #                 for b64_data in song.get("metadata_block_picture", []):
-    #                     try:
-    #                         data = base64.b64decode(b64_data)
-    #                     except (TypeError, ValueError):
-    #                         continue
-
-    #                     try:
-    #                         pic = mutagen.flac.Picture(data)
-    #                     except mutagen.flac.error:
-    #                         continue
-
-    #                     if pic.type == mutagen.id3.PictureType.COVER_FRONT:
-    #                         self._temp_song_url = song_url
-    #                         return self._create_temp_cover(pic)
-
-    #         # Look in song directory for common album cover files
-    #         if os.path.exists(song_dir) and os.path.isdir(song_dir):
-    #             for f in os.listdir(song_dir):
-    #                 if self._params['cover_regex'].match(f):
-    #                     return 'file://' + os.path.join(song_dir, f)
-
-    #         # Search the shared cover directories
-    #         if 'xesam:artist' in self._metadata and 'xesam:album' in self._metadata:
-    #             artist = ",".join(self._metadata['xesam:artist'])
-    #             album = self._metadata['xesam:album']
-    #             for template in downloaded_covers:
-    #                 f = os.path.expanduser(template % (artist, album))
-    #                 if os.path.exists(f):
-    #                     return 'file://' + f
-    #     return None
-
-    # def _create_temp_cover(self, pic):
-    #     """
-    #     Create a temporary file containing pic, and return it's location
-    #     """
-    #     extension = {'image/jpeg': '.jpg',
-    #                  'image/png': '.png',
-    #                  'image/gif': '.gif'}
-
-    #     self._temp_cover = tempfile.NamedTemporaryFile(
-    #         prefix='cover-', suffix=extension.get(pic.mime, '.jpg'))
-    #     self._temp_cover.write(pic.data)
-    #     self._temp_cover.flush()
-    #     logger.debug("find_cover: Storing embedded image at %r" %
-    #                  self._temp_cover.name)
-    #     return 'file://' + self._temp_cover.name
-
-    # def last_status(self):
-    #     if time.time() - self._time >= 2:
-    #         self.timer_callback()
-    #     return self._status.copy()
 
     # def _update_properties(self, force=False):
     #     old_status = self._status
@@ -1011,80 +685,6 @@ class MPDWrapper(object):
             GLib.timeout_add(600, reregister)
 
     # Compatibility functions
-
-    # # Fedora 17 still has python-mpd 0.2, which lacks fileno().
-    # if hasattr(mpd.MPDClient, "fileno"):
-    #     def fileno(self):
-    #         return self.client.fileno()
-    # else:
-    #     def fileno(self):
-    #         if not self.connected:
-    #             raise mpd.ConnectionError("Not connected")
-    #         return self.client._sock.fileno()
-
-    # # Access to python-mpd internal APIs
-
-    # # We use _write_command("idle") to manually enter idle mode, as it has no
-    # # immediate response to fetch.
-    # #
-    # # Similarly, we use _write_command("noidle") + _fetch_object() to manually
-    # # leave idle mode (for reasons I don't quite remember). The result of
-    # # _fetch_object() is not used.
-
-    # if hasattr(mpd.MPDClient, "_write_command"):
-    #     def _write_command(self, *args):
-    #         return self.client._write_command(*args)
-    # elif hasattr(mpd.MPDClient, "_writecommand"):
-    #     def _write_command(self, *args):
-    #         return self.client._writecommand(*args)
-
-    # if hasattr(mpd.MPDClient, "_parse_objects_direct"):
-    #     def _fetch_object(self):
-    #         objs = self._fetch_objects()
-    #         if not objs:
-    #             return {}
-    #         return objs[0]
-    # elif hasattr(mpd.MPDClient, "_fetch_object"):
-    #     def _fetch_object(self):
-    #         return self.client._fetch_object()
-    # elif hasattr(mpd.MPDClient, "_getobject"):
-    #     def _fetch_object(self):
-    #         return self.client._getobject()
-
-    # # We use _fetch_objects("changed") to receive unprompted idle events on
-    # # socket activity.
-
-    # if hasattr(mpd.MPDClient, "_parse_objects_direct"):
-    #     def _fetch_objects(self, *args):
-    #         return list(self.client._parse_objects_direct(self.client._read_lines(), *args))
-    # elif hasattr(mpd.MPDClient, "_fetch_objects"):
-    #     def _fetch_objects(self, *args):
-    #         return self.client._fetch_objects(*args)
-    # elif hasattr(mpd.MPDClient, "_getobjects"):
-    #     def _fetch_objects(self, *args):
-    #         return self.client._getobjects(*args)
-
-    # # Wrapper to catch connection errors when calling mpd client methods.
-
-    # def __getattr__(self, attr):
-    #     if attr[0] == "_":
-    #         raise AttributeError(attr)
-    #     return lambda *a, **kw: self.call(attr, *a, **kw)
-
-    # def call(self, command, *args):
-    #     fn = getattr(self.client, command)
-    #     try:
-    #         was_idle = self.idle_leave()
-    #         logger.debug("Sending command %r (was idle? %r)" %
-    #                      (command, was_idle))
-    #         r = fn(*args)
-    #         if was_idle:
-    #             self.idle_enter()
-    #         return r
-    #     except (socket.error, mpd.MPDError, socket.timeout) as ex:
-    #         logger.debug("Trying to reconnect, got %r" % ex)
-    #         self.reconnect()
-    #         return False
 
 
 class NotifyWrapper(object):
@@ -1216,8 +816,9 @@ class MPRISInterface(dbus.service.Object):
         # status = mpd_wrapper.last_status()
         # return {'play': 'Playing', 'pause': 'Paused', 'stop': 'Stopped'}[status['state']]
         return 'Playing'
-        
+
     def __set_loop_status(value):
+        logger.debug(f'set_loop_status "{value}"')
         # if value == "Playlist":
         #     mpd_wrapper.repeat(1)
         #     if mpd_wrapper._can_single:
@@ -1236,6 +837,7 @@ class MPRISInterface(dbus.service.Object):
         return
 
     def __get_loop_status():
+        logger.debug(f'get_loop_status')
         # status = mpd_wrapper.last_status()
         # if int(status['repeat']) == 1:
         #     if int(status.get('single', 0)) == 1:
@@ -1247,10 +849,12 @@ class MPRISInterface(dbus.service.Object):
         return "None"
 
     def __set_shuffle(value):
+        logger.debug(f'set_shuffle "{value}"')
         # mpd_wrapper.random(value)
         return
 
     def __get_shuffle():
+        logger.debug(f'get_shuffle')
         # if int(mpd_wrapper.last_status()['random']) == 1:
         #     return True
         # else:
@@ -1262,6 +866,7 @@ class MPRISInterface(dbus.service.Object):
         return dbus.Dictionary(snapcast_wrapper.metadata, signature='sv')
 
     def __get_volume():
+        logger.debug(f'get_volume')
         # vol = float(mpd_wrapper.last_status().get('volume', 0))
         # if vol > 0:
         #     return vol / 100.0
@@ -1270,11 +875,13 @@ class MPRISInterface(dbus.service.Object):
         return 0.0
 
     def __set_volume(value):
+        logger.debug(f'set_voume: {value}')
         # if value >= 0 and value <= 1:
         #     mpd_wrapper.setvol(int(value * 100))
         return
 
     def __get_position():
+        logger.debug(f'get_position')
         # status = mpd_wrapper.last_status()
         # if 'time' in status:
         #     current, end = status['time'].split(':')
@@ -1357,31 +964,37 @@ class MPRISInterface(dbus.service.Object):
     # Root methods
     @dbus.service.method(__root_interface, in_signature='', out_signature='')
     def Raise(self):
+        logger.info('Raise')
         return
 
     @dbus.service.method(__root_interface, in_signature='', out_signature='')
     def Quit(self):
+        logger.info('Quit')
         return
 
     # Player methods
     @dbus.service.method(__player_interface, in_signature='', out_signature='')
     def Next(self):
+        logger.info('Next')
         # mpd_wrapper.next()
         return
 
     @dbus.service.method(__player_interface, in_signature='', out_signature='')
     def Previous(self):
+        logger.info('Previous')
         # mpd_wrapper.previous()
         return
 
     @dbus.service.method(__player_interface, in_signature='', out_signature='')
     def Pause(self):
+        logger.info('Pause')
         # mpd_wrapper.pause(1)
         # mpd_wrapper.notify_about_state('pause')
         return
 
     @dbus.service.method(__player_interface, in_signature='', out_signature='')
     def PlayPause(self):
+        logger.info('PlayPause')
         # status = mpd_wrapper.status()
         # if status['state'] == 'play':
         #     mpd_wrapper.pause(1)
@@ -1393,18 +1006,21 @@ class MPRISInterface(dbus.service.Object):
 
     @dbus.service.method(__player_interface, in_signature='', out_signature='')
     def Stop(self):
+        logger.info('Stop')
         # mpd_wrapper.stop()
         # mpd_wrapper.notify_about_state('stop')
         return
 
     @dbus.service.method(__player_interface, in_signature='', out_signature='')
     def Play(self):
+        logger.info('Play')
         # mpd_wrapper.play()
         # mpd_wrapper.notify_about_state('play')
         return
 
     @dbus.service.method(__player_interface, in_signature='x', out_signature='')
     def Seek(self, offset):
+        logger.info(f'Seek {offset}')
         # status = mpd_wrapper.status()
         # current, end = status['time'].split(':')
         # current = int(current)
@@ -1420,6 +1036,7 @@ class MPRISInterface(dbus.service.Object):
 
     @dbus.service.method(__player_interface, in_signature='ox', out_signature='')
     def SetPosition(self, trackid, position):
+        logger.info(f'SetPosition trackid: {trackid}, position: {position}')
         # song = mpd_wrapper.last_currentsong()
         # # FIXME: use real dbus objects
         # if str(trackid) != '/org/mpris/MediaPlayer2/Track/%s' % song['id']:
@@ -1438,6 +1055,7 @@ class MPRISInterface(dbus.service.Object):
 
     @dbus.service.method(__player_interface, in_signature='', out_signature='')
     def OpenUri(self):
+        logger.info('OpenUri')
         # TODO
         return
 
@@ -1470,33 +1088,6 @@ def open_first_xdg_config(suffix):
         return None
 
 
-def find_music_dir():
-    if 'XDG_MUSIC_DIR' in os.environ:
-        return os.environ['XDG_MUSIC_DIR']
-
-    conf = open_first_xdg_config('user-dirs.dirs')
-    if conf is not None:
-        for line in conf:
-            if not line.startswith('XDG_MUSIC_DIR='):
-                continue
-            # use shlex to handle "shell escaping"
-            path = shlex.split(line[14:])[0]
-            if path.startswith('$HOME/'):
-                return os.path.expanduser('~' + path[5:])
-            elif path.startswith('/'):
-                return path
-            else:
-                # other forms are not supported
-                break
-
-    paths = '~/Music', '~/music'
-    for path in map(os.path.expanduser, paths):
-        if os.path.isdir(path):
-            return path
-
-    return None
-
-
 def usage(params):
     print("""\
 Usage: %(progname)s [OPTION]...
@@ -1527,7 +1118,6 @@ if __name__ == '__main__':
     log_journal = False
     log_level = logging.INFO
     config_file = None
-    music_dir = None
 
     # Parse command line
     try:
@@ -1557,8 +1147,6 @@ if __name__ == '__main__':
             params['host'] = arg
         elif opt in ['-j', '--use-journal']:
             log_journal = True
-        elif opt in ['-p', '--path', '--music-dir']:
-            music_dir = arg
         elif opt in ['--port']:
             params['port'] = int(arg)
         elif opt in ['-v', '--version']:
@@ -1634,35 +1222,6 @@ if __name__ == '__main__':
     if config.has_option('Bling', 'notify_urgency'):
         params['notify_urgency'] = int(config.get('Bling', 'notify_urgency'))
 
-    if not music_dir:
-        if config.has_option('Library', 'music_dir'):
-            music_dir = config.get('Library', 'music_dir')
-        elif config.has_option('Connection', 'music_dir'):
-            music_dir = config.get('Connection', 'music_dir')
-        else:
-            music_dir = find_music_dir()
-
-    if music_dir:
-        # Ensure that music_dir starts with an URL scheme.
-        if not re.match('^[0-9A-Za-z+.-]+://', music_dir):
-            music_dir = 'file://' + music_dir
-        if music_dir.startswith('file://'):
-            music_dir = music_dir[:7] + os.path.expanduser(music_dir[7:])
-            if not os.path.exists(music_dir[7:]):
-                logger.error(
-                    'Music library path %s does not exist!' % music_dir)
-        # Non-local URLs can still be useful to MPRIS clients, so accept them.
-        params['music_dir'] = music_dir
-        logger.info('Using %s as music library path.' % music_dir)
-    else:
-        logger.warning('By not supplying a path for the music library '
-                       'this program will break the MPRIS specification!')
-
-    if config.has_option('Library', 'cover_regex'):
-        cover_regex = config.get('Library', 'cover_regex')
-    else:
-        cover_regex = defaults['cover_regex']
-    params['cover_regex'] = re.compile(cover_regex, re.I | re.X)
 
     logger.debug('Parameters: %r' % params)
 

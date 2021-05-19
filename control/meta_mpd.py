@@ -51,12 +51,6 @@ try:
 except ImportError:
     mutagen = None
 
-try:
-    import gi
-    gi.require_version('Notify', '0.7')
-except (ImportError, ValueError):
-    pass
-
 using_gi_glib = False
 
 try:
@@ -65,18 +59,6 @@ try:
 except ImportError:
     import glib as GLib
 
-using_gi_notify = False
-using_old_notify = False
-
-try:
-    from gi.repository import Notify
-    using_gi_notify = True
-except ImportError:
-    try:
-        import pynotify
-        using_old_notify = True
-    except ImportError:
-        pass
 
 _ = gettext.gettext
 
