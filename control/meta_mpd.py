@@ -41,15 +41,10 @@ __version__ = "@version@"
 __git_version__ = "@gitversion@"
 
 musicbrainzngs.set_useragent(
-    "python-musicbrainzngs-example",
+    "snapcast-mtea-mpd",
     "0.1",
-    "https://github.com/alastair/python-musicbrainzngs/",
+    "https://github.com/badaix/snapcast",
 )
-
-try:
-    import mutagen
-except ImportError:
-    mutagen = None
 
 using_gi_glib = False
 
@@ -60,9 +55,8 @@ except ImportError:
     import glib as GLib
 
 
-_ = gettext.gettext
+# _ = gettext.gettext
 
-identity = "Music Player Daemon"
 
 params = {
     'progname': sys.argv[0],
@@ -70,9 +64,6 @@ params = {
     'host': None,
     'port': None,
     'password': None,
-    # Library
-    'music_dir': '',
-    'cover_regex': None,
 }
 
 defaults = {
@@ -80,13 +71,10 @@ defaults = {
     'host': 'localhost',
     'port': 6600,
     'password': None,
-    'bus_name': None,
-    # Library
-    'cover_regex': r'^(album|cover|\.?folder|front).*\.(gif|jpeg|jpg|png)$',
 }
 
 
-# MPD to Snapcast tag mapping
+# MPD to Snapcast tag mapping: <mpd tag>: [<snapcast tag>, <type>, <is list?>]
 tag_mapping = {
     'id': ['trackId', str, False],
     'album': ['album', str, False],
@@ -171,7 +159,7 @@ class MPDWrapper(object):
         Try to connect to MPD; retry every 5 seconds on failure.
         """
         if self.my_connect():
-            # GLib.timeout_add_seconds(5, self.my_connect)
+            GLib.timeout_add_seconds(5, self.my_connect)
             return False
         else:
             return True
@@ -308,6 +296,7 @@ class MPDWrapper(object):
         try:
             was_idle = self.idle_leave()
         except (socket.error, mpd.MPDError, socket.timeout):
+            logger.error('')
             self.reconnect()
             return False
         self._update_properties(force=False)
@@ -316,33 +305,31 @@ class MPDWrapper(object):
         return True
 
     def socket_callback(self, fd, event):
-        logger.debug("Socket event %r on fd %r" % (event, fd))
-        if event & GLib.IO_HUP:
+        try:
+            logger.debug("Socket event %r on fd %r" % (event, fd))
+            if event & GLib.IO_HUP:
+                self.reconnect()
+                return True
+            elif event & GLib.IO_IN:
+                if self._idling:
+                    self._idling = False
+                    data = fd._fetch_objects("changed")
+                    logger.debug("Idle events: %r" % data)
+                    updated = False
+                    for item in data:
+                        subsystem = item["changed"]
+                        # subsystem list: <http://www.musicpd.org/doc/protocol/ch03.html>
+                        if subsystem in ("player", "mixer", "options", "playlist"):
+                            if not updated:
+                                logger.info(f'Subsystem: {subsystem}')
+                                self._update_properties(force=True)
+                                updated = True
+                    self.idle_enter()
+            return True
+        except:
+            logger.error('Exception in socket_callback')
             self.reconnect()
             return True
-        elif event & GLib.IO_IN:
-            if self._idling:
-                self._idling = False
-                data = fd._fetch_objects("changed")
-                logger.debug("Idle events: %r" % data)
-                updated = False
-                for item in data:
-                    subsystem = item["changed"]
-                    # subsystem list: <http://www.musicpd.org/doc/protocol/ch03.html>
-                    if subsystem in ("player", "mixer", "options", "playlist"):
-                        if not updated:
-                            logger.info(f'Subsystem: {subsystem}')
-                            self._update_properties(force=True)
-                            updated = True
-                self.idle_enter()
-        return True
-
-    def last_currentsong(self):
-        return self._currentsong.copy()
-
-    @property
-    def metadata(self):
-        return self._metadata
 
     def update_metadata(self):
         """
@@ -350,7 +337,7 @@ class MPDWrapper(object):
         http://www.freedesktop.org/wiki/Specifications/mpris-spec/metadata
         """
 
-        mpd_meta = self.last_currentsong()
+        mpd_meta = self._currentsong.copy()
         logger.debug(f'mpd meta: {mpd_meta}')
         snapmeta = {}
         for key, values in mpd_meta.items():
@@ -380,21 +367,32 @@ class MPDWrapper(object):
                 # Stream: populate some missings tags with stream's name
         logger.debug(f'snapcast meta: {snapmeta}')
 
+        # Hack for web radio:
+        # "name" and "title" are set, but not "album" and not "artist"
+        # where
+        #  - "name" containts the name of the radio station
+        #  - "title" has the format "<artist> - <title>"
+        # {'file': 'http://wdr-wdr2-aachenundregion.icecast.wdr.de/wdr/wdr2/aachenundregion/mp3/128/stream.mp3', 'title': 'Johannes Oerding - An guten Tagen', 'name': 'WDR 2 Aachen und die Region aktuell, Westdeutscher Rundfunk Koeln', 'trackId': '1'}
+
+        if 'title' in snapmeta and 'name' in snapmeta and 'file' in snapmeta and not 'album' in snapmeta and not 'artist' in snapmeta:
+            if snapmeta['file'].find('http') == 0:
+                fields = snapmeta['title'].split(' - ', 1)
+                if len(fields) == 2:
+                    snapmeta['artist'] = [fields[0]]
+                    snapmeta['title'] = fields[1]
+
         album_key = 'musicbrainzAlbumId'
         try:
             if not album_key in snapmeta:
                 mbartist = None
                 mbrelease = None
-                if 'title' in mpd_meta:
-                    mbartist = mpd_meta['title']
-                if 'album' in mpd_meta:
-                    mbrelease = mpd_meta['album']
-
-                if 'name' in mpd_meta and mbartist is not None and mbrelease is None:
-                    fields = mbartist.split(' - ', 1)
-                    if len(fields) == 2:
-                        mbartist = fields[0]
-                        mbrelease = fields[1]
+                if 'artist' in snapmeta:
+                    mbartist = snapmeta['artist'][0]
+                if 'album' in snapmeta:
+                    mbrelease = snapmeta['album']
+                else:
+                    if 'title' in snapmeta:
+                        mbrelease = snapmeta['title']
 
                 if mbartist is not None and mbrelease is not None:
                     logger.info(
@@ -419,100 +417,6 @@ class MPDWrapper(object):
 
         requests.post('http://127.0.0.1:1780/jsonrpc', json={"id": 4, "jsonrpc": "2.0", "method": "Stream.SetMeta", "params": {
             "id": "Spotify", "meta": snapmeta}})
-
-    def find_cover(self, song_url):
-        if song_url.startswith('file://'):
-            song_path = song_url[7:]
-            song_dir = os.path.dirname(song_path)
-
-            # Try existing temporary file
-            if self._temp_cover:
-                if song_url == self._temp_song_url:
-                    logger.debug("find_cover: Reusing old image at %r" %
-                                 self._temp_cover.name)
-                    return 'file://' + self._temp_cover.name
-                else:
-                    logger.debug(
-                        "find_cover: Cleaning up old image at %r" % self._temp_cover.name)
-                    self._temp_song_url = None
-                    self._temp_cover.close()
-
-            # Search for embedded cover art
-            song = None
-            if mutagen and os.path.exists(song_path):
-                try:
-                    song = mutagen.File(song_path)
-                except mutagen.MutagenError as e:
-                    logger.error("Can't extract covers from %r: %r" %
-                                 (song_path, e))
-            if song is not None:
-                if song.tags:
-                    # present but null for some file types
-                    for tag in song.tags.keys():
-                        if tag.startswith("APIC:"):
-                            for pic in song.tags.getall(tag):
-                                if pic.type == mutagen.id3.PictureType.COVER_FRONT:
-                                    self._temp_song_url = song_url
-                                    return self._create_temp_cover(pic)
-                if hasattr(song, "pictures"):
-                    # FLAC
-                    for pic in song.pictures:
-                        if pic.type == mutagen.id3.PictureType.COVER_FRONT:
-                            self._temp_song_url = song_url
-                            return self._create_temp_cover(pic)
-                elif song.tags and 'metadata_block_picture' in song.tags:
-                    # OGG
-                    for b64_data in song.get("metadata_block_picture", []):
-                        try:
-                            data = base64.b64decode(b64_data)
-                        except (TypeError, ValueError):
-                            continue
-
-                        try:
-                            pic = mutagen.flac.Picture(data)
-                        except mutagen.flac.error:
-                            continue
-
-                        if pic.type == mutagen.id3.PictureType.COVER_FRONT:
-                            self._temp_song_url = song_url
-                            return self._create_temp_cover(pic)
-
-            # Look in song directory for common album cover files
-            if os.path.exists(song_dir) and os.path.isdir(song_dir):
-                for f in os.listdir(song_dir):
-                    if self._params['cover_regex'].match(f):
-                        return 'file://' + os.path.join(song_dir, f)
-
-            # Search the shared cover directories
-            if 'xesam:artist' in self._metadata and 'xesam:album' in self._metadata:
-                artist = ",".join(self._metadata['xesam:artist'])
-                album = self._metadata['xesam:album']
-                for template in downloaded_covers:
-                    f = os.path.expanduser(template % (artist, album))
-                    if os.path.exists(f):
-                        return 'file://' + f
-        return None
-
-    def _create_temp_cover(self, pic):
-        """
-        Create a temporary file containing pic, and return it's location
-        """
-        extension = {'image/jpeg': '.jpg',
-                     'image/png': '.png',
-                     'image/gif': '.gif'}
-
-        self._temp_cover = tempfile.NamedTemporaryFile(
-            prefix='cover-', suffix=extension.get(pic.mime, '.jpg'))
-        self._temp_cover.write(pic.data)
-        self._temp_cover.flush()
-        logger.debug("find_cover: Storing embedded image at %r" %
-                     self._temp_cover.name)
-        return 'file://' + self._temp_cover.name
-
-    def last_status(self):
-        if time.time() - self._time >= 2:
-            self.timer_callback()
-        return self._status.copy()
 
     def _update_properties(self, force=False):
         old_status = self._status
@@ -662,70 +566,12 @@ class MPDWrapper(object):
             return False
 
 
-def each_xdg_config(suffix):
-    """
-    Return each location matching XDG_CONFIG_DIRS/suffix in descending
-    priority order.
-    """
-    config_home = os.environ.get('XDG_CONFIG_HOME',
-                                 os.path.expanduser('~/.config'))
-    config_dirs = os.environ.get('XDG_CONFIG_DIRS', '/etc/xdg').split(':')
-    return ([os.path.join(config_home, suffix)] +
-            [os.path.join(d, suffix) for d in config_dirs])
-
-
-def open_first_xdg_config(suffix):
-    """
-    Try to open each location matching XDG_CONFIG_DIRS/suffix as a file.
-    Return the first that can be opened successfully, or None.
-    """
-    for filename in each_xdg_config(suffix):
-        try:
-            f = open(filename, 'r')
-        except IOError:
-            pass
-        else:
-            return f
-    else:
-        return None
-
-
-def find_music_dir():
-    if 'XDG_MUSIC_DIR' in os.environ:
-        return os.environ['XDG_MUSIC_DIR']
-
-    conf = open_first_xdg_config('user-dirs.dirs')
-    if conf is not None:
-        for line in conf:
-            if not line.startswith('XDG_MUSIC_DIR='):
-                continue
-            # use shlex to handle "shell escaping"
-            path = shlex.split(line[14:])[0]
-            if path.startswith('$HOME/'):
-                return os.path.expanduser('~' + path[5:])
-            elif path.startswith('/'):
-                return path
-            else:
-                # other forms are not supported
-                break
-
-    paths = '~/Music', '~/music'
-    for path in map(os.path.expanduser, paths):
-        if os.path.isdir(path):
-            return path
-
-    return None
-
-
 def usage(params):
     print("""\
 Usage: %(progname)s [OPTION]...
 
-     -c, --config=PATH      Read a custom configuration file
-
      -h, --host=ADDR        Set the mpd server address
          --port=PORT        Set the TCP port
-         --music-dir=PATH   Set the music library path
 
      -d, --debug            Run in debug mode
      -j, --use-journal      Log to systemd journal instead of stderr
@@ -746,15 +592,12 @@ if __name__ == '__main__':
 
     log_journal = False
     log_level = logging.INFO
-    config_file = None
-    music_dir = None
 
     # Parse command line
     try:
         (opts, args) = getopt.getopt(sys.argv[1:], 'c:dh:jp:v',
-                                     ['help', 'config=',
-                                      'debug', 'host=', 'music-dir=',
-                                      'use-journal', 'path=', 'port=',
+                                     ['help', 'debug', 'host=',
+                                      'use-journal', 'port=',
                                       'version'])
     except getopt.GetoptError as ex:
         (msg, opt) = ex.args
@@ -767,16 +610,12 @@ if __name__ == '__main__':
         if opt in ['--help']:
             usage(params)
             sys.exit()
-        elif opt in ['-c', '--config']:
-            config_file = arg
         elif opt in ['-d', '--debug']:
             log_level = logging.DEBUG
         elif opt in ['-h', '--host']:
             params['host'] = arg
         elif opt in ['-j', '--use-journal']:
             log_journal = True
-        elif opt in ['-p', '--path', '--music-dir']:
-            music_dir = arg
         elif opt in ['--port']:
             params['port'] = int(arg)
         elif opt in ['-v', '--version']:
@@ -823,65 +662,16 @@ if __name__ == '__main__':
         if 'MPD_PORT' in os.environ:
             params['port'] = os.environ['MPD_PORT']
 
-    # Read configuration
-    config = ConfigParser()
-    if config_file:
-        with open(config_file) as fh:
-            config.read(config_file)
-    else:
-        config.read(['/etc/mpDris2.conf'] +
-                    list(reversed(each_xdg_config('mpDris2/mpDris2.conf'))))
-
     for p in ['host', 'port', 'password']:
         if not params[p]:
-            # TODO: switch to get(fallback=…) when possible
-            if config.has_option('Connection', p):
-                params[p] = config.get('Connection', p)
-            else:
-                params[p] = defaults[p]
+            params[p] = defaults[p]
 
     if '@' in params['host']:
         params['password'], params['host'] = params['host'].rsplit('@', 1)
 
     params['host'] = os.path.expanduser(params['host'])
 
-    if not music_dir:
-        if config.has_option('Library', 'music_dir'):
-            music_dir = config.get('Library', 'music_dir')
-        elif config.has_option('Connection', 'music_dir'):
-            music_dir = config.get('Connection', 'music_dir')
-        else:
-            music_dir = find_music_dir()
-
-    if music_dir:
-        # Ensure that music_dir starts with an URL scheme.
-        if not re.match('^[0-9A-Za-z+.-]+://', music_dir):
-            music_dir = 'file://' + music_dir
-        if music_dir.startswith('file://'):
-            music_dir = music_dir[:7] + os.path.expanduser(music_dir[7:])
-            if not os.path.exists(music_dir[7:]):
-                logger.error(
-                    'Music library path %s does not exist!' % music_dir)
-        # Non-local URLs can still be useful to MPRIS clients, so accept them.
-        params['music_dir'] = music_dir
-        logger.info('Using %s as music library path.' % music_dir)
-    else:
-        logger.warning('By not supplying a path for the music library '
-                       'this program will break the MPRIS specification!')
-
-    if config.has_option('Library', 'cover_regex'):
-        cover_regex = config.get('Library', 'cover_regex')
-    else:
-        cover_regex = defaults['cover_regex']
-    params['cover_regex'] = re.compile(cover_regex, re.I | re.X)
-
     logger.debug('Parameters: %r' % params)
-
-    if mutagen:
-        logger.info('Using Mutagen to read covers from music files.')
-    else:
-        logger.info(
-            'Mutagen not available, covers in music files will be ignored.')
 
     # Set up the main loop
     if using_gi_glib:
