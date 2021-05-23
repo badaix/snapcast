@@ -20,6 +20,7 @@
 # Some bits taken from quodlibet mpris plugin by <christoph.reiter@gmx.at>
 
 
+from time import sleep
 import websocket
 import logging
 import threading
@@ -31,11 +32,13 @@ import sys
 import re
 import shlex
 import getopt
+import socket
 import dbus
 import dbus.service
 from dbus.mainloop.glib import DBusGMainLoop
 import logging
 import gettext
+import requests
 
 __version__ = "@version@"
 __git_version__ = "@gitversion@"
@@ -84,6 +87,7 @@ params = {
     'port': None,
     'password': None,
     'bus_name': None,
+    'client': None,
     # Bling
     'mmkeys': True,
     'notify': (using_gi_notify or using_old_notify),
@@ -94,6 +98,7 @@ defaults = {
     # Connection
     'host': 'localhost',
     'port': 1780,
+    'client': None,
     'password': None,
     'bus_name': None,
 }
@@ -234,10 +239,6 @@ MPRIS2_INTROSPECTION = """<node name="/org/mpris/MediaPlayer2">
   </interface>
 </node>"""
 
-# Default url handlers if MPD doesn't support 'urlhandlers' command
-urlhandlers = ['http://']
-downloaded_covers = ['~/.covers/%s-%s.jpg']
-
 
 class SnapcastRpcListener:
     def on_snapserver_stream_pause(self):
@@ -295,12 +296,8 @@ class MPDWrapper(object):
         self._dbus_service = None
 
         self._can_single = False
-        self._can_idle = False
 
         self._errors = 0
-        self._poll_id = None
-        self._watch_id = None
-        self._idling = False
 
         self._status = {
             'state': None,
@@ -309,8 +306,6 @@ class MPDWrapper(object):
             'repeat': None,
         }
         self._metadata = {}
-        self._temp_song_url = None
-        self._temp_cover = None
         self._position = 0
         self._time = 0
 
@@ -331,7 +326,9 @@ class MPDWrapper(object):
 
     def websocket_loop(self):
         logger.info("Started SnapcastRpcWebsocketWrapper loop")
-        self.websocket.run_forever()
+        while True:
+            self.websocket.run_forever()
+            sleep(1)
         logger.info("Ending SnapcastRpcWebsocketWrapper loop")
 
     def on_ws_message(self, ws, message):
@@ -381,8 +378,8 @@ class MPDWrapper(object):
             #    '/org/mpris/MediaPlayer2')
             self._dbus_service.acquire_name()
 
-        # self.websocket.send(json.dumps(
-        #     {"id": 1, "jsonrpc": "2.0", "method": "Server.GetStatus"}))
+        self.websocket.send(json.dumps(
+            {"id": 1, "jsonrpc": "2.0", "method": "Server.GetStatus"}))
 
     def on_ws_close(self, ws):
         logger.info("Snapcast RPC websocket closed")
@@ -796,7 +793,7 @@ class MPRISInterface(dbus.service.Object):
         return False
 
     def __get_metadata():
-        logger.info(f'get_metadata: {snapcast_wrapper.metadata}')
+        logger.debug(f'get_metadata: {snapcast_wrapper.metadata}')
         return dbus.Dictionary(snapcast_wrapper.metadata, signature='sv')
 
     def __get_volume():
@@ -994,33 +991,20 @@ class MPRISInterface(dbus.service.Object):
         return
 
 
-def each_xdg_config(suffix):
-    """
-    Return each location matching XDG_CONFIG_DIRS/suffix in descending
-    priority order.
-    """
-    config_home = os.environ.get('XDG_CONFIG_HOME',
-                                 os.path.expanduser('~/.config'))
-    config_dirs = os.environ.get('XDG_CONFIG_DIRS', '/etc/xdg').split(':')
-    return ([os.path.join(config_home, suffix)] +
-            [os.path.join(d, suffix) for d in config_dirs])
-
-
-def open_first_xdg_config(suffix):
-    """
-    Try to open each location matching XDG_CONFIG_DIRS/suffix as a file.
-    Return the first that can be opened successfully, or None.
-    """
-    for filename in each_xdg_config(suffix):
-        try:
-            f = open(filename, 'r')
-        except IOError:
-            pass
-        else:
-            return f
-    else:
-        return None
-
+def __get_client_from_server_status(status):
+    client = None
+    try:
+        for group in status['result']['server']['groups']:
+            for client in group['clients']:
+                if client['host']['name'] == hostname:
+                    active = client["connected"]
+                    logger.info(f'Client with id "{client["id"]}" active: {active}')
+                    client = client['id']
+                    if active:
+                        return client 
+    except:
+        logger.error('Failed to parse server status')
+    return client
 
 def usage(params):
     print("""\
@@ -1030,8 +1014,7 @@ Usage: %(progname)s [OPTION]...
 
      -h, --host=ADDR        Set the mpd server address
          --port=PORT        Set the TCP port
-         --music-dir=PATH   Set the music library path
-
+         --client=ID        Set the client id
      -d, --debug            Run in debug mode
      -j, --use-journal      Log to systemd journal instead of stderr
      -v, --version          mpDris2 version
@@ -1057,7 +1040,7 @@ if __name__ == '__main__':
     try:
         (opts, args) = getopt.getopt(sys.argv[1:], 'c:dh:jp:v',
                                      ['help', 'bus-name=', 'config=',
-                                      'debug', 'host=', 'music-dir=',
+                                      'debug', 'host=', 'client='
                                       'use-journal', 'path=', 'port=',
                                       'version'])
     except getopt.GetoptError as ex:
@@ -1083,6 +1066,8 @@ if __name__ == '__main__':
             log_journal = True
         elif opt in ['--port']:
             params['port'] = int(arg)
+        elif opt in ['--client']:
+            params['client'] = int(arg)
         elif opt in ['-v', '--version']:
             v = __version__
             if __git_version__:
@@ -1127,35 +1112,33 @@ if __name__ == '__main__':
         if 'MPD_PORT' in os.environ:
             params['port'] = os.environ['MPD_PORT']
 
-    # Read configuration
-    config = ConfigParser()
-    if config_file:
-        with open(config_file) as fh:
-            config.read(config_file)
-    else:
-        config.read(['/etc/mpDris2.conf'] +
-                    list(reversed(each_xdg_config('mpDris2/mpDris2.conf'))))
-
-    for p in ['host', 'port', 'password', 'bus_name']:
+    for p in ['host', 'port', 'password', 'bus_name', 'client']:
         if not params[p]:
-            # TODO: switch to get(fallback=…) when possible
-            if config.has_option('Connection', p):
-                params[p] = config.get('Connection', p)
-            else:
-                params[p] = defaults[p]
+            params[p] = defaults[p]
 
     if '@' in params['host']:
         params['password'], params['host'] = params['host'].rsplit('@', 1)
 
     params['host'] = os.path.expanduser(params['host'])
 
-    for p in ['mmkeys', 'notify']:
-        if config.has_option('Bling', p):
-            params[p] = config.getboolean('Bling', p)
+    # for p in ['mmkeys', 'notify']:
+    #     if config.has_option('Bling', p):
+    #         params[p] = config.getboolean('Bling', p)
 
-    if config.has_option('Bling', 'notify_urgency'):
-        params['notify_urgency'] = int(config.get('Bling', 'notify_urgency'))
+    # if config.has_option('Bling', 'notify_urgency'):
+    #     params['notify_urgency'] = int(config.get('Bling', 'notify_urgency'))
 
+    if params['client'] is None:
+        hostname = socket.gethostname()
+        logger.info(f'No client id specified, trying to find a client running on host "{hostname}"')
+        resp = requests.post(f'http://{params["host"]}:{params["port"]}/jsonrpc', json={"id":1,"jsonrpc":"2.0","method":"Server.GetStatus"})
+        if resp.ok:
+            params['client'] = __get_client_from_server_status(json.loads(resp.text))
+    
+    if params['client'] is None:
+        logger.error('Client not found or not configured')
+
+    logger.info(f'Client: {params["client"]}')
     logger.debug('Parameters: %r' % params)
 
     if mutagen:
