@@ -53,7 +53,7 @@ void ControlServer::cleanup()
     auto count = distance(new_end, sessions_.end());
     if (count > 0)
     {
-        LOG(ERROR, LOG_TAG) << "Removing " << count << " inactive session(s), active sessions: " << sessions_.size() - count << "\n";
+        LOG(INFO, LOG_TAG) << "Removing " << count << " inactive session(s), active sessions: " << sessions_.size() - count << "\n";
         sessions_.erase(new_end, sessions_.end());
     }
 }
