@@ -20,11 +20,13 @@
 # Some bits taken from quodlibet mpris plugin by <christoph.reiter@gmx.at>
 
 
+# Dependencies:
+# - python-mpd2
+# - musicbrainzngs
+
 from configparser import ConfigParser
 import os
 import sys
-import re
-import shlex
 import socket
 import getopt
 import mpd
@@ -32,7 +34,6 @@ from dbus.mainloop.glib import DBusGMainLoop
 import logging
 import gettext
 import time
-import tempfile
 import base64
 import musicbrainzngs
 import requests
@@ -61,16 +62,22 @@ except ImportError:
 params = {
     'progname': sys.argv[0],
     # Connection
-    'host': None,
-    'port': None,
-    'password': None,
+    'mpd-host': None,
+    'mpd-port': None,
+    'mpd-password': None,
+    'snapcast-host': None,
+    'snapcast-port': None,
+    'stream': None,
 }
 
 defaults = {
     # Connection
-    'host': 'localhost',
-    'port': 6600,
-    'password': None,
+    'mpd-host': 'localhost',
+    'mpd-port': 6600,
+    'mpd-password': None,
+    'snapcast-host': 'localhost',
+    'snapcast-port': 1780,
+    'stream': 'default',
 }
 
 
@@ -175,10 +182,11 @@ class MPDWrapper(object):
             self._can_idle = False
             self._can_single = False
 
-            self.client.connect(self._params['host'], self._params['port'])
-            if self._params['password']:
+            self.client.connect(
+                self._params['mpd-host'], self._params['mpd-port'])
+            if self._params['mpd-password']:
                 try:
-                    self.client.password(self._params['password'])
+                    self.client.password(self._params['mpd-password'])
                 except mpd.CommandError as e:
                     logger.error(e)
                     sys.exit(1)
@@ -359,10 +367,10 @@ class MPDWrapper(object):
                 logger.debug(
                     f'key: {key}, value: {value}, mapped key: {tag_mapping[key][0]}, mapped value: {snapmeta[tag_mapping[key][0]]}')
             except KeyError:
-                logger.warn(f'tag "{key}" not supported')
+                logger.warning(f'tag "{key}" not supported')
             except (ValueError, TypeError):
-                logger.warn("Can't cast value %r to %s" %
-                            (value, tag_mapping[key][1]))
+                logger.warning("Can't cast value %r to %s" %
+                               (value, tag_mapping[key][1]))
 
                 # Stream: populate some missings tags with stream's name
         logger.debug(f'snapcast meta: {snapmeta}')
@@ -415,8 +423,9 @@ class MPDWrapper(object):
             logger.error(
                 f'Error while getting cover for {snapmeta[album_key]}: {e}')
 
-        requests.post('http://127.0.0.1:1780/jsonrpc', json={"id": 4, "jsonrpc": "2.0", "method": "Stream.SetMeta", "params": {
-            "id": "Spotify", "meta": snapmeta}})
+        logger.info(f'Snapmeta: {snapmeta}')
+        requests.post(f'http://{params["snapcast-host"]}:{params["snapcast-port"]}/jsonrpc', json={
+                      "id": 4, "jsonrpc": "2.0", "method": "Stream.SetMeta", "params": {"id": params['stream'], "meta": snapmeta}})
 
     def _update_properties(self, force=False):
         old_status = self._status
@@ -570,14 +579,15 @@ def usage(params):
     print("""\
 Usage: %(progname)s [OPTION]...
 
-     -h, --host=ADDR        Set the mpd server address
-         --port=PORT        Set the TCP port
+     --mpd-host=ADDR        Set the mpd server address
+     --mpd-port=PORT        Set the TCP port
+     --snapcast-host=ADDR   Set the mpd server address
+     --snapcast-port=PORT   Set the TCP port
+     --stream=ID            Set the stream id
 
      -d, --debug            Run in debug mode
      -j, --use-journal      Log to systemd journal instead of stderr
      -v, --version          mpDris2 version
-
-Environment variables MPD_HOST and MPD_PORT can be used.
 
 Report bugs to https://github.com/eonpatapon/mpDris2/issues""" % params)
 
@@ -595,10 +605,8 @@ if __name__ == '__main__':
 
     # Parse command line
     try:
-        (opts, args) = getopt.getopt(sys.argv[1:], 'c:dh:jp:v',
-                                     ['help', 'debug', 'host=',
-                                      'use-journal', 'port=',
-                                      'version'])
+        (opts, args) = getopt.getopt(sys.argv[1:], 'hdjv',
+                                     ['help', 'mpd-host=', 'mpd-port=', 'snapcast-host=', 'snapcast-port=', 'stream=', 'debug', 'use-journal', 'version'])
     except getopt.GetoptError as ex:
         (msg, opt) = ex.args
         print("%s: %s" % (sys.argv[0], msg), file=sys.stderr)
@@ -607,17 +615,23 @@ if __name__ == '__main__':
         sys.exit(2)
 
     for (opt, arg) in opts:
-        if opt in ['--help']:
+        if opt in ['-h', '--help']:
             usage(params)
             sys.exit()
+        elif opt in ['--mpd-host']:
+            params['mpd-host'] = arg
+        elif opt in ['--mpd-port']:
+            params['mpd-port'] = int(arg)
+        elif opt in ['--snapcast-host']:
+            params['snapcast-host'] = arg
+        elif opt in ['--snapcast-port']:
+            params['snapcast-port'] = int(arg)
+        elif opt in ['--stream']:
+            params['stream'] = arg
         elif opt in ['-d', '--debug']:
             log_level = logging.DEBUG
-        elif opt in ['-h', '--host']:
-            params['host'] = arg
         elif opt in ['-j', '--use-journal']:
             log_journal = True
-        elif opt in ['--port']:
-            params['port'] = int(arg)
         elif opt in ['-v', '--version']:
             v = __version__
             if __git_version__:
@@ -648,30 +662,17 @@ if __name__ == '__main__':
 
     logger.addHandler(log_handler)
 
-    # Pick up the server address (argv -> environment -> config)
-    for arg in args[:2]:
-        if arg.isdigit():
-            params['port'] = arg
-        else:
-            params['host'] = arg
-
-    if not params['host']:
-        if 'MPD_HOST' in os.environ:
-            params['host'] = os.environ['MPD_HOST']
-    if not params['port']:
-        if 'MPD_PORT' in os.environ:
-            params['port'] = os.environ['MPD_PORT']
-
-    for p in ['host', 'port', 'password']:
+    for p in ['mpd-host', 'mpd-port', 'snapcast-host', 'snapcast-port', 'mpd-password', 'stream']:
         if not params[p]:
             params[p] = defaults[p]
 
-    if '@' in params['host']:
-        params['password'], params['host'] = params['host'].rsplit('@', 1)
+    if '@' in params['mpd-host']:
+        params['mpd-password'], params['mpd-host'] = params['mpd-host'].rsplit(
+            '@', 1)
 
-    params['host'] = os.path.expanduser(params['host'])
+    params['mpd-host'] = os.path.expanduser(params['mpd-host'])
 
-    logger.debug('Parameters: %r' % params)
+    logger.debug(f'Parameters: {params}')
 
     # Set up the main loop
     if using_gi_glib:
