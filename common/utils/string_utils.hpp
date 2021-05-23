@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2020  Johannes Pohl
+    Copyright (C) 2014-2021  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -16,8 +16,8 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
-#ifndef STRING_UTILS_H
-#define STRING_UTILS_H
+#ifndef STRING_UTILS_HPP
+#define STRING_UTILS_HPP
 
 #include <algorithm>
 #include <map>
@@ -169,6 +169,20 @@ static std::map<std::string, std::string> split_pairs(const std::string& s, char
     for (auto& pair : pairs)
         result[pair.first] = *pair.second.begin();
     return result;
+}
+
+
+static inline std::string& tolower(std::string& s)
+{
+    std::transform(s.begin(), s.end(), s.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+    return s;
+}
+
+
+static inline std::string tolower_copy(const std::string& s)
+{
+    std::string str(s);
+    return tolower(str);
 }
 
 

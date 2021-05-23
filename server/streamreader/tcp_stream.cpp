@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2020  Johannes Pohl
+    Copyright (C) 2014-2021  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -37,8 +37,8 @@ namespace streamreader
 
 static constexpr auto LOG_TAG = "TcpStream";
 
-TcpStream::TcpStream(PcmListener* pcmListener, boost::asio::io_context& ioc, const StreamUri& uri)
-    : AsioStream<tcp::socket>(pcmListener, ioc, uri), reconnect_timer_(ioc)
+TcpStream::TcpStream(PcmListener* pcmListener, boost::asio::io_context& ioc, const ServerSettings& server_settings, const StreamUri& uri)
+    : AsioStream<tcp::socket>(pcmListener, ioc, server_settings, uri), reconnect_timer_(ioc)
 {
     host_ = uri_.host;
     auto host_port = utils::string::split(host_, ':');

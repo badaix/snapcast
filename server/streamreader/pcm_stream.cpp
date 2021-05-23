@@ -23,6 +23,7 @@
 #include "common/aixlog.hpp"
 #include "common/snap_exception.hpp"
 #include "common/str_compat.hpp"
+#include "common/utils/string_utils.hpp"
 #include "encoder/encoder_factory.hpp"
 #include "pcm_stream.hpp"
 
@@ -33,10 +34,118 @@ namespace streamreader
 {
 
 static constexpr auto LOG_TAG = "PcmStream";
+static constexpr auto SCRIPT_LOG_TAG = "Script";
 
 
-PcmStream::PcmStream(PcmListener* pcmListener, boost::asio::io_context& ioc, const StreamUri& uri)
-    : active_(false), pcmListeners_{pcmListener}, uri_(uri), chunk_ms_(20), state_(ReaderState::kIdle), ioc_(ioc)
+CtrlScript::CtrlScript(boost::asio::io_context& ioc, const std::string& script) : ioc_(ioc), script_(script)
+{
+}
+
+
+CtrlScript::~CtrlScript()
+{
+    stop();
+}
+
+
+void CtrlScript::start(const std::string& stream_id, const ServerSettings& server_setttings)
+{
+    pipe_stderr_ = bp::pipe();
+    pipe_stdout_ = bp::pipe();
+    stringstream params;
+    params << " \"--stream=" + stream_id + "\"";
+    if (server_setttings.http.enabled)
+        params << " --snapcast-port=" << server_setttings.http.port;
+    process_ = bp::child(script_ + params.str(), bp::std_out > pipe_stdout_, bp::std_err > pipe_stderr_);
+    stream_stdout_ = make_unique<boost::asio::posix::stream_descriptor>(ioc_, pipe_stdout_.native_source());
+    stream_stderr_ = make_unique<boost::asio::posix::stream_descriptor>(ioc_, pipe_stderr_.native_source());
+    stderrReadLine();
+    stdoutReadLine();
+}
+
+
+void CtrlScript::logScript(const std::string& source, std::string line)
+{
+    if (line.empty())
+        return;
+
+    std::ignore = source;
+    if (line.back() == '\r')
+        line.resize(line.size() - 1);
+    auto tmp = utils::string::tolower_copy(line);
+    AixLog::Severity severity = AixLog::Severity::info;
+    if (tmp.find(" trace") != string::npos)
+        severity = AixLog::Severity::trace;
+    else if (tmp.find(" debug") != string::npos)
+        severity = AixLog::Severity::debug;
+    else if (tmp.find(" info") != string::npos)
+        severity = AixLog::Severity::info;
+    else if (tmp.find(" warning") != string::npos)
+        severity = AixLog::Severity::warning;
+    else if (tmp.find(" error") != string::npos)
+        severity = AixLog::Severity::error;
+    else if ((tmp.find(" fatal") != string::npos) || (tmp.find(" critical") != string::npos))
+        severity = AixLog::Severity::fatal;
+    LOG(severity, SCRIPT_LOG_TAG) << line << "\n";
+}
+
+
+void CtrlScript::stderrReadLine()
+{
+    const std::string delimiter = "\n";
+    boost::asio::async_read_until(
+        *stream_stderr_, streambuf_stderr_, delimiter,
+        [this, delimiter](const std::error_code& ec, std::size_t bytes_transferred)
+        {
+            if (ec)
+            {
+                LOG(ERROR, LOG_TAG) << "Error while reading from stderr: " << ec.message() << "\n";
+                return;
+            }
+
+            // Extract up to the first delimiter.
+            std::string line{buffers_begin(streambuf_stderr_.data()), buffers_begin(streambuf_stderr_.data()) + bytes_transferred - delimiter.length()};
+            logScript("stderr", std::move(line));
+            streambuf_stderr_.consume(bytes_transferred);
+            stderrReadLine();
+        });
+}
+
+
+void CtrlScript::stdoutReadLine()
+{
+    const std::string delimiter = "\n";
+    boost::asio::async_read_until(
+        *stream_stdout_, streambuf_stdout_, delimiter,
+        [this, delimiter](const std::error_code& ec, std::size_t bytes_transferred)
+        {
+            if (ec)
+            {
+                LOG(ERROR, LOG_TAG) << "Error while reading from stdout: " << ec.message() << "\n";
+                return;
+            }
+
+            // Extract up to the first delimiter.
+            std::string line{buffers_begin(streambuf_stdout_.data()), buffers_begin(streambuf_stdout_.data()) + bytes_transferred - delimiter.length()};
+            logScript("stdout", std::move(line));
+            streambuf_stdout_.consume(bytes_transferred);
+            stdoutReadLine();
+        });
+}
+
+
+
+void CtrlScript::stop()
+{
+    if (process_.running())
+    {
+        ::kill(-process_.native_handle(), SIGINT);
+    }
+}
+
+
+PcmStream::PcmStream(PcmListener* pcmListener, boost::asio::io_context& ioc, const ServerSettings& server_settings, const StreamUri& uri)
+    : active_(false), pcmListeners_{pcmListener}, uri_(uri), chunk_ms_(20), state_(ReaderState::kIdle), ioc_(ioc), server_settings_(server_settings)
 {
     encoder::EncoderFactory encoderFactory;
     if (uri_.query.find(kUriCodec) == uri_.query.end())
@@ -51,6 +160,9 @@ PcmStream::PcmStream(PcmListener* pcmListener, boost::asio::io_context& ioc, con
         throw SnapException("Stream URI must have a sampleformat");
     sampleFormat_ = SampleFormat(uri_.query[kUriSampleFormat]);
     LOG(INFO, LOG_TAG) << "PcmStream: " << name_ << ", sampleFormat: " << sampleFormat_.toString() << "\n";
+
+    if (uri_.query.find(kControlScript) != uri_.query.end())
+        ctrl_script_ = std::make_unique<CtrlScript>(ioc, uri_.query[kControlScript]);
 
     if (uri_.query.find(kUriChunkMs) != uri_.query.end())
         chunk_ms_ = cpt::stoul(uri_.query[kUriChunkMs]);
@@ -108,6 +220,9 @@ void PcmStream::start()
     encoder_->init([this](const encoder::Encoder& encoder, std::shared_ptr<msg::PcmChunk> chunk, double duration) { chunkEncoded(encoder, chunk, duration); },
                    sampleFormat_);
     active_ = true;
+
+    if (ctrl_script_)
+        ctrl_script_->start(getId(), server_settings_);
 }
 
 
@@ -184,18 +299,10 @@ void PcmStream::resync(const std::chrono::nanoseconds& duration)
 
 json PcmStream::toJson() const
 {
-    string state("unknown");
-    if (state_ == ReaderState::kIdle)
-        state = "idle";
-    else if (state_ == ReaderState::kPlaying)
-        state = "playing";
-    else if (state_ == ReaderState::kDisabled)
-        state = "disabled";
-
     json j = {
         {"uri", uri_.toJson()},
         {"id", getId()},
-        {"status", state},
+        {"status", to_string(state_)},
     };
 
     if (meta_)

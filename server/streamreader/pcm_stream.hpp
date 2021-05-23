@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2020  Johannes Pohl
+    Copyright (C) 2014-2021  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -19,18 +19,32 @@
 #ifndef PCM_STREAM_HPP
 #define PCM_STREAM_HPP
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-result"
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#pragma GCC diagnostic ignored "-Wmissing-braces"
+#include <boost/process.hpp>
+#pragma GCC diagnostic pop
+#include <atomic>
+#include <condition_variable>
+#include <map>
+#include <string>
+#include <vector>
+
+#include <boost/asio/io_context.hpp>
+#include <boost/asio/read_until.hpp>
+#include <boost/optional.hpp>
+
 #include "common/json.hpp"
 #include "common/sample_format.hpp"
 #include "encoder/encoder.hpp"
 #include "message/codec_header.hpp"
 #include "message/stream_tags.hpp"
+#include "server_settings.hpp"
 #include "stream_uri.hpp"
-#include <atomic>
-#include <boost/asio/io_context.hpp>
-#include <condition_variable>
-#include <map>
-#include <string>
-#include <vector>
+
+
+namespace bp = boost::process;
 
 
 namespace streamreader
@@ -46,30 +60,37 @@ enum class ReaderState
     kDisabled = 3
 };
 
-static std::ostream& operator<<(std::ostream& os, const ReaderState& reader_state)
+
+static std::string to_string(const ReaderState& reader_state)
 {
     switch (reader_state)
     {
         case ReaderState::kIdle:
-            os << "idle";
-            break;
+            return "idle";
         case ReaderState::kPlaying:
-            os << "playing";
-            break;
+            return "playing";
         case ReaderState::kDisabled:
-            os << "disabled";
-            break;
+            return "disabled";
         case ReaderState::kUnknown:
         default:
-            os << "unknown";
+            return "unknown";
     }
+}
+
+
+static std::ostream& operator<<(std::ostream& os, const ReaderState& reader_state)
+{
+    os << to_string(reader_state);
     return os;
 }
+
+
 
 static constexpr auto kUriCodec = "codec";
 static constexpr auto kUriName = "name";
 static constexpr auto kUriSampleFormat = "sampleformat";
 static constexpr auto kUriChunkMs = "chunk_ms";
+static constexpr auto kControlScript = "controlscript";
 
 
 /// Callback interface for users of PcmStream
@@ -87,6 +108,33 @@ public:
 };
 
 
+class CtrlScript
+{
+public:
+    CtrlScript(boost::asio::io_context& ioc, const std::string& script);
+    virtual ~CtrlScript();
+
+    void start(const std::string& stream_id, const ServerSettings& server_setttings);
+    void stop();
+
+private:
+    void stderrReadLine();
+    void stdoutReadLine();
+    void logScript(const std::string& source, std::string line);
+
+    bp::child process_;
+    bp::pipe pipe_stdout_;
+    bp::pipe pipe_stderr_;
+    std::unique_ptr<boost::asio::posix::stream_descriptor> stream_stdout_;
+    std::unique_ptr<boost::asio::posix::stream_descriptor> stream_stderr_;
+    boost::asio::streambuf streambuf_stdout_;
+    boost::asio::streambuf streambuf_stderr_;
+
+    boost::asio::io_context& ioc_;
+    std::string script_;
+};
+
+
 /// Reads and decodes PCM data
 /**
  * Reads PCM and passes the data to an encoder.
@@ -97,7 +145,7 @@ class PcmStream
 {
 public:
     /// ctor. Encoded PCM data is passed to the PcmListener
-    PcmStream(PcmListener* pcmListener, boost::asio::io_context& ioc, const StreamUri& uri);
+    PcmStream(PcmListener* pcmListener, boost::asio::io_context& ioc, const ServerSettings& server_settings, const StreamUri& uri);
     virtual ~PcmStream();
 
     virtual void start();
@@ -137,6 +185,8 @@ protected:
     ReaderState state_;
     std::shared_ptr<msg::StreamTags> meta_;
     boost::asio::io_context& ioc_;
+    ServerSettings server_settings_;
+    std::unique_ptr<CtrlScript> ctrl_script_;
 };
 
 } // namespace streamreader

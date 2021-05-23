@@ -38,9 +38,9 @@ using namespace std;
 namespace streamreader
 {
 
-StreamManager::StreamManager(PcmListener* pcmListener, boost::asio::io_context& ioc, const std::string& defaultSampleFormat, const std::string& defaultCodec,
-                             size_t defaultChunkBufferMs)
-    : pcmListener_(pcmListener), sampleFormat_(defaultSampleFormat), codec_(defaultCodec), chunkBufferMs_(defaultChunkBufferMs), ioc_(ioc)
+StreamManager::StreamManager(PcmListener* pcmListener, boost::asio::io_context& ioc, const ServerSettings& settings)
+    // const std::string& defaultSampleFormat, const std::string& defaultCodec, size_t defaultChunkBufferMs)
+    : pcmListener_(pcmListener), settings_(settings), ioc_(ioc)
 {
 }
 
@@ -55,13 +55,13 @@ PcmStreamPtr StreamManager::addStream(const std::string& uri)
 PcmStreamPtr StreamManager::addStream(StreamUri& streamUri)
 {
     if (streamUri.query.find(kUriSampleFormat) == streamUri.query.end())
-        streamUri.query[kUriSampleFormat] = sampleFormat_;
+        streamUri.query[kUriSampleFormat] = settings_.stream.sampleFormat;
 
     if (streamUri.query.find(kUriCodec) == streamUri.query.end())
-        streamUri.query[kUriCodec] = codec_;
+        streamUri.query[kUriCodec] = settings_.stream.codec;
 
     if (streamUri.query.find(kUriChunkMs) == streamUri.query.end())
-        streamUri.query[kUriChunkMs] = cpt::to_string(chunkBufferMs_);
+        streamUri.query[kUriChunkMs] = cpt::to_string(settings_.stream.streamChunkMs);
 
     //	LOG(DEBUG) << "\nURI: " << streamUri.uri << "\nscheme: " << streamUri.scheme << "\nhost: "
     //		<< streamUri.host << "\npath: " << streamUri.path << "\nfragment: " << streamUri.fragment << "\n";
@@ -72,20 +72,20 @@ PcmStreamPtr StreamManager::addStream(StreamUri& streamUri)
 
     if (streamUri.scheme == "pipe")
     {
-        stream = make_shared<PipeStream>(pcmListener_, ioc_, streamUri);
+        stream = make_shared<PipeStream>(pcmListener_, ioc_, settings_, streamUri);
     }
     else if (streamUri.scheme == "file")
     {
-        stream = make_shared<FileStream>(pcmListener_, ioc_, streamUri);
+        stream = make_shared<FileStream>(pcmListener_, ioc_, settings_, streamUri);
     }
     else if (streamUri.scheme == "process")
     {
-        stream = make_shared<ProcessStream>(pcmListener_, ioc_, streamUri);
+        stream = make_shared<ProcessStream>(pcmListener_, ioc_, settings_, streamUri);
     }
 #ifdef HAS_ALSA
     else if (streamUri.scheme == "alsa")
     {
-        stream = make_shared<AlsaStream>(pcmListener_, ioc_, streamUri);
+        stream = make_shared<AlsaStream>(pcmListener_, ioc_, settings_, streamUri);
     }
 #endif
     else if ((streamUri.scheme == "spotify") || (streamUri.scheme == "librespot"))
@@ -94,7 +94,7 @@ PcmStreamPtr StreamManager::addStream(StreamUri& streamUri)
         // that all constructors of all parent classes also use the overwritten sample
         // format.
         streamUri.query[kUriSampleFormat] = "44100:16:2";
-        stream = make_shared<LibrespotStream>(pcmListener_, ioc_, streamUri);
+        stream = make_shared<LibrespotStream>(pcmListener_, ioc_, settings_, streamUri);
     }
     else if (streamUri.scheme == "airplay")
     {
@@ -102,15 +102,15 @@ PcmStreamPtr StreamManager::addStream(StreamUri& streamUri)
         // that all constructors of all parent classes also use the overwritten sample
         // format.
         streamUri.query[kUriSampleFormat] = "44100:16:2";
-        stream = make_shared<AirplayStream>(pcmListener_, ioc_, streamUri);
+        stream = make_shared<AirplayStream>(pcmListener_, ioc_, settings_, streamUri);
     }
     else if (streamUri.scheme == "tcp")
     {
-        stream = make_shared<TcpStream>(pcmListener_, ioc_, streamUri);
+        stream = make_shared<TcpStream>(pcmListener_, ioc_, settings_, streamUri);
     }
     else if (streamUri.scheme == "meta")
     {
-        stream = make_shared<MetaStream>(pcmListener_, streams_, ioc_, streamUri);
+        stream = make_shared<MetaStream>(pcmListener_, streams_, ioc_, settings_, streamUri);
     }
     else
     {

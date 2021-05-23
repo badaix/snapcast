@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2020  Johannes Pohl
+    Copyright (C) 2014-2021  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -20,6 +20,8 @@
 #define STREAM_MANAGER_HPP
 
 #include "pcm_stream.hpp"
+#include "server_settings.hpp"
+
 #include <boost/asio/io_context.hpp>
 #include <memory>
 #include <string>
@@ -33,8 +35,7 @@ using PcmStreamPtr = std::shared_ptr<PcmStream>;
 class StreamManager
 {
 public:
-    StreamManager(PcmListener* pcmListener, boost::asio::io_context& ioc, const std::string& defaultSampleFormat, const std::string& defaultCodec,
-                  size_t defaultChunkBufferMs = 20);
+    StreamManager(PcmListener* pcmListener, boost::asio::io_context& ioc, const ServerSettings& settings);
 
     PcmStreamPtr addStream(const std::string& uri);
     PcmStreamPtr addStream(StreamUri& streamUri);
@@ -49,9 +50,7 @@ public:
 private:
     std::vector<PcmStreamPtr> streams_;
     PcmListener* pcmListener_;
-    std::string sampleFormat_;
-    std::string codec_;
-    size_t chunkBufferMs_;
+    ServerSettings settings_;
     boost::asio::io_context& ioc_;
 };
 

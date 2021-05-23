@@ -32,7 +32,8 @@ namespace streamreader
 static constexpr auto LOG_TAG = "LibrespotStream";
 
 
-LibrespotStream::LibrespotStream(PcmListener* pcmListener, boost::asio::io_context& ioc, const StreamUri& uri) : ProcessStream(pcmListener, ioc, uri)
+LibrespotStream::LibrespotStream(PcmListener* pcmListener, boost::asio::io_context& ioc, const ServerSettings& server_settings, const StreamUri& uri)
+    : ProcessStream(pcmListener, ioc, server_settings, uri)
 {
     wd_timeout_sec_ = cpt::stoul(uri_.getQuery("wd_timeout", "7800")); ///< 130min
 

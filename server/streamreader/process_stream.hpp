@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2020  Johannes Pohl
+    Copyright (C) 2014-2021  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -19,12 +19,6 @@
 #ifndef PROCESS_STREAM_HPP
 #define PROCESS_STREAM_HPP
 
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wunused-result"
-#pragma GCC diagnostic ignored "-Wunused-parameter"
-#pragma GCC diagnostic ignored "-Wmissing-braces"
-#include <boost/process.hpp>
-#pragma GCC diagnostic pop
 #include <memory>
 #include <string>
 #include <vector>
@@ -49,7 +43,7 @@ class ProcessStream : public PosixStream, public WatchdogListener
 {
 public:
     /// ctor. Encoded PCM data is passed to the PipeListener
-    ProcessStream(PcmListener* pcmListener, boost::asio::io_context& ioc, const StreamUri& uri);
+    ProcessStream(PcmListener* pcmListener, boost::asio::io_context& ioc, const ServerSettings& server_settings, const StreamUri& uri);
     ~ProcessStream() override = default;
 
 protected:

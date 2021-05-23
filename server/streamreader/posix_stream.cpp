@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2020  Johannes Pohl
+    Copyright (C) 2014-2021  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -37,7 +37,8 @@ namespace streamreader
 static constexpr auto LOG_TAG = "PosixStream";
 static constexpr auto kResyncTolerance = 50ms;
 
-PosixStream::PosixStream(PcmListener* pcmListener, boost::asio::io_context& ioc, const StreamUri& uri) : AsioStream<stream_descriptor>(pcmListener, ioc, uri)
+PosixStream::PosixStream(PcmListener* pcmListener, boost::asio::io_context& ioc, const ServerSettings& server_settings, const StreamUri& uri)
+    : AsioStream<stream_descriptor>(pcmListener, ioc, server_settings, uri)
 {
     if (uri_.query.find("dryout_ms") != uri_.query.end())
         dryout_ms_ = cpt::stoul(uri_.query["dryout_ms"]);

@@ -32,8 +32,9 @@ static constexpr auto LOG_TAG = "MetaStream";
 // static constexpr auto kResyncTolerance = 50ms;
 
 
-MetaStream::MetaStream(PcmListener* pcmListener, const std::vector<std::shared_ptr<PcmStream>>& streams, boost::asio::io_context& ioc, const StreamUri& uri)
-    : PcmStream(pcmListener, ioc, uri), first_read_(true)
+MetaStream::MetaStream(PcmListener* pcmListener, const std::vector<std::shared_ptr<PcmStream>>& streams, boost::asio::io_context& ioc,
+                       const ServerSettings& server_settings, const StreamUri& uri)
+    : PcmStream(pcmListener, ioc, server_settings, uri), first_read_(true)
 {
     auto path_components = utils::string::split(uri.path, '/');
     for (const auto& component : path_components)

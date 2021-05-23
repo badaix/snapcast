@@ -47,8 +47,8 @@ string hex2str(const string& input)
  * Without HAS_EXPAT defined no parsing will occur.
  */
 
-AirplayStream::AirplayStream(PcmListener* pcmListener, boost::asio::io_context& ioc, const StreamUri& uri)
-    : ProcessStream(pcmListener, ioc, uri), port_(5000), pipe_open_timer_(ioc)
+AirplayStream::AirplayStream(PcmListener* pcmListener, boost::asio::io_context& ioc, const ServerSettings& server_settings, const StreamUri& uri)
+    : ProcessStream(pcmListener, ioc, server_settings, uri), port_(5000), pipe_open_timer_(ioc)
 {
     logStderr_ = true;
 

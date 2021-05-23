@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2020  Johannes Pohl
+    Copyright (C) 2014-2021  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -33,7 +33,7 @@ class AsioStream : public PcmStream
 {
 public:
     /// ctor. Encoded PCM data is passed to the PipeListener
-    AsioStream(PcmListener* pcmListener, boost::asio::io_context& ioc, const StreamUri& uri);
+    AsioStream(PcmListener* pcmListener, boost::asio::io_context& ioc, const ServerSettings& server_settings, const StreamUri& uri);
 
     void start() override;
     void stop() override;
@@ -82,8 +82,8 @@ void AsioStream<ReadStream>::wait(Timer& timer, const std::chrono::duration<Rep,
 
 
 template <typename ReadStream>
-AsioStream<ReadStream>::AsioStream(PcmListener* pcmListener, boost::asio::io_context& ioc, const StreamUri& uri)
-    : PcmStream(pcmListener, ioc, uri), read_timer_(ioc), state_timer_(ioc)
+AsioStream<ReadStream>::AsioStream(PcmListener* pcmListener, boost::asio::io_context& ioc, const ServerSettings& server_settings, const StreamUri& uri)
+    : PcmStream(pcmListener, ioc, server_settings, uri), read_timer_(ioc), state_timer_(ioc)
 {
     chunk_ = std::make_unique<msg::PcmChunk>(sampleFormat_, chunk_ms_);
     LOG(DEBUG, "AsioStream") << "Chunk duration: " << chunk_->durationMs() << " ms, frames: " << chunk_->getFrameCount() << ", size: " << chunk_->payloadSize

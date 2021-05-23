@@ -35,7 +35,8 @@ namespace streamreader
 static constexpr auto LOG_TAG = "ProcessStream";
 
 
-ProcessStream::ProcessStream(PcmListener* pcmListener, boost::asio::io_context& ioc, const StreamUri& uri) : PosixStream(pcmListener, ioc, uri)
+ProcessStream::ProcessStream(PcmListener* pcmListener, boost::asio::io_context& ioc, const ServerSettings& server_settings, const StreamUri& uri)
+    : PosixStream(pcmListener, ioc, server_settings, uri)
 {
     params_ = uri_.getQuery("params");
     wd_timeout_sec_ = cpt::stoul(uri_.getQuery("wd_timeout", "0"));

@@ -693,9 +693,8 @@ void Server::start()
     {
         controlServer_ = std::make_unique<ControlServer>(io_context_, settings_.tcp, settings_.http, this);
         streamServer_ = std::make_unique<StreamServer>(io_context_, settings_, this);
-        streamManager_ =
-            std::make_unique<StreamManager>(this, io_context_, settings_.stream.sampleFormat, settings_.stream.codec, settings_.stream.streamChunkMs);
-        //	throw SnapException("xxx");
+        streamManager_ = std::make_unique<StreamManager>(this, io_context_, settings_);
+
         // Add normal sources first
         for (const auto& sourceUri : settings_.stream.sources)
         {
