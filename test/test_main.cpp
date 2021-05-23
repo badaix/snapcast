@@ -107,42 +107,49 @@ TEST_CASE("Uri")
 
 TEST_CASE("Metatags")
 {
-    Metatags meta;
-    meta.fromJson(json::parse(R"({
-    "STREAM": "Spotify",
-    "album": "tru.",
+    auto in_json = json::parse(R"(
+{
+    "album": "Memories...Do Not Open",
     "albumArtist": [
-        "Cro"
+        "The Chainsmokers"
     ],
     "albumArtistSort": [
-        "Cro"
+        "Chainsmokers, The"
     ],
     "artist": [
-        "Cro"
+        "The Chainsmokers & Coldplay"
     ],
     "artistSort": [
-        "Cro"
+        "Chainsmokers, The & Coldplay"
     ],
-    "contentCreated": "2017-09-08",
+    "contentCreated": "2017-04-07",
     "discNumber": 1,
-    "duration": 144.77,
-    "file": "Cro - tru. (2017)/01 - kapitel 1.mp3",
+    "duration": 247.0,
+    "file": "The Chainsmokers - Memories...Do Not Open (2017)/05 - Something Just Like This.mp3",
     "genre": [
-        "Hip-Hop"
+        "Dance/Electronic"
     ],
-    "label": "Chimperator Productions",
-    "musicbrainzAlbumArtistId": "b2ea6506-645e-4935-8d82-84c3a95fe7f0",
-    "musicbrainzAlbumId": "621ca91c-bf60-428f-bdad-3b985dd5610c",
-    "musicbrainzArtistId": "b2ea6506-645e-4935-8d82-84c3a95fe7f0",
-    "musicbrainzReleasetrackId": "4b24ea6c-eacf-4ae5-a0c3-9387fb99bb5b",
-    "musicbrainzTrackId": "fa7ef8b1-04cf-47e2-bcd3-9397f470dad5",
+    "label": "Columbia/Disruptor Records",
+    "musicbrainzAlbumArtistId": "91a81925-92f9-4fc9-b897-93cf01226282",
+    "musicbrainzAlbumId": "a9ff33d7-c5a1-4e15-83f7-f669ff96c196",
+    "musicbrainzArtistId": "91a81925-92f9-4fc9-b897-93cf01226282/cc197bad-dc9c-440d-a5b5-d52ba2e14234",
+    "musicbrainzReleaseTrackId": "8ccd52a8-de1d-48ce-acf9-b382a7296cfe",
+    "musicbrainzTrackId": "6fdd95d6-9837-4d95-91f4-b123d0696a2a",
     "originalDate": "2017",
-    "title": "kapitel 1",
-    "track": 1
-})"));
+    "title": "Something Just Like This",
+    "trackNumber": 5
+}
+)");
+    std::cout << in_json.dump(4) << "\n";
+
+    Metatags meta(in_json);
     REQUIRE(meta.album.has_value());
-    REQUIRE(meta.album.value() == "tru.");
+    REQUIRE(meta.album.value() == "Memories...Do Not Open");
     REQUIRE(meta.genre.has_value());
     REQUIRE(meta.genre->size() == 1);
-    REQUIRE(meta.genre.value().front() == "Hip-Hop");
+    REQUIRE(meta.genre.value().front() == "Dance/Electronic");
+
+    auto out_json = meta.toJson();
+    std::cout << out_json.dump(4) << "\n";
+    REQUIRE(in_json == out_json);
 }
