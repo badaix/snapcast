@@ -584,6 +584,7 @@ Usage: %(progname)s [OPTION]...
      --snapcast-host=ADDR   Set the mpd server address
      --snapcast-port=PORT   Set the TCP port
      --stream=ID            Set the stream id
+     --command=CMD          Issue a command to MPD and exit
 
      -d, --debug            Run in debug mode
      -j, --use-journal      Log to systemd journal instead of stderr
@@ -606,7 +607,7 @@ if __name__ == '__main__':
     # Parse command line
     try:
         (opts, args) = getopt.getopt(sys.argv[1:], 'hdjv',
-                                     ['help', 'mpd-host=', 'mpd-port=', 'snapcast-host=', 'snapcast-port=', 'stream=', 'debug', 'use-journal', 'version'])
+                                     ['help', 'mpd-host=', 'mpd-port=', 'snapcast-host=', 'snapcast-port=', 'stream=', 'command=', 'debug', 'use-journal', 'version'])
     except getopt.GetoptError as ex:
         (msg, opt) = ex.args
         print("%s: %s" % (sys.argv[0], msg), file=sys.stderr)
@@ -628,6 +629,8 @@ if __name__ == '__main__':
             params['snapcast-port'] = int(arg)
         elif opt in ['--stream']:
             params['stream'] = arg
+        elif opt in ['--command']:
+            params['command'] = arg
         elif opt in ['-d', '--debug']:
             log_level = logging.DEBUG
         elif opt in ['-j', '--use-journal']:
@@ -673,6 +676,41 @@ if __name__ == '__main__':
     params['mpd-host'] = os.path.expanduser(params['mpd-host'])
 
     logger.debug(f'Parameters: {params}')
+
+    if 'command' in params:
+        try:
+            cmd = params['command']
+            if cmd not in ['next', 'previous', 'play', 'pause', 'playpause', 'stop']:
+                logger.error(f'Command not supported: {cmd}')
+                sys.exit(1)
+
+            client = mpd.MPDClient()
+            client.connect(params['mpd-host'], params['mpd-port'])
+            if params['mpd-password']:
+                client.password(params['mpd-password'])
+
+            if cmd == 'next':
+                client.next()
+            elif cmd == 'previous':
+                client.previous()
+            elif cmd == 'play':
+                client.play()
+            elif cmd == 'pause':
+                client.pause(1)
+            elif cmd == 'playpause':
+                if client.status()['state'] == 'play':
+                    client.pause(1)
+                else:
+                    client.play()
+            elif cmd == 'stop':
+                client.stop()
+
+            client.close()
+            client.disconnect()
+        except mpd.CommandError as e:
+            logger.error(e)
+            sys.exit(1)
+        sys.exit(0)
 
     # Set up the main loop
     if using_gi_glib:

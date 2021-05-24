@@ -48,7 +48,7 @@ CtrlScript::~CtrlScript()
 }
 
 
-void CtrlScript::start(const std::string& stream_id, const ServerSettings& server_setttings)
+void CtrlScript::start(const std::string& stream_id, const ServerSettings& server_setttings, const std::string& command, const std::string& param)
 {
     pipe_stderr_ = bp::pipe();
     pipe_stdout_ = bp::pipe();
@@ -56,7 +56,15 @@ void CtrlScript::start(const std::string& stream_id, const ServerSettings& serve
     params << " \"--stream=" + stream_id + "\"";
     if (server_setttings.http.enabled)
         params << " --snapcast-port=" << server_setttings.http.port;
-    process_ = bp::child(script_ + params.str(), bp::std_out > pipe_stdout_, bp::std_err > pipe_stderr_);
+    if (!command.empty())
+        params << " --command=" << command;
+    if (!param.empty())
+        params << " --param=" << param;
+    process_ = bp::child(
+        script_ + params.str(), bp::std_out > pipe_stdout_, bp::std_err > pipe_stderr_,
+        bp::on_exit = [](int exit,
+                         const std::error_code& ec_in) { LOG(INFO, SCRIPT_LOG_TAG) << "Exit code: " << exit << ", message: " << ec_in.message() << "\n"; },
+        ioc_);
     stream_stdout_ = make_unique<boost::asio::posix::stream_descriptor>(ioc_, pipe_stdout_.native_source());
     stream_stderr_ = make_unique<boost::asio::posix::stream_descriptor>(ioc_, pipe_stderr_.native_source());
     stderrReadLine();
@@ -93,44 +101,38 @@ void CtrlScript::logScript(const std::string& source, std::string line)
 void CtrlScript::stderrReadLine()
 {
     const std::string delimiter = "\n";
-    boost::asio::async_read_until(
-        *stream_stderr_, streambuf_stderr_, delimiter,
-        [this, delimiter](const std::error_code& ec, std::size_t bytes_transferred)
+    boost::asio::async_read_until(*stream_stderr_, streambuf_stderr_, delimiter, [this, delimiter](const std::error_code& ec, std::size_t bytes_transferred) {
+        if (ec)
         {
-            if (ec)
-            {
-                LOG(ERROR, LOG_TAG) << "Error while reading from stderr: " << ec.message() << "\n";
-                return;
-            }
+            LOG(ERROR, LOG_TAG) << "Error while reading from stderr: " << ec.message() << "\n";
+            return;
+        }
 
-            // Extract up to the first delimiter.
-            std::string line{buffers_begin(streambuf_stderr_.data()), buffers_begin(streambuf_stderr_.data()) + bytes_transferred - delimiter.length()};
-            logScript("stderr", std::move(line));
-            streambuf_stderr_.consume(bytes_transferred);
-            stderrReadLine();
-        });
+        // Extract up to the first delimiter.
+        std::string line{buffers_begin(streambuf_stderr_.data()), buffers_begin(streambuf_stderr_.data()) + bytes_transferred - delimiter.length()};
+        logScript("stderr", std::move(line));
+        streambuf_stderr_.consume(bytes_transferred);
+        stderrReadLine();
+    });
 }
 
 
 void CtrlScript::stdoutReadLine()
 {
     const std::string delimiter = "\n";
-    boost::asio::async_read_until(
-        *stream_stdout_, streambuf_stdout_, delimiter,
-        [this, delimiter](const std::error_code& ec, std::size_t bytes_transferred)
+    boost::asio::async_read_until(*stream_stdout_, streambuf_stdout_, delimiter, [this, delimiter](const std::error_code& ec, std::size_t bytes_transferred) {
+        if (ec)
         {
-            if (ec)
-            {
-                LOG(ERROR, LOG_TAG) << "Error while reading from stdout: " << ec.message() << "\n";
-                return;
-            }
+            LOG(ERROR, LOG_TAG) << "Error while reading from stdout: " << ec.message() << "\n";
+            return;
+        }
 
-            // Extract up to the first delimiter.
-            std::string line{buffers_begin(streambuf_stdout_.data()), buffers_begin(streambuf_stdout_.data()) + bytes_transferred - delimiter.length()};
-            logScript("stdout", std::move(line));
-            streambuf_stdout_.consume(bytes_transferred);
-            stdoutReadLine();
-        });
+        // Extract up to the first delimiter.
+        std::string line{buffers_begin(streambuf_stdout_.data()), buffers_begin(streambuf_stdout_.data()) + bytes_transferred - delimiter.length()};
+        logScript("stdout", std::move(line));
+        streambuf_stdout_.consume(bytes_transferred);
+        stdoutReadLine();
+    });
 }
 
 
@@ -162,7 +164,10 @@ PcmStream::PcmStream(PcmListener* pcmListener, boost::asio::io_context& ioc, con
     LOG(INFO, LOG_TAG) << "PcmStream: " << name_ << ", sampleFormat: " << sampleFormat_.toString() << "\n";
 
     if (uri_.query.find(kControlScript) != uri_.query.end())
+    {
         ctrl_script_ = std::make_unique<CtrlScript>(ioc, uri_.query[kControlScript]);
+        command_script_ = std::make_unique<CtrlScript>(ioc, uri_.query[kControlScript]);
+    }
 
     if (uri_.query.find(kUriChunkMs) != uri_.query.end())
         chunk_ms_ = cpt::stoul(uri_.query[kUriChunkMs]);
@@ -321,6 +326,14 @@ void PcmStream::addListener(PcmListener* pcmListener)
 std::shared_ptr<msg::StreamTags> PcmStream::getMeta() const
 {
     return meta_;
+}
+
+
+void PcmStream::control(const std::string& command, const std::string& param)
+{
+    LOG(INFO, LOG_TAG) << "Stream " << getId() << " control: '" << command << "', param: '" << param << "'\n";
+    if (command_script_)
+        command_script_->start(getId(), server_settings_, command, param);
 }
 
 

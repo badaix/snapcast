@@ -458,6 +458,11 @@ class MPDWrapper(object):
     # def last_currentsong(self):
     #     return self._currentsong.copy()
 
+    def control(self, command):  # , param = ""):
+        logger.info(f'Control: {command}')
+        requests.post(f'http://{params["host"]}:{params["port"]}/jsonrpc', json={
+            "id": 1, "jsonrpc": "2.0", "method": "Stream.Control", "params": {"id": "Pipe", "command": command}})
+
     @property
     def metadata(self):
         return self._metadata
@@ -840,39 +845,37 @@ class MPRISInterface(dbus.service.Object):
         "CanControl": (True, None),
     }
 
-    __tracklist_interface = "org.mpris.MediaPlayer2.TrackList"
-
     __prop_mapping = {
         __player_interface: __player_props,
         __root_interface: __root_props,
     }
 
-    @dbus.service.method(__introspect_interface)
+    @ dbus.service.method(__introspect_interface)
     def Introspect(self):
         return MPRIS2_INTROSPECTION
 
-    @dbus.service.signal(__prop_interface, signature="sa{sv}as")
+    @ dbus.service.signal(__prop_interface, signature="sa{sv}as")
     def PropertiesChanged(self, interface, changed_properties,
                           invalidated_properties):
         pass
 
-    @dbus.service.method(__prop_interface,
-                         in_signature="ss", out_signature="v")
+    @ dbus.service.method(__prop_interface,
+                          in_signature="ss", out_signature="v")
     def Get(self, interface, prop):
         getter, setter = self.__prop_mapping[interface][prop]
         if callable(getter):
             return getter()
         return getter
 
-    @dbus.service.method(__prop_interface,
-                         in_signature="ssv", out_signature="")
+    @ dbus.service.method(__prop_interface,
+                          in_signature="ssv", out_signature="")
     def Set(self, interface, prop, value):
         getter, setter = self.__prop_mapping[interface][prop]
         if setter is not None:
             setter(value)
 
-    @dbus.service.method(__prop_interface,
-                         in_signature="s", out_signature="a{sv}")
+    @ dbus.service.method(__prop_interface,
+                          in_signature="s", out_signature="a{sv}")
     def GetAll(self, interface):
         read_props = {}
         props = self.__prop_mapping[interface]
@@ -893,63 +896,48 @@ class MPRISInterface(dbus.service.Object):
         return value
 
     # Root methods
-    @dbus.service.method(__root_interface, in_signature='', out_signature='')
+    @ dbus.service.method(__root_interface, in_signature='', out_signature='')
     def Raise(self):
         logger.info('Raise')
         return
 
-    @dbus.service.method(__root_interface, in_signature='', out_signature='')
+    @ dbus.service.method(__root_interface, in_signature='', out_signature='')
     def Quit(self):
         logger.info('Quit')
         return
 
     # Player methods
-    @dbus.service.method(__player_interface, in_signature='', out_signature='')
+    @ dbus.service.method(__player_interface, in_signature='', out_signature='')
     def Next(self):
-        logger.info('Next')
-        # mpd_wrapper.next()
+        snapcast_wrapper.control("next")
         return
 
-    @dbus.service.method(__player_interface, in_signature='', out_signature='')
+    @ dbus.service.method(__player_interface, in_signature='', out_signature='')
     def Previous(self):
-        logger.info('Previous')
-        # mpd_wrapper.previous()
+        snapcast_wrapper.control("previous")
         return
 
-    @dbus.service.method(__player_interface, in_signature='', out_signature='')
+    @ dbus.service.method(__player_interface, in_signature='', out_signature='')
     def Pause(self):
-        logger.info('Pause')
-        # mpd_wrapper.pause(1)
-        # mpd_wrapper.notify_about_state('pause')
+        snapcast_wrapper.control("pause")
         return
 
-    @dbus.service.method(__player_interface, in_signature='', out_signature='')
+    @ dbus.service.method(__player_interface, in_signature='', out_signature='')
     def PlayPause(self):
-        logger.info('PlayPause')
-        # status = mpd_wrapper.status()
-        # if status['state'] == 'play':
-        #     mpd_wrapper.pause(1)
-        #     mpd_wrapper.notify_about_state('pause')
-        # else:
-        #     mpd_wrapper.play()
-        #     mpd_wrapper.notify_about_state('play')
+        snapcast_wrapper.control("playpause")
         return
 
-    @dbus.service.method(__player_interface, in_signature='', out_signature='')
+    @ dbus.service.method(__player_interface, in_signature='', out_signature='')
     def Stop(self):
-        logger.info('Stop')
-        # mpd_wrapper.stop()
-        # mpd_wrapper.notify_about_state('stop')
+        snapcast_wrapper.control("stop")
         return
 
-    @dbus.service.method(__player_interface, in_signature='', out_signature='')
+    @ dbus.service.method(__player_interface, in_signature='', out_signature='')
     def Play(self):
-        logger.info('Play')
-        # mpd_wrapper.play()
-        # mpd_wrapper.notify_about_state('play')
+        snapcast_wrapper.control("play")
         return
 
-    @dbus.service.method(__player_interface, in_signature='x', out_signature='')
+    @ dbus.service.method(__player_interface, in_signature='x', out_signature='')
     def Seek(self, offset):
         logger.info(f'Seek {offset}')
         # status = mpd_wrapper.status()
@@ -965,7 +953,7 @@ class MPRISInterface(dbus.service.Object):
         #     self.Seeked(position * 1000000)
         return
 
-    @dbus.service.method(__player_interface, in_signature='ox', out_signature='')
+    @ dbus.service.method(__player_interface, in_signature='ox', out_signature='')
     def SetPosition(self, trackid, position):
         logger.info(f'SetPosition trackid: {trackid}, position: {position}')
         # song = mpd_wrapper.last_currentsong()
@@ -979,16 +967,17 @@ class MPRISInterface(dbus.service.Object):
         #     self.Seeked(position * 1000000)
         return
 
-    @dbus.service.signal(__player_interface, signature='x')
-    def Seeked(self, position):
-        logger.debug("Seeked to %i" % position)
-        return float(position)
-
-    @dbus.service.method(__player_interface, in_signature='', out_signature='')
+    @ dbus.service.method(__player_interface, in_signature='', out_signature='')
     def OpenUri(self):
         logger.info('OpenUri')
         # TODO
         return
+
+    # Player signals
+    @ dbus.service.signal(__player_interface, signature='x')
+    def Seeked(self, position):
+        logger.debug("Seeked to %i" % position)
+        return float(position)
 
 
 def __get_client_from_server_status(status):
@@ -998,13 +987,15 @@ def __get_client_from_server_status(status):
             for client in group['clients']:
                 if client['host']['name'] == hostname:
                     active = client["connected"]
-                    logger.info(f'Client with id "{client["id"]}" active: {active}')
+                    logger.info(
+                        f'Client with id "{client["id"]}" active: {active}')
                     client = client['id']
                     if active:
-                        return client 
+                        return client
     except:
         logger.error('Failed to parse server status')
     return client
+
 
 def usage(params):
     print("""\
@@ -1040,7 +1031,7 @@ if __name__ == '__main__':
     try:
         (opts, args) = getopt.getopt(sys.argv[1:], 'c:dh:jp:v',
                                      ['help', 'bus-name=', 'config=',
-                                      'debug', 'host=', 'client='
+                                     'debug', 'host=', 'client='
                                       'use-journal', 'path=', 'port=',
                                       'version'])
     except getopt.GetoptError as ex:
@@ -1130,11 +1121,14 @@ if __name__ == '__main__':
 
     if params['client'] is None:
         hostname = socket.gethostname()
-        logger.info(f'No client id specified, trying to find a client running on host "{hostname}"')
-        resp = requests.post(f'http://{params["host"]}:{params["port"]}/jsonrpc', json={"id":1,"jsonrpc":"2.0","method":"Server.GetStatus"})
+        logger.info(
+            f'No client id specified, trying to find a client running on host "{hostname}"')
+        resp = requests.post(f'http://{params["host"]}:{params["port"]}/jsonrpc', json={
+            "id": 1, "jsonrpc": "2.0", "method": "Server.GetStatus"})
         if resp.ok:
-            params['client'] = __get_client_from_server_status(json.loads(resp.text))
-    
+            params['client'] = __get_client_from_server_status(
+                json.loads(resp.text))
+
     if params['client'] is None:
         logger.error('Client not found or not configured')
 

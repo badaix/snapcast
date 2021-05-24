@@ -410,10 +410,10 @@ void Server::processRequest(const jsonrpcpp::request_ptr request, jsonrpcpp::ent
             {
                 // clang-format off
                 // Request:      {"id":4,"jsonrpc":"2.0","method":"Stream.SetMeta","params":{"id":"Spotify", "meta": {"album": "some album", "artist": "some artist", "track": "some track"...}}}
-                // Response:     {"id":4,"jsonrpc":"2.0","result":{"stream_id":"Spotify"}}
+                // Response:     {"id":4,"jsonrpc":"2.0","result":{"id":"Spotify"}}
                 // clang-format on
 
-                LOG(INFO, LOG_TAG) << "Stream.SetMeta(" << request->params().get<std::string>("id") << ")" << request->params().get("meta") << "\n";
+                LOG(INFO, LOG_TAG) << "Stream.SetMeta id: " << request->params().get<std::string>("id") << ", meta: " << request->params().get("meta") << "\n";
 
                 // Find stream
                 string streamId = request->params().get<std::string>("id");
@@ -427,11 +427,36 @@ void Server::processRequest(const jsonrpcpp::request_ptr request, jsonrpcpp::ent
                 // Setup response
                 result["id"] = streamId;
             }
+            else if (request->method().find("Stream.Control") == 0)
+            {
+                // clang-format off
+                // Request:      {"id":4,"jsonrpc":"2.0","method":"Stream.Control","params":{"id":"Spotify", "command": "next", params: {}}}
+                // Response:     {"id":4,"jsonrpc":"2.0","result":{"id":"Spotify"}}
+                // 
+                // Request:      {"id":4,"jsonrpc":"2.0","method":"Stream.Control","params":{"id":"Spotify", "command": "seek", "param": "60000"}}
+                // Response:     {"id":4,"jsonrpc":"2.0","result":{"id":"Spotify"}}
+                // clang-format on
+
+                LOG(INFO, LOG_TAG) << "Stream.Control id: " << request->params().get<std::string>("id") << ", command: " << request->params().get("command")
+                                   << "\n";
+
+                // Find stream
+                string streamId = request->params().get<std::string>("id");
+                PcmStreamPtr stream = streamManager_->getStream(streamId);
+                if (stream == nullptr)
+                    throw jsonrpcpp::InternalErrorException("Stream not found", request->id());
+
+                // Set metadata from request
+                stream->control(request->params().get("command"), request->params().has("param") ? request->params().get("param") : "");
+
+                // Setup response
+                result["id"] = streamId;
+            }
             else if (request->method() == "Stream.AddStream")
             {
                 // clang-format off
                 // Request:      {"id":4,"jsonrpc":"2.0","method":"Stream.AddStream","params":{"streamUri":"uri"}}
-                // Response:     {"id":4,"jsonrpc":"2.0","result":{"stream_id":"Spotify"}}
+                // Response:     {"id":4,"jsonrpc":"2.0","result":{"id":"Spotify"}}
                 // clang-format on
 
                 LOG(INFO, LOG_TAG) << "Stream.AddStream(" << request->params().get("streamUri") << ")"
@@ -450,7 +475,7 @@ void Server::processRequest(const jsonrpcpp::request_ptr request, jsonrpcpp::ent
             {
                 // clang-format off
                 // Request:      {"id":4,"jsonrpc":"2.0","method":"Stream.RemoveStream","params":{"id":"Spotify"}}
-                // Response:     {"id":4,"jsonrpc":"2.0","result":{"stream_id":"Spotify"}}
+                // Response:     {"id":4,"jsonrpc":"2.0","result":{"id":"Spotify"}}
                 // clang-format on
 
                 LOG(INFO, LOG_TAG) << "Stream.RemoveStream(" << request->params().get("id") << ")"

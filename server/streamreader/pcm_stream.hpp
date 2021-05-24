@@ -114,7 +114,7 @@ public:
     CtrlScript(boost::asio::io_context& ioc, const std::string& script);
     virtual ~CtrlScript();
 
-    void start(const std::string& stream_id, const ServerSettings& server_setttings);
+    void start(const std::string& stream_id, const ServerSettings& server_setttings, const std::string& command = "", const std::string& param = "");
     void stop();
 
 private:
@@ -162,6 +162,8 @@ public:
     std::shared_ptr<msg::StreamTags> getMeta() const;
     void setMeta(const json& j);
 
+    void control(const std::string& command, const std::string& param);
+
     virtual ReaderState getState() const;
     virtual json toJson() const;
 
@@ -187,6 +189,7 @@ protected:
     boost::asio::io_context& ioc_;
     ServerSettings server_settings_;
     std::unique_ptr<CtrlScript> ctrl_script_;
+    std::unique_ptr<CtrlScript> command_script_;
 };
 
 } // namespace streamreader
