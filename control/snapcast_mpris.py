@@ -308,6 +308,7 @@ class MPDWrapper(object):
         self._metadata = {}
         self._position = 0
         self._time = 0
+        self._req_id = 0
 
         self._bus = dbus.SessionBus()
         if self._params['mmkeys']:
@@ -458,10 +459,14 @@ class MPDWrapper(object):
     # def last_currentsong(self):
     #     return self._currentsong.copy()
 
-    def control(self, command):  # , param = ""):
-        logger.info(f'Control: {command}')
-        requests.post(f'http://{params["host"]}:{params["port"]}/jsonrpc', json={
-            "id": 1, "jsonrpc": "2.0", "method": "Stream.Control", "params": {"id": "Pipe", "command": command}})
+    def control(self, command, params={}):
+        j = {"id": self._req_id, "jsonrpc": "2.0", "method": "Stream.Control",
+             "params": {"id": "Pipe", "command": command, "params": params}}
+        logger.info(f'Control: {command}, json: {j}')
+        url = f'http://{self._params["host"]}:{self._params["port"]}/jsonrpc'
+        logger.info(f'url: {url}')
+        self._req_id += 1
+        requests.post(url, json=j)
 
     @property
     def metadata(self):
@@ -626,6 +631,7 @@ class MPDWrapper(object):
 class NotifyWrapper(object):
 
     def __init__(self, params):
+        self._last_notification = None
         self._notification = None
         self._enabled = True
 
@@ -672,6 +678,11 @@ class NotifyWrapper(object):
     def notify(self, title, body, uri=''):
         if not self._enabled:
             return
+
+        if self._last_notification == [title, body, uri]:
+            return
+
+        self._last_notification = [title, body, uri]
 
         # If we did not yet manage to get a notification service,
         # try again
@@ -909,37 +920,38 @@ class MPRISInterface(dbus.service.Object):
     # Player methods
     @ dbus.service.method(__player_interface, in_signature='', out_signature='')
     def Next(self):
-        snapcast_wrapper.control("next")
+        snapcast_wrapper.control("Next")
         return
 
     @ dbus.service.method(__player_interface, in_signature='', out_signature='')
     def Previous(self):
-        snapcast_wrapper.control("previous")
+        snapcast_wrapper.control("Previous")
         return
 
     @ dbus.service.method(__player_interface, in_signature='', out_signature='')
     def Pause(self):
-        snapcast_wrapper.control("pause")
+        snapcast_wrapper.control("Pause")
         return
 
     @ dbus.service.method(__player_interface, in_signature='', out_signature='')
     def PlayPause(self):
-        snapcast_wrapper.control("playpause")
+        snapcast_wrapper.control("PlayPause")
         return
 
     @ dbus.service.method(__player_interface, in_signature='', out_signature='')
     def Stop(self):
-        snapcast_wrapper.control("stop")
+        snapcast_wrapper.control("Stop")
         return
 
     @ dbus.service.method(__player_interface, in_signature='', out_signature='')
     def Play(self):
-        snapcast_wrapper.control("play")
+        snapcast_wrapper.control("Play")
         return
 
     @ dbus.service.method(__player_interface, in_signature='x', out_signature='')
     def Seek(self, offset):
         logger.info(f'Seek {offset}')
+        snapcast_wrapper.control("Seek", {"Offset": offset})
         # status = mpd_wrapper.status()
         # current, end = status['time'].split(':')
         # current = int(current)
@@ -955,7 +967,11 @@ class MPRISInterface(dbus.service.Object):
 
     @ dbus.service.method(__player_interface, in_signature='ox', out_signature='')
     def SetPosition(self, trackid, position):
-        logger.info(f'SetPosition trackid: {trackid}, position: {position}')
+        logger.info(f'SetPosition TrackId: {trackid}, Position: {position}')
+        snapcast_wrapper.control(
+            "SetPosition", {"TrackId": trackid, "Position": position})
+        self.Seeked(position)
+
         # song = mpd_wrapper.last_currentsong()
         # # FIXME: use real dbus objects
         # if str(trackid) != '/org/mpris/MediaPlayer2/Track/%s' % song['id']:
@@ -1018,6 +1034,9 @@ Report bugs to https://github.com/eonpatapon/mpDris2/issues""" % params)
 if __name__ == '__main__':
     DBusGMainLoop(set_as_default=True)
 
+    # TODO:
+    # -cleanup: remove mpd-ish stuff
+    # -stream id: keep track of the client's stream
     gettext.bindtextdomain('mpDris2', '@datadir@/locale')
     gettext.textdomain('mpDris2')
 

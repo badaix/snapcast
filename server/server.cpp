@@ -438,7 +438,7 @@ void Server::processRequest(const jsonrpcpp::request_ptr request, jsonrpcpp::ent
                 // clang-format on
 
                 LOG(INFO, LOG_TAG) << "Stream.Control id: " << request->params().get<std::string>("id") << ", command: " << request->params().get("command")
-                                   << "\n";
+                                   << ", params: " << (request->params().has("params") ? request->params().get("params") : "") << "\n";
 
                 // Find stream
                 string streamId = request->params().get<std::string>("id");
@@ -447,7 +447,7 @@ void Server::processRequest(const jsonrpcpp::request_ptr request, jsonrpcpp::ent
                     throw jsonrpcpp::InternalErrorException("Stream not found", request->id());
 
                 // Set metadata from request
-                stream->control(request->params().get("command"), request->params().has("param") ? request->params().get("param") : "");
+                stream->control(request->params().get("command"), request->params().has("params") ? request->params().get("params") : json{});
 
                 // Setup response
                 result["id"] = streamId;

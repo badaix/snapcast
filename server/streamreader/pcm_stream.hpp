@@ -45,6 +45,7 @@
 
 
 namespace bp = boost::process;
+using json = nlohmann::json;
 
 
 namespace streamreader
@@ -111,16 +112,20 @@ public:
 class CtrlScript
 {
 public:
+    using OnReceive = std::function<void(std::string msg)>;
+
     CtrlScript(boost::asio::io_context& ioc, const std::string& script);
     virtual ~CtrlScript();
 
-    void start(const std::string& stream_id, const ServerSettings& server_setttings, const std::string& command = "", const std::string& param = "");
+    void start(const std::string& stream_id, const ServerSettings& server_setttings, const OnReceive& receive_handler);
     void stop();
+    /// Send a message to stdin of the process
+    void send(const std::string& msg);
 
 private:
     void stderrReadLine();
     void stdoutReadLine();
-    void logScript(const std::string& source, std::string line);
+    void logScript(std::string line);
 
     bp::child process_;
     bp::pipe pipe_stdout_;
@@ -129,9 +134,11 @@ private:
     std::unique_ptr<boost::asio::posix::stream_descriptor> stream_stderr_;
     boost::asio::streambuf streambuf_stdout_;
     boost::asio::streambuf streambuf_stderr_;
+    OnReceive receive_handler_;
 
     boost::asio::io_context& ioc_;
     std::string script_;
+    bp::opstream in_;
 };
 
 
@@ -162,7 +169,7 @@ public:
     std::shared_ptr<msg::StreamTags> getMeta() const;
     void setMeta(const json& j);
 
-    void control(const std::string& command, const std::string& param);
+    virtual void control(const std::string& command, const json& params);
 
     virtual ReaderState getState() const;
     virtual json toJson() const;
@@ -172,6 +179,7 @@ public:
 protected:
     std::atomic<bool> active_;
 
+    void onControlMsg(const std::string& msg);
     void setState(ReaderState newState);
     void chunkRead(const msg::PcmChunk& chunk);
     void resync(const std::chrono::nanoseconds& duration);
@@ -189,7 +197,7 @@ protected:
     boost::asio::io_context& ioc_;
     ServerSettings server_settings_;
     std::unique_ptr<CtrlScript> ctrl_script_;
-    std::unique_ptr<CtrlScript> command_script_;
+    size_t req_id_;
 };
 
 } // namespace streamreader

@@ -25,6 +25,7 @@
 #include "common/str_compat.hpp"
 #include "common/utils/string_utils.hpp"
 #include "encoder/encoder_factory.hpp"
+#include "jsonrpcpp.hpp"
 #include "pcm_stream.hpp"
 
 
@@ -48,36 +49,42 @@ CtrlScript::~CtrlScript()
 }
 
 
-void CtrlScript::start(const std::string& stream_id, const ServerSettings& server_setttings, const std::string& command, const std::string& param)
+void CtrlScript::start(const std::string& stream_id, const ServerSettings& server_setttings, const OnReceive& receive_handler)
 {
+    receive_handler_ = receive_handler;
     pipe_stderr_ = bp::pipe();
     pipe_stdout_ = bp::pipe();
     stringstream params;
     params << " \"--stream=" + stream_id + "\"";
     if (server_setttings.http.enabled)
         params << " --snapcast-port=" << server_setttings.http.port;
-    if (!command.empty())
-        params << " --command=" << command;
-    if (!param.empty())
-        params << " --param=" << param;
     process_ = bp::child(
-        script_ + params.str(), bp::std_out > pipe_stdout_, bp::std_err > pipe_stderr_,
-        bp::on_exit = [](int exit,
-                         const std::error_code& ec_in) { LOG(INFO, SCRIPT_LOG_TAG) << "Exit code: " << exit << ", message: " << ec_in.message() << "\n"; },
+        script_ + params.str(), bp::std_out > pipe_stdout_, bp::std_err > pipe_stderr_, bp::std_in < in_,
+        bp::on_exit =
+            [](int exit, const std::error_code& ec_in) {
+                auto severity = AixLog::Severity::debug;
+                if (exit != 0)
+                    severity = AixLog::Severity::error;
+                LOG(severity, SCRIPT_LOG_TAG) << "Exit code: " << exit << ", message: " << ec_in.message() << "\n";
+            },
         ioc_);
     stream_stdout_ = make_unique<boost::asio::posix::stream_descriptor>(ioc_, pipe_stdout_.native_source());
     stream_stderr_ = make_unique<boost::asio::posix::stream_descriptor>(ioc_, pipe_stderr_.native_source());
-    stderrReadLine();
     stdoutReadLine();
+    stderrReadLine();
 }
 
+void CtrlScript::send(const std::string& msg)
+{
+    in_.write(msg.data(), msg.size());
+    in_.flush();
+}
 
-void CtrlScript::logScript(const std::string& source, std::string line)
+void CtrlScript::logScript(std::string line)
 {
     if (line.empty())
         return;
 
-    std::ignore = source;
     if (line.back() == '\r')
         line.resize(line.size() - 1);
     auto tmp = utils::string::tolower_copy(line);
@@ -104,13 +111,13 @@ void CtrlScript::stderrReadLine()
     boost::asio::async_read_until(*stream_stderr_, streambuf_stderr_, delimiter, [this, delimiter](const std::error_code& ec, std::size_t bytes_transferred) {
         if (ec)
         {
-            LOG(ERROR, LOG_TAG) << "Error while reading from stderr: " << ec.message() << "\n";
+            LOG(ERROR, SCRIPT_LOG_TAG) << "Error while reading from stderr: " << ec.message() << "\n";
             return;
         }
 
         // Extract up to the first delimiter.
         std::string line{buffers_begin(streambuf_stderr_.data()), buffers_begin(streambuf_stderr_.data()) + bytes_transferred - delimiter.length()};
-        logScript("stderr", std::move(line));
+        logScript(std::move(line));
         streambuf_stderr_.consume(bytes_transferred);
         stderrReadLine();
     });
@@ -123,13 +130,13 @@ void CtrlScript::stdoutReadLine()
     boost::asio::async_read_until(*stream_stdout_, streambuf_stdout_, delimiter, [this, delimiter](const std::error_code& ec, std::size_t bytes_transferred) {
         if (ec)
         {
-            LOG(ERROR, LOG_TAG) << "Error while reading from stdout: " << ec.message() << "\n";
+            LOG(ERROR, SCRIPT_LOG_TAG) << "Error while reading from stdout: " << ec.message() << "\n";
             return;
         }
 
         // Extract up to the first delimiter.
         std::string line{buffers_begin(streambuf_stdout_.data()), buffers_begin(streambuf_stdout_.data()) + bytes_transferred - delimiter.length()};
-        logScript("stdout", std::move(line));
+        receive_handler_(std::move(line));
         streambuf_stdout_.consume(bytes_transferred);
         stdoutReadLine();
     });
@@ -147,7 +154,7 @@ void CtrlScript::stop()
 
 
 PcmStream::PcmStream(PcmListener* pcmListener, boost::asio::io_context& ioc, const ServerSettings& server_settings, const StreamUri& uri)
-    : active_(false), pcmListeners_{pcmListener}, uri_(uri), chunk_ms_(20), state_(ReaderState::kIdle), ioc_(ioc), server_settings_(server_settings)
+    : active_(false), pcmListeners_{pcmListener}, uri_(uri), chunk_ms_(20), state_(ReaderState::kIdle), ioc_(ioc), server_settings_(server_settings), req_id_(0)
 {
     encoder::EncoderFactory encoderFactory;
     if (uri_.query.find(kUriCodec) == uri_.query.end())
@@ -166,7 +173,6 @@ PcmStream::PcmStream(PcmListener* pcmListener, boost::asio::io_context& ioc, con
     if (uri_.query.find(kControlScript) != uri_.query.end())
     {
         ctrl_script_ = std::make_unique<CtrlScript>(ioc, uri_.query[kControlScript]);
-        command_script_ = std::make_unique<CtrlScript>(ioc, uri_.query[kControlScript]);
     }
 
     if (uri_.query.find(kUriChunkMs) != uri_.query.end())
@@ -218,6 +224,74 @@ std::string PcmStream::getCodec() const
 }
 
 
+void PcmStream::onControlMsg(const std::string& msg)
+{
+    LOG(DEBUG, LOG_TAG) << "Received: " << msg << "\n";
+
+    jsonrpcpp::entity_ptr entity(nullptr);
+    try
+    {
+        entity = jsonrpcpp::Parser::do_parse(msg);
+        if (!entity)
+        {
+            LOG(ERROR, LOG_TAG) << "Failed to parse message\n";
+            return;
+        }
+    }
+    catch (const jsonrpcpp::ParseErrorException& e)
+    {
+        LOG(ERROR, LOG_TAG) << "Failed to parse message: " << e.what() << "\n";
+        return;
+        // return e.to_json().dump();
+    }
+    catch (const std::exception& e)
+    {
+        LOG(ERROR, LOG_TAG) << "Failed to parse message: " << e.what() << "\n";
+        return;
+        // return jsonrpcpp::ParseErrorException(e.what()).to_json().dump();
+    }
+
+    if (entity->is_notification())
+    {
+        jsonrpcpp::notification_ptr notification = dynamic_pointer_cast<jsonrpcpp::Notification>(entity);
+        LOG(INFO, LOG_TAG) << "Notification method: " << notification->method() << ", params: " << notification->params().to_json() << "\n";
+        if (notification->method() == "Stream.OnMetadata")
+        {
+            setMeta(notification->params().to_json());
+        }
+    }
+    else if (entity->is_request())
+    {
+        LOG(INFO, LOG_TAG) << "Request\n";
+        // jsonrpcpp::entity_ptr response(nullptr);
+        // jsonrpcpp::notification_ptr notification(nullptr);
+        // jsonrpcpp::request_ptr request = dynamic_pointer_cast<jsonrpcpp::Request>(entity);
+        // processRequest(request, response, notification);
+        // saveConfig();
+        // ////cout << "Request:      " << request->to_json().dump() << "\n";
+        // if (notification)
+        // {
+        //     ////cout << "Notification: " << notification->to_json().dump() << "\n";
+        //     controlServer_->send(notification->to_json().dump(), controlSession);
+        // }
+        // if (response)
+        // {
+        //     ////cout << "Response:     " << response->to_json().dump() << "\n";
+        //     return response->to_json().dump();
+        // }
+        // return "";
+    }
+    else if (entity->is_response())
+    {
+        jsonrpcpp::response_ptr response = dynamic_pointer_cast<jsonrpcpp::Response>(entity);
+        LOG(INFO, LOG_TAG) << "Response: " << response->result().dump() << ", id: " << response->id() << "\n";
+    }
+
+    // json j = json::parse(msg);
+    // setMeta(j["params"]["meta"]);
+}
+
+
 void PcmStream::start()
 {
     LOG(DEBUG, LOG_TAG) << "Start: " << name_ << ", type: " << uri_.scheme << ", sampleformat: " << sampleFormat_.toString() << ", codec: " << getCodec()
@@ -227,7 +301,7 @@ void PcmStream::start()
     active_ = true;
 
     if (ctrl_script_)
-        ctrl_script_->start(getId(), server_settings_);
+        ctrl_script_->start(getId(), server_settings_, [this](const std::string& msg) { onControlMsg(msg); });
 }
 
 
@@ -329,11 +403,16 @@ std::shared_ptr<msg::StreamTags> PcmStream::getMeta() const
 }
 
 
-void PcmStream::control(const std::string& command, const std::string& param)
+void PcmStream::control(const std::string& command, const json& params)
 {
-    LOG(INFO, LOG_TAG) << "Stream " << getId() << " control: '" << command << "', param: '" << param << "'\n";
-    if (command_script_)
-        command_script_->start(getId(), server_settings_, command, param);
+    LOG(INFO, LOG_TAG) << "Stream '" << getId() << "' received command: '" << command << "', params: '" << params << "'\n";
+    for (const auto& it : params.items())
+    {
+        LOG(INFO, LOG_TAG) << "Stream " << getId() << " key: '" << it.key() << "', param: '" << it.value() << "'\n";
+    }
+    jsonrpcpp::Request request(++req_id_, command, params);
+    if (ctrl_script_)
+        ctrl_script_->send(request.to_json().dump() + "\n"); //, params);
 }
 
 

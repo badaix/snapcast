@@ -24,7 +24,6 @@
 # - python-mpd2
 # - musicbrainzngs
 
-from configparser import ConfigParser
 import os
 import sys
 import socket
@@ -34,9 +33,9 @@ from dbus.mainloop.glib import DBusGMainLoop
 import logging
 import gettext
 import time
-import base64
+import json
 import musicbrainzngs
-import requests
+import fcntl
 
 __version__ = "@version@"
 __git_version__ = "@gitversion@"
@@ -131,6 +130,11 @@ urlhandlers = ['http://']
 downloaded_covers = ['~/.covers/%s-%s.jpg']
 
 
+def send(json_msg):
+    print(json.dumps(json_msg))
+    sys.stdout.flush()
+
+
 class MPDWrapper(object):
     """ Wrapper of mpd.MPDClient to handle socket
         errors and similar
@@ -181,6 +185,7 @@ class MPDWrapper(object):
             self._idling = False
             self._can_idle = False
             self._can_single = False
+            self._buffer = ''
 
             self.client.connect(
                 self._params['mpd-host'], self._params['mpd-port'])
@@ -229,6 +234,13 @@ class MPDWrapper(object):
                     self._watch_id = GLib.io_add_watch(self,
                                                        GLib.IO_IN | GLib.IO_HUP,
                                                        self.socket_callback)
+
+            flags = fcntl.fcntl(sys.stdin.fileno(), fcntl.F_GETFL)
+            flags |= os.O_NONBLOCK
+            fcntl.fcntl(sys.stdin.fileno(), fcntl.F_SETFL, flags)
+            GLib.io_add_watch(sys.stdin, GLib.IO_IN |
+                              GLib.IO_HUP, self.io_callback)
+
             # Reset error counter
             self._errors = 0
 
@@ -312,6 +324,67 @@ class MPDWrapper(object):
             self.idle_enter()
         return True
 
+    def control(self, cmd):
+        try:
+            request = json.loads(cmd)
+            cmd = request['method']
+            id = request['id']
+            success = True
+            if cmd == 'Next':
+                self.next()
+            elif cmd == 'Previous':
+                self.previous()
+            elif cmd == 'Play':
+                self.play()
+            elif cmd == 'Pause':
+                self.pause(1)
+            elif cmd == 'PlayPause':
+                if self.status()['state'] == 'play':
+                    self.pause(1)
+                else:
+                    self.play()
+            elif cmd == 'Stop':
+                self.stop()
+            elif cmd == 'SetPosition':
+                trackid = request['params']['TrackId']
+                trackid = trackid.rsplit('/', 1)[1]
+                position = request['params']['Position']
+                position = int(position) / 1000000
+                self.seekid(int(trackid), position)
+            elif cmd == 'Seek':
+                offset = request['params']['Offset']
+                offset = int(offset) / 1000000
+                strOffset = str(offset)
+                if offset >= 0:
+                    strOffset = "+" + strOffset
+                self.seekcur(strOffset)
+            else:
+                send({"jsonrpc": "2.0", "error": {"code": -32601,
+                     "message": "Method not found"}, "id": id})
+                success = False
+            if success:
+                send({"jsonrpc": "2.0", "result": "ok", "id": id})
+        except:
+            send({"jsonrpc": "2.0", "error": {
+                 "code": -32700, "message": "Parse error"}, "id": id})
+
+    def io_callback(self, fd, event):
+        logger.debug("IO event %r on fd %r" % (event, fd))
+        if event & GLib.IO_HUP:
+            logger.debug("IO_HUP")
+            return True
+        elif event & GLib.IO_IN:
+            chunk = fd.read()
+            for char in chunk:
+                if char == '\n':
+                    logger.info(f'Received: {self._buffer}')
+
+                    self.control(self._buffer)
+                    self._buffer = ''
+                else:
+                    self._buffer += char
+            return True
+
     def socket_callback(self, fd, event):
         try:
             logger.debug("Socket event %r on fd %r" % (event, fd))
@@ -389,6 +462,9 @@ class MPDWrapper(object):
                     snapmeta['artist'] = [fields[0]]
                     snapmeta['title'] = fields[1]
 
+        send({"jsonrpc": "2.0", "method": "Stream.OnMetadata", "params": snapmeta})
+
+        snapmeta['artUrl'] = 'http://127.0.0.1:1780/launcher-icon.png'
         album_key = 'musicbrainzAlbumId'
         try:
             if not album_key in snapmeta:
@@ -424,8 +500,7 @@ class MPDWrapper(object):
                 f'Error while getting cover for {snapmeta[album_key]}: {e}')
 
         logger.info(f'Snapmeta: {snapmeta}')
-        requests.post(f'http://{params["snapcast-host"]}:{params["snapcast-port"]}/jsonrpc', json={
-                      "id": 4, "jsonrpc": "2.0", "method": "Stream.SetMeta", "params": {"id": params['stream'], "meta": snapmeta}})
+        send({"jsonrpc": "2.0", "method": "Stream.OnMetadata", "params": snapmeta})
 
     def _update_properties(self, force=False):
         old_status = self._status
@@ -607,7 +682,7 @@ if __name__ == '__main__':
     # Parse command line
     try:
         (opts, args) = getopt.getopt(sys.argv[1:], 'hdjv',
-                                     ['help', 'mpd-host=', 'mpd-port=', 'snapcast-host=', 'snapcast-port=', 'stream=', 'command=', 'debug', 'use-journal', 'version'])
+                                     ['help', 'mpd-host=', 'mpd-port=', 'snapcast-host=', 'snapcast-port=', 'stream=', 'debug', 'use-journal', 'version'])
     except getopt.GetoptError as ex:
         (msg, opt) = ex.args
         print("%s: %s" % (sys.argv[0], msg), file=sys.stderr)
@@ -629,8 +704,6 @@ if __name__ == '__main__':
             params['snapcast-port'] = int(arg)
         elif opt in ['--stream']:
             params['stream'] = arg
-        elif opt in ['--command']:
-            params['command'] = arg
         elif opt in ['-d', '--debug']:
             log_level = logging.DEBUG
         elif opt in ['-j', '--use-journal']:
@@ -676,41 +749,6 @@ if __name__ == '__main__':
     params['mpd-host'] = os.path.expanduser(params['mpd-host'])
 
     logger.debug(f'Parameters: {params}')
-
-    if 'command' in params:
-        try:
-            cmd = params['command']
-            if cmd not in ['next', 'previous', 'play', 'pause', 'playpause', 'stop']:
-                logger.error(f'Command not supported: {cmd}')
-                sys.exit(1)
-
-            client = mpd.MPDClient()
-            client.connect(params['mpd-host'], params['mpd-port'])
-            if params['mpd-password']:
-                client.password(params['mpd-password'])
-
-            if cmd == 'next':
-                client.next()
-            elif cmd == 'previous':
-                client.previous()
-            elif cmd == 'play':
-                client.play()
-            elif cmd == 'pause':
-                client.pause(1)
-            elif cmd == 'playpause':
-                if client.status()['state'] == 'play':
-                    client.pause(1)
-                else:
-                    client.play()
-            elif cmd == 'stop':
-                client.stop()
-
-            client.close()
-            client.disconnect()
-        except mpd.CommandError as e:
-            logger.error(e)
-            sys.exit(1)
-        sys.exit(0)
 
     # Set up the main loop
     if using_gi_glib:
