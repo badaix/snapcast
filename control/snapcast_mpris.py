@@ -356,6 +356,9 @@ class MPDWrapper(object):
                 self._metadata[
                     'mpris:trackid'] = f'/org/mpris/MediaPlayer2/Track/{self._metadata["mpris:trackid"]}'
 
+            if not 'mpris:artUrl' in self._metadata:
+                self._metadata['mpris:artUrl'] = f'http://{self._params["host"]}:{self._params["port"]}/launcher-icon.png'
+
             logger.info(f'mpris meta: {self._metadata}')
 
             self.notify_about_track(self._metadata)
@@ -466,7 +469,7 @@ class MPDWrapper(object):
         url = f'http://{self._params["host"]}:{self._params["port"]}/jsonrpc'
         logger.info(f'url: {url}')
         self._req_id += 1
-        requests.post(url, json=j)
+        self.websocket.send(json.dumps(j))
 
     @property
     def metadata(self):
@@ -474,8 +477,8 @@ class MPDWrapper(object):
 
     def notify_about_track(self, meta, state='play'):
         uri = 'sound'
-        if 'mpris:artUrl' in meta:
-            uri = meta['mpris:artUrl']
+        # if 'mpris:artUrl' in meta:
+        #     uri = meta['mpris:artUrl']
 
         title = 'Unknown Title'
         if 'xesam:title' in meta:

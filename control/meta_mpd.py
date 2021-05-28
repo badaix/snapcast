@@ -79,7 +79,50 @@ defaults = {
     'stream': 'default',
 }
 
+# Player.Status
+status_mapping = {
+    # https://specifications.freedesktop.org/mpris-spec/latest/Player_Interface.html#properties
+    'state': ['playbackStatus', lambda val: {'play': 'playing', 'pause': 'paused', 'stop': 'stopped'}[val]],  # R/O - play => playing, pause => paused, stop => stopped
+    'repeat': ['loopStatus', lambda val: {'0': 'none', '1': 'track', '2': 'playlist'}[val]],     # R/W - 0 => none, 1 => track, n/a => playlist
+    # 'Rate	d (Playback_Rate)	R/W
+    'random': ['shuffle', lambda val: {'0': False, '1': True}[val]],        # R/W - 0 => false, 1 => true
+    # 'Metadata	a{sv} (Metadata_Map)	Read only
+    'volume': ['volume', int],         # R/W - 0-100 => 0-100
+    'elapsed': ['position', float],    # R/O - seconds? ms?
+    # 'MinimumRate	d (Playback_Rate)	Read only
+    # 'MaximumRate	d (Playback_Rate)	Read only
+    # 'CanGoNext	b	Read only
+    # 'CanGoPrevious	b	Read only
+    # 'CanPlay	b	Read only
+    # 'CanPause	b	Read only
+    # 'CanSeek	b	Read only
+    # 'CanControl	b	Read only
 
+    # https://mpd.readthedocs.io/en/stable/protocol.html#status
+    # partition: the name of the current partition (see Partition commands)
+    # single 2: 0, 1, or oneshot 6
+    # consume 2: 0 or 1
+    # playlist: 31-bit unsigned integer, the playlist version number
+    # playlistlength: integer, the length of the playlist
+    # song: playlist song number of the current song stopped on or playing
+    # songid: playlist songid of the current song stopped on or playing
+    # nextsong 2: playlist song number of the next song to be played
+    # nextsongid 2: playlist songid of the next song to be played
+    # time: total time elapsed (of current playing/paused song) in seconds (deprecated, use elapsed instead)
+    'duration': ['duration', float], # duration 5: Duration of the current song in seconds.
+    # bitrate: instantaneous bitrate in kbps
+    # xfade: crossfade in seconds
+    # mixrampdb: mixramp threshold in dB
+    # mixrampdelay: mixrampdelay in seconds
+    # audio: The format emitted by the decoder plugin during playback, format: samplerate:bits:channels. See Global Audio Format for a detailed explanation.
+    # updating_db: job id
+    # error: if there is an error, returns message here
+
+    # Snapcast
+    'mute': ['mute', lambda val: {'0': False, '1': True}[val]] # R/W true/false
+}
+
+# Player.Metadata
 # MPD to Snapcast tag mapping: <mpd tag>: [<snapcast tag>, <type>, <is list?>]
 tag_mapping = {
     'id': ['trackId', str, False],
@@ -445,7 +488,6 @@ class MPDWrapper(object):
                 logger.warning("Can't cast value %r to %s" %
                                (value, tag_mapping[key][1]))
 
-                # Stream: populate some missings tags with stream's name
         logger.debug(f'snapcast meta: {snapmeta}')
 
         # Hack for web radio:
@@ -462,9 +504,8 @@ class MPDWrapper(object):
                     snapmeta['artist'] = [fields[0]]
                     snapmeta['title'] = fields[1]
 
-        send({"jsonrpc": "2.0", "method": "Stream.OnMetadata", "params": snapmeta})
+        send({"jsonrpc": "2.0", "method": "Player.Metadata", "params": snapmeta})
 
-        snapmeta['artUrl'] = 'http://127.0.0.1:1780/launcher-icon.png'
         album_key = 'musicbrainzAlbumId'
         try:
             if not album_key in snapmeta:
@@ -500,7 +541,7 @@ class MPDWrapper(object):
                 f'Error while getting cover for {snapmeta[album_key]}: {e}')
 
         logger.info(f'Snapmeta: {snapmeta}')
-        send({"jsonrpc": "2.0", "method": "Stream.OnMetadata", "params": snapmeta})
+        send({"jsonrpc": "2.0", "method": "Player.Metadata", "params": snapmeta})
 
     def _update_properties(self, force=False):
         old_status = self._status
@@ -510,6 +551,22 @@ class MPDWrapper(object):
         new_status = self.client.status()
         logger.info(f'new status: {new_status}')
         self._time = new_time = int(time.time())
+
+        snapstatus = {}
+        for key, value in new_status.items():
+            try:
+                mapped_key = status_mapping[key][0]
+                mapped_val = status_mapping[key][1](value)
+                snapstatus[mapped_key] = mapped_val
+                logger.debug(
+                    f'key: {key}, value: {value}, mapped key: {mapped_key}, mapped value: {mapped_val}')
+            except KeyError:
+                logger.warning(f'tag "{key}" not supported')
+            except (ValueError, TypeError):
+                logger.warning("Can't cast value %r to %s" %
+                               (value, status_mapping[key][1]))
+
+        send({"jsonrpc": "2.0", "method": "Player.Status", "params": snapstatus})
 
         if not new_status:
             logger.debug("_update_properties: failed to get new status")

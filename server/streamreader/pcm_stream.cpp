@@ -255,7 +255,7 @@ void PcmStream::onControlMsg(const std::string& msg)
     {
         jsonrpcpp::notification_ptr notification = dynamic_pointer_cast<jsonrpcpp::Notification>(entity);
         LOG(INFO, LOG_TAG) << "Notification method: " << notification->method() << ", params: " << notification->params().to_json() << "\n";
-        if (notification->method() == "Stream.OnMetadata")
+        if (notification->method() == "Player.Metadata")
         {
             setMeta(notification->params().to_json());
         }
