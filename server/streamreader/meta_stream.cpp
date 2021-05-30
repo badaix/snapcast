@@ -93,6 +93,12 @@ void MetaStream::onMetaChanged(const PcmStream* pcmStream)
 }
 
 
+void MetaStream::onPropertiesChanged(const PcmStream* pcmStream)
+{
+    LOG(DEBUG, LOG_TAG) << "onPropertiesChanged: " << pcmStream->getName() << "\n";
+}
+
+
 void MetaStream::onStateChanged(const PcmStream* pcmStream, ReaderState state)
 {
     LOG(DEBUG, LOG_TAG) << "onStateChanged: " << pcmStream->getName() << ", state: " << state << "\n";

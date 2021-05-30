@@ -82,10 +82,13 @@ defaults = {
 # Player.Status
 status_mapping = {
     # https://specifications.freedesktop.org/mpris-spec/latest/Player_Interface.html#properties
-    'state': ['playbackStatus', lambda val: {'play': 'playing', 'pause': 'paused', 'stop': 'stopped'}[val]],  # R/O - play => playing, pause => paused, stop => stopped
-    'repeat': ['loopStatus', lambda val: {'0': 'none', '1': 'track', '2': 'playlist'}[val]],     # R/W - 0 => none, 1 => track, n/a => playlist
+    # R/O - play => playing, pause => paused, stop => stopped
+    'state': ['playbackStatus', lambda val: {'play': 'playing', 'pause': 'paused', 'stop': 'stopped'}[val]],
+    # R/W - 0 => none, 1 => track, n/a => playlist
+    'repeat': ['loopStatus', lambda val: {'0': 'none', '1': 'track', '2': 'playlist'}[val]],
     # 'Rate	d (Playback_Rate)	R/W
-    'random': ['shuffle', lambda val: {'0': False, '1': True}[val]],        # R/W - 0 => false, 1 => true
+    # R/W - 0 => false, 1 => true
+    'random': ['shuffle', lambda val: {'0': False, '1': True}[val]],
     # 'Metadata	a{sv} (Metadata_Map)	Read only
     'volume': ['volume', int],         # R/W - 0-100 => 0-100
     'elapsed': ['position', float],    # R/O - seconds? ms?
@@ -109,7 +112,8 @@ status_mapping = {
     # nextsong 2: playlist song number of the next song to be played
     # nextsongid 2: playlist songid of the next song to be played
     # time: total time elapsed (of current playing/paused song) in seconds (deprecated, use elapsed instead)
-    'duration': ['duration', float], # duration 5: Duration of the current song in seconds.
+    # duration 5: Duration of the current song in seconds.
+    'duration': ['duration', float],
     # bitrate: instantaneous bitrate in kbps
     # xfade: crossfade in seconds
     # mixrampdb: mixramp threshold in dB
@@ -119,7 +123,8 @@ status_mapping = {
     # error: if there is an error, returns message here
 
     # Snapcast
-    'mute': ['mute', lambda val: {'0': False, '1': True}[val]] # R/W true/false
+    # R/W true/false
+    'mute': ['mute', lambda val: {'0': False, '1': True}[val]]
 }
 
 # Player.Metadata
@@ -207,6 +212,7 @@ class MPDWrapper(object):
         self._temp_cover = None
         self._position = 0
         self._time = 0
+        self._currentsong = None
 
     def run(self):
         """
@@ -370,37 +376,61 @@ class MPDWrapper(object):
     def control(self, cmd):
         try:
             request = json.loads(cmd)
-            cmd = request['method']
             id = request['id']
-            success = True
-            if cmd == 'Next':
-                self.next()
-            elif cmd == 'Previous':
-                self.previous()
-            elif cmd == 'Play':
-                self.play()
-            elif cmd == 'Pause':
-                self.pause(1)
-            elif cmd == 'PlayPause':
-                if self.status()['state'] == 'play':
-                    self.pause(1)
-                else:
+            [interface, cmd] = request['method'].split('.', 1)
+            if interface == 'Player':
+                success = True
+                if cmd == 'Next':
+                    self.next()
+                elif cmd == 'Previous':
+                    self.previous()
+                elif cmd == 'Play':
                     self.play()
-            elif cmd == 'Stop':
-                self.stop()
-            elif cmd == 'SetPosition':
-                trackid = request['params']['TrackId']
-                trackid = trackid.rsplit('/', 1)[1]
-                position = request['params']['Position']
-                position = int(position) / 1000000
-                self.seekid(int(trackid), position)
-            elif cmd == 'Seek':
-                offset = request['params']['Offset']
-                offset = int(offset) / 1000000
-                strOffset = str(offset)
-                if offset >= 0:
-                    strOffset = "+" + strOffset
-                self.seekcur(strOffset)
+                elif cmd == 'Pause':
+                    self.pause(1)
+                elif cmd == 'PlayPause':
+                    if self.status()['state'] == 'play':
+                        self.pause(1)
+                    else:
+                        self.play()
+                elif cmd == 'Stop':
+                    self.stop()
+                elif cmd == 'SetPosition':
+                    trackid = request['params']['TrackId']
+                    trackid = trackid.rsplit('/', 1)[1]
+                    position = request['params']['Position']
+                    position = int(position) / 1000000
+                    self.seekid(int(trackid), position)
+                elif cmd == 'Seek':
+                    offset = request['params']['Offset']
+                    offset = int(offset) / 1000000
+                    strOffset = str(offset)
+                    if offset >= 0:
+                        strOffset = "+" + strOffset
+                    self.seekcur(strOffset)
+                elif cmd == 'SetProperties':
+                    properties = request['params']
+                    logger.info(f'SetProperties: {properties}')
+                    if 'shuffle' in properties:
+                        self.random(int(properties['shuffle']))
+                    if 'loopStatus' in properties:
+                        value = properties['loopStatus']
+                        if value == "playlist":
+                            self.repeat(1)
+                            if self._can_single:
+                                self.single(0)
+                        elif value == "track":
+                            if self._can_single:
+                                self.repeat(1)
+                                self.single(1)
+                        elif value == "none":
+                            self.repeat(0)
+                            if self._can_single:
+                                self.single(0)
+                else:
+                    send({"jsonrpc": "2.0", "error": {"code": -32601,
+                        "message": "Method not found"}, "id": id})
+                    success = False
             else:
                 send({"jsonrpc": "2.0", "error": {"code": -32601,
                      "message": "Method not found"}, "id": id})
@@ -446,7 +476,8 @@ class MPDWrapper(object):
                         if subsystem in ("player", "mixer", "options", "playlist"):
                             if not updated:
                                 logger.info(f'Subsystem: {subsystem}')
-                                self._update_properties(force=True)
+                                self._update_properties(
+                                    force=subsystem == 'player')
                                 updated = True
                     self.idle_enter()
             return True
@@ -454,6 +485,44 @@ class MPDWrapper(object):
             logger.error('Exception in socket_callback')
             self.reconnect()
             return True
+
+    def update_albumart(self, snapmeta):
+        album_key = 'musicbrainzAlbumId'
+        try:
+            if not album_key in snapmeta:
+                mbartist = None
+                mbrelease = None
+                if 'artist' in snapmeta:
+                    mbartist = snapmeta['artist'][0]
+                if 'album' in snapmeta:
+                    mbrelease = snapmeta['album']
+                else:
+                    if 'title' in snapmeta:
+                        mbrelease = snapmeta['title']
+
+                if mbartist is not None and mbrelease is not None:
+                    logger.info(
+                        f'Querying album art for artist "{mbartist}", release: "{mbrelease}"')
+                    result = musicbrainzngs.search_releases(artist=mbartist, release=mbrelease,
+                                                            limit=1)
+                    if result['release-list']:
+                        snapmeta[album_key] = result['release-list'][0]['id']
+
+            if album_key in snapmeta:
+                data = musicbrainzngs.get_image_list(snapmeta[album_key])
+                for image in data["images"]:
+                    if "Front" in image["types"] and image["approved"]:
+                        snapmeta['artUrl'] = image["thumbnails"]["small"]
+                        logger.debug(
+                            f'{snapmeta["artUrl"]} is an approved front image')
+                        logger.info(f'Snapmeta: {snapmeta}')
+                        send(
+                            {"jsonrpc": "2.0", "method": "Player.Metadata", "params": snapmeta})
+                        break
+
+        except musicbrainzngs.musicbrainz.ResponseError as e:
+            logger.error(
+                f'Error while getting cover for {snapmeta[album_key]}: {e}')
 
     def update_metadata(self):
         """
@@ -505,49 +574,16 @@ class MPDWrapper(object):
                     snapmeta['title'] = fields[1]
 
         send({"jsonrpc": "2.0", "method": "Player.Metadata", "params": snapmeta})
-
-        album_key = 'musicbrainzAlbumId'
-        try:
-            if not album_key in snapmeta:
-                mbartist = None
-                mbrelease = None
-                if 'artist' in snapmeta:
-                    mbartist = snapmeta['artist'][0]
-                if 'album' in snapmeta:
-                    mbrelease = snapmeta['album']
-                else:
-                    if 'title' in snapmeta:
-                        mbrelease = snapmeta['title']
-
-                if mbartist is not None and mbrelease is not None:
-                    logger.info(
-                        f'Querying album art for artist "{mbartist}", release: "{mbrelease}"')
-                    result = musicbrainzngs.search_releases(artist=mbartist, release=mbrelease,
-                                                            limit=1)
-                    if result['release-list']:
-                        snapmeta[album_key] = result['release-list'][0]['id']
-
-            if album_key in snapmeta:
-                data = musicbrainzngs.get_image_list(snapmeta[album_key])
-                for image in data["images"]:
-                    if "Front" in image["types"] and image["approved"]:
-                        snapmeta['artUrl'] = image["thumbnails"]["small"]
-                        logger.debug(
-                            f'{snapmeta["artUrl"]} is an approved front image')
-                        break
-
-        except musicbrainzngs.musicbrainz.ResponseError as e:
-            logger.error(
-                f'Error while getting cover for {snapmeta[album_key]}: {e}')
-
-        logger.info(f'Snapmeta: {snapmeta}')
-        send({"jsonrpc": "2.0", "method": "Player.Metadata", "params": snapmeta})
+        self.update_albumart(snapmeta)
 
     def _update_properties(self, force=False):
         old_status = self._status
         old_position = self._position
         old_time = self._time
-        self._currentsong = self.client.currentsong()
+        currentsong = self.client.currentsong()
+        if self._currentsong != currentsong:
+            self._currentsong = currentsong
+            force = True
         new_status = self.client.status()
         logger.info(f'new status: {new_status}')
         self._time = new_time = int(time.time())
@@ -566,7 +602,13 @@ class MPDWrapper(object):
                 logger.warning("Can't cast value %r to %s" %
                                (value, status_mapping[key][1]))
 
-        send({"jsonrpc": "2.0", "method": "Player.Status", "params": snapstatus})
+        snapstatus['canGoNext'] = True
+        snapstatus['canGoPrevious'] = True
+        snapstatus['canPlay'] = True
+        snapstatus['canPause'] = True
+        snapstatus['canSeek'] = True
+        snapstatus['canControl'] = True
+        send({"jsonrpc": "2.0", "method": "Player.Properties", "params": snapstatus})
 
         if not new_status:
             logger.debug("_update_properties: failed to get new status")

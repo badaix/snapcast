@@ -68,6 +68,17 @@ void Server::onMetaChanged(const PcmStream* pcmStream)
 }
 
 
+void Server::onPropertiesChanged(const PcmStream* pcmStream)
+{
+    LOG(INFO, LOG_TAG) << "onPropertiesChanged (" << pcmStream->getName() << ")\n";
+    const auto props = pcmStream->getProperties();
+
+    // Send propeties to all connected control clients
+    json notification = jsonrpcpp::Notification("Stream.OnProperties", jsonrpcpp::Parameter("id", pcmStream->getId(), "properties", props->toJson())).to_json();
+    controlServer_->send(notification.dump(), nullptr);
+}
+
+
 void Server::onStateChanged(const PcmStream* pcmStream, ReaderState state)
 {
     // clang-format off
@@ -448,6 +459,28 @@ void Server::processRequest(const jsonrpcpp::request_ptr request, jsonrpcpp::ent
 
                 // Set metadata from request
                 stream->control(request->params().get("command"), request->params().has("params") ? request->params().get("params") : json{});
+
+                // Setup response
+                result["id"] = streamId;
+            }
+            else if (request->method().find("Stream.SetProperties") == 0)
+            {
+                // clang-format off
+                // clang-format on
+
+                LOG(INFO, LOG_TAG) << "Stream.SetProperties id: " << request->params().get<std::string>("id")
+                                   << ", properties: " << request->params().get("properties") << "\n";
+
+                // Find stream
+                string streamId = request->params().get<std::string>("id");
+                PcmStreamPtr stream = streamManager_->getStream(streamId);
+                if (stream == nullptr)
+                    throw jsonrpcpp::InternalErrorException("Stream not found", request->id());
+
+                Properties props(request->params().get("properties"));
+
+                // Set metadata from request
+                stream->setProperties(props);
 
                 // Setup response
                 result["id"] = streamId;

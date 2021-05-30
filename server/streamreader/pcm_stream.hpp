@@ -36,6 +36,7 @@
 #include <boost/optional.hpp>
 
 #include "common/json.hpp"
+#include "common/properties.hpp"
 #include "common/sample_format.hpp"
 #include "encoder/encoder.hpp"
 #include "message/codec_header.hpp"
@@ -102,6 +103,7 @@ class PcmListener
 {
 public:
     virtual void onMetaChanged(const PcmStream* pcmStream) = 0;
+    virtual void onPropertiesChanged(const PcmStream* pcmStream) = 0;
     virtual void onStateChanged(const PcmStream* pcmStream, ReaderState state) = 0;
     virtual void onChunkRead(const PcmStream* pcmStream, const msg::PcmChunk& chunk) = 0;
     virtual void onChunkEncoded(const PcmStream* pcmStream, std::shared_ptr<msg::PcmChunk> chunk, double duration) = 0;
@@ -169,6 +171,9 @@ public:
     std::shared_ptr<msg::StreamTags> getMeta() const;
     void setMeta(const json& j);
 
+    std::shared_ptr<Properties> getProperties() const;
+    void setProperties(const Properties& props);
+
     virtual void control(const std::string& command, const json& params);
 
     virtual ReaderState getState() const;
@@ -194,6 +199,7 @@ protected:
     std::string name_;
     ReaderState state_;
     std::shared_ptr<msg::StreamTags> meta_;
+    std::shared_ptr<Properties> properties_;
     boost::asio::io_context& ioc_;
     ServerSettings server_settings_;
     std::unique_ptr<CtrlScript> ctrl_script_;

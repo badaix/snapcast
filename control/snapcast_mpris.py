@@ -32,6 +32,7 @@ import sys
 import re
 import shlex
 import getopt
+import time
 import socket
 import dbus
 import dbus.service
@@ -306,7 +307,7 @@ class MPDWrapper(object):
             'repeat': None,
         }
         self._metadata = {}
-        self._position = 0
+        self._properties = {}
         self._time = 0
         self._req_id = 0
 
@@ -366,6 +367,30 @@ class MPDWrapper(object):
                                                           'Metadata')
             logger.info(f'new meta {new_meta}')
 
+        elif jmsg["method"] == "Stream.OnProperties":
+            logger.info(
+                f'Stream properties changed for "{jmsg["params"]["id"]}"')
+            props = jmsg["params"]["properties"]
+            logger.info(f'Properties: "{props}"')
+            props['received'] = time.time()
+            changed_properties = self.update_properties(props)
+            logger.info(f'Changed properties: "{changed_properties}"')
+            if 'playbackStatus' in changed_properties:
+                self._dbus_service.update_property(
+                    'org.mpris.MediaPlayer2.Player', 'PlaybackStatus')
+            if 'loopStatus' in changed_properties:
+                self._dbus_service.update_property(
+                    'org.mpris.MediaPlayer2.Player', 'LoopStatus')
+            if 'shuffle' in changed_properties:
+                self._dbus_service.update_property(
+                    'org.mpris.MediaPlayer2.Player', 'Shuffle')
+            if 'volume' in changed_properties:
+                self._dbus_service.update_property(
+                    'org.mpris.MediaPlayer2.Player', 'Volume')
+            if 'canGoNext' in changed_properties:
+                self._dbus_service.update_property(
+                    'org.mpris.MediaPlayer2.Player', 'CanGoNext')
+
     def on_ws_error(self, ws, error):
         logger.error("Snapcast RPC websocket error")
         logger.error(error)
@@ -382,14 +407,16 @@ class MPDWrapper(object):
             #    '/org/mpris/MediaPlayer2')
             self._dbus_service.acquire_name()
 
-        self.websocket.send(json.dumps(
-            {"id": 1, "jsonrpc": "2.0", "method": "Server.GetStatus"}))
+        self.send({"id": 1, "jsonrpc": "2.0", "method": "Server.GetStatus"})
 
     def on_ws_close(self, ws):
         logger.info("Snapcast RPC websocket closed")
         if self._dbus_service is not None:
             self._dbus_service.release_name()
         # self._dbus_service.remove_from_connection()
+
+    def send(self, json_msg):
+        self.websocket.send(json.dumps(json_msg))
 
     def stop(self):
         self.websocket.keep_running = False
@@ -469,11 +496,53 @@ class MPDWrapper(object):
         url = f'http://{self._params["host"]}:{self._params["port"]}/jsonrpc'
         logger.info(f'url: {url}')
         self._req_id += 1
-        self.websocket.send(json.dumps(j))
+        self.send(j)
+
+    def set_property(self, property, value):
+        properties = {}
+        properties[property] = value
+        logger.info(f'set_properties {properties}')
+        j = {"id": self._req_id, "jsonrpc": "2.0", "method": "Stream.SetProperties",
+             "params": {"id": "Pipe", "properties": properties}}
+        logger.info(f'Set properties: {properties}, json: {j}')
+        url = f'http://{self._params["host"]}:{self._params["port"]}/jsonrpc'
+        logger.info(f'url: {url}')
+        self._req_id += 1
+        self.send(j)
 
     @property
     def metadata(self):
         return self._metadata
+
+    @property
+    def properties(self):
+        return self._properties
+
+    def update_properties(self, new_properties):
+        changed_properties = {}
+        for key, value in new_properties.items():
+            if not key in self._properties:
+                changed_properties[key] = [None, value]
+            elif value != self._properties[key]:
+                changed_properties[key] = [self._properties[key], value]
+        for key, value in self._properties.items():
+            if not key in self._properties:
+                changed_properties[key] = [value, None]
+        self._properties = new_properties
+        return changed_properties
+
+    def position(self):
+        if not 'position' in self._properties:
+            return 0
+        if not 'duration' in self._properties:
+            return 0
+        position = self._properties['position']
+        if 'received' in self._properties:
+            position += (time.time() - self._properties['received'])
+        return position * 1000000
+
+    def property(self, name, default):
+        return self._properties.get(name, default)
 
     def notify_about_track(self, meta, state='play'):
         uri = 'sound'
@@ -763,82 +832,53 @@ class MPRISInterface(dbus.service.Object):
     }
 
     def __get_playback_status():
-        # status = mpd_wrapper.last_status()
-        # return {'play': 'Playing', 'pause': 'Paused', 'stop': 'Stopped'}[status['state']]
-        return 'Playing'
+        status = snapcast_wrapper.property('playbackStatus', 'stopped')
+        logger.debug(f'get_playback_status "{status}"')
+        return {'playing': 'Playing', 'paused': 'Paused', 'stopped': 'Stopped'}[status]
 
     def __set_loop_status(value):
         logger.debug(f'set_loop_status "{value}"')
-        # if value == "Playlist":
-        #     mpd_wrapper.repeat(1)
-        #     if mpd_wrapper._can_single:
-        #         mpd_wrapper.single(0)
-        # elif value == "Track":
-        #     if mpd_wrapper._can_single:
-        #         mpd_wrapper.repeat(1)
-        #         mpd_wrapper.single(1)
-        # elif value == "None":
-        #     mpd_wrapper.repeat(0)
-        #     if mpd_wrapper._can_single:
-        #         mpd_wrapper.single(0)
-        # else:
-        #     raise dbus.exceptions.DBusException("Loop mode %r not supported" %
-        #                                         value)
+        snapcast_wrapper.set_property(
+            'loopStatus', {'None': 'none', 'Track': 'track', 'Playlist': 'playlist'}[value])
         return
 
     def __get_loop_status():
-        logger.debug(f'get_loop_status')
-        # status = mpd_wrapper.last_status()
-        # if int(status['repeat']) == 1:
-        #     if int(status.get('single', 0)) == 1:
-        #         return "Track"
-        #     else:
-        #         return "Playlist"
-        # else:
-        # return "None"
-        return "None"
+        status = snapcast_wrapper.property('loopStatus', 'none')
+        logger.debug(f'get_loop_status "{status}"')
+        return {'none': 'None', 'track': 'Track', 'playlist': 'Playlist'}[status]
 
     def __set_shuffle(value):
         logger.debug(f'set_shuffle "{value}"')
-        # mpd_wrapper.random(value)
+        snapcast_wrapper.set_property('shuffle', bool(value))
         return
 
     def __get_shuffle():
-        logger.debug(f'get_shuffle')
-        # if int(mpd_wrapper.last_status()['random']) == 1:
-        #     return True
-        # else:
-        #     return False
-        return False
+        shuffle = snapcast_wrapper.property('shuffle', False)
+        logger.debug(f'get_shuffle "{shuffle}"')
+        return shuffle
 
     def __get_metadata():
         logger.debug(f'get_metadata: {snapcast_wrapper.metadata}')
         return dbus.Dictionary(snapcast_wrapper.metadata, signature='sv')
 
     def __get_volume():
-        logger.debug(f'get_volume')
-        # vol = float(mpd_wrapper.last_status().get('volume', 0))
-        # if vol > 0:
-        #     return vol / 100.0
-        # else:
-        #     return 0.0
-        return 0.0
+        volume = snapcast_wrapper.property('volume', 100)
+        logger.debug(f'get_volume "{volume}"')
+        if volume > 0:
+            return volume / 100.0
+        else:
+            return 0.0
 
     def __set_volume(value):
         logger.debug(f'set_voume: {value}')
-        # if value >= 0 and value <= 1:
-        #     mpd_wrapper.setvol(int(value * 100))
+        if value >= 0 and value <= 1:
+            snapcast_wrapper.set_property('volume', int(value * 100))
         return
 
     def __get_position():
-        logger.debug(f'get_position')
-        # status = mpd_wrapper.last_status()
-        # if 'time' in status:
-        #     current, end = status['time'].split(':')
-        #     return dbus.Int64((int(current) * 1000000))
-        # else:
-        #     return dbus.Int64(0)
-        return dbus.Int64(0)
+        position = snapcast_wrapper.position()
+        logger.debug(f'get_position: {position}')
+        return dbus.Int64(position)
 
     __player_interface = "org.mpris.MediaPlayer2.Player"
     __player_props = {
@@ -995,7 +1035,8 @@ class MPRISInterface(dbus.service.Object):
     # Player signals
     @ dbus.service.signal(__player_interface, signature='x')
     def Seeked(self, position):
-        logger.debug("Seeked to %i" % position)
+        logger.debug(f'Seeked to {position}')
+        snapcast_wrapper.properties['position'] = float(position) / 1000000
         return float(position)
 
 

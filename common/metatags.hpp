@@ -268,7 +268,10 @@ private:
         try
         {
             if (!source.has_value())
-                j.erase(tag);
+            {
+                if (j.contains(tag))
+                    j.erase(tag);
+            }
             else
                 j[tag] = source.value();
         }

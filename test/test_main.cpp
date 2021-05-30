@@ -20,6 +20,7 @@
 #include "catch.hpp"
 #include "common/aixlog.hpp"
 #include "common/metatags.hpp"
+#include "common/properties.hpp"
 #include "common/utils/string_utils.hpp"
 #include "server/streamreader/stream_uri.hpp"
 
@@ -150,6 +151,47 @@ TEST_CASE("Metatags")
     REQUIRE(meta.genre.value().front() == "Dance/Electronic");
 
     auto out_json = meta.toJson();
+    std::cout << out_json.dump(4) << "\n";
+    REQUIRE(in_json == out_json);
+}
+
+
+TEST_CASE("Properties")
+{
+    REQUIRE(to_string(PlaybackStatus::kPaused) == "paused");
+    auto in_json = json::parse(R"(
+{
+    "playbackStatus": "playing",
+    "loopStatus": "track",
+    "shuffle": false,
+    "volume": 42,
+    "elapsed": 23.0
+}
+)");
+    std::cout << in_json.dump(4) << "\n";
+
+    Properties props(in_json);
+    std::cout << props.toJson().dump(4) << "\n";
+
+    REQUIRE(props.playback_status.has_value());
+
+    auto out_json = props.toJson();
+    std::cout << out_json.dump(4) << "\n";
+    REQUIRE(in_json == out_json);
+
+    in_json = json::parse(R"(
+{
+    "volume": 42
+}
+)");
+    std::cout << in_json.dump(4) << "\n";
+
+    props.fromJson(in_json);
+    std::cout << props.toJson().dump(4) << "\n";
+
+    REQUIRE(!props.playback_status.has_value());
+
+    out_json = props.toJson();
     std::cout << out_json.dump(4) << "\n";
     REQUIRE(in_json == out_json);
 }

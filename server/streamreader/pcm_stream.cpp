@@ -257,38 +257,33 @@ void PcmStream::onControlMsg(const std::string& msg)
         LOG(INFO, LOG_TAG) << "Notification method: " << notification->method() << ", params: " << notification->params().to_json() << "\n";
         if (notification->method() == "Player.Metadata")
         {
+            LOG(DEBUG, LOG_TAG) << "Received metadata notification\n";
             setMeta(notification->params().to_json());
         }
+        else if (notification->method() == "Player.Properties")
+        {
+            LOG(DEBUG, LOG_TAG) << "Received properties notification\n";
+            properties_ = std::make_shared<Properties>(notification->params().to_json());
+            // Trigger a stream update
+            for (auto* listener : pcmListeners_)
+            {
+                if (listener != nullptr)
+                    listener->onPropertiesChanged(this);
+            }
+        }
+        else
+            LOG(WARNING, LOG_TAG) << "Received unknown notification method: '" << notification->method() << "'\n";
     }
     else if (entity->is_request())
     {
-        LOG(INFO, LOG_TAG) << "Request\n";
-        // jsonrpcpp::entity_ptr response(nullptr);
-        // jsonrpcpp::notification_ptr notification(nullptr);
-        // jsonrpcpp::request_ptr request = dynamic_pointer_cast<jsonrpcpp::Request>(entity);
-        // processRequest(request, response, notification);
-        // saveConfig();
-        // ////cout << "Request:      " << request->to_json().dump() << "\n";
-        // if (notification)
-        // {
-        //     ////cout << "Notification: " << notification->to_json().dump() << "\n";
-        //     controlServer_->send(notification->to_json().dump(), controlSession);
-        // }
-        // if (response)
-        // {
-        //     ////cout << "Response:     " << response->to_json().dump() << "\n";
-        //     return response->to_json().dump();
-        // }
-        // return "";
+        jsonrpcpp::request_ptr request = dynamic_pointer_cast<jsonrpcpp::Request>(entity);
+        LOG(INFO, LOG_TAG) << "Request: " << request->method() << ", id: " << request->id() << ", params: " << request->params().to_json() << "\n";
     }
     else if (entity->is_response())
     {
         jsonrpcpp::response_ptr response = dynamic_pointer_cast<jsonrpcpp::Response>(entity);
         LOG(INFO, LOG_TAG) << "Response: " << response->result().dump() << ", id: " << response->id() << "\n";
     }
-
-    // json j = json::parse(msg);
-    // setMeta(j["params"]["meta"]);
 }
 
 
@@ -403,6 +398,24 @@ std::shared_ptr<msg::StreamTags> PcmStream::getMeta() const
 }
 
 
+std::shared_ptr<Properties> PcmStream::getProperties() const
+{
+    return properties_;
+}
+
+
+void PcmStream::setProperties(const Properties& props)
+{
+    LOG(INFO, LOG_TAG) << "Stream '" << getId() << "' set properties: " << props.toJson() << "\n";
+    // TODO: queue commands, send next on timeout or after reception of the last command's response
+    if (ctrl_script_)
+    {
+        jsonrpcpp::Request request(++req_id_, "Player.SetProperties", props.toJson());
+        ctrl_script_->send(request.to_json().dump() + "\n"); //, params);
+    }
+}
+
+
 void PcmStream::control(const std::string& command, const json& params)
 {
     LOG(INFO, LOG_TAG) << "Stream '" << getId() << "' received command: '" << command << "', params: '" << params << "'\n";
@@ -410,9 +423,12 @@ void PcmStream::control(const std::string& command, const json& params)
     {
         LOG(INFO, LOG_TAG) << "Stream " << getId() << " key: '" << it.key() << "', param: '" << it.value() << "'\n";
     }
-    jsonrpcpp::Request request(++req_id_, command, params);
+    // TODO: queue commands, send next on timeout or after reception of the last command's response
     if (ctrl_script_)
+    {
+        jsonrpcpp::Request request(++req_id_, "Player." + command, params);
         ctrl_script_->send(request.to_json().dump() + "\n"); //, params);
+    }
 }
 
 
