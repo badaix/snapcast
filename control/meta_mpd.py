@@ -175,7 +175,6 @@ tag_mapping = {
 
 # Default url handlers if MPD doesn't support 'urlhandlers' command
 urlhandlers = ['http://']
-downloaded_covers = ['~/.covers/%s-%s.jpg']
 
 
 def send(json_msg):
@@ -201,18 +200,10 @@ class MPDWrapper(object):
         self._watch_id = None
         self._idling = False
 
-        self._status = {
-            'state': None,
-            'volume': None,
-            'random': None,
-            'repeat': None,
-        }
-        self._metadata = {}
-        self._temp_song_url = None
-        self._temp_cover = None
+        self._status = {}
+        self._currentsong = {}
         self._position = 0
         self._time = 0
-        self._currentsong = None
 
     def run(self):
         """
@@ -318,11 +309,6 @@ class MPDWrapper(object):
         self.run()
 
     def disconnect(self):
-        self._temp_song_url = None
-        if self._temp_cover:
-            self._temp_cover.close()
-            self._temp_cover = None
-
         self.client.disconnect()
 
     def init_state(self):
@@ -429,7 +415,7 @@ class MPDWrapper(object):
                                 self.single(0)
                 else:
                     send({"jsonrpc": "2.0", "error": {"code": -32601,
-                        "message": "Method not found"}, "id": id})
+                                                      "message": "Method not found"}, "id": id})
                     success = False
             else:
                 send({"jsonrpc": "2.0", "error": {"code": -32601,
@@ -476,8 +462,7 @@ class MPDWrapper(object):
                         if subsystem in ("player", "mixer", "options", "playlist"):
                             if not updated:
                                 logger.info(f'Subsystem: {subsystem}')
-                                self._update_properties(
-                                    force=subsystem == 'player')
+                                self._update_properties(force=True)
                                 updated = True
                     self.idle_enter()
             return True
@@ -554,8 +539,8 @@ class MPDWrapper(object):
             except KeyError:
                 logger.warning(f'tag "{key}" not supported')
             except (ValueError, TypeError):
-                logger.warning("Can't cast value %r to %s" %
-                               (value, tag_mapping[key][1]))
+                logger.warning(
+                    f"Can't cast value {value} to {tag_mapping[key][1]}")
 
         logger.debug(f'snapcast meta: {snapmeta}')
 
@@ -576,16 +561,47 @@ class MPDWrapper(object):
         send({"jsonrpc": "2.0", "method": "Player.Metadata", "params": snapmeta})
         self.update_albumart(snapmeta)
 
+    def __diff_map(self, old_map, new_map):
+        diff = {}
+        for key, value in new_map.items():
+            if not key in old_map:
+                diff[key] = [None, value]
+            elif value != old_map[key]:
+                diff[key] = [old_map[key], value]
+        for key, value in old_map.items():
+            if not key in new_map:
+                diff[key] = [value, None]
+        return diff
+
     def _update_properties(self, force=False):
-        old_status = self._status
         old_position = self._position
         old_time = self._time
-        currentsong = self.client.currentsong()
-        if self._currentsong != currentsong:
-            self._currentsong = currentsong
-            force = True
+
+        new_song = self.client.currentsong()
+        if not new_song:
+            logger.debug("_update_properties: failed to get current song")
+            return
+
         new_status = self.client.status()
+        if not new_status:
+            logger.debug("_update_properties: failed to get new status")
+            return
+
+        changed_status = self.__diff_map(self._status, new_status)
+        if len(changed_status) > 0:
+            self._status = new_status
+
+        changed_song = self.__diff_map(self._currentsong, new_song)
+        if len(changed_song) > 0:
+            self._currentsong = new_song
+
+        if len(changed_song) == 0 and len(changed_status) == 0:
+            logger.debug('nothing to do')
+            return
+
         logger.info(f'new status: {new_status}')
+        logger.info(f'changed_status: {changed_status}')
+        logger.info(f'changed_song: {changed_song}')
         self._time = new_time = int(time.time())
 
         snapstatus = {}
@@ -597,10 +613,10 @@ class MPDWrapper(object):
                 logger.debug(
                     f'key: {key}, value: {value}, mapped key: {mapped_key}, mapped value: {mapped_val}')
             except KeyError:
-                logger.warning(f'tag "{key}" not supported')
+                logger.debug(f'tag "{key}" not supported')
             except (ValueError, TypeError):
-                logger.warning("Can't cast value %r to %s" %
-                               (value, status_mapping[key][1]))
+                logger.warning(
+                    f"Can't cast value {value} to {status_mapping[key][1]}")
 
         snapstatus['canGoNext'] = True
         snapstatus['canGoPrevious'] = True
@@ -609,15 +625,6 @@ class MPDWrapper(object):
         snapstatus['canSeek'] = True
         snapstatus['canControl'] = True
         send({"jsonrpc": "2.0", "method": "Player.Properties", "params": snapstatus})
-
-        if not new_status:
-            logger.debug("_update_properties: failed to get new status")
-            return
-
-        self._status = new_status
-        logger.debug("_update_properties: current song = %r" %
-                     self._currentsong)
-        logger.debug("_update_properties: current status = %r" % self._status)
 
         if 'elapsed' in new_status:
             new_position = float(new_status['elapsed'])
@@ -630,13 +637,7 @@ class MPDWrapper(object):
 
         # "player" subsystem
 
-        if old_status['state'] != new_status['state']:
-            logger.info('state changed')
-
-        if not force:
-            old_id = old_status.get('songid', None)
-            new_id = new_status.get('songid', None)
-            force = (old_id != new_id)
+        force = len(changed_song) > 0
 
         if not force:
             if new_status['state'] == 'play':
@@ -652,25 +653,7 @@ class MPDWrapper(object):
 
         else:
             # Update current song metadata
-            old_meta = self._metadata.copy()
             self.update_metadata()
-
-        # "mixer" subsystem
-        if old_status.get('volume') != new_status.get('volume'):
-            logger.info('volume changed')
-
-        # "options" subsystem
-        # also triggered if consume, crossfade or ReplayGain are updated
-
-        if old_status['random'] != new_status['random']:
-            logger.info('random changed')
-
-        if (old_status['repeat'] != new_status['repeat']
-                or old_status.get('single', 0) != new_status.get('single', 0)):
-            logger.info('repeat changed')
-
-        if ("nextsongid" in old_status) != ("nextsongid" in new_status):
-            logger.info('nextsongid changed')
 
     # Compatibility functions
 

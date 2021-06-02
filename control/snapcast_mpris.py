@@ -25,12 +25,9 @@ import websocket
 import logging
 import threading
 import json
-
-from configparser import ConfigParser
+import webbrowser
 import os
 import sys
-import re
-import shlex
 import getopt
 import time
 import socket
@@ -105,31 +102,6 @@ defaults = {
 }
 
 notification = None
-
-# MPRIS allowed metadata tags
-allowed_tags = {
-    'mpris:trackid': dbus.ObjectPath,
-    'mpris:length': dbus.Int64,
-    'mpris:artUrl': str,
-    'xesam:album': str,
-    'xesam:albumArtist': list,
-    'xesam:artist': list,
-    'xesam:asText': str,
-    'xesam:audioBPM': int,
-    'xesam:comment': list,
-    'xesam:composer': list,
-    'xesam:contentCreated': str,
-    'xesam:discNumber': int,
-    'xesam:firstUsed': str,
-    'xesam:genre': list,
-    'xesam:lastUsed': str,
-    'xesam:lyricist': str,
-    'xesam:title': str,
-    'xesam:trackNumber': int,
-    'xesam:url': str,
-    'xesam:useCount': int,
-    'xesam:userRating': float,
-}
 
 
 # python dbus bindings don't include annotations and properties
@@ -259,28 +231,42 @@ class SnapcastRpcListener:
 
 
 tag_mapping = {
-    'trackId': 'mpris:trackid',
-    'artUrl': 'mpris:artUrl',
-    'duration': 'mpris:length',
-    'album': 'xesam:album',
-    'albumArtist': 'xesam:albumArtist',
-    'artist': 'xesam:artist',
-    'asText': 'xesam:asText',
-    'audioBPM': 'xesam:audioBPM',
-    'autoRating': 'xesam:autoRating',
-    'comment': 'xesam:comment',
-    'composer': 'xesam:composer',
-    'contentCreated': 'xesam:contentCreated',
-    'discNumber': 'xesam:discNumber',
-    'firstUsed': 'xesam:firstUsed',
-    'genre': 'xesam:genre',
-    'lastUsed': 'xesam:lastUsed',
-    'lyricist': 'xesam:lyricist',
-    'title': 'xesam:title',
-    'trackNumber': 'xesam:trackNumber',
-    'url': 'xesam:url',
-    'useCount': 'xesam:useCount',
-    'userRating': 'xesam:userRating',
+    'trackId': ['mpris:trackid', lambda val: dbus.ObjectPath(f'/org/mpris/MediaPlayer2/Track/{val}')],
+    'artUrl': ['mpris:artUrl', str],
+    'duration': ['mpris:length', lambda val: int(val * 1000000)],
+    'album': ['xesam:album', str],
+    'albumArtist': ['xesam:albumArtist', list],
+    'artist': ['xesam:artist', list],
+    'asText': ['xesam:asText', str],
+    'audioBPM': ['xesam:audioBPM', int],
+    'autoRating': ['xesam:autoRating', float],
+    'comment': ['xesam:comment', list],
+    'composer': ['xesam:composer', list],
+    'contentCreated': ['xesam:contentCreated', str],
+    'discNumber': ['xesam:discNumber', int],
+    'firstUsed': ['xesam:firstUsed', str],
+    'genre': ['xesam:genre', list],
+    'lastUsed': ['xesam:lastUsed', str],
+    'lyricist': ['xesam:lyricist', str],
+    'title': ['xesam:title', str],
+    'trackNumber': ['xesam:trackNumber', int],
+    'url': ['xesam:url', str],
+    'useCount': ['xesam:useCount', int],
+    'userRating': ['xesam:userRating', float]
+}
+
+
+property_mapping = {
+    'playbackStatus': 'PlaybackStatus',
+    'loopStatus': 'LoopStatus',
+    'shuffle': 'Shuffle',
+    'volume': 'Volume',
+    'canGoNext': 'CanGoNext',
+    'canGoPrevious': 'CanGoPrevious',
+    'canPlay': 'CanPlay',
+    'canPause': 'CanPause',
+    'canSeek': 'CanSeek',
+    'canControl': 'CanControl'
 }
 
 
@@ -334,8 +320,7 @@ class MPDWrapper(object):
         logger.info("Ending SnapcastRpcWebsocketWrapper loop")
 
     def on_ws_message(self, ws, message):
-        logger.debug("Snapcast RPC websocket message received")
-        logger.debug(message)
+        logger.debug(f'Snapcast RPC websocket message received: {message}')
         jmsg = json.loads(message)
         if jmsg["method"] == "Stream.OnMetadata":
             logger.info(f'Stream meta changed for "{jmsg["params"]["id"]}"')
@@ -348,14 +333,14 @@ class MPDWrapper(object):
 
             for key, value in meta.items():
                 if key in tag_mapping:
-                    self._metadata[tag_mapping[key]] = value
-
-            if 'mpris:length' in self._metadata:
-                self._metadata['mpris:length'] = int(1000 * 1000 *
-                                                     self._metadata['mpris:length'])
-            if 'mpris:trackid' in self._metadata:
-                self._metadata[
-                    'mpris:trackid'] = f'/org/mpris/MediaPlayer2/Track/{self._metadata["mpris:trackid"]}'
+                    try:
+                        self._metadata[tag_mapping[key][0]
+                                       ] = tag_mapping[key][1](value)
+                    except KeyError:
+                        logger.warning(f'tag "{key}" not supported')
+                    except (ValueError, TypeError):
+                        logger.warning(
+                            f"Can't cast value {value} to {tag_mapping[key][1]}")
 
             if not 'mpris:artUrl' in self._metadata:
                 self._metadata['mpris:artUrl'] = f'http://{self._params["host"]}:{self._params["port"]}/launcher-icon.png'
@@ -375,21 +360,10 @@ class MPDWrapper(object):
             props['received'] = time.time()
             changed_properties = self.update_properties(props)
             logger.info(f'Changed properties: "{changed_properties}"')
-            if 'playbackStatus' in changed_properties:
-                self._dbus_service.update_property(
-                    'org.mpris.MediaPlayer2.Player', 'PlaybackStatus')
-            if 'loopStatus' in changed_properties:
-                self._dbus_service.update_property(
-                    'org.mpris.MediaPlayer2.Player', 'LoopStatus')
-            if 'shuffle' in changed_properties:
-                self._dbus_service.update_property(
-                    'org.mpris.MediaPlayer2.Player', 'Shuffle')
-            if 'volume' in changed_properties:
-                self._dbus_service.update_property(
-                    'org.mpris.MediaPlayer2.Player', 'Volume')
-            if 'canGoNext' in changed_properties:
-                self._dbus_service.update_property(
-                    'org.mpris.MediaPlayer2.Player', 'CanGoNext')
+            for key, value in changed_properties.items():
+                if key in property_mapping:
+                    self._dbus_service.update_property(
+                        'org.mpris.MediaPlayer2.Player', property_mapping[key])
 
     def on_ws_error(self, ws, error):
         logger.error("Snapcast RPC websocket error")
@@ -407,7 +381,7 @@ class MPDWrapper(object):
             #    '/org/mpris/MediaPlayer2')
             self._dbus_service.acquire_name()
 
-        self.send({"id": 1, "jsonrpc": "2.0", "method": "Server.GetStatus"})
+        self.send_request("Server.GetStatus")
 
     def on_ws_close(self, ws):
         logger.info("Snapcast RPC websocket closed")
@@ -415,8 +389,14 @@ class MPDWrapper(object):
             self._dbus_service.release_name()
         # self._dbus_service.remove_from_connection()
 
-    def send(self, json_msg):
-        self.websocket.send(json.dumps(json_msg))
+    def send_request(self, method, params=None):
+        j = {"id": self._req_id, "jsonrpc": "2.0", "method": str(method)}
+        if not params is None:
+            j["params"] = params
+        logger.info(f'send_request: {j}')
+        url = f'http://{self._params["host"]}:{self._params["port"]}/jsonrpc'
+        self._req_id += 1
+        self.websocket.send(json.dumps(j))
 
     def stop(self):
         self.websocket.keep_running = False
@@ -490,25 +470,15 @@ class MPDWrapper(object):
     #     return self._currentsong.copy()
 
     def control(self, command, params={}):
-        j = {"id": self._req_id, "jsonrpc": "2.0", "method": "Stream.Control",
-             "params": {"id": "Pipe", "command": command, "params": params}}
-        logger.info(f'Control: {command}, json: {j}')
-        url = f'http://{self._params["host"]}:{self._params["port"]}/jsonrpc'
-        logger.info(f'url: {url}')
-        self._req_id += 1
-        self.send(j)
+        self.send_request("Stream.Control", {
+                          "id": "Pipe", "command": command, "params": params})
 
     def set_property(self, property, value):
         properties = {}
         properties[property] = value
         logger.info(f'set_properties {properties}')
-        j = {"id": self._req_id, "jsonrpc": "2.0", "method": "Stream.SetProperties",
-             "params": {"id": "Pipe", "properties": properties}}
-        logger.info(f'Set properties: {properties}, json: {j}')
-        url = f'http://{self._params["host"]}:{self._params["port"]}/jsonrpc'
-        logger.info(f'url: {url}')
-        self._req_id += 1
-        self.send(j)
+        self.send_request("Stream.SetProperties", {
+                          "id": "Pipe", "properties": properties})
 
     @property
     def metadata(self):
@@ -526,7 +496,7 @@ class MPDWrapper(object):
             elif value != self._properties[key]:
                 changed_properties[key] = [self._properties[key], value]
         for key, value in self._properties.items():
-            if not key in self._properties:
+            if not key in new_properties:
                 changed_properties[key] = [value, None]
         self._properties = new_properties
         return changed_properties
@@ -823,7 +793,7 @@ class MPRISInterface(dbus.service.Object):
     __root_interface = "org.mpris.MediaPlayer2"
     __root_props = {
         "CanQuit": (False, None),
-        "CanRaise": (False, None),
+        "CanRaise": (True, None),
         "DesktopEntry": ("mpdris2", None),
         "HasTrackList": (False, None),
         "Identity": (identity, None),
@@ -880,6 +850,36 @@ class MPRISInterface(dbus.service.Object):
         logger.debug(f'get_position: {position}')
         return dbus.Int64(position)
 
+    def __get_can_go_next():
+        can_go_next = snapcast_wrapper.property('canGoNext', False)
+        logger.debug(f'get_can_go_next "{can_go_next}"')
+        return can_go_next
+
+    def __get_can_go_previous():
+        can_go_previous = snapcast_wrapper.property('canGoPrevious', False)
+        logger.debug(f'get_can_go_previous "{can_go_previous}"')
+        return can_go_previous
+
+    def __get_can_play():
+        can_play = snapcast_wrapper.property('canPlay', False)
+        logger.debug(f'get_can_play "{can_play}"')
+        return can_play
+
+    def __get_can_pause():
+        can_pause = snapcast_wrapper.property('canPause', False)
+        logger.debug(f'get_can_pause "{can_pause}"')
+        return can_pause
+
+    def __get_can_seek():
+        can_seek = snapcast_wrapper.property('canSeek', False)
+        logger.debug(f'get_can_seek "{can_seek}"')
+        return can_seek
+
+    def __get_can_control():
+        can_control = snapcast_wrapper.property('canControl', False)
+        logger.debug(f'get_can_control "{can_control}"')
+        return can_control
+
     __player_interface = "org.mpris.MediaPlayer2.Player"
     __player_props = {
         "PlaybackStatus": (__get_playback_status, None),
@@ -897,6 +897,12 @@ class MPRISInterface(dbus.service.Object):
         "CanPause": (True, None),
         "CanSeek": (True, None),
         "CanControl": (True, None),
+        "CanGoNext": (__get_can_go_next, None),
+        "CanGoPrevious": (__get_can_go_previous, None),
+        "CanPlay": (__get_can_play, None),
+        "CanPause": (__get_can_pause, None),
+        "CanSeek": (__get_can_seek, None),
+        "CanControl": (__get_can_control, None),
     }
 
     __prop_mapping = {
@@ -953,6 +959,7 @@ class MPRISInterface(dbus.service.Object):
     @ dbus.service.method(__root_interface, in_signature='', out_signature='')
     def Raise(self):
         logger.info('Raise')
+        webbrowser.open(url=f'http://{params["host"]}:{params["port"]}', new=1)
         return
 
     @ dbus.service.method(__root_interface, in_signature='', out_signature='')
