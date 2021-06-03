@@ -204,6 +204,7 @@ class MPDWrapper(object):
         self._currentsong = {}
         self._position = 0
         self._time = 0
+        self._album_art_map = {}
 
     def run(self):
         """
@@ -471,6 +472,9 @@ class MPDWrapper(object):
             self.reconnect()
             return True
 
+    def __track_key(self, snapmeta):
+        return hash(snapmeta.get('artist', [''])[0] + snapmeta.get('album', snapmeta.get('title', '')))
+
     def update_albumart(self, snapmeta):
         album_key = 'musicbrainzAlbumId'
         try:
@@ -501,6 +505,8 @@ class MPDWrapper(object):
                         logger.debug(
                             f'{snapmeta["artUrl"]} is an approved front image')
                         logger.info(f'Snapmeta: {snapmeta}')
+                        self._album_art_map[self.__track_key(
+                            snapmeta)] = snapmeta['artUrl']
                         send(
                             {"jsonrpc": "2.0", "method": "Player.Metadata", "params": snapmeta})
                         break
@@ -508,6 +514,7 @@ class MPDWrapper(object):
         except musicbrainzngs.musicbrainz.ResponseError as e:
             logger.error(
                 f'Error while getting cover for {snapmeta[album_key]}: {e}')
+            self._album_art_map[self.__track_key(snapmeta)] = ''
 
     def update_metadata(self):
         """
@@ -558,8 +565,16 @@ class MPDWrapper(object):
                     snapmeta['artist'] = [fields[0]]
                     snapmeta['title'] = fields[1]
 
+        track_key = self.__track_key(snapmeta)
+        if track_key in self._album_art_map:
+            art_url = self._album_art_map[track_key]
+            logger.info(f'album art cache hit: "{art_url}"')
+            if art_url != '':
+                snapmeta['artUrl'] = art_url
+
         send({"jsonrpc": "2.0", "method": "Player.Metadata", "params": snapmeta})
-        self.update_albumart(snapmeta)
+        if not track_key in self._album_art_map:
+            self.update_albumart(snapmeta)
 
     def __diff_map(self, old_map, new_map):
         diff = {}
@@ -623,7 +638,7 @@ class MPDWrapper(object):
         snapstatus['canGoPrevious'] = True
         snapstatus['canPlay'] = True
         snapstatus['canPause'] = True
-        snapstatus['canSeek'] = True
+        snapstatus['canSeek'] = 'duration' in snapstatus
         snapstatus['canControl'] = True
         send({"jsonrpc": "2.0", "method": "Player.Properties", "params": snapstatus})
 
