@@ -207,27 +207,10 @@ MPRIS2_INTROSPECTION = """<node name="/org/mpris/MediaPlayer2">
       <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="true"/>
     </property>
     <property name="CanControl" type="b" access="read">
-      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="false"/>
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="true"/>
     </property>
   </interface>
 </node>"""
-
-
-class SnapcastRpcListener:
-    def on_snapserver_stream_pause(self):
-        pass
-
-    def on_snapserver_stream_start(self, stream_name, stream_group):
-        pass
-
-    def on_snapserver_volume_change(self, volume_level):
-        pass
-
-    def on_snapserver_mute(self):
-        pass
-
-    def on_snapserver_unmute(self):
-        pass
 
 
 tag_mapping = {
@@ -270,32 +253,21 @@ property_mapping = {
 }
 
 
-class MPDWrapper(object):
+class SnapcastWrapper(object):
     """ Wrapper of mpd.MPDClient to handle socket
         errors and similar
     """
 
     def __init__(self, params):
-        # self.client = mpd.MPDClient()
-
         self._dbus = dbus
         self._params = params
         self._dbus_service = None
 
-        self._can_single = False
-
-        self._errors = 0
-
-        self._status = {
-            'state': None,
-            'volume': None,
-            'random': None,
-            'repeat': None,
-        }
         self._metadata = {}
         self._properties = {}
-        self._time = 0
         self._req_id = 0
+        self._stream_id = ''
+        self._request_map = {}
 
         self._bus = dbus.SessionBus()
         if self._params['mmkeys']:
@@ -319,11 +291,43 @@ class MPDWrapper(object):
             sleep(1)
         logger.info("Ending SnapcastRpcWebsocketWrapper loop")
 
+    def __get_stream_id_from_server_status(self, status, client_id):
+        try:
+            for group in status['server']['groups']:
+                for client in group['clients']:
+                    if client['id'] == client_id:
+                        return group['stream_id']
+            for group in status['server']['groups']:
+                for client in group['clients']:
+                    if client['name'] == client_id:
+                        return group['stream_id']
+        except:
+            logger.error('Failed to parse server status')
+        logger.error(f'Failed to get stream id for client {client_id}')
+        return None
+
     def on_ws_message(self, ws, message):
-        logger.debug(f'Snapcast RPC websocket message received: {message}')
+        logger.info(f'Snapcast RPC websocket message received: {message}')
         jmsg = json.loads(message)
-        if jmsg["method"] == "Stream.OnMetadata":
-            logger.info(f'Stream meta changed for "{jmsg["params"]["id"]}"')
+        if 'id' in jmsg:
+            id = jmsg['id']
+            if id in self._request_map:
+                request = self._request_map[id]
+                del self._request_map[id]
+                logger.info(f'Received response to {request}')
+                if request == 'Server.GetStatus':
+                    self._stream_id = self.__get_stream_id_from_server_status(jmsg['result'], self._params['client'])
+                    logger.info(f'Stream id: {self._stream_id}')
+        elif jmsg['method'] == "Server.OnUpdate":
+            self._stream_id = self.__get_stream_id_from_server_status(jmsg['params'], self._params['client'])
+            logger.info(f'Stream id: {self._stream_id}')
+        elif jmsg['method'] == "Group.OnStreamChanged":
+            self.send_request("Server.GetStatus")
+        elif jmsg["method"] == "Stream.OnMetadata":
+            stream_id = jmsg["params"]["id"]
+            logger.info(f'Stream meta changed for "{stream_id}"')
+            if self._stream_id != stream_id:
+                return
             meta = jmsg["params"]["meta"]
             logger.info(f'Meta: "{meta}"')
 
@@ -353,8 +357,11 @@ class MPDWrapper(object):
             logger.info(f'new meta {new_meta}')
 
         elif jmsg["method"] == "Stream.OnProperties":
+            stream_id = jmsg["params"]["id"]
             logger.info(
-                f'Stream properties changed for "{jmsg["params"]["id"]}"')
+                f'Stream properties changed for "{stream_id}"')
+            if self._stream_id != stream_id:
+                return
             props = jmsg["params"]["properties"]
             logger.info(f'Properties: "{props}"')
             props['received'] = time.time()
@@ -394,59 +401,16 @@ class MPDWrapper(object):
         if not params is None:
             j["params"] = params
         logger.info(f'send_request: {j}')
-        url = f'http://{self._params["host"]}:{self._params["port"]}/jsonrpc'
+        result = self._req_id
+        self._request_map[result] = str(method)
         self._req_id += 1
         self.websocket.send(json.dumps(j))
+        return result
 
     def stop(self):
         self.websocket.keep_running = False
         logger.info("Waiting for websocket thread to exit")
         # self.websocket_thread.join()
-
-    # def run(self):
-    #     """
-    #     Try to connect to MPD; retry every 5 seconds on failure.
-    #     """
-    #     if self.my_connect():
-    #         GLib.timeout_add_seconds(5, self.my_connect)
-    #         return False
-    #     else:
-    #         return True
-
-    # @property
-    # def connected(self):
-    #     return self.client._sock is not None
-
-    # def init_state(self):
-    #     # Get current state
-    #     self._status = self.client.status()
-    #     # Invalid some fields to throw events at start
-    #     self._status['state'] = 'invalid'
-    #     self._status['songid'] = '-1'
-    #     self._position = 0
-
-    # Events
-
-    # def socket_callback(self, fd, event):
-    #     logger.debug("Socket event %r on fd %r" % (event, fd))
-    #     if event & GLib.IO_HUP:
-    #         self.reconnect()
-    #         return True
-    #     elif event & GLib.IO_IN:
-    #         if self._idling:
-    #             self._idling = False
-    #             data = fd._fetch_objects("changed")
-    #             logger.debug("Idle events: %r" % data)
-    #             updated = False
-    #             for item in data:
-    #                 subsystem = item["changed"]
-    #                 # subsystem list: <http://www.musicpd.org/doc/protocol/ch03.html>
-    #                 if subsystem in ("player", "mixer", "options", "playlist"):
-    #                     if not updated:
-    #                         self._update_properties(force=True)
-    #                         updated = True
-    #             self.idle_enter()
-    #     return True
 
     def mediakey_callback(self, appname, key):
         """ GNOME media key handler """
@@ -544,23 +508,6 @@ class MPDWrapper(object):
         else:
             self.notify_about_track(self.metadata, state)
 
-    # def _update_properties(self, force=False):
-    #     old_status = self._status
-    #     old_position = self._position
-    #     old_time = self._time
-    #     self._currentsong = self.client.currentsong()
-    #     new_status = self.client.status()
-    #     self._time = new_time = int(time.time())
-
-    #     if not new_status:
-    #         logger.debug("_update_properties: failed to get new status")
-    #         return
-
-    #     self._status = new_status
-    #     logger.debug("_update_properties: current song = %r" %
-    #                  self._currentsong)
-    #     logger.debug("_update_properties: current status = %r" % self._status)
-
     #     if 'elapsed' in new_status:
     #         new_position = float(new_status['elapsed'])
     #     elif 'time' in new_status:
@@ -569,17 +516,6 @@ class MPDWrapper(object):
     #         new_position = 0
 
     #     self._position = new_position
-
-    #     # "player" subsystem
-
-    #     if old_status['state'] != new_status['state']:
-    #         self._dbus_service.update_property('org.mpris.MediaPlayer2.Player',
-    #                                            'PlaybackStatus')
-
-    #     if not force:
-    #         old_id = old_status.get('songid', None)
-    #         new_id = new_status.get('songid', None)
-    #         force = (old_id != new_id)
 
     #     if not force:
     #         if new_status['state'] == 'play':
@@ -592,41 +528,6 @@ class MPDWrapper(object):
     #             logger.debug("Old position was %r at %r (%r seconds ago)" % (
     #                 old_position, old_time, new_time - old_time))
     #             self._dbus_service.Seeked(new_position * 1000000)
-
-    #     else:
-    #         # Update current song metadata
-    #         old_meta = self._metadata.copy()
-    #         self.update_metadata()
-    #         new_meta = self._dbus_service.update_property('org.mpris.MediaPlayer2.Player',
-    #                                                       'Metadata')
-
-    #         if self._params['notify'] and new_status['state'] != 'stop':
-    #             if old_meta.get('xesam:artist', None) != new_meta.get('xesam:artist', None) \
-    #                     or old_meta.get('xesam:album', None) != new_meta.get('xesam:album', None) \
-    #                     or old_meta.get('xesam:title', None) != new_meta.get('xesam:title', None) \
-    #                     or old_meta.get('xesam:url', None) != new_meta.get('xesam:url', None):
-    #                 self.notify_about_track(new_meta, new_status['state'])
-
-    #     # "mixer" subsystem
-    #     if old_status.get('volume') != new_status.get('volume'):
-    #         self._dbus_service.update_property('org.mpris.MediaPlayer2.Player',
-    #                                            'Volume')
-
-    #     # "options" subsystem
-    #     # also triggered if consume, crossfade or ReplayGain are updated
-
-    #     if old_status['random'] != new_status['random']:
-    #         self._dbus_service.update_property('org.mpris.MediaPlayer2.Player',
-    #                                            'Shuffle')
-
-    #     if (old_status['repeat'] != new_status['repeat']
-    #             or old_status.get('single', 0) != new_status.get('single', 0)):
-    #         self._dbus_service.update_property('org.mpris.MediaPlayer2.Player',
-    #                                            'LoopStatus')
-
-    #     if ("nextsongid" in old_status) != ("nextsongid" in new_status):
-    #         self._dbus_service.update_property('org.mpris.MediaPlayer2.Player',
-    #                                            'CanGoNext')
 
     # Media keys
 
@@ -1048,7 +949,8 @@ class MPRISInterface(dbus.service.Object):
 
 
 def __get_client_from_server_status(status):
-    client = None
+    client_id = None
+    last_seen = 0
     try:
         for group in status['result']['server']['groups']:
             for client in group['clients']:
@@ -1056,12 +958,14 @@ def __get_client_from_server_status(status):
                     active = client["connected"]
                     logger.info(
                         f'Client with id "{client["id"]}" active: {active}')
-                    client = client['id']
+                    if int(client["lastSeen"]["sec"]) > last_seen:
+                        client_id = client['id']
+                        last_seen = int(client["lastSeen"]["sec"])
                     if active:
-                        return client
+                        return client_id
     except:
         logger.error('Failed to parse server status')
-    return client
+    return client_id
 
 
 def usage(params):
@@ -1166,19 +1070,9 @@ if __name__ == '__main__':
         else:
             params['host'] = arg
 
-    if not params['host']:
-        if 'MPD_HOST' in os.environ:
-            params['host'] = os.environ['MPD_HOST']
-    if not params['port']:
-        if 'MPD_PORT' in os.environ:
-            params['port'] = os.environ['MPD_PORT']
-
     for p in ['host', 'port', 'password', 'bus_name', 'client']:
         if not params[p]:
             params[p] = defaults[p]
-
-    if '@' in params['host']:
-        params['password'], params['host'] = params['host'].rsplit('@', 1)
 
     params['host'] = os.path.expanduser(params['host'])
 
@@ -1201,9 +1095,10 @@ if __name__ == '__main__':
 
     if params['client'] is None:
         logger.error('Client not found or not configured')
+        sys.exit()
 
     logger.info(f'Client: {params["client"]}')
-    logger.debug('Parameters: %r' % params)
+    logger.debug(f'Parameters: {params}')
 
     if mutagen:
         logger.info('Using Mutagen to read covers from music files.')
@@ -1223,8 +1118,7 @@ if __name__ == '__main__':
 
     # Create wrapper to handle connection failures with MPD more gracefully
     # wrapper = SnapcastRpcWebsocketWrapper("127.0.0.1", 1780, "id", any)
-    snapcast_wrapper = MPDWrapper(params)
-    # mpd_wrapper = MPDWrapper(params)
+    snapcast_wrapper = SnapcastWrapper(params)
     # mpd_wrapper.run()
 
     # Run idle loop
