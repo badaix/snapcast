@@ -44,7 +44,7 @@ Server::~Server() = default;
 
 void Server::onNewSession(const std::shared_ptr<StreamSession>& session)
 {
-    LOG(INFO, LOG_TAG) << "onNewSession\n";
+    LOG(DEBUG, LOG_TAG) << "onNewSession\n";
     streamServer_->addSession(session);
 }
 
@@ -57,7 +57,7 @@ void Server::onMetaChanged(const PcmStream* pcmStream)
 
     const auto meta = pcmStream->getMeta();
     LOG(DEBUG, LOG_TAG) << "metadata = " << meta->msg.dump(3) << "\n";
-    LOG(INFO, LOG_TAG) << "onMetaChanged (" << pcmStream->getName() << ")\n";
+    LOG(DEBUG, LOG_TAG) << "onMetaChanged (" << pcmStream->getName() << ")\n";
 
     streamServer_->onMetaChanged(pcmStream, meta);
 
@@ -70,7 +70,7 @@ void Server::onMetaChanged(const PcmStream* pcmStream)
 
 void Server::onPropertiesChanged(const PcmStream* pcmStream)
 {
-    LOG(INFO, LOG_TAG) << "onPropertiesChanged (" << pcmStream->getName() << ")\n";
+    LOG(DEBUG, LOG_TAG) << "onPropertiesChanged (" << pcmStream->getName() << ")\n";
     const auto props = pcmStream->getProperties();
 
     // Send propeties to all connected control clients

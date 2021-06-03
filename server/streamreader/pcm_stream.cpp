@@ -82,11 +82,10 @@ void CtrlScript::send(const std::string& msg)
 
 void CtrlScript::logScript(std::string line)
 {
-    if (line.empty())
-        return;
-
     if (line.back() == '\r')
         line.resize(line.size() - 1);
+    if (line.empty())
+        return;
     auto tmp = utils::string::tolower_copy(line);
     AixLog::Severity severity = AixLog::Severity::info;
     if (tmp.find(" trace") != string::npos)
@@ -381,6 +380,8 @@ json PcmStream::toJson() const
 
     if (meta_)
         j["meta"] = meta_->msg;
+    if (properties_)
+        j["properties"] = properties_->toJson();
 
     return j;
 }
