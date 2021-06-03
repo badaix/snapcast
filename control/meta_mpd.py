@@ -574,18 +574,19 @@ class MPDWrapper(object):
         return diff
 
     def _update_properties(self, force=False):
+        logger.debug(f'update_properties force: {force}')
         old_position = self._position
         old_time = self._time
 
         new_song = self.client.currentsong()
         if not new_song:
             logger.debug("_update_properties: failed to get current song")
-            return
+            new_song = {}
 
         new_status = self.client.status()
         if not new_status:
             logger.debug("_update_properties: failed to get new status")
-            return
+            new_status = {}
 
         changed_status = self.__diff_map(self._status, new_status)
         if len(changed_status) > 0:
