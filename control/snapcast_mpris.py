@@ -306,6 +306,44 @@ class SnapcastWrapper(object):
         logger.error(f'Failed to get stream id for client {client_id}')
         return None
 
+    def __update_metadata(self, meta):
+        logger.info(f'Meta: "{meta}"')
+
+        self._metadata = {}
+        self._metadata['xesam:artist'] = ['Unknown Artist']
+        self._metadata['xesam:title'] = 'Unknown Title'
+
+        for key, value in meta.items():
+            if key in tag_mapping:
+                try:
+                    self._metadata[tag_mapping[key][0]
+                                   ] = tag_mapping[key][1](value)
+                except KeyError:
+                    logger.warning(f'tag "{key}" not supported')
+                except (ValueError, TypeError):
+                    logger.warning(
+                        f"Can't cast value {value} to {tag_mapping[key][1]}")
+
+        if not 'mpris:artUrl' in self._metadata:
+            self._metadata['mpris:artUrl'] = f'http://{self._params["host"]}:{self._params["port"]}/launcher-icon.png'
+
+        logger.info(f'mpris meta: {self._metadata}')
+
+        self.notify_about_track(self._metadata)
+        new_meta = self._dbus_service.update_property('org.mpris.MediaPlayer2.Player',
+                                                      'Metadata')
+        logger.info(f'new meta {new_meta}')
+
+    def __update_properties(self, props):
+        logger.info(f'Properties: "{props}"')
+        props['received'] = time.time()
+        changed_properties = self.update_properties(props)
+        logger.info(f'Changed properties: "{changed_properties}"')
+        for key, value in changed_properties.items():
+            if key in property_mapping:
+                self._dbus_service.update_property(
+                    'org.mpris.MediaPlayer2.Player', property_mapping[key])
+
     def on_ws_message(self, ws, message):
         logger.info(f'Snapcast RPC websocket message received: {message}')
         jmsg = json.loads(message)
@@ -316,10 +354,19 @@ class SnapcastWrapper(object):
                 del self._request_map[id]
                 logger.info(f'Received response to {request}')
                 if request == 'Server.GetStatus':
-                    self._stream_id = self.__get_stream_id_from_server_status(jmsg['result'], self._params['client'])
+                    self._stream_id = self.__get_stream_id_from_server_status(
+                        jmsg['result'], self._params['client'])
                     logger.info(f'Stream id: {self._stream_id}')
+                    for stream in jmsg['result']['server']['streams']:
+                        if stream['id'] == self._stream_id:
+                            if 'meta' in stream:
+                                self.__update_metadata(stream['meta'])
+                            if 'properties' in stream:
+                                self.__update_properties(stream['properties'])
+                            break
         elif jmsg['method'] == "Server.OnUpdate":
-            self._stream_id = self.__get_stream_id_from_server_status(jmsg['params'], self._params['client'])
+            self._stream_id = self.__get_stream_id_from_server_status(
+                jmsg['params'], self._params['client'])
             logger.info(f'Stream id: {self._stream_id}')
         elif jmsg['method'] == "Group.OnStreamChanged":
             self.send_request("Server.GetStatus")
@@ -329,32 +376,7 @@ class SnapcastWrapper(object):
             if self._stream_id != stream_id:
                 return
             meta = jmsg["params"]["meta"]
-            logger.info(f'Meta: "{meta}"')
-
-            self._metadata = {}
-            self._metadata['xesam:artist'] = ['Unknown Artist']
-            self._metadata['xesam:title'] = 'Unknown Title'
-
-            for key, value in meta.items():
-                if key in tag_mapping:
-                    try:
-                        self._metadata[tag_mapping[key][0]
-                                       ] = tag_mapping[key][1](value)
-                    except KeyError:
-                        logger.warning(f'tag "{key}" not supported')
-                    except (ValueError, TypeError):
-                        logger.warning(
-                            f"Can't cast value {value} to {tag_mapping[key][1]}")
-
-            if not 'mpris:artUrl' in self._metadata:
-                self._metadata['mpris:artUrl'] = f'http://{self._params["host"]}:{self._params["port"]}/launcher-icon.png'
-
-            logger.info(f'mpris meta: {self._metadata}')
-
-            self.notify_about_track(self._metadata)
-            new_meta = self._dbus_service.update_property('org.mpris.MediaPlayer2.Player',
-                                                          'Metadata')
-            logger.info(f'new meta {new_meta}')
+            self.__update_metadata(meta)
 
         elif jmsg["method"] == "Stream.OnProperties":
             stream_id = jmsg["params"]["id"]
@@ -363,14 +385,7 @@ class SnapcastWrapper(object):
             if self._stream_id != stream_id:
                 return
             props = jmsg["params"]["properties"]
-            logger.info(f'Properties: "{props}"')
-            props['received'] = time.time()
-            changed_properties = self.update_properties(props)
-            logger.info(f'Changed properties: "{changed_properties}"')
-            for key, value in changed_properties.items():
-                if key in property_mapping:
-                    self._dbus_service.update_property(
-                        'org.mpris.MediaPlayer2.Player', property_mapping[key])
+            self.__update_properties(props)
 
     def on_ws_error(self, ws, error):
         logger.error("Snapcast RPC websocket error")
@@ -792,12 +807,6 @@ class MPRISInterface(dbus.service.Object):
         "Position": (__get_position, None),
         "MinimumRate": (1.0, None),
         "MaximumRate": (1.0, None),
-        "CanGoNext": (True, None),
-        "CanGoPrevious": (True, None),
-        "CanPlay": (True, None),
-        "CanPause": (True, None),
-        "CanSeek": (True, None),
-        "CanControl": (True, None),
         "CanGoNext": (__get_can_go_next, None),
         "CanGoPrevious": (__get_can_go_previous, None),
         "CanPlay": (__get_can_play, None),
