@@ -116,7 +116,7 @@ void ControlSessionTcp::send_next()
                                  }
                                  else
                                  {
-                                     LOG(DEBUG, LOG_TAG) << "Wrote " << length << " bytes to control socket\n";
+                                     LOG(TRACE, LOG_TAG) << "Wrote " << length << " bytes to control socket\n";
                                  }
                                  if (!messages_.empty())
                                      send_next();
