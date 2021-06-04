@@ -45,7 +45,7 @@
 #include "common/str_compat.hpp"
 #include "common/utils.hpp"
 #include "common/version.hpp"
-#include "metadata.hpp"
+// #include "metadata.hpp"
 
 
 using namespace std;
@@ -429,8 +429,8 @@ int main(int argc, char** argv)
         LOG(INFO, LOG_TAG) << "Version " << version::code << (!version::rev().empty() ? (", revision " + version::rev(8)) : ("")) << "\n";
 
         // Setup metadata handling
-        auto meta(metaStderr ? std::make_unique<MetaStderrAdapter>() : std::make_unique<MetadataAdapter>());
-        auto controller = make_shared<Controller>(io_context, settings, std::move(meta));
+        // auto meta(metaStderr ? std::make_unique<MetaStderrAdapter>() : std::make_unique<MetadataAdapter>());
+        auto controller = make_shared<Controller>(io_context, settings); //, std::move(meta));
         controller->start();
 
         int num_threads = 0;

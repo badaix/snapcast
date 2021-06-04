@@ -107,7 +107,6 @@ void LibrespotStream::initExeAndPath(const std::string& filename)
 
 void LibrespotStream::onStderrMsg(const std::string& line)
 {
-    static bool libreelec_patched = false;
     // Watch stderr for 'Loading track' messages and set the stream metadata
     // For more than track name check: https://github.com/plietar/librespot/issues/154
 
@@ -153,31 +152,34 @@ void LibrespotStream::onStderrMsg(const std::string& line)
     // Librespot patch:
     // 	info!("metadata:{{\"ARTIST\":\"{}\",\"TITLE\":\"{}\"}}", artist.name, track.name);
     // non patched:
+    //  [2021-06-04T07:20:47Z INFO  librespot_playback::player] <Tunnel> (310573 ms) loaded
     // 	info!("Track \"{}\" loaded", track.name);
-
-    // If we detect a patched libreelec we don't want to bother with this anymoer
-    // to avoid duplicate metadata pushes
+    // std::cerr << line << "\n";
     smatch m;
-    if (!libreelec_patched)
-    {
-        static regex re_nonpatched("Track \"(.*)\" loaded");
-        if (regex_search(line, m, re_nonpatched))
-        {
-            LOG(INFO, LOG_TAG) << "metadata: <" << m[1] << ">\n";
-
-            json jtag = {{"TITLE", string(m[1])}};
-            setMeta(jtag);
-        }
-    }
-
-    // Parse the patched version
     static regex re_patched("metadata:(.*)");
+    static regex re_track_loaded(R"( <(.*)> \((.*) ms\) loaded)");
+    // Parse the patched version
     if (regex_search(line, m, re_patched))
     {
+        // Patched version
         LOG(INFO, LOG_TAG) << "metadata: <" << m[1] << ">\n";
-
-        setMeta(json::parse(m[1].str()));
-        libreelec_patched = true;
+        json j = json::parse(m[1].str());
+        Metatags meta;
+        meta.artist = std::vector<std::string>{j["ARTIST"].get<std::string>()};
+        meta.title = j["TITLE"].get<std::string>();
+        setMeta(meta);
+    }
+    else if (regex_search(line, m, re_track_loaded))
+    {
+        LOG(INFO, LOG_TAG) << "metadata: <" << m[1] << ">\n";
+        Metatags meta;
+        meta.title = string(m[1]);
+        meta.duration = cpt::stod(m[2]) / 1000.;
+        setMeta(meta);
+        // Properties props;
+        // props.can_seek = true;
+        // props.can_control = true;
+        // setProperties(props);
     }
 }
 

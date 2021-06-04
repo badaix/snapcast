@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2020  Johannes Pohl
+    Copyright (C) 2014-2021  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -16,9 +16,10 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
-#ifndef STREAMTAGS_H
-#define STREAMTAGS_H
+#ifndef STREAMTAGS_HPP
+#define STREAMTAGS_HPP
 
+// #include "common/metatags.hpp"
 #include "json_message.hpp"
 
 /*
@@ -64,6 +65,12 @@ public:
     StreamTags() : JsonMessage(message_type::kStreamTags)
     {
     }
+
+    // StreamTags(const Metatags& tags) : JsonMessage(message_type::kStreamTags)
+    // {
+    //     if (tags.album.has_value())
+    //         msg['album'] = *tags.album;
+    // }
 
     ~StreamTags() override = default;
 };

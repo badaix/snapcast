@@ -18,6 +18,9 @@
 
 #define CATCH_CONFIG_MAIN
 #include "catch.hpp"
+
+#include <regex>
+
 #include "common/aixlog.hpp"
 #include "common/metatags.hpp"
 #include "common/properties.hpp"
@@ -141,7 +144,7 @@ TEST_CASE("Metatags")
     "trackNumber": 5
 }
 )");
-    std::cout << in_json.dump(4) << "\n";
+    // std::cout << in_json.dump(4) << "\n";
 
     Metatags meta(in_json);
     REQUIRE(meta.album.has_value());
@@ -151,7 +154,7 @@ TEST_CASE("Metatags")
     REQUIRE(meta.genre.value().front() == "Dance/Electronic");
 
     auto out_json = meta.toJson();
-    std::cout << out_json.dump(4) << "\n";
+    // std::cout << out_json.dump(4) << "\n";
     REQUIRE(in_json == out_json);
 }
 
@@ -165,18 +168,18 @@ TEST_CASE("Properties")
     "loopStatus": "track",
     "shuffle": false,
     "volume": 42,
-    "elapsed": 23.0
+    "position": 23.0
 }
 )");
-    std::cout << in_json.dump(4) << "\n";
+    // std::cout << in_json.dump(4) << "\n";
 
     Properties props(in_json);
-    std::cout << props.toJson().dump(4) << "\n";
+    // std::cout << props.toJson().dump(4) << "\n";
 
     REQUIRE(props.playback_status.has_value());
 
     auto out_json = props.toJson();
-    std::cout << out_json.dump(4) << "\n";
+    // std::cout << out_json.dump(4) << "\n";
     REQUIRE(in_json == out_json);
 
     in_json = json::parse(R"(
@@ -184,14 +187,31 @@ TEST_CASE("Properties")
     "volume": 42
 }
 )");
-    std::cout << in_json.dump(4) << "\n";
+    // std::cout << in_json.dump(4) << "\n";
 
     props.fromJson(in_json);
-    std::cout << props.toJson().dump(4) << "\n";
+    // std::cout << props.toJson().dump(4) << "\n";
 
     REQUIRE(!props.playback_status.has_value());
 
     out_json = props.toJson();
-    std::cout << out_json.dump(4) << "\n";
+    // std::cout << out_json.dump(4) << "\n";
     REQUIRE(in_json == out_json);
+}
+
+
+TEST_CASE("Librespot")
+{
+    std::string line = "[2021-06-04T07:20:47Z INFO  librespot_playback::player] <Tunnel> (310573 ms) loaded";
+
+    smatch m;
+    static regex re_track_loaded(R"( <(.*)> \((.*) ms\) loaded)");
+    // Parse the patched version
+    if (std::regex_search(line, m, re_track_loaded))
+    {
+        REQUIRE(m.size() == 3);
+        REQUIRE(m[1] == "Tunnel");
+        REQUIRE(m[2] == "310573");
+    }
+    REQUIRE(m.size() == 3);
 }

@@ -21,7 +21,7 @@
 #include "config.hpp"
 #include "message/client_info.hpp"
 #include "message/hello.hpp"
-#include "message/stream_tags.hpp"
+// #include "message/stream_tags.hpp"
 #include "message/time.hpp"
 #include "stream_session_tcp.hpp"
 #include <iostream>
@@ -56,13 +56,12 @@ void Server::onMetaChanged(const PcmStream* pcmStream)
     // clang-format on
 
     const auto meta = pcmStream->getMeta();
-    LOG(DEBUG, LOG_TAG) << "metadata = " << meta->msg.dump(3) << "\n";
-    LOG(DEBUG, LOG_TAG) << "onMetaChanged (" << pcmStream->getName() << ")\n";
+    LOG(DEBUG, LOG_TAG) << "Metadata changed, stream: " << pcmStream->getName() << ", meta: " << meta->toJson().dump(3) << "\n";
 
-    streamServer_->onMetaChanged(pcmStream, meta);
+    // streamServer_->onMetaChanged(pcmStream, meta);
 
     // Send meta to all connected clients
-    json notification = jsonrpcpp::Notification("Stream.OnMetadata", jsonrpcpp::Parameter("id", pcmStream->getId(), "meta", meta->msg)).to_json();
+    json notification = jsonrpcpp::Notification("Stream.OnMetadata", jsonrpcpp::Parameter("id", pcmStream->getId(), "meta", meta->toJson())).to_json();
     controlServer_->send(notification.dump(), nullptr);
     // cout << "Notification: " << notification.dump() << "\n";
 }
@@ -70,8 +69,8 @@ void Server::onMetaChanged(const PcmStream* pcmStream)
 
 void Server::onPropertiesChanged(const PcmStream* pcmStream)
 {
-    LOG(DEBUG, LOG_TAG) << "onPropertiesChanged (" << pcmStream->getName() << ")\n";
     const auto props = pcmStream->getProperties();
+    LOG(DEBUG, LOG_TAG) << "Properties changed, stream: " << pcmStream->getName() << ", properties: " << props->toJson().dump(3) << "\n";
 
     // Send propeties to all connected control clients
     json notification = jsonrpcpp::Notification("Stream.OnProperties", jsonrpcpp::Parameter("id", pcmStream->getId(), "properties", props->toJson())).to_json();
@@ -299,7 +298,7 @@ void Server::processRequest(const jsonrpcpp::request_ptr request, jsonrpcpp::ent
                     session_ptr session = streamServer_->getStreamSession(client->id);
                     if (session && (session->pcmStream() != stream))
                     {
-                        session->send(stream->getMeta());
+                        // session->send(stream->getMeta());
                         session->send(stream->getHeader());
                         session->setPcmStream(stream);
                     }
@@ -354,7 +353,7 @@ void Server::processRequest(const jsonrpcpp::request_ptr request, jsonrpcpp::ent
                     session_ptr session = streamServer_->getStreamSession(client->id);
                     if (session && stream && (session->pcmStream() != stream))
                     {
-                        session->send(stream->getMeta());
+                        // session->send(stream->getMeta());
                         session->send(stream->getHeader());
                         session->setPcmStream(stream);
                     }
@@ -417,28 +416,29 @@ void Server::processRequest(const jsonrpcpp::request_ptr request, jsonrpcpp::ent
         }
         else if (request->method().find("Stream.") == 0)
         {
-            if (request->method().find("Stream.SetMeta") == 0)
-            {
-                // clang-format off
+            // if (request->method().find("Stream.SetMeta") == 0)
+            // {
+            // clang-format off
                 // Request:      {"id":4,"jsonrpc":"2.0","method":"Stream.SetMeta","params":{"id":"Spotify", "meta": {"album": "some album", "artist": "some artist", "track": "some track"...}}}
                 // Response:     {"id":4,"jsonrpc":"2.0","result":{"id":"Spotify"}}
-                // clang-format on
+            // clang-format on
 
-                LOG(INFO, LOG_TAG) << "Stream.SetMeta id: " << request->params().get<std::string>("id") << ", meta: " << request->params().get("meta") << "\n";
+            //     LOG(INFO, LOG_TAG) << "Stream.SetMeta id: " << request->params().get<std::string>("id") << ", meta: " << request->params().get("meta") <<
+            //     "\n";
 
-                // Find stream
-                string streamId = request->params().get<std::string>("id");
-                PcmStreamPtr stream = streamManager_->getStream(streamId);
-                if (stream == nullptr)
-                    throw jsonrpcpp::InternalErrorException("Stream not found", request->id());
+            //     // Find stream
+            //     string streamId = request->params().get<std::string>("id");
+            //     PcmStreamPtr stream = streamManager_->getStream(streamId);
+            //     if (stream == nullptr)
+            //         throw jsonrpcpp::InternalErrorException("Stream not found", request->id());
 
-                // Set metadata from request
-                stream->setMeta(request->params().get("meta"));
+            //     // Set metadata from request
+            //     stream->setMeta(request->params().get("meta"));
 
-                // Setup response
-                result["id"] = streamId;
-            }
-            else if (request->method().find("Stream.Control") == 0)
+            //     // Setup response
+            //     result["id"] = streamId;
+            // }
+            if (request->method().find("Stream.Control") == 0)
             {
                 // clang-format off
                 // Request:      {"id":4,"jsonrpc":"2.0","method":"Stream.Control","params":{"id":"Spotify", "command": "next", params: {}}}
@@ -700,8 +700,8 @@ void Server::onMessageReceived(StreamSession* streamSession, const msg::BaseMess
 
         saveConfig();
 
-        LOG(DEBUG, LOG_TAG) << "Sending meta data to " << streamSession->clientId << "\n";
-        streamSession->send(stream->getMeta());
+        // LOG(DEBUG, LOG_TAG) << "Sending meta data to " << streamSession->clientId << "\n";
+        // streamSession->send(stream->getMeta());
         streamSession->setPcmStream(stream);
         auto headerChunk = stream->getHeader();
         LOG(DEBUG, LOG_TAG) << "Sending codec header to " << streamSession->clientId << "\n";

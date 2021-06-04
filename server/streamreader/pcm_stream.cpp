@@ -177,7 +177,7 @@ PcmStream::PcmStream(PcmListener* pcmListener, boost::asio::io_context& ioc, con
     if (uri_.query.find(kUriChunkMs) != uri_.query.end())
         chunk_ms_ = cpt::stoul(uri_.query[kUriChunkMs]);
 
-    setMeta(json());
+    // setMeta(json());
 }
 
 
@@ -379,7 +379,7 @@ json PcmStream::toJson() const
     };
 
     if (meta_)
-        j["meta"] = meta_->msg;
+        j["meta"] = meta_->toJson();
     if (properties_)
         j["properties"] = properties_->toJson();
 
@@ -393,7 +393,7 @@ void PcmStream::addListener(PcmListener* pcmListener)
 }
 
 
-std::shared_ptr<msg::StreamTags> PcmStream::getMeta() const
+std::shared_ptr<Metatags> PcmStream::getMeta() const
 {
     return meta_;
 }
@@ -414,6 +414,16 @@ void PcmStream::setProperties(const Properties& props)
         jsonrpcpp::Request request(++req_id_, "Player.SetProperties", props.toJson());
         ctrl_script_->send(request.to_json().dump() + "\n"); //, params);
     }
+    else // TODO: Will the ctr_script always loop back the new properties?
+    {
+        properties_ = std::make_shared<Properties>(props);
+        // Trigger a stream update
+        for (auto* listener : pcmListeners_)
+        {
+            if (listener != nullptr)
+                listener->onPropertiesChanged(this);
+        }
+    }
 }
 
 
@@ -433,11 +443,10 @@ void PcmStream::control(const std::string& command, const json& params)
 }
 
 
-void PcmStream::setMeta(const json& jtag)
+void PcmStream::setMeta(const Metatags& meta)
 {
-    meta_.reset(new msg::StreamTags(jtag));
-    meta_->msg["STREAM"] = name_;
-    LOG(INFO, LOG_TAG) << "Stream: " << name_ << ", metadata=" << meta_->msg.dump(4) << "\n";
+    meta_ = std::make_shared<Metatags>(meta);
+    LOG(INFO, LOG_TAG) << "Stream: " << name_ << ", metadata=" << meta_->toJson().dump(4) << "\n";
 
     // Trigger a stream update
     for (auto* listener : pcmListeners_)

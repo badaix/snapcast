@@ -21,7 +21,7 @@
 #include "config.hpp"
 #include "message/client_info.hpp"
 #include "message/hello.hpp"
-#include "message/stream_tags.hpp"
+// #include "message/stream_tags.hpp"
 #include "message/time.hpp"
 #include "stream_session_tcp.hpp"
 #include <iostream>
@@ -66,20 +66,20 @@ void StreamServer::addSession(const std::shared_ptr<StreamSession>& session)
 }
 
 
-void StreamServer::onMetaChanged(const PcmStream* pcmStream, std::shared_ptr<msg::StreamTags> meta)
-{
-    // Send meta to all connected clients
+// void StreamServer::onMetaChanged(const PcmStream* pcmStream, std::shared_ptr<msg::StreamTags> meta)
+// {
+//     // Send meta to all connected clients
 
-    std::lock_guard<std::recursive_mutex> mlock(sessionsMutex_);
-    for (const auto& s : sessions_)
-    {
-        if (auto session = s.lock())
-        {
-            if (session->pcmStream().get() == pcmStream)
-                session->send(meta);
-        }
-    }
-}
+//     std::lock_guard<std::recursive_mutex> mlock(sessionsMutex_);
+//     for (const auto& s : sessions_)
+//     {
+//         if (auto session = s.lock())
+//         {
+//             if (session->pcmStream().get() == pcmStream)
+//                 session->send(meta);
+//         }
+//     }
+// }
 
 
 void StreamServer::onChunkEncoded(const PcmStream* pcmStream, bool isDefaultStream, std::shared_ptr<msg::PcmChunk> chunk, double /*duration*/)

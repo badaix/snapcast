@@ -36,11 +36,12 @@
 #include <boost/optional.hpp>
 
 #include "common/json.hpp"
+#include "common/metatags.hpp"
 #include "common/properties.hpp"
 #include "common/sample_format.hpp"
 #include "encoder/encoder.hpp"
 #include "message/codec_header.hpp"
-#include "message/stream_tags.hpp"
+// #include "message/stream_tags.hpp"
 #include "server_settings.hpp"
 #include "stream_uri.hpp"
 
@@ -168,8 +169,7 @@ public:
     virtual const SampleFormat& getSampleFormat() const;
     virtual std::string getCodec() const;
 
-    std::shared_ptr<msg::StreamTags> getMeta() const;
-    void setMeta(const json& j);
+    std::shared_ptr<Metatags> getMeta() const;
 
     std::shared_ptr<Properties> getProperties() const;
     void setProperties(const Properties& props);
@@ -190,6 +190,8 @@ protected:
     void resync(const std::chrono::nanoseconds& duration);
     void chunkEncoded(const encoder::Encoder& encoder, std::shared_ptr<msg::PcmChunk> chunk, double duration);
 
+    void setMeta(const Metatags& meta);
+
     std::chrono::time_point<std::chrono::steady_clock> tvEncodedChunk_;
     std::vector<PcmListener*> pcmListeners_;
     StreamUri uri_;
@@ -198,7 +200,7 @@ protected:
     std::unique_ptr<encoder::Encoder> encoder_;
     std::string name_;
     ReaderState state_;
-    std::shared_ptr<msg::StreamTags> meta_;
+    std::shared_ptr<Metatags> meta_;
     std::shared_ptr<Properties> properties_;
     boost::asio::io_context& ioc_;
     ServerSettings server_settings_;

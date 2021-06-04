@@ -24,7 +24,7 @@
 #include "hello.hpp"
 #include "pcm_chunk.hpp"
 #include "server_settings.hpp"
-#include "stream_tags.hpp"
+// #include "stream_tags.hpp"
 #include "time.hpp"
 
 #include "common/str_compat.hpp"
@@ -74,8 +74,8 @@ static std::unique_ptr<BaseMessage> createMessage(const BaseMessage& base_messag
             return createMessage<Hello>(base_message, buffer);
         case message_type::kServerSettings:
             return createMessage<ServerSettings>(base_message, buffer);
-        case message_type::kStreamTags:
-            return createMessage<StreamTags>(base_message, buffer);
+        // case message_type::kStreamTags:
+        //     return createMessage<StreamTags>(base_message, buffer);
         case message_type::kTime:
             return createMessage<Time>(base_message, buffer);
         case message_type::kWireChunk:

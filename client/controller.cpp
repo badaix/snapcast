@@ -71,9 +71,9 @@ using namespace player;
 static constexpr auto LOG_TAG = "Controller";
 static constexpr auto TIME_SYNC_INTERVAL = 1s;
 
-Controller::Controller(boost::asio::io_context& io_context, const ClientSettings& settings, std::unique_ptr<MetadataAdapter> meta)
-    : io_context_(io_context), timer_(io_context), settings_(settings), stream_(nullptr), decoder_(nullptr), player_(nullptr), meta_(std::move(meta)),
-      serverSettings_(nullptr)
+Controller::Controller(boost::asio::io_context& io_context, const ClientSettings& settings) //, std::unique_ptr<MetadataAdapter> meta)
+    : io_context_(io_context), timer_(io_context), settings_(settings), stream_(nullptr), decoder_(nullptr), player_(nullptr),
+      serverSettings_(nullptr) // meta_(std::move(meta)),
 {
 }
 
@@ -241,14 +241,14 @@ void Controller::getNextMessage()
             player_->setVolume(serverSettings_->getVolume() / 100., serverSettings_->isMuted());
             // }
         }
-        else if (response->type == message_type::kStreamTags)
-        {
-            if (meta_)
-            {
-                auto stream_tags = msg::message_cast<msg::StreamTags>(std::move(response));
-                meta_->push(stream_tags->msg);
-            }
-        }
+        // else if (response->type == message_type::kStreamTags)
+        // {
+        //     if (meta_)
+        //     {
+        //         auto stream_tags = msg::message_cast<msg::StreamTags>(std::move(response));
+        //         meta_->push(stream_tags->msg);
+        //     }
+        // }
         else
         {
             LOG(WARNING, LOG_TAG) << "Unexpected message received, type: " << response->type << "\n";

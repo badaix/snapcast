@@ -24,8 +24,8 @@
 #include "decoder/decoder.hpp"
 #include "message/message.hpp"
 #include "message/server_settings.hpp"
-#include "message/stream_tags.hpp"
-#include "metadata.hpp"
+// #include "message/stream_tags.hpp"
+// #include "metadata.hpp"
 #include "player/player.hpp"
 #include "stream.hpp"
 #include <atomic>
@@ -43,7 +43,7 @@ using namespace std::chrono_literals;
 class Controller
 {
 public:
-    Controller(boost::asio::io_context& io_context, const ClientSettings& settings, std::unique_ptr<MetadataAdapter> meta);
+    Controller(boost::asio::io_context& io_context, const ClientSettings& settings); //, std::unique_ptr<MetadataAdapter> meta);
     void start();
     // void stop();
     static std::vector<std::string> getSupportedPlayerNames();
@@ -63,13 +63,12 @@ private:
     boost::asio::io_context& io_context_;
     boost::asio::steady_timer timer_;
     ClientSettings settings_;
-    std::string meta_callback_;
     SampleFormat sampleFormat_;
     std::unique_ptr<ClientConnection> clientConnection_;
     std::shared_ptr<Stream> stream_;
     std::unique_ptr<decoder::Decoder> decoder_;
     std::unique_ptr<player::Player> player_;
-    std::unique_ptr<MetadataAdapter> meta_;
+    // std::unique_ptr<MetadataAdapter> meta_;
     std::unique_ptr<msg::ServerSettings> serverSettings_;
     std::unique_ptr<msg::CodecHeader> headerChunk_;
 };
