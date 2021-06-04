@@ -450,14 +450,14 @@ class SnapcastWrapper(object):
 
     def control(self, command, params={}):
         self.send_request("Stream.Control", {
-                          "id": "Pipe", "command": command, "params": params})
+                          "id": self._stream_id, "command": command, "params": params})
 
     def set_property(self, property, value):
         properties = {}
         properties[property] = value
         logger.info(f'set_properties {properties}')
         self.send_request("Stream.SetProperties", {
-                          "id": "Pipe", "properties": properties})
+                          "id": self._stream_id, "properties": properties})
 
     @property
     def metadata(self):
