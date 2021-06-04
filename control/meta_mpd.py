@@ -548,7 +548,6 @@ class MPDWrapper(object):
             except (ValueError, TypeError):
                 logger.warning(
                     f"Can't cast value {value} to {tag_mapping[key][1]}")
-
         logger.debug(f'snapcast meta: {snapmeta}')
 
         # Hack for web radio:

@@ -113,8 +113,8 @@ public:
     boost::optional<int> volume;
     /// The current track position in seconds
     boost::optional<float> position;
-    /// The current track duration in seconds
-    boost::optional<float> duration;
+    // /// The current track duration in seconds
+    // boost::optional<float> duration;
     /// Whether the client can call the Next method on this interface and expect the current track to change
     boost::optional<bool> can_go_next;
     /// Whether the client can call the Previous method on this interface and expect the current track to change
@@ -138,7 +138,7 @@ public:
         addTag(j, "shuffle", shuffle);
         addTag(j, "volume", volume);
         addTag(j, "position", position);
-        addTag(j, "duration", duration);
+        // addTag(j, "duration", duration);
         addTag(j, "canGoNext", can_go_next);
         addTag(j, "canGoPrevious", can_go_previous);
         addTag(j, "canPlay", can_play);
@@ -182,7 +182,7 @@ public:
         readTag(j, "shuffle", shuffle);
         readTag(j, "volume", volume);
         readTag(j, "position", position);
-        readTag(j, "duration", duration);
+        // readTag(j, "duration", duration);
         readTag(j, "canGoNext", can_go_next);
         readTag(j, "canGoPrevious", can_go_previous);
         readTag(j, "canPlay", can_play);
