@@ -119,33 +119,28 @@ void LibrespotStream::onStderrMsg(const std::string& line)
 
     // Parse log level, source and message from the log line
     // Format: [2021-05-09T08:31:08Z DEBUG librespot_playback::player] new Player[0]
-    std::string level;
-    std::string source;
-    std::string message;
-    level = utils::string::split_left(line, ' ', source);
-    level = utils::string::split_left(source, ' ', source);
-    source = utils::string::split_left(source, ']', message);
-    utils::string::trim(level);
-    utils::string::trim(source);
-    utils::string::trim(message);
 
-    AixLog::Severity severity = AixLog::Severity::info;
-    bool parsed = true;
-    if (level == "TRACE")
-        severity = AixLog::Severity::trace;
-    else if (level == "DEBUG")
-        severity = AixLog::Severity::debug;
-    else if (level == "INFO")
-        severity = AixLog::Severity::info;
-    else if (level == "WARN")
-        severity = AixLog::Severity::warning;
-    else if (level == "ERROR")
-        severity = AixLog::Severity::error;
-    else
-        parsed = false;
+    smatch m;
+    static regex re_log_line(R"(\[(\S+)(\s+)(\bTRACE\b|\bDEBUG\b|\bINFO\b|\bWARN\b|\bERROR\b)(\s+)(.*)\] (.*))");
+    if (regex_search(line, m, re_log_line) && (m.size() == 7))
+    {
+        const std::string& level = m[3];
+        const std::string& source = m[5];
+        const std::string& message = m[6];
+        AixLog::Severity severity = AixLog::Severity::info;
+        if (level == "TRACE")
+            severity = AixLog::Severity::trace;
+        else if (level == "DEBUG")
+            severity = AixLog::Severity::debug;
+        else if (level == "INFO")
+            severity = AixLog::Severity::info;
+        else if (level == "WARN")
+            severity = AixLog::Severity::warning;
+        else if (level == "ERROR")
+            severity = AixLog::Severity::error;
 
-    if (parsed)
         LOG(severity, source) << message << "\n";
+    }
     else
         LOG(INFO, LOG_TAG) << "(" << getName() << ") " << line << "\n";
 
@@ -155,7 +150,6 @@ void LibrespotStream::onStderrMsg(const std::string& line)
     //  [2021-06-04T07:20:47Z INFO  librespot_playback::player] <Tunnel> (310573 ms) loaded
     // 	info!("Track \"{}\" loaded", track.name);
     // std::cerr << line << "\n";
-    smatch m;
     static regex re_patched("metadata:(.*)");
     static regex re_track_loaded(R"( <(.*)> \((.*) ms\) loaded)");
     // Parse the patched version
@@ -176,10 +170,10 @@ void LibrespotStream::onStderrMsg(const std::string& line)
         meta.title = string(m[1]);
         meta.duration = cpt::stod(m[2]) / 1000.;
         setMeta(meta);
-        // Properties props;
+        Properties props;
         // props.can_seek = true;
         // props.can_control = true;
-        // setProperties(props);
+        setProperties(props);
     }
 }
 
