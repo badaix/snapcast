@@ -335,9 +335,23 @@ class SnapcastWrapper(object):
         logger.info(f'new meta {new_meta}')
 
     def __update_properties(self, props):
+        if props is None:
+            props = {}
         logger.info(f'Properties: "{props}"')
-        props['received'] = time.time()
-        changed_properties = self.update_properties(props)
+        # store the last receive time stamp for better position estimation
+        if 'position' in props:
+            props['received'] = time.time()
+
+        changed_properties = {}
+        for key, value in props.items():
+            if not key in self._properties:
+                changed_properties[key] = [None, value]
+            elif value != self._properties[key]:
+                changed_properties[key] = [self._properties[key], value]
+        for key, value in self._properties.items():
+            if not key in props:
+                changed_properties[key] = [value, None]
+        self._properties = props
         logger.info(f'Changed properties: "{changed_properties}"')
         for key, value in changed_properties.items():
             if key in property_mapping:
@@ -467,23 +481,11 @@ class SnapcastWrapper(object):
     def properties(self):
         return self._properties
 
-    def update_properties(self, new_properties):
-        changed_properties = {}
-        for key, value in new_properties.items():
-            if not key in self._properties:
-                changed_properties[key] = [None, value]
-            elif value != self._properties[key]:
-                changed_properties[key] = [self._properties[key], value]
-        for key, value in self._properties.items():
-            if not key in new_properties:
-                changed_properties[key] = [value, None]
-        self._properties = new_properties
-        return changed_properties
-
     def position(self):
+        logger.info(f'Position props: {self._properties}, meta: {self._metadata}')
         if not 'position' in self._properties:
             return 0
-        if not 'duration' in self._properties:
+        if not 'mpris:length' in self._metadata:
             return 0
         position = self._properties['position']
         if 'received' in self._properties:
