@@ -20,6 +20,7 @@
 #define PROPERTIES_HPP
 
 #include <boost/optional.hpp>
+#include <set>
 #include <string>
 
 #include "common/aixlog.hpp"
@@ -94,6 +95,8 @@ static std::ostream& operator<<(std::ostream& os, LoopStatus loop_status)
 
 class Properties
 {
+    static constexpr auto LOG_TAG = "Properties";
+
 public:
     Properties() = default;
     Properties(const json& j)
@@ -150,6 +153,14 @@ public:
 
     void fromJson(const json& j)
     {
+        static std::set<std::string> supported_props = {"playbackStatus", "loopStatus", "shuffle",  "volume",  "position",  "canGoNext",
+                                                        "canGoPrevious",  "canPlay",    "canPause", "canSeek", "canControl"};
+        for (const auto& element : j.items())
+        {
+            if (supported_props.find(element.key()) == supported_props.end())
+                LOG(WARNING, LOG_TAG) << "Property not supoorted: " << element.key() << "\n";
+        }
+
         boost::optional<std::string> opt;
         readTag(j, "playbackStatus", opt);
         if (opt.has_value())
@@ -204,7 +215,7 @@ private:
         }
         catch (const std::exception& e)
         {
-            LOG(ERROR) << "failed to read tag: '" << tag << "': " << e.what() << '\n';
+            LOG(ERROR, LOG_TAG) << "failed to read tag: '" << tag << "': " << e.what() << '\n';
         }
     }
 
@@ -223,7 +234,7 @@ private:
         }
         catch (const std::exception& e)
         {
-            LOG(ERROR) << "failed to add tag: '" << tag << "': " << e.what() << '\n';
+            LOG(ERROR, LOG_TAG) << "failed to add tag: '" << tag << "': " << e.what() << '\n';
         }
     }
 };

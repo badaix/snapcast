@@ -20,6 +20,7 @@
 #define METATAGS_HPP
 
 #include <boost/optional.hpp>
+#include <set>
 #include <string>
 
 #include "common/aixlog.hpp"
@@ -29,6 +30,8 @@ using json = nlohmann::json;
 
 class Metatags
 {
+    static constexpr auto LOG_TAG = "Metatags";
+
 public:
     Metatags() = default;
     Metatags(const json& j)
@@ -195,6 +198,60 @@ public:
 
     void fromJson(const json& j)
     {
+        static std::set<std::string> supported_tags = {"trackId",
+                                                       "file",
+                                                       "duration",
+                                                       "artist",
+                                                       "artistSort",
+                                                       "album",
+                                                       "albumSort",
+                                                       "albumArtist",
+                                                       "albumArtistSort",
+                                                       "title",
+                                                       "name",
+                                                       "genre",
+                                                       "date",
+                                                       "originalDate",
+                                                       "composer",
+                                                       "performer",
+                                                       "conductor",
+                                                       "work",
+                                                       "grouping",
+                                                       "comment",
+                                                       "discNumber",
+                                                       "label",
+                                                       "musicbrainzArtistId",
+                                                       "musicbrainzAlbumId",
+                                                       "musicbrainzAlbumArtistId",
+                                                       "musicbrainzTrackId",
+                                                       "musicbrainzReleaseTrackId",
+                                                       "musicbrainzWorkId",
+                                                       "art_url",
+                                                       "lyrics",
+                                                       "bpm",
+                                                       "autoRating",
+                                                       "comment",
+                                                       "composer",
+                                                       "contentCreated",
+                                                       "discNumber",
+                                                       "firstUsed",
+                                                       "genre",
+                                                       "lastUsed",
+                                                       "lyricist",
+                                                       "title",
+                                                       "trackNumber",
+                                                       "url",
+                                                       "artUrl",
+                                                       "useCount",
+                                                       "userRating",
+                                                       "spotifyArtistId",
+                                                       "spotifyTrackId"};
+        for (const auto& element : j.items())
+        {
+            if (supported_tags.find(element.key()) == supported_tags.end())
+                LOG(WARNING, LOG_TAG) << "Tag not supoorted: " << element.key() << "\n";
+        }
+
         readTag(j, "trackId", track_id);
         readTag(j, "file", file);
         readTag(j, "duration", duration);
@@ -258,7 +315,7 @@ private:
         }
         catch (const std::exception& e)
         {
-            LOG(ERROR) << "failed to read tag: '" << tag << "': " << e.what() << '\n';
+            LOG(ERROR, LOG_TAG) << "failed to read tag: '" << tag << "': " << e.what() << '\n';
         }
     }
 
@@ -277,7 +334,7 @@ private:
         }
         catch (const std::exception& e)
         {
-            LOG(ERROR) << "failed to add tag: '" << tag << "': " << e.what() << '\n';
+            LOG(ERROR, LOG_TAG) << "failed to add tag: '" << tag << "': " << e.what() << '\n';
         }
     }
 };
