@@ -463,13 +463,13 @@ void Server::processRequest(const jsonrpcpp::request_ptr request, jsonrpcpp::ent
                 // Setup response
                 result["id"] = streamId;
             }
-            else if (request->method().find("Stream.SetProperties") == 0)
+            else if (request->method().find("Stream.SetProperty") == 0)
             {
                 // clang-format off
                 // clang-format on
 
-                LOG(INFO, LOG_TAG) << "Stream.SetProperties id: " << request->params().get<std::string>("id")
-                                   << ", properties: " << request->params().get("properties") << "\n";
+                LOG(INFO, LOG_TAG) << "Stream.SetProperty id: " << request->params().get<std::string>("id")
+                                   << ", property: " << request->params().get("property") << ", value: " << request->params().get("value") << "\n";
 
                 // Find stream
                 string streamId = request->params().get<std::string>("id");
@@ -477,12 +477,10 @@ void Server::processRequest(const jsonrpcpp::request_ptr request, jsonrpcpp::ent
                 if (stream == nullptr)
                     throw jsonrpcpp::InternalErrorException("Stream not found", request->id());
 
-                Properties props(request->params().get("properties"));
-
-                // Set metadata from request
-                stream->setProperties(props);
+                stream->setProperty(request->params().get("property"), request->params().get("value"));
 
                 // Setup response
+                // TODO: error handling
                 result["id"] = streamId;
             }
             else if (request->method() == "Stream.AddStream")

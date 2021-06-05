@@ -262,13 +262,7 @@ void PcmStream::onControlMsg(const std::string& msg)
         else if (notification->method() == "Player.Properties")
         {
             LOG(DEBUG, LOG_TAG) << "Received properties notification\n";
-            properties_ = std::make_shared<Properties>(notification->params().to_json());
-            // Trigger a stream update
-            for (auto* listener : pcmListeners_)
-            {
-                if (listener != nullptr)
-                    listener->onPropertiesChanged(this);
-            }
+            setProperties(notification->params().to_json());
         }
         else
             LOG(WARNING, LOG_TAG) << "Received unknown notification method: '" << notification->method() << "'\n";
@@ -405,24 +399,38 @@ std::shared_ptr<Properties> PcmStream::getProperties() const
 }
 
 
-void PcmStream::setProperties(const Properties& props)
+void PcmStream::setProperty(const std::string& name, const json& value)
 {
-    LOG(INFO, LOG_TAG) << "Stream '" << getId() << "' set properties: " << props.toJson() << "\n";
+    LOG(INFO, LOG_TAG) << "Stream '" << getId() << "' set property: " << name << " = " << value << "\n";
+    // TODO: check validity
+    if (name == "loopStatus")
+        ;
+    else if (name == "shuffle")
+        ;
+    else if (name == "volume")
+        ;
+    else if (name == "rate")
+        ;
+    else
+    {
+        LOG(ERROR, LOG_TAG) << "Property not supported: " << name << "\n";
+    }
+
     // TODO: queue commands, send next on timeout or after reception of the last command's response
     if (ctrl_script_)
     {
-        jsonrpcpp::Request request(++req_id_, "Player.SetProperties", props.toJson());
+        jsonrpcpp::Request request(++req_id_, "Player.SetProperty", {name, value});
         ctrl_script_->send(request.to_json().dump() + "\n"); //, params);
     }
     else // TODO: Will the ctr_script always loop back the new properties?
     {
-        properties_ = std::make_shared<Properties>(props);
-        // Trigger a stream update
-        for (auto* listener : pcmListeners_)
-        {
-            if (listener != nullptr)
-                listener->onPropertiesChanged(this);
-        }
+        // properties_ = std::make_shared<Properties>(props);
+        // // Trigger a stream update
+        // for (auto* listener : pcmListeners_)
+        // {
+        //     if (listener != nullptr)
+        //         listener->onPropertiesChanged(this);
+        // }
     }
 }
 
@@ -446,7 +454,7 @@ void PcmStream::control(const std::string& command, const json& params)
 void PcmStream::setMeta(const Metatags& meta)
 {
     meta_ = std::make_shared<Metatags>(meta);
-    LOG(INFO, LOG_TAG) << "Stream: " << name_ << ", metadata=" << meta_->toJson().dump(4) << "\n";
+    LOG(INFO, LOG_TAG) << "setMeta, stream: " << getId() << ", metadata: " << meta_->toJson() << "\n";
 
     // Trigger a stream update
     for (auto* listener : pcmListeners_)
@@ -455,5 +463,21 @@ void PcmStream::setMeta(const Metatags& meta)
             listener->onMetaChanged(this);
     }
 }
+
+
+void PcmStream::setProperties(const Properties& props)
+{
+    properties_ = std::make_shared<Properties>(props);
+    LOG(INFO, LOG_TAG) << "setProperties, stream: " << getId() << ", properties: " << props.toJson() << "\n";
+
+    // Trigger a stream update
+    for (auto* listener : pcmListeners_)
+    {
+        if (listener != nullptr)
+            listener->onPropertiesChanged(this);
+    }
+}
+
+
 
 } // namespace streamreader

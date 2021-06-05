@@ -19,6 +19,7 @@
 #ifndef PROPERTIES_HPP
 #define PROPERTIES_HPP
 
+#include <boost/any.hpp>
 #include <boost/optional.hpp>
 #include <set>
 #include <string>
@@ -95,8 +96,6 @@ static std::ostream& operator<<(std::ostream& os, LoopStatus loop_status)
 
 class Properties
 {
-    static constexpr auto LOG_TAG = "Properties";
-
 public:
     Properties() = default;
     Properties(const json& j)
@@ -112,12 +111,16 @@ public:
     /// A value of false indicates that playback is progressing linearly through a playlist, while true means playback is progressing through a playlist in some
     /// other order.
     boost::optional<bool> shuffle;
+    /// The current playback rate
+    boost::optional<int> rate;
     /// The volume level between 0-100
     boost::optional<int> volume;
     /// The current track position in seconds
     boost::optional<float> position;
-    // /// The current track duration in seconds
-    // boost::optional<float> duration;
+    /// The minimum value which the Rate property can take. Clients should not attempt to set the Rate property below this value
+    boost::optional<int> minimum_rate;
+    /// The maximum value which the Rate property can take. Clients should not attempt to set the Rate property above this value
+    boost::optional<int> maximum_rate;
     /// Whether the client can call the Next method on this interface and expect the current track to change
     boost::optional<bool> can_go_next;
     /// Whether the client can call the Previous method on this interface and expect the current track to change
@@ -134,14 +137,17 @@ public:
     json toJson() const
     {
         json j;
-        if (playback_status.has_value())
-            addTag(j, "playbackStatus", boost::optional<std::string>(to_string(playback_status.value())));
         if (loop_status.has_value())
             addTag(j, "loopStatus", boost::optional<std::string>(to_string(loop_status.value())));
         addTag(j, "shuffle", shuffle);
         addTag(j, "volume", volume);
+        addTag(j, "rate", rate);
+
+        if (playback_status.has_value())
+            addTag(j, "playbackStatus", boost::optional<std::string>(to_string(playback_status.value())));
         addTag(j, "position", position);
-        // addTag(j, "duration", duration);
+        addTag(j, "minimumRate", minimum_rate);
+        addTag(j, "maximumRate", maximum_rate);
         addTag(j, "canGoNext", can_go_next);
         addTag(j, "canGoPrevious", can_go_previous);
         addTag(j, "canPlay", can_play);
@@ -153,29 +159,19 @@ public:
 
     void fromJson(const json& j)
     {
-        static std::set<std::string> supported_props = {"playbackStatus", "loopStatus", "shuffle",  "volume",  "position",  "canGoNext",
-                                                        "canGoPrevious",  "canPlay",    "canPause", "canSeek", "canControl"};
+        static std::set<std::string> rw_props = {"loopStatus", "shuffle", "volume", "rate"};
+        static std::set<std::string> ro_props = {"playbackStatus", "loopStatus",    "shuffle", "volume",   "position", "minimumRate", "maximumRate",
+                                                 "canGoNext",      "canGoPrevious", "canPlay", "canPause", "canSeek",  "canControl"};
         for (const auto& element : j.items())
         {
-            if (supported_props.find(element.key()) == supported_props.end())
+            bool is_rw = (rw_props.find(element.key()) != rw_props.end());
+            bool is_ro = (ro_props.find(element.key()) != ro_props.end());
+            if (!is_rw && !is_ro)
                 LOG(WARNING, LOG_TAG) << "Property not supoorted: " << element.key() << "\n";
         }
 
         boost::optional<std::string> opt;
-        readTag(j, "playbackStatus", opt);
-        if (opt.has_value())
-        {
-            if (*opt == "playing")
-                playback_status = PlaybackStatus::kPlaying;
-            else if (*opt == "paused")
-                playback_status = PlaybackStatus::kPaused;
-            else if (*opt == "stopped")
-                playback_status = PlaybackStatus::kStopped;
-            else
-                playback_status = PlaybackStatus::kUnknown;
-        }
-        else
-            playback_status = boost::none;
+
         readTag(j, "loopStatus", opt);
         if (opt.has_value())
         {
@@ -192,8 +188,25 @@ public:
             loop_status = boost::none;
         readTag(j, "shuffle", shuffle);
         readTag(j, "volume", volume);
+        readTag(j, "rate", rate);
+
+        readTag(j, "playbackStatus", opt);
+        if (opt.has_value())
+        {
+            if (*opt == "playing")
+                playback_status = PlaybackStatus::kPlaying;
+            else if (*opt == "paused")
+                playback_status = PlaybackStatus::kPaused;
+            else if (*opt == "stopped")
+                playback_status = PlaybackStatus::kStopped;
+            else
+                playback_status = PlaybackStatus::kUnknown;
+        }
+        else
+            playback_status = boost::none;
         readTag(j, "position", position);
-        // readTag(j, "duration", duration);
+        readTag(j, "minimumRate", minimum_rate);
+        readTag(j, "maximumRate", maximum_rate);
         readTag(j, "canGoNext", can_go_next);
         readTag(j, "canGoPrevious", can_go_previous);
         readTag(j, "canPlay", can_play);
@@ -237,6 +250,9 @@ private:
             LOG(ERROR, LOG_TAG) << "failed to add tag: '" << tag << "': " << e.what() << '\n';
         }
     }
+
+private:
+    static constexpr auto LOG_TAG = "Properties";
 };
 
 

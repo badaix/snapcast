@@ -395,13 +395,13 @@ class MPDWrapper(object):
                     if offset >= 0:
                         strOffset = "+" + strOffset
                     self.seekcur(strOffset)
-                elif cmd == 'SetProperties':
-                    properties = request['params']
-                    logger.info(f'SetProperties: {properties}')
-                    if 'shuffle' in properties:
-                        self.random(int(properties['shuffle']))
-                    if 'loopStatus' in properties:
-                        value = properties['loopStatus']
+                elif cmd == 'SetProperty':
+                    property = request['params']
+                    logger.info(f'SetProperty: {property}')
+                    if 'shuffle' in property:
+                        self.random(int(property['shuffle']))
+                    if 'loopStatus' in property:
+                        value = property['loopStatus']
                         if value == "playlist":
                             self.repeat(1)
                             if self._can_single:
@@ -438,7 +438,6 @@ class MPDWrapper(object):
             for char in chunk:
                 if char == '\n':
                     logger.info(f'Received: {self._buffer}')
-
                     self.control(self._buffer)
                     self._buffer = ''
                 else:
@@ -628,7 +627,7 @@ class MPDWrapper(object):
                 logger.debug(
                     f'key: {key}, value: {value}, mapped key: {mapped_key}, mapped value: {mapped_val}')
             except KeyError:
-                logger.debug(f'tag "{key}" not supported')
+                logger.debug(f'property "{key}" not supported')
             except (ValueError, TypeError):
                 logger.warning(
                     f"Can't cast value {value} to {status_mapping[key][1]}")

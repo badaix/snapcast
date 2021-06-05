@@ -21,6 +21,7 @@
 
 
 from time import sleep
+from systemd.journal import _valid_field_name
 import websocket
 import logging
 import threading
@@ -467,11 +468,9 @@ class SnapcastWrapper(object):
                           "id": self._stream_id, "command": command, "params": params})
 
     def set_property(self, property, value):
-        properties = {}
-        properties[property] = value
-        logger.info(f'set_properties {properties}')
-        self.send_request("Stream.SetProperties", {
-                          "id": self._stream_id, "properties": properties})
+        logger.info(f'set_property {property} = {value}')
+        self.send_request("Stream.SetProperty", {
+                          "id": self._stream_id, "property": property, "value": value})
 
     @property
     def metadata(self):

@@ -172,7 +172,7 @@ public:
     std::shared_ptr<Metatags> getMeta() const;
 
     std::shared_ptr<Properties> getProperties() const;
-    void setProperties(const Properties& props);
+    void setProperty(const std::string& name, const json& value);
 
     virtual void control(const std::string& command, const json& params);
 
@@ -191,6 +191,7 @@ protected:
     void chunkEncoded(const encoder::Encoder& encoder, std::shared_ptr<msg::PcmChunk> chunk, double duration);
 
     void setMeta(const Metatags& meta);
+    void setProperties(const Properties& props);
 
     std::chrono::time_point<std::chrono::steady_clock> tvEncodedChunk_;
     std::vector<PcmListener*> pcmListeners_;
