@@ -151,6 +151,11 @@ public:
         return string_id_;
     }
 
+    bool operator<(const Id& other) const
+    {
+        return (to_json() < other.to_json());
+    }
+
 protected:
     value_t type_;
     int int_id_;
