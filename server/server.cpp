@@ -457,8 +457,10 @@ void Server::processRequest(const jsonrpcpp::request_ptr request, jsonrpcpp::ent
                 if (stream == nullptr)
                     throw jsonrpcpp::InternalErrorException("Stream not found", request->id());
 
-                // Set metadata from request
-                stream->control(request->params().get("command"), request->params().has("params") ? request->params().get("params") : json{});
+                stream->control(*request, [](const jsonrpcpp::Response& response) {
+                    LOG(INFO, LOG_TAG) << "Received response for Stream.Control, id: " << response.id() << ", result: " << response.result()
+                                       << ", error: " << response.error().code() << "\n";
+                });
 
                 // Setup response
                 result["id"] = streamId;
@@ -477,7 +479,10 @@ void Server::processRequest(const jsonrpcpp::request_ptr request, jsonrpcpp::ent
                 if (stream == nullptr)
                     throw jsonrpcpp::InternalErrorException("Stream not found", request->id());
 
-                stream->setProperty(request->params().get("property"), request->params().get("value"));
+                stream->setProperty(*request, [](const jsonrpcpp::Response& response) {
+                    LOG(INFO, LOG_TAG) << "Received response for Stream.SetProperty, id: " << response.id() << ", result: " << response.result()
+                                       << ", error: " << response.error().code() << "\n";
+                });
 
                 // Setup response
                 // TODO: error handling

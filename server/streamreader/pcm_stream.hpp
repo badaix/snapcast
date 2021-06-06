@@ -42,6 +42,7 @@
 #include "encoder/encoder.hpp"
 #include "message/codec_header.hpp"
 // #include "message/stream_tags.hpp"
+#include "jsonrpcpp.hpp"
 #include "server_settings.hpp"
 #include "stream_uri.hpp"
 
@@ -115,20 +116,23 @@ public:
 class CtrlScript
 {
 public:
-    using OnReceive = std::function<void(std::string msg)>;
+    using OnRequest = std::function<void(const jsonrpcpp::Request& response)>;
+    using OnNotification = std::function<void(const jsonrpcpp::Notification& response)>;
+    using OnResponse = std::function<void(const jsonrpcpp::Response& response)>;
+    using OnLog = std::function<void(std::string message)>;
 
     CtrlScript(boost::asio::io_context& ioc, const std::string& script);
     virtual ~CtrlScript();
 
-    void start(const std::string& stream_id, const ServerSettings& server_setttings, const OnReceive& receive_handler);
+    void start(const std::string& stream_id, const ServerSettings& server_setttings, const OnNotification& notification_handler,
+               const OnRequest& request_handler, const OnLog& log_handler);
     void stop();
     /// Send a message to stdin of the process
-    void send(const std::string& msg);
+    void send(const jsonrpcpp::Request& request, const OnResponse& response_handler);
 
 private:
     void stderrReadLine();
     void stdoutReadLine();
-    void logScript(std::string line);
 
     bp::child process_;
     bp::pipe pipe_stdout_;
@@ -137,11 +141,15 @@ private:
     std::unique_ptr<boost::asio::posix::stream_descriptor> stream_stderr_;
     boost::asio::streambuf streambuf_stdout_;
     boost::asio::streambuf streambuf_stderr_;
-    OnReceive receive_handler_;
+    OnRequest request_handler_;
+    OnNotification notification_handler_;
+    OnLog log_handler_;
 
     boost::asio::io_context& ioc_;
     std::string script_;
     bp::opstream in_;
+
+    std::map<jsonrpcpp::Id, OnResponse> request_callbacks_;
 };
 
 
@@ -170,11 +178,10 @@ public:
     virtual std::string getCodec() const;
 
     std::shared_ptr<Metatags> getMeta() const;
-
     std::shared_ptr<Properties> getProperties() const;
-    void setProperty(const std::string& name, const json& value);
 
-    virtual void control(const std::string& command, const json& params);
+    virtual void setProperty(const jsonrpcpp::Request& request, const CtrlScript::OnResponse& response_handler);
+    virtual void control(const jsonrpcpp::Request& request, const CtrlScript::OnResponse& response_handler);
 
     virtual ReaderState getState() const;
     virtual json toJson() const;
@@ -184,7 +191,10 @@ public:
 protected:
     std::atomic<bool> active_;
 
-    void onControlMsg(const std::string& msg);
+    void onControlRequest(const jsonrpcpp::Request& request);
+    void onControlNotification(const jsonrpcpp::Notification& notification);
+    void onControlLog(std::string line);
+
     void setState(ReaderState newState);
     void chunkRead(const msg::PcmChunk& chunk);
     void resync(const std::chrono::nanoseconds& duration);
