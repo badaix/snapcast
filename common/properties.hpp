@@ -19,7 +19,6 @@
 #ifndef PROPERTIES_HPP
 #define PROPERTIES_HPP
 
-#include <boost/any.hpp>
 #include <boost/optional.hpp>
 #include <set>
 #include <string>
@@ -108,19 +107,19 @@ public:
     boost::optional<PlaybackStatus> playback_status;
     /// The current loop / repeat status
     boost::optional<LoopStatus> loop_status;
+    /// The current playback rate
+    boost::optional<float> rate;
     /// A value of false indicates that playback is progressing linearly through a playlist, while true means playback is progressing through a playlist in some
     /// other order.
     boost::optional<bool> shuffle;
-    /// The current playback rate
-    boost::optional<int> rate;
     /// The volume level between 0-100
     boost::optional<int> volume;
     /// The current track position in seconds
     boost::optional<float> position;
     /// The minimum value which the Rate property can take. Clients should not attempt to set the Rate property below this value
-    boost::optional<int> minimum_rate;
+    boost::optional<float> minimum_rate;
     /// The maximum value which the Rate property can take. Clients should not attempt to set the Rate property above this value
-    boost::optional<int> maximum_rate;
+    boost::optional<float> maximum_rate;
     /// Whether the client can call the Next method on this interface and expect the current track to change
     boost::optional<bool> can_go_next;
     /// Whether the client can call the Previous method on this interface and expect the current track to change
