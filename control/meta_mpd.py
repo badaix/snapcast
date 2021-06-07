@@ -366,35 +366,38 @@ class MPDWrapper(object):
             id = request['id']
             [interface, cmd] = request['method'].split('.', 1)
             if interface == 'Player':
-                success = True
-                if cmd == 'Next':
-                    self.next()
-                elif cmd == 'Previous':
-                    self.previous()
-                elif cmd == 'Play':
-                    self.play()
-                elif cmd == 'Pause':
-                    self.pause(1)
-                elif cmd == 'PlayPause':
-                    if self.status()['state'] == 'play':
-                        self.pause(1)
-                    else:
+                if cmd == 'Control':
+                    success = True
+                    command = request['params']['command']
+                    params = request['params'].get('params', {})
+                    if command == 'Next':
+                        self.next()
+                    elif command == 'Previous':
+                        self.previous()
+                    elif command == 'Play':
                         self.play()
-                elif cmd == 'Stop':
-                    self.stop()
-                elif cmd == 'SetPosition':
-                    trackid = request['params']['TrackId']
-                    trackid = trackid.rsplit('/', 1)[1]
-                    position = request['params']['Position']
-                    position = int(position) / 1000000
-                    self.seekid(int(trackid), position)
-                elif cmd == 'Seek':
-                    offset = request['params']['Offset']
-                    offset = int(offset) / 1000000
-                    strOffset = str(offset)
-                    if offset >= 0:
-                        strOffset = "+" + strOffset
-                    self.seekcur(strOffset)
+                    elif command == 'Pause':
+                        self.pause(1)
+                    elif command == 'PlayPause':
+                        if self.status()['state'] == 'play':
+                            self.pause(1)
+                        else:
+                            self.play()
+                    elif command == 'Stop':
+                        self.stop()
+                    elif command == 'SetPosition':
+                        trackid = params['TrackId']
+                        trackid = trackid.rsplit('/', 1)[1]
+                        position = params['Position']
+                        position = int(position) / 1000000
+                        self.seekid(int(trackid), position)
+                    elif command == 'Seek':
+                        offset = params['Offset']
+                        offset = int(offset) / 1000000
+                        strOffset = str(offset)
+                        if offset >= 0:
+                            strOffset = "+" + strOffset
+                        self.seekcur(strOffset)
                 elif cmd == 'SetProperty':
                     property = request['params']
                     logger.info(f'SetProperty: {property}')
@@ -402,7 +405,7 @@ class MPDWrapper(object):
                         self.random(int(property['shuffle']))
                     if 'loopStatus' in property:
                         value = property['loopStatus']
-                        if value == "playlist":
+                        if value == "playlist   ":
                             self.repeat(1)
                             if self._can_single:
                                 self.single(0)

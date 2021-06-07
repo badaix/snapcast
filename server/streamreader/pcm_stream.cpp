@@ -83,6 +83,7 @@ void CtrlScript::send(const jsonrpcpp::Request& request, const OnResponse& respo
         request_callbacks_[request.id()] = response_handler;
 
     std::string msg = request.to_json().dump() + "\n";
+    LOG(INFO, SCRIPT_LOG_TAG) << "Sending request: " << msg;
     in_.write(msg.data(), msg.size());
     in_.flush();
 }
@@ -485,7 +486,10 @@ void PcmStream::control(const jsonrpcpp::Request& request, const CtrlScript::OnR
     LOG(INFO, LOG_TAG) << "Stream '" << getId() << "' received command: '" << command << "', params: '" << request.params().to_json() << "'\n";
     if (ctrl_script_)
     {
-        jsonrpcpp::Request req(++req_id_, "Player." + command, request.params().has("params") ? request.params().get("params") : json{});
+        jsonrpcpp::Parameter params{"command", command};
+        if (request.params().has("params"))
+            params.add("params", request.params().get("params"));
+        jsonrpcpp::Request req(++req_id_, "Player.Control", params);
         ctrl_script_->send(req, response_handler);
     }
 }
