@@ -280,12 +280,12 @@ void PcmStream::onControlNotification(const jsonrpcpp::Notification& notificatio
         ctrl_script_->send({++req_id_, "Plugin.Stream.Player.GetProperties"}, [this](const jsonrpcpp::Response& response) {
             LOG(INFO, LOG_TAG) << "Response for Plugin.Stream.Player.GetProperties: " << response.to_json() << "\n";
             if (response.error().code() == 0)
-                setMeta(response.result());
+                setProperties(response.result());
         });
         ctrl_script_->send({++req_id_, "Plugin.Stream.Player.GetMetadata"}, [this](const jsonrpcpp::Response& response) {
             LOG(INFO, LOG_TAG) << "Response for Plugin.Stream.Player.GetMetadata: " << response.to_json() << "\n";
             if (response.error().code() == 0)
-                setProperties(response.result());
+                setMeta(response.result());
         });
     }
     else if (notification.method() == "Plugin.Stream.Log")
