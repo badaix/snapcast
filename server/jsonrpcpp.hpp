@@ -190,6 +190,8 @@ public:
     bool has(const std::string& key) const;
     bool has(size_t idx) const;
 
+    void add(const std::string& key, const Json& value);
+
     template <typename T>
     T get(const std::string& key) const
     {
@@ -691,11 +693,16 @@ inline Parameter::Parameter(const std::string& key1, const Json& value1, const s
 {
     param_map[key1] = value1;
     if (!key2.empty())
-        param_map[key2] = value2;
+        add(key2, value2);
     if (!key3.empty())
-        param_map[key3] = value3;
+        add(key3, value3);
     if (!key4.empty())
-        param_map[key4] = value4;
+        add(key4, value4);
+}
+
+inline void Parameter::add(const std::string& key, const Json& value)
+{
+    param_map[key] = value;
 }
 
 inline void Parameter::parse_json(const Json& json)
