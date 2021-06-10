@@ -214,6 +214,12 @@ public:
         readTag(j, "canControl", can_control);
     }
 
+    bool operator==(const Properties& other) const
+    {
+        // expensive, but not called ofetn and less typing
+        return (toJson() == other.toJson());
+    }
+
 private:
     template <typename T>
     void readTag(const json& j, const std::string& tag, boost::optional<T>& dest) const
