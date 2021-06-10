@@ -55,6 +55,9 @@ using session_ptr = std::shared_ptr<StreamSession>;
 class Server : public StreamMessageReceiver, public ControlMessageReceiver, public PcmListener
 {
 public:
+    // TODO: revise handler names
+    using OnResponse = std::function<void(jsonrpcpp::entity_ptr response, jsonrpcpp::notification_ptr notification)>;
+
     Server(boost::asio::io_context& io_context, const ServerSettings& serverSettings);
     virtual ~Server();
 
@@ -67,12 +70,12 @@ private:
     void onDisconnect(StreamSession* streamSession) override;
 
     /// Implementation of ControllMessageReceiver
-    std::string onMessageReceived(ControlSession* controlSession, const std::string& message) override;
-    void onNewSession(const std::shared_ptr<ControlSession>& session) override
+    void onMessageReceived(std::shared_ptr<ControlSession> controlSession, const std::string& message, const ResponseHander& response_handler) override;
+    void onNewSession(std::shared_ptr<ControlSession> session) override
     {
         std::ignore = session;
     };
-    void onNewSession(const std::shared_ptr<StreamSession>& session) override;
+    void onNewSession(std::shared_ptr<StreamSession> session) override;
 
     /// Implementation of PcmListener
     void onMetaChanged(const PcmStream* pcmStream) override;
@@ -83,7 +86,7 @@ private:
     void onResync(const PcmStream* pcmStream, double ms) override;
 
 private:
-    void processRequest(const jsonrpcpp::request_ptr request, jsonrpcpp::entity_ptr& response, jsonrpcpp::notification_ptr& notification) const;
+    void processRequest(const jsonrpcpp::request_ptr request, const OnResponse& on_response) const;
     /// Save the server state deferred to prevent blocking and lower disk io
     /// @param deferred the delay after the last call to saveConfig
     void saveConfig(const std::chrono::milliseconds& deferred = std::chrono::seconds(2));

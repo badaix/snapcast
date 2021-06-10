@@ -39,10 +39,11 @@ class StreamSession;
 class ControlMessageReceiver
 {
 public:
+    using ResponseHander = std::function<void(const std::string& response)>;
     // TODO: rename, error handling
-    virtual std::string onMessageReceived(ControlSession* session, const std::string& message) = 0;
-    virtual void onNewSession(const std::shared_ptr<ControlSession>& session) = 0;
-    virtual void onNewSession(const std::shared_ptr<StreamSession>& session) = 0;
+    virtual void onMessageReceived(std::shared_ptr<ControlSession> session, const std::string& message, const ResponseHander& response_handler) = 0;
+    virtual void onNewSession(std::shared_ptr<ControlSession> session) = 0;
+    virtual void onNewSession(std::shared_ptr<StreamSession> session) = 0;
 };
 
 

@@ -220,14 +220,15 @@ void ControlSessionHttp::handle_request(http::request<Body, http::basic_fields<A
         if (req.target() != "/jsonrpc")
             return send(bad_request("Illegal request-target"));
 
-        string response = message_receiver_->onMessageReceived(this, req.body());
-        http::response<http::string_body> res{http::status::ok, req.version()};
-        res.set(http::field::server, HTTP_SERVER_NAME);
-        res.set(http::field::content_type, "application/json");
-        res.keep_alive(req.keep_alive());
-        res.body() = response;
-        res.prepare_payload();
-        return send(std::move(res));
+        message_receiver_->onMessageReceived(shared_from_this(), req.body(), [this, req = std::move(req), send = std::move(send)](const std::string& response) {
+            http::response<http::string_body> res{http::status::ok, req.version()};
+            res.set(http::field::server, HTTP_SERVER_NAME);
+            res.set(http::field::content_type, "application/json");
+            res.keep_alive(req.keep_alive());
+            res.body() = response;
+            res.prepare_payload();
+            return send(std::move(res));
+        });
     }
 
     // Request path must be absolute and not contain "..".
@@ -322,7 +323,7 @@ void ControlSessionHttp::on_read(beast::error_code ec, std::size_t bytes_transfe
                 else
                 {
                     auto ws_session = make_shared<ControlSessionWebsocket>(message_receiver_, strand_.context(), std::move(*ws));
-                    message_receiver_->onNewSession(ws_session);
+                    message_receiver_->onNewSession(std::move(ws_session));
                 }
             });
         }
@@ -339,7 +340,7 @@ void ControlSessionHttp::on_read(beast::error_code ec, std::size_t bytes_transfe
                 else
                 {
                     auto ws_session = make_shared<StreamSessionWebsocket>(strand_.context(), nullptr, std::move(*ws));
-                    message_receiver_->onNewSession(ws_session);
+                    message_receiver_->onNewSession(std::move(ws_session));
                 }
             });
         }

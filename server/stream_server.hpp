@@ -63,7 +63,7 @@ public:
     /// Send a message to all connceted clients
     //	void send(const msg::BaseMessage* message);
 
-    void addSession(const std::shared_ptr<StreamSession>& session);
+    void addSession(std::shared_ptr<StreamSession> session);
     // void onMetaChanged(const PcmStream* pcmStream, std::shared_ptr<msg::StreamTags> meta);
     void onChunkEncoded(const PcmStream* pcmStream, bool isDefaultStream, std::shared_ptr<msg::PcmChunk> chunk, double duration);
 

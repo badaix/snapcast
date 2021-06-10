@@ -61,9 +61,9 @@ private:
     void cleanup();
 
     /// Implementation of ControlMessageReceiver
-    std::string onMessageReceived(ControlSession* session, const std::string& message) override;
-    void onNewSession(const std::shared_ptr<ControlSession>& session) override;
-    void onNewSession(const std::shared_ptr<StreamSession>& session) override;
+    void onMessageReceived(std::shared_ptr<ControlSession> session, const std::string& message, const ResponseHander& response_handler) override;
+    void onNewSession(std::shared_ptr<ControlSession> session) override;
+    void onNewSession(std::shared_ptr<StreamSession> session) override;
 
     mutable std::recursive_mutex session_mutex_;
     std::vector<std::weak_ptr<ControlSession>> sessions_;

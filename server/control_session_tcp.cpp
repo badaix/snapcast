@@ -61,9 +61,10 @@ void ControlSessionTcp::do_read()
                 // LOG(DEBUG, LOG_TAG) << "received: " << line << "\n";
                 if ((message_receiver_ != nullptr) && !line.empty())
                 {
-                    string response = message_receiver_->onMessageReceived(this, line);
-                    if (!response.empty())
-                        sendAsync(response);
+                    message_receiver_->onMessageReceived(shared_from_this(), line, [this](const std::string& response) {
+                        if (!response.empty())
+                            sendAsync(response);
+                    });
                 }
             }
             streambuf_.consume(bytes_transferred);

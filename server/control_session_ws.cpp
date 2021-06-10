@@ -122,11 +122,12 @@ void ControlSessionWebsocket::on_read_ws(beast::error_code ec, std::size_t bytes
         // LOG(DEBUG, LOG_TAG) << "received: " << line << "\n";
         if ((message_receiver_ != nullptr) && !line.empty())
         {
-            string response = message_receiver_->onMessageReceived(this, line);
-            if (!response.empty())
-            {
-                sendAsync(response);
-            }
+            message_receiver_->onMessageReceived(shared_from_this(), line, [this](const std::string& response) {
+                if (!response.empty())
+                {
+                    sendAsync(response);
+                }
+            });
         }
     }
     buffer_.consume(bytes_transferred);

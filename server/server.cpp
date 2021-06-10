@@ -42,10 +42,10 @@ Server::Server(boost::asio::io_context& io_context, const ServerSettings& server
 Server::~Server() = default;
 
 
-void Server::onNewSession(const std::shared_ptr<StreamSession>& session)
+void Server::onNewSession(std::shared_ptr<StreamSession> session)
 {
     LOG(DEBUG, LOG_TAG) << "onNewSession\n";
-    streamServer_->addSession(session);
+    streamServer_->addSession(std::move(session));
 }
 
 
@@ -140,8 +140,10 @@ void Server::onDisconnect(StreamSession* streamSession)
 }
 
 
-void Server::processRequest(const jsonrpcpp::request_ptr request, jsonrpcpp::entity_ptr& response, jsonrpcpp::notification_ptr& notification) const
+void Server::processRequest(const jsonrpcpp::request_ptr request, const OnResponse& on_response) const
 {
+    jsonrpcpp::entity_ptr response;
+    jsonrpcpp::notification_ptr notification;
     try
     {
         // LOG(INFO, LOG_TAG) << "Server::processRequest method: " << request->method << ", " << "id: " << request->id() << "\n";
@@ -172,8 +174,8 @@ void Server::processRequest(const jsonrpcpp::request_ptr request, jsonrpcpp::ent
                 std::lock_guard<std::recursive_mutex> lock(clientMutex_);
                 clientInfo->config.volume.fromJson(request->params().get("volume"));
                 result["volume"] = clientInfo->config.volume.toJson();
-                notification.reset(new jsonrpcpp::Notification("Client.OnVolumeChanged",
-                                                               jsonrpcpp::Parameter("id", clientInfo->id, "volume", clientInfo->config.volume.toJson())));
+                notification = std::make_shared<jsonrpcpp::Notification>(
+                    "Client.OnVolumeChanged", jsonrpcpp::Parameter("id", clientInfo->id, "volume", clientInfo->config.volume.toJson()));
             }
             else if (request->method() == "Client.SetLatency")
             {
@@ -189,8 +191,8 @@ void Server::processRequest(const jsonrpcpp::request_ptr request, jsonrpcpp::ent
                     latency = settings_.stream.bufferMs;
                 clientInfo->config.latency = latency; //, -10000, settings_.stream.bufferMs);
                 result["latency"] = clientInfo->config.latency;
-                notification.reset(
-                    new jsonrpcpp::Notification("Client.OnLatencyChanged", jsonrpcpp::Parameter("id", clientInfo->id, "latency", clientInfo->config.latency)));
+                notification = std::make_shared<jsonrpcpp::Notification>("Client.OnLatencyChanged",
+                                                                         jsonrpcpp::Parameter("id", clientInfo->id, "latency", clientInfo->config.latency));
             }
             else if (request->method() == "Client.SetName")
             {
@@ -201,8 +203,8 @@ void Server::processRequest(const jsonrpcpp::request_ptr request, jsonrpcpp::ent
                 // clang-format on
                 clientInfo->config.name = request->params().get<std::string>("name");
                 result["name"] = clientInfo->config.name;
-                notification.reset(
-                    new jsonrpcpp::Notification("Client.OnNameChanged", jsonrpcpp::Parameter("id", clientInfo->id, "name", clientInfo->config.name)));
+                notification = std::make_shared<jsonrpcpp::Notification>("Client.OnNameChanged",
+                                                                         jsonrpcpp::Parameter("id", clientInfo->id, "name", clientInfo->config.name));
             }
             else
                 throw jsonrpcpp::MethodNotFoundException(request->id());
@@ -247,7 +249,7 @@ void Server::processRequest(const jsonrpcpp::request_ptr request, jsonrpcpp::ent
                 // clang-format on
                 group->name = request->params().get<std::string>("name");
                 result["name"] = group->name;
-                notification.reset(new jsonrpcpp::Notification("Group.OnNameChanged", jsonrpcpp::Parameter("id", group->id, "name", group->name)));
+                notification = std::make_shared<jsonrpcpp::Notification>("Group.OnNameChanged", jsonrpcpp::Parameter("id", group->id, "name", group->name));
             }
             else if (request->method() == "Group.SetMute")
             {
@@ -276,7 +278,7 @@ void Server::processRequest(const jsonrpcpp::request_ptr request, jsonrpcpp::ent
                 }
 
                 result["mute"] = group->muted;
-                notification.reset(new jsonrpcpp::Notification("Group.OnMute", jsonrpcpp::Parameter("id", group->id, "mute", group->muted)));
+                notification = std::make_shared<jsonrpcpp::Notification>("Group.OnMute", jsonrpcpp::Parameter("id", group->id, "mute", group->muted));
             }
             else if (request->method() == "Group.SetStream")
             {
@@ -306,7 +308,8 @@ void Server::processRequest(const jsonrpcpp::request_ptr request, jsonrpcpp::ent
 
                 // Notify others
                 result["stream_id"] = group->streamId;
-                notification.reset(new jsonrpcpp::Notification("Group.OnStreamChanged", jsonrpcpp::Parameter("id", group->id, "stream_id", group->streamId)));
+                notification =
+                    std::make_shared<jsonrpcpp::Notification>("Group.OnStreamChanged", jsonrpcpp::Parameter("id", group->id, "stream_id", group->streamId));
             }
             else if (request->method() == "Group.SetClients")
             {
@@ -366,7 +369,7 @@ void Server::processRequest(const jsonrpcpp::request_ptr request, jsonrpcpp::ent
                 result["server"] = server;
 
                 // Notify others: since at least two groups are affected, send a complete server update
-                notification.reset(new jsonrpcpp::Notification("Server.OnUpdate", jsonrpcpp::Parameter("server", server)));
+                notification = std::make_shared<jsonrpcpp::Notification>("Server.OnUpdate", jsonrpcpp::Parameter("server", server));
             }
             else
                 throw jsonrpcpp::MethodNotFoundException(request->id());
@@ -409,7 +412,7 @@ void Server::processRequest(const jsonrpcpp::request_ptr request, jsonrpcpp::ent
                 result["server"] = server;
 
                 /// Notify others
-                notification.reset(new jsonrpcpp::Notification("Server.OnUpdate", jsonrpcpp::Parameter("server", server)));
+                notification = std::make_shared<jsonrpcpp::Notification>("Server.OnUpdate", jsonrpcpp::Parameter("server", server));
             }
             else
                 throw jsonrpcpp::MethodNotFoundException(request->id());
@@ -457,13 +460,14 @@ void Server::processRequest(const jsonrpcpp::request_ptr request, jsonrpcpp::ent
                 if (stream == nullptr)
                     throw jsonrpcpp::InternalErrorException("Stream not found", request->id());
 
-                stream->control(*request, [](const jsonrpcpp::Response& response) {
-                    LOG(INFO, LOG_TAG) << "Received response for Stream.Control, id: " << response.id() << ", result: " << response.result()
-                                       << ", error: " << response.error().code() << "\n";
+                stream->control(*request, [request, on_response](const jsonrpcpp::Response& ctrl_response) {
+                    LOG(INFO, LOG_TAG) << "Received response for Stream.Control, id: " << ctrl_response.id() << ", result: " << ctrl_response.result()
+                                       << ", error: " << ctrl_response.error().code() << "\n";
+                    auto response = make_shared<jsonrpcpp::Response>(request->id(), ctrl_response.result());
+                    on_response(response, nullptr);
                 });
 
-                // Setup response
-                result["id"] = streamId;
+                return;
             }
             else if (request->method().find("Stream.SetProperty") == 0)
             {
@@ -529,22 +533,23 @@ void Server::processRequest(const jsonrpcpp::request_ptr request, jsonrpcpp::ent
         else
             throw jsonrpcpp::MethodNotFoundException(request->id());
 
-        response.reset(new jsonrpcpp::Response(*request, result));
+        response = std::make_shared<jsonrpcpp::Response>(*request, result);
     }
     catch (const jsonrpcpp::RequestException& e)
     {
         LOG(ERROR, LOG_TAG) << "Server::onMessageReceived JsonRequestException: " << e.to_json().dump() << ", message: " << request->to_json().dump() << "\n";
-        response.reset(new jsonrpcpp::RequestException(e));
+        response = std::make_shared<jsonrpcpp::RequestException>(e);
     }
     catch (const exception& e)
     {
         LOG(ERROR, LOG_TAG) << "Server::onMessageReceived exception: " << e.what() << ", message: " << request->to_json().dump() << "\n";
-        response.reset(new jsonrpcpp::InternalErrorException(e.what(), request->id()));
+        response = std::make_shared<jsonrpcpp::InternalErrorException>(e.what(), request->id());
     }
+    on_response(std::move(response), std::move(notification));
 }
 
 
-std::string Server::onMessageReceived(ControlSession* controlSession, const std::string& message)
+void Server::onMessageReceived(std::shared_ptr<ControlSession> controlSession, const std::string& message, const ResponseHander& response_handler)
 {
     // LOG(DEBUG, LOG_TAG) << "onMessageReceived: " << message << "\n";
     jsonrpcpp::entity_ptr entity(nullptr);
@@ -552,15 +557,15 @@ std::string Server::onMessageReceived(ControlSession* controlSession, const std:
     {
         entity = jsonrpcpp::Parser::do_parse(message);
         if (!entity)
-            return "";
+            return response_handler("");
     }
     catch (const jsonrpcpp::ParseErrorException& e)
     {
-        return e.to_json().dump();
+        return response_handler(e.to_json().dump());
     }
     catch (const std::exception& e)
     {
-        return jsonrpcpp::ParseErrorException(e.what()).to_json().dump();
+        return response_handler(jsonrpcpp::ParseErrorException(e.what()).to_json().dump());
     }
 
     jsonrpcpp::entity_ptr response(nullptr);
@@ -568,23 +573,26 @@ std::string Server::onMessageReceived(ControlSession* controlSession, const std:
     if (entity->is_request())
     {
         jsonrpcpp::request_ptr request = dynamic_pointer_cast<jsonrpcpp::Request>(entity);
-        processRequest(request, response, notification);
-        saveConfig();
-        ////cout << "Request:      " << request->to_json().dump() << "\n";
-        if (notification)
-        {
-            ////cout << "Notification: " << notification->to_json().dump() << "\n";
-            controlServer_->send(notification->to_json().dump(), controlSession);
-        }
-        if (response)
-        {
-            ////cout << "Response:     " << response->to_json().dump() << "\n";
-            return response->to_json().dump();
-        }
-        return "";
+        processRequest(request, [this, controlSession, response_handler](jsonrpcpp::entity_ptr response, jsonrpcpp::notification_ptr notification) {
+            saveConfig();
+            ////cout << "Request:      " << request->to_json().dump() << "\n";
+            if (notification)
+            {
+                ////cout << "Notification: " << notification->to_json().dump() << "\n";
+                controlServer_->send(notification->to_json().dump(), controlSession.get());
+            }
+            if (response)
+            {
+                ////cout << "Response:     " << response->to_json().dump() << "\n";
+                return response_handler(response->to_json().dump());
+            }
+            return response_handler("");
+        });
     }
     else if (entity->is_batch())
     {
+        /// Attention: this will only work as long as the response handler in processRequest is called synchronously.
+        /// This is true for volume changes, which is the only batch request, but not for Control commands!
         jsonrpcpp::batch_ptr batch = dynamic_pointer_cast<jsonrpcpp::Batch>(entity);
         ////cout << "Batch: " << batch->to_json().dump() << "\n";
         jsonrpcpp::Batch responseBatch;
@@ -594,21 +602,23 @@ std::string Server::onMessageReceived(ControlSession* controlSession, const std:
             if (batch_entity->is_request())
             {
                 jsonrpcpp::request_ptr request = dynamic_pointer_cast<jsonrpcpp::Request>(batch_entity);
-                processRequest(request, response, notification);
-                if (response != nullptr)
-                    responseBatch.add_ptr(response);
-                if (notification != nullptr)
-                    notificationBatch.add_ptr(notification);
+                processRequest(request, [this, controlSession, response_handler, &responseBatch, &notificationBatch](jsonrpcpp::entity_ptr response,
+                                                                                                                     jsonrpcpp::notification_ptr notification) {
+                    if (response != nullptr)
+                        responseBatch.add_ptr(response);
+                    if (notification != nullptr)
+                        notificationBatch.add_ptr(notification);
+                });
             }
         }
         saveConfig();
         if (!notificationBatch.entities.empty())
-            controlServer_->send(notificationBatch.to_json().dump(), controlSession);
+            controlServer_->send(notificationBatch.to_json().dump(), controlSession.get());
         if (!responseBatch.entities.empty())
-            return responseBatch.to_json().dump();
-        return "";
+            return response_handler(responseBatch.to_json().dump());
+        return response_handler("");
     }
-    return "";
+    return response_handler("");
 }
 
 
@@ -624,7 +634,8 @@ void Server::onMessageReceived(StreamSession* streamSession, const msg::BaseMess
         timeMsg->deserialize(baseMessage, buffer);
         timeMsg->refersTo = timeMsg->id;
         timeMsg->latency = timeMsg->received - timeMsg->sent;
-        // LOG(INFO, LOG_TAG) << "Latency sec: " << timeMsg.latency.sec << ", usec: " << timeMsg.latency.usec << ", refers to: " << timeMsg.refersTo << "\n";
+        // LOG(INFO, LOG_TAG) << "Latency sec: " << timeMsg.latency.sec << ", usec: " << timeMsg.latency.usec << ", refers to: " << timeMsg.refersTo <<
+        // "\n";
         streamSession->send(timeMsg);
 
         // refresh streamSession state

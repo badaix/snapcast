@@ -74,28 +74,27 @@ void ControlServer::send(const std::string& message, const ControlSession* exclu
 }
 
 
-std::string ControlServer::onMessageReceived(ControlSession* session, const std::string& message)
+void ControlServer::onMessageReceived(std::shared_ptr<ControlSession> session, const std::string& message, const ResponseHander& response_handler)
 {
     // LOG(DEBUG, LOG_TAG) << "received: \"" << message << "\"\n";
     if (controlMessageReceiver_ != nullptr)
-        return controlMessageReceiver_->onMessageReceived(session, message);
-    return "";
+        controlMessageReceiver_->onMessageReceived(std::move(session), message, response_handler);
 }
 
 
-void ControlServer::onNewSession(const shared_ptr<ControlSession>& session)
+void ControlServer::onNewSession(shared_ptr<ControlSession> session)
 {
     std::lock_guard<std::recursive_mutex> mlock(session_mutex_);
     session->start();
-    sessions_.emplace_back(session);
+    sessions_.emplace_back(std::move(session));
     cleanup();
 }
 
 
-void ControlServer::onNewSession(const std::shared_ptr<StreamSession>& session)
+void ControlServer::onNewSession(std::shared_ptr<StreamSession> session)
 {
     if (controlMessageReceiver_ != nullptr)
-        controlMessageReceiver_->onNewSession(session);
+        controlMessageReceiver_->onNewSession(std::move(session));
 }
 
 
@@ -136,7 +135,7 @@ void ControlServer::handleAccept(tcp::socket socket, Args&&... args)
         //	socket->set_option(boost::asio::ip::tcp::no_delay(false));
         LOG(NOTICE, LOG_TAG) << "ControlServer::NewConnection: " << socket.remote_endpoint().address().to_string() << endl;
         shared_ptr<SessionType> session = make_shared<SessionType>(this, io_context_, std::move(socket), std::forward<Args>(args)...);
-        onNewSession(session);
+        onNewSession(std::move(session));
     }
     catch (const std::exception& e)
     {
