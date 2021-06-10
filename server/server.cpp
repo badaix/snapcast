@@ -591,7 +591,8 @@ void Server::onMessageReceived(std::shared_ptr<ControlSession> controlSession, c
     }
     else if (entity->is_batch())
     {
-        /// Attention: this will only work as long as the response handler in processRequest is called synchronously.
+        /// Attention: this will only work as long as the response handler in processRequest is called synchronously. One way to do this is to remove the outer
+        /// loop and to call the next processRequest with
         /// This is true for volume changes, which is the only batch request, but not for Control commands!
         jsonrpcpp::batch_ptr batch = dynamic_pointer_cast<jsonrpcpp::Batch>(entity);
         ////cout << "Batch: " << batch->to_json().dump() << "\n";
@@ -602,8 +603,8 @@ void Server::onMessageReceived(std::shared_ptr<ControlSession> controlSession, c
             if (batch_entity->is_request())
             {
                 jsonrpcpp::request_ptr request = dynamic_pointer_cast<jsonrpcpp::Request>(batch_entity);
-                processRequest(request, [this, controlSession, response_handler, &responseBatch, &notificationBatch](jsonrpcpp::entity_ptr response,
-                                                                                                                     jsonrpcpp::notification_ptr notification) {
+                processRequest(request, [controlSession, response_handler, &responseBatch, &notificationBatch](jsonrpcpp::entity_ptr response,
+                                                                                                               jsonrpcpp::notification_ptr notification) {
                     if (response != nullptr)
                         responseBatch.add_ptr(response);
                     if (notification != nullptr)
