@@ -216,7 +216,7 @@ protected:
     boost::asio::io_context& ioc_;
     ServerSettings server_settings_;
     std::unique_ptr<CtrlScript> ctrl_script_;
-    size_t req_id_;
+    int req_id_;
 };
 
 } // namespace streamreader

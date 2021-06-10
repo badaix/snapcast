@@ -264,15 +264,35 @@ void PcmStream::onControlRequest(const jsonrpcpp::Request& request)
 void PcmStream::onControlNotification(const jsonrpcpp::Notification& notification)
 {
     LOG(INFO, LOG_TAG) << "Notification method: " << notification.method() << ", params: " << notification.params().to_json() << "\n";
-    if (notification.method() == "Player.Metadata")
+    if (notification.method() == "Plugin.Stream.Player.Metadata")
     {
         LOG(DEBUG, LOG_TAG) << "Received metadata notification\n";
         setMeta(notification.params().to_json());
     }
-    else if (notification.method() == "Player.Properties")
+    else if (notification.method() == "Plugin.Stream.Player.Properties")
     {
         LOG(DEBUG, LOG_TAG) << "Received properties notification\n";
         setProperties(notification.params().to_json());
+    }
+    else if (notification.method() == "Plugin.Stream.Ready")
+    {
+        LOG(DEBUG, LOG_TAG) << "Plugin is ready\n";
+        ctrl_script_->send({++req_id_, "Plugin.Stream.Player.GetProperties"}, [this](const jsonrpcpp::Response& response) {
+            LOG(INFO, LOG_TAG) << "Response for Plugin.Stream.Player.GetProperties: " << response.to_json() << "\n";
+            if (response.error().code() == 0)
+                setMeta(response.result());
+        });
+        ctrl_script_->send({++req_id_, "Plugin.Stream.Player.GetMetadata"}, [this](const jsonrpcpp::Response& response) {
+            LOG(INFO, LOG_TAG) << "Response for Plugin.Stream.Player.GetMetadata: " << response.to_json() << "\n";
+            if (response.error().code() == 0)
+                setProperties(response.result());
+        });
+    }
+    else if (notification.method() == "Plugin.Stream.Log")
+    {
+        std::string severity = notification.params().get("severity");
+        std::string message = notification.params().get("message");
+        LOG(INFO, LOG_TAG) << "Plugin log - severity: " << severity << ", message: " << message << "\n";
     }
     else
         LOG(WARNING, LOG_TAG) << "Received unknown notification method: '" << notification.method() << "'\n";
@@ -312,9 +332,11 @@ void PcmStream::start()
     active_ = true;
 
     if (ctrl_script_)
+    {
         ctrl_script_->start(
             getId(), server_settings_, [this](const jsonrpcpp::Notification& notification) { onControlNotification(notification); },
             [this](const jsonrpcpp::Request& request) { onControlRequest(request); }, [this](std::string message) { onControlLog(std::move(message)); });
+    }
 }
 
 
@@ -462,7 +484,7 @@ void PcmStream::setProperty(const jsonrpcpp::Request& request, const CtrlScript:
 
     if (ctrl_script_)
     {
-        jsonrpcpp::Request req(++req_id_, "Player.SetProperty", {name, value});
+        jsonrpcpp::Request req(++req_id_, "Plugin.Stream.Player.SetProperty", {name, value});
         ctrl_script_->send(req, response_handler);
     }
 }
@@ -489,7 +511,7 @@ void PcmStream::control(const jsonrpcpp::Request& request, const CtrlScript::OnR
         jsonrpcpp::Parameter params{"command", command};
         if (request.params().has("params"))
             params.add("params", request.params().get("params"));
-        jsonrpcpp::Request req(++req_id_, "Player.Control", params);
+        jsonrpcpp::Request req(++req_id_, "Plugin.Stream.Player.Control", params);
         ctrl_script_->send(req, response_handler);
     }
 }
@@ -497,6 +519,12 @@ void PcmStream::control(const jsonrpcpp::Request& request, const CtrlScript::OnR
 
 void PcmStream::setMeta(const Metatags& meta)
 {
+    if ((meta_ != nullptr) && (meta == *meta_))
+    {
+        LOG(DEBUG, LOG_TAG) << "setMeta: Meta data did not change\n";
+        return;
+    }
+
     meta_ = std::make_shared<Metatags>(meta);
     LOG(INFO, LOG_TAG) << "setMeta, stream: " << getId() << ", metadata: " << meta_->toJson() << "\n";
 
@@ -511,6 +539,12 @@ void PcmStream::setMeta(const Metatags& meta)
 
 void PcmStream::setProperties(const Properties& props)
 {
+    if ((properties_ != nullptr) && (props == *properties_))
+    {
+        LOG(DEBUG, LOG_TAG) << "setProperties: Properties did not change\n";
+        return;
+    }
+
     properties_ = std::make_shared<Properties>(props);
     LOG(INFO, LOG_TAG) << "setProperties, stream: " << getId() << ", properties: " << props.toJson() << "\n";
 

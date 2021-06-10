@@ -36,6 +36,7 @@ import time
 import json
 import musicbrainzngs
 import fcntl
+import threading
 
 __version__ = "@version@"
 __git_version__ = "@gitversion@"
@@ -287,6 +288,8 @@ class MPDWrapper(object):
 
             self.timer_callback()
             self.idle_enter()
+            send({"jsonrpc": "2.0", "method": "Plugin.Stream.Ready"})
+
             # Return False to stop trying to connect
             return False
         except socket.error as e:
@@ -364,8 +367,8 @@ class MPDWrapper(object):
         try:
             request = json.loads(cmd)
             id = request['id']
-            [interface, cmd] = request['method'].split('.', 1)
-            if interface == 'Player':
+            [interface, cmd] = request['method'].rsplit('.', 1)
+            if interface == 'Plugin.Stream.Player':
                 if cmd == 'Control':
                     success = True
                     command = request['params']['command']
@@ -417,19 +420,26 @@ class MPDWrapper(object):
                             self.repeat(0)
                             if self._can_single:
                                 self.single(0)
+                elif cmd == 'GetProperties':
+                    snapstatus = self._get_properties(self.status())
+                    logger.info(f'Snapstatus: {snapstatus}')
+                    return send({"jsonrpc": "2.0", "id": id, "result": snapstatus})
+                    # return send({"jsonrpc": "2.0", "error": {"code": -32601,
+                    #                                          "message": "TODO: GetProperties not yet implemented"}, "id": id})
+                elif cmd == 'GetMetadata':
+                    send({"jsonrpc": "2.0", "method": "Plugin.Stream.Log", "params": {"severity":"Info","message":"Logmessage"}})
+                    return send({"jsonrpc": "2.0", "error": {"code": -32601,
+                                                             "message": "TODO: GetMetadata not yet implemented"}, "id": id})
                 else:
-                    send({"jsonrpc": "2.0", "error": {"code": -32601,
-                                                      "message": "Method not found"}, "id": id})
-                    success = False
+                    return send({"jsonrpc": "2.0", "error": {"code": -32601,
+                                                             "message": "Method not found"}, "id": id})
             else:
-                send({"jsonrpc": "2.0", "error": {"code": -32601,
-                     "message": "Method not found"}, "id": id})
-                success = False
-            if success:
-                send({"jsonrpc": "2.0", "result": "ok", "id": id})
-        except:
+                return send({"jsonrpc": "2.0", "error": {"code": -32601,
+                                                         "message": "Method not found"}, "id": id})
+            send({"jsonrpc": "2.0", "result": "ok", "id": id})
+        except Exception as e:
             send({"jsonrpc": "2.0", "error": {
-                 "code": -32700, "message": "Parse error"}, "id": id})
+                 "code": -32700, "message": "Parse error", "data": str(e)}, "id": id})
 
     def io_callback(self, fd, event):
         logger.debug("IO event %r on fd %r" % (event, fd))
@@ -510,7 +520,7 @@ class MPDWrapper(object):
                         self._album_art_map[self.__track_key(
                             snapmeta)] = snapmeta['artUrl']
                         send(
-                            {"jsonrpc": "2.0", "method": "Player.Metadata", "params": snapmeta})
+                            {"jsonrpc": "2.0", "method": "Plugin.Stream.Player.Metadata", "params": snapmeta})
                         break
 
         except musicbrainzngs.musicbrainz.ResponseError as e:
@@ -573,8 +583,11 @@ class MPDWrapper(object):
             if art_url != '':
                 snapmeta['artUrl'] = art_url
 
-        send({"jsonrpc": "2.0", "method": "Player.Metadata", "params": snapmeta})
+        send({"jsonrpc": "2.0",
+             "method": "Plugin.Stream.Player.Metadata", "params": snapmeta})
         if not track_key in self._album_art_map:
+            # t = threading.Thread(target=self.update_albumart, args=[snapmeta])
+            # t.start()
             self.update_albumart(snapmeta)
 
     def __diff_map(self, old_map, new_map):
@@ -588,6 +601,29 @@ class MPDWrapper(object):
             if not key in new_map:
                 diff[key] = [value, None]
         return diff
+
+    def _get_properties(self, mpd_status):
+        snapstatus = {}
+        for key, value in mpd_status.items():
+            try:
+                mapped_key = status_mapping[key][0]
+                mapped_val = status_mapping[key][1](value)
+                snapstatus[mapped_key] = mapped_val
+                logger.debug(
+                    f'key: {key}, value: {value}, mapped key: {mapped_key}, mapped value: {mapped_val}')
+            except KeyError:
+                logger.debug(f'property "{key}" not supported')
+            except (ValueError, TypeError):
+                logger.warning(
+                    f"Can't cast value {value} to {status_mapping[key][1]}")
+
+        snapstatus['canGoNext'] = True
+        snapstatus['canGoPrevious'] = True
+        snapstatus['canPlay'] = True
+        snapstatus['canPause'] = True
+        snapstatus['canSeek'] = 'duration' in snapstatus
+        snapstatus['canControl'] = True
+        return snapstatus
 
     def _update_properties(self, force=False):
         logger.debug(f'update_properties force: {force}')
@@ -621,27 +657,9 @@ class MPDWrapper(object):
         logger.info(f'changed_song: {changed_song}')
         self._time = new_time = int(time.time())
 
-        snapstatus = {}
-        for key, value in new_status.items():
-            try:
-                mapped_key = status_mapping[key][0]
-                mapped_val = status_mapping[key][1](value)
-                snapstatus[mapped_key] = mapped_val
-                logger.debug(
-                    f'key: {key}, value: {value}, mapped key: {mapped_key}, mapped value: {mapped_val}')
-            except KeyError:
-                logger.debug(f'property "{key}" not supported')
-            except (ValueError, TypeError):
-                logger.warning(
-                    f"Can't cast value {value} to {status_mapping[key][1]}")
-
-        snapstatus['canGoNext'] = True
-        snapstatus['canGoPrevious'] = True
-        snapstatus['canPlay'] = True
-        snapstatus['canPause'] = True
-        snapstatus['canSeek'] = 'duration' in snapstatus
-        snapstatus['canControl'] = True
-        send({"jsonrpc": "2.0", "method": "Player.Properties", "params": snapstatus})
+        snapstatus = self._get_properties(new_status)
+        send({"jsonrpc": "2.0", "method": "Plugin.Stream.Player.Properties",
+             "params": snapstatus})
 
         if 'elapsed' in new_status:
             new_position = float(new_status['elapsed'])
