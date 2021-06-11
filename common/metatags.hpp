@@ -173,7 +173,6 @@ public:
         addTag(j, "musicbrainzTrackId", musicbrainz_track_id);
         addTag(j, "musicbrainzReleaseTrackId", musicbrainz_release_track_id);
         addTag(j, "musicbrainzWorkId", musicbrainz_work_id);
-        addTag(j, "art_url", art_url);
         addTag(j, "lyrics", lyrics);
         addTag(j, "bpm", bpm);
         addTag(j, "autoRating", auto_rating);
@@ -226,7 +225,6 @@ public:
                                                        "musicbrainzTrackId",
                                                        "musicbrainzReleaseTrackId",
                                                        "musicbrainzWorkId",
-                                                       "art_url",
                                                        "lyrics",
                                                        "bpm",
                                                        "autoRating",
@@ -280,7 +278,6 @@ public:
         readTag(j, "musicbrainzTrackId", musicbrainz_track_id);
         readTag(j, "musicbrainzReleaseTrackId", musicbrainz_release_track_id);
         readTag(j, "musicbrainzWorkId", musicbrainz_work_id);
-        readTag(j, "art_url", art_url);
         readTag(j, "lyrics", lyrics);
         readTag(j, "bpm", bpm);
         readTag(j, "autoRating", auto_rating);

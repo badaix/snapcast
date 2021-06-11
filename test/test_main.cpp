@@ -214,4 +214,17 @@ TEST_CASE("Librespot")
         REQUIRE(m[2] == "310573");
     }
     REQUIRE(m.size() == 3);
+
+    static regex re_log_line(R"(\[(\S+)(\s+)(\bTRACE\b|\bDEBUG\b|\bINFO\b|\bWARN\b|\bERROR\b)(\s+)(.*)\] (.*))");
+    // Parse the patched version
+    REQUIRE(std::regex_search(line, m, re_log_line));
+    REQUIRE(m.size() == 7);
+    REQUIRE(m[1] == "2021-06-04T07:20:47Z");
+    REQUIRE(m[2] == " ");
+    REQUIRE(m[3] == "INFO");
+    REQUIRE(m[4] == "  ");
+    REQUIRE(m[5] == "librespot_playback::player");
+    REQUIRE(m[6] == "<Tunnel> (310573 ms) loaded");
+    for (const auto& match: m)
+        std::cerr << "Match: '" << match << "'\n";
 }
