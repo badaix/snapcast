@@ -161,6 +161,15 @@ TEST_CASE("Metatags")
 
 TEST_CASE("Properties")
 {
+
+    std::stringstream ss;
+    ss << PlaybackStatus::kPlaying;
+    REQUIRE(ss.str() == "playing");
+
+    PlaybackStatus playback_status;
+    ss >> playback_status;
+    REQUIRE(playback_status == PlaybackStatus::kPlaying);
+
     REQUIRE(to_string(PlaybackStatus::kPaused) == "paused");
     auto in_json = json::parse(R"(
 {
@@ -174,9 +183,9 @@ TEST_CASE("Properties")
     // std::cout << in_json.dump(4) << "\n";
 
     Properties props(in_json);
-    // std::cout << props.toJson().dump(4) << "\n";
+    std::cout << props.toJson().dump(4) << "\n";
 
-    REQUIRE(props.playback_status.has_value());
+    REQUIRE(props.loop_status.has_value());
 
     auto out_json = props.toJson();
     // std::cout << out_json.dump(4) << "\n";
@@ -192,7 +201,7 @@ TEST_CASE("Properties")
     props.fromJson(in_json);
     // std::cout << props.toJson().dump(4) << "\n";
 
-    REQUIRE(!props.playback_status.has_value());
+    REQUIRE(!props.loop_status.has_value());
 
     out_json = props.toJson();
     // std::cout << out_json.dump(4) << "\n";
@@ -225,6 +234,6 @@ TEST_CASE("Librespot")
     REQUIRE(m[4] == "  ");
     REQUIRE(m[5] == "librespot_playback::player");
     REQUIRE(m[6] == "<Tunnel> (310573 ms) loaded");
-    for (const auto& match: m)
+    for (const auto& match : m)
         std::cerr << "Match: '" << match << "'\n";
 }

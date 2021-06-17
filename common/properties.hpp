@@ -19,9 +19,10 @@
 #ifndef PROPERTIES_HPP
 #define PROPERTIES_HPP
 
-#include <boost/optional.hpp>
 #include <set>
 #include <string>
+
+#include <boost/optional.hpp>
 
 #include "common/aixlog.hpp"
 #include "common/json.hpp"
@@ -60,6 +61,31 @@ static std::ostream& operator<<(std::ostream& os, PlaybackStatus playback_status
 }
 
 
+static PlaybackStatus playback_status_from_string(std::string& status)
+{
+    if (status == "playing")
+        return PlaybackStatus::kPlaying;
+    else if (status == "paused")
+        return PlaybackStatus::kPaused;
+    else if (status == "stopped")
+        return PlaybackStatus::kStopped;
+    else
+        return PlaybackStatus::kUnknown;
+}
+
+
+static std::istream& operator>>(std::istream& is, PlaybackStatus& playback_status)
+{
+    std::string status;
+    playback_status = PlaybackStatus::kUnknown;
+    if (is >> status)
+        playback_status = playback_status_from_string(status);
+    else
+        playback_status = PlaybackStatus::kUnknown;
+    return is;
+}
+
+
 enum class LoopStatus
 {
     kNone = 0,
@@ -92,6 +118,30 @@ static std::ostream& operator<<(std::ostream& os, LoopStatus loop_status)
 }
 
 
+static LoopStatus loop_status_from_string(std::string& status)
+{
+    if (status == "none")
+        return LoopStatus::kNone;
+    else if (status == "track")
+        return LoopStatus::kTrack;
+    else if (status == "playlist")
+        return LoopStatus::kPlaylist;
+    else
+        return LoopStatus::kUnknown;
+}
+
+
+static std::istream& operator>>(std::istream& is, LoopStatus& loop_status)
+{
+    std::string status;
+    if (is >> status)
+        loop_status = loop_status_from_string(status);
+    else
+        loop_status = LoopStatus::kUnknown;
+
+    return is;
+}
+
 
 class Properties
 {
@@ -104,11 +154,11 @@ public:
 
     /// https://www.musicpd.org/doc/html/protocol.html#tags
     /// The current playback status
-    boost::optional<PlaybackStatus> playback_status;
+    PlaybackStatus playback_status;
     /// The current loop / repeat status
     boost::optional<LoopStatus> loop_status;
     /// The current playback rate
-    boost::optional<float> rate;
+    float rate;
     /// A value of false indicates that playback is progressing linearly through a playlist, while true means playback is progressing through a playlist in some
     /// other order.
     boost::optional<bool> shuffle;
@@ -136,14 +186,12 @@ public:
     json toJson() const
     {
         json j;
+        addTag(j, "playbackStatus", to_string(playback_status));
         if (loop_status.has_value())
             addTag(j, "loopStatus", boost::optional<std::string>(to_string(loop_status.value())));
+        addTag(j, "rate", rate);
         addTag(j, "shuffle", shuffle);
         addTag(j, "volume", volume);
-        addTag(j, "rate", rate);
-
-        if (playback_status.has_value())
-            addTag(j, "playbackStatus", boost::optional<std::string>(to_string(playback_status.value())));
         addTag(j, "position", position);
         addTag(j, "minimumRate", minimum_rate);
         addTag(j, "maximumRate", maximum_rate);
@@ -171,38 +219,20 @@ public:
 
         boost::optional<std::string> opt;
 
+        readTag(j, "playbackStatus", opt);
+        if (!opt.has_value())
+            playback_status = PlaybackStatus::kStopped;
+        else
+            playback_status = playback_status_from_string(opt.value());
+
         readTag(j, "loopStatus", opt);
         if (opt.has_value())
-        {
-            if (*opt == "none")
-                loop_status = LoopStatus::kNone;
-            else if (*opt == "track")
-                loop_status = LoopStatus::kTrack;
-            else if (*opt == "playlist")
-                loop_status = LoopStatus::kPlaylist;
-            else
-                loop_status = LoopStatus::kUnknown;
-        }
+            loop_status = loop_status_from_string(opt.value());
         else
             loop_status = boost::none;
+        readTag(j, "rate", rate, 1.0f);
         readTag(j, "shuffle", shuffle);
         readTag(j, "volume", volume);
-        readTag(j, "rate", rate);
-
-        readTag(j, "playbackStatus", opt);
-        if (opt.has_value())
-        {
-            if (*opt == "playing")
-                playback_status = PlaybackStatus::kPlaying;
-            else if (*opt == "paused")
-                playback_status = PlaybackStatus::kPaused;
-            else if (*opt == "stopped")
-                playback_status = PlaybackStatus::kStopped;
-            else
-                playback_status = PlaybackStatus::kUnknown;
-        }
-        else
-            playback_status = boost::none;
         readTag(j, "position", position);
         readTag(j, "minimumRate", minimum_rate);
         readTag(j, "maximumRate", maximum_rate);
@@ -238,17 +268,34 @@ private:
     }
 
     template <typename T>
+    void readTag(const json& j, const std::string& tag, T& dest, const T& def) const
+    {
+        boost::optional<T> val;
+        readTag(j, tag, val);
+        if (val.has_value())
+            dest = val.value();
+        else
+            dest = def;
+    }
+
+    template <typename T>
     void addTag(json& j, const std::string& tag, const boost::optional<T>& source) const
+    {
+        if (!source.has_value())
+        {
+            if (j.contains(tag))
+                j.erase(tag);
+        }
+        else
+            addTag(j, tag, source.value());
+    }
+
+    template <typename T>
+    void addTag(json& j, const std::string& tag, const T& source) const
     {
         try
         {
-            if (!source.has_value())
-            {
-                if (j.contains(tag))
-                    j.erase(tag);
-            }
-            else
-                j[tag] = source.value();
+            j[tag] = source;
         }
         catch (const std::exception& e)
         {
