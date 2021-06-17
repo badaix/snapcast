@@ -220,16 +220,16 @@ void ControlSessionHttp::handle_request(http::request<Body, http::basic_fields<A
         if (req.target() != "/jsonrpc")
             return send(bad_request("Illegal request-target"));
 
-        return message_receiver_->onMessageReceived(shared_from_this(), std::string(req.body()),
-                                                    [req = std::move(req), send = std::move(send)](const std::string& response) {
-                                                        http::response<http::string_body> res{http::status::ok, req.version()};
-                                                        res.set(http::field::server, HTTP_SERVER_NAME);
-                                                        res.set(http::field::content_type, "application/json");
-                                                        res.keep_alive(req.keep_alive());
-                                                        res.body() = response;
-                                                        res.prepare_payload();
-                                                        return send(std::move(res));
-                                                    });
+        std::string request = req.body();
+        return message_receiver_->onMessageReceived(shared_from_this(), request, [req = std::move(req), send = std::move(send)](const std::string& response) {
+            http::response<http::string_body> res{http::status::ok, req.version()};
+            res.set(http::field::server, HTTP_SERVER_NAME);
+            res.set(http::field::content_type, "application/json");
+            res.keep_alive(req.keep_alive());
+            res.body() = response;
+            res.prepare_payload();
+            return send(std::move(res));
+        });
     }
 
     // Request path must be absolute and not contain "..".

@@ -492,7 +492,6 @@ void PcmStream::setProperty(const jsonrpcpp::Request& request, const CtrlScript:
 
 void PcmStream::control(const jsonrpcpp::Request& request, const CtrlScript::OnResponse& response_handler)
 {
-
     std::string command = request.params().get("command");
     static std::set<std::string> supported_commands{"Next", "Previous", "Pause", "PlayPause", "Stop", "Play", "Seek", "SetPosition"};
     if ((supported_commands.find(command) == supported_commands.end()) ||

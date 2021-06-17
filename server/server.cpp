@@ -483,14 +483,14 @@ void Server::processRequest(const jsonrpcpp::request_ptr request, const OnRespon
                 if (stream == nullptr)
                     throw jsonrpcpp::InternalErrorException("Stream not found", request->id());
 
-                stream->setProperty(*request, [](const jsonrpcpp::Response& response) {
-                    LOG(INFO, LOG_TAG) << "Received response for Stream.SetProperty, id: " << response.id() << ", result: " << response.result()
-                                       << ", error: " << response.error().code() << "\n";
+                stream->setProperty(*request, [request, on_response](const jsonrpcpp::Response& props_response) {
+                    LOG(INFO, LOG_TAG) << "Received response for Stream.SetProperty, id: " << props_response.id() << ", result: " << props_response.result()
+                                       << ", error: " << props_response.error().code() << "\n";
+                    auto response = make_shared<jsonrpcpp::Response>(request->id(), props_response.result());
+                    on_response(response, nullptr);
                 });
 
-                // Setup response
-                // TODO: error handling
-                result["id"] = streamId;
+                return;
             }
             else if (request->method() == "Stream.AddStream")
             {
