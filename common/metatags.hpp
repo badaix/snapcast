@@ -144,7 +144,7 @@ public:
 
     json toJson() const
     {
-        json j;
+        json j(json::object());
         addTag(j, "trackId", track_id);
         addTag(j, "file", file);
         addTag(j, "duration", duration);

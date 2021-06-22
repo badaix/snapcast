@@ -308,56 +308,69 @@ class SnapcastWrapper(object):
         return None
 
     def __update_metadata(self, meta):
-        logger.info(f'Meta: "{meta}"')
+        try:
+            if meta is None:
+                meta = {}
+            logger.info(f'Meta: "{meta}"')
 
-        self._metadata = {}
-        self._metadata['xesam:artist'] = ['Unknown Artist']
-        self._metadata['xesam:title'] = 'Unknown Title'
+            self._metadata = {}
+            self._metadata['xesam:artist'] = ['Unknown Artist']
+            self._metadata['xesam:title'] = 'Unknown Title'
 
-        for key, value in meta.items():
-            if key in tag_mapping:
-                try:
-                    self._metadata[tag_mapping[key][0]
-                                   ] = tag_mapping[key][1](value)
-                except KeyError:
-                    logger.warning(f'tag "{key}" not supported')
-                except (ValueError, TypeError):
-                    logger.warning(
-                        f"Can't cast value {value} to {tag_mapping[key][1]}")
+            for key, value in meta.items():
+                if key in tag_mapping:
+                    try:
+                        self._metadata[tag_mapping[key][0]
+                                    ] = tag_mapping[key][1](value)
+                    except KeyError:
+                        logger.warning(f'tag "{key}" not supported')
+                    except (ValueError, TypeError):
+                        logger.warning(
+                            f"Can't cast value {value} to {tag_mapping[key][1]}")
 
-        if not 'mpris:artUrl' in self._metadata:
-            self._metadata['mpris:artUrl'] = f'http://{self._params["host"]}:{self._params["port"]}/launcher-icon.png'
+            if not 'mpris:artUrl' in self._metadata:
+                self._metadata['mpris:artUrl'] = f'http://{self._params["host"]}:{self._params["port"]}/launcher-icon.png'
 
-        logger.info(f'mpris meta: {self._metadata}')
+            logger.info(f'mpris meta: {self._metadata}')
 
-        self.notify_about_track(self._metadata)
-        new_meta = self._dbus_service.update_property('org.mpris.MediaPlayer2.Player',
-                                                      'Metadata')
-        logger.info(f'new meta {new_meta}')
+            self.notify_about_track(self._metadata)
+            new_meta = self._dbus_service.update_property('org.mpris.MediaPlayer2.Player',
+                                                        'Metadata')
+            logger.info(f'new meta {new_meta}')
+        except Exception as e:
+            logger.error(f'Error in update_metadata: {str(e)}')
 
     def __update_properties(self, props):
-        if props is None:
-            props = {}
-        logger.info(f'Properties: "{props}"')
-        # store the last receive time stamp for better position estimation
-        if 'position' in props:
-            props['received'] = time.time()
+        try:
+            if props is None:
+                props = {}
+            logger.info(f'Properties: "{props}"')
+            # store the last receive time stamp for better position estimation
+            if 'position' in props:
+                props['_received'] = time.time()
 
-        changed_properties = {}
-        for key, value in props.items():
-            if not key in self._properties:
-                changed_properties[key] = [None, value]
-            elif value != self._properties[key]:
-                changed_properties[key] = [self._properties[key], value]
-        for key, value in self._properties.items():
-            if not key in props:
-                changed_properties[key] = [value, None]
-        self._properties = props
-        logger.info(f'Changed properties: "{changed_properties}"')
-        for key, value in changed_properties.items():
-            if key in property_mapping:
-                self._dbus_service.update_property(
-                    'org.mpris.MediaPlayer2.Player', property_mapping[key])
+            # ignore "internal" properties, starting with "_" 
+            changed_properties = {}
+            for key, value in props.items():
+                if key.startswith('_'):
+                    continue
+                if not key in self._properties:
+                    changed_properties[key] = [None, value]
+                elif value != self._properties[key]:
+                    changed_properties[key] = [self._properties[key], value]
+            for key, value in self._properties.items():
+                if key.startswith('_'):
+                    continue
+                if not key in props:
+                    changed_properties[key] = [value, None]
+            self._properties = props
+            logger.info(f'Changed properties: "{changed_properties}"')
+            for key, value in changed_properties.items():
+                if key in property_mapping:
+                    self._dbus_service.update_property(
+                        'org.mpris.MediaPlayer2.Player', property_mapping[key])
+        except Exception as e:
+            logger.error(f'Error in update_properties: {str(e)}')
 
     def on_ws_message(self, ws, message):
         logger.info(f'Snapcast RPC websocket message received: {message}')
@@ -481,14 +494,15 @@ class SnapcastWrapper(object):
         return self._properties
 
     def position(self):
-        logger.info(f'Position props: {self._properties}, meta: {self._metadata}')
+        logger.debug(
+            f'Position props: {self._properties}, meta: {self._metadata}')
         if not 'position' in self._properties:
             return 0
         if not 'mpris:length' in self._metadata:
             return 0
         position = self._properties['position']
-        if 'received' in self._properties:
-            position += (time.time() - self._properties['received'])
+        if '_received' in self._properties:
+            position += (time.time() - self._properties['_received'])
         return position * 1000000
 
     def property(self, name, default):
@@ -869,13 +883,13 @@ class MPRISInterface(dbus.service.Object):
     # Root methods
     @ dbus.service.method(__root_interface, in_signature='', out_signature='')
     def Raise(self):
-        logger.info('Raise')
+        logger.debug('Raise')
         webbrowser.open(url=f'http://{params["host"]}:{params["port"]}', new=1)
         return
 
     @ dbus.service.method(__root_interface, in_signature='', out_signature='')
     def Quit(self):
-        logger.info('Quit')
+        logger.debug('Quit')
         return
 
     # Player methods
@@ -911,7 +925,7 @@ class MPRISInterface(dbus.service.Object):
 
     @ dbus.service.method(__player_interface, in_signature='x', out_signature='')
     def Seek(self, offset):
-        logger.info(f'Seek {offset}')
+        logger.debug(f'Seek {offset}')
         snapcast_wrapper.control("Seek", {"Offset": offset})
         # status = mpd_wrapper.status()
         # current, end = status['time'].split(':')
@@ -928,7 +942,7 @@ class MPRISInterface(dbus.service.Object):
 
     @ dbus.service.method(__player_interface, in_signature='ox', out_signature='')
     def SetPosition(self, trackid, position):
-        logger.info(f'SetPosition TrackId: {trackid}, Position: {position}')
+        logger.debug(f'SetPosition TrackId: {trackid}, Position: {position}')
         snapcast_wrapper.control(
             "SetPosition", {"TrackId": trackid, "Position": position})
         self.Seeked(position)
@@ -946,7 +960,7 @@ class MPRISInterface(dbus.service.Object):
 
     @ dbus.service.method(__player_interface, in_signature='', out_signature='')
     def OpenUri(self):
-        logger.info('OpenUri')
+        logger.debug('OpenUri')
         # TODO
         return
 
