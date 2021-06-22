@@ -104,7 +104,7 @@ static constexpr auto kControlScript = "controlscript";
 class PcmListener
 {
 public:
-    virtual void onMetaChanged(const PcmStream* pcmStream) = 0;
+    virtual void onMetadataChanged(const PcmStream* pcmStream) = 0;
     virtual void onPropertiesChanged(const PcmStream* pcmStream) = 0;
     virtual void onStateChanged(const PcmStream* pcmStream, ReaderState state) = 0;
     virtual void onChunkRead(const PcmStream* pcmStream, const msg::PcmChunk& chunk) = 0;
@@ -177,8 +177,8 @@ public:
     virtual const SampleFormat& getSampleFormat() const;
     virtual std::string getCodec() const;
 
-    std::shared_ptr<Metatags> getMeta() const;
-    std::shared_ptr<Properties> getProperties() const;
+    const Metatags& getMetadata() const;
+    const Properties& getProperties() const;
 
     virtual void setProperty(const jsonrpcpp::Request& request, const CtrlScript::OnResponse& response_handler);
     virtual void control(const jsonrpcpp::Request& request, const CtrlScript::OnResponse& response_handler);
@@ -200,7 +200,7 @@ protected:
     void resync(const std::chrono::nanoseconds& duration);
     void chunkEncoded(const encoder::Encoder& encoder, std::shared_ptr<msg::PcmChunk> chunk, double duration);
 
-    void setMeta(const Metatags& meta);
+    void setMetadata(const Metatags& metadata);
     void setProperties(const Properties& props);
 
     std::chrono::time_point<std::chrono::steady_clock> tvEncodedChunk_;
@@ -211,8 +211,8 @@ protected:
     std::unique_ptr<encoder::Encoder> encoder_;
     std::string name_;
     ReaderState state_;
-    std::shared_ptr<Metatags> meta_;
-    std::shared_ptr<Properties> properties_;
+    Metatags metadata_;
+    Properties properties_;
     boost::asio::io_context& ioc_;
     ServerSettings server_settings_;
     std::unique_ptr<CtrlScript> ctrl_script_;

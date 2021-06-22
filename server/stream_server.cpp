@@ -66,7 +66,7 @@ void StreamServer::addSession(std::shared_ptr<StreamSession> session)
 }
 
 
-// void StreamServer::onMetaChanged(const PcmStream* pcmStream, std::shared_ptr<msg::StreamTags> meta)
+// void StreamServer::onMetadataChanged(const PcmStream* pcmStream, std::shared_ptr<msg::StreamTags> meta)
 // {
 //     // Send meta to all connected clients
 

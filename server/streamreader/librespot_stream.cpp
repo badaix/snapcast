@@ -161,7 +161,7 @@ void LibrespotStream::onStderrMsg(const std::string& line)
         Metatags meta;
         meta.artist = std::vector<std::string>{j["ARTIST"].get<std::string>()};
         meta.title = j["TITLE"].get<std::string>();
-        setMeta(meta);
+        setMetadata(meta);
     }
     else if (regex_search(line, m, re_track_loaded))
     {
@@ -169,7 +169,7 @@ void LibrespotStream::onStderrMsg(const std::string& line)
         Metatags meta;
         meta.title = string(m[1]);
         meta.duration = cpt::stod(m[2]) / 1000.;
-        setMeta(meta);
+        setMetadata(meta);
         Properties props;
         // props.can_seek = true;
         // props.can_control = true;

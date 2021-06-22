@@ -155,7 +155,7 @@ void AirplayStream::push()
     // - cover art message (2)
     //
     // As can be seen, the order of metadata (1) and cover (2) messages is non-deterministic.
-    // That is why we call setMeta() on both end of message (1) and (2).
+    // That is why we call setMetadata() on both end of message (1) and (2).
     string data = entry_->data;
 
     // Do not base64 decode cover art
@@ -183,7 +183,7 @@ void AirplayStream::push()
     // mden = metadata end, pcen == picture end
     if (metadata_dirty_ && entry_->type == "ssnc" && (entry_->code == "mden" || entry_->code == "pcen"))
     {
-        setMeta(metadata_);
+        setMetadata(metadata_);
         metadata_dirty_ = false;
     }
 }

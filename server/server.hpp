@@ -78,7 +78,7 @@ private:
     void onNewSession(std::shared_ptr<StreamSession> session) override;
 
     /// Implementation of PcmListener
-    void onMetaChanged(const PcmStream* pcmStream) override;
+    void onMetadataChanged(const PcmStream* pcmStream) override;
     void onPropertiesChanged(const PcmStream* pcmStream) override;
     void onStateChanged(const PcmStream* pcmStream, ReaderState state) override;
     void onChunkRead(const PcmStream* pcmStream, const msg::PcmChunk& chunk) override;

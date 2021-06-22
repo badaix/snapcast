@@ -387,8 +387,8 @@ class SnapcastWrapper(object):
                     logger.info(f'Stream id: {self._stream_id}')
                     for stream in jmsg['result']['server']['streams']:
                         if stream['id'] == self._stream_id:
-                            if 'meta' in stream:
-                                self.__update_metadata(stream['meta'])
+                            if 'metadata' in stream:
+                                self.__update_metadata(stream['metadata'])
                             if 'properties' in stream:
                                 self.__update_properties(stream['properties'])
                             break
@@ -403,7 +403,7 @@ class SnapcastWrapper(object):
             logger.info(f'Stream meta changed for "{stream_id}"')
             if self._stream_id != stream_id:
                 return
-            meta = jmsg["params"]["meta"]
+            meta = jmsg["params"]["metadata"]
             self.__update_metadata(meta)
 
         elif jmsg["method"] == "Stream.OnProperties":

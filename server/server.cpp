@@ -49,19 +49,19 @@ void Server::onNewSession(std::shared_ptr<StreamSession> session)
 }
 
 
-void Server::onMetaChanged(const PcmStream* pcmStream)
+void Server::onMetadataChanged(const PcmStream* pcmStream)
 {
     // clang-format off
-    // Notification: {"jsonrpc":"2.0","method":"Stream.OnMetadata","params":{"id":"stream 1", "meta": {"album": "some album", "artist": "some artist", "track": "some track"...}}}
+    // Notification: {"jsonrpc":"2.0","method":"Stream.OnMetadata","params":{"id":"stream 1", "metadata": {"album": "some album", "artist": "some artist", "track": "some track"...}}}
     // clang-format on
 
-    const auto meta = pcmStream->getMeta();
-    LOG(DEBUG, LOG_TAG) << "Metadata changed, stream: " << pcmStream->getName() << ", meta: " << meta->toJson().dump(3) << "\n";
+    const auto metadata = pcmStream->getMetadata();
+    LOG(DEBUG, LOG_TAG) << "Metadata changed, stream: " << pcmStream->getName() << ", meta: " << metadata.toJson().dump(3) << "\n";
 
-    // streamServer_->onMetaChanged(pcmStream, meta);
+    // streamServer_->onMetadataChanged(pcmStream, meta);
 
     // Send meta to all connected clients
-    json notification = jsonrpcpp::Notification("Stream.OnMetadata", jsonrpcpp::Parameter("id", pcmStream->getId(), "meta", meta->toJson())).to_json();
+    json notification = jsonrpcpp::Notification("Stream.OnMetadata", jsonrpcpp::Parameter("id", pcmStream->getId(), "metadata", metadata.toJson())).to_json();
     controlServer_->send(notification.dump(), nullptr);
     // cout << "Notification: " << notification.dump() << "\n";
 }
@@ -70,10 +70,10 @@ void Server::onMetaChanged(const PcmStream* pcmStream)
 void Server::onPropertiesChanged(const PcmStream* pcmStream)
 {
     const auto props = pcmStream->getProperties();
-    LOG(DEBUG, LOG_TAG) << "Properties changed, stream: " << pcmStream->getName() << ", properties: " << props->toJson().dump(3) << "\n";
+    LOG(DEBUG, LOG_TAG) << "Properties changed, stream: " << pcmStream->getName() << ", properties: " << props.toJson().dump(3) << "\n";
 
     // Send propeties to all connected control clients
-    json notification = jsonrpcpp::Notification("Stream.OnProperties", jsonrpcpp::Parameter("id", pcmStream->getId(), "properties", props->toJson())).to_json();
+    json notification = jsonrpcpp::Notification("Stream.OnProperties", jsonrpcpp::Parameter("id", pcmStream->getId(), "properties", props.toJson())).to_json();
     controlServer_->send(notification.dump(), nullptr);
 }
 
@@ -422,11 +422,11 @@ void Server::processRequest(const jsonrpcpp::request_ptr request, const OnRespon
             // if (request->method().find("Stream.SetMeta") == 0)
             // {
             // clang-format off
-                // Request:      {"id":4,"jsonrpc":"2.0","method":"Stream.SetMeta","params":{"id":"Spotify", "meta": {"album": "some album", "artist": "some artist", "track": "some track"...}}}
+                // Request:      {"id":4,"jsonrpc":"2.0","method":"Stream.SetMeta","params":{"id":"Spotify", "metadata": {"album": "some album", "artist": "some artist", "track": "some track"...}}}
                 // Response:     {"id":4,"jsonrpc":"2.0","result":{"id":"Spotify"}}
             // clang-format on
 
-            //     LOG(INFO, LOG_TAG) << "Stream.SetMeta id: " << request->params().get<std::string>("id") << ", meta: " << request->params().get("meta") <<
+            //     LOG(INFO, LOG_TAG) << "Stream.SetMeta id: " << request->params().get<std::string>("id") << ", meta: " << request->params().get("metadata") <<
             //     "\n";
 
             //     // Find stream
@@ -436,7 +436,7 @@ void Server::processRequest(const jsonrpcpp::request_ptr request, const OnRespon
             //         throw jsonrpcpp::InternalErrorException("Stream not found", request->id());
 
             //     // Set metadata from request
-            //     stream->setMeta(request->params().get("meta"));
+            //     stream->setMetadata(request->params().get("metadata"));
 
             //     // Setup response
             //     result["id"] = streamId;

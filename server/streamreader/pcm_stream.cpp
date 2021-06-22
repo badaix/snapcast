@@ -208,8 +208,6 @@ PcmStream::PcmStream(PcmListener* pcmListener, boost::asio::io_context& ioc, con
 
     if (uri_.query.find(kUriChunkMs) != uri_.query.end())
         chunk_ms_ = cpt::stoul(uri_.query[kUriChunkMs]);
-
-    // setMeta(json());
 }
 
 
@@ -263,39 +261,46 @@ void PcmStream::onControlRequest(const jsonrpcpp::Request& request)
 
 void PcmStream::onControlNotification(const jsonrpcpp::Notification& notification)
 {
-    LOG(INFO, LOG_TAG) << "Notification method: " << notification.method() << ", params: " << notification.params().to_json() << "\n";
-    if (notification.method() == "Plugin.Stream.Player.Metadata")
+    try
     {
-        LOG(DEBUG, LOG_TAG) << "Received metadata notification\n";
-        setMeta(notification.params().to_json());
+        LOG(INFO, LOG_TAG) << "Notification method: " << notification.method() << ", params: " << notification.params().to_json() << "\n";
+        if (notification.method() == "Plugin.Stream.Player.Metadata")
+        {
+            LOG(DEBUG, LOG_TAG) << "Received metadata notification\n";
+            setMetadata(notification.params().to_json());
+        }
+        else if (notification.method() == "Plugin.Stream.Player.Properties")
+        {
+            LOG(DEBUG, LOG_TAG) << "Received properties notification\n";
+            setProperties(notification.params().to_json());
+        }
+        else if (notification.method() == "Plugin.Stream.Ready")
+        {
+            LOG(DEBUG, LOG_TAG) << "Plugin is ready\n";
+            ctrl_script_->send({++req_id_, "Plugin.Stream.Player.GetProperties"}, [this](const jsonrpcpp::Response& response) {
+                LOG(INFO, LOG_TAG) << "Response for Plugin.Stream.Player.GetProperties: " << response.to_json() << "\n";
+                if (response.error().code() == 0)
+                    setProperties(response.result());
+            });
+            ctrl_script_->send({++req_id_, "Plugin.Stream.Player.GetMetadata"}, [this](const jsonrpcpp::Response& response) {
+                LOG(INFO, LOG_TAG) << "Response for Plugin.Stream.Player.GetMetadata: " << response.to_json() << "\n";
+                if (response.error().code() == 0)
+                    setMetadata(response.result());
+            });
+        }
+        else if (notification.method() == "Plugin.Stream.Log")
+        {
+            std::string severity = notification.params().get("severity");
+            std::string message = notification.params().get("message");
+            LOG(INFO, LOG_TAG) << "Plugin log - severity: " << severity << ", message: " << message << "\n";
+        }
+        else
+            LOG(WARNING, LOG_TAG) << "Received unknown notification method: '" << notification.method() << "'\n";
     }
-    else if (notification.method() == "Plugin.Stream.Player.Properties")
+    catch (const std::exception& e)
     {
-        LOG(DEBUG, LOG_TAG) << "Received properties notification\n";
-        setProperties(notification.params().to_json());
+        LOG(ERROR, LOG_TAG) << "Error while receiving notification: " << e.what() << '\n';
     }
-    else if (notification.method() == "Plugin.Stream.Ready")
-    {
-        LOG(DEBUG, LOG_TAG) << "Plugin is ready\n";
-        ctrl_script_->send({++req_id_, "Plugin.Stream.Player.GetProperties"}, [this](const jsonrpcpp::Response& response) {
-            LOG(INFO, LOG_TAG) << "Response for Plugin.Stream.Player.GetProperties: " << response.to_json() << "\n";
-            if (response.error().code() == 0)
-                setProperties(response.result());
-        });
-        ctrl_script_->send({++req_id_, "Plugin.Stream.Player.GetMetadata"}, [this](const jsonrpcpp::Response& response) {
-            LOG(INFO, LOG_TAG) << "Response for Plugin.Stream.Player.GetMetadata: " << response.to_json() << "\n";
-            if (response.error().code() == 0)
-                setMeta(response.result());
-        });
-    }
-    else if (notification.method() == "Plugin.Stream.Log")
-    {
-        std::string severity = notification.params().get("severity");
-        std::string message = notification.params().get("message");
-        LOG(INFO, LOG_TAG) << "Plugin log - severity: " << severity << ", message: " << message << "\n";
-    }
-    else
-        LOG(WARNING, LOG_TAG) << "Received unknown notification method: '" << notification.method() << "'\n";
 }
 
 
@@ -419,10 +424,8 @@ json PcmStream::toJson() const
         {"status", to_string(state_)},
     };
 
-    if (meta_)
-        j["meta"] = meta_->toJson();
-    if (properties_)
-        j["properties"] = properties_->toJson();
+    j["metadata"] = metadata_.toJson();
+    j["properties"] = properties_.toJson();
 
     return j;
 }
@@ -434,13 +437,13 @@ void PcmStream::addListener(PcmListener* pcmListener)
 }
 
 
-std::shared_ptr<Metatags> PcmStream::getMeta() const
+const Metatags& PcmStream::getMetadata() const
 {
-    return meta_;
+    return metadata_;
 }
 
 
-std::shared_ptr<Properties> PcmStream::getProperties() const
+const Properties& PcmStream::getProperties() const
 {
     return properties_;
 }
@@ -448,104 +451,128 @@ std::shared_ptr<Properties> PcmStream::getProperties() const
 
 void PcmStream::setProperty(const jsonrpcpp::Request& request, const CtrlScript::OnResponse& response_handler)
 {
-    auto name = request.params().get("property");
-    auto value = request.params().get("value");
-    LOG(INFO, LOG_TAG) << "Stream '" << getId() << "' set property: " << name << " = " << value << "\n";
-    // TODO: check validity
-    bool valid = true;
-    if (name == "loopStatus")
+    try
     {
-        auto val = value.get<std::string>();
-        valid = ((val == "none") || (val == "track") || (val == "playlist"));
-    }
-    else if (name == "shuffle")
-    {
-        valid = value.is_boolean();
-    }
-    else if (name == "volume")
-    {
-        valid = value.is_number_integer();
-    }
-    else if (name == "rate")
-    {
-        valid = value.is_number_float();
-    }
-    else
-    {
-        valid = false;
-    }
+        if (!request.params().has("property"))
+            throw SnapException("Parameter 'property' is missing");
 
-    if (!valid)
+        if (!request.params().has("value"))
+            throw SnapException("Parameter 'value' is missing");
+
+        auto name = request.params().get("property");
+        auto value = request.params().get("value");
+        LOG(INFO, LOG_TAG) << "Stream '" << getId() << "' set property: " << name << " = " << value << "\n";
+
+        if (name == "loopStatus")
+        {
+            auto val = value.get<std::string>();
+            if ((val != "none") || (val != "track") || (val != "playlist"))
+                throw SnapException("Value for loopStatus must be one of 'none', 'track', 'playlist'");
+        }
+        else if (name == "shuffle")
+        {
+            if (!value.is_boolean())
+                throw SnapException("Value for shuffle must be bool");
+        }
+        else if (name == "volume")
+        {
+            if (!value.is_number_integer())
+                throw SnapException("Value for volume must be an int");
+        }
+        else if (name == "rate")
+        {
+            if (!value.is_number_float())
+                throw SnapException("Value for rate must be float");
+        }
+
+        if (!properties_.can_control)
+            throw SnapException("CanControl is false");
+
+        if (ctrl_script_)
+        {
+            jsonrpcpp::Request req(++req_id_, "Plugin.Stream.Player.SetProperty", {name, value});
+            ctrl_script_->send(req, response_handler);
+        }
+    }
+    catch (const std::exception& e)
     {
-        auto error = jsonrpcpp::InvalidParamsException(request);
+        LOG(WARNING, LOG_TAG) << "Error in setProperty: " << e.what() << '\n';
+        auto error = jsonrpcpp::InvalidParamsException(e.what(), request.id());
         response_handler(error.to_json());
-        return;
-    }
-
-    if (ctrl_script_)
-    {
-        jsonrpcpp::Request req(++req_id_, "Plugin.Stream.Player.SetProperty", {name, value});
-        ctrl_script_->send(req, response_handler);
     }
 }
 
 
 void PcmStream::control(const jsonrpcpp::Request& request, const CtrlScript::OnResponse& response_handler)
 {
-    std::string command = request.params().get("command");
-    static std::set<std::string> supported_commands{"Next", "Previous", "Pause", "PlayPause", "Stop", "Play", "Seek", "SetPosition"};
-    if ((supported_commands.find(command) == supported_commands.end()) ||
-        ((command == "SetPosition") &&
-         (!request.params().has("params") || !request.params().get("params").contains("Position") || !request.params().get("params").contains("TrackId"))) ||
-        ((command == "Seek") && (!request.params().has("params") || !request.params().get("params").contains("Offset"))))
+    try
     {
-        auto error = jsonrpcpp::InvalidParamsException(request);
-        response_handler(error.to_json());
-        return;
-    }
+        if (!request.params().has("command"))
+            throw SnapException("Parameter 'command' is missing");
 
-    LOG(INFO, LOG_TAG) << "Stream '" << getId() << "' received command: '" << command << "', params: '" << request.params().to_json() << "'\n";
-    if (ctrl_script_)
+        std::string command = request.params().get("command");
+        static std::set<std::string> supported_commands{"Next", "Previous", "Pause", "PlayPause", "Stop", "Play", "Seek", "SetPosition"};
+        if (supported_commands.find(command) == supported_commands.end())
+            throw SnapException("Command not supported");
+
+        if (((command == "SetPosition") || (command == "Seek")) && !request.params().has("params"))
+            throw SnapException("Parameter 'params' is missing");
+
+        if ((command == "SetPosition") && (!request.params().get("params").contains("Position") || !request.params().get("params").contains("TrackId")))
+            throw SnapException("SetPosition requires parameters 'Position' and 'TrackId'");
+
+        if ((command == "Seek") && !request.params().get("params").contains("Offset"))
+            throw SnapException("Seek requires parameter 'Offset'");
+
+        LOG(INFO, LOG_TAG) << "Stream '" << getId() << "' received command: '" << command << "', params: '" << request.params().to_json() << "'\n";
+        if (ctrl_script_)
+        {
+            jsonrpcpp::Parameter params{"command", command};
+            if (request.params().has("params"))
+                params.add("params", request.params().get("params"));
+            jsonrpcpp::Request req(++req_id_, "Plugin.Stream.Player.Control", params);
+            ctrl_script_->send(req, response_handler);
+        }
+    }
+    catch (const std::exception& e)
     {
-        jsonrpcpp::Parameter params{"command", command};
-        if (request.params().has("params"))
-            params.add("params", request.params().get("params"));
-        jsonrpcpp::Request req(++req_id_, "Plugin.Stream.Player.Control", params);
-        ctrl_script_->send(req, response_handler);
+        LOG(WARNING, LOG_TAG) << "Error in control: " << e.what() << '\n';
+        auto error = jsonrpcpp::InvalidParamsException(e.what(), request.id());
+        response_handler(error.to_json());
     }
 }
 
 
-void PcmStream::setMeta(const Metatags& meta)
+void PcmStream::setMetadata(const Metatags& metadata)
 {
-    if ((meta_ != nullptr) && (meta == *meta_))
+    if (metadata == metadata_)
     {
-        LOG(DEBUG, LOG_TAG) << "setMeta: Meta data did not change\n";
+        LOG(DEBUG, LOG_TAG) << "setMetadata: Metadata did not change\n";
         return;
     }
 
-    meta_ = std::make_shared<Metatags>(meta);
-    LOG(INFO, LOG_TAG) << "setMeta, stream: " << getId() << ", metadata: " << meta_->toJson() << "\n";
+    metadata_ = metadata;
+    LOG(INFO, LOG_TAG) << "setMetadata, stream: " << getId() << ", metadata: " << metadata_.toJson() << "\n";
 
     // Trigger a stream update
     for (auto* listener : pcmListeners_)
     {
         if (listener != nullptr)
-            listener->onMetaChanged(this);
+            listener->onMetadataChanged(this);
     }
 }
 
 
 void PcmStream::setProperties(const Properties& props)
 {
-    if ((properties_ != nullptr) && (props == *properties_))
+    if (props == properties_)
     {
         LOG(DEBUG, LOG_TAG) << "setProperties: Properties did not change\n";
         return;
     }
 
-    properties_ = std::make_shared<Properties>(props);
-    LOG(INFO, LOG_TAG) << "setProperties, stream: " << getId() << ", properties: " << props.toJson() << "\n";
+    properties_ = props;
+    LOG(INFO, LOG_TAG) << "setProperties, stream: " << getId() << ", properties: " << properties_.toJson() << "\n";
 
     // Trigger a stream update
     for (auto* listener : pcmListeners_)

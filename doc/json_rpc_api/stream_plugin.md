@@ -134,7 +134,7 @@ To control the stream state, the following commands can be sent to the Snapcast 
 ## Notifications:
 
 ```json
-{"jsonrpc": "2.0", "method": "Stream.OnMetadata", "params": {"id": "Pipe", "meta": {}}}
+{"jsonrpc": "2.0", "method": "Stream.OnMetadata", "params": {"id": "Pipe", "metadata": {}}}
 ```
 
 ```json

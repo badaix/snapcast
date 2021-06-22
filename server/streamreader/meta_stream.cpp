@@ -84,9 +84,9 @@ void MetaStream::stop()
 }
 
 
-void MetaStream::onMetaChanged(const PcmStream* pcmStream)
+void MetaStream::onMetadataChanged(const PcmStream* pcmStream)
 {
-    LOG(DEBUG, LOG_TAG) << "onMetaChanged: " << pcmStream->getName() << "\n";
+    LOG(DEBUG, LOG_TAG) << "onMetadataChanged: " << pcmStream->getName() << "\n";
     std::lock_guard<std::mutex> lock(mutex_);
     if (pcmStream != active_stream_.get())
         return;
