@@ -19,15 +19,7 @@
 #ifndef PCM_STREAM_HPP
 #define PCM_STREAM_HPP
 
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wunused-result"
-#pragma GCC diagnostic ignored "-Wunused-parameter"
-#pragma GCC diagnostic ignored "-Wmissing-braces"
-#include <boost/process.hpp>
-#pragma GCC diagnostic pop
 #include <atomic>
-#include <condition_variable>
-#include <map>
 #include <string>
 #include <vector>
 
@@ -40,10 +32,10 @@
 #include "common/properties.hpp"
 #include "common/sample_format.hpp"
 #include "encoder/encoder.hpp"
-#include "message/codec_header.hpp"
-// #include "message/stream_tags.hpp"
 #include "jsonrpcpp.hpp"
+#include "message/codec_header.hpp"
 #include "server_settings.hpp"
+#include "stream_control.hpp"
 #include "stream_uri.hpp"
 
 
@@ -113,45 +105,6 @@ public:
 };
 
 
-class CtrlScript
-{
-public:
-    using OnRequest = std::function<void(const jsonrpcpp::Request& response)>;
-    using OnNotification = std::function<void(const jsonrpcpp::Notification& response)>;
-    using OnResponse = std::function<void(const jsonrpcpp::Response& response)>;
-    using OnLog = std::function<void(std::string message)>;
-
-    CtrlScript(boost::asio::io_context& ioc, const std::string& script);
-    virtual ~CtrlScript();
-
-    void start(const std::string& stream_id, const ServerSettings& server_setttings, const OnNotification& notification_handler,
-               const OnRequest& request_handler, const OnLog& log_handler);
-    void stop();
-    /// Send a message to stdin of the process
-    void send(const jsonrpcpp::Request& request, const OnResponse& response_handler);
-
-private:
-    void stderrReadLine();
-    void stdoutReadLine();
-
-    bp::child process_;
-    bp::pipe pipe_stdout_;
-    bp::pipe pipe_stderr_;
-    std::unique_ptr<boost::asio::posix::stream_descriptor> stream_stdout_;
-    std::unique_ptr<boost::asio::posix::stream_descriptor> stream_stderr_;
-    boost::asio::streambuf streambuf_stdout_;
-    boost::asio::streambuf streambuf_stderr_;
-    OnRequest request_handler_;
-    OnNotification notification_handler_;
-    OnLog log_handler_;
-
-    boost::asio::io_context& ioc_;
-    std::string script_;
-    bp::opstream in_;
-
-    std::map<jsonrpcpp::Id, OnResponse> request_callbacks_;
-};
-
 
 /// Reads and decodes PCM data
 /**
@@ -180,8 +133,8 @@ public:
     const Metatags& getMetadata() const;
     const Properties& getProperties() const;
 
-    virtual void setProperty(const jsonrpcpp::Request& request, const CtrlScript::OnResponse& response_handler);
-    virtual void control(const jsonrpcpp::Request& request, const CtrlScript::OnResponse& response_handler);
+    virtual void setProperty(const jsonrpcpp::Request& request, const StreamControl::OnResponse& response_handler);
+    virtual void control(const jsonrpcpp::Request& request, const StreamControl::OnResponse& response_handler);
 
     virtual ReaderState getState() const;
     virtual json toJson() const;
@@ -215,7 +168,7 @@ protected:
     Properties properties_;
     boost::asio::io_context& ioc_;
     ServerSettings server_settings_;
-    std::unique_ptr<CtrlScript> ctrl_script_;
+    std::unique_ptr<StreamControl> stream_ctrl_;
     int req_id_;
 };
 
