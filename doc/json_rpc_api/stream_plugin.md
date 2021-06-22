@@ -65,7 +65,7 @@ todo
 Success:
 
 ```json
-{"id": 1, "jsonrpc": "2.0", "result": {"artist":["Travis Scott & HVME"],"file":"http://wdr-1live-live.icecast.wdr.de/wdr/1live/live/mp3/128/stream.mp3","name":"1Live, Westdeutscher Rundfunk Koeln","title":"Goosebumps (Remix)","trackId":"3"}}
+{"id": 1, "jsonrpc": "2.0", "result": {"canControl":true,"canGoNext":true,"canGoPrevious":true,"canPause":true,"canPlay":true,"canSeek":false,"loopStatus":"none","playbackStatus":"playing","position":593.394,"shuffle":false,"volume":86}}
 ```
 
 Error:
@@ -85,7 +85,7 @@ todo
 Success:
 
 ```json
-{"id": 1, "jsonrpc": "2.0", "result": {"canControl":true,"canGoNext":true,"canGoPrevious":true,"canPause":true,"canPlay":true,"canSeek":false,"loopStatus":"none","playbackStatus":"playing","position":593.394,"shuffle":false,"volume":86}}
+{"id": 1, "jsonrpc": "2.0", "result": {"artist":["Travis Scott & HVME"],"file":"http://wdr-1live-live.icecast.wdr.de/wdr/1live/live/mp3/128/stream.mp3","name":"1Live, Westdeutscher Rundfunk Koeln","title":"Goosebumps (Remix)","trackId":"3"}}
 ```
 
 ## Notifications:

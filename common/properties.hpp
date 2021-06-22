@@ -154,11 +154,11 @@ public:
 
     /// https://www.musicpd.org/doc/html/protocol.html#tags
     /// The current playback status
-    PlaybackStatus playback_status;
+    boost::optional<PlaybackStatus> playback_status;
     /// The current loop / repeat status
     boost::optional<LoopStatus> loop_status;
     /// The current playback rate
-    float rate;
+    boost::optional<float> rate;
     /// A value of false indicates that playback is progressing linearly through a playlist, while true means playback is progressing through a playlist in some
     /// other order.
     boost::optional<bool> shuffle;
@@ -171,22 +171,23 @@ public:
     /// The maximum value which the Rate property can take. Clients should not attempt to set the Rate property above this value
     boost::optional<float> maximum_rate;
     /// Whether the client can call the Next method on this interface and expect the current track to change
-    boost::optional<bool> can_go_next;
+    bool can_go_next = false;
     /// Whether the client can call the Previous method on this interface and expect the current track to change
-    boost::optional<bool> can_go_previous;
+    bool can_go_previous = false;
     /// Whether playback can be started using "play" or "playPause"
-    boost::optional<bool> can_play;
+    bool can_play = false;
     /// Whether playback can be paused using "pause" or "playPause"
-    boost::optional<bool> can_pause;
+    bool can_pause = false;
     /// Whether the client can control the playback position using "seek" and "setPosition". This may be different for different tracks
-    boost::optional<bool> can_seek;
+    bool can_seek = false;
     /// Whether the media player may be controlled over this interface
-    boost::optional<bool> can_control;
+    bool can_control = false;
 
     json toJson() const
     {
         json j;
-        addTag(j, "playbackStatus", to_string(playback_status));
+        if (playback_status.has_value())
+            addTag(j, "playbackStatus", boost::optional<std::string>(to_string(playback_status.value())));
         if (loop_status.has_value())
             addTag(j, "loopStatus", boost::optional<std::string>(to_string(loop_status.value())));
         addTag(j, "rate", rate);
@@ -220,28 +221,28 @@ public:
         boost::optional<std::string> opt;
 
         readTag(j, "playbackStatus", opt);
-        if (!opt.has_value())
-            playback_status = PlaybackStatus::kStopped;
-        else
+        if (opt.has_value())
             playback_status = playback_status_from_string(opt.value());
+        else
+            playback_status = boost::none;
 
         readTag(j, "loopStatus", opt);
         if (opt.has_value())
             loop_status = loop_status_from_string(opt.value());
         else
             loop_status = boost::none;
-        readTag(j, "rate", rate, 1.0f);
+        readTag(j, "rate", rate);
         readTag(j, "shuffle", shuffle);
         readTag(j, "volume", volume);
         readTag(j, "position", position);
         readTag(j, "minimumRate", minimum_rate);
         readTag(j, "maximumRate", maximum_rate);
-        readTag(j, "canGoNext", can_go_next);
-        readTag(j, "canGoPrevious", can_go_previous);
-        readTag(j, "canPlay", can_play);
-        readTag(j, "canPause", can_pause);
-        readTag(j, "canSeek", can_seek);
-        readTag(j, "canControl", can_control);
+        readTag(j, "canGoNext", can_go_next, false);
+        readTag(j, "canGoPrevious", can_go_previous, false);
+        readTag(j, "canPlay", can_play, false);
+        readTag(j, "canPause", can_pause, false);
+        readTag(j, "canSeek", can_seek, false);
+        readTag(j, "canControl", can_control, false);
     }
 
     bool operator==(const Properties& other) const
