@@ -49,13 +49,12 @@ void Server::onNewSession(std::shared_ptr<StreamSession> session)
 }
 
 
-void Server::onMetadataChanged(const PcmStream* pcmStream)
+void Server::onMetadataChanged(const PcmStream* pcmStream, const Metatags& metadata)
 {
     // clang-format off
     // Notification: {"jsonrpc":"2.0","method":"Stream.OnMetadata","params":{"id":"stream 1", "metadata": {"album": "some album", "artist": "some artist", "track": "some track"...}}}
     // clang-format on
 
-    const auto metadata = pcmStream->getMetadata();
     LOG(DEBUG, LOG_TAG) << "Metadata changed, stream: " << pcmStream->getName() << ", meta: " << metadata.toJson().dump(3) << "\n";
 
     // streamServer_->onMetadataChanged(pcmStream, meta);
@@ -67,13 +66,13 @@ void Server::onMetadataChanged(const PcmStream* pcmStream)
 }
 
 
-void Server::onPropertiesChanged(const PcmStream* pcmStream)
+void Server::onPropertiesChanged(const PcmStream* pcmStream, const Properties& properties)
 {
-    const auto props = pcmStream->getProperties();
-    LOG(DEBUG, LOG_TAG) << "Properties changed, stream: " << pcmStream->getName() << ", properties: " << props.toJson().dump(3) << "\n";
+    LOG(DEBUG, LOG_TAG) << "Properties changed, stream: " << pcmStream->getName() << ", properties: " << properties.toJson().dump(3) << "\n";
 
     // Send propeties to all connected control clients
-    json notification = jsonrpcpp::Notification("Stream.OnProperties", jsonrpcpp::Parameter("id", pcmStream->getId(), "properties", props.toJson())).to_json();
+    json notification =
+        jsonrpcpp::Notification("Stream.OnProperties", jsonrpcpp::Parameter("id", pcmStream->getId(), "properties", properties.toJson())).to_json();
     controlServer_->send(notification.dump(), nullptr);
 }
 

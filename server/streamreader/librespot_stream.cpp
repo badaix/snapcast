@@ -170,10 +170,10 @@ void LibrespotStream::onStderrMsg(const std::string& line)
         meta.title = string(m[1]);
         meta.duration = cpt::stod(m[2]) / 1000.;
         setMetadata(meta);
-        Properties props;
-        // props.can_seek = true;
-        // props.can_control = true;
-        setProperties(props);
+        Properties properties;
+        // properties.can_seek = true;
+        // properties.can_control = true;
+        setProperties(properties);
     }
 }
 

@@ -46,8 +46,8 @@ public:
 
 protected:
     /// Implementation of PcmListener
-    void onMetadataChanged(const PcmStream* pcmStream) override;
-    void onPropertiesChanged(const PcmStream* pcmStream) override;
+    void onMetadataChanged(const PcmStream* pcmStream, const Metatags& metadata) override;
+    void onPropertiesChanged(const PcmStream* pcmStream, const Properties& properties) override;
     void onStateChanged(const PcmStream* pcmStream, ReaderState state) override;
     void onChunkRead(const PcmStream* pcmStream, const msg::PcmChunk& chunk) override;
     void onChunkEncoded(const PcmStream* pcmStream, std::shared_ptr<msg::PcmChunk> chunk, double duration) override;

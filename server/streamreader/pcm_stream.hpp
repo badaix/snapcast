@@ -20,11 +20,13 @@
 #define PCM_STREAM_HPP
 
 #include <atomic>
+#include <mutex>
 #include <string>
 #include <vector>
 
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/read_until.hpp>
+#include <boost/asio/steady_timer.hpp>
 #include <boost/optional.hpp>
 
 #include "common/json.hpp"
@@ -96,8 +98,8 @@ static constexpr auto kControlScript = "controlscript";
 class PcmListener
 {
 public:
-    virtual void onMetadataChanged(const PcmStream* pcmStream) = 0;
-    virtual void onPropertiesChanged(const PcmStream* pcmStream) = 0;
+    virtual void onMetadataChanged(const PcmStream* pcmStream, const Metatags& metadata) = 0;
+    virtual void onPropertiesChanged(const PcmStream* pcmStream, const Properties& properties) = 0;
     virtual void onStateChanged(const PcmStream* pcmStream, ReaderState state) = 0;
     virtual void onChunkRead(const PcmStream* pcmStream, const msg::PcmChunk& chunk) = 0;
     virtual void onChunkEncoded(const PcmStream* pcmStream, std::shared_ptr<msg::PcmChunk> chunk, double duration) = 0;
@@ -154,7 +156,9 @@ protected:
     void chunkEncoded(const encoder::Encoder& encoder, std::shared_ptr<msg::PcmChunk> chunk, double duration);
 
     void setMetadata(const Metatags& metadata);
-    void setProperties(const Properties& props);
+    void setProperties(const Properties& properties);
+
+    void pollProperties();
 
     std::chrono::time_point<std::chrono::steady_clock> tvEncodedChunk_;
     std::vector<PcmListener*> pcmListeners_;
@@ -169,7 +173,9 @@ protected:
     boost::asio::io_context& ioc_;
     ServerSettings server_settings_;
     std::unique_ptr<StreamControl> stream_ctrl_;
-    int req_id_;
+    std::atomic<int> req_id_;
+    boost::asio::steady_timer property_timer_;
+    mutable std::mutex mutex_;
 };
 
 } // namespace streamreader

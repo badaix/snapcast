@@ -182,12 +182,12 @@ TEST_CASE("Properties")
 )");
     // std::cout << in_json.dump(4) << "\n";
 
-    Properties props(in_json);
-    std::cout << props.toJson().dump(4) << "\n";
+    Properties properties(in_json);
+    std::cout << properties.toJson().dump(4) << "\n";
 
-    REQUIRE(props.loop_status.has_value());
+    REQUIRE(properties.loop_status.has_value());
 
-    auto out_json = props.toJson();
+    auto out_json = properties.toJson();
     // std::cout << out_json.dump(4) << "\n";
     REQUIRE(in_json == out_json);
 
@@ -198,12 +198,12 @@ TEST_CASE("Properties")
 )");
     // std::cout << in_json.dump(4) << "\n";
 
-    props.fromJson(in_json);
-    // std::cout << props.toJson().dump(4) << "\n";
+    properties.fromJson(in_json);
+    // std::cout << properties.toJson().dump(4) << "\n";
 
-    REQUIRE(!props.loop_status.has_value());
+    REQUIRE(!properties.loop_status.has_value());
 
-    out_json = props.toJson();
+    out_json = properties.toJson();
     // std::cout << out_json.dump(4) << "\n";
     REQUIRE(in_json == out_json);
 }

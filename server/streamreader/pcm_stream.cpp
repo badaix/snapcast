@@ -37,7 +37,8 @@ static constexpr auto LOG_TAG = "PcmStream";
 
 
 PcmStream::PcmStream(PcmListener* pcmListener, boost::asio::io_context& ioc, const ServerSettings& server_settings, const StreamUri& uri)
-    : active_(false), pcmListeners_{pcmListener}, uri_(uri), chunk_ms_(20), state_(ReaderState::kIdle), ioc_(ioc), server_settings_(server_settings), req_id_(0)
+    : active_(false), pcmListeners_{pcmListener}, uri_(uri), chunk_ms_(20), state_(ReaderState::kIdle), ioc_(ioc), server_settings_(server_settings),
+      req_id_(0), property_timer_(ioc)
 {
     encoder::EncoderFactory encoderFactory;
     if (uri_.query.find(kUriCodec) == uri_.query.end())
@@ -66,6 +67,7 @@ PcmStream::PcmStream(PcmListener* pcmListener, boost::asio::io_context& ioc, con
 PcmStream::~PcmStream()
 {
     stop();
+    property_timer_.cancel();
 }
 
 
@@ -111,6 +113,23 @@ void PcmStream::onControlRequest(const jsonrpcpp::Request& request)
 }
 
 
+void PcmStream::pollProperties()
+{
+    property_timer_.expires_after(10s);
+    property_timer_.async_wait([this](const boost::system::error_code& ec) {
+        if (!ec)
+        {
+            stream_ctrl_->command({++req_id_, "Plugin.Stream.Player.GetProperties"}, [this](const jsonrpcpp::Response& response) {
+                LOG(INFO, LOG_TAG) << "Response for Plugin.Stream.Player.GetProperties: " << response.to_json() << "\n";
+                if (response.error().code() == 0)
+                    setProperties(response.result());
+            });
+            pollProperties();
+        }
+    });
+}
+
+
 void PcmStream::onControlNotification(const jsonrpcpp::Notification& notification)
 {
     try
@@ -139,6 +158,7 @@ void PcmStream::onControlNotification(const jsonrpcpp::Notification& notificatio
                 if (response.error().code() == 0)
                     setMetadata(response.result());
             });
+            pollProperties();
         }
         else if (notification.method() == "Plugin.Stream.Log")
         {
@@ -291,12 +311,14 @@ void PcmStream::addListener(PcmListener* pcmListener)
 
 const Metatags& PcmStream::getMetadata() const
 {
+    std::lock_guard<std::mutex> lock(mutex_);
     return metadata_;
 }
 
 
 const Properties& PcmStream::getProperties() const
 {
+    std::lock_guard<std::mutex> lock(mutex_);
     return properties_;
 }
 
@@ -426,6 +448,7 @@ void PcmStream::control(const jsonrpcpp::Request& request, const StreamControl::
 
 void PcmStream::setMetadata(const Metatags& metadata)
 {
+    std::lock_guard<std::mutex> lock(mutex_);
     if (metadata == metadata_)
     {
         LOG(DEBUG, LOG_TAG) << "setMetadata: Metadata did not change\n";
@@ -439,27 +462,28 @@ void PcmStream::setMetadata(const Metatags& metadata)
     for (auto* listener : pcmListeners_)
     {
         if (listener != nullptr)
-            listener->onMetadataChanged(this);
+            listener->onMetadataChanged(this, metadata_);
     }
 }
 
 
-void PcmStream::setProperties(const Properties& props)
+void PcmStream::setProperties(const Properties& properties)
 {
-    if (props == properties_)
+    std::lock_guard<std::mutex> lock(mutex_);
+    if (properties == properties_)
     {
         LOG(DEBUG, LOG_TAG) << "setProperties: Properties did not change\n";
         return;
     }
 
-    properties_ = props;
+    properties_ = properties;
     LOG(INFO, LOG_TAG) << "setProperties, stream: " << getId() << ", properties: " << properties_.toJson() << "\n";
 
     // Trigger a stream update
     for (auto* listener : pcmListeners_)
     {
         if (listener != nullptr)
-            listener->onPropertiesChanged(this);
+            listener->onPropertiesChanged(this, properties);
     }
 }
 

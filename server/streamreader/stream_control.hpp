@@ -30,6 +30,7 @@
 
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/read_until.hpp>
+#include <boost/asio/strand.hpp>
 
 #include "jsonrpcpp.hpp"
 #include "server_settings.hpp"
@@ -64,17 +65,18 @@ protected:
     virtual void doCommand(const jsonrpcpp::Request& request) = 0;
     virtual void doStart(const std::string& stream_id, const ServerSettings& server_setttings) = 0;
 
-    void onNotification(const jsonrpcpp::Notification& notification);
-    void onRequest(const jsonrpcpp::Request& request);
-    void onResponse(const jsonrpcpp::Response& response);
+    void onReceive(const std::string& json);
     void onLog(std::string message);
 
+    boost::asio::io_context& ioc_;
+
+private:
     OnRequest request_handler_;
     OnNotification notification_handler_;
     OnLog log_handler_;
 
-    boost::asio::io_context& ioc_;
     std::map<jsonrpcpp::Id, OnResponse> request_callbacks_;
+    boost::asio::io_context::strand strand_;
 };
 
 

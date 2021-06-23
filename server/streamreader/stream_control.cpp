@@ -36,7 +36,7 @@ namespace streamreader
 static constexpr auto LOG_TAG = "Script";
 
 
-StreamControl::StreamControl(boost::asio::io_context& ioc) : ioc_(ioc)
+StreamControl::StreamControl(boost::asio::io_context& ioc) : ioc_(ioc), strand_(ioc)
 {
 }
 
@@ -60,10 +60,13 @@ void StreamControl::start(const std::string& stream_id, const ServerSettings& se
 
 void StreamControl::command(const jsonrpcpp::Request& request, const OnResponse& response_handler)
 {
-    if (response_handler)
-        request_callbacks_[request.id()] = response_handler;
+    // use strand to serialize commands sent from different threads
+    boost::asio::post(strand_, [this, request, response_handler]() {
+        if (response_handler)
+            request_callbacks_[request.id()] = response_handler;
 
-    doCommand(request);
+        doCommand(request);
+    });
 }
 
 
@@ -72,31 +75,54 @@ void StreamControl::stop()
 }
 
 
-void StreamControl::onNotification(const jsonrpcpp::Notification& notification)
+void StreamControl::onReceive(const std::string& json)
 {
-    notification_handler_(notification);
-}
-
-
-void StreamControl::onRequest(const jsonrpcpp::Request& request)
-{
-    request_handler_(request);
-}
-
-
-void StreamControl::onResponse(const jsonrpcpp::Response& response)
-{
-    LOG(INFO, LOG_TAG) << "Response: " << response.to_json() << ", id: " << response.id() << "\n";
-    // TODO: call request_callbacks_ on timeout with error
-    auto iter = request_callbacks_.find(response.id());
-    if (iter != request_callbacks_.end())
+    jsonrpcpp::entity_ptr entity(nullptr);
+    try
     {
-        iter->second(response);
-        request_callbacks_.erase(iter);
+        entity = jsonrpcpp::Parser::do_parse(json);
+        if (!entity)
+        {
+            LOG(ERROR, LOG_TAG) << "Failed to parse message\n";
+        }
+        else if (entity->is_notification())
+        {
+            jsonrpcpp::notification_ptr notification = dynamic_pointer_cast<jsonrpcpp::Notification>(entity);
+            notification_handler_(*notification);
+        }
+        else if (entity->is_request())
+        {
+            jsonrpcpp::request_ptr request = dynamic_pointer_cast<jsonrpcpp::Request>(entity);
+            request_handler_(*request);
+        }
+        else if (entity->is_response())
+        {
+            jsonrpcpp::response_ptr response = dynamic_pointer_cast<jsonrpcpp::Response>(entity);
+            LOG(INFO, LOG_TAG) << "Response: " << response->to_json() << ", id: " << response->id() << "\n";
+            // TODO: call request_callbacks_ on timeout with error
+            auto iter = request_callbacks_.find(response->id());
+            if (iter != request_callbacks_.end())
+            {
+                iter->second(*response);
+                request_callbacks_.erase(iter);
+            }
+            else
+            {
+                LOG(WARNING, LOG_TAG) << "No request found for response with id: " << response->id() << "\n";
+            }
+        }
+        else
+        {
+            LOG(WARNING, LOG_TAG) << "Not handling message: " << json << "\n";
+        }
     }
-    else
+    catch (const jsonrpcpp::ParseErrorException& e)
     {
-        LOG(WARNING, LOG_TAG) << "No request found for response with id: " << response.id() << "\n";
+        LOG(ERROR, LOG_TAG) << "Failed to parse message: " << e.what() << "\n";
+    }
+    catch (const std::exception& e)
+    {
+        LOG(ERROR, LOG_TAG) << "Failed to parse message: " << e.what() << "\n";
     }
 }
 
@@ -160,6 +186,7 @@ void ScriptStreamControl::stderrReadLine()
         // Extract up to the first delimiter.
         std::string line{buffers_begin(streambuf_stderr_.data()), buffers_begin(streambuf_stderr_.data()) + bytes_transferred - delimiter.length()};
         onLog(std::move(line));
+
         streambuf_stderr_.consume(bytes_transferred);
         stderrReadLine();
     });
@@ -178,43 +205,7 @@ void ScriptStreamControl::stdoutReadLine()
 
         // Extract up to the first delimiter.
         std::string line{buffers_begin(streambuf_stdout_.data()), buffers_begin(streambuf_stdout_.data()) + bytes_transferred - delimiter.length()};
-
-        jsonrpcpp::entity_ptr entity(nullptr);
-        try
-        {
-            entity = jsonrpcpp::Parser::do_parse(line);
-            if (!entity)
-            {
-                LOG(ERROR, LOG_TAG) << "Failed to parse message\n";
-            }
-            if (entity->is_notification())
-            {
-                jsonrpcpp::notification_ptr notification = dynamic_pointer_cast<jsonrpcpp::Notification>(entity);
-                onNotification(*notification);
-            }
-            else if (entity->is_request())
-            {
-                jsonrpcpp::request_ptr request = dynamic_pointer_cast<jsonrpcpp::Request>(entity);
-                onRequest(*request);
-            }
-            else if (entity->is_response())
-            {
-                jsonrpcpp::response_ptr response = dynamic_pointer_cast<jsonrpcpp::Response>(entity);
-                onResponse(*response);
-            }
-            else
-            {
-                LOG(WARNING, LOG_TAG) << "Not handling message: " << line << "\n";
-            }
-        }
-        catch (const jsonrpcpp::ParseErrorException& e)
-        {
-            LOG(ERROR, LOG_TAG) << "Failed to parse message: " << e.what() << "\n";
-        }
-        catch (const std::exception& e)
-        {
-            LOG(ERROR, LOG_TAG) << "Failed to parse message: " << e.what() << "\n";
-        }
+        onReceive(line);
 
         streambuf_stdout_.consume(bytes_transferred);
         stdoutReadLine();
