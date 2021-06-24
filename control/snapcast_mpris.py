@@ -321,7 +321,7 @@ class SnapcastWrapper(object):
                 if key in tag_mapping:
                     try:
                         self._metadata[tag_mapping[key][0]
-                                    ] = tag_mapping[key][1](value)
+                                       ] = tag_mapping[key][1](value)
                     except KeyError:
                         logger.warning(f'tag "{key}" not supported')
                     except (ValueError, TypeError):
@@ -329,13 +329,13 @@ class SnapcastWrapper(object):
                             f"Can't cast value {value} to {tag_mapping[key][1]}")
 
             if not 'mpris:artUrl' in self._metadata:
-                self._metadata['mpris:artUrl'] = f'http://{self._params["host"]}:{self._params["port"]}/launcher-icon.png'
+                self._metadata['mpris:artUrl'] = f'http://{self._params["host"]}:{self._params["port"]}/snapcast-512.png'
 
             logger.info(f'mpris meta: {self._metadata}')
 
             self.notify_about_track(self._metadata)
             new_meta = self._dbus_service.update_property('org.mpris.MediaPlayer2.Player',
-                                                        'Metadata')
+                                                          'Metadata')
             logger.info(f'new meta {new_meta}')
         except Exception as e:
             logger.error(f'Error in update_metadata: {str(e)}')
@@ -349,7 +349,7 @@ class SnapcastWrapper(object):
             if 'position' in props:
                 props['_received'] = time.time()
 
-            # ignore "internal" properties, starting with "_" 
+            # ignore "internal" properties, starting with "_"
             changed_properties = {}
             for key, value in props.items():
                 if key.startswith('_'):
@@ -926,7 +926,7 @@ class MPRISInterface(dbus.service.Object):
     @ dbus.service.method(__player_interface, in_signature='x', out_signature='')
     def Seek(self, offset):
         logger.debug(f'Seek {offset}')
-        snapcast_wrapper.control("Seek", {"Offset": offset})
+        snapcast_wrapper.control("Seek", {"Offset": float(offset) / 1000000})
         # status = mpd_wrapper.status()
         # current, end = status['time'].split(':')
         # current = int(current)
@@ -944,7 +944,7 @@ class MPRISInterface(dbus.service.Object):
     def SetPosition(self, trackid, position):
         logger.debug(f'SetPosition TrackId: {trackid}, Position: {position}')
         snapcast_wrapper.control(
-            "SetPosition", {"TrackId": trackid, "Position": position})
+            "SetPosition", {"TrackId": trackid, "Position": float(position) / 1000000})
         self.Seeked(position)
 
         # song = mpd_wrapper.last_currentsong()

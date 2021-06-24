@@ -389,14 +389,14 @@ class MPDWrapper(object):
                     elif command == 'Stop':
                         self.stop()
                     elif command == 'SetPosition':
-                        trackid = params['TrackId']
-                        trackid = trackid.rsplit('/', 1)[1]
-                        position = params['Position']
-                        position = int(position) / 1000000
-                        self.seekid(int(trackid), position)
+                        position = float(params['Position'])
+                        if 'TrackId' in params:
+                            trackid = params['TrackId'].rsplit('/', 1)[1]
+                            self.seekid(int(trackid), position)
+                        else:
+                            self.seekcur(position)
                     elif command == 'Seek':
-                        offset = params['Offset']
-                        offset = int(offset) / 1000000
+                        offset = float(params['Offset'])
                         strOffset = str(offset)
                         if offset >= 0:
                             strOffset = "+" + strOffset

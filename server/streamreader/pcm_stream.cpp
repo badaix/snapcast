@@ -387,8 +387,8 @@ void PcmStream::control(const jsonrpcpp::Request& request, const StreamControl::
         std::string command = request.params().get("command");
         if (command == "SetPosition")
         {
-            if (!request.params().has("params") || !request.params().get("params").contains("Position") || !request.params().get("params").contains("TrackId"))
-                throw SnapException("SetPosition requires parameters 'Position' and 'TrackId'");
+            if (!request.params().has("params") || !request.params().get("params").contains("Position"))
+                throw SnapException("SetPosition requires parameters 'Position' and optionally 'TrackId'");
             if (!properties_.can_seek)
                 throw SnapException("CanSeek is false");
         }
