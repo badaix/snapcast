@@ -237,6 +237,8 @@ void ClientConnection::getNextMessage(const MessageHandler<msg::BaseMessage>& ha
                                         }
 
                                         auto response = msg::factory::createMessage(base_message_, buffer_.data());
+                                        if (!response)
+                                            LOG(WARNING, LOG_TAG) << "Failed to deserialize message of type: " << base_message_.type << "\n";
                                         for (auto iter = pendingRequests_.begin(); iter != pendingRequests_.end(); ++iter)
                                         {
                                             auto request = *iter;

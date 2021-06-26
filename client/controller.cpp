@@ -123,6 +123,11 @@ void Controller::getNextMessage()
             reconnect();
             return;
         }
+        
+        if (!response)
+        {
+            return getNextMessage();
+        }
 
         if (response->type == message_type::kWireChunk)
         {
