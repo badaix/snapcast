@@ -131,6 +131,7 @@ status_mapping = {
 # Player.Metadata
 # MPD to Snapcast tag mapping: <mpd tag>: [<snapcast tag>, <type>, <is list?>]
 tag_mapping = {
+    'file': ['url', str, False],
     'id': ['trackId', str, False],
     'album': ['album', str, False],
     'albumsort': ['albumSort', str, False],
@@ -151,8 +152,6 @@ tag_mapping = {
     'lyricist': ['lyricist', str, True],
     'title': ['title', str, False],
     'track': ['trackNumber', int, False],
-    'file': ['file', str, False],
-    'url': ['url', str, False],
     'arturl': ['artUrl', str, False],
     'usecount': ['useCount', int, False],
     'userrating': ['userRating', float, False],
@@ -567,10 +566,10 @@ class MPDWrapper(object):
         # where
         #  - "name" containts the name of the radio station
         #  - "title" has the format "<artist> - <title>"
-        # {'file': 'http://wdr-wdr2-aachenundregion.icecast.wdr.de/wdr/wdr2/aachenundregion/mp3/128/stream.mp3', 'title': 'Johannes Oerding - An guten Tagen', 'name': 'WDR 2 Aachen und die Region aktuell, Westdeutscher Rundfunk Koeln', 'trackId': '1'}
+        # {'url': 'http://wdr-wdr2-aachenundregion.icecast.wdr.de/wdr/wdr2/aachenundregion/mp3/128/stream.mp3', 'title': 'Johannes Oerding - An guten Tagen', 'name': 'WDR 2 Aachen und die Region aktuell, Westdeutscher Rundfunk Koeln', 'trackId': '1'}
 
-        if 'title' in snapmeta and 'name' in snapmeta and 'file' in snapmeta and not 'album' in snapmeta and not 'artist' in snapmeta:
-            if snapmeta['file'].find('http') == 0:
+        if 'title' in snapmeta and 'name' in snapmeta and 'url' in snapmeta and not 'album' in snapmeta and not 'artist' in snapmeta:
+            if snapmeta['url'].find('http') == 0:
                 fields = snapmeta['title'].split(' - ', 1)
                 if len(fields) == 2:
                     snapmeta['artist'] = [fields[0]]

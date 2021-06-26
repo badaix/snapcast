@@ -40,8 +40,6 @@ public:
     }
 
     /// https://www.musicpd.org/doc/html/protocol.html#tags
-    /// the song file.
-    boost::optional<std::string> file;
     /// the duration of the song
     boost::optional<float> duration;
     /// the artist name. Its meaning is not well-defined; see “composer” and “performer” for more specific tags.
@@ -56,21 +54,13 @@ public:
     boost::optional<std::vector<std::string>> album_artist;
     /// same as albumartist, but for sorting.
     boost::optional<std::vector<std::string>> album_artist_sort;
-    /// the song title.
-    // boost::optional<std::string> title;
-    /// the decimal track number within the album.
-    // boost::optional<uint16_t> track;
     /// a name for this song. This is not the song title. The exact meaning of this tag is not well-defined. It is often used by badly configured internet radio
     /// stations with broken tags to squeeze both the artist name and the song title in one tag.
     boost::optional<std::string> name;
-    /// the music genre.
-    // boost::optional<std::string> genre;
     /// the song’s release date. This is usually a 4-digit year.
     boost::optional<std::string> date;
     /// the song’s original release date.
     boost::optional<std::string> original_date;
-    /// the artist who composed the song.
-    // boost::optional<std::string> composer;
     /// the artist who performed the song.
     boost::optional<std::string> performer;
     /// the conductor who conducted the song.
@@ -79,10 +69,6 @@ public:
     boost::optional<std::string> work;
     /// “used if the sound belongs to a larger category of sounds/music” (from the IDv2.4.0 TIT1 description).
     boost::optional<std::string> grouping;
-    /// a human-readable comment about this song. The exact meaning of this tag is not well-defined.
-    // boost::optional<std::string> comment;
-    /// the decimal disc number in a multi-disc album.
-    // boost::optional<uint16_t> disc;
     /// the name of the label or publisher.
     boost::optional<std::string> label;
     /// the artist id in the MusicBrainz database.
@@ -146,7 +132,6 @@ public:
     {
         json j(json::object());
         addTag(j, "trackId", track_id);
-        addTag(j, "file", file);
         addTag(j, "duration", duration);
         addTag(j, "artist", artist);
         addTag(j, "artistSort", artist_sort);
@@ -154,18 +139,13 @@ public:
         addTag(j, "albumSort", album_sort);
         addTag(j, "albumArtist", album_artist);
         addTag(j, "albumArtistSort", album_artist_sort);
-        addTag(j, "title", title);
         addTag(j, "name", name);
-        addTag(j, "genre", genre);
         addTag(j, "date", date);
         addTag(j, "originalDate", original_date);
-        addTag(j, "composer", composer);
         addTag(j, "performer", performer);
         addTag(j, "conductor", conductor);
         addTag(j, "work", work);
         addTag(j, "grouping", grouping);
-        addTag(j, "comment", comment);
-        addTag(j, "discNumber", disc_number);
         addTag(j, "label", label);
         addTag(j, "musicbrainzArtistId", musicbrainz_artist_id);
         addTag(j, "musicbrainzAlbumId", musicbrainz_album_id);
@@ -198,7 +178,6 @@ public:
     void fromJson(const json& j)
     {
         static std::set<std::string> supported_tags = {"trackId",
-                                                       "file",
                                                        "duration",
                                                        "artist",
                                                        "artistSort",
@@ -206,18 +185,13 @@ public:
                                                        "albumSort",
                                                        "albumArtist",
                                                        "albumArtistSort",
-                                                       "title",
                                                        "name",
-                                                       "genre",
                                                        "date",
                                                        "originalDate",
-                                                       "composer",
                                                        "performer",
                                                        "conductor",
                                                        "work",
                                                        "grouping",
-                                                       "comment",
-                                                       "discNumber",
                                                        "label",
                                                        "musicbrainzArtistId",
                                                        "musicbrainzAlbumId",
@@ -251,7 +225,6 @@ public:
         }
 
         readTag(j, "trackId", track_id);
-        readTag(j, "file", file);
         readTag(j, "duration", duration);
         readTag(j, "artist", artist);
         readTag(j, "artistSort", artist_sort);
@@ -259,18 +232,13 @@ public:
         readTag(j, "albumSort", album_sort);
         readTag(j, "albumArtist", album_artist);
         readTag(j, "albumArtistSort", album_artist_sort);
-        readTag(j, "title", title);
         readTag(j, "name", name);
-        readTag(j, "genre", genre);
         readTag(j, "date", date);
         readTag(j, "originalDate", original_date);
-        readTag(j, "composer", composer);
         readTag(j, "performer", performer);
         readTag(j, "conductor", conductor);
         readTag(j, "work", work);
         readTag(j, "grouping", grouping);
-        readTag(j, "comment", comment);
-        readTag(j, "discNumber", disc_number);
         readTag(j, "label", label);
         readTag(j, "musicbrainzArtistId", musicbrainz_artist_id);
         readTag(j, "musicbrainzAlbumId", musicbrainz_album_id);
