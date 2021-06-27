@@ -158,6 +158,9 @@ void PcmStream::onControlNotification(const jsonrpcpp::Notification& notificatio
                 if (response.error().code() == 0)
                     setMetadata(response.result());
             });
+
+            // TODO: Add capabilities or settings?
+            // {"jsonrpc": "2.0", "method": "Plugin.Stream.Ready", "params": {"pollProperties": 10, "responseTimeout": 5}}
             pollProperties();
         }
         else if (notification.method() == "Plugin.Stream.Log")

@@ -136,6 +136,13 @@ void StreamControl::onLog(std::string message)
 
 ScriptStreamControl::ScriptStreamControl(boost::asio::io_context& ioc, const std::string& script) : StreamControl(ioc), script_(script)
 {
+    // auto fileExists = [](const std::string& filename) {
+    //     struct stat buffer;
+    //     return (stat(filename.c_str(), &buffer) == 0);
+    // };
+
+    // if (!fileExists(script_))
+    //     throw SnapException("Control script not found: \"" + script_ + "\"");
 }
 
 
@@ -147,16 +154,24 @@ void ScriptStreamControl::doStart(const std::string& stream_id, const ServerSett
     params << " \"--stream=" + stream_id + "\"";
     if (server_setttings.http.enabled)
         params << " --snapcast-port=" << server_setttings.http.port;
-    process_ = bp::child(
-        script_ + params.str(), bp::std_out > pipe_stdout_, bp::std_err > pipe_stderr_, bp::std_in < in_,
-        bp::on_exit =
-            [](int exit, const std::error_code& ec_in) {
-                auto severity = AixLog::Severity::debug;
-                if (exit != 0)
-                    severity = AixLog::Severity::error;
-                LOG(severity, LOG_TAG) << "Exit code: " << exit << ", message: " << ec_in.message() << "\n";
-            },
-        ioc_);
+    try
+    {
+        process_ = bp::child(
+            script_ + params.str(), bp::std_out > pipe_stdout_, bp::std_err > pipe_stderr_, bp::std_in < in_,
+            bp::on_exit =
+                [](int exit, const std::error_code& ec_in) {
+                    auto severity = AixLog::Severity::debug;
+                    if (exit != 0)
+                        severity = AixLog::Severity::error;
+                    LOG(severity, LOG_TAG) << "Exit code: " << exit << ", message: " << ec_in.message() << "\n";
+                },
+            ioc_);
+    }
+    catch (const std::exception& e)
+    {
+        throw SnapException("Failed to start control script: '" + script_ + "', exception: " + e.what());
+    }
+
     stream_stdout_ = make_unique<boost::asio::posix::stream_descriptor>(ioc_, pipe_stdout_.native_source());
     stream_stderr_ = make_unique<boost::asio::posix::stream_descriptor>(ioc_, pipe_stderr_.native_source());
     stdoutReadLine();

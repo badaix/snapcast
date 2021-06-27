@@ -123,7 +123,7 @@ void Controller::getNextMessage()
             reconnect();
             return;
         }
-        
+
         if (!response)
         {
             return getNextMessage();
