@@ -19,7 +19,7 @@
 #ifndef METATAGS_HPP
 #define METATAGS_HPP
 
-#include <boost/optional.hpp>
+#include <optional>
 #include <set>
 #include <string>
 
@@ -41,92 +41,92 @@ public:
 
     /// https://www.musicpd.org/doc/html/protocol.html#tags
     /// the duration of the song
-    boost::optional<float> duration;
+    std::optional<float> duration;
     /// the artist name. Its meaning is not well-defined; see “composer” and “performer” for more specific tags.
-    boost::optional<std::vector<std::string>> artist;
+    std::optional<std::vector<std::string>> artist;
     /// same as artist, but for sorting. This usually omits prefixes such as “The”.
-    boost::optional<std::vector<std::string>> artist_sort;
+    std::optional<std::vector<std::string>> artist_sort;
     /// the album name.
-    boost::optional<std::string> album;
+    std::optional<std::string> album;
     /// same as album, but for sorting.
-    boost::optional<std::string> album_sort;
+    std::optional<std::string> album_sort;
     /// on multi-artist albums, this is the artist name which shall be used for the whole album. The exact meaning of this tag is not well-defined.
-    boost::optional<std::vector<std::string>> album_artist;
+    std::optional<std::vector<std::string>> album_artist;
     /// same as albumartist, but for sorting.
-    boost::optional<std::vector<std::string>> album_artist_sort;
+    std::optional<std::vector<std::string>> album_artist_sort;
     /// a name for this song. This is not the song title. The exact meaning of this tag is not well-defined. It is often used by badly configured internet radio
     /// stations with broken tags to squeeze both the artist name and the song title in one tag.
-    boost::optional<std::string> name;
+    std::optional<std::string> name;
     /// the song’s release date. This is usually a 4-digit year.
-    boost::optional<std::string> date;
+    std::optional<std::string> date;
     /// the song’s original release date.
-    boost::optional<std::string> original_date;
+    std::optional<std::string> original_date;
     /// the artist who performed the song.
-    boost::optional<std::string> performer;
+    std::optional<std::string> performer;
     /// the conductor who conducted the song.
-    boost::optional<std::string> conductor;
+    std::optional<std::string> conductor;
     /// “a work is a distinct intellectual or artistic creation, which can be expressed in the form of one or more audio recordings”
-    boost::optional<std::string> work;
+    std::optional<std::string> work;
     /// “used if the sound belongs to a larger category of sounds/music” (from the IDv2.4.0 TIT1 description).
-    boost::optional<std::string> grouping;
+    std::optional<std::string> grouping;
     /// the name of the label or publisher.
-    boost::optional<std::string> label;
+    std::optional<std::string> label;
     /// the artist id in the MusicBrainz database.
-    boost::optional<std::string> musicbrainz_artist_id;
+    std::optional<std::string> musicbrainz_artist_id;
     /// the album id in the MusicBrainz database.
-    boost::optional<std::string> musicbrainz_album_id;
+    std::optional<std::string> musicbrainz_album_id;
     /// the album artist id in the MusicBrainz database.
-    boost::optional<std::string> musicbrainz_album_artist_id;
+    std::optional<std::string> musicbrainz_album_artist_id;
     /// the track id in the MusicBrainz database.
-    boost::optional<std::string> musicbrainz_track_id;
+    std::optional<std::string> musicbrainz_track_id;
     /// the release track id in the MusicBrainz database.
-    boost::optional<std::string> musicbrainz_release_track_id;
+    std::optional<std::string> musicbrainz_release_track_id;
     /// the work id in the MusicBrainz database.
-    boost::optional<std::string> musicbrainz_work_id;
+    std::optional<std::string> musicbrainz_work_id;
 
     /// https://www.freedesktop.org/wiki/Specifications/mpris-spec/metadata/
     /// A unique identity for this track within the context of an MPRIS object (eg: tracklist).
-    boost::optional<std::string> track_id;
+    std::optional<std::string> track_id;
     /// URI: The location of an image representing the track or album. Clients should not assume this will continue to exist when the media player stops giving
     /// out the URL
-    boost::optional<std::string> art_url;
+    std::optional<std::string> art_url;
     /// The track lyrics
-    boost::optional<std::string> lyrics;
+    std::optional<std::string> lyrics;
     /// The speed of the music, in beats per minute
-    boost::optional<uint16_t> bpm;
+    std::optional<uint16_t> bpm;
     /// Float: An automatically-generated rating, based on things such as how often it has been played. This should be in the range 0.0 to 1.0
-    boost::optional<float> auto_rating;
+    std::optional<float> auto_rating;
     /// A (list of) freeform comment(s)
-    boost::optional<std::vector<std::string>> comment;
+    std::optional<std::vector<std::string>> comment;
     /// The composer(s) of the track
-    boost::optional<std::vector<std::string>> composer;
+    std::optional<std::vector<std::string>> composer;
     /// Date/Time: When the track was created. Usually only the year component will be useful
-    boost::optional<std::string> content_created;
+    std::optional<std::string> content_created;
     /// Integer: The disc number on the album that this track is from
-    boost::optional<uint16_t> disc_number;
+    std::optional<uint16_t> disc_number;
     /// Date/Time: When the track was first played
-    boost::optional<std::string> first_used;
+    std::optional<std::string> first_used;
     /// List of Strings: The genre(s) of the track
-    boost::optional<std::vector<std::string>> genre;
+    std::optional<std::vector<std::string>> genre;
     /// Date/Time: When the track was last played
-    boost::optional<std::string> last_used;
+    std::optional<std::string> last_used;
     /// List of Strings: The lyricist(s) of the track
-    boost::optional<std::vector<std::string>> lyricist;
+    std::optional<std::vector<std::string>> lyricist;
     /// String: The track title
-    boost::optional<std::string> title;
+    std::optional<std::string> title;
     /// Integer: The track number on the album disc
-    boost::optional<uint16_t> track_number;
+    std::optional<uint16_t> track_number;
     /// URI: The location of the media file.
-    boost::optional<std::string> url;
+    std::optional<std::string> url;
     /// Integer: The number of times the track has been played.
-    boost::optional<uint16_t> use_count;
+    std::optional<uint16_t> use_count;
     /// Float: A user-specified rating. This should be in the range 0.0 to 1.0.
-    boost::optional<float> user_rating;
+    std::optional<float> user_rating;
 
     /// Spotify artist id
-    boost::optional<std::string> spotify_artist_id;
+    std::optional<std::string> spotify_artist_id;
     /// Spotify track id
-    boost::optional<std::string> spotify_track_id;
+    std::optional<std::string> spotify_track_id;
 
     json toJson() const
     {
@@ -275,12 +275,12 @@ public:
 
 private:
     template <typename T>
-    void readTag(const json& j, const std::string& tag, boost::optional<T>& dest) const
+    void readTag(const json& j, const std::string& tag, std::optional<T>& dest) const
     {
         try
         {
             if (!j.contains(tag))
-                dest = boost::none;
+                dest = std::nullopt;
             else
                 dest = j[tag].get<T>();
         }
@@ -291,7 +291,7 @@ private:
     }
 
     template <typename T>
-    void addTag(json& j, const std::string& tag, const boost::optional<T>& source) const
+    void addTag(json& j, const std::string& tag, const std::optional<T>& source) const
     {
         try
         {

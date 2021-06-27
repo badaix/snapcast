@@ -27,7 +27,6 @@
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/read_until.hpp>
 #include <boost/asio/steady_timer.hpp>
-#include <boost/optional.hpp>
 
 #include "common/json.hpp"
 #include "common/metatags.hpp"

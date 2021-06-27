@@ -22,7 +22,7 @@
 #include <set>
 #include <string>
 
-#include <boost/optional.hpp>
+#include <optional>
 
 #include "common/aixlog.hpp"
 #include "common/json.hpp"
@@ -154,22 +154,22 @@ public:
 
     /// https://www.musicpd.org/doc/html/protocol.html#tags
     /// The current playback status
-    boost::optional<PlaybackStatus> playback_status;
+    std::optional<PlaybackStatus> playback_status;
     /// The current loop / repeat status
-    boost::optional<LoopStatus> loop_status;
+    std::optional<LoopStatus> loop_status;
     /// The current playback rate
-    boost::optional<float> rate;
+    std::optional<float> rate;
     /// A value of false indicates that playback is progressing linearly through a playlist, while true means playback is progressing through a playlist in some
     /// other order.
-    boost::optional<bool> shuffle;
+    std::optional<bool> shuffle;
     /// The volume level between 0-100
-    boost::optional<int> volume;
+    std::optional<int> volume;
     /// The current track position in seconds
-    boost::optional<float> position;
+    std::optional<float> position;
     /// The minimum value which the Rate property can take. Clients should not attempt to set the Rate property below this value
-    boost::optional<float> minimum_rate;
+    std::optional<float> minimum_rate;
     /// The maximum value which the Rate property can take. Clients should not attempt to set the Rate property above this value
-    boost::optional<float> maximum_rate;
+    std::optional<float> maximum_rate;
     /// Whether the client can call the Next method on this interface and expect the current track to change
     bool can_go_next = false;
     /// Whether the client can call the Previous method on this interface and expect the current track to change
@@ -187,9 +187,9 @@ public:
     {
         json j;
         if (playback_status.has_value())
-            addTag(j, "playbackStatus", boost::optional<std::string>(to_string(playback_status.value())));
+            addTag(j, "playbackStatus", std::optional<std::string>(to_string(playback_status.value())));
         if (loop_status.has_value())
-            addTag(j, "loopStatus", boost::optional<std::string>(to_string(loop_status.value())));
+            addTag(j, "loopStatus", std::optional<std::string>(to_string(loop_status.value())));
         addTag(j, "rate", rate);
         addTag(j, "shuffle", shuffle);
         addTag(j, "volume", volume);
@@ -218,19 +218,19 @@ public:
                 LOG(WARNING, LOG_TAG) << "Property not supoorted: " << element.key() << "\n";
         }
 
-        boost::optional<std::string> opt;
+        std::optional<std::string> opt;
 
         readTag(j, "playbackStatus", opt);
         if (opt.has_value())
             playback_status = playback_status_from_string(opt.value());
         else
-            playback_status = boost::none;
+            playback_status = std::nullopt;
 
         readTag(j, "loopStatus", opt);
         if (opt.has_value())
             loop_status = loop_status_from_string(opt.value());
         else
-            loop_status = boost::none;
+            loop_status = std::nullopt;
         readTag(j, "rate", rate);
         readTag(j, "shuffle", shuffle);
         readTag(j, "volume", volume);
@@ -253,12 +253,12 @@ public:
 
 private:
     template <typename T>
-    void readTag(const json& j, const std::string& tag, boost::optional<T>& dest) const
+    void readTag(const json& j, const std::string& tag, std::optional<T>& dest) const
     {
         try
         {
             if (!j.contains(tag))
-                dest = boost::none;
+                dest = std::nullopt;
             else
                 dest = j[tag].get<T>();
         }
@@ -271,7 +271,7 @@ private:
     template <typename T>
     void readTag(const json& j, const std::string& tag, T& dest, const T& def) const
     {
-        boost::optional<T> val;
+        std::optional<T> val;
         readTag(j, tag, val);
         if (val.has_value())
             dest = val.value();
@@ -280,7 +280,7 @@ private:
     }
 
     template <typename T>
-    void addTag(json& j, const std::string& tag, const boost::optional<T>& source) const
+    void addTag(json& j, const std::string& tag, const std::optional<T>& source) const
     {
         if (!source.has_value())
         {

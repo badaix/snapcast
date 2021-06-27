@@ -46,7 +46,7 @@ The following rule governs code contributions:
 
 * This project loosely follows the [Google C++ Style Guide](https://google.github.io/styleguide/cppguide.html)
 
-* For better compatibility with embedded toolchains, the used C++ standard should be limited to C++14
+* For better compatibility with embedded toolchains, the used C++ standard should be limited to C++17
 
 * Code should be formatted by running `make reformat`
 

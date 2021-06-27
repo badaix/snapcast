@@ -127,7 +127,7 @@ if(NOT ANDROID)
 endif()
 
 # Configure compiler options
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 17)
 
 # Get arch
 include(${CMAKE_SOURCE_DIR}/cmake/TargetArch.cmake)
