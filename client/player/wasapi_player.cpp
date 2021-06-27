@@ -107,9 +107,18 @@ inline PcmDevice convertToDevice(int idx, IMMDevicePtr& device)
 
     desc.idx = idx;
 
-    using converter = wstring_convert<codecvt_utf8_utf16<wchar_t>, wchar_t>;
-    desc.name = converter{}.to_bytes(id);
-    desc.description = converter{}.to_bytes(deviceName.pwszVal);
+    // Convert a wide Unicode string to an UTF8 string
+    auto utf8_encode = [](const std::wstring& wstr) {
+        if (wstr.empty())
+            return std::string();
+        int size_needed = WideCharToMultiByte(CP_UTF8, 0, &wstr[0], (int)wstr.size(), NULL, 0, NULL, NULL);
+        std::string strTo(size_needed, 0);
+        WideCharToMultiByte(CP_UTF8, 0, &wstr[0], (int)wstr.size(), &strTo[0], size_needed, NULL, NULL);
+        return strTo;
+    };
+
+    desc.name = utf8_encode(id);
+    desc.description = utf8_encode(deviceName.pwszVal);
 
     CoTaskMemFree(id);
 
