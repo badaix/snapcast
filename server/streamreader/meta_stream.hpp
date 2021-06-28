@@ -54,6 +54,9 @@ protected:
     void onResync(const PcmStream* pcmStream, double ms) override;
 
 protected:
+    void setProperty(const jsonrpcpp::Request& request, const StreamControl::OnResponse& response_handler) override;
+    void control(const jsonrpcpp::Request& request, const StreamControl::OnResponse& response_handler) override;
+
     std::vector<std::shared_ptr<PcmStream>> streams_;
     std::shared_ptr<PcmStream> active_stream_;
     std::mutex mutex_;

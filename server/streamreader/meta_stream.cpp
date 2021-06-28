@@ -57,11 +57,11 @@ MetaStream::MetaStream(PcmListener* pcmListener, const std::vector<std::shared_p
             throw SnapException("Unknown stream: \"" + component + "\"");
     }
 
-    if (!streams_.empty())
-    {
-        active_stream_ = streams_.front();
-        resampler_ = make_unique<Resampler>(active_stream_->getSampleFormat(), sampleFormat_);
-    }
+    if (streams_.empty())
+        throw SnapException("Meta stream '" + getName() + "' must contain at least one stream");
+
+    active_stream_ = streams_.front();
+    resampler_ = make_unique<Resampler>(active_stream_->getSampleFormat(), sampleFormat_);
 }
 
 
@@ -129,7 +129,7 @@ void MetaStream::onStateChanged(const PcmStream* pcmStream, ReaderState state)
             return;
         }
     }
-    active_stream_ = nullptr;
+    active_stream_ = streams_.front();
     setState(ReaderState::kIdle);
 }
 
@@ -199,6 +199,20 @@ void MetaStream::onResync(const PcmStream* pcmStream, double ms)
     if (pcmStream != active_stream_.get())
         return;
     resync(std::chrono::nanoseconds(static_cast<int64_t>(ms * 1000000)));
+}
+
+
+void MetaStream::setProperty(const jsonrpcpp::Request& request, const StreamControl::OnResponse& response_handler)
+{
+    std::lock_guard<std::mutex> lock(mutex_);
+    active_stream_->setProperty(request, response_handler);
+}
+
+
+void MetaStream::control(const jsonrpcpp::Request& request, const StreamControl::OnResponse& response_handler)
+{
+    std::lock_guard<std::mutex> lock(mutex_);
+    active_stream_->control(request, response_handler);
 }
 
 
