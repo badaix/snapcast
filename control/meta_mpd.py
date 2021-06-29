@@ -14,10 +14,14 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-# Authors: Jean-Philippe Braun <eon@patapon.info>,
+# Author: Johannes Pohl <snapcast@badaix.de>
+# Based on mpDris2 by
+#          Jean-Philippe Braun <eon@patapon.info>,
 #          Mantas Mikulėnas <grawity@gmail.com>
-# Based on mpDris from: Erik Karlsson <pilo@ayeon.org>
-# Some bits taken from quodlibet mpris plugin by <christoph.reiter@gmx.at>
+# Based on mpDris by:
+#          Erik Karlsson <pilo@ayeon.org>
+# Some bits taken from quodlibet mpris plugin by:
+#           <christoph.reiter@gmx.at>
 
 
 # Dependencies:
@@ -571,6 +575,8 @@ class MPDWrapper(object):
         if 'title' in snapmeta and 'name' in snapmeta and 'url' in snapmeta and not 'album' in snapmeta and not 'artist' in snapmeta:
             if snapmeta['url'].find('http') == 0:
                 fields = snapmeta['title'].split(' - ', 1)
+                if len(fields) == 1:
+                    fields = snapmeta['title'].split(' / ', 1)
                 if len(fields) == 2:
                     snapmeta['artist'] = [fields[0]]
                     snapmeta['title'] = fields[1]
