@@ -314,14 +314,14 @@ void PcmStream::addListener(PcmListener* pcmListener)
 
 const Metatags& PcmStream::getMetadata() const
 {
-    std::lock_guard<std::mutex> lock(mutex_);
+    std::lock_guard<std::recursive_mutex> lock(mutex_);
     return metadata_;
 }
 
 
 const Properties& PcmStream::getProperties() const
 {
-    std::lock_guard<std::mutex> lock(mutex_);
+    std::lock_guard<std::recursive_mutex> lock(mutex_);
     return properties_;
 }
 
@@ -451,7 +451,7 @@ void PcmStream::control(const jsonrpcpp::Request& request, const StreamControl::
 
 void PcmStream::setMetadata(const Metatags& metadata)
 {
-    std::lock_guard<std::mutex> lock(mutex_);
+    std::lock_guard<std::recursive_mutex> lock(mutex_);
     if (metadata == metadata_)
     {
         LOG(DEBUG, LOG_TAG) << "setMetadata: Metadata did not change\n";
@@ -472,7 +472,7 @@ void PcmStream::setMetadata(const Metatags& metadata)
 
 void PcmStream::setProperties(const Properties& properties)
 {
-    std::lock_guard<std::mutex> lock(mutex_);
+    std::lock_guard<std::recursive_mutex> lock(mutex_);
     if (properties == properties_)
     {
         LOG(DEBUG, LOG_TAG) << "setProperties: Properties did not change\n";

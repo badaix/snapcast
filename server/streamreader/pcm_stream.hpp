@@ -174,7 +174,7 @@ protected:
     std::unique_ptr<StreamControl> stream_ctrl_;
     std::atomic<int> req_id_;
     boost::asio::steady_timer property_timer_;
-    mutable std::mutex mutex_;
+    mutable std::recursive_mutex mutex_;
 };
 
 } // namespace streamreader
