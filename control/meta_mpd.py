@@ -778,33 +778,30 @@ Usage: %(progname)s [OPTION]...
 
      --mpd-host=ADDR        Set the mpd server address
      --mpd-port=PORT        Set the TCP port
-     --snapcast-host=ADDR   Set the mpd server address
-     --snapcast-port=PORT   Set the TCP port
+     --snapcast-host=ADDR   Set the snapcast server address
+     --snapcast-port=PORT   Set the snapcast server port
      --stream=ID            Set the stream id
-     --command=CMD          Issue a command to MPD and exit
 
      -d, --debug            Run in debug mode
-     -j, --use-journal      Log to systemd journal instead of stderr
-     -v, --version          mpDris2 version
+     -v, --version          meta_mpd version
 
-Report bugs to https://github.com/eonpatapon/mpDris2/issues""" % params)
+Report bugs to https://github.com/badaix/snapcast/issues""" % params)
 
 
 if __name__ == '__main__':
     DBusGMainLoop(set_as_default=True)
 
-    gettext.bindtextdomain('mpDris2', '@datadir@/locale')
-    gettext.textdomain('mpDris2')
+    gettext.bindtextdomain('meta_mpd', '@datadir@/locale')
+    gettext.textdomain('meta_mpd')
 
     log_format_stderr = '%(asctime)s %(module)s %(levelname)s: %(message)s'
 
-    log_journal = False
     log_level = logging.INFO
 
     # Parse command line
     try:
         (opts, args) = getopt.getopt(sys.argv[1:], 'hdjv',
-                                     ['help', 'mpd-host=', 'mpd-port=', 'snapcast-host=', 'snapcast-port=', 'stream=', 'debug', 'use-journal', 'version'])
+                                     ['help', 'mpd-host=', 'mpd-port=', 'snapcast-host=', 'snapcast-port=', 'stream=', 'debug', 'version'])
     except getopt.GetoptError as ex:
         (msg, opt) = ex.args
         print("%s: %s" % (sys.argv[0], msg), file=sys.stderr)
@@ -828,35 +825,24 @@ if __name__ == '__main__':
             params['stream'] = arg
         elif opt in ['-d', '--debug']:
             log_level = logging.DEBUG
-        elif opt in ['-j', '--use-journal']:
-            log_journal = True
         elif opt in ['-v', '--version']:
             v = __version__
             if __git_version__:
                 v = __git_version__
-            print("mpDris2 version %s" % v)
+            print("meta_mpd version %s" % v)
             sys.exit()
 
     if len(args) > 2:
         usage(params)
         sys.exit()
 
-    logger = logging.getLogger('mpDris2')
+    logger = logging.getLogger('meta_mpd')
     logger.propagate = False
     logger.setLevel(log_level)
 
-    # Attempt to configure systemd journal logging, if enabled
-    if log_journal:
-        try:
-            from systemd.journal import JournalHandler
-            log_handler = JournalHandler(SYSLOG_IDENTIFIER='mpDris2')
-        except ImportError:
-            log_journal = False
-
-    # Log to stderr if journal logging was not enabled, or if setup failed
-    if not log_journal:
-        log_handler = logging.StreamHandler()
-        log_handler.setFormatter(logging.Formatter(log_format_stderr))
+    # Log to stderr
+    log_handler = logging.StreamHandler()
+    log_handler.setFormatter(logging.Formatter(log_format_stderr))
 
     logger.addHandler(log_handler)
 

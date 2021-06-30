@@ -14,14 +14,19 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-# Authors: Jean-Philippe Braun <eon@patapon.info>,
+# Author: Johannes Pohl <snapcast@badaix.de>
+# Based on mpDris2 by
+#          Jean-Philippe Braun <eon@patapon.info>,
 #          Mantas Mikulėnas <grawity@gmail.com>
-# Based on mpDris from: Erik Karlsson <pilo@ayeon.org>
-# Some bits taken from quodlibet mpris plugin by <christoph.reiter@gmx.at>
+# Based on mpDris by:
+#          Erik Karlsson <pilo@ayeon.org>
+# Some bits taken from quodlibet mpris plugin by:
+#           <christoph.reiter@gmx.at>
 
+# Dependencies:
+# - websocket-client
 
 from time import sleep
-from systemd.journal import _valid_field_name
 import websocket
 import logging
 import threading
@@ -42,11 +47,6 @@ import requests
 __version__ = "@version@"
 __git_version__ = "@gitversion@"
 
-
-try:
-    import mutagen
-except ImportError:
-    mutagen = None
 
 try:
     import gi
@@ -578,7 +578,7 @@ class SnapcastWrapper(object):
                 # Try older name.
                 gsd_object = self._bus.get_object("org.gnome.SettingsDaemon",
                                                   "/org/gnome/SettingsDaemon/MediaKeys")
-            gsd_object.GrabMediaPlayerKeys("mpDris2", 0,
+            gsd_object.GrabMediaPlayerKeys("snapcast_mpris", 0,
                                            dbus_interface="org.gnome.SettingsDaemon.MediaKeys")
         except:
             logger.warning(
@@ -631,7 +631,8 @@ class NotifyWrapper(object):
             logger.debug("Initializing GObject.Notify")
             if Notify.init(identity):
                 notif = Notify.Notification()
-                notif.set_hint("desktop-entry", GLib.Variant("s", "mpdris2"))
+                notif.set_hint("desktop-entry",
+                               GLib.Variant("s", "snapcast_mpris"))
                 notif.set_hint("transient", GLib.Variant("b", True))
             else:
                 logger.error(
@@ -640,7 +641,7 @@ class NotifyWrapper(object):
             logger.debug("Initializing old pynotify")
             if pynotify.init(identity):
                 notif = pynotify.Notification("", "", "")
-                notif.set_hint("desktop-entry", "mpdris2")
+                notif.set_hint("desktop-entry", "snapcast_mpris")
                 notif.set_hint("transient", True)
             else:
                 logger.error(
@@ -725,7 +726,7 @@ class MPRISInterface(dbus.service.Object):
     __root_props = {
         "CanQuit": (False, None),
         "CanRaise": (True, None),
-        "DesktopEntry": ("mpdris2", None),
+        "DesktopEntry": ("snapcast_mpris", None),
         "HasTrackList": (False, None),
         "Identity": (identity, None),
         "SupportedUriSchemes": (dbus.Array(signature="s"), None),
@@ -996,18 +997,13 @@ def usage(params):
     print("""\
 Usage: %(progname)s [OPTION]...
 
-     -c, --config=PATH      Read a custom configuration file
-
      -h, --host=ADDR        Set the mpd server address
-         --port=PORT        Set the TCP port
+     -p, --port=PORT        Set the TCP port
          --client=ID        Set the client id
      -d, --debug            Run in debug mode
-     -j, --use-journal      Log to systemd journal instead of stderr
-     -v, --version          mpDris2 version
+     -v, --version          snapcast_mpris version
 
-Environment variables MPD_HOST and MPD_PORT can be used.
-
-Report bugs to https://github.com/eonpatapon/mpDris2/issues""" % params)
+Report bugs to https://github.com/badaix/snapcast/issues""" % params)
 
 
 if __name__ == '__main__':
@@ -1015,23 +1011,21 @@ if __name__ == '__main__':
 
     # TODO:
     # -cleanup: remove mpd-ish stuff
-    # -stream id: keep track of the client's stream
-    gettext.bindtextdomain('mpDris2', '@datadir@/locale')
-    gettext.textdomain('mpDris2')
+    # -use zeroconf to find the snapserver IP and port
+
+    gettext.bindtextdomain('snapcast_mpris', '@datadir@/locale')
+    gettext.textdomain('snapcast_mpris')
 
     log_format_stderr = '%(asctime)s %(module)s %(levelname)s: %(message)s'
 
-    log_journal = False
     log_level = logging.INFO
-    config_file = None
 
     # Parse command line
     try:
-        (opts, args) = getopt.getopt(sys.argv[1:], 'c:dh:jp:v',
-                                     ['help', 'bus-name=', 'config=',
+        (opts, args) = getopt.getopt(sys.argv[1:], 'dh:p:v',
+                                     ['help', 'bus-name=',
                                      'debug', 'host=', 'client='
-                                      'use-journal', 'path=', 'port=',
-                                      'version'])
+                                      'port=', 'version'])
     except getopt.GetoptError as ex:
         (msg, opt) = ex.args
         print("%s: %s" % (sys.argv[0], msg), file=sys.stderr)
@@ -1045,15 +1039,11 @@ if __name__ == '__main__':
             sys.exit()
         elif opt in ['--bus-name']:
             params['bus_name'] = arg
-        elif opt in ['-c', '--config']:
-            config_file = arg
         elif opt in ['-d', '--debug']:
             log_level = logging.DEBUG
         elif opt in ['-h', '--host']:
             params['host'] = arg
-        elif opt in ['-j', '--use-journal']:
-            log_journal = True
-        elif opt in ['--port']:
+        elif opt in ['-p', '--port']:
             params['port'] = int(arg)
         elif opt in ['--client']:
             params['client'] = int(arg)
@@ -1061,7 +1051,7 @@ if __name__ == '__main__':
             v = __version__
             if __git_version__:
                 v = __git_version__
-            print("mpDris2 version %s" % v)
+            print("snapcast_mpris version %s" % v)
             sys.exit()
 
     if len(args) > 2:
@@ -1072,18 +1062,9 @@ if __name__ == '__main__':
     logger.propagate = False
     logger.setLevel(log_level)
 
-    # Attempt to configure systemd journal logging, if enabled
-    if log_journal:
-        try:
-            from systemd.journal import JournalHandler
-            log_handler = JournalHandler(SYSLOG_IDENTIFIER='snapcast_mpris')
-        except ImportError:
-            log_journal = False
-
-    # Log to stderr if journal logging was not enabled, or if setup failed
-    if not log_journal:
-        log_handler = logging.StreamHandler()
-        log_handler.setFormatter(logging.Formatter(log_format_stderr))
+    # Log to stderr
+    log_handler = logging.StreamHandler()
+    log_handler.setFormatter(logging.Formatter(log_format_stderr))
 
     logger.addHandler(log_handler)
 
@@ -1124,12 +1105,6 @@ if __name__ == '__main__':
     logger.info(f'Client: {params["client"]}')
     logger.debug(f'Parameters: {params}')
 
-    if mutagen:
-        logger.info('Using Mutagen to read covers from music files.')
-    else:
-        logger.info(
-            'Mutagen not available, covers in music files will be ignored.')
-
     # Set up the main loop
     if using_gi_glib:
         logger.debug('Using GObject-Introspection main loop.')
@@ -1140,10 +1115,7 @@ if __name__ == '__main__':
     # Wrapper to send notifications
     notification = NotifyWrapper(params)
 
-    # Create wrapper to handle connection failures with MPD more gracefully
-    # wrapper = SnapcastRpcWebsocketWrapper("127.0.0.1", 1780, "id", any)
     snapcast_wrapper = SnapcastWrapper(params)
-    # mpd_wrapper.run()
 
     # Run idle loop
     try:
