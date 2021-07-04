@@ -376,6 +376,7 @@ class MPDWrapper(object):
                     success = True
                     command = request['params']['command']
                     params = request['params'].get('params', {})
+                    logger.debug(f'Control command: {command}, params: {params}')
                     if command == 'Next':
                         self.next()
                     elif command == 'Previous':
@@ -393,6 +394,7 @@ class MPDWrapper(object):
                         self.stop()
                     elif command == 'SetPosition':
                         position = float(params['Position'])
+                        logger.info(f'SetPosition {position}')
                         if 'TrackId' in params:
                             trackid = params['TrackId'].rsplit('/', 1)[1]
                             self.seekid(int(trackid), position)
@@ -411,7 +413,7 @@ class MPDWrapper(object):
                         self.random(int(property['shuffle']))
                     if 'loopStatus' in property:
                         value = property['loopStatus']
-                        if value == "playlist   ":
+                        if value == "playlist":
                             self.repeat(1)
                             if self._can_single:
                                 self.single(0)
@@ -423,6 +425,8 @@ class MPDWrapper(object):
                             self.repeat(0)
                             if self._can_single:
                                 self.single(0)
+                    if 'volume' in property:
+                        self.setvol(int(property['volume']))
                 elif cmd == 'GetProperties':
                     snapstatus = self._get_properties(self.status())
                     logger.info(f'Snapstatus: {snapstatus}')
@@ -430,7 +434,8 @@ class MPDWrapper(object):
                     # return send({"jsonrpc": "2.0", "error": {"code": -32601,
                     #                                          "message": "TODO: GetProperties not yet implemented"}, "id": id})
                 elif cmd == 'GetMetadata':
-                    send({"jsonrpc": "2.0", "method": "Plugin.Stream.Log", "params": {"severity":"Info","message":"Logmessage"}})
+                    send({"jsonrpc": "2.0", "method": "Plugin.Stream.Log", "params": {
+                         "severity": "Info", "message": "Logmessage"}})
                     return send({"jsonrpc": "2.0", "error": {"code": -32601,
                                                              "message": "TODO: GetMetadata not yet implemented"}, "id": id})
                 else:

@@ -373,6 +373,7 @@ class SnapcastWrapper(object):
             logger.error(f'Error in update_properties: {str(e)}')
 
     def on_ws_message(self, ws, message):
+        # TODO: error handling
         logger.info(f'Snapcast RPC websocket message received: {message}')
         jmsg = json.loads(message)
         if 'id' in jmsg:
