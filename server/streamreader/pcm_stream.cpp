@@ -21,9 +21,11 @@
 #include <sys/stat.h>
 
 #include "common/aixlog.hpp"
+#include "common/error_code.hpp"
 #include "common/snap_exception.hpp"
 #include "common/str_compat.hpp"
 #include "common/utils/string_utils.hpp"
+#include "control_error.hpp"
 #include "encoder/encoder_factory.hpp"
 #include "pcm_stream.hpp"
 
@@ -326,126 +328,127 @@ const Properties& PcmStream::getProperties() const
 }
 
 
-void PcmStream::setProperty(const jsonrpcpp::Request& request, const StreamControl::OnResponse& response_handler)
+void PcmStream::setShuffle(bool shuffle, ResultHandler handler)
 {
-    try
-    {
-        if (!request.params().has("property"))
-            throw SnapException("Parameter 'property' is missing");
-
-        if (!request.params().has("value"))
-            throw SnapException("Parameter 'value' is missing");
-
-        auto name = request.params().get("property");
-        auto value = request.params().get("value");
-        LOG(INFO, LOG_TAG) << "Stream '" << getId() << "' set property: " << name << " = " << value << "\n";
-
-        if (name == "loopStatus")
-        {
-            auto val = value.get<std::string>();
-            if ((val != "none") || (val != "track") || (val != "playlist"))
-                throw SnapException("Value for loopStatus must be one of 'none', 'track', 'playlist'");
-        }
-        else if (name == "shuffle")
-        {
-            if (!value.is_boolean())
-                throw SnapException("Value for shuffle must be bool");
-        }
-        else if (name == "volume")
-        {
-            if (!value.is_number_integer())
-                throw SnapException("Value for volume must be an int");
-        }
-        else if (name == "rate")
-        {
-            if (!value.is_number_float())
-                throw SnapException("Value for rate must be float");
-        }
-
-        if (!properties_.can_control)
-            throw SnapException("CanControl is false");
-
-        if (stream_ctrl_)
-        {
-            jsonrpcpp::Request req(++req_id_, "Plugin.Stream.Player.SetProperty", {name, value});
-            stream_ctrl_->command(req, response_handler);
-        }
-    }
-    catch (const std::exception& e)
-    {
-        LOG(WARNING, LOG_TAG) << "Error in setProperty: " << e.what() << '\n';
-        auto error = jsonrpcpp::InvalidParamsException(e.what(), request.id());
-        response_handler(error.to_json());
-    }
+    LOG(DEBUG, LOG_TAG) << "setShuffle: " << shuffle << "\n";
+    sendRequest("Plugin.Stream.Player.SetProperty", {"shuffle", shuffle}, std::move(handler));
 }
 
 
-void PcmStream::control(const jsonrpcpp::Request& request, const StreamControl::OnResponse& response_handler)
+void PcmStream::setLoopStatus(LoopStatus status, ResultHandler handler)
 {
-    try
-    {
-        if (!request.params().has("command"))
-            throw SnapException("Parameter 'command' is missing");
+    LOG(DEBUG, LOG_TAG) << "setLoopStatus: " << status << "\n";
+    sendRequest("Plugin.Stream.Player.SetProperty", {"loopStatus", to_string(status)}, std::move(handler));
+}
 
-        std::string command = request.params().get("command");
-        if (command == "SetPosition")
-        {
-            if (!request.params().has("params") || !request.params().get("params").contains("Position"))
-                throw SnapException("SetPosition requires parameters 'Position' and optionally 'TrackId'");
-            if (!properties_.can_seek)
-                throw SnapException("CanSeek is false");
-        }
-        else if (command == "Seek")
-        {
-            if (!request.params().has("params") || !request.params().get("params").contains("Offset"))
-                throw SnapException("Seek requires parameter 'Offset'");
-            if (!properties_.can_seek)
-                throw SnapException("CanSeek is false");
-        }
-        else if (command == "Next")
-        {
-            if (!properties_.can_go_next)
-                throw SnapException("CanGoNext is false");
-        }
-        else if (command == "Previous")
-        {
-            if (!properties_.can_go_previous)
-                throw SnapException("CanGoPrevious is false");
-        }
-        else if ((command == "Pause") || (command == "PlayPause"))
-        {
-            if (!properties_.can_pause)
-                throw SnapException("CanPause is false");
-        }
-        else if (command == "Stop")
-        {
-            if (!properties_.can_control)
-                throw SnapException("CanControl is false");
-        }
-        else if (command == "Play")
-        {
-            if (!properties_.can_play)
-                throw SnapException("CanPlay is false");
-        }
+
+void PcmStream::setVolume(uint16_t volume, ResultHandler handler)
+{
+    LOG(DEBUG, LOG_TAG) << "setVolume: " << volume << "\n";
+    sendRequest("Plugin.Stream.Player.SetProperty", {"volume", volume}, std::move(handler));
+}
+
+
+void PcmStream::setRate(float rate, ResultHandler handler)
+{
+    LOG(DEBUG, LOG_TAG) << "setRate: " << rate << "\n";
+    sendRequest("Plugin.Stream.Player.SetProperty", {"rate", rate}, std::move(handler));
+}
+
+
+void PcmStream::setPosition(std::chrono::milliseconds position, ResultHandler handler)
+{
+    LOG(DEBUG, LOG_TAG) << "setPosition\n";
+    if (!properties_.can_seek)
+        return handler({ControlErrc::can_seek_is_false});
+    json params;
+    params["command"] = "SetPosition";
+    json j;
+    j["Position"] = position.count() / 1000.f;
+    params["params"] = j;
+    sendRequest("Plugin.Stream.Player.Control", params, std::move(handler));
+}
+
+
+void PcmStream::seek(std::chrono::milliseconds offset, ResultHandler handler)
+{
+    LOG(DEBUG, LOG_TAG) << "seek\n";
+    if (!properties_.can_seek)
+        return handler({ControlErrc::can_seek_is_false});
+    json params;
+    params["command"] = "Seek";
+    json j;
+    j["Offset"] = offset.count() / 1000.f;
+    params["params"] = j;
+    sendRequest("Plugin.Stream.Player.Control", params, std::move(handler));
+}
+
+
+void PcmStream::next(ResultHandler handler)
+{
+    LOG(DEBUG, LOG_TAG) << "next\n";
+    if (!properties_.can_go_next)
+        return handler({ControlErrc::can_go_next_is_false});
+    sendRequest("Plugin.Stream.Player.Control", {"command", "Next"}, std::move(handler));
+}
+
+
+void PcmStream::previous(ResultHandler handler)
+{
+    LOG(DEBUG, LOG_TAG) << "previous\n";
+    if (!properties_.can_go_previous)
+        return handler({ControlErrc::can_go_previous_is_false});
+    sendRequest("Plugin.Stream.Player.Control", {"command", "Previous"}, std::move(handler));
+}
+
+
+void PcmStream::pause(ResultHandler handler)
+{
+    LOG(DEBUG, LOG_TAG) << "pause\n";
+    if (!properties_.can_pause)
+        return handler({ControlErrc::can_pause_is_false});
+    sendRequest("Plugin.Stream.Player.Control", {"command", "Pause"}, std::move(handler));
+}
+
+void PcmStream::sendRequest(const std::string& method, const jsonrpcpp::Parameter& params, ResultHandler handler)
+{
+    if (!stream_ctrl_)
+        return handler({ControlErrc::can_not_control});
+
+    jsonrpcpp::Request req(++req_id_, method, params);
+    stream_ctrl_->command(req, [handler](const jsonrpcpp::Response& response) {
+        if (response.error().code())
+            handler({static_cast<ControlErrc>(response.error().code()), response.error().data()});
         else
-            throw SnapException("Command not supported");
+            handler({ControlErrc::success});
+    });
+}
 
-        LOG(INFO, LOG_TAG) << "Stream '" << getId() << "' received command: '" << command << "', params: '" << request.params().to_json() << "'\n";
-        if (stream_ctrl_)
-        {
-            jsonrpcpp::Parameter params{"command", command};
-            if (request.params().has("params"))
-                params.add("params", request.params().get("params"));
-            jsonrpcpp::Request req(++req_id_, "Plugin.Stream.Player.Control", params);
-            stream_ctrl_->command(req, response_handler);
-        }
-    }
-    catch (const std::exception& e)
-    {
-        LOG(WARNING, LOG_TAG) << "Error in control: " << e.what() << '\n';
-        auto error = jsonrpcpp::InvalidParamsException(e.what(), request.id());
-        response_handler(error.to_json());
-    }
+
+void PcmStream::playPause(ResultHandler handler)
+{
+    LOG(DEBUG, LOG_TAG) << "playPause\n";
+    if (!properties_.can_pause)
+        return handler({ControlErrc::can_play_is_false});
+    sendRequest("Plugin.Stream.Player.Control", {"command", "PlayPause"}, std::move(handler));
+}
+
+
+void PcmStream::stop(ResultHandler handler)
+{
+    LOG(DEBUG, LOG_TAG) << "stop\n";
+    if (!properties_.can_control)
+        return handler({ControlErrc::can_control_is_false});
+    sendRequest("Plugin.Stream.Player.Control", {"command", "Stop"}, std::move(handler));
+}
+
+
+void PcmStream::play(ResultHandler handler)
+{
+    LOG(DEBUG, LOG_TAG) << "play\n";
+    if (!properties_.can_play)
+        return handler({ControlErrc::can_play_is_false});
+    sendRequest("Plugin.Stream.Player.Control", {"command", "Play"}, std::move(handler));
 }
 
 

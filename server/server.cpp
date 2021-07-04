@@ -459,12 +459,64 @@ void Server::processRequest(const jsonrpcpp::request_ptr request, const OnRespon
                 if (stream == nullptr)
                     throw jsonrpcpp::InternalErrorException("Stream not found", request->id());
 
-                stream->control(*request, [request, on_response](const jsonrpcpp::Response& ctrl_response) {
-                    LOG(INFO, LOG_TAG) << "Received response for Stream.Control, id: " << ctrl_response.id() << ", result: " << ctrl_response.result()
-                                       << ", error: " << ctrl_response.error().code() << "\n";
-                    auto response = make_shared<jsonrpcpp::Response>(request->id(), ctrl_response.result());
+                if (!request->params().has("command"))
+                    throw jsonrpcpp::InvalidParamsException("Parameter 'commmand' is missing", request->id());
+
+                auto command = request->params().get<string>("command");
+
+                auto handle_response = [request, on_response, command](const snapcast::ErrorCode& ec) {
+                    LOG(DEBUG, LOG_TAG) << "Response to '" << command << "': " << ec << ", message: " << ec.detailed_message() << ", msg: " << ec.message()
+                                        << ", category: " << ec.category().name() << "\n";
+                    std::shared_ptr<jsonrpcpp::Response> response;
+                    if (ec)
+                        response = make_shared<jsonrpcpp::Response>(request->id(), jsonrpcpp::Error(ec.detailed_message(), ec.value()));
+                    else
+                        response = make_shared<jsonrpcpp::Response>(request->id(), "ok");
                     on_response(response, nullptr);
-                });
+                };
+
+                if (command == "SetPosition")
+                {
+                    if (!request->params().has("params") || !request->params().get("params").contains("Position"))
+                        throw jsonrpcpp::InvalidParamsException("SetPosition requires parameters 'Position'");
+                    auto seconds = request->params().get("params")["Position"].get<float>();
+                    stream->setPosition(std::chrono::milliseconds(static_cast<int>(seconds * 1000)),
+                                        [handle_response](const snapcast::ErrorCode& ec) { handle_response(ec); });
+                }
+                else if (command == "Seek")
+                {
+                    if (!request->params().has("params") || !request->params().get("params").contains("Offset"))
+                        throw jsonrpcpp::InvalidParamsException("Seek requires parameter 'Offset'");
+                    auto offset = request->params().get("params")["Offset"].get<float>();
+                    stream->seek(std::chrono::milliseconds(static_cast<int>(offset * 1000)),
+                                 [handle_response](const snapcast::ErrorCode& ec) { handle_response(ec); });
+                }
+                else if (command == "Next")
+                {
+                    stream->next([handle_response](const snapcast::ErrorCode& ec) { handle_response(ec); });
+                }
+                else if (command == "Previous")
+                {
+                    stream->previous([handle_response](const snapcast::ErrorCode& ec) { handle_response(ec); });
+                }
+                else if (command == "Pause")
+                {
+                    stream->pause([handle_response](const snapcast::ErrorCode& ec) { handle_response(ec); });
+                }
+                else if (command == "PlayPause")
+                {
+                    stream->playPause([handle_response](const snapcast::ErrorCode& ec) { handle_response(ec); });
+                }
+                else if (command == "Stop")
+                {
+                    stream->stop([handle_response](const snapcast::ErrorCode& ec) { handle_response(ec); });
+                }
+                else if (command == "Play")
+                {
+                    stream->play([handle_response](const snapcast::ErrorCode& ec) { handle_response(ec); });
+                }
+                else
+                    throw jsonrpcpp::InvalidParamsException("Command '" + command + "' not supported", request->id());
 
                 return;
             }
@@ -482,12 +534,55 @@ void Server::processRequest(const jsonrpcpp::request_ptr request, const OnRespon
                 if (stream == nullptr)
                     throw jsonrpcpp::InternalErrorException("Stream not found", request->id());
 
-                stream->setProperty(*request, [request, on_response](const jsonrpcpp::Response& props_response) {
-                    LOG(INFO, LOG_TAG) << "Received response for Stream.SetProperty, id: " << props_response.id() << ", result: " << props_response.result()
-                                       << ", error: " << props_response.error().code() << "\n";
-                    auto response = make_shared<jsonrpcpp::Response>(request->id(), props_response.result());
+                if (!request->params().has("property"))
+                    throw jsonrpcpp::InvalidParamsException("Parameter 'property' is missing", request->id());
+
+                if (!request->params().has("value"))
+                    throw jsonrpcpp::InvalidParamsException("Parameter 'value' is missing", request->id());
+
+                auto name = request->params().get<string>("property");
+                auto value = request->params().get("value");
+                LOG(INFO, LOG_TAG) << "Stream '" << streamId << "' set property: " << name << " = " << value << "\n";
+
+                auto handle_response = [request, on_response](const snapcast::ErrorCode& ec) {
+                    LOG(ERROR, LOG_TAG) << "SetShuffle: " << ec << ", message: " << ec.detailed_message() << ", msg: " << ec.message()
+                                        << ", category: " << ec.category().name() << "\n";
+                    std::shared_ptr<jsonrpcpp::Response> response;
+                    if (ec)
+                        response = make_shared<jsonrpcpp::Response>(request->id(), jsonrpcpp::Error(ec.detailed_message(), ec.value()));
+                    else
+                        response = make_shared<jsonrpcpp::Response>(request->id(), "ok");
                     on_response(response, nullptr);
-                });
+                };
+
+                if (name == "loopStatus")
+                {
+                    auto val = value.get<std::string>();
+                    LoopStatus loop_status = loop_status_from_string(val);
+                    if (loop_status == LoopStatus::kUnknown)
+                        throw jsonrpcpp::InvalidParamsException("Value for loopStatus must be one of 'none', 'track', 'playlist'", request->id());
+                    stream->setLoopStatus(loop_status, [handle_response](const snapcast::ErrorCode& ec) { handle_response(ec); });
+                }
+                else if (name == "shuffle")
+                {
+                    if (!value.is_boolean())
+                        throw jsonrpcpp::InvalidParamsException("Value for shuffle must be bool", request->id());
+                    stream->setShuffle(value.get<bool>(), [handle_response](const snapcast::ErrorCode& ec) { handle_response(ec); });
+                }
+                else if (name == "volume")
+                {
+                    if (!value.is_number_integer())
+                        throw jsonrpcpp::InvalidParamsException("Value for volume must be an int", request->id());
+                    stream->setVolume(value.get<int16_t>(), [handle_response](const snapcast::ErrorCode& ec) { handle_response(ec); });
+                }
+                else if (name == "rate")
+                {
+                    if (!value.is_number_float())
+                        throw jsonrpcpp::InvalidParamsException("Value for rate must be float", request->id());
+                    stream->setRate(value.get<float>(), [handle_response](const snapcast::ErrorCode& ec) { handle_response(ec); });
+                }
+                else
+                    throw jsonrpcpp::InvalidParamsException("Property '" + name + "' not supported", request->id());
 
                 return;
             }

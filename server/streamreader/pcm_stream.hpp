@@ -28,6 +28,7 @@
 #include <boost/asio/read_until.hpp>
 #include <boost/asio/steady_timer.hpp>
 
+#include "common/error_code.hpp"
 #include "common/json.hpp"
 #include "common/metatags.hpp"
 #include "common/properties.hpp"
@@ -116,6 +117,8 @@ public:
 class PcmStream
 {
 public:
+    using ResultHandler = std::function<void(const snapcast::ErrorCode& ec)>;
+
     /// ctor. Encoded PCM data is passed to the PcmListener
     PcmStream(PcmListener* pcmListener, boost::asio::io_context& ioc, const ServerSettings& server_settings, const StreamUri& uri);
     virtual ~PcmStream();
@@ -134,8 +137,21 @@ public:
     const Metatags& getMetadata() const;
     const Properties& getProperties() const;
 
-    virtual void setProperty(const jsonrpcpp::Request& request, const StreamControl::OnResponse& response_handler);
-    virtual void control(const jsonrpcpp::Request& request, const StreamControl::OnResponse& response_handler);
+    // Setter for properties
+    virtual void setShuffle(bool shuffle, ResultHandler handler);
+    virtual void setLoopStatus(LoopStatus status, ResultHandler handler);
+    virtual void setVolume(uint16_t volume, ResultHandler handler);
+    virtual void setRate(float rate, ResultHandler handler);
+
+    // Control commands
+    virtual void setPosition(std::chrono::milliseconds position, ResultHandler handler);
+    virtual void seek(std::chrono::milliseconds offset, ResultHandler handler);
+    virtual void next(ResultHandler handler);
+    virtual void previous(ResultHandler handler);
+    virtual void pause(ResultHandler handler);
+    virtual void playPause(ResultHandler handler);
+    virtual void stop(ResultHandler handler);
+    virtual void play(ResultHandler handler);
 
     virtual ReaderState getState() const;
     virtual json toJson() const;
@@ -144,10 +160,6 @@ public:
 
 protected:
     std::atomic<bool> active_;
-
-    void onControlRequest(const jsonrpcpp::Request& request);
-    void onControlNotification(const jsonrpcpp::Notification& notification);
-    void onControlLog(std::string line);
 
     void setState(ReaderState newState);
     void chunkRead(const msg::PcmChunk& chunk);
@@ -158,6 +170,16 @@ protected:
     void setProperties(const Properties& properties);
 
     void pollProperties();
+
+    // script callbacks
+    /// Request received from control script
+    void onControlRequest(const jsonrpcpp::Request& request);
+    /// Notification received from control script
+    void onControlNotification(const jsonrpcpp::Notification& notification);
+    /// Log message received from control script via stderr
+    void onControlLog(std::string line);
+    /// Send request to stream control script
+    void sendRequest(const std::string& method, const jsonrpcpp::Parameter& params, ResultHandler handler);
 
     std::chrono::time_point<std::chrono::steady_clock> tvEncodedChunk_;
     std::vector<PcmListener*> pcmListeners_;
@@ -176,6 +198,7 @@ protected:
     boost::asio::steady_timer property_timer_;
     mutable std::recursive_mutex mutex_;
 };
+
 
 } // namespace streamreader
 

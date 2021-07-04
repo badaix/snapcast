@@ -44,6 +44,22 @@ public:
     void start() override;
     void stop() override;
 
+    // Setter for properties
+    void setShuffle(bool shuffle, ResultHandler handler) override;
+    void setLoopStatus(LoopStatus status, ResultHandler handler) override;
+    void setVolume(uint16_t volume, ResultHandler handler) override;
+    void setRate(float rate, ResultHandler handler) override;
+
+    // Control commands
+    void setPosition(std::chrono::milliseconds position, ResultHandler handler) override;
+    void seek(std::chrono::milliseconds offset, ResultHandler handler) override;
+    void next(ResultHandler handler) override;
+    void previous(ResultHandler handler) override;
+    void pause(ResultHandler handler) override;
+    void playPause(ResultHandler handler) override;
+    void stop(ResultHandler handler) override;
+    void play(ResultHandler handler) override;
+
 protected:
     /// Implementation of PcmListener
     void onMetadataChanged(const PcmStream* pcmStream, const Metatags& metadata) override;
@@ -54,12 +70,9 @@ protected:
     void onResync(const PcmStream* pcmStream, double ms) override;
 
 protected:
-    void setProperty(const jsonrpcpp::Request& request, const StreamControl::OnResponse& response_handler) override;
-    void control(const jsonrpcpp::Request& request, const StreamControl::OnResponse& response_handler) override;
-
     std::vector<std::shared_ptr<PcmStream>> streams_;
     std::shared_ptr<PcmStream> active_stream_;
-    std::mutex mutex_;
+    std::recursive_mutex mutex_;
     std::unique_ptr<Resampler> resampler_;
     bool first_read_;
     std::chrono::time_point<std::chrono::steady_clock> next_tick_;

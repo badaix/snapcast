@@ -25,6 +25,7 @@
 #include "common/metatags.hpp"
 #include "common/properties.hpp"
 #include "common/utils/string_utils.hpp"
+#include "server/streamreader/control_error.hpp"
 #include "server/streamreader/stream_uri.hpp"
 
 using namespace std;
@@ -236,4 +237,18 @@ TEST_CASE("Librespot")
     REQUIRE(m[6] == "<Tunnel> (310573 ms) loaded");
     for (const auto& match : m)
         std::cerr << "Match: '" << match << "'\n";
+}
+
+
+TEST_CASE("Error")
+{
+    std::error_code ec = ControlErrc::can_not_control;
+    REQUIRE(ec);
+    REQUIRE(ec == ControlErrc::can_not_control);
+    REQUIRE(ec != ControlErrc::success);
+    std::cout << ec << std::endl;
+
+    ec = make_error_code(ControlErrc::can_not_control);
+    REQUIRE(ec.category() == snapcast::error::control::category());
+    std::cout << "Category: " << ec.category().name() << ", " << ec.message() << std::endl;
 }
