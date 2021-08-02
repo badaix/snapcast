@@ -3,11 +3,11 @@
     (  _ \ /  \(  _ \(  )
      ) __/(  O )) __// (_/\
     (__)   \__/(__)  \____/
-    version 1.2.90
+    version 1.3.0
     https://github.com/badaix/popl
 
     This file is part of popl (program options parser lib)
-    Copyright (C) 2015-2019 Johannes Pohl
+    Copyright (C) 2015-2021 Johannes Pohl
 
     This software may be modified and distributed under the terms
     of the MIT license.  See the LICENSE file for details.
@@ -41,7 +41,7 @@
 namespace popl
 {
 
-#define POPL_VERSION "1.2.90"
+#define POPL_VERSION "1.3.0"
 
 
 /// Option's argument type
@@ -985,8 +985,6 @@ inline void OptionParser::parse(const std::string& ini_filename)
         Option_ptr option = find_option(key);
         if (option && (option->attribute() == Attribute::inactive))
             option = nullptr;
-        // if (option && (option->argument_type() != Argument::required))
-        //    option = nullptr;
 
         if (option)
             option->parse(OptionName::long_name, key_value.second.c_str());
