@@ -15,11 +15,11 @@ jobs:
       id: cache-boost
       uses: actions/cache@v2
       with:
-        path: boost_1_76_0
+        path: boost_1_77_0
         key: ${{ runner.os }}-boost
     - name: get boost
       if: steps.cache-boost.outputs.cache-hit != 'true'
-      run: wget https://boostorg.jfrog.io/artifactory/main/release/1.76.0/source/boost_1_76_0.tar.bz2 && tar xjf boost_1_76_0.tar.bz2
+      run: wget https://boostorg.jfrog.io/artifactory/main/release/1.76.0/source/boost_1_77_0.tar.bz2 && tar xjf boost_1_77_0.tar.bz2
     - name: cache ccache
       id: cache-ccache
       uses: actions/cache@v2
@@ -30,16 +30,16 @@ jobs:
     #- name: ccache dump config
     #  run: ccache -p
     - name: cmake build
-      run: cmake -S . -B build -DBOOST_ROOT=boost_1_76_0 -DCMAKE_BUILD_TYPE=Release -DWERROR=ON -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DREVISION=${{ github.sha }}
+      run: cmake -S . -B build -DBOOST_ROOT=boost_1_77_0 -DCMAKE_BUILD_TYPE=Release -DWERROR=ON -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DREVISION=${{ github.sha }}
     - name: cmake make
       run: cmake --build build --parallel 3
     - name: debian package
       run: |
-        fakeroot make -f debian/rules CMAKEFLAGS="-DBOOST_ROOT=boost_1_76_0 -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DREVISION=${{ github.sha }} -DBUILD_WITH_PULSE=OFF" binary
+        fakeroot make -f debian/rules CMAKEFLAGS="-DBOOST_ROOT=boost_1_77_0 -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DREVISION=${{ github.sha }} -DBUILD_WITH_PULSE=OFF" binary
         rename 's/_amd64/_without-pulse_amd64/g' ../snapclient*_amd64.deb
         rm ../snapserver*_amd64.deb
         fakeroot make -f debian/rules clean
-        fakeroot make -f debian/rules CMAKEFLAGS="-DBOOST_ROOT=boost_1_76_0 -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DREVISION=${{ github.sha }}" binary
+        fakeroot make -f debian/rules CMAKEFLAGS="-DBOOST_ROOT=boost_1_77_0 -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DREVISION=${{ github.sha }}" binary
     - name: Archive artifacts
       uses: actions/upload-artifact@v2
       with:
