@@ -30,7 +30,6 @@
 
 #include "common/error_code.hpp"
 #include "common/json.hpp"
-#include "common/properties.hpp"
 #include "common/sample_format.hpp"
 #include "encoder/encoder.hpp"
 #include "jsonrpcpp.hpp"
@@ -38,6 +37,7 @@
 #include "server_settings.hpp"
 #include "stream_control.hpp"
 #include "stream_uri.hpp"
+#include "properties.hpp"
 
 
 namespace bp = boost::process;

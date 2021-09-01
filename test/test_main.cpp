@@ -22,9 +22,9 @@
 #include <regex>
 
 #include "common/aixlog.hpp"
-#include "common/properties.hpp"
 #include "common/utils/string_utils.hpp"
 #include "server/streamreader/control_error.hpp"
+#include "server/streamreader/properties.hpp"
 #include "server/streamreader/stream_uri.hpp"
 
 using namespace std;

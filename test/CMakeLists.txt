@@ -12,6 +12,8 @@ endif (ANDROID)
 set(TEST_SOURCES 
     ${CMAKE_CURRENT_SOURCE_DIR}/test_main.cpp 
     ${CMAKE_SOURCE_DIR}/server/streamreader/control_error.cpp
+    ${CMAKE_SOURCE_DIR}/server/streamreader/properties.cpp
+    ${CMAKE_SOURCE_DIR}/server/streamreader/metatags.cpp
     ${CMAKE_SOURCE_DIR}/server/streamreader/stream_uri.cpp)
 
 add_executable(snapcast_test ${TEST_SOURCES})
