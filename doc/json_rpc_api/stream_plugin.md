@@ -4,11 +4,11 @@
 A stream plugin is (this might change in future) an executable binary or script that is started by the server for a specific stream and offers playback control capabilities and provides information about the stream's state, as well as metadata for the currently playing track.
 The Snapcast server communicates via stdin/stdout with the plugin and sends newline delimited JSON-RPC commands and receives responses and notifications from the plugin, as described below. In upcoming releases shared library plugins might be supported as well.  
 
-## Requests:
+## Requests
 
 A Stream plugin must support and handle the following requests, sent by the Snapcast server
 
-### Plugin.Stream.Player.Control:
+### Plugin.Stream.Player.Control
 
 Used to control the player
 
@@ -19,33 +19,33 @@ Used to control the player
 Supported `command`s:
 
 - `Play`: Start playback
-    - `params`: none
+  - `params`: none
 - `Pause`: Stop playback
-    - `params`: none
+  - `params`: none
 - `PlayPause`: Toggle play/pause
-    - `params`: none
+  - `params`: none
 - `Stop`: Stop playback
-    - `params`: none
+  - `params`: none
 - `Next`: Skip to next track
-    - `params`: none
+  - `params`: none
 - `Previous`: Skip to previous track
-    - `params`: none
+  - `params`: none
 - `Seek`: Seek forward or backward in the current track
-    - `params`:
-        - `Offset`: [float] seek offset in seconds
+  - `params`:
+    - `Offset`: [float] seek offset in seconds
 - `SetPosition`: Set the current track position in seconds
-    - `params`:
-        - `Position`: [float] the new track position
-        - `TrackId`: [string] the optional currently playing track's identifier 
+  - `params`:
+    - `Position`: [float] the new track position
+    - `TrackId`: [string] the optional currently playing track's identifier 
 
-#### Example: 
+#### Example
 
 ```json
 {"id": 1, "jsonrpc": "2.0", "method": "Plugin.Stream.Player.Control", "params": {"command": "SetPosition", "params": { "Position": 170966827, "TrackId": "/org/mpris/MediaPlayer2/Track/2"}}}
 ```
 
 
-#### Expected response:
+#### Expected response
 
 Success:
 
@@ -59,23 +59,23 @@ Error:
 todo
 ```
 
-### Plugin.Stream.Player.SetProperty:
+### Plugin.Stream.Player.SetProperty
 
 ```json
 {"id": 1, "jsonrpc": "2.0", "method": "Plugin.Stream.Player.SetProperty", "params": {"<property>", <value>}}
 ```
 
-#### Supported `property`s: 
+#### Supported `property`s
 
 - `loopStatus`: [string] the current repeat status, one of:
-    - `none`: the playback will stop when there are no more tracks to play
-    - `track`: the current track will start again from the begining once it has finished playing
-    - `playlist`: the playback loops through a list of tracks
+  - `none`: the playback will stop when there are no more tracks to play
+  - `track`: the current track will start again from the begining once it has finished playing
+  - `playlist`: the playback loops through a list of tracks
 - `shuffle`: [bool] play playlist in random order
 - `volume`: [int] voume in percent, valid range [0..100]
 - `rate`: [float] The current playback rate, valid range (0..)
 
-#### Expected response:
+#### Expected response
 
 Success:
 
@@ -95,7 +95,7 @@ todo
 {"id": 1, "jsonrpc": "2.0", "method": "Plugin.Stream.Player.GetProperties"}
 ```
 
-#### Expected response:
+#### Expected response
 
 Success:
 
@@ -106,13 +106,13 @@ Success:
 #### Supported `property`s
 
 - `playbackStatus`: [string] The current playback status, one of:
-    - `playing`
-    - `paused` 
-    - `stopped` 
+  - `playing`
+  - `paused`
+  - `stopped`
 - `loopStatus`: [string] The current repeat status, one of:
-    - `none`: The playback will stop when there are no more tracks to play
-    - `track`: The current track will start again from the begining once it has finished playing
-    - `playlist`: The playback loops through a list of tracks
+  - `none`: The playback will stop when there are no more tracks to play
+  - `track`: The current track will start again from the begining once it has finished playing
+  - `playlist`: The playback loops through a list of tracks
 - `rate`: [float] The current playback rate, valid range (0..)
 - `shuffle`: [bool] Traverse through the playlist in random order
 - `volume`: [int] Voume in percent, valid range [0..100]
@@ -132,11 +132,13 @@ todo
 
 ### Plugin.Stream.Player.GetMetadata
 
+TODO: Metadata are part of the properties
+
 ```json
 {"id": 1, "jsonrpc": "2.0", "method": "Plugin.Stream.Player.GetMetadata"}
 ```
 
-#### Expected response:
+#### Expected response
 
 Success:
 
@@ -144,9 +146,11 @@ Success:
 {"id": 1, "jsonrpc": "2.0", "result": {"artist":["Travis Scott & HVME"],"file":"http://wdr-1live-live.icecast.wdr.de/wdr/1live/live/mp3/128/stream.mp3","name":"1Live, Westdeutscher Rundfunk Koeln","title":"Goosebumps (Remix)","trackId":"3"}}
 ```
 
-## Notifications:
+## Notifications
 
 ### Plugin.Stream.Player.Metadata
+
+TODO: Metadata are part of the properties
 
 ```json
 {"jsonrpc": "2.0", "method": "Plugin.Stream.Player.Metadata", "params": {"artist":["Travis Scott & HVME"],"file":"http://wdr-1live-live.icecast.wdr.de/wdr/1live/live/mp3/128/stream.mp3","name":"1Live, Westdeutscher Rundfunk Koeln","title":"Goosebumps (Remix)","trackId":"3"}}
@@ -199,7 +203,6 @@ Success:
 - `spotifyArtistId`: [string] The [Spotify Artist ID](https://developer.spotify.com/documentation/web-api/#spotify-uris-and-ids)
 - `spotifyTrackId`: [string] The [Spotify Track ID](https://developer.spotify.com/documentation/web-api/#spotify-uris-and-ids)
 
-
 ### Plugin.Stream.Player.Properties
 
 ```json
@@ -234,12 +237,11 @@ The plugin shall send this notification when it's up and ready to receive comman
 {"jsonrpc": "2.0", "method": "Plugin.Stream.Ready"}
 ```
 
-
-# Server:
+# Server
 
 TODO: this belongs to doc/json_rpc_api/v2_0_0.md
 
-## Requests:
+## Requests
 
 To control the stream state, the following commands can be sent to the Snapcast server and will be forwarded to the respective stream:
 
@@ -251,7 +253,7 @@ To control the stream state, the following commands can be sent to the Snapcast 
 {"id": 1, "jsonrpc": "2.0", "method": "Stream.SetProperty", "params": {"id": "Pipe", "property": property, "value": value}}
 ```
 
-## Notifications:
+## Notifications
 
 ```json
 {"jsonrpc": "2.0", "method": "Stream.OnMetadata", "params": {"id": "Pipe", "metadata": {}}}

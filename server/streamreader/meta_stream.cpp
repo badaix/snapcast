@@ -84,16 +84,6 @@ void MetaStream::stop()
 }
 
 
-void MetaStream::onMetadataChanged(const PcmStream* pcmStream, const Metatags& metadata)
-{
-    LOG(DEBUG, LOG_TAG) << "onMetadataChanged: " << pcmStream->getName() << "\n";
-    std::lock_guard<std::recursive_mutex> lock(mutex_);
-    if (pcmStream != active_stream_.get())
-        return;
-    setMetadata(metadata);
-}
-
-
 void MetaStream::onPropertiesChanged(const PcmStream* pcmStream, const Properties& properties)
 {
     LOG(DEBUG, LOG_TAG) << "onPropertiesChanged: " << pcmStream->getName() << "\n";
@@ -118,7 +108,6 @@ void MetaStream::onStateChanged(const PcmStream* pcmStream, ReaderState state)
         LOG(INFO, LOG_TAG) << "Stream: " << name_ << ", switching active stream: " << (active_stream_ ? active_stream_->getName() : "<null>") << " => "
                            << new_stream->getName() << "\n";
         active_stream_ = new_stream;
-        setMetadata(active_stream_->getMetadata());
         setProperties(active_stream_->getProperties());
         resampler_ = make_unique<Resampler>(active_stream_->getSampleFormat(), sampleFormat_);
     };

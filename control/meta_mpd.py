@@ -376,7 +376,8 @@ class MPDWrapper(object):
                     success = True
                     command = request['params']['command']
                     params = request['params'].get('params', {})
-                    logger.debug(f'Control command: {command}, params: {params}')
+                    logger.debug(
+                        f'Control command: {command}, params: {params}')
                     if command == 'Next':
                         self.next()
                     elif command == 'Previous':
@@ -495,8 +496,20 @@ class MPDWrapper(object):
     def __track_key(self, snapmeta):
         return hash(snapmeta.get('artist', [''])[0] + snapmeta.get('album', snapmeta.get('title', '')))
 
-    def update_albumart(self, snapmeta):
+    def get_albumart(self, snapmeta, cached):
         album_key = 'musicbrainzAlbumId'
+        track_key = self.__track_key(snapmeta)
+        album_art = self._album_art_map.get(track_key)
+        if album_art is not None:
+            if album_art == '':
+                return None
+            else:
+                return album_art
+
+        if cached:
+            return None
+
+        self._album_art_map[track_key] = ''
         try:
             if not album_key in snapmeta:
                 mbartist = None
@@ -521,22 +534,21 @@ class MPDWrapper(object):
                 data = musicbrainzngs.get_image_list(snapmeta[album_key])
                 for image in data["images"]:
                     if "Front" in image["types"] and image["approved"]:
-                        snapmeta['artUrl'] = image["thumbnails"]["small"]
+                        album_art = image["thumbnails"]["small"]
                         logger.debug(
-                            f'{snapmeta["artUrl"]} is an approved front image')
-                        logger.info(f'Snapmeta: {snapmeta}')
-                        self._album_art_map[self.__track_key(
-                            snapmeta)] = snapmeta['artUrl']
-                        send(
-                            {"jsonrpc": "2.0", "method": "Plugin.Stream.Player.Metadata", "params": snapmeta})
+                            f'{album_art} is an approved front image')
+                        self._album_art_map[track_key] = album_art
                         break
 
         except musicbrainzngs.musicbrainz.ResponseError as e:
             logger.error(
                 f'Error while getting cover for {snapmeta[album_key]}: {e}')
-            self._album_art_map[self.__track_key(snapmeta)] = ''
+        album_art = self._album_art_map[track_key]
+        if album_art == '':
+            return None
+        return album_art
 
-    def update_metadata(self):
+    def get_metadata(self):
         """
         Translate metadata returned by MPD to the MPRIS v2 syntax.
         http://www.freedesktop.org/wiki/Specifications/mpris-spec/metadata
@@ -586,19 +598,12 @@ class MPDWrapper(object):
                     snapmeta['artist'] = [fields[0]]
                     snapmeta['title'] = fields[1]
 
-        track_key = self.__track_key(snapmeta)
-        if track_key in self._album_art_map:
-            art_url = self._album_art_map[track_key]
+        art_url = self.get_albumart(snapmeta, True)
+        if art_url is not None:
             logger.info(f'album art cache hit: "{art_url}"')
-            if art_url != '':
-                snapmeta['artUrl'] = art_url
+            snapmeta['artUrl'] = art_url
 
-        send({"jsonrpc": "2.0",
-             "method": "Plugin.Stream.Player.Metadata", "params": snapmeta})
-        if not track_key in self._album_art_map:
-            # t = threading.Thread(target=self.update_albumart, args=[snapmeta])
-            # t.start()
-            self.update_albumart(snapmeta)
+        return snapmeta
 
     def __diff_map(self, old_map, new_map):
         diff = {}
@@ -662,14 +667,11 @@ class MPDWrapper(object):
             logger.debug('nothing to do')
             return
 
-        logger.info(f'new status: {new_status}')
-        logger.info(f'changed_status: {changed_status}')
-        logger.info(f'changed_song: {changed_song}')
+        logger.info(
+            f'new status: {new_status}, changed_status: {changed_status}, changed_song: {changed_song}')
         self._time = new_time = int(time.time())
 
         snapstatus = self._get_properties(new_status)
-        send({"jsonrpc": "2.0", "method": "Plugin.Stream.Player.Properties",
-             "params": snapstatus})
 
         if 'elapsed' in new_status:
             new_position = float(new_status['elapsed'])
@@ -682,9 +684,9 @@ class MPDWrapper(object):
 
         # "player" subsystem
 
-        force = len(changed_song) > 0
+        new_song = len(changed_song) > 0
 
-        if not force:
+        if not new_song:
             if new_status['state'] == 'play':
                 expected_position = old_position + (new_time - old_time)
             else:
@@ -698,7 +700,18 @@ class MPDWrapper(object):
 
         else:
             # Update current song metadata
-            self.update_metadata()
+            snapstatus["metadata"] = self.get_metadata()
+
+        send({"jsonrpc": "2.0", "method": "Plugin.Stream.Player.Properties",
+             "params": snapstatus})
+
+        if new_song:
+            if 'artUrl' not in snapstatus['metadata']:
+                album_art = self.get_albumart(snapstatus['metadata'], False)
+                if album_art is not None:
+                    snapstatus['metadata']['artUrl'] = album_art
+                    send(
+                        {"jsonrpc": "2.0", "method": "Plugin.Stream.Player.Properties", "params": snapstatus})
 
     # Compatibility functions
 

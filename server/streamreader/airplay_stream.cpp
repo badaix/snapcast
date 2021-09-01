@@ -183,7 +183,7 @@ void AirplayStream::push()
     // mden = metadata end, pcen == picture end
     if (metadata_dirty_ && entry_->type == "ssnc" && (entry_->code == "mden" || entry_->code == "pcen"))
     {
-        setMetadata(metadata_);
+        // setMetadata(metadata_);
         metadata_dirty_ = false;
     }
 }

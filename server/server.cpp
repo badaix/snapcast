@@ -49,23 +49,6 @@ void Server::onNewSession(std::shared_ptr<StreamSession> session)
 }
 
 
-void Server::onMetadataChanged(const PcmStream* pcmStream, const Metatags& metadata)
-{
-    // clang-format off
-    // Notification: {"jsonrpc":"2.0","method":"Stream.OnMetadata","params":{"id":"stream 1", "metadata": {"album": "some album", "artist": "some artist", "track": "some track"...}}}
-    // clang-format on
-
-    LOG(DEBUG, LOG_TAG) << "Metadata changed, stream: " << pcmStream->getName() << ", meta: " << metadata.toJson().dump(3) << "\n";
-
-    // streamServer_->onMetadataChanged(pcmStream, meta);
-
-    // Send meta to all connected clients
-    json notification = jsonrpcpp::Notification("Stream.OnMetadata", jsonrpcpp::Parameter("id", pcmStream->getId(), "metadata", metadata.toJson())).to_json();
-    controlServer_->send(notification.dump(), nullptr);
-    // cout << "Notification: " << notification.dump() << "\n";
-}
-
-
 void Server::onPropertiesChanged(const PcmStream* pcmStream, const Properties& properties)
 {
     LOG(DEBUG, LOG_TAG) << "Properties changed, stream: " << pcmStream->getName() << ", properties: " << properties.toJson().dump(3) << "\n";

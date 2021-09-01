@@ -30,7 +30,6 @@
 
 #include "common/error_code.hpp"
 #include "common/json.hpp"
-#include "common/metatags.hpp"
 #include "common/properties.hpp"
 #include "common/sample_format.hpp"
 #include "encoder/encoder.hpp"
@@ -98,7 +97,6 @@ static constexpr auto kControlScript = "controlscript";
 class PcmListener
 {
 public:
-    virtual void onMetadataChanged(const PcmStream* pcmStream, const Metatags& metadata) = 0;
     virtual void onPropertiesChanged(const PcmStream* pcmStream, const Properties& properties) = 0;
     virtual void onStateChanged(const PcmStream* pcmStream, ReaderState state) = 0;
     virtual void onChunkRead(const PcmStream* pcmStream, const msg::PcmChunk& chunk) = 0;
@@ -166,7 +164,6 @@ protected:
     void resync(const std::chrono::nanoseconds& duration);
     void chunkEncoded(const encoder::Encoder& encoder, std::shared_ptr<msg::PcmChunk> chunk, double duration);
 
-    void setMetadata(const Metatags& metadata);
     void setProperties(const Properties& properties);
 
     void pollProperties();

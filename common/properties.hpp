@@ -26,6 +26,8 @@
 
 #include "common/aixlog.hpp"
 #include "common/json.hpp"
+#include "common/metatags.hpp"
+
 
 using json = nlohmann::json;
 
@@ -152,6 +154,8 @@ public:
         fromJson(j);
     }
 
+    /// Meta data
+    std::optional<Metatags> metatags;
     /// https://www.musicpd.org/doc/html/protocol.html#tags
     /// The current playback status
     std::optional<PlaybackStatus> playback_status;
@@ -202,6 +206,8 @@ public:
         addTag(j, "canPause", can_pause);
         addTag(j, "canSeek", can_seek);
         addTag(j, "canControl", can_control);
+        if (metatags.has_value())
+            addTag(j, "metadata", metatags->toJson());
         return j;
     }
 
@@ -209,7 +215,7 @@ public:
     {
         static std::set<std::string> rw_props = {"loopStatus", "shuffle", "volume", "rate"};
         static std::set<std::string> ro_props = {"playbackStatus", "loopStatus",    "shuffle", "volume",   "position", "minimumRate", "maximumRate",
-                                                 "canGoNext",      "canGoPrevious", "canPlay", "canPause", "canSeek",  "canControl"};
+                                                 "canGoNext",      "canGoPrevious", "canPlay", "canPause", "canSeek",  "canControl",  "metadata"};
         for (const auto& element : j.items())
         {
             bool is_rw = (rw_props.find(element.key()) != rw_props.end());
@@ -243,12 +249,38 @@ public:
         readTag(j, "canPause", can_pause, false);
         readTag(j, "canSeek", can_seek, false);
         readTag(j, "canControl", can_control, false);
+
+        if (j.contains("metadata"))
+        {
+            Metatags m;
+            m.fromJson(j["metadata"]);
+            metatags = m;
+        }
+        else
+            metatags = std::nullopt;
     }
 
     bool operator==(const Properties& other) const
     {
         // expensive, but not called ofetn and less typing
         return (toJson() == other.toJson());
+
+        // clang-format off
+        // return (playback_status == other.playback_status &&
+        //         loop_status == other.loop_status &&
+        //         rate == other.rate &&
+        //         shuffle == other.shuffle &&
+        //         volume == other.volume &&
+        //         position == other.position &&
+        //         minimum_rate == other.minimum_rate &&
+        //         maximum_rate == other.maximum_rate &&
+        //         can_go_next == other.can_go_next &&
+        //         can_go_previous == other.can_go_previous &&
+        //         can_play == other.can_play &&
+        //         can_pause == other.can_pause &&
+        //         can_seek == other.can_seek &&
+        //         can_control == other.can_control);
+        // clang-format on
     }
 
 private:

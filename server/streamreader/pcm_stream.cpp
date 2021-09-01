@@ -137,12 +137,7 @@ void PcmStream::onControlNotification(const jsonrpcpp::Notification& notificatio
     try
     {
         LOG(INFO, LOG_TAG) << "Notification method: " << notification.method() << ", params: " << notification.params().to_json() << "\n";
-        if (notification.method() == "Plugin.Stream.Player.Metadata")
-        {
-            LOG(DEBUG, LOG_TAG) << "Received metadata notification\n";
-            setMetadata(notification.params().to_json());
-        }
-        else if (notification.method() == "Plugin.Stream.Player.Properties")
+        if (notification.method() == "Plugin.Stream.Player.Properties")
         {
             LOG(DEBUG, LOG_TAG) << "Received properties notification\n";
             setProperties(notification.params().to_json());
@@ -155,15 +150,10 @@ void PcmStream::onControlNotification(const jsonrpcpp::Notification& notificatio
                 if (response.error().code() == 0)
                     setProperties(response.result());
             });
-            stream_ctrl_->command({++req_id_, "Plugin.Stream.Player.GetMetadata"}, [this](const jsonrpcpp::Response& response) {
-                LOG(INFO, LOG_TAG) << "Response for Plugin.Stream.Player.GetMetadata: " << response.to_json() << "\n";
-                if (response.error().code() == 0)
-                    setMetadata(response.result());
-            });
 
             // TODO: Add capabilities or settings?
             // {"jsonrpc": "2.0", "method": "Plugin.Stream.Ready", "params": {"pollProperties": 10, "responseTimeout": 5}}
-            pollProperties();
+            // pollProperties();
         }
         else if (notification.method() == "Plugin.Stream.Log")
         {
@@ -452,44 +442,31 @@ void PcmStream::play(ResultHandler handler)
 }
 
 
-void PcmStream::setMetadata(const Metatags& metadata)
-{
-    std::lock_guard<std::recursive_mutex> lock(mutex_);
-    if (metadata == metadata_)
-    {
-        LOG(DEBUG, LOG_TAG) << "setMetadata: Metadata did not change\n";
-        return;
-    }
-
-    metadata_ = metadata;
-    LOG(INFO, LOG_TAG) << "setMetadata, stream: " << getId() << ", metadata: " << metadata_.toJson() << "\n";
-
-    // Trigger a stream update
-    for (auto* listener : pcmListeners_)
-    {
-        if (listener != nullptr)
-            listener->onMetadataChanged(this, metadata_);
-    }
-}
-
-
 void PcmStream::setProperties(const Properties& properties)
 {
     std::lock_guard<std::recursive_mutex> lock(mutex_);
-    if (properties == properties_)
+
+    Properties props = properties;
+    // Missing metadata means, they didn't change, so
+    // enrich the new properites with old metadata
+    if (!props.metatags.has_value() && properties_.metatags.has_value())
+        props.metatags = properties_.metatags;
+
+    if (props == properties_)
     {
         LOG(DEBUG, LOG_TAG) << "setProperties: Properties did not change\n";
         return;
     }
 
-    properties_ = properties;
+    properties_ = std::move(props);
+
     LOG(INFO, LOG_TAG) << "setProperties, stream: " << getId() << ", properties: " << properties_.toJson() << "\n";
 
     // Trigger a stream update
     for (auto* listener : pcmListeners_)
     {
         if (listener != nullptr)
-            listener->onPropertiesChanged(this, properties);
+            listener->onPropertiesChanged(this, properties_);
     }
 }
 

@@ -331,12 +331,12 @@ class SnapcastWrapper(object):
             if not 'mpris:artUrl' in self._metadata:
                 self._metadata['mpris:artUrl'] = f'http://{self._params["host"]}:{self._params["port"]}/snapcast-512.png'
 
-            logger.info(f'mpris meta: {self._metadata}')
+            logger.debug(f'mpris meta: {self._metadata}')
 
             self.notify_about_track(self._metadata)
             new_meta = self._dbus_service.update_property('org.mpris.MediaPlayer2.Player',
                                                           'Metadata')
-            logger.info(f'new meta {new_meta}')
+            logger.debug(f'new meta {new_meta}')
         except Exception as e:
             logger.error(f'Error in update_metadata: {str(e)}')
 
@@ -344,11 +344,10 @@ class SnapcastWrapper(object):
         try:
             if props is None:
                 props = {}
-            logger.info(f'Properties: "{props}"')
+            logger.debug(f'Properties: "{props}"')
             # store the last receive time stamp for better position estimation
             if 'position' in props:
                 props['_received'] = time.time()
-
             # ignore "internal" properties, starting with "_"
             changed_properties = {}
             for key, value in props.items():
@@ -369,6 +368,8 @@ class SnapcastWrapper(object):
                 if key in property_mapping:
                     self._dbus_service.update_property(
                         'org.mpris.MediaPlayer2.Player', property_mapping[key])
+            if 'metadata' in changed_properties:
+                self.__update_metadata(props.get('metadata', None))
         except Exception as e:
             logger.error(f'Error in update_properties: {str(e)}')
 
@@ -388,8 +389,6 @@ class SnapcastWrapper(object):
                     logger.info(f'Stream id: {self._stream_id}')
                     for stream in jmsg['result']['server']['streams']:
                         if stream['id'] == self._stream_id:
-                            if 'metadata' in stream:
-                                self.__update_metadata(stream['metadata'])
                             if 'properties' in stream:
                                 self.__update_properties(stream['properties'])
                             break
@@ -399,14 +398,6 @@ class SnapcastWrapper(object):
             logger.info(f'Stream id: {self._stream_id}')
         elif jmsg['method'] == "Group.OnStreamChanged":
             self.send_request("Server.GetStatus")
-        elif jmsg["method"] == "Stream.OnMetadata":
-            stream_id = jmsg["params"]["id"]
-            logger.info(f'Stream meta changed for "{stream_id}"')
-            if self._stream_id != stream_id:
-                return
-            meta = jmsg["params"]["metadata"]
-            self.__update_metadata(meta)
-
         elif jmsg["method"] == "Stream.OnProperties":
             stream_id = jmsg["params"]["id"]
             logger.info(
