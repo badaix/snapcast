@@ -203,6 +203,21 @@ cs::time_point_clk Stream::getNextPlayerChunk(void* outputBuffer, uint32_t frame
             memcpy(static_cast<char*>(outputBuffer) + pos * format_.frameSize(), read_buffer_.data() + (pos - n) * format_.frameSize(),
                    size * format_.frameSize());
         }
+        //    --      --
+        //   -  -    -  -
+        //  -    -  -    -
+        // -      --      -
+
+        //    --       --
+        //   -  -     -  -
+        //  -    --  -    -
+        // -       --      -
+
+        //    --       --
+        //   -  -     -  -
+        //  -    -_  -    -
+        // -       --      -
+
         else
         {
             // Read all input frames, but skip a frame per slice when writing to the output.

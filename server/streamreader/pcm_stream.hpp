@@ -34,10 +34,10 @@
 #include "encoder/encoder.hpp"
 #include "jsonrpcpp.hpp"
 #include "message/codec_header.hpp"
+#include "properties.hpp"
 #include "server_settings.hpp"
 #include "stream_control.hpp"
 #include "stream_uri.hpp"
-#include "properties.hpp"
 
 
 namespace bp = boost::process;

@@ -66,22 +66,6 @@ void StreamServer::addSession(std::shared_ptr<StreamSession> session)
 }
 
 
-// void StreamServer::onMetadataChanged(const PcmStream* pcmStream, std::shared_ptr<msg::StreamTags> meta)
-// {
-//     // Send meta to all connected clients
-
-//     std::lock_guard<std::recursive_mutex> mlock(sessionsMutex_);
-//     for (const auto& s : sessions_)
-//     {
-//         if (auto session = s.lock())
-//         {
-//             if (session->pcmStream().get() == pcmStream)
-//                 session->send(meta);
-//         }
-//     }
-// }
-
-
 void StreamServer::onChunkEncoded(const PcmStream* pcmStream, bool isDefaultStream, std::shared_ptr<msg::PcmChunk> chunk, double /*duration*/)
 {
     // LOG(TRACE, LOG_TAG) << "onChunkRead (" << pcmStream->getName() << "): " << duration << "ms\n";
