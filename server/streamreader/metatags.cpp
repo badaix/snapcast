@@ -106,6 +106,10 @@ json Metatags::toJson() const
     addTag(j, "trackNumber", track_number);
     addTag(j, "url", url);
     addTag(j, "artUrl", art_url);
+    if (art_data.has_value())
+    {
+        j["artData"] = {{"data", art_data->data}, {"extension", art_data->extension}};
+    }
     addTag(j, "useCount", use_count);
     addTag(j, "userRating", user_rating);
     addTag(j, "spotifyArtistId", spotify_artist_id);
@@ -153,6 +157,7 @@ void Metatags::fromJson(const json& j)
                                                    "trackNumber",
                                                    "url",
                                                    "artUrl",
+                                                   "artData",
                                                    "useCount",
                                                    "userRating",
                                                    "spotifyArtistId",
@@ -200,6 +205,11 @@ void Metatags::fromJson(const json& j)
     readTag(j, "trackNumber", track_number);
     readTag(j, "url", url);
     readTag(j, "artUrl", art_url);
+    art_data = std::nullopt;
+    if (j.contains("artData") && j["artData"].contains("data") && j["artData"].contains("extension"))
+    {
+        art_data = ArtData{j["artData"]["data"].get<std::string>(), j["artData"]["extension"].get<std::string>()};
+    }
     readTag(j, "useCount", use_count);
     readTag(j, "userRating", user_rating);
     readTag(j, "spotifyArtistId", spotify_artist_id);

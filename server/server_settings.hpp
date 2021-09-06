@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2020  Johannes Pohl
+    Copyright (C) 2014-2021  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -22,6 +22,9 @@
 #include <string>
 #include <vector>
 
+#include "image_cache.hpp"
+
+
 struct ServerSettings
 {
     struct Server
@@ -39,6 +42,8 @@ struct ServerSettings
         size_t port{1780};
         std::vector<std::string> bind_to_address{{"0.0.0.0"}};
         std::string doc_root{""};
+        std::string host{"<hostname>"};
+        inline static ImageCache image_cache;
     };
 
     struct Tcp

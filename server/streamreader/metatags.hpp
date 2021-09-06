@@ -31,6 +31,22 @@ using json = nlohmann::json;
 class Metatags
 {
 public:
+    struct ArtData
+    {
+        std::string data;
+        std::string extension;
+
+        bool operator==(const ArtData& other) const
+        {
+            return ((other.data == data) && (other.extension == extension));
+        }
+
+        bool operator!=(const ArtData& other) const
+        {
+            return !(other == *this);
+        }
+    };
+
     Metatags() = default;
     Metatags(const json& j);
 
@@ -85,6 +101,8 @@ public:
     /// URI: The location of an image representing the track or album. Clients should not assume this will continue to exist when the media player stops giving
     /// out the URL
     std::optional<std::string> art_url;
+    /// Base64 encoded data of an image representing the track or album
+    std::optional<ArtData> art_data;
     /// The track lyrics
     std::optional<std::string> lyrics;
     /// The speed of the music, in beats per minute

@@ -20,6 +20,9 @@
 #include <memory>
 #include <sys/stat.h>
 
+#include <boost/asio/ip/host_name.hpp>
+
+#include "base64.h"
 #include "common/aixlog.hpp"
 #include "common/error_code.hpp"
 #include "common/snap_exception.hpp"
@@ -447,10 +450,25 @@ void PcmStream::setProperties(const Properties& properties)
     std::lock_guard<std::recursive_mutex> lock(mutex_);
 
     Properties props = properties;
-    // Missing metadata means, they didn't change, so
+    // Missing metadata means the data didn't change, so
     // enrich the new properites with old metadata
     if (!props.metatags.has_value() && properties_.metatags.has_value())
         props.metatags = properties_.metatags;
+
+    // If the cover image is availbale as raw data, cache it on the HTTP Server to make it also available via HTTP
+    if (props.metatags.has_value() && props.metatags->art_data.has_value() && !props.metatags->art_url.has_value())
+    {
+        auto data = base64_decode(props.metatags->art_data.value().data);
+        auto md5 = server_settings_.http.image_cache.setImage(getName(), std::move(data), props.metatags->art_data.value().extension);
+
+        std::stringstream url;
+        url << "http://" << server_settings_.http.host << ":" << server_settings_.http.port << "/__image_cache?name=" << md5;
+        props.metatags->art_url = url.str();
+    }
+    else if (!props.metatags->art_data.has_value())
+    {
+        server_settings_.http.image_cache.clear(getName());
+    }
 
     if (props == properties_)
     {

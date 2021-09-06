@@ -67,8 +67,8 @@ protected:
     XML_Parser parser_;
     std::unique_ptr<TageEntry> entry_;
     std::string buf_;
-    json metadata_;
     /// set whenever metadata_ has changed
+    Metatags meta_;
     bool metadata_dirty_;
 #endif
 
@@ -77,7 +77,9 @@ protected:
     int parse(const std::string& line);
     void createParser();
     void push();
-    void setMetaData(const std::string& key, const std::string& newValue);
+
+    template <typename T>
+    void setMetaData(std::optional<T>& meta_value, const T& value);
 #endif
 
     void setParamsAndPipePathFromPort();

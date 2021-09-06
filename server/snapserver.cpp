@@ -84,6 +84,7 @@ int main(int argc, char* argv[])
         auto http_bind_to_address = conf.add<Value<string>>("", "http.bind_to_address", "address for the server to listen on",
                                                             settings.http.bind_to_address.front(), &settings.http.bind_to_address[0]);
         conf.add<Implicit<string>>("", "http.doc_root", "serve a website from the doc_root location", settings.http.doc_root, &settings.http.doc_root);
+        conf.add<Value<string>>("", "http.host", "Hostname or IP under which clients can reach this host", settings.http.host, &settings.http.host);
 
         // TCP RPC settings
         conf.add<Value<bool>>("", "tcp.enabled", "enable TCP Json RPC)", settings.tcp.enabled, &settings.tcp.enabled);
@@ -281,6 +282,11 @@ int main(int argc, char* argv[])
         if (settings.http.enabled)
         {
             dns_services.emplace_back("_snapcast-http._tcp", settings.http.port);
+            if ((settings.http.host == "<hostname>") || settings.http.host.empty())
+            {
+                settings.http.host = boost::asio::ip::host_name();
+                LOG(INFO, LOG_TAG) << "Using HTTP host name: " << settings.http.host << "\n";
+            }
         }
         publishZeroConfg->publish(dns_services);
 #endif

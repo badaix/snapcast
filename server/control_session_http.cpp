@@ -21,6 +21,7 @@
 #include "control_session_ws.hpp"
 #include "message/pcm_chunk.hpp"
 #include "stream_session_ws.hpp"
+#include <boost/beast/http/buffer_body.hpp>
 #include <boost/beast/http/file_body.hpp>
 #include <iostream>
 
@@ -139,7 +140,7 @@ ControlSessionHttp::ControlSessionHttp(ControlMessageReceiver* receiver, boost::
                                        const ServerSettings::Http& settings)
     : ControlSession(receiver), socket_(std::move(socket)), settings_(settings), strand_(ioc)
 {
-    LOG(DEBUG, LOG_TAG) << "ControlSessionHttp\n";
+    LOG(DEBUG, LOG_TAG) << "ControlSessionHttp, Local IP: " << socket_.local_endpoint().address().to_string() << "\n";
 }
 
 
@@ -233,11 +234,36 @@ void ControlSessionHttp::handle_request(http::request<Body, http::basic_fields<A
     }
 
     // Request path must be absolute and not contain "..".
-    if (req.target().empty() || req.target()[0] != '/' || req.target().find("..") != beast::string_view::npos)
+    auto target = req.target();
+    if (target.empty() || target[0] != '/' || target.find("..") != beast::string_view::npos)
         return send(bad_request("Illegal request-target"));
 
+    static string image_cache_target = "/__image_cache?name=";
+    auto pos = target.find(image_cache_target);
+    if (pos != std::string::npos)
+    {
+        pos += image_cache_target.size();
+        target = target.substr(pos);
+        auto image = settings_.image_cache.getImage(std::string(target));
+        LOG(DEBUG, LOG_TAG) << "image cache: " << target << ", found: " << image.has_value() << "\n";
+        if (image.has_value())
+        {
+            http::response<http::buffer_body> res{http::status::ok, req.version()};
+            res.body().data = image.value().data();
+            const auto size = image.value().size();
+            res.body().size = size;
+            res.body().more = false;
+            res.set(http::field::server, HTTP_SERVER_NAME);
+            res.set(http::field::content_type, mime_type(target));
+            res.content_length(size);
+            res.keep_alive(req.keep_alive());
+            return send(std::move(res));
+        }
+        return send(not_found(req.target()));
+    }
+
     // Build the path to the requested file
-    std::string path = path_cat(settings_.doc_root, req.target());
+    std::string path = path_cat(settings_.doc_root, target);
     if (req.target().back() == '/')
         path.append("index.html");
 

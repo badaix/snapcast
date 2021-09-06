@@ -67,11 +67,6 @@ AirplayStream::AirplayStream(PcmListener* pcmListener, boost::asio::io_context& 
 #ifdef HAS_EXPAT
     createParser();
     metadata_dirty_ = false;
-    metadata_ = json();
-    metadata_["ALBUM"] = "";
-    metadata_["ARTIST"] = "";
-    metadata_["TITLE"] = "";
-    metadata_["COVER"] = "";
 #else
     LOG(INFO, LOG_TAG) << "Metadata support not enabled (HAS_EXPAT not defined)"
                        << "\n";
@@ -165,7 +160,7 @@ void AirplayStream::push()
 
     if (is_cover)
     {
-        setMetaData("COVER", data);
+        setMetaData(meta_.art_data, Metatags::ArtData{data, "jpg"});
         // LOG(INFO, LOG_TAG) << "Metadata type: " << entry_->type << " code: " << entry_->code << " data length: " << data.length() << "\n";
     }
     else
@@ -174,28 +169,30 @@ void AirplayStream::push()
     }
 
     if (entry_->type == "core" && entry_->code == "asal")
-        setMetaData("ALBUM", data);
-    if (entry_->type == "core" && entry_->code == "asar")
-        setMetaData("ARTIST", data);
-    if (entry_->type == "core" && entry_->code == "minm")
-        setMetaData("TITLE", data);
+        setMetaData(meta_.album, data);
+    else if (entry_->type == "core" && entry_->code == "asar")
+        setMetaData(meta_.artist, {data});
+    else if (entry_->type == "core" && entry_->code == "minm")
+        setMetaData(meta_.title, data);
 
     // mden = metadata end, pcen == picture end
     if (metadata_dirty_ && entry_->type == "ssnc" && (entry_->code == "mden" || entry_->code == "pcen"))
     {
-        // setMetadata(metadata_);
+        Properties properties;
+        properties.metatags = meta_;
+        setProperties(properties);
         metadata_dirty_ = false;
     }
 }
 
-void AirplayStream::setMetaData(const string& key, const string& newValue)
+template <typename T>
+void AirplayStream::setMetaData(std::optional<T>& meta_value, const T& value)
 {
     // Only overwrite metadata and set metadata_dirty_ if the metadata has changed.
     // This avoids multiple unnecessary transmissions of the same metadata.
-    const auto& oldValue = metadata_[key];
-    if (oldValue != newValue)
+    if (!meta_value.has_value() || (meta_value.value() != value))
     {
-        metadata_[key] = newValue;
+        meta_value = value;
         metadata_dirty_ = true;
     }
 }
