@@ -45,6 +45,7 @@ public:
         using boost::uuids::detail::md5;
         md5 hash;
         md5::digest_type digest;
+        hash.process_bytes(key.data(), key.size());
         hash.process_bytes(image.data(), image.size());
         hash.get_digest(digest);
         std::string filename;
