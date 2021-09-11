@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2020  Johannes Pohl
+    Copyright (C) 2014-2021  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -27,8 +27,8 @@ static constexpr auto LOG_TAG = "ControlSessionTCP";
 // https://stackoverflow.com/questions/7754695/boost-asio-async-write-how-to-not-interleaving-async-write-calls/7756894
 
 
-ControlSessionTcp::ControlSessionTcp(ControlMessageReceiver* receiver, boost::asio::io_context& ioc, tcp::socket&& socket)
-    : ControlSession(receiver), socket_(std::move(socket)), strand_(ioc)
+ControlSessionTcp::ControlSessionTcp(ControlMessageReceiver* receiver, tcp::socket&& socket)
+    : ControlSession(receiver), socket_(std::move(socket)), strand_(net::make_strand(socket_.get_executor()))
 {
 }
 
@@ -44,8 +44,7 @@ void ControlSessionTcp::do_read()
 {
     const std::string delimiter = "\n";
     boost::asio::async_read_until(
-        socket_, streambuf_, delimiter,
-        boost::asio::bind_executor(strand_, [this, self = shared_from_this(), delimiter](const std::error_code& ec, std::size_t bytes_transferred) {
+        socket_, streambuf_, delimiter, [this, self = shared_from_this(), delimiter](const std::error_code& ec, std::size_t bytes_transferred) {
             if (ec)
             {
                 LOG(ERROR, LOG_TAG) << "Error while reading from control socket: " << ec.message() << "\n";
@@ -69,7 +68,7 @@ void ControlSessionTcp::do_read()
             }
             streambuf_.consume(bytes_transferred);
             do_read();
-        }));
+        });
 }
 
 
@@ -95,7 +94,7 @@ void ControlSessionTcp::stop()
 
 void ControlSessionTcp::sendAsync(const std::string& message)
 {
-    strand_.post([this, self = shared_from_this(), message]() {
+    net::post(strand_, [this, self = shared_from_this(), message]() {
         messages_.emplace_back(message + "\r\n");
         if (messages_.size() > 1)
         {
@@ -108,18 +107,17 @@ void ControlSessionTcp::sendAsync(const std::string& message)
 
 void ControlSessionTcp::send_next()
 {
-    boost::asio::async_write(socket_, boost::asio::buffer(messages_.front()),
-                             boost::asio::bind_executor(strand_, [this, self = shared_from_this()](std::error_code ec, std::size_t length) {
-                                 messages_.pop_front();
-                                 if (ec)
-                                 {
-                                     LOG(ERROR, LOG_TAG) << "Error while writing to control socket: " << ec.message() << "\n";
-                                 }
-                                 else
-                                 {
-                                     LOG(TRACE, LOG_TAG) << "Wrote " << length << " bytes to control socket\n";
-                                 }
-                                 if (!messages_.empty())
-                                     send_next();
-                             }));
+    boost::asio::async_write(socket_, boost::asio::buffer(messages_.front()), [this, self = shared_from_this()](std::error_code ec, std::size_t length) {
+        messages_.pop_front();
+        if (ec)
+        {
+            LOG(ERROR, LOG_TAG) << "Error while writing to control socket: " << ec.message() << "\n";
+        }
+        else
+        {
+            LOG(TRACE, LOG_TAG) << "Wrote " << length << " bytes to control socket\n";
+        }
+        if (!messages_.empty())
+            send_next();
+    });
 }

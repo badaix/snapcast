@@ -134,7 +134,7 @@ void ControlServer::handleAccept(tcp::socket socket, Args&&... args)
         setsockopt(socket.native_handle(), SOL_SOCKET, SO_SNDTIMEO, &tv, sizeof(tv));
         //	socket->set_option(boost::asio::ip::tcp::no_delay(false));
         LOG(NOTICE, LOG_TAG) << "ControlServer::NewConnection: " << socket.remote_endpoint().address().to_string() << endl;
-        shared_ptr<SessionType> session = make_shared<SessionType>(this, io_context_, std::move(socket), std::forward<Args>(args)...);
+        shared_ptr<SessionType> session = make_shared<SessionType>(this, std::move(socket), std::forward<Args>(args)...);
         onNewSession(std::move(session));
     }
     catch (const std::exception& e)
@@ -155,8 +155,8 @@ void ControlServer::start()
             try
             {
                 LOG(INFO, LOG_TAG) << "Creating TCP acceptor for address: " << address << ", port: " << tcp_settings_.port << "\n";
-                acceptor_tcp_.emplace_back(
-                    make_unique<tcp::acceptor>(io_context_, tcp::endpoint(boost::asio::ip::address::from_string(address), tcp_settings_.port)));
+                acceptor_tcp_.emplace_back(make_unique<tcp::acceptor>(net::make_strand(io_context_.get_executor()),
+                                                                      tcp::endpoint(boost::asio::ip::address::from_string(address), tcp_settings_.port)));
             }
             catch (const boost::system::system_error& e)
             {
@@ -171,8 +171,8 @@ void ControlServer::start()
             try
             {
                 LOG(INFO, LOG_TAG) << "Creating HTTP acceptor for address: " << address << ", port: " << http_settings_.port << "\n";
-                acceptor_http_.emplace_back(
-                    make_unique<tcp::acceptor>(io_context_, tcp::endpoint(boost::asio::ip::address::from_string(address), http_settings_.port)));
+                acceptor_http_.emplace_back(make_unique<tcp::acceptor>(net::make_strand(io_context_.get_executor()),
+                                                                       tcp::endpoint(boost::asio::ip::address::from_string(address), http_settings_.port)));
             }
             catch (const boost::system::system_error& e)
             {

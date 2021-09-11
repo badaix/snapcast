@@ -34,6 +34,7 @@
 
 
 using boost::asio::ip::tcp;
+namespace net = boost::asio;
 
 
 class StreamSession;
@@ -116,7 +117,7 @@ class StreamSession : public std::enable_shared_from_this<StreamSession>
 {
 public:
     /// ctor. Received message from the client are passed to StreamMessageReceiver
-    StreamSession(boost::asio::io_context& ioc, StreamMessageReceiver* receiver);
+    StreamSession(net::any_io_executor strand, StreamMessageReceiver* receiver);
     virtual ~StreamSession() = default;
 
     virtual std::string getIP() = 0;
@@ -156,7 +157,7 @@ protected:
     StreamMessageReceiver* messageReceiver_;
     size_t bufferMs_;
     streamreader::PcmStreamPtr pcmStream_;
-    boost::asio::io_context::strand strand_;
+    net::strand<net::any_io_executor> strand_;
     std::deque<shared_const_buffer> messages_;
 };
 

@@ -33,7 +33,7 @@ using json = nlohmann::json;
 
 static constexpr auto LOG_TAG = "StreamServer";
 
-StreamServer::StreamServer(boost::asio::io_context& io_context, const ServerSettings& serverSettings, StreamMessageReceiver* messageReceiver)
+StreamServer::StreamServer(net::io_context& io_context, const ServerSettings& serverSettings, StreamMessageReceiver* messageReceiver)
     : io_context_(io_context), config_timer_(io_context), settings_(serverSettings), messageReceiver_(messageReceiver)
 {
 }
@@ -195,7 +195,7 @@ void StreamServer::handleAccept(tcp::socket socket)
         socket.set_option(tcp::no_delay(true));
 
         LOG(NOTICE, LOG_TAG) << "StreamServer::NewConnection: " << socket.remote_endpoint().address().to_string() << endl;
-        shared_ptr<StreamSession> session = make_shared<StreamSessionTcp>(io_context_, this, std::move(socket));
+        shared_ptr<StreamSession> session = make_shared<StreamSessionTcp>(this, std::move(socket));
         addSession(session);
     }
     catch (const std::exception& e)
@@ -213,8 +213,8 @@ void StreamServer::start()
         try
         {
             LOG(INFO, LOG_TAG) << "Creating stream acceptor for address: " << address << ", port: " << settings_.stream.port << "\n";
-            acceptor_.emplace_back(
-                make_unique<tcp::acceptor>(io_context_, tcp::endpoint(boost::asio::ip::address::from_string(address), settings_.stream.port)));
+            acceptor_.emplace_back(make_unique<tcp::acceptor>(net::make_strand(io_context_.get_executor()),
+                                                              tcp::endpoint(boost::asio::ip::address::from_string(address), settings_.stream.port)));
         }
         catch (const boost::system::system_error& e)
         {

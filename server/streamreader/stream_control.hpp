@@ -37,6 +37,8 @@
 
 
 namespace bp = boost::process;
+namespace net = boost::asio;
+
 using json = nlohmann::json;
 
 
@@ -52,7 +54,7 @@ public:
     using OnResponse = std::function<void(const jsonrpcpp::Response& response)>;
     using OnLog = std::function<void(std::string message)>;
 
-    StreamControl(boost::asio::io_context& ioc);
+    StreamControl(net::io_context& ioc);
     virtual ~StreamControl();
 
     void start(const std::string& stream_id, const ServerSettings& server_setttings, const OnNotification& notification_handler,
@@ -68,7 +70,7 @@ protected:
     void onReceive(const std::string& json);
     void onLog(std::string message);
 
-    boost::asio::io_context& ioc_;
+    net::io_context& ioc_;
 
 private:
     OnRequest request_handler_;
@@ -76,14 +78,14 @@ private:
     OnLog log_handler_;
 
     std::map<jsonrpcpp::Id, OnResponse> request_callbacks_;
-    boost::asio::io_context::strand strand_;
+    net::strand<net::any_io_executor> strand_;
 };
 
 
 class ScriptStreamControl : public StreamControl
 {
 public:
-    ScriptStreamControl(boost::asio::io_context& ioc, const std::string& script);
+    ScriptStreamControl(net::io_context& ioc, const std::string& script);
     virtual ~ScriptStreamControl() = default;
 
     void stop() override;

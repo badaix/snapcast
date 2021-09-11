@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2020  Johannes Pohl
+    Copyright (C) 2014-2021  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -34,7 +34,7 @@ class StreamSessionTcp : public StreamSession
 {
 public:
     /// ctor. Received message from the client are passed to StreamMessageReceiver
-    StreamSessionTcp(boost::asio::io_context& ioc, StreamMessageReceiver* receiver, tcp::socket&& socket);
+    StreamSessionTcp(StreamMessageReceiver* receiver, tcp::socket&& socket);
     ~StreamSessionTcp() override;
     void start() override;
     void stop() override;

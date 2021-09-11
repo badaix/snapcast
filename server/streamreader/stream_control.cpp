@@ -36,7 +36,7 @@ namespace streamreader
 static constexpr auto LOG_TAG = "Script";
 
 
-StreamControl::StreamControl(boost::asio::io_context& ioc) : ioc_(ioc), strand_(ioc)
+StreamControl::StreamControl(net::io_context& ioc) : ioc_(ioc), strand_(net::make_strand(ioc.get_executor()))
 {
 }
 
@@ -61,7 +61,7 @@ void StreamControl::start(const std::string& stream_id, const ServerSettings& se
 void StreamControl::command(const jsonrpcpp::Request& request, const OnResponse& response_handler)
 {
     // use strand to serialize commands sent from different threads
-    boost::asio::post(strand_, [this, request, response_handler]() {
+    net::post(strand_, [this, request, response_handler]() {
         if (response_handler)
             request_callbacks_[request.id()] = response_handler;
 
@@ -134,7 +134,7 @@ void StreamControl::onLog(std::string message)
 
 
 
-ScriptStreamControl::ScriptStreamControl(boost::asio::io_context& ioc, const std::string& script) : StreamControl(ioc), script_(script)
+ScriptStreamControl::ScriptStreamControl(net::io_context& ioc, const std::string& script) : StreamControl(ioc), script_(script)
 {
     // auto fileExists = [](const std::string& filename) {
     //     struct stat buffer;
@@ -191,7 +191,7 @@ void ScriptStreamControl::doCommand(const jsonrpcpp::Request& request)
 void ScriptStreamControl::stderrReadLine()
 {
     const std::string delimiter = "\n";
-    boost::asio::async_read_until(*stream_stderr_, streambuf_stderr_, delimiter, [this, delimiter](const std::error_code& ec, std::size_t bytes_transferred) {
+    net::async_read_until(*stream_stderr_, streambuf_stderr_, delimiter, [this, delimiter](const std::error_code& ec, std::size_t bytes_transferred) {
         if (ec)
         {
             LOG(ERROR, LOG_TAG) << "Error while reading from stderr: " << ec.message() << "\n";
@@ -211,7 +211,7 @@ void ScriptStreamControl::stderrReadLine()
 void ScriptStreamControl::stdoutReadLine()
 {
     const std::string delimiter = "\n";
-    boost::asio::async_read_until(*stream_stdout_, streambuf_stdout_, delimiter, [this, delimiter](const std::error_code& ec, std::size_t bytes_transferred) {
+    net::async_read_until(*stream_stdout_, streambuf_stdout_, delimiter, [this, delimiter](const std::error_code& ec, std::size_t bytes_transferred) {
         if (ec)
         {
             LOG(ERROR, LOG_TAG) << "Error while reading from stdout: " << ec.message() << "\n";

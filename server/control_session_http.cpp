@@ -136,9 +136,8 @@ std::string path_cat(boost::beast::string_view base, boost::beast::string_view p
 }
 } // namespace
 
-ControlSessionHttp::ControlSessionHttp(ControlMessageReceiver* receiver, boost::asio::io_context& ioc, tcp::socket&& socket,
-                                       const ServerSettings::Http& settings)
-    : ControlSession(receiver), socket_(std::move(socket)), settings_(settings), strand_(ioc)
+ControlSessionHttp::ControlSessionHttp(ControlMessageReceiver* receiver, tcp::socket&& socket, const ServerSettings::Http& settings)
+    : ControlSession(receiver), socket_(std::move(socket)), settings_(settings)
 {
     LOG(DEBUG, LOG_TAG) << "ControlSessionHttp, Local IP: " << socket_.local_endpoint().address().to_string() << "\n";
 }
@@ -153,9 +152,7 @@ ControlSessionHttp::~ControlSessionHttp()
 
 void ControlSessionHttp::start()
 {
-    http::async_read(
-        socket_, buffer_, req_,
-        boost::asio::bind_executor(strand_, [this, self = shared_from_this()](boost::system::error_code ec, std::size_t bytes) { on_read(ec, bytes); }));
+    http::async_read(socket_, buffer_, req_, [this, self = shared_from_this()](boost::system::error_code ec, std::size_t bytes) { on_read(ec, bytes); });
 }
 
 
@@ -349,7 +346,7 @@ void ControlSessionHttp::on_read(beast::error_code ec, std::size_t bytes_transfe
                 }
                 else
                 {
-                    auto ws_session = make_shared<ControlSessionWebsocket>(message_receiver_, strand_.context(), std::move(*ws));
+                    auto ws_session = make_shared<ControlSessionWebsocket>(message_receiver_, std::move(*ws));
                     message_receiver_->onNewSession(std::move(ws_session));
                 }
             });
@@ -366,7 +363,7 @@ void ControlSessionHttp::on_read(beast::error_code ec, std::size_t bytes_transfe
                 }
                 else
                 {
-                    auto ws_session = make_shared<StreamSessionWebsocket>(strand_.context(), nullptr, std::move(*ws));
+                    auto ws_session = make_shared<StreamSessionWebsocket>(nullptr, std::move(*ws));
                     message_receiver_->onNewSession(std::move(ws_session));
                 }
             });
@@ -384,9 +381,7 @@ void ControlSessionHttp::on_read(beast::error_code ec, std::size_t bytes_transfe
 
         // Write the response
         http::async_write(this->socket_, *sp,
-                          boost::asio::bind_executor(strand_, [this, self = this->shared_from_this(), sp](beast::error_code ec, std::size_t bytes) {
-                              this->on_write(ec, bytes, sp->need_eof());
-                          }));
+                          [this, self = this->shared_from_this(), sp](beast::error_code ec, std::size_t bytes) { this->on_write(ec, bytes, sp->need_eof()); });
     });
 }
 
@@ -415,8 +410,7 @@ void ControlSessionHttp::on_write(beast::error_code ec, std::size_t bytes, bool 
     req_ = {};
 
     // Read another request
-    http::async_read(socket_, buffer_, req_,
-                     boost::asio::bind_executor(strand_, [this, self = shared_from_this()](beast::error_code ec, std::size_t bytes) { on_read(ec, bytes); }));
+    http::async_read(socket_, buffer_, req_, [this, self = shared_from_this()](beast::error_code ec, std::size_t bytes) { on_read(ec, bytes); });
 }
 
 

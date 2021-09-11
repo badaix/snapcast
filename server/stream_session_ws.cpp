@@ -26,8 +26,8 @@ using namespace std;
 static constexpr auto LOG_TAG = "StreamSessionWS";
 
 
-StreamSessionWebsocket::StreamSessionWebsocket(boost::asio::io_context& ioc, StreamMessageReceiver* receiver, websocket::stream<beast::tcp_stream>&& socket)
-    : StreamSession(ioc, receiver), ws_(std::move(socket))
+StreamSessionWebsocket::StreamSessionWebsocket(StreamMessageReceiver* receiver, websocket::stream<beast::tcp_stream>&& socket)
+    : StreamSession(socket.get_executor(), receiver), ws_(std::move(socket))
 {
     LOG(DEBUG, LOG_TAG) << "StreamSessionWS\n";
 }
@@ -77,18 +77,14 @@ std::string StreamSessionWebsocket::getIP()
 void StreamSessionWebsocket::sendAsync(const shared_const_buffer& buffer, const WriteHandler& handler)
 {
     LOG(TRACE, LOG_TAG) << "sendAsync: " << buffer.message().type << "\n";
-    ws_.async_write(buffer, boost::asio::bind_executor(strand_, [self = shared_from_this(), buffer, handler](boost::system::error_code ec, std::size_t length) {
-                        handler(ec, length);
-                    }));
+    ws_.async_write(buffer, [self = shared_from_this(), buffer, handler](boost::system::error_code ec, std::size_t length) { handler(ec, length); });
 }
 
 
 void StreamSessionWebsocket::do_read_ws()
 {
     // Read a message into our buffer
-    ws_.async_read(buffer_, boost::asio::bind_executor(strand_, [this, self = shared_from_this()](beast::error_code ec, std::size_t bytes_transferred) {
-                       on_read_ws(ec, bytes_transferred);
-                   }));
+    ws_.async_read(buffer_, [this, self = shared_from_this()](beast::error_code ec, std::size_t bytes_transferred) { on_read_ws(ec, bytes_transferred); });
 }
 
 

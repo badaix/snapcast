@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2020  Johannes Pohl
+    Copyright (C) 2014-2021  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -26,8 +26,8 @@ using namespace std;
 static constexpr auto LOG_TAG = "ControlSessionWS";
 
 
-ControlSessionWebsocket::ControlSessionWebsocket(ControlMessageReceiver* receiver, boost::asio::io_context& ioc, websocket::stream<beast::tcp_stream>&& socket)
-    : ControlSession(receiver), ws_(std::move(socket)), strand_(ioc)
+ControlSessionWebsocket::ControlSessionWebsocket(ControlMessageReceiver* receiver, websocket::stream<beast::tcp_stream>&& socket)
+    : ControlSession(receiver), ws_(std::move(socket)), strand_(net::make_strand(ws_.get_executor()))
 {
     LOG(DEBUG, LOG_TAG) << "ControlSessionWebsocket\n";
 }
@@ -61,7 +61,7 @@ void ControlSessionWebsocket::stop()
 
 void ControlSessionWebsocket::sendAsync(const std::string& message)
 {
-    strand_.post([this, self = shared_from_this(), msg = message]() {
+    net::post(strand_, [this, self = shared_from_this(), msg = message]() {
         messages_.push_back(std::move(msg));
         if (messages_.size() > 1)
         {
@@ -76,29 +76,26 @@ void ControlSessionWebsocket::sendAsync(const std::string& message)
 void ControlSessionWebsocket::send_next()
 {
     const std::string& message = messages_.front();
-    ws_.async_write(boost::asio::buffer(message),
-                    boost::asio::bind_executor(strand_, [this, self = shared_from_this()](std::error_code ec, std::size_t length) {
-                        messages_.pop_front();
-                        if (ec)
-                        {
-                            LOG(ERROR, LOG_TAG) << "Error while writing to web socket: " << ec.message() << "\n";
-                        }
-                        else
-                        {
-                            LOG(TRACE, LOG_TAG) << "Wrote " << length << " bytes to web socket\n";
-                        }
-                        if (!messages_.empty())
-                            send_next();
-                    }));
+    ws_.async_write(boost::asio::buffer(message), [this, self = shared_from_this()](std::error_code ec, std::size_t length) {
+        messages_.pop_front();
+        if (ec)
+        {
+            LOG(ERROR, LOG_TAG) << "Error while writing to web socket: " << ec.message() << "\n";
+        }
+        else
+        {
+            LOG(TRACE, LOG_TAG) << "Wrote " << length << " bytes to web socket\n";
+        }
+        if (!messages_.empty())
+            send_next();
+    });
 }
 
 
 void ControlSessionWebsocket::do_read_ws()
 {
     // Read a message into our buffer
-    ws_.async_read(buffer_, boost::asio::bind_executor(strand_, [this, self = shared_from_this()](beast::error_code ec, std::size_t bytes_transferred) {
-                       on_read_ws(ec, bytes_transferred);
-                   }));
+    ws_.async_read(buffer_, [this, self = shared_from_this()](beast::error_code ec, std::size_t bytes_transferred) { on_read_ws(ec, bytes_transferred); });
 }
 
 

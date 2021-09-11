@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2020  Johannes Pohl
+    Copyright (C) 2014-2021  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -25,11 +25,11 @@
 using namespace std;
 using namespace streamreader;
 
-
 static constexpr auto LOG_TAG = "StreamSession";
 
 
-StreamSession::StreamSession(boost::asio::io_context& ioc, StreamMessageReceiver* receiver) : messageReceiver_(receiver), pcmStream_(nullptr), strand_(ioc)
+StreamSession::StreamSession(net::any_io_executor executor, StreamMessageReceiver* receiver)
+    : messageReceiver_(receiver), pcmStream_(nullptr), strand_(net::make_strand(executor))
 {
     base_msg_size_ = baseMessage_.getSize();
     buffer_.resize(base_msg_size_);
@@ -52,7 +52,7 @@ void StreamSession::send_next()
 {
     auto& buffer = messages_.front();
     buffer.on_air = true;
-    strand_.post([this, self = shared_from_this(), buffer]() {
+    net::post(strand_, [this, self = shared_from_this(), buffer]() {
         sendAsync(buffer, [this](boost::system::error_code ec, std::size_t length) {
             messages_.pop_front();
             if (ec)
@@ -70,7 +70,7 @@ void StreamSession::send_next()
 
 void StreamSession::send(shared_const_buffer const_buf)
 {
-    strand_.post([this, self = shared_from_this(), const_buf]() {
+    net::post(strand_, [this, self = shared_from_this(), const_buf]() {
         // delete PCM chunks that are older than the overall buffer duration
         messages_.erase(std::remove_if(messages_.begin(), messages_.end(),
                                        [this](const shared_const_buffer& buffer) {
