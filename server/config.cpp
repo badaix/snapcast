@@ -113,6 +113,7 @@ void Config::init(const std::string& root_directory, const std::string& user, co
 
 void Config::save()
 {
+    std::lock_guard<std::recursive_mutex> lock(mutex_);
     if (filename_.empty())
         init();
     std::ofstream ofs(filename_.c_str(), std::ofstream::out | std::ofstream::trunc);
@@ -128,6 +129,7 @@ ClientInfoPtr Config::getClientInfo(const std::string& clientId) const
     if (clientId.empty())
         return nullptr;
 
+    std::lock_guard<std::recursive_mutex> lock(mutex_);
     for (const auto& group : groups)
     {
         for (auto client : group->clients)
@@ -143,6 +145,7 @@ ClientInfoPtr Config::getClientInfo(const std::string& clientId) const
 
 GroupPtr Config::addClientInfo(ClientInfoPtr client)
 {
+    std::lock_guard<std::recursive_mutex> lock(mutex_);
     GroupPtr group = getGroupFromClient(client);
     if (!group)
     {
@@ -156,6 +159,7 @@ GroupPtr Config::addClientInfo(ClientInfoPtr client)
 
 GroupPtr Config::addClientInfo(const std::string& clientId)
 {
+    std::lock_guard<std::recursive_mutex> lock(mutex_);
     ClientInfoPtr client = getClientInfo(clientId);
     if (!client)
         client = make_shared<ClientInfo>(clientId);
@@ -165,6 +169,7 @@ GroupPtr Config::addClientInfo(const std::string& clientId)
 
 GroupPtr Config::getGroup(const std::string& groupId) const
 {
+    std::lock_guard<std::recursive_mutex> lock(mutex_);
     for (auto group : groups)
     {
         if (group->id == groupId)
@@ -177,6 +182,7 @@ GroupPtr Config::getGroup(const std::string& groupId) const
 
 GroupPtr Config::getGroupFromClient(const std::string& clientId)
 {
+    std::lock_guard<std::recursive_mutex> lock(mutex_);
     for (auto group : groups)
     {
         for (const auto& c : group->clients)
@@ -197,6 +203,7 @@ GroupPtr Config::getGroupFromClient(ClientInfoPtr client)
 
 json Config::getServerStatus(const json& streams) const
 {
+    std::lock_guard<std::recursive_mutex> lock(mutex_);
     Host host;
     host.update();
     // TODO: Set MAC and IP
@@ -214,6 +221,7 @@ json Config::getServerStatus(const json& streams) const
 
 json Config::getGroups() const
 {
+    std::lock_guard<std::recursive_mutex> lock(mutex_);
     json result = json::array();
     for (const auto& group : groups)
         result.push_back(group->toJson());
@@ -223,6 +231,7 @@ json Config::getGroups() const
 
 void Config::remove(ClientInfoPtr client)
 {
+    std::lock_guard<std::recursive_mutex> lock(mutex_);
     auto group = getGroupFromClient(client);
     if (!group)
         return;
@@ -234,6 +243,7 @@ void Config::remove(ClientInfoPtr client)
 
 void Config::remove(GroupPtr group, bool force)
 {
+    std::lock_guard<std::recursive_mutex> lock(mutex_);
     if (!group)
         return;
 

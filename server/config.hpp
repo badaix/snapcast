@@ -20,6 +20,7 @@
 #define CONFIG_HPP
 
 #include <memory>
+#include <mutex>
 #include <string>
 #include <sys/time.h>
 #include <vector>
@@ -397,6 +398,7 @@ public:
 private:
     Config() = default;
     ~Config();
+    mutable std::recursive_mutex mutex_;
     std::string filename_;
 };
 
