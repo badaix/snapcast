@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2020  Johannes Pohl
+    Copyright (C) 2014-2021  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -155,6 +155,7 @@ bool Player::getHardwareVolume(double& volume, bool& muted)
 
 void Player::adjustVolume(char* buffer, size_t frames)
 {
+    std::lock_guard<std::mutex> lock(mutex_);
     double volume = volCorrection_;
     // apply volume changes only for software mixer
     // for any other mixer, we might still have to apply the volCorrection_
@@ -199,6 +200,7 @@ void Player::setVolume_exp(double volume, double base)
 
 void Player::setVolume(double volume, bool mute)
 {
+    std::lock_guard<std::mutex> lock(mutex_);
     volume_ = volume;
     muted_ = mute;
     if (settings_.mixer.mode == ClientSettings::Mixer::Mode::hardware)

@@ -83,7 +83,7 @@ void Stream::setRealSampleRate(double sampleRate)
 
 void Stream::setBufferLen(size_t bufferLenMs)
 {
-    bufferMs_ = cs::msec(bufferLenMs);
+    bufferMs_.store(cs::msec(bufferLenMs));
 }
 
 
@@ -100,7 +100,7 @@ void Stream::addChunk(unique_ptr<msg::PcmChunk> chunk)
 {
     // drop chunk if it's too old. Just in case, this shouldn't happen.
     auto age = std::chrono::duration_cast<cs::msec>(TimeProvider::serverNow() - chunk->start());
-    if (age > 5s + bufferMs_)
+    if (age > 5s + bufferMs_.load())
         return;
 
     auto resampled = resampler_->resample(std::move(chunk));
@@ -114,7 +114,7 @@ void Stream::addChunk(unique_ptr<msg::PcmChunk> chunk)
         while (chunks_.front_copy(front_))
         {
             age = std::chrono::duration_cast<cs::msec>(TimeProvider::serverNow() - front_->start());
-            if ((age > 5s + bufferMs_) && chunks_.try_pop(front_))
+            if ((age > 5s + bufferMs_.load()) && chunks_.try_pop(front_))
                 LOG(TRACE, LOG_TAG) << "Oldest chunk too old: " << age.count() << " ms, removing. Chunks in queue left: " << chunks_.size() << "\n";
             else
                 break;
@@ -251,10 +251,10 @@ void Stream::resetBuffers()
 
 bool Stream::getPlayerChunk(void* outputBuffer, const cs::usec& outputBufferDacTime, uint32_t frames)
 {
-    if (outputBufferDacTime > bufferMs_)
+    if (outputBufferDacTime > bufferMs_.load())
     {
-        LOG(INFO, LOG_TAG) << "outputBufferDacTime > bufferMs: " << cs::duration<cs::msec>(outputBufferDacTime) << " > " << cs::duration<cs::msec>(bufferMs_)
-                           << "\n";
+        LOG(INFO, LOG_TAG) << "outputBufferDacTime > bufferMs: " << cs::duration<cs::msec>(outputBufferDacTime) << " > "
+                           << cs::duration<cs::msec>(bufferMs_.load()) << "\n";
         return false;
     }
 
@@ -292,7 +292,7 @@ bool Stream::getPlayerChunk(void* outputBuffer, const cs::usec& outputBufferDacT
         if (hard_sync_)
         {
             cs::nsec req_chunk_duration = cs::nsec(static_cast<cs::nsec::rep>(frames / format_.nsRate()));
-            cs::usec age = std::chrono::duration_cast<cs::usec>(TimeProvider::serverNow() - chunk_->start()) - bufferMs_ + outputBufferDacTime;
+            cs::usec age = std::chrono::duration_cast<cs::usec>(TimeProvider::serverNow() - chunk_->start()) - bufferMs_.load() + outputBufferDacTime;
             // LOG(INFO, LOG_TAG) << "age: " << age.count() / 1000 << ", buffer: " <<
             // std::chrono::duration_cast<chrono::milliseconds>(req_chunk_duration).count() << "\n";
             if (age < -req_chunk_duration)
@@ -313,7 +313,7 @@ bool Stream::getPlayerChunk(void* outputBuffer, const cs::usec& outputBufferDacT
                     chunk_ = nullptr;
                     while (chunks_.try_pop(chunk_))
                     {
-                        age = std::chrono::duration_cast<cs::usec>(TimeProvider::serverNow() - chunk_->start()) - bufferMs_ + outputBufferDacTime;
+                        age = std::chrono::duration_cast<cs::usec>(TimeProvider::serverNow() - chunk_->start()) - bufferMs_.load() + outputBufferDacTime;
                         LOG(DEBUG, LOG_TAG) << "age: " << age.count() / 1000 << ", requested chunk_duration: "
                                             << std::chrono::duration_cast<std::chrono::milliseconds>(req_chunk_duration).count()
                                             << ", duration: " << chunk_->duration<std::chrono::milliseconds>().count() << "\n";
@@ -370,8 +370,8 @@ bool Stream::getPlayerChunk(void* outputBuffer, const cs::usec& outputBufferDacT
             }
         }
 
-        cs::usec age = std::chrono::duration_cast<cs::usec>(TimeProvider::serverNow() - getNextPlayerChunk(outputBuffer, frames, framesCorrection) - bufferMs_ +
-                                                            outputBufferDacTime);
+        cs::usec age = std::chrono::duration_cast<cs::usec>(TimeProvider::serverNow() - getNextPlayerChunk(outputBuffer, frames, framesCorrection) -
+                                                            bufferMs_.load() + outputBufferDacTime);
 
         setRealSampleRate(format_.rate());
         // check if we need a hard sync

@@ -19,17 +19,20 @@
 #ifndef STREAM_HPP
 #define STREAM_HPP
 
+#include <atomic>
+#include <deque>
+#include <memory>
+
+#ifdef HAS_SOXR
+#include <soxr.h>
+#endif
+
 #include "common/queue.h"
 #include "common/sample_format.hpp"
 #include "double_buffer.hpp"
 #include "message/message.hpp"
 #include "message/pcm_chunk.hpp"
 #include "resampler.hpp"
-#include <deque>
-#include <memory>
-#ifdef HAS_SOXR
-#include <soxr.h>
-#endif
 
 /// Time synchronized audio stream
 /**
@@ -114,7 +117,7 @@ private:
     time_t lastUpdate_;
     uint32_t playedFrames_;
     int32_t correctAfterXFrames_;
-    chronos::msec bufferMs_;
+    std::atomic<chronos::msec> bufferMs_;
 
     std::unique_ptr<Resampler> resampler_;
 

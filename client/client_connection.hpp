@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2020  Johannes Pohl
+    Copyright (C) 2014-2021  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -36,6 +36,7 @@
 
 
 using boost::asio::ip::tcp;
+namespace net = boost::asio;
 
 
 class ClientConnection;
@@ -47,9 +48,8 @@ using MessageHandler = std::function<void(const boost::system::error_code&, std:
 class PendingRequest : public std::enable_shared_from_this<PendingRequest>
 {
 public:
-    PendingRequest(boost::asio::io_context& io_context, boost::asio::io_context::strand& strand, uint16_t reqId,
-                   const MessageHandler<msg::BaseMessage>& handler)
-        : id_(reqId), timer_(io_context), strand_(strand), handler_(handler){};
+    PendingRequest(const net::strand<net::any_io_executor>& strand, uint16_t reqId, const MessageHandler<msg::BaseMessage>& handler)
+        : id_(reqId), timer_(strand), strand_(strand), handler_(handler){};
 
     virtual ~PendingRequest()
     {
@@ -61,7 +61,7 @@ public:
     /// @param value the response message
     void setValue(std::unique_ptr<msg::BaseMessage> value)
     {
-        boost::asio::post(strand_, [this, self = shared_from_this(), val = std::move(value)]() mutable {
+        net::post(strand_, [this, self = shared_from_this(), val = std::move(value)]() mutable {
             timer_.cancel();
             if (handler_)
                 handler_({}, std::move(val));
@@ -79,7 +79,7 @@ public:
     void startTimer(const chronos::usec& timeout)
     {
         timer_.expires_after(timeout);
-        timer_.async_wait(boost::asio::bind_executor(strand_, [this, self = shared_from_this()](boost::system::error_code ec) {
+        timer_.async_wait([this, self = shared_from_this()](boost::system::error_code ec) {
             if (!handler_)
                 return;
             if (!ec)
@@ -94,7 +94,7 @@ public:
                 //   => should not happen, but who knows => pass the error to the handler
                 handler_(ec, nullptr);
             }
-        }));
+        });
     }
 
     /// Needed to put the requests in a container
@@ -107,7 +107,7 @@ public:
 private:
     uint16_t id_;
     boost::asio::steady_timer timer_;
-    boost::asio::io_context::strand& strand_;
+    net::strand<net::any_io_executor> strand_;
     MessageHandler<msg::BaseMessage> handler_;
 };
 
@@ -174,13 +174,13 @@ protected:
     size_t base_msg_size_;
 
     boost::asio::io_context& io_context_;
+    net::strand<net::any_io_executor> strand_;
     tcp::resolver resolver_;
     tcp::socket socket_;
     std::vector<std::weak_ptr<PendingRequest>> pendingRequests_;
     uint16_t reqId_;
     ClientSettings::Server server_;
 
-    boost::asio::io_context::strand strand_;
     struct PendingMessage
     {
         PendingMessage(const msg::message_ptr& msg, ResultHandler handler) : msg(msg), handler(handler)
