@@ -19,18 +19,21 @@
 #ifndef STREAM_SESSION_HPP
 #define STREAM_SESSION_HPP
 
-#include "common/queue.h"
-#include "message/message.hpp"
-#include "streamreader/stream_manager.hpp"
 #include <atomic>
-#include <boost/asio.hpp>
 #include <condition_variable>
 #include <deque>
 #include <memory>
+#include <mutex>
 #include <set>
 #include <sstream>
 #include <string>
 #include <vector>
+
+#include <boost/asio.hpp>
+
+#include "common/queue.h"
+#include "message/message.hpp"
+#include "streamreader/stream_manager.hpp"
 
 
 using boost::asio::ip::tcp;
@@ -159,6 +162,7 @@ protected:
     streamreader::PcmStreamPtr pcmStream_;
     net::strand<net::any_io_executor> strand_;
     std::deque<shared_const_buffer> messages_;
+    mutable std::mutex mutex_;
 };
 
 

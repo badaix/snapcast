@@ -84,6 +84,7 @@ void StreamServer::onChunkEncoded(const PcmStream* pcmStream, bool isDefaultStre
     {
         if (!settings_.stream.sendAudioToMutedClients)
         {
+            std::lock_guard<std::recursive_mutex> lock(clientMutex_);
             GroupPtr group = Config::instance().getGroupFromClient(session->clientId);
             if (group)
             {
@@ -93,7 +94,6 @@ void StreamServer::onChunkEncoded(const PcmStream* pcmStream, bool isDefaultStre
                 }
                 else
                 {
-                    std::lock_guard<std::recursive_mutex> lock(clientMutex_);
                     ClientInfoPtr client = group->getClient(session->clientId);
                     if (client && client->config.volume.muted)
                         continue;

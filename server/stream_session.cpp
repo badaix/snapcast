@@ -38,12 +38,14 @@ StreamSession::StreamSession(net::any_io_executor executor, StreamMessageReceive
 
 void StreamSession::setPcmStream(PcmStreamPtr pcmStream)
 {
+    std::lock_guard<std::mutex> lock(mutex_);
     pcmStream_ = pcmStream;
 }
 
 
 const PcmStreamPtr StreamSession::pcmStream() const
 {
+    std::lock_guard<std::mutex> lock(mutex_);
     return pcmStream_;
 }
 
