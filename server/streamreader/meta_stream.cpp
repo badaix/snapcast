@@ -87,7 +87,7 @@ void MetaStream::stop()
 void MetaStream::onPropertiesChanged(const PcmStream* pcmStream, const Properties& properties)
 {
     LOG(DEBUG, LOG_TAG) << "onPropertiesChanged: " << pcmStream->getName() << "\n";
-    std::lock_guard<std::recursive_mutex> lock(mutex_);
+    // std::lock_guard<std::recursive_mutex> lock(mutex_);
     if (pcmStream != active_stream_.get())
         return;
     setProperties(properties);
@@ -97,7 +97,7 @@ void MetaStream::onPropertiesChanged(const PcmStream* pcmStream, const Propertie
 void MetaStream::onStateChanged(const PcmStream* pcmStream, ReaderState state)
 {
     LOG(DEBUG, LOG_TAG) << "onStateChanged: " << pcmStream->getName() << ", state: " << state << "\n";
-    std::lock_guard<std::recursive_mutex> lock(mutex_);
+    // std::lock_guard<std::recursive_mutex> lock(mutex_);
 
     if (active_stream_->getProperties().playback_status == PlaybackStatus::kPaused)
         return;
@@ -137,7 +137,7 @@ void MetaStream::onStateChanged(const PcmStream* pcmStream, ReaderState state)
 void MetaStream::onChunkRead(const PcmStream* pcmStream, const msg::PcmChunk& chunk)
 {
     // LOG(TRACE, LOG_TAG) << "onChunkRead: " << pcmStream->getName() << ", duration: " << chunk.durationMs() << "\n";
-    std::lock_guard<std::recursive_mutex> lock(mutex_);
+    // std::lock_guard<std::recursive_mutex> lock(mutex_);
     if (pcmStream != active_stream_.get())
         return;
     // active_stream_->sampleFormat_
@@ -195,7 +195,7 @@ void MetaStream::onChunkEncoded(const PcmStream* pcmStream, std::shared_ptr<msg:
 void MetaStream::onResync(const PcmStream* pcmStream, double ms)
 {
     LOG(DEBUG, LOG_TAG) << "onResync: " << pcmStream->getName() << ", duration: " << ms << " ms\n";
-    std::lock_guard<std::recursive_mutex> lock(mutex_);
+    // std::lock_guard<std::recursive_mutex> lock(mutex_);
     if (pcmStream != active_stream_.get())
         return;
     resync(std::chrono::nanoseconds(static_cast<int64_t>(ms * 1000000)));

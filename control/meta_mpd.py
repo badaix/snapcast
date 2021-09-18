@@ -576,7 +576,7 @@ class MPDWrapper(object):
                 logger.debug(
                     f'key: {key}, value: {value}, mapped key: {tag_mapping[key][0]}, mapped value: {snapmeta[tag_mapping[key][0]]}')
             except KeyError:
-                logger.warning(f'tag "{key}" not supported')
+                logger.debug(f'tag "{key}" not supported')
             except (ValueError, TypeError):
                 logger.warning(
                     f"Can't cast value {value} to {tag_mapping[key][1]}")
@@ -602,7 +602,6 @@ class MPDWrapper(object):
         if art_url is not None:
             logger.info(f'album art cache hit: "{art_url}"')
             snapmeta['artUrl'] = art_url
-
         return snapmeta
 
     def __diff_map(self, old_map, new_map):
@@ -647,12 +646,12 @@ class MPDWrapper(object):
 
         new_song = self.client.currentsong()
         if not new_song:
-            logger.debug("_update_properties: failed to get current song")
+            logger.warning("_update_properties: failed to get current song")
             new_song = {}
 
         new_status = self.client.status()
         if not new_status:
-            logger.debug("_update_properties: failed to get new status")
+            logger.warning("_update_properties: failed to get new status")
             new_status = {}
 
         changed_status = self.__diff_map(self._status, new_status)

@@ -288,6 +288,7 @@ void PcmStream::resync(const std::chrono::nanoseconds& duration)
 
 json PcmStream::toJson() const
 {
+    std::lock_guard<std::recursive_mutex> lock(mutex_);
     json j = {
         {"uri", uri_.toJson()},
         {"id", getId()},
@@ -316,7 +317,7 @@ const Metatags& PcmStream::getMetadata() const
 
 const Properties& PcmStream::getProperties() const
 {
-    std::lock_guard<std::recursive_mutex> lock(mutex_);
+    // std::lock_guard<std::recursive_mutex> lock(mutex_);
     return properties_;
 }
 
@@ -447,8 +448,7 @@ void PcmStream::play(ResultHandler handler)
 
 void PcmStream::setProperties(const Properties& properties)
 {
-    std::lock_guard<std::recursive_mutex> lock(mutex_);
-
+    // std::lock_guard<std::recursive_mutex> lock(mutex_);
     Properties props = properties;
     // Missing metadata means the data didn't change, so
     // enrich the new properites with old metadata

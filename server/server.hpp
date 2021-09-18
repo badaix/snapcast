@@ -90,8 +90,8 @@ private:
     /// @param deferred the delay after the last call to saveConfig
     void saveConfig(const std::chrono::milliseconds& deferred = std::chrono::seconds(2));
 
-    mutable std::recursive_mutex sessionsMutex_;
-    mutable std::recursive_mutex clientMutex_;
+    // mutable std::recursive_mutex controlMutex_;
+    // mutable std::recursive_mutex clientMutex_;
     boost::asio::io_context& io_context_;
     boost::asio::steady_timer config_timer_;
 

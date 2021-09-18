@@ -153,7 +153,7 @@ void Server::processRequest(const jsonrpcpp::request_ptr request, const OnRespon
                 // Notification: {"jsonrpc":"2.0","method":"Client.OnVolumeChanged","params":{"id":"00:21:6a:7d:74:fc","volume":{"muted":false,"percent":74}}}
                 // clang-format on
 
-                std::lock_guard<std::recursive_mutex> lock(clientMutex_);
+                // std::lock_guard<std::recursive_mutex> lock(clientMutex_);
                 clientInfo->config.volume.fromJson(request->params().get("volume"));
                 result["volume"] = clientInfo->config.volume.toJson();
                 notification = std::make_shared<jsonrpcpp::Notification>(
@@ -825,6 +825,8 @@ void Server::onMessageReceived(StreamSession* streamSession, const msg::BaseMess
 
 void Server::saveConfig(const std::chrono::milliseconds& deferred)
 {
+    static std::mutex mutex;
+    std::lock_guard<std::mutex> lock(mutex);
     config_timer_.cancel();
     config_timer_.expires_after(deferred);
     config_timer_.async_wait([](const boost::system::error_code& ec) {
