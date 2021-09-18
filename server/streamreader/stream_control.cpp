@@ -36,7 +36,7 @@ namespace streamreader
 static constexpr auto LOG_TAG = "Script";
 
 
-StreamControl::StreamControl(net::io_context& ioc) : ioc_(ioc), strand_(net::make_strand(ioc.get_executor()))
+StreamControl::StreamControl(const net::any_io_executor& executor) : executor_(executor)
 {
 }
 
@@ -61,7 +61,7 @@ void StreamControl::start(const std::string& stream_id, const ServerSettings& se
 void StreamControl::command(const jsonrpcpp::Request& request, const OnResponse& response_handler)
 {
     // use strand to serialize commands sent from different threads
-    net::post(strand_, [this, request, response_handler]() {
+    net::post(executor_, [this, request, response_handler]() {
         if (response_handler)
             request_callbacks_[request.id()] = response_handler;
 
@@ -134,7 +134,7 @@ void StreamControl::onLog(std::string message)
 
 
 
-ScriptStreamControl::ScriptStreamControl(net::io_context& ioc, const std::string& script) : StreamControl(ioc), script_(script)
+ScriptStreamControl::ScriptStreamControl(const net::any_io_executor& executor, const std::string& script) : StreamControl(executor), script_(script)
 {
     // auto fileExists = [](const std::string& filename) {
     //     struct stat buffer;
@@ -158,22 +158,20 @@ void ScriptStreamControl::doStart(const std::string& stream_id, const ServerSett
     {
         process_ = bp::child(
             script_ + params.str(), bp::std_out > pipe_stdout_, bp::std_err > pipe_stderr_, bp::std_in < in_,
-            bp::on_exit =
-                [](int exit, const std::error_code& ec_in) {
-                    auto severity = AixLog::Severity::debug;
-                    if (exit != 0)
-                        severity = AixLog::Severity::error;
-                    LOG(severity, LOG_TAG) << "Exit code: " << exit << ", message: " << ec_in.message() << "\n";
-                },
-            ioc_);
+            bp::on_exit = [](int exit, const std::error_code& ec_in) {
+                auto severity = AixLog::Severity::debug;
+                if (exit != 0)
+                    severity = AixLog::Severity::error;
+                LOG(severity, LOG_TAG) << "Exit code: " << exit << ", message: " << ec_in.message() << "\n";
+            });
     }
     catch (const std::exception& e)
     {
         throw SnapException("Failed to start control script: '" + script_ + "', exception: " + e.what());
     }
 
-    stream_stdout_ = make_unique<boost::asio::posix::stream_descriptor>(ioc_, pipe_stdout_.native_source());
-    stream_stderr_ = make_unique<boost::asio::posix::stream_descriptor>(ioc_, pipe_stderr_.native_source());
+    stream_stdout_ = make_unique<boost::asio::posix::stream_descriptor>(executor_, pipe_stdout_.native_source());
+    stream_stderr_ = make_unique<boost::asio::posix::stream_descriptor>(executor_, pipe_stderr_.native_source());
     stdoutReadLine();
     stderrReadLine();
 }

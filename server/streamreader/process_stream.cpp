@@ -113,12 +113,12 @@ void ProcessStream::do_connect()
     fcntl(pipe_stdout_.native_source(), F_SETFL, flags | O_NONBLOCK);
 
     process_ = bp::child(path_ + exe_ + " " + params_, bp::std_out > pipe_stdout_, bp::std_err > pipe_stderr_, bp::start_dir = path_);
-    stream_ = make_unique<stream_descriptor>(ioc_, pipe_stdout_.native_source());
-    stream_stderr_ = make_unique<stream_descriptor>(ioc_, pipe_stderr_.native_source());
+    stream_ = make_unique<stream_descriptor>(strand_, pipe_stdout_.native_source());
+    stream_stderr_ = make_unique<stream_descriptor>(strand_, pipe_stderr_.native_source());
     on_connect();
     if (wd_timeout_sec_ > 0)
     {
-        watchdog_ = make_unique<Watchdog>(ioc_, this);
+        watchdog_ = make_unique<Watchdog>(strand_, this);
         watchdog_->start(std::chrono::seconds(wd_timeout_sec_));
     }
     else

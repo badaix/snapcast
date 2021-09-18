@@ -120,7 +120,7 @@ class StreamSession : public std::enable_shared_from_this<StreamSession>
 {
 public:
     /// ctor. Received message from the client are passed to StreamMessageReceiver
-    StreamSession(net::any_io_executor strand, StreamMessageReceiver* receiver);
+    StreamSession(const net::any_io_executor& executor, StreamMessageReceiver* receiver);
     virtual ~StreamSession() = default;
 
     virtual std::string getIP() = 0;

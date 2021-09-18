@@ -41,6 +41,8 @@
 
 
 namespace bp = boost::process;
+namespace net = boost::asio;
+
 using json = nlohmann::json;
 
 
@@ -178,6 +180,7 @@ protected:
     /// Send request to stream control script
     void sendRequest(const std::string& method, const jsonrpcpp::Parameter& params, ResultHandler handler);
 
+    net::strand<net::any_io_executor> strand_;
     std::chrono::time_point<std::chrono::steady_clock> tvEncodedChunk_;
     std::vector<PcmListener*> pcmListeners_;
     StreamUri uri_;
@@ -185,7 +188,7 @@ protected:
     size_t chunk_ms_;
     std::unique_ptr<encoder::Encoder> encoder_;
     std::string name_;
-    ReaderState state_;
+    std::atomic<ReaderState> state_;
     Metatags metadata_;
     Properties properties_;
     boost::asio::io_context& ioc_;

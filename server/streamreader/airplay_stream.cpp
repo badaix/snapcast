@@ -229,7 +229,7 @@ void AirplayStream::pipeReadLine()
         try
         {
             int fd = open(pipePath_.c_str(), O_RDONLY | O_NONBLOCK);
-            pipe_fd_ = std::make_unique<boost::asio::posix::stream_descriptor>(ioc_, fd);
+            pipe_fd_ = std::make_unique<boost::asio::posix::stream_descriptor>(strand_, fd);
             LOG(INFO, LOG_TAG) << "Metadata pipe opened: " << pipePath_ << "\n";
         }
         catch (const std::exception& e)

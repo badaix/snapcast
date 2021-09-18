@@ -28,9 +28,7 @@
 #include <map>
 #include <string>
 
-#include <boost/asio/io_context.hpp>
-#include <boost/asio/read_until.hpp>
-#include <boost/asio/strand.hpp>
+#include <boost/asio.hpp>
 
 #include "jsonrpcpp.hpp"
 #include "server_settings.hpp"
@@ -54,7 +52,7 @@ public:
     using OnResponse = std::function<void(const jsonrpcpp::Response& response)>;
     using OnLog = std::function<void(std::string message)>;
 
-    StreamControl(net::io_context& ioc);
+    StreamControl(const net::any_io_executor& executor);
     virtual ~StreamControl();
 
     void start(const std::string& stream_id, const ServerSettings& server_setttings, const OnNotification& notification_handler,
@@ -70,7 +68,7 @@ protected:
     void onReceive(const std::string& json);
     void onLog(std::string message);
 
-    net::io_context& ioc_;
+    net::any_io_executor executor_;
 
 private:
     OnRequest request_handler_;
@@ -78,14 +76,13 @@ private:
     OnLog log_handler_;
 
     std::map<jsonrpcpp::Id, OnResponse> request_callbacks_;
-    net::strand<net::any_io_executor> strand_;
 };
 
 
 class ScriptStreamControl : public StreamControl
 {
 public:
-    ScriptStreamControl(net::io_context& ioc, const std::string& script);
+    ScriptStreamControl(const net::any_io_executor& executor, const std::string& script);
     virtual ~ScriptStreamControl() = default;
 
     void stop() override;

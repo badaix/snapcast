@@ -29,7 +29,7 @@ using namespace std;
 namespace streamreader
 {
 
-Watchdog::Watchdog(boost::asio::io_context& ioc, WatchdogListener* listener) : timer_(ioc), listener_(listener)
+Watchdog::Watchdog(const net::any_io_executor& executor, WatchdogListener* listener) : timer_(executor), listener_(listener)
 {
 }
 

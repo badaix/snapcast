@@ -53,7 +53,7 @@ void FileStream::do_connect()
 {
     LOG(DEBUG, LOG_TAG) << "connect\n";
     int fd = open(uri_.path.c_str(), O_RDONLY | O_NONBLOCK);
-    stream_ = std::make_unique<boost::asio::posix::stream_descriptor>(ioc_, fd);
+    stream_ = std::make_unique<boost::asio::posix::stream_descriptor>(strand_, fd);
     on_connect();
 }
 

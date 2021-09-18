@@ -61,7 +61,7 @@ TcpStream::TcpStream(PcmListener* pcmListener, boost::asio::io_context& ioc, con
 
     LOG(INFO, LOG_TAG) << "TcpStream host: " << host_ << ", port: " << port_ << ", is server: " << is_server_ << "\n";
     if (is_server_)
-        acceptor_ = make_unique<tcp::acceptor>(ioc_, tcp::endpoint(boost::asio::ip::address::from_string(host_), port_));
+        acceptor_ = make_unique<tcp::acceptor>(strand_, tcp::endpoint(boost::asio::ip::address::from_string(host_), port_));
 }
 
 
@@ -87,7 +87,7 @@ void TcpStream::do_connect()
     }
     else
     {
-        stream_ = make_unique<tcp::socket>(ioc_);
+        stream_ = make_unique<tcp::socket>(strand_);
         boost::asio::ip::tcp::endpoint endpoint(boost::asio::ip::address::from_string(host_), port_);
         stream_->async_connect(endpoint, [this](const boost::system::error_code& ec) {
             if (!ec)

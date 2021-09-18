@@ -22,6 +22,8 @@
 #include <boost/asio.hpp>
 #include <memory>
 
+namespace net = boost::asio;
+
 namespace streamreader
 {
 
@@ -39,7 +41,7 @@ public:
 class Watchdog
 {
 public:
-    Watchdog(boost::asio::io_context& ioc, WatchdogListener* listener = nullptr);
+    Watchdog(const net::any_io_executor& executor, WatchdogListener* listener = nullptr);
     virtual ~Watchdog();
 
     void start(const std::chrono::milliseconds& timeout);

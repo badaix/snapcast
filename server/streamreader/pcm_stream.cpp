@@ -42,8 +42,8 @@ static constexpr auto LOG_TAG = "PcmStream";
 
 
 PcmStream::PcmStream(PcmListener* pcmListener, boost::asio::io_context& ioc, const ServerSettings& server_settings, const StreamUri& uri)
-    : active_(false), pcmListeners_{pcmListener}, uri_(uri), chunk_ms_(20), state_(ReaderState::kIdle), ioc_(ioc), server_settings_(server_settings),
-      req_id_(0), property_timer_(ioc)
+    : active_(false), strand_(net::make_strand(ioc.get_executor())), pcmListeners_{pcmListener}, uri_(uri), chunk_ms_(20), state_(ReaderState::kIdle),
+      ioc_(ioc), server_settings_(server_settings), req_id_(0), property_timer_(strand_)
 {
     encoder::EncoderFactory encoderFactory;
     if (uri_.query.find(kUriCodec) == uri_.query.end())
@@ -61,7 +61,7 @@ PcmStream::PcmStream(PcmListener* pcmListener, boost::asio::io_context& ioc, con
 
     if (uri_.query.find(kControlScript) != uri_.query.end())
     {
-        stream_ctrl_ = std::make_unique<ScriptStreamControl>(ioc, uri_.query[kControlScript]);
+        stream_ctrl_ = std::make_unique<ScriptStreamControl>(strand_, uri_.query[kControlScript]);
     }
 
     if (uri_.query.find(kUriChunkMs) != uri_.query.end())

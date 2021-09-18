@@ -28,7 +28,7 @@ using namespace streamreader;
 static constexpr auto LOG_TAG = "StreamSession";
 
 
-StreamSession::StreamSession(net::any_io_executor executor, StreamMessageReceiver* receiver)
+StreamSession::StreamSession(const net::any_io_executor& executor, StreamMessageReceiver* receiver)
     : messageReceiver_(receiver), pcmStream_(nullptr), strand_(net::make_strand(executor))
 {
     base_msg_size_ = baseMessage_.getSize();
