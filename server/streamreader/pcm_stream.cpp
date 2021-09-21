@@ -295,7 +295,6 @@ json PcmStream::toJson() const
         {"status", to_string(state_)},
     };
 
-    j["metadata"] = metadata_.toJson();
     j["properties"] = properties_.toJson();
 
     return j;
@@ -305,13 +304,6 @@ json PcmStream::toJson() const
 void PcmStream::addListener(PcmListener* pcmListener)
 {
     pcmListeners_.push_back(pcmListener);
-}
-
-
-const Metatags& PcmStream::getMetadata() const
-{
-    std::lock_guard<std::recursive_mutex> lock(mutex_);
-    return metadata_;
 }
 
 
@@ -448,7 +440,7 @@ void PcmStream::play(ResultHandler handler)
 
 void PcmStream::setProperties(const Properties& properties)
 {
-    // std::lock_guard<std::recursive_mutex> lock(mutex_);
+    std::lock_guard<std::recursive_mutex> lock(mutex_);
     Properties props = properties;
     // Missing metadata means the data didn't change, so
     // enrich the new properites with old metadata

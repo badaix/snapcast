@@ -134,7 +134,6 @@ public:
     virtual const SampleFormat& getSampleFormat() const;
     virtual std::string getCodec() const;
 
-    const Metatags& getMetadata() const;
     const Properties& getProperties() const;
 
     // Setter for properties
@@ -189,7 +188,6 @@ protected:
     std::unique_ptr<encoder::Encoder> encoder_;
     std::string name_;
     std::atomic<ReaderState> state_;
-    Metatags metadata_;
     Properties properties_;
     boost::asio::io_context& ioc_;
     ServerSettings server_settings_;

@@ -629,6 +629,7 @@ void Server::processRequest(const jsonrpcpp::request_ptr request, const OnRespon
 void Server::onMessageReceived(std::shared_ptr<ControlSession> controlSession, const std::string& message, const ResponseHander& response_handler)
 {
     // LOG(DEBUG, LOG_TAG) << "onMessageReceived: " << message << "\n";
+    // std::lock_guard<std::recursive_mutex> lock(clientMutex_);
     jsonrpcpp::entity_ptr entity(nullptr);
     try
     {
@@ -703,6 +704,7 @@ void Server::onMessageReceived(std::shared_ptr<ControlSession> controlSession, c
 
 void Server::onMessageReceived(StreamSession* streamSession, const msg::BaseMessage& baseMessage, char* buffer)
 {
+    // std::lock_guard<std::recursive_mutex> lock(clientMutex_);
     LOG(DEBUG, LOG_TAG) << "onMessageReceived: " << baseMessage.type << ", size: " << baseMessage.size << ", id: " << baseMessage.id
                         << ", refers: " << baseMessage.refersTo << ", sent: " << baseMessage.sent.sec << "," << baseMessage.sent.usec
                         << ", recv: " << baseMessage.received.sec << "," << baseMessage.received.usec << "\n";
