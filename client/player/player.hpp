@@ -22,6 +22,7 @@
 #include "client_settings.hpp"
 #include "common/aixlog.hpp"
 #include "common/endian.hpp"
+#include "software_dsp.hpp"
 #include "stream.hpp"
 
 #include <boost/asio.hpp>
@@ -97,6 +98,7 @@ protected:
 
     boost::asio::io_context& io_context_;
     std::atomic<bool> active_;
+    std::unique_ptr<SoftwareDsp> dsp_;
     std::shared_ptr<Stream> stream_;
     std::thread playerThread_;
     ClientSettings::Player settings_;
@@ -105,15 +107,6 @@ protected:
     double volCorrection_;
     volume_callback onVolumeChanged_;
     mutable std::mutex mutex_;
-
-private:
-    template <typename T>
-    void adjustVolume(char* buffer, size_t count, double volume)
-    {
-        T* bufferT = (T*)buffer;
-        for (size_t n = 0; n < count; ++n)
-            bufferT[n] = endian::swap<T>(static_cast<T>(endian::swap<T>(bufferT[n]) * volume));
-    }
 };
 
 } // namespace player

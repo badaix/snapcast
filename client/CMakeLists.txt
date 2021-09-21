@@ -6,7 +6,8 @@ set(CLIENT_SOURCES
     time_provider.cpp
     decoder/pcm_decoder.cpp
     player/player.cpp
-    player/file_player.cpp)
+    player/file_player.cpp
+    player/software_dsp.cpp)
 
 set(CLIENT_LIBRARIES ${CMAKE_THREAD_LIBS_INIT} ${ATOMIC_LIBRARY} common)
 
