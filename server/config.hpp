@@ -275,7 +275,7 @@ struct Group
         clients.clear();
         if (j.count("clients"))
         {
-            for (auto& jClient : j["clients"])
+            for (const auto& jClient : j["clients"])
             {
                 ClientInfoPtr client = std::make_shared<ClientInfo>();
                 client->fromJson(jClient);
@@ -294,7 +294,7 @@ struct Group
         j["muted"] = muted;
 
         json jClients = json::array();
-        for (auto client : clients)
+        for (const auto& client : clients)
             jClients.push_back(client->toJson());
         j["clients"] = jClients;
         return j;
@@ -323,7 +323,7 @@ struct Group
 
     ClientInfoPtr getClient(const std::string& clientId)
     {
-        for (auto client : clients)
+        for (const auto& client : clients)
         {
             if (client->id == clientId)
                 return client;
@@ -336,7 +336,7 @@ struct Group
         if (!client)
             return;
 
-        for (auto c : clients)
+        for (const auto& c : clients)
         {
             if (c->id == client->id)
                 return;
@@ -395,10 +395,13 @@ public:
 
     std::vector<GroupPtr> groups;
 
+    std::mutex& getMutex();
+
 private:
     Config() = default;
     ~Config();
     mutable std::recursive_mutex mutex_;
+    std::mutex client_mutex_;
     std::string filename_;
 };
 

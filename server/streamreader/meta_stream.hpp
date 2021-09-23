@@ -70,8 +70,8 @@ protected:
 
 protected:
     std::vector<std::shared_ptr<PcmStream>> streams_;
+    std::recursive_mutex active_mutex_;
     std::shared_ptr<PcmStream> active_stream_;
-    // std::recursive_mutex mutex_;
     std::unique_ptr<Resampler> resampler_;
     bool first_read_;
     std::chrono::time_point<std::chrono::steady_clock> next_tick_;

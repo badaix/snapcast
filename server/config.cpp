@@ -93,7 +93,7 @@ void Config::init(const std::string& root_directory, const std::string& user, co
             if (j.count("ConfigVersion") != 0u)
             {
                 json jGroups = j["Groups"];
-                for (auto& jGroup : jGroups)
+                for (const auto& jGroup : jGroups)
                 {
                     GroupPtr group = make_shared<Group>();
                     group->fromJson(jGroup);
@@ -170,7 +170,7 @@ GroupPtr Config::addClientInfo(const std::string& clientId)
 GroupPtr Config::getGroup(const std::string& groupId) const
 {
     std::lock_guard<std::recursive_mutex> lock(mutex_);
-    for (auto group : groups)
+    for (const auto& group : groups)
     {
         if (group->id == groupId)
             return group;
@@ -183,7 +183,7 @@ GroupPtr Config::getGroup(const std::string& groupId) const
 GroupPtr Config::getGroupFromClient(const std::string& clientId)
 {
     std::lock_guard<std::recursive_mutex> lock(mutex_);
-    for (auto group : groups)
+    for (const auto& group : groups)
     {
         for (const auto& c : group->clients)
         {
@@ -249,6 +249,12 @@ void Config::remove(GroupPtr group, bool force)
 
     if (group->empty() || force)
         groups.erase(std::remove(groups.begin(), groups.end(), group), groups.end());
+}
+
+
+std::mutex& Config::getMutex()
+{
+    return client_mutex_;
 }
 
 /*

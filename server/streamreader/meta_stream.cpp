@@ -97,7 +97,7 @@ void MetaStream::onPropertiesChanged(const PcmStream* pcmStream, const Propertie
 void MetaStream::onStateChanged(const PcmStream* pcmStream, ReaderState state)
 {
     LOG(DEBUG, LOG_TAG) << "onStateChanged: " << pcmStream->getName() << ", state: " << state << "\n";
-    // std::lock_guard<std::recursive_mutex> lock(mutex_);
+    std::lock_guard<std::recursive_mutex> lock(active_mutex_);
 
     if (active_stream_->getProperties().playback_status == PlaybackStatus::kPaused)
         return;
@@ -138,6 +138,7 @@ void MetaStream::onChunkRead(const PcmStream* pcmStream, const msg::PcmChunk& ch
 {
     // LOG(TRACE, LOG_TAG) << "onChunkRead: " << pcmStream->getName() << ", duration: " << chunk.durationMs() << "\n";
     // std::lock_guard<std::recursive_mutex> lock(mutex_);
+    std::lock_guard<std::recursive_mutex> lock(active_mutex_);
     if (pcmStream != active_stream_.get())
         return;
     // active_stream_->sampleFormat_

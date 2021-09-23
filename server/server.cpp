@@ -630,6 +630,7 @@ void Server::onMessageReceived(std::shared_ptr<ControlSession> controlSession, c
 {
     // LOG(DEBUG, LOG_TAG) << "onMessageReceived: " << message << "\n";
     // std::lock_guard<std::recursive_mutex> lock(clientMutex_);
+    std::lock_guard<std::mutex> lock(Config::instance().getMutex());
     jsonrpcpp::entity_ptr entity(nullptr);
     try
     {
@@ -708,6 +709,7 @@ void Server::onMessageReceived(StreamSession* streamSession, const msg::BaseMess
     LOG(DEBUG, LOG_TAG) << "onMessageReceived: " << baseMessage.type << ", size: " << baseMessage.size << ", id: " << baseMessage.id
                         << ", refers: " << baseMessage.refersTo << ", sent: " << baseMessage.sent.sec << "," << baseMessage.sent.usec
                         << ", recv: " << baseMessage.received.sec << "," << baseMessage.received.usec << "\n";
+    std::lock_guard<std::mutex> lock(Config::instance().getMutex());
     if (baseMessage.type == message_type::kTime)
     {
         auto timeMsg = make_shared<msg::Time>();

@@ -55,8 +55,9 @@ public:
         if (ext.find('.') == 0)
             ext = ext.substr(1);
         filename += "." + ext;
-        key_to_url_[key] = filename;
-        url_to_data_[filename] = image;
+        std::lock_guard<std::mutex> lock(mutex_);
+        key_to_url_[key] = std::move(filename);
+        url_to_data_[filename] = std::move(image);
         return filename;
     };
 
