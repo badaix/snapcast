@@ -97,6 +97,7 @@ static double stod(const std::string& str)
 static long double strtold(const char* str, char** endptr)
 {
 #ifdef NO_CPP11_STRING
+    std::ignore = endptr;
     return cpt::stod(str);
 #else
     return std::strtold(str, endptr);
@@ -106,6 +107,7 @@ static long double strtold(const char* str, char** endptr)
 static float strtof(const char* str, char** endptr)
 {
 #ifdef NO_CPP11_STRING
+    std::ignore = endptr;
     return (float)cpt::stod(str);
 #else
     return std::strtof(str, endptr);
