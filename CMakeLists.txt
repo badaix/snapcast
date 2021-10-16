@@ -280,7 +280,7 @@ if(NOT WIN32 AND NOT ANDROID)
 endif()
 
 if(NOT ANDROID)
-    find_package(Boost 1.70 REQUIRED)
+    find_package(Boost 1.74 REQUIRED)
 else()
     find_package(oboe REQUIRED CONFIG)
     find_package(flac REQUIRED CONFIG)
