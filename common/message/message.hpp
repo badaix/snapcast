@@ -242,7 +242,7 @@ protected:
 
     void writeVal(std::ostream& stream, const message_type& val) const
     {
-        uint16_t v = static_cast<uint16_t>(SWAP_16(val));
+        uint16_t v = static_cast<uint16_t>(SWAP_16(static_cast<uint16_t>(val)));
         stream.write(reinterpret_cast<const char*>(&v), sizeof(uint16_t));
     }
 
@@ -299,7 +299,7 @@ protected:
     void readVal(std::istream& stream, message_type& val) const
     {
         stream.read(reinterpret_cast<char*>(&val), sizeof(uint16_t));
-        val = static_cast<message_type>(SWAP_16(val));
+        val = static_cast<message_type>(SWAP_16(static_cast<uint16_t>(val)));
     }
 
     void readVal(std::istream& stream, int16_t& val) const
