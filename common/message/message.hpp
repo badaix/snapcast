@@ -242,7 +242,7 @@ protected:
 
     void writeVal(std::ostream& stream, const message_type& val) const
     {
-        uint16_t v = static_cast<uint16_t>(SWAP_16(static_cast<uint16_t>(val)));
+        uint16_t v = SWAP_16(static_cast<uint16_t>(val));
         stream.write(reinterpret_cast<const char*>(&v), sizeof(uint16_t));
     }
 
