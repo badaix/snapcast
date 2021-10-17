@@ -57,3 +57,12 @@ debian/snapserver.prerm.debhelper
 debian/snapserver.substvars
 debian/tmp
 obj-x86_64-linux-gnu
+
+# clangd
+.cache
+compile_commands.json
+
+# misc
+notes.txt
+sanitizer-suppressions.txt
+snapserver.conf
