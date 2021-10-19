@@ -177,12 +177,25 @@ bool PulsePlayer::needsThread() const
     return true;
 }
 
-
 void PulsePlayer::worker()
 {
-    pa_mainloop_run(pa_ml_, nullptr);
-}
+    while (active_)
+    {
+        pa_mainloop_run(pa_ml_, nullptr);
 
+        // if we are still active, wait for a chunk and attempt to reconnect
+        while (active_ && !stream_->waitForChunk(100ms))
+        {
+            LOG(DEBUG, LOG_TAG) << "Waiting for a chunk to become available before reconnecting\n";
+        }
+
+        if (active_)
+        {
+            LOG(INFO, LOG_TAG) << "Chunk available, reconnecting to pulse\n";
+            this->connect();
+        }
+    }
+}
 
 void PulsePlayer::setHardwareVolume(double volume, bool muted)
 {
@@ -321,19 +334,37 @@ void PulsePlayer::writeCallback(pa_stream* stream, size_t nbytes)
     // LOG(TRACE, LOG_TAG) << "writeCallback latency " << usec << " us, frames: " << numFrames << "\n";
     if (!stream_->getPlayerChunkOrSilence(buffer_.data(), std::chrono::microseconds(usec), numFrames))
     {
+        // if we haven't got a chunk for a while, it's time to disconnect from pulse so the sound device
+        // can become idle/suspended.
+        if (chronos::getTickCount() - last_chunk_tick_ > 5000)
+        {
+            LOG(INFO, LOG_TAG) << "No chunk received for 5000ms, disconnecting from pulse.\n";
+            this->disconnect();
+            return;
+        }
         // LOG(TRACE, LOG_TAG) << "Failed to get chunk. Playing silence.\n";
     }
     else
     {
+        last_chunk_tick_ = chronos::getTickCount();
         adjustVolume(static_cast<char*>(buffer_.data()), numFrames);
     }
 
     pa_stream_write(stream, buffer_.data(), nbytes, nullptr, 0LL, PA_SEEK_RELATIVE);
 }
 
-
 void PulsePlayer::start()
 {
+    LOG(INFO, LOG_TAG) << "Start\n";
+
+    this->connect();
+    Player::start();
+}
+
+void PulsePlayer::connect()
+{
+    LOG(INFO, LOG_TAG) << "Connecting to pulse\n";
+
     if (settings_.pcm_device.idx == -1)
         throw SnapException("Can't open " + settings_.pcm_device.name + ", error: No such device");
 
@@ -466,19 +497,26 @@ void PulsePlayer::start()
     if (result < 0)
         throw SnapException("Failed to connect PulseAudio playback stream");
 
-    Player::start();
+    // we just connected, pretend we got a chunk so we don't immediately disconnect.
+    last_chunk_tick_ = chronos::getTickCount();
 }
-
 
 void PulsePlayer::stop()
 {
     LOG(INFO, LOG_TAG) << "Stop\n";
+
+    this->disconnect();
+    Player::stop();
+}
+
+void PulsePlayer::disconnect()
+{
+    LOG(INFO, LOG_TAG) << "Disconnecting from pulse\n";
+
     if (pa_ml_ != nullptr)
     {
         pa_mainloop_quit(pa_ml_, 0);
     }
-
-    Player::stop();
 
     if (pa_ctx_ != nullptr)
     {

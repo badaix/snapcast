@@ -52,6 +52,9 @@ protected:
     bool needsThread() const override;
     void worker() override;
 
+    void connect();
+    void disconnect();
+
     bool getHardwareVolume(double& volume, bool& muted) override;
     void setHardwareVolume(double volume, bool muted) override;
 
@@ -67,6 +70,8 @@ protected:
     std::chrono::microseconds latency_;
     int underflows_ = 0;
     std::atomic<int> pa_ready_;
+
+    long last_chunk_tick_;
 
     pa_buffer_attr bufattr_;
     pa_sample_spec pa_ss_;
