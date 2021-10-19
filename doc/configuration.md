@@ -64,6 +64,16 @@ Parameters introduced by Snapclient:
 - `killall`: Kill all running librespot instances before launching librespot
 - `wd_timeout`: Restart librespot if it doesn't create log messages for x seconds
 
+#### Configuring 24 bits sample format
+
+Note: this requires librespot >= 0.2.0.
+
+To get 24 bits sample format from librespot, you need to both instruct librespot to stream in 24 bit and set `sampleformat` for the stream (as it does not inherit the default `sampleformat` set in the server config).
+
+```
+librespot:///<your-librespot-config>&sampleformat=44100:24:2&params=--format=S24
+```
+
 ### airplay
 
 Launches [shairport-sync](https://github.com/mikebrady/shairport-sync) and reads audio from stdout

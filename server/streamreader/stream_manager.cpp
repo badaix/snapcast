@@ -93,7 +93,9 @@ PcmStreamPtr StreamManager::addStream(StreamUri& streamUri)
         // Overwrite sample format here instead of inside the constructor, to make sure
         // that all constructors of all parent classes also use the overwritten sample
         // format.
-        streamUri.query[kUriSampleFormat] = "44100:16:2";
+        // We provide a sane default for the stream, but allow the user to be specific
+        // about an override.
+        streamUri.query[kUriSampleFormat] = streamUri.getQuery(kUriSampleFormat, "44100:16:2");
         stream = make_shared<LibrespotStream>(pcmListener_, ioc_, settings_, streamUri);
     }
     else if (streamUri.scheme == "airplay")
