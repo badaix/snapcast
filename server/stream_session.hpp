@@ -36,7 +36,6 @@
 #include "streamreader/stream_manager.hpp"
 
 
-using boost::asio::ip::tcp;
 namespace net = boost::asio;
 
 
