@@ -199,6 +199,10 @@ void PulsePlayer::worker()
 
 void PulsePlayer::setHardwareVolume(double volume, bool muted)
 {
+    // if we're not connected to pulse, ignore the hardware volume change as the volume will be set upon reconnect
+    if (playstream_ == nullptr)
+        return;
+
     last_change_ = std::chrono::steady_clock::now();
     pa_cvolume cvolume;
     if (muted)
@@ -363,6 +367,7 @@ void PulsePlayer::start()
 
 void PulsePlayer::connect()
 {
+    std::lock_guard<std::mutex> lock(mutex_);
     LOG(INFO, LOG_TAG) << "Connecting to pulse\n";
 
     if (settings_.pcm_device.idx == -1)
@@ -511,6 +516,7 @@ void PulsePlayer::stop()
 
 void PulsePlayer::disconnect()
 {
+    std::lock_guard<std::mutex> lock(mutex_);
     LOG(INFO, LOG_TAG) << "Disconnecting from pulse\n";
 
     if (pa_ml_ != nullptr)
