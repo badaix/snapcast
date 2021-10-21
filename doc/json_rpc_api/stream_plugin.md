@@ -8,6 +8,19 @@ The Snapcast server communicates via stdin/stdout with the plugin and sends newl
 
 A Stream plugin must support and handle the following requests, sent by the Snapcast server
 
+* [Plugin.Stream.Player.Control](#pluginstreamplayercontrol)
+* [Plugin.Stream.Player.SetProperty](#pluginstreamplayersetproperty)
+* [Plugin.Stream.Player.GetProperties](#pluginstreamplayergetproperties)
+
+## Notifications
+
+The following messages can be sent by the plugin to notify the server about changes. The `Plugin.Stream.Ready` should be fired as soon as the plugin is ready to receive commands, upon reception, the server will query the stream's [properties](#pluginstreamplayergetproperties)
+
+* [Plugin.Stream.Player.Properties](#pluginstreamplayerproperties)
+* [Plugin.Stream.Log](#pluginstreamlog)
+* [Plugin.Stream.Ready](#pluginstreamready)
+
+
 ### Plugin.Stream.Player.Control
 
 Used to control the player
