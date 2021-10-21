@@ -53,7 +53,7 @@ void Server::onPropertiesChanged(const PcmStream* pcmStream, const Properties& p
 {
     LOG(DEBUG, LOG_TAG) << "Properties changed, stream: " << pcmStream->getName() << ", properties: " << properties.toJson().dump(3) << "\n";
 
-    // Send propeties to all connected control clients
+    // Send properties to all connected control clients
     json notification =
         jsonrpcpp::Notification("Stream.OnProperties", jsonrpcpp::Parameter("id", pcmStream->getId(), "properties", properties.toJson())).to_json();
     controlServer_->send(notification.dump(), nullptr);

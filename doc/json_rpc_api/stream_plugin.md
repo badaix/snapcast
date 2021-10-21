@@ -16,7 +16,7 @@ Used to control the player
 {"id": 1, "jsonrpc": "2.0", "method": "Plugin.Stream.Player.Control", "params": {"command": "<command>", "params": { "<param 1>": <value 1>, "<param 2>": <value 2>}}}
 ```
 
-Supported `command`s:
+#### Supported `command`s:
 
 - `Play`: Start playback
   - `params`: none
@@ -36,7 +36,7 @@ Supported `command`s:
 - `SetPosition`: Set the current track position in seconds
   - `params`:
     - `Position`: [float] the new track position
-    - `TrackId`: [string] the optional currently playing track's identifier 
+    - `TrackId`: [string] the optional currently playing track's identifier
 
 #### Example
 
@@ -101,6 +101,8 @@ Success:
 
 ```json
 {"id": 1, "jsonrpc": "2.0", "result": {"canControl":true,"canGoNext":true,"canGoPrevious":true,"canPause":true,"canPlay":true,"canSeek":false,"loopStatus":"none","playbackStatus":"playing","position":593.394,"shuffle":false,"volume":86}}
+
+{"id": 1, "jsonrpc": "2.0", "result": {"canControl":true,"canGoNext":true,"canGoPrevious":true,"canPause":true,"canPlay":true,"canSeek":true,"loopStatus":"none","metadata":{"album":"Doldinger","albumArtist":["Klaus Doldinger's Passport"],"artUrl":"http://coverartarchive.org/release/0d4ff56b-2a2b-43b5-bf99-063cac1599e5/16940576164-250.jpg","artist":["Klaus Doldinger's Passport feat. Nils Landgren"],"contentCreated":"2016","duration":305.2929992675781,"genre":["Jazz"],"musicbrainzAlbumId":"0d4ff56b-2a2b-43b5-bf99-063cac1599e5","title":"Soul Town","trackId":"7","trackNumber":6,"url":"Klaus Doldinger's Passport - Doldinger (2016)/06 - Soul Town.mp3"},"playbackStatus":"playing","position":72.79499816894531,"shuffle":false,"volume":97}}
 ```
 
 #### Supported `property`s
@@ -128,22 +130,6 @@ Error:
 
 ```json
 todo
-```
-
-### Plugin.Stream.Player.GetMetadata
-
-TODO: Metadata are part of the properties
-
-```json
-{"id": 1, "jsonrpc": "2.0", "method": "Plugin.Stream.Player.GetMetadata"}
-```
-
-#### Expected response
-
-Success:
-
-```json
-{"id": 1, "jsonrpc": "2.0", "result": {"artist":["Travis Scott & HVME"],"file":"http://wdr-1live-live.icecast.wdr.de/wdr/1live/live/mp3/128/stream.mp3","name":"1Live, Westdeutscher Rundfunk Koeln","title":"Goosebumps (Remix)","trackId":"3"}}
 ```
 
 ## Notifications
