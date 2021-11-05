@@ -93,9 +93,9 @@ elseif (${CMAKE_SYSTEM_NAME} MATCHES "FreeBSD")
     endif()
 elseif (${CMAKE_SYSTEM_NAME} MATCHES "Android")
     set (ANDROID TRUE)
-    if (BUILD_SERVER)
-        message(FATAL_ERROR "Snapserver not yet supported for Android, use \"-DBUILD_SERVER=OFF\"")
-    endif()
+#    if (BUILD_SERVER)
+#        message(FATAL_ERROR "Snapserver not yet supported for Android, use \"-DBUILD_SERVER=OFF\"")
+#    endif()
 endif()
 
 # Configure paths

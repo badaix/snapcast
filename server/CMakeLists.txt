@@ -41,63 +41,81 @@ set(SERVER_INCLUDE
     ${CMAKE_SOURCE_DIR}/server
     ${CMAKE_SOURCE_DIR}/common)
 
-# Avahi
-if (AVAHI_FOUND)
-    list(APPEND SERVER_SOURCES publishZeroConf/publish_avahi.cpp)
-    list(APPEND SERVER_LIBRARIES ${AVAHI_LIBRARIES})
-    list(APPEND SERVER_INCLUDE ${AVAHI_INCLUDE_DIRS})
-endif (AVAHI_FOUND)
-
-if (BONJOUR_FOUND)
-    list(APPEND SERVER_SOURCES publishZeroConf/publish_bonjour.cpp)
-#    list(APPEND SERVER_LIBRARIES ${BONJOUR_LIBRARIES})
-#    list(APPEND SERVER_INCLUDE ${BONJOUR_INCLUDE_DIRS})
-endif (BONJOUR_FOUND)
-
-if (OGG_FOUND AND VORBIS_FOUND AND VORBISENC_FOUND)
-    list(APPEND SERVER_SOURCES encoder/ogg_encoder.cpp)
-    list(APPEND SERVER_LIBRARIES
-        ${OGG_LIBRARIES}
-        ${VORBIS_LIBRARIES}
-        ${VORBISENC_LIBRARIES})
-    list(APPEND SERVER_INCLUDE
-        ${OGG_INCLUDE_DIRS}
-        ${VORBIS_INCLUDE_DIRS}
-        ${VORBISENC_INCLUDE_DIRS})
-endif (OGG_FOUND AND VORBIS_FOUND AND VORBISENC_FOUND)
-
-if (FLAC_FOUND)
+if (ANDROID)
+    find_package(vorbis REQUIRED CONFIG)
+    list(APPEND SERVER_LIBRARIES boost::boost)
+    list(APPEND SERVER_LIBRARIES flac::flac)
+    list(APPEND SERVER_LIBRARIES opus::opus)
+    list(APPEND SERVER_LIBRARIES ogg::ogg)
+    list(APPEND SERVER_LIBRARIES vorbis::vorbis)
     list(APPEND SERVER_SOURCES encoder/flac_encoder.cpp)
-    list(APPEND SERVER_LIBRARIES ${FLAC_LIBRARIES})
-    list(APPEND SERVER_INCLUDE ${FLAC_INCLUDE_DIRS})
-endif (FLAC_FOUND)
-
-if (OPUS_FOUND)
+    list(APPEND SERVER_SOURCES encoder/ogg_encoder.cpp)
     list(APPEND SERVER_SOURCES encoder/opus_encoder.cpp)
-    list(APPEND SERVER_LIBRARIES ${OPUS_LIBRARIES})
-    list(APPEND SERVER_INCLUDE ${OPUS_INCLUDE_DIRS})
-endif (OPUS_FOUND)
 
-if (ALSA_FOUND)
-    list(APPEND SERVER_SOURCES streamreader/alsa_stream.cpp)
-    list(APPEND SERVER_LIBRARIES ${ALSA_LIBRARIES})
-    list(APPEND SERVER_INCLUDE ${ALSA_INCLUDE_DIRS})
-endif (ALSA_FOUND)
+else()
+    # Avahi
+    if (AVAHI_FOUND)
+        list(APPEND SERVER_SOURCES publishZeroConf/publish_avahi.cpp)
+        list(APPEND SERVER_LIBRARIES ${AVAHI_LIBRARIES})
+        list(APPEND SERVER_INCLUDE ${AVAHI_INCLUDE_DIRS})
+    endif (AVAHI_FOUND)
 
-if (EXPAT_FOUND)
-    list(APPEND SERVER_LIBRARIES ${EXPAT_LIBRARIES})
-    list(APPEND SERVER_INCLUDE ${EXPAT_INCLUDE_DIRS})
-endif (EXPAT_FOUND)
+    if (BONJOUR_FOUND)
+        list(APPEND SERVER_SOURCES publishZeroConf/publish_bonjour.cpp)
+    #    list(APPEND SERVER_LIBRARIES ${BONJOUR_LIBRARIES})
+    #    list(APPEND SERVER_INCLUDE ${BONJOUR_INCLUDE_DIRS})
+    endif (BONJOUR_FOUND)
+
+    if (OGG_FOUND AND VORBIS_FOUND AND VORBISENC_FOUND)
+        list(APPEND SERVER_SOURCES encoder/ogg_encoder.cpp)
+        list(APPEND SERVER_LIBRARIES
+            ${OGG_LIBRARIES}
+            ${VORBIS_LIBRARIES}
+            ${VORBISENC_LIBRARIES})
+        list(APPEND SERVER_INCLUDE
+            ${OGG_INCLUDE_DIRS}
+            ${VORBIS_INCLUDE_DIRS}
+            ${VORBISENC_INCLUDE_DIRS})
+    endif (OGG_FOUND AND VORBIS_FOUND AND VORBISENC_FOUND)
+
+    if (FLAC_FOUND)
+        list(APPEND SERVER_SOURCES encoder/flac_encoder.cpp)
+        list(APPEND SERVER_LIBRARIES ${FLAC_LIBRARIES})
+        list(APPEND SERVER_INCLUDE ${FLAC_INCLUDE_DIRS})
+    endif (FLAC_FOUND)
+
+    if (OPUS_FOUND)
+        list(APPEND SERVER_SOURCES encoder/opus_encoder.cpp)
+        list(APPEND SERVER_LIBRARIES ${OPUS_LIBRARIES})
+        list(APPEND SERVER_INCLUDE ${OPUS_INCLUDE_DIRS})
+    endif (OPUS_FOUND)
+
+    if (ALSA_FOUND)
+        list(APPEND SERVER_SOURCES streamreader/alsa_stream.cpp)
+        list(APPEND SERVER_LIBRARIES ${ALSA_LIBRARIES})
+        list(APPEND SERVER_INCLUDE ${ALSA_INCLUDE_DIRS})
+    endif (ALSA_FOUND)
+
+    if (EXPAT_FOUND)
+        list(APPEND SERVER_LIBRARIES ${EXPAT_LIBRARIES})
+        list(APPEND SERVER_INCLUDE ${EXPAT_INCLUDE_DIRS})
+    endif (EXPAT_FOUND)
+endif()
 
 #list(APPEND SERVER_LIBRARIES Boost::boost)
 
 include_directories(${SERVER_INCLUDE})
-add_executable(snapserver ${SERVER_SOURCES})
-target_link_libraries(snapserver ${SERVER_LIBRARIES})
+if (ANDROID)
+    add_executable(libsnapserver.so ${SERVER_SOURCES})
+    target_link_libraries(libsnapserver.so ${SERVER_LIBRARIES} log)
+else()
+    add_executable(snapserver ${SERVER_SOURCES})
+    target_link_libraries(snapserver ${SERVER_LIBRARIES})
 
-install(TARGETS snapserver COMPONENT server DESTINATION ${CMAKE_INSTALL_BINDIR})
-install(FILES snapserver.1 COMPONENT server DESTINATION ${CMAKE_INSTALL_MANDIR}/man1)
-install(FILES etc/snapserver.conf COMPONENT server DESTINATION ${CMAKE_INSTALL_SYSCONFDIR})
-install(FILES etc/index.html COMPONENT server DESTINATION ${CMAKE_INSTALL_DATADIR}/snapserver)
-install(DIRECTORY etc/snapweb/ DESTINATION ${CMAKE_INSTALL_DATADIR}/snapserver/snapweb)
-#install(FILES ../debian/snapserver.service DESTINATION ${SYSTEMD_SERVICES_INSTALL_DIR})
+    install(TARGETS snapserver COMPONENT server DESTINATION ${CMAKE_INSTALL_BINDIR})
+    install(FILES snapserver.1 COMPONENT server DESTINATION ${CMAKE_INSTALL_MANDIR}/man1)
+    install(FILES etc/snapserver.conf COMPONENT server DESTINATION ${CMAKE_INSTALL_SYSCONFDIR})
+    install(FILES etc/index.html COMPONENT server DESTINATION ${CMAKE_INSTALL_DATADIR}/snapserver)
+    install(DIRECTORY etc/snapweb/ DESTINATION ${CMAKE_INSTALL_DATADIR}/snapserver/snapweb)
+    #install(FILES ../debian/snapserver.service DESTINATION ${SYSTEMD_SERVICES_INSTALL_DIR})
+endif()
