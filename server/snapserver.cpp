@@ -265,7 +265,7 @@ int main(int argc, char* argv[])
         else
             Config::instance().init(settings.server.data_dir);
 #else
-        Config::instance().init();
+        Config::instance().init(settings.server.data_dir);
 #endif
 
         boost::asio::io_context io_context;
