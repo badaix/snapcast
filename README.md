@@ -4,8 +4,7 @@
 
 **S**y**n**chronous **a**udio **p**layer
 
-[![Build Status](
-https://travis-ci.org/badaix/snapcast.svg?branch=master)](https://travis-ci.org/badaix/snapcast)
+[![Build Status](https://github.com/badaix/snapcast/actions/workflows/ubuntu.yml/badge.svg)
 [![Github Releases](https://img.shields.io/github/release/badaix/snapcast.svg)](https://github.com/badaix/snapcast/releases)
 [![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://www.paypal.me/badaix)
 
