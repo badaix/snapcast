@@ -119,7 +119,7 @@ Mopdiy configuration would look like this (running GStreamer in [client mode](ht
 
 ```sh
 [audio]
-output = audioresample ! audioconvert ! audio/x-raw,rate=48000,channels=2,format=S16LE ! wavenc ! tcpclientsink
+output = audioresample ! audioconvert ! audio/x-raw,rate=48000,channels=2,format=S16LE ! wavenc ! tcpclientsink host=127.0.0.1
 ```
 
 ### tcp client
@@ -134,7 +134,7 @@ Mopdiy configuration would look like this (running GStreamer in [server mode](ht
 
 ```sh
 [audio]
-output = audioresample ! audioconvert ! audio/x-raw,rate=48000,channels=2,format=S16LE ! wavenc ! tcpserversink
+output = audioresample ! audioconvert ! audio/x-raw,rate=48000,channels=2,format=S16LE ! wavenc ! tcpserversink host=127.0.0.1
 ```
 
 ### alsa
