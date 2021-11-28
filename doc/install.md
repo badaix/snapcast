@@ -10,7 +10,7 @@ Snapcast packages are available for several Linux distributions:
 
 ## Debian
 
-For Debian (and Debian-based systems, such as Ubuntu, Linux Mint, ElementaryOS) download the package for your CPU architecture from the [latest release page](https://github.com/badaix/snapcast/releases/latest).
+For Debian (and Debian-based systems, such as Ubuntu, Linux Mint, elementary OS) download the package for your CPU architecture from the [latest release page](https://github.com/badaix/snapcast/releases/latest).
 
 e.g. for Raspberry Pi `snapclient_0.x.x_armhf.deb`, for laptops `snapclient_0.x.x_amd64.deb`
 
