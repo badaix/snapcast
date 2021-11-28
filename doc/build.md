@@ -1,7 +1,7 @@
 # Build Snapcast
 
 Clone the Snapcast repository. To do this, you need git.  
-For Debian derivates (e.g. Raspbian, Debian, Ubuntu, Mint):
+For Debian derivates (e.g. Raspberry Pi OS, Debian, Ubuntu, Mint):
 
 ```sh
 sudo apt-get install git
@@ -31,7 +31,7 @@ For `cmake` you must add the path to the `-DBOOST_ROOT` flag: `cmake -DBOOST_ROO
 ## Linux (Native)
 
 Install the build tools and required libs:  
-For Debian derivates (e.g. Raspbian, Debian, Ubuntu, Mint):
+For Debian derivates (e.g. Raspberry Pi OS, Debian, Ubuntu, Mint):
 
 ```sh
 sudo apt-get install build-essential
