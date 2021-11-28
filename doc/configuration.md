@@ -200,14 +200,16 @@ The output of any audio player that uses alsa can be redirected to Snapcast by u
 
     In this example the loopback device is card 0 with devices 0 and 1, each having 8 subdevices.  
     The devices are addressed with `hw:<card idx>,<device idx>,<subdevice num>`, e.g. `hw:0,0,0`.  
-    If a process plays audio using `hw:0,0,x`, then the audio will be looped back to `hw:0,1,x`
+    If a process plays audio using `hw:0,0,x`, then the audio will be looped back to `hw:0,1,x`.
+    The `<subdevice_num>` portion can be omitted from the device address.
+    Additionally, the `<card_idx>` value can be the name of the soundcard, i.e. `Loopback` in this case.
 
 3. Configure your player to use a loopback device
 
     For mopidy (gstreamer) in `mopidy.conf`:
 
     ```sh
-    output = audioresample ! audioconvert ! audio/x-raw,rate=48000,channels=2,format=S16LE ! alsasink device=hw:0,0,0
+    output = audioresample ! audioconvert ! audio/x-raw,rate=48000,channels=2,format=S16LE ! alsasink device=hw:Loopback,0
     ```
 
     For mpd: in `mpd.conf`
@@ -217,7 +219,7 @@ The output of any audio player that uses alsa can be redirected to Snapcast by u
     audio_output {
             type            "alsa"
             name            "My ALSA Device"
-            device          "hw:0,0,0"      # optional
+            device          "hw:Loopback,0" # optional
     #       auto_resample   "no"
     #       mixer_type      "hardware"      # optional
     #       mixer_device    "default"       # optional
@@ -230,7 +232,7 @@ The output of any audio player that uses alsa can be redirected to Snapcast by u
 
     ```sh
     [stream]
-    source = alsa://?name=SomeName&device=hw:0,1,0
+    source = alsa://?name=SomeName&device=hw:Loopback,1
     ```
 
 ### meta
