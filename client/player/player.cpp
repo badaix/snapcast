@@ -23,9 +23,11 @@
 #include <cstdlib>
 #else
 #pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Werror=pragmas"
 #pragma GCC diagnostic ignored "-Wunused-result"
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 #pragma GCC diagnostic ignored "-Wmissing-braces"
+#pragma GCC diagnostic ignored "-Werror=narrowing"
 #pragma GCC diagnostic ignored "-Wc++11-narrowing"
 #include <boost/process/args.hpp>
 #include <boost/process/child.hpp>
