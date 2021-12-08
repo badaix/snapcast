@@ -26,6 +26,7 @@
 #pragma GCC diagnostic ignored "-Wunused-result"
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 #pragma GCC diagnostic ignored "-Wmissing-braces"
+#pragma GCC diagnostic ignored "-Wc++11-narrowing"
 #include <boost/process/args.hpp>
 #include <boost/process/child.hpp>
 #include <boost/process/exe.hpp>
