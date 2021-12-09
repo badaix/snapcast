@@ -16,19 +16,19 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
-#ifndef METATAGS_HPP
-#define METATAGS_HPP
+#ifndef METADATA_HPP
+#define METADATA_HPP
+
+#include "common/aixlog.hpp"
+#include "common/json.hpp"
 
 #include <optional>
 #include <set>
 #include <string>
 
-#include "common/aixlog.hpp"
-#include "common/json.hpp"
-
 using json = nlohmann::json;
 
-class Metatags
+class Metadata
 {
 public:
     struct ArtData
@@ -47,8 +47,8 @@ public:
         }
     };
 
-    Metatags() = default;
-    Metatags(const json& j);
+    Metadata() = default;
+    Metadata(const json& j);
 
     /// https://www.musicpd.org/doc/html/protocol.html#tags
     /// the duration of the song
@@ -143,7 +143,7 @@ public:
 
     json toJson() const;
     void fromJson(const json& j);
-    bool operator==(const Metatags& other) const;
+    bool operator==(const Metadata& other) const;
 };
 
 

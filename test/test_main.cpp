@@ -109,7 +109,7 @@ TEST_CASE("Uri")
 }
 
 
-TEST_CASE("Metatags")
+TEST_CASE("Metadata")
 {
     auto in_json = json::parse(R"(
 {
@@ -146,7 +146,7 @@ TEST_CASE("Metatags")
 )");
     // std::cout << in_json.dump(4) << "\n";
 
-    Metatags meta(in_json);
+    Metadata meta(in_json);
     REQUIRE(meta.album.has_value());
     REQUIRE(meta.album.value() == "Memories...Do Not Open");
     REQUIRE(meta.genre.has_value());

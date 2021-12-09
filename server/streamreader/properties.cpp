@@ -101,8 +101,8 @@ json Properties::toJson() const
     addTag(j, "canPause", can_pause);
     addTag(j, "canSeek", can_seek);
     addTag(j, "canControl", can_control);
-    if (metatags.has_value())
-        addTag(j, "metadata", metatags->toJson());
+    if (metadata.has_value())
+        addTag(j, "metadata", metadata->toJson());
     return j;
 }
 
@@ -147,12 +147,12 @@ void Properties::fromJson(const json& j)
 
     if (j.contains("metadata"))
     {
-        Metatags m;
+        Metadata m;
         m.fromJson(j["metadata"]);
-        metatags = m;
+        metadata = m;
     }
     else
-        metatags = std::nullopt;
+        metadata = std::nullopt;
 }
 
 bool Properties::operator==(const Properties& other) const

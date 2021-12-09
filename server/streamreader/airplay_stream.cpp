@@ -160,7 +160,7 @@ void AirplayStream::push()
 
     if (is_cover)
     {
-        setMetaData(meta_.art_data, Metatags::ArtData{data, "jpg"});
+        setMetaData(meta_.art_data, Metadata::ArtData{data, "jpg"});
         // LOG(INFO, LOG_TAG) << "Metadata type: " << entry_->type << " code: " << entry_->code << " data length: " << data.length() << "\n";
     }
     else
@@ -179,7 +179,7 @@ void AirplayStream::push()
     if (metadata_dirty_ && entry_->type == "ssnc" && (entry_->code == "mden" || entry_->code == "pcen"))
     {
         Properties properties;
-        properties.metatags = meta_;
+        properties.metadata = meta_;
         setProperties(properties);
         metadata_dirty_ = false;
     }

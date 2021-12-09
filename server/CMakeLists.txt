@@ -28,7 +28,7 @@ set(SERVER_SOURCES
     streamreader/meta_stream.cpp
     streamreader/watchdog.cpp
     streamreader/properties.cpp
-    streamreader/metatags.cpp
+    streamreader/metadata.cpp
     streamreader/process_stream.cpp)
 
 set(SERVER_LIBRARIES

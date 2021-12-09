@@ -158,21 +158,21 @@ void LibrespotStream::onStderrMsg(const std::string& line)
         // Patched version
         LOG(INFO, LOG_TAG) << "metadata: <" << m[1] << ">\n";
         json j = json::parse(m[1].str());
-        Metatags meta;
+        Metadata meta;
         meta.artist = std::vector<std::string>{j["ARTIST"].get<std::string>()};
         meta.title = j["TITLE"].get<std::string>();
         Properties properties;
-        properties.metatags = meta;
+        properties.metadata = std::move(meta);
         setProperties(properties);
     }
     else if (regex_search(line, m, re_track_loaded))
     {
         LOG(INFO, LOG_TAG) << "metadata: <" << m[1] << ">\n";
-        Metatags meta;
+        Metadata meta;
         meta.title = string(m[1]);
         meta.duration = cpt::stod(m[2]) / 1000.;
         Properties properties;
-        properties.metatags = meta;
+        properties.metadata = std::move(meta);
         setProperties(properties);
     }
 }

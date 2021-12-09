@@ -45,7 +45,6 @@
 #include "common/str_compat.hpp"
 #include "common/utils.hpp"
 #include "common/version.hpp"
-// #include "metadata.hpp"
 
 #include <boost/asio/ip/host_name.hpp>
 #include <boost/asio/signal_set.hpp>
@@ -130,7 +129,6 @@ int main(int argc, char** argv)
     int exitcode = EXIT_SUCCESS;
     try
     {
-        string meta_script;
         ClientSettings settings;
         string pcm_device(player::DEFAULT_DEVICE);
 
@@ -174,8 +172,6 @@ int main(int argc, char** argv)
             mixer_mode = op.add<Value<string>>("", "mixer", "software|hardware|script|none|?[:<options>]", "software");
         else
             mixer_mode = op.add<Value<string>>("", "mixer", "software|script|none|?[:<options>]", "software");
-
-        auto metaStderr = op.add<Switch>("e", "mstderr", "send metadata to stderr");
 
 // daemon settings
 #ifdef HAS_DAEMON
@@ -264,8 +260,6 @@ int main(int argc, char** argv)
             cout << option_printer.print();
             exit(EXIT_SUCCESS);
         }
-
-        // XXX: Only one metadata option must be set
 
         settings.logging.filter = logfilterOption->value();
         if (logfilterOption->is_set())
@@ -430,9 +424,7 @@ int main(int argc, char** argv)
 
         LOG(INFO, LOG_TAG) << "Version " << version::code << (!version::rev().empty() ? (", revision " + version::rev(8)) : ("")) << "\n";
 
-        // Setup metadata handling
-        // auto meta(metaStderr ? std::make_unique<MetaStderrAdapter>() : std::make_unique<MetadataAdapter>());
-        auto controller = make_shared<Controller>(io_context, settings); //, std::move(meta));
+        auto controller = make_shared<Controller>(io_context, settings);
         controller->start();
 
         int num_threads = 0;

@@ -19,14 +19,13 @@
 #ifndef PROPERTIES_HPP
 #define PROPERTIES_HPP
 
-#include <set>
-#include <string>
-
-#include <optional>
-
 #include "common/aixlog.hpp"
 #include "common/json.hpp"
-#include "metatags.hpp"
+#include "metadata.hpp"
+
+#include <optional>
+#include <set>
+#include <string>
 
 
 using json = nlohmann::json;
@@ -152,7 +151,7 @@ public:
     Properties(const json& j);
 
     /// Meta data
-    std::optional<Metatags> metatags;
+    std::optional<Metadata> metadata;
     /// https://www.musicpd.org/doc/html/protocol.html#tags
     /// The current playback status
     std::optional<PlaybackStatus> playback_status;

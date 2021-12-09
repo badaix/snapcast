@@ -68,7 +68,7 @@ protected:
     std::unique_ptr<TageEntry> entry_;
     std::string buf_;
     /// set whenever metadata_ has changed
-    Metatags meta_;
+    Metadata meta_;
     bool metadata_dirty_;
 #endif
 

@@ -16,9 +16,9 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
-#include "metatags.hpp"
+#include "metadata.hpp"
 
-static constexpr auto LOG_TAG = "Metatags";
+static constexpr auto LOG_TAG = "Metadata";
 
 
 namespace
@@ -60,13 +60,13 @@ void addTag(json& j, const std::string& tag, const std::optional<T>& source)
 } // namespace
 
 
-Metatags::Metatags(const json& j)
+Metadata::Metadata(const json& j)
 {
     fromJson(j);
 }
 
 
-json Metatags::toJson() const
+json Metadata::toJson() const
 {
     json j(json::object());
     addTag(j, "trackId", track_id);
@@ -118,7 +118,7 @@ json Metatags::toJson() const
 }
 
 
-void Metatags::fromJson(const json& j)
+void Metadata::fromJson(const json& j)
 {
     static std::set<std::string> supported_tags = {"trackId",
                                                    "duration",
@@ -217,8 +217,8 @@ void Metatags::fromJson(const json& j)
 }
 
 
-bool Metatags::operator==(const Metatags& other) const
+bool Metadata::operator==(const Metadata& other) const
 {
-    // expensive, but not called ofetn and less typing
+    // expensive, but not called often and less typing
     return (toJson() == other.toJson());
 }

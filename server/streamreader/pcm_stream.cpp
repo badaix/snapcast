@@ -16,11 +16,7 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
-#include <fcntl.h>
-#include <memory>
-#include <sys/stat.h>
-
-#include <boost/asio/ip/host_name.hpp>
+#include "pcm_stream.hpp"
 
 #include "base64.h"
 #include "common/aixlog.hpp"
@@ -30,7 +26,12 @@
 #include "common/utils/string_utils.hpp"
 #include "control_error.hpp"
 #include "encoder/encoder_factory.hpp"
-#include "pcm_stream.hpp"
+
+#include <boost/asio/ip/host_name.hpp>
+
+#include <fcntl.h>
+#include <memory>
+#include <sys/stat.h>
 
 
 using namespace std;
@@ -444,20 +445,20 @@ void PcmStream::setProperties(const Properties& properties)
     Properties props = properties;
     // Missing metadata means the data didn't change, so
     // enrich the new properites with old metadata
-    if (!props.metatags.has_value() && properties_.metatags.has_value())
-        props.metatags = properties_.metatags;
+    if (!props.metadata.has_value() && properties_.metadata.has_value())
+        props.metadata = properties_.metadata;
 
     // If the cover image is availbale as raw data, cache it on the HTTP Server to make it also available via HTTP
-    if (props.metatags.has_value() && props.metatags->art_data.has_value() && !props.metatags->art_url.has_value())
+    if (props.metadata.has_value() && props.metadata->art_data.has_value() && !props.metadata->art_url.has_value())
     {
-        auto data = base64_decode(props.metatags->art_data.value().data);
-        auto md5 = server_settings_.http.image_cache.setImage(getName(), std::move(data), props.metatags->art_data.value().extension);
+        auto data = base64_decode(props.metadata->art_data.value().data);
+        auto md5 = server_settings_.http.image_cache.setImage(getName(), std::move(data), props.metadata->art_data.value().extension);
 
         std::stringstream url;
         url << "http://" << server_settings_.http.host << ":" << server_settings_.http.port << "/__image_cache?name=" << md5;
-        props.metatags->art_url = url.str();
+        props.metadata->art_url = url.str();
     }
-    else if (!props.metatags->art_data.has_value())
+    else if (!props.metadata->art_data.has_value())
     {
         server_settings_.http.image_cache.clear(getName());
     }
