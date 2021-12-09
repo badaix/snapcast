@@ -189,10 +189,20 @@ void PulsePlayer::worker()
             LOG(DEBUG, LOG_TAG) << "Waiting for a chunk to become available before reconnecting\n";
         }
 
-        if (active_)
+        while (active_)
         {
             LOG(INFO, LOG_TAG) << "Chunk available, reconnecting to pulse\n";
-            this->connect();
+            try
+            {
+                connect();
+                break;
+            }
+            catch (const std::exception& e)
+            {
+                LOG(ERROR, LOG_TAG) << "Exception while connecting to pulse: " << e.what() << endl;
+                disconnect();
+                chronos::sleep(100);
+            }
         }
     }
 }
