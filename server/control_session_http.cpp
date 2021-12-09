@@ -26,6 +26,7 @@
 #include <iostream>
 
 using namespace std;
+namespace websocket = beast::websocket; // from <boost/beast/websocket.hpp>
 
 static constexpr auto LOG_TAG = "ControlSessionHTTP";
 

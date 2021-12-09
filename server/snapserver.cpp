@@ -39,6 +39,7 @@
 #include "common/aixlog.hpp"
 #include "config.hpp"
 
+#include <boost/asio/ip/host_name.hpp>
 
 using namespace std;
 using namespace popl;

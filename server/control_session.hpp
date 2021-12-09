@@ -29,9 +29,6 @@
 #include <set>
 #include <string>
 
-using boost::asio::ip::tcp;
-namespace net = boost::asio;
-
 
 class ControlSession;
 class StreamSession;

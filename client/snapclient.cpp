@@ -47,6 +47,8 @@
 #include "common/version.hpp"
 // #include "metadata.hpp"
 
+#include <boost/asio/signal_set.hpp>
+#include <boost/asio/ip/host_name.hpp>
 
 using namespace std;
 using namespace popl;

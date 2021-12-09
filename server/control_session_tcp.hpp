@@ -22,6 +22,9 @@
 #include "control_session.hpp"
 #include <deque>
 
+using boost::asio::ip::tcp;
+namespace net = boost::asio;
+
 /// Endpoint for a connected control client.
 /**
  * Endpoint for a connected control client.
