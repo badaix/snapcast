@@ -130,7 +130,7 @@ For some audio backends you can configure the PCM device using the `-s` or `--so
 
 You can test your installation by copying random data into the server's fifo file
 
-    sudo cat /dev/urandom > /tmp/snapfifo
+    cat /dev/urandom > /tmp/snapfifo
 
 All connected clients should play random noise now. You might raise the client's volume with "alsamixer".
 It's also possible to let the server play a WAV file. Simply configure a `file` stream in `/etc/snapserver.conf`, and restart the server:
