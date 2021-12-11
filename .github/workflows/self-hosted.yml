@@ -17,11 +17,11 @@ jobs:
       run: cmake --build build -- -j 1
     - name: debian package
       run: |
-        fakeroot make -f debian/rules CMAKEFLAGS="-DBOOST_ROOT=/home/pi/Develop/boost_1_78_0 -DREVISION=${{ github.sha }} -DBUILD_WITH_PULSE=OFF" binary
+        fakeroot make -f debian/rules CMAKEFLAGS="-DBOOST_ROOT=/home/pi/Develop/boost_1_77_0 -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DREVISION=${{ github.sha }} -DBUILD_WITH_PULSE=OFF" binary
         rename 's/_armhf/_without-pulse_armhf/g' ../snapclient*_armhf.deb
         rm ../snapserver*_armhf.deb
         fakeroot make -f debian/rules clean
-        fakeroot make -f debian/rules CMAKEFLAGS="-DBOOST_ROOT=/home/pi/Develop/boost_1_78_0 -DREVISION=${{ github.sha }}" binary
+        fakeroot make -f debian/rules CMAKEFLAGS="-DBOOST_ROOT=/home/pi/Develop/boost_1_77_0 -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DREVISION=${{ github.sha }}" binary
     - name: Archive artifacts
       uses: actions/upload-artifact@v2
       with:
