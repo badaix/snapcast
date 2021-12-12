@@ -16,16 +16,17 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
-#include <cerrno>
-#include <fcntl.h>
-#include <memory>
-#include <sys/stat.h>
-#include <unistd.h>
+// prototype/interface header file
+#include "posix_stream.hpp"
 
+// local headers
 #include "common/aixlog.hpp"
 #include "common/snap_exception.hpp"
 #include "common/str_compat.hpp"
-#include "posix_stream.hpp"
+
+// standard headers
+#include <cerrno>
+#include <memory>
 
 
 using namespace std;
@@ -37,7 +38,7 @@ namespace streamreader
 static constexpr auto LOG_TAG = "PosixStream";
 static constexpr auto kResyncTolerance = 50ms;
 
-PosixStream::PosixStream(PcmListener* pcmListener, boost::asio::io_context& ioc, const ServerSettings& server_settings, const StreamUri& uri)
+PosixStream::PosixStream(PcmStream::Listener* pcmListener, boost::asio::io_context& ioc, const ServerSettings& server_settings, const StreamUri& uri)
     : AsioStream<stream_descriptor>(pcmListener, ioc, server_settings, uri)
 {
     if (uri_.query.find("dryout_ms") != uri_.query.end())

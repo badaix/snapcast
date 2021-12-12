@@ -16,14 +16,20 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
+// prototype/interface header file
 #include "stream_server.hpp"
+
+// local headers
 #include "common/aixlog.hpp"
 #include "config.hpp"
 #include "message/client_info.hpp"
 #include "message/hello.hpp"
-// #include "message/stream_tags.hpp"
 #include "message/time.hpp"
 #include "stream_session_tcp.hpp"
+
+// 3rd party headers
+
+// standard headers
 #include <iostream>
 
 using namespace std;

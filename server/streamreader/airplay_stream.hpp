@@ -19,12 +19,12 @@
 #ifndef AIRPLAY_STREAM_HPP
 #define AIRPLAY_STREAM_HPP
 
+// local headers
 #include "process_stream.hpp"
 
-/*
- * Expat is used in metadata parsing from Shairport-sync.
- * Without HAS_EXPAT defined no parsing will occur.
- */
+// 3rd party headers
+// Expat is used in metadata parsing from Shairport-sync.
+// Without HAS_EXPAT defined no parsing will occur.
 #ifdef HAS_EXPAT
 #include <expat.h>
 #endif
@@ -51,7 +51,7 @@ public:
 /**
  * Starts librespot, reads PCM data from stdout, and passes the data to an encoder.
  * Implements EncoderListener to get the encoded data.
- * Data is passed to the PcmListener
+ * Data is passed to the PcmStream::Listener
  * usage:
  *   snapserver -s "airplay:///shairport-sync?name=Airplay[&devicename=Snapcast][&port=5000]"
  */
@@ -59,7 +59,7 @@ class AirplayStream : public ProcessStream
 {
 public:
     /// ctor. Encoded PCM data is passed to the PipeListener
-    AirplayStream(PcmListener* pcmListener, boost::asio::io_context& ioc, const ServerSettings& server_settings, const StreamUri& uri);
+    AirplayStream(PcmStream::Listener* pcmListener, boost::asio::io_context& ioc, const ServerSettings& server_settings, const StreamUri& uri);
     ~AirplayStream() override;
 
 protected:

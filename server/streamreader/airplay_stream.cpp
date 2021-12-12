@@ -16,7 +16,10 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
+// prototype/interface header file
 #include "airplay_stream.hpp"
+
+// local headers
 #include "base64.h"
 #include "common/aixlog.hpp"
 #include "common/snap_exception.hpp"
@@ -47,7 +50,7 @@ string hex2str(const string& input)
  * Without HAS_EXPAT defined no parsing will occur.
  */
 
-AirplayStream::AirplayStream(PcmListener* pcmListener, boost::asio::io_context& ioc, const ServerSettings& server_settings, const StreamUri& uri)
+AirplayStream::AirplayStream(PcmStream::Listener* pcmListener, boost::asio::io_context& ioc, const ServerSettings& server_settings, const StreamUri& uri)
     : ProcessStream(pcmListener, ioc, server_settings, uri), port_(5000), pipe_open_timer_(ioc)
 {
     logStderr_ = true;

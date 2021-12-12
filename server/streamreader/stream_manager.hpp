@@ -19,10 +19,14 @@
 #ifndef STREAM_MANAGER_HPP
 #define STREAM_MANAGER_HPP
 
+// local headers
 #include "pcm_stream.hpp"
 #include "server_settings.hpp"
 
+// 3rd party headers
 #include <boost/asio/io_context.hpp>
+
+// standard headers
 #include <memory>
 #include <string>
 #include <vector>
@@ -35,7 +39,7 @@ using PcmStreamPtr = std::shared_ptr<PcmStream>;
 class StreamManager
 {
 public:
-    StreamManager(PcmListener* pcmListener, boost::asio::io_context& ioc, const ServerSettings& settings);
+    StreamManager(PcmStream::Listener* pcmListener, boost::asio::io_context& ioc, const ServerSettings& settings);
 
     PcmStreamPtr addStream(const std::string& uri);
     PcmStreamPtr addStream(StreamUri& streamUri);
@@ -49,7 +53,7 @@ public:
 
 private:
     std::vector<PcmStreamPtr> streams_;
-    PcmListener* pcmListener_;
+    PcmStream::Listener* pcmListener_;
     ServerSettings settings_;
     boost::asio::io_context& ioc_;
 };

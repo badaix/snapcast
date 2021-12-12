@@ -16,16 +16,20 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
-#include <fcntl.h>
-#include <memory>
-#include <sys/stat.h>
+// prototype/interface header file
+#include "stream_control.hpp"
 
+// local headers
 #include "common/aixlog.hpp"
 #include "common/snap_exception.hpp"
 #include "common/str_compat.hpp"
 #include "common/utils/string_utils.hpp"
 #include "encoder/encoder_factory.hpp"
-#include "stream_control.hpp"
+
+// 3rd party headers
+
+// standard headers
+#include <memory>
 
 
 using namespace std;

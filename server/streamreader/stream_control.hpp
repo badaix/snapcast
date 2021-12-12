@@ -19,6 +19,11 @@
 #ifndef STREAM_CONTROL_HPP
 #define STREAM_CONTROL_HPP
 
+// local headers
+#include "jsonrpcpp.hpp"
+#include "server_settings.hpp"
+
+// 3rd party headers
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wpragmas"
 #pragma GCC diagnostic ignored "-Wunused-result"
@@ -28,13 +33,11 @@
 #pragma GCC diagnostic ignored "-Wc++11-narrowing"
 #include <boost/process.hpp>
 #pragma GCC diagnostic pop
-#include <map>
-#include <string>
-
 #include <boost/asio.hpp>
 
-#include "jsonrpcpp.hpp"
-#include "server_settings.hpp"
+// standard headers
+#include <map>
+#include <string>
 
 
 namespace bp = boost::process;

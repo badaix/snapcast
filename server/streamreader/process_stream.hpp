@@ -19,12 +19,14 @@
 #ifndef PROCESS_STREAM_HPP
 #define PROCESS_STREAM_HPP
 
+// local headers
+#include "posix_stream.hpp"
+#include "watchdog.hpp"
+
+// standard headers
 #include <memory>
 #include <string>
 #include <vector>
-
-#include "posix_stream.hpp"
-#include "watchdog.hpp"
 
 
 namespace bp = boost::process;
@@ -37,13 +39,13 @@ namespace streamreader
 /**
  * Starts an external process, reads PCM data from stdout, and passes the data to an encoder.
  * Implements EncoderListener to get the encoded data.
- * Data is passed to the PcmListener
+ * Data is passed to the PcmStream::Listener
  */
 class ProcessStream : public PosixStream, public WatchdogListener
 {
 public:
     /// ctor. Encoded PCM data is passed to the PipeListener
-    ProcessStream(PcmListener* pcmListener, boost::asio::io_context& ioc, const ServerSettings& server_settings, const StreamUri& uri);
+    ProcessStream(PcmStream::Listener* pcmListener, boost::asio::io_context& ioc, const ServerSettings& server_settings, const StreamUri& uri);
     ~ProcessStream() override = default;
 
 protected:

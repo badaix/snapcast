@@ -19,7 +19,10 @@
 #ifndef ALSA_STREAM_HPP
 #define ALSA_STREAM_HPP
 
+// local headers
 #include "pcm_stream.hpp"
+
+// 3rd party headers
 #include <alsa/asoundlib.h>
 #include <boost/asio.hpp>
 
@@ -31,13 +34,13 @@ namespace streamreader
 /**
  * Reads PCM from an alsa audio device device and passes the data to an encoder.
  * Implements EncoderListener to get the encoded data.
- * Data is passed to the PcmListener
+ * Data is passed to the PcmStream::Listener
  */
 class AlsaStream : public PcmStream
 {
 public:
     /// ctor. Encoded PCM data is passed to the PipeListener
-    AlsaStream(PcmListener* pcmListener, boost::asio::io_context& ioc, const ServerSettings& server_settings, const StreamUri& uri);
+    AlsaStream(PcmStream::Listener* pcmListener, boost::asio::io_context& ioc, const ServerSettings& server_settings, const StreamUri& uri);
 
     void start() override;
     void stop() override;

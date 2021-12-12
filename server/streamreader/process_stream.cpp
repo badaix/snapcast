@@ -17,14 +17,17 @@
 ***/
 
 
+// prototype/interface header file
 #include "process_stream.hpp"
+
+// local headers
 #include "common/aixlog.hpp"
 #include "common/snap_exception.hpp"
 #include "common/utils.hpp"
 #include "common/utils/string_utils.hpp"
+
+// standard headers
 #include <climits>
-#include <fcntl.h>
-#include <sys/stat.h>
 
 
 using namespace std;
@@ -35,7 +38,7 @@ namespace streamreader
 static constexpr auto LOG_TAG = "ProcessStream";
 
 
-ProcessStream::ProcessStream(PcmListener* pcmListener, boost::asio::io_context& ioc, const ServerSettings& server_settings, const StreamUri& uri)
+ProcessStream::ProcessStream(PcmStream::Listener* pcmListener, boost::asio::io_context& ioc, const ServerSettings& server_settings, const StreamUri& uri)
     : PosixStream(pcmListener, ioc, server_settings, uri)
 {
     params_ = uri_.getQuery("params");

@@ -16,18 +16,21 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
-#include <cerrno>
-#include <fcntl.h>
-#include <memory>
-#include <sys/stat.h>
-#include <unistd.h>
+// prototype/interface header file
+#include "tcp_stream.hpp"
 
+// local headers
 #include "common/aixlog.hpp"
 #include "common/snap_exception.hpp"
 #include "common/str_compat.hpp"
 #include "common/utils/string_utils.hpp"
 #include "encoder/encoder_factory.hpp"
-#include "tcp_stream.hpp"
+
+// 3rd party headers
+
+// standard headers
+#include <cerrno>
+#include <memory>
 
 
 using namespace std;
@@ -37,7 +40,7 @@ namespace streamreader
 
 static constexpr auto LOG_TAG = "TcpStream";
 
-TcpStream::TcpStream(PcmListener* pcmListener, boost::asio::io_context& ioc, const ServerSettings& server_settings, const StreamUri& uri)
+TcpStream::TcpStream(PcmStream::Listener* pcmListener, boost::asio::io_context& ioc, const ServerSettings& server_settings, const StreamUri& uri)
     : AsioStream<tcp::socket>(pcmListener, ioc, server_settings, uri), reconnect_timer_(ioc)
 {
     host_ = uri_.host;

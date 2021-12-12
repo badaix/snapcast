@@ -19,6 +19,7 @@
 #ifndef PIPE_STREAM_HPP
 #define PIPE_STREAM_HPP
 
+// local headers
 #include "posix_stream.hpp"
 
 namespace streamreader
@@ -31,13 +32,13 @@ using boost::asio::posix::stream_descriptor;
 /**
  * Reads PCM from a named pipe and passes the data to an encoder.
  * Implements EncoderListener to get the encoded data.
- * Data is passed to the PcmListener
+ * Data is passed to the PcmStream::Listener
  */
 class PipeStream : public PosixStream
 {
 public:
     /// ctor. Encoded PCM data is passed to the PipeListener
-    PipeStream(PcmListener* pcmListener, boost::asio::io_context& ioc, const ServerSettings& server_settings, const StreamUri& uri);
+    PipeStream(PcmStream::Listener* pcmListener, boost::asio::io_context& ioc, const ServerSettings& server_settings, const StreamUri& uri);
 
 protected:
     void do_connect() override;

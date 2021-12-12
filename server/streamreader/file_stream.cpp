@@ -16,14 +16,16 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
-#include <fcntl.h>
-#include <memory>
-#include <sys/stat.h>
+// prototype/interface header file
+#include "file_stream.hpp"
 
+// local headers
 #include "common/aixlog.hpp"
 #include "common/snap_exception.hpp"
 #include "encoder/encoder_factory.hpp"
-#include "file_stream.hpp"
+
+// 3rd party headers
+#include <memory>
 
 
 using namespace std;
@@ -34,7 +36,7 @@ namespace streamreader
 static constexpr auto LOG_TAG = "FileStream";
 
 
-FileStream::FileStream(PcmListener* pcmListener, boost::asio::io_context& ioc, const ServerSettings& server_settings, const StreamUri& uri)
+FileStream::FileStream(PcmStream::Listener* pcmListener, boost::asio::io_context& ioc, const ServerSettings& server_settings, const StreamUri& uri)
     : PosixStream(pcmListener, ioc, server_settings, uri)
 {
     struct stat buffer;

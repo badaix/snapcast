@@ -19,15 +19,7 @@
 #ifndef PCM_STREAM_HPP
 #define PCM_STREAM_HPP
 
-#include <atomic>
-#include <mutex>
-#include <string>
-#include <vector>
-
-#include <boost/asio/io_context.hpp>
-#include <boost/asio/read_until.hpp>
-#include <boost/asio/steady_timer.hpp>
-
+// local headers
 #include "common/error_code.hpp"
 #include "common/json.hpp"
 #include "common/sample_format.hpp"
@@ -39,8 +31,18 @@
 #include "stream_control.hpp"
 #include "stream_uri.hpp"
 
+// 3rd party headers
+#include <boost/asio/io_context.hpp>
+#include <boost/asio/read_until.hpp>
+#include <boost/asio/steady_timer.hpp>
 
-namespace bp = boost::process;
+// standard headers
+#include <atomic>
+#include <mutex>
+#include <string>
+#include <vector>
+
+
 namespace net = boost::asio;
 
 using json = nlohmann::json;
@@ -92,35 +94,34 @@ static constexpr auto kUriChunkMs = "chunk_ms";
 static constexpr auto kControlScript = "controlscript";
 
 
-/// Callback interface for users of PcmStream
-/**
- * Users of PcmStream should implement this to get the data
- */
-class PcmListener
-{
-public:
-    virtual void onPropertiesChanged(const PcmStream* pcmStream, const Properties& properties) = 0;
-    virtual void onStateChanged(const PcmStream* pcmStream, ReaderState state) = 0;
-    virtual void onChunkRead(const PcmStream* pcmStream, const msg::PcmChunk& chunk) = 0;
-    virtual void onChunkEncoded(const PcmStream* pcmStream, std::shared_ptr<msg::PcmChunk> chunk, double duration) = 0;
-    virtual void onResync(const PcmStream* pcmStream, double ms) = 0;
-};
-
-
-
 /// Reads and decodes PCM data
 /**
  * Reads PCM and passes the data to an encoder.
  * Implements EncoderListener to get the encoded data.
- * Data is passed to the PcmListener
+ * Data is passed to the PcmStream::Listener
  */
 class PcmStream
 {
 public:
+    /// Callback interface for users of PcmStream
+    /**
+     * Users of PcmStream should implement this to get the data
+     */
+    class Listener
+    {
+    public:
+        virtual void onPropertiesChanged(const PcmStream* pcmStream, const Properties& properties) = 0;
+        virtual void onStateChanged(const PcmStream* pcmStream, ReaderState state) = 0;
+        virtual void onChunkRead(const PcmStream* pcmStream, const msg::PcmChunk& chunk) = 0;
+        virtual void onChunkEncoded(const PcmStream* pcmStream, std::shared_ptr<msg::PcmChunk> chunk, double duration) = 0;
+        virtual void onResync(const PcmStream* pcmStream, double ms) = 0;
+    };
+
+
     using ResultHandler = std::function<void(const snapcast::ErrorCode& ec)>;
 
-    /// ctor. Encoded PCM data is passed to the PcmListener
-    PcmStream(PcmListener* pcmListener, boost::asio::io_context& ioc, const ServerSettings& server_settings, const StreamUri& uri);
+    /// ctor. Encoded PCM data is passed to the PcmStream::Listener
+    PcmStream(PcmStream::Listener* pcmListener, boost::asio::io_context& ioc, const ServerSettings& server_settings, const StreamUri& uri);
     virtual ~PcmStream();
 
     virtual void start();
@@ -155,7 +156,7 @@ public:
     virtual ReaderState getState() const;
     virtual json toJson() const;
 
-    void addListener(PcmListener* pcmListener);
+    void addListener(PcmStream::Listener* pcmListener);
 
 protected:
     std::atomic<bool> active_;
@@ -181,7 +182,7 @@ protected:
 
     net::strand<net::any_io_executor> strand_;
     std::chrono::time_point<std::chrono::steady_clock> tvEncodedChunk_;
-    std::vector<PcmListener*> pcmListeners_;
+    std::vector<PcmStream::Listener*> pcmListeners_;
     StreamUri uri_;
     SampleFormat sampleFormat_;
     size_t chunk_ms_;

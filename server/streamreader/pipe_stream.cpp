@@ -16,16 +16,17 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
-#include <cerrno>
-#include <fcntl.h>
-#include <memory>
-#include <sys/stat.h>
-#include <unistd.h>
+// prototype/interface header file
+#include "pipe_stream.hpp"
 
+// local headers
 #include "common/aixlog.hpp"
 #include "common/snap_exception.hpp"
 #include "common/str_compat.hpp"
-#include "pipe_stream.hpp"
+
+// standard headers
+#include <cerrno>
+#include <memory>
 
 
 using namespace std;
@@ -36,7 +37,7 @@ namespace streamreader
 static constexpr auto LOG_TAG = "PipeStream";
 
 
-PipeStream::PipeStream(PcmListener* pcmListener, boost::asio::io_context& ioc, const ServerSettings& server_settings, const StreamUri& uri)
+PipeStream::PipeStream(PcmStream::Listener* pcmListener, boost::asio::io_context& ioc, const ServerSettings& server_settings, const StreamUri& uri)
     : PosixStream(pcmListener, ioc, server_settings, uri)
 {
     umask(0);

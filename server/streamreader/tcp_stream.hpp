@@ -19,6 +19,7 @@
 #ifndef TCP_STREAM_HPP
 #define TCP_STREAM_HPP
 
+// local headers
 #include "asio_stream.hpp"
 
 using boost::asio::ip::tcp;
@@ -30,13 +31,13 @@ namespace streamreader
 /**
  * Reads PCM from a named pipe and passes the data to an encoder.
  * Implements EncoderListener to get the encoded data.
- * Data is passed to the PcmListener
+ * Data is passed to the PcmStream::Listener
  */
 class TcpStream : public AsioStream<tcp::socket>
 {
 public:
     /// ctor. Encoded PCM data is passed to the PipeListener
-    TcpStream(PcmListener* pcmListener, boost::asio::io_context& ioc, const ServerSettings& server_settings, const StreamUri& uri);
+    TcpStream(PcmStream::Listener* pcmListener, boost::asio::io_context& ioc, const ServerSettings& server_settings, const StreamUri& uri);
 
 protected:
     void do_connect() override;

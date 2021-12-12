@@ -19,8 +19,11 @@
 #ifndef META_STREAM_HPP
 #define META_STREAM_HPP
 
+// local headers
 #include "posix_stream.hpp"
 #include "resampler.hpp"
+
+// standard headers
 #include <memory>
 
 namespace streamreader
@@ -31,13 +34,13 @@ namespace streamreader
 /**
  * Reads PCM and passes the data to an encoder.
  * Implements EncoderListener to get the encoded data.
- * Data is passed to the PcmListener
+ * Data is passed to the PcmStream::Listener
  */
-class MetaStream : public PcmStream, public PcmListener
+class MetaStream : public PcmStream, public PcmStream::Listener
 {
 public:
-    /// ctor. Encoded PCM data is passed to the PcmListener
-    MetaStream(PcmListener* pcmListener, const std::vector<std::shared_ptr<PcmStream>>& streams, boost::asio::io_context& ioc,
+    /// ctor. Encoded PCM data is passed to the PcmStream::Listener
+    MetaStream(PcmStream::Listener* pcmListener, const std::vector<std::shared_ptr<PcmStream>>& streams, boost::asio::io_context& ioc,
                const ServerSettings& server_settings, const StreamUri& uri);
     virtual ~MetaStream();
 
@@ -61,7 +64,7 @@ public:
     void play(ResultHandler handler) override;
 
 protected:
-    /// Implementation of PcmListener
+    /// Implementation of PcmStream::Listener
     void onPropertiesChanged(const PcmStream* pcmStream, const Properties& properties) override;
     void onStateChanged(const PcmStream* pcmStream, ReaderState state) override;
     void onChunkRead(const PcmStream* pcmStream, const msg::PcmChunk& chunk) override;

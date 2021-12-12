@@ -16,8 +16,10 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
+// prototype/interface header file
 #include "pcm_stream.hpp"
 
+// local headers
 #include "base64.h"
 #include "common/aixlog.hpp"
 #include "common/error_code.hpp"
@@ -27,11 +29,11 @@
 #include "control_error.hpp"
 #include "encoder/encoder_factory.hpp"
 
+// 3rd party headers
 #include <boost/asio/ip/host_name.hpp>
 
-#include <fcntl.h>
+// standard headers
 #include <memory>
-#include <sys/stat.h>
 
 
 using namespace std;
@@ -42,7 +44,7 @@ namespace streamreader
 static constexpr auto LOG_TAG = "PcmStream";
 
 
-PcmStream::PcmStream(PcmListener* pcmListener, boost::asio::io_context& ioc, const ServerSettings& server_settings, const StreamUri& uri)
+PcmStream::PcmStream(PcmStream::Listener* pcmListener, boost::asio::io_context& ioc, const ServerSettings& server_settings, const StreamUri& uri)
     : active_(false), strand_(net::make_strand(ioc.get_executor())), pcmListeners_{pcmListener}, uri_(uri), chunk_ms_(20), state_(ReaderState::kIdle),
       ioc_(ioc), server_settings_(server_settings), req_id_(0), property_timer_(strand_)
 {
@@ -302,7 +304,7 @@ json PcmStream::toJson() const
 }
 
 
-void PcmStream::addListener(PcmListener* pcmListener)
+void PcmStream::addListener(PcmStream::Listener* pcmListener)
 {
     pcmListeners_.push_back(pcmListener);
 }

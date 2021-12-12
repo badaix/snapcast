@@ -16,11 +16,16 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
+// prototype/interface header file
 #include "librespot_stream.hpp"
+
+// local headers
 #include "common/aixlog.hpp"
 #include "common/snap_exception.hpp"
 #include "common/utils.hpp"
 #include "common/utils/string_utils.hpp"
+
+// standard headers
 #include <regex>
 
 
@@ -32,7 +37,7 @@ namespace streamreader
 static constexpr auto LOG_TAG = "LibrespotStream";
 
 
-LibrespotStream::LibrespotStream(PcmListener* pcmListener, boost::asio::io_context& ioc, const ServerSettings& server_settings, const StreamUri& uri)
+LibrespotStream::LibrespotStream(PcmStream::Listener* pcmListener, boost::asio::io_context& ioc, const ServerSettings& server_settings, const StreamUri& uri)
     : ProcessStream(pcmListener, ioc, server_settings, uri)
 {
     wd_timeout_sec_ = cpt::stoul(uri_.getQuery("wd_timeout", "7800")); ///< 130min

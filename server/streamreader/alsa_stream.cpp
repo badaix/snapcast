@@ -16,17 +16,17 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
-#include <cerrno>
-#include <fcntl.h>
-#include <memory>
-#include <sys/stat.h>
-#include <unistd.h>
+// prototype/interface header file
+#include "alsa_stream.hpp"
 
+// local headers
 #include "common/aixlog.hpp"
 #include "common/snap_exception.hpp"
 #include "common/str_compat.hpp"
 
-#include "alsa_stream.hpp"
+// standard headers
+#include <cerrno>
+#include <memory>
 
 
 using namespace std;
@@ -65,7 +65,7 @@ void wait(boost::asio::steady_timer& timer, const std::chrono::duration<Rep, Per
 } // namespace
 
 
-AlsaStream::AlsaStream(PcmListener* pcmListener, boost::asio::io_context& ioc, const ServerSettings& server_settings, const StreamUri& uri)
+AlsaStream::AlsaStream(PcmStream::Listener* pcmListener, boost::asio::io_context& ioc, const ServerSettings& server_settings, const StreamUri& uri)
     : PcmStream(pcmListener, ioc, server_settings, uri), handle_(nullptr), read_timer_(strand_), silence_(0ms)
 {
     device_ = uri_.getQuery("device", "hw:0");

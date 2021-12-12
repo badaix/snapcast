@@ -19,6 +19,7 @@
 #ifndef SPOTIFY_STREAM_HPP
 #define SPOTIFY_STREAM_HPP
 
+// local headers
 #include "process_stream.hpp"
 
 namespace streamreader
@@ -28,7 +29,7 @@ namespace streamreader
 /**
  * Starts librespot, reads PCM data from stdout, and passes the data to an encoder.
  * Implements EncoderListener to get the encoded data.
- * Data is passed to the PcmListener
+ * Data is passed to the PcmStream::Listener
  * usage:
  *   snapserver -s "spotify:///librespot?name=Spotify&username=<my username>&password=<my password>[&devicename=Snapcast][&bitrate=320][&volume=<volume in
  * percent>][&cache=<cache dir>]"
@@ -37,7 +38,7 @@ class LibrespotStream : public ProcessStream
 {
 public:
     /// ctor. Encoded PCM data is passed to the PipeListener
-    LibrespotStream(PcmListener* pcmListener, boost::asio::io_context& ioc, const ServerSettings& server_settings, const StreamUri& uri);
+    LibrespotStream(PcmStream::Listener* pcmListener, boost::asio::io_context& ioc, const ServerSettings& server_settings, const StreamUri& uri);
 
 protected:
     bool killall_;

@@ -19,11 +19,17 @@
 #ifndef ASIO_STREAM_HPP
 #define ASIO_STREAM_HPP
 
+// local headers
 #include "common/aixlog.hpp"
 #include "common/str_compat.hpp"
 #include "pcm_stream.hpp"
-#include <atomic>
+
+// 3rd party headers
 #include <boost/asio.hpp>
+
+// standard headers
+#include <atomic>
+
 
 namespace streamreader
 {
@@ -33,7 +39,7 @@ class AsioStream : public PcmStream
 {
 public:
     /// ctor. Encoded PCM data is passed to the PipeListener
-    AsioStream(PcmListener* pcmListener, boost::asio::io_context& ioc, const ServerSettings& server_settings, const StreamUri& uri);
+    AsioStream(PcmStream::Listener* pcmListener, boost::asio::io_context& ioc, const ServerSettings& server_settings, const StreamUri& uri);
 
     void start() override;
     void stop() override;
@@ -82,7 +88,7 @@ void AsioStream<ReadStream>::wait(Timer& timer, const std::chrono::duration<Rep,
 
 
 template <typename ReadStream>
-AsioStream<ReadStream>::AsioStream(PcmListener* pcmListener, boost::asio::io_context& ioc, const ServerSettings& server_settings, const StreamUri& uri)
+AsioStream<ReadStream>::AsioStream(PcmStream::Listener* pcmListener, boost::asio::io_context& ioc, const ServerSettings& server_settings, const StreamUri& uri)
     : PcmStream(pcmListener, ioc, server_settings, uri), read_timer_(strand_), state_timer_(strand_)
 {
     chunk_ = std::make_unique<msg::PcmChunk>(sampleFormat_, chunk_ms_);

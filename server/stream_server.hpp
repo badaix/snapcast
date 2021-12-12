@@ -19,13 +19,7 @@
 #ifndef STREAM_SERVER_HPP
 #define STREAM_SERVER_HPP
 
-#include <boost/asio.hpp>
-#include <memory>
-#include <mutex>
-#include <set>
-#include <sstream>
-#include <vector>
-
+// local headers
 #include "common/queue.h"
 #include "common/sample_format.hpp"
 #include "control_server.hpp"
@@ -37,6 +31,17 @@
 #include "stream_session.hpp"
 #include "streamreader/stream_manager.hpp"
 
+// 3rd party headers
+#include <boost/asio.hpp>
+
+// standard headers
+#include <memory>
+#include <mutex>
+#include <set>
+#include <sstream>
+#include <vector>
+
+
 using namespace streamreader;
 
 using boost::asio::ip::tcp;
@@ -46,7 +51,7 @@ using session_ptr = std::shared_ptr<StreamSession>;
 
 /// Forwars PCM data to the connected clients
 /**
- * Reads PCM data using PipeStream, implements PcmListener to get the (encoded) PCM stream.
+ * Reads PCM data from several StreamSessions
  * Accepts and holds client connections (StreamSession)
  * Receives (via the StreamMessageReceiver interface) and answers messages from the clients
  * Forwards PCM data to the clients

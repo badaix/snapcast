@@ -16,7 +16,10 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
+// prototype/interface header file
 #include "meta_stream.hpp"
+
+// local headers
 #include "common/aixlog.hpp"
 #include "common/snap_exception.hpp"
 #include "common/utils/string_utils.hpp"
@@ -32,7 +35,7 @@ static constexpr auto LOG_TAG = "MetaStream";
 // static constexpr auto kResyncTolerance = 50ms;
 
 
-MetaStream::MetaStream(PcmListener* pcmListener, const std::vector<std::shared_ptr<PcmStream>>& streams, boost::asio::io_context& ioc,
+MetaStream::MetaStream(PcmStream::Listener* pcmListener, const std::vector<std::shared_ptr<PcmStream>>& streams, boost::asio::io_context& ioc,
                        const ServerSettings& server_settings, const StreamUri& uri)
     : PcmStream(pcmListener, ioc, server_settings, uri), first_read_(true)
 {

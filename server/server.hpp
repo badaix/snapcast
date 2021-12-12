@@ -19,13 +19,7 @@
 #ifndef SERVER_HPP
 #define SERVER_HPP
 
-#include <boost/asio.hpp>
-#include <memory>
-#include <mutex>
-#include <set>
-#include <sstream>
-#include <vector>
-
+// local headers
 #include "common/queue.h"
 #include "common/sample_format.hpp"
 #include "control_server.hpp"
@@ -38,6 +32,17 @@
 #include "stream_session.hpp"
 #include "streamreader/stream_manager.hpp"
 
+// 3rd party headers
+#include <boost/asio.hpp>
+
+// standard headers
+#include <memory>
+#include <mutex>
+#include <set>
+#include <sstream>
+#include <vector>
+
+
 using namespace streamreader;
 
 using boost::asio::ip::tcp;
@@ -45,14 +50,11 @@ using acceptor_ptr = std::unique_ptr<tcp::acceptor>;
 using session_ptr = std::shared_ptr<StreamSession>;
 
 
-/// Forwars PCM data to the connected clients
 /**
- * Reads PCM data using PipeStream, implements PcmListener to get the (encoded) PCM stream.
- * Accepts and holds client connections (StreamSession)
- * Receives (via the StreamMessageReceiver interface) and answers messages from the clients
- * Forwards PCM data to the clients
+ * Receives and routes PcmStreams
+ * Processes ControlSession messages
  */
-class Server : public StreamMessageReceiver, public ControlMessageReceiver, public PcmListener
+class Server : public StreamMessageReceiver, public ControlMessageReceiver, public PcmStream::Listener
 {
 public:
     // TODO: revise handler names
@@ -77,7 +79,7 @@ private:
     };
     void onNewSession(std::shared_ptr<StreamSession> session) override;
 
-    /// Implementation of PcmListener
+    /// Implementation of PcmStream::Listener
     void onPropertiesChanged(const PcmStream* pcmStream, const Properties& properties) override;
     void onStateChanged(const PcmStream* pcmStream, ReaderState state) override;
     void onChunkRead(const PcmStream* pcmStream, const msg::PcmChunk& chunk) override;

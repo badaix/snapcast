@@ -16,7 +16,10 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
+// prototype/interface header file
 #include "stream_manager.hpp"
+
+// local headers
 #include "airplay_stream.hpp"
 #ifdef HAS_ALSA
 #include "alsa_stream.hpp"
@@ -32,13 +35,17 @@
 #include "process_stream.hpp"
 #include "tcp_stream.hpp"
 
+// 3rd party headers
+
+// standard headers
+
 
 using namespace std;
 
 namespace streamreader
 {
 
-StreamManager::StreamManager(PcmListener* pcmListener, boost::asio::io_context& ioc, const ServerSettings& settings)
+StreamManager::StreamManager(PcmStream::Listener* pcmListener, boost::asio::io_context& ioc, const ServerSettings& settings)
     // const std::string& defaultSampleFormat, const std::string& defaultCodec, size_t defaultChunkBufferMs)
     : pcmListener_(pcmListener), settings_(settings), ioc_(ioc)
 {
