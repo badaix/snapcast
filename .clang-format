@@ -14,7 +14,7 @@ Language: Cpp
 MaxEmptyLinesToKeep: '3'
 PenaltyBreakComment: '100000'
 PointerAlignment: Left
-Standard: Cpp11
+Standard: Latest
 UseTab: Never
 
 ...
