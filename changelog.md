@@ -1,5 +1,24 @@
 # Snapcast changelog
 
+## Version 0.26.0
+
+### Features
+
+- Client: Disconnect from pulse when no audio is available (Issue #927, PR #931)
+- Server: New Metadata API for audio streams (Issue #803, #953)
+- Server: New Control API for audio streams (Issue #954)
+- Server: Lowered minimum buffer from 400ms to 20ms (Issue #329)
+
+### Bugfixes
+
+- Server: systemd.unit starts server after network-online (Issue #950)
+
+### General
+
+- Update documentation (Issue #804, PR #945)
+
+_Johannes Pohl <snapcast@badaix.de>  Fri, 24 Dec 2021 00:13:37 +0200_
+
 ## Version 0.25.0
 
 ### Features
@@ -9,7 +28,7 @@
 
 ### Bugfixes
 
-- Client: Fix crash on Windows when  system volume changes (PR #838)
+- Client: Fix crash on Windows when system volume changes (PR #838)
 - Client: Removed a log message to stdout for file player backend (Issue #681)
 - Server: Fix percent-decoding for stream URIs (Issue #850)
 - Server: Fix double quotes in Airplay device names (Issue #851)
