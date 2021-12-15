@@ -146,7 +146,7 @@ To setup WiFi on a Raspberry Pi, you can follow this [guide](https://www.raspber
 
 ## Control
 
-Snapcast can be controlled using a [JSON-RPC API](doc/json_rpc_api/v2_0_0.md) over plain TCP, HTTP, or Websockets:
+Snapcast can be controlled using a [JSON-RPC API](doc/json_rpc_api/control.md) over plain TCP, HTTP, or Websockets:
 
 - Set client's volume
 - Mute clients
