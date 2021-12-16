@@ -52,7 +52,7 @@ _Johannes Pohl <snapcast@badaix.de>  Sat, 15 May 2021 00:13:37 +0200_
 
 - Client: Fix dropouts in alsa player backend (Issue #774)
 - Client: Fix alsa player volume resetting to max (Issue #735)  
-- Client: Fix noise while muted for Pulseaudio (Issue #785) 
+- Client: Fix noise while muted for Pulseaudio (Issue #785)
 - Client: Android support for opus readded (Issue #789)
 - Client: Fix host id for MacBook Pro (later 2016) (Issue #807)
 
@@ -60,7 +60,7 @@ _Johannes Pohl <snapcast@badaix.de>  Sat, 15 May 2021 00:13:37 +0200_
 
 - Snapweb: Update to v0.2.0
 - Remove submodules with external libs from the git repository
-- Write version and revision (git sha) to log 
+- Write version and revision (git sha) to log
 - Add documentation to the default files (Issue #791)
 
 _Johannes Pohl <snapcast@badaix.de>  Sat, 27 Feb 2021 00:13:37 +0200_
@@ -298,7 +298,7 @@ _Johannes Pohl <snapcast@badaix.de>  Wed, 20 Nov 2019 00:13:37 +0200_
 - Snapcast depends on boost::asio and boost::beast (header only)
 - Tidy up code base
 - Makefile doesn't statically link libgcc and libstdc++
-- debian scripts: change usernames to _snapclient and _snapserver
+- debian scripts: change usernames to \_snapclient and \_snapserver
 
 _Johannes Pohl <snapcast@badaix.de>  Sat, 13 Oct 2019 00:13:37 +0200_
 
@@ -374,7 +374,7 @@ _Johannes Pohl <snapcast@badaix.de>  Tue, 04 Mar 2018 00:13:37 +0200_
 - Snapclient: configurable client id (Issue #249)
 - Android: Snapclient support for ARM, MIPS and X86
 - Snapserver: Play some silence before going idle (PR #284)
- 
+
 ### Bugfixes
 
 - Fix linker error (Issue #255, #274)
@@ -389,7 +389,7 @@ _Johannes Pohl <snapcast@badaix.de>  Tue, 04 Mar 2018 00:13:37 +0200_
 - Improved logging: Use `--debug` for debug logging
 - Log to file: Use `--debug=<filename>`
 - Improved exception handling and error logging (Issue #276)
-- Android: update to NDK r16 and clang++ 
+- Android: update to NDK r16 and clang++
 - hide spotify credentials in json control message (Issue #282)
 
 _Johannes Pohl <snapcast@badaix.de>  Tue, 17 Oct 2017 00:13:37 +0200_
@@ -492,7 +492,7 @@ _Johannes Pohl <snapcast@badaix.de>  Wed, 16 Nov 2016 00:13:37 +0200_
 - Android client: Fixed crash on Nougat (Issue #97)
 - Fixed FreeBSD compile error for Snapserver (Issue #107)
 - Snapserver randomly dropped JSON control messages
-- Long command line options (like `--sampleformat`) didn't work on some systems (Issue #103) 
+- Long command line options (like `--sampleformat`) didn't work on some systems (Issue #103)
 
 ### General
 
@@ -518,11 +518,11 @@ _Johannes Pohl <snapcast@badaix.de>  Sun, 24 Jul 2016 00:13:37 +0200_
 
 ### Features
 
-- Support for HiRes audio (e.g. 96000:24:2) (Issue #13) 
-  - Bitdepth must be one of 8, 16, 24 (=24 bit padded to 32) or 32 
-- Auto start option for Android (Issue #49) 
-- Creation mode for the fifo can be configured (Issue #52) 
-  - "-s pipe:///tmp/snapfifo?mode=[read|create]" 
+- Support for HiRes audio (e.g. 96000:24:2) (Issue #13)
+  - Bitdepth must be one of 8, 16, 24 (=24 bit padded to 32) or 32
+- Auto start option for Android (Issue #49)
+- Creation mode for the fifo can be configured (Issue #52)
+  - "-s pipe:///tmp/snapfifo?mode=[read|create]"
 
 ### Bugfixes
 
