@@ -45,6 +45,8 @@ std::string category::message(int value) const
             return "Success";
         case ControlErrc::can_not_control:
             return "Stream can not be controlled";
+        case ControlErrc::can_go_next_is_false:
+            return "Stream property can_go_next is false";
         case ControlErrc::can_go_previous_is_false:
             return "Stream property can_go_previous is false";
         case ControlErrc::can_play_is_false:
