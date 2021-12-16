@@ -16,16 +16,23 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
-#include <cassert>
-#include <iostream>
+// prototype/interface header file
+#include "pulse_player.hpp"
 
-#include <pulse/proplist.h>
-
+// local headers
 #include "common/aixlog.hpp"
 #include "common/snap_exception.hpp"
 #include "common/str_compat.hpp"
+#include "common/utils/logging.hpp"
 #include "common/utils/string_utils.hpp"
-#include "pulse_player.hpp"
+
+// 3rd party headers
+#include <pulse/proplist.h>
+
+// standard headers
+#include <cassert>
+#include <iostream>
+
 
 using namespace std::chrono_literals;
 using namespace std;
@@ -186,7 +193,8 @@ void PulsePlayer::worker()
         // if we are still active, wait for a chunk and attempt to reconnect
         while (active_ && !stream_->waitForChunk(100ms))
         {
-            LOG(DEBUG, LOG_TAG) << "Waiting for a chunk to become available before reconnecting\n";
+            static utils::logging::TimeConditional cond(2s);
+            LOG(DEBUG, LOG_TAG) << cond << "Waiting for a chunk to become available before reconnecting\n";
         }
 
         while (active_)
