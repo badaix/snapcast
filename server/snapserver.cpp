@@ -297,11 +297,11 @@ int main(int argc, char* argv[])
             settings.stream.streamChunkMs = 10;
         }
 
-        static constexpr int32_t MIN_BUFFER_DURATION_MS = 20;
-        if (settings.stream.bufferMs < MIN_BUFFER_DURATION_MS)
+        static constexpr chrono::milliseconds MIN_BUFFER_DURATION = 20ms;
+        if (settings.stream.bufferMs < MIN_BUFFER_DURATION.count())
         {
-            LOG(WARNING, LOG_TAG) << "Buffer is less than " << MIN_BUFFER_DURATION_MS << "ms, changing to " << MIN_BUFFER_DURATION_MS << "ms\n";
-            settings.stream.bufferMs = MIN_BUFFER_DURATION_MS;
+            LOG(WARNING, LOG_TAG) << "Buffer is less than " << MIN_BUFFER_DURATION.count() << "ms, changing to " << MIN_BUFFER_DURATION.count() << "ms\n";
+            settings.stream.bufferMs = MIN_BUFFER_DURATION.count();
         }
 
         auto server = std::make_unique<Server>(io_context, settings);
