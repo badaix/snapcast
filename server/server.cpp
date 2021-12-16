@@ -454,13 +454,17 @@ void Server::processRequest(const jsonrpcpp::request_ptr request, const OnRespon
                 auto command = request->params().get<string>("command");
 
                 auto handle_response = [request, on_response, command](const snapcast::ErrorCode& ec) {
-                    LOG(DEBUG, LOG_TAG) << "Response to '" << command << "': " << ec << ", message: " << ec.detailed_message() << ", msg: " << ec.message()
+                    auto log_level = AixLog::Severity::debug;
+                    if (ec)
+                        log_level = AixLog::Severity::error;
+                    LOG(log_level, LOG_TAG) << "Response to '" << command << "': " << ec << ", message: " << ec.detailed_message() << ", msg: " << ec.message()
                                         << ", category: " << ec.category().name() << "\n";
                     std::shared_ptr<jsonrpcpp::Response> response;
                     if (ec)
                         response = make_shared<jsonrpcpp::Response>(request->id(), jsonrpcpp::Error(ec.detailed_message(), ec.value()));
                     else
                         response = make_shared<jsonrpcpp::Response>(request->id(), "ok");
+                    // LOG(DEBUG, LOG_TAG) << response->to_json().dump() << "\n";
                     on_response(response, nullptr);
                 };
 
@@ -511,9 +515,6 @@ void Server::processRequest(const jsonrpcpp::request_ptr request, const OnRespon
             }
             else if (request->method().find("Stream.SetProperty") == 0)
             {
-                // clang-format off
-                // clang-format on
-
                 LOG(INFO, LOG_TAG) << "Stream.SetProperty id: " << request->params().get<std::string>("id")
                                    << ", property: " << request->params().get("property") << ", value: " << request->params().get("value") << "\n";
 
