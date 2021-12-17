@@ -458,7 +458,7 @@ void Server::processRequest(const jsonrpcpp::request_ptr request, const OnRespon
                     if (ec)
                         log_level = AixLog::Severity::error;
                     LOG(log_level, LOG_TAG) << "Response to '" << command << "': " << ec << ", message: " << ec.detailed_message() << ", msg: " << ec.message()
-                                        << ", category: " << ec.category().name() << "\n";
+                                            << ", category: " << ec.category().name() << "\n";
                     std::shared_ptr<jsonrpcpp::Response> response;
                     if (ec)
                         response = make_shared<jsonrpcpp::Response>(request->id(), jsonrpcpp::Error(ec.detailed_message(), ec.value()));
@@ -468,43 +468,43 @@ void Server::processRequest(const jsonrpcpp::request_ptr request, const OnRespon
                     on_response(response, nullptr);
                 };
 
-                if (command == "SetPosition")
+                if (command == "setPosition")
                 {
-                    if (!request->params().has("params") || !request->params().get("params").contains("Position"))
-                        throw jsonrpcpp::InvalidParamsException("SetPosition requires parameters 'Position'");
-                    auto seconds = request->params().get("params")["Position"].get<float>();
+                    if (!request->params().has("params") || !request->params().get("params").contains("position"))
+                        throw jsonrpcpp::InvalidParamsException("setPosition requires parameter 'position'");
+                    auto seconds = request->params().get("params")["position"].get<float>();
                     stream->setPosition(std::chrono::milliseconds(static_cast<int>(seconds * 1000)),
                                         [handle_response](const snapcast::ErrorCode& ec) { handle_response(ec); });
                 }
-                else if (command == "Seek")
+                else if (command == "seek")
                 {
-                    if (!request->params().has("params") || !request->params().get("params").contains("Offset"))
-                        throw jsonrpcpp::InvalidParamsException("Seek requires parameter 'Offset'");
-                    auto offset = request->params().get("params")["Offset"].get<float>();
+                    if (!request->params().has("params") || !request->params().get("params").contains("offset"))
+                        throw jsonrpcpp::InvalidParamsException("Seek requires parameter 'offset'");
+                    auto offset = request->params().get("params")["offset"].get<float>();
                     stream->seek(std::chrono::milliseconds(static_cast<int>(offset * 1000)),
                                  [handle_response](const snapcast::ErrorCode& ec) { handle_response(ec); });
                 }
-                else if (command == "Next")
+                else if (command == "next")
                 {
                     stream->next([handle_response](const snapcast::ErrorCode& ec) { handle_response(ec); });
                 }
-                else if (command == "Previous")
+                else if (command == "previous")
                 {
                     stream->previous([handle_response](const snapcast::ErrorCode& ec) { handle_response(ec); });
                 }
-                else if (command == "Pause")
+                else if (command == "pause")
                 {
                     stream->pause([handle_response](const snapcast::ErrorCode& ec) { handle_response(ec); });
                 }
-                else if (command == "PlayPause")
+                else if (command == "playPause")
                 {
                     stream->playPause([handle_response](const snapcast::ErrorCode& ec) { handle_response(ec); });
                 }
-                else if (command == "Stop")
+                else if (command == "stop")
                 {
                     stream->stop([handle_response](const snapcast::ErrorCode& ec) { handle_response(ec); });
                 }
-                else if (command == "Play")
+                else if (command == "play")
                 {
                     stream->play([handle_response](const snapcast::ErrorCode& ec) { handle_response(ec); });
                 }

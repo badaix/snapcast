@@ -888,38 +888,38 @@ class MPRISInterface(dbus.service.Object):
     # Player methods
     @ dbus.service.method(__player_interface, in_signature='', out_signature='')
     def Next(self):
-        snapcast_wrapper.control("Next")
+        snapcast_wrapper.control("next")
         return
 
     @ dbus.service.method(__player_interface, in_signature='', out_signature='')
     def Previous(self):
-        snapcast_wrapper.control("Previous")
+        snapcast_wrapper.control("previous")
         return
 
     @ dbus.service.method(__player_interface, in_signature='', out_signature='')
     def Pause(self):
-        snapcast_wrapper.control("Pause")
+        snapcast_wrapper.control("pause")
         return
 
     @ dbus.service.method(__player_interface, in_signature='', out_signature='')
     def PlayPause(self):
-        snapcast_wrapper.control("PlayPause")
+        snapcast_wrapper.control("playPause")
         return
 
     @ dbus.service.method(__player_interface, in_signature='', out_signature='')
     def Stop(self):
-        snapcast_wrapper.control("Stop")
+        snapcast_wrapper.control("stop")
         return
 
     @ dbus.service.method(__player_interface, in_signature='', out_signature='')
     def Play(self):
-        snapcast_wrapper.control("Play")
+        snapcast_wrapper.control("play")
         return
 
     @ dbus.service.method(__player_interface, in_signature='x', out_signature='')
     def Seek(self, offset):
         logger.debug(f'Seek {offset}')
-        snapcast_wrapper.control("Seek", {"Offset": float(offset) / 1000000})
+        snapcast_wrapper.control("seek", {"offset": float(offset) / 1000000})
         # status = mpd_wrapper.status()
         # current, end = status['time'].split(':')
         # current = int(current)
@@ -935,9 +935,9 @@ class MPRISInterface(dbus.service.Object):
 
     @ dbus.service.method(__player_interface, in_signature='ox', out_signature='')
     def SetPosition(self, trackid, position):
-        logger.debug(f'SetPosition TrackId: {trackid}, Position: {position}')
+        logger.debug(f'setPosition trackId: {trackid}, position: {position}')
         snapcast_wrapper.control(
-            "SetPosition", {"TrackId": trackid, "Position": float(position) / 1000000})
+            "setPosition", {"position": float(position) / 1000000})
         self.Seeked(position)
 
         # song = mpd_wrapper.last_currentsong()

@@ -484,8 +484,8 @@ See [Plugin.Stream.Player.Control](stream_plugin.md#pluginstreamplayercontrol).
 
 {"id": 1, "jsonrpc": "2.0", "error": {"code": -32602, "message": "Command '<command>' not supported"}}
 {"id": 1, "jsonrpc": "2.0", "error": {"code": -32602, "message": "Parameter 'commmand' is missing"}}
-{"id": 1, "jsonrpc": "2.0", "error": {"code": -32602, "message": "SetPosition requires parameters 'Position'"}}
-{"id": 1, "jsonrpc": "2.0", "error": {"code": -32602, "message": "Seek requires parameter 'Offset'"}}
+{"id": 1, "jsonrpc": "2.0", "error": {"code": -32602, "message": "setPosition requires parameter 'position'"}}
+{"id": 1, "jsonrpc": "2.0", "error": {"code": -32602, "message": "seek requires parameter 'offset'"}}
 ```
 
 ### Stream.SetProperty

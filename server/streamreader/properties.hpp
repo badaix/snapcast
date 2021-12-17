@@ -19,10 +19,12 @@
 #ifndef PROPERTIES_HPP
 #define PROPERTIES_HPP
 
+// local headers
 #include "common/aixlog.hpp"
 #include "common/json.hpp"
 #include "metadata.hpp"
 
+// standard headers
 #include <optional>
 #include <set>
 #include <string>
@@ -170,9 +172,9 @@ public:
     std::optional<float> minimum_rate;
     /// The maximum value which the Rate property can take. Clients should not attempt to set the Rate property above this value
     std::optional<float> maximum_rate;
-    /// Whether the client can call the Next method on this interface and expect the current track to change
+    /// Whether the client can call the next method on this interface and expect the current track to change
     bool can_go_next = false;
-    /// Whether the client can call the Previous method on this interface and expect the current track to change
+    /// Whether the client can call the previous method on this interface and expect the current track to change
     bool can_go_previous = false;
     /// Whether playback can be started using "play" or "playPause"
     bool can_play = false;

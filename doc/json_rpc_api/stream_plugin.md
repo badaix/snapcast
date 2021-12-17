@@ -31,30 +31,29 @@ Used to control the player. The property `canControl` must be `true`.
 
 #### Supported `command`s
 
-* `Play`: Start playback (if `canPlay` is `true`)
+* `play`: Start playback (if `canPlay` is `true`)
   * `params`: none
-* `Pause`: Stop playback (if `canPause` is `true`)
+* `pause`: Stop playback (if `canPause` is `true`)
   * `params`: none
-* `PlayPause`: Toggle play/pause (if `canPause` is `true`)
+* `playPause`: Toggle play/pause (if `canPause` is `true`)
   * `params`: none
-* `Stop`: Stop playback (if `canControl` is `true`)
+* `stop`: Stop playback (if `canControl` is `true`)
   * `params`: none
-* `Next`: Skip to next track (if `canGoNext` is `true`)
+* `next`: Skip to next track (if `canGoNext` is `true`)
   * `params`: none
-* `Previous`: Skip to previous track (if `canGoPrevious` is `true`)
+* `previous`: Skip to previous track (if `canGoPrevious` is `true`)
   * `params`: none
-* `Seek`: Seek forward or backward in the current track (if `canSeek` is `true`)
+* `seek`: Seek forward or backward in the current track (if `canSeek` is `true`)
   * `params`:
-    * `Offset`: [float] seek offset in seconds
-* `SetPosition`: Set the current track position in seconds (if `canSeek` is `true`)
+    * `offset`: [float] seek offset in seconds
+* `setPosition`: Set the current track position in seconds (if `canSeek` is `true`)
   * `params`:
-    * `Position`: [float] the new track position
-    * `TrackId`: [string] the optional currently playing track's identifier
+    * `position`: [float] the new track position
 
 #### Example
 
 ```json
-{"id": 1, "jsonrpc": "2.0", "method": "Plugin.Stream.Player.Control", "params": {"command": "SetPosition", "params": { "Position": 17.827, "TrackId": "/org/mpris/MediaPlayer2/Track/2"}}}
+{"id": 1, "jsonrpc": "2.0", "method": "Plugin.Stream.Player.Control", "params": {"command": "setPosition", "params": { "position": 17.827 }}}
 ```
 
 #### Expected response
@@ -119,11 +118,11 @@ Any [json-rpc 2.0 conformant error](https://www.jsonrpc.org/specification#error_
 * `volume`: [int] Voume in percent, valid range [0..100]
 * `rate`: [float] The current playback rate, valid range (0..)
 * `position`: [float] Current playback position in seconds
-* `canGoNext`: [bool] Whether the client can call the `Next` method on this interface and expect the current track to change
-* `canGoPrevious`: [bool] Whether the client can call the `Previous` method on this interface and expect the current track to change
-* `canPlay`: [bool] Whether playback can be started using `Play` or `PlayPause`
-* `canPause`: [bool] Whether playback can be paused using `Pause` or `PlayPause`
-* `canSeek`: [bool] Whether the client can control the playback position using `Seek` and `SetPosition`
+* `canGoNext`: [bool] Whether the client can call the `next` method on this interface and expect the current track to change
+* `canGoPrevious`: [bool] Whether the client can call the `previous` method on this interface and expect the current track to change
+* `canPlay`: [bool] Whether playback can be started using `play` or `playPause`
+* `canPause`: [bool] Whether playback can be paused using `pause` or `playPause`
+* `canSeek`: [bool] Whether the client can control the playback position using `seek` and `setPosition`
 * `canControl`: [bool] Whether the media player may be controlled over this interface
 * `metadata`: [json] message with the following (optional) fields:
   * `trackId`: [string] A unique identity for this track within the context of an MPRIS object (eg: tracklist).

@@ -359,9 +359,9 @@ void PcmStream::setPosition(std::chrono::milliseconds position, ResultHandler ha
     if (!properties_.can_seek)
         return handler({ControlErrc::can_seek_is_false});
     json params;
-    params["command"] = "SetPosition";
+    params["command"] = "setPosition";
     json j;
-    j["Position"] = position.count() / 1000.f;
+    j["position"] = position.count() / 1000.f;
     params["params"] = j;
     sendRequest("Plugin.Stream.Player.Control", params, std::move(handler));
 }
@@ -373,9 +373,9 @@ void PcmStream::seek(std::chrono::milliseconds offset, ResultHandler handler)
     if (!properties_.can_seek)
         return handler({ControlErrc::can_seek_is_false});
     json params;
-    params["command"] = "Seek";
+    params["command"] = "seek";
     json j;
-    j["Offset"] = offset.count() / 1000.f;
+    j["offset"] = offset.count() / 1000.f;
     params["params"] = j;
     sendRequest("Plugin.Stream.Player.Control", params, std::move(handler));
 }
@@ -386,7 +386,7 @@ void PcmStream::next(ResultHandler handler)
     LOG(DEBUG, LOG_TAG) << "next\n";
     if (!properties_.can_go_next)
         return handler({ControlErrc::can_go_next_is_false});
-    sendRequest("Plugin.Stream.Player.Control", {"command", "Next"}, std::move(handler));
+    sendRequest("Plugin.Stream.Player.Control", {"command", "next"}, std::move(handler));
 }
 
 
@@ -395,7 +395,7 @@ void PcmStream::previous(ResultHandler handler)
     LOG(DEBUG, LOG_TAG) << "previous\n";
     if (!properties_.can_go_previous)
         return handler({ControlErrc::can_go_previous_is_false});
-    sendRequest("Plugin.Stream.Player.Control", {"command", "Previous"}, std::move(handler));
+    sendRequest("Plugin.Stream.Player.Control", {"command", "previous"}, std::move(handler));
 }
 
 
@@ -404,8 +404,36 @@ void PcmStream::pause(ResultHandler handler)
     LOG(DEBUG, LOG_TAG) << "pause\n";
     if (!properties_.can_pause)
         return handler({ControlErrc::can_pause_is_false});
-    sendRequest("Plugin.Stream.Player.Control", {"command", "Pause"}, std::move(handler));
+    sendRequest("Plugin.Stream.Player.Control", {"command", "pause"}, std::move(handler));
 }
+
+
+void PcmStream::playPause(ResultHandler handler)
+{
+    LOG(DEBUG, LOG_TAG) << "playPause\n";
+    if (!properties_.can_pause)
+        return handler({ControlErrc::can_play_is_false});
+    sendRequest("Plugin.Stream.Player.Control", {"command", "playPause"}, std::move(handler));
+}
+
+
+void PcmStream::stop(ResultHandler handler)
+{
+    LOG(DEBUG, LOG_TAG) << "stop\n";
+    if (!properties_.can_control)
+        return handler({ControlErrc::can_control_is_false});
+    sendRequest("Plugin.Stream.Player.Control", {"command", "stop"}, std::move(handler));
+}
+
+
+void PcmStream::play(ResultHandler handler)
+{
+    LOG(DEBUG, LOG_TAG) << "play\n";
+    if (!properties_.can_play)
+        return handler({ControlErrc::can_play_is_false});
+    sendRequest("Plugin.Stream.Player.Control", {"command", "play"}, std::move(handler));
+}
+
 
 void PcmStream::sendRequest(const std::string& method, const jsonrpcpp::Parameter& params, ResultHandler handler)
 {
@@ -419,33 +447,6 @@ void PcmStream::sendRequest(const std::string& method, const jsonrpcpp::Paramete
         else
             handler({ControlErrc::success});
     });
-}
-
-
-void PcmStream::playPause(ResultHandler handler)
-{
-    LOG(DEBUG, LOG_TAG) << "playPause\n";
-    if (!properties_.can_pause)
-        return handler({ControlErrc::can_play_is_false});
-    sendRequest("Plugin.Stream.Player.Control", {"command", "PlayPause"}, std::move(handler));
-}
-
-
-void PcmStream::stop(ResultHandler handler)
-{
-    LOG(DEBUG, LOG_TAG) << "stop\n";
-    if (!properties_.can_control)
-        return handler({ControlErrc::can_control_is_false});
-    sendRequest("Plugin.Stream.Player.Control", {"command", "Stop"}, std::move(handler));
-}
-
-
-void PcmStream::play(ResultHandler handler)
-{
-    LOG(DEBUG, LOG_TAG) << "play\n";
-    if (!properties_.can_play)
-        return handler({ControlErrc::can_play_is_false});
-    sendRequest("Plugin.Stream.Player.Control", {"command", "Play"}, std::move(handler));
 }
 
 

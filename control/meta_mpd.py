@@ -40,7 +40,6 @@ import time
 import json
 import musicbrainzngs
 import fcntl
-import threading
 
 __version__ = "@version@"
 __git_version__ = "@gitversion@"
@@ -378,31 +377,27 @@ class MPDWrapper(object):
                     params = request['params'].get('params', {})
                     logger.debug(
                         f'Control command: {command}, params: {params}')
-                    if command == 'Next':
+                    if command == 'next':
                         self.next()
-                    elif command == 'Previous':
+                    elif command == 'previous':
                         self.previous()
-                    elif command == 'Play':
+                    elif command == 'play':
                         self.play()
-                    elif command == 'Pause':
+                    elif command == 'pause':
                         self.pause(1)
-                    elif command == 'PlayPause':
+                    elif command == 'playPause':
                         if self.status()['state'] == 'play':
                             self.pause(1)
                         else:
                             self.play()
-                    elif command == 'Stop':
+                    elif command == 'stop':
                         self.stop()
-                    elif command == 'SetPosition':
-                        position = float(params['Position'])
-                        logger.info(f'SetPosition {position}')
-                        if 'TrackId' in params:
-                            trackid = params['TrackId'].rsplit('/', 1)[1]
-                            self.seekid(int(trackid), position)
-                        else:
-                            self.seekcur(position)
-                    elif command == 'Seek':
-                        offset = float(params['Offset'])
+                    elif command == 'setPosition':
+                        position = float(params['position'])
+                        logger.info(f'setPosition {position}')
+                        self.seekcur(position)
+                    elif command == 'seek':
+                        offset = float(params['offset'])
                         strOffset = str(offset)
                         if offset >= 0:
                             strOffset = "+" + strOffset
