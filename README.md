@@ -108,7 +108,7 @@ Available stream sources are:
 
 ### Client
 
-The client will use as audio backend the system's low level audio API to have the best possible control and most precise timing to achieve perfectly synced playback. 
+The client will use as audio backend the system's low level audio API to have the best possible control and most precise timing to achieve perfectly synced playback.
 
 Available audio backends are configured using the `--player` command line parameter:
 

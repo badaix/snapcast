@@ -184,6 +184,18 @@ The Server JSON object contains a list of Groups and Streams. Every Group holds 
 
 ## Requests
 
+Any request might be answered with a generic [json-rpc-2.0 error](https://www.jsonrpc.org/specification#error_object):
+
+```json
+{"id": 1, "jsonrpc": "2.0", "error": {"code": -32700, "message": "Parse error"}}
+{"id": 1, "jsonrpc": "2.0", "error": {"code": -32600, "message": "Invalid request"}}
+{"id": 1, "jsonrpc": "2.0", "error": {"code": -32601, "message": "Method not found"}}
+{"id": 1, "jsonrpc": "2.0", "error": {"code": -32602, "message": "Invalid params"}}
+{"id": 1, "jsonrpc": "2.0", "error": {"code": -32603, "message": "Internal error"}}
+```
+
+Some requests might return more specific json error messages.
+
 ### Client.GetStatus
 
 #### Request
@@ -432,64 +444,82 @@ The Server JSON object contains a list of Groups and Streams. Every Group holds 
 
 #### Request
 
+Same request as in [Plugin.Stream.Player.Control](stream_plugin.md#pluginstreamplayercontrol), but with the method `Stream.Control`.
+
 ```json
 {"id": 1, "jsonrpc": "2.0", "method": "Stream.Control", "params": {"command": "<command>", "params": { "<param 1>": <value 1>, "<param 2>": <value 2>}}}
-{"id":4,"jsonrpc":"2.0","method":"Stream.Control","params":{"id":"Spotify", "command": "next", params: {}}}
-{"id":4,"jsonrpc":"2.0","method":"Stream.Control","params":{"id":"Spotify", "command": "seek", "param": "60"}}
+```
+
+Example:
+
+```json
+{"id": 1, "jsonrpc": "2.0", "method": "Stream.Control", "params": {"id": "Spotify", "command": "next", params: {}}}
+{"id": 1, "jsonrpc": "2.0", "method": "Stream.Control", "params": {"id": "Spotify", "command": "seek", "param": "60"}}
 ```
 
 #### Supported `command`s
 
-* `Play`: Start playback
-  * `params`: none
-* `Pause`: Stop playback
-  * `params`: none
-* `PlayPause`: Toggle play/pause
-  * `params`: none
-* `Stop`: Stop playback
-  * `params`: none
-* `Next`: Skip to next track
-  * `params`: none
-* `Previous`: Skip to previous track
-  * `params`: none
-* `Seek`: Seek forward or backward in the current track
-  * `params`:
-    * `Offset`: [float] seek offset in seconds
-* `SetPosition`: Set the current track position in seconds
-  * `params`:
-    * `Position`: [float] the new track position
-    * `TrackId`: [string] the optional currently playing track's identifier
+See [Plugin.Stream.Player.Control](stream_plugin.md#pluginstreamplayercontrol).
 
 #### Response
 
+##### Success
+
 ```json
-TODO
+{"id": 1, "jsonrpc": "2.0", "result": "ok"}
+```
+
+##### Error
+
+```json
+{"id": 1, "jsonrpc": "2.0", "error": {"code": -32603, "message": "Stream not found"}}
+
+{"id": 1, "jsonrpc": "2.0", "error": {"code": 1, "message": "Stream can not be controlled"}}
+{"id": 1, "jsonrpc": "2.0", "error": {"code": 2, "message": "Stream property canGoNext is false"}}
+{"id": 1, "jsonrpc": "2.0", "error": {"code": 3, "message": "Stream property canGoPrevious is false"}}
+{"id": 1, "jsonrpc": "2.0", "error": {"code": 4, "message": "Stream property canPlay is false"}}
+{"id": 1, "jsonrpc": "2.0", "error": {"code": 5, "message": "Stream property canPause is false"}}
+{"id": 1, "jsonrpc": "2.0", "error": {"code": 6, "message": "Stream property canSeek is false"}}
+{"id": 1, "jsonrpc": "2.0", "error": {"code": 7, "message": "Stream property canControl is false"}}
+
+{"id": 1, "jsonrpc": "2.0", "error": {"code": -32602, "message": "Command '<command>' not supported"}}
+{"id": 1, "jsonrpc": "2.0", "error": {"code": -32602, "message": "Parameter 'commmand' is missing"}}
+{"id": 1, "jsonrpc": "2.0", "error": {"code": -32602, "message": "SetPosition requires parameters 'Position'"}}
+{"id": 1, "jsonrpc": "2.0", "error": {"code": -32602, "message": "Seek requires parameter 'Offset'"}}
 ```
 
 ### Stream.SetProperty
 
 #### Request
 
+Same request as in [Plugin.Stream.Player.SetProperty](stream_plugin.md#pluginstreamplayersetproperty), but with the method `Stream.SetProperty`.
+
 ```json
 {"id": 1, "jsonrpc": "2.0", "method": "Stream.SetProperty", "params": {"id": "Pipe", "property": property, "value": value}}
-{"id":4,"jsonrpc":"2.0","method":"Stream.Control","params":{"id":"Spotify", "command": "next", params: {}}}
-{"id":4,"jsonrpc":"2.0","method":"Stream.Control","params":{"id":"Spotify", "command": "seek", "param": "60000"}}
 ```
 
 #### Supported `property`s
 
-* `loopStatus`: [string] the current repeat status, one of:
-  * `none`: the playback will stop when there are no more tracks to play
-  * `track`: the current track will start again from the begining once it has finished playing
-  * `playlist`: the playback loops through a list of tracks
-* `shuffle`: [bool] play playlist in random order
-* `volume`: [int] voume in percent, valid range [0..100]
-* `rate`: [float] The current playback rate, valid range (0..)
+See [Plugin.Stream.Player.SetProperty](stream_plugin.md#pluginstreamplayersetproperty).
 
 #### Response
 
+##### Success
+
 ```json
-TODO
+{"id": 1, "jsonrpc": "2.0", "result": "ok"}
+```
+
+##### Error
+
+```json
+{"id": 1, "jsonrpc": "2.0", "error": {"code": -32602, "message": "Property '<property>' not supported"}}
+{"id": 1, "jsonrpc": "2.0", "error": {"code": -32602, "message": "Parameter 'property' is missing"}}
+{"id": 1, "jsonrpc": "2.0", "error": {"code": -32602, "message": "Parameter 'value' is missing"}}
+{"id": 1, "jsonrpc": "2.0", "error": {"code": -32602, "message": "Value for loopStatus must be one of 'none', 'track', 'playlist'"}}
+{"id": 1, "jsonrpc": "2.0", "error": {"code": -32602, "message": "Value for shuffle must be bool"}}
+{"id": 1, "jsonrpc": "2.0", "error": {"code": -32602, "message": "Value for volume must be an int"}}
+{"id": 1, "jsonrpc": "2.0", "error": {"code": -32602, "message": "Value for rate must be float"}}
 ```
 
 ## Notifications
@@ -550,10 +580,10 @@ TODO
 
 ### Stream.OnProperties
 
+Same notification as in [Plugin.Stream.Player.Properties](stream_plugin.md#pluginstreamplayerproperties), but with the method `Stream.OnProperties`.
+
 ```json
 {"jsonrpc":"2.0","method":"Stream.OnProperties","params":{"id":"stream 1", "metadata": {"album": "some album", "artist": "some artist", "track": "some track"...}}}
-
-{"jsonrpc":"2.0","method":"Stream.OnProperties","params":{"id":"Meta","properties":{"canControl":true,"canGoNext":true,"canGoPrevious":true,"canPause":true,"canPlay":true,"canSeek":true,"loopStatus":"none","metadata":{"album":"Doldinger","albumArtist":["Klaus Doldinger's Passport"],"artUrl":"http://coverartarchive.org/release/0d4ff56b-2a2b-43b5-bf99-063cac1599e5/16940576164-250.jpg","artist":["Klaus Doldinger's Passport feat. Nils Landgren"],"contentCreated":"2016","duration":305.2929992675781,"genre":["Jazz"],"title":"Soul Town","trackId":"7","trackNumber":6,"url":"Klaus Doldinger's Passport - Doldinger (2016)/06 - Soul Town.mp3"},"playbackStatus":"playing","position":221.82400512695313,"shuffle":false,"volume":97}}}
 ```
 
 ### Server.OnUpdate
