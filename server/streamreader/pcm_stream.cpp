@@ -320,6 +320,8 @@ const Properties& PcmStream::getProperties() const
 void PcmStream::setShuffle(bool shuffle, ResultHandler handler)
 {
     LOG(DEBUG, LOG_TAG) << "setShuffle: " << shuffle << "\n";
+    if (!properties_.can_control)
+        return handler({ControlErrc::can_control_is_false});
     sendRequest("Plugin.Stream.Player.SetProperty", {"shuffle", shuffle}, std::move(handler));
 }
 
@@ -327,6 +329,8 @@ void PcmStream::setShuffle(bool shuffle, ResultHandler handler)
 void PcmStream::setLoopStatus(LoopStatus status, ResultHandler handler)
 {
     LOG(DEBUG, LOG_TAG) << "setLoopStatus: " << status << "\n";
+    if (!properties_.can_control)
+        return handler({ControlErrc::can_control_is_false});
     sendRequest("Plugin.Stream.Player.SetProperty", {"loopStatus", to_string(status)}, std::move(handler));
 }
 
@@ -334,6 +338,8 @@ void PcmStream::setLoopStatus(LoopStatus status, ResultHandler handler)
 void PcmStream::setVolume(uint16_t volume, ResultHandler handler)
 {
     LOG(DEBUG, LOG_TAG) << "setVolume: " << volume << "\n";
+    if (!properties_.can_control)
+        return handler({ControlErrc::can_control_is_false});
     sendRequest("Plugin.Stream.Player.SetProperty", {"volume", volume}, std::move(handler));
 }
 
@@ -341,6 +347,8 @@ void PcmStream::setVolume(uint16_t volume, ResultHandler handler)
 void PcmStream::setRate(float rate, ResultHandler handler)
 {
     LOG(DEBUG, LOG_TAG) << "setRate: " << rate << "\n";
+    if (!properties_.can_control)
+        return handler({ControlErrc::can_control_is_false});
     sendRequest("Plugin.Stream.Player.SetProperty", {"rate", rate}, std::move(handler));
 }
 

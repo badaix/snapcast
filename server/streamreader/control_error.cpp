@@ -46,17 +46,17 @@ std::string category::message(int value) const
         case ControlErrc::can_not_control:
             return "Stream can not be controlled";
         case ControlErrc::can_go_next_is_false:
-            return "Stream property can_go_next is false";
+            return "Stream property canGoNext is false";
         case ControlErrc::can_go_previous_is_false:
-            return "Stream property can_go_previous is false";
+            return "Stream property canGoPrevious is false";
         case ControlErrc::can_play_is_false:
-            return "Stream property can_play is false";
+            return "Stream property canPlay is false";
         case ControlErrc::can_pause_is_false:
-            return "Stream property can_pause is false";
+            return "Stream property canPause is false";
         case ControlErrc::can_seek_is_false:
-            return "Stream property can_seek is false";
+            return "Stream property canSeek is false";
         case ControlErrc::can_control_is_false:
-            return "Stream property can_control is false";
+            return "Stream property canControl is false";
         case ControlErrc::parse_error:
             return "Parse error";
         case ControlErrc::invalid_request:
