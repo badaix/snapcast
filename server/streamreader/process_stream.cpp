@@ -28,6 +28,8 @@
 
 // standard headers
 #include <climits>
+#include <cstdio>
+#include <filesystem>
 
 
 using namespace std;
@@ -48,17 +50,10 @@ ProcessStream::ProcessStream(PcmStream::Listener* pcmListener, boost::asio::io_c
 }
 
 
-bool ProcessStream::fileExists(const std::string& filename) const
-{
-    struct stat buffer;
-    return (stat(filename.c_str(), &buffer) == 0);
-}
-
-
 std::string ProcessStream::findExe(const std::string& filename) const
 {
     /// check if filename exists
-    if (fileExists(filename))
+    if (std::filesystem::exists(filename))
         return filename;
 
     std::string exe = filename;
@@ -95,7 +90,7 @@ void ProcessStream::initExeAndPath(const std::string& filename)
         exe_ = exe_.substr(exe_.find_last_of('/') + 1);
     }
 
-    if (!fileExists(path_ + exe_))
+    if (!std::filesystem::exists(path_ + exe_))
         throw SnapException("file not found: \"" + filename + "\"");
 }
 

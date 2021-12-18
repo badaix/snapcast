@@ -68,7 +68,6 @@ protected:
     virtual void onStderrMsg(const std::string& line);
     virtual void initExeAndPath(const std::string& filename);
 
-    bool fileExists(const std::string& filename) const;
     std::string findExe(const std::string& filename) const;
 
     size_t wd_timeout_sec_;

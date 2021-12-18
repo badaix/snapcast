@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2020  Johannes Pohl
+    Copyright (C) 2014-2021  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -16,15 +16,24 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
-#ifndef FILE_UTILS_H
-#define FILE_UTILS_H
+#ifndef FILE_UTILS_HPP
+#define FILE_UTILS_HPP
 
+// local headers
 #include "string_utils.hpp"
-#include <fstream>
+
+// 3rd party headers
+
+// standard headers
 #ifndef WINDOWS
 #include <grp.h>
 #include <pwd.h>
+#include <sys/stat.h>
+#include <unistd.h>
 #endif
+
+#include <filesystem>
+#include <fstream>
 #include <stdexcept>
 #include <vector>
 
@@ -35,26 +44,13 @@ namespace file
 {
 
 
-static bool exists(const std::string& filename)
-{
-    if (filename.empty())
-        return false;
-#ifdef WINDOWS
-    DWORD dwAttrib = GetFileAttributes(filename.c_str());
-    return (dwAttrib != INVALID_FILE_ATTRIBUTES);
-#else
-    struct stat buffer;
-    return (stat(filename.c_str(), &buffer) == 0);
-#endif
-}
-
 #ifndef WINDOWS
 static void do_chown(const std::string& file_path, const std::string& user_name, const std::string& group_name)
 {
     if (user_name.empty() && group_name.empty())
         return;
 
-    if (!exists(file_path))
+    if (!std::filesystem::exists(file_path))
         return;
 
     uid_t uid = -1;

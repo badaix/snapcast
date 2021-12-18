@@ -24,8 +24,10 @@
 #include "common/aixlog.hpp"
 #include "common/snap_exception.hpp"
 #include "common/utils.hpp"
-#include "common/utils/file_utils.hpp"
 #include "common/utils/string_utils.hpp"
+
+// standard headers
+#include <filesystem>
 
 using namespace std;
 
@@ -220,7 +222,7 @@ void AirplayStream::do_disconnect()
 {
     ProcessStream::do_disconnect();
     // Shairpot-sync created but does not remove the pipe
-    if (utils::file::exists(pipePath_) && (remove(pipePath_.c_str()) != 0))
+    if (std::filesystem::exists(pipePath_) && (remove(pipePath_.c_str()) != 0))
         LOG(INFO, LOG_TAG) << "Failed to remove metadata pipe \"" << pipePath_ << "\": " << errno << "\n";
 }
 
@@ -281,10 +283,10 @@ void AirplayStream::initExeAndPath(const string& filename)
 {
     path_ = "";
     exe_ = findExe(filename);
-    if (!fileExists(exe_) || (exe_ == "/"))
+    if (!std::filesystem::exists(exe_) || (exe_ == "/"))
     {
         exe_ = findExe("shairport-sync");
-        if (!fileExists(exe_))
+        if (!std::filesystem::exists(exe_))
             throw SnapException("shairport-sync not found");
     }
 

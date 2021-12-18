@@ -26,6 +26,7 @@
 #include "common/utils/string_utils.hpp"
 
 // standard headers
+#include <filesystem>
 #include <regex>
 
 
@@ -89,10 +90,10 @@ void LibrespotStream::initExeAndPath(const std::string& filename)
 {
     path_ = "";
     exe_ = findExe(filename);
-    if (!fileExists(exe_) || (exe_ == "/"))
+    if (!std::filesystem::exists(exe_) || (exe_ == "/"))
     {
         exe_ = findExe("librespot");
-        if (!fileExists(exe_))
+        if (!std::filesystem::exists(exe_))
             throw SnapException("librespot not found");
     }
 
