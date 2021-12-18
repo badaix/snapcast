@@ -34,8 +34,7 @@ set(SERVER_SOURCES
 set(SERVER_LIBRARIES
     ${CMAKE_THREAD_LIBS_INIT}
     ${ATOMIC_LIBRARY}
-    common
-    stdc++fs)
+    common)
 
 set(SERVER_INCLUDE
     ${Boost_INCLUDE_DIR}
