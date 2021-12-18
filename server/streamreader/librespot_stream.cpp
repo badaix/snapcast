@@ -23,10 +23,10 @@
 #include "common/aixlog.hpp"
 #include "common/snap_exception.hpp"
 #include "common/utils.hpp"
+#include "common/utils/file_utils.hpp"
 #include "common/utils/string_utils.hpp"
 
 // standard headers
-#include <filesystem>
 #include <regex>
 
 
@@ -90,10 +90,10 @@ void LibrespotStream::initExeAndPath(const std::string& filename)
 {
     path_ = "";
     exe_ = findExe(filename);
-    if (!std::filesystem::exists(exe_) || (exe_ == "/"))
+    if (!utils::file::exists(exe_) || (exe_ == "/"))
     {
         exe_ = findExe("librespot");
-        if (!std::filesystem::exists(exe_))
+        if (!utils::file::exists(exe_))
             throw SnapException("librespot not found");
     }
 

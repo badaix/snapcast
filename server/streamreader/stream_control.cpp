@@ -23,13 +23,11 @@
 #include "common/aixlog.hpp"
 #include "common/snap_exception.hpp"
 #include "common/str_compat.hpp"
+#include "common/utils/file_utils.hpp"
 #include "common/utils/string_utils.hpp"
 #include "encoder/encoder_factory.hpp"
 
-// 3rd party headers
-
 // standard headers
-#include <filesystem>
 #include <memory>
 
 
@@ -141,14 +139,12 @@ void StreamControl::onLog(std::string message)
 
 ScriptStreamControl::ScriptStreamControl(const net::any_io_executor& executor, const std::string& script) : StreamControl(executor), script_(script)
 {
-    namespace fs = std::filesystem;
+    namespace fs = utils::file;
     if (!fs::exists(script_))
     {
-        fs::path plugin_path = "/usr/share/snapserver/plug-ins";
-        if (fs::exists(plugin_path / script_))
-            script_ = (plugin_path / script_).native();
-        else if (fs::exists(plugin_path / fs::path(script_).filename()))
-            script_ = (plugin_path / fs::path(script_).filename()).native();
+        std::string plugin_path = "/usr/share/snapserver/plug-ins/";
+        if (fs::exists(plugin_path + script_))
+            script_ = plugin_path + script_;
         else
             throw SnapException("Control script not found: \"" + script_ + "\"");
     }

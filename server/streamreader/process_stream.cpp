@@ -24,12 +24,12 @@
 #include "common/aixlog.hpp"
 #include "common/snap_exception.hpp"
 #include "common/utils.hpp"
+#include "common/utils/file_utils.hpp"
 #include "common/utils/string_utils.hpp"
 
 // standard headers
 #include <climits>
 #include <cstdio>
-#include <filesystem>
 
 
 using namespace std;
@@ -53,7 +53,7 @@ ProcessStream::ProcessStream(PcmStream::Listener* pcmListener, boost::asio::io_c
 std::string ProcessStream::findExe(const std::string& filename) const
 {
     /// check if filename exists
-    if (std::filesystem::exists(filename))
+    if (utils::file::exists(filename))
         return filename;
 
     std::string exe = filename;
@@ -90,7 +90,7 @@ void ProcessStream::initExeAndPath(const std::string& filename)
         exe_ = exe_.substr(exe_.find_last_of('/') + 1);
     }
 
-    if (!std::filesystem::exists(path_ + exe_))
+    if (!utils::file::exists(path_ + exe_))
         throw SnapException("file not found: \"" + filename + "\"");
 }
 
