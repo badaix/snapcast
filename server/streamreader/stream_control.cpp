@@ -29,6 +29,7 @@
 // 3rd party headers
 
 // standard headers
+#include <filesystem>
 #include <memory>
 
 
@@ -140,13 +141,17 @@ void StreamControl::onLog(std::string message)
 
 ScriptStreamControl::ScriptStreamControl(const net::any_io_executor& executor, const std::string& script) : StreamControl(executor), script_(script)
 {
-    // auto fileExists = [](const std::string& filename) {
-    //     struct stat buffer;
-    //     return (stat(filename.c_str(), &buffer) == 0);
-    // };
-
-    // if (!fileExists(script_))
-    //     throw SnapException("Control script not found: \"" + script_ + "\"");
+    namespace fs = std::filesystem;
+    if (!fs::exists(script_))
+    {
+        fs::path plugin_path = "/usr/share/snapserver/plug-ins";
+        if (fs::exists(plugin_path / script_))
+            script_ = (plugin_path / script_).native();
+        else if (fs::exists(plugin_path / fs::path(script_).filename()))
+            script_ = (plugin_path / fs::path(script_).filename()).native();
+        else
+            throw SnapException("Control script not found: \"" + script_ + "\"");
+    }
 }
 
 
