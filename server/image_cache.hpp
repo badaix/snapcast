@@ -19,13 +19,18 @@
 #ifndef IMAGE_CACHE_HPP
 #define IMAGE_CACHE_HPP
 
+
+// 3rd party headers
+#include <boost/algorithm/hex.hpp>
+#include <boost/uuid/detail/md5.hpp>
+
+// standard headers
+#include <iostream>
 #include <map>
 #include <mutex>
 #include <optional>
+#include <regex>
 #include <string>
-
-#include <boost/algorithm/hex.hpp>
-#include <boost/uuid/detail/md5.hpp>
 
 
 class ImageCache
@@ -56,7 +61,7 @@ public:
             ext = ext.substr(1);
         filename += "." + ext;
         std::lock_guard<std::mutex> lock(mutex_);
-        key_to_url_[key] = std::move(filename);
+        key_to_url_[key] = filename;
         url_to_data_[filename] = std::move(image);
         return filename;
     };
