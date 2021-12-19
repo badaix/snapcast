@@ -1,8 +1,16 @@
 
 # Stream plugin
 
-A stream plugin is (this might change in future) an executable binary or script that is started by the server for a specific stream and offers playback control capabilities and provides information about the stream's state, as well as metadata for the currently playing track.
-The Snapcast server communicates via stdin/stdout with the plugin and sends newline delimited JSON-RPC> commands and receives responses and notifications from the plugin, as described below. In upcoming releases shared library plugins might be supported as well.  
+A stream plugin is an executable binary or script that is started by the server for a specific stream and offers playback control capabilities and provides information about the stream's state, as well as metadata for the currently playing track.
+The Snapcast server communicates via stdin/stdout with the plugin and sends [newline delimited](http://ndjson.org/) [JSON-RPC-2.0](https://www.jsonrpc.org/specification) commands and receives responses and notifications from the plugin, as described below. In upcoming releases shared library plugins might be supported as well.  
+A stream is connected to a plugin with the `controlscript` stream source parameter, e.g.
+
+```ini
+[stream]
+source = pipe:///tmp/snapfifo?name=MPD&controlscript=meta_mpd.py
+```
+
+If a relative path is given, Snapserver will search the script in `/usr/share/snapserver/plug-ins`.
 
 A Stream plugin must support and handle the following [requests](#requests), sent by the Snapcast server
 
@@ -165,6 +173,9 @@ Any [json-rpc 2.0 conformant error](https://www.jsonrpc.org/specification#error_
   * `trackNumber`: [string] The track number on the album disc.
   * `url`: [string uri] The location of the media file.
   * `artUrl`: [string uri] The location of an image representing the track or album. Clients should not assume this will continue to exist when the media player stops giving out the URL.
+  * `artData`: [json] Base64 encoded image representing the track or album. if `artUrl` is not specified, Snapserver will decode and cache the image, and will publish the image via `artUrl`.
+    * `data`: [string] Base64 encoded image
+    * `extension`: [string] The image file extension (e.g. "png", "jpg", "svg")
   * `useCount`: [integer] The number of times the track has been played.
   * `userRating`: [float] A user-specified rating. This should be in the range 0.0 to 1.0.
   * `spotifyArtistId`: [string] The [Spotify Artist ID](https://developer.spotify.com/documentation/web-api/#spotify-uris-and-ids)

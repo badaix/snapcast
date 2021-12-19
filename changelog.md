@@ -15,7 +15,7 @@
 
 ### General
 
-- Update documentation (Issue #804, PR #945)
+- Update documentation (Issue #804, PR #945, PR #951)
 
 _Johannes Pohl <snapcast@badaix.de>  Fri, 24 Dec 2021 00:13:37 +0200_
 

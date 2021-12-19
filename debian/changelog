@@ -10,7 +10,7 @@ snapcast (0.26.0-1) unstable; urgency=medium
     -Server: systemd.unit starts server after network-online (Issue #950)
 
   * General
-    -Update documentation (Issue #804, PR #945)
+    -Update documentation (Issue #804, PR #945, PR #951)
 
  -- Johannes Pohl <snapcast@badaix.de>  Fri, 24 May 2021 00:13:37 +0200
 

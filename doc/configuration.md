@@ -13,13 +13,30 @@ The following notation is used in this paragraph:
 The general format of an audio source is:
 
 ```sh
-TYPE://host/path?name=<name>[&codec=<codec>][&sampleformat=<sampleformat>][&chunk_ms=<chunk ms>]
+TYPE://host/path?name=<name>[&codec=<codec>][&sampleformat=<sampleformat>][&chunk_ms=<chunk ms>][&controlscript=<control script filename>]
 ```
 
-parameters have the form `key=value`, they are concatenated with an `&` character.
-Parameter `name` is mandatory for all sources, while `codec`, `sampleformat` and `chunk_ms` are optional
-and will override the default `codec`, `sampleformat` or `chunk_ms` settings.
-Non blocking sources support the `dryout_ms` parameter: when no new data is read from the source, send silence to the clients
+Within the `[stream]` section there are some global parameters valid for all `source`s:
+
+- `sampleformat`: Default sample format of the stream source, e.g. `48000:16:2`
+- `codec`: The codec to use to save bandwith, one of:
+  - `flac` [default]: lossless codec, mean codec latency ~26ms
+  - `ogg`: lossy codec
+  - `opus`: lossy low latency codec, only supports 48kHz, if your stream has a different sample rate, automatic resampling will be applied, introducing further latecy
+  - `pcm`: lossless, uncompresssed. No latency.
+- `chunk_ms`: Default source stream read chunk size [ms]. The server will continously read this number of milliseconds from the source into a buffer, before this buffer is passed to the encoder (the `codec` above)
+- `buffer`: Buffer [ms]. The end-to-end latency, from capturing a sample on the server until the sample is played-out on the client
+- `send_to_muted`: `true` or `false`: Send audio to clients that are muted
+
+`source` parameters have the form `key=value`, they are concatenated with an `&` character.
+Supported parameters for all source types:
+
+- `name`: The mandatory source name
+- `codec`: Override the global codec
+- `sampleformat`: Override the global sample format
+- `chunk_ms`: Override the global `chunk_ms`
+- `dryout_ms`: Supported by non-blocking sourced: when no new data is read from the source, send silence to the clients
+- `controlscript`: Script to control the stream source and read and provide meta data, see [stream_plugin.md](json_rpc_api/stream_plugin.md)
 
 Available audio source types are:
 
