@@ -142,7 +142,7 @@ void PcmStream::onControlNotification(const jsonrpcpp::Notification& notificatio
 {
     try
     {
-        LOG(INFO, LOG_TAG) << "Notification method: " << notification.method() << ", params: " << notification.params().to_json() << "\n";
+        LOG(DEBUG, LOG_TAG) << "Notification method: " << notification.method() << ", params: " << notification.params().to_json() << "\n";
         if (notification.method() == "Plugin.Stream.Player.Properties")
         {
             LOG(DEBUG, LOG_TAG) << "Received properties notification\n";
@@ -462,8 +462,8 @@ void PcmStream::setProperties(const Properties& properties)
     // If the cover image is availbale as raw data, cache it on the HTTP Server to make it also available via HTTP
     if (props.metadata.has_value() && props.metadata->art_data.has_value() && !props.metadata->art_url.has_value())
     {
-        auto data = base64_decode(props.metadata->art_data.value().data);
-        auto md5 = server_settings_.http.image_cache.setImage(getName(), std::move(data), props.metadata->art_data.value().extension);
+        auto data = base64_decode(props.metadata->art_data->data);
+        auto md5 = server_settings_.http.image_cache.setImage(getName(), std::move(data), props.metadata->art_data->extension);
 
         std::stringstream url;
         url << "http://" << server_settings_.http.host << ":" << server_settings_.http.port << "/__image_cache?name=" << md5;
@@ -482,7 +482,7 @@ void PcmStream::setProperties(const Properties& properties)
 
     properties_ = std::move(props);
 
-    LOG(INFO, LOG_TAG) << "setProperties, stream: " << getId() << ", properties: " << properties_.toJson() << "\n";
+    LOG(DEBUG, LOG_TAG) << "setProperties, stream: " << getId() << ", properties: " << properties_.toJson() << "\n";
 
     // Trigger a stream update
     for (auto* listener : pcmListeners_)
