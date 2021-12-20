@@ -41,8 +41,6 @@ function uuidv4() {
 }
 class Tv {
     constructor(sec, usec) {
-        this.sec = 0;
-        this.usec = 0;
         this.sec = sec;
         this.usec = usec;
     }
@@ -53,15 +51,11 @@ class Tv {
     getMilliseconds() {
         return this.sec * 1000 + this.usec / 1000;
     }
+    sec = 0;
+    usec = 0;
 }
 class BaseMessage {
     constructor(_buffer) {
-        this.type = 0;
-        this.id = 0;
-        this.refersTo = 0;
-        this.received = new Tv(0, 0);
-        this.sent = new Tv(0, 0);
-        this.size = 0;
     }
     deserialize(buffer) {
         let view = new DataView(buffer);
@@ -89,11 +83,16 @@ class BaseMessage {
     getSize() {
         return 0;
     }
+    type = 0;
+    id = 0;
+    refersTo = 0;
+    received = new Tv(0, 0);
+    sent = new Tv(0, 0);
+    size = 0;
 }
 class CodecMessage extends BaseMessage {
     constructor(buffer) {
         super(buffer);
-        this.codec = "";
         this.payload = new ArrayBuffer(0);
         if (buffer) {
             this.deserialize(buffer);
@@ -111,11 +110,12 @@ class CodecMessage extends BaseMessage {
         this.payload = buffer.slice(34 + codecSize, 34 + codecSize + payloadSize);
         console.log("payload: " + this.payload);
     }
+    codec = "";
+    payload;
 }
 class TimeMessage extends BaseMessage {
     constructor(buffer) {
         super(buffer);
-        this.latency = new Tv(0, 0);
         if (buffer) {
             this.deserialize(buffer);
         }
@@ -136,6 +136,7 @@ class TimeMessage extends BaseMessage {
     getSize() {
         return 8;
     }
+    latency = new Tv(0, 0);
 }
 class JsonMessage extends BaseMessage {
     constructor(buffer) {
@@ -168,19 +169,11 @@ class JsonMessage extends BaseMessage {
         return encoded.length + 4;
         // return JSON.stringify(this.json).length;
     }
+    json;
 }
 class HelloMessage extends JsonMessage {
     constructor(buffer) {
         super(buffer);
-        this.mac = "";
-        this.hostname = "";
-        this.version = "0.1.0";
-        this.clientName = "Snapweb";
-        this.os = "";
-        this.arch = "web";
-        this.instance = 1;
-        this.uniqueId = "";
-        this.snapStreamProtocolVersion = 2;
         if (buffer) {
             this.deserialize(buffer);
         }
@@ -202,14 +195,19 @@ class HelloMessage extends JsonMessage {
         this.json = { "MAC": this.mac, "HostName": this.hostname, "Version": this.version, "ClientName": this.clientName, "OS": this.os, "Arch": this.arch, "Instance": this.instance, "ID": this.uniqueId, "SnapStreamProtocolVersion": this.snapStreamProtocolVersion };
         return super.serialize();
     }
+    mac = "";
+    hostname = "";
+    version = "0.0.0";
+    clientName = "Snapweb";
+    os = "";
+    arch = "web";
+    instance = 1;
+    uniqueId = "";
+    snapStreamProtocolVersion = 2;
 }
 class ServerSettingsMessage extends JsonMessage {
     constructor(buffer) {
         super(buffer);
-        this.bufferMs = 0;
-        this.latency = 0;
-        this.volumePercent = 0;
-        this.muted = false;
         if (buffer) {
             this.deserialize(buffer);
         }
@@ -226,14 +224,14 @@ class ServerSettingsMessage extends JsonMessage {
         this.json = { "bufferMs": this.bufferMs, "latency": this.latency, "volume": this.volumePercent, "muted": this.muted };
         return super.serialize();
     }
+    bufferMs = 0;
+    latency = 0;
+    volumePercent = 0;
+    muted = false;
 }
 class PcmChunkMessage extends BaseMessage {
     constructor(buffer, sampleFormat) {
         super(buffer);
-        this.timestamp = new Tv(0, 0);
-        // payloadSize: number = 0;
-        this.payload = new ArrayBuffer(0);
-        this.idx = 0;
         this.deserialize(buffer);
         this.sampleFormat = sampleFormat;
         this.type = 2;
@@ -288,27 +286,22 @@ class PcmChunkMessage extends BaseMessage {
         }
         this.payload = payload;
     }
+    timestamp = new Tv(0, 0);
+    // payloadSize: number = 0;
+    payload = new ArrayBuffer(0);
+    idx = 0;
+    sampleFormat;
 }
 class AudioStream {
+    timeProvider;
+    sampleFormat;
+    bufferMs;
     constructor(timeProvider, sampleFormat, bufferMs) {
         this.timeProvider = timeProvider;
         this.sampleFormat = sampleFormat;
         this.bufferMs = bufferMs;
-        this.chunks = new Array();
-        // setRealSampleRate(sampleRate: number) {
-        //     if (sampleRate == this.sampleFormat.rate) {
-        //         this.correctAfterXFrames = 0;
-        //     }
-        //     else {
-        //         this.correctAfterXFrames = Math.ceil((this.sampleFormat.rate / sampleRate) / (this.sampleFormat.rate / sampleRate - 1.));
-        //         console.debug("setRealSampleRate: " + sampleRate + ", correct after X: " + this.correctAfterXFrames);
-        //     }
-        // }
-        this.chunk = undefined;
-        this.volume = 1;
-        this.muted = false;
-        this.lastLog = 0;
     }
+    chunks = new Array();
     setVolume(percent, muted) {
         // let base = 10;
         this.volume = percent / 100; // (Math.pow(base, percent / 100) - 1) / (base - 1);
@@ -458,11 +451,22 @@ class AudioStream {
         buffer.getChannelData(0).set(left);
         buffer.getChannelData(1).set(right);
     }
+    // setRealSampleRate(sampleRate: number) {
+    //     if (sampleRate == this.sampleFormat.rate) {
+    //         this.correctAfterXFrames = 0;
+    //     }
+    //     else {
+    //         this.correctAfterXFrames = Math.ceil((this.sampleFormat.rate / sampleRate) / (this.sampleFormat.rate / sampleRate - 1.));
+    //         console.debug("setRealSampleRate: " + sampleRate + ", correct after X: " + this.correctAfterXFrames);
+    //     }
+    // }
+    chunk = undefined;
+    volume = 1;
+    muted = false;
+    lastLog = 0;
 }
 class TimeProvider {
     constructor(ctx = undefined) {
-        this.diffBuffer = new Array();
-        this.diff = 0;
         if (ctx) {
             this.setAudioContext(ctx);
         }
@@ -508,13 +512,14 @@ class TimeProvider {
     serverTime(localTimeMs) {
         return localTimeMs + this.diff;
     }
+    diffBuffer = new Array();
+    diff = 0;
+    ctx;
 }
 class SampleFormat {
-    constructor() {
-        this.rate = 48000;
-        this.channels = 2;
-        this.bits = 16;
-    }
+    rate = 48000;
+    channels = 2;
+    bits = 16;
     msRate() {
         return this.rate / 1000;
     }
@@ -568,8 +573,6 @@ class OpusDecoder extends Decoder {
 class FlacDecoder extends Decoder {
     constructor() {
         super();
-        this.header = null;
-        this.cacheInfo = { isCachedChunk: false, cachedBlocks: 0 };
         this.decoder = Flac.create_libflac_decoder(true);
         if (this.decoder) {
             let init_status = Flac.init_decoder_stream(this.decoder, this.read_callback_fn.bind(this), this.write_callback_fn.bind(this), this.error_callback_fn.bind(this), this.metadata_callback_fn.bind(this), false);
@@ -657,10 +660,15 @@ class FlacDecoder extends Decoder {
         Flac.FLAC__stream_decoder_process_until_end_of_metadata(this.decoder);
         return this.sampleFormat;
     }
+    sampleFormat;
+    decoder;
+    header = null;
+    flacChunk;
+    pcmChunk;
+    cacheInfo = { isCachedChunk: false, cachedBlocks: 0 };
 }
 class PlayBuffer {
     constructor(buffer, playTime, source, destination) {
-        this.num = 0;
         this.buffer = buffer;
         this.playTime = playTime;
         this.source = source;
@@ -668,12 +676,17 @@ class PlayBuffer {
         this.source.connect(destination);
         this.onended = (_playBuffer) => { };
     }
+    onended;
     start() {
         this.source.onended = () => {
             this.onended(this);
         };
         this.source.start(this.playTime);
     }
+    buffer;
+    playTime;
+    source;
+    num = 0;
 }
 class PcmDecoder extends Decoder {
     setHeader(buffer) {
@@ -690,19 +703,6 @@ class PcmDecoder extends Decoder {
 }
 class SnapStream {
     constructor(baseUrl) {
-        this.playTime = 0;
-        this.msgId = 0;
-        this.bufferDurationMs = 80; // 0;
-        this.bufferFrameCount = 3844; // 9600; // 2400;//8192;
-        this.syncHandle = -1;
-        // ageBuffer: Array<number>;
-        this.audioBuffers = new Array();
-        this.freeBuffers = new Array();
-        // median: number = 0;
-        this.audioBufferCount = 3;
-        this.bufferMs = 1000;
-        this.bufferNum = 0;
-        this.latency = 0;
         this.baseUrl = baseUrl;
         this.timeProvider = new TimeProvider();
         if (this.setupAudioContext()) {
@@ -734,6 +734,9 @@ class SnapStream {
         }
         return true;
     }
+    static getClientId() {
+        return getPersistentValue("uniqueId", uuidv4());
+    }
     connect() {
         this.streamsocket = new WebSocket(this.baseUrl + '/stream');
         this.streamsocket.binaryType = "arraybuffer";
@@ -745,7 +748,9 @@ class SnapStream {
             hello.arch = "web";
             hello.os = navigator.platform;
             hello.hostname = "Snapweb client";
-            hello.uniqueId = getPersistentValue("uniqueId", uuidv4());
+            hello.uniqueId = SnapStream.getClientId();
+            const versionElem = document.getElementsByTagName("meta").namedItem("version");
+            hello.version = versionElem ? versionElem.content : "0.0.0";
             this.sendMessage(hello);
             this.syncTime();
             this.syncHandle = window.setInterval(() => this.syncTime(), 1000);
@@ -888,5 +893,27 @@ class SnapStream {
         playBuffer.start();
         this.playTime += this.bufferFrameCount / this.sampleFormat.rate;
     }
+    baseUrl;
+    streamsocket;
+    playTime = 0;
+    msgId = 0;
+    bufferDurationMs = 80; // 0;
+    bufferFrameCount = 3844; // 9600; // 2400;//8192;
+    syncHandle = -1;
+    // ageBuffer: Array<number>;
+    audioBuffers = new Array();
+    freeBuffers = new Array();
+    timeProvider;
+    stream;
+    ctx; // | undefined;
+    gainNode;
+    serverSettings;
+    decoder;
+    sampleFormat;
+    // median: number = 0;
+    audioBufferCount = 3;
+    bufferMs = 1000;
+    bufferNum = 0;
+    latency = 0;
 }
 //# sourceMappingURL=snapstream.js.map

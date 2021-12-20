@@ -28,6 +28,10 @@ body {
     background: #555;
 }
 
+input, textarea, button, select, a {
+    -webkit-tap-highlight-color: rgba(0,0,0,0);
+}
+
 .navbar {
     overflow: hidden;
     background-color: #607d8b;
@@ -129,6 +133,7 @@ select {
     grid-template-columns: min-content auto min-content;
     grid-template-rows: min-content min-content;
     grid-gap: 0px;
+/*    align-items: center;*/
 }
 
 /* .client:hover {
@@ -185,13 +190,24 @@ select {
     color: #686868;
     grid-row: 2;
     grid-column: 1;
+/*    top: 50%;*/
     height: 25px;
     width: 25px;
     padding-left: 10px;
     padding-right: 10px;
     text-decoration: none;
 }
-
+/*
+.cover-img {
+    color: #686868;
+    grid-row: 2;
+    grid-column: 1;
+    height: 50px;
+    width: 50px;
+    padding: 5px;
+    text-decoration: none;
+}
+*/
 .sliderdiv {
     display: flex;
     justify-content: center;

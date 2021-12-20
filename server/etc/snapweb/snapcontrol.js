@@ -1,11 +1,6 @@
 "use strict";
 class Host {
     constructor(json) {
-        this.arch = "";
-        this.ip = "";
-        this.mac = "";
-        this.name = "";
-        this.os = "";
         this.fromJson(json);
     }
     fromJson(json) {
@@ -15,11 +10,14 @@ class Host {
         this.name = json.name;
         this.os = json.os;
     }
+    arch = "";
+    ip = "";
+    mac = "";
+    name = "";
+    os = "";
 }
 class Client {
     constructor(json) {
-        this.id = "";
-        this.connected = false;
         this.fromJson(json);
     }
     fromJson(json) {
@@ -32,14 +30,15 @@ class Client {
         this.lastSeen = { sec: json.lastSeen.sec, usec: json.lastSeen.usec };
         this.connected = Boolean(json.connected);
     }
+    id = "";
+    host;
+    snapclient;
+    config;
+    lastSeen;
+    connected = false;
 }
 class Group {
     constructor(json) {
-        this.name = "";
-        this.id = "";
-        this.stream_id = "";
-        this.muted = false;
-        this.clients = [];
         this.fromJson(json);
     }
     fromJson(json) {
@@ -50,6 +49,11 @@ class Group {
         for (let client of json.clients)
             this.clients.push(new Client(client));
     }
+    name = "";
+    id = "";
+    stream_id = "";
+    muted = false;
+    clients = [];
     getClient(id) {
         for (let client of this.clients) {
             if (client.id == id)
@@ -58,23 +62,88 @@ class Group {
         return null;
     }
 }
+class Metadata {
+    constructor(json) {
+        this.fromJson(json);
+    }
+    fromJson(json) {
+        this.title = json.title;
+        this.artist = json.artist;
+        this.album = json.album;
+        this.artUrl = json.artUrl;
+        this.duration = json.duration;
+    }
+    title;
+    artist;
+    album;
+    artUrl;
+    duration;
+}
+class Properties {
+    constructor(json) {
+        this.fromJson(json);
+    }
+    fromJson(json) {
+        this.loopStatus = json.loopStatus;
+        this.shuffle = json.shuffle;
+        this.volume = json.volume;
+        this.rate = json.rate;
+        this.playbackStatus = json.playbackStatus;
+        this.position = json.position;
+        this.minimumRate = json.minimumRate;
+        this.maximumRate = json.maximumRate;
+        this.canGoNext = Boolean(json.canGoNext);
+        this.canGoPrevious = Boolean(json.canGoPrevious);
+        this.canPlay = Boolean(json.canPlay);
+        this.canPause = Boolean(json.canPause);
+        this.canSeek = Boolean(json.canSeek);
+        this.canControl = Boolean(json.canControl);
+        if (json.metadata != undefined) {
+            this.metadata = new Metadata(json.metadata);
+        }
+        else {
+            this.metadata = new Metadata({});
+        }
+    }
+    loopStatus;
+    shuffle;
+    volume;
+    rate;
+    playbackStatus;
+    position;
+    minimumRate;
+    maximumRate;
+    canGoNext = false;
+    canGoPrevious = false;
+    canPlay = false;
+    canPause = false;
+    canSeek = false;
+    canControl = false;
+    metadata;
+}
 class Stream {
     constructor(json) {
-        this.id = "";
-        this.status = "";
         this.fromJson(json);
     }
     fromJson(json) {
         this.id = json.id;
         this.status = json.status;
+        if (json.properties != undefined) {
+            this.properties = new Properties(json.properties);
+        }
+        else {
+            this.properties = new Properties({});
+        }
         let juri = json.uri;
         this.uri = { raw: juri.raw, scheme: juri.scheme, host: juri.host, path: juri.path, fragment: juri.fragment, query: juri.query };
     }
+    id = "";
+    status = "";
+    uri;
+    properties;
 }
 class Server {
     constructor(json) {
-        this.groups = [];
-        this.streams = [];
         if (json)
             this.fromJson(json);
     }
@@ -89,6 +158,9 @@ class Server {
             this.streams.push(new Stream(jstream));
         }
     }
+    groups = [];
+    server;
+    streams = [];
     getClient(id) {
         for (let group of this.groups) {
             let client = group.getClient(id);
@@ -130,38 +202,185 @@ class SnapControl {
             setTimeout(() => this.connect(), 1000);
         };
     }
-    action(answer) {
-        switch (answer.method) {
+    onNotification(notification) {
+        let stream;
+        switch (notification.method) {
             case 'Client.OnVolumeChanged':
-                let client = this.getClient(answer.params.id);
-                client.config.volume = answer.params.volume;
+                let client = this.getClient(notification.params.id);
+                client.config.volume = notification.params.volume;
                 updateGroupVolume(this.getGroupFromClient(client.id));
-                break;
+                return true;
             case 'Client.OnLatencyChanged':
-                this.getClient(answer.params.id).config.latency = answer.params.latency;
-                break;
+                this.getClient(notification.params.id).config.latency = notification.params.latency;
+                return false;
             case 'Client.OnNameChanged':
-                this.getClient(answer.params.id).config.name = answer.params.name;
-                break;
+                this.getClient(notification.params.id).config.name = notification.params.name;
+                return true;
             case 'Client.OnConnect':
             case 'Client.OnDisconnect':
-                this.getClient(answer.params.client.id).fromJson(answer.params.client);
-                break;
+                this.getClient(notification.params.client.id).fromJson(notification.params.client);
+                return true;
             case 'Group.OnMute':
-                this.getGroup(answer.params.id).muted = Boolean(answer.params.mute);
-                break;
+                this.getGroup(notification.params.id).muted = Boolean(notification.params.mute);
+                return true;
             case 'Group.OnStreamChanged':
-                this.getGroup(answer.params.id).stream_id = answer.params.stream_id;
-                break;
+                this.getGroup(notification.params.id).stream_id = notification.params.stream_id;
+                this.updateProperties(notification.params.stream_id);
+                return true;
             case 'Stream.OnUpdate':
-                this.getStream(answer.params.id).fromJson(answer.params.stream);
-                break;
+                stream = this.getStream(notification.params.id);
+                stream.fromJson(notification.params.stream);
+                this.updateProperties(stream.id);
+                return true;
             case 'Server.OnUpdate':
-                this.server.fromJson(answer.params.server);
-                break;
+                this.server.fromJson(notification.params.server);
+                this.updateProperties(this.getMyStreamId());
+                return true;
+            case 'Stream.OnProperties':
+                stream = this.getStream(notification.params.id);
+                stream.properties.fromJson(notification.params.properties);
+                if (this.getMyStreamId() == stream.id)
+                    this.updateProperties(stream.id);
+                return false;
             default:
-                break;
+                return false;
         }
+    }
+    updateProperties(stream_id) {
+        if (!('mediaSession' in navigator)) {
+            console.log('updateProperties: mediaSession not supported');
+            return;
+        }
+        if (stream_id != this.getMyStreamId()) {
+            console.log('updateProperties: not my stream id: ' + stream_id + ', mine: ' + this.getMyStreamId());
+            return;
+        }
+        let props;
+        let metadata;
+        try {
+            props = this.getStreamFromClient(SnapStream.getClientId()).properties;
+            metadata = this.getStreamFromClient(SnapStream.getClientId()).properties.metadata;
+        }
+        catch (e) {
+            console.log('updateProperties failed: ' + e);
+            return;
+        }
+        // https://developers.google.com/web/updates/2017/02/media-session
+        // https://github.com/googlechrome/samples/tree/gh-pages/media-session
+        // https://googlechrome.github.io/samples/media-session/audio.html
+        // https://developer.mozilla.org/en-US/docs/Web/API/MediaSession/setActionHandler#seekto
+        console.log('updateProperties: ', props);
+        let play_state = "none";
+        if (props.playbackStatus != undefined) {
+            if (props.playbackStatus == "playing") {
+                audio.play();
+                play_state = "playing";
+            }
+            else if (props.playbackStatus == "paused") {
+                audio.pause();
+                play_state = "paused";
+            }
+            else if (props.playbackStatus == "stopped") {
+                audio.pause();
+                play_state = "none";
+            }
+        }
+        let mediaSession = navigator.mediaSession;
+        mediaSession.playbackState = play_state;
+        console.log('updateProperties playbackState: ', navigator.mediaSession.playbackState);
+        // if (props.canGoNext == undefined || !props.canGoNext!)
+        mediaSession.setActionHandler('play', () => {
+            props.canPlay ?
+                this.sendRequest('Stream.Control', { id: stream_id, command: 'play' }) : null;
+        });
+        mediaSession.setActionHandler('pause', () => {
+            props.canPause ?
+                this.sendRequest('Stream.Control', { id: stream_id, command: 'pause' }) : null;
+        });
+        mediaSession.setActionHandler('previoustrack', () => {
+            props.canGoPrevious ?
+                this.sendRequest('Stream.Control', { id: stream_id, command: 'previous' }) : null;
+        });
+        mediaSession.setActionHandler('nexttrack', () => {
+            props.canGoNext ?
+                this.sendRequest('Stream.Control', { id: stream_id, command: 'next' }) : null;
+        });
+        try {
+            mediaSession.setActionHandler('stop', () => {
+                props.canControl ?
+                    this.sendRequest('Stream.Control', { id: stream_id, command: 'stop' }) : null;
+            });
+        }
+        catch (error) {
+            console.log('Warning! The "stop" media session action is not supported.');
+        }
+        let defaultSkipTime = 10; // Time to skip in seconds by default
+        mediaSession.setActionHandler('seekbackward', (event) => {
+            let offset = (event.seekOffset || defaultSkipTime) * -1;
+            if (props.position != undefined)
+                Math.max(props.position + offset, 0);
+            props.canSeek ?
+                this.sendRequest('Stream.Control', { id: stream_id, command: 'seek', params: { 'offset': offset } }) : null;
+        });
+        mediaSession.setActionHandler('seekforward', (event) => {
+            let offset = event.seekOffset || defaultSkipTime;
+            if ((metadata.duration != undefined) && (props.position != undefined))
+                Math.min(props.position + offset, metadata.duration);
+            props.canSeek ?
+                this.sendRequest('Stream.Control', { id: stream_id, command: 'seek', params: { 'offset': offset } }) : null;
+        });
+        try {
+            mediaSession.setActionHandler('seekto', (event) => {
+                let position = event.seekTime || 0;
+                if (metadata.duration != undefined)
+                    Math.min(position, metadata.duration);
+                props.canSeek ?
+                    this.sendRequest('Stream.Control', { id: stream_id, command: 'setPosition', params: { 'position': position } }) : null;
+            });
+        }
+        catch (error) {
+            console.log('Warning! The "seekto" media session action is not supported.');
+        }
+        if ((metadata.duration != undefined) && (props.position != undefined) && (props.position <= metadata.duration)) {
+            if ('setPositionState' in mediaSession) {
+                console.log('Updating position state: ' + props.position + '/' + metadata.duration);
+                mediaSession.setPositionState({
+                    duration: metadata.duration,
+                    playbackRate: 1.0,
+                    position: props.position
+                });
+            }
+        }
+        else {
+            mediaSession.setPositionState({
+                duration: 0,
+                playbackRate: 1.0,
+                position: 0
+            });
+        }
+        console.log('updateMetadata: ', metadata);
+        // https://github.com/Microsoft/TypeScript/issues/19473
+        let title = metadata.title || "Unknown Title";
+        let artist = (metadata.artist != undefined) ? metadata.artist[0] : "Unknown Artist";
+        let album = metadata.album || "";
+        let artwork = metadata.artUrl || 'snapcast-512.png';
+        console.log('Metadata title: ' + title + ', artist: ' + artist + ', album: ' + album + ", artwork: " + artwork);
+        navigator.mediaSession.metadata = new MediaMetadata({
+            title: title,
+            artist: artist,
+            album: album,
+            artwork: [
+                // { src: artwork, sizes: '250x250', type: 'image/jpeg' },
+                // 'https://dummyimage.com/96x96', sizes: '96x96', type: 'image/png' },
+                { src: artwork, sizes: '128x128', type: 'image/png' },
+                { src: artwork, sizes: '192x192', type: 'image/png' },
+                { src: artwork, sizes: '256x256', type: 'image/png' },
+                { src: artwork, sizes: '384x384', type: 'image/png' },
+                { src: artwork, sizes: '512x512', type: 'image/png' },
+            ]
+        });
+        // mediaSession.setActionHandler('seekbackward', function () { });
+        // mediaSession.setActionHandler('seekforward', function () { });
     }
     getClient(client_id) {
         let client = this.server.getClient(client_id);
@@ -198,6 +417,19 @@ class SnapControl {
                 if (client.id == client_id)
                     return group;
         throw new Error(`group for client ${client_id} was null`);
+    }
+    getStreamFromClient(client_id) {
+        let group = this.getGroupFromClient(client_id);
+        return this.getStream(group.stream_id);
+    }
+    getMyStreamId() {
+        try {
+            let group = this.getGroupFromClient(SnapStream.getClientId());
+            return this.getStream(group.stream_id).id;
+        }
+        catch (e) {
+            return "";
+        }
     }
     getStream(stream_id) {
         let stream = this.server.getStream(stream_id);
@@ -248,6 +480,7 @@ class SnapControl {
     }
     setStream(group_id, stream_id) {
         this.getGroup(group_id).stream_id = stream_id;
+        this.updateProperties(stream_id);
         this.sendRequest('Group.SetStream', { id: group_id, stream_id: stream_id });
     }
     setClients(group_id, clients) {
@@ -271,34 +504,43 @@ class SnapControl {
         return this.msg_id;
     }
     onMessage(msg) {
-        let answer = JSON.parse(msg);
-        let is_response = (answer.id != undefined);
-        console.log("Received " + (is_response ? "response" : "notification") + ", json: " + JSON.stringify(answer));
+        let json_msg = JSON.parse(msg);
+        let is_response = (json_msg.id != undefined);
+        console.log("Received " + (is_response ? "response" : "notification") + ", json: " + JSON.stringify(json_msg));
         if (is_response) {
-            if (answer.id == this.status_req_id) {
-                this.server = new Server(answer.result.server);
+            if (json_msg.id == this.status_req_id) {
+                this.server = new Server(json_msg.result.server);
+                this.updateProperties(this.getMyStreamId());
                 show();
             }
         }
         else {
-            if (Array.isArray(answer)) {
-                for (let a of answer) {
-                    this.action(a);
+            let refresh = false;
+            if (Array.isArray(json_msg)) {
+                for (let notification of json_msg) {
+                    refresh = this.onNotification(notification) || refresh;
                 }
             }
             else {
-                this.action(answer);
+                refresh = this.onNotification(json_msg);
             }
             // TODO: don't update everything, but only the changed, 
             // e.g. update the values for the volume sliders
-            show();
+            if (refresh)
+                show();
         }
     }
+    baseUrl;
+    connection;
+    server;
+    msg_id;
+    status_req_id;
 }
 let snapcontrol;
 let snapstream = null;
 let hide_offline = true;
 let autoplay_done = false;
+let audio = document.createElement('audio');
 function autoplayRequested() {
     return document.location.hash.match(/autoplay/) !== null;
 }
@@ -368,17 +610,21 @@ function show() {
         // Group mute and refresh button
         content += "<div class='groupheader'>";
         content += streamselect;
+        // let cover_img: string = server.getStream(group.stream_id)!.properties.metadata.artUrl || "snapcast-512.png";
+        // content += "<img src='" + cover_img + "' class='cover-img' id='cover_" + group.id + "'>";
         let clientCount = 0;
         for (let client of group.clients)
             if (!hide_offline || client.connected)
                 clientCount++;
         if (clientCount > 1) {
             let volume = snapcontrol.getGroupVolume(group, hide_offline);
+            // content += "<div class='client'>";
             content += "<a href=\"javascript:setMuteGroup('" + group.id + "'," + !muted + ");\"><img src='" + mute_img + "' class='mute-button'></a>";
             content += "<div class='slidergroupdiv'>";
             content += "    <input type='range' draggable='false' min=0 max=100 step=1 id='vol_" + group.id + "' oninput='javascript:setGroupVolume(\"" + group.id + "\")' value=" + volume + " class='slider'>";
             // content += "    <input type='range' min=0 max=100 step=1 id='vol_" + group.id + "' oninput='javascript:setVolume(\"" + client.id + "\"," + client.config.volume.muted + ")' value=" + client.config.volume.percent + " class='" + sliderclass + "'>";
             content += "</div>";
+            // content += "</div>";
         }
         // transparent placeholder edit icon
         content += "<div class='edit-group-icon'>&#9998</div>";
@@ -531,11 +777,20 @@ function play() {
     if (snapstream) {
         snapstream.stop();
         snapstream = null;
+        audio.pause();
+        audio.src = '';
+        document.body.removeChild(audio);
     }
     else {
         snapstream = new SnapStream(config.baseUrl);
+        // User interacted with the page. Let's play audio...
+        document.body.appendChild(audio);
+        audio.src = "10-seconds-of-silence.mp3";
+        audio.loop = true;
+        audio.play().then(() => {
+            snapcontrol.updateProperties(snapcontrol.getMyStreamId());
+        });
     }
-    show();
 }
 function setMuteGroup(id, mute) {
     snapcontrol.muteGroup(id, mute);
