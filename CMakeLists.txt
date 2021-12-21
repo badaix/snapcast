@@ -6,7 +6,7 @@ set(PROJECT_URL "https://github.com/badaix/snapcast")
 
 option(BUILD_SHARED_LIBS "Build snapcast in a shared context" ON)
 option(BUILD_STATIC_LIBS "Build snapcast in a static context" ON)
-option(BUILD_TESTS "Build tests (in test/snapcast_test)" ON)
+option(BUILD_TESTS "Build tests (in test/snapcast_test)" OFF)
 option(WERROR "Treat warnings as errors" OFF)
 
 option(ASAN "Enable AddressSanitizer" OFF)
