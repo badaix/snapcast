@@ -4,7 +4,7 @@ Upstream-Contact: Johannes Pohl <snapcast@badaix.de>
 Source: https://github.com/badaix/snapcast
 
 Files: *
-Copyright: 2014-2018 Johannes Pohl
+Copyright: 2014-2021 Johannes Pohl
 License: GPL-3+
 
 Files: client/browseZeroConf/browseAvahi.cpp
@@ -17,7 +17,7 @@ Copyright: 2004-2008 René Nyffenegger
 License: Zlib
 
 Files: common/json.hpp
-Copyright: 2013-2018 Niels Lohmann
+Copyright: 2013-2021 Niels Lohmann
            2009 Florian Loitsch
 License: Expat
 
