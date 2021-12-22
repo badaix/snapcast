@@ -11,8 +11,9 @@ snapcast (0.26.0-1) unstable; urgency=medium
 
   * General
     -Update documentation (Issue #804, PR #945, PR #951)
+    -Snapweb: Update to v0.4.0
 
- -- Johannes Pohl <snapcast@badaix.de>  Fri, 24 May 2021 00:13:37 +0200
+ -- Johannes Pohl <snapcast@badaix.de>  Wed, 22 Dec 2021 00:13:37 +0200
 
 snapcast (0.25.0-1) unstable; urgency=medium
 

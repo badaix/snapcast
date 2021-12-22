@@ -16,8 +16,9 @@
 ### General
 
 - Update documentation (Issue #804, PR #945, PR #951)
+- Snapweb: Update to v0.4.0
 
-_Johannes Pohl <snapcast@badaix.de>  Fri, 24 Dec 2021 00:13:37 +0200_
+_Johannes Pohl <snapcast@badaix.de>  Wed, 22 Dec 2021 00:13:37 +0200_
 
 ## Version 0.25.0
 
