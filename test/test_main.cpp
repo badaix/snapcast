@@ -17,15 +17,22 @@
 ***/
 
 #define CATCH_CONFIG_MAIN
+
+// prototype/interface header file
 #include "catch.hpp"
 
-#include <regex>
-
+// local headers
 #include "common/aixlog.hpp"
 #include "common/utils/string_utils.hpp"
 #include "server/streamreader/control_error.hpp"
 #include "server/streamreader/properties.hpp"
 #include "server/streamreader/stream_uri.hpp"
+
+// 3rd party headers
+
+// standard headers
+#include <regex>
+
 
 using namespace std;
 
@@ -129,7 +136,7 @@ TEST_CASE("Metadata")
     "contentCreated": "2017-04-07",
     "discNumber": 1,
     "duration": 247.0,
-    "file": "The Chainsmokers - Memories...Do Not Open (2017)/05 - Something Just Like This.mp3",
+    "url": "The Chainsmokers - Memories...Do Not Open (2017)/05 - Something Just Like This.mp3",
     "genre": [
         "Dance/Electronic"
     ],
@@ -173,6 +180,12 @@ TEST_CASE("Properties")
     REQUIRE(to_string(PlaybackStatus::kPaused) == "paused");
     auto in_json = json::parse(R"(
 {
+    "canControl": false,
+    "canGoNext": false,
+    "canGoPrevious": false,
+    "canPause": false,
+    "canPlay": false,
+    "canSeek": false,
     "playbackStatus": "playing",
     "loopStatus": "track",
     "shuffle": false,
@@ -193,6 +206,12 @@ TEST_CASE("Properties")
 
     in_json = json::parse(R"(
 {
+    "canControl": true,
+    "canGoNext": true,
+    "canGoPrevious": true,
+    "canPause": true,
+    "canPlay": true,
+    "canSeek": true,
     "volume": 42
 }
 )");
