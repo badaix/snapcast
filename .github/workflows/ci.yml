@@ -1,4 +1,4 @@
-name: Ubuntu-amd64
+name: CI
 
 on: [push, pull_request]
 
