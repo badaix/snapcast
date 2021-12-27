@@ -106,7 +106,7 @@ sudo make install
 
 This will copy the server binary to `/usr/bin` and update init.d/systemd to start the server as a daemon.
 
-### Debian packages
+### Debian packages: TODO - outdated
 
 Debian packages can be made with
 

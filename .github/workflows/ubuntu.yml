@@ -30,18 +30,6 @@ jobs:
     #- name: ccache dump config
     #  run: ccache -p
     - name: cmake build
-      run: cmake -S . -B build -DBOOST_ROOT=boost_1_78_0 -DCMAKE_BUILD_TYPE=Release -DWERROR=ON -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DREVISION=${{ github.sha }} -DCMAKE_CXX_FLAGS=-DJSON_HAS_CPP_14
+      run: cmake -S . -B build -DBOOST_ROOT=boost_1_78_0 -DCMAKE_BUILD_TYPE=Release -DWERROR=ON -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_FLAGS=-DJSON_HAS_CPP_14
     - name: cmake make
       run: cmake --build build --parallel 3
-    - name: debian package
-      run: |
-        fakeroot make -f debian/rules CMAKEFLAGS="-DBOOST_ROOT=boost_1_78_0 -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DREVISION=${{ github.sha }} -DCMAKE_CXX_FLAGS=-DJSON_HAS_CPP_14 -DBUILD_WITH_PULSE=OFF" binary
-        rename 's/_amd64/_without-pulse_amd64/g' ../snapclient*_amd64.deb
-        rm ../snapserver*_amd64.deb
-        fakeroot make -f debian/rules clean
-        fakeroot make -f debian/rules CMAKEFLAGS="-DBOOST_ROOT=boost_1_78_0 -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DREVISION=${{ github.sha }} -DCMAKE_CXX_FLAGS=-DJSON_HAS_CPP_14" binary
-    - name: Archive artifacts
-      uses: actions/upload-artifact@v2
-      with:
-        name: develop_snapshot_amd64-${{github.sha}}
-        path: /home/runner/work/snapcast/snap*_amd64.deb

@@ -55,7 +55,7 @@ Snapcast packages are available for several Linux distributions:
 
 ### Nightly builds
 
-There are debian packages of automated builds for [armhf](https://github.com/badaix/snapcast/actions?query=workflow%3Aself-hosted) and [amd64](https://github.com/badaix/snapcast/actions?query=workflow%3AUbuntu) available in [Actions](https://github.com/badaix/snapcast/actions).  
+There are debian packages of automated builds for `armhf` and `amd64` in [Snapos Actions](https://github.com/badaix/snapos/actions).
 Download and extract the archive for your architecture and follow the [debian installation instructions](doc/install.md#debian).
 
 ### Installation from source

@@ -1,5 +1,21 @@
 # Snapcast changelog
 
+## Version 0.27.0
+
+### Features
+
+- Server: TODO
+
+### Bugfixes
+
+- TODO
+
+### General
+
+- Remove debhelper files from project
+
+_Johannes Pohl <snapcast@badaix.de>  Sun, 13 Feb 2022 00:13:37 +0200_
+
 ## Version 0.26.0
 
 ### Features
@@ -133,7 +149,7 @@ _Johannes Pohl <snapcast@badaix.de>  Thu, 15 Oct 2020 00:13:37 +0200_
 
 ### General
 
-- debian packag generation switched from make to CMake buildsystem
+- debian package generation switched from make to CMake buildsystem
 - Reintroduce MACOS define, hopefully not breaking anything on macOS
 - Snapcast uses GitHub actions for automated CI/CD
 - CMake installs man files (Issue #507)
