@@ -30,7 +30,7 @@ jobs:
     #- name: ccache dump config
     #  run: ccache -p
     - name: cmake build
-      run: cmake -S . -B build -DBOOST_ROOT=boost_1_78_0 -DCMAKE_BUILD_TYPE=Release -DWERROR=ON -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_FLAGS=-DJSON_HAS_CPP_14
+      run: cmake -S . -B build -DBOOST_ROOT=boost_1_78_0 -DCMAKE_BUILD_TYPE=Release -DWERROR=ON -DBUILD_TESTS=ON -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_FLAGS=-DJSON_HAS_CPP_14
     - name: cmake make
       run: cmake --build build --parallel 3
 
@@ -67,7 +67,7 @@ jobs:
     #- name: ccache dump config
     #  run: ccache -p
     - name: cmake build
-      run: cmake -S . -B build -DBOOST_ROOT=boost_1_78_0 -DCMAKE_BUILD_TYPE=Release -DWERROR=ON -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_FLAGS="-I/usr/local/include -Wno-deprecated-declarations"
+      run: cmake -S . -B build -DBOOST_ROOT=boost_1_78_0 -DCMAKE_BUILD_TYPE=Release -DWERROR=ON -DBUILD_TESTS=ON -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_FLAGS="-I/usr/local/include -Wno-deprecated-declarations"
     - name: cmake make
       run: cmake --build build --parallel 3
 
@@ -91,7 +91,7 @@ jobs:
     - name: cmake build
       run: |
         echo vcpkg installation root: ${env:VCPKG_INSTALLATION_ROOT}
-        cmake -S . -B build -G "Visual Studio 16 2019" -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake" -DVCPKG_TARGET_TRIPLET="x64-windows" -DCMAKE_BUILD_TYPE="Release" -DREVISION="${{ github.sha }}" -DWERROR=ON
+        cmake -S . -B build -G "Visual Studio 16 2019" -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake" -DVCPKG_TARGET_TRIPLET="x64-windows" -DCMAKE_BUILD_TYPE="Release" -DREVISION="${{ github.sha }}" -DWERROR=ON -DBUILD_TESTS=ON
     - name: cmake make
       run: cmake --build build --config Release --parallel 3 --verbose
     - name: installer
