@@ -469,7 +469,7 @@ void PcmStream::setProperties(const Properties& properties)
         url << "http://" << server_settings_.http.host << ":" << server_settings_.http.port << "/__image_cache?name=" << md5;
         props.metadata->art_url = url.str();
     }
-    else if (!props.metadata->art_data.has_value())
+    else if (!props.metadata.has_value() || !props.metadata->art_data.has_value())
     {
         server_settings_.http.image_cache.clear(getName());
     }
