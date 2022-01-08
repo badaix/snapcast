@@ -134,7 +134,7 @@ include(${CMAKE_SOURCE_DIR}/cmake/TargetArch.cmake)
 target_architecture(ARCH)
 
 #message(STATUS "System name:  ${CMAKE_SYSTEM_NAME}")
-#message(STATUS "Architecture: ${ARCH}")
+message(STATUS "Architecture: ${ARCH}")
 #message(STATUS "System processor: ${CMAKE_SYSTEM_PROCESSOR}")
 
 include(CheckAtomic)
