@@ -1,6 +1,11 @@
 name: CI
 
-on: [push, pull_request]
+on:
+  push:
+    branches:
+      - develop
+      - master
+  pull_request:
 
 env:
   BOOST_VERSION: 1_78_0
@@ -12,17 +17,14 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - os: ubuntu-latest
-            xcode: ''
+          - name: Linux
+            os: ubuntu-latest
             ccache: /home/runner/.ccache
-          - os: macos-latest
-            xcode: '11'
-            ccache: /Users/runner/.ccache
-          - os: macos-latest
-            xcode: '13'
+          - name: macOS
+            os: macos-latest
             ccache: /Users/runner/.ccache
 
-    name: Build ${{ matrix.os }} ${{ matrix.xcode }}
+    name: Build ${{ matrix.name }}
     runs-on: ${{ matrix.os }}
 
     steps:
@@ -70,10 +72,11 @@ jobs:
           -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
           -DCMAKE_CXX_FLAGS="${CMAKE_CXX_FLAGS}"
     - name: cmake make
-      run: cmake --build build --parallel 3
+      run: cmake --build build --parallel 3 --verbose
 
   windows:
 
+    name: Build Windows
     runs-on: windows-latest
 
     steps:
@@ -91,11 +94,11 @@ jobs:
     - name: cmake build
       run: |
         echo vcpkg installation root: ${env:VCPKG_INSTALLATION_ROOT}
-        cmake -S . -B build -G "Visual Studio 16 2019" \
-          -DWERROR=ON -DBUILD_TESTS=ON \
-          -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake" \
-          -DVCPKG_TARGET_TRIPLET="x64-windows" \
-          -DCMAKE_BUILD_TYPE=Release \
+        cmake -S . -B build -G "Visual Studio 16 2019" `
+          -DWERROR=ON -DBUILD_TESTS=ON `
+          -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake" `
+          -DVCPKG_TARGET_TRIPLET="x64-windows" `
+          -DCMAKE_BUILD_TYPE=Release `
           -DREVISION="${{ github.sha }}"
     - name: cmake make
       run: cmake --build build --config Release --parallel 3 --verbose
