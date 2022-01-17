@@ -2,75 +2,75 @@ name: CI
 
 on: [push, pull_request]
 
+env:
+  BOOST_VERSION: 1_78_0
+
 jobs:
-  linux:
-
-    runs-on: ubuntu-latest
-
-    steps:
-    - uses: actions/checkout@v2
-    - name: dependencies
-      run: sudo apt-get update && sudo apt-get install -yq rename libasound2-dev libsoxr-dev libvorbisidec-dev libvorbis-dev libflac-dev libopus-dev alsa-utils libpulse-dev libavahi-client-dev avahi-daemon debhelper ccache expat
-    - name: cache boost
-      id: cache-boost
-      uses: actions/cache@v2
-      with:
-        path: boost_1_78_0
-        key: ${{ runner.os }}-boost
-    - name: get boost
-      if: steps.cache-boost.outputs.cache-hit != 'true'
-      run: wget https://boostorg.jfrog.io/artifactory/main/release/1.78.0/source/boost_1_78_0.tar.bz2 && tar xjf boost_1_78_0.tar.bz2
-    - name: cache ccache
-      id: cache-ccache
-      uses: actions/cache@v2
-      with:
-        path: /home/runner/.ccache
-        key: ${{ runner.os }}-ccache-${{ github.sha }}
-        restore-keys: ${{ runner.os }}-ccache-
-    #- name: ccache dump config
-    #  run: ccache -p
-    - name: cmake build
-      run: cmake -S . -B build -DBOOST_ROOT=boost_1_78_0 -DCMAKE_BUILD_TYPE=Release -DWERROR=ON -DBUILD_TESTS=ON -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_FLAGS=-DJSON_HAS_CPP_14
-    - name: cmake make
-      run: cmake --build build --parallel 3
-
-
-  macos:
+  unix:
 
     strategy:
       fail-fast: false
       matrix:
-        xcode: ['11', '13']
+        include:
+          - os: ubuntu-latest
+            xcode: ''
+            ccache: /home/runner/.ccache
+          - os: macos-latest
+            xcode: '11'
+            ccache: /Users/runner/.ccache
+          - os: macos-latest
+            xcode: '13'
+            ccache: /Users/runner/.ccache
 
-    runs-on: macos-latest
+    name: Build ${{ matrix.os }} ${{ matrix.xcode }}
+    runs-on: ${{ matrix.os }}
 
     steps:
     - uses: actions/checkout@v2
-    - name: dependencies
-      run: brew install pkgconfig libsoxr ccache expat
+    - name: Linux dependencies
+      if: ${{ runner.os == 'Linux' }}
+      run: |
+        sudo apt update
+        sudo apt-get install -yq \
+          rename libasound2-dev libsoxr-dev libvorbisidec-dev libvorbis-dev \
+          libflac-dev libopus-dev alsa-utils libpulse-dev \
+          libavahi-client-dev avahi-daemon debhelper ccache expat
+        echo "CMAKE_CXX_FLAGS=-DJSON_HAS_CPP_14" >> ${GITHUB_ENV}
+    - name: macOS dependencies
+      if: ${{ runner.os == 'macOS' }}
+      run: |
+        brew install pkgconfig libsoxr ccache expat
+        echo "CMAKE_CXX_FLAGS=-I/usr/local/include -Wno-deprecated-declarations" >> ${GITHUB_ENV}
     - name: cache boost
       id: cache-boost
       uses: actions/cache@v2
       with:
-        path: boost_1_78_0
+        path: boost_${{ env.BOOST_VERSION }}
         key: ${{ runner.os }}-boost
     - name: get boost
       if: steps.cache-boost.outputs.cache-hit != 'true'
-      run: wget https://boostorg.jfrog.io/artifactory/main/release/1.78.0/source/boost_1_78_0.tar.bz2 && tar xjf boost_1_78_0.tar.bz2
+      run: |
+        wget https://boostorg.jfrog.io/artifactory/main/release/${BOOST_VERSION//_/.}/source/boost_${BOOST_VERSION}.tar.bz2
+        tar xjf boost_${BOOST_VERSION}.tar.bz2
     - name: cache ccache
       id: cache-ccache
       uses: actions/cache@v2
       with:
-        path: /Users/runner/.ccache
+        path: ${{ matrix.ccache }}
         key: ${{ runner.os }}-ccache-${{ github.sha }}
         restore-keys: ${{ runner.os }}-ccache-
     #- name: ccache dump config
     #  run: ccache -p
     - name: cmake build
-      run: cmake -S . -B build -DBOOST_ROOT=boost_1_78_0 -DCMAKE_BUILD_TYPE=Release -DWERROR=ON -DBUILD_TESTS=ON -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_FLAGS="-I/usr/local/include -Wno-deprecated-declarations"
+      run: |
+        cmake -S . -B build \
+          -DWERROR=ON -DBUILD_TESTS=ON \
+          -DBOOST_ROOT=boost_${BOOST_VERSION} \
+          -DCMAKE_BUILD_TYPE=Release \
+          -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
+          -DCMAKE_CXX_FLAGS="${CMAKE_CXX_FLAGS}"
     - name: cmake make
       run: cmake --build build --parallel 3
-
 
   windows:
 
@@ -91,7 +91,12 @@ jobs:
     - name: cmake build
       run: |
         echo vcpkg installation root: ${env:VCPKG_INSTALLATION_ROOT}
-        cmake -S . -B build -G "Visual Studio 16 2019" -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake" -DVCPKG_TARGET_TRIPLET="x64-windows" -DCMAKE_BUILD_TYPE="Release" -DREVISION="${{ github.sha }}" -DWERROR=ON -DBUILD_TESTS=ON
+        cmake -S . -B build -G "Visual Studio 16 2019" \
+          -DWERROR=ON -DBUILD_TESTS=ON \
+          -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake" \
+          -DVCPKG_TARGET_TRIPLET="x64-windows" \
+          -DCMAKE_BUILD_TYPE=Release \
+          -DREVISION="${{ github.sha }}"
     - name: cmake make
       run: cmake --build build --config Release --parallel 3 --verbose
     - name: installer
