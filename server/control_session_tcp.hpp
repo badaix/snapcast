@@ -29,7 +29,6 @@
 #include <deque>
 
 using boost::asio::ip::tcp;
-namespace net = boost::asio;
 
 /// Endpoint for a connected control client.
 /**
@@ -55,7 +54,7 @@ protected:
 
     tcp::socket socket_;
     boost::asio::streambuf streambuf_;
-    net::strand<net::any_io_executor> strand_;
+    boost::asio::strand<boost::asio::any_io_executor> strand_;
     std::deque<std::string> messages_;
 };
 

@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2021  Johannes Pohl
+    Copyright (C) 2014-2022  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -58,7 +58,7 @@ public:
     using OnResponse = std::function<void(const jsonrpcpp::Response& response)>;
     using OnLog = std::function<void(std::string message)>;
 
-    StreamControl(const net::any_io_executor& executor);
+    StreamControl(const boost::asio::any_io_executor& executor);
     virtual ~StreamControl();
 
     void start(const std::string& stream_id, const ServerSettings& server_setttings, const OnNotification& notification_handler,
@@ -74,7 +74,7 @@ protected:
     void onReceive(const std::string& json);
     void onLog(std::string message);
 
-    net::any_io_executor executor_;
+    boost::asio::any_io_executor executor_;
 
 private:
     OnRequest request_handler_;
@@ -88,7 +88,7 @@ private:
 class ScriptStreamControl : public StreamControl
 {
 public:
-    ScriptStreamControl(const net::any_io_executor& executor, const std::string& script);
+    ScriptStreamControl(const boost::asio::any_io_executor& executor, const std::string& script);
     virtual ~ScriptStreamControl() = default;
 
     void stop() override;

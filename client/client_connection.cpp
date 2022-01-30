@@ -35,7 +35,7 @@ using namespace std;
 static constexpr auto LOG_TAG = "Connection";
 
 ClientConnection::ClientConnection(boost::asio::io_context& io_context, const ClientSettings::Server& server)
-    : io_context_(io_context), strand_(net::make_strand(io_context_.get_executor())), resolver_(strand_), socket_(strand_), reqId_(1), server_(server)
+    : io_context_(io_context), strand_(boost::asio::make_strand(io_context_.get_executor())), resolver_(strand_), socket_(strand_), reqId_(1), server_(server)
 {
     base_msg_size_ = base_message_.getSize();
     buffer_.resize(base_msg_size_);
@@ -144,7 +144,7 @@ void ClientConnection::sendNext()
     message.msg->serialize(stream);
     auto handler = message.handler;
 
-    net::async_write(socket_, streambuf, [this, handler](boost::system::error_code ec, std::size_t length) {
+    boost::asio::async_write(socket_, streambuf, [this, handler](boost::system::error_code ec, std::size_t length) {
         if (ec)
             LOG(ERROR, LOG_TAG) << "Failed to send message, error: " << ec.message() << "\n";
         else
@@ -162,7 +162,7 @@ void ClientConnection::sendNext()
 
 void ClientConnection::send(const msg::message_ptr& message, const ResultHandler& handler)
 {
-    net::post(strand_, [this, message, handler]() {
+    boost::asio::post(strand_, [this, message, handler]() {
         messages_.emplace_back(message, handler);
         if (messages_.size() > 1)
         {
@@ -176,7 +176,7 @@ void ClientConnection::send(const msg::message_ptr& message, const ResultHandler
 
 void ClientConnection::sendRequest(const msg::message_ptr& message, const chronos::usec& timeout, const MessageHandler<msg::BaseMessage>& handler)
 {
-    net::post(strand_, [this, message, timeout, handler]() {
+    boost::asio::post(strand_, [this, message, timeout, handler]() {
         pendingRequests_.erase(
             std::remove_if(pendingRequests_.begin(), pendingRequests_.end(), [](std::weak_ptr<PendingRequest> request) { return request.expired(); }),
             pendingRequests_.end());
@@ -197,7 +197,7 @@ void ClientConnection::sendRequest(const msg::message_ptr& message, const chrono
 
 void ClientConnection::getNextMessage(const MessageHandler<msg::BaseMessage>& handler)
 {
-    net::async_read(socket_, boost::asio::buffer(buffer_, base_msg_size_), [this, handler](boost::system::error_code ec, std::size_t length) mutable {
+    boost::asio::async_read(socket_, boost::asio::buffer(buffer_, base_msg_size_), [this, handler](boost::system::error_code ec, std::size_t length) mutable {
         if (ec)
         {
             LOG(ERROR, LOG_TAG) << "Error reading message header of length " << length << ": " << ec.message() << "\n";
@@ -229,35 +229,36 @@ void ClientConnection::getNextMessage(const MessageHandler<msg::BaseMessage>& ha
         if (base_message_.size > buffer_.size())
             buffer_.resize(base_message_.size);
 
-        net::async_read(socket_, boost::asio::buffer(buffer_, base_message_.size), [this, handler](boost::system::error_code ec, std::size_t length) mutable {
-            if (ec)
-            {
-                LOG(ERROR, LOG_TAG) << "Error reading message body of length " << length << ": " << ec.message() << "\n";
-                if (handler)
-                    handler(ec, nullptr);
-                return;
-            }
+        boost::asio::async_read(socket_, boost::asio::buffer(buffer_, base_message_.size),
+                                [this, handler](boost::system::error_code ec, std::size_t length) mutable {
+                                    if (ec)
+                                    {
+                                        LOG(ERROR, LOG_TAG) << "Error reading message body of length " << length << ": " << ec.message() << "\n";
+                                        if (handler)
+                                            handler(ec, nullptr);
+                                        return;
+                                    }
 
-            auto response = msg::factory::createMessage(base_message_, buffer_.data());
-            if (!response)
-                LOG(WARNING, LOG_TAG) << "Failed to deserialize message of type: " << base_message_.type << "\n";
-            for (auto iter = pendingRequests_.begin(); iter != pendingRequests_.end(); ++iter)
-            {
-                auto request = *iter;
-                if (auto req = request.lock())
-                {
-                    if (req->id() == base_message_.refersTo)
-                    {
-                        req->setValue(std::move(response));
-                        pendingRequests_.erase(iter);
-                        getNextMessage(handler);
-                        return;
-                    }
-                }
-            }
+                                    auto response = msg::factory::createMessage(base_message_, buffer_.data());
+                                    if (!response)
+                                        LOG(WARNING, LOG_TAG) << "Failed to deserialize message of type: " << base_message_.type << "\n";
+                                    for (auto iter = pendingRequests_.begin(); iter != pendingRequests_.end(); ++iter)
+                                    {
+                                        auto request = *iter;
+                                        if (auto req = request.lock())
+                                        {
+                                            if (req->id() == base_message_.refersTo)
+                                            {
+                                                req->setValue(std::move(response));
+                                                pendingRequests_.erase(iter);
+                                                getNextMessage(handler);
+                                                return;
+                                            }
+                                        }
+                                    }
 
-            if (handler)
-                handler(ec, std::move(response));
-        });
+                                    if (handler)
+                                        handler(ec, std::move(response));
+                                });
     });
 }

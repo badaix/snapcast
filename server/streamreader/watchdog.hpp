@@ -44,7 +44,7 @@ public:
 class Watchdog
 {
 public:
-    Watchdog(const net::any_io_executor& executor, WatchdogListener* listener = nullptr);
+    Watchdog(const boost::asio::any_io_executor& executor, WatchdogListener* listener = nullptr);
     virtual ~Watchdog();
 
     void start(const std::chrono::milliseconds& timeout);

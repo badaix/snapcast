@@ -32,7 +32,7 @@ static constexpr auto LOG_TAG = "ControlSessionWS";
 
 
 ControlSessionWebsocket::ControlSessionWebsocket(ControlMessageReceiver* receiver, websocket::stream<beast::tcp_stream>&& socket)
-    : ControlSession(receiver), ws_(std::move(socket)), strand_(net::make_strand(ws_.get_executor()))
+    : ControlSession(receiver), ws_(std::move(socket)), strand_(boost::asio::make_strand(ws_.get_executor()))
 {
     LOG(DEBUG, LOG_TAG) << "ControlSessionWebsocket\n";
 }
@@ -66,7 +66,7 @@ void ControlSessionWebsocket::stop()
 
 void ControlSessionWebsocket::sendAsync(const std::string& message)
 {
-    net::post(strand_, [this, self = shared_from_this(), msg = message]() {
+    boost::asio::post(strand_, [this, self = shared_from_this(), msg = message]() {
         messages_.push_back(std::move(msg));
         if (messages_.size() > 1)
         {

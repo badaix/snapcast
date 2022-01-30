@@ -122,7 +122,7 @@ class StreamSession : public std::enable_shared_from_this<StreamSession>
 {
 public:
     /// ctor. Received message from the client are passed to StreamMessageReceiver
-    StreamSession(const net::any_io_executor& executor, StreamMessageReceiver* receiver);
+    StreamSession(const boost::asio::any_io_executor& executor, StreamMessageReceiver* receiver);
     virtual ~StreamSession() = default;
 
     virtual std::string getIP() = 0;
@@ -162,7 +162,7 @@ protected:
     StreamMessageReceiver* messageReceiver_;
     size_t bufferMs_;
     streamreader::PcmStreamPtr pcmStream_;
-    net::strand<net::any_io_executor> strand_;
+    boost::asio::strand<boost::asio::any_io_executor> strand_;
     std::deque<shared_const_buffer> messages_;
     mutable std::mutex mutex_;
 };

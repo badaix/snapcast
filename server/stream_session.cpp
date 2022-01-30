@@ -16,10 +16,16 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
+// prototype/interface header file
 #include "stream_session.hpp"
 
+// local headers
 #include "common/aixlog.hpp"
 #include "message/pcm_chunk.hpp"
+
+// 3rd party headers
+
+// standard headers
 #include <iostream>
 
 using namespace std;
@@ -28,8 +34,8 @@ using namespace streamreader;
 static constexpr auto LOG_TAG = "StreamSession";
 
 
-StreamSession::StreamSession(const net::any_io_executor& executor, StreamMessageReceiver* receiver)
-    : messageReceiver_(receiver), pcmStream_(nullptr), strand_(net::make_strand(executor))
+StreamSession::StreamSession(const boost::asio::any_io_executor& executor, StreamMessageReceiver* receiver)
+    : messageReceiver_(receiver), pcmStream_(nullptr), strand_(boost::asio::make_strand(executor))
 {
     base_msg_size_ = baseMessage_.getSize();
     buffer_.resize(base_msg_size_);
@@ -54,7 +60,7 @@ void StreamSession::send_next()
 {
     auto& buffer = messages_.front();
     buffer.on_air = true;
-    net::post(strand_, [this, self = shared_from_this(), buffer]() {
+    boost::asio::post(strand_, [this, self = shared_from_this(), buffer]() {
         sendAsync(buffer, [this](boost::system::error_code ec, std::size_t length) {
             messages_.pop_front();
             if (ec)
@@ -72,7 +78,7 @@ void StreamSession::send_next()
 
 void StreamSession::send(shared_const_buffer const_buf)
 {
-    net::post(strand_, [this, self = shared_from_this(), const_buf]() {
+    boost::asio::post(strand_, [this, self = shared_from_this(), const_buf]() {
         // delete PCM chunks that are older than the overall buffer duration
         messages_.erase(std::remove_if(messages_.begin(), messages_.end(),
                                        [this](const shared_const_buffer& buffer) {

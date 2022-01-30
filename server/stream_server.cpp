@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2021  Johannes Pohl
+    Copyright (C) 2014-2022  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -39,7 +39,7 @@ using json = nlohmann::json;
 
 static constexpr auto LOG_TAG = "StreamServer";
 
-StreamServer::StreamServer(net::io_context& io_context, const ServerSettings& serverSettings, StreamMessageReceiver* messageReceiver)
+StreamServer::StreamServer(boost::asio::io_context& io_context, const ServerSettings& serverSettings, StreamMessageReceiver* messageReceiver)
     : io_context_(io_context), config_timer_(io_context), settings_(serverSettings), messageReceiver_(messageReceiver)
 {
 }
@@ -219,7 +219,7 @@ void StreamServer::start()
         try
         {
             LOG(INFO, LOG_TAG) << "Creating stream acceptor for address: " << address << ", port: " << settings_.stream.port << "\n";
-            acceptor_.emplace_back(make_unique<tcp::acceptor>(net::make_strand(io_context_.get_executor()),
+            acceptor_.emplace_back(make_unique<tcp::acceptor>(boost::asio::make_strand(io_context_.get_executor()),
                                                               tcp::endpoint(boost::asio::ip::address::from_string(address), settings_.stream.port)));
         }
         catch (const boost::system::system_error& e)

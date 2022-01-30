@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2021  Johannes Pohl
+    Copyright (C) 2014-2022  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -39,7 +39,7 @@ namespace streamreader
 static constexpr auto LOG_TAG = "Script";
 
 
-StreamControl::StreamControl(const net::any_io_executor& executor) : executor_(executor)
+StreamControl::StreamControl(const boost::asio::any_io_executor& executor) : executor_(executor)
 {
 }
 
@@ -64,7 +64,7 @@ void StreamControl::start(const std::string& stream_id, const ServerSettings& se
 void StreamControl::command(const jsonrpcpp::Request& request, const OnResponse& response_handler)
 {
     // use strand to serialize commands sent from different threads
-    net::post(executor_, [this, request, response_handler]() {
+    boost::asio::post(executor_, [this, request, response_handler]() {
         if (response_handler)
             request_callbacks_[request.id()] = response_handler;
 
@@ -137,7 +137,7 @@ void StreamControl::onLog(std::string message)
 
 
 
-ScriptStreamControl::ScriptStreamControl(const net::any_io_executor& executor, const std::string& script) : StreamControl(executor), script_(script)
+ScriptStreamControl::ScriptStreamControl(const boost::asio::any_io_executor& executor, const std::string& script) : StreamControl(executor), script_(script)
 {
     namespace fs = utils::file;
     if (!fs::exists(script_))
@@ -194,7 +194,7 @@ void ScriptStreamControl::doCommand(const jsonrpcpp::Request& request)
 void ScriptStreamControl::stderrReadLine()
 {
     const std::string delimiter = "\n";
-    net::async_read_until(*stream_stderr_, streambuf_stderr_, delimiter, [this, delimiter](const std::error_code& ec, std::size_t bytes_transferred) {
+    boost::asio::async_read_until(*stream_stderr_, streambuf_stderr_, delimiter, [this, delimiter](const std::error_code& ec, std::size_t bytes_transferred) {
         if (ec)
         {
             LOG(ERROR, LOG_TAG) << "Error while reading from stderr: " << ec.message() << "\n";
@@ -214,7 +214,7 @@ void ScriptStreamControl::stderrReadLine()
 void ScriptStreamControl::stdoutReadLine()
 {
     const std::string delimiter = "\n";
-    net::async_read_until(*stream_stdout_, streambuf_stdout_, delimiter, [this, delimiter](const std::error_code& ec, std::size_t bytes_transferred) {
+    boost::asio::async_read_until(*stream_stdout_, streambuf_stdout_, delimiter, [this, delimiter](const std::error_code& ec, std::size_t bytes_transferred) {
         if (ec)
         {
             LOG(ERROR, LOG_TAG) << "Error while reading from stdout: " << ec.message() << "\n";

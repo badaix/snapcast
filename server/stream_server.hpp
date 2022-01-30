@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2021  Johannes Pohl
+    Copyright (C) 2014-2022  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -59,7 +59,7 @@ using session_ptr = std::shared_ptr<StreamSession>;
 class StreamServer : public StreamMessageReceiver
 {
 public:
-    StreamServer(net::io_context& io_context, const ServerSettings& serverSettings, StreamMessageReceiver* messageReceiver = nullptr);
+    StreamServer(boost::asio::io_context& io_context, const ServerSettings& serverSettings, StreamMessageReceiver* messageReceiver = nullptr);
     virtual ~StreamServer();
 
     void start();
@@ -87,7 +87,7 @@ private:
     mutable std::recursive_mutex sessionsMutex_;
     // mutable std::recursive_mutex clientMutex_;
     std::vector<std::weak_ptr<StreamSession>> sessions_;
-    net::io_context& io_context_;
+    boost::asio::io_context& io_context_;
     std::vector<acceptor_ptr> acceptor_;
     boost::asio::steady_timer config_timer_;
 

@@ -32,7 +32,7 @@ static constexpr auto LOG_TAG = "ControlSessionTCP";
 
 
 ControlSessionTcp::ControlSessionTcp(ControlMessageReceiver* receiver, tcp::socket&& socket)
-    : ControlSession(receiver), socket_(std::move(socket)), strand_(net::make_strand(socket_.get_executor()))
+    : ControlSession(receiver), socket_(std::move(socket)), strand_(boost::asio::make_strand(socket_.get_executor()))
 {
 }
 
@@ -98,7 +98,7 @@ void ControlSessionTcp::stop()
 
 void ControlSessionTcp::sendAsync(const std::string& message)
 {
-    net::post(strand_, [this, self = shared_from_this(), message]() {
+    boost::asio::post(strand_, [this, self = shared_from_this(), message]() {
         messages_.emplace_back(message + "\r\n");
         if (messages_.size() > 1)
         {

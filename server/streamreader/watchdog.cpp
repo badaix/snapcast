@@ -36,7 +36,7 @@ using namespace std;
 namespace streamreader
 {
 
-Watchdog::Watchdog(const net::any_io_executor& executor, WatchdogListener* listener) : timer_(executor), listener_(listener)
+Watchdog::Watchdog(const boost::asio::any_io_executor& executor, WatchdogListener* listener) : timer_(executor), listener_(listener)
 {
 }
 

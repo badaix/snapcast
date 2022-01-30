@@ -29,9 +29,9 @@
 // standard headers
 #include <deque>
 
+
 namespace beast = boost::beast;         // from <boost/beast.hpp>
 namespace websocket = beast::websocket; // from <boost/beast/websocket.hpp>
-namespace net = boost::asio;            // from <boost/asio.hpp>
 
 
 /// Endpoint for a connected control client.
@@ -62,7 +62,7 @@ protected:
 
 protected:
     beast::flat_buffer buffer_;
-    net::strand<net::any_io_executor> strand_;
+    boost::asio::strand<boost::asio::any_io_executor> strand_;
     std::deque<std::string> messages_;
 };
 

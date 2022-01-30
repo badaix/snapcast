@@ -40,7 +40,6 @@
 
 
 using boost::asio::ip::tcp;
-namespace net = boost::asio;
 
 
 class ClientConnection;
@@ -52,7 +51,7 @@ using MessageHandler = std::function<void(const boost::system::error_code&, std:
 class PendingRequest : public std::enable_shared_from_this<PendingRequest>
 {
 public:
-    PendingRequest(const net::strand<net::any_io_executor>& strand, uint16_t reqId, const MessageHandler<msg::BaseMessage>& handler)
+    PendingRequest(const boost::asio::strand<boost::asio::any_io_executor>& strand, uint16_t reqId, const MessageHandler<msg::BaseMessage>& handler)
         : id_(reqId), timer_(strand), strand_(strand), handler_(handler){};
 
     virtual ~PendingRequest()
@@ -65,7 +64,7 @@ public:
     /// @param value the response message
     void setValue(std::unique_ptr<msg::BaseMessage> value)
     {
-        net::post(strand_, [this, self = shared_from_this(), val = std::move(value)]() mutable {
+        boost::asio::post(strand_, [this, self = shared_from_this(), val = std::move(value)]() mutable {
             timer_.cancel();
             if (handler_)
                 handler_({}, std::move(val));
@@ -111,7 +110,7 @@ public:
 private:
     uint16_t id_;
     boost::asio::steady_timer timer_;
-    net::strand<net::any_io_executor> strand_;
+    boost::asio::strand<boost::asio::any_io_executor> strand_;
     MessageHandler<msg::BaseMessage> handler_;
 };
 
@@ -178,7 +177,7 @@ protected:
     size_t base_msg_size_;
 
     boost::asio::io_context& io_context_;
-    net::strand<net::any_io_executor> strand_;
+    boost::asio::strand<boost::asio::any_io_executor> strand_;
     tcp::resolver resolver_;
     tcp::socket socket_;
     std::vector<std::weak_ptr<PendingRequest>> pendingRequests_;
