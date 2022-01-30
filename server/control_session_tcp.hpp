@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2021  Johannes Pohl
+    Copyright (C) 2014-2022  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -19,7 +19,13 @@
 #ifndef CONTROL_SESSION_TCP_HPP
 #define CONTROL_SESSION_TCP_HPP
 
+// local headers
 #include "control_session.hpp"
+
+// 3rd party headers
+#include <boost/asio.hpp>
+
+// standard headers
 #include <deque>
 
 using boost::asio::ip::tcp;

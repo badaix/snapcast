@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2020  Johannes Pohl
+    Copyright (C) 2014-2022  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -17,10 +17,13 @@
 ***/
 
 
-#ifndef PUBLISH_BONJOUR_H
-#define PUBLISH_BONJOUR_H
+#ifndef PUBLISH_BONJOUR_HPP
+#define PUBLISH_BONJOUR_HPP
 
+// 3rd party headers
 #include <dns_sd.h>
+
+// standard headers
 #include <string>
 
 class PublishBonjour;

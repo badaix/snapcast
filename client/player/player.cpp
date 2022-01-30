@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2021  Johannes Pohl
+    Copyright (C) 2014-2022  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -16,9 +16,16 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
-#include <cmath>
-#include <iostream>
+// prototype/interface header file
+#include "player.hpp"
 
+// local headers
+#include "common/aixlog.hpp"
+#include "common/snap_exception.hpp"
+#include "common/str_compat.hpp"
+#include "common/utils/string_utils.hpp"
+
+// 3rd party headers
 #ifdef WINDOWS
 #include <cstdlib>
 #else
@@ -35,11 +42,9 @@
 #pragma GCC diagnostic pop
 #endif
 
-#include "common/aixlog.hpp"
-#include "common/snap_exception.hpp"
-#include "common/str_compat.hpp"
-#include "common/utils/string_utils.hpp"
-#include "player.hpp"
+// standard headers
+#include <cmath>
+#include <iostream>
 
 
 using namespace std;

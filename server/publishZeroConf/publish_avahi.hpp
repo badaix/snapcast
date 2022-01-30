@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2020  Johannes Pohl
+    Copyright (C) 2014-2022  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -17,18 +17,22 @@
 ***/
 
 
-#ifndef PUBLISH_AVAHI_H
-#define PUBLISH_AVAHI_H
+#ifndef PUBLISH_AVAHI_HPP
+#define PUBLISH_AVAHI_HPP
 
+// local headers
+
+// 3rd party headers
 #include <avahi-client/client.h>
 #include <avahi-client/publish.h>
-
-#include <atomic>
 #include <avahi-common/alternative.h>
 #include <avahi-common/error.h>
 #include <avahi-common/malloc.h>
 #include <avahi-common/simple-watch.h>
 #include <avahi-common/timeval.h>
+
+// standard headers
+#include <atomic>
 #include <string>
 #include <vector>
 

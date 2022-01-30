@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2016  Johannes Pohl
+    Copyright (C) 2014-2022  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -22,9 +22,13 @@
 #pragma warning(push)
 #pragma warning(disable : 4100)
 
+// local headers
 #include "player.hpp"
+
+// 3rd party headers
 #include <audiopolicy.h>
 #include <endpointvolume.h>
+
 
 namespace player
 {

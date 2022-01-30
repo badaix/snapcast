@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2021  Johannes Pohl
+    Copyright (C) 2014-2022  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -19,6 +19,15 @@
 #ifndef STREAM_SESSION_HPP
 #define STREAM_SESSION_HPP
 
+// local headers
+#include "common/queue.h"
+#include "message/message.hpp"
+#include "streamreader/stream_manager.hpp"
+
+// 3rd party headers
+#include <boost/asio.hpp>
+
+// standard headers
 #include <atomic>
 #include <condition_variable>
 #include <deque>
@@ -28,12 +37,6 @@
 #include <sstream>
 #include <string>
 #include <vector>
-
-#include <boost/asio.hpp>
-
-#include "common/queue.h"
-#include "message/message.hpp"
-#include "streamreader/stream_manager.hpp"
 
 
 namespace net = boost::asio;

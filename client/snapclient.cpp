@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2021  Johannes Pohl
+    Copyright (C) 2014-2022  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -16,13 +16,7 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
-#include <chrono>
-#include <iostream>
-#ifndef WINDOWS
-#include <csignal>
-#include <sys/resource.h>
-#endif
-
+// local headers
 #include "common/popl.hpp"
 #include "controller.hpp"
 
@@ -46,8 +40,18 @@
 #include "common/utils.hpp"
 #include "common/version.hpp"
 
+// 3rd party headers
 #include <boost/asio/ip/host_name.hpp>
 #include <boost/asio/signal_set.hpp>
+
+// standard headers
+#include <chrono>
+#include <iostream>
+#ifndef WINDOWS
+#include <csignal>
+#include <sys/resource.h>
+#endif
+
 
 using namespace std;
 using namespace popl;

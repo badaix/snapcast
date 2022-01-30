@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2021  Johannes Pohl
+    Copyright (C) 2014-2022  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -19,13 +19,16 @@
 #ifndef PLAYER_HPP
 #define PLAYER_HPP
 
+// local headers
 #include "client_settings.hpp"
 #include "common/aixlog.hpp"
 #include "common/endian.hpp"
 #include "stream.hpp"
 
+// 3rd party headers
 #include <boost/asio.hpp>
 
+// standard headers
 #include <atomic>
 #include <functional>
 #include <mutex>

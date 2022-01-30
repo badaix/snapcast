@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2020  Johannes Pohl
+    Copyright (C) 2014-2022  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -19,11 +19,14 @@
 #ifndef CORE_AUDIO_PLAYER_HPP
 #define CORE_AUDIO_PLAYER_HPP
 
+// local headers
+#include "player.hpp"
+
+// 3rd party headers
 #include <AudioToolbox/AudioQueue.h>
 #include <CoreAudio/CoreAudioTypes.h>
 #include <CoreFoundation/CFRunLoop.h>
 
-#include "player.hpp"
 
 namespace player
 {

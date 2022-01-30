@@ -1,20 +1,46 @@
+/***
+    This file is part of snapcast
+    Copyright (C) 2014-2022  Johannes Pohl
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+***/
+
+// prototype/interface header file
 #include "wasapi_player.hpp"
+
+// local headers
+#include "common/aixlog.hpp"
+#include "common/snap_exception.hpp"
+
+// 3rd party headers
 #include <initguid.h>
 #include <mmdeviceapi.h>
 //#include <functiondiscoverykeys_devpkey.h>
-#include "common/aixlog.hpp"
-#include "common/snap_exception.hpp"
-#include <assert.h>
+
+// standard headers
 #include <audioclient.h>
 #include <avrt.h>
-#include <chrono>
-#include <codecvt>
 #include <comdef.h>
 #include <comip.h>
-#include <functional>
 #include <ksmedia.h>
-#include <locale>
 #include <mmdeviceapi.h>
+
+#include <cassert>
+#include <chrono>
+#include <codecvt>
+#include <functional>
+#include <locale>
 
 using namespace std;
 using namespace std::chrono;

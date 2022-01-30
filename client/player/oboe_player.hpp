@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2020  Johannes Pohl
+    Copyright (C) 2014-2022  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -19,10 +19,15 @@
 #ifndef OBOE_PLAYER_HPP
 #define OBOE_PLAYER_HPP
 
+// local headers
+#include "player.hpp"
+
+// 3rd party headers
 #include <oboe/LatencyTuner.h>
 #include <oboe/Oboe.h>
 
-#include "player.hpp"
+// standard headers
+
 
 namespace player
 {

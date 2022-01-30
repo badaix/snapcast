@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2021  Johannes Pohl
+    Copyright (C) 2014-2022  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -19,7 +19,10 @@
 #ifndef CONTROL_SESSION_HTTP_HPP
 #define CONTROL_SESSION_HTTP_HPP
 
+// local headers
 #include "control_session.hpp"
+
+// 3rd party headers
 #include <boost/beast/core.hpp>
 #if defined(__GNUC__) && !defined(__clang__)
 #pragma GCC diagnostic push
@@ -29,6 +32,8 @@
 #else
 #include <boost/beast/websocket.hpp>
 #endif
+
+// standard headers
 #include <deque>
 
 using boost::asio::ip::tcp;

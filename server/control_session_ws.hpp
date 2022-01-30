@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2021  Johannes Pohl
+    Copyright (C) 2014-2022  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -19,9 +19,14 @@
 #ifndef CONTROL_SESSION_WS_HPP
 #define CONTROL_SESSION_WS_HPP
 
+// local headers
 #include "control_session.hpp"
+
+// 3rd party headers
 #include <boost/beast/core.hpp>
 #include <boost/beast/websocket.hpp>
+
+// standard headers
 #include <deque>
 
 namespace beast = boost::beast;         // from <boost/beast.hpp>

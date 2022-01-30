@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2021  Johannes Pohl
+    Copyright (C) 2014-2022  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -20,7 +20,10 @@
 #define NOMINMAX
 #endif // NOMINMAX
 
+// prototype/interface header file
 #include "controller.hpp"
+
+// local headers
 #include "decoder/pcm_decoder.hpp"
 #if defined(HAS_OGG) && (defined(HAS_TREMOR) || defined(HAS_VORBIS))
 #include "decoder/ogg_decoder.hpp"
@@ -60,6 +63,7 @@
 #include "message/time.hpp"
 #include "time_provider.hpp"
 
+// standard headers
 #include <algorithm>
 #include <iostream>
 #include <memory>

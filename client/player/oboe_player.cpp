@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2020  Johannes Pohl
+    Copyright (C) 2014-2022  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -16,13 +16,20 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
-#include <assert.h>
-#include <iostream>
+// prototype/interface header file
+#include "oboe_player.hpp"
 
+// local headers
 #include "common/aixlog.hpp"
 #include "common/snap_exception.hpp"
 #include "common/str_compat.hpp"
-#include "oboe_player.hpp"
+
+// 3rd party headers
+
+// standard headers
+#include <cassert>
+#include <iostream>
+
 
 using namespace std;
 

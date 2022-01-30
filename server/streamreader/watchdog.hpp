@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2020  Johannes Pohl
+    Copyright (C) 2014-2022  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -19,7 +19,10 @@
 #ifndef WATCH_DOG_HPP
 #define WATCH_DOG_HPP
 
+// 3rd party headers
 #include <boost/asio.hpp>
+
+// standard headers
 #include <memory>
 
 namespace net = boost::asio;

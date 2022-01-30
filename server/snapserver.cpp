@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2021  Johannes Pohl
+    Copyright (C) 2014-2022  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -16,10 +16,7 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
-#include <chrono>
-#include <memory>
-#include <sys/resource.h>
-
+// local headers
 #include "common/popl.hpp"
 #ifdef HAS_DAEMON
 #include "common/daemon.hpp"
@@ -39,7 +36,14 @@
 #include "common/aixlog.hpp"
 #include "config.hpp"
 
+// 3rd party headers
 #include <boost/asio/ip/host_name.hpp>
+
+// standard headers
+#include <chrono>
+#include <memory>
+#include <sys/resource.h>
+
 
 using namespace std;
 using namespace popl;
