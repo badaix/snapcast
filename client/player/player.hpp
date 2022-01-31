@@ -26,7 +26,7 @@
 #include "stream.hpp"
 
 // 3rd party headers
-#include <boost/asio.hpp>
+#include <boost/asio/io_context.hpp>
 
 // standard headers
 #include <atomic>

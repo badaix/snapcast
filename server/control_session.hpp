@@ -25,7 +25,6 @@
 #include "server_settings.hpp"
 
 // 3rd party headers
-#include <boost/asio.hpp>
 
 // standard headers
 #include <atomic>

@@ -25,7 +25,9 @@
 #include "streamreader/stream_manager.hpp"
 
 // 3rd party headers
-#include <boost/asio.hpp>
+#include <boost/asio/any_io_executor.hpp>
+#include <boost/asio/buffer.hpp>
+#include <boost/asio/strand.hpp>
 
 // standard headers
 #include <atomic>
@@ -38,8 +40,6 @@
 #include <string>
 #include <vector>
 
-
-namespace net = boost::asio;
 
 
 class StreamSession;

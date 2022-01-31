@@ -20,12 +20,12 @@
 #define WATCH_DOG_HPP
 
 // 3rd party headers
-#include <boost/asio.hpp>
+#include <boost/asio/any_io_executor.hpp>
+#include <boost/asio/steady_timer.hpp>
 
 // standard headers
 #include <memory>
 
-namespace net = boost::asio;
 
 namespace streamreader
 {

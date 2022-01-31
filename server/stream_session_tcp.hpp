@@ -23,6 +23,7 @@
 #include "stream_session.hpp"
 
 // 3rd party headers
+#include <boost/asio/ip/tcp.hpp>
 
 // standard headers
 

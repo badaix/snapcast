@@ -33,7 +33,7 @@
 #pragma GCC diagnostic ignored "-Wc++11-narrowing"
 #include <boost/process.hpp>
 #pragma GCC diagnostic pop
-#include <boost/asio.hpp>
+#include <boost/asio/any_io_executor.hpp>
 
 // standard headers
 #include <map>
@@ -41,7 +41,6 @@
 
 
 namespace bp = boost::process;
-namespace net = boost::asio;
 
 using json = nlohmann::json;
 

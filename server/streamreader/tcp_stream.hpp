@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2021  Johannes Pohl
+    Copyright (C) 2014-2022  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -21,6 +21,9 @@
 
 // local headers
 #include "asio_stream.hpp"
+
+// 3rd party headers
+#include <boost/asio/ip/tcp.hpp>
 
 using boost::asio::ip::tcp;
 

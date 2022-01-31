@@ -32,7 +32,8 @@
 #include "streamreader/stream_manager.hpp"
 
 // 3rd party headers
-#include <boost/asio.hpp>
+#include <boost/asio/io_context.hpp>
+#include <boost/asio/steady_timer.hpp>
 
 // standard headers
 #include <memory>

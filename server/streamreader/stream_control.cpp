@@ -27,6 +27,9 @@
 #include "common/utils/string_utils.hpp"
 #include "encoder/encoder_factory.hpp"
 
+// 3rd party headers
+#include <boost/asio/read_until.hpp>
+
 // standard headers
 #include <memory>
 

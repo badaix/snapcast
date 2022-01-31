@@ -20,7 +20,7 @@
 #define PUBLISH_MDNS_HPP
 
 // 3rd party headers
-#include <boost/asio.hpp>
+#include <boost/asio/io_context.hpp>
 
 // standard headers
 #include <string>

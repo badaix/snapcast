@@ -23,6 +23,7 @@
 #include "control_session.hpp"
 
 // 3rd party headers
+#include <boost/asio/strand.hpp>
 #include <boost/beast/core.hpp>
 #include <boost/beast/websocket.hpp>
 

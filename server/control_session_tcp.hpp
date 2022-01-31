@@ -23,7 +23,10 @@
 #include "control_session.hpp"
 
 // 3rd party headers
-#include <boost/asio.hpp>
+#include <boost/asio/any_io_executor.hpp>
+#include <boost/asio/ip/tcp.hpp>
+#include <boost/asio/strand.hpp>
+#include <boost/asio/streambuf.hpp>
 
 // standard headers
 #include <deque>

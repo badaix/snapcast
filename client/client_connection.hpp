@@ -26,7 +26,10 @@
 #include "message/message.hpp"
 
 // 3rd party headers
-#include <boost/asio.hpp>
+#include <boost/asio/any_io_executor.hpp>
+#include <boost/asio/ip/tcp.hpp>
+#include <boost/asio/steady_timer.hpp>
+#include <boost/asio/strand.hpp>
 
 // standard headers
 #include <atomic>
@@ -51,61 +54,22 @@ using MessageHandler = std::function<void(const boost::system::error_code&, std:
 class PendingRequest : public std::enable_shared_from_this<PendingRequest>
 {
 public:
-    PendingRequest(const boost::asio::strand<boost::asio::any_io_executor>& strand, uint16_t reqId, const MessageHandler<msg::BaseMessage>& handler)
-        : id_(reqId), timer_(strand), strand_(strand), handler_(handler){};
-
-    virtual ~PendingRequest()
-    {
-        handler_ = nullptr;
-        timer_.cancel();
-    }
+    PendingRequest(const boost::asio::strand<boost::asio::any_io_executor>& strand, uint16_t reqId, const MessageHandler<msg::BaseMessage>& handler);
+    virtual ~PendingRequest();
 
     /// Set the response for the pending request and passes it to the handler
     /// @param value the response message
-    void setValue(std::unique_ptr<msg::BaseMessage> value)
-    {
-        boost::asio::post(strand_, [this, self = shared_from_this(), val = std::move(value)]() mutable {
-            timer_.cancel();
-            if (handler_)
-                handler_({}, std::move(val));
-        });
-    }
+    void setValue(std::unique_ptr<msg::BaseMessage> value);
 
     /// @return the id of the request
-    uint16_t id() const
-    {
-        return id_;
-    }
+    uint16_t id() const;
 
     /// Start the timer for the request
     /// @param timeout the timeout to wait for the reception of the response
-    void startTimer(const chronos::usec& timeout)
-    {
-        timer_.expires_after(timeout);
-        timer_.async_wait([this, self = shared_from_this()](boost::system::error_code ec) {
-            if (!handler_)
-                return;
-            if (!ec)
-            {
-                // !ec => expired => timeout
-                handler_(boost::asio::error::timed_out, nullptr);
-                handler_ = nullptr;
-            }
-            else if (ec != boost::asio::error::operation_aborted)
-            {
-                // ec != aborted => not cancelled (in setValue)
-                //   => should not happen, but who knows => pass the error to the handler
-                handler_(ec, nullptr);
-            }
-        });
-    }
+    void startTimer(const chronos::usec& timeout);
 
     /// Needed to put the requests in a container
-    bool operator<(const PendingRequest& other) const
-    {
-        return (id_ < other.id());
-    }
-
+    bool operator<(const PendingRequest& other) const;
 
 private:
     uint16_t id_;

@@ -19,6 +19,10 @@
 // prototype/interface header file
 #include "control_session_tcp.hpp"
 
+// 3rd party headers
+#include <boost/asio/read_until.hpp>
+#include <boost/asio/write.hpp>
+
 // local headers
 #include "common/aixlog.hpp"
 #include "message/pcm_chunk.hpp"

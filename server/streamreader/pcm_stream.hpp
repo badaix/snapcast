@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2021  Johannes Pohl
+    Copyright (C) 2014-2022  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -43,7 +43,6 @@
 #include <vector>
 
 
-namespace net = boost::asio;
 
 using json = nlohmann::json;
 
@@ -180,7 +179,7 @@ protected:
     /// Send request to stream control script
     void sendRequest(const std::string& method, const jsonrpcpp::Parameter& params, ResultHandler handler);
 
-    net::strand<net::any_io_executor> strand_;
+    boost::asio::strand<boost::asio::any_io_executor> strand_;
     std::chrono::time_point<std::chrono::steady_clock> tvEncodedChunk_;
     std::vector<PcmStream::Listener*> pcmListeners_;
     StreamUri uri_;

@@ -23,6 +23,7 @@
 #include "player.hpp"
 
 // 3rd party headers
+#include <boost/asio/steady_timer.hpp>
 
 // standard headers
 #include <cstdio>

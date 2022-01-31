@@ -16,8 +16,10 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
-// local headers
+// prototype/interface header file
 #include "control_session_ws.hpp"
+
+// local headers
 #include "common/aixlog.hpp"
 #include "message/pcm_chunk.hpp"
 

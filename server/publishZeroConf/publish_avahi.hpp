@@ -30,6 +30,7 @@
 #include <avahi-common/malloc.h>
 #include <avahi-common/simple-watch.h>
 #include <avahi-common/timeval.h>
+#include <boost/asio/steady_timer.hpp>
 
 // standard headers
 #include <atomic>

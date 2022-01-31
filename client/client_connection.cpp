@@ -25,6 +25,11 @@
 #include "common/str_compat.hpp"
 #include "message/hello.hpp"
 
+// 3rd party headers
+#include <boost/asio/read.hpp>
+#include <boost/asio/streambuf.hpp>
+#include <boost/asio/write.hpp>
+
 // standard headers
 #include <iostream>
 #include <mutex>
@@ -33,6 +38,59 @@
 using namespace std;
 
 static constexpr auto LOG_TAG = "Connection";
+
+PendingRequest::PendingRequest(const boost::asio::strand<boost::asio::any_io_executor>& strand, uint16_t reqId, const MessageHandler<msg::BaseMessage>& handler)
+    : id_(reqId), timer_(strand), strand_(strand), handler_(handler)
+{
+}
+
+PendingRequest::~PendingRequest()
+{
+    handler_ = nullptr;
+    timer_.cancel();
+}
+
+void PendingRequest::setValue(std::unique_ptr<msg::BaseMessage> value)
+{
+    boost::asio::post(strand_, [this, self = shared_from_this(), val = std::move(value)]() mutable {
+        timer_.cancel();
+        if (handler_)
+            handler_({}, std::move(val));
+    });
+}
+
+uint16_t PendingRequest::id() const
+{
+    return id_;
+}
+
+void PendingRequest::startTimer(const chronos::usec& timeout)
+{
+    timer_.expires_after(timeout);
+    timer_.async_wait([this, self = shared_from_this()](boost::system::error_code ec) {
+        if (!handler_)
+            return;
+        if (!ec)
+        {
+            // !ec => expired => timeout
+            handler_(boost::asio::error::timed_out, nullptr);
+            handler_ = nullptr;
+        }
+        else if (ec != boost::asio::error::operation_aborted)
+        {
+            // ec != aborted => not cancelled (in setValue)
+            //   => should not happen, but who knows => pass the error to the handler
+            handler_(ec, nullptr);
+        }
+    });
+}
+
+bool PendingRequest::operator<(const PendingRequest& other) const
+{
+    return (id_ < other.id());
+}
+
+
 
 ClientConnection::ClientConnection(boost::asio::io_context& io_context, const ClientSettings::Server& server)
     : io_context_(io_context), strand_(boost::asio::make_strand(io_context_.get_executor())), resolver_(strand_), socket_(strand_), reqId_(1), server_(server)

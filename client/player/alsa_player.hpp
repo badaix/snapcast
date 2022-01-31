@@ -24,6 +24,8 @@
 
 // 3rd party headers
 #include <alsa/asoundlib.h>
+#include <boost/asio/posix/stream_descriptor.hpp>
+#include <boost/asio/steady_timer.hpp>
 
 // standard headers
 #include <chrono>
