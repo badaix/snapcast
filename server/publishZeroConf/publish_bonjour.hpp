@@ -25,6 +25,7 @@
 
 // standard headers
 #include <string>
+#include <thread>
 
 class PublishBonjour;
 

@@ -26,7 +26,6 @@
 
 // standard headers
 #include <cstdlib>
-#include <thread>
 
 
 static constexpr auto LOG_TAG = "Bonjour";
