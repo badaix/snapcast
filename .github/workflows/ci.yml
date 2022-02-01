@@ -11,38 +11,14 @@ env:
   BOOST_VERSION: 1_78_0
 
 jobs:
-  unix:
+  linux:
 
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - name: Linux
-            os: ubuntu-latest
-            ccache: /home/runner/.ccache
-          - name: macOS
-            os: macos-latest
-            ccache: /Users/runner/.ccache
-
-    name: Build ${{ matrix.name }}
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
 
     steps:
     - uses: actions/checkout@v2
-    - name: Linux dependencies
-      if: ${{ runner.os == 'Linux' }}
-      run: |
-        sudo apt update
-        sudo apt-get install -yq \
-          rename libasound2-dev libsoxr-dev libvorbisidec-dev libvorbis-dev \
-          libflac-dev libopus-dev alsa-utils libpulse-dev \
-          libavahi-client-dev avahi-daemon debhelper ccache expat
-        echo "CMAKE_CXX_FLAGS=-DJSON_HAS_CPP_14" >> ${GITHUB_ENV}
-    - name: macOS dependencies
-      if: ${{ runner.os == 'macOS' }}
-      run: |
-        brew install pkgconfig libsoxr ccache expat
-        echo "CMAKE_CXX_FLAGS=-I/usr/local/include -Wno-deprecated-declarations" >> ${GITHUB_ENV}
+    - name: dependencies
+      run: sudo apt-get update && sudo apt-get install -yq rename libasound2-dev libsoxr-dev libvorbisidec-dev libvorbis-dev libflac-dev libopus-dev alsa-utils libpulse-dev libavahi-client-dev avahi-daemon debhelper ccache expat
     - name: cache boost
       id: cache-boost
       uses: actions/cache@v2
@@ -58,12 +34,12 @@ jobs:
       id: cache-ccache
       uses: actions/cache@v2
       with:
-        path: ${{ matrix.ccache }}
+        path: /home/runner/.ccache
         key: ${{ runner.os }}-ccache-${{ github.sha }}
         restore-keys: ${{ runner.os }}-ccache-
     #- name: ccache dump config
     #  run: ccache -p
-    - name: cmake build
+    - name: cmake
       run: |
         cmake -S . -B build \
           -DWERROR=ON -DBUILD_TESTS=ON \
@@ -71,13 +47,58 @@ jobs:
           -DCMAKE_BUILD_TYPE=Release \
           -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
           -DCMAKE_CXX_FLAGS="${CMAKE_CXX_FLAGS}"
-    - name: cmake make
+    - name: build
+      run: cmake --build build --parallel 3
+
+
+  macos:
+
+    strategy:
+      fail-fast: false
+      matrix:
+        xcode: ['11', '13']
+
+    runs-on: macos-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: dependencies
+      run: brew install pkgconfig libsoxr ccache expat
+    - name: cache boost
+      id: cache-boost
+      uses: actions/cache@v2
+      with:
+        path: boost_${{ env.BOOST_VERSION }}
+        key: ${{ runner.os }}-boost
+    - name: get boost
+      if: steps.cache-boost.outputs.cache-hit != 'true'
+      run: |
+        wget https://boostorg.jfrog.io/artifactory/main/release/${BOOST_VERSION//_/.}/source/boost_${BOOST_VERSION}.tar.bz2
+        tar xjf boost_${BOOST_VERSION}.tar.bz2
+    - name: cache ccache
+      id: cache-ccache
+      uses: actions/cache@v2
+      with:
+        path: /Users/runner/.ccache
+        key: ${{ runner.os }}-ccache-${{ github.sha }}
+        restore-keys: ${{ runner.os }}-ccache-
+    #- name: ccache dump config
+    #  run: ccache -p
+    - name: cmake
+      run: |
+        cmake -S . -B build \
+          -DWERROR=ON -DBUILD_TESTS=ON \
+          -DBOOST_ROOT=boost_${BOOST_VERSION} \
+          -DCMAKE_BUILD_TYPE=Release \
+          -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
+          -DCMAKE_CXX_FLAGS="${CMAKE_CXX_FLAGS}"
+    - name: build
       run: cmake --build build --parallel 3 --verbose
 
   windows:
 
     name: Build Windows
-    runs-on: windows-latest
+    runs-on: windows-2019
 
     steps:
     - uses: actions/checkout@v2
@@ -91,7 +112,7 @@ jobs:
     - name: dependencies
       if: steps.cache-dependencies.outputs.cache-hit != 'true'
       run: vcpkg.exe install libflac libvorbis soxr opus boost-asio --triplet x64-windows
-    - name: cmake build
+    - name: cmake
       run: |
         echo vcpkg installation root: ${env:VCPKG_INSTALLATION_ROOT}
         cmake -S . -B build -G "Visual Studio 16 2019" `
@@ -100,7 +121,7 @@ jobs:
           -DVCPKG_TARGET_TRIPLET="x64-windows" `
           -DCMAKE_BUILD_TYPE=Release `
           -DREVISION="${{ github.sha }}"
-    - name: cmake make
+    - name: build
       run: cmake --build build --config Release --parallel 3 --verbose
     - name: installer
       run: |
