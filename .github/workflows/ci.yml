@@ -13,6 +13,32 @@ env:
 jobs:
   linux:
 
+    strategy:
+      fail-fast: false
+      matrix:
+        compiler: 
+          - clang-10
+          - clang-11
+          - clang-12
+          - gcc-9
+          - gcc-10
+        include:
+          - compiler: clang-10
+            cc: clang-10
+            cxx: clang++-10
+          - compiler: clang-11
+            cc: clang-11
+            cxx: clang++-11
+          - compiler: clang-12
+            cc: clang-12
+            cxx: clang++-12
+          - compiler: gcc-9
+            cc: gcc-9
+            cxx: g++-9
+          - compiler: gcc-10
+            cc: gcc-10
+            cxx: g++-10
+
     runs-on: ubuntu-latest
 
     steps:
@@ -47,6 +73,9 @@ jobs:
           -DCMAKE_BUILD_TYPE=Release \
           -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
           -DCMAKE_CXX_FLAGS="-DCMAKE_CXX_FLAGS=-DJSON_HAS_CPP_14"
+      env:
+        CC: ${{ matrix.cc }}
+        CXX: ${{ matrix.cxx }}
     - name: build
       run: cmake --build build --parallel 3
 
