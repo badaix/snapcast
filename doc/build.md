@@ -51,7 +51,7 @@ For Fedora (and probably RHEL, CentOS, & Scientific Linux, but untested):
 
 ```sh
 sudo dnf install @development-tools
-sudo dnf install alsa-lib-devel avahi-devel gcc-c++ libatomic libvorbis-devel opus-devel pulseaudio-libs-devel flac-devel soxr-devel libstdc++-static expat boost-devel
+sudo dnf install alsa-lib-devel avahi-devel gcc-c++ libatomic libvorbis-devel opus-devel pulseaudio-libs-devel flac-devel soxr-devel libstdc++-static expat-devel boost-devel
 ```
 
 ### Build Snapclient and Snapserver
