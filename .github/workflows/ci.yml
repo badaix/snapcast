@@ -111,8 +111,8 @@ jobs:
         path: /Users/runner/.ccache
         key: ${{ runner.os }}-${{ matrix.xcode }}-ccache-${{ github.sha }}
         restore-keys: ${{ runner.os }}-${{ matrix.xcode }}-ccache-
-    #- name: ccache dump config
-    #  run: ccache -p
+    - name: ccache dump config
+      run: ccache -p
     - name: cmake
       run: |
         cmake -S . -B build \
