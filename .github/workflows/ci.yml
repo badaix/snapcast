@@ -61,8 +61,8 @@ jobs:
       uses: actions/cache@v2
       with:
         path: /home/runner/.ccache
-        key: ${{ runner.os }}-ccache-${{ github.sha }}
-        restore-keys: ${{ runner.os }}-ccache-
+        key: ${{ runner.os }}-${{ matrix.compiler }}-ccache-${{ github.sha }}
+        restore-keys: ${{ runner.os }}-${{ matrix.compiler }}-ccache-
     #- name: ccache dump config
     #  run: ccache -p
     - name: cmake
@@ -109,8 +109,8 @@ jobs:
       uses: actions/cache@v2
       with:
         path: /Users/runner/.ccache
-        key: ${{ runner.os }}-ccache-${{ github.sha }}
-        restore-keys: ${{ runner.os }}-ccache-
+        key: ${{ runner.os }}-${{ matrix.xcode }}-ccache-${{ github.sha }}
+        restore-keys: ${{ runner.os }}-${{ matrix.xcode }}-ccache-
     #- name: ccache dump config
     #  run: ccache -p
     - name: cmake
