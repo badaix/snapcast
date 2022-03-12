@@ -222,17 +222,55 @@ source = process:///usr/bin/mpv?name=Webradio&sampleformat=48000:16:2&params=htt
 
 ### Line-in
 
+#### ALSA Method
+Audio can be played directly through the line-in via ALSA. The following guide was written in regards to a raspberry pi using a HiFiBerry product but it should roughly apply for line-in with other hardware.
+
+1. Get a list of recording devices from ALSA.
+    ```
+    arecord -l
+    ```
+2. You will receive output in the following format. Note the `<device_name>` of your input device for the next step.
+    ```
+    card <number>: <device_name> ....
+    ```
+3. Edit the file `/etc/snapserver.conf` and add the following line, substituting `<device_name>` for the value derived from the previous step. Pick whatever you'd like for `<stream_name>`.
+    ```
+    stream = alsa://?name=<stream_name>&device=hw:<device_name>
+    ```
+4. Restart the snapserver service.
+   ```
+   sudo service snapserver restart
+   ```
+5. You are done. Enjoy your new snapserver with line in. However, if you'd like to run the client on the same machine as the server then continue with the remaining steps.
+6. Get the sound devices as far as snapclient is concerned. You are looking for the device name. This is probably the same as the `aplay -l` device names so may be able to use that instead.
+   ```
+   snapclient -l
+   ```
+7. In the output you are looking for the `hw:CARD` line that corresponds with the output device you want to use. Note the `<device_name>` for the next step.
+   ```
+   <number> hw:CARD=<device_name>,DEV=<device_number>
+   ```
+8. Edit the file `/etc/default/snapclient` and modify the `SNAPCLIENT_OPTS`. 
+   ```
+   SNAPCLIENT_OPTS=" --host <hostname> -s <dervice_name> "
+   ```
+9. Restart the snapclient service.
+   ```
+   sudo service snapclient restart
+   ```
+
+#### Pipe Method
 Audio captured from line-in can be redirected to the snapserver's pipe, e.g. by using:
 
-#### cpiped
+##### cpiped
 
 [cpipe](https://github.com/b-fitzpatrick/cpiped)
 
-#### PulseAudio
+##### PulseAudio
 
 `parec >/tmp/snapfifo` (defaults to 44.1kHz, 16bit, stereo)
 
-### VLC
+#### VLC
 
 Use `--aout afile` and `--audiofile-file` to pipe VLC's audio output to the snapfifo:
 
