@@ -189,7 +189,6 @@ protected:
     std::string name_;
     std::atomic<ReaderState> state_;
     Properties properties_;
-    boost::asio::io_context& ioc_;
     ServerSettings server_settings_;
     std::unique_ptr<StreamControl> stream_ctrl_;
     std::atomic<int> req_id_;

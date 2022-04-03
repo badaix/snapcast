@@ -86,7 +86,6 @@ private:
     void onDisconnect(StreamSession* streamSession) override;
 
     mutable std::recursive_mutex sessionsMutex_;
-    // mutable std::recursive_mutex clientMutex_;
     std::vector<std::weak_ptr<StreamSession>> sessions_;
     boost::asio::io_context& io_context_;
     std::vector<acceptor_ptr> acceptor_;

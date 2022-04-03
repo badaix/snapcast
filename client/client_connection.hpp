@@ -140,7 +140,6 @@ protected:
     std::vector<char> buffer_;
     size_t base_msg_size_;
 
-    boost::asio::io_context& io_context_;
     boost::asio::strand<boost::asio::any_io_executor> strand_;
     tcp::resolver resolver_;
     tcp::socket socket_;

@@ -93,7 +93,7 @@ bool PendingRequest::operator<(const PendingRequest& other) const
 
 
 ClientConnection::ClientConnection(boost::asio::io_context& io_context, const ClientSettings::Server& server)
-    : io_context_(io_context), strand_(boost::asio::make_strand(io_context_.get_executor())), resolver_(strand_), socket_(strand_), reqId_(1), server_(server)
+    : strand_(boost::asio::make_strand(io_context.get_executor())), resolver_(strand_), socket_(strand_), reqId_(1), server_(server)
 {
     base_msg_size_ = base_message_.getSize();
     buffer_.resize(base_msg_size_);

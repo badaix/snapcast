@@ -55,7 +55,7 @@ ControlServer::~ControlServer()
 
 void ControlServer::cleanup()
 {
-    auto new_end = std::remove_if(sessions_.begin(), sessions_.end(), [](std::weak_ptr<ControlSession> session) { return session.expired(); });
+    auto new_end = std::remove_if(sessions_.begin(), sessions_.end(), [](const std::weak_ptr<ControlSession>& session) { return session.expired(); });
     auto count = distance(new_end, sessions_.end());
     if (count > 0)
     {

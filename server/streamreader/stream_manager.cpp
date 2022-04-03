@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2021  Johannes Pohl
+    Copyright (C) 2014-2022  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -47,7 +47,7 @@ namespace streamreader
 
 StreamManager::StreamManager(PcmStream::Listener* pcmListener, boost::asio::io_context& ioc, const ServerSettings& settings)
     // const std::string& defaultSampleFormat, const std::string& defaultCodec, size_t defaultChunkBufferMs)
-    : pcmListener_(pcmListener), settings_(settings), ioc_(ioc)
+    : pcmListener_(pcmListener), settings_(settings), io_context_(ioc)
 {
 }
 
@@ -79,20 +79,20 @@ PcmStreamPtr StreamManager::addStream(StreamUri& streamUri)
 
     if (streamUri.scheme == "pipe")
     {
-        stream = make_shared<PipeStream>(pcmListener_, ioc_, settings_, streamUri);
+        stream = make_shared<PipeStream>(pcmListener_, io_context_, settings_, streamUri);
     }
     else if (streamUri.scheme == "file")
     {
-        stream = make_shared<FileStream>(pcmListener_, ioc_, settings_, streamUri);
+        stream = make_shared<FileStream>(pcmListener_, io_context_, settings_, streamUri);
     }
     else if (streamUri.scheme == "process")
     {
-        stream = make_shared<ProcessStream>(pcmListener_, ioc_, settings_, streamUri);
+        stream = make_shared<ProcessStream>(pcmListener_, io_context_, settings_, streamUri);
     }
 #ifdef HAS_ALSA
     else if (streamUri.scheme == "alsa")
     {
-        stream = make_shared<AlsaStream>(pcmListener_, ioc_, settings_, streamUri);
+        stream = make_shared<AlsaStream>(pcmListener_, io_context_, settings_, streamUri);
     }
 #endif
     else if ((streamUri.scheme == "spotify") || (streamUri.scheme == "librespot"))
@@ -101,7 +101,7 @@ PcmStreamPtr StreamManager::addStream(StreamUri& streamUri)
         // that all constructors of all parent classes also use the overwritten sample
         // format.
         streamUri.query[kUriSampleFormat] = "44100:16:2";
-        stream = make_shared<LibrespotStream>(pcmListener_, ioc_, settings_, streamUri);
+        stream = make_shared<LibrespotStream>(pcmListener_, io_context_, settings_, streamUri);
     }
     else if (streamUri.scheme == "airplay")
     {
@@ -109,15 +109,15 @@ PcmStreamPtr StreamManager::addStream(StreamUri& streamUri)
         // that all constructors of all parent classes also use the overwritten sample
         // format.
         streamUri.query[kUriSampleFormat] = "44100:16:2";
-        stream = make_shared<AirplayStream>(pcmListener_, ioc_, settings_, streamUri);
+        stream = make_shared<AirplayStream>(pcmListener_, io_context_, settings_, streamUri);
     }
     else if (streamUri.scheme == "tcp")
     {
-        stream = make_shared<TcpStream>(pcmListener_, ioc_, settings_, streamUri);
+        stream = make_shared<TcpStream>(pcmListener_, io_context_, settings_, streamUri);
     }
     else if (streamUri.scheme == "meta")
     {
-        stream = make_shared<MetaStream>(pcmListener_, streams_, ioc_, settings_, streamUri);
+        stream = make_shared<MetaStream>(pcmListener_, streams_, io_context_, settings_, streamUri);
     }
     else
     {

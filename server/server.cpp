@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2021  Johannes Pohl
+    Copyright (C) 2014-2022  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -159,7 +159,6 @@ void Server::processRequest(const jsonrpcpp::request_ptr request, const OnRespon
                 // Notification: {"jsonrpc":"2.0","method":"Client.OnVolumeChanged","params":{"id":"00:21:6a:7d:74:fc","volume":{"muted":false,"percent":74}}}
                 // clang-format on
 
-                // std::lock_guard<std::recursive_mutex> lock(clientMutex_);
                 clientInfo->config.volume.fromJson(request->params().get("volume"));
                 result["volume"] = clientInfo->config.volume.toJson();
                 notification = std::make_shared<jsonrpcpp::Notification>(
@@ -636,7 +635,6 @@ void Server::processRequest(const jsonrpcpp::request_ptr request, const OnRespon
 void Server::onMessageReceived(std::shared_ptr<ControlSession> controlSession, const std::string& message, const ResponseHander& response_handler)
 {
     // LOG(DEBUG, LOG_TAG) << "onMessageReceived: " << message << "\n";
-    // std::lock_guard<std::recursive_mutex> lock(clientMutex_);
     std::lock_guard<std::mutex> lock(Config::instance().getMutex());
     jsonrpcpp::entity_ptr entity(nullptr);
     try
@@ -712,7 +710,6 @@ void Server::onMessageReceived(std::shared_ptr<ControlSession> controlSession, c
 
 void Server::onMessageReceived(StreamSession* streamSession, const msg::BaseMessage& baseMessage, char* buffer)
 {
-    // std::lock_guard<std::recursive_mutex> lock(clientMutex_);
     LOG(DEBUG, LOG_TAG) << "onMessageReceived: " << baseMessage.type << ", size: " << baseMessage.size << ", id: " << baseMessage.id
                         << ", refers: " << baseMessage.refersTo << ", sent: " << baseMessage.sent.sec << "," << baseMessage.sent.usec
                         << ", recv: " << baseMessage.received.sec << "," << baseMessage.received.usec << "\n";
