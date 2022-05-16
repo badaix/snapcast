@@ -242,6 +242,13 @@ The output of any audio player that uses alsa can be redirected to Snapcast by u
     #       mixer_index     "0"             # optional
     }
     ```
+    
+    For [librespot](https://github.com/librespot-org/librespot) (check previusly if your librespot binary is compiled with alsa backend with `./librespot --backend ?`):
+    
+    ```sh
+    ./librespot -b 320 --disable-audio-cache --name Snapcast --initial-volume 100 --backend alsa --device hw:0,0,0
+    ```
+    
 
 4. Configure Snapserver to capture the loopback device:
 
