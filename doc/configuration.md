@@ -244,6 +244,7 @@ The output of any audio player that uses alsa can be redirected to Snapcast by u
     ```
     
     For [librespot](https://github.com/librespot-org/librespot) (check previusly if your librespot binary is compiled with alsa backend with `./librespot --backend ?`):
+    Warning, you need to set snapserver rate to 44100`source = alsa://?name=Spotify&sampleformat=44100:16:2&device=hw:0,1,0`
     
     ```sh
     ./librespot -b 320 --disable-audio-cache --name Snapcast --initial-volume 100 --backend alsa --device hw:0,0,0
