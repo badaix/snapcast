@@ -27,6 +27,7 @@ Within the `[stream]` section there are some global parameters valid for all `so
 - `chunk_ms`: Default source stream read chunk size [ms]. The server will continously read this number of milliseconds from the source into a buffer, before this buffer is passed to the encoder (the `codec` above)
 - `buffer`: Buffer [ms]. The end-to-end latency, from capturing a sample on the server until the sample is played-out on the client
 - `send_to_muted`: `true` or `false`: Send audio to clients that are muted
+- `initial_client_percent`: 0-100 [percent]: The volume an audio client gets assigned on very first connect (i.e. client not known to snapserver yet). Defaults to 100 if unset.
 
 `source` parameters have the form `key=value`, they are concatenated with an `&` character.
 Supported parameters for all source types:
