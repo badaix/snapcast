@@ -65,6 +65,11 @@ struct ServerSettings
         std::vector<std::string> bind_to_address{{"0.0.0.0"}};
     };
 
+    struct StreamingClient
+    {
+        uint16_t initialVolume{100};
+    };
+
     struct Logging
     {
         std::string sink{""};
@@ -75,6 +80,7 @@ struct ServerSettings
     Http http;
     Tcp tcp;
     Stream stream;
+    StreamingClient streamingclient;
     Logging logging;
 };
 

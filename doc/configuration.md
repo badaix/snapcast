@@ -268,3 +268,7 @@ meta:///<name of source#1>/<name of source#2>/.../<name of source#N>?name=<name>
 
 Plays audio from the active source with the highest priority, with `source#1` having the highest priority and `source#N` the lowest.  
 Use `codec=null` for stream sources that should only serve as input for meta streams
+
+## Streaming clients
+Streaming clients connect to the server and receive configuration and audio data. The client is fully controlled from the server so clients don't have to persist any state. The `[streaming_client]` section has just one option currently:
+- `initial_volume`: 0-100 [percent]: The volume a streaming client gets assigned on very first connect (i.e. the client is not known to the server yet). Defaults to 100 if unset.
