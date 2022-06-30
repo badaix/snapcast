@@ -26,6 +26,17 @@ IF (TIDY)
     ENDIF()
 ENDIF()
 
+if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+    set(MACOSX TRUE)
+elseif (${CMAKE_SYSTEM_NAME} MATCHES "FreeBSD")
+    set (FREEBSD TRUE)
+    if (BUILD_CLIENT)
+        message(FATAL_ERROR "Snapclient not yet supported for FreeBSD, use \"-DBUILD_CLIENT=OFF\"")
+    endif()
+elseif (${CMAKE_SYSTEM_NAME} MATCHES "Android")
+    set (ANDROID TRUE)
+endif()
+
 
 if (MSVC)
     # warning level 4 and all warnings as errors
@@ -39,6 +50,10 @@ if (MSVC)
 else()
     # lots of warnings and all warnings as errors
     add_compile_options(-Wall -Wextra -pedantic -Wno-unused-function)
+    if (MACOSX)
+        add_compile_options(-Wno-deprecated-declarations)
+    endif()
+
     if (WERROR)
         add_compile_options(-Werror)
     endif()
@@ -83,19 +98,6 @@ if (NOT BUILD_CLIENT AND NOT BUILD_SERVER)
     message(FATAL_ERROR "One or both of BUILD_CLIENT or BUILD_SERVER must be set to ON to build")
 endif()
 
-if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-    set(MACOSX TRUE)
-elseif (${CMAKE_SYSTEM_NAME} MATCHES "FreeBSD")
-    set (FREEBSD TRUE)
-    if (BUILD_CLIENT)
-        message(FATAL_ERROR "Snapclient not yet supported for FreeBSD, use \"-DBUILD_CLIENT=OFF\"")
-    endif()
-elseif (${CMAKE_SYSTEM_NAME} MATCHES "Android")
-    set (ANDROID TRUE)
-#    if (BUILD_SERVER)
-#        message(FATAL_ERROR "Snapserver not yet supported for Android, use \"-DBUILD_SERVER=OFF\"")
-#    endif()
-endif()
 
 # Configure paths
 if(NOT DEFINED CMAKE_INSTALL_BINDIR)

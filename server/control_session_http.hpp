@@ -24,6 +24,7 @@
 
 // 3rd party headers
 #include <boost/beast/core.hpp>
+
 #if defined(__GNUC__) && !defined(__clang__)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
