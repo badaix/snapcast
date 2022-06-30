@@ -258,6 +258,124 @@ TEST_CASE("Librespot")
 }
 
 
+// TEST_CASE("Librespot2")
+// {
+//     std::vector<std::string>
+//         loglines =
+//             {R"xx([2022-06-27T20:44:48Z INFO  librespot] librespot 0.4.1 c8897dd332 (Built on 2022-05-24, Build ID: 1653416940, Profile: release))xx",
+//              R"xx([2022-06-27T20:44:48Z TRACE librespot] Command line argument(s):)xx",
+//              R"xx([2022-06-27T20:44:48Z TRACE librespot] 		-n "libre")xx",
+//              R"xx([2022-06-27T20:44:48Z TRACE librespot] 		-b "160")xx",
+//              R"xx([2022-06-27T20:44:48Z TRACE librespot] 		-v)xx",
+//              R"xx([2022-06-27T20:44:48Z TRACE librespot] 		--backend "pipe")xx",
+//              R"xx([2022-06-27T20:44:48Z TRACE librespot] 		--device "/dev/null")xx",
+//              R"xx([2022-06-27T20:44:48Z DEBUG librespot_discovery::server] Zeroconf server listening on 0.0.0.0:46693)xx",
+//              R"xx([2022-06-27T20:44:59Z DEBUG librespot_discovery::server] POST "/" {})xx",
+//              R"xx([2022-06-27T20:44:59Z INFO  librespot_core::session] Connecting to AP "ap-gae2.spotify.com:4070")xx",
+//              R"xx([2022-06-27T20:45:00Z INFO  librespot_core::session] Authenticated as "REDACTED" !)xx",
+//              R"xx([2022-06-27T20:45:00Z DEBUG librespot_core::session] new Session[0])xx",
+//              R"xx([2022-06-27T20:45:00Z INFO  librespot_playback::mixer::softmixer] Mixing with softvol and volume control: Log(60.0))xx",
+//              R"xx([2022-06-27T20:45:00Z DEBUG librespot_connect::spirc] new Spirc[0])xx",
+//              R"xx([2022-06-27T20:45:00Z DEBUG librespot_connect::spirc] canonical_username: REDACTED)xx",
+//              R"xx([2022-06-27T20:45:00Z DEBUG librespot::component] new MercuryManager)xx",
+//              R"xx([2022-06-27T20:45:00Z DEBUG librespot_playback::player] new Player[0])xx",
+//              R"xx([2022-06-27T20:45:00Z DEBUG librespot_playback::mixer::mappings] Input volume 58958 mapped to: 49.99%)xx",
+//              R"xx([2022-06-27T20:45:00Z INFO  librespot_playback::convert] Converting with ditherer: tpdf)xx",
+//              R"xx([2022-06-27T20:45:00Z INFO  librespot_playback::audio_backend::pipe] Using pipe sink with format: S16)xx",
+//              R"xx([2022-06-27T20:45:00Z DEBUG librespot_playback::player] command=AddEventSender)xx",
+//              R"xx([2022-06-27T20:45:00Z DEBUG librespot_playback::player] command=VolumeSet(58958))xx",
+//              R"xx([2022-06-27T20:45:00Z DEBUG librespot_core::session] Session[0] strong=3 weak=2)xx",
+//              R"xx([2022-06-27T20:45:00Z INFO  librespot_core::session] Country: "NZ")xx",
+//              R"xx([2022-06-27T20:45:00Z DEBUG librespot_core::mercury] subscribed uri=hm://remote/user/REDACTED/ count=0)xx",
+//              R"xx([2022-06-27T20:45:00Z DEBUG librespot_connect::spirc] kMessageTypeNotify "REDACTED’s MacBook Air" 77fff453997b1fd01bfe33e60acca5b91948f3df 652808319 1656362700156 kPlayStatusStop)xx",
+//              R"xx([2022-06-27T20:45:00Z DEBUG librespot_connect::spirc] kMessageTypeNotify "REDACTED" 73d40aa67ebaebab0f887eae39a3dca1a29a68f0 652808319 1656362700156 kPlayStatusStop)xx",
+//              R"xx([2022-06-27T20:45:00Z DEBUG librespot_connect::spirc] kMessageTypeLoad "REDACTED MacBook Air" 77fff453997b1fd01bfe33e60acca5b91948f3df 652808631 1656362700156 kPlayStatusPause)xx",
+//              R"xx([2022-06-27T20:45:00Z DEBUG librespot_connect::spirc] State: context_uri: "spotify:playlist:6C0FrjLUZZ99ovwSXwt0DE" index: 10 position_ms: 126126 status: kPlayStatusPause position_measured_at: 1656362700511 context_description: "" shuffle: false repeat: false playing_from_fallback: true row: 0 playing_track_index: 10 track {gid: "\315i\201.\177BC\316\223\302h!|\203\264\024"} track {gid: "y\336[{\220\237C\022\210\300\032_\246\276Eu"} track {gid: "\323.H^\265\265A\313\265\'\205\220\272*\341\030"} track {gid: ")\224E\314)\357GX\201\277\311l\277\364`$"} track {gid: "\310#\223\310\254\376H\026\214\3600\r\201\000R\313"} track {gid: "\223\227#\3447\354M\322\234\222\355\242Kpq)"} track {gid: "\326\326\235\t\320\244K<\231\336\032V\240d%\031"} track {gid: "\007\204\252o\022\303N\200\214\377\221\310EW7\230"} track {gid: "\327\307\336\265koLt\2507a9\364\306}j"} track {gid: ")\221-\034\316`J\303\241\362\020\335\221\034:\320"} track {gid: "M\332\300\341\260\264M\340\216\237[\3313<\221 "} track {gid: "\202q\273\177i\352J.\212\222\335\303\002a!z"} track {gid: ",\356\372\\\215D@j\203\366\022\021&\336\237\000"} track {gid: "<\031\235{\305\320O-\264a\331=\273\236\365\220"} track {gid: "\316[\002\222\3704J*\2157V\336\344\266\351\314"} track {gid: "1+\360\n;\212Nb\235%\2476xL\257\265"} track {gid: "j\207K\250f<L\337\241|C\3376w-\203"} track {gid: "\361$p\035\221\377H \216\216-\265\000\211f)"} track {gid: "\\N9h\211.Jz\236\013`\202\033\230i\313"} track {gid: ".\036\211\302\247\234C\336\252\353>\034\306RcH"} track {gid: ";wr\260\264\234E>\207\200\301n9\261\022w"} track {gid: "\010\226\300\377BDD\377\215\030\376\013j\311\262*"} track {gid: "\377\272\345m\324\232N\321\203\253I\016I\321H\315"} track {gid: "\313\336\321<c\350N\005\265\037\354b\330w\240&"} track {gid: "z\024_I\213\335O\002\264kiu\331\317\n\375"} track {gid: "%/\230z\337JK+\2027\253\021\300b\370\214"} track {gid: "\016\257\036\312\364\336H \252\216\376%\343\2778|"} track {gid: "\013\323\303Y\261\002J\330\236\272zT\017\230\200\004"} track {gid: "NN~u\246\177M\273\224T\335y\312&m\027"} track {gid: "mq\000\314&\267M\226\222[\350(\230\321\211\315"} track {gid: "\344\361\314\222\371\023J~\275\345M@M\0214\000"})xx",
+//              R"xx([2022-06-27T20:45:00Z DEBUG librespot_connect::spirc] Frame has 31 tracks)xx",
+//              R"xx([2022-06-27T20:45:00Z TRACE librespot_connect::spirc] Sending status to server: [kPlayStatusPause])xx",
+//              R"xx([2022-06-27T20:45:00Z DEBUG librespot_playback::player] command=SetAutoNormaliseAsAlbum(false))xx",
+//              R"xx([2022-06-27T20:45:00Z DEBUG librespot_playback::player] command=Load(SpotifyId { id: REDACTED, audio_type: Track }, false, 126126))xx",
+//              R"xx([2022-06-27T20:45:00Z TRACE librespot_connect::spirc] Sending status to server: [kPlayStatusPause])xx",
+//              R"xx([2022-06-27T20:45:00Z INFO  librespot_playback::player] Loading <Flip Reset> with Spotify URI <spotify:track:2mUnxSunvs3Clvtpq3FtGo>)xx",
+//              R"xx([2022-06-27T20:45:00Z DEBUG librespot_audio::fetch] Downloading file REDACTED)xx",
+//              R"xx([2022-06-27T20:45:00Z DEBUG librespot::component] new ChannelManager)xx",
+//              R"xx([2022-06-27T20:45:01Z DEBUG librespot::component] new AudioKeyManager)xx",
+//              R"xx([2022-06-27T20:45:03Z INFO  librespot_playback::player] <Flip Reset> (187661 ms) loaded)xx",
+//              R"xx([2022-06-27T20:45:03Z TRACE librespot_connect::spirc] Sending status to server: [kPlayStatusPause])xx",
+//              R"xx([2022-06-27T20:45:03Z TRACE librespot_connect::spirc] ==> kPlayStatusPause)xx",
+//              R"xx([2022-06-30T15:25:37Z DEBUG librespot_connect::spirc] State: context_uri: "spotify:show:4bGWMQA1ANGTgcysDo14aX" index: 10 position_ms: 3130170 status: kPlayStatusPause position_measured_at: 1656602737490 context_description: "" shuffle: false repeat: false playing_from_fallback: true row: 0 playing_track_index: 10 track {uri: "spotify:episode:7luHEaQvEf2GA241SqaoIg"} track {uri: "spotify:episode:29LOC9vr1vWakVpWBwuF7n"} track {uri: "spotify:episode:2MS5phBmztGepq6yft07XA"} track {uri: "spotify:episode:1kqqpitr713tPbjzPhCCbf"} track {uri: "spotify:episode:59PP5P8bF17KnzueM9DUH5"} track {uri: "spotify:episode:4nxFKKH8UPXrYUhbD2G0Db"} track {uri: "spotify:episode:4CU6IsMhkflwdQcXyXPxrs"} track {uri: "spotify:episode:0VfUuKQWnttO6XsffakAnF"} track {uri: "spotify:episode:5ZNj0vDZJOYTHRpaCJExCl"} track {uri: "spotify:episode:3SV9ap9wMxpDKHaeEv0kuc"} track {uri: "spotify:episode:7oe8eW41Vrh2xJAUOQRsvF"})xx"};
+
+
+//     auto onStderrMsg = [](const std::string& line)
+//     {
+//         std::string LOG_TAG = "xxx";
+//         smatch m;
+//         static regex re_log_line(R"(\[(\S+)(\s+)(\bTRACE\b|\bDEBUG\b|\bINFO\b|\bWARN\b|\bERROR\b)(\s+)(.*)\] (.*))");
+//         if (regex_search(line, m, re_log_line) && (m.size() == 7))
+//         {
+//             const std::string& level = m[3];
+//             const std::string& source = m[5];
+//             const std::string& message = m[6];
+//             AixLog::Severity severity = AixLog::Severity::info;
+//             if (level == "TRACE")
+//                 severity = AixLog::Severity::trace;
+//             else if (level == "DEBUG")
+//                 severity = AixLog::Severity::debug;
+//             else if (level == "INFO")
+//                 severity = AixLog::Severity::info;
+//             else if (level == "WARN")
+//                 severity = AixLog::Severity::warning;
+//             else if (level == "ERROR")
+//                 severity = AixLog::Severity::error;
+
+//             LOG(severity, source) << message << "\n";
+//         }
+//         else
+//             LOG(INFO, LOG_TAG) << line << "\n";
+
+//         // Librespot patch:
+//         // 	info!("metadata:{{\"ARTIST\":\"{}\",\"TITLE\":\"{}\"}}", artist.name, track.name);
+//         // non patched:
+//         //  [2021-06-04T07:20:47Z INFO  librespot_playback::player] <Tunnel> (310573 ms) loaded
+//         // 	info!("Track \"{}\" loaded", track.name);
+//         // std::cerr << line << "\n";
+//         static regex re_patched("metadata:(.*)");
+//         static regex re_track_loaded(R"( <(.*)> \((.*) ms\) loaded)");
+//         // Parse the patched version
+//         if (regex_search(line, m, re_patched))
+//         {
+//             // Patched version
+//             LOG(INFO, LOG_TAG) << "metadata: <" << m[1] << ">\n";
+//             json j = json::parse(m[1].str());
+//             Metadata meta;
+//             meta.artist = std::vector<std::string>{j["ARTIST"].get<std::string>()};
+//             meta.title = j["TITLE"].get<std::string>();
+//             // meta.art_data = {SPOTIFY_LOGO, "svg"};
+//             Properties properties;
+//             properties.metadata = std::move(meta);
+//             // setProperties(properties);
+//         }
+//         else if (regex_search(line, m, re_track_loaded))
+//         {
+//             LOG(INFO, LOG_TAG) << "metadata: <" << m[1] << ">\n";
+//             Metadata meta;
+//             meta.title = string(m[1]);
+//             meta.duration = cpt::stod(m[2]) / 1000.;
+//             // meta.art_data = {SPOTIFY_LOGO, "svg"};
+//             Properties properties;
+//             properties.metadata = std::move(meta);
+//             // setProperties(properties);
+//         }
+//     };
+
+//     for (const auto& line : loglines)
+//     {
+//         onStderrMsg(line);
+//     }
+//     REQUIRE(true);
+// }
+
+
 TEST_CASE("Error")
 {
     std::error_code ec = ControlErrc::can_not_control;
