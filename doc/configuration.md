@@ -27,7 +27,6 @@ Within the `[stream]` section there are some global parameters valid for all `so
 - `chunk_ms`: Default source stream read chunk size [ms]. The server will continously read this number of milliseconds from the source into a buffer, before this buffer is passed to the encoder (the `codec` above)
 - `buffer`: Buffer [ms]. The end-to-end latency, from capturing a sample on the server until the sample is played-out on the client
 - `send_to_muted`: `true` or `false`: Send audio to clients that are muted
-- `initial_client_percent`: 0-100 [percent]: The volume an audio client gets assigned on very first connect (i.e. client not known to snapserver yet). Defaults to 100 if unset or invalid (e.g. out of bounds).
 
 `source` parameters have the form `key=value`, they are concatenated with an `&` character.
 Supported parameters for all source types:
@@ -269,3 +268,7 @@ meta:///<name of source#1>/<name of source#2>/.../<name of source#N>?name=<name>
 
 Plays audio from the active source with the highest priority, with `source#1` having the highest priority and `source#N` the lowest.  
 Use `codec=null` for stream sources that should only serve as input for meta streams
+
+## Streaming clients
+Streaming clients connect to the server and receive configuration and audio data. The client is fully controlled from the server so clients don't have to persist any state. The `[streaming_client]` section has just one option currently:
+- `initial_volume`: 0-100 [percent]: The volume a streaming client gets assigned on very first connect (i.e. the client is not known to the server yet). Defaults to 100 if unset.

@@ -769,7 +769,7 @@ void Server::onMessageReceived(StreamSession* streamSession, const msg::BaseMess
         ClientInfoPtr client = group->getClient(streamSession->clientId);
         if (newGroup)
         {
-            client->config.volume.percent = settings_.stream.initialClientPercent;
+            client->config.volume.percent = settings_.streamingclient.initialVolume;
         }
 
         LOG(DEBUG, LOG_TAG) << "Sending ServerSettings to " << streamSession->clientId << "\n";

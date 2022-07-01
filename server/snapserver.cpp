@@ -117,8 +117,10 @@ int main(int argc, char* argv[])
         conf.add<Value<int>>("", "stream.buffer", "Buffer [ms]", settings.stream.bufferMs, &settings.stream.bufferMs);
         conf.add<Value<bool>>("", "stream.send_to_muted", "Send audio to muted clients", settings.stream.sendAudioToMutedClients,
                               &settings.stream.sendAudioToMutedClients);
-        conf.add<Value<uint16_t>>("", "stream.initial_client_percent", "Volume assigned to new snapclients", settings.stream.initialClientPercent,
-                                  &settings.stream.initialClientPercent);
+
+        // streaming_client options
+        conf.add<Value<uint16_t>>("", "streaming_client.initial_volume", "Volume [percent] assigned to new streaming clients", settings.streamingclient.initialVolume,
+                                  &settings.streamingclient.initialVolume);
 
         // logging settings
         conf.add<Value<string>>("", "logging.sink", "log sink [null,system,stdout,stderr,file:<filename>]", settings.logging.sink, &settings.logging.sink);

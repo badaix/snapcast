@@ -63,7 +63,11 @@ struct ServerSettings
         size_t streamChunkMs{20};
         bool sendAudioToMutedClients{false};
         std::vector<std::string> bind_to_address{{"0.0.0.0"}};
-        uint16_t initialClientPercent{100};
+    };
+
+    struct StreamingClient
+    {
+        uint16_t initialVolume{100};
     };
 
     struct Logging
@@ -76,6 +80,7 @@ struct ServerSettings
     Http http;
     Tcp tcp;
     Stream stream;
+    StreamingClient streamingclient;
     Logging logging;
 };
 
