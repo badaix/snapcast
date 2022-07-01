@@ -27,6 +27,8 @@
 # Dependencies:
 # - python-mpd2
 # - musicbrainzngs
+# - PyGObject
+# - dbus-python
 
 import os
 import sys
