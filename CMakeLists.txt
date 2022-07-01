@@ -364,7 +364,7 @@ IF(CLANG_FORMAT)
     list(REMOVE_ITEM CHECK_CXX_SOURCE_FILES "${CMAKE_SOURCE_DIR}/common/json.hpp")
 
     ADD_CUSTOM_TARGET(
-        reformat
+        reformat-source
         COMMAND
         ${CLANG_FORMAT}
         -i
@@ -374,3 +374,24 @@ IF(CLANG_FORMAT)
     )
 ENDIF()
 
+
+FIND_PROGRAM(CMAKE_FORMAT "cmake-format")
+IF(CMAKE_FORMAT)
+    FILE(GLOB_RECURSE
+        CHECK_CMAKE_SOURCE_FILES
+        CMakeLists.txt
+    )
+
+    ADD_CUSTOM_TARGET(
+        reformat-cmake
+        COMMAND
+        ${CMAKE_FORMAT}
+        -i
+        ${CHECK_CMAKE_SOURCE_FILES}
+        COMMENT "Auto formatting of all CMakeLists.txt files"
+    )
+ENDIF()
+
+
+add_custom_target(reformat
+    DEPENDS reformat-source reformat-cmake)
