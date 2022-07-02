@@ -20,26 +20,46 @@ jobs:
           - clang-10
           - clang-11
           - clang-12
+          - clang-13
+          - clang-14
           - gcc-9
           - gcc-10
+          - gcc-11
         include:
           - compiler: clang-10
             cc: clang-10
             cxx: clang++-10
+            os: ubuntu-20.04
           - compiler: clang-11
             cc: clang-11
             cxx: clang++-11
+            os: ubuntu-20.04
           - compiler: clang-12
             cc: clang-12
             cxx: clang++-12
+            os: ubuntu-22.04
+          - compiler: clang-13
+            cc: clang-13
+            cxx: clang++-13
+            os: ubuntu-22.04
+          - compiler: clang-14
+            cc: clang-14
+            cxx: clang++-14
+            os: ubuntu-22.04
           - compiler: gcc-9
             cc: gcc-9
             cxx: g++-9
+            os: ubuntu-22.04
           - compiler: gcc-10
             cc: gcc-10
             cxx: g++-10
+            os: ubuntu-22.04
+          - compiler: gcc-11
+            cc: gcc-11
+            cxx: g++-11
+            os: ubuntu-22.04
 
-    runs-on: ubuntu-20.04
+    runs-on: ${{ matrix.os }}
 
     steps:
     - uses: actions/checkout@v2
@@ -77,7 +97,7 @@ jobs:
         CC: ${{ matrix.cc }}
         CXX: ${{ matrix.cxx }}
     - name: build
-      run: cmake --build build --parallel 3
+      run: cmake --build build --parallel 3 --verbose
 
 
   macos:
@@ -146,13 +166,15 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: 
-          - windows-2019
-          - windows-2022
+        compiler: 
+          - vs-16
+          - vs-17
         include:
-          - os: windows-2019
+          - compiler: vs-16
+            os: windows-2019
             vs: "Visual Studio 16 2019"
-          - os: windows-2022
+          - compiler: vs-17
+            os: windows-2022
             vs: "Visual Studio 17 2022"
 
     runs-on: ${{ matrix.os }}
