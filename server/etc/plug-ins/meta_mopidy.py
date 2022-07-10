@@ -74,7 +74,6 @@ class MopidyControl(object):
         self._metadata = {}
         self._properties = {}
         self._req_id = 0
-        self._stream_id = ''
         self._request_map = {}
 
         self.websocket = websocket.WebSocketApp("ws://" + self._params['host'] + ":" + str(self._params['port']) + "/mopidy/ws",
@@ -94,84 +93,6 @@ class MopidyControl(object):
             self.websocket.run_forever()
             sleep(1)
         logger.info("Ending MopidyControl loop")
-
-    def __get_stream_id_from_server_status(self, status, client_id):
-        try:
-            for group in status['server']['groups']:
-                for client in group['clients']:
-                    if client['id'] == client_id:
-                        return group['stream_id']
-            for group in status['server']['groups']:
-                for client in group['clients']:
-                    if client['name'] == client_id:
-                        return group['stream_id']
-        except:
-            logger.error('Failed to parse server status')
-        logger.error(f'Failed to get stream id for client {client_id}')
-        return None
-
-    def __update_metadata(self, meta):
-        try:
-            if meta is None:
-                meta = {}
-            logger.info(f'Meta: "{meta}"')
-
-            self._metadata = {}
-            self._metadata['xesam:artist'] = ['Unknown Artist']
-            self._metadata['xesam:title'] = 'Unknown Title'
-
-            for key, value in meta.items():
-                if key in tag_mapping:
-                    try:
-                        self._metadata[tag_mapping[key][0]
-                                       ] = tag_mapping[key][1](value)
-                    except KeyError:
-                        logger.warning(f'tag "{key}" not supported')
-                    except (ValueError, TypeError):
-                        logger.warning(
-                            f"Can't cast value {value} to {tag_mapping[key][1]}")
-
-            if not 'mpris:artUrl' in self._metadata:
-                self._metadata['mpris:artUrl'] = f'http://{self._params["host"]}:{self._params["port"]}/snapcast-512.png'
-
-            logger.debug(f'mpris meta: {self._metadata}')
-
-            self.notify_about_track(self._metadata)
-        except Exception as e:
-            logger.error(f'Error in update_metadata: {str(e)}')
-
-    def __update_properties(self, props):
-        try:
-            if props is None:
-                props = {}
-            logger.debug(f'Properties: "{props}"')
-            # store the last receive time stamp for better position estimation
-            if 'position' in props:
-                props['_received'] = time.time()
-            # ignore "internal" properties, starting with "_"
-            changed_properties = {}
-            for key, value in props.items():
-                if key.startswith('_'):
-                    continue
-                if not key in self._properties:
-                    changed_properties[key] = [None, value]
-                elif value != self._properties[key]:
-                    changed_properties[key] = [self._properties[key], value]
-            for key, value in self._properties.items():
-                if key.startswith('_'):
-                    continue
-                if not key in props:
-                    changed_properties[key] = [value, None]
-            self._properties = props
-            logger.info(f'Changed properties: "{changed_properties}"')
-            # for key, value in changed_properties.items():
-            #     if key in property_mapping:
-            #         self._dbus_service.update_property(
-            #             'org.mpris.MediaPlayer2.Player', property_mapping[key])
-            if 'metadata' in changed_properties:
-                self.__update_metadata(props.get('metadata', None))
-        except Exception as e:
-            logger.error(f'Error in update_properties: {str(e)}')
 
     def on_ws_message(self, ws, message):
         # TODO: error handling
@@ -239,7 +160,8 @@ class MopidyControl(object):
                         if 'date' in result:
                             self._metadata['contentCreated'] = result['date']
                         if 'length' in result:
-                            self._metadata['duration'] = float(result['length']) / 1000
+                            self._metadata['duration'] = float(
+                                result['length']) / 1000
                         # if 'bitrate' in result:
                         #     self._metadata[''] = result['bitrate']
                         if 'comment' in result:
@@ -250,7 +172,6 @@ class MopidyControl(object):
                         #     self._metadata[''] = result['last_modified']
                     if request == 'core.playback.get_time_position':
                         self._properties['position'] = float(result) / 1000
-                        logger.info(f'Result for {request}: {result}')
                 if repeat and single:
                     self._properties['loopStatus'] = 'track'
                 elif repeat:
@@ -268,7 +189,8 @@ class MopidyControl(object):
             logger.info(f'Result: {self._properties}')
 
             if 'url' in self._metadata:
-                self.send_request('core.library.get_images', {'uris': [self._metadata['url']]})
+                self.send_request('core.library.get_images', {
+                                  'uris': [self._metadata['url']]})
             # return send({"jsonrpc": "2.0", "id": id, "result": self._properties})
 
         if 'id' in jmsg:
@@ -281,32 +203,9 @@ class MopidyControl(object):
                     result = dict(jmsg['result'])
                     for _, value in result.items():
                         if value and 'uri' in value[0]:
-                            url = str(f"http://{self._params['host']}:{self._params['port']}{value[0]['uri']}") 
+                            url = str(
+                                f"http://{self._params['host']}:{self._params['port']}{value[0]['uri']}")
                             logger.info(f"Image: {url}")
-
-                if request == 'Server.GetStatus':
-                    self._stream_id = self.__get_stream_id_from_server_status(
-                        jmsg['result'], self._params['client'])
-                    logger.info(f'Stream id: {self._stream_id}')
-                    for stream in jmsg['result']['server']['streams']:
-                        if stream['id'] == self._stream_id:
-                            if 'properties' in stream:
-                                self.__update_properties(stream['properties'])
-                            break
-        elif jmsg['method'] == "Server.OnUpdate":
-            self._stream_id = self.__get_stream_id_from_server_status(
-                jmsg['params'], self._params['client'])
-            logger.info(f'Stream id: {self._stream_id}')
-        elif jmsg['method'] == "Group.OnStreamChanged":
-            self.send_request("Server.GetStatus")
-        elif jmsg["method"] == "Stream.OnProperties":
-            stream_id = jmsg["params"]["id"]
-            logger.info(
-                f'Stream properties changed for "{stream_id}"')
-            if self._stream_id != stream_id:
-                return
-            props = jmsg["params"]["properties"]
-            self.__update_properties(props)
 
     def on_ws_error(self, ws, error):
         logger.error("Snapcast RPC websocket error")
@@ -376,7 +275,8 @@ class MopidyControl(object):
                     elif command == 'setPosition':
                         position = float(params['position'])
                         logger.info(f'setPosition {position}')
-                        self.send_request("core.playback.seek", {"time_position": float(position) / 1000})
+                        self.send_request("core.playback.seek", {
+                                          "time_position": float(position) / 1000})
                     elif command == 'seek':
                         offset = float(params['offset'])
                         strOffset = str(offset)
@@ -387,20 +287,28 @@ class MopidyControl(object):
                     property = request['params']
                     logger.info(f'SetProperty: {property}')
                     if 'shuffle' in property:
-                        self.send_request("core.tracklist.set_random", {"value": property['shuffle']})
+                        self.send_request("core.tracklist.set_random", {
+                                          "value": property['shuffle']})
                     if 'loopStatus' in property:
                         value = property['loopStatus']
                         if value == "playlist":
-                            self.send_request("core.tracklist.set_single", {"value": False})
-                            self.send_request("core.tracklist.set_repeat", {"value": True})
+                            self.send_request(
+                                "core.tracklist.set_single", {"value": False})
+                            self.send_request(
+                                "core.tracklist.set_repeat", {"value": True})
                         elif value == "track":
-                            self.send_request("core.tracklist.set_single", {"value": True})
-                            self.send_request("core.tracklist.set_repeat", {"value": True})
+                            self.send_request(
+                                "core.tracklist.set_single", {"value": True})
+                            self.send_request(
+                                "core.tracklist.set_repeat", {"value": True})
                         elif value == "none":
-                            self.send_request("core.tracklist.set_single", {"value": False})
-                            self.send_request("core.tracklist.set_repeat", {"value": False})
+                            self.send_request(
+                                "core.tracklist.set_single", {"value": False})
+                            self.send_request(
+                                "core.tracklist.set_repeat", {"value": False})
                     if 'volume' in property:
-                        self.send_request("core.mixer.set_volume", {"volume": int(property['volume'])})
+                        self.send_request("core.mixer.set_volume", {
+                                          "volume": int(property['volume'])})
                 elif cmd == 'GetProperties':
                     self.send_requests(["core.playback.get_state", "core.tracklist.get_repeat", "core.tracklist.get_single",
                                        "core.tracklist.get_random", "core.mixer.get_volume", "core.playback.get_current_track", "core.playback.get_time_position"])
@@ -420,29 +328,6 @@ class MopidyControl(object):
         except Exception as e:
             send({"jsonrpc": "2.0", "error": {
                  "code": -32700, "message": "Parse error", "data": str(e)}, "id": id})
-
-    def _get_properties(self, mpd_status):
-        snapstatus = {}
-        for key, value in mpd_status.items():
-            try:
-                mapped_key = status_mapping[key][0]
-                mapped_val = status_mapping[key][1](value)
-                snapstatus[mapped_key] = mapped_val
-                logger.debug(
-                    f'key: {key}, value: {value}, mapped key: {mapped_key}, mapped value: {mapped_val}')
-            except KeyError:
-                logger.debug(f'property "{key}" not supported')
-            except (ValueError, TypeError):
-                logger.warning(
-                    f"Can't cast value {value} to {status_mapping[key][1]}")
-
-        snapstatus['canGoNext'] = True
-        snapstatus['canGoPrevious'] = True
-        snapstatus['canPlay'] = True
-        snapstatus['canPause'] = True
-        snapstatus['canSeek'] = 'duration' in snapstatus
-        snapstatus['canControl'] = True
-        return snapstatus
 
 
 def usage(params):
