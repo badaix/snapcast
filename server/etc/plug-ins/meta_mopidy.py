@@ -21,7 +21,6 @@
 # Dependencies:
 # - websocket-client
 
-from cmath import log
 from time import sleep
 import websocket
 import logging
@@ -30,15 +29,11 @@ import json
 import os
 import sys
 import getopt
-import time
 import logging
-import gettext
 
 __version__ = "@version@"
 __git_version__ = "@gitversion@"
 
-
-_ = gettext.gettext
 
 identity = "Snapcast"
 
@@ -48,6 +43,9 @@ params = {
     'host': None,
     'port': None,
     'password': None,
+    'snapcast-host': None,
+    'snapcast-port': None,
+    'stream': None,
 }
 
 defaults = {
@@ -55,9 +53,10 @@ defaults = {
     'host': 'localhost',
     'port': 6680,
     'password': None,
+    'snapcast-host': 'localhost',
+    'snapcast-port': 1780,
+    'stream': 'default',
 }
-
-notification = None
 
 
 def send(json_msg):
@@ -74,7 +73,9 @@ class MopidyControl(object):
         self._metadata = {}
         self._properties = {}
         self._req_id = 0
-        self._request_map = {}
+        self._mopidy_request_map = {}
+        self._snapcast_request_map = {}
+        self._seek_offset = 0.0
 
         self.websocket = websocket.WebSocketApp("ws://" + self._params['host'] + ":" + str(self._params['port']) + "/mopidy/ws",
                                                 on_message=self.on_ws_message,
@@ -98,15 +99,21 @@ class MopidyControl(object):
         # TODO: error handling
         logger.info(f'Snapcast RPC websocket message received: {message}')
         jmsg = json.loads(message)
+
+        # Batch request
         if isinstance(jmsg, list):
+            snapcast_req_id = -1
             logger.info('List')
             self._properties = {}
-            self._metadata = {}
+            update_image = False
             for msg in jmsg:
                 id = msg['id']
-                if id in self._request_map:
-                    request = self._request_map[id]
-                    del self._request_map[id]
+                if id in self._mopidy_request_map:
+                    if id in self._snapcast_request_map:
+                        snapcast_req_id = self._snapcast_request_map[id]
+                        del self._snapcast_request_map[id]
+                    request = self._mopidy_request_map[id]
+                    del self._mopidy_request_map[id]
                     logger.info(f'Received response to {request}')
                     result = msg['result']
                     repeat = False
@@ -114,23 +121,27 @@ class MopidyControl(object):
                     logger.info(f'Result for {request}: {result}')
                     if request == 'core.playback.get_state':
                         self._properties['playbackStatus'] = str(result)
-                    if request == 'core.tracklist.get_repeat':
+                    elif request == 'core.tracklist.get_repeat':
                         repeat = result
-                    if request == 'core.tracklist.get_single':
+                    elif request == 'core.tracklist.get_single':
                         single = result
-                    if request == 'core.tracklist.get_random':
+                    elif request == 'core.tracklist.get_random':
                         self._properties['shuffle'] = result
-                    if request == 'core.mixer.get_volume':
+                    elif request == 'core.mixer.get_volume':
                         self._properties['volume'] = result
-                    if request == 'core.playback.get_current_track':
+                    elif request == 'core.playback.get_time_position':
+                        self._properties['position'] = float(result) / 1000
+                    elif request == 'core.playback.get_current_track':
+                        self._metadata = {}
                         if 'uri' in result:
                             self._metadata['url'] = result['uri']
+                            update_image = True
                         if 'name' in result:
-                            self._metadata['name'] = result['name']
+                            self._metadata['title'] = result['name']
                         if 'artists' in result:
                             for artist in result['artists']:
                                 if 'musicbrainz_id' in artist:
-                                    self._metadata['musicbrainz_artistid'] = artist['musicbrainz_id']
+                                    self._metadata['musicbrainzArtistId'] = artist['musicbrainz_id']
                                 if 'name' in artist:
                                     if not 'artist' in self._metadata:
                                         self._metadata['artist'] = []
@@ -144,7 +155,7 @@ class MopidyControl(object):
                         if 'album' in result:
                             album = result['album']
                             if 'musicbrainz_id' in album:
-                                self._metadata['musicbrainz_albumid'] = album['musicbrainz_id']
+                                self._metadata['musicbrainzAlbumId'] = album['musicbrainz_id']
                             if 'name' in album:
                                 self._metadata['album'] = album['name']
                         # if 'composers' in result:
@@ -152,7 +163,7 @@ class MopidyControl(object):
                         # if 'performers' in result:
                         #     self._metadata[''] = result['']
                         if 'genre' in result:
-                            self._metadata['genre'] = result['genre']
+                            self._metadata['genre'] = [result['genre']]
                         if 'track_no' in result:
                             self._metadata['trackNumber'] = result['track_no']
                         if 'disc_no' in result:
@@ -165,13 +176,14 @@ class MopidyControl(object):
                         # if 'bitrate' in result:
                         #     self._metadata[''] = result['bitrate']
                         if 'comment' in result:
-                            self._metadata['comment'] = result['comment']
+                            self._metadata['comment'] = [result['comment']]
                         if 'musicbrainz_id' in result:
                             self._metadata['musicbrainzTrackId'] = result['musicbrainz_id']
+                        if 'track_no' in result:
+                            self._metadata['trackId'] = str(result['track_no'])
                         # if 'last_modified' in result:
                         #     self._metadata[''] = result['last_modified']
-                    if request == 'core.playback.get_time_position':
-                        self._properties['position'] = float(result) / 1000
+
                 if repeat and single:
                     self._properties['loopStatus'] = 'track'
                 elif repeat:
@@ -185,27 +197,66 @@ class MopidyControl(object):
             self._properties['canPause'] = True
             self._properties['canSeek'] = 'duration' in self._metadata
             self._properties['canControl'] = True
-            self._properties['metadata'] = self._metadata
+            if self._metadata:
+                self._properties['metadata'] = self._metadata
             logger.info(f'Result: {self._properties}')
 
-            if 'url' in self._metadata:
-                self.send_request('core.library.get_images', {
-                                  'uris': [self._metadata['url']]})
-            # return send({"jsonrpc": "2.0", "id": id, "result": self._properties})
+            if snapcast_req_id >= 0:
+                # Update was requested by Snapcast
+                send({"jsonrpc": "2.0", "id": snapcast_req_id,
+                     "result": self._properties})
+            else:
+                # Update was triggered by a Mopidy event notification
+                send({"jsonrpc": "2.0", "method": "Plugin.Stream.Player.Properties",
+                     "params": self._properties})
 
-        if 'id' in jmsg:
+            if update_image:
+                self.send_request('core.library.get_images', {
+                    'uris': [self._metadata['url']]})
+
+        # Request
+        elif 'id' in jmsg:
             id = jmsg['id']
-            if id in self._request_map:
-                request = self._request_map[id]
-                del self._request_map[id]
+            if id in self._mopidy_request_map:
+                request = self._mopidy_request_map[id]
+                del self._mopidy_request_map[id]
                 logger.info(f'Received response to {request}')
-                if request == 'core.library.get_images':
-                    result = dict(jmsg['result'])
-                    for _, value in result.items():
-                        if value and 'uri' in value[0]:
-                            url = str(
-                                f"http://{self._params['host']}:{self._params['port']}{value[0]['uri']}")
-                            logger.info(f"Image: {url}")
+
+                if request == 'core.library.get_images' and 'metadata' in self._properties:
+                    # => {'id': 25, 'jsonrpc': '2.0', 'method': 'core.library.get_images', 'params': {'uris': ['local:track:A/ABBA/ABBA%20-%20Voyage%20%282021%29/10%20-%20Ode%20to%20Freedom.ogg']}}
+                    # <= {"jsonrpc": "2.0", "id": 25, "result": {"local:track:A/ABBA/ABBA%20-%20Voyage%20%282021%29/10%20-%20Ode%20to%20Freedom.ogg": [{"__model__": "Image", "uri": "/local/f0b20b441175563334f6ad75e76426b7-500x500.jpeg", "width": 500, "height": 500}]}}
+                    result = jmsg['result']
+                    meta = self._properties['metadata']
+                    if 'url' in meta and meta['url'] in result and result[meta['url']]:
+                        uri = result[meta['url']][0]['uri']
+                        url = str(
+                            f"http://{self._params['host']}:{self._params['port']}{uri}")
+                        logger.info(f"Image: {url}")
+                        if 'metadata' in self._properties:
+                            self._properties['metadata']['artUrl'] = url
+                            logger.info(f"Properties: {self._properties}")
+                            sleep(0.1)
+                            return send({"jsonrpc": "2.0", "method": "Plugin.Stream.Player.Properties",
+                                         "params": self._properties})
+
+                elif request == 'core.playback.get_time_position' and self._seek_offset != 0:
+                    pos = int(int(jmsg['result']) + self._seek_offset * 1000)
+                    logger.info(f"Seeking to: {pos}")
+                    self.send_request("core.playback.seek", {
+                        "time_position": pos})
+                    self._seek_offset = 0.0
+
+        # Notification
+        else:
+            if 'event' in jmsg:
+                if jmsg['event'] == 'track_playback_started':
+                    self.send_requests(["core.playback.get_state", "core.tracklist.get_repeat", "core.tracklist.get_single",
+                                        "core.tracklist.get_random", "core.mixer.get_volume", "core.playback.get_current_track", "core.playback.get_time_position"])
+                else:
+                    self.send_requests(["core.playback.get_state", "core.tracklist.get_repeat", "core.tracklist.get_single",
+                                        "core.tracklist.get_random", "core.mixer.get_volume", "core.playback.get_time_position"])
+
+                logger.info(f"Event: {jmsg['event']}")
 
     def on_ws_error(self, ws, error):
         logger.error("Snapcast RPC websocket error")
@@ -224,20 +275,22 @@ class MopidyControl(object):
             j["params"] = params
         logger.info(f'send_request: {j}')
         result = self._req_id
-        self._request_map[result] = str(method)
+        self._mopidy_request_map[result] = str(method)
         self._req_id += 1
         self.websocket.send(json.dumps(j))
         return result
 
     def send_requests(self, methods):
         j = []
+        result = self._req_id
         for method in methods:
             j.append({"id": self._req_id, "jsonrpc": "2.0",
                      "method": str(method)})
-            self._request_map[self._req_id] = str(method)
+            self._mopidy_request_map[self._req_id] = str(method)
             self._req_id += 1
         logger.info(f'send_request: {j}')
         self.websocket.send(json.dumps(j))
+        return result
 
     def stop(self):
         self.websocket.keep_running = False
@@ -266,23 +319,20 @@ class MopidyControl(object):
                     elif command == 'pause':
                         self.send_request("core.playback.pause")
                     elif command == 'playPause':
-                        if self._properties['playbackStatus'] == 'play':
+                        if self._properties['playbackStatus'] == 'playing':
                             self.send_request("core.playback.pause")
                         else:
-                            self.send_request("core.playback.resume")
+                            self.send_request("core.playback.play")
                     elif command == 'stop':
                         self.send_request("core.playback.stop")
                     elif command == 'setPosition':
                         position = float(params['position'])
                         logger.info(f'setPosition {position}')
                         self.send_request("core.playback.seek", {
-                                          "time_position": float(position) / 1000})
+                                          "time_position": int(position * 1000)})
                     elif command == 'seek':
-                        offset = float(params['offset'])
-                        strOffset = str(offset)
-                        if offset >= 0:
-                            strOffset = "+" + strOffset
-                        # TODO: self.seekcur(strOffset)
+                        self._seek_offset = float(params['offset'])
+                        self.send_request("core.playback.get_time_position")
                 elif cmd == 'SetProperty':
                     property = request['params']
                     logger.info(f'SetProperty: {property}')
@@ -310,9 +360,10 @@ class MopidyControl(object):
                         self.send_request("core.mixer.set_volume", {
                                           "volume": int(property['volume'])})
                 elif cmd == 'GetProperties':
-                    self.send_requests(["core.playback.get_state", "core.tracklist.get_repeat", "core.tracklist.get_single",
-                                       "core.tracklist.get_random", "core.mixer.get_volume", "core.playback.get_current_track", "core.playback.get_time_position"])
-                    # return send({"jsonrpc": "2.0", "id": id, "result": snapstatus})
+                    req_id = self.send_requests(["core.playback.get_state", "core.tracklist.get_repeat", "core.tracklist.get_single",
+                                                 "core.tracklist.get_random", "core.mixer.get_volume", "core.playback.get_current_track", "core.playback.get_time_position"])
+                    self._snapcast_request_map[req_id] = id
+                    return
                 elif cmd == 'GetMetadata':
                     send({"jsonrpc": "2.0", "method": "Plugin.Stream.Log", "params": {
                          "severity": "Info", "message": "Logmessage"}})
@@ -336,16 +387,17 @@ Usage: %(progname)s [OPTION]...
 
      -h, --host=ADDR        Set the mpd server address
      -p, --port=PORT        Set the TCP port
+     --snapcast-host=ADDR   Set the snapcast server address
+     --snapcast-port=PORT   Set the snapcast server port
+     --stream=ID            Set the stream id
+
      -d, --debug            Run in debug mode
-     -v, --version          snapcast_mpris version
+     -v, --version          meta_mopidy version
 
 Report bugs to https://github.com/badaix/snapcast/issues""" % params)
 
 
 if __name__ == '__main__':
-
-    gettext.bindtextdomain('snapcast_mpris', '@datadir@/locale')
-    gettext.textdomain('snapcast_mpris')
 
     log_format_stderr = '%(asctime)s %(module)s %(levelname)s: %(message)s'
 
@@ -353,8 +405,8 @@ if __name__ == '__main__':
 
     # Parse command line
     try:
-        (opts, args) = getopt.getopt(sys.argv[1:], 'dh:p:v',
-                                     ['help',
+        (opts, args) = getopt.getopt(sys.argv[1:], 'h:p:dv',
+                                     ['help', 'stream=', 'snapcast-host=', 'snapcast-port=',
                                      'debug', 'host=',
                                       'port=', 'version'])
     except getopt.GetoptError as ex:
@@ -374,6 +426,12 @@ if __name__ == '__main__':
             params['host'] = arg
         elif opt in ['-p', '--port']:
             params['port'] = int(arg)
+        elif opt in ['--snapcast-host']:
+            params['snapcast-host'] = arg
+        elif opt in ['--snapcast-port']:
+            params['snapcast-port'] = int(arg)
+        elif opt in ['--stream']:
+            params['stream'] = arg
         elif opt in ['-v', '--version']:
             v = __version__
             if __git_version__:
@@ -385,7 +443,7 @@ if __name__ == '__main__':
         usage(params)
         sys.exit()
 
-    logger = logging.getLogger('snapcast_mpris')
+    logger = logging.getLogger('meta_mopidy')
     logger.propagate = False
     logger.setLevel(log_level)
 
