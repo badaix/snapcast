@@ -75,7 +75,6 @@ class MopidyControl(object):
         self._properties = {}
         self._req_id = 0
         self._mopidy_request_map = {}
-        self._snapcast_request_map = {}
         self._seek_offset = 0.0
 
         self.websocket = websocket.WebSocketApp("ws://" + self._params['host'] + ":" + str(self._params['port']) + "/mopidy/ws",
@@ -96,6 +95,146 @@ class MopidyControl(object):
             sleep(1)
         logger.info("Ending MopidyControl loop")
 
+    def onGetImageResponse(self, jmsg):
+        if 'metadata' in self._properties:
+            # => {'id': 25, 'jsonrpc': '2.0', 'method': 'core.library.get_images', 'params': {'uris': ['local:track:A/ABBA/ABBA%20-%20Voyage%20%282021%29/10%20-%20Ode%20to%20Freedom.ogg']}}
+            # <= {"jsonrpc": "2.0", "id": 25, "result": {"local:track:A/ABBA/ABBA%20-%20Voyage%20%282021%29/10%20-%20Ode%20to%20Freedom.ogg": [{"__model__": "Image", "uri": "/local/f0b20b441175563334f6ad75e76426b7-500x500.jpeg", "width": 500, "height": 500}]}}
+            result = jmsg['result']
+            meta = self._properties['metadata']
+            if 'url' in meta and meta['url'] in result and result[meta['url']]:
+                uri = result[meta['url']][0]['uri']
+                url = str(
+                    f"http://{self._params['host']}:{self._params['port']}{uri}")
+                logger.debug(f"Image: {url}")
+                if 'metadata' in self._properties:
+                    self._properties['metadata']['artUrl'] = url
+                    logger.info(f'New properties: {self._properties}')
+                    return send({"jsonrpc": "2.0", "method": "Plugin.Stream.Player.Properties",
+                                 "params": self._properties})
+
+    def getMetaData(self, track):
+        metadata = {}
+        if 'uri' in track:
+            metadata['url'] = track['uri']
+            update_image = True
+        if 'name' in track:
+            metadata['title'] = track['name']
+        if 'artists' in track:
+            for artist in track['artists']:
+                if 'musicbrainz_id' in artist:
+                    metadata['musicbrainzArtistId'] = artist['musicbrainz_id']
+                if 'name' in artist:
+                    if not 'artist' in metadata:
+                        metadata['artist'] = []
+                    metadata['artist'].append(
+                        artist['name'])
+                if 'sortname' in artist:
+                    if not 'sortname' in metadata:
+                        metadata['artistsort'] = []
+                    metadata['artistsort'].append(
+                        artist['sortname'])
+        if 'album' in track:
+            album = track['album']
+            if 'musicbrainz_id' in album:
+                self._metadata['musicbrainzAlbumId'] = album['musicbrainz_id']
+            if 'name' in album:
+                self._metadata['album'] = album['name']
+        if 'genre' in track:
+            metadata['genre'] = [track['genre']]
+        if 'track_no' in track:
+            metadata['trackNumber'] = track['track_no']
+        if 'disc_no' in track:
+            metadata['discNumber'] = track['disc_no']
+        if 'date' in track:
+            metadata['contentCreated'] = track['date']
+        if 'length' in track:
+            metadata['duration'] = float(
+                track['length']) / 1000
+        if 'comment' in track:
+            metadata['comment'] = [track['comment']]
+        if 'musicbrainz_id' in track:
+            metadata['musicbrainzTrackId'] = track['musicbrainz_id']
+        if 'track_no' in track:
+            metadata['trackId'] = str(track['track_no'])
+        # Not supported:
+        # if 'composers' in result:
+        # if 'performers' in result:
+        # if 'bitrate' in result:
+        # if 'last_modified' in result:
+        return metadata
+
+    def getProperties(self, req_res):
+        properties = {}
+        for rr in req_res:
+            request = rr[0]
+            result = rr[1]
+            logger.debug(
+                f'getProperties request: {request}, result: {result}')
+            repeat = False
+            single = False
+            if request == 'core.playback.get_state':
+                properties['playbackStatus'] = str(result)
+            elif request == 'core.tracklist.get_repeat':
+                repeat = result
+            elif request == 'core.tracklist.get_single':
+                single = result
+            elif request == 'core.tracklist.get_random':
+                properties['shuffle'] = result
+            elif request == 'core.mixer.get_volume':
+                properties['volume'] = result
+            elif request == 'core.playback.get_time_position':
+                properties['position'] = float(result) / 1000
+            elif request == 'core.playback.get_current_track':
+                self._metadata = self.getMetaData(result)
+            elif request == 'core.library.get_images':
+                metadata = self._metadata
+                if not metadata is None and 'url' in metadata and metadata['url'] in result and result[metadata['url']]:
+                    uri = result[metadata['url']][0]['uri']
+                    url = str(
+                        f"http://{self._params['host']}:{self._params['port']}{uri}")
+                    logger.debug(f"Image: {url}")
+                    self._metadata['artUrl'] = url
+
+            if repeat and single:
+                properties['loopStatus'] = 'track'
+            elif repeat:
+                properties['loopStatus'] = 'playlist'
+            else:
+                properties['loopStatus'] = 'none'
+
+        properties['canGoNext'] = True
+        properties['canGoPrevious'] = True
+        properties['canPlay'] = True
+        properties['canPause'] = True
+        properties['canSeek'] = 'duration' in self._metadata
+        properties['canControl'] = True
+        if self._metadata:
+            properties['metadata'] = self._metadata
+        return properties
+
+    def onSnapcastPropertiesResponse(self, req_id, req_res):
+        logger.debug(f'onSnapcastPropertiesRequest id: {req_id}')
+        self._properties = self.getProperties(req_res)
+        logger.info(f'New properties: {self._properties}')
+        send({"jsonrpc": "2.0", "id": req_id,
+              "result": self._properties})
+        self.send_request('core.library.get_images', {
+            'uris': [self._metadata['url']]}, self.onGetImageResponse)
+
+    def onPropertiesResponse(self, req_res):
+        self._properties = self.getProperties(req_res)
+        logger.info(f'New properties: {self._properties}')
+        send({"jsonrpc": "2.0", "method": "Plugin.Stream.Player.Properties",
+              "params": self._properties})
+
+    def onGetTimePositionResponse(self, jmsg):
+        if self._seek_offset != 0:
+            pos = int(int(jmsg['result']) + self._seek_offset * 1000)
+            logger.debug(f"Seeking to: {pos}")
+            self.send_request("core.playback.seek", {
+                "time_position": pos})
+            self._seek_offset = 0.0
+
     def on_ws_message(self, ws, message):
         # TODO: error handling
         logger.debug(f'Snapcast RPC websocket message received: {message}')
@@ -106,113 +245,18 @@ class MopidyControl(object):
             snapcast_req_id = -1
             self._properties = {}
             update_image = False
+            req_res = []
+            callback = None
             for msg in jmsg:
                 id = msg['id']
                 if id in self._mopidy_request_map:
-                    if id in self._snapcast_request_map:
-                        snapcast_req_id = self._snapcast_request_map[id]
-                        del self._snapcast_request_map[id]
                     request = self._mopidy_request_map[id]
                     del self._mopidy_request_map[id]
-                    result = msg['result']
-                    repeat = False
-                    single = False
-                    logger.debug(
-                        f'Received response to batch request "{request}": {result}')
-                    if request == 'core.playback.get_state':
-                        self._properties['playbackStatus'] = str(result)
-                    elif request == 'core.tracklist.get_repeat':
-                        repeat = result
-                    elif request == 'core.tracklist.get_single':
-                        single = result
-                    elif request == 'core.tracklist.get_random':
-                        self._properties['shuffle'] = result
-                    elif request == 'core.mixer.get_volume':
-                        self._properties['volume'] = result
-                    elif request == 'core.playback.get_time_position':
-                        self._properties['position'] = float(result) / 1000
-                    elif request == 'core.playback.get_current_track':
-                        self._metadata = {}
-                        if 'uri' in result:
-                            self._metadata['url'] = result['uri']
-                            update_image = True
-                        if 'name' in result:
-                            self._metadata['title'] = result['name']
-                        if 'artists' in result:
-                            for artist in result['artists']:
-                                if 'musicbrainz_id' in artist:
-                                    self._metadata['musicbrainzArtistId'] = artist['musicbrainz_id']
-                                if 'name' in artist:
-                                    if not 'artist' in self._metadata:
-                                        self._metadata['artist'] = []
-                                    self._metadata['artist'].append(
-                                        artist['name'])
-                                if 'sortname' in artist:
-                                    if not 'sortname' in self._metadata:
-                                        self._metadata['artistsort'] = []
-                                    self._metadata['artistsort'].append(
-                                        artist['sortname'])
-                        if 'album' in result:
-                            album = result['album']
-                            if 'musicbrainz_id' in album:
-                                self._metadata['musicbrainzAlbumId'] = album['musicbrainz_id']
-                            if 'name' in album:
-                                self._metadata['album'] = album['name']
-                        # if 'composers' in result:
-                        #     self._metadata[''] = result['']
-                        # if 'performers' in result:
-                        #     self._metadata[''] = result['']
-                        if 'genre' in result:
-                            self._metadata['genre'] = [result['genre']]
-                        if 'track_no' in result:
-                            self._metadata['trackNumber'] = result['track_no']
-                        if 'disc_no' in result:
-                            self._metadata['discNumber'] = result['disc_no']
-                        if 'date' in result:
-                            self._metadata['contentCreated'] = result['date']
-                        if 'length' in result:
-                            self._metadata['duration'] = float(
-                                result['length']) / 1000
-                        # if 'bitrate' in result:
-                        #     self._metadata[''] = result['bitrate']
-                        if 'comment' in result:
-                            self._metadata['comment'] = [result['comment']]
-                        if 'musicbrainz_id' in result:
-                            self._metadata['musicbrainzTrackId'] = result['musicbrainz_id']
-                        if 'track_no' in result:
-                            self._metadata['trackId'] = str(result['track_no'])
-                        # if 'last_modified' in result:
-                        #     self._metadata[''] = result['last_modified']
-
-                if repeat and single:
-                    self._properties['loopStatus'] = 'track'
-                elif repeat:
-                    self._properties['loopStatus'] = 'playlist'
-                else:
-                    self._properties['loopStatus'] = 'none'
-
-            self._properties['canGoNext'] = True
-            self._properties['canGoPrevious'] = True
-            self._properties['canPlay'] = True
-            self._properties['canPause'] = True
-            self._properties['canSeek'] = 'duration' in self._metadata
-            self._properties['canControl'] = True
-            if self._metadata:
-                self._properties['metadata'] = self._metadata
-            logger.info(f'New properties: {self._properties}')
-
-            if snapcast_req_id >= 0:
-                # Update was requested by Snapcast
-                send({"jsonrpc": "2.0", "id": snapcast_req_id,
-                     "result": self._properties})
-            else:
-                # Update was triggered by a Mopidy event notification
-                send({"jsonrpc": "2.0", "method": "Plugin.Stream.Player.Properties",
-                     "params": self._properties})
-
-            if update_image:
-                self.send_request('core.library.get_images', {
-                    'uris': [self._metadata['url']]})
+                    req_res.append((request[0], msg['result']))
+                    if not request[1] is None:
+                        callback = request[1]
+            if not callback is None:
+                callback(req_res)
 
         # Request
         elif 'id' in jmsg:
@@ -220,30 +264,10 @@ class MopidyControl(object):
             if id in self._mopidy_request_map:
                 request = self._mopidy_request_map[id]
                 del self._mopidy_request_map[id]
-                logger.debug(f'Received response to request "{request}"')
-
-                if request == 'core.library.get_images' and 'metadata' in self._properties:
-                    # => {'id': 25, 'jsonrpc': '2.0', 'method': 'core.library.get_images', 'params': {'uris': ['local:track:A/ABBA/ABBA%20-%20Voyage%20%282021%29/10%20-%20Ode%20to%20Freedom.ogg']}}
-                    # <= {"jsonrpc": "2.0", "id": 25, "result": {"local:track:A/ABBA/ABBA%20-%20Voyage%20%282021%29/10%20-%20Ode%20to%20Freedom.ogg": [{"__model__": "Image", "uri": "/local/f0b20b441175563334f6ad75e76426b7-500x500.jpeg", "width": 500, "height": 500}]}}
-                    result = jmsg['result']
-                    meta = self._properties['metadata']
-                    if 'url' in meta and meta['url'] in result and result[meta['url']]:
-                        uri = result[meta['url']][0]['uri']
-                        url = str(
-                            f"http://{self._params['host']}:{self._params['port']}{uri}")
-                        logger.debug(f"Image: {url}")
-                        if 'metadata' in self._properties:
-                            self._properties['metadata']['artUrl'] = url
-                            logger.info(f'New properties: {self._properties}')
-                            return send({"jsonrpc": "2.0", "method": "Plugin.Stream.Player.Properties",
-                                         "params": self._properties})
-
-                elif request == 'core.playback.get_time_position' and self._seek_offset != 0:
-                    pos = int(int(jmsg['result']) + self._seek_offset * 1000)
-                    logger.debug(f"Seeking to: {pos}")
-                    self.send_request("core.playback.seek", {
-                        "time_position": pos})
-                    self._seek_offset = 0.0
+                logger.debug(f'Received response to request "{request[0]}"')
+                callback = request[1]
+                if not callback is None:
+                    callback(jmsg)
 
         # Notification
         else:
@@ -251,8 +275,12 @@ class MopidyControl(object):
                 event = jmsg['event']
                 logger.info(f"Event: {event}")
                 if event == 'track_playback_started':
-                    self.send_requests(["core.playback.get_state", "core.tracklist.get_repeat", "core.tracklist.get_single",
-                                        "core.tracklist.get_random", "core.mixer.get_volume", "core.playback.get_current_track", "core.playback.get_time_position"])
+                    self._metadata = self.getMetaData(
+                        jmsg['tl_track']['track'])
+                    logger.debug(f'Meta: {self._metadata}')
+                    self.send_batch_request([("core.playback.get_state", None), ("core.tracklist.get_repeat", None), ("core.tracklist.get_single", None),
+                                             ("core.tracklist.get_random", None), ("core.mixer.get_volume", None), ("core.playback.get_time_position", None), ('core.library.get_images', {
+                                                 'uris': [self._metadata['url']]})], self.onPropertiesResponse)
                 elif event in ['tracklist_changed', 'track_playback_ended']:
                     logger.debug("Nothing to do")
                 elif event == 'playback_state_changed' and jmsg["old_state"] == jmsg["new_state"]:
@@ -260,8 +288,8 @@ class MopidyControl(object):
                 elif event == 'volume_changed' and 'volume' in self._properties and jmsg['volume'] == self._properties['volume']:
                     logger.debug("Nothing to do")
                 else:
-                    self.send_requests(["core.playback.get_state", "core.tracklist.get_repeat", "core.tracklist.get_single",
-                                        "core.tracklist.get_random", "core.mixer.get_volume", "core.playback.get_time_position"])
+                    self.send_batch_request([("core.playback.get_state", None), ("core.tracklist.get_repeat", None), ("core.tracklist.get_single", None),
+                                             ("core.tracklist.get_random", None), ("core.mixer.get_volume", None), ("core.playback.get_time_position", None)], self.onPropertiesResponse)
 
     def on_ws_error(self, ws, error):
         logger.error("Snapcast RPC websocket error")
@@ -274,27 +302,33 @@ class MopidyControl(object):
     def on_ws_close(self, ws):
         logger.info("Snapcast RPC websocket closed")
 
-    def send_request(self, method, params=None):
+    def send_request(self, method, params=None, callback=None):
         j = {"id": self._req_id, "jsonrpc": "2.0", "method": str(method)}
         if not params is None:
             j["params"] = params
         logger.debug(f'send_request: {j}')
         result = self._req_id
-        self._mopidy_request_map[result] = str(method)
+        self._mopidy_request_map[result] = (str(method), callback)
         self._req_id += 1
         self.websocket.send(json.dumps(j))
         return result
 
-    def send_requests(self, methods):
-        j = []
+    def send_batch_request(self, methods_params, callback=None):
+        batch = []
         result = self._req_id
-        for method in methods:
-            j.append({"id": self._req_id, "jsonrpc": "2.0",
-                     "method": str(method)})
-            self._mopidy_request_map[self._req_id] = str(method)
+        for method_param in methods_params:
+            method = str(method_param[0])
+            params = method_param[1]
+            j = {"id": self._req_id, "jsonrpc": "2.0",
+                 "method": method}
+            if not params is None:
+                j["params"] = params
+            batch.append(j)
+            self._mopidy_request_map[self._req_id] = (
+                method, callback)
             self._req_id += 1
-        logger.debug(f'send_batch request: {j}')
-        self.websocket.send(json.dumps(j))
+        logger.debug(f'send_batch_request: {batch}')
+        self.websocket.send(json.dumps(batch))
         return result
 
     def stop(self):
@@ -336,7 +370,8 @@ class MopidyControl(object):
                                           "time_position": int(position * 1000)})
                     elif command == 'seek':
                         self._seek_offset = float(params['offset'])
-                        self.send_request("core.playback.get_time_position")
+                        self.send_request(
+                            "core.playback.get_time_position", None, self.onGetTimePositionResponse)
                 elif cmd == 'SetProperty':
                     property = request['params']
                     logger.debug(f'SetProperty: {property}')
@@ -364,9 +399,8 @@ class MopidyControl(object):
                         self.send_request("core.mixer.set_volume", {
                                           "volume": int(property['volume'])})
                 elif cmd == 'GetProperties':
-                    req_id = self.send_requests(["core.playback.get_state", "core.tracklist.get_repeat", "core.tracklist.get_single",
-                                                 "core.tracklist.get_random", "core.mixer.get_volume", "core.playback.get_current_track", "core.playback.get_time_position"])
-                    self._snapcast_request_map[req_id] = id
+                    self.send_batch_request([("core.playback.get_state", None), ("core.tracklist.get_repeat", None), ("core.tracklist.get_single", None),
+                                             ("core.tracklist.get_random", None), ("core.mixer.get_volume", None), ("core.playback.get_current_track", None), ("core.playback.get_time_position", None)], lambda req_res: self.onSnapcastPropertiesResponse(id, req_res))
                     return
                 elif cmd == 'GetMetadata':
                     send({"jsonrpc": "2.0", "method": "Plugin.Stream.Log", "params": {
