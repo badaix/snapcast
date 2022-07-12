@@ -60,7 +60,8 @@ defaults = {
 
 
 def send(json_msg):
-    print(json.dumps(json_msg))
+    sys.stdout.write(json.dumps(json_msg))
+    sys.stdout.write('\n')
     sys.stdout.flush()
 
 
@@ -97,13 +98,12 @@ class MopidyControl(object):
 
     def on_ws_message(self, ws, message):
         # TODO: error handling
-        logger.info(f'Snapcast RPC websocket message received: {message}')
+        logger.debug(f'Snapcast RPC websocket message received: {message}')
         jmsg = json.loads(message)
 
         # Batch request
         if isinstance(jmsg, list):
             snapcast_req_id = -1
-            logger.info('List')
             self._properties = {}
             update_image = False
             for msg in jmsg:
@@ -114,11 +114,11 @@ class MopidyControl(object):
                         del self._snapcast_request_map[id]
                     request = self._mopidy_request_map[id]
                     del self._mopidy_request_map[id]
-                    logger.info(f'Received response to {request}')
                     result = msg['result']
                     repeat = False
                     single = False
-                    logger.info(f'Result for {request}: {result}')
+                    logger.debug(
+                        f'Received response to batch request "{request}": {result}')
                     if request == 'core.playback.get_state':
                         self._properties['playbackStatus'] = str(result)
                     elif request == 'core.tracklist.get_repeat':
@@ -199,7 +199,7 @@ class MopidyControl(object):
             self._properties['canControl'] = True
             if self._metadata:
                 self._properties['metadata'] = self._metadata
-            logger.info(f'Result: {self._properties}')
+            logger.info(f'New properties: {self._properties}')
 
             if snapcast_req_id >= 0:
                 # Update was requested by Snapcast
@@ -220,7 +220,7 @@ class MopidyControl(object):
             if id in self._mopidy_request_map:
                 request = self._mopidy_request_map[id]
                 del self._mopidy_request_map[id]
-                logger.info(f'Received response to {request}')
+                logger.debug(f'Received response to request "{request}"')
 
                 if request == 'core.library.get_images' and 'metadata' in self._properties:
                     # => {'id': 25, 'jsonrpc': '2.0', 'method': 'core.library.get_images', 'params': {'uris': ['local:track:A/ABBA/ABBA%20-%20Voyage%20%282021%29/10%20-%20Ode%20to%20Freedom.ogg']}}
@@ -231,17 +231,16 @@ class MopidyControl(object):
                         uri = result[meta['url']][0]['uri']
                         url = str(
                             f"http://{self._params['host']}:{self._params['port']}{uri}")
-                        logger.info(f"Image: {url}")
+                        logger.debug(f"Image: {url}")
                         if 'metadata' in self._properties:
                             self._properties['metadata']['artUrl'] = url
-                            logger.info(f"Properties: {self._properties}")
-                            sleep(0.1)
+                            logger.info(f'New properties: {self._properties}')
                             return send({"jsonrpc": "2.0", "method": "Plugin.Stream.Player.Properties",
                                          "params": self._properties})
 
                 elif request == 'core.playback.get_time_position' and self._seek_offset != 0:
                     pos = int(int(jmsg['result']) + self._seek_offset * 1000)
-                    logger.info(f"Seeking to: {pos}")
+                    logger.debug(f"Seeking to: {pos}")
                     self.send_request("core.playback.seek", {
                         "time_position": pos})
                     self._seek_offset = 0.0
@@ -249,14 +248,20 @@ class MopidyControl(object):
         # Notification
         else:
             if 'event' in jmsg:
-                if jmsg['event'] == 'track_playback_started':
+                event = jmsg['event']
+                logger.info(f"Event: {event}")
+                if event == 'track_playback_started':
                     self.send_requests(["core.playback.get_state", "core.tracklist.get_repeat", "core.tracklist.get_single",
                                         "core.tracklist.get_random", "core.mixer.get_volume", "core.playback.get_current_track", "core.playback.get_time_position"])
+                elif event in ['tracklist_changed', 'track_playback_ended']:
+                    logger.debug("Nothing to do")
+                elif event == 'playback_state_changed' and jmsg["old_state"] == jmsg["new_state"]:
+                    logger.debug("Nothing to do")
+                elif event == 'volume_changed' and 'volume' in self._properties and jmsg['volume'] == self._properties['volume']:
+                    logger.debug("Nothing to do")
                 else:
                     self.send_requests(["core.playback.get_state", "core.tracklist.get_repeat", "core.tracklist.get_single",
                                         "core.tracklist.get_random", "core.mixer.get_volume", "core.playback.get_time_position"])
-
-                logger.info(f"Event: {jmsg['event']}")
 
     def on_ws_error(self, ws, error):
         logger.error("Snapcast RPC websocket error")
@@ -273,7 +278,7 @@ class MopidyControl(object):
         j = {"id": self._req_id, "jsonrpc": "2.0", "method": str(method)}
         if not params is None:
             j["params"] = params
-        logger.info(f'send_request: {j}')
+        logger.debug(f'send_request: {j}')
         result = self._req_id
         self._mopidy_request_map[result] = str(method)
         self._req_id += 1
@@ -288,7 +293,7 @@ class MopidyControl(object):
                      "method": str(method)})
             self._mopidy_request_map[self._req_id] = str(method)
             self._req_id += 1
-        logger.info(f'send_request: {j}')
+        logger.debug(f'send_batch request: {j}')
         self.websocket.send(json.dumps(j))
         return result
 
@@ -327,7 +332,6 @@ class MopidyControl(object):
                         self.send_request("core.playback.stop")
                     elif command == 'setPosition':
                         position = float(params['position'])
-                        logger.info(f'setPosition {position}')
                         self.send_request("core.playback.seek", {
                                           "time_position": int(position * 1000)})
                     elif command == 'seek':
@@ -335,7 +339,7 @@ class MopidyControl(object):
                         self.send_request("core.playback.get_time_position")
                 elif cmd == 'SetProperty':
                     property = request['params']
-                    logger.info(f'SetProperty: {property}')
+                    logger.debug(f'SetProperty: {property}')
                     if 'shuffle' in property:
                         self.send_request("core.tracklist.set_random", {
                                           "value": property['shuffle']})
