@@ -347,6 +347,15 @@ void PcmStream::setVolume(uint16_t volume, ResultHandler handler)
 }
 
 
+void PcmStream::setMute(bool mute, ResultHandler handler)
+{
+    LOG(DEBUG, LOG_TAG) << "setMute: " << mute << "\n";
+    if (!properties_.can_control)
+        return handler({ControlErrc::can_control_is_false});
+    sendRequest("Plugin.Stream.Player.SetProperty", {"mute", mute}, std::move(handler));
+}
+
+
 void PcmStream::setRate(float rate, ResultHandler handler)
 {
     LOG(DEBUG, LOG_TAG) << "setRate: " << rate << "\n";

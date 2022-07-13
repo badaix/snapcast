@@ -519,6 +519,7 @@ See [Plugin.Stream.Player.SetProperty](stream_plugin.md#pluginstreamplayersetpro
 {"id": 1, "jsonrpc": "2.0", "error": {"code": -32602, "message": "Value for loopStatus must be one of 'none', 'track', 'playlist'"}}
 {"id": 1, "jsonrpc": "2.0", "error": {"code": -32602, "message": "Value for shuffle must be bool"}}
 {"id": 1, "jsonrpc": "2.0", "error": {"code": -32602, "message": "Value for volume must be an int"}}
+{"id": 1, "jsonrpc": "2.0", "error": {"code": -32602, "message": "Value for mute must be bool"}}
 {"id": 1, "jsonrpc": "2.0", "error": {"code": -32602, "message": "Value for rate must be float"}}
 ```
 

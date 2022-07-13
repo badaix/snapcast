@@ -82,7 +82,7 @@ Any [json-rpc 2.0 conformant error](https://www.jsonrpc.org/specification#error_
 Snapserver will send the `SetProperty` command to the plugin, if `canControl` is `true`.
 
 ```json
-{"id": 1, "jsonrpc": "2.0", "method": "Plugin.Stream.Player.SetProperty", "params": {"<property>", <value>}}
+{"id": 1, "jsonrpc": "2.0", "method": "Plugin.Stream.Player.SetProperty", "params": {"<property>": <value>}}
 ```
 
 #### Supported `property`s
@@ -93,7 +93,8 @@ Snapserver will send the `SetProperty` command to the plugin, if `canControl` is
   * `playlist`: the playback loops through a list of tracks
 * `shuffle`: [bool] play playlist in random order
 * `volume`: [int] voume in percent, valid range [0..100]
-* `rate`: [float] The current playback rate, valid range (0..)
+* `mute`: [bool] the current mute state
+* `rate`: [float] the current playback rate, valid range (0..)
 
 #### Expected response
 
@@ -125,6 +126,7 @@ Any [json-rpc 2.0 conformant error](https://www.jsonrpc.org/specification#error_
   * `playlist`: The playback loops through a list of tracks
 * `shuffle`: [bool] Traverse through the playlist in random order
 * `volume`: [int] Voume in percent, valid range [0..100]
+* `mute`: [bool] Current mute state
 * `rate`: [float] The current playback rate, valid range (0..)
 * `position`: [float] Current playback position in seconds
 * `canGoNext`: [bool] Whether the client can call the `next` method on this interface and expect the current track to change
@@ -187,9 +189,9 @@ Any [json-rpc 2.0 conformant error](https://www.jsonrpc.org/specification#error_
 ##### Success
 
 ```json
-{"id": 1, "jsonrpc": "2.0", "result": {"canControl":true,"canGoNext":true,"canGoPrevious":true,"canPause":true,"canPlay":true,"canSeek":false,"loopStatus":"none","playbackStatus":"playing","position":93.394,"shuffle":false,"volume":86}}
+{"id": 1, "jsonrpc": "2.0", "result": {"canControl":true,"canGoNext":true,"canGoPrevious":true,"canPause":true,"canPlay":true,"canSeek":false,"loopStatus":"none","playbackStatus":"playing","position":93.394,"shuffle":false,"volume":86,"mute":false}}
 
-{"id": 1, "jsonrpc": "2.0", "result": {"canControl":true,"canGoNext":true,"canGoPrevious":true,"canPause":true,"canPlay":true,"canSeek":true,"loopStatus":"none","metadata":{"album":"Doldinger","albumArtist":["Klaus Doldinger's Passport"],"artUrl":"http://coverartarchive.org/release/0d4ff56b-2a2b-43b5-bf99-063cac1599e5/16940576164-250.jpg","artist":["Klaus Doldinger's Passport feat. Nils Landgren"],"contentCreated":"2016","duration":305.2929992675781,"genre":["Jazz"],"musicbrainzAlbumId":"0d4ff56b-2a2b-43b5-bf99-063cac1599e5","title":"Soul Town","trackId":"7","trackNumber":6,"url":"Klaus Doldinger's Passport - Doldinger (2016)/06 - Soul Town.mp3"},"playbackStatus":"playing","position":72.79499816894531,"shuffle":false,"volume":97}}
+{"id": 1, "jsonrpc": "2.0", "result": {"canControl":true,"canGoNext":true,"canGoPrevious":true,"canPause":true,"canPlay":true,"canSeek":true,"loopStatus":"none","metadata":{"album":"Doldinger","albumArtist":["Klaus Doldinger's Passport"],"artUrl":"http://coverartarchive.org/release/0d4ff56b-2a2b-43b5-bf99-063cac1599e5/16940576164-250.jpg","artist":["Klaus Doldinger's Passport feat. Nils Landgren"],"contentCreated":"2016","duration":305.2929992675781,"genre":["Jazz"],"musicbrainzAlbumId":"0d4ff56b-2a2b-43b5-bf99-063cac1599e5","title":"Soul Town","trackId":"7","trackNumber":6,"url":"Klaus Doldinger's Passport - Doldinger (2016)/06 - Soul Town.mp3"},"playbackStatus":"playing","position":72.79499816894531,"shuffle":false,"volume":97,"mute":false}}
 ```
 
 ##### Error
@@ -201,7 +203,7 @@ Any [json-rpc 2.0 conformant error](https://www.jsonrpc.org/specification#error_
 ### Plugin.Stream.Player.Properties
 
 ```json
-{"jsonrpc": "2.0", "method": "Plugin.Stream.Player.Properties", "params": {"canControl":true,"canGoNext":true,"canGoPrevious":true,"canPause":true,"canPlay":true,"canSeek":false,"loopStatus":"none","playbackStatus":"playing","position":593.394,"shuffle":false,"volume":86}}
+{"jsonrpc": "2.0", "method": "Plugin.Stream.Player.Properties", "params": {"canControl":true,"canGoNext":true,"canGoPrevious":true,"canPause":true,"canPlay":true,"canSeek":false,"loopStatus":"none","playbackStatus":"playing","position":593.394,"shuffle":false,"volume":86,"mute":false}}
 ```
 
 Same format as in [GetProperties](#pluginstreamplayergetproperties). If `metadata` is missing, the last known metadata will be used, so the plugin must not send the complete metadata if one of the properties is updated.

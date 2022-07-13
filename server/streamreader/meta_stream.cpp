@@ -226,6 +226,12 @@ void MetaStream::setVolume(uint16_t volume, ResultHandler handler)
     active_stream_->setVolume(volume, std::move(handler));
 }
 
+void MetaStream::setMute(bool mute, ResultHandler handler)
+{
+    std::lock_guard<std::recursive_mutex> lock(mutex_);
+    active_stream_->setMute(mute, std::move(handler));
+}
+
 void MetaStream::setRate(float rate, ResultHandler handler)
 {
     std::lock_guard<std::recursive_mutex> lock(mutex_);

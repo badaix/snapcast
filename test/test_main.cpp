@@ -190,6 +190,7 @@ TEST_CASE("Properties")
     "loopStatus": "track",
     "shuffle": false,
     "volume": 42,
+    "mute": false,
     "position": 23.0
 }
 )");

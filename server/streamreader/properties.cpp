@@ -92,6 +92,7 @@ json Properties::toJson() const
     addTag(j, "rate", rate);
     addTag(j, "shuffle", shuffle);
     addTag(j, "volume", volume);
+    addTag(j, "mute", mute);
     addTag(j, "position", position);
     addTag(j, "minimumRate", minimum_rate);
     addTag(j, "maximumRate", maximum_rate);
@@ -108,9 +109,9 @@ json Properties::toJson() const
 
 void Properties::fromJson(const json& j)
 {
-    static std::set<std::string> rw_props = {"loopStatus", "shuffle", "volume", "rate"};
-    static std::set<std::string> ro_props = {"playbackStatus", "loopStatus",    "shuffle", "volume",   "position", "minimumRate", "maximumRate",
-                                             "canGoNext",      "canGoPrevious", "canPlay", "canPause", "canSeek",  "canControl",  "metadata"};
+    static std::set<std::string> rw_props = {"loopStatus", "shuffle", "volume", "mute", "rate"};
+    static std::set<std::string> ro_props = {"playbackStatus", "loopStatus",    "shuffle", "volume",   "mute",    "position",   "minimumRate", "maximumRate",
+                                             "canGoNext",      "canGoPrevious", "canPlay", "canPause", "canSeek", "canControl", "metadata"};
     for (const auto& element : j.items())
     {
         bool is_rw = (rw_props.find(element.key()) != rw_props.end());
@@ -135,6 +136,7 @@ void Properties::fromJson(const json& j)
     readTag(j, "rate", rate);
     readTag(j, "shuffle", shuffle);
     readTag(j, "volume", volume);
+    readTag(j, "mute", mute);
     readTag(j, "position", position);
     readTag(j, "minimumRate", minimum_rate);
     readTag(j, "maximumRate", maximum_rate);

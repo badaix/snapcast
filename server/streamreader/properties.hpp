@@ -166,6 +166,8 @@ public:
     std::optional<bool> shuffle;
     /// The volume level between 0-100
     std::optional<int> volume;
+    /// The current mute state
+    std::optional<bool> mute;
     /// The current track position in seconds
     std::optional<float> position;
     /// The minimum value which the Rate property can take. Clients should not attempt to set the Rate property below this value

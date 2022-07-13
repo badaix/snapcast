@@ -141,6 +141,7 @@ public:
     virtual void setShuffle(bool shuffle, ResultHandler handler);
     virtual void setLoopStatus(LoopStatus status, ResultHandler handler);
     virtual void setVolume(uint16_t volume, ResultHandler handler);
+    virtual void setMute(bool mute, ResultHandler handler);
     virtual void setRate(float rate, ResultHandler handler);
 
     // Control commands

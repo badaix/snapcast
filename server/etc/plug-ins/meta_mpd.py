@@ -800,6 +800,7 @@ Usage: %(progname)s [OPTION]...
      --snapcast-port=PORT   Set the snapcast server port
      --stream=ID            Set the stream id
 
+     -h, --help             Show this help message
      -d, --debug            Run in debug mode
      -v, --version          meta_mpd version
 

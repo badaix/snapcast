@@ -564,6 +564,12 @@ void Server::processRequest(const jsonrpcpp::request_ptr request, const OnRespon
                         throw jsonrpcpp::InvalidParamsException("Value for volume must be an int", request->id());
                     stream->setVolume(value.get<int16_t>(), [handle_response](const snapcast::ErrorCode& ec) { handle_response(ec); });
                 }
+                else if (name == "mute")
+                {
+                    if (!value.is_boolean())
+                        throw jsonrpcpp::InvalidParamsException("Value for mute must be bool", request->id());
+                    stream->setMute(value.get<bool>(), [handle_response](const snapcast::ErrorCode& ec) { handle_response(ec); });
+                }
                 else if (name == "rate")
                 {
                     if (!value.is_number_float())

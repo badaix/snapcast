@@ -51,6 +51,7 @@ public:
     void setShuffle(bool shuffle, ResultHandler handler) override;
     void setLoopStatus(LoopStatus status, ResultHandler handler) override;
     void setVolume(uint16_t volume, ResultHandler handler) override;
+    void setMute(bool mute, ResultHandler handler) override;
     void setRate(float rate, ResultHandler handler) override;
 
     // Control commands
