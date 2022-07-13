@@ -26,7 +26,6 @@ import websocket
 import logging
 import threading
 import json
-import os
 import sys
 import getopt
 import logging
@@ -40,9 +39,8 @@ identity = "Snapcast"
 params = {
     'progname': sys.argv[0],
     # Connection
-    'host': None,
-    'port': None,
-    'password': None,
+    'mopidy-host': None,
+    'mopidy-port': None,
     'snapcast-host': None,
     'snapcast-port': None,
     'stream': None,
@@ -50,9 +48,8 @@ params = {
 
 defaults = {
     # Connection
-    'host': 'localhost',
-    'port': 6680,
-    'password': None,
+    'mopidy-host': 'localhost',
+    'mopidy-port': 6680,
     'snapcast-host': 'localhost',
     'snapcast-port': 1780,
     'stream': 'default',
@@ -77,7 +74,7 @@ class MopidyControl(object):
         self._mopidy_request_map = {}
         self._seek_offset = 0.0
 
-        self.websocket = websocket.WebSocketApp("ws://" + self._params['host'] + ":" + str(self._params['port']) + "/mopidy/ws",
+        self.websocket = websocket.WebSocketApp("ws://" + self._params['mopidy-host'] + ":" + str(self._params['mopidy-port']) + "/mopidy/ws",
                                                 on_message=self.on_ws_message,
                                                 on_error=self.on_ws_error,
                                                 on_open=self.on_ws_open,
@@ -95,22 +92,28 @@ class MopidyControl(object):
             sleep(1)
         logger.info("Ending MopidyControl loop")
 
-    def onGetImageResponse(self, jmsg):
+    def extractImageUrl(self, track_uri, jmsg):
+        url = None
+        if jmsg and track_uri in jmsg and jmsg[track_uri]:
+            url = jmsg[track_uri][0]['uri']
+            if url.find('://') == -1:
+                url = str(
+                    f"http://{self._params['mopidy-host']}:{self._params['mopidy-port']}{url}")
+            logger.debug(f"Image: {url}")
+        return url
+
+    def onGetImageResponse(self, result):
         if 'metadata' in self._properties:
             # => {'id': 25, 'jsonrpc': '2.0', 'method': 'core.library.get_images', 'params': {'uris': ['local:track:A/ABBA/ABBA%20-%20Voyage%20%282021%29/10%20-%20Ode%20to%20Freedom.ogg']}}
             # <= {"jsonrpc": "2.0", "id": 25, "result": {"local:track:A/ABBA/ABBA%20-%20Voyage%20%282021%29/10%20-%20Ode%20to%20Freedom.ogg": [{"__model__": "Image", "uri": "/local/f0b20b441175563334f6ad75e76426b7-500x500.jpeg", "width": 500, "height": 500}]}}
-            result = jmsg['result']
             meta = self._properties['metadata']
-            if 'url' in meta and meta['url'] in result and result[meta['url']]:
-                uri = result[meta['url']][0]['uri']
-                url = str(
-                    f"http://{self._params['host']}:{self._params['port']}{uri}")
-                logger.debug(f"Image: {url}")
-                if 'metadata' in self._properties:
+            if 'url' in meta:
+                url = self.extractImageUrl(meta['url'], result)
+                if not url is None:
                     self._properties['metadata']['artUrl'] = url
                     logger.info(f'New properties: {self._properties}')
                     return send({"jsonrpc": "2.0", "method": "Plugin.Stream.Player.Properties",
-                                 "params": self._properties})
+                                "params": self._properties})
 
     def getMetaData(self, track):
         metadata = {}
@@ -165,13 +168,13 @@ class MopidyControl(object):
 
     def getProperties(self, req_res):
         properties = {}
+        repeat = False
+        single = False
         for rr in req_res:
             request = rr[0]
             result = rr[1]
             logger.debug(
                 f'getProperties request: {request}, result: {result}')
-            repeat = False
-            single = False
             if request == 'core.playback.get_state':
                 properties['playbackStatus'] = str(result)
             elif request == 'core.tracklist.get_repeat':
@@ -188,19 +191,17 @@ class MopidyControl(object):
                 self._metadata = self.getMetaData(result)
             elif request == 'core.library.get_images':
                 metadata = self._metadata
-                if not metadata is None and 'url' in metadata and metadata['url'] in result and result[metadata['url']]:
-                    uri = result[metadata['url']][0]['uri']
-                    url = str(
-                        f"http://{self._params['host']}:{self._params['port']}{uri}")
-                    logger.debug(f"Image: {url}")
-                    self._metadata['artUrl'] = url
+                if not metadata is None and 'url' in metadata:
+                    url = self.extractImageUrl(metadata['url'], result)
+                    if not url is None:
+                        self._metadata['artUrl'] = url
 
-            if repeat and single:
-                properties['loopStatus'] = 'track'
-            elif repeat:
-                properties['loopStatus'] = 'playlist'
-            else:
-                properties['loopStatus'] = 'none'
+        if repeat and single:
+            properties['loopStatus'] = 'track'
+        elif repeat:
+            properties['loopStatus'] = 'playlist'
+        else:
+            properties['loopStatus'] = 'none'
 
         properties['canGoNext'] = True
         properties['canGoPrevious'] = True
@@ -218,6 +219,9 @@ class MopidyControl(object):
         logger.info(f'New properties: {self._properties}')
         send({"jsonrpc": "2.0", "id": req_id,
               "result": self._properties})
+        # The next request will trigger another update to Snapcast
+        # Sleep for a short while to avoid too frequent updates
+        sleep(0.2)
         self.send_request('core.library.get_images', {
             'uris': [self._metadata['url']]}, self.onGetImageResponse)
 
@@ -227,9 +231,9 @@ class MopidyControl(object):
         send({"jsonrpc": "2.0", "method": "Plugin.Stream.Player.Properties",
               "params": self._properties})
 
-    def onGetTimePositionResponse(self, jmsg):
+    def onGetTimePositionResponse(self, result):
         if self._seek_offset != 0:
-            pos = int(int(jmsg['result']) + self._seek_offset * 1000)
+            pos = int(int(result) + self._seek_offset * 1000)
             logger.debug(f"Seeking to: {pos}")
             self.send_request("core.playback.seek", {
                 "time_position": pos})
@@ -267,7 +271,7 @@ class MopidyControl(object):
                 logger.debug(f'Received response to request "{request[0]}"')
                 callback = request[1]
                 if not callback is None:
-                    callback(jmsg)
+                    callback(jmsg['result'])
 
         # Notification
         else:
@@ -423,12 +427,13 @@ def usage(params):
     print("""\
 Usage: %(progname)s [OPTION]...
 
-     -h, --host=ADDR        Set the mpd server address
-     -p, --port=PORT        Set the TCP port
+     --mopidy-host=ADDR     Set the mopidy server address
+     --mopidy-port=PORT     Set the mopidy server port
      --snapcast-host=ADDR   Set the snapcast server address
      --snapcast-port=PORT   Set the snapcast server port
      --stream=ID            Set the stream id
 
+     -h, --help             Show this help message
      -d, --debug            Run in debug mode
      -v, --version          meta_mopidy version
 
@@ -443,10 +448,9 @@ if __name__ == '__main__':
 
     # Parse command line
     try:
-        (opts, args) = getopt.getopt(sys.argv[1:], 'h:p:dv',
-                                     ['help', 'stream=', 'snapcast-host=', 'snapcast-port=',
-                                     'debug', 'host=',
-                                      'port=', 'version'])
+        (opts, args) = getopt.getopt(sys.argv[1:], 'hdv',
+                                     ['help', 'mopidy-host=', 'mopidy-port=', 'snapcast-host=', 'snapcast-port=', 'stream=', 'debug', 'version'])
+
     except getopt.GetoptError as ex:
         (msg, opt) = ex.args
         print("%s: %s" % (sys.argv[0], msg), file=sys.stderr)
@@ -455,26 +459,26 @@ if __name__ == '__main__':
         sys.exit(2)
 
     for (opt, arg) in opts:
-        if opt in ['--help']:
+        if opt in ['-h', '--help']:
             usage(params)
             sys.exit()
-        elif opt in ['-d', '--debug']:
-            log_level = logging.DEBUG
-        elif opt in ['-h', '--host']:
-            params['host'] = arg
-        elif opt in ['-p', '--port']:
-            params['port'] = int(arg)
+        elif opt in ['--mopidy-host']:
+            params['mopidy-host'] = arg
+        elif opt in ['--mopidy-port']:
+            params['mopidy-port'] = int(arg)
         elif opt in ['--snapcast-host']:
             params['snapcast-host'] = arg
         elif opt in ['--snapcast-port']:
             params['snapcast-port'] = int(arg)
         elif opt in ['--stream']:
             params['stream'] = arg
+        elif opt in ['-d', '--debug']:
+            log_level = logging.DEBUG
         elif opt in ['-v', '--version']:
             v = __version__
             if __git_version__:
                 v = __git_version__
-            print("snapcast_mopidy version %s" % v)
+            print("meta_mopidy version %s" % v)
             sys.exit()
 
     if len(args) > 2:
@@ -491,18 +495,9 @@ if __name__ == '__main__':
 
     logger.addHandler(log_handler)
 
-    # Pick up the server address (argv -> environment -> config)
-    for arg in args[:2]:
-        if arg.isdigit():
-            params['port'] = arg
-        else:
-            params['host'] = arg
-
-    for p in ['host', 'port', 'password']:
+    for p in ['mopidy-host', 'mopidy-port', 'snapcast-host', 'snapcast-port', 'stream']:
         if not params[p]:
             params[p] = defaults[p]
-
-    params['host'] = os.path.expanduser(params['host'])
 
     logger.debug(f'Parameters: {params}')
 
