@@ -11,6 +11,7 @@ source = pipe:///tmp/snapfifo?name=MPD&controlscript=meta_mpd.py
 ```
 
 If a relative path is given, Snapserver will search the script in `/usr/share/snapserver/plug-ins`. An example script `meta_mpd.py` is shipped with the server installation, that can be used with mpd stream sources.
+Paramters are passed to the control script using the `controlscriptparams` stream source parameter.
 
 A Stream plugin must support and handle the following [requests](#requests), sent by the Snapcast server
 

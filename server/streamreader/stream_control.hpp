@@ -87,7 +87,7 @@ private:
 class ScriptStreamControl : public StreamControl
 {
 public:
-    ScriptStreamControl(const boost::asio::any_io_executor& executor, const std::string& script);
+    ScriptStreamControl(const boost::asio::any_io_executor& executor, const std::string& script, const std::string& params);
     virtual ~ScriptStreamControl() = default;
 
     void stop() override;
@@ -109,6 +109,7 @@ protected:
     boost::asio::streambuf streambuf_stderr_;
 
     std::string script_;
+    std::string params_;
     bp::opstream in_;
 };
 

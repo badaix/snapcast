@@ -91,6 +91,7 @@ static constexpr auto kUriName = "name";
 static constexpr auto kUriSampleFormat = "sampleformat";
 static constexpr auto kUriChunkMs = "chunk_ms";
 static constexpr auto kControlScript = "controlscript";
+static constexpr auto kControlScriptParams = "controlscriptparams";
 
 
 /// Reads and decodes PCM data

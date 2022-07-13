@@ -140,7 +140,8 @@ void StreamControl::onLog(std::string message)
 
 
 
-ScriptStreamControl::ScriptStreamControl(const boost::asio::any_io_executor& executor, const std::string& script) : StreamControl(executor), script_(script)
+ScriptStreamControl::ScriptStreamControl(const boost::asio::any_io_executor& executor, const std::string& script, const std::string& params)
+    : StreamControl(executor), script_(script), params_(params)
 {
     namespace fs = utils::file;
     if (!fs::exists(script_))
@@ -159,9 +160,14 @@ void ScriptStreamControl::doStart(const std::string& stream_id, const ServerSett
     pipe_stderr_ = bp::pipe();
     pipe_stdout_ = bp::pipe();
     stringstream params;
+    params << " " << params_;
     params << " \"--stream=" + stream_id + "\"";
     if (server_setttings.http.enabled)
+    {
         params << " --snapcast-port=" << server_setttings.http.port;
+        params << " --snapcast-host=" << server_setttings.http.host;
+    }
+    LOG(DEBUG, LOG_TAG) << "Starting control script: '" << script_ << "', params: '" << params.str() << "'\n";
     try
     {
         process_ = bp::child(

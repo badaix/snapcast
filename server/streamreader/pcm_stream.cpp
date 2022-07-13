@@ -64,7 +64,10 @@ PcmStream::PcmStream(PcmStream::Listener* pcmListener, boost::asio::io_context& 
 
     if (uri_.query.find(kControlScript) != uri_.query.end())
     {
-        stream_ctrl_ = std::make_unique<ScriptStreamControl>(strand_, uri_.query[kControlScript]);
+        std::string params;
+        if (uri_.query.find(kControlScriptParams) != uri_.query.end())
+            params = uri_.query[kControlScriptParams];
+        stream_ctrl_ = std::make_unique<ScriptStreamControl>(strand_, uri_.query[kControlScript], params);
     }
 
     if (uri_.query.find(kUriChunkMs) != uri_.query.end())
@@ -442,7 +445,7 @@ void PcmStream::sendRequest(const std::string& method, const jsonrpcpp::Paramete
 
     jsonrpcpp::Request req(++req_id_, method, params);
     stream_ctrl_->command(req, [handler](const jsonrpcpp::Response& response) {
-        if (response.error().code())
+        if (response.error().code() != 0)
             handler({static_cast<ControlErrc>(response.error().code()), response.error().data()});
         else
             handler({ControlErrc::success});
@@ -463,7 +466,7 @@ void PcmStream::setProperties(const Properties& properties)
     if (props.metadata.has_value() && props.metadata->art_data.has_value() && !props.metadata->art_url.has_value())
     {
         auto data = base64_decode(props.metadata->art_data->data);
-        auto md5 = server_settings_.http.image_cache.setImage(getName(), std::move(data), props.metadata->art_data->extension);
+        auto md5 = ServerSettings::Http::image_cache.setImage(getName(), std::move(data), props.metadata->art_data->extension);
 
         std::stringstream url;
         url << "http://" << server_settings_.http.host << ":" << server_settings_.http.port << "/__image_cache?name=" << md5;
@@ -471,7 +474,7 @@ void PcmStream::setProperties(const Properties& properties)
     }
     else if (!props.metadata.has_value() || !props.metadata->art_data.has_value())
     {
-        server_settings_.http.image_cache.clear(getName());
+        ServerSettings::Http::image_cache.clear(getName());
     }
 
     if (props == properties_)

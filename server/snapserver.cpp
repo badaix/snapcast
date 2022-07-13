@@ -119,8 +119,8 @@ int main(int argc, char* argv[])
                               &settings.stream.sendAudioToMutedClients);
 
         // streaming_client options
-        conf.add<Value<uint16_t>>("", "streaming_client.initial_volume", "Volume [percent] assigned to new streaming clients", settings.streamingclient.initialVolume,
-                                  &settings.streamingclient.initialVolume);
+        conf.add<Value<uint16_t>>("", "streaming_client.initial_volume", "Volume [percent] assigned to new streaming clients",
+                                  settings.streamingclient.initialVolume, &settings.streamingclient.initialVolume);
 
         // logging settings
         conf.add<Value<string>>("", "logging.sink", "log sink [null,system,stdout,stderr,file:<filename>]", settings.logging.sink, &settings.logging.sink);

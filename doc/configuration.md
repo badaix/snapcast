@@ -13,7 +13,7 @@ The following notation is used in this paragraph:
 The general format of an audio source is:
 
 ```sh
-TYPE://host/path?name=<name>[&codec=<codec>][&sampleformat=<sampleformat>][&chunk_ms=<chunk ms>][&controlscript=<control script filename>]
+TYPE://host/path?name=<name>[&codec=<codec>][&sampleformat=<sampleformat>][&chunk_ms=<chunk ms>][&controlscript=<control script filename>[&controlscriptparams=<control script command line arguments>]]
 ```
 
 Within the `[stream]` section there are some global parameters valid for all `source`s:
@@ -37,6 +37,7 @@ Supported parameters for all source types:
 - `chunk_ms`: Override the global `chunk_ms`
 - `dryout_ms`: Supported by non-blocking sourced: when no new data is read from the source, send silence to the clients
 - `controlscript`: Script to control the stream source and read and provide meta data, see [stream_plugin.md](json_rpc_api/stream_plugin.md)
+- `controlscriptparams`: Control script command line arguments, must be url-encoded (use `%20` instead of a space ` `), e.g. `--mopidy-host=192.168.42.23%20--debug`
 
 Available audio source types are:
 
