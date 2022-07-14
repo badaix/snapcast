@@ -127,7 +127,7 @@ else()
   install(DIRECTORY etc/snapweb/
           DESTINATION ${CMAKE_INSTALL_DATADIR}/snapserver/snapweb)
   install(
-    FILES etc/plug-ins/meta_mpd.py
+    FILES etc/plug-ins/meta_mpd.py etc/plug-ins/meta_mopidy.py
     PERMISSIONS
       OWNER_READ
       OWNER_WRITE

@@ -10,8 +10,8 @@ A stream is connected to a plugin with the `controlscript` stream source paramet
 source = pipe:///tmp/snapfifo?name=MPD&controlscript=meta_mpd.py
 ```
 
-If a relative path is given, Snapserver will search the script in `/usr/share/snapserver/plug-ins`. An example script `meta_mpd.py` is shipped with the server installation, that can be used with mpd stream sources.
-Paramters are passed to the control script using the `controlscriptparams` stream source parameter.
+If a relative path is given, Snapserver will search the script in `/usr/share/snapserver/plug-ins`. Example scripts `meta_mpd.py` and `meta_mopidy.py` are shipped with the server installation, that can be used with mpd and mopidy stream sources.
+Paramters are passed to the control script using the `controlscriptparams` stream source parameter. Snapserver will always pass the parameter `--stream=<id of the stream>` and, if HTTP is enabled, `--snapcast-port=<http.port>` and `--snapcast-host=<http.host>`
 
 A Stream plugin must support and handle the following [requests](#requests), sent by the Snapcast server
 
