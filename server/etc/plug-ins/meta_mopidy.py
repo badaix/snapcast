@@ -117,6 +117,8 @@ class MopidyControl(object):
 
     def getMetaData(self, track):
         metadata = {}
+        if track is None:
+            return metadata
         if 'uri' in track:
             metadata['url'] = track['uri']
             update_image = True
@@ -218,17 +220,22 @@ class MopidyControl(object):
             properties['metadata'] = self._metadata
         return properties
 
+    def onGetTrackResponse(self, req_id, track):
+        self._metadata = self.getMetaData(track)
+        batch_req = [("core.playback.get_stream_title", None), ("core.playback.get_state", None), ("core.tracklist.get_repeat", None), ("core.tracklist.get_single", None),
+                     ("core.tracklist.get_random", None), ("core.mixer.get_volume", None), ("core.playback.get_time_position", None)]
+        if 'url' in self._metadata:
+            batch_req.append(('core.library.get_images', {
+                'uris': [self._metadata['url']]}))
+        self.send_batch_request(
+            batch_req, lambda req_res: self.onSnapcastPropertiesResponse(req_id, req_res))
+
     def onSnapcastPropertiesResponse(self, req_id, req_res):
         logger.debug(f'onSnapcastPropertiesRequest id: {req_id}')
         self._properties = self.getProperties(req_res)
         logger.info(f'New properties: {self._properties}')
         send({"jsonrpc": "2.0", "id": req_id,
               "result": self._properties})
-        # The next request will trigger another update to Snapcast
-        # Sleep for a short while to avoid too frequent updates
-        sleep(0.2)
-        self.send_request('core.library.get_images', {
-            'uris': [self._metadata['url']]}, self.onGetImageResponse)
 
     def onPropertiesResponse(self, req_res):
         self._properties = self.getProperties(req_res)
@@ -287,9 +294,13 @@ class MopidyControl(object):
                     self._metadata = self.getMetaData(
                         jmsg['tl_track']['track'])
                     logger.debug(f'Meta: {self._metadata}')
-                    self.send_batch_request([("core.playback.get_stream_title", None), ("core.playback.get_state", None), ("core.tracklist.get_repeat", None), ("core.tracklist.get_single", None),
-                                             ("core.tracklist.get_random", None), ("core.mixer.get_volume", None), ("core.mixer.get_mute", None), ("core.playback.get_time_position", None), ('core.library.get_images', {
-                                                 'uris': [self._metadata['url']]})], self.onPropertiesResponse)
+                    batch_req = [("core.playback.get_stream_title", None), ("core.playback.get_state", None), ("core.tracklist.get_repeat", None), ("core.tracklist.get_single", None),
+                                 ("core.tracklist.get_random", None), ("core.mixer.get_volume", None), ("core.mixer.get_mute", None), ("core.playback.get_time_position", None)]
+                    if 'url' in self._metadata:
+                        batch_req.append(('core.library.get_images', {
+                            'uris': [self._metadata['url']]}))
+                    self.send_batch_request(
+                        batch_req, self.onPropertiesResponse)
                 elif event in ['tracklist_changed', 'track_playback_ended']:
                     logger.debug("Nothing to do")
                 elif event == 'playback_state_changed' and jmsg["old_state"] == jmsg["new_state"]:
@@ -411,8 +422,8 @@ class MopidyControl(object):
                         self.send_request("core.mixer.set_mute", {
                                           "mute": property['mute']})
                 elif cmd == 'GetProperties':
-                    self.send_batch_request([("core.playback.get_current_track", None), ("core.playback.get_stream_title", None), ("core.playback.get_state", None), ("core.tracklist.get_repeat", None), ("core.tracklist.get_single", None),
-                                             ("core.tracklist.get_random", None), ("core.mixer.get_volume", None), ("core.playback.get_time_position", None)], lambda req_res: self.onSnapcastPropertiesResponse(id, req_res))
+                    self.send_request("core.playback.get_current_track", None,
+                                      lambda track: self.onGetTrackResponse(id, track))
                     return
                 elif cmd == 'GetMetadata':
                     send({"jsonrpc": "2.0", "method": "Plugin.Stream.Log", "params": {
