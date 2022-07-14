@@ -175,7 +175,10 @@ class MopidyControl(object):
             result = rr[1]
             logger.debug(
                 f'getProperties request: {request}, result: {result}')
-            if request == 'core.playback.get_state':
+            if request == 'core.playback.get_stream_title':
+                if not result is None and not self._metadata is None:
+                    self._metadata['title'] = result
+            elif request == 'core.playback.get_state':
                 properties['playbackStatus'] = str(result)
             elif request == 'core.tracklist.get_repeat':
                 repeat = result
@@ -284,7 +287,7 @@ class MopidyControl(object):
                     self._metadata = self.getMetaData(
                         jmsg['tl_track']['track'])
                     logger.debug(f'Meta: {self._metadata}')
-                    self.send_batch_request([("core.playback.get_state", None), ("core.tracklist.get_repeat", None), ("core.tracklist.get_single", None),
+                    self.send_batch_request([("core.playback.get_stream_title", None), ("core.playback.get_state", None), ("core.tracklist.get_repeat", None), ("core.tracklist.get_single", None),
                                              ("core.tracklist.get_random", None), ("core.mixer.get_volume", None), ("core.mixer.get_mute", None), ("core.playback.get_time_position", None), ('core.library.get_images', {
                                                  'uris': [self._metadata['url']]})], self.onPropertiesResponse)
                 elif event in ['tracklist_changed', 'track_playback_ended']:
@@ -294,7 +297,7 @@ class MopidyControl(object):
                 elif event == 'volume_changed' and 'volume' in self._properties and jmsg['volume'] == self._properties['volume']:
                     logger.debug("Nothing to do")
                 else:
-                    self.send_batch_request([("core.playback.get_state", None), ("core.tracklist.get_repeat", None), ("core.tracklist.get_single", None),
+                    self.send_batch_request([("core.playback.get_stream_title", None), ("core.playback.get_state", None), ("core.tracklist.get_repeat", None), ("core.tracklist.get_single", None),
                                              ("core.tracklist.get_random", None), ("core.mixer.get_volume", None), ("core.mixer.get_mute", None), ("core.playback.get_time_position", None)], self.onPropertiesResponse)
 
     def on_ws_error(self, ws, error):
@@ -408,8 +411,8 @@ class MopidyControl(object):
                         self.send_request("core.mixer.set_mute", {
                                           "mute": property['mute']})
                 elif cmd == 'GetProperties':
-                    self.send_batch_request([("core.playback.get_state", None), ("core.tracklist.get_repeat", None), ("core.tracklist.get_single", None),
-                                             ("core.tracklist.get_random", None), ("core.mixer.get_volume", None), ("core.playback.get_current_track", None), ("core.playback.get_time_position", None)], lambda req_res: self.onSnapcastPropertiesResponse(id, req_res))
+                    self.send_batch_request([("core.playback.get_current_track", None), ("core.playback.get_stream_title", None), ("core.playback.get_state", None), ("core.tracklist.get_repeat", None), ("core.tracklist.get_single", None),
+                                             ("core.tracklist.get_random", None), ("core.mixer.get_volume", None), ("core.playback.get_time_position", None)], lambda req_res: self.onSnapcastPropertiesResponse(id, req_res))
                     return
                 elif cmd == 'GetMetadata':
                     send({"jsonrpc": "2.0", "method": "Plugin.Stream.Log", "params": {
