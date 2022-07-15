@@ -14,7 +14,7 @@
 #   You should have received a copy of the GNU General Public License
 #   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-VERSION = 0.26.0
+VERSION = 0.27.0
 BIN = snapclient
 
 ifeq ($(TARGET), FREEBSD)
