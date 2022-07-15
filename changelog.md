@@ -4,17 +4,22 @@
 
 ### Features
 
-- Server: TODO
+- Server: Configurable default volume for new clients (Issue #910, PR #1024)
+- Server: New control script for mopidy: meta_mopidy.py
 
 ### Bugfixes
 
-- TODO
+- Server: Fix segfault with Librespot on Alpine (Issue #1026)
+- Server: meta_mpd.py is installed with 755 (Issue #1021, #970)
+- Server: Add list of dependecies to meta_mpd.py (Issue #971)
+- Server: meta_mpd.py stopped working (Issue #997)
 
 ### General
 
 - Remove debhelper files from project
+- Snapos uses containers to build deb packages (solves Issue #968)
 
-_Johannes Pohl <snapcast@badaix.de>  Sun, 13 Feb 2022 00:13:37 +0200_
+_Johannes Pohl <snapcast@badaix.de>  Sat, 23 Jul 2022 00:13:37 +0200_
 
 ## Version 0.26.0
 
