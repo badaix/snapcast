@@ -726,7 +726,7 @@ _Johannes Pohl <snapcast@badaix.de>  Wed, 26 Aug 2015 12:00:00 +0200_
 - Code clean up
 - Refactored encoding for lower latency
 
-_Johannes Pohl <snapcast@badaix.de>  Sun, 16 Aug 2015 19:25:51 +0100
+_Johannes Pohl <snapcast@badaix.de>  Sun, 16 Aug 2015 19:25:51 +0100_
 
 ## Version 0.2.1
 
@@ -734,4 +734,4 @@ _Johannes Pohl <snapcast@badaix.de>  Sun, 16 Aug 2015 19:25:51 +0100
 
 - Arch Linux compatibility
 
-_Johannes Pohl <snapcast@badaix.de>  Fri, 24 Jul 2015 15:47:00 +0100
+_Johannes Pohl <snapcast@badaix.de>  Fri, 24 Jul 2015 15:47:00 +0100_
