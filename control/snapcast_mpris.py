@@ -1016,7 +1016,7 @@ if __name__ == '__main__':
     try:
         (opts, args) = getopt.getopt(sys.argv[1:], 'dh:p:v',
                                      ['help', 'bus-name=',
-                                     'debug', 'host=', 'client='
+                                     'debug', 'host=', 'client=',
                                       'port=', 'version'])
     except getopt.GetoptError as ex:
         (msg, opt) = ex.args
@@ -1026,6 +1026,7 @@ if __name__ == '__main__':
         sys.exit(2)
 
     for (opt, arg) in opts:
+        print(f"opt: {opt}, arg: {arg}")
         if opt in ['--help']:
             usage(params)
             sys.exit()
@@ -1038,7 +1039,7 @@ if __name__ == '__main__':
         elif opt in ['-p', '--port']:
             params['port'] = int(arg)
         elif opt in ['--client']:
-            params['client'] = int(arg)
+            params['client'] = arg
         elif opt in ['-v', '--version']:
             v = __version__
             if __git_version__:
