@@ -160,8 +160,6 @@ class LibrespotControl(object):
         if res.status_code / 100 == 2:
             self._metadata = self.getMetaData(res.text)
             self._properties['metadata'] = self._metadata
-            send({"jsonrpc": "2.0", "method": "Plugin.Stream.Player.Properties",
-                  "params": self._properties})
 
     def on_ws_message(self, ws, message):
         # TODO: error handling
@@ -181,9 +179,35 @@ class LibrespotControl(object):
             if 'event' in jmsg:
                 event = jmsg['event']
                 logger.info(f"Event: {event}, msg: {jmsg}")
-                # if event == 'metadataAvailable':
-                    # 'trackChanged':
-                self.updateProperties()
+                # elif event == 'contextChanged':
+                # elif event == 'trackChanged':
+                sendupdate = True
+                if event == 'playbackEnded':
+                    self._properties['playbackStatus'] = 'stopped'
+                elif event == 'playbackPaused':
+                    self._properties['playbackStatus'] = 'paused'
+                elif event == 'playbackResumed':
+                    self._properties['playbackStatus'] = 'playing'
+                elif event == 'volumeChanged':
+                    self._properties['volume'] = int(jmsg['value'] * 100.0)
+                elif event == 'trackSeeked':
+                    self._properties['position'] = float(
+                        jmsg['trackTime']) / 1000.0
+                elif event == 'metadataAvailable':
+                    self.updateProperties()
+                # elif event == 'playbackHaltStateChanged':
+                # elif event == 'sessionCleared':
+                # elif event == 'sessionChanged':
+                # elif event == 'inactiveSession':
+                # elif event == 'connectionDropped':
+                # elif event == 'connectionEstablished':
+                # elif event == 'panic':
+                else:
+                    sendupdate = False
+
+                if sendupdate:
+                    send({"jsonrpc": "2.0", "method": "Plugin.Stream.Player.Properties",
+                         "params": self._properties})
 
     def on_ws_error(self, ws, error):
         logger.error("Snapcast RPC websocket error")
