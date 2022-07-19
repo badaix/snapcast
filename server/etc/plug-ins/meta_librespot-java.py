@@ -155,6 +155,14 @@ class LibrespotControl(object):
 
         return metadata
 
+    def updateProperties(self):
+        res = self.send_request('player/current')
+        if res.status_code / 100 == 2:
+            self._metadata = self.getMetaData(res.text)
+            self._properties['metadata'] = self._metadata
+            send({"jsonrpc": "2.0", "method": "Plugin.Stream.Player.Properties",
+                  "params": self._properties})
+
     def on_ws_message(self, ws, message):
         # TODO: error handling
         logger.debug(f'Snapcast RPC websocket message received: {message}')
@@ -173,14 +181,9 @@ class LibrespotControl(object):
             if 'event' in jmsg:
                 event = jmsg['event']
                 logger.info(f"Event: {event}, msg: {jmsg}")
-                if event == 'metadataAvailable':
+                # if event == 'metadataAvailable':
                     # 'trackChanged':
-                    res = self.send_request('player/current')
-                    if res.status_code / 100 == 2:
-                        self._metadata = self.getMetaData(res.text)
-                        self._properties['metadata'] = self._metadata
-                        send({"jsonrpc": "2.0", "method": "Plugin.Stream.Player.Properties",
-                              "params": self._properties})
+                self.updateProperties()
 
     def on_ws_error(self, ws, error):
         logger.error("Snapcast RPC websocket error")
@@ -229,10 +232,12 @@ class LibrespotControl(object):
                         self.send_request("player/pause")
                         self._properties['playbackStatus'] = 'paused'
                     elif command == 'playPause':
-                        self.send_request("player/play-pause")
+                        # self.send_request("player/play-pause")
                         if self._properties['playbackStatus'] == 'playing':
+                            self.send_request("player/pause")
                             self._properties['playbackStatus'] = 'paused'
                         else:
+                            self.send_request("player/resume")
                             self._properties['playbackStatus'] = 'playing'
                     elif command == 'stop':
                         self.send_request("player/pause")
@@ -247,6 +252,7 @@ class LibrespotControl(object):
                         logger.debug("todo: not implemented")
                         # self.send_request(
                         #     "core.playback.get_time_position", None, self.onGetTimePositionResponse)
+                    # self.updateProperties()
                 elif cmd == 'SetProperty':
                     property = request['params']
                     logger.debug(f'SetProperty: {property}')
@@ -272,6 +278,7 @@ class LibrespotControl(object):
                         # self._properties['mute'] = False
                         # self.send_request("core.mixer.set_mute", {
                         #                   "mute": property['mute']})
+                    # self.updateProperties()
                 elif cmd == 'GetProperties':
                     res = self.send_request('player/current')
                     # if res.status_code / 100 == 2:
