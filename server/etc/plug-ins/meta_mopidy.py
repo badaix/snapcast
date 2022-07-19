@@ -121,7 +121,6 @@ class MopidyControl(object):
             return metadata
         if 'uri' in track:
             metadata['url'] = track['uri']
-            update_image = True
         if 'name' in track:
             metadata['title'] = track['name']
         if 'artists' in track:
@@ -148,6 +147,7 @@ class MopidyControl(object):
             metadata['genre'] = [track['genre']]
         if 'track_no' in track:
             metadata['trackNumber'] = track['track_no']
+            metadata['trackId'] = str(track['track_no'])
         if 'disc_no' in track:
             metadata['discNumber'] = track['disc_no']
         if 'date' in track:
@@ -159,8 +159,6 @@ class MopidyControl(object):
             metadata['comment'] = [track['comment']]
         if 'musicbrainz_id' in track:
             metadata['musicbrainzTrackId'] = track['musicbrainz_id']
-        if 'track_no' in track:
-            metadata['trackId'] = str(track['track_no'])
         # Not supported:
         # if 'composers' in result:
         # if 'performers' in result:
@@ -258,9 +256,7 @@ class MopidyControl(object):
 
         # Batch request
         if isinstance(jmsg, list):
-            snapcast_req_id = -1
             self._properties = {}
-            update_image = False
             req_res = []
             callback = None
             for msg in jmsg:
