@@ -102,8 +102,9 @@ void MetaStream::onStateChanged(const PcmStream* pcmStream, ReaderState state)
     LOG(DEBUG, LOG_TAG) << "onStateChanged: " << pcmStream->getName() << ", state: " << state << "\n";
     std::lock_guard<std::recursive_mutex> lock(active_mutex_);
 
-    if (active_stream_->getProperties().playback_status == PlaybackStatus::kPaused)
-        return;
+    // Should a pause keep the stream active? E.g. Spotify can only pause, so it would never get inactive
+    // if (active_stream_->getProperties().playback_status == PlaybackStatus::kPaused)
+    //     return;
 
     auto switch_stream = [this](std::shared_ptr<PcmStream> new_stream) {
         if (new_stream == active_stream_)
