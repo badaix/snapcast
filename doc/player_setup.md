@@ -186,7 +186,25 @@ It might be necessary to set the PulseAudio latency environment variable to 60 m
 
 ### AirPlay
 
-Snapserver supports [shairport-sync](https://github.com/mikebrady/shairport-sync) with the `stdout` backend and metadata support.
+Snapserver supports [shairport-sync](https://github.com/mikebrady/shairport-sync) with the `stdout` backend and metadata support. 
+These options are passed as parameters when Snapcast invokes Shairport-sync, so it _should_ work without modifying the shairport-sync.conf file.
+
+Some distros have shairport-sync packages in their main package repositories, and you may find that they 'just work', as long as you **disable the service**, so that Snapcast has full control of the shairport-sync process. Here is an example for some debian-based distros, but the need for sudo, the name of the package manager, and the syntax to install and control services may vary in your case
+
+```sh
+sudo apt install -y shairport-sync
+sudo systemctl disable --now shairport-sync
+```
+
+Here is an example configuration line for /etc/snapserver.conf but please see [the Snapcast Airplay configuration guide](configuration.md#airplay) for more details on the syntax and options.
+
+```plaintext
+source = airplay:///shairport-sync?name=Airplay[&devicename=Snapcast][&port=5000]
+```
+
+#### in case of issues
+
+Although this _might_ be a quick and convenient way to set up an Airplay source stream, the Snapcast project has no control over how the package is compiled for different distros. Therefore, if you have issues getting the ready-compiled package to work, we recommend that you compile it yourself and re-test, before raising an issue against Snapcast.
 
  1. Install dependencies. For debian derivates: `apt-get install autoconf libpopt-dev libconfig-dev libssl-dev`  
  2. Build shairport-sync (version 3.3 or later) with `stdout` backend: 
