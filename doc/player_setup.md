@@ -199,7 +199,7 @@ sudo systemctl disable --now shairport-sync
 Here is an example configuration line for /etc/snapserver.conf but please see [the Snapcast Airplay configuration guide](configuration.md#airplay) for more details on the syntax and options.
 
 ```plaintext
-source = airplay:///shairport-sync?name=Airplay[&devicename=Snapcast][&port=5000]
+source = airplay:///shairport-sync?name=Airplay
 ```
 
 #### in case of issues
