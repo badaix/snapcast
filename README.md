@@ -58,6 +58,14 @@ Snapcast packages are available for several Linux distributions:
 There are debian packages of automated builds for `armhf` and `amd64` in [Snapos Actions](https://github.com/badaix/snapos/actions).
 Download and extract the archive for your architecture and follow the [debian installation instructions](doc/install.md#debian).
 
+### Install using Homebrew
+
+On macOS and Linux, snapcast can be installed using [Homebrew](https://brew.sh):
+
+```bash
+brew install snapcast
+```
+
 ### Installation from source
 
 Please follow this [guide](doc/build.md) to build Snapcast for
