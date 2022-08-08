@@ -57,6 +57,8 @@ static constexpr auto LOG_TAG = "Player";
 Player::Player(boost::asio::io_context& io_context, const ClientSettings::Player& settings, std::shared_ptr<Stream> stream)
     : io_context_(io_context), active_(false), stream_(stream), settings_(settings), volume_(1.0), muted_(false), volCorrection_(1.0)
 {
+    dsp_ = std::make_unique<SoftwareDsp>(stream_->getFormat());
+
     string sharing_mode;
     switch (settings_.sharing_mode)
     {
@@ -173,16 +175,7 @@ void Player::adjustVolume(char* buffer, size_t frames)
         volume *= volCorrection_;
     }
 
-    if (volume != 1.0)
-    {
-        const SampleFormat& sampleFormat = stream_->getFormat();
-        if (sampleFormat.sampleSize() == 1)
-            adjustVolume<int8_t>(buffer, frames * sampleFormat.channels(), volume);
-        else if (sampleFormat.sampleSize() == 2)
-            adjustVolume<int16_t>(buffer, frames * sampleFormat.channels(), volume);
-        else if (sampleFormat.sampleSize() == 4)
-            adjustVolume<int32_t>(buffer, frames * sampleFormat.channels(), volume);
-    }
+    dsp_->adjustVolume(buffer, frames, volume);
 }
 
 
