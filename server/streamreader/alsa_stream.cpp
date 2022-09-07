@@ -160,10 +160,33 @@ void AlsaStream::initAlsa()
     if ((err = snd_pcm_hw_params(handle_, hw_params)) < 0)
         throw SnapException("Can't set hardware parameters: " + string(snd_strerror(err)));
 
+#if 0 // Period size test code
+    // snd_pcm_uframes_t period_size;
+    // if ((err = snd_pcm_hw_params_get_period_size(hw_params, &period_size, nullptr)) < 0)
+    //     LOG(ERROR, LOG_TAG) << "Can't get min period size: " << snd_strerror(err) << "\n";
+    // else
+    //     LOG(INFO, LOG_TAG) << "Period size: " << period_size << ", " << double(period_size) / double(sampleFormat_.rate()) * 1000. << " ms\n";
+
+    // period_size = sampleFormat_.msRate() * chunk_ms_;
+    // if ((err = snd_pcm_hw_params_set_period_size_near(handle_, hw_params, &period_size, 0)) < 0)
+    //     LOG(ERROR, LOG_TAG) << "Can't set period size: " << snd_strerror(err) << "\n";
+    // else
+    //     LOG(INFO, LOG_TAG) << "Period size: " << period_size << ", " << double(period_size) / double(sampleFormat_.rate()) * 1000. << " ms\n";
+
+    // chunk_ = std::make_unique<msg::PcmChunk>(sampleFormat_, 2*period_size, false);
+    // LOG(INFO, LOG_TAG) << "Chunk duration: " << chunk_->duration<std::chrono::milliseconds>().count() << "\n";
+#endif
+
     snd_pcm_hw_params_free(hw_params);
 
     if ((err = snd_pcm_prepare(handle_)) < 0)
         throw SnapException("Can't prepare audio interface for use: " + string(snd_strerror(err)));
+
+    if (snd_pcm_state(handle_) == SND_PCM_STATE_PREPARED)
+    {
+        if ((err = snd_pcm_start(handle_)) < 0)
+            throw SnapException("Failed to start PCM: " + string(snd_strerror(err)));
+    }
 }
 
 
@@ -222,12 +245,60 @@ void AlsaStream::do_read()
             nextTick_ = std::chrono::steady_clock::now();
         }
 
+        auto avail = snd_pcm_avail(handle_);
+        if (avail >= 0)
+        {
+#if 0 // Some debug code
+            static long max_avail = 0;
+            if (avail > max_avail)
+            {
+                max_avail = avail;
+                LOG(INFO, LOG_TAG) << "Max Available: " << avail << ", " << double(avail) / double(sampleFormat_.rate()) * 1000. << " ms\n";
+            }
+            static utils::logging::TimeConditional cond(1s);
+            LOG(INFO, LOG_TAG) << cond << "Available: " << avail << ", " << double(avail) / double(sampleFormat_.rate()) * 1000. << " ms, max: " << double(max_avail) / double(sampleFormat_.rate()) * 1000. << " ms\n";
+#endif
+    
+            // check if enough data is available to read from alsa
+            if ((static_cast<int32_t>(chunk_->getFrameCount()) > avail))
+            {
+                // Calculate when there will be enough data available, add half chunk duration tolerance and try later
+                auto available = std::chrono::milliseconds(static_cast<size_t>(double(avail) / double(sampleFormat_.rate()) * 1000.));
+                auto missing = chunk_->duration<std::chrono::milliseconds>() - available;
+                LOG(INFO, LOG_TAG) << "Not enough data available: " << available.count() << " ms, missing: " << missing.count() << " ms, needed: " << chunk_->duration<std::chrono::milliseconds>().count() << " ms\n";
+                missing += chunk_->duration<std::chrono::milliseconds>() / 2;
+                resync(missing);
+                wait(read_timer_, missing, [this] { do_read(); });
+                return;
+            }
+            // check if there is too much data available, i.e. if we are far behind
+            else if (avail > static_cast<int32_t>(3*chunk_->getFrameCount()))
+            {
+                // Fast forward, by reading and dropping audio frames
+                // const auto newAvail = static_cast<int32_t>(chunk_->getFrameCount() + static_cast<uint32_t>(chunk_->format.msRate() * 20));
+                const auto newAvail = 1.5 * chunk_->getFrameCount();
+                LOG(INFO, LOG_TAG) << "Too many frames available, fast forwarding from " << avail << " frames (" << double(avail) / double(sampleFormat_.rate()) * 1000. << " ms) to " << newAvail << " frames (" << double(newAvail) / double(sampleFormat_.rate()) * 1000. << " ms)\n";
+                do
+                {
+                    int count = snd_pcm_readi(handle_, chunk_->payload, std::min(chunk_->getFrameCount(), static_cast<uint32_t>(avail - newAvail)));
+                    if (count <= 0)
+                    {
+                        // some read error happened, just break here, this will be handled properly later in the read loop 
+                        break;
+                    }
+                    avail -= count;
+                    LOG(DEBUG, LOG_TAG) << "Read " << count << " frames (" << double(count) / double(sampleFormat_.rate()) * 1000. << " ms), available: " << avail << " frames (" << double(avail) / double(sampleFormat_.rate()) * 1000. << " ms)\n";
+                }
+                while (avail > newAvail);
+            }
+        }
+
         int toRead = chunk_->payloadSize;
         auto duration = chunk_->duration<std::chrono::nanoseconds>();
         int len = 0;
         do
         {
-            int count = snd_pcm_readi(handle_, chunk_->payload + len, (toRead - len) / chunk_->format.frameSize());
+            snd_pcm_sframes_t count = snd_pcm_readi(handle_, chunk_->payload + len, (toRead - len) / chunk_->format.frameSize());
             if (count == -EAGAIN)
             {
                 LOG(INFO, LOG_TAG) << "No data availabale, playing silence.\n";
@@ -292,7 +363,7 @@ void AlsaStream::do_read()
         {
             // LOG(DEBUG, LOG_TAG) << "Next read: " << std::chrono::duration_cast<std::chrono::milliseconds>(next_read).count() << "\n";
             // synchronize reads to an interval of chunk_ms_
-            wait(read_timer_, nextTick_ - currentTick, [this] { do_read(); });
+            wait(read_timer_, next_read, [this] { do_read(); });
             return;
         }
         else if (next_read >= -kResyncTolerance)
@@ -306,7 +377,7 @@ void AlsaStream::do_read()
             // reading chunk_ms_ took longer than chunk_ms_
             resync(-next_read);
             first_ = true;
-            wait(read_timer_, nextTick_ - currentTick, [this] { do_read(); });
+            do_read();
         }
 
         lastException_ = "";
