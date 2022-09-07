@@ -37,7 +37,7 @@ Supported parameters for all source types:
 - `chunk_ms`: Override the global `chunk_ms`
 - `dryout_ms`: Supported by non-blocking sourced: when no new data is read from the source, send silence to the clients
 - `controlscript`: Script to control the stream source and read and provide meta data, see [stream_plugin.md](json_rpc_api/stream_plugin.md)
-- `controlscriptparams`: Control script command line arguments, must be url-encoded (use `%20` instead of a space ` `), e.g. `--mopidy-host=192.168.42.23%20--debug`
+- `controlscriptparams`: Control script command line arguments, must be url-encoded (use `%20` instead of a space " "), e.g. `--mopidy-host=192.168.42.23%20--debug`
 
 Available audio source types are:
 
@@ -160,14 +160,14 @@ output = audioresample ! audioconvert ! audio/x-raw,rate=48000,channels=2,format
 Captures audio from an alsa device
 
 ```sh
-alsa://?name=<name>&device=<alsa device>[&send_silence=false][&idle_threshold=100][&silence_threshold_percent=0.0]
+alsa:///?name=<name>&device=<alsa device>[&send_silence=false][&idle_threshold=100][&silence_threshold_percent=0.0]
 ```
 
 #### Available parameters
 
 - `device`: alsa device name or identifier, e.g. `default` or `hw:0,0` or `hw:0,0,0`
 - `idle_threshold`: switch stream state from playing to idle after receiving `idle_threshold` milliseconds of silence
-- `silence_threshold_percent`: percent (float) of the max amplitude to be considered as silence 
+- `silence_threshold_percent`: percent (float) of the max amplitude to be considered as silence
 - `send_silence`: forward silence to clients when stream state is `idle`
 
 The output of any audio player that uses alsa can be redirected to Snapcast by using an alsa loopback device:
@@ -243,20 +243,19 @@ The output of any audio player that uses alsa can be redirected to Snapcast by u
     #       mixer_index     "0"             # optional
     }
     ```
-    
+
     For [librespot](https://github.com/librespot-org/librespot) (check previusly if your librespot binary is compiled with alsa backend with `./librespot --backend ?`):
-    Warning, you need to set snapserver rate to 44100`source = alsa://?name=Spotify&sampleformat=44100:16:2&device=hw:0,1,0`
-    
+    Warning, you need to set snapserver rate to 44100`source = alsa:///?name=Spotify&sampleformat=44100:16:2&device=hw:0,1,0`
+
     ```sh
     ./librespot -b 320 --disable-audio-cache --name Snapcast --initial-volume 100 --backend alsa --device hw:0,0,0
     ```
-    
 
 4. Configure Snapserver to capture the loopback device:
 
     ```sh
     [stream]
-    source = alsa://?name=SomeName&device=hw:0,1,0
+    source = alsa:///?name=SomeName&device=hw:0,1,0
     ```
 
 ### meta
@@ -271,5 +270,7 @@ Plays audio from the active source with the highest priority, with `source#1` ha
 Use `codec=null` for stream sources that should only serve as input for meta streams
 
 ## Streaming clients
+
 Streaming clients connect to the server and receive configuration and audio data. The client is fully controlled from the server so clients don't have to persist any state. The `[streaming_client]` section has just one option currently:
+
 - `initial_volume`: 0-100 [percent]: The volume a streaming client gets assigned on very first connect (i.e. the client is not known to the server yet). Defaults to 100 if unset.
