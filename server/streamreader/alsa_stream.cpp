@@ -51,16 +51,18 @@ template <typename Rep, typename Period>
 void wait(boost::asio::steady_timer& timer, const std::chrono::duration<Rep, Period>& duration, std::function<void()> handler)
 {
     timer.expires_after(duration);
-    timer.async_wait([handler = std::move(handler)](const boost::system::error_code& ec) {
-        if (ec)
+    timer.async_wait(
+        [handler = std::move(handler)](const boost::system::error_code& ec)
         {
-            LOG(ERROR, LOG_TAG) << "Error during async wait: " << ec.message() << "\n";
-        }
-        else
-        {
-            handler();
-        }
-    });
+            if (ec)
+            {
+                LOG(ERROR, LOG_TAG) << "Error during async wait: " << ec.message() << "\n";
+            }
+            else
+            {
+                handler();
+            }
+        });
 }
 } // namespace
 
@@ -258,14 +260,15 @@ void AlsaStream::do_read()
             static utils::logging::TimeConditional cond(1s);
             LOG(INFO, LOG_TAG) << cond << "Available: " << avail << ", " << double(avail) / double(sampleFormat_.rate()) * 1000. << " ms, max: " << double(max_avail) / double(sampleFormat_.rate()) * 1000. << " ms\n";
 #endif
-    
+
             // check if enough data is available to read from alsa
             if ((static_cast<int32_t>(chunk_->getFrameCount()) > avail))
             {
                 // Calculate when there will be enough data available, add half chunk duration tolerance and try later
                 auto available = std::chrono::milliseconds(static_cast<size_t>(double(avail) / double(sampleFormat_.rate()) * 1000.));
                 auto missing = chunk_->duration<std::chrono::milliseconds>() - available;
-                LOG(INFO, LOG_TAG) << "Not enough data available: " << available.count() << " ms, missing: " << missing.count() << " ms, needed: " << chunk_->duration<std::chrono::milliseconds>().count() << " ms\n";
+                LOG(INFO, LOG_TAG) << "Not enough data available: " << available.count() << " ms, missing: " << missing.count()
+                                   << " ms, needed: " << chunk_->duration<std::chrono::milliseconds>().count() << " ms\n";
                 missing += chunk_->duration<std::chrono::milliseconds>() / 2;
                 resync(missing);
                 first_ = true;
@@ -273,24 +276,26 @@ void AlsaStream::do_read()
                 return;
             }
             // check if there is too much data available, i.e. if we are far behind
-            else if (avail > static_cast<int32_t>(3*chunk_->getFrameCount()))
+            else if (avail > static_cast<int32_t>(3 * chunk_->getFrameCount()))
             {
                 // Fast forward, by reading and dropping audio frames
                 // const auto newAvail = static_cast<int32_t>(chunk_->getFrameCount() + static_cast<uint32_t>(chunk_->format.msRate() * 20));
                 const auto newAvail = 1.5 * chunk_->getFrameCount();
-                LOG(INFO, LOG_TAG) << "Too many frames available, fast forwarding from " << avail << " frames (" << double(avail) / double(sampleFormat_.rate()) * 1000. << " ms) to " << newAvail << " frames (" << double(newAvail) / double(sampleFormat_.rate()) * 1000. << " ms)\n";
+                LOG(INFO, LOG_TAG) << "Too many frames available, fast forwarding from " << avail << " frames ("
+                                   << double(avail) / double(sampleFormat_.rate()) * 1000. << " ms) to " << newAvail << " frames ("
+                                   << double(newAvail) / double(sampleFormat_.rate()) * 1000. << " ms)\n";
                 do
                 {
                     int count = snd_pcm_readi(handle_, chunk_->payload, std::min(chunk_->getFrameCount(), static_cast<uint32_t>(avail - newAvail)));
                     if (count <= 0)
                     {
-                        // some read error happened, just break here, this will be handled properly later in the read loop 
+                        // some read error happened, just break here, this will be handled properly later in the read loop
                         break;
                     }
                     avail -= count;
-                    LOG(DEBUG, LOG_TAG) << "Read " << count << " frames (" << double(count) / double(sampleFormat_.rate()) * 1000. << " ms), available: " << avail << " frames (" << double(avail) / double(sampleFormat_.rate()) * 1000. << " ms)\n";
-                }
-                while (avail > newAvail);
+                    LOG(DEBUG, LOG_TAG) << "Read " << count << " frames (" << double(count) / double(sampleFormat_.rate()) * 1000.
+                                        << " ms), available: " << avail << " frames (" << double(avail) / double(sampleFormat_.rate()) * 1000. << " ms)\n";
+                } while (avail > newAvail);
                 first_ = true;
             }
         }
