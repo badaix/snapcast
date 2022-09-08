@@ -72,12 +72,10 @@ namespace strutils = utils::string;
 #ifndef WINDOWS
 static std::string execGetOutput(const std::string& cmd)
 {
-    std::shared_ptr<::FILE> pipe(popen((cmd + " 2> /dev/null").c_str(), "r"),
-                                 [](::FILE* stream)
-                                 {
-                                     if (stream != nullptr)
-                                         pclose(stream);
-                                 });
+    std::shared_ptr<::FILE> pipe(popen((cmd + " 2> /dev/null").c_str(), "r"), [](::FILE* stream) {
+        if (stream != nullptr)
+            pclose(stream);
+    });
     if (!pipe)
         return "";
     char buffer[1024];
