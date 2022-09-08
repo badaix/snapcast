@@ -24,6 +24,9 @@
 #include "common/snap_exception.hpp"
 #include "common/str_compat.hpp"
 
+// 3rd party headers
+#include <boost/asio/post.hpp>
+
 // standard headers
 #include <cerrno>
 #include <memory>
@@ -104,7 +107,7 @@ void AlsaStream::start()
     tvEncodedChunk_ = std::chrono::steady_clock::now();
     PcmStream::start();
     // wait(read_timer_, std::chrono::milliseconds(chunk_ms_), [this] { do_read(); });
-    do_read();
+    boost::asio::post(strand_, [this] { do_read(); });
 }
 
 
@@ -377,14 +380,14 @@ void AlsaStream::do_read()
         {
             LOG(INFO, LOG_TAG) << "next read < 0 (" << getName() << "): " << std::chrono::duration_cast<std::chrono::microseconds>(next_read).count() / 1000.
                                << " ms\n ";
-            do_read();
+            boost::asio::post(strand_, [this] { do_read(); });
         }
         else
         {
             // reading chunk_ms_ took longer than chunk_ms_
             resync(-next_read);
             first_ = true;
-            do_read();
+            boost::asio::post(strand_, [this] { do_read(); });
         }
 
         lastException_ = "";

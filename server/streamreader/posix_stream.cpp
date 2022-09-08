@@ -150,7 +150,7 @@ void PosixStream::do_read()
         {
             LOG(INFO, LOG_TAG) << "next read < 0 (" << getName() << "): " << std::chrono::duration_cast<std::chrono::microseconds>(next_read).count() / 1000.
                                << " ms\n";
-            do_read();
+            boost::asio::post(strand_, [this] { do_read(); });
         }
         else
         {
