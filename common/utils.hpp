@@ -75,14 +75,14 @@ static std::string execGetOutput(const std::string& cmd)
     std::shared_ptr<::FILE> pipe(popen((cmd + " 2> /dev/null").c_str(), "r"),
                                  [](::FILE* stream)
                                  {
-                                     if (stream)
+                                     if (stream != nullptr)
                                          pclose(stream);
                                  });
     if (!pipe)
         return "";
     char buffer[1024];
-    std::string result = "";
-    while (!feof(pipe.get()))
+    std::string result;
+    while (feof(pipe.get()) == 0)
     {
         if (fgets(buffer, 1024, pipe.get()) != nullptr)
             result += buffer;
@@ -106,7 +106,7 @@ static std::string getProp(const std::string& key, const std::string& def = "")
 
 static std::string getOS()
 {
-    static std::string os("");
+    static std::string os;
 
     if (!os.empty())
         return os;
@@ -142,17 +142,17 @@ static std::string getOS()
         os = "Unknown Windows";
 #else
     os = execGetOutput("lsb_release -d");
-    if ((os.find(":") != std::string::npos) && (os.find("lsb_release") == std::string::npos))
-        os = strutils::trim_copy(os.substr(os.find(":") + 1));
+    if ((os.find(':') != std::string::npos) && (os.find("lsb_release") == std::string::npos))
+        os = strutils::trim_copy(os.substr(os.find(':') + 1));
 #endif
 
 #ifndef WINDOWS
     if (os.empty())
     {
         os = strutils::trim_copy(execGetOutput("grep /etc/os-release /etc/openwrt_release -e PRETTY_NAME -e DISTRIB_DESCRIPTION"));
-        if (os.find("=") != std::string::npos)
+        if (os.find('=') != std::string::npos)
         {
-            os = strutils::trim_copy(os.substr(os.find("=") + 1));
+            os = strutils::trim_copy(os.substr(os.find('=') + 1));
             os.erase(std::remove(os.begin(), os.end(), '"'), os.end());
             os.erase(std::remove(os.begin(), os.end(), '\''), os.end());
         }
@@ -422,7 +422,7 @@ static std::string getMacAddress(const std::string& address)
 }
 #endif
 
-static std::string getHostId(const std::string defaultId = "")
+static std::string getHostId(const std::string& defaultId = "")
 {
     std::string result = strutils::trim_copy(defaultId);
 
