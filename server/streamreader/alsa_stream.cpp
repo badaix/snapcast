@@ -268,6 +268,7 @@ void AlsaStream::do_read()
                 LOG(INFO, LOG_TAG) << "Not enough data available: " << available.count() << " ms, missing: " << missing.count() << " ms, needed: " << chunk_->duration<std::chrono::milliseconds>().count() << " ms\n";
                 missing += chunk_->duration<std::chrono::milliseconds>() / 2;
                 resync(missing);
+                first_ = true;
                 wait(read_timer_, missing, [this] { do_read(); });
                 return;
             }
@@ -290,6 +291,7 @@ void AlsaStream::do_read()
                     LOG(DEBUG, LOG_TAG) << "Read " << count << " frames (" << double(count) / double(sampleFormat_.rate()) * 1000. << " ms), available: " << avail << " frames (" << double(avail) / double(sampleFormat_.rate()) * 1000. << " ms)\n";
                 }
                 while (avail > newAvail);
+                first_ = true;
             }
         }
 
