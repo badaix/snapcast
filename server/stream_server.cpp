@@ -117,8 +117,17 @@ void StreamServer::onChunkEncoded(const PcmStream* pcmStream, bool isDefaultStre
 
 void StreamServer::onMessageReceived(StreamSession* streamSession, const msg::BaseMessage& baseMessage, char* buffer)
 {
-    if (messageReceiver_ != nullptr)
-        messageReceiver_->onMessageReceived(streamSession, baseMessage, buffer);
+    try
+    {
+        if (messageReceiver_ != nullptr)
+            messageReceiver_->onMessageReceived(streamSession, baseMessage, buffer);
+    }
+    catch (const std::exception& e)
+    {
+        LOG(ERROR, LOG_TAG) << "Server::onMessageReceived exception: " << e.what() << ", message type: " << baseMessage.type << "\n";
+        auto session = getStreamSession(streamSession);
+        session->stop();
+    }
 }
 
 
