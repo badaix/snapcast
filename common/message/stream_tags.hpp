@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2021  Johannes Pohl
+    Copyright (C) 2014-2022  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -16,10 +16,10 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
-#ifndef STREAMTAGS_HPP
-#define STREAMTAGS_HPP
+#ifndef MESSAGE_STREAM_TAGS_HPP
+#define MESSAGE_STREAM_TAGS_HPP
 
-// #include "common/metatags.hpp"
+// local headers
 #include "json_message.hpp"
 
 /*

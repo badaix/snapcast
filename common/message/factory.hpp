@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2021  Johannes Pohl
+    Copyright (C) 2014-2022  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -19,17 +19,18 @@
 #ifndef MESSAGE_FACTORY_HPP
 #define MESSAGE_FACTORY_HPP
 
+// local headers
 #include "client_info.hpp"
 #include "codec_header.hpp"
-#include "hello.hpp"
-#include "pcm_chunk.hpp"
-#include "server_settings.hpp"
-// #include "stream_tags.hpp"
-#include "time.hpp"
-
 #include "common/str_compat.hpp"
 #include "common/utils.hpp"
+#include "hello.hpp"
 #include "json_message.hpp"
+#include "pcm_chunk.hpp"
+#include "server_settings.hpp"
+#include "time.hpp"
+
+// standard headers
 #include <string>
 
 

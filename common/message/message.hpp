@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2021  Johannes Pohl
+    Copyright (C) 2014-2022  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -16,11 +16,14 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
-#ifndef MESSAGE_HPP
-#define MESSAGE_HPP
+#ifndef MESSAGE_MESSAGE_HPP
+#define MESSAGE_MESSAGE_HPP
 
+// local headers
 #include "common/endian.hpp"
 #include "common/time_defs.hpp"
+
+// standard headers
 #include <cstdlib>
 #include <cstring>
 #include <iostream>

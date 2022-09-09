@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2020  Johannes Pohl
+    Copyright (C) 2014-2022  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -16,9 +16,10 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
-#ifndef JSON_MESSAGE_H
-#define JSON_MESSAGE_H
+#ifndef MESSAGE_JSON_HPP
+#define MESSAGE_JSON_HPP
 
+// local headers
 #include "common/json.hpp"
 #include "message.hpp"
 
