@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2021  Johannes Pohl
+    Copyright (C) 2014-2022  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -26,8 +26,6 @@
 #include "common/utils/file_utils.hpp"
 #include "common/utils/string_utils.hpp"
 
-// standard headers
-#include <regex>
 
 
 using namespace std;
@@ -178,16 +176,15 @@ void LibrespotStream::onStderrMsg(const std::string& line)
     // non patched:
     //  [2021-06-04T07:20:47Z INFO  librespot_playback::player] <Tunnel> (310573 ms) loaded
     // 	info!("Track \"{}\" loaded", track.name);
-    // std::cerr << line << "\n";
-    smatch m;
-    static regex re_patched("metadata:(.*)");
-    static regex re_track_loaded(R"( <(.*)> \((.*) ms\) loaded)");
-    // Parse the patched version
-    if (regex_search(line, m, re_patched))
+    size_t title_pos = 0;
+    size_t ms_pos = 0;
+    size_t n = 0;
+    if (((n = line.find("metadata:")) != std::string::npos))
     {
+        std::string metadata = line.substr(n + 9);
         // Patched version
-        LOG(INFO, LOG_TAG) << "metadata: <" << m[1] << ">\n";
-        json j = json::parse(m[1].str());
+        LOG(INFO, LOG_TAG) << "metadata: <" << metadata << ">\n";
+        json j = json::parse(metadata);
         Metadata meta;
         meta.artist = std::vector<std::string>{j["ARTIST"].get<std::string>()};
         meta.title = j["TITLE"].get<std::string>();
@@ -196,12 +193,17 @@ void LibrespotStream::onStderrMsg(const std::string& line)
         properties.metadata = std::move(meta);
         setProperties(properties);
     }
-    else if (regex_search(line, m, re_track_loaded))
+    else if (((title_pos = line.find("<")) != std::string::npos) && ((n = line.find(">", title_pos)) != std::string::npos) &&
+             ((ms_pos = line.find("(", n)) != std::string::npos) && ((n = line.find("ms) loaded", ms_pos)) != std::string::npos))
     {
-        LOG(INFO, LOG_TAG) << "metadata: <" << m[1] << ">\n";
+        title_pos += 1;
+        std::string title = line.substr(title_pos, line.find(">", title_pos) - title_pos);
+        LOG(INFO, LOG_TAG) << "metadata: <" << title << ">\n";
+        ms_pos += 1;
+        std::string ms = line.substr(ms_pos, n - ms_pos - 1);
         Metadata meta;
-        meta.title = string(m[1]);
-        meta.duration = cpt::stod(m[2]) / 1000.;
+        meta.title = title;
+        meta.duration = cpt::stod(ms) / 1000.;
         meta.art_data = {SPOTIFY_LOGO, "svg"};
         Properties properties;
         properties.metadata = std::move(meta);
