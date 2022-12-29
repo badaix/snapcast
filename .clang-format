@@ -7,6 +7,7 @@ AllowShortIfStatementsOnASingleLine: 'false'
 AllowShortLoopsOnASingleLine: 'false'
 AlwaysBreakTemplateDeclarations: 'true'
 BreakBeforeBraces: Allman
+LambdaBodyIndentation: OuterScope
 ColumnLimit: '160'
 IndentCaseLabels: 'true'
 IndentWidth: '4'
