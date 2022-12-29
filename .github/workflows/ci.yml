@@ -67,12 +67,12 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - name: dependencies
       run: sudo apt-get update && sudo apt-get install -yq rename libasound2-dev libsoxr-dev libvorbisidec-dev libvorbis-dev libflac-dev libopus-dev alsa-utils libpulse-dev libavahi-client-dev avahi-daemon debhelper ccache expat
     - name: cache boost
       id: cache-boost
-      uses: actions/cache@v2
+      uses: actions/cache@v3
       with:
         path: boost_${{ env.BOOST_VERSION }}
         key: ${{ runner.os }}-boost
@@ -83,7 +83,7 @@ jobs:
         tar xjf boost_${BOOST_VERSION}.tar.bz2
     - name: cache ccache
       id: cache-ccache
-      uses: actions/cache@v2
+      uses: actions/cache@v3
       with:
         path: /home/runner/.ccache
         key: ${{ runner.os }}-${{ matrix.compiler }}-ccache-${{ github.sha }}
@@ -140,12 +140,12 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - name: dependencies
       run: brew install pkgconfig libsoxr ccache expat
     - name: cache boost
       id: cache-boost
-      uses: actions/cache@v2
+      uses: actions/cache@v3
       with:
         path: boost_${{ env.BOOST_VERSION }}
         key: ${{ runner.os }}-boost
@@ -156,7 +156,7 @@ jobs:
         tar xjf boost_${BOOST_VERSION}.tar.bz2
     - name: cache ccache
       id: cache-ccache
-      uses: actions/cache@v2
+      uses: actions/cache@v3
       with:
         path: /Users/runner/Library/Caches/ccache
         key: ${{ runner.os }}-${{ matrix.xcode }}-ccache-${{ github.sha }}
@@ -194,10 +194,10 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - name: cache dependencies
       id: cache-dependencies
-      uses: actions/cache@v2
+      uses: actions/cache@v3
       with:
         #path: ${VCPKG_INSTALLATION_ROOT}\installed
         path: c:\vcpkg\installed
