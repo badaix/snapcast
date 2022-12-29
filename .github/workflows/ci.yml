@@ -211,5 +211,5 @@ jobs:
       with:
         token: ${{ secrets.REPODISPATCH }}
         repository: badaix/snapos
-          event-type: build-success
-          client-payload: '{"ref": "${{ github.ref }}", "sha": "${{ github.sha }}"}'
+        event-type: build-success
+        client-payload: '{"ref": "${{ github.ref }}", "sha": "${{ github.sha }}"}'
