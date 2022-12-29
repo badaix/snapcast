@@ -31,6 +31,7 @@
 #pragma GCC diagnostic ignored "-Wmissing-braces"
 #pragma GCC diagnostic ignored "-Wnarrowing"
 #pragma GCC diagnostic ignored "-Wc++11-narrowing"
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 #include <boost/process.hpp>
 #pragma GCC diagnostic pop
 #include <boost/asio/any_io_executor.hpp>
