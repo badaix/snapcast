@@ -25,6 +25,7 @@ jobs:
           - gcc-9
           - gcc-10
           - gcc-11
+          - gcc-12
         include:
           - compiler: clang-10
             cc: clang-10
@@ -57,6 +58,10 @@ jobs:
           - compiler: gcc-11
             cc: gcc-11
             cxx: g++-11
+            os: ubuntu-22.04
+          - compiler: gcc-12
+            cc: gcc-12
+            cxx: g++-12
             os: ubuntu-22.04
 
     runs-on: ${{ matrix.os }}
@@ -203,14 +208,14 @@ jobs:
     - name: build
       run: cmake --build build --config Release --parallel 3 --verbose
 
-  trigger_snapos:
-    needs: [linux, macos, windows]
-    runs-on: ubuntu-latest
-    steps:
-    - name: Repository Dispatch
-      uses: peter-evans/repository-dispatch@v2
-      with:
-        token: ${{ secrets.REPODISPATCH }}
-        repository: badaix/snapos
-        event-type: build-success
-        client-payload: '{"ref": "${{ github.ref }}", "sha": "${{ github.sha }}"}'
+  # trigger_snapos:
+  #   needs: [linux, macos, windows]
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #   - name: Repository Dispatch
+  #     uses: peter-evans/repository-dispatch@v2
+  #     with:
+  #       token: ${{ secrets.REPODISPATCH }}
+  #       repository: badaix/snapos
+  #       event-type: build-success
+  #       client-payload: '{"ref": "${{ github.ref }}", "sha": "${{ github.sha }}"}'
