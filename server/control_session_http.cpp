@@ -127,8 +127,8 @@ boost::beast::string_view mime_type(boost::beast::string_view path)
 std::string path_cat(boost::beast::string_view base, boost::beast::string_view path)
 {
     if (base.empty())
-        return static_cast<std::string>(path);
-    std::string result = static_cast<std::string>(base);
+        return std::string(path);
+    std::string result = std::string(base);
     char constexpr path_separator = '/';
     if (result.back() == path_separator)
         result.resize(result.size() - 1);
@@ -171,7 +171,7 @@ void ControlSessionHttp::handle_request(http::request<Body, http::basic_fields<A
         res.set(http::field::server, HTTP_SERVER_NAME);
         res.set(http::field::content_type, "text/html");
         res.keep_alive(req.keep_alive());
-        res.body() = static_cast<std::string>(why);
+        res.body() = std::string(why);
         res.prepare_payload();
         return res;
     };
@@ -182,7 +182,7 @@ void ControlSessionHttp::handle_request(http::request<Body, http::basic_fields<A
         res.set(http::field::server, HTTP_SERVER_NAME);
         res.set(http::field::content_type, "text/html");
         res.keep_alive(req.keep_alive());
-        res.body() = "The resource '" + static_cast<std::string>(target) + "' was not found.";
+        res.body() = "The resource '" + std::string(target) + "' was not found.";
         res.prepare_payload();
         return res;
     };
@@ -204,7 +204,7 @@ void ControlSessionHttp::handle_request(http::request<Body, http::basic_fields<A
         res.set(http::field::server, HTTP_SERVER_NAME);
         res.set(http::field::content_type, "text/html");
         res.keep_alive(req.keep_alive());
-        res.body() = "An error occurred: '" + static_cast<std::string>(what) + "'";
+        res.body() = "An error occurred: '" + std::string(what) + "'";
         res.prepare_payload();
         return res;
     };

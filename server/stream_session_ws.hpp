@@ -19,9 +19,18 @@
 #ifndef STREAM_SESSION_WS_HPP
 #define STREAM_SESSION_WS_HPP
 
+// local headers
 #include "stream_session.hpp"
+
+// 3rd party headers
+#include <boost/asio/strand.hpp>
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-copy-with-user-provided-copy"
 #include <boost/beast/core.hpp>
+#pragma GCC diagnostic pop
 #include <boost/beast/websocket.hpp>
+
+// standard headers
 #include <deque>
 
 namespace beast = boost::beast; // from <boost/beast.hpp>
