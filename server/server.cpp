@@ -719,6 +719,7 @@ void Server::onMessageReceived(StreamSession* streamSession, const msg::BaseMess
     LOG(DEBUG, LOG_TAG) << "onMessageReceived: " << baseMessage.type << ", size: " << baseMessage.size << ", id: " << baseMessage.id
                         << ", refers: " << baseMessage.refersTo << ", sent: " << baseMessage.sent.sec << "," << baseMessage.sent.usec
                         << ", recv: " << baseMessage.received.sec << "," << baseMessage.received.usec << "\n";
+
     std::lock_guard<std::mutex> lock(Config::instance().getMutex());
     if (baseMessage.type == message_type::kTime)
     {
