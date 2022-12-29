@@ -142,10 +142,11 @@ void StreamServer::onDisconnect(StreamSession* streamSession)
     LOG(INFO, LOG_TAG) << "onDisconnect: " << session->clientId << "\n";
     LOG(DEBUG, LOG_TAG) << "sessions: " << sessions_.size() << "\n";
     sessions_.erase(std::remove_if(sessions_.begin(), sessions_.end(),
-                                   [streamSession](std::weak_ptr<StreamSession> session) {
-                                       auto s = session.lock();
-                                       return s.get() == streamSession;
-                                   }),
+                                   [streamSession](std::weak_ptr<StreamSession> session)
+                                   {
+        auto s = session.lock();
+        return s.get() == streamSession;
+                    }),
                     sessions_.end());
     LOG(DEBUG, LOG_TAG) << "sessions: " << sessions_.size() << "\n";
     if (messageReceiver_ != nullptr)
@@ -184,7 +185,8 @@ session_ptr StreamServer::getStreamSession(const std::string& clientId) const
 
 void StreamServer::startAccept()
 {
-    auto accept_handler = [this](error_code ec, tcp::socket socket) {
+    auto accept_handler = [this](error_code ec, tcp::socket socket)
+    {
         if (!ec)
             handleAccept(std::move(socket));
         else

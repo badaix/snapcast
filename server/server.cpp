@@ -452,7 +452,8 @@ void Server::processRequest(const jsonrpcpp::request_ptr request, const OnRespon
 
                 auto command = request->params().get<string>("command");
 
-                auto handle_response = [request, on_response, command](const snapcast::ErrorCode& ec) {
+                auto handle_response = [request, on_response, command](const snapcast::ErrorCode& ec)
+                {
                     auto log_level = AixLog::Severity::debug;
                     if (ec)
                         log_level = AixLog::Severity::error;
@@ -533,7 +534,8 @@ void Server::processRequest(const jsonrpcpp::request_ptr request, const OnRespon
                 auto value = request->params().get("value");
                 LOG(INFO, LOG_TAG) << "Stream '" << streamId << "' set property: " << name << " = " << value << "\n";
 
-                auto handle_response = [request, on_response](const snapcast::ErrorCode& ec) {
+                auto handle_response = [request, on_response](const snapcast::ErrorCode& ec)
+                {
                     LOG(ERROR, LOG_TAG) << "SetShuffle: " << ec << ", message: " << ec.detailed_message() << ", msg: " << ec.message()
                                         << ", category: " << ec.category().name() << "\n";
                     std::shared_ptr<jsonrpcpp::Response> response;
@@ -663,7 +665,9 @@ void Server::onMessageReceived(std::shared_ptr<ControlSession> controlSession, c
     if (entity->is_request())
     {
         jsonrpcpp::request_ptr request = dynamic_pointer_cast<jsonrpcpp::Request>(entity);
-        processRequest(request, [this, controlSession, response_handler](jsonrpcpp::entity_ptr response, jsonrpcpp::notification_ptr notification) {
+        processRequest(request,
+                       [this, controlSession, response_handler](jsonrpcpp::entity_ptr response, jsonrpcpp::notification_ptr notification)
+                       {
             saveConfig();
             ////cout << "Request:      " << request->to_json().dump() << "\n";
             if (notification)
@@ -693,8 +697,10 @@ void Server::onMessageReceived(std::shared_ptr<ControlSession> controlSession, c
             if (batch_entity->is_request())
             {
                 jsonrpcpp::request_ptr request = dynamic_pointer_cast<jsonrpcpp::Request>(batch_entity);
-                processRequest(request, [controlSession, response_handler, &responseBatch, &notificationBatch](jsonrpcpp::entity_ptr response,
-                                                                                                               jsonrpcpp::notification_ptr notification) {
+                processRequest(request,
+                               [controlSession, response_handler, &responseBatch, &notificationBatch](jsonrpcpp::entity_ptr response,
+                                                                                                      jsonrpcpp::notification_ptr notification)
+                               {
                     if (response != nullptr)
                         responseBatch.add_ptr(response);
                     if (notification != nullptr)
@@ -848,7 +854,9 @@ void Server::saveConfig(const std::chrono::milliseconds& deferred)
     std::lock_guard<std::mutex> lock(mutex);
     config_timer_.cancel();
     config_timer_.expires_after(deferred);
-    config_timer_.async_wait([](const boost::system::error_code& ec) {
+    config_timer_.async_wait(
+        [](const boost::system::error_code& ec)
+        {
         if (!ec)
         {
             LOG(DEBUG, LOG_TAG) << "Saving config\n";

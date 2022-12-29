@@ -85,7 +85,8 @@ void FlacEncoder::encode(const msg::PcmChunk& chunk)
         pcmBuffer_ = static_cast<FLAC__int32*>(realloc(pcmBuffer_, pcmBufferSize_ * sizeof(FLAC__int32)));
     }
 
-    auto clip = [](int32_t min, int32_t max, int32_t value) -> int32_t {
+    auto clip = [](int32_t min, int32_t max, int32_t value) -> int32_t
+    {
         if (value < min)
             return min;
         if (value > max)

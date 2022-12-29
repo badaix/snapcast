@@ -60,8 +60,12 @@ void StreamSession::send_next()
 {
     auto& buffer = messages_.front();
     buffer.on_air = true;
-    boost::asio::post(strand_, [this, self = shared_from_this(), buffer]() {
-        sendAsync(buffer, [this](boost::system::error_code ec, std::size_t length) {
+    boost::asio::post(strand_,
+                      [this, self = shared_from_this(), buffer]()
+                      {
+        sendAsync(buffer,
+                  [this](boost::system::error_code ec, std::size_t length)
+                  {
             messages_.pop_front();
             if (ec)
             {
@@ -78,16 +82,19 @@ void StreamSession::send_next()
 
 void StreamSession::send(shared_const_buffer const_buf)
 {
-    boost::asio::post(strand_, [this, self = shared_from_this(), const_buf]() {
+    boost::asio::post(strand_,
+                      [this, self = shared_from_this(), const_buf]()
+                      {
         // delete PCM chunks that are older than the overall buffer duration
         messages_.erase(std::remove_if(messages_.begin(), messages_.end(),
-                                       [this](const shared_const_buffer& buffer) {
-                                           const auto& msg = buffer.message();
-                                           if (!msg.is_pcm_chunk || buffer.on_air)
-                                               return false;
-                                           auto age = chronos::clk::now() - msg.rec_time;
-                                           return (age > std::chrono::milliseconds(bufferMs_) + 100ms);
-                                       }),
+                                       [this](const shared_const_buffer& buffer)
+                                       {
+            const auto& msg = buffer.message();
+            if (!msg.is_pcm_chunk || buffer.on_air)
+                return false;
+            auto age = chronos::clk::now() - msg.rec_time;
+            return (age > std::chrono::milliseconds(bufferMs_) + 100ms);
+                        }),
                         messages_.end());
 
         messages_.push_back(const_buf);

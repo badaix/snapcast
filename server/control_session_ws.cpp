@@ -68,7 +68,9 @@ void ControlSessionWebsocket::stop()
 
 void ControlSessionWebsocket::sendAsync(const std::string& message)
 {
-    boost::asio::post(strand_, [this, self = shared_from_this(), msg = message]() {
+    boost::asio::post(strand_,
+                      [this, self = shared_from_this(), msg = message]()
+                      {
         messages_.push_back(std::move(msg));
         if (messages_.size() > 1)
         {
@@ -83,7 +85,9 @@ void ControlSessionWebsocket::sendAsync(const std::string& message)
 void ControlSessionWebsocket::send_next()
 {
     const std::string& message = messages_.front();
-    ws_.async_write(boost::asio::buffer(message), [this, self = shared_from_this()](std::error_code ec, std::size_t length) {
+    ws_.async_write(boost::asio::buffer(message),
+                    [this, self = shared_from_this()](std::error_code ec, std::size_t length)
+                    {
         messages_.pop_front();
         if (ec)
         {
@@ -126,7 +130,9 @@ void ControlSessionWebsocket::on_read_ws(beast::error_code ec, std::size_t bytes
         // LOG(DEBUG, LOG_TAG) << "received: " << line << "\n";
         if ((message_receiver_ != nullptr) && !line.empty())
         {
-            message_receiver_->onMessageReceived(shared_from_this(), line, [this](const std::string& response) {
+            message_receiver_->onMessageReceived(shared_from_this(), line,
+                                                 [this](const std::string& response)
+                                                 {
                 if (!response.empty())
                 {
                     sendAsync(response);

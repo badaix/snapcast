@@ -52,7 +52,9 @@ PendingRequest::~PendingRequest()
 
 void PendingRequest::setValue(std::unique_ptr<msg::BaseMessage> value)
 {
-    boost::asio::post(strand_, [this, self = shared_from_this(), val = std::move(value)]() mutable {
+    boost::asio::post(strand_,
+                      [this, self = shared_from_this(), val = std::move(value)]() mutable
+                      {
         timer_.cancel();
         if (handler_)
             handler_({}, std::move(val));
@@ -67,7 +69,9 @@ uint16_t PendingRequest::id() const
 void PendingRequest::startTimer(const chronos::usec& timeout)
 {
     timer_.expires_after(timeout);
-    timer_.async_wait([this, self = shared_from_this()](boost::system::error_code ec) {
+    timer_.async_wait(
+        [this, self = shared_from_this()](boost::system::error_code ec)
+        {
         if (!handler_)
             return;
         if (!ec)
@@ -202,7 +206,9 @@ void ClientConnection::sendNext()
     message.msg->serialize(stream);
     auto handler = message.handler;
 
-    boost::asio::async_write(socket_, streambuf, [this, handler](boost::system::error_code ec, std::size_t length) {
+    boost::asio::async_write(socket_, streambuf,
+                             [this, handler](boost::system::error_code ec, std::size_t length)
+                             {
         if (ec)
             LOG(ERROR, LOG_TAG) << "Failed to send message, error: " << ec.message() << "\n";
         else
@@ -220,7 +226,9 @@ void ClientConnection::sendNext()
 
 void ClientConnection::send(const msg::message_ptr& message, const ResultHandler& handler)
 {
-    boost::asio::post(strand_, [this, message, handler]() {
+    boost::asio::post(strand_,
+                      [this, message, handler]()
+                      {
         messages_.emplace_back(message, handler);
         if (messages_.size() > 1)
         {
@@ -234,7 +242,9 @@ void ClientConnection::send(const msg::message_ptr& message, const ResultHandler
 
 void ClientConnection::sendRequest(const msg::message_ptr& message, const chronos::usec& timeout, const MessageHandler<msg::BaseMessage>& handler)
 {
-    boost::asio::post(strand_, [this, message, timeout, handler]() {
+    boost::asio::post(strand_,
+                      [this, message, timeout, handler]()
+                      {
         pendingRequests_.erase(
             std::remove_if(pendingRequests_.begin(), pendingRequests_.end(), [](std::weak_ptr<PendingRequest> request) { return request.expired(); }),
             pendingRequests_.end());
@@ -245,7 +255,9 @@ void ClientConnection::sendRequest(const msg::message_ptr& message, const chrono
         auto request = make_shared<PendingRequest>(strand_, reqId_, handler);
         pendingRequests_.push_back(request);
         request->startTimer(timeout);
-        send(message, [handler](const boost::system::error_code& ec) {
+        send(message,
+             [handler](const boost::system::error_code& ec)
+             {
             if (ec)
                 handler(ec, nullptr);
         });
@@ -255,7 +267,9 @@ void ClientConnection::sendRequest(const msg::message_ptr& message, const chrono
 
 void ClientConnection::getNextMessage(const MessageHandler<msg::BaseMessage>& handler)
 {
-    boost::asio::async_read(socket_, boost::asio::buffer(buffer_, base_msg_size_), [this, handler](boost::system::error_code ec, std::size_t length) mutable {
+    boost::asio::async_read(socket_, boost::asio::buffer(buffer_, base_msg_size_),
+                            [this, handler](boost::system::error_code ec, std::size_t length) mutable
+                            {
         if (ec)
         {
             LOG(ERROR, LOG_TAG) << "Error reading message header of length " << length << ": " << ec.message() << "\n";
@@ -288,35 +302,36 @@ void ClientConnection::getNextMessage(const MessageHandler<msg::BaseMessage>& ha
             buffer_.resize(base_message_.size);
 
         boost::asio::async_read(socket_, boost::asio::buffer(buffer_, base_message_.size),
-                                [this, handler](boost::system::error_code ec, std::size_t length) mutable {
-                                    if (ec)
-                                    {
-                                        LOG(ERROR, LOG_TAG) << "Error reading message body of length " << length << ": " << ec.message() << "\n";
-                                        if (handler)
-                                            handler(ec, nullptr);
-                                        return;
-                                    }
+                                [this, handler](boost::system::error_code ec, std::size_t length) mutable
+                                {
+            if (ec)
+            {
+                LOG(ERROR, LOG_TAG) << "Error reading message body of length " << length << ": " << ec.message() << "\n";
+                if (handler)
+                    handler(ec, nullptr);
+                return;
+            }
 
-                                    auto response = msg::factory::createMessage(base_message_, buffer_.data());
-                                    if (!response)
-                                        LOG(WARNING, LOG_TAG) << "Failed to deserialize message of type: " << base_message_.type << "\n";
-                                    for (auto iter = pendingRequests_.begin(); iter != pendingRequests_.end(); ++iter)
-                                    {
-                                        auto request = *iter;
-                                        if (auto req = request.lock())
-                                        {
-                                            if (req->id() == base_message_.refersTo)
-                                            {
-                                                req->setValue(std::move(response));
-                                                pendingRequests_.erase(iter);
-                                                getNextMessage(handler);
-                                                return;
-                                            }
-                                        }
-                                    }
+            auto response = msg::factory::createMessage(base_message_, buffer_.data());
+            if (!response)
+                LOG(WARNING, LOG_TAG) << "Failed to deserialize message of type: " << base_message_.type << "\n";
+            for (auto iter = pendingRequests_.begin(); iter != pendingRequests_.end(); ++iter)
+            {
+                auto request = *iter;
+                if (auto req = request.lock())
+                {
+                    if (req->id() == base_message_.refersTo)
+                    {
+                        req->setValue(std::move(response));
+                        pendingRequests_.erase(iter);
+                        getNextMessage(handler);
+                        return;
+                    }
+                }
+            }
 
-                                    if (handler)
-                                        handler(ec, std::move(response));
-                                });
+            if (handler)
+                handler(ec, std::move(response));
+        });
     });
 }

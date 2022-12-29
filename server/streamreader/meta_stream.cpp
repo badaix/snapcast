@@ -106,7 +106,8 @@ void MetaStream::onStateChanged(const PcmStream* pcmStream, ReaderState state)
     // if (active_stream_->getProperties().playback_status == PlaybackStatus::kPaused)
     //     return;
 
-    auto switch_stream = [this](std::shared_ptr<PcmStream> new_stream) {
+    auto switch_stream = [this](std::shared_ptr<PcmStream> new_stream)
+    {
         if (new_stream == active_stream_)
             return;
         LOG(INFO, LOG_TAG) << "Stream: " << name_ << ", switching active stream: " << (active_stream_ ? active_stream_->getName() : "<null>") << " => "

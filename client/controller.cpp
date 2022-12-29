@@ -121,7 +121,9 @@ std::vector<std::string> Controller::getSupportedPlayerNames()
 
 void Controller::getNextMessage()
 {
-    clientConnection_->getNextMessage([this](const boost::system::error_code& ec, std::unique_ptr<msg::BaseMessage> response) {
+    clientConnection_->getNextMessage(
+        [this](const boost::system::error_code& ec, std::unique_ptr<msg::BaseMessage> response)
+        {
         if (ec)
         {
             reconnect();
@@ -222,7 +224,9 @@ void Controller::getNextMessage()
             if (!player_)
                 throw SnapException("No audio player support" + (settings_.player.player_name.empty() ? "" : " for: " + settings_.player.player_name));
 
-            player_->setVolumeCallback([this](double volume, bool muted) {
+            player_->setVolumeCallback(
+                [this](double volume, bool muted)
+                {
                 static double last_volume(-1);
                 static bool last_muted(true);
                 if ((volume != last_volume) || (last_muted != muted))
@@ -232,7 +236,9 @@ void Controller::getNextMessage()
                     auto info = std::make_shared<msg::ClientInfo>();
                     info->setVolume(static_cast<uint16_t>(volume * 100.));
                     info->setMuted(muted);
-                    clientConnection_->send(info, [this](const boost::system::error_code& ec) {
+                    clientConnection_->send(info,
+                                            [this](const boost::system::error_code& ec)
+                                            {
                         if (ec)
                         {
                             LOG(ERROR, LOG_TAG) << "Failed to send client info, error: " << ec.message() << "\n";
@@ -270,35 +276,38 @@ void Controller::getNextMessage()
 void Controller::sendTimeSyncMessage(int quick_syncs)
 {
     auto timeReq = std::make_shared<msg::Time>();
-    clientConnection_->sendRequest<msg::Time>(
-        timeReq, 2s, [this, quick_syncs](const boost::system::error_code& ec, const std::unique_ptr<msg::Time>& response) mutable {
-            if (ec)
-            {
-                LOG(ERROR, LOG_TAG) << "Time sync request failed: " << ec.message() << "\n";
-                reconnect();
-                return;
-            }
-            else
-            {
-                TimeProvider::getInstance().setDiff(response->latency, response->received - response->sent);
-            }
+    clientConnection_->sendRequest<msg::Time>(timeReq, 2s,
+                                              [this, quick_syncs](const boost::system::error_code& ec, const std::unique_ptr<msg::Time>& response) mutable
+                                              {
+        if (ec)
+        {
+            LOG(ERROR, LOG_TAG) << "Time sync request failed: " << ec.message() << "\n";
+            reconnect();
+            return;
+        }
+        else
+        {
+            TimeProvider::getInstance().setDiff(response->latency, response->received - response->sent);
+        }
 
-            std::chrono::microseconds next = TIME_SYNC_INTERVAL;
-            if (quick_syncs > 0)
+        std::chrono::microseconds next = TIME_SYNC_INTERVAL;
+        if (quick_syncs > 0)
+        {
+            if (--quick_syncs == 0)
+                LOG(INFO, LOG_TAG) << "diff to server [ms]: "
+                                   << static_cast<float>(TimeProvider::getInstance().getDiffToServer<chronos::usec>().count()) / 1000.f << "\n";
+            next = 100us;
+        }
+        timer_.expires_after(next);
+        timer_.async_wait(
+            [this, quick_syncs](const boost::system::error_code& ec)
             {
-                if (--quick_syncs == 0)
-                    LOG(INFO, LOG_TAG) << "diff to server [ms]: "
-                                       << static_cast<float>(TimeProvider::getInstance().getDiffToServer<chronos::usec>().count()) / 1000.f << "\n";
-                next = 100us;
+            if (!ec)
+            {
+                sendTimeSyncMessage(quick_syncs);
             }
-            timer_.expires_after(next);
-            timer_.async_wait([this, quick_syncs](const boost::system::error_code& ec) {
-                if (!ec)
-                {
-                    sendTimeSyncMessage(quick_syncs);
-                }
-            });
         });
+    });
 }
 
 void Controller::browseMdns(const MdnsHandler& handler)
@@ -324,7 +333,9 @@ void Controller::browseMdns(const MdnsHandler& handler)
     }
 
     timer_.expires_after(500ms);
-    timer_.async_wait([this, handler](const boost::system::error_code& ec) {
+    timer_.async_wait(
+        [this, handler](const boost::system::error_code& ec)
+        {
         if (!ec)
         {
             browseMdns(handler);
@@ -343,7 +354,9 @@ void Controller::start()
 {
     if (settings_.server.host.empty())
     {
-        browseMdns([this](const boost::system::error_code& ec, const std::string& host, uint16_t port) {
+        browseMdns(
+            [this](const boost::system::error_code& ec, const std::string& host, uint16_t port)
+            {
             if (ec)
             {
                 LOG(ERROR, LOG_TAG) << "Failed to browse MDNS, error: " << ec.message() << "\n";
@@ -380,7 +393,9 @@ void Controller::reconnect()
     stream_.reset();
     decoder_.reset();
     timer_.expires_after(1s);
-    timer_.async_wait([this](const boost::system::error_code& ec) {
+    timer_.async_wait(
+        [this](const boost::system::error_code& ec)
+        {
         if (!ec)
         {
             worker();
@@ -390,7 +405,9 @@ void Controller::reconnect()
 
 void Controller::worker()
 {
-    clientConnection_->connect([this](const boost::system::error_code& ec) {
+    clientConnection_->connect(
+        [this](const boost::system::error_code& ec)
+        {
         if (!ec)
         {
             // LOG(INFO, LOG_TAG) << "Connected!\n";
@@ -401,19 +418,21 @@ void Controller::worker()
             // Say hello to the server
             auto hello = std::make_shared<msg::Hello>(macAddress, settings_.host_id, settings_.instance);
             clientConnection_->sendRequest<msg::ServerSettings>(
-                hello, 2s, [this](const boost::system::error_code& ec, std::unique_ptr<msg::ServerSettings> response) mutable {
-                    if (ec)
-                    {
-                        LOG(ERROR, LOG_TAG) << "Failed to send hello request, error: " << ec.message() << "\n";
-                        reconnect();
-                        return;
-                    }
-                    else
-                    {
-                        serverSettings_ = std::move(response);
-                        LOG(INFO, LOG_TAG) << "ServerSettings - buffer: " << serverSettings_->getBufferMs() << ", latency: " << serverSettings_->getLatency()
-                                           << ", volume: " << serverSettings_->getVolume() << ", muted: " << serverSettings_->isMuted() << "\n";
-                    }
+                hello, 2s,
+                [this](const boost::system::error_code& ec, std::unique_ptr<msg::ServerSettings> response) mutable
+                {
+                if (ec)
+                {
+                    LOG(ERROR, LOG_TAG) << "Failed to send hello request, error: " << ec.message() << "\n";
+                    reconnect();
+                    return;
+                }
+                else
+                {
+                    serverSettings_ = std::move(response);
+                    LOG(INFO, LOG_TAG) << "ServerSettings - buffer: " << serverSettings_->getBufferMs() << ", latency: " << serverSettings_->getLatency()
+                                       << ", volume: " << serverSettings_->getVolume() << ", muted: " << serverSettings_->isMuted() << "\n";
+                }
                 });
 
             // Do initial time sync with the server

@@ -131,7 +131,9 @@ void FilePlayer::loop()
         next_request_ = now + 1ms;
 
     timer_.expires_at(next_request_);
-    timer_.async_wait([this](boost::system::error_code ec) {
+    timer_.async_wait(
+        [this](boost::system::error_code ec)
+        {
         if (ec)
             return;
         requestAudio();

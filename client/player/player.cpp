@@ -71,7 +71,8 @@ Player::Player(boost::asio::io_context& io_context, const ClientSettings::Player
             break;
     }
 
-    auto not_empty = [](const std::string& value) -> std::string {
+    auto not_empty = [](const std::string& value) -> std::string
+    {
         if (!value.empty())
             return value;
         else

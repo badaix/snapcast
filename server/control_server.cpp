@@ -106,14 +106,16 @@ void ControlServer::onNewSession(std::shared_ptr<StreamSession> session)
 
 void ControlServer::startAccept()
 {
-    auto accept_handler_tcp = [this](error_code ec, tcp::socket socket) {
+    auto accept_handler_tcp = [this](error_code ec, tcp::socket socket)
+    {
         if (!ec)
             handleAccept<ControlSessionTcp>(std::move(socket));
         else
             LOG(ERROR, LOG_TAG) << "Error while accepting socket connection: " << ec.message() << "\n";
     };
 
-    auto accept_handler_http = [this](error_code ec, tcp::socket socket) {
+    auto accept_handler_http = [this](error_code ec, tcp::socket socket)
+    {
         if (!ec)
             handleAccept<ControlSessionHttp>(std::move(socket), http_settings_);
         else

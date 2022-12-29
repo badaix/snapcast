@@ -71,7 +71,8 @@ namespace
 boost::beast::string_view mime_type(boost::beast::string_view path)
 {
     using boost::beast::iequals;
-    auto const ext = [&path] {
+    auto const ext = [&path]
+    {
         auto const pos = path.rfind(".");
         if (pos == boost::beast::string_view::npos)
             return boost::beast::string_view{};
@@ -165,7 +166,8 @@ template <class Body, class Allocator, class Send>
 void ControlSessionHttp::handle_request(http::request<Body, http::basic_fields<Allocator>>&& req, Send&& send)
 {
     // Returns a bad request response
-    auto const bad_request = [&req](boost::beast::string_view why) {
+    auto const bad_request = [&req](boost::beast::string_view why)
+    {
         http::response<http::string_body> res{http::status::bad_request, req.version()};
         // TODO: Server: Snapcast/VERSION
         res.set(http::field::server, HTTP_SERVER_NAME);
@@ -177,7 +179,8 @@ void ControlSessionHttp::handle_request(http::request<Body, http::basic_fields<A
     };
 
     // Returns a not found response
-    auto const not_found = [&req](boost::beast::string_view target) {
+    auto const not_found = [&req](boost::beast::string_view target)
+    {
         http::response<http::string_body> res{http::status::not_found, req.version()};
         res.set(http::field::server, HTTP_SERVER_NAME);
         res.set(http::field::content_type, "text/html");
@@ -188,7 +191,8 @@ void ControlSessionHttp::handle_request(http::request<Body, http::basic_fields<A
     };
 
     // Returns a configuration help
-    auto const unconfigured = [&req]() {
+    auto const unconfigured = [&req]()
+    {
         http::response<http::string_body> res{http::status::ok, req.version()};
         res.set(http::field::server, HTTP_SERVER_NAME);
         res.set(http::field::content_type, "text/html");
@@ -199,7 +203,8 @@ void ControlSessionHttp::handle_request(http::request<Body, http::basic_fields<A
     };
 
     // Returns a server error response
-    auto const server_error = [&req](boost::beast::string_view what) {
+    auto const server_error = [&req](boost::beast::string_view what)
+    {
         http::response<http::string_body> res{http::status::internal_server_error, req.version()};
         res.set(http::field::server, HTTP_SERVER_NAME);
         res.set(http::field::content_type, "text/html");
@@ -220,7 +225,9 @@ void ControlSessionHttp::handle_request(http::request<Body, http::basic_fields<A
             return send(bad_request("Illegal request-target"));
 
         std::string request = req.body();
-        return message_receiver_->onMessageReceived(shared_from_this(), request, [req = std::move(req), send = std::move(send)](const std::string& response) {
+        return message_receiver_->onMessageReceived(shared_from_this(), request,
+                                                    [req = std::move(req), send = std::move(send)](const std::string& response)
+                                                    {
             http::response<http::string_body> res{http::status::ok, req.version()};
             res.set(http::field::server, HTTP_SERVER_NAME);
             res.set(http::field::content_type, "application/json");
@@ -340,7 +347,9 @@ void ControlSessionHttp::on_read(beast::error_code ec, std::size_t bytes_transfe
             // Create a WebSocket session by transferring the socket
             // std::make_shared<websocket_session>(std::move(socket_), state_)->run(std::move(req_));
             auto ws = std::make_shared<websocket::stream<beast::tcp_stream>>(std::move(socket_));
-            ws->async_accept(req_, [this, ws, self = shared_from_this()](beast::error_code ec) {
+            ws->async_accept(req_,
+                             [this, ws, self = shared_from_this()](beast::error_code ec)
+                             {
                 if (ec)
                 {
                     LOG(ERROR, LOG_TAG) << "Error during WebSocket handshake (control): " << ec.message() << "\n";
@@ -357,7 +366,9 @@ void ControlSessionHttp::on_read(beast::error_code ec, std::size_t bytes_transfe
             // Create a WebSocket session by transferring the socket
             // std::make_shared<websocket_session>(std::move(socket_), state_)->run(std::move(req_));
             auto ws = std::make_shared<websocket::stream<beast::tcp_stream>>(std::move(socket_));
-            ws->async_accept(req_, [this, ws, self = shared_from_this()](beast::error_code ec) {
+            ws->async_accept(req_,
+                             [this, ws, self = shared_from_this()](beast::error_code ec)
+                             {
                 if (ec)
                 {
                     LOG(ERROR, LOG_TAG) << "Error during WebSocket handshake (stream): " << ec.message() << "\n";
@@ -373,7 +384,9 @@ void ControlSessionHttp::on_read(beast::error_code ec, std::size_t bytes_transfe
     }
 
     // Send the response
-    handle_request(std::move(req_), [this](auto&& response) {
+    handle_request(std::move(req_),
+                   [this](auto&& response)
+                   {
         // The lifetime of the message has to extend
         // for the duration of the async operation so
         // we use a shared_ptr to manage it.

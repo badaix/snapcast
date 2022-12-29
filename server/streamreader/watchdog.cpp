@@ -65,7 +65,9 @@ void Watchdog::trigger()
 {
     timer_.cancel();
     timer_.expires_after(timeout_ms_);
-    timer_.async_wait([this](const boost::system::error_code& ec) {
+    timer_.async_wait(
+        [this](const boost::system::error_code& ec)
+        {
         if (!ec)
         {
             LOG(INFO, LOG_TAG) << "Timed out: " << std::chrono::duration_cast<std::chrono::seconds>(timeout_ms_).count() << "s\n";

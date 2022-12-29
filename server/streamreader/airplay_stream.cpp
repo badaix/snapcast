@@ -245,7 +245,9 @@ void AirplayStream::pipeReadLine()
     }
 
     const std::string delimiter = "\n";
-    boost::asio::async_read_until(*pipe_fd_, streambuf_pipe_, delimiter, [this, delimiter](const std::error_code& ec, std::size_t bytes_transferred) {
+    boost::asio::async_read_until(*pipe_fd_, streambuf_pipe_, delimiter,
+                                  [this, delimiter](const std::error_code& ec, std::size_t bytes_transferred)
+                                  {
         if (ec)
         {
             if ((ec.value() == boost::asio::error::eof) || (ec.value() == boost::asio::error::bad_descriptor))

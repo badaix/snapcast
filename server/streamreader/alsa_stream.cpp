@@ -54,7 +54,9 @@ template <typename Rep, typename Period>
 void wait(boost::asio::steady_timer& timer, const std::chrono::duration<Rep, Period>& duration, std::function<void()> handler)
 {
     timer.expires_after(duration);
-    timer.async_wait([handler = std::move(handler)](const boost::system::error_code& ec) {
+    timer.async_wait(
+        [handler = std::move(handler)](const boost::system::error_code& ec)
+        {
         if (ec)
         {
             LOG(ERROR, LOG_TAG) << "Error during async wait: " << ec.message() << "\n";

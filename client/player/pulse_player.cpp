@@ -54,7 +54,9 @@ vector<PcmDevice> PulsePlayer::pcm_list(const std::string& parameter)
 {
     auto pa_ml = std::shared_ptr<pa_mainloop>(pa_mainloop_new(), [](pa_mainloop* pa_ml) { pa_mainloop_free(pa_ml); });
     pa_mainloop_api* pa_mlapi = pa_mainloop_get_api(pa_ml.get());
-    auto pa_ctx = std::shared_ptr<pa_context>(pa_context_new(pa_mlapi, "Snapcast"), [](pa_context* pa_ctx) {
+    auto pa_ctx = std::shared_ptr<pa_context>(pa_context_new(pa_mlapi, "Snapcast"),
+                                              [](pa_context* pa_ctx)
+                                              {
         pa_context_disconnect(pa_ctx);
         pa_context_unref(pa_ctx);
     });
@@ -70,21 +72,22 @@ vector<PcmDevice> PulsePlayer::pcm_list(const std::string& parameter)
     static int pa_ready = 0;
     pa_context_set_state_callback(
         pa_ctx.get(),
-        [](pa_context* c, void* userdata) {
-            std::ignore = userdata;
-            pa_context_state_t state = pa_context_get_state(c);
-            switch (state)
-            {
-                case PA_CONTEXT_FAILED:
-                case PA_CONTEXT_TERMINATED:
-                    pa_ready = 2;
-                    break;
-                case PA_CONTEXT_READY:
-                    pa_ready = 1;
-                    break;
-                default:
-                    break;
-            }
+        [](pa_context* c, void* userdata)
+        {
+        std::ignore = userdata;
+        pa_context_state_t state = pa_context_get_state(c);
+        switch (state)
+        {
+            case PA_CONTEXT_FAILED:
+            case PA_CONTEXT_TERMINATED:
+                pa_ready = 2;
+                break;
+            case PA_CONTEXT_READY:
+                pa_ready = 1;
+                break;
+            default:
+                break;
+        }
         },
         nullptr);
 
@@ -107,13 +110,14 @@ vector<PcmDevice> PulsePlayer::pcm_list(const std::string& parameter)
     static std::vector<PcmDevice> devices;
     auto* op = pa_context_get_sink_info_list(
         pa_ctx.get(),
-        [](pa_context* ctx, const pa_sink_info* i, int eol, void* userdata) mutable {
-            std::ignore = ctx;
-            std::ignore = userdata;
-            // auto self = static_cast<PulsePlayer*>(userdata);
-            // If eol is set to a positive number, you're at the end of the list
-            if (eol <= 0)
-                devices.emplace_back(i->index, i->name, i->description);
+        [](pa_context* ctx, const pa_sink_info* i, int eol, void* userdata) mutable
+        {
+        std::ignore = ctx;
+        std::ignore = userdata;
+        // auto self = static_cast<PulsePlayer*>(userdata);
+        // If eol is set to a positive number, you're at the end of the list
+        if (eol <= 0)
+            devices.emplace_back(i->index, i->name, i->description);
         },
         nullptr);
 
@@ -246,26 +250,27 @@ void PulsePlayer::triggerVolumeUpdate()
 {
     pa_context_get_sink_input_info(
         pa_ctx_, pa_stream_get_index(playstream_),
-        [](pa_context* ctx, const pa_sink_input_info* info, int eol, void* userdata) {
-            std::ignore = ctx;
-            LOG(DEBUG, LOG_TAG) << "pa_context_get_sink_info_by_index info: " << (info != nullptr) << ", eol: " << eol << "\n";
-            if (info != nullptr)
-            {
-                auto* self = static_cast<PulsePlayer*>(userdata);
-                self->volume_ = static_cast<double>(pa_cvolume_avg(&(info->volume))) / static_cast<double>(PA_VOLUME_NORM);
-                self->muted_ = (info->mute != 0);
-                LOG(DEBUG, LOG_TAG) << "Volume changed: " << self->volume_ << ", muted: " << self->muted_ << "\n";
+        [](pa_context* ctx, const pa_sink_input_info* info, int eol, void* userdata)
+        {
+        std::ignore = ctx;
+        LOG(DEBUG, LOG_TAG) << "pa_context_get_sink_info_by_index info: " << (info != nullptr) << ", eol: " << eol << "\n";
+        if (info != nullptr)
+        {
+            auto* self = static_cast<PulsePlayer*>(userdata);
+            self->volume_ = static_cast<double>(pa_cvolume_avg(&(info->volume))) / static_cast<double>(PA_VOLUME_NORM);
+            self->muted_ = (info->mute != 0);
+            LOG(DEBUG, LOG_TAG) << "Volume changed: " << self->volume_ << ", muted: " << self->muted_ << "\n";
 
-                auto now = std::chrono::steady_clock::now();
-                if (now - self->last_change_ < 1s)
-                {
-                    LOG(DEBUG, LOG_TAG) << "Last volume change by server: "
-                                        << std::chrono::duration_cast<std::chrono::milliseconds>(now - self->last_change_).count()
-                                        << " ms => ignoring volume change\n";
-                    return;
-                }
-                self->notifyVolumeChange(self->volume_, self->muted_);
+            auto now = std::chrono::steady_clock::now();
+            if (now - self->last_change_ < 1s)
+            {
+                LOG(DEBUG, LOG_TAG) << "Last volume change by server: "
+                                    << std::chrono::duration_cast<std::chrono::milliseconds>(now - self->last_change_).count()
+                                    << " ms => ignoring volume change\n";
+                return;
             }
+            self->notifyVolumeChange(self->volume_, self->muted_);
+        }
         },
         this);
 }
@@ -432,9 +437,10 @@ void PulsePlayer::connect()
     // If there's an error, the callback will set pa_ready to 2
     pa_context_set_state_callback(
         pa_ctx_,
-        [](pa_context* c, void* userdata) {
-            auto* self = static_cast<PulsePlayer*>(userdata);
-            self->stateCallback(c);
+        [](pa_context* c, void* userdata)
+        {
+        auto* self = static_cast<PulsePlayer*>(userdata);
+        self->stateCallback(c);
         },
         this);
 
@@ -462,39 +468,43 @@ void PulsePlayer::connect()
     {
         pa_context_set_subscribe_callback(
             pa_ctx_,
-            [](pa_context* ctx, pa_subscription_event_type_t event_type, uint32_t idx, void* userdata) {
-                auto* self = static_cast<PulsePlayer*>(userdata);
-                self->subscribeCallback(ctx, event_type, idx);
+            [](pa_context* ctx, pa_subscription_event_type_t event_type, uint32_t idx, void* userdata)
+            {
+            auto* self = static_cast<PulsePlayer*>(userdata);
+            self->subscribeCallback(ctx, event_type, idx);
             },
             this);
         const auto mask = static_cast<pa_subscription_mask_t>(PA_SUBSCRIPTION_MASK_SINK_INPUT);
 
         pa_context_subscribe(
             pa_ctx_, mask,
-            [](pa_context* ctx, int success, void* userdata) {
-                std::ignore = ctx;
-                if (success != 0)
-                {
-                    auto* self = static_cast<PulsePlayer*>(userdata);
-                    self->triggerVolumeUpdate();
-                }
+            [](pa_context* ctx, int success, void* userdata)
+            {
+            std::ignore = ctx;
+            if (success != 0)
+            {
+                auto* self = static_cast<PulsePlayer*>(userdata);
+                self->triggerVolumeUpdate();
+            }
             },
             this);
     }
 
     pa_stream_set_write_callback(
         playstream_,
-        [](pa_stream* stream, size_t length, void* userdata) {
-            auto* self = static_cast<PulsePlayer*>(userdata);
-            self->writeCallback(stream, length);
+        [](pa_stream* stream, size_t length, void* userdata)
+        {
+        auto* self = static_cast<PulsePlayer*>(userdata);
+        self->writeCallback(stream, length);
         },
         this);
 
     pa_stream_set_underflow_callback(
         playstream_,
-        [](pa_stream* stream, void* userdata) {
-            auto* self = static_cast<PulsePlayer*>(userdata);
-            self->underflowCallback(stream);
+        [](pa_stream* stream, void* userdata)
+        {
+        auto* self = static_cast<PulsePlayer*>(userdata);
+        self->underflowCallback(stream);
         },
         this);
 

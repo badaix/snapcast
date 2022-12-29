@@ -86,50 +86,52 @@ std::string StreamSessionTcp::getIP()
 
 void StreamSessionTcp::read_next()
 {
-    boost::asio::async_read(
-        socket_, boost::asio::buffer(buffer_, base_msg_size_), [this, self = shared_from_this()](boost::system::error_code ec, std::size_t length) mutable {
+    boost::asio::async_read(socket_, boost::asio::buffer(buffer_, base_msg_size_),
+                            [this, self = shared_from_this()](boost::system::error_code ec, std::size_t length) mutable
+                            {
+        if (ec)
+        {
+            LOG(ERROR, LOG_TAG) << "Error reading message header of length " << length << ": " << ec.message() << "\n";
+            messageReceiver_->onDisconnect(this);
+            return;
+        }
+
+        baseMessage_.deserialize(buffer_.data());
+        LOG(DEBUG, LOG_TAG) << "getNextMessage: " << baseMessage_.type << ", size: " << baseMessage_.size << ", id: " << baseMessage_.id
+                            << ", refers: " << baseMessage_.refersTo << "\n";
+        if (baseMessage_.type > message_type::kLast)
+        {
+            LOG(ERROR, LOG_TAG) << "unknown message type received: " << baseMessage_.type << ", size: " << baseMessage_.size << "\n";
+            messageReceiver_->onDisconnect(this);
+            return;
+        }
+        else if (baseMessage_.size > msg::max_size)
+        {
+            LOG(ERROR, LOG_TAG) << "received message of type " << baseMessage_.type << " to large: " << baseMessage_.size << "\n";
+            messageReceiver_->onDisconnect(this);
+            return;
+        }
+
+        if (baseMessage_.size > buffer_.size())
+            buffer_.resize(baseMessage_.size);
+
+        boost::asio::async_read(socket_, boost::asio::buffer(buffer_, baseMessage_.size),
+                                [this, self](boost::system::error_code ec, std::size_t length) mutable
+                                {
             if (ec)
             {
-                LOG(ERROR, LOG_TAG) << "Error reading message header of length " << length << ": " << ec.message() << "\n";
+                LOG(ERROR, LOG_TAG) << "Error reading message body of length " << length << ": " << ec.message() << "\n";
                 messageReceiver_->onDisconnect(this);
                 return;
             }
 
-            baseMessage_.deserialize(buffer_.data());
-            LOG(DEBUG, LOG_TAG) << "getNextMessage: " << baseMessage_.type << ", size: " << baseMessage_.size << ", id: " << baseMessage_.id
-                                << ", refers: " << baseMessage_.refersTo << "\n";
-            if (baseMessage_.type > message_type::kLast)
-            {
-                LOG(ERROR, LOG_TAG) << "unknown message type received: " << baseMessage_.type << ", size: " << baseMessage_.size << "\n";
-                messageReceiver_->onDisconnect(this);
-                return;
-            }
-            else if (baseMessage_.size > msg::max_size)
-            {
-                LOG(ERROR, LOG_TAG) << "received message of type " << baseMessage_.type << " to large: " << baseMessage_.size << "\n";
-                messageReceiver_->onDisconnect(this);
-                return;
-            }
-
-            if (baseMessage_.size > buffer_.size())
-                buffer_.resize(baseMessage_.size);
-
-            boost::asio::async_read(socket_, boost::asio::buffer(buffer_, baseMessage_.size),
-                                    [this, self](boost::system::error_code ec, std::size_t length) mutable {
-                                        if (ec)
-                                        {
-                                            LOG(ERROR, LOG_TAG) << "Error reading message body of length " << length << ": " << ec.message() << "\n";
-                                            messageReceiver_->onDisconnect(this);
-                                            return;
-                                        }
-
-                                        tv t;
-                                        baseMessage_.received = t;
-                                        if (messageReceiver_ != nullptr)
-                                            messageReceiver_->onMessageReceived(this, baseMessage_, buffer_.data());
-                                        read_next();
-                                    });
+            tv t;
+            baseMessage_.received = t;
+            if (messageReceiver_ != nullptr)
+                messageReceiver_->onMessageReceived(this, baseMessage_, buffer_.data());
+            read_next();
         });
+    });
 }
 
 

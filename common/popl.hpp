@@ -945,18 +945,21 @@ inline void OptionParser::parse(const std::string& ini_filename)
     std::ifstream file(ini_filename.c_str());
     std::string line;
 
-    auto trim = [](std::string& s) {
+    auto trim = [](std::string& s)
+    {
         s.erase(s.begin(), std::find_if(s.begin(), s.end(), [](int ch) { return !std::isspace(ch); }));
         s.erase(std::find_if(s.rbegin(), s.rend(), [](int ch) { return !std::isspace(ch); }).base(), s.end());
         return s;
     };
 
-    auto trim_copy = [trim](const std::string& s) {
+    auto trim_copy = [trim](const std::string& s)
+    {
         std::string copy(s);
         return trim(copy);
     };
 
-    auto split = [trim_copy](const std::string& s) -> std::pair<std::string, std::string> {
+    auto split = [trim_copy](const std::string& s) -> std::pair<std::string, std::string>
+    {
         size_t pos = s.find('=');
         if (pos == std::string::npos)
             return {"", ""};

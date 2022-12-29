@@ -188,7 +188,9 @@ bool AlsaPlayer::getHardwareVolume(double& volume, bool& muted)
 
 void AlsaPlayer::waitForEvent()
 {
-    sd_.async_wait(boost::asio::posix::stream_descriptor::wait_read, [this](const boost::system::error_code& ec) {
+    sd_.async_wait(boost::asio::posix::stream_descriptor::wait_read,
+                   [this](const boost::system::error_code& ec)
+                   {
         if (ec)
         {
             // TODO: fd is "Bad" after unplugging/plugging USB DAC, i.e. after init/uninit/init cycle
@@ -221,7 +223,9 @@ void AlsaPlayer::waitForEvent()
                 // As workaround we defer getting the volume by 20ms.
                 timer_.cancel();
                 timer_.expires_after(20ms);
-                timer_.async_wait([this](const boost::system::error_code& ec) {
+                timer_.async_wait(
+                    [this](const boost::system::error_code& ec)
+                    {
                     if (!ec)
                     {
                         if (getHardwareVolume(volume_, muted_))
@@ -249,7 +253,9 @@ void AlsaPlayer::initMixer()
         throw SnapException("Can't open control for " + mixer_device_ + ", error: " + snd_strerror(err));
     if ((err = snd_ctl_subscribe_events(ctl_, 1)) < 0)
         throw SnapException("Can't subscribe for events for " + mixer_device_ + ", error: " + snd_strerror(err));
-    fd_ = std::unique_ptr<pollfd, std::function<void(pollfd*)>>(new pollfd(), [](pollfd* p) {
+    fd_ = std::unique_ptr<pollfd, std::function<void(pollfd*)>>(new pollfd(),
+                                                                [](pollfd* p)
+                                                                {
         close(p->fd);
         delete p;
     });

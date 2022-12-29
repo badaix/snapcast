@@ -71,7 +71,9 @@ void PublishAvahi::publish(const std::vector<mDNSService>& services)
 void PublishAvahi::poll()
 {
     timer_.expires_after(std::chrono::milliseconds(50));
-    timer_.async_wait([this](const boost::system::error_code& ec) {
+    timer_.async_wait(
+        [this](const boost::system::error_code& ec)
+        {
         if (!ec && (avahi_simple_poll_iterate(simple_poll, 0) == 0))
             poll();
     });

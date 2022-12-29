@@ -418,7 +418,9 @@ int main(int argc, char** argv)
         boost::asio::io_context io_context;
         // Construct a signal set registered for process termination.
         boost::asio::signal_set signals(io_context, SIGHUP, SIGINT, SIGTERM);
-        signals.async_wait([&](const boost::system::error_code& ec, int signal) {
+        signals.async_wait(
+            [&](const boost::system::error_code& ec, int signal)
+            {
             if (!ec)
                 LOG(INFO, LOG_TAG) << "Received signal " << signal << ": " << strsignal(signal) << "\n";
             else
