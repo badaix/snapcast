@@ -25,7 +25,11 @@
 // 3rd party headers
 #include <boost/asio/strand.hpp>
 #pragma GCC diagnostic push
+#ifdef __clang__
+#pragma GCC diagnostic ignored "-Wunknown-warning-option"
 #pragma GCC diagnostic ignored "-Wdeprecated-copy-with-user-provided-copy"
+#pragma GCC diagnostic ignored "-Wdeprecated-copy"
+#endif
 #include <boost/beast/core.hpp>
 #pragma GCC diagnostic pop
 #include <boost/beast/websocket.hpp>
