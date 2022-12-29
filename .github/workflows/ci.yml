@@ -90,7 +90,7 @@ jobs:
         restore-keys: ${{ runner.os }}-${{ matrix.compiler }}-ccache-
     #- name: ccache dump config
     #  run: ccache -p
-    - name: cmake
+    - name: configure
       run: |
         cmake -S . -B build \
           -DWERROR=ON -DBUILD_TESTS=ON \
@@ -161,7 +161,7 @@ jobs:
         path: /Users/runner/Library/Caches/ccache
         key: ${{ runner.os }}-${{ matrix.xcode }}-ccache-${{ github.sha }}
         restore-keys: ${{ runner.os }}-${{ matrix.xcode }}-ccache-
-    - name: cmake
+    - name: configure
       run: |
         cmake -S . -B build \
           -DWERROR=ON -DBUILD_TESTS=ON \
@@ -205,7 +205,7 @@ jobs:
     - name: dependencies
       if: steps.cache-dependencies.outputs.cache-hit != 'true'
       run: vcpkg.exe install libflac libvorbis soxr opus boost-asio --triplet x64-windows
-    - name: cmake
+    - name: configure
       run: |
         echo vcpkg installation root: ${env:VCPKG_INSTALLATION_ROOT}
         cmake -S . -B build -G "${{ matrix.vs }}" `
