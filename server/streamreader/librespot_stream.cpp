@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2022  Johannes Pohl
+    Copyright (C) 2014-2023  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -26,6 +26,8 @@
 #include "common/utils/file_utils.hpp"
 #include "common/utils/string_utils.hpp"
 
+// standard headers
+#include <exception>
 
 
 using namespace std;
@@ -94,7 +96,7 @@ LibrespotStream::LibrespotStream(PcmStream::Listener* pcmListener, boost::asio::
     if (normalize)
         params_ += " --enable-volume-normalisation";
     if (autoplay)
-        params_ += " --autoplay";
+        params_ += " --autoplay on";
     params_ += " --verbose";
 
     if (uri_.query.find("username") != uri_.query.end())
@@ -129,85 +131,81 @@ void LibrespotStream::initExeAndPath(const std::string& filename)
     }
 }
 
-
 void LibrespotStream::onStderrMsg(const std::string& line)
 {
-    // Watch stderr for 'Loading track' messages and set the stream metadata
-    // For more than track name check: https://github.com/plietar/librespot/issues/154
-
-    /// Watch will kill librespot if there was no message received for 130min
-    // 2021-05-09 09-25-48.651 [Info] (LibrespotStream) (Spotify) [2021-05-09T07:25:48Z DEBUG librespot_playback::player] command=Load(SpotifyId
-    // 2021-05-09 09-25-48.651 [Info] (LibrespotStream) (Spotify) [2021-05-09T07:25:48Z TRACE librespot_connect::spirc] Sending status to server
-    // 2021-05-09 09-25-48.746 [Info] (LibrespotStream) (Spotify) [2021-05-09T07:25:48Z WARN  librespot_connect::spirc] No autoplay_uri found
-    // 2021-05-09 09-25-48.747 [Info] (LibrespotStream) (Spotify) [2021-05-09T07:25:48Z ERROR librespot_connect::spirc] AutoplayError: MercuryError
-    // 2021-05-09 09-25-48.750 [Info] (LibrespotStream) (Spotify) [2021-05-09T07:25:48Z INFO  librespot_playback::player] Loading <Big Gangsta>
-
-    // Parse log level, source and message from the log line
-    // Format: [2021-05-09T08:31:08Z DEBUG librespot_playback::player] new Player[0]
-
-    std::string message = line;
-    utils::string::split_left(message, ' ', message);
-    std::string level = utils::string::trim_copy(utils::string::split_left(message, ' ', message));
-    std::string source = utils::string::trim_copy(utils::string::split_left(message, ']', message));
-    utils::string::trim(message);
-
-    bool parsed = true;
-    AixLog::Severity severity = AixLog::Severity::info;
-    if (level == "TRACE")
-        severity = AixLog::Severity::trace;
-    else if (level == "DEBUG")
-        severity = AixLog::Severity::debug;
-    else if (level == "INFO")
-        severity = AixLog::Severity::info;
-    else if (level == "WARN")
-        severity = AixLog::Severity::warning;
-    else if (level == "ERROR")
-        severity = AixLog::Severity::error;
-    else
-        parsed = false;
-
-    if (parsed)
-        LOG(severity, source) << message << "\n";
-    else
-        LOG(INFO, LOG_TAG) << "(" << getName() << ") " << line << "\n";
-
-    // Librespot patch:
-    // 	info!("metadata:{{\"ARTIST\":\"{}\",\"TITLE\":\"{}\"}}", artist.name, track.name);
-    // non patched:
-    //  [2021-06-04T07:20:47Z INFO  librespot_playback::player] <Tunnel> (310573 ms) loaded
-    // 	info!("Track \"{}\" loaded", track.name);
-    size_t title_pos = 0;
-    size_t ms_pos = 0;
-    size_t n = 0;
-    if (((n = line.find("metadata:")) != std::string::npos))
+    try
     {
-        std::string metadata = line.substr(n + 9);
-        // Patched version
-        LOG(INFO, LOG_TAG) << "metadata: <" << metadata << ">\n";
-        json j = json::parse(metadata);
-        Metadata meta;
-        meta.artist = std::vector<std::string>{j["ARTIST"].get<std::string>()};
-        meta.title = j["TITLE"].get<std::string>();
-        meta.art_data = {SPOTIFY_LOGO, "svg"};
-        Properties properties;
-        properties.metadata = std::move(meta);
-        setProperties(properties);
+        // Watch stderr for 'Loading track' messages and set the stream metadata
+        // For more than track name check: https://github.com/plietar/librespot/issues/154
+
+        /// Watch will kill librespot if there was no message received for 130min
+        // 2021-05-09 09-25-48.651 [Info] (LibrespotStream) (Spotify) [2021-05-09T07:25:48Z DEBUG librespot_playback::player] command=Load(SpotifyId
+        // 2021-05-09 09-25-48.651 [Info] (LibrespotStream) (Spotify) [2021-05-09T07:25:48Z TRACE librespot_connect::spirc] Sending status to server
+        // 2021-05-09 09-25-48.746 [Info] (LibrespotStream) (Spotify) [2021-05-09T07:25:48Z WARN  librespot_connect::spirc] No autoplay_uri found
+        // 2021-05-09 09-25-48.747 [Info] (LibrespotStream) (Spotify) [2021-05-09T07:25:48Z ERROR librespot_connect::spirc] AutoplayError: MercuryError
+        // 2021-05-09 09-25-48.750 [Info] (LibrespotStream) (Spotify) [2021-05-09T07:25:48Z INFO  librespot_playback::player] Loading <Big Gangsta>
+
+        // Parse log level, source and message from the log line
+        // Format: [2021-05-09T08:31:08Z DEBUG librespot_playback::player] new Player[0]
+
+        // std::cerr << "Librespot: " << line << "\n";
+        std::string message = line;
+        utils::string::split_left(message, ' ', message);
+        std::string level = utils::string::trim_copy(utils::string::split_left(message, ' ', message));
+        std::string source = utils::string::trim_copy(utils::string::split_left(message, ']', message));
+        utils::string::trim(message);
+
+        bool parsed = true;
+        AixLog::Severity severity = AixLog::Severity::info;
+        if (level == "TRACE")
+            severity = AixLog::Severity::trace;
+        else if (level == "DEBUG")
+            severity = AixLog::Severity::debug;
+        else if (level == "INFO")
+            severity = AixLog::Severity::info;
+        else if (level == "WARN")
+            severity = AixLog::Severity::warning;
+        else if (level == "ERROR")
+            severity = AixLog::Severity::error;
+        else
+            parsed = false;
+
+        if (parsed)
+        {
+            LOG(severity, source) << message << "\n";
+            // std::cerr << "Parsed: " << "Severity: " << severity << ", source: " << source << ", msg: " << message << "\n";
+        }
+        else
+        {
+            return;
+            // LOG(INFO, LOG_TAG) << "(" << getName() << ") " << line << "\n";
+        }
+
+        //  [2021-06-04T07:20:47Z INFO  librespot_playback::player] <Tunnel> (310573 ms) loaded
+        // 	info!("Track \"{}\" loaded", track.name);
+        size_t title_pos = 0;
+        size_t ms_pos = 0;
+        size_t n = 0;
+        if (((title_pos = line.find("<")) != std::string::npos) && ((n = line.find(">", title_pos)) != std::string::npos) &&
+                 ((ms_pos = line.find("(", n)) != std::string::npos) && ((n = line.find("ms) loaded", ms_pos)) != std::string::npos))
+        {
+            title_pos += 1;
+            std::string title = line.substr(title_pos, line.find(">", title_pos) - title_pos);
+            LOG(INFO, LOG_TAG) << "metadata: <" << title << ">\n";
+            ms_pos += 1;
+            std::string ms = line.substr(ms_pos, n - ms_pos - 1);
+            Metadata meta;
+            meta.title = title;
+            meta.duration = cpt::stod(ms) / 1000.;
+            meta.art_data = {SPOTIFY_LOGO, "svg"};
+            Properties properties;
+            properties.metadata = std::move(meta);
+            setProperties(properties);
+        }
     }
-    else if (((title_pos = line.find("<")) != std::string::npos) && ((n = line.find(">", title_pos)) != std::string::npos) &&
-             ((ms_pos = line.find("(", n)) != std::string::npos) && ((n = line.find("ms) loaded", ms_pos)) != std::string::npos))
+    catch (const std::exception& e)
     {
-        title_pos += 1;
-        std::string title = line.substr(title_pos, line.find(">", title_pos) - title_pos);
-        LOG(INFO, LOG_TAG) << "metadata: <" << title << ">\n";
-        ms_pos += 1;
-        std::string ms = line.substr(ms_pos, n - ms_pos - 1);
-        Metadata meta;
-        meta.title = title;
-        meta.duration = cpt::stod(ms) / 1000.;
-        meta.art_data = {SPOTIFY_LOGO, "svg"};
-        Properties properties;
-        properties.metadata = std::move(meta);
-        setProperties(properties);
+        LOG(ERROR, LOG_TAG) << "Exception: " << e.what() << std::endl;
     }
 }
 
