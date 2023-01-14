@@ -79,7 +79,7 @@ void TcpStream::do_connect()
             if (!ec)
             {
                 LOG(DEBUG, LOG_TAG) << "New client connection\n";
-                stream_ = make_unique<tcp::socket>(move(socket));
+                stream_ = make_unique<tcp::socket>(std::move(socket));
                 on_connect();
             }
             else
