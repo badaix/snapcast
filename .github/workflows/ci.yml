@@ -75,7 +75,8 @@ jobs:
       uses: actions/cache@v3
       with:
         path: boost_${{ env.BOOST_VERSION }}
-        key: ${{ runner.os }}-boost
+        key: boost
+        enableCrossOsArchive: true
     - name: get boost
       if: steps.cache-boost.outputs.cache-hit != 'true'
       run: |
@@ -148,7 +149,8 @@ jobs:
       uses: actions/cache@v3
       with:
         path: boost_${{ env.BOOST_VERSION }}
-        key: ${{ runner.os }}-boost
+        key: boost
+        enableCrossOsArchive: true
     - name: get boost
       if: steps.cache-boost.outputs.cache-hit != 'true'
       run: |
