@@ -88,7 +88,7 @@ jobs:
       id: cache-ccache
       uses: actions/cache@v3
       with:
-        path: /home/runner/.ccache
+        path: $HOME/.ccache
         key: ${{ runner.os }}-${{ matrix.compiler }}-ccache-${{ github.sha }}
         restore-keys: ${{ runner.os }}-${{ matrix.compiler }}-ccache-
     #- name: ccache dump config
@@ -105,6 +105,8 @@ jobs:
         CC: ${{ matrix.cc }}
         CXX: ${{ matrix.cxx }}
     - name: build
+      env:
+        CCACHE_DIR: $HOME/.ccache
       run: cmake --build build --parallel 3 --verbose
 
 
@@ -144,6 +146,8 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
+    - name: print environment
+      run: env
     - name: dependencies
       run: brew install pkgconfig libsoxr ccache expat
     - name: cache boost
