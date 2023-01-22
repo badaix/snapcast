@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2022  Johannes Pohl
+    Copyright (C) 2014-2023  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -20,7 +20,7 @@
 #include "coreaudio_player.hpp"
 
 // local headers
-#include "aixlog.hpp"
+#include "common/aixlog.hpp"
 
 // 3rd party headers
 #include <CoreAudio/CoreAudio.h>
