@@ -34,7 +34,7 @@ set(SERVER_SOURCES
 set(SERVER_LIBRARIES ${CMAKE_THREAD_LIBS_INIT} ${ATOMIC_LIBRARY} common)
 
 set(SERVER_INCLUDE ${Boost_INCLUDE_DIR} ${CMAKE_SOURCE_DIR}/server
-                   ${CMAKE_SOURCE_DIR}/common)
+                   ${CMAKE_SOURCE_DIR})
 
 if(ANDROID)
   find_package(vorbis REQUIRED CONFIG)

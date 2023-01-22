@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2022  Johannes Pohl
+    Copyright (C) 2014-2023  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -20,12 +20,12 @@
 #define CONTROL_SERVER_HPP
 
 // local headers
+#include "common/message/codec_header.hpp"
+#include "common/message/message.hpp"
+#include "common/message/server_settings.hpp"
 #include "common/queue.h"
 #include "common/sample_format.hpp"
 #include "control_session.hpp"
-#include "message/codec_header.hpp"
-#include "message/message.hpp"
-#include "message/server_settings.hpp"
 #include "server_settings.hpp"
 
 // 3rd party headers

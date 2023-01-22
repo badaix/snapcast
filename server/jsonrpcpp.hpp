@@ -22,7 +22,7 @@
 #ifndef JSON_RPC_HPP
 #define JSON_RPC_HPP
 
-#include "json.hpp"
+#include "common/json.hpp"
 #include <cstring>
 #include <exception>
 #include <string>

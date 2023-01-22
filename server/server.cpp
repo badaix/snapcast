@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2022  Johannes Pohl
+    Copyright (C) 2014-2023  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -21,10 +21,10 @@
 
 // local headers
 #include "common/aixlog.hpp"
+#include "common/message/client_info.hpp"
+#include "common/message/hello.hpp"
+#include "common/message/time.hpp"
 #include "config.hpp"
-#include "message/client_info.hpp"
-#include "message/hello.hpp"
-#include "message/time.hpp"
 #include "stream_session_tcp.hpp"
 
 // 3rd party headers

@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2021  Johannes Pohl
+    Copyright (C) 2014-2023  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -16,14 +16,21 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
+// prototype/interface header file
 #include "control_session_http.hpp"
-#include "common/aixlog.hpp"
-#include "control_session_ws.hpp"
-#include "message/pcm_chunk.hpp"
-#include "stream_session_ws.hpp"
+
+// standard headers
+#include <iostream>
+
+// 3rd party headers
 #include <boost/beast/http/buffer_body.hpp>
 #include <boost/beast/http/file_body.hpp>
-#include <iostream>
+
+// local headers
+#include "common/aixlog.hpp"
+#include "common/message/pcm_chunk.hpp"
+#include "control_session_ws.hpp"
+#include "stream_session_ws.hpp"
 
 using namespace std;
 namespace websocket = beast::websocket; // from <boost/beast/websocket.hpp>

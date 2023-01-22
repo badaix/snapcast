@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2021  Johannes Pohl
+    Copyright (C) 2014-2023  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -20,8 +20,8 @@
 #define META_STREAM_HPP
 
 // local headers
+#include "common/resampler.hpp"
 #include "posix_stream.hpp"
-#include "resampler.hpp"
 
 // standard headers
 #include <memory>

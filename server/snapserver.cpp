@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2022  Johannes Pohl
+    Copyright (C) 2014-2023  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -21,13 +21,13 @@
 #ifdef HAS_DAEMON
 #include "common/daemon.hpp"
 #endif
+#include "common/message/message.hpp"
 #include "common/sample_format.hpp"
 #include "common/snap_exception.hpp"
 #include "common/time_defs.hpp"
 #include "common/utils/string_utils.hpp"
 #include "common/version.hpp"
 #include "encoder/encoder_factory.hpp"
-#include "message/message.hpp"
 #include "server.hpp"
 #include "server_settings.hpp"
 #if defined(HAS_AVAHI) || defined(HAS_BONJOUR)
