@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2021  Johannes Pohl
+    Copyright (C) 2014-2023  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -16,10 +16,10 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
-#ifndef STREAMREADER_ERROR_HPP
-#define STREAMREADER_ERROR_HPP
+#pragma once
 
 
+// standard headers
 #include <system_error>
 
 
@@ -77,6 +77,3 @@ struct is_error_code_enum<ControlErrc> : public std::true_type
 } // namespace std
 
 std::error_code make_error_code(ControlErrc);
-
-
-#endif

@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2021  Johannes Pohl
+    Copyright (C) 2014-2023  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -19,6 +19,17 @@
 #ifndef STREAM_HPP
 #define STREAM_HPP
 
+// local headers
+#include "common/message/message.hpp"
+#include "common/message/pcm_chunk.hpp"
+#include "common/queue.h"
+#include "common/resampler.hpp"
+#include "common/sample_format.hpp"
+#include "double_buffer.hpp"
+
+// 3rd party headers
+
+// standard headers
 #include <atomic>
 #include <deque>
 #include <memory>
@@ -27,12 +38,6 @@
 #include <soxr.h>
 #endif
 
-#include "common/queue.h"
-#include "common/sample_format.hpp"
-#include "double_buffer.hpp"
-#include "message/message.hpp"
-#include "message/pcm_chunk.hpp"
-#include "resampler.hpp"
 
 /// Time synchronized audio stream
 /**

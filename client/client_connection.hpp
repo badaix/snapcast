@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2022  Johannes Pohl
+    Copyright (C) 2014-2023  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -21,9 +21,9 @@
 
 // local headers
 #include "client_settings.hpp"
+#include "common/message/factory.hpp"
+#include "common/message/message.hpp"
 #include "common/time_defs.hpp"
-#include "message/factory.hpp"
-#include "message/message.hpp"
 
 // 3rd party headers
 #include <boost/asio/any_io_executor.hpp>

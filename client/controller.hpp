@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2021  Johannes Pohl
+    Copyright (C) 2014-2023  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -22,9 +22,9 @@
 // local headers
 #include "client_connection.hpp"
 #include "client_settings.hpp"
+#include "common/message/message.hpp"
+#include "common/message/server_settings.hpp"
 #include "decoder/decoder.hpp"
-#include "message/message.hpp"
-#include "message/server_settings.hpp"
 #include "player/player.hpp"
 #include "stream.hpp"
 

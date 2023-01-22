@@ -12,7 +12,7 @@ set(CLIENT_SOURCES
 set(CLIENT_LIBRARIES ${CMAKE_THREAD_LIBS_INIT} ${ATOMIC_LIBRARY} common)
 
 set(CLIENT_INCLUDE ${Boost_INCLUDE_DIR} ${CMAKE_SOURCE_DIR}/client
-                   ${CMAKE_SOURCE_DIR}/common)
+                   ${CMAKE_SOURCE_DIR})
 
 if(MACOSX)
   # Bonjour

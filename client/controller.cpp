@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2022  Johannes Pohl
+    Copyright (C) 2014-2023  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -24,8 +24,8 @@
 #include "controller.hpp"
 
 // local headers
-#include "decoder/pcm_decoder.hpp"
 #include "decoder/null_decoder.hpp"
+#include "decoder/pcm_decoder.hpp"
 #if defined(HAS_OGG) && (defined(HAS_TREMOR) || defined(HAS_VORBIS))
 #include "decoder/ogg_decoder.hpp"
 #endif
@@ -58,10 +58,10 @@
 
 #include "browseZeroConf/browse_mdns.hpp"
 #include "common/aixlog.hpp"
+#include "common/message/client_info.hpp"
+#include "common/message/hello.hpp"
+#include "common/message/time.hpp"
 #include "common/snap_exception.hpp"
-#include "message/client_info.hpp"
-#include "message/hello.hpp"
-#include "message/time.hpp"
 #include "time_provider.hpp"
 
 // standard headers

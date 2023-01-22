@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2021  Johannes Pohl
+    Copyright (C) 2014-2023  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -16,15 +16,23 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
+
+// prototype/interface header file
+#include "ogg_decoder.hpp"
+
+// local headers
+#include "common/aixlog.hpp"
+#include "common/endian.hpp"
+#include "common/snap_exception.hpp"
+
+// 3rd party headers
+
+// standard headers
 #include <cmath>
 #include <cstdint>
 #include <cstring>
 #include <iostream>
 
-#include "common/aixlog.hpp"
-#include "common/endian.hpp"
-#include "common/snap_exception.hpp"
-#include "ogg_decoder.hpp"
 
 
 using namespace std;
