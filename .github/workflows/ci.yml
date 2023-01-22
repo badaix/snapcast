@@ -88,6 +88,7 @@ jobs:
       id: cache-ccache
       uses: actions/cache@v3
       with:
+        # TODO: use environment variable $HOME/.ccache
         path: /home/runner/.ccache
         key: ${{ runner.os }}-${{ matrix.compiler }}-ccache-${{ github.sha }}
         restore-keys: ${{ runner.os }}-${{ matrix.compiler }}-ccache-
@@ -106,6 +107,7 @@ jobs:
         CXX: ${{ matrix.cxx }}
     - name: build
       env:
+        # TODO: use environment variable $HOME/.ccache
         CCACHE_DIR: /home/runner/.ccache
       run: cmake --build build --parallel 3 --verbose
 
