@@ -25,6 +25,7 @@
 
 // local headers
 #include "decoder/pcm_decoder.hpp"
+#include "decoder/null_decoder.hpp"
 #if defined(HAS_OGG) && (defined(HAS_TREMOR) || defined(HAS_VORBIS))
 #include "decoder/ogg_decoder.hpp"
 #endif
@@ -185,6 +186,8 @@ void Controller::getNextMessage()
             else if (headerChunk_->codec == "opus")
                 decoder_ = make_unique<decoder::OpusDecoder>();
 #endif
+            else if (headerChunk_->codec == "null")
+                decoder_ = make_unique<decoder::NullDecoder>();
             else
                 throw SnapException("codec not supported: \"" + headerChunk_->codec + "\"");
 

@@ -5,6 +5,7 @@ set(CLIENT_SOURCES
     stream.cpp
     time_provider.cpp
     decoder/pcm_decoder.cpp
+    decoder/null_decoder.cpp
     player/player.cpp
     player/file_player.cpp)
 
