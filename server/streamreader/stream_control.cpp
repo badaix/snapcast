@@ -253,7 +253,14 @@ void ScriptStreamControl::stop()
 {
     if (process_.running())
     {
+        LOG(INFO, LOG_TAG) << "Stopping script '" << script_ << "'\n";
         ::kill(-process_.native_handle(), SIGINT);
+        auto timeout = 500ms;
+        if (!process_.wait_for(timeout))
+        {
+            LOG(INFO, LOG_TAG) << "Script did not terminate after " << timeout.count() << " ms, terminating.\n";
+            process_.terminate();
+        }
     }
 }
 

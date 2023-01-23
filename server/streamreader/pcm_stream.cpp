@@ -257,8 +257,8 @@ void PcmStream::setState(ReaderState newState)
 void PcmStream::chunkEncoded(const encoder::Encoder& encoder, std::shared_ptr<msg::PcmChunk> chunk, double duration)
 {
     std::ignore = encoder;
-    // LOG(TRACE, LOG_TAG) << "onChunkEncoded: " << getName() << ", duration: " << duration << " ms, compression ratio: " << 100 - ceil(100 *
-    // (chunk->durationMs() / duration)) << "%\n";
+    // LOG(TRACE, LOG_TAG) << "onChunkEncoded: " << getName() << ", duration: " << duration
+    //                     << " ms, compression ratio: " << 100 - ceil(100 * (chunk->durationMs() / duration)) << "%\n";
     if (duration <= 0)
         return;
 
