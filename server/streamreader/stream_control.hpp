@@ -59,11 +59,10 @@ public:
     using OnLog = std::function<void(std::string message)>;
 
     StreamControl(const boost::asio::any_io_executor& executor);
-    virtual ~StreamControl();
+    virtual ~StreamControl() = default;
 
     void start(const std::string& stream_id, const ServerSettings& server_setttings, const OnNotification& notification_handler,
                const OnRequest& request_handler, const OnLog& log_handler);
-    virtual void stop();
 
     void command(const jsonrpcpp::Request& request, const OnResponse& response_handler);
 
@@ -90,8 +89,6 @@ class ScriptStreamControl : public StreamControl
 public:
     ScriptStreamControl(const boost::asio::any_io_executor& executor, const std::string& script, const std::string& params);
     virtual ~ScriptStreamControl() = default;
-
-    void stop() override;
 
 protected:
     /// Send a message to stdin of the process

@@ -47,11 +47,6 @@ StreamControl::StreamControl(const boost::asio::any_io_executor& executor) : exe
 }
 
 
-StreamControl::~StreamControl()
-{
-    stop();
-}
-
 
 void StreamControl::start(const std::string& stream_id, const ServerSettings& server_setttings, const OnNotification& notification_handler,
                           const OnRequest& request_handler, const OnLog& log_handler)
@@ -77,10 +72,6 @@ void StreamControl::command(const jsonrpcpp::Request& request, const OnResponse&
     });
 }
 
-
-void StreamControl::stop()
-{
-}
 
 
 void StreamControl::onReceive(const std::string& json)
@@ -155,6 +146,7 @@ ScriptStreamControl::ScriptStreamControl(const boost::asio::any_io_executor& exe
             throw SnapException("Control script not found: \"" + script_ + "\"");
     }
 }
+
 
 
 void ScriptStreamControl::doStart(const std::string& stream_id, const ServerSettings& server_setttings)
@@ -245,23 +237,6 @@ void ScriptStreamControl::stdoutReadLine()
         streambuf_stdout_.consume(bytes_transferred);
         stdoutReadLine();
     });
-}
-
-
-
-void ScriptStreamControl::stop()
-{
-    if (process_.running())
-    {
-        LOG(INFO, LOG_TAG) << "Stopping script '" << script_ << "'\n";
-        ::kill(-process_.native_handle(), SIGINT);
-        auto timeout = 500ms;
-        if (!process_.wait_for(timeout))
-        {
-            LOG(INFO, LOG_TAG) << "Script did not terminate after " << timeout.count() << " ms, terminating.\n";
-            process_.terminate();
-        }
-    }
 }
 
 
