@@ -9,7 +9,8 @@
 
 ### Bugfixes
 
-- Server: Fix compatibility with librespot 0.5-dev (Issue #1063, #1074)
+- Server: Fix random crash with meta stream (Issue #966)
+- Server: Fix compatibility with librespot 0.5-dev (Issue #1063, #1074, #1042)
 - Server: Not terminate on malformed json messages (Issue #1049)
 - Server: Fix random segfault (Issue #1047)
 - Server: Fix growing delay on input stream (Issue #1014)
@@ -18,11 +19,14 @@
 - Server: Add list of dependecies to meta_mpd.py (Issue #971)
 - Server: meta_mpd.py stopped working (Issue #997)
 - Client: Not terminate if codec is "null" (Issue #1076)
+- Fix test failures (Issue #961)
 
 ### General
 
-- Remove debhelper files from project
-- Snapos uses containers to build deb packages (solves Issue #968)
+- Fix compilation on macOS with Xcode 13.4.1 (Issue #1028)
+- Fix compilation with boost 1.81.0 (Issue #1082)
+- Remove debhelper files from project (moved to SnapOS project)
+- SnapOs uses containers to build deb packages (solves Issue #968)
 - Snapweb: Update to v0.5.0
 
 _Johannes Pohl <snapcast@badaix.de>  Sun, 05 Feb 2023 00:13:37 +0200_
