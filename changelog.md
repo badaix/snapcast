@@ -9,17 +9,23 @@
 
 ### Bugfixes
 
+- Server: Fix compatibility with librespot 0.5-dev (Issue #1063, #1074)
+- Server: Not terminate on malformed json messages (Issue #1049)
+- Server: Fix random segfault (Issue #1047)
+- Server: Fix growing delay on input stream (Issue #1014)
 - Server: Fix segfault with Librespot on Alpine (Issue #1026)
 - Server: meta_mpd.py is installed with 755 (Issue #1021, #970)
 - Server: Add list of dependecies to meta_mpd.py (Issue #971)
 - Server: meta_mpd.py stopped working (Issue #997)
+- Client: Not terminate if codec is "null" (Issue #1076)
 
 ### General
 
 - Remove debhelper files from project
 - Snapos uses containers to build deb packages (solves Issue #968)
+- Snapweb: Update to v0.5.0
 
-_Johannes Pohl <snapcast@badaix.de>  Sat, 23 Jul 2022 00:13:37 +0200_
+_Johannes Pohl <snapcast@badaix.de>  Sun, 05 Feb 2023 00:13:37 +0200_
 
 ## Version 0.26.0
 
