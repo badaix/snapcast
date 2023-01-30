@@ -712,9 +712,6 @@ class SnapStream {
             alert("Sorry, but the Web Audio API is not supported by your browser");
         }
     }
-    resume() {
-        this.ctx.resume();
-    }
     setupAudioContext() {
         let AudioContext = window.AudioContext // Default
             || window.webkitAudioContext // Safari and old versions of Chrome
