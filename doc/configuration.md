@@ -97,7 +97,7 @@ Note that you need to have the shairport-sync binary on your machine and the sam
 Parameters used to configure the shairport-sync binary:
 
 - `devicename`: Advertised name
-- `port`: RTSP listening port
+- `port`: RTSP listening port (5000 for Airplay 1, 7000 for Airplay 2)
 - `password`: Password
 - `params`: Optional string appended to the shairport-sync invocation. This allows for arbitrary flags to be passed to shairport-sync, for instance `params=--on-start=start.sh%20--on-stop=stop.sh`. The value has to be properly URL-encoded.
 

@@ -28,6 +28,10 @@ git clone https://github.com/badaix/snapcast.git
 Snapcast depends on boost 1.70 or higher. Since it depends on header only boost libs, boost does not need to be installed, but the boost include path must be set properly: download and extract the latest boost version and add the include path, e.g. calling `make` with prepended `ADD_CFLAGS`: `ADD_CFLAGS="-I/path/to/boost_1_7x_0/" make`.  
 For `cmake` you must add the path to the `-DBOOST_ROOT` flag: `cmake -DBOOST_ROOT=/path/to/boost_1_7x_0`
 
+### Airplay Metadata
+
+If you want to use Airplay metadata, `HAS_EXPAT=1` flag needs to be set when building the Snapsever. E.g. `make HAS_EXPAT=1 server`. Adjust the following `make` calls accordingly.
+
 ## Linux (Native)
 
 Install the build tools and required libs:  
