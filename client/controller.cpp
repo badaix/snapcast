@@ -259,14 +259,6 @@ void Controller::getNextMessage()
             player_->setVolume(serverSettings_->getVolume() / 100., serverSettings_->isMuted());
             // }
         }
-        // else if (response->type == message_type::kStreamTags)
-        // {
-        //     if (meta_)
-        //     {
-        //         auto stream_tags = msg::message_cast<msg::StreamTags>(std::move(response));
-        //         meta_->push(stream_tags->msg);
-        //     }
-        // }
         else
         {
             LOG(WARNING, LOG_TAG) << "Unexpected message received, type: " << response->type << "\n";

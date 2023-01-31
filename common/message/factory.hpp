@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2022  Johannes Pohl
+    Copyright (C) 2014-2023  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -75,8 +75,6 @@ static std::unique_ptr<BaseMessage> createMessage(const BaseMessage& base_messag
             return createMessage<Hello>(base_message, buffer);
         case message_type::kServerSettings:
             return createMessage<ServerSettings>(base_message, buffer);
-        // case message_type::kStreamTags:
-        //     return createMessage<StreamTags>(base_message, buffer);
         case message_type::kTime:
             return createMessage<Time>(base_message, buffer);
         case message_type::kWireChunk:

@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2022  Johannes Pohl
+    Copyright (C) 2014-2023  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -63,7 +63,7 @@ enum class message_type : uint16_t
     kServerSettings = 3,
     kTime = 4,
     kHello = 5,
-    kStreamTags = 6,
+    // kStreamTags = 6,
     kClientInfo = 7,
 
     kFirst = kBase,
@@ -91,9 +91,6 @@ static std::ostream& operator<<(std::ostream& os, const message_type& msg_type)
             break;
         case message_type::kHello:
             os << "Hello";
-            break;
-        case message_type::kStreamTags:
-            os << "StreamTags";
             break;
         case message_type::kClientInfo:
             os << "ClientInfo";

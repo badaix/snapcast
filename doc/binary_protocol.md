@@ -13,7 +13,6 @@ When a client joins a server, the following exchanges happen
 1. Client opens a TCP socket to the server (default port is 1704)
 1. Client sends a [Hello](#hello) message
 1. Server sends a [Server Settings](#server-settings) message
-1. Server sends a [Stream Tags](#stream-tags) message
 1. Server sends a [Codec Header](#codec-header) message
     1. Until the server sends this, the client shouldn't play any [Wire Chunk](#wire-chunk) messages
 1. The server will now send [Wire Chunk](#wire-chunk) messages, which can be fed to the audio decoder.
@@ -123,20 +122,3 @@ Sample JSON payload (whitespace added for readability):
     "Version": "0.17.1"
 }
 ```
-
-### Stream Tags
-
-| Field   | Type   | Description                                                    |
-|---------|--------|----------------------------------------------------------------|
-| size    | uint32 | Size of the following JSON string                              |
-| payload | char[] | JSON string containing the message (not null terminated)       |
-
-Sample JSON payload (whitespace added for readability):
-
-```json
-{
-    "STREAM": "default"
-}
-```
-
-[According to the source](https://github.com/badaix/snapcast/blob/master/common/message/stream_tags.hpp#L55-L56), these tags can vary based on the stream.
