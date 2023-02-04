@@ -6,6 +6,8 @@
 
 - Server: Configurable default volume for new clients (Issue #910, PR #1024)
 - Server: New control script for mopidy: meta_mopidy.py
+- Server: New control script for librespot java: meta_librespot-java.py
+- Server: Add "mute" stream property
 
 ### Bugfixes
 
