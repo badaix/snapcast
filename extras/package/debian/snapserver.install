@@ -1,0 +1,3 @@
+usr/bin/snapserver usr/bin/
+usr/share/snapserver usr/share/
+etc/snapserver.conf	etc/
