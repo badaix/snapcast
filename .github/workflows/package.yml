@@ -2,11 +2,9 @@ name: Package
 
 on: 
   workflow_dispatch:
-  pull_request:
 
 env:
   BOOST_VERSION: 1_81_0
-  VERSION: v0.27.0
 
 jobs:
 
