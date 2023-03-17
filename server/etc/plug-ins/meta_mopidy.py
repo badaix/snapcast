@@ -74,6 +74,12 @@ class MopidyControl(object):
         self._mopidy_request_map = {}
         self._seek_offset = 0.0
 
+        wsversion = websocket.__version__.split('.')
+        if int(wsversion[0]) == 0 and int(wsversion[1]) < 58:
+            logger.error(
+                f"websocket-client version 0.58.0 or higher required, installed: {websocket.__version__}, exiting.")
+            exit()
+
         self.websocket = websocket.WebSocketApp("ws://" + self._params['mopidy-host'] + ":" + str(self._params['mopidy-port']) + "/mopidy/ws",
                                                 on_message=self.on_ws_message,
                                                 on_error=self.on_ws_error,
