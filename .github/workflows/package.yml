@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
 
 env:
-  BOOST_VERSION: 1_81_0
+  BOOST_VERSION: 1_82_0
 
 jobs:
 

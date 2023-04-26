@@ -8,7 +8,7 @@ on:
   pull_request:
 
 env:
-  BOOST_VERSION: 1_81_0
+  BOOST_VERSION: 1_82_0
 
 jobs:
   linux:
@@ -71,7 +71,7 @@ jobs:
     - name: print environment
       run: env
     - name: dependencies
-      run: sudo apt-get update && sudo apt-get install -yq rename libasound2-dev libsoxr-dev libvorbisidec-dev libvorbis-dev libflac-dev libopus-dev alsa-utils libpulse-dev libavahi-client-dev avahi-daemon debhelper ccache expat
+      run: sudo apt-get update && sudo apt-get install -yq libasound2-dev libsoxr-dev libvorbisidec-dev libvorbis-dev libflac-dev libopus-dev alsa-utils libpulse-dev libavahi-client-dev avahi-daemon debhelper ccache expat
     - name: cache boost
       id: cache-boost
       uses: actions/cache@v3
