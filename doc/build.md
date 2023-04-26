@@ -132,17 +132,27 @@ sudo pkg install alsa-lib pulseaudio gmake gcc bash avahi libogg libvorbis opus 
 
 ### Build Snapserver
 
-`cd` into the Snapserver src-root directory:
+Setup cmake build environment:
 
 ```sh
-cd <snapcast dir>/server
-gmake TARGET=FREEBSD
+cd <snapcast dir>
+mkdir build
+cd build
+cmake .. -DBUILD_CLIENT=OFF
+```
+
+`cd` into the Snapserver build directory:
+
+```sh
+cd <snapcast dir>/build
+make 
 ```
 
 Install Snapserver
 
 ```sh
-sudo gmake TARGET=FREEBSD install
+cd <snapcast dir>/build
+make install
 ```
 
 This will copy the server binary to `/usr/local/bin` and the startup script to `/usr/local/etc/rc.d/snapserver`. To enable the Snapserver, add this line to `/etc/rc.conf`:  
