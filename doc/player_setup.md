@@ -291,6 +291,7 @@ Audio can be played directly through the line-in via ALSA. The following guide w
    ```
 
 #### Pipe Method
+
 Audio captured from line-in can be redirected to the snapserver's pipe, e.g. by using:
 
 ##### cpiped
