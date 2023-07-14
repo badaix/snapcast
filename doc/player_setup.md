@@ -235,7 +235,11 @@ For example, you could install the minimalist **mpv** media player to pick up We
 
 ```ini
 [stream]
-source = process:///usr/bin/mpv?name=Webradio&sampleformat=48000:16:2&params=http://129.122.92.10:88/broadwavehigh.mp3 --no-terminal --audio-display=no --audio-channels=stereo --audio-samplerate=48000 --audio-format=s16 --ao=pcm:file=/dev/stdout
+# mpv < 0.21.0
+#source = process:///usr/bin/mpv?name=Webradio&sampleformat=48000:16:2&params=http://129.122.92.10:88/broadwavehigh.mp3 --no-terminal --audio-display=no --audio-channels=stereo --audio-samplerate=48000 --audio-format=s16 --ao=pcm:file=/dev/stdout
+# mpv >= 0.21.0
+source = process:///usr/bin/mpv?name=Webradio&sampleformat=48000:16:2&params=http://129.122.92.10:88/broadwavehigh.mp3 --no-terminal --audio-display=no --audio-channels=stereo --audio-samplerate=48000 --audio-format=s16 --ao=pcm --ao-pcm-file=/dev/stdout
+
 ```
 
 ### Line-in
