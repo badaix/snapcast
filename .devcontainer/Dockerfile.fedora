@@ -1,0 +1,13 @@
+ARG VARIANT="38"
+FROM fedora:${VARIANT}
+
+# [Optional] Uncomment this section to install additional packages.
+RUN dnf -y update \
+    && dnf -y install @development-tools cmake ccache \
+    && dnf -y install alsa-lib-devel avahi-devel gcc-c++ libatomic libvorbis-devel opus-devel \
+    pulseaudio-libs-devel flac-devel soxr-devel libstdc++-static expat-devel boost-devel \
+    && dnf clean all
+
+RUN useradd -rm -d /home/vscode -s /bin/bash -g root -u 1001 vscode
+USER vscode
+WORKDIR /home/vscode
