@@ -1,6 +1,8 @@
 # Build Snapcast
 
-Clone the Snapcast repository. To do this, you need git.  
+## Clone the Snapcast repository
+
+To do this, you need git.  
 For Debian derivates (e.g. Raspberry Pi OS, Debian, Ubuntu, Mint):
 
 ```sh
@@ -25,147 +27,122 @@ Clone Snapcast:
 git clone https://github.com/badaix/snapcast.git
 ```
 
-Snapcast depends on boost 1.70 or higher. Since it depends on header only boost libs, boost does not need to be installed, but the boost include path must be set properly: download and extract the latest boost version and add the include path, e.g. calling `make` with prepended `ADD_CFLAGS`: `ADD_CFLAGS="-I/path/to/boost_1_7x_0/" make`.  
-For `cmake` you must add the path to the `-DBOOST_ROOT` flag: `cmake -DBOOST_ROOT=/path/to/boost_1_7x_0`
+## Install dependencies
 
-### Airplay Metadata
+Snapcast depends on boost 1.74 or higher. Since it depends on header only boost libs, boost does not need to be installed, but the boost include path must be set properly: download and extract the latest boost version and tell `cmake` the path using the `-DBOOST_ROOT` flag: `cmake -DBOOST_ROOT=/path/to/boost_1_8x_0`.
 
-If you want to use Airplay metadata, `HAS_EXPAT=1` flag needs to be set when building the Snapsever. E.g. `make HAS_EXPAT=1 server`. Adjust the following `make` calls accordingly.
-
-## Linux (Native)
-
-Install the build tools and required libs:  
-For Debian derivates (e.g. Raspberry Pi OS, Debian, Ubuntu, Mint):
+### For Debian derivates (e.g. Raspberry Pi OS, Debian, Ubuntu, Mint)
 
 ```sh
-sudo apt-get install build-essential
+sudo apt-get install build-essential cmake
 sudo apt-get install libasound2-dev libpulse-dev libvorbisidec-dev libvorbis-dev libopus-dev libflac-dev libsoxr-dev alsa-utils libavahi-client-dev avahi-daemon libexpat1-dev
 ```
 
-Compilation requires gcc 4.8 or higher, so it's highly recommended to use Debian (Raspbian) Jessie.
-
-For Arch derivates:
+### For Arch derivates
 
 ```sh
-sudo pacman -S base-devel
+sudo pacman -S base-devel cmake
 sudo pacman -S alsa-lib avahi libvorbis opus-dev flac libsoxr alsa-utils boost expat
 ```
 
-For Fedora (and probably RHEL, CentOS, & Scientific Linux, but untested):
+### For Fedora (and probably RHEL, CentOS, & Scientific Linux, but untested)
 
 ```sh
-sudo dnf install @development-tools
+sudo dnf install @development-tools cmake
 sudo dnf install alsa-lib-devel avahi-devel gcc-c++ libatomic libvorbis-devel opus-devel pulseaudio-libs-devel flac-devel soxr-devel libstdc++-static expat-devel boost-devel
 ```
 
-### Build Snapclient and Snapserver
+### For FreeBSD
 
-`cd` into the Snapcast src-root directory:
+```sh
+sudo pkg install alsa-lib pulseaudio cmake gmake gcc bash avahi libogg libvorbis opus flac libsoxr
+```
+
+### For macOS
+
+*Warning:* macOS support is experimental
+
+ 1. Install Xcode from the App Store
+ 2. Install [Homebrew](http://brew.sh)
+ 3. Install the required libs
+
+```sh
+brew install pkgconfig libsoxr expat flac libvorbis boost opus
+```
+
+## Build Snapclient and Snapserver
+
+Create a `build` directory in the Snapcast src-root directory (`<snapcast dir>`) and `cd` into it:
 
 ```sh
 cd <snapcast dir>
-make
+mkdir build
+cd build
 ```
 
-Install Snapclient and/or Snapserver:
+Build Snapcast. If you haven't installed boost, but downloaded and extracted the sources, you must point cmake to the boost root directoty, otherwise the part starting with `-DBOOST_ROOT=...` can be omitted.
+
+Other flags that can be passed to `cmake`:
+
+- `-DBUILD_CLIENT=<ON|OFF>`: build the client: yes or no
+- `-DBUILD_SERVER=<ON|OFF>`: build the server: yes or no
+- `-DBUILD_WITH_PULSE=<ON|OFF>`: build with pulse audio support: yes or no
 
 ```sh
-sudo make installserver
-sudo make installclient
+cmake .. -DBOOST_ROOT=/path/to/boost_1_8x_0
+cmake --build .
 ```
 
-This will copy the client and/or server binary to `/usr/bin` and update init.d/systemd to start the client/server as a daemon.
-
-### Build Snapclient
-
-`cd` into the Snapclient src-root directory:
+Binaries will be created in `<snapcast dir>/bin`:
 
 ```sh
-cd <snapcast dir>/client
-make
+<snapcast dir>/bin/snapclient
+<snapcast dir>/bin/snapserver
 ```
 
-Install Snapclient
+## Windows (vcpkg)
+
+Prerequisites:
+
+ 1. CMake
+ 2. Visual Studio 2017 or 2019 with C++
+
+Set up [vcpkg](https://github.com/Microsoft/vcpkg)
+
+Install dependencies
 
 ```sh
-sudo make install
+vcpkg.exe install libflac libvorbis soxr opus boost-asio --triplet x64-windows
 ```
 
-This will copy the client binary to `/usr/bin` and update init.d/systemd to start the client as a daemon.
-
-### Build Snapserver
-
-`cd` into the Snapserver src-root directory:
+Build
 
 ```sh
-cd <snapcast dir>/server
-make
-```
-
-Install Snapserver
-
-```sh
-sudo make install
-```
-
-This will copy the server binary to `/usr/bin` and update init.d/systemd to start the server as a daemon.
-
-### Debian packages: TODO - outdated
-
-Debian packages can be made with
-
-```sh
-sudo apt-get install debhelper
 cd <snapcast dir>
-fakeroot make -f debian/rules binary
+mkdir build
+cd build && cmake .. -DCMAKE_TOOLCHAIN_FILE=<vcpkg_dir>/scripts/buildsystems/vcpkg.cmake
+cmake --build . --config Release
 ```
 
-If you don't have boost installed or in your standard include paths, you can call
+## Build packages
+
+### Debian packages
+
+Debian packages can be made with the following steps. You can switch pulse audio support on or off by passing `-DBUILD_WITH_PULSE=ON` or `OFF` in the last step:
 
 ```sh
-fakeroot make -f debian/rules CPPFLAGS="-I/path/to/boost_1_7x_0" binary
+sudo apt-get install debhelper python3
+cd <snapcast dir>
+ln -s extras/package/debian debian
+debian/changelog_md2deb.py changelog.md  > debian/changelog
+fakeroot make -f debian/rules CMAKEFLAGS="-DBOOST_ROOT=/path/to/boost/boost_1_8x_0 -DCMAKE_BUILD_TYPE:STRING=Release -DBUILD_WITH_PULSE=OFF" binary
 ```
 
-## FreeBSD (Native)
+The resulting debian packages are created in the parent direcory of `<snapcast dir>`
 
-Install the build tools and required libs:  
+### Gentoo (native)
 
-```sh
-sudo pkg install alsa-lib pulseaudio gmake gcc bash avahi libogg libvorbis opus flac libsoxr
-```
-
-### Build Snapserver
-
-`cd` into the Snapserver src-root directory:
-
-```sh
-cd <snapcast dir>/server
-gmake TARGET=FREEBSD
-```
-
-Install Snapserver
-
-```sh
-sudo gmake TARGET=FREEBSD install
-```
-
-This will copy the server binary to `/usr/local/bin` and the startup script to `/usr/local/etc/rc.d/snapserver`. To enable the Snapserver, add this line to `/etc/rc.conf`:  
-
-```ini
-snapserver_enable="YES"
-```
-
-For additional command line arguments, add in `/etc/rc.conf`:
-
-```ini
-snapserver_opts="<your custom options>"
-```
-
-Start and stop the server with `sudo service snapserver start` and `sudo service snapserver stop`.
-
-## Gentoo (native)
-
-Snapcast is available under Gentoo's [Portage](https://wiki.gentoo.org/wiki/Portage) package management system.  Portage utilises `USE` flags to determine what components are built on compilation.  The available options are...
+Snapcast is available under Gentoo's [Portage](https://wiki.gentoo.org/wiki/Portage) package management system. Portage utilises `USE` flags to determine what components are built on compilation. The available options are...
 
 ```sh
 equery u snapcast
@@ -204,7 +181,7 @@ Once `USE` flags are configured emerge snapcast as root:
 emerge -av snapcast
 ```
 
-Starting the client or server depends on whether you are using `systemd` or `openrc`.  To start using `openrc`:
+Starting the client or server depends on whether you are using `systemd` or `openrc`. To start using `openrc`:
 
 ```sh
 /etc/init.d/snapclient start
@@ -218,90 +195,22 @@ rc-update add snapserver default
 rc-update add snapclient default
 ```
 
-## macOS (Native)
-
-*Warning:* macOS support is experimental
-
- 1. Install Xcode from the App Store
- 2. Install [Homebrew](http://brew.sh)
- 3. Install the required libs
-
-```ssh
-brew install flac libsoxr libvorbis boost opus
-```
-
-### Build Snapclient
-
-`cd` into the Snapclient src-root directory:
-
-```sh
-cd <snapcast dir>/client
-make TARGET=MACOS
-```
-
-Install Snapclient
-
-```sh
-sudo make install TARGET=MACOS
-```
-
-This will copy the client binary to `/usr/local/bin` and create a Launch Agent to start the client as a daemon.
-
-### Build Snapserver
-
-`cd` into the Snapserver src-root directory:
-
-```sh
-cd <snapcast dir>/server
-make TARGET=MACOS
-```
-
-Install Snapserver
-
-```sh
-sudo make install TARGET=MACOS
-```
-
-This will copy the server binary to `/usr/local/bin` and create a Launch Agent to start the server as a daemon.
-
-## Android (Cross compile)
+### Android (Cross compile)
 
 Clone [Snapdroid](https://github.com/badaix/snapdroid), which includes Snapclient as submodule:
+
 ```sh
 git clone https://github.com/badaix/snapdroid.git
 cd snapdroid
 git submodule update --init --recursive
 ```
+
 and execute `./gradlew build`, which will cross compile Snapclient and bundle it into the Snapdroid App.
 
-## OpenWrt/LEDE (Cross compile)
+### OpenWrt/LEDE (Cross compile)
 
 To cross compile for OpenWrt, please follow the [OpenWrt flavored SnapOS guide](https://github.com/badaix/snapos/blob/master/openwrt/README.md)
 
-## Buildroot (Cross compile)
+### Buildroot (Cross compile)
 
 To integrate Snapcast into [Buildroot](https://buildroot.org/), please follow the [Buildroot flavored SnapOS guide](https://github.com/badaix/snapos/blob/master/buildroot-external/README.md)
-
-## Windows (vcpkg)
-
-Prerequisites:
-
- 1. CMake
- 2. Visual Studio 2017 or 2019 with C++
-
-Set up [vcpkg](https://github.com/Microsoft/vcpkg)
-
-Install dependencies
-
-```sh
-vcpkg.exe install libflac libvorbis soxr opus boost-asio --triplet x64-windows
-```
-
-Build
-
-```sh
-cd <snapcast dir>
-mkdir build
-cd build && cmake .. -DCMAKE_TOOLCHAIN_FILE=<vcpkg_dir>/scripts/buildsystems/vcpkg.cmake
-cmake --build . --config Release
-```

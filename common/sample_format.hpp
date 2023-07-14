@@ -19,6 +19,7 @@
 #ifndef SAMPLE_FORMAT_H
 #define SAMPLE_FORMAT_H
 
+#include <cstdint>
 #include <string>
 
 

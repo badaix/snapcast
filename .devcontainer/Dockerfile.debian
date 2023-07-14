@@ -1,0 +1,10 @@
+ARG VARIANT="debian-11"
+FROM mcr.microsoft.com/devcontainers/cpp:1-${VARIANT}
+
+# [Optional] Uncomment this section to install additional packages.
+RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
+    && apt-get -y install --no-install-recommends \
+    build-essential cmake \
+    libasound2-dev libpulse-dev libvorbisidec-dev libvorbis-dev libopus-dev libflac-dev \
+    libsoxr-dev alsa-utils libavahi-client-dev avahi-daemon libexpat1-dev libboost-dev \
+    cmake-format ccache

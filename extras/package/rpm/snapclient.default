@@ -1,0 +1,7 @@
+# Start the client, used only by the init.d script
+START_SNAPCLIENT=true
+
+# Additional command line options that will be passed to snapclient
+# note that user/group should be configured in the init.d script or the systemd unit file
+# For a list of available options, invoke "snapclient --help" 
+SNAPCLIENT_OPTS=""

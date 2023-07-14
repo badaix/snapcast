@@ -217,7 +217,7 @@ class LibrespotControl(object):
         logger.info("Snapcast RPC websocket opened")
         send({"jsonrpc": "2.0", "method": "Plugin.Stream.Ready"})
 
-    def on_ws_close(self, ws):
+    def on_ws_close(self, ws, close_status_code, close_msg):
         logger.info("Snapcast RPC websocket closed")
 
     def send_request(self, method, params=None):

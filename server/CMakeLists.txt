@@ -128,6 +128,7 @@ else()
           DESTINATION ${CMAKE_INSTALL_DATADIR}/snapserver/snapweb)
   install(
     FILES etc/plug-ins/meta_mpd.py etc/plug-ins/meta_mopidy.py
+          etc/plug-ins/meta_librespot-java.py
     PERMISSIONS
       OWNER_READ
       OWNER_WRITE
