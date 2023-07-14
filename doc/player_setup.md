@@ -215,7 +215,8 @@ Although this _might_ be a quick and convenient way to set up an Airplay source 
     * `autoreconf -i -f` 
     * `./configure --with-stdout --with-avahi --with-ssl=openssl --with-metadata`
  3. Copy the `shairport-sync` binary somewhere to your `PATH`, e.g. `/usr/local/bin/`
- 4. Configure snapserver with `source = airplay:///shairport-sync?name=Airplay[&devicename=Snapcast][&port=5000]`
+ 4. Configure snapserver with `source = airplay:///shairport-sync?name=Airplay[&devicename=Snapcast][&port=PORT]`
+    * `PORT` is 5000 for Airplay 1 and 7000 for Airplay 2 
 
 ### Spotify
 
