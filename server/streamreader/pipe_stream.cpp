@@ -58,6 +58,9 @@ PipeStream::PipeStream(PcmStream::Listener* pcmListener, boost::asio::io_context
 void PipeStream::do_connect()
 {
     int fd = open(uri_.path.c_str(), O_RDONLY | O_NONBLOCK);
+    if (fd < 0)
+        throw SnapException("failed to open fifo \"" + uri_.path + "\": " + cpt::to_string(errno));
+
     int pipe_size = -1;
 #if !defined(MACOS) && !defined(FREEBSD)
     pipe_size = fcntl(fd, F_GETPIPE_SZ);
