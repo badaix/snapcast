@@ -55,7 +55,7 @@ sudo dnf install alsa-lib-devel avahi-devel gcc-c++ libatomic libvorbis-devel op
 ### For FreeBSD
 
 ```sh
-sudo pkg install alsa-lib pulseaudio cmake gmake gcc bash avahi libogg libvorbis opus flac libsoxr
+sudo pkg install alsa-lib pulseaudio cmake gmake gcc bash avahi libogg libvorbis opus flac libsoxr pkgconfig
 ```
 
 ### For macOS
