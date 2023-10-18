@@ -38,7 +38,7 @@ jobs:
           - compiler: clang-12
             cc: clang-12
             cxx: clang++-12
-            os: ubuntu-22.04
+            os: ubuntu-20.04
           - compiler: clang-13
             cc: clang-13
             cxx: clang++-13
