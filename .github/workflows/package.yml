@@ -28,9 +28,6 @@ jobs:
             arch: "armhf"
             image_prefix: "badaix/raspios-"
             image_suffix: "-armhf-lite"
-        exclude:
-          - os: self-hosted-rpi4
-            image: "bookworm"
 
     runs-on: ${{ matrix.os }}
     name: deb (${{ matrix.arch }}, ${{ matrix.image }})
