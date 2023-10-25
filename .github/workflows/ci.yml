@@ -143,6 +143,10 @@ jobs:
             os: macos-12
           - xcode: 14.2
             os: macos-12
+          - xcode: 14.3
+            os: macos-13
+          - xcode: 15.0
+            os: macos-13
 
     runs-on: ${{ matrix.os }}
 
