@@ -16,9 +16,10 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
-#ifndef DOUBLE_BUFFER_H
-#define DOUBLE_BUFFER_H
+#pragma once
 
+
+// standard headers
 #include <algorithm>
 #include <array>
 #include <deque>
@@ -126,7 +127,7 @@ public:
 
     inline bool empty() const
     {
-        return (buffer.size() == 0);
+        return buffer.empty();
     }
 
     void setSize(size_t size)
@@ -136,7 +137,7 @@ public:
 
     const std::deque<T>& getBuffer() const
     {
-        return &buffer;
+        return buffer;
     }
 
 private:
@@ -144,6 +145,3 @@ private:
     std::deque<T> buffer;
 };
 
-
-
-#endif
