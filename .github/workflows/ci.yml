@@ -22,10 +22,12 @@ jobs:
           - clang-12
           - clang-13
           - clang-14
+          - clang-15
           - gcc-9
           - gcc-10
           - gcc-11
           - gcc-12
+          - gcc-13
         include:
           - compiler: clang-10
             cc: clang-10
@@ -47,6 +49,10 @@ jobs:
             cc: clang-14
             cxx: clang++-14
             os: ubuntu-22.04
+          - compiler: clang-15
+            cc: clang-15
+            cxx: clang++-15
+            os: ubuntu-22.04
           - compiler: gcc-9
             cc: gcc-9
             cxx: g++-9
@@ -62,6 +68,10 @@ jobs:
           - compiler: gcc-12
             cc: gcc-12
             cxx: g++-12
+            os: ubuntu-22.04
+          - compiler: gcc-13
+            cc: gcc-13
+            cxx: g++-13
             os: ubuntu-22.04
 
     runs-on: ${{ matrix.os }}
