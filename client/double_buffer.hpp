@@ -144,4 +144,3 @@ private:
     size_t bufferSize;
     std::deque<T> buffer;
 };
-
