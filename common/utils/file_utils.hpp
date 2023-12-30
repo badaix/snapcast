@@ -99,7 +99,7 @@ static int mkdirRecursive(const char* path, mode_t mode)
         if (p.empty())
             continue;
         ss << "/" << p;
-        int res = mkdir(ss.str().c_str(), mode);
+        res = mkdir(ss.str().c_str(), mode);
         if ((res != 0) && (errno != EEXIST))
             return res;
     }

@@ -154,11 +154,11 @@ using message_ptr = std::shared_ptr<msg::BaseMessage>;
 
 struct BaseMessage
 {
-    BaseMessage() : type(message_type::kBase), id(0), refersTo(0)
+    BaseMessage() : BaseMessage(message_type::kBase)
     {
     }
 
-    BaseMessage(message_type type_) : type(type_), id(0), refersTo(0)
+    BaseMessage(message_type type_) : type(type_), id(0), refersTo(0), size(0)
     {
     }
 
@@ -272,8 +272,8 @@ protected:
 
     void writeVal(std::ostream& stream, const std::string& val) const
     {
-        auto size = static_cast<uint32_t>(val.size());
-        writeVal(stream, val.c_str(), size);
+        auto len = static_cast<uint32_t>(val.size());
+        writeVal(stream, val.c_str(), len);
     }
 
 
@@ -293,6 +293,7 @@ protected:
     void readVal(std::istream& stream, uint16_t& val) const
     {
         stream.read(reinterpret_cast<char*>(&val), sizeof(uint16_t));
+        // cppcheck-suppress selfAssignment
         val = SWAP_16(val);
     }
 
@@ -305,18 +306,21 @@ protected:
     void readVal(std::istream& stream, int16_t& val) const
     {
         stream.read(reinterpret_cast<char*>(&val), sizeof(int16_t));
+        // cppcheck-suppress selfAssignment
         val = SWAP_16(val);
     }
 
     void readVal(std::istream& stream, uint32_t& val) const
     {
         stream.read(reinterpret_cast<char*>(&val), sizeof(uint32_t));
+        // cppcheck-suppress selfAssignment
         val = SWAP_32(val);
     }
 
     void readVal(std::istream& stream, int32_t& val) const
     {
         stream.read(reinterpret_cast<char*>(&val), sizeof(int32_t));
+        // cppcheck-suppress selfAssignment
         val = SWAP_32(val);
     }
 
@@ -329,10 +333,10 @@ protected:
 
     void readVal(std::istream& stream, std::string& val) const
     {
-        uint32_t size;
-        readVal(stream, size);
-        val.resize(size);
-        stream.read(&val[0], size);
+        uint32_t len;
+        readVal(stream, len);
+        val.resize(len);
+        stream.read(&val[0], len);
     }
 
 

@@ -64,7 +64,7 @@ void Daemon::daemonize()
 
     auto user_uid = static_cast<uid_t>(-1);
     auto user_gid = static_cast<gid_t>(-1);
-    std::string user_name;
+    // std::string user_name;
     // #ifdef FREEBSD
     //     bool had_group = false;
     // #endif
@@ -76,7 +76,7 @@ void Daemon::daemonize()
             throw SnapException("no such user \"" + user_ + "\"");
         user_uid = pwd->pw_uid;
         user_gid = pwd->pw_gid;
-        user_name = strdup(user_.c_str());
+        // user_name = strdup(user_.c_str());
         /// this is needed by libs such as arts
         setenv("HOME", pwd->pw_dir, 1);
     }

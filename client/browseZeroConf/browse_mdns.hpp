@@ -12,6 +12,10 @@ enum IPVersion
 
 struct mDNSResult
 {
+    mDNSResult() : ip_version(IPv4), iface_idx(0), port(0), valid(false)
+    {
+    }
+
     IPVersion ip_version;
     int iface_idx;
     std::string ip;

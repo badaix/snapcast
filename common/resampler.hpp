@@ -45,7 +45,7 @@ private:
     SampleFormat in_format_;
     SampleFormat out_format_;
 #ifdef HAS_SOXR
-    soxr_t soxr_;
+    soxr_t soxr_{nullptr};
 #endif
 };
 

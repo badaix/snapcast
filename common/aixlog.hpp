@@ -559,7 +559,7 @@ public:
     }
 
     /// Without "init" every LOG(X) will simply go to clog
-    static void init(const std::vector<log_sink_ptr> log_sinks = {})
+    static void init(const std::vector<log_sink_ptr>& log_sinks = {})
     {
         Log::instance().log_sinks_.clear();
 
@@ -606,10 +606,15 @@ protected:
 
     virtual ~Log()
     {
-        sync();
+        do_sync();
     }
 
     int sync() override
+    {
+        return do_sync();
+    }
+
+    int do_sync()
     {
         std::lock_guard<std::recursive_mutex> lock(mutex_);
         if (!get_stream().str().empty())

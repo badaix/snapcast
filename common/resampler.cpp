@@ -29,7 +29,6 @@ static constexpr auto LOG_TAG = "Resampler";
 Resampler::Resampler(const SampleFormat& in_format, const SampleFormat& out_format) : in_format_(in_format), out_format_(out_format)
 {
 #ifdef HAS_SOXR
-    soxr_ = nullptr;
     if ((out_format_.rate() != in_format_.rate()) || (out_format_.bits() != in_format_.bits()))
     {
         LOG(INFO, LOG_TAG) << "Resampling from " << in_format_.toString() << " to " << out_format_.toString() << "\n";

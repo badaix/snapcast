@@ -155,7 +155,7 @@ cs::time_point_clk Stream::getNextPlayerChunk(void* outputBuffer, uint32_t frame
 
 cs::time_point_clk Stream::getNextPlayerChunk(void* outputBuffer, uint32_t frames, int32_t framesCorrection)
 {
-    if (framesCorrection < 0 && frames + framesCorrection <= 0)
+    if (framesCorrection < 0 && (static_cast<int32_t>(frames) + framesCorrection <= 0))
     {
         // Avoid underflow in new char[] constructor.
         framesCorrection = -static_cast<int32_t>(frames) + 1;

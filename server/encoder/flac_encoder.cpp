@@ -34,6 +34,8 @@ FlacEncoder::FlacEncoder(const std::string& codecOptions) : Encoder(codecOptions
 {
     headerChunk_.reset(new msg::CodecHeader("flac"));
     pcmBuffer_ = static_cast<FLAC__int32*>(malloc(pcmBufferSize_ * sizeof(FLAC__int32)));
+    metadata_[0] = nullptr;
+    metadata_[1] = nullptr;
 }
 
 
