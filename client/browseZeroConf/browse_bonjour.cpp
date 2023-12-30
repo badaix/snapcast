@@ -212,7 +212,7 @@ bool BrowseBonjour::browse(const string& serviceName, mDNSResult& result, int /*
     }
 
     // DNS/mDNS Resolve
-    deque<mDNSResult> resultCollection(resolveCollection.size(), mDNSResult{IPVersion::IPv4, 0, "", "", 0, false});
+    deque<mDNSResult> resultCollection(resolveCollection.size(), mDNSResult{});
     {
         DNSServiceHandle service(new DNSServiceRef(NULL));
         unsigned i = 0;
