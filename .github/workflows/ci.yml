@@ -8,7 +8,7 @@ on:
   pull_request:
 
 env:
-  BOOST_VERSION: 1_83_0
+  BOOST_VERSION: 1_84_0
 
 jobs:
   linux:
