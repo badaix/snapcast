@@ -28,6 +28,7 @@ jobs:
           - gcc-11
           - gcc-12
           - gcc-13
+          - cppcheck
         include:
           - compiler: clang-10
             cc: clang-10
@@ -73,6 +74,8 @@ jobs:
             cc: gcc-13
             cxx: g++-13
             os: ubuntu-22.04
+          - compiler: cppcheck
+            os: ubuntu-22.04
 
     runs-on: ${{ matrix.os }}
 
@@ -81,7 +84,7 @@ jobs:
     - name: print environment
       run: env
     - name: dependencies
-      run: sudo apt-get update && sudo apt-get install -yq libasound2-dev libsoxr-dev libvorbisidec-dev libvorbis-dev libflac-dev libopus-dev alsa-utils libpulse-dev libavahi-client-dev avahi-daemon debhelper ccache expat
+      run: sudo apt-get update && sudo apt-get install -yq libasound2-dev libsoxr-dev libvorbisidec-dev libvorbis-dev libflac-dev libopus-dev alsa-utils libpulse-dev libavahi-client-dev avahi-daemon debhelper ccache expat cppcheck
     - name: cache boost
       id: cache-boost
       uses: actions/cache@v3
@@ -117,12 +120,13 @@ jobs:
         CC: ${{ matrix.cc }}
         CXX: ${{ matrix.cxx }}
     - name: build
+      if: matrix.compiler != 'cppcheck'
       env:
         # TODO: use environment variable $HOME/.ccache
         CCACHE_DIR: /home/runner/.ccache
       run: cmake --build build --parallel 3 --verbose
     - name: cppcheck
-      if: matrix.compiler == 'clang-15'
+      if: matrix.compiler == 'cppcheck'
       run: cmake --build build --target cppcheck
 
 
