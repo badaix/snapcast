@@ -39,23 +39,12 @@ jobs:
       run: |
         wget https://boostorg.jfrog.io/artifactory/main/release/${BOOST_VERSION//_/.}/source/boost_${BOOST_VERSION}.tar.bz2
         tar xjf boost_${BOOST_VERSION}.tar.bz2
-    - name: cache ccache
-      id: cache-ccache
-      uses: actions/cache@v3
-      with:
-        # TODO: use environment variable $HOME/.ccache
-        path: /home/runner/.ccache
-        key: ${{ runner.os }}-${{ matrix.compiler }}-ccache-${{ github.sha }}
-        restore-keys: ${{ runner.os }}-${{ matrix.compiler }}-ccache-
-    #- name: ccache dump config
-    #  run: ccache -p
     - name: configure
       run: |
         cmake -S . -B build \
           -DWERROR=ON -DBUILD_TESTS=ON \
           -DBOOST_ROOT=boost_${BOOST_VERSION} \
           -DCMAKE_BUILD_TYPE=Release \
-          -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
           -DCMAKE_EXPORT_COMPILE_COMMANDS=TRUE \
           -DCMAKE_CXX_FLAGS="-DCMAKE_CXX_FLAGS=-DJSON_HAS_CPP_14"
     - name: analysis
@@ -123,8 +112,6 @@ jobs:
           - compiler: gcc-13
             cc: gcc-13
             cxx: g++-13
-            os: ubuntu-22.04
-          - compiler: cppcheck
             os: ubuntu-22.04
 
     runs-on: ${{ matrix.os }}
