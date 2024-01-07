@@ -27,6 +27,7 @@
 // 3rd party headers
 
 // standard headers
+#include <filesystem>
 #include <memory>
 
 
@@ -50,6 +51,12 @@ FileStream::FileStream(PcmStream::Listener* pcmListener, boost::asio::io_context
     {
         throw SnapException("Not a regular file: \"" + uri_.path + "\"");
     }
+
+    Properties properties;
+    Metadata meta;
+    meta.title = std::filesystem::path(uri_.path).filename().replace_extension("");
+    properties.metadata = meta;
+    setProperties(properties);
 }
 
 

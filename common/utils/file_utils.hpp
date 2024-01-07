@@ -32,6 +32,7 @@
 #include <unistd.h>
 #endif
 
+#include <filesystem>
 #include <fstream>
 #include <stdexcept>
 #include <vector>
@@ -45,16 +46,9 @@ namespace file
 
 static bool exists(const std::string& filename)
 {
-    if (filename.empty())
-        return false;
-#ifdef WINDOWS
-    DWORD dwAttrib = GetFileAttributes(filename.c_str());
-    return (dwAttrib != INVALID_FILE_ATTRIBUTES);
-#else
-    struct stat buffer;
-    return (stat(filename.c_str(), &buffer) == 0);
-#endif
+    return std::filesystem::exists(filename);
 }
+
 
 #ifndef WINDOWS
 static void do_chown(const std::string& file_path, const std::string& user_name, const std::string& group_name)
