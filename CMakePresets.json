@@ -12,7 +12,8 @@
             "generator": "Ninja",
             "hidden": true,
             "cacheVariables": {
-                "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
+                "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+                "CMAKE_BUILD_TYPE": "Debug"
             }
         },
         {
@@ -124,44 +125,37 @@
         {
             "name": "linux",
             "configurePreset": "linux",
-            "displayName": "Linux",
-            "configuration": "Debug"
+            "displayName": "Linux"
         },
         {
             "name": "windows",
             "configurePreset": "windows",
-            "displayName": "x64",
-            "configuration": "Debug"
+            "displayName": "x64"
         },
         {
             "name": "macos",
             "configurePreset": "macos",
-            "displayName": "macOS",
-            "configuration": "Debug"
+            "displayName": "macOS"
         },
         {
             "name": "android-x86",
             "configurePreset": "android-x86",
-            "displayName": "x86",
-            "configuration": "Debug"
+            "displayName": "x86"
         },
         {
             "name": "android-x86_64",
             "configurePreset": "android-x86_64",
-            "displayName": "x86_64",
-            "configuration": "Debug"
+            "displayName": "x86_64"
         },
         {
             "name": "android-armeabi-v7a",
             "configurePreset": "android-armeabi-v7a",
-            "displayName": "armeabi-v7a",
-            "configuration": "Debug"
+            "displayName": "armeabi-v7a"
         },
         {
             "name": "android-arm64-v8a",
             "configurePreset": "android-arm64-v8a",
-            "displayName": "arm64-v8a",
-            "configuration": "Debug"
+            "displayName": "arm64-v8a"
         }
     ]
 }
