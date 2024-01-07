@@ -34,8 +34,6 @@
 #include <memory>
 
 
-using namespace std;
-
 namespace streamreader
 {
 
@@ -86,17 +84,17 @@ void StreamControl::onReceive(const std::string& json)
         }
         else if (entity->is_notification())
         {
-            jsonrpcpp::notification_ptr notification = dynamic_pointer_cast<jsonrpcpp::Notification>(entity);
+            jsonrpcpp::notification_ptr notification = std::dynamic_pointer_cast<jsonrpcpp::Notification>(entity);
             notification_handler_(*notification);
         }
         else if (entity->is_request())
         {
-            jsonrpcpp::request_ptr request = dynamic_pointer_cast<jsonrpcpp::Request>(entity);
+            jsonrpcpp::request_ptr request = std::dynamic_pointer_cast<jsonrpcpp::Request>(entity);
             request_handler_(*request);
         }
         else if (entity->is_response())
         {
-            jsonrpcpp::response_ptr response = dynamic_pointer_cast<jsonrpcpp::Response>(entity);
+            jsonrpcpp::response_ptr response = std::dynamic_pointer_cast<jsonrpcpp::Response>(entity);
             LOG(INFO, LOG_TAG) << "Response: " << response->to_json() << ", id: " << response->id() << "\n";
             // TODO: call request_callbacks_ on timeout with error
             auto iter = request_callbacks_.find(response->id());
@@ -153,7 +151,7 @@ void ScriptStreamControl::doStart(const std::string& stream_id, const ServerSett
 {
     pipe_stderr_ = bp::pipe();
     pipe_stdout_ = bp::pipe();
-    stringstream params;
+    std::stringstream params;
     params << " " << params_;
     params << " \"--stream=" + stream_id + "\"";
     if (server_setttings.http.enabled)
@@ -180,8 +178,8 @@ void ScriptStreamControl::doStart(const std::string& stream_id, const ServerSett
         throw SnapException("Failed to start control script: '" + script_ + "', exception: " + e.what());
     }
 
-    stream_stdout_ = make_unique<boost::asio::posix::stream_descriptor>(executor_, pipe_stdout_.native_source());
-    stream_stderr_ = make_unique<boost::asio::posix::stream_descriptor>(executor_, pipe_stderr_.native_source());
+    stream_stdout_ = std::make_unique<boost::asio::posix::stream_descriptor>(executor_, pipe_stdout_.native_source());
+    stream_stderr_ = std::make_unique<boost::asio::posix::stream_descriptor>(executor_, pipe_stderr_.native_source());
     stdoutReadLine();
     stderrReadLine();
 }

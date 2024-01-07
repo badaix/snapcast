@@ -36,7 +36,7 @@
 #include <memory>
 
 
-using namespace std;
+using namespace std::chrono_literals;
 
 namespace streamreader
 {
@@ -194,17 +194,17 @@ void PcmStream::onControlLog(std::string line)
         return;
     auto tmp = utils::string::tolower_copy(line);
     AixLog::Severity severity = AixLog::Severity::info;
-    if (tmp.find(" trace") != string::npos)
+    if (tmp.find(" trace") != std::string::npos)
         severity = AixLog::Severity::trace;
-    else if (tmp.find(" debug") != string::npos)
+    else if (tmp.find(" debug") != std::string::npos)
         severity = AixLog::Severity::debug;
-    else if (tmp.find(" info") != string::npos)
+    else if (tmp.find(" info") != std::string::npos)
         severity = AixLog::Severity::info;
-    else if (tmp.find(" warning") != string::npos)
+    else if (tmp.find(" warning") != std::string::npos)
         severity = AixLog::Severity::warning;
-    else if (tmp.find(" error") != string::npos)
+    else if (tmp.find(" error") != std::string::npos)
         severity = AixLog::Severity::error;
-    else if ((tmp.find(" fatal") != string::npos) || (tmp.find(" critical") != string::npos))
+    else if ((tmp.find(" fatal") != std::string::npos) || (tmp.find(" critical") != std::string::npos))
         severity = AixLog::Severity::fatal;
     LOG(severity, LOG_TAG) << "Stream: " << getId() << ", message: " << line << "\n";
 }

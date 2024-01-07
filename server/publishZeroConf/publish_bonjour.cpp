@@ -30,11 +30,11 @@
 
 static constexpr auto LOG_TAG = "Bonjour";
 
-typedef union
+using Opaque16 = union
 {
     unsigned char b[2];
     unsigned short NotAnInteger;
-} Opaque16;
+};
 
 
 PublishBonjour::PublishBonjour(const std::string& serviceName, boost::asio::io_context& ioc) : PublishmDNS(serviceName, ioc), active_(false)
@@ -68,9 +68,9 @@ void PublishBonjour::worker()
 
     std::vector<int> dns_sd_fds;
     int nfds = -1;
-    for (size_t n = 0; n < clients.size(); ++n)
+    for (auto* client : clients)
     {
-        int dns_sd_fd = DNSServiceRefSockFD(clients[n]);
+        int dns_sd_fd = DNSServiceRefSockFD(client);
         dns_sd_fds.push_back(dns_sd_fd);
         if (nfds < dns_sd_fd)
             nfds = dns_sd_fd;
@@ -88,10 +88,12 @@ void PublishBonjour::worker()
     while (active_)
     {
         FD_ZERO(&readfds);
-        for (size_t n = 0; n < dns_sd_fds.size(); ++n)
-            FD_SET(dns_sd_fds[n], &readfds);
+        for (int dns_sd_fd : dns_sd_fds)
+        {
+            FD_SET(dns_sd_fd, &readfds);
+        }
 
-        int result = select(nfds, &readfds, (fd_set*)NULL, (fd_set*)NULL, &tv);
+        int result = select(nfds, &readfds, (fd_set*)nullptr, (fd_set*)nullptr, &tv);
         if (result > 0)
         {
 
@@ -126,7 +128,7 @@ static void DNSSD_API reg_reply(DNSServiceRef sdref, const DNSServiceFlags flags
     (void)sdref; // Unused
     (void)flags; // Unused
 
-    PublishBonjour* publishBonjour = (PublishBonjour*)context;
+    auto* publishBonjour = static_cast<PublishBonjour*>(context);
     (void)publishBonjour; // unused
 
     LOG(INFO, LOG_TAG) << "Got a reply for service " << name << "." << regtype << domain << "\n";
@@ -154,15 +156,15 @@ static void DNSSD_API reg_reply(DNSServiceRef sdref, const DNSServiceFlags flags
 
 void PublishBonjour::publish(const std::vector<mDNSService>& services)
 {
-    for (auto service : services)
+    for (const auto& service : services)
     {
         DNSServiceFlags flags = 0;
         Opaque16 registerPort = {{static_cast<unsigned char>(service.port_ >> 8), static_cast<unsigned char>(service.port_ & 0xFF)}};
-        DNSServiceRef client = NULL;
+        DNSServiceRef client = nullptr;
         // DNSServiceRegister(&client, flags, kDNSServiceInterfaceIndexAny, serviceName_.c_str(), service.name_.c_str(), NULL, NULL, registerPort.NotAnInteger,
         // service.txt_.size(), service.txt_.empty()?NULL:service.txt_.c_str(), reg_reply, this);
-        DNSServiceRegister(&client, flags, kDNSServiceInterfaceIndexAny, serviceName_.c_str(), service.name_.c_str(), NULL, NULL, registerPort.NotAnInteger, 0,
-                           NULL, reg_reply, this);
+        DNSServiceRegister(&client, flags, kDNSServiceInterfaceIndexAny, serviceName_.c_str(), service.name_.c_str(), nullptr, nullptr,
+                           registerPort.NotAnInteger, 0, nullptr, reg_reply, this);
         clients.push_back(client);
     }
 

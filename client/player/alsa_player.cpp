@@ -31,7 +31,6 @@
 // standard headers
 
 using namespace std::chrono_literals;
-using namespace std;
 
 namespace player
 {
@@ -52,19 +51,19 @@ AlsaPlayer::AlsaPlayer(boost::asio::io_context& io_context, const ClientSettings
 {
     if (settings_.mixer.mode == ClientSettings::Mixer::Mode::hardware)
     {
-        string tmp;
+        std::string tmp;
         if (settings_.mixer.parameter.empty())
             mixer_name_ = DEFAULT_MIXER;
         else
             mixer_name_ = utils::string::split_left(settings_.mixer.parameter, ':', tmp);
 
-        string card;
+        std::string card;
         // default:CARD=ALSA[,DEV=x] => default
         mixer_device_ = utils::string::split_left(settings_.pcm_device.name, ':', card);
         if (!card.empty())
         {
             auto pos = card.find("CARD=");
-            if (pos != string::npos)
+            if (pos != std::string::npos)
             {
                 card = card.substr(pos + 5);
                 card = utils::string::split_left(card, ',', tmp);
@@ -145,7 +144,7 @@ bool AlsaPlayer::getHardwareVolume(double& volume, bool& muted)
         long vol;
         int err = 0;
         while (snd_mixer_handle_events(mixer_) > 0)
-            this_thread::sleep_for(1us);
+            std::this_thread::sleep_for(1us);
         long minv, maxv;
         if ((err = snd_mixer_selem_get_playback_dB_range(elem_, &minv, &maxv)) == 0)
         {
@@ -309,7 +308,7 @@ void AlsaPlayer::initAlsa()
     snd_pcm_hw_params_t* params;
     snd_pcm_hw_params_alloca(&params);
     if ((err = snd_pcm_hw_params_any(handle_, params)) < 0)
-        throw SnapException("Can't fill params: " + string(snd_strerror(err)));
+        throw SnapException("Can't fill params: " + std::string(snd_strerror(err)));
 
     snd_output_t* output;
     if (snd_output_buffer_open(&output) == 0)
@@ -325,7 +324,7 @@ void AlsaPlayer::initAlsa()
 
     // Set parameters
     if ((err = snd_pcm_hw_params_set_access(handle_, params, SND_PCM_ACCESS_RW_INTERLEAVED)) < 0)
-        throw SnapException("Can't set interleaved mode: " + string(snd_strerror(err)));
+        throw SnapException("Can't set interleaved mode: " + std::string(snd_strerror(err)));
 
     snd_pcm_format_t snd_pcm_format;
     if (format.bits() == 8)
@@ -356,8 +355,8 @@ void AlsaPlayer::initAlsa()
     err = snd_pcm_hw_params_set_format(handle_, params, snd_pcm_format);
     if (err < 0)
     {
-        stringstream ss;
-        ss << "Can't set format: " << string(snd_strerror(err)) << ", supported: ";
+        std::stringstream ss;
+        ss << "Can't set format: " << std::string(snd_strerror(err)) << ", supported: ";
         for (int format = 0; format <= static_cast<int>(SND_PCM_FORMAT_LAST); format++)
         {
             auto snd_pcm_format = static_cast<snd_pcm_format_t>(format);
@@ -368,10 +367,10 @@ void AlsaPlayer::initAlsa()
     }
 
     if ((err = snd_pcm_hw_params_set_channels(handle_, params, channels)) < 0)
-        throw SnapException("Can't set channel count: " + string(snd_strerror(err)));
+        throw SnapException("Can't set channel count: " + std::string(snd_strerror(err)));
 
     if ((err = snd_pcm_hw_params_set_rate_near(handle_, params, &rate, nullptr)) < 0)
-        throw SnapException("Can't set rate: " + string(snd_strerror(err)));
+        throw SnapException("Can't set rate: " + std::string(snd_strerror(err)));
     if (rate != format.rate())
         LOG(WARNING, LOG_TAG) << "Could not set sample rate to " << format.rate() << " Hz, using: " << rate << " Hz\n";
 
@@ -404,7 +403,7 @@ void AlsaPlayer::initAlsa()
     }
 
     if ((err = snd_pcm_hw_params_set_period_time_near(handle_, params, &period_time, nullptr)) < 0)
-        throw SnapException("Can't set period time: " + string(snd_strerror(err)));
+        throw SnapException("Can't set period time: " + std::string(snd_strerror(err)));
 
     uint32_t buffer_time = buffer_time_.value_or(BUFFER_TIME).count();
     uint32_t periods = periods_.value_or(MIN_PERIODS);
@@ -416,7 +415,7 @@ void AlsaPlayer::initAlsa()
     }
 
     if ((err = snd_pcm_hw_params_set_buffer_time_near(handle_, params, &buffer_time, nullptr)) < 0)
-        throw SnapException("Can't set buffer time to " + cpt::to_string(buffer_time) + " us : " + string(snd_strerror(err)));
+        throw SnapException("Can't set buffer time to " + cpt::to_string(buffer_time) + " us : " + std::string(snd_strerror(err)));
 
     // unsigned int periods = periods_;
     // if ((err = snd_pcm_hw_params_set_periods_near(handle_, params, &periods, 0)) < 0)
@@ -424,7 +423,7 @@ void AlsaPlayer::initAlsa()
 
     // Write parameters
     if ((err = snd_pcm_hw_params(handle_, params)) < 0)
-        throw SnapException("Can't set hardware parameters: " + string(snd_strerror(err)));
+        throw SnapException("Can't set hardware parameters: " + std::string(snd_strerror(err)));
 
     // Resume information
     // uint32_t periods;
@@ -542,7 +541,7 @@ bool AlsaPlayer::getAvailDelay(snd_pcm_sframes_t& avail, snd_pcm_sframes_t& dela
     {
         LOG(WARNING, LOG_TAG) << "snd_pcm_avail_delay failed: " << snd_strerror(result) << " (" << result << "), avail: " << avail << ", delay: " << delay
                               << ", using snd_pcm_avail amd snd_pcm_delay.\n";
-        this_thread::sleep_for(1ms);
+        std::this_thread::sleep_for(1ms);
         avail = snd_pcm_avail(handle_);
         result = snd_pcm_delay(handle_, &delay);
         if ((result < 0) || (delay < 0))
@@ -584,7 +583,7 @@ void AlsaPlayer::worker()
             }
             catch (const std::exception& e)
             {
-                LOG(ERROR, LOG_TAG) << "Exception in initAlsa: " << e.what() << endl;
+                LOG(ERROR, LOG_TAG) << "Exception in initAlsa: " << e.what() << std::endl;
                 chronos::sleep(100);
             }
             if (handle_ == nullptr)
@@ -610,7 +609,7 @@ void AlsaPlayer::worker()
 
         if (!getAvailDelay(framesAvail, framesDelay))
         {
-            this_thread::sleep_for(10ms);
+            std::this_thread::sleep_for(10ms);
             snd_pcm_prepare(handle_);
             continue;
         }
@@ -625,7 +624,7 @@ void AlsaPlayer::worker()
             auto frame_time = std::chrono::microseconds(static_cast<int>(frames_ / format.usRate()));
             std::chrono::microseconds wait = std::min(frame_time / 2, std::chrono::microseconds(10ms));
             LOG(DEBUG, LOG_TAG) << "No frames available, waiting for " << wait.count() << " us\n";
-            this_thread::sleep_for(wait);
+            std::this_thread::sleep_for(wait);
             continue;
         }
 
@@ -673,11 +672,11 @@ void AlsaPlayer::worker()
 
 
 
-vector<PcmDevice> AlsaPlayer::pcm_list()
+std::vector<PcmDevice> AlsaPlayer::pcm_list()
 {
     void **hints, **n;
     char *name, *descr, *io;
-    vector<PcmDevice> result;
+    std::vector<PcmDevice> result;
     PcmDevice pcmDevice;
 
     if (snd_device_name_hint(-1, "pcm", &hints) < 0)

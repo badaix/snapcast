@@ -32,7 +32,6 @@
 #include "control_session_ws.hpp"
 #include "stream_session_ws.hpp"
 
-using namespace std;
 namespace websocket = beast::websocket; // from <boost/beast/websocket.hpp>
 
 static constexpr auto LOG_TAG = "ControlSessionHTTP";
@@ -250,7 +249,7 @@ void ControlSessionHttp::handle_request(http::request<Body, http::basic_fields<A
     if (target.empty() || target[0] != '/' || target.find("..") != beast::string_view::npos)
         return send(bad_request("Illegal request-target"));
 
-    static string image_cache_target = "/__image_cache?name=";
+    static std::string image_cache_target = "/__image_cache?name=";
     auto pos = target.find(image_cache_target);
     if (pos != std::string::npos)
     {
@@ -363,7 +362,7 @@ void ControlSessionHttp::on_read(beast::error_code ec, std::size_t bytes_transfe
                 }
                 else
                 {
-                    auto ws_session = make_shared<ControlSessionWebsocket>(message_receiver_, std::move(*ws));
+                    auto ws_session = std::make_shared<ControlSessionWebsocket>(message_receiver_, std::move(*ws));
                     message_receiver_->onNewSession(std::move(ws_session));
                 }
             });
@@ -382,7 +381,7 @@ void ControlSessionHttp::on_read(beast::error_code ec, std::size_t bytes_transfe
                 }
                 else
                 {
-                    auto ws_session = make_shared<StreamSessionWebsocket>(nullptr, std::move(*ws));
+                    auto ws_session = std::make_shared<StreamSessionWebsocket>(nullptr, std::move(*ws));
                     message_receiver_->onNewSession(std::move(ws_session));
                 }
             });

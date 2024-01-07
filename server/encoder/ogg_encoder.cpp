@@ -22,11 +22,9 @@
 #include "common/aixlog.hpp"
 #include "common/snap_exception.hpp"
 #include "common/str_compat.hpp"
-#include "common/utils.hpp"
 #include "common/utils/string_utils.hpp"
 #include "ogg_encoder.hpp"
 
-using namespace std;
 
 namespace encoder
 {
@@ -72,7 +70,7 @@ void OggEncoder::encode(const msg::PcmChunk& chunk)
     // LOG(TRACE, LOG_TAG) << "payload: " << chunk->payloadSize << "\tframes: " << chunk->getFrameCount() << "\tduration: " <<
     // chunk->duration<chronos::msec>().count()
     // << "\n";
-    int frames = chunk.getFrameCount();
+    const int frames = chunk.getFrameCount();
     float** buffer = vorbis_analysis_buffer(&vd_, frames);
 
     /* uninterleave samples */
@@ -101,7 +99,7 @@ void OggEncoder::encode(const msg::PcmChunk& chunk)
     /* tell the library how much we actually submitted */
     vorbis_analysis_wrote(&vd_, frames);
 
-    auto oggChunk = make_shared<msg::PcmChunk>(chunk.format, 0);
+    auto oggChunk = std::make_shared<msg::PcmChunk>(chunk.format, 0);
 
     /* vorbis does some data preanalysis, then divvies up blocks for
     more involved (potentially parallel) processing.  Get a single
@@ -157,13 +155,13 @@ void OggEncoder::encode(const msg::PcmChunk& chunk)
 
 void OggEncoder::initEncoder()
 {
-    if (codecOptions_.find(':') == string::npos)
+    if (codecOptions_.find(':') == std::string::npos)
         throw SnapException("Invalid codec options: \"" + codecOptions_ + "\"");
-    string mode = utils::string::trim_copy(codecOptions_.substr(0, codecOptions_.find(':')));
+    std::string mode = utils::string::trim_copy(codecOptions_.substr(0, codecOptions_.find(':')));
     if (mode != "VBR")
         throw SnapException("Unsupported codec mode: \"" + mode + R"(". Available: "VBR")");
 
-    string qual = utils::string::trim_copy(codecOptions_.substr(codecOptions_.find(':') + 1));
+    std::string qual = utils::string::trim_copy(codecOptions_.substr(codecOptions_.find(':') + 1));
     double quality = 1.0;
     try
     {

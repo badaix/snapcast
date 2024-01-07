@@ -23,7 +23,6 @@
 #include "common/str_compat.hpp"
 #include "flac_encoder.hpp"
 
-using namespace std;
 
 namespace encoder
 {
@@ -74,7 +73,7 @@ std::string FlacEncoder::name() const
 void FlacEncoder::encode(const msg::PcmChunk& chunk)
 {
     if (flacChunk_ == nullptr)
-        flacChunk_ = make_shared<msg::PcmChunk>(chunk.format, 0);
+        flacChunk_ = std::make_shared<msg::PcmChunk>(chunk.format, 0);
 
     int samples = chunk.getSampleCount();
     int frames = chunk.getFrameCount();
@@ -132,7 +131,7 @@ void FlacEncoder::encode(const msg::PcmChunk& chunk)
         //		LOG(INFO, LOG_TAG) << "encoded: " << chunk->payloadSize << "\tframes: " << encodedSamples_ << "\tres: " << resMs << "\n";
         encodedSamples_ = 0;
         encoded_callback_(*this, flacChunk_, resMs);
-        flacChunk_ = make_shared<msg::PcmChunk>(chunk.format, 0);
+        flacChunk_ = std::make_shared<msg::PcmChunk>(chunk.format, 0);
     }
 }
 
@@ -225,7 +224,7 @@ void FlacEncoder::initEncoder()
     // initialize encoder
     init_status = FLAC__stream_encoder_init_stream(encoder_, callback::write_callback, nullptr, nullptr, nullptr, this);
     if (init_status != FLAC__STREAM_ENCODER_INIT_STATUS_OK)
-        throw SnapException("ERROR: initializing encoder: " + string(FLAC__StreamEncoderInitStatusString[init_status]));
+        throw SnapException("ERROR: initializing encoder: " + std::string(FLAC__StreamEncoderInitStatusString[init_status]));
 }
 
 } // namespace encoder

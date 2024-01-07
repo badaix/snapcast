@@ -20,9 +20,6 @@
 #include "common/aixlog.hpp"
 #include "common/snap_exception.hpp"
 #include <cassert>
-#include <cstdio>
-#include <cstdlib>
-#include <ctime>
 #include <iostream>
 
 

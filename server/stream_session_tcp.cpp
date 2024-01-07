@@ -28,7 +28,6 @@
 // standard headers
 #include <iostream>
 
-using namespace std;
 using namespace streamreader;
 
 

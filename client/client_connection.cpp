@@ -32,10 +32,8 @@
 
 // standard headers
 #include <iostream>
-#include <mutex>
 
 
-using namespace std;
 
 static constexpr auto LOG_TAG = "Connection";
 
@@ -146,7 +144,7 @@ void ClientConnection::connect(const ResultHandler& handler)
         handler(ec);
         return;
     }
-    LOG(NOTICE, LOG_TAG) << "Connected to " << socket_.remote_endpoint().address().to_string() << endl;
+    LOG(NOTICE, LOG_TAG) << "Connected to " << socket_.remote_endpoint().address().to_string() << std::endl;
     handler(ec);
 
 #if 0
@@ -187,10 +185,10 @@ void ClientConnection::disconnect()
     boost::system::error_code ec;
     socket_.shutdown(boost::asio::ip::tcp::socket::shutdown_both, ec);
     if (ec)
-        LOG(ERROR, LOG_TAG) << "Error in socket shutdown: " << ec.message() << endl;
+        LOG(ERROR, LOG_TAG) << "Error in socket shutdown: " << ec.message() << std::endl;
     socket_.close(ec);
     if (ec)
-        LOG(ERROR, LOG_TAG) << "Error in socket close: " << ec.message() << endl;
+        LOG(ERROR, LOG_TAG) << "Error in socket close: " << ec.message() << std::endl;
     boost::asio::post(strand_, [this]() { pendingRequests_.clear(); });
     LOG(DEBUG, LOG_TAG) << "Disconnected\n";
 }
@@ -248,11 +246,11 @@ void ClientConnection::sendRequest(const msg::message_ptr& message, const chrono
         pendingRequests_.erase(
             std::remove_if(pendingRequests_.begin(), pendingRequests_.end(), [](std::weak_ptr<PendingRequest> request) { return request.expired(); }),
             pendingRequests_.end());
-        unique_ptr<msg::BaseMessage> response(nullptr);
+        std::unique_ptr<msg::BaseMessage> response(nullptr);
         if (++reqId_ >= 10000)
             reqId_ = 1;
         message->id = reqId_;
-        auto request = make_shared<PendingRequest>(strand_, reqId_, handler);
+        auto request = std::make_shared<PendingRequest>(strand_, reqId_, handler);
         pendingRequests_.push_back(request);
         request->startTimer(timeout);
         send(message,

@@ -28,7 +28,6 @@
 #include "common/message/pcm_chunk.hpp"
 
 
-using namespace std;
 
 static constexpr auto LOG_TAG = "ControlSessionTCP";
 

@@ -30,8 +30,7 @@
 #include <cstring>
 #include <iostream>
 
-
-using namespace std;
+using namespace std::chrono_literals;
 namespace cs = chronos;
 
 static constexpr auto LOG_TAG = "Stream";
@@ -96,7 +95,7 @@ void Stream::clearChunks()
 }
 
 
-void Stream::addChunk(unique_ptr<msg::PcmChunk> chunk)
+void Stream::addChunk(std::unique_ptr<msg::PcmChunk> chunk)
 {
     // drop chunk if it's too old. Just in case, this shouldn't happen.
     auto age = std::chrono::duration_cast<cs::msec>(TimeProvider::serverNow() - chunk->start());

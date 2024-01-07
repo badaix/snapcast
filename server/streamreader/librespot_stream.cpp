@@ -30,7 +30,6 @@
 #include <exception>
 
 
-using namespace std;
 
 namespace streamreader
 {
@@ -64,16 +63,16 @@ LibrespotStream::LibrespotStream(PcmStream::Listener* pcmListener, boost::asio::
 {
     wd_timeout_sec_ = cpt::stoul(uri_.getQuery("wd_timeout", "7800")); ///< 130min
 
-    string username = uri_.getQuery("username", "");
-    string password = uri_.getQuery("password", "");
-    string cache = uri_.getQuery("cache", "");
-    bool disable_audio_cache = (uri_.getQuery("disable_audio_cache", "false") == "true");
-    string volume = uri_.getQuery("volume", "100");
-    string bitrate = uri_.getQuery("bitrate", "320");
-    string devicename = uri_.getQuery("devicename", "Snapcast");
-    string onevent = uri_.getQuery("onevent", "");
-    bool normalize = (uri_.getQuery("normalize", "false") == "true");
-    bool autoplay = (uri_.getQuery("autoplay", "false") == "true");
+    const std::string username = uri_.getQuery("username", "");
+    const std::string password = uri_.getQuery("password", "");
+    const std::string cache = uri_.getQuery("cache", "");
+    const bool disable_audio_cache = (uri_.getQuery("disable_audio_cache", "false") == "true");
+    const std::string volume = uri_.getQuery("volume", "100");
+    const std::string bitrate = uri_.getQuery("bitrate", "320");
+    const std::string devicename = uri_.getQuery("devicename", "Snapcast");
+    const std::string onevent = uri_.getQuery("onevent", "");
+    const bool normalize = (uri_.getQuery("normalize", "false") == "true");
+    const bool autoplay = (uri_.getQuery("autoplay", "false") == "true");
     killall_ = (uri_.getQuery("killall", "false") == "true");
 
     if (username.empty() != password.empty())
@@ -118,7 +117,7 @@ void LibrespotStream::initExeAndPath(const std::string& filename)
             throw SnapException("librespot not found");
     }
 
-    if (exe_.find('/') != string::npos)
+    if (exe_.find('/') != std::string::npos)
     {
         path_ = exe_.substr(0, exe_.find_last_of('/') + 1);
         exe_ = exe_.substr(exe_.find_last_of('/') + 1);
@@ -151,8 +150,8 @@ void LibrespotStream::onStderrMsg(const std::string& line)
         // std::cerr << "Librespot: " << line << "\n";
         std::string message = line;
         utils::string::split_left(message, ' ', message);
-        std::string level = utils::string::trim_copy(utils::string::split_left(message, ' ', message));
-        std::string source = utils::string::trim_copy(utils::string::split_left(message, ']', message));
+        const std::string level = utils::string::trim_copy(utils::string::split_left(message, ' ', message));
+        const std::string source = utils::string::trim_copy(utils::string::split_left(message, ']', message));
         utils::string::trim(message);
 
         bool parsed = true;
@@ -193,7 +192,7 @@ void LibrespotStream::onStderrMsg(const std::string& line)
             std::string title = line.substr(title_pos, line.find(">", title_pos) - title_pos);
             LOG(INFO, LOG_TAG) << "metadata: <" << title << ">\n";
             ms_pos += 1;
-            std::string ms = line.substr(ms_pos, n - ms_pos - 1);
+            const std::string ms = line.substr(ms_pos, n - ms_pos - 1);
             Metadata meta;
             meta.title = title;
             meta.duration = cpt::stod(ms) / 1000.;

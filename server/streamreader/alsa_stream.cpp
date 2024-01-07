@@ -32,7 +32,6 @@
 #include <memory>
 
 
-using namespace std;
 using namespace std::chrono_literals;
 
 namespace streamreader
@@ -139,19 +138,19 @@ void AlsaStream::initAlsa()
 
     snd_pcm_hw_params_t* hw_params;
     if ((err = snd_pcm_hw_params_malloc(&hw_params)) < 0)
-        throw SnapException("Can't allocate hardware parameter structure: " + string(snd_strerror(err)));
+        throw SnapException("Can't allocate hardware parameter structure: " + std::string(snd_strerror(err)));
 
     if ((err = snd_pcm_hw_params_any(handle_, hw_params)) < 0)
-        throw SnapException("Can't fill params: " + string(snd_strerror(err)));
+        throw SnapException("Can't fill params: " + std::string(snd_strerror(err)));
 
     if ((err = snd_pcm_hw_params_set_access(handle_, hw_params, SND_PCM_ACCESS_RW_INTERLEAVED)) < 0)
-        throw SnapException("Can't set interleaved mode: " + string(snd_strerror(err)));
+        throw SnapException("Can't set interleaved mode: " + std::string(snd_strerror(err)));
 
     if ((err = snd_pcm_hw_params_set_format(handle_, hw_params, snd_pcm_format)) < 0)
-        throw SnapException("Can't set sample format: " + string(snd_strerror(err)));
+        throw SnapException("Can't set sample format: " + std::string(snd_strerror(err)));
 
     if ((err = snd_pcm_hw_params_set_rate_near(handle_, hw_params, &rate, nullptr)) < 0)
-        throw SnapException("Can't set rate: " + string(snd_strerror(err)));
+        throw SnapException("Can't set rate: " + std::string(snd_strerror(err)));
 
     if (rate != sampleFormat_.rate())
     {
@@ -160,10 +159,10 @@ void AlsaStream::initAlsa()
     }
 
     if ((err = snd_pcm_hw_params_set_channels(handle_, hw_params, sampleFormat_.channels())) < 0)
-        throw SnapException("Can't set channel count: " + string(snd_strerror(err)));
+        throw SnapException("Can't set channel count: " + std::string(snd_strerror(err)));
 
     if ((err = snd_pcm_hw_params(handle_, hw_params)) < 0)
-        throw SnapException("Can't set hardware parameters: " + string(snd_strerror(err)));
+        throw SnapException("Can't set hardware parameters: " + std::string(snd_strerror(err)));
 
 #if 0 // Period size test code
     // snd_pcm_uframes_t period_size;
@@ -185,12 +184,12 @@ void AlsaStream::initAlsa()
     snd_pcm_hw_params_free(hw_params);
 
     if ((err = snd_pcm_prepare(handle_)) < 0)
-        throw SnapException("Can't prepare audio interface for use: " + string(snd_strerror(err)));
+        throw SnapException("Can't prepare audio interface for use: " + std::string(snd_strerror(err)));
 
     if (snd_pcm_state(handle_) == SND_PCM_STATE_PREPARED)
     {
         if ((err = snd_pcm_start(handle_)) < 0)
-            throw SnapException("Failed to start PCM: " + string(snd_strerror(err)));
+            throw SnapException("Failed to start PCM: " + std::string(snd_strerror(err)));
     }
 }
 
@@ -303,7 +302,7 @@ void AlsaStream::do_read()
             }
         }
 
-        int toRead = chunk_->payloadSize;
+        const int toRead = chunk_->payloadSize;
         auto duration = chunk_->duration<std::chrono::nanoseconds>();
         int len = 0;
         do

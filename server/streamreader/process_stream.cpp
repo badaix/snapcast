@@ -32,8 +32,6 @@
 #include <cstdio>
 
 
-using namespace std;
-
 namespace streamreader
 {
 
@@ -57,11 +55,11 @@ std::string ProcessStream::findExe(const std::string& filename) const
         return filename;
 
     std::string exe = filename;
-    if (exe.find('/') != string::npos)
+    if (exe.find('/') != std::string::npos)
         exe = exe.substr(exe.find_last_of('/') + 1);
 
     /// check with "which"
-    string which = execGetOutput("which " + exe);
+    std::string which = execGetOutput("which " + exe);
     if (!which.empty())
         return which;
 
@@ -73,7 +71,7 @@ std::string ProcessStream::findExe(const std::string& filename) const
     if (len != -1)
     {
         buff[len] = '\0';
-        return string(buff) + "/" + exe;
+        return std::string(buff) + "/" + exe;
     }
 
     return "";
@@ -84,7 +82,7 @@ void ProcessStream::initExeAndPath(const std::string& filename)
 {
     path_ = "";
     exe_ = findExe(filename);
-    if (exe_.find('/') != string::npos)
+    if (exe_.find('/') != std::string::npos)
     {
         path_ = exe_.substr(0, exe_.find_last_of('/') + 1);
         exe_ = exe_.substr(exe_.find_last_of('/') + 1);
@@ -111,12 +109,12 @@ void ProcessStream::do_connect()
     fcntl(pipe_stdout_.native_source(), F_SETFL, flags | O_NONBLOCK);
 
     process_ = bp::child(path_ + exe_ + " " + params_, bp::std_out > pipe_stdout_, bp::std_err > pipe_stderr_, bp::start_dir = path_);
-    stream_ = make_unique<stream_descriptor>(strand_, pipe_stdout_.native_source());
-    stream_stderr_ = make_unique<stream_descriptor>(strand_, pipe_stderr_.native_source());
+    stream_ = std::make_unique<stream_descriptor>(strand_, pipe_stdout_.native_source());
+    stream_stderr_ = std::make_unique<stream_descriptor>(strand_, pipe_stderr_.native_source());
     on_connect();
     if (wd_timeout_sec_ > 0)
     {
-        watchdog_ = make_unique<Watchdog>(strand_, this);
+        watchdog_ = std::make_unique<Watchdog>(strand_, this);
         watchdog_->start(std::chrono::seconds(wd_timeout_sec_));
     }
     else

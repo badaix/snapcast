@@ -70,7 +70,6 @@
 #include <memory>
 #include <string>
 
-using namespace std;
 using namespace player;
 
 static constexpr auto LOG_TAG = "Controller";
@@ -89,7 +88,7 @@ std::unique_ptr<Player> Controller::createPlayer(ClientSettings::Player& setting
     if (settings.player_name.empty() || settings.player_name == player_name)
     {
         settings.player_name = player_name;
-        return make_unique<PlayerType>(io_context_, settings, stream_);
+        return std::make_unique<PlayerType>(io_context_, settings, stream_);
     }
     return nullptr;
 }
@@ -173,28 +172,28 @@ void Controller::getNextMessage()
             player_.reset(nullptr);
 
             if (headerChunk_->codec == "pcm")
-                decoder_ = make_unique<decoder::PcmDecoder>();
+                decoder_ = std::make_unique<decoder::PcmDecoder>();
 #if defined(HAS_OGG) && (defined(HAS_TREMOR) || defined(HAS_VORBIS))
             else if (headerChunk_->codec == "ogg")
-                decoder_ = make_unique<decoder::OggDecoder>();
+                decoder_ = std::make_unique<decoder::OggDecoder>();
 #endif
 #if defined(HAS_FLAC)
             else if (headerChunk_->codec == "flac")
-                decoder_ = make_unique<decoder::FlacDecoder>();
+                decoder_ = std::make_unique<decoder::FlacDecoder>();
 #endif
 #if defined(HAS_OPUS)
             else if (headerChunk_->codec == "opus")
-                decoder_ = make_unique<decoder::OpusDecoder>();
+                decoder_ = std::make_unique<decoder::OpusDecoder>();
 #endif
             else if (headerChunk_->codec == "null")
-                decoder_ = make_unique<decoder::NullDecoder>();
+                decoder_ = std::make_unique<decoder::NullDecoder>();
             else
                 throw SnapException("codec not supported: \"" + headerChunk_->codec + "\"");
 
             sampleFormat_ = decoder_->setHeader(headerChunk_.get());
             LOG(INFO, LOG_TAG) << "Codec: " << headerChunk_->codec << ", sampleformat: " << sampleFormat_.toString() << "\n";
 
-            stream_ = make_shared<Stream>(sampleFormat_, settings_.player.sample_format);
+            stream_ = std::make_shared<Stream>(sampleFormat_, settings_.player.sample_format);
             stream_->setBufferLen(std::max(0, serverSettings_->getBufferMs() - serverSettings_->getLatency() - settings_.player.latency));
 
 #ifdef HAS_ALSA
@@ -314,8 +313,8 @@ void Controller::browseMdns(const MdnsHandler& handler)
         mDNSResult avahiResult;
         if (browser.browse("_snapcast._tcp", avahiResult, 1000))
         {
-            string host = avahiResult.ip;
-            uint16_t port = avahiResult.port;
+            std::string host = avahiResult.ip;
+            const uint16_t port = avahiResult.port;
             if (avahiResult.ip_version == IPVersion::IPv6)
                 host += "%" + cpt::to_string(avahiResult.iface_idx);
             handler({}, host, port);
@@ -361,14 +360,14 @@ void Controller::start()
                 settings_.server.host = host;
                 settings_.server.port = port;
                 LOG(INFO, LOG_TAG) << "Found server " << settings_.server.host << ":" << settings_.server.port << "\n";
-                clientConnection_ = make_unique<ClientConnection>(io_context_, settings_.server);
+                clientConnection_ = std::make_unique<ClientConnection>(io_context_, settings_.server);
                 worker();
             }
         });
     }
     else
     {
-        clientConnection_ = make_unique<ClientConnection>(io_context_, settings_.server);
+        clientConnection_ = std::make_unique<ClientConnection>(io_context_, settings_.server);
         worker();
     }
 }
@@ -406,7 +405,7 @@ void Controller::worker()
         if (!ec)
         {
             // LOG(INFO, LOG_TAG) << "Connected!\n";
-            string macAddress = clientConnection_->getMacAddress();
+            const std::string macAddress = clientConnection_->getMacAddress();
             if (settings_.host_id.empty())
                 settings_.host_id = ::getHostId(macAddress);
 

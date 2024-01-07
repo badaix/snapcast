@@ -45,7 +45,7 @@
 #include <sys/resource.h>
 
 
-using namespace std;
+using namespace std::chrono_literals;
 using namespace popl;
 
 static constexpr auto LOG_TAG = "Snapserver";
@@ -72,43 +72,43 @@ int main(int argc, char* argv[])
         int processPriority(0);
         auto daemonOption = op.add<Implicit<int>>("d", "daemon", "Daemonize\noptional process priority [-20..19]", 0, &processPriority);
 #endif
-        op.add<Value<string>>("c", "config", "path to the configuration file", config_file, &config_file);
+        op.add<Value<std::string>>("c", "config", "path to the configuration file", config_file, &config_file);
 
         OptionParser conf("Overridable config file options");
 
         // server settings
         conf.add<Value<int>>("", "server.threads", "number of server threads", settings.server.threads, &settings.server.threads);
-        conf.add<Value<string>>("", "server.pidfile", "pid file when running as daemon", settings.server.pid_file, &settings.server.pid_file);
-        conf.add<Value<string>>("", "server.user", "the user to run as when daemonized", settings.server.user, &settings.server.user);
-        conf.add<Implicit<string>>("", "server.group", "the group to run as when daemonized", settings.server.group, &settings.server.group);
-        conf.add<Implicit<string>>("", "server.datadir", "directory where persistent data is stored", settings.server.data_dir, &settings.server.data_dir);
+        conf.add<Value<std::string>>("", "server.pidfile", "pid file when running as daemon", settings.server.pid_file, &settings.server.pid_file);
+        conf.add<Value<std::string>>("", "server.user", "the user to run as when daemonized", settings.server.user, &settings.server.user);
+        conf.add<Implicit<std::string>>("", "server.group", "the group to run as when daemonized", settings.server.group, &settings.server.group);
+        conf.add<Implicit<std::string>>("", "server.datadir", "directory where persistent data is stored", settings.server.data_dir, &settings.server.data_dir);
 
         // HTTP RPC settings
         conf.add<Value<bool>>("", "http.enabled", "enable HTTP Json RPC (HTTP POST and websockets)", settings.http.enabled, &settings.http.enabled);
         conf.add<Value<size_t>>("", "http.port", "which port the server should listen on", settings.http.port, &settings.http.port);
-        auto http_bind_to_address = conf.add<Value<string>>("", "http.bind_to_address", "address for the server to listen on",
+        auto http_bind_to_address = conf.add<Value<std::string>>("", "http.bind_to_address", "address for the server to listen on",
                                                             settings.http.bind_to_address.front(), &settings.http.bind_to_address[0]);
-        conf.add<Implicit<string>>("", "http.doc_root", "serve a website from the doc_root location", settings.http.doc_root, &settings.http.doc_root);
-        conf.add<Value<string>>("", "http.host", "Hostname or IP under which clients can reach this host", settings.http.host, &settings.http.host);
+        conf.add<Implicit<std::string>>("", "http.doc_root", "serve a website from the doc_root location", settings.http.doc_root, &settings.http.doc_root);
+        conf.add<Value<std::string>>("", "http.host", "Hostname or IP under which clients can reach this host", settings.http.host, &settings.http.host);
 
         // TCP RPC settings
         conf.add<Value<bool>>("", "tcp.enabled", "enable TCP Json RPC)", settings.tcp.enabled, &settings.tcp.enabled);
         conf.add<Value<size_t>>("", "tcp.port", "which port the server should listen on", settings.tcp.port, &settings.tcp.port);
-        auto tcp_bind_to_address = conf.add<Value<string>>("", "tcp.bind_to_address", "address for the server to listen on",
+        auto tcp_bind_to_address = conf.add<Value<std::string>>("", "tcp.bind_to_address", "address for the server to listen on",
                                                            settings.tcp.bind_to_address.front(), &settings.tcp.bind_to_address[0]);
 
         // stream settings
-        auto stream_bind_to_address = conf.add<Value<string>>("", "stream.bind_to_address", "address for the server to listen on",
+        auto stream_bind_to_address = conf.add<Value<std::string>>("", "stream.bind_to_address", "address for the server to listen on",
                                                               settings.stream.bind_to_address.front(), &settings.stream.bind_to_address[0]);
         conf.add<Value<size_t>>("", "stream.port", "which port the server should listen on", settings.stream.port, &settings.stream.port);
         // deprecated: stream.stream, use stream.source instead
-        auto streamValue = conf.add<Value<string>>("", "stream.stream", "Deprecated: use stream.source", pcmSource, &pcmSource);
-        auto sourceValue = conf.add<Value<string>>(
+        auto streamValue = conf.add<Value<std::string>>("", "stream.stream", "Deprecated: use stream.source", pcmSource, &pcmSource);
+        auto sourceValue = conf.add<Value<std::string>>(
             "", "stream.source", "URI of the PCM input stream.\nFormat: TYPE://host/path?name=NAME\n[&codec=CODEC]\n[&sampleformat=SAMPLEFORMAT]", pcmSource,
             &pcmSource);
 
-        conf.add<Value<string>>("", "stream.sampleformat", "Default sample format", settings.stream.sampleFormat, &settings.stream.sampleFormat);
-        conf.add<Value<string>>("", "stream.codec", "Default transport codec\n(flac|ogg|opus|pcm)[:options]\nType codec:? to get codec specific options",
+        conf.add<Value<std::string>>("", "stream.sampleformat", "Default sample format", settings.stream.sampleFormat, &settings.stream.sampleFormat);
+        conf.add<Value<std::string>>("", "stream.codec", "Default transport codec\n(flac|ogg|opus|pcm)[:options]\nType codec:? to get codec specific options",
                                 settings.stream.codec, &settings.stream.codec);
         // deprecated: stream_buffer, use chunk_ms instead
         conf.add<Value<size_t>>("", "stream.stream_buffer", "Default stream read chunk size [ms], deprecated, use stream.chunk_ms instead",
@@ -123,8 +123,8 @@ int main(int argc, char* argv[])
                                   settings.streamingclient.initialVolume, &settings.streamingclient.initialVolume);
 
         // logging settings
-        conf.add<Value<string>>("", "logging.sink", "log sink [null,system,stdout,stderr,file:<filename>]", settings.logging.sink, &settings.logging.sink);
-        auto logfilterOption = conf.add<Value<string>>(
+        conf.add<Value<std::string>>("", "logging.sink", "log sink [null,system,stdout,stderr,file:<filename>]", settings.logging.sink, &settings.logging.sink);
+        auto logfilterOption = conf.add<Value<std::string>>(
             "", "logging.filter",
             "log filter <tag>:<level>[,<tag>:<level>]* with tag = * or <log tag> and level = [trace,debug,info,notice,warning,error,fatal]",
             settings.logging.filter);
@@ -155,14 +155,14 @@ int main(int argc, char* argv[])
         }
         catch (const std::invalid_argument& e)
         {
-            cerr << "Exception: " << e.what() << std::endl;
-            cout << "\n" << op << "\n";
+            std::cerr << "Exception: " << e.what() << std::endl;
+            std::cout << "\n" << op << "\n";
             exit(EXIT_FAILURE);
         }
 
         if (versionSwitch->is_set())
         {
-            cout << "snapserver v" << version::code << (!version::rev().empty() ? (" (rev " + version::rev(8) + ")") : ("")) << "\n"
+            std::cout << "snapserver v" << version::code << (!version::rev().empty() ? (" (rev " + version::rev(8) + ")") : ("")) << "\n"
                  << "Copyright (C) 2014-2022 BadAix (snapcast@badaix.de).\n"
                  << "License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>.\n"
                  << "This is free software: you are free to change and redistribute it.\n"
@@ -173,26 +173,26 @@ int main(int argc, char* argv[])
 
         if (helpSwitch->is_set())
         {
-            cout << op << "\n";
+            std::cout << op << "\n";
             if (helpSwitch->count() > 1)
-                cout << conf << "\n";
+                std::cout << conf << "\n";
             exit(EXIT_SUCCESS);
         }
 
         if (groffSwitch->is_set())
         {
             GroffOptionPrinter option_printer(&op);
-            cout << option_printer.print();
+            std::cout << option_printer.print();
             exit(EXIT_SUCCESS);
         }
 
-        if (settings.stream.codec.find(":?") != string::npos)
+        if (settings.stream.codec.find(":?") != std::string::npos)
         {
             encoder::EncoderFactory encoderFactory;
             std::unique_ptr<encoder::Encoder> encoder(encoderFactory.createEncoder(settings.stream.codec));
             if (encoder)
             {
-                cout << "Options for codec \"" << encoder->name() << "\":\n"
+                std::cout << "Options for codec \"" << encoder->name() << "\":\n"
                      << "  " << encoder->getAvailableOptions() << "\n"
                      << "  Default: \"" << encoder->getDefaultOptions() << "\"\n";
             }
@@ -219,10 +219,10 @@ int main(int argc, char* argv[])
         for (const auto& filter : filters)
             logfilter.add_filter(filter);
 
-        string logformat = "%Y-%m-%d %H-%M-%S.#ms [#severity] (#tag_func)";
-        if (settings.logging.sink.find("file:") != string::npos)
+        std::string logformat = "%Y-%m-%d %H-%M-%S.#ms [#severity] (#tag_func)";
+        if (settings.logging.sink.find("file:") != std::string::npos)
         {
-            string logfile = settings.logging.sink.substr(settings.logging.sink.find(':') + 1);
+            std::string logfile = settings.logging.sink.substr(settings.logging.sink.find(':') + 1);
             AixLog::Log::init<AixLog::SinkFile>(logfilter, logfile, logformat);
         }
         else if (settings.logging.sink == "stdout")
@@ -280,7 +280,7 @@ int main(int argc, char* argv[])
         boost::asio::io_context io_context;
 #if defined(HAS_AVAHI) || defined(HAS_BONJOUR)
         auto publishZeroConfg = std::make_unique<PublishZeroConf>("Snapcast", io_context);
-        vector<mDNSService> dns_services;
+        std::vector<mDNSService> dns_services;
         dns_services.emplace_back("_snapcast._tcp", settings.stream.port);
         dns_services.emplace_back("_snapcast-stream._tcp", settings.stream.port);
         if (settings.tcp.enabled)
@@ -305,7 +305,7 @@ int main(int argc, char* argv[])
             settings.stream.streamChunkMs = 10;
         }
 
-        static constexpr chrono::milliseconds MIN_BUFFER_DURATION = 20ms;
+        static constexpr std::chrono::milliseconds MIN_BUFFER_DURATION = 20ms;
         if (settings.stream.bufferMs < MIN_BUFFER_DURATION.count())
         {
             LOG(WARNING, LOG_TAG) << "Buffer is less than " << MIN_BUFFER_DURATION.count() << "ms, changing to " << MIN_BUFFER_DURATION.count() << "ms\n";
@@ -340,9 +340,9 @@ int main(int argc, char* argv[])
         for (auto& t : threads)
             t.join();
 
-        LOG(INFO, LOG_TAG) << "Stopping streamServer" << endl;
+        LOG(INFO, LOG_TAG) << "Stopping streamServer" << std::endl;
         server->stop();
-        LOG(INFO, LOG_TAG) << "done" << endl;
+        LOG(INFO, LOG_TAG) << "done" << std::endl;
     }
     catch (const std::exception& e)
     {
@@ -350,6 +350,6 @@ int main(int argc, char* argv[])
         exitcode = EXIT_FAILURE;
     }
     Config::instance().save();
-    LOG(NOTICE, LOG_TAG) << "Snapserver terminated." << endl;
+    LOG(NOTICE, LOG_TAG) << "Snapserver terminated." << std::endl;
     exit(exitcode);
 }

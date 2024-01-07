@@ -34,7 +34,6 @@
 // standard headers
 #include <iostream>
 
-using namespace std;
 using json = nlohmann::json;
 
 static constexpr auto LOG_TAG = "ControlServer";
@@ -88,7 +87,7 @@ void ControlServer::onMessageReceived(std::shared_ptr<ControlSession> session, c
 }
 
 
-void ControlServer::onNewSession(shared_ptr<ControlSession> session)
+void ControlServer::onNewSession(std::shared_ptr<ControlSession> session)
 {
     std::lock_guard<std::recursive_mutex> mlock(session_mutex_);
     session->start();
@@ -106,7 +105,7 @@ void ControlServer::onNewSession(std::shared_ptr<StreamSession> session)
 
 void ControlServer::startAccept()
 {
-    auto accept_handler_tcp = [this](error_code ec, tcp::socket socket)
+    auto accept_handler_tcp = [this](std::error_code ec, tcp::socket socket)
     {
         if (!ec)
             handleAccept<ControlSessionTcp>(std::move(socket));
@@ -114,7 +113,7 @@ void ControlServer::startAccept()
             LOG(ERROR, LOG_TAG) << "Error while accepting socket connection: " << ec.message() << "\n";
     };
 
-    auto accept_handler_http = [this](error_code ec, tcp::socket socket)
+    auto accept_handler_http = [this](std::error_code ec, tcp::socket socket)
     {
         if (!ec)
             handleAccept<ControlSessionHttp>(std::move(socket), http_settings_);
@@ -141,13 +140,13 @@ void ControlServer::handleAccept(tcp::socket socket, Args&&... args)
         setsockopt(socket.native_handle(), SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
         setsockopt(socket.native_handle(), SOL_SOCKET, SO_SNDTIMEO, &tv, sizeof(tv));
         //	socket->set_option(boost::asio::ip::tcp::no_delay(false));
-        LOG(NOTICE, LOG_TAG) << "ControlServer::NewConnection: " << socket.remote_endpoint().address().to_string() << endl;
-        shared_ptr<SessionType> session = make_shared<SessionType>(this, std::move(socket), std::forward<Args>(args)...);
+        LOG(NOTICE, LOG_TAG) << "ControlServer::NewConnection: " << socket.remote_endpoint().address().to_string() << std::endl;
+        std::shared_ptr<SessionType> session = std::make_shared<SessionType>(this, std::move(socket), std::forward<Args>(args)...);
         onNewSession(std::move(session));
     }
     catch (const std::exception& e)
     {
-        LOG(ERROR, LOG_TAG) << "Exception in ControlServer::handleAccept: " << e.what() << endl;
+        LOG(ERROR, LOG_TAG) << "Exception in ControlServer::handleAccept: " << e.what() << std::endl;
     }
     startAccept();
 }
@@ -163,7 +162,7 @@ void ControlServer::start()
             try
             {
                 LOG(INFO, LOG_TAG) << "Creating TCP acceptor for address: " << address << ", port: " << tcp_settings_.port << "\n";
-                acceptor_tcp_.emplace_back(make_unique<tcp::acceptor>(boost::asio::make_strand(io_context_.get_executor()),
+                acceptor_tcp_.emplace_back(std::make_unique<tcp::acceptor>(boost::asio::make_strand(io_context_.get_executor()),
                                                                       tcp::endpoint(boost::asio::ip::address::from_string(address), tcp_settings_.port)));
             }
             catch (const boost::system::system_error& e)
@@ -179,7 +178,7 @@ void ControlServer::start()
             try
             {
                 LOG(INFO, LOG_TAG) << "Creating HTTP acceptor for address: " << address << ", port: " << http_settings_.port << "\n";
-                acceptor_http_.emplace_back(make_unique<tcp::acceptor>(boost::asio::make_strand(io_context_.get_executor()),
+                acceptor_http_.emplace_back(std::make_unique<tcp::acceptor>(boost::asio::make_strand(io_context_.get_executor()),
                                                                        tcp::endpoint(boost::asio::ip::address::from_string(address), http_settings_.port)));
             }
             catch (const boost::system::system_error& e)

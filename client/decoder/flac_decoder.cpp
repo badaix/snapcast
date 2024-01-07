@@ -20,12 +20,9 @@
 #include "common/aixlog.hpp"
 #include "common/endian.hpp"
 #include "common/snap_exception.hpp"
-#include <cmath>
 #include <cstring>
 #include <iostream>
 
-
-using namespace std;
 
 static constexpr auto LOG_TAG = "FlacDecoder";
 
@@ -115,7 +112,7 @@ SampleFormat FlacDecoder::setHeader(msg::CodecHeader* chunk)
     init_status = FLAC__stream_decoder_init_stream(decoder, callback::read_callback, nullptr, nullptr, nullptr, nullptr, callback::write_callback,
                                                    callback::metadata_callback, callback::error_callback, this);
     if (init_status != FLAC__STREAM_DECODER_INIT_STATUS_OK)
-        throw SnapException("ERROR: initializing decoder: " + string(FLAC__StreamDecoderInitStatusString[init_status]));
+        throw SnapException("ERROR: initializing decoder: " + std::string(FLAC__StreamDecoderInitStatusString[init_status]));
 
     FLAC__stream_decoder_process_until_end_of_metadata(decoder);
     if (sampleFormat.rate() == 0)

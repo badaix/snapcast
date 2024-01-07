@@ -22,7 +22,6 @@
 // local headers
 #include "common/aixlog.hpp"
 #include "common/snap_exception.hpp"
-#include "encoder/encoder_factory.hpp"
 
 // 3rd party headers
 
@@ -30,7 +29,6 @@
 #include <memory>
 
 
-using namespace std;
 
 namespace streamreader
 {
@@ -56,7 +54,7 @@ FileStream::FileStream(PcmStream::Listener* pcmListener, boost::asio::io_context
 void FileStream::do_connect()
 {
     LOG(DEBUG, LOG_TAG) << "connect\n";
-    int fd = open(uri_.path.c_str(), O_RDONLY | O_NONBLOCK);
+    const int fd = open(uri_.path.c_str(), O_RDONLY | O_NONBLOCK);
     stream_ = std::make_unique<boost::asio::posix::stream_descriptor>(strand_, fd);
     on_connect();
 }

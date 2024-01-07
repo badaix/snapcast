@@ -27,9 +27,6 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
-using namespace std;
-
-
 
 Config::~Config()
 {
@@ -39,13 +36,13 @@ Config::~Config()
 
 void Config::init(const std::string& root_directory, const std::string& user, const std::string& group)
 {
-    string dir;
+    std::string dir;
     if (!root_directory.empty())
         dir = root_directory;
-    else if (getenv("HOME") == nullptr)
+    else if (std::getenv("HOME") == nullptr)
         dir = "/var/lib/snapserver/";
     else
-        dir = string(getenv("HOME")) + "/.config/snapserver/";
+        dir = std::string(std::getenv("HOME")) + "/.config/snapserver/";
 
     if (!dir.empty() && (dir.back() != '/'))
         dir += "/";
@@ -85,7 +82,7 @@ void Config::init(const std::string& root_directory, const std::string& user, co
 
     try
     {
-        ifstream ifs(filename_, std::ifstream::in);
+        std::ifstream ifs(filename_, std::ifstream::in);
         if (ifs.good() && (ifs.peek() != std::ifstream::traits_type::eof()))
         {
             json j;
@@ -95,7 +92,7 @@ void Config::init(const std::string& root_directory, const std::string& user, co
                 json jGroups = j["Groups"];
                 for (const auto& jGroup : jGroups)
                 {
-                    GroupPtr group = make_shared<Group>();
+                    GroupPtr group = std::make_shared<Group>();
                     group->fromJson(jGroup);
                     // if (client->id.empty() || getClientInfo(client->id))
                     //     continue;
@@ -162,7 +159,7 @@ GroupPtr Config::addClientInfo(const std::string& clientId)
     std::lock_guard<std::recursive_mutex> lock(mutex_);
     ClientInfoPtr client = getClientInfo(clientId);
     if (!client)
-        client = make_shared<ClientInfo>(clientId);
+        client = std::make_shared<ClientInfo>(clientId);
     return addClientInfo(client);
 }
 

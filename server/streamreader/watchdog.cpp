@@ -31,8 +31,6 @@
 static constexpr auto LOG_TAG = "Watchdog";
 
 
-using namespace std;
-
 namespace streamreader
 {
 

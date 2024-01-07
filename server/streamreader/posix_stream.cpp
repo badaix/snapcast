@@ -29,7 +29,6 @@
 #include <memory>
 
 
-using namespace std;
 using namespace std::chrono_literals;
 
 namespace streamreader
