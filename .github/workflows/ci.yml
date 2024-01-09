@@ -37,7 +37,7 @@ jobs:
     - name: get boost
       if: steps.cache-boost.outputs.cache-hit != 'true'
       run: |
-        wget https://archives.boost.io/release/${BOOST_VERSION//_/.}/source/boost_${BOOST_VERSION}.tar.bz2
+        wget https://boostorg.jfrog.io/artifactory/main/release/${BOOST_VERSION//_/.}/source/boost_${BOOST_VERSION}.tar.bz2
         tar xjf boost_${BOOST_VERSION}.tar.bz2
     - name: configure
       run: |
@@ -132,7 +132,7 @@ jobs:
     - name: get boost
       if: steps.cache-boost.outputs.cache-hit != 'true'
       run: |
-        wget https://archives.boost.io/release/${BOOST_VERSION//_/.}/source/boost_${BOOST_VERSION}.tar.bz2
+        wget https://boostorg.jfrog.io/artifactory/main/release/${BOOST_VERSION//_/.}/source/boost_${BOOST_VERSION}.tar.bz2
         tar xjf boost_${BOOST_VERSION}.tar.bz2
     - name: cache ccache
       id: cache-ccache
@@ -219,7 +219,7 @@ jobs:
     - name: get boost
       if: steps.cache-boost.outputs.cache-hit != 'true'
       run: |
-        wget https://archives.boost.io/release/${BOOST_VERSION//_/.}/source/boost_${BOOST_VERSION}.tar.bz2
+        wget https://boostorg.jfrog.io/artifactory/main/release/${BOOST_VERSION//_/.}/source/boost_${BOOST_VERSION}.tar.bz2
         tar xjf boost_${BOOST_VERSION}.tar.bz2
     - name: cache ccache
       id: cache-ccache
@@ -295,3 +295,4 @@ jobs:
   #       repository: badaix/snapos
   #       event-type: build-success
   #       client-payload: '{"ref": "${{ github.ref }}", "sha": "${{ github.sha }}"}'
+  
