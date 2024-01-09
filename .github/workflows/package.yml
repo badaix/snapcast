@@ -64,7 +64,7 @@ jobs:
     - name: Get boost
       if: steps.cache-boost.outputs.cache-hit != 'true'
       run: |
-        wget https://boostorg.jfrog.io/artifactory/main/release/${{env.BOOST_DOT_VERSION}}/source/${{env.BOOST}}.tar.bz2
+        wget https://archives.boost.io/release/${{env.BOOST_DOT_VERSION}}/source/${{env.BOOST}}.tar.bz2
         tar xjf ${{env.BOOST}}.tar.bz2
     - name: cache ccache
       id: cache-ccache
