@@ -18,13 +18,13 @@ jobs:
           - bookworm
         os: 
           - ubuntu-latest
-          - self-hosted-rpi4
+          - self-hosted-rpi5
         include:
           - os: ubuntu-latest
             arch: "amd64"
             image_prefix: "debian:"
             image_suffix: ""
-          - os: self-hosted-rpi4
+          - os: self-hosted-rpi5
             arch: "armhf"
             image_prefix: "badaix/raspios-"
             image_suffix: "-armhf-lite"
