@@ -25,9 +25,14 @@ jobs:
             image_prefix: "debian:"
             image_suffix: ""
           - os: self-hosted-rpi5
-            arch: "armhf"
+            arch: "arm64"
             image_prefix: "badaix/raspios-"
-            image_suffix: "-armhf-lite"
+            image_suffix: "-arm64-lite"
+        exclude:
+          - os: self-hosted-rpi5
+            image: buster
+          - os: self-hosted-rpi5
+            image: bullseye
 
     runs-on: ${{ matrix.os }}
     name: deb (${{ matrix.arch }}, ${{ matrix.image }})
