@@ -13,7 +13,6 @@ jobs:
       fail-fast: false
       matrix:
         image:
-          - buster
           - bullseye
           - bookworm
         os: 
@@ -25,9 +24,9 @@ jobs:
             image_prefix: "debian:"
             image_suffix: ""
           - os: self-hosted-rpi5
-            arch: "arm64"
+            arch: "armhf"
             image_prefix: "badaix/raspios-"
-            image_suffix: "-arm64-lite"
+            image_suffix: "-armhf-lite"
         exclude:
           - os: self-hosted-rpi5
             image: buster
