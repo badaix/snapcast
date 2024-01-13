@@ -25,7 +25,7 @@ jobs:
             image_prefix: "debian:"
             image_suffix: ""
           - arch: "armhf"
-            os: self-hosted-rpi5
+            os: self-hosted-rpi4
             image_prefix: "badaix/raspios-"
             image_suffix: "-armhf-lite"
           - arch: "arm64"
