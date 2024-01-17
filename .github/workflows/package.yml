@@ -35,7 +35,7 @@ jobs:
     timeout-minutes: 240
 
     container:
-      image: ${{matrix.image_prefix}}${{matrix.debian}}${{matrix.image_suffix}}
+      image: ${{matrix.image_prefix}}${{matrix.debian}}
     steps:
     - name: Get dependencies
       run: apt-get update && apt-get install -yq wget debhelper build-essential cmake git rename libatomic1 libasound2-dev libsoxr-dev libvorbisidec-dev libvorbis-dev libflac-dev libopus-dev alsa-utils libpulse-dev libavahi-client-dev avahi-daemon libexpat1-dev python3 ccache
