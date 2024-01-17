@@ -24,20 +24,18 @@ jobs:
             os: ubuntu-latest
             image_prefix: "debian:"
           - arch: "armhf"
-            os: self-hosted-rpi5
+            os: self-hosted-rpi4
             image_prefix: "badaix/raspios-lite:"
-            image_postfix: "-armhf"
           - arch: "arm64"
             os: self-hosted-rpi5
             image_prefix: "badaix/raspios-lite:"
-            image_postfix: "-arm64"
 
     runs-on: ${{ matrix.os }}
     name: deb (${{ matrix.arch }}, ${{ matrix.debian }})
     timeout-minutes: 240
 
     container:
-      image: ${{matrix.image_prefix}}${{matrix.debian}}${{matrix.image_postfix}}
+      image: ${{matrix.image_prefix}}${{matrix.debian}}${{matrix.image_suffix}}
     steps:
     - name: Get dependencies
       run: apt-get update && apt-get install -yq wget debhelper build-essential cmake git rename libatomic1 libasound2-dev libsoxr-dev libvorbisidec-dev libvorbis-dev libflac-dev libopus-dev alsa-utils libpulse-dev libavahi-client-dev avahi-daemon libexpat1-dev python3 ccache
