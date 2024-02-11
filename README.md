@@ -6,6 +6,7 @@
 
 [![CI](https://github.com/badaix/snapcast/actions/workflows/ci.yml/badge.svg)](https://github.com/badaix/snapcast/actions/workflows/ci.yml)
 [![Github Releases](https://img.shields.io/github/release/badaix/snapcast.svg)](https://github.com/badaix/snapcast/releases)
+[![GitHub Downloads](https://img.shields.io/github/downloads/badaix/snapcast/total)](https://github.com/badaix/snapcast/releases)
 [![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://www.paypal.me/badaix)
 
 Snapcast is a multiroom client-server audio player, where all clients are time synchronized with the server to play perfectly synced audio. It's not a standalone player, but an extension that turns your existing audio player into a Sonos-like multiroom solution.  
