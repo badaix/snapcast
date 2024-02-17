@@ -6,36 +6,36 @@ import threading
 import time
 
 if len(sys.argv) < 2:
-	print("usage: testClient.py <SERVER HOST>")
-	sys.exit(0)
+    print("usage: testClient.py <SERVER HOST>")
+    sys.exit(0)
 
 telnet = telnetlib.Telnet(sys.argv[1], 1705)
 
 
 class ReaderThread(threading.Thread):
-	def __init__(self, tn, stop_event):
-		super(ReaderThread, self).__init__()
-		self.tn = tn
-		self.stop_event = stop_event
+    def __init__(self, tn, stop_event):
+        super(ReaderThread, self).__init__()
+        self.tn = tn
+        self.stop_event = stop_event
 
-	def run(self):
-		while (not self.stop_event.is_set()):
-			response = self.tn.read_until("\r\n", 2)
-			if response:
-				print("received: " + response)
-				jresponse = json.loads(response)
-				print(json.dumps(jresponse, indent=2))
-				print("\r\n")
-
-
-def doRequest( str ):
-	print("send: " + str)
-	telnet.write(str)
-	time.sleep(1)
-	return;
+    def run(self):
+        while (not self.stop_event.is_set()):
+            response = self.tn.read_until("\r\n", 2)
+            if response:
+                print("received: " + response)
+                jresponse = json.loads(response)
+                print(json.dumps(jresponse, indent=2))
+                print("\r\n")
 
 
-t_stop= threading.Event()
+def doRequest(str):
+    print("send: " + str)
+    telnet.write(str)
+    time.sleep(1)
+    return
+
+
+t_stop = threading.Event()
 t = ReaderThread(telnet, t_stop)
 t.start()
 
@@ -58,7 +58,7 @@ doRequest("{\"jsonrpc\": \"2.0\", \"method\": \"Client.SetStream\", \"params\": 
 time.sleep(5)
 
 
-#doRequest("{\"jsonrpc\": \"2.0\", \"method\": \"Server.GetStatus\", \"params\": {\"client\": \"80:1f:02:ed:fd:e0\"}, \"id\": 2}\r\n")
+# doRequest("{\"jsonrpc\": \"2.0\", \"method\": \"Server.GetStatus\", \"params\": {\"client\": \"80:1f:02:ed:fd:e0\"}, \"id\": 2}\r\n")
 '''
 doRequest("{\"jsonrpc\": \"2.0\", \"method\": \"Client.SetVolume\", \"params\": {\"client\": \"80:1f:02:ed:fd:e0\", \"volume\": 10}, \"id\": 3}\r\n")
 doRequest("{\"jsonrpc\": \"2.0\", \"method\": \"Client.SetVolume\", \"params\": {\"client\": \"80:1f:02:ed:fd:e0\", \"volume\": 30}, \"id\": 4}\r\n")
@@ -83,6 +83,6 @@ doRequest("{\"jsonrpc\": \"2.0\", \"method\": \"Client.SetVolume\", \"params\": 
 '''
 s = raw_input("")
 print(s)
-t_stop.set();
+t_stop.set()
 t.join()
 telnet.close

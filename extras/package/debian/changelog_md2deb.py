@@ -28,10 +28,13 @@ if __name__ == "__main__":
     with open(sys.argv[1], 'r') as file:
         data = file.read()
 
-    data = re.sub('^\s*# Snapcast changelog *\n*', '', data, flags=re.MULTILINE)
-    data = re.sub('^\s*### ([a-zA-Z]+) *\n', r'\n  * \1\n', data, flags=re.MULTILINE)
-    data = re.sub('^\s*## Version\s+(\S*) *\n', r'snapcast (\1-1) unstable; urgency=medium\n', data, flags=re.MULTILINE)
+    data = re.sub('^\s*# Snapcast changelog *\n*',
+                  '', data, flags=re.MULTILINE)
+    data = re.sub('^\s*### ([a-zA-Z]+) *\n',
+                  r'\n  * \1\n', data, flags=re.MULTILINE)
+    data = re.sub('^\s*## Version\s+(\S*) *\n',
+                  r'snapcast (\1-1) unstable; urgency=medium\n', data, flags=re.MULTILINE)
     data = re.sub('^\s*-\s*(.*) *\n', r'    -\1\n', data, flags=re.MULTILINE)
     data = re.sub('^_(.*)_ *\n', r' -- \1\n\n', data, flags=re.MULTILINE)
 
-    print(data)    
+    print(data)

@@ -449,7 +449,8 @@ class MPDWrapper(object):
 
     def io_callback(self, fd, event):
         try:
-            logger.error(f'IO event "{event}" on fd "{fd}" (type: "{type(fd)}"')
+            logger.error(
+                f'IO event "{event}" on fd "{fd}" (type: "{type(fd)}"')
             if event & GLib.IO_HUP:
                 logger.debug("IO_HUP")
                 return True
