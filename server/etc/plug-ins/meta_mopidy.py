@@ -94,9 +94,13 @@ class MopidyControl(object):
     def websocket_loop(self):
         logger.info("Started MopidyControl loop")
         while True:
-            self.websocket.run_forever()
-            sleep(1)
-        logger.info("Ending MopidyControl loop")
+            try:
+                self.websocket.run_forever()
+                sleep(2)
+            except Exception as e:
+                logger.info(f"Exception: {str(e)}")
+                self.websocket.close()
+        # logger.info("Ending MopidyControl loop")
 
     def extractImageUrl(self, track_uri, jmsg):
         url = None
