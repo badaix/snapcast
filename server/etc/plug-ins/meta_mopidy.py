@@ -82,11 +82,11 @@ class MopidyControl(object):
             exit()
 
         self.websocket = websocket.WebSocketApp(
-            f"ws://{self._params["mopidy-host"]}:{str(self._params["mopidy-port"])}/mopidy/ws",
+            url=f"ws://{self._params['mopidy-host']}:{self._params['mopidy-port']}/mopidy/ws",
             on_message=self.on_ws_message,
             on_error=self.on_ws_error,
             on_open=self.on_ws_open,
-            on_close=self.on_ws_close,
+            on_close=self.on_ws_close
         )
 
         self.websocket_thread = threading.Thread(
