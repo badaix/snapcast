@@ -21,9 +21,21 @@ if(CMAKE_FORMAT)
     COMMENT "Auto formatting of all CMakeLists.txt files")
 endif()
 
-if(CLANG_FORMAT AND CMAKE_FORMAT)
+find_program(AUTOPEP "autopep8")
+if(AUTOPEP)
+  file(GLOB_RECURSE CHECK_PYTHON_SOURCE_FILES *.py)
+
+  add_custom_target(
+    reformat-python
+    COMMAND ${AUTOPEP} -i ${CHECK_PYTHON_SOURCE_FILES}
+    COMMENT "Auto formatting of all Python files")
+endif()
+
+if(CLANG_FORMAT
+   AND CMAKE_FORMAT
+   AND AUTOPEP)
   add_custom_target(
     reformat
-    DEPENDS reformat-cmake reformat-source
+    DEPENDS reformat-cmake reformat-source reformat-python
     COMMENT "Auto formatting of all source and CMakeLists.txt files")
 endif()
