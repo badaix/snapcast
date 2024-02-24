@@ -3,7 +3,7 @@
 include /usr/share/dpkg/buildflags.mk
 
 export DEB_BUILD_MAINT_OPTIONS = hardening=+all
-export DEB_BUILD_OPTIONS = noautodbgsym parallel=3
+export DEB_BUILD_OPTIONS = noautodbgsym parallel=4
 export DEB_LDFLAGS_MAINT_APPEND = -Wl,--as-needed
 export DEB_CPPFLAGS_MAINT_APPEND = -DJSON_HAS_CPP_14
 
