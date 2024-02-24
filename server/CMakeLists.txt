@@ -125,7 +125,7 @@ else()
     COMPONENT server
     DESTINATION ${CMAKE_INSTALL_DATADIR}/snapserver)
   if(SNAPWEB_DIR)
-    install(DIRECTORY "${SNAPWEB_DIR}"
+    install(DIRECTORY "${SNAPWEB_DIR}/"
             DESTINATION ${CMAKE_INSTALL_DATADIR}/snapserver/snapweb)
   else()
     install(DIRECTORY etc/snapweb/
