@@ -29,6 +29,7 @@
 // local headers
 #include "common/aixlog.hpp"
 #include "common/message/pcm_chunk.hpp"
+#include "common/utils/file_utils.hpp"
 #include "control_session_ws.hpp"
 #include "stream_session_ws.hpp"
 
@@ -281,9 +282,8 @@ void ControlSessionHttp::handle_request(http::request<Body, http::basic_fields<A
 
     if (settings_.doc_root.empty())
     {
-        std::string default_page = "/usr/share/snapserver/index.html";
-        struct stat buffer;
-        if (stat(default_page.c_str(), &buffer) == 0)
+        static constexpr auto default_page = "/usr/share/snapserver/index.html";
+        if (utils::file::exists(default_page))
             path = default_page;
         else
             return send(unconfigured());

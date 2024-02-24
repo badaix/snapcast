@@ -124,8 +124,14 @@ else()
     FILES etc/index.html
     COMPONENT server
     DESTINATION ${CMAKE_INSTALL_DATADIR}/snapserver)
-  install(DIRECTORY etc/snapweb/
-          DESTINATION ${CMAKE_INSTALL_DATADIR}/snapserver/snapweb)
+  if(SNAPWEB_DIR)
+    install(DIRECTORY "${SNAPWEB_DIR}"
+            DESTINATION ${CMAKE_INSTALL_DATADIR}/snapserver/snapweb)
+  else()
+    install(DIRECTORY etc/snapweb/
+            DESTINATION ${CMAKE_INSTALL_DATADIR}/snapserver/snapweb)
+  endif()
+
   install(
     FILES etc/plug-ins/meta_mpd.py etc/plug-ins/meta_mopidy.py
           etc/plug-ins/meta_librespot-java.py

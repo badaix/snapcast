@@ -1,24 +1,70 @@
 <html>
 
 <head>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#455A64">
-  <meta name="author" content="Johannes M. Pohl">
-  <meta name="version" content="0.5.0">
-  <meta charset="utf-8">
-  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-  <link rel="manifest" href="manifest.json">
-  <link rel="stylesheet" href="styles.css">
-  <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
-  <title>Snapweb</title>
-  <script src="3rd-party/libflac.js"></script>
-  <script src="config.js"></script>
-  <script src="snapstream.js"></script>
-  <script src="snapcontrol.js"></script>
+  <title>Snapweb Placeholder</title>
+  <style>
+    body {
+      background: #ffffff;
+      color: rgb(0, 0, 0);
+      font-family: 'Arial', sans-serif;
+      margin: 20px;
+      font-size: 20px;
+    }
+
+    pre {
+      margin: 8px 0px 8px 0px;
+      padding: 20px;
+      border-width: 1px;
+      border-style: dotted;
+      border-color: #000000;
+      background-color: #F5F6F7;
+      font-style: italic;
+      display: inline-block;
+    }
+
+    h1 {
+      margin: 15px 0px 0px 50px;
+      font-size: 180%;
+      font-weight: bold;
+    }
+  </style>
 </head>
 
 <body>
-  <div id="show"></div>
+  <h1>Snapweb Placeholder</h1>
+  <p>
+    This is a placeholder for Snapweb, to install Snapweb, please follow these steps:
+  <ol>
+    <li>Download Snapweb on the <a href="https://github.com/badaix/snapweb/releases">Snapweb release page</a>. You can
+      either download
+      <ul>
+        <li><b>snapweb.zip</b> and extract it on your Snapcast server machine, e.g. into
+          <tt>/usr/share/snapcast/snapweb</tt> or
+        </li>
+        <li><b>snapweb_x.y.z-1_all.deb</b> and install it with <tt>sudo apt install ./snapweb_x.y.z-1_all.deb</tt> to
+          <tt>/usr/share/snapweb</tt>
+        </li>
+      </ul>
+    </li>
+    <li>Configure the document root (<tt>doc_root</tt>, see below) in the snapserver configuration file
+      <tt>snapserver.conf</tt> &mdash; usually
+      located in <tt>/etc/snapserver.conf</tt> &mdash; to the location where snapweb is extracted or installed.
+    </li>
+    <li>Restart the snapserver to activate the changes.</li>
+  </ol>
+  </p>
+  <pre>
+# HTTP RPC #####################################
+#
+[http]
+
+...
+
+# serve a website from the doc_root location
+doc_root = /usr/share/snapserver/snapweb/
+
+#
+################################################</pre>
 </body>
 
 </html>

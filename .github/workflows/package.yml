@@ -5,6 +5,7 @@ on:
 
 env:
   BOOST_VERSION: 1_84_0
+  SNAPWEB_VERSION: 0.5.0
 
 jobs:
 
@@ -75,15 +76,19 @@ jobs:
         path: /home/runner/.ccache
         key: ${{ matrix.os }}-${{ matrix.debian }}-ccache-${{ github.sha }}
         restore-keys: ${{ matrix.os }}-${{ matrix.debian }}-ccache-
+    - name: Get Snapweb
+      run: | 
+        wget https://github.com/badaix/snapweb/releases/download/v${SNAPWEB_VERSION}/snapweb.zip
+        unzip snapweb.zip -d snapweb
     - name: Create deb package
       env:
         # TODO: use environment variable $HOME/.ccache
         CCACHE_DIR: /home/runner/.ccache
       run: |
-        fakeroot make -f debian/rules CMAKEFLAGS="-DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DBOOST_ROOT=$GITHUB_WORKSPACE/${{env.BOOST}} -DCMAKE_BUILD_TYPE:STRING=Release -DREVISION=${{ github.sha }} -DBUILD_WITH_PULSE=OFF" binary
+        fakeroot make -f debian/rules CMAKEFLAGS="-DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DBOOST_ROOT=$GITHUB_WORKSPACE/${{env.BOOST}} -DCMAKE_BUILD_TYPE:STRING=Release -DREVISION=${{ github.sha }} -DBUILD_WITH_PULSE=OFF -DSNAPWEB_DIR:STRING=$GITHUB_WORKSPACE/snapweb" binary
         rename 's/_${{ matrix.arch }}/_without-pulse_${{ matrix.arch }}/g' ../snapclient*_${{ matrix.arch }}.deb
         fakeroot make -f debian/rules clean
-        fakeroot make -f debian/rules CMAKEFLAGS="-DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DBOOST_ROOT=$GITHUB_WORKSPACE/${{env.BOOST}} -DCMAKE_BUILD_TYPE:STRING=Release -DREVISION=${{ github.sha }}" binary
+        fakeroot make -f debian/rules CMAKEFLAGS="-DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DBOOST_ROOT=$GITHUB_WORKSPACE/${{env.BOOST}} -DCMAKE_BUILD_TYPE:STRING=Release -DREVISION=${{ github.sha }} -DSNAPWEB_DIR:STRING=$GITHUB_WORKSPACE/snapweb" binary
     - name: Archive artifacts
       uses: actions/upload-artifact@v4
       with:

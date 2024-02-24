@@ -13,8 +13,8 @@ Build-Depends: debhelper (>= 10~),
                libsoxr-dev
 Standards-Version: 4.1.4
 Homepage: https://github.com/badaix/snapcast
-Vcs-Git: https://salsa.debian.org/debian/snapcast.git
-Vcs-Browser: https://salsa.debian.org/debian/snapcast
+Vcs-Git: https://github.com/badaix/snapcast.git
+Vcs-Browser: https://github.com/badaix/snapcast
 
 Package: snapclient
 Architecture: any
