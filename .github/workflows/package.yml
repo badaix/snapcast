@@ -5,7 +5,7 @@ on:
 
 env:
   BOOST_VERSION: 1_84_0
-  SNAPWEB_VERSION: 0.6.0
+  SNAPWEB_VERSION: v0.6.0-beta.1
 
 jobs:
 
@@ -78,7 +78,7 @@ jobs:
         restore-keys: ${{ matrix.os }}-${{ matrix.debian }}-ccache-
     - name: Get Snapweb
       run: | 
-        wget https://github.com/badaix/snapweb/releases/download/v${SNAPWEB_VERSION}/snapweb.zip
+        wget https://github.com/badaix/snapweb/releases/download/${SNAPWEB_VERSION}/snapweb.zip
         unzip snapweb.zip -d snapweb
     - name: Create deb package
       env:
