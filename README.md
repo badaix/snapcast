@@ -169,7 +169,8 @@ Snapcast can be controlled using a [JSON-RPC API](doc/json_rpc_api/control.md) o
 
 The server is shipped with [Snapweb](https://github.com/badaix/snapweb), this WebApp can be reached under `http://<snapserver host>:1780`.
 
-![Snapweb](https://raw.githubusercontent.com/badaix/snapweb/master/snapweb.png)
+![Snapweb-Dark](https://raw.githubusercontent.com/badaix/snapweb/master/snapweb_dark.png#gh-dark-mode-only)
+![Snapweb-Light](https://raw.githubusercontent.com/badaix/snapweb/master/snapweb_light.png#gh-light-mode-only)
 
 ### Android client
 
