@@ -1,7 +1,7 @@
 # Snapcast
 
 ![Snapcast](doc/Snapcast_800.png#gh-light-mode-only)
-![Snapweb-Dark](doc/Snapcast_800_dark.png.png#gh-dark-mode-only)
+![Snapweb-Dark](doc/Snapcast_800_dark.png#gh-dark-mode-only)
 
 **S**y**n**chronous **a**udio **p**layer
 
