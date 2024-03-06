@@ -10,6 +10,8 @@ endif(SOXR_FOUND)
 
 add_library(common STATIC ${SOURCES})
 
+print(1)
+
 if(ANDROID)
   target_link_libraries(common soxr::soxr)
 elseif(SOXR_FOUND)
