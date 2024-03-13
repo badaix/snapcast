@@ -2,9 +2,6 @@ name: CI
 
 on:
   push:
-    branches:
-      - develop
-      - master
   pull_request:
 
 env:
