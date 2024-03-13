@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2022  Johannes Pohl
+    Copyright (C) 2014-2024  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -60,6 +60,10 @@ PcmStream::PcmStream(PcmStream::Listener* pcmListener, boost::asio::io_context& 
     if (uri_.query.find(kUriSampleFormat) == uri_.query.end())
         throw SnapException("Stream URI must have a sampleformat");
     sampleFormat_ = SampleFormat(uri_.query[kUriSampleFormat]);
+    chunk_ = std::make_unique<msg::PcmChunk>(sampleFormat_, chunk_ms_);
+    silent_chunk_ = std::vector<char>(chunk_->payloadSize, 0);
+    LOG(DEBUG, LOG_TAG) << "Chunk duration: " << chunk_->durationMs() << " ms, frames: " << chunk_->getFrameCount() << ", size: " << chunk_->payloadSize
+                        << "\n";
     LOG(INFO, LOG_TAG) << "PcmStream: " << name_ << ", sampleFormat: " << sampleFormat_.toString() << "\n";
 
     if (uri_.query.find(kControlScript) != uri_.query.end())
@@ -72,6 +76,18 @@ PcmStream::PcmStream(PcmStream::Listener* pcmListener, boost::asio::io_context& 
 
     if (uri_.query.find(kUriChunkMs) != uri_.query.end())
         chunk_ms_ = cpt::stoul(uri_.query[kUriChunkMs]);
+
+    double silence_threshold_percent = 0.;
+    try
+    {
+        silence_threshold_percent = cpt::stod(uri_.getQuery("silence_threshold_percent", "0"));
+    }
+    catch (...)
+    {
+    }
+    int32_t max_amplitude = std::pow(2, sampleFormat_.bits() - 1) - 1;
+    silence_threshold_ = max_amplitude * (silence_threshold_percent / 100.);
+    LOG(DEBUG, LOG_TAG) << "Silence threshold percent: " << silence_threshold_percent << ", silence threshold amplitude: " << silence_threshold_ << "\n";
 }
 
 
@@ -216,7 +232,6 @@ void PcmStream::start()
                         << "\n";
     encoder_->init([this](const encoder::Encoder& encoder, std::shared_ptr<msg::PcmChunk> chunk, double duration) { chunkEncoded(encoder, chunk, duration); },
                    sampleFormat_);
-    active_ = true;
 
     if (stream_ctrl_)
     {
@@ -224,12 +239,51 @@ void PcmStream::start()
             getId(), server_settings_, [this](const jsonrpcpp::Notification& notification) { onControlNotification(notification); },
             [this](const jsonrpcpp::Request& request) { onControlRequest(request); }, [this](std::string message) { onControlLog(std::move(message)); });
     }
+
+    active_ = true;
 }
 
 
 void PcmStream::stop()
 {
     active_ = false;
+    setState(ReaderState::kIdle);
+}
+
+
+bool PcmStream::isSilent(const msg::PcmChunk& chunk) const
+{
+    if (silence_threshold_ == 0)
+        return (std::memcmp(chunk.payload, silent_chunk_.data(), silent_chunk_.size()) == 0);
+
+    if (sampleFormat_.sampleSize() == 1)
+    {
+        auto payload = chunk.getPayload<int8_t>();
+        for (size_t n = 0; n < payload.second; ++n)
+        {
+            if (abs(payload.first[n]) > silence_threshold_)
+                return false;
+        }
+    }
+    else if (sampleFormat_.sampleSize() == 2)
+    {
+        auto payload = chunk.getPayload<int16_t>();
+        for (size_t n = 0; n < payload.second; ++n)
+        {
+            if (abs(payload.first[n]) > silence_threshold_)
+                return false;
+        }
+    }
+    else if (sampleFormat_.sampleSize() == 4)
+    {
+        auto payload = chunk.getPayload<int32_t>();
+        for (size_t n = 0; n < payload.second; ++n)
+        {
+            if (abs(payload.first[n]) > silence_threshold_)
+                return false;
+        }
+    }
+    return true;
 }
 
 

@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2021  Johannes Pohl
+    Copyright (C) 2014-2024  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -84,8 +84,8 @@ protected:
 
     void setParamsAndPipePathFromPort();
 
-    void do_connect() override;
-    void do_disconnect() override;
+    void connect() override;
+    void disconnect() override;
     void onStderrMsg(const std::string& line) override;
     void initExeAndPath(const std::string& filename) override;
 

@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2021  Johannes Pohl
+    Copyright (C) 2014-2024  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -41,7 +41,7 @@ static constexpr auto LOG_TAG = "ProcessStream";
 
 
 ProcessStream::ProcessStream(PcmStream::Listener* pcmListener, boost::asio::io_context& ioc, const ServerSettings& server_settings, const StreamUri& uri)
-    : PosixStream(pcmListener, ioc, server_settings, uri)
+    : AsioStream<stream_descriptor>(pcmListener, ioc, server_settings, uri)
 {
     params_ = uri_.getQuery("params");
     wd_timeout_sec_ = cpt::stoul(uri_.getQuery("wd_timeout", "0"));
@@ -95,7 +95,7 @@ void ProcessStream::initExeAndPath(const std::string& filename)
 }
 
 
-void ProcessStream::do_connect()
+void ProcessStream::connect()
 {
     if (!active_)
         return;
@@ -127,10 +127,11 @@ void ProcessStream::do_connect()
 }
 
 
-void ProcessStream::do_disconnect()
+void ProcessStream::disconnect()
 {
     if (process_.running())
         ::kill(-process_.native_handle(), SIGINT);
+    AsioStream<stream_descriptor>::disconnect();
 }
 
 

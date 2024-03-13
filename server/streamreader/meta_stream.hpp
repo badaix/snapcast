@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2023  Johannes Pohl
+    Copyright (C) 2014-2024  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -21,7 +21,7 @@
 
 // local headers
 #include "common/resampler.hpp"
-#include "posix_stream.hpp"
+#include "pcm_stream.hpp"
 
 // standard headers
 #include <memory>
@@ -29,6 +29,8 @@
 namespace streamreader
 {
 
+// Mixing digital audio:
+// https://www.vttoth.com/CMS/technical-notes/?view=article&id=68
 
 /// Reads and decodes PCM data
 /**

@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2022  Johannes Pohl
+    Copyright (C) 2014-2024  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -52,16 +52,12 @@ protected:
     void initAlsa();
     void uninitAlsa();
 
-    /// check if the chunk's volume is below the silence threshold
-    bool isSilent(const msg::PcmChunk& chunk) const;
 
     snd_pcm_t* handle_;
-    std::unique_ptr<msg::PcmChunk> chunk_;
     bool first_;
     std::chrono::time_point<std::chrono::steady_clock> nextTick_;
     boost::asio::steady_timer read_timer_;
     std::string device_;
-    std::vector<char> silent_chunk_;
     std::chrono::microseconds silence_;
     std::string lastException_;
 
@@ -69,7 +65,6 @@ protected:
     bool send_silence_;
     /// silence duration before switching the stream to idle
     std::chrono::milliseconds idle_threshold_;
-    int32_t silence_threshold_ = 0;
 };
 
 } // namespace streamreader

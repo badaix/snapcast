@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2021  Johannes Pohl
+    Copyright (C) 2014-2024  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -68,7 +68,7 @@ TcpStream::TcpStream(PcmStream::Listener* pcmListener, boost::asio::io_context& 
 }
 
 
-void TcpStream::do_connect()
+void TcpStream::connect()
 {
     if (!active_)
         return;
@@ -112,12 +112,13 @@ void TcpStream::do_connect()
 }
 
 
-void TcpStream::do_disconnect()
+void TcpStream::disconnect()
 {
-    if (stream_)
-        stream_->close();
+    reconnect_timer_.cancel();
     if (acceptor_)
         acceptor_->cancel();
-    reconnect_timer_.cancel();
+    AsioStream<tcp::socket>::disconnect();
 }
+
+
 } // namespace streamreader

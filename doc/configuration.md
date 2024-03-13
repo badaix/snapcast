@@ -35,7 +35,7 @@ Supported parameters for all source types:
 - `codec`: Override the global codec
 - `sampleformat`: Override the global sample format
 - `chunk_ms`: Override the global `chunk_ms`
-- `dryout_ms`: Supported by non-blocking sourced: when no new data is read from the source, send silence to the clients
+- `dryout_ms`: Supported by blocking sources: when no new data is read from the source, send silence to the clients
 - `controlscript`: Script to control the stream source and read and provide meta data, see [stream_plugin.md](json_rpc_api/stream_plugin.md)
 - `controlscriptparams`: Control script command line arguments, must be url-encoded (use `%20` instead of a space " "), e.g. `--mopidy-host=192.168.42.23%20--debug`
 

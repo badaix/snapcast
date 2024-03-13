@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2021  Johannes Pohl
+    Copyright (C) 2014-2024  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -20,7 +20,7 @@
 #define PROCESS_STREAM_HPP
 
 // local headers
-#include "posix_stream.hpp"
+#include "asio_stream.hpp"
 #include "watchdog.hpp"
 
 // standard headers
@@ -35,13 +35,15 @@ namespace bp = boost::process;
 namespace streamreader
 {
 
+using boost::asio::posix::stream_descriptor;
+
 /// Starts an external process and reads and PCM data from stdout
 /**
  * Starts an external process, reads PCM data from stdout, and passes the data to an encoder.
  * Implements EncoderListener to get the encoded data.
  * Data is passed to the PcmStream::Listener
  */
-class ProcessStream : public PosixStream, public WatchdogListener
+class ProcessStream : public AsioStream<stream_descriptor>, public WatchdogListener
 {
 public:
     /// ctor. Encoded PCM data is passed to the PipeListener
@@ -49,8 +51,8 @@ public:
     ~ProcessStream() override = default;
 
 protected:
-    void do_connect() override;
-    void do_disconnect() override;
+    void connect() override;
+    void disconnect() override;
 
     std::string exe_;
     std::string path_;

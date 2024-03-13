@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2021  Johannes Pohl
+    Copyright (C) 2014-2024  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -209,16 +209,16 @@ void AirplayStream::setParamsAndPipePathFromPort()
 }
 
 
-void AirplayStream::do_connect()
+void AirplayStream::connect()
 {
-    ProcessStream::do_connect();
+    ProcessStream::connect();
     pipeReadLine();
 }
 
 
-void AirplayStream::do_disconnect()
+void AirplayStream::disconnect()
 {
-    ProcessStream::do_disconnect();
+    ProcessStream::disconnect();
     // Shairpot-sync created but does not remove the pipe
     if (utils::file::exists(pipePath_) && (remove(pipePath_.c_str()) != 0))
         LOG(INFO, LOG_TAG) << "Failed to remove metadata pipe \"" << pipePath_ << "\": " << errno << "\n";

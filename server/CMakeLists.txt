@@ -21,7 +21,6 @@ set(SERVER_SOURCES
     streamreader/pcm_stream.cpp
     streamreader/tcp_stream.cpp
     streamreader/pipe_stream.cpp
-    streamreader/posix_stream.cpp
     streamreader/file_stream.cpp
     streamreader/airplay_stream.cpp
     streamreader/librespot_stream.cpp

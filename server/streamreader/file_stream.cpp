@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2023  Johannes Pohl
+    Copyright (C) 2014-2024  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -40,7 +40,7 @@ static constexpr auto LOG_TAG = "FileStream";
 
 
 FileStream::FileStream(PcmStream::Listener* pcmListener, boost::asio::io_context& ioc, const ServerSettings& server_settings, const StreamUri& uri)
-    : PosixStream(pcmListener, ioc, server_settings, uri)
+    : AsioStream<stream_descriptor>(pcmListener, ioc, server_settings, uri)
 {
     struct stat buffer;
     if (stat(uri_.path.c_str(), &buffer) != 0)
@@ -60,7 +60,7 @@ FileStream::FileStream(PcmStream::Listener* pcmListener, boost::asio::io_context
 }
 
 
-void FileStream::do_connect()
+void FileStream::connect()
 {
     LOG(DEBUG, LOG_TAG) << "connect\n";
     int fd = open(uri_.path.c_str(), O_RDONLY | O_NONBLOCK);

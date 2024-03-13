@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2023  Johannes Pohl
+    Copyright (C) 2014-2024  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -162,6 +162,9 @@ public:
 protected:
     std::atomic<bool> active_;
 
+    /// check if the volume of the \p chunk is below the silence threshold
+    bool isSilent(const msg::PcmChunk& chunk) const;
+
     void setState(ReaderState newState);
     void chunkRead(const msg::PcmChunk& chunk);
     void resync(const std::chrono::nanoseconds& duration);
@@ -196,6 +199,12 @@ protected:
     std::atomic<int> req_id_;
     boost::asio::steady_timer property_timer_;
     mutable std::recursive_mutex mutex_;
+    /// If a chunk's max amplitude is below the threshold, it is considered silent
+    int32_t silence_threshold_ = 0;
+    /// Current chunk
+    std::unique_ptr<msg::PcmChunk> chunk_;
+    /// Silent chunk (all 0), for fast silence detection (memcmp)
+    std::vector<char> silent_chunk_;
 };
 
 

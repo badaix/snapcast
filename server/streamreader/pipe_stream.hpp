@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2021  Johannes Pohl
+    Copyright (C) 2014-2024  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -20,7 +20,7 @@
 #define PIPE_STREAM_HPP
 
 // local headers
-#include "posix_stream.hpp"
+#include "asio_stream.hpp"
 
 namespace streamreader
 {
@@ -34,14 +34,14 @@ using boost::asio::posix::stream_descriptor;
  * Implements EncoderListener to get the encoded data.
  * Data is passed to the PcmStream::Listener
  */
-class PipeStream : public PosixStream
+class PipeStream : public AsioStream<stream_descriptor>
 {
 public:
     /// ctor. Encoded PCM data is passed to the PipeListener
     PipeStream(PcmStream::Listener* pcmListener, boost::asio::io_context& ioc, const ServerSettings& server_settings, const StreamUri& uri);
 
 protected:
-    void do_connect() override;
+    void connect() override;
 };
 
 } // namespace streamreader
