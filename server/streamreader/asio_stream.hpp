@@ -128,9 +128,8 @@ void AsioStream<ReadStream>::check_state(const std::chrono::steady_clock::durati
         {
         if (!ec)
         {
-
             LOG(INFO, "AsioStream") << "No data since " << std::chrono::duration_cast<std::chrono::milliseconds>(duration).count()
-                                    << " ms, switchung to idle\n";
+                                    << " ms, switching to idle\n";
             setState(ReaderState::kIdle);
         }
     });
