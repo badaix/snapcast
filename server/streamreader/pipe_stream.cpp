@@ -29,8 +29,6 @@
 #include <memory>
 
 
-using namespace std;
-
 namespace streamreader
 {
 
@@ -41,7 +39,7 @@ PipeStream::PipeStream(PcmStream::Listener* pcmListener, boost::asio::io_context
     : PosixStream(pcmListener, ioc, server_settings, uri)
 {
     umask(0);
-    string mode = uri_.getQuery("mode", "create");
+    const std::string mode = uri_.getQuery("mode", "create");
 
     LOG(INFO, LOG_TAG) << "PipeStream mode: " << mode << "\n";
     if ((mode != "read") && (mode != "create"))
@@ -57,7 +55,7 @@ PipeStream::PipeStream(PcmStream::Listener* pcmListener, boost::asio::io_context
 
 void PipeStream::do_connect()
 {
-    int fd = open(uri_.path.c_str(), O_RDONLY | O_NONBLOCK);
+    const int fd = open(uri_.path.c_str(), O_RDONLY | O_NONBLOCK);
     if (fd < 0)
         throw SnapException("failed to open fifo \"" + uri_.path + "\": " + cpt::to_string(errno));
 

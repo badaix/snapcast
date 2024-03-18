@@ -20,13 +20,11 @@
 
 #include "common/snap_exception.hpp"
 #include "common/str_compat.hpp"
-#include "common/utils.hpp"
 #include "common/utils/file_utils.hpp"
 #include <cstdlib>
 #include <cstring>
 #include <fcntl.h>
 #include <grp.h>
-#include <iostream>
 #include <pwd.h>
 #include <sys/stat.h>
 #include <sys/types.h>

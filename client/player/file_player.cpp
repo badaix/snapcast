@@ -28,10 +28,8 @@
 // 3rd party headers
 
 // standard headers
-#include <cassert>
-#include <iostream>
 
-using namespace std;
+using namespace std::chrono_literals;
 
 namespace player
 {
@@ -44,7 +42,7 @@ static constexpr auto kDescription = "Raw PCM file output";
 std::vector<PcmDevice> FilePlayer::pcm_list(const std::string& parameter)
 {
     auto params = utils::string::split_pairs(parameter, ',', '=');
-    string filename;
+    std::string filename;
     if (params.find("filename") != params.end())
         filename = params["filename"];
     if (filename.empty())
@@ -57,7 +55,7 @@ FilePlayer::FilePlayer(boost::asio::io_context& io_context, const ClientSettings
     : Player(io_context, settings, stream), timer_(io_context), file_(nullptr)
 {
     auto params = utils::string::split_pairs(settings.parameter, ',', '=');
-    string filename;
+    std::string filename;
     if (params.find("filename") != params.end())
         filename = params["filename"];
 

@@ -20,7 +20,6 @@
 #include "opus_decoder.hpp"
 #include "common/aixlog.hpp"
 #include "common/snap_exception.hpp"
-#include "common/str_compat.hpp"
 
 namespace decoder
 {

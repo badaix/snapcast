@@ -20,15 +20,11 @@
 #include <sstream>
 #include <vector>
 
-#include "common/aixlog.hpp"
 #include "common/snap_exception.hpp"
 #include "common/str_compat.hpp"
-#include "common/utils.hpp"
 #include "common/utils/string_utils.hpp"
 #include "sample_format.hpp"
 
-
-using namespace std;
 
 
 SampleFormat::SampleFormat()
@@ -49,9 +45,9 @@ SampleFormat::SampleFormat(uint32_t sampleRate, uint16_t bitsPerSample, uint16_t
 }
 
 
-string SampleFormat::toString() const
+std::string SampleFormat::toString() const
 {
-    stringstream ss;
+    std::stringstream ss;
     ss << rate_ << ":" << bits_ << ":" << channels_;
     return ss.str();
 }

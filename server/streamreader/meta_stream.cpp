@@ -23,10 +23,9 @@
 #include "common/aixlog.hpp"
 #include "common/snap_exception.hpp"
 #include "common/utils/string_utils.hpp"
-#include "encoder/encoder_factory.hpp"
 
 
-using namespace std;
+using namespace std::chrono_literals;
 
 namespace streamreader
 {
@@ -64,7 +63,7 @@ MetaStream::MetaStream(PcmStream::Listener* pcmListener, const std::vector<std::
         throw SnapException("Meta stream '" + getName() + "' must contain at least one stream");
 
     active_stream_ = streams_.front();
-    resampler_ = make_unique<Resampler>(active_stream_->getSampleFormat(), sampleFormat_);
+    resampler_ = std::make_unique<Resampler>(active_stream_->getSampleFormat(), sampleFormat_);
 }
 
 
@@ -106,15 +105,15 @@ void MetaStream::onStateChanged(const PcmStream* pcmStream, ReaderState state)
     // if (active_stream_->getProperties().playback_status == PlaybackStatus::kPaused)
     //     return;
 
-    auto switch_stream = [this](std::shared_ptr<PcmStream> new_stream)
+    const auto switch_stream = [this](std::shared_ptr<PcmStream> new_stream)
     {
         if (new_stream == active_stream_)
             return;
         LOG(INFO, LOG_TAG) << "Stream: " << name_ << ", switching active stream: " << (active_stream_ ? active_stream_->getName() : "<null>") << " => "
                            << new_stream->getName() << "\n";
-        active_stream_ = new_stream;
+        active_stream_ = std::move(new_stream);
         setProperties(active_stream_->getProperties());
-        resampler_ = make_unique<Resampler>(active_stream_->getSampleFormat(), sampleFormat_);
+        resampler_ = std::make_unique<Resampler>(active_stream_->getSampleFormat(), sampleFormat_);
     };
 
     for (const auto& stream : streams_)

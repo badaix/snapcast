@@ -47,7 +47,6 @@
 #include <iostream>
 
 
-using namespace std;
 
 namespace player
 {
@@ -57,7 +56,7 @@ static constexpr auto LOG_TAG = "Player";
 Player::Player(boost::asio::io_context& io_context, const ClientSettings::Player& settings, std::shared_ptr<Stream> stream)
     : io_context_(io_context), active_(false), stream_(stream), settings_(settings), volume_(1.0), muted_(false), volCorrection_(1.0)
 {
-    string sharing_mode;
+    std::string sharing_mode;
     switch (settings_.sharing_mode)
     {
         case ClientSettings::SharingMode::unspecified:
@@ -82,7 +81,7 @@ Player::Player(boost::asio::io_context& io_context, const ClientSettings::Player
                        << ", description: " << not_empty(settings_.pcm_device.description) << ", idx: " << settings_.pcm_device.idx
                        << ", sharing mode: " << sharing_mode << ", parameters: " << not_empty(settings.parameter) << "\n";
 
-    string mixer;
+    std::string mixer;
     switch (settings_.mixer.mode)
     {
         case ClientSettings::Mixer::Mode::hardware:
@@ -114,7 +113,7 @@ void Player::start()
 {
     active_ = true;
     if (needsThread())
-        playerThread_ = thread(&Player::worker, this);
+        playerThread_ = std::thread(&Player::worker, this);
 
     // If hardware mixer is used, send the initial volume to the server, because this is
     // the volume that is configured by the user on his local device, so we shouldn't change it
@@ -218,8 +217,8 @@ void Player::setVolume(double volume, bool mute)
     }
     else if (settings_.mixer.mode == ClientSettings::Mixer::Mode::software)
     {
-        string param;
-        string mode = utils::string::split_left(settings_.mixer.parameter, ':', param);
+        std::string param;
+        std::string mode = utils::string::split_left(settings_.mixer.parameter, ':', param);
         double dparam = -1.;
         if (!param.empty())
         {
@@ -231,7 +230,7 @@ void Player::setVolume(double volume, bool mute)
             }
             catch (const std::exception& e)
             {
-                throw SnapException("Invalid mixer param: " + param + ", error: " + string(e.what()));
+                throw SnapException("Invalid mixer param: " + param + ", error: " + std::string(e.what()));
             }
         }
         if (mode == "poly")

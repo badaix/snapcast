@@ -18,11 +18,9 @@
 
 #include "resampler.hpp"
 #include "common/aixlog.hpp"
-#include "common/snap_exception.hpp"
 
 #include <cmath>
 
-using namespace std;
 
 static constexpr auto LOG_TAG = "Resampler";
 
@@ -144,7 +142,7 @@ std::shared_ptr<msg::PcmChunk> Resampler::resample(const msg::PcmChunk& chunk)
                 auto resampled_start = input_end_ts - std::chrono::microseconds(static_cast<int>(resampled_ms * 1000.));
 
                 auto resampled_chunk = std::make_shared<msg::PcmChunk>(out_format_, 0);
-                auto us = chrono::duration_cast<chrono::microseconds>(resampled_start.time_since_epoch()).count();
+                const auto us = std::chrono::duration_cast<std::chrono::microseconds>(resampled_start.time_since_epoch()).count();
                 resampled_chunk->timestamp.sec = static_cast<int32_t>(us / 1000000);
                 resampled_chunk->timestamp.usec = static_cast<int32_t>(us % 1000000);
 
@@ -190,7 +188,7 @@ std::shared_ptr<msg::PcmChunk> Resampler::resample(const msg::PcmChunk& chunk)
 }
 
 
-shared_ptr<msg::PcmChunk> Resampler::resample(shared_ptr<msg::PcmChunk> chunk)
+std::shared_ptr<msg::PcmChunk> Resampler::resample(std::shared_ptr<msg::PcmChunk> chunk)
 {
 #ifndef HAS_SOXR
     return chunk;

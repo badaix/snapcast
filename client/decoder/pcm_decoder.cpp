@@ -17,7 +17,6 @@
 ***/
 
 #include "pcm_decoder.hpp"
-#include "common/aixlog.hpp"
 #include "common/endian.hpp"
 #include "common/snap_exception.hpp"
 

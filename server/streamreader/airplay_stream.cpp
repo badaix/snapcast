@@ -23,11 +23,10 @@
 #include "base64.h"
 #include "common/aixlog.hpp"
 #include "common/snap_exception.hpp"
-#include "common/utils.hpp"
 #include "common/utils/file_utils.hpp"
-#include "common/utils/string_utils.hpp"
 
-using namespace std;
+
+using namespace std::chrono_literals;
 
 namespace streamreader
 {
@@ -36,12 +35,12 @@ static constexpr auto LOG_TAG = "AirplayStream";
 
 namespace
 {
-string hex2str(const string& input)
+std::string hex2str(const std::string& input)
 {
     using byte = unsigned char;
     unsigned long x = strtoul(input.c_str(), nullptr, 16);
     byte a[] = {byte(x >> 24), byte(x >> 16), byte(x >> 8), byte(x), 0};
-    return string(reinterpret_cast<char*>(a));
+    return std::string(reinterpret_cast<char*>(a));
 }
 } // namespace
 
@@ -55,8 +54,8 @@ AirplayStream::AirplayStream(PcmStream::Listener* pcmListener, boost::asio::io_c
 {
     logStderr_ = true;
 
-    string devicename = uri_.getQuery("devicename", "Snapcast");
-    string password = uri_.getQuery("password", "");
+    std::string devicename = uri_.getQuery("devicename", "Snapcast");
+    std::string password = uri_.getQuery("password", "");
 
     params_wo_port_ = "\"--name=" + devicename + "\" --output=stdout --get-coverart";
     if (!password.empty())
@@ -80,13 +79,13 @@ AirplayStream::AirplayStream(PcmStream::Listener* pcmListener, boost::asio::io_c
 AirplayStream::~AirplayStream()
 {
 #ifdef HAS_EXPAT
-    parse(string("</metatags>"));
+    parse(std::string("</metatags>"));
     XML_ParserFree(parser_);
 #endif
 }
 
 #ifdef HAS_EXPAT
-int AirplayStream::parse(const string& line)
+int AirplayStream::parse(const std::string& line)
 {
     enum XML_Status result;
 
@@ -106,7 +105,7 @@ void AirplayStream::createParser()
     XML_SetUserData(parser_, this);
 
     // Make an outer element to keep parsing going
-    parse(string("<metatags>"));
+    parse(std::string("<metatags>"));
 }
 
 void AirplayStream::push()
@@ -154,7 +153,7 @@ void AirplayStream::push()
     //
     // As can be seen, the order of metadata (1) and cover (2) messages is non-deterministic.
     // That is why we call setMetadata() on both end of message (1) and (2).
-    string data = entry_->data;
+    std::string data = entry_->data;
 
     // Do not base64 decode cover art
     const bool is_cover = entry_->type == "ssnc" && entry_->code == "PICT";
@@ -279,7 +278,7 @@ void AirplayStream::pipeReadLine()
     });
 }
 
-void AirplayStream::initExeAndPath(const string& filename)
+void AirplayStream::initExeAndPath(const std::string& filename)
 {
     path_ = "";
     exe_ = findExe(filename);
@@ -290,7 +289,7 @@ void AirplayStream::initExeAndPath(const string& filename)
             throw SnapException("shairport-sync not found");
     }
 
-    if (exe_.find('/') != string::npos)
+    if (exe_.find('/') != std::string::npos)
     {
         path_ = exe_.substr(0, exe_.find_last_of('/') + 1);
         exe_ = exe_.substr(exe_.find_last_of('/') + 1);
@@ -303,13 +302,13 @@ void AirplayStream::onStderrMsg(const std::string& line)
     if (line.empty())
         return;
     LOG(INFO, LOG_TAG) << "(" << getName() << ") " << line << "\n";
-    if (line.find("Is another instance of Shairport Sync running on this device") != string::npos)
+    if (line.find("Is another instance of Shairport Sync running on this device") != std::string::npos)
     {
         LOG(ERROR, LOG_TAG) << "It seems there is another Shairport Sync runnig on port " << port_ << ", switching to port " << port_ + 1 << "\n";
         ++port_;
         setParamsAndPipePathFromPort();
     }
-    else if (line.find("Invalid audio output specified") != string::npos)
+    else if (line.find("Invalid audio output specified") != std::string::npos)
     {
         LOG(ERROR, LOG_TAG) << "shairport sync compiled without stdout audio backend\n";
         LOG(ERROR, LOG_TAG) << "build with: \"./configure --with-stdout --with-avahi --with-ssl=openssl --with-metadata\"\n";
@@ -320,7 +319,7 @@ void AirplayStream::onStderrMsg(const std::string& line)
 void XMLCALL AirplayStream::element_start(void* userdata, const char* element_name, const char** attr)
 {
     auto* self = static_cast<AirplayStream*>(userdata);
-    string name(element_name);
+    std::string name(element_name);
 
     self->buf_.assign("");
     if (name == "item")
@@ -328,8 +327,8 @@ void XMLCALL AirplayStream::element_start(void* userdata, const char* element_na
 
     for (int i = 0; attr[i] != nullptr; i += 2)
     {
-        string name(attr[i]);
-        string value(attr[i + 1]);
+        std::string name(attr[i]);
+        std::string value(attr[i + 1]);
         if (name == "encoding")
             self->entry_->isBase64 = (value == "base64"); // Quick & dirty..
     }
@@ -338,7 +337,7 @@ void XMLCALL AirplayStream::element_start(void* userdata, const char* element_na
 void XMLCALL AirplayStream::element_end(void* userdata, const char* element_name)
 {
     auto* self = static_cast<AirplayStream*>(userdata);
-    string name(element_name);
+    std::string name(element_name);
 
     if (name == "code")
         self->entry_->code.assign(hex2str(self->buf_));
@@ -358,13 +357,13 @@ void XMLCALL AirplayStream::element_end(void* userdata, const char* element_name
     else if (name == "metatags")
         ;
     else
-        cout << "Unknown tag <" << name << ">\n";
+        std::cout << "Unknown tag <" << name << ">\n";
 }
 
 void XMLCALL AirplayStream::data(void* userdata, const char* content, int length)
 {
     auto* self = static_cast<AirplayStream*>(userdata);
-    string value(content, static_cast<size_t>(length));
+    std::string value(content, static_cast<size_t>(length));
     self->buf_.append(value);
 }
 

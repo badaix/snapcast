@@ -32,7 +32,6 @@
 // standard headers
 #include <iostream>
 
-using namespace std;
 using namespace streamreader;
 
 using json = nlohmann::json;
@@ -203,7 +202,7 @@ void Server::processRequest(const jsonrpcpp::request_ptr request, const OnRespon
                 session_ptr session = streamServer_->getStreamSession(clientInfo->id);
                 if (session != nullptr)
                 {
-                    auto serverSettings = make_shared<msg::ServerSettings>();
+                    auto serverSettings = std::make_shared<msg::ServerSettings>();
                     serverSettings->setBufferMs(settings_.stream.bufferMs);
                     serverSettings->setVolume(clientInfo->config.volume.percent);
                     GroupPtr group = Config::instance().getGroupFromClient(clientInfo);
@@ -254,7 +253,7 @@ void Server::processRequest(const jsonrpcpp::request_ptr request, const OnRespon
                     session_ptr session = streamServer_->getStreamSession(client->id);
                     if (session != nullptr)
                     {
-                        auto serverSettings = make_shared<msg::ServerSettings>();
+                        auto serverSettings = std::make_shared<msg::ServerSettings>();
                         serverSettings->setBufferMs(settings_.stream.bufferMs);
                         serverSettings->setVolume(client->config.volume.percent);
                         GroupPtr group = Config::instance().getGroupFromClient(client);
@@ -274,7 +273,7 @@ void Server::processRequest(const jsonrpcpp::request_ptr request, const OnRespon
                 // Response:     {"id":4,"jsonrpc":"2.0","result":{"stream_id":"stream 1"}}
                 // Notification: {"jsonrpc":"2.0","method":"Group.OnStreamChanged","params":{"id":"4dcc4e3b-c699-a04b-7f0c-8260d23c43e1","stream_id":"stream 1"}}
                 // clang-format on
-                string streamId = request->params().get<std::string>("stream_id");
+                std::string streamId = request->params().get<std::string>("stream_id");
                 PcmStreamPtr stream = streamManager_->getStream(streamId);
                 if (stream == nullptr)
                     throw jsonrpcpp::InternalErrorException("Stream not found", request->id());
@@ -305,7 +304,7 @@ void Server::processRequest(const jsonrpcpp::request_ptr request, const OnRespon
                 // Response: {"id":3,"jsonrpc":"2.0","result":{"server":{"groups":[{"clients":[{"config":{"instance":2,"latency":6,"name":"123 456","volume":{"muted":false,"percent":48}},"connected":true,"host":{"arch":"x86_64","ip":"127.0.0.1","mac":"00:21:6a:7d:74:fc","name":"T400","os":"Linux Mint 17.3 Rosa"},"id":"00:21:6a:7d:74:fc#2","lastSeen":{"sec":1488025901,"usec":864472},"snapclient":{"name":"Snapclient","protocolVersion":2,"version":"0.10.0"}},{"config":{"instance":1,"latency":0,"name":"","volume":{"muted":false,"percent":100}},"connected":true,"host":{"arch":"x86_64","ip":"127.0.0.1","mac":"00:21:6a:7d:74:fc","name":"T400","os":"Linux Mint 17.3 Rosa"},"id":"00:21:6a:7d:74:fc","lastSeen":{"sec":1488025905,"usec":45238},"snapclient":{"name":"Snapclient","protocolVersion":2,"version":"0.10.0"}}],"id":"4dcc4e3b-c699-a04b-7f0c-8260d23c43e1","muted":false,"name":"","stream_id":"stream 2"}],"server":{"host":{"arch":"x86_64","ip":"","mac":"","name":"T400","os":"Linux Mint 17.3 Rosa"},"snapserver":{"controlProtocolVersion":1,"name":"Snapserver","protocolVersion":1,"version":"0.10.0"}},"streams":[{"id":"stream 1","status":"idle","uri":{"fragment":"","host":"","path":"/tmp/snapfifo","query":{"chunk_ms":"20","codec":"flac","name":"stream 1","sampleformat":"48000:16:2"},"raw":"pipe:///tmp/snapfifo?name=stream 1","scheme":"pipe"}},{"id":"stream 2","status":"idle","uri":{"fragment":"","host":"","path":"/tmp/snapfifo","query":{"chunk_ms":"20","codec":"flac","name":"stream 2","sampleformat":"48000:16:2"},"raw":"pipe:///tmp/snapfifo?name=stream 2","scheme":"pipe"}}]}}}
                 // Notification: {"jsonrpc":"2.0","method":"Server.OnUpdate","params":{"server":{"groups":[{"clients":[{"config":{"instance":2,"latency":6,"name":"123 456","volume":{"muted":false,"percent":48}},"connected":true,"host":{"arch":"x86_64","ip":"127.0.0.1","mac":"00:21:6a:7d:74:fc","name":"T400","os":"Linux Mint 17.3 Rosa"},"id":"00:21:6a:7d:74:fc#2","lastSeen":{"sec":1488025901,"usec":864472},"snapclient":{"name":"Snapclient","protocolVersion":2,"version":"0.10.0"}},{"config":{"instance":1,"latency":0,"name":"","volume":{"muted":false,"percent":100}},"connected":true,"host":{"arch":"x86_64","ip":"127.0.0.1","mac":"00:21:6a:7d:74:fc","name":"T400","os":"Linux Mint 17.3 Rosa"},"id":"00:21:6a:7d:74:fc","lastSeen":{"sec":1488025905,"usec":45238},"snapclient":{"name":"Snapclient","protocolVersion":2,"version":"0.10.0"}}],"id":"4dcc4e3b-c699-a04b-7f0c-8260d23c43e1","muted":false,"name":"","stream_id":"stream 2"}],"server":{"host":{"arch":"x86_64","ip":"","mac":"","name":"T400","os":"Linux Mint 17.3 Rosa"},"snapserver":{"controlProtocolVersion":1,"name":"Snapserver","protocolVersion":1,"version":"0.10.0"}},"streams":[{"id":"stream 1","status":"idle","uri":{"fragment":"","host":"","path":"/tmp/snapfifo","query":{"chunk_ms":"20","codec":"flac","name":"stream 1","sampleformat":"48000:16:2"},"raw":"pipe:///tmp/snapfifo?name=stream 1","scheme":"pipe"}},{"id":"stream 2","status":"idle","uri":{"fragment":"","host":"","path":"/tmp/snapfifo","query":{"chunk_ms":"20","codec":"flac","name":"stream 2","sampleformat":"48000:16:2"},"raw":"pipe:///tmp/snapfifo?name=stream 2","scheme":"pipe"}}]}}}
                 // clang-format on
-                vector<string> clients = request->params().get("clients");
+                std::vector<std::string> clients = request->params().get("clients");
                 // Remove clients from group
                 for (auto iter = group->clients.begin(); iter != group->clients.end();)
                 {
@@ -442,7 +441,7 @@ void Server::processRequest(const jsonrpcpp::request_ptr request, const OnRespon
                                    << ", params: " << (request->params().has("params") ? request->params().get("params") : "") << "\n";
 
                 // Find stream
-                string streamId = request->params().get<std::string>("id");
+                std::string streamId = request->params().get<std::string>("id");
                 PcmStreamPtr stream = streamManager_->getStream(streamId);
                 if (stream == nullptr)
                     throw jsonrpcpp::InternalErrorException("Stream not found", request->id());
@@ -450,7 +449,7 @@ void Server::processRequest(const jsonrpcpp::request_ptr request, const OnRespon
                 if (!request->params().has("command"))
                     throw jsonrpcpp::InvalidParamsException("Parameter 'commmand' is missing", request->id());
 
-                auto command = request->params().get<string>("command");
+                auto command = request->params().get<std::string>("command");
 
                 auto handle_response = [request, on_response, command](const snapcast::ErrorCode& ec)
                 {
@@ -461,9 +460,9 @@ void Server::processRequest(const jsonrpcpp::request_ptr request, const OnRespon
                                             << ", category: " << ec.category().name() << "\n";
                     std::shared_ptr<jsonrpcpp::Response> response;
                     if (ec)
-                        response = make_shared<jsonrpcpp::Response>(request->id(), jsonrpcpp::Error(ec.detailed_message(), ec.value()));
+                        response = std::make_shared<jsonrpcpp::Response>(request->id(), jsonrpcpp::Error(ec.detailed_message(), ec.value()));
                     else
-                        response = make_shared<jsonrpcpp::Response>(request->id(), "ok");
+                        response = std::make_shared<jsonrpcpp::Response>(request->id(), "ok");
                     // LOG(DEBUG, LOG_TAG) << response->to_json().dump() << "\n";
                     on_response(response, nullptr);
                 };
@@ -519,7 +518,7 @@ void Server::processRequest(const jsonrpcpp::request_ptr request, const OnRespon
                                    << ", property: " << request->params().get("property") << ", value: " << request->params().get("value") << "\n";
 
                 // Find stream
-                string streamId = request->params().get<std::string>("id");
+                std::string streamId = request->params().get<std::string>("id");
                 PcmStreamPtr stream = streamManager_->getStream(streamId);
                 if (stream == nullptr)
                     throw jsonrpcpp::InternalErrorException("Stream not found", request->id());
@@ -530,7 +529,7 @@ void Server::processRequest(const jsonrpcpp::request_ptr request, const OnRespon
                 if (!request->params().has("value"))
                     throw jsonrpcpp::InvalidParamsException("Parameter 'value' is missing", request->id());
 
-                auto name = request->params().get<string>("property");
+                auto name = request->params().get<std::string>("property");
                 auto value = request->params().get("value");
                 LOG(INFO, LOG_TAG) << "Stream '" << streamId << "' set property: " << name << " = " << value << "\n";
 
@@ -540,9 +539,9 @@ void Server::processRequest(const jsonrpcpp::request_ptr request, const OnRespon
                                         << ", category: " << ec.category().name() << "\n";
                     std::shared_ptr<jsonrpcpp::Response> response;
                     if (ec)
-                        response = make_shared<jsonrpcpp::Response>(request->id(), jsonrpcpp::Error(ec.detailed_message(), ec.value()));
+                        response = std::make_shared<jsonrpcpp::Response>(request->id(), jsonrpcpp::Error(ec.detailed_message(), ec.value()));
                     else
-                        response = make_shared<jsonrpcpp::Response>(request->id(), "ok");
+                        response = std::make_shared<jsonrpcpp::Response>(request->id(), "ok");
                     on_response(response, nullptr);
                 };
 
@@ -594,7 +593,7 @@ void Server::processRequest(const jsonrpcpp::request_ptr request, const OnRespon
                                    << "\n";
 
                 // Find stream
-                string streamUri = request->params().get("streamUri");
+                std::string streamUri = request->params().get("streamUri");
                 PcmStreamPtr stream = streamManager_->addStream(streamUri);
                 if (stream == nullptr)
                     throw jsonrpcpp::InternalErrorException("Stream not created", request->id());
@@ -613,7 +612,7 @@ void Server::processRequest(const jsonrpcpp::request_ptr request, const OnRespon
                                    << "\n";
 
                 // Find stream
-                string streamId = request->params().get("id");
+                std::string streamId = request->params().get("id");
                 streamManager_->removeStream(streamId);
                 // Setup response
                 result["id"] = streamId;
@@ -631,7 +630,7 @@ void Server::processRequest(const jsonrpcpp::request_ptr request, const OnRespon
         LOG(ERROR, LOG_TAG) << "Server::onMessageReceived JsonRequestException: " << e.to_json().dump() << ", message: " << request->to_json().dump() << "\n";
         response = std::make_shared<jsonrpcpp::RequestException>(e);
     }
-    catch (const exception& e)
+    catch (const std::exception& e)
     {
         LOG(ERROR, LOG_TAG) << "Server::onMessageReceived exception: " << e.what() << ", message: " << request->to_json().dump() << "\n";
         response = std::make_shared<jsonrpcpp::InternalErrorException>(e.what(), request->id());
@@ -664,10 +663,10 @@ void Server::onMessageReceived(std::shared_ptr<ControlSession> controlSession, c
     jsonrpcpp::notification_ptr notification(nullptr);
     if (entity->is_request())
     {
-        jsonrpcpp::request_ptr request = dynamic_pointer_cast<jsonrpcpp::Request>(entity);
+        jsonrpcpp::request_ptr request = std::dynamic_pointer_cast<jsonrpcpp::Request>(entity);
         processRequest(request,
                        [this, controlSession, response_handler](jsonrpcpp::entity_ptr response, jsonrpcpp::notification_ptr notification)
-                       {
+        {
             saveConfig();
             ////cout << "Request:      " << request->to_json().dump() << "\n";
             if (notification)
@@ -688,7 +687,7 @@ void Server::onMessageReceived(std::shared_ptr<ControlSession> controlSession, c
         /// Attention: this will only work as long as the response handler in processRequest is called synchronously. One way to do this is to remove the outer
         /// loop and to call the next processRequest with
         /// This is true for volume changes, which is the only batch request, but not for Control commands!
-        jsonrpcpp::batch_ptr batch = dynamic_pointer_cast<jsonrpcpp::Batch>(entity);
+        jsonrpcpp::batch_ptr batch = std::dynamic_pointer_cast<jsonrpcpp::Batch>(entity);
         ////cout << "Batch: " << batch->to_json().dump() << "\n";
         jsonrpcpp::Batch responseBatch;
         jsonrpcpp::Batch notificationBatch;
@@ -696,11 +695,11 @@ void Server::onMessageReceived(std::shared_ptr<ControlSession> controlSession, c
         {
             if (batch_entity->is_request())
             {
-                jsonrpcpp::request_ptr request = dynamic_pointer_cast<jsonrpcpp::Request>(batch_entity);
+                jsonrpcpp::request_ptr request = std::dynamic_pointer_cast<jsonrpcpp::Request>(batch_entity);
                 processRequest(request,
                                [controlSession, response_handler, &responseBatch, &notificationBatch](jsonrpcpp::entity_ptr response,
                                                                                                       jsonrpcpp::notification_ptr notification)
-                               {
+                {
                     if (response != nullptr)
                         responseBatch.add_ptr(response);
                     if (notification != nullptr)
@@ -729,7 +728,7 @@ void Server::onMessageReceived(StreamSession* streamSession, const msg::BaseMess
     std::lock_guard<std::mutex> lock(Config::instance().getMutex());
     if (baseMessage.type == message_type::kTime)
     {
-        auto timeMsg = make_shared<msg::Time>();
+        auto timeMsg = std::make_shared<msg::Time>();
         timeMsg->deserialize(baseMessage, buffer);
         timeMsg->refersTo = timeMsg->id;
         timeMsg->latency = timeMsg->received - timeMsg->sent;
@@ -758,7 +757,7 @@ void Server::onMessageReceived(StreamSession* streamSession, const msg::BaseMess
 
         clientInfo->config.volume.percent = infoMsg.getVolume();
         clientInfo->config.volume.muted = infoMsg.isMuted();
-        jsonrpcpp::notification_ptr notification = make_shared<jsonrpcpp::Notification>(
+        jsonrpcpp::notification_ptr notification = std::make_shared<jsonrpcpp::Notification>(
             "Client.OnVolumeChanged", jsonrpcpp::Parameter("id", streamSession->clientId, "volume", clientInfo->config.volume.toJson()));
         controlServer_->send(notification->to_json().dump());
     }
@@ -786,7 +785,7 @@ void Server::onMessageReceived(StreamSession* streamSession, const msg::BaseMess
         }
 
         LOG(DEBUG, LOG_TAG) << "Sending ServerSettings to " << streamSession->clientId << "\n";
-        auto serverSettings = make_shared<msg::ServerSettings>();
+        auto serverSettings = std::make_shared<msg::ServerSettings>();
         serverSettings->setVolume(client->config.volume.percent);
         serverSettings->setMuted(client->config.volume.muted || group->muted);
         serverSettings->setLatency(client->config.latency);
@@ -856,7 +855,7 @@ void Server::saveConfig(const std::chrono::milliseconds& deferred)
     config_timer_.expires_after(deferred);
     config_timer_.async_wait(
         [](const boost::system::error_code& ec)
-        {
+    {
         if (!ec)
         {
             LOG(DEBUG, LOG_TAG) << "Saving config\n";
@@ -901,7 +900,7 @@ void Server::start()
     }
     catch (const std::exception& e)
     {
-        LOG(NOTICE, LOG_TAG) << "Server::start: " << e.what() << endl;
+        LOG(NOTICE, LOG_TAG) << "Server::start: " << e.what() << std::endl;
         stop();
         throw;
     }

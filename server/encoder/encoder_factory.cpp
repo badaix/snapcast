@@ -33,8 +33,6 @@
 #include "common/utils/string_utils.hpp"
 
 
-using namespace std;
-
 namespace encoder
 {
 

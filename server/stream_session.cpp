@@ -28,7 +28,7 @@
 // standard headers
 #include <iostream>
 
-using namespace std;
+using namespace std::chrono_literals;
 using namespace streamreader;
 
 static constexpr auto LOG_TAG = "StreamSession";

@@ -28,8 +28,6 @@
 // standard headers
 #include <iostream>
 
-using namespace std;
-
 static constexpr auto LOG_TAG = "ControlSessionWS";
 
 

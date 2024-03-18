@@ -32,7 +32,6 @@
 // standard headers
 #include <iostream>
 
-using namespace std;
 using namespace streamreader;
 
 using json = nlohmann::json;
@@ -185,7 +184,7 @@ session_ptr StreamServer::getStreamSession(const std::string& clientId) const
 
 void StreamServer::startAccept()
 {
-    auto accept_handler = [this](error_code ec, tcp::socket socket)
+    auto accept_handler = [this](std::error_code ec, tcp::socket socket)
     {
         if (!ec)
             handleAccept(std::move(socket));
@@ -211,13 +210,13 @@ void StreamServer::handleAccept(tcp::socket socket)
         /// experimental: turn on tcp::no_delay
         socket.set_option(tcp::no_delay(true));
 
-        LOG(NOTICE, LOG_TAG) << "StreamServer::NewConnection: " << socket.remote_endpoint().address().to_string() << endl;
-        shared_ptr<StreamSession> session = make_shared<StreamSessionTcp>(this, std::move(socket));
+        LOG(NOTICE, LOG_TAG) << "StreamServer::NewConnection: " << socket.remote_endpoint().address().to_string() << std::endl;
+        std::shared_ptr<StreamSession> session = std::make_shared<StreamSessionTcp>(this, std::move(socket));
         addSession(session);
     }
     catch (const std::exception& e)
     {
-        LOG(ERROR, LOG_TAG) << "Exception in StreamServer::handleAccept: " << e.what() << endl;
+        LOG(ERROR, LOG_TAG) << "Exception in StreamServer::handleAccept: " << e.what() << std::endl;
     }
     startAccept();
 }
@@ -230,7 +229,7 @@ void StreamServer::start()
         try
         {
             LOG(INFO, LOG_TAG) << "Creating stream acceptor for address: " << address << ", port: " << settings_.stream.port << "\n";
-            acceptor_.emplace_back(make_unique<tcp::acceptor>(boost::asio::make_strand(io_context_.get_executor()),
+            acceptor_.emplace_back(std::make_unique<tcp::acceptor>(boost::asio::make_strand(io_context_.get_executor()),
                                                               tcp::endpoint(boost::asio::ip::address::from_string(address), settings_.stream.port)));
         }
         catch (const boost::system::system_error& e)

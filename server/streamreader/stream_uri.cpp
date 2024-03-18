@@ -26,7 +26,6 @@
 #include "common/utils/string_utils.hpp"
 
 
-using namespace std;
 namespace strutils = utils::string;
 
 namespace streamreader
@@ -54,24 +53,24 @@ void StreamUri::parse(const std::string& streamUri)
     // string decodedUri = strutils::uriDecode(uri);
     // LOG(DEBUG) << "StreamUri decoded: " << decodedUri << "\n";
 
-    string tmp(uri);
+    std::string tmp(uri);
 
     pos = tmp.find(':');
-    if (pos == string::npos)
-        throw invalid_argument("missing ':'");
+    if (pos == std::string::npos)
+        throw std::invalid_argument("missing ':'");
     scheme = strutils::uriDecode(strutils::trim_copy(tmp.substr(0, pos)));
     tmp = tmp.substr(pos + 1);
     LOG(TRACE) << "scheme: '" << scheme << "', tmp: '" << tmp << "'\n";
 
     if (tmp.find("//") != 0)
-        throw invalid_argument("missing host separator: '//'");
+        throw std::invalid_argument("missing host separator: '//'");
     tmp = tmp.substr(2);
 
     pos = tmp.find('/');
-    if (pos == string::npos)
+    if (pos == std::string::npos)
     {
         pos = tmp.find('?');
-        if (pos == string::npos)
+        if (pos == std::string::npos)
             pos = tmp.length();
     }
 
@@ -82,9 +81,9 @@ void StreamUri::parse(const std::string& streamUri)
     path = strutils::uriDecode(strutils::trim_copy(path.substr(0, pos)));
     LOG(TRACE) << "host: '" << host << "', tmp: '" << tmp << "', path: '" << path << "'\n";
 
-    string queryStr;
+    std::string queryStr;
     pos = tmp.find('?');
-    if (pos != string::npos)
+    if (pos != std::string::npos)
     {
         tmp = tmp.substr(pos + 1);
         queryStr = tmp;
@@ -92,7 +91,7 @@ void StreamUri::parse(const std::string& streamUri)
     }
 
     pos = tmp.find('#');
-    if (pos != string::npos)
+    if (pos != std::string::npos)
     {
         queryStr = tmp.substr(0, pos);
         tmp = tmp.substr(pos + 1);
@@ -100,14 +99,14 @@ void StreamUri::parse(const std::string& streamUri)
         LOG(TRACE) << "query: '" << queryStr << "', fragment: '" << fragment << "', tmp: '" << tmp << "'\n";
     }
 
-    vector<string> keyValueList = strutils::split(queryStr, '&');
+    std::vector<std::string> keyValueList = strutils::split(queryStr, '&');
     for (auto& kv : keyValueList)
     {
         pos = kv.find('=');
-        if (pos != string::npos)
+        if (pos != std::string::npos)
         {
-            string key = strutils::uriDecode(strutils::trim_copy(kv.substr(0, pos)));
-            string value = strutils::uriDecode(strutils::trim_copy(kv.substr(pos + 1)));
+            std::string key = strutils::uriDecode(strutils::trim_copy(kv.substr(0, pos)));
+            std::string value = strutils::uriDecode(strutils::trim_copy(kv.substr(pos + 1)));
             query[key] = value;
         }
     }
@@ -118,7 +117,7 @@ void StreamUri::parse(const std::string& streamUri)
 std::string StreamUri::toString() const
 {
     // scheme:[//[user:password@]host[:port]][/]path[?query][#fragment]
-    stringstream ss;
+    std::stringstream ss;
     ss << scheme << "://" << host << "/" + path;
     if (!query.empty())
     {

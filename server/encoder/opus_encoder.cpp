@@ -23,7 +23,6 @@
 #include "common/str_compat.hpp"
 #include "common/utils/string_utils.hpp"
 
-using namespace std;
 
 namespace encoder
 {
@@ -48,7 +47,7 @@ void assign(void* pointer, T val)
 
 OpusEncoder::OpusEncoder(const std::string& codecOptions) : Encoder(codecOptions), enc_(nullptr), remainder_max_size_(0)
 {
-    headerChunk_ = make_unique<msg::CodecHeader>("opus");
+    headerChunk_ = std::make_unique<msg::CodecHeader>("opus");
 }
 
 
@@ -89,7 +88,7 @@ void OpusEncoder::initEncoder()
     if ((sampleFormat_.rate() != 48000) || (sampleFormat_.bits() != 16))
         LOG(INFO, LOG_TAG) << "Resampling input from " << sampleFormat_.toString() << " to " << out.toString() << " as required by Opus\n";
 
-    resampler_ = make_unique<Resampler>(sampleFormat_, out);
+    resampler_ = std::make_unique<Resampler>(sampleFormat_, out);
     sampleFormat_ = out;
 
     opus_int32 bitrate = 192000;
@@ -248,7 +247,7 @@ void OpusEncoder::encode(const SampleFormat& format, const char* data, size_t si
     if (len > 0)
     {
         // copy encoded data to chunk
-        auto opusChunk = make_shared<msg::PcmChunk>(format, 0);
+        auto opusChunk = std::make_shared<msg::PcmChunk>(format, 0);
         opusChunk->payloadSize = len;
         opusChunk->payload = static_cast<char*>(realloc(opusChunk->payload, opusChunk->payloadSize));
         memcpy(opusChunk->payload, encoded_.data(), len);

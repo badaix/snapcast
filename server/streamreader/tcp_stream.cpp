@@ -29,11 +29,9 @@
 // 3rd party headers
 
 // standard headers
-#include <cerrno>
 #include <memory>
 
-
-using namespace std;
+using namespace std::chrono_literals;
 
 namespace streamreader
 {
@@ -64,7 +62,7 @@ TcpStream::TcpStream(PcmStream::Listener* pcmListener, boost::asio::io_context& 
 
     LOG(INFO, LOG_TAG) << "TcpStream host: " << host_ << ", port: " << port_ << ", is server: " << is_server_ << "\n";
     if (is_server_)
-        acceptor_ = make_unique<tcp::acceptor>(strand_, tcp::endpoint(boost::asio::ip::address::from_string(host_), port_));
+        acceptor_ = std::make_unique<tcp::acceptor>(strand_, tcp::endpoint(boost::asio::ip::address::from_string(host_), port_));
 }
 
 
@@ -81,7 +79,7 @@ void TcpStream::do_connect()
             if (!ec)
             {
                 LOG(DEBUG, LOG_TAG) << "New client connection\n";
-                stream_ = make_unique<tcp::socket>(std::move(socket));
+                stream_ = std::make_unique<tcp::socket>(std::move(socket));
                 on_connect();
             }
             else
@@ -92,7 +90,7 @@ void TcpStream::do_connect()
     }
     else
     {
-        stream_ = make_unique<tcp::socket>(strand_);
+        stream_ = std::make_unique<tcp::socket>(strand_);
         boost::asio::ip::tcp::endpoint endpoint(boost::asio::ip::address::from_string(host_), port_);
         stream_->async_connect(endpoint,
                                [this](const boost::system::error_code& ec)

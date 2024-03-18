@@ -30,12 +30,10 @@
 #include <pulse/proplist.h>
 
 // standard headers
-#include <cassert>
 #include <iostream>
 
 
 using namespace std::chrono_literals;
-using namespace std;
 
 namespace player
 {
@@ -50,7 +48,7 @@ static constexpr auto LOG_TAG = "PulsePlayer";
 // https://www.freedesktop.org/wiki/Software/PulseAudio/Documentation/Developer/Clients/Samples/AsyncPlayback/
 
 
-vector<PcmDevice> PulsePlayer::pcm_list(const std::string& parameter)
+std::vector<PcmDevice> PulsePlayer::pcm_list(const std::string& parameter)
 {
     auto pa_ml = std::shared_ptr<pa_mainloop>(pa_mainloop_new(), [](pa_mainloop* pa_ml) { pa_mainloop_free(pa_ml); });
     pa_mainloop_api* pa_mlapi = pa_mainloop_get_api(pa_ml.get());
@@ -101,7 +99,7 @@ vector<PcmDevice> PulsePlayer::pcm_list(const std::string& parameter)
             throw SnapException("Timeout while waiting for PulseAudio to become ready");
         if (pa_mainloop_iterate(pa_ml.get(), 1, nullptr) < 0)
             throw SnapException("Error while waiting for PulseAudio to become ready, error: " + std::string(pa_strerror(pa_context_errno(pa_ctx.get()))));
-        this_thread::sleep_for(1ms);
+        std::this_thread::sleep_for(1ms);
     }
 
     if (pa_ready == 2)
@@ -211,7 +209,7 @@ void PulsePlayer::worker()
             }
             catch (const std::exception& e)
             {
-                LOG(ERROR, LOG_TAG) << "Exception while connecting to pulse: " << e.what() << endl;
+                LOG(ERROR, LOG_TAG) << "Exception while connecting to pulse: " << e.what() << std::endl;
                 disconnect();
                 chronos::sleep(100);
             }
@@ -312,7 +310,7 @@ void PulsePlayer::underflowCallback(pa_stream* stream)
 void PulsePlayer::stateCallback(pa_context* ctx)
 {
     pa_context_state_t state = pa_context_get_state(ctx);
-    string str_state = "unknown";
+    std::string str_state{"unknown"};
     pa_ready_ = 0;
     switch (state)
     {
@@ -454,7 +452,7 @@ void PulsePlayer::connect()
             throw SnapException("Timeout while waiting for PulseAudio to become ready");
         if (pa_mainloop_iterate(pa_ml_, 1, nullptr) < 0)
             throw SnapException("Error while waiting for PulseAudio to become ready, error: " + std::string(pa_strerror(pa_context_errno(pa_ctx_))));
-        this_thread::sleep_for(1ms);
+        std::this_thread::sleep_for(1ms);
     }
 
     if (pa_ready_ == 2)
