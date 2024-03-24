@@ -248,14 +248,17 @@ void AirplayStream::pipeReadLine()
     boost::asio::async_read_until(*pipe_fd_, streambuf_pipe_, delimiter,
                                   [this, delimiter](const std::error_code& ec, std::size_t bytes_transferred)
                                   {
+        static AixLog::Severity logseverity = AixLog::Severity::info;
         if (ec)
         {
             if ((ec.value() == boost::asio::error::eof) || (ec.value() == boost::asio::error::bad_descriptor))
             {
                 // For some reason, EOF is returned until the first metadata is written to the pipe.
                 // If shairport-sync has not finished setting up the pipe, bad file descriptor is returned.
-                LOG(INFO, LOG_TAG) << "Waiting for metadata, retrying in 2500ms\n";
-                wait(pipe_open_timer_, 2500ms, [this] { pipeReadLine(); });
+                static constexpr auto retry_ms = 2500ms;
+                LOG(logseverity, LOG_TAG) << "Waiting for metadata, retrying in " << retry_ms.count() << "ms\n";
+                logseverity = AixLog::Severity::debug;
+                wait(pipe_open_timer_, retry_ms, [this] { pipeReadLine(); });
             }
             else
             {
@@ -263,6 +266,7 @@ void AirplayStream::pipeReadLine()
             }
             return;
         }
+        logseverity = AixLog::Severity::info;
 
         // Extract up to the first delimiter.
         std::string line{buffers_begin(streambuf_pipe_.data()), buffers_begin(streambuf_pipe_.data()) + bytes_transferred - delimiter.length()};
