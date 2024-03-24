@@ -35,7 +35,6 @@ Supported parameters for all source types:
 - `codec`: Override the global codec
 - `sampleformat`: Override the global sample format
 - `chunk_ms`: Override the global `chunk_ms`
-- `dryout_ms`: Supported by blocking sources: when no new data is read from the source, send silence to the clients
 - `controlscript`: Script to control the stream source and read and provide meta data, see [stream_plugin.md](json_rpc_api/stream_plugin.md)
 - `controlscriptparams`: Control script command line arguments, must be url-encoded (use `%20` instead of a space " "), e.g. `--mopidy-host=192.168.42.23%20--debug`
 
@@ -46,7 +45,7 @@ Available audio source types are:
 Captures audio from a named pipe
 
 ```sh
-pipe:///<path/to/pipe>?name=<name>[&mode=create][&dryout_ms=2000]
+pipe:///<path/to/pipe>?name=<name>[&mode=create]
 ```
 
 `mode` can be `create` or `read`. Sometimes your audio source might insist in creating the pipe itself. So the pipe creation mode can by changed to "not create, but only read mode", using the `mode` option set to `read`
@@ -60,7 +59,7 @@ See [stackexchange](https://unix.stackexchange.com/questions/503111/group-permis
 Launches librespot and reads audio from stdout
 
 ```sh
-librespot:///<path/to/librespot>?name=<name>[&dryout_ms=2000][&username=<my username>&password=<my password>][&devicename=Snapcast][&bitrate=320][&wd_timeout=7800][&volume=100][&onevent=""][&normalize=false][&autoplay=false][&cache=""][&disable_audio_cache=false][&killall=false][&params=extra-params]
+librespot:///<path/to/librespot>?name=<name>[&username=<my username>&password=<my password>][&devicename=Snapcast][&bitrate=320][&wd_timeout=7800][&volume=100][&onevent=""][&normalize=false][&autoplay=false][&cache=""][&disable_audio_cache=false][&killall=false][&params=extra-params]
 ```
 
 Note that you need to have the librespot binary on your machine and the sampleformat will be set to `44100:16:2`
@@ -91,7 +90,7 @@ Parameters introduced by Snapclient:
 Launches [shairport-sync](https://github.com/mikebrady/shairport-sync) and reads audio from stdout
 
 ```sh
-airplay:///<path/to/shairport-sync>?name=<name>[&dryout_ms=2000][&devicename=Snapcast][&port=5000][&password=<my password>]
+airplay:///<path/to/shairport-sync>?name=<name>[&devicename=Snapcast][&port=5000][&password=<my password>]
 ```
 
 Note that you need to have the shairport-sync binary on your machine and the sampleformat will be set to `44100:16:2`
@@ -118,7 +117,7 @@ file:///<path/to/PCM/file>?name=<name>
 Launches a process and reads audio from stdout
 
 ```sh
-process:///<path/to/process>?name=<name>[&dryout_ms=2000][&wd_timeout=0][&log_stderr=false][&params=<process arguments>]
+process:///<path/to/process>?name=<name>[&wd_timeout=0][&log_stderr=false][&params=<process arguments>]
 ```
 
 #### Available parameters

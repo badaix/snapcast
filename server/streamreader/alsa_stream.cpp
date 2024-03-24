@@ -83,9 +83,6 @@ void AlsaStream::start()
 {
     LOG(DEBUG, LOG_TAG) << "Start, sampleformat: " << sampleFormat_.toString() << "\n";
 
-    // idle_bytes_ = 0;
-    // max_idle_bytes_ = sampleFormat_.rate() * sampleFormat_.frameSize() * dryout_ms_ / 1000;
-
     initAlsa();
     first_ = true;
     tvEncodedChunk_ = std::chrono::steady_clock::now();
@@ -263,7 +260,6 @@ void AlsaStream::do_read()
                 LOG(INFO, LOG_TAG) << "No data availabale, playing silence.\n";
                 // no data available, fill with silence
                 memset(chunk_->payload + len, 0, toRead - len);
-                // idle_bytes_ += toRead - len;
                 break;
             }
             else if (count == 0)
