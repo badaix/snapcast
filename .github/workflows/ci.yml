@@ -280,16 +280,3 @@ jobs:
           -DREVISION="${{ github.sha }}"
     - name: build
       run: cmake --build build --config Release --parallel 3 --verbose
-
-  # trigger_snapos:
-  #   needs: [linux, macos, windows]
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #   - name: Repository Dispatch
-  #     uses: peter-evans/repository-dispatch@v2
-  #     with:
-  #       token: ${{ secrets.REPODISPATCH }}
-  #       repository: badaix/snapos
-  #       event-type: build-success
-  #       client-payload: '{"ref": "${{ github.ref }}", "sha": "${{ github.sha }}"}'
-  

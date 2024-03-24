@@ -14,7 +14,7 @@ Snapcast is a multiroom client-server audio player, where all clients are time s
 Audio is captured by the server and routed to the connected clients. Several players can feed audio to the server in parallel and clients can be grouped to play the same audio stream.  
 One of the most generic ways to use Snapcast is in conjunction with the music player daemon ([MPD](http://www.musicpd.org/)) or [Mopidy](https://www.mopidy.com/).
 
-![Overview](https://raw.githubusercontent.com/badaix/snapcast/master/doc/Overview.png)
+![Overview](doc/Overview.png)
 
 ## How does it work
 
@@ -57,7 +57,7 @@ Snapcast packages are available for several Linux distributions:
 
 ### Nightly builds
 
-There are debian packages of automated builds for `armhf` and `amd64` in [Snapos Actions](https://github.com/badaix/snapos/actions).
+There are debian packages of automated builds for `armhf`, `arm64` and `amd64` in [Snapcast Actions - Package workflow](https://github.com/badaix/snapcast/actions/workflows/package.yml).
 Download and extract the archive for your architecture and follow the [debian installation instructions](doc/install.md#debian).
 
 ### Install using Homebrew
@@ -81,17 +81,6 @@ Please follow this [guide](doc/build.md) to build Snapcast for
 - [Raspberry Pi](doc/build.md#raspberry-pi-cross-compile)
 - [Windows](doc/build.md#windows-vcpkg)
 
-## SnapOS
-
-The bravest among you may be interested in [SnapOS](https://github.com/badaix/snapos), a small and fast-booting "just enough" OS to run Snapcast as an appliance.
-
-There is a guide (with the necessary buildfiles) available to build SnapOS, which comes in two flavors:
-
-- [Buildroot](https://github.com/badaix/snapos/blob/master/buildroot-external/README.md) based, or
-- [OpenWrt](https://github.com/badaix/snapos/tree/master/openwrt) based.
-
-Please note that there are no pre-built firmware packages available.
-
 ## Configuration
 
 After installation, Snapserver and Snapclient are started with the command line arguments that are configured in `/etc/default/snapserver` and `/etc/default/snapclient`.
@@ -101,9 +90,11 @@ Allowed options are listed in the man pages (`man snapserver`, `man snapclient`)
 
 The server configuration is done in `/etc/snapserver.conf`. Different audio sources can by configured in the `[stream]` section with a list of `source` options, e.g.:
 
-    [stream]
-    source = pipe:///tmp/snapfifo?name=Radio&sampleformat=48000:16:2&codec=flac
-    source = file:///home/user/Musik/Some%20wave%20file.wav?name=File
+```ini
+[stream]
+source = pipe:///tmp/snapfifo?name=Radio&sampleformat=48000:16:2&codec=flac
+source = file:///home/user/Musik/Some%20wave%20file.wav?name=File
+```
 
 Available stream sources are:
 
@@ -177,7 +168,7 @@ The server is shipped with [Snapweb](https://github.com/badaix/snapweb), this We
 
 There is an Android client [snapdroid](https://github.com/badaix/snapdroid) available in [Releases](https://github.com/badaix/snapdroid/releases/latest) and on [Google Play](https://play.google.com/store/apps/details?id=de.badaix.snapcast)
 
-![Snapcast for Android](https://raw.githubusercontent.com/badaix/snapcast/master/doc/snapcast_android_scaled.png)
+![Snapcast for Android](doc/snapcast_android_scaled.png)
 
 ### Contributions
 
