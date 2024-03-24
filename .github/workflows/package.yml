@@ -5,7 +5,7 @@ on:
 
 env:
   BOOST_VERSION: 1_84_0
-  SNAPWEB_VERSION: v0.6.0
+  SNAPWEB_VERSION: v0.7.0-beta.1
 
 jobs:
 
