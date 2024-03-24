@@ -8,9 +8,10 @@
 
 ### Bugfixes
 
-- Server: Fix noise caused by reading half samples
+- Server: Fix noise caused by reading half samples (Issue #1170)
 - Server: Check open syscall error in PipeStream::do_connect (PR #1150)
 - Server: Tweak Airplay support (#1102)
+- Server: Lower log severity for shairport-sync (Issue #891)
 - Improve connect handling in meta_mopidy.py
 - Fix cppcheck issues
 
@@ -20,9 +21,9 @@
 - CI: Add cppcheck static analysis
 - Update documentation (PR #1130, PR #1067)
 - Delete deprecated Makefiles, CMake is the only buildsystem
-- Snapweb: Update to v0.6.0
+- Snapweb: Update to v0.7.0
 
-_Johannes Pohl <snapcast@badaix.de>  Sun, 05 Feb 2023 00:13:37 +0200_
+_Johannes Pohl <snapcast@badaix.de>  Sun, 24 Mar 2024 00:13:37 +0200_
 
 ## Version 0.27.0
 
