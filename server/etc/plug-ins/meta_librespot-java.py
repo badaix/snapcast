@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 #
 # This file is part of snapcast
-# Copyright (C) 2014-2022  Johannes Pohl
+# Copyright (C) 2014-2024  Johannes Pohl
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -91,11 +91,13 @@ class LibrespotControl(object):
         self._librespot_request_map = {}
         self._seek_offset = 0.0
 
-        self.websocket = websocket.WebSocketApp("ws://" + self._params['librespot-host'] + ":" + str(self._params['librespot-port']) + "/events",
-                                                on_message=self.on_ws_message,
-                                                on_error=self.on_ws_error,
-                                                on_open=self.on_ws_open,
-                                                on_close=self.on_ws_close)
+        self.websocket = websocket.WebSocketApp(
+            url=f"ws://{self._params['librespot-host']}:{self._params['librespot-port']}/events",
+            on_message=self.on_ws_message,
+            on_error=self.on_ws_error,
+            on_open=self.on_ws_open,
+            on_close=self.on_ws_close
+        )
 
         self.websocket_thread = threading.Thread(
             target=self.websocket_loop, args=())
@@ -105,9 +107,13 @@ class LibrespotControl(object):
     def websocket_loop(self):
         logger.info("Started LibrespotControl loop")
         while True:
-            self.websocket.run_forever()
-            sleep(1)
-        logger.info("Ending LibrespotControl loop")
+            try:
+                self.websocket.run_forever()
+                sleep(2)
+            except Exception as e:
+                logger.info(f"Exception: {str(e)}")
+                self.websocket.close()
+        # logger.info("Ending LibrespotControl loop")
 
     def getMetaData(self, data):
         data = json.loads(data)
