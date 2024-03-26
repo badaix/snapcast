@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2022  Johannes Pohl
+    Copyright (C) 2014-2024  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -77,22 +77,31 @@ PcmStreamPtr StreamManager::addStream(StreamUri& streamUri)
     //		LOG(DEBUG) << "key: '" << kv.first << "' value: '" << kv.second << "'\n";
     PcmStreamPtr stream(nullptr);
 
+    PcmStream::Listener* listener = pcmListener_;
+    if ((streamUri.query[kUriCodec] == "null") && (streamUri.scheme != "meta"))
+    {
+        // Streams with null codec are "invisible" and will not report any updates to the listener.
+        // If the stream is used as input for a Meta stream, then the meta stream will add himself
+        // as another listener to the stream, so that updates are indirect reported through it.
+        listener = nullptr;
+    }
+
     if (streamUri.scheme == "pipe")
     {
-        stream = make_shared<PipeStream>(pcmListener_, io_context_, settings_, streamUri);
+        stream = make_shared<PipeStream>(listener, io_context_, settings_, streamUri);
     }
     else if (streamUri.scheme == "file")
     {
-        stream = make_shared<FileStream>(pcmListener_, io_context_, settings_, streamUri);
+        stream = make_shared<FileStream>(listener, io_context_, settings_, streamUri);
     }
     else if (streamUri.scheme == "process")
     {
-        stream = make_shared<ProcessStream>(pcmListener_, io_context_, settings_, streamUri);
+        stream = make_shared<ProcessStream>(listener, io_context_, settings_, streamUri);
     }
 #ifdef HAS_ALSA
     else if (streamUri.scheme == "alsa")
     {
-        stream = make_shared<AlsaStream>(pcmListener_, io_context_, settings_, streamUri);
+        stream = make_shared<AlsaStream>(listener, io_context_, settings_, streamUri);
     }
 #endif
     else if ((streamUri.scheme == "spotify") || (streamUri.scheme == "librespot"))
@@ -101,7 +110,7 @@ PcmStreamPtr StreamManager::addStream(StreamUri& streamUri)
         // that all constructors of all parent classes also use the overwritten sample
         // format.
         streamUri.query[kUriSampleFormat] = "44100:16:2";
-        stream = make_shared<LibrespotStream>(pcmListener_, io_context_, settings_, streamUri);
+        stream = make_shared<LibrespotStream>(listener, io_context_, settings_, streamUri);
     }
     else if (streamUri.scheme == "airplay")
     {
@@ -109,15 +118,15 @@ PcmStreamPtr StreamManager::addStream(StreamUri& streamUri)
         // that all constructors of all parent classes also use the overwritten sample
         // format.
         streamUri.query[kUriSampleFormat] = "44100:16:2";
-        stream = make_shared<AirplayStream>(pcmListener_, io_context_, settings_, streamUri);
+        stream = make_shared<AirplayStream>(listener, io_context_, settings_, streamUri);
     }
     else if (streamUri.scheme == "tcp")
     {
-        stream = make_shared<TcpStream>(pcmListener_, io_context_, settings_, streamUri);
+        stream = make_shared<TcpStream>(listener, io_context_, settings_, streamUri);
     }
     else if (streamUri.scheme == "meta")
     {
-        stream = make_shared<MetaStream>(pcmListener_, streams_, io_context_, settings_, streamUri);
+        stream = make_shared<MetaStream>(listener, streams_, io_context_, settings_, streamUri);
     }
     else
     {
@@ -210,8 +219,11 @@ json StreamManager::toJson() const
 {
     json result = json::array();
     for (const auto& stream : streams_)
+    {
+        // A stream with "null" codec will only serve as input for a meta stream, i.e. is not a "stand alone" stream
         if (stream->getCodec() != "null")
             result.push_back(stream->toJson());
+    }
     return result;
 }
 

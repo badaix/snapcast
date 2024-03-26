@@ -12,6 +12,7 @@
 - Server: Check open syscall error in PipeStream::do_connect (PR #1150)
 - Server: Tweak Airplay support (#1102)
 - Server: Lower log severity for shairport-sync (Issue #891)
+- Server: Emits notifications for streams with codec=null (Issue #1205)
 - Improve connect handling in meta_mopidy.py
 - Fix cppcheck issues
 
@@ -20,7 +21,7 @@
 - CI: Build debian bookworm and bullseye packages for amd64, arm and arm64
 - CI: Add cppcheck static analysis
 - Update documentation (PR #1130, PR #1067)
-- Delete deprecated Makefiles, CMake is the only buildsystem
+- Delete deprecated Makefiles, CMake is the only supported buildsystem
 - Snapweb: Update to v0.7.0
 
 _Johannes Pohl <snapcast@badaix.de>  Sun, 24 Mar 2024 00:13:37 +0200_

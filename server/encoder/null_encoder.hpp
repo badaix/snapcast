@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2020  Johannes Pohl
+    Copyright (C) 2014-2024  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -23,6 +23,15 @@
 namespace encoder
 {
 
+/// Null Encoder class
+/**
+ * Dummy encoder that will not encode any PcmChunk and thus will also never call
+ * "Encoder::encoded_callback_", i.e. the "OnEncodedCallback" to report any encoded data
+ * to the listener.
+ * Typically used as input stream for a MetaStream, which will do it's own encoding.
+ * Streams that use the null encoder cannot be listened to directly, nor they are visible
+ * on the RPC interface.
+ */
 class NullEncoder : public Encoder
 {
 public:
