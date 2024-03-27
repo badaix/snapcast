@@ -137,7 +137,7 @@ void ClientConnection::connect(const ResultHandler& handler)
         handler(ec);
         return;
     }
-    std::for_each(iterator, {}, [this](auto& it) { LOG(DEBUG, LOG_TAG) << "Resolved IP: " << it.endpoint().address().to_string() << "\n"; });
+    std::for_each(iterator, {}, [](auto& it) { LOG(DEBUG, LOG_TAG) << "Resolved IP: " << it.endpoint().address().to_string() << "\n"; });
 
     LOG(INFO, LOG_TAG) << "Connecting to " << iterator->endpoint() << "\n";
     socket_.connect(*iterator, ec);
