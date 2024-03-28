@@ -91,6 +91,13 @@ class LibrespotControl(object):
         self._librespot_request_map = {}
         self._seek_offset = 0.0
 
+        wsversion = websocket.__version__.split(".")
+        if int(wsversion[0]) == 0 and int(wsversion[1]) < 58:
+            logger.error(
+                f"websocket-client version 0.58.0 or higher required, installed: {websocket.__version__}, exiting."
+            )
+            exit()
+
         self.websocket = websocket.WebSocketApp(
             url=f"ws://{self._params['librespot-host']}:{self._params['librespot-port']}/events",
             on_message=self.on_ws_message,
