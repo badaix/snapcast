@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2023  Johannes Pohl
+    Copyright (C) 2014-2024  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -137,17 +137,26 @@ void ClientConnection::connect(const ResultHandler& handler)
         handler(ec);
         return;
     }
-    std::for_each(iterator, {}, [](auto& it) { LOG(DEBUG, LOG_TAG) << "Resolved IP: " << it.endpoint().address().to_string() << "\n"; });
 
-    LOG(INFO, LOG_TAG) << "Connecting to " << iterator->endpoint() << "\n";
-    socket_.connect(*iterator, ec);
-    if (ec)
+    for (const auto& iter : iterator)
+        LOG(DEBUG, LOG_TAG) << "Resolved IP: " << iter.endpoint().address().to_string() << "\n";
+
+    for (const auto& iter : iterator)
     {
-        LOG(ERROR, LOG_TAG) << "Failed to connect to host '" << server_.host << "', error: " << ec.message() << "\n";
-        handler(ec);
-        return;
+        LOG(INFO, LOG_TAG) << "Connecting to " << iter.endpoint() << "\n";
+        socket_.connect(*iterator, ec);
+        if (!ec || (ec == boost::system::errc::interrupted))
+        {
+            // We were successful or interrupted, e.g. by sig int
+            break;
+        }
     }
-    LOG(NOTICE, LOG_TAG) << "Connected to " << socket_.remote_endpoint().address().to_string() << endl;
+
+    if (ec)
+        LOG(ERROR, LOG_TAG) << "Failed to connect to host '" << server_.host << "', error: " << ec.message() << "\n";
+    else
+        LOG(NOTICE, LOG_TAG) << "Connected to " << socket_.remote_endpoint().address().to_string() << endl;
+
     handler(ec);
 
 #if 0
