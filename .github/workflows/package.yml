@@ -1,4 +1,5 @@
 name: Package
+run-name: Package ${{ github.sha }} by @${{ github.actor }}
 
 on: 
   workflow_dispatch:
