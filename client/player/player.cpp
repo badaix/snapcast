@@ -28,11 +28,22 @@
 // 3rd party headers
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-parameter"
+#if BOOST_VERSION >= 108000
 #if defined(__clang__) && (__clang_major__ >= 13) && !((__clang_major__ == 13) && (__clang_minor__ == 0) && (__clang_patchlevel__ == 0))
 #pragma GCC diagnostic ignored "-Wunused-but-set-variable"
 #endif
 #pragma GCC diagnostic ignored "-Wpedantic"
 #include <boost/process/v2.hpp>
+#else
+#pragma GCC diagnostic ignored "-Wpragmas"
+#pragma GCC diagnostic ignored "-Wunused-result"
+#pragma GCC diagnostic ignored "-Wmissing-braces"
+#pragma GCC diagnostic ignored "-Wnarrowing"
+#pragma GCC diagnostic ignored "-Wc++11-narrowing"
+#include <boost/process/args.hpp>
+#include <boost/process/child.hpp>
+#include <boost/process/exe.hpp>
+#endif
 #pragma GCC diagnostic pop
 
 // standard headers
@@ -233,6 +244,8 @@ void Player::setVolume(const Volume& volume)
     }
     else if (settings_.mixer.mode == ClientSettings::Mixer::Mode::script)
     {
+#if BOOST_VERSION >= 108000
+        // Use Boost process v2 if Boost >= 1.80.0 is available
         static std::optional<Volume> pending_volume_setting;
         static bool script_running = false;
         if (script_running)
@@ -268,6 +281,19 @@ void Player::setVolume(const Volume& volume)
                 LOG(ERROR, LOG_TAG) << "Failed to run script '" + settings_.mixer.parameter + "', error: " << e.what() << "\n";
             }
         }
+#else
+        // Use Boost process v1
+        try
+        {
+            using namespace boost::process;
+            child c(exe = settings_.mixer.parameter, args = {"--volume", cpt::to_string(volume), "--mute", mute ? "true" : "false"});
+            c.detach();
+        }
+        catch (const std::exception& e)
+        {
+            LOG(ERROR, LOG_TAG) << "Failed to run script '" + settings_.mixer.parameter + "', error: " << e.what() << "\n";
+        }
+#endif
     }
 }
 
