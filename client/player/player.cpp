@@ -28,7 +28,9 @@
 // 3rd party headers
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-parameter"
+#if defined(__clang__) && (__clang_major__ >= 13)
 #pragma GCC diagnostic ignored "-Wunused-but-set-variable"
+#endif
 #pragma GCC diagnostic ignored "-Wpedantic"
 #include <boost/process/v2.hpp>
 #pragma GCC diagnostic pop
