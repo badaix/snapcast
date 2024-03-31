@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2022  Johannes Pohl
+    Copyright (C) 2014-2024  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -45,16 +45,21 @@ namespace player
  */
 class Player
 {
-    using volume_callback = std::function<void(double volume, bool muted)>;
-
 public:
+    struct Volume
+    {
+        double volume{1.0};
+        bool mute{false};
+    };
+
+    using volume_callback = std::function<void(const Volume& volume)>;
+
     Player(boost::asio::io_context& io_context, const ClientSettings::Player& settings, std::shared_ptr<Stream> stream);
     virtual ~Player();
 
     /// Set audio volume in range [0..1]
-    /// @param volume the volume on range [0..1]
-    /// @param muted muted or not
-    virtual void setVolume(double volume, bool mute);
+    /// @param volume the volume on range [0..1], muted or not
+    virtual void setVolume(const Volume& volume);
 
     /// Called on start, before the first audio sample is sent or any other function is called.
     /// In case of hardware mixer, it will call getVolume and notify the server about the current volume
@@ -74,15 +79,14 @@ protected:
     virtual bool needsThread() const = 0;
 
     /// get the hardware mixer volume
-    /// @param[out] volume the volume on range [0..1]
-    /// @param[out] muted muted or not
+    /// @param[out] volume the volume on range [0..1], muted or not
     /// @return success or not
-    virtual bool getHardwareVolume(double& volume, bool& muted);
+    virtual bool getHardwareVolume(Volume& volume);
 
     /// set the hardware mixer volume
-    /// @param volume the volume on range [0..1]
+    /// @param volume the volume on range [0..1], muted or not
     /// @param muted muted or not
-    virtual void setHardwareVolume(double volume, bool muted);
+    virtual void setHardwareVolume(const Volume& volume);
 
     void setVolume_poly(double volume, double exp);
     void setVolume_exp(double volume, double base);
@@ -92,10 +96,10 @@ protected:
     /// Notify the server about hardware volume changes
     /// @param volume the volume in range [0..1]
     /// @param muted if muted or not
-    void notifyVolumeChange(double volume, bool muted) const
+    void notifyVolumeChange(const Volume& volume) const
     {
         if (onVolumeChanged_)
-            onVolumeChanged_(volume, muted);
+            onVolumeChanged_(volume);
     }
 
     boost::asio::io_context& io_context_;
@@ -103,8 +107,7 @@ protected:
     std::shared_ptr<Stream> stream_;
     std::thread playerThread_;
     ClientSettings::Player settings_;
-    double volume_;
-    bool muted_;
+    Player::Volume volume_;
     double volCorrection_;
     volume_callback onVolumeChanged_;
     mutable std::mutex mutex_;
@@ -118,6 +121,16 @@ private:
             bufferT[n] = endian::swap<T>(static_cast<T>(endian::swap<T>(bufferT[n]) * volume));
     }
 };
+
+inline bool operator==(const Player::Volume& lhs, const Player::Volume& rhs)
+{
+    return ((lhs.volume == rhs.volume) && (lhs.mute == rhs.mute));
+}
+
+inline bool operator!=(const Player::Volume& lhs, const Player::Volume& rhs)
+{
+    return !(lhs == rhs);
+}
 
 } // namespace player
 

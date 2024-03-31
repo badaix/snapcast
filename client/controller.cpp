@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2023  Johannes Pohl
+    Copyright (C) 2014-2024  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -161,7 +161,7 @@ void Controller::getNextMessage()
                                << ", volume: " << serverSettings_->getVolume() << ", muted: " << serverSettings_->isMuted() << "\n";
             if (stream_ && player_)
             {
-                player_->setVolume(serverSettings_->getVolume() / 100., serverSettings_->isMuted());
+                player_->setVolume({serverSettings_->getVolume() / 100., serverSettings_->isMuted()});
                 stream_->setBufferLen(std::max(0, serverSettings_->getBufferMs() - serverSettings_->getLatency() - settings_.player.latency));
             }
         }
@@ -228,17 +228,15 @@ void Controller::getNextMessage()
                 throw SnapException("No audio player support" + (settings_.player.player_name.empty() ? "" : " for: " + settings_.player.player_name));
 
             player_->setVolumeCallback(
-                [this](double volume, bool muted)
+                [this](const Player::Volume& volume)
                 {
-                static double last_volume(-1);
-                static bool last_muted(true);
-                if ((volume != last_volume) || (last_muted != muted))
+                static Player::Volume last_volume{-1, true};
+                if (volume != last_volume)
                 {
                     last_volume = volume;
-                    last_muted = muted;
                     auto info = std::make_shared<msg::ClientInfo>();
-                    info->setVolume(static_cast<uint16_t>(volume * 100.));
-                    info->setMuted(muted);
+                    info->setVolume(static_cast<uint16_t>(volume.volume * 100.));
+                    info->setMuted(volume.mute);
                     clientConnection_->send(info,
                                             [this](const boost::system::error_code& ec)
                                             {
@@ -256,7 +254,7 @@ void Controller::getNextMessage()
             // The player class will send the device's volume to the server instead
             // if (settings_.player.mixer.mode != ClientSettings::Mixer::Mode::hardware)
             // {
-            player_->setVolume(serverSettings_->getVolume() / 100., serverSettings_->isMuted());
+            player_->setVolume({serverSettings_->getVolume() / 100., serverSettings_->isMuted()});
             // }
         }
         else

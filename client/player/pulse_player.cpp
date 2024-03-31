@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2021  Johannes Pohl
+    Copyright (C) 2014-2024  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -219,7 +219,7 @@ void PulsePlayer::worker()
     }
 }
 
-void PulsePlayer::setHardwareVolume(double volume, bool muted)
+void PulsePlayer::setHardwareVolume(const Volume& volume)
 {
     // if we're not connected to pulse, ignore the hardware volume change as the volume will be set upon reconnect
     if (playstream_ == nullptr)
@@ -227,21 +227,20 @@ void PulsePlayer::setHardwareVolume(double volume, bool muted)
 
     last_change_ = std::chrono::steady_clock::now();
     pa_cvolume cvolume;
-    if (muted)
+    if (volume.mute)
         pa_cvolume_set(&cvolume, stream_->getFormat().channels(), PA_VOLUME_MUTED);
     else
-        pa_cvolume_set(&cvolume, stream_->getFormat().channels(), volume * PA_VOLUME_NORM);
+        pa_cvolume_set(&cvolume, stream_->getFormat().channels(), volume.volume * PA_VOLUME_NORM);
     pa_context_set_sink_input_volume(pa_ctx_, pa_stream_get_index(playstream_), &cvolume, nullptr, nullptr);
 }
 
 
-bool PulsePlayer::getHardwareVolume(double& volume, bool& muted)
+bool PulsePlayer::getHardwareVolume(Volume& volume)
 {
     // This is called during start to send the initial volume to the server
     // Because getting the volume works async, we return false here
     // and instead trigger volume notification in pa_context_subscribe
     std::ignore = volume;
-    std::ignore = muted;
     return false;
 }
 
@@ -257,9 +256,9 @@ void PulsePlayer::triggerVolumeUpdate()
         if (info != nullptr)
         {
             auto* self = static_cast<PulsePlayer*>(userdata);
-            self->volume_ = static_cast<double>(pa_cvolume_avg(&(info->volume))) / static_cast<double>(PA_VOLUME_NORM);
-            self->muted_ = (info->mute != 0);
-            LOG(DEBUG, LOG_TAG) << "Volume changed: " << self->volume_ << ", muted: " << self->muted_ << "\n";
+            self->volume_.volume = static_cast<double>(pa_cvolume_avg(&(info->volume))) / static_cast<double>(PA_VOLUME_NORM);
+            self->volume_.mute = (info->mute != 0);
+            LOG(DEBUG, LOG_TAG) << "Volume changed: " << self->volume_.volume << ", muted: " << self->volume_.mute << "\n";
 
             auto now = std::chrono::steady_clock::now();
             if (now - self->last_change_ < 1s)
@@ -269,7 +268,7 @@ void PulsePlayer::triggerVolumeUpdate()
                                     << " ms => ignoring volume change\n";
                 return;
             }
-            self->notifyVolumeChange(self->volume_, self->muted_);
+            self->notifyVolumeChange(self->volume_);
         }
         },
         this);
