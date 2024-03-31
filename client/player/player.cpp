@@ -28,7 +28,7 @@
 // 3rd party headers
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-parameter"
-#if defined(__clang__) && (__clang_major__ >= 13)
+#if defined(__clang__) && (__clang_major__ >= 13) && !((__clang_major__ == 13) && (__clang_minor__ == 0) && (__clang_patchlevel__ == 0))
 #pragma GCC diagnostic ignored "-Wunused-but-set-variable"
 #endif
 #pragma GCC diagnostic ignored "-Wpedantic"
