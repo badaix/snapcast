@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2022  Johannes Pohl
+    Copyright (C) 2014-2024  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -172,10 +172,14 @@ int main(int argc, char** argv)
         hw_mixer_supported = true;
 #endif
         std::shared_ptr<popl::Value<std::string>> mixer_mode;
+
+        std::string mixers = "software";
         if (hw_mixer_supported)
-            mixer_mode = op.add<Value<string>>("", "mixer", "software|hardware|script|none|?[:<options>]", "software");
-        else
-            mixer_mode = op.add<Value<string>>("", "mixer", "software|script|none|?[:<options>]", "software");
+            mixers += "|hardware";
+#ifdef SUPPORTS_VOLUME_SCRIPT
+        mixers += "|script";
+#endif
+        mixer_mode = op.add<Value<string>>("", "mixer", mixers + "|none|?[:<options>]", "software");
 
 // daemon settings
 #ifdef HAS_DAEMON
@@ -400,16 +404,26 @@ int main(int argc, char** argv)
             settings.player.mixer.mode = ClientSettings::Mixer::Mode::software;
         else if ((mode == "hardware") && hw_mixer_supported)
             settings.player.mixer.mode = ClientSettings::Mixer::Mode::hardware;
+#ifdef SUPPORTS_VOLUME_SCRIPT
         else if (mode == "script")
             settings.player.mixer.mode = ClientSettings::Mixer::Mode::script;
+#endif
         else if (mode == "none")
             settings.player.mixer.mode = ClientSettings::Mixer::Mode::none;
         else if ((mode == "?") || (mode == "help"))
         {
-            cout << "mixer can be one of 'software', " << (hw_mixer_supported ? "'hardware', " : "") << "'script', 'none'\n"
+            cout << "mixer can be one of 'software', " << (hw_mixer_supported ? "'hardware', " : "")
+#ifdef SUPPORTS_VOLUME_SCRIPT
+                 << "'script', "
+#endif
+                 << "'none'\n"
                  << "followed by optional parameters:\n"
                  << " * software[:poly[:<exponent>]|exp[:<base>]]\n"
-                 << (hw_mixer_supported ? " * hardware[:<mixer name>]\n" : "") << " * script[:<script filename>]\n";
+                 << (hw_mixer_supported ? " * hardware[:<mixer name>]\n" : "")
+#ifdef SUPPORTS_VOLUME_SCRIPT
+                 << " * script[:<script filename>]"
+#endif
+                 << "\n";
             exit(EXIT_SUCCESS);
         }
         else

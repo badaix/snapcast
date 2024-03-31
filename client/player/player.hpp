@@ -36,6 +36,10 @@
 #include <thread>
 #include <vector>
 
+#if (BOOST_VERSION >= 108000 && !defined(WINDOWS))
+#define SUPPORTS_VOLUME_SCRIPT
+#endif
+
 namespace player
 {
 
