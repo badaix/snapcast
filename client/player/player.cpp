@@ -33,8 +33,7 @@
 #pragma GCC diagnostic ignored "-Wunused-but-set-variable"
 #endif
 #pragma GCC diagnostic ignored "-Wpedantic"
-#include <boost/process/v2/execute.hpp>
-#include <boost/process/v2/process.hpp>
+#include <boost/process/v2.hpp>
 #pragma GCC diagnostic pop
 #endif
 
