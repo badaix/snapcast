@@ -35,8 +35,8 @@
 #pragma GCC diagnostic ignored "-Wpedantic"
 #include <boost/process/v2/execute.hpp>
 #include <boost/process/v2/process.hpp>
-#endif
 #pragma GCC diagnostic pop
+#endif
 
 // standard headers
 #include <cmath>
