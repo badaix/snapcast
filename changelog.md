@@ -1,10 +1,11 @@
 # Snapcast changelog
 
-## Version 0.28.0-beta.1
+## Version 0.28.0-beta.2
 
 ### Features
 
 - Server: Use filename as title for FileStreams
+- Client: Loop through resolved server IPs during connect (Issue #1216)
 
 ### Bugfixes
 
@@ -12,8 +13,12 @@
 - Server: Check open syscall error in PipeStream::do_connect (PR #1150)
 - Server: Tweak Airplay support (#1102)
 - Server: Lower log severity for shairport-sync (Issue #891)
-- Server: Emits notifications for streams with codec=null (Issue #1205)
+- Server: Emits notifications for streams with codec=null (Is11sue #1205)
+- Server: Fix delayed switching of meta streams (Issue #1187)
+- Server: Mixer script calls piling up (Issue #1174)
+- Server: Mixer script creates zombie processes (Issue #1157)
 - Improve connect handling in meta_mopidy.py
+- Improve connect handling in meta_librespot-java.py
 - Fix cppcheck issues
 
 ### General
