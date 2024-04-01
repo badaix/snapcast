@@ -28,12 +28,16 @@
 // 3rd party headers
 #ifdef SUPPORTS_VOLUME_SCRIPT
 #pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wpragmas"
+#pragma GCC diagnostic ignored "-Wunused-result"
 #pragma GCC diagnostic ignored "-Wunused-parameter"
-#if defined(__clang__) && (__clang_major__ >= 13) && !((__clang_major__ == 13) && (__clang_minor__ == 0) && (__clang_patchlevel__ == 0))
-#pragma GCC diagnostic ignored "-Wunused-but-set-variable"
-#endif
-#pragma GCC diagnostic ignored "-Wpedantic"
-#include <boost/process/v2.hpp>
+#pragma GCC diagnostic ignored "-Wmissing-braces"
+#pragma GCC diagnostic ignored "-Wnarrowing"
+#pragma GCC diagnostic ignored "-Wc++11-narrowing"
+#include <boost/process/args.hpp>
+#include <boost/process/async.hpp>
+#include <boost/process/child.hpp>
+#include <boost/process/exe.hpp>
 #pragma GCC diagnostic pop
 #endif
 
@@ -245,30 +249,40 @@ void Player::setVolume(const Volume& volume)
         }
         else
         {
-            try
+            static std::optional<Volume> pending_volume_setting;
+            static boost::process::child c;
+            if (c.running())
             {
-                namespace procv2 = boost::process::v2;
-                script_running = true;
-                procv2::async_execute(procv2::process(io_context_, settings_.mixer.parameter,
-                                                      {"--volume", cpt::to_string(volume.volume), "--mute", volume.mute ? "true" : "false"}),
-                                      [&](boost::system::error_code ec, int ret_val)
-                                      {
-                    std::unique_lock<std::mutex> lock(mutex_);
-                    LOG(DEBUG, LOG_TAG) << "Error code: " << ec.message() << ", i: " << ret_val << "\n";
-                    script_running = false;
-                    if (pending_volume_setting.has_value())
-                    {
-                        Volume v = pending_volume_setting.value();
-                        pending_volume_setting = std::nullopt;
-                        lock.unlock();
-                        setVolume(v);
-                    }
-                });
+                pending_volume_setting = volume;
+                LOG(DEBUG, LOG_TAG) << "Volume script still running, deferring this volume setting\n";
             }
-            catch (const std::exception& e)
+            else
             {
-                script_running = false;
-                LOG(ERROR, LOG_TAG) << "Failed to run script '" + settings_.mixer.parameter + "', error: " << e.what() << "\n";
+                try
+                {
+                    namespace bp = boost::process;
+                    c = bp::child(bp::exe = settings_.mixer.parameter,
+                                  bp::args = {"--volume", cpt::to_string(volume.volume), "--mute", volume.mute ? "true" : "false"},
+                                  bp::on_exit(
+                                      [&](int ret_val, std::error_code ec)
+                                      {
+                        std::unique_lock<std::mutex> lock(mutex_);
+                        LOG(DEBUG, LOG_TAG) << "Error code: " << ec.message() << ", i: " << ret_val << "\n";
+                        if (pending_volume_setting.has_value())
+                        {
+                            Volume v = pending_volume_setting.value();
+                            pending_volume_setting = std::nullopt;
+                            lock.unlock();
+                            setVolume(v);
+                        }
+                                  }),
+                                  io_context_);
+                }
+                catch (const std::exception& e)
+                {
+                    script_running = false;
+                    LOG(ERROR, LOG_TAG) << "Failed to run script '" + settings_.mixer.parameter + "', error: " << e.what() << "\n";
+                }
             }
         }
 #else

@@ -36,7 +36,7 @@
 #include <thread>
 #include <vector>
 
-#if (BOOST_VERSION >= 108000 && !defined(WINDOWS))
+#if !defined(WINDOWS)
 #define SUPPORTS_VOLUME_SCRIPT
 #endif
 
