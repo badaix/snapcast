@@ -101,6 +101,9 @@ protected:
     static void XMLCALL element_end(void* userdata, const char* element_name);
     static void XMLCALL data(void* userdata, const char* content, int length);
 #endif
+
+private:
+    AixLog::Severity read_logseverity_{AixLog::Severity::info};
 };
 
 } // namespace streamreader

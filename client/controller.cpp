@@ -230,6 +230,7 @@ void Controller::getNextMessage()
             player_->setVolumeCallback(
                 [this](const Player::Volume& volume)
                 {
+                // Cache the last volume and check if it really changed in the player's volume callback
                 static Player::Volume last_volume{-1, true};
                 if (volume != last_volume)
                 {

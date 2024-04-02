@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2023  Johannes Pohl
+    Copyright (C) 2014-2024  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -251,7 +251,7 @@ void ControlSessionHttp::handle_request(http::request<Body, http::basic_fields<A
     if (target.empty() || target[0] != '/' || target.find("..") != beast::string_view::npos)
         return send(bad_request("Illegal request-target"));
 
-    static string image_cache_target = "/__image_cache?name=";
+    static const string image_cache_target = "/__image_cache?name=";
     auto pos = target.find(image_cache_target);
     if (pos != std::string::npos)
     {

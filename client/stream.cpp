@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2021  Johannes Pohl
+    Copyright (C) 2014-2024  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -20,12 +20,18 @@
 #define NOMINMAX
 #endif // NOMINMAX
 
+// prototype/interface header file
 #include "stream.hpp"
+
+// local headers
 #include "common/aixlog.hpp"
 #include "common/snap_exception.hpp"
 #include "common/str_compat.hpp"
-#include "common/utils/logging.hpp"
 #include "time_provider.hpp"
+
+// 3rd party headers
+
+// standard headers
 #include <cmath>
 #include <cstring>
 #include <iostream>
@@ -41,7 +47,7 @@ static constexpr auto kCorrectionBegin = 100us;
 
 Stream::Stream(const SampleFormat& in_format, const SampleFormat& out_format)
     : in_format_(in_format), median_(0), shortMedian_(0), lastUpdate_(0), playedFrames_(0), correctAfterXFrames_(0), bufferMs_(cs::msec(500)), frame_delta_(0),
-      hard_sync_(true)
+      hard_sync_(true), time_cond_(1s)
 {
     buffer_.setSize(500);
     shortBuffer_.setSize(100);
@@ -459,8 +465,7 @@ bool Stream::getPlayerChunkOrSilence(void* outputBuffer, const chronos::usec& ou
     bool result = getPlayerChunk(outputBuffer, outputBufferDacTime, frames);
     if (!result)
     {
-        static utils::logging::TimeConditional cond(1s);
-        LOG(DEBUG, LOG_TAG) << cond << "Failed to get chunk, returning silence\n";
+        LOG(DEBUG, LOG_TAG) << time_cond_ << "Failed to get chunk, returning silence\n";
         getSilentPlayerChunk(outputBuffer, frames);
     }
     return result;

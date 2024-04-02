@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2023  Johannes Pohl
+    Copyright (C) 2014-2024  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -25,6 +25,7 @@
 #include "common/queue.h"
 #include "common/resampler.hpp"
 #include "common/sample_format.hpp"
+#include "common/utils/logging.hpp"
 #include "double_buffer.hpp"
 
 // 3rd party headers
@@ -134,6 +135,9 @@ private:
     mutable std::mutex mutex_;
 
     bool hard_sync_;
+
+    /// Log "failed to get chunk" only once per second
+    utils::logging::TimeConditional time_cond_;
 };
 
 

@@ -240,49 +240,39 @@ void Player::setVolume(const Volume& volume)
     else if (settings_.mixer.mode == ClientSettings::Mixer::Mode::script)
     {
 #ifdef SUPPORTS_VOLUME_SCRIPT
-        static std::optional<Volume> pending_volume_setting;
-        static bool script_running = false;
-        if (script_running)
+        static std::optional<Volume> pending_volume_change;
+        static boost::process::child mixer_script_process;
+        if (mixer_script_process.running())
         {
-            pending_volume_setting = volume;
-            LOG(DEBUG, LOG_TAG) << "Volume script still running, deferring this volume setting\n";
+            pending_volume_change = volume;
+            LOG(DEBUG, LOG_TAG) << "Volume mixer script still running, deferring this volume change\n";
         }
         else
         {
-            static std::optional<Volume> pending_volume_setting;
-            static boost::process::child c;
-            if (c.running())
+            try
             {
-                pending_volume_setting = volume;
-                LOG(DEBUG, LOG_TAG) << "Volume script still running, deferring this volume setting\n";
+                namespace bp = boost::process;
+                mixer_script_process = bp::child(bp::exe = settings_.mixer.parameter,
+                                                 bp::args = {"--volume", cpt::to_string(volume.volume), "--mute", volume.mute ? "true" : "false"},
+                                                 bp::on_exit(
+                                                     [&](int ret_val, std::error_code ec)
+                                                     {
+                    std::unique_lock<std::mutex> lock(mutex_);
+                    LOG(DEBUG, LOG_TAG) << "Error code: " << ec.message() << ", i: " << ret_val << "\n";
+                    if (pending_volume_change.has_value())
+                    {
+                        Volume v = pending_volume_change.value();
+                        pending_volume_change = std::nullopt;
+                        lock.unlock();
+                        setVolume(v);
+                    }
+                                                 }),
+                                                 io_context_);
             }
-            else
+            catch (const std::exception& e)
             {
-                try
-                {
-                    namespace bp = boost::process;
-                    c = bp::child(bp::exe = settings_.mixer.parameter,
-                                  bp::args = {"--volume", cpt::to_string(volume.volume), "--mute", volume.mute ? "true" : "false"},
-                                  bp::on_exit(
-                                      [&](int ret_val, std::error_code ec)
-                                      {
-                        std::unique_lock<std::mutex> lock(mutex_);
-                        LOG(DEBUG, LOG_TAG) << "Error code: " << ec.message() << ", i: " << ret_val << "\n";
-                        if (pending_volume_setting.has_value())
-                        {
-                            Volume v = pending_volume_setting.value();
-                            pending_volume_setting = std::nullopt;
-                            lock.unlock();
-                            setVolume(v);
-                        }
-                                  }),
-                                  io_context_);
-                }
-                catch (const std::exception& e)
-                {
-                    script_running = false;
-                    LOG(ERROR, LOG_TAG) << "Failed to run script '" + settings_.mixer.parameter + "', error: " << e.what() << "\n";
-                }
+                LOG(ERROR, LOG_TAG) << "Failed to run script '" + settings_.mixer.parameter + "', error: " << e.what() << "\n";
+                pending_volume_change = std::nullopt;
             }
         }
 #else

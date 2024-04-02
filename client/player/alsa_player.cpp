@@ -659,6 +659,7 @@ void AlsaPlayer::worker()
             LOG(INFO, LOG_TAG) << "Failed to get chunk\n";
             while (active_ && !stream_->waitForChunk(100ms))
             {
+                // Log "Waiting for chunk" only every second second
                 static utils::logging::TimeConditional cond(2s);
                 LOG(DEBUG, LOG_TAG) << cond << "Waiting for chunk\n";
                 if ((handle_ != nullptr) && (chronos::getTickCount() - lastChunkTick > 5000))
