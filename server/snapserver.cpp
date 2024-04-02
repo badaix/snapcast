@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2023  Johannes Pohl
+    Copyright (C) 2014-2024  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -21,10 +21,7 @@
 #ifdef HAS_DAEMON
 #include "common/daemon.hpp"
 #endif
-#include "common/message/message.hpp"
-#include "common/sample_format.hpp"
 #include "common/snap_exception.hpp"
-#include "common/time_defs.hpp"
 #include "common/utils/string_utils.hpp"
 #include "common/version.hpp"
 #include "encoder/encoder_factory.hpp"
@@ -291,14 +288,18 @@ int main(int argc, char* argv[])
         if (settings.http.enabled)
         {
             dns_services.emplace_back("_snapcast-http._tcp", settings.http.port);
+        }
+        publishZeroConfg->publish(dns_services);
+#endif
+        if (settings.http.enabled)
+        {
             if ((settings.http.host == "<hostname>") || settings.http.host.empty())
             {
                 settings.http.host = boost::asio::ip::host_name();
                 LOG(INFO, LOG_TAG) << "Using HTTP host name: " << settings.http.host << "\n";
             }
         }
-        publishZeroConfg->publish(dns_services);
-#endif
+
         if (settings.stream.streamChunkMs < 10)
         {
             LOG(WARNING, LOG_TAG) << "Stream read chunk size is less than 10ms, changing to 10ms\n";
