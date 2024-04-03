@@ -25,6 +25,7 @@
 #include "common/snap_exception.hpp"
 
 // standard headers
+#include <deque>
 #include <iostream>
 #ifdef WINDOWS
 #include <WinSock2.h>
