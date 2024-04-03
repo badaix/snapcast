@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2021  Johannes Pohl
+    Copyright (C) 2014-2024  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -16,17 +16,19 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
+// prototype/interface header file
 #include "daemon.hpp"
 
+// local headers
 #include "common/snap_exception.hpp"
 #include "common/str_compat.hpp"
-#include "common/utils.hpp"
 #include "common/utils/file_utils.hpp"
+
+// standard headers
 #include <cstdlib>
 #include <cstring>
 #include <fcntl.h>
 #include <grp.h>
-#include <iostream>
 #include <pwd.h>
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -102,14 +104,14 @@ void Daemon::daemonize()
     if (user_gid != static_cast<gid_t>(-1) && user_gid != getgid() && setgid(user_gid) == -1)
         throw SnapException("Failed to set group " + cpt::to_string(static_cast<int>(user_gid)));
 
-    //#if defined(FREEBSD) && !defined(MACOS)
-    //#ifdef FREEBSD
+    // #if defined(FREEBSD) && !defined(MACOS)
+    // #ifdef FREEBSD
     /// init supplementary groups
     /// (must be done before we change our uid)
     /// no need to set the new user's supplementary groups if we are already this user
     //	if (!had_group && user_uid != getuid() && initgroups(user_name, user_gid) == -1)
     //		throw SnapException("Failed to set supplementary groups of user \"" + user + "\"");
-    //#endif
+    // #endif
     /// set uid
     if (user_uid != static_cast<uid_t>(-1) && user_uid != getuid() && setuid(user_uid) == -1)
         throw SnapException("Failed to set user " + user_);

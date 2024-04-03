@@ -16,8 +16,7 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
-#ifndef PULSE_PLAYER_HPP
-#define PULSE_PLAYER_HPP
+#pragma once
 
 // local headers
 #include "player.hpp"
@@ -91,5 +90,3 @@ protected:
 };
 
 } // namespace player
-
-#endif

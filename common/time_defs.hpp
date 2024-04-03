@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2020  Johannes Pohl
+    Copyright (C) 2014-2024  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -16,9 +16,10 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
-#ifndef TIME_DEFS_H
-#define TIME_DEFS_H
+#pragma once
 
+
+// standard headers
 #include <chrono>
 #include <thread>
 #ifdef MACOS
@@ -33,6 +34,7 @@
 #include <stdint.h>
 #include <winsock2.h>
 #endif
+
 
 namespace chronos
 {
@@ -159,6 +161,3 @@ inline void usleep(const int32_t& microseconds)
     sleep(usec(microseconds));
 }
 } // namespace chronos
-
-
-#endif

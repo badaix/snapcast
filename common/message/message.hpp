@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2023  Johannes Pohl
+    Copyright (C) 2014-2024  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -16,8 +16,7 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
-#ifndef MESSAGE_MESSAGE_HPP
-#define MESSAGE_MESSAGE_HPP
+#pragma once
 
 // local headers
 #include "common/endian.hpp"
@@ -32,7 +31,6 @@
 #include <sys/time.h>
 #endif
 #include <memory>
-#include <vector>
 
 /*
 template<typename CharT, typename TraitsT = std::char_traits<CharT> >
@@ -344,5 +342,3 @@ protected:
 };
 
 } // namespace msg
-
-#endif

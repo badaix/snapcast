@@ -16,8 +16,7 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
-#ifndef ALSA_PLAYER_HPP
-#define ALSA_PLAYER_HPP
+#pragma once
 
 // local headers
 #include "player.hpp"
@@ -30,6 +29,7 @@
 // standard headers
 #include <chrono>
 #include <optional>
+#include <vector>
 
 
 namespace player
@@ -94,5 +94,3 @@ private:
 };
 
 } // namespace player
-
-#endif

@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2020  Johannes Pohl
+    Copyright (C) 2014-2024  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -16,21 +16,16 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
-#ifndef UTILS_H
-#define UTILS_H
+#pragma once
 
-#include "common/str_compat.hpp"
+
+// local headers
 #include "common/utils/string_utils.hpp"
 
-#include <cctype>
-#include <cerrno>
-// #include <chrono>
+// standard headers
 #include <cstring>
 #include <fstream>
-#include <functional>
 #include <iomanip>
-#include <iterator>
-#include <locale>
 #include <memory>
 #ifndef WINDOWS
 #include <net/if.h>
@@ -43,7 +38,6 @@
 #include <string>
 #include <sys/stat.h>
 #include <sys/types.h>
-#include <vector>
 #if !defined(WINDOWS) && !defined(FREEBSD)
 #include <sys/sysinfo.h>
 #endif
@@ -463,6 +457,3 @@ static std::string getHostId(const std::string& defaultId = "")
     /// The host name should be unique enough in a LAN
     return getHostName();
 }
-
-
-#endif

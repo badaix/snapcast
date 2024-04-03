@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2020  Johannes Pohl
+    Copyright (C) 2014-2024  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -15,19 +15,21 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
-#ifndef BROWSEAVAHI_H
-#define BROWSEAVAHI_H
 
+#pragma once
+
+class BrowseAvahi;
+
+// local headers
+#include "browse_mdns.hpp"
+
+// 3rd party headers
 #include <avahi-client/client.h>
 #include <avahi-client/lookup.h>
-
 #include <avahi-common/error.h>
 #include <avahi-common/malloc.h>
 #include <avahi-common/simple-watch.h>
 
-class BrowseAvahi;
-
-#include "browse_mdns.hpp"
 
 class BrowseAvahi : public BrowsemDNS
 {
@@ -49,5 +51,3 @@ private:
     mDNSResult result_;
     AvahiServiceBrowser* sb_;
 };
-
-#endif

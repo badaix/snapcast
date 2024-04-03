@@ -30,7 +30,6 @@
 #include <pulse/proplist.h>
 
 // standard headers
-#include <cassert>
 #include <iostream>
 
 

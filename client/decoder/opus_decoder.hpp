@@ -1,6 +1,7 @@
 /***
         This file is part of snapcast
         Copyright (C) 2015  Hannes Ellinger
+        Copyright (C) 2016-2024  Johannes Pohl
 
         This program is free software: you can redistribute it and/or modify
         it under the terms of the GNU General Public License as published by
@@ -18,8 +19,15 @@
 
 #pragma once
 
+// local headers
 #include "decoder/decoder.hpp"
+
+// 3rd party headers
 #include <opus/opus.h>
+
+// standard headers
+#include <vector>
+
 
 namespace decoder
 {

@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2023  Johannes Pohl
+    Copyright (C) 2014-2024  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -16,12 +16,11 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
-#ifndef STREAM_SESSION_HPP
-#define STREAM_SESSION_HPP
+#pragma once
+
 
 // local headers
 #include "common/message/message.hpp"
-#include "common/queue.h"
 #include "streamreader/stream_manager.hpp"
 
 // 3rd party headers
@@ -30,12 +29,9 @@
 #include <boost/asio/strand.hpp>
 
 // standard headers
-#include <atomic>
-#include <condition_variable>
 #include <deque>
 #include <memory>
 #include <mutex>
-#include <set>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -166,7 +162,3 @@ protected:
     std::deque<shared_const_buffer> messages_;
     mutable std::mutex mutex_;
 };
-
-
-
-#endif

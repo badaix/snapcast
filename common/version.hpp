@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2021  Johannes Pohl
+    Copyright (C) 2014-2024  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -16,10 +16,12 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
-#ifndef VERSION_HPP
-#define VERSION_HPP
+#pragma once
 
+
+// standard headers
 #include <string>
+
 
 namespace version
 {
@@ -46,5 +48,3 @@ static std::string rev(std::size_t len = 0)
 }
 
 } // namespace version
-
-#endif

@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2022  Johannes Pohl
+    Copyright (C) 2014-2024  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -16,11 +16,12 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
-#ifndef CONTROL_SESSION_HTTP_HPP
-#define CONTROL_SESSION_HTTP_HPP
+#pragma once
+
 
 // local headers
 #include "control_session.hpp"
+#include "server_settings.hpp"
 
 // 3rd party headers
 #include <boost/beast/core.hpp>
@@ -77,7 +78,3 @@ protected:
     ServerSettings::Http settings_;
     std::deque<std::string> messages_;
 };
-
-
-
-#endif

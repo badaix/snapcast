@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2023  Johannes Pohl
+    Copyright (C) 2014-2024  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -16,13 +16,11 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
-#ifndef CONTROLLER_HPP
-#define CONTROLLER_HPP
+#pragma once
 
 // local headers
 #include "client_connection.hpp"
 #include "client_settings.hpp"
-#include "common/message/message.hpp"
 #include "common/message/server_settings.hpp"
 #include "decoder/decoder.hpp"
 #include "player/player.hpp"
@@ -31,8 +29,7 @@
 // 3rd party headers
 
 // standard headers
-#include <atomic>
-#include <thread>
+
 
 using namespace std::chrono_literals;
 
@@ -75,6 +72,3 @@ private:
     std::unique_ptr<msg::ServerSettings> serverSettings_;
     std::unique_ptr<msg::CodecHeader> headerChunk_;
 };
-
-
-#endif

@@ -21,8 +21,6 @@
 
 // local headers
 #include "common/aixlog.hpp"
-#include "common/message/hello.hpp"
-#include "common/snap_exception.hpp"
 #include "common/str_compat.hpp"
 
 // 3rd party headers
@@ -32,7 +30,6 @@
 
 // standard headers
 #include <iostream>
-#include <mutex>
 
 
 using namespace std;

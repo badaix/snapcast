@@ -37,7 +37,6 @@
 #include "common/aixlog.hpp"
 #include "common/snap_exception.hpp"
 #include "common/str_compat.hpp"
-#include "common/utils.hpp"
 #include "common/version.hpp"
 
 // 3rd party headers
@@ -45,7 +44,6 @@
 #include <boost/asio/signal_set.hpp>
 
 // standard headers
-#include <chrono>
 #include <iostream>
 #ifndef WINDOWS
 #include <csignal>

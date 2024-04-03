@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2021  Johannes Pohl
+    Copyright (C) 2014-2024  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -16,16 +16,17 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
+
+// local headers
+#include "sample_format.hpp"
+#include "common/snap_exception.hpp"
+#include "common/str_compat.hpp"
+#include "common/utils/string_utils.hpp"
+
+// standard headers
 #include <iostream>
 #include <sstream>
 #include <vector>
-
-#include "common/aixlog.hpp"
-#include "common/snap_exception.hpp"
-#include "common/str_compat.hpp"
-#include "common/utils.hpp"
-#include "common/utils/string_utils.hpp"
-#include "sample_format.hpp"
 
 
 using namespace std;

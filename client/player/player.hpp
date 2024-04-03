@@ -16,12 +16,10 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
-#ifndef PLAYER_HPP
-#define PLAYER_HPP
+#pragma once
 
 // local headers
 #include "client_settings.hpp"
-#include "common/aixlog.hpp"
 #include "common/endian.hpp"
 #include "stream.hpp"
 
@@ -32,9 +30,8 @@
 #include <atomic>
 #include <functional>
 #include <mutex>
-#include <string>
 #include <thread>
-#include <vector>
+
 
 #if !defined(WINDOWS)
 #define SUPPORTS_VOLUME_SCRIPT
@@ -137,5 +134,3 @@ inline bool operator!=(const Player::Volume& lhs, const Player::Volume& rhs)
 }
 
 } // namespace player
-
-#endif

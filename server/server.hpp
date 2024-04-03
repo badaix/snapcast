@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2023  Johannes Pohl
+    Copyright (C) 2014-2024  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -16,15 +16,12 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
-#ifndef SERVER_HPP
-#define SERVER_HPP
+#pragma once
+
 
 // local headers
-#include "common/message/codec_header.hpp"
 #include "common/message/message.hpp"
-#include "common/message/server_settings.hpp"
-#include "common/queue.h"
-#include "common/sample_format.hpp"
+#include "common/queue.hpp"
 #include "control_server.hpp"
 #include "jsonrpcpp.hpp"
 #include "server_settings.hpp"
@@ -38,10 +35,6 @@
 
 // standard headers
 #include <memory>
-#include <mutex>
-#include <set>
-#include <sstream>
-#include <vector>
 
 
 using namespace streamreader;
@@ -102,7 +95,3 @@ private:
     std::unique_ptr<StreamServer> streamServer_;
     std::unique_ptr<StreamManager> streamManager_;
 };
-
-
-
-#endif

@@ -408,7 +408,7 @@ bool Stream::getPlayerChunk(void* outputBuffer, const cs::usec& outputBufferDacT
             auto miniMedian = miniBuffer_.median();
             if ((cs::usec(shortMedian_) > kCorrectionBegin) && (cs::usec(miniMedian) > cs::usec(50)) && (cs::usec(age) > cs::usec(50)))
             {
-                double rate = (shortMedian_ / 100) * 0.00005;
+                double rate = (shortMedian_ / 100.) * 0.00005;
                 rate = 1.0 - std::min(rate, 0.0005);
                 // LOG(INFO, LOG_TAG) << "Rate: " << rate << "\n";
                 // we are late (age > 0), this means we are not playing fast enough
@@ -417,7 +417,7 @@ bool Stream::getPlayerChunk(void* outputBuffer, const cs::usec& outputBufferDacT
             }
             else if ((cs::usec(shortMedian_) < -kCorrectionBegin) && (cs::usec(miniMedian) < -cs::usec(50)) && (cs::usec(age) < -cs::usec(50)))
             {
-                double rate = (-shortMedian_ / 100) * 0.00005;
+                double rate = (-shortMedian_ / 100.) * 0.00005;
                 rate = 1.0 + std::min(rate, 0.0005);
                 // LOG(INFO, LOG_TAG) << "Rate: " << rate << "\n";
                 // we are early (age > 0), this means we are playing too fast

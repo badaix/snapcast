@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2023  Johannes Pohl
+    Copyright (C) 2014-2024 Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -16,8 +16,7 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
-#ifndef CLIENT_CONNECTION_HPP
-#define CLIENT_CONNECTION_HPP
+#pragma once
 
 // local headers
 #include "client_settings.hpp"
@@ -32,14 +31,9 @@
 #include <boost/asio/strand.hpp>
 
 // standard headers
-#include <atomic>
-#include <condition_variable>
 #include <deque>
 #include <memory>
-#include <mutex>
-#include <set>
 #include <string>
-#include <thread>
 
 
 using boost::asio::ip::tcp;
@@ -159,7 +153,3 @@ protected:
     };
     std::deque<PendingMessage> messages_;
 };
-
-
-
-#endif
