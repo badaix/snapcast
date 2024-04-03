@@ -28,6 +28,9 @@
 // 3rd party headers
 
 // standard headers
+#ifndef HAS_TREMOR
+#include <cmath> // floor
+#endif
 #include <cstdint>
 #include <cstring>
 
