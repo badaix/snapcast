@@ -19,6 +19,7 @@
 #pragma once
 
 // standard headers
+#include <cstdint>
 #include <string>
 
 enum IPVersion
