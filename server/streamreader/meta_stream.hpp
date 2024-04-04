@@ -16,8 +16,8 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
-#ifndef META_STREAM_HPP
-#define META_STREAM_HPP
+#pragma once
+
 
 // local headers
 #include "common/resampler.hpp"
@@ -84,5 +84,3 @@ protected:
 };
 
 } // namespace streamreader
-
-#endif

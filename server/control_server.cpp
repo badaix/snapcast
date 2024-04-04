@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2023  Johannes Pohl
+    Copyright (C) 2014-2024  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -21,18 +21,15 @@
 
 // local headers
 #include "common/aixlog.hpp"
-#include "common/message/time.hpp"
-#include "common/snap_exception.hpp"
-#include "common/utils.hpp"
-#include "config.hpp"
+#include "common/json.hpp"
 #include "control_session_http.hpp"
 #include "control_session_tcp.hpp"
-#include "jsonrpcpp.hpp"
 
 // 3rd party headers
 
 // standard headers
 #include <iostream>
+
 
 using namespace std;
 using json = nlohmann::json;

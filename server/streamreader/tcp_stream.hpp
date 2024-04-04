@@ -16,8 +16,8 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
-#ifndef TCP_STREAM_HPP
-#define TCP_STREAM_HPP
+#pragma once
+
 
 // local headers
 #include "asio_stream.hpp"
@@ -53,5 +53,3 @@ protected:
 };
 
 } // namespace streamreader
-
-#endif

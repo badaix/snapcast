@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2021  Johannes Pohl
+    Copyright (C) 2014-2024  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -16,8 +16,7 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
-#ifndef IMAGE_CACHE_HPP
-#define IMAGE_CACHE_HPP
+#pragma once
 
 
 // 3rd party headers
@@ -25,11 +24,9 @@
 #include <boost/uuid/detail/md5.hpp>
 
 // standard headers
-#include <iostream>
 #include <map>
 #include <mutex>
 #include <optional>
-#include <regex>
 #include <string>
 
 
@@ -95,6 +92,3 @@ private:
     std::map<std::string, std::string> url_to_data_;
     std::mutex mutex_;
 };
-
-
-#endif

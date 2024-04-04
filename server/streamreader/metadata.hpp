@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2021  Johannes Pohl
+    Copyright (C) 2014-2024  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -16,15 +16,16 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
-#ifndef METADATA_HPP
-#define METADATA_HPP
+#pragma once
 
-#include "common/aixlog.hpp"
+
+// local headers
 #include "common/json.hpp"
 
+// standard headers
 #include <optional>
-#include <set>
 #include <string>
+
 
 using json = nlohmann::json;
 
@@ -145,6 +146,3 @@ public:
     void fromJson(const json& j);
     bool operator==(const Metadata& other) const;
 };
-
-
-#endif

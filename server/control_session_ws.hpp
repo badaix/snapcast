@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2022  Johannes Pohl
+    Copyright (C) 2014-2024  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -16,8 +16,8 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
-#ifndef CONTROL_SESSION_WS_HPP
-#define CONTROL_SESSION_WS_HPP
+#pragma once
+
 
 // local headers
 #include "control_session.hpp"
@@ -73,7 +73,3 @@ protected:
     boost::asio::strand<boost::asio::any_io_executor> strand_;
     std::deque<std::string> messages_;
 };
-
-
-
-#endif

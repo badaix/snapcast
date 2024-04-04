@@ -24,10 +24,8 @@
 #ifdef HAS_ALSA
 #include "alsa_stream.hpp"
 #endif
-#include "common/aixlog.hpp"
 #include "common/snap_exception.hpp"
 #include "common/str_compat.hpp"
-#include "common/utils.hpp"
 #include "file_stream.hpp"
 #include "librespot_stream.hpp"
 #include "meta_stream.hpp"

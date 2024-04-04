@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2021  Johannes Pohl
+    Copyright (C) 2014-2024  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -16,17 +16,15 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
-#ifndef PROPERTIES_HPP
-#define PROPERTIES_HPP
+#pragma once
+
 
 // local headers
-#include "common/aixlog.hpp"
 #include "common/json.hpp"
 #include "metadata.hpp"
 
 // standard headers
 #include <optional>
-#include <set>
 #include <string>
 
 
@@ -191,6 +189,3 @@ public:
     void fromJson(const json& j);
     bool operator==(const Properties& other) const;
 };
-
-
-#endif

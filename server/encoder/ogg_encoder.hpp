@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2020  Johannes Pohl
+    Copyright (C) 2014-2024  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -16,11 +16,15 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
-#ifndef OGG_ENCODER_HPP
-#define OGG_ENCODER_HPP
+#pragma once
+
+// local headers
 #include "encoder.hpp"
+
+// 3rd party headers
 #include <ogg/ogg.h>
 #include <vorbis/vorbisenc.h>
+
 
 namespace encoder
 {
@@ -54,5 +58,3 @@ private:
 };
 
 } // namespace encoder
-
-#endif

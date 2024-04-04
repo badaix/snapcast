@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2022  Johannes Pohl
+    Copyright (C) 2014-2024  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -22,10 +22,7 @@
 // local headers
 #include "common/aixlog.hpp"
 #include "common/snap_exception.hpp"
-#include "common/str_compat.hpp"
 #include "common/utils/file_utils.hpp"
-#include "common/utils/string_utils.hpp"
-#include "encoder/encoder_factory.hpp"
 
 // 3rd party headers
 #include <boost/asio/read_until.hpp>

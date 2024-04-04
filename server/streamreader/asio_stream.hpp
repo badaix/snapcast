@@ -16,8 +16,8 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
-#ifndef ASIO_STREAM_HPP
-#define ASIO_STREAM_HPP
+#pragma once
+
 
 // local headers
 #include "common/aixlog.hpp"
@@ -30,7 +30,6 @@
 #include <boost/asio/steady_timer.hpp>
 
 // standard headers
-#include <atomic>
 
 
 namespace streamreader
@@ -268,5 +267,3 @@ void AsioStream<ReadStream>::do_read()
 }
 
 } // namespace streamreader
-
-#endif

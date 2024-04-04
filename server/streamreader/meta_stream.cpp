@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2021  Johannes Pohl
+    Copyright (C) 2014-2024  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -23,7 +23,6 @@
 #include "common/aixlog.hpp"
 #include "common/snap_exception.hpp"
 #include "common/utils/string_utils.hpp"
-#include "encoder/encoder_factory.hpp"
 
 
 using namespace std;

@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2022  Johannes Pohl
+    Copyright (C) 2014-2024  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -16,8 +16,8 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
-#ifndef STREAM_CONTROL_HPP
-#define STREAM_CONTROL_HPP
+#pragma once
+
 
 // local headers
 #include "jsonrpcpp.hpp"
@@ -111,7 +111,4 @@ protected:
     bp::opstream in_;
 };
 
-
 } // namespace streamreader
-
-#endif

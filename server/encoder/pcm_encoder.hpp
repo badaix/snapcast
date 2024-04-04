@@ -16,9 +16,11 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
-#ifndef PCM_ENCODER_HPP
-#define PCM_ENCODER_HPP
+#pragma once
+
+// local headers
 #include "encoder.hpp"
+
 
 namespace encoder
 {
@@ -35,5 +37,3 @@ protected:
 };
 
 } // namespace encoder
-
-#endif

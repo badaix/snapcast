@@ -16,8 +16,8 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
-#ifndef PROCESS_STREAM_HPP
-#define PROCESS_STREAM_HPP
+#pragma once
+
 
 // local headers
 #include "asio_stream.hpp"
@@ -26,7 +26,6 @@
 // standard headers
 #include <memory>
 #include <string>
-#include <vector>
 
 
 namespace bp = boost::process;
@@ -78,5 +77,3 @@ protected:
 };
 
 } // namespace streamreader
-
-#endif

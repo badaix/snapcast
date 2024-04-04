@@ -16,9 +16,11 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
-#ifndef NULL_ENCODER_HPP
-#define NULL_ENCODER_HPP
+#pragma once
+
+// local headers
 #include "encoder.hpp"
+
 
 namespace encoder
 {
@@ -44,5 +46,3 @@ protected:
 };
 
 } // namespace encoder
-
-#endif

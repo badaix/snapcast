@@ -16,9 +16,14 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
+// prototype/interface header file
 #include "pcm_encoder.hpp"
+
+// local headers
 #include "common/aixlog.hpp"
 #include "common/endian.hpp"
+
+// standard headers
 #include <memory>
 
 

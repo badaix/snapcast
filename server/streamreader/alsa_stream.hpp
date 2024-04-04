@@ -16,8 +16,8 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
-#ifndef ALSA_STREAM_HPP
-#define ALSA_STREAM_HPP
+#pragma once
+
 
 // local headers
 #include "pcm_stream.hpp"
@@ -68,5 +68,3 @@ protected:
 };
 
 } // namespace streamreader
-
-#endif

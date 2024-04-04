@@ -25,10 +25,8 @@
 #include "common/snap_exception.hpp"
 #include "common/utils.hpp"
 #include "common/utils/file_utils.hpp"
-#include "common/utils/string_utils.hpp"
 
 // standard headers
-#include <climits>
 #include <cstdio>
 
 

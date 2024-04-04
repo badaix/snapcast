@@ -16,8 +16,8 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
-#ifndef PCM_STREAM_HPP
-#define PCM_STREAM_HPP
+#pragma once
+
 
 // local headers
 #include "common/error_code.hpp"
@@ -207,7 +207,4 @@ protected:
     std::vector<char> silent_chunk_;
 };
 
-
 } // namespace streamreader
-
-#endif

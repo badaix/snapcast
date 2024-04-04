@@ -16,8 +16,8 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
-#ifndef AIRPLAY_STREAM_HPP
-#define AIRPLAY_STREAM_HPP
+#pragma once
+
 
 // local headers
 #include "process_stream.hpp"
@@ -107,5 +107,3 @@ private:
 };
 
 } // namespace streamreader
-
-#endif

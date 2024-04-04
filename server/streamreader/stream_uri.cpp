@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2020  Johannes Pohl
+    Copyright (C) 2014-2024  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -20,9 +20,11 @@
 #define NOMINMAX
 #endif // NOMINMAX
 
+// prototype/interface header file
 #include "stream_uri.hpp"
+
+// local headers
 #include "common/aixlog.hpp"
-#include "common/str_compat.hpp"
 #include "common/utils/string_utils.hpp"
 
 

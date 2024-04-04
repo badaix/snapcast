@@ -16,13 +16,15 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
-#ifndef STREAM_URI_HPP
-#define STREAM_URI_HPP
+#pragma once
 
+
+// local headers
+#include "common/json.hpp"
+
+// standard headers
 #include <map>
 #include <string>
-
-#include "common/json.hpp"
 
 
 using json = nlohmann::json;
@@ -59,5 +61,3 @@ struct StreamUri
 };
 
 } // namespace streamreader
-
-#endif

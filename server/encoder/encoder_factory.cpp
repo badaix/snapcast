@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2021  Johannes Pohl
+    Copyright (C) 2014-2024  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -16,7 +16,10 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
+// prototype/interface header file
 #include "encoder_factory.hpp"
+
+// local headers
 #include "null_encoder.hpp"
 #include "pcm_encoder.hpp"
 #if defined(HAS_OGG) && defined(HAS_VORBIS) && defined(HAS_VORBIS_ENC)
@@ -28,7 +31,6 @@
 #if defined(HAS_OPUS)
 #include "opus_encoder.hpp"
 #endif
-#include "common/aixlog.hpp"
 #include "common/snap_exception.hpp"
 #include "common/utils/string_utils.hpp"
 

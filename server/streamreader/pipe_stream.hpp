@@ -16,8 +16,8 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
-#ifndef PIPE_STREAM_HPP
-#define PIPE_STREAM_HPP
+#pragma once
+
 
 // local headers
 #include "asio_stream.hpp"
@@ -45,5 +45,3 @@ protected:
 };
 
 } // namespace streamreader
-
-#endif

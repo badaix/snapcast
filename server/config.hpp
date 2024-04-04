@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2021  Johannes Pohl
+    Copyright (C) 2014-2024  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -16,18 +16,20 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
-#ifndef CONFIG_HPP
-#define CONFIG_HPP
+#pragma once
 
+
+// local headers
+#include "common/json.hpp"
+#include "common/utils.hpp"
+#include "common/utils/string_utils.hpp"
+
+// standard headers
 #include <memory>
 #include <mutex>
 #include <string>
 #include <sys/time.h>
 #include <vector>
-
-#include "common/json.hpp"
-#include "common/utils.hpp"
-#include "common/utils/string_utils.hpp"
 
 
 namespace strutils = utils::string;
@@ -404,6 +406,3 @@ private:
     std::mutex client_mutex_;
     std::string filename_;
 };
-
-
-#endif
