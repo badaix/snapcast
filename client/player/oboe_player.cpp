@@ -21,6 +21,7 @@
 
 // local headers
 #include "common/aixlog.hpp"
+#include "common/str_compat.hpp"
 
 // 3rd party headers
 
