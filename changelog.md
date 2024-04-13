@@ -1,6 +1,6 @@
 # Snapcast changelog
 
-## Version 0.28.0-beta.2
+## Version 0.28.0
 
 ### Features
 
