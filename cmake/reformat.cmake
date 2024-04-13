@@ -8,7 +8,7 @@ if(CLANG_FORMAT)
   add_custom_target(
     reformat-source
     COMMAND ${CLANG_FORMAT} -i -style=file ${CHECK_CXX_SOURCE_FILES}
-    COMMENT "Auto formatting of all source files")
+    COMMENT "Auto formatting of all source files with ${CLANG_FORMAT}")
 endif()
 
 find_program(CMAKE_FORMAT "cmake-format")
@@ -18,7 +18,7 @@ if(CMAKE_FORMAT)
   add_custom_target(
     reformat-cmake
     COMMAND ${CMAKE_FORMAT} -i ${CHECK_CMAKE_SOURCE_FILES}
-    COMMENT "Auto formatting of all CMakeLists.txt files")
+    COMMENT "Auto formatting of all CMakeLists.txt files with ${CMAKE_FORMAT}")
 endif()
 
 find_program(AUTOPEP "autopep8")
@@ -28,7 +28,7 @@ if(AUTOPEP)
   add_custom_target(
     reformat-python
     COMMAND ${AUTOPEP} -i ${CHECK_PYTHON_SOURCE_FILES}
-    COMMENT "Auto formatting of all Python files")
+    COMMENT "Auto formatting of all Python files with ${AUTOPEP}")
 endif()
 
 if(CLANG_FORMAT
