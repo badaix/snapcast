@@ -29,7 +29,7 @@
 - Delete deprecated Makefiles, CMake is the only supported buildsystem
 - Snapweb: Update to v0.7.0
 
-_Johannes Pohl <snapcast@badaix.de>  Sun, 24 Mar 2024 00:13:37 +0200_
+_Johannes Pohl <snapcast@badaix.de>  Fri, 19 Apr 2024 00:13:37 +0200_
 
 ## Version 0.27.0
 
