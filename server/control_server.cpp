@@ -39,14 +39,26 @@ static constexpr auto LOG_TAG = "ControlServer";
 
 ControlServer::ControlServer(boost::asio::io_context& io_context, const ServerSettings::Tcp& tcp_settings, const ServerSettings::Http& http_settings,
                              ControlMessageReceiver* controlMessageReceiver)
-    : io_context_(io_context), tcp_settings_(tcp_settings), http_settings_(http_settings), controlMessageReceiver_(controlMessageReceiver)
+    : io_context_(io_context), ssl_context_(boost::asio::ssl::context::sslv23), tcp_settings_(tcp_settings), http_settings_(http_settings),
+      controlMessageReceiver_(controlMessageReceiver)
 {
+    ssl_context_.set_options(boost::asio::ssl::context::default_workarounds | boost::asio::ssl::context::no_sslv2 | boost::asio::ssl::context::single_dh_use);
+    ssl_context_.set_password_callback(std::bind(&ControlServer::getPassword, this));
+    ssl_context_.use_certificate_chain_file("server.pem");
+    ssl_context_.use_private_key_file("server.pem", boost::asio::ssl::context::pem);
+    ssl_context_.use_tmp_dh_file("dh4096.pem");
 }
 
 
 ControlServer::~ControlServer()
 {
     stop();
+}
+
+
+std::string ControlServer::getPassword() const
+{
+    return "test";
 }
 
 
@@ -114,7 +126,13 @@ void ControlServer::startAccept()
     auto accept_handler_http = [this](error_code ec, tcp::socket socket)
     {
         if (!ec)
+        {
             handleAccept<ControlSessionHttp>(std::move(socket), http_settings_);
+            // auto session = make_shared<ControlSessionHttp<boost::asio::ssl::stream<tcp::socket>>>(
+            //                                  this, boost::asio::ssl::stream<tcp::socket>(std::move(socket), ssl_context_), http_settings_);
+            // onNewSession(std::move(session));
+            // startAccept();
+        }
         else
             LOG(ERROR, LOG_TAG) << "Error while accepting socket connection: " << ec.message() << "\n";
     };
