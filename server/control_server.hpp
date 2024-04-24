@@ -25,6 +25,7 @@
 // 3rd party headers
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/ip/tcp.hpp>
+#include <boost/asio/ssl.hpp>
 
 // standard headers
 #include <memory>
@@ -64,6 +65,8 @@ private:
     void onNewSession(std::shared_ptr<ControlSession> session) override;
     void onNewSession(std::shared_ptr<StreamSession> session) override;
 
+    std::string getPassword() const;
+
     mutable std::recursive_mutex session_mutex_;
     std::vector<std::weak_ptr<ControlSession>> sessions_;
 
@@ -71,6 +74,7 @@ private:
     std::vector<acceptor_ptr> acceptor_http_;
 
     boost::asio::io_context& io_context_;
+    boost::asio::ssl::context ssl_context_;
     ServerSettings::Tcp tcp_settings_;
     ServerSettings::Http http_settings_;
     ControlMessageReceiver* controlMessageReceiver_;
