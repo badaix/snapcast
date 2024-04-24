@@ -32,6 +32,9 @@
 #pragma GCC diagnostic ignored "-Wnarrowing"
 #pragma GCC diagnostic ignored "-Wc++11-narrowing"
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+#if !defined(__clang__)
+#pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
+#endif
 #include <boost/process.hpp>
 #pragma GCC diagnostic pop
 #include <boost/asio/any_io_executor.hpp>
