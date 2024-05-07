@@ -29,14 +29,12 @@
 #include <boost/beast/core.hpp>
 #include <boost/beast/ssl.hpp>
 
-#if defined(__GNUC__) && !defined(__clang__)
 #pragma GCC diagnostic push
+#if defined(__GNUC__) && !defined(__clang__)
 #pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
+#endif
 #include <boost/beast/websocket.hpp>
 #pragma GCC diagnostic pop
-#else
-#include <boost/beast/websocket.hpp>
-#endif
 
 // standard headers
 #include <deque>
