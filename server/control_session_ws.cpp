@@ -21,7 +21,6 @@
 
 // local headers
 #include "common/aixlog.hpp"
-#include "common/message/pcm_chunk.hpp"
 
 // 3rd party headers
 
@@ -33,8 +32,8 @@ using namespace std;
 static constexpr auto LOG_TAG = "ControlSessionWS";
 
 
-ControlSessionWebsocket::ControlSessionWebsocket(ControlMessageReceiver* receiver, websocket::stream<beast::tcp_stream>&& socket)
-    : ControlSession(receiver), ws_(std::move(socket)), strand_(boost::asio::make_strand(ws_.get_executor()))
+ControlSessionWebsocket::ControlSessionWebsocket(ControlMessageReceiver* receiver, websocket::stream<ssl_socket>&& wss)
+    : ControlSession(receiver), wss_(std::move(wss)), strand_(boost::asio::make_strand(wss_.get_executor()))
 {
     LOG(DEBUG, LOG_TAG) << "ControlSessionWebsocket\n";
 }
@@ -85,9 +84,9 @@ void ControlSessionWebsocket::sendAsync(const std::string& message)
 void ControlSessionWebsocket::send_next()
 {
     const std::string& message = messages_.front();
-    ws_.async_write(boost::asio::buffer(message),
-                    [this, self = shared_from_this()](std::error_code ec, std::size_t length)
-                    {
+    wss_.async_write(boost::asio::buffer(message),
+                     [this, self = shared_from_this()](std::error_code ec, std::size_t length)
+                     {
         messages_.pop_front();
         if (ec)
         {
@@ -106,7 +105,7 @@ void ControlSessionWebsocket::send_next()
 void ControlSessionWebsocket::do_read_ws()
 {
     // Read a message into our buffer
-    ws_.async_read(buffer_, [this, self = shared_from_this()](beast::error_code ec, std::size_t bytes_transferred) { on_read_ws(ec, bytes_transferred); });
+    wss_.async_read(buffer_, [this, self = shared_from_this()](beast::error_code ec, std::size_t bytes_transferred) { on_read_ws(ec, bytes_transferred); });
 }
 
 

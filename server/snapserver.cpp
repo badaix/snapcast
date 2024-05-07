@@ -80,6 +80,10 @@ int main(int argc, char* argv[])
         conf.add<Implicit<string>>("", "server.group", "the group to run as when daemonized", settings.server.group, &settings.server.group);
         conf.add<Implicit<string>>("", "server.datadir", "directory where persistent data is stored", settings.server.data_dir, &settings.server.data_dir);
 
+        // SSL settings
+        conf.add<Value<string>>("", "ssl.certificate", "certificate file (PEM format)", settings.ssl.certificate, &settings.ssl.certificate);
+        conf.add<Value<string>>("", "ssl.private_key", "private key file (PEM format)", settings.ssl.private_key, &settings.ssl.private_key);
+
         // HTTP RPC settings
         conf.add<Value<bool>>("", "http.enabled", "enable HTTP Json RPC (HTTP POST and websockets)", settings.http.enabled, &settings.http.enabled);
         conf.add<Value<size_t>>("", "http.port", "which port the server should listen on", settings.http.port, &settings.http.port);
