@@ -24,7 +24,10 @@
 #include "server_settings.hpp"
 
 // 3rd party headers
+#include <boost/asio/ip/tcp.hpp>
+#include <boost/asio/ssl.hpp>
 #include <boost/beast/core.hpp>
+#include <boost/beast/ssl.hpp>
 
 #if defined(__GNUC__) && !defined(__clang__)
 #pragma GCC diagnostic push
@@ -37,12 +40,13 @@
 
 // standard headers
 #include <deque>
-
-using boost::asio::ip::tcp;
+// #include <variant>
 
 namespace beast = boost::beast; // from <boost/beast.hpp>
 namespace http = beast::http;   // from <boost/beast/http.hpp>
 
+using tcp_socket = boost::asio::ip::tcp::socket;
+using ssl_socket = boost::asio::ssl::stream<tcp_socket>;
 
 /// Endpoint for a connected control client.
 /**
@@ -54,7 +58,7 @@ class ControlSessionHttp : public ControlSession
 {
 public:
     /// ctor. Received message from the client are passed to ControlMessageReceiver
-    ControlSessionHttp(ControlMessageReceiver* receiver, tcp::socket&& socket, const ServerSettings::Http& settings);
+    ControlSessionHttp(ControlMessageReceiver* receiver, tcp_socket&& socket, boost::asio::ssl::context& ssl_context, const ServerSettings::Http& settings);
     ~ControlSessionHttp() override;
     void start() override;
     void stop() override;
@@ -72,8 +76,14 @@ protected:
 
     http::request<http::string_body> req_;
 
+    // do SSL handshake
+    void doHandshake();
+
 protected:
-    tcp::socket socket_;
+    // tcp_socket socket_;
+    ssl_socket socket_;
+    // std::variant<tcp_socket, ssl_socket> sock_;
+    boost::asio::ssl::context& ssl_context_;
     beast::flat_buffer buffer_;
     ServerSettings::Http settings_;
     std::deque<std::string> messages_;

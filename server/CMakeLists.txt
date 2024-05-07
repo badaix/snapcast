@@ -118,7 +118,6 @@ endif()
 # list(APPEND SERVER_LIBRARIES Boost::boost)
 list(APPEND SERVER_LIBRARIES OpenSSL::Crypto OpenSSL::SSL)
 
-
 include_directories(${SERVER_INCLUDE})
 if(ANDROID)
   add_executable(libsnapserver.so ${SERVER_SOURCES})

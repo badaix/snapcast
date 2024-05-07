@@ -32,14 +32,16 @@
 #endif
 #include <boost/beast/core.hpp>
 #pragma GCC diagnostic pop
+#include <boost/beast/ssl.hpp>
 #include <boost/beast/websocket.hpp>
 
 // standard headers
 
 
-namespace beast = boost::beast; // from <boost/beast.hpp>
-// namespace http = beast::http;           // from <boost/beast/http.hpp>
+namespace beast = boost::beast;         // from <boost/beast.hpp>
 namespace websocket = beast::websocket; // from <boost/beast/websocket.hpp>
+using tcp_socket = boost::asio::ip::tcp::socket;
+using ssl_socket = boost::asio::ssl::stream<tcp_socket>;
 
 
 /// Endpoint for a connected control client.
@@ -52,7 +54,7 @@ class StreamSessionWebsocket : public StreamSession
 {
 public:
     /// ctor. Received message from the client are passed to StreamMessageReceiver
-    StreamSessionWebsocket(StreamMessageReceiver* receiver, websocket::stream<beast::tcp_stream>&& socket);
+    StreamSessionWebsocket(StreamMessageReceiver* receiver, websocket::stream<ssl_socket>&& wss);
     ~StreamSessionWebsocket() override;
     void start() override;
     void stop() override;
@@ -64,7 +66,7 @@ protected:
     void on_read_ws(beast::error_code ec, std::size_t bytes_transferred);
     void do_read_ws();
 
-    websocket::stream<beast::tcp_stream> ws_;
+    websocket::stream<ssl_socket> wss_;
 
 protected:
     beast::flat_buffer buffer_;

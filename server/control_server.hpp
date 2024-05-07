@@ -43,8 +43,7 @@ using acceptor_ptr = std::unique_ptr<tcp::acceptor>;
 class ControlServer : public ControlMessageReceiver
 {
 public:
-    ControlServer(boost::asio::io_context& io_context, const ServerSettings::Tcp& tcp_settings, const ServerSettings::Http& http_settings,
-                  ControlMessageReceiver* controlMessageReceiver = nullptr);
+    ControlServer(boost::asio::io_context& io_context, const ServerSettings& settings, ControlMessageReceiver* controlMessageReceiver = nullptr);
     virtual ~ControlServer();
 
     void start();
