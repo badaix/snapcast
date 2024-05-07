@@ -23,7 +23,13 @@
 #include "control_session.hpp"
 
 // 3rd party headers
+#pragma GCC diagnostic push
+#if defined(__GNUC__) && !defined(__clang__)
+#pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
+#endif
 #include <boost/asio/strand.hpp>
+#pragma GCC diagnostic pop
+
 #pragma GCC diagnostic push
 #if defined(__clang__)
 #pragma GCC diagnostic ignored "-Wunknown-warning-option"
