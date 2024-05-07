@@ -24,6 +24,7 @@
 #include "common/json.hpp"
 #include "control_session_http.hpp"
 #include "control_session_tcp.hpp"
+#include "server_settings.hpp"
 
 // 3rd party headers
 
@@ -37,16 +38,16 @@ using json = nlohmann::json;
 static constexpr auto LOG_TAG = "ControlServer";
 
 
-ControlServer::ControlServer(boost::asio::io_context& io_context, const ServerSettings::Tcp& tcp_settings, const ServerSettings::Http& http_settings,
-                             ControlMessageReceiver* controlMessageReceiver)
-    : io_context_(io_context), ssl_context_(boost::asio::ssl::context::sslv23), tcp_settings_(tcp_settings), http_settings_(http_settings),
+ControlServer::ControlServer(boost::asio::io_context& io_context, const ServerSettings& settings, ControlMessageReceiver* controlMessageReceiver)
+    : io_context_(io_context), ssl_context_(boost::asio::ssl::context::sslv23), tcp_settings_(settings.tcp), http_settings_(settings.http),
       controlMessageReceiver_(controlMessageReceiver)
 {
+    const ServerSettings::Ssl& ssl = settings.ssl;
     ssl_context_.set_options(boost::asio::ssl::context::default_workarounds | boost::asio::ssl::context::no_sslv2 | boost::asio::ssl::context::single_dh_use);
     ssl_context_.set_password_callback(std::bind(&ControlServer::getPassword, this));
-    ssl_context_.use_certificate_chain_file("server.pem");
-    ssl_context_.use_private_key_file("server.pem", boost::asio::ssl::context::pem);
-    ssl_context_.use_tmp_dh_file("dh4096.pem");
+    ssl_context_.use_certificate_chain_file(ssl.certificate);
+    ssl_context_.use_private_key_file(ssl.private_key, boost::asio::ssl::context::pem);
+    // ssl_context_.use_tmp_dh_file("dh4096.pem");
 }
 
 
@@ -58,6 +59,7 @@ ControlServer::~ControlServer()
 
 std::string ControlServer::getPassword() const
 {
+    LOG(DEBUG, LOG_TAG) << "getPassword\n";
     return "test";
 }
 
@@ -127,11 +129,10 @@ void ControlServer::startAccept()
     {
         if (!ec)
         {
-            handleAccept<ControlSessionHttp>(std::move(socket), http_settings_);
-            // auto session = make_shared<ControlSessionHttp<boost::asio::ssl::stream<tcp::socket>>>(
-            //                                  this, boost::asio::ssl::stream<tcp::socket>(std::move(socket), ssl_context_), http_settings_);
-            // onNewSession(std::move(session));
-            // startAccept();
+            // handleAccept<ControlSessionHttp>(std::move(socket), http_settings_);
+            auto session = make_shared<ControlSessionHttp>(this, std::move(socket), ssl_context_, http_settings_);
+            onNewSession(std::move(session));
+            startAccept();
         }
         else
             LOG(ERROR, LOG_TAG) << "Error while accepting socket connection: " << ec.message() << "\n";

@@ -38,6 +38,12 @@ struct ServerSettings
         std::string data_dir{""};
     };
 
+    struct Ssl
+    {
+        std::string certificate{""};
+        std::string private_key{""};
+    };
+
     struct Http
     {
         bool enabled{true};
@@ -79,6 +85,7 @@ struct ServerSettings
     };
 
     Server server;
+    Ssl ssl;
     Http http;
     Tcp tcp;
     Stream stream;

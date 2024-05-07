@@ -871,7 +871,7 @@ void Server::start()
 {
     try
     {
-        controlServer_ = std::make_unique<ControlServer>(io_context_, settings_.tcp, settings_.http, this);
+        controlServer_ = std::make_unique<ControlServer>(io_context_, settings_, this);
         streamServer_ = std::make_unique<StreamServer>(io_context_, settings_, this);
         streamManager_ = std::make_unique<StreamManager>(this, io_context_, settings_);
 
