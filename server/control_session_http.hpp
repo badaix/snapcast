@@ -57,6 +57,7 @@ class ControlSessionHttp : public ControlSession
 public:
     /// ctor. Received message from the client are passed to ControlMessageReceiver
     ControlSessionHttp(ControlMessageReceiver* receiver, tcp_socket&& socket, boost::asio::ssl::context& ssl_context, const ServerSettings::Http& settings);
+    // ControlSessionHttp(ControlMessageReceiver* receiver, tcp_socket&& socket, const ServerSettings::Http& settings);
     ~ControlSessionHttp() override;
     void start() override;
     void stop() override;
@@ -74,13 +75,10 @@ protected:
 
     http::request<http::string_body> req_;
 
-    // do SSL handshake
-    void doHandshake();
-
 protected:
     // tcp_socket socket_;
-    ssl_socket socket_;
-    // std::variant<tcp_socket, ssl_socket> sock_;
+    ssl_socket ssl_socket_;
+    // std::variant<tcp_socket, ssl_socket> socket_;
     boost::asio::ssl::context& ssl_context_;
     beast::flat_buffer buffer_;
     ServerSettings::Http settings_;
