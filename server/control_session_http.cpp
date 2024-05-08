@@ -149,9 +149,9 @@ std::string path_cat(boost::beast::string_view base, boost::beast::string_view p
 
 ControlSessionHttp::ControlSessionHttp(ControlMessageReceiver* receiver, tcp_socket&& socket, boost::asio::ssl::context& ssl_context,
                                        const ServerSettings::Http& settings)
-    : ControlSession(receiver), socket_(ssl_socket(std::move(socket), ssl_context)), ssl_context_(ssl_context), settings_(settings)
+    : ControlSession(receiver), ssl_socket_(ssl_socket(std::move(socket), ssl_context)), ssl_context_(ssl_context), settings_(settings)
 {
-    LOG(DEBUG, LOG_TAG) << "ControlSessionHttp, Local IP: " << socket_.next_layer().local_endpoint().address().to_string() << "\n";
+    LOG(DEBUG, LOG_TAG) << "ControlSessionHttp, mode: ssl, Local IP: " << ssl_socket_.next_layer().local_endpoint().address().to_string() << "\n";
 }
 
 
@@ -162,12 +162,12 @@ ControlSessionHttp::~ControlSessionHttp()
 }
 
 
-void ControlSessionHttp::doHandshake()
+void ControlSessionHttp::start()
 {
-    LOG(DEBUG, LOG_TAG) << "doHandshake\n";
-    socket_.async_handshake(boost::asio::ssl::stream_base::server,
-                            [this, self = shared_from_this()](const boost::system::error_code& error)
-                            {
+    LOG(DEBUG, LOG_TAG) << "start\n";
+    ssl_socket_.async_handshake(boost::asio::ssl::stream_base::server,
+                                [this, self = shared_from_this()](const boost::system::error_code& error)
+                                {
         LOG(DEBUG, LOG_TAG) << "async_handshake\n";
         if (error)
         {
@@ -175,18 +175,11 @@ void ControlSessionHttp::doHandshake()
         }
         else
         {
-            http::async_read(socket_, buffer_, req_,
+            http::async_read(ssl_socket_, buffer_, req_,
                              [this, self = shared_from_this()](boost::system::error_code ec, std::size_t bytes) { on_read(ec, bytes); });
         }
     });
-}
-
-
-void ControlSessionHttp::start()
-{
-    LOG(DEBUG, LOG_TAG) << "start\n";
-    doHandshake();
-    // http::async_read(socket_, buffer_, req_, [this, self = shared_from_this()](boost::system::error_code ec, std::size_t bytes) { on_read(ec, bytes); });
+    // http::async_read(tcp_socket_, buffer_, req_, [this, self = shared_from_this()](boost::system::error_code ec, std::size_t bytes) { on_read(ec, bytes); });
 }
 
 
@@ -356,8 +349,8 @@ void ControlSessionHttp::on_read(beast::error_code ec, std::size_t bytes_transfe
     if (ec == http::error::end_of_stream)
     {
         boost::system::error_code res;
-        res = socket_.shutdown(res);
-        // auto res = socket_.lowest_layer().shutdown(tcp_socket::shutdown_send, ec);
+        res = ssl_socket_.shutdown(res);
+        // auto res = ssl_socket_.lowest_layer().shutdown(tcp_socket::shutdown_send, ec);
         if (res.failed())
             LOG(ERROR, LOG_TAG) << "Failed to shudown socket: " << res << "\n";
         return;
@@ -377,10 +370,10 @@ void ControlSessionHttp::on_read(beast::error_code ec, std::size_t bytes_transfe
     if (websocket::is_upgrade(req_))
     {
         LOG(DEBUG, LOG_TAG) << "websocket upgrade, target: " << req_.target() << "\n";
-        if (req_.target() == "/jsonrpc")
+        if ((req_.target() == "/jsonrpc") || (req_.target() == "/stream"))
         {
             // Create a WebSocket session by transferring the socket
-            auto ws = std::make_shared<websocket::stream<ssl_socket>>(std::move(socket_));
+            auto ws = std::make_shared<websocket::stream<ssl_socket>>(std::move(ssl_socket_));
             // Accept the websocket handshake
             ws->async_accept(req_,
                              [this, ws, self = shared_from_this()](beast::error_code ec) mutable
@@ -391,27 +384,16 @@ void ControlSessionHttp::on_read(beast::error_code ec, std::size_t bytes_transfe
                 }
                 else
                 {
-                    auto ws_session = make_shared<ControlSessionWebsocket>(message_receiver_, std::move(*ws));
-                    message_receiver_->onNewSession(std::move(ws_session));
-                }
-            });
-        }
-        else if (req_.target() == "/stream")
-        {
-            // Create a WebSocket session by transferring the socket
-            // std::make_shared<websocket_session>(std::move(socket_), state_)->run(std::move(req_));
-            auto ws = std::make_shared<websocket::stream<ssl_socket>>(std::move(socket_));
-            ws->async_accept(req_,
-                             [this, ws, self = shared_from_this()](beast::error_code ec)
-                             {
-                if (ec)
-                {
-                    LOG(ERROR, LOG_TAG) << "Error during WebSocket handshake (stream): " << ec.message() << "\n";
-                }
-                else
-                {
-                    auto ws_session = make_shared<StreamSessionWebsocket>(nullptr, std::move(*ws));
-                    message_receiver_->onNewSession(std::move(ws_session));
+                    if (req_.target() == "/jsonrpc")
+                    {
+                        auto ws_session = make_shared<ControlSessionWebsocket>(message_receiver_, std::move(*ws));
+                        message_receiver_->onNewSession(std::move(ws_session));
+                    }
+                    else // if (req_.target() == "/stream")
+                    {
+                        auto ws_session = make_shared<StreamSessionWebsocket>(nullptr, std::move(*ws));
+                        message_receiver_->onNewSession(std::move(ws_session));
+                    }
                 }
             });
         }
@@ -429,7 +411,7 @@ void ControlSessionHttp::on_read(beast::error_code ec, std::size_t bytes_transfe
         auto sp = std::make_shared<response_type>(std::forward<decltype(response)>(response));
 
         // Write the response
-        http::async_write(this->socket_, *sp,
+        http::async_write(this->ssl_socket_, *sp,
                           [this, self = this->shared_from_this(), sp](beast::error_code ec, std::size_t bytes) { this->on_write(ec, bytes, sp->need_eof()); });
     });
 }
@@ -451,8 +433,8 @@ void ControlSessionHttp::on_write(beast::error_code ec, std::size_t bytes, bool 
         // This means we should close the connection, usually because
         // the response indicated the "Connection: close" semantic.
         boost::system::error_code res;
-        res = socket_.shutdown(res);
-        // auto res = socket_.lowest_layer().shutdown(tcp::socket::shutdown_send, ec);
+        res = ssl_socket_.shutdown(res);
+        // auto res = ssl_socket_.lowest_layer().shutdown(tcp::socket::shutdown_send, ec);
         if (res.failed())
             LOG(ERROR, LOG_TAG) << "Failed to shudown socket: " << res << "\n";
         return;
@@ -463,7 +445,7 @@ void ControlSessionHttp::on_write(beast::error_code ec, std::size_t bytes, bool 
     req_ = {};
 
     // Read another request
-    http::async_read(socket_, buffer_, req_, [this, self = shared_from_this()](beast::error_code ec, std::size_t bytes) { on_read(ec, bytes); });
+    http::async_read(ssl_socket_, buffer_, req_, [this, self = shared_from_this()](beast::error_code ec, std::size_t bytes) { on_read(ec, bytes); });
 }
 
 
