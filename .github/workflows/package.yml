@@ -77,7 +77,7 @@ jobs:
         apt-get install -yq wget debhelper build-essential cmake git rename \
         libatomic1 libasound2-dev libsoxr-dev libvorbisidec-dev libvorbis-dev libflac-dev \
         libopus-dev alsa-utils libpulse-dev libavahi-client-dev avahi-daemon libexpat1-dev \
-        libssl-dev libcrypto-dev python3 ccache unzip
+        libssl-dev python3 ccache unzip
       env:
         DEBIAN_FRONTEND: noninteractive
     - name: Checkout
