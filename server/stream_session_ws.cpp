@@ -32,10 +32,16 @@ using namespace std;
 static constexpr auto LOG_TAG = "StreamSessionWS";
 
 
-StreamSessionWebsocket::StreamSessionWebsocket(StreamMessageReceiver* receiver, websocket::stream<ssl_socket>&& wss)
-    : StreamSession(wss.get_executor(), receiver), wss_(std::move(wss))
+StreamSessionWebsocket::StreamSessionWebsocket(StreamMessageReceiver* receiver, ssl_websocket&& ssl_ws)
+    : StreamSession(ssl_ws.get_executor(), receiver), ssl_ws_(std::move(ssl_ws)), is_ssl_(true)
 {
-    LOG(DEBUG, LOG_TAG) << "StreamSessionWS\n";
+    LOG(DEBUG, LOG_TAG) << "StreamSessionWS, mode: ssl\n";
+}
+
+StreamSessionWebsocket::StreamSessionWebsocket(StreamMessageReceiver* receiver, tcp_websocket&& tcp_ws)
+    : StreamSession(tcp_ws.get_executor(), receiver), tcp_ws_(std::move(tcp_ws)), is_ssl_(false)
+{
+    LOG(DEBUG, LOG_TAG) << "StreamSessionWS, mode: tcp\n";
 }
 
 
@@ -50,20 +56,29 @@ void StreamSessionWebsocket::start()
 {
     // Read a message
     LOG(DEBUG, LOG_TAG) << "start\n";
-    wss_.binary(true);
+    if (is_ssl_)
+        ssl_ws_->binary(true);
+    else
+        tcp_ws_->binary(true);
     do_read_ws();
 }
 
 
 void StreamSessionWebsocket::stop()
 {
-    if (wss_.is_open())
+    boost::beast::error_code ec;
+    if (is_ssl_)
     {
-        boost::beast::error_code ec;
-        wss_.close(beast::websocket::close_code::normal, ec);
-        if (ec)
-            LOG(ERROR, LOG_TAG) << "Error in socket close: " << ec.message() << "\n";
+        if (ssl_ws_->is_open())
+            ssl_ws_->close(beast::websocket::close_code::normal, ec);
     }
+    else
+    {
+        if (tcp_ws_->is_open())
+            tcp_ws_->close(beast::websocket::close_code::normal, ec);
+    }
+    if (ec)
+        LOG(ERROR, LOG_TAG) << "Error in socket close: " << ec.message() << "\n";
 }
 
 
@@ -71,7 +86,10 @@ std::string StreamSessionWebsocket::getIP()
 {
     try
     {
-        return wss_.next_layer().lowest_layer().remote_endpoint().address().to_string();
+        if (is_ssl_)
+            return ssl_ws_->next_layer().lowest_layer().remote_endpoint().address().to_string();
+        else
+            return tcp_ws_->next_layer().lowest_layer().remote_endpoint().address().to_string();
     }
     catch (...)
     {
@@ -83,14 +101,22 @@ std::string StreamSessionWebsocket::getIP()
 void StreamSessionWebsocket::sendAsync(const shared_const_buffer& buffer, const WriteHandler& handler)
 {
     LOG(TRACE, LOG_TAG) << "sendAsync: " << buffer.message().type << "\n";
-    wss_.async_write(buffer, [self = shared_from_this(), buffer, handler](boost::system::error_code ec, std::size_t length) { handler(ec, length); });
+    if (is_ssl_)
+        ssl_ws_->async_write(buffer, [self = shared_from_this(), buffer, handler](boost::system::error_code ec, std::size_t length) { handler(ec, length); });
+    else
+        tcp_ws_->async_write(buffer, [self = shared_from_this(), buffer, handler](boost::system::error_code ec, std::size_t length) { handler(ec, length); });
 }
 
 
 void StreamSessionWebsocket::do_read_ws()
 {
     // Read a message into our buffer
-    wss_.async_read(buffer_, [this, self = shared_from_this()](beast::error_code ec, std::size_t bytes_transferred) { on_read_ws(ec, bytes_transferred); });
+    if (is_ssl_)
+        ssl_ws_->async_read(buffer_,
+                            [this, self = shared_from_this()](beast::error_code ec, std::size_t bytes_transferred) { on_read_ws(ec, bytes_transferred); });
+    else
+        tcp_ws_->async_read(buffer_,
+                            [this, self = shared_from_this()](beast::error_code ec, std::size_t bytes_transferred) { on_read_ws(ec, bytes_transferred); });
 }
 
 

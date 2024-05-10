@@ -45,12 +45,15 @@
 
 // standard headers
 #include <deque>
+#include <optional>
 
 
 namespace beast = boost::beast;         // from <boost/beast.hpp>
 namespace websocket = beast::websocket; // from <boost/beast/websocket.hpp>
 using tcp_socket = boost::asio::ip::tcp::socket;
 using ssl_socket = boost::asio::ssl::stream<tcp_socket>;
+using tcp_websocket = websocket::stream<tcp_socket>;
+using ssl_websocket = websocket::stream<ssl_socket>;
 
 
 /// Endpoint for a connected control client.
@@ -63,7 +66,8 @@ class ControlSessionWebsocket : public ControlSession
 {
 public:
     /// ctor. Received message from the client are passed to ControlMessageReceiver
-    ControlSessionWebsocket(ControlMessageReceiver* receiver, websocket::stream<ssl_socket>&& wss);
+    ControlSessionWebsocket(ControlMessageReceiver* receiver, ssl_websocket&& ssl_ws);
+    ControlSessionWebsocket(ControlMessageReceiver* receiver, tcp_websocket&& tcp_ws);
     ~ControlSessionWebsocket() override;
     void start() override;
     void stop() override;
@@ -77,10 +81,12 @@ protected:
     void do_read_ws();
     void send_next();
 
-    websocket::stream<ssl_socket> wss_;
+    std::optional<ssl_websocket> ssl_ws_;
+    std::optional<tcp_websocket> tcp_ws_;
 
 protected:
     beast::flat_buffer buffer_;
     boost::asio::strand<boost::asio::any_io_executor> strand_;
     std::deque<std::string> messages_;
+    bool is_ssl_;
 };
