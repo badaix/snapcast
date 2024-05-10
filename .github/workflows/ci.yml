@@ -23,7 +23,11 @@ jobs:
     - name: print environment
       run: env
     - name: dependencies
-      run: sudo apt-get update && sudo apt-get install -yq libasound2-dev libsoxr-dev libvorbisidec-dev libvorbis-dev libflac-dev libopus-dev alsa-utils libpulse-dev libavahi-client-dev avahi-daemon debhelper ccache expat cppcheck
+      run: |
+        sudo apt-get update && \
+        sudo apt-get install -yq libasound2-dev libsoxr-dev libvorbisidec-dev libvorbis-dev libflac-dev \
+        libopus-dev alsa-utils libpulse-dev libavahi-client-dev libssl-dev libcrypto-dev \
+        avahi-daemon debhelper ccache expat cppcheck 
     - name: cache boost
       id: cache-boost
       uses: actions/cache@v4
