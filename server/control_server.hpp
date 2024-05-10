@@ -55,8 +55,6 @@ public:
 private:
     void startAccept();
 
-    template <typename SessionType, typename... Args>
-    void handleAccept(tcp::socket socket, Args&&... args);
     void cleanup();
 
     /// Implementation of ControlMessageReceiver
@@ -64,13 +62,10 @@ private:
     void onNewSession(std::shared_ptr<ControlSession> session) override;
     void onNewSession(std::shared_ptr<StreamSession> session) override;
 
-    std::string getPassword() const;
-
     mutable std::recursive_mutex session_mutex_;
     std::vector<std::weak_ptr<ControlSession>> sessions_;
 
-    std::vector<acceptor_ptr> acceptor_tcp_;
-    std::vector<acceptor_ptr> acceptor_http_;
+    std::vector<acceptor_ptr> acceptor_;
 
     boost::asio::io_context& io_context_;
     boost::asio::ssl::context ssl_context_;

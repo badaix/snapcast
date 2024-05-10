@@ -38,7 +38,7 @@
 
 // standard headers
 #include <deque>
-// #include <variant>
+#include <optional>
 
 namespace beast = boost::beast; // from <boost/beast.hpp>
 namespace http = beast::http;   // from <boost/beast/http.hpp>
@@ -56,8 +56,8 @@ class ControlSessionHttp : public ControlSession
 {
 public:
     /// ctor. Received message from the client are passed to ControlMessageReceiver
-    ControlSessionHttp(ControlMessageReceiver* receiver, tcp_socket&& socket, boost::asio::ssl::context& ssl_context, const ServerSettings::Http& settings);
-    // ControlSessionHttp(ControlMessageReceiver* receiver, tcp_socket&& socket, const ServerSettings::Http& settings);
+    ControlSessionHttp(ControlMessageReceiver* receiver, ssl_socket&& socket, const ServerSettings::Http& settings);
+    ControlSessionHttp(ControlMessageReceiver* receiver, tcp_socket&& socket, const ServerSettings::Http& settings);
     ~ControlSessionHttp() override;
     void start() override;
     void stop() override;
@@ -76,11 +76,10 @@ protected:
     http::request<http::string_body> req_;
 
 protected:
-    // tcp_socket socket_;
-    ssl_socket ssl_socket_;
-    // std::variant<tcp_socket, ssl_socket> socket_;
-    boost::asio::ssl::context& ssl_context_;
+    std::optional<tcp_socket> tcp_socket_;
+    std::optional<ssl_socket> ssl_socket_;
     beast::flat_buffer buffer_;
     ServerSettings::Http settings_;
     std::deque<std::string> messages_;
+    bool is_ssl_;
 };
