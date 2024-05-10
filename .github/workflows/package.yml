@@ -71,74 +71,67 @@ jobs:
     container:
       image: ${{matrix.image_prefix}}${{matrix.debian}}
     steps:
-      - name: Get dependencies
-        run: apt-get update && apt-get install -yq wget debhelper build-essential cmake git rename libatomic1 libasound2-dev libsoxr-dev libvorbisidec-dev libvorbis-dev libflac-dev libopus-dev alsa-utils libpulse-dev libavahi-client-dev avahi-daemon libexpat1-dev python3 ccache unzip
-        env:
-          DEBIAN_FRONTEND: noninteractive
-      - name: Get GitHub cli
-        run: |
-          (type -p wget >/dev/null || (apt update && apt-get install wget -y)) \
-          && mkdir -p -m 755 /etc/apt/keyrings \
-          && wget -qO- https://cli.github.com/packages/githubcli-archive-keyring.gpg | tee /etc/apt/keyrings/githubcli-archive-keyring.gpg > /dev/null \
-          && chmod go+r /etc/apt/keyrings/githubcli-archive-keyring.gpg \
-          && echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | tee /etc/apt/sources.list.d/github-cli.list > /dev/null \
-          && apt update \
-          && apt install gh -y
-      - name: Checkout
-        uses: actions/checkout@v4
-      - name: Setup environment
-        run: |
-          echo "PARENT_DIR=$(dirname $GITHUB_WORKSPACE)" >> $GITHUB_ENV
-          BOOST_DOT_VERSION=$(echo ${BOOST_VERSION} | sed 's/_/./g')
-          echo "BOOST_DOT_VERSION=$BOOST_DOT_VERSION" >> $GITHUB_ENV
-          echo "BOOST=boost_${BOOST_VERSION}" >> $GITHUB_ENV
-          ln -s extras/package/debian debian
-      - name: Create changelog
-        run: |
-          $GITHUB_WORKSPACE/debian/changelog_md2deb.py $GITHUB_WORKSPACE/changelog.md > $GITHUB_WORKSPACE/debian/changelog
-          cat $GITHUB_WORKSPACE/debian/changelog
-      - name: Clean up
-        run: rm -rf ${{env.PARENT_DIR}}/snap*_*.deb
-      - name: Cache boost
-        id: cache-boost
-        uses: actions/cache@v4
-        with:
-          path: ${{env.BOOST}}
-          key: ${{env.BOOST}}
-      - name: Get boost
-        if: steps.cache-boost.outputs.cache-hit != 'true'
-        run: |
-          wget https://boostorg.jfrog.io/artifactory/main/release/${{env.BOOST_DOT_VERSION}}/source/${{env.BOOST}}.tar.bz2
-          tar xjf ${{env.BOOST}}.tar.bz2
-      - name: cache ccache
-        id: cache-ccache
-        uses: actions/cache@v4
-        with:
-          # TODO: use environment variable $HOME/.ccache
-          path: /home/runner/.ccache
-          key: ${{ matrix.os }}-${{ matrix.debian }}-ccache-${{ github.sha }}
-          restore-keys: ${{ matrix.os }}-${{ matrix.debian }}-ccache-
-      - name: Get Snapweb
-        run: |
-          wget https://github.com/badaix/snapweb/releases/download/${SNAPWEB_VERSION}/snapweb.zip
-          unzip snapweb.zip -d snapweb
-      - name: Create deb package
-        env:
-          # TODO: use environment variable $HOME/.ccache
-          CCACHE_DIR: /home/runner/.ccache
-        run: |
-          fakeroot make -f debian/rules CMAKEFLAGS="-DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DBOOST_ROOT=$GITHUB_WORKSPACE/${{env.BOOST}} -DCMAKE_BUILD_TYPE:STRING=Release -DREVISION=${{ github.sha }} -DBUILD_WITH_JACK=OFF -DBUILD_WITH_PULSE=OFF -DSNAPWEB_DIR:STRING=$GITHUB_WORKSPACE/snapweb" binary
-          rename 's/_${{ matrix.arch }}/_${{ matrix.arch }}_${{ matrix.debian }}/g' ../snap*_${{ matrix.arch }}.deb
-          fakeroot make -f debian/rules clean
-          fakeroot make -f debian/rules CMAKEFLAGS="-DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DBOOST_ROOT=$GITHUB_WORKSPACE/${{env.BOOST}} -DCMAKE_BUILD_TYPE:STRING=Release -DREVISION=${{ github.sha }} -DBUILD_WITH_JACK=OFF -DSNAPWEB_DIR:STRING=$GITHUB_WORKSPACE/snapweb" binary
-          rm ../snapserver_*_${{ matrix.arch }}.deb
-          rename 's/_${{ matrix.arch }}/_${{ matrix.arch }}_${{ matrix.debian }}_with-pulse/g' ../snap*_${{ matrix.arch }}.deb
-      - name: Release artifacts
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          git config --global --add safe.directory $GITHUB_WORKSPACE
-          gh release upload ${{needs.release.outputs.tag}} ${{env.PARENT_DIR}}/snap*_*.deb
+    - name: Get dependencies
+      run: |
+        apt-get update && \
+        apt-get install -yq wget debhelper build-essential cmake git rename \
+        libatomic1 libasound2-dev libsoxr-dev libvorbisidec-dev libvorbis-dev libflac-dev \
+        libopus-dev alsa-utils libpulse-dev libavahi-client-dev avahi-daemon libexpat1-dev \
+        libssl-dev libcrypto-dev python3 ccache unzip
+      env:
+        DEBIAN_FRONTEND: noninteractive
+    - name: Checkout
+      uses: actions/checkout@v4
+    - name: Setup environment
+      run: |
+        echo "PARENT_DIR=$(dirname $GITHUB_WORKSPACE)" >> $GITHUB_ENV
+        BOOST_DOT_VERSION=$(echo ${BOOST_VERSION} | sed 's/_/./g')
+        echo "BOOST_DOT_VERSION=$BOOST_DOT_VERSION" >> $GITHUB_ENV
+        echo "BOOST=boost_${BOOST_VERSION}" >> $GITHUB_ENV
+        ln -s extras/package/debian debian
+    - name: Create changelog
+      run: |
+        $GITHUB_WORKSPACE/debian/changelog_md2deb.py $GITHUB_WORKSPACE/changelog.md > $GITHUB_WORKSPACE/debian/changelog
+        cat $GITHUB_WORKSPACE/debian/changelog
+    - name: Clean up
+      run: rm -rf ${{env.PARENT_DIR}}/snap*_${{ matrix.arch }}.deb
+    - name: Cache boost
+      id: cache-boost
+      uses: actions/cache@v4
+      with:
+        path: ${{env.BOOST}}
+        key: ${{env.BOOST}}
+    - name: Get boost
+      if: steps.cache-boost.outputs.cache-hit != 'true'
+      run: |
+        wget https://boostorg.jfrog.io/artifactory/main/release/${{env.BOOST_DOT_VERSION}}/source/${{env.BOOST}}.tar.bz2
+        tar xjf ${{env.BOOST}}.tar.bz2
+    - name: cache ccache
+      id: cache-ccache
+      uses: actions/cache@v4
+      with:
+        # TODO: use environment variable $HOME/.ccache
+        path: /home/runner/.ccache
+        key: ${{ matrix.os }}-${{ matrix.debian }}-ccache-${{ github.sha }}
+        restore-keys: ${{ matrix.os }}-${{ matrix.debian }}-ccache-
+    - name: Get Snapweb
+      run: | 
+        wget https://github.com/badaix/snapweb/releases/download/${SNAPWEB_VERSION}/snapweb.zip
+        unzip snapweb.zip -d snapweb
+    - name: Create deb package
+      env:
+        # TODO: use environment variable $HOME/.ccache
+        CCACHE_DIR: /home/runner/.ccache
+      run: |
+        fakeroot make -f debian/rules CMAKEFLAGS="-DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DBOOST_ROOT=$GITHUB_WORKSPACE/${{env.BOOST}} -DCMAKE_BUILD_TYPE:STRING=Release -DREVISION=${{ github.sha }} -DBUILD_WITH_PULSE=OFF -DSNAPWEB_DIR:STRING=$GITHUB_WORKSPACE/snapweb" binary
+        rename 's/_${{ matrix.arch }}/_without-pulse_${{ matrix.arch }}/g' ../snapclient*_${{ matrix.arch }}.deb
+        fakeroot make -f debian/rules clean
+        fakeroot make -f debian/rules CMAKEFLAGS="-DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DBOOST_ROOT=$GITHUB_WORKSPACE/${{env.BOOST}} -DCMAKE_BUILD_TYPE:STRING=Release -DREVISION=${{ github.sha }} -DSNAPWEB_DIR:STRING=$GITHUB_WORKSPACE/snapweb" binary
+    - name: Archive artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: snapcast_${{ matrix.arch }}-debian-${{matrix.debian}}-${{ github.sha }}
+        path: ${{env.PARENT_DIR}}/snap*_${{ matrix.arch }}.deb
 
 
   win:
