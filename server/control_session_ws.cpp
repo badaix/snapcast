@@ -32,10 +32,16 @@ using namespace std;
 static constexpr auto LOG_TAG = "ControlSessionWS";
 
 
-ControlSessionWebsocket::ControlSessionWebsocket(ControlMessageReceiver* receiver, websocket::stream<ssl_socket>&& wss)
-    : ControlSession(receiver), wss_(std::move(wss)), strand_(boost::asio::make_strand(wss_.get_executor()))
+ControlSessionWebsocket::ControlSessionWebsocket(ControlMessageReceiver* receiver, ssl_websocket&& ssl_ws)
+    : ControlSession(receiver), ssl_ws_(std::move(ssl_ws)), strand_(boost::asio::make_strand(ssl_ws_->get_executor())), is_ssl_(true)
 {
-    LOG(DEBUG, LOG_TAG) << "ControlSessionWebsocket\n";
+    LOG(DEBUG, LOG_TAG) << "ControlSessionWebsocket, mode: ssl\n";
+}
+
+ControlSessionWebsocket::ControlSessionWebsocket(ControlMessageReceiver* receiver, tcp_websocket&& tcp_ws)
+    : ControlSession(receiver), tcp_ws_(std::move(tcp_ws)), strand_(boost::asio::make_strand(tcp_ws_->get_executor())), is_ssl_(false)
+{
+    LOG(DEBUG, LOG_TAG) << "ControlSessionWebsocket, mode: tcp\n";
 }
 
 
@@ -84,9 +90,9 @@ void ControlSessionWebsocket::sendAsync(const std::string& message)
 void ControlSessionWebsocket::send_next()
 {
     const std::string& message = messages_.front();
-    wss_.async_write(boost::asio::buffer(message),
-                     [this, self = shared_from_this()](std::error_code ec, std::size_t length)
-                     {
+
+    auto write_handler = [this, self = shared_from_this()](std::error_code ec, std::size_t length)
+    {
         messages_.pop_front();
         if (ec)
         {
@@ -98,14 +104,28 @@ void ControlSessionWebsocket::send_next()
         }
         if (!messages_.empty())
             send_next();
-    });
+    };
+
+    if (is_ssl_)
+    {
+        ssl_ws_->async_write(boost::asio::buffer(message), [write_handler](std::error_code ec, std::size_t length) { write_handler(ec, length); });
+    }
+    else
+    {
+        tcp_ws_->async_write(boost::asio::buffer(message), [write_handler](std::error_code ec, std::size_t length) { write_handler(ec, length); });
+    }
 }
 
 
 void ControlSessionWebsocket::do_read_ws()
 {
     // Read a message into our buffer
-    wss_.async_read(buffer_, [this, self = shared_from_this()](beast::error_code ec, std::size_t bytes_transferred) { on_read_ws(ec, bytes_transferred); });
+    if (is_ssl_)
+        ssl_ws_->async_read(buffer_,
+                            [this, self = shared_from_this()](beast::error_code ec, std::size_t bytes_transferred) { on_read_ws(ec, bytes_transferred); });
+    else
+        tcp_ws_->async_read(buffer_,
+                            [this, self = shared_from_this()](beast::error_code ec, std::size_t bytes_transferred) { on_read_ws(ec, bytes_transferred); });
 }
 
 

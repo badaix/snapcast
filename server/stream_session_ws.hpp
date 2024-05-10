@@ -42,6 +42,8 @@ namespace beast = boost::beast;         // from <boost/beast.hpp>
 namespace websocket = beast::websocket; // from <boost/beast/websocket.hpp>
 using tcp_socket = boost::asio::ip::tcp::socket;
 using ssl_socket = boost::asio::ssl::stream<tcp_socket>;
+using tcp_websocket = websocket::stream<tcp_socket>;
+using ssl_websocket = websocket::stream<ssl_socket>;
 
 
 /// Endpoint for a connected control client.
@@ -54,7 +56,8 @@ class StreamSessionWebsocket : public StreamSession
 {
 public:
     /// ctor. Received message from the client are passed to StreamMessageReceiver
-    StreamSessionWebsocket(StreamMessageReceiver* receiver, websocket::stream<ssl_socket>&& wss);
+    StreamSessionWebsocket(StreamMessageReceiver* receiver, ssl_websocket&& ssl_ws);
+    StreamSessionWebsocket(StreamMessageReceiver* receiver, tcp_websocket&& tcp_ws);
     ~StreamSessionWebsocket() override;
     void start() override;
     void stop() override;
@@ -66,8 +69,10 @@ protected:
     void on_read_ws(beast::error_code ec, std::size_t bytes_transferred);
     void do_read_ws();
 
-    websocket::stream<ssl_socket> wss_;
+    std::optional<ssl_websocket> ssl_ws_;
+    std::optional<tcp_websocket> tcp_ws_;
 
 protected:
     beast::flat_buffer buffer_;
+    bool is_ssl_;
 };
