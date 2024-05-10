@@ -89,6 +89,9 @@ int main(int argc, char* argv[])
         conf.add<Value<size_t>>("", "http.port", "which port the server should listen on", settings.http.port, &settings.http.port);
         auto http_bind_to_address = conf.add<Value<string>>("", "http.bind_to_address", "address for the server to listen on",
                                                             settings.http.bind_to_address.front(), &settings.http.bind_to_address[0]);
+        conf.add<Value<size_t>>("", "http.ssl_port", "which ssl port the server should listen on", settings.http.ssl_port, &settings.http.ssl_port);
+        auto http_ssl_bind_to_address = conf.add<Value<string>>("", "http.ssl_bind_to_address", "ssl address for the server to listen on",
+                                                                settings.http.ssl_bind_to_address.front(), &settings.http.ssl_bind_to_address[0]);
         conf.add<Implicit<string>>("", "http.doc_root", "serve a website from the doc_root location", settings.http.doc_root, &settings.http.doc_root);
         conf.add<Value<string>>("", "http.host", "Hostname or IP under which clients can reach this host", settings.http.host, &settings.http.host);
 
@@ -146,6 +149,12 @@ int main(int argc, char* argv[])
                 settings.http.bind_to_address.clear();
                 for (size_t n = 0; n < http_bind_to_address->count(); ++n)
                     settings.http.bind_to_address.push_back(http_bind_to_address->value(n));
+            }
+            if (http_ssl_bind_to_address->is_set())
+            {
+                settings.http.ssl_bind_to_address.clear();
+                for (size_t n = 0; n < http_ssl_bind_to_address->count(); ++n)
+                    settings.http.ssl_bind_to_address.push_back(http_ssl_bind_to_address->value(n));
             }
             if (stream_bind_to_address->is_set())
             {

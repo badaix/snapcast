@@ -48,7 +48,9 @@ struct ServerSettings
     {
         bool enabled{true};
         size_t port{1780};
+        size_t ssl_port{1788};
         std::vector<std::string> bind_to_address{{"0.0.0.0"}};
+        std::vector<std::string> ssl_bind_to_address{{"0.0.0.0"}};
         std::string doc_root{""};
         std::string host{"<hostname>"};
         inline static ImageCache image_cache;
