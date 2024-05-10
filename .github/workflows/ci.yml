@@ -19,33 +19,37 @@ jobs:
     runs-on: ubuntu-22.04
 
     steps:
-      - uses: actions/checkout@v4
-      - name: print environment
-        run: env
-      - name: dependencies
-        run: sudo apt-get update && sudo apt-get install -yq libasound2-dev libsoxr-dev libvorbisidec-dev libvorbis-dev libflac-dev libopus-dev alsa-utils libpulse-dev libavahi-client-dev avahi-daemon debhelper ccache expat cppcheck
-      - name: cache boost
-        id: cache-boost
-        uses: actions/cache@v4
-        with:
-          path: boost_${{ env.BOOST_VERSION }}
-          key: boost-${{ env.BOOST_VERSION }}
-          enableCrossOsArchive: true
-      - name: get boost
-        if: steps.cache-boost.outputs.cache-hit != 'true'
-        run: |
-          wget https://boostorg.jfrog.io/artifactory/main/release/${BOOST_VERSION//_/.}/source/boost_${BOOST_VERSION}.tar.bz2
-          tar xjf boost_${BOOST_VERSION}.tar.bz2
-      - name: configure
-        run: |
-          cmake -S . -B build \
-            -DWERROR=ON -DBUILD_TESTS=ON \
-            -DBOOST_ROOT=boost_${BOOST_VERSION} \
-            -DCMAKE_BUILD_TYPE=Release \
-            -DCMAKE_EXPORT_COMPILE_COMMANDS=TRUE \
-            -DCMAKE_CXX_FLAGS="-DCMAKE_CXX_FLAGS=-DJSON_HAS_CPP_14"
-      - name: analysis
-        run: cmake --build build --target ${{ matrix.tool }}
+    - uses: actions/checkout@v4
+    - name: print environment
+      run: env
+    - name: dependencies
+      run: |
+        sudo apt-get update && \
+        sudo apt-get install -yq libasound2-dev libsoxr-dev libvorbisidec-dev libvorbis-dev libflac-dev \
+        libopus-dev alsa-utils libpulse-dev libavahi-client-dev libssl-dev libcrypto-dev \
+        avahi-daemon debhelper ccache expat cppcheck 
+    - name: cache boost
+      id: cache-boost
+      uses: actions/cache@v4
+      with:
+        path: boost_${{ env.BOOST_VERSION }}
+        key: boost-${{ env.BOOST_VERSION }}
+        enableCrossOsArchive: true
+    - name: get boost
+      if: steps.cache-boost.outputs.cache-hit != 'true'
+      run: |
+        wget https://boostorg.jfrog.io/artifactory/main/release/${BOOST_VERSION//_/.}/source/boost_${BOOST_VERSION}.tar.bz2
+        tar xjf boost_${BOOST_VERSION}.tar.bz2
+    - name: configure
+      run: |
+        cmake -S . -B build \
+          -DWERROR=ON -DBUILD_TESTS=ON \
+          -DBOOST_ROOT=boost_${BOOST_VERSION} \
+          -DCMAKE_BUILD_TYPE=Release \
+          -DCMAKE_EXPORT_COMPILE_COMMANDS=TRUE \
+          -DCMAKE_CXX_FLAGS="-DCMAKE_CXX_FLAGS=-DJSON_HAS_CPP_14"
+    - name: analysis
+      run: cmake --build build --target ${{ matrix.tool }}
 
 
   linux:

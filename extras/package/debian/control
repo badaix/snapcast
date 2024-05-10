@@ -10,7 +10,9 @@ Build-Depends: debhelper (>= 10~),
                libopus-dev,
                libavahi-client-dev,
                libasio-dev,
-               libsoxr-dev
+               libsoxr-dev,
+               libssl-dev,
+               libcrypto-dev
 Standards-Version: 4.1.4
 Homepage: https://github.com/badaix/snapcast
 Vcs-Git: https://github.com/badaix/snapcast.git
