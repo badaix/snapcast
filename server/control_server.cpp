@@ -40,15 +40,10 @@ static constexpr auto LOG_TAG = "ControlServer";
 
 ControlServer::ControlServer(boost::asio::io_context& io_context, const ServerSettings& settings, ControlMessageReceiver* controlMessageReceiver)
     : io_context_(io_context), ssl_context_(boost::asio::ssl::context::sslv23), tcp_settings_(settings.tcp), http_settings_(settings.http),
-      controlMessageReceiver_(controlMessageReceiver), ssl_enabled_(true)
+      controlMessageReceiver_(controlMessageReceiver)
 {
     const ServerSettings::Ssl& ssl = settings.ssl;
-    if (ssl.certificate.empty() || ssl.private_key.empty())
-    {
-        LOG(INFO, LOG_TAG) << "SSL disabled, to enable SSL, please configure a certificate and private key file in PEM format\n";
-        ssl_enabled_ = false;
-    }
-    if (ssl_enabled_)
+    if (http_settings_.ssl_enabled)
     {
         ssl_context_.set_options(boost::asio::ssl::context::default_workarounds | boost::asio::ssl::context::no_sslv2 |
                                  boost::asio::ssl::context::single_dh_use);
@@ -192,23 +187,26 @@ void ControlServer::start()
             }
         }
     }
-    if (http_settings_.enabled)
+    if (http_settings_.enabled || http_settings_.ssl_enabled)
     {
-        for (const auto& address : http_settings_.bind_to_address)
+        if (http_settings_.enabled)
         {
-            try
+            for (const auto& address : http_settings_.bind_to_address)
             {
-                LOG(INFO, LOG_TAG) << "Creating HTTP acceptor for address: " << address << ", port: " << http_settings_.port << "\n";
-                acceptor_.emplace_back(make_unique<tcp::acceptor>(boost::asio::make_strand(io_context_.get_executor()),
-                                                                  tcp::endpoint(boost::asio::ip::address::from_string(address), http_settings_.port)));
-            }
-            catch (const boost::system::system_error& e)
-            {
-                LOG(ERROR, LOG_TAG) << "error creating HTTP acceptor: " << e.what() << ", code: " << e.code() << "\n";
+                try
+                {
+                    LOG(INFO, LOG_TAG) << "Creating HTTP acceptor for address: " << address << ", port: " << http_settings_.port << "\n";
+                    acceptor_.emplace_back(make_unique<tcp::acceptor>(boost::asio::make_strand(io_context_.get_executor()),
+                                                                      tcp::endpoint(boost::asio::ip::address::from_string(address), http_settings_.port)));
+                }
+                catch (const boost::system::system_error& e)
+                {
+                    LOG(ERROR, LOG_TAG) << "error creating HTTP acceptor: " << e.what() << ", code: " << e.code() << "\n";
+                }
             }
         }
 
-        if (ssl_enabled_)
+        if (http_settings_.ssl_enabled)
         {
             for (const auto& address : http_settings_.ssl_bind_to_address)
             {
