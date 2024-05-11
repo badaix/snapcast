@@ -42,6 +42,7 @@ struct ServerSettings
     {
         std::string certificate{""};
         std::string private_key{""};
+        std::string key_password{""};
     };
 
     struct Http
