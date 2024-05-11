@@ -48,6 +48,7 @@ struct ServerSettings
     struct Http
     {
         bool enabled{true};
+        bool ssl_enabled{false};
         size_t port{1780};
         size_t ssl_port{1788};
         std::vector<std::string> bind_to_address{{"0.0.0.0"}};
