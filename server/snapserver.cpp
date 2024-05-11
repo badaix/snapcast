@@ -90,6 +90,8 @@ int main(int argc, char* argv[])
         conf.add<Value<size_t>>("", "http.port", "which port the server should listen on", settings.http.port, &settings.http.port);
         auto http_bind_to_address = conf.add<Value<string>>("", "http.bind_to_address", "address for the server to listen on",
                                                             settings.http.bind_to_address.front(), &settings.http.bind_to_address[0]);
+        conf.add<Value<bool>>("", "http.ssl_enabled", "enable HTTPS Json RPC (HTTPS POST and ssl websockets)", settings.http.ssl_enabled,
+                              &settings.http.ssl_enabled);
         conf.add<Value<size_t>>("", "http.ssl_port", "which ssl port the server should listen on", settings.http.ssl_port, &settings.http.ssl_port);
         auto http_ssl_bind_to_address = conf.add<Value<string>>("", "http.ssl_bind_to_address", "ssl address for the server to listen on",
                                                                 settings.http.ssl_bind_to_address.front(), &settings.http.ssl_bind_to_address[0]);
