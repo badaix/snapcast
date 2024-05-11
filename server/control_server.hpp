@@ -72,5 +72,4 @@ private:
     ServerSettings::Tcp tcp_settings_;
     ServerSettings::Http http_settings_;
     ControlMessageReceiver* controlMessageReceiver_;
-    bool ssl_enabled_;
 };
