@@ -40,19 +40,34 @@ static constexpr auto LOG_TAG = "ControlServer";
 
 ControlServer::ControlServer(boost::asio::io_context& io_context, const ServerSettings& settings, ControlMessageReceiver* controlMessageReceiver)
     : io_context_(io_context), ssl_context_(boost::asio::ssl::context::sslv23), tcp_settings_(settings.tcp), http_settings_(settings.http),
-      controlMessageReceiver_(controlMessageReceiver)
+      controlMessageReceiver_(controlMessageReceiver), ssl_enabled_(true)
 {
     const ServerSettings::Ssl& ssl = settings.ssl;
-    ssl_context_.set_options(boost::asio::ssl::context::default_workarounds | boost::asio::ssl::context::no_sslv2 | boost::asio::ssl::context::single_dh_use);
-    ssl_context_.set_password_callback(
-        [](size_t max_length, boost::asio::ssl::context_base::password_purpose purpose) -> string
+    if (ssl.certificate.empty() || ssl.private_key.empty())
+    {
+        LOG(INFO, LOG_TAG) << "SSL disabled, to enable SSL, please configure a certificate and private key file in PEM format\n";
+        ssl_enabled_ = false;
+    }
+    if (ssl_enabled_)
+    {
+        ssl_context_.set_options(boost::asio::ssl::context::default_workarounds | boost::asio::ssl::context::no_sslv2 |
+                                 boost::asio::ssl::context::single_dh_use);
+        if (!ssl.key_password.empty())
         {
-        LOG(DEBUG, LOG_TAG) << "getPassword, purpose: " << purpose << ", max length: " << max_length << "\n";
-        return "test";
-        });
-    ssl_context_.use_certificate_chain_file(ssl.certificate);
-    ssl_context_.use_private_key_file(ssl.private_key, boost::asio::ssl::context::pem);
-    // ssl_context_.use_tmp_dh_file("dh4096.pem");
+            ssl_context_.set_password_callback(
+                [pw = ssl.key_password](size_t max_length, boost::asio::ssl::context_base::password_purpose purpose) -> string
+                {
+                LOG(DEBUG, LOG_TAG) << "getPassword, purpose: " << purpose << ", max length: " << max_length << "\n";
+                return pw;
+                });
+        }
+        if (!ssl.certificate.empty() && !ssl.private_key.empty())
+        {
+            ssl_context_.use_certificate_chain_file(ssl.certificate);
+            ssl_context_.use_private_key_file(ssl.private_key, boost::asio::ssl::context::pem);
+        }
+        // ssl_context_.use_tmp_dh_file("dh4096.pem");
+    }
 }
 
 
@@ -193,17 +208,20 @@ void ControlServer::start()
             }
         }
 
-        for (const auto& address : http_settings_.ssl_bind_to_address)
+        if (ssl_enabled_)
         {
-            try
+            for (const auto& address : http_settings_.ssl_bind_to_address)
             {
-                LOG(INFO, LOG_TAG) << "Creating HTTPS acceptor for address: " << address << ", port: " << http_settings_.ssl_port << "\n";
-                acceptor_.emplace_back(make_unique<tcp::acceptor>(boost::asio::make_strand(io_context_.get_executor()),
-                                                                  tcp::endpoint(boost::asio::ip::address::from_string(address), http_settings_.ssl_port)));
-            }
-            catch (const boost::system::system_error& e)
-            {
-                LOG(ERROR, LOG_TAG) << "error creating HTTP acceptor: " << e.what() << ", code: " << e.code() << "\n";
+                try
+                {
+                    LOG(INFO, LOG_TAG) << "Creating HTTPS acceptor for address: " << address << ", port: " << http_settings_.ssl_port << "\n";
+                    acceptor_.emplace_back(make_unique<tcp::acceptor>(boost::asio::make_strand(io_context_.get_executor()),
+                                                                      tcp::endpoint(boost::asio::ip::address::from_string(address), http_settings_.ssl_port)));
+                }
+                catch (const boost::system::system_error& e)
+                {
+                    LOG(ERROR, LOG_TAG) << "error creating HTTP acceptor: " << e.what() << ", code: " << e.code() << "\n";
+                }
             }
         }
     }

@@ -83,6 +83,7 @@ int main(int argc, char* argv[])
         // SSL settings
         conf.add<Value<string>>("", "ssl.certificate", "certificate file (PEM format)", settings.ssl.certificate, &settings.ssl.certificate);
         conf.add<Value<string>>("", "ssl.private_key", "private key file (PEM format)", settings.ssl.private_key, &settings.ssl.private_key);
+        conf.add<Value<string>>("", "ssl.key_password", "key password (for encrypted private key)", settings.ssl.key_password, &settings.ssl.key_password);
 
         // HTTP RPC settings
         conf.add<Value<bool>>("", "http.enabled", "enable HTTP Json RPC (HTTP POST and websockets)", settings.http.enabled, &settings.http.enabled);
