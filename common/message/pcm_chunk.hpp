@@ -128,6 +128,12 @@ public:
     //     payloadSize = newSize;
     // }
 
+    void setFrameCount(int frameCount) {
+        auto newSize = format.frameSize() * frameCount;
+        payload = (char*)realloc(payload, newSize);
+        payloadSize = newSize;
+    }
+
     double durationMs() const
     {
         return static_cast<double>(getFrameCount()) / format.msRate();

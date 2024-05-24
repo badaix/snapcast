@@ -96,6 +96,7 @@ option(BUILD_WITH_OPUS "Build with OPUS support" ON)
 option(BUILD_WITH_AVAHI "Build with AVAHI support" ON)
 option(BUILD_WITH_EXPAT "Build with EXPAT support" ON)
 option(BUILD_WITH_PULSE "Build with PulseAudio support" ON)
+option(BUILD_WITH_JACK "Build with JACK support" ON)
 
 if(NOT BUILD_SHARED_LIBS AND NOT BUILD_STATIC_LIBS)
   message(
@@ -199,6 +200,13 @@ if(NOT WIN32 AND NOT ANDROID)
     if(ALSA_FOUND)
       add_compile_definitions(HAS_ALSA)
     endif(ALSA_FOUND)
+
+    if(BUILD_WITH_JACK)
+      pkg_search_module(JACK jack)
+      if(JACK_FOUND)
+        add_compile_definitions(HAS_JACK)
+      endif(JACK_FOUND)
+    endif(BUILD_WITH_JACK)
 
     if(BUILD_WITH_PULSE)
       pkg_search_module(PULSE libpulse)

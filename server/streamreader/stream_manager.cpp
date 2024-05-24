@@ -24,6 +24,9 @@
 #ifdef HAS_ALSA
 #include "alsa_stream.hpp"
 #endif
+#ifdef HAS_JACK
+#include "jack_stream.hpp"
+#endif
 #include "common/snap_exception.hpp"
 #include "common/str_compat.hpp"
 #include "file_stream.hpp"
@@ -100,6 +103,12 @@ PcmStreamPtr StreamManager::addStream(StreamUri& streamUri)
     else if (streamUri.scheme == "alsa")
     {
         stream = make_shared<AlsaStream>(listener, io_context_, settings_, streamUri);
+    }
+#endif
+#ifdef HAS_JACK
+    else if (streamUri.scheme == "jack")
+    {
+        stream = make_shared<JackStream>(listener, io_context_, settings_, streamUri);
     }
 #endif
     else if ((streamUri.scheme == "spotify") || (streamUri.scheme == "librespot"))
