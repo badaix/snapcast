@@ -119,6 +119,9 @@ void wait(boost::asio::steady_timer& timer, const std::chrono::duration<Rep, Per
 JackStream::JackStream(PcmStream::Listener* pcmListener, boost::asio::io_context& ioc, const ServerSettings& server_settings, const StreamUri& uri)
     : PcmStream(pcmListener, ioc, server_settings, uri), read_timer_(strand_), silence_(0ms)
 {
+
+    serverName_ = uri_.getQuery("server_name", "default");
+
     send_silence_ = (uri_.getQuery("send_silence", "false") == "true");
     idle_threshold_ = std::chrono::milliseconds(std::max(cpt::stoi(uri_.getQuery("idle_threshold", "100")), 10));
 
@@ -194,8 +197,10 @@ void JackStream::tryConnect()
 
 bool JackStream::openJackConnection()
 {
-    client_ = jack_client_open(name_.c_str(), JackNoStartServer, &status_, nullptr);
+    char *serverName = serverName_.data();
+    jack_options_t options = (jack_options_t)(JackNoStartServer | JackServerName);
 
+    client_ = jack_client_open(name_.c_str(), options, nullptr, serverName);
     if (client_ == NULL) {
         return false;
     }

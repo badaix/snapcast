@@ -61,8 +61,9 @@ protected:
 
     void autoConnectPorts();
 
+    std::string serverName_;
+
     jack_client_t *client_;
-    jack_status_t status_;
     std::vector<jack_port_t *> ports_;
     jack_nframes_t jackConnectFrames_;
     std::chrono::time_point<std::chrono::steady_clock> jackConnectTime_;
