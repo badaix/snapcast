@@ -261,6 +261,54 @@ The output of any audio player that uses alsa can be redirected to Snapcast by u
     source = alsa:///?name=SomeName&device=hw:0,1,0
     ```
 
+### jack
+
+Reads audio from a Jack server
+
+```sh
+jack:///?name=<name>[sampleformat=48000:16:2][autoconnect=][autoconnect_skip=0][&send_silence=false][&idle_threshold=100]
+```
+
+#### Available parameters
+
+- `server_name`: The Jack server name to connect to, leave empty for "default"
+- `autoconnect`: Regular expression to match Jack ports to auto-connect to stream inputs
+- `autoconnect_skip`: Skip this number of matches from the regular expression
+- `idle_threshold`: switch stream state from playing to idle after receiving `idle_threshold` milliseconds of silence
+- `silence_threshold_percent`: percent (float) of the max amplitude to be considered as silence
+- `send_silence`: forward silence to clients when stream state is `idle`
+
+#### Description of Jack stream
+
+Each `jack` stream creates a separate connection to a jack server and registers
+as many input ports as there are audio channels in this stream (according to
+`sampleformat`). The timing information is taken from the Jack server, so all
+streams connected to the same Jack server should play perfectly in sync.
+
+You can use `autoconnect` to automatically connect this streams input ports
+with Jack output ports. The parameter takes a regular expression and matches
+against the whole Jack port name (including client name). For example, if you
+have a Jack client named "system" with four output ports ("playback_1",
+"playback_2", ...) and you want each output as a separate SnapCast stream, you
+could either autoconnect to the exact ports, or you use a autoconnect search term
+that returns all ports and use `autoconnect_skip` to pick the right one:
+
+```
+jack:///?name=Channel1&sampleformat=48000:16:1&autoconnect=system:playback_
+jack:///?name=Channel2&sampleformat=48000:16:1&autoconnect=system:playback_&autoconnect_skip=1
+jack:///?name=Channel3&sampleformat=48000:16:1&autoconnect=system:playback_&autoconnect_skip=2
+jack:///?name=Channel4&sampleformat=48000:16:1&autoconnect=system:playback_&autoconnect_skip=3
+```
+
+#### Limitations
+
+- Currently all `jack` streams need to match the sample rate of the Jack server.
+
+- The `chunk_ms` parameter is ignored for jack streams. Instead, the Jack
+  buffer size (Frames/Period) is used. So if you are encoding your streams with
+  Ogg, ensure that the Jack server Frames/Period size is set appropriately.
+
+
 ### meta
 
 Read and mix audio from other stream sources
