@@ -153,6 +153,11 @@ void JackStream::start()
 {
     LOG(TRACE, LOG_TAG) << "JackStream::start()\n";
 
+    // Need to start immediately, otherwise client will fail
+    // due to a zero-length pcm header message
+    tvEncodedChunk_ = std::chrono::steady_clock::now();
+    PcmStream::start();
+
     boost::asio::post(strand_, [this] { tryConnect(); });
 }
 
