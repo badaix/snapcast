@@ -349,8 +349,8 @@ void PulsePlayer::stateCallback(pa_context* ctx)
 
 void PulsePlayer::writeCallback(pa_stream* stream, size_t nbytes)
 {
-    pa_usec_t usec;
-    int neg;
+    pa_usec_t usec = 0;
+    int neg = 0;
     pa_stream_get_latency(stream, &usec, &neg);
 
     auto numFrames = nbytes / stream_->getFormat().frameSize();
