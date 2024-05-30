@@ -25,8 +25,8 @@
 #include <server/server_settings.hpp>
 
 // 3rd party headers
-#include <boost/asio/spawn.hpp>
 #include <boost/asio/io_context.hpp>
+#include <boost/asio/spawn.hpp>
 #include <boost/asio/steady_timer.hpp>
 
 
@@ -63,8 +63,8 @@ protected:
 
     std::string serverName_;
 
-    jack_client_t *client_;
-    std::vector<jack_port_t *> ports_;
+    jack_client_t* client_;
+    std::vector<jack_port_t*> ports_;
     jack_nframes_t jackConnectFrames_;
     std::chrono::time_point<std::chrono::steady_clock> jackConnectTime_;
     jack_time_t jackTimeAdjust_;
@@ -74,7 +74,7 @@ protected:
     bool doAutoConnect_ = false;
     int autoConnectSkip_;
 
-    void (*interleave_func_)(char *, jack_default_audio_sample_t *, unsigned long, unsigned long);
+    void (*interleave_func_)(char*, jack_default_audio_sample_t*, unsigned long, unsigned long);
 
     bool first_;
     std::chrono::time_point<std::chrono::steady_clock> nextTick_;
@@ -96,4 +96,3 @@ protected:
 };
 
 } // namespace streamreader
-
