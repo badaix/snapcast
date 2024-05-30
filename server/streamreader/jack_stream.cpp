@@ -39,60 +39,73 @@ namespace streamreader
 static constexpr auto LOG_TAG = "JackStream";
 
 
-void float_to_s32(char *dst, jack_default_audio_sample_t *src, unsigned long nsamples, unsigned long dst_skip)
+void float_to_s32(char* dst, jack_default_audio_sample_t* src, unsigned long nsamples, unsigned long dst_skip)
 {
-	while (nsamples--) {
+    while (nsamples--)
+    {
         // float to S32 conversion
-		double clipped = fmin(1.0f, fmax((double)(*src), -1.0f));
-		double scaled = clipped * 2147483647.0;
-		*(int32_t *)dst = lrint(scaled);
+        double clipped = fmin(1.0f, fmax((double)(*src), -1.0f));
+        double scaled = clipped * 2147483647.0;
+        *(int32_t*)dst = lrint(scaled);
 
-		dst += dst_skip;
-		src++;
-	}
+        dst += dst_skip;
+        src++;
+    }
 }
 
-void float_to_s24(char *dst, jack_default_audio_sample_t *src, unsigned long nsamples, unsigned long dst_skip)
+void float_to_s24(char* dst, jack_default_audio_sample_t* src, unsigned long nsamples, unsigned long dst_skip)
 {
     int32_t tmp;
 
-	while (nsamples--) {
+    while (nsamples--)
+    {
 
         // float to S24 conversion
-        if (*src <= -1.0f) {
+        if (*src <= -1.0f)
+        {
             tmp = -8388607;
-        } else if (*src >= 1.0f) {
+        }
+        else if (*src >= 1.0f)
+        {
             tmp = 8388607;
-        } else {
-            tmp = lrintf (*src * 8388607.0);
+        }
+        else
+        {
+            tmp = lrintf(*src * 8388607.0);
         }
 
 #if __BYTE_ORDER == __LITTLE_ENDIAN
-		memcpy (dst, &tmp, 3);
+        memcpy(dst, &tmp, 3);
 #elif __BYTE_ORDER == __BIG_ENDIAN
-		memcpy (dst, (char *)&tmp + 1, 3);
+        memcpy(dst, (char*)&tmp + 1, 3);
 #endif
-		dst += dst_skip;
-		src++;
-	}
+        dst += dst_skip;
+        src++;
+    }
 }
 
-void float_to_s16(char *dst, jack_default_audio_sample_t *src, unsigned long nsamples, unsigned long dst_skip)	
+void float_to_s16(char* dst, jack_default_audio_sample_t* src, unsigned long nsamples, unsigned long dst_skip)
 {
-	while (nsamples--) {
+    while (nsamples--)
+    {
 
         // float to S16 conversion
-        if (*src <= -1.0f) {
-            *((int16_t*) dst) = -32767;
-        } else if (*src >= 1.0f) {
-            *((int16_t*) dst) = 32767;
-        } else {
-            *((int16_t*) dst) = lrintf (*src * 32767.0);
+        if (*src <= -1.0f)
+        {
+            *((int16_t*)dst) = -32767;
+        }
+        else if (*src >= 1.0f)
+        {
+            *((int16_t*)dst) = 32767;
+        }
+        else
+        {
+            *((int16_t*)dst) = lrintf(*src * 32767.0);
         }
 
-		dst += dst_skip;
-		src++;
-	}
+        dst += dst_skip;
+        src++;
+    }
 }
 
 namespace
@@ -103,7 +116,7 @@ void wait(boost::asio::steady_timer& timer, const std::chrono::duration<Rep, Per
     timer.expires_after(duration);
     timer.async_wait(
         [handler = std::move(handler)](const boost::system::error_code& ec)
-        {
+    {
         if (ec)
         {
             LOG(ERROR, LOG_TAG) << "Error during async wait: " << ec.message() << "\n";
@@ -129,7 +142,7 @@ JackStream::JackStream(PcmStream::Listener* pcmListener, boost::asio::io_context
     autoConnectRegex_ = uri_.getQuery("autoconnect", "");
     autoConnectSkip_ = cpt::stoi(uri_.getQuery("autoconnect_skip", "0"));
 
-    switch(sampleFormat_.bits())
+    switch (sampleFormat_.bits())
     {
         case 16:
             interleave_func_ = float_to_s16;
@@ -172,19 +185,22 @@ void JackStream::stop()
 
 
 /**
- * Try to connect to the jack server. If it fails, wait 
+ * Try to connect to the jack server. If it fails, wait
  * a little bit and try again.
  */
 void JackStream::tryConnect()
 {
-    try {
-        if (!openJackConnection()) {
+    try
+    {
+        if (!openJackConnection())
+        {
             LOG(WARNING, LOG_TAG) << "Jack connection failed, trying again in 5 seconds\n";
             wait(read_timer_, 5s, [this] { tryConnect(); });
             return;
         }
 
-        if (!createJackPorts()) {
+        if (!createJackPorts())
+        {
             LOG(ERROR, LOG_TAG) << "Failed to create Jack ports, trying again in 5 seconds\n";
             closeJackConnection();
             wait(read_timer_, 5s, [this] { tryConnect(); });
@@ -193,7 +209,8 @@ void JackStream::tryConnect()
 
         PcmStream::start();
     }
-    catch (exception& e) {
+    catch (exception& e)
+    {
         LOG(ERROR, LOG_TAG) << "Error during Jack connection: " << e.what() << "\n";
         stop();
     }
@@ -202,32 +219,30 @@ void JackStream::tryConnect()
 
 bool JackStream::openJackConnection()
 {
-    char *serverName = serverName_.data();
+    char* serverName = serverName_.data();
     jack_options_t options = (jack_options_t)(JackNoStartServer | JackServerName);
 
     client_ = jack_client_open(name_.c_str(), options, nullptr, serverName);
-    if (client_ == NULL) {
+    if (client_ == NULL)
+    {
         return false;
     }
 
     LOG(INFO, LOG_TAG) << "Connected Jack client " << jack_get_client_name(client_) << "\n";
 
     jack_nframes_t jack_sample_rate = jack_get_sample_rate(client_);
-    if (jack_sample_rate != sampleFormat_.rate()) {
-        throw SnapException(
-            "Jack streams must match the sample rate of the Jack server. "
-            "The server sample rate is " + cpt::to_string(jack_sample_rate) + "."
-        );
+    if (jack_sample_rate != sampleFormat_.rate())
+    {
+        throw SnapException("Jack streams must match the sample rate of the Jack server. "
+                            "The server sample rate is " +
+                            cpt::to_string(jack_sample_rate) + ".");
     }
 
     jack_time_t connect_time = jack_get_time();
     jackConnectTime_ = std::chrono::steady_clock::now();
-    jackTimeAdjust_ = chrono::duration_cast<chrono::microseconds>(
-        jackConnectTime_.time_since_epoch()
-    ).count() - connect_time;
+    jackTimeAdjust_ = chrono::duration_cast<chrono::microseconds>(jackConnectTime_.time_since_epoch()).count() - connect_time;
 
-    LOG(DEBUG, LOG_TAG) << name_ << ": Jack server time adjustment is "
-        << jackTimeAdjust_ << "\n";
+    LOG(DEBUG, LOG_TAG) << name_ << ": Jack server time adjustment is " << jackTimeAdjust_ << "\n";
 
     jack_set_process_callback(client_, processCallback, this);
     jack_on_shutdown(client_, jackShutdown, this);
@@ -236,8 +251,7 @@ bool JackStream::openJackConnection()
     int err = jack_activate(client_);
     if (err)
     {
-        LOG(ERROR, LOG_TAG) << "Failed to activate Jack client "
-            << name_ << ": " << err << "\n";
+        LOG(ERROR, LOG_TAG) << "Failed to activate Jack client " << name_ << ": " << err << "\n";
         closeJackConnection();
         return false;
     }
@@ -247,7 +261,8 @@ bool JackStream::openJackConnection()
 
 bool JackStream::createJackPorts()
 {
-    if (ports_.size() > 0) {
+    if (ports_.size() > 0)
+    {
         throw SnapException("Jack ports already created!");
     }
 
@@ -255,11 +270,10 @@ bool JackStream::createJackPorts()
     ports_.reserve(channelCount);
 
     // Register input ports
-    for (int i=0; i < channelCount; ++i)
+    for (int i = 0; i < channelCount; ++i)
     {
         std::string portName = "input_" + std::to_string(i);
-        jack_port_t *port = jack_port_register(client_, portName.c_str(),
-                JACK_DEFAULT_AUDIO_TYPE, JackPortIsInput, 0);
+        jack_port_t* port = jack_port_register(client_, portName.c_str(), JACK_DEFAULT_AUDIO_TYPE, JackPortIsInput, 0);
         if (port == NULL)
         {
             LOG(ERROR, LOG_TAG) << name_ << ": failed to register port " << portName << "\n";
@@ -283,8 +297,7 @@ int JackStream::readJackBuffers(jack_nframes_t nframes)
     jack_time_t next_usecs;
     float period_usecs;
 
-    int err = jack_get_cycle_times(client_, &current_frames, &current_usecs,
-            &next_usecs, &period_usecs);
+    int err = jack_get_cycle_times(client_, &current_frames, &current_usecs, &next_usecs, &period_usecs);
     if (err)
     {
         LOG(ERROR, LOG_TAG) << "Unable to get Jack cycle times: " << err << "\n";
@@ -305,19 +318,17 @@ int JackStream::readJackBuffers(jack_nframes_t nframes)
 
     int connectedPorts = 0;
 
-    for (size_t i=0; i < ports_.size(); i++)
+    for (size_t i = 0; i < ports_.size(); i++)
     {
         int payload_offset = bytes_per_frame * i;
-        jack_port_t *port = ports_[i];
+        jack_port_t* port = ports_[i];
 
         if (jack_port_connected(port))
         {
             connectedPorts++;
         }
 
-        jack_default_audio_sample_t *buf = static_cast<jack_default_audio_sample_t *>(
-            jack_port_get_buffer(port, nframes)
-        );
+        jack_default_audio_sample_t* buf = static_cast<jack_default_audio_sample_t*>(jack_port_get_buffer(port, nframes));
 
         if (buf == NULL)
         {
@@ -346,9 +357,7 @@ int JackStream::readJackBuffers(jack_nframes_t nframes)
     {
         // We use the (adjusted) Jack server time as chunk time, that way all Jack
         // streams will play simultaneously (hopefully!)
-        tvEncodedChunk_ = std::chrono::time_point<std::chrono::steady_clock>(
-            static_cast<chrono::microseconds>(current_usecs + jackTimeAdjust_)
-        );
+        tvEncodedChunk_ = std::chrono::time_point<std::chrono::steady_clock>(static_cast<chrono::microseconds>(current_usecs + jackTimeAdjust_));
 
         // TODO: should we chunkRead() in a separate thread?
         chunkRead(*chunk_);
@@ -359,7 +368,8 @@ int JackStream::readJackBuffers(jack_nframes_t nframes)
 
 void JackStream::closeJackConnection()
 {
-    if (client_ == NULL) {
+    if (client_ == NULL)
+    {
         return;
     }
 
@@ -373,16 +383,19 @@ void JackStream::closeJackConnection()
 
 void JackStream::onJackPortRegistration(jack_port_id_t port_id, int registered)
 {
-    if (!doAutoConnect_ || !registered) {
+    if (!doAutoConnect_ || !registered)
+    {
         return;
     }
 
-    jack_port_t *port = jack_port_by_id(client_, port_id);
-    if (port == NULL) {
+    jack_port_t* port = jack_port_by_id(client_, port_id);
+    if (port == NULL)
+    {
         return;
     }
 
-    if (jack_port_is_mine(client_, port)) {
+    if (jack_port_is_mine(client_, port))
+    {
         return;
     }
 
@@ -391,17 +404,17 @@ void JackStream::onJackPortRegistration(jack_port_id_t port_id, int registered)
 
 void JackStream::autoConnectPorts()
 {
-    const char **portNames = jack_get_ports(client_, autoConnectRegex_.c_str(),
-            NULL, JackPortIsOutput);
+    const char** portNames = jack_get_ports(client_, autoConnectRegex_.c_str(), NULL, JackPortIsOutput);
 
-    if (portNames == NULL) {
+    if (portNames == NULL)
+    {
         return;
     }
 
     size_t portIdx = 0;
     int nameIdx = 0;
 
-    while(portIdx < ports_.size() && portNames[nameIdx] != NULL)
+    while (portIdx < ports_.size() && portNames[nameIdx] != NULL)
     {
         if (nameIdx < autoConnectSkip_)
         {
@@ -409,13 +422,14 @@ void JackStream::autoConnectPorts()
             continue;
         }
 
-        if (!jack_port_connected_to(ports_[portIdx], portNames[nameIdx])) {
+        if (!jack_port_connected_to(ports_[portIdx], portNames[nameIdx]))
+        {
 
-            const char *localPortName = jack_port_name(ports_[portIdx]);
+            const char* localPortName = jack_port_name(ports_[portIdx]);
             int err = jack_connect(client_, portNames[nameIdx], localPortName);
-            if (err != 0) {
-                LOG(ERROR, LOG_TAG) << "Unable to autoconnect " << localPortName
-                    << " to " << portNames[nameIdx] << "(Error: " << err << ")\n";
+            if (err != 0)
+            {
+                LOG(ERROR, LOG_TAG) << "Unable to autoconnect " << localPortName << " to " << portNames[nameIdx] << "(Error: " << err << ")\n";
             }
         }
         portIdx++;
@@ -436,28 +450,27 @@ void JackStream::onJackShutdown()
 
 int JackStream::processCallback(jack_nframes_t nframes, void* arg)
 {
-    return static_cast<JackStream *>(arg)->readJackBuffers(nframes);
+    return static_cast<JackStream*>(arg)->readJackBuffers(nframes);
 }
 
 void JackStream::jackShutdown(void* arg)
 {
-    static_cast<JackStream *>(arg)->onJackShutdown();
+    static_cast<JackStream*>(arg)->onJackShutdown();
 }
 
 void JackStream::jackErrorMessage(const char* msg)
 {
-    //LOG(TRACE, LOG_TAG) << "Jack Error: " << msg << "\n";
+    // LOG(TRACE, LOG_TAG) << "Jack Error: " << msg << "\n";
 }
 
 void JackStream::jackInfoMessage(const char* msg)
 {
-    //LOG(TRACE, LOG_TAG) << msg << "\n";
+    // LOG(TRACE, LOG_TAG) << msg << "\n";
 }
 
 void JackStream::jackPortRegistration(jack_port_id_t port_id, int registered, void* arg)
 {
-    return static_cast<JackStream *>(arg)->onJackPortRegistration(port_id, registered);
+    return static_cast<JackStream*>(arg)->onJackPortRegistration(port_id, registered);
 }
 
 } // namespace streamreader
-
