@@ -23,7 +23,7 @@
 #include "decoder/decoder.hpp"
 
 // 3rd party headers
-#include <opus/opus.h>
+#include <opus.h>
 
 // standard headers
 #include <vector>
