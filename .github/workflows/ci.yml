@@ -234,7 +234,7 @@ jobs:
     - name: print environment
       run: env
     - name: dependencies
-      run: brew install pkgconfig libsoxr ccache expat
+      run: brew install pkgconfig libsoxr flac libvorbis opus ccache expat
     - name: cache boost
       id: cache-boost
       uses: actions/cache@v4
