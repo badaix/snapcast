@@ -80,6 +80,7 @@ else()
     list(APPEND SERVER_SOURCES encoder/flac_encoder.cpp)
     list(APPEND SERVER_LIBRARIES ${FLAC_LIBRARIES})
     list(APPEND SERVER_INCLUDE ${FLAC_INCLUDE_DIRS})
+    link_directories(${FLAC_LIBRARY_DIRS})
   endif(FLAC_FOUND)
 
   if(OPUS_FOUND)
