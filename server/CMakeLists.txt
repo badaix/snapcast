@@ -69,6 +69,8 @@ else()
     list(APPEND SERVER_INCLUDE ${OGG_INCLUDE_DIRS} ${VORBIS_INCLUDE_DIRS}
          ${VORBISENC_INCLUDE_DIRS})
     link_directories(${VORBIS_LIBRARY_DIRS})
+    link_directories(${VORBISENC_LIBRARY_DIRS})
+    link_directories(${OGG_LIBRARY_DIRS})
   endif(
     OGG_FOUND
     AND VORBIS_FOUND
