@@ -347,6 +347,7 @@ if(WIN32)
   find_library(SOXR_LIBRARIES soxr)
   find_package_handle_standard_args(Soxr REQUIRED SOXR_INCLUDE_DIRS
                                     SOXR_LIBRARIES)
+  include_directories("${SOXR_INCLUDE_DIRS}")
 
   add_compile_definitions(
     NTDDI_VERSION=0x06020000
