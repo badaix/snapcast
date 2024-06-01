@@ -298,6 +298,8 @@ jobs:
     - name: dependencies
       if: steps.cache-dependencies.outputs.cache-hit != 'true'
       run: |
+        cd c:\vcpkg
+        git pull
         vcpkg.exe update
         vcpkg.exe --triplet x64-windows install libflac libvorbis soxr opus boost-asio
     - name: configure
