@@ -24,7 +24,7 @@
 #include "encoder.hpp"
 
 // 3rd party headers
-#include <opus.h>
+#include <opus/opus.h>
 
 
 namespace encoder
