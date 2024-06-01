@@ -23,7 +23,11 @@
 #include "decoder/decoder.hpp"
 
 // 3rd party headers
+#ifdef MACOS
 #include <opus.h>
+#else
+#include <opus/opus.h>
+#endif
 
 // standard headers
 #include <vector>

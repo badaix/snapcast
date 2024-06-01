@@ -338,7 +338,7 @@ if(WIN32)
   find_package_handle_standard_args(Vorbis REQUIRED VORBIS_INCLUDE_DIRS
                                     VORBIS_LIBRARIES)
 
-  find_path(OPUS_INCLUDE_DIRS opus.h)
+  find_path(OPUS_INCLUDE_DIRS opus/opus.h)
   find_library(OPUS_LIBRARIES opus)
   find_package_handle_standard_args(Opus REQUIRED OPUS_INCLUDE_DIRS
                                     OPUS_LIBRARIES)
