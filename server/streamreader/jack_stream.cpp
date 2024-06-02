@@ -222,7 +222,7 @@ bool JackStream::openJackConnection()
     jack_options_t options = (jack_options_t)(JackNoStartServer | JackServerName);
 
     client_ = jack_client_open(name_.c_str(), options, nullptr, serverName);
-    if (client_ == NULL)
+    if (client_ == nullptr)
     {
         return false;
     }
@@ -273,7 +273,7 @@ bool JackStream::createJackPorts()
     {
         std::string portName = "input_" + std::to_string(i);
         jack_port_t* port = jack_port_register(client_, portName.c_str(), JACK_DEFAULT_AUDIO_TYPE, JackPortIsInput, 0);
-        if (port == NULL)
+        if (port == nullptr)
         {
             LOG(ERROR, LOG_TAG) << name_ << ": failed to register port " << portName << "\n";
             return false;
@@ -329,7 +329,7 @@ int JackStream::readJackBuffers(jack_nframes_t nframes)
 
         jack_default_audio_sample_t* buf = static_cast<jack_default_audio_sample_t*>(jack_port_get_buffer(port, nframes));
 
-        if (buf == NULL)
+        if (buf == nullptr)
         {
             LOG(ERROR, LOG_TAG) << "Unable to get Jack port buffer!\n";
             return -1;
@@ -367,7 +367,7 @@ int JackStream::readJackBuffers(jack_nframes_t nframes)
 
 void JackStream::closeJackConnection()
 {
-    if (client_ == NULL)
+    if (client_ == nullptr)
     {
         return;
     }
@@ -377,7 +377,7 @@ void JackStream::closeJackConnection()
     ports_.clear();
 
     jack_client_close(client_);
-    client_ = NULL;
+    client_ = nullptr;
 }
 
 void JackStream::onJackPortRegistration(jack_port_id_t port_id, int registered)
@@ -388,7 +388,7 @@ void JackStream::onJackPortRegistration(jack_port_id_t port_id, int registered)
     }
 
     jack_port_t* port = jack_port_by_id(client_, port_id);
-    if (port == NULL)
+    if (port == nullptr)
     {
         return;
     }
@@ -403,9 +403,9 @@ void JackStream::onJackPortRegistration(jack_port_id_t port_id, int registered)
 
 void JackStream::autoConnectPorts()
 {
-    const char** portNames = jack_get_ports(client_, autoConnectRegex_.c_str(), NULL, JackPortIsOutput);
+    const char** portNames = jack_get_ports(client_, autoConnectRegex_.c_str(), nullptr, JackPortIsOutput);
 
-    if (portNames == NULL)
+    if (portNames == nullptr)
     {
         return;
     }
@@ -413,7 +413,7 @@ void JackStream::autoConnectPorts()
     size_t portIdx = 0;
     int nameIdx = 0;
 
-    while (portIdx < ports_.size() && portNames[nameIdx] != NULL)
+    while (portIdx < ports_.size() && portNames[nameIdx] != nullptr)
     {
         if (nameIdx < autoConnectSkip_)
         {
@@ -443,7 +443,7 @@ void JackStream::onJackShutdown()
     LOG(ERROR, LOG_TAG) << "Jack has shut down, trying to connect again!\n";
     PcmStream::stop();
     ports_.clear();
-    client_ = NULL;
+    client_ = nullptr;
     wait(read_timer_, 1000ms, [this] { tryConnect(); });
 }
 
