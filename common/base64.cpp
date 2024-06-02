@@ -39,7 +39,7 @@ static inline bool is_base64(unsigned char c)
     return ((isalnum(c) != 0) || (c == '+') || (c == '/'));
 }
 
-std::string base64_encode(unsigned char const* bytes_to_encode, unsigned int in_len)
+std::string base64_encode(const unsigned char* bytes_to_encode, unsigned int in_len)
 {
     std::string ret;
     int i = 0;
@@ -85,7 +85,7 @@ std::string base64_encode(unsigned char const* bytes_to_encode, unsigned int in_
 
 std::string base64_encode(const std::string& text)
 {
-    return base64_encode(reinterpret_cast<const u_char*>(text.c_str()), text.size());
+    return base64_encode(reinterpret_cast<const unsigned char*>(text.c_str()), text.size());
 }
 
 std::string base64_decode(const std::string& encoded_string)
@@ -136,7 +136,7 @@ std::string base64_decode(const std::string& encoded_string)
 }
 
 
-std::string base64url_encode(unsigned char const* bytes_to_encode, unsigned int in_len)
+std::string base64url_encode(const unsigned char* bytes_to_encode, unsigned int in_len)
 {
     std::string res = base64_encode(bytes_to_encode, in_len);
     std::replace(res.begin(), res.end(), '+', '-');
@@ -147,7 +147,7 @@ std::string base64url_encode(unsigned char const* bytes_to_encode, unsigned int 
 
 std::string base64url_encode(const std::string& text)
 {
-    return base64url_encode(reinterpret_cast<const u_char*>(text.c_str()), text.size());
+    return base64url_encode(reinterpret_cast<const unsigned char*>(text.c_str()), text.size());
 }
 
 std::string base64url_decode(const std::string& encoded_string)
