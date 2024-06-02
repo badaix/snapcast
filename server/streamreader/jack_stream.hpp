@@ -76,11 +76,8 @@ protected:
 
     void (*interleave_func_)(char*, jack_default_audio_sample_t*, unsigned long, unsigned long);
 
-    bool first_;
-    std::chrono::time_point<std::chrono::steady_clock> nextTick_;
     boost::asio::steady_timer read_timer_;
     std::chrono::microseconds silence_;
-    std::string lastException_;
 
     /// send silent chunks to clients
     bool send_silence_;
