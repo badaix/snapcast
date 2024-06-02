@@ -58,7 +58,7 @@ EVP_PKEY* createPrivate(const std::string& key)
     char* name = nullptr;
     char* header = nullptr;
     uint8_t* data = nullptr;
-    int64_t datalen = 0;
+    long datalen = 0;
     if (PEM_read_bio(keybio, &name, &header, &data, &datalen) == 1)
     {
         // Copies the data pointer. D2I functions update it
@@ -83,7 +83,7 @@ EVP_PKEY* createPrivate(const std::string& key)
 }
 
 
-bool Sign(const std::string& pem_key, const std::string& msg, std::vector<u_char>& encoded)
+bool Sign(const std::string& pem_key, const std::string& msg, std::vector<unsigned char>& encoded)
 {
     auto* key = createPrivate(pem_key);
     EVP_MD_CTX* ctx = EVP_MD_CTX_create();
@@ -166,7 +166,7 @@ Jwt::Jwt()
                "ajjiCZsv+OITxQ+TTHeGDsdD\n"
                "-----END PRIVATE KEY-----\n";
 
-    std::vector<u_char> encoded;
+    std::vector<unsigned char> encoded;
     if (Sign(key, msg, encoded))
     {
         std::string signature = base64url_encode(encoded.data(), encoded.size());
