@@ -27,7 +27,6 @@
 #include "common/str_compat.hpp"
 
 // standard headers
-#include <cerrno>
 #include <memory>
 
 using namespace std;
