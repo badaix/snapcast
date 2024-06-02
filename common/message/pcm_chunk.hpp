@@ -130,7 +130,7 @@ public:
 
     void setFrameCount(int frameCount) {
         auto newSize = format.frameSize() * frameCount;
-        payload = (char*)realloc(payload, newSize);
+        payload = static_cast<char*>(realloc(payload, newSize));
         payloadSize = newSize;
     }
 
