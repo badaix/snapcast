@@ -9,9 +9,13 @@ if(ANDROID)
   list(APPEND TEST_LIBRARIES log)
 endif(ANDROID)
 
+list(APPEND TEST_LIBRARIES OpenSSL::Crypto OpenSSL::SSL)
+
 # Make test executable
 set(TEST_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/test_main.cpp
+    ${CMAKE_SOURCE_DIR}/common/jwt.cpp
+    ${CMAKE_SOURCE_DIR}/common/base64.cpp
     ${CMAKE_SOURCE_DIR}/server/streamreader/control_error.cpp
     ${CMAKE_SOURCE_DIR}/server/streamreader/properties.cpp
     ${CMAKE_SOURCE_DIR}/server/streamreader/metadata.cpp

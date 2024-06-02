@@ -20,8 +20,8 @@
 #include "airplay_stream.hpp"
 
 // local headers
-#include "base64.h"
 #include "common/aixlog.hpp"
+#include "common/base64.h"
 #include "common/snap_exception.hpp"
 #include "common/utils/file_utils.hpp"
 

@@ -20,8 +20,8 @@
 #include "pcm_stream.hpp"
 
 // local headers
-#include "base64.h"
 #include "common/aixlog.hpp"
+#include "common/base64.h"
 #include "common/error_code.hpp"
 #include "common/snap_exception.hpp"
 #include "common/str_compat.hpp"
