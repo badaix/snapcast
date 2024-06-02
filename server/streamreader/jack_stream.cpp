@@ -156,8 +156,8 @@ JackStream::JackStream(PcmStream::Listener* pcmListener, boost::asio::io_context
             throw SnapException("JackStreams only support 16, 24 and 32 bit sample formats");
     }
 
-    jack_set_error_function(jackErrorMessage);
-    jack_set_info_function(jackInfoMessage);
+    jack_set_error_function([](const char* msg) { LOG(ERROR, LOG_TAG) << "Jack Error: " << msg << "\n"; });
+    jack_set_info_function([](const char* msg) { LOG(DEBUG, LOG_TAG) << msg << "\n"; });
 }
 
 
@@ -243,9 +243,13 @@ bool JackStream::openJackConnection()
 
     LOG(DEBUG, LOG_TAG) << name_ << ": Jack server time adjustment is " << jackTimeAdjust_ << "\n";
 
-    jack_set_process_callback(client_, processCallback, this);
-    jack_on_shutdown(client_, jackShutdown, this);
-    jack_set_port_registration_callback(client_, jackPortRegistration, this);
+    jack_set_process_callback(
+        client_, [](jack_nframes_t nframes, void* arg) { return static_cast<JackStream*>(arg)->readJackBuffers(nframes); }, this);
+    jack_on_shutdown(
+        client_, [](void* arg) { static_cast<JackStream*>(arg)->onJackShutdown(); }, this);
+    jack_set_port_registration_callback(
+        client_, [](jack_port_id_t port_id, int registered, void* arg) { return static_cast<JackStream*>(arg)->onJackPortRegistration(port_id, registered); },
+        this);
 
     int err = jack_activate(client_);
     if (err)
@@ -445,31 +449,6 @@ void JackStream::onJackShutdown()
     ports_.clear();
     client_ = nullptr;
     wait(read_timer_, 1000ms, [this] { tryConnect(); });
-}
-
-int JackStream::processCallback(jack_nframes_t nframes, void* arg)
-{
-    return static_cast<JackStream*>(arg)->readJackBuffers(nframes);
-}
-
-void JackStream::jackShutdown(void* arg)
-{
-    static_cast<JackStream*>(arg)->onJackShutdown();
-}
-
-void JackStream::jackErrorMessage(const char* msg)
-{
-    // LOG(TRACE, LOG_TAG) << "Jack Error: " << msg << "\n";
-}
-
-void JackStream::jackInfoMessage(const char* msg)
-{
-    // LOG(TRACE, LOG_TAG) << msg << "\n";
-}
-
-void JackStream::jackPortRegistration(jack_port_id_t port_id, int registered, void* arg)
-{
-    return static_cast<JackStream*>(arg)->onJackPortRegistration(port_id, registered);
 }
 
 } // namespace streamreader
