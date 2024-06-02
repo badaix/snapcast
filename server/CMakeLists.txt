@@ -13,7 +13,6 @@ set(SERVER_SOURCES
     encoder/encoder_factory.cpp
     encoder/pcm_encoder.cpp
     encoder/null_encoder.cpp
-    streamreader/base64.cpp
     streamreader/control_error.cpp
     streamreader/stream_control.cpp
     streamreader/stream_uri.cpp

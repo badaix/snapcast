@@ -1,4 +1,4 @@
-set(SOURCES resampler.cpp sample_format.cpp)
+set(SOURCES resampler.cpp sample_format.cpp jwt.cpp base64.cpp)
 
 if(NOT WIN32 AND NOT ANDROID)
   list(APPEND SOURCES daemon.cpp)
