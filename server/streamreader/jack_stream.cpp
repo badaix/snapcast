@@ -156,8 +156,13 @@ JackStream::JackStream(PcmStream::Listener* pcmListener, boost::asio::io_context
             throw SnapException("JackStreams only support 16, 24 and 32 bit sample formats");
     }
 
+#if 0
+    // Disabled by default as aixlog <= 1.4.0 is not thread-safe at the moment
+    // and Jack produces quite a few log message.
+    // TODO: enable if and when aixlog becomes thread-safe.
     jack_set_error_function([](const char* msg) { LOG(ERROR, LOG_TAG) << "Jack Error: " << msg << "\n"; });
     jack_set_info_function([](const char* msg) { LOG(DEBUG, LOG_TAG) << msg << "\n"; });
+#endif
 }
 
 
