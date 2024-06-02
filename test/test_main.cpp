@@ -23,6 +23,7 @@
 
 // local headers
 #include "common/aixlog.hpp"
+#include "common/jwt.hpp"
 #include "common/utils/string_utils.hpp"
 #include "server/streamreader/control_error.hpp"
 #include "server/streamreader/properties.hpp"
@@ -44,9 +45,21 @@ TEST_CASE("String utils")
 }
 
 
-TEST_CASE("Uri")
+TEST_CASE("JWT")
 {
     AixLog::Log::init<AixLog::SinkCout>(AixLog::Severity::debug);
+    Jwt jwt;
+
+    jwt.decode(
+        "eyJhbGciOiJSUzM4NCIsInR5cCI6IkpXVCJ9.eyJhZG1pbiI6dHJ1ZSwiaWF0IjoxNTE2MjM5MDIyLCJuYW1lIjoiSm9oYW5uZXMiLCJzdWIiOiIxMjM0NTY3ODkwIn0."
+        "QooKYcDKXwds9GF6Qgs5qTgXZyjPIf9OD_eBYIako7EoC18dqkvPgpwEar_Npck5wSGDPxcMCm9VxRHwv_LP4yelncf08BMu0JRK7vSqKQ8GGC2YoRILsOXD4nIf2mDUJ4CVo5fCbKuhwxE_"
+        "lBdiQXFGF6NaQ-02LYTnoRub2x1wtHrQam5eYTaNPjaY2ANvSpRK8CCA6jWd6P5qqgedcPtE4J2HLDFR2GefFjhOYYaZP-LMhdbHDEoThk05-bQVyXXXg-7RCqCfzE_"
+        "H5fx4w8t6JYudM8PsRoK3kE8vGsR7tHRGi0CBJqTMTxIYnjaQPQUd8OYFbux3TxEV0Kr9kQ");
+}
+
+
+TEST_CASE("Uri")
+{
     using namespace streamreader;
     StreamUri uri("pipe:///tmp/snapfifo?name=default&codec=flac");
     REQUIRE(uri.scheme == "pipe");
