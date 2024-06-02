@@ -73,7 +73,7 @@ protected:
     bool doAutoConnect_ = false;
     int autoConnectSkip_;
 
-    void (*interleave_func_)(char*, jack_default_audio_sample_t*, unsigned long, unsigned long);
+    std::function<void(char*, jack_default_audio_sample_t*, unsigned long, unsigned long)> interleave_func_;
 
     boost::asio::steady_timer read_timer_;
     std::chrono::microseconds silence_;
