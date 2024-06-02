@@ -238,9 +238,9 @@ bool JackStream::openJackConnection()
                             cpt::to_string(jack_sample_rate) + ".");
     }
 
-    jack_time_t connect_time = jack_get_time();
-    jackConnectTime_ = std::chrono::steady_clock::now();
-    jackTimeAdjust_ = chrono::duration_cast<chrono::microseconds>(jackConnectTime_.time_since_epoch()).count() - connect_time;
+    jack_time_t jackTime = jack_get_time();
+    auto now = std::chrono::steady_clock::now();
+    jackTimeAdjust_ = chrono::duration_cast<chrono::microseconds>(now.time_since_epoch()).count() - jackTime;
 
     LOG(DEBUG, LOG_TAG) << name_ << ": Jack server time adjustment is " << jackTimeAdjust_ << "\n";
 

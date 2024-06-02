@@ -66,7 +66,6 @@ protected:
     jack_client_t* client_;
     std::vector<jack_port_t*> ports_;
     jack_nframes_t jackConnectFrames_;
-    std::chrono::time_point<std::chrono::steady_clock> jackConnectTime_;
     jack_time_t jackTimeAdjust_;
     SampleFormat jackSampleFormat_;
 
