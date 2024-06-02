@@ -82,13 +82,6 @@ protected:
     bool send_silence_;
     /// silence duration before switching the stream to idle
     std::chrono::milliseconds idle_threshold_;
-
-    static int processCallback(jack_nframes_t nframes, void* arg);
-    static void jackShutdown(void* arg);
-    static void jackErrorMessage(const char* msg);
-    static void jackInfoMessage(const char* msg);
-    static void jackPortConnect(jack_port_id_t a, jack_port_id_t b, int connect, void* arg);
-    static void jackPortRegistration(jack_port_id_t port_id, int registered, void* arg);
 };
 
 } // namespace streamreader
