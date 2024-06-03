@@ -22,6 +22,8 @@
 #include "common/json.hpp"
 
 // standard headers
+#include <chrono>
+#include <optional>
 #include <string>
 
 
@@ -53,19 +55,63 @@ https://datatracker.ietf.org/doc/html/rfc7518#section-3
    | none         | No digital signature or MAC   | Optional           |
    |              | performed                     |                    |
    +--------------+-------------------------------+--------------------+
-*/
+
+
+https://auth0.com/docs/secure/tokens/json-web-tokens/json-web-token-claims
+
+Registered claims
+The JWT specification defines seven reserved claims that are not required, but are recommended to allow interoperability with third-party applications. These
+are:
+- iss (issuer): Issuer of the JWT
+- sub (subject): Subject of the JWT (the user)
+- aud (audience): Recipient for which the JWT is intended
+- exp (expiration time): Time after which the JWT expires
+- nbf (not before time): Time before which the JWT must not be accepted for processing
+- iat (issued at time): Time at which the JWT was issued; can be used to determine age of the JWT
+- jti (JWT ID): Unique identifier; can be used to prevent the JWT from being replayed (allows a token to be used only once)
+
 
 // https://techdocs.akamai.com/iot-token-access-control/docs/generate-jwt-rsa-keys
+*/
+
 using json = nlohmann::json;
 
+
+/// Json Web Token in RS256 format
 class Jwt
 {
 public:
+    /// c'tor
     Jwt();
 
-    bool decode(const std::string& token);
+    /// Parse an base64 url encoded token of the form "<header>.<payload>.<signature>"
+    /// @param token The token
+    /// @param pem_cert Certificate in PEM format to verify the signature
+    /// @return true on success, else false
+    bool parse(const std::string& token, const std::string& pem_cert);
+    /// Create an base64 url encoded token of the form "<header>.<payload>.<signature>"
+    /// @param pem_key Private key in PEM format to sign the token
+    /// @return the token or nullopt if failed
+    std::optional<std::string> getToken(const std::string& pem_key) const;
 
-private:
-    json header_;
-    json payload_;
+    /// Get the iat "Issued at time" claim
+    /// @return the claim or nullopt, if not present
+    std::optional<std::chrono::seconds> getIat() const;
+    /// Set the iat "Issued at time" claim, use nullopt to delete the iat
+    void setIat(const std::optional<std::chrono::seconds>& iat);
+
+    /// Get the exp "Expiration time" claim
+    /// @return the claim or nullopt, if not present
+    std::optional<std::chrono::seconds> getExp() const;
+    /// Set the exp "Expiration time" claim, use nullopt to delete the exp
+    void setExp(const std::optional<std::chrono::seconds>& exp);
+
+    /// Get the sub "Subject" claim
+    /// @return the claim or nullopt, if not present
+    std::optional<std::string> getSub() const;
+    /// Set the sub "Subject" claim, use nullopt to delete the sub
+    void setSub(const std::optional<std::string>& sub);
+
+    /// The token's raw payload (claims) in json format
+    json claims;
 };
