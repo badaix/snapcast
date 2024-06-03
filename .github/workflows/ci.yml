@@ -234,42 +234,44 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     steps:
-      - uses: actions/checkout@v4
-      - name: print environment
-        run: env
-      - name: dependencies
-        run: brew install pkgconfig libsoxr flac libvorbis opus ccache expat
-      - name: cache boost
-        id: cache-boost
-        uses: actions/cache@v4
-        with:
-          path: boost_${{ env.BOOST_VERSION }}
-          key: boost-${{ env.BOOST_VERSION }}
-          enableCrossOsArchive: true
-      - name: get boost
-        if: steps.cache-boost.outputs.cache-hit != 'true'
-        run: |
-          wget https://boostorg.jfrog.io/artifactory/main/release/${BOOST_VERSION//_/.}/source/boost_${BOOST_VERSION}.tar.bz2
-          tar xjf boost_${BOOST_VERSION}.tar.bz2
-      - name: cache ccache
-        id: cache-ccache
-        uses: actions/cache@v4
-        with:
-          path: /Users/runner/Library/Caches/ccache
-          key: ${{ runner.os }}-${{ matrix.xcode }}-ccache-${{ github.sha }}
-          restore-keys: ${{ runner.os }}-${{ matrix.xcode }}-ccache-
-      - name: configure
-        run: |
-          cmake -S . -B build \
-            -DWERROR=ON -DBUILD_TESTS=ON \
-            -DBOOST_ROOT=boost_${BOOST_VERSION} \
-            -DCMAKE_BUILD_TYPE=Release \
-            -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
-            -DCMAKE_CXX_FLAGS="-I/usr/local/include -DCMAKE_CXX_FLAGS=-DJSON_HAS_CPP_14"
-        env:
-          DEVELOPER_DIR: /Applications/Xcode_${{ matrix.xcode }}.app/Contents/Developer
-      - name: build
-        run: cmake --build build --parallel 3 --verbose
+    - uses: actions/checkout@v4
+    - name: print environment
+      run: env
+    - name: dependencies
+      run: |
+        brew update
+        brew install pkgconfig libsoxr flac libvorbis opus ccache expat
+    - name: cache boost
+      id: cache-boost
+      uses: actions/cache@v4
+      with:
+        path: boost_${{ env.BOOST_VERSION }}
+        key: boost-${{ env.BOOST_VERSION }}
+        enableCrossOsArchive: true
+    - name: get boost
+      if: steps.cache-boost.outputs.cache-hit != 'true'
+      run: |
+        wget https://boostorg.jfrog.io/artifactory/main/release/${BOOST_VERSION//_/.}/source/boost_${BOOST_VERSION}.tar.bz2
+        tar xjf boost_${BOOST_VERSION}.tar.bz2
+    - name: cache ccache
+      id: cache-ccache
+      uses: actions/cache@v4
+      with:
+        path: /Users/runner/Library/Caches/ccache
+        key: ${{ runner.os }}-${{ matrix.xcode }}-ccache-${{ github.sha }}
+        restore-keys: ${{ runner.os }}-${{ matrix.xcode }}-ccache-
+    - name: configure
+      run: |
+        cmake -S . -B build \
+          -DWERROR=ON -DBUILD_TESTS=ON \
+          -DBOOST_ROOT=boost_${BOOST_VERSION} \
+          -DCMAKE_BUILD_TYPE=Release \
+          -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
+          -DCMAKE_CXX_FLAGS="-I/usr/local/include -DCMAKE_CXX_FLAGS=-DJSON_HAS_CPP_14"
+      env:
+        DEVELOPER_DIR: /Applications/Xcode_${{ matrix.xcode }}.app/Contents/Developer
+    - name: build
+      run: cmake --build build --parallel 3 --verbose
 
 
   windows:
