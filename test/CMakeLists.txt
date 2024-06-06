@@ -2,7 +2,8 @@
 set(CATCH_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 add_library(Catch INTERFACE)
 target_include_directories(
-  Catch INTERFACE ${CATCH_INCLUDE_DIR} ${CMAKE_SOURCE_DIR} ${Boost_INCLUDE_DIR} ${OPENSSL_INCLUDE_DIR})
+  Catch INTERFACE ${CATCH_INCLUDE_DIR} ${CMAKE_SOURCE_DIR} ${Boost_INCLUDE_DIR}
+                  ${OPENSSL_INCLUDE_DIR})
 
 set(TEST_LIBRARIES Catch)
 if(ANDROID)
@@ -14,6 +15,7 @@ list(APPEND TEST_LIBRARIES OpenSSL::Crypto OpenSSL::SSL)
 # Make test executable
 set(TEST_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/test_main.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/catch_amalgamated.cpp
     ${CMAKE_SOURCE_DIR}/common/jwt.cpp
     ${CMAKE_SOURCE_DIR}/common/base64.cpp
     ${CMAKE_SOURCE_DIR}/server/streamreader/control_error.cpp
