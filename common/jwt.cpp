@@ -53,7 +53,7 @@ namespace
 EVP_PKEY* readKey(const std::string& key)
 {
     // Reads PEM information and retrieves some details
-    BIO* keybio = BIO_new_mem_buf((void*)key.c_str(), -1);
+    std::shared_ptr<BIO> keybio(BIO_new_mem_buf((void*)key.c_str(), -1), [](auto p) { BIO_free(p); });
     if (keybio == nullptr)
     {
         LOG(ERROR, LOG_TAG) << "BIO_new_mem_buf failed\n";
@@ -64,7 +64,7 @@ EVP_PKEY* readKey(const std::string& key)
     char* header = nullptr;
     uint8_t* data = nullptr;
     long datalen = 0;
-    if (PEM_read_bio(keybio, &name, &header, &data, &datalen) == 1)
+    if (PEM_read_bio(keybio.get(), &name, &header, &data, &datalen) == 1)
     {
         // Copies the data pointer. D2I functions update it
         const auto* data_pkey = reinterpret_cast<const uint8_t*>(data);
@@ -91,7 +91,7 @@ EVP_PKEY* readKey(const std::string& key)
 EVP_PKEY* readCert(const std::string& key)
 {
     // Reads PEM information and retrieves some details
-    BIO* keybio = BIO_new_mem_buf((void*)key.c_str(), -1);
+    std::shared_ptr<BIO> keybio(BIO_new_mem_buf((void*)key.c_str(), -1), [](auto p) { BIO_free(p); });
     if (keybio == nullptr)
     {
         LOG(ERROR, LOG_TAG) << "BIO_new_mem_buf failed\n";
@@ -102,7 +102,7 @@ EVP_PKEY* readCert(const std::string& key)
     char* header = nullptr;
     uint8_t* data = nullptr;
     long datalen = 0;
-    if (PEM_read_bio(keybio, &name, &header, &data, &datalen) == 1)
+    if (PEM_read_bio(keybio.get(), &name, &header, &data, &datalen) == 1)
     {
         // Copies the data pointer. D2I functions update it
         const auto* data_pkey = reinterpret_cast<const uint8_t*>(data);
@@ -128,10 +128,10 @@ EVP_PKEY* readCert(const std::string& key)
 
 bool sign(const std::string& pem_key, const std::string& msg, std::vector<unsigned char>& encoded)
 {
-    auto* key = readKey(pem_key);
+    std::shared_ptr<EVP_PKEY> key(readKey(pem_key), [](auto p) { EVP_PKEY_free(p); });
     std::shared_ptr<EVP_MD_CTX> ctx(EVP_MD_CTX_create(), [](auto p) { EVP_MD_CTX_free(p); });
 
-    if (EVP_DigestSignInit(ctx.get(), nullptr, EVP_sha256(), nullptr, key) <= 0)
+    if (EVP_DigestSignInit(ctx.get(), nullptr, EVP_sha256(), nullptr, key.get()) <= 0)
     {
         LOG(ERROR, LOG_TAG) << "EVP_DigestSignInit failed\n";
         return false;
@@ -161,10 +161,10 @@ bool sign(const std::string& pem_key, const std::string& msg, std::vector<unsign
 bool verifySignature(const std::string& pem_cert, unsigned char* MsgHash, size_t MsgHashLen, const char* Msg, size_t MsgLen, bool& Authentic)
 {
     Authentic = false;
-    auto* key = readCert(pem_cert);
+    std::shared_ptr<EVP_PKEY> key(readCert(pem_cert), [](auto p) { EVP_PKEY_free(p); });
     EVP_MD_CTX* ctx = EVP_MD_CTX_create();
 
-    if (EVP_DigestVerifyInit(ctx, nullptr, EVP_sha256(), nullptr, key) <= 0)
+    if (EVP_DigestVerifyInit(ctx, nullptr, EVP_sha256(), nullptr, key.get()) <= 0)
     {
         LOG(ERROR, LOG_TAG) << "EVP_DigestVerifyInit failed\n";
         return false;
