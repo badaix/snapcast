@@ -19,12 +19,6 @@
 #define CATCH_CONFIG_MAIN
 
 // prototype/interface header file
-#pragma GCC diagnostic push
-#if !defined(__clang__)
-#pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
-#endif
-#include "catch_amalgamated.hpp"
-#pragma GCC diagnostic pop
 
 // local headers
 #include "common/aixlog.hpp"
@@ -35,6 +29,12 @@
 #include "server/streamreader/stream_uri.hpp"
 
 // 3rd party headers
+#pragma GCC diagnostic push
+#if defined(__GNUC__) && !defined(__clang__)
+#pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
+#endif
+#include "catch_amalgamated.hpp"
+#pragma GCC diagnostic pop
 
 // standard headers
 #include <regex>
