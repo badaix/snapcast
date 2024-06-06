@@ -23,12 +23,6 @@
 #include "common/aixlog.hpp"
 #include "common/base64.h"
 #include "common/utils/string_utils.hpp"
-#include <chrono>
-#include <cstdint>
-#include <exception>
-#include <openssl/x509.h>
-#include <optional>
-#include <sys/types.h>
 
 // 3rd party headers
 #include <openssl/aes.h>
@@ -38,9 +32,16 @@
 #include <openssl/pem.h>
 #include <openssl/rsa.h>
 #include <openssl/ssl.h>
-#include <vector>
+#include <openssl/x509.h>
 
 // standard headers
+#include <chrono>
+#include <cstdint>
+#include <exception>
+#include <memory>
+#include <optional>
+#include <sys/types.h>
+#include <vector>
 
 
 static constexpr auto LOG_TAG = "JWT";
@@ -107,8 +108,8 @@ EVP_PKEY* readCert(const std::string& key)
         // Copies the data pointer. D2I functions update it
         const auto* data_pkey = reinterpret_cast<const uint8_t*>(data);
         // Detects type and decodes the private key
-        X509* x509 = d2i_X509(nullptr, &data_pkey, datalen);
-        EVP_PKEY* pkey = X509_get_pubkey(x509);
+        std::shared_ptr<X509> x509(d2i_X509(nullptr, &data_pkey, datalen), [](auto* p) { X509_free(p); });
+        EVP_PKEY* pkey = X509_get_pubkey(x509.get());
         if (pkey == nullptr)
         {
             LOG(ERROR, LOG_TAG) << "d2i_AutoPrivateKey failed\n";
@@ -158,24 +159,23 @@ bool sign(const std::string& pem_key, const std::string& msg, std::vector<unsign
 }
 
 
-bool verifySignature(const std::string& pem_cert, unsigned char* MsgHash, size_t MsgHashLen, const char* Msg, size_t MsgLen, bool& Authentic)
+bool verifySignature(const std::string& pem_cert, const unsigned char* MsgHash, size_t MsgHashLen, const char* Msg, size_t MsgLen, bool& Authentic)
 {
     Authentic = false;
     std::shared_ptr<EVP_PKEY> key(readCert(pem_cert), [](auto p) { EVP_PKEY_free(p); });
-    EVP_MD_CTX* ctx = EVP_MD_CTX_create();
+    std::shared_ptr<EVP_MD_CTX> ctx(EVP_MD_CTX_create(), [](auto p) { EVP_MD_CTX_free(p); });
 
-    if (EVP_DigestVerifyInit(ctx, nullptr, EVP_sha256(), nullptr, key.get()) <= 0)
+    if (EVP_DigestVerifyInit(ctx.get(), nullptr, EVP_sha256(), nullptr, key.get()) <= 0)
     {
         LOG(ERROR, LOG_TAG) << "EVP_DigestVerifyInit failed\n";
         return false;
     }
-    if (EVP_DigestVerifyUpdate(ctx, Msg, MsgLen) <= 0)
+    if (EVP_DigestVerifyUpdate(ctx.get(), Msg, MsgLen) <= 0)
     {
         LOG(ERROR, LOG_TAG) << "EVP_DigestVerifyInit failed\n";
         return false;
     }
-    int authStatus = EVP_DigestVerifyFinal(ctx, MsgHash, MsgHashLen);
-    EVP_MD_CTX_free(ctx);
+    int authStatus = EVP_DigestVerifyFinal(ctx.get(), MsgHash, MsgHashLen);
     if (authStatus == 1)
     {
         Authentic = true;
