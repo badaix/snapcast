@@ -100,10 +100,12 @@ jobs:
           -DCMAKE_BUILD_TYPE=Release \
           -DCMAKE_EXPORT_COMPILE_COMMANDS=TRUE \
           -DCMAKE_CXX_FLAGS="-DCMAKE_CXX_FLAGS=-DJSON_HAS_CPP_14"
-    - name: analysis
+    - name: build
       run: cmake --build build --verbose
+    - name: unit-test
+      run: ./bin/snapcast_test
 
-    
+
   linux:
 
     strategy:
