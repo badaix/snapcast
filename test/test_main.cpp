@@ -21,14 +21,6 @@
 #endif // NOMINMAX
 
 
-#if defined(__GNUC__) && !defined(__clang__)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
-#include "catch_amalgamated.hpp"
-#pragma GCC diagnostic pop
-#else
-#include "catch_amalgamated.hpp"
-#endif
 
 // prototype/interface header file
 
@@ -41,6 +33,7 @@
 #include "server/streamreader/stream_uri.hpp"
 
 // 3rd party headers
+#include "catch_amalgamated.hpp"
 
 // standard headers
 #include <regex>
