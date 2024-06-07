@@ -16,7 +16,7 @@ jobs:
         tool:
           - cppcheck
 
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
 
     steps:
     - uses: actions/checkout@v4
@@ -66,7 +66,7 @@ jobs:
           - compiler: tsan
             param: "TSAN=ON"
 
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
 
     steps:
     - uses: actions/checkout@v4
@@ -77,7 +77,7 @@ jobs:
         sudo apt-get update && \
         sudo apt-get install -yq libasound2-dev libsoxr-dev libvorbisidec-dev libvorbis-dev libflac-dev \
         libopus-dev alsa-utils libpulse-dev libavahi-client-dev libssl-dev \
-        avahi-daemon debhelper ccache expat cppcheck 
+        avahi-daemon debhelper ccache expat 
     - name: cache boost
       id: cache-boost
       uses: actions/cache@v4
@@ -90,6 +90,14 @@ jobs:
       run: |
         wget https://boostorg.jfrog.io/artifactory/main/release/${BOOST_VERSION//_/.}/source/boost_${BOOST_VERSION}.tar.bz2
         tar xjf boost_${BOOST_VERSION}.tar.bz2
+    - name: cache ccache
+      id: cache-ccache
+      uses: actions/cache@v4
+      with:
+        # TODO: use environment variable $HOME/.ccache
+        path: /home/runner/.ccache
+        key: ${{ matrix.sanitizer }}-ccache-${{ github.sha }}
+        restore-keys: ${{ matrix.sanitizer }}-ccache-
     - name: configure
       run: |
         cmake -S . -B build \
