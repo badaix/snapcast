@@ -63,7 +63,7 @@ jobs:
         include:
           - sanitizer: asan
             param: "ASAN=ON"
-          - compiler: tsan
+          - sanitizer: tsan
             param: "TSAN=ON"
 
     runs-on: ubuntu-24.04
