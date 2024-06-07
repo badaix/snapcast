@@ -19,7 +19,8 @@
 #ifndef NOMINMAX
 #define NOMINMAX
 #endif // NOMINMAX
- 
+
+
 #if defined(__GNUC__) && !defined(__clang__)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
