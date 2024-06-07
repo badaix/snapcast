@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2021  Johannes Pohl
+    Copyright (C) 2014-2024  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -16,7 +16,18 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
-#define CATCH_CONFIG_MAIN
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif // NOMINMAX
+ 
+#if defined(__GNUC__) && !defined(__clang__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
+#include "catch_amalgamated.hpp"
+#pragma GCC diagnostic pop
+#else
+#include "catch_amalgamated.hpp"
+#endif
 
 // prototype/interface header file
 
@@ -29,16 +40,11 @@
 #include "server/streamreader/stream_uri.hpp"
 
 // 3rd party headers
-#pragma GCC diagnostic push
-#if defined(__GNUC__) && !defined(__clang__)
-#pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
-#endif
-#include "catch_amalgamated.hpp"
-#pragma GCC diagnostic pop
 
 // standard headers
 #include <regex>
 
+#define CATCH_CONFIG_MAIN
 
 using namespace std;
 
