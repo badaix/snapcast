@@ -106,10 +106,11 @@ jobs:
           -D${{ matrix.param }} \
           -DBOOST_ROOT=boost_${BOOST_VERSION} \
           -DCMAKE_BUILD_TYPE=Release \
+          -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
           -DCMAKE_EXPORT_COMPILE_COMMANDS=TRUE \
           -DCMAKE_CXX_FLAGS="-DCMAKE_CXX_FLAGS=-DJSON_HAS_CPP_14"
     - name: build
-      run: cmake --build build --verbose
+      run: cmake --build build --parallel 4 --verbose
     - name: unit-test
       run: ./bin/snapcast_test
 
