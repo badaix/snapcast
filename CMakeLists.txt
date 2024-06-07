@@ -64,7 +64,7 @@ else()
   endif()
 
   if(ASAN)
-    add_compile_options(-fsanitize=address)
+    add_compile_options(-fsanitize=address -Wno-error=maybe-uninitialized)
     add_link_options(-fsanitize=address)
   endif()
 
