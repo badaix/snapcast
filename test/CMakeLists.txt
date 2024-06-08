@@ -24,6 +24,5 @@ if(ANDROID)
   target_link_libraries(snapcast_test log)
 endif(ANDROID)
 
-target_link_libraries(
-  snapcast_test PRIVATE OpenSSL::Crypto OpenSSL::SSL Catch2::Catch2
-                        Catch2::Catch2WithMain)
+target_link_libraries(snapcast_test OpenSSL::Crypto OpenSSL::SSL Catch2::Catch2
+                      Catch2::Catch2WithMain)
