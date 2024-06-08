@@ -42,7 +42,7 @@ if(CMAKE_VERSION VERSION_EQUAL "3.19.0" OR CMAKE_VERSION VERSION_GREATER
         "--project=${CMAKE_BINARY_DIR}/compile_commands.json"
         "--error-exitcode=10"
         "--inline-suppr"
-        "--suppress=*:build\*"
+        "--suppress=*:${CMAKE_BINARY_DIR}/_deps/*"
         "--suppress=unusedFunction"
         "--suppress=noExplicitConstructor"
         "--suppress=preprocessorErrorDirective")
