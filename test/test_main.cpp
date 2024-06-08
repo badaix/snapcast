@@ -20,8 +20,6 @@
 #define NOMINMAX
 #endif // NOMINMAX
 
-
-
 // prototype/interface header file
 
 // local headers
@@ -33,7 +31,7 @@
 #include "server/streamreader/stream_uri.hpp"
 
 // 3rd party headers
-#include "catch_amalgamated.hpp"
+#include <catch2/catch_test_macros.hpp>
 
 // standard headers
 #include <regex>
