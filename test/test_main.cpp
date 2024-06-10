@@ -16,10 +16,6 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
-#ifndef NOMINMAX
-#define NOMINMAX
-#endif // NOMINMAX
-
 // prototype/interface header file
 
 // local headers
