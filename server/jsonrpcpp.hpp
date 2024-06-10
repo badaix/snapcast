@@ -3,11 +3,11 @@
      _(  )/ ___) /  \ (  ( \(  _ \(  _ \ / __)( )  ( )
     / \) \\___ \(  O )/    / )   / ) __/( (__(_ _)(_ _)
     \____/(____/ \__/ \_)__)(__\_)(__)   \___)(_)  (_)
-    version 1.3.3
+    version 1.4.0
     https://github.com/badaix/jsonrpcpp
 
     This file is part of jsonrpc++
-    Copyright (C) 2017-2021 Johannes Pohl
+    Copyright (C) 2017-2024 Johannes Pohl
 
     This software may be modified and distributed under the terms
     of the MIT license.  See the LICENSE file for details.
@@ -22,7 +22,10 @@
 #ifndef JSON_RPC_HPP
 #define JSON_RPC_HPP
 
+// nlohmann-json
 #include "common/json.hpp"
+
+// standard headers
 #include <cstring>
 #include <exception>
 #include <string>
@@ -1261,8 +1264,10 @@ inline entity_ptr Parser::do_parse(const std::string& json_str)
     {
         throw ParseErrorException(e.what());
     }
-
-    return nullptr;
+    catch (...)
+    {
+        return nullptr;
+    }
 }
 
 inline entity_ptr Parser::do_parse_json(const Json& json)
