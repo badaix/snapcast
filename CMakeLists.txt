@@ -365,7 +365,7 @@ if(WIN32)
     WINDOWS
     WIN32_LEAN_AND_MEAN
     UNICODE
-    _UNICODE
+    # _UNICODE
     _CRT_SECURE_NO_WARNINGS)
   add_compile_definitions(
     HAS_OGG
