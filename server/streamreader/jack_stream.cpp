@@ -211,8 +211,6 @@ void JackStream::tryConnect()
             wait(read_timer_, 5s, [this] { tryConnect(); });
             return;
         }
-
-        PcmStream::start();
     }
     catch (exception& e)
     {
@@ -451,7 +449,6 @@ void JackStream::autoConnectPorts()
 void JackStream::onJackShutdown()
 {
     LOG(ERROR, LOG_TAG) << "Jack has shut down, trying to connect again!\n";
-    PcmStream::stop();
     ports_.clear();
     client_ = nullptr;
     wait(read_timer_, 1000ms, [this] { tryConnect(); });
