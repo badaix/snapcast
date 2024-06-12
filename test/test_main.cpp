@@ -30,6 +30,7 @@
 #include <catch2/catch_test_macros.hpp>
 
 // standard headers
+#include <chrono>
 #include <regex>
 
 
@@ -154,7 +155,7 @@ TEST_CASE("JWT")
                            "-----END CERTIFICATE-----\n";
 
         Jwt jwt;
-        jwt.setIat(std::chrono::seconds(1516239022));
+        jwt.setIat(std::chrono::system_clock::from_time_t(1516239022));
         jwt.setSub("Badaix");
         std::optional<std::string> token = jwt.getToken(key);
         REQUIRE(token.has_value());
@@ -168,7 +169,7 @@ TEST_CASE("JWT")
         REQUIRE(jwt.getSub().has_value());
         REQUIRE(jwt.getSub().value() == "Badaix");
         REQUIRE(jwt.getIat().has_value());
-        REQUIRE(jwt.getIat().value() == std::chrono::seconds(1516239022));
+        REQUIRE(jwt.getIat().value() == std::chrono::system_clock::from_time_t(1516239022));
         REQUIRE(!jwt.getExp().has_value());
     }
 }

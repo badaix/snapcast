@@ -19,12 +19,14 @@
 #pragma once
 
 // local headers
+#include "authinfo.hpp"
 
 // 3rd party headers
 
 // standard headers
 #include <functional>
 #include <memory>
+#include <optional>
 #include <string>
 
 
@@ -62,6 +64,8 @@ public:
 
     /// Sends a message to the client (asynchronous)
     virtual void sendAsync(const std::string& message) = 0;
+
+    std::optional<AuthInfo> authinfo;
 
 protected:
     ControlMessageReceiver* message_receiver_;
