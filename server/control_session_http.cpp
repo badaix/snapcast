@@ -19,20 +19,22 @@
 // prototype/interface header file
 #include "control_session_http.hpp"
 
-// standard headers
-#include <iostream>
-#include <memory>
+// local headers
+#include "authinfo.hpp"
+#include "common/aixlog.hpp"
+#include "common/utils/file_utils.hpp"
+#include "control_session_ws.hpp"
+#include "stream_session_ws.hpp"
 
 // 3rd party headers
 #include <boost/asio/ssl/stream.hpp>
 #include <boost/beast/http/buffer_body.hpp>
 #include <boost/beast/http/file_body.hpp>
 
-// local headers
-#include "common/aixlog.hpp"
-#include "common/utils/file_utils.hpp"
-#include "control_session_ws.hpp"
-#include "stream_session_ws.hpp"
+// standard headers
+#include <iostream>
+#include <memory>
+
 
 using namespace std;
 namespace websocket = beast::websocket; // from <boost/beast/websocket.hpp>
@@ -358,14 +360,16 @@ void ControlSessionHttp::handle_request(http::request<Body, http::basic_fields<A
 void ControlSessionHttp::on_read(beast::error_code ec, std::size_t bytes_transferred)
 {
     // This means they closed the connection
-    if (ec == http::error::end_of_stream)
+    if ((ec == http::error::end_of_stream) || (ec == boost::asio::error::connection_reset))
     {
-        boost::system::error_code res;
         if (is_ssl_)
-            res = ssl_socket_->shutdown(res);
-        else
-            res = tcp_socket_->shutdown(tcp_socket::shutdown_send, ec);
-        if (res.failed())
+            ssl_socket_->async_shutdown(
+                [](const boost::system::error_code& error)
+                {
+                if (error.failed())
+                    LOG(ERROR, LOG_TAG) << "Failed to shudown ssl socket: " << error << "\n";
+            });
+        else if (boost::system::error_code res = tcp_socket_->shutdown(tcp_socket::shutdown_send, ec); res.failed())
             LOG(ERROR, LOG_TAG) << "Failed to shudown socket: " << res << "\n";
         return;
     }
@@ -373,7 +377,7 @@ void ControlSessionHttp::on_read(beast::error_code ec, std::size_t bytes_transfe
     // Handle the error, if any
     if (ec)
     {
-        LOG(ERROR, LOG_TAG) << "ControlSessionHttp::on_read error: " << ec.message() << "\n";
+        LOG(ERROR, LOG_TAG) << "ControlSessionHttp::on_read error: " << ec.message() << ", code: " << ec.value() << "\n";
         return;
     }
 
@@ -442,6 +446,13 @@ void ControlSessionHttp::on_read(beast::error_code ec, std::size_t bytes_transfe
             }
         }
         return;
+    }
+
+
+    std::string_view authheader = req_[beast::http::field::authorization];
+    if (!authheader.empty())
+    {
+        authinfo = AuthInfo(std::string(authheader));
     }
 
     // Send the response

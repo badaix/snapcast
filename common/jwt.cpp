@@ -37,6 +37,7 @@
 // standard headers
 #include <chrono>
 #include <cstdint>
+#include <ctime>
 #include <exception>
 #include <memory>
 #include <optional>
@@ -196,32 +197,32 @@ Jwt::Jwt() : claims({})
 {
 }
 
-std::optional<std::chrono::seconds> Jwt::getIat() const
+std::optional<std::chrono::system_clock::time_point> Jwt::getIat() const
 {
     if (!claims.contains("iat"))
         return std::nullopt;
-    return std::chrono::seconds(claims.at("iat").get<int64_t>());
+    return std::chrono::system_clock::from_time_t(claims.at("iat").get<int64_t>());
 }
 
-void Jwt::setIat(const std::optional<std::chrono::seconds>& iat)
+void Jwt::setIat(const std::optional<std::chrono::system_clock::time_point>& iat)
 {
     if (iat.has_value())
-        claims["iat"] = iat->count();
+        claims["iat"] = std::chrono::system_clock::to_time_t(iat.value());
     else if (claims.contains("iat"))
         claims.erase("iat");
 }
 
-std::optional<std::chrono::seconds> Jwt::getExp() const
+std::optional<std::chrono::system_clock::time_point> Jwt::getExp() const
 {
     if (!claims.contains("exp"))
         return std::nullopt;
-    return std::chrono::seconds(claims.at("exp").get<int64_t>());
+    return std::chrono::system_clock::from_time_t(claims.at("exp").get<int64_t>());
 }
 
-void Jwt::setExp(const std::optional<std::chrono::seconds>& exp)
+void Jwt::setExp(const std::optional<std::chrono::system_clock::time_point>& exp)
 {
     if (exp.has_value())
-        claims["exp"] = exp->count();
+        claims["exp"] = std::chrono::system_clock::to_time_t(exp.value());
     else if (claims.contains("exp"))
         claims.erase("exp");
 }
