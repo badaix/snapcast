@@ -96,15 +96,15 @@ public:
 
     /// Get the iat "Issued at time" claim
     /// @return the claim or nullopt, if not present
-    std::optional<std::chrono::seconds> getIat() const;
+    std::optional<std::chrono::system_clock::time_point> getIat() const;
     /// Set the iat "Issued at time" claim, use nullopt to delete the iat
-    void setIat(const std::optional<std::chrono::seconds>& iat);
+    void setIat(const std::optional<std::chrono::system_clock::time_point>& iat);
 
     /// Get the exp "Expiration time" claim
     /// @return the claim or nullopt, if not present
-    std::optional<std::chrono::seconds> getExp() const;
+    std::optional<std::chrono::system_clock::time_point> getExp() const;
     /// Set the exp "Expiration time" claim, use nullopt to delete the exp
-    void setExp(const std::optional<std::chrono::seconds>& exp);
+    void setExp(const std::optional<std::chrono::system_clock::time_point>& exp);
 
     /// Get the sub "Subject" claim
     /// @return the claim or nullopt, if not present
