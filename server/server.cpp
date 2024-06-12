@@ -21,6 +21,7 @@
 
 // local headers
 #include "common/aixlog.hpp"
+#include "common/jwt.hpp"
 #include "common/message/client_info.hpp"
 #include "common/message/hello.hpp"
 #include "common/message/server_settings.hpp"
@@ -30,6 +31,7 @@
 // 3rd party headers
 
 // standard headers
+#include <chrono>
 #include <iostream>
 
 
@@ -402,6 +404,34 @@ void Server::processRequest(const jsonrpcpp::request_ptr request, const OnRespon
                 /// Notify others
                 notification = std::make_shared<jsonrpcpp::Notification>("Server.OnUpdate", jsonrpcpp::Parameter("server", server));
             }
+            else if (request->method() == "Server.Authenticate")
+            {
+                // clang-format off
+                // Request:      {"id":8,"jsonrpc":"2.0","method":"Server.Authenticate","params":{"user":"badaix","password":"secret"}}
+                // Response:     {"id":8,"jsonrpc":"2.0","result":{"token":"<token>"}}
+                // clang-format on
+                if (request->params().has("token"))
+                {
+                    auto token = request->params().get<std::string>("token");
+                    LOG(INFO, LOG_TAG) << "Server.Authenticate, token: " << token << "\n";
+                    result["token"] = token;
+                }
+                else if (request->params().has("user"))
+                {
+                    auto user = request->params().get<std::string>("user");
+                    Jwt jwt;
+                    auto now = std::chrono::system_clock::now();
+                    jwt.setIat(now);
+                    jwt.setExp(now + 10h);
+                    jwt.setSub(user);
+                    std::ifstream ifs(settings_.ssl.private_key.c_str());
+                    std::string private_key((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
+                    std::optional<std::string> token = jwt.getToken(private_key);
+                    result["token"] = token.value();
+                    LOG(INFO, LOG_TAG) << "Server.Authenticate, user: " << user << ", password: " << request->params().get<std::string>("password")
+                                       << ", jwt claims: " << jwt.claims.dump() << ", token: '" << token.value_or("") << "'\n";
+                }
+            }
             else
                 throw jsonrpcpp::MethodNotFoundException(request->id());
         }
@@ -669,6 +699,11 @@ void Server::onMessageReceived(std::shared_ptr<ControlSession> controlSession, c
         processRequest(request,
                        [this, controlSession, response_handler](jsonrpcpp::entity_ptr response, jsonrpcpp::notification_ptr notification)
                        {
+            if (controlSession->authinfo.has_value())
+            {
+                LOG(INFO, LOG_TAG) << "Request auth info - username: " << controlSession->authinfo->username()
+                                   << ", valid: " << controlSession->authinfo->valid() << "\n";
+            }
             saveConfig();
             ////cout << "Request:      " << request->to_json().dump() << "\n";
             if (notification)

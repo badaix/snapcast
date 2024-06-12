@@ -1,4 +1,5 @@
 set(SERVER_SOURCES
+    authinfo.cpp
     config.cpp
     control_server.cpp
     control_session_tcp.cpp
