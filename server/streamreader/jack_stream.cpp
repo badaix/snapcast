@@ -289,18 +289,6 @@ bool JackStream::createJackPorts()
  */
 int JackStream::readJackBuffers(jack_nframes_t nframes)
 {
-    jack_nframes_t current_frames;
-    jack_time_t current_usecs;
-    jack_time_t next_usecs;
-    float period_usecs;
-
-    int err = jack_get_cycle_times(client_, &current_frames, &current_usecs, &next_usecs, &period_usecs);
-    if (err)
-    {
-        LOG(ERROR, LOG_TAG) << "Unable to get Jack cycle times: " << err << "\n";
-        return -1;
-    }
-
     int bytes_per_frame = sampleFormat_.sampleSize();
     int num_channels = sampleFormat_.channels();
     int payload_skip = bytes_per_frame * num_channels;
