@@ -65,8 +65,6 @@ protected:
 
     jack_client_t* client_;
     std::vector<jack_port_t*> ports_;
-    jack_nframes_t jackConnectFrames_;
-    jack_time_t jackTimeAdjust_;
     SampleFormat jackSampleFormat_;
 
     std::string autoConnectRegex_;
@@ -82,6 +80,8 @@ protected:
     bool send_silence_;
     /// silence duration before switching the stream to idle
     std::chrono::milliseconds idle_threshold_;
+    /// first read after idle => reset chunk timestamp
+    bool first_;
 };
 
 } // namespace streamreader
