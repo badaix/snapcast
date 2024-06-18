@@ -282,16 +282,15 @@ jack:///?name=<name>[sampleformat=48000:16:2][autoconnect=][autoconnect_skip=0][
 
 Each `jack` stream creates a separate connection to a jack server and registers
 as many input ports as there are audio channels in this stream (according to
-`sampleformat`). The timing information is taken from the Jack server, so all
-streams connected to the same Jack server should play perfectly in sync.
+`sampleformat`).
 
 You can use `autoconnect` to automatically connect this streams input ports
 with Jack output ports. The parameter takes a regular expression and matches
 against the whole Jack port name (including client name). For example, if you
 have a Jack client named "system" with four output ports ("playback_1",
 "playback_2", ...) and you want each output as a separate SnapCast stream, you
-could either autoconnect to the exact ports, or you use a autoconnect search term
-that returns all ports and use `autoconnect_skip` to pick the right one:
+could either autoconnect to the exact ports, or you use an `autoconnect` search
+term that returns all ports and use `autoconnect_skip` to pick the right one:
 
 ```
 jack:///?name=Channel1&sampleformat=48000:16:1&autoconnect=system:playback_
@@ -306,7 +305,8 @@ jack:///?name=Channel4&sampleformat=48000:16:1&autoconnect=system:playback_&auto
 
 - The `chunk_ms` parameter is ignored for jack streams. Instead, the Jack
   buffer size (Frames/Period) is used. So if you are encoding your streams with
-  Ogg, ensure that the Jack server Frames/Period size is set appropriately.
+  anything other than "pcm", ensure that the Jack server Frames/Period size is
+  set appropriately.
 
 
 ### meta
