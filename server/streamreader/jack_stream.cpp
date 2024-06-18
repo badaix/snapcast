@@ -130,7 +130,7 @@ void wait(boost::asio::steady_timer& timer, const std::chrono::duration<Rep, Per
 } // namespace
 
 JackStream::JackStream(PcmStream::Listener* pcmListener, boost::asio::io_context& ioc, const ServerSettings& server_settings, const StreamUri& uri)
-    : PcmStream(pcmListener, ioc, server_settings, uri), read_timer_(strand_), silence_(0ms)
+    : PcmStream(pcmListener, ioc, server_settings, uri), read_timer_(strand_), silence_(0ms), first_(true)
 {
 
     serverName_ = uri_.getQuery("server_name", "default");
@@ -173,6 +173,7 @@ void JackStream::start()
 
     // Need to start immediately, otherwise client will fail
     // due to a zero-length pcm header message
+    first_ = true;
     tvEncodedChunk_ = std::chrono::steady_clock::now();
     PcmStream::start();
 
@@ -240,12 +241,6 @@ bool JackStream::openJackConnection()
                             "The server sample rate is " +
                             cpt::to_string(jack_sample_rate) + ".");
     }
-
-    jack_time_t jackTime = jack_get_time();
-    auto now = std::chrono::steady_clock::now();
-    jackTimeAdjust_ = chrono::duration_cast<chrono::microseconds>(now.time_since_epoch()).count() - jackTime;
-
-    LOG(DEBUG, LOG_TAG) << name_ << ": Jack server time adjustment is " << jackTimeAdjust_ << "\n";
 
     jack_set_process_callback(
         client_, [](jack_nframes_t nframes, void* arg) { return static_cast<JackStream*>(arg)->readJackBuffers(nframes); }, this);
@@ -352,21 +347,22 @@ int JackStream::readJackBuffers(jack_nframes_t nframes)
         if (silence_ > idle_threshold_)
         {
             setState(ReaderState::kIdle);
+            first_ = true;
         }
     }
     else
     {
         silence_ = 0ms;
         setState(ReaderState::kPlaying);
+        if (first_)
+        {
+            first_ = false;
+            tvEncodedChunk_ = std::chrono::steady_clock::now();
+        }
     }
 
     if ((state_ == ReaderState::kPlaying) || ((state_ == ReaderState::kIdle) && send_silence_))
     {
-        // We use the (adjusted) Jack server time as chunk time, that way all Jack
-        // streams will play simultaneously (hopefully!)
-        tvEncodedChunk_ = std::chrono::time_point<std::chrono::steady_clock>(static_cast<chrono::microseconds>(current_usecs + jackTimeAdjust_));
-
-        // TODO: should we chunkRead() in a separate thread?
         chunkRead(*chunk_);
     }
 
