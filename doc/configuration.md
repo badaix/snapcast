@@ -303,10 +303,8 @@ jack:///?name=Channel4&sampleformat=48000:16:1&autoconnect=system:playback_&auto
 
 - Currently all `jack` streams need to match the sample rate of the Jack server.
 
-- The `chunk_ms` parameter is ignored for jack streams. Instead, the Jack
-  buffer size (Frames/Period) is used. So if you are encoding your streams with
-  anything other than "pcm", ensure that the Jack server Frames/Period size is
-  set appropriately.
+- The `chunk_ms` parameter is ignored for jack streams. The Jack buffer size
+  (Frames/Period) is used instead.
 
 
 ### meta
