@@ -352,7 +352,7 @@ int JackStream::readJackBuffers(jack_nframes_t nframes)
         if (first_)
         {
             first_ = false;
-            tvEncodedChunk_ = std::chrono::steady_clock::now();
+            tvEncodedChunk_ = std::chrono::steady_clock::now() - chunk_->duration<chrono::nanoseconds>();
         }
     }
 
