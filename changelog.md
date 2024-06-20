@@ -1,5 +1,17 @@
 # Snapcast changelog
 
+## Version 0.29.0
+
+### Features
+
+- Server: Add support for Jack streams (PR #1241, Issue #644)
+
+### Bugfixes
+
+### General
+
+_Johannes Pohl <snapcast@badaix.de>  Fri, 19 Apr 2024 00:13:37 +0200_
+
 ## Version 0.28.0
 
 ### Features
