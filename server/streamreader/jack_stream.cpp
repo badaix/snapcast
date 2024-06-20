@@ -207,6 +207,11 @@ void JackStream::tryConnect()
             wait(read_timer_, 5s, [this] { tryConnect(); });
             return;
         }
+
+        if (doAutoConnect_)
+        {
+            autoConnectPorts();
+        }
     }
     catch (exception& e)
     {
