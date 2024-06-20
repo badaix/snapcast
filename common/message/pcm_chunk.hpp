@@ -128,7 +128,8 @@ public:
     //     payloadSize = newSize;
     // }
 
-    void setFrameCount(int frameCount) {
+    void setFrameCount(int frameCount)
+    {
         auto newSize = format.frameSize() * frameCount;
         payload = static_cast<char*>(realloc(payload, newSize));
         payloadSize = newSize;
