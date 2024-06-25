@@ -52,6 +52,32 @@ jobs:
         run: cmake --build build --target ${{ matrix.tool }}
 
 
+  documentation:
+
+    # TODO: Fail in case of (too many) warnings, upload artifacts
+    strategy:
+      fail-fast: false
+
+    runs-on: ubuntu-24.04
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: print environment
+        run: env
+      - name: dependencies
+        run: |
+          sudo apt-get update && \
+          sudo apt-get install -yq libasound2-dev libsoxr-dev libvorbisidec-dev libvorbis-dev libflac-dev \
+          libopus-dev alsa-utils libpulse-dev libavahi-client-dev libssl-dev \
+          avahi-daemon debhelper ccache expat cppcheck doxygen graphviz
+      - name: doxygen
+        run: |
+          mkdir -p build/doxygen
+          doxygen 2>&1 | tee build/doxygen.log
+          WARNINGS=$(cat build/doxygen.log | sort | uniq | grep -e ": warning: " | wc -l)
+          echo "Doxygen finished with $WARNINGS warnings"
+
+
   unit-test:
 
     strategy:
