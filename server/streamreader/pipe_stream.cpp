@@ -27,6 +27,7 @@
 // standard headers
 #include <cerrno>
 #include <memory>
+#include <system_error>
 
 
 using namespace std;
@@ -59,7 +60,16 @@ void PipeStream::connect()
 {
     int fd = open(uri_.path.c_str(), O_RDONLY | O_NONBLOCK);
     if (fd < 0)
-        throw SnapException("failed to open fifo \"" + uri_.path + "\": " + cpt::to_string(errno));
+    {
+        std::string error = "failed to open fifo \"" + uri_.path + "\": " + cpt::to_string(errno);
+        if (errno == static_cast<int>(std::errc::no_such_file_or_directory))
+        {
+            LOG(ERROR, LOG_TAG) << error << "\n";
+            wait(read_timer_, 200ms, [this] { connect(); });
+            return;
+        }
+        throw SnapException(error);
+    }
 
     int pipe_size = -1;
 #if !defined(MACOS) && !defined(FREEBSD)
