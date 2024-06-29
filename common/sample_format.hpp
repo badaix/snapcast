@@ -81,17 +81,17 @@ public:
 
     inline double msRate() const
     {
-        return (double)rate_ / 1000.;
+        return static_cast<double>(rate_) / 1000.;
     }
 
     inline double usRate() const
     {
-        return (double)rate_ / 1000000.;
+        return static_cast<double>(rate_) / 1000000.;
     }
 
     inline double nsRate() const
     {
-        return (double)rate_ / 1000000000.;
+        return static_cast<double>(rate_) / 1000000000.;
     }
 
 private:
