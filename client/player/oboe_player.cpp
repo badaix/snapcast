@@ -26,6 +26,7 @@
 // 3rd party headers
 
 // standard headers
+#include <cstring>
 #include <iostream>
 
 
@@ -81,13 +82,28 @@ oboe::Result OboePlayer::openStream()
     if (settings_.sharing_mode == ClientSettings::SharingMode::exclusive)
         sharing_mode = oboe::SharingMode::Exclusive;
 
+    oboe::AudioFormat audio_format;
+    switch (stream_->getFormat().bits())
+    {
+        case 32:
+            audio_format = oboe::AudioFormat::I32;
+            break;
+        case 24:
+            audio_format = oboe::AudioFormat::I24;
+            break;
+        case 16:
+        default:
+            audio_format = oboe::AudioFormat::I16;
+            break;
+    }
+
     // The builder set methods can be chained for convenience.
     oboe::AudioStreamBuilder builder;
     auto result = builder.setSharingMode(sharing_mode)
                       ->setPerformanceMode(oboe::PerformanceMode::None)
                       ->setChannelCount(stream_->getFormat().channels())
                       ->setSampleRate(stream_->getFormat().rate())
-                      ->setFormat(oboe::AudioFormat::I16)
+                      ->setFormat(audio_format)
                       ->setDataCallback(this)
                       ->setErrorCallback(this)
                       ->setDirection(oboe::Direction::Output)
@@ -96,11 +112,12 @@ oboe::Result OboePlayer::openStream()
                       //->setFramesPerCallback(960) // 2*192)
                       ->openStream(out_stream_);
 
+    LOG(INFO, LOG_TAG) << "Hardware sample rate: " << out_stream_->getHardwareSampleRate()
+                       << ", hardware format: " << oboe::convertToText(out_stream_->getHardwareFormat()) << "\n";
     if (out_stream_->getAudioApi() == oboe::AudioApi::AAudio)
     {
         LOG(INFO, LOG_TAG) << "AudioApi: AAudio\n";
-        // mLatencyTuner = std::make_unique<oboe::LatencyTuner>(*out_stream_);
-        mLatencyTuner = nullptr;
+        latency_tuner_ = nullptr;
     }
     else
     {
@@ -150,20 +167,40 @@ double OboePlayer::getCurrentOutputLatencyMillis() const
 
 oboe::DataCallbackResult OboePlayer::onAudioReady(oboe::AudioStream* /*oboeStream*/, void* audioData, int32_t numFrames)
 {
-    if (mLatencyTuner)
-        mLatencyTuner->tune();
+    if (latency_tuner_)
+        latency_tuner_->tune();
 
     double output_latency = getCurrentOutputLatencyMillis();
     // LOG(INFO, LOG_TAG) << "getCurrentOutputLatencyMillis: " << output_latency << ", frames: " << numFrames << "\n";
     chronos::usec delay(static_cast<int>(output_latency * 1000.));
 
-    if (!stream_->getPlayerChunkOrSilence(audioData, delay, numFrames))
+    void* buffer = audioData;
+    if (stream_->getFormat().bits() == 24)
+    {
+        // Oboe expects 24 bit audio in 3 bytes, while Snapcast stores 24 bit in 4 bytes.
+        // Data must be converted before passing it to Oboe, but first we need to adabt the buffer size
+        size_t needed = stream_->getFormat().frameSize() * numFrames;
+        if (audio_data_.size() < needed)
+        {
+            LOG(INFO, LOG_TAG) << "Resizing audio buffer to " << numFrames << " frames, (" << needed << ") bytes\n";
+            audio_data_.resize(needed);
+        }
+        buffer = audio_data_.data();
+    }
+
+    if (!stream_->getPlayerChunkOrSilence(buffer, delay, numFrames))
     {
         // LOG(INFO, LOG_TAG) << "Failed to get chunk. Playing silence.\n";
     }
     else
     {
-        adjustVolume(static_cast<char*>(audioData), numFrames);
+        adjustVolume(static_cast<char*>(buffer), numFrames);
+        if (stream_->getFormat().bits() == 24)
+        {
+            // Copy the 24 bit, 4 bytes data into Oboes 24 bit, 3 bytes buffer
+            for (size_t n = 0; n < static_cast<size_t>(numFrames) * stream_->getFormat().channels(); ++n)
+                memcpy(static_cast<char*>(audioData) + 3 * n, audio_data_.data() + 4 * n, 3);
+        }
     }
 
     return oboe::DataCallbackResult::Continue;
