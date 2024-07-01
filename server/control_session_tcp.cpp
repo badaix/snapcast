@@ -26,6 +26,7 @@
 
 // local headers
 #include "common/aixlog.hpp"
+#include "server_settings.hpp"
 
 
 using namespace std;
@@ -35,8 +36,8 @@ static constexpr auto LOG_TAG = "ControlSessionTCP";
 // https://stackoverflow.com/questions/7754695/boost-asio-async-write-how-to-not-interleaving-async-write-calls/7756894
 
 
-ControlSessionTcp::ControlSessionTcp(ControlMessageReceiver* receiver, tcp::socket&& socket)
-    : ControlSession(receiver), socket_(std::move(socket)), strand_(boost::asio::make_strand(socket_.get_executor()))
+ControlSessionTcp::ControlSessionTcp(ControlMessageReceiver* receiver, tcp::socket&& socket, const ServerSettings& settings)
+    : ControlSession(receiver, settings), socket_(std::move(socket)), strand_(boost::asio::make_strand(socket_.get_executor()))
 {
 }
 

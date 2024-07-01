@@ -20,6 +20,7 @@
 
 
 // local headers
+#include "authinfo.hpp"
 #include "common/message/message.hpp"
 #include "common/queue.hpp"
 #include "control_server.hpp"
@@ -52,12 +53,16 @@ class Server : public StreamMessageReceiver, public ControlMessageReceiver, publ
 {
 public:
     // TODO: revise handler names
+    /// Response handler for json control requests, returning a @p response and/or a @p notification broadcast
     using OnResponse = std::function<void(jsonrpcpp::entity_ptr response, jsonrpcpp::notification_ptr notification)>;
 
+    /// c'tor
     Server(boost::asio::io_context& io_context, const ServerSettings& serverSettings);
     virtual ~Server();
 
+    /// Start the server (control server, stream server and stream manager)
     void start();
+    /// Stop the server (control server, stream server and stream manager)
     void stop();
 
 private:
@@ -66,7 +71,7 @@ private:
     void onDisconnect(StreamSession* streamSession) override;
 
     /// Implementation of ControllMessageReceiver
-    void onMessageReceived(std::shared_ptr<ControlSession> controlSession, const std::string& message, const ResponseHander& response_handler) override;
+    void onMessageReceived(std::shared_ptr<ControlSession> controlSession, const std::string& message, const ResponseHandler& response_handler) override;
     void onNewSession(std::shared_ptr<ControlSession> session) override
     {
         std::ignore = session;
@@ -81,7 +86,7 @@ private:
     void onResync(const PcmStream* pcmStream, double ms) override;
 
 private:
-    void processRequest(const jsonrpcpp::request_ptr request, const OnResponse& on_response) const;
+    void processRequest(const jsonrpcpp::request_ptr request, AuthInfo& authinfo, const OnResponse& on_response) const;
     /// Save the server state deferred to prevent blocking and lower disk io
     /// @param deferred the delay after the last call to saveConfig
     void saveConfig(const std::chrono::milliseconds& deferred = std::chrono::seconds(2));

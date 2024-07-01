@@ -87,7 +87,5 @@ const std::error_category& category()
 
 std::error_code make_error_code(ControlErrc errc)
 {
-    // Create an error_code with the original mpg123 error value
-    // and the mpg123 error category.
     return std::error_code(static_cast<int>(errc), snapcast::error::control::category());
 }

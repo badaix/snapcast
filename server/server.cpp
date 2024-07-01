@@ -21,12 +21,15 @@
 
 // local headers
 #include "common/aixlog.hpp"
+#include "common/base64.h"
 #include "common/jwt.hpp"
 #include "common/message/client_info.hpp"
 #include "common/message/hello.hpp"
 #include "common/message/server_settings.hpp"
 #include "common/message/time.hpp"
+#include "common/utils/string_utils.hpp"
 #include "config.hpp"
+#include "jsonrpcpp.hpp"
 
 // 3rd party headers
 
@@ -131,9 +134,9 @@ void Server::onDisconnect(StreamSession* streamSession)
 }
 
 
-void Server::processRequest(const jsonrpcpp::request_ptr request, const OnResponse& on_response) const
+void Server::processRequest(const jsonrpcpp::request_ptr request, AuthInfo& authinfo, const OnResponse& on_response) const
 {
-    jsonrpcpp::entity_ptr response;
+    jsonrpcpp::entity_ptr response = nullptr;
     jsonrpcpp::notification_ptr notification;
     try
     {
@@ -407,30 +410,48 @@ void Server::processRequest(const jsonrpcpp::request_ptr request, const OnRespon
             else if (request->method() == "Server.Authenticate")
             {
                 // clang-format off
-                // Request:      {"id":8,"jsonrpc":"2.0","method":"Server.Authenticate","params":{"user":"badaix","password":"secret"}}
+                // Request:      {"id":8,"jsonrpc":"2.0","method":"Server.Authenticate","params":{"scheme":"Basic","param":"YmFkYWl4OnNlY3JldA=="}}
+                // Response:     {"id":8,"jsonrpc":"2.0","result":"ok"}
+                // Request:      {"id":8,"jsonrpc":"2.0","method":"Server.Authenticate","params":{"scheme":"Bearer","param":"eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3MTg1NjQ1MTYsImlhdCI6MTcxODUyODUxNiwic3ViIjoiQmFkYWl4In0.gHrMVp7jTAg8aCSg3cttcfIxswqmOPuqVNOb5p79Cn0NmAqRmLXtDLX4QjOoOqqb66ezBBeikpNjPi_aO18YPoNmX9fPxSwcObTHBupnm5eugEpneMPDASFUSE2hg8rrD_OEoAVxx6hCLln7Z3ILyWDmR6jcmy7z0bp0BiAqOywUrFoVIsnlDZRs3wOaap5oS9J2oaA_gNi_7OuvAhrydn26LDhm0KiIqEcyIholkpRHrDYODkz98h2PkZdZ2U429tTvVhzDBJ1cBq2Zq3cvuMZT6qhwaUc8eYA8fUJ7g65iP4o2OZtUzlfEUqX1TKyuWuSK6CUlsZooNE-MSCT7_w"}}
+                // Response:     {"id":8,"jsonrpc":"2.0","result":"ok"}
+                // clang-format on
+                if (!request->params().has("scheme"))
+                    throw jsonrpcpp::InvalidParamsException("Parameter 'scheme' is missing", request->id());
+                if (!request->params().has("param"))
+                    throw jsonrpcpp::InvalidParamsException("Parameter 'param' is missing", request->id());
+
+                auto scheme = request->params().get<std::string>("scheme");
+                auto param = request->params().get<std::string>("param");
+                LOG(INFO, LOG_TAG) << "Authorization scheme: " << scheme << ", param: " << param << "\n";
+                auto ec = authinfo.authenticate(scheme, param);
+
+                if (ec)
+                    response = make_shared<jsonrpcpp::Response>(request->id(), jsonrpcpp::Error(ec.detailed_message(), ec.value()));
+                else
+                    response = make_shared<jsonrpcpp::Response>(request->id(), "ok");
+                // LOG(DEBUG, LOG_TAG) << response->to_json().dump() << "\n";
+            }
+            else if (request->method() == "Server.GetToken")
+            {
+                // clang-format off
+                // Request:      {"id":8,"jsonrpc":"2.0","method":"Server.GetToken","params":{"username":"Badaix","password":"secret"}}
                 // Response:     {"id":8,"jsonrpc":"2.0","result":{"token":"<token>"}}
                 // clang-format on
-                if (request->params().has("token"))
-                {
-                    auto token = request->params().get<std::string>("token");
-                    LOG(INFO, LOG_TAG) << "Server.Authenticate, token: " << token << "\n";
-                    result["token"] = token;
-                }
-                else if (request->params().has("user"))
-                {
-                    auto user = request->params().get<std::string>("user");
-                    Jwt jwt;
-                    auto now = std::chrono::system_clock::now();
-                    jwt.setIat(now);
-                    jwt.setExp(now + 10h);
-                    jwt.setSub(user);
-                    std::ifstream ifs(settings_.ssl.private_key.c_str());
-                    std::string private_key((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
-                    std::optional<std::string> token = jwt.getToken(private_key);
-                    result["token"] = token.value();
-                    LOG(INFO, LOG_TAG) << "Server.Authenticate, user: " << user << ", password: " << request->params().get<std::string>("password")
-                                       << ", jwt claims: " << jwt.claims.dump() << ", token: '" << token.value_or("") << "'\n";
-                }
+                if (!request->params().has("username"))
+                    throw jsonrpcpp::InvalidParamsException("Parameter 'username' is missing", request->id());
+                if (!request->params().has("password"))
+                    throw jsonrpcpp::InvalidParamsException("Parameter 'password' is missing", request->id());
+
+                auto username = request->params().get<std::string>("username");
+                auto password = request->params().get<std::string>("password");
+                LOG(INFO, LOG_TAG) << "GetToken username: " << username << ", password: " << password << "\n";
+                auto token = authinfo.getToken(username, password);
+
+                if (token.hasError())
+                    response = make_shared<jsonrpcpp::Response>(request->id(), jsonrpcpp::Error(token.getError().detailed_message(), token.getError().value()));
+                else
+                    result["token"] = token.takeValue();
+                // LOG(DEBUG, LOG_TAG) << response->to_json().dump() << "\n";
             }
             else
                 throw jsonrpcpp::MethodNotFoundException(request->id());
@@ -473,7 +494,7 @@ void Server::processRequest(const jsonrpcpp::request_ptr request, const OnRespon
                                    << ", params: " << (request->params().has("params") ? request->params().get("params") : "") << "\n";
 
                 // Find stream
-                string streamId = request->params().get<std::string>("id");
+                auto streamId = request->params().get<std::string>("id");
                 PcmStreamPtr stream = streamManager_->getStream(streamId);
                 if (stream == nullptr)
                     throw jsonrpcpp::InternalErrorException("Stream not found", request->id());
@@ -565,9 +586,9 @@ void Server::processRequest(const jsonrpcpp::request_ptr request, const OnRespon
                 auto value = request->params().get("value");
                 LOG(INFO, LOG_TAG) << "Stream '" << streamId << "' set property: " << name << " = " << value << "\n";
 
-                auto handle_response = [request, on_response](const snapcast::ErrorCode& ec)
+                auto handle_response = [request, on_response](const std::string& command, const snapcast::ErrorCode& ec)
                 {
-                    LOG(ERROR, LOG_TAG) << "SetShuffle: " << ec << ", message: " << ec.detailed_message() << ", msg: " << ec.message()
+                    LOG(ERROR, LOG_TAG) << "Result for '" << command << "': " << ec << ", message: " << ec.detailed_message() << ", msg: " << ec.message()
                                         << ", category: " << ec.category().name() << "\n";
                     std::shared_ptr<jsonrpcpp::Response> response;
                     if (ec)
@@ -583,31 +604,31 @@ void Server::processRequest(const jsonrpcpp::request_ptr request, const OnRespon
                     LoopStatus loop_status = loop_status_from_string(val);
                     if (loop_status == LoopStatus::kUnknown)
                         throw jsonrpcpp::InvalidParamsException("Value for loopStatus must be one of 'none', 'track', 'playlist'", request->id());
-                    stream->setLoopStatus(loop_status, [handle_response](const snapcast::ErrorCode& ec) { handle_response(ec); });
+                    stream->setLoopStatus(loop_status, [handle_response, name](const snapcast::ErrorCode& ec) { handle_response(name, ec); });
                 }
                 else if (name == "shuffle")
                 {
                     if (!value.is_boolean())
                         throw jsonrpcpp::InvalidParamsException("Value for shuffle must be bool", request->id());
-                    stream->setShuffle(value.get<bool>(), [handle_response](const snapcast::ErrorCode& ec) { handle_response(ec); });
+                    stream->setShuffle(value.get<bool>(), [handle_response, name](const snapcast::ErrorCode& ec) { handle_response(name, ec); });
                 }
                 else if (name == "volume")
                 {
                     if (!value.is_number_integer())
                         throw jsonrpcpp::InvalidParamsException("Value for volume must be an int", request->id());
-                    stream->setVolume(value.get<int16_t>(), [handle_response](const snapcast::ErrorCode& ec) { handle_response(ec); });
+                    stream->setVolume(value.get<int16_t>(), [handle_response, name](const snapcast::ErrorCode& ec) { handle_response(name, ec); });
                 }
                 else if (name == "mute")
                 {
                     if (!value.is_boolean())
                         throw jsonrpcpp::InvalidParamsException("Value for mute must be bool", request->id());
-                    stream->setMute(value.get<bool>(), [handle_response](const snapcast::ErrorCode& ec) { handle_response(ec); });
+                    stream->setMute(value.get<bool>(), [handle_response, name](const snapcast::ErrorCode& ec) { handle_response(name, ec); });
                 }
                 else if (name == "rate")
                 {
                     if (!value.is_number_float())
                         throw jsonrpcpp::InvalidParamsException("Value for rate must be float", request->id());
-                    stream->setRate(value.get<float>(), [handle_response](const snapcast::ErrorCode& ec) { handle_response(ec); });
+                    stream->setRate(value.get<float>(), [handle_response, name](const snapcast::ErrorCode& ec) { handle_response(name, ec); });
                 }
                 else
                     throw jsonrpcpp::InvalidParamsException("Property '" + name + "' not supported", request->id());
@@ -655,7 +676,8 @@ void Server::processRequest(const jsonrpcpp::request_ptr request, const OnRespon
         else
             throw jsonrpcpp::MethodNotFoundException(request->id());
 
-        response = std::make_shared<jsonrpcpp::Response>(*request, result);
+        if (!response)
+            response = std::make_shared<jsonrpcpp::Response>(*request, result);
     }
     catch (const jsonrpcpp::RequestException& e)
     {
@@ -671,7 +693,7 @@ void Server::processRequest(const jsonrpcpp::request_ptr request, const OnRespon
 }
 
 
-void Server::onMessageReceived(std::shared_ptr<ControlSession> controlSession, const std::string& message, const ResponseHander& response_handler)
+void Server::onMessageReceived(std::shared_ptr<ControlSession> controlSession, const std::string& message, const ResponseHandler& response_handler)
 {
     // LOG(DEBUG, LOG_TAG) << "onMessageReceived: " << message << "\n";
     std::lock_guard<std::mutex> lock(Config::instance().getMutex());
@@ -696,14 +718,14 @@ void Server::onMessageReceived(std::shared_ptr<ControlSession> controlSession, c
     if (entity->is_request())
     {
         jsonrpcpp::request_ptr request = dynamic_pointer_cast<jsonrpcpp::Request>(entity);
-        processRequest(request,
+        processRequest(request, controlSession->authinfo,
                        [this, controlSession, response_handler](jsonrpcpp::entity_ptr response, jsonrpcpp::notification_ptr notification)
                        {
-            if (controlSession->authinfo.has_value())
-            {
-                LOG(INFO, LOG_TAG) << "Request auth info - username: " << controlSession->authinfo->username()
-                                   << ", valid: " << controlSession->authinfo->valid() << "\n";
-            }
+            // if (controlSession->authinfo.hasAuthInfo())
+            // {
+            //     LOG(INFO, LOG_TAG) << "Request auth info - username: " << controlSession->authinfo->username()
+            //                        << ", valid: " << controlSession->authinfo->valid() << "\n";
+            // }
             saveConfig();
             ////cout << "Request:      " << request->to_json().dump() << "\n";
             if (notification)
@@ -733,7 +755,7 @@ void Server::onMessageReceived(std::shared_ptr<ControlSession> controlSession, c
             if (batch_entity->is_request())
             {
                 jsonrpcpp::request_ptr request = dynamic_pointer_cast<jsonrpcpp::Request>(batch_entity);
-                processRequest(request,
+                processRequest(request, controlSession->authinfo,
                                [controlSession, response_handler, &responseBatch, &notificationBatch](jsonrpcpp::entity_ptr response,
                                                                                                       jsonrpcpp::notification_ptr notification)
                                {

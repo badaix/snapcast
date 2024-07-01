@@ -85,6 +85,9 @@ int main(int argc, char* argv[])
         conf.add<Value<string>>("", "ssl.private_key", "private key file (PEM format)", settings.ssl.private_key, &settings.ssl.private_key);
         conf.add<Value<string>>("", "ssl.key_password", "key password (for encrypted private key)", settings.ssl.key_password, &settings.ssl.key_password);
 
+        // Users setting
+        auto users_value = conf.add<Value<string>>("", "users.user", "<User nane>:<permissions>:<password>");
+
         // HTTP RPC settings
         conf.add<Value<bool>>("", "http.enabled", "enable HTTP Json RPC (HTTP POST and websockets)", settings.http.enabled, &settings.http.enabled);
         conf.add<Value<size_t>>("", "http.port", "which port the server should listen on", settings.http.port, &settings.http.port);
@@ -264,6 +267,15 @@ int main(int argc, char* argv[])
             LOG(INFO, LOG_TAG) << "Adding source: " << sourceValue->value(n) << "\n";
             settings.stream.sources.push_back(sourceValue->value(n));
         }
+
+        for (size_t n = 0; n < users_value->count(); ++n)
+        {
+            settings.users.emplace_back(users_value->value(n));
+            LOG(DEBUG, LOG_TAG) << "User: " << settings.users.back().name
+                                << ", permissions: " << utils::string::container_to_string(settings.users.back().permissions)
+                                << ", pw: " << settings.users.back().password << "\n";
+        }
+
 
 #ifdef HAS_DAEMON
         std::unique_ptr<Daemon> daemon;
