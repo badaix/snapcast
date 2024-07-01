@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2021  Johannes Pohl
+    Copyright (C) 2014-2024  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -16,135 +16,62 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
-#ifndef STRING_UTILS_HPP
-#define STRING_UTILS_HPP
 
-#include <algorithm>
+#pragma once
+
+
+// standard headers
 #include <map>
 #include <sstream>
-#include <stdio.h>
 #include <string>
 #include <vector>
-#ifdef WINDOWS
-#include <cctype>
-#endif
 
-namespace utils
-{
-namespace string
+
+namespace utils::string
 {
 
-// trim from start
-static inline std::string& ltrim(std::string& s)
-{
-    s.erase(s.begin(), std::find_if(s.begin(), s.end(), [](int ch) { return !std::isspace(ch); }));
-    return s;
-}
+/// Check of text matches pattern, with pattern containing '*' wildcards
+bool wildcardMatch(const std::string& pattern, const std::string& text);
 
-// trim from end
-static inline std::string& rtrim(std::string& s)
-{
-    s.erase(std::find_if(s.rbegin(), s.rend(), [](int ch) { return !std::isspace(ch); }).base(), s.end());
-    return s;
-}
+/// trim from start
+std::string& ltrim(std::string& s);
 
-// trim from both ends
-static inline std::string& trim(std::string& s)
-{
-    return ltrim(rtrim(s));
-}
+/// trim from end
+std::string& rtrim(std::string& s);
 
-// trim from start
-static inline std::string ltrim_copy(const std::string& s)
-{
-    std::string str(s);
-    return ltrim(str);
-}
+/// trim from both ends
+std::string& trim(std::string& s);
 
-// trim from end
-static inline std::string rtrim_copy(const std::string& s)
-{
-    std::string str(s);
-    return rtrim(str);
-}
+/// trim from start
+std::string ltrim_copy(const std::string& s);
 
-// trim from both ends
-static inline std::string trim_copy(const std::string& s)
-{
-    std::string str(s);
-    return trim(str);
-}
+/// trim from end
+std::string rtrim_copy(const std::string& s);
 
-// decode %xx to char
-static std::string uriDecode(const std::string& src)
-{
-    std::string ret;
-    char ch;
-    for (size_t i = 0; i < src.length(); i++)
-    {
-        if (int(src[i]) == 37)
-        {
-            unsigned int ii;
-            sscanf(src.substr(i + 1, 2).c_str(), "%x", &ii);
-            ch = static_cast<char>(ii);
-            ret += ch;
-            i += 2;
-        }
-        else
-        {
-            ret += src[i];
-        }
-    }
-    return (ret);
-}
+/// trim from both ends
+std::string trim_copy(const std::string& s);
 
+/// decode %xx to char
+std::string uriDecode(const std::string& src);
 
-static void split_left(const std::string& s, char delim, std::string& left, std::string& right)
-{
-    auto pos = s.find(delim);
-    if (pos != std::string::npos)
-    {
-        left = s.substr(0, pos);
-        right = s.substr(pos + 1);
-    }
-    else
-    {
-        left = s;
-        right = "";
-    }
-}
+/// Split string @p s at @p delim into @p left and @p right
+void split_left(const std::string& s, char delim, std::string& left, std::string& right);
 
+/// Split string @p s at @p delim and left and @p right
+/// @return the left part
+std::string split_left(const std::string& s, char delim, std::string& right);
 
-static std::string split_left(const std::string& s, char delim, std::string& right)
-{
-    std::string left;
-    split_left(s, delim, left, right);
-    return left;
-}
+/// Split string @p s at @p delim and return the splitted list in @p elems
+/// @return list of splitted strings
+std::vector<std::string>& split(const std::string& s, char delim, std::vector<std::string>& elems);
 
+/// @return resulting list of strings by splitting @p s at @p delim
+std::vector<std::string> split(const std::string& s, char delim);
 
-
-static std::vector<std::string>& split(const std::string& s, char delim, std::vector<std::string>& elems)
-{
-    std::stringstream ss(s);
-    std::string item;
-    while (std::getline(ss, item, delim))
-    {
-        elems.push_back(item);
-    }
-    return elems;
-}
-
-
-static std::vector<std::string> split(const std::string& s, char delim)
-{
-    std::vector<std::string> elems;
-    split(s, delim, elems);
-    return elems;
-}
-
+/// Split @p s into key value pairs, separated by @p pair_delim and @p key_value_delim
+/// @return map from keys to values
 template <typename T>
-static std::map<std::string, T> split_pairs_to_container(const std::string& s, char pair_delim, char key_value_delim)
+std::map<std::string, T> split_pairs_to_container(const std::string& s, char pair_delim, char key_value_delim)
 {
     std::map<std::string, T> result;
     auto keyValueList = split(s, pair_delim);
@@ -161,32 +88,30 @@ static std::map<std::string, T> split_pairs_to_container(const std::string& s, c
     return result;
 }
 
-
-static std::map<std::string, std::string> split_pairs(const std::string& s, char pair_delim, char key_value_delim)
+/// @return concatenated values of @p container, separated by @p delim
+template <typename T>
+std::string container_to_string(const T& container, const std::string& delim = ", ")
 {
-    std::map<std::string, std::string> result;
-    auto pairs = split_pairs_to_container<std::vector<std::string>>(s, pair_delim, key_value_delim);
-    for (auto& pair : pairs)
-        result[pair.first] = *pair.second.begin();
-    return result;
+    std::stringstream ss;
+    for (auto iter = container.begin(); iter != container.end(); ++iter)
+    {
+        ss << *iter;
+        if (std::distance(iter, container.end()) > 1)
+            ss << delim;
+    }
+    return ss.str();
 }
 
 
-static inline std::string& tolower(std::string& s)
-{
-    std::transform(s.begin(), s.end(), s.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
-    return s;
-}
+/// Split @p s into key value pairs, separated by @p pair_delim and @p key_value_delim
+/// @return map from keys to values
+std::map<std::string, std::string> split_pairs(const std::string& s, char pair_delim, char key_value_delim);
+
+/// @return @p[in, out] s converted to lowercase
+std::string& tolower(std::string& s);
+
+/// @return @p s converted to lowercase
+std::string tolower_copy(const std::string& s);
 
 
-static inline std::string tolower_copy(const std::string& s)
-{
-    std::string str(s);
-    return tolower(str);
-}
-
-
-} // namespace string
-} // namespace utils
-
-#endif
+} // namespace utils::string

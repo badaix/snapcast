@@ -1,7 +1,7 @@
 set(SOURCES resampler.cpp sample_format.cpp jwt.cpp base64.cpp)
 
 if(NOT WIN32 AND NOT ANDROID)
-  list(APPEND SOURCES daemon.cpp)
+  list(APPEND SOURCES daemon.cpp utils/string_utils.cpp)
 endif()
 
 include_directories(${SOXR_INCLUDE_DIRS} ${OPENSSL_INCLUDE_DIR})
