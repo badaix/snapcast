@@ -24,6 +24,7 @@
 #include "common/aixlog.hpp"
 #include "common/utils/file_utils.hpp"
 #include "control_session_ws.hpp"
+#include "image_cache.hpp"
 #include "stream_session_ws.hpp"
 
 // 3rd party headers
@@ -288,7 +289,7 @@ void ControlSessionHttp::handle_request(http::request<Body, http::basic_fields<A
     {
         pos += image_cache_target.size();
         target = target.substr(pos);
-        auto image = settings_.http.image_cache.getImage(std::string(target));
+        auto image = ImageCache::instance().getImage(std::string(target));
         LOG(DEBUG, LOG_TAG) << "image cache: " << target << ", found: " << image.has_value() << "\n";
         if (image.has_value())
         {
