@@ -22,7 +22,6 @@
 
 // local headers
 #include "pcm_stream.hpp"
-#include <server/server_settings.hpp>
 
 // 3rd party headers
 #include <boost/asio/io_context.hpp>

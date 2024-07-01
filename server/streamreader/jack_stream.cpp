@@ -20,8 +20,6 @@
 // prototype/interface header file
 #include "jack_stream.hpp"
 
-#include <jack/jack.h>
-
 // local headers
 #include "common/aixlog.hpp"
 #include "common/snap_exception.hpp"
@@ -59,7 +57,6 @@ void float_to_s24(char* dst, jack_default_audio_sample_t* src, unsigned long nsa
 
     while (nsamples--)
     {
-
         // float to S24 conversion
         if (*src <= -1.0f)
         {
