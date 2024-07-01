@@ -43,10 +43,14 @@ using acceptor_ptr = std::unique_ptr<tcp::acceptor>;
 class ControlServer : public ControlMessageReceiver
 {
 public:
+    /// c'tor
     ControlServer(boost::asio::io_context& io_context, const ServerSettings& settings, ControlMessageReceiver* controlMessageReceiver = nullptr);
+    /// d'tor
     virtual ~ControlServer();
 
+    /// Start accepting control connections
     void start();
+    /// Stop accepting connections and stop all running sessions
     void stop();
 
     /// Send a message to all connected clients
@@ -58,7 +62,7 @@ private:
     void cleanup();
 
     /// Implementation of ControlMessageReceiver
-    void onMessageReceived(std::shared_ptr<ControlSession> session, const std::string& message, const ResponseHander& response_handler) override;
+    void onMessageReceived(std::shared_ptr<ControlSession> session, const std::string& message, const ResponseHandler& response_handler) override;
     void onNewSession(std::shared_ptr<ControlSession> session) override;
     void onNewSession(std::shared_ptr<StreamSession> session) override;
 
@@ -69,7 +73,6 @@ private:
 
     boost::asio::io_context& io_context_;
     boost::asio::ssl::context ssl_context_;
-    ServerSettings::Tcp tcp_settings_;
-    ServerSettings::Http http_settings_;
+    ServerSettings settings_;
     ControlMessageReceiver* controlMessageReceiver_;
 };

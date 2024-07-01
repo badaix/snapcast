@@ -55,9 +55,10 @@ using ssl_socket = boost::asio::ssl::stream<tcp_socket>;
 class ControlSessionHttp : public ControlSession
 {
 public:
-    /// ctor. Received message from the client are passed to ControlMessageReceiver
-    ControlSessionHttp(ControlMessageReceiver* receiver, ssl_socket&& socket, const ServerSettings::Http& settings);
-    ControlSessionHttp(ControlMessageReceiver* receiver, tcp_socket&& socket, const ServerSettings::Http& settings);
+    /// c'tor for ssl sockets. Received message from the client are passed to ControlMessageReceiver
+    ControlSessionHttp(ControlMessageReceiver* receiver, ssl_socket&& socket, const ServerSettings& settings);
+    /// c'tor for tcp sockets
+    ControlSessionHttp(ControlMessageReceiver* receiver, tcp_socket&& socket, const ServerSettings& settings);
     ~ControlSessionHttp() override;
     void start() override;
     void stop() override;
@@ -65,21 +66,21 @@ public:
     /// Sends a message to the client (asynchronous)
     void sendAsync(const std::string& message) override;
 
-protected:
-    // HTTP methods
+private:
+    /// HTTP on read callback
     void on_read(beast::error_code ec, std::size_t bytes_transferred);
+    /// HTTP on write callback
     void on_write(beast::error_code ec, std::size_t bytes, bool close);
 
+    /// Handle an incoming HTTP request
     template <class Body, class Allocator, class Send>
     void handle_request(http::request<Body, http::basic_fields<Allocator>>&& req, Send&& send);
 
     http::request<http::string_body> req_;
-
-protected:
     std::optional<tcp_socket> tcp_socket_;
     std::optional<ssl_socket> ssl_socket_;
     beast::flat_buffer buffer_;
-    ServerSettings::Http settings_;
+    ServerSettings settings_;
     std::deque<std::string> messages_;
     bool is_ssl_;
 };

@@ -39,11 +39,10 @@ static constexpr auto LOG_TAG = "ControlServer";
 
 
 ControlServer::ControlServer(boost::asio::io_context& io_context, const ServerSettings& settings, ControlMessageReceiver* controlMessageReceiver)
-    : io_context_(io_context), ssl_context_(boost::asio::ssl::context::sslv23), tcp_settings_(settings.tcp), http_settings_(settings.http),
-      controlMessageReceiver_(controlMessageReceiver)
+    : io_context_(io_context), ssl_context_(boost::asio::ssl::context::sslv23), settings_(settings), controlMessageReceiver_(controlMessageReceiver)
 {
     const ServerSettings::Ssl& ssl = settings.ssl;
-    if (http_settings_.ssl_enabled)
+    if (settings_.http.ssl_enabled)
     {
         ssl_context_.set_options(boost::asio::ssl::context::default_workarounds | boost::asio::ssl::context::no_sslv2 |
                                  boost::asio::ssl::context::single_dh_use);
@@ -99,7 +98,7 @@ void ControlServer::send(const std::string& message, const ControlSession* exclu
 }
 
 
-void ControlServer::onMessageReceived(std::shared_ptr<ControlSession> session, const std::string& message, const ResponseHander& response_handler)
+void ControlServer::onMessageReceived(std::shared_ptr<ControlSession> session, const std::string& message, const ResponseHandler& response_handler)
 {
     // LOG(DEBUG, LOG_TAG) << "received: \"" << message << "\"\n";
     if (controlMessageReceiver_ != nullptr)
@@ -138,19 +137,19 @@ void ControlServer::startAccept()
             auto port = socket.local_endpoint().port();
             LOG(NOTICE, LOG_TAG) << "New connection from: " << socket.remote_endpoint().address().to_string() << ", port: " << port << endl;
 
-            if (port == http_settings_.ssl_port)
+            if (port == settings_.http.ssl_port)
             {
-                auto session = make_shared<ControlSessionHttp>(this, ssl_socket(std::move(socket), ssl_context_), http_settings_);
+                auto session = make_shared<ControlSessionHttp>(this, ssl_socket(std::move(socket), ssl_context_), settings_);
                 onNewSession(std::move(session));
             }
-            else if (port == http_settings_.port)
+            else if (port == settings_.http.port)
             {
-                auto session = make_shared<ControlSessionHttp>(this, std::move(socket), http_settings_);
+                auto session = make_shared<ControlSessionHttp>(this, std::move(socket), settings_);
                 onNewSession(std::move(session));
             }
-            else if (port == tcp_settings_.port)
+            else if (port == settings_.tcp.port)
             {
-                auto session = make_shared<ControlSessionTcp>(this, std::move(socket));
+                auto session = make_shared<ControlSessionTcp>(this, std::move(socket), settings_);
                 onNewSession(std::move(session));
             }
             else
@@ -171,15 +170,15 @@ void ControlServer::startAccept()
 
 void ControlServer::start()
 {
-    if (tcp_settings_.enabled)
+    if (settings_.tcp.enabled)
     {
-        for (const auto& address : tcp_settings_.bind_to_address)
+        for (const auto& address : settings_.tcp.bind_to_address)
         {
             try
             {
-                LOG(INFO, LOG_TAG) << "Creating TCP acceptor for address: " << address << ", port: " << tcp_settings_.port << "\n";
+                LOG(INFO, LOG_TAG) << "Creating TCP acceptor for address: " << address << ", port: " << settings_.tcp.port << "\n";
                 acceptor_.emplace_back(make_unique<tcp::acceptor>(boost::asio::make_strand(io_context_.get_executor()),
-                                                                  tcp::endpoint(boost::asio::ip::address::from_string(address), tcp_settings_.port)));
+                                                                  tcp::endpoint(boost::asio::ip::address::from_string(address), settings_.tcp.port)));
             }
             catch (const boost::system::system_error& e)
             {
@@ -187,17 +186,17 @@ void ControlServer::start()
             }
         }
     }
-    if (http_settings_.enabled || http_settings_.ssl_enabled)
+    if (settings_.http.enabled || settings_.http.ssl_enabled)
     {
-        if (http_settings_.enabled)
+        if (settings_.http.enabled)
         {
-            for (const auto& address : http_settings_.bind_to_address)
+            for (const auto& address : settings_.http.bind_to_address)
             {
                 try
                 {
-                    LOG(INFO, LOG_TAG) << "Creating HTTP acceptor for address: " << address << ", port: " << http_settings_.port << "\n";
+                    LOG(INFO, LOG_TAG) << "Creating HTTP acceptor for address: " << address << ", port: " << settings_.http.port << "\n";
                     acceptor_.emplace_back(make_unique<tcp::acceptor>(boost::asio::make_strand(io_context_.get_executor()),
-                                                                      tcp::endpoint(boost::asio::ip::address::from_string(address), http_settings_.port)));
+                                                                      tcp::endpoint(boost::asio::ip::address::from_string(address), settings_.http.port)));
                 }
                 catch (const boost::system::system_error& e)
                 {
@@ -206,15 +205,15 @@ void ControlServer::start()
             }
         }
 
-        if (http_settings_.ssl_enabled)
+        if (settings_.http.ssl_enabled)
         {
-            for (const auto& address : http_settings_.ssl_bind_to_address)
+            for (const auto& address : settings_.http.ssl_bind_to_address)
             {
                 try
                 {
-                    LOG(INFO, LOG_TAG) << "Creating HTTPS acceptor for address: " << address << ", port: " << http_settings_.ssl_port << "\n";
+                    LOG(INFO, LOG_TAG) << "Creating HTTPS acceptor for address: " << address << ", port: " << settings_.http.ssl_port << "\n";
                     acceptor_.emplace_back(make_unique<tcp::acceptor>(boost::asio::make_strand(io_context_.get_executor()),
-                                                                      tcp::endpoint(boost::asio::ip::address::from_string(address), http_settings_.ssl_port)));
+                                                                      tcp::endpoint(boost::asio::ip::address::from_string(address), settings_.http.ssl_port)));
                 }
                 catch (const boost::system::system_error& e)
                 {

@@ -32,14 +32,14 @@ using namespace std;
 static constexpr auto LOG_TAG = "ControlSessionWS";
 
 
-ControlSessionWebsocket::ControlSessionWebsocket(ControlMessageReceiver* receiver, ssl_websocket&& ssl_ws)
-    : ControlSession(receiver), ssl_ws_(std::move(ssl_ws)), strand_(boost::asio::make_strand(ssl_ws_->get_executor())), is_ssl_(true)
+ControlSessionWebsocket::ControlSessionWebsocket(ControlMessageReceiver* receiver, ssl_websocket&& ssl_ws, const ServerSettings& settings)
+    : ControlSession(receiver, settings), ssl_ws_(std::move(ssl_ws)), strand_(boost::asio::make_strand(ssl_ws_->get_executor())), is_ssl_(true)
 {
     LOG(DEBUG, LOG_TAG) << "ControlSessionWebsocket, mode: ssl\n";
 }
 
-ControlSessionWebsocket::ControlSessionWebsocket(ControlMessageReceiver* receiver, tcp_websocket&& tcp_ws)
-    : ControlSession(receiver), tcp_ws_(std::move(tcp_ws)), strand_(boost::asio::make_strand(tcp_ws_->get_executor())), is_ssl_(false)
+ControlSessionWebsocket::ControlSessionWebsocket(ControlMessageReceiver* receiver, tcp_websocket&& tcp_ws, const ServerSettings& settings)
+    : ControlSession(receiver, settings), tcp_ws_(std::move(tcp_ws)), strand_(boost::asio::make_strand(tcp_ws_->get_executor())), is_ssl_(false)
 {
     LOG(DEBUG, LOG_TAG) << "ControlSessionWebsocket, mode: tcp\n";
 }
