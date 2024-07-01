@@ -21,7 +21,6 @@
 
 // local headers
 #include "common/utils/string_utils.hpp"
-#include "image_cache.hpp"
 
 // standard headers
 #include <string>
@@ -73,7 +72,6 @@ struct ServerSettings
         std::vector<std::string> ssl_bind_to_address{{"0.0.0.0"}};
         std::string doc_root{""};
         std::string host{"<hostname>"};
-        inline static ImageCache image_cache;
     };
 
     struct Tcp
