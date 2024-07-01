@@ -23,6 +23,7 @@
 #include "common/utils/string_utils.hpp"
 
 // standard headers
+#include <cstdint>
 #include <string>
 #include <vector>
 
