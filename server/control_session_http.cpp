@@ -149,14 +149,14 @@ std::string path_cat(boost::beast::string_view base, boost::beast::string_view p
 }
 } // namespace
 
-ControlSessionHttp::ControlSessionHttp(ControlMessageReceiver* receiver, ssl_socket&& socket, const ServerSettings::Http& settings)
-    : ControlSession(receiver), ssl_socket_(std::move(socket)), settings_(settings), is_ssl_(true)
+ControlSessionHttp::ControlSessionHttp(ControlMessageReceiver* receiver, ssl_socket&& socket, const ServerSettings& settings)
+    : ControlSession(receiver, settings), ssl_socket_(std::move(socket)), settings_(settings), is_ssl_(true)
 {
     LOG(DEBUG, LOG_TAG) << "ControlSessionHttp, mode: ssl, Local IP: " << ssl_socket_->next_layer().local_endpoint().address().to_string() << "\n";
 }
 
-ControlSessionHttp::ControlSessionHttp(ControlMessageReceiver* receiver, tcp_socket&& socket, const ServerSettings::Http& settings)
-    : ControlSession(receiver), tcp_socket_(std::move(socket)), settings_(settings), is_ssl_(false)
+ControlSessionHttp::ControlSessionHttp(ControlMessageReceiver* receiver, tcp_socket&& socket, const ServerSettings& settings)
+    : ControlSession(receiver, settings), tcp_socket_(std::move(socket)), settings_(settings), is_ssl_(false)
 {
     LOG(DEBUG, LOG_TAG) << "ControlSessionHttp, mode: tcp, Local IP: " << tcp_socket_->local_endpoint().address().to_string() << "\n";
 }
@@ -288,7 +288,7 @@ void ControlSessionHttp::handle_request(http::request<Body, http::basic_fields<A
     {
         pos += image_cache_target.size();
         target = target.substr(pos);
-        auto image = settings_.image_cache.getImage(std::string(target));
+        auto image = settings_.http.image_cache.getImage(std::string(target));
         LOG(DEBUG, LOG_TAG) << "image cache: " << target << ", found: " << image.has_value() << "\n";
         if (image.has_value())
         {
@@ -307,11 +307,11 @@ void ControlSessionHttp::handle_request(http::request<Body, http::basic_fields<A
     }
 
     // Build the path to the requested file
-    std::string path = path_cat(settings_.doc_root, target);
+    std::string path = path_cat(settings_.http.doc_root, target);
     if (req.target().back() == '/')
         path.append("index.html");
 
-    if (settings_.doc_root.empty())
+    if (settings_.http.doc_root.empty())
     {
         static constexpr auto default_page = "/usr/share/snapserver/index.html";
         if (utils::file::exists(default_page))
@@ -406,7 +406,7 @@ void ControlSessionHttp::on_read(beast::error_code ec, std::size_t bytes_transfe
                     {
                         if (req_.target() == "/jsonrpc")
                         {
-                            auto ws_session = make_shared<ControlSessionWebsocket>(message_receiver_, std::move(*ws));
+                            auto ws_session = make_shared<ControlSessionWebsocket>(message_receiver_, std::move(*ws), settings_);
                             message_receiver_->onNewSession(std::move(ws_session));
                         }
                         else // if (req_.target() == "/stream")
@@ -433,7 +433,7 @@ void ControlSessionHttp::on_read(beast::error_code ec, std::size_t bytes_transfe
                     {
                         if (req_.target() == "/jsonrpc")
                         {
-                            auto ws_session = make_shared<ControlSessionWebsocket>(message_receiver_, std::move(*ws));
+                            auto ws_session = make_shared<ControlSessionWebsocket>(message_receiver_, std::move(*ws), settings_);
                             message_receiver_->onNewSession(std::move(ws_session));
                         }
                         else // if (req_.target() == "/stream")
@@ -452,7 +452,11 @@ void ControlSessionHttp::on_read(beast::error_code ec, std::size_t bytes_transfe
     std::string_view authheader = req_[beast::http::field::authorization];
     if (!authheader.empty())
     {
-        authinfo = AuthInfo(std::string(authheader));
+        auto ec = authinfo.authenticate(std::string(authheader));
+        if (ec)
+        {
+            LOG(ERROR, LOG_TAG) << "Authentication failed: " << ec.detailed_message() << "\n";
+        }
     }
 
     // Send the response

@@ -43,7 +43,7 @@ class ControlSessionTcp : public ControlSession
 {
 public:
     /// ctor. Received message from the client are passed to ControlMessageReceiver
-    ControlSessionTcp(ControlMessageReceiver* receiver, tcp::socket&& socket);
+    ControlSessionTcp(ControlMessageReceiver* receiver, tcp::socket&& socket, const ServerSettings& settings);
     ~ControlSessionTcp() override;
     void start() override;
     void stop() override;
@@ -51,7 +51,7 @@ public:
     /// Sends a message to the client (asynchronous)
     void sendAsync(const std::string& message) override;
 
-protected:
+private:
     void do_read();
     void send_next();
 
