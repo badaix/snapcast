@@ -65,9 +65,10 @@ using ssl_websocket = websocket::stream<ssl_socket>;
 class ControlSessionWebsocket : public ControlSession
 {
 public:
-    /// ctor. Received message from the client are passed to ControlMessageReceiver
-    ControlSessionWebsocket(ControlMessageReceiver* receiver, ssl_websocket&& ssl_ws);
-    ControlSessionWebsocket(ControlMessageReceiver* receiver, tcp_websocket&& tcp_ws);
+    /// c'tor for ssl websockets. Received message from the client are passed to ControlMessageReceiver
+    ControlSessionWebsocket(ControlMessageReceiver* receiver, ssl_websocket&& ssl_ws, const ServerSettings& settings);
+    /// c'tor for TCP websockets. Received message from the client are passed to ControlMessageReceiver
+    ControlSessionWebsocket(ControlMessageReceiver* receiver, tcp_websocket&& tcp_ws, const ServerSettings& settings);
     ~ControlSessionWebsocket() override;
     void start() override;
     void stop() override;
@@ -75,7 +76,7 @@ public:
     /// Sends a message to the client (asynchronous)
     void sendAsync(const std::string& message) override;
 
-protected:
+private:
     // Websocket methods
     void on_read_ws(beast::error_code ec, std::size_t bytes_transferred);
     void do_read_ws();
@@ -84,7 +85,6 @@ protected:
     std::optional<ssl_websocket> ssl_ws_;
     std::optional<tcp_websocket> tcp_ws_;
 
-protected:
     beast::flat_buffer buffer_;
     boost::asio::strand<boost::asio::any_io_executor> strand_;
     std::deque<std::string> messages_;

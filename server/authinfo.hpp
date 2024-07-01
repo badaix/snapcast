@@ -19,7 +19,8 @@
 #pragma once
 
 // local headers
-#include "common/jwt.hpp"
+#include "common/error_code.hpp"
+#include "server_settings.hpp"
 
 // 3rd party headers
 
@@ -27,19 +28,82 @@
 #include <chrono>
 #include <optional>
 #include <string>
+#include <system_error>
+
+/// Authentication error codes
+enum class AuthErrc
+{
+    auth_scheme_not_supported = 1,
+    failed_to_create_token = 2,
+    unknown_user = 3,
+    wrong_password = 4,
+    expired = 5,
+    token_validation_failed = 6,
+};
+
+namespace snapcast::error::auth
+{
+const std::error_category& category();
+}
 
 
 
+namespace std
+{
+template <>
+struct is_error_code_enum<AuthErrc> : public std::true_type
+{
+};
+} // namespace std
+
+std::error_code make_error_code(AuthErrc);
+
+using snapcast::ErrorCode;
+using snapcast::ErrorOr;
+
+/// Authentication Info class
 class AuthInfo
 {
 public:
-    AuthInfo(std::string authheader);
+    /// c'tor
+    explicit AuthInfo(const ServerSettings& settings);
+    // explicit AuthInfo(std::string authheader);
+    /// d'tor
     virtual ~AuthInfo() = default;
 
-    bool valid() const;
+    /// @return if authentication info is available
+    bool hasAuthInfo() const;
+    // ErrorCode isValid(const std::string& command) const;
+    /// @return the username
     const std::string& username() const;
 
+    /// Authenticate with basic scheme
+    ErrorCode authenticateBasic(const std::string& credentials);
+    /// Authenticate with bearer scheme
+    ErrorCode authenticateBearer(const std::string& token);
+    /// Authenticate with basic or bearer scheme with an auth header
+    ErrorCode authenticate(const std::string& auth);
+    /// Authenticate with scheme ("basic" or "bearer") and auth param
+    ErrorCode authenticate(const std::string& scheme, const std::string& param);
+
+    /// @return JWS token for @p username and @p password
+    ErrorOr<std::string> getToken(const std::string& username, const std::string& password) const;
+    /// @return if the authenticated user has permission to access @p ressource
+    bool hasPermission(const std::string& resource) const;
+
 private:
+    /// has auth info
+    bool has_auth_info_;
+    /// auth user name
     std::string username_;
+    /// optional token expiration
     std::optional<std::chrono::system_clock::time_point> expires_;
+    /// server configuration
+    ServerSettings settings_;
+
+    /// Validate @p username and @p password
+    /// @return true if username and password are correct
+    ErrorCode validateUser(const std::string& username, const std::optional<std::string>& password = std::nullopt) const;
+    /// @return if the authentication is expired
+    bool isExpired() const;
 };

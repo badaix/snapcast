@@ -20,6 +20,7 @@
 
 
 // local headers
+#include "common/utils/string_utils.hpp"
 #include "image_cache.hpp"
 
 // standard headers
@@ -44,6 +45,23 @@ struct ServerSettings
         std::string private_key{""};
         std::string key_password{""};
     };
+
+    struct User
+    {
+        User(const std::string& user_permissions_password)
+        {
+            std::string perm;
+            name = utils::string::split_left(user_permissions_password, ':', perm);
+            perm = utils::string::split_left(perm, ':', password);
+            permissions = utils::string::split(perm, ',');
+        }
+
+        std::string name;
+        std::vector<std::string> permissions;
+        std::string password;
+    };
+
+    std::vector<User> users;
 
     struct Http
     {

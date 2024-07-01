@@ -20,8 +20,12 @@
 
 // local headers
 #include "common/aixlog.hpp"
+#include "common/base64.h"
+#include "common/error_code.hpp"
 #include "common/jwt.hpp"
 #include "common/utils/string_utils.hpp"
+#include "server/authinfo.hpp"
+#include "server/server_settings.hpp"
 #include "server/streamreader/control_error.hpp"
 #include "server/streamreader/properties.hpp"
 #include "server/streamreader/stream_uri.hpp"
@@ -32,6 +36,8 @@
 // standard headers
 #include <chrono>
 #include <regex>
+#include <system_error>
+#include <vector>
 
 
 using namespace std;
@@ -41,6 +47,32 @@ TEST_CASE("String utils")
 {
     using namespace utils::string;
     REQUIRE(ltrim_copy(" test") == "test");
+
+    auto strings = split("1*2", '*');
+    REQUIRE(strings.size() == 2);
+    REQUIRE(strings[0] == "1");
+    REQUIRE(strings[1] == "2");
+
+    strings = split("1**2", '*');
+    REQUIRE(strings.size() == 3);
+    REQUIRE(strings[0] == "1");
+    REQUIRE(strings[1] == "");
+    REQUIRE(strings[2] == "2");
+
+    strings = split("*1*2", '*');
+    REQUIRE(strings.size() == 3);
+    REQUIRE(strings[0] == "");
+    REQUIRE(strings[1] == "1");
+    REQUIRE(strings[2] == "2");
+
+    strings = split("*1*2*", '*');
+    REQUIRE(strings.size() == 3);
+    REQUIRE(strings[0] == "");
+    REQUIRE(strings[1] == "1");
+    REQUIRE(strings[2] == "2");
+
+    std::vector<std::string> vec{"1", "2", "3"};
+    REQUIRE(container_to_string(vec) == "1, 2, 3");
 }
 
 
@@ -574,4 +606,110 @@ TEST_CASE("Error")
     ec = make_error_code(ControlErrc::can_not_control);
     REQUIRE(ec.category() == snapcast::error::control::category());
     std::cout << "Category: " << ec.category().name() << ", " << ec.message() << std::endl;
+
+    snapcast::ErrorCode error_code{};
+    REQUIRE(!error_code);
+}
+
+
+
+TEST_CASE("ErrorOr")
+{
+    {
+        snapcast::ErrorOr<std::string> error_or("test");
+        REQUIRE(error_or.hasValue());
+        REQUIRE(!error_or.hasError());
+        // Get value by reference
+        REQUIRE(error_or.getValue() == "test");
+        // Move value out
+        REQUIRE(error_or.takeValue() == "test");
+        // Value has been moved out, get will return an empty string
+        REQUIRE(error_or.getValue() == "");
+    }
+
+    {
+        snapcast::ErrorOr<std::string> error_or(make_error_code(ControlErrc::can_not_control));
+        REQUIRE(error_or.hasError());
+        REQUIRE(!error_or.hasValue());
+        // Get error by reference
+        REQUIRE(error_or.getError() == make_error_code(ControlErrc::can_not_control));
+        // Get error by reference
+        REQUIRE(error_or.getError() == ControlErrc::can_not_control);
+        // Get error by reference
+        REQUIRE(error_or.getError() != ControlErrc::parse_error);
+        // Get error by reference
+        REQUIRE(error_or.getError() == snapcast::ErrorCode(ControlErrc::can_not_control));
+        // Move error out
+        REQUIRE(error_or.takeError() == snapcast::ErrorCode(ControlErrc::can_not_control));
+        // Error is moved out, will return something else
+        // REQUIRE(error_or.getError() != snapcast::ErrorCode(ControlErrc::can_not_control));
+    }
+}
+
+
+TEST_CASE("WildcardMatch")
+{
+    using namespace utils::string;
+    REQUIRE(wildcardMatch("*", "Server.getToken"));
+    REQUIRE(wildcardMatch("Server.*", "Server.getToken"));
+    REQUIRE(wildcardMatch("Server.getToken", "Server.getToken"));
+    REQUIRE(wildcardMatch("*.getToken", "Server.getToken"));
+    REQUIRE(wildcardMatch("*.get*", "Server.getToken"));
+    REQUIRE(wildcardMatch("**.get*", "Server.getToken"));
+    REQUIRE(wildcardMatch("*.get**", "Server.getToken"));
+    REQUIRE(wildcardMatch("*.ge**t*", "Server.getToken"));
+
+    REQUIRE(!wildcardMatch("*.set*", "Server.getToken"));
+    REQUIRE(!wildcardMatch(".*", "Server.getToken"));
+    REQUIRE(!wildcardMatch("*.get", "Server.getToken"));
+    REQUIRE(wildcardMatch("*erver*get*", "Server.getToken"));
+    REQUIRE(!wildcardMatch("*get*erver*", "Server.getToken"));
+}
+
+
+TEST_CASE("Auth")
+{
+    {
+        ServerSettings settings;
+        ServerSettings::User user("badaix:*:secret");
+        REQUIRE(user.permissions.size() == 1);
+        REQUIRE(user.permissions[0] == "*");
+        settings.users.push_back(user);
+
+        AuthInfo auth(settings);
+        auto ec = auth.authenticateBasic(base64_encode("badaix:secret"));
+        REQUIRE(!ec);
+        REQUIRE(auth.hasAuthInfo());
+        REQUIRE(auth.hasPermission("stream"));
+    }
+
+    {
+        ServerSettings settings;
+        ServerSettings::User user("badaix::secret");
+        REQUIRE(user.permissions.empty());
+        settings.users.push_back(user);
+
+        AuthInfo auth(settings);
+        auto ec = auth.authenticateBasic(base64_encode("badaix:secret"));
+        REQUIRE(!ec);
+        REQUIRE(auth.hasAuthInfo());
+        REQUIRE(!auth.hasPermission("stream"));
+    }
+
+    {
+        ServerSettings settings;
+        ServerSettings::User user("badaix:*:secret");
+        settings.users.push_back(user);
+
+        AuthInfo auth(settings);
+        auto ec = auth.authenticateBasic(base64_encode("badaix:wrong_password"));
+        REQUIRE(ec == AuthErrc::wrong_password);
+        REQUIRE(!auth.hasAuthInfo());
+        REQUIRE(!auth.hasPermission("stream"));
+
+        ec = auth.authenticateBasic(base64_encode("unknown_user:secret"));
+        REQUIRE(ec == AuthErrc::unknown_user);
+        REQUIRE(!auth.hasAuthInfo());
+        REQUIRE(!auth.hasPermission("stream"));
+    }
 }
