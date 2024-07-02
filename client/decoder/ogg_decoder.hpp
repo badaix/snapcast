@@ -29,6 +29,10 @@
 #endif
 #include <ogg/ogg.h>
 
+// standard headers
+#include <mutex>
+
+
 namespace decoder
 {
 
@@ -64,6 +68,7 @@ private:
     vorbis_block vb;     /// local working space for packet->PCM decode
 
     SampleFormat sampleFormat_;
+    std::mutex mutex_;
 };
 
 } // namespace decoder

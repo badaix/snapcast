@@ -40,21 +40,24 @@ namespace encoder
 class Encoder
 {
 public:
+    /// Callback type to return encoded chunks, along with the encoder itself and the duration in ms of the chunk
     using OnEncodedCallback = std::function<void(const Encoder&, std::shared_ptr<msg::PcmChunk>, double)>;
 
-    /// ctor. Codec options (E.g. compression level) are passed as string and are codec dependend
+    /// c'tor
+    /// Codec options (E.g. compression level) are passed as string and are codec dependend
     Encoder(const std::string& codecOptions = "") : headerChunk_(nullptr), codecOptions_(codecOptions)
     {
     }
 
+    /// d'tor
     virtual ~Encoder() = default;
 
     /// The listener will receive the encoded stream
     virtual void init(OnEncodedCallback callback, const SampleFormat& format)
     {
-        if (codecOptions_ == "")
+        if (codecOptions_.empty())
             codecOptions_ = getDefaultOptions();
-        encoded_callback_ = callback;
+        encoded_callback_ = std::move(callback);
         sampleFormat_ = format;
         initEncoder();
     }
@@ -62,13 +65,16 @@ public:
     /// Here the work is done. Encoded data is passed to the EncoderListener.
     virtual void encode(const msg::PcmChunk& chunk) = 0;
 
+    /// @return the name of the encoder
     virtual std::string name() const = 0;
 
+    /// @return configuration options of the encoder
     virtual std::string getAvailableOptions() const
     {
         return "No codec options supported";
     }
 
+    /// @return default configuration option of the encoder
     virtual std::string getDefaultOptions() const
     {
         return "";
@@ -81,11 +87,16 @@ public:
     }
 
 protected:
+    /// Initialize the encoder
     virtual void initEncoder() = 0;
 
+    /// The sampleformat
     SampleFormat sampleFormat_;
+    /// The codec header, sent to each newly connected streaming client
     std::shared_ptr<msg::CodecHeader> headerChunk_;
+    /// The configured codec options
     std::string codecOptions_;
+    /// Callback to return encoded chunks
     OnEncodedCallback encoded_callback_;
 };
 
