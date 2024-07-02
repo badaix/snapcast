@@ -26,6 +26,7 @@
 
 // standard headers
 #include <memory>
+#include <mutex>
 
 
 namespace decoder
@@ -60,6 +61,9 @@ public:
 
     CacheInfo cacheInfo_;
     std::unique_ptr<FLAC__StreamDecoderErrorStatus> lastError_;
+
+private:
+    std::mutex mutex_;
 };
 
 } // namespace decoder
