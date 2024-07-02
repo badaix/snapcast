@@ -124,15 +124,23 @@ public:
     PcmStream(PcmStream::Listener* pcmListener, boost::asio::io_context& ioc, const ServerSettings& server_settings, const StreamUri& uri);
     virtual ~PcmStream();
 
+    /// Start the stream reader, init the encoder and optionally the stream control
     virtual void start();
+    /// Stop the stream reader
     virtual void stop();
 
+    /// @return the codec header of the stream
     virtual std::shared_ptr<msg::CodecHeader> getHeader();
 
+    /// @return the uri of the stream, as configured in snapserver.conf
     virtual const StreamUri& getUri() const;
+    /// @return the name of the stream
     virtual const std::string& getName() const;
+    /// @return the id of the stream
     virtual const std::string& getId() const;
+    /// @return the sample format of the stream
     virtual const SampleFormat& getSampleFormat() const;
+    /// @return the codec of the stream
     virtual std::string getCodec() const;
 
     const Properties& getProperties() const;
