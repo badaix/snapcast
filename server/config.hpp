@@ -42,35 +42,44 @@ using ClientInfoPtr = std::shared_ptr<ClientInfo>;
 using GroupPtr = std::shared_ptr<Group>;
 
 
-template <typename T>
-T jGet(const json& j, const std::string& what, const T& def)
+struct JsonConfigItem
 {
-    try
+    /// Read config item from json object @p j
+    virtual void fromJson(const json& j) = 0;
+    /// @return config item serialized to json 
+    virtual json toJson() = 0;
+
+protected:
+    /// @return value for key @p what or @p def, if not found. Result is casted to T.
+    template <typename T>
+    T jGet(const json& j, const std::string& what, const T& def)
     {
-        if (!j.count(what))
+        try
+        {
+            if (!j.count(what))
+                return def;
+            return j[what].get<T>();
+        }
+        catch (...)
+        {
             return def;
-        return j[what].get<T>();
+        }
     }
-    catch (...)
-    {
-        return def;
-    }
-}
+};
 
-
-struct Volume
+struct Volume : public JsonConfigItem
 {
     Volume(uint16_t _percent = 100, bool _muted = false) : percent(_percent), muted(_muted)
     {
     }
 
-    void fromJson(const json& j)
+    void fromJson(const json& j) override
     {
         percent = jGet<uint16_t>(j, "percent", percent);
         muted = jGet<bool>(j, "muted", muted);
     }
 
-    json toJson()
+    json toJson() override
     {
         json j;
         j["percent"] = percent;
@@ -84,7 +93,7 @@ struct Volume
 
 
 
-struct Host
+struct Host : public JsonConfigItem
 {
     Host() : name(""), mac(""), os(""), arch(""), ip("")
     {
@@ -97,7 +106,7 @@ struct Host
         arch = getArch();
     }
 
-    void fromJson(const json& j)
+    void fromJson(const json& j) override
     {
         name = strutils::trim_copy(jGet<std::string>(j, "name", ""));
         mac = strutils::trim_copy(jGet<std::string>(j, "mac", ""));
@@ -106,7 +115,7 @@ struct Host
         ip = strutils::trim_copy(jGet<std::string>(j, "ip", ""));
     }
 
-    json toJson()
+    json toJson() override
     {
         json j;
         j["name"] = name;
@@ -125,13 +134,13 @@ struct Host
 };
 
 
-struct ClientConfig
+struct ClientConfig : public JsonConfigItem
 {
     ClientConfig() : name(""), volume(100), latency(0), instance(1)
     {
     }
 
-    void fromJson(const json& j)
+    void fromJson(const json& j) override
     {
         name = strutils::trim_copy(jGet<std::string>(j, "name", ""));
         volume.fromJson(j["volume"]);
@@ -139,7 +148,7 @@ struct ClientConfig
         instance = jGet<size_t>(j, "instance", 1);
     }
 
-    json toJson()
+    json toJson() override
     {
         json j;
         j["name"] = strutils::trim_copy(name);
@@ -157,7 +166,7 @@ struct ClientConfig
 
 
 
-struct Snapcast
+struct Snapcast : public JsonConfigItem
 {
     Snapcast(const std::string& _name = "", const std::string& _version = "") : name(_name), version(_version), protocolVersion(1)
     {
@@ -165,14 +174,14 @@ struct Snapcast
 
     virtual ~Snapcast() = default;
 
-    virtual void fromJson(const json& j)
+    void fromJson(const json& j) override
     {
         name = strutils::trim_copy(jGet<std::string>(j, "name", ""));
         version = strutils::trim_copy(jGet<std::string>(j, "version", ""));
         protocolVersion = jGet<int>(j, "protocolVersion", 1);
     }
 
-    virtual json toJson()
+    json toJson() override
     {
         json j;
         j["name"] = strutils::trim_copy(name);
@@ -218,7 +227,7 @@ struct Snapserver : public Snapcast
 };
 
 
-struct ClientInfo
+struct ClientInfo : public JsonConfigItem
 {
     ClientInfo(const std::string& _clientId = "") : id(_clientId), connected(false)
     {
@@ -226,7 +235,7 @@ struct ClientInfo
         lastSeen.tv_usec = 0;
     }
 
-    void fromJson(const json& j)
+    void fromJson(const json& j) override
     {
         host.fromJson(j["host"]);
         id = jGet<std::string>(j, "id", host.mac);
@@ -237,7 +246,7 @@ struct ClientInfo
         connected = jGet<bool>(j, "connected", true);
     }
 
-    json toJson()
+    json toJson() override
     {
         json j;
         j["id"] = id;
@@ -259,7 +268,7 @@ struct ClientInfo
 };
 
 
-struct Group
+struct Group : public JsonConfigItem
 {
     Group(const ClientInfoPtr client = nullptr) : muted(false)
     {
@@ -268,7 +277,7 @@ struct Group
         id = generateUUID();
     }
 
-    void fromJson(const json& j)
+    void fromJson(const json& j) override
     {
         name = strutils::trim_copy(jGet<std::string>(j, "name", ""));
         id = strutils::trim_copy(jGet<std::string>(j, "id", ""));
@@ -287,7 +296,7 @@ struct Group
         }
     }
 
-    json toJson()
+    json toJson() override
     {
         json j;
         j["name"] = strutils::trim_copy(name);
