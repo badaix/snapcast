@@ -75,7 +75,9 @@ jobs:
           mkdir -p build/doxygen
           doxygen 2>&1 | tee build/doxygen.log
           WARNINGS=$(cat build/doxygen.log | sort | uniq | grep -e ": warning: " | wc -l)
-          echo "Doxygen finished with $WARNINGS warnings"
+          MAX_ALLOWED=865
+          echo "Doxygen finished with $WARNINGS warnings, max allowed: $MAX_ALLOWED"
+          exit $($WARNINGS > $MAX_ALLOWED)
 
 
   unit-test:
