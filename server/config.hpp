@@ -46,8 +46,11 @@ struct JsonConfigItem
 {
     /// Read config item from json object @p j
     virtual void fromJson(const json& j) = 0;
-    /// @return config item serialized to json 
+    /// @return config item serialized to json
     virtual json toJson() = 0;
+
+    /// d'tor
+    virtual ~JsonConfigItem() = default;
 
 protected:
     /// @return value for key @p what or @p def, if not found. Result is casted to T.
