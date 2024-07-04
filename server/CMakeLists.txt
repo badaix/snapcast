@@ -2,6 +2,7 @@ set(SERVER_SOURCES
     authinfo.cpp
     config.cpp
     control_server.cpp
+    control_requests.cpp
     control_session_tcp.cpp
     control_session_http.cpp
     control_session_ws.cpp
