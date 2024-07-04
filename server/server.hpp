@@ -23,12 +23,14 @@
 #include "authinfo.hpp"
 #include "common/message/message.hpp"
 #include "common/queue.hpp"
+#include "control_requests.hpp"
 #include "control_server.hpp"
 #include "jsonrpcpp.hpp"
 #include "server_settings.hpp"
 #include "stream_server.hpp"
 #include "stream_session.hpp"
 #include "streamreader/stream_manager.hpp"
+
 
 // 3rd party headers
 #include <boost/asio/io_context.hpp>
@@ -38,9 +40,6 @@
 #include <memory>
 
 
-using namespace streamreader;
-
-using boost::asio::ip::tcp;
 using acceptor_ptr = std::unique_ptr<tcp::acceptor>;
 using session_ptr = std::shared_ptr<StreamSession>;
 
@@ -51,14 +50,13 @@ using session_ptr = std::shared_ptr<StreamSession>;
  */
 class Server : public StreamMessageReceiver, public ControlMessageReceiver, public PcmStream::Listener
 {
-public:
-    // TODO: revise handler names
-    /// Response handler for json control requests, returning a @p response and/or a @p notification broadcast
-    using OnResponse = std::function<void(jsonrpcpp::entity_ptr response, jsonrpcpp::notification_ptr notification)>;
+    friend class Request;
 
+public:
     /// c'tor
     Server(boost::asio::io_context& io_context, const ServerSettings& serverSettings);
-    virtual ~Server();
+    /// d'tor
+    virtual ~Server() = default;
 
     /// Start the server (control server, stream server and stream manager)
     void start();
@@ -86,7 +84,7 @@ private:
     void onResync(const PcmStream* pcmStream, double ms) override;
 
 private:
-    void processRequest(const jsonrpcpp::request_ptr request, AuthInfo& authinfo, const OnResponse& on_response) const;
+    void processRequest(const jsonrpcpp::request_ptr& request, AuthInfo& authinfo, const Request::OnResponse& on_response) const;
     /// Save the server state deferred to prevent blocking and lower disk io
     /// @param deferred the delay after the last call to saveConfig
     void saveConfig(const std::chrono::milliseconds& deferred = std::chrono::seconds(2));
@@ -99,4 +97,5 @@ private:
     std::unique_ptr<ControlServer> controlServer_;
     std::unique_ptr<StreamServer> streamServer_;
     std::unique_ptr<StreamManager> streamManager_;
+    ControlRequestFactory request_factory_;
 };
