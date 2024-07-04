@@ -48,7 +48,21 @@ TEST_CASE("String utils")
     using namespace utils::string;
     REQUIRE(ltrim_copy(" test") == "test");
 
-    auto strings = split("1*2", '*');
+    auto strings = split("", '*');
+    REQUIRE(strings.empty());
+
+    strings = split("*", '*');
+    REQUIRE(strings.size() == 2);
+    REQUIRE(strings[0] == "");
+    REQUIRE(strings[1] == "");
+
+    strings = split("**", '*');
+    REQUIRE(strings.size() == 3);
+    REQUIRE(strings[0] == "");
+    REQUIRE(strings[1] == "");
+    REQUIRE(strings[2] == "");
+
+    strings = split("1*2", '*');
     REQUIRE(strings.size() == 2);
     REQUIRE(strings[0] == "1");
     REQUIRE(strings[1] == "2");
@@ -66,10 +80,11 @@ TEST_CASE("String utils")
     REQUIRE(strings[2] == "2");
 
     strings = split("*1*2*", '*');
-    REQUIRE(strings.size() == 3);
+    REQUIRE(strings.size() == 4);
     REQUIRE(strings[0] == "");
     REQUIRE(strings[1] == "1");
     REQUIRE(strings[2] == "2");
+    REQUIRE(strings[3] == "");
 
     std::vector<std::string> vec{"1", "2", "3"};
     REQUIRE(container_to_string(vec) == "1, 2, 3");
