@@ -64,7 +64,7 @@ protected:
     /// @return the server's stream server
     const StreamServer& getStreamServer() const;
     /// @return the server's stream manager
-    const StreamManager& getStreamManager() const;
+    StreamManager& getStreamManager() const;
     /// @return server settings
     const ServerSettings& getSettings() const;
 
