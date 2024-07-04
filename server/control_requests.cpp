@@ -53,7 +53,7 @@ const StreamServer& Request::getStreamServer() const
     return *server_.streamServer_;
 }
 
-const StreamManager& Request::getStreamManager() const
+StreamManager& Request::getStreamManager() const
 {
     return *server_.streamManager_;
 }
