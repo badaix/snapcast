@@ -165,13 +165,13 @@ void StreamManager::removeStream(const std::string& name)
 }
 
 
-const std::vector<PcmStreamPtr>& StreamManager::getStreams()
+const std::vector<PcmStreamPtr>& StreamManager::getStreams() const
 {
     return streams_;
 }
 
 
-const PcmStreamPtr StreamManager::getDefaultStream()
+const PcmStreamPtr StreamManager::getDefaultStream() const
 {
     if (streams_.empty())
         return nullptr;
@@ -185,7 +185,7 @@ const PcmStreamPtr StreamManager::getDefaultStream()
 }
 
 
-const PcmStreamPtr StreamManager::getStream(const std::string& id)
+const PcmStreamPtr StreamManager::getStream(const std::string& id) const
 {
     for (auto stream : streams_)
     {
