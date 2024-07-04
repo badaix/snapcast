@@ -34,21 +34,37 @@
 namespace streamreader
 {
 
+/// Shared pointer to a stream object
 using PcmStreamPtr = std::shared_ptr<PcmStream>;
 
+/// Manage all available stream sources
 class StreamManager
 {
 public:
+    /// C'tor
     StreamManager(PcmStream::Listener* pcmListener, boost::asio::io_context& ioc, const ServerSettings& settings);
 
+    /// Construct and add a stream from @p uri
+    /// @return the created stream
     PcmStreamPtr addStream(const std::string& uri);
+    /// Construct and add a stream from @p streamUri
+    /// @return the created stream
     PcmStreamPtr addStream(StreamUri& streamUri);
+    /// Remove a stream by @p name
     void removeStream(const std::string& name);
+
+    /// Start all stream sources, i.e the streams sources will start reading their respective inputs
     void start();
+    /// Stop all stream sources
     void stop();
-    const std::vector<PcmStreamPtr>& getStreams();
-    const PcmStreamPtr getDefaultStream();
-    const PcmStreamPtr getStream(const std::string& id);
+
+    /// @return list of all available streams
+    const std::vector<PcmStreamPtr>& getStreams() const;
+    /// @return default stream for groups that don't have a stream source configured
+    const PcmStreamPtr getDefaultStream() const;
+    /// @return stream by id (id is an alias for name)
+    const PcmStreamPtr getStream(const std::string& id) const;
+    /// @return all streams with details as json
     json toJson() const;
 
 private:
