@@ -64,20 +64,25 @@
 #include "common/snap_exception.hpp"
 #include "time_provider.hpp"
 
+#include <boost/process.hpp>
+
 // standard headers
 #include <algorithm>
 #include <iostream>
 #include <memory>
 #include <string>
+#include <chrono>
 
 using namespace std;
 using namespace player;
+
+namespace bp = boost::process;
 
 static constexpr auto LOG_TAG = "Controller";
 static constexpr auto TIME_SYNC_INTERVAL = 1s;
 
 Controller::Controller(boost::asio::io_context& io_context, const ClientSettings& settings) //, std::unique_ptr<MetadataAdapter> meta)
-    : io_context_(io_context), timer_(io_context), settings_(settings), stream_(nullptr), decoder_(nullptr), player_(nullptr),
+    : io_context_(io_context), timer_(io_context), systemInfoTimer_(io_context), settings_(settings), stream_(nullptr), decoder_(nullptr), player_(nullptr),
       serverSettings_(nullptr) // meta_(std::move(meta)),
 {
 }
@@ -304,6 +309,90 @@ void Controller::sendTimeSyncMessage(int quick_syncs)
     });
 }
 
+void Controller::sendSystemInfoMessage()
+{
+    auto data = getSystemInfo();
+    if (data != nullptr)
+    {
+        auto sysInfo = std::make_shared<msg::ClientSystemInfo>();
+        sysInfo->msg = data;
+
+        LOG(TRACE, LOG_TAG) << "Sending system info: " << sysInfo->msg.dump() << "\n";
+        clientConnection_->send(sysInfo,
+                                [this](const boost::system::error_code& ec)
+                                {
+            if (ec)
+            {
+                LOG(ERROR, LOG_TAG) << "Failed to send client system info, error: " << ec.message() << "\n";
+                reconnect();
+                return;
+            }
+        });
+    }
+    auto interval = std::chrono::seconds(settings_.systemInfo.interval_secs);
+    systemInfoTimer_.expires_after(interval);
+    systemInfoTimer_.async_wait(
+        [this](const boost::system::error_code& ec)
+        {
+        if (!ec)
+        {
+            sendSystemInfoMessage();
+        }
+    });
+}
+
+json Controller::getSystemInfo()
+{
+
+    if (settings_.systemInfo.mode == ClientSettings::SystemInfo::Mode::script)
+    {
+        try
+        {
+            bp::ipstream istream;
+            auto ret = bp::system(settings_.systemInfo.path, bp::std_out > istream);
+            if (ret != 0)
+            {
+                LOG(ERROR, LOG_TAG)
+                    << "System info process returned with exit code "
+                    << ret  << std::endl;
+                return nullptr;
+            }
+            return json::parse(istream);
+        }
+        catch (const std::exception& e)
+        {
+            LOG(ERROR, LOG_TAG)
+                << "Unable to read system info from process ("
+                << settings_.systemInfo.path
+                << "): "
+                << e.what() << std::endl;
+            return nullptr;
+        }
+    }
+
+    if (settings_.systemInfo.mode == ClientSettings::SystemInfo::Mode::file)
+    {
+        try
+        {
+            ifstream fJson(settings_.systemInfo.path);
+            stringstream buffer;
+            buffer << fJson.rdbuf();
+            return json::parse(buffer.str());
+        }
+        catch (const std::exception& e)
+        {
+            LOG(ERROR, LOG_TAG)
+                << "Unable to read system info file ("
+                << settings_.systemInfo.path
+                << "): "
+                << e.what() << std::endl;
+            return nullptr;
+        }
+    }
+
+    return nullptr;
+}
+
 void Controller::browseMdns(const MdnsHandler& handler)
 {
 #if defined(HAS_AVAHI) || defined(HAS_BONJOUR)
@@ -382,6 +471,7 @@ void Controller::start()
 void Controller::reconnect()
 {
     timer_.cancel();
+    systemInfoTimer_.cancel();
     clientConnection_->disconnect();
     player_.reset();
     stream_.reset();
@@ -431,6 +521,11 @@ void Controller::worker()
 
             // Do initial time sync with the server
             sendTimeSyncMessage(50);
+            // start system info updates, if configured
+            if (settings_.systemInfo.mode != ClientSettings::SystemInfo::Mode::none)
+            {
+                sendSystemInfoMessage();
+            }
             // Start receiver loop
             getNextMessage();
         }
