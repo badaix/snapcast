@@ -235,6 +235,10 @@ struct ClientInfo
         lastSeen.tv_sec = jGet<int32_t>(j["lastSeen"], "sec", 0);
         lastSeen.tv_usec = jGet<int32_t>(j["lastSeen"], "usec", 0);
         connected = jGet<bool>(j, "connected", true);
+        if (j.contains("systemInfo"))
+        {
+            systemInfo = j["systemInfo"].template get<json>();
+        }
     }
 
     json toJson()
@@ -247,6 +251,7 @@ struct ClientInfo
         j["lastSeen"]["sec"] = lastSeen.tv_sec;
         j["lastSeen"]["usec"] = lastSeen.tv_usec;
         j["connected"] = connected;
+        j["systemInfo"] = systemInfo;
         return j;
     }
 
@@ -256,6 +261,7 @@ struct ClientInfo
     ClientConfig config;
     timeval lastSeen;
     bool connected;
+    json systemInfo;
 };
 
 

@@ -63,9 +63,10 @@ enum class message_type : uint16_t
     kHello = 5,
     // kStreamTags = 6,
     kClientInfo = 7,
+    kClientSystemInfo = 8,
 
     kFirst = kBase,
-    kLast = kClientInfo
+    kLast = kClientSystemInfo
 };
 
 static std::ostream& operator<<(std::ostream& os, const message_type& msg_type)
@@ -92,6 +93,9 @@ static std::ostream& operator<<(std::ostream& os, const message_type& msg_type)
             break;
         case message_type::kClientInfo:
             os << "ClientInfo";
+            break;
+        case message_type::kClientSystemInfo:
+            os << "ClientSystemInfo";
             break;
         default:
             os << "Unknown";

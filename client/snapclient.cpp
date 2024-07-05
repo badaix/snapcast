@@ -179,6 +179,10 @@ int main(int argc, char** argv)
 #endif
         mixer_mode = op.add<Value<string>>("", "mixer", mixers + "|none|?[:<options>]", "software");
 
+        // system info
+        auto sysInfo = op.add<Value<string>>("", "sysinfo", "source for JSON-formatted system infomation [file:<filename>,script:<executable>]", "none");
+        op.add<Value<int>>("", "sysinfo-interval", "interval in seconds between system info updates", 10, &settings.systemInfo.interval_secs);
+
 // daemon settings
 #ifdef HAS_DAEMON
         int processPriority(-3);
@@ -426,6 +430,22 @@ int main(int argc, char** argv)
         }
         else
             throw SnapException("Mixer mode not supported: " + mode);
+
+        string sysInfoMode = utils::string::split_left(sysInfo->value(), ':', settings.systemInfo.path);
+        if (sysInfoMode == "none")
+            settings.systemInfo.mode = ClientSettings::SystemInfo::Mode::none;
+        else if (sysInfoMode == "file")
+            settings.systemInfo.mode = ClientSettings::SystemInfo::Mode::file;
+        else if (sysInfoMode == "script")
+            settings.systemInfo.mode = ClientSettings::SystemInfo::Mode::script;
+        else
+            throw SnapException("System info mode not supported: " + sysInfoMode);
+
+        if (settings.systemInfo.interval_secs < 1)
+        {
+            LOG(ERROR, LOG_TAG) << "System info interval too low, setting to default value (10 seconds)\n";
+            settings.systemInfo.interval_secs = 10;
+        }
 
         boost::asio::io_context io_context;
         // Construct a signal set registered for process termination.
