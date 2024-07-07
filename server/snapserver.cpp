@@ -87,6 +87,7 @@ int main(int argc, char* argv[])
                                                             settings.http.bind_to_address.front(), &settings.http.bind_to_address[0]);
         conf.add<Implicit<string>>("", "http.doc_root", "serve a website from the doc_root location", settings.http.doc_root, &settings.http.doc_root);
         conf.add<Value<string>>("", "http.host", "Hostname or IP under which clients can reach this host", settings.http.host, &settings.http.host);
+        conf.add<Value<string>>("", "http.url_prefix", "URL prefix for generating album art URLs", settings.http.url_prefix, &settings.http.url_prefix);
 
         // TCP RPC settings
         conf.add<Value<bool>>("", "tcp.enabled", "enable TCP Json RPC)", settings.tcp.enabled, &settings.tcp.enabled);
