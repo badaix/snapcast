@@ -73,6 +73,7 @@ struct ServerSettings
         std::vector<std::string> ssl_bind_to_address{{"0.0.0.0"}};
         std::string doc_root{""};
         std::string host{"<hostname>"};
+        std::string url_prefix{""};
     };
 
     struct Tcp
