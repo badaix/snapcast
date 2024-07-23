@@ -541,7 +541,11 @@ void PcmStream::setProperties(const Properties& properties)
         auto md5 = ImageCache::instance().setImage(getName(), std::move(data), props.metadata->art_data->extension);
 
         std::stringstream url;
-        url << "http://" << server_settings_.http.host << ":" << server_settings_.http.port << "/__image_cache?name=" << md5;
+        if (server_settings_.http.url_prefix == "") {
+            url << "http://" << server_settings_.http.host << ":" << server_settings_.http.port << "/__image_cache?name=" << md5;
+        } else {
+            url << server_settings_.http.url_prefix << "/__image_cache?name=" << md5;
+        }
         props.metadata->art_url = url.str();
     }
     else if (!props.metadata.has_value() || !props.metadata->art_data.has_value())
