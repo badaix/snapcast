@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2021  Johannes Pohl
+    Copyright (C) 2014-2024  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -16,22 +16,28 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
-#define CATCH_CONFIG_MAIN
-
 // prototype/interface header file
-#include "catch.hpp"
 
 // local headers
 #include "common/aixlog.hpp"
+#include "common/base64.h"
+#include "common/error_code.hpp"
+#include "common/jwt.hpp"
 #include "common/utils/string_utils.hpp"
+#include "server/authinfo.hpp"
+#include "server/server_settings.hpp"
 #include "server/streamreader/control_error.hpp"
 #include "server/streamreader/properties.hpp"
 #include "server/streamreader/stream_uri.hpp"
 
 // 3rd party headers
+#include <catch2/catch_test_macros.hpp>
 
 // standard headers
+#include <chrono>
 #include <regex>
+#include <system_error>
+#include <vector>
 
 
 using namespace std;
@@ -41,12 +47,183 @@ TEST_CASE("String utils")
 {
     using namespace utils::string;
     REQUIRE(ltrim_copy(" test") == "test");
+
+    auto strings = split("", '*');
+    REQUIRE(strings.empty());
+
+    strings = split("*", '*');
+    REQUIRE(strings.size() == 2);
+    REQUIRE(strings[0] == "");
+    REQUIRE(strings[1] == "");
+
+    strings = split("**", '*');
+    REQUIRE(strings.size() == 3);
+    REQUIRE(strings[0] == "");
+    REQUIRE(strings[1] == "");
+    REQUIRE(strings[2] == "");
+
+    strings = split("1*2", '*');
+    REQUIRE(strings.size() == 2);
+    REQUIRE(strings[0] == "1");
+    REQUIRE(strings[1] == "2");
+
+    strings = split("1**2", '*');
+    REQUIRE(strings.size() == 3);
+    REQUIRE(strings[0] == "1");
+    REQUIRE(strings[1] == "");
+    REQUIRE(strings[2] == "2");
+
+    strings = split("*1*2", '*');
+    REQUIRE(strings.size() == 3);
+    REQUIRE(strings[0] == "");
+    REQUIRE(strings[1] == "1");
+    REQUIRE(strings[2] == "2");
+
+    strings = split("*1*2*", '*');
+    REQUIRE(strings.size() == 4);
+    REQUIRE(strings[0] == "");
+    REQUIRE(strings[1] == "1");
+    REQUIRE(strings[2] == "2");
+    REQUIRE(strings[3] == "");
+
+    std::vector<std::string> vec{"1", "2", "3"};
+    REQUIRE(container_to_string(vec) == "1, 2, 3");
+}
+
+
+TEST_CASE("JWT")
+{
+#if 0
+    /// ECDSA
+    {
+        const auto* key = "-----BEGIN EC PRIVATE KEY-----\n"
+                          "MIHcAgEBBEIAarXYdFyTZIM2NGgbjPj8UBlBRYjDKrEfHIDuP1sYGLCJDqqx/GxH\n"
+                          "DpP8mmpTL2dII8cZSbW7zqRv43ZcwK2dq3OgBwYFK4EEACOhgYkDgYYABADPIxdE\n"
+                          "ubzaxsCtZAhbRnG3SJMZoD/0+sFO+r/5m9o4PPAz7cBnSEG3hBThsa+uBE+rfeah\n"
+                          "RagSvgYzRyn85/N0YQBsE6V3htaOBrmoW4PBo/Lg0GwXe5qz7Fp98DuwpDC3OtXa\n"
+                          "43Mgl0rbcwtQ6e0xcAxkLJ0tDfpomiM9Lj5gM+WT1g==\n"
+                          "-----END EC PRIVATE KEY-----\n";
+
+        const auto* cert = "-----BEGIN CERTIFICATE-----\n"
+                           "MIICVjCCAbigAwIBAgIUBrGbikLGcul0Cia5tBCsPDm7/P4wCgYIKoZIzj0EAwIw\n"
+                           "PTELMAkGA1UEBhMCREUxDDAKBgNVBAgMA05SVzEPMA0GA1UEBwwGQWFjaGVuMQ8w\n"
+                           "DQYDVQQKDAZCYWRBaXgwHhcNMjQwNjAzMTk0NzEzWhcNMjUwNjAzMTk0NzEzWjA9\n"
+                           "MQswCQYDVQQGEwJERTEMMAoGA1UECAwDTlJXMQ8wDQYDVQQHDAZBYWNoZW4xDzAN\n"
+                           "BgNVBAoMBkJhZEFpeDCBmzAQBgcqhkjOPQIBBgUrgQQAIwOBhgAEAM8jF0S5vNrG\n"
+                           "wK1kCFtGcbdIkxmgP/T6wU76v/mb2jg88DPtwGdIQbeEFOGxr64ET6t95qFFqBK+\n"
+                           "BjNHKfzn83RhAGwTpXeG1o4Guahbg8Gj8uDQbBd7mrPsWn3wO7CkMLc61drjcyCX\n"
+                           "SttzC1Dp7TFwDGQsnS0N+miaIz0uPmAz5ZPWo1MwUTAdBgNVHQ4EFgQUy+1q8Nh5\n"
+                           "qbrckn9hdMT7WXhha2gwHwYDVR0jBBgwFoAUy+1q8Nh5qbrckn9hdMT7WXhha2gw\n"
+                           "DwYDVR0TAQH/BAUwAwEB/zAKBggqhkjOPQQDAgOBiwAwgYcCQgCYarPzdeupTvEs\n"
+                           "CC5OlWj9pzUJDY4R0kaEe94g+KwTsgyaY1OzhHKwmu4E2ggrU0BN/HTpRYrYhtFz\n"
+                           "HnDpYIN5XAJBK9fgry78uAiN4RZHPfWBKJ/NMcCZO/dXLbxoFlh2+6FXD/TmABHW\n"
+                           "XsA/SmQzK2kJOKkBu9jBwNPiFZUQrJJ5msE=\n"
+                           "-----END CERTIFICATE-----\n";
+
+        Jwt jwt;
+        jwt.setIat(std::chrono::seconds(1516239022));
+        jwt.setSub("Badaix");
+        std::optional<std::string> token = jwt.getToken(key);
+        REQUIRE(token.has_value());
+        LOG(INFO, "TEST") << "Token: " << *token << "\n";
+        REQUIRE(token.value() == "eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE1MTYyMzkwMjIsInN1YiI6IkJhZGFpeCJ9.MIGHAkEDxp53c--"
+                                 "MwMQAiTR5pnXlCunmqruZ8U6owKIfm06zgcAVswmTAhXFMIF28X9Yu2_F0o2LjgSWfBP9NEKg6BXy-gJCAevKxaKwxv1bbPOf7kGOeBzESuq8h_"
+                                 "pCJwGEA1WW9tflQgpsU52oBmIA-6fAHvl_EVPh4KIXoTQ71BRfacDMDzG2AA");
+
+        REQUIRE(jwt.parse(token.value(), cert));
+        REQUIRE(jwt.getSub().has_value());
+        REQUIRE(jwt.getSub().value() == "Badaix");
+        REQUIRE(jwt.getIat().has_value());
+        REQUIRE(jwt.getIat().value() == std::chrono::seconds(1516239022));
+        REQUIRE(!jwt.getExp().has_value());
+    }
+#endif
+
+    /// RSA keys
+    {
+        AixLog::Log::init<AixLog::SinkCout>(AixLog::Severity::debug);
+        const auto* key = "-----BEGIN PRIVATE KEY-----\n"
+                          "MIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQCwFxHHKvV6THj1\n"
+                          "VjvZQJIW+OjIKF9MPfIN8wJTXn+4EkBJCoBy0NfKHG+FCb90YCPzvLrjL8jKcfhT\n"
+                          "/jpaStrYYjABXA1sJS9P+9cwiV9RwTxTrfOiss8F7eZdyZI9UogrPmQa7YbevmwB\n"
+                          "XeXIqKzdWQbtQsOJQgoL3vIR7qjUpVQrXPwAYQ6pc7AxS5RHFy8V2Y3sh/+i0aS9\n"
+                          "bH/276OAKZNwVIfUIcSVVbBAPvrheR2ezUVoKSumUzek/2uq3cLb5YNF4XSe1Ikv\n"
+                          "16lRSGTIQ2KflSYn3mJldFjEKL3sgADTmMhKes+TVveNr7eCvynyDCtHdiLanOKY\n"
+                          "PyyOXFTdAgMBAAECggEAAjunU6UBZsBhrUzKEVZ5XnYKxP+xZlmyat0Iy8QFmcY4\n"
+                          "z076iNo0o6u/efVWb/RIfcQILlmHXJKG7BEWg4Qc/oRPkwjW47xHULvtw0AOt85G\n"
+                          "mfy5UPgfBMvQRs1c/87piqYt0KNFTqhQCCa9GKcTmsf7p5ZtPTLw8Sxt2e6H8LsK\n"
+                          "60Jzc2Yw2t3unEb1NnjsTgshjPwFcdrppyRAa2B0Wk3f4ADA1i4vDmTt2+jTq/Hp\n"
+                          "yFWup58Djs+lyn4RLnp7jFD2KS/q+qVQsTfGcPeXLMIWHHQDwfjfkzdA74zNi+Pn\n"
+                          "C4e/iXIsC7VH4BJ8qrVH20WqTXRyuZ1uEF+32XbcSQKBgQDAtBXbnuGhu2llnfP2\n"
+                          "dxJ5qtRjxTHedZs9UMEuy5pkLMi4JsIdjf072lqizpG7DE9kfiERwXJ/Spe4OMMh\n"
+                          "MvWBpnJieTHnouAMpDVootVbSCpikOSGzClHZwpl6KU7pv9Q+Hv2xkSnTJLsakSt\n"
+                          "qlOsG6cwK56kXiwYG0RsAn6lhQKBgQDp7gNE4J6wf9SZHErpyh+65VqqcF5+chNq\n"
+                          "DTwFlb7U31WcDOA3hUHaQfrlwfblMAgnlVMofopdP4KIIgSWE31cCziBp8ZRy/25\n"
+                          "2/aNkDoPEN59Ibk1RWLYsCzcQIAQrTjvfDMn3An1E9B3qYFzfdLKZItb8p3cxpO/\n"
+                          "sMUwQRqFeQKBgDb7av0lwQUPXwwiXDhnUvsp9b2dxxPNBIUjJGuApkWMzZxVWq9q\n"
+                          "EuXf8FphjA0Nfx2SK0dQpaWSF+X1NB+l1YyvfBWCtO19eGXC+IYpZ6zK02UaKEoZ\n"
+                          "uHFqAfp/vZ1ekZx9uYj4myAM5iLUU1Iltgf2P+arm3EUeYpLRWN39sCtAoGBALZ0\n"
+                          "egBC4gLv8TXqp1Np3w26zdiaBFnDR/kzkVkZztnhx7gLIuaq/Q3q4HJLsvJXYETf\n"
+                          "ZxjyeaD5ZCohvkn/sYsVBWG7JieuX5uTQN5xW5dcpOwcXYR7Nfmkj5jKhhh7wyin\n"
+                          "So8QRIPujG6IuvsFbF+HxFpXBWGpUJv2mBZm8PShAoGBALU/KNl1El0HpxTr3wgj\n"
+                          "YY6eU3snn0Oa5Ci3k/FMWd1QTtVsf4Mym0demxshdC75L+qzCS0m5jAo9tm0keY9\n"
+                          "A4F3VRlsuUyuAja+qDU2xMo3jnFKOIyMfN4mVSiFkqnq3eQ4xHgViyIEyr+8AbA4\n"
+                          "ajjiCZsv+OITxQ+TTHeGDsdD\n"
+                          "-----END PRIVATE KEY-----\n";
+
+        const auto* cert = "-----BEGIN CERTIFICATE-----\n"
+                           "MIIE3TCCAsWgAwIBAgIUW+CDwjHiUAMf5yeFct8FatvUWhYwDQYJKoZIhvcNAQEL\n"
+                           "BQAwVDELMAkGA1UEBhMCREUxDDAKBgNVBAgMA05SVzEPMA0GA1UEBwwGQWFjaGVu\n"
+                           "MQ8wDQYDVQQKDAZCYWRhaXgxFTATBgNVBAMMDGxhcHRvcC5sb2NhbDAeFw0yNDA1\n"
+                           "MTAxNTA2NDdaFw0yNTA5MjIxNTA2NDdaMFQxCzAJBgNVBAYTAkRFMQwwCgYDVQQI\n"
+                           "DANOUlcxDzANBgNVBAcMBkFhY2hlbjEPMA0GA1UECgwGQmFkYWl4MRUwEwYDVQQD\n"
+                           "DAxsYXB0b3AubG9jYWwwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQCw\n"
+                           "FxHHKvV6THj1VjvZQJIW+OjIKF9MPfIN8wJTXn+4EkBJCoBy0NfKHG+FCb90YCPz\n"
+                           "vLrjL8jKcfhT/jpaStrYYjABXA1sJS9P+9cwiV9RwTxTrfOiss8F7eZdyZI9Uogr\n"
+                           "PmQa7YbevmwBXeXIqKzdWQbtQsOJQgoL3vIR7qjUpVQrXPwAYQ6pc7AxS5RHFy8V\n"
+                           "2Y3sh/+i0aS9bH/276OAKZNwVIfUIcSVVbBAPvrheR2ezUVoKSumUzek/2uq3cLb\n"
+                           "5YNF4XSe1Ikv16lRSGTIQ2KflSYn3mJldFjEKL3sgADTmMhKes+TVveNr7eCvyny\n"
+                           "DCtHdiLanOKYPyyOXFTdAgMBAAGjgaYwgaMwHwYDVR0jBBgwFoAUG790F3RT+ckl\n"
+                           "UB16DIH7Hs5D0fYwCQYDVR0TBAIwADALBgNVHQ8EBAMCBPAwSQYDVR0RBEIwQIIM\n"
+                           "bGFwdG9wLmxvY2FsggwxOTIuMTY4LjAuMzmCCTEyNy4wLjAuMYIKcnBpNS5sb2Nh\n"
+                           "bIILMTkyLjE2OC4wLjMwHQYDVR0OBBYEFNxTG9vR5KC+XgGVsRb76DA7EKbiMA0G\n"
+                           "CSqGSIb3DQEBCwUAA4ICAQA9cTmiDYiQKz/0BUMYA3xfy48ajS5F3PVOGRQsoOyO\n"
+                           "gRcut5mxH9xzhJc2rbwRKyuZBZV8EuEDImxNf41L72nUUyrfOfC2AV92IeXMGVzg\n"
+                           "Qvw8ypXTI3wRFFeWmjyuFK42wcVXlZd8Rx6hWz7BVDR9fBVSHV3I2Iyv98RVukwv\n"
+                           "X2hnZu+6Bn8fJ890YMmpX1sAfgcSFY863zNyj3n3/tjoMYHSYwWMC5cEa6BotSjH\n"
+                           "dAkjoIQwWwUAJWxzwOJwSolj81oM/7BcZ8UmHhGWuVYmxr/NfSfe7pFb0H6Fkktb\n"
+                           "S+8qUjhIm8YsrC2qO6DCCiOWqSwxoyjmX1tap0IyciSfRyyFlgSBs4v8/Y33wIlW\n"
+                           "ktH0A4i9CZPlOGTy8hDGhwAxGY8unfuDSoAUr4RQpoJDGSIEeyUpWbfUVxdXhSI9\n"
+                           "FgkhWQq28cauJPRcbNILCmz+iUh2DlehlBW4lc6PwcBF5PRknAT+81lRRWPnw1nV\n"
+                           "Qmg7wFnm+G1K6Ip2yz69hvywQddkZ3nTFcIxDfXWpD+8w+RdITI0Q9jNeKAuHRIq\n"
+                           "eHg9/cG/dph/CE/W/mN1sjO5E+oj8wbguBmBe+r6Ga/nQUwSYAGsvr5JlmDFDwqR\n"
+                           "Q3Q4ZajYb45p1McbRnN1ImovW9o6GOS3JUZcMBBLyZH0fmbikUb80bj++artyfAD\n"
+                           "Iw==\n"
+                           "-----END CERTIFICATE-----\n";
+
+        Jwt jwt;
+        jwt.setIat(std::chrono::system_clock::from_time_t(1516239022));
+        jwt.setSub("Badaix");
+        std::optional<std::string> token = jwt.getToken(key);
+        REQUIRE(token.has_value());
+        REQUIRE(token.value() ==
+                "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE1MTYyMzkwMjIsInN1YiI6IkJhZGFpeCJ9.LtKDGnT2OSgvWLECReajyMmUv7ApJeRu83MZhDM7d_"
+                "1t1zy2Z08BQZEEB58WzR1vZAtRGHDVrYytJaVCPzibQN4eZ1F4m0gDk83hxQPTAKsbwjtzi7pUJzvaBa1ni4ysc9POtoi_M1OtNk5xxziyk5VP1Ph-"
+                "TQbm9BCPfpA8bSUCx0LFrm5gyCD3irkww_W3RwDc2ghrjDCRNCyu4R9__lrCRGdx3Z8i0YMB_obuShcYzJXFSxG8adTSs3PQ_R4NXR94-vydVrvBxqe79apocFVrs_"
+                "c9Ub8TIFynzqp9L_s206nb2N3C1WfUkKeQ1E7gAgVq8b4SM0OZsmkERQ0P0w");
+
+        REQUIRE(jwt.parse(token.value(), cert));
+        REQUIRE(jwt.getSub().has_value());
+        REQUIRE(jwt.getSub().value() == "Badaix");
+        REQUIRE(jwt.getIat().has_value());
+        REQUIRE(jwt.getIat().value() == std::chrono::system_clock::from_time_t(1516239022));
+        REQUIRE(!jwt.getExp().has_value());
+    }
 }
 
 
 TEST_CASE("Uri")
 {
-    AixLog::Log::init<AixLog::SinkCout>(AixLog::Severity::debug);
     using namespace streamreader;
     StreamUri uri("pipe:///tmp/snapfifo?name=default&codec=flac");
     REQUIRE(uri.scheme == "pipe");
@@ -444,4 +621,110 @@ TEST_CASE("Error")
     ec = make_error_code(ControlErrc::can_not_control);
     REQUIRE(ec.category() == snapcast::error::control::category());
     std::cout << "Category: " << ec.category().name() << ", " << ec.message() << std::endl;
+
+    snapcast::ErrorCode error_code{};
+    REQUIRE(!error_code);
+}
+
+
+
+TEST_CASE("ErrorOr")
+{
+    {
+        snapcast::ErrorOr<std::string> error_or("test");
+        REQUIRE(error_or.hasValue());
+        REQUIRE(!error_or.hasError());
+        // Get value by reference
+        REQUIRE(error_or.getValue() == "test");
+        // Move value out
+        REQUIRE(error_or.takeValue() == "test");
+        // Value has been moved out, get will return an empty string
+        REQUIRE(error_or.getValue() == "");
+    }
+
+    {
+        snapcast::ErrorOr<std::string> error_or(make_error_code(ControlErrc::can_not_control));
+        REQUIRE(error_or.hasError());
+        REQUIRE(!error_or.hasValue());
+        // Get error by reference
+        REQUIRE(error_or.getError() == make_error_code(ControlErrc::can_not_control));
+        // Get error by reference
+        REQUIRE(error_or.getError() == ControlErrc::can_not_control);
+        // Get error by reference
+        REQUIRE(error_or.getError() != ControlErrc::parse_error);
+        // Get error by reference
+        REQUIRE(error_or.getError() == snapcast::ErrorCode(ControlErrc::can_not_control));
+        // Move error out
+        REQUIRE(error_or.takeError() == snapcast::ErrorCode(ControlErrc::can_not_control));
+        // Error is moved out, will return something else
+        // REQUIRE(error_or.getError() != snapcast::ErrorCode(ControlErrc::can_not_control));
+    }
+}
+
+
+TEST_CASE("WildcardMatch")
+{
+    using namespace utils::string;
+    REQUIRE(wildcardMatch("*", "Server.getToken"));
+    REQUIRE(wildcardMatch("Server.*", "Server.getToken"));
+    REQUIRE(wildcardMatch("Server.getToken", "Server.getToken"));
+    REQUIRE(wildcardMatch("*.getToken", "Server.getToken"));
+    REQUIRE(wildcardMatch("*.get*", "Server.getToken"));
+    REQUIRE(wildcardMatch("**.get*", "Server.getToken"));
+    REQUIRE(wildcardMatch("*.get**", "Server.getToken"));
+    REQUIRE(wildcardMatch("*.ge**t*", "Server.getToken"));
+
+    REQUIRE(!wildcardMatch("*.set*", "Server.getToken"));
+    REQUIRE(!wildcardMatch(".*", "Server.getToken"));
+    REQUIRE(!wildcardMatch("*.get", "Server.getToken"));
+    REQUIRE(wildcardMatch("*erver*get*", "Server.getToken"));
+    REQUIRE(!wildcardMatch("*get*erver*", "Server.getToken"));
+}
+
+
+TEST_CASE("Auth")
+{
+    {
+        ServerSettings settings;
+        ServerSettings::User user("badaix:*:secret");
+        REQUIRE(user.permissions.size() == 1);
+        REQUIRE(user.permissions[0] == "*");
+        settings.users.push_back(user);
+
+        AuthInfo auth(settings);
+        auto ec = auth.authenticateBasic(base64_encode("badaix:secret"));
+        REQUIRE(!ec);
+        REQUIRE(auth.hasAuthInfo());
+        REQUIRE(auth.hasPermission("stream"));
+    }
+
+    {
+        ServerSettings settings;
+        ServerSettings::User user("badaix::secret");
+        REQUIRE(user.permissions.empty());
+        settings.users.push_back(user);
+
+        AuthInfo auth(settings);
+        auto ec = auth.authenticateBasic(base64_encode("badaix:secret"));
+        REQUIRE(!ec);
+        REQUIRE(auth.hasAuthInfo());
+        REQUIRE(!auth.hasPermission("stream"));
+    }
+
+    {
+        ServerSettings settings;
+        ServerSettings::User user("badaix:*:secret");
+        settings.users.push_back(user);
+
+        AuthInfo auth(settings);
+        auto ec = auth.authenticateBasic(base64_encode("badaix:wrong_password"));
+        REQUIRE(ec == AuthErrc::wrong_password);
+        REQUIRE(!auth.hasAuthInfo());
+        REQUIRE(!auth.hasPermission("stream"));
+
+        ec = auth.authenticateBasic(base64_encode("unknown_user:secret"));
+        REQUIRE(ec == AuthErrc::unknown_user);
+        REQUIRE(!auth.hasAuthInfo());
+        REQUIRE(!auth.hasPermission("stream"));
+    }
 }

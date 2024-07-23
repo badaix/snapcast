@@ -61,7 +61,7 @@ public:
     using OnResponse = std::function<void(const jsonrpcpp::Response& response)>;
     using OnLog = std::function<void(std::string message)>;
 
-    StreamControl(const boost::asio::any_io_executor& executor);
+    explicit StreamControl(const boost::asio::any_io_executor& executor);
     virtual ~StreamControl() = default;
 
     void start(const std::string& stream_id, const ServerSettings& server_setttings, const OnNotification& notification_handler,

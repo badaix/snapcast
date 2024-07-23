@@ -20,14 +20,17 @@
 
 
 // local headers
+#include "authinfo.hpp"
 #include "common/message/message.hpp"
 #include "common/queue.hpp"
+#include "control_requests.hpp"
 #include "control_server.hpp"
 #include "jsonrpcpp.hpp"
 #include "server_settings.hpp"
 #include "stream_server.hpp"
 #include "stream_session.hpp"
 #include "streamreader/stream_manager.hpp"
+
 
 // 3rd party headers
 #include <boost/asio/io_context.hpp>
@@ -37,9 +40,6 @@
 #include <memory>
 
 
-using namespace streamreader;
-
-using boost::asio::ip::tcp;
 using acceptor_ptr = std::unique_ptr<tcp::acceptor>;
 using session_ptr = std::shared_ptr<StreamSession>;
 
@@ -50,14 +50,17 @@ using session_ptr = std::shared_ptr<StreamSession>;
  */
 class Server : public StreamMessageReceiver, public ControlMessageReceiver, public PcmStream::Listener
 {
+    friend class Request;
+
 public:
-    // TODO: revise handler names
-    using OnResponse = std::function<void(jsonrpcpp::entity_ptr response, jsonrpcpp::notification_ptr notification)>;
-
+    /// c'tor
     Server(boost::asio::io_context& io_context, const ServerSettings& serverSettings);
-    virtual ~Server();
+    /// d'tor
+    virtual ~Server() = default;
 
+    /// Start the server (control server, stream server and stream manager)
     void start();
+    /// Stop the server (control server, stream server and stream manager)
     void stop();
 
 private:
@@ -66,7 +69,7 @@ private:
     void onDisconnect(StreamSession* streamSession) override;
 
     /// Implementation of ControllMessageReceiver
-    void onMessageReceived(std::shared_ptr<ControlSession> controlSession, const std::string& message, const ResponseHander& response_handler) override;
+    void onMessageReceived(std::shared_ptr<ControlSession> controlSession, const std::string& message, const ResponseHandler& response_handler) override;
     void onNewSession(std::shared_ptr<ControlSession> session) override
     {
         std::ignore = session;
@@ -81,7 +84,7 @@ private:
     void onResync(const PcmStream* pcmStream, double ms) override;
 
 private:
-    void processRequest(const jsonrpcpp::request_ptr request, const OnResponse& on_response) const;
+    void processRequest(const jsonrpcpp::request_ptr& request, AuthInfo& authinfo, const Request::OnResponse& on_response) const;
     /// Save the server state deferred to prevent blocking and lower disk io
     /// @param deferred the delay after the last call to saveConfig
     void saveConfig(const std::chrono::milliseconds& deferred = std::chrono::seconds(2));
@@ -94,4 +97,5 @@ private:
     std::unique_ptr<ControlServer> controlServer_;
     std::unique_ptr<StreamServer> streamServer_;
     std::unique_ptr<StreamManager> streamManager_;
+    ControlRequestFactory request_factory_;
 };

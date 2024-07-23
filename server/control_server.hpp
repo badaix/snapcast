@@ -25,6 +25,7 @@
 // 3rd party headers
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/ip/tcp.hpp>
+#include <boost/asio/ssl.hpp>
 
 // standard headers
 #include <memory>
@@ -42,11 +43,14 @@ using acceptor_ptr = std::unique_ptr<tcp::acceptor>;
 class ControlServer : public ControlMessageReceiver
 {
 public:
-    ControlServer(boost::asio::io_context& io_context, const ServerSettings::Tcp& tcp_settings, const ServerSettings::Http& http_settings,
-                  ControlMessageReceiver* controlMessageReceiver = nullptr);
+    /// c'tor
+    ControlServer(boost::asio::io_context& io_context, const ServerSettings& settings, ControlMessageReceiver* controlMessageReceiver = nullptr);
+    /// d'tor
     virtual ~ControlServer();
 
+    /// Start accepting control connections
     void start();
+    /// Stop accepting connections and stop all running sessions
     void stop();
 
     /// Send a message to all connected clients
@@ -55,23 +59,20 @@ public:
 private:
     void startAccept();
 
-    template <typename SessionType, typename... Args>
-    void handleAccept(tcp::socket socket, Args&&... args);
     void cleanup();
 
     /// Implementation of ControlMessageReceiver
-    void onMessageReceived(std::shared_ptr<ControlSession> session, const std::string& message, const ResponseHander& response_handler) override;
+    void onMessageReceived(std::shared_ptr<ControlSession> session, const std::string& message, const ResponseHandler& response_handler) override;
     void onNewSession(std::shared_ptr<ControlSession> session) override;
     void onNewSession(std::shared_ptr<StreamSession> session) override;
 
     mutable std::recursive_mutex session_mutex_;
     std::vector<std::weak_ptr<ControlSession>> sessions_;
 
-    std::vector<acceptor_ptr> acceptor_tcp_;
-    std::vector<acceptor_ptr> acceptor_http_;
+    std::vector<acceptor_ptr> acceptor_;
 
     boost::asio::io_context& io_context_;
-    ServerSettings::Tcp tcp_settings_;
-    ServerSettings::Http http_settings_;
+    boost::asio::ssl::context ssl_context_;
+    ServerSettings settings_;
     ControlMessageReceiver* controlMessageReceiver_;
 };

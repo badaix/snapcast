@@ -1,6 +1,8 @@
 set(SERVER_SOURCES
+    authinfo.cpp
     config.cpp
     control_server.cpp
+    control_requests.cpp
     control_session_tcp.cpp
     control_session_http.cpp
     control_session_ws.cpp
@@ -13,7 +15,6 @@ set(SERVER_SOURCES
     encoder/encoder_factory.cpp
     encoder/pcm_encoder.cpp
     encoder/null_encoder.cpp
-    streamreader/base64.cpp
     streamreader/control_error.cpp
     streamreader/stream_control.cpp
     streamreader/stream_uri.cpp
@@ -116,6 +117,7 @@ else()
 endif()
 
 # list(APPEND SERVER_LIBRARIES Boost::boost)
+list(APPEND SERVER_LIBRARIES OpenSSL::Crypto OpenSSL::SSL)
 
 include_directories(${SERVER_INCLUDE})
 if(ANDROID)

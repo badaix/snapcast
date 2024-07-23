@@ -80,11 +80,24 @@ int main(int argc, char* argv[])
         conf.add<Implicit<string>>("", "server.group", "the group to run as when daemonized", settings.server.group, &settings.server.group);
         conf.add<Implicit<string>>("", "server.datadir", "directory where persistent data is stored", settings.server.data_dir, &settings.server.data_dir);
 
+        // SSL settings
+        conf.add<Value<string>>("", "ssl.certificate", "certificate file (PEM format)", settings.ssl.certificate, &settings.ssl.certificate);
+        conf.add<Value<string>>("", "ssl.private_key", "private key file (PEM format)", settings.ssl.private_key, &settings.ssl.private_key);
+        conf.add<Value<string>>("", "ssl.key_password", "key password (for encrypted private key)", settings.ssl.key_password, &settings.ssl.key_password);
+
+        // Users setting
+        auto users_value = conf.add<Value<string>>("", "users.user", "<User nane>:<permissions>:<password>");
+
         // HTTP RPC settings
         conf.add<Value<bool>>("", "http.enabled", "enable HTTP Json RPC (HTTP POST and websockets)", settings.http.enabled, &settings.http.enabled);
         conf.add<Value<size_t>>("", "http.port", "which port the server should listen on", settings.http.port, &settings.http.port);
         auto http_bind_to_address = conf.add<Value<string>>("", "http.bind_to_address", "address for the server to listen on",
                                                             settings.http.bind_to_address.front(), &settings.http.bind_to_address[0]);
+        conf.add<Value<bool>>("", "http.ssl_enabled", "enable HTTPS Json RPC (HTTPS POST and ssl websockets)", settings.http.ssl_enabled,
+                              &settings.http.ssl_enabled);
+        conf.add<Value<size_t>>("", "http.ssl_port", "which ssl port the server should listen on", settings.http.ssl_port, &settings.http.ssl_port);
+        auto http_ssl_bind_to_address = conf.add<Value<string>>("", "http.ssl_bind_to_address", "ssl address for the server to listen on",
+                                                                settings.http.ssl_bind_to_address.front(), &settings.http.ssl_bind_to_address[0]);
         conf.add<Implicit<string>>("", "http.doc_root", "serve a website from the doc_root location", settings.http.doc_root, &settings.http.doc_root);
         conf.add<Value<string>>("", "http.host", "Hostname or IP under which clients can reach this host", settings.http.host, &settings.http.host);
         conf.add<Value<string>>("", "http.url_prefix", "URL prefix for generating album art URLs", settings.http.url_prefix, &settings.http.url_prefix);
@@ -143,6 +156,12 @@ int main(int argc, char* argv[])
                 settings.http.bind_to_address.clear();
                 for (size_t n = 0; n < http_bind_to_address->count(); ++n)
                     settings.http.bind_to_address.push_back(http_bind_to_address->value(n));
+            }
+            if (http_ssl_bind_to_address->is_set())
+            {
+                settings.http.ssl_bind_to_address.clear();
+                for (size_t n = 0; n < http_ssl_bind_to_address->count(); ++n)
+                    settings.http.ssl_bind_to_address.push_back(http_ssl_bind_to_address->value(n));
             }
             if (stream_bind_to_address->is_set())
             {
@@ -249,6 +268,15 @@ int main(int argc, char* argv[])
             LOG(INFO, LOG_TAG) << "Adding source: " << sourceValue->value(n) << "\n";
             settings.stream.sources.push_back(sourceValue->value(n));
         }
+
+        for (size_t n = 0; n < users_value->count(); ++n)
+        {
+            settings.users.emplace_back(users_value->value(n));
+            LOG(DEBUG, LOG_TAG) << "User: " << settings.users.back().name
+                                << ", permissions: " << utils::string::container_to_string(settings.users.back().permissions)
+                                << ", pw: " << settings.users.back().password << "\n";
+        }
+
 
 #ifdef HAS_DAEMON
         std::unique_ptr<Daemon> daemon;

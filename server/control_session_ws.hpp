@@ -23,7 +23,13 @@
 #include "control_session.hpp"
 
 // 3rd party headers
+#pragma GCC diagnostic push
+#if defined(__GNUC__) && !defined(__clang__)
+#pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
+#endif
 #include <boost/asio/strand.hpp>
+#pragma GCC diagnostic pop
+
 #pragma GCC diagnostic push
 #if defined(__clang__)
 #pragma GCC diagnostic ignored "-Wunknown-warning-option"
@@ -34,14 +40,20 @@
 #endif
 #include <boost/beast/core.hpp>
 #pragma GCC diagnostic pop
+#include <boost/beast/ssl.hpp>
 #include <boost/beast/websocket.hpp>
 
 // standard headers
 #include <deque>
+#include <optional>
 
 
 namespace beast = boost::beast;         // from <boost/beast.hpp>
 namespace websocket = beast::websocket; // from <boost/beast/websocket.hpp>
+using tcp_socket = boost::asio::ip::tcp::socket;
+using ssl_socket = boost::asio::ssl::stream<tcp_socket>;
+using tcp_websocket = websocket::stream<tcp_socket>;
+using ssl_websocket = websocket::stream<ssl_socket>;
 
 
 /// Endpoint for a connected control client.
@@ -53,8 +65,10 @@ namespace websocket = beast::websocket; // from <boost/beast/websocket.hpp>
 class ControlSessionWebsocket : public ControlSession
 {
 public:
-    /// ctor. Received message from the client are passed to ControlMessageReceiver
-    ControlSessionWebsocket(ControlMessageReceiver* receiver, websocket::stream<beast::tcp_stream>&& socket);
+    /// c'tor for ssl websockets. Received message from the client are passed to ControlMessageReceiver
+    ControlSessionWebsocket(ControlMessageReceiver* receiver, ssl_websocket&& ssl_ws, const ServerSettings& settings);
+    /// c'tor for TCP websockets. Received message from the client are passed to ControlMessageReceiver
+    ControlSessionWebsocket(ControlMessageReceiver* receiver, tcp_websocket&& tcp_ws, const ServerSettings& settings);
     ~ControlSessionWebsocket() override;
     void start() override;
     void stop() override;
@@ -62,16 +76,17 @@ public:
     /// Sends a message to the client (asynchronous)
     void sendAsync(const std::string& message) override;
 
-protected:
+private:
     // Websocket methods
     void on_read_ws(beast::error_code ec, std::size_t bytes_transferred);
     void do_read_ws();
     void send_next();
 
-    websocket::stream<beast::tcp_stream> ws_;
+    std::optional<ssl_websocket> ssl_ws_;
+    std::optional<tcp_websocket> tcp_ws_;
 
-protected:
     beast::flat_buffer buffer_;
     boost::asio::strand<boost::asio::any_io_executor> strand_;
     std::deque<std::string> messages_;
+    bool is_ssl_;
 };

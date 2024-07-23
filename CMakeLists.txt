@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.14)
 
 project(
   snapcast
@@ -64,12 +64,12 @@ else()
   endif()
 
   if(ASAN)
-    add_compile_options(-fsanitize=address)
+    add_compile_options(-fsanitize=address -Wno-error=maybe-uninitialized)
     add_link_options(-fsanitize=address)
   endif()
 
   if(TSAN)
-    add_compile_options(-fsanitize=thread)
+    add_compile_options(-fsanitize=thread -Wno-error=tsan)
     add_link_options(-fsanitize=thread)
   endif()
 
@@ -171,6 +171,8 @@ if(NOT WIN32) # no PkgConfig on Windows...
 endif()
 
 find_package(Threads REQUIRED)
+
+find_package(OpenSSL REQUIRED)
 
 include(CMakePushCheckState)
 include(CheckIncludeFileCXX)
@@ -363,7 +365,7 @@ if(WIN32)
     WINDOWS
     WIN32_LEAN_AND_MEAN
     UNICODE
-    _UNICODE
+    # _UNICODE
     _CRT_SECURE_NO_WARNINGS)
   add_compile_definitions(
     HAS_OGG
