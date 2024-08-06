@@ -96,7 +96,7 @@ option(BUILD_WITH_OPUS "Build with OPUS support" ON)
 option(BUILD_WITH_AVAHI "Build with AVAHI support" ON)
 option(BUILD_WITH_EXPAT "Build with EXPAT support" ON)
 option(BUILD_WITH_PULSE "Build with PulseAudio support" ON)
-option(BUILD_WITH_JACK "Build with JACK support" ON)
+option(BUILD_WITH_JACK "Build with JACK support" OFF)
 
 if(NOT BUILD_SHARED_LIBS AND NOT BUILD_STATIC_LIBS)
   message(

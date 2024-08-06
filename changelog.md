@@ -5,12 +5,17 @@
 ### Features
 
 - Server: Add support for Jack streams (PR #1241, Issue #644)
+- Client: Add support for 24 and 32 bit audio on Android
 
 ### Bugfixes
 
+- Fix linker paths for ARM based MacOS
+
 ### General
 
-_Johannes Pohl <snapcast@badaix.de>  Fri, 19 Apr 2024 00:13:37 +0200_
+- CI: Add clang 16, 17, 18, gcc 14, xcode 15.1, 15.2, 15.3, 15.4
+
+_Johannes Pohl <snapcast@badaix.de>  Sun, 11 Aug 2024 00:13:37 +0200_
 
 ## Version 0.28.0
 
