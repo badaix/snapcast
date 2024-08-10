@@ -263,7 +263,7 @@ The output of any audio player that uses alsa can be redirected to Snapcast by u
 
 ### jack
 
-Reads audio from a Jack server. Snapcast must be built with the cmake flag `BUILD_WITH_JACK=ON` to enable Jack support.
+Reads audio from a Jack server. Snapcast must be built with the cmake flag `BUILD_WITH_JACK=ON` (= default) to enable Jack support.
 
 ```sh
 jack:///?name=<name>[sampleformat=48000:16:2][autoconnect=][autoconnect_skip=0][&send_silence=false][&idle_threshold=100]
