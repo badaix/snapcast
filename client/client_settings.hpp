@@ -54,6 +54,12 @@ struct ClientSettings
     {
         std::string host{""};
         size_t port{1704};
+#if defined(HAS_AVAHI) || defined(HAS_BONJOUR)
+        bool use_mdns{true};
+#else
+        bool use_mdns{false};
+#endif
+        ssize_t connection_attempts{-1};
     };
 
     struct Player

@@ -71,4 +71,6 @@ private:
     // std::unique_ptr<MetadataAdapter> meta_;
     std::unique_ptr<msg::ServerSettings> serverSettings_;
     std::unique_ptr<msg::CodecHeader> headerChunk_;
+
+    ssize_t connectionAttempts_;
 };

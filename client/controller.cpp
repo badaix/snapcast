@@ -78,7 +78,7 @@ static constexpr auto TIME_SYNC_INTERVAL = 1s;
 
 Controller::Controller(boost::asio::io_context& io_context, const ClientSettings& settings) //, std::unique_ptr<MetadataAdapter> meta)
     : io_context_(io_context), timer_(io_context), settings_(settings), stream_(nullptr), decoder_(nullptr), player_(nullptr),
-      serverSettings_(nullptr) // meta_(std::move(meta)),
+      serverSettings_(nullptr), connectionAttempts_(0) // meta_(std::move(meta)),
 {
 }
 
@@ -346,7 +346,13 @@ void Controller::browseMdns(const MdnsHandler& handler)
 
 void Controller::start()
 {
-    if (settings_.server.host.empty())
+    if (!settings_.server.host.empty())
+    {
+        clientConnection_ = make_unique<ClientConnection>(io_context_, settings_.server);
+        worker();
+
+    }
+    else if(settings_.server.use_mdns)
     {
         browseMdns(
             [this](const boost::system::error_code& ec, const std::string& host, uint16_t port)
@@ -360,15 +366,12 @@ void Controller::start()
                 settings_.server.host = host;
                 settings_.server.port = port;
                 LOG(INFO, LOG_TAG) << "Found server " << settings_.server.host << ":" << settings_.server.port << "\n";
+
+                connectionAttempts_=0;
                 clientConnection_ = make_unique<ClientConnection>(io_context_, settings_.server);
                 worker();
             }
         });
-    }
-    else
-    {
-        clientConnection_ = make_unique<ClientConnection>(io_context_, settings_.server);
-        worker();
     }
 }
 
@@ -387,14 +390,29 @@ void Controller::reconnect()
     stream_.reset();
     decoder_.reset();
     timer_.expires_after(1s);
-    timer_.async_wait(
-        [this](const boost::system::error_code& ec)
-        {
-        if (!ec)
-        {
-            worker();
-        }
-    });
+    if (settings_.server.connection_attempts == -1 || connectionAttempts_++ < settings_.server.connection_attempts)
+    {
+        timer_.async_wait(
+            [this](const boost::system::error_code& ec)
+            {
+            if (!ec)
+            {
+                worker();
+            }
+        });
+    }
+    else if (settings_.server.use_mdns)
+    {
+        settings_.server.host.clear();
+        timer_.async_wait(
+            [this](const boost::system::error_code& ec)
+            {
+            if (!ec)
+            {
+                start();
+            }
+        });
+    }
 }
 
 void Controller::worker()
