@@ -15,7 +15,6 @@ jobs:
       fail-fast: false
       matrix:
         debian:
-          - bullseye
           - bookworm
         arch: 
           - amd64
@@ -26,10 +25,10 @@ jobs:
             os: ubuntu-latest
             image_prefix: "debian:"
           - arch: "armhf"
-            os: self-hosted-rpi4
+            os: self-hosted
             image_prefix: "badaix/raspios-lite:"
           - arch: "arm64"
-            os: self-hosted-rpi5
+            os: self-hosted
             image_prefix: "badaix/raspios-lite:"
 
     runs-on: ${{ matrix.os }}
@@ -97,150 +96,4 @@ jobs:
         path: ${{env.PARENT_DIR}}/snap*_${{ matrix.arch }}.deb
 
 
-  # mac:
-  #   strategy:
-  #     fail-fast: false
-  #     matrix:
-  #       xcode: ['11']
 
-  #   runs-on: macos-latest
-  #   name: mac (xcode ${{ matrix.xcode }})
-
-  #   steps:
-  #   - name: Checkout
-  #     uses: actions/checkout@v4
-  #   - name: Checkout Snapcast
-  #     uses: actions/checkout@v4
-  #     with:
-  #       repository: badaix/snapcast
-  #       path: src/snapcast
-  #       ref: ${{ env.VERSION }}
-  #   - name: Setup environment
-  #     run: |
-  #       BOOST_DOT_VERSION=$(echo ${BOOST_VERSION} | sed 's/_/./g')
-  #       echo "BOOST_DOT_VERSION=$BOOST_DOT_VERSION" >> $GITHUB_ENV
-  #       echo "BOOST=boost_${BOOST_VERSION}" >> $GITHUB_ENV
-  #   - name: Get dependencies
-  #     run: brew install pkgconfig libsoxr ccache expat
-  #   - name: Cache boost
-  #     id: cache-boost
-  #     uses: actions/cache@v4
-  #     with:
-  #       path: ${{env.BOOST}}
-  #       key: ${{ runner.os }}-boost
-  #   - name: Get boost
-  #     if: steps.cache-boost.outputs.cache-hit != 'true'
-  #     run: |
-  #       wget https://boostorg.jfrog.io/artifactory/main/release/${{env.BOOST_DOT_VERSION}}/source/${{env.BOOST}}.tar.bz2
-  #       tar xjf ${{env.BOOST}}.tar.bz2
-  #   - name: Cache ccache
-  #     id: cache-ccache
-  #     uses: actions/cache@v4
-  #     with:
-  #       path: /Users/runner/.ccache
-  #       key: ${{ runner.os }}-ccache-${{ github.sha }}
-  #       restore-keys: ${{ runner.os }}-ccache-
-  #   #- name: ccache dump config
-  #   #  run: ccache -p
-  #   - name: configure
-  #     run: cmake -S $GITHUB_WORKSPACE/src/snapcast -B build -DBOOST_ROOT=$GITHUB_WORKSPACE/${{env.BOOST}} -DCMAKE_BUILD_TYPE=Release -DREVISION=${{ github.sha }} -DWERROR=ON -DBUILD_TESTS=ON -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_FLAGS="-I/usr/local/include -Wno-deprecated-declarations"
-  #   - name: build
-  #     run: cmake --build build --parallel 3
-
-
-  # rpm:
-  #   if: ${{ false }}  # disable for now
-  #   strategy:
-  #     fail-fast: false
-  #     matrix:
-  #       image:
-  #         - 34
-  #         - 35
-  #       os:
-  #         - ubuntu-latest
-  #         - self-hosted-rpi4
-  #       include:
-  #         - os: ubuntu-latest
-  #           arch: "x86_64"
-  #         - os: self-hosted-rpi4
-  #           arch: "armv7hl"
-
-  #   runs-on: ${{ matrix.os }}
-  #   name: rpm (${{ matrix.arch }}, fedora ${{ matrix.image }})
-
-  #   container:
-  #     image: fedora:${{matrix.image}}
-
-  #   steps:
-  #   - name: Get dependencies
-  #     run: dnf -y update && dnf -y install wget git rpm-build gcc-c++ cmake boost-devel alsa-lib-devel avahi-devel libatomic libvorbis-devel opus-devel pulseaudio-libs-devel flac-devel soxr-devel libstdc++-static expat-devel
-  #   - name: Checkout
-  #     uses: actions/checkout@v4
-  #   - name: Checkout Snapcast
-  #     uses: actions/checkout@v4
-  #     with:
-  #       repository: badaix/snapcast
-  #       path: src/snapcast
-  #       ref: ${{ env.VERSION }}
-  #   - name: Create rpm package
-  #     run: |
-  #       mkdir -p ~/rpmbuild/{BUILD,BUILDROOT,RPMS,SOURCES,SPECS,SRPMS}
-  #       cp rpm/* ~/rpmbuild/SOURCES/
-  #       tar -C $GITHUB_WORKSPACE/src/ -czvf ~/rpmbuild/SOURCES/snapcast.tar.gz snapcast
-  #       rpmbuild --nodebuginfo --define '_reversion ${{ github.sha }}' --define '_version ${{ env.VERSION }}' -bb ~/rpmbuild/SOURCES/snapcast.spec
-  #   - name: Archive artifacts
-  #     uses: actions/upload-artifact@v4
-  #     with:
-  #       name: snapcast_${{ matrix.arch }}-fedora-${{matrix.image}}-${{ github.sha }}
-  #       path: ~/rpmbuild/RPMS/${{ matrix.arch }}/snap*.rpm
-
-
-  win:
-    runs-on: windows-2019
-    name: win
-
-    steps:
-    - name: Checkout
-      uses: actions/checkout@v4
-    - name: Checkout Snapcast
-      uses: actions/checkout@v4
-      with:
-        repository: badaix/snapcast
-        path: src/snapcast
-        ref: ${{ env.VERSION }}
-    - name: Cache dependencies
-      id: cache-dependencies
-      uses: actions/cache@v4
-      with:
-        #path: ${VCPKG_INSTALLATION_ROOT}\installed
-        path: c:\vcpkg\installed
-        key: ${{ runner.os }}-dependencies
-    - name: Get dependenciesenv
-      if: steps.cache-dependencies.outputs.cache-hit != 'true'
-      run: vcpkg.exe install libflac libvorbis soxr opus boost-asio --triplet x64-windows
-    - name: configure
-      run: |
-        echo vcpkg installation root: $env:VCPKG_INSTALLATION_ROOT
-        cmake -S . -B build -G "Visual Studio 16 2019" -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake" -DVCPKG_TARGET_TRIPLET="x64-windows" -DCMAKE_BUILD_TYPE="Release" -DREVISION="${{ github.sha }}" -DWERROR=ON -DBUILD_TESTS=ON
-    - name: build
-      run: cmake --build build --config Release --parallel 3 --verbose
-    - name: installer
-      run: |
-        copy ${env:VCPKG_INSTALLATION_ROOT}\installed\x64-windows\bin\FLAC.dll bin\Release\
-        copy ${env:VCPKG_INSTALLATION_ROOT}\installed\x64-windows\bin\ogg.dll bin\Release\
-        copy ${env:VCPKG_INSTALLATION_ROOT}\installed\x64-windows\bin\opus.dll bin\Release\
-        copy ${env:VCPKG_INSTALLATION_ROOT}\installed\x64-windows\bin\vorbis.dll bin\Release\
-        copy ${env:VCPKG_INSTALLATION_ROOT}\installed\x64-windows\bin\soxr.dll bin\Release\
-        copy "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Redist\MSVC\v142\vc_redist.x64.exe" bin\Release\
-    - name: Archive artifacts
-      uses: actions/upload-artifact@v4
-      with:
-        name: snapcast_win64-${{ github.sha }}
-        path: |
-          bin\Release\snapclient.exe
-          bin\Release\FLAC.dll
-          bin\Release\ogg.dll
-          bin\Release\opus.dll
-          bin\Release\vorbis.dll
-          bin\Release\soxr.dll
-          bin\Release\vc_redist.x64.exe

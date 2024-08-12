@@ -140,6 +140,10 @@ int main(int argc, char** argv)
         auto versionSwitch = op.add<Switch>("v", "version", "show version number");
         op.add<Value<string>>("h", "host", "server hostname or ip address", "", &settings.server.host);
         op.add<Value<size_t>>("p", "port", "server port", 1704, &settings.server.port);
+#if defined(HAS_AVAHI) || defined(HAS_BONJOUR)
+        op.add<Value<bool>>("m", "mdns", "use mDNS (true/false)", "true", &settings.server.use_mdns);
+        op.add<Value<ssize_t>>("", "connection-attempts", "connectionAttempts before querying mDNS again", -1, &settings.server.connection_attempts);
+#endif
         op.add<Value<size_t>>("i", "instance", "instance id when running multiple instances on the same host", 1, &settings.instance);
         op.add<Value<string>>("", "hostID", "unique host id, default is MAC address", "", &settings.host_id);
 
@@ -304,10 +308,14 @@ int main(int argc, char** argv)
         else
             throw SnapException("Invalid log sink: " + settings.logging.sink);
 
-#if !defined(HAS_AVAHI) && !defined(HAS_BONJOUR)
-        if (settings.server.host.empty())
-            throw SnapException("Snapserver host not configured and mDNS not available, please configure with \"--host\".");
+
+        if (
+#if defined(HAS_AVAHI) || defined(HAS_BONJOUR)
+            !settings.server.use_mdns &&
 #endif
+            settings.server.host.empty())
+            throw SnapException("Snapserver host not configured and mDNS is disabled or not available, please configure with \"--host\" or \"--mdns\".");
+
 
 
 #ifdef HAS_DAEMON
