@@ -36,7 +36,7 @@ jobs:
               gh release create v0.0.0 \
               --draft \
               --repo="$GITHUB_REPOSITORY" \
-              --title="Snapcast v0.0.0" \
+              --title="Snapcast v${{ github.sha }}" \
               --notes-file changelog_current.md \
               )
           echo "tag=$(basename $URL)" >> $GITHUB_OUTPUT
