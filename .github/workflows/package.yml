@@ -181,13 +181,13 @@ jobs:
         copy ${env:VCPKG_INSTALLATION_ROOT}\installed\x64-windows\bin\soxr.dll bundle\
         copy "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Redist\MSVC\v142\vc_redist.x64.exe" bundle\
         copy bin\Release\snapclient.exe bundle\
-        Compress-Archive -Path bundle\* -Destination snapcast_win64.zip
+        Compress-Archive -Path bundle\* -Destination snapclient_win64.zip
     - name: Release artifacts
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
         git config --global --add safe.directory .
-        gh release upload ${{needs.release.outputs.tag}} snapcast_win64.zip
+        gh release upload ${{needs.release.outputs.tag}} snapclient_win64.zip
 
   # mac:
   #   strategy:
