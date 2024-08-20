@@ -13,39 +13,39 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        tool: 
+        tool:
           - cppcheck
 
     runs-on: ubuntu-22.04
 
     steps:
-    - uses: actions/checkout@v4
-    - name: print environment
-      run: env
-    - name: dependencies
-      run: sudo apt-get update && sudo apt-get install -yq libasound2-dev libsoxr-dev libvorbisidec-dev libvorbis-dev libflac-dev libopus-dev alsa-utils libpulse-dev libavahi-client-dev avahi-daemon debhelper ccache expat cppcheck
-    - name: cache boost
-      id: cache-boost
-      uses: actions/cache@v4
-      with:
-        path: boost_${{ env.BOOST_VERSION }}
-        key: boost-${{ env.BOOST_VERSION }}
-        enableCrossOsArchive: true
-    - name: get boost
-      if: steps.cache-boost.outputs.cache-hit != 'true'
-      run: |
-        wget https://boostorg.jfrog.io/artifactory/main/release/${BOOST_VERSION//_/.}/source/boost_${BOOST_VERSION}.tar.bz2
-        tar xjf boost_${BOOST_VERSION}.tar.bz2
-    - name: configure
-      run: |
-        cmake -S . -B build \
-          -DWERROR=ON -DBUILD_TESTS=ON \
-          -DBOOST_ROOT=boost_${BOOST_VERSION} \
-          -DCMAKE_BUILD_TYPE=Release \
-          -DCMAKE_EXPORT_COMPILE_COMMANDS=TRUE \
-          -DCMAKE_CXX_FLAGS="-DCMAKE_CXX_FLAGS=-DJSON_HAS_CPP_14"
-    - name: analysis
-      run: cmake --build build --target ${{ matrix.tool }}
+      - uses: actions/checkout@v4
+      - name: print environment
+        run: env
+      - name: dependencies
+        run: sudo apt-get update && sudo apt-get install -yq libasound2-dev libsoxr-dev libvorbisidec-dev libvorbis-dev libflac-dev libopus-dev alsa-utils libpulse-dev libavahi-client-dev avahi-daemon debhelper ccache expat cppcheck
+      - name: cache boost
+        id: cache-boost
+        uses: actions/cache@v4
+        with:
+          path: boost_${{ env.BOOST_VERSION }}
+          key: boost-${{ env.BOOST_VERSION }}
+          enableCrossOsArchive: true
+      - name: get boost
+        if: steps.cache-boost.outputs.cache-hit != 'true'
+        run: |
+          wget https://boostorg.jfrog.io/artifactory/main/release/${BOOST_VERSION//_/.}/source/boost_${BOOST_VERSION}.tar.bz2
+          tar xjf boost_${BOOST_VERSION}.tar.bz2
+      - name: configure
+        run: |
+          cmake -S . -B build \
+            -DWERROR=ON -DBUILD_TESTS=ON \
+            -DBOOST_ROOT=boost_${BOOST_VERSION} \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_EXPORT_COMPILE_COMMANDS=TRUE \
+            -DCMAKE_CXX_FLAGS="-DCMAKE_CXX_FLAGS=-DJSON_HAS_CPP_14"
+      - name: analysis
+        run: cmake --build build --target ${{ matrix.tool }}
 
 
   linux:
@@ -53,7 +53,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        compiler: 
+        compiler:
           - clang-10
           - clang-11
           - clang-12
@@ -134,50 +134,50 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     steps:
-    - uses: actions/checkout@v4
-    - name: print environment
-      run: env
-    - name: dependencies
-      run: sudo apt-get update && sudo apt-get install -yq libasound2-dev libsoxr-dev libvorbisidec-dev libvorbis-dev libflac-dev libopus-dev alsa-utils libpulse-dev libavahi-client-dev avahi-daemon debhelper ccache expat cppcheck
-    - name: cache boost
-      id: cache-boost
-      uses: actions/cache@v4
-      with:
-        path: boost_${{ env.BOOST_VERSION }}
-        key: boost-${{ env.BOOST_VERSION }}
-        enableCrossOsArchive: true
-    - name: get boost
-      if: steps.cache-boost.outputs.cache-hit != 'true'
-      run: |
-        wget https://boostorg.jfrog.io/artifactory/main/release/${BOOST_VERSION//_/.}/source/boost_${BOOST_VERSION}.tar.bz2
-        tar xjf boost_${BOOST_VERSION}.tar.bz2
-    - name: cache ccache
-      id: cache-ccache
-      uses: actions/cache@v4
-      with:
-        # TODO: use environment variable $HOME/.ccache
-        path: /home/runner/.ccache
-        key: ${{ runner.os }}-${{ matrix.compiler }}-ccache-${{ github.sha }}
-        restore-keys: ${{ runner.os }}-${{ matrix.compiler }}-ccache-
-    #- name: ccache dump config
-    #  run: ccache -p
-    - name: configure
-      run: |
-        cmake -S . -B build \
-          -DWERROR=ON -DBUILD_TESTS=ON \
-          -DBOOST_ROOT=boost_${BOOST_VERSION} \
-          -DCMAKE_BUILD_TYPE=Release \
-          -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
-          -DCMAKE_EXPORT_COMPILE_COMMANDS=TRUE \
-          -DCMAKE_CXX_FLAGS="-DCMAKE_CXX_FLAGS=-DJSON_HAS_CPP_14"
-      env:
-        CC: ${{ matrix.cc }}
-        CXX: ${{ matrix.cxx }}
-    - name: build
-      env:
-        # TODO: use environment variable $HOME/.ccache
-        CCACHE_DIR: /home/runner/.ccache
-      run: cmake --build build --parallel 3 --verbose
+      - uses: actions/checkout@v4
+      - name: print environment
+        run: env
+      - name: dependencies
+        run: sudo apt-get update && sudo apt-get install -yq libasound2-dev libsoxr-dev libvorbisidec-dev libvorbis-dev libflac-dev libopus-dev alsa-utils libpulse-dev libavahi-client-dev avahi-daemon debhelper ccache expat cppcheck
+      - name: cache boost
+        id: cache-boost
+        uses: actions/cache@v4
+        with:
+          path: boost_${{ env.BOOST_VERSION }}
+          key: boost-${{ env.BOOST_VERSION }}
+          enableCrossOsArchive: true
+      - name: get boost
+        if: steps.cache-boost.outputs.cache-hit != 'true'
+        run: |
+          wget https://boostorg.jfrog.io/artifactory/main/release/${BOOST_VERSION//_/.}/source/boost_${BOOST_VERSION}.tar.bz2
+          tar xjf boost_${BOOST_VERSION}.tar.bz2
+      - name: cache ccache
+        id: cache-ccache
+        uses: actions/cache@v4
+        with:
+          # TODO: use environment variable $HOME/.ccache
+          path: /home/runner/.ccache
+          key: ${{ runner.os }}-${{ matrix.compiler }}-ccache-${{ github.sha }}
+          restore-keys: ${{ runner.os }}-${{ matrix.compiler }}-ccache-
+      #- name: ccache dump config
+      #  run: ccache -p
+      - name: configure
+        run: |
+          cmake -S . -B build \
+            -DWERROR=ON -DBUILD_TESTS=ON \
+            -DBOOST_ROOT=boost_${BOOST_VERSION} \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
+            -DCMAKE_EXPORT_COMPILE_COMMANDS=TRUE \
+            -DCMAKE_CXX_FLAGS="-DCMAKE_CXX_FLAGS=-DJSON_HAS_CPP_14"
+        env:
+          CC: ${{ matrix.cc }}
+          CXX: ${{ matrix.cxx }}
+      - name: build
+        env:
+          # TODO: use environment variable $HOME/.ccache
+          CCACHE_DIR: /home/runner/.ccache
+        run: cmake --build build --parallel 3 --verbose
 
 
   macos:
@@ -185,7 +185,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        xcode: 
+        xcode:
           - "13.1"
           - "13.2"
           - "13.3"
@@ -230,42 +230,42 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     steps:
-    - uses: actions/checkout@v4
-    - name: print environment
-      run: env
-    - name: dependencies
-      run: brew install pkgconfig libsoxr flac libvorbis opus ccache expat
-    - name: cache boost
-      id: cache-boost
-      uses: actions/cache@v4
-      with:
-        path: boost_${{ env.BOOST_VERSION }}
-        key: boost-${{ env.BOOST_VERSION }}
-        enableCrossOsArchive: true
-    - name: get boost
-      if: steps.cache-boost.outputs.cache-hit != 'true'
-      run: |
-        wget https://boostorg.jfrog.io/artifactory/main/release/${BOOST_VERSION//_/.}/source/boost_${BOOST_VERSION}.tar.bz2
-        tar xjf boost_${BOOST_VERSION}.tar.bz2
-    - name: cache ccache
-      id: cache-ccache
-      uses: actions/cache@v4
-      with:
-        path: /Users/runner/Library/Caches/ccache
-        key: ${{ runner.os }}-${{ matrix.xcode }}-ccache-${{ github.sha }}
-        restore-keys: ${{ runner.os }}-${{ matrix.xcode }}-ccache-
-    - name: configure
-      run: |
-        cmake -S . -B build \
-          -DWERROR=ON -DBUILD_TESTS=ON \
-          -DBOOST_ROOT=boost_${BOOST_VERSION} \
-          -DCMAKE_BUILD_TYPE=Release \
-          -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
-          -DCMAKE_CXX_FLAGS="-I/usr/local/include -DCMAKE_CXX_FLAGS=-DJSON_HAS_CPP_14"
-      env:
-        DEVELOPER_DIR: /Applications/Xcode_${{ matrix.xcode }}.app/Contents/Developer
-    - name: build
-      run: cmake --build build --parallel 3 --verbose
+      - uses: actions/checkout@v4
+      - name: print environment
+        run: env
+      - name: dependencies
+        run: brew install pkgconfig libsoxr flac libvorbis opus ccache expat
+      - name: cache boost
+        id: cache-boost
+        uses: actions/cache@v4
+        with:
+          path: boost_${{ env.BOOST_VERSION }}
+          key: boost-${{ env.BOOST_VERSION }}
+          enableCrossOsArchive: true
+      - name: get boost
+        if: steps.cache-boost.outputs.cache-hit != 'true'
+        run: |
+          wget https://boostorg.jfrog.io/artifactory/main/release/${BOOST_VERSION//_/.}/source/boost_${BOOST_VERSION}.tar.bz2
+          tar xjf boost_${BOOST_VERSION}.tar.bz2
+      - name: cache ccache
+        id: cache-ccache
+        uses: actions/cache@v4
+        with:
+          path: /Users/runner/Library/Caches/ccache
+          key: ${{ runner.os }}-${{ matrix.xcode }}-ccache-${{ github.sha }}
+          restore-keys: ${{ runner.os }}-${{ matrix.xcode }}-ccache-
+      - name: configure
+        run: |
+          cmake -S . -B build \
+            -DWERROR=ON -DBUILD_TESTS=ON \
+            -DBOOST_ROOT=boost_${BOOST_VERSION} \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
+            -DCMAKE_CXX_FLAGS="-I/usr/local/include -DCMAKE_CXX_FLAGS=-DJSON_HAS_CPP_14"
+        env:
+          DEVELOPER_DIR: /Applications/Xcode_${{ matrix.xcode }}.app/Contents/Developer
+      - name: build
+        run: cmake --build build --parallel 3 --verbose
 
 
   windows:
@@ -273,7 +273,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        compiler: 
+        compiler:
           - vs-16
           - vs-17
         include:
@@ -287,29 +287,29 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     steps:
-    - uses: actions/checkout@v4
-    - name: cache dependencies
-      id: cache-dependencies
-      uses: actions/cache@v4
-      with:
-        #path: ${VCPKG_INSTALLATION_ROOT}\installed
-        path: c:\vcpkg\installed
-        key: ${{ runner.os }}-dependencies
-    - name: dependencies
-      if: steps.cache-dependencies.outputs.cache-hit != 'true'
-      run: |
-        cd c:\vcpkg
-        git pull
-        vcpkg.exe update
-        vcpkg.exe --triplet x64-windows install libflac libvorbis soxr opus boost-asio
-    - name: configure
-      run: |
-        echo vcpkg installation root: ${env:VCPKG_INSTALLATION_ROOT}
-        cmake -S . -B build -G "${{ matrix.vs }}" `
-          -DWERROR=ON -DBUILD_TESTS=ON `
-          -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake" `
-          -DVCPKG_TARGET_TRIPLET="x64-windows" `
-          -DCMAKE_BUILD_TYPE=Release `
-          -DREVISION="${{ github.sha }}"
-    - name: build
-      run: cmake --build build --config Release --parallel 3 --verbose
+      - uses: actions/checkout@v4
+      - name: cache dependencies
+        id: cache-dependencies
+        uses: actions/cache@v4
+        with:
+          #path: ${VCPKG_INSTALLATION_ROOT}\installed
+          path: c:\vcpkg\installed
+          key: ${{ runner.os }}-dependencies
+      - name: dependencies
+        if: steps.cache-dependencies.outputs.cache-hit != 'true'
+        run: |
+          cd c:\vcpkg
+          git pull
+          vcpkg.exe update
+          vcpkg.exe --triplet x64-windows install libflac libvorbis soxr opus boost-asio
+      - name: configure
+        run: |
+          echo vcpkg installation root: ${env:VCPKG_INSTALLATION_ROOT}
+          cmake -S . -B build -G "${{ matrix.vs }}" `
+            -DWERROR=ON -DBUILD_TESTS=ON `
+            -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake" `
+            -DVCPKG_TARGET_TRIPLET="x64-windows" `
+            -DCMAKE_BUILD_TYPE=Release `
+            -DREVISION="${{ github.sha }}"
+      - name: build
+        run: cmake --build build --config Release --parallel 3 --verbose
