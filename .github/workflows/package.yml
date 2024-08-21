@@ -80,6 +80,15 @@ jobs:
           libssl-dev python3 ccache unzip
         env:
           DEBIAN_FRONTEND: noninteractive
+      - name: Get GitHub cli
+        run: |
+          (type -p wget >/dev/null || (apt update && apt-get install wget -y)) \
+          && mkdir -p -m 755 /etc/apt/keyrings \
+          && wget -qO- https://cli.github.com/packages/githubcli-archive-keyring.gpg | tee /etc/apt/keyrings/githubcli-archive-keyring.gpg > /dev/null \
+          && chmod go+r /etc/apt/keyrings/githubcli-archive-keyring.gpg \
+          && echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | tee /etc/apt/sources.list.d/github-cli.list > /dev/null \
+          && apt update \
+          && apt install gh -y
       - name: Checkout
         uses: actions/checkout@v4
       - name: Setup environment
@@ -94,7 +103,7 @@ jobs:
           $GITHUB_WORKSPACE/debian/changelog_md2deb.py $GITHUB_WORKSPACE/changelog.md > $GITHUB_WORKSPACE/debian/changelog
           cat $GITHUB_WORKSPACE/debian/changelog
       - name: Clean up
-        run: rm -rf ${{env.PARENT_DIR}}/snap*_${{ matrix.arch }}.deb
+        run: rm -rf ${{env.PARENT_DIR}}/snap*_*.deb
       - name: Cache boost
         id: cache-boost
         uses: actions/cache@v4
@@ -123,15 +132,19 @@ jobs:
           # TODO: use environment variable $HOME/.ccache
           CCACHE_DIR: /home/runner/.ccache
         run: |
-          fakeroot make -f debian/rules CMAKEFLAGS="-DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DBOOST_ROOT=$GITHUB_WORKSPACE/${{env.BOOST}} -DCMAKE_BUILD_TYPE:STRING=Release -DREVISION=${{ github.sha }} -DBUILD_WITH_PULSE=OFF -DSNAPWEB_DIR:STRING=$GITHUB_WORKSPACE/snapweb" binary
-          rename 's/_${{ matrix.arch }}/_without-pulse_${{ matrix.arch }}/g' ../snapclient*_${{ matrix.arch }}.deb
+          fakeroot make -f debian/rules CMAKEFLAGS="-DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DBOOST_ROOT=$GITHUB_WORKSPACE/${{env.BOOST}} -DCMAKE_BUILD_TYPE:STRING=Release -DREVISION=${{ github.sha }} -DBUILD_WITH_JACK=OFF -DBUILD_WITH_PULSE=OFF -DSNAPWEB_DIR:STRING=$GITHUB_WORKSPACE/snapweb" binary
+          rename 's/_${{ matrix.arch }}/_${{ matrix.arch }}_${{ matrix.debian }}/g' ../snap*_${{ matrix.arch }}.deb
           fakeroot make -f debian/rules clean
-          fakeroot make -f debian/rules CMAKEFLAGS="-DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DBOOST_ROOT=$GITHUB_WORKSPACE/${{env.BOOST}} -DCMAKE_BUILD_TYPE:STRING=Release -DREVISION=${{ github.sha }} -DSNAPWEB_DIR:STRING=$GITHUB_WORKSPACE/snapweb" binary
-      - name: Archive artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: snapcast_${{ matrix.arch }}-debian-${{matrix.debian}}-${{ github.sha }}
-          path: ${{env.PARENT_DIR}}/snap*_${{ matrix.arch }}.deb
+          fakeroot make -f debian/rules CMAKEFLAGS="-DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DBOOST_ROOT=$GITHUB_WORKSPACE/${{env.BOOST}} -DCMAKE_BUILD_TYPE:STRING=Release -DREVISION=${{ github.sha }} -DBUILD_WITH_JACK=OFF -DSNAPWEB_DIR:STRING=$GITHUB_WORKSPACE/snapweb" binary
+          rm ../snapserver_*_${{ matrix.arch }}.deb
+          rename 's/_${{ matrix.arch }}/_${{ matrix.arch }}_${{ matrix.debian }}_with-pulse/g' ../snap*_${{ matrix.arch }}.deb
+      - name: Release artifacts
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git config --global --add safe.directory $GITHUB_WORKSPACE
+          gh release upload ${{needs.release.outputs.tag}} ${{env.PARENT_DIR}}/snap*_*.deb
+
 
   win:
     needs: release
@@ -277,52 +290,3 @@ jobs:
   #       name: snapcast_${{ matrix.arch }}-fedora-${{matrix.image}}-${{ github.sha }}
   #       path: ~/rpmbuild/RPMS/${{ matrix.arch }}/snap*.rpm
 
-  win:
-    runs-on: windows-2019
-    name: win
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      - name: Checkout Snapcast
-        uses: actions/checkout@v4
-        with:
-          repository: badaix/snapcast
-          path: src/snapcast
-          ref: ${{ env.VERSION }}
-      - name: Cache dependencies
-        id: cache-dependencies
-        uses: actions/cache@v4
-        with:
-          #path: ${VCPKG_INSTALLATION_ROOT}\installed
-          path: c:\vcpkg\installed
-          key: ${{ runner.os }}-dependencies
-      - name: Get dependenciesenv
-        if: steps.cache-dependencies.outputs.cache-hit != 'true'
-        run: vcpkg.exe install libflac libvorbis soxr opus boost-asio --triplet x64-windows
-      - name: configure
-        run: |
-          echo vcpkg installation root: $env:VCPKG_INSTALLATION_ROOT
-          cmake -S . -B build -G "Visual Studio 16 2019" -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake" -DVCPKG_TARGET_TRIPLET="x64-windows" -DCMAKE_BUILD_TYPE="Release" -DREVISION="${{ github.sha }}" -DWERROR=ON -DBUILD_TESTS=ON
-      - name: build
-        run: cmake --build build --config Release --parallel 3 --verbose
-      - name: installer
-        run: |
-          copy ${env:VCPKG_INSTALLATION_ROOT}\installed\x64-windows\bin\FLAC.dll bin\Release\
-          copy ${env:VCPKG_INSTALLATION_ROOT}\installed\x64-windows\bin\ogg.dll bin\Release\
-          copy ${env:VCPKG_INSTALLATION_ROOT}\installed\x64-windows\bin\opus.dll bin\Release\
-          copy ${env:VCPKG_INSTALLATION_ROOT}\installed\x64-windows\bin\vorbis.dll bin\Release\
-          copy ${env:VCPKG_INSTALLATION_ROOT}\installed\x64-windows\bin\soxr.dll bin\Release\
-          copy "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Redist\MSVC\v142\vc_redist.x64.exe" bin\Release\
-      - name: Archive artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: snapcast_win64-${{ github.sha }}
-          path: |
-            bin\Release\snapclient.exe
-            bin\Release\FLAC.dll
-            bin\Release\ogg.dll
-            bin\Release\opus.dll
-            bin\Release\vorbis.dll
-            bin\Release\soxr.dll
-            bin\Release\vc_redist.x64.exe
