@@ -56,7 +56,7 @@ bool MetaStream::isAllowed(const PcmStream& stream) const
         if (component.empty())
             continue;
 
-        if (stream.getName() == component)
+        if (component == WILDCARD || stream.getName() == component)
         {
             return true;
         }
@@ -98,6 +98,8 @@ void MetaStream::updateActiveStream()
             if (component == first->getName())
                 return true;
             if (component == second->getName())
+                return false;
+            if (component == WILDCARD)
                 return false;
         }
         return false;
