@@ -49,6 +49,9 @@ public:
     void start() override;
     void stop() override;
 
+    void addStream(std::shared_ptr<PcmStream> stream);
+    void removeStream(const PcmStream& stream);
+
     // Setter for properties
     void setShuffle(bool shuffle, ResultHandler handler) override;
     void setLoopStatus(LoopStatus status, ResultHandler handler) override;
@@ -67,6 +70,9 @@ public:
     void play(ResultHandler handler) override;
 
 protected:
+    bool isAllowed(const PcmStream& stream) const;
+    void updateActiveStream();
+
     /// Implementation of PcmStream::Listener
     void onPropertiesChanged(const PcmStream* pcmStream, const Properties& properties) override;
     void onStateChanged(const PcmStream* pcmStream, ReaderState state) override;

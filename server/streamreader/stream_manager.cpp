@@ -146,6 +146,9 @@ PcmStreamPtr StreamManager::addStream(StreamUri& streamUri)
         {
             if (s->getName() == stream->getName())
                 throw SnapException("Stream with name \"" + stream->getName() + "\" already exists");
+
+            if (auto meta = dynamic_cast<MetaStream*>(s.get()))
+                meta->addStream(stream);
         }
         streams_.push_back(stream);
     }
@@ -161,6 +164,12 @@ void StreamManager::removeStream(const std::string& name)
     {
         (*iter)->stop();
         streams_.erase(iter);
+
+        for (const auto& s : streams_)
+        {
+            if (auto meta = dynamic_cast<MetaStream*>(s.get()))
+                meta->removeStream(**iter);
+        }
     }
 }
 
