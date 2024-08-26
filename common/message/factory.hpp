@@ -19,6 +19,7 @@
 #pragma once
 
 // local headers
+#include "client_system_info.hpp"
 #include "client_info.hpp"
 #include "codec_header.hpp"
 #include "hello.hpp"
@@ -76,6 +77,8 @@ static std::unique_ptr<BaseMessage> createMessage(const BaseMessage& base_messag
             return createMessage<PcmChunk>(base_message, buffer);
         case message_type::kClientInfo:
             return createMessage<ClientInfo>(base_message, buffer);
+        case message_type::kClientSystemInfo:
+            return createMessage<ClientSystemInfo>(base_message, buffer);
         default:
             return nullptr;
     }
