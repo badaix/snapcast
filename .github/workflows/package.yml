@@ -25,10 +25,10 @@ jobs:
             os: ubuntu-latest
             image_prefix: "debian:"
           - arch: "armhf"
-            os: self-hosted,ARM
+            os: self-hosted, ARM
             image_prefix: "badaix/raspios-lite:"
           - arch: "arm64"
-            os: self-hosted,ARM64
+            os: self-hosted, ARM64
             image_prefix: "badaix/raspios-lite:"
 
     runs-on: ${{ matrix.os }}
