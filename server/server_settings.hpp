@@ -42,7 +42,7 @@ struct ServerSettings
     {
         bool enabled{true};
         size_t port{1780};
-        std::vector<std::string> bind_to_address{{"0.0.0.0"}};
+        std::vector<std::string> bind_to_address{{"::"}};
         std::string doc_root{""};
         std::string host{"<hostname>"};
         inline static ImageCache image_cache;
@@ -52,7 +52,7 @@ struct ServerSettings
     {
         bool enabled{true};
         size_t port{1705};
-        std::vector<std::string> bind_to_address{{"0.0.0.0"}};
+        std::vector<std::string> bind_to_address{{"::"}};
     };
 
     struct Stream
@@ -64,7 +64,7 @@ struct ServerSettings
         std::string sampleFormat{"48000:16:2"};
         size_t streamChunkMs{20};
         bool sendAudioToMutedClients{false};
-        std::vector<std::string> bind_to_address{{"0.0.0.0"}};
+        std::vector<std::string> bind_to_address{{"::"}};
     };
 
     struct StreamingClient
