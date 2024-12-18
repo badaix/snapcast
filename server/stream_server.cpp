@@ -231,7 +231,7 @@ void StreamServer::start()
         {
             LOG(INFO, LOG_TAG) << "Creating stream acceptor for address: " << address << ", port: " << settings_.stream.port << "\n";
             acceptor_.emplace_back(make_unique<tcp::acceptor>(boost::asio::make_strand(io_context_.get_executor()),
-                                                              tcp::endpoint(boost::asio::ip::address::from_string(address), settings_.stream.port)));
+                                                              tcp::endpoint(boost::asio::ip::make_address(address), settings_.stream.port)));
         }
         catch (const boost::system::system_error& e)
         {
