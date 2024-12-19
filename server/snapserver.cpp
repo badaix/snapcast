@@ -172,7 +172,7 @@ int main(int argc, char* argv[])
         }
         catch (const std::invalid_argument& e)
         {
-            cerr << "Exception: " << e.what() << std::endl;
+            cerr << "Exception: " << e.what() << "\n";
             cout << "\n" << op << "\n";
             exit(EXIT_FAILURE);
         }
@@ -209,9 +209,9 @@ int main(int argc, char* argv[])
             std::unique_ptr<encoder::Encoder> encoder(encoderFactory.createEncoder(settings.stream.codec));
             if (encoder)
             {
-                cout << "Options for codec \"" << encoder->name() << "\":\n"
+                cout << "Options for codec '" << encoder->name() << "':\n"
                      << "  " << encoder->getAvailableOptions() << "\n"
-                     << "  Default: \"" << encoder->getDefaultOptions() << "\"\n";
+                     << "  Default: '" << encoder->getDefaultOptions() << "'\n";
             }
             exit(EXIT_SUCCESS);
         }
@@ -293,9 +293,9 @@ int main(int argc, char* argv[])
             processPriority = std::min(std::max(-20, processPriority), 19);
             if (processPriority != 0)
                 setpriority(PRIO_PROCESS, 0, processPriority);
-            LOG(NOTICE, LOG_TAG) << "daemonizing" << std::endl;
+            LOG(NOTICE, LOG_TAG) << "daemonizing" << "\n";
             daemon->daemonize();
-            LOG(NOTICE, LOG_TAG) << "daemon started" << std::endl;
+            LOG(NOTICE, LOG_TAG) << "daemon started" << "\n";
         }
         else
             Config::instance().init(settings.server.data_dir);
@@ -351,9 +351,8 @@ int main(int argc, char* argv[])
 
         // Construct a signal set registered for process termination.
         boost::asio::signal_set signals(io_context, SIGHUP, SIGINT, SIGTERM);
-        signals.async_wait(
-            [&io_context](const boost::system::error_code& ec, int signal)
-            {
+        signals.async_wait([&io_context](const boost::system::error_code& ec, int signal)
+        {
             if (!ec)
                 LOG(INFO, LOG_TAG) << "Received signal " << signal << ": " << strsignal(signal) << "\n";
             else
@@ -362,6 +361,7 @@ int main(int argc, char* argv[])
         });
 
         std::vector<std::thread> threads;
+        threads.reserve(settings.server.threads);
         for (int n = 0; n < settings.server.threads; ++n)
             threads.emplace_back([&] { io_context.run(); });
 
@@ -370,16 +370,16 @@ int main(int argc, char* argv[])
         for (auto& t : threads)
             t.join();
 
-        LOG(INFO, LOG_TAG) << "Stopping streamServer" << endl;
+        LOG(INFO, LOG_TAG) << "Stopping streamServer\n";
         server->stop();
-        LOG(INFO, LOG_TAG) << "done" << endl;
+        LOG(INFO, LOG_TAG) << "done\n";
     }
     catch (const std::exception& e)
     {
-        LOG(ERROR, LOG_TAG) << "Exception: " << e.what() << std::endl;
+        LOG(ERROR, LOG_TAG) << "Exception: " << e.what() << "\n";
         exitcode = EXIT_FAILURE;
     }
     Config::instance().save();
-    LOG(NOTICE, LOG_TAG) << "Snapserver terminated." << endl;
+    LOG(NOTICE, LOG_TAG) << "Snapserver terminated.\n";
     exit(exitcode);
 }
