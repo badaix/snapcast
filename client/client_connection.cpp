@@ -24,6 +24,7 @@
 #include "common/str_compat.hpp"
 
 // 3rd party headers
+#include <boost/asio/connect.hpp>
 #include <boost/asio/read.hpp>
 #include <boost/asio/streambuf.hpp>
 #include <boost/asio/write.hpp>
@@ -124,10 +125,9 @@ std::string ClientConnection::getMacAddress()
 
 void ClientConnection::connect(const ResultHandler& handler)
 {
-    tcp::resolver::query query(server_.host, cpt::to_string(server_.port), boost::asio::ip::resolver_query_base::numeric_service);
     boost::system::error_code ec;
     LOG(INFO, LOG_TAG) << "Resolving host IP for: " << server_.host << "\n";
-    auto iterator = resolver_.resolve(query, ec);
+    auto endpoints = resolver_.resolve(server_.host, cpt::to_string(server_.port), ec);
     if (ec)
     {
         LOG(ERROR, LOG_TAG) << "Failed to resolve host '" << server_.host << "', error: " << ec.message() << "\n";
@@ -135,51 +135,13 @@ void ClientConnection::connect(const ResultHandler& handler)
         return;
     }
 
-    for (const auto& iter : iterator)
-        LOG(DEBUG, LOG_TAG) << "Resolved IP: " << iter.endpoint().address().to_string() << "\n";
-
-    for (const auto& iter : iterator)
-    {
-        LOG(INFO, LOG_TAG) << "Connecting to " << iter.endpoint() << "\n";
-        socket_.connect(*iterator, ec);
-        if (!ec || (ec == boost::system::errc::interrupted))
-        {
-            // We were successful or interrupted, e.g. by sig int
-            break;
-        }
-    }
-
+    auto finalEndpoint = boost::asio::connect(socket_,endpoints.begin(),endpoints.end(),ec);
     if (ec)
         LOG(ERROR, LOG_TAG) << "Failed to connect to host '" << server_.host << "', error: " << ec.message() << "\n";
     else
         LOG(NOTICE, LOG_TAG) << "Connected to " << socket_.remote_endpoint().address().to_string() << endl;
 
     handler(ec);
-
-#if 0
-    resolver_.async_resolve(query, host_, cpt::to_string(port_), [this, handler](const boost::system::error_code& ec, tcp::resolver::results_type results) {
-        if (ec)
-        {
-            LOG(ERROR, LOG_TAG) << "Failed to resolve host '" << host_ << "', error: " << ec.message() << "\n";
-            handler(ec);
-            return;
-        }
-
-        resolver_.cancel();
-        socket_.async_connect(*results, [this, handler](const boost::system::error_code& ec) {
-            if (ec)
-            {
-                LOG(ERROR, LOG_TAG) << "Failed to connect to host '" << host_ << "', error: " << ec.message() << "\n";
-                handler(ec);
-                return;
-            }
-
-            LOG(NOTICE, LOG_TAG) << "Connected to " << socket_.remote_endpoint().address().to_string() << endl;
-            handler(ec);
-            getNextMessage();
-        });
-    });
-#endif
 }
 
 
