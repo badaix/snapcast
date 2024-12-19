@@ -178,7 +178,7 @@ void ControlServer::start()
             {
                 LOG(INFO, LOG_TAG) << "Creating TCP acceptor for address: " << address << ", port: " << settings_.tcp.port << "\n";
                 acceptor_.emplace_back(make_unique<tcp::acceptor>(boost::asio::make_strand(io_context_.get_executor()),
-                                                                  tcp::endpoint(boost::asio::ip::address::from_string(address), settings_.tcp.port)));
+                                                                  tcp::endpoint(boost::asio::ip::make_address(address), settings_.tcp.port)));
             }
             catch (const boost::system::system_error& e)
             {
@@ -196,7 +196,7 @@ void ControlServer::start()
                 {
                     LOG(INFO, LOG_TAG) << "Creating HTTP acceptor for address: " << address << ", port: " << settings_.http.port << "\n";
                     acceptor_.emplace_back(make_unique<tcp::acceptor>(boost::asio::make_strand(io_context_.get_executor()),
-                                                                      tcp::endpoint(boost::asio::ip::address::from_string(address), settings_.http.port)));
+                                                                      tcp::endpoint(boost::asio::ip::make_address(address), settings_.http.port)));
                 }
                 catch (const boost::system::system_error& e)
                 {
@@ -213,7 +213,7 @@ void ControlServer::start()
                 {
                     LOG(INFO, LOG_TAG) << "Creating HTTPS acceptor for address: " << address << ", port: " << settings_.http.ssl_port << "\n";
                     acceptor_.emplace_back(make_unique<tcp::acceptor>(boost::asio::make_strand(io_context_.get_executor()),
-                                                                      tcp::endpoint(boost::asio::ip::address::from_string(address), settings_.http.ssl_port)));
+                                                                      tcp::endpoint(boost::asio::ip::make_address(address), settings_.http.ssl_port)));
                 }
                 catch (const boost::system::system_error& e)
                 {
