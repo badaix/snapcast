@@ -1,5 +1,10 @@
 cmake_minimum_required(VERSION 3.14)
 
+# find_package() uses uppercase <PackageName>_ROOT variables.
+if(POLICY CMP0144)
+  cmake_policy(SET CMP0144 NEW)
+endif()
+
 project(
   snapcast
   LANGUAGES CXX

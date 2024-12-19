@@ -21,9 +21,6 @@
 
 // local headers
 #include "common/aixlog.hpp"
-#include "common/message/client_info.hpp"
-#include "common/message/hello.hpp"
-#include "common/message/time.hpp"
 #include "config.hpp"
 #include "stream_session_tcp.hpp"
 

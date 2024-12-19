@@ -449,11 +449,10 @@ void ControlSessionHttp::on_read(beast::error_code ec, std::size_t bytes_transfe
         return;
     }
 
-
-    std::string_view authheader = req_[beast::http::field::authorization];
+    auto authheader = req_[beast::http::field::authorization];
     if (!authheader.empty())
     {
-        auto ec = authinfo.authenticate(std::string(authheader));
+        auto ec = authinfo.authenticate(std::string{authheader});
         if (ec)
         {
             LOG(ERROR, LOG_TAG) << "Authentication failed: " << ec.detailed_message() << "\n";

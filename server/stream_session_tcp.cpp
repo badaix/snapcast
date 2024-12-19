@@ -21,7 +21,6 @@
 
 // local headers
 #include "common/aixlog.hpp"
-#include "common/message/pcm_chunk.hpp"
 
 // 3rd party headers
 
