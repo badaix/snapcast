@@ -284,11 +284,6 @@ jobs:
       fail-fast: false
       matrix:
         xcode:
-          - "13.1"
-          - "13.2"
-          - "13.3"
-          - "13.4"
-          - "14.0"
           - "14.1"
           - "14.2"
           - "14.3"
@@ -297,23 +292,16 @@ jobs:
           - "15.2"
           - "15.3"
           - "15.4"
+          - "16.0"
+          - "16.1"
+          - "16.2"
         include:
-          - xcode: "13.1"
-            os: macos-12
-          - xcode: "13.2"
-            os: macos-12
-          - xcode: "13.3"
-            os: macos-12
-          - xcode: "13.4"
-            os: macos-12
-          - xcode: "14.0"
-            os: macos-12
           - xcode: "14.1"
             os: macos-13
           - xcode: "14.2"
             os: macos-13
           - xcode: "14.3"
-            os: macos-14
+            os: macos-13
           - xcode: "15.0"
             os: macos-14
           - xcode: "15.1"
@@ -323,7 +311,13 @@ jobs:
           - xcode: "15.3"
             os: macos-14
           - xcode: "15.4"
-            os: macos-14
+            os: macos-15
+          - xcode: "16.0"
+            os: macos-15
+          - xcode: "16.1"
+            os: macos-15
+          - xcode: "16.2"
+            os: macos-15
 
     runs-on: ${{ matrix.os }}
 
