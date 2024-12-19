@@ -34,10 +34,10 @@
 #pragma GCC diagnostic ignored "-Wmissing-braces"
 #pragma GCC diagnostic ignored "-Wnarrowing"
 #pragma GCC diagnostic ignored "-Wc++11-narrowing"
-#include <boost/process/args.hpp>
-#include <boost/process/async.hpp>
-#include <boost/process/child.hpp>
-#include <boost/process/exe.hpp>
+#include <boost/process/v1/args.hpp>
+#include <boost/process/v1/async.hpp>
+#include <boost/process/v1/child.hpp>
+#include <boost/process/v1/exe.hpp>
 #pragma GCC diagnostic pop
 #endif
 
