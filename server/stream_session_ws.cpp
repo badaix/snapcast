@@ -114,7 +114,7 @@ void StreamSessionWebsocket::on_read_ws(beast::error_code ec, std::size_t bytes_
         return;
     }
 
-    auto* data = boost::asio::buffer_cast<char*>(buffer_.data());
+    auto* data = static_cast<char*>(buffer_.data().data());
     baseMessage_.deserialize(data);
     LOG(DEBUG, LOG_TAG) << "getNextMessage: " << baseMessage_.type << ", size: " << baseMessage_.size << ", id: " << baseMessage_.id
                         << ", refers: " << baseMessage_.refersTo << "\n";
