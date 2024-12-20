@@ -20,7 +20,7 @@ set(TEST_SOURCES
     ${CMAKE_SOURCE_DIR}/server/streamreader/metadata.cpp
     ${CMAKE_SOURCE_DIR}/server/streamreader/stream_uri.cpp)
 
-include_directories(${Boost_INCLUDE_DIR})
+include_directories(SYSTEM ${Boost_INCLUDE_DIR})
 
 add_executable(snapcast_test ${TEST_SOURCES})
 
