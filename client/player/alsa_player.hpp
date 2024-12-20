@@ -86,6 +86,7 @@ private:
     snd_pcm_uframes_t frames_;
     boost::asio::posix::stream_descriptor sd_;
     std::chrono::time_point<std::chrono::steady_clock> last_change_;
+    std::recursive_mutex rec_mutex_;
     boost::asio::steady_timer timer_;
 
     std::optional<std::chrono::microseconds> buffer_time_;

@@ -145,7 +145,7 @@ vector<PcmDevice> PulsePlayer::pcm_list(const std::string& parameter)
 
 
 PulsePlayer::PulsePlayer(boost::asio::io_context& io_context, const ClientSettings::Player& settings, std::shared_ptr<Stream> stream)
-    : Player(io_context, settings, stream), latency_(BUFFER_TIME), last_chunk_tick_(0), pa_ml_(nullptr), pa_ctx_(nullptr), playstream_(nullptr),
+    : Player(io_context, settings, std::move(stream)), latency_(BUFFER_TIME), last_chunk_tick_(0), pa_ml_(nullptr), pa_ctx_(nullptr), playstream_(nullptr),
       proplist_(nullptr), server_(std::nullopt)
 {
     auto params = utils::string::split_pairs_to_container<std::vector<std::string>>(settings.parameter, ',', '=');
@@ -210,7 +210,7 @@ void PulsePlayer::worker()
             }
             catch (const std::exception& e)
             {
-                LOG(ERROR, LOG_TAG) << "Exception while connecting to pulse: " << e.what() << endl;
+                LOG(ERROR, LOG_TAG) << "Exception while connecting to pulse: " << e.what() << "\n";
                 disconnect();
                 chronos::sleep(100);
             }

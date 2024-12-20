@@ -117,7 +117,7 @@ private:
     template <typename T>
     void adjustVolume(char* buffer, size_t count, double volume)
     {
-        auto* bufferT = static_cast<T*>(buffer);
+        auto* bufferT = reinterpret_cast<T*>(buffer);
         for (size_t n = 0; n < count; ++n)
             bufferT[n] = endian::swap<T>(static_cast<T>(endian::swap<T>(bufferT[n]) * volume));
     }
