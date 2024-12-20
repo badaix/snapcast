@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2022  Johannes Pohl
+    Copyright (C) 2014-2024  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -83,7 +83,7 @@ public:
 
         // logd << ", from: " << format.frameSize()*idx << ", to: " << format.frameSize()*idx + format.frameSize()*result;
         if (outputBuffer != nullptr)
-            memcpy((char*)outputBuffer, (char*)(payload) + format.frameSize() * idx_, format.frameSize() * result);
+            memcpy(static_cast<char*>(outputBuffer), static_cast<char*>(payload) + format.frameSize() * idx_, format.frameSize() * result);
 
         idx_ += result;
         // logd << ", new idx: " << idx << ", result: " << result << ", wireChunk->length: " << wireChunk->length << ", format.frameSize(): " <<

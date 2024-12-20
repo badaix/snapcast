@@ -116,7 +116,7 @@ struct tv
     }
 
     /// C'tor, construct from timeval @p tv
-    tv(timeval tv) : sec(tv.tv_sec), usec(tv.tv_usec){};
+    explicit tv(timeval tv) : sec(tv.tv_sec), usec(tv.tv_usec){};
     /// C'tor, construct from @p _sec and @p _usec
     tv(int32_t _sec, int32_t _usec) : sec(_sec), usec(_usec){};
 
@@ -173,7 +173,7 @@ struct BaseMessage
     }
 
     /// c'tor with message type @p type_
-    BaseMessage(message_type type_) : type(type_), id(0), refersTo(0), size(0)
+    explicit BaseMessage(message_type type_) : type(type_), id(0), refersTo(0), size(0)
     {
     }
 
@@ -370,7 +370,7 @@ protected:
     void readVal(std::istream& stream, char** payload, uint32_t& size) const
     {
         readVal(stream, size);
-        *payload = (char*)realloc(*payload, size);
+        *payload = static_cast<char*>(realloc(*payload, size));
         stream.read(*payload, size);
     }
 

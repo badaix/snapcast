@@ -44,7 +44,7 @@ namespace
 template <typename T>
 void assign(void* pointer, T val)
 {
-    T* p = (T*)pointer;
+    T* p = static_cast<T*>(pointer);
     *p = val;
 }
 } // namespace
@@ -246,7 +246,7 @@ void OpusEncoder::encode(const SampleFormat& format, const char* data, size_t si
     if (encoded_.size() < size)
         encoded_.resize(size);
 
-    opus_int32 len = opus_encode(enc_, (opus_int16*)data, samples_per_channel, encoded_.data(), size);
+    opus_int32 len = opus_encode(enc_, reinterpret_cast<const opus_int16*>(data), samples_per_channel, encoded_.data(), size);
     LOG(TRACE, LOG_TAG) << "Encode " << samples_per_channel << " frames, size " << size << " bytes, encoded: " << len << " bytes" << '\n';
 
     if (len > 0)

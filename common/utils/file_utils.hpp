@@ -33,7 +33,6 @@
 #endif
 
 #include <filesystem>
-#include <fstream>
 #include <stdexcept>
 #include <vector>
 
@@ -64,7 +63,7 @@ static void do_chown(const std::string& file_path, const std::string& user_name,
 
     if (!user_name.empty())
     {
-        struct passwd* pwd = getpwnam(user_name.c_str());
+        const struct passwd* pwd = getpwnam(user_name.c_str());
         if (pwd == nullptr)
             throw std::runtime_error("Failed to get uid");
         uid = pwd->pw_uid;
@@ -72,7 +71,7 @@ static void do_chown(const std::string& file_path, const std::string& user_name,
 
     if (!group_name.empty())
     {
-        struct group* grp = getgrnam(group_name.c_str());
+        const struct group* grp = getgrnam(group_name.c_str());
         if (grp == nullptr)
             throw std::runtime_error("Failed to get gid");
         gid = grp->gr_gid;

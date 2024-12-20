@@ -31,11 +31,11 @@ namespace msg
 class CodecHeader : public BaseMessage
 {
 public:
-    CodecHeader(const std::string& codecName = "", uint32_t size = 0)
+    explicit CodecHeader(const std::string& codecName = "", uint32_t size = 0)
         : BaseMessage(message_type::kCodecHeader), payloadSize(size), payload(nullptr), codec(codecName)
     {
         if (size > 0)
-            payload = (char*)malloc(size * sizeof(char));
+            payload = static_cast<char*>(malloc(size * sizeof(char)));
     }
 
     ~CodecHeader() override

@@ -126,7 +126,8 @@ struct ErrorOr
     /// @return the moved error
     ErrorCode takeError()
     {
-        return std::move(std::get<ErrorCode>(var));
+        auto ec = std::move(std::get<ErrorCode>(var));
+        return ec;
     }
 
 private:

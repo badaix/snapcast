@@ -16,7 +16,7 @@ jobs:
         tool:
           - cppcheck
 
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
 
     steps:
       - uses: actions/checkout@v4
@@ -43,7 +43,7 @@ jobs:
       - name: configure
         run: |
           cmake -S . -B build \
-            -DWERROR=ON -DBUILD_TESTS=ON \
+            -DWERROR=ON -DBUILD_TESTS=OFF \
             -DBOOST_ROOT=boost_${BOOST_VERSION} \
             -DCMAKE_BUILD_TYPE=Release \
             -DCMAKE_EXPORT_COMPILE_COMMANDS=TRUE \

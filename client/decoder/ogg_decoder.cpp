@@ -33,6 +33,7 @@
 #endif
 #include <cstdint>
 #include <cstring>
+#include <string>
 
 
 
@@ -43,7 +44,7 @@ static constexpr auto LOG_TAG = "OggDecoder";
 namespace decoder
 {
 
-OggDecoder::OggDecoder() : Decoder()
+OggDecoder::OggDecoder()
 {
     ogg_sync_init(&oy); /* Now we can read pages */
 }
@@ -244,7 +245,6 @@ SampleFormat OggDecoder::setHeader(msg::CodecHeader* chunk)
         if (comment.find("SAMPLE_FORMAT=") == 0)
             sampleFormat_.setFormat(comment.substr(comment.find('=') + 1));
         LOG(INFO, LOG_TAG) << "comment: " << comment << "\n";
-        ;
         ++ptr;
     }
 

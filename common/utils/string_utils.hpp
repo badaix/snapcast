@@ -75,7 +75,7 @@ std::map<std::string, T> split_pairs_to_container(const std::string& s, char pai
 {
     std::map<std::string, T> result;
     auto keyValueList = split(s, pair_delim);
-    for (auto& kv : keyValueList)
+    for (const auto& kv : keyValueList)
     {
         auto pos = kv.find(key_value_delim);
         if (pos != std::string::npos)

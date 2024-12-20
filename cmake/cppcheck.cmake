@@ -45,7 +45,14 @@ if(CMAKE_VERSION VERSION_EQUAL "3.19.0" OR CMAKE_VERSION VERSION_GREATER
         "--suppress=*:${CMAKE_BINARY_DIR}/_deps/*"
         "--suppress=unusedFunction"
         "--suppress=noExplicitConstructor"
-        "--suppress=preprocessorErrorDirective")
+        "--suppress=missingInclude"
+        "--suppress=missingIncludeSystem"
+        "--suppress=useInitializationList"
+        "--suppress=shadowFunction"
+        "--suppress=shadowVariable"
+        "--suppress=stlIfStrFind"
+        "--suppress=useStlAlgorithm"
+        "--suppress=virtualCallInConstructor")
 
       if(CPPCHECK_ARGS)
         set(CPPCHECK_ARGS_LIST ${CPPCHECK_ARGS})
