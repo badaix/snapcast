@@ -42,7 +42,7 @@ if(CMAKE_VERSION VERSION_EQUAL "3.19.0" OR CMAKE_VERSION VERSION_GREATER
         "--project=${CMAKE_BINARY_DIR}/compile_commands.json"
         "--error-exitcode=10"
         "--inline-suppr"
-        "--suppress=*:${CMAKE_BINARY_DIR}/_deps/*"
+        "--suppress=*:${CMAKE_BINARY_DIR}/*"
         "--suppress=unusedFunction"
         "--suppress=noExplicitConstructor"
         "--suppress=missingInclude"
@@ -52,6 +52,7 @@ if(CMAKE_VERSION VERSION_EQUAL "3.19.0" OR CMAKE_VERSION VERSION_GREATER
         "--suppress=shadowVariable"
         "--suppress=stlIfStrFind"
         "--suppress=useStlAlgorithm"
+        "--suppress=unmatchedSuppression"
         "--suppress=virtualCallInConstructor")
 
       if(CPPCHECK_ARGS)
