@@ -27,18 +27,10 @@
 
 // 3rd party headers
 #ifdef SUPPORTS_VOLUME_SCRIPT
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wpragmas"
-#pragma GCC diagnostic ignored "-Wunused-result"
-#pragma GCC diagnostic ignored "-Wunused-parameter"
-#pragma GCC diagnostic ignored "-Wmissing-braces"
-#pragma GCC diagnostic ignored "-Wnarrowing"
-#pragma GCC diagnostic ignored "-Wc++11-narrowing"
 #include <boost/process/args.hpp>
 #include <boost/process/async.hpp>
 #include <boost/process/child.hpp>
 #include <boost/process/exe.hpp>
-#pragma GCC diagnostic pop
 #endif
 
 // standard headers

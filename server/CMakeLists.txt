@@ -33,9 +33,11 @@ set(SERVER_SOURCES
 
 set(SERVER_LIBRARIES ${CMAKE_THREAD_LIBS_INIT} ${ATOMIC_LIBRARY} common)
 
-set(SERVER_INCLUDE ${Boost_INCLUDE_DIR} ${CMAKE_SOURCE_DIR}/server
-                   ${CMAKE_SOURCE_DIR})
+include_directories(${CMAKE_SOURCE_DIR} ${CMAKE_SOURCE_DIR}/server)
 
+include_directories(SYSTEM ${Boost_INCLUDE_DIR})
+
+                   
 if(ANDROID)
   find_package(vorbis REQUIRED CONFIG)
   list(APPEND SERVER_LIBRARIES boost::boost)
@@ -52,7 +54,7 @@ else()
   if(AVAHI_FOUND)
     list(APPEND SERVER_SOURCES publishZeroConf/publish_avahi.cpp)
     list(APPEND SERVER_LIBRARIES ${AVAHI_LIBRARIES})
-    list(APPEND SERVER_INCLUDE ${AVAHI_INCLUDE_DIRS})
+    include_directories(${AVAHI_INCLUDE_DIRS})
   endif(AVAHI_FOUND)
 
   if(BONJOUR_FOUND)
@@ -67,7 +69,7 @@ else()
     list(APPEND SERVER_SOURCES encoder/ogg_encoder.cpp)
     list(APPEND SERVER_LIBRARIES ${VORBIS_LIBRARIES} ${VORBISENC_LIBRARIES}
          ${OGG_LIBRARIES})
-    list(APPEND SERVER_INCLUDE ${OGG_INCLUDE_DIRS} ${VORBIS_INCLUDE_DIRS}
+    include_directories(${OGG_INCLUDE_DIRS} ${VORBIS_INCLUDE_DIRS}
          ${VORBISENC_INCLUDE_DIRS})
     link_directories(${VORBIS_LIBRARY_DIRS})
     link_directories(${VORBISENC_LIBRARY_DIRS})
@@ -80,38 +82,38 @@ else()
   if(FLAC_FOUND)
     list(APPEND SERVER_SOURCES encoder/flac_encoder.cpp)
     list(APPEND SERVER_LIBRARIES ${FLAC_LIBRARIES})
-    list(APPEND SERVER_INCLUDE ${FLAC_INCLUDE_DIRS})
+    include_directories(${FLAC_INCLUDE_DIRS})
     link_directories(${FLAC_LIBRARY_DIRS})
   endif(FLAC_FOUND)
 
   if(OPUS_FOUND)
     list(APPEND SERVER_SOURCES encoder/opus_encoder.cpp)
     list(APPEND SERVER_LIBRARIES ${OPUS_LIBRARIES})
-    list(APPEND SERVER_INCLUDE ${OPUS_INCLUDE_DIRS})
+    include_directories(${OPUS_INCLUDE_DIRS})
     link_directories(${OPUS_LIBRARY_DIRS})
   endif(OPUS_FOUND)
 
   if(ALSA_FOUND)
     list(APPEND SERVER_SOURCES streamreader/alsa_stream.cpp)
     list(APPEND SERVER_LIBRARIES ${ALSA_LIBRARIES})
-    list(APPEND SERVER_INCLUDE ${ALSA_INCLUDE_DIRS})
+    include_directories(${ALSA_INCLUDE_DIRS})
   endif(ALSA_FOUND)
 
   if(JACK_FOUND)
     list(APPEND SERVER_SOURCES streamreader/jack_stream.cpp)
     list(APPEND SERVER_LIBRARIES ${JACK_LIBRARIES})
-    list(APPEND SERVER_INCLUDE ${JACK_INCLUDE_DIRS})
+    include_directories(${JACK_INCLUDE_DIRS})
   endif(JACK_FOUND)
 
   if(EXPAT_FOUND)
     list(APPEND SERVER_LIBRARIES ${EXPAT_LIBRARIES})
-    list(APPEND SERVER_INCLUDE ${EXPAT_INCLUDE_DIRS})
+    include_directories(${EXPAT_INCLUDE_DIRS})
     link_directories(${EXPAT_LIBRARY_DIRS})
   endif(EXPAT_FOUND)
 
   if(SOXR_FOUND)
     list(APPEND SERVER_LIBRARIES ${SOXR_LIBRARIES})
-    list(APPEND SERVER_INCLUDE ${SOXR_INCLUDE_DIRS})
+    include_directories(${SOXR_INCLUDE_DIRS})
     link_directories(${SOXR_LIBRARY_DIRS})
   endif(SOXR_FOUND)
 endif()
@@ -119,7 +121,6 @@ endif()
 # list(APPEND SERVER_LIBRARIES Boost::boost)
 list(APPEND SERVER_LIBRARIES OpenSSL::Crypto OpenSSL::SSL)
 
-include_directories(${SERVER_INCLUDE})
 if(ANDROID)
   add_executable(libsnapserver.so ${SERVER_SOURCES})
   target_link_libraries(libsnapserver.so ${SERVER_LIBRARIES} log)

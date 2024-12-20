@@ -23,23 +23,8 @@
 #include "control_session.hpp"
 
 // 3rd party headers
-#pragma GCC diagnostic push
-#if defined(__GNUC__) && !defined(__clang__)
-#pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
-#endif
 #include <boost/asio/strand.hpp>
-#pragma GCC diagnostic pop
-
-#pragma GCC diagnostic push
-#if defined(__clang__)
-#pragma GCC diagnostic ignored "-Wunknown-warning-option"
-#pragma GCC diagnostic ignored "-Wdeprecated-copy-with-user-provided-copy"
-#pragma GCC diagnostic ignored "-Wdeprecated-copy"
-#elif defined(__GNUC__)
-#pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
-#endif
 #include <boost/beast/core.hpp>
-#pragma GCC diagnostic pop
 #include <boost/beast/ssl.hpp>
 #include <boost/beast/websocket.hpp>
 

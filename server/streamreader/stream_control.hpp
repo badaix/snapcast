@@ -24,19 +24,7 @@
 #include "server_settings.hpp"
 
 // 3rd party headers
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wpragmas"
-#pragma GCC diagnostic ignored "-Wunused-result"
-#pragma GCC diagnostic ignored "-Wunused-parameter"
-#pragma GCC diagnostic ignored "-Wmissing-braces"
-#pragma GCC diagnostic ignored "-Wnarrowing"
-#pragma GCC diagnostic ignored "-Wc++11-narrowing"
-#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
-#if !defined(__clang__)
-#pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
-#endif
 #include <boost/process.hpp>
-#pragma GCC diagnostic pop
 #include <boost/asio/any_io_executor.hpp>
 
 // standard headers

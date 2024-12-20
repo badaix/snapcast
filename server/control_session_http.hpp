@@ -28,13 +28,7 @@
 #include <boost/asio/ssl.hpp>
 #include <boost/beast/core.hpp>
 #include <boost/beast/ssl.hpp>
-
-#pragma GCC diagnostic push
-#if defined(__GNUC__) && !defined(__clang__)
-#pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
-#endif
 #include <boost/beast/websocket.hpp>
-#pragma GCC diagnostic pop
 
 // standard headers
 #include <deque>
