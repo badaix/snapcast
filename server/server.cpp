@@ -21,7 +21,6 @@
 
 // local headers
 #include "common/aixlog.hpp"
-#include "common/jwt.hpp"
 #include "common/message/client_info.hpp"
 #include "common/message/hello.hpp"
 #include "common/message/server_settings.hpp"
