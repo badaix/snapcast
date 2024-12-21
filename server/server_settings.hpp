@@ -69,8 +69,8 @@ struct ServerSettings
         bool ssl_enabled{false};
         size_t port{1780};
         size_t ssl_port{1788};
-        std::vector<std::string> bind_to_address{{"0.0.0.0"}};
-        std::vector<std::string> ssl_bind_to_address{{"0.0.0.0"}};
+        std::vector<std::string> bind_to_address{{"::"}};
+        std::vector<std::string> ssl_bind_to_address{{"::"}};
         std::string doc_root{""};
         std::string host{"<hostname>"};
         std::string url_prefix{""};
@@ -80,7 +80,7 @@ struct ServerSettings
     {
         bool enabled{true};
         size_t port{1705};
-        std::vector<std::string> bind_to_address{{"0.0.0.0"}};
+        std::vector<std::string> bind_to_address{{"::"}};
     };
 
     struct Stream
@@ -92,7 +92,7 @@ struct ServerSettings
         std::string sampleFormat{"48000:16:2"};
         size_t streamChunkMs{20};
         bool sendAudioToMutedClients{false};
-        std::vector<std::string> bind_to_address{{"0.0.0.0"}};
+        std::vector<std::string> bind_to_address{{"::"}};
     };
 
     struct StreamingClient
