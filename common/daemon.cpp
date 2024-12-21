@@ -85,7 +85,7 @@ void Daemon::daemonize()
 
     if (!group_.empty())
     {
-        struct group* grp = getgrnam(group_.c_str());
+        const struct group* grp = getgrnam(group_.c_str());
         if (grp == nullptr)
             throw SnapException("no such group \"" + group_ + "\"");
         user_gid = grp->gr_gid;

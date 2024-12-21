@@ -80,13 +80,27 @@ int main(int argc, char* argv[])
         conf.add<Implicit<string>>("", "server.group", "the group to run as when daemonized", settings.server.group, &settings.server.group);
         conf.add<Implicit<string>>("", "server.datadir", "directory where persistent data is stored", settings.server.data_dir, &settings.server.data_dir);
 
+        // SSL settings
+        conf.add<Value<string>>("", "ssl.certificate", "certificate file (PEM format)", settings.ssl.certificate, &settings.ssl.certificate);
+        conf.add<Value<string>>("", "ssl.private_key", "private key file (PEM format)", settings.ssl.private_key, &settings.ssl.private_key);
+        conf.add<Value<string>>("", "ssl.key_password", "key password (for encrypted private key)", settings.ssl.key_password, &settings.ssl.key_password);
+
+        // Users setting
+        auto users_value = conf.add<Value<string>>("", "users.user", "<User nane>:<permissions>:<password>");
+
         // HTTP RPC settings
         conf.add<Value<bool>>("", "http.enabled", "enable HTTP Json RPC (HTTP POST and websockets)", settings.http.enabled, &settings.http.enabled);
         conf.add<Value<size_t>>("", "http.port", "which port the server should listen on", settings.http.port, &settings.http.port);
         auto http_bind_to_address = conf.add<Value<string>>("", "http.bind_to_address", "address for the server to listen on",
                                                             settings.http.bind_to_address.front(), &settings.http.bind_to_address[0]);
+        conf.add<Value<bool>>("", "http.ssl_enabled", "enable HTTPS Json RPC (HTTPS POST and ssl websockets)", settings.http.ssl_enabled,
+                              &settings.http.ssl_enabled);
+        conf.add<Value<size_t>>("", "http.ssl_port", "which ssl port the server should listen on", settings.http.ssl_port, &settings.http.ssl_port);
+        auto http_ssl_bind_to_address = conf.add<Value<string>>("", "http.ssl_bind_to_address", "ssl address for the server to listen on",
+                                                                settings.http.ssl_bind_to_address.front(), &settings.http.ssl_bind_to_address[0]);
         conf.add<Implicit<string>>("", "http.doc_root", "serve a website from the doc_root location", settings.http.doc_root, &settings.http.doc_root);
         conf.add<Value<string>>("", "http.host", "Hostname or IP under which clients can reach this host", settings.http.host, &settings.http.host);
+        conf.add<Value<string>>("", "http.url_prefix", "URL prefix for generating album art URLs", settings.http.url_prefix, &settings.http.url_prefix);
 
         // TCP RPC settings
         conf.add<Value<bool>>("", "tcp.enabled", "enable TCP Json RPC)", settings.tcp.enabled, &settings.tcp.enabled);
@@ -143,6 +157,12 @@ int main(int argc, char* argv[])
                 for (size_t n = 0; n < http_bind_to_address->count(); ++n)
                     settings.http.bind_to_address.push_back(http_bind_to_address->value(n));
             }
+            if (http_ssl_bind_to_address->is_set())
+            {
+                settings.http.ssl_bind_to_address.clear();
+                for (size_t n = 0; n < http_ssl_bind_to_address->count(); ++n)
+                    settings.http.ssl_bind_to_address.push_back(http_ssl_bind_to_address->value(n));
+            }
             if (stream_bind_to_address->is_set())
             {
                 settings.stream.bind_to_address.clear();
@@ -152,7 +172,7 @@ int main(int argc, char* argv[])
         }
         catch (const std::invalid_argument& e)
         {
-            cerr << "Exception: " << e.what() << std::endl;
+            cerr << "Exception: " << e.what() << "\n";
             cout << "\n" << op << "\n";
             exit(EXIT_FAILURE);
         }
@@ -189,9 +209,9 @@ int main(int argc, char* argv[])
             std::unique_ptr<encoder::Encoder> encoder(encoderFactory.createEncoder(settings.stream.codec));
             if (encoder)
             {
-                cout << "Options for codec \"" << encoder->name() << "\":\n"
+                cout << "Options for codec '" << encoder->name() << "':\n"
                      << "  " << encoder->getAvailableOptions() << "\n"
-                     << "  Default: \"" << encoder->getDefaultOptions() << "\"\n";
+                     << "  Default: '" << encoder->getDefaultOptions() << "'\n";
             }
             exit(EXIT_SUCCESS);
         }
@@ -249,6 +269,15 @@ int main(int argc, char* argv[])
             settings.stream.sources.push_back(sourceValue->value(n));
         }
 
+        for (size_t n = 0; n < users_value->count(); ++n)
+        {
+            settings.users.emplace_back(users_value->value(n));
+            LOG(DEBUG, LOG_TAG) << "User: " << settings.users.back().name
+                                << ", permissions: " << utils::string::container_to_string(settings.users.back().permissions)
+                                << ", pw: " << settings.users.back().password << "\n";
+        }
+
+
 #ifdef HAS_DAEMON
         std::unique_ptr<Daemon> daemon;
         if (daemonOption->is_set())
@@ -264,9 +293,9 @@ int main(int argc, char* argv[])
             processPriority = std::min(std::max(-20, processPriority), 19);
             if (processPriority != 0)
                 setpriority(PRIO_PROCESS, 0, processPriority);
-            LOG(NOTICE, LOG_TAG) << "daemonizing" << std::endl;
+            LOG(NOTICE, LOG_TAG) << "daemonizing" << "\n";
             daemon->daemonize();
-            LOG(NOTICE, LOG_TAG) << "daemon started" << std::endl;
+            LOG(NOTICE, LOG_TAG) << "daemon started" << "\n";
         }
         else
             Config::instance().init(settings.server.data_dir);
@@ -322,9 +351,8 @@ int main(int argc, char* argv[])
 
         // Construct a signal set registered for process termination.
         boost::asio::signal_set signals(io_context, SIGHUP, SIGINT, SIGTERM);
-        signals.async_wait(
-            [&io_context](const boost::system::error_code& ec, int signal)
-            {
+        signals.async_wait([&io_context](const boost::system::error_code& ec, int signal)
+        {
             if (!ec)
                 LOG(INFO, LOG_TAG) << "Received signal " << signal << ": " << strsignal(signal) << "\n";
             else
@@ -333,6 +361,7 @@ int main(int argc, char* argv[])
         });
 
         std::vector<std::thread> threads;
+        threads.reserve(settings.server.threads);
         for (int n = 0; n < settings.server.threads; ++n)
             threads.emplace_back([&] { io_context.run(); });
 
@@ -341,16 +370,16 @@ int main(int argc, char* argv[])
         for (auto& t : threads)
             t.join();
 
-        LOG(INFO, LOG_TAG) << "Stopping streamServer" << endl;
+        LOG(INFO, LOG_TAG) << "Stopping streamServer\n";
         server->stop();
-        LOG(INFO, LOG_TAG) << "done" << endl;
+        LOG(INFO, LOG_TAG) << "done\n";
     }
     catch (const std::exception& e)
     {
-        LOG(ERROR, LOG_TAG) << "Exception: " << e.what() << std::endl;
+        LOG(ERROR, LOG_TAG) << "Exception: " << e.what() << "\n";
         exitcode = EXIT_FAILURE;
     }
     Config::instance().save();
-    LOG(NOTICE, LOG_TAG) << "Snapserver terminated." << endl;
+    LOG(NOTICE, LOG_TAG) << "Snapserver terminated.\n";
     exit(exitcode);
 }

@@ -106,6 +106,7 @@ private:
 };
 
 
+/// Write result callback function type
 using WriteHandler = std::function<void(boost::system::error_code ec, std::size_t length)>;
 
 /// Endpoint for a connected client.
@@ -117,21 +118,27 @@ using WriteHandler = std::function<void(boost::system::error_code ec, std::size_
 class StreamSession : public std::enable_shared_from_this<StreamSession>
 {
 public:
-    /// ctor. Received message from the client are passed to StreamMessageReceiver
+    /// c'tor. Received message from the client are passed to StreamMessageReceiver
     StreamSession(const boost::asio::any_io_executor& executor, StreamMessageReceiver* receiver);
+    /// d'tor
     virtual ~StreamSession() = default;
 
+    /// @return the IP of the connected streaming client
     virtual std::string getIP() = 0;
 
+    /// Start the StreamSession, e.g. start reading and processing data
     virtual void start() = 0;
+    /// Stop the StreamSession
     virtual void stop() = 0;
 
+    /// Set the message receiver to @p receiver
     void setMessageReceiver(StreamMessageReceiver* receiver)
     {
         messageReceiver_ = receiver;
     }
 
 protected:
+    /// Send data @p buffer to the streaming client, result is returned in the callback @p handler
     virtual void sendAsync(const shared_const_buffer& buffer, const WriteHandler& handler) = 0;
 
 public:

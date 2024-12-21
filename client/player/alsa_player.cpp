@@ -50,7 +50,7 @@ static constexpr auto DEFAULT_MIXER = "PCM";
 
 
 AlsaPlayer::AlsaPlayer(boost::asio::io_context& io_context, const ClientSettings::Player& settings, std::shared_ptr<Stream> stream)
-    : Player(io_context, settings, stream), handle_(nullptr), ctl_(nullptr), mixer_(nullptr), elem_(nullptr), sd_(io_context), timer_(io_context)
+    : Player(io_context, settings, std::move(stream)), handle_(nullptr), ctl_(nullptr), mixer_(nullptr), elem_(nullptr), sd_(io_context), timer_(io_context)
 {
     if (settings_.mixer.mode == ClientSettings::Mixer::Mode::hardware)
     {
@@ -93,7 +93,7 @@ AlsaPlayer::AlsaPlayer(boost::asio::io_context& io_context, const ClientSettings
 
 void AlsaPlayer::setHardwareVolume(const Volume& volume)
 {
-    std::lock_guard<std::recursive_mutex> lock(mutex_);
+    std::lock_guard<std::recursive_mutex> lock(rec_mutex_);
     if (elem_ == nullptr)
         return;
 
@@ -140,7 +140,7 @@ bool AlsaPlayer::getHardwareVolume(Volume& volume)
 {
     try
     {
-        std::lock_guard<std::recursive_mutex> lock(mutex_);
+        std::lock_guard<std::recursive_mutex> lock(rec_mutex_);
         if (elem_ == nullptr)
             throw SnapException("Mixer not initialized");
 
@@ -201,7 +201,7 @@ void AlsaPlayer::waitForEvent()
             return;
         }
 
-        std::lock_guard<std::recursive_mutex> lock(mutex_);
+        std::lock_guard<std::recursive_mutex> lock(rec_mutex_);
         if (ctl_ == nullptr)
             return;
 
@@ -250,7 +250,7 @@ void AlsaPlayer::initMixer()
         return;
 
     LOG(DEBUG, LOG_TAG) << "initMixer\n";
-    std::lock_guard<std::recursive_mutex> lock(mutex_);
+    std::lock_guard<std::recursive_mutex> lock(rec_mutex_);
     int err;
     if ((err = snd_ctl_open(&ctl_, mixer_device_.c_str(), SND_CTL_READONLY)) < 0)
         throw SnapException("Can't open control for " + mixer_device_ + ", error: " + snd_strerror(err));
@@ -292,7 +292,7 @@ void AlsaPlayer::initMixer()
 
 void AlsaPlayer::initAlsa()
 {
-    std::lock_guard<std::recursive_mutex> lock(mutex_);
+    std::lock_guard<std::recursive_mutex> lock(rec_mutex_);
 
     const SampleFormat& format = stream_->getFormat();
     uint32_t rate = format.rate();
@@ -461,7 +461,7 @@ void AlsaPlayer::initAlsa()
 
 void AlsaPlayer::uninitAlsa(bool uninit_mixer)
 {
-    std::lock_guard<std::recursive_mutex> lock(mutex_);
+    std::lock_guard<std::recursive_mutex> lock(rec_mutex_);
     if (uninit_mixer)
         uninitMixer();
 
@@ -480,7 +480,7 @@ void AlsaPlayer::uninitMixer()
         return;
 
     LOG(DEBUG, LOG_TAG) << "uninitMixer\n";
-    std::lock_guard<std::recursive_mutex> lock(mutex_);
+    std::lock_guard<std::recursive_mutex> lock(rec_mutex_);
     if (sd_.is_open())
     {
         boost::system::error_code ec;
@@ -587,7 +587,7 @@ void AlsaPlayer::worker()
             }
             catch (const std::exception& e)
             {
-                LOG(ERROR, LOG_TAG) << "Exception in initAlsa: " << e.what() << endl;
+                LOG(ERROR, LOG_TAG) << "Exception in initAlsa: " << e.what() << "\n";
                 chronos::sleep(100);
             }
             if (handle_ == nullptr)

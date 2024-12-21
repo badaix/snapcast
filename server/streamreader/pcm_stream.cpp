@@ -20,14 +20,15 @@
 #include "pcm_stream.hpp"
 
 // local headers
-#include "base64.h"
 #include "common/aixlog.hpp"
+#include "common/base64.h"
 #include "common/error_code.hpp"
 #include "common/snap_exception.hpp"
 #include "common/str_compat.hpp"
 #include "common/utils/string_utils.hpp"
 #include "control_error.hpp"
 #include "encoder/encoder_factory.hpp"
+#include "image_cache.hpp"
 
 // 3rd party headers
 #include <boost/asio/ip/host_name.hpp>
@@ -537,15 +538,22 @@ void PcmStream::setProperties(const Properties& properties)
     if (props.metadata.has_value() && props.metadata->art_data.has_value() && !props.metadata->art_url.has_value())
     {
         auto data = base64_decode(props.metadata->art_data->data);
-        auto md5 = ServerSettings::Http::image_cache.setImage(getName(), std::move(data), props.metadata->art_data->extension);
+        auto md5 = ImageCache::instance().setImage(getName(), std::move(data), props.metadata->art_data->extension);
 
         std::stringstream url;
-        url << "http://" << server_settings_.http.host << ":" << server_settings_.http.port << "/__image_cache?name=" << md5;
+        if (server_settings_.http.url_prefix.empty())
+        {
+            url << "http://" << server_settings_.http.host << ":" << server_settings_.http.port << "/__image_cache?name=" << md5;
+        }
+        else
+        {
+            url << server_settings_.http.url_prefix << "/__image_cache?name=" << md5;
+        }
         props.metadata->art_url = url.str();
     }
     else if (!props.metadata.has_value() || !props.metadata->art_data.has_value())
     {
-        ServerSettings::Http::image_cache.clear(getName());
+        ImageCache::instance().clear(getName());
     }
 
     if (props == properties_)

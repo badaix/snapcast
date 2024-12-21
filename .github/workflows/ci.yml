@@ -5,7 +5,7 @@ on:
   pull_request:
 
 env:
-  BOOST_VERSION: 1_85_0
+  BOOST_VERSION: 1_87_0
 
 jobs:
   static-analysis:
@@ -16,14 +16,18 @@ jobs:
         tool:
           - cppcheck
 
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
 
     steps:
       - uses: actions/checkout@v4
       - name: print environment
         run: env
       - name: dependencies
-        run: sudo apt-get update && sudo apt-get install -yq libasound2-dev libsoxr-dev libvorbisidec-dev libvorbis-dev libflac-dev libopus-dev alsa-utils libpulse-dev libavahi-client-dev avahi-daemon debhelper ccache expat cppcheck
+        run: |
+          sudo apt-get update && \
+          sudo apt-get install -yq libasound2-dev libsoxr-dev libvorbisidec-dev libvorbis-dev libflac-dev \
+          libopus-dev alsa-utils libpulse-dev libavahi-client-dev libssl-dev \
+          avahi-daemon debhelper ccache expat cppcheck 
       - name: cache boost
         id: cache-boost
         uses: actions/cache@v4
@@ -39,13 +43,107 @@ jobs:
       - name: configure
         run: |
           cmake -S . -B build \
-            -DWERROR=ON -DBUILD_TESTS=ON \
+            -DWERROR=ON -DBUILD_TESTS=OFF \
             -DBOOST_ROOT=boost_${BOOST_VERSION} \
             -DCMAKE_BUILD_TYPE=Release \
             -DCMAKE_EXPORT_COMPILE_COMMANDS=TRUE \
             -DCMAKE_CXX_FLAGS="-DCMAKE_CXX_FLAGS=-DJSON_HAS_CPP_14"
       - name: analysis
         run: cmake --build build --target ${{ matrix.tool }}
+
+
+  documentation:
+
+    # TODO: Fail in case of (too many) warnings, upload artifacts
+    strategy:
+      fail-fast: false
+
+    runs-on: ubuntu-24.04
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: print environment
+        run: env
+      - name: dependencies
+        run: |
+          sudo apt-get update && \
+          sudo apt-get install -yq libasound2-dev libsoxr-dev libvorbisidec-dev libvorbis-dev libflac-dev \
+          libopus-dev alsa-utils libpulse-dev libavahi-client-dev libssl-dev \
+          avahi-daemon debhelper ccache expat cppcheck doxygen graphviz
+      - name: doxygen
+        run: |
+          mkdir -p build/doxygen
+          doxygen 2>&1 | tee build/doxygen.log
+          WARNINGS=$(cat build/doxygen.log | sort | uniq | grep -e ": warning: " | wc -l)
+          MAX_ALLOWED=775
+          echo "Doxygen finished with $WARNINGS warnings, max allowed: $MAX_ALLOWED"
+          if [ "$WARNINGS" -gt "$MAX_ALLOWED" ]; then exit $WARNINGS; else exit 0; fi;
+
+
+  unit-test:
+
+    strategy:
+      fail-fast: false
+      matrix:
+        sanitizer:
+          - asan
+          - tsan
+        include:
+          - sanitizer: asan
+            param: "ASAN=ON"
+          - sanitizer: tsan
+            param: "TSAN=ON"
+
+    runs-on: ubuntu-24.04
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: print environment
+        run: env
+      - name: dependencies
+        run: |
+          sudo apt-get update && \
+          sudo apt-get install -yq libasound2-dev libsoxr-dev libvorbisidec-dev libvorbis-dev libflac-dev \
+          libopus-dev alsa-utils libpulse-dev libavahi-client-dev libssl-dev \
+          avahi-daemon debhelper ccache expat 
+      - name: cache boost
+        id: cache-boost
+        uses: actions/cache@v4
+        with:
+          path: boost_${{ env.BOOST_VERSION }}
+          key: boost-${{ env.BOOST_VERSION }}
+          enableCrossOsArchive: true
+      - name: get boost
+        if: steps.cache-boost.outputs.cache-hit != 'true'
+        run: |
+          wget https://boostorg.jfrog.io/artifactory/main/release/${BOOST_VERSION//_/.}/source/boost_${BOOST_VERSION}.tar.bz2
+          tar xjf boost_${BOOST_VERSION}.tar.bz2
+      - name: cache ccache
+        id: cache-ccache
+        uses: actions/cache@v4
+        with:
+          # TODO: use environment variable $HOME/.ccache
+          path: /home/runner/.ccache
+          key: ${{ matrix.sanitizer }}-ccache-${{ github.sha }}
+          restore-keys: ${{ matrix.sanitizer }}-ccache-
+      - name: configure
+        run: |
+          cmake -S . -B build \
+            -DWERROR=ON \
+            -DBUILD_TESTS=ON \
+            -D${{ matrix.param }} \
+            -DBOOST_ROOT=boost_${BOOST_VERSION} \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
+            -DCMAKE_EXPORT_COMPILE_COMMANDS=TRUE \
+            -DCMAKE_CXX_FLAGS="-DCMAKE_CXX_FLAGS=-DJSON_HAS_CPP_14"
+      - name: build
+        env:
+          # TODO: use environment variable $HOME/.ccache
+          CCACHE_DIR: /home/runner/.ccache
+        run: cmake --build build --parallel 4 --verbose
+      - name: unit-test
+        run: ./bin/snapcast_test
 
 
   linux:
@@ -186,11 +284,6 @@ jobs:
       fail-fast: false
       matrix:
         xcode:
-          - "13.1"
-          - "13.2"
-          - "13.3"
-          - "13.4"
-          - "14.0"
           - "14.1"
           - "14.2"
           - "14.3"
@@ -199,23 +292,16 @@ jobs:
           - "15.2"
           - "15.3"
           - "15.4"
+          - "16.0"
+          - "16.1"
+          - "16.2"
         include:
-          - xcode: "13.1"
-            os: macos-12
-          - xcode: "13.2"
-            os: macos-12
-          - xcode: "13.3"
-            os: macos-12
-          - xcode: "13.4"
-            os: macos-12
-          - xcode: "14.0"
-            os: macos-12
           - xcode: "14.1"
             os: macos-13
           - xcode: "14.2"
             os: macos-13
           - xcode: "14.3"
-            os: macos-14
+            os: macos-13
           - xcode: "15.0"
             os: macos-14
           - xcode: "15.1"
@@ -225,7 +311,13 @@ jobs:
           - xcode: "15.3"
             os: macos-14
           - xcode: "15.4"
-            os: macos-14
+            os: macos-15
+          - xcode: "16.0"
+            os: macos-15
+          - xcode: "16.1"
+            os: macos-15
+          - xcode: "16.2"
+            os: macos-15
 
     runs-on: ${{ matrix.os }}
 
@@ -234,7 +326,9 @@ jobs:
       - name: print environment
         run: env
       - name: dependencies
-        run: brew install pkgconfig libsoxr flac libvorbis opus ccache expat
+        run: |
+          brew update
+          brew install pkgconfig libsoxr flac libvorbis opus ccache expat
       - name: cache boost
         id: cache-boost
         uses: actions/cache@v4

@@ -30,12 +30,19 @@
 #include <string>
 
 
+/// Image cache, used to store current album art per stream
 class ImageCache
 {
 public:
-    ImageCache() = default;
-    virtual ~ImageCache() = default;
+    /// @return singleton to the image cache
+    static ImageCache& instance()
+    {
+        static ImageCache instance_;
+        return instance_;
+    }
 
+    /// Store the base64 encoded @p image for @p key (the session that stores the image) in the cache
+    /// @return url of the cached image (md5 of key + image data) appended with @p extension
     std::string setImage(const std::string& key, std::string image, const std::string& extension)
     {
         if (image.empty())
@@ -51,7 +58,7 @@ public:
         hash.process_bytes(image.data(), image.size());
         hash.get_digest(digest);
         std::string filename;
-        const auto intDigest = reinterpret_cast<const int*>(&digest);
+        const auto* intDigest = reinterpret_cast<const int*>(&digest);
         boost::algorithm::hex_lower(intDigest, intDigest + (sizeof(md5::digest_type) / sizeof(int)), std::back_inserter(filename));
         auto ext = extension;
         if (ext.find('.') == 0)
@@ -63,6 +70,7 @@ public:
         return filename;
     };
 
+    /// Clear image for @p key (the stream session's name)
     void clear(const std::string& key)
     {
         std::lock_guard<std::mutex> lock(mutex_);
@@ -77,6 +85,7 @@ public:
         }
     }
 
+    /// @return base64 encoded image for url (the one returned by "setImage")
     std::optional<std::string> getImage(const std::string& url)
     {
         std::lock_guard<std::mutex> lock(mutex_);
@@ -88,6 +97,9 @@ public:
     }
 
 private:
+    ImageCache() = default;
+    ~ImageCache() = default;
+
     std::map<std::string, std::string> key_to_url_;
     std::map<std::string, std::string> url_to_data_;
     std::mutex mutex_;

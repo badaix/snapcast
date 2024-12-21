@@ -24,19 +24,7 @@
 #include "server_settings.hpp"
 
 // 3rd party headers
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wpragmas"
-#pragma GCC diagnostic ignored "-Wunused-result"
-#pragma GCC diagnostic ignored "-Wunused-parameter"
-#pragma GCC diagnostic ignored "-Wmissing-braces"
-#pragma GCC diagnostic ignored "-Wnarrowing"
-#pragma GCC diagnostic ignored "-Wc++11-narrowing"
-#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
-#if !defined(__clang__)
-#pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
-#endif
 #include <boost/process.hpp>
-#pragma GCC diagnostic pop
 #include <boost/asio/any_io_executor.hpp>
 
 // standard headers
@@ -61,7 +49,7 @@ public:
     using OnResponse = std::function<void(const jsonrpcpp::Response& response)>;
     using OnLog = std::function<void(std::string message)>;
 
-    StreamControl(const boost::asio::any_io_executor& executor);
+    explicit StreamControl(const boost::asio::any_io_executor& executor);
     virtual ~StreamControl() = default;
 
     void start(const std::string& stream_id, const ServerSettings& server_setttings, const OnNotification& notification_handler,

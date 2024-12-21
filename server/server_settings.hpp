@@ -20,9 +20,10 @@
 
 
 // local headers
-#include "image_cache.hpp"
+#include "common/utils/string_utils.hpp"
 
 // standard headers
+#include <cstdint>
 #include <string>
 #include <vector>
 
@@ -38,14 +39,41 @@ struct ServerSettings
         std::string data_dir{""};
     };
 
+    struct Ssl
+    {
+        std::string certificate{""};
+        std::string private_key{""};
+        std::string key_password{""};
+    };
+
+    struct User
+    {
+        User(const std::string& user_permissions_password)
+        {
+            std::string perm;
+            name = utils::string::split_left(user_permissions_password, ':', perm);
+            perm = utils::string::split_left(perm, ':', password);
+            permissions = utils::string::split(perm, ',');
+        }
+
+        std::string name;
+        std::vector<std::string> permissions;
+        std::string password;
+    };
+
+    std::vector<User> users;
+
     struct Http
     {
         bool enabled{true};
+        bool ssl_enabled{false};
         size_t port{1780};
+        size_t ssl_port{1788};
         std::vector<std::string> bind_to_address{{"::"}};
+        std::vector<std::string> ssl_bind_to_address{{"::"}};
         std::string doc_root{""};
         std::string host{"<hostname>"};
-        inline static ImageCache image_cache;
+        std::string url_prefix{""};
     };
 
     struct Tcp
@@ -79,6 +107,7 @@ struct ServerSettings
     };
 
     Server server;
+    Ssl ssl;
     Http http;
     Tcp tcp;
     Stream stream;

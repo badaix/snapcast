@@ -8,7 +8,7 @@ permissions:
   contents: write
 
 env:
-  BOOST_VERSION: 1_85_0
+  BOOST_VERSION: 1_87_0
   SNAPWEB_VERSION: v0.8.0
 
 jobs:
@@ -72,7 +72,12 @@ jobs:
       image: ${{matrix.image_prefix}}${{matrix.debian}}
     steps:
       - name: Get dependencies
-        run: apt-get update && apt-get install -yq wget debhelper build-essential cmake git rename libatomic1 libasound2-dev libsoxr-dev libvorbisidec-dev libvorbis-dev libflac-dev libopus-dev alsa-utils libpulse-dev libavahi-client-dev avahi-daemon libexpat1-dev python3 ccache unzip
+        run: |
+          apt-get update && \
+          apt-get install -yq wget debhelper build-essential cmake git rename \
+          libatomic1 libasound2-dev libsoxr-dev libvorbisidec-dev libvorbis-dev libflac-dev \
+          libopus-dev alsa-utils libpulse-dev libavahi-client-dev avahi-daemon libexpat1-dev \
+          libssl-dev python3 ccache unzip
         env:
           DEBIAN_FRONTEND: noninteractive
       - name: Get GitHub cli
@@ -238,7 +243,6 @@ jobs:
   #     run: cmake -S $GITHUB_WORKSPACE/src/snapcast -B build -DBOOST_ROOT=$GITHUB_WORKSPACE/${{env.BOOST}} -DCMAKE_BUILD_TYPE=Release -DREVISION=${{ github.sha }} -DWERROR=ON -DBUILD_TESTS=ON -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_FLAGS="-I/usr/local/include -Wno-deprecated-declarations"
   #   - name: build
   #     run: cmake --build build --parallel 3
-
 
   # rpm:
   #   if: ${{ false }}  # disable for now

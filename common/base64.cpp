@@ -27,9 +27,11 @@
 
 #include "base64.h"
 
-static const std::string base64_chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-                                        "abcdefghijklmnopqrstuvwxyz"
-                                        "0123456789+/";
+#include <algorithm>
+
+static std::string base64_chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+                                  "abcdefghijklmnopqrstuvwxyz"
+                                  "0123456789+/";
 
 
 static inline bool is_base64(unsigned char c)
@@ -37,7 +39,7 @@ static inline bool is_base64(unsigned char c)
     return ((isalnum(c) != 0) || (c == '+') || (c == '/'));
 }
 
-std::string base64_encode(unsigned char const* bytes_to_encode, unsigned int in_len)
+std::string base64_encode(const unsigned char* bytes_to_encode, size_t in_len)
 {
     std::string ret;
     int i = 0;
@@ -81,10 +83,14 @@ std::string base64_encode(unsigned char const* bytes_to_encode, unsigned int in_
     return ret;
 }
 
-
-std::string base64_decode(std::string const& encoded_string)
+std::string base64_encode(const std::string& text)
 {
-    int in_len = encoded_string.size();
+    return base64_encode(reinterpret_cast<const unsigned char*>(text.c_str()), text.size());
+}
+
+std::string base64_decode(const std::string& encoded_string)
+{
+    size_t in_len = encoded_string.size();
     int i = 0;
     int in_ = 0;
     unsigned char char_array_4[4], char_array_3[3];
@@ -97,7 +103,7 @@ std::string base64_decode(std::string const& encoded_string)
         if (i == 4)
         {
             for (i = 0; i < 4; i++)
-                char_array_4[i] = base64_chars.find(char_array_4[i]);
+                char_array_4[i] = static_cast<unsigned char>(base64_chars.find(char_array_4[i]));
 
             char_array_3[0] = (char_array_4[0] << 2) + ((char_array_4[1] & 0x30) >> 4);
             char_array_3[1] = ((char_array_4[1] & 0xf) << 4) + ((char_array_4[2] & 0x3c) >> 2);
@@ -116,7 +122,7 @@ std::string base64_decode(std::string const& encoded_string)
             char_array_4[j] = 0;
 
         for (j = 0; j < 4; j++)
-            char_array_4[j] = base64_chars.find(char_array_4[j]);
+            char_array_4[j] = static_cast<unsigned char>(base64_chars.find(char_array_4[j]));
 
         char_array_3[0] = (char_array_4[0] << 2) + ((char_array_4[1] & 0x30) >> 4);
         char_array_3[1] = ((char_array_4[1] & 0xf) << 4) + ((char_array_4[2] & 0x3c) >> 2);
@@ -127,4 +133,40 @@ std::string base64_decode(std::string const& encoded_string)
     }
 
     return ret;
+}
+
+
+std::string base64url_encode(const unsigned char* bytes_to_encode, size_t in_len)
+{
+    std::string res = base64_encode(bytes_to_encode, in_len);
+    std::replace(res.begin(), res.end(), '+', '-');
+    std::replace(res.begin(), res.end(), '/', '_');
+    res.erase(std::remove(res.begin(), res.end(), '='), res.end());
+    return res;
+}
+
+std::string base64url_encode(const std::string& text)
+{
+    return base64url_encode(reinterpret_cast<const unsigned char*>(text.c_str()), text.size());
+}
+
+std::string base64url_decode(const std::string& encoded_string)
+{
+    std::string b64 = encoded_string;
+    std::replace(b64.begin(), b64.end(), '-', '+');
+    std::replace(b64.begin(), b64.end(), '_', '/');
+    switch (b64.size() % 4) // Pad with trailing '='s
+    {
+        case 0:
+            break; // No pad chars in this case
+        case 2:
+            b64 += "==";
+            break; // Two pad chars
+        case 3:
+            b64 += "=";
+            break; // One pad char
+        default:
+            break; // throw new Exception("Illegal base64url string!");
+    }
+    return base64_decode(b64);
 }

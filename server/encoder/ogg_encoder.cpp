@@ -84,19 +84,19 @@ void OggEncoder::encode(const msg::PcmChunk& chunk)
     {
         if (sampleFormat_.sampleSize() == 1)
         {
-            auto* chunkBuffer = reinterpret_cast<int8_t*>(chunk.payload);
+            const auto* chunkBuffer = reinterpret_cast<int8_t*>(chunk.payload);
             for (int i = 0; i < frames; i++)
                 buffer[channel][i] = chunkBuffer[sampleFormat_.channels() * i + channel] / 128.f;
         }
         else if (sampleFormat_.sampleSize() == 2)
         {
-            auto* chunkBuffer = reinterpret_cast<int16_t*>(chunk.payload);
+            const auto* chunkBuffer = reinterpret_cast<int16_t*>(chunk.payload);
             for (int i = 0; i < frames; i++)
                 buffer[channel][i] = chunkBuffer[sampleFormat_.channels() * i + channel] / 32768.f;
         }
         else if (sampleFormat_.sampleSize() == 4)
         {
-            auto* chunkBuffer = reinterpret_cast<int32_t*>(chunk.payload);
+            const auto* chunkBuffer = reinterpret_cast<int32_t*>(chunk.payload);
             for (int i = 0; i < frames; i++)
                 buffer[channel][i] = chunkBuffer[sampleFormat_.channels() * i + channel] / 2147483648.f;
         }

@@ -124,10 +124,9 @@ std::string ClientConnection::getMacAddress()
 
 void ClientConnection::connect(const ResultHandler& handler)
 {
-    tcp::resolver::query query(server_.host, cpt::to_string(server_.port), boost::asio::ip::resolver_query_base::numeric_service);
     boost::system::error_code ec;
     LOG(INFO, LOG_TAG) << "Resolving host IP for: " << server_.host << "\n";
-    auto iterator = resolver_.resolve(query, ec);
+    auto iterator = resolver_.resolve(server_.host, cpt::to_string(server_.port), boost::asio::ip::resolver_query_base::numeric_service, ec);
     if (ec)
     {
         LOG(ERROR, LOG_TAG) << "Failed to resolve host '" << server_.host << "', error: " << ec.message() << "\n";
@@ -141,7 +140,7 @@ void ClientConnection::connect(const ResultHandler& handler)
     for (const auto& iter : iterator)
     {
         LOG(INFO, LOG_TAG) << "Connecting to " << iter.endpoint() << "\n";
-        socket_.connect(*iterator, ec);
+        socket_.connect(iter, ec);
         if (!ec || (ec == boost::system::errc::interrupted))
         {
             // We were successful or interrupted, e.g. by sig int

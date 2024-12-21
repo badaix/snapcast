@@ -25,9 +25,9 @@
 #include "FLAC/stream_encoder.h"
 
 // standard headers
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
 
 namespace encoder
 {
@@ -35,7 +35,7 @@ namespace encoder
 class FlacEncoder : public Encoder
 {
 public:
-    FlacEncoder(const std::string& codecOptions = "");
+    explicit FlacEncoder(const std::string& codecOptions = "");
     ~FlacEncoder() override;
     void encode(const msg::PcmChunk& chunk) override;
     std::string getAvailableOptions() const override;

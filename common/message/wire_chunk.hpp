@@ -39,15 +39,15 @@ namespace msg
 class WireChunk : public BaseMessage
 {
 public:
-    WireChunk(uint32_t size = 0) : BaseMessage(message_type::kWireChunk), payloadSize(size), payload(nullptr)
+    explicit WireChunk(uint32_t size = 0) : BaseMessage(message_type::kWireChunk), payloadSize(size), payload(nullptr)
     {
         if (size > 0)
-            payload = (char*)malloc(size * sizeof(char));
+            payload = static_cast<char*>(malloc(size * sizeof(char)));
     }
 
     WireChunk(const WireChunk& wireChunk) : BaseMessage(message_type::kWireChunk), timestamp(wireChunk.timestamp), payloadSize(wireChunk.payloadSize)
     {
-        payload = (char*)malloc(payloadSize);
+        payload = static_cast<char*>(malloc(payloadSize));
         memcpy(payload, wireChunk.payload, payloadSize);
     }
 

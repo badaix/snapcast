@@ -1,30 +1,11 @@
 ---
-# Checks:          '*,clang-diagnostic-*,clang-analyzer-*'
-Checks:          '*,-llvmlibc-*,-readability-braces-around-statements,-hicpp-braces-around-statements,-google-readability-braces-around-statements,-hicpp-no-array-decay,-fuchsia-default-arguments-calls,-modernize-use-trailing-return-type,-cppcoreguidelines-pro-bounds-array-to-pointer-decay,-cppcoreguidelines-avoid-magic-numbers,-readability-magic-numbers,-bugprone-lambda-function-name,-hicpp-signed-bitwise,-cert-err60-cpp,-cppcoreguidelines-pro-type-reinterpret-cast,-cppcoreguidelines-pro-bounds-pointer-arithmetic,-cppcoreguidelines-init-variables,-cppcoreguidelines-no-malloc,-hicpp-no-malloc,-google-readability-todo,-modernize-pass-by-value,-cppcoreguidelines-pro-type-member-init,-hicpp-member-init,-hicpp-avoid-c-arrays,-cppcoreguidelines-avoid-c-arrays,-modernize-avoid-c-arrays,-abseil-string-find-startswith,-google-build-using-namespace,-cppcoreguidelines-owning-memory,-readability-else-after-return,-cppcoreguidelines-pro-type-vararg,-hicpp-vararg,-readability-isolate-declaration,-cert-env33-c,-abseil-*'
-# Checks:          '*,clang-diagnostic-*,clang-analyzer-*'
-# Checks:          '*,-llvmlibc-restrict-system-libc-headers,-readability-braces-around-statements,-hicpp-braces-around-statements,-google-readability-braces-around-statements,-hicpp-no-array-decay,-fuchsia-default-arguments-calls,-modernize-use-trailing-return-type,-cppcoreguidelines-pro-bounds-array-to-pointer-decay,-cppcoreguidelines-avoid-magic-numbers,-readability-magic-numbers,-bugprone-lambda-function-name,-hicpp-signed-bitwise,-cert-err60-cpp,-cppcoreguidelines-pro-type-reinterpret-cast,-cppcoreguidelines-pro-bounds-pointer-arithmetic,-cppcoreguidelines-init-variables,-cppcoreguidelines-no-malloc,-hicpp-no-malloc,-google-readability-todo,-modernize-pass-by-value,-cppcoreguidelines-pro-type-member-init,-hicpp-member-init,-hicpp-avoid-c-arrays,-cppcoreguidelines-avoid-c-arrays,-modernize-avoid-c-arrays,-abseil-string-find-startswith,-google-build-using-namespace,-cppcoreguidelines-owning-memory,-readability-else-after-return,-cppcoreguidelines-pro-type-vararg,-hicpp-vararg,-readability-isolate-declaration'
+Checks:          'clang-diagnostic-*,clang-analyzer-*,modernize*,performance*,readability-*size*,readability*redundant*,-readability-redundant-member-init,-readability-redundant-access-specifiers,misc*,boost-use-to-string,cert*,google-runtime-member-string-references,google-explicit-constructor,-cert-err58-cpp,-modernize-concat-nested-namespaces,-modernize-use-nodiscard,-misc-non-private-member-variables-in-classes,-modernize-use-trailing-return-type,-misc-no-recursion,-misc-const-correctness,-misc-use-anonymous-namespace'
 WarningsAsErrors: ''
 HeaderFilterRegex: ''
 AnalyzeTemporaryDtors: false
-FormatStyle:     none
+FormatStyle:     file
 User:            johannes
 CheckOptions:
-  - key:             cert-dcl16-c.NewSuffixes
-    value:           'L;LL;LU;LLU'
-  - key:             cert-oop54-cpp.WarnOnlyIfThisHasSuspiciousField
-    value:           '0'
-  - key:             cppcoreguidelines-explicit-virtual-functions.IgnoreDestructors
-    value:           '1'
-  - key:             cppcoreguidelines-non-private-member-variables-in-classes.IgnoreClassesWithAllMemberVariablesBeingPublic
-    value:           '1'
-  - key:             google-readability-braces-around-statements.ShortStatementLines
-    value:           '1'
-  - key:             google-readability-function-size.StatementThreshold
-    value:           '800'
-  - key:             google-readability-namespace-comments.ShortNamespaceLines
-    value:           '10'
-  - key:             google-readability-namespace-comments.SpacesBeforeComments
-    value:           '2'
   - key:             modernize-loop-convert.MaxCopySize
     value:           '16'
   - key:             modernize-loop-convert.MinConfidence
@@ -37,5 +18,6 @@ CheckOptions:
     value:           llvm
   - key:             modernize-use-nullptr.NullMacros
     value:           'NULL'
+  - key:             hicpp-signed-bitwise.IgnorePositiveIntegerLiterals
+    value:           '1'
 ...
-

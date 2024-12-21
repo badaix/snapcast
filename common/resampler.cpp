@@ -21,6 +21,7 @@
 
 // local headers
 #include "common/aixlog.hpp"
+#include "common/snap_exception.hpp"
 
 // standard headers
 #include <cmath>

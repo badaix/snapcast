@@ -20,5 +20,10 @@
 
 #include <string>
 
-std::string base64_encode(unsigned char const* bytes_to_encode, unsigned int in_len);
-std::string base64_decode(std::string const& encoded_string);
+std::string base64_encode(const unsigned char* bytes_to_encode, size_t in_len);
+std::string base64_encode(const std::string& text);
+std::string base64_decode(const std::string& encoded_string);
+
+std::string base64url_encode(const unsigned char* bytes_to_encode, size_t in_len);
+std::string base64url_encode(const std::string& text);
+std::string base64url_decode(const std::string& encoded_string);

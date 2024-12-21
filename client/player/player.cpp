@@ -27,18 +27,7 @@
 
 // 3rd party headers
 #ifdef SUPPORTS_VOLUME_SCRIPT
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wpragmas"
-#pragma GCC diagnostic ignored "-Wunused-result"
-#pragma GCC diagnostic ignored "-Wunused-parameter"
-#pragma GCC diagnostic ignored "-Wmissing-braces"
-#pragma GCC diagnostic ignored "-Wnarrowing"
-#pragma GCC diagnostic ignored "-Wc++11-narrowing"
-#include <boost/process/args.hpp>
-#include <boost/process/async.hpp>
-#include <boost/process/child.hpp>
-#include <boost/process/exe.hpp>
-#pragma GCC diagnostic pop
+#include <boost/process.hpp>
 #endif
 
 // standard headers
@@ -56,7 +45,7 @@ namespace player
 static constexpr auto LOG_TAG = "Player";
 
 Player::Player(boost::asio::io_context& io_context, const ClientSettings::Player& settings, std::shared_ptr<Stream> stream)
-    : io_context_(io_context), active_(false), stream_(stream), settings_(settings), volCorrection_(1.0)
+    : io_context_(io_context), active_(false), stream_(std::move(stream)), settings_(settings), volCorrection_(1.0)
 {
     string sharing_mode;
     switch (settings_.sharing_mode)
@@ -100,8 +89,8 @@ Player::Player(boost::asio::io_context& io_context, const ClientSettings::Player
             break;
     }
     LOG(INFO, LOG_TAG) << "Mixer mode: " << mixer << ", parameters: " << not_empty(settings_.mixer.parameter) << "\n";
-    LOG(INFO, LOG_TAG) << "Sampleformat: " << (settings_.sample_format.isInitialized() ? settings_.sample_format.toString() : stream->getFormat().toString())
-                       << ", stream: " << stream->getFormat().toString() << "\n";
+    LOG(INFO, LOG_TAG) << "Sampleformat: " << (settings_.sample_format.isInitialized() ? settings_.sample_format.toString() : stream_->getFormat().toString())
+                       << ", stream: " << stream_->getFormat().toString() << "\n";
 }
 
 
