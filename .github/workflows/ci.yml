@@ -167,6 +167,9 @@ jobs:
           - gcc-12
           - gcc-13
           - gcc-14
+        build_type:
+          - Debug
+          - Release
         include:
           - compiler: clang-10
             cc: clang-10
@@ -264,7 +267,7 @@ jobs:
           cmake -S . -B build \
             -DWERROR=ON -DBUILD_TESTS=ON \
             -DBOOST_ROOT=boost_${BOOST_VERSION} \
-            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
             -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
             -DCMAKE_EXPORT_COMPILE_COMMANDS=TRUE \
             -DCMAKE_CXX_FLAGS="-DCMAKE_CXX_FLAGS=-DJSON_HAS_CPP_14"
@@ -295,6 +298,9 @@ jobs:
           - "16.0"
           - "16.1"
           - "16.2"
+        build_type:
+          - Debug
+          - Release
         include:
           - xcode: "14.1"
             os: macos-13
@@ -353,7 +359,7 @@ jobs:
           cmake -S . -B build \
             -DWERROR=ON -DBUILD_TESTS=ON \
             -DBOOST_ROOT=boost_${BOOST_VERSION} \
-            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
             -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
             -DCMAKE_CXX_FLAGS="-I/usr/local/include -DCMAKE_CXX_FLAGS=-DJSON_HAS_CPP_14"
         env:
@@ -370,6 +376,9 @@ jobs:
         compiler:
           - vs-16
           - vs-17
+        build_type:
+          - Debug
+          - Release
         include:
           - compiler: vs-16
             os: windows-2019
@@ -403,7 +412,7 @@ jobs:
             -DWERROR=ON -DBUILD_TESTS=ON `
             -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake" `
             -DVCPKG_TARGET_TRIPLET="x64-windows" `
-            -DCMAKE_BUILD_TYPE=Release `
+            -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} `
             -DREVISION="${{ github.sha }}"
       - name: build
-        run: cmake --build build --config Release --parallel 3 --verbose
+        run: cmake --build build --parallel 3 --verbose
