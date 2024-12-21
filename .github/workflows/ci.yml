@@ -258,8 +258,8 @@ jobs:
         with:
           # TODO: use environment variable $HOME/.ccache
           path: /home/runner/.ccache
-          key: ${{ runner.os }}-${{ matrix.compiler }}-ccache-${{ github.sha }}
-          restore-keys: ${{ runner.os }}-${{ matrix.compiler }}-ccache-
+          key: ${{ runner.os }}-${{ matrix.compiler }}-${{ matrix.build_type }}-ccache-${{ github.sha }}
+          restore-keys: ${{ runner.os }}-${{ matrix.compiler }}-${{ matrix.build_type }}-ccache-
       #- name: ccache dump config
       #  run: ccache -p
       - name: configure
@@ -352,8 +352,8 @@ jobs:
         uses: actions/cache@v4
         with:
           path: /Users/runner/Library/Caches/ccache
-          key: ${{ runner.os }}-${{ matrix.xcode }}-ccache-${{ github.sha }}
-          restore-keys: ${{ runner.os }}-${{ matrix.xcode }}-ccache-
+          key: ${{ runner.os }}-${{ matrix.xcode }}-${{ matrix.build_type }}-ccache-${{ github.sha }}
+          restore-keys: ${{ runner.os }}-${{ matrix.xcode }}-${{ matrix.build_type }}-ccache-
       - name: configure
         run: |
           cmake -S . -B build \
