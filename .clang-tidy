@@ -1,5 +1,5 @@
 ---
-Checks:          'clang-diagnostic-*,clang-analyzer-*,modernize*,performance*,readability-*size*,readability*redundant*,-readability-redundant-member-init,-readability-redundant-access-specifiers,misc*,boost-use-to-string,cert*,google-runtime-member-string-references,google-explicit-constructor,-cert-err58-cpp,-modernize-concat-nested-namespaces,-modernize-use-nodiscard,-misc-non-private-member-variables-in-classes,-modernize-use-trailing-return-type,-misc-no-recursion,-misc-const-correctness,-misc-use-anonymous-namespace'
+Checks:          'clang-diagnostic-*,clang-analyzer-*,modernize*,performance*,readability-*size*,readability*redundant*,-readability-redundant-member-init,-readability-redundant-access-specifiers,misc*,boost-use-to-string,cert*,google-runtime-member-string-references,google-explicit-constructor,-cert-err33-c,-cert-err58-cpp,-modernize-concat-nested-namespaces,-modernize-use-nodiscard,-misc-non-private-member-variables-in-classes,-modernize-use-trailing-return-type,-misc-no-recursion,-misc-const-correctness,-misc-use-anonymous-namespace'
 WarningsAsErrors: ''
 HeaderFilterRegex: ''
 AnalyzeTemporaryDtors: false

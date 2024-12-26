@@ -151,7 +151,7 @@ void ClientConnection::connect(const ResultHandler& handler)
     if (ec)
         LOG(ERROR, LOG_TAG) << "Failed to connect to host '" << server_.host << "', error: " << ec.message() << "\n";
     else
-        LOG(NOTICE, LOG_TAG) << "Connected to " << socket_.remote_endpoint().address().to_string() << endl;
+        LOG(NOTICE, LOG_TAG) << "Connected to " << socket_.remote_endpoint().address().to_string() << "\n";
 
     handler(ec);
 
@@ -193,10 +193,10 @@ void ClientConnection::disconnect()
     boost::system::error_code ec;
     socket_.shutdown(boost::asio::ip::tcp::socket::shutdown_both, ec);
     if (ec)
-        LOG(ERROR, LOG_TAG) << "Error in socket shutdown: " << ec.message() << endl;
+        LOG(ERROR, LOG_TAG) << "Error in socket shutdown: " << ec.message() << "\n";
     socket_.close(ec);
     if (ec)
-        LOG(ERROR, LOG_TAG) << "Error in socket close: " << ec.message() << endl;
+        LOG(ERROR, LOG_TAG) << "Error in socket close: " << ec.message() << "\n";
     boost::asio::post(strand_, [this]() { pendingRequests_.clear(); });
     LOG(DEBUG, LOG_TAG) << "Disconnected\n";
 }

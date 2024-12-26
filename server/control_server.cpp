@@ -135,7 +135,7 @@ void ControlServer::startAccept()
             setsockopt(socket.native_handle(), SOL_SOCKET, SO_SNDTIMEO, &tv, sizeof(tv));
             //	socket->set_option(boost::asio::ip::tcp::no_delay(false));
             auto port = socket.local_endpoint().port();
-            LOG(NOTICE, LOG_TAG) << "New connection from: " << socket.remote_endpoint().address().to_string() << ", port: " << port << endl;
+            LOG(NOTICE, LOG_TAG) << "New connection from: " << socket.remote_endpoint().address().to_string() << ", port: " << port << "\n";
 
             if (port == settings_.http.ssl_port)
             {
