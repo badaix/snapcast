@@ -42,7 +42,7 @@ struct ServerSettings
     struct Ssl
     {
         std::string certificate{""};
-        std::string private_key{""};
+        std::string certificate_key{""};
         std::string key_password{""};
     };
 

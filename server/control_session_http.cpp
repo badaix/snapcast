@@ -20,7 +20,6 @@
 #include "control_session_http.hpp"
 
 // local headers
-#include "authinfo.hpp"
 #include "common/aixlog.hpp"
 #include "common/utils/file_utils.hpp"
 #include "control_session_ws.hpp"

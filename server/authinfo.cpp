@@ -188,12 +188,12 @@ ErrorOr<std::string> AuthInfo::getToken(const std::string& username, const std::
     jwt.setIat(now);
     jwt.setExp(now + 10h);
     jwt.setSub(username);
-    std::ifstream ifs(settings_.ssl.private_key);
-    std::string private_key((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
+    std::ifstream ifs(settings_.ssl.certificate_key);
+    std::string certificate_key((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
     if (!ifs.good())
         return ErrorCode{std::make_error_code(std::errc::io_error), "Failed to read private key file"};
     // TODO tls: eroor handling
-    std::optional<std::string> token = jwt.getToken(private_key);
+    std::optional<std::string> token = jwt.getToken(certificate_key);
     if (!token.has_value())
         return ErrorCode{AuthErrc::failed_to_create_token};
     return token.value();

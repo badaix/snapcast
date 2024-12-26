@@ -55,10 +55,10 @@ ControlServer::ControlServer(boost::asio::io_context& io_context, const ServerSe
                 return pw;
                 });
         }
-        if (!ssl.certificate.empty() && !ssl.private_key.empty())
+        if (!ssl.certificate.empty() && !ssl.certificate_key.empty())
         {
             ssl_context_.use_certificate_chain_file(ssl.certificate);
-            ssl_context_.use_private_key_file(ssl.private_key, boost::asio::ssl::context::pem);
+            ssl_context_.use_private_key_file(ssl.certificate_key, boost::asio::ssl::context::pem);
         }
         // ssl_context_.use_tmp_dh_file("dh4096.pem");
     }
