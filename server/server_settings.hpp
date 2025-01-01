@@ -222,6 +222,8 @@ struct ServerSettings
         std::string codec{"flac"};
         /// Default end to end delay
         int32_t bufferMs{1000};
+        // Default source
+        std::string defaultSource{""};
         /// Default sample format
         std::string sampleFormat{"48000:16:2"};
         /// Default read size for stream sources
