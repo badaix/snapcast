@@ -53,14 +53,14 @@ TEST_CASE("String utils")
 
     strings = split("*", '*');
     REQUIRE(strings.size() == 2);
-    REQUIRE(strings[0] == "");
-    REQUIRE(strings[1] == "");
+    REQUIRE(strings[0].empty());
+    REQUIRE(strings[1].empty());
 
     strings = split("**", '*');
     REQUIRE(strings.size() == 3);
-    REQUIRE(strings[0] == "");
-    REQUIRE(strings[1] == "");
-    REQUIRE(strings[2] == "");
+    REQUIRE(strings[0].empty());
+    REQUIRE(strings[1].empty());
+    REQUIRE(strings[2].empty());
 
     strings = split("1*2", '*');
     REQUIRE(strings.size() == 2);
@@ -70,21 +70,21 @@ TEST_CASE("String utils")
     strings = split("1**2", '*');
     REQUIRE(strings.size() == 3);
     REQUIRE(strings[0] == "1");
-    REQUIRE(strings[1] == "");
+    REQUIRE(strings[1].empty());
     REQUIRE(strings[2] == "2");
 
     strings = split("*1*2", '*');
     REQUIRE(strings.size() == 3);
-    REQUIRE(strings[0] == "");
+    REQUIRE(strings[0].empty());
     REQUIRE(strings[1] == "1");
     REQUIRE(strings[2] == "2");
 
     strings = split("*1*2*", '*');
     REQUIRE(strings.size() == 4);
-    REQUIRE(strings[0] == "");
+    REQUIRE(strings[0].empty());
     REQUIRE(strings[1] == "1");
     REQUIRE(strings[2] == "2");
-    REQUIRE(strings[3] == "");
+    REQUIRE(strings[3].empty());
 
     std::vector<std::string> vec{"1", "2", "3"};
     REQUIRE(container_to_string(vec) == "1, 2, 3");
@@ -442,11 +442,11 @@ TEST_CASE("Librespot2")
     size_t n = 0;
     size_t title_pos = 0;
     size_t ms_pos = 0;
-    if (((title_pos = line.find("<")) != std::string::npos) && ((n = line.find(">", title_pos)) != std::string::npos) &&
-        ((ms_pos = line.find("(", n)) != std::string::npos) && ((n = line.find("ms) loaded", ms_pos)) != std::string::npos))
+    if (((title_pos = line.find('<')) != std::string::npos) && ((n = line.find('>', title_pos)) != std::string::npos) &&
+        ((ms_pos = line.find('(', n)) != std::string::npos) && ((n = line.find("ms) loaded", ms_pos)) != std::string::npos))
     {
         title_pos += 1;
-        std::string title = line.substr(title_pos, line.find(">", title_pos) - title_pos);
+        std::string title = line.substr(title_pos, line.find('>', title_pos) - title_pos);
         REQUIRE(title == "Tunnel");
         ms_pos += 1;
         std::string ms = line.substr(ms_pos, n - ms_pos - 1);
@@ -616,11 +616,11 @@ TEST_CASE("Error")
     REQUIRE(ec);
     REQUIRE(ec == ControlErrc::can_not_control);
     REQUIRE(ec != ControlErrc::success);
-    std::cout << ec << std::endl;
+    std::cout << ec << '\n';
 
     ec = make_error_code(ControlErrc::can_not_control);
     REQUIRE(ec.category() == snapcast::error::control::category());
-    std::cout << "Category: " << ec.category().name() << ", " << ec.message() << std::endl;
+    std::cout << "Category: " << ec.category().name() << ", " << ec.message() << '\n';
 
     snapcast::ErrorCode error_code{};
     REQUIRE(!error_code);
@@ -639,7 +639,7 @@ TEST_CASE("ErrorOr")
         // Move value out
         REQUIRE(error_or.takeValue() == "test");
         // Value has been moved out, get will return an empty string
-        REQUIRE(error_or.getValue() == "");
+        REQUIRE(error_or.getValue().empty());
     }
 
     {

@@ -4,7 +4,7 @@ WarningsAsErrors: ''
 HeaderFilterRegex: ''
 AnalyzeTemporaryDtors: false
 FormatStyle:     file
-User:            johannes
+User:            badaix
 CheckOptions:
   - key:             modernize-loop-convert.MaxCopySize
     value:           '16'

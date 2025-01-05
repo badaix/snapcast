@@ -115,13 +115,13 @@ Available audio backends are configured using the `--player` command line parame
 
 | Backend   | OS      | Description  | Parameters |
 | --------- | ------- | ------------ | ---------- |
-| alsa      | Linux   | ALSA | `buffer_time=<total buffer size [ms]>` (default 80, min 10)<br />`fragments=<number of buffers>` (default 4, min 2) |
-| pulse     | Linux   | PulseAudio | `buffer_time=<buffer size [ms]>` (default 100, min 10)<br />`server=<PulseAudio server>` - default not-set: use the default server<br />`property=<key>=<value>` set PA property, can be used multiple times (default `media.role=music`)  |
+| alsa      | Linux   | ALSA | `buffer_time=<total buffer size [ms]>` (default 80, min 10)<br>`fragments=<number of buffers>` (default 4, min 2) |
+| pulse     | Linux   | PulseAudio | `buffer_time=<buffer size [ms]>` (default 100, min 10)<br>`server=<PulseAudio server>` - default not-set: use the default server<br>`property=<key>=<value>` set PA property, can be used multiple times (default `media.role=music`)  |
 | oboe      | Android | Oboe, using OpenSL ES on Android 4.1 and AAudio on 8.1 | |
 | opensl    | Android | OpenSL ES | |
 | coreaudio | macOS   | Core Audio | |
 | wasapi    | Windows | Windows Audio Session API | |
-| file      | All     | Write audio to file | `filename=<filename>` (`<filename>` = `stdout`, `stderr`, `null` or a filename)<br />`mode=[w|a]` (`w`: write (discarding the content), `a`: append (keeping the content) |
+| file      | All     | Write audio to file | `filename=<filename>` (`<filename>` = `stdout`, `stderr`, `null` or a filename)<br>`mode=[w\|a]` (`w`: write (discarding the content), `a`: append (keeping the content) |
 
 Parameters are appended to the player name, e.g. `--player alsa:buffer_time=100`. Use `--player <name>:?` to get a list of available options.  
 For some audio backends you can configure the PCM device using the `-s` or `--soundcard` parameter, the device is chosen by index or name. Available PCM devices can be listed with `-l` or `--list`  
@@ -131,18 +131,24 @@ If you are running MPD and Shairport-sync into a soundcard that only supports 48
 
 You can test your installation by copying random data into the server's fifo file
 
-    cat /dev/urandom > /tmp/snapfifo
+```shell
+cat /dev/urandom > /tmp/snapfifo
+```
 
 All connected clients should play random noise now. You might raise the client's volume with "alsamixer".
 It's also possible to let the server play a WAV file. Simply configure a `file` stream in `/etc/snapserver.conf`, and restart the server:
 
-    [stream]
-    source = file:///home/user/Musik/Some%20wave%20file.wav?name=test
+```ini
+[stream]
+source = file:///home/user/Musik/Some%20wave%20file.wav?name=test
+```
 
 When you are using a Raspberry Pi, you might have to change your audio output to the 3.5mm jack:
 
-    #The last number is the audio output with 1 being the 3.5 jack, 2 being HDMI and 0 being auto.
-    amixer cset numid=3 1
+``` shell
+# The last number is the audio output with 1 being the 3.5 jack, 2 being HDMI and 0 being auto.
+amixer cset numid=3 1
+```
 
 To setup WiFi on a Raspberry Pi, you can follow this [guide](https://www.raspberrypi.org/documentation/configuration/wireless/wireless-cli.md)
 
@@ -195,7 +201,9 @@ The only requirement is that the player's audio can be redirected into the Snaps
 
 The goal is to build the following chain:
 
-    audio player software -> snapfifo -> snapserver -> network -> snapclient -> alsa
+```plain
+audio player software -> snapfifo -> snapserver -> network -> snapclient -> alsa
+```
 
 This [guide](doc/player_setup.md) shows how to configure different players/audio sources to redirect their audio signal into the Snapserver's fifo:
 

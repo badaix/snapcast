@@ -50,7 +50,7 @@ pipe:///<path/to/pipe>?name=<name>[&mode=create]
 
 `mode` can be `create` or `read`. Sometimes your audio source might insist in creating the pipe itself. So the pipe creation mode can by changed to "not create, but only read mode", using the `mode` option set to `read`
 
-**NOTE** With newer kernels using FIFO pipes in a world writeable sticky dir (e.g. `/tmp`) one might also have to turn off `fs.protected_fifos`, as default settings have changed recently: `sudo sysctl fs.protected_fifos=0`. 
+**NOTE** With newer kernels using FIFO pipes in a world writeable sticky dir (e.g. `/tmp`) one might also have to turn off `fs.protected_fifos`, as default settings have changed recently: `sudo sysctl fs.protected_fifos=0`.
 
 See [stackexchange](https://unix.stackexchange.com/questions/503111/group-permissions-for-root-not-working-in-tmp) for more details. You need to run this after each reboot or add it to /etc/sysctl.conf or /etc/sysctl.d/50-default.conf depending on distribution.
 
@@ -292,7 +292,7 @@ have a Jack client named "system" with four output ports ("playback_1",
 could either autoconnect to the exact ports, or you use an `autoconnect` search
 term that returns all ports and use `autoconnect_skip` to pick the right one:
 
-```
+```ini
 jack:///?name=Channel1&sampleformat=48000:16:1&autoconnect=system:playback_
 jack:///?name=Channel2&sampleformat=48000:16:1&autoconnect=system:playback_&autoconnect_skip=1
 jack:///?name=Channel3&sampleformat=48000:16:1&autoconnect=system:playback_&autoconnect_skip=2
@@ -305,7 +305,6 @@ jack:///?name=Channel4&sampleformat=48000:16:1&autoconnect=system:playback_&auto
 
 - The `chunk_ms` parameter is ignored for jack streams. The Jack buffer size
   (Frames/Period) is used instead.
-
 
 ### meta
 

@@ -9,7 +9,7 @@ The goal is to build the following chain:
 audio player software -> snapfifo -> snapserver -> network -> snapclient -> alsa
 ```
 
-**NOTE** With newer kernels using FIFO pipes in a world writeable sticky dir (e.g. `/tmp`) one might also have to turn off `fs.protected_fifos`, as default settings have changed recently: `sudo sysctl fs.protected_fifos=0`. 
+**NOTE** With newer kernels using FIFO pipes in a world writeable sticky dir (e.g. `/tmp`) one might also have to turn off `fs.protected_fifos`, as default settings have changed recently: `sudo sysctl fs.protected_fifos=0`.
 
 See [stackexchange](https://unix.stackexchange.com/questions/503111/group-permissions-for-root-not-working-in-tmp) for more details. You need to run this after each reboot or add it to /etc/sysctl.conf or /etc/sysctl.d/50-default.conf depending on distribution.
 
@@ -200,9 +200,9 @@ sudo apt install -y shairport-sync
 sudo systemctl disable --now shairport-sync
 ```
 
-Here is an example configuration line for /etc/snapserver.conf but please see [the Snapcast Airplay configuration guide](configuration.md#airplay) for more details on the syntax and options.
+Here is an example configuration line for `/etc/snapserver.conf` but please see [the Snapcast Airplay configuration guide](configuration.md#airplay) for more details on the syntax and options.
 
-```plaintext
+```ini
 source = airplay:///shairport-sync?name=Airplay
 ```
 
@@ -212,11 +212,11 @@ Although this _might_ be a quick and convenient way to set up an Airplay source 
 
  1. Install dependencies. For debian derivates: `apt-get install autoconf libpopt-dev libconfig-dev libssl-dev`  
  2. Build shairport-sync (version 3.3 or later) with `stdout` backend:
-    * `autoreconf -i -f` 
+    * `autoreconf -i -f`
     * `./configure --with-stdout --with-avahi --with-ssl=openssl --with-metadata`
  3. Copy the `shairport-sync` binary somewhere to your `PATH`, e.g. `/usr/local/bin/`
  4. Configure snapserver with `source = airplay:///shairport-sync?name=Airplay[&devicename=Snapcast][&port=PORT]`
-    * `PORT` is 5000 for Airplay 1 and 7000 for Airplay 2 
+    * `PORT` is 5000 for Airplay 1 and 7000 for Airplay 2
 
 ### Spotify
 
@@ -266,28 +266,39 @@ Audio can be played directly through the line-in via ALSA. The following guide w
     ```
 
 3. Edit the file `/etc/snapserver.conf` and add the following line, substituting `<device_name>` for the value derived from the previous step. Pick whatever you'd like for `<stream_name>`.
-    ```
+
+    ```ini
     stream = alsa:///?name=<stream_name>&device=hw:<device_name>
     ```
+
 4. Restart the snapserver service.
-   ```
+
+   ```shell
    sudo service snapserver restart
    ```
+
 5. You are done. Enjoy your new snapserver with line in. However, if you'd like to run the client on the same machine as the server then continue with the remaining steps.
 6. Get the sound devices as far as snapclient is concerned. You are looking for the device name. This is probably the same as the `aplay -l` device names so may be able to use that instead.
-   ```
+
+   ```shell
    snapclient -l
    ```
+
 7. In the output you are looking for the `hw:CARD` line that corresponds with the output device you want to use. Note the `<device_name>` for the next step.
-   ```
+
+   ```plain
    <number> hw:CARD=<device_name>,DEV=<device_number>
    ```
-8. Edit the file `/etc/default/snapclient` and modify the `SNAPCLIENT_OPTS`. 
-   ```
+
+8. Edit the file `/etc/default/snapclient` and modify the `SNAPCLIENT_OPTS`.
+
+   ```ini
    SNAPCLIENT_OPTS=" --host <hostname> -s <dervice_name> "
    ```
+
 9. Restart the snapclient service.
-   ```
+
+   ```shell
    sudo service snapclient restart
    ```
 
