@@ -24,6 +24,7 @@
 
 // standard headers
 #include <cstdint>
+#include <filesystem>
 #include <string>
 #include <vector>
 
@@ -35,20 +36,25 @@ struct ServerSettings
         int threads{-1};
         std::string pid_file{"/var/run/snapserver/pid"};
         std::string user{"snapserver"};
-        std::string group{""};
-        std::string data_dir{""};
+        std::string group;
+        std::string data_dir;
     };
 
     struct Ssl
     {
-        std::string certificate{""};
-        std::string certificate_key{""};
-        std::string key_password{""};
+        std::filesystem::path certificate;
+        std::filesystem::path certificate_key;
+        std::string key_password;
+
+        bool enabled() const
+        {
+            return !certificate.empty() && !certificate_key.empty();
+        }
     };
 
     struct User
     {
-        User(const std::string& user_permissions_password)
+        explicit User(const std::string& user_permissions_password)
         {
             std::string perm;
             name = utils::string::split_left(user_permissions_password, ':', perm);
@@ -71,9 +77,9 @@ struct ServerSettings
         size_t ssl_port{1788};
         std::vector<std::string> bind_to_address{{"::"}};
         std::vector<std::string> ssl_bind_to_address{{"::"}};
-        std::string doc_root{""};
+        std::string doc_root;
         std::string host{"<hostname>"};
-        std::string url_prefix{""};
+        std::string url_prefix;
     };
 
     struct Tcp
@@ -102,7 +108,7 @@ struct ServerSettings
 
     struct Logging
     {
-        std::string sink{""};
+        std::string sink;
         std::string filter{"*:info"};
     };
 

@@ -18,6 +18,7 @@
 
 // local headers
 #include "common/popl.hpp"
+#include <filesystem>
 #ifdef HAS_DAEMON
 #include "common/daemon.hpp"
 #endif
@@ -81,12 +82,14 @@ int main(int argc, char* argv[])
         conf.add<Implicit<string>>("", "server.datadir", "directory where persistent data is stored", settings.server.data_dir, &settings.server.data_dir);
 
         // SSL settings
-        conf.add<Value<string>>("", "ssl.certificate", "certificate file (PEM format)", settings.ssl.certificate, &settings.ssl.certificate);
-        conf.add<Value<string>>("", "ssl.certificate_key", "private key file (PEM format)", settings.ssl.certificate_key, &settings.ssl.certificate_key);
+        conf.add<Value<std::filesystem::path>>("", "ssl.certificate", "certificate file (PEM format)", settings.ssl.certificate, &settings.ssl.certificate);
+        conf.add<Value<std::filesystem::path>>("", "ssl.certificate_key", "private key file (PEM format)", settings.ssl.certificate_key, &settings.ssl.certificate_key);
         conf.add<Value<string>>("", "ssl.key_password", "key password (for encrypted private key)", settings.ssl.key_password, &settings.ssl.key_password);
 
+#if 0 // feature: users
         // Users setting
         auto users_value = conf.add<Value<string>>("", "users.user", "<User nane>:<permissions>:<password>");
+#endif
 
         // HTTP RPC settings
         conf.add<Value<bool>>("", "http.enabled", "enable HTTP Json RPC (HTTP POST and websockets)", settings.http.enabled, &settings.http.enabled);
@@ -253,7 +256,39 @@ int main(int argc, char* argv[])
         else
             throw SnapException("Invalid log sink: " + settings.logging.sink);
 
+        if (!settings.ssl.certificate.empty() && !settings.ssl.certificate_key.empty())
+        {
+            namespace fs = std::filesystem;
+            auto make_absolute = [](const fs::path& filename) {
+                const fs::path cert_path = "/etc/snapserver/certs/";
+                if (filename.is_absolute())
+                    return filename;
+                if (fs::exists(filename))
+                    return fs::canonical(filename);
+                return cert_path / filename;
+            };
+            settings.ssl.certificate = make_absolute(settings.ssl.certificate);
+            if (!fs::exists(settings.ssl.certificate))
+                throw SnapException("SSL certificate file not found: " + settings.ssl.certificate.native());
+            settings.ssl.certificate_key = make_absolute(settings.ssl.certificate_key);
+            if (!fs::exists(settings.ssl.certificate_key))
+                throw SnapException("SSL certificate_key file not found: " + settings.ssl.certificate_key.native());
+        }
+        else if (settings.ssl.certificate.empty() != settings.ssl.certificate_key.empty())
+        {
+            throw SnapException("Both SSL 'certificate' and 'certificate_key' must be set or empty");
+        }
+
+        if (!settings.ssl.enabled())
+        {
+            if (settings.http.ssl_enabled)
+                throw SnapException("HTTPS enabled ([http] ssl_enabled), but no certificates specified");
+        }
+
         LOG(INFO, LOG_TAG) << "Version " << version::code << (!version::rev().empty() ? (", revision " + version::rev(8)) : ("")) << "\n";
+
+        if (settings.ssl.enabled())
+            LOG(INFO, LOG_TAG) << "SSL enabled - certificate file: '" << settings.ssl.certificate.native() << "', certificate key file: '" << settings.ssl.certificate_key.native() << "'\n";
 
         if (!streamValue->is_set() && !sourceValue->is_set())
             settings.stream.sources.push_back(sourceValue->value());
@@ -269,6 +304,7 @@ int main(int argc, char* argv[])
             settings.stream.sources.push_back(sourceValue->value(n));
         }
 
+#if 0 // feature: users
         for (size_t n = 0; n < users_value->count(); ++n)
         {
             settings.users.emplace_back(users_value->value(n));
@@ -276,7 +312,7 @@ int main(int argc, char* argv[])
                                 << ", permissions: " << utils::string::container_to_string(settings.users.back().permissions)
                                 << ", pw: " << settings.users.back().password << "\n";
         }
-
+#endif
 
 #ifdef HAS_DAEMON
         std::unique_ptr<Daemon> daemon;
