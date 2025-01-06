@@ -4,7 +4,7 @@
 
 ### Features
 
-- Server: Add support for HTTPS and WSS
+- Server: Add support for HTTPS and WSS (Issue #1322)
 - Server: custom URL prefix for HTTP URLs (PR #1260)
 - Server: listen to both IPv4 and IPv4 for incoming connections (PR #1290)
 
