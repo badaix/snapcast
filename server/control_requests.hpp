@@ -46,7 +46,7 @@ public:
     Request() = delete;
 
     /// c'tor
-    explicit Request(const Server& server, const std::string& method, const std::string& ressource);
+    explicit Request(const Server& server, const std::string& method);
 
     /// d'tor
     virtual ~Request() = default;
@@ -100,7 +100,7 @@ class ClientRequest : public Request
 {
 public:
     /// c'tor
-    ClientRequest(const Server& server, const std::string& method, const std::string& ressource);
+    ClientRequest(const Server& server, const std::string& method);
 
 protected:
     /// update the client that is referenced in the @p request
@@ -157,7 +157,7 @@ class GroupRequest : public Request
 {
 public:
     /// c'tor
-    GroupRequest(const Server& server, const std::string& method, const std::string& ressource);
+    GroupRequest(const Server& server, const std::string& method);
 
 protected:
     /// @return the group referenced in the request
@@ -221,7 +221,7 @@ class StreamRequest : public Request
 {
 public:
     /// c'tor
-    StreamRequest(const Server& server, const std::string& method, const std::string& ressource);
+    StreamRequest(const Server& server, const std::string& method);
 
 protected:
     /// @return the stream referenced in the request

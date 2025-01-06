@@ -28,18 +28,21 @@
 
 // standard headers
 #include <memory>
+#include <tuple>
 
 
 static constexpr auto LOG_TAG = "ControlRequest";
 
 
-Request::Request(const Server& server, const std::string& method, const std::string& ressource) : server_(server), method_(method), ressource_(ressource)
+Request::Request(const Server& server, const std::string& method) : server_(server), method_(method)
 {
 }
 
 bool Request::hasPermission(const AuthInfo& authinfo) const
 {
-    return authinfo.hasPermission(ressource_);
+    std::ignore = authinfo;
+    return true;
+    // return authinfo.hasPermission(method_);
 }
 
 const std::string& Request::method() const
@@ -103,47 +106,13 @@ std::shared_ptr<Request> ControlRequestFactory::getRequest(const std::string& me
     if (iter != request_map_.end())
         return iter->second;
     return nullptr;
-    // if (method == "Client.GetStatus")
-    //     return nullptr;
-    // else if (method == "Client.SetVolume")
-    //     return nullptr;
-    // else if (method == "Client.SetLatency")
-    //     return nullptr;
-    // else if (method == "Client.SetName")
-    //     return nullptr;
-    // else if (method == "Group.GetStatus")
-    //     return nullptr;
-    // else if (method == "Group.SetName")
-    //     return nullptr;
-    // else if (method == "Group.SetMute")
-    //     return nullptr;
-    // else if (method == "Group.SetStream")
-    //     return nullptr;
-    // else if (method == "Group.SetClients")
-    //     return nullptr;
-    // else if (method == "Server.GetRPCVersion")
-    //     return std::make_unique<ServerGetRpcVersionRequest>(server);
-    // else if (method == "Server.GetStatus")
-    //     return std::make_unique<ServerGetStatusRequest>(server);
-    // else if (method == "Server.DeleteClient")
-    //     return std::make_unique<ServerDeleteClientRequest>(server);
-    // else if (method == "Server.Authenticate")
-    //     return nullptr;
-    // else if (method == "Server.GetToken")
-    //     return nullptr;
-    // else if (method == "Stream.AddStream")
-    //     return nullptr;
-    // else if (method == "Stream.RemoveStream")
-    //     return nullptr;
-    // else
-    //     return nullptr;
 }
 
 
 ///////////////////////////////////////// Client requests /////////////////////////////////////////
 
 
-ClientRequest::ClientRequest(const Server& server, const std::string& method, const std::string& ressource) : Request(server, method, ressource)
+ClientRequest::ClientRequest(const Server& server, const std::string& method) : Request(server, method)
 {
 }
 
@@ -176,7 +145,7 @@ void ClientRequest::updateClient(const jsonrpcpp::request_ptr& request)
 }
 
 
-ClientGetStatusRequest::ClientGetStatusRequest(const Server& server) : ClientRequest(server, "Client.GetStatus", "xxx")
+ClientGetStatusRequest::ClientGetStatusRequest(const Server& server) : ClientRequest(server, "Client.GetStatus")
 {
 }
 
@@ -197,7 +166,7 @@ void ClientGetStatusRequest::execute(const jsonrpcpp::request_ptr& request, Auth
 
 
 
-ClientSetVolumeRequest::ClientSetVolumeRequest(const Server& server) : ClientRequest(server, "Client.SetVolume", "xxx")
+ClientSetVolumeRequest::ClientSetVolumeRequest(const Server& server) : ClientRequest(server, "Client.SetVolume")
 {
 }
 
@@ -224,7 +193,7 @@ void ClientSetVolumeRequest::execute(const jsonrpcpp::request_ptr& request, Auth
 
 
 
-ClientSetLatencyRequest::ClientSetLatencyRequest(const Server& server) : ClientRequest(server, "Client.SetLatency", "xxx")
+ClientSetLatencyRequest::ClientSetLatencyRequest(const Server& server) : ClientRequest(server, "Client.SetLatency")
 {
 }
 
@@ -256,7 +225,7 @@ void ClientSetLatencyRequest::execute(const jsonrpcpp::request_ptr& request, Aut
 
 
 
-ClientSetNameRequest::ClientSetNameRequest(const Server& server) : ClientRequest(server, "Client.SetName", "xxx")
+ClientSetNameRequest::ClientSetNameRequest(const Server& server) : ClientRequest(server, "Client.SetName")
 {
 }
 
@@ -287,7 +256,7 @@ void ClientSetNameRequest::execute(const jsonrpcpp::request_ptr& request, AuthIn
 
 
 
-GroupRequest::GroupRequest(const Server& server, const std::string& method, const std::string& ressource) : Request(server, method, ressource)
+GroupRequest::GroupRequest(const Server& server, const std::string& method) : Request(server, method)
 {
 }
 
@@ -304,7 +273,7 @@ GroupPtr GroupRequest::getGroup(const jsonrpcpp::request_ptr& request)
 
 
 
-GroupGetStatusRequest::GroupGetStatusRequest(const Server& server) : GroupRequest(server, "Group.GetStatus", "xxx")
+GroupGetStatusRequest::GroupGetStatusRequest(const Server& server) : GroupRequest(server, "Group.GetStatus")
 {
 }
 
@@ -323,7 +292,7 @@ void GroupGetStatusRequest::execute(const jsonrpcpp::request_ptr& request, AuthI
 }
 
 
-GroupSetNameRequest::GroupSetNameRequest(const Server& server) : GroupRequest(server, "Group.SetName", "xxx")
+GroupSetNameRequest::GroupSetNameRequest(const Server& server) : GroupRequest(server, "Group.SetName")
 {
 }
 
@@ -347,7 +316,7 @@ void GroupSetNameRequest::execute(const jsonrpcpp::request_ptr& request, AuthInf
 }
 
 
-GroupSetMuteRequest::GroupSetMuteRequest(const Server& server) : GroupRequest(server, "Group.SetMute", "xxx")
+GroupSetMuteRequest::GroupSetMuteRequest(const Server& server) : GroupRequest(server, "Group.SetMute")
 {
 }
 
@@ -389,7 +358,7 @@ void GroupSetMuteRequest::execute(const jsonrpcpp::request_ptr& request, AuthInf
 }
 
 
-GroupSetStreamRequest::GroupSetStreamRequest(const Server& server) : GroupRequest(server, "Group.SetStream", "xxx")
+GroupSetStreamRequest::GroupSetStreamRequest(const Server& server) : GroupRequest(server, "Group.SetStream")
 {
 }
 
@@ -432,7 +401,7 @@ void GroupSetStreamRequest::execute(const jsonrpcpp::request_ptr& request, AuthI
 }
 
 
-GroupSetClientsRequest::GroupSetClientsRequest(const Server& server) : GroupRequest(server, "Group.SetClients", "xxx")
+GroupSetClientsRequest::GroupSetClientsRequest(const Server& server) : GroupRequest(server, "Group.SetClients")
 {
 }
 
@@ -510,7 +479,7 @@ void GroupSetClientsRequest::execute(const jsonrpcpp::request_ptr& request, Auth
 
 
 
-StreamRequest::StreamRequest(const Server& server, const std::string& method, const std::string& ressource) : Request(server, method, ressource)
+StreamRequest::StreamRequest(const Server& server, const std::string& method) : Request(server, method)
 {
 }
 
@@ -532,7 +501,7 @@ std::string StreamRequest::getStreamId(const jsonrpcpp::request_ptr& request)
 }
 
 
-StreamControlRequest::StreamControlRequest(const Server& server) : StreamRequest(server, "Stream.Control", "xxx")
+StreamControlRequest::StreamControlRequest(const Server& server) : StreamRequest(server, "Stream.Control")
 {
 }
 
@@ -618,7 +587,7 @@ void StreamControlRequest::execute(const jsonrpcpp::request_ptr& request, AuthIn
 }
 
 
-StreamSetPropertyRequest::StreamSetPropertyRequest(const Server& server) : StreamRequest(server, "Stream.SetProperty", "xxx")
+StreamSetPropertyRequest::StreamSetPropertyRequest(const Server& server) : StreamRequest(server, "Stream.SetProperty")
 {
 }
 
@@ -691,7 +660,7 @@ void StreamSetPropertyRequest::execute(const jsonrpcpp::request_ptr& request, Au
 }
 
 
-StreamAddRequest::StreamAddRequest(const Server& server) : StreamRequest(server, "Stream.AddStream", "xxx")
+StreamAddRequest::StreamAddRequest(const Server& server) : StreamRequest(server, "Stream.AddStream")
 {
 }
 
@@ -721,7 +690,7 @@ void StreamAddRequest::execute(const jsonrpcpp::request_ptr& request, AuthInfo& 
 }
 
 
-StreamRemoveRequest::StreamRemoveRequest(const Server& server) : StreamRequest(server, "Stream.RemoveStream", "xxx")
+StreamRemoveRequest::StreamRemoveRequest(const Server& server) : StreamRequest(server, "Stream.RemoveStream")
 {
 }
 
@@ -752,7 +721,7 @@ void StreamRemoveRequest::execute(const jsonrpcpp::request_ptr& request, AuthInf
 
 
 
-ServerGetRpcVersionRequest::ServerGetRpcVersionRequest(const Server& server) : Request(server, "Server.GetRPCVersion", "xxx")
+ServerGetRpcVersionRequest::ServerGetRpcVersionRequest(const Server& server) : Request(server, "Server.GetRPCVersion")
 {
 }
 
@@ -777,7 +746,7 @@ void ServerGetRpcVersionRequest::execute(const jsonrpcpp::request_ptr& request, 
 
 
 
-ServerGetStatusRequest::ServerGetStatusRequest(const Server& server) : Request(server, "Server.GetStatus", "xxx")
+ServerGetStatusRequest::ServerGetStatusRequest(const Server& server) : Request(server, "Server.GetStatus")
 {
 }
 
@@ -797,7 +766,7 @@ void ServerGetStatusRequest::execute(const jsonrpcpp::request_ptr& request, Auth
 
 
 
-ServerDeleteClientRequest::ServerDeleteClientRequest(const Server& server) : Request(server, "Server.DeleteClient", "xxx")
+ServerDeleteClientRequest::ServerDeleteClientRequest(const Server& server) : Request(server, "Server.DeleteClient")
 {
 }
 
@@ -826,7 +795,7 @@ void ServerDeleteClientRequest::execute(const jsonrpcpp::request_ptr& request, A
 }
 
 
-ServerAuthenticateRequest::ServerAuthenticateRequest(const Server& server) : Request(server, "Server.Authenticate", "xxx")
+ServerAuthenticateRequest::ServerAuthenticateRequest(const Server& server) : Request(server, "Server.Authenticate")
 {
 }
 
@@ -860,7 +829,7 @@ void ServerAuthenticateRequest::execute(const jsonrpcpp::request_ptr& request, A
 }
 
 
-ServerGetTokenRequest::ServerGetTokenRequest(const Server& server) : Request(server, "Server.GetToken", "xxx")
+ServerGetTokenRequest::ServerGetTokenRequest(const Server& server) : Request(server, "Server.GetToken")
 {
 }
 
