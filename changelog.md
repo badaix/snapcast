@@ -1,5 +1,30 @@
 # Snapcast changelog
 
+## Version 0.30.0
+
+### Features
+
+- Server: Add support for HTTPS and WSS
+- Server: custom URL prefix for HTTP URLs (PR #1260)
+- Server: listen to both IPv4 and IPv4 for incoming connections (PR #1290)
+
+### Bugfixes
+
+- Fix compile error on MacOS
+- Remove PiMusicBox from readme (Issue ##1304)
+- Add missing include (Issue #1295)
+- Fix building with boost v1.87.0 (Issues #1305, #1306, #1307, PR #1308)
+
+### General
+
+- CI: execute unit tests (asan and tsan)
+- CI: create doxygen documentation
+- CI: compile release and debug builds
+- Code cleanup
+- Add more doxygen documentation
+
+_Johannes Pohl <snapcast@badaix.de>  Sun, 19 Jan 2025 00:13:37 +0200_
+
 ## Version 0.29.0
 
 ### Features
