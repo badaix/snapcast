@@ -1,7 +1,10 @@
 # Snapcast
 
-![Snapcast](doc/Snapcast_800.png#gh-light-mode-only)
-![Snapweb-Dark](doc/Snapcast_800_dark.png#gh-dark-mode-only)
+<picture>
+ <source media="(prefers-color-scheme: dark)" srcset="doc/Snapcast_800_dark.png">
+ <source media="(prefers-color-scheme: light)" srcset="doc/Snapcast_800.png">
+ <img alt="Snapcast" src="doc/Snapcast_800.png">
+</picture>
 
 **S**y**n**chronous **a**udio **p**layer
 
@@ -167,8 +170,11 @@ Snapcast can be controlled using a [JSON-RPC API](doc/json_rpc_api/control.md) o
 
 The server is shipped with [Snapweb](https://github.com/badaix/snapweb), this WebApp can be reached under `http://<snapserver host>:1780`.
 
-![Snapweb-Light](https://raw.githubusercontent.com/badaix/snapweb/master/snapweb_light.png#gh-light-mode-only)
-![Snapweb-Dark](https://raw.githubusercontent.com/badaix/snapweb/master/snapweb_dark.png#gh-dark-mode-only)
+<picture>
+ <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/badaix/snapweb/master/snapweb_dark.png">
+ <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/badaix/snapweb/master/snapweb_light.png">
+ <img alt="Snapweb" src="https://raw.githubusercontent.com/badaix/snapweb/master/snapweb_light.png">
+</picture>
 
 ### Android client
 
