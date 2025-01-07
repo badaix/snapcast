@@ -198,7 +198,7 @@ int main(int argc, char** argv)
         }
         catch (const std::invalid_argument& e)
         {
-            cerr << "Exception: " << e.what() << std::endl;
+            cerr << "Exception: " << e.what() << "\n";
             cout << "\n" << op << "\n";
             exit(EXIT_FAILURE);
         }
@@ -334,9 +334,9 @@ int main(int argc, char** argv)
             processPriority = std::min(std::max(-20, processPriority), 19);
             if (processPriority != 0)
                 setpriority(PRIO_PROCESS, 0, processPriority);
-            LOG(NOTICE, LOG_TAG) << "daemonizing" << std::endl;
+            LOG(NOTICE, LOG_TAG) << "daemonizing\n";
             daemon->daemonize();
-            LOG(NOTICE, LOG_TAG) << "daemon started" << std::endl;
+            LOG(NOTICE, LOG_TAG) << "daemon started\n";
         }
 #endif
 
@@ -455,10 +455,10 @@ int main(int argc, char** argv)
     }
     catch (const std::exception& e)
     {
-        LOG(FATAL, LOG_TAG) << "Exception: " << e.what() << std::endl;
+        LOG(FATAL, LOG_TAG) << "Exception: " << e.what() << "\n";
         exitcode = EXIT_FAILURE;
     }
 
-    LOG(NOTICE, LOG_TAG) << "Snapclient terminated." << endl;
+    LOG(NOTICE, LOG_TAG) << "Snapclient terminated.\n";
     exit(exitcode);
 }

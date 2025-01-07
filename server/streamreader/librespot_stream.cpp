@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2023  Johannes Pohl
+    Copyright (C) 2014-2025  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -186,11 +186,11 @@ void LibrespotStream::onStderrMsg(const std::string& line)
         size_t title_pos = 0;
         size_t ms_pos = 0;
         size_t n = 0;
-        if (((title_pos = line.find("<")) != std::string::npos) && ((n = line.find(">", title_pos)) != std::string::npos) &&
-            ((ms_pos = line.find("(", n)) != std::string::npos) && ((n = line.find("ms) loaded", ms_pos)) != std::string::npos))
+        if (((title_pos = line.find('<')) != std::string::npos) && ((n = line.find('>', title_pos)) != std::string::npos) &&
+            ((ms_pos = line.find('(', n)) != std::string::npos) && ((n = line.find("ms) loaded", ms_pos)) != std::string::npos))
         {
             title_pos += 1;
-            std::string title = line.substr(title_pos, line.find(">", title_pos) - title_pos);
+            std::string title = line.substr(title_pos, line.find('>', title_pos) - title_pos);
             LOG(INFO, LOG_TAG) << "metadata: <" << title << ">\n";
             ms_pos += 1;
             std::string ms = line.substr(ms_pos, n - ms_pos - 1);
@@ -205,7 +205,7 @@ void LibrespotStream::onStderrMsg(const std::string& line)
     }
     catch (const std::exception& e)
     {
-        LOG(ERROR, LOG_TAG) << "Exception: " << e.what() << std::endl;
+        LOG(ERROR, LOG_TAG) << "Exception: " << e.what() << "\n";
     }
 }
 

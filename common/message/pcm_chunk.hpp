@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2024  Johannes Pohl
+    Copyright (C) 2014-2025  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -16,8 +16,7 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
-#ifndef MESSAGE_PCM_CHUNK_HPP
-#define MESSAGE_PCM_CHUNK_HPP
+#pragma once
 
 // local headers
 #include "common/sample_format.hpp"
@@ -76,7 +75,7 @@ public:
 
     int readFrames(void* outputBuffer, uint32_t frameCount)
     {
-        // logd << "read: " << frameCount << ", total: " << (wireChunk->length / format.frameSize()) << ", idx: " << idx;// << std::endl;
+        // logd << "read: " << frameCount << ", total: " << (wireChunk->length / format.frameSize()) << ", idx: " << idx;// << "\n";
         int result = frameCount;
         if (idx_ + frameCount > (payloadSize / format.frameSize()))
             result = (payloadSize / format.frameSize()) - idx_;
@@ -167,5 +166,3 @@ private:
     uint32_t idx_ = 0;
 };
 } // namespace msg
-
-#endif

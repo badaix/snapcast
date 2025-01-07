@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2024  Johannes Pohl
+    Copyright (C) 2014-2025  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -89,7 +89,7 @@ EXTERN_C const PROPERTYKEY DECLSPEC_SELECTANY PKEY_Device_FriendlyName = {{0xa45
     if (FAILED(hres))                                                                                                                                          \
     {                                                                                                                                                          \
         stringstream ss;                                                                                                                                       \
-        ss << "HRESULT fault status: " << hex << (hres) << " line " << dec << __LINE__ << endl;                                                                \
+        ss << "HRESULT fault status: " << hex << (hres) << " line " << dec << __LINE__ << "\n";                                                                \
         LOG(FATAL, LOG_TAG) << ss.str();                                                                                                                       \
         throw SnapException(ss.str());                                                                                                                         \
     }

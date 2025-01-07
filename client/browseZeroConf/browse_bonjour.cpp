@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2024  Johannes Pohl
+    Copyright (C) 2014-2025  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -272,7 +272,7 @@ bool BrowseBonjour::browse(const string& serviceName, mDNSResult& result, int /*
         return false;
 
     if (resultCollection.size() > 1)
-        LOG(NOTICE, LOG_TAG) << "Multiple servers found.  Using first" << endl;
+        LOG(NOTICE, LOG_TAG) << "Multiple servers found.  Using first" << "\n";
 
     result = resultCollection.front();
 

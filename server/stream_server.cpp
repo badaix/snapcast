@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2023  Johannes Pohl
+    Copyright (C) 2014-2025  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -208,13 +208,13 @@ void StreamServer::handleAccept(tcp::socket socket)
         /// experimental: turn on tcp::no_delay
         socket.set_option(tcp::no_delay(true));
 
-        LOG(NOTICE, LOG_TAG) << "StreamServer::NewConnection: " << socket.remote_endpoint().address().to_string() << endl;
+        LOG(NOTICE, LOG_TAG) << "StreamServer::NewConnection: " << socket.remote_endpoint().address().to_string() << "\n";
         shared_ptr<StreamSession> session = make_shared<StreamSessionTcp>(this, std::move(socket));
         addSession(session);
     }
     catch (const std::exception& e)
     {
-        LOG(ERROR, LOG_TAG) << "Exception in StreamServer::handleAccept: " << e.what() << endl;
+        LOG(ERROR, LOG_TAG) << "Exception in StreamServer::handleAccept: " << e.what() << "\n";
     }
     startAccept();
 }

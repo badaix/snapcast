@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2024  Johannes Pohl
+    Copyright (C) 2014-2025  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -341,7 +341,7 @@ void AlsaStream::do_read()
     {
         if (lastException_ != e.what())
         {
-            LOG(ERROR, LOG_TAG) << "Exception: " << e.what() << std::endl;
+            LOG(ERROR, LOG_TAG) << "Exception: " << e.what() << "\n";
             lastException_ = e.what();
         }
         first_ = true;
