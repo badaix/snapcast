@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2024  Johannes Pohl
+    Copyright (C) 2014-2025  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -183,7 +183,7 @@ int main(int argc, char* argv[])
         if (versionSwitch->is_set())
         {
             cout << "snapserver v" << version::code << (!version::rev().empty() ? (" (rev " + version::rev(8) + ")") : ("")) << "\n"
-                 << "Copyright (C) 2014-2024 BadAix (snapcast@badaix.de).\n"
+                 << "Copyright (C) 2014-2025 BadAix (snapcast@badaix.de).\n"
                  << "License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>.\n"
                  << "This is free software: you are free to change and redistribute it.\n"
                  << "There is NO WARRANTY, to the extent permitted by law.\n\n"
