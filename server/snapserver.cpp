@@ -354,9 +354,14 @@ int main(int argc, char* argv[])
         {
             dns_services.emplace_back("_snapcast-http._tcp", settings.http.port);
         }
+        if (settings.http.ssl_enabled)
+        {
+            dns_services.emplace_back("_snapcast-https._tcp", settings.http.ssl_port);
+        }
+
         publishZeroConfg->publish(dns_services);
 #endif
-        if (settings.http.enabled)
+        if (settings.http.enabled || settings.http.ssl_enabled)
         {
             if ((settings.http.host == "<hostname>") || settings.http.host.empty())
             {
