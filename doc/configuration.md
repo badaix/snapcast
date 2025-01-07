@@ -322,3 +322,14 @@ Use `codec=null` for stream sources that should only serve as input for meta str
 Streaming clients connect to the server and receive configuration and audio data. The client is fully controlled from the server so clients don't have to persist any state. The `[streaming_client]` section has just one option currently:
 
 - `initial_volume`: 0-100 [percent]: The volume a streaming client gets assigned on very first connect (i.e. the client is not known to the server yet). Defaults to 100 if unset.
+
+## HTTP
+
+Snapserver supports RPC via HTTP(S) and WS(S) as well as audio streaming over WS(S). To enable HTTP and WS, the parameter `enabled` must be set to `true` (default) in the `[http]` section.
+
+For HTTPS/WSS, the paramter `ssl_enabled` must be set to `true` (default: `false`) and the `certificate` and `certificate_key` paramters in the `[ssl]` section must point to a certificate file and key file in PEM format.
+
+Some hints on how to create a certificate and a private key are given for instance here:
+
+- [Create Root CA (Done once)](https://gist.github.com/fntlnz/cf14feb5a46b2eda428e000157447309)
+- [Create Your Own SSL Certificate Authority for Local HTTPS Development](https://deliciousbrains.com/ssl-certificate-authority-for-local-https-development/)
