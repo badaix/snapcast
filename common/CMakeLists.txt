@@ -5,7 +5,7 @@ if(NOT WIN32 AND NOT ANDROID)
   list(APPEND SOURCES daemon.cpp)
 endif()
 
-include_directories(${SOXR_INCLUDE_DIRS} ${OPENSSL_INCLUDE_DIR})
+include_directories(${OPENSSL_INCLUDE_DIR})
 
 if(SOXR_FOUND)
   include_directories(${SOXR_INCLUDE_DIRS})
