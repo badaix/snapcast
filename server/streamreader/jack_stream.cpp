@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2024  Johannes Pohl
+    Copyright (C) 2014-2025  Johannes Pohl
     Copyright (C) 2024  Marcus Weseloh <marcus@weseloh.cc>
 
     This program is free software: you can redistribute it and/or modify
@@ -111,9 +111,8 @@ template <typename Rep, typename Period>
 void wait(boost::asio::steady_timer& timer, const std::chrono::duration<Rep, Period>& duration, std::function<void()> handler)
 {
     timer.expires_after(duration);
-    timer.async_wait(
-        [handler = std::move(handler)](const boost::system::error_code& ec)
-        {
+    timer.async_wait([handler = std::move(handler)](const boost::system::error_code& ec)
+    {
         if (ec)
         {
             LOG(ERROR, LOG_TAG) << "Error during async wait: " << ec.message() << "\n";
@@ -239,13 +238,10 @@ bool JackStream::openJackConnection()
                             cpt::to_string(jack_sample_rate) + ".");
     }
 
-    jack_set_process_callback(
-        client_, [](jack_nframes_t nframes, void* arg) { return static_cast<JackStream*>(arg)->readJackBuffers(nframes); }, this);
-    jack_on_shutdown(
-        client_, [](void* arg) { static_cast<JackStream*>(arg)->onJackShutdown(); }, this);
-    jack_set_port_registration_callback(
-        client_, [](jack_port_id_t port_id, int registered, void* arg) { return static_cast<JackStream*>(arg)->onJackPortRegistration(port_id, registered); },
-        this);
+    jack_set_process_callback(client_, [](jack_nframes_t nframes, void* arg) { return static_cast<JackStream*>(arg)->readJackBuffers(nframes); }, this);
+    jack_on_shutdown(client_, [](void* arg) { static_cast<JackStream*>(arg)->onJackShutdown(); }, this);
+    jack_set_port_registration_callback(client_, [](jack_port_id_t port_id, int registered, void* arg)
+    { return static_cast<JackStream*>(arg)->onJackPortRegistration(port_id, registered); }, this);
 
     int err = jack_activate(client_);
     if (err)
@@ -260,7 +256,7 @@ bool JackStream::openJackConnection()
 
 bool JackStream::createJackPorts()
 {
-    if (ports_.size() > 0)
+    if (!ports_.empty())
     {
         throw SnapException("Jack ports already created!");
     }

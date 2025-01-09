@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2023  Johannes Pohl
+    Copyright (C) 2014-2025  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -87,7 +87,7 @@ void StreamSessionTcp::read_next()
 {
     boost::asio::async_read(socket_, boost::asio::buffer(buffer_, base_msg_size_),
                             [this, self = shared_from_this()](boost::system::error_code ec, std::size_t length) mutable
-                            {
+    {
         if (ec)
         {
             LOG(ERROR, LOG_TAG) << "Error reading message header of length " << length << ": " << ec.message() << "\n";
@@ -114,9 +114,8 @@ void StreamSessionTcp::read_next()
         if (baseMessage_.size > buffer_.size())
             buffer_.resize(baseMessage_.size);
 
-        boost::asio::async_read(socket_, boost::asio::buffer(buffer_, baseMessage_.size),
-                                [this, self](boost::system::error_code ec, std::size_t length) mutable
-                                {
+        boost::asio::async_read(socket_, boost::asio::buffer(buffer_, baseMessage_.size), [this, self](boost::system::error_code ec, std::size_t length) mutable
+        {
             if (ec)
             {
                 LOG(ERROR, LOG_TAG) << "Error reading message body of length " << length << ": " << ec.message() << "\n";

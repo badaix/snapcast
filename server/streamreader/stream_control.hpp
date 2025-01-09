@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2024  Johannes Pohl
+    Copyright (C) 2014-2025  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -24,8 +24,8 @@
 #include "server_settings.hpp"
 
 // 3rd party headers
-#include <boost/process.hpp>
 #include <boost/asio/any_io_executor.hpp>
+#include <boost/process.hpp>
 
 // standard headers
 #include <map>

@@ -83,11 +83,12 @@ int main(int argc, char* argv[])
 
         // SSL settings
         conf.add<Value<std::filesystem::path>>("", "ssl.certificate", "certificate file (PEM format)", settings.ssl.certificate, &settings.ssl.certificate);
-        conf.add<Value<std::filesystem::path>>("", "ssl.certificate_key", "private key file (PEM format)", settings.ssl.certificate_key, &settings.ssl.certificate_key);
+        conf.add<Value<std::filesystem::path>>("", "ssl.certificate_key", "private key file (PEM format)", settings.ssl.certificate_key,
+                                               &settings.ssl.certificate_key);
         conf.add<Value<string>>("", "ssl.key_password", "key password (for encrypted private key)", settings.ssl.key_password, &settings.ssl.key_password);
 
 #if 0 // feature: users
-        // Users setting
+      // Users setting
         auto users_value = conf.add<Value<string>>("", "users.user", "<User nane>:<permissions>:<password>");
 #endif
 
@@ -259,7 +260,8 @@ int main(int argc, char* argv[])
         if (!settings.ssl.certificate.empty() && !settings.ssl.certificate_key.empty())
         {
             namespace fs = std::filesystem;
-            auto make_absolute = [](const fs::path& filename) {
+            auto make_absolute = [](const fs::path& filename)
+            {
                 const fs::path cert_path = "/etc/snapserver/certs/";
                 if (filename.is_absolute())
                     return filename;
@@ -288,7 +290,8 @@ int main(int argc, char* argv[])
         LOG(INFO, LOG_TAG) << "Version " << version::code << (!version::rev().empty() ? (", revision " + version::rev(8)) : ("")) << "\n";
 
         if (settings.ssl.enabled())
-            LOG(INFO, LOG_TAG) << "SSL enabled - certificate file: '" << settings.ssl.certificate.native() << "', certificate key file: '" << settings.ssl.certificate_key.native() << "'\n";
+            LOG(INFO, LOG_TAG) << "SSL enabled - certificate file: '" << settings.ssl.certificate.native() << "', certificate key file: '"
+                               << settings.ssl.certificate_key.native() << "'\n";
 
         if (!streamValue->is_set() && !sourceValue->is_set())
             settings.stream.sources.push_back(sourceValue->value());

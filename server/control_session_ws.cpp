@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2024  Johannes Pohl
+    Copyright (C) 2014-2025  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -73,9 +73,8 @@ void ControlSessionWebsocket::stop()
 
 void ControlSessionWebsocket::sendAsync(const std::string& message)
 {
-    boost::asio::post(strand_,
-                      [this, self = shared_from_this(), msg = message]() mutable
-                      {
+    boost::asio::post(strand_, [this, self = shared_from_this(), msg = message]() mutable
+    {
         messages_.push_back(std::move(msg));
         if (messages_.size() > 1)
         {
@@ -149,9 +148,8 @@ void ControlSessionWebsocket::on_read_ws(beast::error_code ec, std::size_t bytes
         // LOG(DEBUG, LOG_TAG) << "received: " << line << "\n";
         if (message_receiver_ != nullptr)
         {
-            message_receiver_->onMessageReceived(shared_from_this(), line,
-                                                 [this](const std::string& response)
-                                                 {
+            message_receiver_->onMessageReceived(shared_from_this(), line, [this](const std::string& response)
+            {
                 if (!response.empty())
                 {
                     sendAsync(response);

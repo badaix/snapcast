@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2024  Johannes Pohl
+    Copyright (C) 2014-2025  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -48,12 +48,11 @@ ControlServer::ControlServer(boost::asio::io_context& io_context, const ServerSe
                                  boost::asio::ssl::context::single_dh_use);
         if (!ssl.key_password.empty())
         {
-            ssl_context_.set_password_callback(
-                [pw = ssl.key_password](size_t max_length, boost::asio::ssl::context_base::password_purpose purpose) -> string
-                {
+            ssl_context_.set_password_callback([pw = ssl.key_password](size_t max_length, boost::asio::ssl::context_base::password_purpose purpose) -> string
+            {
                 LOG(DEBUG, LOG_TAG) << "getPassword, purpose: " << purpose << ", max length: " << max_length << "\n";
                 return pw;
-                });
+            });
         }
         if (!ssl.certificate.empty() && !ssl.certificate_key.empty())
         {

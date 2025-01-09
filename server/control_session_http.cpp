@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2024  Johannes Pohl
+    Copyright (C) 2014-2025  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -174,9 +174,8 @@ void ControlSessionHttp::start()
     LOG(DEBUG, LOG_TAG) << "start\n";
     if (is_ssl_)
     {
-        ssl_socket_->async_handshake(boost::asio::ssl::stream_base::server,
-                                     [this, self = shared_from_this()](const boost::system::error_code& error)
-                                     {
+        ssl_socket_->async_handshake(boost::asio::ssl::stream_base::server, [this, self = shared_from_this()](const boost::system::error_code& error)
+        {
             LOG(DEBUG, LOG_TAG) << "async_handshake\n";
             if (error)
             {
@@ -264,9 +263,8 @@ void ControlSessionHttp::handle_request(http::request<Body, http::basic_fields<A
             return send(bad_request("Illegal request-target"));
 
         std::string request = req.body();
-        return message_receiver_->onMessageReceived(shared_from_this(), request,
-                                                    [req = std::move(req), send = std::move(send)](const std::string& response)
-                                                    {
+        return message_receiver_->onMessageReceived(shared_from_this(), request, [req = std::move(req), send = std::move(send)](const std::string& response)
+        {
             http::response<http::string_body> res{http::status::ok, req.version()};
             res.set(http::field::server, HTTP_SERVER_NAME);
             res.set(http::field::content_type, "application/json");
@@ -363,9 +361,8 @@ void ControlSessionHttp::on_read(beast::error_code ec, std::size_t bytes_transfe
     if ((ec == http::error::end_of_stream) || (ec == boost::asio::error::connection_reset))
     {
         if (is_ssl_)
-            ssl_socket_->async_shutdown(
-                [](const boost::system::error_code& error)
-                {
+            ssl_socket_->async_shutdown([](const boost::system::error_code& error)
+            {
                 if (error.failed())
                     LOG(ERROR, LOG_TAG) << "Failed to shudown ssl socket: " << error << "\n";
             });
@@ -395,9 +392,8 @@ void ControlSessionHttp::on_read(beast::error_code ec, std::size_t bytes_transfe
                 // Create a WebSocket session by transferring the socket
                 auto ws = std::make_shared<websocket::stream<ssl_socket>>(std::move(*ssl_socket_));
                 // Accept the websocket handshake
-                ws->async_accept(req_,
-                                 [this, ws, self = shared_from_this()](beast::error_code ec) mutable
-                                 {
+                ws->async_accept(req_, [this, ws, self = shared_from_this()](beast::error_code ec) mutable
+                {
                     if (ec)
                     {
                         LOG(ERROR, LOG_TAG) << "Error during WebSocket accept (control): " << ec.message() << "\n";
@@ -422,9 +418,8 @@ void ControlSessionHttp::on_read(beast::error_code ec, std::size_t bytes_transfe
                 // Create a WebSocket session by transferring the socket
                 auto ws = std::make_shared<websocket::stream<tcp_socket>>(std::move(*tcp_socket_));
                 // Accept the websocket handshake
-                ws->async_accept(req_,
-                                 [this, ws, self = shared_from_this()](beast::error_code ec) mutable
-                                 {
+                ws->async_accept(req_, [this, ws, self = shared_from_this()](beast::error_code ec) mutable
+                {
                     if (ec)
                     {
                         LOG(ERROR, LOG_TAG) << "Error during WebSocket accept (control): " << ec.message() << "\n";
@@ -459,9 +454,8 @@ void ControlSessionHttp::on_read(beast::error_code ec, std::size_t bytes_transfe
     }
 
     // Send the response
-    handle_request(std::move(req_),
-                   [this](auto&& response)
-                   {
+    handle_request(std::move(req_), [this](auto&& response)
+    {
         // The lifetime of the message has to extend
         // for the duration of the async operation so
         // we use a shared_ptr to manage it.
@@ -470,13 +464,11 @@ void ControlSessionHttp::on_read(beast::error_code ec, std::size_t bytes_transfe
 
         // Write the response
         if (is_ssl_)
-            http::async_write(this->ssl_socket_.value(), *sp,
-                              [this, self = this->shared_from_this(), sp](beast::error_code ec, std::size_t bytes)
-                              { this->on_write(ec, bytes, sp->need_eof()); });
+            http::async_write(this->ssl_socket_.value(), *sp, [this, self = this->shared_from_this(), sp](beast::error_code ec, std::size_t bytes)
+            { this->on_write(ec, bytes, sp->need_eof()); });
         else
-            http::async_write(this->tcp_socket_.value(), *sp,
-                              [this, self = this->shared_from_this(), sp](beast::error_code ec, std::size_t bytes)
-                              { this->on_write(ec, bytes, sp->need_eof()); });
+            http::async_write(this->tcp_socket_.value(), *sp, [this, self = this->shared_from_this(), sp](beast::error_code ec, std::size_t bytes)
+            { this->on_write(ec, bytes, sp->need_eof()); });
     });
 }
 

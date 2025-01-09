@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2024  Johannes Pohl
+    Copyright (C) 2014-2025  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -53,9 +53,8 @@ vector<PcmDevice> PulsePlayer::pcm_list(const std::string& parameter)
 {
     auto pa_ml = std::shared_ptr<pa_mainloop>(pa_mainloop_new(), [](pa_mainloop* pa_ml) { pa_mainloop_free(pa_ml); });
     pa_mainloop_api* pa_mlapi = pa_mainloop_get_api(pa_ml.get());
-    auto pa_ctx = std::shared_ptr<pa_context>(pa_context_new(pa_mlapi, "Snapcast"),
-                                              [](pa_context* pa_ctx)
-                                              {
+    auto pa_ctx = std::shared_ptr<pa_context>(pa_context_new(pa_mlapi, "Snapcast"), [](pa_context* pa_ctx)
+    {
         pa_context_disconnect(pa_ctx);
         pa_context_unref(pa_ctx);
     });
@@ -69,10 +68,8 @@ vector<PcmDevice> PulsePlayer::pcm_list(const std::string& parameter)
         throw SnapException("Failed to connect to PulseAudio context, error: " + std::string(pa_strerror(pa_context_errno(pa_ctx.get()))));
 
     static int pa_ready = 0;
-    pa_context_set_state_callback(
-        pa_ctx.get(),
-        [](pa_context* c, void* userdata)
-        {
+    pa_context_set_state_callback(pa_ctx.get(), [](pa_context* c, void* userdata)
+    {
         std::ignore = userdata;
         pa_context_state_t state = pa_context_get_state(c);
         switch (state)
@@ -87,8 +84,7 @@ vector<PcmDevice> PulsePlayer::pcm_list(const std::string& parameter)
             default:
                 break;
         }
-        },
-        nullptr);
+    }, nullptr);
 
     // We can't do anything until PA is ready, so just iterate the mainloop
     // and continue
@@ -107,18 +103,15 @@ vector<PcmDevice> PulsePlayer::pcm_list(const std::string& parameter)
         throw SnapException("PulseAudio context failed, error: " + std::string(pa_strerror(pa_context_errno(pa_ctx.get()))));
 
     static std::vector<PcmDevice> devices;
-    auto* op = pa_context_get_sink_info_list(
-        pa_ctx.get(),
-        [](pa_context* ctx, const pa_sink_info* i, int eol, void* userdata) mutable
-        {
+    auto* op = pa_context_get_sink_info_list(pa_ctx.get(), [](pa_context* ctx, const pa_sink_info* i, int eol, void* userdata) mutable
+    {
         std::ignore = ctx;
         std::ignore = userdata;
         // auto self = static_cast<PulsePlayer*>(userdata);
         // If eol is set to a positive number, you're at the end of the list
         if (eol <= 0)
             devices.emplace_back(i->index, i->name, i->description);
-        },
-        nullptr);
+    }, nullptr);
 
     if (op == nullptr)
         throw SnapException("PulseAudio get sink info list failed, error: " + std::string(pa_strerror(pa_context_errno(pa_ctx.get()))));
@@ -246,10 +239,8 @@ bool PulsePlayer::getHardwareVolume(Volume& volume)
 
 void PulsePlayer::triggerVolumeUpdate()
 {
-    pa_context_get_sink_input_info(
-        pa_ctx_, pa_stream_get_index(playstream_),
-        [](pa_context* ctx, const pa_sink_input_info* info, int eol, void* userdata)
-        {
+    pa_context_get_sink_input_info(pa_ctx_, pa_stream_get_index(playstream_), [](pa_context* ctx, const pa_sink_input_info* info, int eol, void* userdata)
+    {
         std::ignore = ctx;
         LOG(DEBUG, LOG_TAG) << "pa_context_get_sink_info_by_index info: " << (info != nullptr) << ", eol: " << eol << "\n";
         if (info != nullptr)
@@ -269,8 +260,7 @@ void PulsePlayer::triggerVolumeUpdate()
             }
             self->notifyVolumeChange(self->volume_);
         }
-        },
-        this);
+    }, this);
 }
 
 
@@ -433,14 +423,11 @@ void PulsePlayer::connect()
     // modify the variable to 1 so we know when we have a connection and it's
     // ready.
     // If there's an error, the callback will set pa_ready to 2
-    pa_context_set_state_callback(
-        pa_ctx_,
-        [](pa_context* c, void* userdata)
-        {
+    pa_context_set_state_callback(pa_ctx_, [](pa_context* c, void* userdata)
+    {
         auto* self = static_cast<PulsePlayer*>(userdata);
         self->stateCallback(c);
-        },
-        this);
+    }, this);
 
     // We can't do anything until PA is ready, so just iterate the mainloop
     // and continue
@@ -464,47 +451,35 @@ void PulsePlayer::connect()
 
     if (settings_.mixer.mode == ClientSettings::Mixer::Mode::hardware)
     {
-        pa_context_set_subscribe_callback(
-            pa_ctx_,
-            [](pa_context* ctx, pa_subscription_event_type_t event_type, uint32_t idx, void* userdata)
-            {
+        pa_context_set_subscribe_callback(pa_ctx_, [](pa_context* ctx, pa_subscription_event_type_t event_type, uint32_t idx, void* userdata)
+        {
             auto* self = static_cast<PulsePlayer*>(userdata);
             self->subscribeCallback(ctx, event_type, idx);
-            },
-            this);
+        }, this);
         const auto mask = static_cast<pa_subscription_mask_t>(PA_SUBSCRIPTION_MASK_SINK_INPUT);
 
-        pa_context_subscribe(
-            pa_ctx_, mask,
-            [](pa_context* ctx, int success, void* userdata)
-            {
+        pa_context_subscribe(pa_ctx_, mask, [](pa_context* ctx, int success, void* userdata)
+        {
             std::ignore = ctx;
             if (success != 0)
             {
                 auto* self = static_cast<PulsePlayer*>(userdata);
                 self->triggerVolumeUpdate();
             }
-            },
-            this);
+        }, this);
     }
 
-    pa_stream_set_write_callback(
-        playstream_,
-        [](pa_stream* stream, size_t length, void* userdata)
-        {
+    pa_stream_set_write_callback(playstream_, [](pa_stream* stream, size_t length, void* userdata)
+    {
         auto* self = static_cast<PulsePlayer*>(userdata);
         self->writeCallback(stream, length);
-        },
-        this);
+    }, this);
 
-    pa_stream_set_underflow_callback(
-        playstream_,
-        [](pa_stream* stream, void* userdata)
-        {
+    pa_stream_set_underflow_callback(playstream_, [](pa_stream* stream, void* userdata)
+    {
         auto* self = static_cast<PulsePlayer*>(userdata);
         self->underflowCallback(stream);
-        },
-        this);
+    }, this);
 
     bufattr_.fragsize = pa_usec_to_bytes(latency_.count(), &pa_ss_);
     bufattr_.maxlength = pa_usec_to_bytes(latency_.count(), &pa_ss_);

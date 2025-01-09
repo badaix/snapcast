@@ -1,7 +1,7 @@
 /***
     This file is part of snapcast
     Copyright (C) 2015  Hannes Ellinger
-    Copyright (C) 2016-2024  Johannes Pohl
+    Copyright (C) 2016-2025  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -204,8 +204,7 @@ void OpusEncoder::encode(const msg::PcmChunk& chunk)
 
         if (remainder_->payloadSize < remainder_max_size_)
         {
-            LOG(DEBUG, LOG_TAG) << "not enough data to encode (" << remainder_->payloadSize << " of " << remainder_max_size_ << " bytes)"
-                                << "\n";
+            LOG(DEBUG, LOG_TAG) << "not enough data to encode (" << remainder_->payloadSize << " of " << remainder_max_size_ << " bytes)" << "\n";
             return;
         }
         encode(out->format, remainder_->payload, remainder_->payloadSize);

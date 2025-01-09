@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2024  Johannes Pohl
+    Copyright (C) 2014-2025  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -54,7 +54,7 @@ void ControlSessionTcp::do_read()
     const std::string delimiter = "\n";
     boost::asio::async_read_until(socket_, streambuf_, delimiter,
                                   [this, self = shared_from_this(), delimiter](const std::error_code& ec, std::size_t bytes_transferred)
-                                  {
+    {
         if (ec)
         {
             LOG(ERROR, LOG_TAG) << "Error while reading from control socket: " << ec.message() << "\n";
@@ -70,9 +70,8 @@ void ControlSessionTcp::do_read()
             // LOG(DEBUG, LOG_TAG) << "received: " << line << "\n";
             if ((message_receiver_ != nullptr) && !line.empty())
             {
-                message_receiver_->onMessageReceived(shared_from_this(), line,
-                                                     [this](const std::string& response)
-                                                     {
+                message_receiver_->onMessageReceived(shared_from_this(), line, [this](const std::string& response)
+                {
                     if (!response.empty())
                         sendAsync(response);
                 });
@@ -106,9 +105,8 @@ void ControlSessionTcp::stop()
 
 void ControlSessionTcp::sendAsync(const std::string& message)
 {
-    boost::asio::post(strand_,
-                      [this, self = shared_from_this(), message]()
-                      {
+    boost::asio::post(strand_, [this, self = shared_from_this(), message]()
+    {
         messages_.emplace_back(message + "\r\n");
         if (messages_.size() > 1)
         {
@@ -121,9 +119,8 @@ void ControlSessionTcp::sendAsync(const std::string& message)
 
 void ControlSessionTcp::send_next()
 {
-    boost::asio::async_write(socket_, boost::asio::buffer(messages_.front()),
-                             [this, self = shared_from_this()](std::error_code ec, std::size_t length)
-                             {
+    boost::asio::async_write(socket_, boost::asio::buffer(messages_.front()), [this, self = shared_from_this()](std::error_code ec, std::size_t length)
+    {
         messages_.pop_front();
         if (ec)
         {

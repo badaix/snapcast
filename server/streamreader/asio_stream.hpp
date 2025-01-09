@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2024  Johannes Pohl
+    Copyright (C) 2014-2025  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -82,9 +82,8 @@ template <typename Timer, typename Rep, typename Period>
 void AsioStream<ReadStream>::wait(Timer& timer, const std::chrono::duration<Rep, Period>& duration, std::function<void()> handler)
 {
     timer.expires_after(duration);
-    timer.async_wait(
-        [handler = std::move(handler)](const boost::system::error_code& ec)
-        {
+    timer.async_wait([handler = std::move(handler)](const boost::system::error_code& ec)
+    {
         if (ec)
         {
             LOG(ERROR, "AsioStream") << "Error during async wait: " << ec.message() << "\n";
@@ -122,9 +121,8 @@ template <typename ReadStream>
 void AsioStream<ReadStream>::check_state(const std::chrono::steady_clock::duration& duration)
 {
     state_timer_.expires_after(duration);
-    state_timer_.async_wait(
-        [this, duration](const boost::system::error_code& ec)
-        {
+    state_timer_.async_wait([this, duration](const boost::system::error_code& ec)
+    {
         if (!ec)
         {
             LOG(INFO, "AsioStream") << "No data since " << std::chrono::duration_cast<std::chrono::milliseconds>(duration).count()
@@ -177,7 +175,7 @@ void AsioStream<ReadStream>::do_read()
     check_state(idle_threshold_ + std::chrono::milliseconds(chunk_ms_));
     boost::asio::async_read(*stream_, boost::asio::buffer(chunk_->payload, chunk_->payloadSize),
                             [this](boost::system::error_code ec, std::size_t length) mutable
-                            {
+    {
         state_timer_.cancel();
 
         if (ec)
@@ -242,9 +240,8 @@ void AsioStream<ReadStream>::do_read()
         if (nextTick_ >= currentTick)
         {
             read_timer_.expires_after(nextTick_ - currentTick);
-            read_timer_.async_wait(
-                [this](const boost::system::error_code& ec)
-                {
+            read_timer_.async_wait([this](const boost::system::error_code& ec)
+            {
                 if (ec)
                 {
                     LOG(ERROR, "AsioStream") << "Error during async wait: " << ec.message() << "\n";

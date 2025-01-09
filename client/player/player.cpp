@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2024  Johannes Pohl
+    Copyright (C) 2014-2025  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -245,7 +245,7 @@ void Player::setVolume(const Volume& volume)
                                                  bp::args = {"--volume", cpt::to_string(volume.volume), "--mute", volume.mute ? "true" : "false"},
                                                  bp::on_exit(
                                                      [&](int ret_val, std::error_code ec)
-                                                     {
+                {
                     std::unique_lock<std::mutex> lock(mutex_);
                     LOG(DEBUG, LOG_TAG) << "Error code: " << ec.message() << ", i: " << ret_val << "\n";
                     if (pending_volume_change.has_value())
@@ -255,7 +255,7 @@ void Player::setVolume(const Volume& volume)
                         lock.unlock();
                         setVolume(v);
                     }
-                                                 }),
+                }),
                                                  io_context_);
             }
             catch (const std::exception& e)

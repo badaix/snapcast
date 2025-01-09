@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2024  Johannes Pohl
+    Copyright (C) 2014-2025  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -66,9 +66,8 @@ namespace strutils = utils::string;
 #ifndef WINDOWS
 static std::string execGetOutput(const std::string& cmd)
 {
-    std::shared_ptr<::FILE> pipe(popen((cmd + " 2> /dev/null").c_str(), "r"),
-                                 [](::FILE* stream)
-                                 {
+    std::shared_ptr<::FILE> pipe(popen((cmd + " 2> /dev/null").c_str(), "r"), [](::FILE* stream)
+    {
         if (stream != nullptr)
             pclose(stream);
     });
@@ -441,15 +440,15 @@ static std::string getHostId(const std::string& defaultId = "")
     result = getProp("ro.serialno");
 #endif
 
-    //#else
+    // #else
     //	// on embedded platforms it's
-    //  // - either not there
-    //  // - or not unique, or changes during boot
-    //  // - or changes during boot
+    //   // - either not there
+    //   // - or not unique, or changes during boot
+    //   // - or changes during boot
     //	std::ifstream infile("/var/lib/dbus/machine-id");
     //	if (infile.good())
     //		std::getline(infile, result);
-    //#endif
+    // #endif
     strutils::trim(result);
     if (!result.empty())
         return result;

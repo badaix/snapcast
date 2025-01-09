@@ -189,7 +189,7 @@ void Server::onMessageReceived(std::shared_ptr<ControlSession> controlSession, c
         jsonrpcpp::request_ptr request = dynamic_pointer_cast<jsonrpcpp::Request>(entity);
         processRequest(request, controlSession->authinfo,
                        [this, controlSession, response_handler](jsonrpcpp::entity_ptr response, jsonrpcpp::notification_ptr notification)
-                       {
+        {
             // if (controlSession->authinfo.hasAuthInfo())
             // {
             //     LOG(INFO, LOG_TAG) << "Request auth info - username: " << controlSession->authinfo->username()
@@ -227,7 +227,7 @@ void Server::onMessageReceived(std::shared_ptr<ControlSession> controlSession, c
                 processRequest(request, controlSession->authinfo,
                                [controlSession, response_handler, &responseBatch, &notificationBatch](jsonrpcpp::entity_ptr response,
                                                                                                       jsonrpcpp::notification_ptr notification)
-                               {
+                {
                     if (response != nullptr)
                         responseBatch.add_ptr(response);
                     if (notification != nullptr)
@@ -381,9 +381,8 @@ void Server::saveConfig(const std::chrono::milliseconds& deferred)
     std::lock_guard<std::mutex> lock(mutex);
     config_timer_.cancel();
     config_timer_.expires_after(deferred);
-    config_timer_.async_wait(
-        [](const boost::system::error_code& ec)
-        {
+    config_timer_.async_wait([](const boost::system::error_code& ec)
+    {
         if (!ec)
         {
             LOG(DEBUG, LOG_TAG) << "Saving config\n";

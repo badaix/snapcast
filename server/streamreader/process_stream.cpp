@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2024  Johannes Pohl
+    Copyright (C) 2014-2025  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -145,9 +145,8 @@ void ProcessStream::onStderrMsg(const std::string& line)
 void ProcessStream::stderrReadLine()
 {
     const std::string delimiter = "\n";
-    boost::asio::async_read_until(*stream_stderr_, streambuf_stderr_, delimiter,
-                                  [this, delimiter](const std::error_code& ec, std::size_t bytes_transferred)
-                                  {
+    boost::asio::async_read_until(*stream_stderr_, streambuf_stderr_, delimiter, [this, delimiter](const std::error_code& ec, std::size_t bytes_transferred)
+    {
         if (ec)
         {
             LOG(ERROR, LOG_TAG) << "Error while reading from stderr: " << ec.message() << "\n";

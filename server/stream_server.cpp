@@ -140,10 +140,10 @@ void StreamServer::onDisconnect(StreamSession* streamSession)
     LOG(DEBUG, LOG_TAG) << "sessions: " << sessions_.size() << "\n";
     sessions_.erase(std::remove_if(sessions_.begin(), sessions_.end(),
                                    [streamSession](std::weak_ptr<StreamSession> session)
-                                   {
+    {
         auto s = session.lock();
         return s.get() == streamSession;
-                    }),
+    }),
                     sessions_.end());
     LOG(DEBUG, LOG_TAG) << "sessions: " << sessions_.size() << "\n";
     if (messageReceiver_ != nullptr)

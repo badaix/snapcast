@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2024  Johannes Pohl
+    Copyright (C) 2014-2025  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -42,7 +42,7 @@ static constexpr std::chrono::milliseconds BUFFER_TIME = 80ms;
 static constexpr int PERIODS = 4;
 static constexpr int MIN_PERIODS = 3;
 
-#define exp10(x) (exp((x)*log(10)))
+#define exp10(x) (exp((x) * log(10)))
 
 
 static constexpr auto LOG_TAG = "Alsa";
@@ -191,9 +191,8 @@ bool AlsaPlayer::getHardwareVolume(Volume& volume)
 
 void AlsaPlayer::waitForEvent()
 {
-    sd_.async_wait(boost::asio::posix::stream_descriptor::wait_read,
-                   [this](const boost::system::error_code& ec)
-                   {
+    sd_.async_wait(boost::asio::posix::stream_descriptor::wait_read, [this](const boost::system::error_code& ec)
+    {
         if (ec)
         {
             // TODO: fd is "Bad" after unplugging/plugging USB DAC, i.e. after init/uninit/init cycle
@@ -226,9 +225,8 @@ void AlsaPlayer::waitForEvent()
                 // As workaround we defer getting the volume by 20ms.
                 timer_.cancel();
                 timer_.expires_after(20ms);
-                timer_.async_wait(
-                    [this](const boost::system::error_code& ec)
-                    {
+                timer_.async_wait([this](const boost::system::error_code& ec)
+                {
                     if (!ec)
                     {
                         if (getHardwareVolume(volume_))
@@ -256,9 +254,8 @@ void AlsaPlayer::initMixer()
         throw SnapException("Can't open control for " + mixer_device_ + ", error: " + snd_strerror(err));
     if ((err = snd_ctl_subscribe_events(ctl_, 1)) < 0)
         throw SnapException("Can't subscribe for events for " + mixer_device_ + ", error: " + snd_strerror(err));
-    fd_ = std::unique_ptr<pollfd, std::function<void(pollfd*)>>(new pollfd(),
-                                                                [](pollfd* p)
-                                                                {
+    fd_ = std::unique_ptr<pollfd, std::function<void(pollfd*)>>(new pollfd(), [](pollfd* p)
+    {
         close(p->fd);
         delete p;
     });

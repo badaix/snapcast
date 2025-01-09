@@ -62,8 +62,7 @@ static constexpr auto LOG_TAG = "Snapclient";
 
 PcmDevice getPcmDevice(const std::string& player, const std::string& parameter, const std::string& soundcard)
 {
-    LOG(DEBUG, LOG_TAG) << "Trying to get PCM device for player: " << player << ", parameter: "
-                        << ", card: " << soundcard << "\n";
+    LOG(DEBUG, LOG_TAG) << "Trying to get PCM device for player: " << player << ", parameter: " << ", card: " << soundcard << "\n";
 #if defined(HAS_ALSA) || defined(HAS_PULSE) || defined(HAS_WASAPI)
     vector<PcmDevice> pcm_devices;
 #if defined(HAS_ALSA)
@@ -430,9 +429,8 @@ int main(int argc, char** argv)
         boost::asio::io_context io_context;
         // Construct a signal set registered for process termination.
         boost::asio::signal_set signals(io_context, SIGHUP, SIGINT, SIGTERM);
-        signals.async_wait(
-            [&](const boost::system::error_code& ec, int signal)
-            {
+        signals.async_wait([&](const boost::system::error_code& ec, int signal)
+        {
             if (!ec)
                 LOG(INFO, LOG_TAG) << "Received signal " << signal << ": " << strsignal(signal) << "\n";
             else

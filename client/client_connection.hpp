@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2024 Johannes Pohl
+    Copyright (C) 2014-2025 Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -111,9 +111,8 @@ public:
     template <typename Message>
     void sendRequest(const msg::message_ptr& message, const chronos::usec& timeout, const MessageHandler<Message>& handler)
     {
-        sendRequest(message, timeout,
-                    [handler](const boost::system::error_code& ec, std::unique_ptr<msg::BaseMessage> response)
-                    {
+        sendRequest(message, timeout, [handler](const boost::system::error_code& ec, std::unique_ptr<msg::BaseMessage> response)
+        {
             if (ec)
                 handler(ec, nullptr);
             else if (auto casted_response = msg::message_cast<Message>(std::move(response)))

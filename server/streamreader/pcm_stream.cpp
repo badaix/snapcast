@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2024  Johannes Pohl
+    Copyright (C) 2014-2025  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -144,14 +144,12 @@ void PcmStream::onControlRequest(const jsonrpcpp::Request& request)
 void PcmStream::pollProperties()
 {
     property_timer_.expires_after(10s);
-    property_timer_.async_wait(
-        [this](const boost::system::error_code& ec)
-        {
+    property_timer_.async_wait([this](const boost::system::error_code& ec)
+    {
         if (!ec)
         {
-            stream_ctrl_->command({++req_id_, "Plugin.Stream.Player.GetProperties"},
-                                  [this](const jsonrpcpp::Response& response)
-                                  {
+            stream_ctrl_->command({++req_id_, "Plugin.Stream.Player.GetProperties"}, [this](const jsonrpcpp::Response& response)
+            {
                 LOG(INFO, LOG_TAG) << "Response for Plugin.Stream.Player.GetProperties: " << response.to_json() << "\n";
                 if (response.error().code() == 0)
                     setProperties(response.result());
@@ -175,9 +173,8 @@ void PcmStream::onControlNotification(const jsonrpcpp::Notification& notificatio
         else if (notification.method() == "Plugin.Stream.Ready")
         {
             LOG(DEBUG, LOG_TAG) << "Plugin is ready\n";
-            stream_ctrl_->command({++req_id_, "Plugin.Stream.Player.GetProperties"},
-                                  [this](const jsonrpcpp::Response& response)
-                                  {
+            stream_ctrl_->command({++req_id_, "Plugin.Stream.Player.GetProperties"}, [this](const jsonrpcpp::Response& response)
+            {
                 LOG(INFO, LOG_TAG) << "Response for Plugin.Stream.Player.GetProperties: " << response.to_json() << "\n";
                 if (response.error().code() == 0)
                     setProperties(response.result());
@@ -231,14 +228,14 @@ void PcmStream::start()
 {
     LOG(DEBUG, LOG_TAG) << "Start: " << name_ << ", type: " << uri_.scheme << ", sampleformat: " << sampleFormat_.toString() << ", codec: " << getCodec()
                         << "\n";
-    encoder_->init([this](const encoder::Encoder& encoder, std::shared_ptr<msg::PcmChunk> chunk, double duration) { chunkEncoded(encoder, chunk, duration); },
-                   sampleFormat_);
+    encoder_->init([this](const encoder::Encoder& encoder, std::shared_ptr<msg::PcmChunk> chunk, double duration)
+    { chunkEncoded(encoder, std::move(chunk), duration); }, sampleFormat_);
 
     if (stream_ctrl_)
     {
-        stream_ctrl_->start(
-            getId(), server_settings_, [this](const jsonrpcpp::Notification& notification) { onControlNotification(notification); },
-            [this](const jsonrpcpp::Request& request) { onControlRequest(request); }, [this](std::string message) { onControlLog(std::move(message)); });
+        stream_ctrl_->start(getId(), server_settings_, [this](const jsonrpcpp::Notification& notification) {
+            onControlNotification(notification);
+        }, [this](const jsonrpcpp::Request& request) { onControlRequest(request); }, [this](std::string message) { onControlLog(std::move(message)); });
     }
 
     active_ = true;
@@ -514,9 +511,8 @@ void PcmStream::sendRequest(const std::string& method, const jsonrpcpp::Paramete
         return handler({ControlErrc::can_not_control});
 
     jsonrpcpp::Request req(++req_id_, method, params);
-    stream_ctrl_->command(req,
-                          [handler](const jsonrpcpp::Response& response)
-                          {
+    stream_ctrl_->command(req, [handler](const jsonrpcpp::Response& response)
+    {
         if (response.error().code() != 0)
             handler({static_cast<ControlErrc>(response.error().code()), response.error().data()});
         else

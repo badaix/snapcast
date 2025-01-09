@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2024  Johannes Pohl
+    Copyright (C) 2014-2025  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -69,8 +69,7 @@ AirplayStream::AirplayStream(PcmStream::Listener* pcmListener, boost::asio::io_c
     createParser();
     metadata_dirty_ = false;
 #else
-    LOG(INFO, LOG_TAG) << "Metadata support not enabled (HAS_EXPAT not defined)"
-                       << "\n";
+    LOG(INFO, LOG_TAG) << "Metadata support not enabled (HAS_EXPAT not defined)" << "\n";
 #endif
 }
 
@@ -243,9 +242,8 @@ void AirplayStream::pipeReadLine()
     }
 
     const std::string delimiter = "\n";
-    boost::asio::async_read_until(*pipe_fd_, streambuf_pipe_, delimiter,
-                                  [this, delimiter](const std::error_code& ec, std::size_t bytes_transferred)
-                                  {
+    boost::asio::async_read_until(*pipe_fd_, streambuf_pipe_, delimiter, [this, delimiter](const std::error_code& ec, std::size_t bytes_transferred)
+    {
         if (ec)
         {
             if ((ec.value() == boost::asio::error::eof) || (ec.value() == boost::asio::error::bad_descriptor))
