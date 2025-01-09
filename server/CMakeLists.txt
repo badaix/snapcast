@@ -139,6 +139,7 @@ else()
     FILES etc/snapserver.conf
     COMPONENT server
     DESTINATION ${CMAKE_INSTALL_SYSCONFDIR})
+  install(DIRECTORY DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/snapserver/certs)
   install(
     FILES etc/index.html
     COMPONENT server
