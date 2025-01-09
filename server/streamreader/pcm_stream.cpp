@@ -543,12 +543,20 @@ void PcmStream::setProperties(const Properties& properties)
         std::stringstream url;
         if (server_settings_.http.url_prefix.empty())
         {
-            url << "http://" << server_settings_.http.host << ":" << server_settings_.http.port << "/__image_cache?name=" << md5;
+            std::string proto{"http"};
+            size_t port{server_settings_.http.port};
+            if (server_settings_.http.ssl_enabled)
+            {
+                proto = "https";
+                port = server_settings_.http.ssl_port;
+            }
+            url << proto << "://" << server_settings_.http.host << ":" << port;
         }
         else
         {
-            url << server_settings_.http.url_prefix << "/__image_cache?name=" << md5;
+            url << server_settings_.http.url_prefix;
         }
+        url << "/__image_cache?name=" << md5;
         props.metadata->art_url = url.str();
     }
     else if (!props.metadata.has_value() || !props.metadata->art_data.has_value())
