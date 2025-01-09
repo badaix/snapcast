@@ -37,7 +37,6 @@ include_directories(${CMAKE_SOURCE_DIR} ${CMAKE_SOURCE_DIR}/server)
 
 include_directories(SYSTEM ${Boost_INCLUDE_DIR})
 
-                   
 if(ANDROID)
   find_package(vorbis REQUIRED CONFIG)
   list(APPEND SERVER_LIBRARIES boost::boost)
@@ -70,7 +69,7 @@ else()
     list(APPEND SERVER_LIBRARIES ${VORBIS_LIBRARIES} ${VORBISENC_LIBRARIES}
          ${OGG_LIBRARIES})
     include_directories(${OGG_INCLUDE_DIRS} ${VORBIS_INCLUDE_DIRS}
-         ${VORBISENC_INCLUDE_DIRS})
+                        ${VORBISENC_INCLUDE_DIRS})
     link_directories(${VORBIS_LIBRARY_DIRS})
     link_directories(${VORBISENC_LIBRARY_DIRS})
     link_directories(${OGG_LIBRARY_DIRS})
