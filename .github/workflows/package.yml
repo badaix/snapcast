@@ -173,7 +173,7 @@ jobs:
       - name: configure
         run: |
           echo vcpkg installation root: $env:VCPKG_INSTALLATION_ROOT
-          cmake -S . -B build -G "Visual Studio 16 2019" -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake" -DVCPKG_TARGET_TRIPLET="x64-windows" -DCMAKE_BUILD_TYPE="Release" -DREVISION="${{ github.sha }}" -DWERROR=ON -DBUILD_TESTS=ON
+          cmake -S . -B build -G "Visual Studio 16 2019" -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake" -DVCPKG_TARGET_TRIPLET="x64-windows" -DCMAKE_BUILD_TYPE="Release" -DREVISION="${{ github.sha }}" -DWERROR=ON
       - name: build
         run: cmake --build build --config Release --parallel 3 --verbose
       - name: installer
@@ -240,7 +240,7 @@ jobs:
   #   #- name: ccache dump config
   #   #  run: ccache -p
   #   - name: configure
-  #     run: cmake -S $GITHUB_WORKSPACE/src/snapcast -B build -DBOOST_ROOT=$GITHUB_WORKSPACE/${{env.BOOST}} -DCMAKE_BUILD_TYPE=Release -DREVISION=${{ github.sha }} -DWERROR=ON -DBUILD_TESTS=ON -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_FLAGS="-I/usr/local/include -Wno-deprecated-declarations"
+  #     run: cmake -S $GITHUB_WORKSPACE/src/snapcast -B build -DBOOST_ROOT=$GITHUB_WORKSPACE/${{env.BOOST}} -DCMAKE_BUILD_TYPE=Release -DREVISION=${{ github.sha }} -DWERROR=ON -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_FLAGS="-I/usr/local/include -Wno-deprecated-declarations"
   #   - name: build
   #     run: cmake --build build --parallel 3
 
