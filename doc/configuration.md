@@ -327,9 +327,58 @@ Streaming clients connect to the server and receive configuration and audio data
 
 Snapserver supports RPC via HTTP(S) and WS(S) as well as audio streaming over WS(S). To enable HTTP and WS, the parameter `enabled` must be set to `true` (default) in the `[http]` section.
 
+### HTTPS
+
 For HTTPS/WSS, the paramter `ssl_enabled` must be set to `true` (default: `false`) and the `certificate` and `certificate_key` paramters in the `[ssl]` section must point to a certificate file and key file in PEM format.
 
 Some hints on how to create a certificate and a private key are given for instance here:
 
 - [Create Root CA (Done once)](https://gist.github.com/fntlnz/cf14feb5a46b2eda428e000157447309)
 - [Create Your Own SSL Certificate Authority for Local HTTPS Development](https://deliciousbrains.com/ssl-certificate-authority-for-local-https-development/)
+
+A certificate, signed by a CA, and a certificate key can be created like this:
+
+Create an X509 V3 certificate extension config file `snapserver.ext`, which is used to define the Subject Alternative Name (SAN) for the certificate.  
+Set the `DNS.x` values to your snapserver's IPs and domain names:
+
+```ini
+authorityKeyIdentifier=keyid,issuer
+basicConstraints=CA:FALSE
+keyUsage = digitalSignature, nonRepudiation, keyEncipherment, dataEncipherment
+subjectAltName = @alt_names
+
+[alt_names]
+DNS.1 = <IP or domain name>
+DNS.2 = <another IP or domain name>
+...
+DNS.x = <another IP or domain name>
+```
+
+Use OpenSSL to create the CA certificate `snapcastCA.crt`, the CA key `snapcastCA.key`, the snapserver certificate `snapserver.crt`, signed by the `snapcastCA` and the snapserver key `snapserver.key`:
+
+```shell
+# Create a private CA key file "snapcastCA.key"
+openssl genrsa -out snapcastCA.key 4096
+# Generate a root certificate "snapcastCA.crt"
+openssl req -x509 -new -nodes -key snapcastCA.key -sha256 -days 3650 -out snapcastCA.crt -subj "/C=DE/ST=NRW/O=Badaix"
+# Create a certificate key file "snapserver.key" for snapserver
+openssl genrsa -out snapserver.key 2048
+# Create a certificate signing request (CSR) "snapserver.csr"
+openssl req -new -sha256 -key snapserver.key -subj "/C=DE/ST=NRW/O=Badaix/CN=Snapserver" -addext "subjectAltName=DNS:laptop.local,DNS:127.0.0.1" -out snapserver.csr
+# Create a certificate file "snapserver.crt", signed by the root CA
+openssl x509 -req -in snapserver.csr -CA snapcastCA.crt -CAkey snapcastCA.key -CAcreateserial -out snapserver.crt -days 3650 -sha256 -extfile snapserver.ext
+```
+
+Copy `snapserver.crt` and `snapserver.key` into the `/etc/snapserver/certs/` directory and configure `[ssl]` in `snapserver.conf` with:
+
+```ini
+[ssl]
+...
+# Certificate file in PEM format
+certificate = snapserver.crt
+
+# Private key file in PEM format
+certificate_key = snapserver.key
+```
+
+Install the CA certificate `snapcastCA.crt` on you client's OS or browser.
