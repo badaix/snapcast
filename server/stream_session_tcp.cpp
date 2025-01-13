@@ -123,8 +123,8 @@ void StreamSessionTcp::read_next()
                 return;
             }
 
-            tv t;
-            baseMessage_.received = t;
+            tv now;
+            baseMessage_.received = now;
             if (messageReceiver_ != nullptr)
                 messageReceiver_->onMessageReceived(this, baseMessage_, buffer_.data());
             read_next();

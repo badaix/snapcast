@@ -122,8 +122,8 @@ void StreamSessionWebsocket::do_read_ws()
 
 void StreamSessionWebsocket::on_read_ws(beast::error_code ec, std::size_t bytes_transferred)
 {
+    tv now;
     LOG(DEBUG, LOG_TAG) << "on_read_ws, ec: " << ec << ", bytes_transferred: " << bytes_transferred << "\n";
-    boost::ignore_unused(bytes_transferred);
 
     // This indicates that the session was closed
     if (ec == websocket::error::closed)
@@ -144,8 +144,7 @@ void StreamSessionWebsocket::on_read_ws(beast::error_code ec, std::size_t bytes_
     LOG(DEBUG, LOG_TAG) << "getNextMessage: " << baseMessage_.type << ", size: " << baseMessage_.size << ", id: " << baseMessage_.id
                         << ", refers: " << baseMessage_.refersTo << "\n";
 
-    tv t;
-    baseMessage_.received = t;
+    baseMessage_.received = now;
     if (messageReceiver_ != nullptr)
         messageReceiver_->onMessageReceived(this, baseMessage_, data + base_msg_size_);
 

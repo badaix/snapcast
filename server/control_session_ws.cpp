@@ -130,8 +130,6 @@ void ControlSessionWebsocket::do_read_ws()
 
 void ControlSessionWebsocket::on_read_ws(beast::error_code ec, std::size_t bytes_transferred)
 {
-    boost::ignore_unused(bytes_transferred);
-
     // This indicates that the session was closed
     if (ec == websocket::error::closed)
         return;
