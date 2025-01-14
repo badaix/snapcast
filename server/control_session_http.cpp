@@ -361,10 +361,12 @@ void ControlSessionHttp::on_read(beast::error_code ec, std::size_t bytes_transfe
     if ((ec == http::error::end_of_stream) || (ec == boost::asio::error::connection_reset))
     {
         if (is_ssl_)
-            ssl_socket_->async_shutdown([](const boost::system::error_code& error)
+            ssl_socket_->async_shutdown([&](const boost::system::error_code& error)
             {
                 if (error.failed())
-                    LOG(ERROR, LOG_TAG) << "Failed to shudown ssl socket: " << error << "\n";
+                    LOG(INFO, LOG_TAG) << "Failed to shudown ssl socket: " << error << "\n";
+                else if (boost::system::error_code res = ssl_socket_->next_layer().shutdown(tcp_socket::shutdown_send, ec); res.failed())
+                    LOG(ERROR, LOG_TAG) << "Failed to shudown socket: " << res << "\n";
             });
         else if (boost::system::error_code res = tcp_socket_->shutdown(tcp_socket::shutdown_send, ec); res.failed())
             LOG(ERROR, LOG_TAG) << "Failed to shudown socket: " << res << "\n";
