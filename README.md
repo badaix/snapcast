@@ -157,7 +157,7 @@ To setup WiFi on a Raspberry Pi, you can follow this [guide](https://www.raspber
 
 ## Control
 
-Snapcast can be controlled using a [JSON-RPC API](doc/json_rpc_api/control.md) over plain TCP, HTTP, or Websockets:
+Snapcast can be controlled using a [JSON-RPC API](doc/json_rpc_api/control.md) over plain TCP, HTTP(S), or Websockets:
 
 - Set client's volume
 - Mute clients
@@ -168,7 +168,7 @@ Snapcast can be controlled using a [JSON-RPC API](doc/json_rpc_api/control.md) o
 
 ### WebApp
 
-The server is shipped with [Snapweb](https://github.com/badaix/snapweb), this WebApp can be reached under `http://<snapserver host>:1780`.
+The server is shipped with [Snapweb](https://github.com/badaix/snapweb), this WebApp can be reached under `http://<snapserver host>:1780` or `https://<snapserver host>:1788`, if SSL is enabled (see [HTTPS configuration](doc/configuration.md#https)).
 
 <picture>
  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/badaix/snapweb/master/snapweb_dark.png">
