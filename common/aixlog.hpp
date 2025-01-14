@@ -3,11 +3,11 @@
      / _\ (  )( \/ )(  )   /  \  / __)
     /    \ )(  )  ( / (_/\(  O )( (_ \
     \_/\_/(__)(_/\_)\____/ \__/  \___/
-    version 1.4.0
+    version 1.5.1
     https://github.com/badaix/aixlog
 
     This file is part of aixlog
-    Copyright (C) 2017-2020 Johannes Pohl
+    Copyright (C) 2017-2025 Johannes Pohl
 
     This software may be modified and distributed under the terms
     of the MIT license.  See the LICENSE file for details.
@@ -269,11 +269,17 @@ struct TextColor
  */
 struct Conditional
 {
-    Conditional() : Conditional(true)
+    using EvalFunc = std::function<bool()>;
+
+    Conditional() : func_([](void) { return true; })
     {
     }
 
-    Conditional(bool value) : is_true_(value)
+    Conditional(EvalFunc func) : func_(std::move(func))
+    {
+    }
+
+    Conditional(bool value) : func_([value](void) { return value; })
     {
     }
 
@@ -281,11 +287,11 @@ struct Conditional
 
     virtual bool is_true() const
     {
-        return is_true_;
+        return func_();
     }
 
 protected:
-    bool is_true_;
+    EvalFunc func_;
 };
 
 /**
@@ -310,7 +316,7 @@ struct Timestamp
     {
     }
 
-    Timestamp(time_point_sys_clock&& time_point) : time_point(std::move(time_point)), is_null_(false)
+    Timestamp(time_point_sys_clock&& time_point) : time_point(time_point), is_null_(false)
     {
     }
 
@@ -367,7 +373,7 @@ private:
  */
 struct Tag
 {
-    Tag(std::nullptr_t) : text(""), is_null_(true)
+    Tag(std::nullptr_t) : is_null_(true)
     {
     }
 
@@ -419,7 +425,7 @@ struct Function
     {
     }
 
-    Function(std::nullptr_t) : name(""), file(""), line(0), is_null_(true)
+    Function(std::nullptr_t) : line(0), is_null_(true)
     {
     }
 
@@ -499,7 +505,7 @@ public:
 
     void add_filter(const std::string& filter)
     {
-        auto pos = filter.find(":");
+        auto pos = filter.find(':');
         if (pos != std::string::npos)
             add_filter(filter.substr(0, pos), to_severity(filter.substr(pos + 1)));
         else
@@ -519,7 +525,7 @@ private:
  */
 struct Sink
 {
-    Sink(const Filter& filter) : filter(filter)
+    Sink(Filter filter) : filter(std::move(filter))
     {
     }
 
@@ -606,15 +612,10 @@ protected:
 
     virtual ~Log()
     {
-        do_sync();
+        sync();
     }
 
     int sync() override
-    {
-        return do_sync();
-    }
-
-    int do_sync()
     {
         std::lock_guard<std::recursive_mutex> lock(mutex_);
         if (!get_stream().str().empty())
@@ -761,14 +762,14 @@ protected:
         if (pos != std::string::npos)
         {
             result.replace(pos, 8, message);
-            stream << result << std::endl;
+            stream << result << "\n";
         }
         else
         {
             if (result.empty() || (result.back() == ' '))
-                stream << result << message << std::endl;
+                stream << result << message << "\n";
             else
-                stream << result << " " << message << std::endl;
+                stream << result << " " << message << "\n";
         }
     }
 
@@ -846,10 +847,14 @@ struct SinkOutputDebugString : public Sink
     {
     }
 
-    void log(const Metadata& /*metadata*/, const std::string& message) override
+    void log(const Metadata& metadata, const std::string& message) override
     {
+#ifdef UNICODE
         std::wstring wide = std::wstring(message.begin(), message.end());
         OutputDebugString(wide.c_str());
+#else
+        OutputDebugString(message.c_str());
+#endif
     }
 };
 #endif
@@ -936,7 +941,7 @@ struct SinkSyslog : public Sink
 
     void log(const Metadata& metadata, const std::string& message) override
     {
-        syslog(get_syslog_priority(metadata.severity), "%s", message.c_str());
+        syslog(get_syslog_priority(metadata.severity), "(%s) %s", metadata.tag.text.c_str(), message.c_str());
     }
 };
 #endif
@@ -1009,8 +1014,12 @@ struct SinkEventLog : public Sink
 {
     SinkEventLog(const std::string& ident, const Filter& filter) : Sink(filter)
     {
+#ifdef UNICODE
         std::wstring wide = std::wstring(ident.begin(), ident.end()); // stijnvdb: RegisterEventSource expands to RegisterEventSourceW which takes wchar_t
         event_log = RegisterEventSource(NULL, wide.c_str());
+#else
+        event_log = RegisterEventSource(NULL, ident.c_str());
+#endif
     }
 
     WORD get_type(Severity severity) const
@@ -1036,11 +1045,15 @@ struct SinkEventLog : public Sink
 
     void log(const Metadata& metadata, const std::string& message) override
     {
+#ifdef UNICODE
         std::wstring wide = std::wstring(message.begin(), message.end());
         // We need this temp variable because we cannot take address of rValue
-        const wchar_t* c_str = wide.c_str();
-
+        const auto* c_str = wide.c_str();
         ReportEvent(event_log, get_type(metadata.severity), 0, 0, NULL, 1, 0, &c_str, NULL);
+#else
+        const auto* c_str = message.c_str();
+        ReportEvent(event_log, get_type(metadata.severity), 0, 0, NULL, 1, 0, &c_str, NULL);
+#endif
     }
 
 protected:
@@ -1103,7 +1116,7 @@ struct SinkCallback : public Sink
 {
     using callback_fun = std::function<void(const Metadata& metadata, const std::string& message)>;
 
-    SinkCallback(const Filter& filter, callback_fun callback) : Sink(filter), callback_(callback)
+    SinkCallback(const Filter& filter, callback_fun callback) : Sink(filter), callback_(std::move(callback))
     {
     }
 
