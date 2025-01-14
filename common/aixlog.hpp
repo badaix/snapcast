@@ -847,7 +847,7 @@ struct SinkOutputDebugString : public Sink
     {
     }
 
-    void log(const Metadata& metadata, const std::string& message) override
+    void log(const Metadata& /*metadata*/, const std::string& message) override
     {
 #ifdef UNICODE
         std::wstring wide = std::wstring(message.begin(), message.end());
