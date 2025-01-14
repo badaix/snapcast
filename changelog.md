@@ -14,6 +14,7 @@
 - Remove PiMusicBox from readme (Issue ##1304)
 - Add missing include (Issue #1295)
 - Fix building with boost v1.87.0 (Issues #1305, #1306, #1307, PR #1308)
+- Log tag is missing in syslog (Issue #1276)
 
 ### General
 
