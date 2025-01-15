@@ -157,7 +157,8 @@ void Server::processRequest(const jsonrpcpp::request_ptr& request, AuthInfo& aut
     else
     {
         LOG(ERROR, LOG_TAG) << "Method not found: " << request->method() << "\n";
-        throw jsonrpcpp::MethodNotFoundException(request->id());
+        auto response = std::make_shared<jsonrpcpp::MethodNotFoundException>(request->id());
+        on_response(std::move(response), nullptr);
     }
 }
 
