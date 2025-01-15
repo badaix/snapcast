@@ -18,6 +18,7 @@
 
 ### General
 
+- Server: Fix CVE-2023-36177 (Issue #1327)
 - CI: execute unit tests (asan and tsan)
 - CI: create doxygen documentation
 - CI: compile release and debug builds
