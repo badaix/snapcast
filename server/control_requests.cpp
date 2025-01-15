@@ -88,8 +88,10 @@ ControlRequestFactory::ControlRequestFactory(const Server& server)
     // Stream requests
     add_request(std::make_shared<StreamControlRequest>(server));
     add_request(std::make_shared<StreamSetPropertyRequest>(server));
+#if 0 // Removed to fix CVE-2023-36177
     add_request(std::make_shared<StreamAddRequest>(server));
     add_request(std::make_shared<StreamRemoveRequest>(server));
+#endif
 
     // Server requests
     add_request(std::make_shared<ServerGetRpcVersionRequest>(server));
