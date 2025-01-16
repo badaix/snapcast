@@ -10,6 +10,7 @@
 
 ### Bugfixes
 
+- Fix CVE-2023-36177: Remove "AddStream" and "RemoveStream" RPC (Issue #1327)
 - Fix compile error on MacOS
 - Remove PiMusicBox from readme (Issue ##1304)
 - Add missing include (Issue #1295)
@@ -18,7 +19,6 @@
 
 ### General
 
-- Server: Fix CVE-2023-36177 (Issue #1327)
 - CI: execute unit tests (asan and tsan)
 - CI: create doxygen documentation
 - CI: compile release and debug builds
