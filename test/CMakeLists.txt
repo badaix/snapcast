@@ -1,12 +1,18 @@
-include(FetchContent)
 
-FetchContent_Declare(
-  Catch2
-  GIT_REPOSITORY https://github.com/catchorg/Catch2.git
-  GIT_TAG v3.6.0 # or a later release
-)
+find_package(Catch2 3 QUIET)
 
-FetchContent_MakeAvailable(Catch2)
+if (NOT Catch2_FOUND)
+  message(STATUS "Catch2 not found, fetching it")
+  include(FetchContent)
+
+  FetchContent_Declare(
+    Catch2
+    GIT_REPOSITORY https://github.com/catchorg/Catch2.git
+    GIT_TAG v3.6.0 # or a later release
+  )
+
+  FetchContent_MakeAvailable(Catch2)
+endif()
 
 # Make test executable
 set(TEST_SOURCES

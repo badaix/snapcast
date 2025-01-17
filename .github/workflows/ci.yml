@@ -27,7 +27,7 @@ jobs:
           sudo apt-get update && \
           sudo apt-get install -yq libasound2-dev libsoxr-dev libvorbisidec-dev libvorbis-dev libflac-dev \
           libopus-dev alsa-utils libpulse-dev libavahi-client-dev libssl-dev \
-          avahi-daemon debhelper ccache expat cppcheck 
+          avahi-daemon ccache expat cppcheck 
       - name: cache boost
         id: cache-boost
         uses: actions/cache@v4
@@ -105,7 +105,7 @@ jobs:
           sudo apt-get update && \
           sudo apt-get install -yq libasound2-dev libsoxr-dev libvorbisidec-dev libvorbis-dev libflac-dev \
           libopus-dev alsa-utils libpulse-dev libavahi-client-dev libssl-dev \
-          avahi-daemon debhelper ccache expat 
+          avahi-daemon ccache expat catch2
       - name: cache boost
         id: cache-boost
         uses: actions/cache@v4
@@ -239,7 +239,11 @@ jobs:
       - name: print environment
         run: env
       - name: dependencies
-        run: sudo apt-get update && sudo apt-get install -yq libasound2-dev libsoxr-dev libvorbisidec-dev libvorbis-dev libflac-dev libopus-dev alsa-utils libpulse-dev libavahi-client-dev avahi-daemon debhelper ccache expat cppcheck
+        run: |
+          sudo apt-get update && \
+          sudo apt-get install -yq libasound2-dev libsoxr-dev libvorbisidec-dev libvorbis-dev libflac-dev \
+          libopus-dev alsa-utils libpulse-dev libavahi-client-dev libssl-dev \
+          avahi-daemon ccache expat catch2
       - name: cache boost
         id: cache-boost
         uses: actions/cache@v4
@@ -334,7 +338,7 @@ jobs:
       - name: dependencies
         run: |
           brew update
-          brew install libsoxr flac libvorbis opus ccache expat
+          brew install libsoxr flac libvorbis opus ccache expat catch2
       - name: cache boost
         id: cache-boost
         uses: actions/cache@v4
@@ -404,7 +408,7 @@ jobs:
           cd c:\vcpkg
           git pull
           vcpkg.exe update
-          vcpkg.exe --triplet x64-windows install libflac libvorbis soxr opus boost-asio
+          vcpkg.exe --triplet x64-windows install libflac libvorbis soxr opus boost-asio catch2
       - name: configure
         run: |
           echo vcpkg installation root: ${env:VCPKG_INSTALLATION_ROOT}
