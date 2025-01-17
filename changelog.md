@@ -25,7 +25,7 @@
 - Code cleanup
 - Add more doxygen documentation
 
-_Johannes Pohl <snapcast@badaix.de>  Sun, 19 Jan 2025 00:13:37 +0200_
+_Johannes Pohl <snapcast@badaix.de>  Fri, 17 Jan 2025 00:13:37 +0200_
 
 ## Version 0.29.0
 
