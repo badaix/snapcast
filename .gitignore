@@ -66,5 +66,7 @@ compile_commands.json
 notes.txt
 sanitizer-suppressions.txt
 snapserver.conf
+certs
+server/etc/certs
 
 extras/package/debian/snap*.debhelper.log

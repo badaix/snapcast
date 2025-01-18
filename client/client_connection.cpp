@@ -29,6 +29,7 @@
 #include <boost/asio/write.hpp>
 
 // standard headers
+#include <cstdint>
 #include <iostream>
 
 
@@ -91,8 +92,8 @@ bool PendingRequest::operator<(const PendingRequest& other) const
 
 
 
-ClientConnection::ClientConnection(boost::asio::io_context& io_context, const ClientSettings::Server& server)
-    : strand_(boost::asio::make_strand(io_context.get_executor())), resolver_(strand_), socket_(strand_), reqId_(1), server_(server)
+ClientConnection::ClientConnection(boost::asio::io_context& io_context, ClientSettings::Server server)
+    : strand_(boost::asio::make_strand(io_context.get_executor())), resolver_(strand_), socket_(strand_), reqId_(1), server_(std::move(server))
 {
     base_msg_size_ = base_message_.getSize();
     buffer_.resize(base_msg_size_);
@@ -247,10 +248,11 @@ void ClientConnection::sendRequest(const msg::message_ptr& message, const chrono
     boost::asio::post(strand_, [this, message, timeout, handler]()
     {
         pendingRequests_.erase(
-            std::remove_if(pendingRequests_.begin(), pendingRequests_.end(), [](std::weak_ptr<PendingRequest> request) { return request.expired(); }),
+            std::remove_if(pendingRequests_.begin(), pendingRequests_.end(), [](const std::weak_ptr<PendingRequest>& request) { return request.expired(); }),
             pendingRequests_.end());
         unique_ptr<msg::BaseMessage> response(nullptr);
-        if (++reqId_ >= 10000)
+        static constexpr uint16_t max_req_id = 10000;
+        if (++reqId_ >= max_req_id)
             reqId_ = 1;
         message->id = reqId_;
         auto request = make_shared<PendingRequest>(strand_, reqId_, handler);

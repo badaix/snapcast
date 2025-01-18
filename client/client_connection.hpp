@@ -83,10 +83,11 @@ private:
 class ClientConnection
 {
 public:
+    /// Result callback with boost::error_code
     using ResultHandler = std::function<void(const boost::system::error_code&)>;
 
     /// c'tor
-    ClientConnection(boost::asio::io_context& io_context, const ClientSettings::Server& server);
+    ClientConnection(boost::asio::io_context& io_context, ClientSettings::Server server);
     /// d'tor
     virtual ~ClientConnection();
 
@@ -122,6 +123,7 @@ public:
         });
     }
 
+    /// @return MAC address of the client
     std::string getMacAddress();
 
     /// async get the next message
@@ -129,26 +131,42 @@ public:
     void getNextMessage(const MessageHandler<msg::BaseMessage>& handler);
 
 protected:
+    /// Send next pending message from messages_
     void sendNext();
 
+    /// Base message holding the received message
     msg::BaseMessage base_message_;
+    /// Receive buffer
     std::vector<char> buffer_;
+    /// Size of a base message (= message header)
     size_t base_msg_size_;
 
+    /// Strand to serialize send/receive
     boost::asio::strand<boost::asio::any_io_executor> strand_;
+    /// TCP resolver
     tcp::resolver resolver_;
+    /// TCP socket
     tcp::socket socket_;
+    /// List of pending requests, waiting for a response (Message::refersTo)
     std::vector<std::weak_ptr<PendingRequest>> pendingRequests_;
+    /// unique request id to match a response
     uint16_t reqId_;
+    /// Server settings (host and port)
     ClientSettings::Server server_;
 
+    /// A pending request
     struct PendingMessage
     {
-        PendingMessage(const msg::message_ptr& msg, ResultHandler handler) : msg(msg), handler(handler)
+        /// C'tor
+        PendingMessage(msg::message_ptr msg, ResultHandler handler) : msg(std::move(msg)), handler(std::move(handler))
         {
         }
+        /// Pointer to the request
         msg::message_ptr msg;
+        /// Response handler
         ResultHandler handler;
     };
+
+    /// Pending messages to be sent
     std::deque<PendingMessage> messages_;
 };
