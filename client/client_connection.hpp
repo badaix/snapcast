@@ -48,7 +48,9 @@ using MessageHandler = std::function<void(const boost::system::error_code&, std:
 class PendingRequest : public std::enable_shared_from_this<PendingRequest>
 {
 public:
+    /// c'tor
     PendingRequest(const boost::asio::strand<boost::asio::any_io_executor>& strand, uint16_t reqId, const MessageHandler<msg::BaseMessage>& handler);
+    /// d'tor
     virtual ~PendingRequest();
 
     /// Set the response for the pending request and passes it to the handler
@@ -157,7 +159,7 @@ protected:
     /// A pending request
     struct PendingMessage
     {
-        /// C'tor
+        /// c'tor
         PendingMessage(msg::message_ptr msg, ResultHandler handler) : msg(std::move(msg)), handler(std::move(handler))
         {
         }
