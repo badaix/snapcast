@@ -161,6 +161,8 @@ The Server JSON object contains a list of Groups and Streams. Every Group holds 
 * Stream
   * [Stream.Control](#streamcontrol)
   * [Stream.SetProperty](#streamsetproperty)
+  * [Stream.AddStream](#streamaddstream)
+  * [Stream.RemoveStream](#streamremovestream)
 
 ### Notifications
 
@@ -479,6 +481,38 @@ See [Plugin.Stream.Player.SetProperty](stream_plugin.md#pluginstreamplayersetpro
 ```json
 {"id": 1, "jsonrpc": "2.0", "result": "ok"}
 ```
+
+### Stream.AddStream
+
+Note: for security purposes, we don't allow adding `process` streams.
+We also don't allow setting the `controlscript` query parameter of streamUri.
+
+#### Request
+
+```json
+{"id":8,"jsonrpc":"2.0","method":"Stream.AddStream","params":{"streamUri":"pipe:///tmp/snapfifo?name=stream 2"}}
+```
+
+#### Response
+
+```json
+{"id":8,"jsonrpc":"2.0","result":{"stream_id":"stream 2"}}
+```
+
+### Stream.RemoveStream
+
+#### Request
+
+```json
+{"id":8,"jsonrpc":"2.0","method":"Stream.RemoveStream","params":{"id":"stream 2"}}
+```
+
+#### Response
+
+```json
+{"id":8,"jsonrpc":"2.0","result":{"stream_id":"stream 2"}}
+```
+
 
 ##### Error
 
