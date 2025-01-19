@@ -99,10 +99,8 @@ ControlRequestFactory::ControlRequestFactory(const Server& server)
     // Stream requests
     add_request(std::make_shared<StreamControlRequest>(server));
     add_request(std::make_shared<StreamSetPropertyRequest>(server));
-#if 0 // Removed to fix CVE-2023-36177
     add_request(std::make_shared<StreamAddRequest>(server));
     add_request(std::make_shared<StreamRemoveRequest>(server));
-#endif
 
     // Server requests
     add_request(std::make_shared<ServerGetRpcVersionRequest>(server));
@@ -692,11 +690,15 @@ void StreamAddRequest::execute(const jsonrpcpp::request_ptr& request, AuthInfo& 
 
     checkParams(request, {"streamUri"});
 
+    // Don't allow adding a process stream: CVE-2023-36177
+    const std::string streamUri = request->params().get("streamUri");
+    if(StreamUri(streamUri).scheme == "process")
+        throw jsonrpcpp::InvalidParamsException("Adding process streams is not allowed", request->id());
+
     std::ignore = authinfo;
     LOG(INFO, LOG_TAG) << "Stream.AddStream(" << request->params().get("streamUri") << ")\n";
 
     // Add stream
-    std::string streamUri = request->params().get("streamUri");
     PcmStreamPtr stream = getStreamManager().addStream(streamUri);
     if (stream == nullptr)
         throw jsonrpcpp::InternalErrorException("Stream not created", request->id());
