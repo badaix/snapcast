@@ -693,9 +693,9 @@ void StreamAddRequest::execute(const jsonrpcpp::request_ptr& request, AuthInfo& 
     // Don't allow adding a process stream: CVE-2023-36177
     const std::string streamUri = request->params().get("streamUri");
     const StreamUri parsedUri(streamUri);
-    if(parsedUri.scheme == "process")
+    if (parsedUri.scheme == "process")
         throw jsonrpcpp::InvalidParamsException("Adding process streams is not allowed", request->id());
-    
+
     // Don't allow settings the controlscript streamUri property
     if (!parsedUri.getQuery("controlscript").empty())
         throw jsonrpcpp::InvalidParamsException("No controlscript streamUri property allowed", request->id());
