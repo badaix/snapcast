@@ -44,6 +44,16 @@ static void checkParams(const jsonrpcpp::request_ptr& request, const std::vector
     }
 }
 
+/// throw InvalidParamsException if one of @p params exists in @p request
+static void checkParamsNotAllowed(const jsonrpcpp::request_ptr& request, const std::vector<std::string>& params)
+{
+    for (const auto& param : params)
+    {
+        if (request->params().has(param))
+            throw jsonrpcpp::InvalidParamsException("Parameter '" + param + "' is not allowed", request->id());
+    }
+}
+
 
 Request::Request(const Server& server, const std::string& method) : server_(server), method_(method)
 {
@@ -694,6 +704,9 @@ void StreamAddRequest::execute(const jsonrpcpp::request_ptr& request, AuthInfo& 
     const std::string streamUri = request->params().get("streamUri");
     if(StreamUri(streamUri).scheme == "process")
         throw jsonrpcpp::InvalidParamsException("Adding process streams is not allowed", request->id());
+    
+    // Don't allow settings the controlscript parameter
+    checkParamsNotAllowed(request, {"controlscript"});
 
     std::ignore = authinfo;
     LOG(INFO, LOG_TAG) << "Stream.AddStream(" << request->params().get("streamUri") << ")\n";
