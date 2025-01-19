@@ -44,16 +44,6 @@ static void checkParams(const jsonrpcpp::request_ptr& request, const std::vector
     }
 }
 
-/// throw InvalidParamsException if one of @p params exists in @p request
-static void checkParamsNotAllowed(const jsonrpcpp::request_ptr& request, const std::vector<std::string>& params)
-{
-    for (const auto& param : params)
-    {
-        if (request->params().has(param))
-            throw jsonrpcpp::InvalidParamsException("Parameter '" + param + "' is not allowed", request->id());
-    }
-}
-
 
 Request::Request(const Server& server, const std::string& method) : server_(server), method_(method)
 {
