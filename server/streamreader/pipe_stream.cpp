@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2024  Johannes Pohl
+    Copyright (C) 2014-2025  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -65,7 +65,7 @@ void PipeStream::connect()
         if (errno == static_cast<int>(std::errc::no_such_file_or_directory))
         {
             LOG(ERROR, LOG_TAG) << error << "\n";
-            wait(read_timer_, 200ms, [this] { connect(); });
+            wait(read_timer_, 200ms, [this, self = shared_from_this()] { connect(); });
             return;
         }
         throw SnapException(error);

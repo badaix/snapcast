@@ -145,7 +145,8 @@ void ProcessStream::onStderrMsg(const std::string& line)
 void ProcessStream::stderrReadLine()
 {
     const std::string delimiter = "\n";
-    boost::asio::async_read_until(*stream_stderr_, streambuf_stderr_, delimiter, [this, delimiter](const std::error_code& ec, std::size_t bytes_transferred)
+    boost::asio::async_read_until(*stream_stderr_, streambuf_stderr_, delimiter,
+                                  [this, self = shared_from_this(), delimiter](const std::error_code& ec, std::size_t bytes_transferred)
     {
         if (ec)
         {

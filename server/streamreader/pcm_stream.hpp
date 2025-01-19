@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2024  Johannes Pohl
+    Copyright (C) 2014-2025  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -100,7 +100,7 @@ static constexpr auto kControlScriptParams = "controlscriptparams";
  * Implements EncoderListener to get the encoded data.
  * Data is passed to the PcmStream::Listener
  */
-class PcmStream
+class PcmStream : public std::enable_shared_from_this<PcmStream>
 {
 public:
     /// Callback interface for users of PcmStream

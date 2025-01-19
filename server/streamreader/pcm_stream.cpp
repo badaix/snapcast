@@ -144,11 +144,11 @@ void PcmStream::onControlRequest(const jsonrpcpp::Request& request)
 void PcmStream::pollProperties()
 {
     property_timer_.expires_after(10s);
-    property_timer_.async_wait([this](const boost::system::error_code& ec)
+    property_timer_.async_wait([this, self = shared_from_this()](const boost::system::error_code& ec)
     {
         if (!ec)
         {
-            stream_ctrl_->command({++req_id_, "Plugin.Stream.Player.GetProperties"}, [this](const jsonrpcpp::Response& response)
+            stream_ctrl_->command({++req_id_, "Plugin.Stream.Player.GetProperties"}, [this, self = shared_from_this()](const jsonrpcpp::Response& response)
             {
                 LOG(INFO, LOG_TAG) << "Response for Plugin.Stream.Player.GetProperties: " << response.to_json() << "\n";
                 if (response.error().code() == 0)
@@ -173,7 +173,7 @@ void PcmStream::onControlNotification(const jsonrpcpp::Notification& notificatio
         else if (notification.method() == "Plugin.Stream.Ready")
         {
             LOG(DEBUG, LOG_TAG) << "Plugin is ready\n";
-            stream_ctrl_->command({++req_id_, "Plugin.Stream.Player.GetProperties"}, [this](const jsonrpcpp::Response& response)
+            stream_ctrl_->command({++req_id_, "Plugin.Stream.Player.GetProperties"}, [this, self = shared_from_this()](const jsonrpcpp::Response& response)
             {
                 LOG(INFO, LOG_TAG) << "Response for Plugin.Stream.Player.GetProperties: " << response.to_json() << "\n";
                 if (response.error().code() == 0)
@@ -228,14 +228,14 @@ void PcmStream::start()
 {
     LOG(DEBUG, LOG_TAG) << "Start: " << name_ << ", type: " << uri_.scheme << ", sampleformat: " << sampleFormat_.toString() << ", codec: " << getCodec()
                         << "\n";
-    encoder_->init([this](const encoder::Encoder& encoder, std::shared_ptr<msg::PcmChunk> chunk, double duration)
+    encoder_->init([this, self = shared_from_this()](const encoder::Encoder& encoder, std::shared_ptr<msg::PcmChunk> chunk, double duration)
     { chunkEncoded(encoder, std::move(chunk), duration); }, sampleFormat_);
 
     if (stream_ctrl_)
     {
-        stream_ctrl_->start(getId(), server_settings_, [this](const jsonrpcpp::Notification& notification) {
-            onControlNotification(notification);
-        }, [this](const jsonrpcpp::Request& request) { onControlRequest(request); }, [this](std::string message) { onControlLog(std::move(message)); });
+        stream_ctrl_->start(getId(), server_settings_, [this, self = shared_from_this()](const jsonrpcpp::Notification& notification)
+        { onControlNotification(notification); }, [this, self = shared_from_this()](const jsonrpcpp::Request& request) { onControlRequest(request); },
+                            [this, self = shared_from_this()](std::string message) { onControlLog(std::move(message)); });
     }
 
     active_ = true;

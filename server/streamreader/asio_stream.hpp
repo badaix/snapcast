@@ -121,7 +121,7 @@ template <typename ReadStream>
 void AsioStream<ReadStream>::check_state(const std::chrono::steady_clock::duration& duration)
 {
     state_timer_.expires_after(duration);
-    state_timer_.async_wait([this, duration](const boost::system::error_code& ec)
+    state_timer_.async_wait([this, self = shared_from_this(), duration](const boost::system::error_code& ec)
     {
         if (!ec)
         {
@@ -174,7 +174,7 @@ void AsioStream<ReadStream>::do_read()
     // Reset the silence timer
     check_state(idle_threshold_ + std::chrono::milliseconds(chunk_ms_));
     boost::asio::async_read(*stream_, boost::asio::buffer(chunk_->payload, chunk_->payloadSize),
-                            [this](boost::system::error_code ec, std::size_t length) mutable
+                            [this, self = shared_from_this()](boost::system::error_code ec, std::size_t length) mutable
     {
         state_timer_.cancel();
 
@@ -186,7 +186,7 @@ void AsioStream<ReadStream>::do_read()
                 lastException_ = ec.message();
             }
             disconnect();
-            wait(read_timer_, 100ms, [this] { connect(); });
+            wait(read_timer_, 100ms, [this, self = shared_from_this()] { connect(); });
             return;
         }
 
@@ -240,7 +240,7 @@ void AsioStream<ReadStream>::do_read()
         if (nextTick_ >= currentTick)
         {
             read_timer_.expires_after(nextTick_ - currentTick);
-            read_timer_.async_wait([this](const boost::system::error_code& ec)
+            read_timer_.async_wait([this, self = shared_from_this()](const boost::system::error_code& ec)
             {
                 if (ec)
                 {

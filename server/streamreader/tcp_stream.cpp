@@ -73,7 +73,7 @@ void TcpStream::connect()
 
     if (is_server_)
     {
-        acceptor_->async_accept([this](boost::system::error_code ec, tcp::socket socket)
+        acceptor_->async_accept([this, self = shared_from_this()](boost::system::error_code ec, tcp::socket socket)
         {
             if (!ec)
             {
@@ -91,7 +91,7 @@ void TcpStream::connect()
     {
         stream_ = make_unique<tcp::socket>(strand_);
         boost::asio::ip::tcp::endpoint endpoint(boost::asio::ip::make_address(host_), port_);
-        stream_->async_connect(endpoint, [this](const boost::system::error_code& ec)
+        stream_->async_connect(endpoint, [this, self = shared_from_this()](const boost::system::error_code& ec)
         {
             if (!ec)
             {
@@ -101,7 +101,7 @@ void TcpStream::connect()
             else
             {
                 LOG(DEBUG, LOG_TAG) << "Connect failed: " << ec.message() << "\n";
-                wait(reconnect_timer_, 1s, [this] { connect(); });
+                wait(reconnect_timer_, 1s, [this, self = shared_from_this()] { connect(); });
             }
         });
     }
