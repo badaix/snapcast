@@ -485,7 +485,7 @@ See [Plugin.Stream.Player.SetProperty](stream_plugin.md#pluginstreamplayersetpro
 ### Stream.AddStream
 
 Note: for security purposes, we don't allow adding `process` streams.
-We also don't allow setting the `controlscript` parameter.
+We also don't allow setting the `controlscript` query parameter of streamUri.
 
 #### Request
 
