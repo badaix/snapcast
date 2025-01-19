@@ -511,6 +511,7 @@ We also don't allow setting the `controlscript` query parameter of streamUri.
 
 ```json
 {"id":8,"jsonrpc":"2.0","result":{"stream_id":"stream 2"}}
+```
 
 
 ##### Error
