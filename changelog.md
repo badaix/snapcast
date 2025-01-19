@@ -1,12 +1,30 @@
 # Snapcast changelog
 
+## Version 0.31.0
+
+### Features
+
+- Server: Add secure RPC methods `AddStream` and `RemoveStream` (PR #1331, Issue #1330)
+
+### Bugfixes
+
+- Fix crash when calling `Stream.RemoveStream`
+- Fix typo in `changelog.md` (PR #1328)
+- Fix typo in `configuration.md` (PR #1329)
+
+### General
+
+- Add more doxygen documentation
+
+_Johannes Pohl <snapcast@badaix.de>  Tue, 21 Jan 2025 00:13:37 +0200_
+
 ## Version 0.30.0
 
 ### Features
 
 - Server: Add support for HTTPS and WSS (Issue #1322)
 - Server: custom URL prefix for HTTP URLs (PR #1260)
-- Server: listen to both IPv6 and IPv4 for incoming connections (PR #1290)
+- Server: listen to both IPv4 and IPv6 for incoming connections (PR #1290)
 
 ### Bugfixes
 
