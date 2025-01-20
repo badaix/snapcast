@@ -690,21 +690,23 @@ void StreamAddRequest::execute(const jsonrpcpp::request_ptr& request, AuthInfo& 
 
     checkParams(request, {"streamUri"});
 
-    // Don't allow adding a process stream: CVE-2023-36177
-    const std::string streamUri = request->params().get("streamUri");
-    const StreamUri parsedUri(streamUri);
-    if (parsedUri.scheme == "process")
-        throw jsonrpcpp::InvalidParamsException("Adding process streams is not allowed", request->id());
+    // Don't allow adding streams that start a user defined process: CVE-2023-36177
+    static constexpr std::array whitelist{"pipe", "file", "tcp", "alsa", "jack", "meta"};
+    const std::string stream_uri = request->params().get("streamUri");
+    const StreamUri parsedUri(stream_uri);
+
+    if (std::find(whitelist.begin(), whitelist.end(), parsedUri.scheme) == whitelist.end())
+        throw jsonrpcpp::InvalidParamsException("Adding '" + parsedUri.scheme + "' streams is not allowed", request->id());
 
     // Don't allow settings the controlscript streamUri property
     if (!parsedUri.getQuery("controlscript").empty())
-        throw jsonrpcpp::InvalidParamsException("No controlscript streamUri property allowed", request->id());
+        throw jsonrpcpp::InvalidParamsException("No 'controlscript' streamUri property allowed", request->id());
 
     std::ignore = authinfo;
     LOG(INFO, LOG_TAG) << "Stream.AddStream(" << request->params().get("streamUri") << ")\n";
 
     // Add stream
-    PcmStreamPtr stream = getStreamManager().addStream(streamUri);
+    PcmStreamPtr stream = getStreamManager().addStream(stream_uri);
     if (stream == nullptr)
         throw jsonrpcpp::InternalErrorException("Stream not created", request->id());
     stream->start(); // We start the stream, otherwise it would be silent

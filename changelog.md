@@ -4,7 +4,8 @@
 
 ### Features
 
-- Server: Add secure RPC methods `AddStream` and `RemoveStream` (PR #1331, Issue #1330)
+- Server: Add secure RPC method `Stream.AddStream` (PR #1331, Issue #1330)
+- Server: Re-add RPC method `RemoveStream` (Issue #1330)
 
 ### Bugfixes
 

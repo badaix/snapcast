@@ -484,8 +484,8 @@ See [Plugin.Stream.Player.SetProperty](stream_plugin.md#pluginstreamplayersetpro
 
 ### Stream.AddStream
 
-Note: for security purposes, we don't allow adding `process` streams.
-We also don't allow setting the `controlscript` query parameter of streamUri.
+Note: For security purposes, the RPC interface allows only adding streams of these types: `pipe`, `file`, `tcp`, `alsa`, `jack` and `meta`.
+It is also not allowed to set the `controlscript` query parameter of `streamUri`.
 
 #### Request
 
@@ -512,7 +512,6 @@ We also don't allow setting the `controlscript` query parameter of streamUri.
 ```json
 {"id":8,"jsonrpc":"2.0","result":{"stream_id":"stream 2"}}
 ```
-
 
 ##### Error
 
