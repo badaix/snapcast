@@ -22,11 +22,13 @@
 // local headers
 #include "common/aixlog.hpp"
 #include "common/message/server_settings.hpp"
+#include "jsonrpcpp.hpp"
 #include "server.hpp"
 
 // 3rd party headers
 
 // standard headers
+#include <filesystem>
 #include <memory>
 #include <tuple>
 
@@ -692,18 +694,35 @@ void StreamAddRequest::execute(const jsonrpcpp::request_ptr& request, AuthInfo& 
 
     // Don't allow adding streams that start a user defined process: CVE-2023-36177
     static constexpr std::array whitelist{"pipe", "file", "tcp", "alsa", "jack", "meta"};
-    const std::string stream_uri = request->params().get("streamUri");
-    const StreamUri parsedUri(stream_uri);
+    std::string stream_uri = request->params().get("streamUri");
+    StreamUri parsed_uri(stream_uri);
 
-    if (std::find(whitelist.begin(), whitelist.end(), parsedUri.scheme) == whitelist.end())
-        throw jsonrpcpp::InvalidParamsException("Adding '" + parsedUri.scheme + "' streams is not allowed", request->id());
+    if (std::find(whitelist.begin(), whitelist.end(), parsed_uri.scheme) == whitelist.end())
+        throw jsonrpcpp::InvalidParamsException("Adding '" + parsed_uri.scheme + "' streams is not allowed", request->id());
 
-    // Don't allow settings the controlscript streamUri property
-    if (!parsedUri.getQuery("controlscript").empty())
-        throw jsonrpcpp::InvalidParamsException("No 'controlscript' streamUri property allowed", request->id());
+    std::filesystem::path script = parsed_uri.getQuery("controlscript");
+    if (!script.empty())
+    {
+        // script must be located in the [stream] plugin_dir
+        std::filesystem::path plugin_dir = getSettings().stream.plugin_dir;
+        // if script file name is relative, prepend the plugin_dir
+        if (!script.is_absolute())
+            script = plugin_dir / script;
+        // convert to normalized absolute path
+        script = std::filesystem::weakly_canonical(script);
+        LOG(DEBUG, LOG_TAG) << "controlscript: " << script.native() << "\n";
+        // check if script is directly located in plugin_dir
+        if (script.parent_path() != plugin_dir)
+            throw jsonrpcpp::InvalidParamsException("controlscript must be located in '" + plugin_dir.native() + "'");
+        if (!std::filesystem::exists(script))
+            throw jsonrpcpp::InvalidParamsException("controlscript '" + script.native() + "' does not exist");
+        parsed_uri.query["controlscript"] = script;
+        LOG(DEBUG, LOG_TAG) << "Raw stream uri: " << stream_uri << "\n";
+        stream_uri = parsed_uri.toString();
+    }
 
     std::ignore = authinfo;
-    LOG(INFO, LOG_TAG) << "Stream.AddStream(" << request->params().get("streamUri") << ")\n";
+    LOG(INFO, LOG_TAG) << "Stream.AddStream(" << stream_uri << ")\n";
 
     // Add stream
     PcmStreamPtr stream = getStreamManager().addStream(stream_uri);

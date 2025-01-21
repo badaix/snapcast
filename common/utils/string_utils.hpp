@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2024  Johannes Pohl
+    Copyright (C) 2014-2025  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -53,6 +53,9 @@ std::string trim_copy(const std::string& s);
 
 /// decode %xx to char
 std::string uriDecode(const std::string& src);
+
+/// @return uri encoded version of @p str
+std::string urlEncode(const std::string& str);
 
 /// Split string @p s at @p delim into @p left and @p right
 void split_left(const std::string& s, char delim, std::string& left, std::string& right);

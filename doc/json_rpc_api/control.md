@@ -485,7 +485,7 @@ See [Plugin.Stream.Player.SetProperty](stream_plugin.md#pluginstreamplayersetpro
 ### Stream.AddStream
 
 Note: For security purposes, the RPC interface allows only adding streams of these types: `pipe`, `file`, `tcp`, `alsa`, `jack` and `meta`.
-It is also not allowed to set the `controlscript` query parameter of `streamUri`.
+The optional`controlscript` of the `streamUri` must be located in `[stream] plugin_dir` (configured in `snapserver.conf`, default `/usr/share/snapserver/plug-ins`), can be an absolute or relative path.
 
 #### Request
 

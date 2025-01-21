@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2020  Johannes Pohl
+    Copyright (C) 2014-2025  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -32,32 +32,49 @@ using json = nlohmann::json;
 namespace streamreader
 {
 
-// scheme:[//[user:password@]host[:port]][/]path[?query][#fragment]
+/// URI with the general format:
+///  scheme:[//[user:password@]host[:port]][/]path[?query][#fragment]
 struct StreamUri
 {
-    StreamUri(const std::string& uri);
+    /// c'tor construct from string @p uri
+    explicit StreamUri(const std::string& uri);
+
+    /// the complete uri
     std::string uri;
+    /// the scheme component (pipe, http, file, tcp, ...)
     std::string scheme;
-    /*	struct Authority
-            {
-                    std::string username;
-                    std::string password;
-                    std::string host;
-                    size_t port;
-            };
-            Authority authority;
-    */
+    // struct Authority
+    // {
+    //     std::string username;
+    //     std::string password;
+    //     std::string host;
+    //     size_t port;
+    // };
+    // Authority authority;
+
+    /// the host component
     std::string host;
+    /// the path component
     std::string path;
+    /// the query component: "key = value" pairs
     std::map<std::string, std::string> query;
+    /// the fragment component
     std::string fragment;
 
-    std::string id() const;
+    /// @return URI as json
     json toJson() const;
+
+    /// @return value for a @p key or @p def, if key does not exist
     std::string getQuery(const std::string& key, const std::string& def = "") const;
 
-    void parse(const std::string& streamUri);
+    /// parse @p stream_uri string
+    void parse(const std::string& stream_uri);
+
+    /// @return uri as string
     std::string toString() const;
+
+    /// @return true if @p other is equal to this
+    bool operator==(const StreamUri& other) const;
 };
 
 } // namespace streamreader

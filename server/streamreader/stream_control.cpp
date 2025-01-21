@@ -129,15 +129,15 @@ void StreamControl::onLog(std::string message)
 
 
 
-ScriptStreamControl::ScriptStreamControl(const boost::asio::any_io_executor& executor, const std::string& script, const std::string& params)
-    : StreamControl(executor), script_(script), params_(params)
+ScriptStreamControl::ScriptStreamControl(const boost::asio::any_io_executor& executor, const std::filesystem::path& plugin_dir, std::string script,
+                                         std::string params)
+    : StreamControl(executor), script_(std::move(script)), params_(std::move(params))
 {
     namespace fs = utils::file;
     if (!fs::exists(script_))
     {
-        std::string plugin_path = "/usr/share/snapserver/plug-ins/";
-        if (fs::exists(plugin_path + script_))
-            script_ = plugin_path + script_;
+        if (fs::exists(plugin_dir / script_))
+            script_ = plugin_dir / script_;
         else
             throw SnapException("Control script not found: \"" + script_ + "\"");
     }

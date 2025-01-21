@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2024  Johannes Pohl
+    Copyright (C) 2014-2025  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -104,6 +104,31 @@ std::string trim_copy(const std::string& s)
     std::string str(s);
     return trim(str);
 }
+
+
+std::string urlEncode(const std::string& str)
+{
+    std::ostringstream os;
+    for (std::string::const_iterator ci = str.begin(); ci != str.end(); ++ci)
+    {
+        if ((*ci >= 'a' && *ci <= 'z') || (*ci >= 'A' && *ci <= 'Z') || (*ci >= '0' && *ci <= '9'))
+        { // allowed
+            os << *ci;
+        }
+        else if (*ci == ' ')
+        {
+            os << '+';
+        }
+        else
+        {
+            auto toHex = [](unsigned char x) { return static_cast<unsigned char>(x + (x > 9 ? ('A' - 10) : '0')); };
+            os << '%' << toHex(*ci >> 4) << toHex(*ci % 16);
+        }
+    }
+
+    return os.str();
+}
+
 
 // decode %xx to char
 std::string uriDecode(const std::string& src)

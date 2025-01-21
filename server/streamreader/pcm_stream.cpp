@@ -72,7 +72,7 @@ PcmStream::PcmStream(PcmStream::Listener* pcmListener, boost::asio::io_context& 
         std::string params;
         if (uri_.query.find(kControlScriptParams) != uri_.query.end())
             params = uri_.query[kControlScriptParams];
-        stream_ctrl_ = std::make_unique<ScriptStreamControl>(strand_, uri_.query[kControlScript], params);
+        stream_ctrl_ = std::make_unique<ScriptStreamControl>(strand_, server_settings_.stream.plugin_dir, uri_.query[kControlScript], std::move(params));
     }
 
     if (uri_.query.find(kUriChunkMs) != uri_.query.end())

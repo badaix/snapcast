@@ -28,6 +28,7 @@
 #include <boost/process.hpp>
 
 // standard headers
+#include <filesystem>
 #include <map>
 #include <string>
 
@@ -78,10 +79,10 @@ private:
 class ScriptStreamControl : public StreamControl
 {
 public:
-    ScriptStreamControl(const boost::asio::any_io_executor& executor, const std::string& script, const std::string& params);
+    ScriptStreamControl(const boost::asio::any_io_executor& executor, const std::filesystem::path& plugin_dir, std::string script, std::string params);
     virtual ~ScriptStreamControl() = default;
 
-protected:
+private:
     /// Send a message to stdin of the process
     void doCommand(const jsonrpcpp::Request& request) override;
     void doStart(const std::string& stream_id, const ServerSettings& server_setttings) override;

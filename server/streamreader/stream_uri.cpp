@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2024  Johannes Pohl
+    Copyright (C) 2014-2025  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -31,6 +31,8 @@
 using namespace std;
 namespace strutils = utils::string;
 
+static constexpr auto LOG_TAG = "StreamUri";
+
 namespace streamreader
 {
 
@@ -40,34 +42,39 @@ StreamUri::StreamUri(const std::string& uri)
 }
 
 
-void StreamUri::parse(const std::string& streamUri)
+void StreamUri::parse(const std::string& stream_uri)
 {
     // https://en.wikipedia.org/wiki/Uniform_Resource_Identifier
     // scheme:[//[user:password@]host[:port]][/]path[?query][#fragment]
     // would be more elegant with regex. Not yet supported on my dev machine's gcc 4.8 :(
-    LOG(DEBUG) << "StreamUri: " << streamUri << "\n";
+    LOG(DEBUG, LOG_TAG) << "StreamUri: " << stream_uri << "\n";
     size_t pos;
-    uri = strutils::trim_copy(streamUri);
+
+    // Remove leading and trailing quotes
+    uri = strutils::trim_copy(stream_uri);
     while (!uri.empty() && ((uri[0] == '\'') || (uri[0] == '"')))
         uri = uri.substr(1);
     while (!uri.empty() && ((uri[uri.length() - 1] == '\'') || (uri[uri.length() - 1] == '"')))
         uri = uri.substr(0, this->uri.length() - 1);
 
     // string decodedUri = strutils::uriDecode(uri);
-    // LOG(DEBUG) << "StreamUri decoded: " << decodedUri << "\n";
+    // LOG(DEBUG, LOG_TAG) << "StreamUri decoded: " << decodedUri << "\n";
 
     string tmp(uri);
 
+    // Parse scheme
     pos = tmp.find(':');
     if (pos == string::npos)
         throw invalid_argument("missing ':'");
     scheme = strutils::uriDecode(strutils::trim_copy(tmp.substr(0, pos)));
     tmp = tmp.substr(pos + 1);
-    LOG(TRACE) << "scheme: '" << scheme << "', tmp: '" << tmp << "'\n";
+    LOG(TRACE, LOG_TAG) << "scheme: '" << scheme << "', tmp: '" << tmp << "'\n";
+    // tmp = //[user:password@]host[:port][/]path[?query][#fragment]
 
     if (tmp.find("//") != 0)
         throw invalid_argument("missing host separator: '//'");
     tmp = tmp.substr(2);
+    // tmp = [user:password@]host[:port][/]path[?query][#fragment]
 
     pos = tmp.find('/');
     if (pos == string::npos)
@@ -76,13 +83,15 @@ void StreamUri::parse(const std::string& streamUri)
         if (pos == string::npos)
             pos = tmp.length();
     }
+    // [user:password@]host[:port][/]path[?query][#fragment]
+    // pos:                        ^  or  ^  or             ^
 
     host = strutils::uriDecode(strutils::trim_copy(tmp.substr(0, pos)));
     tmp = tmp.substr(pos);
     path = tmp;
     pos = std::min(path.find('?'), path.find('#'));
     path = strutils::uriDecode(strutils::trim_copy(path.substr(0, pos)));
-    LOG(TRACE) << "host: '" << host << "', tmp: '" << tmp << "', path: '" << path << "'\n";
+    LOG(TRACE, LOG_TAG) << "host: '" << host << "', tmp: '" << tmp << "', path: '" << path << "'\n";
 
     string queryStr;
     pos = tmp.find('?');
@@ -90,7 +99,7 @@ void StreamUri::parse(const std::string& streamUri)
     {
         tmp = tmp.substr(pos + 1);
         queryStr = tmp;
-        LOG(TRACE) << "path: '" << path << "', tmp: '" << tmp << "', query: '" << queryStr << "'\n";
+        LOG(TRACE, LOG_TAG) << "path: '" << path << "', tmp: '" << tmp << "', query: '" << queryStr << "'\n";
     }
 
     pos = tmp.find('#');
@@ -99,7 +108,7 @@ void StreamUri::parse(const std::string& streamUri)
         queryStr = tmp.substr(0, pos);
         tmp = tmp.substr(pos + 1);
         fragment = strutils::uriDecode(strutils::trim_copy(tmp));
-        LOG(TRACE) << "query: '" << queryStr << "', fragment: '" << fragment << "', tmp: '" << tmp << "'\n";
+        LOG(TRACE, LOG_TAG) << "query: '" << queryStr << "', fragment: '" << fragment << "', tmp: '" << tmp << "'\n";
     }
 
     vector<string> keyValueList = strutils::split(queryStr, '&');
@@ -113,15 +122,16 @@ void StreamUri::parse(const std::string& streamUri)
             query[key] = value;
         }
     }
-    LOG(DEBUG) << "StreamUri.toString: " << toString() << "\n";
+    LOG(DEBUG, LOG_TAG) << "StreamUri.toString: " << toString() << "\n";
 }
 
 
 std::string StreamUri::toString() const
 {
+    // TODO: path must be properly be uri encoded
     // scheme:[//[user:password@]host[:port]][/]path[?query][#fragment]
     stringstream ss;
-    ss << scheme << "://" << host << "/" + path;
+    ss << scheme << "://" << host << path;
     if (!query.empty())
     {
         ss << "?";
@@ -155,4 +165,10 @@ std::string StreamUri::getQuery(const std::string& key, const std::string& def) 
         return iter->second;
     return def;
 }
+
+bool StreamUri::operator==(const StreamUri& other) const
+{
+    return (other.scheme == scheme) && (other.host == host) && (other.path == path) && (other.query == query) && (other.fragment == fragment);
+}
+
 } // namespace streamreader

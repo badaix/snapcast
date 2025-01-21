@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2024  Johannes Pohl
+    Copyright (C) 2014-2025  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -290,6 +290,9 @@ TEST_CASE("Uri")
     REQUIRE(uri.query["devicename"] == "Snapcast");
     REQUIRE(uri.query["bitrate"] == "320");
     REQUIRE(uri.query["killall"] == "false");
+    REQUIRE(uri.toString().find("spotify:///librespot?") == 0);
+    StreamUri uri_from_str{uri.toString()};
+    // REQUIRE(uri == uri_from_str);
 }
 
 
