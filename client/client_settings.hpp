@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2024  Johannes Pohl
+    Copyright (C) 2014-2025  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -26,58 +26,83 @@
 #include <string>
 
 
-
+/// Snapclient settings
 struct ClientSettings
 {
+    /// Sharing mode for audio device
     enum class SharingMode
     {
-        unspecified,
-        exclusive,
-        shared
+        unspecified, ///< unspecified
+        exclusive,   ///< exclusice access
+        shared       ///< shared access
     };
 
+    /// Mixer settings
     struct Mixer
     {
+        /// Mixer mode
         enum class Mode
         {
-            hardware,
-            software,
-            script,
-            none
+            hardware, ///< hardware mixer
+            software, ///< software mixer
+            script,   ///< run a mixer script
+            none      ///< no mixer
         };
 
+        /// the configured mixer mode
         Mode mode{Mode::software};
+        /// mixer parameter
         std::string parameter;
     };
 
+    /// Server settings
     struct Server
     {
+        /// server host or IP address
         std::string host;
+        /// protocol: "tcp", "ws" or "wss"
         std::string protocol;
+        /// server port
         size_t port{1704};
     };
 
+    /// The audio player (DAC)
     struct Player
     {
+        /// name of the player
         std::string player_name;
+        /// player parameters
         std::string parameter;
+        /// additional latency of the DAC [ms]
         int latency{0};
+        /// the DAC
         player::PcmDevice pcm_device;
+        /// Sampleformat to be uses, i.e. 48000:16:2
         SampleFormat sample_format;
+        /// The sharing mode
         SharingMode sharing_mode{SharingMode::unspecified};
+        /// Mixer settings
         Mixer mixer;
     };
 
+    /// Log settings
     struct Logging
     {
+        /// The log sink (null,system,stdout,stderr,file:<filename>)
         std::string sink;
+        /// Log filter
         std::string filter{"*:info"};
     };
 
+    /// The snapclient process instance
     size_t instance{1};
+    /// The host id, presented to the server
     std::string host_id;
 
+    /// Server settings
     Server server;
+    /// Player settings
     Player player;
+    /// Logging settings
     Logging logging;
 };
