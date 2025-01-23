@@ -771,6 +771,7 @@ protected:
             else
                 stream << result << " " << message << "\n";
         }
+         stream.flush();
     }
 
     std::string format_;
