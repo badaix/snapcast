@@ -12,12 +12,13 @@
 - Fix crash when calling `Stream.RemoveStream`
 - Fix typo in `changelog.md` (PR #1328)
 - Fix typo in `configuration.md` (PR #1329)
+- Update to AixLog v1.5.1, flushing log lines (PR #1332)
 
 ### General
 
 - Add more doxygen documentation
 
-_Johannes Pohl <snapcast@badaix.de>  Tue, 21 Jan 2025 00:13:37 +0200_
+_Johannes Pohl <snapcast@badaix.de>  Thu, 23 Jan 2025 00:13:37 +0200_
 
 ## Version 0.30.0
 
