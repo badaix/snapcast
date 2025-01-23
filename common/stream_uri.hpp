@@ -24,6 +24,7 @@
 
 // standard headers
 #include <map>
+#include <optional>
 #include <string>
 
 
@@ -54,6 +55,8 @@ struct StreamUri
 
     /// the host component
     std::string host;
+    /// the port
+    std::optional<size_t> port;
     /// the path component
     std::string path;
     /// the query component: "key = value" pairs

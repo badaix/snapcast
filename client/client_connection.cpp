@@ -24,16 +24,22 @@
 #include "common/str_compat.hpp"
 
 // 3rd party headers
+#include <boost/asio/buffer.hpp>
 #include <boost/asio/read.hpp>
 #include <boost/asio/streambuf.hpp>
 #include <boost/asio/write.hpp>
 
 // standard headers
+#include <boost/beast/core/flat_buffer.hpp>
+#include <boost/system/detail/error_code.hpp>
 #include <cstdint>
 #include <iostream>
+#include <optional>
+#include <utility>
 
 
 using namespace std;
+namespace http = beast::http; // from <boost/beast/http.hpp>
 
 static constexpr auto LOG_TAG = "Connection";
 
@@ -93,35 +99,92 @@ bool PendingRequest::operator<(const PendingRequest& other) const
 
 
 ClientConnection::ClientConnection(boost::asio::io_context& io_context, ClientSettings::Server server)
-    : strand_(boost::asio::make_strand(io_context.get_executor())), resolver_(strand_), socket_(strand_), reqId_(1), server_(std::move(server))
+    : strand_(boost::asio::make_strand(io_context.get_executor())), resolver_(strand_), reqId_(1), server_(std::move(server)),
+      base_msg_size_(base_message_.getSize())
 {
-    base_msg_size_ = base_message_.getSize();
-    buffer_.resize(base_msg_size_);
 }
 
 
-ClientConnection::~ClientConnection()
+void ClientConnection::sendNext()
+{
+    auto& message = messages_.front();
+    boost::asio::streambuf streambuf;
+    std::ostream stream(&streambuf);
+    tv t;
+    message.msg->sent = t;
+    message.msg->serialize(stream);
+    ResultHandler handler = message.handler;
+
+    write(streambuf, [this, handler](boost::system::error_code ec, std::size_t length)
+    {
+        if (ec)
+            LOG(ERROR, LOG_TAG) << "Failed to send message, error: " << ec.message() << "\n";
+        else
+            LOG(TRACE, LOG_TAG) << "Wrote " << length << " bytes to socket\n";
+
+        messages_.pop_front();
+        if (handler)
+            handler(ec);
+
+        if (!messages_.empty())
+            sendNext();
+    });
+}
+
+
+void ClientConnection::send(const msg::message_ptr& message, const ResultHandler& handler)
+{
+    boost::asio::post(strand_, [this, message, handler]()
+    {
+        messages_.emplace_back(message, handler);
+        if (messages_.size() > 1)
+        {
+            LOG(DEBUG, LOG_TAG) << "outstanding async_write\n";
+            return;
+        }
+        sendNext();
+    });
+}
+
+
+void ClientConnection::sendRequest(const msg::message_ptr& message, const chronos::usec& timeout, const MessageHandler<msg::BaseMessage>& handler)
+{
+    boost::asio::post(strand_, [this, message, timeout, handler]()
+    {
+        pendingRequests_.erase(
+            std::remove_if(pendingRequests_.begin(), pendingRequests_.end(), [](const std::weak_ptr<PendingRequest>& request) { return request.expired(); }),
+            pendingRequests_.end());
+        unique_ptr<msg::BaseMessage> response(nullptr);
+        static constexpr uint16_t max_req_id = 10000;
+        if (++reqId_ >= max_req_id)
+            reqId_ = 1;
+        message->id = reqId_;
+        auto request = make_shared<PendingRequest>(strand_, reqId_, handler);
+        pendingRequests_.push_back(request);
+        request->startTimer(timeout);
+        send(message, [handler](const boost::system::error_code& ec)
+        {
+            if (ec)
+                handler(ec, nullptr);
+        });
+    });
+}
+
+
+///////////////////////////////////// TCP /////////////////////////////////////
+
+ClientConnectionTcp::ClientConnectionTcp(boost::asio::io_context& io_context, ClientSettings::Server server)
+    : ClientConnection(io_context, std::move(server)), socket_(strand_)
+{
+    buffer_.resize(base_msg_size_);
+}
+
+ClientConnectionTcp::~ClientConnectionTcp()
 {
     disconnect();
 }
 
-
-std::string ClientConnection::getMacAddress()
-{
-    std::string mac =
-#ifndef WINDOWS
-        ::getMacAddress(socket_.native_handle());
-#else
-        ::getMacAddress(socket_.local_endpoint().address().to_string());
-#endif
-    if (mac.empty())
-        mac = "00:00:00:00:00:00";
-    LOG(INFO, LOG_TAG) << "My MAC: \"" << mac << "\", socket: " << socket_.native_handle() << "\n";
-    return mac;
-}
-
-
-void ClientConnection::connect(const ResultHandler& handler)
+void ClientConnectionTcp::connect(const ResultHandler& handler)
 {
     boost::system::error_code ec;
     LOG(INFO, LOG_TAG) << "Resolving host IP for: " << server_.host << "\n";
@@ -180,8 +243,7 @@ void ClientConnection::connect(const ResultHandler& handler)
 #endif
 }
 
-
-void ClientConnection::disconnect()
+void ClientConnectionTcp::disconnect()
 {
     LOG(DEBUG, LOG_TAG) << "Disconnecting\n";
     if (!socket_.is_open())
@@ -201,73 +263,22 @@ void ClientConnection::disconnect()
 }
 
 
-void ClientConnection::sendNext()
+std::string ClientConnectionTcp::getMacAddress()
 {
-    auto& message = messages_.front();
-    static boost::asio::streambuf streambuf;
-    std::ostream stream(&streambuf);
-    tv t;
-    message.msg->sent = t;
-    message.msg->serialize(stream);
-    auto handler = message.handler;
-
-    boost::asio::async_write(socket_, streambuf, [this, handler](boost::system::error_code ec, std::size_t length)
-    {
-        if (ec)
-            LOG(ERROR, LOG_TAG) << "Failed to send message, error: " << ec.message() << "\n";
-        else
-            LOG(TRACE, LOG_TAG) << "Wrote " << length << " bytes to socket\n";
-
-        messages_.pop_front();
-        if (handler)
-            handler(ec);
-
-        if (!messages_.empty())
-            sendNext();
-    });
+    std::string mac =
+#ifndef WINDOWS
+        ::getMacAddress(socket_.native_handle());
+#else
+        ::getMacAddress(socket_.local_endpoint().address().to_string());
+#endif
+    if (mac.empty())
+        mac = "00:00:00:00:00:00";
+    LOG(INFO, LOG_TAG) << "My MAC: \"" << mac << "\", socket: " << socket_.native_handle() << "\n";
+    return mac;
 }
 
 
-void ClientConnection::send(const msg::message_ptr& message, const ResultHandler& handler)
-{
-    boost::asio::post(strand_, [this, message, handler]()
-    {
-        messages_.emplace_back(message, handler);
-        if (messages_.size() > 1)
-        {
-            LOG(DEBUG, LOG_TAG) << "outstanding async_write\n";
-            return;
-        }
-        sendNext();
-    });
-}
-
-
-void ClientConnection::sendRequest(const msg::message_ptr& message, const chronos::usec& timeout, const MessageHandler<msg::BaseMessage>& handler)
-{
-    boost::asio::post(strand_, [this, message, timeout, handler]()
-    {
-        pendingRequests_.erase(
-            std::remove_if(pendingRequests_.begin(), pendingRequests_.end(), [](const std::weak_ptr<PendingRequest>& request) { return request.expired(); }),
-            pendingRequests_.end());
-        unique_ptr<msg::BaseMessage> response(nullptr);
-        static constexpr uint16_t max_req_id = 10000;
-        if (++reqId_ >= max_req_id)
-            reqId_ = 1;
-        message->id = reqId_;
-        auto request = make_shared<PendingRequest>(strand_, reqId_, handler);
-        pendingRequests_.push_back(request);
-        request->startTimer(timeout);
-        send(message, [handler](const boost::system::error_code& ec)
-        {
-            if (ec)
-                handler(ec, nullptr);
-        });
-    });
-}
-
-
-void ClientConnection::getNextMessage(const MessageHandler<msg::BaseMessage>& handler)
+void ClientConnectionTcp::getNextMessage(const MessageHandler<msg::BaseMessage>& handler)
 {
     boost::asio::async_read(socket_, boost::asio::buffer(buffer_, base_msg_size_), [this, handler](boost::system::error_code ec, std::size_t length) mutable
     {
@@ -335,4 +346,173 @@ void ClientConnection::getNextMessage(const MessageHandler<msg::BaseMessage>& ha
                 handler(ec, std::move(response));
         });
     });
+}
+
+
+void ClientConnectionTcp::write(boost::asio::streambuf& buffer, WriteHandler&& write_handler)
+{
+    boost::asio::async_write(socket_, buffer, write_handler);
+}
+
+
+///////////////////////////////// Websockets //////////////////////////////////
+
+
+ClientConnectionWs::ClientConnectionWs(boost::asio::io_context& io_context, ClientSettings::Server server)
+    : ClientConnection(io_context, std::move(server)), tcp_ws_(strand_)
+{
+}
+
+
+ClientConnectionWs::~ClientConnectionWs()
+{
+    disconnect();
+}
+
+
+void ClientConnectionWs::connect(const ResultHandler& handler)
+{
+    boost::system::error_code ec;
+    LOG(INFO, LOG_TAG) << "Resolving host IP for: " << server_.host << "\n";
+    auto iterator = resolver_.resolve(server_.host, cpt::to_string(server_.port), boost::asio::ip::resolver_query_base::numeric_service, ec);
+    if (ec)
+    {
+        LOG(ERROR, LOG_TAG) << "Failed to resolve host '" << server_.host << "', error: " << ec.message() << "\n";
+        handler(ec);
+        return;
+    }
+
+    for (const auto& iter : iterator)
+        LOG(DEBUG, LOG_TAG) << "Resolved IP: " << iter.endpoint().address().to_string() << "\n";
+
+    for (const auto& iter : iterator)
+    {
+        LOG(INFO, LOG_TAG) << "Connecting to " << iter.endpoint() << "\n";
+        if (tcp_ws_)
+        {
+            tcp_ws_->binary(true);
+            tcp_ws_->next_layer().connect(iter, ec);
+
+            // Set suggested timeout settings for the websocket
+            tcp_ws_->set_option(websocket::stream_base::timeout::suggested(beast::role_type::client));
+
+            // Set a decorator to change the User-Agent of the handshake
+            tcp_ws_->set_option(websocket::stream_base::decorator([](websocket::request_type& req)
+            { req.set(http::field::user_agent, std::string(BOOST_BEAST_VERSION_STRING) + " websocket-client-async"); }));
+
+            // Perform the websocket handshake
+            tcp_ws_->handshake("127.0.0.1", "/stream", ec);
+            handler(ec);
+            return;
+        }
+
+        if (!ec || (ec == boost::system::errc::interrupted))
+        {
+            // We were successful or interrupted, e.g. by sig int
+            break;
+        }
+    }
+
+    if (ec)
+        LOG(ERROR, LOG_TAG) << "Failed to connect to host '" << server_.host << "', error: " << ec.message() << "\n";
+    else
+        LOG(NOTICE, LOG_TAG) << "Connected to " << tcp_ws_->next_layer().remote_endpoint().address().to_string() << "\n";
+
+    handler(ec);
+}
+
+
+void ClientConnectionWs::disconnect()
+{
+    LOG(DEBUG, LOG_TAG) << "Disconnecting\n";
+    if (!tcp_ws_->is_open())
+    {
+        LOG(DEBUG, LOG_TAG) << "Not connected\n";
+        return;
+    }
+    boost::system::error_code ec;
+    tcp_ws_->close(websocket::close_code::normal, ec);
+    if (ec)
+        LOG(ERROR, LOG_TAG) << "Error in socket close: " << ec.message() << "\n";
+    boost::asio::post(strand_, [this]() { pendingRequests_.clear(); });
+    LOG(DEBUG, LOG_TAG) << "Disconnected\n";
+}
+
+
+std::string ClientConnectionWs::getMacAddress()
+{
+    std::string mac =
+#ifndef WINDOWS
+        ::getMacAddress(tcp_ws_->next_layer().native_handle());
+#else
+        ::getMacAddress(tcp_ws_->next_layer().local_endpoint().address().to_string());
+#endif
+    if (mac.empty())
+        mac = "00:00:00:00:00:00";
+    LOG(INFO, LOG_TAG) << "My MAC: \"" << mac << "\", socket: " << tcp_ws_->next_layer().native_handle() << "\n";
+    return mac;
+}
+
+
+void ClientConnectionWs::getNextMessage(const MessageHandler<msg::BaseMessage>& handler)
+{
+    tcp_ws_->async_read(buffer_, [this, handler](beast::error_code ec, std::size_t bytes_transferred) mutable
+    {
+        tv now;
+        LOG(DEBUG, LOG_TAG) << "on_read_ws, ec: " << ec << ", bytes_transferred: " << bytes_transferred << "\n";
+
+        // This indicates that the session was closed
+        if (ec == websocket::error::closed)
+        {
+            if (handler)
+                handler(ec, nullptr);
+            return;
+        }
+
+        if (ec)
+        {
+            LOG(ERROR, LOG_TAG) << "ControlSessionWebsocket::on_read_ws error: " << ec.message() << "\n";
+            if (handler)
+                handler(ec, nullptr);
+            return;
+        }
+
+        buffer_.consume(bytes_transferred);
+
+        auto* data = static_cast<char*>(buffer_.data().data());
+        base_message_.deserialize(data);
+
+        base_message_.received = now;
+
+        auto response = msg::factory::createMessage(base_message_, data + base_msg_size_);
+        if (!response)
+            LOG(WARNING, LOG_TAG) << "Failed to deserialize message of type: " << base_message_.type << "\n";
+        else
+            LOG(DEBUG, LOG_TAG) << "getNextMessage: " << response->type << ", size: " << response->size << ", id: " << response->id
+                                << ", refers: " << response->refersTo << "\n";
+
+        for (auto iter = pendingRequests_.begin(); iter != pendingRequests_.end(); ++iter)
+        {
+            auto request = *iter;
+            if (auto req = request.lock())
+            {
+                if (req->id() == base_message_.refersTo)
+                {
+                    req->setValue(std::move(response));
+                    pendingRequests_.erase(iter);
+                    getNextMessage(handler);
+                    return;
+                }
+            }
+        }
+
+        if (handler)
+            handler(ec, std::move(response));
+    });
+}
+
+
+void ClientConnectionWs::write(boost::asio::streambuf& buffer, WriteHandler&& write_handler)
+{
+    tcp_ws_->async_write(boost::asio::buffer(buffer.data()), write_handler);
 }

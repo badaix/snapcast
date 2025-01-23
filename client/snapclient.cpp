@@ -18,6 +18,7 @@
 
 // local headers
 #include "common/popl.hpp"
+#include "common/utils/string_utils.hpp"
 #include "controller.hpp"
 
 #ifdef HAS_ALSA
@@ -37,6 +38,7 @@
 #include "common/aixlog.hpp"
 #include "common/snap_exception.hpp"
 #include "common/str_compat.hpp"
+#include "common/stream_uri.hpp"
 #include "common/version.hpp"
 
 // 3rd party headers
@@ -200,6 +202,14 @@ int main(int argc, char** argv)
             cerr << "Exception: " << e.what() << "\n";
             cout << "\n" << op << "\n";
             exit(EXIT_FAILURE);
+        }
+
+        if (!op.non_option_args().empty())
+        {
+            streamreader::StreamUri uri(op.non_option_args().front());
+            settings.server.host = uri.host;
+            settings.server.port = uri.port.value_or(settings.server.port);
+            settings.server.protocol = uri.scheme;
         }
 
         if (versionSwitch->is_set())

@@ -47,19 +47,20 @@ struct ClientSettings
         };
 
         Mode mode{Mode::software};
-        std::string parameter{""};
+        std::string parameter;
     };
 
     struct Server
     {
-        std::string host{""};
+        std::string host;
+        std::string protocol;
         size_t port{1704};
     };
 
     struct Player
     {
-        std::string player_name{""};
-        std::string parameter{""};
+        std::string player_name;
+        std::string parameter;
         int latency{0};
         player::PcmDevice pcm_device;
         SampleFormat sample_format;
@@ -69,7 +70,7 @@ struct ClientSettings
 
     struct Logging
     {
-        std::string sink{""};
+        std::string sink;
         std::string filter{"*:info"};
     };
 

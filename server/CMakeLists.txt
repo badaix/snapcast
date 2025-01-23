@@ -17,7 +17,6 @@ set(SERVER_SOURCES
     encoder/null_encoder.cpp
     streamreader/control_error.cpp
     streamreader/stream_control.cpp
-    streamreader/stream_uri.cpp
     streamreader/stream_manager.cpp
     streamreader/pcm_stream.cpp
     streamreader/tcp_stream.cpp

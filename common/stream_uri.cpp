@@ -18,6 +18,7 @@
 
 #ifndef NOMINMAX
 #define NOMINMAX
+#include <optional>
 #endif // NOMINMAX
 
 // prototype/interface header file
@@ -87,6 +88,12 @@ void StreamUri::parse(const std::string& stream_uri)
     // pos:                        ^  or  ^  or             ^
 
     host = strutils::uriDecode(strutils::trim_copy(tmp.substr(0, pos)));
+    std::string str_port;
+    host = utils::string::split_left(host, ':', str_port);
+    port = std::atoi(str_port.c_str());
+    if (port == 0)
+        port = std::nullopt;
+
     tmp = tmp.substr(pos);
     path = tmp;
     pos = std::min(path.find('?'), path.find('#'));
@@ -166,9 +173,11 @@ std::string StreamUri::getQuery(const std::string& key, const std::string& def) 
     return def;
 }
 
+
 bool StreamUri::operator==(const StreamUri& other) const
 {
-    return (other.scheme == scheme) && (other.host == host) && (other.path == path) && (other.query == query) && (other.fragment == fragment);
+    return (other.scheme == scheme) && (other.host == host) && (other.port == port) && (other.path == path) && (other.query == query) &&
+           (other.fragment == fragment);
 }
 
 } // namespace streamreader

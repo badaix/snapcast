@@ -23,12 +23,12 @@
 #include "common/base64.h"
 #include "common/error_code.hpp"
 #include "common/jwt.hpp"
+#include "common/stream_uri.hpp"
 #include "common/utils/string_utils.hpp"
 #include "server/authinfo.hpp"
 #include "server/server_settings.hpp"
 #include "server/streamreader/control_error.hpp"
 #include "server/streamreader/properties.hpp"
-#include "server/streamreader/stream_uri.hpp"
 
 // 3rd party headers
 #include <catch2/catch_test_macros.hpp>
@@ -232,9 +232,11 @@ TEST_CASE("Uri")
 
     // uri = StreamUri("scheme:[//host[:port]][/]path[?query=none][#fragment]");
     // Test with all fields
-    uri = StreamUri("scheme://host:port/path?query=none&key=value#fragment");
+    uri = StreamUri("scheme://host:42/path?query=none&key=value#fragment");
     REQUIRE(uri.scheme == "scheme");
-    REQUIRE(uri.host == "host:port");
+    REQUIRE(uri.host == "host");
+    REQUIRE(uri.port.has_value());
+    REQUIRE(uri.port.value() == 42);
     REQUIRE(uri.path == "/path");
     REQUIRE(uri.query["query"] == "none");
     REQUIRE(uri.query["key"] == "value");
@@ -243,9 +245,11 @@ TEST_CASE("Uri")
     // Test with all fields, url encoded
     // "%21%23%24%25%26%27%28%29%2A%2B%2C%2F%3A%3B%3D%3F%40%5B%5D"
     // "!#$%&'()*+,/:;=?@[]"
-    uri = StreamUri("scheme%26://%26host%3f:port/pa%2Bth?%21%23%24%25%26%27%28%29=%2A%2B%2C%2F%3A%3B%3D%3F%40%5B%5D&key%2525=value#fragment%3f%21%3F");
+    uri = StreamUri("scheme%26://%26host%3f:23/pa%2Bth?%21%23%24%25%26%27%28%29=%2A%2B%2C%2F%3A%3B%3D%3F%40%5B%5D&key%2525=value#fragment%3f%21%3F");
     REQUIRE(uri.scheme == "scheme&");
-    REQUIRE(uri.host == "&host?:port");
+    REQUIRE(uri.host == "&host?");
+    REQUIRE(uri.port.has_value());
+    REQUIRE(uri.port.value() == 23);
     REQUIRE(uri.path == "/pa+th");
     REQUIRE(uri.query["!#$%&'()"] == "*+,/:;=?@[]");
     REQUIRE(uri.query["key%25"] == "value");
@@ -283,6 +287,7 @@ TEST_CASE("Uri")
     uri = StreamUri("spotify:///librespot?name=Spotify&username=EMAIL&password=string%26with%26ampersands&devicename=Snapcast&bitrate=320&killall=false");
     REQUIRE(uri.scheme == "spotify");
     REQUIRE(uri.host.empty());
+    REQUIRE(!uri.port.has_value());
     REQUIRE(uri.path == "/librespot");
     REQUIRE(uri.query["name"] == "Spotify");
     REQUIRE(uri.query["username"] == "EMAIL");

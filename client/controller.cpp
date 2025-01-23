@@ -354,14 +354,17 @@ void Controller::start()
                 settings_.server.host = host;
                 settings_.server.port = port;
                 LOG(INFO, LOG_TAG) << "Found server " << settings_.server.host << ":" << settings_.server.port << "\n";
-                clientConnection_ = make_unique<ClientConnection>(io_context_, settings_.server);
+                clientConnection_ = make_unique<ClientConnectionTcp>(io_context_, settings_.server);
                 worker();
             }
         });
     }
     else
     {
-        clientConnection_ = make_unique<ClientConnection>(io_context_, settings_.server);
+        if (settings_.server.protocol == "ws")
+            clientConnection_ = make_unique<ClientConnectionWs>(io_context_, settings_.server);
+        else
+            clientConnection_ = make_unique<ClientConnectionTcp>(io_context_, settings_.server);
         worker();
     }
 }
