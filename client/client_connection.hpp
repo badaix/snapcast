@@ -107,7 +107,7 @@ public:
 
     /// async connect
     /// @param handler async result handler
-    virtual void connect(const ResultHandler& handler) = 0;
+    void connect(const ResultHandler& handler);
     /// disconnect the socket
     virtual void disconnect() = 0;
 
@@ -146,6 +146,9 @@ public:
 
 protected:
     virtual void write(boost::asio::streambuf& buffer, WriteHandler&& write_handler) = 0;
+
+    /// Connect to @p endpoint
+    virtual boost::system::error_code doConnect(boost::asio::ip::basic_endpoint<boost::asio::ip::tcp> endpoint) = 0;
 
     /// Send next pending message from messages_
     void sendNext();
@@ -195,12 +198,12 @@ public:
     /// d'tor
     virtual ~ClientConnectionTcp();
 
-    void connect(const ResultHandler& handler) override;
     void disconnect() override;
     std::string getMacAddress() override;
     void getNextMessage(const MessageHandler<msg::BaseMessage>& handler) override;
 
 private:
+    boost::system::error_code doConnect(boost::asio::ip::basic_endpoint<boost::asio::ip::tcp> endpoint) override;
     void write(boost::asio::streambuf& buffer, WriteHandler&& write_handler) override;
 
     /// TCP socket
@@ -219,12 +222,12 @@ public:
     /// d'tor
     virtual ~ClientConnectionWs();
 
-    void connect(const ResultHandler& handler) override;
     void disconnect() override;
     std::string getMacAddress() override;
     void getNextMessage(const MessageHandler<msg::BaseMessage>& handler) override;
 
 private:
+    boost::system::error_code doConnect(boost::asio::ip::basic_endpoint<boost::asio::ip::tcp> endpoint) override;
     void write(boost::asio::streambuf& buffer, WriteHandler&& write_handler) override;
 
     /// SSL web socket

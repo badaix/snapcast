@@ -105,6 +105,66 @@ ClientConnection::ClientConnection(boost::asio::io_context& io_context, ClientSe
 }
 
 
+void ClientConnection::connect(const ResultHandler& handler)
+{
+    boost::system::error_code ec;
+    LOG(INFO, LOG_TAG) << "Resolving host IP for: " << server_.host << "\n";
+    auto iterator = resolver_.resolve(server_.host, cpt::to_string(server_.port), boost::asio::ip::resolver_query_base::numeric_service, ec);
+    if (ec)
+    {
+        LOG(ERROR, LOG_TAG) << "Failed to resolve host '" << server_.host << "', error: " << ec.message() << "\n";
+        handler(ec);
+        return;
+    }
+
+    for (const auto& iter : iterator)
+        LOG(DEBUG, LOG_TAG) << "Resolved IP: " << iter.endpoint().address().to_string() << "\n";
+
+    for (const auto& iter : iterator)
+    {
+        LOG(INFO, LOG_TAG) << "Connecting to " << iter.endpoint() << "\n";
+        ec = doConnect(iter.endpoint());
+        if (!ec || (ec == boost::system::errc::interrupted))
+        {
+            // We were successful or interrupted, e.g. by sig int
+            break;
+        }
+    }
+
+    if (ec)
+        LOG(ERROR, LOG_TAG) << "Failed to connect to host '" << server_.host << "', error: " << ec.message() << "\n";
+    else
+        LOG(NOTICE, LOG_TAG) << "Connected to " << server_.host << "\n";
+
+    handler(ec);
+
+#if 0
+    resolver_.async_resolve(query, host_, cpt::to_string(port_), [this, handler](const boost::system::error_code& ec, tcp::resolver::results_type results) {
+        if (ec)
+        {
+            LOG(ERROR, LOG_TAG) << "Failed to resolve host '" << host_ << "', error: " << ec.message() << "\n";
+            handler(ec);
+            return;
+        }
+
+        resolver_.cancel();
+        socket_.async_connect(*results, [this, handler](const boost::system::error_code& ec) {
+            if (ec)
+            {
+                LOG(ERROR, LOG_TAG) << "Failed to connect to host '" << host_ << "', error: " << ec.message() << "\n";
+                handler(ec);
+                return;
+            }
+
+            LOG(NOTICE, LOG_TAG) << "Connected to " << socket_.remote_endpoint().address().to_string() << "\n";
+            handler(ec);
+            getNextMessage();
+        });
+    });
+#endif
+}
+
+
 void ClientConnection::sendNext()
 {
     auto& message = messages_.front();
@@ -184,64 +244,6 @@ ClientConnectionTcp::~ClientConnectionTcp()
     disconnect();
 }
 
-void ClientConnectionTcp::connect(const ResultHandler& handler)
-{
-    boost::system::error_code ec;
-    LOG(INFO, LOG_TAG) << "Resolving host IP for: " << server_.host << "\n";
-    auto iterator = resolver_.resolve(server_.host, cpt::to_string(server_.port), boost::asio::ip::resolver_query_base::numeric_service, ec);
-    if (ec)
-    {
-        LOG(ERROR, LOG_TAG) << "Failed to resolve host '" << server_.host << "', error: " << ec.message() << "\n";
-        handler(ec);
-        return;
-    }
-
-    for (const auto& iter : iterator)
-        LOG(DEBUG, LOG_TAG) << "Resolved IP: " << iter.endpoint().address().to_string() << "\n";
-
-    for (const auto& iter : iterator)
-    {
-        LOG(INFO, LOG_TAG) << "Connecting to " << iter.endpoint() << "\n";
-        socket_.connect(iter, ec);
-        if (!ec || (ec == boost::system::errc::interrupted))
-        {
-            // We were successful or interrupted, e.g. by sig int
-            break;
-        }
-    }
-
-    if (ec)
-        LOG(ERROR, LOG_TAG) << "Failed to connect to host '" << server_.host << "', error: " << ec.message() << "\n";
-    else
-        LOG(NOTICE, LOG_TAG) << "Connected to " << socket_.remote_endpoint().address().to_string() << "\n";
-
-    handler(ec);
-
-#if 0
-    resolver_.async_resolve(query, host_, cpt::to_string(port_), [this, handler](const boost::system::error_code& ec, tcp::resolver::results_type results) {
-        if (ec)
-        {
-            LOG(ERROR, LOG_TAG) << "Failed to resolve host '" << host_ << "', error: " << ec.message() << "\n";
-            handler(ec);
-            return;
-        }
-
-        resolver_.cancel();
-        socket_.async_connect(*results, [this, handler](const boost::system::error_code& ec) {
-            if (ec)
-            {
-                LOG(ERROR, LOG_TAG) << "Failed to connect to host '" << host_ << "', error: " << ec.message() << "\n";
-                handler(ec);
-                return;
-            }
-
-            LOG(NOTICE, LOG_TAG) << "Connected to " << socket_.remote_endpoint().address().to_string() << "\n";
-            handler(ec);
-            getNextMessage();
-        });
-    });
-#endif
-}
 
 void ClientConnectionTcp::disconnect()
 {
@@ -349,6 +351,14 @@ void ClientConnectionTcp::getNextMessage(const MessageHandler<msg::BaseMessage>&
 }
 
 
+boost::system::error_code ClientConnectionTcp::doConnect(boost::asio::ip::basic_endpoint<boost::asio::ip::tcp> endpoint)
+{
+    boost::system::error_code ec;
+    socket_.connect(endpoint, ec);
+    return ec;
+}
+
+
 void ClientConnectionTcp::write(boost::asio::streambuf& buffer, WriteHandler&& write_handler)
 {
     boost::asio::async_write(socket_, buffer, write_handler);
@@ -367,58 +377,6 @@ ClientConnectionWs::ClientConnectionWs(boost::asio::io_context& io_context, Clie
 ClientConnectionWs::~ClientConnectionWs()
 {
     disconnect();
-}
-
-
-void ClientConnectionWs::connect(const ResultHandler& handler)
-{
-    boost::system::error_code ec;
-    LOG(INFO, LOG_TAG) << "Resolving host IP for: " << server_.host << "\n";
-    auto iterator = resolver_.resolve(server_.host, cpt::to_string(server_.port), boost::asio::ip::resolver_query_base::numeric_service, ec);
-    if (ec)
-    {
-        LOG(ERROR, LOG_TAG) << "Failed to resolve host '" << server_.host << "', error: " << ec.message() << "\n";
-        handler(ec);
-        return;
-    }
-
-    for (const auto& iter : iterator)
-        LOG(DEBUG, LOG_TAG) << "Resolved IP: " << iter.endpoint().address().to_string() << "\n";
-
-    for (const auto& iter : iterator)
-    {
-        LOG(INFO, LOG_TAG) << "Connecting to " << iter.endpoint() << "\n";
-        if (tcp_ws_)
-        {
-            tcp_ws_->binary(true);
-            tcp_ws_->next_layer().connect(iter, ec);
-
-            // Set suggested timeout settings for the websocket
-            tcp_ws_->set_option(websocket::stream_base::timeout::suggested(beast::role_type::client));
-
-            // Set a decorator to change the User-Agent of the handshake
-            tcp_ws_->set_option(websocket::stream_base::decorator([](websocket::request_type& req)
-            { req.set(http::field::user_agent, std::string(BOOST_BEAST_VERSION_STRING) + " websocket-client-async"); }));
-
-            // Perform the websocket handshake
-            tcp_ws_->handshake("127.0.0.1", "/stream", ec);
-            handler(ec);
-            return;
-        }
-
-        if (!ec || (ec == boost::system::errc::interrupted))
-        {
-            // We were successful or interrupted, e.g. by sig int
-            break;
-        }
-    }
-
-    if (ec)
-        LOG(ERROR, LOG_TAG) << "Failed to connect to host '" << server_.host << "', error: " << ec.message() << "\n";
-    else
-        LOG(NOTICE, LOG_TAG) << "Connected to " << tcp_ws_->next_layer().remote_endpoint().address().to_string() << "\n";
-
-    handler(ec);
 }
 
 
@@ -509,6 +467,25 @@ void ClientConnectionWs::getNextMessage(const MessageHandler<msg::BaseMessage>& 
         if (handler)
             handler(ec, std::move(response));
     });
+}
+
+
+boost::system::error_code ClientConnectionWs::doConnect(boost::asio::ip::basic_endpoint<boost::asio::ip::tcp> endpoint)
+{
+    boost::system::error_code ec;
+    tcp_ws_->binary(true);
+    tcp_ws_->next_layer().connect(endpoint, ec);
+
+    // Set suggested timeout settings for the websocket
+    tcp_ws_->set_option(websocket::stream_base::timeout::suggested(beast::role_type::client));
+
+    // Set a decorator to change the User-Agent of the handshake
+    tcp_ws_->set_option(websocket::stream_base::decorator([](websocket::request_type& req)
+    { req.set(http::field::user_agent, std::string(BOOST_BEAST_VERSION_STRING) + " websocket-client-async"); }));
+
+    // Perform the websocket handshake
+    tcp_ws_->handshake("127.0.0.1", "/stream", ec);
+    return ec;
 }
 
 
