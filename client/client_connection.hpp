@@ -150,6 +150,9 @@ protected:
     /// Connect to @p endpoint
     virtual boost::system::error_code doConnect(boost::asio::ip::basic_endpoint<boost::asio::ip::tcp> endpoint) = 0;
 
+    /// Handle received messages, check for response of pending requests
+    void messageReceived(std::unique_ptr<msg::BaseMessage> message, const MessageHandler<msg::BaseMessage>& handler);
+
     /// Send next pending message from messages_
     void sendNext();
 
@@ -230,10 +233,33 @@ private:
     boost::system::error_code doConnect(boost::asio::ip::basic_endpoint<boost::asio::ip::tcp> endpoint) override;
     void write(boost::asio::streambuf& buffer, WriteHandler&& write_handler) override;
 
-    /// SSL web socket
-    // std::optional<ssl_websocket> ssl_ws_;
     /// TCP web socket
-    std::optional<tcp_websocket> tcp_ws_;
+    tcp_websocket tcp_ws_;
+    /// Receive buffer
+    boost::beast::flat_buffer buffer_;
+};
+
+
+
+/// Websocket connection
+class ClientConnectionWss : public ClientConnection
+{
+public:
+    /// c'tor
+    ClientConnectionWss(boost::asio::io_context& io_context, boost::asio::ssl::context& ssl_context, ClientSettings::Server server);
+    /// d'tor
+    virtual ~ClientConnectionWss();
+
+    void disconnect() override;
+    std::string getMacAddress() override;
+    void getNextMessage(const MessageHandler<msg::BaseMessage>& handler) override;
+
+private:
+    boost::system::error_code doConnect(boost::asio::ip::basic_endpoint<boost::asio::ip::tcp> endpoint) override;
+    void write(boost::asio::streambuf& buffer, WriteHandler&& write_handler) override;
+
+    /// SSL web socket
+    ssl_websocket ssl_ws_;
     /// Receive buffer
     boost::beast::flat_buffer buffer_;
 };

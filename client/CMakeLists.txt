@@ -62,6 +62,8 @@ elseif(NOT ANDROID)
   endif(PULSE_FOUND)
 endif(MACOSX)
 
+list(APPEND CLIENT_LIBRARIES OpenSSL::Crypto OpenSSL::SSL)
+
 if(ANDROID)
   list(APPEND CLIENT_LIBRARIES oboe::oboe)
   list(APPEND CLIENT_LIBRARIES boost::boost)

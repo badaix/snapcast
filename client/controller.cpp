@@ -76,10 +76,12 @@ using namespace player;
 static constexpr auto LOG_TAG = "Controller";
 static constexpr auto TIME_SYNC_INTERVAL = 1s;
 
-Controller::Controller(boost::asio::io_context& io_context, const ClientSettings& settings) //, std::unique_ptr<MetadataAdapter> meta)
-    : io_context_(io_context), timer_(io_context), settings_(settings), stream_(nullptr), decoder_(nullptr), player_(nullptr),
-      serverSettings_(nullptr) // meta_(std::move(meta)),
+Controller::Controller(boost::asio::io_context& io_context, const ClientSettings& settings)
+    : io_context_(io_context), ssl_context_(boost::asio::ssl::context::tlsv12_client), timer_(io_context), settings_(settings), stream_(nullptr),
+      decoder_(nullptr), player_(nullptr), serverSettings_(nullptr)
 {
+    // TODO: Load and verify certificate
+    // ssl_context_.load_verify_file("/home/johannes/Develop/snapcast/server/etc/certs/snapcastCA.crt");
 }
 
 
@@ -363,6 +365,8 @@ void Controller::start()
     {
         if (settings_.server.protocol == "ws")
             clientConnection_ = make_unique<ClientConnectionWs>(io_context_, settings_.server);
+        else if (settings_.server.protocol == "wss")
+            clientConnection_ = make_unique<ClientConnectionWss>(io_context_, ssl_context_, settings_.server);
         else
             clientConnection_ = make_unique<ClientConnectionTcp>(io_context_, settings_.server);
         worker();
