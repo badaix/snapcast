@@ -529,7 +529,7 @@ std::string ClientConnectionWss::getMacAddress()
 #ifndef WINDOWS
         ::getMacAddress(ssl_ws_.next_layer().lowest_layer().native_handle());
 #else
-        ::getMacAddress(tcp_ws_.next_layer().lowest_layer().local_endpoint().address().to_string());
+        ::getMacAddress(ssl_ws_.next_layer().lowest_layer().local_endpoint().address().to_string());
 #endif
     if (mac.empty())
         mac = "00:00:00:00:00:00";
