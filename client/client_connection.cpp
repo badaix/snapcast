@@ -611,7 +611,7 @@ boost::system::error_code ClientConnectionWss::doConnect(boost::asio::ip::basic_
     // beast::get_lowest_layer(ssl_ws_).expires_after(std::chrono::seconds(30));
 
     // Set suggested timeout settings for the websocket
-    // ssl_ws_.set_option(websocket::stream_base::timeout::suggested(beast::role_type::client));
+    ssl_ws_.set_option(websocket::stream_base::timeout::suggested(beast::role_type::client));
 
     // Set SNI Hostname (many hosts need this to handshake successfully)
     if (!SSL_set_tlsext_host_name(ssl_ws_.next_layer().native_handle(), server_.host.c_str()))
