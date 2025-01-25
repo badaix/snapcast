@@ -3,7 +3,7 @@
     (  _ \ /  \(  _ \(  )
      ) __/(  O )) __// (_/\
     (__)   \__/(__)  \____/
-    version 1.3.0
+    version 1.3.1
     https://github.com/badaix/popl
 
     This file is part of popl (program options parser lib)
@@ -1167,7 +1167,7 @@ inline std::string ConsoleOptionPrinter::print(const Attribute& max_attribute) c
 
     std::stringstream s;
     if (!option_parser_->description().empty())
-        s << option_parser_->description() << ":\n";
+        s << option_parser_->description() << "\n";
 
     size_t optionRightMargin(20);
     const size_t maxDescriptionLeftMargin(40);

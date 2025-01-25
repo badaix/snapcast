@@ -497,6 +497,27 @@ void ClientConnectionWs::write(boost::asio::streambuf& buffer, WriteHandler&& wr
 ClientConnectionWss::ClientConnectionWss(boost::asio::io_context& io_context, boost::asio::ssl::context& ssl_context, ClientSettings::Server server)
     : ClientConnection(io_context, std::move(server)), ssl_ws_(strand_, ssl_context)
 {
+    if (server.certificate.has_value())
+    {
+        ssl_ws_.next_layer().set_verify_mode(boost::asio::ssl::verify_peer);
+        ssl_ws_.next_layer().set_verify_callback([](bool preverified, boost::asio::ssl::verify_context& ctx)
+        {
+            // The verify callback can be used to check whether the certificate that is
+            // being presented is valid for the peer. For example, RFC 2818 describes
+            // the steps involved in doing this for HTTPS. Consult the OpenSSL
+            // documentation for more details. Note that the callback is called once
+            // for each certificate in the certificate chain, starting from the root
+            // certificate authority.
+
+            // In this example we will simply print the certificate's subject name.
+            char subject_name[256];
+            X509* cert = X509_STORE_CTX_get_current_cert(ctx.native_handle());
+            X509_NAME_oneline(X509_get_subject_name(cert), subject_name, 256);
+            LOG(INFO, LOG_TAG) << "verifying cert: '" << subject_name << "', pre verified: " << preverified << "\n";
+
+            return preverified;
+        });
+    }
 }
 
 

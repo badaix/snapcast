@@ -23,6 +23,8 @@
 #include "player/pcm_device.hpp"
 
 // standard headers
+#include <filesystem>
+#include <optional>
 #include <string>
 
 
@@ -64,6 +66,13 @@ struct ClientSettings
         std::string protocol;
         /// server port
         size_t port{1704};
+        /// server certificate
+        std::optional<std::filesystem::path> certificate;
+        /// Is ssl in use?
+        bool isSsl() const
+        {
+            return (protocol == "wss");
+        }
     };
 
     /// The audio player (DAC)

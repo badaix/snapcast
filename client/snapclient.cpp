@@ -46,6 +46,7 @@
 #include <boost/asio/signal_set.hpp>
 
 // standard headers
+#include <filesystem>
 #include <iostream>
 #ifndef WINDOWS
 #include <csignal>
@@ -135,23 +136,27 @@ int main(int argc, char** argv)
         ClientSettings settings;
         string pcm_device(player::DEFAULT_DEVICE);
 
-        OptionParser op("Allowed options");
-        auto helpSwitch = op.add<Switch>("", "help", "produce help message");
-        auto groffSwitch = op.add<Switch, Attribute::hidden>("", "groff", "produce groff message");
-        auto versionSwitch = op.add<Switch>("v", "version", "show version number");
-        op.add<Value<string>>("h", "host", "server hostname or ip address", "", &settings.server.host);
-        op.add<Value<size_t>>("p", "port", "server port", 1704, &settings.server.port);
-        op.add<Value<size_t>>("i", "instance", "instance id when running multiple instances on the same host", 1, &settings.instance);
-        op.add<Value<string>>("", "hostID", "unique host id, default is MAC address", "", &settings.host_id);
+        OptionParser op("Usage: snapclient [options...] [url]\n\n"
+                        " With 'url' = <tcp|ws|wss>://<snapserver host or IP>[:port]\n"
+                        " For example: \"tcp:\\\\192.168.1.1:1704\", or \"wss:\\\\homeserver.local\"\n"
+                        " If 'url' is not configured, snapclient tries to resolve the snapserver IP via mDNS\n");
+        auto helpSwitch = op.add<Switch>("", "help", "Produce help message");
+        auto groffSwitch = op.add<Switch, Attribute::hidden>("", "groff", "Produce groff message");
+        auto versionSwitch = op.add<Switch>("v", "version", "Show version number");
+        op.add<Value<string>>("h", "host", "(deprecated, use [url]) Server hostname or ip address", "", &settings.server.host);
+        op.add<Value<size_t>>("p", "port", "(deprecated, use [url]) Server port", 1704, &settings.server.port);
+        op.add<Value<size_t>>("i", "instance", "Instance id when running multiple instances on the same host", 1, &settings.instance);
+        op.add<Value<string>>("", "hostID", "Unique host id, default is MAC address", "", &settings.host_id);
+        auto server_cert_opt = op.add<Implicit<std::filesystem::path>>("", "server-cert", "Verify server with certificate", "default certificates");
 
 // PCM device specific
 #if defined(HAS_ALSA) || defined(HAS_PULSE) || defined(HAS_WASAPI)
-        auto listSwitch = op.add<Switch>("l", "list", "list PCM devices");
-        /*auto soundcardValue =*/op.add<Value<string>>("s", "soundcard", "index or name of the pcm device", pcm_device, &pcm_device);
+        auto listSwitch = op.add<Switch>("l", "list", "List PCM devices");
+        /*auto soundcardValue =*/op.add<Value<string>>("s", "Soundcard", "index or name of the pcm device", pcm_device, &pcm_device);
 #endif
-        /*auto latencyValue =*/op.add<Value<int>>("", "latency", "latency of the PCM device", 0, &settings.player.latency);
+        /*auto latencyValue =*/op.add<Value<int>>("", "Latency", "latency of the PCM device", 0, &settings.player.latency);
 #ifdef HAS_SOXR
-        auto sample_format = op.add<Value<string>>("", "sampleformat", "resample audio stream to <rate>:<bits>:<channels>", "");
+        auto sample_format = op.add<Value<string>>("", "sampleformat", "Resample audio stream to <rate>:<bits>:<channels>", "");
 #endif
 
         auto supported_players = Controller::getSupportedPlayerNames();
@@ -162,7 +167,7 @@ int main(int argc, char** argv)
 
 // sharing mode
 #if defined(HAS_OBOE) || defined(HAS_WASAPI)
-        auto sharing_mode = op.add<Value<string>>("", "sharingmode", "audio mode to use [shared|exclusive]", "shared");
+        auto sharing_mode = op.add<Value<string>>("", "sharingmode", "Audio mode to use [shared|exclusive]", "shared");
 #endif
 
         // mixer
@@ -183,12 +188,12 @@ int main(int argc, char** argv)
 // daemon settings
 #ifdef HAS_DAEMON
         int processPriority(-3);
-        auto daemonOption = op.add<Implicit<int>>("d", "daemon", "daemonize, optional process priority [-20..19]", processPriority, &processPriority);
+        auto daemonOption = op.add<Implicit<int>>("d", "daemon", "Daemonize, optional process priority [-20..19]", processPriority, &processPriority);
         auto userValue = op.add<Value<string>>("", "user", "the user[:group] to run snapclient as when daemonized");
 #endif
 
         // logging
-        op.add<Value<string>>("", "logsink", "log sink [null,system,stdout,stderr,file:<filename>]", settings.logging.sink, &settings.logging.sink);
+        op.add<Value<string>>("", "logsink", "Log sink [null,system,stdout,stderr,file:<filename>]", settings.logging.sink, &settings.logging.sink);
         auto logfilterOption = op.add<Value<string>>(
             "", "logfilter", "log filter <tag>:<level>[,<tag>:<level>]* with tag = * or <log tag> and level = [trace,debug,info,notice,warning,error,fatal]",
             settings.logging.filter);
@@ -316,6 +321,18 @@ int main(int argc, char** argv)
                 settings.server.port = 1780;
             else if (settings.server.protocol == "wss")
                 settings.server.port = 1788;
+        }
+
+        if (server_cert_opt->is_set())
+        {
+            if (server_cert_opt->get_default() == server_cert_opt->value())
+                settings.server.certificate = "";
+            else
+                settings.server.certificate = std::filesystem::weakly_canonical(server_cert_opt->value());
+            if (settings.server.certificate.value_or("").empty())
+                LOG(INFO, LOG_TAG) << "Server certificate: default certificates\n";
+            else
+                LOG(INFO, LOG_TAG) << "Server certificate: " << settings.server.certificate.value_or("") << "\n";
         }
 
 #if !defined(HAS_AVAHI) && !defined(HAS_BONJOUR)

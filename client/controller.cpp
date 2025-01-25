@@ -80,8 +80,19 @@ Controller::Controller(boost::asio::io_context& io_context, const ClientSettings
     : io_context_(io_context), ssl_context_(boost::asio::ssl::context::tlsv12_client), timer_(io_context), settings_(settings), stream_(nullptr),
       decoder_(nullptr), player_(nullptr), serverSettings_(nullptr)
 {
-    // TODO: Load and verify certificate
-    // ssl_context_.load_verify_file("/home/johannes/Develop/snapcast/server/etc/certs/snapcastCA.crt");
+    if (settings.server.isSsl() && settings.server.certificate.has_value())
+    {
+        boost::system::error_code ec;
+        ssl_context_.set_default_verify_paths(ec);
+        if (ec.failed())
+            LOG(WARNING, LOG_TAG) << "Failed to load system certificates: " << ec << "\n";
+        if (!settings.server.certificate->empty())
+        {
+            ssl_context_.load_verify_file(settings.server.certificate.value(), ec);
+            if (ec.failed())
+                throw SnapException("Failed to load certificate: " + settings.server.certificate.value().native() + ": " + ec.message());
+        }
+    }
 }
 
 
