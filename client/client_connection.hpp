@@ -173,6 +173,8 @@ protected:
     ClientSettings::Server server_;
     /// Size of a base message (= message header)
     const size_t base_msg_size_;
+    /// Send stream buffer
+    boost::asio::streambuf streambuf_;
 
     /// A pending request
     struct PendingMessage

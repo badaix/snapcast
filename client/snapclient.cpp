@@ -204,14 +204,6 @@ int main(int argc, char** argv)
             exit(EXIT_FAILURE);
         }
 
-        if (!op.non_option_args().empty())
-        {
-            streamreader::StreamUri uri(op.non_option_args().front());
-            settings.server.host = uri.host;
-            settings.server.port = uri.port.value_or(settings.server.port);
-            settings.server.protocol = uri.scheme;
-        }
-
         if (versionSwitch->is_set())
         {
             cout << "snapclient v" << version::code << (!version::rev().empty() ? (" (rev " + version::rev(8) + ")") : ("")) << "\n"
@@ -312,6 +304,19 @@ int main(int argc, char** argv)
             AixLog::Log::init<AixLog::SinkNull>();
         else
             throw SnapException("Invalid log sink: " + settings.logging.sink);
+
+        if (!op.non_option_args().empty())
+        {
+            streamreader::StreamUri uri(op.non_option_args().front());
+            settings.server.host = uri.host;
+            settings.server.protocol = uri.scheme;
+            if (uri.port.has_value())
+                settings.server.port = uri.port.value();
+            else if (settings.server.protocol == "ws")
+                settings.server.port = 1780;
+            else if (settings.server.protocol == "wss")
+                settings.server.port = 1788;
+        }
 
 #if !defined(HAS_AVAHI) && !defined(HAS_BONJOUR)
         if (settings.server.host.empty())

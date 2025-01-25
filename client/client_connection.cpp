@@ -173,15 +173,15 @@ void ClientConnection::connect(const ResultHandler& handler)
 void ClientConnection::sendNext()
 {
     auto& message = messages_.front();
-    boost::asio::streambuf streambuf;
-    std::ostream stream(&streambuf);
+    std::ostream stream(&streambuf_);
     tv t;
     message.msg->sent = t;
     message.msg->serialize(stream);
     ResultHandler handler = message.handler;
 
-    write(streambuf, [this, handler](boost::system::error_code ec, std::size_t length)
+    write(streambuf_, [this, handler](boost::system::error_code ec, std::size_t length)
     {
+        streambuf_.consume(length);
         if (ec)
             LOG(ERROR, LOG_TAG) << "Failed to send message, error: " << ec.message() << "\n";
         else
