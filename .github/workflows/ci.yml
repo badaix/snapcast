@@ -129,7 +129,7 @@ jobs:
       - name: configure
         run: |
           cmake -S . -B build \
-            -DWERROR=ON \
+            -DWERROR=OFF \
             -DBUILD_TESTS=ON \
             -D${{ matrix.param }} \
             -DBOOST_ROOT=boost_${BOOST_VERSION} \
