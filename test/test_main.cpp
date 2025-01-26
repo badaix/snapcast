@@ -224,7 +224,6 @@ TEST_CASE("JWT")
 
 TEST_CASE("Uri")
 {
-    using namespace streamreader;
     StreamUri uri("pipe:///tmp/snapfifo?name=default&codec=flac");
     REQUIRE(uri.scheme == "pipe");
     REQUIRE(uri.path == "/tmp/snapfifo");

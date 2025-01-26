@@ -1,5 +1,21 @@
 # Snapcast changelog
 
+## Version 0.32.0
+
+### Features
+
+- Client: Add support for (secure-) websockets (Issue #1325)
+
+### Bugfixes
+
+- Fix typo in documentation (PR #1333)
+
+### General
+
+- Client: Command line arguments '--host' and '--port' are deprecated
+
+_Johannes Pohl <snapcast@badaix.de>  Thu, 23 Jan 2025 00:13:37 +0200_
+
 ## Version 0.31.0
 
 ### Features

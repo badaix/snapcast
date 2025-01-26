@@ -143,8 +143,8 @@ int main(int argc, char** argv)
         auto helpSwitch = op.add<Switch>("", "help", "Produce help message");
         auto groffSwitch = op.add<Switch, Attribute::hidden>("", "groff", "Produce groff message");
         auto versionSwitch = op.add<Switch>("v", "version", "Show version number");
-        op.add<Value<string>>("h", "host", "(deprecated, use [url]) Server hostname or ip address", "", &settings.server.host);
-        op.add<Value<size_t>>("p", "port", "(deprecated, use [url]) Server port", 1704, &settings.server.port);
+        auto host_opt = op.add<Value<string>>("h", "host", "(deprecated, use [url]) Server hostname or ip address", "", &settings.server.host);
+        auto port_opt = op.add<Value<size_t>>("p", "port", "(deprecated, use [url]) Server port", 1704, &settings.server.port);
         op.add<Value<size_t>>("i", "instance", "Instance id when running multiple instances on the same host", 1, &settings.instance);
         op.add<Value<string>>("", "hostID", "Unique host id, default is MAC address", "", &settings.host_id);
         auto server_cert_opt = op.add<Implicit<std::filesystem::path>>("", "server-cert", "Verify server with certificate", "default certificates");
@@ -310,13 +310,36 @@ int main(int argc, char** argv)
         else
             throw SnapException("Invalid log sink: " + settings.logging.sink);
 
+        if (!op.unknown_options().empty())
+        {
+            throw SnapException("Unknown command line argument: '" + op.unknown_options().front() + "'");
+        }
+
+        if (host_opt->is_set() || port_opt->is_set())
+        {
+            LOG(WARNING, LOG_TAG) << "Options '--" << host_opt->long_name() << "' and '--" << port_opt->long_name()
+                                  << "' are deprecated. Please add the server URI as last command line argument\n";
+        }
+
         if (!op.non_option_args().empty())
         {
-            streamreader::StreamUri uri(op.non_option_args().front());
+            StreamUri uri;
+            try
+            {
+                uri.parse(op.non_option_args().front());
+            }
+            catch (...)
+            {
+                throw SnapException("Invalid URI - expected format: \"<scheme>://<host or IP>[:port]\", with 'scheme' on of 'tcp', 'ws' or 'wss'");
+            }
+            if ((uri.scheme != "tcp") && (uri.scheme != "ws") && (uri.scheme != "wss"))
+                throw SnapException("Protocol must be one of 'tcp', 'ws' or 'wss'");
             settings.server.host = uri.host;
             settings.server.protocol = uri.scheme;
             if (uri.port.has_value())
                 settings.server.port = uri.port.value();
+            else if (settings.server.protocol == "tcp")
+                settings.server.port = 1704;
             else if (settings.server.protocol == "ws")
                 settings.server.port = 1780;
             else if (settings.server.protocol == "wss")

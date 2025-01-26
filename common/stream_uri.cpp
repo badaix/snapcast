@@ -34,8 +34,6 @@ namespace strutils = utils::string;
 
 static constexpr auto LOG_TAG = "StreamUri";
 
-namespace streamreader
-{
 
 StreamUri::StreamUri(const std::string& uri)
 {
@@ -179,5 +177,3 @@ bool StreamUri::operator==(const StreamUri& other) const
     return (other.scheme == scheme) && (other.host == host) && (other.port == port) && (other.path == path) && (other.query == query) &&
            (other.fragment == fragment);
 }
-
-} // namespace streamreader
