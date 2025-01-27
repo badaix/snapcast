@@ -37,6 +37,8 @@
 // standard headers
 #include <deque>
 #include <memory>
+#include <mutex>
+#include <optional>
 #include <string>
 
 
@@ -235,10 +237,15 @@ private:
     boost::system::error_code doConnect(boost::asio::ip::basic_endpoint<boost::asio::ip::tcp> endpoint) override;
     void write(boost::asio::streambuf& buffer, WriteHandler&& write_handler) override;
 
+    /// @return the websocket
+    tcp_websocket& getWs();
+
     /// TCP web socket
-    tcp_websocket tcp_ws_;
+    std::optional<tcp_websocket> tcp_ws_;
     /// Receive buffer
     boost::beast::flat_buffer buffer_;
+    /// protect ssl_ws_
+    std::mutex ws_mutex_;
 };
 
 
@@ -260,8 +267,15 @@ private:
     boost::system::error_code doConnect(boost::asio::ip::basic_endpoint<boost::asio::ip::tcp> endpoint) override;
     void write(boost::asio::streambuf& buffer, WriteHandler&& write_handler) override;
 
+    /// @return the websocket
+    ssl_websocket& getWs();
+
+    /// SSL context
+    boost::asio::ssl::context& ssl_context_;
     /// SSL web socket
-    ssl_websocket ssl_ws_;
+    std::optional<ssl_websocket> ssl_ws_;
     /// Receive buffer
     boost::beast::flat_buffer buffer_;
+    /// protect ssl_ws_
+    std::mutex ws_mutex_;
 };
