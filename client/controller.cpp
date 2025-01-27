@@ -80,17 +80,42 @@ Controller::Controller(boost::asio::io_context& io_context, const ClientSettings
     : io_context_(io_context), ssl_context_(boost::asio::ssl::context::tlsv12_client), timer_(io_context), settings_(settings), stream_(nullptr),
       decoder_(nullptr), player_(nullptr), serverSettings_(nullptr)
 {
-    if (settings.server.isSsl() && settings.server.certificate.has_value())
+    if (settings.server.isSsl())
     {
         boost::system::error_code ec;
-        ssl_context_.set_default_verify_paths(ec);
-        if (ec.failed())
-            LOG(WARNING, LOG_TAG) << "Failed to load system certificates: " << ec << "\n";
-        if (!settings.server.certificate->empty())
+        if (settings.server.server_certificate.has_value())
         {
-            ssl_context_.load_verify_file(settings.server.certificate.value().string(), ec);
+            LOG(DEBUG, LOG_TAG) << "Loading server certificate\n";
+            ssl_context_.set_default_verify_paths(ec);
             if (ec.failed())
-                throw SnapException("Failed to load certificate: " + settings.server.certificate.value().string() + ": " + ec.message());
+                LOG(WARNING, LOG_TAG) << "Failed to load system certificates: " << ec << "\n";
+            if (!settings.server.server_certificate->empty())
+            {
+                ssl_context_.load_verify_file(settings.server.server_certificate.value().string(), ec);
+                if (ec.failed())
+                    throw SnapException("Failed to load server certificate: " + settings.server.server_certificate.value().string() + ": " + ec.message());
+            }
+        }
+
+        if (!settings.server.certificate.empty() && !settings.server.certificate_key.empty())
+        {
+            if (!settings.server.key_password.empty())
+            {
+                ssl_context_.set_password_callback(
+                    [pw = settings.server.key_password](size_t max_length, boost::asio::ssl::context_base::password_purpose purpose) -> string
+                {
+                    LOG(DEBUG, LOG_TAG) << "getPassword, purpose: " << purpose << ", max length: " << max_length << "\n";
+                    return pw;
+                });
+            }
+            LOG(DEBUG, LOG_TAG) << "Loading certificate file: " << settings.server.certificate << "\n";
+            ssl_context_.use_certificate_chain_file(settings.server.certificate.string(), ec);
+            if (ec.failed())
+                throw SnapException("Failed to load certificate: " + settings.server.certificate.string() + ": " + ec.message());
+            LOG(DEBUG, LOG_TAG) << "Loading certificate key file: " << settings.server.certificate_key << "\n";
+            ssl_context_.use_private_key_file(settings.server.certificate_key.string(), boost::asio::ssl::context::pem, ec);
+            if (ec.failed())
+                throw SnapException("Failed to load private key file: " + settings.server.certificate_key.string() + ": " + ec.message());
         }
     }
 }

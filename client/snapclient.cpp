@@ -147,7 +147,12 @@ int main(int argc, char** argv)
         auto port_opt = op.add<Value<size_t>>("p", "port", "(deprecated, use [url]) Server port", 1704, &settings.server.port);
         op.add<Value<size_t>>("i", "instance", "Instance id when running multiple instances on the same host", 1, &settings.instance);
         op.add<Value<string>>("", "hostID", "Unique host id, default is MAC address", "", &settings.host_id);
-        auto server_cert_opt = op.add<Implicit<std::filesystem::path>>("", "server-cert", "Verify server with certificate", "default certificates");
+        auto server_cert_opt =
+            op.add<Implicit<std::filesystem::path>>("", "server-cert", "Verify server with certificate (PEM format)", "default certificates");
+        op.add<Value<std::filesystem::path>>("", "cert", "Client certificate file (PEM format)", settings.server.certificate, &settings.server.certificate);
+        op.add<Value<std::filesystem::path>>("", "cert-key", "Client private key file (PEM format)", settings.server.certificate_key,
+                                             &settings.server.certificate_key);
+        op.add<Value<string>>("", "key-password", "Key password (for encrypted private key)", settings.server.key_password, &settings.server.key_password);
 
 // PCM device specific
 #if defined(HAS_ALSA) || defined(HAS_PULSE) || defined(HAS_WASAPI)
@@ -349,13 +354,28 @@ int main(int argc, char** argv)
         if (server_cert_opt->is_set())
         {
             if (server_cert_opt->get_default() == server_cert_opt->value())
-                settings.server.certificate = "";
+                settings.server.server_certificate = "";
             else
-                settings.server.certificate = std::filesystem::weakly_canonical(server_cert_opt->value());
-            if (settings.server.certificate.value_or("").empty())
+                settings.server.server_certificate = std::filesystem::weakly_canonical(server_cert_opt->value());
+            if (settings.server.server_certificate.value_or("").empty())
                 LOG(INFO, LOG_TAG) << "Server certificate: default certificates\n";
             else
-                LOG(INFO, LOG_TAG) << "Server certificate: " << settings.server.certificate.value_or("") << "\n";
+                LOG(INFO, LOG_TAG) << "Server certificate: " << settings.server.server_certificate.value_or("") << "\n";
+        }
+
+        if (!settings.server.certificate.empty() && !settings.server.certificate_key.empty())
+        {
+            namespace fs = std::filesystem;
+            settings.server.certificate = fs::weakly_canonical(settings.server.certificate);
+            if (!fs::exists(settings.server.certificate))
+                throw SnapException("Certificate file not found: " + settings.server.certificate.native());
+            settings.server.certificate_key = fs::weakly_canonical(settings.server.certificate_key);
+            if (!fs::exists(settings.server.certificate_key))
+                throw SnapException("Certificate_key file not found: " + settings.server.certificate_key.native());
+        }
+        else if (settings.server.certificate.empty() != settings.server.certificate_key.empty())
+        {
+            throw SnapException("Both SSL 'certificate' and 'certificate_key' must be set or empty");
         }
 
 #if !defined(HAS_AVAHI) && !defined(HAS_BONJOUR)
@@ -500,6 +520,7 @@ int main(int argc, char** argv)
 
         int num_threads = 0;
         std::vector<std::thread> threads;
+        threads.reserve(num_threads);
         for (int n = 0; n < num_threads; ++n)
             threads.emplace_back([&] { io_context.run(); });
         io_context.run();

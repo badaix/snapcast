@@ -483,7 +483,7 @@ public:
     std::string print(const Attribute& max_attribute = Attribute::optional) const override;
 
 private:
-    std::string to_string(Option_ptr option) const;
+    std::string to_string(const Option_ptr& option) const;
 };
 
 
@@ -501,7 +501,7 @@ public:
     std::string print(const Attribute& max_attribute = Attribute::optional) const override;
 
 private:
-    std::string to_string(Option_ptr option) const;
+    std::string to_string(const Option_ptr& option) const;
 };
 
 
@@ -1122,7 +1122,7 @@ inline ConsoleOptionPrinter::ConsoleOptionPrinter(const OptionParser* option_par
 }
 
 
-inline std::string ConsoleOptionPrinter::to_string(Option_ptr option) const
+inline std::string ConsoleOptionPrinter::to_string(const Option_ptr& option) const
 {
     std::stringstream line;
     if (option->short_name() != 0)
@@ -1142,7 +1142,7 @@ inline std::string ConsoleOptionPrinter::to_string(Option_ptr option) const
         std::stringstream defaultStr;
         if (option->get_default(defaultStr))
         {
-            if (!defaultStr.str().empty())
+            if (!defaultStr.str().empty() && (defaultStr.str() != "\"\""))
                 line << " (=" << defaultStr.str() << ")";
         }
     }
@@ -1216,7 +1216,7 @@ inline GroffOptionPrinter::GroffOptionPrinter(const OptionParser* option_parser)
 }
 
 
-inline std::string GroffOptionPrinter::to_string(Option_ptr option) const
+inline std::string GroffOptionPrinter::to_string(const Option_ptr& option) const
 {
     std::stringstream line;
     if (option->short_name() != 0)

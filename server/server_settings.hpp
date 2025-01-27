@@ -31,27 +31,43 @@
 
 struct ServerSettings
 {
+    /// Launch settings
     struct Server
     {
+        /// Number of worker threads
         int threads{-1};
+        /// PID file, if running as daemon
         std::string pid_file{"/var/run/snapserver/pid"};
+        /// User when running as deaemon
         std::string user{"snapserver"};
+        /// Group when running as deaemon
         std::string group;
+        /// Server data dir
         std::string data_dir;
     };
 
+    /// SSL settings
     struct Ssl
     {
+        /// Certificate file
         std::filesystem::path certificate;
+        /// Private key file
         std::filesystem::path certificate_key;
+        /// Password for encrypted key file
         std::string key_password;
+        /// Verify client certificates
+        bool verify_clients = false;
+        /// Client CA certificates
+        std::vector<std::filesystem::path> client_certs;
 
+        /// @return if SSL is enabled
         bool enabled() const
         {
             return !certificate.empty() && !certificate_key.empty();
         }
     };
 
+    /// User settings
     struct User
     {
         explicit User(const std::string& user_permissions_password)
@@ -67,8 +83,8 @@ struct ServerSettings
         std::string password;
     };
 
-    std::vector<User> users;
 
+    /// HTTP settings
     struct Http
     {
         bool enabled{true};
@@ -82,6 +98,7 @@ struct ServerSettings
         std::string url_prefix;
     };
 
+    /// TCP streaming client settings
     struct Tcp
     {
         bool enabled{true};
@@ -89,6 +106,7 @@ struct ServerSettings
         std::vector<std::string> bind_to_address{{"::"}};
     };
 
+    /// Stream settings
     struct Stream
     {
         size_t port{1704};
@@ -102,22 +120,28 @@ struct ServerSettings
         std::vector<std::string> bind_to_address{{"::"}};
     };
 
+    /// Client settings
     struct StreamingClient
     {
+        /// Initial volume of new clients
         uint16_t initialVolume{100};
     };
 
+    /// Logging settings
     struct Logging
     {
+        /// log sing
         std::string sink;
+        /// log filter
         std::string filter{"*:info"};
     };
 
-    Server server;
-    Ssl ssl;
-    Http http;
-    Tcp tcp;
-    Stream stream;
-    StreamingClient streamingclient;
-    Logging logging;
+    Server server; ///< Server settings
+    Ssl ssl; ///< SSL settings
+    std::vector<User> users; ///< User settings
+    Http http; ///< HTTP settings
+    Tcp tcp; ///< TCP settings
+    Stream stream; ///< Stream settings
+    StreamingClient streamingclient; ///< Client settings
+    Logging logging; ///< Logging settings
 };

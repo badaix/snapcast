@@ -22,6 +22,7 @@
 // local headers
 #include "common/aixlog.hpp"
 #include "common/json.hpp"
+#include "common/snap_exception.hpp"
 #include "control_session_http.hpp"
 #include "control_session_tcp.hpp"
 #include "server_settings.hpp"
@@ -54,10 +55,50 @@ ControlServer::ControlServer(boost::asio::io_context& io_context, const ServerSe
                 return pw;
             });
         }
+
         if (!ssl.certificate.empty() && !ssl.certificate_key.empty())
         {
-            ssl_context_.use_certificate_chain_file(ssl.certificate);
-            ssl_context_.use_private_key_file(ssl.certificate_key, boost::asio::ssl::context::pem);
+            boost::system::error_code ec;
+            ssl_context_.use_certificate_chain_file(ssl.certificate, ec);
+            if (ec.failed())
+                throw SnapException("Failed to load certificate: " + settings.ssl.certificate.string() + ": " + ec.message());
+            ssl_context_.use_private_key_file(ssl.certificate_key, boost::asio::ssl::context::pem, ec);
+            if (ec.failed())
+                throw SnapException("Failed to load private key file: " + settings.ssl.certificate_key.string() + ": " + ec.message());
+        }
+
+        if (settings.ssl.verify_clients)
+        {
+            boost::system::error_code ec;
+            ssl_context_.set_default_verify_paths(ec);
+            if (ec.failed())
+                LOG(WARNING, LOG_TAG) << "Failed to load system certificates: " << ec << "\n";
+            for (const auto& cert_path : settings_.ssl.client_certs)
+            {
+                LOG(DEBUG, LOG_TAG) << "Loading client certificate: " << cert_path << "\n";
+                ssl_context_.load_verify_file(cert_path.string(), ec);
+                if (ec.failed())
+                    throw SnapException("Failed to load client certificate: " + cert_path.string() + ": " + ec.message());
+            }
+
+            ssl_context_.set_verify_mode(boost::asio::ssl::verify_peer | boost::asio::ssl::verify_fail_if_no_peer_cert);
+            ssl_context_.set_verify_callback([](bool preverified, boost::asio::ssl::verify_context& ctx)
+            {
+                // The verify callback can be used to check whether the certificate that is
+                // being presented is valid for the peer. For example, RFC 2818 describes
+                // the steps involved in doing this for HTTPS. Consult the OpenSSL
+                // documentation for more details. Note that the callback is called once
+                // for each certificate in the certificate chain, starting from the root
+                // certificate authority.
+
+                // In this example we will simply print the certificate's subject name.
+                char subject_name[256];
+                X509* cert = X509_STORE_CTX_get_current_cert(ctx.native_handle());
+                X509_NAME_oneline(X509_get_subject_name(cert), subject_name, 256);
+                LOG(INFO, LOG_TAG) << "Verifying cert: '" << subject_name << "', pre verified: " << preverified << "\n";
+
+                return preverified;
+            });
         }
         // ssl_context_.use_tmp_dh_file("dh4096.pem");
     }

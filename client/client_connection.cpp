@@ -535,7 +535,7 @@ ssl_websocket& ClientConnectionWss::getWs()
         return ssl_ws_.value();
 
     ssl_ws_.emplace(strand_, ssl_context_);
-    if (server_.certificate.has_value())
+    if (server_.server_certificate.has_value())
     {
         ssl_ws_->next_layer().set_verify_mode(boost::asio::ssl::verify_peer);
         ssl_ws_->next_layer().set_verify_callback([](bool preverified, boost::asio::ssl::verify_context& ctx)
@@ -551,7 +551,7 @@ ssl_websocket& ClientConnectionWss::getWs()
             char subject_name[256];
             X509* cert = X509_STORE_CTX_get_current_cert(ctx.native_handle());
             X509_NAME_oneline(X509_get_subject_name(cert), subject_name, 256);
-            LOG(INFO, LOG_TAG) << "verifying cert: '" << subject_name << "', pre verified: " << preverified << "\n";
+            LOG(INFO, LOG_TAG) << "Verifying cert: '" << subject_name << "', pre verified: " << preverified << "\n";
 
             return preverified;
         });

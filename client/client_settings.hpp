@@ -67,7 +67,13 @@ struct ClientSettings
         /// server port
         size_t port{1704};
         /// server certificate
-        std::optional<std::filesystem::path> certificate;
+        std::optional<std::filesystem::path> server_certificate;
+        /// Certificate file
+        std::filesystem::path certificate;
+        /// Private key file
+        std::filesystem::path certificate_key;
+        /// Password for encrypted key file
+        std::string key_password;
         /// Is ssl in use?
         bool isSsl() const
         {
