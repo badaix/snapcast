@@ -368,10 +368,10 @@ int main(int argc, char** argv)
             namespace fs = std::filesystem;
             settings.server.certificate = fs::weakly_canonical(settings.server.certificate);
             if (!fs::exists(settings.server.certificate))
-                throw SnapException("Certificate file not found: " + settings.server.certificate.native());
+                throw SnapException("Certificate file not found: " + settings.server.certificate.string());
             settings.server.certificate_key = fs::weakly_canonical(settings.server.certificate_key);
             if (!fs::exists(settings.server.certificate_key))
-                throw SnapException("Certificate_key file not found: " + settings.server.certificate_key.native());
+                throw SnapException("Certificate_key file not found: " + settings.server.certificate_key.string());
         }
         else if (settings.server.certificate.empty() != settings.server.certificate_key.empty())
         {

@@ -28,7 +28,7 @@
 #include <string>
 #include <vector>
 
-
+/// Server settings
 struct ServerSettings
 {
     /// Launch settings
@@ -70,6 +70,7 @@ struct ServerSettings
     /// User settings
     struct User
     {
+        /// c'tor
         explicit User(const std::string& user_permissions_password)
         {
             std::string perm;
@@ -78,8 +79,11 @@ struct ServerSettings
             permissions = utils::string::split(perm, ',');
         }
 
+        /// user name
         std::string name;
+        /// permissions
         std::vector<std::string> permissions;
+        /// password
         std::string password;
     };
 
@@ -87,36 +91,57 @@ struct ServerSettings
     /// HTTP settings
     struct Http
     {
+        /// enable HTTP server
         bool enabled{true};
+        /// enable HTTPS
         bool ssl_enabled{false};
+        /// HTTP port
         size_t port{1780};
+        /// HTTPS port
         size_t ssl_port{1788};
+        /// HTTP listen address
         std::vector<std::string> bind_to_address{{"::"}};
+        /// HTTPS listen address
         std::vector<std::string> ssl_bind_to_address{{"::"}};
+        /// doc root directory
         std::string doc_root;
+        /// HTTP server host name
         std::string host{"<hostname>"};
+        /// URL prefix when serving album art
         std::string url_prefix;
     };
 
     /// TCP streaming client settings
     struct Tcp
     {
+        /// enable plain TCP audio streaming
         bool enabled{true};
+        /// TCP port
         size_t port{1705};
+        /// TCP listen addresses
         std::vector<std::string> bind_to_address{{"::"}};
     };
 
     /// Stream settings
     struct Stream
     {
+        /// Audio streaming port
         size_t port{1704};
+        /// Directory for stream plugins
         std::filesystem::path plugin_dir{"/usr/share/snapserver/plug-ins"};
+        /// Stream sources
         std::vector<std::string> sources;
+        /// Default codec
         std::string codec{"flac"};
+        /// Default end to end delay
         int32_t bufferMs{1000};
+        /// Default sample format
         std::string sampleFormat{"48000:16:2"};
+        /// Default read size for stream sources
         size_t streamChunkMs{20};
+        /// Send audio to muted clients?
         bool sendAudioToMutedClients{false};
+        /// Liste addresses
         std::vector<std::string> bind_to_address{{"::"}};
     };
 
