@@ -399,6 +399,9 @@ ClientConnectionWs::~ClientConnectionWs()
 
 tcp_websocket& ClientConnectionWs::getWs()
 {
+    // Looks like the websocket must be recreated after disconnect:
+    // https://github.com/boostorg/beast/issues/2409#issuecomment-1103685782
+
     std::lock_guard lock(ws_mutex_);
     if (tcp_ws_.has_value())
         return tcp_ws_.value();
@@ -524,6 +527,9 @@ ClientConnectionWss::ClientConnectionWss(boost::asio::io_context& io_context, bo
 
 ssl_websocket& ClientConnectionWss::getWs()
 {
+    // Looks like the websocket must be recreated after disconnect:
+    // https://github.com/boostorg/beast/issues/2409#issuecomment-1103685782
+
     std::lock_guard lock(ws_mutex_);
     if (ssl_ws_.has_value())
         return ssl_ws_.value();
@@ -586,7 +592,7 @@ std::string ClientConnectionWss::getMacAddress()
 #ifndef WINDOWS
         ::getMacAddress(getWs().next_layer().lowest_layer().native_handle());
 #else
-        ::getMacAddress(ssl_ws_.next_layer().lowest_layer().local_endpoint().address().to_string());
+        ::getMacAddress(getWs().next_layer().lowest_layer().local_endpoint().address().to_string());
 #endif
     if (mac.empty())
         mac = "00:00:00:00:00:00";
@@ -641,12 +647,12 @@ boost::system::error_code ClientConnectionWss::doConnect(boost::asio::ip::basic_
 {
     boost::system::error_code ec;
     getWs().binary(true);
-    beast::get_lowest_layer(*ssl_ws_).connect(endpoint, ec);
+    beast::get_lowest_layer(getWs()).connect(endpoint, ec);
     if (ec.failed())
         return ec;
 
     // Set a timeout on the operation
-    // beast::get_lowest_layer(ssl_ws_).expires_after(std::chrono::seconds(30));
+    // beast::get_lowest_layer(getWs()).expires_after(std::chrono::seconds(30));
 
     // Set suggested timeout settings for the websocket
     getWs().set_option(websocket::stream_base::timeout::suggested(beast::role_type::client));

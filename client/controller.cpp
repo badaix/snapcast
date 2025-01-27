@@ -88,9 +88,9 @@ Controller::Controller(boost::asio::io_context& io_context, const ClientSettings
             LOG(WARNING, LOG_TAG) << "Failed to load system certificates: " << ec << "\n";
         if (!settings.server.certificate->empty())
         {
-            ssl_context_.load_verify_file(settings.server.certificate.value(), ec);
+            ssl_context_.load_verify_file(settings.server.certificate.value().string(), ec);
             if (ec.failed())
-                throw SnapException("Failed to load certificate: " + settings.server.certificate.value().native() + ": " + ec.message());
+                throw SnapException("Failed to load certificate: " + settings.server.certificate.value().string() + ": " + ec.message());
         }
     }
 }
