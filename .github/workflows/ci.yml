@@ -401,7 +401,8 @@ jobs:
         with:
           #path: ${VCPKG_INSTALLATION_ROOT}\installed
           path: c:\vcpkg\installed
-          key: ${{ runner.os }}-dependencies
+          key: ${{ runner.os }}-${{ matrix.compiler }}-${{ matrix.build_type }}-ccache-${{ github.sha }}
+          restore-keys: ${{ runner.os }}-${{ matrix.compiler }}-${{ matrix.build_type }}-ccache-
       - name: dependencies
         if: steps.cache-dependencies.outputs.cache-hit != 'true'
         run: |
