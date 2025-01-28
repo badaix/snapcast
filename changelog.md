@@ -5,6 +5,7 @@
 ### Features
 
 - Client: Add support for (secure-) websockets (Issue #1325)
+- Server: Add client authentication (Issue #1334)
 
 ### Bugfixes
 
