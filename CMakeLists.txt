@@ -177,8 +177,6 @@ endif()
 
 find_package(Threads REQUIRED)
 
-find_package(OpenSSL REQUIRED)
-
 include(CMakePushCheckState)
 include(CheckIncludeFileCXX)
 include_directories(${INCLUDE_DIRS})

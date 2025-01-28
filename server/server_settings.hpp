@@ -161,12 +161,12 @@ struct ServerSettings
         std::string filter{"*:info"};
     };
 
-    Server server; ///< Server settings
-    Ssl ssl; ///< SSL settings
-    std::vector<User> users; ///< User settings
-    Http http; ///< HTTP settings
-    Tcp tcp; ///< TCP settings
-    Stream stream; ///< Stream settings
+    Server server;                   ///< Server settings
+    Ssl ssl;                         ///< SSL settings
+    std::vector<User> users;         ///< User settings
+    Http http;                       ///< HTTP settings
+    Tcp tcp;                         ///< TCP settings
+    Stream stream;                   ///< Stream settings
     StreamingClient streamingclient; ///< Client settings
-    Logging logging; ///< Logging settings
+    Logging logging;                 ///< Logging settings
 };

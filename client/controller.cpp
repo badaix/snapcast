@@ -77,9 +77,13 @@ static constexpr auto LOG_TAG = "Controller";
 static constexpr auto TIME_SYNC_INTERVAL = 1s;
 
 Controller::Controller(boost::asio::io_context& io_context, const ClientSettings& settings)
-    : io_context_(io_context), ssl_context_(boost::asio::ssl::context::tlsv12_client), timer_(io_context), settings_(settings), stream_(nullptr),
-      decoder_(nullptr), player_(nullptr), serverSettings_(nullptr)
+    : io_context_(io_context),
+#ifdef HAS_OPENSSL
+      ssl_context_(boost::asio::ssl::context::tlsv12_client),
+#endif
+      timer_(io_context), settings_(settings), stream_(nullptr), decoder_(nullptr), player_(nullptr), serverSettings_(nullptr)
 {
+#ifdef HAS_OPENSSL
     if (settings.server.isSsl())
     {
         boost::system::error_code ec;
@@ -118,6 +122,7 @@ Controller::Controller(boost::asio::io_context& io_context, const ClientSettings
                 throw SnapException("Failed to load private key file: " + settings.server.certificate_key.string() + ": " + ec.message());
         }
     }
+#endif // HAS_OPENSSL
 }
 
 
@@ -401,8 +406,10 @@ void Controller::start()
     {
         if (settings_.server.protocol == "ws")
             clientConnection_ = make_unique<ClientConnectionWs>(io_context_, settings_.server);
+#ifdef HAS_OPENSSL
         else if (settings_.server.protocol == "wss")
             clientConnection_ = make_unique<ClientConnectionWss>(io_context_, ssl_context_, settings_.server);
+#endif
         else
             clientConnection_ = make_unique<ClientConnectionTcp>(io_context_, settings_.server);
         worker();

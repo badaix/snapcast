@@ -64,7 +64,9 @@ private:
     void sendTimeSyncMessage(int quick_syncs);
 
     boost::asio::io_context& io_context_;
+#ifdef HAS_OPENSSL
     boost::asio::ssl::context ssl_context_;
+#endif
     boost::asio::steady_timer timer_;
     ClientSettings settings_;
     SampleFormat sampleFormat_;

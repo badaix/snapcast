@@ -6,6 +6,7 @@ set(SERVER_SOURCES
     control_session_tcp.cpp
     control_session_http.cpp
     control_session_ws.cpp
+    jwt.cpp
     snapserver.cpp
     server.cpp
     stream_server.cpp
@@ -35,6 +36,8 @@ set(SERVER_LIBRARIES ${CMAKE_THREAD_LIBS_INIT} ${ATOMIC_LIBRARY} common)
 include_directories(${CMAKE_SOURCE_DIR} ${CMAKE_SOURCE_DIR}/server)
 
 include_directories(SYSTEM ${Boost_INCLUDE_DIR})
+
+find_package(OpenSSL REQUIRED)
 
 if(ANDROID)
   find_package(vorbis REQUIRED CONFIG)

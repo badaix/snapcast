@@ -137,8 +137,14 @@ int main(int argc, char** argv)
         string pcm_device(player::DEFAULT_DEVICE);
 
         OptionParser op("Usage: snapclient [options...] [url]\n\n"
-                        " With 'url' = <tcp|ws|wss>://<snapserver host or IP>[:port]\n"
-                        " For example: \"tcp:\\\\192.168.1.1:1704\", or \"wss:\\\\homeserver.local\"\n"
+                        " With 'url' = "
+#ifdef HAS_OPENSSL
+                        "<tcp|ws|wss>"
+#else
+                        "<tcp|ws>"
+#endif
+                        "://<snapserver host or IP>[:port]\n"
+                        " For example: \"tcp:\\\\192.168.1.1:1704\", or \"ws:\\\\homeserver.local\"\n"
                         " If 'url' is not configured, snapclient tries to resolve the snapserver IP via mDNS\n");
         auto helpSwitch = op.add<Switch>("", "help", "Produce help message");
         auto groffSwitch = op.add<Switch, Attribute::hidden>("", "groff", "Produce groff message");
@@ -335,10 +341,18 @@ int main(int argc, char** argv)
             }
             catch (...)
             {
+#ifdef HAS_OPENSSL
                 throw SnapException("Invalid URI - expected format: \"<scheme>://<host or IP>[:port]\", with 'scheme' on of 'tcp', 'ws' or 'wss'");
+#else
+                throw SnapException("Invalid URI - expected format: \"<scheme>://<host or IP>[:port]\", with 'scheme' on of 'tcp' or 'ws'");
+#endif
             }
             if ((uri.scheme != "tcp") && (uri.scheme != "ws") && (uri.scheme != "wss"))
+#ifdef HAS_OPENSSL
                 throw SnapException("Protocol must be one of 'tcp', 'ws' or 'wss'");
+#else
+                throw SnapException("Protocol must be one of 'tcp' or 'ws'");
+#endif
             settings.server.host = uri.host;
             settings.server.protocol = uri.scheme;
             if (uri.port.has_value())
@@ -348,7 +362,12 @@ int main(int argc, char** argv)
             else if (settings.server.protocol == "ws")
                 settings.server.port = 1780;
             else if (settings.server.protocol == "wss")
+            {
                 settings.server.port = 1788;
+#ifndef HAS_OPENSSL
+                throw SnapException("Snapclient is built without wss support");
+#endif
+            }
         }
 
         if (server_cert_opt->is_set())

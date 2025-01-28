@@ -18,7 +18,6 @@
 
 #ifndef NOMINMAX
 #define NOMINMAX
-#include <optional>
 #endif // NOMINMAX
 
 // prototype/interface header file
@@ -88,7 +87,7 @@ void StreamUri::parse(const std::string& stream_uri)
     host = strutils::uriDecode(strutils::trim_copy(tmp.substr(0, pos)));
     std::string str_port;
     host = utils::string::split_left(host, ':', str_port);
-    port = std::atoi(str_port.c_str());
+    port = std::strtol(str_port.c_str(), nullptr, 10);
     if (port == 0)
         port = std::nullopt;
 

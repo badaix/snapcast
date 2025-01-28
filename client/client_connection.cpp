@@ -517,6 +517,7 @@ void ClientConnectionWs::write(boost::asio::streambuf& buffer, WriteHandler&& wr
 
 /////////////////////////////// SSL Websockets ////////////////////////////////
 
+#ifdef HAS_OPENSSL
 
 ClientConnectionWss::ClientConnectionWss(boost::asio::io_context& io_context, boost::asio::ssl::context& ssl_context, ClientSettings::Server server)
     : ClientConnection(io_context, std::move(server)), ssl_context_(ssl_context)
@@ -683,3 +684,5 @@ void ClientConnectionWss::write(boost::asio::streambuf& buffer, WriteHandler&& w
 {
     getWs().async_write(boost::asio::buffer(buffer.data()), write_handler);
 }
+
+#endif // HAS_OPENSSL

@@ -48,8 +48,9 @@ namespace websocket = beast::websocket; // from <boost/beast/websocket.hpp>
 using tcp_socket = boost::asio::ip::tcp::socket;
 using ssl_socket = boost::asio::ssl::stream<tcp_socket>;
 using tcp_websocket = websocket::stream<tcp_socket>;
+#ifdef HAS_OPENSSL
 using ssl_websocket = websocket::stream<ssl_socket>;
-
+#endif
 
 class ClientConnection;
 
@@ -244,11 +245,12 @@ private:
     std::optional<tcp_websocket> tcp_ws_;
     /// Receive buffer
     boost::beast::flat_buffer buffer_;
-    /// protect ssl_ws_
+    /// protect tcp_ws_
     std::mutex ws_mutex_;
 };
 
 
+#ifdef HAS_OPENSSL
 
 /// Websocket connection
 class ClientConnectionWss : public ClientConnection
@@ -279,3 +281,5 @@ private:
     /// protect ssl_ws_
     std::mutex ws_mutex_;
 };
+
+#endif // HAS_OPENSSL

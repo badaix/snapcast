@@ -1,4 +1,4 @@
-set(SOURCES resampler.cpp sample_format.cpp jwt.cpp base64.cpp stream_uri.cpp
+set(SOURCES resampler.cpp sample_format.cpp base64.cpp stream_uri.cpp
             utils/string_utils.cpp)
 
 if(NOT WIN32 AND NOT ANDROID)
@@ -18,5 +18,3 @@ if(ANDROID)
 elseif(SOXR_FOUND)
   target_link_libraries(common ${SOXR_LIBRARIES})
 endif()
-
-target_link_libraries(common OpenSSL::Crypto OpenSSL::SSL)
