@@ -329,7 +329,11 @@ Snapserver supports RPC via HTTP(S) and WS(S) as well as audio streaming over WS
 
 ### HTTPS
 
+#### Server
+
 For HTTPS/WSS, the paramter `ssl_enabled` must be set to `true` (default: `false`) and the `certificate` and `certificate_key` paramters in the `[ssl]` section must point to a certificate file and key file in PEM format.
+
+If you want only trusted clients being able to connect, the parameter `verify_clients` must be set to `true` and the client CA certificates must be configures as list of `client_cert =` entries.
 
 Some hints on how to create a certificate and a private key are given for instance here:
 
@@ -382,3 +386,11 @@ certificate_key = snapserver.key
 ```
 
 Install the CA certificate `snapcastCA.crt` on you client's OS or browser.
+
+#### Client
+
+To use an SSL connection to the server, the client must use the secure websockets URI: `snapclient [options...] wss://<server host or IP>[:port]`.
+
+To enable server authentication, the server CA certificate can be configured with `--server-cert=<filename>`.
+
+If the server is confgured to authenticate the clients (`verify_clients = true` in `snapserver.conf`), you must configure the client certificate and private key with `--cert=<filename>` and `--cert-key=<filename>`.

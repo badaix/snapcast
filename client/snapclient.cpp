@@ -153,12 +153,12 @@ int main(int argc, char** argv)
         auto port_opt = op.add<Value<size_t>>("p", "port", "(deprecated, use [url]) Server port", 1704, &settings.server.port);
         op.add<Value<size_t>>("i", "instance", "Instance id when running multiple instances on the same host", 1, &settings.instance);
         op.add<Value<string>>("", "hostID", "Unique host id, default is MAC address", "", &settings.host_id);
-        auto server_cert_opt =
-            op.add<Implicit<std::filesystem::path>>("", "server-cert", "Verify server with certificate (PEM format)", "default certificates");
         op.add<Value<std::filesystem::path>>("", "cert", "Client certificate file (PEM format)", settings.server.certificate, &settings.server.certificate);
         op.add<Value<std::filesystem::path>>("", "cert-key", "Client private key file (PEM format)", settings.server.certificate_key,
                                              &settings.server.certificate_key);
         op.add<Value<string>>("", "key-password", "Key password (for encrypted private key)", settings.server.key_password, &settings.server.key_password);
+        auto server_cert_opt =
+            op.add<Implicit<std::filesystem::path>>("", "server-cert", "Verify server with CA certificate (PEM format)", "default certificates");
 
 // PCM device specific
 #if defined(HAS_ALSA) || defined(HAS_PULSE) || defined(HAS_WASAPI)
