@@ -31,7 +31,9 @@
 #include <boost/asio/strand.hpp>
 #include <boost/asio/streambuf.hpp>
 #include <boost/beast/core.hpp>
+#ifdef HAS_OPENSSL
 #include <boost/beast/ssl.hpp>
+#endif
 #include <boost/beast/websocket.hpp>
 
 // standard headers
@@ -46,9 +48,9 @@
 namespace beast = boost::beast;         // from <boost/beast.hpp>
 namespace websocket = beast::websocket; // from <boost/beast/websocket.hpp>
 using tcp_socket = boost::asio::ip::tcp::socket;
-using ssl_socket = boost::asio::ssl::stream<tcp_socket>;
 using tcp_websocket = websocket::stream<tcp_socket>;
 #ifdef HAS_OPENSSL
+using ssl_socket = boost::asio::ssl::stream<tcp_socket>;
 using ssl_websocket = websocket::stream<ssl_socket>;
 #endif
 

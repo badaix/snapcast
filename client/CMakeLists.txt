@@ -67,7 +67,7 @@ if(OpenSSL_FOUND)
   add_compile_definitions(HAS_OPENSSL)
   list(APPEND CLIENT_LIBRARIES OpenSSL::Crypto OpenSSL::SSL)
 else()
-  message(STATUS "OpenSSL not found, building without wss support")
+  message(NOTICE "OpenSSL not found, building without SSL support")
 endif()
 
 if(ANDROID)
