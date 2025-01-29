@@ -63,7 +63,7 @@ struct ClientSettings
         /// server host or IP address
         std::string host;
         /// protocol: "tcp", "ws" or "wss"
-        std::string protocol;
+        std::string protocol{"tcp"};
         /// server port
         size_t port{1704};
         /// server certificate
