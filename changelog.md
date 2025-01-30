@@ -9,11 +9,12 @@
 
 ### Bugfixes
 
-- Fix typo in documentation (PR #1333)
+- Fix typos (PR #1333, PR #1341)
 
 ### General
 
 - Client: Command line arguments '--host' and '--port' are deprecated
+- Update binary_protocol.md (Issue #1339)
 
 _Johannes Pohl <snapcast@badaix.de>  Thu, 23 Jan 2025 00:13:37 +0200_
 
