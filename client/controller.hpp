@@ -59,9 +59,12 @@ private:
 
     void getNextMessage();
     void sendTimeSyncMessage(int quick_syncs);
+    void sendSystemInfoMessage();
+    json getSystemInfo();
 
     boost::asio::io_context& io_context_;
     boost::asio::steady_timer timer_;
+    boost::asio::steady_timer systemInfoTimer_;
     ClientSettings settings_;
     SampleFormat sampleFormat_;
     std::unique_ptr<ClientConnection> clientConnection_;

@@ -24,6 +24,7 @@
 
 // standard headers
 #include <string>
+#include <chrono>
 
 
 
@@ -73,10 +74,24 @@ struct ClientSettings
         std::string filter{"*:info"};
     };
 
+    struct SystemInfo
+    {
+        enum class Mode
+        {
+            file,
+            script,
+            none
+        };
+        Mode mode{Mode::none};
+        std::string path;
+        int interval_secs;
+    };
+
     size_t instance{1};
     std::string host_id;
 
     Server server;
     Player player;
     Logging logging;
+    SystemInfo systemInfo;
 };

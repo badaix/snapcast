@@ -22,6 +22,7 @@
 // local headers
 #include "common/aixlog.hpp"
 #include "common/message/client_info.hpp"
+#include "common/message/client_system_info.hpp"
 #include "common/message/hello.hpp"
 #include "common/message/server_settings.hpp"
 #include "common/message/time.hpp"
@@ -288,6 +289,22 @@ void Server::onMessageReceived(StreamSession* streamSession, const msg::BaseMess
         clientInfo->config.volume.muted = infoMsg.isMuted();
         jsonrpcpp::notification_ptr notification = make_shared<jsonrpcpp::Notification>(
             "Client.OnVolumeChanged", jsonrpcpp::Parameter("id", streamSession->clientId, "volume", clientInfo->config.volume.toJson()));
+        controlServer_->send(notification->to_json().dump());
+    }
+    else if (baseMessage.type == message_type::kClientSystemInfo)
+    {
+        ClientInfoPtr clientInfo = Config::instance().getClientInfo(streamSession->clientId);
+        if (clientInfo == nullptr)
+        {
+            LOG(ERROR, LOG_TAG) << "client not found: " << streamSession->clientId << "\n";
+            return;
+        }
+        msg::ClientSystemInfo sysInfoMsg;
+        sysInfoMsg.deserialize(baseMessage, buffer);
+
+        clientInfo->systemInfo = sysInfoMsg.msg;
+        jsonrpcpp::notification_ptr notification = make_shared<jsonrpcpp::Notification>(
+            "Client.OnSystemInfoChanged", jsonrpcpp::Parameter("id", streamSession->clientId, "systemInfo", clientInfo->systemInfo));
         controlServer_->send(notification->to_json().dump());
     }
     else if (baseMessage.type == message_type::kHello)
