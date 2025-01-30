@@ -129,7 +129,7 @@ void ClientConnection::connect(const ResultHandler& handler)
 
     for (const auto& iter : iterator)
     {
-        LOG(INFO, LOG_TAG) << "Connecting to " << server_.protocol << "://" << iter.endpoint() << "\n";
+        LOG(INFO, LOG_TAG) << "Connecting to host: " << iter.endpoint() << ", port: " << server_.port << ", protocol: " << server_.protocol << "\n";
         ec = doConnect(iter.endpoint());
         if (!ec || (ec == boost::system::errc::interrupted))
         {
