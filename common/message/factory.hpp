@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2024  Johannes Pohl
+    Copyright (C) 2014-2025  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -30,15 +30,16 @@
 namespace msg
 {
 
+/// Cast a BaseMessage @message to type "ToType"
+/// @return castest message or nullptr, if the cast failed
 template <typename ToType>
 static std::unique_ptr<ToType> message_cast(std::unique_ptr<msg::BaseMessage> message)
 {
-    ToType* tmp = dynamic_cast<ToType*>(message.get());
-    std::unique_ptr<ToType> result;
+    auto* tmp = dynamic_cast<ToType*>(message.get());
     if (tmp != nullptr)
     {
         message.release();
-        result.reset(tmp);
+        std::unique_ptr<ToType> result(tmp);
         return result;
     }
     return nullptr;
@@ -47,6 +48,7 @@ static std::unique_ptr<ToType> message_cast(std::unique_ptr<msg::BaseMessage> me
 namespace factory
 {
 
+/// Create a message of type T from @p base_message beaser and payload @p buffer
 template <typename T>
 static std::unique_ptr<T> createMessage(const BaseMessage& base_message, char* buffer)
 {
@@ -57,6 +59,7 @@ static std::unique_ptr<T> createMessage(const BaseMessage& base_message, char* b
     return result;
 }
 
+/// Create a BaseMessage from @p base_message header and payload @p buffer
 static std::unique_ptr<BaseMessage> createMessage(const BaseMessage& base_message, char* buffer)
 {
     std::unique_ptr<BaseMessage> result;

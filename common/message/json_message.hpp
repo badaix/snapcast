@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2022  Johannes Pohl
+    Copyright (C) 2014-2025  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -16,8 +16,8 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
-#ifndef MESSAGE_JSON_HPP
-#define MESSAGE_JSON_HPP
+#pragma once
+
 
 // local headers
 #include "common/json.hpp"
@@ -30,13 +30,16 @@ using json = nlohmann::json;
 namespace msg
 {
 
+/// Base class of a message with json payload
 class JsonMessage : public BaseMessage
 {
 public:
-    JsonMessage(message_type msgType) : BaseMessage(msgType)
+    /// c'tor taking the @p msg_type
+    explicit JsonMessage(message_type msg_type) : BaseMessage(msg_type)
     {
     }
 
+    /// d'tor
     ~JsonMessage() override = default;
 
     void read(std::istream& stream) override
@@ -60,6 +63,7 @@ protected:
         writeVal(stream, msg.dump());
     }
 
+    /// @return value for key @p what or @p def, if not found
     template <typename T>
     T get(const std::string& what, const T& def) const
     {
@@ -75,7 +79,5 @@ protected:
         }
     }
 };
+
 } // namespace msg
-
-
-#endif

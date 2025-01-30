@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2022  Johannes Pohl
+    Copyright (C) 2014-2025  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -16,8 +16,7 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
-#ifndef MESSAGE_SERVER_SETTINGS_HPP
-#define MESSAGE_SERVER_SETTINGS_HPP
+#pragma once
 
 // local headers
 #include "json_message.hpp"
@@ -26,9 +25,11 @@
 namespace msg
 {
 
+/// Dynamic settings that affect the client
 class ServerSettings : public JsonMessage
 {
 public:
+    /// c'tor
     ServerSettings() : JsonMessage(message_type::kServerSettings)
     {
         setBufferMs(0);
@@ -37,51 +38,57 @@ public:
         setMuted(false);
     }
 
+    /// d'tor
     ~ServerSettings() override = default;
 
+    /// @return the end to end delay in [ms]
     int32_t getBufferMs()
     {
         return get("bufferMs", 0);
     }
 
+    /// @return client specific additional latency in [ms]
     int32_t getLatency()
     {
         return get("latency", 0);
     }
 
+    /// @return the volume in [%]
     uint16_t getVolume()
     {
         return get("volume", static_cast<uint16_t>(100));
     }
 
+    /// @return if muted
     bool isMuted()
     {
         return get("muted", false);
     }
 
 
-
-    void setBufferMs(int32_t bufferMs)
+    /// Set the end to end delay to @p buffer_ms [ms]
+    void setBufferMs(int32_t buffer_ms)
     {
-        msg["bufferMs"] = bufferMs;
+        msg["bufferMs"] = buffer_ms;
     }
 
+    /// Set the additional client specific @p latency [ms]
     void setLatency(int32_t latency)
     {
         msg["latency"] = latency;
     }
 
+    /// Set the @p volume [%]
     void setVolume(uint16_t volume)
     {
         msg["volume"] = volume;
     }
 
+    /// Set client to @p muted
     void setMuted(bool muted)
     {
         msg["muted"] = muted;
     }
 };
+
 } // namespace msg
-
-
-#endif
