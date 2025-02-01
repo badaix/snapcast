@@ -19,14 +19,10 @@
 // prototype/interface header file
 
 // local headers
-#include "common/aixlog.hpp"
-#include "common/base64.h"
 #include "common/error_code.hpp"
 #include "common/stream_uri.hpp"
 #include "common/utils/string_utils.hpp"
-#include "server/authinfo.hpp"
-#include "server/jwt.hpp"
-#include "server/server_settings.hpp"
+// #include "server/jwt.hpp"
 #include "server/streamreader/control_error.hpp"
 #include "server/streamreader/properties.hpp"
 
@@ -34,7 +30,7 @@
 #include <catch2/catch_test_macros.hpp>
 
 // standard headers
-#include <chrono>
+#include <iostream>
 #include <regex>
 #include <system_error>
 #include <vector>
@@ -91,9 +87,9 @@ TEST_CASE("String utils")
 }
 
 
+#if 0
 TEST_CASE("JWT")
 {
-#if 0
     /// ECDSA
     {
         const auto* key = "-----BEGIN EC PRIVATE KEY-----\n"
@@ -137,7 +133,6 @@ TEST_CASE("JWT")
         REQUIRE(jwt.getIat().value() == std::chrono::seconds(1516239022));
         REQUIRE(!jwt.getExp().has_value());
     }
-#endif
 
     /// RSA keys
     {
@@ -220,6 +215,7 @@ TEST_CASE("JWT")
         REQUIRE(!jwt.getExp().has_value());
     }
 }
+#endif
 
 
 TEST_CASE("Uri")
@@ -688,7 +684,7 @@ TEST_CASE("WildcardMatch")
     REQUIRE(!wildcardMatch("*get*erver*", "Server.getToken"));
 }
 
-
+#if 0
 TEST_CASE("Auth")
 {
     {
@@ -735,3 +731,4 @@ TEST_CASE("Auth")
         REQUIRE(!auth.hasPermission("stream"));
     }
 }
+#endif

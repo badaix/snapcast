@@ -59,7 +59,7 @@ class ControlSession : public std::enable_shared_from_this<ControlSession>
 {
 public:
     /// ctor. Received message from the client are passed to ControlMessageReceiver
-    ControlSession(ControlMessageReceiver* receiver, const ServerSettings& settings) : authinfo(settings), message_receiver_(receiver)
+    ControlSession(ControlMessageReceiver* receiver, const ServerSettings& settings) : authinfo(settings.auth), message_receiver_(receiver)
     {
     }
     virtual ~ControlSession() = default;

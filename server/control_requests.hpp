@@ -312,6 +312,7 @@ public:
 };
 
 
+#if 0
 /// "Server.GetToken" request
 class ServerGetTokenRequest : public Request
 {
@@ -320,3 +321,4 @@ public:
     explicit ServerGetTokenRequest(const Server& server);
     void execute(const jsonrpcpp::request_ptr& request, AuthInfo& authinfo, const OnResponse& on_response) override;
 };
+#endif

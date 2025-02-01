@@ -138,7 +138,20 @@ void Server::processRequest(const jsonrpcpp::request_ptr& request, AuthInfo& aut
     {
         try
         {
-            req->execute(request, authinfo, on_response);
+            if (req->hasPermission(authinfo))
+            {
+                req->execute(request, authinfo, on_response);
+            }
+            else
+            {
+                std::optional<jsonrpcpp::RequestException> e;
+                if (!authinfo.hasAuthInfo())
+                    e.emplace(jsonrpcpp::Error("Unauthorized", 401), request->id());
+                else
+                    e.emplace(jsonrpcpp::Error("Forbidden", 403), request->id());
+                auto response = std::make_shared<jsonrpcpp::RequestException>(e.value());
+                on_response(std::move(response), nullptr);
+            }
         }
         catch (const jsonrpcpp::RequestException& e)
         {
@@ -189,7 +202,7 @@ void Server::onMessageReceived(std::shared_ptr<ControlSession> controlSession, c
     {
         jsonrpcpp::request_ptr request = dynamic_pointer_cast<jsonrpcpp::Request>(entity);
         processRequest(request, controlSession->authinfo,
-                       [this, controlSession, response_handler](jsonrpcpp::entity_ptr response, jsonrpcpp::notification_ptr notification)
+                       [this, controlSession, response_handler](const jsonrpcpp::entity_ptr& response, const jsonrpcpp::notification_ptr& notification)
         {
             // if (controlSession->authinfo.hasAuthInfo())
             // {
@@ -226,8 +239,8 @@ void Server::onMessageReceived(std::shared_ptr<ControlSession> controlSession, c
             {
                 jsonrpcpp::request_ptr request = dynamic_pointer_cast<jsonrpcpp::Request>(batch_entity);
                 processRequest(request, controlSession->authinfo,
-                               [controlSession, response_handler, &responseBatch, &notificationBatch](jsonrpcpp::entity_ptr response,
-                                                                                                      jsonrpcpp::notification_ptr notification)
+                               [controlSession, response_handler, &responseBatch, &notificationBatch](const jsonrpcpp::entity_ptr& response,
+                                                                                                      const jsonrpcpp::notification_ptr& notification)
                 {
                     if (response != nullptr)
                         responseBatch.add_ptr(response);

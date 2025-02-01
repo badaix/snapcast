@@ -53,9 +53,9 @@ Request::Request(const Server& server, const std::string& method) : server_(serv
 
 bool Request::hasPermission(const AuthInfo& authinfo) const
 {
-    std::ignore = authinfo;
-    return true;
-    // return authinfo.hasPermission(method_);
+    bool has_permission = authinfo.hasPermission(method());
+    LOG(INFO, LOG_TAG) << "Has permission for '" << method() << "': " << has_permission << "\n";
+    return has_permission;
 }
 
 const std::string& Request::method() const
@@ -109,7 +109,7 @@ ControlRequestFactory::ControlRequestFactory(const Server& server)
     add_request(std::make_shared<ServerGetStatusRequest>(server));
     add_request(std::make_shared<ServerDeleteClientRequest>(server));
     add_request(std::make_shared<ServerAuthenticateRequest>(server));
-    add_request(std::make_shared<ServerGetTokenRequest>(server));
+    // add_request(std::make_shared<ServerGetTokenRequest>(server));
 }
 
 
@@ -877,7 +877,7 @@ void ServerAuthenticateRequest::execute(const jsonrpcpp::request_ptr& request, A
     on_response(std::move(response), nullptr);
 }
 
-
+#if 0
 ServerGetTokenRequest::ServerGetTokenRequest(const Server& server) : Request(server, "Server.GetToken")
 {
 }
@@ -911,3 +911,4 @@ void ServerGetTokenRequest::execute(const jsonrpcpp::request_ptr& request, AuthI
 
     on_response(std::move(response), nullptr);
 }
+#endif

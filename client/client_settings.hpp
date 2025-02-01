@@ -103,7 +103,7 @@ struct ClientSettings
     /// Log settings
     struct Logging
     {
-        /// The log sink (null,system,stdout,stderr,file:<filename>)
+        /// The log sink (null,system,stdout,stderr,file)
         std::string sink;
         /// Log filter
         std::string filter{"*:info"};
