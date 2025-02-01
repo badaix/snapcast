@@ -23,14 +23,12 @@
 #include "common/aixlog.hpp"
 #include "common/base64.h"
 #include "common/utils/string_utils.hpp"
-#include "jwt.hpp"
 
 // 3rd party headers
 
 // standard headers
 #include <algorithm>
 #include <chrono>
-#include <fstream>
 #include <string>
 #include <system_error>
 
@@ -100,14 +98,15 @@ std::error_code make_error_code(AuthErrc errc)
 }
 
 
-AuthInfo::AuthInfo(const ServerSettings& settings) : has_auth_info_(false), settings_(settings)
+AuthInfo::AuthInfo(ServerSettings::Authorization settings) : has_auth_info_(false), settings_(std::move(settings))
 {
 }
 
 
 ErrorCode AuthInfo::validateUser(const std::string& username, const std::optional<std::string>& password) const
 {
-    auto iter = std::find_if(settings_.users.begin(), settings_.users.end(), [&](const ServerSettings::User& user) { return user.name == username; });
+    auto iter =
+        std::find_if(settings_.users.begin(), settings_.users.end(), [&](const ServerSettings::Authorization::User& user) { return user.name == username; });
     if (iter == settings_.users.end())
         return ErrorCode{AuthErrc::unknown_user};
     if (password.has_value() && (iter->password != password.value()))
@@ -120,12 +119,12 @@ ErrorCode AuthInfo::authenticate(const std::string& scheme, const std::string& p
 {
     std::string scheme_normed = utils::string::trim_copy(utils::string::tolower_copy(scheme));
     std::string param_normed = utils::string::trim_copy(param);
-    if (scheme_normed == "bearer")
-        return authenticateBearer(param_normed);
-    else if (scheme_normed == "basic")
+    // if (scheme_normed == "bearer")
+    //     return authenticateBearer(param_normed);
+    if (scheme_normed == "basic")
         return authenticateBasic(param_normed);
 
-    return {AuthErrc::auth_scheme_not_supported, "Scheme must be 'Basic' or 'Bearer'"};
+    return {AuthErrc::auth_scheme_not_supported, "Scheme must be 'Basic'"}; // or 'Bearer'"};
 }
 
 
@@ -151,7 +150,7 @@ ErrorCode AuthInfo::authenticateBasic(const std::string& credentials)
     return ec;
 }
 
-
+#if 0
 ErrorCode AuthInfo::authenticateBearer(const std::string& token)
 {
     has_auth_info_ = false;
@@ -198,6 +197,7 @@ ErrorOr<std::string> AuthInfo::getToken(const std::string& username, const std::
         return ErrorCode{AuthErrc::failed_to_create_token};
     return token.value();
 }
+#endif
 
 
 bool AuthInfo::isExpired() const
@@ -236,19 +236,25 @@ const std::string& AuthInfo::username() const
 
 bool AuthInfo::hasPermission(const std::string& resource) const
 {
+    if (!settings_.enabled)
+        return true;
+
     if (!hasAuthInfo())
         return false;
 
-    auto iter = std::find_if(settings_.users.begin(), settings_.users.end(), [&](const ServerSettings::User& user) { return user.name == username_; });
-    if (iter == settings_.users.end())
+    const auto& user_iter = std::find_if(settings_.users.begin(), settings_.users.end(), [&](const auto& user) { return user.name == username_; });
+    if (user_iter == settings_.users.end())
         return false;
 
-    auto perm_iter = std::find_if(iter->permissions.begin(), iter->permissions.end(),
+    const auto& role = user_iter->role;
+    auto perm_iter = std::find_if(role->permissions.begin(), role->permissions.end(),
                                   [&](const std::string& permission) { return utils::string::wildcardMatch(permission, resource); });
-    if (perm_iter != iter->permissions.end())
+
+    if (perm_iter != role->permissions.end())
     {
         LOG(DEBUG, LOG_TAG) << "Found permission for ressource '" << resource << "': '" << *perm_iter << "'\n";
         return true;
     }
+
     return false;
 }

@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2024  Johannes Pohl
+    Copyright (C) 2014-2025  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -66,7 +66,7 @@ class AuthInfo
 {
 public:
     /// c'tor
-    explicit AuthInfo(const ServerSettings& settings);
+    explicit AuthInfo(ServerSettings::Authorization settings);
     // explicit AuthInfo(std::string authheader);
     /// d'tor
     virtual ~AuthInfo() = default;
@@ -80,14 +80,14 @@ public:
     /// Authenticate with basic scheme
     ErrorCode authenticateBasic(const std::string& credentials);
     /// Authenticate with bearer scheme
-    ErrorCode authenticateBearer(const std::string& token);
+    // ErrorCode authenticateBearer(const std::string& token);
     /// Authenticate with basic or bearer scheme with an auth header
     ErrorCode authenticate(const std::string& auth);
     /// Authenticate with scheme ("basic" or "bearer") and auth param
     ErrorCode authenticate(const std::string& scheme, const std::string& param);
 
     /// @return JWS token for @p username and @p password
-    ErrorOr<std::string> getToken(const std::string& username, const std::string& password) const;
+    // ErrorOr<std::string> getToken(const std::string& username, const std::string& password) const;
     /// @return if the authenticated user has permission to access @p ressource
     bool hasPermission(const std::string& resource) const;
 
@@ -99,7 +99,7 @@ private:
     /// optional token expiration
     std::optional<std::chrono::system_clock::time_point> expires_;
     /// server configuration
-    ServerSettings settings_;
+    ServerSettings::Authorization settings_;
 
     /// Validate @p username and @p password
     /// @return true if username and password are correct
