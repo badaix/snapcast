@@ -18,6 +18,8 @@
 
 // local headers
 #include "common/popl.hpp"
+#include <algorithm>
+#include <cstddef>
 #include <filesystem>
 #ifdef HAS_DAEMON
 #include "common/daemon.hpp"
@@ -90,10 +92,10 @@ int main(int argc, char* argv[])
         auto client_cert_opt =
             conf.add<Value<std::filesystem::path>>("", "ssl.client_cert", "List of client CA certificate files, can be configured multiple times", "");
 
-#if 0 // feature: users
-      // Users setting
-        auto users_value = conf.add<Value<string>>("", "users.user", "<User nane>:<permissions>:<password>");
-#endif
+        // Users setting
+        conf.add<Value<bool>>("", "authorization.enabled", "enabled authorization", settings.auth.enabled, &settings.auth.enabled);
+        auto roles_value = conf.add<Value<string>>("", "authorization.role", "<Role name>:<permissions>");
+        auto users_value = conf.add<Value<string>>("", "authorization.user", "<User nane>:<password>:<role>");
 
         // HTTP RPC settings
         conf.add<Value<bool>>("", "http.enabled", "enable HTTP Json RPC (HTTP POST and websockets)", settings.http.enabled, &settings.http.enabled);
@@ -320,15 +322,37 @@ int main(int argc, char* argv[])
             settings.stream.sources.push_back(sourceValue->value(n));
         }
 
-#if 0 // feature: users
-        for (size_t n = 0; n < users_value->count(); ++n)
+        if (settings.auth.enabled)
         {
-            settings.users.emplace_back(users_value->value(n));
-            LOG(DEBUG, LOG_TAG) << "User: " << settings.users.back().name
-                                << ", permissions: " << utils::string::container_to_string(settings.users.back().permissions)
-                                << ", pw: " << settings.users.back().password << "\n";
+            for (size_t n = 0; n < roles_value->count(); ++n)
+            {
+                settings.auth.roles.emplace_back(std::make_shared<ServerSettings::Authorization::Role>(roles_value->value(n)));
+                const auto& role = settings.auth.roles.back();
+                LOG(DEBUG, LOG_TAG) << "Role: " << role->role << ", permissions: " << utils::string::container_to_string(role->permissions) << "\n";
+            }
+
+            auto empty_role = std::make_shared<ServerSettings::Authorization::Role>();
+            for (size_t n = 0; n < users_value->count(); ++n)
+            {
+                settings.auth.users.emplace_back(users_value->value(n));
+                ServerSettings::Authorization::User& user = settings.auth.users.back();
+                if (user.role_name.empty())
+                {
+                    user.role = empty_role;
+                }
+                else
+                {
+                    const auto& role_iter =
+                        find_if(settings.auth.roles.begin(), settings.auth.roles.end(), [&](const auto& role) { return role->role == user.role_name; });
+                    if (role_iter != settings.auth.roles.end())
+                        user.role = *role_iter;
+                }
+                if (user.role == nullptr)
+                    throw SnapException("Role '" + user.role_name + "' for user '" + user.name + "' not found");
+
+                LOG(DEBUG, LOG_TAG) << "User: " << user.name << ", pw: " << user.password << ", role: " << user.role_name << "\n";
+            }
         }
-#endif
 
 #ifdef HAS_DAEMON
         std::unique_ptr<Daemon> daemon;

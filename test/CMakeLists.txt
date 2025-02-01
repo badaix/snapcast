@@ -20,7 +20,7 @@ set(TEST_SOURCES
     ${CMAKE_SOURCE_DIR}/common/base64.cpp
     ${CMAKE_SOURCE_DIR}/common/utils/string_utils.cpp
     ${CMAKE_SOURCE_DIR}/server/authinfo.cpp
-    ${CMAKE_SOURCE_DIR}/server/jwt.cpp
+    # ${CMAKE_SOURCE_DIR}/server/jwt.cpp
     ${CMAKE_SOURCE_DIR}/server/streamreader/control_error.cpp
     ${CMAKE_SOURCE_DIR}/server/streamreader/properties.cpp
     ${CMAKE_SOURCE_DIR}/server/streamreader/metadata.cpp)

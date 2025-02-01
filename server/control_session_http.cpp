@@ -448,6 +448,7 @@ void ControlSessionHttp::on_read(beast::error_code ec, std::size_t bytes_transfe
     auto authheader = req_[beast::http::field::authorization];
     if (!authheader.empty())
     {
+        LOG(INFO, LOG_TAG) << "Auth header: " << authheader << "\n";
         auto ec = authinfo.authenticate(std::string{authheader});
         if (ec)
         {

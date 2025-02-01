@@ -25,6 +25,7 @@
 // standard headers
 #include <cstdint>
 #include <filesystem>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -67,26 +68,57 @@ struct ServerSettings
         }
     };
 
-    /// User settings
-    struct User
+    /// Authorization settings
+    struct Authorization
     {
-        /// c'tor
-        explicit User(const std::string& user_permissions_password)
+        /// Role settings
+        struct Role
         {
-            std::string perm;
-            name = utils::string::split_left(user_permissions_password, ':', perm);
-            perm = utils::string::split_left(perm, ':', password);
-            permissions = utils::string::split(perm, ',');
-        }
+            /// c'tor
+            Role() = default;
 
-        /// user name
-        std::string name;
-        /// permissions
-        std::vector<std::string> permissions;
-        /// password
-        std::string password;
+            /// c'tor
+            explicit Role(const std::string& role_permissions)
+            {
+                std::string perm;
+                role = utils::string::split_left(role_permissions, ':', perm);
+                permissions = utils::string::split(perm, ',');
+            }
+
+            /// role name
+            std::string role;
+            /// permissions
+            std::vector<std::string> permissions;
+        };
+
+        /// User settings
+        struct User
+        {
+            /// c'tor
+            explicit User(const std::string& user_password_role)
+            {
+                std::string perm;
+                name = utils::string::split_left(user_password_role, ':', perm);
+                password = utils::string::split_left(perm, ':', role_name);
+            }
+
+            /// user name
+            std::string name;
+            /// password
+            std::string password;
+            /// role
+            std::string role_name;
+            /// role
+            std::shared_ptr<Role> role;
+        };
+
+        /// is auth enabled
+        bool enabled{false};
+        /// users
+        std::vector<User> users;
+        /// roles
+        std::vector<std::shared_ptr<Role>> roles;
     };
-
 
     /// HTTP settings
     struct Http
@@ -163,7 +195,7 @@ struct ServerSettings
 
     Server server;                   ///< Server settings
     Ssl ssl;                         ///< SSL settings
-    std::vector<User> users;         ///< User settings
+    Authorization auth;              ///< Auth settings
     Http http;                       ///< HTTP settings
     Tcp tcp;                         ///< TCP settings
     Stream stream;                   ///< Stream settings
