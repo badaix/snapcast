@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2024  Johannes Pohl
+    Copyright (C) 2014-2025  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -42,6 +42,7 @@ using ClientInfoPtr = std::shared_ptr<ClientInfo>;
 using GroupPtr = std::shared_ptr<Group>;
 
 
+/// Config item base class
 struct JsonConfigItem
 {
     /// Read config item from json object @p j
@@ -70,9 +71,11 @@ protected:
     }
 };
 
+/// Volume config
 struct Volume : public JsonConfigItem
 {
-    Volume(uint16_t _percent = 100, bool _muted = false) : percent(_percent), muted(_muted)
+    /// c'tor
+    explicit Volume(uint16_t _percent = 100, bool _muted = false) : percent(_percent), muted(_muted)
     {
     }
 
@@ -90,18 +93,18 @@ struct Volume : public JsonConfigItem
         return j;
     }
 
-    uint16_t percent;
-    bool muted;
+    uint16_t percent; ///< volume in percent
+    bool muted;       ///< muted
 };
 
 
-
+/// Host config
 struct Host : public JsonConfigItem
 {
-    Host() : name(""), mac(""), os(""), arch(""), ip("")
-    {
-    }
+    /// c'tor
+    Host() = default;
 
+    /// Update name, os and arch to actual values
     void update()
     {
         name = getHostName();
@@ -129,17 +132,18 @@ struct Host : public JsonConfigItem
         return j;
     }
 
-    std::string name;
-    std::string mac;
-    std::string os;
-    std::string arch;
-    std::string ip;
+    std::string name; ///< host name
+    std::string mac;  ///< mac address
+    std::string os;   /// OS
+    std::string arch; /// CPU architecture
+    std::string ip;   /// IP address
 };
 
 
+/// Client config
 struct ClientConfig : public JsonConfigItem
 {
-    ClientConfig() : name(""), volume(100), latency(0), instance(1)
+    ClientConfig() : volume(100)
     {
     }
 
@@ -161,17 +165,18 @@ struct ClientConfig : public JsonConfigItem
         return j;
     }
 
-    std::string name;
-    Volume volume;
-    int32_t latency;
-    size_t instance;
+    std::string name;   ///< client name
+    Volume volume;      ///< client volume
+    int32_t latency{0}; ///< additional latency
+    size_t instance{1}; ///< instance id
 };
 
 
-
+/// Snapcast base config
 struct Snapcast : public JsonConfigItem
 {
-    Snapcast(const std::string& _name = "", const std::string& _version = "") : name(_name), version(_version), protocolVersion(1)
+    /// c'tor
+    explicit Snapcast(std::string _name = "", std::string _version = "") : name(std::move(_name)), version(std::move(_version))
     {
     }
 
@@ -193,23 +198,26 @@ struct Snapcast : public JsonConfigItem
         return j;
     }
 
-    std::string name;
-    std::string version;
-    int protocolVersion;
+    std::string name;       ///< name of the client or server
+    std::string version;    ///< software version
+    int protocolVersion{1}; ///< binary protocol version
 };
 
 
+/// Snapclient config
 struct Snapclient : public Snapcast
 {
-    Snapclient(const std::string& _name = "", const std::string& _version = "") : Snapcast(_name, _version)
+    explicit Snapclient(std::string _name = "", std::string _version = "") : Snapcast(std::move(_name), std::move(_version))
     {
     }
 };
 
 
+/// Snapserver config
 struct Snapserver : public Snapcast
 {
-    Snapserver(const std::string& _name = "", const std::string& _version = "") : Snapcast(_name, _version), controlProtocolVersion(1)
+    /// c'tor
+    explicit Snapserver(std::string _name = "", std::string _version = "") : Snapcast(std::move(_name), std::move(_version))
     {
     }
 
@@ -226,13 +234,14 @@ struct Snapserver : public Snapcast
         return j;
     }
 
-    int controlProtocolVersion;
+    int controlProtocolVersion{1}; ///< control protocol version
 };
 
 
+/// Client config
 struct ClientInfo : public JsonConfigItem
 {
-    ClientInfo(const std::string& _clientId = "") : id(_clientId), connected(false)
+    explicit ClientInfo(std::string _clientId = "") : id(std::move(_clientId))
     {
         lastSeen.tv_sec = 0;
         lastSeen.tv_usec = 0;
@@ -262,18 +271,20 @@ struct ClientInfo : public JsonConfigItem
         return j;
     }
 
-    std::string id;
-    Host host;
-    Snapclient snapclient;
-    ClientConfig config;
-    timeval lastSeen;
-    bool connected;
+    std::string id;        ///< unique client id
+    Host host;             ///< host
+    Snapclient snapclient; ///< Snapclient
+    ClientConfig config;   ///< Client config
+    timeval lastSeen;      ///< last online
+    bool connected{false}; ///< connected to server?
 };
 
 
+/// Group config
 struct Group : public JsonConfigItem
 {
-    Group(const ClientInfoPtr client = nullptr) : muted(false)
+    /// c'tor
+    explicit Group(const ClientInfoPtr& client = nullptr)
     {
         if (client)
             id = client->id;
@@ -314,11 +325,12 @@ struct Group : public JsonConfigItem
         return j;
     }
 
-    ClientInfoPtr removeClient(const std::string& clientId)
+    /// Remove client with id @p client_id from the group and @return the removed client
+    ClientInfoPtr removeClient(const std::string& client_id)
     {
         for (auto iter = clients.begin(); iter != clients.end(); ++iter)
         {
-            if ((*iter)->id == clientId)
+            if ((*iter)->id == client_id)
             {
                 clients.erase(iter);
                 return (*iter);
@@ -327,7 +339,8 @@ struct Group : public JsonConfigItem
         return nullptr;
     }
 
-    ClientInfoPtr removeClient(ClientInfoPtr client)
+    /// Remove client @p client from the group and @return the removed client
+    ClientInfoPtr removeClient(const ClientInfoPtr& client)
     {
         if (!client)
             return nullptr;
@@ -335,17 +348,19 @@ struct Group : public JsonConfigItem
         return removeClient(client->id);
     }
 
-    ClientInfoPtr getClient(const std::string& clientId)
+    /// @return client with id @p client_id
+    ClientInfoPtr getClient(const std::string& client_id)
     {
         for (const auto& client : clients)
         {
-            if (client->id == clientId)
+            if (client->id == client_id)
                 return client;
         }
         return nullptr;
     }
 
-    void addClient(ClientInfoPtr client)
+    /// Add client @p client
+    void addClient(const ClientInfoPtr& client)
     {
         if (!client)
             return;
@@ -365,56 +380,78 @@ struct Group : public JsonConfigItem
         */
     }
 
+    /// @return if the group is empty
     bool empty() const
     {
         return clients.empty();
     }
 
-    std::string name;
-    std::string id;
-    std::string streamId;
-    bool muted;
-    std::vector<ClientInfoPtr> clients;
+    std::string name;                   ///< group name
+    std::string id;                     ///< group id
+    std::string streamId;               ///< stream id assigned to this group
+    bool muted{false};                  ///< is the group muted?
+    std::vector<ClientInfoPtr> clients; ///< list of clients in this group
 };
 
 
+/// Runtime configuration
 class Config
 {
 public:
+    /// singleton c'tor
     static Config& instance()
     {
         static Config instance_;
         return instance_;
     }
 
-    ClientInfoPtr getClientInfo(const std::string& clientId) const;
-    GroupPtr addClientInfo(const std::string& clientId);
-    GroupPtr addClientInfo(ClientInfoPtr client);
-    void remove(ClientInfoPtr client);
-    void remove(GroupPtr group, bool force = false);
+    /// @return client from @p client_id
+    ClientInfoPtr getClientInfo(const std::string& client_id) const;
+    /// Get or create client with id @p client_id and return its group (create a new group for new clients)
+    /// @return the client's group
+    GroupPtr addClientInfo(const std::string& client_id);
+    /// Add client @p client to a group
+    /// @return the client's group: exising or newly created
+    GroupPtr addClientInfo(const ClientInfoPtr& client);
+    /// Remove client @p client from group
+    void remove(const ClientInfoPtr& client);
+    /// Remove group @group, @p force removal of a non-empty group
+    void remove(const GroupPtr& group, bool force = false);
 
     //	GroupPtr removeFromGroup(const std::string& groupId, const std::string& clientId);
     //	GroupPtr setGroupForClient(const std::string& groupId, const std::string& clientId);
 
-    GroupPtr getGroupFromClient(const std::string& clientId);
-    GroupPtr getGroupFromClient(ClientInfoPtr client);
-    GroupPtr getGroup(const std::string& groupId) const;
+    /// @return grouo from client with id @client_id
+    GroupPtr getGroupFromClient(const std::string& client_id);
+    /// @return group from @p client
+    GroupPtr getGroupFromClient(const ClientInfoPtr& client);
+    /// @return group with id @p group_id
+    GroupPtr getGroup(const std::string& group_id) const;
 
+    /// @return groups with client as json
     json getGroups() const;
+    /// @return complete server status, including @p streams
     json getServerStatus(const json& streams) const;
 
+    /// Save config to file (json format)
     void save();
 
+    /// Set directory and user/group of persistent "server.json"
     void init(const std::string& root_directory = "", const std::string& user = "", const std::string& group = "");
 
+    /// List of groups
     std::vector<GroupPtr> groups;
 
+    /// to protect members
     std::mutex& getMutex();
 
 private:
+    /// c'tor
     Config() = default;
+    /// d'tor
     ~Config();
-    mutable std::recursive_mutex mutex_;
-    std::mutex client_mutex_;
-    std::string filename_;
+
+    mutable std::recursive_mutex mutex_; ///< to protect members
+    std::mutex client_mutex_;            ///< returned by "getMutex()", TODO: check this
+    std::string filename_;               ///< filename to persist the config
 };

@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2024  Johannes Pohl
+    Copyright (C) 2014-2025  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -129,9 +129,9 @@ void Config::save()
 }
 
 
-ClientInfoPtr Config::getClientInfo(const std::string& clientId) const
+ClientInfoPtr Config::getClientInfo(const std::string& client_id) const
 {
-    if (clientId.empty())
+    if (client_id.empty())
         return nullptr;
 
     std::lock_guard<std::recursive_mutex> lock(mutex_);
@@ -139,7 +139,7 @@ ClientInfoPtr Config::getClientInfo(const std::string& clientId) const
     {
         for (auto client : group->clients)
         {
-            if (client->id == clientId)
+            if (client->id == client_id)
                 return client;
         }
     }
@@ -148,7 +148,7 @@ ClientInfoPtr Config::getClientInfo(const std::string& clientId) const
 }
 
 
-GroupPtr Config::addClientInfo(ClientInfoPtr client)
+GroupPtr Config::addClientInfo(const ClientInfoPtr& client)
 {
     std::lock_guard<std::recursive_mutex> lock(mutex_);
     GroupPtr group = getGroupFromClient(client);
@@ -162,22 +162,22 @@ GroupPtr Config::addClientInfo(ClientInfoPtr client)
 }
 
 
-GroupPtr Config::addClientInfo(const std::string& clientId)
+GroupPtr Config::addClientInfo(const std::string& client_id)
 {
     std::lock_guard<std::recursive_mutex> lock(mutex_);
-    ClientInfoPtr client = getClientInfo(clientId);
+    ClientInfoPtr client = getClientInfo(client_id);
     if (!client)
-        client = make_shared<ClientInfo>(clientId);
+        client = make_shared<ClientInfo>(client_id);
     return addClientInfo(client);
 }
 
 
-GroupPtr Config::getGroup(const std::string& groupId) const
+GroupPtr Config::getGroup(const std::string& group_id) const
 {
     std::lock_guard<std::recursive_mutex> lock(mutex_);
     for (const auto& group : groups)
     {
-        if (group->id == groupId)
+        if (group->id == group_id)
             return group;
     }
 
@@ -185,14 +185,14 @@ GroupPtr Config::getGroup(const std::string& groupId) const
 }
 
 
-GroupPtr Config::getGroupFromClient(const std::string& clientId)
+GroupPtr Config::getGroupFromClient(const std::string& client_id)
 {
     std::lock_guard<std::recursive_mutex> lock(mutex_);
     for (const auto& group : groups)
     {
         for (const auto& c : group->clients)
         {
-            if (c->id == clientId)
+            if (c->id == client_id)
                 return group;
         }
     }
@@ -200,7 +200,7 @@ GroupPtr Config::getGroupFromClient(const std::string& clientId)
 }
 
 
-GroupPtr Config::getGroupFromClient(ClientInfoPtr client)
+GroupPtr Config::getGroupFromClient(const ClientInfoPtr& client)
 {
     return getGroupFromClient(client->id);
 }
@@ -234,7 +234,7 @@ json Config::getGroups() const
 }
 
 
-void Config::remove(ClientInfoPtr client)
+void Config::remove(const ClientInfoPtr& client)
 {
     std::lock_guard<std::recursive_mutex> lock(mutex_);
     auto group = getGroupFromClient(client);
@@ -246,7 +246,7 @@ void Config::remove(ClientInfoPtr client)
 }
 
 
-void Config::remove(GroupPtr group, bool force)
+void Config::remove(const GroupPtr& group, bool force)
 {
     std::lock_guard<std::recursive_mutex> lock(mutex_);
     if (!group)
