@@ -187,7 +187,7 @@ struct ServerSettings
     /// Logging settings
     struct Logging
     {
-        /// log sing
+        /// log sink
         std::string sink;
         /// log filter
         std::string filter{"*:info"};

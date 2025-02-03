@@ -134,9 +134,9 @@ struct Host : public JsonConfigItem
 
     std::string name; ///< host name
     std::string mac;  ///< mac address
-    std::string os;   /// OS
-    std::string arch; /// CPU architecture
-    std::string ip;   /// IP address
+    std::string os;   ///< OS
+    std::string arch; ///< CPU architecture
+    std::string ip;   ///< IP address
 };
 
 
@@ -241,6 +241,7 @@ struct Snapserver : public Snapcast
 /// Client config
 struct ClientInfo : public JsonConfigItem
 {
+    /// c'tor
     explicit ClientInfo(std::string _clientId = "") : id(std::move(_clientId))
     {
         lastSeen.tv_sec = 0;
@@ -415,13 +416,13 @@ public:
     GroupPtr addClientInfo(const ClientInfoPtr& client);
     /// Remove client @p client from group
     void remove(const ClientInfoPtr& client);
-    /// Remove group @group, @p force removal of a non-empty group
+    /// Remove group @p group, @p force removal of a non-empty group
     void remove(const GroupPtr& group, bool force = false);
 
     //	GroupPtr removeFromGroup(const std::string& groupId, const std::string& clientId);
     //	GroupPtr setGroupForClient(const std::string& groupId, const std::string& clientId);
 
-    /// @return grouo from client with id @client_id
+    /// @return grouo from client with id @p client_id
     GroupPtr getGroupFromClient(const std::string& client_id);
     /// @return group from @p client
     GroupPtr getGroupFromClient(const ClientInfoPtr& client);
