@@ -145,7 +145,7 @@ void Server::processRequest(const jsonrpcpp::request_ptr& request, AuthInfo& aut
             else
             {
                 std::optional<jsonrpcpp::RequestException> e;
-                if (!authinfo.hasAuthInfo())
+                if (!authinfo.isAuthenticated())
                     e.emplace(jsonrpcpp::Error("Unauthorized", 401), request->id());
                 else
                     e.emplace(jsonrpcpp::Error("Forbidden", 403), request->id());
@@ -204,7 +204,7 @@ void Server::onMessageReceived(std::shared_ptr<ControlSession> controlSession, c
         processRequest(request, controlSession->authinfo,
                        [this, controlSession, response_handler](const jsonrpcpp::entity_ptr& response, const jsonrpcpp::notification_ptr& notification)
         {
-            // if (controlSession->authinfo.hasAuthInfo())
+            // if (controlSession->authinfo.isAuthenticated())
             // {
             //     LOG(INFO, LOG_TAG) << "Request auth info - username: " << controlSession->authinfo->username()
             //                        << ", valid: " << controlSession->authinfo->valid() << "\n";

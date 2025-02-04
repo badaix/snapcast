@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2024  Johannes Pohl
+    Copyright (C) 2014-2025  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -55,7 +55,7 @@ public:
     virtual void execute(const jsonrpcpp::request_ptr& request, AuthInfo& authinfo, const OnResponse& on_response) = 0;
 
     /// @return true if the user has the permission for the request
-    bool hasPermission(const AuthInfo& authinfo) const;
+    virtual bool hasPermission(const AuthInfo& authinfo) const;
 
     /// @return the name of the method
     const std::string& method() const;
@@ -309,6 +309,23 @@ public:
     /// c'tor
     explicit ServerAuthenticateRequest(const Server& server);
     void execute(const jsonrpcpp::request_ptr& request, AuthInfo& authinfo, const OnResponse& on_response) override;
+};
+
+
+/// "General.GetRpcCommands" request
+class GeneralGetRpcCommands : public Request
+{
+public:
+    /// c'tor
+    explicit GeneralGetRpcCommands(const Server& server);
+    void execute(const jsonrpcpp::request_ptr& request, AuthInfo& authinfo, const OnResponse& on_response) override;
+    bool hasPermission(const AuthInfo& authinfo) const override;
+
+    /// Set available @p requests
+    void setCommands(std::vector<std::shared_ptr<Request>> requests);
+
+private:
+    std::vector<std::shared_ptr<Request>> requests_;
 };
 
 

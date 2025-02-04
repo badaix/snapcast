@@ -28,9 +28,11 @@
 // 3rd party headers
 
 // standard headers
+#include <algorithm>
 #include <filesystem>
 #include <memory>
 #include <tuple>
+#include <vector>
 
 
 static constexpr auto LOG_TAG = "ControlRequest";
@@ -110,6 +112,18 @@ ControlRequestFactory::ControlRequestFactory(const Server& server)
     add_request(std::make_shared<ServerDeleteClientRequest>(server));
     add_request(std::make_shared<ServerAuthenticateRequest>(server));
     // add_request(std::make_shared<ServerGetTokenRequest>(server));
+
+    // General requests
+    auto get_rpc_cmds = std::make_shared<GeneralGetRpcCommands>(server);
+    add_request(get_rpc_cmds);
+
+    std::vector<std::shared_ptr<Request>> requests;
+    for (const auto& [key, value] : request_map_)
+    {
+        std::ignore = key;
+        requests.push_back(value);
+    }
+    get_rpc_cmds->setCommands(requests);
 }
 
 
@@ -911,4 +925,57 @@ void ServerGetTokenRequest::execute(const jsonrpcpp::request_ptr& request, AuthI
 
     on_response(std::move(response), nullptr);
 }
+
 #endif
+
+GeneralGetRpcCommands::GeneralGetRpcCommands(const Server& server) : Request(server, "General.GetRPCCommands")
+{
+}
+
+void GeneralGetRpcCommands::execute(const jsonrpcpp::request_ptr& request, AuthInfo& authinfo, const OnResponse& on_response)
+{
+    // clang-format off
+    // Request:      {"id":8,"jsonrpc":"2.0","method":"General.GetRPCCommands"}
+    // Response:     {"id":8,"jsonrpc":"2.0","result":{"major":2,"minor":0,"patch":0}}
+    // clang-format on
+
+    std::ignore = request;
+    std::ignore = authinfo;
+    std::ignore = on_response;
+    Json result;
+    Json commands = Json::array();
+
+    for (const auto& req : requests_)
+    {
+        Json jreq;
+        jreq["method"] = req->method();
+        jreq["hasPermission"] = req->hasPermission(authinfo);
+        commands.push_back(jreq);
+    }
+    result["commands"] = commands;
+
+    // for (const auto& [key, value]: request_map_)
+    // {
+    //     key
+    // }
+    // // <major>: backwards incompatible change
+    // result["major"] = 23;
+    // // <minor>: feature addition to the API
+    // result["minor"] = 0;
+    // // <patch>: bugfix release
+    // result["patch"] = 0;
+    auto response = std::make_shared<jsonrpcpp::Response>(*request, result);
+    on_response(std::move(response), nullptr);
+}
+
+bool GeneralGetRpcCommands::hasPermission(const AuthInfo& authinfo) const
+{
+    return authinfo.isAuthenticated();
+}
+
+
+void GeneralGetRpcCommands::setCommands(std::vector<std::shared_ptr<Request>> requests)
+{
+    requests_ = std::move(requests);
+    std::sort(requests_.begin(), requests_.end(), [](const auto& lhs, const auto& rhs) { return lhs->method() < rhs->method(); });
+}
