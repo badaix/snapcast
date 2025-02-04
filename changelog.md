@@ -9,7 +9,7 @@
 
 ### Bugfixes
 
-- Fix typos (PR #1333, PR #1341)
+- Fix typos (PR #1333, PR #1341, PR #1345)
 
 ### General
 
