@@ -71,8 +71,8 @@ public:
     /// d'tor
     virtual ~AuthInfo() = default;
 
-    /// @return if authentication info is available
-    bool hasAuthInfo() const;
+    /// @return if user is authenticated
+    bool isAuthenticated() const;
     // ErrorCode isValid(const std::string& command) const;
     /// @return the username
     const std::string& username() const;
@@ -92,8 +92,8 @@ public:
     bool hasPermission(const std::string& resource) const;
 
 private:
-    /// has auth info
-    bool has_auth_info_;
+    /// is authenticated
+    bool is_authenticated_;
     /// auth user name
     std::string username_;
     /// optional token expiration

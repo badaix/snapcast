@@ -697,7 +697,7 @@ TEST_CASE("Auth")
         AuthInfo auth(settings);
         auto ec = auth.authenticateBasic(base64_encode("badaix:secret"));
         REQUIRE(!ec);
-        REQUIRE(auth.hasAuthInfo());
+        REQUIRE(auth.isAuthenticated());
         REQUIRE(auth.hasPermission("stream"));
     }
 
@@ -710,7 +710,7 @@ TEST_CASE("Auth")
         AuthInfo auth(settings);
         auto ec = auth.authenticateBasic(base64_encode("badaix:secret"));
         REQUIRE(!ec);
-        REQUIRE(auth.hasAuthInfo());
+        REQUIRE(auth.isAuthenticated());
         REQUIRE(!auth.hasPermission("stream"));
     }
 
@@ -722,12 +722,12 @@ TEST_CASE("Auth")
         AuthInfo auth(settings);
         auto ec = auth.authenticateBasic(base64_encode("badaix:wrong_password"));
         REQUIRE(ec == AuthErrc::wrong_password);
-        REQUIRE(!auth.hasAuthInfo());
+        REQUIRE(!auth.isAuthenticated());
         REQUIRE(!auth.hasPermission("stream"));
 
         ec = auth.authenticateBasic(base64_encode("unknown_user:secret"));
         REQUIRE(ec == AuthErrc::unknown_user);
-        REQUIRE(!auth.hasAuthInfo());
+        REQUIRE(!auth.isAuthenticated());
         REQUIRE(!auth.hasPermission("stream"));
     }
 }
