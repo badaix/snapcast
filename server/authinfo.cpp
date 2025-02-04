@@ -98,7 +98,7 @@ std::error_code make_error_code(AuthErrc errc)
 }
 
 
-AuthInfo::AuthInfo(ServerSettings::Authorization settings) : has_auth_info_(false), settings_(std::move(settings))
+AuthInfo::AuthInfo(ServerSettings::Authorization settings) : is_authenticated_(false), settings_(std::move(settings))
 {
 }
 
@@ -139,21 +139,21 @@ ErrorCode AuthInfo::authenticate(const std::string& auth)
 
 ErrorCode AuthInfo::authenticateBasic(const std::string& credentials)
 {
-    has_auth_info_ = false;
+    is_authenticated_ = false;
     std::string username = base64_decode(credentials);
     std::string password;
     username_ = utils::string::split_left(username, ':', password);
     auto ec = validateUser(username_, password);
 
     LOG(INFO, LOG_TAG) << "Authorization basic: " << credentials << ", user: " << username_ << ", password: " << password << "\n";
-    has_auth_info_ = (ec.value() == 0);
+    is_authenticated_ = (ec.value() == 0);
     return ec;
 }
 
 #if 0
 ErrorCode AuthInfo::authenticateBearer(const std::string& token)
 {
-    has_auth_info_ = false;
+    is_authenticated_ = false;
     std::ifstream ifs(settings_.ssl.certificate);
     std::string certificate((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
     Jwt jwt;
@@ -171,7 +171,7 @@ ErrorCode AuthInfo::authenticateBearer(const std::string& token)
     if (isExpired())
         return {AuthErrc::expired};
 
-    has_auth_info_ = true;
+    is_authenticated_ = true;
     return {};
 }
 
@@ -213,9 +213,9 @@ bool AuthInfo::isExpired() const
 }
 
 
-bool AuthInfo::hasAuthInfo() const
+bool AuthInfo::isAuthenticated() const
 {
-    return has_auth_info_;
+    return is_authenticated_;
 }
 
 
@@ -239,7 +239,7 @@ bool AuthInfo::hasPermission(const std::string& resource) const
     if (!settings_.enabled)
         return true;
 
-    if (!hasAuthInfo())
+    if (!isAuthenticated())
         return false;
 
     const auto& user_iter = std::find_if(settings_.users.begin(), settings_.users.end(), [&](const auto& user) { return user.name == username_; });

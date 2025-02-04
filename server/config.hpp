@@ -143,6 +143,7 @@ struct Host : public JsonConfigItem
 /// Client config
 struct ClientConfig : public JsonConfigItem
 {
+    /// c'tor
     ClientConfig() : volume(100)
     {
     }
@@ -207,6 +208,7 @@ struct Snapcast : public JsonConfigItem
 /// Snapclient config
 struct Snapclient : public Snapcast
 {
+    /// c'tor
     explicit Snapclient(std::string _name = "", std::string _version = "") : Snapcast(std::move(_name), std::move(_version))
     {
     }
