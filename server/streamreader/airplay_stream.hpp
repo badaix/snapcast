@@ -49,7 +49,7 @@ public:
 /// Starts shairport-sync and reads PCM data from stdout
 
 /**
- * Starts librespot, reads PCM data from stdout, and passes the data to an encoder.
+ * Starts shairport-sync, reads PCM data from stdout, and passes the data to an encoder.
  * Implements EncoderListener to get the encoded data.
  * Data is passed to the PcmStream::Listener
  * usage:
