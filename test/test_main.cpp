@@ -225,6 +225,22 @@ TEST_CASE("Uri")
     REQUIRE(uri.path == "/tmp/snapfifo");
     REQUIRE(uri.host.empty());
 
+    uri = StreamUri("wss://user:pass@localhost:1788");
+    REQUIRE(uri.scheme == "wss");
+    REQUIRE(uri.path.empty());
+    REQUIRE(uri.host == "localhost");
+    REQUIRE(uri.user == "user");
+    REQUIRE(uri.password == "pass");
+    REQUIRE(uri.port == 1788);
+
+    uri = StreamUri("wss://user@localhost:1788");
+    REQUIRE(uri.scheme == "wss");
+    REQUIRE(uri.path.empty());
+    REQUIRE(uri.host == "localhost");
+    REQUIRE(uri.user == "user");
+    REQUIRE(uri.password.empty());
+    REQUIRE(uri.port == 1788);
+
     // uri = StreamUri("scheme:[//host[:port]][/]path[?query=none][#fragment]");
     // Test with all fields
     uri = StreamUri("scheme://host:42/path?query=none&key=value#fragment");
