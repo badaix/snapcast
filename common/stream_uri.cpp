@@ -74,6 +74,15 @@ void StreamUri::parse(const std::string& stream_uri)
     tmp = tmp.substr(2);
     // tmp = [user:password@]host[:port][/]path[?query][#fragment]
 
+    pos = tmp.find('@');
+    if (pos != std::string::npos)
+    {
+        user = tmp.substr(0, pos);
+        if (user.find(':') != std::string::npos)
+            user = strutils::split_left(user, ':', password);
+        tmp = tmp.substr(pos + 1);
+    }
+
     pos = tmp.find('/');
     if (pos == string::npos)
     {
