@@ -66,7 +66,7 @@ class AuthInfo
 {
 public:
     /// c'tor
-    explicit AuthInfo(ServerSettings::Authorization settings);
+    explicit AuthInfo(ServerSettings::Authorization auth_settings);
     // explicit AuthInfo(std::string authheader);
     /// d'tor
     virtual ~AuthInfo() = default;
@@ -99,7 +99,7 @@ private:
     /// optional token expiration
     std::optional<std::chrono::system_clock::time_point> expires_;
     /// server configuration
-    ServerSettings::Authorization settings_;
+    ServerSettings::Authorization auth_settings_;
 
     /// Validate @p username and @p password
     /// @return true if username and password are correct

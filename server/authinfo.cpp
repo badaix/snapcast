@@ -98,16 +98,16 @@ std::error_code make_error_code(AuthErrc errc)
 }
 
 
-AuthInfo::AuthInfo(ServerSettings::Authorization settings) : is_authenticated_(false), settings_(std::move(settings))
+AuthInfo::AuthInfo(ServerSettings::Authorization auth_settings) : is_authenticated_(false), auth_settings_(std::move(auth_settings))
 {
 }
 
 
 ErrorCode AuthInfo::validateUser(const std::string& username, const std::optional<std::string>& password) const
 {
-    auto iter =
-        std::find_if(settings_.users.begin(), settings_.users.end(), [&](const ServerSettings::Authorization::User& user) { return user.name == username; });
-    if (iter == settings_.users.end())
+    auto iter = std::find_if(auth_settings_.users.begin(), auth_settings_.users.end(),
+                             [&](const ServerSettings::Authorization::User& user) { return user.name == username; });
+    if (iter == auth_settings_.users.end())
         return ErrorCode{AuthErrc::unknown_user};
     if (password.has_value() && (iter->password != password.value()))
         return ErrorCode{AuthErrc::wrong_password};
@@ -154,7 +154,7 @@ ErrorCode AuthInfo::authenticateBasic(const std::string& credentials)
 ErrorCode AuthInfo::authenticateBearer(const std::string& token)
 {
     is_authenticated_ = false;
-    std::ifstream ifs(settings_.ssl.certificate);
+    std::ifstream ifs(auth_settings_.ssl.certificate);
     std::string certificate((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
     Jwt jwt;
     if (!jwt.parse(token, certificate))
@@ -187,7 +187,7 @@ ErrorOr<std::string> AuthInfo::getToken(const std::string& username, const std::
     jwt.setIat(now);
     jwt.setExp(now + 10h);
     jwt.setSub(username);
-    std::ifstream ifs(settings_.ssl.certificate_key);
+    std::ifstream ifs(auth_settings_.ssl.certificate_key);
     std::string certificate_key((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
     if (!ifs.good())
         return ErrorCode{std::make_error_code(std::errc::io_error), "Failed to read private key file"};
@@ -215,6 +215,8 @@ bool AuthInfo::isExpired() const
 
 bool AuthInfo::isAuthenticated() const
 {
+    if (!auth_settings_.enabled)
+        return true;
     return is_authenticated_;
 }
 
@@ -236,14 +238,14 @@ const std::string& AuthInfo::username() const
 
 bool AuthInfo::hasPermission(const std::string& resource) const
 {
-    if (!settings_.enabled)
+    if (!auth_settings_.enabled)
         return true;
 
     if (!isAuthenticated())
         return false;
 
-    const auto& user_iter = std::find_if(settings_.users.begin(), settings_.users.end(), [&](const auto& user) { return user.name == username_; });
-    if (user_iter == settings_.users.end())
+    const auto& user_iter = std::find_if(auth_settings_.users.begin(), auth_settings_.users.end(), [&](const auto& user) { return user.name == username_; });
+    if (user_iter == auth_settings_.users.end())
         return false;
 
     const auto& role = user_iter->role;
