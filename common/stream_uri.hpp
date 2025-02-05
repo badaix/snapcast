@@ -43,6 +43,12 @@ struct StreamUri
     std::string uri;
     /// the scheme component (pipe, http, file, tcp, ...)
     std::string scheme;
+
+    /// user name
+    std::string user;
+    /// password
+    std::string password;
+
     // struct Authority
     // {
     //     std::string username;
