@@ -55,9 +55,13 @@ Request::Request(const Server& server, const std::string& method) : server_(serv
 
 bool Request::hasPermission(const AuthInfo& authinfo) const
 {
-    bool has_permission = authinfo.hasPermission(method());
-    LOG(INFO, LOG_TAG) << "Has permission for '" << method() << "': " << has_permission << "\n";
-    return has_permission;
+    if (!requiresAuthentication() && !requiresAuthorization())
+        return true;
+
+    if (requiresAuthentication() && !authinfo.isAuthenticated())
+        return false;
+
+    return authinfo.hasPermission(method());
 }
 
 const std::string& Request::method() const
@@ -81,6 +85,15 @@ const ServerSettings& Request::getSettings() const
     return server_.settings_;
 }
 
+bool Request::requiresAuthentication() const
+{
+    return true;
+}
+
+bool Request::requiresAuthorization() const
+{
+    return true;
+}
 
 
 ControlRequestFactory::ControlRequestFactory(const Server& server)
@@ -891,6 +904,7 @@ void ServerAuthenticateRequest::execute(const jsonrpcpp::request_ptr& request, A
     on_response(std::move(response), nullptr);
 }
 
+
 #if 0
 ServerGetTokenRequest::ServerGetTokenRequest(const Server& server) : Request(server, "Server.GetToken")
 {
@@ -936,41 +950,26 @@ void GeneralGetRpcCommands::execute(const jsonrpcpp::request_ptr& request, AuthI
 {
     // clang-format off
     // Request:      {"id":8,"jsonrpc":"2.0","method":"General.GetRPCCommands"}
-    // Response:     {"id":8,"jsonrpc":"2.0","result":{"major":2,"minor":0,"patch":0}}
+    // Response:     TODO
     // clang-format on
 
-    std::ignore = request;
-    std::ignore = authinfo;
-    std::ignore = on_response;
-    Json result;
     Json commands = Json::array();
-
     for (const auto& req : requests_)
     {
         Json jreq;
         jreq["method"] = req->method();
         jreq["hasPermission"] = req->hasPermission(authinfo);
+        Json jperms;
+        jperms["authentication"] = req->requiresAuthentication();
+        jperms["authorization"] = req->requiresAuthorization();
+        jreq["requires"] = jperms;
         commands.push_back(jreq);
     }
+    Json result;
     result["commands"] = commands;
 
-    // for (const auto& [key, value]: request_map_)
-    // {
-    //     key
-    // }
-    // // <major>: backwards incompatible change
-    // result["major"] = 23;
-    // // <minor>: feature addition to the API
-    // result["minor"] = 0;
-    // // <patch>: bugfix release
-    // result["patch"] = 0;
     auto response = std::make_shared<jsonrpcpp::Response>(*request, result);
     on_response(std::move(response), nullptr);
-}
-
-bool GeneralGetRpcCommands::hasPermission(const AuthInfo& authinfo) const
-{
-    return authinfo.isAuthenticated();
 }
 
 

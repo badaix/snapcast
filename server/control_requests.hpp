@@ -57,6 +57,11 @@ public:
     /// @return true if the user has the permission for the request
     virtual bool hasPermission(const AuthInfo& authinfo) const;
 
+    /// @return user needs to be authenticated
+    virtual bool requiresAuthentication() const;
+    /// @return user needs authorization
+    virtual bool requiresAuthorization() const;
+
     /// @return the name of the method
     const std::string& method() const;
 
@@ -67,7 +72,6 @@ protected:
     StreamManager& getStreamManager() const;
     /// @return server settings
     const ServerSettings& getSettings() const;
-
 
 private:
     /// the server
@@ -309,23 +313,16 @@ public:
     /// c'tor
     explicit ServerAuthenticateRequest(const Server& server);
     void execute(const jsonrpcpp::request_ptr& request, AuthInfo& authinfo, const OnResponse& on_response) override;
-};
 
+    bool requiresAuthentication() const override
+    {
+        return false;
+    }
 
-/// "General.GetRpcCommands" request
-class GeneralGetRpcCommands : public Request
-{
-public:
-    /// c'tor
-    explicit GeneralGetRpcCommands(const Server& server);
-    void execute(const jsonrpcpp::request_ptr& request, AuthInfo& authinfo, const OnResponse& on_response) override;
-    bool hasPermission(const AuthInfo& authinfo) const override;
-
-    /// Set available @p requests
-    void setCommands(std::vector<std::shared_ptr<Request>> requests);
-
-private:
-    std::vector<std::shared_ptr<Request>> requests_;
+    bool requiresAuthorization() const override
+    {
+        return false;
+    }
 };
 
 
@@ -339,3 +336,29 @@ public:
     void execute(const jsonrpcpp::request_ptr& request, AuthInfo& authinfo, const OnResponse& on_response) override;
 };
 #endif
+
+
+/// "General.GetRpcCommands" request
+class GeneralGetRpcCommands : public Request
+{
+public:
+    /// c'tor
+    explicit GeneralGetRpcCommands(const Server& server);
+    void execute(const jsonrpcpp::request_ptr& request, AuthInfo& authinfo, const OnResponse& on_response) override;
+
+    /// Set available @p requests
+    void setCommands(std::vector<std::shared_ptr<Request>> requests);
+
+    bool requiresAuthentication() const override
+    {
+        return true;
+    }
+
+    bool requiresAuthorization() const override
+    {
+        return false;
+    }
+
+private:
+    std::vector<std::shared_ptr<Request>> requests_;
+};
