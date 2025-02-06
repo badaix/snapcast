@@ -24,6 +24,7 @@
 #include "json_message.hpp"
 
 // standard headers
+#include <optional>
 #include <string>
 
 
@@ -41,7 +42,8 @@ public:
     }
 
     /// c'tor taking @p macAddress, @p id and @p instance
-    Hello(const std::string& mac_address, const std::string& id, size_t instance) : JsonMessage(message_type::kHello)
+    Hello(const std::string& mac_address, const std::string& id, size_t instance, std::optional<std::string> username, std::optional<std::string> password)
+        : JsonMessage(message_type::kHello)
     {
         msg["MAC"] = mac_address;
         msg["HostName"] = ::getHostName();
@@ -51,6 +53,10 @@ public:
         msg["Arch"] = ::getArch();
         msg["Instance"] = instance;
         msg["ID"] = id;
+        if (username.has_value())
+            msg["Username"] = username.value();
+        if (password.has_value())
+            msg["Password"] = password.value();
         msg["SnapStreamProtocolVersion"] = 2;
     }
 
@@ -121,6 +127,22 @@ public:
             id = id + "#" + cpt::to_string(instance);
         }
         return id;
+    }
+
+    /// @return the username
+    std::optional<std::string> getUsername() const
+    {
+        if (!msg.contains("Username"))
+            return std::nullopt;
+        return msg["Username"];
+    }
+
+    /// @return the password
+    std::optional<std::string> getPassword() const
+    {
+        if (!msg.contains("Password"))
+            return std::nullopt;
+        return msg["Password"];
     }
 };
 

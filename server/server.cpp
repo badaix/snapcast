@@ -310,8 +310,10 @@ void Server::onMessageReceived(StreamSession* streamSession, const msg::BaseMess
         streamSession->clientId = helloMsg.getUniqueId();
         LOG(INFO, LOG_TAG) << "Hello from " << streamSession->clientId << ", host: " << helloMsg.getHostName() << ", v" << helloMsg.getVersion()
                            << ", ClientName: " << helloMsg.getClientName() << ", OS: " << helloMsg.getOS() << ", Arch: " << helloMsg.getArch()
-                           << ", Protocol version: " << helloMsg.getProtocolVersion() << "\n";
-
+                           << ", Protocol version: " << helloMsg.getProtocolVersion() << ", Userrname: " << helloMsg.getUsername().value_or("<not set>")
+                           << ", Password: " << (helloMsg.getPassword().has_value() ? "<password is set>" : "<not set>") << "\n";
+        streamSession->stop();
+        return;
         bool newGroup(false);
         GroupPtr group = Config::instance().getGroupFromClient(streamSession->clientId);
         if (group == nullptr)

@@ -454,7 +454,7 @@ void Controller::worker()
                 settings_.host_id = ::getHostId(macAddress);
 
             // Say hello to the server
-            auto hello = std::make_shared<msg::Hello>(macAddress, settings_.host_id, settings_.instance);
+            auto hello = std::make_shared<msg::Hello>(macAddress, settings_.host_id, settings_.instance, settings_.server.username, settings_.server.password);
             clientConnection_->sendRequest<msg::ServerSettings>(
                 hello, 2s, [this](const boost::system::error_code& ec, std::unique_ptr<msg::ServerSettings> response) mutable
             {
