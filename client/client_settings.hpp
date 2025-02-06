@@ -66,6 +66,10 @@ struct ClientSettings
         std::string protocol{"tcp"};
         /// server port
         size_t port{1704};
+        /// username
+        std::optional<std::string> username;
+        /// password
+        std::optional<std::string> password;
         /// server certificate
         std::optional<std::filesystem::path> server_certificate;
         /// Certificate file

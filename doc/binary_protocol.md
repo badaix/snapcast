@@ -118,10 +118,14 @@ Sample JSON payload (whitespace added for readability):
     "Instance": 1,
     "MAC": "00:11:22:33:44:55",
     "OS": "Arch Linux",
+    "Username": "Badaix",
+    "Password": "$ecret",
     "SnapStreamProtocolVersion": 2,
     "Version": "0.17.1"
 }
 ```
+
+The fields `Username` and `Password` are optional and only used if authentication and authorization is enabled on the server.
 
 ### Client Info
 
