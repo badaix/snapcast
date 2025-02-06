@@ -79,10 +79,15 @@ uint16_t PendingRequest::id() const
 void PendingRequest::startTimer(const chronos::usec& timeout)
 {
     timer_.expires_after(timeout);
-    timer_.async_wait([this, self = shared_from_this()](boost::system::error_code ec)
+    timer_.async_wait([this, me = weak_from_this()](boost::system::error_code ec)
     {
+        auto self = me.lock();
+        if (!self)
+            return;
+
         if (!handler_)
             return;
+
         if (!ec)
         {
             // !ec => expired => timeout
@@ -581,6 +586,7 @@ void ClientConnectionWss::disconnect()
         getWs().next_layer().lowest_layer().shutdown(boost::asio::ip::tcp::socket::shutdown_both, ec);
         getWs().next_layer().lowest_layer().close(ec);
     }
+
     boost::asio::post(strand_, [this]() { pendingRequests_.clear(); });
     ssl_ws_ = std::nullopt;
     LOG(DEBUG, LOG_TAG) << "Disconnected\n";
