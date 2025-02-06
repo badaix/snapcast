@@ -169,6 +169,7 @@ void Controller::getNextMessage()
     {
         if (ec)
         {
+            LOG(ERROR, LOG_TAG) << "Error receiving next message: " << ec << "\n";
             reconnect();
             return;
         }
@@ -425,6 +426,7 @@ void Controller::start()
 
 void Controller::reconnect()
 {
+    LOG(INFO, LOG_TAG) << "Reconnecting\n";
     timer_.cancel();
     clientConnection_->disconnect();
     player_.reset();
@@ -467,11 +469,12 @@ void Controller::worker()
                     serverSettings_ = std::move(response);
                     LOG(INFO, LOG_TAG) << "ServerSettings - buffer: " << serverSettings_->getBufferMs() << ", latency: " << serverSettings_->getLatency()
                                        << ", volume: " << serverSettings_->getVolume() << ", muted: " << serverSettings_->isMuted() << "\n";
+
+                    // Do initial time sync with the server
+                    sendTimeSyncMessage(50);
                 }
             });
 
-            // Do initial time sync with the server
-            sendTimeSyncMessage(50);
             // Start receiver loop
             getNextMessage();
         }
