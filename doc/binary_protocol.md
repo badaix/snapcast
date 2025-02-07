@@ -34,6 +34,7 @@ When a client joins a server, the following exchanges happen
 | 4                | [Time](#time)                        | C->S<br>S->C | Used for synchronizing time with the server                       |
 | 5                | [Hello](#hello)                      | C->S | Sent by the client when connecting with the server                        |
 | 7                | [Client Info](#client-info)          | C->S | Update the server when relevant information changes (e.g. client volume)  |
+| 8                | [Error](#error)                      | S->C | Error response, used e.g. for missing authentication                      |
 
 ### Base
 
@@ -144,3 +145,11 @@ Sample JSON payload (whitespace added for readability):
 ```
 
 - `volume` can have a value between 0-100 inclusive
+
+### Error
+
+| Field   | Type   | Description                                              |
+|---------|--------|----------------------------------------------------------|
+| code    | uint32 | Error code                                               |
+| size    | uint32 | Size of the following error message                      |
+| error   | char[] | string containing the error (not null terminated)        |

@@ -59,6 +59,7 @@
 #include "browseZeroConf/browse_mdns.hpp"
 #include "common/aixlog.hpp"
 #include "common/message/client_info.hpp"
+#include "common/message/error.hpp"
 #include "common/message/hello.hpp"
 #include "common/message/time.hpp"
 #include "common/snap_exception.hpp"
@@ -298,6 +299,11 @@ void Controller::getNextMessage()
             // {
             player_->setVolume({serverSettings_->getVolume() / 100., serverSettings_->isMuted()});
             // }
+        }
+        else if (response->type == message_type::kError)
+        {
+            auto error = msg::message_cast<msg::Error>(std::move(response));
+            LOG(ERROR, LOG_TAG) << "Received error: " << error->message << ", code: " << error->code << "\n";
         }
         else
         {
