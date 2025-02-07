@@ -46,10 +46,11 @@ public:
         readVal(stream, message);
     }
 
-    uint32_t getSize() const override{
+    uint32_t getSize() const override
+    {
         return static_cast<uint32_t>(sizeof(uint32_t)   // code
                                      + sizeof(uint32_t) // message len
-                                     + message.size());  // message;
+                                     + message.size()); // message;
     }
 
     /// error code
