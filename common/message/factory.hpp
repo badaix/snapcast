@@ -21,6 +21,8 @@
 // local headers
 #include "client_info.hpp"
 #include "codec_header.hpp"
+#include "common/message/error.hpp"
+#include "error.hpp"
 #include "hello.hpp"
 #include "pcm_chunk.hpp"
 #include "server_settings.hpp"
@@ -79,6 +81,8 @@ static std::unique_ptr<BaseMessage> createMessage(const BaseMessage& base_messag
             return createMessage<PcmChunk>(base_message, buffer);
         case message_type::kClientInfo:
             return createMessage<ClientInfo>(base_message, buffer);
+        case message_type::kError:
+            return createMessage<msg::Error>(base_message, buffer);
         default:
             return nullptr;
     }
