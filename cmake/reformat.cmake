@@ -6,7 +6,7 @@ if(CLANG_FORMAT)
   list(REMOVE_ITEM CHECK_CXX_SOURCE_FILES "${CMAKE_SOURCE_DIR}/common/json.hpp")
 
   add_custom_target(
-    reformat-source
+    reformat-c++
     COMMAND ${CLANG_FORMAT} -i -style=file ${CHECK_CXX_SOURCE_FILES}
     COMMENT "Auto formatting of all source files with ${CLANG_FORMAT}")
 endif()
