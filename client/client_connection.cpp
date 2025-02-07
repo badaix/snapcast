@@ -57,8 +57,7 @@ PendingRequest::PendingRequest(const boost::asio::strand<boost::asio::any_io_exe
 
 PendingRequest::~PendingRequest()
 {
-    handler_ = nullptr;
-    timer_.cancel();
+    cancel();
 }
 
 void PendingRequest::setValue(std::unique_ptr<msg::BaseMessage> value)
@@ -79,12 +78,8 @@ uint16_t PendingRequest::id() const
 void PendingRequest::startTimer(const chronos::usec& timeout)
 {
     timer_.expires_after(timeout);
-    timer_.async_wait([this, me = weak_from_this()](boost::system::error_code ec)
+    timer_.async_wait([this, self = shared_from_this()](boost::system::error_code ec)
     {
-        auto self = me.lock();
-        if (!self)
-            return;
-
         if (!handler_)
             return;
 
@@ -106,6 +101,18 @@ void PendingRequest::startTimer(const chronos::usec& timeout)
 bool PendingRequest::operator<(const PendingRequest& other) const
 {
     return (id_ < other.id());
+}
+
+void PendingRequest::cancel()
+{
+    boost::asio::post(strand_, [this, me = weak_from_this()]() mutable
+    {
+        auto self = me.lock();
+        if (!self)
+            return;
+        handler_ = nullptr;
+        timer_.cancel();
+    });
 }
 
 
@@ -226,16 +233,16 @@ void ClientConnection::sendRequest(const msg::message_ptr& message, const chrono
 {
     boost::asio::post(strand_, [this, message, timeout, handler]()
     {
-        pendingRequests_.erase(
-            std::remove_if(pendingRequests_.begin(), pendingRequests_.end(), [](const std::weak_ptr<PendingRequest>& request) { return request.expired(); }),
-            pendingRequests_.end());
+        pending_requests_.erase(
+            std::remove_if(pending_requests_.begin(), pending_requests_.end(), [](const std::weak_ptr<PendingRequest>& request) { return request.expired(); }),
+            pending_requests_.end());
         unique_ptr<msg::BaseMessage> response(nullptr);
         static constexpr uint16_t max_req_id = 10000;
         if (++reqId_ >= max_req_id)
             reqId_ = 1;
         message->id = reqId_;
         auto request = make_shared<PendingRequest>(strand_, reqId_, handler);
-        pendingRequests_.push_back(request);
+        pending_requests_.push_back(request);
         request->startTimer(timeout);
         send(message, [handler](const boost::system::error_code& ec)
         {
@@ -248,7 +255,7 @@ void ClientConnection::sendRequest(const msg::message_ptr& message, const chrono
 
 void ClientConnection::messageReceived(std::unique_ptr<msg::BaseMessage> message, const MessageHandler<msg::BaseMessage>& handler)
 {
-    for (auto iter = pendingRequests_.begin(); iter != pendingRequests_.end(); ++iter)
+    for (auto iter = pending_requests_.begin(); iter != pending_requests_.end(); ++iter)
     {
         auto request = *iter;
         if (auto req = request.lock())
@@ -256,7 +263,7 @@ void ClientConnection::messageReceived(std::unique_ptr<msg::BaseMessage> message
             if (req->id() == base_message_.refersTo)
             {
                 req->setValue(std::move(message));
-                pendingRequests_.erase(iter);
+                pending_requests_.erase(iter);
                 getNextMessage(handler);
                 return;
             }
@@ -265,6 +272,21 @@ void ClientConnection::messageReceived(std::unique_ptr<msg::BaseMessage> message
 
     if (handler)
         handler({}, std::move(message));
+}
+
+
+void ClientConnection::cancelRequests()
+{
+    boost::asio::post(strand_, [this]()
+    {
+        for (const auto& pending_request : pending_requests_)
+        {
+            auto req = pending_request.lock();
+            if (req)
+                req->cancel();
+        }
+        pending_requests_.clear();
+    });
 }
 
 
@@ -297,7 +319,8 @@ void ClientConnectionTcp::disconnect()
     socket_.close(ec);
     if (ec)
         LOG(ERROR, LOG_TAG) << "Error in socket close: " << ec.message() << "\n";
-    boost::asio::post(strand_, [this]() { pendingRequests_.clear(); });
+
+    cancelRequests();
     LOG(DEBUG, LOG_TAG) << "Disconnected\n";
 }
 
@@ -430,7 +453,8 @@ void ClientConnectionWs::disconnect()
         getWs().next_layer().shutdown(boost::asio::ip::tcp::socket::shutdown_both, ec);
         getWs().next_layer().close(ec);
     }
-    boost::asio::post(strand_, [this]() { pendingRequests_.clear(); });
+
+    cancelRequests();
     tcp_ws_ = std::nullopt;
     LOG(DEBUG, LOG_TAG) << "Disconnected\n";
 }
@@ -587,7 +611,7 @@ void ClientConnectionWss::disconnect()
         getWs().next_layer().lowest_layer().close(ec);
     }
 
-    boost::asio::post(strand_, [this]() { pendingRequests_.clear(); });
+    cancelRequests();
     ssl_ws_ = std::nullopt;
     LOG(DEBUG, LOG_TAG) << "Disconnected\n";
 }

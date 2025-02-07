@@ -82,6 +82,9 @@ public:
     /// Needed to put the requests in a container
     bool operator<(const PendingRequest& other) const;
 
+    /// Cancel the request
+    void cancel();
+
 private:
     uint16_t id_;
     boost::asio::steady_timer timer_;
@@ -161,6 +164,9 @@ protected:
     /// Send next pending message from messages_
     void sendNext();
 
+    /// Cancel all pending requests and timers
+    void cancelRequests();
+
     /// Base message holding the received message
     msg::BaseMessage base_message_;
 
@@ -171,7 +177,7 @@ protected:
     boost::asio::ip::tcp::resolver resolver_;
 
     /// List of pending requests, waiting for a response (Message::refersTo)
-    std::vector<std::weak_ptr<PendingRequest>> pendingRequests_;
+    std::vector<std::weak_ptr<PendingRequest>> pending_requests_;
     /// unique request id to match a response
     uint16_t reqId_;
     /// Server settings (host and port)
