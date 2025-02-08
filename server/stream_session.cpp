@@ -34,8 +34,8 @@ using namespace streamreader;
 static constexpr auto LOG_TAG = "StreamSession";
 
 
-StreamSession::StreamSession(const boost::asio::any_io_executor& executor, StreamMessageReceiver* receiver)
-    : messageReceiver_(receiver), pcmStream_(nullptr), strand_(boost::asio::make_strand(executor))
+StreamSession::StreamSession(const boost::asio::any_io_executor& executor, const ServerSettings& server_settings, StreamMessageReceiver* receiver)
+    : authinfo(server_settings.auth), messageReceiver_(receiver), pcm_stream_(nullptr), strand_(boost::asio::make_strand(executor))
 {
     base_msg_size_ = baseMessage_.getSize();
     buffer_.resize(base_msg_size_);
@@ -45,25 +45,29 @@ StreamSession::StreamSession(const boost::asio::any_io_executor& executor, Strea
 void StreamSession::setPcmStream(PcmStreamPtr pcmStream)
 {
     std::lock_guard<std::mutex> lock(mutex_);
-    pcmStream_ = std::move(pcmStream);
+    pcm_stream_ = std::move(pcmStream);
 }
 
 
 const PcmStreamPtr StreamSession::pcmStream() const
 {
     std::lock_guard<std::mutex> lock(mutex_);
-    return pcmStream_;
+    return pcm_stream_;
 }
 
 
-void StreamSession::send_next()
+void StreamSession::sendNext()
 {
     auto& buffer = messages_.front();
     buffer.on_air = true;
     boost::asio::post(strand_, [this, self = shared_from_this(), buffer]()
     {
-        sendAsync(buffer, [this](boost::system::error_code ec, std::size_t length)
+        sendAsync(buffer, [this, buffer](boost::system::error_code ec, std::size_t length)
         {
+            auto write_handler = buffer.getWriteHandler();
+            if (write_handler)
+                write_handler(ec, length);
+
             messages_.pop_front();
             if (ec)
             {
@@ -72,15 +76,15 @@ void StreamSession::send_next()
                 return;
             }
             if (!messages_.empty())
-                send_next();
+                sendNext();
         });
     });
 }
 
 
-void StreamSession::send(shared_const_buffer const_buf)
+void StreamSession::send(shared_const_buffer const_buf, WriteHandler&& handler)
 {
-    boost::asio::post(strand_, [this, self = shared_from_this(), const_buf]()
+    boost::asio::post(strand_, [this, self = shared_from_this(), const_buf = std::move(const_buf), handler = std::move(handler)]() mutable
     {
         // delete PCM chunks that are older than the overall buffer duration
         messages_.erase(std::remove_if(messages_.begin(), messages_.end(),
@@ -94,25 +98,26 @@ void StreamSession::send(shared_const_buffer const_buf)
         }),
                         messages_.end());
 
-        messages_.push_back(const_buf);
+        const_buf.setWriteHandler(std::move(handler));
+        messages_.push_back(std::move(const_buf));
 
         if (messages_.size() > 1)
         {
             LOG(TRACE, LOG_TAG) << "outstanding async_write\n";
             return;
         }
-        send_next();
+        sendNext();
     });
 }
 
 
-void StreamSession::send(msg::message_ptr message)
+void StreamSession::send(const msg::message_ptr& message, WriteHandler&& handler)
 {
     if (!message)
         return;
 
     // TODO: better set the timestamp in send_next for more accurate time sync
-    send(shared_const_buffer(*message));
+    send(shared_const_buffer(*message), std::move(handler));
 }
 
 

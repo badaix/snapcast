@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2024  Johannes Pohl
+    Copyright (C) 2014-2025  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -53,19 +53,27 @@ using session_ptr = std::shared_ptr<StreamSession>;
 class StreamServer : public StreamMessageReceiver
 {
 public:
+    /// c'tor
     StreamServer(boost::asio::io_context& io_context, const ServerSettings& serverSettings, StreamMessageReceiver* messageReceiver = nullptr);
+    /// d'tor
     virtual ~StreamServer();
 
+    /// Start accepting connections
     void start();
+    /// Stop accepting connections and active sessions
     void stop();
 
     /// Send a message to all connceted clients
     //	void send(const msg::BaseMessage* message);
 
+    /// Add a new stream session
     void addSession(std::shared_ptr<StreamSession> session);
-    void onChunkEncoded(const PcmStream* pcmStream, bool isDefaultStream, std::shared_ptr<msg::PcmChunk> chunk, double duration);
+    /// Callback for chunks that are ready to be sent
+    void onChunkEncoded(const PcmStream* pcmStream, bool isDefaultStream, const std::shared_ptr<msg::PcmChunk>& chunk, double duration);
 
+    /// @return stream session for @p clientId
     session_ptr getStreamSession(const std::string& clientId) const;
+    /// @return stream session for @p session
     session_ptr getStreamSession(StreamSession* session) const;
 
 private:
@@ -74,7 +82,7 @@ private:
     void cleanup();
 
     /// Implementation of StreamMessageReceiver
-    void onMessageReceived(StreamSession* streamSession, const msg::BaseMessage& baseMessage, char* buffer) override;
+    void onMessageReceived(const std::shared_ptr<StreamSession>& streamSession, const msg::BaseMessage& baseMessage, char* buffer) override;
     void onDisconnect(StreamSession* streamSession) override;
 
     mutable std::recursive_mutex sessionsMutex_;

@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2023  Johannes Pohl
+    Copyright (C) 2014-2025  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -32,14 +32,14 @@ using namespace std;
 static constexpr auto LOG_TAG = "StreamSessionWS";
 
 
-StreamSessionWebsocket::StreamSessionWebsocket(StreamMessageReceiver* receiver, ssl_websocket&& ssl_ws)
-    : StreamSession(ssl_ws.get_executor(), receiver), ssl_ws_(std::move(ssl_ws)), is_ssl_(true)
+StreamSessionWebsocket::StreamSessionWebsocket(StreamMessageReceiver* receiver, const ServerSettings& server_settings, ssl_websocket&& ssl_ws)
+    : StreamSession(ssl_ws.get_executor(), server_settings, receiver), ssl_ws_(std::move(ssl_ws)), is_ssl_(true)
 {
     LOG(DEBUG, LOG_TAG) << "StreamSessionWS, mode: ssl\n";
 }
 
-StreamSessionWebsocket::StreamSessionWebsocket(StreamMessageReceiver* receiver, tcp_websocket&& tcp_ws)
-    : StreamSession(tcp_ws.get_executor(), receiver), tcp_ws_(std::move(tcp_ws)), is_ssl_(false)
+StreamSessionWebsocket::StreamSessionWebsocket(StreamMessageReceiver* receiver, const ServerSettings& server_settings, tcp_websocket&& tcp_ws)
+    : StreamSession(tcp_ws.get_executor(), server_settings, receiver), tcp_ws_(std::move(tcp_ws)), is_ssl_(false)
 {
     LOG(DEBUG, LOG_TAG) << "StreamSessionWS, mode: tcp\n";
 }
@@ -98,13 +98,21 @@ std::string StreamSessionWebsocket::getIP()
 }
 
 
-void StreamSessionWebsocket::sendAsync(const shared_const_buffer& buffer, const WriteHandler& handler)
+void StreamSessionWebsocket::sendAsync(const shared_const_buffer& buffer, WriteHandler&& handler)
 {
     LOG(TRACE, LOG_TAG) << "sendAsync: " << buffer.message().type << "\n";
     if (is_ssl_)
-        ssl_ws_->async_write(buffer, [self = shared_from_this(), buffer, handler](boost::system::error_code ec, std::size_t length) { handler(ec, length); });
+        ssl_ws_->async_write(buffer, [self = shared_from_this(), buffer, handler = std::move(handler)](boost::system::error_code ec, std::size_t length)
+        {
+            if (handler)
+                handler(ec, length);
+        });
     else
-        tcp_ws_->async_write(buffer, [self = shared_from_this(), buffer, handler](boost::system::error_code ec, std::size_t length) { handler(ec, length); });
+        tcp_ws_->async_write(buffer, [self = shared_from_this(), buffer, handler = std::move(handler)](boost::system::error_code ec, std::size_t length)
+        {
+            if (handler)
+                handler(ec, length);
+        });
 }
 
 
@@ -146,7 +154,7 @@ void StreamSessionWebsocket::on_read_ws(beast::error_code ec, std::size_t bytes_
 
     baseMessage_.received = now;
     if (messageReceiver_ != nullptr)
-        messageReceiver_->onMessageReceived(this, baseMessage_, data + base_msg_size_);
+        messageReceiver_->onMessageReceived(shared_from_this(), baseMessage_, data + base_msg_size_);
 
     buffer_.consume(bytes_transferred);
     do_read_ws();

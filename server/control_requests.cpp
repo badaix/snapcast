@@ -885,6 +885,8 @@ void ServerAuthenticateRequest::execute(const jsonrpcpp::request_ptr& request, A
     // Response:     {"id":8,"jsonrpc":"2.0","result":"ok"}
     // Request:      {"id":8,"jsonrpc":"2.0","method":"Server.Authenticate","params":{"scheme":"Bearer","param":"eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3MTg1NjQ1MTYsImlhdCI6MTcxODUyODUxNiwic3ViIjoiQmFkYWl4In0.gHrMVp7jTAg8aCSg3cttcfIxswqmOPuqVNOb5p79Cn0NmAqRmLXtDLX4QjOoOqqb66ezBBeikpNjPi_aO18YPoNmX9fPxSwcObTHBupnm5eugEpneMPDASFUSE2hg8rrD_OEoAVxx6hCLln7Z3ILyWDmR6jcmy7z0bp0BiAqOywUrFoVIsnlDZRs3wOaap5oS9J2oaA_gNi_7OuvAhrydn26LDhm0KiIqEcyIholkpRHrDYODkz98h2PkZdZ2U429tTvVhzDBJ1cBq2Zq3cvuMZT6qhwaUc8eYA8fUJ7g65iP4o2OZtUzlfEUqX1TKyuWuSK6CUlsZooNE-MSCT7_w"}}
     // Response:     {"id":8,"jsonrpc":"2.0","result":"ok"}
+    // Request:      {"id":8,"jsonrpc":"2.0","method":"Server.Authenticate","params":{"scheme":"Plain","param":"<user>:<password>"}}
+    // Response:     {"id":8,"jsonrpc":"2.0","result":"ok"}
     // clang-format on
 
     checkParams(request, {"scheme", "param"});

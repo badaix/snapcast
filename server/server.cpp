@@ -22,6 +22,7 @@
 // local headers
 #include "common/aixlog.hpp"
 #include "common/message/client_info.hpp"
+#include "common/message/error.hpp"
 #include "common/message/hello.hpp"
 #include "common/message/server_settings.hpp"
 #include "common/message/time.hpp"
@@ -261,7 +262,7 @@ void Server::onMessageReceived(std::shared_ptr<ControlSession> controlSession, c
 
 
 
-void Server::onMessageReceived(StreamSession* streamSession, const msg::BaseMessage& baseMessage, char* buffer)
+void Server::onMessageReceived(const std::shared_ptr<StreamSession>& streamSession, const msg::BaseMessage& baseMessage, char* buffer)
 {
     LOG(DEBUG, LOG_TAG) << "onMessageReceived: " << baseMessage.type << ", size: " << baseMessage.size << ", id: " << baseMessage.id
                         << ", refers: " << baseMessage.refersTo << ", sent: " << baseMessage.sent.sec << "," << baseMessage.sent.usec
@@ -308,12 +309,48 @@ void Server::onMessageReceived(StreamSession* streamSession, const msg::BaseMess
         msg::Hello helloMsg;
         helloMsg.deserialize(baseMessage, buffer);
         streamSession->clientId = helloMsg.getUniqueId();
+        auto auth = helloMsg.getAuth();
+        // TODO: don't log passwords
         LOG(INFO, LOG_TAG) << "Hello from " << streamSession->clientId << ", host: " << helloMsg.getHostName() << ", v" << helloMsg.getVersion()
                            << ", ClientName: " << helloMsg.getClientName() << ", OS: " << helloMsg.getOS() << ", Arch: " << helloMsg.getArch()
-                           << ", Protocol version: " << helloMsg.getProtocolVersion() << ", Userrname: " << helloMsg.getUsername().value_or("<not set>")
-                           << ", Password: " << (helloMsg.getPassword().has_value() ? "<password is set>" : "<not set>") << "\n";
-        streamSession->stop();
-        return;
+                           << ", Protocol version: " << helloMsg.getProtocolVersion() << ", Auth: " << auth.value_or(msg::Hello::Auth{}).toJson().dump()
+                           << "\n";
+
+        if (settings_.auth.enabled)
+        {
+            ErrorCode ec;
+            if (auth.has_value())
+                ec = streamSession->authinfo.authenticate(auth->scheme, auth->param);
+
+            if (!auth.has_value() || ec)
+            {
+                if (ec)
+                    LOG(ERROR, LOG_TAG) << "Authentication failed: " << ec.detailed_message() << "\n";
+                else
+                    LOG(ERROR, LOG_TAG) << "Authentication required\n";
+                auto error_msg = make_shared<msg::Error>(401, "Unauthorized", ec ? ec.detailed_message() : "Authentication required");
+                streamSession->send(error_msg, [streamSession](boost::system::error_code ec, std::size_t length)
+                {
+                    LOG(DEBUG, LOG_TAG) << "Sent result: " << ec << ", len: " << length << "\n";
+                    streamSession->stop();
+                });
+                return;
+            }
+
+            if (!streamSession->authinfo.hasPermission("Streaming"))
+            {
+                std::string error = "Permission 'Streaming' missing";
+                LOG(ERROR, LOG_TAG) << error << "\n";
+                auto error_msg = make_shared<msg::Error>(403, "Forbidden", error);
+                streamSession->send(error_msg, [streamSession](boost::system::error_code ec, std::size_t length)
+                {
+                    LOG(DEBUG, LOG_TAG) << "Sent result: " << ec << ", len: " << length << "\n";
+                    streamSession->stop();
+                });
+                return;
+            }
+        }
+
         bool newGroup(false);
         GroupPtr group = Config::instance().getGroupFromClient(streamSession->clientId);
         if (group == nullptr)

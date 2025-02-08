@@ -17,6 +17,7 @@
 ***/
 
 // local headers
+#include "common/base64.h"
 #include "common/popl.hpp"
 #include "common/utils/string_utils.hpp"
 #include "controller.hpp"
@@ -368,10 +369,14 @@ int main(int argc, char** argv)
                 throw SnapException("Snapclient is built without wss support");
 #endif
             }
-            if (!uri.user.empty())
-                settings.server.username = uri.user;
-            if (!uri.password.empty())
-                settings.server.password = uri.password;
+
+            if (!uri.user.empty() || !uri.password.empty())
+            {
+                ClientSettings::Server::Auth auth;
+                auth.scheme = "Basic";
+                auth.param = base64_encode(uri.user + ":" + uri.password);
+                settings.server.auth = auth;
+            }
         }
 
         if (server_cert_opt->is_set())

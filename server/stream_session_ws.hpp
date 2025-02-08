@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2024  Johannes Pohl
+    Copyright (C) 2014-2025  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -48,24 +48,26 @@ using ssl_websocket = websocket::stream<ssl_socket>;
 class StreamSessionWebsocket : public StreamSession
 {
 public:
-    /// ctor. Received message from the client are passed to StreamMessageReceiver
-    StreamSessionWebsocket(StreamMessageReceiver* receiver, ssl_websocket&& ssl_ws);
-    StreamSessionWebsocket(StreamMessageReceiver* receiver, tcp_websocket&& tcp_ws);
+    /// c'tor for SSL. Received message from the client are passed to StreamMessageReceiver
+    StreamSessionWebsocket(StreamMessageReceiver* receiver, const ServerSettings& server_settings, ssl_websocket&& ssl_ws);
+    /// c'tor for TCP
+    StreamSessionWebsocket(StreamMessageReceiver* receiver, const ServerSettings& server_settings, tcp_websocket&& tcp_ws);
     ~StreamSessionWebsocket() override;
     void start() override;
     void stop() override;
     std::string getIP() override;
 
-protected:
-    // Websocket methods
-    void sendAsync(const shared_const_buffer& buffer, const WriteHandler& handler) override;
+private:
+    /// Send message @p buffer and pass result to @p handler
+    void sendAsync(const shared_const_buffer& buffer, WriteHandler&& handler) override;
+    /// Read callback
     void on_read_ws(beast::error_code ec, std::size_t bytes_transferred);
+    /// Read loop
     void do_read_ws();
 
-    std::optional<ssl_websocket> ssl_ws_;
-    std::optional<tcp_websocket> tcp_ws_;
+    std::optional<ssl_websocket> ssl_ws_; ///< SSL websocket
+    std::optional<tcp_websocket> tcp_ws_; ///< TCP websocket
 
-protected:
-    beast::flat_buffer buffer_;
-    bool is_ssl_;
+    beast::flat_buffer buffer_; ///< read buffer
+    bool is_ssl_;               ///< are we in SSL mode?
 };

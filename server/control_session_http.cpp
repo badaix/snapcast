@@ -409,7 +409,7 @@ void ControlSessionHttp::on_read(beast::error_code ec, std::size_t bytes_transfe
                         }
                         else // if (req_.target() == "/stream")
                         {
-                            auto ws_session = make_shared<StreamSessionWebsocket>(nullptr, std::move(*ws));
+                            auto ws_session = make_shared<StreamSessionWebsocket>(nullptr, settings_, std::move(*ws));
                             message_receiver_->onNewSession(std::move(ws_session));
                         }
                     }
@@ -435,7 +435,7 @@ void ControlSessionHttp::on_read(beast::error_code ec, std::size_t bytes_transfe
                         }
                         else // if (req_.target() == "/stream")
                         {
-                            auto ws_session = make_shared<StreamSessionWebsocket>(nullptr, std::move(*ws));
+                            auto ws_session = make_shared<StreamSessionWebsocket>(nullptr, settings_, std::move(*ws));
                             message_receiver_->onNewSession(std::move(ws_session));
                         }
                     }

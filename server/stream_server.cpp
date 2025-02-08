@@ -47,7 +47,7 @@ StreamServer::~StreamServer() = default;
 
 void StreamServer::cleanup()
 {
-    auto new_end = std::remove_if(sessions_.begin(), sessions_.end(), [](std::weak_ptr<StreamSession> session) { return session.expired(); });
+    auto new_end = std::remove_if(sessions_.begin(), sessions_.end(), [](const std::weak_ptr<StreamSession>& session) { return session.expired(); });
     auto count = distance(new_end, sessions_.end());
     if (count > 0)
     {
@@ -69,7 +69,7 @@ void StreamServer::addSession(std::shared_ptr<StreamSession> session)
 }
 
 
-void StreamServer::onChunkEncoded(const PcmStream* pcmStream, bool isDefaultStream, std::shared_ptr<msg::PcmChunk> chunk, double /*duration*/)
+void StreamServer::onChunkEncoded(const PcmStream* pcmStream, bool isDefaultStream, const std::shared_ptr<msg::PcmChunk>& chunk, double /*duration*/)
 {
     // LOG(TRACE, LOG_TAG) << "onChunkRead (" << pcmStream->getName() << "): " << duration << "ms\n";
     shared_const_buffer buffer(*chunk);
@@ -112,7 +112,7 @@ void StreamServer::onChunkEncoded(const PcmStream* pcmStream, bool isDefaultStre
 }
 
 
-void StreamServer::onMessageReceived(StreamSession* streamSession, const msg::BaseMessage& baseMessage, char* buffer)
+void StreamServer::onMessageReceived(const std::shared_ptr<StreamSession>& streamSession, const msg::BaseMessage& baseMessage, char* buffer)
 {
     try
     {
@@ -122,7 +122,7 @@ void StreamServer::onMessageReceived(StreamSession* streamSession, const msg::Ba
     catch (const std::exception& e)
     {
         LOG(ERROR, LOG_TAG) << "Server::onMessageReceived exception: " << e.what() << ", message type: " << baseMessage.type << "\n";
-        auto session = getStreamSession(streamSession);
+        auto session = getStreamSession(streamSession.get());
         session->stop();
     }
 }
@@ -139,7 +139,7 @@ void StreamServer::onDisconnect(StreamSession* streamSession)
     LOG(INFO, LOG_TAG) << "onDisconnect: " << session->clientId << "\n";
     LOG(DEBUG, LOG_TAG) << "sessions: " << sessions_.size() << "\n";
     sessions_.erase(std::remove_if(sessions_.begin(), sessions_.end(),
-                                   [streamSession](std::weak_ptr<StreamSession> session)
+                                   [streamSession](const std::weak_ptr<StreamSession>& session)
     {
         auto s = session.lock();
         return s.get() == streamSession;
@@ -209,7 +209,7 @@ void StreamServer::handleAccept(tcp::socket socket)
         socket.set_option(tcp::no_delay(true));
 
         LOG(NOTICE, LOG_TAG) << "StreamServer::NewConnection: " << socket.remote_endpoint().address().to_string() << "\n";
-        shared_ptr<StreamSession> session = make_shared<StreamSessionTcp>(this, std::move(socket));
+        shared_ptr<StreamSession> session = make_shared<StreamSessionTcp>(this, settings_, std::move(socket));
         addSession(session);
     }
     catch (const std::exception& e)

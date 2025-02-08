@@ -60,16 +60,23 @@ struct ClientSettings
     /// Server settings
     struct Server
     {
+        /// Auth info
+        struct Auth
+        {
+            /// the scheme (Basic, Plain, bearer, ...)
+            std::string scheme;
+            /// the param (base64 encoded "<user>:<password>", "<user>:<password>", token, ...)
+            std::string param;
+        };
+
         /// server host or IP address
         std::string host;
         /// protocol: "tcp", "ws" or "wss"
         std::string protocol{"tcp"};
         /// server port
         size_t port{1704};
-        /// username
-        std::optional<std::string> username;
-        /// password
-        std::optional<std::string> password;
+        /// auth info
+        std::optional<Auth> auth;
         /// server certificate
         std::optional<std::filesystem::path> server_certificate;
         /// Certificate file

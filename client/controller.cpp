@@ -303,7 +303,7 @@ void Controller::getNextMessage()
         else if (response->type == message_type::kError)
         {
             auto error = msg::message_cast<msg::Error>(std::move(response));
-            LOG(ERROR, LOG_TAG) << "Received error: " << error->message << ", code: " << error->code << "\n";
+            LOG(ERROR, LOG_TAG) << "Received error: " << error->error << ", message: " << error->message << ", code: " << error->code << "\n";
         }
         else
         {
@@ -460,7 +460,10 @@ void Controller::worker()
                 settings_.host_id = ::getHostId(macAddress);
 
             // Say hello to the server
-            auto hello = std::make_shared<msg::Hello>(macAddress, settings_.host_id, settings_.instance, settings_.server.username, settings_.server.password);
+            std::optional<msg::Hello::Auth> auth;
+            if (settings_.server.auth.has_value())
+                auth = msg::Hello::Auth{settings_.server.auth->scheme, settings_.server.auth->param};
+            auto hello = std::make_shared<msg::Hello>(macAddress, settings_.host_id, settings_.instance, auth);
             clientConnection_->sendRequest<msg::ServerSettings>(
                 hello, 2s, [this](const boost::system::error_code& ec, std::unique_ptr<msg::ServerSettings> response) mutable
             {
