@@ -79,6 +79,8 @@ public:
 
     /// Authenticate with basic scheme
     ErrorCode authenticateBasic(const std::string& credentials);
+    /// Authenticate with <user>:<password>
+    ErrorCode authenticatePlain(const std::string& user_password);
     /// Authenticate with bearer scheme
     // ErrorCode authenticateBearer(const std::string& token);
     /// Authenticate with basic or bearer scheme with an auth header

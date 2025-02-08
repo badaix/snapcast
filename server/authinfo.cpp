@@ -105,6 +105,9 @@ AuthInfo::AuthInfo(ServerSettings::Authorization auth_settings) : is_authenticat
 
 ErrorCode AuthInfo::validateUser(const std::string& username, const std::optional<std::string>& password) const
 {
+    if (!auth_settings_.enabled)
+        return {};
+
     auto iter = std::find_if(auth_settings_.users.begin(), auth_settings_.users.end(),
                              [&](const ServerSettings::Authorization::User& user) { return user.name == username; });
     if (iter == auth_settings_.users.end())
@@ -119,12 +122,14 @@ ErrorCode AuthInfo::authenticate(const std::string& scheme, const std::string& p
 {
     std::string scheme_normed = utils::string::trim_copy(utils::string::tolower_copy(scheme));
     std::string param_normed = utils::string::trim_copy(param);
-    // if (scheme_normed == "bearer")
-    //     return authenticateBearer(param_normed);
     if (scheme_normed == "basic")
         return authenticateBasic(param_normed);
+    else if (scheme_normed == "plain")
+        return authenticatePlain(param_normed);
+    // else if (scheme_normed == "bearer")
+    //     return authenticateBearer(param_normed);
 
-    return {AuthErrc::auth_scheme_not_supported, "Scheme must be 'Basic'"}; // or 'Bearer'"};
+    return {AuthErrc::auth_scheme_not_supported, "Scheme must be 'Basic' or 'Plain'"}; // or 'Bearer'"};
 }
 
 
@@ -149,6 +154,21 @@ ErrorCode AuthInfo::authenticateBasic(const std::string& credentials)
     is_authenticated_ = (ec.value() == 0);
     return ec;
 }
+
+
+ErrorCode AuthInfo::authenticatePlain(const std::string& user_password)
+{
+    is_authenticated_ = false;
+    std::string password;
+    std::string username = utils::string::split_left(user_password, ':', password);
+    auto ec = validateUser(username_, password);
+
+    // TODO: don't log passwords
+    LOG(INFO, LOG_TAG) << "Authorization basic: " << user_password << ", user: " << username_ << ", password: " << password << "\n";
+    is_authenticated_ = (ec.value() == 0);
+    return ec;
+}
+
 
 #if 0
 ErrorCode AuthInfo::authenticateBearer(const std::string& token)

@@ -113,20 +113,22 @@ Sample JSON payload (whitespace added for readability):
 ```json
 {
     "Arch": "x86_64",
+    "Auth": {
+        "param": "YmFkYWl4OnBhc3N3ZA==",
+        "scheme": "Basic"
+    },
     "ClientName": "Snapclient",
     "HostName": "my_hostname",
     "ID": "00:11:22:33:44:55",
     "Instance": 1,
     "MAC": "00:11:22:33:44:55",
     "OS": "Arch Linux",
-    "Username": "Badaix",
-    "Password": "$ecret",
     "SnapStreamProtocolVersion": 2,
-    "Version": "0.17.1"
+    "Version": "0.32.0"
 }
 ```
 
-The fields `Username` and `Password` are optional and only used if authentication and authorization is enabled on the server.
+The field `Auth` is optional and only used if authentication and authorization is enabled on the server.
 
 ### Client Info
 
@@ -151,5 +153,7 @@ Sample JSON payload (whitespace added for readability):
 | Field   | Type   | Description                                              |
 |---------|--------|----------------------------------------------------------|
 | code    | uint32 | Error code                                               |
-| size    | uint32 | Size of the following error message                      |
+| size    | uint32 | Size of the following error string                       |
 | error   | char[] | string containing the error (not null terminated)        |
+| size    | uint32 | Size of the following error message                      |
+| error   | char[] | string containing error details (not null terminated)    |
