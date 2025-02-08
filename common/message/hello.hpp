@@ -36,14 +36,48 @@ namespace msg
 class Hello : public JsonMessage
 {
 public:
+    /// Auth info
+    struct Auth
+    {
+        /// c'tor
+        Auth() = default;
+
+        /// c'tor construct from json
+        explicit Auth(const json& j)
+        {
+            if (j.contains("scheme"))
+                scheme = j["scheme"];
+            if (j.contains("param"))
+                param = j["param"];
+        }
+
+        /// c'tor construct from @p scheme and @p param
+        Auth(std::string scheme, std::string param) : scheme(std::move(scheme)), param(std::move(param))
+        {
+        }
+
+        /// @return serialized to json
+        json toJson() const
+        {
+            json j;
+            j["scheme"] = scheme;
+            j["param"] = param;
+            return j;
+        }
+
+        /// the scheme (Basic, Plain, bearer, ...)
+        std::string scheme;
+        /// the param (base64 encoded "<user>:<password>", "<user>:<password>", token, ...)
+        std::string param;
+    };
+
     /// c'tor
     Hello() : JsonMessage(message_type::kHello)
     {
     }
 
-    /// c'tor taking @p macAddress, @p id and @p instance
-    Hello(const std::string& mac_address, const std::string& id, size_t instance, std::optional<std::string> username, std::optional<std::string> password)
-        : JsonMessage(message_type::kHello)
+    /// c'tor taking @p macAddress, @p id, @p instance and @p auth info
+    Hello(const std::string& mac_address, const std::string& id, size_t instance, std::optional<Auth> auth) : JsonMessage(message_type::kHello)
     {
         msg["MAC"] = mac_address;
         msg["HostName"] = ::getHostName();
@@ -53,10 +87,8 @@ public:
         msg["Arch"] = ::getArch();
         msg["Instance"] = instance;
         msg["ID"] = id;
-        if (username.has_value())
-            msg["Username"] = username.value();
-        if (password.has_value())
-            msg["Password"] = password.value();
+        if (auth.has_value())
+            msg["Auth"] = auth->toJson();
         msg["SnapStreamProtocolVersion"] = 2;
     }
 
@@ -129,20 +161,12 @@ public:
         return id;
     }
 
-    /// @return the username
-    std::optional<std::string> getUsername() const
+    /// @return the auth info
+    std::optional<Auth> getAuth() const
     {
-        if (!msg.contains("Username"))
+        if (!msg.contains("Auth"))
             return std::nullopt;
-        return msg["Username"];
-    }
-
-    /// @return the password
-    std::optional<std::string> getPassword() const
-    {
-        if (!msg.contains("Password"))
-            return std::nullopt;
-        return msg["Password"];
+        return Auth{msg["Auth"]};
     }
 };
 

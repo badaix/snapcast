@@ -31,37 +31,45 @@ namespace msg
 class Error : public BaseMessage
 {
 public:
-    /// c'tor taking the @p code and @p message of error
-    explicit Error(uint32_t code, std::string message) : BaseMessage(message_type::kError), code(code), message(std::move(message))
+    /// c'tor taking the @p code, @p error and @p message of error
+    explicit Error(uint32_t code, std::string error, std::string message)
+        : BaseMessage(message_type::kError), code(code), error(std::move(error)), message(std::move(message))
     {
     }
 
-    Error() : Error(0, "")
+    /// c'tor
+    Error() : Error(0, "", "")
     {
     }
 
     void read(std::istream& stream) override
     {
         readVal(stream, code);
+        readVal(stream, error);
         readVal(stream, message);
     }
 
     uint32_t getSize() const override
     {
         return static_cast<uint32_t>(sizeof(uint32_t)   // code
+                                     + sizeof(uint32_t) // error string len
+                                     + error.size()     // error string
                                      + sizeof(uint32_t) // message len
                                      + message.size()); // message;
     }
 
     /// error code
     uint32_t code;
-    /// error message
+    /// error string
+    std::string error;
+    /// detailed error message
     std::string message;
 
 protected:
     void doserialize(std::ostream& stream) const override
     {
         writeVal(stream, code);
+        writeVal(stream, error);
         writeVal(stream, message);
     }
 };
