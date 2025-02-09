@@ -94,7 +94,7 @@ const std::error_category& category()
 
 std::error_code make_error_code(AuthErrc errc)
 {
-    return std::error_code(static_cast<int>(errc), snapcast::error::auth::category());
+    return {static_cast<int>(errc), snapcast::error::auth::category()};
 }
 
 

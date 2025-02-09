@@ -46,7 +46,7 @@ public:
     Request() = delete;
 
     /// c'tor
-    explicit Request(const Server& server, const std::string& method);
+    explicit Request(const Server& server, std::string method);
 
     /// d'tor
     virtual ~Request() = default;
