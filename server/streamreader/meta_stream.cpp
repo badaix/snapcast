@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2024  Johannes Pohl
+    Copyright (C) 2014-2025  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -105,7 +105,7 @@ void MetaStream::onStateChanged(const PcmStream* pcmStream, ReaderState state)
     // if (active_stream_->getProperties().playback_status == PlaybackStatus::kPaused)
     //     return;
 
-    auto switch_stream = [this](std::shared_ptr<PcmStream> new_stream)
+    auto switch_stream = [this](const std::shared_ptr<PcmStream>& new_stream)
     {
         if (new_stream == active_stream_)
             return;
@@ -209,31 +209,31 @@ void MetaStream::onResync(const PcmStream* pcmStream, double ms)
 
 
 // Setter for properties
-void MetaStream::setShuffle(bool shuffle, ResultHandler handler)
+void MetaStream::setShuffle(bool shuffle, ResultHandler&& handler)
 {
     std::lock_guard<std::recursive_mutex> lock(mutex_);
     active_stream_->setShuffle(shuffle, std::move(handler));
 }
 
-void MetaStream::setLoopStatus(LoopStatus status, ResultHandler handler)
+void MetaStream::setLoopStatus(LoopStatus status, ResultHandler&& handler)
 {
     std::lock_guard<std::recursive_mutex> lock(mutex_);
     active_stream_->setLoopStatus(status, std::move(handler));
 }
 
-void MetaStream::setVolume(uint16_t volume, ResultHandler handler)
+void MetaStream::setVolume(uint16_t volume, ResultHandler&& handler)
 {
     std::lock_guard<std::recursive_mutex> lock(mutex_);
     active_stream_->setVolume(volume, std::move(handler));
 }
 
-void MetaStream::setMute(bool mute, ResultHandler handler)
+void MetaStream::setMute(bool mute, ResultHandler&& handler)
 {
     std::lock_guard<std::recursive_mutex> lock(mutex_);
     active_stream_->setMute(mute, std::move(handler));
 }
 
-void MetaStream::setRate(float rate, ResultHandler handler)
+void MetaStream::setRate(float rate, ResultHandler&& handler)
 {
     std::lock_guard<std::recursive_mutex> lock(mutex_);
     active_stream_->setRate(rate, std::move(handler));
@@ -241,53 +241,53 @@ void MetaStream::setRate(float rate, ResultHandler handler)
 
 
 // Control commands
-void MetaStream::setPosition(std::chrono::milliseconds position, ResultHandler handler)
+void MetaStream::setPosition(std::chrono::milliseconds position, ResultHandler&& handler)
 {
     std::lock_guard<std::recursive_mutex> lock(mutex_);
     active_stream_->setPosition(position, std::move(handler));
 }
 
-void MetaStream::seek(std::chrono::milliseconds offset, ResultHandler handler)
+void MetaStream::seek(std::chrono::milliseconds offset, ResultHandler&& handler)
 {
     std::lock_guard<std::recursive_mutex> lock(mutex_);
     active_stream_->seek(offset, std::move(handler));
 }
 
-void MetaStream::next(ResultHandler handler)
+void MetaStream::next(ResultHandler&& handler)
 {
     std::lock_guard<std::recursive_mutex> lock(mutex_);
     active_stream_->next(std::move(handler));
 }
 
-void MetaStream::previous(ResultHandler handler)
+void MetaStream::previous(ResultHandler&& handler)
 {
     std::lock_guard<std::recursive_mutex> lock(mutex_);
     active_stream_->previous(std::move(handler));
 }
 
-void MetaStream::pause(ResultHandler handler)
+void MetaStream::pause(ResultHandler&& handler)
 {
     std::lock_guard<std::recursive_mutex> lock(mutex_);
     active_stream_->pause(std::move(handler));
 }
 
-void MetaStream::playPause(ResultHandler handler)
+void MetaStream::playPause(ResultHandler&& handler)
 {
     LOG(DEBUG, LOG_TAG) << "PlayPause\n";
     std::lock_guard<std::recursive_mutex> lock(mutex_);
     if (active_stream_->getState() == ReaderState::kIdle)
-        play(handler);
+        play(std::move(handler));
     else
         active_stream_->playPause(std::move(handler));
 }
 
-void MetaStream::stop(ResultHandler handler)
+void MetaStream::stop(ResultHandler&& handler)
 {
     std::lock_guard<std::recursive_mutex> lock(mutex_);
     active_stream_->stop(std::move(handler));
 }
 
-void MetaStream::play(ResultHandler handler)
+void MetaStream::play(ResultHandler&& handler)
 {
     LOG(DEBUG, LOG_TAG) << "Play\n";
     std::lock_guard<std::recursive_mutex> lock(mutex_);

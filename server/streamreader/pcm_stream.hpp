@@ -152,33 +152,33 @@ public:
 
     // Setter for properties
     /// Set shuffle property
-    virtual void setShuffle(bool shuffle, ResultHandler handler);
+    virtual void setShuffle(bool shuffle, ResultHandler&& handler);
     /// Set loop property
-    virtual void setLoopStatus(LoopStatus status, ResultHandler handler);
+    virtual void setLoopStatus(LoopStatus status, ResultHandler&& handler);
     /// Set volume property
-    virtual void setVolume(uint16_t volume, ResultHandler handler);
+    virtual void setVolume(uint16_t volume, ResultHandler&& handler);
     /// Set mute property
-    virtual void setMute(bool mute, ResultHandler handler);
+    virtual void setMute(bool mute, ResultHandler&& handler);
     /// Set playback rate property
-    virtual void setRate(float rate, ResultHandler handler);
+    virtual void setRate(float rate, ResultHandler&& handler);
 
     // Control commands
     /// Set position
-    virtual void setPosition(std::chrono::milliseconds position, ResultHandler handler);
+    virtual void setPosition(std::chrono::milliseconds position, ResultHandler&& handler);
     /// Seek
-    virtual void seek(std::chrono::milliseconds offset, ResultHandler handler);
+    virtual void seek(std::chrono::milliseconds offset, ResultHandler&& handler);
     /// Play next
-    virtual void next(ResultHandler handler);
+    virtual void next(ResultHandler&& handler);
     /// Play previous
-    virtual void previous(ResultHandler handler);
+    virtual void previous(ResultHandler&& handler);
     /// Pause
-    virtual void pause(ResultHandler handler);
+    virtual void pause(ResultHandler&& handler);
     /// Toggle play/pause
-    virtual void playPause(ResultHandler handler);
+    virtual void playPause(ResultHandler&& handler);
     /// Stop
-    virtual void stop(ResultHandler handler);
+    virtual void stop(ResultHandler&& handler);
     /// Play
-    virtual void play(ResultHandler handler);
+    virtual void play(ResultHandler&& handler);
 
     /// Get stream reader state (idle/playing)
     virtual ReaderState getState() const;
@@ -218,7 +218,7 @@ protected:
     /// Log message received from control script via stderr
     void onControlLog(std::string line);
     /// Send request to stream control script
-    void sendRequest(const std::string& method, const jsonrpcpp::Parameter& params, ResultHandler handler);
+    void sendRequest(const std::string& method, const jsonrpcpp::Parameter& params, ResultHandler&& handler);
 
     /// Executor for synchronous IO
     boost::asio::strand<boost::asio::any_io_executor> strand_;
