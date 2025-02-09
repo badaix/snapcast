@@ -228,8 +228,8 @@ void PcmStream::start()
 {
     LOG(DEBUG, LOG_TAG) << "Start: " << name_ << ", type: " << uri_.scheme << ", sampleformat: " << sampleFormat_.toString() << ", codec: " << getCodec()
                         << "\n";
-    encoder_->init([this, self = shared_from_this()](const encoder::Encoder& encoder, std::shared_ptr<msg::PcmChunk> chunk, double duration)
-    { chunkEncoded(encoder, std::move(chunk), duration); }, sampleFormat_);
+    encoder_->init([this, self = shared_from_this()](const encoder::Encoder& encoder, const std::shared_ptr<msg::PcmChunk>& chunk, double duration)
+    { chunkEncoded(encoder, chunk, duration); }, sampleFormat_);
 
     if (stream_ctrl_)
     {
@@ -378,7 +378,7 @@ const Properties& PcmStream::getProperties() const
 }
 
 
-void PcmStream::setShuffle(bool shuffle, ResultHandler handler)
+void PcmStream::setShuffle(bool shuffle, ResultHandler&& handler)
 {
     LOG(DEBUG, LOG_TAG) << "setShuffle: " << shuffle << "\n";
     if (!properties_.can_control)
@@ -387,7 +387,7 @@ void PcmStream::setShuffle(bool shuffle, ResultHandler handler)
 }
 
 
-void PcmStream::setLoopStatus(LoopStatus status, ResultHandler handler)
+void PcmStream::setLoopStatus(LoopStatus status, ResultHandler&& handler)
 {
     LOG(DEBUG, LOG_TAG) << "setLoopStatus: " << status << "\n";
     if (!properties_.can_control)
@@ -396,7 +396,7 @@ void PcmStream::setLoopStatus(LoopStatus status, ResultHandler handler)
 }
 
 
-void PcmStream::setVolume(uint16_t volume, ResultHandler handler)
+void PcmStream::setVolume(uint16_t volume, ResultHandler&& handler)
 {
     LOG(DEBUG, LOG_TAG) << "setVolume: " << volume << "\n";
     if (!properties_.can_control)
@@ -405,7 +405,7 @@ void PcmStream::setVolume(uint16_t volume, ResultHandler handler)
 }
 
 
-void PcmStream::setMute(bool mute, ResultHandler handler)
+void PcmStream::setMute(bool mute, ResultHandler&& handler)
 {
     LOG(DEBUG, LOG_TAG) << "setMute: " << mute << "\n";
     if (!properties_.can_control)
@@ -414,7 +414,7 @@ void PcmStream::setMute(bool mute, ResultHandler handler)
 }
 
 
-void PcmStream::setRate(float rate, ResultHandler handler)
+void PcmStream::setRate(float rate, ResultHandler&& handler)
 {
     LOG(DEBUG, LOG_TAG) << "setRate: " << rate << "\n";
     if (!properties_.can_control)
@@ -423,7 +423,7 @@ void PcmStream::setRate(float rate, ResultHandler handler)
 }
 
 
-void PcmStream::setPosition(std::chrono::milliseconds position, ResultHandler handler)
+void PcmStream::setPosition(std::chrono::milliseconds position, ResultHandler&& handler)
 {
     LOG(DEBUG, LOG_TAG) << "setPosition\n";
     if (!properties_.can_seek)
@@ -437,7 +437,7 @@ void PcmStream::setPosition(std::chrono::milliseconds position, ResultHandler ha
 }
 
 
-void PcmStream::seek(std::chrono::milliseconds offset, ResultHandler handler)
+void PcmStream::seek(std::chrono::milliseconds offset, ResultHandler&& handler)
 {
     LOG(DEBUG, LOG_TAG) << "seek\n";
     if (!properties_.can_seek)
@@ -451,7 +451,7 @@ void PcmStream::seek(std::chrono::milliseconds offset, ResultHandler handler)
 }
 
 
-void PcmStream::next(ResultHandler handler)
+void PcmStream::next(ResultHandler&& handler)
 {
     LOG(DEBUG, LOG_TAG) << "next\n";
     if (!properties_.can_go_next)
@@ -460,7 +460,7 @@ void PcmStream::next(ResultHandler handler)
 }
 
 
-void PcmStream::previous(ResultHandler handler)
+void PcmStream::previous(ResultHandler&& handler)
 {
     LOG(DEBUG, LOG_TAG) << "previous\n";
     if (!properties_.can_go_previous)
@@ -469,7 +469,7 @@ void PcmStream::previous(ResultHandler handler)
 }
 
 
-void PcmStream::pause(ResultHandler handler)
+void PcmStream::pause(ResultHandler&& handler)
 {
     LOG(DEBUG, LOG_TAG) << "pause\n";
     if (!properties_.can_pause)
@@ -478,7 +478,7 @@ void PcmStream::pause(ResultHandler handler)
 }
 
 
-void PcmStream::playPause(ResultHandler handler)
+void PcmStream::playPause(ResultHandler&& handler)
 {
     LOG(DEBUG, LOG_TAG) << "playPause\n";
     if (!properties_.can_pause)
@@ -487,7 +487,7 @@ void PcmStream::playPause(ResultHandler handler)
 }
 
 
-void PcmStream::stop(ResultHandler handler)
+void PcmStream::stop(ResultHandler&& handler)
 {
     LOG(DEBUG, LOG_TAG) << "stop\n";
     if (!properties_.can_control)
@@ -496,7 +496,7 @@ void PcmStream::stop(ResultHandler handler)
 }
 
 
-void PcmStream::play(ResultHandler handler)
+void PcmStream::play(ResultHandler&& handler)
 {
     LOG(DEBUG, LOG_TAG) << "play\n";
     if (!properties_.can_play)
@@ -505,13 +505,13 @@ void PcmStream::play(ResultHandler handler)
 }
 
 
-void PcmStream::sendRequest(const std::string& method, const jsonrpcpp::Parameter& params, ResultHandler handler)
+void PcmStream::sendRequest(const std::string& method, const jsonrpcpp::Parameter& params, ResultHandler&& handler)
 {
     if (!stream_ctrl_)
         return handler({ControlErrc::can_not_control});
 
     jsonrpcpp::Request req(++req_id_, method, params);
-    stream_ctrl_->command(req, [handler](const jsonrpcpp::Response& response)
+    stream_ctrl_->command(req, [handler = std::move(handler)](const jsonrpcpp::Response& response)
     {
         if (response.error().code() != 0)
             handler({static_cast<ControlErrc>(response.error().code()), response.error().data()});
