@@ -160,7 +160,7 @@ ErrorCode AuthInfo::authenticatePlain(const std::string& user_password)
 {
     is_authenticated_ = false;
     std::string password;
-    std::string username = utils::string::split_left(user_password, ':', password);
+    username_ = utils::string::split_left(user_password, ':', password);
     auto ec = validateUser(username_, password);
 
     // TODO: don't log passwords
