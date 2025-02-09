@@ -84,6 +84,23 @@ TEST_CASE("String utils")
 
     std::vector<std::string> vec{"1", "2", "3"};
     REQUIRE(container_to_string(vec) == "1, 2, 3");
+
+    std::string right;
+    std::string left = split_left("left:mid:right", ':', right);
+    REQUIRE(left == "left");
+    REQUIRE(right == "mid:right");
+
+    left = split_right("left:mid:right", ':', right);
+    REQUIRE(left == "left:mid");
+    REQUIRE(right == "right");
+
+    std::string user = split_left("username:password:with:colons:role", ':', right);
+    REQUIRE(user == "username");
+    REQUIRE(right == "password:with:colons:role");
+    std::string role;
+    std::string password = split_right(right, ':', role);
+    REQUIRE(password == "password:with:colons");
+    REQUIRE(role == "role");
 }
 
 

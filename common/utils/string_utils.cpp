@@ -140,7 +140,7 @@ std::string uriDecode(const std::string& src)
         if (int(src[i]) == 37)
         {
             unsigned int ii;
-            sscanf(src.substr(i + 1, 2).c_str(), "%x", &ii);
+            sscanf(src.substr(i + 1, 2).c_str(), "%x", &ii); // NOLINT
             ch = static_cast<char>(ii);
             ret += ch;
             i += 2;
@@ -170,10 +170,34 @@ void split_left(const std::string& s, char delim, std::string& left, std::string
 }
 
 
+void split_right(const std::string& s, char delim, std::string& left, std::string& right)
+{
+    auto pos = s.rfind(delim);
+    if (pos != std::string::npos)
+    {
+        left = s.substr(0, pos);
+        right = s.substr(pos + 1);
+    }
+    else
+    {
+        left = s;
+        right = "";
+    }
+}
+
+
 std::string split_left(const std::string& s, char delim, std::string& right)
 {
     std::string left;
     split_left(s, delim, left, right);
+    return left;
+}
+
+
+std::string split_right(const std::string& s, char delim, std::string& right)
+{
+    std::string left;
+    split_right(s, delim, left, right);
     return left;
 }
 
