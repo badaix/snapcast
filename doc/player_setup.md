@@ -321,3 +321,49 @@ Use `--aout afile` and `--audiofile-file` to pipe VLC's audio output to the snap
 ```sh
 vlc --no-video --aout afile --audiofile-file /tmp/snapfifo
 ```
+
+## Plexamp
+
+Plexamp can be configured to use Snapcast for multi-room audio by redirecting its output to a FIFO pipe. This can be managed using a Plex control script for audio playback.
+
+### 1. Install Plexamp
+Follow the [official instructions](https://www.plex.tv/plexamp/) to install Plexamp on your system. This method works with both **plexamp-headless** and the standalone **Plexamp** client.
+
+### 2. Create a loopback FIFO pipe
+You need to use **Pipewire** or **Pulseaudio**:
+
+```sh
+pactl load-module module-pipe-sink file=/tmp/snapfifo sink_name=Snapcast-Plexamp format=s16le rate=44100
+```
+
+**Note:** Ensure that the virtual sink settings match those configured in Snapserver to avoid audio issues. With this setup, resampling will be handled by your audio server.
+
+### 3. Configure Plexamp to use the FIFO pipe
+
+1. Go to Settings > Playback > Audio Output, and ensure it is set to Pipewire (or Pulseaudio).
+2. Set the sink volume to the maximum from your system settings or using the command:
+
+```sh
+pactl set-sink-volume @DEFAULT_SINK@ 100%
+```
+
+### 4. Add a new source to Snapserver
+Edit your `snapserver.conf` file to add a new stream source for the FIFO pipe:
+
+```ini
+[stream]
+source = pipe:///tmp/snapfifo?name=Plexamp
+```
+
+### 5. (Optional) Configure the control script
+
+1. Retrieve your Plex API token following the [official guide](https://support.plex.tv/articles/204059436-finding-an-authentication-token-x-plex-token/).
+
+2. Modify the `snapserver.conf` file to add the control script:
+
+```ini
+[stream]
+source = pipe:///tmp/snapfifo?name=Plexamp&sampleformat=44100:16:2&codec=flac&controlscript=plex_bridge.py&controlscriptparams=--token=<Plex Token> --ip=<Plex Server IP address> --player=<Player name to control>
+```
+
+This setup allows you to use Plexamp with Snapcast for synchronized multi-room audio playback.
