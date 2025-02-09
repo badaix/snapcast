@@ -57,12 +57,19 @@ std::string uriDecode(const std::string& src);
 /// @return uri encoded version of @p str
 std::string urlEncode(const std::string& str);
 
-/// Split string @p s at @p delim into @p left and @p right
+/// Split string @p s at left-most @p delim into @p left and @p right
 void split_left(const std::string& s, char delim, std::string& left, std::string& right);
 
-/// Split string @p s at @p delim and left and @p right
+/// Split string @p s at right-most @p delim into @p left and @p right
+void split_right(const std::string& s, char delim, std::string& left, std::string& right);
+
+/// Split string @p s at left-most @p delim into left and @p right
 /// @return the left part
 std::string split_left(const std::string& s, char delim, std::string& right);
+
+/// Split string @p s at right-most @p delim into left and @p right
+/// @return the left part
+std::string split_right(const std::string& s, char delim, std::string& right);
 
 /// Split string @p s at @p delim and return the splitted list in @p elems
 /// @return list of splitted strings

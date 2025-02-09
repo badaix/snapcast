@@ -99,7 +99,7 @@ struct ServerSettings
             {
                 std::string perm;
                 name = utils::string::split_left(user_password_role, ':', perm);
-                password = utils::string::split_left(perm, ':', role_name);
+                password = utils::string::split_right(perm, ':', role_name);
             }
 
             /// user name
