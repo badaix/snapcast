@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2024  Johannes Pohl
+    Copyright (C) 2014-2025  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -146,6 +146,7 @@ void FlacEncoder::encode(const msg::PcmChunk& chunk)
 }
 
 
+// NOLINTNEXTLINE
 FLAC__StreamEncoderWriteStatus FlacEncoder::write_callback(const FLAC__StreamEncoder* /*encoder*/, const FLAC__byte buffer[], size_t bytes, unsigned samples,
                                                            unsigned current_frame)
 {
@@ -168,6 +169,7 @@ FLAC__StreamEncoderWriteStatus FlacEncoder::write_callback(const FLAC__StreamEnc
 
 namespace callback
 {
+// NOLINTNEXTLINE
 FLAC__StreamEncoderWriteStatus write_callback(const FLAC__StreamEncoder* encoder, const FLAC__byte buffer[], size_t bytes, unsigned samples,
                                               unsigned current_frame, void* client_data)
 {

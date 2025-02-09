@@ -25,9 +25,13 @@
 
 */
 
+// prototype/interface header file
 #include "base64.h"
 
+// standard headers
 #include <algorithm>
+#include <array>
+
 
 static std::string base64_chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
                                   "abcdefghijklmnopqrstuvwxyz"
@@ -43,8 +47,8 @@ std::string base64_encode(const unsigned char* bytes_to_encode, size_t in_len)
 {
     std::string ret;
     int i = 0;
-    unsigned char char_array_3[3];
-    unsigned char char_array_4[4];
+    std::array<unsigned char, 3> char_array_3;
+    std::array<unsigned char, 4> char_array_4;
 
     while ((in_len--) != 0u)
     {
@@ -93,7 +97,8 @@ std::string base64_decode(const std::string& encoded_string)
     size_t in_len = encoded_string.size();
     int i = 0;
     int in_ = 0;
-    unsigned char char_array_4[4], char_array_3[3];
+    std::array<unsigned char, 4> char_array_4;
+    std::array<unsigned char, 3> char_array_3;
     std::string ret;
 
     while (((in_len--) != 0) && (encoded_string[in_] != '=') && is_base64(encoded_string[in_]))

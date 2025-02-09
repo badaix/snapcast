@@ -57,14 +57,14 @@ void StreamServer::cleanup()
 }
 
 
-void StreamServer::addSession(std::shared_ptr<StreamSession> session)
+void StreamServer::addSession(const std::shared_ptr<StreamSession>& session)
 {
     session->setMessageReceiver(this);
     session->setBufferMs(settings_.stream.bufferMs);
     session->start();
 
     std::lock_guard<std::recursive_mutex> mlock(sessionsMutex_);
-    sessions_.emplace_back(std::move(session));
+    sessions_.emplace_back(session);
     cleanup();
 }
 

@@ -46,8 +46,8 @@ static constexpr auto LOG_TAG = "Server";
 
 
 
-Server::Server(boost::asio::io_context& io_context, const ServerSettings& serverSettings)
-    : io_context_(io_context), config_timer_(io_context), settings_(serverSettings), request_factory_(*this)
+Server::Server(boost::asio::io_context& io_context, ServerSettings serverSettings)
+    : io_context_(io_context), config_timer_(io_context), settings_(std::move(serverSettings)), request_factory_(*this)
 {
 }
 

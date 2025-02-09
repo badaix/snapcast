@@ -580,7 +580,7 @@ ssl_websocket& ClientConnectionWss::getWs()
             // In this example we will simply print the certificate's subject name.
             std::array<char, 256> subject_name;
             X509* cert = X509_STORE_CTX_get_current_cert(ctx.native_handle());
-            X509_NAME_oneline(X509_get_subject_name(cert), subject_name.data(), subject_name.size());
+            X509_NAME_oneline(X509_get_subject_name(cert), subject_name.data(), static_cast<int>(subject_name.size()));
             LOG(INFO, LOG_TAG) << "Verifying cert: '" << subject_name.data() << "', pre verified: " << preverified << "\n";
 
             return preverified;
@@ -692,7 +692,7 @@ boost::system::error_code ClientConnectionWss::doConnect(boost::asio::ip::basic_
     if (!SSL_set_tlsext_host_name(getWs().next_layer().native_handle(), server_.host.c_str()))
     {
         LOG(ERROR, LOG_TAG) << "Failed to set SNI Hostname\n";
-        return boost::system::error_code(static_cast<int>(::ERR_get_error()), boost::asio::error::get_ssl_category());
+        return {static_cast<int>(::ERR_get_error()), boost::asio::error::get_ssl_category()};
     }
 
     // Perform the SSL handshake

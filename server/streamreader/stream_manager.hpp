@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2024  Johannes Pohl
+    Copyright (C) 2014-2025  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -42,7 +42,7 @@ class StreamManager
 {
 public:
     /// C'tor
-    StreamManager(PcmStream::Listener* pcmListener, boost::asio::io_context& ioc, const ServerSettings& settings);
+    StreamManager(PcmStream::Listener* pcmListener, boost::asio::io_context& ioc, ServerSettings settings);
 
     /// Construct and add a stream from @p uri
     /// @return the created stream

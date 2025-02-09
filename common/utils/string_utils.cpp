@@ -109,6 +109,7 @@ std::string trim_copy(const std::string& s)
 std::string urlEncode(const std::string& str)
 {
     std::ostringstream os;
+    // NOLINTNEXTLINE
     for (std::string::const_iterator ci = str.begin(); ci != str.end(); ++ci)
     {
         if ((*ci >= 'a' && *ci <= 'z') || (*ci >= 'A' && *ci <= 'Z') || (*ci >= '0' && *ci <= '9'))

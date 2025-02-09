@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2024  Johannes Pohl
+    Copyright (C) 2014-2025  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -87,5 +87,5 @@ const std::error_category& category()
 
 std::error_code make_error_code(ControlErrc errc)
 {
-    return std::error_code(static_cast<int>(errc), snapcast::error::control::category());
+    return {static_cast<int>(errc), snapcast::error::control::category()};
 }
