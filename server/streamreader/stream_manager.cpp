@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2024  Johannes Pohl
+    Copyright (C) 2014-2025  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -46,9 +46,9 @@ using namespace std;
 namespace streamreader
 {
 
-StreamManager::StreamManager(PcmStream::Listener* pcmListener, boost::asio::io_context& ioc, const ServerSettings& settings)
+StreamManager::StreamManager(PcmStream::Listener* pcmListener, boost::asio::io_context& ioc, ServerSettings settings)
     // const std::string& defaultSampleFormat, const std::string& defaultCodec, size_t defaultChunkBufferMs)
-    : pcmListener_(pcmListener), settings_(settings), io_context_(ioc)
+    : pcmListener_(pcmListener), settings_(std::move(settings)), io_context_(ioc)
 {
 }
 

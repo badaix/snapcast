@@ -54,7 +54,7 @@ class Server : public StreamMessageReceiver, public ControlMessageReceiver, publ
 
 public:
     /// c'tor
-    Server(boost::asio::io_context& io_context, const ServerSettings& serverSettings);
+    Server(boost::asio::io_context& io_context, ServerSettings serverSettings);
     /// d'tor
     virtual ~Server() = default;
 

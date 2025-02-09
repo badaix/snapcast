@@ -49,7 +49,7 @@ static void checkParams(const jsonrpcpp::request_ptr& request, const std::vector
 }
 
 
-Request::Request(const Server& server, const std::string& method) : server_(server), method_(method)
+Request::Request(const Server& server, std::string method) : server_(server), method_(std::move(method))
 {
 }
 
