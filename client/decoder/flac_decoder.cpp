@@ -38,11 +38,13 @@ namespace decoder
 
 namespace callback
 {
+// NOLINTBEGIN
 FLAC__StreamDecoderReadStatus read_callback(const FLAC__StreamDecoder* decoder, FLAC__byte buffer[], size_t* bytes, void* client_data);
 FLAC__StreamDecoderWriteStatus write_callback(const FLAC__StreamDecoder* decoder, const FLAC__Frame* frame, const FLAC__int32* const buffer[],
                                               void* client_data);
 void metadata_callback(const FLAC__StreamDecoder* decoder, const FLAC__StreamMetadata* metadata, void* client_data);
 void error_callback(const FLAC__StreamDecoder* decoder, FLAC__StreamDecoderErrorStatus status, void* client_data);
+// NOLINTEND
 } // namespace callback
 
 namespace
@@ -130,6 +132,7 @@ SampleFormat FlacDecoder::setHeader(msg::CodecHeader* chunk)
 
 namespace callback
 {
+// NOLINTNEXTLINE
 FLAC__StreamDecoderReadStatus read_callback(const FLAC__StreamDecoder* /*decoder*/, FLAC__byte buffer[], size_t* bytes, void* client_data)
 {
     if (flacHeader != nullptr)
@@ -156,7 +159,7 @@ FLAC__StreamDecoderReadStatus read_callback(const FLAC__StreamDecoder* /*decoder
     return FLAC__STREAM_DECODER_READ_STATUS_CONTINUE;
 }
 
-
+// NOLINTNEXTLINE
 FLAC__StreamDecoderWriteStatus write_callback(const FLAC__StreamDecoder* /*decoder*/, const FLAC__Frame* frame, const FLAC__int32* const buffer[],
                                               void* client_data)
 {

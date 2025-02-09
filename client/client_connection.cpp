@@ -578,10 +578,10 @@ ssl_websocket& ClientConnectionWss::getWs()
             // certificate authority.
 
             // In this example we will simply print the certificate's subject name.
-            char subject_name[256];
+            std::array<char, 256> subject_name;
             X509* cert = X509_STORE_CTX_get_current_cert(ctx.native_handle());
-            X509_NAME_oneline(X509_get_subject_name(cert), subject_name, 256);
-            LOG(INFO, LOG_TAG) << "Verifying cert: '" << subject_name << "', pre verified: " << preverified << "\n";
+            X509_NAME_oneline(X509_get_subject_name(cert), subject_name.data(), subject_name.size());
+            LOG(INFO, LOG_TAG) << "Verifying cert: '" << subject_name.data() << "', pre verified: " << preverified << "\n";
 
             return preverified;
         });
