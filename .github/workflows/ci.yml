@@ -15,6 +15,7 @@ jobs:
       matrix:
         tool:
           - cppcheck
+          - clang-tidy
 
     runs-on: ubuntu-24.04
 
@@ -27,7 +28,7 @@ jobs:
           sudo apt-get update && \
           sudo apt-get install -yq libasound2-dev libsoxr-dev libvorbisidec-dev libvorbis-dev libflac-dev \
           libopus-dev alsa-utils libpulse-dev libavahi-client-dev libssl-dev \
-          avahi-daemon ccache expat cppcheck 
+          avahi-daemon ccache expat cppcheck clang-tidy
       - name: cache boost
         id: cache-boost
         uses: actions/cache@v4

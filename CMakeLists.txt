@@ -85,6 +85,7 @@ else()
 endif()
 
 include(GNUInstallDirs)
+include(${CMAKE_SOURCE_DIR}/cmake/clang-tidy.cmake)
 include(${CMAKE_SOURCE_DIR}/cmake/cppcheck.cmake)
 include(${CMAKE_SOURCE_DIR}/cmake/reformat.cmake)
 
