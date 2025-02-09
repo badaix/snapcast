@@ -116,7 +116,7 @@ public:
         virtual void onChunkRead(const PcmStream* pcmStream, const msg::PcmChunk& chunk) = 0;
         /// Chunk @p chunk with duration @p duration of stream @pcmStream has been encoded
         virtual void onChunkEncoded(const PcmStream* pcmStream, std::shared_ptr<msg::PcmChunk> chunk, double duration) = 0;
-        /// Stream @p pcmStream muissed to read audio with duration @p ms 
+        /// Stream @p pcmStream muissed to read audio with duration @p ms
         virtual void onResync(const PcmStream* pcmStream, double ms) = 0;
     };
 

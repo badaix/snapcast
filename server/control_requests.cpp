@@ -893,14 +893,20 @@ void ServerAuthenticateRequest::execute(const jsonrpcpp::request_ptr& request, A
 
     auto scheme = request->params().get<std::string>("scheme");
     auto param = request->params().get<std::string>("param");
+    // TODO: don't log passwords
     LOG(INFO, LOG_TAG) << "Authorization scheme: " << scheme << ", param: " << param << "\n";
     auto ec = authinfo.authenticate(scheme, param);
 
     std::shared_ptr<jsonrpcpp::Response> response;
     if (ec)
+    {
+        LOG(ERROR, LOG_TAG) << "Auth error: " << ec.detailed_message() << "\n";
         response = std::make_shared<jsonrpcpp::Response>(request->id(), jsonrpcpp::Error(ec.detailed_message(), ec.value()));
+    }
     else
+    {
         response = std::make_shared<jsonrpcpp::Response>(request->id(), "ok");
+    }
     // LOG(DEBUG, LOG_TAG) << response->to_json().dump() << "\n";
 
     on_response(std::move(response), nullptr);
