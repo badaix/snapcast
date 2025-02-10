@@ -20,9 +20,11 @@
 
 
 // local headers
+#include "common/snap_exception.hpp"
 #include "common/utils/string_utils.hpp"
 
 // standard headers
+#include <algorithm>
 #include <cstdint>
 #include <filesystem>
 #include <memory>
@@ -71,6 +73,35 @@ struct ServerSettings
     /// Authorization settings
     struct Authorization
     {
+        /// c'tor
+        Authorization() = default;
+
+        /// c'tor
+        Authorization(const std::vector<std::string>& conf_roles, const std::vector<std::string>& conf_users)
+        {
+            for (const auto& role : conf_roles)
+                roles.emplace_back(std::make_shared<ServerSettings::Authorization::Role>(role));
+
+            auto empty_role = std::make_shared<ServerSettings::Authorization::Role>();
+            for (const auto& conf_user : conf_users)
+            {
+                users.emplace_back(conf_user);
+                ServerSettings::Authorization::User& user = users.back();
+                if (user.role_name.empty())
+                {
+                    user.role = empty_role;
+                }
+                else
+                {
+                    const auto& role_iter = std::find_if(roles.begin(), roles.end(), [&](const auto& role) { return role->role == user.role_name; });
+                    if (role_iter != roles.end())
+                        user.role = *role_iter;
+                }
+                if (user.role == nullptr)
+                    throw SnapException("Role '" + user.role_name + "' for user '" + user.name + "' not found");
+            }
+        }
+
         /// Role settings
         struct Role
         {
