@@ -31,6 +31,7 @@
 // standard headers
 #include <functional>
 #include <string>
+#include <vector>
 
 class Server;
 
@@ -38,6 +39,44 @@ class Server;
 class Request
 {
 public:
+    /// Description of the request
+    struct Description
+    {
+        /// c'tor
+        Description(std::string description, std::vector<std::pair<std::string, std::string>> parameters = {}, std::string result = "")
+            : description(std::move(description)), parameters(std::move(parameters)), result(std::move(result))
+        {
+        }
+
+        /// Description
+        std::string description;
+        /// Parameters
+        std::vector<std::pair<std::string, std::string>> parameters;
+        /// Return value
+        std::string result;
+
+        Json toJson()
+        {
+            Json jres;
+            jres["description"] = description;
+            if (!result.empty())
+                jres["return"] = result;
+            if (!parameters.empty())
+            {
+                Json jparams = Json::array();
+                for (const auto& [param, desc] : parameters)
+                {
+                    Json jparam;
+                    jparam["parameter"] = param;
+                    jparam["description"] = desc;
+                    jparams.push_back(std::move(jparam));
+                }
+                jres["parameters"] = jparams;
+            }
+            return jres;
+        }
+    };
+
     // TODO: revise handler names
     /// Response handler for json control requests, returning a @p response and/or a @p notification broadcast
     using OnResponse = std::function<void(jsonrpcpp::entity_ptr response, jsonrpcpp::notification_ptr notification)>;
@@ -53,6 +92,9 @@ public:
 
     /// Execute the Request
     virtual void execute(const jsonrpcpp::request_ptr& request, AuthInfo& authinfo, const OnResponse& on_response) = 0;
+
+    /// @return description
+    virtual Description description() const = 0;
 
     /// @return true if the user has the permission for the request
     virtual bool hasPermission(const AuthInfo& authinfo) const;
@@ -122,6 +164,7 @@ public:
     /// c'tor
     explicit ClientGetStatusRequest(const Server& server);
     void execute(const jsonrpcpp::request_ptr& request, AuthInfo& authinfo, const OnResponse& on_response) override;
+    Description description() const override;
 };
 
 
@@ -132,6 +175,7 @@ public:
     /// c'tor
     explicit ClientSetVolumeRequest(const Server& server);
     void execute(const jsonrpcpp::request_ptr& request, AuthInfo& authinfo, const OnResponse& on_response) override;
+    Description description() const override;
 };
 
 
@@ -142,6 +186,7 @@ public:
     /// c'tor
     explicit ClientSetLatencyRequest(const Server& server);
     void execute(const jsonrpcpp::request_ptr& request, AuthInfo& authinfo, const OnResponse& on_response) override;
+    Description description() const override;
 };
 
 
@@ -152,6 +197,7 @@ public:
     /// c'tor
     explicit ClientSetNameRequest(const Server& server);
     void execute(const jsonrpcpp::request_ptr& request, AuthInfo& authinfo, const OnResponse& on_response) override;
+    Description description() const override;
 };
 
 
@@ -176,6 +222,7 @@ public:
     /// c'tor
     explicit GroupGetStatusRequest(const Server& server);
     void execute(const jsonrpcpp::request_ptr& request, AuthInfo& authinfo, const OnResponse& on_response) override;
+    Description description() const override;
 };
 
 
@@ -186,6 +233,7 @@ public:
     /// c'tor
     explicit GroupSetNameRequest(const Server& server);
     void execute(const jsonrpcpp::request_ptr& request, AuthInfo& authinfo, const OnResponse& on_response) override;
+    Description description() const override;
 };
 
 
@@ -196,6 +244,7 @@ public:
     /// c'tor
     explicit GroupSetMuteRequest(const Server& server);
     void execute(const jsonrpcpp::request_ptr& request, AuthInfo& authinfo, const OnResponse& on_response) override;
+    Description description() const override;
 };
 
 
@@ -206,6 +255,7 @@ public:
     /// c'tor
     explicit GroupSetStreamRequest(const Server& server);
     void execute(const jsonrpcpp::request_ptr& request, AuthInfo& authinfo, const OnResponse& on_response) override;
+    Description description() const override;
 };
 
 
@@ -216,6 +266,7 @@ public:
     /// c'tor
     explicit GroupSetClientsRequest(const Server& server);
     void execute(const jsonrpcpp::request_ptr& request, AuthInfo& authinfo, const OnResponse& on_response) override;
+    Description description() const override;
 };
 
 
@@ -242,6 +293,7 @@ public:
     /// c'tor
     explicit StreamControlRequest(const Server& server);
     void execute(const jsonrpcpp::request_ptr& request, AuthInfo& authinfo, const OnResponse& on_response) override;
+    Description description() const override;
 };
 
 
@@ -252,6 +304,7 @@ public:
     /// c'tor
     explicit StreamSetPropertyRequest(const Server& server);
     void execute(const jsonrpcpp::request_ptr& request, AuthInfo& authinfo, const OnResponse& on_response) override;
+    Description description() const override;
 };
 
 
@@ -262,6 +315,7 @@ public:
     /// c'tor
     explicit StreamAddRequest(const Server& server);
     void execute(const jsonrpcpp::request_ptr& request, AuthInfo& authinfo, const OnResponse& on_response) override;
+    Description description() const override;
 };
 
 
@@ -272,6 +326,7 @@ public:
     /// c'tor
     explicit StreamRemoveRequest(const Server& server);
     void execute(const jsonrpcpp::request_ptr& request, AuthInfo& authinfo, const OnResponse& on_response) override;
+    Description description() const override;
 };
 
 
@@ -283,6 +338,7 @@ public:
     /// c'tor
     explicit ServerGetRpcVersionRequest(const Server& server);
     void execute(const jsonrpcpp::request_ptr& request, AuthInfo& authinfo, const OnResponse& on_response) override;
+    Description description() const override;
 };
 
 
@@ -293,6 +349,7 @@ public:
     /// c'tor
     explicit ServerGetStatusRequest(const Server& server);
     void execute(const jsonrpcpp::request_ptr& request, AuthInfo& authinfo, const OnResponse& on_response) override;
+    Description description() const override;
 };
 
 
@@ -303,6 +360,7 @@ public:
     /// c'tor
     explicit ServerDeleteClientRequest(const Server& server);
     void execute(const jsonrpcpp::request_ptr& request, AuthInfo& authinfo, const OnResponse& on_response) override;
+    Description description() const override;
 };
 
 
@@ -313,6 +371,7 @@ public:
     /// c'tor
     explicit ServerAuthenticateRequest(const Server& server);
     void execute(const jsonrpcpp::request_ptr& request, AuthInfo& authinfo, const OnResponse& on_response) override;
+    Description description() const override;
 
     bool requiresAuthentication() const override
     {
@@ -345,6 +404,7 @@ public:
     /// c'tor
     explicit GeneralGetRpcCommands(const Server& server);
     void execute(const jsonrpcpp::request_ptr& request, AuthInfo& authinfo, const OnResponse& on_response) override;
+    Description description() const override;
 
     /// Set available @p requests
     void setCommands(std::vector<std::shared_ptr<Request>> requests);

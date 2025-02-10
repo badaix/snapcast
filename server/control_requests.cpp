@@ -203,6 +203,11 @@ void ClientGetStatusRequest::execute(const jsonrpcpp::request_ptr& request, Auth
     on_response(std::move(response), nullptr);
 }
 
+Request::Description ClientGetStatusRequest::description() const
+{
+    return {"Get client status", {{"id", "client id"}}, "Client status, information and settings"};
+}
+
 
 
 ClientSetVolumeRequest::ClientSetVolumeRequest(const Server& server) : ClientRequest(server, "Client.SetVolume")
@@ -230,6 +235,11 @@ void ClientSetVolumeRequest::execute(const jsonrpcpp::request_ptr& request, Auth
                                                                   jsonrpcpp::Parameter("id", client_info->id, "volume", client_info->config.volume.toJson()));
     on_response(std::move(response), std::move(notification));
     updateClient(request);
+}
+
+Request::Description ClientSetVolumeRequest::description() const
+{
+    return {"Set client volume", {{"volume", "muted [bool] and volume [percent]"}}};
 }
 
 
@@ -266,6 +276,11 @@ void ClientSetLatencyRequest::execute(const jsonrpcpp::request_ptr& request, Aut
     updateClient(request);
 }
 
+Request::Description ClientSetLatencyRequest::description() const
+{
+    return {"Set additional client audio latency", {{"id", "client id"}, {"latency", "value [ms]"}}};
+}
+
 
 
 ClientSetNameRequest::ClientSetNameRequest(const Server& server) : ClientRequest(server, "Client.SetName")
@@ -295,6 +310,10 @@ void ClientSetNameRequest::execute(const jsonrpcpp::request_ptr& request, AuthIn
     updateClient(request);
 }
 
+Request::Description ClientSetNameRequest::description() const
+{
+    return {"Set name of a client", {{"name", "new client name"}}};
+}
 
 
 ///////////////////////////////////////// Group requests //////////////////////////////////////////
@@ -335,6 +354,12 @@ void GroupGetStatusRequest::execute(const jsonrpcpp::request_ptr& request, AuthI
     on_response(std::move(response), nullptr);
 }
 
+Request::Description GroupGetStatusRequest::description() const
+{
+    return {"Get status of a group", {{"id", "group id"}}, "Group status, information and settings"};
+}
+
+
 
 GroupSetNameRequest::GroupSetNameRequest(const Server& server) : GroupRequest(server, "Group.SetName")
 {
@@ -360,6 +385,12 @@ void GroupSetNameRequest::execute(const jsonrpcpp::request_ptr& request, AuthInf
     auto notification = std::make_shared<jsonrpcpp::Notification>("Group.OnNameChanged", jsonrpcpp::Parameter("id", group->id, "name", group->name));
     on_response(std::move(response), std::move(notification));
 }
+
+Request::Description GroupSetNameRequest::description() const
+{
+    return {"Set name of a group", {{"id", "group id"}, {"name", "new name of the group"}}};
+}
+
 
 
 GroupSetMuteRequest::GroupSetMuteRequest(const Server& server) : GroupRequest(server, "Group.SetMute")
@@ -405,6 +436,12 @@ void GroupSetMuteRequest::execute(const jsonrpcpp::request_ptr& request, AuthInf
     on_response(std::move(response), std::move(notification));
 }
 
+Request::Description GroupSetMuteRequest::description() const
+{
+    return {"Mute a grouo", {{"id", "id of the group"}, {"mute", "true or false"}}};
+}
+
+
 
 GroupSetStreamRequest::GroupSetStreamRequest(const Server& server) : GroupRequest(server, "Group.SetStream")
 {
@@ -449,6 +486,12 @@ void GroupSetStreamRequest::execute(const jsonrpcpp::request_ptr& request, AuthI
     auto notification = std::make_shared<jsonrpcpp::Notification>("Group.OnStreamChanged", jsonrpcpp::Parameter("id", group->id, "stream_id", group->streamId));
     on_response(std::move(response), std::move(notification));
 }
+
+Request::Description GroupSetStreamRequest::description() const
+{
+    return {"Assign a stream to a group", {{"id", "id of the group"}, {"stream_id", "id of the stream"}}};
+}
+
 
 
 GroupSetClientsRequest::GroupSetClientsRequest(const Server& server) : GroupRequest(server, "Group.SetClients")
@@ -525,6 +568,11 @@ void GroupSetClientsRequest::execute(const jsonrpcpp::request_ptr& request, Auth
     on_response(std::move(response), std::move(notification));
 }
 
+Request::Description GroupSetClientsRequest::description() const
+{
+    return {"Assign clients to a group", {{"id", "id of the group"}, {"clients", "list of client ids"}}};
+}
+
 
 
 ///////////////////////////////////////// Stream requests /////////////////////////////////////////
@@ -550,6 +598,7 @@ std::string StreamRequest::getStreamId(const jsonrpcpp::request_ptr& request)
 
     return request->params().get<std::string>("id");
 }
+
 
 
 StreamControlRequest::StreamControlRequest(const Server& server) : StreamRequest(server, "Stream.Control")
@@ -636,6 +685,12 @@ void StreamControlRequest::execute(const jsonrpcpp::request_ptr& request, AuthIn
         throw jsonrpcpp::InvalidParamsException("Command '" + command + "' not supported", request->id());
 }
 
+Request::Description StreamControlRequest::description() const
+{
+    return {"Control a stream (setPositiom, seek, next, previous, pause, playPause, stop, play)"};
+}
+
+
 
 StreamSetPropertyRequest::StreamSetPropertyRequest(const Server& server) : StreamRequest(server, "Stream.SetProperty")
 {
@@ -705,6 +760,12 @@ void StreamSetPropertyRequest::execute(const jsonrpcpp::request_ptr& request, Au
         throw jsonrpcpp::InvalidParamsException("Property '" + name + "' not supported", request->id());
 }
 
+Request::Description StreamSetPropertyRequest::description() const
+{
+    return {"Set stream property (loopStatus, shuffle, volume, mute, rate)"};
+}
+
+
 
 StreamAddRequest::StreamAddRequest(const Server& server) : StreamRequest(server, "Stream.AddStream")
 {
@@ -765,6 +826,12 @@ void StreamAddRequest::execute(const jsonrpcpp::request_ptr& request, AuthInfo& 
     on_response(std::move(response), nullptr);
 }
 
+Request::Description StreamAddRequest::description() const
+{
+    return {"Add a stream"};
+}
+
+
 
 StreamRemoveRequest::StreamRemoveRequest(const Server& server) : StreamRequest(server, "Stream.RemoveStream")
 {
@@ -790,6 +857,11 @@ void StreamRemoveRequest::execute(const jsonrpcpp::request_ptr& request, AuthInf
     result["id"] = streamId;
     auto response = std::make_shared<jsonrpcpp::Response>(*request, result);
     on_response(std::move(response), nullptr);
+}
+
+Request::Description StreamRemoveRequest::description() const
+{
+    return {"Remove a stream"};
 }
 
 
@@ -821,6 +893,11 @@ void ServerGetRpcVersionRequest::execute(const jsonrpcpp::request_ptr& request, 
     on_response(std::move(response), nullptr);
 }
 
+Request::Description ServerGetRpcVersionRequest::description() const
+{
+    return {"Get the RPC version"};
+}
+
 
 
 ServerGetStatusRequest::ServerGetStatusRequest(const Server& server) : Request(server, "Server.GetStatus")
@@ -839,6 +916,11 @@ void ServerGetStatusRequest::execute(const jsonrpcpp::request_ptr& request, Auth
     result["server"] = Config::instance().getServerStatus(getStreamManager().toJson());
     auto response = std::make_shared<jsonrpcpp::Response>(*request, result);
     on_response(std::move(response), nullptr);
+}
+
+Request::Description ServerGetStatusRequest::description() const
+{
+    return {"Get server status"};
 }
 
 
@@ -872,6 +954,12 @@ void ServerDeleteClientRequest::execute(const jsonrpcpp::request_ptr& request, A
     auto notification = std::make_shared<jsonrpcpp::Notification>("Server.OnUpdate", jsonrpcpp::Parameter("server", server));
     on_response(std::move(response), std::move(notification));
 }
+
+Request::Description ServerDeleteClientRequest::description() const
+{
+    return {"Delete client"};
+}
+
 
 
 ServerAuthenticateRequest::ServerAuthenticateRequest(const Server& server) : Request(server, "Server.Authenticate")
@@ -911,6 +999,12 @@ void ServerAuthenticateRequest::execute(const jsonrpcpp::request_ptr& request, A
 
     on_response(std::move(response), nullptr);
 }
+
+Request::Description ServerAuthenticateRequest::description() const
+{
+    return {"Authenticate"};
+}
+
 
 
 #if 0
@@ -971,6 +1065,7 @@ void GeneralGetRpcCommands::execute(const jsonrpcpp::request_ptr& request, AuthI
         jperms["authentication"] = req->requiresAuthentication();
         jperms["authorization"] = req->requiresAuthorization();
         jreq["requires"] = jperms;
+        jreq["description"] = req->description().toJson();
         commands.push_back(jreq);
     }
     Json result;
@@ -978,6 +1073,12 @@ void GeneralGetRpcCommands::execute(const jsonrpcpp::request_ptr& request, AuthI
 
     auto response = std::make_shared<jsonrpcpp::Response>(*request, result);
     on_response(std::move(response), nullptr);
+}
+
+
+Request::Description GeneralGetRpcCommands::description() const
+{
+    return {"Get available RPC commands", {}, "List of RPC commands"};
 }
 
 
