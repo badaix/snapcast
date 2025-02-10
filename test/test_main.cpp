@@ -19,10 +19,13 @@
 // prototype/interface header file
 
 // local headers
+#include "common/base64.h"
 #include "common/error_code.hpp"
 #include "common/stream_uri.hpp"
 #include "common/utils/string_utils.hpp"
 // #include "server/jwt.hpp"
+#include "server/authinfo.hpp"
+#include "server/server_settings.hpp"
 #include "server/streamreader/control_error.hpp"
 #include "server/streamreader/properties.hpp"
 
@@ -30,6 +33,7 @@
 #include <catch2/catch_test_macros.hpp>
 
 // standard headers
+#include <cstddef>
 #include <iostream>
 #include <regex>
 #include <system_error>
@@ -717,17 +721,19 @@ TEST_CASE("WildcardMatch")
     REQUIRE(!wildcardMatch("*get*erver*", "Server.getToken"));
 }
 
-#if 0
+
 TEST_CASE("Auth")
 {
     {
-        ServerSettings settings;
-        ServerSettings::User user("badaix:*:secret");
-        REQUIRE(user.permissions.size() == 1);
-        REQUIRE(user.permissions[0] == "*");
-        settings.users.push_back(user);
+        ServerSettings::Authorization auth_settings({"admin:*"}, {"badaix:secret:admin"});
+        auth_settings.enabled = true;
+        REQUIRE(auth_settings.users.size() == 1);
+        REQUIRE(auth_settings.roles.size() == 1);
+        REQUIRE(auth_settings.users.front().role->role == "admin");
+        REQUIRE(auth_settings.users.front().role->permissions.size() == 1);
+        REQUIRE(auth_settings.users.front().role->permissions.front() == "*");
 
-        AuthInfo auth(settings);
+        AuthInfo auth(auth_settings);
         auto ec = auth.authenticateBasic(base64_encode("badaix:secret"));
         REQUIRE(!ec);
         REQUIRE(auth.isAuthenticated());
@@ -735,12 +741,14 @@ TEST_CASE("Auth")
     }
 
     {
-        ServerSettings settings;
-        ServerSettings::User user("badaix::secret");
-        REQUIRE(user.permissions.empty());
-        settings.users.push_back(user);
+        ServerSettings::Authorization auth_settings({"admin:"}, {"badaix:secret:admin"});
+        auth_settings.enabled = true;
+        REQUIRE(auth_settings.users.size() == 1);
+        REQUIRE(auth_settings.roles.size() == 1);
+        REQUIRE(auth_settings.users.front().role->role == "admin");
+        REQUIRE(auth_settings.users.front().role->permissions.empty());
 
-        AuthInfo auth(settings);
+        AuthInfo auth(auth_settings);
         auto ec = auth.authenticateBasic(base64_encode("badaix:secret"));
         REQUIRE(!ec);
         REQUIRE(auth.isAuthenticated());
@@ -748,11 +756,29 @@ TEST_CASE("Auth")
     }
 
     {
-        ServerSettings settings;
-        ServerSettings::User user("badaix:*:secret");
-        settings.users.push_back(user);
+        ServerSettings::Authorization auth_settings({}, {"badaix:secret:"});
+        auth_settings.enabled = true;
+        REQUIRE(auth_settings.users.size() == 1);
+        REQUIRE(auth_settings.roles.empty());
+        REQUIRE(auth_settings.users.front().role->permissions.empty());
 
-        AuthInfo auth(settings);
+        AuthInfo auth(auth_settings);
+        auto ec = auth.authenticateBasic(base64_encode("badaix:secret"));
+        REQUIRE(!ec);
+        REQUIRE(auth.isAuthenticated());
+        REQUIRE(!auth.hasPermission("stream"));
+    }
+
+    {
+        ServerSettings::Authorization auth_settings({"admin:xxx,stream"}, {"badaix:secret:admin"});
+        auth_settings.enabled = true;
+        REQUIRE(auth_settings.users.size() == 1);
+        REQUIRE(auth_settings.roles.size() == 1);
+        REQUIRE(auth_settings.users.front().role->permissions.size() == 2);
+        REQUIRE(auth_settings.users.front().role->permissions[0] == "xxx");
+        REQUIRE(auth_settings.users.front().role->permissions[1] == "stream");
+
+        AuthInfo auth(auth_settings);
         auto ec = auth.authenticateBasic(base64_encode("badaix:wrong_password"));
         REQUIRE(ec == AuthErrc::wrong_password);
         REQUIRE(!auth.isAuthenticated());
@@ -762,6 +788,11 @@ TEST_CASE("Auth")
         REQUIRE(ec == AuthErrc::unknown_user);
         REQUIRE(!auth.isAuthenticated());
         REQUIRE(!auth.hasPermission("stream"));
+
+        ec = auth.authenticateBasic(base64_encode("badaix:secret"));
+        REQUIRE(!ec);
+        REQUIRE(auth.isAuthenticated());
+        REQUIRE(auth.hasPermission("stream"));
+        REQUIRE(!auth.hasPermission("play"));
     }
 }
-#endif

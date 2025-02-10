@@ -324,34 +324,20 @@ int main(int argc, char* argv[])
 
         if (settings.auth.enabled)
         {
+            std::vector<std::string> roles;
             for (size_t n = 0; n < roles_value->count(); ++n)
-            {
-                settings.auth.roles.emplace_back(std::make_shared<ServerSettings::Authorization::Role>(roles_value->value(n)));
-                const auto& role = settings.auth.roles.back();
-                LOG(DEBUG, LOG_TAG) << "Role: " << role->role << ", permissions: " << utils::string::container_to_string(role->permissions) << "\n";
-            }
-
-            auto empty_role = std::make_shared<ServerSettings::Authorization::Role>();
+                roles.push_back(roles_value->value(n));
+            std::vector<std::string> users;
             for (size_t n = 0; n < users_value->count(); ++n)
-            {
-                settings.auth.users.emplace_back(users_value->value(n));
-                ServerSettings::Authorization::User& user = settings.auth.users.back();
-                if (user.role_name.empty())
-                {
-                    user.role = empty_role;
-                }
-                else
-                {
-                    const auto& role_iter =
-                        find_if(settings.auth.roles.begin(), settings.auth.roles.end(), [&](const auto& role) { return role->role == user.role_name; });
-                    if (role_iter != settings.auth.roles.end())
-                        user.role = *role_iter;
-                }
-                if (user.role == nullptr)
-                    throw SnapException("Role '" + user.role_name + "' for user '" + user.name + "' not found");
+                users.push_back(users_value->value(n));
 
+            settings.auth = ServerSettings::Authorization(roles, users);
+
+
+            for (const auto& role : settings.auth.roles)
+                LOG(DEBUG, LOG_TAG) << "Role: " << role->role << ", permissions: " << utils::string::container_to_string(role->permissions) << "\n";
+            for (const auto& user : settings.auth.users)
                 LOG(DEBUG, LOG_TAG) << "User: " << user.name << ", pw: " << user.password << ", role: " << user.role_name << "\n";
-            }
         }
 
 #ifdef HAS_DAEMON
