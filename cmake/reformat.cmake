@@ -36,6 +36,6 @@ if(CLANG_FORMAT
    AND AUTOPEP)
   add_custom_target(
     reformat
-    DEPENDS reformat-cmake reformat-source reformat-python
+    DEPENDS reformat-cmake reformat-c++ reformat-python
     COMMENT "Auto formatting of all source and CMakeLists.txt files")
 endif()
