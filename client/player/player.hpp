@@ -47,15 +47,18 @@ namespace player
 class Player
 {
 public:
+    /// Volume
     struct Volume
     {
-        double volume{1.0};
-        bool mute{false};
+        double volume{1.0}; ///< volume [0..1]
+        bool mute{false}; ///< muted?
     };
 
     using volume_callback = std::function<void(const Volume& volume)>;
 
+    /// c'tor
     Player(boost::asio::io_context& io_context, const ClientSettings::Player& settings, std::shared_ptr<Stream> stream);
+    /// d'tor
     virtual ~Player();
 
     /// Set audio volume in range [0..1]
@@ -89,9 +92,12 @@ protected:
     /// @param muted muted or not
     virtual void setHardwareVolume(const Volume& volume);
 
+    /// set volume polynomial: volume^exp
     void setVolume_poly(double volume, double exp);
+    /// set volume exponential: (base^volume - 1) / (base - 1)
     void setVolume_exp(double volume, double base);
 
+    /// adjust volume of buffer by the current volume setting
     void adjustVolume(char* buffer, size_t frames);
 
     /// Notify the server about hardware volume changes
@@ -103,14 +109,23 @@ protected:
             onVolumeChanged_(volume);
     }
 
+    /// asio IO context
     boost::asio::io_context& io_context_;
+    /// is the player started?
     std::atomic<bool> active_;
+    /// the played stream
     std::shared_ptr<Stream> stream_;
+    /// runs the worker function if "needsThread" is true
     std::thread playerThread_;
+    /// player settings
     ClientSettings::Player settings_;
+    /// player volume
     Player::Volume volume_;
+    /// current volume correction factor (according to "setVolume")
     double volCorrection_;
+    /// callback for local volume changes that are reported back to the server
     volume_callback onVolumeChanged_;
+    /// mutex
     mutable std::mutex mutex_;
 
 private:
