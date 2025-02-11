@@ -322,26 +322,26 @@ void Server::onMessageReceived(const std::shared_ptr<StreamSession>& streamSessi
             if (auth.has_value())
                 ec = streamSession->authinfo.authenticate(auth->scheme, auth->param);
 
+            std::shared_ptr<msg::Error> error_msg;
             if (!auth.has_value() || ec)
             {
                 if (ec)
                     LOG(ERROR, LOG_TAG) << "Authentication failed: " << ec.detailed_message() << "\n";
                 else
                     LOG(ERROR, LOG_TAG) << "Authentication required\n";
-                auto error_msg = make_shared<msg::Error>(401, "Unauthorized", ec ? ec.detailed_message() : "Authentication required");
-                streamSession->send(error_msg, [streamSession](boost::system::error_code ec, std::size_t length)
-                {
-                    LOG(DEBUG, LOG_TAG) << "Sent result: " << ec << ", len: " << length << "\n";
-                    streamSession->stop();
-                });
-                return;
+                error_msg = make_shared<msg::Error>(401, "Unauthorized", ec ? ec.detailed_message() : "Authentication required");
             }
 
             if (!streamSession->authinfo.hasPermission("Streaming"))
             {
                 std::string error = "Permission 'Streaming' missing";
                 LOG(ERROR, LOG_TAG) << error << "\n";
-                auto error_msg = make_shared<msg::Error>(403, "Forbidden", error);
+                error_msg = make_shared<msg::Error>(403, "Forbidden", error);
+            }
+
+            if (error_msg)
+            {
+                error_msg->refersTo = helloMsg.id;
                 streamSession->send(error_msg, [streamSession](boost::system::error_code ec, std::size_t length)
                 {
                     LOG(DEBUG, LOG_TAG) << "Sent result: " << ec << ", len: " << length << "\n";

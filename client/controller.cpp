@@ -60,7 +60,10 @@
 #include "common/aixlog.hpp"
 #include "common/message/client_info.hpp"
 #include "common/message/error.hpp"
+#include "common/message/factory.hpp"
 #include "common/message/hello.hpp"
+#include "common/message/message.hpp"
+#include "common/message/server_settings.hpp"
 #include "common/message/time.hpp"
 #include "common/snap_exception.hpp"
 #include "time_provider.hpp"
@@ -459,13 +462,15 @@ void Controller::worker()
             if (settings_.host_id.empty())
                 settings_.host_id = ::getHostId(macAddress);
 
+            // Start receiver loop
+            getNextMessage();
+
             // Say hello to the server
             std::optional<msg::Hello::Auth> auth;
             if (settings_.server.auth.has_value())
                 auth = msg::Hello::Auth{settings_.server.auth->scheme, settings_.server.auth->param};
             auto hello = std::make_shared<msg::Hello>(macAddress, settings_.host_id, settings_.instance, auth);
-            clientConnection_->sendRequest<msg::ServerSettings>(
-                hello, 2s, [this](const boost::system::error_code& ec, std::unique_ptr<msg::ServerSettings> response) mutable
+            clientConnection_->sendRequest(hello, 2s, [this](const boost::system::error_code& ec, std::unique_ptr<msg::BaseMessage> response) mutable
             {
                 if (ec)
                 {
@@ -475,7 +480,22 @@ void Controller::worker()
                 }
                 else
                 {
-                    serverSettings_ = std::move(response);
+                    if (response->type == message_type::kError)
+                    {
+                        auto error_msg = msg::message_cast<msg::Error>(std::move(response));
+                        LOG(ERROR, LOG_TAG) << "Received error repsonse to hello request: " << error_msg->error << ", code: " << error_msg->code
+                                            << ", message: " << error_msg->message << "\n";
+                        // reconnect();
+                        return;
+                    }
+                    else if (response->type != message_type::kServerSettings)
+                    {
+                        LOG(ERROR, LOG_TAG) << "Received unexpected message type as repsonse to hello request: " << response->type << "\n";
+                        reconnect();
+                        return;
+                    }
+
+                    serverSettings_ = msg::message_cast<msg::ServerSettings>(std::move(response));
                     LOG(INFO, LOG_TAG) << "ServerSettings - buffer: " << serverSettings_->getBufferMs() << ", latency: " << serverSettings_->getLatency()
                                        << ", volume: " << serverSettings_->getVolume() << ", muted: " << serverSettings_->isMuted() << "\n";
 
@@ -483,9 +503,6 @@ void Controller::worker()
                     sendTimeSyncMessage(50);
                 }
             });
-
-            // Start receiver loop
-            getNextMessage();
         }
         else
         {

@@ -66,19 +66,37 @@ void StreamSessionWebsocket::start()
 
 void StreamSessionWebsocket::stop()
 {
+    LOG(DEBUG, LOG_TAG) << "stop\n";
     boost::beast::error_code ec;
     if (is_ssl_)
     {
+#if 0 // this might not return
         if (ssl_ws_->is_open())
             ssl_ws_->close(beast::websocket::close_code::normal, ec);
+#endif
+
+        if (ssl_ws_->next_layer().lowest_layer().is_open())
+        {
+            ssl_ws_->next_layer().lowest_layer().shutdown(boost::asio::ip::tcp::socket::shutdown_both, ec);
+            ssl_ws_->next_layer().lowest_layer().close(ec);
+        }
     }
     else
     {
+#if 0 // this might not return
         if (tcp_ws_->is_open())
             tcp_ws_->close(beast::websocket::close_code::normal, ec);
+#endif
+
+        if (tcp_ws_->next_layer().is_open())
+        {
+            tcp_ws_->next_layer().shutdown(boost::asio::ip::tcp::socket::shutdown_both, ec);
+            tcp_ws_->next_layer().close(ec);
+        }
     }
     if (ec)
         LOG(ERROR, LOG_TAG) << "Error in socket close: " << ec.message() << "\n";
+    LOG(DEBUG, LOG_TAG) << "stopped\n";
 }
 
 
