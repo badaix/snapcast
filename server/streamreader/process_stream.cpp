@@ -64,14 +64,14 @@ std::string ProcessStream::findExe(const std::string& filename) const
         return which;
 
     /// check in the same path as this binary
-    char buff[PATH_MAX];
-    char szTmp[32];
-    sprintf(szTmp, "/proc/%d/exe", getpid());
-    ssize_t len = readlink(szTmp, buff, sizeof(buff) - 1);
+    std::array<char, PATH_MAX> buff;
+    std::array<char, 32> szTmp;
+    sprintf(szTmp.data(), "/proc/%d/exe", getpid());
+    ssize_t len = readlink(szTmp.data(), buff.data(), buff.size() - 1);
     if (len != -1)
     {
         buff[len] = '\0';
-        return string(buff) + "/" + exe;
+        return string(buff.data()) + "/" + exe;
     }
 
     return "";

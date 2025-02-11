@@ -724,9 +724,10 @@ TEST_CASE("WildcardMatch")
 
 TEST_CASE("Auth")
 {
+    ServerSettings::Authorization auth_settings;
+    auth_settings.enabled = true;
     {
-        ServerSettings::Authorization auth_settings({"admin:*"}, {"badaix:secret:admin"});
-        auth_settings.enabled = true;
+        auth_settings.init({"admin:*"}, {"badaix:secret:admin"});
         REQUIRE(auth_settings.users.size() == 1);
         REQUIRE(auth_settings.roles.size() == 1);
         REQUIRE(auth_settings.users.front().role->role == "admin");
@@ -741,8 +742,7 @@ TEST_CASE("Auth")
     }
 
     {
-        ServerSettings::Authorization auth_settings({"admin:"}, {"badaix:secret:admin"});
-        auth_settings.enabled = true;
+        auth_settings.init({"admin:"}, {"badaix:secret:admin"});
         REQUIRE(auth_settings.users.size() == 1);
         REQUIRE(auth_settings.roles.size() == 1);
         REQUIRE(auth_settings.users.front().role->role == "admin");
@@ -756,8 +756,7 @@ TEST_CASE("Auth")
     }
 
     {
-        ServerSettings::Authorization auth_settings({}, {"badaix:secret:"});
-        auth_settings.enabled = true;
+        auth_settings.init({}, {"badaix:secret:"});
         REQUIRE(auth_settings.users.size() == 1);
         REQUIRE(auth_settings.roles.empty());
         REQUIRE(auth_settings.users.front().role->permissions.empty());
@@ -770,8 +769,7 @@ TEST_CASE("Auth")
     }
 
     {
-        ServerSettings::Authorization auth_settings({"admin:xxx,stream"}, {"badaix:secret:admin"});
-        auth_settings.enabled = true;
+        auth_settings.init({"admin:xxx,stream"}, {"badaix:secret:admin"});
         REQUIRE(auth_settings.users.size() == 1);
         REQUIRE(auth_settings.roles.size() == 1);
         REQUIRE(auth_settings.users.front().role->permissions.size() == 2);
