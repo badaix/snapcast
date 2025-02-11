@@ -331,7 +331,7 @@ int main(int argc, char* argv[])
             for (size_t n = 0; n < users_value->count(); ++n)
                 users.push_back(users_value->value(n));
 
-            settings.auth = ServerSettings::Authorization(roles, users);
+            settings.auth.init(roles, users);
 
 
             for (const auto& role : settings.auth.roles)

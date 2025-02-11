@@ -55,6 +55,7 @@ public:
         /// Return value
         std::string result;
 
+        /// @return description as json
         Json toJson()
         {
             Json jres;

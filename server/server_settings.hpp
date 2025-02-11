@@ -76,9 +76,11 @@ struct ServerSettings
         /// c'tor
         Authorization() = default;
 
-        /// c'tor
-        Authorization(const std::vector<std::string>& conf_roles, const std::vector<std::string>& conf_users)
+        void init(const std::vector<std::string>& conf_roles, const std::vector<std::string>& conf_users)
         {
+            roles.clear();
+            users.clear();
+
             for (const auto& role : conf_roles)
                 roles.emplace_back(std::make_shared<ServerSettings::Authorization::Role>(role));
 
