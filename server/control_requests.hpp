@@ -43,6 +43,7 @@ public:
     struct Description
     {
         /// c'tor
+        // NOLINTNEXTLINE
         Description(std::string description, std::vector<std::pair<std::string, std::string>> parameters = {}, std::string result = "")
             : description(std::move(description)), parameters(std::move(parameters)), result(std::move(result))
         {
