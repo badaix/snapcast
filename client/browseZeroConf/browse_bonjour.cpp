@@ -43,6 +43,7 @@ static constexpr auto LOG_TAG = "Bonjour";
 /// DNSServiceRefDeleter
 struct DNSServiceRefDeleter
 {
+    /// operator ()
     void operator()(DNSServiceRef* ref)
     {
         DNSServiceRefDeallocate(*ref);
@@ -159,14 +160,16 @@ string BonjourGetError(DNSServiceErrorType error)
 /// mDNS reply
 struct mDNSReply
 {
-    string name, regtype, domain;
+    string name;    ///< name
+    string regtype; ///< reg type
+    string domain;  ///< domain
 };
 
 /// mDNS resolve
 struct mDNSResolve
 {
-    string fullName;
-    uint16_t port;
+    string fullName; ///< full name
+    uint16_t port;   ///< port
 };
 
 #define CHECKED(err)                                                                                                                                           \
