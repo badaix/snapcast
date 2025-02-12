@@ -31,7 +31,7 @@
 #include "server.hpp"
 #include "server_settings.hpp"
 #if defined(HAS_AVAHI) || defined(HAS_BONJOUR)
-#include "publishZeroConf/publish_mdns.hpp"
+#include "publishZeroConf/publish_zeroconf.hpp"
 #endif
 #include "common/aixlog.hpp"
 #include "config.hpp"

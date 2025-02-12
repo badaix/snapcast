@@ -18,30 +18,10 @@
 
 #pragma once
 
-
-// local headers
-#include "publish_mdns.hpp"
-
-// 3rd party headers
-#include <dns_sd.h>
-
-// standard headers
-#include <string>
-#include <thread>
-
-
-/// Bonjour based mDNS publisher
-class PublishBonjour : public PublishmDNS
-{
-public:
-    /// c'tor
-    PublishBonjour(std::string serviceName, boost::asio::io_context& ioc);
-    ~PublishBonjour() override;
-    void publish(const std::vector<mDNSService>& services) override;
-
-private:
-    std::thread pollThread_;
-    void worker();
-    std::atomic<bool> active_;
-    std::vector<DNSServiceRef> clients;
-};
+#if defined(HAS_AVAHI)
+#include "publish_avahi.hpp"
+using PublishZeroConf = PublishAvahi;
+#elif defined(HAS_BONJOUR)
+#include "publish_bonjour.hpp"
+using PublishZeroConf = PublishBonjour;
+#endif
