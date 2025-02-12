@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2025  Johannes Pohl
+    Copyright (C) 2014-2024  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -18,17 +18,10 @@
 
 #pragma once
 
-
-// local headers
-#include "browse_mdns.hpp"
-
-// 3rd party headers
-#include <dns_sd.h>
-
-
-/// Bonjour based mDNS browser
-class BrowseBonjour : public BrowsemDNS
-{
-public:
-    bool browse(const std::string& serviceName, mDNSResult& result, int timeout) override;
-};
+#if defined(HAS_AVAHI)
+#include "browse_avahi.hpp"
+using BrowseZeroConf = BrowseAvahi;
+#elif defined(HAS_BONJOUR)
+#include "browse_bonjour.hpp"
+using BrowseZeroConf = BrowseBonjour;
+#endif

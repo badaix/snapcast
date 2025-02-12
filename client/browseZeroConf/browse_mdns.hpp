@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2024  Johannes Pohl
+    Copyright (C) 2014-2025  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -22,37 +22,28 @@
 #include <cstdint>
 #include <string>
 
-enum IPVersion
+/// IP versions IPv4 and IPv6
+enum class IPVersion
 {
-    IPv4 = 0,
-    IPv6 = 1
+    IPv4 = 0, ///< IPv4
+    IPv6 = 1  ///< IPv6
 };
 
-
+/// mDNS record
 struct mDNSResult
 {
-    mDNSResult() : ip_version(IPv4), iface_idx(0), port(0), valid(false)
-    {
-    }
-
-    IPVersion ip_version;
-    int iface_idx;
-    std::string ip;
-    std::string host;
-    uint16_t port;
-    bool valid;
+    IPVersion ip_version{IPVersion::IPv4}; ///< IP version
+    int iface_idx{0};                      ///< interface index
+    std::string ip;                        ///< IP address
+    std::string host;                      ///< host
+    uint16_t port{0};                      ///< port
+    bool valid{false};                     ///< valid
 };
 
+/// mDNS browser interface
 class BrowsemDNS
 {
 public:
+    /// get mDNS record for @p serviceName
     virtual bool browse(const std::string& serviceName, mDNSResult& result, int timeout) = 0;
 };
-
-#if defined(HAS_AVAHI)
-#include "browse_avahi.hpp"
-using BrowseZeroConf = BrowseAvahi;
-#elif defined(HAS_BONJOUR)
-#include "browse_bonjour.hpp"
-using BrowseZeroConf = BrowseBonjour;
-#endif

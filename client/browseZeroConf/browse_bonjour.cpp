@@ -40,6 +40,7 @@ using namespace std;
 
 static constexpr auto LOG_TAG = "Bonjour";
 
+/// DNSServiceRefDeleter
 struct DNSServiceRefDeleter
 {
     void operator()(DNSServiceRef* ref)
@@ -51,6 +52,7 @@ struct DNSServiceRefDeleter
 
 using DNSServiceHandle = std::unique_ptr<DNSServiceRef, DNSServiceRefDeleter>;
 
+/// @return @p error as string
 string BonjourGetError(DNSServiceErrorType error)
 {
     switch (error)
@@ -154,11 +156,13 @@ string BonjourGetError(DNSServiceErrorType error)
     }
 }
 
+/// mDNS reply
 struct mDNSReply
 {
     string name, regtype, domain;
 };
 
+/// mDNS resolve
 struct mDNSResolve
 {
     string fullName;
@@ -169,6 +173,7 @@ struct mDNSResolve
     if ((err) != kDNSServiceErr_NoError)                                                                                                                       \
         throw SnapException(BonjourGetError(err) + ":" + to_string(__LINE__));
 
+/// run service @p service
 void runService(const DNSServiceHandle& service)
 {
     if (!*service)

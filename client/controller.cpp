@@ -56,7 +56,7 @@
 #endif
 #include "player/file_player.hpp"
 
-#include "browseZeroConf/browse_mdns.hpp"
+#include "browseZeroConf/browse_zeroconf.hpp"
 #include "common/aixlog.hpp"
 #include "common/message/client_info.hpp"
 #include "common/message/error.hpp"
