@@ -30,10 +30,11 @@
 
 static constexpr auto LOG_TAG = "Bonjour";
 
+/// Opaque16
 typedef union
 {
-    unsigned char b[2];
-    unsigned short NotAnInteger;
+    unsigned char b[2];          ///< b
+    unsigned short NotAnInteger; ///< not an int
 } Opaque16;
 
 
