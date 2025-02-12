@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2024  Johannes Pohl
+    Copyright (C) 2014-2025  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -27,37 +27,35 @@
 #include <vector>
 
 
+/// mDNS service
 struct mDNSService
 {
-    mDNSService(const std::string& name, size_t port) : name_(name), port_(port)
+    /// c'tor
+    mDNSService(std::string name, size_t port) : name_(std::move(name)), port_(port)
     {
     }
 
-    std::string name_;
-    size_t port_;
+    std::string name_; ///< service name
+    size_t port_;      ///< service port
 };
 
 
+/// mDNS publisher interface
 class PublishmDNS
 {
 public:
-    PublishmDNS(const std::string& serviceName, boost::asio::io_context& ioc) : serviceName_(serviceName), io_context_(ioc)
+    /// c'tor
+    PublishmDNS(std::string serviceName, boost::asio::io_context& ioc) : serviceName_(std::move(serviceName)), io_context_(ioc)
     {
     }
 
+    /// d'tor
     virtual ~PublishmDNS() = default;
 
+    /// publish list of @p services
     virtual void publish(const std::vector<mDNSService>& services) = 0;
 
 protected:
-    std::string serviceName_;
-    boost::asio::io_context& io_context_;
+    std::string serviceName_;             ///< service name
+    boost::asio::io_context& io_context_; ///< asio io context
 };
-
-#if defined(HAS_AVAHI)
-#include "publish_avahi.hpp"
-using PublishZeroConf = PublishAvahi;
-#elif defined(HAS_BONJOUR)
-#include "publish_bonjour.hpp"
-using PublishZeroConf = PublishBonjour;
-#endif

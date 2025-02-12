@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2022  Johannes Pohl
+    Copyright (C) 2014-2025  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -37,7 +37,7 @@ typedef union
 } Opaque16;
 
 
-PublishBonjour::PublishBonjour(const std::string& serviceName, boost::asio::io_context& ioc) : PublishmDNS(serviceName, ioc), active_(false)
+PublishBonjour::PublishBonjour(std::string serviceName, boost::asio::io_context& ioc) : PublishmDNS(std::move(serviceName), ioc), active_(false)
 {
     ///	dns-sd -R Snapcast _snapcast._tcp local 1704
     ///	dns-sd -R Snapcast _snapcast-jsonrpc._tcp local 1705

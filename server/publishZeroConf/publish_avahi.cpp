@@ -33,7 +33,7 @@ static AvahiEntryGroup* group;
 static AvahiSimplePoll* simple_poll;
 static char* name;
 
-PublishAvahi::PublishAvahi(const std::string& serviceName, boost::asio::io_context& ioc) : PublishmDNS(serviceName, ioc), client_(nullptr), timer_(ioc)
+PublishAvahi::PublishAvahi(std::string serviceName, boost::asio::io_context& ioc) : PublishmDNS(std::move(serviceName), ioc), client_(nullptr), timer_(ioc)
 {
     group = nullptr;
     simple_poll = nullptr;
