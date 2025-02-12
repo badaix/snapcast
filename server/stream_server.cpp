@@ -57,14 +57,14 @@ void StreamServer::cleanup()
 }
 
 
-void StreamServer::addSession(const std::shared_ptr<StreamSession>& session)
+void StreamServer::addSession(std::shared_ptr<StreamSession> session)
 {
     session->setMessageReceiver(this);
     session->setBufferMs(settings_.stream.bufferMs);
     session->start();
 
     std::lock_guard<std::recursive_mutex> mlock(sessionsMutex_);
-    sessions_.emplace_back(session);
+    sessions_.emplace_back(std::move(session));
     cleanup();
 }
 
@@ -210,7 +210,7 @@ void StreamServer::handleAccept(tcp::socket socket)
 
         LOG(NOTICE, LOG_TAG) << "StreamServer::NewConnection: " << socket.remote_endpoint().address().to_string() << "\n";
         shared_ptr<StreamSession> session = make_shared<StreamSessionTcp>(this, settings_, std::move(socket));
-        addSession(session);
+        addSession(std::move(session));
     }
     catch (const std::exception& e)
     {

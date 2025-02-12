@@ -67,7 +67,7 @@ public:
     //	void send(const msg::BaseMessage* message);
 
     /// Add a new stream session
-    void addSession(const std::shared_ptr<StreamSession>& session);
+    void addSession(std::shared_ptr<StreamSession> session);
     /// Callback for chunks that are ready to be sent
     void onChunkEncoded(const PcmStream* pcmStream, bool isDefaultStream, const std::shared_ptr<msg::PcmChunk>& chunk, double duration);
 
