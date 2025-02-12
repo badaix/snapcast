@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2024  Johannes Pohl
+    Copyright (C) 2014-2025  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -18,8 +18,6 @@
 
 #pragma once
 
-class BrowseAvahi;
-
 // local headers
 #include "browse_mdns.hpp"
 
@@ -31,11 +29,15 @@ class BrowseAvahi;
 #include <avahi-common/simple-watch.h>
 
 
+/// Avahi based mDNS browser
 class BrowseAvahi : public BrowsemDNS
 {
 public:
+    /// c'tor
     BrowseAvahi();
+    /// d'tor
     ~BrowseAvahi();
+
     bool browse(const std::string& serviceName, mDNSResult& result, int timeout) override;
 
 private:
