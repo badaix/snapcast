@@ -43,13 +43,13 @@ static constexpr auto LOG_TAG = "StringUtils";
 
 bool wildcardMatch(const std::string& pattern, const std::string& text)
 {
-    LOG(INFO, LOG_TAG) << "wildcardMatch '" << pattern << "', text: '" << text << "'\n";
+    LOG(DEBUG, LOG_TAG) << "wildcardMatch '" << pattern << "', text: '" << text << "'\n";
     std::vector<std::string> parts = utils::string::split(pattern, '*');
     size_t pos = 0;
     for (size_t n = 0; n < parts.size(); ++n)
     {
         const std::string& part = parts[n];
-        LOG(INFO, LOG_TAG) << "Matching '" << part << "', pos: " << pos << "\n";
+        LOG(DEBUG, LOG_TAG) << "Matching '" << part << "', pos: " << pos << "\n";
         pos = text.find(part, pos);
         if (pos == std::string::npos)
             return false;

@@ -269,11 +269,28 @@ bool AuthInfo::hasPermission(const std::string& resource) const
         return false;
 
     const auto& role = user_iter->role;
-    auto perm_iter = std::find_if(role->permissions.begin(), role->permissions.end(),
-                                  [&](const std::string& permission) { return utils::string::wildcardMatch(permission, resource); });
+    auto perm_iter = std::find_if(role->permissions.begin(), role->permissions.end(), [&](const std::string& permission)
+    {
+        if (!permission.empty() && (permission[0] == '-'))
+            return false;
+        return utils::string::wildcardMatch(permission, resource);
+    });
 
     if (perm_iter != role->permissions.end())
     {
+        auto not_perm_iter = std::find_if(role->permissions.begin(), role->permissions.end(), [&](const std::string& permission)
+        {
+            if (!permission.empty() && (permission[0] != '-'))
+                return false;
+            return utils::string::wildcardMatch(permission.substr(1), resource);
+        });
+
+        if (not_perm_iter != role->permissions.end())
+        {
+            LOG(DEBUG, LOG_TAG) << "Found non-permission for ressource '" << resource << "': '" << *perm_iter << "'\n";
+            return false;
+        }
+
         LOG(DEBUG, LOG_TAG) << "Found permission for ressource '" << resource << "': '" << *perm_iter << "'\n";
         return true;
     }
