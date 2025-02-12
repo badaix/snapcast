@@ -793,4 +793,20 @@ TEST_CASE("Auth")
         REQUIRE(auth.hasPermission("stream"));
         REQUIRE(!auth.hasPermission("play"));
     }
+
+    {
+        auth_settings.init({"admin:Client.*,Group.*,-Group.Set*"}, {"badaix:secret:admin"});
+        REQUIRE(auth_settings.users.size() == 1);
+        REQUIRE(auth_settings.roles.size() == 1);
+        REQUIRE(auth_settings.users.front().role->permissions.size() == 3);
+
+        AuthInfo auth(auth_settings);
+        auto ec = auth.authenticateBasic(base64_encode("badaix:secret"));
+        REQUIRE(!ec);
+        REQUIRE(auth.hasPermission("Client.SetVolume"));
+        REQUIRE(auth.hasPermission("Client.SetName"));
+        REQUIRE(auth.hasPermission("Group.GetStatus"));
+        REQUIRE(!auth.hasPermission("Group.SetName"));
+        REQUIRE(!auth.hasPermission("Server.GetStatus"));
+    }
 }
