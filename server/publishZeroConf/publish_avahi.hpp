@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2024  Johannes Pohl
+    Copyright (C) 2014-2025  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -20,6 +20,7 @@
 
 
 // local headers
+#include "publish_mdns.hpp"
 
 // 3rd party headers
 #include <avahi-client/client.h>
@@ -36,14 +37,12 @@
 #include <vector>
 
 
-class PublishAvahi;
-
-#include "publish_mdns.hpp"
-
+/// Avahi based mDNS publisher
 class PublishAvahi : public PublishmDNS
 {
 public:
-    PublishAvahi(const std::string& serviceName, boost::asio::io_context& ioc);
+    /// c'tor
+    PublishAvahi(std::string serviceName, boost::asio::io_context& ioc);
     ~PublishAvahi() override;
     void publish(const std::vector<mDNSService>& services) override;
 
