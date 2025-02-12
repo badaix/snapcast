@@ -17,6 +17,7 @@ curl --header "Content-Type: application/json" --request POST --data '{"id":7,"j
 ```
 
 ### Remove all disconnected clients
+
 ```bash
 curl -s  -H "Content-Type: application/json" -d '{"id":1, "jsonrpc":"2.0", "method": "Server.GetStatus"}' http://127.0.0.1:1780/jsonrpc | jq '.result.server.groups[].clients[] | select(.connected==false) .id' | while read ln; do curl -s -H  "Content-Type: application/json" -d '{"id":1, "jsonrpc":"2.0", "method": "Server.DeleteClient", "params": {"id":'$ln'}}' http://127.0.0.1:1780/jsonrpc; done
 ```

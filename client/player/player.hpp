@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2024  Johannes Pohl
+    Copyright (C) 2014-2025  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -51,7 +51,7 @@ public:
     struct Volume
     {
         double volume{1.0}; ///< volume [0..1]
-        bool mute{false}; ///< muted?
+        bool mute{false};   ///< muted?
     };
 
     using volume_callback = std::function<void(const Volume& volume)>;
