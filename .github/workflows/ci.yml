@@ -50,12 +50,20 @@ jobs:
             -DCMAKE_EXPORT_COMPILE_COMMANDS=TRUE \
             -DCMAKE_CXX_FLAGS="-DCMAKE_CXX_FLAGS=-DJSON_HAS_CPP_14"
       - name: analysis
-        run: cmake --build build --target ${{ matrix.tool }}
+        run: |
+          mkdir -p build/analysis
+          cmake --build build --target ${{ matrix.tool }} 2>&1 | tee build/analysis.log
+      - name: evaluate
+        run: |
+          WARNINGS=$(cat build/analysis.log | sort | uniq | grep -e ": warning: " | wc -l)
+          MAX_ALLOWED=431
+          echo "Analysis finished with $WARNINGS warnings, max allowed: $MAX_ALLOWED"
+          if [ "$WARNINGS" -gt "$MAX_ALLOWED" ]; then exit $WARNINGS; else exit 0; fi;
 
 
   documentation:
 
-    # TODO: Fail in case of (too many) warnings, upload artifacts
+    # TODO: upload artifacts
     strategy:
       fail-fast: false
 
