@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2024  Johannes Pohl
+    Copyright (C) 2014-2025  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -50,7 +50,7 @@ void assign(void* pointer, T val)
 
 PcmEncoder::PcmEncoder(const std::string& codecOptions) : Encoder(codecOptions)
 {
-    headerChunk_.reset(new msg::CodecHeader("pcm"));
+    headerChunk_ = std::make_shared<msg::CodecHeader>("pcm");
 }
 
 

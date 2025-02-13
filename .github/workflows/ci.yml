@@ -56,7 +56,7 @@ jobs:
       - name: evaluate
         run: |
           WARNINGS=$(cat build/analysis.log | sort | uniq | grep -e ": warning: " | wc -l)
-          MAX_ALLOWED=431
+          MAX_ALLOWED=0
           echo "Analysis finished with $WARNINGS warnings, max allowed: $MAX_ALLOWED"
           if [ "$WARNINGS" -gt "$MAX_ALLOWED" ]; then exit $WARNINGS; else exit 0; fi;
 

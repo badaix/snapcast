@@ -55,7 +55,7 @@ Server::Server(boost::asio::io_context& io_context, ServerSettings serverSetting
 void Server::onNewSession(std::shared_ptr<StreamSession> session)
 {
     LOG(DEBUG, LOG_TAG) << "onNewSession\n";
-    streamServer_->addSession(std::move(session));
+    streamServer_->addSession(session);
 }
 
 

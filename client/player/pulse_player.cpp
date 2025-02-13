@@ -171,7 +171,7 @@ PulsePlayer::PulsePlayer(boost::asio::io_context& io_context, const ClientSettin
 PulsePlayer::~PulsePlayer()
 {
     LOG(DEBUG, LOG_TAG) << "Destructor\n";
-    stop();
+    stop(); // NOLINT
 }
 
 
@@ -491,6 +491,7 @@ void PulsePlayer::connect()
     if (settings_.pcm_device.name != DEFAULT_DEVICE)
         device = settings_.pcm_device.name.c_str();
 
+    // NOLINTBEGIN
     int result = pa_stream_connect_playback(
         playstream_, device, &bufattr_, static_cast<pa_stream_flags>(PA_STREAM_INTERPOLATE_TIMING | PA_STREAM_ADJUST_LATENCY | PA_STREAM_AUTO_TIMING_UPDATE),
         nullptr, nullptr);
@@ -500,6 +501,7 @@ void PulsePlayer::connect()
         result = pa_stream_connect_playback(playstream_, device, &bufattr_,
                                             static_cast<pa_stream_flags>(PA_STREAM_INTERPOLATE_TIMING | PA_STREAM_AUTO_TIMING_UPDATE), nullptr, nullptr);
     }
+    // NOLINTEND
     if (result < 0)
         throw SnapException("Failed to connect PulseAudio playback stream");
 

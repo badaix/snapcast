@@ -45,12 +45,13 @@ Config::~Config()
 void Config::init(const std::string& root_directory, const std::string& user, const std::string& group)
 {
     string dir;
+    auto home = getenv("HOME");
     if (!root_directory.empty())
         dir = root_directory;
-    else if (getenv("HOME") == nullptr)
+    else if (home == nullptr)
         dir = "/var/lib/snapserver/";
     else
-        dir = string(getenv("HOME")) + "/.config/snapserver/";
+        dir = string{home} + "/.config/snapserver/";
 
     if (!dir.empty() && (dir.back() != '/'))
         dir += "/";

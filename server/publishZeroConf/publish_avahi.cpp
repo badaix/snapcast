@@ -45,18 +45,18 @@ void PublishAvahi::publish(const std::vector<mDNSService>& services)
 {
     services_ = services;
 
-    /// Allocate main loop object
+    // Allocate main loop object
     if ((simple_poll = avahi_simple_poll_new()) == nullptr)
     {
-        /// TODO: error handling
+        // TODO: error handling
         LOG(ERROR, LOG_TAG) << "Failed to create simple poll object.\n";
     }
 
-    /// Allocate a new client
+    // Allocate a new client
     int error;
     client_ = avahi_client_new(avahi_simple_poll_get(simple_poll), AVAHI_CLIENT_IGNORE_USER_CONFIG, client_callback, this, &error);
 
-    /// Check wether creating the client object succeeded
+    // Check wether creating the client object succeeded
     if (client_ == nullptr)
     {
         LOG(ERROR, LOG_TAG) << "Failed to create client: " << avahi_strerror(error) << "\n";
@@ -96,11 +96,11 @@ void PublishAvahi::entry_group_callback(AvahiEntryGroup* g, AvahiEntryGroupState
     assert(g == group || group == nullptr);
     group = g;
 
-    /// Called whenever the entry group state changes
+    // Called whenever the entry group state changes
     switch (state)
     {
         case AVAHI_ENTRY_GROUP_ESTABLISHED:
-            /// The entry group has been established successfully
+            // The entry group has been established successfully
             LOG(INFO, LOG_TAG) << "Service '" << name << "' successfully established.\n";
             break;
 
@@ -108,14 +108,14 @@ void PublishAvahi::entry_group_callback(AvahiEntryGroup* g, AvahiEntryGroupState
         {
             char* n;
 
-            /// A service name collision with a remote service happened. Let's pick a new name
+            // A service name collision with a remote service happened. Let's pick a new name
             n = avahi_alternative_service_name(name);
             avahi_free(name);
             name = n;
 
             LOG(NOTICE, LOG_TAG) << "Service name collision, renaming service to '" << name << "'\n";
 
-            /// And recreate the services
+            // And recreate the services
             static_cast<PublishAvahi*>(userdata)->create_services(avahi_entry_group_get_client(g));
             break;
         }
@@ -124,7 +124,7 @@ void PublishAvahi::entry_group_callback(AvahiEntryGroup* g, AvahiEntryGroupState
 
             LOG(ERROR, LOG_TAG) << "Entry group failure: " << avahi_strerror(avahi_client_errno(avahi_entry_group_get_client(g))) << "\n";
 
-            /// Some kind of failure happened while we were registering our services
+            // Some kind of failure happened while we were registering our services
             avahi_simple_poll_quit(simple_poll);
             break;
 
@@ -138,7 +138,7 @@ void PublishAvahi::create_services(AvahiClient* c)
     assert(c);
     char* n;
 
-    /// If this is the first time we're called, let's create a new entry group if necessary
+    // If this is the first time we're called, let's create a new entry group if necessary
     if (group == nullptr)
     {
         if ((group = avahi_entry_group_new(c, entry_group_callback, this)) == nullptr)
@@ -148,15 +148,16 @@ void PublishAvahi::create_services(AvahiClient* c)
         }
     }
 
-    /// If the group is empty (either because it was just created, or because it was reset previously, add our entries.
+    // If the group is empty (either because it was just created, or because it was reset previously, add our entries.
     int ret;
     if (avahi_entry_group_is_empty(group) != 0)
     {
         LOG(INFO, LOG_TAG) << "Adding service '" << name << "'\n";
 
-        /// We will now add two services and one subtype to the entry group
+        // We will now add two services and one subtype to the entry group
         for (const auto& service : services_)
         {
+            // NOLINTNEXTLINE
             if ((ret = avahi_entry_group_add_service(group, AVAHI_IF_UNSPEC, AVAHI_PROTO_UNSPEC, AvahiPublishFlags(0), name, service.name_.c_str(), nullptr,
                                                      nullptr, service.port_, static_cast<char*>(nullptr))) < 0)
             {
@@ -168,7 +169,7 @@ void PublishAvahi::create_services(AvahiClient* c)
             }
         }
 
-        /// Add an additional (hypothetic) subtype
+        // Add an additional (hypothetic) subtype
         /* if ((ret = avahi_entry_group_add_service_subtype(group, AVAHI_IF_UNSPEC, AVAHI_PROTO_UNSPEC, AvahiPublishFlags(0), name,
            "_printer._tcp",
            NULL, "_magic._sub._printer._tcp") < 0))
@@ -177,7 +178,7 @@ void PublishAvahi::create_services(AvahiClient* c)
                                 goto fail;
                         }
         */
-        /// Tell the server to register the service
+        // Tell the server to register the service
         if ((ret = avahi_entry_group_commit(group)) < 0)
         {
             LOG(ERROR, LOG_TAG) << "Failed to commit entry group: " << avahi_strerror(ret) << "\n";
@@ -189,7 +190,7 @@ void PublishAvahi::create_services(AvahiClient* c)
 
 collision:
 
-    /// A service name collision with a local service happened. Let's pick a new name
+    // A service name collision with a local service happened. Let's pick a new name
     n = avahi_alternative_service_name(name);
     avahi_free(name);
     name = n;
@@ -210,12 +211,12 @@ void PublishAvahi::client_callback(AvahiClient* c, AvahiClientState state, AVAHI
 {
     assert(c);
 
-    /// Called whenever the client or server state changes
+    // Called whenever the client or server state changes
     switch (state)
     {
         case AVAHI_CLIENT_S_RUNNING:
 
-            /// The server has startup successfully and registered its host name on the network, so it's time to create our services
+            // The server has startup successfully and registered its host name on the network, so it's time to create our services
             static_cast<PublishAvahi*>(userdata)->create_services(c);
             break;
 
@@ -227,13 +228,13 @@ void PublishAvahi::client_callback(AvahiClient* c, AvahiClientState state, AVAHI
 
         case AVAHI_CLIENT_S_COLLISION:
 
-            /// Let's drop our registered services. When the server is back
-            /// in AVAHI_SERVER_RUNNING state we will register them again with the new host name.
+            // Let's drop our registered services. When the server is back
+            // in AVAHI_SERVER_RUNNING state we will register them again with the new host name.
 
         case AVAHI_CLIENT_S_REGISTERING:
 
-            /// The server records are now being established. This might be caused by a host name change. We need to wait
-            /// for our own records to register until the host name is properly esatblished.
+            // The server records are now being established. This might be caused by a host name change. We need to wait
+            // for our own records to register until the host name is properly esatblished.
 
             if (group != nullptr)
                 avahi_entry_group_reset(group);

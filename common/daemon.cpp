@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2024  Johannes Pohl
+    Copyright (C) 2014-2025  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -25,8 +25,8 @@
 #include "common/utils/file_utils.hpp"
 
 // standard headers
+#include <array>
 #include <cstdlib>
-#include <cstring>
 #include <fcntl.h>
 #include <grp.h>
 #include <pwd.h>
@@ -36,11 +36,11 @@
 #include <unistd.h>
 
 
-Daemon::Daemon(const std::string& user, const std::string& group, const std::string& pidfile)
-    : pidFilehandle_(-1), user_(user), group_(group), pidfile_(pidfile)
+Daemon::Daemon(std::string user, std::string group, std::string pidfile)
+    : pidFilehandle_(-1), user_(std::move(user)), group_(std::move(group)), pidfile_(std::move(pidfile))
 {
-    if (pidfile.empty() || pidfile.find('/') == std::string::npos)
-        throw SnapException("invalid pid file \"" + pidfile + "\"");
+    if (pidfile_.empty() || pidfile_.find('/') == std::string::npos)
+        throw SnapException("invalid pid file \"" + pidfile_ + "\"");
 }
 
 
@@ -152,12 +152,12 @@ void Daemon::daemonize()
     if (lockf(pidFilehandle_, F_TLOCK, 0) == -1)
         throw SnapException("Could not lock PID lock file \"" + pidfile_ + "\". Is the daemon already running?");
 
-    char str[10];
+    std::array<char, 10> str;
     /// Get and format PID
-    sprintf(str, "%d\n", getpid());
+    sprintf(str.data(), "%d\n", getpid());
 
     /// write pid to lockfile
-    if (write(pidFilehandle_, str, strlen(str)) != static_cast<int>(strlen(str)))
+    if (write(pidFilehandle_, str.data(), str.size()) != static_cast<int>(str.size()))
         throw SnapException("Could not write PID to lock file \"" + pidfile_ + "\"");
 
     /// Close out the standard file descriptors

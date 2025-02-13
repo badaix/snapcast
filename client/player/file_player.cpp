@@ -86,7 +86,7 @@ FilePlayer::FilePlayer(boost::asio::io_context& io_context, const ClientSettings
 FilePlayer::~FilePlayer()
 {
     LOG(DEBUG, LOG_TAG) << "Destructor\n";
-    stop();
+    stop(); // NOLINT
 }
 
 

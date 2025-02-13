@@ -165,7 +165,7 @@ ControlSessionHttp::ControlSessionHttp(ControlMessageReceiver* receiver, tcp_soc
 ControlSessionHttp::~ControlSessionHttp()
 {
     LOG(DEBUG, LOG_TAG) << "ControlSessionHttp::~ControlSessionHttp()\n";
-    stop();
+    stop(); // NOLINT
 }
 
 
@@ -462,7 +462,7 @@ void ControlSessionHttp::on_read(beast::error_code ec, std::size_t bytes_transfe
         // The lifetime of the message has to extend
         // for the duration of the async operation so
         // we use a shared_ptr to manage it.
-        using response_type = typename std::decay<decltype(response)>::type;
+        using response_type = typename std::decay<decltype(response)>::type; // NOLINT
         auto sp = std::make_shared<response_type>(std::forward<decltype(response)>(response));
 
         // Write the response

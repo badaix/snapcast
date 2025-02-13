@@ -43,7 +43,7 @@ StreamSessionTcp::StreamSessionTcp(StreamMessageReceiver* receiver, const Server
 StreamSessionTcp::~StreamSessionTcp()
 {
     LOG(DEBUG, LOG_TAG) << "~StreamSessionTcp\n";
-    stop();
+    stop(); // NOLINT
 }
 
 

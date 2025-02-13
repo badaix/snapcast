@@ -45,9 +45,9 @@ namespace streamreader
 static constexpr auto LOG_TAG = "PcmStream";
 
 
-PcmStream::PcmStream(PcmStream::Listener* pcmListener, boost::asio::io_context& ioc, const ServerSettings& server_settings, const StreamUri& uri)
-    : active_(false), strand_(boost::asio::make_strand(ioc.get_executor())), pcmListeners_{pcmListener}, uri_(uri), chunk_ms_(20), state_(ReaderState::kIdle),
-      server_settings_(server_settings), req_id_(0), property_timer_(strand_)
+PcmStream::PcmStream(PcmStream::Listener* pcmListener, boost::asio::io_context& ioc, ServerSettings server_settings, StreamUri uri)
+    : active_(false), strand_(boost::asio::make_strand(ioc.get_executor())), pcmListeners_{pcmListener}, uri_(std::move(uri)), chunk_ms_(20),
+      state_(ReaderState::kIdle), server_settings_(std::move(server_settings)), req_id_(0), property_timer_(strand_)
 {
     encoder::EncoderFactory encoderFactory;
     if (uri_.query.find(kUriCodec) == uri_.query.end())
@@ -94,7 +94,7 @@ PcmStream::PcmStream(PcmStream::Listener* pcmListener, boost::asio::io_context& 
 
 PcmStream::~PcmStream()
 {
-    stop();
+    stop(); // NOLINT
     property_timer_.cancel();
 }
 
