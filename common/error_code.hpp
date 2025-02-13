@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2024  Johannes Pohl
+    Copyright (C) 2014-2025  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -112,9 +112,9 @@ struct ErrorOr
     }
 
     /// @return the moved value
-    T takeValue()
+    T&& takeValue()
     {
-        return std::move(std::get<T>(var));
+        return std::get<T>(std::move(var));
     }
 
     /// @return the error
@@ -124,10 +124,9 @@ struct ErrorOr
     }
 
     /// @return the moved error
-    ErrorCode takeError()
+    ErrorCode&& takeError()
     {
-        auto ec = std::move(std::get<ErrorCode>(var));
-        return ec;
+        return std::get<ErrorCode>(std::move(var));
     }
 
 private:

@@ -45,7 +45,7 @@ ControlSessionTcp::ControlSessionTcp(ControlMessageReceiver* receiver, tcp::sock
 ControlSessionTcp::~ControlSessionTcp()
 {
     LOG(DEBUG, LOG_TAG) << "ControlSessionTcp::~ControlSessionTcp()\n";
-    stop();
+    stop(); // NOLINT
 }
 
 

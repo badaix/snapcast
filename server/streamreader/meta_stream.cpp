@@ -69,7 +69,7 @@ MetaStream::MetaStream(PcmStream::Listener* pcmListener, const std::vector<std::
 
 MetaStream::~MetaStream()
 {
-    stop();
+    stop(); // NOLINT
 }
 
 

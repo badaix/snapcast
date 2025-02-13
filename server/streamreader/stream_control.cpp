@@ -39,7 +39,7 @@ namespace streamreader
 static constexpr auto LOG_TAG = "Script";
 
 
-StreamControl::StreamControl(const boost::asio::any_io_executor& executor) : executor_(executor)
+StreamControl::StreamControl(const boost::asio::any_io_executor& executor) : executor_(executor) // NOLINT
 {
 }
 

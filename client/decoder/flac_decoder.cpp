@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2024  Johannes Pohl
+    Copyright (C) 2014-2025  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -80,7 +80,7 @@ bool FlacDecoder::decode(msg::PcmChunk* chunk)
     memcpy(flacChunk->payload, chunk->payload, chunk->payloadSize);
     flacChunk->payloadSize = chunk->payloadSize;
 
-    pcmChunk->payload = static_cast<char*>(realloc(pcmChunk->payload, 0));
+    pcmChunk->payload = static_cast<char*>(realloc(pcmChunk->payload, 0)); // NOLINT
     pcmChunk->payloadSize = 0;
     while (flacChunk->payloadSize > 0)
     {
@@ -154,7 +154,7 @@ FLAC__StreamDecoderReadStatus read_callback(const FLAC__StreamDecoder* /*decoder
         memcpy(buffer, flacChunk->payload, *bytes);
         memmove(flacChunk->payload, flacChunk->payload + *bytes, flacChunk->payloadSize - *bytes);
         flacChunk->payloadSize = flacChunk->payloadSize - static_cast<uint32_t>(*bytes);
-        flacChunk->payload = static_cast<char*>(realloc(flacChunk->payload, flacChunk->payloadSize));
+        flacChunk->payload = static_cast<char*>(realloc(flacChunk->payload, flacChunk->payloadSize)); // NOLINT
     }
     return FLAC__STREAM_DECODER_READ_STATUS_CONTINUE;
 }

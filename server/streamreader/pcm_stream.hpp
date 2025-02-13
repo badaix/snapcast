@@ -124,7 +124,7 @@ public:
     using ResultHandler = std::function<void(const snapcast::ErrorCode& ec)>;
 
     /// c'tor. Encoded PCM data is passed to the PcmStream::Listener
-    PcmStream(PcmStream::Listener* pcmListener, boost::asio::io_context& ioc, const ServerSettings& server_settings, const StreamUri& uri);
+    PcmStream(PcmStream::Listener* pcmListener, boost::asio::io_context& ioc, ServerSettings server_settings, StreamUri uri);
     /// d'tor
     virtual ~PcmStream();
 

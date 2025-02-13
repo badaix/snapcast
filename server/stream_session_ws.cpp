@@ -48,7 +48,7 @@ StreamSessionWebsocket::StreamSessionWebsocket(StreamMessageReceiver* receiver, 
 StreamSessionWebsocket::~StreamSessionWebsocket()
 {
     LOG(DEBUG, LOG_TAG) << "~StreamSessionWS\n";
-    stop();
+    stop(); // NOLINT
 }
 
 

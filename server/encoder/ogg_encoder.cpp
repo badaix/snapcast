@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2024  Johannes Pohl
+    Copyright (C) 2014-2025  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -28,6 +28,7 @@
 // standard headers
 #include <cstring>
 #include <iostream>
+#include <memory>
 
 
 using namespace std;
@@ -238,8 +239,8 @@ void OggEncoder::initEncoder()
     /* set up our packet->stream encoder */
     /* pick a random serial number; that way we can more likely build
      chained streams just by concatenation */
-    srand(time(nullptr));
-    ogg_stream_init(&os_, rand());
+    srand(time(nullptr));          // NOLINT
+    ogg_stream_init(&os_, rand()); // NOLINT
 
     /* Vorbis streams begin with three headers; the initial header (with
      most of the codec setup parameters) which is mandated by the Ogg
@@ -261,7 +262,7 @@ void OggEncoder::initEncoder()
      * audio data will start on a new page, as per spec
      */
     size_t pos(0);
-    headerChunk_.reset(new msg::CodecHeader("ogg"));
+    headerChunk_ = std::make_shared<msg::CodecHeader>("ogg");
     while (true)
     {
         int result = ogg_stream_flush(&os_, &og_);
