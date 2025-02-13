@@ -96,7 +96,7 @@ Player::Player(boost::asio::io_context& io_context, const ClientSettings::Player
 
 Player::~Player()
 {
-    stop();
+    stop(); // NOLINT
 }
 
 

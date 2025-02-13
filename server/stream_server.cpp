@@ -36,8 +36,8 @@ using json = nlohmann::json;
 
 static constexpr auto LOG_TAG = "StreamServer";
 
-StreamServer::StreamServer(boost::asio::io_context& io_context, const ServerSettings& serverSettings, StreamMessageReceiver* messageReceiver)
-    : io_context_(io_context), config_timer_(io_context), settings_(serverSettings), messageReceiver_(messageReceiver)
+StreamServer::StreamServer(boost::asio::io_context& io_context, ServerSettings serverSettings, StreamMessageReceiver* messageReceiver)
+    : io_context_(io_context), config_timer_(io_context), settings_(std::move(serverSettings)), messageReceiver_(messageReceiver)
 {
 }
 
@@ -57,14 +57,14 @@ void StreamServer::cleanup()
 }
 
 
-void StreamServer::addSession(std::shared_ptr<StreamSession> session)
+void StreamServer::addSession(const std::shared_ptr<StreamSession>& session)
 {
     session->setMessageReceiver(this);
     session->setBufferMs(settings_.stream.bufferMs);
     session->start();
 
     std::lock_guard<std::recursive_mutex> mlock(sessionsMutex_);
-    sessions_.emplace_back(std::move(session));
+    sessions_.emplace_back(session);
     cleanup();
 }
 
@@ -210,7 +210,7 @@ void StreamServer::handleAccept(tcp::socket socket)
 
         LOG(NOTICE, LOG_TAG) << "StreamServer::NewConnection: " << socket.remote_endpoint().address().to_string() << "\n";
         shared_ptr<StreamSession> session = make_shared<StreamSessionTcp>(this, settings_, std::move(socket));
-        addSession(std::move(session));
+        addSession(session);
     }
     catch (const std::exception& e)
     {

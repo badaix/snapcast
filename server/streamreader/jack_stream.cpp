@@ -220,7 +220,7 @@ void JackStream::tryConnect()
 bool JackStream::openJackConnection()
 {
     char* serverName = serverName_.data();
-    jack_options_t options = (jack_options_t)(JackNoStartServer | JackServerName);
+    auto options = static_cast<jack_options_t>(JackNoStartServer | JackServerName); // NOLINT
 
     client_ = jack_client_open(name_.c_str(), options, nullptr, serverName);
     if (client_ == nullptr)

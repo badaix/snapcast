@@ -25,6 +25,10 @@
 #include "common/snap_exception.hpp"
 #include "common/utils/file_utils.hpp"
 
+// standard headers
+#include <memory>
+
+
 using namespace std;
 
 namespace streamreader
@@ -38,8 +42,9 @@ string hex2str(const string& input)
 {
     using byte = unsigned char;
     unsigned long x = strtoul(input.c_str(), nullptr, 16);
+    // NOLINTNEXTLINE
     byte a[] = {byte(x >> 24), byte(x >> 16), byte(x >> 8), byte(x), 0};
-    return string(reinterpret_cast<char*>(a));
+    return reinterpret_cast<char*>(a);
 }
 } // namespace
 
@@ -323,7 +328,7 @@ void XMLCALL AirplayStream::element_start(void* userdata, const char* element_na
 
     self->buf_.assign("");
     if (name == "item")
-        self->entry_.reset(new TageEntry);
+        self->entry_ = std::make_unique<TageEntry>();
 
     for (int i = 0; attr[i] != nullptr; i += 2)
     {

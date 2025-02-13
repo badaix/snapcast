@@ -30,6 +30,7 @@
 
 // standard headers
 #include <iostream>
+#include <memory>
 
 
 using namespace std;
@@ -41,7 +42,7 @@ static constexpr auto LOG_TAG = "FlacEnc";
 
 FlacEncoder::FlacEncoder(const std::string& codecOptions) : Encoder(codecOptions), encoder_(nullptr), pcmBufferSize_(0), encodedSamples_(0), flacChunk_(nullptr)
 {
-    headerChunk_.reset(new msg::CodecHeader("flac"));
+    headerChunk_ = std::make_shared<msg::CodecHeader>("flac");
     pcmBuffer_ = static_cast<FLAC__int32*>(malloc(pcmBufferSize_ * sizeof(FLAC__int32)));
     metadata_[0] = nullptr;
     metadata_[1] = nullptr;

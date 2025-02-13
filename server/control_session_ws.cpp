@@ -48,7 +48,7 @@ ControlSessionWebsocket::ControlSessionWebsocket(ControlMessageReceiver* receive
 ControlSessionWebsocket::~ControlSessionWebsocket()
 {
     LOG(DEBUG, LOG_TAG) << "ControlSessionWebsocket::~ControlSessionWebsocket()\n";
-    stop();
+    stop(); // NOLINT
 }
 
 

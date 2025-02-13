@@ -300,7 +300,7 @@ ClientConnectionTcp::ClientConnectionTcp(boost::asio::io_context& io_context, Cl
 
 ClientConnectionTcp::~ClientConnectionTcp()
 {
-    disconnect();
+    disconnect(); // NOLINT
 }
 
 
@@ -421,7 +421,7 @@ ClientConnectionWs::ClientConnectionWs(boost::asio::io_context& io_context, Clie
 
 ClientConnectionWs::~ClientConnectionWs()
 {
-    disconnect();
+    disconnect(); // NOLINT
 }
 
 
@@ -539,7 +539,7 @@ boost::system::error_code ClientConnectionWs::doConnect(boost::asio::ip::basic_e
 
 void ClientConnectionWs::write(boost::asio::streambuf& buffer, WriteHandler&& write_handler)
 {
-    getWs().async_write(boost::asio::buffer(buffer.data()), write_handler);
+    getWs().async_write(boost::asio::buffer(buffer.data()), write_handler); // NOLINT
 }
 
 
@@ -592,7 +592,7 @@ ssl_websocket& ClientConnectionWss::getWs()
 
 ClientConnectionWss::~ClientConnectionWss()
 {
-    disconnect();
+    disconnect(); // NOLINT
 }
 
 
