@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2024  Johannes Pohl
+    Copyright (C) 2014-2025  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -143,12 +143,14 @@ static std::istream& operator>>(std::istream& is, LoopStatus& loop_status)
     return is;
 }
 
-
+/// Properties of the stream (volume, shuffle, mute, position, can_play, can_pause, ...)
 class Properties
 {
 public:
+    /// c'tor
     Properties() = default;
-    Properties(const json& j);
+    /// c'tor taking json serialized properties
+    explicit Properties(const json& j);
 
     /// Meta data
     std::optional<Metadata> metadata;
@@ -185,7 +187,10 @@ public:
     /// Whether the media player may be controlled over this interface
     bool can_control = false;
 
+    /// serialize to json
     json toJson() const;
+    /// deserialize from json
     void fromJson(const json& j);
+    /// compare for equality
     bool operator==(const Properties& other) const;
 };
