@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2024  Johannes Pohl
+    Copyright (C) 2014-2025  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -32,20 +32,24 @@
 #include <vector>
 
 
+/// Resampler
 class Resampler
 {
 public:
+    /// c'tor to resample from @p in_format to @p out_format
     Resampler(const SampleFormat& in_format, const SampleFormat& out_format);
+    /// d'tor
     virtual ~Resampler();
 
-    // std::shared_ptr<msg::PcmChunk> resample(std::shared_ptr<msg::PcmChunk> chunk, chronos::usec duration);
+    /// @return resampled @p chunk
     std::shared_ptr<msg::PcmChunk> resample(std::shared_ptr<msg::PcmChunk> chunk);
+    /// @return resampled @p chunk
     std::shared_ptr<msg::PcmChunk> resample(const msg::PcmChunk& chunk);
+    /// @return if resampling is needed (in_format != out_format)
     bool resamplingNeeded() const;
 
 private:
     std::vector<char> resample_buffer_;
-    // std::unique_ptr<msg::PcmChunk> resampled_chunk_;
     SampleFormat in_format_;
     SampleFormat out_format_;
 #ifdef HAS_SOXR

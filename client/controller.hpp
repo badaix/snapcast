@@ -44,7 +44,7 @@ class Controller
 {
 public:
     /// c'tor
-    Controller(boost::asio::io_context& io_context, const ClientSettings& settings); //, std::unique_ptr<MetadataAdapter> meta);
+    Controller(boost::asio::io_context& io_context, const ClientSettings& settings);
     /// Start thw work
     void start();
     // void stop();
@@ -74,7 +74,6 @@ private:
     std::shared_ptr<Stream> stream_;
     std::unique_ptr<decoder::Decoder> decoder_;
     std::unique_ptr<player::Player> player_;
-    // std::unique_ptr<MetadataAdapter> meta_;
     std::unique_ptr<msg::ServerSettings> serverSettings_;
     std::unique_ptr<msg::CodecHeader> headerChunk_;
 };

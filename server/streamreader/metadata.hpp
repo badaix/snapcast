@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2024  Johannes Pohl
+    Copyright (C) 2014-2025  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -29,27 +29,35 @@
 
 using json = nlohmann::json;
 
+/// Meta data of a single track
 class Metadata
 {
 public:
+    /// Cover art
     struct ArtData
     {
+        /// base64 encoded art data
         std::string data;
+        /// type of the data (e.g. jpg)
         std::string extension;
 
+        /// compare for equality
         bool operator==(const ArtData& other) const
         {
             return ((other.data == data) && (other.extension == extension));
         }
 
+        /// compare for un-equality
         bool operator!=(const ArtData& other) const
         {
             return !(other == *this);
         }
     };
 
+    /// c'tor
     Metadata() = default;
-    Metadata(const json& j);
+    /// c'tor taking json serialized meta data
+    explicit Metadata(const json& j);
 
     /// https://www.musicpd.org/doc/html/protocol.html#tags
     /// the duration of the song
@@ -142,7 +150,10 @@ public:
     /// Spotify track id
     std::optional<std::string> spotify_track_id;
 
+    /// serialize to json
     json toJson() const;
+    /// deserialize from json
     void fromJson(const json& j);
+    /// compare for equality
     bool operator==(const Metadata& other) const;
 };

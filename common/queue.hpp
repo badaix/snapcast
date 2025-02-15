@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2024  Johannes Pohl
+    Copyright (C) 2014-2025  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -25,6 +25,7 @@
 #include <mutex>
 
 
+/// Queue with "wait for new element" functionality
 template <typename T>
 class Queue
 {
@@ -32,8 +33,7 @@ public:
     T pop()
     {
         std::unique_lock<std::mutex> mlock(mutex_);
-        while (queue_.empty())
-            cond_.wait(mlock);
+        cond_.wait(mlock, [this]() { return queue_.empty(); });
 
         //		std::lock_guard<std::mutex> lock(mutex_);
         auto val = queue_.front();
@@ -54,7 +54,7 @@ public:
     {
         std::unique_lock<std::mutex> mlock(mutex_);
         abort_ = false;
-        if (!cond_.wait_for(mlock, timeout, [this] { return (!queue_.empty() || abort_); }))
+        if (!cond_.wait_for(mlock, timeout, [this]() { return (!queue_.empty() || abort_); }))
             return false;
 
         return !queue_.empty() && !abort_;
@@ -66,7 +66,7 @@ public:
         abort_ = false;
         if (timeout.count() > 0)
         {
-            if (!cond_.wait_for(mlock, timeout, [this] { return (!queue_.empty() || abort_); }))
+            if (!cond_.wait_for(mlock, timeout, [this]() { return (!queue_.empty() || abort_); }))
                 return false;
         }
 

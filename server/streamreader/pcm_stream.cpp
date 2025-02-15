@@ -29,6 +29,7 @@
 #include "control_error.hpp"
 #include "encoder/encoder_factory.hpp"
 #include "image_cache.hpp"
+#include "streamreader/properties.hpp"
 
 // 3rd party headers
 #include <boost/asio/ip/host_name.hpp>
@@ -152,7 +153,7 @@ void PcmStream::pollProperties()
             {
                 LOG(INFO, LOG_TAG) << "Response for Plugin.Stream.Player.GetProperties: " << response.to_json() << "\n";
                 if (response.error().code() == 0)
-                    setProperties(response.result());
+                    setProperties(Properties(response.result()));
             });
             pollProperties();
         }
@@ -168,7 +169,7 @@ void PcmStream::onControlNotification(const jsonrpcpp::Notification& notificatio
         if (notification.method() == "Plugin.Stream.Player.Properties")
         {
             LOG(DEBUG, LOG_TAG) << "Received properties notification\n";
-            setProperties(notification.params().to_json());
+            setProperties(Properties(notification.params().to_json()));
         }
         else if (notification.method() == "Plugin.Stream.Ready")
         {
@@ -177,7 +178,7 @@ void PcmStream::onControlNotification(const jsonrpcpp::Notification& notificatio
             {
                 LOG(INFO, LOG_TAG) << "Response for Plugin.Stream.Player.GetProperties: " << response.to_json() << "\n";
                 if (response.error().code() == 0)
-                    setProperties(response.result());
+                    setProperties(Properties(response.result()));
             });
 
             // TODO: Add capabilities or settings?
