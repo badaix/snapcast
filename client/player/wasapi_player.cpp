@@ -51,6 +51,7 @@ static constexpr auto LOG_TAG = "WASAPI";
 template <typename T>
 struct COMMemDeleter
 {
+    /// Operator()
     void operator()(T* obj)
     {
         if (obj != NULL)

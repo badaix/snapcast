@@ -45,11 +45,14 @@
 class Stream
 {
 public:
+    /// c'tor
     Stream(const SampleFormat& in_format, const SampleFormat& out_format);
+    /// d'tor
     virtual ~Stream() = default;
 
     /// Adds PCM data to the queue
     void addChunk(std::unique_ptr<msg::PcmChunk> chunk);
+    /// Remove all chunks from the queue
     void clearChunks();
 
     /// Get PCM data, which will be played out in "outputBufferDacTime" time
@@ -68,11 +71,13 @@ public:
     /// "Server buffer": playout latency, e.g. 1000ms
     void setBufferLen(size_t bufferLenMs);
 
+    /// @return sampleformat
     const SampleFormat& getFormat() const
     {
         return format_;
     }
 
+    /// @return if chunk was avabilable within @p timeout
     bool waitForChunk(const std::chrono::milliseconds& timeout) const;
 
 private:

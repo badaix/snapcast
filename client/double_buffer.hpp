@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2024  Johannes Pohl
+    Copyright (C) 2014-2025  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -36,10 +36,12 @@ template <class T>
 class DoubleBuffer
 {
 public:
-    DoubleBuffer(size_t size = 10) : bufferSize(size)
+    /// c'tor
+    explicit DoubleBuffer(size_t size = 10) : bufferSize(size)
     {
     }
 
+    /// Add @p element, pop last, if buffer is full
     inline void add(const T& element)
     {
         buffer.push_back(element);
@@ -47,6 +49,7 @@ public:
             buffer.pop_front();
     }
 
+    /// Add @p element, pop last, if buffer is full
     inline void add(T&& element)
     {
         buffer.push_back(std::move(element));
@@ -54,7 +57,7 @@ public:
             buffer.pop_front();
     }
 
-    /// Median as mean over N values around the median
+    /// @return median as mean over N values around the median
     T median(uint16_t mean = 1) const
     {
         if (buffer.empty())
@@ -78,6 +81,7 @@ public:
         }
     }
 
+    /// @return mean value
     double mean() const
     {
         if (buffer.empty())
@@ -88,6 +92,7 @@ public:
         return mean;
     }
 
+    /// @return @p percentile percentile
     T percentile(unsigned int percentile) const
     {
         if (buffer.empty())
@@ -97,6 +102,7 @@ public:
         return tmpBuffer[(size_t)((tmpBuffer.size() - 1) * ((float)percentile / (float)100))];
     }
 
+    /// @return array of different percentiles
     template <std::size_t Size>
     std::array<T, Size> percentiles(std::array<uint8_t, Size> percentiles) const
     {
@@ -112,31 +118,37 @@ public:
         return result;
     }
 
+    /// @return if the buffer is full
     inline bool full() const
     {
         return (buffer.size() == bufferSize);
     }
 
+    /// Clear the buffer
     inline void clear()
     {
         buffer.clear();
     }
 
+    /// @return current size of the buffer
     inline size_t size() const
     {
         return buffer.size();
     }
 
+    /// @return if the buffer is empty
     inline bool empty() const
     {
         return buffer.empty();
     }
 
+    /// Set size of the buffer
     void setSize(size_t size)
     {
         bufferSize = size;
     }
 
+    /// @return the raw buffer
     const std::deque<T>& getBuffer() const
     {
         return buffer;

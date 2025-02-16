@@ -46,8 +46,8 @@ struct riff_wave_header
 /// See https://en.wikipedia.org/wiki/WAV
 struct chunk_header
 {
-    uint32_t id;
-    uint32_t sz;
+    uint32_t id; ///< id
+    uint32_t sz; ///< size
 };
 
 
@@ -55,12 +55,12 @@ struct chunk_header
 /// See https://en.wikipedia.org/wiki/WAV
 struct chunk_fmt
 {
-    uint16_t audio_format; ///<
-    uint16_t num_channels;
-    uint32_t sample_rate;
-    uint32_t byte_rate;
-    uint16_t block_align;
-    uint16_t bits_per_sample;
+    uint16_t audio_format;    ///< format
+    uint16_t num_channels;    ///< channels
+    uint32_t sample_rate;     ///< sample rate
+    uint32_t byte_rate;       ///< byte rate
+    uint16_t block_align;     ///< block align
+    uint16_t bits_per_sample; ///< bps
 };
 
 

@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2022  Johannes Pohl
+    Copyright (C) 2014-2025  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -16,8 +16,8 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
-#ifndef CORE_AUDIO_PLAYER_HPP
-#define CORE_AUDIO_PLAYER_HPP
+
+#pragma once
 
 // local headers
 #include "player.hpp"
@@ -45,13 +45,17 @@ static constexpr auto COREAUDIO = "coreaudio";
 class CoreAudioPlayer : public Player
 {
 public:
+    /// c'tor
     CoreAudioPlayer(boost::asio::io_context& io_context, const ClientSettings::Player& settings, std::shared_ptr<Stream> stream);
+    /// d'tor
     virtual ~CoreAudioPlayer();
 
+    /// Callback funtion for audio data to be played
     void playerCallback(AudioQueueRef queue, AudioQueueBufferRef bufferRef);
+    /// @return list of available pcm devices
     static std::vector<PcmDevice> pcm_list();
 
-protected:
+private:
     void worker() override;
     bool needsThread() const override;
 
@@ -67,5 +71,3 @@ protected:
 };
 
 } // namespace player
-
-#endif

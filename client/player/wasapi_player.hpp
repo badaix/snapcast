@@ -16,8 +16,7 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
-#ifndef WASAPI_PLAYER_HPP
-#define WASAPI_PLAYER_HPP
+#pragma once
 
 #pragma warning(push)
 #pragma warning(disable : 4100)
@@ -42,31 +41,37 @@ class AudioSessionEventListener : public IAudioSessionEvents
     bool muted_ = false;
 
 public:
+    /// c'tor
     AudioSessionEventListener() : _cRef(1)
     {
     }
 
+    /// @return volume
     float getVolume()
     {
         return volume_;
     }
 
+    /// @return if muted
     bool getMuted()
     {
         return muted_;
     }
 
+    /// d'tor
     ~AudioSessionEventListener()
     {
     }
 
     // IUnknown methods -- AddRef, Release, and QueryInterface
 
+    /// documentation missing
     ULONG STDMETHODCALLTYPE AddRef()
     {
         return InterlockedIncrement(&_cRef);
     }
 
+    /// documentation missing
     ULONG STDMETHODCALLTYPE Release()
     {
         ULONG ulRef = InterlockedDecrement(&_cRef);
@@ -77,34 +82,42 @@ public:
         return ulRef;
     }
 
+    /// documentation missing
     HRESULT STDMETHODCALLTYPE QueryInterface(REFIID riid, VOID** ppvInterface);
 
     // Notification methods for audio session events
 
+    /// OnDisplayNameChanged callback
     HRESULT STDMETHODCALLTYPE OnDisplayNameChanged(LPCWSTR NewDisplayName, LPCGUID EventContext)
     {
         return S_OK;
     }
 
+    /// OnIconPathChanged callback
     HRESULT STDMETHODCALLTYPE OnIconPathChanged(LPCWSTR NewIconPath, LPCGUID EventContext)
     {
         return S_OK;
     }
 
+    /// OnSimpleVolumeChanged callback
     HRESULT STDMETHODCALLTYPE OnSimpleVolumeChanged(float NewVolume, BOOL NewMute, LPCGUID EventContext);
 
+    /// OnChannelVolumeChanged callback
     HRESULT STDMETHODCALLTYPE OnChannelVolumeChanged(DWORD ChannelCount, float NewChannelVolumeArray[], DWORD ChangedChannel, LPCGUID EventContext)
     {
         return S_OK;
     }
 
+    /// OnGroupingParamChanged callback
     HRESULT STDMETHODCALLTYPE OnGroupingParamChanged(LPCGUID NewGroupingParam, LPCGUID EventContext)
     {
         return S_OK;
     }
 
+    /// OnStateChanged callback
     HRESULT STDMETHODCALLTYPE OnStateChanged(AudioSessionState NewState);
 
+    /// OnSessionDisconnected callback
     HRESULT STDMETHODCALLTYPE OnSessionDisconnected(AudioSessionDisconnectReason DisconnectReason);
 };
 
@@ -117,19 +130,23 @@ class AudioEndpointVolumeCallback : public IAudioEndpointVolumeCallback
     bool muted_ = false;
 
 public:
+    /// c'tor
     AudioEndpointVolumeCallback() : _cRef(1)
     {
     }
 
+    /// d'tor
     ~AudioEndpointVolumeCallback()
     {
     }
 
+    /// @return volume
     float getVolume()
     {
         return volume_;
     }
 
+    /// @return if muted
     bool getMuted()
     {
         return muted_;
@@ -137,11 +154,13 @@ public:
 
     // IUnknown methods -- AddRef, Release, and QueryInterface
 
+    /// documentation missing
     ULONG STDMETHODCALLTYPE AddRef()
     {
         return InterlockedIncrement(&_cRef);
     }
 
+    /// documentation missing
     ULONG STDMETHODCALLTYPE Release()
     {
         ULONG ulRef = InterlockedDecrement(&_cRef);
@@ -152,6 +171,7 @@ public:
         return ulRef;
     }
 
+    /// documentation missing
     HRESULT STDMETHODCALLTYPE QueryInterface(REFIID riid, VOID** ppvInterface)
     {
         if (IID_IUnknown == riid)
@@ -175,6 +195,7 @@ public:
 
     // Callback method for endpoint-volume-change notifications.
 
+    /// documentation missing
     HRESULT STDMETHODCALLTYPE OnNotify(PAUDIO_VOLUME_NOTIFICATION_DATA pNotify);
 };
 
@@ -184,14 +205,17 @@ static constexpr auto WASAPI = "wasapi";
 class WASAPIPlayer : public Player
 {
 public:
+    /// c'tor
     WASAPIPlayer(boost::asio::io_context& io_context, const ClientSettings::Player& settings, std::shared_ptr<Stream> stream);
+    /// d'tor
     virtual ~WASAPIPlayer();
 
+    /// @return list of available PCM devices
     static std::vector<PcmDevice> pcm_list();
 
 protected:
-    virtual void worker();
-    virtual bool needsThread() const override
+    void worker() override;
+    bool needsThread() const override
     {
         return true;
     }
@@ -206,5 +230,3 @@ private:
 #pragma warning(pop)
 
 } // namespace player
-
-#endif

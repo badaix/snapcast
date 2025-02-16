@@ -87,8 +87,9 @@ public:
         buffer_ = boost::asio::buffer(message_->data);
     }
 
-    // Implement the ConstBufferSequence requirements.
+    /// const buffer.
     using value_type = boost::asio::const_buffer;
+    /// const buffer iterator
     using const_iterator = const boost::asio::const_buffer*;
 
     /// begin iterator
