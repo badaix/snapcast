@@ -36,7 +36,7 @@ using namespace std;
 namespace streamreader
 {
 
-Watchdog::Watchdog(const boost::asio::any_io_executor& executor, WatchdogListener* listener) : timer_(executor), listener_(listener)
+Watchdog::Watchdog(const boost::asio::any_io_executor& executor) : timer_(executor)
 {
 }
 
@@ -47,9 +47,10 @@ Watchdog::~Watchdog()
 }
 
 
-void Watchdog::start(const std::chrono::milliseconds& timeout)
+void Watchdog::start(const std::chrono::milliseconds& timeout, TimeoutHandler&& handler)
 {
     LOG(INFO, LOG_TAG) << "Starting watchdog, timeout: " << std::chrono::duration_cast<std::chrono::seconds>(timeout).count() << "s\n";
+    handler_ = std::move(handler);
     timeout_ms_ = timeout;
     trigger();
 }
@@ -70,7 +71,8 @@ void Watchdog::trigger()
         if (!ec)
         {
             LOG(INFO, LOG_TAG) << "Timed out: " << std::chrono::duration_cast<std::chrono::seconds>(timeout_ms_).count() << "s\n";
-            listener_->onTimeout(*this, timeout_ms_);
+            if (handler_)
+                handler_(timeout_ms_);
         }
     });
 }
