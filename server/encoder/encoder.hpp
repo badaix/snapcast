@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2024  Johannes Pohl
+    Copyright (C) 2014-2025  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -45,7 +45,7 @@ public:
 
     /// c'tor
     /// Codec options (E.g. compression level) are passed as string and are codec dependend
-    Encoder(const std::string& codecOptions = "") : headerChunk_(nullptr), codecOptions_(codecOptions)
+    explicit Encoder(std::string codecOptions = "") : headerChunk_(nullptr), codecOptions_(std::move(codecOptions))
     {
     }
 

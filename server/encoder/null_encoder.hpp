@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2024  Johannes Pohl
+    Copyright (C) 2014-2025  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -37,11 +37,13 @@ namespace encoder
 class NullEncoder : public Encoder
 {
 public:
-    NullEncoder(const std::string& codecOptions = "");
+    /// c'tor
+    explicit NullEncoder(std::string codecOptions);
+
     void encode(const msg::PcmChunk& chunk) override;
     std::string name() const override;
 
-protected:
+private:
     void initEncoder() override;
 };
 

@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2024  Johannes Pohl
+    Copyright (C) 2014-2025  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -32,34 +32,38 @@
 namespace decoder
 {
 
+
+/// Cache internal decoder status
 struct CacheInfo
 {
-    CacheInfo() : sampleRate_(0)
-    {
-        reset();
-    }
-
+    /// Reset current cache info
     void reset()
     {
         isCachedChunk_ = true;
         cachedBlocks_ = 0;
     }
 
-    bool isCachedChunk_;
-    size_t cachedBlocks_;
-    size_t sampleRate_;
+    bool isCachedChunk_{true}; ///< is the current block cached
+    size_t cachedBlocks_{0};   ///< number of cached blocks
+    size_t sampleRate_{0};     ///< sample rate of the block
 };
 
 
+/// Flac decoder
 class FlacDecoder : public Decoder
 {
 public:
+    /// c'tor
     FlacDecoder();
+    /// d'tor
     ~FlacDecoder() override;
+
     bool decode(msg::PcmChunk* chunk) override;
     SampleFormat setHeader(msg::CodecHeader* chunk) override;
 
+    /// Flac internal cache info
     CacheInfo cacheInfo_;
+    /// Last decoder error
     std::unique_ptr<FLAC__StreamDecoderErrorStatus> lastError_;
 
 private:

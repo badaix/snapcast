@@ -40,7 +40,8 @@ namespace encoder
 
 static constexpr auto LOG_TAG = "FlacEnc";
 
-FlacEncoder::FlacEncoder(const std::string& codecOptions) : Encoder(codecOptions), encoder_(nullptr), pcmBufferSize_(0), encodedSamples_(0), flacChunk_(nullptr)
+FlacEncoder::FlacEncoder(std::string codecOptions)
+    : Encoder(std::move(codecOptions)), encoder_(nullptr), pcmBufferSize_(0), encodedSamples_(0), flacChunk_(nullptr)
 {
     headerChunk_ = std::make_shared<msg::CodecHeader>("flac");
     pcmBuffer_ = static_cast<FLAC__int32*>(malloc(pcmBufferSize_ * sizeof(FLAC__int32)));
@@ -230,7 +231,7 @@ void FlacEncoder::initEncoder()
         throw SnapException("out of memory or tag error");
 
     metadata_[1]->length = 1234; // set the padding length
-    ok = FLAC__stream_encoder_set_metadata(encoder_, metadata_, 2);
+    ok = FLAC__stream_encoder_set_metadata(encoder_, metadata_.data(), 2);
     if (ok == 0)
         throw SnapException("error setting meta data");
 

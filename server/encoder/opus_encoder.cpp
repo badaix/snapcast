@@ -50,7 +50,7 @@ void assign(void* pointer, T val)
 } // namespace
 
 
-OpusEncoder::OpusEncoder(const std::string& codecOptions) : Encoder(codecOptions), enc_(nullptr), remainder_max_size_(0)
+OpusEncoder::OpusEncoder(std::string codecOptions) : Encoder(std::move(codecOptions)), enc_(nullptr), remainder_max_size_(0)
 {
     headerChunk_ = make_unique<msg::CodecHeader>("opus");
 }
