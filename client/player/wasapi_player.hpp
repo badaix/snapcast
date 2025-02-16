@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2022  Johannes Pohl
+    Copyright (C) 2014-2025  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -33,6 +33,7 @@
 namespace player
 {
 
+/// Implementation of IAudioSessionEvents
 class AudioSessionEventListener : public IAudioSessionEvents
 {
     LONG _cRef;
@@ -108,6 +109,7 @@ public:
 };
 
 
+/// Implementation of IAudioEndpointVolumeCallback
 class AudioEndpointVolumeCallback : public IAudioEndpointVolumeCallback
 {
     LONG _cRef;
@@ -178,6 +180,7 @@ public:
 
 static constexpr auto WASAPI = "wasapi";
 
+/// WASAPI player
 class WASAPIPlayer : public Player
 {
 public:

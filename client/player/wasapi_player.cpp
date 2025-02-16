@@ -47,6 +47,7 @@ namespace player
 
 static constexpr auto LOG_TAG = "WASAPI";
 
+/// COMMemDeleter helper
 template <typename T>
 struct COMMemDeleter
 {

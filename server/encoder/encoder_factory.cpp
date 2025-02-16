@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2024  Johannes Pohl
+    Copyright (C) 2014-2025  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -40,9 +40,9 @@ using namespace std;
 namespace encoder
 {
 
-std::unique_ptr<Encoder> EncoderFactory::createEncoder(const std::string& codecSettings) const
+std::unique_ptr<Encoder> EncoderFactory::createEncoder(const std::string& codec_settings) const
 {
-    std::string codec(codecSettings);
+    std::string codec(codec_settings);
     std::string codecOptions;
     if (codec.find(':') != std::string::npos)
     {

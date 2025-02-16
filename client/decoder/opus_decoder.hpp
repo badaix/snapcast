@@ -1,7 +1,7 @@
 /***
         This file is part of snapcast
         Copyright (C) 2015  Hannes Ellinger
-        Copyright (C) 2016-2024  Johannes Pohl
+        Copyright (C) 2016-2025  Johannes Pohl
 
         This program is free software: you can redistribute it and/or modify
         it under the terms of the GNU General Public License as published by
@@ -36,11 +36,15 @@
 namespace decoder
 {
 
+/// Opus decoder
 class OpusDecoder : public Decoder
 {
 public:
+    /// c'tor
     OpusDecoder();
-    ~OpusDecoder();
+    /// c'tor
+    ~OpusDecoder() override;
+
     bool decode(msg::PcmChunk* chunk) override;
     SampleFormat setHeader(msg::CodecHeader* chunk) override;
 

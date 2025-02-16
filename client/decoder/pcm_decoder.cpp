@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2024  Johannes Pohl
+    Copyright (C) 2014-2025  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -32,14 +32,18 @@ static constexpr auto ID_WAVE = 0x45564157;
 static constexpr auto ID_FMT = 0x20746d66;
 static constexpr auto ID_DATA = 0x61746164;
 
+/// RIFF wave header
+/// See https://en.wikipedia.org/wiki/WAV
 struct riff_wave_header
 {
-    uint32_t riff_id;
-    uint32_t riff_sz;
-    uint32_t wave_id;
+    uint32_t riff_id; ///< "RIFF"
+    uint32_t riff_sz; ///< file size - 8
+    uint32_t wave_id; ///< "WAVE"
 };
 
 
+/// Chunk header
+/// See https://en.wikipedia.org/wiki/WAV
 struct chunk_header
 {
     uint32_t id;
@@ -47,9 +51,11 @@ struct chunk_header
 };
 
 
+/// Chunk format
+/// See https://en.wikipedia.org/wiki/WAV
 struct chunk_fmt
 {
-    uint16_t audio_format;
+    uint16_t audio_format; ///<
     uint16_t num_channels;
     uint32_t sample_rate;
     uint32_t byte_rate;

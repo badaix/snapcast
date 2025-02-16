@@ -26,6 +26,7 @@ namespace snapcast::error::control
 namespace detail
 {
 
+/// control error category
 struct category : public std::error_category
 {
 public:

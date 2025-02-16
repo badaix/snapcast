@@ -1,7 +1,7 @@
 /***
     This file is part of snapcast
     Copyright (C) 2015  Hannes Ellinger
-    Copyright (C) 2016-2024  Johannes Pohl
+    Copyright (C) 2016-2025  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -34,10 +34,13 @@
 namespace encoder
 {
 
+/// Opuse encoder
 class OpusEncoder : public Encoder
 {
 public:
-    OpusEncoder(const std::string& codecOptions = "");
+    /// c'tor
+    explicit OpusEncoder(std::string codecOptions);
+    /// d'tor
     ~OpusEncoder() override;
 
     void encode(const msg::PcmChunk& chunk) override;
@@ -45,7 +48,7 @@ public:
     std::string getDefaultOptions() const override;
     std::string name() const override;
 
-protected:
+private:
     void encode(const SampleFormat& format, const char* data, size_t size);
     void initEncoder() override;
     ::OpusEncoder* enc_;
