@@ -146,7 +146,7 @@ void ControlServer::onMessageReceived(std::shared_ptr<ControlSession> session, c
 }
 
 
-void ControlServer::onNewSession(shared_ptr<ControlSession> session)
+void ControlServer::onNewSession(std::shared_ptr<ControlSession> session)
 {
     std::lock_guard<std::recursive_mutex> mlock(session_mutex_);
     session->start();

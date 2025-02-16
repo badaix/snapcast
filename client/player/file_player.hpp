@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2022  Johannes Pohl
+    Copyright (C) 2014-2025  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -16,8 +16,9 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
-#ifndef FILE_PLAYER_HPP
-#define FILE_PLAYER_HPP
+
+#pragma once
+
 
 // local headers
 #include "player.hpp"
@@ -40,8 +41,10 @@ static constexpr auto FILE = "file";
 class FilePlayer : public Player
 {
 public:
+    /// c'tor
     FilePlayer(boost::asio::io_context& io_context, const ClientSettings::Player& settings, std::shared_ptr<Stream> stream);
-    virtual ~FilePlayer();
+    /// d'tor
+    ~FilePlayer() override;
 
     void start() override;
     void stop() override;
@@ -49,7 +52,7 @@ public:
     /// List the dummy file PCM device
     static std::vector<PcmDevice> pcm_list(const std::string& parameter);
 
-protected:
+private:
     void requestAudio();
     void loop();
     bool needsThread() const override;
@@ -60,5 +63,3 @@ protected:
 };
 
 } // namespace player
-
-#endif

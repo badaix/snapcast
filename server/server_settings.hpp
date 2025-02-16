@@ -76,6 +76,7 @@ struct ServerSettings
         /// c'tor
         Authorization() = default;
 
+        /// Init with @p conf_roles and @p conf_users
         void init(const std::vector<std::string>& conf_roles, const std::vector<std::string>& conf_users)
         {
             roles.clear();

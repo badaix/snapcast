@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2024  Johannes Pohl
+    Copyright (C) 2014-2025  Johannes Pohl
     Copyright (C) 2024  Marcus Weseloh <marcus@weseloh.cc>
 
     This program is free software: you can redistribute it and/or modify
@@ -49,7 +49,7 @@ public:
     void start() override;
     void stop() override;
 
-protected:
+private:
     bool openJackConnection();
     void closeJackConnection();
     bool createJackPorts();

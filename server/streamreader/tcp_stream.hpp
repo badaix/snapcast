@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2024  Johannes Pohl
+    Copyright (C) 2014-2025  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -39,10 +39,10 @@ namespace streamreader
 class TcpStream : public AsioStream<tcp::socket>
 {
 public:
-    /// ctor. Encoded PCM data is passed to the PipeListener
+    /// c'tor. Encoded PCM data is passed to the PipeListener
     TcpStream(PcmStream::Listener* pcmListener, boost::asio::io_context& ioc, const ServerSettings& server_settings, const StreamUri& uri);
 
-protected:
+private:
     void connect() override;
     void disconnect() override;
     std::unique_ptr<tcp::acceptor> acceptor_;

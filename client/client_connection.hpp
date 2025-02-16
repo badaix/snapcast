@@ -153,6 +153,7 @@ public:
     virtual void getNextMessage(const MessageHandler<msg::BaseMessage>& handler) = 0;
 
 protected:
+    /// Send @p buffer, return result in @p write_handler
     virtual void write(boost::asio::streambuf& buffer, WriteHandler&& write_handler) = 0;
 
     /// Connect to @p endpoint

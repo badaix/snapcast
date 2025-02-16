@@ -35,11 +35,11 @@ namespace streamreader
 /// Tage entry??
 struct TageEntry
 {
-    std::string code;
-    std::string type;
-    std::string data;
-    bool isBase64{false};
-    int length{0};
+    std::string code;     ///< code
+    std::string type;     ///< type
+    std::string data;     ///< data
+    bool isBase64{false}; ///< is base64?
+    int length{0};        ///< length
 };
 
 /// Starts shairport-sync and reads PCM data from stdout

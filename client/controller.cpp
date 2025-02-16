@@ -129,7 +129,7 @@ Controller::Controller(boost::asio::io_context& io_context, const ClientSettings
 #endif // HAS_OPENSSL
 }
 
-
+/// Helper to create a player instance
 template <typename PlayerType>
 std::unique_ptr<Player> Controller::createPlayer(ClientSettings::Player& settings, const std::string& player_name)
 {

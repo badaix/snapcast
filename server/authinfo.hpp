@@ -79,7 +79,7 @@ public:
 
     /// Authenticate with basic scheme
     ErrorCode authenticateBasic(const std::string& credentials);
-    /// Authenticate with <user>:<password>
+    /// Authenticate with user:password
     ErrorCode authenticatePlain(const std::string& user_password);
     /// Authenticate with bearer scheme
     // ErrorCode authenticateBearer(const std::string& token);
@@ -88,7 +88,7 @@ public:
     /// Authenticate with scheme ("basic" or "bearer") and auth param
     ErrorCode authenticate(const std::string& scheme, const std::string& param);
 
-    /// @return JWS token for @p username and @p password
+    // @return JWS token for @p username and @p password
     // ErrorOr<std::string> getToken(const std::string& username, const std::string& password) const;
     /// @return if the authenticated user has permission to access @p ressource
     bool hasPermission(const std::string& resource) const;

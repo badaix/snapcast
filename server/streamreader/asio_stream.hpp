@@ -45,7 +45,9 @@ public:
     /// c'tor. Encoded PCM data is passed to the PipeListener
     AsioStream(PcmStream::Listener* pcmListener, boost::asio::io_context& ioc, const ServerSettings& server_settings, const StreamUri& uri);
 
+    /// Start the stream reader, init the encoder and optionally the stream control
     void start() override;
+    /// Stop the stream reader
     void stop() override;
 
 protected:

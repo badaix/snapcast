@@ -54,6 +54,7 @@ public:
         bool mute{false};   ///< muted?
     };
 
+    /// Callback for volume changes on the local client, to notify the server
     using volume_callback = std::function<void(const Volume& volume)>;
 
     /// c'tor
@@ -89,7 +90,6 @@ protected:
 
     /// set the hardware mixer volume
     /// @param volume the volume on range [0..1], muted or not
-    /// @param muted muted or not
     virtual void setHardwareVolume(const Volume& volume);
 
     /// set volume polynomial: volume^exp
@@ -102,7 +102,6 @@ protected:
 
     /// Notify the server about hardware volume changes
     /// @param volume the volume in range [0..1]
-    /// @param muted if muted or not
     void notifyVolumeChange(const Volume& volume) const
     {
         if (onVolumeChanged_)

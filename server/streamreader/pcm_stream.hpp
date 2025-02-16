@@ -114,13 +114,13 @@ public:
         virtual void onStateChanged(const PcmStream* pcmStream, ReaderState state) = 0;
         /// Chunk @p chunk of @p pcmStream has read
         virtual void onChunkRead(const PcmStream* pcmStream, const msg::PcmChunk& chunk) = 0;
-        /// Chunk @p chunk with duration @p duration of stream @pcmStream has been encoded
+        /// Chunk @p chunk with duration @p duration of stream @p pcmStream has been encoded
         virtual void onChunkEncoded(const PcmStream* pcmStream, std::shared_ptr<msg::PcmChunk> chunk, double duration) = 0;
         /// Stream @p pcmStream muissed to read audio with duration @p ms
         virtual void onResync(const PcmStream* pcmStream, double ms) = 0;
     };
 
-
+    /// Handler function for command results
     using ResultHandler = std::function<void(const snapcast::ErrorCode& ec)>;
 
     /// c'tor. Encoded PCM data is passed to the PcmStream::Listener

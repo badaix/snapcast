@@ -30,6 +30,12 @@ template <typename T>
 class Queue
 {
 public:
+    /// c'tor
+    Queue() = default;
+    Queue(const Queue&) = delete;            ///< disable copying
+    Queue& operator=(const Queue&) = delete; ///< disable assignment
+
+    /// @return next element, delete from queue
     T pop()
     {
         std::unique_lock<std::mutex> mlock(mutex_);
@@ -41,6 +47,7 @@ public:
         return val;
     }
 
+    /// abort wait
     void abort_wait()
     {
         {
@@ -50,6 +57,7 @@ public:
         cond_.notify_one();
     }
 
+    /// wait for @p timeout for new element, @return if an element has been added
     bool wait_for(const std::chrono::microseconds& timeout) const
     {
         std::unique_lock<std::mutex> mlock(mutex_);
@@ -60,6 +68,7 @@ public:
         return !queue_.empty() && !abort_;
     }
 
+    /// @return if an element has been returned in @p item within @p timeout
     bool try_pop(T& item, const std::chrono::microseconds& timeout = std::chrono::microseconds(0))
     {
         std::unique_lock<std::mutex> mlock(mutex_);
@@ -79,6 +88,7 @@ public:
         return true;
     }
 
+    /// return next element in @p item, wait for an element if queue is empty
     void pop(T& item)
     {
         std::unique_lock<std::mutex> mlock(mutex_);
@@ -89,6 +99,7 @@ public:
         queue_.pop_front();
     }
 
+    /// Add @p item to the queue
     void push_front(const T& item)
     {
         {
@@ -98,6 +109,7 @@ public:
         cond_.notify_one();
     }
 
+    /// return a copy of the next element in @p copy, @return false if the queue is empty
     bool back_copy(T& copy)
     {
         std::lock_guard<std::mutex> mlock(mutex_);
@@ -107,6 +119,7 @@ public:
         return true;
     }
 
+    /// return a copy of the last element in @p copy, @return false if the queue is empty
     bool front_copy(T& copy)
     {
         std::lock_guard<std::mutex> mlock(mutex_);
@@ -116,6 +129,7 @@ public:
         return true;
     }
 
+    /// Add element @p item at the front of the queue
     void push_front(T&& item)
     {
         {
@@ -125,6 +139,7 @@ public:
         cond_.notify_one();
     }
 
+    /// Add element @p item at the end of the queue
     void push(const T& item)
     {
         {
@@ -134,6 +149,7 @@ public:
         cond_.notify_one();
     }
 
+    /// Add element @p item at the end of the queue
     void push(T&& item)
     {
         {
@@ -143,20 +159,18 @@ public:
         cond_.notify_one();
     }
 
+    /// @return number of elements in the queue
     size_t size() const
     {
         std::lock_guard<std::mutex> mlock(mutex_);
         return queue_.size();
     }
 
+    /// @return if the queue is empty
     bool empty() const
     {
         return (size() == 0);
     }
-
-    Queue() = default;
-    Queue(const Queue&) = delete;            // disable copying
-    Queue& operator=(const Queue&) = delete; // disable assignment
 
 private:
     std::deque<T> queue_;

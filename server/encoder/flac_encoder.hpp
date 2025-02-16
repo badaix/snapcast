@@ -25,6 +25,7 @@
 #include "FLAC/stream_encoder.h"
 
 // standard headers
+#include <array>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
