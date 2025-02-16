@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2024  Johannes Pohl
+    Copyright (C) 2014-2025  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -32,27 +32,27 @@ namespace streamreader
 class Watchdog;
 
 
-class WatchdogListener
-{
-public:
-    virtual void onTimeout(const Watchdog& watchdog, std::chrono::milliseconds ms) = 0;
-};
-
-
 /// Watchdog
 class Watchdog
 {
 public:
-    Watchdog(const boost::asio::any_io_executor& executor, WatchdogListener* listener = nullptr);
+    using TimeoutHandler = std::function<void(std::chrono::milliseconds ms)>;
+
+    /// c'tor
+    explicit Watchdog(const boost::asio::any_io_executor& executor);//, WatchdogListener* listener = nullptr);
+    /// d'tor
     virtual ~Watchdog();
 
-    void start(const std::chrono::milliseconds& timeout);
+    /// start the watchdog, call @p handler on @p timeout
+    void start(const std::chrono::milliseconds& timeout, TimeoutHandler&& handler);
+    /// stop the watchdog
     void stop();
+    /// trigger the watchdog (reset timeout)
     void trigger();
 
 private:
     boost::asio::steady_timer timer_;
-    WatchdogListener* listener_;
+    TimeoutHandler handler_;
     std::chrono::milliseconds timeout_ms_;
 };
 

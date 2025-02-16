@@ -114,8 +114,8 @@ void ProcessStream::connect()
     on_connect();
     if (wd_timeout_sec_ > 0)
     {
-        watchdog_ = make_unique<Watchdog>(strand_, this);
-        watchdog_->start(std::chrono::seconds(wd_timeout_sec_));
+        watchdog_ = make_unique<Watchdog>(strand_);
+        watchdog_->start(std::chrono::seconds(wd_timeout_sec_), [this](std::chrono::milliseconds ms) { onTimeout(ms); });
     }
     else
     {
@@ -171,7 +171,7 @@ void ProcessStream::stderrReadLine()
 }
 
 
-void ProcessStream::onTimeout(const Watchdog& /*watchdog*/, std::chrono::milliseconds ms)
+void ProcessStream::onTimeout(std::chrono::milliseconds ms)
 {
     LOG(ERROR, LOG_TAG) << "Watchdog timeout: " << ms.count() / 1000 << "s\n";
     if (process_)
