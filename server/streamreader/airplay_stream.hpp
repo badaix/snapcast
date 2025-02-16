@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2024  Johannes Pohl
+    Copyright (C) 2014-2025  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -32,18 +32,14 @@
 namespace streamreader
 {
 
-class TageEntry
+/// Tage entry??
+struct TageEntry
 {
-public:
-    TageEntry() : isBase64(false), length(0)
-    {
-    }
-
     std::string code;
     std::string type;
     std::string data;
-    bool isBase64;
-    int length;
+    bool isBase64{false};
+    int length{0};
 };
 
 /// Starts shairport-sync and reads PCM data from stdout
@@ -58,11 +54,12 @@ public:
 class AirplayStream : public ProcessStream
 {
 public:
-    /// ctor. Encoded PCM data is passed to the PipeListener
+    /// c'tor. Encoded PCM data is passed to the PipeListener
     AirplayStream(PcmStream::Listener* pcmListener, boost::asio::io_context& ioc, const ServerSettings& server_settings, const StreamUri& uri);
+    /// d'tor
     ~AirplayStream() override;
 
-protected:
+private:
 #ifdef HAS_EXPAT
     XML_Parser parser_;
     std::unique_ptr<TageEntry> entry_;

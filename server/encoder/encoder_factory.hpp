@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2024  Johannes Pohl
+    Copyright (C) 2014-2025  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -29,11 +29,12 @@
 namespace encoder
 {
 
+/// Factory to create an encoder from an URI
 class EncoderFactory
 {
 public:
-    //	EncoderFactory(const std::string& codecSettings);
-    std::unique_ptr<Encoder> createEncoder(const std::string& codecSettings) const;
+    /// @return Encoder from @p codec_settings
+    std::unique_ptr<Encoder> createEncoder(const std::string& codec_settings) const;
 };
 
 } // namespace encoder

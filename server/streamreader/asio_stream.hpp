@@ -37,21 +37,26 @@ namespace streamreader
 
 using namespace std::chrono_literals;
 
+/// Boost asio based stream class interface
 template <typename ReadStream>
 class AsioStream : public PcmStream
 {
 public:
-    /// ctor. Encoded PCM data is passed to the PipeListener
+    /// c'tor. Encoded PCM data is passed to the PipeListener
     AsioStream(PcmStream::Listener* pcmListener, boost::asio::io_context& ioc, const ServerSettings& server_settings, const StreamUri& uri);
 
     void start() override;
     void stop() override;
 
 protected:
+    /// connect to the stream
     virtual void connect() = 0;
+    /// disconnect from the stream
     virtual void disconnect();
 
+    /// resets first chunk timer and starts reader loop
     virtual void on_connect();
+    /// read from asio stream
     virtual void do_read();
     /// Start a timer that will change the stream state to idle after \p duration
     void check_state(const std::chrono::steady_clock::duration& duration);
@@ -62,12 +67,18 @@ protected:
 
     /// Cache last exception to avoid repeated error logging
     std::string lastException_;
-    timeval tv_chunk_;
+    /// Marker: next chunk is the first chunk
     bool first_;
+
+    /// next read = current chunk start + chunk duration
     std::chrono::time_point<std::chrono::steady_clock> nextTick_;
+    /// chunk read buffer
     uint32_t buffer_ms_;
+    /// read timer
     boost::asio::steady_timer read_timer_;
+    /// state timer: set stream to idle/playing on timeout
     boost::asio::steady_timer state_timer_;
+    /// the stream
     std::unique_ptr<ReadStream> stream_;
 
     /// duration of the current silence period

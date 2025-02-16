@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2024  Johannes Pohl
+    Copyright (C) 2014-2025  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -25,10 +25,13 @@
 namespace decoder
 {
 
+/// PCM decoder
 class PcmDecoder : public Decoder
 {
 public:
+    /// c'tor
     PcmDecoder();
+
     bool decode(msg::PcmChunk* chunk) override;
     SampleFormat setHeader(msg::CodecHeader* chunk) override;
 };

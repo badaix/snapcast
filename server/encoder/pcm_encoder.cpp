@@ -48,7 +48,7 @@ void assign(void* pointer, T val)
 } // namespace
 
 
-PcmEncoder::PcmEncoder(const std::string& codecOptions) : Encoder(codecOptions)
+PcmEncoder::PcmEncoder(std::string codecOptions) : Encoder(std::move(codecOptions))
 {
     headerChunk_ = std::make_shared<msg::CodecHeader>("pcm");
 }

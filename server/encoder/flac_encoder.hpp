@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2024  Johannes Pohl
+    Copyright (C) 2014-2025  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -32,24 +32,29 @@
 namespace encoder
 {
 
+/// Flac encoder
 class FlacEncoder : public Encoder
 {
 public:
-    explicit FlacEncoder(const std::string& codecOptions = "");
+    /// c'tor
+    explicit FlacEncoder(std::string codecOptions);
+    /// d'tor
     ~FlacEncoder() override;
+
     void encode(const msg::PcmChunk& chunk) override;
     std::string getAvailableOptions() const override;
     std::string getDefaultOptions() const override;
     std::string name() const override;
 
+    /// FLAC write callback
     FLAC__StreamEncoderWriteStatus write_callback(const FLAC__StreamEncoder* encoder, const FLAC__byte buffer[], size_t bytes, unsigned samples,
                                                   unsigned current_frame);
 
-protected:
+private:
     void initEncoder() override;
 
     FLAC__StreamEncoder* encoder_;
-    FLAC__StreamMetadata* metadata_[2];
+    std::array<FLAC__StreamMetadata*, 2> metadata_;
 
     FLAC__int32* pcmBuffer_;
     int pcmBufferSize_;

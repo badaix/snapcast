@@ -38,7 +38,8 @@ namespace encoder
 
 static constexpr auto LOG_TAG = "OggEnc";
 
-OggEncoder::OggEncoder(const std::string& codecOptions) : Encoder(codecOptions), lastGranulepos_(0)
+
+OggEncoder::OggEncoder(std::string codecOptions) : Encoder(std::move(codecOptions)), lastGranulepos_(0)
 {
 }
 

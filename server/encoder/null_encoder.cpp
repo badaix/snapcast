@@ -31,7 +31,7 @@ namespace encoder
 
 static constexpr auto LOG_TAG = "NullEnc";
 
-NullEncoder::NullEncoder(const std::string& codecOptions) : Encoder(codecOptions)
+NullEncoder::NullEncoder(std::string codecOptions) : Encoder(std::move(codecOptions))
 {
     headerChunk_ = std::make_shared<msg::CodecHeader>("null");
 }

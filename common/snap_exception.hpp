@@ -22,28 +22,33 @@
 #include <exception>
 #include <string>
 
-// text_exception uses a dynamically-allocated internal c-string for what():
+/// Snapcast specific exceptions
 class SnapException : public std::exception
 {
     std::string text_;
     int error_code_;
 
 public:
+    /// c'tor
     explicit SnapException(const char* text, int error_code = 0) : text_(text), error_code_(error_code)
     {
     }
 
+    /// c'tor
     explicit SnapException(const std::string& text, int error_code = 0) : SnapException(text.c_str(), error_code)
     {
     }
 
+    /// d'tor
     ~SnapException() override = default;
 
+    /// @return error code
     int code() const noexcept
     {
         return error_code_;
     }
 
+    /// @return the exception text
     const char* what() const noexcept override
     {
         return text_.c_str();
