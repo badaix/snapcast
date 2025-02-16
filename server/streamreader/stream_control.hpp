@@ -42,29 +42,45 @@ namespace streamreader
 {
 
 
+/// Stream control base class
+/// Controls a stream via "command" (play, pause, next, ...)
+/// Provides status information (playback status, position, metadata, ...)
 class StreamControl
 {
 public:
+    /// Request handler coming from the plugin
     using OnRequest = std::function<void(const jsonrpcpp::Request& response)>;
+    /// Notification handler coming from the plugin
     using OnNotification = std::function<void(const jsonrpcpp::Notification& response)>;
+    /// Response handler coming from the plugin
     using OnResponse = std::function<void(const jsonrpcpp::Response& response)>;
+    /// Log handler coming from the plugin
     using OnLog = std::function<void(std::string message)>;
 
+    /// c'tor
     explicit StreamControl(const boost::asio::any_io_executor& executor);
+    /// d'tor
     virtual ~StreamControl() = default;
 
+    /// Start the stream control, calls abstract "doStart"
     void start(const std::string& stream_id, const ServerSettings& server_setttings, const OnNotification& notification_handler,
                const OnRequest& request_handler, const OnLog& log_handler);
 
+    /// Issue a command to the stream, calls abstract "doCommand"
     void command(const jsonrpcpp::Request& request, const OnResponse& response_handler);
 
 protected:
+    /// abstract "command" interface: send a json request to the plugin
     virtual void doCommand(const jsonrpcpp::Request& request) = 0;
+    /// abstract "start" interface: starts and initializes the plugin
     virtual void doStart(const std::string& stream_id, const ServerSettings& server_setttings) = 0;
 
+    /// a @p json message has been received from the plugin
     void onReceive(const std::string& json);
+    /// a @p message log request has been received from the plugin
     void onLog(std::string message);
 
+    /// asio executor
     boost::asio::any_io_executor executor_;
 
 private:
@@ -76,10 +92,14 @@ private:
 };
 
 
+/// Script based stream control
+/// Executes a script (e.g. Python) and communicates via stdout/stdin with the script
 class ScriptStreamControl : public StreamControl
 {
 public:
+    /// c'tor
     ScriptStreamControl(const boost::asio::any_io_executor& executor, const std::filesystem::path& plugin_dir, std::string script, std::string params);
+    /// d'tor
     virtual ~ScriptStreamControl() = default;
 
 private:

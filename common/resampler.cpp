@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2024  Johannes Pohl
+    Copyright (C) 2014-2025  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -21,7 +21,9 @@
 
 // local headers
 #include "common/aixlog.hpp"
+#ifndef HAS_SOXR
 #include "common/snap_exception.hpp"
+#endif
 
 // standard headers
 #include <cmath>
@@ -195,7 +197,7 @@ std::shared_ptr<msg::PcmChunk> Resampler::resample(const msg::PcmChunk& chunk)
 }
 
 
-shared_ptr<msg::PcmChunk> Resampler::resample(shared_ptr<msg::PcmChunk> chunk)
+std::shared_ptr<msg::PcmChunk> Resampler::resample(std::shared_ptr<msg::PcmChunk> chunk)
 {
 #ifndef HAS_SOXR
     return chunk;

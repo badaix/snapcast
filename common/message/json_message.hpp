@@ -54,6 +54,7 @@ public:
         return static_cast<uint32_t>(sizeof(uint32_t) + msg.dump().size());
     }
 
+    /// the json message payload
     json msg;
 
 

@@ -36,10 +36,11 @@ class Watchdog;
 class Watchdog
 {
 public:
+    /// Watchdog timeout handler
     using TimeoutHandler = std::function<void(std::chrono::milliseconds ms)>;
 
     /// c'tor
-    explicit Watchdog(const boost::asio::any_io_executor& executor);//, WatchdogListener* listener = nullptr);
+    explicit Watchdog(const boost::asio::any_io_executor& executor);
     /// d'tor
     virtual ~Watchdog();
 

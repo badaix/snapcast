@@ -40,7 +40,7 @@ public:
     /// ctor. Encoded PCM data is passed to the PipeListener
     LibrespotStream(PcmStream::Listener* pcmListener, boost::asio::io_context& ioc, const ServerSettings& server_settings, const StreamUri& uri);
 
-protected:
+private:
     bool killall_;
 
     void onStderrMsg(const std::string& line) override;

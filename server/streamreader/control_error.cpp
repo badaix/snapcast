@@ -30,7 +30,9 @@ namespace detail
 struct category : public std::error_category
 {
 public:
+    /// @return category name
     const char* name() const noexcept override;
+    /// @return error message for @p value
     std::string message(int value) const override;
 };
 
