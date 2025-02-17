@@ -125,7 +125,7 @@ mpv http://wms-15.streamsrus.com:11630 --audio-display=no --audio-channels=stere
 For version >= 0.21.0:
 
 ```sh
-mpv http://wms-15.streamsrus.com:11630 --audio-display=no --audio-channels=stereo --audio-samplerate=48000 --audio-format=s16 --ao=pcm --ao-pcm-file=/tmp/snapfifo
+mpv http://wms-15.streamsrus.com:11630 --audio-display=no --audio-channels=stereo --audio-samplerate=48000 --audio-format=s16 --ao=pcm --ao-pcm-waveheader=no --ao-pcm-file=/tmp/snapfifo
 ```
 
 ### MPlayer
