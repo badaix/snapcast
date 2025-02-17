@@ -82,6 +82,15 @@ class exampleControl(object):
         self._properties["canControl"] = True
         self.updateProperties
 
+    def log(self, message):
+        send(
+            {
+                "jsonrpc": "2.0",
+                "method": "Plugin.Stream.Log",
+                "params": {"severity": "Info", "message": f"{message}"},
+            }
+        )
+
     def updateProperties(self):
         metadata = {}
         metadata["title"] = f"track {self.track}"
@@ -104,6 +113,7 @@ class exampleControl(object):
 
     def control(self, cmd):
         logger.debug(f"Received command: {cmd}")
+        self.log(f"Received command: {cmd}")
         request = json.loads(cmd)
         id = request["id"]
         command = request["params"]["command"]
