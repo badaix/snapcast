@@ -12,12 +12,14 @@
 
 - Fix typos (PR #1333, PR #1341, PR #1345)
 - Add `mpv` option `--ao-pcm-waveheader=no` on player setup page (Issue #1094)
+- Fix clang-tidy static analysis issues (Issue #1354)
 
 ### General
 
 - Client: Command line arguments '--host' and '--port' are deprecated
 - Update binary_protocol.md (Issue #1339)
 - Add missing doxygen code documentation (Issue #1352)
+- Add clang-tidy static analysis to CI (Issue #1353)
 
 _Johannes Pohl <snapcast@badaix.de>  Thu, 23 Jan 2025 00:13:37 +0200_
 
