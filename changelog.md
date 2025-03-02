@@ -6,6 +6,7 @@
 
 - Client: Add support for (secure-) websockets (Issue #1325, PR #1340)
 - Server: Add client authentication (Issue #1334, PR #1340)
+- Server: Add control script for Plex (PR #1346)
 
 ### Bugfixes
 
