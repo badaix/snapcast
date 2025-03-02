@@ -327,9 +327,11 @@ vlc --no-video --aout afile --audiofile-file /tmp/snapfifo
 Plexamp can be configured to use Snapcast for multi-room audio by redirecting its output to a FIFO pipe. This can be managed using a Plex control script for audio playback.
 
 ### 1. Install Plexamp
+
 Follow the [official instructions](https://www.plex.tv/plexamp/) to install Plexamp on your system. This method works with both **plexamp-headless** and the standalone **Plexamp** client.
 
 ### 2. Create a loopback FIFO pipe
+
 You need to use **Pipewire** or **Pulseaudio**:
 
 ```sh
@@ -348,6 +350,7 @@ pactl set-sink-volume @DEFAULT_SINK@ 100%
 ```
 
 ### 4. Add a new source to Snapserver
+
 Edit your `snapserver.conf` file to add a new stream source for the FIFO pipe:
 
 ```ini
@@ -358,8 +361,8 @@ source = pipe:///tmp/snapfifo?name=Plexamp
 ### 5. (Optional) Configure the control script
 
 1. Retrieve your Plex API token following the [official guide](https://support.plex.tv/articles/204059436-finding-an-authentication-token-x-plex-token/).
-
-2. Modify the `snapserver.conf` file to add the control script:
+2. Install Python package [plexapi](https://pypi.org/project/PlexAPI)
+3. Modify the `snapserver.conf` file to add the control script:
 
 ```ini
 [stream]
