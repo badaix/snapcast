@@ -187,6 +187,8 @@ There is also an [unofficial FHEM module](https://forum.fhem.de/index.php/topic,
 
 There is a [snapcast component for Home Assistant](https://home-assistant.io/components/media_player.snapcast/) which integrates a Snapcast controller in to the [Home Assistant](https://home-assistant.io/) home automation system and a [snapcast python plugin for Domoticz](https://github.com/akamming/domoticz-snapcast) to integrate a Snapcast controller into the [Domoticz](https://domoticz.com/) home automation system.
 
+There is also support for [Music Assistant](https://github.com/music-assistant/music-assistant), a powerful music management system designed to work with Home Assistant. It enables seamless streaming to Snapcast clients from local files or streaming services, with advanced features like multi-room playback, metadata management, and automated library organization.
+
 For a web interface in Python, see [snapcastr](https://github.com/xkonni/snapcastr), based on [python-snapcast](https://github.com/happyleavesaoc/python-snapcast). This interface controls client volume and assigns streams to groups.
 
 Another web interface running on any device is [snapcast-websockets-ui](https://github.com/derglaus/snapcast-websockets-ui), running entirely in the browser, which needs [websockify](https://github.com/novnc/websockify). No configuration needed; features almost all functions; still needs some tuning for the optics.
