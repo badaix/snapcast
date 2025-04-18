@@ -24,7 +24,7 @@
 #include "server_settings.hpp"
 
 // 3rd party headers
-#include <boost/asio/any_io_executor.hpp>
+#include <boost/asio.hpp>
 #include <boost/process.hpp>
 
 // standard headers
