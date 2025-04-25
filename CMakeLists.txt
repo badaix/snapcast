@@ -177,7 +177,11 @@ endif()
 
 find_package(Threads REQUIRED)
 
-find_package(OpenSSL REQUIRED)
+if (ANDROID)
+  find_package(openssl REQUIRED CONFIG)
+else ()
+  find_package(OpenSSL REQUIRED)
+endif ()
 
 include(CMakePushCheckState)
 include(CheckIncludeFileCXX)
