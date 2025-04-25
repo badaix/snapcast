@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2024  Johannes Pohl
+    Copyright (C) 2014-2025  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -29,15 +29,15 @@ class SnapException : public std::exception
     int error_code_;
 
 public:
-    SnapException(const char* text, int error_code = 0) : text_(text), error_code_(error_code)
+    explicit SnapException(const char* text, int error_code = 0) : text_(text), error_code_(error_code)
     {
     }
 
-    SnapException(const std::string& text, int error_code = 0) : SnapException(text.c_str(), error_code)
+    explicit SnapException(const std::string& text, int error_code = 0) : SnapException(text.c_str(), error_code)
     {
     }
 
-    ~SnapException() throw() override = default;
+    ~SnapException() override = default;
 
     int code() const noexcept
     {

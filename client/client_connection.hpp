@@ -29,15 +29,30 @@
 #include <boost/asio/ip/tcp.hpp>
 #include <boost/asio/steady_timer.hpp>
 #include <boost/asio/strand.hpp>
+#include <boost/asio/streambuf.hpp>
+#include <boost/beast/core.hpp>
+#ifdef HAS_OPENSSL
+#include <boost/beast/ssl.hpp>
+#endif
+#include <boost/beast/websocket.hpp>
 
 // standard headers
 #include <deque>
 #include <memory>
+#include <mutex>
+#include <optional>
 #include <string>
 
 
-using boost::asio::ip::tcp;
-
+// using boost::asio::ip::tcp;
+namespace beast = boost::beast;         // from <boost/beast.hpp>
+namespace websocket = beast::websocket; // from <boost/beast/websocket.hpp>
+using tcp_socket = boost::asio::ip::tcp::socket;
+using tcp_websocket = websocket::stream<tcp_socket>;
+#ifdef HAS_OPENSSL
+using ssl_socket = boost::asio::ssl::stream<tcp_socket>;
+using ssl_websocket = websocket::stream<ssl_socket>;
+#endif
 
 class ClientConnection;
 
@@ -87,17 +102,19 @@ class ClientConnection
 public:
     /// Result callback with boost::error_code
     using ResultHandler = std::function<void(const boost::system::error_code&)>;
+    /// Result callback of a write operation
+    using WriteHandler = std::function<void(boost::system::error_code ec, std::size_t length)>;
 
     /// c'tor
     ClientConnection(boost::asio::io_context& io_context, ClientSettings::Server server);
     /// d'tor
-    virtual ~ClientConnection();
+    virtual ~ClientConnection() = default;
 
     /// async connect
     /// @param handler async result handler
     void connect(const ResultHandler& handler);
     /// disconnect the socket
-    void disconnect();
+    virtual void disconnect() = 0;
 
     /// async send a message
     /// @param message the message
@@ -126,35 +143,43 @@ public:
     }
 
     /// @return MAC address of the client
-    std::string getMacAddress();
+    virtual std::string getMacAddress() = 0;
 
     /// async get the next message
     /// @param handler the next received message or error
-    void getNextMessage(const MessageHandler<msg::BaseMessage>& handler);
+    virtual void getNextMessage(const MessageHandler<msg::BaseMessage>& handler) = 0;
 
 protected:
+    virtual void write(boost::asio::streambuf& buffer, WriteHandler&& write_handler) = 0;
+
+    /// Connect to @p endpoint
+    virtual boost::system::error_code doConnect(boost::asio::ip::basic_endpoint<boost::asio::ip::tcp> endpoint) = 0;
+
+    /// Handle received messages, check for response of pending requests
+    void messageReceived(std::unique_ptr<msg::BaseMessage> message, const MessageHandler<msg::BaseMessage>& handler);
+
     /// Send next pending message from messages_
     void sendNext();
 
     /// Base message holding the received message
     msg::BaseMessage base_message_;
-    /// Receive buffer
-    std::vector<char> buffer_;
-    /// Size of a base message (= message header)
-    size_t base_msg_size_;
 
     /// Strand to serialize send/receive
     boost::asio::strand<boost::asio::any_io_executor> strand_;
+
     /// TCP resolver
-    tcp::resolver resolver_;
-    /// TCP socket
-    tcp::socket socket_;
+    boost::asio::ip::tcp::resolver resolver_;
+
     /// List of pending requests, waiting for a response (Message::refersTo)
     std::vector<std::weak_ptr<PendingRequest>> pendingRequests_;
     /// unique request id to match a response
     uint16_t reqId_;
     /// Server settings (host and port)
     ClientSettings::Server server_;
+    /// Size of a base message (= message header)
+    const size_t base_msg_size_;
+    /// Send stream buffer
+    boost::asio::streambuf streambuf_;
 
     /// A pending request
     struct PendingMessage
@@ -172,3 +197,91 @@ protected:
     /// Pending messages to be sent
     std::deque<PendingMessage> messages_;
 };
+
+
+/// Plain TCP connection
+class ClientConnectionTcp : public ClientConnection
+{
+public:
+    /// c'tor
+    ClientConnectionTcp(boost::asio::io_context& io_context, ClientSettings::Server server);
+    /// d'tor
+    virtual ~ClientConnectionTcp();
+
+    void disconnect() override;
+    std::string getMacAddress() override;
+    void getNextMessage(const MessageHandler<msg::BaseMessage>& handler) override;
+
+private:
+    boost::system::error_code doConnect(boost::asio::ip::basic_endpoint<boost::asio::ip::tcp> endpoint) override;
+    void write(boost::asio::streambuf& buffer, WriteHandler&& write_handler) override;
+
+    /// TCP socket
+    tcp_socket socket_;
+    /// Receive buffer
+    std::vector<char> buffer_;
+};
+
+
+/// Websocket connection
+class ClientConnectionWs : public ClientConnection
+{
+public:
+    /// c'tor
+    ClientConnectionWs(boost::asio::io_context& io_context, ClientSettings::Server server);
+    /// d'tor
+    virtual ~ClientConnectionWs();
+
+    void disconnect() override;
+    std::string getMacAddress() override;
+    void getNextMessage(const MessageHandler<msg::BaseMessage>& handler) override;
+
+private:
+    boost::system::error_code doConnect(boost::asio::ip::basic_endpoint<boost::asio::ip::tcp> endpoint) override;
+    void write(boost::asio::streambuf& buffer, WriteHandler&& write_handler) override;
+
+    /// @return the websocket
+    tcp_websocket& getWs();
+
+    /// TCP web socket
+    std::optional<tcp_websocket> tcp_ws_;
+    /// Receive buffer
+    boost::beast::flat_buffer buffer_;
+    /// protect tcp_ws_
+    std::mutex ws_mutex_;
+};
+
+
+#ifdef HAS_OPENSSL
+
+/// Websocket connection
+class ClientConnectionWss : public ClientConnection
+{
+public:
+    /// c'tor
+    ClientConnectionWss(boost::asio::io_context& io_context, boost::asio::ssl::context& ssl_context, ClientSettings::Server server);
+    /// d'tor
+    virtual ~ClientConnectionWss();
+
+    void disconnect() override;
+    std::string getMacAddress() override;
+    void getNextMessage(const MessageHandler<msg::BaseMessage>& handler) override;
+
+private:
+    boost::system::error_code doConnect(boost::asio::ip::basic_endpoint<boost::asio::ip::tcp> endpoint) override;
+    void write(boost::asio::streambuf& buffer, WriteHandler&& write_handler) override;
+
+    /// @return the websocket
+    ssl_websocket& getWs();
+
+    /// SSL context
+    boost::asio::ssl::context& ssl_context_;
+    /// SSL web socket
+    std::optional<ssl_websocket> ssl_ws_;
+    /// Receive buffer
+    boost::beast::flat_buffer buffer_;
+    /// protect ssl_ws_
+    std::mutex ws_mutex_;
+};
+
+#endif // HAS_OPENSSL

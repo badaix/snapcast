@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2024  Johannes Pohl
+    Copyright (C) 2014-2025  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -43,9 +43,12 @@ using namespace std::chrono_literals;
 class Controller
 {
 public:
+    /// c'tor
     Controller(boost::asio::io_context& io_context, const ClientSettings& settings); //, std::unique_ptr<MetadataAdapter> meta);
+    /// Start thw work
     void start();
     // void stop();
+    /// @return list of supported audio backends
     static std::vector<std::string> getSupportedPlayerNames();
 
 private:
@@ -61,6 +64,9 @@ private:
     void sendTimeSyncMessage(int quick_syncs);
 
     boost::asio::io_context& io_context_;
+#ifdef HAS_OPENSSL
+    boost::asio::ssl::context ssl_context_;
+#endif
     boost::asio::steady_timer timer_;
     ClientSettings settings_;
     SampleFormat sampleFormat_;

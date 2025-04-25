@@ -76,10 +76,53 @@ using namespace player;
 static constexpr auto LOG_TAG = "Controller";
 static constexpr auto TIME_SYNC_INTERVAL = 1s;
 
-Controller::Controller(boost::asio::io_context& io_context, const ClientSettings& settings) //, std::unique_ptr<MetadataAdapter> meta)
-    : io_context_(io_context), timer_(io_context), settings_(settings), stream_(nullptr), decoder_(nullptr), player_(nullptr),
-      serverSettings_(nullptr) // meta_(std::move(meta)),
+Controller::Controller(boost::asio::io_context& io_context, const ClientSettings& settings)
+    : io_context_(io_context),
+#ifdef HAS_OPENSSL
+      ssl_context_(boost::asio::ssl::context::tlsv12_client),
+#endif
+      timer_(io_context), settings_(settings), stream_(nullptr), decoder_(nullptr), player_(nullptr), serverSettings_(nullptr)
 {
+#ifdef HAS_OPENSSL
+    if (settings.server.isSsl())
+    {
+        boost::system::error_code ec;
+        if (settings.server.server_certificate.has_value())
+        {
+            LOG(DEBUG, LOG_TAG) << "Loading server certificate\n";
+            ssl_context_.set_default_verify_paths(ec);
+            if (ec.failed())
+                LOG(WARNING, LOG_TAG) << "Failed to load system certificates: " << ec << "\n";
+            if (!settings.server.server_certificate->empty())
+            {
+                ssl_context_.load_verify_file(settings.server.server_certificate.value().string(), ec);
+                if (ec.failed())
+                    throw SnapException("Failed to load server certificate: " + settings.server.server_certificate.value().string() + ": " + ec.message());
+            }
+        }
+
+        if (!settings.server.certificate.empty() && !settings.server.certificate_key.empty())
+        {
+            if (!settings.server.key_password.empty())
+            {
+                ssl_context_.set_password_callback(
+                    [pw = settings.server.key_password](size_t max_length, boost::asio::ssl::context_base::password_purpose purpose) -> string
+                {
+                    LOG(DEBUG, LOG_TAG) << "getPassword, purpose: " << purpose << ", max length: " << max_length << "\n";
+                    return pw;
+                });
+            }
+            LOG(DEBUG, LOG_TAG) << "Loading certificate file: " << settings.server.certificate << "\n";
+            ssl_context_.use_certificate_chain_file(settings.server.certificate.string(), ec);
+            if (ec.failed())
+                throw SnapException("Failed to load certificate: " + settings.server.certificate.string() + ": " + ec.message());
+            LOG(DEBUG, LOG_TAG) << "Loading certificate key file: " << settings.server.certificate_key << "\n";
+            ssl_context_.use_private_key_file(settings.server.certificate_key.string(), boost::asio::ssl::context::pem, ec);
+            if (ec.failed())
+                throw SnapException("Failed to load private key file: " + settings.server.certificate_key.string() + ": " + ec.message());
+        }
+    }
+#endif // HAS_OPENSSL
 }
 
 
@@ -354,14 +397,21 @@ void Controller::start()
                 settings_.server.host = host;
                 settings_.server.port = port;
                 LOG(INFO, LOG_TAG) << "Found server " << settings_.server.host << ":" << settings_.server.port << "\n";
-                clientConnection_ = make_unique<ClientConnection>(io_context_, settings_.server);
+                clientConnection_ = make_unique<ClientConnectionTcp>(io_context_, settings_.server);
                 worker();
             }
         });
     }
     else
     {
-        clientConnection_ = make_unique<ClientConnection>(io_context_, settings_.server);
+        if (settings_.server.protocol == "ws")
+            clientConnection_ = make_unique<ClientConnectionWs>(io_context_, settings_.server);
+#ifdef HAS_OPENSSL
+        else if (settings_.server.protocol == "wss")
+            clientConnection_ = make_unique<ClientConnectionWss>(io_context_, ssl_context_, settings_.server);
+#endif
+        else
+            clientConnection_ = make_unique<ClientConnectionTcp>(io_context_, settings_.server);
         worker();
     }
 }

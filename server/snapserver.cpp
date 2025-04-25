@@ -86,6 +86,9 @@ int main(int argc, char* argv[])
         conf.add<Value<std::filesystem::path>>("", "ssl.certificate_key", "private key file (PEM format)", settings.ssl.certificate_key,
                                                &settings.ssl.certificate_key);
         conf.add<Value<string>>("", "ssl.key_password", "key password (for encrypted private key)", settings.ssl.key_password, &settings.ssl.key_password);
+        conf.add<Value<bool>>("", "ssl.verify_clients", "Verify client certificates", settings.ssl.verify_clients, &settings.ssl.verify_clients);
+        auto client_cert_opt =
+            conf.add<Value<std::filesystem::path>>("", "ssl.client_cert", "List of client CA certificate files, can be configured multiple times", "");
 
 #if 0 // feature: users
       // Users setting
@@ -276,6 +279,13 @@ int main(int argc, char* argv[])
             settings.ssl.certificate_key = make_absolute(settings.ssl.certificate_key);
             if (!fs::exists(settings.ssl.certificate_key))
                 throw SnapException("SSL certificate_key file not found: " + settings.ssl.certificate_key.native());
+            for (size_t n = 0; n < client_cert_opt->count(); ++n)
+            {
+                auto cert_file = std::filesystem::weakly_canonical(client_cert_opt->value(n));
+                if (!fs::exists(cert_file))
+                    throw SnapException("Client certificate file not found: " + cert_file.string());
+                settings.ssl.client_certs.push_back(std::move(cert_file));
+            }
         }
         else if (settings.ssl.certificate.empty() != settings.ssl.certificate_key.empty())
         {

@@ -8,7 +8,7 @@ endif()
 project(
   snapcast
   LANGUAGES CXX
-  VERSION 0.31.0)
+  VERSION 0.31.100)
 
 set(PROJECT_DESCRIPTION "Multiroom client-server audio player")
 set(PROJECT_URL "https://github.com/badaix/snapcast")
@@ -69,12 +69,12 @@ else()
   endif()
 
   if(ASAN)
-    add_compile_options(-fsanitize=address -Wno-error=maybe-uninitialized)
+    add_compile_options(-fsanitize=address)
     add_link_options(-fsanitize=address)
   endif()
 
   if(TSAN)
-    add_compile_options(-fsanitize=thread -Wno-error=tsan)
+    add_compile_options(-fsanitize=thread)
     add_link_options(-fsanitize=thread)
   endif()
 

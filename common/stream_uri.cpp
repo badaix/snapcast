@@ -33,8 +33,6 @@ namespace strutils = utils::string;
 
 static constexpr auto LOG_TAG = "StreamUri";
 
-namespace streamreader
-{
 
 StreamUri::StreamUri(const std::string& uri)
 {
@@ -87,6 +85,12 @@ void StreamUri::parse(const std::string& stream_uri)
     // pos:                        ^  or  ^  or             ^
 
     host = strutils::uriDecode(strutils::trim_copy(tmp.substr(0, pos)));
+    std::string str_port;
+    host = utils::string::split_left(host, ':', str_port);
+    port = std::strtol(str_port.c_str(), nullptr, 10);
+    if (port == 0)
+        port = std::nullopt;
+
     tmp = tmp.substr(pos);
     path = tmp;
     pos = std::min(path.find('?'), path.find('#'));
@@ -166,9 +170,9 @@ std::string StreamUri::getQuery(const std::string& key, const std::string& def) 
     return def;
 }
 
+
 bool StreamUri::operator==(const StreamUri& other) const
 {
-    return (other.scheme == scheme) && (other.host == host) && (other.path == path) && (other.query == query) && (other.fragment == fragment);
+    return (other.scheme == scheme) && (other.host == host) && (other.port == port) && (other.path == path) && (other.query == query) &&
+           (other.fragment == fragment);
 }
-
-} // namespace streamreader

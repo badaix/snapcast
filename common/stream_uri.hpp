@@ -24,18 +24,18 @@
 
 // standard headers
 #include <map>
+#include <optional>
 #include <string>
 
 
 using json = nlohmann::json;
 
-namespace streamreader
-{
-
 /// URI with the general format:
 ///  scheme:[//[user:password@]host[:port]][/]path[?query][#fragment]
 struct StreamUri
 {
+    /// c'tor
+    StreamUri() = default;
     /// c'tor construct from string @p uri
     explicit StreamUri(const std::string& uri);
 
@@ -54,6 +54,8 @@ struct StreamUri
 
     /// the host component
     std::string host;
+    /// the port
+    std::optional<size_t> port;
     /// the path component
     std::string path;
     /// the query component: "key = value" pairs
@@ -76,5 +78,3 @@ struct StreamUri
     /// @return true if @p other is equal to this
     bool operator==(const StreamUri& other) const;
 };
-
-} // namespace streamreader

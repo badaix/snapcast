@@ -169,7 +169,7 @@ jobs:
           key: ${{ runner.os }}-dependencies
       - name: Get dependenciesenv
         if: steps.cache-dependencies.outputs.cache-hit != 'true'
-        run: vcpkg.exe install libflac libvorbis soxr opus boost-asio --triplet x64-windows
+        run: vcpkg.exe install libflac libvorbis soxr opus boost-asio boost-beast --triplet x64-windows
       - name: configure
         run: |
           echo vcpkg installation root: $env:VCPKG_INSTALLATION_ROOT

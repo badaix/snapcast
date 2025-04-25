@@ -24,12 +24,12 @@
 #include "common/json.hpp"
 #include "common/message/codec_header.hpp"
 #include "common/sample_format.hpp"
+#include "common/stream_uri.hpp"
 #include "encoder/encoder.hpp"
 #include "jsonrpcpp.hpp"
 #include "properties.hpp"
 #include "server_settings.hpp"
 #include "stream_control.hpp"
-#include "stream_uri.hpp"
 
 // 3rd party headers
 #include <boost/asio/io_context.hpp>

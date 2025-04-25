@@ -18,6 +18,7 @@
 
 // local headers
 #include "common/popl.hpp"
+#include "common/utils/string_utils.hpp"
 #include "controller.hpp"
 
 #ifdef HAS_ALSA
@@ -37,6 +38,7 @@
 #include "common/aixlog.hpp"
 #include "common/snap_exception.hpp"
 #include "common/str_compat.hpp"
+#include "common/stream_uri.hpp"
 #include "common/version.hpp"
 
 // 3rd party headers
@@ -44,6 +46,7 @@
 #include <boost/asio/signal_set.hpp>
 
 // standard headers
+#include <filesystem>
 #include <iostream>
 #ifndef WINDOWS
 #include <csignal>
@@ -133,23 +136,38 @@ int main(int argc, char** argv)
         ClientSettings settings;
         string pcm_device(player::DEFAULT_DEVICE);
 
-        OptionParser op("Allowed options");
-        auto helpSwitch = op.add<Switch>("", "help", "produce help message");
-        auto groffSwitch = op.add<Switch, Attribute::hidden>("", "groff", "produce groff message");
-        auto versionSwitch = op.add<Switch>("v", "version", "show version number");
-        op.add<Value<string>>("h", "host", "server hostname or ip address", "", &settings.server.host);
-        op.add<Value<size_t>>("p", "port", "server port", 1704, &settings.server.port);
-        op.add<Value<size_t>>("i", "instance", "instance id when running multiple instances on the same host", 1, &settings.instance);
-        op.add<Value<string>>("", "hostID", "unique host id, default is MAC address", "", &settings.host_id);
+        OptionParser op("Usage: snapclient [options...] [url]\n\n"
+                        " With 'url' = "
+#ifdef HAS_OPENSSL
+                        "<tcp|ws|wss>"
+#else
+                        "<tcp|ws>"
+#endif
+                        "://<snapserver host or IP>[:port]\n"
+                        " For example: \"tcp:\\\\192.168.1.1:1704\", or \"ws:\\\\homeserver.local\"\n"
+                        " If 'url' is not configured, snapclient tries to resolve the snapserver IP via mDNS\n");
+        auto helpSwitch = op.add<Switch>("", "help", "Produce help message");
+        auto groffSwitch = op.add<Switch, Attribute::hidden>("", "groff", "Produce groff message");
+        auto versionSwitch = op.add<Switch>("v", "version", "Show version number");
+        auto host_opt = op.add<Value<string>>("h", "host", "(deprecated, use [url]) Server hostname or ip address", "", &settings.server.host);
+        auto port_opt = op.add<Value<size_t>>("p", "port", "(deprecated, use [url]) Server port", 1704, &settings.server.port);
+        op.add<Value<size_t>>("i", "instance", "Instance id when running multiple instances on the same host", 1, &settings.instance);
+        op.add<Value<string>>("", "hostID", "Unique host id, default is MAC address", "", &settings.host_id);
+        op.add<Value<std::filesystem::path>>("", "cert", "Client certificate file (PEM format)", settings.server.certificate, &settings.server.certificate);
+        op.add<Value<std::filesystem::path>>("", "cert-key", "Client private key file (PEM format)", settings.server.certificate_key,
+                                             &settings.server.certificate_key);
+        op.add<Value<string>>("", "key-password", "Key password (for encrypted private key)", settings.server.key_password, &settings.server.key_password);
+        auto server_cert_opt =
+            op.add<Implicit<std::filesystem::path>>("", "server-cert", "Verify server with CA certificate (PEM format)", "default certificates");
 
 // PCM device specific
 #if defined(HAS_ALSA) || defined(HAS_PULSE) || defined(HAS_WASAPI)
-        auto listSwitch = op.add<Switch>("l", "list", "list PCM devices");
-        /*auto soundcardValue =*/op.add<Value<string>>("s", "soundcard", "index or name of the pcm device", pcm_device, &pcm_device);
+        auto listSwitch = op.add<Switch>("l", "list", "List PCM devices");
+        /*auto soundcardValue =*/op.add<Value<string>>("s", "Soundcard", "index or name of the pcm device", pcm_device, &pcm_device);
 #endif
-        /*auto latencyValue =*/op.add<Value<int>>("", "latency", "latency of the PCM device", 0, &settings.player.latency);
+        /*auto latencyValue =*/op.add<Value<int>>("", "Latency", "latency of the PCM device", 0, &settings.player.latency);
 #ifdef HAS_SOXR
-        auto sample_format = op.add<Value<string>>("", "sampleformat", "resample audio stream to <rate>:<bits>:<channels>", "");
+        auto sample_format = op.add<Value<string>>("", "sampleformat", "Resample audio stream to <rate>:<bits>:<channels>", "");
 #endif
 
         auto supported_players = Controller::getSupportedPlayerNames();
@@ -160,7 +178,7 @@ int main(int argc, char** argv)
 
 // sharing mode
 #if defined(HAS_OBOE) || defined(HAS_WASAPI)
-        auto sharing_mode = op.add<Value<string>>("", "sharingmode", "audio mode to use [shared|exclusive]", "shared");
+        auto sharing_mode = op.add<Value<string>>("", "sharingmode", "Audio mode to use [shared|exclusive]", "shared");
 #endif
 
         // mixer
@@ -181,12 +199,12 @@ int main(int argc, char** argv)
 // daemon settings
 #ifdef HAS_DAEMON
         int processPriority(-3);
-        auto daemonOption = op.add<Implicit<int>>("d", "daemon", "daemonize, optional process priority [-20..19]", processPriority, &processPriority);
+        auto daemonOption = op.add<Implicit<int>>("d", "daemon", "Daemonize, optional process priority [-20..19]", processPriority, &processPriority);
         auto userValue = op.add<Value<string>>("", "user", "the user[:group] to run snapclient as when daemonized");
 #endif
 
         // logging
-        op.add<Value<string>>("", "logsink", "log sink [null,system,stdout,stderr,file:<filename>]", settings.logging.sink, &settings.logging.sink);
+        op.add<Value<string>>("", "logsink", "Log sink [null,system,stdout,stderr,file:<filename>]", settings.logging.sink, &settings.logging.sink);
         auto logfilterOption = op.add<Value<string>>(
             "", "logfilter", "log filter <tag>:<level>[,<tag>:<level>]* with tag = * or <log tag> and level = [trace,debug,info,notice,warning,error,fatal]",
             settings.logging.filter);
@@ -302,6 +320,82 @@ int main(int argc, char** argv)
             AixLog::Log::init<AixLog::SinkNull>();
         else
             throw SnapException("Invalid log sink: " + settings.logging.sink);
+
+        if (!op.unknown_options().empty())
+        {
+            throw SnapException("Unknown command line argument: '" + op.unknown_options().front() + "'");
+        }
+
+        if (host_opt->is_set() || port_opt->is_set())
+        {
+            LOG(WARNING, LOG_TAG) << "Options '--" << host_opt->long_name() << "' and '--" << port_opt->long_name()
+                                  << "' are deprecated. Please add the server URI as last command line argument\n";
+        }
+
+        if (!op.non_option_args().empty())
+        {
+            StreamUri uri;
+            try
+            {
+                uri.parse(op.non_option_args().front());
+            }
+            catch (...)
+            {
+#ifdef HAS_OPENSSL
+                throw SnapException("Invalid URI - expected format: \"<scheme>://<host or IP>[:port]\", with 'scheme' on of 'tcp', 'ws' or 'wss'");
+#else
+                throw SnapException("Invalid URI - expected format: \"<scheme>://<host or IP>[:port]\", with 'scheme' on of 'tcp' or 'ws'");
+#endif
+            }
+            if ((uri.scheme != "tcp") && (uri.scheme != "ws") && (uri.scheme != "wss"))
+#ifdef HAS_OPENSSL
+                throw SnapException("Protocol must be one of 'tcp', 'ws' or 'wss'");
+#else
+                throw SnapException("Protocol must be one of 'tcp' or 'ws'");
+#endif
+            settings.server.host = uri.host;
+            settings.server.protocol = uri.scheme;
+            if (uri.port.has_value())
+                settings.server.port = uri.port.value();
+            else if (settings.server.protocol == "tcp")
+                settings.server.port = 1704;
+            else if (settings.server.protocol == "ws")
+                settings.server.port = 1780;
+            else if (settings.server.protocol == "wss")
+            {
+                settings.server.port = 1788;
+#ifndef HAS_OPENSSL
+                throw SnapException("Snapclient is built without wss support");
+#endif
+            }
+        }
+
+        if (server_cert_opt->is_set())
+        {
+            if (server_cert_opt->get_default() == server_cert_opt->value())
+                settings.server.server_certificate = "";
+            else
+                settings.server.server_certificate = std::filesystem::weakly_canonical(server_cert_opt->value());
+            if (settings.server.server_certificate.value_or("").empty())
+                LOG(INFO, LOG_TAG) << "Server certificate: default certificates\n";
+            else
+                LOG(INFO, LOG_TAG) << "Server certificate: " << settings.server.server_certificate.value_or("") << "\n";
+        }
+
+        if (!settings.server.certificate.empty() && !settings.server.certificate_key.empty())
+        {
+            namespace fs = std::filesystem;
+            settings.server.certificate = fs::weakly_canonical(settings.server.certificate);
+            if (!fs::exists(settings.server.certificate))
+                throw SnapException("Certificate file not found: " + settings.server.certificate.string());
+            settings.server.certificate_key = fs::weakly_canonical(settings.server.certificate_key);
+            if (!fs::exists(settings.server.certificate_key))
+                throw SnapException("Certificate_key file not found: " + settings.server.certificate_key.string());
+        }
+        else if (settings.server.certificate.empty() != settings.server.certificate_key.empty())
+        {
+            throw SnapException("Both SSL 'certificate' and 'certificate_key' must be set or empty");
+        }
 
 #if !defined(HAS_AVAHI) && !defined(HAS_BONJOUR)
         if (settings.server.host.empty())
@@ -445,6 +539,7 @@ int main(int argc, char** argv)
 
         int num_threads = 0;
         std::vector<std::thread> threads;
+        threads.reserve(num_threads);
         for (int n = 0; n < num_threads; ++n)
             threads.emplace_back([&] { io_context.run(); });
         io_context.run();

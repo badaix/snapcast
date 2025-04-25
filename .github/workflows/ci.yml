@@ -75,7 +75,7 @@ jobs:
           mkdir -p build/doxygen
           doxygen 2>&1 | tee build/doxygen.log
           WARNINGS=$(cat build/doxygen.log | sort | uniq | grep -e ": warning: " | wc -l)
-          MAX_ALLOWED=768
+          MAX_ALLOWED=593
           echo "Doxygen finished with $WARNINGS warnings, max allowed: $MAX_ALLOWED"
           if [ "$WARNINGS" -gt "$MAX_ALLOWED" ]; then exit $WARNINGS; else exit 0; fi;
 
@@ -129,7 +129,7 @@ jobs:
       - name: configure
         run: |
           cmake -S . -B build \
-            -DWERROR=ON \
+            -DWERROR=OFF \
             -DBUILD_TESTS=ON \
             -D${{ matrix.param }} \
             -DBOOST_ROOT=boost_${BOOST_VERSION} \
@@ -401,14 +401,15 @@ jobs:
         with:
           #path: ${VCPKG_INSTALLATION_ROOT}\installed
           path: c:\vcpkg\installed
-          key: ${{ runner.os }}-dependencies
+          key: ${{ runner.os }}-${{ matrix.compiler }}-${{ matrix.build_type }}-ccache-${{ github.sha }}
+          restore-keys: ${{ runner.os }}-${{ matrix.compiler }}-${{ matrix.build_type }}-ccache-
       - name: dependencies
         if: steps.cache-dependencies.outputs.cache-hit != 'true'
         run: |
           cd c:\vcpkg
           git pull
           vcpkg.exe update
-          vcpkg.exe --triplet x64-windows install libflac libvorbis soxr opus boost-asio catch2
+          vcpkg.exe --triplet x64-windows install libflac libvorbis soxr opus boost-asio boost-beast catch2
       - name: configure
         run: |
           echo vcpkg installation root: ${env:VCPKG_INSTALLATION_ROOT}

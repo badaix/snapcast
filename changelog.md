@@ -1,5 +1,24 @@
 # Snapcast changelog
 
+## Version 0.32.0
+
+### Features
+
+- Client: Add support for (secure-) websockets (Issue #1325, PR #1340)
+- Server: Add client authentication (Issue #1334, PR #1340)
+- Server: Add control script for Plex (PR #1346)
+
+### Bugfixes
+
+- Fix typos (PR #1333, PR #1341, PR #1345)
+
+### General
+
+- Client: Command line arguments '--host' and '--port' are deprecated
+- Update binary_protocol.md (Issue #1339)
+
+_Johannes Pohl <snapcast@badaix.de>  Thu, 23 Jan 2025 00:13:37 +0200_
+
 ## Version 0.31.0
 
 ### Features

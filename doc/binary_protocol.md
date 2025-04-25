@@ -1,6 +1,7 @@
 # Snapcast binary protocol
 
 Each message sent with the Snapcast binary protocol is split up into two parts:
+
 - A base message that provides general information like time sent/received, type of the message, message size, etc
 - A typed message that carries the rest of the information
 
@@ -24,15 +25,15 @@ When a client joins a server, the following exchanges happen
 
 ## Messages
 
-| Typed Message ID | Name                                 | Notes                                                                     |
-|------------------|--------------------------------------|---------------------------------------------------------------------------|
-| 0                | [Base](#base)                        | The beginning of every message containing data about the typed message    |
-| 1                | [Codec Header](#codec-header)        | The codec-specific data to put at the start of a stream to allow decoding |
-| 2                | [Wire Chunk](#wire-chunk)            | A part of an audio stream                                                 |
-| 3                | [Server Settings](#server-settings)  | Settings set from the server like volume, latency, etc                    |
-| 4                | [Time](#time)                        | Used for synchronizing time with the server                               |
-| 5                | [Hello](#hello)                      | Sent by the client when connecting with the server                        |
-| 6                | [Stream Tags](#stream-tags)          | Metadata about the stream for use by the client                           |
+| Typed Message ID | Name                                 | Dir  | Notes                                                                     |
+|------------------|--------------------------------------|------|---------------------------------------------------------------------------|
+| 0                | [Base](#base)                        |      | The beginning of every message containing data about the typed message    |
+| 1                | [Codec Header](#codec-header)        | S->C | The codec-specific data to put at the start of a stream to allow decoding |
+| 2                | [Wire Chunk](#wire-chunk)            | S->C | A part of an audio stream                                                 |
+| 3                | [Server Settings](#server-settings)  | S->C | Settings set from the server like volume, latency, etc                    |
+| 4                | [Time](#time)                        | C->S<br>S->C | Used for synchronizing time with the server                       |
+| 5                | [Hello](#hello)                      | C->S | Sent by the client when connecting with the server                        |
+| 7                | [Client Info](#client-info)          | C->S | Update the server when relevant information changes (e.g. client volume)  |
 
 ### Base
 
@@ -62,7 +63,6 @@ The payload depends on the used codec:
 - Ogg: the vorbis stream header, as described [here](https://xiph.org/vorbis/doc/Vorbis_I_spec.html#x1-610004.2). The decoder must be initialized with this header.
 - PCM: a RIFF WAVE header, as described [here](https://de.wikipedia.org/wiki/RIFF_WAVE). PCM is not encoded, but the decoder must know the samplerate, bit depth and number of channels, which is encoded into the header
 - Opus: a dummy header is sent, containing a 4 byte ID (0x4F505553, ascii for "OPUS"), 4 byte samplerate, 2 byte bit depth, 2 byte channel count (all little endian)
-
 
 ### Wire Chunk
 
@@ -122,3 +122,21 @@ Sample JSON payload (whitespace added for readability):
     "Version": "0.17.1"
 }
 ```
+
+### Client Info
+
+| Field   | Type   | Description                                              |
+|---------|--------|----------------------------------------------------------|
+| size    | uint32 | Size of the following JSON string                        |
+| payload | char[] | JSON string containing the message (not null terminated) |
+
+Sample JSON payload (whitespace added for readability):
+
+```json
+{
+    "volume": 100,
+    "muted": false,
+}
+```
+
+- `volume` can have a value between 0-100 inclusive

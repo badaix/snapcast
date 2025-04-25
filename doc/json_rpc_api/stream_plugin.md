@@ -92,7 +92,7 @@ Snapserver will send the `SetProperty` command to the plugin, if `canControl` is
   * `track`: the current track will start again from the begining once it has finished playing
   * `playlist`: the playback loops through a list of tracks
 * `shuffle`: [bool] play playlist in random order
-* `volume`: [int] voume in percent, valid range [0..100]
+* `volume`: [int] volume in percent, valid range [0..100]
 * `mute`: [bool] the current mute state
 * `rate`: [float] the current playback rate, valid range (0..)
 

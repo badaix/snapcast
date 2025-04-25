@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2022  Johannes Pohl
+    Copyright (C) 2014-2025  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -16,8 +16,7 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
-#ifndef MESSAGE_TIME_HPP
-#define MESSAGE_TIME_HPP
+#pragma once
 
 // local headers
 #include "message.hpp"
@@ -25,13 +24,16 @@
 namespace msg
 {
 
+/// Time sync message, send from client to server and back
 class Time : public BaseMessage
 {
 public:
+    /// c'tor
     Time() : BaseMessage(message_type::kTime)
     {
     }
 
+    /// d'tor
     ~Time() override = default;
 
     void read(std::istream& stream) override
@@ -45,6 +47,7 @@ public:
         return sizeof(tv);
     }
 
+    /// The latency after round trip "client => server => client"
     tv latency;
 
 protected:
@@ -54,7 +57,5 @@ protected:
         writeVal(stream, latency.usec);
     }
 };
+
 } // namespace msg
-
-
-#endif

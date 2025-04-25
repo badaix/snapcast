@@ -3,7 +3,7 @@
     (  _ \ /  \(  _ \(  )
      ) __/(  O )) __// (_/\
     (__)   \__/(__)  \____/
-    version 1.3.0
+    version 1.3.1
     https://github.com/badaix/popl
 
     This file is part of popl (program options parser lib)
@@ -483,7 +483,7 @@ public:
     std::string print(const Attribute& max_attribute = Attribute::optional) const override;
 
 private:
-    std::string to_string(Option_ptr option) const;
+    std::string to_string(const Option_ptr& option) const;
 };
 
 
@@ -501,7 +501,7 @@ public:
     std::string print(const Attribute& max_attribute = Attribute::optional) const override;
 
 private:
-    std::string to_string(Option_ptr option) const;
+    std::string to_string(const Option_ptr& option) const;
 };
 
 
@@ -1122,7 +1122,7 @@ inline ConsoleOptionPrinter::ConsoleOptionPrinter(const OptionParser* option_par
 }
 
 
-inline std::string ConsoleOptionPrinter::to_string(Option_ptr option) const
+inline std::string ConsoleOptionPrinter::to_string(const Option_ptr& option) const
 {
     std::stringstream line;
     if (option->short_name() != 0)
@@ -1142,7 +1142,7 @@ inline std::string ConsoleOptionPrinter::to_string(Option_ptr option) const
         std::stringstream defaultStr;
         if (option->get_default(defaultStr))
         {
-            if (!defaultStr.str().empty())
+            if (!defaultStr.str().empty() && (defaultStr.str() != "\"\""))
                 line << " (=" << defaultStr.str() << ")";
         }
     }
@@ -1167,7 +1167,7 @@ inline std::string ConsoleOptionPrinter::print(const Attribute& max_attribute) c
 
     std::stringstream s;
     if (!option_parser_->description().empty())
-        s << option_parser_->description() << ":\n";
+        s << option_parser_->description() << "\n";
 
     size_t optionRightMargin(20);
     const size_t maxDescriptionLeftMargin(40);
@@ -1216,7 +1216,7 @@ inline GroffOptionPrinter::GroffOptionPrinter(const OptionParser* option_parser)
 }
 
 
-inline std::string GroffOptionPrinter::to_string(Option_ptr option) const
+inline std::string GroffOptionPrinter::to_string(const Option_ptr& option) const
 {
     std::stringstream line;
     if (option->short_name() != 0)
