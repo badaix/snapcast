@@ -18,14 +18,16 @@
 
 #pragma once
 
-
 // local headers
 #include "jsonrpcpp.hpp"
 #include "server_settings.hpp"
 
 // 3rd party headers
-#include <boost/asio/any_io_executor.hpp>
-#include <boost/process.hpp>
+#define BOOST_PROCESS_VERSION 1
+#include <boost/asio.hpp>
+#include <boost/process/v1/io.hpp>
+#include <boost/process/v1/start_dir.hpp>
+#include <boost/process/v1/system.hpp>
 
 // standard headers
 #include <filesystem>
