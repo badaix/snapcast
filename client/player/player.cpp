@@ -27,7 +27,11 @@
 
 // 3rd party headers
 #ifdef SUPPORTS_VOLUME_SCRIPT
-#include <boost/process.hpp>
+#define BOOST_PROCESS_VERSION 1
+#include <boost/process/v1/args.hpp>
+#include <boost/process/v1/child.hpp>
+#include <boost/process/v1/detail/on_exit.hpp>
+#include <boost/process/v1/exe.hpp>
 #endif
 
 // standard headers
