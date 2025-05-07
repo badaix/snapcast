@@ -41,6 +41,9 @@ namespace streamreader
 class MetaStream : public PcmStream, public PcmStream::Listener
 {
 public:
+    static inline const std::string WILDCARD = "*";
+
+public:
     /// ctor. Encoded PCM data is passed to the PcmStream::Listener
     MetaStream(PcmStream::Listener* pcmListener, const std::vector<std::shared_ptr<PcmStream>>& streams, boost::asio::io_context& ioc,
                const ServerSettings& server_settings, const StreamUri& uri);
@@ -48,6 +51,9 @@ public:
 
     void start() override;
     void stop() override;
+
+    void addStream(std::shared_ptr<PcmStream> stream);
+    void removeStream(const PcmStream& stream);
 
     // Setter for properties
     void setShuffle(bool shuffle, ResultHandler handler) override;
@@ -67,6 +73,9 @@ public:
     void play(ResultHandler handler) override;
 
 protected:
+    bool isAllowed(const PcmStream& stream) const;
+    void updateActiveStream();
+
     /// Implementation of PcmStream::Listener
     void onPropertiesChanged(const PcmStream* pcmStream, const Properties& properties) override;
     void onStateChanged(const PcmStream* pcmStream, ReaderState state) override;
