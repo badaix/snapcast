@@ -18,6 +18,7 @@ logging.basicConfig(
     filename="/tmp/plex_bridge.log"
 )
 
+
 class PlexSnapcastBridge:
     def __init__(self, config: Dict[str, Union[str, Optional[str]]]):
         self.config = config
@@ -30,7 +31,8 @@ class PlexSnapcastBridge:
             self.snapcast_url = f"http://{self.config['snapcast_host']}:{self.config['snapcast_port']}/jsonrpc"
         self.connect_to_plex()
         self.send_ready_notification()
-        self.monitor_thread = threading.Thread(target=self.monitor_sessions, daemon=True)
+        self.monitor_thread = threading.Thread(
+            target=self.monitor_sessions, daemon=True)
         self.monitor_thread.start()
 
     def connect_to_plex(self) -> None:
@@ -50,7 +52,7 @@ class PlexSnapcastBridge:
     def update_snapcast_status(self, properties: Dict[str, Any]) -> None:
         if not self.snapcast_url:
             return
-        
+
         try:
             payload = {
                 "id": 1,
@@ -63,7 +65,8 @@ class PlexSnapcastBridge:
             }
             requests.post(self.snapcast_url, json=payload)
         except requests.exceptions.RequestException as e:
-            self.send_log(f"Failed to update Snapcast status: {str(e)}", "error")
+            self.send_log(
+                f"Failed to update Snapcast status: {str(e)}", "error")
 
     def send_ready_notification(self) -> None:
         notification = {
@@ -107,16 +110,17 @@ class PlexSnapcastBridge:
         try:
             metadata: Dict[str, Any] = {}
             playback_status = "stopped"
-            
+
             now_playing = self.plex.sessions()
             player_name = self.config["player"]
-            
+
             active_session = None
             for session in now_playing:
                 if hasattr(session, "players") and session.players:
                     if session.players[0].title == player_name:
                         active_session = session
-                        raw_state = getattr(session.players[0], "state", "stopped")
+                        raw_state = getattr(
+                            session.players[0], "state", "stopped")
                         playback_status = "playing" if raw_state == "playing" else "paused"
                         break
 
@@ -127,8 +131,8 @@ class PlexSnapcastBridge:
 
                 metadata = {
                     "title": getattr(active_session, "title", "Unknown Title"),
-                    "artist": [getattr(active_session, "originalTitle", None) or 
-                             getattr(active_session, "grandparentTitle", "Unknown Artist")],
+                    "artist": [getattr(active_session, "originalTitle", None) or
+                               getattr(active_session, "grandparentTitle", "Unknown Artist")],
                     "album": getattr(active_session, "parentTitle", "Unknown Album"),
                     "duration": getattr(active_session, "duration", 0) / 1000,
                     "trackNumber": int(getattr(active_session, "index", 0)) if getattr(active_session, "index", None) else 0,
@@ -182,8 +186,9 @@ class PlexSnapcastBridge:
             if self.current_player is None:
                 raise Exception("No player connected")
 
-            self.send_log(f"Executing command: {command} with params: {params}", "debug")
-            
+            self.send_log(
+                f"Executing command: {command} with params: {params}", "debug")
+
             if command == "play":
                 self.current_player.play()
             elif command == "pause":
@@ -196,8 +201,10 @@ class PlexSnapcastBridge:
                 self.current_player.skipPrevious()
             elif command == "seek":
                 if "offset" in params:
-                    current_time = getattr(self.current_player, "viewOffset", 0)
-                    new_time = int((current_time / 1000 + params["offset"]) * 1000)
+                    current_time = getattr(
+                        self.current_player, "viewOffset", 0)
+                    new_time = int(
+                        (current_time / 1000 + params["offset"]) * 1000)
                     self.current_player.seekTo(new_time)
             elif command == "setPosition":
                 if "position" in params:
@@ -208,9 +215,10 @@ class PlexSnapcastBridge:
             properties = self.get_current_properties()
             self.send_properties_notification(properties)
             return {"status": "ok"}
-            
+
         except Exception as e:
-            self.send_log(f"Error executing control command ({type(e).__name__}): {str(e)}", "error")
+            self.send_log(
+                f"Error executing control command ({type(e).__name__}): {str(e)}", "error")
             return {"error": {"code": -32000, "message": str(e)}}
 
     def handle_set_property(self, property_name: str, value: Any) -> Dict[str, Any]:
@@ -242,12 +250,14 @@ class PlexSnapcastBridge:
 
             if method == "Plugin.Stream.Player.Control":
                 params = command.get("params", {})
-                result = self.handle_control_command(params.get("command", ""), params.get("params", {}))
+                result = self.handle_control_command(
+                    params.get("command", ""), params.get("params", {}))
                 response["result"] = result
             elif method == "Plugin.Stream.Player.SetProperty":
                 params = command.get("params", {})
                 property_name = next(iter(params.keys()))
-                result = self.handle_set_property(property_name, params[property_name])
+                result = self.handle_set_property(
+                    property_name, params[property_name])
                 response["result"] = result
             elif method == "Plugin.Stream.Player.GetProperties":
                 response["result"] = self.get_current_properties()
@@ -274,12 +284,13 @@ class PlexSnapcastBridge:
             try:
                 properties = self.get_current_properties()
                 current_metadata = properties.get("metadata", {})
-                
+
                 if current_metadata != self.last_metadata:
-                    self.send_log("Track changed, updating properties", "debug")
+                    self.send_log(
+                        "Track changed, updating properties", "debug")
                     self.send_properties_notification(properties)
                     self.last_metadata = current_metadata.copy()
-                
+
                 time.sleep(1)
             except Exception as e:
                 self.send_log(f"Error in session monitor: {str(e)}", "error")
@@ -302,16 +313,20 @@ class PlexSnapcastBridge:
                 except json.JSONDecodeError as e:
                     self.send_log(f"Invalid JSON received: {str(e)}", "error")
                 except Exception as e:
-                    self.send_log(f"Error processing command: {str(e)}", "error")
+                    self.send_log(
+                        f"Error processing command: {str(e)}", "error")
         finally:
             self.running = False
             self.monitor_thread.join(timeout=1)
 
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Plex to Snapcast Bridge")
     parser.add_argument("--token", type=str, required=True, help="Plex token")
-    parser.add_argument("--ip", type=str, required=True, help="Plex server IP address")
-    parser.add_argument("--player", type=str, required=True, help="Plex player name")
+    parser.add_argument("--ip", type=str, required=True,
+                        help="Plex server IP address")
+    parser.add_argument("--player", type=str, required=True,
+                        help="Plex player name")
     parser.add_argument("--stream", type=str, help="Stream ID")
     parser.add_argument("--snapcast-port", type=str, help="Snapcast HTTP port")
     parser.add_argument("--snapcast-host", type=str, help="Snapcast HTTP host")
