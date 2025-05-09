@@ -42,9 +42,55 @@ public:
     /// Description of the request
     struct Description
     {
+        /// Type of a value or parameter
+        enum class Type
+        {
+            string,  ///< string
+            number,  ///< integer
+            boolean, ///< bool
+            array,   ///< array
+            object,  ///< json object
+            null,    ///< null
+        };
+
+        std::string toString(Type type)
+        {
+            switch (type)
+            {
+                case Type::string:
+                    return "string";
+                case Type::number:
+                    return "number";
+                case Type::boolean:
+                    return "boolean";
+                case Type::array:
+                    return "array";
+                case Type::object:
+                    return "object";
+                case Type::null:
+                default:
+                    return "null";
+            }
+        };
+
+        /// An RPC parameter
+        struct Parameter
+        {
+            std::string name;        ///< param name
+            Type type;               ///< param type (string, number, bool, array, object)
+            std::string description; ///< param description
+        };
+
+        /// The RPC command's resilt
+        struct Result
+        {
+            Type type = Type::null;  ///< result type (string, number, bool, array, object)
+            std::string description; ///< result description
+        };
+
         /// c'tor
         // NOLINTNEXTLINE
-        Description(std::string description, std::vector<std::pair<std::string, std::string>> parameters = {}, std::string result = "")
+        Description(std::string description, std::vector<Parameter> parameters = {}, Result result = {Type::null, ""})
             : description(std::move(description)), parameters(std::move(parameters)), result(std::move(result))
         {
         }
@@ -52,25 +98,26 @@ public:
         /// Description
         std::string description;
         /// Parameters
-        std::vector<std::pair<std::string, std::string>> parameters;
+        std::vector<Parameter> parameters;
         /// Return value
-        std::string result;
+        Result result;
 
         /// @return description as json
         Json toJson()
         {
             Json jres;
             jres["description"] = description;
-            if (!result.empty())
-                jres["return"] = result;
+            if (result.type != Type::null)
+                jres["return"] = {toString(result.type), result.description};
             if (!parameters.empty())
             {
                 Json jparams = Json::array();
-                for (const auto& [param, desc] : parameters)
+                for (const auto& parameter : parameters)
                 {
                     Json jparam;
-                    jparam["parameter"] = param;
-                    jparam["description"] = desc;
+                    jparam["parameter"] = parameter.name;
+                    jparam["description"] = parameter.description;
+                    jparam["type"] = toString(parameter.type);
                     jparams.push_back(std::move(jparam));
                 }
                 jres["parameters"] = jparams;

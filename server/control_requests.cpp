@@ -205,7 +205,7 @@ void ClientGetStatusRequest::execute(const jsonrpcpp::request_ptr& request, Auth
 
 Request::Description ClientGetStatusRequest::description() const
 {
-    return {"Get client status", {{"id", "client id"}}, "Client status, information and settings"};
+    return {"Get client status", {{"id", Description::Type::string, "client id"}}, {Description::Type::object, "Client status, information and settings"}};
 }
 
 
@@ -239,7 +239,7 @@ void ClientSetVolumeRequest::execute(const jsonrpcpp::request_ptr& request, Auth
 
 Request::Description ClientSetVolumeRequest::description() const
 {
-    return {"Set client volume", {{"volume", "muted [bool] and volume [percent]"}}};
+    return {"Set client volume", {{"volume", Description::Type::object, "muted [bool] and volume [percent]"}}};
 }
 
 
@@ -278,7 +278,7 @@ void ClientSetLatencyRequest::execute(const jsonrpcpp::request_ptr& request, Aut
 
 Request::Description ClientSetLatencyRequest::description() const
 {
-    return {"Set additional client audio latency", {{"id", "client id"}, {"latency", "value [ms]"}}};
+    return {"Set additional client audio latency", {{"id", Description::Type::string, "client id"}, {"latency", Description::Type::number, "value [ms]"}}};
 }
 
 
@@ -312,7 +312,7 @@ void ClientSetNameRequest::execute(const jsonrpcpp::request_ptr& request, AuthIn
 
 Request::Description ClientSetNameRequest::description() const
 {
-    return {"Set name of a client", {{"name", "new client name"}}};
+    return {"Set name of a client", {{"name", Description::Type::string, "new client name"}}};
 }
 
 
@@ -356,7 +356,7 @@ void GroupGetStatusRequest::execute(const jsonrpcpp::request_ptr& request, AuthI
 
 Request::Description GroupGetStatusRequest::description() const
 {
-    return {"Get status of a group", {{"id", "group id"}}, "Group status, information and settings"};
+    return {"Get status of a group", {{"id", Description::Type::string, "group id"}}, {Description::Type::object, "Group status, information and settings"}};
 }
 
 
@@ -388,7 +388,7 @@ void GroupSetNameRequest::execute(const jsonrpcpp::request_ptr& request, AuthInf
 
 Request::Description GroupSetNameRequest::description() const
 {
-    return {"Set name of a group", {{"id", "group id"}, {"name", "new name of the group"}}};
+    return {"Set name of a group", {{"id", Description::Type::string, "group id"}, {"name", Description::Type::string, "new name of the group"}}};
 }
 
 
@@ -438,7 +438,7 @@ void GroupSetMuteRequest::execute(const jsonrpcpp::request_ptr& request, AuthInf
 
 Request::Description GroupSetMuteRequest::description() const
 {
-    return {"Mute a grouo", {{"id", "id of the group"}, {"mute", "true or false"}}};
+    return {"Mute a grouo", {{"id", Description::Type::string, "id of the group"}, {"mute", Description::Type::boolean, "true or false"}}};
 }
 
 
@@ -489,7 +489,7 @@ void GroupSetStreamRequest::execute(const jsonrpcpp::request_ptr& request, AuthI
 
 Request::Description GroupSetStreamRequest::description() const
 {
-    return {"Assign a stream to a group", {{"id", "id of the group"}, {"stream_id", "id of the stream"}}};
+    return {"Assign a stream to a group", {{"id", Description::Type::string, "id of the group"}, {"stream_id", Description::Type::string, "id of the stream"}}};
 }
 
 
@@ -570,7 +570,7 @@ void GroupSetClientsRequest::execute(const jsonrpcpp::request_ptr& request, Auth
 
 Request::Description GroupSetClientsRequest::description() const
 {
-    return {"Assign clients to a group", {{"id", "id of the group"}, {"clients", "list of client ids"}}};
+    return {"Assign clients to a group", {{"id", Description::Type::string, "id of the group"}, {"clients", Description::Type::array, "list of client ids"}}};
 }
 
 
@@ -1078,7 +1078,7 @@ void GeneralGetRpcCommands::execute(const jsonrpcpp::request_ptr& request, AuthI
 
 Request::Description GeneralGetRpcCommands::description() const
 {
-    return {"Get available RPC commands", {}, "List of RPC commands"};
+    return {"Get available RPC commands", {}, {Description::Type::array, "List of RPC commands"}};
 }
 
 
