@@ -193,6 +193,16 @@ class LibrespotControl(object):
                 sendupdate = True
                 if event == 'stopped':
                     self._properties['playbackStatus'] = 'stopped'
+                elif event == 'inactive':
+                    self._metadata = {}
+                    self._properties = {}
+                    self._properties['playbackStatus'] = 'paused'
+                    self._properties['loopStatus'] = 'none'
+                    self._properties['shuffle'] = False
+                    self._properties['volume'] = 100
+                    self._properties['mute'] = False
+                    self._properties['rate'] = 1.0
+                    self._properties['position'] = 0
                 elif event == 'paused':
                     self._properties['playbackStatus'] = 'paused'
                 elif event == 'playing':
