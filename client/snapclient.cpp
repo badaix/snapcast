@@ -63,7 +63,8 @@ using namespace std::chrono_literals;
 
 static constexpr auto LOG_TAG = "Snapclient";
 
-
+namespace
+{
 PcmDevice getPcmDevice(const std::string& player, const std::string& parameter, const std::string& soundcard)
 {
     LOG(DEBUG, LOG_TAG) << "Trying to get PCM device for player: " << player << ", parameter: " << ", card: " << soundcard << "\n";
@@ -104,6 +105,7 @@ PcmDevice getPcmDevice(const std::string& player, const std::string& parameter, 
     pcm_device.name = soundcard;
     return pcm_device;
 }
+} // namespace
 
 #ifdef WINDOWS
 // hack to avoid case destinction in the signal handler
