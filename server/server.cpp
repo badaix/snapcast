@@ -331,8 +331,7 @@ void Server::onMessageReceived(const std::shared_ptr<StreamSession>& streamSessi
                     LOG(ERROR, LOG_TAG) << "Authentication required\n";
                 error_msg = make_shared<msg::Error>(401, "Unauthorized", ec ? ec.detailed_message() : "Authentication required");
             }
-
-            if (!streamSession->authinfo.hasPermission("Streaming"))
+            else if (!streamSession->authinfo.hasPermission("Streaming"))
             {
                 std::string error = "Permission 'Streaming' missing";
                 LOG(ERROR, LOG_TAG) << error << "\n";
