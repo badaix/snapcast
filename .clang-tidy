@@ -1,0 +1,23 @@
+---
+Checks:          'clang-diagnostic-*,clang-analyzer-*,modernize*,performance*,readability-*size*,readability*redundant*,-readability-redundant-member-init,-readability-redundant-access-specifiers,misc*,boost-use-to-string,cert*,google-runtime-member-string-references,google-explicit-constructor,-cert-err33-c,-cert-err58-cpp,-modernize-concat-nested-namespaces,-modernize-use-nodiscard,-misc-non-private-member-variables-in-classes,-modernize-use-trailing-return-type,-misc-no-recursion,-misc-const-correctness,-misc-use-anonymous-namespace'
+WarningsAsErrors: ''
+HeaderFilterRegex: ''
+AnalyzeTemporaryDtors: false
+FormatStyle:     file
+User:            badaix
+CheckOptions:
+  - key:             modernize-loop-convert.MaxCopySize
+    value:           '16'
+  - key:             modernize-loop-convert.MinConfidence
+    value:           reasonable
+  - key:             modernize-loop-convert.NamingStyle
+    value:           CamelCase
+  - key:             modernize-pass-by-value.IncludeStyle
+    value:           llvm
+  - key:             modernize-replace-auto-ptr.IncludeStyle
+    value:           llvm
+  - key:             modernize-use-nullptr.NullMacros
+    value:           'NULL'
+  - key:             hicpp-signed-bitwise.IgnorePositiveIntegerLiterals
+    value:           '1'
+...

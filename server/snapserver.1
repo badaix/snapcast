@@ -1,0 +1,49 @@
+.TH SNAPSERVER 1 "January 2025"
+.SH NAME
+snapserver - Snapcast server
+.SH SYNOPSIS
+\fBsnapserver\fR [\fIOPTION\fR]...
+.SH DESCRIPTION
+Snapcast is a multiroom client-server audio player, where all clients are
+time synchronized with the server to play perfectly synced audio. It's not a
+standalone player, but an extension that turns your existing audio player into
+a Sonos-like multiroom solution.
+.br
+The server's audio input is a named pipe `/tmp/snapfifo`. All data that is fed
+into this file will be send to the connected clients. One of the most generic
+ways to use Snapcast is in conjunction with the music player daemon or Mopidy,
+which can be configured to use a named pipe as audio output.
+.SS Allowed options:
+.TP
+\fB-h, --help\fR
+Produce help message, use -hh to show options from config file
+.TP
+\fB-v, --version\fR
+Show version number
+.TP
+\fB-d, --daemon [=arg(=0)]\fR
+Daemonize
+optional process priority [-20..19]
+.TP
+\fB-c, --config arg (=/etc/snapserver.conf)\fR
+path to the configuration file
+.SH FILES
+.TP
+\fI/tmp/snapfifo\fR
+PCM input fifo file
+.TP
+\fI/etc/default/snapserver\fR
+the daemon default configuration file
+.TP
+\fI/etc/snapserver.conf\fR
+the snapserver configuration file
+.TP
+\fI~/.config/snapcast/server.json\fR or (if $HOME is not set) \fI/var/lib/snapcast/server.json\fR
+persistent server data file
+.SH "COPYRIGHT"
+Copyright (C) 2014-2025 Johannes Pohl (snapcast@badaix.de).
+License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>.
+This is free software: you are free to change and redistribute it.
+There is NO WARRANTY, to the extent permitted by law.
+.SH "SEE ALSO"
+snapclient(1)

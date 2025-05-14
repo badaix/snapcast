@@ -1,0 +1,80 @@
+#!/usr/bin/make -f
+
+include /usr/share/dpkg/buildflags.mk
+
+export DEB_BUILD_MAINT_OPTIONS = hardening=+all
+export DEB_BUILD_OPTIONS = noautodbgsym parallel=$(shell nproc)
+export DEB_LDFLAGS_MAINT_APPEND = -Wl,--as-needed
+export DEB_CPPFLAGS_MAINT_APPEND = -DJSON_HAS_CPP_14
+
+# Check if ninja is available
+NINJA := $(shell which ninja)
+ifneq ($(NINJA),)
+    # Set the CMake generator to Ninja if available
+    export DH_CMAKE_GENERATOR=Ninja
+    # Ninja-specific optimizations
+    export NINJA_STATUS="[%p/%f/%t] "
+    # Use jobserver for better parallelization
+    export NINJA_OPTS=-j$(shell nproc)
+endif
+
+# Check for ccache
+CCACHE := $(shell which ccache)
+ifneq ($(CCACHE),)
+    # Configure ccache for maximum performance
+    export CCACHE_DIR=$(HOME)/.ccache
+    export CCACHE_COMPRESS=1
+    export CCACHE_MAXSIZE=5G
+    export CCACHE_SLOPPINESS=pch_defines,time_macros
+    CMAKEFLAGS += -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DCMAKE_C_COMPILER_LAUNCHER=ccache
+endif
+
+# Add installation prefix and optimization flags
+CMAKEFLAGS += -DCMAKE_INSTALL_PREFIX=/usr
+
+# Add build optimizations
+CMAKEFLAGS += -DCMAKE_CXX_FLAGS="-pipe -O2" -DCMAKE_C_FLAGS="-pipe -O2"
+
+%:
+	dh $@ --buildsystem=cmake --builddirectory=build
+
+# Clean CMake cache before configuring to avoid generator conflicts
+override_dh_auto_configure:
+	rm -f build/CMakeCache.txt
+	# Show build configuration
+	echo "Building with: $(CMAKEFLAGS)"
+	dh_auto_configure -- $(CMAKEFLAGS)
+
+# Override build to use Ninja directly if available
+override_dh_auto_build:
+	if [ -n "$(NINJA)" ] && [ -f build/build.ninja ]; then \
+		cd build && $(NINJA) $(NINJA_OPTS); \
+	else \
+		dh_auto_build; \
+	fi
+	# Check if binaries were built
+	ls -la bin/ || echo "No binaries found in bin/"
+
+# Create necessary directories for installation
+override_dh_auto_install:
+	dh_auto_install
+	mkdir -p debian/tmp/etc/snapserver
+	mkdir -p debian/tmp/usr/share/snapserver
+	mkdir -p debian/tmp/usr/share/pixmaps
+	mkdir -p debian/tmp/usr/bin
+	
+	# Copy binaries if they exist in the project bin directory
+	if [ -f "bin/snapclient" ] && [ ! -f "debian/tmp/usr/bin/snapclient" ]; then \
+		cp bin/snapclient debian/tmp/usr/bin/; \
+	fi
+	if [ -f "bin/snapserver" ] && [ ! -f "debian/tmp/usr/bin/snapserver" ]; then \
+		cp bin/snapserver debian/tmp/usr/bin/; \
+	fi
+	
+	# Copy config files if they exist in the source but not in the destination
+	if [ -f "server/etc/snapserver.conf" ] && [ ! -f "debian/tmp/etc/snapserver.conf" ]; then \
+		cp server/etc/snapserver.conf debian/tmp/etc/snapserver.conf; \
+	fi
+	if [ -f "debian/snapcast.svg" ] && [ ! -f "debian/tmp/usr/share/pixmaps/snapcast.svg" ]; then \
+		cp debian/snapcast.svg debian/tmp/usr/share/pixmaps/snapcast.svg; \
+	fi

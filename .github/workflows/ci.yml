@@ -1,0 +1,423 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+env:
+  BOOST_VERSION: 1_87_0
+
+jobs:
+  static-analysis:
+
+    strategy:
+      fail-fast: false
+      matrix:
+        tool:
+          - cppcheck
+
+    runs-on: ubuntu-24.04
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: print environment
+        run: env
+      - name: dependencies
+        run: |
+          sudo apt-get update && \
+          sudo apt-get install -yq libasound2-dev libsoxr-dev libvorbisidec-dev libvorbis-dev libflac-dev \
+          libopus-dev alsa-utils libpulse-dev libavahi-client-dev libssl-dev \
+          avahi-daemon ccache expat cppcheck 
+      - name: cache boost
+        id: cache-boost
+        uses: actions/cache@v4
+        with:
+          path: boost_${{ env.BOOST_VERSION }}
+          key: boost-${{ env.BOOST_VERSION }}
+          enableCrossOsArchive: true
+      - name: get boost
+        if: steps.cache-boost.outputs.cache-hit != 'true'
+        run: |
+          wget https://archives.boost.io/release/${BOOST_VERSION//_/.}/source/boost_${BOOST_VERSION}.tar.bz2
+          tar xjf boost_${BOOST_VERSION}.tar.bz2
+      - name: configure
+        run: |
+          cmake -S . -B build \
+            -DWERROR=ON -DBUILD_TESTS=OFF \
+            -DBOOST_ROOT=boost_${BOOST_VERSION} \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_EXPORT_COMPILE_COMMANDS=TRUE \
+            -DCMAKE_CXX_FLAGS="-DCMAKE_CXX_FLAGS=-DJSON_HAS_CPP_14"
+      - name: analysis
+        run: cmake --build build --target ${{ matrix.tool }}
+
+
+  documentation:
+
+    # TODO: Fail in case of (too many) warnings, upload artifacts
+    strategy:
+      fail-fast: false
+
+    runs-on: ubuntu-24.04
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: print environment
+        run: env
+      - name: dependencies
+        run: |
+          sudo apt-get update && \
+          sudo apt-get install -yq libasound2-dev libsoxr-dev libvorbisidec-dev libvorbis-dev libflac-dev \
+          libopus-dev alsa-utils libpulse-dev libavahi-client-dev libssl-dev \
+          avahi-daemon debhelper ccache expat cppcheck doxygen graphviz
+      - name: doxygen
+        run: |
+          mkdir -p build/doxygen
+          doxygen 2>&1 | tee build/doxygen.log
+          WARNINGS=$(cat build/doxygen.log | sort | uniq | grep -e ": warning: " | wc -l)
+          MAX_ALLOWED=593
+          echo "Doxygen finished with $WARNINGS warnings, max allowed: $MAX_ALLOWED"
+          if [ "$WARNINGS" -gt "$MAX_ALLOWED" ]; then exit $WARNINGS; else exit 0; fi;
+
+
+  unit-test:
+
+    strategy:
+      fail-fast: false
+      matrix:
+        sanitizer:
+          - asan
+          - tsan
+        include:
+          - sanitizer: asan
+            param: "ASAN=ON"
+          - sanitizer: tsan
+            param: "TSAN=ON"
+
+    runs-on: ubuntu-24.04
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: print environment
+        run: env
+      - name: dependencies
+        run: |
+          sudo apt-get update && \
+          sudo apt-get install -yq libasound2-dev libsoxr-dev libvorbisidec-dev libvorbis-dev libflac-dev \
+          libopus-dev alsa-utils libpulse-dev libavahi-client-dev libssl-dev \
+          avahi-daemon ccache expat catch2
+      - name: cache boost
+        id: cache-boost
+        uses: actions/cache@v4
+        with:
+          path: boost_${{ env.BOOST_VERSION }}
+          key: boost-${{ env.BOOST_VERSION }}
+          enableCrossOsArchive: true
+      - name: get boost
+        if: steps.cache-boost.outputs.cache-hit != 'true'
+        run: |
+          wget https://archives.boost.io/release/${BOOST_VERSION//_/.}/source/boost_${BOOST_VERSION}.tar.bz2
+          tar xjf boost_${BOOST_VERSION}.tar.bz2
+      - name: cache ccache
+        id: cache-ccache
+        uses: actions/cache@v4
+        with:
+          # TODO: use environment variable $HOME/.ccache
+          path: /home/runner/.ccache
+          key: ${{ matrix.sanitizer }}-ccache-${{ github.sha }}
+          restore-keys: ${{ matrix.sanitizer }}-ccache-
+      - name: configure
+        run: |
+          cmake -S . -B build \
+            -DWERROR=OFF \
+            -DBUILD_TESTS=ON \
+            -D${{ matrix.param }} \
+            -DBOOST_ROOT=boost_${BOOST_VERSION} \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
+            -DCMAKE_EXPORT_COMPILE_COMMANDS=TRUE \
+            -DCMAKE_CXX_FLAGS="-DCMAKE_CXX_FLAGS=-DJSON_HAS_CPP_14"
+      - name: build
+        env:
+          # TODO: use environment variable $HOME/.ccache
+          CCACHE_DIR: /home/runner/.ccache
+        run: cmake --build build --parallel 4 --verbose
+      - name: unit-test
+        run: ./bin/snapcast_test
+
+
+  linux:
+
+    strategy:
+      fail-fast: false
+      matrix:
+        compiler:
+          - clang-10
+          - clang-11
+          - clang-12
+          - clang-13
+          - clang-14
+          - clang-15
+          - clang-16
+          - clang-17
+          - clang-18
+          - gcc-9
+          - gcc-10
+          - gcc-11
+          - gcc-12
+          - gcc-13
+          - gcc-14
+        build_type:
+          - Debug
+          - Release
+        include:
+          - compiler: clang-10
+            cc: clang-10
+            cxx: clang++-10
+            os: ubuntu-20.04
+          - compiler: clang-11
+            cc: clang-11
+            cxx: clang++-11
+            os: ubuntu-20.04
+          - compiler: clang-12
+            cc: clang-12
+            cxx: clang++-12
+            os: ubuntu-20.04
+          - compiler: clang-13
+            cc: clang-13
+            cxx: clang++-13
+            os: ubuntu-22.04
+          - compiler: clang-14
+            cc: clang-14
+            cxx: clang++-14
+            os: ubuntu-22.04
+          - compiler: clang-15
+            cc: clang-15
+            cxx: clang++-15
+            os: ubuntu-22.04
+          - compiler: clang-16
+            cc: clang-16
+            cxx: clang++-16
+            os: ubuntu-24.04
+          - compiler: clang-17
+            cc: clang-17
+            cxx: clang++-17
+            os: ubuntu-24.04
+          - compiler: clang-18
+            cc: clang-18
+            cxx: clang++-18
+            os: ubuntu-24.04
+          - compiler: gcc-9
+            cc: gcc-9
+            cxx: g++-9
+            os: ubuntu-22.04
+          - compiler: gcc-10
+            cc: gcc-10
+            cxx: g++-10
+            os: ubuntu-22.04
+          - compiler: gcc-11
+            cc: gcc-11
+            cxx: g++-11
+            os: ubuntu-22.04
+          - compiler: gcc-12
+            cc: gcc-12
+            cxx: g++-12
+            os: ubuntu-22.04
+          - compiler: gcc-13
+            cc: gcc-13
+            cxx: g++-13
+            os: ubuntu-24.04
+          - compiler: gcc-14
+            cc: gcc-14
+            cxx: g++-14
+            os: ubuntu-24.04
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: print environment
+        run: env
+      - name: dependencies
+        run: |
+          sudo apt-get update && \
+          sudo apt-get install -yq libasound2-dev libsoxr-dev libvorbisidec-dev libvorbis-dev libflac-dev \
+          libopus-dev alsa-utils libpulse-dev libavahi-client-dev libssl-dev \
+          avahi-daemon ccache expat
+      - name: cache boost
+        id: cache-boost
+        uses: actions/cache@v4
+        with:
+          path: boost_${{ env.BOOST_VERSION }}
+          key: boost-${{ env.BOOST_VERSION }}
+          enableCrossOsArchive: true
+      - name: get boost
+        if: steps.cache-boost.outputs.cache-hit != 'true'
+        run: |
+          wget https://archives.boost.io/release/${BOOST_VERSION//_/.}/source/boost_${BOOST_VERSION}.tar.bz2
+          tar xjf boost_${BOOST_VERSION}.tar.bz2
+      - name: cache ccache
+        id: cache-ccache
+        uses: actions/cache@v4
+        with:
+          # TODO: use environment variable $HOME/.ccache
+          path: /home/runner/.ccache
+          key: ${{ runner.os }}-${{ matrix.compiler }}-${{ matrix.build_type }}-ccache-${{ github.sha }}
+          restore-keys: ${{ runner.os }}-${{ matrix.compiler }}-${{ matrix.build_type }}-ccache-
+      #- name: ccache dump config
+      #  run: ccache -p
+      - name: configure
+        run: |
+          cmake -S . -B build \
+            -DWERROR=ON -DBUILD_TESTS=ON \
+            -DBOOST_ROOT=boost_${BOOST_VERSION} \
+            -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
+            -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
+            -DCMAKE_EXPORT_COMPILE_COMMANDS=TRUE \
+            -DCMAKE_CXX_FLAGS="-DCMAKE_CXX_FLAGS=-DJSON_HAS_CPP_14"
+        env:
+          CC: ${{ matrix.cc }}
+          CXX: ${{ matrix.cxx }}
+      - name: build
+        env:
+          # TODO: use environment variable $HOME/.ccache
+          CCACHE_DIR: /home/runner/.ccache
+        run: cmake --build build --parallel 3 --verbose
+
+
+  macos:
+
+    strategy:
+      fail-fast: false
+      matrix:
+        xcode:
+          - "14.1"
+          - "14.2"
+          - "14.3"
+          - "15.0"
+          - "15.1"
+          - "15.2"
+          - "15.3"
+          - "15.4"
+          - "16.0"
+          - "16.1"
+          - "16.2"
+        build_type:
+          - Debug
+          - Release
+        include:
+          - xcode: "14.1"
+            os: macos-13
+          - xcode: "14.2"
+            os: macos-13
+          - xcode: "14.3"
+            os: macos-13
+          - xcode: "15.0"
+            os: macos-14
+          - xcode: "15.1"
+            os: macos-14
+          - xcode: "15.2"
+            os: macos-14
+          - xcode: "15.3"
+            os: macos-14
+          - xcode: "15.4"
+            os: macos-15
+          - xcode: "16.0"
+            os: macos-15
+          - xcode: "16.1"
+            os: macos-15
+          - xcode: "16.2"
+            os: macos-15
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: print environment
+        run: env
+      - name: dependencies
+        run: |
+          brew update
+          brew install libsoxr flac libvorbis opus ccache expat catch2
+      - name: cache boost
+        id: cache-boost
+        uses: actions/cache@v4
+        with:
+          path: boost_${{ env.BOOST_VERSION }}
+          key: boost-${{ env.BOOST_VERSION }}
+          enableCrossOsArchive: true
+      - name: get boost
+        if: steps.cache-boost.outputs.cache-hit != 'true'
+        run: |
+          wget https://archives.boost.io/release/${BOOST_VERSION//_/.}/source/boost_${BOOST_VERSION}.tar.bz2
+          tar xjf boost_${BOOST_VERSION}.tar.bz2
+      - name: cache ccache
+        id: cache-ccache
+        uses: actions/cache@v4
+        with:
+          path: /Users/runner/Library/Caches/ccache
+          key: ${{ runner.os }}-${{ matrix.xcode }}-${{ matrix.build_type }}-ccache-${{ github.sha }}
+          restore-keys: ${{ runner.os }}-${{ matrix.xcode }}-${{ matrix.build_type }}-ccache-
+      - name: configure
+        run: |
+          cmake -S . -B build \
+            -DWERROR=ON -DBUILD_TESTS=ON \
+            -DBOOST_ROOT=boost_${BOOST_VERSION} \
+            -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
+            -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
+            -DCMAKE_CXX_FLAGS="-I/usr/local/include -DCMAKE_CXX_FLAGS=-DJSON_HAS_CPP_14"
+        env:
+          DEVELOPER_DIR: /Applications/Xcode_${{ matrix.xcode }}.app/Contents/Developer
+      - name: build
+        run: cmake --build build --parallel 3 --verbose
+
+
+  windows:
+
+    strategy:
+      fail-fast: false
+      matrix:
+        compiler:
+          - vs-16
+          - vs-17
+        build_type:
+          - Debug
+          - Release
+        include:
+          - compiler: vs-16
+            os: windows-2019
+            vs: "Visual Studio 16 2019"
+          - compiler: vs-17
+            os: windows-2022
+            vs: "Visual Studio 17 2022"
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: cache dependencies
+        id: cache-dependencies
+        uses: actions/cache@v4
+        with:
+          #path: ${VCPKG_INSTALLATION_ROOT}\installed
+          path: c:\vcpkg\installed
+          key: ${{ runner.os }}-${{ matrix.compiler }}-${{ matrix.build_type }}-ccache-${{ github.sha }}
+          restore-keys: ${{ runner.os }}-${{ matrix.compiler }}-${{ matrix.build_type }}-ccache-
+      - name: dependencies
+        if: steps.cache-dependencies.outputs.cache-hit != 'true'
+        run: |
+          cd c:\vcpkg
+          git pull
+          vcpkg.exe update
+          vcpkg.exe --triplet x64-windows install libflac libvorbis soxr opus boost-asio boost-beast catch2
+      - name: configure
+        run: |
+          echo vcpkg installation root: ${env:VCPKG_INSTALLATION_ROOT}
+          cmake -S . -B build -G "${{ matrix.vs }}" `
+            -DWERROR=ON -DBUILD_TESTS=ON `
+            -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake" `
+            -DVCPKG_TARGET_TRIPLET="x64-windows" `
+            -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} `
+            -DREVISION="${{ github.sha }}"
+      - name: build
+        run: cmake --build build --parallel 3 --verbose

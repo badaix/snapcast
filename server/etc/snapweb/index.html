@@ -1,0 +1,71 @@
+<html>
+
+<head>
+  <title>Snapweb Placeholder</title>
+  <style>
+    body {
+      background: #ffffff;
+      color: rgb(0, 0, 0);
+      font-family: 'Arial', sans-serif;
+      margin: 20px;
+      font-size: 20px;
+    }
+
+    pre {
+      margin: 8px 0px 8px 0px;
+      padding: 20px;
+      border-width: 1px;
+      border-style: dotted;
+      border-color: #000000;
+      background-color: #F5F6F7;
+      font-style: italic;
+      display: inline-block;
+    }
+
+    h1 {
+      margin: 15px 0px 0px 50px;
+      font-size: 180%;
+      font-weight: bold;
+    }
+  </style>
+</head>
+
+<body>
+  <h1>Snapweb Placeholder</h1>
+  <p>
+    This is a placeholder for <a href="https://github.com/badaix/snapweb/releases">Snapweb</a>, a web based control client and player for Snapcast.<br>
+    To install Snapweb, please follow these steps:
+  <ol>
+    <li>Download Snapweb on the <a href="https://github.com/badaix/snapweb/releases">Snapweb release page</a>. You can
+      either download
+      <ul>
+        <li><b>snapweb.zip</b> and extract it on your Snapcast server machine, e.g. into
+          <tt>/usr/share/snapserver/snapweb</tt> or
+        </li>
+        <li><b>snapweb_x.y.z-1_all.deb</b> and install it with <tt>sudo apt install ./snapweb_x.y.z-1_all.deb</tt> to
+          <tt>/usr/share/snapweb</tt>
+        </li>
+      </ul>
+    </li>
+    <li>Configure the document root (<tt>doc_root</tt>, see below) in the snapserver configuration file
+      <tt>snapserver.conf</tt> &mdash; usually
+      located in <tt>/etc/snapserver.conf</tt> &mdash; to the location where snapweb is extracted or installed.
+    </li>
+    <li>Restart Snapserver to activate the changes: <tt>sudo service snapserver restart</tt></li>
+  </ol>
+  </p>
+  <pre>
+# HTTP RPC #####################################
+#
+[http]
+
+...
+
+# serve a website from the doc_root location
+doc_root = /usr/share/snapserver/snapweb/
+
+#
+################################################</pre>
+</body>
+
+</html>

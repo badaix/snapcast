@@ -1,0 +1,76 @@
+.\"groff -Tascii -man snapclient.1
+.TH SNAPCLIENT 1 "January 2025"
+.SH NAME
+snapclient - Snapcast client
+.SH SYNOPSIS
+\fBsnapclient\fR [\fIOPTION\fR]...
+.SH DESCRIPTION
+Snapcast is a multiroom client-server audio player, where all clients are
+time synchronized with the server to play perfectly synced audio. It's not a
+standalone player, but an extension that turns your existing audio player into
+a Sonos-like multiroom solution.
+.br
+The server's audio input is a named pipe `/tmp/snapfifo`. All data that is fed
+into this file will be send to the connected clients. One of the most generic
+ways to use Snapcast is in conjunction with the music player daemon or Mopidy,
+which can be configured to use a named pipe as audio output.
+.SS Allowed options:
+.TP
+\fB--help\fR
+produce help message
+.TP
+\fB-v, --version\fR
+show version number
+.TP
+\fB-h, --host arg\fR
+server hostname or ip address
+.TP
+\fB-p, --port arg (=1704)\fR
+server port
+.TP
+\fB-i, --instance arg (=1)\fR
+instance id when running multiple instances on the same host
+.TP
+\fB--hostID arg\fR
+unique host id, default is MAC address
+.TP
+\fB-l, --list\fR
+list PCM devices
+.TP
+\fB-s, --soundcard arg (=default)\fR
+index or name of the pcm device
+.TP
+\fB--latency arg (=0)\fR
+latency of the PCM device
+.TP
+\fB--sampleformat arg\fR
+resample audio stream to <rate>:<bits>:<channels>
+.TP
+\fB--player arg (=alsa)\fR
+alsa|pulse|file[:<options>|?]
+.TP
+\fB--mixer arg (=software)\fR
+software|hardware|script|none|?[:<options>]
+.TP
+\fB-d, --daemon [=arg(=-3)]\fR
+daemonize, optional process priority [-20..19]
+.TP
+\fB--user arg\fR
+the user[:group] to run snapclient as when daemonized
+.TP
+\fB--logsink arg\fR
+log sink [null,system,stdout,stderr,file:<filename>]
+.TP
+\fB--logfilter arg (=*:info)\fR
+log filter <tag>:<level>[,<tag>:<level>]* with tag = * or <log tag> and level = [trace,debug,info,notice,warning,error,fatal]
+.SH FILES
+.TP
+\fI/etc/default/snapclient\fR
+the daemon default configuration file
+.SH "COPYRIGHT"
+Copyright (C) 2014-2025 Johannes Pohl (snapcast@badaix.de).
+License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>.
+This is free software: you are free to change and redistribute it.
+There is NO WARRANTY, to the extent permitted by law.
+.SH "SEE ALSO"
+snapserver(1)

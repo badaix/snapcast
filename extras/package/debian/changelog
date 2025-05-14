@@ -1,0 +1,6 @@
+snapcast (0.0.0-1) unstable; urgency=medium
+
+  * Placeholder for changelog
+     Content should be created with `changelog_md2deb.py changelog.md`
+
+ -- Johannes Pohl <snapcast@badaix.de>  Sun, 01 Jan 1970 00:00:00 +0000

@@ -1,0 +1,9 @@
+# See here for image contents: https://github.com/microsoft/vscode-dev-containers/tree/v0.238.0/containers/cpp/.devcontainer/base.Dockerfile
+
+# [Choice] Debian / Ubuntu version (use Debian 11, Ubuntu 18.04/22.04 on local arm64/Apple Silicon): debian-11, debian-10, ubuntu-22.04, ubuntu-20.04, ubuntu-18.04
+ARG VARIANT="alpine"
+FROM mcr.microsoft.com/vscode/devcontainers/base:0-${VARIANT}
+
+RUN echo "https://dl-cdn.alpinelinux.org/alpine/edge/testing/" >> /etc/apk/repositories
+
+RUN apk update && apk upgrade && apk add --no-cache bash librespot git alpine-sdk gdb libvorbis-dev soxr-dev flac-dev avahi-dev expat-dev boost-dev opus-dev alsa-lib-dev ninja ccache libstdc++ clang clang-dev

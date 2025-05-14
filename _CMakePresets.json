@@ -1,0 +1,161 @@
+{
+    "version": 3,
+    "cmakeMinimumRequired": {
+        "major": 3,
+        "minor": 21,
+        "patch": 0
+    },
+    "configurePresets": [
+        {
+            "name": "default",
+            "binaryDir": "${sourceDir}/build",
+            "generator": "Ninja",
+            "hidden": true,
+            "cacheVariables": {
+                "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+                "CMAKE_BUILD_TYPE": "Debug"
+            }
+        },
+        {
+            "name": "linux",
+            "displayName": "Linux",
+            "inherits": "default",
+            "condition": {
+                "lhs": "${hostSystemName}",
+                "type": "equals",
+                "rhs": "Linux"
+            },
+            "cacheVariables": {
+                "CMAKE_C_COMPILER": "gcc",
+                "CMAKE_CXX_COMPILER": "g++"
+            }
+        },
+        {
+            "name": "windows",
+            "inherits": "default",
+            "architecture": {
+                "value": "x64",
+                "strategy": "external"
+            },
+            "toolset": {
+                "value": "host=x64",
+                "strategy": "external"
+            },
+            "condition": {
+                "lhs": "${hostSystemName}",
+                "type": "equals",
+                "rhs": "Windows"
+            },
+            "cacheVariables": {
+                "CMAKE_C_COMPILER": "cl",
+                "CMAKE_CXX_COMPILER": "cl"
+            },
+            "vendor": {
+                "microsoft.com/VisualStudioSettings/CMake/1.0": {
+                    "hostOS": [
+                        "Windows"
+                    ]
+                }
+            }
+        },
+        {
+            "name": "macos",
+            "displayName": "macOS",
+            "inherits": "default",
+            "condition": {
+                "lhs": "${hostSystemName}",
+                "type": "equals",
+                "rhs": "Darwin"
+            }
+        },
+        {
+            "name": "android",
+            "inherits": "default",
+            "hidden": true,
+            "condition": {
+                "lhs": "$env{ANDROID_NDK_HOME}",
+                "type": "notEquals",
+                "rhs": ""
+            },
+            "toolchainFile": "$env{VCPKG_HOME}/scripts/buildsystems/vcpkg.cmake",
+            "cacheVariables": {
+                "CMAKE_SYSTEM_NAME": "Android",
+                "CMAKE_ANDROID_NDK": "$env{ANDROID_NDK_HOME}",
+                "VCPKG_CHAINLOAD_TOOLCHAIN_FILE": "$env{ANDROID_NDK_HOME}/build/cmake/android.toolchain.cmake"
+            }
+        },
+        {
+            "name": "android-x86",
+            "displayName": "Android x86",
+            "inherits": "android",
+            "cacheVariables": {
+                "CMAKE_ANDROID_ARCH_ABI": "x86",
+                "VCPKG_TARGET_TRIPLET": "x86-android"
+            }
+        },
+        {
+            "name": "android-x86_64",
+            "displayName": "Android x86_64",
+            "inherits": "android",
+            "cacheVariables": {
+                "CMAKE_ANDROID_ARCH_ABI": "x86_64",
+                "VCPKG_TARGET_TRIPLET": "x64-android"
+            }
+        },
+        {
+            "name": "android-armeabi-v7a",
+            "displayName": "Android armeabi-v7a",
+            "inherits": "android",
+            "cacheVariables": {
+                "CMAKE_ANDROID_ARCH_ABI": "armeabi-v7a",
+                "VCPKG_TARGET_TRIPLET": "arm-android"
+            }
+        },
+        {
+            "name": "android-arm64-v8a",
+            "displayName": "Android arm64-v8a",
+            "inherits": "android",
+            "cacheVariables": {
+                "CMAKE_ANDROID_ARCH_ABI": "arm64-v8a",
+                "VCPKG_TARGET_TRIPLET": "arm64-android"
+            }
+        }
+    ],
+    "buildPresets": [
+        {
+            "name": "linux",
+            "configurePreset": "linux",
+            "displayName": "Linux"
+        },
+        {
+            "name": "windows",
+            "configurePreset": "windows",
+            "displayName": "x64"
+        },
+        {
+            "name": "macos",
+            "configurePreset": "macos",
+            "displayName": "macOS"
+        },
+        {
+            "name": "android-x86",
+            "configurePreset": "android-x86",
+            "displayName": "x86"
+        },
+        {
+            "name": "android-x86_64",
+            "configurePreset": "android-x86_64",
+            "displayName": "x86_64"
+        },
+        {
+            "name": "android-armeabi-v7a",
+            "configurePreset": "android-armeabi-v7a",
+            "displayName": "armeabi-v7a"
+        },
+        {
+            "name": "android-arm64-v8a",
+            "configurePreset": "android-arm64-v8a",
+            "displayName": "arm64-v8a"
+        }
+    ]
+}

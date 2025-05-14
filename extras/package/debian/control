@@ -1,0 +1,46 @@
+Source: snapcast
+Section: sound
+Priority: optional
+Maintainer: Johannes Pohl <snapcast@badaix.de>
+Build-Depends: debhelper (>= 10~),
+               libasound2-dev,
+               libpulse-dev,
+               libvorbis-dev,
+               libflac-dev,
+               libopus-dev,
+               libavahi-client-dev,
+               libasio-dev,
+               libsoxr-dev,
+               libssl-dev
+Standards-Version: 4.1.4
+Homepage: https://github.com/badaix/snapcast
+Vcs-Git: https://github.com/badaix/snapcast.git
+Vcs-Browser: https://github.com/badaix/snapcast
+
+Package: snapclient
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, adduser
+Recommends: avahi-daemon
+Description: Snapcast client
+ Snapcast is a multiroom client-server audio player, where all clients are
+ time synchronized with the server to play perfectly synced audio. It's not a
+ standalone player, but an extension that turns your existing audio player into
+ a Sonos-like multiroom solution.
+ .
+ This package contains the client which connects to the server and plays the
+ audio.
+
+Package: snapserver
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, adduser
+Recommends: avahi-daemon
+Description: Snapcast server
+ Snapcast is a multiroom client-server audio player, where all clients are
+ time synchronized with the server to play perfectly synced audio. It's not a
+ standalone player, but an extension that turns your existing audio player into
+ a Sonos-like multiroom solution.
+ .
+ The server's audio input is a named pipe `/tmp/snapfifo`. All data that is fed
+ into this file will be send to the connected clients. One of the most generic
+ ways to use Snapcast is in conjunction with the music player daemon or Mopidy,
+ which can be configured to use a named pipe as audio output.

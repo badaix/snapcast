@@ -1,0 +1,64 @@
+<html>
+
+<head>
+  <title>Snapcast Default Page</title>
+  <style>
+    body {
+      background: #ffffff;
+      color: rgb(0, 0, 0);
+      font-family: 'Arial', sans-serif;
+      margin: 20px;
+      font-size: 20px;
+    }
+
+    pre {
+      margin: 8px 0px 8px 0px;
+      padding: 20px;
+      border-width: 1px;
+      border-style: dotted;
+      border-color: #000000;
+      background-color: #F5F6F7;
+      font-style: italic;
+      display: inline-block;
+    }
+
+    h1 {
+      margin: 15px 0px 0px 50px;
+      font-size: 180%;
+      font-weight: bold;
+    }
+  </style>
+</head>
+
+<body>
+  <h1>Snapcast Default Page</h1>
+  <p>
+    This is the default welcome page used to test the correct operation of the Snapcast built-in webserver.
+  </p>
+  <p>
+    This webserver is a websocket endpoint for control clients (ws://<i>host</i>:1780/jsonrpc) and streaming clients
+    (ws://<i>host</i>:1780/stream), but it can also host simple web pages. To serve a web page, you must configure the
+    document root in the snapserver configuration file <b>snapserver.conf</b>, usually located in
+    <b>/etc/snapserver.conf</b>
+  </p>
+  <p>
+    The Snapserver installation should include a copy of <a href="https://github.com/badaix/snapweb">Snapweb</a>,
+    located in
+    <b>/usr/share/snapserver/snapweb/</b><br>
+    To activate it, please configure the <b>doc_root</b> as follows, and restart Snapserver to activate the changes:
+  </p>
+  <pre>
+# HTTP RPC #####################################
+#
+[http]
+
+...
+
+# serve a website from the doc_root location
+doc_root = /usr/share/snapserver/snapweb/
+
+#
+################################################</pre>
+</body>
+
+</html>
