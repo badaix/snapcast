@@ -322,6 +322,8 @@ int main(int argc, char* argv[])
             settings.stream.sources.push_back(sourceValue->value(n));
         }
 
+        // TODO: auth
+        settings.auth.enabled = false;
         if (settings.auth.enabled)
         {
             std::vector<std::string> roles;

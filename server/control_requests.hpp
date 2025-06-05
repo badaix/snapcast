@@ -53,7 +53,7 @@ public:
             null,    ///< null
         };
 
-        /// @return the string representation of @p type 
+        /// @return the string representation of @p type
         std::string toString(Type type)
         {
             switch (type)
