@@ -164,7 +164,7 @@ ErrorCode AuthInfo::authenticatePlain(const std::string& user_password)
     auto ec = validateUser(username_, password);
 
     // TODO: don't log passwords
-    LOG(INFO, LOG_TAG) << "Authorization basic: " << user_password << ", user: " << username_ << ", password: " << password << "\n";
+    LOG(INFO, LOG_TAG) << "Authorization basic: " << user_password << ", user: " << username_ << "\n"; // , password: " << password << "\n";
     is_authenticated_ = (ec.value() == 0);
     return ec;
 }
