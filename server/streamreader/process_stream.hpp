@@ -24,9 +24,6 @@
 #include "watchdog.hpp"
 
 // 3rd party headers
-#include <boost/asio/posix/stream_descriptor.hpp>
-#include <boost/process/v1/child.hpp>
-#include <boost/process/v1/pipe.hpp>
 
 // standard headers
 #include <memory>

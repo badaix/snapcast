@@ -31,7 +31,6 @@
 #include <boost/asio/write.hpp>
 #include <boost/beast/core/flat_buffer.hpp>
 #include <boost/beast/core/stream_traits.hpp>
-#include <boost/system/detail/error_code.hpp>
 
 // standard headers
 #include <cstdint>
