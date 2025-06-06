@@ -23,6 +23,7 @@
 #include "process_stream.hpp"
 
 // 3rd party headers
+#include <boost/asio/streambuf.hpp>
 // Expat is used in metadata parsing from Shairport-sync.
 // Without HAS_EXPAT defined no parsing will occur.
 #ifdef HAS_EXPAT
@@ -41,8 +42,6 @@ struct TageEntry
     bool isBase64{false}; ///< is base64?
     int length{0};        ///< length
 };
-
-/// Starts shairport-sync and reads PCM data from stdout
 
 /**
  * Starts shairport-sync, reads PCM data from stdout, and passes the data to an encoder.

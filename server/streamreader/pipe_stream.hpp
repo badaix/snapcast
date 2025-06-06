@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2024  Johannes Pohl
+    Copyright (C) 2014-2025  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -21,6 +21,10 @@
 
 // local headers
 #include "asio_stream.hpp"
+
+// 3rd party headers
+#include <boost/asio/posix/stream_descriptor.hpp>
+
 
 namespace streamreader
 {
