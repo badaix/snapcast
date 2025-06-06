@@ -24,10 +24,14 @@
 
 // 3rd party headers
 #include <boost/asio/any_io_executor.hpp>
+#if BOOST_VERSION >= 108800
 #include <boost/process/v1/child.hpp>
 #include <boost/process/v1/io.hpp>
 #include <boost/process/v1/start_dir.hpp>
 #include <boost/process/v1/system.hpp>
+#else
+#include <boost/process.hpp>
+#endif
 
 // standard headers
 #include <filesystem>
