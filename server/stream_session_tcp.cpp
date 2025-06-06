@@ -23,6 +23,8 @@
 #include "common/aixlog.hpp"
 
 // 3rd party headers
+#include <boost/asio/read.hpp>
+#include <boost/asio/write.hpp>
 
 // standard headers
 #include <iostream>

@@ -38,6 +38,7 @@
 
 // 3rd party headers
 #include <boost/asio/ip/host_name.hpp>
+#include <boost/asio/signal_set.hpp>
 
 // standard headers
 #include <chrono>
