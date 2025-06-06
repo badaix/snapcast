@@ -5,7 +5,7 @@ on:
   pull_request:
 
 env:
-  BOOST_VERSION: 1_87_0
+  BOOST_VERSION: 1_88_0
 
 jobs:
   static-analysis:
