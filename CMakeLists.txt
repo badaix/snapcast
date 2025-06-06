@@ -332,7 +332,8 @@ else()
   add_compile_definitions(HAS_TREMOR)
 endif()
 
-add_compile_definitions(BOOST_ERROR_CODE_HEADER_ONLY BOOST_ASIO_NO_TS_EXECUTORS)
+add_compile_definitions(BOOST_ERROR_CODE_HEADER_ONLY BOOST_ASIO_NO_TS_EXECUTORS
+                        BOOST_PROCESS_VERSION=1)
 
 if(WIN32)
   include(FindPackageHandleStandardArgs)
