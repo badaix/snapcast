@@ -1,6 +1,6 @@
 # Snapcast changelog
 
-## Version 0.31.102
+## Version 0.31.103
 
 ### Features
 
@@ -15,6 +15,7 @@
 
 ### General
 
+- Snapweb: Update to v0.9.0
 - Client: Command line arguments '--host' and '--port' are deprecated
 - Update binary_protocol.md (Issue #1339)
 - Add missing doxygen code documentation (Issue #1352)
