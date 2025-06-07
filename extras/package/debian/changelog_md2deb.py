@@ -28,12 +28,19 @@ if __name__ == "__main__":
     with open(sys.argv[1], 'r') as file:
         data = file.read()
 
+    # Remove '# Snapcast changelog'
     data = re.sub(r'^\s*# Snapcast changelog *\n*',
                   '', data, flags=re.MULTILINE)
+    # Remove Contributors section
+    data = re.sub(r'^\s*### Contributors *\n*( *-.*\n)*',
+                  '', data, flags=re.MULTILINE)
+    # Replace '### <text>' with '  * <text>'
     data = re.sub(r'^\s*### ([a-zA-Z]+) *\n',
                   r'\n  * \1\n', data, flags=re.MULTILINE)
+    # Replace '## Version <ver>' with 'snapcast (<ver>-1) unstable; urgency=medium'
     data = re.sub(r'^\s*## Version\s+(\S*) *\n',
                   r'snapcast (\1-1) unstable; urgency=medium\n', data, flags=re.MULTILINE)
+    # Replace bullets with '    -'
     data = re.sub(r'^\s*-\s*(.*) *\n', r'    -\1\n', data, flags=re.MULTILINE)
     data = re.sub(r'^_(.*)_ *\n', r' -- \1\n\n', data, flags=re.MULTILINE)
 

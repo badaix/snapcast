@@ -1,6 +1,6 @@
 # Snapcast changelog
 
-## Version 0.32.0
+## Version 0.31.102
 
 ### Features
 
@@ -19,6 +19,18 @@
 - Update binary_protocol.md (Issue #1339)
 - Add missing doxygen code documentation (Issue #1352)
 - Add clang-tidy static analysis to CI (Issue #1353)
+- Compiles with boost v1.88.0 (Issue #1367, PR #1378, PR #1387)
+- Add Music Assistant project to readme (PR #1366)
+- Fix typos (PR #1328, PR #1329, PR #1333)
+ 
+### Contributors
+
+- @chicco-carone
+- @rnestler
+- @badaix
+- @chriscn
+- @SantiagoSotoC
+- @tobster
 
 _Johannes Pohl <snapcast@badaix.de>  Thu, 23 Jan 2025 00:13:37 +0200_
 
