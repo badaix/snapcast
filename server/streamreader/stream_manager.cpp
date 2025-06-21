@@ -138,7 +138,7 @@ PcmStreamPtr StreamManager::addStream(StreamUri& streamUri)
     {
         stream = make_shared<MetaStream>(listener, streams_, io_context_, settings_, streamUri);
     }
-    else if (uri.scheme == "pipewire")
+    else if (streamUri.scheme == "pipewire")
     {
 #ifdef HAS_PIPEWIRE
         stream = make_shared<PipeWireStream>(listener, streams_, io_context_, settings_, streamUri);
