@@ -109,6 +109,15 @@ else()
     endif()
   endif(JACK_FOUND)
 
+  if(PIPEWIRE_FOUND)
+    list(APPEND SERVER_SOURCES streamreader/pipewire_stream.cpp)
+    list(APPEND SERVER_LIBRARIES ${PIPEWIRE_LIBRARIES})
+    include_directories(${PIPEWIRE_INCLUDE_DIRS})
+    link_directories(${PIPEWIRE_LIBRARY_DIRS})
+    # PipeWire requires threading support
+    list(APPEND SERVER_LIBRARIES ${CMAKE_THREAD_LIBS_INIT})
+  endif(PIPEWIRE_FOUND)
+
   if(EXPAT_FOUND)
     list(APPEND SERVER_LIBRARIES ${EXPAT_LIBRARIES})
     include_directories(${EXPAT_INCLUDE_DIRS})
