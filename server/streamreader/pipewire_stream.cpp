@@ -28,6 +28,7 @@
 #include <boost/asio/post.hpp>
 #include <spa/param/audio/format-utils.h>
 #include <spa/param/audio/type-info.h>
+#include <spa/debug/types.h>
 #include <spa/utils/result.h>
 
 // standard headers
@@ -143,7 +144,7 @@ void PipeWireStream::on_param_changed(void* userdata, uint32_t id, const struct 
     
     spa_format_audio_raw_parse(param, &info.info.raw);
     
-    LOG(INFO, LOG_TAG) << "Audio format: " << info.info.raw.format 
+    LOG(INFO, LOG_TAG) << "Audio format: " << spa_debug_type_find_name(spa_type_audio_format, info.info.raw.format) 
                        << ", channels: " << info.info.raw.channels
                        << ", rate: " << info.info.raw.rate << "\n";
 }
@@ -343,7 +344,7 @@ void PipeWireStream::initPipeWire()
         pw_stream_ = nullptr;
         pw_thread_loop_destroy(pw_loop_);
         pw_loop_ = nullptr;
-        throw SnapException("Failed to connect PipeWire stream: " + spa_strerror(res));
+        throw SnapException("Failed to connect PipeWire stream: " + std::string(spa_strerror(res)));
     }
     
     // Clear temporary buffer
