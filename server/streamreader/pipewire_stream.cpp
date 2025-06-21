@@ -376,12 +376,11 @@ void PipeWireStream::initPipeWire()
     pw_stream_add_listener(pw_stream_, &stream_listener_, &stream_events_, this);
     
     // Set up audio format
-    struct spa_audio_info_raw spa_audio_info = SPA_AUDIO_INFO_RAW_INIT(
-        .flags = SPA_AUDIO_FLAG_NONE,
-        .format = sampleFormatToPipeWire(sampleFormat_),
-        .rate = sampleFormat_.rate(),
-        .channels = sampleFormat_.channels()
-    );
+    struct spa_audio_info_raw spa_audio_info = {};
+    spa_audio_info.flags = SPA_AUDIO_FLAG_NONE;
+    spa_audio_info.format = sampleFormatToPipeWire(sampleFormat_);
+    spa_audio_info.rate = sampleFormat_.rate();
+    spa_audio_info.channels = sampleFormat_.channels();
     
     // Set channel positions (stereo by default)
     if (sampleFormat_.channels() == 2)
