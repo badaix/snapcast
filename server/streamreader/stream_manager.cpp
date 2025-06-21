@@ -141,7 +141,9 @@ PcmStreamPtr StreamManager::addStream(StreamUri& streamUri)
     else if (streamUri.scheme == "pipewire")
     {
 #ifdef HAS_PIPEWIRE
-        stream = make_shared<PipeWireStream>(listener, streams_, io_context_, settings_, streamUri);
+        // PipeWire streams are not "invisible" and will report updates to the listener
+        // Hence not needed in c'tor
+        stream = make_shared<PipeWireStream>(listener, io_context_, settings_, streamUri);
 #else
         throw SnapException("PipeWire support not compiled in");
 #endif
