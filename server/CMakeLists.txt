@@ -112,12 +112,18 @@ else()
   if(PIPEWIRE_FOUND)
     list(APPEND SERVER_SOURCES streamreader/pipewire_stream.cpp)
     list(APPEND SERVER_LIBRARIES ${PIPEWIRE_LIBRARIES})
-    include_directories(${PIPEWIRE_INCLUDE_DIRS})
+    # Mark PipeWire includes as system headers to suppress warnings
+    include_directories(SYSTEM ${PIPEWIRE_INCLUDE_DIRS})
     # Some systems have SPA headers in a separate directory
-    include_directories(${PIPEWIRE_INCLUDE_DIRS}/../spa-0.2)
+    if(EXISTS "${PIPEWIRE_INCLUDE_DIRS}/../spa-0.2")
+      include_directories(SYSTEM ${PIPEWIRE_INCLUDE_DIRS}/../spa-0.2)
+    endif()
     link_directories(${PIPEWIRE_LIBRARY_DIRS})
     # PipeWire requires threading support
     list(APPEND SERVER_LIBRARIES ${CMAKE_THREAD_LIBS_INIT})
+    # Alternative: Disable pedantic warnings for PipeWire stream source
+    # set_source_files_properties(streamreader/pipewire_stream.cpp 
+    #                             PROPERTIES COMPILE_FLAGS "-Wno-pedantic")
   endif(PIPEWIRE_FOUND)
 
   if(EXPAT_FOUND)

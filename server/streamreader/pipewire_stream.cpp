@@ -33,6 +33,7 @@
 #include <spa/debug/types.h>
 
 // standard headers
+#include <algorithm>
 #include <cerrno>
 #include <cstring>
 #include <memory>
@@ -172,8 +173,8 @@ void PipeWireStream::processAudio()
         return;
     }
 
-    uint32_t offset = SPA_MIN(d->chunk->offset, d->maxsize);
-    uint32_t size = SPA_MIN(d->chunk->size, d->maxsize - offset);
+    uint32_t offset = std::min(d->chunk->offset, d->maxsize);
+    uint32_t size = std::min(d->chunk->size, d->maxsize - offset);
     
     if (size == 0)
     {
@@ -234,6 +235,7 @@ void PipeWireStream::processAudio()
 
 void PipeWireStream::on_core_info(void* userdata, const struct pw_core_info* info)
 {
+    (void)userdata; // Unused
     LOG(DEBUG, LOG_TAG) << "Core info: " << info->name << " version " << info->version << "\n";
 }
 
@@ -292,7 +294,8 @@ void PipeWireStream::initPipeWire()
     int res;
     const struct spa_pod* params[1];
     uint8_t buffer[1024];
-    struct spa_pod_builder b = SPA_POD_BUILDER_INIT(buffer, sizeof(buffer));
+    struct spa_pod_builder b;
+    spa_pod_builder_init(&b, buffer, sizeof(buffer));
     
     // Create main loop
     pw_main_loop_ = pw_main_loop_new(nullptr);
@@ -347,7 +350,7 @@ void PipeWireStream::initPipeWire()
     
     // Set latency
     pw_properties_setf(props_, PW_KEY_NODE_LATENCY, "%u/%u", 
-                      chunk_ms_ * sampleFormat_.rate() / 1000,
+                      static_cast<unsigned int>(chunk_ms_ * sampleFormat_.rate() / 1000),
                       sampleFormat_.rate());
     
     // Create stream
