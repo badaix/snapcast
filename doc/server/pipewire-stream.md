@@ -105,23 +105,3 @@ source = pipewire://?capture_sink=true&target=alsa_output.platform-snd_aloop.0.a
 ```
 
 This eliminates the need for FIFOs and external processes, providing better performance and lower latency.
-
-## Stream Registration
-
-To enable PipeWire streams, you need to modify the stream factory. In `streamreader/stream_manager.cpp` or similar:
-
-```cpp
-#ifdef HAS_PIPEWIRE
-#include "pipewire_stream.hpp"
-#endif
-
-// In the createStream function:
-else if (uri.scheme == "pipewire")
-{
-#ifdef HAS_PIPEWIRE
-    return std::make_shared<PipeWireStream>(pcmListener, ioc, server_settings, uri);
-#else
-    throw SnapException("PipeWire support not compiled in");
-#endif
-}
-```
