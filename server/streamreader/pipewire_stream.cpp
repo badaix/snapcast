@@ -127,7 +127,7 @@ void PipeWireStream::on_state_changed(void* userdata, enum pw_stream_state old, 
 
 void PipeWireStream::on_param_changed(void* userdata, uint32_t id, const struct spa_pod* param)
 {
-    auto* stream = static_cast<PipeWireStream*>(userdata);
+    (void)userdata; // Unused for now
     
     if (param == nullptr || id != SPA_PARAM_Format)
         return;

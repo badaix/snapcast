@@ -81,7 +81,6 @@ private:
     std::string target_device_;
     std::string stream_name_;
     bool capture_sink_;
-    bool capture_sink_;
     
     // Audio buffer management
     std::mutex buffer_mutex_;
