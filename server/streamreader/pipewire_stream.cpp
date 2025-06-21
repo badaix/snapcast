@@ -27,6 +27,7 @@
 // 3rd party headers
 #include <boost/asio/post.hpp>
 #include <spa/param/audio/format-utils.h>
+#include <spa/param/audio/type-info.h>
 #include <spa/utils/result.h>
 
 // standard headers
@@ -62,7 +63,7 @@ void wait(boost::asio::steady_timer& timer, const std::chrono::duration<Rep, Per
     });
 }
 
-uint32_t sampleFormatToPipeWire(const SampleFormat& format)
+spa_audio_format sampleFormatToPipeWire(const SampleFormat& format)
 {
     if (format.bits() == 8)
         return SPA_AUDIO_FORMAT_S8;
@@ -280,21 +281,20 @@ void PipeWireStream::initPipeWire()
     }
     
     // Set up audio format
-    spa_audio_info_raw_ = SPA_AUDIO_INFO_RAW_INIT(
-        .format = sampleFormatToPipeWire(sampleFormat_),
-        .rate = sampleFormat_.rate(),
-        .channels = sampleFormat_.channels()
-    );
+    spa_audio_info_ = {};
+    spa_audio_info_.format = sampleFormatToPipeWire(sampleFormat_);
+    spa_audio_info_.rate = sampleFormat_.rate();
+    spa_audio_info_.channels = sampleFormat_.channels();
     
     // Set channel positions (stereo by default)
     if (sampleFormat_.channels() == 2)
     {
-        spa_audio_info_raw_.position[0] = SPA_AUDIO_CHANNEL_FL;
-        spa_audio_info_raw_.position[1] = SPA_AUDIO_CHANNEL_FR;
+        spa_audio_info_.position[0] = SPA_AUDIO_CHANNEL_FL;
+        spa_audio_info_.position[1] = SPA_AUDIO_CHANNEL_FR;
     }
     else if (sampleFormat_.channels() == 1)
     {
-        spa_audio_info_raw_.position[0] = SPA_AUDIO_CHANNEL_MONO;
+        spa_audio_info_.position[0] = SPA_AUDIO_CHANNEL_MONO;
     }
     
     // Create stream
@@ -325,7 +325,7 @@ void PipeWireStream::initPipeWire()
     struct spa_pod_builder b = SPA_POD_BUILDER_INIT(buffer, sizeof(buffer));
     
     const struct spa_pod* params[1];
-    params[0] = spa_format_audio_raw_build(&b, SPA_PARAM_EnumFormat, &spa_audio_info_raw_);
+    params[0] = spa_format_audio_raw_build(&b, SPA_PARAM_EnumFormat, &spa_audio_info_);
     
     // Connect stream
     int res = pw_stream_connect(
