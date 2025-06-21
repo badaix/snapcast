@@ -35,8 +35,8 @@ source = pipewire://?name=Snapcast&device=&auto_connect=true
 ### URI Parameters
 
 - `name`: The name of the PipeWire stream (default: "Snapcast")
-- `device`: Target device/node to connect to (default: empty, auto-selects)
-- `auto_connect`: Whether to automatically connect to available sources (default: true)
+- `target`: Target device/node to connect to (default: empty, auto-selects)
+- `capture_sink`: Capture from sink outputs instead of sources (default: false)
 - `send_silence`: Send silent chunks when idle (default: false)
 - `idle_threshold`: Duration of silence before switching to idle state in ms (default: 100)
 
@@ -47,19 +47,19 @@ source = pipewire://?name=Snapcast&device=&auto_connect=true
    source = pipewire://
    ```
 
-2. **Capture from specific application:**
+2. **Capture from specific application/device:**
    ```
-   source = pipewire://?device=Firefox
-   ```
-
-3. **Named stream without auto-connect:**
-   ```
-   source = pipewire://?name=SnapcastCapture&auto_connect=false
+   source = pipewire://?target=Firefox
    ```
 
-4. **With custom idle settings:**
+3. **Capture sink output (like pw-record with stream.capture.sink=true):**
    ```
-   source = pipewire://?idle_threshold=500&send_silence=true
+   source = pipewire://?capture_sink=true&target=alsa_output.platform-snd_aloop.0.analog-stereo
+   ```
+
+4. **Named stream with custom idle settings:**
+   ```
+   source = pipewire://?name=SnapcastCapture&idle_threshold=500&send_silence=true
    ```
 
 ## PipeWire Graph Management
@@ -91,6 +91,20 @@ pw-link "Snapcast:input_FR" "Firefox:output_FR"
 1. **No audio captured**: Check PipeWire connections with `pw-link -l`
 2. **Permission issues**: Ensure your user is in the `audio` group
 3. **High CPU usage**: Adjust buffer sizes in PipeWire configuration
+
+## Replacing pw-record
+
+If you're currently using pw-record to capture audio into a FIFO, like:
+```bash
+pw-record -P stream.capture.sink=true --target alsa_output.platform-snd_aloop.0.analog-stereo - >/tmp/snapfifo
+```
+
+You can replace it with a native PipeWire stream in snapserver:
+```ini
+source = pipewire://?capture_sink=true&target=alsa_output.platform-snd_aloop.0.analog-stereo
+```
+
+This eliminates the need for FIFOs and external processes, providing better performance and lower latency.
 
 ## Stream Registration
 

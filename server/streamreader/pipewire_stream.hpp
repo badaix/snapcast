@@ -24,12 +24,14 @@
 // 3rd party headers
 #include <pipewire/pipewire.h>
 #include <spa/param/audio/format-utils.h>
+#include <spa/param/audio/raw.h>
 #include <boost/asio/io_context.hpp>
-#include <boost/asio/steady_timer.hpp>
 
 // standard headers
 #include <memory>
 #include <mutex>
+#include <thread>
+#include <vector>
 
 namespace streamreader
 {
@@ -55,47 +57,50 @@ private:
     static void on_process(void* userdata);
     static void on_state_changed(void* userdata, enum pw_stream_state old, enum pw_stream_state state, const char* error);
     static void on_param_changed(void* userdata, uint32_t id, const struct spa_pod* param);
+    static void on_core_info(void* userdata, const struct pw_core_info* info);
+    static void on_core_error(void* userdata, uint32_t id, int seq, int res, const char* message);
     
     void initPipeWire();
     void uninitPipeWire();
     void processAudio();
-    void checkSilence();
 
     // PipeWire structures
-    struct pw_thread_loop* pw_loop_;
+    struct pw_main_loop* pw_main_loop_;
+    struct pw_context* pw_context_;
+    struct pw_core* pw_core_;
     struct pw_stream* pw_stream_;
     struct pw_properties* props_;
-    struct spa_audio_info_raw spa_audio_info_;
-    struct pw_buffer* pw_buffer_;
     
     // PipeWire event handlers
+    struct pw_core_events core_events_;
+    struct spa_hook core_listener_;
     struct pw_stream_events stream_events_;
     struct spa_hook stream_listener_;
 
     // Stream properties
     std::string target_device_;
     std::string stream_name_;
-    bool auto_connect_;
+    bool capture_sink_;
+    bool capture_sink_;
     
     // Audio buffer management
     std::mutex buffer_mutex_;
     std::vector<uint8_t> temp_buffer_;
-    size_t buffer_offset_;
     
     // Timing and state
     bool first_;
-    std::chrono::time_point<std::chrono::steady_clock> last_process_time_;
-    boost::asio::steady_timer check_timer_;
     std::chrono::microseconds silence_;
     
     // Configuration
     bool send_silence_;
     std::chrono::milliseconds idle_threshold_;
-    std::string lastException_;
     
     // Stream state
     enum pw_stream_state stream_state_;
     bool running_;
+    
+    // PipeWire thread
+    std::thread pw_thread_;
 };
 
 } // namespace streamreader
