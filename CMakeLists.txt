@@ -208,11 +208,10 @@ if(NOT WIN32 AND NOT ANDROID)
     endif(ALSA_FOUND)
 
     if(BUILD_WITH_JACK)
-      # Use custom FindJACK module to handle PipeWire JACK installations
-      find_package(JACK)
+      pkg_search_module(JACK jack)
       if(JACK_FOUND)
         add_compile_definitions(HAS_JACK)
-      endif()
+      endif(JACK_FOUND)
     endif(BUILD_WITH_JACK)
 
     if(BUILD_WITH_PULSE)
