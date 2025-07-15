@@ -102,7 +102,7 @@ else()
 
   if(JACK_FOUND)
     list(APPEND SERVER_SOURCES streamreader/jack_stream.cpp)
-    list(APPEND SERVER_LIBRARIES ${JACK_LIBRARIES})
+    list(APPEND SERVER_LIBRARIES ${JACK_LINK_LIBRARIES})
     include_directories(${JACK_INCLUDE_DIRS})
   endif(JACK_FOUND)
 

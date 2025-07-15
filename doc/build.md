@@ -84,9 +84,16 @@ Build Snapcast. If you haven't installed boost, but downloaded and extracted the
 
 Other flags that can be passed to `cmake`:
 
-- `-DBUILD_CLIENT=<ON|OFF>`: build the client: yes or no
-- `-DBUILD_SERVER=<ON|OFF>`: build the server: yes or no
-- `-DBUILD_WITH_PULSE=<ON|OFF>`: build with pulse audio support: yes or no
+- `-DBUILD_CLIENT=<ON|OFF>`: build the client: yes or no (default `ON`)
+- `-DBUILD_SERVER=<ON|OFF>`: build the server: yes or no (default `ON`)
+- `-DBUILD_WITH_FLAC=<ON|OFF>`: build with FLAC support: yes or no (default `ON`)
+- `-DBUILD_WITH_VORBIS=<ON|OFF>`: build with VORBIS support: yes or no (default `ON`)
+- `-DBUILD_WITH_TREMOR=<ON|OFF>`: build with vorbis using TREMOR: yes or no (default `ON`)
+- `-DBUILD_WITH_OPUS=<ON|OFF>`: build with OPUS support: yes or no (default `ON`)
+- `-DBUILD_WITH_AVAHI=<ON|OFF>`: build with AVAHI support: yes or no (default `ON`)
+- `-DBUILD_WITH_EXPAT=<ON|OFF>`: build with EXPAT support: yes or no (default `ON`)
+- `-DBUILD_WITH_PULSE=<ON|OFF>`: build with PulseAudio support: yes or no (default `OFF`)
+- `-DBUILD_WITH_JACK=<ON|OFF>`: build with JACK support: yes or no (default `OFF`)
 
 ```sh
 cmake .. -DBOOST_ROOT=/path/to/boost_1_8x_0

@@ -3,7 +3,7 @@
 {
 	"name": "Snapcast-dev",
 	"build": {
-		"dockerfile": "Dockerfile.debian",
+		"dockerfile": "Dockerfile.fedora"
 		// "args": { "VARIANT": "alpine" }
 	},
 	"runArgs": ["--cap-add=SYS_PTRACE", "--security-opt", "seccomp=unconfined"],
