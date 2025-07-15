@@ -378,15 +378,15 @@ jobs:
       fail-fast: false
       matrix:
         compiler:
-          - vs-16
+          # - vs-16
           - vs-17
         build_type:
           - Debug
           - Release
         include:
-          - compiler: vs-16
-            os: windows-2019
-            vs: "Visual Studio 16 2019"
+          # - compiler: vs-16
+          #   os: windows-2019
+          #   vs: "Visual Studio 16 2019"
           - compiler: vs-17
             os: windows-2022
             vs: "Visual Studio 17 2022"
