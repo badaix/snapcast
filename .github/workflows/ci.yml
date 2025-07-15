@@ -270,6 +270,8 @@ jobs:
             -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
             -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
             -DCMAKE_EXPORT_COMPILE_COMMANDS=TRUE \
+            -DBUILD_WITH_PULSE=ON \
+            -DBUILD_WITH_JACK=ON \
             -DCMAKE_CXX_FLAGS="-DCMAKE_CXX_FLAGS=-DJSON_HAS_CPP_14"
         env:
           CC: ${{ matrix.cc }}
