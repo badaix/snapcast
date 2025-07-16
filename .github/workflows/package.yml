@@ -184,7 +184,7 @@ jobs:
           copy ${env:VCPKG_INSTALLATION_ROOT}\installed\x64-windows\bin\opus.dll bundle\
           copy ${env:VCPKG_INSTALLATION_ROOT}\installed\x64-windows\bin\vorbis.dll bundle\
           copy ${env:VCPKG_INSTALLATION_ROOT}\installed\x64-windows\bin\soxr.dll bundle\
-          copy "C:\Program Files (x86)\Microsoft Visual Studio\2022\Enterprise\VC\Redist\MSVC\v142\vc_redist.x64.exe" bundle\
+          copy "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Redist\MSVC\v143\vc_redist.x64.exe" bundle\
           copy bin\Release\snapclient.exe bundle\
           Compress-Archive -Path bundle\* -Destination snapclient_win64.zip
       - name: Release artifacts
