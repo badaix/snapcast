@@ -1,10 +1,11 @@
 # Snapcast changelog
 
-## Version 0.31.103
+## Version 0.31.104
 
 ### Features
 
 - Client: Add support for (secure-) websockets (Issue #1325, PR #1340)
+- Server: Add client certificate validation (Issue #1334)
 - Server: Add control script for Plex (PR #1346)
 
 ### Bugfixes
@@ -12,6 +13,7 @@
 - Fix typos (PR #1333, PR #1341, PR #1345)
 - Add `mpv` option `--ao-pcm-waveheader=no` on player setup page (Issue #1094)
 - Fix clang-tidy static analysis issues (Issue #1354)
+- Fix building with Jack on Fedora (Issue #1363)
 
 ### General
 
@@ -22,7 +24,6 @@
 - Add clang-tidy static analysis to CI (Issue #1353)
 - Compiles with boost v1.88.0 (Issue #1367, PR #1378, PR #1387)
 - Add Music Assistant project to readme (PR #1366)
-- Fix typos (PR #1328, PR #1329, PR #1333)
  
 ### Contributors
 
