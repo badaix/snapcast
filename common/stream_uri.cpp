@@ -34,6 +34,53 @@ namespace strutils = utils::string;
 static constexpr auto LOG_TAG = "StreamUri";
 
 
+std::string uri_encode(const std::string& str)
+{
+    std::ostringstream escaped;
+    escaped.fill('0');
+    escaped << std::hex;
+
+    for (unsigned char c : str)
+    {
+        // Keep alphanumerics and a few safe characters as-is
+        if (isalnum(c) || c == '-' || c == '_' || c == '.' || c == '~')
+        {
+            escaped << c;
+        }
+        else
+        {
+            // Percent-encode all others
+            escaped << '%' << std::uppercase << std::setw(2) << int(c);
+            escaped << std::nouppercase;
+        }
+    }
+
+    return escaped.str();
+}
+
+std::string encode_path(const std::string& path)
+{
+    std::stringstream encoded;
+    std::stringstream input(path);
+    std::string segment;
+    bool leading_slash = !path.empty() && path[0] == '/';
+
+    if (leading_slash)
+        encoded << "/";
+
+    while (std::getline(input, segment, '/'))
+    {
+        encoded << uri_encode(segment);
+        if (!input.eof())
+        {
+            encoded << "/";
+        }
+    }
+
+    return encoded.str();
+}
+
+
 StreamUri::StreamUri(const std::string& uri)
 {
     parse(uri);
@@ -141,24 +188,28 @@ void StreamUri::parse(const std::string& stream_uri)
 
 std::string StreamUri::toString() const
 {
-    // TODO: path must be properly be uri encoded
     // scheme:[//[user:password@]host[:port]][/]path[?query][#fragment]
     stringstream ss;
-    ss << scheme << "://" << host << path;
+    ss << scheme << "://" << host;
+    if (port.has_value())
+        ss << ":" << port.value();
+
+    ss << encode_path(path);
+
     if (!query.empty())
     {
         ss << "?";
         auto iter = query.begin();
         while (true)
         {
-            ss << iter->first << "=" << iter->second;
+            ss << uri_encode(iter->first) << "=" << uri_encode(iter->second);
             if (++iter == query.end())
                 break;
             ss << "&";
         }
     }
     if (!fragment.empty())
-        ss << "#" << fragment;
+        ss << "#" << uri_encode(fragment);
 
     return ss.str();
 }
