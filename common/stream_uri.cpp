@@ -63,10 +63,6 @@ std::string encode_path(const std::string& path)
     std::stringstream encoded;
     std::stringstream input(path);
     std::string segment;
-    bool leading_slash = !path.empty() && path[0] == '/';
-
-    if (leading_slash)
-        encoded << "/";
 
     while (std::getline(input, segment, '/'))
     {
