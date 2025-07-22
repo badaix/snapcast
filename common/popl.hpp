@@ -943,7 +943,8 @@ inline std::shared_ptr<T> OptionParser::get_option(char short_name) const
 inline void OptionParser::parse(const std::string& ini_filename)
 {
     std::ifstream file(ini_filename.c_str());
-    std::string line;
+    if (file.fail())
+        throw std::invalid_argument("cannot open file: '" + ini_filename + "'");
 
     auto trim = [](std::string& s)
     {
@@ -966,6 +967,7 @@ inline void OptionParser::parse(const std::string& ini_filename)
         return {trim_copy(s.substr(0, pos)), trim_copy(s.substr(pos + 1, std::string::npos))};
     };
 
+    std::string line;
     std::string section;
     while (std::getline(file, line))
     {
