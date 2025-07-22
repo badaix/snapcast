@@ -1,6 +1,6 @@
 # Snapcast changelog
 
-## Version 0.31.104
+## Version 0.31.105
 
 ### Features
 
@@ -14,6 +14,8 @@
 - Add `mpv` option `--ao-pcm-waveheader=no` on player setup page (Issue #1094)
 - Fix clang-tidy static analysis issues (Issue #1354)
 - Fix building with Jack on Fedora (Issue #1363)
+- Snapserver silently ignores if config file cannot be read (Issue #1402) 
+- Add required packages to build instructions (Issue #1397)
 
 ### General
 
