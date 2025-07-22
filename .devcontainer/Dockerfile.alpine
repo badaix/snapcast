@@ -6,4 +6,8 @@ FROM mcr.microsoft.com/vscode/devcontainers/base:0-${VARIANT}
 
 RUN echo "https://dl-cdn.alpinelinux.org/alpine/edge/testing/" >> /etc/apk/repositories
 
-RUN apk update && apk upgrade && apk add --no-cache bash librespot git alpine-sdk gdb libvorbis-dev soxr-dev flac-dev avahi-dev expat-dev boost-dev opus-dev alsa-lib-dev ninja ccache libstdc++ clang clang-dev
+RUN apk update && apk upgrade && apk add --no-cache \
+    bash git alpine-sdk \
+    cmake ninja ccache libstdc++ clang clang-dev gdb \
+    alsa-lib-dev avahi-dev boost-dev expat-dev flac-dev jack-dev \
+    libvorbis-dev openssl-dev opus-dev soxr-dev
