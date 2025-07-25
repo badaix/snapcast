@@ -5,11 +5,9 @@ if(POLICY CMP0144)
   cmake_policy(SET CMP0144 NEW)
 endif()
 
-# The FindBoost module is removed.
-# CI is failing, maybe because it uses just the downloaded headers without being installed
-# if(POLICY CMP0167)
-#   cmake_policy(SET CMP0167 NEW)
-# endif()
+# The FindBoost module is removed. CI is failing, maybe because it uses just the
+# downloaded headers without being installed if(POLICY CMP0167) cmake_policy(SET
+# CMP0167 NEW) endif()
 
 project(
   snapcast

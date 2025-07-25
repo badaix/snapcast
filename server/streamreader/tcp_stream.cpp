@@ -28,6 +28,7 @@
 // 3rd party headers
 
 // standard headers
+#include <cstdint>
 #include <memory>
 
 
@@ -41,13 +42,9 @@ static constexpr auto LOG_TAG = "TcpStream";
 TcpStream::TcpStream(PcmStream::Listener* pcmListener, boost::asio::io_context& ioc, const ServerSettings& server_settings, const StreamUri& uri)
     : AsioStream<tcp::socket>(pcmListener, ioc, server_settings, uri), reconnect_timer_(ioc)
 {
+    static constexpr uint16_t DEFAULT_PORT = 4953;
     host_ = uri_.host;
-    auto host_port = utils::string::split(host_, ':');
-    port_ = 4953;
-    if (uri_.port.has_value())
-    {
-        port_ = uri_.port.value();
-    }
+    port_ = uri_.port.value_or(DEFAULT_PORT);
 
     auto mode = uri_.getQuery("mode", "server");
     if (mode == "server")
