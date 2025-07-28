@@ -277,15 +277,16 @@ TEST_CASE("Uri")
     // Test with all fields, url encoded
     // "%21%23%24%25%26%27%28%29%2A%2B%2C%2F%3A%3B%3D%3F%40%5B%5D"
     // "!#$%&'()*+,/:;=?@[]"
-    uri = StreamUri("scheme%26://%26host%3f:23/pa%2Bth?%21%23%24%25%26%27%28%29=%2A%2B%2C%2F%3A%3B%3D%3F%40%5B%5D&key%2525=value#fragment%3f%21%3F");
-    REQUIRE(uri.scheme == "scheme&");
-    REQUIRE(uri.host == "&host?");
+    uri = StreamUri("scheme://host:23/pa%2Bth?%21%23%24%25%26%27%28%29=%2A%2B%2C%2F%3A%3B%3D%3F%40%5B%5D&key%2525=value#fragment%3F%21%3F");
+    REQUIRE(uri.scheme == "scheme");
+    REQUIRE(uri.host == "host");
     REQUIRE(uri.port.has_value());
     REQUIRE(uri.port.value() == 23);
     REQUIRE(uri.path == "/pa+th");
     REQUIRE(uri.query["!#$%&'()"] == "*+,/:;=?@[]");
     REQUIRE(uri.query["key%25"] == "value");
     REQUIRE(uri.fragment == "fragment?!?");
+    REQUIRE(uri.toString() == uri.uri );
 
     // No host
     uri = StreamUri("scheme:///path?query=none#fragment");
@@ -329,7 +330,7 @@ TEST_CASE("Uri")
     REQUIRE(uri.query["killall"] == "false");
     REQUIRE(uri.toString().find("spotify:///librespot?") == 0);
     StreamUri uri_from_str{uri.toString()};
-    // REQUIRE(uri == uri_from_str);
+    REQUIRE(uri == uri_from_str);
 }
 
 
