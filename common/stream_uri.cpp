@@ -34,49 +34,6 @@ namespace strutils = utils::string;
 static constexpr auto LOG_TAG = "StreamUri";
 
 
-std::string uri_encode(const std::string& str)
-{
-    std::ostringstream escaped;
-    escaped.fill('0');
-    escaped << std::hex;
-
-    for (unsigned char c : str)
-    {
-        // Keep alphanumerics and a few safe characters as-is
-        if (isalnum(c) || c == '-' || c == '_' || c == '.' || c == '~')
-        {
-            escaped << c;
-        }
-        else
-        {
-            // Percent-encode all others
-            escaped << '%' << std::uppercase << std::setw(2) << int(c);
-            escaped << std::nouppercase;
-        }
-    }
-
-    return escaped.str();
-}
-
-std::string encode_path(const std::string& path)
-{
-    std::stringstream encoded;
-    std::stringstream input(path);
-    std::string segment;
-
-    while (std::getline(input, segment, '/'))
-    {
-        encoded << uri_encode(segment);
-        if (!input.eof())
-        {
-            encoded << "/";
-        }
-    }
-
-    return encoded.str();
-}
-
-
 StreamUri::StreamUri(const std::string& uri)
 {
     parse(uri);
@@ -190,7 +147,7 @@ std::string StreamUri::toString() const
     if (port.has_value())
         ss << ":" << port.value();
 
-    ss << encode_path(path);
+    ss << strutils::uriEncodePath(path);
 
     if (!query.empty())
     {
@@ -198,14 +155,14 @@ std::string StreamUri::toString() const
         auto iter = query.begin();
         while (true)
         {
-            ss << uri_encode(iter->first) << "=" << uri_encode(iter->second);
+            ss << strutils::uriEncode(iter->first) << "=" << strutils::uriEncode(iter->second);
             if (++iter == query.end())
                 break;
             ss << "&";
         }
     }
     if (!fragment.empty())
-        ss << "#" << uri_encode(fragment);
+        ss << "#" << strutils::uriEncode(fragment);
 
     return ss.str();
 }

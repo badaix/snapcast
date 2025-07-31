@@ -28,6 +28,7 @@
 // standard headers
 #include <algorithm>
 #include <cstdio>
+#include <iomanip>
 #include <map>
 #include <sstream>
 #include <string>
@@ -106,29 +107,49 @@ std::string trim_copy(const std::string& s)
 }
 
 
-std::string urlEncode(const std::string& str)
+std::string uriEncode(const std::string& str)
 {
-    std::ostringstream os;
-    // NOLINTNEXTLINE
-    for (std::string::const_iterator ci = str.begin(); ci != str.end(); ++ci)
+    std::ostringstream escaped;
+    escaped.fill('0');
+    escaped << std::hex;
+
+    for (unsigned char c : str)
     {
-        if ((*ci >= 'a' && *ci <= 'z') || (*ci >= 'A' && *ci <= 'Z') || (*ci >= '0' && *ci <= '9'))
-        { // allowed
-            os << *ci;
-        }
-        else if (*ci == ' ')
+        // Keep alphanumerics and a few safe characters as-is
+        if (isalnum(c) || c == '-' || c == '_' || c == '.' || c == '~')
         {
-            os << '+';
+            escaped << c;
         }
         else
         {
-            auto toHex = [](unsigned char x) { return static_cast<unsigned char>(x + (x > 9 ? ('A' - 10) : '0')); };
-            os << '%' << toHex(*ci >> 4) << toHex(*ci % 16);
+            // Percent-encode all others
+            escaped << '%' << std::uppercase << std::setw(2) << int(c);
+            escaped << std::nouppercase;
         }
     }
 
-    return os.str();
+    return escaped.str();
 }
+
+
+std::string uriEncodePath(const std::string& path)
+{
+    std::stringstream encoded;
+    std::stringstream input(path);
+    std::string segment;
+
+    while (std::getline(input, segment, '/'))
+    {
+        encoded << uriEncode(segment);
+        if (!input.eof())
+        {
+            encoded << "/";
+        }
+    }
+
+    return encoded.str();
+}
+
 
 
 // decode %xx to char

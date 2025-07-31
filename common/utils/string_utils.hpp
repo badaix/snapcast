@@ -55,7 +55,10 @@ std::string trim_copy(const std::string& s);
 std::string uriDecode(const std::string& src);
 
 /// @return uri encoded version of @p str
-std::string urlEncode(const std::string& str);
+std::string uriEncode(const std::string& str);
+
+/// @return uri encoded version of @p path
+std::string uriEncodePath(const std::string& path);
 
 /// Split string @p s at left-most @p delim into @p left and @p right
 void split_left(const std::string& s, char delim, std::string& left, std::string& right);
