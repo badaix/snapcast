@@ -1,6 +1,6 @@
 # Snapcast changelog
 
-## Version 0.31.105
+## Version 0.32.0
 
 ### Features
 
@@ -16,6 +16,8 @@
 - Fix building with Jack on Fedora (Issue #1363)
 - Snapserver silently ignores if config file cannot be read (Issue #1402) 
 - Add required packages to build instructions (Issue #1397)
+- Fix stream URI string encoding (PR #1398)
+- Fix reading port for TCP streams (PR #1399)
 
 ### General
 
@@ -35,8 +37,9 @@
 - @chriscn
 - @SantiagoSotoC
 - @tobster
+- @gnumpi
 
-_Johannes Pohl <snapcast@badaix.de>  Thu, 23 Jan 2025 00:13:37 +0200_
+_Johannes Pohl <snapcast@badaix.de>  Sun, 03 Aug 2025 00:13:37 +0200_
 
 ## Version 0.31.0
 
