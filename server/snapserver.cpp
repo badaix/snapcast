@@ -151,35 +151,10 @@ int main(int argc, char* argv[])
             "log filter <tag>:<level>[,<tag>:<level>]* with tag = * or <log tag> and level = [trace,debug,info,notice,warning,error,fatal]",
             settings.logging.filter);
 
+        // Parse command line arguments
         try
         {
             op.parse(argc, argv);
-            conf.parse(config_file);
-            conf.parse(argc, argv);
-            if (tcp_bind_to_address->is_set())
-            {
-                settings.tcp.bind_to_address.clear();
-                for (size_t n = 0; n < tcp_bind_to_address->count(); ++n)
-                    settings.tcp.bind_to_address.push_back(tcp_bind_to_address->value(n));
-            }
-            if (http_bind_to_address->is_set())
-            {
-                settings.http.bind_to_address.clear();
-                for (size_t n = 0; n < http_bind_to_address->count(); ++n)
-                    settings.http.bind_to_address.push_back(http_bind_to_address->value(n));
-            }
-            if (http_ssl_bind_to_address->is_set())
-            {
-                settings.http.ssl_bind_to_address.clear();
-                for (size_t n = 0; n < http_ssl_bind_to_address->count(); ++n)
-                    settings.http.ssl_bind_to_address.push_back(http_ssl_bind_to_address->value(n));
-            }
-            if (stream_bind_to_address->is_set())
-            {
-                settings.stream.bind_to_address.clear();
-                for (size_t n = 0; n < stream_bind_to_address->count(); ++n)
-                    settings.stream.bind_to_address.push_back(stream_bind_to_address->value(n));
-            }
         }
         catch (const std::invalid_argument& e)
         {
@@ -212,6 +187,19 @@ int main(int argc, char* argv[])
             GroffOptionPrinter option_printer(&op);
             cout << option_printer.print();
             exit(EXIT_SUCCESS);
+        }
+
+        // Parse configuration file and overrides from command line
+        try
+        {
+            conf.parse(config_file);
+            conf.parse(argc, argv);
+        }
+        catch (const std::invalid_argument& e)
+        {
+            cerr << "Exception: " << e.what() << "\n";
+            cout << "\n" << op << "\n";
+            exit(EXIT_FAILURE);
         }
 
         if (settings.stream.codec.find(":?") != string::npos)
@@ -263,6 +251,31 @@ int main(int argc, char* argv[])
             AixLog::Log::init<AixLog::SinkNull>();
         else
             throw SnapException("Invalid log sink: " + settings.logging.sink);
+
+        if (tcp_bind_to_address->is_set())
+        {
+            settings.tcp.bind_to_address.clear();
+            for (size_t n = 0; n < tcp_bind_to_address->count(); ++n)
+                settings.tcp.bind_to_address.push_back(tcp_bind_to_address->value(n));
+        }
+        if (http_bind_to_address->is_set())
+        {
+            settings.http.bind_to_address.clear();
+            for (size_t n = 0; n < http_bind_to_address->count(); ++n)
+                settings.http.bind_to_address.push_back(http_bind_to_address->value(n));
+        }
+        if (http_ssl_bind_to_address->is_set())
+        {
+            settings.http.ssl_bind_to_address.clear();
+            for (size_t n = 0; n < http_ssl_bind_to_address->count(); ++n)
+                settings.http.ssl_bind_to_address.push_back(http_ssl_bind_to_address->value(n));
+        }
+        if (stream_bind_to_address->is_set())
+        {
+            settings.stream.bind_to_address.clear();
+            for (size_t n = 0; n < stream_bind_to_address->count(); ++n)
+                settings.stream.bind_to_address.push_back(stream_bind_to_address->value(n));
+        }
 
         if (!settings.ssl.certificate.empty() && !settings.ssl.certificate_key.empty())
         {
@@ -335,7 +348,6 @@ int main(int argc, char* argv[])
                 users.push_back(users_value->value(n));
 
             settings.auth.init(roles, users);
-
 
             for (const auto& role : settings.auth.roles)
                 LOG(DEBUG, LOG_TAG) << "Role: " << role->role << ", permissions: " << utils::string::container_to_string(role->permissions) << "\n";
