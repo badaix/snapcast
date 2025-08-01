@@ -14,52 +14,69 @@ The server's audio input is a named pipe `/tmp/snapfifo`. All data that is fed
 into this file will be send to the connected clients. One of the most generic
 ways to use Snapcast is in conjunction with the music player daemon or Mopidy,
 which can be configured to use a named pipe as audio output.
-.SS Allowed options:
+.SS Usage: snapclient [options...] [url]
+
+ With 'url' = <tcp|ws|wss>://<snapserver host or IP>[:port]
+ For example: "tcp:\\192.168.1.1:1704", or "ws:\\homeserver.local"
+ If 'url' is not configured, snapclient tries to resolve the snapserver IP via mDNS
+:
 .TP
 \fB--help\fR
-produce help message
+Produce help message
 .TP
 \fB-v, --version\fR
-show version number
+Show version number
 .TP
 \fB-h, --host arg\fR
-server hostname or ip address
+(deprecated, use [url]) Server hostname or ip address
 .TP
 \fB-p, --port arg (=1704)\fR
-server port
+(deprecated, use [url]) Server port
 .TP
 \fB-i, --instance arg (=1)\fR
-instance id when running multiple instances on the same host
+Instance id when running multiple instances on the same host
 .TP
 \fB--hostID arg\fR
-unique host id, default is MAC address
+Unique host id, default is MAC address
+.TP
+\fB--cert arg (="")\fR
+Client certificate file (PEM format)
+.TP
+\fB--cert-key arg (="")\fR
+Client private key file (PEM format)
+.TP
+\fB--key-password arg\fR
+Key password (for encrypted private key)
+.TP
+\fB--server-cert [=arg(="default certificates")]\fR
+Verify server with CA certificate (PEM format)
 .TP
 \fB-l, --list\fR
-list PCM devices
+List PCM devices
 .TP
-\fB-s, --soundcard arg (=default)\fR
+\fB-s, --Soundcard arg (=default)\fR
 index or name of the pcm device
 .TP
-\fB--latency arg (=0)\fR
+\fB--Latency arg (=0)\fR
 latency of the PCM device
 .TP
 \fB--sampleformat arg\fR
-resample audio stream to <rate>:<bits>:<channels>
+Resample audio stream to <rate>:<bits>:<channels>
 .TP
 \fB--player arg (=alsa)\fR
-alsa|pulse|file[:<options>|?]
+alsa|file[:<options>|?]
 .TP
 \fB--mixer arg (=software)\fR
 software|hardware|script|none|?[:<options>]
 .TP
 \fB-d, --daemon [=arg(=-3)]\fR
-daemonize, optional process priority [-20..19]
+Daemonize, optional process priority [-20..19]
 .TP
 \fB--user arg\fR
 the user[:group] to run snapclient as when daemonized
 .TP
 \fB--logsink arg\fR
-log sink [null,system,stdout,stderr,file:<filename>]
+Log sink [null,system,stdout,stderr,file:<filename>]
 .TP
 \fB--logfilter arg (=*:info)\fR
 log filter <tag>:<level>[,<tag>:<level>]* with tag = * or <log tag> and level = [trace,debug,info,notice,warning,error,fatal]
