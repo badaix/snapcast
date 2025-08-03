@@ -21,7 +21,7 @@
 
 ### General
 
-- Snapweb: Update to v0.9.0
+- Snapweb: Update to v0.9.1
 - Client: Command line arguments '--host' and '--port' are deprecated
 - Update binary_protocol.md (Issue #1339)
 - Add missing doxygen code documentation (Issue #1352)

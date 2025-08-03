@@ -9,7 +9,7 @@ permissions:
 
 env:
   BOOST_VERSION: 1_88_0
-  SNAPWEB_VERSION: v0.9.0
+  SNAPWEB_VERSION: v0.9.1
 
 jobs:
 
