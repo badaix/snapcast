@@ -4,7 +4,7 @@
 
 ### Bugfixes
 
-- Add OpenSSL dlls to Windows bundle (Issue ##1405)
+- Add OpenSSL dlls to Windows bundle (Issue #1405)
 
 ### Contributors
 
