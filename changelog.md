@@ -1,5 +1,17 @@
 # Snapcast changelog
 
+## Version 0.32.1
+
+### Bugfixes
+
+- Add OpenSSL dlls to Windows bundle (Issue ##1405)
+
+### Contributors
+
+- @badaix
+
+_Johannes Pohl <snapcast@badaix.de>  Mon, 04 Aug 2025 00:13:37 +0200_
+
 ## Version 0.32.0
 
 ### Features
