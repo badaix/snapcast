@@ -413,7 +413,8 @@ jobs:
           cd c:\vcpkg
           git pull
           vcpkg.exe update
-          vcpkg.exe --triplet x64-windows install libflac libvorbis soxr opus boost-asio boost-beast catch2
+          vcpkg.exe --triplet x64-windows install libflac libvorbis soxr opus openssl boost-asio boost-beast catch2
+          dir ${env:VCPKG_INSTALLATION_ROOT}\installed\x64-windows\bin\
       - name: configure
         run: |
           echo vcpkg installation root: ${env:VCPKG_INSTALLATION_ROOT}
