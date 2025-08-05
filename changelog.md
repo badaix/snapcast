@@ -1,5 +1,17 @@
 # Snapcast changelog
 
+## Version 0.32.2
+
+### Bugfixes
+
+- Fix building Snapclient debian package with Pulse audio (Issue #1406)
+
+### Contributors
+
+- @badaix
+
+_Johannes Pohl <snapcast@badaix.de>  Tue, 05 Aug 2025 00:13:37 +0200_
+
 ## Version 0.32.1
 
 ### Bugfixes
