@@ -138,6 +138,15 @@ jobs:
           fakeroot make -f debian/rules CMAKEFLAGS="-DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DBOOST_ROOT=$GITHUB_WORKSPACE/${{env.BOOST}} -DCMAKE_BUILD_TYPE:STRING=Release -DREVISION=${{ github.sha }} -DBUILD_WITH_PULSE=ON -DSNAPWEB_DIR:STRING=$GITHUB_WORKSPACE/snapweb" binary
           rm ../snapserver_*_${{ matrix.arch }}.deb
           rename 's/_${{ matrix.arch }}/_${{ matrix.arch }}_${{ matrix.debian }}_with-pulse/g' ../snap*_${{ matrix.arch }}.deb
+          deb_file="../snapclient_${{ matrix.arch }}_${{ matrix.debian }}_with-pulse.deb"
+          mkdir ../debtmp
+          dpkg-deb -R "$deb_file" ../debtmp
+          sed -i "s|Package: snapclient|Package: snapclient-with-pulse|g" ../debtmp/DEBIAN/control
+          cd ../debtmp/
+          find . -type f -not -path "./DEBIAN/*" -exec md5sum {} + | sort -k 2 | sed 's/\.\/\(.*\)/\1/' > DEBIAN/md5sums
+          cd .. || exit 0
+          dpkg-deb -b ../debtmp "$deb_file"
+          rm -rf ../debtmp
       - name: Release artifacts
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
