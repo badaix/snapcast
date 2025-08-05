@@ -132,10 +132,10 @@ jobs:
           # TODO: use environment variable $HOME/.ccache
           CCACHE_DIR: /home/runner/.ccache
         run: |
-          fakeroot make -f debian/rules CMAKEFLAGS="-DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DBOOST_ROOT=$GITHUB_WORKSPACE/${{env.BOOST}} -DCMAKE_BUILD_TYPE:STRING=Release -DREVISION=${{ github.sha }} -DBUILD_WITH_JACK=OFF -DBUILD_WITH_PULSE=OFF -DSNAPWEB_DIR:STRING=$GITHUB_WORKSPACE/snapweb" binary
+          fakeroot make -f debian/rules CMAKEFLAGS="-DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DBOOST_ROOT=$GITHUB_WORKSPACE/${{env.BOOST}} -DCMAKE_BUILD_TYPE:STRING=Release -DREVISION=${{ github.sha }} -DSNAPWEB_DIR:STRING=$GITHUB_WORKSPACE/snapweb" binary
           rename 's/_${{ matrix.arch }}/_${{ matrix.arch }}_${{ matrix.debian }}/g' ../snap*_${{ matrix.arch }}.deb
           fakeroot make -f debian/rules clean
-          fakeroot make -f debian/rules CMAKEFLAGS="-DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DBOOST_ROOT=$GITHUB_WORKSPACE/${{env.BOOST}} -DCMAKE_BUILD_TYPE:STRING=Release -DREVISION=${{ github.sha }} -DBUILD_WITH_JACK=OFF -DSNAPWEB_DIR:STRING=$GITHUB_WORKSPACE/snapweb" binary
+          fakeroot make -f debian/rules CMAKEFLAGS="-DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DBOOST_ROOT=$GITHUB_WORKSPACE/${{env.BOOST}} -DCMAKE_BUILD_TYPE:STRING=Release -DREVISION=${{ github.sha }} -DBUILD_WITH_PULSE=ON -DSNAPWEB_DIR:STRING=$GITHUB_WORKSPACE/snapweb" binary
           rm ../snapserver_*_${{ matrix.arch }}.deb
           rename 's/_${{ matrix.arch }}/_${{ matrix.arch }}_${{ matrix.debian }}_with-pulse/g' ../snap*_${{ matrix.arch }}.deb
       - name: Release artifacts
