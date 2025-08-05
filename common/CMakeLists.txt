@@ -16,3 +16,10 @@ if(ANDROID)
 elseif(SOXR_FOUND)
   target_link_libraries(common ${SOXR_LIBRARIES})
 endif()
+
+if (ANDROID)
+  target_link_libraries(common openssl::crypto openssl::ssl)
+else ()
+  target_link_libraries(common OpenSSL::Crypto OpenSSL::SSL)
+endif ()
+
