@@ -119,7 +119,7 @@ Set up [vcpkg](https://github.com/Microsoft/vcpkg)
 Install dependencies
 
 ```sh
-vcpkg.exe install libflac libvorbis soxr opus boost-asio --triplet x64-windows
+vcpkg.exe install libflac libvorbis soxr opus boost-asio boost-beast --triplet x64-windows
 ```
 
 Build
