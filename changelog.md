@@ -1,5 +1,22 @@
 # Snapcast changelog
 
+## Version 0.32.100
+
+### Features
+
+### Bugfixes
+
+- Update Windows build instructions (PR #1408)
+
+### General
+
+### Contributors
+
+- @stijnvdb88
+- @badaix
+
+_Johannes Pohl <snapcast@badaix.de>  Tue, 30 Dec 2025 00:13:37 +0200_
+
 ## Version 0.32.2
 
 ### Bugfixes
