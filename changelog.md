@@ -7,7 +7,7 @@
 ### Bugfixes
 
 - Server: re-add port to host in json RPC stream requests (Issue #1410)
-- Update Windows build instructions (PR #1408)
+- Documentation: Update Windows build instructions (PR #1408)
 
 ### General
 
