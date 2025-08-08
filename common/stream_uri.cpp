@@ -27,6 +27,8 @@
 #include "common/aixlog.hpp"
 #include "common/utils/string_utils.hpp"
 
+// standard headers
+#include <string>
 
 using namespace std;
 namespace strutils = utils::string;
@@ -170,7 +172,11 @@ std::string StreamUri::toString() const
 
 json StreamUri::toJson() const
 {
-    json j = {{"raw", toString()}, {"scheme", scheme}, {"host", host}, {"path", path}, {"fragment", fragment}, {"query", query}};
+    std::string host_port = host;
+    if (port.has_value())
+        host_port += ":" + std::to_string(port.value());
+
+    json j = {{"raw", toString()}, {"scheme", scheme}, {"host", host_port}, {"path", path}, {"fragment", fragment}, {"query", query}};
     return j;
 }
 

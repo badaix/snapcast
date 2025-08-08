@@ -1,11 +1,12 @@
 # Snapcast changelog
 
-## Version 0.32.100
+## Version 0.32.3
 
 ### Features
 
 ### Bugfixes
 
+- Re-add port to host in json RPC stream requests (#1410)
 - Update Windows build instructions (PR #1408)
 
 ### General
@@ -15,7 +16,7 @@
 - @stijnvdb88
 - @badaix
 
-_Johannes Pohl <snapcast@badaix.de>  Tue, 30 Dec 2025 00:13:37 +0200_
+_Johannes Pohl <snapcast@badaix.de>  Fri, 08 Aug 2025 00:13:37 +0200_
 
 ## Version 0.32.2
 

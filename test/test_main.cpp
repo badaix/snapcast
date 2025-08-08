@@ -286,7 +286,7 @@ TEST_CASE("Uri")
     REQUIRE(uri.query["!#$%&'()"] == "*+,/:;=?@[]");
     REQUIRE(uri.query["key%25"] == "value");
     REQUIRE(uri.fragment == "fragment?!?");
-    REQUIRE(uri.toString() == uri.uri );
+    REQUIRE(uri.toString() == uri.uri);
 
     // No host
     uri = StreamUri("scheme:///path?query=none#fragment");
@@ -331,6 +331,19 @@ TEST_CASE("Uri")
     REQUIRE(uri.toString().find("spotify:///librespot?") == 0);
     StreamUri uri_from_str{uri.toString()};
     REQUIRE(uri == uri_from_str);
+
+    // Issue #1410
+    uri = StreamUri("tcp://0.0.0.0:5099?sampleformat=48000:16:2&idle_threshold=60000&name=Music Assistant - osmc4");
+    REQUIRE(
+        uri.toJson().dump() ==
+        R"({"fragment":"","host":"0.0.0.0:5099","path":"","query":{"idle_threshold":"60000","name":"Music Assistant - osmc4","sampleformat":"48000:16:2"},"raw":"tcp://0.0.0.0:5099?idle_threshold=60000&name=Music%20Assistant%20-%20osmc4&sampleformat=48000%3A16%3A2","scheme":"tcp"})");
+    REQUIRE(uri.toJson()["host"].get<std::string>() == "0.0.0.0:5099");
+
+    uri = StreamUri("tcp://0.0.0.0?sampleformat=48000:16:2&idle_threshold=60000&name=Music Assistant - osmc4");
+    REQUIRE(
+        uri.toJson().dump() ==
+        R"({"fragment":"","host":"0.0.0.0","path":"","query":{"idle_threshold":"60000","name":"Music Assistant - osmc4","sampleformat":"48000:16:2"},"raw":"tcp://0.0.0.0:5099?idle_threshold=60000&name=Music%20Assistant%20-%20osmc4&sampleformat=48000%3A16%3A2","scheme":"tcp"})");
+    REQUIRE(uri.toJson()["host"].get<std::string>() == "0.0.0.0");
 }
 
 
