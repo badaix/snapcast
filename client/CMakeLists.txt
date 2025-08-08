@@ -60,6 +60,13 @@ elseif(NOT ANDROID)
     list(APPEND CLIENT_LIBRARIES ${PULSE_LIBRARIES})
     include_directories(${PULSE_INCLUDE_DIRS})
   endif(PULSE_FOUND)
+
+  if(PIPEWIRE_FOUND)
+    list(APPEND CLIENT_SOURCES player/pipewire_player.cpp)
+    list(APPEND CLIENT_LIBRARIES ${PIPEWIRE_LIBRARIES})
+    include_directories(SYSTEM ${PIPEWIRE_INCLUDE_DIRS})
+  endif(PIPEWIRE_FOUND)    
+
 endif(MACOSX)
 
 find_package(OpenSSL)

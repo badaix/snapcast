@@ -39,6 +39,9 @@
 #ifdef HAS_ALSA
 #include "player/alsa_player.hpp"
 #endif
+#ifdef HAS_PIPEWIRE
+#include "player/pipewire_player.hpp"
+#endif
 #ifdef HAS_PULSE
 #include "player/pulse_player.hpp"
 #endif
@@ -150,6 +153,9 @@ std::vector<std::string> Controller::getSupportedPlayerNames()
 #ifdef HAS_PULSE
     result.emplace_back(player::PULSE);
 #endif
+#ifdef HAS_PIPEWIRE
+    result.emplace_back(player::PIPEWIRE);
+#endif
 #ifdef HAS_OBOE
     result.emplace_back(player::OBOE);
 #endif
@@ -251,6 +257,10 @@ void Controller::getNextMessage()
 #ifdef HAS_PULSE
             if (!player_)
                 player_ = createPlayer<PulsePlayer>(settings_.player, player::PULSE);
+#endif
+#ifdef HAS_PIPEWIRE
+            if (!player_)
+                player_ = createPlayer<PipewirePlayer>(settings_.player, player::PIPEWIRE);
 #endif
 #ifdef HAS_OBOE
             if (!player_)
