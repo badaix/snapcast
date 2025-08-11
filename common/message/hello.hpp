@@ -24,8 +24,11 @@
 #include "json_message.hpp"
 
 // standard headers
+#include <array>
+#include <cstdint>
 #include <optional>
 #include <string>
+#include <vector>
 
 
 namespace msg
@@ -36,6 +39,68 @@ namespace msg
 class Hello : public JsonMessage
 {
 public:
+    /// Device type
+    enum class DeviceType : uint8_t
+    {
+        unknown,     ///< unspecified
+        computer,    ///< Computer
+        tablet,      ///< tablet PC
+        smartphone,  ///< Smartphone
+        speaker,     ///< Audio speaker
+        tv,          ///< TV
+        avr,         ///< Audio/Video Receiver
+        stb,         ///< Set-Top Box
+        audiodongle, ///< generic audio dongle
+        lightbulb    ///< Light bulb
+    };
+
+    /// @return the string representation of @p type
+    std::string toString(DeviceType type) const
+    {
+        switch (type)
+        {
+            case DeviceType::computer:
+                return "computer";
+            case DeviceType::tablet:
+                return "tablet";
+            case DeviceType::smartphone:
+                return "smartphone";
+            case DeviceType::speaker:
+                return "speaker";
+            case DeviceType::tv:
+                return "tv";
+            case DeviceType::avr:
+                return "avr";
+            case DeviceType::stb:
+                return "stb";
+            case DeviceType::audiodongle:
+                return "audiodongle";
+            case DeviceType::lightbulb:
+                return "lightbulb";
+            case DeviceType::unknown:
+            default:
+                return "unknown";
+        }
+    };
+
+    /// @return the device type from string @p type
+    DeviceType deviceTypeFromString(const std::string& type) const
+    {
+        auto dev_types = std::array{DeviceType::unknown, DeviceType::computer, DeviceType::tablet, DeviceType::smartphone,  DeviceType::speaker,
+                                    DeviceType::tv,      DeviceType::avr,      DeviceType::stb,    DeviceType::audiodongle, DeviceType::lightbulb};
+        for (const auto& dev_type : dev_types)
+        {
+            if (toString(dev_type) == type)
+                return dev_type;
+        }
+        return DeviceType::unknown;
+    }
+
+    struct Capabilities
+    {
+        std::vector<std::string> supportedCodecs; ///< supported codecs
+    };
+
     /// Auth info
     struct Auth
     {
