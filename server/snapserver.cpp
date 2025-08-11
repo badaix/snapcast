@@ -73,7 +73,7 @@ int main(int argc, char* argv[])
         int processPriority(0);
         auto daemonOption = op.add<Implicit<int>>("d", "daemon", "Daemonize\noptional process priority [-20..19]", 0, &processPriority);
 #endif
-        op.add<Value<string>>("c", "config", "path to the configuration file", config_file, &config_file);
+        auto config_file_option = op.add<Value<string>>("c", "config", "Path to the configuration file", config_file, &config_file);
 
         OptionParser conf("Overridable config file options");
 
@@ -197,9 +197,14 @@ int main(int argc, char* argv[])
         }
         catch (const std::invalid_argument& e)
         {
-            cerr << "Exception: " << e.what() << "\n";
-            cout << "\n" << op << "\n";
-            exit(EXIT_FAILURE);
+            if (config_file_option->is_set())
+            {
+                cerr << "Exception: " << e.what() << "\n";
+                cout << "\n" << op << "\n";
+                exit(EXIT_FAILURE);
+            }
+            else
+                cerr << "Warning - Failed to load config file '" << config_file << "': " << e.what() << "\n";
         }
 
         if (settings.stream.codec.find(":?") != string::npos)

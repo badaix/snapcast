@@ -166,9 +166,9 @@ int main(int argc, char** argv)
 // PCM device specific
 #if defined(HAS_ALSA) || defined(HAS_PULSE) || defined(HAS_WASAPI)
         auto listSwitch = op.add<Switch>("l", "list", "List PCM devices");
-        /*auto soundcardValue =*/op.add<Value<string>>("s", "Soundcard", "index or name of the pcm device", pcm_device, &pcm_device);
+        op.add<Value<string>>("s", "soundcard", "Index or name of the PCM device", pcm_device, &pcm_device);
 #endif
-        /*auto latencyValue =*/op.add<Value<int>>("", "Latency", "latency of the PCM device", 0, &settings.player.latency);
+        op.add<Value<int>>("", "latency", "Latency of the PCM device", 0, &settings.player.latency);
 #ifdef HAS_SOXR
         auto sample_format = op.add<Value<string>>("", "sampleformat", "Resample audio stream to <rate>:<bits>:<channels>", "");
 #endif
@@ -203,13 +203,13 @@ int main(int argc, char** argv)
 #ifdef HAS_DAEMON
         int processPriority(-3);
         auto daemonOption = op.add<Implicit<int>>("d", "daemon", "Daemonize, optional process priority [-20..19]", processPriority, &processPriority);
-        auto userValue = op.add<Value<string>>("", "user", "the user[:group] to run snapclient as when daemonized");
+        auto userValue = op.add<Value<string>>("", "user", "The user[:group] to run snapclient as when daemonized");
 #endif
 
         // logging
         op.add<Value<string>>("", "logsink", "Log sink [null,system,stdout,stderr,file:<filename>]", settings.logging.sink, &settings.logging.sink);
         auto logfilterOption = op.add<Value<string>>(
-            "", "logfilter", "log filter <tag>:<level>[,<tag>:<level>]* with tag = * or <log tag> and level = [trace,debug,info,notice,warning,error,fatal]",
+            "", "logfilter", "Log filter <tag>:<level>[,<tag>:<level>]* with tag = * or <log tag> and level = [trace,debug,info,notice,warning,error,fatal]",
             settings.logging.filter);
 
         try

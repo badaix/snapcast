@@ -1,5 +1,23 @@
 # Snapcast changelog
 
+## Version 0.32.4
+
+### Features
+
+### Bugfixes
+
+- Client: Fix case of command line arguments (Issue #1411)
+
+### General
+
+- Server: Log warning if default config is missing (PR #1402)
+
+### Contributors
+
+- @badaix
+
+_Johannes Pohl <snapcast@badaix.de>  Mon, 11 Aug 2025 00:13:37 +0200_
+
 ## Version 0.32.3
 
 ### Features
