@@ -7,6 +7,7 @@
 ### Bugfixes
 
 - Client: Fix case of command line arguments (Issue #1411)
+- Fix building with boost v1.89.0 (Issues #1413)
 
 ### General
 
@@ -16,7 +17,7 @@
 
 - @badaix
 
-_Johannes Pohl <snapcast@badaix.de>  Mon, 11 Aug 2025 00:13:37 +0200_
+_Johannes Pohl <snapcast@badaix.de>  Thu, 14 Aug 2025 00:13:37 +0200_
 
 ## Version 0.32.3
 
