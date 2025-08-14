@@ -39,11 +39,11 @@
 #ifdef HAS_ALSA
 #include "player/alsa_player.hpp"
 #endif
-#ifdef HAS_PIPEWIRE
-#include "player/pipewire_player.hpp"
-#endif
 #ifdef HAS_PULSE
 #include "player/pulse_player.hpp"
+#endif
+#ifdef HAS_PIPEWIRE
+#include "player/pipewire_player.hpp"
 #endif
 #ifdef HAS_OPENSL
 #include "player/opensl_player.hpp"

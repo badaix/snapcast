@@ -28,6 +28,9 @@
 #ifdef HAS_PULSE
 #include "player/pulse_player.hpp"
 #endif
+#ifdef HAS_PIPEWIRE
+#include "player/pipewire_player.hpp"
+#endif
 #ifdef HAS_WASAPI
 #include "player/wasapi_player.hpp"
 #endif
