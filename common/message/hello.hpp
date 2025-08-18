@@ -96,6 +96,7 @@ public:
         return DeviceType::unknown;
     }
 
+    /// Capabilities of the client (supported codec, ...)
     struct Capabilities
     {
         std::vector<std::string> supportedCodecs; ///< supported codecs
