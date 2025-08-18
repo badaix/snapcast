@@ -96,8 +96,12 @@ void Stream::setBufferLen(size_t bufferLenMs)
 void Stream::clearChunks()
 {
     std::lock_guard<std::mutex> lock(mutex_);
-    while (!chunks_.empty())
-        chunks_.pop();
+	// Use the safer try_pop pattern to drain the queue
+    std::shared_ptr<msg::PcmChunk> chunk;
+    while (chunks_.try_pop(chunk))
+    {
+        // Keep popping until the queue is empty
+    }
     resetBuffers();
 }
 
