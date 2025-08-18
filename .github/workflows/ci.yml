@@ -57,7 +57,8 @@ jobs:
           cmake --build build --target ${{ matrix.tool }} 2>&1 | tee build/analysis.log
       - name: evaluate
         run: |
-          WARNINGS=$(cat build/analysis.log | sort | uniq | grep -e ": warning: " | wc -l)
+          cat build/analysis.log | sort | uniq | grep -e ": warning: " | tee build/doxy_warnings.log
+          WARNINGS=$(cat build/doxy_warnings.log | wc -l)
           MAX_ALLOWED=0
           echo "Analysis finished with $WARNINGS warnings, max allowed: $MAX_ALLOWED"
           if [ "$WARNINGS" -gt "$MAX_ALLOWED" ]; then exit $WARNINGS; else exit 0; fi;
