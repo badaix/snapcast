@@ -7,6 +7,7 @@
 ### Bugfixes
 
 - Client: Fix case of command line arguments (Issue #1411)
+- Client: Fix deadlock during shutdown (PR #1415)
 - Fix building with boost v1.89.0 (Issues #1413)
 
 ### General
@@ -16,8 +17,9 @@
 ### Contributors
 
 - @badaix
+- @mafrosis
 
-_Johannes Pohl <snapcast@badaix.de>  Thu, 14 Aug 2025 00:13:37 +0200_
+_Johannes Pohl <snapcast@badaix.de>  Mon, 18 Aug 2025 00:13:37 +0200_
 
 ## Version 0.32.3
 
