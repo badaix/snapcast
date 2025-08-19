@@ -23,7 +23,6 @@
 #include "common/aixlog.hpp"
 #include "common/snap_exception.hpp"
 #include "common/str_compat.hpp"
-#include "common/utils/string_utils.hpp"
 
 // 3rd party headers
 

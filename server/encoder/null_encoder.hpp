@@ -28,7 +28,7 @@ namespace encoder
 /// Null Encoder class
 /**
  * Dummy encoder that will not encode any PcmChunk and thus will also never call
- * "Encoder::encoded_callback_", i.e. the "OnEncodedCallback" to report any encoded data
+ * "Encoder::chunkEncoded", i.e. the "OnEncodedCallback" to report any encoded data
  * to the listener.
  * Typically used as input stream for a MetaStream, which will do it's own encoding.
  * Streams that use the null encoder cannot be listened to directly, nor they are visible
