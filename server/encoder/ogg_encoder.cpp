@@ -156,7 +156,7 @@ void OggEncoder::encode(const msg::PcmChunk& chunk)
         // make oggChunk smaller
         oggChunk->payload = static_cast<char*>(realloc(oggChunk->payload, pos));
         oggChunk->payloadSize = pos;
-        encoded_callback_(*this, oggChunk, res);
+        chunkEncoded(oggChunk, res);
     }
 }
 

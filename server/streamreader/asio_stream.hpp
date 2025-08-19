@@ -178,7 +178,7 @@ template <typename ReadStream>
 void AsioStream<ReadStream>::on_connect()
 {
     first_ = true;
-    tvEncodedChunk_ = std::chrono::steady_clock::now();
+    encoder_->setStreamTimestamp(std::chrono::steady_clock::now());
     do_read();
 }
 
@@ -243,7 +243,7 @@ void AsioStream<ReadStream>::do_read()
         if (first_)
         {
             first_ = false;
-            tvEncodedChunk_ = std::chrono::steady_clock::now() - chunk_->duration<std::chrono::nanoseconds>();
+            encoder_->setStreamTimestamp(std::chrono::steady_clock::now() - chunk_->duration<std::chrono::nanoseconds>());
             nextTick_ = std::chrono::steady_clock::now();
         }
 

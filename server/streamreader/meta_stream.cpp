@@ -152,7 +152,7 @@ void MetaStream::onChunkRead(const PcmStream* pcmStream, const msg::PcmChunk& ch
     {
         first_read_ = false;
         LOG(INFO, LOG_TAG) << "first read, updating timestamp\n";
-        tvEncodedChunk_ = std::chrono::steady_clock::now() - chunk.duration<std::chrono::nanoseconds>();
+        encoder_->setStreamTimestamp(std::chrono::steady_clock::now() - chunk.duration<std::chrono::nanoseconds>());
         next_tick_ = std::chrono::steady_clock::now();
     }
 

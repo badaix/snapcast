@@ -14,6 +14,7 @@ set(SERVER_SOURCES
     stream_session_tcp.cpp
     stream_session_ws.cpp
     encoder/encoder_factory.cpp
+    encoder/encoder.cpp
     encoder/pcm_encoder.cpp
     encoder/null_encoder.cpp
     streamreader/control_error.cpp

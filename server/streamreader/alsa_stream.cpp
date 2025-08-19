@@ -85,7 +85,8 @@ void AlsaStream::start()
 
     initAlsa();
     first_ = true;
-    tvEncodedChunk_ = std::chrono::steady_clock::now();
+
+    encoder_->setStreamTimestamp(std::chrono::steady_clock::now());
     PcmStream::start();
     // wait(read_timer_, std::chrono::milliseconds(chunk_ms_), [this] { do_read(); });
     boost::asio::post(strand_, [this] { do_read(); });
@@ -303,7 +304,7 @@ void AlsaStream::do_read()
         {
             first_ = false;
             // initialize the stream's base timestamp to now minus the chunk's duration
-            tvEncodedChunk_ = std::chrono::steady_clock::now() - duration;
+            encoder_->setStreamTimestamp(std::chrono::steady_clock::now() - duration);
         }
 
         if ((state_ == ReaderState::kPlaying) || ((state_ == ReaderState::kIdle) && send_silence_))

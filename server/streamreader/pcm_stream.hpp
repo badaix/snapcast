@@ -230,8 +230,6 @@ protected:
 
     /// Executor for synchronous IO
     boost::asio::strand<boost::asio::any_io_executor> strand_;
-    /// Current abolute time of the last encoded chunk
-    std::chrono::time_point<std::chrono::steady_clock> tvEncodedChunk_;
     /// Listeners for PCM events
     std::vector<PcmStream::Listener*> pcmListeners_;
     /// URI of this stream

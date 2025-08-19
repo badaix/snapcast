@@ -39,6 +39,8 @@ static constexpr auto LOG_TAG = "JackStream";
 namespace
 {
 
+namespace
+{
 void float_to_s32(char* dst, jack_default_audio_sample_t* src, unsigned long nsamples, unsigned long dst_skip)
 {
     while (nsamples--)
@@ -106,6 +108,7 @@ void float_to_s16(char* dst, jack_default_audio_sample_t* src, unsigned long nsa
         src++;
     }
 }
+} // namespace
 
 template <typename Rep, typename Period>
 void wait(boost::asio::steady_timer& timer, const std::chrono::duration<Rep, Period>& duration, std::function<void()> handler)
@@ -166,7 +169,7 @@ void JackStream::start()
     // Need to start immediately, otherwise client will fail
     // due to a zero-length pcm header message
     first_ = true;
-    tvEncodedChunk_ = std::chrono::steady_clock::now();
+    encoder_->setStreamTimestamp(std::chrono::steady_clock::now());
     PcmStream::start();
 
     boost::asio::post(strand_, [this] { tryConnect(); });
@@ -339,7 +342,7 @@ int JackStream::readJackBuffers(jack_nframes_t nframes)
         if (first_)
         {
             first_ = false;
-            tvEncodedChunk_ = std::chrono::steady_clock::now() - chunk_->duration<chrono::nanoseconds>();
+            encoder_->setStreamTimestamp(std::chrono::steady_clock::now() - chunk_->duration<chrono::nanoseconds>());
         }
     }
 
