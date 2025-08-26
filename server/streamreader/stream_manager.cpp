@@ -138,10 +138,12 @@ PcmStreamPtr StreamManager::addStream(StreamUri& streamUri)
     {
         stream = make_shared<MetaStream>(listener, streams_, io_context_, settings_, streamUri);
     }
+#ifdef HAS_PIPEWIRE
     else if (streamUri.scheme == "pipewire")
     {
         stream = make_shared<PipeWireStream>(listener, io_context_, settings_, streamUri);
     }
+#endif
     else
     {
         throw SnapException("Unknown stream type: " + streamUri.scheme);
