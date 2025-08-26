@@ -45,13 +45,12 @@ class StreamSession;
 using WriteHandler = std::function<void(boost::system::error_code ec, std::size_t length)>;
 
 /// Interface: callback for a received message.
-class StreamMessageReceiver
+struct StreamMessageReceiver
 {
-public:
     /// message received callback
-    virtual void onMessageReceived(const std::shared_ptr<StreamSession>& connection, const msg::BaseMessage& baseMessage, char* buffer) = 0;
+    virtual void onMessageReceived(const std::shared_ptr<StreamSession>& streamSession, const msg::BaseMessage& baseMessage, char* buffer) = 0;
     /// disonnect callback
-    virtual void onDisconnect(StreamSession* connection) = 0;
+    virtual void onDisconnect(StreamSession* streamSession) = 0;
 };
 
 

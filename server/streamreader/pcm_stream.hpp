@@ -113,9 +113,8 @@ public:
 
     /// Callback interface for users of PcmStream
     /// Users of PcmStream should implement this to get the data
-    class Listener
+    struct Listener
     {
-    public:
         /// Properties of @p pcmStream changed to @p properties
         virtual void onPropertiesChanged(const PcmStream* pcmStream, const Properties& properties) = 0;
         /// State of @p pcmStream changed to @p state

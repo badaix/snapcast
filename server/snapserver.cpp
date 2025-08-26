@@ -236,8 +236,7 @@ int main(int argc, char* argv[])
 
         if (settings.stream.codec.find(":?") != string::npos)
         {
-            encoder::EncoderFactory encoderFactory;
-            std::unique_ptr<encoder::Encoder> encoder(encoderFactory.createEncoder(settings.stream.codec));
+            std::unique_ptr<encoder::Encoder> encoder(encoder::EncoderFactory::createEncoder(settings.stream.codec));
             if (encoder)
             {
                 cout << "Options for codec '" << encoder->name() << "':\n"

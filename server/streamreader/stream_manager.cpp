@@ -49,7 +49,7 @@ using namespace std;
 namespace streamreader
 {
 
-StreamManager::StreamManager(PcmStream::Listener* pcmListener, boost::asio::io_context& ioc, ServerSettings settings)
+StreamManager::StreamManager(boost::asio::io_context& ioc, ServerSettings settings, PcmStream::Listener* pcmListener)
     // const std::string& defaultSampleFormat, const std::string& defaultCodec, size_t defaultChunkBufferMs)
     : pcmListener_(pcmListener), settings_(std::move(settings)), io_context_(ioc)
 {

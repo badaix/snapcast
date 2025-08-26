@@ -42,7 +42,7 @@ class StreamManager
 {
 public:
     /// C'tor
-    StreamManager(PcmStream::Listener* pcmListener, boost::asio::io_context& ioc, ServerSettings settings);
+    StreamManager(boost::asio::io_context& ioc, ServerSettings settings, PcmStream::Listener* pcmListener);
 
     /// Construct and add a stream from @p uri, added from @p source
     /// @return the created stream
