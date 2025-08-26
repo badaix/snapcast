@@ -40,7 +40,7 @@ using namespace std;
 namespace encoder
 {
 
-std::unique_ptr<Encoder> EncoderFactory::createEncoder(const std::string& codec_settings) const
+std::unique_ptr<Encoder> EncoderFactory::createEncoder(const std::string& codec_settings)
 {
     std::string codec(codec_settings);
     std::string codecOptions;

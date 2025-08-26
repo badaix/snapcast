@@ -450,7 +450,7 @@ void Server::start()
     {
         controlServer_ = std::make_unique<ControlServer>(io_context_, settings_, this);
         streamServer_ = std::make_unique<StreamServer>(io_context_, settings_, this);
-        streamManager_ = std::make_unique<StreamManager>(this, io_context_, settings_);
+        streamManager_ = std::make_unique<StreamManager>(io_context_, settings_, this);
 
         // Add normal sources first
         for (const auto& sourceUri : settings_.stream.sources)

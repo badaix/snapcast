@@ -34,7 +34,7 @@ class EncoderFactory
 {
 public:
     /// @return Encoder from @p codec_settings
-    std::unique_ptr<Encoder> createEncoder(const std::string& codec_settings) const;
+    static std::unique_ptr<Encoder> createEncoder(const std::string& codec_settings);
 };
 
 } // namespace encoder

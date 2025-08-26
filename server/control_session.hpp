@@ -34,9 +34,8 @@ class ControlSession;
 class StreamSession;
 
 /// Interface: callback for a received message.
-class ControlMessageReceiver
+struct ControlMessageReceiver
 {
-public:
     /// Response callback function for requests
     using ResponseHandler = std::function<void(const std::string& response)>;
     // TODO: rename, error handling
