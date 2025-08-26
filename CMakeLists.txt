@@ -70,6 +70,7 @@ else()
 
   if(WERROR)
     add_compile_options(-Werror)
+    add_compile_options(-Wno-error=gnu-statement-expression)
   endif()
 
   if(ASAN)
