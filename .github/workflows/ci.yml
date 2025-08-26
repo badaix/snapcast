@@ -28,7 +28,9 @@ jobs:
           sudo apt-get update && \
           sudo apt-get install -yq libasound2-dev libsoxr-dev libvorbisidec-dev libvorbis-dev libflac-dev \
           libopus-dev alsa-utils libpulse-dev libavahi-client-dev libssl-dev \
-          avahi-daemon ccache expat cppcheck clang-tidy
+          avahi-daemon ccache expat cppcheck clang-tidy \
+          libpipewire-0.3-dev pipewire-pulse libdbus-1-dev libjack-dev libavahi-client-dev \
+          libatomic1  libvorbis-dev libopus-dev libpulse-dev libflac-dev libsoxr-dev libexpat1-dev
       - name: cache boost
         id: cache-boost
         uses: actions/cache@v4
@@ -48,6 +50,7 @@ jobs:
             -DBOOST_ROOT=boost_${BOOST_VERSION} \
             -DCMAKE_BUILD_TYPE=Release \
             -DCMAKE_EXPORT_COMPILE_COMMANDS=TRUE \
+            -DBUILD_WITH_PIPEWIRE=ON \
             -DCMAKE_CXX_FLAGS="-DCMAKE_CXX_FLAGS=-DJSON_HAS_CPP_14"
       - name: analysis
         run: |
@@ -78,7 +81,9 @@ jobs:
           sudo apt-get update && \
           sudo apt-get install -yq libasound2-dev libsoxr-dev libvorbisidec-dev libvorbis-dev libflac-dev \
           libopus-dev alsa-utils libpulse-dev libavahi-client-dev libssl-dev \
-          avahi-daemon debhelper ccache expat cppcheck doxygen graphviz
+          avahi-daemon debhelper ccache expat cppcheck doxygen graphviz \
+          libpipewire-0.3-dev pipewire-pulse libdbus-1-dev libjack-dev libavahi-client-dev \
+          libatomic1  libvorbis-dev libopus-dev libpulse-dev libflac-dev libsoxr-dev libexpat1-dev
       - name: doxygen
         run: |
           mkdir -p build/doxygen
@@ -116,7 +121,9 @@ jobs:
           sudo apt-get update && \
           sudo apt-get install -yq libasound2-dev libsoxr-dev libvorbisidec-dev libvorbis-dev libflac-dev \
           libopus-dev alsa-utils libpulse-dev libavahi-client-dev libssl-dev \
-          avahi-daemon ccache expat catch2
+          avahi-daemon ccache expat catch2 \
+          libpipewire-0.3-dev pipewire-pulse libdbus-1-dev libjack-dev libavahi-client-dev \
+          libatomic1  libvorbis-dev libopus-dev libpulse-dev libflac-dev libsoxr-dev libexpat1-dev
       - name: cache boost
         id: cache-boost
         uses: actions/cache@v4
@@ -147,6 +154,7 @@ jobs:
             -DCMAKE_BUILD_TYPE=Release \
             -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
             -DCMAKE_EXPORT_COMPILE_COMMANDS=TRUE \
+            -DBUILD_WITH_PIPEWIRE=ON \
             -DCMAKE_CXX_FLAGS="-DCMAKE_CXX_FLAGS=-DJSON_HAS_CPP_14"
       - name: build
         env:
@@ -239,7 +247,9 @@ jobs:
           sudo apt-get update && \
           sudo apt-get install -yq libasound2-dev libsoxr-dev libvorbisidec-dev libvorbis-dev libflac-dev \
           libopus-dev alsa-utils libpulse-dev libjack-dev libavahi-client-dev libssl-dev \
-          avahi-daemon ccache expat
+          avahi-daemon ccache expat \
+          libpipewire-0.3-dev pipewire-pulse libdbus-1-dev libjack-dev libavahi-client-dev \
+          libatomic1  libvorbis-dev libopus-dev libpulse-dev libflac-dev libsoxr-dev libexpat1-dev
       - name: cache boost
         id: cache-boost
         uses: actions/cache@v4
@@ -272,6 +282,7 @@ jobs:
             -DCMAKE_EXPORT_COMPILE_COMMANDS=TRUE \
             -DBUILD_WITH_PULSE=ON \
             -DBUILD_WITH_JACK=ON \
+            -DBUILD_WITH_PIPEWIRE=ON \
             -DCMAKE_CXX_FLAGS="-DCMAKE_CXX_FLAGS=-DJSON_HAS_CPP_14"
         env:
           CC: ${{ matrix.cc }}
