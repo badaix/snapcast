@@ -27,6 +27,9 @@
 #ifdef HAS_JACK
 #include "jack_stream.hpp"
 #endif
+#ifdef HAS_PIPEWIRE
+#include "pipewire_stream.hpp"
+#endif
 #include "common/snap_exception.hpp"
 #include "common/str_compat.hpp"
 #include "file_stream.hpp"
@@ -134,6 +137,10 @@ PcmStreamPtr StreamManager::addStream(StreamUri& streamUri)
     else if (streamUri.scheme == "meta")
     {
         stream = make_shared<MetaStream>(listener, streams_, io_context_, settings_, streamUri);
+    }
+    else if (streamUri.scheme == "pipewire")
+    {
+        stream = make_shared<PipeWireStream>(listener, io_context_, settings_, streamUri);
     }
     else
     {
