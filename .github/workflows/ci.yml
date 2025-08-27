@@ -29,8 +29,7 @@ jobs:
           sudo apt-get install -yq libasound2-dev libsoxr-dev libvorbisidec-dev libvorbis-dev libflac-dev \
           libopus-dev alsa-utils libpulse-dev libavahi-client-dev libssl-dev \
           avahi-daemon ccache expat cppcheck clang-tidy \
-          libpipewire-0.3-dev pipewire-pulse libdbus-1-dev libjack-dev libavahi-client-dev \
-          libatomic1  libvorbis-dev libopus-dev libpulse-dev libflac-dev libsoxr-dev libexpat1-dev
+          libpipewire-0.3-dev pipewire-pulse
       - name: cache boost
         id: cache-boost
         uses: actions/cache@v4
@@ -82,8 +81,7 @@ jobs:
           sudo apt-get install -yq libasound2-dev libsoxr-dev libvorbisidec-dev libvorbis-dev libflac-dev \
           libopus-dev alsa-utils libpulse-dev libavahi-client-dev libssl-dev \
           avahi-daemon debhelper ccache expat cppcheck doxygen graphviz \
-          libpipewire-0.3-dev pipewire-pulse libdbus-1-dev libjack-dev libavahi-client-dev \
-          libatomic1  libvorbis-dev libopus-dev libpulse-dev libflac-dev libsoxr-dev libexpat1-dev
+          libpipewire-0.3-dev pipewire-pulse
       - name: doxygen
         run: |
           mkdir -p build/doxygen
@@ -122,8 +120,7 @@ jobs:
           sudo apt-get install -yq libasound2-dev libsoxr-dev libvorbisidec-dev libvorbis-dev libflac-dev \
           libopus-dev alsa-utils libpulse-dev libavahi-client-dev libssl-dev \
           avahi-daemon ccache expat catch2 \
-          libpipewire-0.3-dev pipewire-pulse libdbus-1-dev libjack-dev libavahi-client-dev \
-          libatomic1  libvorbis-dev libopus-dev libpulse-dev libflac-dev libsoxr-dev libexpat1-dev
+          libpipewire-0.3-dev pipewire-pulse
       - name: cache boost
         id: cache-boost
         uses: actions/cache@v4
@@ -248,8 +245,7 @@ jobs:
           sudo apt-get install -yq libasound2-dev libsoxr-dev libvorbisidec-dev libvorbis-dev libflac-dev \
           libopus-dev alsa-utils libpulse-dev libjack-dev libavahi-client-dev libssl-dev \
           avahi-daemon ccache expat \
-          libpipewire-0.3-dev pipewire-pulse libdbus-1-dev libjack-dev libavahi-client-dev \
-          libatomic1  libvorbis-dev libopus-dev libpulse-dev libflac-dev libsoxr-dev libexpat1-dev
+          libpipewire-0.3-dev pipewire-pulse
       - name: cache boost
         id: cache-boost
         uses: actions/cache@v4
