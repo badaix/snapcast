@@ -286,7 +286,9 @@ void PipeWireStream::initPipeWire()
     struct spa_pod_builder b;
 
 #pragma GCC diagnostic push
+#if defined(__GNUC__) && !defined(__clang__)
 #pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
+#endif
     spa_pod_builder_init(&b, buffer.data(), buffer.size());
 #pragma GCC diagnostic pop
 
