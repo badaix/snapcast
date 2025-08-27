@@ -52,6 +52,10 @@ public:
     void start() override;
     void stop() override;
 
+protected:
+    // non-virtual version of stop(), for destructor
+    void cleanup();
+
 private:
     // PipeWire callbacks
     static void on_process(void* userdata);

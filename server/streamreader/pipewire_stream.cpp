@@ -80,7 +80,7 @@ PipeWireStream::PipeWireStream(PcmStream::Listener* pcmListener, boost::asio::io
 
 PipeWireStream::~PipeWireStream()
 {
-    stop();
+    cleanup();
     pw_deinit();
 }
 
@@ -255,7 +255,7 @@ void PipeWireStream::start()
     pw_thread_ = std::thread([this]() { pw_main_loop_run(pw_main_loop_); });
 }
 
-void PipeWireStream::stop()
+void PipeWireStream::cleanup()
 {
     running_ = false;
 
@@ -273,13 +273,18 @@ void PipeWireStream::stop()
     uninitPipeWire();
 }
 
+void PipeWireStream::stop()
+{
+    cleanup();
+}
+
 void PipeWireStream::initPipeWire()
 {
     int res;
-    const struct spa_pod* params[1];
-    uint8_t buffer[1024];
+    std::array<const struct spa_pod*, 1> params;
+    std::array<uint8_t, 1024> buffer;
     struct spa_pod_builder b;
-    spa_pod_builder_init(&b, buffer, sizeof(buffer));
+    spa_pod_builder_init(&b, buffer.data(), buffer.size());
 
     // Create main loop
     pw_main_loop_ = pw_main_loop_new(nullptr);
@@ -377,9 +382,9 @@ void PipeWireStream::initPipeWire()
     params[0] = spa_format_audio_raw_build(&b, SPA_PARAM_EnumFormat, &spa_audio_info);
 
     // Connect stream
-    enum pw_stream_flags flags = static_cast<pw_stream_flags>(PW_STREAM_FLAG_AUTOCONNECT | PW_STREAM_FLAG_MAP_BUFFERS | PW_STREAM_FLAG_RT_PROCESS);
+    auto flags = static_cast<pw_stream_flags>(PW_STREAM_FLAG_AUTOCONNECT | PW_STREAM_FLAG_MAP_BUFFERS | PW_STREAM_FLAG_RT_PROCESS);
 
-    res = pw_stream_connect(pw_stream_, PW_DIRECTION_INPUT, PW_ID_ANY, flags, params, 1);
+    res = pw_stream_connect(pw_stream_, PW_DIRECTION_INPUT, PW_ID_ANY, flags, params.data(), params.size());
 
     if (res < 0)
     {
