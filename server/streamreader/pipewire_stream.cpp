@@ -284,7 +284,11 @@ void PipeWireStream::initPipeWire()
     std::array<const struct spa_pod*, 1> params;
     std::array<uint8_t, 1024> buffer;
     struct spa_pod_builder b;
+
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
     spa_pod_builder_init(&b, buffer.data(), buffer.size());
+#pragma GCC diagnostic pop
 
     // Create main loop
     pw_main_loop_ = pw_main_loop_new(nullptr);
@@ -382,8 +386,7 @@ void PipeWireStream::initPipeWire()
     params[0] = spa_format_audio_raw_build(&b, SPA_PARAM_EnumFormat, &spa_audio_info);
 
     // Connect stream
-    // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange)
-    auto flags = static_cast<pw_stream_flags>(PW_STREAM_FLAG_AUTOCONNECT | PW_STREAM_FLAG_MAP_BUFFERS | PW_STREAM_FLAG_RT_PROCESS);
+    auto flags = static_cast<pw_stream_flags>(PW_STREAM_FLAG_AUTOCONNECT | PW_STREAM_FLAG_MAP_BUFFERS | PW_STREAM_FLAG_RT_PROCESS); // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange)
 
     res = pw_stream_connect(pw_stream_, PW_DIRECTION_INPUT, PW_ID_ANY, flags, params.data(), params.size());
 

@@ -53,7 +53,7 @@ public:
     void stop() override;
 
 protected:
-    // non-virtual version of stop(), for destructor
+    /// non-virtual version of stop(), for destructor
     void cleanup();
 
 private:
