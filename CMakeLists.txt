@@ -70,6 +70,7 @@ else()
 
   if(WERROR)
     add_compile_options(-Werror)
+    add_compile_options(-Wno-gnu-statement-expression)
   endif()
 
   if(ASAN)
@@ -107,6 +108,7 @@ option(BUILD_WITH_AVAHI "Build with AVAHI support" ON)
 option(BUILD_WITH_EXPAT "Build with EXPAT support" ON)
 option(BUILD_WITH_PULSE "Build with PulseAudio support" OFF)
 option(BUILD_WITH_JACK "Build with JACK support" OFF)
+option(BUILD_WITH_PIPEWIRE "Build with PipeWire support" OFF)
 
 if(NOT BUILD_SHARED_LIBS AND NOT BUILD_STATIC_LIBS)
   message(
@@ -224,6 +226,11 @@ if(NOT WIN32 AND NOT ANDROID)
       pkg_search_module(PULSE REQUIRED libpulse)
       add_compile_definitions(HAS_PULSE)
     endif(BUILD_WITH_PULSE)
+
+    if(BUILD_WITH_PIPEWIRE)
+      pkg_search_module(PIPEWIRE libpipewire-0.3)
+      add_compile_definitions(HAS_PIPEWIRE)
+    endif(BUILD_WITH_PIPEWIRE)
 
     if(BUILD_WITH_AVAHI)
       pkg_search_module(AVAHI REQUIRED avahi-client)
