@@ -47,6 +47,11 @@ namespace streamreader
 
 static constexpr auto LOG_TAG = "PipeWireStream";
 
+#ifdef __clang__
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wgnu-statement-expression"
+#endif
+
 namespace
 {
 spa_audio_format sampleFormatToPipeWire(const SampleFormat& format)
@@ -389,8 +394,9 @@ void PipeWireStream::initPipeWire()
     params[0] = spa_format_audio_raw_build(&b, SPA_PARAM_EnumFormat, &spa_audio_info);
 
     // Connect stream
-    auto flags = static_cast<pw_stream_flags>(PW_STREAM_FLAG_AUTOCONNECT | PW_STREAM_FLAG_MAP_BUFFERS |
-                                              PW_STREAM_FLAG_RT_PROCESS); // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange)
+    // NOLINTBEGIN(clang-analyzer-optin.core.EnumCastOutOfRange)
+    auto flags = static_cast<pw_stream_flags>(PW_STREAM_FLAG_AUTOCONNECT | PW_STREAM_FLAG_MAP_BUFFERS | PW_STREAM_FLAG_RT_PROCESS);
+    // NOLINTEND(clang-analyzer-optin.core.EnumCastOutOfRange)
 
     res = pw_stream_connect(pw_stream_, PW_DIRECTION_INPUT, PW_ID_ANY, flags, params.data(), params.size());
 
@@ -445,5 +451,10 @@ void PipeWireStream::uninitPipeWire()
         pw_main_loop_ = nullptr;
     }
 }
+
+#ifdef __clang__
+#pragma GCC diagnostic pop
+#endif
+
 
 } // namespace streamreader
