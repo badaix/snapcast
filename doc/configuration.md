@@ -269,6 +269,10 @@ Reads audio from a Jack server. Snapcast must be built with the cmake flag `BUIL
 jack:///?name=<name>[sampleformat=48000:16:2][autoconnect=][autoconnect_skip=0][&send_silence=false][&idle_threshold=100]
 ```
 
+### pipewire
+
+Direct audio capture from PipeWire, see the [PipeWire Stream Usage Guide](pipewire-stream.md)
+
 #### Available parameters
 
 - `server_name`: The Jack server name to connect to, leave empty for "default"

@@ -9,6 +9,7 @@ It is the solution to [issue 1371](https://github.com/badaix/snapcast/issues/137
 ## Building with PipeWire Support
 
 1. Ensure PipeWire development packages are installed:
+
    ```bash
    # Fedora/RHEL
    sudo dnf install pipewire-devel
@@ -18,6 +19,7 @@ It is the solution to [issue 1371](https://github.com/badaix/snapcast/issues/137
    ```
 
 2. Build Snapcast with PipeWire support:
+
    ```bash
    cmake .. -DBUILD_WITH_PIPEWIRE=ON
    make
@@ -45,22 +47,26 @@ source = pipewire://?name=Snapcast&device=&auto_connect=true
 ### Examples
 
 1. **Capture from default source:**
-   ```
+
+   ```ini
    source = pipewire://?name=<your_stream_name>
    ```
 
 2. **Capture from specific application/device:**
-   ```
+
+   ```ini
    source = pipewire://?name=<your_stream_name>&target=Firefox
    ```
 
 3. **Capture sink output (like pw-record with stream.capture.sink=true):**
-   ```
-   source = pipewire://?capture_sink=true&target=alsa_output.platform-snd_aloop.0.analog-stereo
+
+   ```ini
+   source = pipewire://?name=<your_stream_name>&capture_sink=true&target=alsa_output.platform-snd_aloop.0.analog-stereo
    ```
 
 4. **Named stream with custom idle settings:**
-   ```
+
+   ```ini
    source = pipewire://?name=SnapcastCapture&idle_threshold=500&send_silence=true
    ```
 
@@ -99,11 +105,13 @@ Pulseaudio clients like the `pavucontrol` UI can also be used.
 ## Replacing pw-record
 
 If you're currently using pw-record to capture audio into a FIFO, like:
+
 ```bash
 pw-record -P stream.capture.sink=true --target alsa_output.platform-snd_aloop.0.analog-stereo - >/tmp/snapfifo
 ```
 
 You can replace it with a native PipeWire stream in snapserver:
+
 ```ini
 source = pipewire://?capture_sink=true&target=alsa_output.platform-snd_aloop.0.analog-stereo
 ```
@@ -134,7 +142,7 @@ An alternative to using the `pipewire-stream` source in Snapcast is to use the `
 For details, see the [PipeWire documentation](https://docs.pipewire.org/page_module_snapcast_discover.html)
 and [issue 1371](https://github.com/badaix/snapcast/issues/1371).
 
-Using `libpipewire-module-snapcast-discover` allows for discover snapserver on the (sub) network. 
+Using `libpipewire-module-snapcast-discover` allows for discover snapserver on the (sub) network.
 
 Using pipewire-stream is more direct, avoids loopback networking, but is restricted to snapserver on the local machine. It is - of course - better integrated with PipeWire and may feel more naturally because of that.
 

@@ -29,7 +29,7 @@ jobs:
           sudo apt-get install -yq libasound2-dev libsoxr-dev libvorbisidec-dev libvorbis-dev libflac-dev \
           libopus-dev alsa-utils libpulse-dev libavahi-client-dev libssl-dev \
           avahi-daemon ccache expat cppcheck clang-tidy \
-          libpipewire-0.3-dev pipewire-pulse
+          libpipewire-0.3-dev
       - name: cache boost
         id: cache-boost
         uses: actions/cache@v4
@@ -81,7 +81,7 @@ jobs:
           sudo apt-get install -yq libasound2-dev libsoxr-dev libvorbisidec-dev libvorbis-dev libflac-dev \
           libopus-dev alsa-utils libpulse-dev libavahi-client-dev libssl-dev \
           avahi-daemon debhelper ccache expat cppcheck doxygen graphviz \
-          libpipewire-0.3-dev pipewire-pulse
+          libpipewire-0.3-dev
       - name: doxygen
         run: |
           mkdir -p build/doxygen
@@ -120,7 +120,7 @@ jobs:
           sudo apt-get install -yq libasound2-dev libsoxr-dev libvorbisidec-dev libvorbis-dev libflac-dev \
           libopus-dev alsa-utils libpulse-dev libavahi-client-dev libssl-dev \
           avahi-daemon ccache expat catch2 \
-          libpipewire-0.3-dev pipewire-pulse
+          libpipewire-0.3-dev
       - name: cache boost
         id: cache-boost
         uses: actions/cache@v4
@@ -245,7 +245,7 @@ jobs:
           sudo apt-get install -yq libasound2-dev libsoxr-dev libvorbisidec-dev libvorbis-dev libflac-dev \
           libopus-dev alsa-utils libpulse-dev libjack-dev libavahi-client-dev libssl-dev \
           avahi-daemon ccache expat \
-          libpipewire-0.3-dev pipewire-pulse
+          libpipewire-0.3-dev
       - name: cache boost
         id: cache-boost
         uses: actions/cache@v4

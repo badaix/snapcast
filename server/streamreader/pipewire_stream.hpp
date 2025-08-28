@@ -1,5 +1,6 @@
 /***
     This file is part of snapcast
+    Copyright (C) 2014-2025  Johannes Pohl
     Copyright (C) 2025  aanno <aannoaanno@gmail.com>
 
     This program is free software: you can redistribute it and/or modify
@@ -28,7 +29,6 @@
 #include <spa/param/audio/raw.h>
 
 // standard headers
-#include <memory>
 #include <mutex>
 #include <thread>
 #include <vector>

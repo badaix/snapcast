@@ -70,7 +70,6 @@ else()
 
   if(WERROR)
     add_compile_options(-Werror)
-    add_compile_options(-Wno-gnu-statement-expression)
   endif()
 
   if(ASAN)
@@ -228,7 +227,7 @@ if(NOT WIN32 AND NOT ANDROID)
     endif(BUILD_WITH_PULSE)
 
     if(BUILD_WITH_PIPEWIRE)
-      pkg_search_module(PIPEWIRE libpipewire-0.3)
+      pkg_search_module(PIPEWIRE REQUIRED libpipewire-0.3)
       add_compile_definitions(HAS_PIPEWIRE)
     endif(BUILD_WITH_PIPEWIRE)
 
