@@ -46,12 +46,12 @@ source = pipewire://?name=Snapcast&device=&auto_connect=true
 
 1. **Capture from default source:**
    ```
-   source = pipewire://
+   source = pipewire://?name=<your_stream_name>
    ```
 
 2. **Capture from specific application/device:**
    ```
-   source = pipewire://?target=Firefox
+   source = pipewire://?name=<your_stream_name>&target=Firefox
    ```
 
 3. **Capture sink output (like pw-record with stream.capture.sink=true):**
@@ -80,6 +80,8 @@ qpwgraph  # GUI tool
 pw-link "Snapcast:input_FL" "Firefox:output_FL"
 pw-link "Snapcast:input_FR" "Firefox:output_FR"
 ```
+
+Pulseaudio clients like the `pavucontrol` UI can also be used.
 
 ## Key Differences from ALSA Implementation
 

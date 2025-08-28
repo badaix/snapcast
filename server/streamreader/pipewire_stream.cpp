@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2025  Johannes Pohl
+    Copyright (C) 2025  aanno <aannoaanno@gmail.com>
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -120,7 +120,7 @@ void PipeWireStream::on_state_changed(void* userdata, enum pw_stream_state old, 
 
 void PipeWireStream::on_param_changed(void* userdata, uint32_t id, const struct spa_pod* param)
 {
-    (void)userdata; // Unused for now
+    std::ignore = userdata; // Unused for now
 
     if (param == nullptr || id != SPA_PARAM_Format)
         return;
@@ -223,7 +223,7 @@ void PipeWireStream::processAudio()
 
 void PipeWireStream::on_core_info(void* userdata, const struct pw_core_info* info)
 {
-    (void)userdata; // Unused
+    std::ignore = userdata; // Unused
     LOG(DEBUG, LOG_TAG) << "Core info: " << info->name << " version " << info->version << "\n";
 }
 
