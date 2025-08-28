@@ -106,7 +106,6 @@ option(BUILD_WITH_OPUS "Build with OPUS support" ON)
 option(BUILD_WITH_AVAHI "Build with AVAHI support" ON)
 option(BUILD_WITH_EXPAT "Build with EXPAT support" ON)
 option(BUILD_WITH_PULSE "Build with PulseAudio support" OFF)
-option(BUILD_WITH_PULSE "Build with Pipewire support" OFF)
 option(BUILD_WITH_JACK "Build with JACK support" OFF)
 option(BUILD_WITH_PIPEWIRE "Build with PipeWire support" OFF)
 
