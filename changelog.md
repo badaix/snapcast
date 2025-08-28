@@ -1,8 +1,10 @@
 # Snapcast changelog
 
-## Version 0.32.4
+## Version 0.33.0
 
 ### Features
+
+- Server: Add PipeWire stream reader (PR #1418, Issue #1371)
 
 ### Bugfixes
 
@@ -18,6 +20,7 @@
 
 - @badaix
 - @mafrosis
+- @aanno
 
 _Johannes Pohl <snapcast@badaix.de>  Mon, 18 Aug 2025 00:13:37 +0200_
 
