@@ -216,7 +216,7 @@ void PipeWireStream::processAudio()
                 if (first_)
                 {
                     first_ = false;
-                    tvEncodedChunk_ = std::chrono::steady_clock::now() - chunk_->duration<std::chrono::nanoseconds>();
+                    encoder_->setStreamTimestamp(std::chrono::steady_clock::now() - chunk_->duration<std::chrono::nanoseconds>());
                 }
 
                 // Post to the strand to ensure thread safety
@@ -254,7 +254,7 @@ void PipeWireStream::start()
 
     initPipeWire();
     first_ = true;
-    tvEncodedChunk_ = std::chrono::steady_clock::now();
+    encoder_->setStreamTimestamp(std::chrono::steady_clock::now());
     running_ = true;
     PcmStream::start();
 
