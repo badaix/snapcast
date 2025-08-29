@@ -23,19 +23,15 @@
 #include "common/aixlog.hpp"
 #include "common/snap_exception.hpp"
 #include "common/str_compat.hpp"
-#include "common/utils/string_utils.hpp"
 
 // 3rd party headers
 
 // standard headers
+#include <algorithm>
+#include <cmath>
+#include <pipewire/main-loop.h>
+#include <tuple>
 
-
-
-#include <math.h>
-
-#include <spa/param/audio/format-utils.h>
-
-#include <pipewire/pipewire.h>
 
 #define M_PI_M2 (M_PI + M_PI)
 
@@ -50,50 +46,45 @@ namespace player
 {
 
 static constexpr auto LOG_TAG = "PipewirePlayer";
-static constexpr auto kDefaultBuffer = 50ms;
+// static constexpr auto kDefaultBuffer = 50ms;
 
-static constexpr auto kDescription = "Pipewire player";
+// static constexpr auto kDescription = "Pipewire player";
+
+#ifdef __clang__
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wgnu-statement-expression"
+#pragma GCC diagnostic ignored "-Wgnu-statement-expression-from-macro-expansion"
+#endif
+
+namespace
+{
+spa_audio_format sampleFormatToPipeWire(const SampleFormat& format)
+{
+    if (format.bits() == 8)
+        return SPA_AUDIO_FORMAT_S8;
+    else if (format.bits() == 16)
+        return SPA_AUDIO_FORMAT_S16_LE;
+    else if ((format.bits() == 24) && (format.sampleSize() == 4))
+        return SPA_AUDIO_FORMAT_S24_LE;
+    else if (format.bits() == 32)
+        return SPA_AUDIO_FORMAT_S32_LE;
+    else
+        throw SnapException("Unsupported sample format: " + cpt::to_string(format.bits()));
+}
+} // namespace
+
 
 std::vector<PcmDevice> PipewirePlayer::pcm_list(const std::string& parameter)
 {
-    auto params = utils::string::split_pairs(parameter, ',', '=');
-    string filename;
-    if (params.find("filename") != params.end())
-        filename = params["filename"];
-    if (filename.empty())
-        filename = "stdout";
-    return {PcmDevice{0, filename, kDescription}};
+    std::ignore = parameter;
+    return {};
 }
 
 
 PipewirePlayer::PipewirePlayer(boost::asio::io_context& io_context, const ClientSettings::Player& settings, std::shared_ptr<Stream> stream)
-    : Player(io_context, settings, std::move(stream)), timer_(io_context), file_(nullptr)
+    : Player(io_context, settings, std::move(stream)), timer_(io_context)
 {
-    auto params = utils::string::split_pairs(settings.parameter, ',', '=');
-    string filename;
-    if (params.find("filename") != params.end())
-        filename = params["filename"];
-
-    if (filename.empty() || (filename == "stdout"))
-    {
-        file_.reset(stdout, [](auto p) { std::ignore = p; });
-    }
-    else if (filename == "stderr")
-    {
-        file_.reset(stderr, [](auto p) { std::ignore = p; });
-    }
-    else if (filename != "null")
-    {
-        std::string mode = "w";
-        if (params.find("mode") != params.end())
-            mode = params["mode"];
-        if ((mode != "w") && (mode != "a"))
-            throw SnapException("Mode must be w (write) or a (append)");
-        mode += "b";
-        file_.reset(fopen(filename.c_str(), mode.c_str()), [](auto p) { fclose(p); });
-        if (!file_)
-            throw SnapException("Error opening file: '" + filename + "', error: " + cpt::to_string(errno));
-    }
+    LOG(DEBUG, LOG_TAG) << "Pipewire player\n";
 }
 
 
@@ -104,59 +95,17 @@ PipewirePlayer::~PipewirePlayer()
 }
 
 
+void PipewirePlayer::worker()
+{
+    pw_main_loop_run(pw_main_loop_);
+    pw_stream_destroy(pw_stream_);
+    pw_main_loop_destroy(pw_main_loop_);
+}
+
+
 bool PipewirePlayer::needsThread() const
 {
-    return false;
-}
-
-
-void PipewirePlayer::requestAudio()
-{
-    auto numFrames = static_cast<uint32_t>(stream_->getFormat().msRate() * kDefaultBuffer.count());
-    auto needed = numFrames * stream_->getFormat().frameSize();
-    if (buffer_.size() < needed)
-        buffer_.resize(needed);
-
-    if (!stream_->getPlayerChunkOrSilence(buffer_.data(), 10ms, numFrames))
-    {
-        // LOG(INFO, LOG_TAG) << "Failed to get chunk. Playing silence.\n";
-    }
-    else
-    {
-        adjustVolume(static_cast<char*>(buffer_.data()), numFrames);
-    }
-
-    if (file_)
-    {
-        fwrite(buffer_.data(), 1, needed, file_.get());
-        fflush(file_.get());
-    }
-
-    loop();
-}
-
-
-void PipewirePlayer::loop()
-{
-    next_request_ += kDefaultBuffer;
-    auto now = std::chrono::steady_clock::now();
-    if (next_request_ < now)
-        next_request_ = now + 1ms;
-
-    timer_.expires_at(next_request_);
-    timer_.async_wait([this](boost::system::error_code ec)
-    {
-        if (ec)
-            return;
-        requestAudio();
-    });
-}
-
-
-void PipewirePlayer::start()
-{
-    next_request_ = std::chrono::steady_clock::now();
-    loop();
+    return true;
 }
 
 
@@ -167,42 +116,39 @@ void PipewirePlayer::stop()
 }
 
 
-struct Data
+void PipewirePlayer::onProcess()
 {
-    struct pw_main_loop* loop;
-    struct pw_stream* stream;
-    double accumulator;
-};
+    if (!active_)
+    {
+        pw_main_loop_quit(pw_main_loop_);
+        return;
+    }
 
-/* [on_process] */
-static void on_process(void* userdata)
-{
-    Data* data = reinterpret_cast<Data*>(userdata);
     struct pw_buffer* b;
-    struct spa_buffer* buf;
     int i, c, n_frames, stride;
     int16_t *dst, val;
 
-    if ((b = pw_stream_dequeue_buffer(data->stream)) == nullptr)
+    if ((b = pw_stream_dequeue_buffer(pw_stream_)) == nullptr)
     {
         pw_log_warn("out of buffers: %s", strerror(errno));
         return;
     }
 
-    buf = b->buffer;
+    spa_buffer* buf = b->buffer;
     if ((dst = reinterpret_cast<int16_t*>(buf->datas[0].data)) == nullptr)
         return;
 
     stride = sizeof(int16_t) * DEFAULT_CHANNELS;
     n_frames = buf->datas[0].maxsize / stride;
     if (b->requested)
-        n_frames = SPA_MIN(b->requested, n_frames);
+        n_frames = std::min<int>(static_cast<int>(b->requested), n_frames);
+    LOG(DEBUG, LOG_TAG) << "on_process: " << accumulator << ", frames: " << n_frames << ", requested: " << b->requested << "\n";
 
     for (i = 0; i < n_frames; i++)
     {
-        data->accumulator += M_PI_M2 * 440 / DEFAULT_RATE;
-        if (data->accumulator >= M_PI_M2)
-            data->accumulator -= M_PI_M2;
+        accumulator += M_PI_M2 * 440 / DEFAULT_RATE;
+        if (accumulator >= M_PI_M2)
+            accumulator -= M_PI_M2;
 
         /* sin() gives a value between -1.0 and 1.0, we first apply
          * the volume and then scale with 32767.0 to get a 16 bits value
@@ -210,66 +156,109 @@ static void on_process(void* userdata)
          * Another common method to convert a double to
          * 16 bits is to multiple by 32768.0 and then clamp to
          * [-32768 32767] to get the full 16 bits range. */
-        val = sin(data->accumulator) * DEFAULT_VOLUME * 32767.0;
+        val = sin(accumulator) * DEFAULT_VOLUME * 32767.0;
         for (c = 0; c < DEFAULT_CHANNELS; c++)
-            *dst++ = val;
+            dst[i * DEFAULT_CHANNELS + c] = val;
+        // *dst++ = val;
     }
 
     buf->datas[0].chunk->offset = 0;
     buf->datas[0].chunk->stride = stride;
     buf->datas[0].chunk->size = n_frames * stride;
 
-    pw_stream_queue_buffer(data->stream, b);
+    LOG(DEBUG, LOG_TAG) << "queue: " << dst[0] << "\n";
+    pw_stream_queue_buffer(pw_stream_, b);
 }
-/* [on_process] */
 
-// static constexpr auto streamEvents = std::invoke([]() -> pw_stream_events
-// {
-//     auto ret = pw_stream_events{};
-//     ret.version = PW_VERSION_STREAM_EVENTS;
-//     ret.state_changed = [](void* data, pw_stream_state old, pw_stream_state state, const char* error) noexcept -> void
-//     { static_cast<PipeWirePlayback*>(data)->stateChangedCallback(old, state, error); };
-//     ret.io_changed = [](void* data, uint32_t id, void* area, uint32_t size) noexcept -> void
-//     { static_cast<PipeWirePlayback*>(data)->ioChangedCallback(id, area, size); };
-//     ret.process = [](void* data) noexcept -> void { static_cast<PipeWirePlayback*>(data)->outputCallback(); };
-//     return ret;
-// });
 
-static const struct pw_stream_events stream_events = {
-    PW_VERSION_STREAM_EVENTS,
-    .process = on_process,
-};
-
-int main(int argc, char* argv[])
+void PipewirePlayer::on_process(void* userdata)
 {
-    struct data data = {
-        0,
-    };
-    const struct spa_pod* params[1];
-    uint8_t buffer[1024];
-    struct spa_pod_builder b = SPA_POD_BUILDER_INIT(buffer, sizeof(buffer));
-
-    pw_init(&argc, &argv);
-
-    data.loop = pw_main_loop_new(NULL);
-
-    data.stream = pw_stream_new_simple(pw_main_loop_get_loop(data.loop), "audio-src",
-                                       pw_properties_new(PW_KEY_MEDIA_TYPE, "Audio", PW_KEY_MEDIA_CATEGORY, "Playback", PW_KEY_MEDIA_ROLE, "Music", NULL),
-                                       &stream_events, &data);
-
-    params[0] = spa_format_audio_raw_build(&b, SPA_PARAM_EnumFormat,
-                                           &SPA_AUDIO_INFO_RAW_INIT(.format = SPA_AUDIO_FORMAT_S16, .channels = DEFAULT_CHANNELS, .rate = DEFAULT_RATE));
-
-    pw_stream_connect(data.stream, PW_DIRECTION_OUTPUT, PW_ID_ANY, PW_STREAM_FLAG_AUTOCONNECT | PW_STREAM_FLAG_MAP_BUFFERS | PW_STREAM_FLAG_RT_PROCESS, params,
-                      1);
-
-    pw_main_loop_run(data.loop);
-
-    pw_stream_destroy(data.stream);
-    pw_main_loop_destroy(data.loop);
-
-    return 0;
+    auto* player = static_cast<PipewirePlayer*>(userdata);
+    player->onProcess();
 }
+
+
+void PipewirePlayer::start()
+{
+    LOG(DEBUG, LOG_TAG) << "Start\n";
+
+    // Set up stream events
+    spa_zero(stream_events_);
+    stream_events_.version = PW_VERSION_STREAM_EVENTS;
+    stream_events_.process = on_process;
+    // stream_events_.state_changed = on_state_changed;
+    // stream_events_.param_changed = on_param_changed;
+
+    // next_request_ = std::chrono::steady_clock::now();
+    // loop();
+
+    std::array<uint8_t, 1024> buffer;
+    struct spa_pod_builder b;
+
+#pragma GCC diagnostic push
+#if defined(__GNUC__) && !defined(__clang__)
+#pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
+#endif
+    spa_pod_builder_init(&b, buffer.data(), buffer.size());
+#pragma GCC diagnostic pop
+
+    pw_init(nullptr, nullptr);
+
+    // Create main loop
+    pw_main_loop_ = pw_main_loop_new(nullptr);
+    if (!pw_main_loop_)
+        throw SnapException("Failed to create PipeWire main loop");
+
+    // // Set up stream properties
+    // auto* props = pw_properties_new(PW_KEY_MEDIA_TYPE, "Audio", PW_KEY_MEDIA_CATEGORY, "Playback", PW_KEY_MEDIA_ROLE, "Music", PW_KEY_APP_NAME, "Snapcast",
+    //                            PW_KEY_MEDIA_CLASS, "Audio/Source", PW_KEY_NODE_NAME, "TODO", nullptr);
+    // // Create stream, "props" ownership transferred to stream
+    // pw_stream_ = pw_stream_new(pw_core_, stream_name_.c_str(), props);
+
+    pw_stream_ = pw_stream_new_simple(pw_main_loop_get_loop(pw_main_loop_), "audio-src",
+                                      pw_properties_new(PW_KEY_MEDIA_TYPE, "Audio", PW_KEY_MEDIA_CATEGORY, "Playback", PW_KEY_MEDIA_ROLE, "Music", nullptr),
+                                      // PW_KEY_APP_NAME, "Snapcast", PW_KEY_MEDIA_CLASS, "Audio/Source",,
+                                      &stream_events_, this);
+
+    // Set up audio format
+    struct spa_audio_info_raw spa_audio_info = {};
+    spa_audio_info.flags = SPA_AUDIO_FLAG_NONE;
+    const auto& sampleformat = stream_->getFormat();
+    spa_audio_info.format = sampleFormatToPipeWire(sampleformat);
+    spa_audio_info.rate = sampleformat.rate();
+    spa_audio_info.channels = sampleformat.channels();
+
+    // Set channel positions (stereo by default)
+    if (sampleformat.channels() == 2)
+    {
+        spa_audio_info.position[0] = SPA_AUDIO_CHANNEL_FL;
+        spa_audio_info.position[1] = SPA_AUDIO_CHANNEL_FR;
+    }
+    else if (sampleformat.channels() == 1)
+    {
+        spa_audio_info.position[0] = SPA_AUDIO_CHANNEL_MONO;
+    }
+
+    // Build format parameters
+    std::array<const struct spa_pod*, 1> params;
+    params[0] = spa_format_audio_raw_build(&b, SPA_PARAM_EnumFormat, &spa_audio_info);
+
+    // Connect stream
+    // NOLINTBEGIN(clang-analyzer-optin.core.EnumCastOutOfRange)
+    auto flags = static_cast<pw_stream_flags>(PW_STREAM_FLAG_AUTOCONNECT | PW_STREAM_FLAG_MAP_BUFFERS | PW_STREAM_FLAG_RT_PROCESS);
+    // NOLINTEND(clang-analyzer-optin.core.EnumCastOutOfRange)
+    int res = pw_stream_connect(pw_stream_, PW_DIRECTION_OUTPUT, PW_ID_ANY, flags, params.data(), params.size());
+    std::ignore = res;
+    LOG(DEBUG, LOG_TAG) << "pw_stream_connect: " << res << "\n";
+
+    // Run PipeWire main loop in a separate thread
+    Player::start();
+}
+
+
+#ifdef __clang__
+#pragma GCC diagnostic pop
+#endif
 
 
 } // namespace player

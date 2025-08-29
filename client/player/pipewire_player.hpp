@@ -25,6 +25,9 @@
 
 // 3rd party headers
 #include <boost/asio/steady_timer.hpp>
+#include <pipewire/pipewire.h>
+#include <spa/param/audio/format-utils.h>
+#include <spa/param/audio/raw.h>
 
 // standard headers
 #include <cstdio>
@@ -51,13 +54,24 @@ public:
     static std::vector<PcmDevice> pcm_list(const std::string& parameter);
 
 private:
-    void requestAudio();
-    void loop();
+    // PipeWire callbacks
+    static void on_process(void* userdata);
+
+    void onProcess();
+
+    void worker() override;
     bool needsThread() const override;
     boost::asio::steady_timer timer_;
     std::vector<char> buffer_;
-    std::chrono::time_point<std::chrono::steady_clock> next_request_;
-    std::shared_ptr<::FILE> file_;
+
+    // PipeWire structures
+    struct pw_main_loop* pw_main_loop_;
+    struct pw_stream* pw_stream_;
+
+    // PipeWire event handlers
+    struct pw_stream_events stream_events_;
+
+    float accumulator;
 };
 
 } // namespace player
