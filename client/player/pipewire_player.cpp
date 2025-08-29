@@ -154,7 +154,11 @@ void PipewirePlayer::onProcess()
     // }
 
     pw_time time;
+#if PW_CHECK_VERSION(0, 3, 50)
     pw_stream_get_time_n(pw_stream_, &time, sizeof(struct pw_time));
+#else
+    pw_stream_get_time(pw_stream_, &time);
+#endif
     auto delay = chronos::usec(static_cast<int>(time.delay * 1000. * 1000. / sampleformat.rate()));
     if (!stream_->getPlayerChunkOrSilence(dst, delay, n_frames))
     {
