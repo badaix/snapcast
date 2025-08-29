@@ -71,7 +71,7 @@ private:
     // PipeWire event handlers
     struct pw_stream_events stream_events_;
 
-    float accumulator;
+    float accumulator{0};
 };
 
 } // namespace player

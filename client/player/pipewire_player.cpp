@@ -81,7 +81,7 @@ std::vector<PcmDevice> PipewirePlayer::pcm_list(const std::string& parameter)
 
 
 PipewirePlayer::PipewirePlayer(boost::asio::io_context& io_context, const ClientSettings::Player& settings, std::shared_ptr<Stream> stream)
-    : Player(io_context, settings, std::move(stream)), timer_(io_context)
+    : Player(io_context, settings, std::move(stream)), timer_(io_context), pw_main_loop_(nullptr), pw_stream_(nullptr)
 {
     LOG(DEBUG, LOG_TAG) << "Pipewire player\n";
 }
@@ -142,8 +142,10 @@ void PipewirePlayer::onProcess()
 #if PW_CHECK_VERSION(0, 3, 49)
     if (b->requested)
         n_frames = std::min<int>(static_cast<int>(b->requested), n_frames);
-#endif
     LOG(DEBUG, LOG_TAG) << "on_process: " << accumulator << ", frames: " << n_frames << ", requested: " << b->requested << "\n";
+#else
+    LOG(DEBUG, LOG_TAG) << "on_process: " << accumulator << ", frames: " << n_frames << "\n";
+#endif
 
     for (i = 0; i < n_frames; i++)
     {
