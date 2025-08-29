@@ -58,6 +58,8 @@ private:
     static void on_process(void* userdata);
 
     void onProcess();
+    void initPipewire();
+    void uninitPipewire();
 
     void worker() override;
     bool needsThread() const override;

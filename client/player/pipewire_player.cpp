@@ -25,6 +25,8 @@
 #include "common/str_compat.hpp"
 
 // 3rd party headers
+#include <pipewire/stream.h>
+#include <spa/utils/result.h>
 
 // standard headers
 #include <algorithm>
@@ -86,8 +88,6 @@ PipewirePlayer::~PipewirePlayer()
 void PipewirePlayer::worker()
 {
     pw_main_loop_run(pw_main_loop_);
-    pw_stream_destroy(pw_stream_);
-    pw_main_loop_destroy(pw_main_loop_);
 }
 
 
@@ -97,9 +97,19 @@ bool PipewirePlayer::needsThread() const
 }
 
 
+void PipewirePlayer::start()
+{
+    LOG(DEBUG, LOG_TAG) << "Start\n";
+    initPipewire();
+    Player::start();
+}
+
+
 void PipewirePlayer::stop()
 {
     LOG(INFO, LOG_TAG) << "Stop\n";
+    Player::stop();
+    uninitPipewire();
 }
 
 
@@ -114,14 +124,17 @@ void PipewirePlayer::onProcess()
     struct pw_buffer* b;
     if ((b = pw_stream_dequeue_buffer(pw_stream_)) == nullptr)
     {
-        pw_log_warn("out of buffers: %s", strerror(errno));
+        LOG(WARNING, LOG_TAG) << "No buffer available: " << strerror(errno) << "\n";
         return;
     }
 
     spa_buffer* buf = b->buffer;
     int16_t* dst;
     if ((dst = reinterpret_cast<int16_t*>(buf->datas[0].data)) == nullptr)
+    {
+        LOG(WARNING, LOG_TAG) << "Failed to get buffer\n";
         return;
+    }
 
     const auto& sampleformat = stream_->getFormat();
     int stride = sizeof(int16_t) * sampleformat.channels();
@@ -162,6 +175,7 @@ void PipewirePlayer::onProcess()
     auto delay = chronos::usec(static_cast<int>(time.delay * 1000. * 1000. / sampleformat.rate()));
     if (!stream_->getPlayerChunkOrSilence(dst, delay, n_frames))
     {
+        // LOG(DEBUG, LOG_TAG) << "Failed to get chunk. Playing silence.\n";
     }
 
     buf->datas[0].chunk->offset = 0;
@@ -179,16 +193,12 @@ void PipewirePlayer::on_process(void* userdata)
 }
 
 
-void PipewirePlayer::start()
+void PipewirePlayer::initPipewire()
 {
-    LOG(DEBUG, LOG_TAG) << "Start\n";
-
     // Set up stream events
     spa_zero(stream_events_);
     stream_events_.version = PW_VERSION_STREAM_EVENTS;
     stream_events_.process = on_process;
-    // stream_events_.state_changed = on_state_changed;
-    // stream_events_.param_changed = on_param_changed;
 
     std::array<uint8_t, 1024> buffer;
     struct spa_pod_builder b;
@@ -212,6 +222,12 @@ void PipewirePlayer::start()
                                       pw_properties_new(PW_KEY_MEDIA_TYPE, "Audio", PW_KEY_MEDIA_CATEGORY, "Playback", PW_KEY_MEDIA_ROLE, "Music",
                                                         PW_KEY_APP_NAME, "Snapclient", /*PW_KEY_MEDIA_CLASS, "Audio/Sink",*/ PW_KEY_NODE_NAME, "TODO", nullptr),
                                       &stream_events_, this);
+
+    if (!pw_stream_)
+    {
+        uninitPipewire();
+        throw SnapException("Failed to create PipeWire stream");
+    }
 
     // Set up audio format
     struct spa_audio_info_raw spa_audio_info = {};
@@ -241,13 +257,28 @@ void PipewirePlayer::start()
     auto flags = static_cast<pw_stream_flags>(PW_STREAM_FLAG_AUTOCONNECT | PW_STREAM_FLAG_MAP_BUFFERS | PW_STREAM_FLAG_RT_PROCESS);
     // NOLINTEND(clang-analyzer-optin.core.EnumCastOutOfRange)
     int res = pw_stream_connect(pw_stream_, PW_DIRECTION_OUTPUT, PW_ID_ANY, flags, params.data(), params.size());
-    std::ignore = res;
-    LOG(DEBUG, LOG_TAG) << "pw_stream_connect: " << res << "\n";
-
-    // Run PipeWire main loop in a separate thread
-    Player::start();
+    if (res < 0)
+    {
+        uninitPipewire();
+        throw SnapException("Failed to connect PipeWire stream: " + std::string(spa_strerror(res)));
+    }
 }
 
+void PipewirePlayer::uninitPipewire()
+{
+    if (pw_stream_)
+    {
+        pw_stream_disconnect(pw_stream_);
+        pw_stream_destroy(pw_stream_);
+        pw_stream_ = nullptr;
+    }
+
+    if (pw_main_loop_)
+    {
+        pw_main_loop_destroy(pw_main_loop_);
+        pw_main_loop_ = nullptr;
+    }
+}
 
 #ifdef __clang__
 #pragma GCC diagnostic pop
