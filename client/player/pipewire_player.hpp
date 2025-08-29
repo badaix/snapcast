@@ -61,8 +61,6 @@ private:
 
     void worker() override;
     bool needsThread() const override;
-    boost::asio::steady_timer timer_;
-    std::vector<char> buffer_;
 
     // PipeWire structures
     struct pw_main_loop* pw_main_loop_;
@@ -70,8 +68,6 @@ private:
 
     // PipeWire event handlers
     struct pw_stream_events stream_events_;
-
-    float accumulator{0};
 };
 
 } // namespace player

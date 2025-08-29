@@ -28,26 +28,16 @@
 
 // standard headers
 #include <algorithm>
-#include <cmath>
 #include <pipewire/main-loop.h>
 #include <tuple>
 
-
-#define M_PI_M2 (M_PI + M_PI)
 
 using namespace std;
 
 namespace player
 {
 
-static constexpr int DEFAULT_RATE = 44100;
-static constexpr int DEFAULT_CHANNELS = 2;
-static constexpr float DEFAULT_VOLUME = 0.7;
-
 static constexpr auto LOG_TAG = "PipewirePlayer";
-// static constexpr auto kDefaultBuffer = 50ms;
-
-// static constexpr auto kDescription = "Pipewire player";
 
 #ifdef __clang__
 #pragma GCC diagnostic push
@@ -80,7 +70,7 @@ std::vector<PcmDevice> PipewirePlayer::pcm_list(const std::string& parameter)
 
 
 PipewirePlayer::PipewirePlayer(boost::asio::io_context& io_context, const ClientSettings::Player& settings, std::shared_ptr<Stream> stream)
-    : Player(io_context, settings, std::move(stream)), timer_(io_context), pw_main_loop_(nullptr), pw_stream_(nullptr)
+    : Player(io_context, settings, std::move(stream)), pw_main_loop_(nullptr), pw_stream_(nullptr)
 {
     LOG(DEBUG, LOG_TAG) << "Pipewire player\n";
 }
@@ -110,7 +100,6 @@ bool PipewirePlayer::needsThread() const
 void PipewirePlayer::stop()
 {
     LOG(INFO, LOG_TAG) << "Stop\n";
-    timer_.cancel();
 }
 
 
@@ -123,9 +112,6 @@ void PipewirePlayer::onProcess()
     }
 
     struct pw_buffer* b;
-    int i, c, n_frames, stride;
-    int16_t *dst, val;
-
     if ((b = pw_stream_dequeue_buffer(pw_stream_)) == nullptr)
     {
         pw_log_warn("out of buffers: %s", strerror(errno));
@@ -133,42 +119,51 @@ void PipewirePlayer::onProcess()
     }
 
     spa_buffer* buf = b->buffer;
+    int16_t* dst;
     if ((dst = reinterpret_cast<int16_t*>(buf->datas[0].data)) == nullptr)
         return;
 
-    stride = sizeof(int16_t) * DEFAULT_CHANNELS;
-    n_frames = buf->datas[0].maxsize / stride;
+    const auto& sampleformat = stream_->getFormat();
+    int stride = sizeof(int16_t) * sampleformat.channels();
+    int n_frames = buf->datas[0].maxsize / stride;
 #if PW_CHECK_VERSION(0, 3, 49)
     if (b->requested)
         n_frames = std::min<int>(static_cast<int>(b->requested), n_frames);
-    LOG(DEBUG, LOG_TAG) << "on_process: " << accumulator << ", frames: " << n_frames << ", requested: " << b->requested << "\n";
+        // LOG(TRACE, LOG_TAG) << "on_process - frames: " << n_frames << ", requested: " << b->requested << "\n";
 #else
-    LOG(DEBUG, LOG_TAG) << "on_process: " << accumulator << ", frames: " << n_frames << "\n";
+    // LOG(TRACE, LOG_TAG) << "on_process - frames: " << n_frames << "\n";
 #endif
 
-    for (i = 0; i < n_frames; i++)
-    {
-        accumulator += M_PI_M2 * 440 / DEFAULT_RATE;
-        if (accumulator >= M_PI_M2)
-            accumulator -= M_PI_M2;
+    // if (delay.count() == 0)
+    // {
+    //     // Calc latency according to:
+    //     // https://docs.pipewire.org/structpw__time.html
+    //     pw_time time;
+    //     pw_stream_get_time_n(pw_stream_, &time, sizeof(struct pw_time));
+    //     uint64_t now = pw_stream_get_nsec(pw_stream_);
+    //     int64_t diff = now - time.now;
+    //     double elapsed = static_cast<double>(time.rate.denom * diff) / static_cast<double>(time.rate.num * SPA_NSEC_PER_SEC);
 
-        /* sin() gives a value between -1.0 and 1.0, we first apply
-         * the volume and then scale with 32767.0 to get a 16 bits value
-         * between [-32767 32767].
-         * Another common method to convert a double to
-         * 16 bits is to multiple by 32768.0 and then clamp to
-         * [-32768 32767] to get the full 16 bits range. */
-        val = sin(accumulator) * DEFAULT_VOLUME * 32767.0;
-        for (c = 0; c < DEFAULT_CHANNELS; c++)
-            dst[i * DEFAULT_CHANNELS + c] = val;
-        // *dst++ = val;
+    //     double rate = sampleformat.rate();
+    //     double latency_ms = (time.buffered * 1000. / rate) + (time.queued * 1000. / rate) +
+    //                         ((time.delay - elapsed) * 1000. * static_cast<double>(time.rate.num) / static_cast<double>(time.rate.denom));
+    //     LOG(DEBUG, LOG_TAG) << "time.buffered: " << time.buffered << ", time.queued: " << time.queued << ", time.delay: " << time.delay
+    //                         << ", elapsed: " << elapsed << ", time.rate.num: " << time.rate.num << ", time.rate.denom: " << time.rate.denom << "\n";
+    //     LOG(DEBUG, LOG_TAG) << "latency: " << latency_ms << "\n";
+    //     delay = chronos::usec(static_cast<int>(latency_ms * 1000));
+    // }
+
+    pw_time time;
+    pw_stream_get_time_n(pw_stream_, &time, sizeof(struct pw_time));
+    auto delay = chronos::usec(static_cast<int>(time.delay * 1000. * 1000. / sampleformat.rate()));
+    if (!stream_->getPlayerChunkOrSilence(dst, delay, n_frames))
+    {
     }
 
     buf->datas[0].chunk->offset = 0;
     buf->datas[0].chunk->stride = stride;
     buf->datas[0].chunk->size = n_frames * stride;
 
-    LOG(DEBUG, LOG_TAG) << "queue: " << dst[0] << "\n";
     pw_stream_queue_buffer(pw_stream_, b);
 }
 
@@ -191,9 +186,6 @@ void PipewirePlayer::start()
     // stream_events_.state_changed = on_state_changed;
     // stream_events_.param_changed = on_param_changed;
 
-    // next_request_ = std::chrono::steady_clock::now();
-    // loop();
-
     std::array<uint8_t, 1024> buffer;
     struct spa_pod_builder b;
 
@@ -211,15 +203,10 @@ void PipewirePlayer::start()
     if (!pw_main_loop_)
         throw SnapException("Failed to create PipeWire main loop");
 
-    // // Set up stream properties
-    // auto* props = pw_properties_new(PW_KEY_MEDIA_TYPE, "Audio", PW_KEY_MEDIA_CATEGORY, "Playback", PW_KEY_MEDIA_ROLE, "Music", PW_KEY_APP_NAME, "Snapcast",
-    //                            PW_KEY_MEDIA_CLASS, "Audio/Source", PW_KEY_NODE_NAME, "TODO", nullptr);
-    // // Create stream, "props" ownership transferred to stream
-    // pw_stream_ = pw_stream_new(pw_core_, stream_name_.c_str(), props);
-
-    pw_stream_ = pw_stream_new_simple(pw_main_loop_get_loop(pw_main_loop_), "audio-src",
-                                      pw_properties_new(PW_KEY_MEDIA_TYPE, "Audio", PW_KEY_MEDIA_CATEGORY, "Playback", PW_KEY_MEDIA_ROLE, "Music", nullptr),
-                                      // PW_KEY_APP_NAME, "Snapcast", PW_KEY_MEDIA_CLASS, "Audio/Source",,
+    // Set up stream properties
+    pw_stream_ = pw_stream_new_simple(pw_main_loop_get_loop(pw_main_loop_), "Snapcast",
+                                      pw_properties_new(PW_KEY_MEDIA_TYPE, "Audio", PW_KEY_MEDIA_CATEGORY, "Playback", PW_KEY_MEDIA_ROLE, "Music",
+                                                        PW_KEY_APP_NAME, "Snapclient", /*PW_KEY_MEDIA_CLASS, "Audio/Sink",*/ PW_KEY_NODE_NAME, "TODO", nullptr),
                                       &stream_events_, this);
 
     // Set up audio format
