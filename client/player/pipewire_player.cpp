@@ -35,15 +35,14 @@
 
 #define M_PI_M2 (M_PI + M_PI)
 
-#define DEFAULT_RATE 44100
-#define DEFAULT_CHANNELS 2
-#define DEFAULT_VOLUME 0.7
-
-
 using namespace std;
 
 namespace player
 {
+
+static constexpr int DEFAULT_RATE = 44100;
+static constexpr int DEFAULT_CHANNELS = 2;
+static constexpr float DEFAULT_VOLUME = 0.7;
 
 static constexpr auto LOG_TAG = "PipewirePlayer";
 // static constexpr auto kDefaultBuffer = 50ms;
