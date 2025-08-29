@@ -53,7 +53,6 @@ static constexpr auto LOG_TAG = "PipewirePlayer";
 #ifdef __clang__
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wgnu-statement-expression"
-#pragma GCC diagnostic ignored "-Wgnu-statement-expression-from-macro-expansion"
 #endif
 
 namespace
@@ -140,8 +139,10 @@ void PipewirePlayer::onProcess()
 
     stride = sizeof(int16_t) * DEFAULT_CHANNELS;
     n_frames = buf->datas[0].maxsize / stride;
+#if PW_CHECK_VERSION(0, 3, 49)
     if (b->requested)
         n_frames = std::min<int>(static_cast<int>(b->requested), n_frames);
+#endif
     LOG(DEBUG, LOG_TAG) << "on_process: " << accumulator << ", frames: " << n_frames << ", requested: " << b->requested << "\n";
 
     for (i = 0; i < n_frames; i++)
