@@ -37,8 +37,8 @@
 #include <chrono>
 #include <cstring>
 #include <iostream>
-#include <thread>
 #include <mutex>
+#include <thread>
 
 using namespace std::chrono_literals;
 using namespace std;
@@ -206,9 +206,9 @@ void PipeWirePlayer::registry_event_global_remove(void* data, uint32_t id)
 }
 
 PipeWirePlayer::PipeWirePlayer(boost::asio::io_context& io_context, const ClientSettings::Player& settings, std::shared_ptr<Stream> stream)
-    : Player(io_context, settings, std::move(stream)), latency_(BUFFER_TIME), stream_ready_(false), connected_(false), last_chunk_tick_(0), disconnect_requested_(false), main_loop_(nullptr),
-      context_(nullptr), core_(nullptr), pw_stream_(nullptr), registry_(nullptr), stream_events_(get_stream_events()), has_target_node_(false), target_node_(), node_id_(0), frame_size_(0),
-      position_(nullptr)
+    : Player(io_context, settings, std::move(stream)), latency_(BUFFER_TIME), stream_ready_(false), connected_(false), last_chunk_tick_(0),
+      disconnect_requested_(false), main_loop_(nullptr), context_(nullptr), core_(nullptr), pw_stream_(nullptr), registry_(nullptr),
+      stream_events_(get_stream_events()), has_target_node_(false), target_node_(), node_id_(0), frame_size_(0), position_(nullptr)
 {
     auto params = utils::string::split_pairs_to_container<std::vector<std::string>>(settings.parameter, ',', '=');
 
@@ -309,7 +309,7 @@ void PipeWirePlayer::worker()
             {
                 LOG(DEBUG, LOG_TAG) << "Starting PipeWire main loop\n";
                 LOG(DEBUG, LOG_TAG) << "main_loop_: " << main_loop_ << ", pw_stream_: " << pw_stream_ << ", connected_: " << connected_.load() << "\n";
-                
+
                 // Validate PipeWire objects before main loop
                 if (!main_loop_)
                 {
@@ -321,14 +321,15 @@ void PipeWirePlayer::worker()
                     LOG(ERROR, LOG_TAG) << "pw_stream_ is NULL!\n";
                     break;
                 }
-                
+
                 auto stream_state = pw_stream_get_state(pw_stream_, nullptr);
                 LOG(DEBUG, LOG_TAG) << "Stream state before main loop: " << pw_stream_state_as_string(stream_state) << "\n";
-                
+
                 LOG(DEBUG, LOG_TAG) << "About to call pw_main_loop_run...\n";
-                
+
                 // Start a monitoring thread to check for disconnect requests
-                std::thread disconnect_monitor([this]() {
+                std::thread disconnect_monitor([this]()
+                {
                     while (active_ && connected_)
                     {
                         if (disconnect_requested_.load(std::memory_order_acquire))
@@ -341,11 +342,11 @@ void PipeWirePlayer::worker()
                         std::this_thread::sleep_for(100ms);
                     }
                 });
-                
+
                 // This will run until pw_main_loop_quit() is called
                 int result = pw_main_loop_run(main_loop_);
                 LOG(DEBUG, LOG_TAG) << "PipeWire main loop exited with result: " << result << "\n";
-                
+
                 // Clean up monitor thread
                 if (disconnect_monitor.joinable())
                     disconnect_monitor.join();
@@ -356,14 +357,14 @@ void PipeWirePlayer::worker()
                     LOG(INFO, LOG_TAG) << "Disconnecting from PipeWire due to silence.\n";
                     disconnect();
                     disconnect_requested_.store(false, std::memory_order_release);
-                    
+
                     // Wait for chunks to become available before reconnecting (matching PulseAudio pattern)
                     while (active_ && !stream_->waitForChunk(100ms))
                     {
                         static utils::logging::TimeConditional cond(2s);
                         LOG(DEBUG, LOG_TAG) << cond << "Waiting for a chunk to become available before reconnecting\n";
                     }
-                    
+
                     if (active_)
                     {
                         LOG(INFO, LOG_TAG) << "Chunk available, reconnecting to PipeWire\n";
@@ -559,7 +560,8 @@ void PipeWirePlayer::connect()
 
     // Connect stream
     if (pw_stream_connect(pw_stream_, PW_DIRECTION_OUTPUT, PW_ID_ANY,
-                          static_cast<pw_stream_flags>(PW_STREAM_FLAG_AUTOCONNECT | PW_STREAM_FLAG_MAP_BUFFERS | PW_STREAM_FLAG_RT_PROCESS), params.data(), params.size()) < 0) // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange)
+                          static_cast<pw_stream_flags>(PW_STREAM_FLAG_AUTOCONNECT | PW_STREAM_FLAG_MAP_BUFFERS | PW_STREAM_FLAG_RT_PROCESS), params.data(),
+                          params.size()) < 0) // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange)
     {
         throw SnapException("Failed to connect PipeWire stream");
     }
@@ -704,7 +706,7 @@ void PipeWirePlayer::on_state_changed(void* userdata, enum pw_stream_state old, 
 {
     if (!userdata)
         return;
-        
+
     auto* self = static_cast<PipeWirePlayer*>(userdata);
 
     LOG(DEBUG, LOG_TAG) << "Stream state changed from " << pw_stream_state_as_string(old) << " to " << pw_stream_state_as_string(state);
@@ -759,13 +761,13 @@ void PipeWirePlayer::on_process(void* userdata)
 {
     if (!userdata)
         return;
-        
+
     auto* self = static_cast<PipeWirePlayer*>(userdata);
 
     // Check if we're shutting down
     if (!self->active_.load(std::memory_order_acquire))
         return;
-        
+
     if (!self->pw_stream_)
         return;
 
@@ -779,7 +781,7 @@ void PipeWirePlayer::on_process(void* userdata)
         pw_stream_queue_buffer(self->pw_stream_, buffer);
         return;
     }
-    
+
     struct spa_data* d = &spa_buffer->datas[0];
     if (!d)
     {
@@ -802,7 +804,7 @@ void PipeWirePlayer::on_process(void* userdata)
     // Calculate frames directly from maxsize (official PipeWire pattern - don't use chunk->offset)
     uint32_t stride = self->frame_size_;
     uint32_t n_frames = d->maxsize / stride;
-    
+
     // Limit to requested frames if specified
     if (buffer->requested)
         n_frames = SPA_MIN(n_frames, buffer->requested);
@@ -816,7 +818,7 @@ void PipeWirePlayer::on_process(void* userdata)
         // Get accurate latency from PipeWire (similar to pa_stream_get_latency)
         struct pw_time time;
         auto latency_us = std::chrono::microseconds(0);
-        
+
         if (pw_stream_get_time_n(self->pw_stream_, &time, sizeof(time)) == 0)
         {
             // Convert PipeWire timing to latency in microseconds
@@ -867,7 +869,7 @@ void PipeWirePlayer::on_param_changed(void* userdata, uint32_t id, const struct 
 {
     if (!userdata)
         return;
-        
+
     auto* self = static_cast<PipeWirePlayer*>(userdata);
 
     LOG(TRACE, LOG_TAG) << "Stream param changed: " << id << "\n";
@@ -890,7 +892,7 @@ void PipeWirePlayer::on_io_changed(void* userdata, uint32_t id, void* area, uint
 {
     if (!userdata)
         return;
-        
+
     auto* self = static_cast<PipeWirePlayer*>(userdata);
     std::ignore = size;
 
@@ -910,7 +912,7 @@ void PipeWirePlayer::on_drained(void* userdata)
 {
     if (!userdata)
         return;
-        
+
     auto* self = static_cast<PipeWirePlayer*>(userdata);
     LOG(DEBUG, LOG_TAG) << "Stream drained\n";
     std::ignore = self;
