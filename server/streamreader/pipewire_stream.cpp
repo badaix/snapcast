@@ -178,7 +178,7 @@ void PipeWireStream::processAudio()
         return;
     }
 
-    auto data = static_cast<uint8_t*>(d->data) + offset;
+    auto* data = static_cast<uint8_t*>(d->data) + offset;
 
     // Process data in chunks
     {

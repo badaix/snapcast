@@ -564,9 +564,10 @@ void PipeWirePlayer::connect()
     params[0] = spa_format_audio_raw_build(&b, SPA_PARAM_EnumFormat, &audio_info_);
 
     // Connect stream
-    if (pw_stream_connect(pw_stream_, PW_DIRECTION_OUTPUT, PW_ID_ANY,
-                          static_cast<pw_stream_flags>(PW_STREAM_FLAG_AUTOCONNECT | PW_STREAM_FLAG_MAP_BUFFERS | PW_STREAM_FLAG_RT_PROCESS), params.data(),
-                          params.size()) < 0) // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange)
+    auto connect_flags = static_cast<pw_stream_flags>(PW_STREAM_FLAG_AUTOCONNECT | PW_STREAM_FLAG_MAP_BUFFERS |
+                                                      PW_STREAM_FLAG_RT_PROCESS); // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange)
+    auto connect_ret = pw_stream_connect(pw_stream_, PW_DIRECTION_OUTPUT, PW_ID_ANY, connect_flags, params.data(), params.size());
+    if (connect_ret < 0)
     {
         throw SnapException("Failed to connect PipeWire stream");
     }
