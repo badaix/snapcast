@@ -40,6 +40,12 @@
 #include <mutex>
 #include <thread>
 
+#ifdef __clang__
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wgnu-statement-expression"
+#pragma GCC diagnostic ignored "-Wc99-extensions"
+#endif
+
 using namespace std::chrono_literals;
 using namespace std;
 
