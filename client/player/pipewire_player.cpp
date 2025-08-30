@@ -40,17 +40,16 @@
 #include <mutex>
 #include <thread>
 
-#ifdef __clang__
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wgnu-statement-expression"
-#pragma GCC diagnostic ignored "-Wc99-extensions"
-#endif
-
 using namespace std::chrono_literals;
 using namespace std;
 
 namespace player
 {
+#ifdef __clang__
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wgnu-statement-expression"
+#pragma GCC diagnostic ignored "-Wc99-extensions"
+#endif
 
 static constexpr std::chrono::milliseconds BUFFER_TIME = 100ms;
 static constexpr auto LOG_TAG = "PipeWirePlayer";
@@ -923,5 +922,9 @@ void PipeWirePlayer::on_drained(void* userdata)
     LOG(DEBUG, LOG_TAG) << "Stream drained\n";
     std::ignore = self;
 }
+
+#ifdef __clang__
+#pragma GCC diagnostic pop
+#endif
 
 } // namespace player
