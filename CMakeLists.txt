@@ -70,6 +70,8 @@ else()
 
   if(WERROR)
     add_compile_options(-Werror)
+    # SPA_POD_BUILDER_INIT
+    add_compile_options(-Wno-c99-extensions)
   endif()
 
   if(ASAN)
@@ -228,7 +230,26 @@ if(NOT WIN32 AND NOT ANDROID)
 
     if(BUILD_WITH_PIPEWIRE)
       pkg_search_module(PIPEWIRE REQUIRED libpipewire-0.3)
-      add_compile_definitions(HAS_PIPEWIRE)
+      if(PIPEWIRE_FOUND)
+        add_compile_definitions(HAS_PIPEWIRE)
+        # include_directories(${PIPEWIRE_INCLUDE_DIRS})
+        # link_libraries(${PIPEWIRE_LIBRARIES})
+        set(HAS_PIPEWIRE ON)
+      else()
+        # Fallback: manually search for headers and libraries
+        find_path(PIPEWIRE_INCLUDE_DIR pipewire/pipewire.h
+          PATHS /usr/include/pipewire-0.3 /usr/local/include/pipewire-0.3
+        )
+        find_library(PIPEWIRE_LIBRARY pipewire-0.3)
+        if(PIPEWIRE_INCLUDE_DIR AND PIPEWIRE_LIBRARY)
+          add_compile_definitions(HAS_PIPEWIRE)
+          # include_directories(${PIPEWIRE_INCLUDE_DIR})
+          # link_libraries(${PIPEWIRE_LIBRARY})
+          set(HAS_PIPEWIRE ON)
+        else()
+          message(WARNING "PipeWire development files not found, disabling PipeWire support")
+        endif()
+      endif()
     endif(BUILD_WITH_PIPEWIRE)
 
     if(BUILD_WITH_AVAHI)

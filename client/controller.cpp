@@ -54,6 +54,9 @@
 #ifdef HAS_WASAPI
 #include "player/wasapi_player.hpp"
 #endif
+#ifdef HAS_USEABLE_PIPEWIRE
+#include "player/pipewire_player.hpp"
+#endif
 #include "player/file_player.hpp"
 
 #include "browseZeroConf/browse_zeroconf.hpp"
@@ -162,6 +165,9 @@ std::vector<std::string> Controller::getSupportedPlayerNames()
 #ifdef HAS_WASAPI
     result.emplace_back(player::WASAPI);
 #endif
+#ifdef HAS_USEABLE_PIPEWIRE
+    result.emplace_back(player::PIPEWIRE);
+#endif
     result.emplace_back(player::FILE);
     return result;
 }
@@ -267,6 +273,10 @@ void Controller::getNextMessage()
 #ifdef HAS_WASAPI
             if (!player_)
                 player_ = createPlayer<WASAPIPlayer>(settings_.player, player::WASAPI);
+#endif
+#ifdef HAS_USEABLE_PIPEWIRE
+            if (!player_)
+                player_ = createPlayer<PipeWirePlayer>(settings_.player, player::PIPEWIRE);
 #endif
             if (!player_ && (settings_.player.player_name == player::FILE))
                 player_ = createPlayer<FilePlayer>(settings_.player, player::FILE);
