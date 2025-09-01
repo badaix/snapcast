@@ -99,6 +99,7 @@ endif()
 
 option(BUILD_CLIENT "Build Snapclient" ON)
 
+option(BUILD_WITH_ALSA "Build with ALSA support" ON)
 option(BUILD_WITH_FLAC "Build with FLAC support" ON)
 option(BUILD_WITH_VORBIS "Build with VORBIS support" ON)
 option(BUILD_WITH_TREMOR "Build with vorbis using TREMOR" OFF)
@@ -209,10 +210,10 @@ if(NOT WIN32 AND NOT ANDROID)
 
     include(FindPkgConfig)
 
-    pkg_search_module(ALSA REQUIRED alsa)
-    if(ALSA_FOUND)
+    if(BUILD_WITH_ALSA)
+      pkg_search_module(ALSA REQUIRED alsa)
       add_compile_definitions(HAS_ALSA)
-    endif(ALSA_FOUND)
+    endif(BUILD_WITH_ALSA)
 
     if(BUILD_WITH_JACK)
       pkg_check_modules(JACK REQUIRED jack)
