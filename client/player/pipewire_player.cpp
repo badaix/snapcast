@@ -28,10 +28,14 @@
 #include "common/utils/string_utils.hpp"
 
 // 3rd party headers
+#include <cstddef>
 #include <pipewire/pipewire.h>
 #include <spa/param/audio/format-utils.h>
+#include <spa/param/audio/raw.h>
+#include <spa/param/param.h>
 #include <spa/param/props.h>
 #include <spa/utils/result.h>
+#include <spa/utils/type.h>
 
 // standard headers
 #include <chrono>
@@ -39,6 +43,7 @@
 #include <iostream>
 #include <mutex>
 #include <thread>
+#include <tuple>
 
 using namespace std::chrono_literals;
 using namespace std;
@@ -212,8 +217,8 @@ void PipeWirePlayer::registry_event_global_remove(void* data, uint32_t id)
 
 PipeWirePlayer::PipeWirePlayer(boost::asio::io_context& io_context, const ClientSettings::Player& settings, std::shared_ptr<Stream> stream)
     : Player(io_context, settings, std::move(stream)), latency_(BUFFER_TIME), stream_ready_(false), connected_(false), last_chunk_tick_(0),
-      disconnect_requested_(false), main_loop_(nullptr), context_(nullptr), core_(nullptr), pw_stream_(nullptr), registry_(nullptr),
-      stream_events_(get_stream_events()), has_target_node_(false), target_node_(), node_id_(0), frame_size_(0), position_(nullptr)
+      disconnect_requested_(false), main_loop_(nullptr), context_(nullptr), core_(nullptr), pw_stream_(nullptr), stream_events_(get_stream_events()),
+      has_target_node_(false), target_node_(), frame_size_(0)
 {
     auto params = utils::string::split_pairs_to_container<std::vector<std::string>>(settings.parameter, ',', '=');
 
@@ -314,6 +319,9 @@ void PipeWirePlayer::worker()
             {
                 LOG(DEBUG, LOG_TAG) << "Starting PipeWire main loop\n";
                 LOG(DEBUG, LOG_TAG) << "main_loop_: " << main_loop_ << ", pw_stream_: " << pw_stream_ << ", connected_: " << connected_.load() << "\n";
+
+                // Get the initial hardware volume
+                getHardwareVolume(volume_);
 
                 // Validate PipeWire objects before main loop
                 if (!main_loop_)
@@ -671,31 +679,33 @@ void PipeWirePlayer::disconnect()
 
 void PipeWirePlayer::setHardwareVolume(const Volume& volume)
 {
+    // https://franks-reich.net/posts/sending_messages_to_pipewire/
     if (!pw_stream_ || !stream_ready_)
         return;
 
-    // Volume struct has volume in range [0..1] and mute flag
-    auto vol = static_cast<float>(volume.volume);
-
-    // If muted, set volume to 0
-    if (volume.mute)
-        vol = 0.0f;
-
-    std::array<float, 2> values = {vol, vol}; // Same volume for both channels
-
-    int ret = pw_stream_set_control(pw_stream_, SPA_PROP_channelVolumes, 2, values.data(), 0);
-
-    if (ret >= 0)
+    pw_loop_invoke(pw_main_loop_get_loop(main_loop_),
+                   []([[maybe_unused]] struct spa_loop* loop, [[maybe_unused]] bool async, [[maybe_unused]] uint32_t seq, [[maybe_unused]] const void* data,
+                      [[maybe_unused]] size_t size, [[maybe_unused]] void* user_data) -> int
     {
-        LOG(DEBUG, LOG_TAG) << "Set hardware volume to " << (volume.volume * 100.0) << "% (mute: " << volume.mute << ")\n";
+        auto* self = static_cast<PipeWirePlayer*>(user_data);
+        const auto* volume = static_cast<const Volume*>(data);
+        LOG(TRACE, LOG_TAG) << "pw_loop_invoke - volume: " << volume->volume << ", mute: " << volume->mute << "\n";
+        auto vol = static_cast<float>(volume->volume);
+        std::array<float, 2> values = {vol, vol}; // Same volume for both channels
 
-        // Update our internal volume state
-        volume_ = volume;
-    }
-    else
-    {
-        LOG(ERROR, LOG_TAG) << "Failed to set hardware volume\n";
-    }
+        int ret = pw_stream_set_control(self->pw_stream_, SPA_PROP_channelVolumes, 2, values.data(), 0);
+        float muted = volume->mute ? 1.0f : 0.0f;
+        if (ret >= 0)
+            ret = pw_stream_set_control(self->pw_stream_, SPA_PROP_mute, 1, &muted, 0);
+
+        if (ret >= 0)
+            LOG(DEBUG, LOG_TAG) << "Set hardware volume to " << (volume->volume * 100.0) << "%, mute: " << volume->mute << "\n";
+        else
+            LOG(ERROR, LOG_TAG) << "Failed to set hardware volume\n";
+
+        return 0;
+    },
+                   0, &volume, sizeof(volume), true, this);
 }
 
 bool PipeWirePlayer::getHardwareVolume(Volume& volume)
@@ -703,10 +713,33 @@ bool PipeWirePlayer::getHardwareVolume(Volume& volume)
     if (!pw_stream_ || !stream_ready_)
         return false;
 
-    // PipeWire doesn't have a standard way to get volume yet
-    // For now, return the last set volume from the base class
-    volume = volume_;
-    return false; // Indicate we can't retrieve actual hardware volume
+    if (settings_.mixer.mode != ClientSettings::Mixer::Mode::hardware)
+        return false;
+
+    const pw_stream_control* ret = pw_stream_get_control(pw_stream_, SPA_PROP_channelVolumes);
+    if (!ret)
+        return false;
+    LOG(DEBUG, LOG_TAG) << "name: " << ret->name << ", def: " << ret->def << ", min: " << ret->min << ", max: " << ret->max << ", values: " << ret->n_values
+                        << "\n";
+    // Take the volume of the first channel
+    if (ret->n_values >= 1)
+        volume.volume = ret->values[0];
+    for (size_t n = 0; n < ret->n_values; ++n)
+        LOG(DEBUG, LOG_TAG) << "val " << n << ": " << ret->values[n] << "\n";
+
+    ret = pw_stream_get_control(pw_stream_, SPA_PROP_mute);
+    if (!ret)
+        return false;
+    LOG(DEBUG, LOG_TAG) << "name: " << ret->name << ", def: " << ret->def << ", min: " << ret->min << ", max: " << ret->max << ", values: " << ret->n_values
+                        << "\n";
+    if (ret->n_values >= 1)
+        volume.mute = (ret->values[0] == 1);
+    for (size_t n = 0; n < ret->n_values; ++n)
+        LOG(DEBUG, LOG_TAG) << "val " << n << ": " << ret->values[n] << "\n";
+
+    LOG(DEBUG, LOG_TAG) << "getHardwareVolume: " << volume.volume << ", mute: " << volume.mute << "\n";
+
+    return true;
 }
 
 void PipeWirePlayer::on_state_changed(void* userdata, enum pw_stream_state old, enum pw_stream_state state, const char* error)
@@ -725,14 +758,7 @@ void PipeWirePlayer::on_state_changed(void* userdata, enum pw_stream_state old, 
     {
         case PW_STREAM_STATE_STREAMING:
             self->stream_ready_ = true;
-            self->node_id_ = pw_stream_get_node_id(self->pw_stream_);
-            LOG(INFO, LOG_TAG) << "Stream node " << self->node_id_ << " streaming\n";
-
-            // Set initial volume if not muted and still active
-            if (self->active_ && !self->volume_.mute && self->volume_.volume > 0.0)
-            {
-                self->setHardwareVolume(self->volume_);
-            }
+            LOG(INFO, LOG_TAG) << "Stream node '" << pw_stream_get_node_id(self->pw_stream_) << "' streaming\n";
             break;
 
         case PW_STREAM_STATE_ERROR:
@@ -813,8 +839,13 @@ void PipeWirePlayer::on_process(void* userdata)
     uint32_t n_frames = d->maxsize / stride;
 
     // Limit to requested frames if specified
+#if PW_CHECK_VERSION(0, 3, 49)
     if (buffer->requested)
         n_frames = SPA_MIN(n_frames, buffer->requested);
+        // LOG(TRACE, LOG_TAG) << "on_process - frames: " << n_frames << ", requested: " << buffer->requested << "\n";
+#else
+    // LOG(TRACE, LOG_TAG) << "on_process - frames: " << n_frames << "\n";
+#endif
 
     auto* p = static_cast<uint8_t*>(d->data);
 
@@ -826,7 +857,11 @@ void PipeWirePlayer::on_process(void* userdata)
         struct pw_time time;
         auto latency_us = std::chrono::microseconds(0);
 
+#if PW_CHECK_VERSION(0, 3, 50)
         if (pw_stream_get_time_n(self->pw_stream_, &time, sizeof(time)) == 0)
+#else
+        if (pw_stream_get_time(self->pw_stream_, &time) == 0)
+#endif
         {
             // Convert PipeWire timing to latency in microseconds
             // time.delay contains the total delay including buffering latency
@@ -874,39 +909,67 @@ void PipeWirePlayer::on_process(void* userdata)
 
 void PipeWirePlayer::on_param_changed(void* userdata, uint32_t id, const struct spa_pod* param)
 {
-    if (!userdata)
+    if (!userdata || !param)
         return;
 
-    auto* self = static_cast<PipeWirePlayer*>(userdata);
+    LOG(INFO, LOG_TAG) << "Stream param changed: " << id << "\n";
 
-    LOG(TRACE, LOG_TAG) << "Stream param changed: " << id << "\n";
+    if (id == SPA_PARAM_Props)
+    {
+        auto* self = static_cast<PipeWirePlayer*>(userdata);
+        if (self->settings_.mixer.mode != ClientSettings::Mixer::Mode::hardware)
+            return;
 
-    if (id != SPA_PARAM_Format || param == nullptr)
+        int csize = 0, ctype = 0, n_vals = 0;
+        float* vals = nullptr;
+        int res = spa_pod_parse_object(param, SPA_TYPE_OBJECT_Props, nullptr, SPA_PROP_channelVolumes, SPA_POD_Array(&csize, &ctype, &n_vals, &vals));
+        LOG(DEBUG, LOG_TAG) << "res: " << res << "\n";
+        if (res == 1)
+        {
+            LOG(DEBUG, LOG_TAG) << "csize: " << csize << ", ctype: " << ctype << ", n: " << n_vals << ", vals: " << vals[0] << "\n";
+            self->volume_.volume = vals[0];
+        }
+
+        bool mute = false;
+        res = spa_pod_parse_object(param, SPA_TYPE_OBJECT_Props, nullptr, SPA_PROP_mute, SPA_POD_Bool(&mute));
+        LOG(DEBUG, LOG_TAG) << "res: " << res << "\n";
+        if (res == 1)
+        {
+            self->volume_.mute = mute;
+        }
+
+        LOG(INFO, LOG_TAG) << "Volume changed: " << self->volume_.volume << ", mute: " << self->volume_.mute << "\n";
+        self->notifyVolumeChange(self->volume_);
         return;
+    }
 
-    struct spa_audio_info_raw info;
-    spa_zero(info);
+    if (id == SPA_PARAM_Format)
+    {
 
-    if (spa_format_audio_raw_parse(param, &info) < 0)
-        return;
+        struct spa_audio_info_raw info;
+        spa_zero(info);
 
-    LOG(DEBUG, LOG_TAG) << "Format changed - rate: " << info.rate << ", channels: " << info.channels << "\n";
+        if (spa_format_audio_raw_parse(param, &info) < 0)
+            return;
 
-    std::ignore = self;
+        LOG(INFO, LOG_TAG) << "Format changed - rate: " << info.rate << ", channels: " << info.channels << "\n";
+    }
 }
 
 void PipeWirePlayer::on_io_changed(void* userdata, uint32_t id, void* area, uint32_t size)
 {
     if (!userdata)
         return;
+    LOG(INFO, LOG_TAG) << "IO changed: " << id << "\n";
 
-    auto* self = static_cast<PipeWirePlayer*>(userdata);
+    // auto* self = static_cast<PipeWirePlayer*>(userdata);
     std::ignore = size;
+    std::ignore = area;
 
     switch (id)
     {
         case SPA_IO_Position:
-            self->position_ = static_cast<struct spa_io_position*>(area);
+            // self->position_ = static_cast<struct spa_io_position*>(area);
             LOG(TRACE, LOG_TAG) << "Position IO changed\n";
             break;
         default:
@@ -920,9 +983,7 @@ void PipeWirePlayer::on_drained(void* userdata)
     if (!userdata)
         return;
 
-    auto* self = static_cast<PipeWirePlayer*>(userdata);
     LOG(DEBUG, LOG_TAG) << "Stream drained\n";
-    std::ignore = self;
 }
 
 #ifdef __clang__

@@ -88,8 +88,6 @@ private:
     struct pw_core* core_;
     struct pw_stream* pw_stream_;
 
-    [[maybe_unused]] struct pw_registry* registry_;
-
     struct spa_hook stream_listener_;
     struct pw_stream_events stream_events_;
 
@@ -97,14 +95,9 @@ private:
     std::string target_node_;
     std::map<std::string, std::string> properties_;
 
-    // Volume control
-    std::chrono::time_point<std::chrono::steady_clock> last_change_;
-    uint32_t node_id_;
-
     // Stream parameters
     struct spa_audio_info_raw audio_info_;
     uint32_t frame_size_;
-    struct spa_io_position* position_;
 
     // PipeWire stream events - C++11 compatible initialization
     static struct pw_stream_events get_stream_events();
