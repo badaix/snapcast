@@ -31,6 +31,9 @@
 #ifdef HAS_WASAPI
 #include "player/wasapi_player.hpp"
 #endif
+#ifdef HAS_USEABLE_PIPEWIRE
+#include "player/pipewire_player.hpp"
+#endif
 #include "player/file_player.hpp"
 #ifdef HAS_DAEMON
 #include "common/daemon.hpp"
@@ -81,6 +84,10 @@ PcmDevice getPcmDevice(const std::string& player, const std::string& parameter, 
 #if defined(HAS_WASAPI)
     if (player == player::WASAPI)
         pcm_devices = WASAPIPlayer::pcm_list();
+#endif
+#if defined(HAS_USEABLE_PIPEWIRE)
+    if (player == player::PIPEWIRE)
+        pcm_devices = PipeWirePlayer::pcm_list(parameter);
 #endif
     if (player == player::FILE)
         return FilePlayer::pcm_list(parameter).front();
@@ -164,7 +171,7 @@ int main(int argc, char** argv)
             op.add<Implicit<std::filesystem::path>>("", "server-cert", "Verify server with CA certificate (PEM format)", "default certificates");
 
 // PCM device specific
-#if defined(HAS_ALSA) || defined(HAS_PULSE) || defined(HAS_WASAPI)
+#if defined(HAS_ALSA) || defined(HAS_PULSE) || defined(HAS_WASAPI) || defined(HAS_USEABLE_PIPEWIRE)
         auto listSwitch = op.add<Switch>("l", "list", "List PCM devices");
         op.add<Value<string>>("s", "soundcard", "Index or name of the PCM device", pcm_device, &pcm_device);
 #endif
@@ -236,7 +243,7 @@ int main(int argc, char** argv)
 
         settings.player.player_name = utils::string::split_left(settings.player.player_name, ':', settings.player.parameter);
 
-#if defined(HAS_ALSA) || defined(HAS_PULSE) || defined(HAS_WASAPI)
+#if defined(HAS_ALSA) || defined(HAS_PULSE) || defined(HAS_WASAPI) || defined(HAS_USEABLE_PIPEWIRE)
         if (listSwitch->is_set())
         {
             try
@@ -253,6 +260,10 @@ int main(int argc, char** argv)
 #if defined(HAS_WASAPI)
                 if (settings.player.player_name == player::WASAPI)
                     pcm_devices = WASAPIPlayer::pcm_list();
+#endif
+#if defined(HAS_USEABLE_PIPEWIRE)
+                if (settings.player.player_name == player::PIPEWIRE)
+                    pcm_devices = PipeWirePlayer::pcm_list(settings.player.parameter);
 #endif
 #ifdef WINDOWS
                 // Set console code page to UTF-8 so console known how to interpret string data
@@ -480,6 +491,15 @@ int main(int argc, char** argv)
 #ifdef HAS_ALSA
             else if (settings.player.player_name == player::ALSA)
             {
+                cout << "Options are a comma separated list of:\n"
+                     << " \"buffer_time=<total buffer size [ms]>\" - default 80, min 10\n"
+                     << " \"fragments=<number of buffers>\" - default 4, min 2\n";
+            }
+#endif
+#ifdef HAS_USEABLE_PIPEWIRE
+            else if (settings.player.player_name == player::PIPEWIRE)
+            {
+                // TODO: add pipewire options
                 cout << "Options are a comma separated list of:\n"
                      << " \"buffer_time=<total buffer size [ms]>\" - default 80, min 10\n"
                      << " \"fragments=<number of buffers>\" - default 4, min 2\n";
