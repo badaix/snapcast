@@ -34,7 +34,7 @@ struct PcmDevice
     PcmDevice() : idx(-1), name(DEFAULT_DEVICE){};
 
     /// c'tor
-    PcmDevice(int idx, const std::string& name, const std::string& description = "") : idx(idx), name(name), description(description){};
+    PcmDevice(int idx, std::string name, std::string description = "") : idx(idx), name(std::move(name)), description(std::move(description)){};
 
     /// index of the DAC (as in "aplay -L")
     int idx;

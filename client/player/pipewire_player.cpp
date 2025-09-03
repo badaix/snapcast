@@ -30,6 +30,7 @@
 // 3rd party headers
 #include <cstddef>
 #include <pipewire/pipewire.h>
+#include <spa/node/io.h>
 #include <spa/param/audio/format-utils.h>
 #include <spa/param/audio/raw.h>
 #include <spa/param/param.h>
@@ -218,18 +219,12 @@ void PipeWirePlayer::registry_event_global_remove(void* data, uint32_t id)
 PipeWirePlayer::PipeWirePlayer(boost::asio::io_context& io_context, const ClientSettings::Player& settings, std::shared_ptr<Stream> stream)
     : Player(io_context, settings, std::move(stream)), latency_(BUFFER_TIME), stream_ready_(false), connected_(false), last_chunk_tick_(0),
       disconnect_requested_(false), main_loop_(nullptr), context_(nullptr), core_(nullptr), pw_stream_(nullptr), stream_events_(get_stream_events()),
-      has_target_node_(false), target_node_(), frame_size_(0)
+      frame_size_(0)
 {
     auto params = utils::string::split_pairs_to_container<std::vector<std::string>>(settings.parameter, ',', '=');
 
     if (params.find("buffer_time") != params.end())
         latency_ = std::chrono::milliseconds(std::max(cpt::stoi(params["buffer_time"].front()), 10));
-
-    if (params.find("target") != params.end())
-    {
-        target_node_ = params["target"].front();
-        has_target_node_ = true;
-    }
 
     // Set default properties
     properties_[PW_KEY_MEDIA_TYPE] = "Audio";
@@ -264,7 +259,7 @@ PipeWirePlayer::PipeWirePlayer(boost::asio::io_context& io_context, const Client
             LOG(INFO, LOG_TAG) << "Setting property \"" << property.first << "\" to \"" << property.second << "\"\n";
     }
 
-    LOG(INFO, LOG_TAG) << "Using buffer_time: " << latency_.count() / 1000 << " ms, target: " << (has_target_node_ ? target_node_ : "default") << "\n";
+    LOG(INFO, LOG_TAG) << "Using buffer_time: " << latency_.count() / 1000 << " ms, target: " << settings_.pcm_device.name << "\n";
 }
 
 PipeWirePlayer::~PipeWirePlayer()
@@ -553,9 +548,7 @@ void PipeWirePlayer::connect()
     }
 
     // Set target node if specified
-    if (has_target_node_ && target_node_ != DEFAULT_DEVICE)
-        pw_properties_set(props, PW_KEY_TARGET_OBJECT, target_node_.c_str());
-    else if (settings_.pcm_device.name != DEFAULT_DEVICE)
+    if (settings_.pcm_device.name != DEFAULT_DEVICE)
         pw_properties_set(props, PW_KEY_TARGET_OBJECT, settings_.pcm_device.name.c_str());
 
     // Create playback stream
@@ -790,52 +783,47 @@ void PipeWirePlayer::on_state_changed(void* userdata, enum pw_stream_state old, 
     }
 }
 
-void PipeWirePlayer::on_process(void* userdata)
+void PipeWirePlayer::onProcess()
 {
-    if (!userdata)
-        return;
-
-    auto* self = static_cast<PipeWirePlayer*>(userdata);
-
     // Check if we're shutting down
-    if (!self->active_.load(std::memory_order_acquire))
+    if (!active_.load(std::memory_order_acquire))
         return;
 
-    if (!self->pw_stream_)
+    if (!pw_stream_)
         return;
 
-    struct pw_buffer* buffer = pw_stream_dequeue_buffer(self->pw_stream_);
+    struct pw_buffer* buffer = pw_stream_dequeue_buffer(pw_stream_);
     if (!buffer)
         return;
 
     struct spa_buffer* spa_buffer = buffer->buffer;
     if (!spa_buffer || !spa_buffer->datas)
     {
-        pw_stream_queue_buffer(self->pw_stream_, buffer);
+        pw_stream_queue_buffer(pw_stream_, buffer);
         return;
     }
 
     struct spa_data* d = &spa_buffer->datas[0];
     if (!d)
     {
-        pw_stream_queue_buffer(self->pw_stream_, buffer);
+        pw_stream_queue_buffer(pw_stream_, buffer);
         return;
     }
 
     if (!d->data)
     {
-        pw_stream_queue_buffer(self->pw_stream_, buffer);
+        pw_stream_queue_buffer(pw_stream_, buffer);
         return;
     }
 
     if (!d->chunk)
     {
-        pw_stream_queue_buffer(self->pw_stream_, buffer);
+        pw_stream_queue_buffer(pw_stream_, buffer);
         return;
     }
 
     // Calculate frames directly from maxsize (official PipeWire pattern - don't use chunk->offset)
-    uint32_t stride = self->frame_size_;
+    uint32_t stride = frame_size_;
     uint32_t n_frames = d->maxsize / stride;
 
     // Limit to requested frames if specified
@@ -851,16 +839,16 @@ void PipeWirePlayer::on_process(void* userdata)
 
     // Always produce audio even during shutdown to avoid underruns
     bool got_data = false;
-    if (self->stream_ && self->active_.load(std::memory_order_acquire))
+    if (stream_ && active_.load(std::memory_order_acquire))
     {
         // Get accurate latency from PipeWire (similar to pa_stream_get_latency)
         struct pw_time time;
         auto latency_us = std::chrono::microseconds(0);
 
 #if PW_CHECK_VERSION(0, 3, 50)
-        if (pw_stream_get_time_n(self->pw_stream_, &time, sizeof(time)) == 0)
+        if (pw_stream_get_time_n(pw_stream_, &time, sizeof(time)) == 0)
 #else
-        if (pw_stream_get_time(self->pw_stream_, &time) == 0)
+        if (pw_stream_get_time(pw_stream_, &time) == 0)
 #endif
         {
             // Convert PipeWire timing to latency in microseconds
@@ -870,9 +858,9 @@ void PipeWirePlayer::on_process(void* userdata)
         else
         {
             // Fallback to buffer-based estimate if timing query fails
-            latency_us = std::chrono::microseconds((n_frames * 1000000) / self->audio_info_.rate);
+            latency_us = std::chrono::microseconds((n_frames * 1000000) / audio_info_.rate);
         }
-        got_data = self->stream_->getPlayerChunkOrSilence(p, latency_us, n_frames);
+        got_data = stream_->getPlayerChunkOrSilence(p, latency_us, n_frames);
     }
 
     if (!got_data)
@@ -882,30 +870,31 @@ void PipeWirePlayer::on_process(void* userdata)
 
         // Safe silence detection using atomic flag (matching PulseAudio pattern)
         auto now = chronos::getTickCount();
-        if (now - self->last_chunk_tick_ > 5000) // 5 seconds silence (matching PulseAudio)
+        if (now - last_chunk_tick_ > 5000) // 5 seconds silence (matching PulseAudio)
         {
             LOG(INFO, LOG_TAG) << "No chunk received for 5000ms, requesting disconnection from PipeWire.\n";
             // Set atomic flag to request disconnection in worker thread (safe approach)
-            self->disconnect_requested_.store(true, std::memory_order_release);
+            disconnect_requested_.store(true, std::memory_order_release);
             return;
         }
-        else if (now - self->last_chunk_tick_ > 1000)
+        else if (now - last_chunk_tick_ > 1000)
         {
             LOG(DEBUG, LOG_TAG) << "No audio data available, producing silence\n";
         }
     }
     else
     {
-        self->last_chunk_tick_ = chronos::getTickCount();
-        self->adjustVolume(reinterpret_cast<char*>(p), n_frames);
+        last_chunk_tick_ = chronos::getTickCount();
+        adjustVolume(reinterpret_cast<char*>(p), n_frames);
     }
 
     // Set chunk size (official PipeWire pattern - only set size, not offset/stride)
     if (d->chunk)
         d->chunk->size = n_frames * stride;
 
-    pw_stream_queue_buffer(self->pw_stream_, buffer);
+    pw_stream_queue_buffer(pw_stream_, buffer);
 }
+
 
 void PipeWirePlayer::on_param_changed(void* userdata, uint32_t id, const struct spa_pod* param)
 {
@@ -956,11 +945,53 @@ void PipeWirePlayer::on_param_changed(void* userdata, uint32_t id, const struct 
     }
 }
 
+
+void PipeWirePlayer::on_process(void* userdata)
+{
+    if (!userdata)
+        return;
+
+    auto* self = static_cast<PipeWirePlayer*>(userdata);
+    self->onProcess();
+}
+
+
 void PipeWirePlayer::on_io_changed(void* userdata, uint32_t id, void* area, uint32_t size)
 {
     if (!userdata)
         return;
-    LOG(INFO, LOG_TAG) << "IO changed: " << id << "\n";
+
+    auto ioToString = [](spa_io_type io_type)
+    {
+        switch (io_type)
+        {
+            case SPA_IO_Invalid:
+                return "SPA_IO_Invalid";
+            case SPA_IO_Buffers:
+                return "SPA_IO_Buffers";
+            case SPA_IO_Range:
+                return "SPA_IO_Range";
+            case SPA_IO_Clock:
+                return "SPA_IO_Clock";
+            case SPA_IO_Latency:
+                return "SPA_IO_Latency";
+            case SPA_IO_Control:
+                return "SPA_IO_Control";
+            case SPA_IO_Notify:
+                return "SPA_IO_Notify";
+            case SPA_IO_Position:
+                return "SPA_IO_Position";
+            case SPA_IO_RateMatch:
+                return "SPA_IO_RateMatch";
+            case SPA_IO_Memory:
+                return "SPA_IO_Memory";
+            default:
+                return "unknown";
+        }
+    };
+
+
+    LOG(INFO, LOG_TAG) << "IO changed: " << ioToString(static_cast<spa_io_type>(id)) << ", id: " << id << "\n";
 
     // auto* self = static_cast<PipeWirePlayer*>(userdata);
     std::ignore = size;

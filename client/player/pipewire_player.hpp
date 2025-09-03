@@ -1,5 +1,6 @@
 /***
     This file is part of snapcast
+    Copyright (C) 2014-2025  Johannes Pohl
     Copyright (C) 2025  aanno <aannoaanno@gmail.com>
 
     This program is free software: you can redistribute it and/or modify
@@ -72,6 +73,9 @@ private:
     static void on_io_changed(void* userdata, uint32_t id, void* area, uint32_t size);
     static void on_drained(void* userdata);
 
+    // PipeWire callback helper
+    void onProcess();
+
     // Registry callbacks for device enumeration
     static void registry_event_global(void* data, uint32_t id, uint32_t permissions, const char* type, uint32_t version, const struct spa_dict* props);
     static void registry_event_global_remove(void* data, uint32_t id);
@@ -91,8 +95,6 @@ private:
     struct spa_hook stream_listener_;
     struct pw_stream_events stream_events_;
 
-    bool has_target_node_;
-    std::string target_node_;
     std::map<std::string, std::string> properties_;
 
     // Stream parameters

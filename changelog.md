@@ -5,6 +5,7 @@
 ### Features
 
 - Server: Add PipeWire stream reader (PR #1418, Issue #1371)
+- Client: Add PipeWire player (PR #1420, Issue #1419)
 
 ### Bugfixes
 
@@ -16,6 +17,7 @@
 
 - Server: Log warning if default config is missing (PR #1402)
 - Server: Make SSL support optional (`-DBUILD_WITH_SSL`) (Issue #1426, PR #1427)
+- Make ALSA optional (PR #1422)
 - Enable OpenSSL support for Android builds in `CMakeLists.txt` (PR #1373)
 
 ### Contributors
@@ -23,6 +25,7 @@
 - @badaix
 - @mafrosis
 - @aanno
+- @filmor
 - @sajjadsabzkar
 
 _Johannes Pohl <snapcast@badaix.de>  Mon, 18 Aug 2025 00:13:37 +0200_

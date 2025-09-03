@@ -9,6 +9,7 @@ The PipeWire player provides the same functionality as the PulseAudio player, in
 ## Building with PipeWire Support
 
 1. Ensure PipeWire development packages are installed:
+
    ```bash
    # Fedora/RHEL
    sudo dnf install pipewire-devel
@@ -18,6 +19,7 @@ The PipeWire player provides the same functionality as the PulseAudio player, in
    ```
 
 2. Build Snapcast with PipeWire support:
+
    ```bash
    cmake .. -DBUILD_WITH_PIPEWIRE=ON
    make
@@ -36,40 +38,43 @@ snapclient --player pipewire
 ### Player Parameters
 
 - `buffer_time`: Audio buffer time in milliseconds (default: 100ms, minimum: 10ms)
-- `target`: Target PipeWire node/device to connect to (default: empty, auto-selects default sink)
 
 ### Examples
 
 1. **Use default PipeWire sink:**
+
    ```bash
    snapclient --player pipewire
    ```
 
 2. **Specify custom buffer time:**
+
    ```bash
    snapclient --player pipewire:buffer_time=50
    ```
 
 3. **Target specific output device:**
+
    ```bash
-   snapclient --player pipewire:target=alsa_output.pci-0000_00_1b.0.analog-stereo
+   snapclient --player pipewire --soundcard alsa_output.pci-0000_00_1b.0.analog-stereo
    ```
 
 4. **Combined parameters:**
+
    ```bash
-   snapclient --player pipewire:buffer_time=200,target=my_audio_device
+   snapclient --player pipewire:buffer_time=200 --soundcard my_audio_device
    ```
 
 ## Device Selection and Management
 
 The PipeWire player automatically lists available audio devices at startup:
 
-```
+```log
 [Debug] (PipeWirePlayer) Found audio sink: alsa_output.pci-0000_00_1b.0.analog-stereo (Built-in Audio Analog Stereo)
 [Debug] (PipeWirePlayer) Found audio sink: alsa_output.usb-Generic_USB_Audio-00.analog-stereo (USB Audio Device)
 ```
 
-If no target is specified, PipeWire automatically selects the default sink.
+If no `soundcard` is specified, PipeWire automatically selects the default sink.
 
 ## PipeWire Graph Management
 
@@ -108,19 +113,19 @@ This behavior matches the PulseAudio player exactly and helps prevent audio devi
 
 ## Troubleshooting
 
-1. **No audio output**: 
+1. **No audio output**:
    - Check available devices: `snapclient -l`
    - Verify PipeWire is running: `systemctl --user status pipewire`
 
-2. **Permission issues**: 
+2. **Permission issues**:
    - Ensure your user has audio access
    - Check PipeWire session: `pw-cli info 0`
 
-3. **Device not found**: 
+3. **Device not found**:
    - List available targets: `pw-cli list-objects Node | grep -A5 -B5 "audio.sink"`
    - Use exact node name from PipeWire
 
-4. **High latency**: 
+4. **High latency**:
    - Reduce buffer_time: `--player pipewire:buffer_time=50`
    - Check PipeWire quantum settings
 
@@ -140,7 +145,7 @@ The PipeWire player provides identical functionality with potentially lower late
 
 ## Known Limitations
 
-* PipeWire doesn't have a standard way to get volume yet. For now, the last set volume from the base class is used.
+- PipeWire doesn't have a standard way to get volume yet. For now, the last set volume from the base class is used.
 
 ## Acknowledgements
 
@@ -152,6 +157,6 @@ However, all tests, prompt directions, and the initial PR were done by [aanno](h
 
 ## References
 
-* [pipewire examples](https://docs.pipewire.org/examples.html)
-* [pw-cat (pw-play) documentation](https://docs.pipewire.org/page_man_pw-cat_1.html)
-  + [pw-cat source code](https://github.com/PipeWire/pipewire/blob/master/src/tools/pw-cat.c)
+- [pipewire examples](https://docs.pipewire.org/examples.html)
+- [pw-cat (pw-play) documentation](https://docs.pipewire.org/page_man_pw-cat_1.html)
+  - [pw-cat source code](https://github.com/PipeWire/pipewire/blob/master/src/tools/pw-cat.c)

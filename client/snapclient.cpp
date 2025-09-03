@@ -93,8 +93,10 @@ PcmDevice getPcmDevice(const std::string& player, const std::string& parameter, 
         return FilePlayer::pcm_list(parameter).front();
     try
     {
+        // If "soundcard" can be converted to an integer,
+        // try to map the device by index
         int soundcardIdx = cpt::stoi(soundcard);
-        for (auto dev : pcm_devices)
+        for (const auto& dev : pcm_devices)
             if (dev.idx == soundcardIdx)
                 return dev;
     }
@@ -102,7 +104,7 @@ PcmDevice getPcmDevice(const std::string& player, const std::string& parameter, 
     {
     }
 
-    for (auto dev : pcm_devices)
+    for (const auto& dev : pcm_devices)
         if (dev.name.find(soundcard) != string::npos)
             return dev;
 #endif
