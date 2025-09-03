@@ -170,7 +170,7 @@ else()
 
   install(
     FILES etc/plug-ins/meta_mpd.py etc/plug-ins/meta_mopidy.py
-          etc/plug-ins/meta_librespot-java.py
+          etc/plug-ins/meta_librespot-java.py etc/plug-ins/meta_go-librespot-java.py
     PERMISSIONS
       OWNER_READ
       OWNER_WRITE

@@ -85,6 +85,47 @@ Parameters introduced by Snapclient:
 - `killall`: Kill all running librespot instances before launching librespot
 - `wd_timeout`: Restart librespot if it doesn't create log messages for x seconds
 
+### go-librespot
+
+Launches go-librespot and reads audio from stdout
+
+```sh
+source = process:///<path/to/go-librespot>?name=<name>&params=--config_dir%20/var/lib/snapserver/.config/go-librespot/<name>&dryout_ms=2000&wd_timeout=0&log_stderr=false&controlscript=meta_go-librespot.py&controlscriptparams=--stream=<name>%20--librespot-host=127.0.0.1%20--librespot-port=24879
+```
+
+Note that you need to have the librespot binary on your machine and the sampleformat will be set to `44100:16:2`, this will be configured in the go-librespot configuration file, located in the path passed as '--config_dir' in the above source example, which of course need to be accessible to the snapserver user.
+
+#### go-librespot configuration file
+
+Read about the file `config.yml` and especially about how to persist your Spotify credentials either in `zeroconf` or `interactive` mode in the [go-librespot configuration documentation](https://github.com/devgianlu/go-librespot?tab=readme-ov-file#configuration).
+Create the file `/var/lib/snapserver/.config/go-librespot/<name>/config.yml` (path may vary according to how snapserver is configured on your system) with the following content: 
+
+```yaml
+device_name: "<name>"
+device_type: "speaker"
+
+audio_backend: "pipe"
+audio_output_pipe: "/dev/stdout"
+audio_output_pipe_format: "s16le"
+
+bitrate: 320
+
+volume_steps: 100
+
+normalisation_disabled: false
+normalisation_use_album_gain: false
+normalisation_pregain: 0
+
+server:
+  enabled: true
+  port: 24879
+
+credentials:
+  type: zeroconf
+  zeroconf:
+    persist_credentials: true
+```
+
 ### airplay
 
 Launches [shairport-sync](https://github.com/mikebrady/shairport-sync) and reads audio from stdout

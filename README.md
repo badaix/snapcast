@@ -99,6 +99,7 @@ Available stream sources are:
 - [pipe](doc/configuration.md#pipe): read audio from a named pipe
 - [alsa](doc/configuration.md#alsa): read audio from an alsa device
 - [librespot](doc/configuration.md#librespot): launches librespot and reads audio from stdout
+- [go-librespot](doc/configuration.md#go-librespot): launches go-librespot and reads audio from stdout
 - [airplay](doc/configuration.md#airplay): launches airplay and read audio from stdout
 - [file](doc/configuration.md#file): read PCM audio from a file
 - [process](doc/configuration.md#process): launches a process and reads audio from stdout
