@@ -735,13 +735,9 @@ bool PipeWirePlayer::getHardwareVolume(Volume& volume)
     return true;
 }
 
-void PipeWirePlayer::on_state_changed(void* userdata, enum pw_stream_state old, enum pw_stream_state state, const char* error)
+
+void PipeWirePlayer::onStateChanged(enum pw_stream_state old, enum pw_stream_state state, const char* error)
 {
-    if (!userdata)
-        return;
-
-    auto* self = static_cast<PipeWirePlayer*>(userdata);
-
     LOG(DEBUG, LOG_TAG) << "Stream state changed from " << pw_stream_state_as_string(old) << " to " << pw_stream_state_as_string(state);
     if (error)
         LOG(DEBUG, LOG_TAG) << " (error: " << error << ")";
@@ -750,27 +746,27 @@ void PipeWirePlayer::on_state_changed(void* userdata, enum pw_stream_state old, 
     switch (state)
     {
         case PW_STREAM_STATE_STREAMING:
-            self->stream_ready_ = true;
-            LOG(INFO, LOG_TAG) << "Stream node '" << pw_stream_get_node_id(self->pw_stream_) << "' streaming\n";
+            stream_ready_ = true;
+            LOG(INFO, LOG_TAG) << "Stream node '" << pw_stream_get_node_id(pw_stream_) << "' streaming\n";
             break;
 
         case PW_STREAM_STATE_ERROR:
             LOG(ERROR, LOG_TAG) << "Stream error: " << (error ? error : "unknown") << "\n";
-            self->stream_ready_ = false;
+            stream_ready_ = false;
             // Exit the main loop on error so the worker thread can handle reconnection
-            if (self->main_loop_ && self->active_.load(std::memory_order_acquire))
+            if (main_loop_ && active_.load(std::memory_order_acquire))
             {
-                pw_main_loop_quit(self->main_loop_);
+                pw_main_loop_quit(main_loop_);
             }
             break;
 
         case PW_STREAM_STATE_UNCONNECTED:
             LOG(INFO, LOG_TAG) << "Stream disconnected\n";
-            self->stream_ready_ = false;
+            stream_ready_ = false;
             // Also exit main loop on disconnect, but only if still active
-            if (self->main_loop_ && self->active_.load(std::memory_order_acquire))
+            if (main_loop_ && active_.load(std::memory_order_acquire))
             {
-                pw_main_loop_quit(self->main_loop_);
+                pw_main_loop_quit(main_loop_);
             }
             break;
 
@@ -782,6 +778,17 @@ void PipeWirePlayer::on_state_changed(void* userdata, enum pw_stream_state old, 
             break;
     }
 }
+
+
+void PipeWirePlayer::on_state_changed(void* userdata, enum pw_stream_state old, enum pw_stream_state state, const char* error)
+{
+    if (!userdata)
+        return;
+
+    auto* self = static_cast<PipeWirePlayer*>(userdata);
+    self->onStateChanged(old, state, error);
+}
+
 
 void PipeWirePlayer::onProcess()
 {
@@ -830,7 +837,7 @@ void PipeWirePlayer::onProcess()
 #if PW_CHECK_VERSION(0, 3, 49)
     if (buffer->requested)
         n_frames = SPA_MIN(n_frames, buffer->requested);
-        // LOG(TRACE, LOG_TAG) << "on_process - frames: " << n_frames << ", requested: " << buffer->requested << "\n";
+    // LOG(TRACE, LOG_TAG) << "on_process - frames: " << n_frames << ", requested: " << buffer->requested << "\n";
 #else
     // LOG(TRACE, LOG_TAG) << "on_process - frames: " << n_frames << "\n";
 #endif
