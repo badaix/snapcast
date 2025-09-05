@@ -70,8 +70,8 @@ spa_audio_format sampleFormatToPipeWire(const SampleFormat& format)
 } // namespace
 
 PipeWireStream::PipeWireStream(PcmStream::Listener* pcmListener, boost::asio::io_context& ioc, const ServerSettings& server_settings, const StreamUri& uri)
-    : PcmStream(pcmListener, ioc, server_settings, uri), pw_main_loop_(nullptr), pw_context_(nullptr), pw_core_(nullptr), pw_stream_(nullptr), props_(nullptr),
-      first_(true), silence_(0us), stream_state_(PW_STREAM_STATE_UNCONNECTED), running_(false)
+    : PcmStream(pcmListener, ioc, server_settings, uri), pw_main_loop_(nullptr), pw_context_(nullptr), pw_core_(nullptr), pw_stream_(nullptr), first_(true),
+      silence_(0us), stream_state_(PW_STREAM_STATE_UNCONNECTED), running_(false)
 {
     // Parse URI parameters
     target_device_ = uri_.getQuery("target", "");
@@ -331,25 +331,24 @@ void PipeWireStream::initPipeWire()
     pw_core_add_listener(pw_core_, &core_listener_, &core_events_, this);
 
     // Set up stream properties
-    props_ = pw_properties_new(PW_KEY_MEDIA_TYPE, "Audio", PW_KEY_MEDIA_CATEGORY, "Capture", PW_KEY_MEDIA_ROLE, "Music", PW_KEY_APP_NAME, "Snapcast",
+    auto* props = pw_properties_new(PW_KEY_MEDIA_TYPE, "Audio", PW_KEY_MEDIA_CATEGORY, "Capture", PW_KEY_MEDIA_ROLE, "Music", PW_KEY_APP_NAME, "Snapcast",
                                PW_KEY_MEDIA_CLASS, "Audio/Sink", PW_KEY_NODE_NAME, stream_name_.c_str(), nullptr);
 
     if (!target_device_.empty())
     {
-        pw_properties_set(props_, PW_KEY_TARGET_OBJECT, target_device_.c_str());
+        pw_properties_set(props, PW_KEY_TARGET_OBJECT, target_device_.c_str());
     }
 
     if (capture_sink_)
     {
-        pw_properties_set(props_, "stream.capture.sink", "true");
+        pw_properties_set(props, "stream.capture.sink", "true");
     }
 
     // Set latency
-    pw_properties_setf(props_, PW_KEY_NODE_LATENCY, "%u/%u", static_cast<unsigned int>(chunk_ms_ * sampleFormat_.rate() / 1000), sampleFormat_.rate());
+    pw_properties_setf(props, PW_KEY_NODE_LATENCY, "%u/%u", static_cast<unsigned int>(chunk_ms_ * sampleFormat_.rate() / 1000), sampleFormat_.rate());
 
-    // Create stream
-    pw_stream_ = pw_stream_new(pw_core_, stream_name_.c_str(), props_);
-    props_ = nullptr; // ownership transferred to stream
+    // Create stream, props ownership transferred to stream
+    pw_stream_ = pw_stream_new(pw_core_, stream_name_.c_str(), props);
 
     if (!pw_stream_)
     {
