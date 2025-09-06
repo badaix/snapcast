@@ -99,6 +99,7 @@ endif()
 
 option(BUILD_CLIENT "Build Snapclient" ON)
 
+option(BUILD_WITH_SSL "Build client with SSL support" ON)
 option(BUILD_WITH_ALSA "Build with ALSA support" ON)
 option(BUILD_WITH_FLAC "Build with FLAC support" ON)
 option(BUILD_WITH_VORBIS "Build with VORBIS support" ON)
