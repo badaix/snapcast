@@ -15,12 +15,14 @@
 ### General
 
 - Server: Log warning if default config is missing (PR #1402)
+- Enable OpenSSL support for Android builds in `CMakeLists.txt` (PR #1373)
 
 ### Contributors
 
 - @badaix
 - @mafrosis
 - @aanno
+- @sajjadsabzkar
 
 _Johannes Pohl <snapcast@badaix.de>  Mon, 18 Aug 2025 00:13:37 +0200_
 
