@@ -18,7 +18,7 @@
 ***/
 
 // prototype/interface header file
-#include "pipewire_player_simple.hpp"
+#include "pipewire_player.hpp"
 
 // local headers
 #include "common/aixlog.hpp"
