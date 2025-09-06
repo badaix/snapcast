@@ -34,6 +34,7 @@
 
 // standard headers
 #include <algorithm>
+#include <cstdint>
 #include <tuple>
 
 
@@ -207,10 +208,35 @@ PipeWirePlayer::~PipeWirePlayer()
 
 void PipeWirePlayer::worker()
 {
-    // Get the initial hardware volume
-    getHardwareVolume(volume_);
-    int res = pw_main_loop_run(pw_main_loop_);
-    LOG(DEBUG, LOG_TAG) << "Result: " << res << "\n";
+    while (active_)
+    {
+        LOG(DEBUG, LOG_TAG) << "Starting main loop\n";
+        int res = pw_main_loop_run(pw_main_loop_);
+        LOG(DEBUG, LOG_TAG) << "PipeWire main loop exited with result: " << res << "\n";
+        if (active_)
+        {
+            // sleep and run the main loop again
+            LOG(DEBUG, LOG_TAG) << "Still active, sleeping before running the main loop again\n";
+            this_thread::sleep_for(100ms);
+            try
+            {
+                uninitPipewire();
+            }
+            catch (const std::exception& e)
+            {
+                LOG(ERROR, LOG_TAG) << "Exception while uninitializing PipeWire: " << e.what() << "\n";
+            }
+
+            try
+            {
+                initPipewire();
+            }
+            catch (const std::exception& e)
+            {
+                LOG(ERROR, LOG_TAG) << "Exception while initializing PipeWire: " << e.what() << "\n";
+            }
+        }
+    }
 }
 
 
@@ -265,7 +291,7 @@ void PipeWirePlayer::onProcess()
 #if PW_CHECK_VERSION(0, 3, 49)
     if (b->requested)
         n_frames = std::min<int>(static_cast<int>(b->requested), n_frames);
-    // LOG(TRACE, LOG_TAG) << "on_process - frames: " << n_frames << ", requested: " << b->requested << "\n";
+        // LOG(TRACE, LOG_TAG) << "on_process - frames: " << n_frames << ", requested: " << b->requested << "\n";
 #else
     // LOG(TRACE, LOG_TAG) << "on_process - frames: " << n_frames << "\n";
 #endif
@@ -290,12 +316,21 @@ void PipeWirePlayer::onProcess()
     // }
 
     pw_time time;
+    int64_t delay_us = 0;
 #if PW_CHECK_VERSION(0, 3, 50)
-    pw_stream_get_time_n(pw_stream_, &time, sizeof(struct pw_time));
+    if (pw_stream_get_time_n(pw_stream_, &time, sizeof(struct pw_time)) == 0)
 #else
-    pw_stream_get_time(pw_stream_, &time);
+    if (pw_stream_get_time(pw_stream_, &time) == 0)
 #endif
-    auto delay_us = time.delay * time.rate.num * 1000 * 1000 / time.rate.denom;
+    {
+        delay_us = time.delay * time.rate.num * 1000 * 1000 / time.rate.denom;
+    }
+    else
+    {
+        // Fallback to buffer-based estimate if timing query fails
+        delay_us = (n_frames * 1000000) / sampleformat.rate();
+    }
+
     // LOG(TRACE, LOG_TAG) << "Delay: " << time.delay << ", rate: " << time.rate.num << "/" << time.rate.denom << ", ms: " << delay_us / 1000 << "\n";
     if (!stream_->getPlayerChunkOrSilence(dst, chronos::usec(delay_us), n_frames))
     {
@@ -448,7 +483,6 @@ void PipeWirePlayer::initPipewire()
     pw_main_loop_ = pw_main_loop_new(nullptr);
     if (!pw_main_loop_)
         throw SnapException("Failed to create PipeWire main loop");
-
 
     // clang-format off
     // Set up stream properties
