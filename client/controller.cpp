@@ -55,7 +55,7 @@
 #include "player/wasapi_player.hpp"
 #endif
 #ifdef HAS_PIPEWIRE
-#include "player/pipewire_player.hpp"
+#include "player/pipewire_player_simple.hpp"
 #endif
 #include "player/file_player.hpp"
 

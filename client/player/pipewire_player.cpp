@@ -837,7 +837,7 @@ void PipeWirePlayer::onProcess()
 #if PW_CHECK_VERSION(0, 3, 49)
     if (buffer->requested)
         n_frames = SPA_MIN(n_frames, buffer->requested);
-    // LOG(TRACE, LOG_TAG) << "on_process - frames: " << n_frames << ", requested: " << buffer->requested << "\n";
+        // LOG(TRACE, LOG_TAG) << "on_process - frames: " << n_frames << ", requested: " << buffer->requested << "\n";
 #else
     // LOG(TRACE, LOG_TAG) << "on_process - frames: " << n_frames << "\n";
 #endif

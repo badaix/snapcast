@@ -1,6 +1,7 @@
 /***
     This file is part of snapcast
     Copyright (C) 2014-2025  Johannes Pohl
+    Copyright (C) 2025  aanno <aannoaanno@gmail.com>
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -24,14 +25,14 @@
 #include "player.hpp"
 
 // 3rd party headers
-#include <boost/asio/steady_timer.hpp>
-#include <pipewire/pipewire.h>
-#include <spa/param/audio/format-utils.h>
-#include <spa/param/audio/raw.h>
+#include <pipewire/main-loop.h>
+#include <pipewire/stream.h>
 
 // standard headers
+#include <chrono>
 #include <cstdio>
 #include <memory>
+#include <optional>
 
 namespace player
 {
@@ -76,6 +77,8 @@ private:
 
     // PipeWire event handlers
     struct pw_stream_events stream_events_;
+
+    std::optional<std::chrono::milliseconds> node_latency_;
 };
 
 } // namespace player

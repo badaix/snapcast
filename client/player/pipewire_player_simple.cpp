@@ -1,6 +1,7 @@
 /***
     This file is part of snapcast
     Copyright (C) 2014-2025  Johannes Pohl
+    Copyright (C) 2025  aanno <aannoaanno@gmail.com>
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -23,15 +24,16 @@
 #include "common/aixlog.hpp"
 #include "common/snap_exception.hpp"
 #include "common/str_compat.hpp"
+#include "common/utils/string_utils.hpp"
 
 // 3rd party headers
-#include <pipewire/stream.h>
+#include <pipewire/pipewire.h>
+#include <spa/param/audio/format-utils.h>
 #include <spa/param/props.h>
 #include <spa/utils/result.h>
 
 // standard headers
 #include <algorithm>
-#include <pipewire/main-loop.h>
 #include <tuple>
 
 
@@ -185,9 +187,14 @@ std::vector<PcmDevice> PipeWirePlayer::pcm_list(const std::string& parameter)
 
 
 PipeWirePlayer::PipeWirePlayer(boost::asio::io_context& io_context, const ClientSettings::Player& settings, std::shared_ptr<Stream> stream)
-    : Player(io_context, settings, std::move(stream)), pw_main_loop_(nullptr), pw_stream_(nullptr)
+    : Player(io_context, settings, std::move(stream)), pw_main_loop_(nullptr), pw_stream_(nullptr), node_latency_(std::nullopt)
 {
     LOG(DEBUG, LOG_TAG) << "Pipewire player\n";
+
+    auto params = utils::string::split_pairs_to_container<std::vector<std::string>>(settings.parameter, ',', '=');
+
+    if (params.find("buffer_time") != params.end())
+        node_latency_ = std::chrono::milliseconds(std::max(cpt::stoi(params["buffer_time"].front()), 10));
 }
 
 
@@ -253,7 +260,7 @@ void PipeWirePlayer::onProcess()
     }
 
     const auto& sampleformat = stream_->getFormat();
-    int stride = sizeof(int16_t) * sampleformat.channels();
+    int stride = sampleformat.frameSize();
     int n_frames = buf->datas[0].maxsize / stride;
 #if PW_CHECK_VERSION(0, 3, 49)
     if (b->requested)
@@ -288,10 +295,15 @@ void PipeWirePlayer::onProcess()
 #else
     pw_stream_get_time(pw_stream_, &time);
 #endif
-    auto delay = chronos::usec(static_cast<int>(time.delay * 1000. * 1000. / sampleformat.rate()));
-    if (!stream_->getPlayerChunkOrSilence(dst, delay, n_frames))
+    auto delay_us = time.delay * time.rate.num * 1000 * 1000 / time.rate.denom;
+    // LOG(TRACE, LOG_TAG) << "Delay: " << time.delay << ", rate: " << time.rate.num << "/" << time.rate.denom << ", ms: " << delay_us / 1000 << "\n";
+    if (!stream_->getPlayerChunkOrSilence(dst, chronos::usec(delay_us), n_frames))
     {
         // LOG(DEBUG, LOG_TAG) << "Failed to get chunk. Playing silence.\n";
+    }
+    else
+    {
+        adjustVolume(reinterpret_cast<char*>(dst), n_frames);
     }
 
     buf->datas[0].chunk->offset = 0;
@@ -311,7 +323,50 @@ void PipeWirePlayer::on_process(void* userdata)
 
 void PipeWirePlayer::onParamChanged(uint32_t id, const struct spa_pod* param)
 {
-    LOG(INFO, LOG_TAG) << "Stream param changed: " << id << "\n";
+    auto typeToString = [](enum spa_param_type param_type)
+    {
+        switch (param_type)
+        {
+            case SPA_PARAM_Invalid:
+                return "SPA_PARAM_Invalid";
+            case SPA_PARAM_PropInfo:
+                return "SPA_PARAM_PropInfo";
+            case SPA_PARAM_Props:
+                return "SPA_PARAM_Props";
+            case SPA_PARAM_EnumFormat:
+                return "SPA_PARAM_EnumFormat";
+            case SPA_PARAM_Format:
+                return "SPA_PARAM_Format";
+            case SPA_PARAM_Buffers:
+                return "SPA_PARAM_Buffers";
+            case SPA_PARAM_Meta:
+                return "SPA_PARAM_Meta";
+            case SPA_PARAM_IO:
+                return "SPA_PARAM_IO";
+            case SPA_PARAM_EnumProfile:
+                return "SPA_PARAM_EnumProfile";
+            case SPA_PARAM_Profile:
+                return "SPA_PARAM_Profile";
+            case SPA_PARAM_EnumPortConfig:
+                return "SPA_PARAM_EnumPortConfig";
+            case SPA_PARAM_PortConfig:
+                return "SPA_PARAM_PortConfig";
+            case SPA_PARAM_EnumRoute:
+                return "SPA_PARAM_EnumRoute";
+            case SPA_PARAM_Route:
+                return "SPA_PARAM_Route";
+            case SPA_PARAM_Control:
+                return "SPA_PARAM_Control";
+            case SPA_PARAM_Latency:
+                return "SPA_PARAM_Latency";
+            case SPA_PARAM_ProcessLatency:
+                return "SPA_PARAM_ProcessLatency";
+            case SPA_PARAM_Tag:
+                return "SPA_PARAM_Tag";
+        }
+    };
+
+    LOG(DEBUG, LOG_TAG) << "Stream param changed, type: " << typeToString(static_cast<spa_param_type>(id)) << "\n";
 
     if (id == SPA_PARAM_Props)
     {
@@ -321,7 +376,7 @@ void PipeWirePlayer::onParamChanged(uint32_t id, const struct spa_pod* param)
         int csize = 0, ctype = 0, n_vals = 0;
         float* vals = nullptr;
         int res = spa_pod_parse_object(param, SPA_TYPE_OBJECT_Props, nullptr, SPA_PROP_channelVolumes, SPA_POD_Array(&csize, &ctype, &n_vals, &vals));
-        LOG(DEBUG, LOG_TAG) << "res: " << res << "\n";
+        LOG(DEBUG, LOG_TAG) << "get SPA_PROP_channelVolumes result: " << res << "\n";
         if (res == 1)
         {
             LOG(DEBUG, LOG_TAG) << "csize: " << csize << ", ctype: " << ctype << ", n: " << n_vals << ", vals: " << vals[0] << "\n";
@@ -330,7 +385,7 @@ void PipeWirePlayer::onParamChanged(uint32_t id, const struct spa_pod* param)
 
         bool mute = false;
         res = spa_pod_parse_object(param, SPA_TYPE_OBJECT_Props, nullptr, SPA_PROP_mute, SPA_POD_Bool(&mute));
-        LOG(DEBUG, LOG_TAG) << "res: " << res << "\n";
+        LOG(DEBUG, LOG_TAG) << "get SPA_PROP_mute result: " << res << "\n";
         if (res == 1)
         {
             volume_.mute = mute;
@@ -390,9 +445,31 @@ void PipeWirePlayer::initPipewire()
     if (!pw_main_loop_)
         throw SnapException("Failed to create PipeWire main loop");
 
+
+    // clang-format off
     // Set up stream properties
-    auto* props = pw_properties_new(PW_KEY_MEDIA_TYPE, "Audio", PW_KEY_MEDIA_CATEGORY, "Playback", PW_KEY_MEDIA_ROLE, "Music", PW_KEY_APP_NAME, "Snapclient",
-                                    /*PW_KEY_MEDIA_CLASS, "Audio/Sink",*/ PW_KEY_NODE_NAME, "TODO", nullptr);
+    auto* props = pw_properties_new(
+        PW_KEY_MEDIA_TYPE, "Audio", 
+        PW_KEY_MEDIA_CATEGORY, "Playback", 
+        PW_KEY_MEDIA_ROLE, "Music", 
+        // PW_KEY_MEDIA_CLASS, "Audio/Sink",
+        PW_KEY_APP_NAME, "Snapclient",
+        PW_KEY_APP_ID, "snapcast",
+        PW_KEY_APP_ICON_NAME, "snapcast",
+        PW_KEY_NODE_DESCRIPTION, "Snapcast Audio Stream",
+        // PW_KEY_NODE_NAME, "TODO: Player name or instance id", 
+        nullptr);
+    // clang-format on
+
+    if (node_latency_)
+    {
+        // Calculate latency in samples
+        const SampleFormat& format = stream_->getFormat();
+        uint32_t latency_samples = (node_latency_->count() * format.rate()) / 1000;
+        std::string latency = std::to_string(latency_samples) + "/" + std::to_string(format.rate());
+        LOG(INFO, LOG_TAG) << "Setting Node-latency to: " << node_latency_->count() << " ms, fraction: " << latency << "\n";
+        pw_properties_set(props, PW_KEY_NODE_LATENCY, latency.c_str());
+    }
 
     // Set target node if specified
     // Check if device exists (only for non-default devices)
@@ -495,7 +572,7 @@ void PipeWirePlayer::setHardwareVolume(const Volume& volume)
         if (ret >= 0)
             LOG(DEBUG, LOG_TAG) << "Set hardware volume to " << (volume->volume * 100.0) << "%, mute: " << volume->mute << "\n";
         else
-            LOG(ERROR, LOG_TAG) << "Failed to set hardware volume\n";
+            LOG(ERROR, LOG_TAG) << "Failed to set hardware volume: " << ret << "\n";
 
         return 0;
     },
@@ -513,24 +590,24 @@ bool PipeWirePlayer::getHardwareVolume(Volume& volume)
 
     const pw_stream_control* ret = pw_stream_get_control(pw_stream_, SPA_PROP_channelVolumes);
     if (!ret)
+    {
+        LOG(ERROR, LOG_TAG) << "Failed to query 'SPA_PROP_channelVolumes': " << ret << "\n";
         return false;
-    LOG(DEBUG, LOG_TAG) << "name: " << ret->name << ", def: " << ret->def << ", min: " << ret->min << ", max: " << ret->max << ", values: " << ret->n_values
-                        << "\n";
+    }
+
     // Take the volume of the first channel
     if (ret->n_values >= 1)
         volume.volume = ret->values[0];
-    for (size_t n = 0; n < ret->n_values; ++n)
-        LOG(DEBUG, LOG_TAG) << "val " << n << ": " << ret->values[n] << "\n";
 
     ret = pw_stream_get_control(pw_stream_, SPA_PROP_mute);
     if (!ret)
+    {
+        LOG(ERROR, LOG_TAG) << "Failed to query 'SPA_PROP_mute': " << ret << "\n";
         return false;
-    LOG(DEBUG, LOG_TAG) << "name: " << ret->name << ", def: " << ret->def << ", min: " << ret->min << ", max: " << ret->max << ", values: " << ret->n_values
-                        << "\n";
+    }
+
     if (ret->n_values >= 1)
         volume.mute = (ret->values[0] == 1);
-    for (size_t n = 0; n < ret->n_values; ++n)
-        LOG(DEBUG, LOG_TAG) << "val " << n << ": " << ret->values[n] << "\n";
 
     LOG(DEBUG, LOG_TAG) << "getHardwareVolume: " << volume.volume << ", mute: " << volume.mute << "\n";
 

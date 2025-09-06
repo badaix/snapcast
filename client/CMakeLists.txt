@@ -62,7 +62,7 @@ elseif(NOT ANDROID)
   endif(PULSE_FOUND)
 
   if(PIPEWIRE_FOUND)
-    list(APPEND CLIENT_SOURCES player/pipewire_player.cpp)
+    list(APPEND CLIENT_SOURCES player/pipewire_player_simple.cpp)
     list(APPEND CLIENT_LIBRARIES ${PIPEWIRE_LIBRARIES})
     # Mark PipeWire includes as system headers to suppress warnings
     include_directories(SYSTEM ${PIPEWIRE_INCLUDE_DIRS})
