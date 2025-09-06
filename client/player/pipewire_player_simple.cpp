@@ -361,8 +361,12 @@ void PipeWirePlayer::onParamChanged(uint32_t id, const struct spa_pod* param)
                 return "SPA_PARAM_Latency";
             case SPA_PARAM_ProcessLatency:
                 return "SPA_PARAM_ProcessLatency";
+#if PW_CHECK_VERSION(0, 3, 79)
             case SPA_PARAM_Tag:
                 return "SPA_PARAM_Tag";
+#endif
+            default:
+                return "Unknown";
         }
     };
 
