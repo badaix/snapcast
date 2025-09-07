@@ -87,22 +87,23 @@ Parameters introduced by Snapclient:
 
 ### go-librespot
 
-Launches go-librespot and reads audio from stdout
+Add a `source` entry to `/etc/snapserver.conf` which will launch [go-librespot](https://github.com/devgianlu/go-librespot) and read audio from stdout. Note that using different source profiles will require to have different configuration directories for `go-librespot`, each configured with different device name and server port accordingly:
 
 ```sh
 source = process:///<path/to/go-librespot>?name=<name>&params=--config_dir%20/var/lib/snapserver/.config/go-librespot/<name>&dryout_ms=2000&wd_timeout=0&log_stderr=false&controlscript=meta_go-librespot.py&controlscriptparams=--stream=<name>%20--librespot-host=127.0.0.1%20--librespot-port=24879
 ```
 
-Note that you need to have the librespot binary on your machine and the sampleformat will be set to `44100:16:2`, this will be configured in the go-librespot configuration file, located in the path passed as '--config_dir' in the above source example, which of course need to be accessible to the snapserver user.
+You need to have the `go-librespot` binary on your machine and a configuration file located in the path passed as `--config_dir` in the above source example, which of course need to be accessible to the snapserver user.
 
 #### go-librespot configuration file
 
-Read about the options which can be used in the file `config.yml` in the [go-librespot configuration documentation](https://github.com/devgianlu/go-librespot?tab=readme-ov-file#configuration), especially about:
+Read about the options which can be used in the file `config.yml` in the [go-librespot configuration documentation](https://github.com/devgianlu/go-librespot?tab=readme-ov-file#configuration), including the [linked config schema](https://github.com/devgianlu/go-librespot/blob/master/config_schema.json) which has all the options. You will be interested in how to:
 
-- *persisting your Spotify credentials* either in `zeroconf` or `interactive` mode;
-- *adjusting volume*, in order to align it somehow to your other snapcast sources if necessary, please see example below, in which `external_volume` is disabled as we're using the pipe `audio_backend` and normalisation is disabled as well, therefore the volume is then pre-factored with the ratio between `initial_volume` and `volume_steps`.
+- *persist your Spotify credentials* either in `zeroconf` or `interactive` mode;
+- match the sampling format of go-librespot's "pipe" audio backend to what your snapserver configuration expects;
+- last but not least, if you need *adjusting the volume*, in order to align it somehow to your other snapcast sources if necessary. Surprisingly, since we're using the pipe `audio_backend`, none of the volume-related settings have worked for me for raising the volume, as they would only be effective with disabled normalisation, which unfortunately led to crackling sounds due to go-librespot clipping some samples. Luckily, adjusting the volume can be achieved enabling normalisation and setting a pregain value (in dB). The track or album gain provided in the Spotify metadata will be used, to which the pregain is added (negative pregain will lower the volume). `go-librespot` will silently cap the resulting normalisation factor to 1.0 in order to avoid clipping, however this would be just seen in the log and the effect of raising the volume will be limited, so you would need to try a lower (or negative) value, or maybe rather adjust the volume of other snapserver.conf sources. If interested, you can find more details in [go-librespot's source of the functions GetTrackFactor / GetAlbumFactor](https://github.com/devgianlu/go-librespot/blob/master/vorbis/metadata.go#L187). For me, raising the volume by using `normalisation_pregain: 6.0` had the effect that playing a track from my local MP3 collection through Mopidy and then the same track from Spotify subjectively sounded at similar volume.
 
-Create the file `/var/lib/snapserver/.config/go-librespot/<name>/config.yml` (path may vary according to how snapserver is configured on your system) with the following content, which you can of course adapt to your needs:
+Create the file `/var/lib/snapserver/.config/go-librespot/<name>/config.yml` (path may vary according to how snapserver is configured on your system) with the following content addressing the above 3 topics and adapt it to your needs (at least the device name):
 
 ```yaml
 device_name: "<name>"
@@ -114,10 +115,9 @@ audio_output_pipe_format: "s16le"
 
 bitrate: 320
 
-external_volume: false
-volume_steps: 100
-initial_volume: 120
-normalisation_disabled: true
+normalisation_disabled: false
+normalisation_use_album_gain: true
+normalisation_pregain: 6.0
 
 server:
   enabled: true
