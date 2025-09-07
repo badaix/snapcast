@@ -212,11 +212,12 @@ void PipeWirePlayer::worker()
     {
         LOG(DEBUG, LOG_TAG) << "Starting main loop\n";
         int res = pw_main_loop_run(pw_main_loop_);
-        LOG(DEBUG, LOG_TAG) << "PipeWire main loop exited with result: " << res << "\n";
+        const SEVERITY severity = active_ ? SEVERITY::ERROR : SEVERITY::DEBUG;
+        LOG(severity, LOG_TAG) << "PipeWire main loop exited with result: " << res << "\n";
         if (active_)
         {
             // sleep and run the main loop again
-            LOG(DEBUG, LOG_TAG) << "Still active, sleeping before running the main loop again\n";
+            LOG(INFO, LOG_TAG) << "Still active, sleeping before running the main loop again\n";
             this_thread::sleep_for(100ms);
             try
             {
