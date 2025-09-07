@@ -97,8 +97,12 @@ Note that you need to have the librespot binary on your machine and the samplefo
 
 #### go-librespot configuration file
 
-Read about the file `config.yml` and especially about how to persist your Spotify credentials either in `zeroconf` or `interactive` mode in the [go-librespot configuration documentation](https://github.com/devgianlu/go-librespot?tab=readme-ov-file#configuration).
-Create the file `/var/lib/snapserver/.config/go-librespot/<name>/config.yml` (path may vary according to how snapserver is configured on your system) with the following content: 
+Read about the options which can be used in the file `config.yml` in the [go-librespot configuration documentation](https://github.com/devgianlu/go-librespot?tab=readme-ov-file#configuration), especially about:
+
+- *persisting your Spotify credentials* either in `zeroconf` or `interactive` mode;
+- *adjusting volume*, in order to align it somehow to your other snapcast sources if necessary, please see example below, in which `external_volume` is disabled as we're using the pipe `audio_backend` and normalisation is disabled as well, therefore the volume is then pre-factored with the ratio between `initial_volume` and `volume_steps`.
+
+Create the file `/var/lib/snapserver/.config/go-librespot/<name>/config.yml` (path may vary according to how snapserver is configured on your system) with the following content, which you can of course adapt to your needs:
 
 ```yaml
 device_name: "<name>"
@@ -110,11 +114,10 @@ audio_output_pipe_format: "s16le"
 
 bitrate: 320
 
+external_volume: false
 volume_steps: 100
-
-normalisation_disabled: false
-normalisation_use_album_gain: false
-normalisation_pregain: 0
+initial_volume: 120
+normalisation_disabled: true
 
 server:
   enabled: true
