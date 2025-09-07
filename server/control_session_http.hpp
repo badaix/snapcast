@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2024  Johannes Pohl
+    Copyright (C) 2014-2025  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -25,10 +25,12 @@
 
 // 3rd party headers
 #include <boost/asio/ip/tcp.hpp>
-#include <boost/asio/ssl.hpp>
 #include <boost/beast/core.hpp>
-#include <boost/beast/ssl.hpp>
 #include <boost/beast/websocket.hpp>
+#ifdef HAS_OPENSSL
+#include <boost/asio/ssl.hpp>
+#include <boost/beast/ssl.hpp>
+#endif
 
 // standard headers
 #include <deque>
@@ -49,8 +51,10 @@ using ssl_socket = boost::asio::ssl::stream<tcp_socket>;
 class ControlSessionHttp : public ControlSession
 {
 public:
+#ifdef HAS_OPENSSL
     /// c'tor for ssl sockets. Received message from the client are passed to ControlMessageReceiver
     ControlSessionHttp(ControlMessageReceiver* receiver, ssl_socket&& socket, const ServerSettings& settings);
+#endif
     /// c'tor for tcp sockets
     ControlSessionHttp(ControlMessageReceiver* receiver, tcp_socket&& socket, const ServerSettings& settings);
     ~ControlSessionHttp() override;
@@ -72,7 +76,9 @@ private:
 
     http::request<http::string_body> req_;
     std::optional<tcp_socket> tcp_socket_;
+#ifdef HAS_OPENSSL
     std::optional<ssl_socket> ssl_socket_;
+#endif
     beast::flat_buffer buffer_;
     ServerSettings settings_;
     std::deque<std::string> messages_;

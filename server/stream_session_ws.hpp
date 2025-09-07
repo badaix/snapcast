@@ -25,8 +25,10 @@
 // 3rd party headers
 #include <boost/asio/strand.hpp>
 #include <boost/beast/core.hpp>
-#include <boost/beast/ssl.hpp>
 #include <boost/beast/websocket.hpp>
+#ifdef HAS_OPENSSL
+#include <boost/beast/ssl.hpp>
+#endif
 
 // standard headers
 
@@ -34,10 +36,11 @@
 namespace beast = boost::beast;         // from <boost/beast.hpp>
 namespace websocket = beast::websocket; // from <boost/beast/websocket.hpp>
 using tcp_socket = boost::asio::ip::tcp::socket;
-using ssl_socket = boost::asio::ssl::stream<tcp_socket>;
 using tcp_websocket = websocket::stream<tcp_socket>;
+#ifdef HAS_OPENSSL
+using ssl_socket = boost::asio::ssl::stream<tcp_socket>;
 using ssl_websocket = websocket::stream<ssl_socket>;
-
+#endif
 
 /// Endpoint for a connected control client.
 /**
@@ -48,8 +51,10 @@ using ssl_websocket = websocket::stream<ssl_socket>;
 class StreamSessionWebsocket : public StreamSession
 {
 public:
+#ifdef HAS_OPENSSL
     /// c'tor for SSL. Received message from the client are passed to StreamMessageReceiver
     StreamSessionWebsocket(StreamMessageReceiver* receiver, const ServerSettings& server_settings, ssl_websocket&& ssl_ws);
+#endif
     /// c'tor for TCP
     StreamSessionWebsocket(StreamMessageReceiver* receiver, const ServerSettings& server_settings, tcp_websocket&& tcp_ws);
     ~StreamSessionWebsocket() override;
@@ -65,8 +70,10 @@ private:
     /// Read loop
     void do_read_ws();
 
-    std::optional<ssl_websocket> ssl_ws_; ///< SSL websocket
     std::optional<tcp_websocket> tcp_ws_; ///< TCP websocket
+#ifdef HAS_OPENSSL
+    std::optional<ssl_websocket> ssl_ws_; ///< SSL websocket
+#endif
 
     beast::flat_buffer buffer_; ///< read buffer
     bool is_ssl_;               ///< are we in SSL mode?
