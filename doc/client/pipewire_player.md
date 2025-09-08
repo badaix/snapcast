@@ -143,10 +143,6 @@ snapclient --player pipewire
 
 The PipeWire player provides identical functionality with potentially lower latency and better integration with modern Linux audio systems.
 
-## Known Limitations
-
-- PipeWire doesn't have a standard way to get volume yet. For now, the last set volume from the base class is used.
-
 ## Acknowledgements
 
 This implementation was developed and tested as part of adding comprehensive PipeWire support to Snapcast. The implementation closely follows PipeWire best practices and official examples for robust audio playback.
