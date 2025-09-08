@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2024  Johannes Pohl
+    Copyright (C) 2014-2025  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -25,7 +25,9 @@
 // 3rd party headers
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/ip/tcp.hpp>
+#ifdef HAS_OPENSSL
 #include <boost/asio/ssl.hpp>
+#endif
 
 // standard headers
 #include <memory>
@@ -72,7 +74,9 @@ private:
     std::vector<acceptor_ptr> acceptor_;
 
     boost::asio::io_context& io_context_;
+#ifdef HAS_OPENSSL
     boost::asio::ssl::context ssl_context_;
+#endif
     ServerSettings settings_;
     ControlMessageReceiver* controlMessageReceiver_;
 };

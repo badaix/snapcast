@@ -99,7 +99,7 @@ endif()
 
 option(BUILD_CLIENT "Build Snapclient" ON)
 
-option(BUILD_WITH_SSL "Build client with SSL support" ON)
+option(BUILD_WITH_SSL "Build with SSL support" ON)
 option(BUILD_WITH_ALSA "Build with ALSA support" ON)
 option(BUILD_WITH_FLAC "Build with FLAC support" ON)
 option(BUILD_WITH_VORBIS "Build with VORBIS support" ON)
@@ -318,6 +318,16 @@ else()
   add_compile_definitions(HAS_OPUS)
   add_compile_definitions(HAS_SOXR)
   add_compile_definitions(HAS_TREMOR)
+endif()
+
+if(BUILD_WITH_SSL)
+  if(ANDROID)
+    find_package(openssl REQUIRED CONFIG)
+    add_compile_definitions(HAS_OPENSSL)
+  else()
+    find_package(OpenSSL REQUIRED)
+    add_compile_definitions(HAS_OPENSSL)
+  endif()
 endif()
 
 add_compile_definitions(BOOST_ERROR_CODE_HEADER_ONLY BOOST_ASIO_NO_TS_EXECUTORS

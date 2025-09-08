@@ -15,6 +15,7 @@
 ### General
 
 - Server: Log warning if default config is missing (PR #1402)
+- Server: Make SSL support optional (`-DBUILD_WITH_SSL`) (Issue #1426, PR #1427)
 - Enable OpenSSL support for Android builds in `CMakeLists.txt` (PR #1373)
 
 ### Contributors

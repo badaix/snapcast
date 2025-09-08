@@ -37,8 +37,6 @@ include_directories(${CMAKE_SOURCE_DIR} ${CMAKE_SOURCE_DIR}/server)
 
 include_directories(SYSTEM ${Boost_INCLUDE_DIR})
 
-find_package(OpenSSL REQUIRED)
-
 if(ANDROID)
   find_package(vorbis REQUIRED CONFIG)
   list(APPEND SERVER_LIBRARIES boost::boost)
@@ -133,11 +131,12 @@ else()
   endif(SOXR_FOUND)
 endif()
 
-# list(APPEND SERVER_LIBRARIES Boost::boost)
-if(ANDROID)
-  list(APPEND SERVER_LIBRARIES openssl::crypto openssl::ssl)
-else()
-  list(APPEND SERVER_LIBRARIES OpenSSL::Crypto OpenSSL::SSL)
+if(OPENSSL_FOUND)
+  if(ANDROID)
+    list(APPEND SERVER_LIBRARIES openssl::crypto openssl::ssl)
+  else()
+    list(APPEND SERVER_LIBRARIES OpenSSL::Crypto OpenSSL::SSL)
+  endif()
 endif()
 
 if(ANDROID)

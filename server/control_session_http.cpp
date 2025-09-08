@@ -27,9 +27,11 @@
 #include "stream_session_ws.hpp"
 
 // 3rd party headers
-#include <boost/asio/ssl/stream.hpp>
 #include <boost/beast/http/buffer_body.hpp>
 #include <boost/beast/http/file_body.hpp>
+#ifdef HAS_OPENSSL
+#include <boost/asio/ssl/stream.hpp>
+#endif
 
 // standard headers
 #include <iostream>
@@ -149,11 +151,13 @@ std::string path_cat(boost::beast::string_view base, boost::beast::string_view p
 }
 } // namespace
 
+#ifdef HAS_OPENSSL
 ControlSessionHttp::ControlSessionHttp(ControlMessageReceiver* receiver, ssl_socket&& socket, const ServerSettings& settings)
     : ControlSession(receiver, settings), ssl_socket_(std::move(socket)), settings_(settings), is_ssl_(true)
 {
     LOG(DEBUG, LOG_TAG) << "ControlSessionHttp, mode: ssl, Local IP: " << ssl_socket_->next_layer().local_endpoint().address().to_string() << "\n";
 }
+#endif
 
 ControlSessionHttp::ControlSessionHttp(ControlMessageReceiver* receiver, tcp_socket&& socket, const ServerSettings& settings)
     : ControlSession(receiver, settings), tcp_socket_(std::move(socket)), settings_(settings), is_ssl_(false)
@@ -172,6 +176,7 @@ ControlSessionHttp::~ControlSessionHttp()
 void ControlSessionHttp::start()
 {
     LOG(DEBUG, LOG_TAG) << "start\n";
+#ifdef HAS_OPENSSL
     if (is_ssl_)
     {
         ssl_socket_->async_handshake(boost::asio::ssl::stream_base::server, [this, self = shared_from_this()](const boost::system::error_code& error)
@@ -189,6 +194,7 @@ void ControlSessionHttp::start()
         });
     }
     else
+#endif
     {
         http::async_read(*tcp_socket_, buffer_, req_,
                          [this, self = shared_from_this()](boost::system::error_code ec, std::size_t bytes) { on_read(ec, bytes); });
@@ -361,6 +367,8 @@ void ControlSessionHttp::on_read(beast::error_code ec, std::size_t bytes_transfe
     if ((ec == http::error::end_of_stream) || (ec == boost::asio::error::connection_reset))
     {
         if (is_ssl_)
+        {
+#ifdef HAS_OPENSSL
             ssl_socket_->async_shutdown([&](const boost::system::error_code& error)
             {
                 if (error.failed())
@@ -368,8 +376,12 @@ void ControlSessionHttp::on_read(beast::error_code ec, std::size_t bytes_transfe
                 else if (boost::system::error_code res = ssl_socket_->next_layer().shutdown(tcp_socket::shutdown_send, ec); res.failed())
                     LOG(ERROR, LOG_TAG) << "Failed to shudown socket: " << res << "\n";
             });
+#endif
+        }
         else if (boost::system::error_code res = tcp_socket_->shutdown(tcp_socket::shutdown_send, ec); res.failed())
+        {
             LOG(ERROR, LOG_TAG) << "Failed to shudown socket: " << res << "\n";
+        }
         return;
     }
 
@@ -389,6 +401,7 @@ void ControlSessionHttp::on_read(beast::error_code ec, std::size_t bytes_transfe
         LOG(DEBUG, LOG_TAG) << "websocket upgrade, target: " << req_.target() << "\n";
         if ((req_.target() == "/jsonrpc") || (req_.target() == "/stream"))
         {
+#ifdef HAS_OPENSSL
             if (is_ssl_)
             {
                 // Create a WebSocket session by transferring the socket
@@ -416,6 +429,7 @@ void ControlSessionHttp::on_read(beast::error_code ec, std::size_t bytes_transfe
                 });
             }
             else
+#endif
             {
                 // Create a WebSocket session by transferring the socket
                 auto ws = std::make_shared<websocket::stream<tcp_socket>>(std::move(*tcp_socket_));
@@ -467,12 +481,18 @@ void ControlSessionHttp::on_read(beast::error_code ec, std::size_t bytes_transfe
         auto sp = std::make_shared<response_type>(std::forward<decltype(response)>(response));
 
         // Write the response
+#ifdef HAS_OPENSSL
         if (is_ssl_)
+        {
             http::async_write(this->ssl_socket_.value(), *sp, [this, self = this->shared_from_this(), sp](beast::error_code ec, std::size_t bytes)
             { this->on_write(ec, bytes, sp->need_eof()); });
+        }
         else
+#endif
+        {
             http::async_write(this->tcp_socket_.value(), *sp, [this, self = this->shared_from_this(), sp](beast::error_code ec, std::size_t bytes)
             { this->on_write(ec, bytes, sp->need_eof()); });
+        }
     });
 }
 
@@ -493,10 +513,17 @@ void ControlSessionHttp::on_write(beast::error_code ec, std::size_t bytes, bool 
         // This means we should close the connection, usually because
         // the response indicated the "Connection: close" semantic.
         boost::system::error_code res;
+#ifdef HAS_OPENSSL
         if (is_ssl_)
+        {
             res = ssl_socket_->shutdown(res);
+        }
         else
+#endif
+        {
             res = tcp_socket_->shutdown(tcp_socket::shutdown_send, ec);
+        }
+
         if (res.failed())
             LOG(ERROR, LOG_TAG) << "Failed to shudown socket: " << res << "\n";
         return;
@@ -507,10 +534,16 @@ void ControlSessionHttp::on_write(beast::error_code ec, std::size_t bytes, bool 
     req_ = {};
 
     // Read another request
+#ifdef HAS_OPENSSL
     if (is_ssl_)
+    {
         http::async_read(*ssl_socket_, buffer_, req_, [this, self = shared_from_this()](beast::error_code ec, std::size_t bytes) { on_read(ec, bytes); });
+    }
     else
+#endif
+    {
         http::async_read(*tcp_socket_, buffer_, req_, [this, self = shared_from_this()](beast::error_code ec, std::size_t bytes) { on_read(ec, bytes); });
+    }
 }
 
 

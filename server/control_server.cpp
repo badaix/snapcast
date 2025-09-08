@@ -22,10 +22,12 @@
 // local headers
 #include "common/aixlog.hpp"
 #include "common/json.hpp"
-#include "common/snap_exception.hpp"
 #include "control_session_http.hpp"
 #include "control_session_tcp.hpp"
 #include "server_settings.hpp"
+#ifdef HAS_OPENSSL
+#include "common/snap_exception.hpp"
+#endif
 
 // 3rd party headers
 
@@ -40,8 +42,13 @@ static constexpr auto LOG_TAG = "ControlServer";
 
 
 ControlServer::ControlServer(boost::asio::io_context& io_context, const ServerSettings& settings, ControlMessageReceiver* controlMessageReceiver)
-    : io_context_(io_context), ssl_context_(boost::asio::ssl::context::sslv23), settings_(settings), controlMessageReceiver_(controlMessageReceiver)
+    : io_context_(io_context),
+#ifdef HAS_OPENSSL
+      ssl_context_(boost::asio::ssl::context::sslv23),
+#endif
+      settings_(settings), controlMessageReceiver_(controlMessageReceiver)
 {
+#ifdef HAS_OPENSSL
     const ServerSettings::Ssl& ssl = settings.ssl;
     if (settings_.http.ssl_enabled)
     {
@@ -102,6 +109,7 @@ ControlServer::ControlServer(boost::asio::io_context& io_context, const ServerSe
         }
         // ssl_context_.use_tmp_dh_file("dh4096.pem");
     }
+#endif
 }
 
 
@@ -177,9 +185,9 @@ void ControlServer::startAccept()
             auto port = socket.local_endpoint().port();
             LOG(NOTICE, LOG_TAG) << "New connection from: " << socket.remote_endpoint().address().to_string() << ", port: " << port << "\n";
 
-            if (port == settings_.http.ssl_port)
+            if (port == settings_.tcp.port)
             {
-                auto session = make_shared<ControlSessionHttp>(this, ssl_socket(std::move(socket), ssl_context_), settings_);
+                auto session = make_shared<ControlSessionTcp>(this, std::move(socket), settings_);
                 onNewSession(std::move(session));
             }
             else if (port == settings_.http.port)
@@ -187,11 +195,13 @@ void ControlServer::startAccept()
                 auto session = make_shared<ControlSessionHttp>(this, std::move(socket), settings_);
                 onNewSession(std::move(session));
             }
-            else if (port == settings_.tcp.port)
+#ifdef HAS_OPENSSL
+            else if (port == settings_.http.ssl_port)
             {
-                auto session = make_shared<ControlSessionTcp>(this, std::move(socket), settings_);
+                auto session = make_shared<ControlSessionHttp>(this, ssl_socket(std::move(socket), ssl_context_), settings_);
                 onNewSession(std::move(session));
             }
+#endif
             else
             {
                 LOG(ERROR, LOG_TAG) << "Port unknown, should not listen on this port?!?\n";

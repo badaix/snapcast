@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2024  Johannes Pohl
+    Copyright (C) 2014-2025  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -25,8 +25,10 @@
 // 3rd party headers
 #include <boost/asio/strand.hpp>
 #include <boost/beast/core.hpp>
-#include <boost/beast/ssl.hpp>
 #include <boost/beast/websocket.hpp>
+#ifdef HAS_OPENSSL
+#include <boost/beast/ssl.hpp>
+#endif
 
 // standard headers
 #include <deque>
@@ -50,8 +52,10 @@ using ssl_websocket = websocket::stream<ssl_socket>;
 class ControlSessionWebsocket : public ControlSession
 {
 public:
+#ifdef HAS_OPENSSL
     /// c'tor for ssl websockets. Received message from the client are passed to ControlMessageReceiver
     ControlSessionWebsocket(ControlMessageReceiver* receiver, ssl_websocket&& ssl_ws, const ServerSettings& settings);
+#endif
     /// c'tor for TCP websockets. Received message from the client are passed to ControlMessageReceiver
     ControlSessionWebsocket(ControlMessageReceiver* receiver, tcp_websocket&& tcp_ws, const ServerSettings& settings);
     ~ControlSessionWebsocket() override;
@@ -67,8 +71,10 @@ private:
     void do_read_ws();
     void send_next();
 
-    std::optional<ssl_websocket> ssl_ws_;
     std::optional<tcp_websocket> tcp_ws_;
+#ifdef HAS_OPENSSL
+    std::optional<ssl_websocket> ssl_ws_;
+#endif
 
     beast::flat_buffer buffer_;
     boost::asio::strand<boost::asio::any_io_executor> strand_;
