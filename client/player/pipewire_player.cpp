@@ -618,7 +618,7 @@ void PipeWirePlayer::setHardwareVolume(const Volume& volume)
                    0, &volume, sizeof(volume), true, this);
 }
 
-
+// Seems unused
 bool PipeWirePlayer::getHardwareVolume(Volume& volume)
 {
     if (!pw_stream_)
