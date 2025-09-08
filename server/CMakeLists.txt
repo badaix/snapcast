@@ -114,8 +114,6 @@ else()
       include_directories(SYSTEM ${PIPEWIRE_INCLUDE_DIRS}/../spa-0.2)
     endif()
     link_directories(${PIPEWIRE_LIBRARY_DIRS})
-    # PipeWire requires threading support
-    list(APPEND SERVER_LIBRARIES ${CMAKE_THREAD_LIBS_INIT})
   endif(PIPEWIRE_FOUND)
 
   if(EXPAT_FOUND)
