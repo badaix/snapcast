@@ -359,54 +359,7 @@ void PipeWirePlayer::on_process(void* userdata)
 
 void PipeWirePlayer::onParamChanged(uint32_t id, const struct spa_pod* param)
 {
-    auto typeToString = [](enum spa_param_type param_type)
-    {
-        switch (param_type)
-        {
-            case SPA_PARAM_Invalid:
-                return "SPA_PARAM_Invalid";
-            case SPA_PARAM_PropInfo:
-                return "SPA_PARAM_PropInfo";
-            case SPA_PARAM_Props:
-                return "SPA_PARAM_Props";
-            case SPA_PARAM_EnumFormat:
-                return "SPA_PARAM_EnumFormat";
-            case SPA_PARAM_Format:
-                return "SPA_PARAM_Format";
-            case SPA_PARAM_Buffers:
-                return "SPA_PARAM_Buffers";
-            case SPA_PARAM_Meta:
-                return "SPA_PARAM_Meta";
-            case SPA_PARAM_IO:
-                return "SPA_PARAM_IO";
-            case SPA_PARAM_EnumProfile:
-                return "SPA_PARAM_EnumProfile";
-            case SPA_PARAM_Profile:
-                return "SPA_PARAM_Profile";
-            case SPA_PARAM_EnumPortConfig:
-                return "SPA_PARAM_EnumPortConfig";
-            case SPA_PARAM_PortConfig:
-                return "SPA_PARAM_PortConfig";
-            case SPA_PARAM_EnumRoute:
-                return "SPA_PARAM_EnumRoute";
-            case SPA_PARAM_Route:
-                return "SPA_PARAM_Route";
-            case SPA_PARAM_Control:
-                return "SPA_PARAM_Control";
-            case SPA_PARAM_Latency:
-                return "SPA_PARAM_Latency";
-            case SPA_PARAM_ProcessLatency:
-                return "SPA_PARAM_ProcessLatency";
-#if PW_CHECK_VERSION(0, 3, 79)
-            case SPA_PARAM_Tag:
-                return "SPA_PARAM_Tag";
-#endif
-            default:
-                return "Unknown";
-        }
-    };
-
-    LOG(DEBUG, LOG_TAG) << "Stream param changed, type: " << typeToString(static_cast<spa_param_type>(id)) << "\n";
+    LOG(DEBUG, LOG_TAG) << "Stream param changed, type: " << id << "\n";
 
     if (id == SPA_PARAM_Props)
     {
