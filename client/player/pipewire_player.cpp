@@ -578,6 +578,13 @@ void PipeWirePlayer::setHardwareVolume(const Volume& volume)
 // Seems unused
 bool PipeWirePlayer::getHardwareVolume(Volume& volume)
 {
+    std::ignore = volume;
+    return false;
+}
+
+#if 0
+bool PipeWirePlayer::getHardwareVolume(Volume& volume)
+{
     if (!pw_stream_)
         return false;
 
@@ -609,7 +616,7 @@ bool PipeWirePlayer::getHardwareVolume(Volume& volume)
 
     return true;
 }
-
+#endif
 
 #ifdef __clang__
 #pragma GCC diagnostic pop
