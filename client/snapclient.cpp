@@ -501,10 +501,8 @@ int main(int argc, char** argv)
 #ifdef HAS_PIPEWIRE
             else if (settings.player.player_name == player::PIPEWIRE)
             {
-                // TODO: add pipewire options
-                cout << "Options are a comma separated list of:\n"
-                     << " \"buffer_time=<total buffer size [ms]>\" - default 80, min 10\n"
-                     << " \"fragments=<number of buffers>\" - default 4, min 2\n";
+                cout << "Options are:\n"
+                     << " \"buffer_time=<total buffer size [ms]>\" - default <not set, PipeWire will decide>, min 10\n";
             }
 #endif
             else
