@@ -474,7 +474,11 @@ void PipeWirePlayer::initPipewire()
         else
         {
             LOG(INFO, LOG_TAG) << "Using device '" << settings_.pcm_device.name << "'\n";
+#if PW_CHECK_VERSION(0, 3, 64)
             pw_properties_set(props, PW_KEY_TARGET_OBJECT, settings_.pcm_device.name.c_str());
+#else
+            pw_properties_set(props, PW_KEY_NODE_TARGET, settings_.pcm_device.name.c_str());
+#endif
         }
     }
 

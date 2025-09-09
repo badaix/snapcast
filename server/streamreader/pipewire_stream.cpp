@@ -336,7 +336,11 @@ void PipeWireStream::initPipeWire()
 
     if (!target_device_.empty())
     {
+#if PW_CHECK_VERSION(0, 3, 64)
         pw_properties_set(props, PW_KEY_TARGET_OBJECT, target_device_.c_str());
+#else
+        pw_properties_set(props, PW_KEY_NODE_TARGET, target_device_.c_str());
+#endif
     }
 
     if (capture_sink_)
