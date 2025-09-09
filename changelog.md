@@ -5,7 +5,7 @@
 ### Features
 
 - Server: Add PipeWire stream reader (PR #1418, Issue #1371)
-- Client: Add PipeWire player (PR #1420, Issue #1419)
+- Client: Add PipeWire player (PR #1420, Issue #1419, #821)
 
 ### Bugfixes
 
