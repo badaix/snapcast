@@ -17,6 +17,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+# Dependencies:
+# - websocket-client>=0.58
+# - requests
+
 import argparse
 import json
 import logging
@@ -25,18 +29,19 @@ import threading
 import time
 
 import requests
+import websocket
 
 __version__ = "@version@"
 __git_version__ = "@gitversion@"
 
 identity = "Snapcast"
 
-params = {
-    "librespot-host": "127.0.0.1",
-    "librespot-port": 24879,
+defaults = {
+    "librespot_host": "127.0.0.1",
+    "librespot_port": 24879,
     "stream": "SpotCast",
-    "snapcast-host": "localhost",
-    "snapcast-port": 1780,
+    "snapcast_host": "localhost",
+    "snapcast_port": 1780,
 }
 
 log_level = logging.INFO
@@ -47,52 +52,15 @@ log_handler.setFormatter(logging.Formatter("%(asctime)s %(levelname)s: %(message
 logger.addHandler(log_handler)
 logger.setLevel(log_level)
 
-BASE = None  # filled below
 
-
-# JSON-RPC sender to Snapserver
 def send(msg):
     sys.stdout.write(json.dumps(msg) + "\n")
     sys.stdout.flush()
 
 
-def api_url(path: str) -> str:
-    return f"{BASE}/{path.lstrip('/')}"
-
-
-def post_json(path: str, payload=None, timeout=2.0):
-    """POST with json payload (default {}), log result, return response or None."""
-    if payload is None:
-        payload = {}
-    url = api_url(path)
-    try:
-        r = requests.post(url, json=payload, timeout=timeout)
-        logger.debug(f"POST {url} -> {r.status_code} {r.reason} {r.text[:256]!r}")
-        return r
-    except requests.RequestException as e:
-        logger.debug(f"POST {url} failed: {e}")
-        return None
-
-
-def get_simple(path: str, timeout=2.0):
-    url = api_url(path)
-    try:
-        r = requests.get(url, timeout=timeout)
-        logger.debug(f"GET  {url} -> {r.status_code} {r.reason} {r.text[:256]!r}")
-        return r
-    except requests.RequestException as e:
-        logger.debug(f"GET  {url} failed: {e}")
-        return None
-
-
-class LibrespotControl(threading.Thread):
-    def __init__(self, host, port, stream):
-        super().__init__(daemon=True)
-        self.host = host
-        self.port = port
-        self.stream = stream
-        self._stop_event = threading.Event()
-        self._lock = threading.Lock()
+class LibrespotControl:
+    def __init__(self, params):
+        self._params = params
 
         self._properties = {
             "playbackStatus": "stopped",
@@ -121,73 +89,196 @@ class LibrespotControl(threading.Thread):
         }
         self._metadata = self._properties["metadata"].copy()
 
-    def run(self):
+        self._lock = threading.Lock()
+        self._stop_event = threading.Event()
+        self.BASE_URL = (
+            f"http://{self._params.librespot_host}:{self._params.librespot_port}"
+        )
+
+        wsversion = websocket.__version__.split(".")
+
+        if int(wsversion[0]) == 0 and int(wsversion[1]) < 58:
+            logger.error(
+                "websocket-client version 0.58.0 or higher required, installed: %s, exiting.",
+                websocket.__version__,
+            )
+            exit()
+
+        ws_url = (
+            f"ws://{self._params.librespot_host}:{self._params.librespot_port}/events"
+        )
+        logger.info("Connecting to librespot WebSocket at %s", ws_url)
+
+        self.websocket = websocket.WebSocketApp(
+            url=ws_url,
+            on_message=self.on_ws_message,
+            on_error=self.on_ws_error,
+            on_open=self.on_ws_open,
+            on_close=self.on_ws_close,
+        )
+
+        self.websocket_thread = threading.Thread(target=self.websocket_loop, args=())
+        self.websocket_thread.name = "LibrespotControl"
+        self.websocket_thread.start()
+
+    def websocket_loop(self):
+        logger.info("Started LibrespotControl loop")
         while not self._stop_event.is_set():
-            interval = 1.0
             try:
-                r = get_simple("status", timeout=1.5)
-                if not r or r.status_code // 100 != 2:
-                    interval = 3.0
-                    time.sleep(interval)
-                    continue
+                self.websocket.run_forever()
+            except Exception as e:
+                logger.info(f"Exception: {str(e)}")
+                self.websocket.close()
 
-                try:
-                    data = r.json()
-                except ValueError as e:
-                    logger.debug(f"Invalid JSON: {e}, content: {r.text[:200]!r}")
-                    data = None
+            if not self._stop_event.is_set():
+                logger.info("Disconnected. Retrying in 2 seconds...")
+                time.sleep(2)
 
-                if not data or "track" not in data or data["track"] is None:
-                    interval = 3.0
-                    with self._lock:
-                        if self._properties["playbackStatus"] != "stopped":
-                            self._properties["playbackStatus"] = "stopped"
-                            send(
-                                {
-                                    "jsonrpc": "2.0",
-                                    "method": "Plugin.Stream.Player.Properties",
-                                    "params": self._properties,
-                                }
-                            )
-                else:
-                    interval = 0.5
-                    track = data["track"]
-                    with self._lock:
-                        self._metadata.update(
-                            {
-                                "title": track.get("name", ""),
-                                "artist": track.get("artist_names", []),
-                                "album": track.get("album_name", ""),
-                                "trackId": track.get("uri", ""),
-                                "artUrl": track.get("album_cover_url", ""),
-                                "trackNumber": track.get("track_number", 0),
-                                "discNumber": track.get("disc_number", 0),
-                                "duration": track.get("duration", 0) / 1000.0,
-                                "contentCreated": track.get("release_date", ""),
-                            }
-                        )
-                        self._properties["metadata"] = self._metadata
-                        self._properties["playbackStatus"] = (
-                            "paused" if data.get("paused", True) else "playing"
-                        )
-                        self._properties["position"] = track.get("position", 0) / 1000.0
+    def on_ws_message(self, ws, message):
+        logger.debug("Snapcast RPC websocket message received: %s", message)
 
-                    send(
-                        {
-                            "jsonrpc": "2.0",
-                            "method": "Plugin.Stream.Player.Properties",
-                            "params": self._properties,
-                        }
-                    )
+        try:
+            jmsg = json.loads(message)
+            event = jmsg["type"]
+            data = jmsg["data"]
+        except json.JSONDecodeError as e:
+            logger.error("Invalid JSON from WebSocket: %s, content: %s", e, message)
+            return
 
-            except requests.RequestException as e:
-                logger.debug(f"Status request failed: {e}")
-                interval = 3.0
+        logger.info(f"Event: {type}, msg: {data}")
+        sendupdate = True
 
-            time.sleep(interval)
+        if event == "not_playing":
+            self._properties["playbackStatus"] = "stopped"
+        elif event == "paused":
+            self._properties["playbackStatus"] = "paused"
+        elif event == "playing":
+            self._properties["playbackStatus"] = "playing"
+        elif event == "volume":
+            self._properties["volume"] = int(data["value"] / data["max"] * 100.0)
+        elif event == "seek":
+            self._properties["position"] = float(data["trackTime"]) / 1000.0
+        elif event == "metadata":
+            with self._lock:
+                self._metadata.update(
+                    {
+                        "trackId": data.get("uri", ""),
+                        "title": data.get("name", ""),
+                        "artist": data.get("artist_names", []),
+                        "album": data.get("album_name", ""),
+                        "artUrl": data.get("album_cover_url", ""),
+                        "duration": data.get("duration", 0) / 1000.0,
+                        "contentCreated": data.get("release_date", ""),
+                        "trackNumber": data.get("track_number", 0),
+                        "discNumber": data.get("disc_number", 0),
+                    }
+                )
+                self._properties["metadata"] = self._metadata
+                self._properties["position"] = data.get("position", 0) / 1000.0
+
+        # elif event == 'active':
+        # elif event == 'inactive':
+        # elif event == 'playbackHaltStateChanged':
+        # elif event == 'sessionCleared':
+        # elif event == 'sessionChanged':
+        # elif event == 'inactiveSession':
+        # elif event == 'connectionDropped':
+        # elif event == 'connectionEstablished':
+        # elif event == 'panic':
+        else:
+            sendupdate = False
+
+        if sendupdate:
+            send(
+                {
+                    "jsonrpc": "2.0",
+                    "method": "Plugin.Stream.Player.Properties",
+                    "params": self._properties,
+                }
+            )
+
+    def on_ws_error(self, ws, error):
+        logger.error("Snapcast RPC websocket error (%s)", str(error))
+
+    def on_ws_open(self, ws):
+        logger.info("Snapcast RPC websocket opened")
+        # send({"jsonrpc": "2.0", "method": "Plugin.Stream.Ready"})
+
+    def on_ws_close(self, ws, close_status_code, close_msg):
+        logger.info("Snapcast RPC websocket closed")
 
     def stop(self):
         self._stop_event.set()
+        self.websocket.keep_running = False
+        logger.info("Waiting for websocket thread to exit")
+        # self.websocket_thread.join()
+
+    def post_json(self, path: str, payload=None, timeout=2.0):
+        if payload is None:
+            payload = {}
+
+        url = f"{self.BASE_URL}/{path}"
+
+        try:
+            r = requests.post(url, json=payload, timeout=timeout)
+            logger.debug(f"POST {url} -> {r.status_code} {r.reason} {r.text[:256]!r}")
+            return r
+        except requests.RequestException as e:
+            logger.debug(f"POST {url} failed: {e}")
+            return None
+
+    def control(self, cmd):
+        if not cmd:
+            return
+        try:
+            req = json.loads(cmd)
+            method = req.get("method", "")
+            id_ = req.get("id")
+
+            if method.endswith(".Control"):
+                action = req["params"].get("command", "")
+                logger.debug(f"Control command: {action}")
+
+                if action == "play":
+                    self.post_json("player/resume")
+                elif action == "pause":
+                    self.post_json("player/pause")
+                elif action == "playPause":
+                    status = ctrl._properties["playbackStatus"]
+                    self.post_json(
+                        "player/pause" if status == "playing" else "player/resume"
+                    )
+
+                elif action == "previous":
+                    # prev always worked via POST without body
+                    r = self.post_json("player/prev")
+                    if not r or r.status_code // 100 != 2:
+                        self.get_simple("player/prev")
+
+                elif action == "next":
+                    # send an explicit empty JSON body; fallback to GET if needed
+                    r = self.post_json("player/next", payload={})
+                    if not r or r.status_code // 100 != 2:
+                        self.get_simple("player/next")
+
+                elif action == "setPosition":
+                    pos = float(req["params"].get("params", {}).get("position", 0))
+                    self.post_json("player/seek", {"position": int(pos * 1000)})
+
+                # ack
+                if id_ is not None:
+                    send({"jsonrpc": "2.0", "result": "ok", "id": id_})
+
+            elif method.endswith(".GetProperties"):
+                send({"jsonrpc": "2.0", "id": id_, "result": ctrl._properties})
+
+            elif method.endswith(".SetProperty"):
+                # We keep Spotify volume fixed; ignore for now.
+                if id_ is not None:
+                    send({"jsonrpc": "2.0", "id": id_, "result": "ok"})
+
+        except Exception as e:
+            logger.debug(f"Error processing command: {e}")
 
 
 def parse_args():
@@ -201,31 +292,31 @@ def parse_args():
     parser.add_argument(
         "--librespot-host",
         type=str,
-        default=params["librespot-host"],
+        default=defaults["librespot_host"],
         help="The hostname or IP address of the librespot instance.",
     )
     parser.add_argument(
         "--librespot-port",
         type=int,
-        default=params["librespot-port"],
+        default=defaults["librespot_port"],
         help="The port of the librespot web API.",
     )
     parser.add_argument(
         "--stream",
         type=str,
-        default=params["stream"],
+        default=defaults["stream"],
         help="The name of the Snapcast stream to control.",
     )
     parser.add_argument(
         "--snapcast-host",
         type=str,
-        default=params["snapcast-host"],
+        default=defaults["snapcast_host"],
         help="The hostname or IP address of the Snapserver.",
     )
     parser.add_argument(
         "--snapcast-port",
         type=int,
-        default=params["snapcast-port"],
+        default=defaults["snapcast_port"],
         help="The JSON-RPC port of the Snapserver.",
     )
     parser.add_argument(
@@ -235,84 +326,16 @@ def parse_args():
         "-v", "--version", action="version", version=f"%(prog)s {__version__}"
     )
 
-    args = parser.parse_args()
-
-    # Update global configuration from parsed arguments
-    params["librespot-host"] = args.librespot_host
-    params["librespot-port"] = args.librespot_port
-    params["stream"] = args.stream
-    params["snapcast-host"] = args.snapcast_host
-    params["snapcast-port"] = args.snapcast_port
-
-    if args.debug:
-        global log_level
-        log_level = logging.DEBUG
-        logger.setLevel(log_level)
+    return parser.parse_args()
 
 
 if __name__ == "__main__":
-    parse_args()
+    args = parse_args()
 
-    BASE = f"http://{params['librespot-host']}:{params['librespot-port']}"
-
-    ctrl = LibrespotControl(
-        params["librespot-host"], params["librespot-port"], params["stream"]
-    )
-    ctrl.start()
+    ctrl = LibrespotControl(args)
 
     try:
         for line in sys.stdin:
-            line = line.strip()
-            if not line:
-                continue
-            try:
-                req = json.loads(line)
-                method = req.get("method", "")
-                id_ = req.get("id")
-                if method.endswith(".Control"):
-                    action = req["params"].get("command", "")
-                    logger.debug(f"Control command: {action}")
-
-                    if action == "play":
-                        post_json("player/resume")
-                    elif action == "pause":
-                        post_json("player/pause")
-                    elif action == "playPause":
-                        status = ctrl._properties["playbackStatus"]
-                        post_json(
-                            "player/pause" if status == "playing" else "player/resume"
-                        )
-
-                    elif action == "previous":
-                        # prev always worked via POST without body
-                        r = post_json("player/prev")
-                        if not r or r.status_code // 100 != 2:
-                            get_simple("player/prev")
-
-                    elif action == "next":
-                        # send an explicit empty JSON body; fallback to GET if needed
-                        r = post_json("player/next", payload={})
-                        if not r or r.status_code // 100 != 2:
-                            get_simple("player/next")
-
-                    elif action == "setPosition":
-                        pos = float(req["params"].get("params", {}).get("position", 0))
-                        post_json("player/seek", {"position": int(pos * 1000)})
-
-                    # ack
-                    if id_ is not None:
-                        send({"jsonrpc": "2.0", "result": "ok", "id": id_})
-
-                elif method.endswith(".GetProperties"):
-                    send({"jsonrpc": "2.0", "id": id_, "result": ctrl._properties})
-
-                elif method.endswith(".SetProperty"):
-                    # We keep Spotify volume fixed; ignore for now.
-                    if id_ is not None:
-                        send({"jsonrpc": "2.0", "id": id_, "result": "ok"})
-
-            except Exception as e:
-                logger.debug(f"Error processing command: {e}")
-
+            ctrl.control(line)
     except KeyboardInterrupt:
         ctrl.stop()
