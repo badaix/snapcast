@@ -93,8 +93,10 @@ PcmDevice getPcmDevice(const std::string& player, const std::string& parameter, 
         return FilePlayer::pcm_list(parameter).front();
     try
     {
+        // If "soundcard" can be converted to an integer,
+        // try to map the device by index
         int soundcardIdx = cpt::stoi(soundcard);
-        for (auto dev : pcm_devices)
+        for (const auto& dev : pcm_devices)
             if (dev.idx == soundcardIdx)
                 return dev;
     }
@@ -102,7 +104,7 @@ PcmDevice getPcmDevice(const std::string& player, const std::string& parameter, 
     {
     }
 
-    for (auto dev : pcm_devices)
+    for (const auto& dev : pcm_devices)
         if (dev.name.find(soundcard) != string::npos)
             return dev;
 #endif
@@ -499,10 +501,8 @@ int main(int argc, char** argv)
 #ifdef HAS_PIPEWIRE
             else if (settings.player.player_name == player::PIPEWIRE)
             {
-                // TODO: add pipewire options
-                cout << "Options are a comma separated list of:\n"
-                     << " \"buffer_time=<total buffer size [ms]>\" - default 80, min 10\n"
-                     << " \"fragments=<number of buffers>\" - default 4, min 2\n";
+                cout << "Options are:\n"
+                     << " \"buffer_time=<total buffer size [ms]>\" - default <not set, PipeWire will decide>, min 10\n";
             }
 #endif
             else

@@ -32,15 +32,20 @@ using namespace std;
 static constexpr auto LOG_TAG = "ControlSessionWS";
 
 
+#ifdef HAS_OPENSSL
 ControlSessionWebsocket::ControlSessionWebsocket(ControlMessageReceiver* receiver, ssl_websocket&& ssl_ws, const ServerSettings& settings)
     : ControlSession(receiver, settings), ssl_ws_(std::move(ssl_ws)), strand_(boost::asio::make_strand(ssl_ws_->get_executor())), is_ssl_(true)
 {
     LOG(DEBUG, LOG_TAG) << "ControlSessionWebsocket, mode: ssl\n";
 }
+#endif
 
 ControlSessionWebsocket::ControlSessionWebsocket(ControlMessageReceiver* receiver, tcp_websocket&& tcp_ws, const ServerSettings& settings)
     : ControlSession(receiver, settings), tcp_ws_(std::move(tcp_ws)), strand_(boost::asio::make_strand(tcp_ws_->get_executor())), is_ssl_(false)
 {
+#ifndef HAS_OPENSSL
+    std::ignore = is_ssl_;
+#endif
     LOG(DEBUG, LOG_TAG) << "ControlSessionWebsocket, mode: tcp\n";
 }
 
@@ -105,11 +110,13 @@ void ControlSessionWebsocket::send_next()
             send_next();
     };
 
+#ifdef HAS_OPENSSL
     if (is_ssl_)
     {
         ssl_ws_->async_write(boost::asio::buffer(message), [write_handler](std::error_code ec, std::size_t length) { write_handler(ec, length); });
     }
     else
+#endif
     {
         tcp_ws_->async_write(boost::asio::buffer(message), [write_handler](std::error_code ec, std::size_t length) { write_handler(ec, length); });
     }
@@ -119,12 +126,18 @@ void ControlSessionWebsocket::send_next()
 void ControlSessionWebsocket::do_read_ws()
 {
     // Read a message into our buffer
+#ifdef HAS_OPENSSL
     if (is_ssl_)
+    {
         ssl_ws_->async_read(buffer_,
                             [this, self = shared_from_this()](beast::error_code ec, std::size_t bytes_transferred) { on_read_ws(ec, bytes_transferred); });
+    }
     else
+#endif
+    {
         tcp_ws_->async_read(buffer_,
                             [this, self = shared_from_this()](beast::error_code ec, std::size_t bytes_transferred) { on_read_ws(ec, bytes_transferred); });
+    }
 }
 
 

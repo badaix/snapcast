@@ -61,10 +61,10 @@ void Config::init(const std::string& root_directory, const std::string& user, co
 
     int status = utils::file::mkdirRecursive(dir.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
     if ((status != 0) && (errno != EEXIST))
-        throw SnapException("failed to create settings directory: \"" + dir + "\": " + cpt::to_string(errno));
+        throw SnapException("failed to create persistent settings directory: \"" + dir + "\": " + cpt::to_string(errno));
 
     filename_ = dir + "server.json";
-    LOG(NOTICE) << "Settings file: \"" << filename_ << "\"\n";
+    LOG(DEBUG) << "Internal persistent settings file: \"" << filename_ << "\"\n";
 
     int fd;
     if ((fd = open(filename_.c_str(), O_RDWR | O_CREAT, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH)) == -1)

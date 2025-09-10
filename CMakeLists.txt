@@ -73,7 +73,7 @@ else()
   endif()
 
   if(ASAN)
-    add_compile_options(-fsanitize=address)
+    add_compile_options(-fsanitize=address -g)
     add_link_options(-fsanitize=address)
   endif()
 
@@ -99,6 +99,7 @@ endif()
 
 option(BUILD_CLIENT "Build Snapclient" ON)
 
+option(BUILD_WITH_SSL "Build with SSL support" ON)
 option(BUILD_WITH_ALSA "Build with ALSA support" ON)
 option(BUILD_WITH_FLAC "Build with FLAC support" ON)
 option(BUILD_WITH_VORBIS "Build with VORBIS support" ON)
@@ -228,7 +229,7 @@ if(NOT WIN32 AND NOT ANDROID)
     endif(BUILD_WITH_PULSE)
 
     if(BUILD_WITH_PIPEWIRE)
-      pkg_search_module(PIPEWIRE REQUIRED libpipewire-0.3)
+      pkg_search_module(PIPEWIRE REQUIRED libpipewire-0.3>=0.3.19)
       add_compile_definitions(HAS_PIPEWIRE)
     endif(BUILD_WITH_PIPEWIRE)
 
@@ -317,6 +318,16 @@ else()
   add_compile_definitions(HAS_OPUS)
   add_compile_definitions(HAS_SOXR)
   add_compile_definitions(HAS_TREMOR)
+endif()
+
+if(BUILD_WITH_SSL)
+  if(ANDROID)
+    find_package(openssl REQUIRED CONFIG)
+    add_compile_definitions(HAS_OPENSSL)
+  else()
+    find_package(OpenSSL REQUIRED)
+    add_compile_definitions(HAS_OPENSSL)
+  endif()
 endif()
 
 add_compile_definitions(BOOST_ERROR_CODE_HEADER_ONLY BOOST_ASIO_NO_TS_EXECUTORS

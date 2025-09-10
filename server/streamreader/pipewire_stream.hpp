@@ -73,7 +73,6 @@ private:
     struct pw_context* pw_context_;
     struct pw_core* pw_core_;
     struct pw_stream* pw_stream_;
-    struct pw_properties* props_;
 
     // PipeWire event handlers
     struct pw_core_events core_events_;

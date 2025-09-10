@@ -257,6 +257,11 @@ int main(int argc, char* argv[])
         else
             throw SnapException("Invalid log sink: " + settings.logging.sink);
 
+#ifndef HAS_OPENSSL
+        if (settings.http.ssl_enabled)
+            throw SnapException("HTTPS enabled ([http] ssl_enabled), but snapserrver is built without ssl support");
+#endif
+
         if (tcp_bind_to_address->is_set())
         {
             settings.tcp.bind_to_address.clear();
