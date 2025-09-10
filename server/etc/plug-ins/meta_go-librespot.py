@@ -17,13 +17,14 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import sys
+import argparse
 import json
 import logging
+import sys
 import threading
 import time
+
 import requests
-import getopt
 
 __version__ = "@version@"
 __git_version__ = "@gitversion@"
@@ -45,43 +46,6 @@ log_handler = logging.StreamHandler()
 log_handler.setFormatter(logging.Formatter("%(asctime)s %(levelname)s: %(message)s"))
 logger.addHandler(log_handler)
 logger.setLevel(log_level)
-
-# ---- CLI ----
-for opt, arg in getopt.getopt(
-    sys.argv[1:],
-    "hdv",
-    [
-        "help",
-        "librespot-host=",
-        "librespot-port=",
-        "stream=",
-        "snapcast-host=",
-        "snapcast-port=",
-        "debug",
-        "version",
-    ],
-)[0]:
-    if opt in ("-h", "--help"):
-        print(
-            "Usage: meta_go-librespot.py --librespot-host=HOST --librespot-port=PORT --stream=NAME --snapcast-host=HOST --snapcast-port=PORT"
-        )
-        sys.exit(0)
-    elif opt == "--librespot-host":
-        params["librespot-host"] = arg
-    elif opt == "--librespot-port":
-        params["librespot-port"] = int(arg)
-    elif opt == "--stream":
-        params["stream"] = arg
-    elif opt == "--snapcast-host":
-        params["snapcast-host"] = arg
-    elif opt == "--snapcast-port":
-        params["snapcast-port"] = int(arg)
-    elif opt in ("-d", "--debug"):
-        log_level = logging.DEBUG
-        logger.setLevel(log_level)
-    elif opt in ("-v", "--version"):
-        print(__version__)
-        sys.exit(0)
 
 BASE = None  # filled below
 
@@ -226,68 +190,129 @@ class LibrespotControl(threading.Thread):
         self._stop_event.set()
 
 
-# ---- bootstrap ----
-BASE = f"http://{params['librespot-host']}:{params['librespot-port']}"
+def parse_args():
+    """Configures and parses command-line arguments."""
+    parser = argparse.ArgumentParser(
+        description="""Connects go-librespot to Snapcast for metadata display and control.
+        \nReport bugs to https://github.com/badaix/snapcast/issues
+        """,
+        formatter_class=argparse.RawTextHelpFormatter,
+    )
+    parser.add_argument(
+        "--librespot-host",
+        type=str,
+        default=params["librespot-host"],
+        help="The hostname or IP address of the librespot instance.",
+    )
+    parser.add_argument(
+        "--librespot-port",
+        type=int,
+        default=params["librespot-port"],
+        help="The port of the librespot web API.",
+    )
+    parser.add_argument(
+        "--stream",
+        type=str,
+        default=params["stream"],
+        help="The name of the Snapcast stream to control.",
+    )
+    parser.add_argument(
+        "--snapcast-host",
+        type=str,
+        default=params["snapcast-host"],
+        help="The hostname or IP address of the Snapserver.",
+    )
+    parser.add_argument(
+        "--snapcast-port",
+        type=int,
+        default=params["snapcast-port"],
+        help="The JSON-RPC port of the Snapserver.",
+    )
+    parser.add_argument(
+        "-d", "--debug", action="store_true", help="Enable debug logging."
+    )
+    parser.add_argument(
+        "-v", "--version", action="version", version=f"%(prog)s {__version__}"
+    )
 
-ctrl = LibrespotControl(
-    params["librespot-host"], params["librespot-port"], params["stream"]
-)
-ctrl.start()
+    args = parser.parse_args()
 
-# ---- Snapcast control loop ----
-try:
-    for line in sys.stdin:
-        line = line.strip()
-        if not line:
-            continue
-        try:
-            req = json.loads(line)
-            method = req.get("method", "")
-            id_ = req.get("id")
-            if method.endswith(".Control"):
-                action = req["params"].get("command", "")
-                logger.debug(f"Control command: {action}")
+    # Update global configuration from parsed arguments
+    params["librespot-host"] = args.librespot_host
+    params["librespot-port"] = args.librespot_port
+    params["stream"] = args.stream
+    params["snapcast-host"] = args.snapcast_host
+    params["snapcast-port"] = args.snapcast_port
 
-                if action == "play":
-                    post_json("player/resume")
-                elif action == "pause":
-                    post_json("player/pause")
-                elif action == "playPause":
-                    status = ctrl._properties["playbackStatus"]
-                    post_json(
-                        "player/pause" if status == "playing" else "player/resume"
-                    )
+    if args.debug:
+        global log_level
+        log_level = logging.DEBUG
+        logger.setLevel(log_level)
 
-                elif action == "previous":
-                    # prev always worked via POST without body
-                    r = post_json("player/prev")
-                    if not r or r.status_code // 100 != 2:
-                        get_simple("player/prev")
 
-                elif action == "next":
-                    # send an explicit empty JSON body; fallback to GET if needed
-                    r = post_json("player/next", payload={})
-                    if not r or r.status_code // 100 != 2:
-                        get_simple("player/next")
+if __name__ == "__main__":
+    parse_args()
 
-                elif action == "setPosition":
-                    pos = float(req["params"].get("params", {}).get("position", 0))
-                    post_json("player/seek", {"position": int(pos * 1000)})
+    BASE = f"http://{params['librespot-host']}:{params['librespot-port']}"
 
-                # ack
-                if id_ is not None:
-                    send({"jsonrpc": "2.0", "result": "ok", "id": id_})
+    ctrl = LibrespotControl(
+        params["librespot-host"], params["librespot-port"], params["stream"]
+    )
+    ctrl.start()
 
-            elif method.endswith(".GetProperties"):
-                send({"jsonrpc": "2.0", "id": id_, "result": ctrl._properties})
+    try:
+        for line in sys.stdin:
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                req = json.loads(line)
+                method = req.get("method", "")
+                id_ = req.get("id")
+                if method.endswith(".Control"):
+                    action = req["params"].get("command", "")
+                    logger.debug(f"Control command: {action}")
 
-            elif method.endswith(".SetProperty"):
-                # We keep Spotify volume fixed; ignore for now.
-                if id_ is not None:
-                    send({"jsonrpc": "2.0", "id": id_, "result": "ok"})
+                    if action == "play":
+                        post_json("player/resume")
+                    elif action == "pause":
+                        post_json("player/pause")
+                    elif action == "playPause":
+                        status = ctrl._properties["playbackStatus"]
+                        post_json(
+                            "player/pause" if status == "playing" else "player/resume"
+                        )
 
-        except Exception as e:
-            logger.debug(f"Error processing command: {e}")
+                    elif action == "previous":
+                        # prev always worked via POST without body
+                        r = post_json("player/prev")
+                        if not r or r.status_code // 100 != 2:
+                            get_simple("player/prev")
 
-except KeyboardInterrupt:
-    ctrl.stop()
+                    elif action == "next":
+                        # send an explicit empty JSON body; fallback to GET if needed
+                        r = post_json("player/next", payload={})
+                        if not r or r.status_code // 100 != 2:
+                            get_simple("player/next")
+
+                    elif action == "setPosition":
+                        pos = float(req["params"].get("params", {}).get("position", 0))
+                        post_json("player/seek", {"position": int(pos * 1000)})
+
+                    # ack
+                    if id_ is not None:
+                        send({"jsonrpc": "2.0", "result": "ok", "id": id_})
+
+                elif method.endswith(".GetProperties"):
+                    send({"jsonrpc": "2.0", "id": id_, "result": ctrl._properties})
+
+                elif method.endswith(".SetProperty"):
+                    # We keep Spotify volume fixed; ignore for now.
+                    if id_ is not None:
+                        send({"jsonrpc": "2.0", "id": id_, "result": "ok"})
+
+            except Exception as e:
+                logger.debug(f"Error processing command: {e}")
+
+    except KeyboardInterrupt:
+        ctrl.stop()
