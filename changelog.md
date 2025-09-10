@@ -20,6 +20,7 @@
 - Make ALSA optional (PR #1422)
 - Enable OpenSSL support for Android builds in `CMakeLists.txt` (PR #1373)
 - Update Readme (PR #1431)
+- Build Trixie packages for amd64 (Issue #1429)
 
 ### Contributors
 
