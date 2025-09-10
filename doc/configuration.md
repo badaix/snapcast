@@ -87,7 +87,7 @@ Parameters introduced by Snapclient:
 
 ### go-librespot
 
-Add a `source` entry to `/etc/snapserver.conf` which will launch [go-librespot](https://github.com/devgianlu/go-librespot) and read audio from stdout. Note that using different source profiles will require to have different configuration directories for `go-librespot`, each configured with different device name and server port accordingly:
+Add a stream source entry of type `process` which is briefly described further down, to `/etc/snapserver.conf` to launch [go-librespot](https://github.com/devgianlu/go-librespot) and read audio from stdout. Note that adding several more such stream sources with different profiles will require to have different configuration directories for `go-librespot`, each configured with different device name and server port accordingly:
 
 ```sh
 source = process:///<path/to/go-librespot>?name=<name>&params=--config_dir%20/var/lib/snapserver/.config/go-librespot/<name>&dryout_ms=2000&wd_timeout=0&log_stderr=false&controlscript=meta_go-librespot.py&controlscriptparams=--stream=<name>%20--librespot-host=127.0.0.1%20--librespot-port=24879
