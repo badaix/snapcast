@@ -49,6 +49,7 @@ jobs:
         debian:
           - bullseye
           - bookworm
+          - trixie
         arch:
           - amd64
           - armhf
@@ -63,7 +64,11 @@ jobs:
           - arch: "arm64"
             os: self-hosted-rpi5
             image_prefix: "badaix/raspios-lite:"
-
+        exclude:
+          - debian: trixie
+            arch: armhf
+          - debian: trixie
+            arch: arm64
     runs-on: ${{ matrix.os }}
     name: deb (${{ matrix.arch }}, ${{ matrix.debian }})
     timeout-minutes: 240
