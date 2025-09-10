@@ -19,6 +19,7 @@
 - Server: Make SSL support optional (`-DBUILD_WITH_SSL`) (Issue #1426, PR #1427)
 - Make ALSA optional (PR #1422)
 - Enable OpenSSL support for Android builds in `CMakeLists.txt` (PR #1373)
+- Update Readme (PR #1431)
 
 ### Contributors
 
@@ -27,6 +28,7 @@
 - @aanno
 - @filmor
 - @sajjadsabzkar
+- @MickMorley
 
 _Johannes Pohl <snapcast@badaix.de>  Mon, 18 Aug 2025 00:13:37 +0200_
 
