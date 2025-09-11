@@ -42,10 +42,13 @@
 #include <sys/sysinfo.h>
 #endif
 #ifdef MACOS
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wzero-length-array"
 #include <IOKit/IOCFPlugIn.h>
 #include <IOKit/IOTypes.h>
 #include <ifaddrs.h>
 #include <net/if_dl.h>
+#pragma clang diagnostic pop
 #endif
 #ifdef ANDROID
 #include <sys/system_properties.h>

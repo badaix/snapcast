@@ -1,6 +1,11 @@
 set(SOURCES resampler.cpp sample_format.cpp base64.cpp stream_uri.cpp
             utils/string_utils.cpp)
 
+if(LIBRIST_FOUND)
+  list(APPEND SOURCES rist_transport.cpp)
+  include_directories(${LIBRIST_INCLUDE_DIRS})
+endif()
+
 if(NOT WIN32 AND NOT ANDROID)
   list(APPEND SOURCES daemon.cpp)
 endif()

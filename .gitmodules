@@ -1,0 +1,4 @@
+[submodule "librist"]
+	path = librist
+	# url = https://github.com/nanake/librist.git
+	url = https://code.videolan.org/rist/librist.git

@@ -25,6 +25,9 @@
 #include "control_server.hpp"
 #include "server_settings.hpp"
 #include "stream_session.hpp"
+#ifdef HAS_LIBRIST
+#include "common/rist_transport.hpp"
+#endif
 
 // 3rd party headers
 #include <boost/asio/io_context.hpp>
@@ -43,7 +46,7 @@ using acceptor_ptr = std::unique_ptr<tcp::acceptor>;
 using session_ptr = std::shared_ptr<StreamSession>;
 
 
-/// Forwars PCM data to the connected clients
+/// Forwards PCM data to the connected clients
 /**
  * Reads PCM data from several StreamSessions
  * Accepts and holds client connections (StreamSession)
@@ -51,6 +54,9 @@ using session_ptr = std::shared_ptr<StreamSession>;
  * Forwards PCM data to the clients
  */
 class StreamServer : public StreamMessageReceiver
+#ifdef HAS_LIBRIST
+                   , public RistTransportReceiver
+#endif
 {
 public:
     /// c'tor
@@ -85,6 +91,17 @@ private:
     void onMessageReceived(const std::shared_ptr<StreamSession>& streamSession, const msg::BaseMessage& baseMessage, char* buffer) override;
     void onDisconnect(StreamSession* streamSession) override;
 
+#ifdef HAS_LIBRIST
+    /// Implementation of RistTransportReceiver
+    void onRistMessageReceived(const msg::BaseMessage& baseMessage, const std::string& payload, 
+                              const char* payload_ptr /*, size_t payload_size, uint16_t vport */) override;
+    void onRistClientConnected(const std::string& clientId) override;
+    void onRistClientDisconnected(const std::string& clientId) override;
+    
+    /// Get RIST parameters from active stream or config fallback
+    std::pair<uint32_t, uint32_t> getRistParameters() const;
+#endif
+
     mutable std::recursive_mutex sessionsMutex_;
     std::vector<std::weak_ptr<StreamSession>> sessions_;
     boost::asio::io_context& io_context_;
@@ -94,4 +111,9 @@ private:
     ServerSettings settings_;
     Queue<std::shared_ptr<msg::BaseMessage>> messages_;
     StreamMessageReceiver* messageReceiver_;
+
+#ifdef HAS_LIBRIST
+    std::unique_ptr<RistTransport> rist_transport_;
+    streamreader::PcmStream* active_pcm_stream_; ///< Current active stream for RIST CodecHeader
+#endif
 };

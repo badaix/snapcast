@@ -23,6 +23,10 @@
 // prototype/interface header file
 #include "controller.hpp"
 
+#ifdef HAS_LIBRIST
+#include "client_connection_rist_bidirectional.hpp"
+#endif
+
 // local headers
 #include "decoder/null_decoder.hpp"
 #include "decoder/pcm_decoder.hpp"
@@ -211,12 +215,24 @@ void Controller::getNextMessage()
         {
             serverSettings_ = msg::message_cast<msg::ServerSettings>(std::move(response));
             LOG(INFO, LOG_TAG) << "ServerSettings - buffer: " << serverSettings_->getBufferMs() << ", latency: " << serverSettings_->getLatency()
-                               << ", volume: " << serverSettings_->getVolume() << ", muted: " << serverSettings_->isMuted() << "\n";
+                               << ", volume: " << serverSettings_->getVolume() << ", muted: " << serverSettings_->isMuted() 
+                               << ", RIST recovery_length_min: " << serverSettings_->getRistRecoveryLengthMin()
+                               << ", RIST recovery_length_max: " << serverSettings_->getRistRecoveryLengthMax() << "\n";
             if (stream_ && player_)
             {
                 player_->setVolume({serverSettings_->getVolume() / 100., serverSettings_->isMuted()});
-                stream_->setBufferLen(std::max(0, serverSettings_->getBufferMs() - serverSettings_->getLatency() - settings_.player.latency));
+                stream_->setBufferLen(std::max(0, serverSettings_->getBufferMs() - serverSettings_->getLatency() - settings_.player.latency + settings_.player.rist_latency));
             }
+            
+            // Update RIST parameters if this is a RIST connection
+#ifdef HAS_LIBRIST
+            auto* rist_connection = dynamic_cast<ClientConnectionRistBidirectional*>(clientConnection_.get());
+            if (rist_connection)
+            {
+                rist_connection->updateRistParameters(serverSettings_->getRistRecoveryLengthMin(), 
+                                                     serverSettings_->getRistRecoveryLengthMax());
+            }
+#endif // HAS_LIBRIST
         }
         else if (response->type == message_type::kCodecHeader)
         {
@@ -248,7 +264,7 @@ void Controller::getNextMessage()
             LOG(INFO, LOG_TAG) << "Codec: " << headerChunk_->codec << ", sampleformat: " << sampleFormat_.toString() << "\n";
 
             stream_ = make_shared<Stream>(sampleFormat_, settings_.player.sample_format);
-            stream_->setBufferLen(std::max(0, serverSettings_->getBufferMs() - serverSettings_->getLatency() - settings_.player.latency));
+            stream_->setBufferLen(std::max(0, serverSettings_->getBufferMs() - serverSettings_->getLatency() - settings_.player.latency + settings_.player.rist_latency));
 
 #ifdef HAS_ALSA
             if (!player_)
@@ -330,7 +346,7 @@ void Controller::getNextMessage()
 void Controller::sendTimeSyncMessage(int quick_syncs)
 {
     auto timeReq = std::make_shared<msg::Time>();
-    clientConnection_->sendRequest<msg::Time>(timeReq, 2s,
+    clientConnection_->sendRequest<msg::Time>(timeReq, 10s,
                                               [this, quick_syncs](const boost::system::error_code& ec, const std::unique_ptr<msg::Time>& response) mutable
     {
         if (ec)
@@ -430,6 +446,10 @@ void Controller::start()
         else if (settings_.server.protocol == "wss")
             clientConnection_ = make_unique<ClientConnectionWss>(io_context_, ssl_context_, settings_.server);
 #endif
+#ifdef HAS_LIBRIST
+        else if (settings_.server.protocol == "rist")
+            clientConnection_ = make_unique<ClientConnectionRistBidirectional>(io_context_, settings_.server);
+#endif
         else
             clientConnection_ = make_unique<ClientConnectionTcp>(io_context_, settings_.server);
         worker();
@@ -476,11 +496,13 @@ void Controller::worker()
             getNextMessage();
 
             // Say hello to the server
+            LOG(INFO, LOG_TAG) << "*** HELLO SEND *** Preparing to send Hello message to server\n";
             std::optional<msg::Hello::Auth> auth;
             if (settings_.server.auth.has_value())
                 auth = msg::Hello::Auth{settings_.server.auth->scheme, settings_.server.auth->param};
             auto hello = std::make_shared<msg::Hello>(macAddress, settings_.host_id, settings_.instance, auth);
-            clientConnection_->sendRequest(hello, 2s, [this](const boost::system::error_code& ec, std::unique_ptr<msg::BaseMessage> response) mutable
+            LOG(INFO, LOG_TAG) << "*** HELLO SEND *** Sending Hello with MAC: " << macAddress << ", host_id: " << settings_.host_id << "\n";
+            clientConnection_->sendRequest(hello, 10s, [this](const boost::system::error_code& ec, std::unique_ptr<msg::BaseMessage> response) mutable
             {
                 if (ec)
                 {
@@ -507,7 +529,9 @@ void Controller::worker()
 
                     serverSettings_ = msg::message_cast<msg::ServerSettings>(std::move(response));
                     LOG(INFO, LOG_TAG) << "ServerSettings - buffer: " << serverSettings_->getBufferMs() << ", latency: " << serverSettings_->getLatency()
-                                       << ", volume: " << serverSettings_->getVolume() << ", muted: " << serverSettings_->isMuted() << "\n";
+                                       << ", volume: " << serverSettings_->getVolume() << ", muted: " << serverSettings_->isMuted()
+                                       << ", RIST recovery_length_min: " << serverSettings_->getRistRecoveryLengthMin()
+                                       << ", RIST recovery_length_max: " << serverSettings_->getRistRecoveryLengthMax() << "\n";
 
                     // Do initial time sync with the server
                     sendTimeSyncMessage(50);

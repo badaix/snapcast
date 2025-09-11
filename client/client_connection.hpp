@@ -128,7 +128,7 @@ public:
     /// @param message the message
     /// @param timeout the send timeout
     /// @param handler async result handler with the response message or error
-    void sendRequest(const msg::message_ptr& message, const chronos::usec& timeout, const MessageHandler<msg::BaseMessage>& handler);
+    virtual void sendRequest(const msg::message_ptr& message, const chronos::usec& timeout, const MessageHandler<msg::BaseMessage>& handler);
 
     /// @sa sendRequest with templated response message
     template <typename Message>
@@ -160,7 +160,7 @@ protected:
     virtual boost::system::error_code doConnect(boost::asio::ip::basic_endpoint<boost::asio::ip::tcp> endpoint) = 0;
 
     /// Handle received messages, check for response of pending requests
-    void messageReceived(std::unique_ptr<msg::BaseMessage> message, const MessageHandler<msg::BaseMessage>& handler);
+    virtual void messageReceived(std::unique_ptr<msg::BaseMessage> message, const MessageHandler<msg::BaseMessage>& handler);
 
     /// Send next pending message from messages_
     void sendNext();

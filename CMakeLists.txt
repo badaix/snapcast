@@ -110,6 +110,7 @@ option(BUILD_WITH_EXPAT "Build with EXPAT support" ON)
 option(BUILD_WITH_PULSE "Build with PulseAudio support" OFF)
 option(BUILD_WITH_JACK "Build with JACK support" OFF)
 option(BUILD_WITH_PIPEWIRE "Build with PipeWire support" OFF)
+option(BUILD_WITH_LIBRIST "Build with librist support" OFF)
 
 if(NOT BUILD_SHARED_LIBS AND NOT BUILD_STATIC_LIBS)
   message(
@@ -232,6 +233,16 @@ if(NOT WIN32 AND NOT ANDROID)
       pkg_search_module(PIPEWIRE REQUIRED libpipewire-0.3>=0.3.19)
       add_compile_definitions(HAS_PIPEWIRE)
     endif(BUILD_WITH_PIPEWIRE)
+
+    if(BUILD_WITH_LIBRIST)
+      # Use custom static librist build - build dir first for librist_config.h
+      set(LIBRIST_INCLUDE_DIRS "${CMAKE_SOURCE_DIR}/librist/build/include" "${CMAKE_SOURCE_DIR}/librist/include")
+      # librist static library with its dependencies
+      set(LIBRIST_LIBRARIES "${CMAKE_SOURCE_DIR}/librist/build/librist.a" "cjson" "mbedtls" "mbedx509" "mbedcrypto")
+      set(LIBRIST_FOUND TRUE)
+      message(STATUS "Using static librist: ${LIBRIST_LIBRARIES}")
+      add_compile_definitions(HAS_LIBRIST)
+    endif(BUILD_WITH_LIBRIST)
 
     if(BUILD_WITH_AVAHI)
       pkg_search_module(AVAHI REQUIRED avahi-client)

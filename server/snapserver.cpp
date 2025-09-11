@@ -118,6 +118,12 @@ int main(int argc, char* argv[])
         auto tcp_bind_to_address = conf.add<Value<string>>("", "tcp.bind_to_address", "address for the server to listen on",
                                                            settings.tcp.bind_to_address.front(), &settings.tcp.bind_to_address[0]);
 
+        // RIST streaming settings
+        conf.add<Value<bool>>("", "rist.enabled", "enable RIST streaming", settings.rist.enabled, &settings.rist.enabled);
+        conf.add<Value<size_t>>("", "rist.port", "which port the server should listen on", settings.rist.port, &settings.rist.port);
+        auto rist_bind_to_address = conf.add<Value<string>>("", "rist.bind_to_address", "address for the server to listen on",
+                                                            settings.rist.bind_to_address.front(), &settings.rist.bind_to_address[0]);
+
         // stream settings
         conf.add<Value<std::filesystem::path>>("", "stream.plugin_dir", "stream plugin directory", settings.stream.plugin_dir, &settings.stream.plugin_dir);
         auto stream_bind_to_address = conf.add<Value<string>>("", "stream.bind_to_address", "address for the server to listen on",
@@ -285,6 +291,12 @@ int main(int argc, char* argv[])
             settings.stream.bind_to_address.clear();
             for (size_t n = 0; n < stream_bind_to_address->count(); ++n)
                 settings.stream.bind_to_address.push_back(stream_bind_to_address->value(n));
+        }
+        if (rist_bind_to_address->is_set())
+        {
+            settings.rist.bind_to_address.clear();
+            for (size_t n = 0; n < rist_bind_to_address->count(); ++n)
+                settings.rist.bind_to_address.push_back(rist_bind_to_address->value(n));
         }
 
         if (!settings.ssl.certificate.empty() && !settings.ssl.certificate_key.empty())

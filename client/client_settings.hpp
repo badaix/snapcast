@@ -101,6 +101,8 @@ struct ClientSettings
         std::string parameter;
         /// additional latency of the DAC [ms]
         int latency{0};
+        /// additional latency for RIST transport [ms] - added to buffer tolerance
+        int rist_latency{0};
         /// the DAC
         player::PcmDevice pcm_device;
         /// Sampleformat to be uses, i.e. 48000:16:2
