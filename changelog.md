@@ -6,6 +6,7 @@
 
 - Server: Add PipeWire stream reader (PR #1418, Issue #1371)
 - Client: Add PipeWire player (PR #1420, Issue #1419, #821)
+- Server: Librespot stream sources can be added via RPC (Issue: #1359)
 
 ### Bugfixes
 

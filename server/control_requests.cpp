@@ -781,7 +781,7 @@ void StreamAddRequest::execute(const jsonrpcpp::request_ptr& request, AuthInfo& 
     checkParams(request, {"streamUri"});
 
     // Don't allow adding streams that start a user defined process: CVE-2023-36177
-    static constexpr std::array whitelist{"pipe", "file", "tcp", "alsa", "jack", "meta"};
+    static constexpr std::array whitelist{"pipe", "file", "tcp", "alsa", "spotify", "librespot", "jack", "meta"};
     std::string stream_uri = request->params().get("streamUri");
     StreamUri parsed_uri(stream_uri);
 

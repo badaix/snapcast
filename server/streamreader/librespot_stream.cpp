@@ -62,6 +62,9 @@ static constexpr auto SPOTIFY_LOGO = "PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVV
 LibrespotStream::LibrespotStream(PcmStream::Listener* pcmListener, boost::asio::io_context& ioc, const ServerSettings& server_settings, const StreamUri& uri)
     : ProcessStream(pcmListener, ioc, server_settings, uri)
 {
+    if (params_.find("--onevent") != std::string::npos)
+        throw SnapException("please use '&onevent' to configure the '--onevent' script instead of '&param'");
+
     wd_timeout_sec_ = cpt::stoul(uri_.getQuery("wd_timeout", "7800")); ///< 130min
 
     string username = uri_.getQuery("username", "");
@@ -92,7 +95,23 @@ LibrespotStream::LibrespotStream(PcmStream::Listener* pcmListener, boost::asio::
     if (!volume.empty())
         params_ += " --initial-volume " + volume;
     if (!onevent.empty())
-        params_ += " --onevent \"" + onevent + "\"";
+    {
+        std::filesystem::path script = onevent;
+        // script must be located in the [stream] plugin_dir
+        std::filesystem::path plugin_dir = server_settings.stream.plugin_dir;
+        // if script file name is relative, prepend the plugin_dir
+        if (!script.is_absolute())
+            script = plugin_dir / script;
+        // convert to normalized absolute path
+        script = std::filesystem::weakly_canonical(script);
+        LOG(DEBUG, LOG_TAG) << "onevent script: " << script.native() << "\n";
+        // check if script is directly located in plugin_dir
+        if (script.parent_path() != plugin_dir)
+            throw SnapException("onevent script must be located in '" + plugin_dir.native() + "'");
+        if (!std::filesystem::exists(script))
+            throw SnapException("on event script '" + script.native() + "' does not exist");
+        params_ += " --onevent \"" + script.native() + "\"";
+    }
     if (normalize)
         params_ += " --enable-volume-normalisation";
     if (autoplay)
@@ -103,7 +122,7 @@ LibrespotStream::LibrespotStream(PcmStream::Listener* pcmListener, boost::asio::
         uri_.query["username"] = "xxx";
     if (uri_.query.find("password") != uri_.query.end())
         uri_.query["password"] = "xxx";
-    //	LOG(INFO, LOG_TAG) << "params: " << params << "\n";
+    // LOG(DEBUG, LOG_TAG) << "params: " << params_ << "\n";
 }
 
 
