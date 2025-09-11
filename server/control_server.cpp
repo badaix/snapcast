@@ -185,7 +185,7 @@ void ControlServer::startAccept()
             auto port = socket.local_endpoint().port();
             LOG(NOTICE, LOG_TAG) << "New connection from: " << socket.remote_endpoint().address().to_string() << ", port: " << port << "\n";
 
-            if (port == settings_.tcp.port)
+            if (port == settings_.tcp_control.port)
             {
                 auto session = make_shared<ControlSessionTcp>(this, std::move(socket), settings_);
                 onNewSession(std::move(session));
@@ -220,19 +220,19 @@ void ControlServer::startAccept()
 
 void ControlServer::start()
 {
-    if (settings_.tcp.enabled)
+    if (settings_.tcp_control.enabled)
     {
-        for (const auto& address : settings_.tcp.bind_to_address)
+        for (const auto& address : settings_.tcp_control.bind_to_address)
         {
             try
             {
-                LOG(INFO, LOG_TAG) << "Creating TCP acceptor for address: " << address << ", port: " << settings_.tcp.port << "\n";
+                LOG(INFO, LOG_TAG) << "Creating TCP control acceptor for address: " << address << ", port: " << settings_.tcp_control.port << "\n";
                 acceptor_.emplace_back(make_unique<tcp::acceptor>(boost::asio::make_strand(io_context_.get_executor()),
-                                                                  tcp::endpoint(boost::asio::ip::make_address(address), settings_.tcp.port)));
+                                                                  tcp::endpoint(boost::asio::ip::make_address(address), settings_.tcp_control.port)));
             }
             catch (const boost::system::system_error& e)
             {
-                LOG(ERROR, LOG_TAG) << "error creating TCP acceptor: " << e.what() << ", code: " << e.code() << "\n";
+                LOG(ERROR, LOG_TAG) << "error creating TCP control acceptor: " << e.what() << ", code: " << e.code() << "\n";
             }
         }
     }
