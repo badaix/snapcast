@@ -94,24 +94,10 @@ PcmStreamPtr StreamManager::addStream(StreamUri& streamUri)
     {
         stream = make_shared<PipeStream>(listener, io_context_, settings_, streamUri);
     }
-    else if (streamUri.scheme == "file")
-    {
-        stream = make_shared<FileStream>(listener, io_context_, settings_, streamUri);
-    }
-    else if (streamUri.scheme == "process")
-    {
-        stream = make_shared<ProcessStream>(listener, io_context_, settings_, streamUri);
-    }
 #ifdef HAS_ALSA
     else if (streamUri.scheme == "alsa")
     {
         stream = make_shared<AlsaStream>(listener, io_context_, settings_, streamUri);
-    }
-#endif
-#ifdef HAS_JACK
-    else if (streamUri.scheme == "jack")
-    {
-        stream = make_shared<JackStream>(listener, io_context_, settings_, streamUri);
     }
 #endif
     else if ((streamUri.scheme == "spotify") || (streamUri.scheme == "librespot"))
@@ -130,13 +116,17 @@ PcmStreamPtr StreamManager::addStream(StreamUri& streamUri)
         streamUri.query[kUriSampleFormat] = "44100:16:2";
         stream = make_shared<AirplayStream>(listener, io_context_, settings_, streamUri);
     }
+    else if (streamUri.scheme == "file")
+    {
+        stream = make_shared<FileStream>(listener, io_context_, settings_, streamUri);
+    }
+    else if (streamUri.scheme == "process")
+    {
+        stream = make_shared<ProcessStream>(listener, io_context_, settings_, streamUri);
+    }
     else if (streamUri.scheme == "tcp")
     {
         stream = make_shared<TcpStream>(listener, io_context_, settings_, streamUri);
-    }
-    else if (streamUri.scheme == "meta")
-    {
-        stream = make_shared<MetaStream>(listener, streams_, io_context_, settings_, streamUri);
     }
 #ifdef HAS_PIPEWIRE
     else if (streamUri.scheme == "pipewire")
@@ -144,6 +134,16 @@ PcmStreamPtr StreamManager::addStream(StreamUri& streamUri)
         stream = make_shared<PipeWireStream>(listener, io_context_, settings_, streamUri);
     }
 #endif
+#ifdef HAS_JACK
+    else if (streamUri.scheme == "jack")
+    {
+        stream = make_shared<JackStream>(listener, io_context_, settings_, streamUri);
+    }
+#endif
+    else if (streamUri.scheme == "meta")
+    {
+        stream = make_shared<MetaStream>(listener, streams_, io_context_, settings_, streamUri);
+    }
     else
     {
         throw SnapException("Unknown stream type: " + streamUri.scheme);
