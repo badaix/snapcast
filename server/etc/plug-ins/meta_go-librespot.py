@@ -157,7 +157,7 @@ class LibrespotControl:
         elif event == "volume":
             self._properties["volume"] = int(data["value"] / data["max"] * 100.0)
         elif event == "seek":
-            self._properties["position"] = float(data["trackTime"]) / 1000.0
+            self._properties["position"] = float(data["position"]) / 1000.0
         elif event == "metadata":
             with self._lock:
                 self._metadata.update(
@@ -264,6 +264,12 @@ class LibrespotControl:
                 elif action == "setPosition":
                     pos = float(req["params"].get("params", {}).get("position", 0))
                     self.post_json("player/seek", {"position": int(pos * 1000)})
+
+                elif action == "seek":
+                    pos = float(req["params"].get("params", {}).get("offset", 0))
+                    self.post_json(
+                        "player/seek", {"position": int(pos * 1000), "relative": True}
+                    )
 
                 # ack
                 if id_ is not None:
