@@ -140,7 +140,7 @@ void StreamSessionWebsocket::sendAsync(const std::shared_ptr<shared_const_buffer
 #ifdef HAS_OPENSSL
     if (is_ssl_)
     {
-        ssl_ws_->async_write(buffer, [self = shared_from_this(), buffer, handler = std::move(handler)](boost::system::error_code ec, std::size_t length)
+        ssl_ws_->async_write(*buffer, [self = shared_from_this(), buffer, handler = std::move(handler)](boost::system::error_code ec, std::size_t length)
         {
             if (handler)
                 handler(ec, length);
@@ -149,7 +149,7 @@ void StreamSessionWebsocket::sendAsync(const std::shared_ptr<shared_const_buffer
     else
 #endif
     {
-        tcp_ws_->async_write(buffer, [self = shared_from_this(), buffer, handler = std::move(handler)](boost::system::error_code ec, std::size_t length)
+        tcp_ws_->async_write(*buffer, [self = shared_from_this(), buffer, handler = std::move(handler)](boost::system::error_code ec, std::size_t length)
         {
             if (handler)
                 handler(ec, length);
