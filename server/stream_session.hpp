@@ -21,6 +21,7 @@
 
 // local headers
 #include "authinfo.hpp"
+#include "common/buffer_pool.hpp"
 #include "common/message/message.hpp"
 #include "streamreader/stream_manager.hpp"
 
@@ -61,10 +62,14 @@ class shared_const_buffer
     /// the message
     struct Message
     {
-        std::vector<char> data;           ///< data
+        DynamicBufferPool::BufferGuard buffer_guard; ///< pooled buffer for data
+        size_t data_size;                 ///< actual size of data in buffer
         bool is_pcm_chunk;                ///< is it a PCM chunk
         message_type type;                ///< message type
         chronos::time_point_clk rec_time; ///< recording time
+        
+        Message(DynamicBufferPool::BufferGuard&& guard, size_t size) 
+            : buffer_guard(std::move(guard)), data_size(size) {}
     };
 
 public:
@@ -74,17 +79,28 @@ public:
         tv t;
         message.sent = t;
         const msg::PcmChunk* pcm_chunk = dynamic_cast<const msg::PcmChunk*>(&message);
-        message_ = std::make_shared<Message>();
+        
+        // Serialize message to get size
+        std::ostringstream oss;
+        message.serialize(oss);
+        std::string s = oss.str();
+        
+        // Acquire buffer from pool
+        auto buffer_guard = DynamicBufferPool::instance().acquire(s.size());
+        
+        // Copy data to pooled buffer
+        buffer_guard.resize(s.size());
+        std::copy(s.begin(), s.end(), buffer_guard.get().begin());
+        
+        // Create Message with pooled buffer
+        message_ = std::make_shared<Message>(std::move(buffer_guard), s.size());
         message_->type = message.type;
         message_->is_pcm_chunk = (pcm_chunk != nullptr);
         if (message_->is_pcm_chunk)
             message_->rec_time = pcm_chunk->start();
 
-        std::ostringstream oss;
-        message.serialize(oss);
-        std::string s = oss.str();
-        message_->data = std::vector<char>(s.begin(), s.end());
-        buffer_ = boost::asio::buffer(message_->data);
+        // Set up boost::asio buffer pointing to pooled data
+        buffer_ = boost::asio::buffer(message_->buffer_guard.get().data(), message_->data_size);
     }
 
     /// const buffer.
@@ -162,7 +178,7 @@ public:
 
 protected:
     /// Send data @p buffer to the streaming client, result is returned in the callback @p handler
-    virtual void sendAsync(const shared_const_buffer& buffer, WriteHandler&& handler) = 0;
+    virtual void sendAsync(const std::shared_ptr<shared_const_buffer> buffer, WriteHandler&& handler) = 0;
 
 public:
     /// Sends a message to the client (asynchronous)

@@ -134,9 +134,9 @@ std::string StreamSessionWebsocket::getIP()
 }
 
 
-void StreamSessionWebsocket::sendAsync(const shared_const_buffer& buffer, WriteHandler&& handler)
+void StreamSessionWebsocket::sendAsync(const std::shared_ptr<shared_const_buffer> buffer, WriteHandler&& handler)
 {
-    LOG(TRACE, LOG_TAG) << "sendAsync: " << buffer.message().type << "\n";
+    LOG(TRACE, LOG_TAG) << "sendAsync: " << buffer->message().type << "\n";
 #ifdef HAS_OPENSSL
     if (is_ssl_)
     {

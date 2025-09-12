@@ -62,9 +62,10 @@ void StreamSession::sendNext()
     buffer.on_air = true;
     boost::asio::post(strand_, [this, self = shared_from_this(), buffer]()
     {
-        sendAsync(buffer, [this, buffer](boost::system::error_code ec, std::size_t length)
+        auto buffer_ptr = std::make_shared<shared_const_buffer>(buffer);
+        sendAsync(buffer_ptr, [this, buffer_ptr](boost::system::error_code ec, std::size_t length)
         {
-            auto write_handler = buffer.getWriteHandler();
+            auto write_handler = buffer_ptr->getWriteHandler();
             if (write_handler)
                 write_handler(ec, length);
 

@@ -50,8 +50,7 @@ protected:
     /// Read next message
     void readNext();
     /// Send message @p buffer and pass result to @p handler
-    void sendAsync(const shared_const_buffer& buffer, WriteHandler&& handler) override;
-
-private:
+    void sendAsync(const std::shared_ptr<shared_const_buffer> buffer, WriteHandler&& handler) override;
+    
     tcp::socket socket_;
 };
