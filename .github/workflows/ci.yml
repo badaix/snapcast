@@ -349,7 +349,7 @@ jobs:
       - name: dependencies
         run: |
           brew update
-          brew install libsoxr flac libvorbis opus ccache expat catch2
+          brew install libsoxr flac libvorbis opus ccache catch2
       - name: cache boost
         id: cache-boost
         uses: actions/cache@v4
