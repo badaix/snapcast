@@ -51,6 +51,7 @@
 #endif
 
 #ifdef _WIN32
+#define NOMINMAX
 #include <Windows.h>
 // ERROR macro is defined in Windows header
 // To avoid conflict between these macro and declaration of ERROR / DEBUG in SEVERITY enum
@@ -79,6 +80,11 @@
 #endif
 #else
 #define AIXLOG_INTERNAL__FUNC __func__
+#endif
+
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wgnu-zero-variadic-macro-arguments"
 #endif
 
 /// Internal helper macros (exposed, but shouldn't be used directly)
@@ -149,6 +155,10 @@ namespace AixLog {
 #define CHOOSE_FROM_ARG_COUNT(...) FUNC_RECOMPOSER((__VA_ARGS__, LOG_2, LOG_1, FUNC_, ...))
 #define MACRO_CHOOSER(...) CHOOSE_FROM_ARG_COUNT(__VA_ARGS__())
 #define LOG(...) MACRO_CHOOSER(__VA_ARGS__)(__VA_ARGS__) << TIMESTAMP << FUNC
+#endif
+
+#if defined(__clang__)
+#pragma clang diagnostic pop
 #endif
 
 /**
