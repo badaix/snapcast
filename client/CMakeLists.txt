@@ -82,6 +82,16 @@ if(OPENSSL_FOUND)
   endif()
 endif()
 
+if(BUILD_WITH_LIBRIST)
+  # Use custom static librist build - build dir first for librist_config.h  
+  set(LIBRIST_LIBRARIES "${CMAKE_SOURCE_DIR}/librist/build/librist.a" "cjson" "mbedtls" "mbedx509" "mbedcrypto")
+  list(APPEND CLIENT_SOURCES client_connection_rist_bidirectional.cpp)
+  list(APPEND CLIENT_LIBRARIES ${LIBRIST_LIBRARIES})
+  include_directories("${CMAKE_SOURCE_DIR}/librist/build/include" "${CMAKE_SOURCE_DIR}/librist/include")
+  add_compile_definitions(HAS_LIBRIST)
+  message(STATUS "Using static libRIST: ${LIBRIST_LIBRARIES}")
+endif()
+
 if(ANDROID)
   list(APPEND CLIENT_LIBRARIES oboe::oboe)
   list(APPEND CLIENT_LIBRARIES boost::boost)

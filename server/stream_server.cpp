@@ -23,6 +23,12 @@
 #include "common/aixlog.hpp"
 #include "config.hpp"
 #include "stream_session_tcp.hpp"
+#ifdef HAS_LIBRIST
+
+#include "common/message/server_settings.hpp"
+#include "common/message/codec_header.hpp"
+#include "common/message/time.hpp"
+#endif
 
 // 3rd party headers
 
@@ -38,6 +44,9 @@ static constexpr auto LOG_TAG = "StreamServer";
 
 StreamServer::StreamServer(boost::asio::io_context& io_context, ServerSettings serverSettings, StreamMessageReceiver* messageReceiver)
     : io_context_(io_context), config_timer_(io_context), settings_(std::move(serverSettings)), messageReceiver_(messageReceiver)
+#ifdef HAS_LIBRIST
+    , active_pcm_stream_(nullptr)
+#endif
 {
 }
 
@@ -71,7 +80,7 @@ void StreamServer::addSession(const std::shared_ptr<StreamSession>& session)
 
 void StreamServer::onChunkEncoded(const PcmStream* pcmStream, bool isDefaultStream, const std::shared_ptr<msg::PcmChunk>& chunk, double /*duration*/)
 {
-    // LOG(TRACE, LOG_TAG) << "onChunkRead (" << pcmStream->getName() << "): " << duration << "ms\n";
+    // LOG(DEBUG, LOG_TAG) << "*** AUDIO CHUNK *** onChunkEncoded: stream=" << pcmStream->getName() << ", isDefault=" << isDefaultStream << ", chunkSize=" << chunk->payloadSize << "\n";
     shared_const_buffer buffer(*chunk);
 
     // make a copy of the sessions to avoid that a session get's deleted
@@ -104,11 +113,36 @@ void StreamServer::onChunkEncoded(const PcmStream* pcmStream, bool isDefaultStre
             }
         }
 
+        LOG(DEBUG, LOG_TAG) << "*** SESSION CHECK *** clientId=" << session->clientId 
+                       << ", hasPcmStream=" << (session->pcmStream() != nullptr)
+                       << ", isDefaultStream=" << isDefaultStream 
+                       << ", pcmStreamMatch=" << (session->pcmStream().get() == pcmStream) << "\n";
+                       
         if (!session->pcmStream() && isDefaultStream) //->getName() == "default")
+        {
+            LOG(DEBUG, LOG_TAG) << "*** SENDING AUDIO *** to " << session->clientId << " (default stream path)\n";
             session->send(buffer);
+        }
         else if (session->pcmStream().get() == pcmStream)
+        {
+            LOG(DEBUG, LOG_TAG) << "*** SENDING AUDIO *** to " << session->clientId << " (matched stream path)\n";
             session->send(buffer);
+        }
+        else
+        {
+            LOG(DEBUG, LOG_TAG) << "*** SKIPPING AUDIO *** for " << session->clientId << " (no stream match)\n";
+        }
     }
+
+#ifdef HAS_LIBRIST
+    // Send audio via RIST transport (parallel to TCP/WebSocket sessions)
+    if (rist_transport_ && isDefaultStream)
+    {
+        // Update active stream reference for CodecHeader
+        active_pcm_stream_ = const_cast<streamreader::PcmStream*>(pcmStream);
+        rist_transport_->sendAudioChunk(chunk);
+    }
+#endif
 }
 
 
@@ -237,6 +271,41 @@ void StreamServer::start()
     }
 
     startAccept();
+
+#ifdef HAS_LIBRIST
+    // Initialize RIST transport if enabled
+    if (settings_.rist.enabled && !settings_.rist.bind_to_address.empty())
+    {
+        LOG(INFO, LOG_TAG) << "RIST is enabled, creating transport...\n";
+        rist_transport_ = std::make_unique<RistTransport>(RistTransport::Mode::SERVER, this);
+        
+        // Configure for first address (like the old code)
+        const std::string& address = settings_.rist.bind_to_address[0];
+        if (rist_transport_->configureServer(address, settings_.rist.port))
+        {
+            if (rist_transport_->start())
+            {
+                LOG(INFO, LOG_TAG) << "Successfully started RIST transport for: " << address << ":" << settings_.rist.port << "\n";
+            }
+            else
+            {
+                LOG(ERROR, LOG_TAG) << "Failed to start RIST transport\n";
+                rist_transport_.reset();
+            }
+        }
+        else
+        {
+            LOG(ERROR, LOG_TAG) << "Failed to configure RIST transport\n";
+            rist_transport_.reset();
+        }
+    }
+    else
+    {
+        LOG(INFO, LOG_TAG) << "RIST is disabled in configuration\n";
+    }
+#else
+    LOG(INFO, LOG_TAG) << "RIST support not compiled in (HAS_LIBRIST not defined)\n";
+#endif
 }
 
 
@@ -246,6 +315,15 @@ void StreamServer::stop()
         acceptor->cancel();
     acceptor_.clear();
 
+#ifdef HAS_LIBRIST
+    // Stop RIST transport
+    if (rist_transport_)
+    {
+        rist_transport_->stop();
+        rist_transport_.reset();
+    }
+#endif
+
     std::lock_guard<std::recursive_mutex> mlock(sessionsMutex_);
     cleanup();
     for (const auto& s : sessions_)
@@ -254,3 +332,174 @@ void StreamServer::stop()
             session->stop();
     }
 }
+
+#ifdef HAS_LIBRIST
+// Helper function to get RIST parameters from active stream or fallback to config
+std::pair<uint32_t, uint32_t> StreamServer::getRistParameters() const
+{
+    // Try to get parameters from active stream first
+    if (active_pcm_stream_)
+    {
+        const auto& uri = active_pcm_stream_->getUri();
+        std::string min_str = uri.getQuery("recovery_length_min");
+        std::string max_str = uri.getQuery("recovery_length_max");
+        
+        if (!min_str.empty() && !max_str.empty())
+        {
+            try
+            {
+                auto min_val = static_cast<uint32_t>(std::stoi(min_str));
+                auto max_val = static_cast<uint32_t>(std::stoi(max_str));
+                LOG(DEBUG, LOG_TAG) << "Using RIST parameters from stream URL: recovery_length_min=" << min_val 
+                                   << ", recovery_length_max=" << max_val << "\n";
+                return {min_val, max_val};
+            }
+            catch (const std::exception& e)
+            {
+                LOG(WARNING, LOG_TAG) << "Failed to parse RIST parameters from stream URL: " << e.what() << "\n";
+            }
+        }
+    }
+    
+    // Fallback to config values
+    LOG(DEBUG, LOG_TAG) << "Using RIST parameters from config: recovery_length_min=" << settings_.rist.recovery_length_min 
+                       << ", recovery_length_max=" << settings_.rist.recovery_length_max << "\n";
+    return {settings_.rist.recovery_length_min, settings_.rist.recovery_length_max};
+}
+
+void StreamServer::onRistMessageReceived(const msg::BaseMessage& baseMessage, const std::string& payload, 
+                                        const char* payload_ptr /*, size_t payload_size, uint16_t vport */)
+{
+    // LOG(TRACE, LOG_TAG) << "RIST message received: type=" << baseMessage.type << ", vport=" << vport << "\n";
+    
+    // Handle RIST-specific messages directly (don't forward to session-based handler)
+    try 
+    {
+        if (baseMessage.type == message_type::kHello && (!payload.empty() || payload_ptr))
+        {
+            // Handle Hello messages from RIST clients
+            auto helloMsg = std::make_shared<msg::Hello>();
+            // For zero-copy optimization: use raw pointer if payload is empty (large audio data)
+            const char* data_ptr = payload.empty() ? payload_ptr : payload.data();
+            /*
+            if (payload.empty()) {
+                LOG(TRACE, LOG_TAG) << "🔄 SERVER ZERO-COPY: Processing Hello with direct pointer (" << payload_size << " bytes)\n";
+            } else {
+                LOG(TRACE, LOG_TAG) << "📋 SERVER COPY: Processing Hello with copied data (" << payload.size() << " bytes)\n";
+            }
+            */
+            helloMsg->deserialize(baseMessage, const_cast<char*>(data_ptr));
+            
+            LOG(DEBUG, LOG_TAG) << "RIST Hello received from client: " << helloMsg->getMacAddress() << "\n";
+            
+            // Send ServerSettings response via RIST transport
+            if (rist_transport_)
+            {
+                msg::ServerSettings serverSettings;
+                // Set refersTo field to correlate with Hello request
+                serverSettings.refersTo = baseMessage.id;
+                // Get RIST parameters from active stream or config
+                auto [min_recovery, max_recovery] = getRistParameters();
+                serverSettings.setRistRecoveryLengthMin(min_recovery);
+                serverSettings.setRistRecoveryLengthMax(max_recovery);
+                rist_transport_->sendMessage(RistTransport::VPORT_CONTROL, serverSettings);
+                LOG(INFO, LOG_TAG) << "Sent ServerSettings to RIST client via control channel\n";
+                
+                // Send CodecHeader from active stream if available
+                if (active_pcm_stream_)
+                {
+                    auto codecHeader = active_pcm_stream_->getHeader();
+                    if (codecHeader)
+                    {
+                        rist_transport_->sendMessage(RistTransport::VPORT_AUDIO, *codecHeader);
+                        LOG(DEBUG, LOG_TAG) << "Sent CodecHeader (" << codecHeader->payloadSize << " bytes) to RIST client via audio channel\n";
+                    }
+                    else
+                    {
+                        LOG(WARNING, LOG_TAG) << "No CodecHeader available from active stream\n";
+                    }
+                }
+                else
+                {
+                    LOG(WARNING, LOG_TAG) << "No active stream available for CodecHeader\n";
+                }
+            }
+        }
+        else if (baseMessage.type == message_type::kTime && (!payload.empty() || payload_ptr))
+        {
+            // Handle Time messages for RIST clients
+            auto timeMsg = std::make_shared<msg::Time>();
+            // For zero-copy optimization: use raw pointer if payload is empty (large audio data)
+            const char* data_ptr = payload.empty() ? payload_ptr : payload.data();
+            /*
+            if (payload.empty()) {
+                LOG(TRACE, LOG_TAG) << "⏱️ SERVER ZERO-COPY: Processing Time with direct pointer (" << payload_size << " bytes)\n";
+            } else {
+                LOG(TRACE, LOG_TAG) << "📋 SERVER COPY: Processing Time with copied data (" << payload.size() << " bytes)\n";
+            }
+            */
+            timeMsg->deserialize(baseMessage, const_cast<char*>(data_ptr));
+            timeMsg->refersTo = timeMsg->id;
+            timeMsg->latency = timeMsg->received - timeMsg->sent;
+            
+            // Send Time response back via RIST transport
+            if (rist_transport_)
+            {
+                rist_transport_->sendMessage(RistTransport::VPORT_BACKCHANNEL, *timeMsg);
+                // LOG(TRACE, LOG_TAG) << "Sent Time response via RIST backchannel\n";
+            }
+        }
+        else
+        {
+            LOG(DEBUG, LOG_TAG) << "RIST message type " << baseMessage.type << " not handled (no action needed)\n";
+        }
+    }
+    catch (const std::exception& e)
+    {
+        LOG(ERROR, LOG_TAG) << "Error processing RIST message: " << e.what() << "\n";
+    }
+}
+
+void StreamServer::onRistClientConnected(const std::string& clientId)
+{
+    LOG(INFO, LOG_TAG) << "RIST client connected: " << clientId << "\n";
+    
+    // Send ServerSettings and CodecHeader like the testrist server
+    if (rist_transport_)
+    {
+        // Create and send ServerSettings
+        msg::ServerSettings serverSettings;
+        // Get RIST parameters from active stream or config
+        auto [min_recovery, max_recovery] = getRistParameters();
+        serverSettings.setRistRecoveryLengthMin(min_recovery);
+        serverSettings.setRistRecoveryLengthMax(max_recovery);
+        rist_transport_->sendMessage(RistTransport::VPORT_CONTROL, serverSettings);
+        LOG(INFO, LOG_TAG) << "Sent ServerSettings to RIST client: " << clientId << " with recovery_length_min=" << min_recovery << ", recovery_length_max=" << max_recovery << "\n";
+        
+        // Send CodecHeader from active stream if available
+        if (active_pcm_stream_)
+        {
+            auto codecHeader = active_pcm_stream_->getHeader();
+            if (codecHeader)
+            {
+                rist_transport_->sendMessage(RistTransport::VPORT_AUDIO, *codecHeader);
+                LOG(DEBUG, LOG_TAG) << "Sent CodecHeader (" << codecHeader->payloadSize << " bytes) to RIST client: " << clientId << "\n";
+            }
+            else
+            {
+                LOG(WARNING, LOG_TAG) << "No CodecHeader available for RIST client: " << clientId << "\n";
+            }
+        }
+        else
+        {
+            LOG(WARNING, LOG_TAG) << "No active PCM stream available for RIST client: " << clientId << " - CodecHeader will be sent with first audio chunk\n";
+        }
+    }
+}
+
+void StreamServer::onRistClientDisconnected(const std::string& clientId)
+{
+    LOG(INFO, LOG_TAG) << "RIST client disconnected: " << clientId << "\n";
+    // Note: Unlike TCP sessions, RIST doesn't need explicit cleanup
+}
+#endif

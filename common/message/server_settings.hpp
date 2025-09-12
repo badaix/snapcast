@@ -89,6 +89,30 @@ public:
     {
         msg["muted"] = muted;
     }
+
+    /// @return RIST recovery length minimum in [ms]
+    uint32_t getRistRecoveryLengthMin()
+    {
+        return get("rist_recovery_length_min", static_cast<uint32_t>(20));
+    }
+
+    /// @return RIST recovery length maximum in [ms]
+    uint32_t getRistRecoveryLengthMax()
+    {
+        return get("rist_recovery_length_max", static_cast<uint32_t>(50));
+    }
+
+    /// Set RIST recovery length minimum to @p value [ms]
+    void setRistRecoveryLengthMin(uint32_t value)
+    {
+        msg["rist_recovery_length_min"] = value;
+    }
+
+    /// Set RIST recovery length maximum to @p value [ms]
+    void setRistRecoveryLengthMax(uint32_t value)
+    {
+        msg["rist_recovery_length_max"] = value;
+    }
 };
 
 } // namespace msg
