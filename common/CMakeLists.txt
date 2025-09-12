@@ -1,5 +1,5 @@
 set(SOURCES resampler.cpp sample_format.cpp base64.cpp stream_uri.cpp
-            utils/string_utils.cpp)
+            utils/string_utils.cpp aixlog.cpp)
 
 if(NOT WIN32 AND NOT ANDROID)
   list(APPEND SOURCES daemon.cpp)
