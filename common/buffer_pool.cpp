@@ -72,7 +72,7 @@ DynamicBufferPool::BufferGuard DynamicBufferPool::acquire(size_t min_size)
             LOG(TRACE, LOG_TAG) << "Reused buffer from size bucket " << it->first 
                                 << " for requested size " << target_size << "\n";
             
-            return BufferGuard(*this, std::move(buffer));
+            return { *this, std::move(buffer) };
         }
         ++it;
     }
@@ -83,7 +83,7 @@ DynamicBufferPool::BufferGuard DynamicBufferPool::acquire(size_t min_size)
     
     LOG(TRACE, LOG_TAG) << "Created new buffer of size " << target_size << "\n";
     
-    return BufferGuard(*this, std::move(buffer));
+    return { *this, std::move(buffer) };
 }
 
 void DynamicBufferPool::release(std::unique_ptr<Buffer> buffer)

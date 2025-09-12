@@ -18,6 +18,8 @@
 
 #pragma once
 
+#define NOMINMAX
+
 // standard headers
 #include <atomic>
 #include <memory>
@@ -42,10 +44,15 @@ public:
     /// Individual buffer wrapper with metadata
     struct Buffer
     {
+        /// @brief Actual buffer data
         std::vector<char> data;
+        /// @brief Current capacity of the buffer
         size_t capacity;
+        /// @brief Last used timestamp for cleanup purposes
         std::chrono::steady_clock::time_point last_used;
         
+        /// @brief c'tor for buffer of given size
+        /// @param size Initial size of the buffer
         explicit Buffer(size_t size) 
             : data(size)
             , capacity(size)
@@ -53,6 +60,8 @@ public:
         {
         }
         
+        /// @brief Resize buffer if needed
+        /// @param new_size 
         void resize_if_needed(size_t new_size)
         {
             if (new_size > capacity)
@@ -72,26 +81,36 @@ public:
     class BufferGuard
     {
     public:
+        /// @brief c'tor
+        /// @param pool Underlying buffer pool
+        /// @param buffer Underlying buffer
         BufferGuard(DynamicBufferPool& pool, std::unique_ptr<Buffer> buffer)
             : pool_(pool), buffer_(std::move(buffer))
         {
         }
         
+        /// @brief d'tor returns buffer to pool
         ~BufferGuard()
         {
             if (buffer_)
                 pool_.release(std::move(buffer_));
         }
         
-        // No copying, only moving
+        /// @brief Copy constructor deleted
+        /// No copying, only moving
         BufferGuard(const BufferGuard&) = delete;
+
+        /// @brief Move assignment operator deleted
+        /// No copying, only moving
         BufferGuard& operator=(const BufferGuard&) = delete;
         
+        /// @brief Move constructor
         BufferGuard(BufferGuard&& other) noexcept
             : pool_(other.pool_), buffer_(std::move(other.buffer_))
         {
         }
         
+        /// @brief Move assignment operator
         BufferGuard& operator=(BufferGuard&& other) noexcept
         {
             if (this != &other)
@@ -103,9 +122,13 @@ public:
             return *this;
         }
         
+        /// @brief Access underlying buffer data
         std::vector<char>& get() { return buffer_->data; }
+
+        /// @brief Access underlying buffer data (const)
         const std::vector<char>& get() const { return buffer_->data; }
         
+        /// @brief Resize underlying buffer if needed
         void resize(size_t size) { buffer_->resize_if_needed(size); }
         
     private:
@@ -125,15 +148,31 @@ public:
     /// Get pool statistics
     struct Stats
     {
+        /// @brief Total number of buffers managed by the pool
         size_t total_buffers{0};
+
+        /// @brief Total bytes allocated across all buffers
         size_t available_buffers{0};
+
+        /// @brief Total bytes currently allocated
         size_t bytes_allocated{0};
+
+        /// @brief Total number of buffers created since pool initialization
         size_t buffers_created{0};
+
+        /// @brief Total number of buffers reused from the pool
         size_t buffers_reused{0};
+
+        /// @brief Total number of cleanup operations performed
         size_t cleanup_operations{0};
     };
     
+    /// @brief Get current pool statistics
+    /// @return Stats structure with current statistics
     Stats getStats() const;
+
+    /// @brief Reset statistics counters
+    /// Note: This does not affect the actual pool or allocated buffers
     void resetStats();
     
     /// Force cleanup of old unused buffers
