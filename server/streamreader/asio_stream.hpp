@@ -87,6 +87,8 @@ protected:
     std::chrono::microseconds silence_{0ms};
     /// silence duration before switching the stream to idle
     std::chrono::milliseconds idle_threshold_;
+    std::chrono::milliseconds silence_threshold_;
+    bool silence_detection_disabled_;
 };
 
 
@@ -116,7 +118,9 @@ AsioStream<ReadStream>::AsioStream(PcmStream::Listener* pcmListener, boost::asio
     LOG(DEBUG, "AsioStream") << "Chunk duration: " << chunk_->durationMs() << " ms, frames: " << chunk_->getFrameCount() << ", size: " << chunk_->payloadSize
                              << "\n";
 
-    idle_threshold_ = std::chrono::milliseconds(std::max(cpt::stoi(uri_.getQuery("idle_threshold", "100")), 10));
+    idle_threshold_ = std::chrono::milliseconds(std::max(cpt::stoi(uri_.getQuery("idle_threshold", "500")), 10));
+    silence_threshold_ = std::chrono::milliseconds(std::max(cpt::stoi(uri_.getQuery("silence_threshold", "1500")), 10));
+    silence_detection_disabled_ = cpt::stoi(uri_.getQuery("silence_threshold", "1500")) == -1;
 
     buffer_ms_ = 50;
 
@@ -205,14 +209,14 @@ void AsioStream<ReadStream>::do_read()
 
         lastException_.clear();
 
-        if (isSilent(*chunk_))
+        if (isSilent(*chunk_) && !silence_detection_disabled_)
         {
             silence_ += chunk_->duration<std::chrono::microseconds>();
-            if (silence_ >= idle_threshold_)
+            if (silence_ >= silence_threshold_)
             {
                 setState(ReaderState::kIdle);
                 // Avoid overflow
-                silence_ = idle_threshold_;
+                silence_ = silence_threshold_;
             }
         }
         else
