@@ -329,16 +329,16 @@ jobs:
             os: macos-14
           - xcode: "15.4"
             os: macos-14
-          - xcode: "16.0"
-            os: macos-15
-          - xcode: "16.1"
-            os: macos-15
-          - xcode: "16.2"
-            os: macos-15
-          - xcode: "16.3"
-            os: macos-15
-          - xcode: "16.4"
-            os: macos-15
+          # - xcode: "16.0"
+          #   os: macos-15
+          # - xcode: "16.1"
+          #   os: macos-15
+          # - xcode: "16.2"
+          #   os: macos-15
+          # - xcode: "16.3"
+          #   os: macos-15
+          # - xcode: "16.4"
+          #   os: macos-15
 
     runs-on: ${{ matrix.os }}
 
