@@ -43,7 +43,8 @@ class AsioStream : public PcmStream
 {
 public:
     /// c'tor. Encoded PCM data is passed to the PipeListener
-    AsioStream(PcmStream::Listener* pcmListener, boost::asio::io_context& ioc, const ServerSettings& server_settings, const StreamUri& uri);
+    AsioStream(PcmStream::Listener* pcmListener, boost::asio::io_context& ioc, const ServerSettings& server_settings, const StreamUri& uri,
+               PcmStream::Source source);
 
     /// Start the stream reader, init the encoder and optionally the stream control
     void start() override;
@@ -110,8 +111,9 @@ void AsioStream<ReadStream>::wait(Timer& timer, const std::chrono::duration<Rep,
 
 
 template <typename ReadStream>
-AsioStream<ReadStream>::AsioStream(PcmStream::Listener* pcmListener, boost::asio::io_context& ioc, const ServerSettings& server_settings, const StreamUri& uri)
-    : PcmStream(pcmListener, ioc, server_settings, uri), read_timer_(strand_), state_timer_(strand_)
+AsioStream<ReadStream>::AsioStream(PcmStream::Listener* pcmListener, boost::asio::io_context& ioc, const ServerSettings& server_settings, const StreamUri& uri,
+                                   PcmStream::Source source)
+    : PcmStream(pcmListener, ioc, server_settings, uri, source), read_timer_(strand_), state_timer_(strand_)
 {
     LOG(DEBUG, "AsioStream") << "Chunk duration: " << chunk_->durationMs() << " ms, frames: " << chunk_->getFrameCount() << ", size: " << chunk_->payloadSize
                              << "\n";

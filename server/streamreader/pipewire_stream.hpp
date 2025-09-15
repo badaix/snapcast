@@ -46,7 +46,8 @@ class PipeWireStream : public PcmStream
 {
 public:
     /// ctor. Encoded PCM data is passed to the PipeListener
-    PipeWireStream(PcmStream::Listener* pcmListener, boost::asio::io_context& ioc, const ServerSettings& server_settings, const StreamUri& uri);
+    PipeWireStream(PcmStream::Listener* pcmListener, boost::asio::io_context& ioc, const ServerSettings& server_settings, const StreamUri& uri,
+                   PcmStream::Source source);
     ~PipeWireStream() override;
 
     void start() override;

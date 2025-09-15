@@ -120,6 +120,8 @@ int main(int argc, char* argv[])
 
         // stream settings
         conf.add<Value<std::filesystem::path>>("", "stream.plugin_dir", "stream plugin directory", settings.stream.plugin_dir, &settings.stream.plugin_dir);
+        conf.add<Value<std::filesystem::path>>("", "stream.sandbox_dir", "directory with executable process stream sources", settings.stream.sandbox_dir,
+                                               &settings.stream.sandbox_dir);
         auto stream_bind_to_address = conf.add<Value<string>>("", "stream.bind_to_address", "address for the server to listen on",
                                                               settings.stream.bind_to_address.front(), &settings.stream.bind_to_address[0]);
         conf.add<Value<size_t>>("", "stream.port", "which port the server should listen on", settings.stream.port, &settings.stream.port);
@@ -334,7 +336,8 @@ int main(int argc, char* argv[])
             settings.stream.sources.push_back(sourceValue->value());
 
         settings.stream.plugin_dir = std::filesystem::weakly_canonical(settings.stream.plugin_dir);
-        LOG(INFO, LOG_TAG) << "Stream plugin directory: " << settings.stream.plugin_dir << "\n";
+        settings.stream.sandbox_dir = std::filesystem::weakly_canonical(settings.stream.sandbox_dir);
+        LOG(INFO, LOG_TAG) << "Stream plugin directory: '" << settings.stream.plugin_dir << "', sandbox directory: '" << settings.stream.sandbox_dir << "'\n";
         for (size_t n = 0; n < streamValue->count(); ++n)
         {
             LOG(INFO, LOG_TAG) << "Adding stream: " << streamValue->value(n) << "\n";

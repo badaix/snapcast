@@ -23,7 +23,6 @@
 #include "common/aixlog.hpp"
 #include "common/snap_exception.hpp"
 #include "common/str_compat.hpp"
-#include "common/utils/string_utils.hpp"
 
 // 3rd party headers
 
@@ -39,8 +38,9 @@ namespace streamreader
 
 static constexpr auto LOG_TAG = "TcpStream";
 
-TcpStream::TcpStream(PcmStream::Listener* pcmListener, boost::asio::io_context& ioc, const ServerSettings& server_settings, const StreamUri& uri)
-    : AsioStream<tcp::socket>(pcmListener, ioc, server_settings, uri), reconnect_timer_(ioc)
+TcpStream::TcpStream(PcmStream::Listener* pcmListener, boost::asio::io_context& ioc, const ServerSettings& server_settings, const StreamUri& uri,
+                     PcmStream::Source source)
+    : AsioStream<tcp::socket>(pcmListener, ioc, server_settings, uri, source), reconnect_timer_(ioc)
 {
     static constexpr uint16_t DEFAULT_PORT = 4953;
     host_ = uri_.host;

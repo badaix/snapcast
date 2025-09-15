@@ -69,8 +69,9 @@ void wait(boost::asio::steady_timer& timer, const std::chrono::duration<Rep, Per
 } // namespace
 
 
-AlsaStream::AlsaStream(PcmStream::Listener* pcmListener, boost::asio::io_context& ioc, const ServerSettings& server_settings, const StreamUri& uri)
-    : PcmStream(pcmListener, ioc, server_settings, uri), handle_(nullptr), read_timer_(strand_), silence_(0ms)
+AlsaStream::AlsaStream(PcmStream::Listener* pcmListener, boost::asio::io_context& ioc, const ServerSettings& server_settings, const StreamUri& uri,
+                       PcmStream::Source source)
+    : PcmStream(pcmListener, ioc, server_settings, uri, source), handle_(nullptr), read_timer_(strand_), silence_(0ms)
 {
     device_ = uri_.getQuery("device", "hw:0");
     send_silence_ = (uri_.getQuery("send_silence", "false") == "true");

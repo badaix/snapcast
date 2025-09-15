@@ -45,11 +45,13 @@ public:
     StreamManager(PcmStream::Listener* pcmListener, boost::asio::io_context& ioc, ServerSettings settings);
 
     /// Construct and add a stream from @p uri
+    /// @param source the config source
     /// @return the created stream
-    PcmStreamPtr addStream(const std::string& uri);
+    PcmStreamPtr addStream(const std::string& uri, PcmStream::Source source);
     /// Construct and add a stream from @p streamUri
+    /// @param source the config source
     /// @return the created stream
-    PcmStreamPtr addStream(StreamUri& streamUri);
+    PcmStreamPtr addStream(StreamUri& streamUri, PcmStream::Source source);
     /// Remove a stream by @p name
     void removeStream(const std::string& name);
 

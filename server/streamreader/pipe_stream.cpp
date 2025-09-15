@@ -38,8 +38,9 @@ namespace streamreader
 static constexpr auto LOG_TAG = "PipeStream";
 
 
-PipeStream::PipeStream(PcmStream::Listener* pcmListener, boost::asio::io_context& ioc, const ServerSettings& server_settings, const StreamUri& uri)
-    : AsioStream<stream_descriptor>(pcmListener, ioc, server_settings, uri)
+PipeStream::PipeStream(PcmStream::Listener* pcmListener, boost::asio::io_context& ioc, const ServerSettings& server_settings, const StreamUri& uri,
+                       PcmStream::Source source)
+    : AsioStream<stream_descriptor>(pcmListener, ioc, server_settings, uri, source)
 {
     umask(0);
     string mode = uri_.getQuery("mode", "create");

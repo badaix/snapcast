@@ -44,7 +44,8 @@ class JackStream : public PcmStream
 {
 public:
     /// ctor. Encoded PCM data is passed to the PipeListener
-    JackStream(PcmStream::Listener* pcmListener, boost::asio::io_context& ioc, const ServerSettings& server_settings, const StreamUri& uri);
+    JackStream(PcmStream::Listener* pcmListener, boost::asio::io_context& ioc, const ServerSettings& server_settings, const StreamUri& uri,
+               PcmStream::Source source);
 
     void start() override;
     void stop() override;

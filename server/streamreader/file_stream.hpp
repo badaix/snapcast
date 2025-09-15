@@ -40,7 +40,8 @@ class FileStream : public AsioStream<stream_descriptor>
 {
 public:
     /// ctor. Encoded PCM data is passed to the PipeListener
-    FileStream(PcmStream::Listener* pcmListener, boost::asio::io_context& ioc, const ServerSettings& server_settings, const StreamUri& uri);
+    FileStream(PcmStream::Listener* pcmListener, boost::asio::io_context& ioc, const ServerSettings& server_settings, const StreamUri& uri,
+               PcmStream::Source source);
 
 protected:
     void connect() override;

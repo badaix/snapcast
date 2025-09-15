@@ -458,7 +458,7 @@ void Server::start()
             StreamUri streamUri(sourceUri);
             if (streamUri.scheme == "meta")
                 continue;
-            PcmStreamPtr stream = streamManager_->addStream(streamUri);
+            PcmStreamPtr stream = streamManager_->addStream(streamUri, PcmStream::Source::config);
             if (stream)
                 LOG(INFO, LOG_TAG) << "Stream: " << stream->getUri().toJson() << "\n";
         }
@@ -468,7 +468,7 @@ void Server::start()
             StreamUri streamUri(sourceUri);
             if (streamUri.scheme != "meta")
                 continue;
-            PcmStreamPtr stream = streamManager_->addStream(streamUri);
+            PcmStreamPtr stream = streamManager_->addStream(streamUri, PcmStream::Source::config);
             if (stream)
                 LOG(INFO, LOG_TAG) << "Stream: " << stream->getUri().toJson() << "\n";
         }

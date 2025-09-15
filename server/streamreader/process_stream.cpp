@@ -38,13 +38,23 @@ namespace streamreader
 static constexpr auto LOG_TAG = "ProcessStream";
 
 
-ProcessStream::ProcessStream(PcmStream::Listener* pcmListener, boost::asio::io_context& ioc, const ServerSettings& server_settings, const StreamUri& uri)
-    : AsioStream<stream_descriptor>(pcmListener, ioc, server_settings, uri)
+ProcessStream::ProcessStream(PcmStream::Listener* pcmListener, boost::asio::io_context& ioc, const ServerSettings& server_settings, const StreamUri& uri,
+                             PcmStream::Source source)
+    : AsioStream<stream_descriptor>(pcmListener, ioc, server_settings, uri, source)
 {
     params_ = uri_.getQuery("params");
     wd_timeout_sec_ = cpt::stoul(uri_.getQuery("wd_timeout", "0"));
     LOG(DEBUG, LOG_TAG) << "Watchdog timeout: " << wd_timeout_sec_ << "\n";
     logStderr_ = (uri_.getQuery("log_stderr", "false") == "true");
+
+    if (source == Source::rpc)
+    {
+        auto exe_path = utils::file::isInDirectory(uri.path, server_settings.stream.sandbox_dir);
+        // check if exe is located in sandbox_dir
+        if (!exe_path)
+            throw SnapException("Process stream executable must be located in '" + server_settings.stream.sandbox_dir.native() + "'");
+        uri_.path = exe_path->native();
+    }
 }
 
 

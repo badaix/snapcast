@@ -43,7 +43,7 @@ class MetaStream : public PcmStream, public PcmStream::Listener
 public:
     /// c'tor. Encoded PCM data is passed to the PcmStream::Listener
     MetaStream(PcmStream::Listener* pcmListener, const std::vector<std::shared_ptr<PcmStream>>& streams, boost::asio::io_context& ioc,
-               const ServerSettings& server_settings, const StreamUri& uri);
+               const ServerSettings& server_settings, const StreamUri& uri, PcmStream::Source source);
     /// d'tor
     virtual ~MetaStream();
 
