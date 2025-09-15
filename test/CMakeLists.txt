@@ -19,6 +19,7 @@ set(TEST_SOURCES
     ${CMAKE_SOURCE_DIR}/common/stream_uri.cpp
     ${CMAKE_SOURCE_DIR}/common/base64.cpp
     ${CMAKE_SOURCE_DIR}/common/utils/string_utils.cpp
+    ${CMAKE_SOURCE_DIR}/common/utils/file_utils.cpp
     ${CMAKE_SOURCE_DIR}/server/authinfo.cpp
     # ${CMAKE_SOURCE_DIR}/server/jwt.cpp
     ${CMAKE_SOURCE_DIR}/server/streamreader/control_error.cpp

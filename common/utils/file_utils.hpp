@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2021  Johannes Pohl
+    Copyright (C) 2014-2025  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -16,90 +16,31 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ***/
 
-#ifndef FILE_UTILS_HPP
-#define FILE_UTILS_HPP
+#pragma once
 
 // local headers
-#include "string_utils.hpp"
 
 // 3rd party headers
 
 // standard headers
-#ifndef WINDOWS
-#include <grp.h>
-#include <pwd.h>
-#include <sys/stat.h>
-#include <unistd.h>
-#endif
-
 #include <filesystem>
-#include <stdexcept>
-#include <vector>
+#include <optional>
 
 
-namespace utils
-{
-namespace file
+namespace utils::file
 {
 
+/// @return true if @p filename exists
+bool exists(const std::string& filename);
 
-static bool exists(const std::string& filename)
-{
-    return std::filesystem::exists(filename);
-}
-
+/// @return absolute version of @p filename, if @p filename is located in @p directory
+std::optional<std::filesystem::path> isInDirectory(std::filesystem::path filename, std::filesystem::path directory);
 
 #ifndef WINDOWS
-static void do_chown(const std::string& file_path, const std::string& user_name, const std::string& group_name)
-{
-    if (user_name.empty() && group_name.empty())
-        return;
-
-    if (!utils::file::exists(file_path))
-        return;
-
-    uid_t uid = -1;
-    gid_t gid = -1;
-
-    if (!user_name.empty())
-    {
-        const struct passwd* pwd = getpwnam(user_name.c_str());
-        if (pwd == nullptr)
-            throw std::runtime_error("Failed to get uid");
-        uid = pwd->pw_uid;
-    }
-
-    if (!group_name.empty())
-    {
-        const struct group* grp = getgrnam(group_name.c_str());
-        if (grp == nullptr)
-            throw std::runtime_error("Failed to get gid");
-        gid = grp->gr_gid;
-    }
-
-    if (chown(file_path.c_str(), uid, gid) == -1)
-        throw std::runtime_error("chown failed");
-}
-
-
-static int mkdirRecursive(const char* path, mode_t mode)
-{
-    std::vector<std::string> pathes = utils::string::split(path, '/');
-    std::stringstream ss;
-    int res = 0;
-    for (const auto& p : pathes)
-    {
-        if (p.empty())
-            continue;
-        ss << "/" << p;
-        res = mkdir(ss.str().c_str(), mode);
-        if ((res != 0) && (errno != EEXIST))
-            return res;
-    }
-    return res;
-}
+/// change owner if @p file_path to user @p user_name and group @p group_name
+void do_chown(const std::string& file_path, const std::string& user_name, const std::string& group_name);
+/// make recursice directory
+int mkdirRecursive(const char* path, mode_t mode);
 #endif
-} // namespace file
-} // namespace utils
 
-#endif
+} // namespace utils::file
