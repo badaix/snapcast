@@ -23,9 +23,12 @@
 // 3rd party headers
 
 // standard headers
+#include <string>
+
+#ifndef WINDOWS
 #include <filesystem>
 #include <optional>
-
+#endif
 
 namespace utils::file
 {
@@ -33,10 +36,10 @@ namespace utils::file
 /// @return true if @p filename exists
 bool exists(const std::string& filename);
 
+#ifndef WINDOWS
 /// @return absolute version of @p filename, if @p filename is located in @p directory
 std::optional<std::filesystem::path> isInDirectory(std::filesystem::path filename, std::filesystem::path directory);
 
-#ifndef WINDOWS
 /// change owner if @p file_path to user @p user_name and group @p group_name
 void do_chown(const std::string& file_path, const std::string& user_name, const std::string& group_name);
 /// make recursice directory

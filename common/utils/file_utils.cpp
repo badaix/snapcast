@@ -33,11 +33,12 @@
 #include <pwd.h>
 #include <sys/stat.h>
 #include <unistd.h>
-#endif
-#include <filesystem>
+
 #include <optional>
 #include <stdexcept>
 #include <vector>
+#endif
+#include <filesystem>
 
 
 namespace utils::file
@@ -52,6 +53,7 @@ bool exists(const std::string& filename)
 }
 
 
+#ifndef WINDOWS
 std::optional<std::filesystem::path> isInDirectory(std::filesystem::path filename, std::filesystem::path directory)
 {
     auto addLeadingSlash = [](const std::filesystem::path& path) -> std::filesystem::path
@@ -74,7 +76,6 @@ std::optional<std::filesystem::path> isInDirectory(std::filesystem::path filenam
 }
 
 
-#ifndef WINDOWS
 void do_chown(const std::string& file_path, const std::string& user_name, const std::string& group_name)
 {
     if (user_name.empty() && group_name.empty())
