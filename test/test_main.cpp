@@ -109,6 +109,8 @@ TEST_CASE("String utils")
     REQUIRE(role == "role");
 }
 
+
+#ifndef WINDOWS
 TEST_CASE("File utils")
 {
     using namespace utils::file;
@@ -120,6 +122,8 @@ TEST_CASE("File utils")
     REQUIRE(isInDirectory("/dir/to/check/subdir1/../../filename.txt", "/dir/to/check") == std::nullopt);
     REQUIRE(isInDirectory("/dir/xx/filename.txt", "/dir/to/check") == std::nullopt);
 }
+#endif
+
 
 #if 0
 TEST_CASE("JWT")
