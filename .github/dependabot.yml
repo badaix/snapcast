@@ -1,12 +1,10 @@
 version: 2
 updates:
-
 - package-ecosystem: github-actions
-  directory: "/"^
-  schedule:^
+  directory: "/"
+  schedule:
     interval: weekly
     day: saturday
     time: "10:00"
-
   open-pull-requests-limit: 10
   target-branch: develop
