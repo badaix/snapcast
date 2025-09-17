@@ -24,7 +24,7 @@ jobs:
         env:
           DEBIAN_FRONTEND: noninteractive
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - name: Create release notes
         run: $GITHUB_WORKSPACE/extras/changelog_current_version.py $GITHUB_WORKSPACE/changelog.md > $GITHUB_WORKSPACE/changelog_current.md
       - name: Create draft release
@@ -95,7 +95,7 @@ jobs:
           && apt update \
           && apt install gh -y
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - name: Setup environment
         run: |
           echo "PARENT_DIR=$(dirname $GITHUB_WORKSPACE)" >> $GITHUB_ENV
@@ -161,9 +161,9 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - name: Checkout Snapcast
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           repository: badaix/snapcast
           path: src/snapcast
@@ -215,9 +215,9 @@ jobs:
 
   #   steps:
   #   - name: Checkout
-  #     uses: actions/checkout@v4
+  #     uses: actions/checkout@v5
   #   - name: Checkout Snapcast
-  #     uses: actions/checkout@v4
+  #     uses: actions/checkout@v5
   #     with:
   #       repository: badaix/snapcast
   #       path: src/snapcast
@@ -281,9 +281,9 @@ jobs:
   #   - name: Get dependencies
   #     run: dnf -y update && dnf -y install wget git rpm-build gcc-c++ cmake boost-devel alsa-lib-devel avahi-devel libatomic libvorbis-devel opus-devel pulseaudio-libs-devel flac-devel soxr-devel libstdc++-static expat-devel
   #   - name: Checkout
-  #     uses: actions/checkout@v4
+  #     uses: actions/checkout@v5
   #   - name: Checkout Snapcast
-  #     uses: actions/checkout@v4
+  #     uses: actions/checkout@v5
   #     with:
   #       repository: badaix/snapcast
   #       path: src/snapcast
