@@ -48,7 +48,8 @@ class ProcessStream : public AsioStream<stream_descriptor>
 {
 public:
     /// c'tor. Encoded PCM data is passed to the PipeListener
-    ProcessStream(PcmStream::Listener* pcmListener, boost::asio::io_context& ioc, const ServerSettings& server_settings, const StreamUri& uri);
+    ProcessStream(PcmStream::Listener* pcmListener, boost::asio::io_context& ioc, const ServerSettings& server_settings, const StreamUri& uri,
+                  PcmStream::Source source);
     /// d'tor
     ~ProcessStream() override = default;
 

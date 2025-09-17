@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2024  Johannes Pohl
+    Copyright (C) 2014-2025  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -22,7 +22,6 @@
 // local headers
 #include "common/aixlog.hpp"
 #include "common/snap_exception.hpp"
-#include "encoder/encoder_factory.hpp"
 
 // 3rd party headers
 
@@ -39,8 +38,9 @@ namespace streamreader
 static constexpr auto LOG_TAG = "FileStream";
 
 
-FileStream::FileStream(PcmStream::Listener* pcmListener, boost::asio::io_context& ioc, const ServerSettings& server_settings, const StreamUri& uri)
-    : AsioStream<stream_descriptor>(pcmListener, ioc, server_settings, uri)
+FileStream::FileStream(PcmStream::Listener* pcmListener, boost::asio::io_context& ioc, const ServerSettings& server_settings, const StreamUri& uri,
+                       PcmStream::Source source)
+    : AsioStream<stream_descriptor>(pcmListener, ioc, server_settings, uri, source)
 {
     struct stat buffer;
     if (stat(uri_.path.c_str(), &buffer) != 0)

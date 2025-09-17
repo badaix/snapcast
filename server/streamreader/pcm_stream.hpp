@@ -53,7 +53,7 @@ namespace streamreader
 
 class PcmStream;
 
-enum class ReaderState
+enum class ReaderState : char
 {
     kUnknown = 0,
     kIdle = 1,
@@ -104,6 +104,13 @@ static constexpr auto kControlScriptParams = "controlscriptparams";
 class PcmStream : public std::enable_shared_from_this<PcmStream>
 {
 public:
+    /// Source of the stream
+    enum class Source : char
+    {
+        config, ///< from static server config
+        rpc     ///< from RPC
+    };
+
     /// Callback interface for users of PcmStream
     /// Users of PcmStream should implement this to get the data
     class Listener
@@ -125,7 +132,7 @@ public:
     using ResultHandler = std::function<void(const snapcast::ErrorCode& ec)>;
 
     /// c'tor. Encoded PCM data is passed to the PcmStream::Listener
-    PcmStream(PcmStream::Listener* pcmListener, boost::asio::io_context& ioc, ServerSettings server_settings, StreamUri uri);
+    PcmStream(PcmStream::Listener* pcmListener, boost::asio::io_context& ioc, ServerSettings server_settings, StreamUri uri, Source source);
     /// d'tor
     virtual ~PcmStream();
 

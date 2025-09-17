@@ -40,7 +40,8 @@ class TcpStream : public AsioStream<tcp::socket>
 {
 public:
     /// c'tor. Encoded PCM data is passed to the PipeListener
-    TcpStream(PcmStream::Listener* pcmListener, boost::asio::io_context& ioc, const ServerSettings& server_settings, const StreamUri& uri);
+    TcpStream(PcmStream::Listener* pcmListener, boost::asio::io_context& ioc, const ServerSettings& server_settings, const StreamUri& uri,
+              PcmStream::Source source);
 
 private:
     void connect() override;

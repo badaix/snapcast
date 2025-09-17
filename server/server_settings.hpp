@@ -195,6 +195,8 @@ struct ServerSettings
         size_t port{1704};
         /// Directory for stream plugins
         std::filesystem::path plugin_dir{"/usr/share/snapserver/plug-ins"};
+        /// Directory for executable process stream sources
+        std::filesystem::path sandbox_dir{"/usr/share/snapserver/sandbox"};
         /// Stream sources
         std::vector<std::string> sources;
         /// Default codec

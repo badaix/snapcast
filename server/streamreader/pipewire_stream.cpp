@@ -69,9 +69,10 @@ spa_audio_format sampleFormatToPipeWire(const SampleFormat& format)
 }
 } // namespace
 
-PipeWireStream::PipeWireStream(PcmStream::Listener* pcmListener, boost::asio::io_context& ioc, const ServerSettings& server_settings, const StreamUri& uri)
-    : PcmStream(pcmListener, ioc, server_settings, uri), pw_main_loop_(nullptr), pw_context_(nullptr), pw_core_(nullptr), pw_stream_(nullptr), first_(true),
-      silence_(0us), stream_state_(PW_STREAM_STATE_UNCONNECTED), running_(false)
+PipeWireStream::PipeWireStream(PcmStream::Listener* pcmListener, boost::asio::io_context& ioc, const ServerSettings& server_settings, const StreamUri& uri,
+                               PcmStream::Source source)
+    : PcmStream(pcmListener, ioc, server_settings, uri, source), pw_main_loop_(nullptr), pw_context_(nullptr), pw_core_(nullptr), pw_stream_(nullptr),
+      first_(true), silence_(0us), stream_state_(PW_STREAM_STATE_UNCONNECTED), running_(false)
 {
     // Parse URI parameters
     target_device_ = uri_.getQuery("target", "");

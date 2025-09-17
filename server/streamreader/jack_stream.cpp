@@ -36,6 +36,8 @@ namespace streamreader
 
 static constexpr auto LOG_TAG = "JackStream";
 
+namespace
+{
 
 void float_to_s32(char* dst, jack_default_audio_sample_t* src, unsigned long nsamples, unsigned long dst_skip)
 {
@@ -105,8 +107,6 @@ void float_to_s16(char* dst, jack_default_audio_sample_t* src, unsigned long nsa
     }
 }
 
-namespace
-{
 template <typename Rep, typename Period>
 void wait(boost::asio::steady_timer& timer, const std::chrono::duration<Rep, Period>& duration, std::function<void()> handler)
 {
@@ -125,8 +125,9 @@ void wait(boost::asio::steady_timer& timer, const std::chrono::duration<Rep, Per
 }
 } // namespace
 
-JackStream::JackStream(PcmStream::Listener* pcmListener, boost::asio::io_context& ioc, const ServerSettings& server_settings, const StreamUri& uri)
-    : PcmStream(pcmListener, ioc, server_settings, uri), read_timer_(strand_), silence_(0ms), first_(true)
+JackStream::JackStream(PcmStream::Listener* pcmListener, boost::asio::io_context& ioc, const ServerSettings& server_settings, const StreamUri& uri,
+                       PcmStream::Source source)
+    : PcmStream(pcmListener, ioc, server_settings, uri, source), read_timer_(strand_), silence_(0ms), first_(true)
 {
 
     serverName_ = uri_.getQuery("server_name", "default");

@@ -22,6 +22,7 @@
 #include "common/base64.h"
 #include "common/error_code.hpp"
 #include "common/stream_uri.hpp"
+#include "common/utils/file_utils.hpp"
 #include "common/utils/string_utils.hpp"
 // #include "server/jwt.hpp"
 #include "server/authinfo.hpp"
@@ -35,6 +36,7 @@
 // standard headers
 #include <cstddef>
 #include <iostream>
+#include <optional>
 #include <regex>
 #include <system_error>
 #include <vector>
@@ -106,6 +108,21 @@ TEST_CASE("String utils")
     REQUIRE(password == "password:with:colons");
     REQUIRE(role == "role");
 }
+
+
+#ifndef WINDOWS
+TEST_CASE("File utils")
+{
+    using namespace utils::file;
+    REQUIRE(isInDirectory("filename.txt", "/dir/to/check").value() == "/dir/to/check/filename.txt");
+    REQUIRE(isInDirectory("/dir/to/check/filename.txt", "/dir/to/check") == "/dir/to/check/filename.txt");
+    REQUIRE(isInDirectory("/dir/to/check/subdir/filename.txt", "/dir/to/check") == "/dir/to/check/subdir/filename.txt");
+    REQUIRE(isInDirectory("/dir/to/check/subdir1/../filename.txt", "/dir/to/check") == "/dir/to/check/filename.txt");
+    REQUIRE(isInDirectory("/dir/to/check_xxx/filename.txt", "/dir/to/check") == std::nullopt);
+    REQUIRE(isInDirectory("/dir/to/check/subdir1/../../filename.txt", "/dir/to/check") == std::nullopt);
+    REQUIRE(isInDirectory("/dir/xx/filename.txt", "/dir/to/check") == std::nullopt);
+}
+#endif
 
 
 #if 0

@@ -44,12 +44,12 @@ public:
     /// C'tor
     StreamManager(PcmStream::Listener* pcmListener, boost::asio::io_context& ioc, ServerSettings settings);
 
-    /// Construct and add a stream from @p uri
+    /// Construct and add a stream from @p uri, added from @p source
     /// @return the created stream
-    PcmStreamPtr addStream(const std::string& uri);
-    /// Construct and add a stream from @p streamUri
+    PcmStreamPtr addStream(const std::string& uri, PcmStream::Source source);
+    /// Construct and add a stream from @p streamUri, added from @p source
     /// @return the created stream
-    PcmStreamPtr addStream(StreamUri& streamUri);
+    PcmStreamPtr addStream(StreamUri& streamUri, PcmStream::Source source);
     /// Remove a stream by @p name
     void removeStream(const std::string& name);
 

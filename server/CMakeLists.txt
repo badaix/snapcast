@@ -169,6 +169,8 @@ else()
             DESTINATION ${CMAKE_INSTALL_DATADIR}/snapserver/snapweb)
   endif()
 
+  install(DIRECTORY DESTINATION ${CMAKE_INSTALL_DATADIR}/snapserver/sandbox/)
+
   install(
     FILES etc/plug-ins/meta_mpd.py etc/plug-ins/meta_mopidy.py
           etc/plug-ins/meta_librespot-java.py

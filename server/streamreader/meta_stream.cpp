@@ -35,8 +35,8 @@ static constexpr auto LOG_TAG = "MetaStream";
 
 
 MetaStream::MetaStream(PcmStream::Listener* pcmListener, const std::vector<std::shared_ptr<PcmStream>>& streams, boost::asio::io_context& ioc,
-                       const ServerSettings& server_settings, const StreamUri& uri)
-    : PcmStream(pcmListener, ioc, server_settings, uri), first_read_(true)
+                       const ServerSettings& server_settings, const StreamUri& uri, PcmStream::Source source)
+    : PcmStream(pcmListener, ioc, server_settings, uri, source), first_read_(true)
 {
     auto path_components = utils::string::split(uri.path, '/');
     for (const auto& component : path_components)

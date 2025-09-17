@@ -56,14 +56,14 @@ StreamManager::StreamManager(PcmStream::Listener* pcmListener, boost::asio::io_c
 }
 
 
-PcmStreamPtr StreamManager::addStream(const std::string& uri)
+PcmStreamPtr StreamManager::addStream(const std::string& uri, PcmStream::Source source)
 {
     StreamUri streamUri(uri);
-    return addStream(streamUri);
+    return addStream(streamUri, source);
 }
 
 
-PcmStreamPtr StreamManager::addStream(StreamUri& streamUri)
+PcmStreamPtr StreamManager::addStream(StreamUri& streamUri, PcmStream::Source source)
 {
     if (streamUri.query.find(kUriSampleFormat) == streamUri.query.end())
         streamUri.query[kUriSampleFormat] = settings_.stream.sampleFormat;
@@ -92,12 +92,12 @@ PcmStreamPtr StreamManager::addStream(StreamUri& streamUri)
 
     if (streamUri.scheme == "pipe")
     {
-        stream = make_shared<PipeStream>(listener, io_context_, settings_, streamUri);
+        stream = make_shared<PipeStream>(listener, io_context_, settings_, streamUri, source);
     }
 #ifdef HAS_ALSA
     else if (streamUri.scheme == "alsa")
     {
-        stream = make_shared<AlsaStream>(listener, io_context_, settings_, streamUri);
+        stream = make_shared<AlsaStream>(listener, io_context_, settings_, streamUri, source);
     }
 #endif
     else if ((streamUri.scheme == "spotify") || (streamUri.scheme == "librespot"))
@@ -106,7 +106,7 @@ PcmStreamPtr StreamManager::addStream(StreamUri& streamUri)
         // that all constructors of all parent classes also use the overwritten sample
         // format.
         streamUri.query[kUriSampleFormat] = "44100:16:2";
-        stream = make_shared<LibrespotStream>(listener, io_context_, settings_, streamUri);
+        stream = make_shared<LibrespotStream>(listener, io_context_, settings_, streamUri, source);
     }
     else if (streamUri.scheme == "airplay")
     {
@@ -114,35 +114,35 @@ PcmStreamPtr StreamManager::addStream(StreamUri& streamUri)
         // that all constructors of all parent classes also use the overwritten sample
         // format.
         streamUri.query[kUriSampleFormat] = "44100:16:2";
-        stream = make_shared<AirplayStream>(listener, io_context_, settings_, streamUri);
+        stream = make_shared<AirplayStream>(listener, io_context_, settings_, streamUri, source);
     }
     else if (streamUri.scheme == "file")
     {
-        stream = make_shared<FileStream>(listener, io_context_, settings_, streamUri);
+        stream = make_shared<FileStream>(listener, io_context_, settings_, streamUri, source);
     }
     else if (streamUri.scheme == "process")
     {
-        stream = make_shared<ProcessStream>(listener, io_context_, settings_, streamUri);
+        stream = make_shared<ProcessStream>(listener, io_context_, settings_, streamUri, source);
     }
     else if (streamUri.scheme == "tcp")
     {
-        stream = make_shared<TcpStream>(listener, io_context_, settings_, streamUri);
+        stream = make_shared<TcpStream>(listener, io_context_, settings_, streamUri, source);
     }
 #ifdef HAS_PIPEWIRE
     else if (streamUri.scheme == "pipewire")
     {
-        stream = make_shared<PipeWireStream>(listener, io_context_, settings_, streamUri);
+        stream = make_shared<PipeWireStream>(listener, io_context_, settings_, streamUri, source);
     }
 #endif
 #ifdef HAS_JACK
     else if (streamUri.scheme == "jack")
     {
-        stream = make_shared<JackStream>(listener, io_context_, settings_, streamUri);
+        stream = make_shared<JackStream>(listener, io_context_, settings_, streamUri, source);
     }
 #endif
     else if (streamUri.scheme == "meta")
     {
-        stream = make_shared<MetaStream>(listener, streams_, io_context_, settings_, streamUri);
+        stream = make_shared<MetaStream>(listener, streams_, io_context_, settings_, streamUri, source);
     }
     else
     {
