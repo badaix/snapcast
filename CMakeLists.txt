@@ -66,6 +66,15 @@ else()
   add_compile_options(-Wall -Wextra -pedantic -Wno-unused-function)
   if(MACOSX)
     add_compile_options(-Wno-deprecated-declarations)
+    add_compile_options(
+      # From CoreAudioTypes.framework
+      -Wno-nullability-extension
+      # From IOKit.framework
+      -Wno-zero-length-array
+      # From CoreFoundation.framework
+      -Wno-gnu-zero-variadic-macro-arguments
+      # Boost ... although includedd as system header
+      -Wno-unused-parameter)
   endif()
 
   if(WERROR)
