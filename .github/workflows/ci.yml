@@ -349,11 +349,24 @@ jobs:
       - name: dependencies
         run: |
           brew update
-          brew install libsoxr flac libvorbis opus catch2 boost
+          brew install libsoxr flac libvorbis opus catch2
+      - name: cache boost
+        id: cache-boost
+        uses: actions/cache@v4
+        with:
+          path: boost_${{ env.BOOST_VERSION }}
+          key: boost-${{ env.BOOST_VERSION }}
+          enableCrossOsArchive: true
+      - name: get boost
+        if: steps.cache-boost.outputs.cache-hit != 'true'
+        run: |
+          wget https://archives.boost.io/release/${BOOST_VERSION//_/.}/source/boost_${BOOST_VERSION}.tar.bz2
+          tar xjf boost_${BOOST_VERSION}.tar.bz2
       - name: configure
         run: |
           cmake -S . -B build \
             -DWERROR=ON -DBUILD_TESTS=ON \
+            -DBOOST_ROOT=boost_${BOOST_VERSION} \
             -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
             -DCMAKE_CXX_FLAGS="-I/usr/local/include -DCMAKE_CXX_FLAGS=-DJSON_HAS_CPP_14"
         env:
