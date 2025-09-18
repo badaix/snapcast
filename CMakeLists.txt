@@ -72,7 +72,9 @@ else()
       # From IOKit.framework
       -Wno-zero-length-array
       # From CoreFoundation.framework
-      -Wno-gnu-zero-variadic-macro-arguments)
+      -Wno-gnu-zero-variadic-macro-arguments
+      # Boost ... although includedd as system header
+      -Wno-unused-parameter)
   endif()
 
   if(WERROR)
