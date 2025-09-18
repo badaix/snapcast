@@ -66,6 +66,11 @@ else()
   add_compile_options(-Wall -Wextra -pedantic -Wno-unused-function)
   if(MACOSX)
     add_compile_options(-Wno-deprecated-declarations)
+    add_compile_options(
+      # From CoreAudioTypes.framework
+      -Wno-nullability-extension
+      # Caused somewhere in IOKit.framework
+      -Wno-zero-length-array)
   endif()
 
   if(WERROR)
