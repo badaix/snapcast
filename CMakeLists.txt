@@ -69,8 +69,10 @@ else()
     add_compile_options(
       # From CoreAudioTypes.framework
       -Wno-nullability-extension
-      # Caused somewhere in IOKit.framework
-      -Wno-zero-length-array)
+      # From IOKit.framework
+      -Wno-zero-length-array
+      # From CoreFoundation.framework
+      -Wno-gnu-zero-variadic-macro-arguments)
   endif()
 
   if(WERROR)
