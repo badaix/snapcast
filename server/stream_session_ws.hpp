@@ -64,7 +64,7 @@ public:
 
 private:
     /// Send message @p buffer and pass result to @p handler
-    void sendAsync(const shared_const_buffer& buffer, WriteHandler&& handler) override;
+    void sendAsync(const std::shared_ptr<shared_const_buffer> buffer, WriteHandler&& handler) override;
     /// Read callback
     void on_read_ws(beast::error_code ec, std::size_t bytes_transferred);
     /// Read loop

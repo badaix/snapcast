@@ -74,6 +74,7 @@ int main(int argc, char* argv[])
         auto daemonOption = op.add<Implicit<int>>("d", "daemon", "Daemonize\noptional process priority [-20..19]", 0, &processPriority);
 #endif
         auto config_file_option = op.add<Value<string>>("c", "config", "Path to the configuration file", config_file, &config_file);
+        auto zerocopy_switch = op.add<Switch>("z", "zerocopy", "Enable zerocopy networking for improved performance");
 
         OptionParser conf("Overridable config file options");
 
@@ -141,6 +142,7 @@ int main(int argc, char* argv[])
         conf.add<Value<int>>("", "stream.buffer", "Buffer [ms]", settings.stream.bufferMs, &settings.stream.bufferMs);
         conf.add<Value<bool>>("", "stream.send_to_muted", "Send audio to muted clients", settings.stream.sendAudioToMutedClients,
                               &settings.stream.sendAudioToMutedClients);
+        conf.add<Value<bool>>("", "stream.zerocopy", "Enable zerocopy networking for improved performance", settings.stream.zerocopy, &settings.stream.zerocopy);
 
         // streaming_client options
         conf.add<Value<uint16_t>>("", "streaming_client.initial_volume", "Volume [percent] assigned to new streaming clients",
@@ -207,6 +209,12 @@ int main(int argc, char* argv[])
             }
             else
                 cerr << "Warning - Failed to load config file '" << config_file << "': " << e.what() << "\n";
+        }
+
+        // Override zerocopy setting if -z flag is provided
+        if (zerocopy_switch->is_set())
+        {
+            settings.stream.zerocopy = true;
         }
 
         if (settings.stream.codec.find(":?") != string::npos)
@@ -327,6 +335,8 @@ int main(int argc, char* argv[])
         }
 
         LOG(INFO, LOG_TAG) << "Version " << version::code << (!version::rev().empty() ? (", revision " + version::rev(8)) : ("")) << "\n";
+
+        LOG(INFO, LOG_TAG) << "ZeroCopy setting: " << (settings.stream.zerocopy ? "enabled" : "disabled") << "\n";
 
         if (settings.ssl.enabled())
             LOG(INFO, LOG_TAG) << "SSL enabled - certificate file: '" << settings.ssl.certificate.native() << "', certificate key file: '"

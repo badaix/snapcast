@@ -23,6 +23,11 @@
 #include "common/aixlog.hpp"
 #include "config.hpp"
 #include "stream_session_tcp.hpp"
+#include "stream_session_tcp_coordinated.hpp"
+
+// standard headers
+#include <iomanip>
+#include <thread>
 
 // 3rd party headers
 
@@ -35,9 +40,10 @@ using namespace streamreader;
 using json = nlohmann::json;
 
 static constexpr auto LOG_TAG = "StreamServer";
+static constexpr auto LOG_STATS_TAG = "StreamServerStats";
 
 StreamServer::StreamServer(boost::asio::io_context& io_context, ServerSettings serverSettings, StreamMessageReceiver* messageReceiver)
-    : io_context_(io_context), config_timer_(io_context), settings_(std::move(serverSettings)), messageReceiver_(messageReceiver)
+    : io_context_(io_context), config_timer_(io_context), diagnostics_timer_(io_context), settings_(std::move(serverSettings)), messageReceiver_(messageReceiver)
 {
 }
 
@@ -209,7 +215,19 @@ void StreamServer::handleAccept(tcp::socket socket)
         socket.set_option(tcp::no_delay(true));
 
         LOG(NOTICE, LOG_TAG) << "StreamServer::NewConnection: " << socket.remote_endpoint().address().to_string() << "\n";
-        shared_ptr<StreamSession> session = make_shared<StreamSessionTcp>(this, settings_, std::move(socket));
+        
+        shared_ptr<StreamSession> session;
+        if (settings_.stream.zerocopy)
+        {
+            LOG(INFO, LOG_TAG) << "Creating zerocopy-enabled session for " << socket.remote_endpoint().address().to_string() << "\n";
+            session = make_shared<StreamSessionTcpCoordinated>(this, settings_, std::move(socket));
+        }
+        else
+        {
+            LOG(DEBUG, LOG_TAG) << "Creating regular TCP session for " << socket.remote_endpoint().address().to_string() << "\n";
+            session = make_shared<StreamSessionTcp>(this, settings_, std::move(socket));
+        }
+        
         addSession(session);
     }
     catch (const std::exception& e)
@@ -237,6 +255,7 @@ void StreamServer::start()
     }
 
     startAccept();
+    startDiagnosticsTimer();
 }
 
 
@@ -253,4 +272,101 @@ void StreamServer::stop()
         if (auto session = s.lock())
             session->stop();
     }
+}
+
+void StreamServer::printZeroCopyDiagnostics(StreamSessionTcpCoordinated* /* coordinated_session */) const
+{
+    // Aggregate stats from all zerocopy sessions
+    StreamSessionTcpCoordinated::ZeroCopyStats aggregated_stats = {};
+    int zerocopy_session_count = 0;
+    
+    std::lock_guard<std::recursive_mutex> mlock(sessionsMutex_);
+    for (const auto& s : sessions_) {
+        if (auto session = s.lock()) {
+            if (auto zc_session = dynamic_cast<StreamSessionTcpCoordinated*>(session.get())) {
+                auto stats = zc_session->getZeroCopyStats();
+                aggregated_stats.zerocopy_attempts += stats.zerocopy_attempts;
+                aggregated_stats.zerocopy_successful += stats.zerocopy_successful;
+                aggregated_stats.zerocopy_bytes += stats.zerocopy_bytes;
+                aggregated_stats.regular_sends += stats.regular_sends;
+                aggregated_stats.regular_bytes += stats.regular_bytes;
+                aggregated_stats.coordination_fallbacks += stats.coordination_fallbacks;
+                aggregated_stats.pending_async_operations += stats.pending_async_operations;
+                aggregated_stats.outstanding_zerocopy_buffers += stats.outstanding_zerocopy_buffers;
+                aggregated_stats.completion_notifications_received += stats.completion_notifications_received;
+                aggregated_stats.completion_notifications_missing += stats.completion_notifications_missing;
+                aggregated_stats.buffers_completed_via_notifications += stats.buffers_completed_via_notifications;
+                zerocopy_session_count++;
+            }
+        }
+    }
+    
+    // Only print once for all sessions
+    static bool already_printed = false;
+    if (!already_printed && zerocopy_session_count > 0) {
+        already_printed = true;
+        
+        LOG(INFO, LOG_STATS_TAG) << "=== Aggregated ZeroCopy Stats (All " << zerocopy_session_count << " Sessions) ==="
+                           << "\n\tZC Attempts: " << aggregated_stats.zerocopy_attempts << ", "
+                           << "\n\tZC Successful: " << aggregated_stats.zerocopy_successful << ", "
+                           << "\n\tZC Bytes: " << aggregated_stats.zerocopy_bytes << ", "
+                           << "\n\tRegular Sends: " << aggregated_stats.regular_sends << ", "
+                           << "\n\tRegular Bytes: " << aggregated_stats.regular_bytes << ", "
+                           << "\n\tCoordination Fallbacks: " << aggregated_stats.coordination_fallbacks << ", "
+                           << "\n\tPending Async Operations: " << aggregated_stats.pending_async_operations << ", "
+                           << "\n\tOutstanding ZC Buffers: " << aggregated_stats.outstanding_zerocopy_buffers << ", "
+                           << "\n\tCompletion Notifications: " << aggregated_stats.completion_notifications_received << ", "
+                           << "\n\tMissing Notifications: " << aggregated_stats.completion_notifications_missing << ", "
+                           << std::fixed << std::setprecision(2)
+                           << "\n\tZC Success Rate: " << aggregated_stats.zerocopy_percentage() << "%"
+                           << "\n\tCompletion Reliability: " << aggregated_stats.completion_reliability() << "%\n";
+        
+        // Reset stats after reporting for all sessions
+        for (const auto& s : sessions_) {
+            if (auto session = s.lock()) {
+                if (auto zc_session = dynamic_cast<StreamSessionTcpCoordinated*>(session.get())) {
+                    zc_session->resetZeroCopyStats();
+                }
+            }
+        }
+        
+        // Reset the flag for next reporting cycle
+        std::thread([]{
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+            already_printed = false;
+        }).detach();
+    }
+}
+
+void StreamServer::startDiagnosticsTimer()
+{
+    diagnostics_timer_.expires_after(std::chrono::seconds(30));
+    diagnostics_timer_.async_wait([this](boost::system::error_code ec)
+    {
+        if (ec)
+            return;
+        
+        // Only print diagnostics if there are active sessions
+        {
+            std::lock_guard<std::recursive_mutex> mlock(sessionsMutex_);
+            if (!sessions_.empty())
+            {
+                for (const auto& s : sessions_)
+                {
+                    if (auto session = s.lock())
+                    {
+                        // Handle zerocopy diagnostics
+                        if (auto coordinated_session = std::dynamic_pointer_cast<StreamSessionTcpCoordinated>(session))
+                        {
+                            LOG(INFO, LOG_TAG) << "=== Periodic ZeroCopy Status (every 30s) ===\n";
+                            printZeroCopyDiagnostics(coordinated_session.get());
+                        }
+                    }
+                }
+            }
+        }
+        
+        // Schedule next diagnostics check
+        startDiagnosticsTimer();
+    });
 }

@@ -162,7 +162,7 @@ public:
 
 protected:
     /// Send data @p buffer to the streaming client, result is returned in the callback @p handler
-    virtual void sendAsync(const shared_const_buffer& buffer, WriteHandler&& handler) = 0;
+    virtual void sendAsync(const std::shared_ptr<shared_const_buffer> buffer, WriteHandler&& handler) = 0;
 
 public:
     /// Sends a message to the client (asynchronous)
