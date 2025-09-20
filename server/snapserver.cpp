@@ -30,7 +30,7 @@
 #include "encoder/encoder_factory.hpp"
 #include "server.hpp"
 #include "server_settings.hpp"
-#if defined(HAS_AVAHI) || defined(HAS_BONJOUR)
+#ifdef HAS_MDNS
 #include "publishZeroConf/publish_zeroconf.hpp"
 #endif
 #include "common/aixlog.hpp"
@@ -364,9 +364,11 @@ int main(int argc, char* argv[])
         if (settings.auth.enabled)
         {
             std::vector<std::string> roles;
+            roles.reserve(roles_value->count());
             for (size_t n = 0; n < roles_value->count(); ++n)
                 roles.push_back(roles_value->value(n));
             std::vector<std::string> users;
+            users.reserve(users_value->count());
             for (size_t n = 0; n < users_value->count(); ++n)
                 users.push_back(users_value->value(n));
 
@@ -404,7 +406,7 @@ int main(int argc, char* argv[])
 #endif
 
         boost::asio::io_context io_context;
-#if defined(HAS_AVAHI) || defined(HAS_BONJOUR)
+#ifdef HAS_MDNS
         if (settings.server.mdns_enabled)
         {
             auto publishZeroConfg = std::make_unique<PublishZeroConf>("Snapcast", io_context);

@@ -365,12 +365,12 @@ void Controller::sendTimeSyncMessage(int quick_syncs)
 
 void Controller::browseMdns(const MdnsHandler& handler)
 {
-#if defined(HAS_AVAHI) || defined(HAS_BONJOUR)
+#ifdef HAS_MDNS
     try
     {
         BrowseZeroConf browser;
         mDNSResult avahiResult;
-        if (browser.browse("_snapcast._tcp", avahiResult, 1000))
+        if (browser.browse(settings_.server.uri.host, avahiResult, 1000))
         {
             string host = avahiResult.ip;
             uint16_t port = avahiResult.port;
@@ -404,9 +404,23 @@ void Controller::browseMdns(const MdnsHandler& handler)
 
 void Controller::start()
 {
-    if (settings_.server.host.empty())
+    auto connect = [&]()
     {
-        browseMdns([this](const boost::system::error_code& ec, const std::string& host, uint16_t port)
+        if (settings_.server.uri.scheme == "ws")
+            clientConnection_ = make_unique<ClientConnectionWs>(io_context_, settings_.server);
+#ifdef HAS_OPENSSL
+        else if (settings_.server.uri.scheme == "wss")
+            clientConnection_ = make_unique<ClientConnectionWss>(io_context_, ssl_context_, settings_.server);
+#endif
+        else
+            clientConnection_ = make_unique<ClientConnectionTcp>(io_context_, settings_.server);
+        worker();
+    };
+
+    // mDNS service names start (unlike host names) with "_"
+    if (settings_.server.uri.host.empty() || (settings_.server.uri.host[0] == '_'))
+    {
+        browseMdns([this, connect = std::move(connect)](const boost::system::error_code& ec, const std::string& host, uint16_t port)
         {
             if (ec)
             {
@@ -414,25 +428,16 @@ void Controller::start()
             }
             else
             {
-                settings_.server.host = host;
-                settings_.server.port = port;
-                LOG(INFO, LOG_TAG) << "Found server " << settings_.server.host << ":" << settings_.server.port << "\n";
-                clientConnection_ = make_unique<ClientConnectionTcp>(io_context_, settings_.server);
-                worker();
+                settings_.server.uri.host = host;
+                settings_.server.uri.port = port;
+                LOG(INFO, LOG_TAG) << "Found server " << settings_.server.uri.host << ":" << settings_.server.uri.port.value() << "\n";
+                connect();
             }
         });
     }
     else
     {
-        if (settings_.server.protocol == "ws")
-            clientConnection_ = make_unique<ClientConnectionWs>(io_context_, settings_.server);
-#ifdef HAS_OPENSSL
-        else if (settings_.server.protocol == "wss")
-            clientConnection_ = make_unique<ClientConnectionWss>(io_context_, ssl_context_, settings_.server);
-#endif
-        else
-            clientConnection_ = make_unique<ClientConnectionTcp>(io_context_, settings_.server);
-        worker();
+        connect();
     }
 }
 
