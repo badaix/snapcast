@@ -169,7 +169,7 @@ int main(int argc, char** argv)
                         default_uri + "'\n");
 #else
                         "://<snapserver host or IP>[:port]\n"
-                        " For example: 'tcp://192.168.1.1:1704', or 'ws:\\\\homeserver.local'\n";
+                        " For example: 'tcp://192.168.1.1:1704', or 'ws:\\\\homeserver.local'\n");
 #endif
         auto helpSwitch = op.add<Switch>("", "help", "Produce help message");
         auto groffSwitch = op.add<Switch, Attribute::hidden>("", "groff", "Produce groff message");
