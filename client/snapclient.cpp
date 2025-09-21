@@ -174,8 +174,8 @@ int main(int argc, char** argv)
         auto helpSwitch = op.add<Switch>("", "help", "Produce help message");
         auto groffSwitch = op.add<Switch, Attribute::hidden>("", "groff", "Produce groff message");
         auto versionSwitch = op.add<Switch>("v", "version", "Show version number");
-        auto host_opt = op.add<Value<string>>("h", "host", "(deprecated, use [url]) Server hostname or ip address", "");
-        auto port_opt = op.add<Value<size_t>>("p", "port", "(deprecated, use [url]) Server port", 1704);
+        auto deprecated_host_opt = op.add<Value<string>>("h", "host", "(deprecated, use [url]) Server hostname or ip address", "");
+        auto deprecated_port_opt = op.add<Value<size_t>>("p", "port", "(deprecated, use [url]) Server port", 1704);
         op.add<Value<size_t>>("i", "instance", "Instance id when running multiple instances on the same host", 1, &settings.instance);
         op.add<Value<string>>("", "hostID", "Unique host id, default is MAC address", "", &settings.host_id);
         op.add<Value<std::filesystem::path>>("", "cert", "Client certificate file (PEM format)", settings.server.certificate, &settings.server.certificate);
@@ -355,12 +355,12 @@ int main(int argc, char** argv)
             throw SnapException("Unknown command line argument: '" + op.unknown_options().front() + "'");
         }
 
-        if (host_opt->is_set() || port_opt->is_set())
+        if (deprecated_host_opt->is_set() || deprecated_port_opt->is_set())
         {
-            LOG(WARNING, LOG_TAG) << "Options '--" << host_opt->long_name() << "' and '--" << port_opt->long_name()
+            LOG(WARNING, LOG_TAG) << "Options '--" << deprecated_host_opt->long_name() << "' and '--" << deprecated_port_opt->long_name()
                                   << "' are deprecated. Please add the server URI as last command line argument\n";
-            settings.server.uri.host = host_opt->value();
-            settings.server.uri.port = port_opt->value();
+            settings.server.uri.host = deprecated_host_opt->value();
+            settings.server.uri.port = deprecated_port_opt->value();
             settings.server.uri.scheme = "tcp";
         }
 

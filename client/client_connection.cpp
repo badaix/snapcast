@@ -710,7 +710,7 @@ boost::system::error_code ClientConnectionWss::doConnect(boost::asio::ip::basic_
     getWs().set_option(websocket::stream_base::decorator([](websocket::request_type& req) { req.set(http::field::user_agent, WS_CLIENT_NAME); }));
 
     // Perform the websocket handshake
-    getWs().handshake(server_.uri.host + ":" + std::to_string(server_.uri.port.value_or(9)), "/stream", ec);
+    getWs().handshake(server_.uri.host + ":" + std::to_string(server_.uri.port.value_or(0)), "/stream", ec);
 
     return ec;
 }
