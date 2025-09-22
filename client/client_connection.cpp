@@ -126,11 +126,17 @@ ClientConnection::ClientConnection(boost::asio::io_context& io_context, ClientSe
 void ClientConnection::connect(const ResultHandler& handler)
 {
     boost::system::error_code ec;
-    LOG(INFO, LOG_TAG) << "Resolving host IP for: " << server_.host << "\n";
-    auto iterator = resolver_.resolve(server_.host, cpt::to_string(server_.port), boost::asio::ip::resolver_query_base::numeric_service, ec);
+    if (!server_.uri.port.has_value())
+    {
+        uint16_t default_port = 1704;
+        LOG(WARNING, LOG_TAG) << "Port not configured, using default port: " << default_port << "\n";
+        server_.uri.port = default_port;
+    }
+    LOG(INFO, LOG_TAG) << "Resolving host IP for: " << server_.uri.host << "\n";
+    auto iterator = resolver_.resolve(server_.uri.host, cpt::to_string(server_.uri.port.value()), boost::asio::ip::resolver_query_base::numeric_service, ec);
     if (ec)
     {
-        LOG(ERROR, LOG_TAG) << "Failed to resolve host '" << server_.host << "', error: " << ec.message() << "\n";
+        LOG(ERROR, LOG_TAG) << "Failed to resolve host '" << server_.uri.host << "', error: " << ec.message() << "\n";
         handler(ec);
         return;
     }
@@ -140,7 +146,8 @@ void ClientConnection::connect(const ResultHandler& handler)
 
     for (const auto& iter : iterator)
     {
-        LOG(INFO, LOG_TAG) << "Connecting to host: " << iter.endpoint() << ", port: " << server_.port << ", protocol: " << server_.protocol << "\n";
+        LOG(INFO, LOG_TAG) << "Connecting to host: " << iter.endpoint() << ", port: " << server_.uri.port.value() << ", protocol: " << server_.uri.scheme
+                           << "\n";
         ec = doConnect(iter.endpoint());
         if (!ec || (ec == boost::system::errc::interrupted))
         {
@@ -151,11 +158,11 @@ void ClientConnection::connect(const ResultHandler& handler)
 
     if (ec)
     {
-        LOG(ERROR, LOG_TAG) << "Failed to connect to host '" << server_.host << "', error: " << ec.message() << "\n";
+        LOG(ERROR, LOG_TAG) << "Failed to connect to host '" << server_.uri.host << "', error: " << ec.message() << "\n";
         disconnect();
     }
     else
-        LOG(NOTICE, LOG_TAG) << "Connected to " << server_.host << "\n";
+        LOG(NOTICE, LOG_TAG) << "Connected to " << server_.uri.host << "\n";
 
     handler(ec);
 
@@ -256,7 +263,7 @@ void ClientConnection::messageReceived(std::unique_ptr<msg::BaseMessage> message
 {
     for (auto iter = pending_requests_.begin(); iter != pending_requests_.end(); ++iter)
     {
-        auto request = *iter;
+        const auto& request = *iter;
         if (auto req = request.lock())
         {
             if (req->id() == base_message_.refersTo)
@@ -531,7 +538,7 @@ boost::system::error_code ClientConnectionWs::doConnect(boost::asio::ip::basic_e
     getWs().set_option(websocket::stream_base::decorator([](websocket::request_type& req) { req.set(http::field::user_agent, WS_CLIENT_NAME); }));
 
     // Perform the websocket handshake
-    getWs().handshake(server_.host + ":" + std::to_string(server_.port), "/stream", ec);
+    getWs().handshake(server_.uri.host + ":" + std::to_string(server_.uri.port.value_or(0)), "/stream", ec);
     return ec;
 }
 
@@ -688,7 +695,7 @@ boost::system::error_code ClientConnectionWss::doConnect(boost::asio::ip::basic_
     getWs().set_option(websocket::stream_base::timeout::suggested(beast::role_type::client));
 
     // Set SNI Hostname (many hosts need this to handshake successfully)
-    if (!SSL_set_tlsext_host_name(getWs().next_layer().native_handle(), server_.host.c_str()))
+    if (!SSL_set_tlsext_host_name(getWs().next_layer().native_handle(), server_.uri.host.c_str()))
     {
         LOG(ERROR, LOG_TAG) << "Failed to set SNI Hostname\n";
         return {static_cast<int>(::ERR_get_error()), boost::asio::error::get_ssl_category()};
@@ -703,7 +710,7 @@ boost::system::error_code ClientConnectionWss::doConnect(boost::asio::ip::basic_
     getWs().set_option(websocket::stream_base::decorator([](websocket::request_type& req) { req.set(http::field::user_agent, WS_CLIENT_NAME); }));
 
     // Perform the websocket handshake
-    getWs().handshake(server_.host + ":" + std::to_string(server_.port), "/stream", ec);
+    getWs().handshake(server_.uri.host + ":" + std::to_string(server_.uri.port.value_or(0)), "/stream", ec);
 
     return ec;
 }

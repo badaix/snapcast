@@ -47,6 +47,8 @@ struct ServerSettings
         std::string group;
         /// Server data dir
         std::string data_dir;
+        /// Enable mDNS to publish services
+        bool mdns_enabled{true};
     };
 
     /// SSL settings
@@ -175,24 +177,41 @@ struct ServerSettings
         std::string host{"<hostname>"};
         /// URL prefix when serving album art
         std::string url_prefix;
+        /// Publish HTTP service via mDNS as '_snapcast-http._tcp'
+        bool publish_http{true};
+        /// Publish HTTPS service via mDNS as '_snapcast-https._tcp'
+        bool publish_https{true};
     };
 
-    /// TCP streaming client settings
-    struct Tcp
+    /// TCP control client settings
+    struct TcpControl
     {
-        /// enable plain TCP audio streaming
+        /// enable plain TCP control
         bool enabled{true};
         /// TCP port
         size_t port{1705};
         /// TCP listen addresses
         std::vector<std::string> bind_to_address{{"::"}};
+        /// Publish TCP control service via mDNS as '_snapcast-ctrl._tcp'
+        bool publish{true};
+    };
+
+    /// TCP streaming client settings
+    struct TcpStream
+    {
+        /// enable plain TCP audio streaming
+        bool enabled{true};
+        /// TCP port
+        size_t port{1704};
+        /// TCP listen addresses
+        std::vector<std::string> bind_to_address{{"::"}};
+        /// Publish TCP streaming service via mDNS as '_snapcast._tcp'
+        bool publish{true};
     };
 
     /// Stream settings
     struct Stream
     {
-        /// Audio streaming port
-        size_t port{1704};
         /// Directory for stream plugins
         std::filesystem::path plugin_dir{"/usr/share/snapserver/plug-ins"};
         /// Directory for executable process stream sources
@@ -209,8 +228,6 @@ struct ServerSettings
         size_t streamChunkMs{20};
         /// Send audio to muted clients?
         bool sendAudioToMutedClients{false};
-        /// Liste addresses
-        std::vector<std::string> bind_to_address{{"::"}};
     };
 
     /// Client settings
@@ -233,7 +250,8 @@ struct ServerSettings
     Ssl ssl;                         ///< SSL settings
     Authorization auth;              ///< Auth settings
     Http http;                       ///< HTTP settings
-    Tcp tcp;                         ///< TCP settings
+    TcpControl tcp_control;          ///< TCP-Control settings
+    TcpStream tcp_stream;            ///< TCP-Stream settings
     Stream stream;                   ///< Stream settings
     StreamingClient streamingclient; ///< Client settings
     Logging logging;                 ///< Logging settings

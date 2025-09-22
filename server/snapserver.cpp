@@ -30,7 +30,7 @@
 #include "encoder/encoder_factory.hpp"
 #include "server.hpp"
 #include "server_settings.hpp"
-#if defined(HAS_AVAHI) || defined(HAS_BONJOUR)
+#ifdef HAS_MDNS
 #include "publishZeroConf/publish_zeroconf.hpp"
 #endif
 #include "common/aixlog.hpp"
@@ -83,6 +83,7 @@ int main(int argc, char* argv[])
         conf.add<Value<string>>("", "server.user", "the user to run as when daemonized", settings.server.user, &settings.server.user);
         conf.add<Implicit<string>>("", "server.group", "the group to run as when daemonized", settings.server.group, &settings.server.group);
         conf.add<Implicit<string>>("", "server.datadir", "directory where persistent data is stored", settings.server.data_dir, &settings.server.data_dir);
+        conf.add<Value<bool>>("", "server.mdns_enabled", "enable mDNS to publish services", settings.server.mdns_enabled, &settings.server.mdns_enabled);
 
         // SSL settings
         conf.add<Value<std::filesystem::path>>("", "ssl.certificate", "certificate file (PEM format)", settings.ssl.certificate, &settings.ssl.certificate);
@@ -111,20 +112,44 @@ int main(int argc, char* argv[])
         conf.add<Implicit<string>>("", "http.doc_root", "serve a website from the doc_root location", settings.http.doc_root, &settings.http.doc_root);
         conf.add<Value<string>>("", "http.host", "Hostname or IP under which clients can reach this host", settings.http.host, &settings.http.host);
         conf.add<Value<string>>("", "http.url_prefix", "URL prefix for generating album art URLs", settings.http.url_prefix, &settings.http.url_prefix);
+        conf.add<Value<bool>>("", "http.publish_http", "Publish HTTP service via mDNS", settings.http.publish_http, &settings.http.publish_http);
+        conf.add<Value<bool>>("", "http.publish_https", "Publish HTTPS service via mDNS", settings.http.publish_https, &settings.http.publish_https);
 
         // TCP RPC settings
-        conf.add<Value<bool>>("", "tcp.enabled", "enable TCP Json RPC)", settings.tcp.enabled, &settings.tcp.enabled);
-        conf.add<Value<size_t>>("", "tcp.port", "which port the server should listen on", settings.tcp.port, &settings.tcp.port);
-        auto tcp_bind_to_address = conf.add<Value<string>>("", "tcp.bind_to_address", "address for the server to listen on",
-                                                           settings.tcp.bind_to_address.front(), &settings.tcp.bind_to_address[0]);
+        // Deprecated: tcp.x => tcp-control.x
+        auto deprecated_tcp_enabled =
+            conf.add<Value<bool>>("", "tcp.enabled", "deprecated: use 'tcp-control.enabled'", settings.tcp_control.enabled, &settings.tcp_control.enabled);
+        auto deprecated_tcp_port =
+            conf.add<Value<size_t>>("", "tcp.port", "deprecated: use 'tcp-control.port'", settings.tcp_control.port, &settings.tcp_control.port);
+        auto deprecated_tcp_bind_to_address = conf.add<Value<string>>("", "tcp.bind_to_address", "deprecated: use 'tcp-control.bind_to_address'",
+                                                                      settings.tcp_control.bind_to_address.front(), &settings.tcp_control.bind_to_address[0]);
+
+        // Deprecated: stream.x => tcp-streaming.x
+        auto deprecated_stream_bind_to_address = conf.add<Value<string>>("", "stream.bind_to_address", "deprecated: use 'tcp-streaming.bind_to_address'",
+                                                                         settings.tcp_stream.bind_to_address.front(), &settings.tcp_stream.bind_to_address[0]);
+        auto deprecated_stream_port =
+            conf.add<Value<size_t>>("", "stream.port", "deprecated: use 'tcp-streaming.port'", settings.tcp_stream.port, &settings.tcp_stream.port);
+
+
+        conf.add<Value<bool>>("", "tcp-control.enabled", "enable TCP Json RPC)", settings.tcp_control.enabled, &settings.tcp_control.enabled);
+        conf.add<Value<size_t>>("", "tcp-control.port", "which control port the server should listen on", settings.tcp_control.port,
+                                &settings.tcp_control.port);
+        auto control_bind_to_address = conf.add<Value<string>>("", "tcp-control.bind_to_address", "address for the control server to listen on",
+                                                               settings.tcp_control.bind_to_address.front(), &settings.tcp_control.bind_to_address[0]);
+        conf.add<Value<bool>>("", "tcp-control.publish", "Publish TCP control service via mDNS", settings.tcp_control.publish, &settings.tcp_control.publish);
+
+        // TCP Streaming settings
+        conf.add<Value<bool>>("", "tcp-streaming.enabled", "enable TCP streaming)", settings.tcp_stream.enabled, &settings.tcp_stream.enabled);
+        conf.add<Value<size_t>>("", "tcp-streaming.port", "which streaming port the server should listen on", settings.tcp_stream.port,
+                                &settings.tcp_stream.port);
+        auto stream_bind_to_address = conf.add<Value<string>>("", "tcp-streaming.bind_to_address", "address for the streaming server to listen on",
+                                                              settings.tcp_stream.bind_to_address.front(), &settings.tcp_stream.bind_to_address[0]);
+        conf.add<Value<bool>>("", "tcp-streaming.publish", "Publish TCP streaming service via mDNS", settings.tcp_stream.publish, &settings.tcp_stream.publish);
 
         // stream settings
         conf.add<Value<std::filesystem::path>>("", "stream.plugin_dir", "stream plugin directory", settings.stream.plugin_dir, &settings.stream.plugin_dir);
         conf.add<Value<std::filesystem::path>>("", "stream.sandbox_dir", "directory with executable process stream sources", settings.stream.sandbox_dir,
                                                &settings.stream.sandbox_dir);
-        auto stream_bind_to_address = conf.add<Value<string>>("", "stream.bind_to_address", "address for the server to listen on",
-                                                              settings.stream.bind_to_address.front(), &settings.stream.bind_to_address[0]);
-        conf.add<Value<size_t>>("", "stream.port", "which port the server should listen on", settings.stream.port, &settings.stream.port);
         // deprecated: stream.stream, use stream.source instead
         auto streamValue = conf.add<Value<string>>("", "stream.stream", "Deprecated: use stream.source", pcmSource, &pcmSource);
         auto sourceValue = conf.add<Value<string>>(
@@ -264,11 +289,32 @@ int main(int argc, char* argv[])
             throw SnapException("HTTPS enabled ([http] ssl_enabled), but snapserrver is built without ssl support");
 #endif
 
-        if (tcp_bind_to_address->is_set())
+        if (deprecated_tcp_enabled->is_set())
+            LOG(WARNING, LOG_TAG) << "Option '" << deprecated_tcp_enabled->long_name() << "' is " << deprecated_tcp_enabled->description() << "\n";
+        if (deprecated_tcp_port->is_set())
+            LOG(WARNING, LOG_TAG) << "Option '" << deprecated_tcp_port->long_name() << "' is " << deprecated_tcp_port->description() << "\n";
+        if (deprecated_tcp_bind_to_address->is_set())
         {
-            settings.tcp.bind_to_address.clear();
-            for (size_t n = 0; n < tcp_bind_to_address->count(); ++n)
-                settings.tcp.bind_to_address.push_back(tcp_bind_to_address->value(n));
+            LOG(WARNING, LOG_TAG) << "Option '" << deprecated_tcp_bind_to_address->long_name() << "' is " << deprecated_tcp_bind_to_address->description()
+                                  << "\n";
+            if (!control_bind_to_address->is_set())
+                control_bind_to_address = deprecated_tcp_bind_to_address;
+        }
+        if (deprecated_stream_bind_to_address->is_set())
+        {
+            LOG(WARNING, LOG_TAG) << "Option '" << deprecated_stream_bind_to_address->long_name() << "' is " << deprecated_stream_bind_to_address->description()
+                                  << "\n";
+            if (!stream_bind_to_address->is_set())
+                stream_bind_to_address = deprecated_stream_bind_to_address;
+        }
+        if (deprecated_stream_port->is_set())
+            LOG(WARNING, LOG_TAG) << "Option '" << deprecated_stream_port->long_name() << "' is " << deprecated_stream_port->description() << "\n";
+
+        if (control_bind_to_address->is_set())
+        {
+            settings.tcp_control.bind_to_address.clear();
+            for (size_t n = 0; n < control_bind_to_address->count(); ++n)
+                settings.tcp_control.bind_to_address.push_back(control_bind_to_address->value(n));
         }
         if (http_bind_to_address->is_set())
         {
@@ -284,9 +330,9 @@ int main(int argc, char* argv[])
         }
         if (stream_bind_to_address->is_set())
         {
-            settings.stream.bind_to_address.clear();
+            settings.tcp_stream.bind_to_address.clear();
             for (size_t n = 0; n < stream_bind_to_address->count(); ++n)
-                settings.stream.bind_to_address.push_back(stream_bind_to_address->value(n));
+                settings.tcp_stream.bind_to_address.push_back(stream_bind_to_address->value(n));
         }
 
         if (!settings.ssl.certificate.empty() && !settings.ssl.certificate_key.empty())
@@ -354,9 +400,11 @@ int main(int argc, char* argv[])
         if (settings.auth.enabled)
         {
             std::vector<std::string> roles;
+            roles.reserve(roles_value->count());
             for (size_t n = 0; n < roles_value->count(); ++n)
                 roles.push_back(roles_value->value(n));
             std::vector<std::string> users;
+            users.reserve(users_value->count());
             for (size_t n = 0; n < users_value->count(); ++n)
                 users.push_back(users_value->value(n));
 
@@ -394,26 +442,32 @@ int main(int argc, char* argv[])
 #endif
 
         boost::asio::io_context io_context;
-#if defined(HAS_AVAHI) || defined(HAS_BONJOUR)
-        auto publishZeroConfg = std::make_unique<PublishZeroConf>("Snapcast", io_context);
-        vector<mDNSService> dns_services;
-        dns_services.emplace_back("_snapcast._tcp", settings.stream.port);
-        dns_services.emplace_back("_snapcast-stream._tcp", settings.stream.port);
-        if (settings.tcp.enabled)
+#ifdef HAS_MDNS
+        std::unique_ptr<PublishZeroConf> publishZeroConfg;
+        if (settings.server.mdns_enabled)
         {
-            dns_services.emplace_back("_snapcast-jsonrpc._tcp", settings.tcp.port);
-            dns_services.emplace_back("_snapcast-tcp._tcp", settings.tcp.port);
-        }
-        if (settings.http.enabled)
-        {
-            dns_services.emplace_back("_snapcast-http._tcp", settings.http.port);
-        }
-        if (settings.http.ssl_enabled)
-        {
-            dns_services.emplace_back("_snapcast-https._tcp", settings.http.ssl_port);
-        }
+            publishZeroConfg = std::make_unique<PublishZeroConf>("Snapcast", io_context);
+            vector<mDNSService> dns_services;
+            if (settings.tcp_stream.enabled && settings.tcp_stream.publish)
+            {
+                dns_services.emplace_back("_snapcast._tcp", settings.tcp_stream.port);
+                // dns_services.emplace_back("_snapcast-stream._tcp", settings.tcp_stream.port);
+            }
+            if (settings.tcp_control.enabled && settings.tcp_control.publish)
+            {
+                dns_services.emplace_back("_snapcast-ctrl._tcp", settings.tcp_control.port);
+            }
+            if (settings.http.enabled && settings.http.publish_http)
+            {
+                dns_services.emplace_back("_snapcast-http._tcp", settings.http.port);
+            }
+            if (settings.http.ssl_enabled && settings.http.publish_https)
+            {
+                dns_services.emplace_back("_snapcast-https._tcp", settings.http.ssl_port);
+            }
 
-        publishZeroConfg->publish(dns_services);
+            publishZeroConfg->publish(dns_services);
+        }
 #endif
         if (settings.http.enabled || settings.http.ssl_enabled)
         {

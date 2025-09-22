@@ -222,17 +222,20 @@ void StreamServer::handleAccept(tcp::socket socket)
 
 void StreamServer::start()
 {
-    for (const auto& address : settings_.stream.bind_to_address)
+    if (settings_.tcp_stream.enabled)
     {
-        try
+        for (const auto& address : settings_.tcp_stream.bind_to_address)
         {
-            LOG(INFO, LOG_TAG) << "Creating stream acceptor for address: " << address << ", port: " << settings_.stream.port << "\n";
-            acceptor_.emplace_back(make_unique<tcp::acceptor>(boost::asio::make_strand(io_context_.get_executor()),
-                                                              tcp::endpoint(boost::asio::ip::make_address(address), settings_.stream.port)));
-        }
-        catch (const boost::system::system_error& e)
-        {
-            LOG(ERROR, LOG_TAG) << "error creating TCP acceptor: " << e.what() << ", code: " << e.code() << "\n";
+            try
+            {
+                LOG(INFO, LOG_TAG) << "Creating TCP stream acceptor for address: " << address << ", port: " << settings_.tcp_stream.port << "\n";
+                acceptor_.emplace_back(make_unique<tcp::acceptor>(boost::asio::make_strand(io_context_.get_executor()),
+                                                                  tcp::endpoint(boost::asio::ip::make_address(address), settings_.tcp_stream.port)));
+            }
+            catch (const boost::system::system_error& e)
+            {
+                LOG(ERROR, LOG_TAG) << "error creating TCP stream acceptor: " << e.what() << ", code: " << e.code() << "\n";
+            }
         }
     }
 

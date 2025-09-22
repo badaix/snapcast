@@ -20,6 +20,7 @@
 
 // local headers
 #include "common/sample_format.hpp"
+#include "common/stream_uri.hpp"
 #include "player/pcm_device.hpp"
 
 // standard headers
@@ -32,7 +33,7 @@
 struct ClientSettings
 {
     /// Sharing mode for audio device
-    enum class SharingMode
+    enum class SharingMode : char
     {
         unspecified, ///< unspecified
         exclusive,   ///< exclusice access
@@ -43,7 +44,7 @@ struct ClientSettings
     struct Mixer
     {
         /// Mixer mode
-        enum class Mode
+        enum class Mode : char
         {
             hardware, ///< hardware mixer
             software, ///< software mixer
@@ -69,12 +70,8 @@ struct ClientSettings
             std::string param;
         };
 
-        /// server host or IP address
-        std::string host;
-        /// protocol: "tcp", "ws" or "wss"
-        std::string protocol{"tcp"};
-        /// server port
-        size_t port{1704};
+        /// Server host
+        StreamUri uri;
         /// auth info
         std::optional<Auth> auth;
         /// server certificate
@@ -88,7 +85,7 @@ struct ClientSettings
         /// Is ssl in use?
         bool isSsl() const
         {
-            return (protocol == "wss");
+            return (uri.scheme == "wss");
         }
     };
 

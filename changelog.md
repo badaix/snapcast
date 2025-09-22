@@ -7,6 +7,8 @@
 - Server: Add PipeWire stream reader (PR #1418, Issue #1371)
 - Client: Add PipeWire player (PR #1420, Issue #1419, #821)
 - Server: process stream sources can be added via RPC (Issue #1359, PR #1444)
+- Server: mDNS can be disabled (Issue #1172, PR #1437)
+- Server: Audio streaming over plain TCP (port 1704) can be disabled (PR #1437)
 
 ### Bugfixes
 
@@ -22,6 +24,8 @@
 - Enable OpenSSL support for Android builds in `CMakeLists.txt` (PR #1373)
 - Update Readme (PR #1431)
 - Build Trixie packages for amd64 (Issue #1429)
+- `tcp` section in `snapserver.conf` renamed to `tcp-control` (PR #1437)
+- TCP streaming settings moved from `stream` to `tcp-streaming` (PR #1437)
 
 ### Contributors
 

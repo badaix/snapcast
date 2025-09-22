@@ -50,8 +50,10 @@
 #include <boost/asio/signal_set.hpp>
 
 // standard headers
+#include <algorithm>
 #include <filesystem>
 #include <iostream>
+#include <vector>
 #ifndef WINDOWS
 #include <csignal>
 #include <sys/resource.h>
@@ -142,6 +144,11 @@ int main(int argc, char** argv)
 #ifdef MACOS
 #pragma message "Warning: the macOS support is experimental and might not be maintained"
 #endif
+
+#ifdef HAS_MDNS
+    const std::string default_uri = "tcp://_snapcast._tcp";
+#endif
+
     int exitcode = EXIT_SUCCESS;
     try
     {
@@ -155,14 +162,20 @@ int main(int argc, char** argv)
 #else
                         "<tcp|ws>"
 #endif
+#ifdef HAS_MDNS
+                        "://<snapserver host or IP or mDNS service name>[:port]\n"
+                        " For example: 'tcp://192.168.1.1:1704', or 'ws://)homeserver.local' or 'wss://_snapcast-https._tcp'\n"
+                        " If 'url' is not configured, snapclient defaults to '" +
+                        default_uri + "'\n");
+#else
                         "://<snapserver host or IP>[:port]\n"
-                        " For example: \"tcp:\\\\192.168.1.1:1704\", or \"ws:\\\\homeserver.local\"\n"
-                        " If 'url' is not configured, snapclient tries to resolve the snapserver IP via mDNS\n");
+                        " For example: 'tcp://192.168.1.1:1704', or 'ws://homeserver.local'\n");
+#endif
         auto helpSwitch = op.add<Switch>("", "help", "Produce help message");
         auto groffSwitch = op.add<Switch, Attribute::hidden>("", "groff", "Produce groff message");
         auto versionSwitch = op.add<Switch>("v", "version", "Show version number");
-        auto host_opt = op.add<Value<string>>("h", "host", "(deprecated, use [url]) Server hostname or ip address", "", &settings.server.host);
-        auto port_opt = op.add<Value<size_t>>("p", "port", "(deprecated, use [url]) Server port", 1704, &settings.server.port);
+        auto deprecated_host_opt = op.add<Value<string>>("h", "host", "(deprecated, use [url]) Server hostname or ip address", "");
+        auto deprecated_port_opt = op.add<Value<size_t>>("p", "port", "(deprecated, use [url]) Server port", 1704);
         op.add<Value<size_t>>("i", "instance", "Instance id when running multiple instances on the same host", 1, &settings.instance);
         op.add<Value<string>>("", "hostID", "Unique host id, default is MAC address", "", &settings.host_id);
         op.add<Value<std::filesystem::path>>("", "cert", "Client certificate file (PEM format)", settings.server.certificate, &settings.server.certificate);
@@ -342,54 +355,49 @@ int main(int argc, char** argv)
             throw SnapException("Unknown command line argument: '" + op.unknown_options().front() + "'");
         }
 
-        if (host_opt->is_set() || port_opt->is_set())
+        if (deprecated_host_opt->is_set() || deprecated_port_opt->is_set())
         {
-            LOG(WARNING, LOG_TAG) << "Options '--" << host_opt->long_name() << "' and '--" << port_opt->long_name()
+            LOG(WARNING, LOG_TAG) << "Options '--" << deprecated_host_opt->long_name() << "' and '--" << deprecated_port_opt->long_name()
                                   << "' are deprecated. Please add the server URI as last command line argument\n";
+            settings.server.uri.host = deprecated_host_opt->value();
+            settings.server.uri.port = deprecated_port_opt->value();
+            settings.server.uri.scheme = "tcp";
         }
 
         if (!op.non_option_args().empty())
         {
-            StreamUri uri;
+            std::vector<std::string> schemes{"tcp", "ws"};
+#ifdef HAS_OPENSSL
+            schemes.emplace_back("wss");
+#endif
             try
             {
-                uri.parse(op.non_option_args().front());
+                settings.server.uri.parse(op.non_option_args().front());
             }
             catch (...)
             {
-#ifdef HAS_OPENSSL
-                throw SnapException("Invalid URI - expected format: \"<scheme>://<host or IP>[:port]\", with 'scheme' on of 'tcp', 'ws' or 'wss'");
-#else
-                throw SnapException("Invalid URI - expected format: \"<scheme>://<host or IP>[:port]\", with 'scheme' on of 'tcp' or 'ws'");
-#endif
-            }
-            if ((uri.scheme != "tcp") && (uri.scheme != "ws") && (uri.scheme != "wss"))
-#ifdef HAS_OPENSSL
-                throw SnapException("Protocol must be one of 'tcp', 'ws' or 'wss'");
-#else
-                throw SnapException("Protocol must be one of 'tcp' or 'ws'");
-#endif
-            settings.server.host = uri.host;
-            settings.server.protocol = uri.scheme;
-            if (uri.port.has_value())
-                settings.server.port = uri.port.value();
-            else if (settings.server.protocol == "tcp")
-                settings.server.port = 1704;
-            else if (settings.server.protocol == "ws")
-                settings.server.port = 1780;
-            else if (settings.server.protocol == "wss")
-            {
-                settings.server.port = 1788;
-#ifndef HAS_OPENSSL
-                throw SnapException("Snapclient is built without wss support");
-#endif
+                throw SnapException("Invalid URI - expected format: \"<scheme>://<host or IP>[:port]\", with 'scheme' one of: " +
+                                    utils::string::container_to_string(schemes));
             }
 
-            if (!uri.user.empty() || !uri.password.empty())
+            if (std::find(schemes.begin(), schemes.end(), settings.server.uri.scheme) == schemes.end())
+                throw SnapException("Protocol must be one of: " + utils::string::container_to_string(schemes));
+
+            if (!settings.server.uri.port.has_value())
+            {
+                if (settings.server.uri.scheme == "tcp")
+                    settings.server.uri.port = 1704;
+                else if (settings.server.uri.scheme == "ws")
+                    settings.server.uri.port = 1780;
+                else if (settings.server.uri.scheme == "wss")
+                    settings.server.uri.port = 1788;
+            }
+
+            if (!settings.server.uri.user.empty() || !settings.server.uri.password.empty())
             {
                 ClientSettings::Server::Auth auth;
                 auth.scheme = "Basic";
-                auth.param = base64_encode(uri.user + ":" + uri.password);
+                auth.param = base64_encode(settings.server.uri.user + ":" + settings.server.uri.password);
                 settings.server.auth = auth;
             }
         }
@@ -421,10 +429,15 @@ int main(int argc, char** argv)
             throw SnapException("Both SSL 'certificate' and 'certificate_key' must be set or empty");
         }
 
-#if !defined(HAS_AVAHI) && !defined(HAS_BONJOUR)
-        if (settings.server.host.empty())
+        if (settings.server.uri.host.empty())
+        {
+#ifndef HAS_MDNS
             throw SnapException("Snapserver host not configured and mDNS not available, please configure with \"--host\".");
+#else
+            LOG(INFO, LOG_TAG) << "No server URL given, defaulting to '" << default_uri << "'\n";
+            settings.server.uri.parse(default_uri);
 #endif
+        }
 
 
 #ifdef HAS_DAEMON

@@ -210,7 +210,7 @@ if(NOT WIN32 AND NOT ANDROID)
   if(MACOSX)
     set(BONJOUR_FOUND true)
     if(BONJOUR_FOUND)
-      add_compile_definitions(HAS_BONJOUR)
+      add_compile_definitions(HAS_BONJOUR HAS_MDNS)
     endif(BONJOUR_FOUND)
 
     add_compile_definitions(FREEBSD MACOS HAS_DAEMON)
@@ -244,7 +244,7 @@ if(NOT WIN32 AND NOT ANDROID)
 
     if(BUILD_WITH_AVAHI)
       pkg_search_module(AVAHI REQUIRED avahi-client)
-      add_compile_definitions(HAS_AVAHI)
+      add_compile_definitions(HAS_AVAHI HAS_MDNS)
     endif(BUILD_WITH_AVAHI)
 
     add_compile_definitions(HAS_DAEMON)
