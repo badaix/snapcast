@@ -85,6 +85,50 @@ Parameters introduced by Snapclient:
 - `killall`: Kill all running librespot instances before launching librespot
 - `wd_timeout`: Restart librespot if it doesn't create log messages for x seconds
 
+### go-librespot
+
+Add a stream source entry of type `process` which is briefly described further down, to `/etc/snapserver.conf` to launch [go-librespot](https://github.com/devgianlu/go-librespot) and read audio from stdout. Note that adding several more such stream sources with different profiles will require to have different configuration directories for `go-librespot`, each configured with different device name and server port accordingly:
+
+```sh
+source = process:///<path/to/go-librespot>?name=<name>&params=--config_dir%20/var/lib/snapserver/.config/go-librespot/<name>&dryout_ms=2000&wd_timeout=0&log_stderr=false&controlscript=meta_go-librespot.py&controlscriptparams=--stream=<name>%20--librespot-host=127.0.0.1%20--librespot-port=24879
+```
+
+You need to have the `go-librespot` binary on your machine and a configuration file located in the path passed as `--config_dir` in the above source example, which of course need to be accessible to the snapserver user.
+
+#### go-librespot configuration file
+
+Read about the options which can be used in the file `config.yml` in the [go-librespot configuration documentation](https://github.com/devgianlu/go-librespot?tab=readme-ov-file#configuration), including the [linked config schema](https://github.com/devgianlu/go-librespot/blob/master/config_schema.json) which has all the options. You will be interested in how to:
+
+- *persist your Spotify credentials* either in `zeroconf` or `interactive` mode;
+- match the sampling format of go-librespot's "pipe" audio backend to what your snapserver configuration expects;
+- last but not least, if you need *adjusting the volume*, in order to align it somehow to your other snapcast sources if necessary. Surprisingly, since we're using the pipe `audio_backend`, none of the volume-related settings have worked for me for raising the volume, as they would only be effective with disabled normalisation, which unfortunately led to crackling sounds due to go-librespot clipping some samples. Luckily, adjusting the volume can be achieved enabling normalisation and setting a pregain value (in dB). The track or album gain provided in the Spotify metadata will be used, to which the pregain is added (negative pregain will lower the volume). `go-librespot` will silently cap the resulting normalisation factor to 1.0 in order to avoid clipping, however this would be just seen in the log and the effect of raising the volume will be limited, so you would need to try a lower (or negative) value, or maybe rather adjust the volume of other snapserver.conf sources. If interested, you can find more details in [go-librespot's source of the functions GetTrackFactor / GetAlbumFactor](https://github.com/devgianlu/go-librespot/blob/master/vorbis/metadata.go#L187). For me, raising the volume by using `normalisation_pregain: 6.0` had the effect that playing a track from my local MP3 collection through Mopidy and then the same track from Spotify subjectively sounded at similar volume.
+
+Create the file `/var/lib/snapserver/.config/go-librespot/<name>/config.yml` (path may vary according to how snapserver is configured on your system) with the following content addressing the above 3 topics and adapt it to your needs (at least the device name):
+
+```yaml
+device_name: "<name>"
+device_type: "speaker"
+
+audio_backend: "pipe"
+audio_output_pipe: "/dev/stdout"
+audio_output_pipe_format: "s16le"
+
+bitrate: 320
+
+normalisation_disabled: false
+normalisation_use_album_gain: true
+normalisation_pregain: 6.0
+
+server:
+  enabled: true
+  port: 24879
+
+credentials:
+  type: zeroconf
+  zeroconf:
+    persist_credentials: true
+```
+
 ### airplay
 
 Launches [shairport-sync](https://github.com/mikebrady/shairport-sync) and reads audio from stdout
