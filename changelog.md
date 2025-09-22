@@ -9,12 +9,14 @@
 - Server: process stream sources can be added via RPC (Issue #1359, PR #1444)
 - Server: mDNS can be disabled (Issue #1172, PR #1437)
 - Server: Audio streaming over plain TCP (port 1704) can be disabled (PR #1437)
+- Server: Add control script for `go-librespot` (PR #1433, Issue #1424)
 
 ### Bugfixes
 
 - Client: Fix case of command line arguments (Issue #1411)
 - Client: Fix deadlock during shutdown (PR #1415)
 - Fix building with boost v1.89.0 (Issues #1413)
+- Fix MacOS CI (PR #1446)
 
 ### General
 
@@ -35,6 +37,7 @@
 - @filmor
 - @sajjadsabzkar
 - @MickMorley
+- @lucianm
 
 _Johannes Pohl <snapcast@badaix.de>  Mon, 18 Aug 2025 00:13:37 +0200_
 

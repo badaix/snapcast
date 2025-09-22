@@ -3,6 +3,7 @@
 #
 # This file is part of snapcast
 # Copyright (C) 2014-2025  Johannes Pohl
+# Copyright (C) 2025  lucianm
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -48,7 +49,8 @@ log_level = logging.INFO
 logger = logging.getLogger("meta_go-librespot")
 logger.propagate = False
 log_handler = logging.StreamHandler()
-log_handler.setFormatter(logging.Formatter("%(asctime)s %(levelname)s: %(message)s"))
+log_handler.setFormatter(logging.Formatter(
+    "%(asctime)s %(levelname)s: %(message)s"))
 logger.addHandler(log_handler)
 logger.setLevel(log_level)
 
@@ -117,7 +119,8 @@ class LibrespotControl:
             on_close=self.on_ws_close,
         )
 
-        self.websocket_thread = threading.Thread(target=self.websocket_loop, args=())
+        self.websocket_thread = threading.Thread(
+            target=self.websocket_loop, args=())
         self.websocket_thread.name = "LibrespotControl"
         self.websocket_thread.start()
 
@@ -142,7 +145,8 @@ class LibrespotControl:
             event = jmsg["type"]
             data = jmsg["data"]
         except json.JSONDecodeError as e:
-            logger.error("Invalid JSON from WebSocket: %s, content: %s", e, message)
+            logger.error(
+                "Invalid JSON from WebSocket: %s, content: %s", e, message)
             return
 
         logger.info(f"Event: {type}, msg: {data}")
@@ -155,7 +159,8 @@ class LibrespotControl:
         elif event == "playing":
             self._properties["playbackStatus"] = "playing"
         elif event == "volume":
-            self._properties["volume"] = int(data["value"] / data["max"] * 100.0)
+            self._properties["volume"] = int(
+                data["value"] / data["max"] * 100.0)
         elif event == "seek":
             self._properties["position"] = float(data["position"]) / 1000.0
         elif event == "metadata":
@@ -221,7 +226,8 @@ class LibrespotControl:
 
         try:
             r = requests.post(url, json=payload, timeout=timeout)
-            logger.debug(f"POST {url} -> {r.status_code} {r.reason} {r.text[:256]!r}")
+            logger.debug(
+                f"POST {url} -> {r.status_code} {r.reason} {r.text[:256]!r}")
             return r
         except requests.RequestException as e:
             logger.debug(f"POST {url} failed: {e}")
@@ -262,13 +268,17 @@ class LibrespotControl:
                         self.get_simple("player/next")
 
                 elif action == "setPosition":
-                    pos = float(req["params"].get("params", {}).get("position", 0))
-                    self.post_json("player/seek", {"position": int(pos * 1000)})
+                    pos = float(req["params"].get(
+                        "params", {}).get("position", 0))
+                    self.post_json(
+                        "player/seek", {"position": int(pos * 1000)})
 
                 elif action == "seek":
-                    pos = float(req["params"].get("params", {}).get("offset", 0))
+                    pos = float(req["params"].get(
+                        "params", {}).get("offset", 0))
                     self.post_json(
-                        "player/seek", {"position": int(pos * 1000), "relative": True}
+                        "player/seek", {"position": int(pos * 1000),
+                                        "relative": True}
                     )
 
                 # ack
