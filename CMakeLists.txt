@@ -337,6 +337,8 @@ if(BUILD_WITH_SSL)
     find_package(OpenSSL REQUIRED)
     add_compile_definitions(HAS_OPENSSL)
   endif()
+  # set OPENSSL_FOUND to TRUE for Android compatibility
+  set(OPENSSL_FOUND TRUE)
 endif()
 
 add_compile_definitions(BOOST_ERROR_CODE_HEADER_ONLY BOOST_ASIO_NO_TS_EXECUTORS
