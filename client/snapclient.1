@@ -1,5 +1,5 @@
 .\"groff -Tascii -man snapclient.1
-.TH SNAPCLIENT 1 "August 2025"
+.TH SNAPCLIENT 1 "September 2025"
 .SH NAME
 snapclient - Snapcast client
 .SH SYNOPSIS
@@ -16,9 +16,9 @@ ways to use Snapcast is in conjunction with the music player daemon or Mopidy,
 which can be configured to use a named pipe as audio output.
 .SS Usage: snapclient [options...] [url]
 
- With 'url' = <tcp|ws|wss>://<snapserver host or IP>[:port]
- For example: "tcp:\\192.168.1.1:1704", or "ws:\\homeserver.local"
- If 'url' is not configured, snapclient tries to resolve the snapserver IP via mDNS
+ With 'url' = <tcp|ws|wss>://<snapserver host or IP or mDNS service name>[:port]
+ For example: 'tcp://192.168.1.1:1704', or 'ws://)homeserver.local' or 'wss://_snapcast-https._tcp'
+ If 'url' is not configured, snapclient defaults to 'tcp://_snapcast._tcp'
 :
 .TP
 \fB--help\fR
@@ -64,7 +64,7 @@ Latency of the PCM device
 Resample audio stream to <rate>:<bits>:<channels>
 .TP
 \fB--player arg (=alsa)\fR
-alsa|file[:<options>|?]
+alsa|pipewire|file[:<options>|?]
 .TP
 \fB--mixer arg (=software)\fR
 software|hardware|script|none|?[:<options>]

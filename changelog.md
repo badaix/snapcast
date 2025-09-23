@@ -39,7 +39,7 @@
 - @MickMorley
 - @lucianm
 
-_Johannes Pohl <snapcast@badaix.de>  Mon, 22 Sep 2025 00:13:37 +0200_
+_Johannes Pohl <snapcast@badaix.de>  Tue, 23 Sep 2025 00:13:37 +0200_
 
 ## Version 0.32.3
 
