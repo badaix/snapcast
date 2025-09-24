@@ -28,6 +28,7 @@
 #ifndef WINDOWS
 #include <filesystem>
 #include <optional>
+#include <sys/types.h>
 #endif
 
 namespace utils::file
