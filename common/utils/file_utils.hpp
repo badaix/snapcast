@@ -28,7 +28,7 @@
 #ifndef WINDOWS
 #include <filesystem>
 #include <optional>
-#include <sys/types.h>
+#include <sys/types.h> // mode_t
 #endif
 
 namespace utils::file
