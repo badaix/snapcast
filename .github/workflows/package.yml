@@ -64,11 +64,6 @@ jobs:
           - arch: "arm64"
             os: self-hosted-rpi5
             image_prefix: "badaix/raspios-lite:"
-        exclude:
-          - arch: armhf
-            debian: trixie
-          - arch: arm64
-            debian: trixie
     runs-on: ${{ matrix.os }}
     name: deb (${{ matrix.arch }}, ${{ matrix.debian }})
     timeout-minutes: 240
