@@ -11,6 +11,10 @@
 - Fix file utils include (PR #1447)
 - Fix pipewire / jack mixup in documentation (PR #1450)
 
+### General
+
+- Snapweb: Update to v0.9.2
+
 ### Contributors
 
 - @badaix
