@@ -1,5 +1,24 @@
 # Snapcast changelog
 
+## Version 0.34.0
+
+### Features
+
+- CI: Build packages for Raspberry Pi OS trixie (Issue #1429)
+
+### Bugfixes
+
+- Fix file utils include (PR #1447)
+- Fix pipewire / jack mixup in documentation (PR #1450)
+
+### Contributors
+
+- @badaix
+- @djmaze
+- @W-Floyd
+
+_Johannes Pohl <snapcast@badaix.de>  Thu, 02 Oct 2025 00:13:37 +0200_
+
 ## Version 0.33.0
 
 ### Features
