@@ -305,6 +305,10 @@ The output of any audio player that uses alsa can be redirected to Snapcast by u
     source = alsa:///?name=SomeName&device=hw:0,1,0
     ```
 
+### pipewire
+
+Direct audio capture from PipeWire, see the [PipeWire Stream Usage Guide](pipewire-stream.md)
+
 ### jack
 
 Reads audio from a Jack server. Snapcast must be built with the cmake flag `BUILD_WITH_JACK=ON` to enable Jack support.
@@ -312,10 +316,6 @@ Reads audio from a Jack server. Snapcast must be built with the cmake flag `BUIL
 ```sh
 jack:///?name=<name>[sampleformat=48000:16:2][autoconnect=][autoconnect_skip=0][&send_silence=false][&idle_threshold=100]
 ```
-
-### pipewire
-
-Direct audio capture from PipeWire, see the [PipeWire Stream Usage Guide](pipewire-stream.md)
 
 #### Available parameters
 
