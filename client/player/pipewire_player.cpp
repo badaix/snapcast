@@ -292,7 +292,7 @@ void PipeWirePlayer::onProcess()
 #if PW_CHECK_VERSION(0, 3, 49)
     if (b->requested)
         n_frames = std::min<int>(static_cast<int>(b->requested), n_frames);
-        // LOG(TRACE, LOG_TAG) << "on_process - frames: " << n_frames << ", requested: " << b->requested << "\n";
+    // LOG(TRACE, LOG_TAG) << "on_process - frames: " << n_frames << ", requested: " << b->requested << "\n";
 #else
     // LOG(TRACE, LOG_TAG) << "on_process - frames: " << n_frames << "\n";
 #endif

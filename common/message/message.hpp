@@ -120,9 +120,9 @@ struct tv
     }
 
     /// C'tor, construct from timeval @p tv
-    explicit tv(timeval tv) : sec(tv.tv_sec), usec(tv.tv_usec){};
+    explicit tv(timeval tv) : sec(tv.tv_sec), usec(tv.tv_usec) {};
     /// C'tor, construct from @p _sec and @p _usec
-    tv(int32_t _sec, int32_t _usec) : sec(_sec), usec(_usec){};
+    tv(int32_t _sec, int32_t _usec) : sec(_sec), usec(_usec) {};
 
     /// seconds
     int32_t sec;

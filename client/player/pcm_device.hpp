@@ -31,10 +31,10 @@ static constexpr char DEFAULT_DEVICE[] = "default";
 struct PcmDevice
 {
     /// c'tor
-    PcmDevice() : idx(-1), name(DEFAULT_DEVICE){};
+    PcmDevice() : idx(-1), name(DEFAULT_DEVICE) {};
 
     /// c'tor
-    PcmDevice(int idx, std::string name, std::string description = "") : idx(idx), name(std::move(name)), description(std::move(description)){};
+    PcmDevice(int idx, std::string name, std::string description = "") : idx(idx), name(std::move(name)), description(std::move(description)) {};
 
     /// index of the DAC (as in "aplay -L")
     int idx;
