@@ -272,4 +272,18 @@ std::string tolower_copy(const std::string& s)
     return tolower(str);
 }
 
+
+bool timing_safe_equals(const std::string a, const std::string b)
+{
+    volatile size_t i = 0;
+    volatile char result = (a.length() == b.length()) ? 0x00 : 0x01;
+    while (i < b.length())
+    {
+        result |= b[i] ^ (i < a.length() ? a[i] : 0x01);
+        ++i;
+    }
+    return (result == 0);
+}
+
+
 } // namespace utils::string

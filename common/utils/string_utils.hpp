@@ -127,4 +127,12 @@ std::string& tolower(std::string& s);
 std::string tolower_copy(const std::string& s);
 
 
+/// Compare @p a with @p b in time not dependent on the value of @p a
+/// or @p b. Intended for comparing credentials without introducing
+/// timing vulnerabilities. Timing depends on the length of @p b,
+/// which should be used for the user-provided input.
+/// @return true if strings are equal, otherwise false.
+bool timing_safe_equals(const std::string a, const std::string b);
+
+
 } // namespace utils::string

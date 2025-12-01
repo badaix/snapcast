@@ -112,7 +112,7 @@ ErrorCode AuthInfo::validateUser(const std::string& username, const std::optiona
                              [&](const ServerSettings::Authorization::User& user) { return user.name == username; });
     if (iter == auth_settings_.users.end())
         return ErrorCode{AuthErrc::unknown_user};
-    if (password.has_value() && (iter->password != password.value()))
+    if (password.has_value() && (!utils::string::timing_safe_equals(iter->password, password.value())))
         return ErrorCode{AuthErrc::wrong_password};
     return {};
 }
