@@ -107,6 +107,15 @@ TEST_CASE("String utils")
     std::string password = split_right(right, ':', role);
     REQUIRE(password == "password:with:colons");
     REQUIRE(role == "role");
+
+	REQUIRE(timing_safe_equals("", "") == true);
+	REQUIRE(timing_safe_equals("foo", "foo") == true);
+	REQUIRE(timing_safe_equals("foo", "") == false);
+	REQUIRE(timing_safe_equals("", "foo") == false);
+	REQUIRE(timing_safe_equals("foo", "bar") == false);
+	REQUIRE(timing_safe_equals("foo", "foobar") == false);
+	REQUIRE(timing_safe_equals("foobar", "foo") == false);
+	REQUIRE(timing_safe_equals("foobar", "foobaz") == false);
 }
 
 
