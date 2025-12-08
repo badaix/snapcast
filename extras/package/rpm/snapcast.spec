@@ -61,15 +61,16 @@ This package contains the client which connects to the server and plays the audi
 %setup -q -n %{name}
 
 %build 
-%cmake -DWERROR=ON -DBUILD_TESTS=OFF -DREVISION=%{_reversion}
+%cmake -DWERROR=OFF -DBUILD_TESTS=OFF -DREVISION=%{_reversion} -DCMAKE_BUILD_TYPE=Release -DBUILD_WITH_PULSE=ON -DBUILD_WITH_PIPEWIRE=ON 
+
 %cmake_build --parallel 2
 
 %install
 %cmake_install
 
 chmod 755 %{buildroot}%{_datadir}/snapserver/plug-ins/meta_mpd.py
-install -D -m 0644 %{SOURCE3} %{buildroot}%{_unitdir}/snapclient.service
-install -D -m 0644 %{SOURCE1} %{buildroot}%{_unitdir}/snapserver.service
+install -D -m 0644 %{SOURCE3} %{buildroot}%{_userunitdir}/snapclient.service
+install -D -m 0644 %{SOURCE1} %{buildroot}%{_userunitdir}/snapserver.service
 install -D -m 0644 %{SOURCE4} %{buildroot}/etc/default/snapserver.default
 install -D -m 0644 %{SOURCE2} %{buildroot}/etc/default/snapclient.default
 
@@ -101,7 +102,7 @@ chgrp snapserver %{_sharedstatedir}/snapserver
 %if 0%{?suse_version}
 %service_add_post snapclient.service
 %else
-%systemd_post snapclient.service
+%systemd_user_post snapclient.service
 %endif
 
 %post -n snapserver 
@@ -110,28 +111,28 @@ chgrp snapserver %{_sharedstatedir}/snapserver
 %if 0%{?suse_version}
 %service_add_post snapserver.service
 %else
-%systemd_post snapserver.service
+%systemd_user_post snapserver.service
 %endif
 
 %preun -n snapclient 
 %if 0%{?suse_version}
 %service_del_preun snapclient.service
 %else
-%systemd_preun snapclient.service
+%systemd_user_preun snapclient.service
 %endif
 
 %preun -n snapserver
 %if 0%{?suse_version}
 %service_del_preun snapserver.service
 %else
-%systemd_preun snapserver.service
+%systemd_user_preun snapserver.service
 %endif
 
 %postun -n snapclient 
 %if 0%{?suse_version}
 %service_del_postun snapclient.service
 %else
-%systemd_postun_with_restart snapclient.service
+%systemd_user_postun_with_restart snapclient.service
 %endif
 if [ $1 -eq 0 ]; then
    userdel --force snapclient 2> /dev/null; true
@@ -141,7 +142,7 @@ fi
 %if 0%{?suse_version}
 %service_del_postun snapserver.service
 %else
-%systemd_postun_with_restart snapserver.service
+%systemd_user_postun_with_restart snapserver.service
 %endif
 
 #%files 
@@ -154,14 +155,14 @@ fi
 %{_datadir}
 %config(noreplace) /usr/etc/snapserver.conf
 %config(noreplace) /etc/default/snapserver.default
-%{_unitdir}/snapserver.service
+%{_userunitdir}/snapserver.service
 #%{_fillupdir}/sysconfig.snapserver
 
 %files -n snapclient
 %{_bindir}/snapclient
 %{_mandir}/man1/snapclient.1.*
 %config(noreplace) /etc/default/snapclient.default
-%{_unitdir}/snapclient.service
+%{_userunitdir}/snapclient.service
 #%{_fillupdir}/sysconfig.snapclient
 
 %changelog
