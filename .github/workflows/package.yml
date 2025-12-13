@@ -107,7 +107,7 @@ jobs:
         run: rm -rf ${{env.PARENT_DIR}}/snap*_*.deb
       - name: Cache boost
         id: cache-boost
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ${{env.BOOST}}
           key: ${{env.BOOST}}
@@ -118,7 +118,7 @@ jobs:
           tar xjf ${{env.BOOST}}.tar.bz2
       - name: cache ccache
         id: cache-ccache
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           # TODO: use environment variable $HOME/.ccache
           path: /home/runner/.ccache
@@ -166,7 +166,7 @@ jobs:
           ref: ${{ env.VERSION }}
       - name: Cache dependencies
         id: cache-dependencies
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           #path: ${VCPKG_INSTALLATION_ROOT}\installed
           path: c:\vcpkg\installed
@@ -227,7 +227,7 @@ jobs:
   #     run: brew install pkgconfig libsoxr ccache expat
   #   - name: Cache boost
   #     id: cache-boost
-  #     uses: actions/cache@v4
+  #     uses: actions/cache@v5
   #     with:
   #       path: ${{env.BOOST}}
   #       key: ${{ runner.os }}-boost
@@ -238,7 +238,7 @@ jobs:
   #       tar xjf ${{env.BOOST}}.tar.bz2
   #   - name: Cache ccache
   #     id: cache-ccache
-  #     uses: actions/cache@v4
+  #     uses: actions/cache@v5
   #     with:
   #       path: /Users/runner/.ccache
   #       key: ${{ runner.os }}-ccache-${{ github.sha }}
