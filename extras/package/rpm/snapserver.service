@@ -1,8 +1,8 @@
 [Unit]
 Description=Snapcast server
 Documentation=man:snapserver(1)
-Wants=avahi-daemon.service
-After=network-online.target time-sync.target avahi-daemon.service
+Wants=pipewire.service pipewire-pulse.service
+After=network-online.target time-sync.target pipewire.service pipewire-pulse.service
 
 [Service]
 EnvironmentFile=-/etc/default/snapserver
@@ -10,4 +10,4 @@ ExecStart=/usr/bin/snapserver --logging.sink=system --server.datadir=${HOME} $SN
 Restart=on-failure
 
 [Install]
-WantedBy=multi-user.target
+WantedBy=default.target
