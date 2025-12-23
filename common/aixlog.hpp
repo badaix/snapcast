@@ -51,6 +51,7 @@
 #endif
 
 #ifdef _WIN32
+#define NOMINMAX
 #include <Windows.h>
 // ERROR macro is defined in Windows header
 // To avoid conflict between these macro and declaration of ERROR / DEBUG in SEVERITY enum
@@ -81,6 +82,11 @@
 #define AIXLOG_INTERNAL__FUNC __func__
 #endif
 
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wgnu-zero-variadic-macro-arguments"
+#endif
+
 /// Internal helper macros (exposed, but shouldn't be used directly)
 #define AIXLOG_INTERNAL__LOG_SEVERITY(SEVERITY_) std::clog << static_cast<AixLog::Severity>(SEVERITY_) << TAG()
 #define AIXLOG_INTERNAL__LOG_SEVERITY_TAG(SEVERITY_, TAG_) std::clog << static_cast<AixLog::Severity>(SEVERITY_) << TAG(TAG_)
@@ -96,8 +102,34 @@
 /// External logger macros
 // usage: LOG(SEVERITY) or LOG(SEVERITY, TAG)
 // e.g.: LOG(NOTICE) or LOG(NOTICE, "my tag")
+// Helper for filtered-out log messages - inherit from ostream to ensure compatibility
+namespace AixLog {
+    class NullBuffer : public std::streambuf {
+    public:
+        int overflow(int c) override { return c; }
+    };
+    
+    class NullStream : public std::ostream {
+    public:
+        NullStream() : std::ostream(&buffer) {}
+    private:
+        NullBuffer buffer;
+    };
+    // Function to get null stream instance
+    inline NullStream& get_null_stream() {
+        static NullStream instance;
+        return instance;
+    }
+}
+
+// LOG macro - optimization can be enabled by uncommenting the should_log check
 #ifndef WIN32
-#define LOG(...) AIXLOG_INTERNAL__LOG_MACRO_CHOOSER(__VA_ARGS__)(__VA_ARGS__) << TIMESTAMP << FUNC
+// #define LOG(...) AIXLOG_INTERNAL__LOG_MACRO_CHOOSER(__VA_ARGS__)(__VA_ARGS__) << TIMESTAMP << FUNC
+/* Optimized version with caching */
+#define LOG(LEVEL, ...) \
+    (AixLog::Log::should_log_cached(LEVEL, ##__VA_ARGS__) ? \
+        (AIXLOG_INTERNAL__LOG_MACRO_CHOOSER(LEVEL, ##__VA_ARGS__)(LEVEL, ##__VA_ARGS__) << TIMESTAMP << FUNC) : \
+        AixLog::get_null_stream())
 #endif
 
 // usage: COLOR(TEXT_COLOR, BACKGROUND_COLOR) or COLOR(TEXT_COLOR)
@@ -123,6 +155,10 @@
 #define CHOOSE_FROM_ARG_COUNT(...) FUNC_RECOMPOSER((__VA_ARGS__, LOG_2, LOG_1, FUNC_, ...))
 #define MACRO_CHOOSER(...) CHOOSE_FROM_ARG_COUNT(__VA_ARGS__())
 #define LOG(...) MACRO_CHOOSER(__VA_ARGS__)(__VA_ARGS__) << TIMESTAMP << FUNC
+#endif
+
+#if defined(__clang__)
+#pragma clang diagnostic pop
 #endif
 
 /**
@@ -381,7 +417,7 @@ struct Tag
     {
     }
 
-    Tag(const char* text) : text(text), is_null_(false)
+    Tag(const char* text) : text(text ? text : ""), is_null_(text == nullptr)
     {
     }
 
@@ -564,10 +600,81 @@ public:
         return instance_;
     }
 
+    /// Quick check if any sink would accept this log level/tag (optimization to avoid string construction)
+    static bool should_log(SEVERITY severity, const char* tag = nullptr)
+    {
+        Log& log = instance();
+        std::lock_guard<std::recursive_mutex> lock(log.mutex_);
+        
+        if (log.log_sinks_.empty()) return true; // If no sinks configured, default to logging
+        
+        // Convert old SEVERITY enum to new Severity enum
+        Severity new_severity = static_cast<Severity>(severity);
+        
+        Metadata temp_metadata;
+        temp_metadata.severity = new_severity;
+        temp_metadata.tag = tag;
+        
+        for (const auto& sink : log.log_sinks_)
+        {
+            if (sink->filter.match(temp_metadata))
+                return true;
+        }
+        return false;
+    }
+
+    /// Overload for new Severity enum class
+    static bool should_log(Severity severity, const char* tag = nullptr)
+    {
+        Log& log = instance();
+        std::lock_guard<std::recursive_mutex> lock(log.mutex_);
+        
+        if (log.log_sinks_.empty()) return true; // If no sinks configured, default to logging
+        
+        Metadata temp_metadata;
+        temp_metadata.severity = severity;
+        temp_metadata.tag = tag;
+        
+        for (const auto& sink : log.log_sinks_)
+        {
+            if (sink->filter.match(temp_metadata))
+                return true;
+        }
+        return false;
+    }
+
+    /// Cached version of should_log for better performance (implemented in aixlog.cpp)
+    static bool should_log_cached(SEVERITY severity, const char* tag = nullptr);
+    
+    /// Cached version of should_log for new Severity enum class
+    static bool should_log_cached(Severity severity, const char* tag = nullptr);
+    
+    /// Cached version of should_log for new Severity enum class with std::string tag
+    static bool should_log_cached(Severity severity, const std::string& tag);
+    
+    /// Clear the should_log cache (call when log configuration changes)
+    static void clearShouldLogCache();
+    
+    /// Get cache statistics for debugging
+    static void getShouldLogCacheStats(size_t& hits, size_t& misses, size_t& size);
+
+    /// Overload for old SEVERITY enum with std::string tag
+    static bool should_log(SEVERITY severity, const std::string& tag)
+    {
+        return should_log(severity, tag.c_str());
+    }
+
+    /// Overload for new Severity enum class with std::string tag
+    static bool should_log(Severity severity, const std::string& tag)
+    {
+        return should_log(severity, tag.c_str());
+    }
+
     /// Without "init" every LOG(X) will simply go to clog
     static void init(const std::vector<log_sink_ptr>& log_sinks = {})
     {
         Log::instance().log_sinks_.clear();
+        clearShouldLogCache(); // Clear cache when configuration changes
 
         for (const auto& sink : log_sinks)
             Log::instance().add_logsink(sink);
@@ -595,12 +702,14 @@ public:
     {
         std::lock_guard<std::recursive_mutex> lock(mutex_);
         log_sinks_.push_back(sink);
+        clearShouldLogCache(); // Clear cache when sinks change
     }
 
     void remove_logsink(const log_sink_ptr& sink)
     {
         std::lock_guard<std::recursive_mutex> lock(mutex_);
         log_sinks_.erase(std::remove(log_sinks_.begin(), log_sinks_.end(), sink), log_sinks_.end());
+        clearShouldLogCache(); // Clear cache when sinks change
     }
 
 protected:
@@ -1239,6 +1348,7 @@ static std::ostream& operator<<(std::ostream& os, const Color& color)
     os << TextColor(color);
     return os;
 }
+
 
 } // namespace AixLog
 
