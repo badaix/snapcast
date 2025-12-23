@@ -62,9 +62,15 @@ void StreamSession::sendNext()
     buffer.on_air = true;
     boost::asio::post(strand_, [this, self = shared_from_this(), buffer]()
     {
-        sendAsync(buffer, [this, buffer](boost::system::error_code ec, std::size_t length)
+        // CRITICAL: Convert to shared_ptr for safe zerocopy buffer lifetime
+        auto buffer_ptr = std::make_shared<shared_const_buffer>(buffer);
+        
+        // Pass shared_ptr to sendAsync - buffer now guaranteed to live 
+        // until kernel completion notification
+        sendAsync(buffer_ptr, [this, buffer_ptr](boost::system::error_code ec, std::size_t length)
         {
-            auto write_handler = buffer.getWriteHandler();
+            // buffer_ptr keeps buffer alive during this callback
+            auto write_handler = buffer_ptr->getWriteHandler();
             if (write_handler)
                 write_handler(ec, length);
 

@@ -228,6 +228,8 @@ struct ServerSettings
         size_t streamChunkMs{20};
         /// Send audio to muted clients?
         bool sendAudioToMutedClients{false};
+        /// Enable zerocopy networking for improved performance
+        bool zerocopy{false};
     };
 
     /// Client settings
