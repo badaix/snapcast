@@ -209,101 +209,207 @@ void StreamSessionTcpCoordinated::sendRegularCoordinated(const std::shared_ptr<s
 void StreamSessionTcpCoordinated::sendZeroCopy(const std::shared_ptr<shared_const_buffer> buffer, WriteHandler&& handler)
 {
     zerocopy_attempts_++;
-    
+
     size_t buffer_size = boost::asio::buffer_size(*buffer);
-    
+
     // Generate simple sequential buffer ID that matches kernel MSG_ZEROCOPY numbering
     uint32_t buffer_id = next_buffer_id_++;
-    
+
     // Prepare message header for sendmsg using the original buffer directly
     struct msghdr msg = {};
-    
-    // Create iovec from the shared_const_buffer - no copying needed!
-    // Get the first boost::asio::const_buffer from the shared_const_buffer
-    auto const_buf = *buffer->begin();
-    const auto* data = boost::asio::buffer_cast<const void*>(const_buf);
-    struct iovec iov = {const_cast<void*>(data), buffer_size};
-    msg.msg_iov = &iov;
-    msg.msg_iovlen = 1;
-    
-    // Send with MSG_ZEROCOPY
-    // LOG(DEBUG, LOG_TAG) << "Attempting sendmsg with MSG_ZEROCOPY|MSG_DONTWAIT, buffer_size: " << buffer_size << "\n";
+
+    // Build iovec vector from all const_buffer segments in the shared_const_buffer (no copies)
+    std::vector<iovec> iovs;
+    iovs.reserve(std::distance(buffer->begin(), buffer->end()));
+    for (auto const_buf : *buffer) {
+        const void* ptr = boost::asio::buffer_cast<const void*>(const_buf);
+        size_t len = boost::asio::buffer_size(const_buf);
+        iovs.push_back({ const_cast<void*>(ptr), static_cast<size_t>(len) });
+    }
+    msg.msg_iov = iovs.data();
+    msg.msg_iovlen = static_cast<int>(iovs.size());
+
+    // Single-shot sendmsg attempt
     ssize_t result = sendmsg(native_socket_, &msg, MSG_ZEROCOPY | MSG_DONTWAIT);
-    // LOG(TRACE, LOG_TAG) << "sendmsg result: " << result << ", errno: " << (result < 0 ? strerror(errno) : "success") << "\n";
-    
+
+    // If it failed with transient "would block", do a small retry/backoff loop
+    auto is_would_block_err = [](int e) {
+        return e == EAGAIN || e == EWOULDBLOCK || e == ENOBUFS;
+    };
+
+    if (result < 0 && is_would_block_err(errno))
+    {
+        // limited retries with backoff (keeps blocking short and bounded)
+        const std::array<std::chrono::milliseconds, 3> backoffs = {
+            std::chrono::milliseconds(5),
+            std::chrono::milliseconds(20),
+            std::chrono::milliseconds(50)
+        };
+
+        for (size_t attempt = 0; attempt < backoffs.size(); ++attempt)
+        {
+            std::this_thread::sleep_for(backoffs[attempt]);
+            result = sendmsg(native_socket_, &msg, MSG_ZEROCOPY | MSG_DONTWAIT);
+            if (result >= 0)
+                break;
+            if (result < 0 && !is_would_block_err(errno))
+                break; // fatal error, don't retry further
+        }
+    }
+
     if (result < 0)
     {
-        if (errno == EAGAIN || errno == EWOULDBLOCK || errno == ENOBUFS)
+        if (is_would_block_err(errno))
         {
-            LOG(WARNING, LOG_TAG) << "ZeroCopy send would block, falling back to regular send\n";
-            releaseZeroCopy(); // Release reservation before fallback
+            LOG(WARNING, LOG_TAG) << "ZeroCopy send would block after retries, falling back to regular send\n";
+            // No zerocopy queued; release reservation and fallback
+            releaseZeroCopy();
             sendRegularCoordinated(buffer, std::move(handler));
             return;
         }
         else
         {
             LOG(ERROR, LOG_TAG) << "ZeroCopy sendmsg failed: " << strerror(errno) << "\n";
-            releaseZeroCopy(); // Release reservation on error
+            releaseZeroCopy();
             if (handler)
                 handler(boost::system::error_code(errno, boost::system::system_category()), 0);
             return;
         }
     }
-    
-    if (static_cast<size_t>(result) != buffer_size)
-    {
-        LOG(WARNING, LOG_TAG) << "ZeroCopy partial send: " << result << "/" << buffer_size << " bytes\n";
-        
-        // Track the partial zerocopy send - this IS a successful zerocopy operation
-        zerocopy_successful_++;
-        zerocopy_bytes_ += result;
-        outstanding_zerocopy_buffers_++;
-        
-        // Track the buffer for completion notification
-        {
-            std::lock_guard<std::mutex> lock(zerocopy_buffers_mutex_);
-            pending_zerocopy_buffers_[buffer_id] = buffer;
-        }
-        
-        // Send the unsent portion via regular send
-        size_t remaining_bytes = buffer_size - result;
-        // Create a sub-buffer for the remaining data
-        auto const_buf = *buffer->begin();
-        auto remaining_data = boost::asio::buffer_cast<const char*>(const_buf) + result;
-        auto remaining_buffer = std::make_shared<std::vector<char>>(remaining_data, remaining_data + remaining_bytes);
-        
-        LOG(INFO, LOG_TAG) << "Sending remaining " << remaining_bytes << " bytes via regular send\n";
-        releaseZeroCopy();
-        
-        // Send remaining data with shared_ptr to ensure buffer lifetime
-        boost::asio::async_write(socket_, boost::asio::buffer(*remaining_buffer),
-            [this, handler = std::move(handler), buffer_size, remaining_buffer](boost::system::error_code ec, std::size_t) mutable {
-            if (handler) {
-                handler(ec, ec ? 0 : buffer_size); // Report full size on success
-            }
-        });
-        return;
-    }
-    
-    // Success - zerocopy send completed immediately (synchronously from our perspective)
+
+    // At this point result >= 0: some bytes were queued
+    size_t sent_total = static_cast<size_t>(result);
+
+    // Track that kernel has queued at least part of the buffer
     zerocopy_successful_++;
-    zerocopy_bytes_ += buffer_size;
+    zerocopy_bytes_ += sent_total;
     outstanding_zerocopy_buffers_++;
-    
-    // Track the buffer for completion notification - shared_ptr keeps it alive
+
     {
         std::lock_guard<std::mutex> lock(zerocopy_buffers_mutex_);
         pending_zerocopy_buffers_[buffer_id] = buffer;
     }
-    
-    // LOG(TRACE, LOG_TAG) << "ZeroCopy send successful: " << buffer_size << " bytes, ID: " << buffer_id << ", tracking for completion\n";
-    
-    // Release zerocopy reservation
+
+    if (sent_total == buffer_size)
+    {
+        // Entire buffer queued via zerocopy
+        releaseZeroCopy();
+        if (handler)
+            handler(boost::system::error_code(), buffer_size);
+        return;
+    }
+
+    // Partial send: try to continue sending remaining bytes using iovecs that point
+    // into the original buffers. We do a bounded sequence of non-blocking attempts
+    // before falling back to an allocated copy + async_write.
+    size_t remaining = buffer_size - sent_total;
+
+    // Build remaining iovecs pointing into original iovs starting from offset 'sent_total'
+    auto build_remaining_iovs = [&](size_t already_sent) {
+        std::vector<iovec> rem;
+        rem.reserve(iovs.size());
+        size_t skip = already_sent;
+        for (const auto &iov : iovs) {
+            size_t len = static_cast<size_t>(iov.iov_len);
+            if (skip >= len) {
+                skip -= len;
+                continue;
+            }
+            char* base = static_cast<char*>(iov.iov_base) + skip;
+            rem.push_back({ base, static_cast<size_t>(len - skip) });
+            skip = 0;
+        }
+        return rem;
+    };
+
+    // Limited retry/backoff for remaining bytes
+    const std::array<std::chrono::milliseconds, 3> rem_backoffs = {
+        std::chrono::milliseconds(5),
+        std::chrono::milliseconds(20),
+        std::chrono::milliseconds(50)
+    };
+
+    size_t already_sent = sent_total;
+    bool rem_fully_queued = false;
+
+    for (size_t attempt = 0; attempt < rem_backoffs.size(); ++attempt)
+    {
+        std::vector<iovec> rem_iovs = build_remaining_iovs(already_sent);
+        msg.msg_iov = rem_iovs.data();
+        msg.msg_iovlen = static_cast<int>(rem_iovs.size());
+
+        // Try to send remaining portion
+        ssize_t rem_result = sendmsg(native_socket_, &msg, MSG_ZEROCOPY | MSG_DONTWAIT);
+        if (rem_result >= 0)
+        {
+            already_sent += static_cast<size_t>(rem_result);
+            zerocopy_bytes_ += static_cast<size_t>(rem_result);
+            if (already_sent >= buffer_size)
+            {
+                rem_fully_queued = true;
+                break;
+            }
+            // If still partial, sleep and retry
+            std::this_thread::sleep_for(rem_backoffs[attempt]);
+            continue;
+        }
+        else if (is_would_block_err(errno))
+        {
+            // wait and retry
+            std::this_thread::sleep_for(rem_backoffs[attempt]);
+            continue;
+        }
+        else
+        {
+            // fatal error from sendmsg
+            LOG(ERROR, LOG_TAG) << "ZeroCopy continued send failed: " << strerror(errno) << "\n";
+            break;
+        }
+    }
+
+    if (rem_fully_queued)
+    {
+        // All bytes successfully queued via zerocopy after retries
+        releaseZeroCopy();
+        if (handler)
+            handler(boost::system::error_code(), buffer_size);
+        return;
+    }
+
+    // Still some bytes remain after retries -> fall back to copying the remaining bytes
+    size_t still_remaining = buffer_size - already_sent;
+    LOG(WARNING, LOG_TAG) << "ZeroCopy partial send unresolved after retries, falling back for remaining "
+                          << still_remaining << " bytes\n";
+
     releaseZeroCopy();
-    
-    // Complete the handler immediately
-    if (handler)
-        handler(boost::system::error_code(), buffer_size);
+
+    // Build contiguous copy of the remaining tail (only now we allocate)
+    auto remaining_vec = std::make_shared<std::vector<char>>();
+    remaining_vec->reserve(still_remaining);
+
+    size_t to_skip = already_sent;
+    for (auto const_buf : *buffer) {
+        size_t len = boost::asio::buffer_size(const_buf);
+        const char* data = boost::asio::buffer_cast<const char*>(const_buf);
+        if (to_skip >= len) {
+            to_skip -= len;
+            continue;
+        }
+        size_t off = to_skip;
+        size_t take = std::min(len - off, still_remaining - remaining_vec->size());
+        remaining_vec->insert(remaining_vec->end(), data + off, data + off + take);
+        if (remaining_vec->size() == still_remaining) break;
+        to_skip = 0;
+    }
+
+    LOG(INFO, LOG_TAG) << "Sending remaining " << still_remaining << " bytes via regular send\n";
+
+    boost::asio::async_write(socket_, boost::asio::buffer(*remaining_vec),
+        [this, handler = std::move(handler), buffer_size, remaining_vec](boost::system::error_code ec, std::size_t) mutable {
+            if (handler) {
+                handler(ec, ec ? 0 : buffer_size); // report full logical size on success
+            }
+        });
 }
 
 void StreamSessionTcpCoordinated::processPendingSends()
