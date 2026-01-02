@@ -32,7 +32,12 @@
 #include <unordered_map>
 #include <chrono>
 #include <thread>
+// msghdr, sendmsg
 #include <sys/socket.h>
+// iovec
+#include <sys/uio.h>
+// buffer_cast, buffer_size
+#include <boost/asio/buffer.hpp>
 #include <linux/errqueue.h>
 
 using boost::asio::ip::tcp;
