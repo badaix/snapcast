@@ -28,6 +28,13 @@
 #include <cstring>
 #include <pthread.h>
 
+// msghdr, sendmsg
+#include <sys/socket.h>
+// iovec
+#include <sys/uio.h>
+// buffer_cast, buffer_size
+#include <boost/asio/buffer.hpp>
+
 // MSG_ZEROCOPY definition for compatibility with older headers
 #ifndef MSG_ZEROCOPY
 #define MSG_ZEROCOPY 0x4000000
@@ -302,7 +309,6 @@ void StreamSessionTcpCoordinated::sendZeroCopy(const std::shared_ptr<shared_cons
     // Partial send: try to continue sending remaining bytes using iovecs that point
     // into the original buffers. We do a bounded sequence of non-blocking attempts
     // before falling back to an allocated copy + async_write.
-    size_t remaining = buffer_size - sent_total;
 
     // Build remaining iovecs pointing into original iovs starting from offset 'sent_total'
     auto build_remaining_iovs = [&](size_t already_sent) {
