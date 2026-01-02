@@ -227,11 +227,16 @@ void StreamSessionTcpCoordinated::sendZeroCopy(const std::shared_ptr<shared_cons
 
     // Build iovec vector from all const_buffer segments in the shared_const_buffer (no copies)
     std::vector<iovec> iovs;
-    iovs.reserve(std::distance(buffer->begin(), buffer->end()));
-    for (auto const_buf : *buffer) {
-        const void* ptr = boost::asio::buffer_cast<const void*>(const_buf);
-        size_t len = boost::asio::buffer_size(const_buf);
-        iovs.push_back({ const_cast<void*>(ptr), static_cast<size_t>(len) });
+    // buffer->begin()/end() returns pointers to a single const_buffer in this implementation,
+    // but keep generic iteration for multi-segment buffers if present.
+    auto it_begin = buffer->begin();
+    auto it_end = buffer->end();
+    iovs.reserve(static_cast<size_t>(std::distance(it_begin, it_end)));
+    for (auto const_buf = it_begin; const_buf != it_end; ++const_buf) {
+        const boost::asio::const_buffer& cb = *const_buf;
+        const void* ptr = cb.data();
+        size_t len = static_cast<size_t>(cb.size());
+        iovs.push_back({ const_cast<void*>(ptr), len });
     }
     msg.msg_iov = iovs.data();
     msg.msg_iovlen = static_cast<int>(iovs.size());
@@ -394,9 +399,10 @@ void StreamSessionTcpCoordinated::sendZeroCopy(const std::shared_ptr<shared_cons
     remaining_vec->reserve(still_remaining);
 
     size_t to_skip = already_sent;
-    for (auto const_buf : *buffer) {
-        size_t len = boost::asio::buffer_size(const_buf);
-        const char* data = boost::asio::buffer_cast<const char*>(const_buf);
+    for (auto const_buf = buffer->begin(); const_buf != buffer->end(); ++const_buf) {
+        const boost::asio::const_buffer& cb = *const_buf;
+        size_t len = static_cast<size_t>(cb.size());
+        const char* data = static_cast<const char*>(cb.data());
         if (to_skip >= len) {
             to_skip -= len;
             continue;
@@ -541,7 +547,7 @@ void StreamSessionTcpCoordinated::processErrorQueue()
                     uint32_t hi = ee->ee_data;
                     
                     uint32_t buffers_in_range = hi - lo + 1;
-                    // LOG(TRACE, LOG_TAG_COMPLETION) << "ZeroCopy completion notification: range [" << lo << "-" << hi << "] (" << buffers_in_range << " buffers), tracking " << pending_zerocopy_buffers_.size() << " buffers\n";
+                    // LOG(TRACE, LOG_TAG_COMPLETION) << "ZeroCopy completion notification: range [" << lo << "-" << hi << "] (" << buffers_in_range << " buffers), tracking " << pending_zerocopy_[...]
                     completion_notifications_received_++;
                     buffers_completed_via_notifications_ += buffers_in_range;
                     // LOG(TRACE, LOG_TAG_STATS) << "Added " << buffers_in_range << " completed buffers, total now: " << buffers_completed_via_notifications_.load() << "\n";
