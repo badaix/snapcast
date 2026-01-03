@@ -23,6 +23,7 @@
 #include "common/aixlog.hpp"
 
 // standard headers
+#include <array>
 #include <linux/errqueue.h>
 #include <linux/net_tstamp.h>
 #include <cstring>
@@ -65,7 +66,7 @@ StreamSessionTcpCoordinated::StreamSessionTcpCoordinated(StreamMessageReceiver* 
 
 StreamSessionTcpCoordinated::~StreamSessionTcpCoordinated()
 {
-    stop();
+    finish();
     
     // Log final statistics
     if (zerocopy_available_)
@@ -89,6 +90,11 @@ void StreamSessionTcpCoordinated::start()
 
 void StreamSessionTcpCoordinated::stop()
 {
+    finish();
+}
+
+void StreamSessionTcpCoordinated::finish()
+{
     if (zerocopy_available_)
     {
         stopErrorQueueMonitoring();
@@ -107,8 +113,6 @@ void StreamSessionTcpCoordinated::stop()
     }
     
     StreamSessionTcp::stop();
-
-
 }
 
 bool StreamSessionTcpCoordinated::initializeZeroCopy()
@@ -188,7 +192,7 @@ void StreamSessionTcpCoordinated::sendAsync(const std::shared_ptr<shared_const_b
     }
 }
 
-void StreamSessionTcpCoordinated::sendRegularCoordinated(const std::shared_ptr<shared_const_buffer> buffer, WriteHandler&& handler)
+void StreamSessionTcpCoordinated::sendRegularCoordinated(const std::shared_ptr<shared_const_buffer>& buffer, WriteHandler&& handler)
 {
     // Track the async operation
     pending_async_operations_++;
@@ -213,7 +217,7 @@ void StreamSessionTcpCoordinated::sendRegularCoordinated(const std::shared_ptr<s
     });
 }
 
-void StreamSessionTcpCoordinated::sendZeroCopy(const std::shared_ptr<shared_const_buffer> buffer, WriteHandler&& handler)
+void StreamSessionTcpCoordinated::sendZeroCopy(const std::shared_ptr<shared_const_buffer>& buffer, WriteHandler&& handler)
 {
     zerocopy_attempts_++;
 
@@ -235,7 +239,7 @@ void StreamSessionTcpCoordinated::sendZeroCopy(const std::shared_ptr<shared_cons
     for (auto const_buf = it_begin; const_buf != it_end; ++const_buf) {
         const boost::asio::const_buffer& cb = *const_buf;
         const void* ptr = cb.data();
-        size_t len = static_cast<size_t>(cb.size());
+        auto len = static_cast<size_t>(cb.size());
         iovs.push_back({ const_cast<void*>(ptr), len });
     }
     msg.msg_iov = iovs.data();
@@ -258,9 +262,9 @@ void StreamSessionTcpCoordinated::sendZeroCopy(const std::shared_ptr<shared_cons
             std::chrono::milliseconds(50)
         };
 
-        for (size_t attempt = 0; attempt < backoffs.size(); ++attempt)
+        for (auto backoff : backoffs)
         {
-            std::this_thread::sleep_for(backoffs[attempt]);
+            std::this_thread::sleep_for(backoff);
             result = sendmsg(native_socket_, &msg, MSG_ZEROCOPY | MSG_DONTWAIT);
             if (result >= 0)
                 break;
@@ -290,7 +294,7 @@ void StreamSessionTcpCoordinated::sendZeroCopy(const std::shared_ptr<shared_cons
     }
 
     // At this point result >= 0: some bytes were queued
-    size_t sent_total = static_cast<size_t>(result);
+    auto sent_total = static_cast<size_t>(result);
 
     // Track that kernel has queued at least part of the buffer
     zerocopy_successful_++;
@@ -321,13 +325,13 @@ void StreamSessionTcpCoordinated::sendZeroCopy(const std::shared_ptr<shared_cons
         rem.reserve(iovs.size());
         size_t skip = already_sent;
         for (const auto &iov : iovs) {
-            size_t len = static_cast<size_t>(iov.iov_len);
+            auto len = static_cast<size_t>(iov.iov_len);
             if (skip >= len) {
                 skip -= len;
                 continue;
             }
             char* base = static_cast<char*>(iov.iov_base) + skip;
-            rem.push_back({ base, static_cast<size_t>(len - skip) });
+            rem.push_back({ base, len - skip });
             skip = 0;
         }
         return rem;
@@ -343,7 +347,7 @@ void StreamSessionTcpCoordinated::sendZeroCopy(const std::shared_ptr<shared_cons
     size_t already_sent = sent_total;
     bool rem_fully_queued = false;
 
-    for (size_t attempt = 0; attempt < rem_backoffs.size(); ++attempt)
+    for (auto rem_backoff : rem_backoffs)
     {
         std::vector<iovec> rem_iovs = build_remaining_iovs(already_sent);
         msg.msg_iov = rem_iovs.data();
@@ -361,13 +365,13 @@ void StreamSessionTcpCoordinated::sendZeroCopy(const std::shared_ptr<shared_cons
                 break;
             }
             // If still partial, sleep and retry
-            std::this_thread::sleep_for(rem_backoffs[attempt]);
+            std::this_thread::sleep_for(rem_backoff);
             continue;
         }
         else if (is_would_block_err(errno))
         {
             // wait and retry
-            std::this_thread::sleep_for(rem_backoffs[attempt]);
+            std::this_thread::sleep_for(rem_backoff);
             continue;
         }
         else
@@ -401,7 +405,7 @@ void StreamSessionTcpCoordinated::sendZeroCopy(const std::shared_ptr<shared_cons
     size_t to_skip = already_sent;
     for (auto const_buf = buffer->begin(); const_buf != buffer->end(); ++const_buf) {
         const boost::asio::const_buffer& cb = *const_buf;
-        size_t len = static_cast<size_t>(cb.size());
+        auto len = static_cast<size_t>(cb.size());
         const char* data = static_cast<const char*>(cb.data());
         if (to_skip >= len) {
             to_skip -= len;
@@ -506,9 +510,9 @@ void StreamSessionTcpCoordinated::processErrorQueue()
 {
     // static int call_count = 0;
     static int debug_call_count = 0;
-    char control_buf[512];
+    std::array<char, 512> control_buf = {};
     struct msghdr msg = {};
-    msg.msg_control = control_buf;
+    msg.msg_control = control_buf.data();
     msg.msg_controllen = sizeof(control_buf);
     
     while (true)
@@ -539,7 +543,7 @@ void StreamSessionTcpCoordinated::processErrorQueue()
             // LOG(TRACE, LOG_TAG) << "Control message: level=" << cmsg->cmsg_level << ", type=" << cmsg->cmsg_type << "\n";
             if (cmsg->cmsg_level == SOL_IP && cmsg->cmsg_type == IP_RECVERR)
             {
-                struct sock_extended_err* ee = reinterpret_cast<struct sock_extended_err*>(CMSG_DATA(cmsg));
+                auto ee = reinterpret_cast<struct sock_extended_err*>(CMSG_DATA(cmsg));
                 if (ee->ee_errno == 0 && ee->ee_origin == SO_EE_ORIGIN_ZEROCOPY)
                 {
                     // Zerocopy completion notification
