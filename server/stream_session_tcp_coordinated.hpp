@@ -32,7 +32,6 @@
 #include <unordered_map>
 #include <chrono>
 #include <thread>
-#include <linux/errqueue.h>
 
 using boost::asio::ip::tcp;
 

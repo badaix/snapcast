@@ -417,7 +417,7 @@ void StreamSessionTcpCoordinated::sendZeroCopy(const std::shared_ptr<shared_cons
     LOG(INFO, LOG_TAG) << "Sending remaining " << still_remaining << " bytes via regular send\n";
 
     boost::asio::async_write(socket_, boost::asio::buffer(*remaining_vec),
-        [this, handler = std::move(handler), buffer_size, remaining_vec](boost::system::error_code ec, std::size_t) mutable {
+        [handler = std::move(handler), buffer_size, remaining_vec](boost::system::error_code ec, std::size_t) mutable {
             if (handler) {
                 handler(ec, ec ? 0 : buffer_size); // report full logical size on success
             }
