@@ -193,6 +193,21 @@ void DynamicBufferPool::cleanup(std::chrono::seconds max_idle_time)
     {
         LOG(DEBUG, LOG_TAG) << "Cleaned up " << cleaned_count << " stale buffers\n";
     }
+
+    // Log buffer pool statistics at DEBUG level
+    size_t available_count = 0;
+    for (const auto& bucket : available_buffers_)
+    {
+        available_count += bucket.second.size();
+    }
+
+    LOG(DEBUG, LOG_TAG) << "Buffer pool stats: "
+                        << "total=" << total_buffers_
+                        << ", available=" << available_count
+                        << ", created=" << buffers_created_
+                        << ", reused=" << buffers_reused_
+                        << ", bytes=" << bytes_allocated_
+                        << ", cleanups=" << cleanup_operations_ << "\n";
 }
 
 void DynamicBufferPool::check_cleanup()
