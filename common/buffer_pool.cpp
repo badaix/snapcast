@@ -29,9 +29,7 @@
 static constexpr auto LOG_TAG = "BufferPool";
 
 DynamicBufferPool::DynamicBufferPool(size_t initial_count, size_t default_buffer_size)
-    : default_buffer_size_(std::max(default_buffer_size, MIN_BUFFER_SIZE))
-    , initial_count_(initial_count)
-    , last_cleanup_(std::chrono::steady_clock::now())
+    : default_buffer_size_(std::max(default_buffer_size, MIN_BUFFER_SIZE)), initial_count_(initial_count), last_cleanup_(std::chrono::steady_clock::now())
 {
     // Lazy pre-allocation on first acquire
     LOG(DEBUG, LOG_TAG) << "Initialized buffer pool (lazy) with default size " << default_buffer_size_ << "\n";
@@ -40,12 +38,12 @@ DynamicBufferPool::DynamicBufferPool(size_t initial_count, size_t default_buffer
 DynamicBufferPool::BufferGuard DynamicBufferPool::acquire(size_t min_size)
 {
     check_cleanup();
-    
+
     size_t target_size = std::max({min_size, default_buffer_size_, MIN_BUFFER_SIZE});
     size_t size_bucket = get_size_bucket(target_size);
-    
+
     std::lock_guard<std::mutex> lock(mutex_);
-    
+
     // Lazy initial allocation
     if (available_buffers_.empty() && initial_count_ > 0)
     {
@@ -54,9 +52,9 @@ DynamicBufferPool::BufferGuard DynamicBufferPool::acquire(size_t min_size)
             auto buffer = create_buffer(default_buffer_size_);
             available_buffers_[size_bucket].push_back(std::move(buffer));
         }
-        initial_count_ = 0;  // Prevent repeated allocation
+        initial_count_ = 0; // Prevent repeated allocation
     }
-    
+
     // Try to reuse an existing buffer from the same or larger size bucket
     auto it = available_buffers_.lower_bound(size_bucket);
     while (it != available_buffers_.end())
@@ -65,44 +63,43 @@ DynamicBufferPool::BufferGuard DynamicBufferPool::acquire(size_t min_size)
         {
             auto buffer = std::move(it->second.back());
             it->second.pop_back();
-            
+
             buffer->resize_if_needed(target_size);
             ++buffers_reused_;
-            
-            LOG(TRACE, LOG_TAG) << "Reused buffer from size bucket " << it->first 
-                                << " for requested size " << target_size << "\n";
-            
-            return { *this, std::move(buffer) };
+
+            LOG(TRACE, LOG_TAG) << "Reused buffer from size bucket " << it->first << " for requested size " << target_size << "\n";
+
+            return {*this, std::move(buffer)};
         }
         ++it;
     }
-    
+
     // No suitable buffer found, create a new one
     auto buffer = create_buffer(target_size);
     ++buffers_created_;
-    
+
     LOG(TRACE, LOG_TAG) << "Created new buffer of size " << target_size << "\n";
-    
-    return { *this, std::move(buffer) };
+
+    return {*this, std::move(buffer)};
 }
 
 void DynamicBufferPool::release(std::unique_ptr<Buffer> buffer)
 {
     if (!buffer)
         return;
-        
+
     check_cleanup();
-    
+
     size_t size_bucket = get_size_bucket(buffer->capacity);
-    
+
     std::lock_guard<std::mutex> lock(mutex_);
-    
+
     // Check if we have room in this size bucket
     if (available_buffers_[size_bucket].size() < MAX_POOL_SIZE)
     {
         buffer->last_used = std::chrono::steady_clock::now();
         available_buffers_[size_bucket].push_back(std::move(buffer));
-        
+
         LOG(TRACE, LOG_TAG) << "Returned buffer to pool, size bucket " << size_bucket << "\n";
     }
     else
@@ -110,9 +107,8 @@ void DynamicBufferPool::release(std::unique_ptr<Buffer> buffer)
         // Pool is full for this size, let buffer be destroyed
         --total_buffers_;
         bytes_allocated_ -= buffer->capacity;
-        
-        LOG(TRACE, LOG_TAG) << "Pool full for size bucket " << size_bucket 
-                            << ", destroying buffer\n";
+
+        LOG(TRACE, LOG_TAG) << "Pool full for size bucket " << size_bucket << ", destroying buffer\n";
     }
 }
 
@@ -136,20 +132,20 @@ size_t DynamicBufferPool::get_size_bucket(size_t size)
 DynamicBufferPool::Stats DynamicBufferPool::getStats() const
 {
     std::lock_guard<std::mutex> lock(mutex_);
-    
+
     Stats stats;
     stats.total_buffers = total_buffers_;
     stats.bytes_allocated = bytes_allocated_;
     stats.buffers_created = buffers_created_;
     stats.buffers_reused = buffers_reused_;
     stats.cleanup_operations = cleanup_operations_;
-    
+
     // Count available buffers
     for (const auto& bucket : available_buffers_)
     {
         stats.available_buffers += bucket.second.size();
     }
-    
+
     return stats;
 }
 
@@ -167,13 +163,13 @@ void DynamicBufferPool::cleanup(std::chrono::seconds max_idle_time)
     std::lock_guard<std::mutex> lock(mutex_);
     last_cleanup_ = now;
     ++cleanup_operations_;
-    
+
     size_t cleaned_count = 0;
-    
+
     for (auto& bucket_pair : available_buffers_)
     {
         auto& deq = bucket_pair.second;
-        for (auto it = deq.begin(); it != deq.end(); )
+        for (auto it = deq.begin(); it != deq.end();)
         {
             if (now - (*it)->last_used >= max_idle_time)
             {
@@ -188,7 +184,7 @@ void DynamicBufferPool::cleanup(std::chrono::seconds max_idle_time)
             }
         }
     }
-    
+
     if (cleaned_count > 0)
     {
         LOG(DEBUG, LOG_TAG) << "Cleaned up " << cleaned_count << " stale buffers\n";
@@ -202,12 +198,8 @@ void DynamicBufferPool::cleanup(std::chrono::seconds max_idle_time)
     }
 
     LOG(DEBUG, LOG_TAG) << "Buffer pool stats: "
-                        << "total=" << total_buffers_
-                        << ", available=" << available_count
-                        << ", created=" << buffers_created_
-                        << ", reused=" << buffers_reused_
-                        << ", bytes=" << bytes_allocated_
-                        << ", cleanups=" << cleanup_operations_ << "\n";
+                        << "total=" << total_buffers_ << ", available=" << available_count << ", created=" << buffers_created_ << ", reused=" << buffers_reused_
+                        << ", bytes=" << bytes_allocated_ << ", cleanups=" << cleanup_operations_ << "\n";
 }
 
 void DynamicBufferPool::check_cleanup()

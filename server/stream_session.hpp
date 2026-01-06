@@ -63,13 +63,14 @@ class shared_const_buffer
     struct Message
     {
         DynamicBufferPool::BufferGuard buffer_guard; ///< pooled buffer for data
-        size_t data_size;                 ///< actual size of data in buffer
-        bool is_pcm_chunk;                ///< is it a PCM chunk
-        message_type type;                ///< message type
-        chronos::time_point_clk rec_time; ///< recording time
-        
-        Message(DynamicBufferPool::BufferGuard&& guard, size_t size) 
-            : buffer_guard(std::move(guard)), data_size(size) {}
+        size_t data_size;                            ///< actual size of data in buffer
+        bool is_pcm_chunk;                           ///< is it a PCM chunk
+        message_type type;                           ///< message type
+        chronos::time_point_clk rec_time;            ///< recording time
+
+        Message(DynamicBufferPool::BufferGuard&& guard, size_t size) : buffer_guard(std::move(guard)), data_size(size)
+        {
+        }
     };
 
 public:
@@ -79,19 +80,19 @@ public:
         tv t;
         message.sent = t;
         const msg::PcmChunk* pcm_chunk = dynamic_cast<const msg::PcmChunk*>(&message);
-        
+
         // Serialize message to get size
         std::ostringstream oss;
         message.serialize(oss);
         std::string s = oss.str();
-        
+
         // Acquire buffer from pool
         auto buffer_guard = DynamicBufferPool::instance().acquire(s.size());
-        
+
         // Copy data to pooled buffer
         buffer_guard.resize(s.size());
         std::copy(s.begin(), s.end(), buffer_guard.get().begin());
-        
+
         // Create Message with pooled buffer
         message_ = std::make_shared<Message>(std::move(buffer_guard), s.size());
         message_->type = message.type;
