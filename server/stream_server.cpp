@@ -42,7 +42,9 @@ using namespace streamreader;
 using json = nlohmann::json;
 
 static constexpr auto LOG_TAG = "StreamServer";
+#ifdef __linux__
 static constexpr auto LOG_STATS_TAG = "StreamServerStats";
+#endif
 
 StreamServer::StreamServer(boost::asio::io_context& io_context, ServerSettings serverSettings, StreamMessageReceiver* messageReceiver)
     : io_context_(io_context), config_timer_(io_context), diagnostics_timer_(io_context), settings_(std::move(serverSettings)), messageReceiver_(messageReceiver)
