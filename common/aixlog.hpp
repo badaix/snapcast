@@ -3,7 +3,7 @@
      / _\ (  )( \/ )(  )   /  \  / __)
     /    \ )(  )  ( / (_/\(  O )( (_ \
     \_/\_/(__)(_/\_)\____/ \__/  \___/
-    version 1.5.1
+    version 1.6.0 - improved by aanno - but not header-only any more
     https://github.com/badaix/aixlog
 
     This file is part of aixlog
@@ -103,33 +103,43 @@
 // usage: LOG(SEVERITY) or LOG(SEVERITY, TAG)
 // e.g.: LOG(NOTICE) or LOG(NOTICE, "my tag")
 // Helper for filtered-out log messages - inherit from ostream to ensure compatibility
-namespace AixLog {
-    class NullBuffer : public std::streambuf {
-    public:
-        int overflow(int c) override { return c; }
-    };
-    
-    class NullStream : public std::ostream {
-    public:
-        NullStream() : std::ostream(&buffer) {}
-    private:
-        NullBuffer buffer;
-    };
-    // Function to get null stream instance
-    inline NullStream& get_null_stream() {
-        static NullStream instance;
-        return instance;
+namespace AixLog
+{
+class NullBuffer : public std::streambuf
+{
+public:
+    int overflow(int c) override
+    {
+        return c;
     }
+};
+
+class NullStream : public std::ostream
+{
+public:
+    NullStream() : std::ostream(&buffer)
+    {
+    }
+
+private:
+    NullBuffer buffer;
+};
+// Function to get null stream instance
+inline NullStream& get_null_stream()
+{
+    static NullStream instance;
+    return instance;
 }
+} // namespace AixLog
 
 // LOG macro - optimization can be enabled by uncommenting the should_log check
 #ifndef WIN32
 // #define LOG(...) AIXLOG_INTERNAL__LOG_MACRO_CHOOSER(__VA_ARGS__)(__VA_ARGS__) << TIMESTAMP << FUNC
 /* Optimized version with caching */
-#define LOG(LEVEL, ...) \
-    (AixLog::Log::should_log_cached(LEVEL, ##__VA_ARGS__) ? \
-        (AIXLOG_INTERNAL__LOG_MACRO_CHOOSER(LEVEL, ##__VA_ARGS__)(LEVEL, ##__VA_ARGS__) << TIMESTAMP << FUNC) : \
-        AixLog::get_null_stream())
+#define LOG(LEVEL, ...)                                                                                                                                        \
+    (AixLog::Log::should_log_cached(LEVEL, ##__VA_ARGS__)                                                                                                      \
+         ? (AIXLOG_INTERNAL__LOG_MACRO_CHOOSER(LEVEL, ##__VA_ARGS__)(LEVEL, ##__VA_ARGS__) << TIMESTAMP << FUNC)                                               \
+         : AixLog::get_null_stream())
 #endif
 
 // usage: COLOR(TEXT_COLOR, BACKGROUND_COLOR) or COLOR(TEXT_COLOR)
@@ -605,16 +615,17 @@ public:
     {
         Log& log = instance();
         std::lock_guard<std::recursive_mutex> lock(log.mutex_);
-        
-        if (log.log_sinks_.empty()) return true; // If no sinks configured, default to logging
-        
+
+        if (log.log_sinks_.empty())
+            return true; // If no sinks configured, default to logging
+
         // Convert old SEVERITY enum to new Severity enum
         Severity new_severity = static_cast<Severity>(severity);
-        
+
         Metadata temp_metadata;
         temp_metadata.severity = new_severity;
         temp_metadata.tag = tag;
-        
+
         for (const auto& sink : log.log_sinks_)
         {
             if (sink->filter.match(temp_metadata))
@@ -628,13 +639,14 @@ public:
     {
         Log& log = instance();
         std::lock_guard<std::recursive_mutex> lock(log.mutex_);
-        
-        if (log.log_sinks_.empty()) return true; // If no sinks configured, default to logging
-        
+
+        if (log.log_sinks_.empty())
+            return true; // If no sinks configured, default to logging
+
         Metadata temp_metadata;
         temp_metadata.severity = severity;
         temp_metadata.tag = tag;
-        
+
         for (const auto& sink : log.log_sinks_)
         {
             if (sink->filter.match(temp_metadata))
@@ -645,16 +657,16 @@ public:
 
     /// Cached version of should_log for better performance (implemented in aixlog.cpp)
     static bool should_log_cached(SEVERITY severity, const char* tag = nullptr);
-    
+
     /// Cached version of should_log for new Severity enum class
     static bool should_log_cached(Severity severity, const char* tag = nullptr);
-    
+
     /// Cached version of should_log for new Severity enum class with std::string tag
     static bool should_log_cached(Severity severity, const std::string& tag);
-    
+
     /// Clear the should_log cache (call when log configuration changes)
     static void clearShouldLogCache();
-    
+
     /// Get cache statistics for debugging
     static void getShouldLogCacheStats(size_t& hits, size_t& misses, size_t& size);
 

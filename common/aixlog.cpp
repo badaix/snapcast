@@ -3,7 +3,7 @@
      / _\ (  )( \/ )(  )   /  \  / __)
     /    \ )(  )  ( / (_/\(  O )( (_ \
     \_/\_/(__)(_/\_)\____/ \__/  \___/
-    version 1.5.1
+    version 1.6.0 - improved by aanno - but not header-only any more
     https://github.com/badaix/aixlog
 
     This file is part of aixlog
@@ -26,30 +26,33 @@ public:
     /// @brief Key for the cache
     struct CacheKey
     {
+        /// @brief Severity level
         int severity;
+        /// @brief Tag string
         std::string tag;
-        
+
+        /// @brief Equality operator
         bool operator==(const CacheKey& other) const
         {
             return severity == other.severity && tag == other.tag;
         }
     };
-    
+
     /// @brief Hash function for CacheKey
     struct CacheKeyHash
     {
+        /// @brief  Compute hash
         std::size_t operator()(const CacheKey& key) const
         {
-            return std::hash<int>()(key.severity) ^ 
-                   (std::hash<std::string>()(key.tag) << 1);
+            return std::hash<int>()(key.severity) ^ (std::hash<std::string>()(key.tag) << 1);
         }
     };
-    
+
     /// @brief  Try to get from cache
     bool getCached(SEVERITY severity, const char* tag, bool& result)
     {
         std::lock_guard<std::mutex> lock(cache_mutex_);
-        
+
         CacheKey key{static_cast<int>(severity), tag ? std::string(tag) : std::string()};
         auto it = cache_.find(key);
         if (it != cache_.end())
@@ -61,15 +64,15 @@ public:
         cache_misses_++;
         return false;
     }
-    
+
     /// @brief  Store in cache
     void putCache(SEVERITY severity, const char* tag, bool result)
     {
         std::lock_guard<std::mutex> lock(cache_mutex_);
-        
+
         CacheKey key{static_cast<int>(severity), tag ? std::string(tag) : std::string()};
         cache_[key] = result;
-        
+
         // Limit cache size to avoid memory growth
         if (cache_.size() > MAX_CACHE_SIZE)
         {
@@ -79,7 +82,7 @@ public:
             cache_.erase(cache_.begin(), it);
         }
     }
-    
+
     /// @brief Clear the cache
     void clearCache()
     {
@@ -88,7 +91,7 @@ public:
         cache_hits_ = 0;
         cache_misses_ = 0;
     }
-    
+
     /// Debug stats
     void getStats(size_t& hits, size_t& misses, size_t& size)
     {
@@ -97,7 +100,7 @@ public:
         misses = cache_misses_;
         size = cache_.size();
     }
-    
+
 private:
     static constexpr size_t MAX_CACHE_SIZE = 1000;
     std::unordered_map<CacheKey, bool, CacheKeyHash> cache_;
@@ -118,17 +121,17 @@ bool Log::should_log_cached(SEVERITY severity, const char* tag)
 {
     auto& cache = getShouldLogCache();
     bool result;
-    
+
     // Try cache first
     if (cache.getCached(severity, tag, result))
     {
         return result;
     }
-    
+
     // Cache miss - compute result
     Log& log = instance();
     std::lock_guard<std::recursive_mutex> lock(log.mutex_);
-    
+
     if (log.log_sinks_.empty())
     {
         result = true; // If no sinks configured, default to logging
@@ -137,11 +140,11 @@ bool Log::should_log_cached(SEVERITY severity, const char* tag)
     {
         // Convert old SEVERITY enum to new Severity enum
         auto new_severity = static_cast<Severity>(severity);
-        
+
         Metadata temp_metadata;
         temp_metadata.severity = new_severity;
         temp_metadata.tag = tag;
-        
+
         result = false;
         for (const auto& sink : log.log_sinks_)
         {
@@ -152,10 +155,10 @@ bool Log::should_log_cached(SEVERITY severity, const char* tag)
             }
         }
     }
-    
+
     // Cache the result
     cache.putCache(severity, tag, result);
-    
+
     return result;
 }
 
