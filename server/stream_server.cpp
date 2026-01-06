@@ -23,7 +23,9 @@
 #include "common/aixlog.hpp"
 #include "config.hpp"
 #include "stream_session_tcp.hpp"
+#ifdef __linux__
 #include "stream_session_tcp_coordinated.hpp"
+#endif
 
 // standard headers
 #include <iomanip>
@@ -217,12 +219,14 @@ void StreamServer::handleAccept(tcp::socket socket)
         LOG(NOTICE, LOG_TAG) << "StreamServer::NewConnection: " << socket.remote_endpoint().address().to_string() << "\n";
         
         shared_ptr<StreamSession> session;
+#ifdef __linux__
         if (settings_.stream.zerocopy)
         {
             LOG(INFO, LOG_TAG) << "Creating zerocopy-enabled session for " << socket.remote_endpoint().address().to_string() << "\n";
             session = make_shared<StreamSessionTcpCoordinated>(this, settings_, std::move(socket));
         }
         else
+#endif
         {
             LOG(DEBUG, LOG_TAG) << "Creating regular TCP session for " << socket.remote_endpoint().address().to_string() << "\n";
             session = make_shared<StreamSessionTcp>(this, settings_, std::move(socket));
@@ -277,6 +281,7 @@ void StreamServer::stop()
     }
 }
 
+#ifdef __linux__
 void StreamServer::printZeroCopyDiagnostics(StreamSessionTcpCoordinated* /* coordinated_session */) const
 {
     // Aggregate stats from all zerocopy sessions
@@ -340,6 +345,7 @@ void StreamServer::printZeroCopyDiagnostics(StreamSessionTcpCoordinated* /* coor
         }).detach();
     }
 }
+#endif // __linux__
 
 void StreamServer::startDiagnosticsTimer()
 {
@@ -358,12 +364,14 @@ void StreamServer::startDiagnosticsTimer()
                 {
                     if (auto session = s.lock())
                     {
+#ifdef __linux__
                         // Handle zerocopy diagnostics
                         if (auto coordinated_session = std::dynamic_pointer_cast<StreamSessionTcpCoordinated>(session))
                         {
                             LOG(INFO, LOG_TAG) << "=== Periodic ZeroCopy Status (every 30s) ===\n";
                             printZeroCopyDiagnostics(coordinated_session.get());
                         }
+#endif
                     }
                 }
             }
