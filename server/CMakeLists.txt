@@ -12,7 +12,6 @@ set(SERVER_SOURCES
     stream_server.cpp
     stream_session.cpp
     stream_session_tcp.cpp
-    stream_session_tcp_coordinated.cpp
     stream_session_ws.cpp
     encoder/encoder_factory.cpp
     encoder/pcm_encoder.cpp
@@ -128,6 +127,11 @@ else()
     include_directories(${SOXR_INCLUDE_DIRS})
     link_directories(${SOXR_LIBRARY_DIRS})
   endif(SOXR_FOUND)
+
+  # Zero-copy TCP stream session (Linux only - uses MSG_ZEROCOPY and linux/errqueue.h)
+  if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    list(APPEND SERVER_SOURCES stream_session_tcp_coordinated.cpp)
+  endif()
 endif()
 
 if(OPENSSL_FOUND)

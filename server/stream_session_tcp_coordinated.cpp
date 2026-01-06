@@ -403,8 +403,7 @@ void StreamSessionTcpCoordinated::sendZeroCopy(const std::shared_ptr<shared_cons
     remaining_vec->reserve(still_remaining);
 
     size_t to_skip = already_sent;
-    for (auto const_buf = buffer->begin(); const_buf != buffer->end(); ++const_buf) {
-        const boost::asio::const_buffer& cb = *const_buf;
+    for (const auto& cb : *buffer) {
         auto len = static_cast<size_t>(cb.size());
         const char* data = static_cast<const char*>(cb.data());
         if (to_skip >= len) {
