@@ -113,12 +113,6 @@ private:
     void stopErrorQueueMonitoring();
     void errorQueueMonitoringLoop();
     void processErrorQueue();
-
-    /// Periodic statistics logging
-    void startPeriodicLogging();
-    void stopPeriodicLogging();
-    void logStatistics();
-    void scheduleNextLog();
     
     /// Simple buffer tracking for zerocopy completion
     /// Maps buffer_id to the shared_ptr that keeps the buffer alive
@@ -163,12 +157,8 @@ private:
     std::unique_ptr<std::thread> error_queue_thread_;
     std::atomic<bool> monitoring_active_{false};
     std::atomic<bool> shutdown_requested_{false};
-
+    
     // Buffer tracking - maps buffer_id to shared_ptr for completion handling
     std::unordered_map<uint32_t, std::shared_ptr<shared_const_buffer>> pending_zerocopy_buffers_;
     std::mutex zerocopy_buffers_mutex_;
-
-    // Periodic statistics logging (every 30 seconds)
-    std::shared_ptr<boost::asio::steady_timer> stats_timer_;
-    std::atomic<bool> stats_logging_active_{false};
 };
