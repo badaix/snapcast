@@ -24,6 +24,7 @@
 
 // standard headers
 #include <array>
+#include <iomanip>
 #include <linux/errqueue.h>
 #include <linux/net_tstamp.h>
 #include <cstring>
@@ -81,10 +82,11 @@ StreamSessionTcpCoordinated::~StreamSessionTcpCoordinated()
 void StreamSessionTcpCoordinated::start()
 {
     StreamSessionTcp::start();
-    
+
     if (zerocopy_available_)
     {
         startErrorQueueMonitoring();
+        startPeriodicLogging();
     }
 }
 
@@ -97,6 +99,7 @@ void StreamSessionTcpCoordinated::finish()
 {
     if (zerocopy_available_)
     {
+        stopPeriodicLogging();
         stopErrorQueueMonitoring();
         
         // Clear any pending sends
@@ -611,6 +614,72 @@ void StreamSessionTcpCoordinated::resetZeroCopyStats()
     completion_notifications_missing_.store(0);
     buffers_completed_via_notifications_.store(0);
     // Note: outstanding_zerocopy_buffers, and pending_async_operations are not reset as they represent current state
+}
+
+void StreamSessionTcpCoordinated::startPeriodicLogging()
+{
+    if (stats_logging_active_.load())
+        return;
+
+    stats_logging_active_.store(true);
+
+    // Create timer using the socket's io_context
+    stats_timer_ = std::make_shared<boost::asio::steady_timer>(socket_.get_executor());
+
+    LOG(DEBUG, LOG_TAG_STATS) << "Starting periodic statistics logging for session " << getIP() << "\n";
+
+    scheduleNextLog();
+}
+
+void StreamSessionTcpCoordinated::stopPeriodicLogging()
+{
+    if (!stats_logging_active_.load())
+        return;
+
+    LOG(DEBUG, LOG_TAG_STATS) << "Stopping periodic statistics logging for session " << getIP() << "\n";
+
+    stats_logging_active_.store(false);
+
+    if (stats_timer_)
+    {
+        boost::system::error_code ec;
+        stats_timer_->cancel(ec);
+        stats_timer_.reset();
+    }
+}
+
+void StreamSessionTcpCoordinated::scheduleNextLog()
+{
+    if (!stats_logging_active_.load() || !stats_timer_)
+        return;
+
+    stats_timer_->expires_after(std::chrono::seconds(30));
+    stats_timer_->async_wait([this, self = shared_from_this()](const boost::system::error_code& ec)
+    {
+        if (ec || !stats_logging_active_.load())
+            return;
+
+        logStatistics();
+        scheduleNextLog();
+    });
+}
+
+void StreamSessionTcpCoordinated::logStatistics()
+{
+    auto stats = getZeroCopyStats();
+
+    LOG(INFO, LOG_TAG_STATS) << "=== ZeroCopy Status (session " << getIP() << ") ===\n"
+                             << "ZC Attempts: " << stats.zerocopy_attempts
+                             << ", ZC Successful: " << stats.zerocopy_successful
+                             << " (" << std::fixed << std::setprecision(2) << stats.zerocopy_percentage() << "%)"
+                             << ", ZC Bytes: " << stats.zerocopy_bytes << "\n"
+                             << "Regular Sends: " << stats.regular_sends
+                             << ", Regular Bytes: " << stats.regular_bytes
+                             << ", Coordination Fallbacks: " << stats.coordination_fallbacks << "\n"
+                             << "Outstanding ZC Buffers: " << stats.outstanding_zerocopy_buffers
+                             << ", Pending Async Ops: " << stats.pending_async_operations
+                             << ", Completion Reliability: " << std::fixed << std::setprecision(2)
+                             << stats.completion_reliability() << "%\n";
 }
 
 // cleanupStaleBuffers() removed - shared_ptr handles cleanup automatically
