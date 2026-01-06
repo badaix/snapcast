@@ -116,6 +116,11 @@ static ShouldLogCache& getShouldLogCache()
     return instance;
 }
 
+// doxygen has problems with static functions inside cpp files and emits warning 
+// like "common/aixlog.cpp:166: warning: documented symbol 
+// 'bool AixLog::Log::should_log_cached' was not declared or defined."
+/// @cond INTERNAL
+
 /// Cached version of should_log
 bool Log::should_log_cached(SEVERITY severity, const char* tag)
 {
@@ -161,11 +166,6 @@ bool Log::should_log_cached(SEVERITY severity, const char* tag)
 
     return result;
 }
-
-// doxygen has problems with static functions inside cpp files and emits warning 
-// like "common/aixlog.cpp:166: warning: documented symbol 
-// 'bool AixLog::Log::should_log_cached' was not declared or defined."
-/// @cond INTERNAL
 
 /// Overload for new Severity enum class
 bool Log::should_log_cached(Severity severity, const char* tag)
