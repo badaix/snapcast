@@ -91,7 +91,7 @@ private:
     void startAccept();
     void handleAccept(tcp::socket socket);
     void cleanup();
-    
+
     /// Start periodic diagnostics timer
     void startDiagnosticsTimer();
 

@@ -167,7 +167,8 @@ int main(int argc, char* argv[])
         conf.add<Value<int>>("", "stream.buffer", "Buffer [ms]", settings.stream.bufferMs, &settings.stream.bufferMs);
         conf.add<Value<bool>>("", "stream.send_to_muted", "Send audio to muted clients", settings.stream.sendAudioToMutedClients,
                               &settings.stream.sendAudioToMutedClients);
-        conf.add<Value<bool>>("", "stream.zerocopy", "Enable zerocopy networking for improved performance", settings.stream.zerocopy, &settings.stream.zerocopy);
+        conf.add<Value<bool>>("", "stream.zerocopy", "Enable zerocopy networking for improved performance", settings.stream.zerocopy,
+                              &settings.stream.zerocopy);
 
         // streaming_client options
         conf.add<Value<uint16_t>>("", "streaming_client.initial_volume", "Volume [percent] assigned to new streaming clients",

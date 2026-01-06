@@ -64,8 +64,8 @@ void StreamSession::sendNext()
     {
         // CRITICAL: Convert to shared_ptr for safe zerocopy buffer lifetime
         auto buffer_ptr = std::make_shared<shared_const_buffer>(buffer);
-        
-        // Pass shared_ptr to sendAsync - buffer now guaranteed to live 
+
+        // Pass shared_ptr to sendAsync - buffer now guaranteed to live
         // until kernel completion notification
         sendAsync(buffer_ptr, [this, buffer_ptr](boost::system::error_code ec, std::size_t length)
         {
