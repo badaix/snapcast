@@ -202,6 +202,8 @@ A web interface called [HydraPlay](https://github.com/mariolukas/HydraPlay) inte
 
 For Windows, there's [Snap.Net](https://github.com/stijnvdb88/snap.net), a control client and player. It runs in the tray and lets you adjust client volumes with just a few clicks. The player simplifies setting up snapclient to play your music through multiple Windows sound devices simultaneously: pc speakers, hdmi audio, any usb audio devices you may have, etc. Snap.Net also runs on Android, and has limited support for iOS.
 
+There's [snapmixer](https://github.com/tremby/snapmixer), a text-mode volume control for all groups and clients.
+
 ## Setup of audio players/server
 
 Snapcast can be used with a number of different audio players and servers, and so it can be integrated into your favorite audio-player solution and make it synced-multiroom capable.
