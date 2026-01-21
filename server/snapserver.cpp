@@ -156,7 +156,7 @@ int main(int argc, char* argv[])
             "", "stream.source", "URI of the PCM input stream.\nFormat: TYPE://host/path?name=NAME\n[&codec=CODEC]\n[&sampleformat=SAMPLEFORMAT]", pcmSource,
             &pcmSource);
 
-        conf.add<Value<string>>("", "stream.default_source", "Default sample format", settings.stream.defaultSource, &settings.stream.defaultSource);
+        conf.add<Value<string>>("", "stream.default_source", "Default source for new clients", settings.stream.defaultSource, &settings.stream.defaultSource);
         conf.add<Value<string>>("", "stream.sampleformat", "Default sample format", settings.stream.sampleFormat, &settings.stream.sampleFormat);
         conf.add<Value<string>>("", "stream.codec", "Default transport codec\n(flac|ogg|opus|pcm)[:options]\nType codec:? to get codec specific options",
                                 settings.stream.codec, &settings.stream.codec);
