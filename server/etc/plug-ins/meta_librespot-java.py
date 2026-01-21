@@ -355,7 +355,7 @@ Usage: %(progname)s [OPTION]...
      -d, --debug            Run in debug mode
      -v, --version          meta_librespot version
 
-Report bugs to https://github.com/badaix/snapcast/issues""" % params)
+Report bugs to https://github.com/snapcast/snapcast/issues""" % params)
 
 
 if __name__ == '__main__':

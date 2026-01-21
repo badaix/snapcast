@@ -15,7 +15,7 @@ project(
   VERSION 0.34.0)
 
 set(PROJECT_DESCRIPTION "Multiroom client-server audio player")
-set(PROJECT_URL "https://github.com/badaix/snapcast")
+set(PROJECT_URL "https://github.com/snapcast/snapcast")
 
 option(BUILD_SHARED_LIBS "Build snapcast in a shared context" ON)
 option(BUILD_STATIC_LIBS "Build snapcast in a static context" ON)
@@ -119,6 +119,7 @@ option(BUILD_WITH_EXPAT "Build with EXPAT support" ON)
 option(BUILD_WITH_PULSE "Build with PulseAudio support" OFF)
 option(BUILD_WITH_JACK "Build with JACK support" OFF)
 option(BUILD_WITH_PIPEWIRE "Build with PipeWire support" OFF)
+option(BUILD_WITH_SDL2 "Build with SDL2 support" OFF)
 
 if(NOT BUILD_SHARED_LIBS AND NOT BUILD_STATIC_LIBS)
   message(
@@ -241,6 +242,13 @@ if(NOT WIN32 AND NOT ANDROID)
       pkg_search_module(PIPEWIRE REQUIRED libpipewire-0.3>=0.3.19)
       add_compile_definitions(HAS_PIPEWIRE)
     endif(BUILD_WITH_PIPEWIRE)
+
+    if(BUILD_WITH_SDL2)
+      # Find SDL2
+      find_package(PkgConfig REQUIRED)
+      pkg_check_modules(SDL2 REQUIRED sdl2)
+      add_compile_definitions(HAS_SDL2)
+    endif(BUILD_WITH_SDL2)
 
     if(BUILD_WITH_AVAHI)
       pkg_search_module(AVAHI REQUIRED avahi-client)

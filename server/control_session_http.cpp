@@ -59,7 +59,7 @@ static constexpr const char* UNCONFIGURED =
     "    <b>/etc/snapserver.conf</b>"
     "  </p>"
     "  <p>"
-    "    The Snapserver installation should include a copy of <a href=\"https://github.com/badaix/snapweb\">Snapweb</a>,"
+    "    The Snapserver installation should include a copy of <a href=\"https://github.com/snapcast/snapweb\">Snapweb</a>,"
     "    located in <b>/usr/share/snapserver/snapweb/</b><br>"
     "    To activate it, please configure the <b>doc_root</b> as follows, and restart Snapserver to activate the changes:"
     "  </p>"

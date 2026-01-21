@@ -108,7 +108,7 @@ static double stod(const std::string& str)
         throw std::out_of_range("stod");
     return val;
 #else
-    return std::stod(str.c_str());
+    return std::stod(str);
 #endif
 }
 

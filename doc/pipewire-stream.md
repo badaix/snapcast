@@ -4,7 +4,7 @@
 
 This implementation adds native PipeWire support to Snapcast server, allowing direct audio capture from PipeWire without going through ALSA or JACK compatibility layers.
 
-It is the solution to [issue 1371](https://github.com/badaix/snapcast/issues/1371).
+It is the solution to [issue 1371](https://github.com/snapcast/snapcast/issues/1371).
 
 ## Building with PipeWire Support
 
@@ -140,7 +140,7 @@ snd_aloop
 An alternative to using the `pipewire-stream` source in Snapcast is to use the `libpipewire-module-snapcast-discover` module from PipeWire. This module allows PipeWire clients to automatically discover and connect to snapserver.
 
 For details, see the [PipeWire documentation](https://docs.pipewire.org/page_module_snapcast_discover.html)
-and [issue 1371](https://github.com/badaix/snapcast/issues/1371).
+and [issue 1371](https://github.com/snapcast/snapcast/issues/1371).
 
 Using `libpipewire-module-snapcast-discover` allows for discover snapserver on the (sub) network.
 

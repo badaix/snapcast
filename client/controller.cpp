@@ -57,6 +57,10 @@
 #ifdef HAS_PIPEWIRE
 #include "player/pipewire_player.hpp"
 #endif
+#ifdef HAS_SDL2
+#include "player/sdl2_player.hpp"
+#endif
+
 #include "player/file_player.hpp"
 
 #include "browseZeroConf/browse_zeroconf.hpp"
@@ -168,6 +172,10 @@ std::vector<std::string> Controller::getSupportedPlayerNames()
 #ifdef HAS_PIPEWIRE
     result.emplace_back(player::PIPEWIRE);
 #endif
+#ifdef HAS_SDL2
+    result.emplace_back(player::SDL2);
+#endif
+
     result.emplace_back(player::FILE);
     return result;
 }
@@ -278,6 +286,11 @@ void Controller::getNextMessage()
             if (!player_)
                 player_ = createPlayer<PipeWirePlayer>(settings_.player, player::PIPEWIRE);
 #endif
+#ifdef HAS_SDL2
+            if (!player_)
+                player_ = createPlayer<Sdl2Player>(settings_.player, player::SDL2);
+#endif
+
             if (!player_ && (settings_.player.player_name == player::FILE))
                 player_ = createPlayer<FilePlayer>(settings_.player, player::FILE);
 

@@ -24,7 +24,7 @@ sudo pkg install git
 Clone Snapcast:
 
 ```sh
-git clone https://github.com/badaix/snapcast.git
+git clone https://github.com/snapcast/snapcast.git
 ```
 
 ## Install dependencies
@@ -206,10 +206,10 @@ rc-update add snapclient default
 
 ### Android (Cross compile)
 
-Clone [Snapdroid](https://github.com/badaix/snapdroid), which includes Snapclient as submodule:
+Clone [Snapdroid](https://github.com/snapcast/snapdroid), which includes Snapclient as submodule:
 
 ```sh
-git clone https://github.com/badaix/snapdroid.git
+git clone https://github.com/snapcast/snapdroid.git
 cd snapdroid
 git submodule update --init --recursive
 ```
@@ -218,8 +218,42 @@ and execute `./gradlew build`, which will cross compile Snapclient and bundle it
 
 ### OpenWrt/LEDE (Cross compile)
 
-To cross compile for OpenWrt, please follow the [OpenWrt flavored SnapOS guide](https://github.com/badaix/snapos/blob/master/openwrt/README.md)
+To cross compile for OpenWrt, please follow the [OpenWrt flavored SnapOS guide](https://github.com/snapcast/snapos/blob/master/openwrt/README.md)
 
 ### Buildroot (Cross compile)
 
-To integrate Snapcast into [Buildroot](https://buildroot.org/), please follow the [Buildroot flavored SnapOS guide](https://github.com/badaix/snapos/blob/master/buildroot-external/README.md)
+To integrate Snapcast into [Buildroot](https://buildroot.org/), please follow the [Buildroot flavored SnapOS guide](https://github.com/snapcast/snapos/blob/master/buildroot-external/README.md)
+
+### webOS (Cross compile)
+
+To cross compile Snapcast client for LG webOS TVs, you need the webOS SDK and toolchain.
+
+#### Prerequisites
+
+Install the [openlgtv buildroot toolchain](https://github.com/openlgtv/buildroot-nc4)
+
+#### Build Steps
+
+1. Configure the build for webOS target:
+
+    ```sh
+    mkdir build
+    cd build
+
+    # Configure with webOS toolchain
+    cmake .. \
+        -G Ninja \
+        -DCMAKE_TOOLCHAIN_FILE=/path/to/openlgtv/toolchain.cmake \
+        -DBUILD_WITH_SDL2=ON \
+        -DBUILD_SERVER=OFF \
+        -DBUILD_CLIENT=ON \
+        -DBUILD_WITH_ALSA=OFF \
+        -DBUILD_WITH_PULSE=OFF \
+        -DBUILD_WITH_PIPEWIRE=OFF
+    ```
+
+2. Build the client:
+
+    ```sh
+    cmake --build -j
+    ```

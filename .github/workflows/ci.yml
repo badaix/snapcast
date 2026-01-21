@@ -5,7 +5,7 @@ on:
   pull_request:
 
 env:
-  BOOST_VERSION: 1_89_0
+  BOOST_VERSION: 1_90_0
 
 jobs:
   static-analysis:
@@ -20,7 +20,7 @@ jobs:
     runs-on: ubuntu-24.04
 
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - name: print environment
         run: env
       - name: dependencies
@@ -32,7 +32,7 @@ jobs:
           libpipewire-0.3-dev
       - name: cache boost
         id: cache-boost
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: boost_${{ env.BOOST_VERSION }}
           key: boost-${{ env.BOOST_VERSION }}
@@ -72,7 +72,7 @@ jobs:
     runs-on: ubuntu-24.04
 
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - name: print environment
         run: env
       - name: dependencies
@@ -111,7 +111,7 @@ jobs:
     runs-on: ubuntu-24.04
 
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - name: print environment
         run: env
       - name: dependencies
@@ -123,7 +123,7 @@ jobs:
           libpipewire-0.3-dev
       - name: cache boost
         id: cache-boost
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: boost_${{ env.BOOST_VERSION }}
           key: boost-${{ env.BOOST_VERSION }}
@@ -135,7 +135,7 @@ jobs:
           tar xjf boost_${BOOST_VERSION}.tar.bz2
       - name: cache ccache
         id: cache-ccache
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           # TODO: use environment variable $HOME/.ccache
           path: /home/runner/.ccache
@@ -174,7 +174,6 @@ jobs:
           - clang-16
           - clang-17
           - clang-18
-          - gcc-9
           - gcc-10
           - gcc-11
           - gcc-12
@@ -208,10 +207,6 @@ jobs:
             cc: clang-18
             cxx: clang++-18
             os: ubuntu-24.04
-          - compiler: gcc-9
-            cc: gcc-9
-            cxx: g++-9
-            os: ubuntu-22.04
           - compiler: gcc-10
             cc: gcc-10
             cxx: g++-10
@@ -236,19 +231,19 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - name: print environment
         run: env
       - name: dependencies
         run: |
           sudo apt-get update && \
           sudo apt-get install -yq libasound2-dev libsoxr-dev libvorbisidec-dev libvorbis-dev libflac-dev \
-          libopus-dev alsa-utils libpulse-dev libjack-dev libavahi-client-dev libssl-dev \
+          libopus-dev alsa-utils libpulse-dev libjack-dev libavahi-client-dev libssl-dev libsdl2-dev \
           avahi-daemon ccache expat \
           libpipewire-0.3-dev
       - name: cache boost
         id: cache-boost
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: boost_${{ env.BOOST_VERSION }}
           key: boost-${{ env.BOOST_VERSION }}
@@ -260,7 +255,7 @@ jobs:
           tar xjf boost_${BOOST_VERSION}.tar.bz2
       - name: cache ccache
         id: cache-ccache
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           # TODO: use environment variable $HOME/.ccache
           path: /home/runner/.ccache
@@ -279,6 +274,7 @@ jobs:
             -DBUILD_WITH_PULSE=ON \
             -DBUILD_WITH_JACK=ON \
             -DBUILD_WITH_PIPEWIRE=ON \
+            -DBUILD_WITH_SDL2=ON \
             -DCMAKE_CXX_FLAGS="-DCMAKE_CXX_FLAGS=-DJSON_HAS_CPP_14"
         env:
           CC: ${{ matrix.cc }}
@@ -296,9 +292,6 @@ jobs:
       fail-fast: false
       matrix:
         xcode:
-          - "14.1"
-          - "14.2"
-          - "14.3"
           - "15.0"
           - "15.1"
           - "15.2"
@@ -309,16 +302,12 @@ jobs:
           - "16.2"
           - "16.3"
           - "16.4"
+          - "26.0"
+          - "26.1"
         build_type:
           - Debug
           - Release
         include:
-          - xcode: "14.1"
-            os: macos-13
-          - xcode: "14.2"
-            os: macos-13
-          - xcode: "14.3"
-            os: macos-13
           - xcode: "15.0"
             os: macos-14
           - xcode: "15.1"
@@ -339,16 +328,20 @@ jobs:
             os: macos-15
           - xcode: "16.4"
             os: macos-15
+          - xcode: "26.0"
+            os: macos-15
+          - xcode: "26.1"
+            os: macos-15
 
     runs-on: ${{ matrix.os }}
 
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - name: print environment
         run: env
       - name: dependencies
         run: |
-          brew update
+          brew update-if-needed
           brew install libsoxr flac libvorbis opus catch2 boost
       - name: configure
         run: |
@@ -384,10 +377,10 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - name: cache dependencies
         id: cache-dependencies
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           #path: ${VCPKG_INSTALLATION_ROOT}\installed
           path: c:\vcpkg\installed

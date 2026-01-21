@@ -8,7 +8,7 @@ permissions:
   contents: write
 
 env:
-  BOOST_VERSION: 1_89_0
+  BOOST_VERSION: 1_90_0
   SNAPWEB_VERSION: v0.9.2
 
 jobs:
@@ -24,7 +24,7 @@ jobs:
         env:
           DEBIAN_FRONTEND: noninteractive
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
       - name: Create release notes
         run: $GITHUB_WORKSPACE/extras/changelog_current_version.py $GITHUB_WORKSPACE/changelog.md > $GITHUB_WORKSPACE/changelog_current.md
       - name: Create draft release
@@ -73,6 +73,7 @@ jobs:
     steps:
       - name: Get dependencies
         run: |
+          sed -i -e 's/MODULES=dep/MODULES=most/g' /etc/initramfs-tools/initramfs.conf || true
           apt-get update && \
           apt-get install -yq wget debhelper build-essential cmake git rename \
           libatomic1 libasound2-dev libsoxr-dev libvorbisidec-dev libvorbis-dev libflac-dev \
@@ -90,7 +91,7 @@ jobs:
           && apt update \
           && apt install gh -y
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
       - name: Setup environment
         run: |
           echo "PARENT_DIR=$(dirname $GITHUB_WORKSPACE)" >> $GITHUB_ENV
@@ -106,7 +107,7 @@ jobs:
         run: rm -rf ${{env.PARENT_DIR}}/snap*_*.deb
       - name: Cache boost
         id: cache-boost
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ${{env.BOOST}}
           key: ${{env.BOOST}}
@@ -117,7 +118,7 @@ jobs:
           tar xjf ${{env.BOOST}}.tar.bz2
       - name: cache ccache
         id: cache-ccache
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           # TODO: use environment variable $HOME/.ccache
           path: /home/runner/.ccache
@@ -125,7 +126,7 @@ jobs:
           restore-keys: ${{ matrix.os }}-${{ matrix.debian }}-ccache-
       - name: Get Snapweb
         run: |
-          wget https://github.com/badaix/snapweb/releases/download/${SNAPWEB_VERSION}/snapweb.zip
+          wget https://github.com/snapcast/snapweb/releases/download/${SNAPWEB_VERSION}/snapweb.zip
           unzip snapweb.zip -d snapweb
       - name: Create deb package
         env:
@@ -156,16 +157,16 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
       - name: Checkout Snapcast
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
-          repository: badaix/snapcast
+          repository: snapcast/snapcast
           path: src/snapcast
           ref: ${{ env.VERSION }}
       - name: Cache dependencies
         id: cache-dependencies
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           #path: ${VCPKG_INSTALLATION_ROOT}\installed
           path: c:\vcpkg\installed
@@ -210,11 +211,11 @@ jobs:
 
   #   steps:
   #   - name: Checkout
-  #     uses: actions/checkout@v5
+  #     uses: actions/checkout@v6
   #   - name: Checkout Snapcast
-  #     uses: actions/checkout@v5
+  #     uses: actions/checkout@v6
   #     with:
-  #       repository: badaix/snapcast
+  #       repository: snapcast/snapcast
   #       path: src/snapcast
   #       ref: ${{ env.VERSION }}
   #   - name: Setup environment
@@ -226,7 +227,7 @@ jobs:
   #     run: brew install pkgconfig libsoxr ccache expat
   #   - name: Cache boost
   #     id: cache-boost
-  #     uses: actions/cache@v4
+  #     uses: actions/cache@v5
   #     with:
   #       path: ${{env.BOOST}}
   #       key: ${{ runner.os }}-boost
@@ -237,7 +238,7 @@ jobs:
   #       tar xjf ${{env.BOOST}}.tar.bz2
   #   - name: Cache ccache
   #     id: cache-ccache
-  #     uses: actions/cache@v4
+  #     uses: actions/cache@v5
   #     with:
   #       path: /Users/runner/.ccache
   #       key: ${{ runner.os }}-ccache-${{ github.sha }}
@@ -276,11 +277,11 @@ jobs:
   #   - name: Get dependencies
   #     run: dnf -y update && dnf -y install wget git rpm-build gcc-c++ cmake boost-devel alsa-lib-devel avahi-devel libatomic libvorbis-devel opus-devel pulseaudio-libs-devel flac-devel soxr-devel libstdc++-static expat-devel
   #   - name: Checkout
-  #     uses: actions/checkout@v5
+  #     uses: actions/checkout@v6
   #   - name: Checkout Snapcast
-  #     uses: actions/checkout@v5
+  #     uses: actions/checkout@v6
   #     with:
-  #       repository: badaix/snapcast
+  #       repository: snapcast/snapcast
   #       path: src/snapcast
   #       ref: ${{ env.VERSION }}
   #   - name: Create rpm package

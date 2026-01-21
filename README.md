@@ -8,9 +8,9 @@
 
 **S**y**n**chronous **a**udio **p**layer
 
-[![CI](https://github.com/badaix/snapcast/actions/workflows/ci.yml/badge.svg)](https://github.com/badaix/snapcast/actions/workflows/ci.yml)
-[![Github Releases](https://img.shields.io/github/release/badaix/snapcast.svg)](https://github.com/badaix/snapcast/releases)
-[![GitHub Downloads](https://img.shields.io/github/downloads/badaix/snapcast/total)](https://github.com/badaix/snapcast/releases)
+[![CI](https://github.com/snapcast/snapcast/actions/workflows/ci.yml/badge.svg)](https://github.com/snapcast/snapcast/actions/workflows/ci.yml)
+[![Github Releases](https://img.shields.io/github/release/snapcast/snapcast.svg)](https://github.com/snapcast/snapcast/releases)
+[![GitHub Downloads](https://img.shields.io/github/downloads/snapcast/snapcast/total)](https://github.com/snapcast/snapcast/releases)
 [![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://www.paypal.me/badaix)
 
 Snapcast is a multiroom client-server audio player, where all clients are time synchronized with the server to play perfectly synced audio. It's not a standalone player, but an extension that turns your existing audio player into a Sonos-like multiroom solution.  
@@ -77,7 +77,9 @@ Please follow this [guide](doc/build.md) to build Snapcast for
 - [OpenWrt](doc/build.md#openwrtlede-cross-compile)
 - [Buildroot](doc/build.md#buildroot-cross-compile)
 - [Raspberry Pi](doc/build.md#raspberry-pi-cross-compile)
+- [webOS](doc/build.md#webos-cross-compile)
 - [Windows](doc/build.md#windows-vcpkg)
+
 
 ## Configuration
 
@@ -121,6 +123,7 @@ Available audio backends are configured using the `--player` command line parame
 | opensl    | Android | OpenSL ES | |
 | coreaudio | macOS   | Core Audio | |
 | wasapi    | Windows | Windows Audio Session API | |
+| sld2      | All     | SDL2 Audio (e.g. for LG webOS TVs) | |
 | file      | All     | Write audio to file | `filename=<filename>` (`<filename>` = `stdout`, `stderr`, `null` or a filename)<br>`mode=[w\|a]` (`w`: write (discarding the content), `a`: append (keeping the content) |
 
 Parameters are appended to the player name, e.g. `--player alsa:buffer_time=100`. Use `--player <name>:?` to get a list of available options.  
@@ -165,17 +168,17 @@ Snapcast can be controlled using a [JSON-RPC API](doc/json_rpc_api/control.md) o
 
 ### WebApp
 
-The server is shipped with [Snapweb](https://github.com/badaix/snapweb), this WebApp can be reached under `http://<snapserver host>:1780` or `https://<snapserver host>:1788`, if SSL is enabled (see [HTTPS configuration](doc/configuration.md#https)).
+The server is shipped with [Snapweb](https://github.com/snapcast/snapweb), this WebApp can be reached under `http://<snapserver host>:1780` or `https://<snapserver host>:1788`, if SSL is enabled (see [HTTPS configuration](doc/configuration.md#https)).
 
 <picture>
- <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/badaix/snapweb/master/snapweb_dark.png">
- <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/badaix/snapweb/master/snapweb_light.png">
- <img alt="Snapweb" src="https://raw.githubusercontent.com/badaix/snapweb/master/snapweb_light.png">
+ <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/snapcast/snapweb/master/snapweb_dark.png">
+ <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/snapcast/snapweb/master/snapweb_light.png">
+ <img alt="Snapweb" src="https://raw.githubusercontent.com/snapcast/snapweb/master/snapweb_light.png">
 </picture>
 
 ### Android client
 
-There is an Android client [snapdroid](https://github.com/badaix/snapdroid) available in [Releases](https://github.com/badaix/snapdroid/releases/latest) and on [Google Play](https://play.google.com/store/apps/details?id=de.badaix.snapcast)
+There is an Android client [snapdroid](https://github.com/snapcast/snapdroid) available in [Releases](https://github.com/snapcast/snapdroid/releases/latest) and on [Google Play](https://play.google.com/store/apps/details?id=de.badaix.snapcast)
 
 ![Snapcast for Android](doc/snapcast_android_scaled.png)
 

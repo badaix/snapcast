@@ -1,5 +1,27 @@
 # Snapcast changelog
 
+## Version 0.35.0
+
+### Features
+
+- Client: Add SDL2 player for better portability (PR #1460)
+
+### Bugfixes
+
+### General
+
+- CI: remove gcc-9
+- Move project to https://github.com/snapcast/snapcast (Issue #1458)
+
+### Contributors
+
+- @badaix
+- @malkstar
+
+_Johannes Pohl <snapcast@badaix.de>  Wed, 24 Dec 2025 00:13:37 +0200_
+
+# Snapcast changelog
+
 ## Version 0.34.0
 
 ### Features
@@ -616,7 +638,7 @@ _Johannes Pohl <snapcast@badaix.de>  Sat, 07 Jul 2018 00:13:37 +0200_
 - cmake: works on FreeBSD
 - Update external libs (JSON for modern C++, ASIO, AixLog)
 - Restructured source tree
-- Moved Android app into seperate project [snapdroid](https://github.com/badaix/snapdroid)
+- Moved Android app into seperate project [snapdroid](https://github.com/snapcast/snapdroid)
 
 _Johannes Pohl <snapcast@badaix.de>  Fri, 27 Apr 2018 00:13:37 +0200_
 
@@ -636,7 +658,7 @@ _Johannes Pohl <snapcast@badaix.de>  Fri, 27 Apr 2018 00:13:37 +0200_
 ### General
 
 - Drop dependency to external "jsonrpc++"
-- Move OpenWrt and Buildroot support into separate project "[SnapOS](https://github.com/badaix/snapos)"
+- Move OpenWrt and Buildroot support into separate project "[SnapOS](https://github.com/snapcast/snapos)"
 - Add CMake support (not fully replacing Make yet) (PR #212)
 - Remove MIPS support for Android (deprecated by Google)
 - Use MAC address as default client id (override with "--hostID")
@@ -743,9 +765,9 @@ _Johannes Pohl <snapcast@badaix.de>  Sat, 04 Mar 2017 00:13:37 +0200_
 
 ### Features
 
-- Added support [process](https://github.com/badaix/snapcast/blob/master/doc/player_setup.md#process) streams:  
+- Added support [process](https://github.com/snapcast/snapcast/blob/master/doc/player_setup.md#process) streams:  
   Snapserver starts a process and reads PCM data from stdout
-- Specialized versions for [Spotify](https://github.com/badaix/snapcast/blob/master/doc/player_setup.md#spotify) and [AirPlay](https://github.com/badaix/snapcast/blob/master/doc/player_setup.md#airplay)
+- Specialized versions for [Spotify](https://github.com/snapcast/snapcast/blob/master/doc/player_setup.md#spotify) and [AirPlay](https://github.com/snapcast/snapcast/blob/master/doc/player_setup.md#airplay)
 
 ### Bugfixes
 

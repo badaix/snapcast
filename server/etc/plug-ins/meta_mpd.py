@@ -49,7 +49,7 @@ __git_version__ = "@gitversion@"
 musicbrainzngs.set_useragent(
     "snapcast-mtea-mpd",
     "0.1",
-    "https://github.com/badaix/snapcast",
+    "https://github.com/snapcast/snapcast",
 )
 
 using_gi_glib = False
@@ -805,7 +805,7 @@ Usage: %(progname)s [OPTION]...
      -d, --debug            Run in debug mode
      -v, --version          meta_mpd version
 
-Report bugs to https://github.com/badaix/snapcast/issues""" % params)
+Report bugs to https://github.com/snapcast/snapcast/issues""" % params)
 
 
 if __name__ == '__main__':
