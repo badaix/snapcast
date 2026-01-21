@@ -186,16 +186,20 @@ const PcmStreamPtr StreamManager::getDefaultStream() const
         return nullptr;
 
     bool hasDefaultSource = settings_.stream.defaultSource.length() > 0;
+    PcmStreamPtr firstValidStream = nullptr;
 
     for (const auto& stream : streams_)
     {
         if (stream->getCodec() != "null")
         {
-            if (hasDefaultSource && stream->getName() == settings_.stream.defaultSource || !hasDefaultSource)
+            if (firstValidStream == nullptr)
+                firstValidStream = stream;
+
+            if (!hasDefaultSource || (hasDefaultSource && stream->getName() == settings_.stream.defaultSource))
                 return stream;
         }
     }
-    return nullptr;
+    return firstValidStream;
 }
 
 
