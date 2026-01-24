@@ -176,7 +176,7 @@ void UdpStream::handle_receive(const boost::system::error_code& error, size_t by
 
 UdpStream::RtpHeader UdpStream::parse_rtp_header(const char* data, size_t len)
 {
-    RtpHeader header;
+    RtpHeader header{};
     if (len < 12)
         return header; // Caller ensures length
 

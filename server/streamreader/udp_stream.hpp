@@ -56,15 +56,15 @@ protected:
 
     struct RtpHeader
     {
-        uint8_t version;
-        bool padding;
-        bool extension;
-        uint8_t csrcCount;
-        bool marker;
-        uint8_t payloadType;
-        uint16_t sequenceNumber;
-        uint32_t timestamp;
-        uint32_t ssrc;
+        uint8_t version{0};
+        bool padding{false};
+        bool extension{false};
+        uint8_t csrcCount{0};
+        bool marker{false};
+        uint8_t payloadType{0};
+        uint16_t sequenceNumber{0};
+        uint32_t timestamp{0};
+        uint32_t ssrc{0};
     };
 
     std::unique_ptr<udp::socket> socket_;
