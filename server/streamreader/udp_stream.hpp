@@ -20,8 +20,8 @@
 
 
 // local headers
-#include "asio_stream.hpp"
 #include "common/message/pcm_chunk.hpp"
+#include "pcm_stream.hpp"
 
 // 3rd party headers
 #include <boost/asio/ip/udp.hpp>
@@ -34,11 +34,11 @@
 #include <string>
 #include <vector>
 
-using boost::asio::ip::udp;
-
 
 namespace streamreader
 {
+
+using boost::asio::ip::udp;
 
 /// Reads and decodes PCM data from a UDP socket
 /**
