@@ -21,9 +21,18 @@
 
 // local headers
 #include "asio_stream.hpp"
+#include "common/message/pcm_chunk.hpp"
 
 // 3rd party headers
 #include <boost/asio/ip/udp.hpp>
+#include <boost/asio/steady_timer.hpp>
+
+// standard headers
+#include <chrono>
+#include <map>
+#include <memory>
+#include <string>
+#include <vector>
 
 using boost::asio::ip::udp;
 
@@ -49,10 +58,17 @@ public:
     void stop() override;
 
 protected:
+    /// Asynchronous read operation
     void do_read();
+
+    /// Handle received data
+    /// @param error Error code
+    /// @param bytes_transferred Number of bytes received
     void handle_receive(const boost::system::error_code& error, size_t bytes_transferred);
+
+    /// Check stream state (playing/idle)
+    /// @param duration Time to wait before next check
     void check_state(const std::chrono::steady_clock::duration& duration);
-    void on_timer(const boost::system::error_code& ec);
 
     /// RTP Header structure (RFC 3550)
     struct RtpHeader
@@ -68,34 +84,41 @@ protected:
         uint32_t ssrc{0};           ///< Synchronization source identifier
     };
 
-    std::unique_ptr<udp::socket> socket_;
-    udp::endpoint remote_endpoint_;
-    std::vector<char> recv_buffer_;
-    boost::asio::steady_timer state_timer_;
-    boost::asio::steady_timer sap_timer_;
-    std::chrono::microseconds silence_{0};
-    std::chrono::milliseconds idle_threshold_;
-    bool is_rtp_{false};
+    std::unique_ptr<udp::socket> socket_;      ///< UDP socket
+    udp::endpoint remote_endpoint_;            ///< Sender endpoint
+    std::vector<char> recv_buffer_;            ///< Receive buffer
+    boost::asio::steady_timer state_timer_;    ///< Timer for state checking
+    boost::asio::steady_timer sap_timer_;      ///< Timer for SAP announcements
+    std::chrono::microseconds silence_{0};     ///< Accumulated silence duration
+    std::chrono::milliseconds idle_threshold_; ///< Threshold to switch to idle state
+    bool is_rtp_{false};                       ///< RTP mode flag
 
     // Jitter buffer
-    std::map<uint16_t, msg::PcmChunk> jitter_buffer_;
-    uint16_t next_sequence_number_{0};
-    bool first_packet_{true};
-    uint32_t buffer_ms_{50}; // Jitter buffer latency config
+    std::map<uint16_t, msg::PcmChunk> jitter_buffer_; ///< Jitter buffer (seq -> chunk)
+    uint16_t next_sequence_number_{0};                ///< Next expected sequence number
+    bool first_packet_{true};                         ///< Flag for first packet
+    uint32_t buffer_ms_{50};                          ///< Jitter buffer latency config
 
     /// Processes a parsed RTP packet and adds it to the jitter buffer
+    /// @param header Parsed RTP header
+    /// @param payload Pointer to the RTP payload
+    /// @param len Length of the payload
     void process_rtp_packet(const RtpHeader& header, const char* payload, size_t len);
 
     /// Pops available packets from the jitter buffer and sends them to the encoder
     void pop_from_buffer();
 
     /// Parses the RTP header from the received data
+    /// @param data Pointer to the packet data
+    /// @param len Length of the packet data
+    /// @return Parsed RTP header
     RtpHeader parse_rtp_header(const char* data, size_t len);
 
     // SAP announcements
+    /// Sends a SAP announcement
     void send_sap_announcement();
-    std::unique_ptr<udp::socket> sap_socket_;
-    udp::endpoint sap_endpoint_;
+    std::unique_ptr<udp::socket> sap_socket_; ///< Socket for SAP announcements
+    udp::endpoint sap_endpoint_;              ///< SAP multicast endpoint
 };
 
 } // namespace streamreader
