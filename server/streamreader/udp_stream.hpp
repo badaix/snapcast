@@ -54,17 +54,18 @@ protected:
     void check_state(const std::chrono::steady_clock::duration& duration);
     void on_timer(const boost::system::error_code& ec);
 
+    /// RTP Header structure (RFC 3550)
     struct RtpHeader
     {
-        uint8_t version{0};
-        bool padding{false};
-        bool extension{false};
-        uint8_t csrcCount{0};
-        bool marker{false};
-        uint8_t payloadType{0};
-        uint16_t sequenceNumber{0};
-        uint32_t timestamp{0};
-        uint32_t ssrc{0};
+        uint8_t version{0};         ///< Protocol version
+        bool padding{false};        ///< Padding flag
+        bool extension{false};      ///< Extension flag
+        uint8_t csrcCount{0};       ///< CSRC count
+        bool marker{false};         ///< Marker bit
+        uint8_t payloadType{0};     ///< Payload type
+        uint16_t sequenceNumber{0}; ///< Sequence number
+        uint32_t timestamp{0};      ///< Timestamp
+        uint32_t ssrc{0};           ///< Synchronization source identifier
     };
 
     std::unique_ptr<udp::socket> socket_;
@@ -82,8 +83,13 @@ protected:
     bool first_packet_{true};
     uint32_t buffer_ms_{50}; // Jitter buffer latency config
 
+    /// Processes a parsed RTP packet and adds it to the jitter buffer
     void process_rtp_packet(const RtpHeader& header, const char* payload, size_t len);
+
+    /// Pops available packets from the jitter buffer and sends them to the encoder
     void pop_from_buffer();
+
+    /// Parses the RTP header from the received data
     RtpHeader parse_rtp_header(const char* data, size_t len);
 
     // SAP announcements

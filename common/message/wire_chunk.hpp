@@ -53,10 +53,54 @@ public:
         memcpy(payload, wireChunk.payload, payloadSize);
     }
 
+    /// copy assignment
+    WireChunk& operator=(const WireChunk& other)
+    {
+        if (this != &other)
+        {
+            BaseMessage::operator=(other);
+            timestamp = other.timestamp;
+
+            if (payloadSize != other.payloadSize)
+            {
+                free(payload);
+                payloadSize = other.payloadSize;
+                payload = (payloadSize > 0) ? static_cast<char*>(malloc(payloadSize)) : nullptr;
+            }
+            if (payload && other.payload)
+                memcpy(payload, other.payload, payloadSize);
+        }
+        return *this;
+    }
+
     /// d'tor
     ~WireChunk() override
     {
         free(payload);
+    }
+
+    /// move c'tor
+    WireChunk(WireChunk&& other) noexcept
+        : BaseMessage(std::move(other)), timestamp(std::move(other.timestamp)), payloadSize(other.payloadSize), payload(other.payload)
+    {
+        other.payload = nullptr;
+        other.payloadSize = 0;
+    }
+
+    /// move assignment
+    WireChunk& operator=(WireChunk&& other) noexcept
+    {
+        if (this != &other)
+        {
+            free(payload);
+            timestamp = std::move(other.timestamp);
+            payloadSize = other.payloadSize;
+            payload = other.payload;
+
+            other.payload = nullptr;
+            other.payloadSize = 0;
+        }
+        return *this;
     }
 
     void read(std::istream& stream) override
