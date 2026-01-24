@@ -40,7 +40,7 @@ UdpStream::UdpStream(PcmStream::Listener* pcmListener, boost::asio::io_context& 
     if (uri_.query.find(kUriBufferMs) == uri_.query.end())
         uri_.query[kUriBufferMs] = "50";
 
-    buffer_ms_ = std::max(cpt::stoi(uri_.getQuery(kUriBufferMs, "50")), 0);
+    buffer_ms_ = static_cast<uint32_t>(std::max(cpt::stoi(uri_.getQuery(kUriBufferMs, "50")), 0));
     idle_threshold_ = std::chrono::milliseconds(std::max(cpt::stoi(uri_.getQuery(kUriIdleThreshold, "100")), 10));
 
     // Determine if RTP mode is enabled (default to true if not specified, or checks scheme/params)
@@ -52,7 +52,7 @@ UdpStream::UdpStream(PcmStream::Listener* pcmListener, boost::asio::io_context& 
 
 UdpStream::~UdpStream()
 {
-    stop();
+    UdpStream::stop();
 }
 
 
@@ -208,7 +208,7 @@ UdpStream::RtpHeader UdpStream::parse_rtp_header(const char* data, size_t len)
 
 void UdpStream::process_rtp_packet(const RtpHeader& header, const char* data, size_t len)
 {
-    size_t header_len = 12 + (header.csrcCount * 4);
+    size_t header_len = 12 + static_cast<size_t>(header.csrcCount * 4);
     if (len < header_len)
         return;
 
