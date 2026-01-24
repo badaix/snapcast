@@ -180,8 +180,8 @@ UdpStream::RtpHeader UdpStream::parse_rtp_header(const char* data, size_t len)
     if (len < 12)
         return header; // Caller ensures length
 
-    uint8_t b0 = static_cast<uint8_t>(data[0]);
-    uint8_t b1 = static_cast<uint8_t>(data[1]);
+    auto b0 = static_cast<uint8_t>(data[0]);
+    auto b1 = static_cast<uint8_t>(data[1]);
 
     header.version = (b0 >> 6) & 0x03;
     header.padding = (b0 >> 5) & 0x01;
