@@ -1,13 +1,15 @@
 # Santcasp
 
-Prebuilt [snapclient](https://github.com/snapcast/snapcast) binaries for Linux, macOS and Windows.
+Prebuilt [snapclient and snapserver](https://github.com/snapcast/snapcast) binaries for Linux, macOS and Windows.
 
 > This is a fork of [Snapcast](https://github.com/snapcast/snapcast) by [Johannes Pohl](https://github.com/badaix).
 > All credit for the original software goes to the upstream project and its [contributors](https://github.com/snapcast/snapcast/graphs/contributors).
 
 ## What is this?
 
-Santcasp provides ready-to-use **snapclient** packages so you don't have to build from source. The upstream project distributes packages via its own CI/release process; this fork offers additional per-distro builds and a Windows binary.
+Santcasp provides ready-to-use **snapclient** and **snapserver** packages so you don't have to build from source. The upstream project distributes packages via its own CI/release process; this fork offers additional per-distro builds and a Windows binary.
+
+Client and server are packaged separately — install only what you need.
 
 For documentation on how snapclient works, configuration, and audio backends, see the [upstream README](https://github.com/snapcast/snapcast#readme).
 
@@ -17,24 +19,29 @@ Grab the latest builds from the [Releases](https://github.com/lollonet/santcasp/
 
 ### Available platforms
 
-| Platform | Arch | Format | Notes |
-|----------|------|--------|-------|
-| Ubuntu 24.04 | amd64 | `.deb`, `.tar.gz` | |
-| Debian 12 (bookworm) | amd64 | `.deb`, `.tar.gz` | |
-| Debian 13 (trixie) | amd64 | `.deb`, `.tar.gz` | |
-| macOS | arm64 | `.tar.gz` | Bundled with dylibs |
-| Windows | x64 | `.zip` | MSVC 2022, WASAPI backend, all DLLs included |
+| Platform | Arch | Client | Server |
+|----------|------|--------|--------|
+| Ubuntu 24.04 | amd64 | `.deb`, `.tar.gz` | `.deb`, `.tar.gz` |
+| Debian 12 (bookworm) | amd64 | `.deb`, `.tar.gz` | `.deb`, `.tar.gz` |
+| Debian 13 (trixie) | amd64 | `.deb`, `.tar.gz` | `.deb`, `.tar.gz` |
+| macOS | arm64 | `.tar.gz` | `.tar.gz` |
+| Windows | x64 | `.zip` | — |
 
 ### Install (.deb)
 
 ```bash
+# Client
 sudo dpkg -i santcasp_<version>_<distro>_amd64.deb
-sudo apt-get install -f   # resolve dependencies if needed
+sudo apt-get install -f
+
+# Server
+sudo dpkg -i santcasp-server_<version>_<distro>_amd64.deb
+sudo apt-get install -f
 ```
 
 ### Install (tar.gz / zip)
 
-Extract and run the `snapclient` binary directly. On macOS, the bundled `libs/` directory must stay next to the binary. On Windows, keep all `.dll` files in the same directory as `snapclient.exe`.
+Extract and run the binary directly. On macOS, the bundled `libs/` directory must stay next to the binary. On Windows, keep all `.dll` files in the same directory as `snapclient.exe`.
 
 ## Versions
 
