@@ -22,7 +22,7 @@
 // local headers
 #include "common/message/message.hpp"
 #include "common/time_defs.hpp"
-#include "double_buffer.hpp"
+#include "common/double_buffer.hpp"
 
 // 3rd party headers
 

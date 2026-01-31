@@ -24,7 +24,7 @@
 #include "common/resampler.hpp"
 #include "common/sample_format.hpp"
 #include "common/utils/logging.hpp"
-#include "double_buffer.hpp"
+#include "common/double_buffer.hpp"
 
 // 3rd party headers
 #ifdef HAS_SOXR

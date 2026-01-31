@@ -21,6 +21,7 @@
 
 // local headers
 #include "authinfo.hpp"
+#include "common/double_buffer.hpp"
 #include "common/message/message.hpp"
 #include "streamreader/stream_manager.hpp"
 
@@ -185,6 +186,36 @@ public:
     /// Authentication info attached to this session
     AuthInfo authinfo;
 
+    /// Add an RTT sample in microseconds
+    void addRttSample(int64_t rtt_usec)
+    {
+        rttBuffer_.add(rtt_usec);
+    }
+
+    /// @return number of RTT samples collected
+    size_t rttSampleCount() const
+    {
+        return rttBuffer_.size();
+    }
+
+    /// @return true if RTT buffer has enough samples for statistics
+    bool hasRttStats() const
+    {
+        return rttBuffer_.full();
+    }
+
+    /// @return RTT median in microseconds
+    int64_t rttMedian() const
+    {
+        return rttBuffer_.median();
+    }
+
+    /// @return RTT percentile in microseconds
+    int64_t rttPercentile(unsigned int p) const
+    {
+        return rttBuffer_.percentile(p);
+    }
+
 protected:
     /// Send next message from "messages_"
     void sendNext();
@@ -198,4 +229,5 @@ protected:
     boost::asio::strand<boost::asio::any_io_executor> strand_; ///< strand to sync IO on
     std::deque<shared_const_buffer> messages_;                 ///< messages to be sent
     mutable std::mutex mutex_;                                 ///< protect pcm_stream_
+    DoubleBuffer<int64_t> rttBuffer_{100};                     ///< RTT samples buffer for time stats
 };

@@ -279,6 +279,23 @@ void Server::onMessageReceived(const std::shared_ptr<StreamSession>& streamSessi
         // "\n";
         streamSession->send(timeMsg);
 
+        // Accumulate RTT sample for time statistics
+        int64_t rtt_usec = static_cast<int64_t>(timeMsg->latency.sec) * 1000000 + timeMsg->latency.usec;
+        streamSession->addRttSample(rtt_usec);
+
+        // Log RTT stats periodically (every 60 samples, ~1 per second)
+        if (streamSession->rttSampleCount() % 60 == 0 && streamSession->rttSampleCount() > 0)
+        {
+            double median_ms = static_cast<double>(streamSession->rttMedian()) / 1000.0;
+            double p95_ms = static_cast<double>(streamSession->rttPercentile(95)) / 1000.0;
+            double jitter_ms = p95_ms - median_ms;
+            LOG(INFO, LOG_TAG) << "TimeStats client=" << streamSession->clientId
+                               << " RTT median=" << median_ms << "ms"
+                               << " p95=" << p95_ms << "ms"
+                               << " jitter=" << jitter_ms << "ms"
+                               << " samples=" << streamSession->rttSampleCount() << "\n";
+        }
+
         // refresh streamSession state
         ClientInfoPtr client = Config::instance().getClientInfo(streamSession->clientId);
         if (client != nullptr)
