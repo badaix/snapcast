@@ -251,6 +251,16 @@ public:
 };
 
 
+/// "Client.GetTimeStats" request
+class ClientGetTimeStatsRequest : public ClientRequest
+{
+public:
+    /// c'tor
+    explicit ClientGetTimeStatsRequest(const Server& server);
+    void execute(const jsonrpcpp::request_ptr& request, AuthInfo& authinfo, const OnResponse& on_response) override;
+    Description description() const override;
+};
+
 
 /// Base for "Group." requests
 class GroupRequest : public Request

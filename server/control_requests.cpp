@@ -107,6 +107,7 @@ ControlRequestFactory::ControlRequestFactory(const Server& server)
     add_request(std::make_shared<ClientSetVolumeRequest>(server));
     add_request(std::make_shared<ClientSetLatencyRequest>(server));
     add_request(std::make_shared<ClientSetNameRequest>(server));
+    add_request(std::make_shared<ClientGetTimeStatsRequest>(server));
 
     // Group requests
     add_request(std::make_shared<GroupGetStatusRequest>(server));
@@ -316,6 +317,65 @@ Request::Description ClientSetNameRequest::description() const
 {
     return {"Set name of a client", {{"name", Description::Type::string, "new client name"}}};
 }
+
+
+ClientGetTimeStatsRequest::ClientGetTimeStatsRequest(const Server& server) : ClientRequest(server, "Client.GetTimeStats")
+{
+}
+
+void ClientGetTimeStatsRequest::execute(const jsonrpcpp::request_ptr& request, AuthInfo& authinfo, const OnResponse& on_response)
+{
+    // clang-format off
+    // Request:  {"id":9,"jsonrpc":"2.0","method":"Client.GetTimeStats","params":{"id":"00:21:6a:7d:74:fc"}}
+    // Response: {"id":9,"jsonrpc":"2.0","result":{"id":"00:21:6a:7d:74:fc","rtt_median_ms":3.2,"rtt_p95_ms":5.1,"jitter_ms":1.9,"samples":100,"suggested_latency_ms":-1}}
+    // clang-format on
+
+    std::ignore = authinfo;
+
+    auto client_info = getClient(request);
+    session_ptr session = getStreamServer().getStreamSession(client_info->id);
+
+    Json result;
+    result["id"] = client_info->id;
+
+    if (session == nullptr || session->rttSampleCount() == 0)
+    {
+        result["rtt_median_ms"] = 0.0;
+        result["rtt_p95_ms"] = 0.0;
+        result["jitter_ms"] = 0.0;
+        result["samples"] = 0;
+        result["suggested_latency_ms"] = 0;
+    }
+    else
+    {
+        double median_ms = static_cast<double>(session->rttMedian()) / 1000.0;
+        double p95_ms = static_cast<double>(session->rttPercentile(95)) / 1000.0;
+        double jitter_ms = p95_ms - median_ms;
+
+        // Suggested latency: negative value = increase buffer to absorb jitter.
+        // Use jitter * 1.5 as safety margin, rounded to nearest ms.
+        int suggested = 0;
+        if (jitter_ms > 2.0)
+            suggested = -static_cast<int>(jitter_ms * 1.5 + 0.5);
+
+        result["rtt_median_ms"] = median_ms;
+        result["rtt_p95_ms"] = p95_ms;
+        result["jitter_ms"] = jitter_ms;
+        result["samples"] = static_cast<int>(session->rttSampleCount());
+        result["suggested_latency_ms"] = suggested;
+    }
+
+    auto response = std::make_shared<jsonrpcpp::Response>(*request, result);
+    on_response(std::move(response), nullptr);
+}
+
+Request::Description ClientGetTimeStatsRequest::description() const
+{
+    return {"Get client RTT time statistics and suggested latency",
+            {{"id", Description::Type::string, "client id"}},
+            {Description::Type::object, "RTT median, P95, jitter in ms, sample count, and suggested latency"}};
+}
+
 
 
 ///////////////////////////////////////// Group requests //////////////////////////////////////////
