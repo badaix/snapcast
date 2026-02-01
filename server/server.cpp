@@ -279,9 +279,14 @@ void Server::onMessageReceived(const std::shared_ptr<StreamSession>& streamSessi
         // "\n";
         streamSession->send(timeMsg);
 
-        // Accumulate RTT sample for time statistics
-        int64_t rtt_usec = static_cast<int64_t>(timeMsg->latency.sec) * 1000000 + timeMsg->latency.usec;
-        streamSession->addRttSample(rtt_usec);
+        // Accumulate RTT sample for time statistics.
+        // timeMsg->latency is one-way delay (received - sent) using different clocks,
+        // which can be negative if the client clock is ahead of the server.
+        // Use abs(one-way) * 2 as a symmetric RTT estimate.
+        int64_t one_way_usec = static_cast<int64_t>(timeMsg->latency.sec) * 1000000 + timeMsg->latency.usec;
+        int64_t rtt_usec = (one_way_usec < 0 ? -one_way_usec : one_way_usec) * 2;
+        if (rtt_usec < 10000000) // sanity check: discard if > 10 seconds
+            streamSession->addRttSample(rtt_usec);
 
         // Log RTT stats periodically (every 60 samples, ~1 per second)
         if (streamSession->rttSampleCount() % 60 == 0 && streamSession->rttSampleCount() > 0)
