@@ -25,7 +25,9 @@ Grab the latest builds from the [Releases](https://github.com/lollonet/santcasp/
 | Debian 12 (bookworm) | amd64 | `.deb`, `.tar.gz` | `.deb`, `.tar.gz` |
 | Debian 13 (trixie) | amd64 | `.deb`, `.tar.gz` | `.deb`, `.tar.gz` |
 | macOS | arm64 | `.tar.gz` | `.tar.gz` |
-| Windows | x64 | `.zip` | — |
+| Windows | x64 | `.zip` | — * |
+
+\* Snapserver does not compile on Windows ([upstream limitation](https://github.com/snapcast/snapcast/issues/1380)).
 
 ### Install (.deb)
 
@@ -53,7 +55,7 @@ Extract and run the binary directly. On macOS, the bundled `libs/` directory mus
 - Boost 1.90.0
 - Linux: built per-distro in Docker containers for correct library linking
 - macOS: arm64 (Apple Silicon), CoreAudio backend, bundled Homebrew dylibs
-- Windows: native MSVC 2022 build, vcpkg dependencies, WASAPI backend, SSL disabled
+- Windows: native MSVC 2022 build, vcpkg dependencies, WASAPI backend, SSL disabled (client only — snapserver is [not supported on Windows](https://github.com/snapcast/snapcast/issues/1380))
 
 ## Upstream
 
