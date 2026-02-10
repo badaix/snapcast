@@ -18,7 +18,6 @@
 
 #pragma once
 
-
 // local headers
 #include "common/message/pcm_chunk.hpp"
 #include "pcm_stream.hpp"
@@ -29,11 +28,9 @@
 
 // standard headers
 #include <chrono>
-#include <map>
 #include <memory>
 #include <string>
 #include <vector>
-
 
 namespace streamreader
 {
@@ -82,6 +79,7 @@ protected:
         uint16_t sequenceNumber{0}; ///< Sequence number
         uint32_t timestamp{0};      ///< Timestamp
         uint32_t ssrc{0};           ///< Synchronization source identifier
+        size_t header_size{0};      ///< Total size of the parsed header
     };
 
     std::unique_ptr<udp::socket> socket_;      ///< UDP socket
@@ -93,11 +91,12 @@ protected:
     std::chrono::milliseconds idle_threshold_; ///< Threshold to switch to idle state
     bool is_rtp_{false};                       ///< RTP mode flag
 
-    // Jitter buffer
-    std::map<uint16_t, msg::PcmChunk> jitter_buffer_; ///< Jitter buffer (seq -> chunk)
-    uint16_t next_sequence_number_{0};                ///< Next expected sequence number
-    bool first_packet_{true};                         ///< Flag for first packet
-    uint32_t buffer_ms_{50};                          ///< Jitter buffer latency config
+    // Ring Buffer for Jitter
+    std::vector<msg::PcmChunk> ring_buffer_; ///< Fixed size ring buffer
+    uint16_t playout_seq_{0};                ///< Next sequence number to play out
+    bool buffering_{true};                   ///< Initial buffering state
+    uint32_t buffer_ms_{50};                 ///< Jitter buffer latency config
+    size_t ring_buffer_size_{0};             ///< Size of the ring buffer slots
 
     /// Processes a parsed RTP packet and adds it to the jitter buffer
     /// @param header Parsed RTP header
@@ -108,7 +107,7 @@ protected:
     /// Pops available packets from the jitter buffer and sends them to the encoder
     void pop_from_buffer();
 
-    /// Parses the RTP header from the received data
+    /// Parses the RTP header from the received data using safe bound checks
     /// @param data Pointer to the packet data
     /// @param len Length of the packet data
     /// @return Parsed RTP header
