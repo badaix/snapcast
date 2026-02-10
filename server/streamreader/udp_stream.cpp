@@ -279,7 +279,7 @@ void UdpStream::process_rtp_packet(const RtpHeader& header, const char* data, si
 
         // Calculate difference considering potential wrap-around for uint16_t
         // This cast handles positive and negative differences correctly for uint16_t
-        int16_t diff = static_cast<int16_t>(header.sequenceNumber - playout_seq_);
+        auto diff = static_cast<int16_t>(header.sequenceNumber - playout_seq_);
 
         if (diff >= packets_needed)
         {
