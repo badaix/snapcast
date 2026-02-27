@@ -13,9 +13,9 @@ Build-Depends: debhelper (>= 10~),
                libsoxr-dev,
                libssl-dev
 Standards-Version: 4.1.4
-Homepage: https://github.com/badaix/snapcast
-Vcs-Git: https://github.com/badaix/snapcast.git
-Vcs-Browser: https://github.com/badaix/snapcast
+Homepage: https://github.com/snapcast/snapcast
+Vcs-Git: https://github.com/snapcast/snapcast.git
+Vcs-Browser: https://github.com/snapcast/snapcast
 
 Package: snapclient
 Architecture: any

@@ -5,7 +5,7 @@ on:
   pull_request:
 
 env:
-  BOOST_VERSION: 1_89_0
+  BOOST_VERSION: 1_90_0
 
 jobs:
   static-analysis:
@@ -32,7 +32,7 @@ jobs:
           libpipewire-0.3-dev
       - name: cache boost
         id: cache-boost
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: boost_${{ env.BOOST_VERSION }}
           key: boost-${{ env.BOOST_VERSION }}
@@ -123,7 +123,7 @@ jobs:
           libpipewire-0.3-dev
       - name: cache boost
         id: cache-boost
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: boost_${{ env.BOOST_VERSION }}
           key: boost-${{ env.BOOST_VERSION }}
@@ -135,7 +135,7 @@ jobs:
           tar xjf boost_${BOOST_VERSION}.tar.bz2
       - name: cache ccache
         id: cache-ccache
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           # TODO: use environment variable $HOME/.ccache
           path: /home/runner/.ccache
@@ -243,7 +243,7 @@ jobs:
           libpipewire-0.3-dev
       - name: cache boost
         id: cache-boost
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: boost_${{ env.BOOST_VERSION }}
           key: boost-${{ env.BOOST_VERSION }}
@@ -255,7 +255,7 @@ jobs:
           tar xjf boost_${BOOST_VERSION}.tar.bz2
       - name: cache ccache
         id: cache-ccache
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           # TODO: use environment variable $HOME/.ccache
           path: /home/runner/.ccache
@@ -292,9 +292,6 @@ jobs:
       fail-fast: false
       matrix:
         xcode:
-          - "14.1"
-          - "14.2"
-          - "14.3"
           - "15.0"
           - "15.1"
           - "15.2"
@@ -305,16 +302,12 @@ jobs:
           - "16.2"
           - "16.3"
           - "16.4"
+          - "26.0"
+          - "26.1"
         build_type:
           - Debug
           - Release
         include:
-          - xcode: "14.1"
-            os: macos-13
-          - xcode: "14.2"
-            os: macos-13
-          - xcode: "14.3"
-            os: macos-13
           - xcode: "15.0"
             os: macos-14
           - xcode: "15.1"
@@ -335,6 +328,10 @@ jobs:
             os: macos-15
           - xcode: "16.4"
             os: macos-15
+          - xcode: "26.0"
+            os: macos-15
+          - xcode: "26.1"
+            os: macos-15
 
     runs-on: ${{ matrix.os }}
 
@@ -344,7 +341,7 @@ jobs:
         run: env
       - name: dependencies
         run: |
-          brew update
+          brew update-if-needed
           brew install libsoxr flac libvorbis opus catch2 boost
       - name: configure
         run: |
@@ -383,7 +380,7 @@ jobs:
       - uses: actions/checkout@v6
       - name: cache dependencies
         id: cache-dependencies
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           #path: ${VCPKG_INSTALLATION_ROOT}\installed
           path: c:\vcpkg\installed

@@ -8,9 +8,9 @@
 
 **S**y**n**chronous **a**udio **p**layer
 
-[![CI](https://github.com/badaix/snapcast/actions/workflows/ci.yml/badge.svg)](https://github.com/badaix/snapcast/actions/workflows/ci.yml)
-[![Github Releases](https://img.shields.io/github/release/badaix/snapcast.svg)](https://github.com/badaix/snapcast/releases)
-[![GitHub Downloads](https://img.shields.io/github/downloads/badaix/snapcast/total)](https://github.com/badaix/snapcast/releases)
+[![CI](https://github.com/snapcast/snapcast/actions/workflows/ci.yml/badge.svg)](https://github.com/snapcast/snapcast/actions/workflows/ci.yml)
+[![Github Releases](https://img.shields.io/github/release/snapcast/snapcast.svg)](https://github.com/snapcast/snapcast/releases)
+[![GitHub Downloads](https://img.shields.io/github/downloads/snapcast/snapcast/total)](https://github.com/snapcast/snapcast/releases)
 [![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://www.paypal.me/badaix)
 
 Snapcast is a multiroom client-server audio player, where all clients are time synchronized with the server to play perfectly synced audio. It's not a standalone player, but an extension that turns your existing audio player into a Sonos-like multiroom solution.  
@@ -168,17 +168,17 @@ Snapcast can be controlled using a [JSON-RPC API](doc/json_rpc_api/control.md) o
 
 ### WebApp
 
-The server is shipped with [Snapweb](https://github.com/badaix/snapweb), this WebApp can be reached under `http://<snapserver host>:1780` or `https://<snapserver host>:1788`, if SSL is enabled (see [HTTPS configuration](doc/configuration.md#https)).
+The server is shipped with [Snapweb](https://github.com/snapcast/snapweb), this WebApp can be reached under `http://<snapserver host>:1780` or `https://<snapserver host>:1788`, if SSL is enabled (see [HTTPS configuration](doc/configuration.md#https)).
 
 <picture>
- <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/badaix/snapweb/master/snapweb_dark.png">
- <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/badaix/snapweb/master/snapweb_light.png">
- <img alt="Snapweb" src="https://raw.githubusercontent.com/badaix/snapweb/master/snapweb_light.png">
+ <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/snapcast/snapweb/master/snapweb_dark.png">
+ <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/snapcast/snapweb/master/snapweb_light.png">
+ <img alt="Snapweb" src="https://raw.githubusercontent.com/snapcast/snapweb/master/snapweb_light.png">
 </picture>
 
 ### Android client
 
-There is an Android client [snapdroid](https://github.com/badaix/snapdroid) available in [Releases](https://github.com/badaix/snapdroid/releases/latest) and on [Google Play](https://play.google.com/store/apps/details?id=de.badaix.snapcast)
+There is an Android client [snapdroid](https://github.com/snapcast/snapdroid) available in [Releases](https://github.com/snapcast/snapdroid/releases/latest) and on [Google Play](https://play.google.com/store/apps/details?id=de.badaix.snapcast)
 
 ![Snapcast for Android](doc/snapcast_android_scaled.png)
 
@@ -203,6 +203,8 @@ A web interface called [HydraPlay](https://github.com/mariolukas/HydraPlay) inte
 For Windows, there's [Snap.Net](https://github.com/stijnvdb88/snap.net), a control client and player. It runs in the tray and lets you adjust client volumes with just a few clicks. The player simplifies setting up snapclient to play your music through multiple Windows sound devices simultaneously: pc speakers, hdmi audio, any usb audio devices you may have, etc. Snap.Net also runs on Android, and has limited support for iOS.
 
 If you need an extremely small form factor and low power consumption, there is a microcontroller implementation of Snapclient written in C. The [**Snapclient for ESP32**](https://github.com/CarlosDerSeher/snapclient) project provides a lightweight, Snapcast client that runs on ESP32/ESP32-S2 microcontrollers and delivers excellent multiroom synchronization with very low latency.
+
+There's [snapmixer](https://github.com/tremby/snapmixer), a text-mode volume control for all groups and clients.
 
 ## Setup of audio players/server
 

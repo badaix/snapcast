@@ -3,7 +3,7 @@ Release:        1
 License:        GPL-3.0 
 Group:          Productivity/Multimedia/Sound/Players
 Summary:        Snapcast is a multi-room time-synced client-server audio player
-Url:            https://github.com/badaix/snapcast 
+Url:            https://github.com/snapcast/snapcast 
 Source0:        snapcast.tar.gz 
 Source1:        snapserver.service
 Source2:        snapserver.default

@@ -301,7 +301,7 @@ def parse_args():
     """Configures and parses command-line arguments."""
     parser = argparse.ArgumentParser(
         description="""Connects go-librespot to Snapcast for metadata display and control.
-        \nReport bugs to https://github.com/badaix/snapcast/issues
+        \nReport bugs to https://github.com/snapcast/snapcast/issues
         """,
         formatter_class=argparse.RawTextHelpFormatter,
     )

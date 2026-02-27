@@ -15,7 +15,7 @@ project(
   VERSION 0.34.0)
 
 set(PROJECT_DESCRIPTION "Multiroom client-server audio player")
-set(PROJECT_URL "https://github.com/badaix/snapcast")
+set(PROJECT_URL "https://github.com/snapcast/snapcast")
 
 option(BUILD_SHARED_LIBS "Build snapcast in a shared context" ON)
 option(BUILD_STATIC_LIBS "Build snapcast in a static context" ON)

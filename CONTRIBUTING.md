@@ -6,7 +6,7 @@ You can contribute in several ways:
 
 * Contribute code for new features, bugfixes, or documentation (see below)
 
-* Help testing the latest features. Nightly builds are available in [Actions](https://github.com/badaix/snapcast/actions)
+* Help testing the latest features. Nightly builds are available in [Actions](https://github.com/snapcast/snapcast/actions)
 
 * Star the project
 
@@ -30,7 +30,7 @@ Only start working on the Pull Request after the team assigned the issue to you 
 
 If you have questions about one of the issues, please comment on them, and one of the maintainers will clarify.
 
-We kindly ask you to follow the [Pull Request Checklist](#Pull-Request-Checklist) to ensure reviews can happen accordingly.
+We kindly ask you to follow the [Pull Request Checklist](#pull-request-checklist) to ensure reviews can happen accordingly.
 
 ## Contributing Code
 
@@ -38,7 +38,7 @@ You are welcome to contribute code in order to fix a bug or to implement a new f
 
 Only start working on the Pull Request after the team assigned the issue to you to avoid unnecessary efforts.
 
-Please note that Snapweb related contributions should be made in the [Snapweb project](https://github.com/badaix/snapweb).
+Please note that Snapweb related contributions should be made in the [Snapweb project](https://github.com/snapcast/snapweb).
 
 The following rule governs code contributions:
 
@@ -86,4 +86,4 @@ The following rule governs documentation contributions:
 
 * Attach a log file (preferably inline as code block) if necessary. Use `debug` log level (`snapclient --logfilter debug`, `snapserver --logging.filter debug`).
 
-* Please apply one or more applicable [labels](https://github.com/badaix/snapcast/labels) to your issue so that all community members are able to cluster the issues better.
+* Please apply one or more applicable [labels](https://github.com/snapcast/snapcast/labels) to your issue so that all community members are able to cluster the issues better.

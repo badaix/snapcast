@@ -177,7 +177,7 @@ Redirect the PulseAudio stream into the snapfifo:
 audio player software -> PulseAudio -> PulseAudio pipe sink -> snapfifo -> snapserver -> network -> snapclient -> Alsa
 ```
 
-PulseAudio will create the pipe file for itself and will fail if it already exists; see the [Configuration section](https://github.com/badaix/snapcast#configuration) in the main README file on how to change the pipe creation mode to read-only.
+PulseAudio will create the pipe file for itself and will fail if it already exists; see the [Configuration section](https://github.com/snapcast/snapcast#configuration) in the main README file on how to change the pipe creation mode to read-only.
 
 Load the module `pipe-sink` like this:
 
