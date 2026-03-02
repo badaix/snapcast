@@ -44,6 +44,8 @@ source = pipewire://?name=Snapcast&device=&auto_connect=true
 - `send_silence`: Send silent chunks when idle (default: false)
 - `idle_threshold`: Duration of silence before switching to idle state in ms (default: 100)
 
+Any additional URI parameters are passed directly as PipeWire properties on the stream node. This allows setting arbitrary PipeWire properties such as `media.role`, `node.name`, `media.category`, or any other property recognized by PipeWire and WirePlumber.
+
 ### Examples
 
 1. **Capture from default source:**
@@ -69,6 +71,20 @@ source = pipewire://?name=Snapcast&device=&auto_connect=true
    ```ini
    source = pipewire://?name=SnapcastCapture&idle_threshold=500&send_silence=true
    ```
+
+5. **Set custom PipeWire properties:**
+
+   ```ini
+   source = pipewire://?name=SnapcastCapture&media.role=Communication
+   ```
+
+6. **Multiple custom properties (for multi-instance routing):**
+
+   ```ini
+   source = pipewire://?name=SnapcastKitchen&node.name=snapcast-kitchen-capture&media.role=Music
+   ```
+
+   This allows WirePlumber to distinguish between instances and route them differently.
 
 ## PipeWire Graph Management
 

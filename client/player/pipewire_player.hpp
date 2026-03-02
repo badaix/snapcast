@@ -31,8 +31,10 @@
 // standard headers
 #include <chrono>
 #include <cstdio>
+#include <map>
 #include <memory>
 #include <optional>
+#include <string>
 
 namespace player
 {
@@ -79,6 +81,9 @@ private:
     struct pw_stream_events stream_events_;
 
     std::optional<std::chrono::milliseconds> node_latency_;
+
+    /// Custom PipeWire properties from player parameters
+    std::map<std::string, std::string> custom_props_;
 };
 
 } // namespace player

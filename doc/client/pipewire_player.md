@@ -39,6 +39,8 @@ snapclient --player pipewire
 
 - `buffer_time`: Audio buffer time in milliseconds (default: 100ms, minimum: 10ms)
 
+Any additional parameters are passed directly as PipeWire properties on the stream node. This allows setting arbitrary PipeWire properties such as `media.role`, `node.name`, or any other property recognized by PipeWire and WirePlumber.
+
 ### Examples
 
 1. **Use default PipeWire sink:**
@@ -64,6 +66,21 @@ snapclient --player pipewire
    ```bash
    snapclient --player pipewire:buffer_time=200 --soundcard my_audio_device
    ```
+
+5. **Set custom PipeWire properties:**
+
+   ```bash
+   snapclient --player pipewire:media.role=Notification
+   ```
+
+6. **Multiple custom properties (for multi-instance routing):**
+
+   ```bash
+   snapclient --player pipewire:node.name=snapclient-kitchen,media.role=Music
+   snapclient --player pipewire:node.name=snapclient-alerts,media.role=Notification
+   ```
+
+   This allows WirePlumber to distinguish between instances and route them differently.
 
 ## Device Selection and Management
 

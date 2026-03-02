@@ -29,6 +29,7 @@
 #include <spa/param/audio/raw.h>
 
 // standard headers
+#include <map>
 #include <mutex>
 #include <thread>
 #include <vector>
@@ -85,6 +86,7 @@ private:
     std::string target_device_;
     std::string stream_name_;
     bool capture_sink_;
+    std::map<std::string, std::string> custom_props_;
 
     // Audio buffer management
     std::mutex buffer_mutex_;
