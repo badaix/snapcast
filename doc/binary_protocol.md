@@ -23,6 +23,26 @@ When a client joins a server, the following exchanges happen
     1. Calculates `latency_s2c = t_client-recv - t_server-sent + t_network_latency`
     1. Calcutates the time diff between server and client as `(latency_c2s - latency_s2c) / 2`, eliminating the network latency (assumed to be symmetric)
 
+```mermaid
+sequenceDiagram
+    participant Client as Snapclient
+    participant Server as Snapserver
+    Note over Client,Server: Client connects to the server<br/>over TCP or WS
+    Client ->> Server: Hello
+    Server ->> Client: Server Settings
+    Server ->> Client: Codec Header
+    loop Time sync
+        Client ->> Server: Time
+        Server ->> Client: Time
+    end
+    Note over Client,Server: Audio starts playing on the server<br/>Time sync continues
+    loop Stream
+        Server ->> Client: Wire Chunk
+    end
+    Note over Client,Server: Client closes the connection
+
+```
+
 ## Messages
 
 | Typed Message ID | Name                                 | Dir  | Notes                                                                     |

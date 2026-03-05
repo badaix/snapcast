@@ -19,6 +19,7 @@
 - Doc: Update README with Snapclient for ESP32 details (PR #1468)
 - Doc: Update README with snapmixer (CLI volume control) details (PR #1490)
 - Doc: Include correct samplerate in the go-librespot example (PR #1504)
+. Doc: Update param name in librespot example (PR #1476)
 
 ### Contributors
 
@@ -28,6 +29,7 @@
 - @tremby
 - @genericuser256
 - @flocke
+- @olorin
 
 _Johannes Pohl <snapcast@badaix.de>  Sat, 07 Mar 2026 00:13:37 +0200_
 
