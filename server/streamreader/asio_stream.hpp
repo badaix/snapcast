@@ -115,8 +115,8 @@ AsioStream<ReadStream>::AsioStream(PcmStream::Listener* pcmListener, boost::asio
                                    PcmStream::Source source)
     : PcmStream(pcmListener, ioc, server_settings, uri, source), read_timer_(strand_), state_timer_(strand_)
 {
-    LOG(DEBUG, "AsioStream") << "Chunk duration: " << chunk_->durationMs() << " ms, frames: " << chunk_->getFrameCount() << ", size: " << chunk_->payloadSize
-                             << "\n";
+    LOG(DEBUG, "AsioStream") << "Stream: '" << getName() << "', Chunk duration: " << chunk_->durationMs() << " ms, frames: " << chunk_->getFrameCount()
+                             << ", size: " << chunk_->payloadSize << "\n";
 
     idle_threshold_ = std::chrono::milliseconds(std::max(cpt::stoi(uri_.getQuery("idle_threshold", "100")), 10));
 
@@ -140,8 +140,8 @@ void AsioStream<ReadStream>::check_state(const std::chrono::steady_clock::durati
     {
         if (!ec)
         {
-            LOG(INFO, "AsioStream") << "No data since " << std::chrono::duration_cast<std::chrono::milliseconds>(duration).count()
-                                    << " ms, switching to idle\n";
+            LOG(INFO, "AsioStream") << "No data since " << std::chrono::duration_cast<std::chrono::milliseconds>(duration).count() << " ms in stream '"
+                                    << getName() << "', switching to idle\n";
             setState(ReaderState::kIdle);
         }
     });
@@ -197,7 +197,8 @@ void AsioStream<ReadStream>::do_read()
         {
             if (lastException_ != ec.message())
             {
-                LOG(ERROR, "AsioStream") << "Error reading message: " << ec.message() << ", length: " << length << ", ec: " << ec << "\n";
+                LOG(ERROR, "AsioStream") << "Error reading message in stream '" << getName() << "': " << ec.message() << ", length: " << length
+                                         << ", ec: " << ec << "\n";
                 lastException_ = ec.message();
             }
             disconnect();
@@ -259,7 +260,7 @@ void AsioStream<ReadStream>::do_read()
             {
                 if (ec)
                 {
-                    LOG(ERROR, "AsioStream") << "Error during async wait: " << ec.message() << "\n";
+                    LOG(ERROR, "AsioStream") << "Error during async wait in stream '" << getName() << "': " << ec.message() << "\n";
                 }
                 else
                 {

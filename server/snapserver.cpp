@@ -156,7 +156,7 @@ int main(int argc, char* argv[])
             "", "stream.source", "URI of the PCM input stream.\nFormat: TYPE://host/path?name=NAME\n[&codec=CODEC]\n[&sampleformat=SAMPLEFORMAT]", pcmSource,
             &pcmSource);
 
-        conf.add<Value<string>>("", "stream.default_source", "Default source for new clients", settings.stream.defaultSource, &settings.stream.defaultSource);
+        auto defaultSourceValue = conf.add<Value<string>>("", "stream.default_source", "Default source for new clients");
         conf.add<Value<string>>("", "stream.sampleformat", "Default sample format", settings.stream.sampleFormat, &settings.stream.sampleFormat);
         conf.add<Value<string>>("", "stream.codec", "Default transport codec\n(flac|ogg|opus|pcm)[:options]\nType codec:? to get codec specific options",
                                 settings.stream.codec, &settings.stream.codec);
@@ -289,6 +289,9 @@ int main(int argc, char* argv[])
         if (settings.http.ssl_enabled)
             throw SnapException("HTTPS enabled ([http] ssl_enabled), but snapserrver is built without ssl support");
 #endif
+
+        if (defaultSourceValue->is_set() && !defaultSourceValue->value().empty())
+            settings.stream.default_source = defaultSourceValue->value();
 
         if (deprecated_tcp_enabled->is_set())
             LOG(WARNING, LOG_TAG) << "Option '" << deprecated_tcp_enabled->long_name() << "' is " << deprecated_tcp_enabled->description() << "\n";

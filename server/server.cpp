@@ -473,6 +473,10 @@ void Server::start()
                 LOG(INFO, LOG_TAG) << "Stream: " << stream->getUri().toJson() << "\n";
         }
 
+        // Validate the default source if set
+        if (settings_.stream.default_source.has_value() && streamManager_->getStream(settings_.stream.default_source.value()) == nullptr)
+            throw SnapException("Default stream source: '" + settings_.stream.default_source.value() + "' not found");
+
         streamManager_->start();
         controlServer_->start();
         streamServer_->start();

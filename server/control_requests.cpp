@@ -843,7 +843,10 @@ void StreamRemoveRequest::execute(const jsonrpcpp::request_ptr& request, AuthInf
 
     // Find stream
     std::string streamId = getStreamId(request);
-    getStreamManager().removeStream(streamId);
+    if (!getStreamManager().removeStream(streamId))
+    {
+        throw jsonrpcpp::InvalidParamsException("Stream with id '" + streamId + "' not found");
+    }
 
     auto groups = Config::instance().getGroups();
     for (const auto& group : groups)

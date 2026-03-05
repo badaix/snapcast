@@ -10,6 +10,7 @@
 ### Bugfixes
 
 - Server: End control script when Stream.RemoveStream is called (Issue #1455)
+- Server: Close TCP server when Stream.RemoveStream is called (Issue #1497)
 
 ### General
 
