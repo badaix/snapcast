@@ -28,8 +28,7 @@ class PlexSnapcastBridge:
         self.last_metadata: Dict[str, Any] = {}
         self.running = True
         if self.config.get("snapcast_host") and self.config.get("snapcast_port"):
-            self.snapcast_url = f"http://{self.config['snapcast_host']}:{
-                self.config['snapcast_port']}/jsonrpc"
+            self.snapcast_url = f"http://{self.config['snapcast_host']}:{self.config['snapcast_port']}/jsonrpc"
         self.connect_to_plex()
         self.send_ready_notification()
         self.monitor_thread = threading.Thread(
@@ -128,8 +127,7 @@ class PlexSnapcastBridge:
             if active_session:
                 art_url = None
                 if hasattr(active_session, "thumb") and active_session.thumb:
-                    art_url = f"http://{self.config['ip']}:32400{
-                        active_session.thumb}?X-Plex-Token={self.config['token']}"
+                    art_url = f"http://{self.config['ip']}:32400{active_session.thumb}?X-Plex-Token={self.config['token']}"
 
                 metadata = {
                     "title": getattr(active_session, "title", "Unknown Title"),
@@ -144,8 +142,7 @@ class PlexSnapcastBridge:
                 if art_url:
                     metadata["artUrl"] = art_url
                 if hasattr(active_session, "key"):
-                    metadata["url"] = f"http://{self.config['ip']}:32400{
-                        active_session.key}?X-Plex-Token={self.config['token']}"
+                    metadata["url"] = f"http://{self.config['ip']}:32400{active_session.key}?X-Plex-Token={self.config['token']}"
 
             return {
                 "canControl": True,

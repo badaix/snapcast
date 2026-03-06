@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 #
 # This file is part of snapcast
-# Copyright (C) 2014-2026  Johannes Pohl
+# Copyright (C) 2014-2024  Johannes Pohl
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -94,14 +94,12 @@ class LibrespotControl(object):
         wsversion = websocket.__version__.split(".")
         if int(wsversion[0]) == 0 and int(wsversion[1]) < 58:
             logger.error(
-                f"websocket-client version 0.58.0 or higher required, installed: {
-                    websocket.__version__}, exiting."
+                f"websocket-client version 0.58.0 or higher required, installed: {websocket.__version__}, exiting."
             )
             exit()
 
         self.websocket = websocket.WebSocketApp(
-            url=f"ws://{self._params['librespot-host']
-                        }:{self._params['librespot-port']}/events",
+            url=f"ws://{self._params['librespot-host']}:{self._params['librespot-port']}/events",
             on_message=self.on_ws_message,
             on_error=self.on_ws_error,
             on_open=self.on_ws_open,
@@ -155,14 +153,12 @@ class LibrespotControl(object):
                     metadata['album'] = album['name']
                 if 'date' in album:
                     date = album['date']
-                    metadata['contentCreated'] = f"{
-                        date['year']:04d}-{date['month']:02d}-{date['day']:02d}"
+                    metadata['contentCreated'] = f"{date['year']:04d}-{date['month']:02d}-{date['day']:02d}"
                 if 'coverGroup' in album and 'image' in album['coverGroup']:
                     images = album['coverGroup']['image']
                     for image in images:
                         if 'size' in image and image['size'] == 'DEFAULT':
-                            metadata['artUrl'] = f"http://i.scdn.co/image/{
-                                str(image['fileId']).lower()}"
+                            metadata['artUrl'] = f"http://i.scdn.co/image/{str(image['fileId']).lower()}"
 
             if 'discNumber' in track:
                 metadata['discNumber'] = track['discNumber']
@@ -238,8 +234,7 @@ class LibrespotControl(object):
         logger.info("Snapcast RPC websocket closed")
 
     def send_request(self, method, params=None):
-        request = f"http://{self._params['librespot-host']
-                            }:{self._params['librespot-port']}/{method}"
+        request = f"http://{self._params['librespot-host']}:{self._params['librespot-port']}/{method}"
         logger.debug(f"Sending request: {request}")
         r = requests.post(request, data=params)
         logger.info(

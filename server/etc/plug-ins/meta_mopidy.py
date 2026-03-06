@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 #
 # This file is part of snapcast
-# Copyright (C) 2014-2026  Johannes Pohl
+# Copyright (C) 2014-2024  Johannes Pohl
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -77,14 +77,12 @@ class MopidyControl(object):
         wsversion = websocket.__version__.split(".")
         if int(wsversion[0]) == 0 and int(wsversion[1]) < 58:
             logger.error(
-                f"websocket-client version 0.58.0 or higher required, installed: {
-                    websocket.__version__}, exiting."
+                f"websocket-client version 0.58.0 or higher required, installed: {websocket.__version__}, exiting."
             )
             exit()
 
         self.websocket = websocket.WebSocketApp(
-            url=f"ws://{self._params['mopidy-host']
-                        }:{self._params['mopidy-port']}/mopidy/ws",
+            url=f"ws://{self._params['mopidy-host']}:{self._params['mopidy-port']}/mopidy/ws",
             on_message=self.on_ws_message,
             on_error=self.on_ws_error,
             on_open=self.on_ws_open,
@@ -113,8 +111,7 @@ class MopidyControl(object):
             url = jmsg[track_uri][0]["uri"]
             if url.find("://") == -1:
                 url = str(
-                    f"http://{self._params['mopidy-host']
-                              }:{self._params['mopidy-port']}{url}"
+                    f"http://{self._params['mopidy-host']}:{self._params['mopidy-port']}{url}"
                 )
             logger.debug(f"Image: {url}")
         return url

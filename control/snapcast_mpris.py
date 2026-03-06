@@ -329,8 +329,7 @@ class SnapcastWrapper(object):
                             f"Can't cast value {value} to {tag_mapping[key][1]}")
 
             if not 'mpris:artUrl' in self._metadata:
-                self._metadata['mpris:artUrl'] = f'http://{
-                    self._params["host"]}:{self._params["port"]}/snapcast-512.png'
+                self._metadata['mpris:artUrl'] = f'http://{self._params["host"]}:{self._params["port"]}/snapcast-512.png'
 
             logger.debug(f'mpris meta: {self._metadata}')
 
