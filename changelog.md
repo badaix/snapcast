@@ -16,10 +16,10 @@
 
 - CI: remove gcc-9
 - Move project to https://github.com/snapcast/snapcast (Issue #1458)
-- Doc: Update README with Snapclient for ESP32 details (PR #1468)
+- Doc: Update README with Snapclient for ESP32 details (PR #1468, Issue #1501)
 - Doc: Update README with snapmixer (CLI volume control) details (PR #1490)
 - Doc: Include correct samplerate in the go-librespot example (PR #1504)
-. Doc: Update param name in librespot example (PR #1476)
+- Doc: Update param name in librespot example (PR #1476)
 
 ### Contributors
 
@@ -31,7 +31,7 @@
 - @flocke
 - @olorin
 
-_Johannes Pohl <snapcast@badaix.de>  Sat, 07 Mar 2026 00:13:37 +0200_
+_Johannes Pohl <snapcast@badaix.de>  Sun, 08 Mar 2026 00:13:37 +0200_
 
 # Snapcast changelog
 
