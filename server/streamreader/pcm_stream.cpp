@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2025  Johannes Pohl
+    Copyright (C) 2014-2026  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -99,6 +99,7 @@ PcmStream::~PcmStream()
 {
     stop(); // NOLINT
     property_timer_.cancel();
+    LOG(DEBUG, LOG_TAG) << "PcmStream '" << name_ << "' destroyed\n";
 }
 
 
@@ -147,11 +148,11 @@ void PcmStream::onControlRequest(const jsonrpcpp::Request& request)
 void PcmStream::pollProperties()
 {
     property_timer_.expires_after(10s);
-    property_timer_.async_wait([this, self = shared_from_this()](const boost::system::error_code& ec)
+    property_timer_.async_wait([this, me = weak_from_this()](const boost::system::error_code& ec)
     {
-        if (!ec)
+        if (auto self = me.lock(); !ec && self)
         {
-            stream_ctrl_->command({++req_id_, "Plugin.Stream.Player.GetProperties"}, [this, self = shared_from_this()](const jsonrpcpp::Response& response)
+            stream_ctrl_->command({++req_id_, "Plugin.Stream.Player.GetProperties"}, [this, self](const jsonrpcpp::Response& response)
             {
                 LOG(INFO, LOG_TAG) << "Response for Plugin.Stream.Player.GetProperties: " << response.to_json() << "\n";
                 if (response.error().code() == 0)
@@ -231,14 +232,35 @@ void PcmStream::start()
 {
     LOG(DEBUG, LOG_TAG) << "Start: " << name_ << ", type: " << uri_.scheme << ", sampleformat: " << sampleFormat_.toString() << ", codec: " << getCodec()
                         << "\n";
-    encoder_->init([this, self = shared_from_this()](const encoder::Encoder& encoder, const std::shared_ptr<msg::PcmChunk>& chunk, double duration)
-    { chunkEncoded(encoder, chunk, duration); }, sampleFormat_);
+
+    auto onChunkEncoded = [me = weak_from_this()](const encoder::Encoder& encoder, const std::shared_ptr<msg::PcmChunk>& chunk, double duration)
+    {
+        if (auto self = me.lock())
+            self->chunkEncoded(encoder, chunk, duration);
+    };
+
+    encoder_->init(std::move(onChunkEncoded), sampleFormat_);
 
     if (stream_ctrl_)
     {
-        stream_ctrl_->start(getId(), server_settings_, [this, self = shared_from_this()](const jsonrpcpp::Notification& notification)
-        { onControlNotification(notification); }, [this, self = shared_from_this()](const jsonrpcpp::Request& request) { onControlRequest(request); },
-                            [this, self = shared_from_this()](std::string message) { onControlLog(std::move(message)); });
+        // clang-format off
+        stream_ctrl_->start(getId(), server_settings_,
+        [me = weak_from_this()](const jsonrpcpp::Notification& notification)
+        {
+            if (auto self = me.lock())
+                self->onControlNotification(notification);
+        },
+        [me = weak_from_this()](const jsonrpcpp::Request& request)
+        {
+            if (auto self = me.lock())
+                self->onControlRequest(request);
+        }, 
+        [me = weak_from_this()](std::string message)
+        {
+            if (auto self = me.lock())
+                self->onControlLog(std::move(message));
+        });
+        // clang-format on
     }
 
     active_ = true;
@@ -247,6 +269,7 @@ void PcmStream::start()
 
 void PcmStream::stop()
 {
+    LOG(INFO, LOG_TAG) << "Stop " << name_ << "\n";
     active_ = false;
     setState(ReaderState::kIdle);
 }

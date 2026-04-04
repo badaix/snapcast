@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2025  Johannes Pohl
+    Copyright (C) 2014-2026  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -430,9 +430,11 @@ public:
     GroupPtr getGroupFromClient(const ClientInfoPtr& client);
     /// @return group with id @p group_id
     GroupPtr getGroup(const std::string& group_id) const;
+    /// @return all groups
+    std::vector<GroupPtr> getGroups() const;
 
     /// @return groups with client as json
-    json getGroups() const;
+    json getGroupsJson() const;
     /// @return complete server status, including @p streams
     json getServerStatus(const json& streams) const;
 

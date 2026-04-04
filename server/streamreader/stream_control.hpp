@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2025  Johannes Pohl
+    Copyright (C) 2014-2026  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -69,11 +69,11 @@ public:
     virtual ~StreamControl() = default;
 
     /// Start the stream control, calls abstract "doStart"
-    void start(const std::string& stream_id, const ServerSettings& server_setttings, const OnNotification& notification_handler,
-               const OnRequest& request_handler, const OnLog& log_handler);
+    void start(const std::string& stream_id, const ServerSettings& server_setttings, OnNotification&& notification_handler, OnRequest&& request_handler,
+               OnLog&& log_handler);
 
     /// Issue a command to the stream, calls abstract "doCommand"
-    void command(const jsonrpcpp::Request& request, const OnResponse& response_handler);
+    void command(const jsonrpcpp::Request& request, OnResponse&& response_handler);
 
 protected:
     /// abstract "command" interface: send a json request to the plugin

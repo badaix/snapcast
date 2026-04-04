@@ -312,7 +312,7 @@ int JackStream::readJackBuffers(jack_nframes_t nframes)
             connectedPorts++;
         }
 
-        jack_default_audio_sample_t* buf = static_cast<jack_default_audio_sample_t*>(jack_port_get_buffer(port, nframes));
+        auto* buf = static_cast<jack_default_audio_sample_t*>(jack_port_get_buffer(port, nframes));
 
         if (buf == nullptr)
         {

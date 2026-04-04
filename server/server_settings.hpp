@@ -28,6 +28,7 @@
 #include <cstdint>
 #include <filesystem>
 #include <memory>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -222,6 +223,8 @@ struct ServerSettings
         std::string codec{"flac"};
         /// Default end to end delay
         int32_t bufferMs{1000};
+        /// Optional default source
+        std::optional<std::string> default_source;
         /// Default sample format
         std::string sampleFormat{"48000:16:2"};
         /// Default read size for stream sources

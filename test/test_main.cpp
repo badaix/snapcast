@@ -524,7 +524,7 @@ TEST_CASE("Librespot2")
         REQUIRE(ms == "310573");
     }
 
-    line = "[2021-06-04T07:20:47Z INFO  librespot_playback::player] metadata:{\"ARTIST\":\"artist\",\"TITLE\":\"title\"}";
+    line = R"([2021-06-04T07:20:47Z INFO  librespot_playback::player] metadata:{"ARTIST":"artist","TITLE":"title"})";
     if (n = line.find("metadata:"); n != std::string::npos)
     {
         std::string meta = line.substr(n + 9);

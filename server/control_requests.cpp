@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2025  Johannes Pohl
+    Copyright (C) 2014-2026  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -811,8 +811,12 @@ void StreamAddRequest::execute(const jsonrpcpp::request_ptr& request, AuthInfo& 
     Json result;
     result["id"] = stream->getId();
 
+
+    // Notify others: since the list of streams changed, send a complete server update
+    json server = Config::instance().getServerStatus(getStreamManager().toJson());
+    auto notification = std::make_shared<jsonrpcpp::Notification>("Server.OnUpdate", jsonrpcpp::Parameter("server", server));
     auto response = std::make_shared<jsonrpcpp::Response>(*request, result);
-    on_response(std::move(response), nullptr);
+    on_response(std::move(response), std::move(notification));
 }
 
 Request::Description StreamAddRequest::description() const
@@ -839,13 +843,38 @@ void StreamRemoveRequest::execute(const jsonrpcpp::request_ptr& request, AuthInf
 
     // Find stream
     std::string streamId = getStreamId(request);
-    getStreamManager().removeStream(streamId);
+    if (!getStreamManager().removeStream(streamId))
+    {
+        throw jsonrpcpp::InvalidParamsException("Stream with id '" + streamId + "' not found");
+    }
+
+    auto groups = Config::instance().getGroups();
+    for (const auto& group : groups)
+    {
+        if (group->streamId == streamId)
+        {
+            group->streamId = "";
+            // Update clients
+            for (const auto& client : group->clients)
+            {
+                session_ptr session = getStreamServer().getStreamSession(client->id);
+                if (session)
+                {
+                    session->setPcmStream(nullptr);
+                }
+            }
+        }
+    }
 
     // Setup response
+    // Notify others: since the list of streams changed and multiple clients might be affected, send a complete server update
+    json server = Config::instance().getServerStatus(getStreamManager().toJson());
+    auto notification = std::make_shared<jsonrpcpp::Notification>("Server.OnUpdate", jsonrpcpp::Parameter("server", server));
+
     Json result;
     result["id"] = streamId;
     auto response = std::make_shared<jsonrpcpp::Response>(*request, result);
-    on_response(std::move(response), nullptr);
+    on_response(std::move(response), std::move(notification));
 }
 
 Request::Description StreamRemoveRequest::description() const

@@ -50,8 +50,8 @@ public:
     /// Construct and add a stream from @p streamUri, added from @p source
     /// @return the created stream
     PcmStreamPtr addStream(StreamUri& streamUri, PcmStream::Source source);
-    /// Remove a stream by @p name
-    void removeStream(const std::string& name);
+    /// Remove a stream by @p name, return true if a stream was removed, false if no stream with the given name was found
+    bool removeStream(const std::string& name);
 
     /// Start all stream sources, i.e the streams sources will start reading their respective inputs
     void start();

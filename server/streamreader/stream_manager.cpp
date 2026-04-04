@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2025  Johannes Pohl
+    Copyright (C) 2014-2026  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -21,6 +21,8 @@
 
 // local headers
 #include "airplay_stream.hpp"
+#include "common/aixlog.hpp"
+#include <algorithm>
 #ifdef HAS_ALSA
 #include "alsa_stream.hpp"
 #endif
@@ -43,6 +45,9 @@
 // 3rd party headers
 
 // standard headers
+
+
+static constexpr auto LOG_TAG = "StreamManager";
 
 
 using namespace std;
@@ -75,6 +80,13 @@ PcmStreamPtr StreamManager::addStream(StreamUri& streamUri, PcmStream::Source so
     if (streamUri.query.find(kUriChunkMs) == streamUri.query.end())
         streamUri.query[kUriChunkMs] = cpt::to_string(settings_.stream.streamChunkMs);
 
+    auto name = streamUri.query[kUriName];
+    if (name.empty())
+        throw SnapException("Stream name must not be empty");
+
+    auto iter = find_if(streams_.begin(), streams_.end(), [&name](const PcmStreamPtr& stream) { return stream->getName() == name; });
+    if (iter != streams_.end())
+        throw SnapException("Stream with name '" + name + "' already exists");
     //	LOG(DEBUG) << "\nURI: " << streamUri.uri << "\nscheme: " << streamUri.scheme << "\nhost: "
     //		<< streamUri.host << "\npath: " << streamUri.path << "\nfragment: " << streamUri.fragment << "\n";
 
@@ -155,26 +167,27 @@ PcmStreamPtr StreamManager::addStream(StreamUri& streamUri, PcmStream::Source so
     }
 
     if (stream)
-    {
-        for (const auto& s : streams_)
-        {
-            if (s->getName() == stream->getName())
-                throw SnapException("Stream with name \"" + stream->getName() + "\" already exists");
-        }
         streams_.push_back(stream);
-    }
 
     return stream;
 }
 
 
-void StreamManager::removeStream(const std::string& name)
+bool StreamManager::removeStream(const std::string& name)
 {
+    LOG(INFO, LOG_TAG) << "Removing stream '" << name << "'\n";
     auto iter = std::find_if(streams_.begin(), streams_.end(), [&name](const PcmStreamPtr& stream) { return stream->getName() == name; });
     if (iter != streams_.end())
     {
         (*iter)->stop();
         streams_.erase(iter);
+        LOG(DEBUG, LOG_TAG) << "Found and removed stream '" << (*iter)->getName() << "'\n";
+        return true;
+    }
+    else
+    {
+        LOG(WARNING, LOG_TAG) << "Stream '" << name << "' not found\n";
+        return false;
     }
 }
 
@@ -190,12 +203,20 @@ const PcmStreamPtr StreamManager::getDefaultStream() const
     if (streams_.empty())
         return nullptr;
 
+    auto& default_source = settings_.stream.default_source;
+    PcmStreamPtr firstValidStream = nullptr;
     for (const auto& stream : streams_)
     {
         if (stream->getCodec() != "null")
-            return stream;
+        {
+            if (firstValidStream == nullptr)
+                firstValidStream = stream;
+
+            if (!default_source.has_value() || (default_source.value() == stream->getName()))
+                return stream;
+        }
     }
-    return nullptr;
+    return firstValidStream;
 }
 
 

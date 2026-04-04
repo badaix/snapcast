@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2025  Johannes Pohl
+    Copyright (C) 2014-2026  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -123,7 +123,7 @@ void Config::save()
     if (filename_.empty())
         init();
     std::ofstream ofs(filename_.c_str(), std::ofstream::out | std::ofstream::trunc);
-    json clients = {{"ConfigVersion", 2}, {"Groups", getGroups()}};
+    json clients = {{"ConfigVersion", 2}, {"Groups", getGroupsJson()}};
     // ofs << std::setw(4) << clients;
     ofs << clients;
     ofs.close();
@@ -217,15 +217,21 @@ json Config::getServerStatus(const json& streams) const
     json serverStatus = {{"server",
                           {{"host", host.toJson()}, // getHostName()},
                            {"snapserver", snapserver.toJson()}}},
-                         {"groups", getGroups()},
+                         {"groups", getGroupsJson()},
                          {"streams", streams}};
 
     return serverStatus;
 }
 
 
+std::vector<GroupPtr> Config::getGroups() const
+{
+    std::lock_guard<std::recursive_mutex> lock(mutex_);
+    return groups;
+}
 
-json Config::getGroups() const
+
+json Config::getGroupsJson() const
 {
     std::lock_guard<std::recursive_mutex> lock(mutex_);
     json result = json::array();

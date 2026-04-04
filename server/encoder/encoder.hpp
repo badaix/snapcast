@@ -1,6 +1,6 @@
 /***
     This file is part of snapcast
-    Copyright (C) 2014-2025  Johannes Pohl
+    Copyright (C) 2014-2026  Johannes Pohl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -53,11 +53,11 @@ public:
     virtual ~Encoder() = default;
 
     /// The listener will receive the encoded stream
-    virtual void init(OnEncodedCallback callback, const SampleFormat& format)
+    virtual void init(OnEncodedCallback&& callback, const SampleFormat& format)
     {
         if (codecOptions_.empty())
             codecOptions_ = getDefaultOptions();
-        encoded_callback_ = std::move(callback);
+        encoded_callback_ = callback;
         sampleFormat_ = format;
         initEncoder();
     }
