@@ -29,7 +29,7 @@ One of the most generic ways to use Snapcast is in conjunction with the music pl
 
 ---
 
-## 📑 Table of Contents
+## Table of Contents
 
 - [How does it work](#how-does-it-work)
 - [Installation](#installation)
@@ -41,7 +41,7 @@ One of the most generic ways to use Snapcast is in conjunction with the music pl
 
 ---
 
-## ⚙️ How does it work
+## How does it work
 
 The Snapserver reads PCM chunks from configurable stream sources:
 
@@ -68,7 +68,7 @@ For more information on the binary protocol, please see the [documentation](doc/
 
 ---
 
-## 🚀 Installation
+## Installation
 
 You can either install Snapcast from a prebuilt package (recommended for new users), or build and install snapcast from source.
 
@@ -106,12 +106,12 @@ Please follow this [guide](doc/build.md) to build Snapcast for
 
 ---
 
-## 🎛️ Configuration
+## Configuration
 
 After installation, Snapserver and Snapclient are started with the command line arguments that are configured in `/etc/default/snapserver` and `/etc/default/snapclient`.
 Allowed options are listed in the man pages (`man snapserver`, `man snapclient`) or by invoking the snapserver or snapclient with the `-h` option.
 
-### 🖥️ Server
+### Server
 
 The server configuration is done in `/etc/snapserver.conf`. Different audio sources can by configured in the `[stream]` section with a list of `source` options, e.g.:
 
@@ -134,7 +134,7 @@ Available stream sources are:
 - [jack](doc/configuration.md#jack): receives audio from a Jack server
 - [meta](doc/configuration.md#meta): read and mix audio from other stream sources
 
-### 📱 Client
+### Client
 
 The client will use as audio backend the system's low level audio API to have the best possible control and most precise timing to achieve perfectly synced playback.
 
@@ -157,7 +157,7 @@ If you are running MPD and Shairport-sync into a soundcard that only supports 48
 
 ---
 
-## 🧪 Test
+## Test
 
 You can test your installation by copying random data into the server's fifo file
 
@@ -184,7 +184,7 @@ To setup WiFi on a Raspberry Pi, you can follow this [guide](https://www.raspber
 
 ---
 
-## 🎮 Control
+## Control
 
 Snapcast can be controlled using a [JSON-RPC API](doc/json_rpc_api/control.md) over plain TCP, HTTP(S), or Websockets:
 
@@ -229,7 +229,7 @@ There is an Android client [snapdroid](https://github.com/snapcast/snapdroid) av
 
 ---
 
-## 🎵 Setup of audio players/server
+## Setup of audio players/server
 
 Snapcast can be used with a number of different audio players and servers, and so it can be integrated into your favorite audio-player solution and make it synced-multiroom capable.
 The only requirement is that the player's audio can be redirected into the Snapserver's fifo `/tmp/snapfifo`. In the following configuration hints for [MPD](http://www.musicpd.org/) and [Mopidy](https://www.mopidy.com/) are given, which are base of other audio player solutions, like [Volumio](https://volumio.org/) or [RuneAudio](http://www.runeaudio.com/) (both MPD).
@@ -258,7 +258,7 @@ This [guide](doc/player_setup.md) shows how to configure different players/audio
 
 ---
 
-## 🗺️ Roadmap
+## Roadmap
 
 Unordered list of features that should make it into the v1.0
 
