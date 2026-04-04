@@ -1,10 +1,12 @@
-# Snapcast
+<div align="center">
 
 <picture>
  <source media="(prefers-color-scheme: dark)" srcset="doc/Snapcast_800_dark.png">
  <source media="(prefers-color-scheme: light)" srcset="doc/Snapcast_800.png">
  <img alt="Snapcast" src="doc/Snapcast_800.png">
 </picture>
+
+# Snapcast
 
 **S**y**n**chronous **a**udio **p**layer
 
@@ -13,13 +15,33 @@
 [![GitHub Downloads](https://img.shields.io/github/downloads/snapcast/snapcast/total)](https://github.com/snapcast/snapcast/releases)
 [![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://www.paypal.me/badaix)
 
+</div>
+
+<br/>
+
 Snapcast is a multiroom client-server audio player, where all clients are time synchronized with the server to play perfectly synced audio. It's not a standalone player, but an extension that turns your existing audio player into a Sonos-like multiroom solution.  
 Audio is captured by the server and routed to the connected clients. Several players can feed audio to the server in parallel and clients can be grouped to play the same audio stream.  
 One of the most generic ways to use Snapcast is in conjunction with the music player daemon ([MPD](http://www.musicpd.org/)) or [Mopidy](https://www.mopidy.com/).
 
-![Overview](doc/Overview.png)
+<div align="center">
+  <img alt="Overview Architecture" src="doc/Overview.png">
+</div>
 
-## How does it work
+---
+
+## 📑 Table of Contents
+
+- [How does it work](#how-does-it-work)
+- [Installation](#installation)
+- [Configuration](#configuration)
+- [Test](#test)
+- [Control](#control)
+- [Setup of audio players/server](#setup-of-audio-playersserver)
+- [Roadmap](#roadmap)
+
+---
+
+## ⚙️ How does it work
 
 The Snapserver reads PCM chunks from configurable stream sources:
 
@@ -44,7 +66,9 @@ Typically the deviation is below 0.2ms.
 
 For more information on the binary protocol, please see the [documentation](doc/binary_protocol.md).
 
-## Installation
+---
+
+## 🚀 Installation
 
 You can either install Snapcast from a prebuilt package (recommended for new users), or build and install snapcast from source.
 
@@ -80,13 +104,14 @@ Please follow this [guide](doc/build.md) to build Snapcast for
 - [webOS](doc/build.md#webos-cross-compile)
 - [Windows](doc/build.md#windows-vcpkg)
 
+---
 
-## Configuration
+## 🎛️ Configuration
 
 After installation, Snapserver and Snapclient are started with the command line arguments that are configured in `/etc/default/snapserver` and `/etc/default/snapclient`.
 Allowed options are listed in the man pages (`man snapserver`, `man snapclient`) or by invoking the snapserver or snapclient with the `-h` option.
 
-### Server
+### 🖥️ Server
 
 The server configuration is done in `/etc/snapserver.conf`. Different audio sources can by configured in the `[stream]` section with a list of `source` options, e.g.:
 
@@ -109,7 +134,7 @@ Available stream sources are:
 - [jack](doc/configuration.md#jack): receives audio from a Jack server
 - [meta](doc/configuration.md#meta): read and mix audio from other stream sources
 
-### Client
+### 📱 Client
 
 The client will use as audio backend the system's low level audio API to have the best possible control and most precise timing to achieve perfectly synced playback.
 
@@ -130,7 +155,9 @@ Parameters are appended to the player name, e.g. `--player alsa:buffer_time=100`
 For some audio backends you can configure the PCM device using the `-s` or `--soundcard` parameter, the device is chosen by index or name. Available PCM devices can be listed with `-l` or `--list`  
 If you are running MPD and Shairport-sync into a soundcard that only supports 48000 sample rate, you can use `--sampleformat <arg>` and the snapclient will resample the audio from shairport-sync, for example, which is 44100 (i.e.  `--sampleformat 48000:16:*`)
 
-## Test
+---
+
+## 🧪 Test
 
 You can test your installation by copying random data into the server's fifo file
 
@@ -155,7 +182,9 @@ amixer cset numid=3 1
 
 To setup WiFi on a Raspberry Pi, you can follow this [guide](https://www.raspberrypi.org/documentation/configuration/wireless/wireless-cli.md)
 
-## Control
+---
+
+## 🎮 Control
 
 Snapcast can be controlled using a [JSON-RPC API](doc/json_rpc_api/control.md) over plain TCP, HTTP(S), or Websockets:
 
@@ -184,29 +213,23 @@ There is an Android client [snapdroid](https://github.com/snapcast/snapdroid) av
 
 ### Contributions
 
-There is also an unofficial WebApp from @atoomic [atoomic/snapcast-volume-ui](https://github.com/atoomic/snapcast-volume-ui).
-This app lists all clients connected to a server and allows you to control individually the volume of each client.
-Once installed, you can use any mobile device, laptop, desktop, or browser.
+- **[atoomic/snapcast-volume-ui](https://github.com/atoomic/snapcast-volume-ui)**: An unofficial WebApp from @atoomic. This app lists all clients connected to a server and allows you to control individually the volume of each client. Once installed, you can use any mobile device, laptop, desktop, or browser.
+- **[unofficial FHEM module](https://forum.fhem.de/index.php/topic,62389.0.html)**: From @unimatrix27 which integrates a Snapcast controller into the [FHEM](https://fhem.de/fhem.html) home automation system.
+- **[snapcast component for Home Assistant](https://home-assistant.io/components/media_player.snapcast/)**: Integrates a Snapcast controller in to the [Home Assistant](https://home-assistant.io/) home automation system. Also includes a [snapcast python plugin for Domoticz](https://github.com/akamming/domoticz-snapcast) to integrate a Snapcast controller into the [Domoticz](https://domoticz.com/) home automation system.
+- **[Music Assistant](https://www.music-assistant.io)**: A powerful music management system designed to work with Home Assistant. It enables seamless streaming to Snapcast clients from local files or streaming services, with advanced features like multi-room playback, metadata management, and automated library organization.
+- **[snapcastr](https://github.com/xkonni/snapcastr)**: A web interface in Python, based on [python-snapcast](https://github.com/happyleavesaoc/python-snapcast). This interface controls client volume and assigns streams to groups.
+- **[snapcast-websockets-ui](https://github.com/derglaus/snapcast-websockets-ui)**: Another web interface running on any device, running entirely in the browser, which needs [websockify](https://github.com/novnc/websockify). No configuration needed; features almost all functions; still needs some tuning for the optics.
+- **[HydraPlay](https://github.com/mariolukas/HydraPlay)**: A web interface that integrates Snapcast and multiple Mopidy instances. It is JavaScript based and uses Angular 7. A Snapcast web socket proxy server is needed to connect Snapcast to HydraPlay over web sockets.
+- **[Snap.Net](https://github.com/stijnvdb88/snap.net)**: For Windows, a control client and player. It runs in the tray and lets you adjust client volumes with just a few clicks. The player simplifies setting up snapclient to play your music through multiple Windows sound devices simultaneously: pc speakers, hdmi audio, any usb audio devices you may have, etc. Snap.Net also runs on Android, and has limited support for iOS.
+- **[Snapclient for ESP32](https://github.com/CarlosDerSeher/snapclient)**: If you need an extremely small form factor and low power consumption, there is a microcontroller implementation of Snapclient written in C. The project provides a lightweight, Snapcast client that runs on ESP32/ESP32-S2 microcontrollers and delivers excellent multiroom synchronization with very low latency.
+- **[snapmixer](https://github.com/tremby/snapmixer)**: A text-mode volume control for all groups and clients.
+- **[TCP-Streamer](https://github.com/NaturalDevCR/TCP-Streamer)**: A lightweight, cross-platform audio streaming application built with Tauri, enabling system audio streaming over TCP with minimal latency.
+- **[Snap-CTRL](https://github.com/NaturalDevCR/snap-ctrl)**: A modern, responsive Vue 3 + Tailwind CSS alternative to Snapweb, offering real-time Snapcast control and advanced group management.
+- **[SnapcastManager](https://github.com/NaturalDevCR/Snapcast-Manager)**: A powerful web interface for managing, configuring, and monitoring Snapcast infrastructure on Linux/Raspberry Pi, featuring an interactive audio matrix and UI-driven package management.
 
-There is also an [unofficial FHEM module](https://forum.fhem.de/index.php/topic,62389.0.html) from @unimatrix27 which integrates a Snapcast controller into the [FHEM](https://fhem.de/fhem.html) home automation system.
+---
 
-There is a [snapcast component for Home Assistant](https://home-assistant.io/components/media_player.snapcast/) which integrates a Snapcast controller in to the [Home Assistant](https://home-assistant.io/) home automation system and a [snapcast python plugin for Domoticz](https://github.com/akamming/domoticz-snapcast) to integrate a Snapcast controller into the [Domoticz](https://domoticz.com/) home automation system.
-
-There is also support for [Music Assistant](https://www.music-assistant.io), a powerful music management system designed to work with Home Assistant. It enables seamless streaming to Snapcast clients from local files or streaming services, with advanced features like multi-room playback, metadata management, and automated library organization.
-
-For a web interface in Python, see [snapcastr](https://github.com/xkonni/snapcastr), based on [python-snapcast](https://github.com/happyleavesaoc/python-snapcast). This interface controls client volume and assigns streams to groups.
-
-Another web interface running on any device is [snapcast-websockets-ui](https://github.com/derglaus/snapcast-websockets-ui), running entirely in the browser, which needs [websockify](https://github.com/novnc/websockify). No configuration needed; features almost all functions; still needs some tuning for the optics.
-
-A web interface called [HydraPlay](https://github.com/mariolukas/HydraPlay) integrates Snapcast and multiple Mopidy instances. It is JavaScript based and uses Angular 7. A Snapcast web socket proxy server is needed to connect Snapcast to HydraPlay over web sockets.
-
-For Windows, there's [Snap.Net](https://github.com/stijnvdb88/snap.net), a control client and player. It runs in the tray and lets you adjust client volumes with just a few clicks. The player simplifies setting up snapclient to play your music through multiple Windows sound devices simultaneously: pc speakers, hdmi audio, any usb audio devices you may have, etc. Snap.Net also runs on Android, and has limited support for iOS.
-
-If you need an extremely small form factor and low power consumption, there is a microcontroller implementation of Snapclient written in C. The [**Snapclient for ESP32**](https://github.com/CarlosDerSeher/snapclient) project provides a lightweight, Snapcast client that runs on ESP32/ESP32-S2 microcontrollers and delivers excellent multiroom synchronization with very low latency.
-
-There's [snapmixer](https://github.com/tremby/snapmixer), a text-mode volume control for all groups and clients.
-
-## Setup of audio players/server
+## 🎵 Setup of audio players/server
 
 Snapcast can be used with a number of different audio players and servers, and so it can be integrated into your favorite audio-player solution and make it synced-multiroom capable.
 The only requirement is that the player's audio can be redirected into the Snapserver's fifo `/tmp/snapfifo`. In the following configuration hints for [MPD](http://www.musicpd.org/) and [Mopidy](https://www.mopidy.com/) are given, which are base of other audio player solutions, like [Volumio](https://volumio.org/) or [RuneAudio](http://www.runeaudio.com/) (both MPD).
@@ -233,7 +256,9 @@ This [guide](doc/player_setup.md) shows how to configure different players/audio
 - [VLC](doc/player_setup.md#vlc)
 - [PlexAmp](doc/player_setup.md#plexamp)
 
-## Roadmap
+---
+
+## 🗺️ Roadmap
 
 Unordered list of features that should make it into the v1.0
 
