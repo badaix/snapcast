@@ -125,7 +125,7 @@ void Properties::fromJson(const json& j)
         bool is_rw = (rw_props.find(element.key()) != rw_props.end());
         bool is_ro = (ro_props.find(element.key()) != ro_props.end());
         if (!is_rw && !is_ro)
-            LOG(WARNING, LOG_TAG) << "Property not supoorted: " << element.key() << "\n";
+            LOG(WARNING, LOG_TAG) << "Property not supported: " << element.key() << "\n";
     }
 
     std::optional<std::string> opt;

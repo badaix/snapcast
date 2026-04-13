@@ -173,7 +173,7 @@ void Metadata::fromJson(const json& j)
     for (const auto& element : j.items())
     {
         if (supported_tags.find(element.key()) == supported_tags.end())
-            LOG(WARNING, LOG_TAG) << "Tag not supoorted: " << element.key() << "\n";
+            LOG(WARNING, LOG_TAG) << "Tag not supported: " << element.key() << "\n";
     }
 
     readTag(j, "trackId", track_id);
