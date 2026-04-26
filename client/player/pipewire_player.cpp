@@ -24,6 +24,7 @@
 #include "common/aixlog.hpp"
 #include "common/snap_exception.hpp"
 #include "common/str_compat.hpp"
+#include "common/time_defs.hpp"
 #include "common/utils/string_utils.hpp"
 
 // 3rd party headers
@@ -188,7 +189,8 @@ std::vector<PcmDevice> PipeWirePlayer::pcm_list(const std::string& parameter)
 
 
 PipeWirePlayer::PipeWirePlayer(boost::asio::io_context& io_context, const ClientSettings::Player& settings, std::shared_ptr<Stream> stream)
-    : Player(io_context, settings, std::move(stream)), pw_main_loop_(nullptr), pw_stream_(nullptr), node_latency_(std::nullopt)
+    : Player(io_context, settings, std::move(stream)), pw_main_loop_(nullptr), pw_stream_(nullptr), node_latency_(std::nullopt), idle_threshold_(5s),
+      last_chunk_tick_(0), stream_active_(true)
 {
     LOG(DEBUG, LOG_TAG) << "Pipewire player\n";
 
@@ -196,6 +198,12 @@ PipeWirePlayer::PipeWirePlayer(boost::asio::io_context& io_context, const Client
 
     if (params.find("buffer_time") != params.end())
         node_latency_ = std::chrono::milliseconds(std::max(cpt::stoi(params["buffer_time"].front()), 10));
+
+    if (params.find("idle_threshold_ms") != params.end())
+    {
+        idle_threshold_ = std::chrono::milliseconds(std::max(cpt::stoi(params["idle_threshold_ms"].front()), 0));
+        LOG(INFO, LOG_TAG) << "idle_threshold_ms: " << idle_threshold_.count() << " (0 = disabled)\n";
+    }
 }
 
 
@@ -258,18 +266,27 @@ void PipeWirePlayer::start()
 void PipeWirePlayer::stop()
 {
     LOG(INFO, LOG_TAG) << "Stop\n";
-    Player::stop();
+
+    // Don't call Player::stop() — its `if (active_)` guard couples set-and-join, which
+    // forces the wrong order for us (we need active_=false BEFORE the loop is quit so
+    // the worker's re-init path is skipped, but join must still happen). Replicate its
+    // 4-line body with the right ordering.
+    if (active_)
+    {
+        active_ = false;
+        if (pw_main_loop_)
+            pw_main_loop_quit(pw_main_loop_);
+        if (playerThread_.joinable())
+            playerThread_.join();
+    }
     uninitPipewire();
 }
 
 
 void PipeWirePlayer::onProcess()
 {
-    if (!active_)
-    {
-        pw_main_loop_quit(pw_main_loop_);
-        return;
-    }
+    // Note: shutdown is handled directly by stop() which calls pw_main_loop_quit;
+    // we don't need to poll active_ here.
 
     struct pw_buffer* b;
     if ((b = pw_stream_dequeue_buffer(pw_stream_)) == nullptr)
@@ -335,10 +352,27 @@ void PipeWirePlayer::onProcess()
     // LOG(TRACE, LOG_TAG) << "Delay: " << time.delay << ", rate: " << time.rate.num << "/" << time.rate.denom << ", ms: " << delay_us / 1000 << "\n";
     if (!stream_->getPlayerChunkOrSilence(dst, chronos::usec(delay_us), n_frames))
     {
-        // LOG(DEBUG, LOG_TAG) << "Failed to get chunk. Playing silence.\n";
+        // No chunk available; playing silence. If we've been idle long enough,
+        // suspend the stream so the sink can power down its DAC.
+        if (idle_threshold_ > 0s && stream_active_.load() && chronos::getTickCount() - last_chunk_tick_.load() > idle_threshold_.count())
+        {
+            LOG(INFO, LOG_TAG) << "No chunk for " << idle_threshold_.count() << "ms, suspending stream\n";
+            stream_active_ = false;
+            // pw_stream_set_active and starting the watcher thread must run on the main
+            // loop, not from this on_process callback (which runs on the data/realtime loop).
+            pw_loop_invoke(pw_main_loop_get_loop(pw_main_loop_), [](struct spa_loop*, bool, uint32_t, const void*, size_t, void* user_data) -> int
+            {
+                auto* self = static_cast<PipeWirePlayer*>(user_data);
+                if (self->pw_stream_)
+                    pw_stream_set_active(self->pw_stream_, false);
+                self->startWatcher();
+                return 0;
+            }, 0, nullptr, 0, false, this);
+        }
     }
     else
     {
+        last_chunk_tick_ = chronos::getTickCount();
         adjustVolume(reinterpret_cast<char*>(dst), n_frames);
     }
 
@@ -524,15 +558,23 @@ void PipeWirePlayer::initPipewire()
         uninitPipewire();
         throw SnapException("Failed to connect PipeWire stream: " + std::string(spa_strerror(res)));
     }
+
+    // Reset idle-suspend state so we don't go idle on startup before any chunks arrive
+    last_chunk_tick_ = chronos::getTickCount();
+    stream_active_ = true;
 }
 
 void PipeWirePlayer::uninitPipewire()
 {
+    // Stop the watcher first so no pending pw_loop_invoke fires after we've torn things down
+    stopWatcher();
+
     if (pw_stream_)
     {
-        pw_stream_disconnect(pw_stream_);
-        pw_stream_destroy(pw_stream_);
-        pw_stream_ = nullptr;
+        pw_stream* tmp = pw_stream_;
+        pw_stream_ = nullptr; // null first so any in-flight onChunkWakeup is a no-op
+        pw_stream_disconnect(tmp);
+        pw_stream_destroy(tmp);
     }
 
     if (pw_main_loop_)
@@ -540,6 +582,54 @@ void PipeWirePlayer::uninitPipewire()
         pw_main_loop_destroy(pw_main_loop_);
         pw_main_loop_ = nullptr;
     }
+}
+
+void PipeWirePlayer::startWatcher()
+{
+    std::lock_guard<std::mutex> lock(watcher_mutex_);
+    if (watcher_thread_.joinable())
+        watcher_thread_.join();
+
+    watcher_thread_ = std::thread([this]()
+    {
+        LOG(DEBUG, LOG_TAG) << "Watcher thread started\n";
+        // 1s timeout is just for periodic shutdown checks; condition variable in
+        // Stream::waitForChunk wakes us within microseconds of an actual chunk.
+        while (active_ && !stream_active_.load())
+        {
+            if (stream_->waitForChunk(1000ms))
+            {
+                LOG(DEBUG, LOG_TAG) << "Watcher: chunk available, scheduling wakeup on main loop\n";
+                pw_loop_invoke(pw_main_loop_get_loop(pw_main_loop_), [](struct spa_loop*, bool, uint32_t, const void*, size_t, void* user_data) -> int
+                {
+                    auto* self = static_cast<PipeWirePlayer*>(user_data);
+                    self->onChunkWakeup();
+                    return 0;
+                }, 0, nullptr, 0, false, this);
+                return;
+            }
+            // Timeout — loop and re-check active_ / stream_active_
+        }
+        LOG(DEBUG, LOG_TAG) << "Watcher thread exiting without firing wakeup\n";
+    });
+}
+
+void PipeWirePlayer::stopWatcher()
+{
+    std::lock_guard<std::mutex> lock(watcher_mutex_);
+    if (watcher_thread_.joinable())
+        watcher_thread_.join();
+}
+
+void PipeWirePlayer::onChunkWakeup()
+{
+    if (!pw_stream_)
+        return; // stream torn down between watcher's invoke and us being scheduled
+
+    LOG(INFO, LOG_TAG) << "Chunk available, resuming stream\n";
+    last_chunk_tick_ = chronos::getTickCount();
+    stream_active_ = true;
+    pw_stream_set_active(pw_stream_, true);
 }
 
 void PipeWirePlayer::setHardwareVolume(const Volume& volume)
