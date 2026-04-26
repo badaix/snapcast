@@ -500,7 +500,8 @@ int main(int argc, char** argv)
                 cout << "Options are a comma separated list of:\n"
                      << " \"buffer_time=<buffer size [ms]>\" - default 100, min 10\n"
                      << " \"server=<PulseAudio server>\" - default not-set: use the default server\n"
-                     << " \"property=<key>=<value>\" - can be set multiple times, default 'media.role=music'\n";
+                     << " \"property=<key>=<value>\" - can be set multiple times, default 'media.role=music'\n"
+                     << " \"idle_threshold_ms=<ms>\" - disconnect from pulse after no audio for N ms; 0 disables. Default 5000.\n";
             }
 #endif
 #ifdef HAS_ALSA
