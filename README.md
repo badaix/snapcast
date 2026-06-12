@@ -80,7 +80,6 @@ Please follow this [guide](doc/build.md) to build Snapcast for
 - [webOS](doc/build.md#webos-cross-compile)
 - [Windows](doc/build.md#windows-vcpkg)
 
-
 ## Configuration
 
 After installation, Snapserver and Snapclient are started with the command line arguments that are configured in `/etc/default/snapserver` and `/etc/default/snapclient`.
@@ -107,6 +106,7 @@ Available stream sources are:
 - [tcp](doc/configuration.md#tcp-server): receives audio from a TCP socket, can act as client or server
 - [pipewire](doc/configuration.md#pipewire): direct audio capture from PipeWire
 - [jack](doc/configuration.md#jack): receives audio from a Jack server
+- [udp](doc/configuration.md#udp-server): receives audio from a UDP socket (PCM, RTP)
 - [meta](doc/configuration.md#meta): read and mix audio from other stream sources
 
 ### Client
@@ -115,20 +115,20 @@ The client will use as audio backend the system's low level audio API to have th
 
 Available audio backends are configured using the `--player` command line parameter:
 
-| Backend   | OS      | Description  | Parameters |
-| --------- | ------- | ------------ | ---------- |
-| alsa      | Linux   | ALSA | `buffer_time=<total buffer size [ms]>` (default 80, min 10)<br>`fragments=<number of buffers>` (default 4, min 2) |
-| pulse     | Linux   | PulseAudio | `buffer_time=<buffer size [ms]>` (default 100, min 10)<br>`server=<PulseAudio server>` - default not-set: use the default server<br>`property=<key>=<value>` set PA property, can be used multiple times (default `media.role=music`)  |
-| oboe      | Android | Oboe, using OpenSL ES on Android 4.1 and AAudio on 8.1 | |
-| opensl    | Android | OpenSL ES | |
-| coreaudio | macOS   | Core Audio | |
-| wasapi    | Windows | Windows Audio Session API | |
-| sld2      | All     | SDL2 Audio (e.g. for LG webOS TVs) | |
-| file      | All     | Write audio to file | `filename=<filename>` (`<filename>` = `stdout`, `stderr`, `null` or a filename)<br>`mode=[w\|a]` (`w`: write (discarding the content), `a`: append (keeping the content) |
+| Backend   | OS      | Description                                            | Parameters                                                                                                                                                                                                                            |
+| --------- | ------- | ------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| alsa      | Linux   | ALSA                                                   | `buffer_time=<total buffer size [ms]>` (default 80, min 10)<br>`fragments=<number of buffers>` (default 4, min 2)                                                                                                                     |
+| pulse     | Linux   | PulseAudio                                             | `buffer_time=<buffer size [ms]>` (default 100, min 10)<br>`server=<PulseAudio server>` - default not-set: use the default server<br>`property=<key>=<value>` set PA property, can be used multiple times (default `media.role=music`) |
+| oboe      | Android | Oboe, using OpenSL ES on Android 4.1 and AAudio on 8.1 |                                                                                                                                                                                                                                       |
+| opensl    | Android | OpenSL ES                                              |                                                                                                                                                                                                                                       |
+| coreaudio | macOS   | Core Audio                                             |                                                                                                                                                                                                                                       |
+| wasapi    | Windows | Windows Audio Session API                              |                                                                                                                                                                                                                                       |
+| sld2      | All     | SDL2 Audio (e.g. for LG webOS TVs)                     |                                                                                                                                                                                                                                       |
+| file      | All     | Write audio to file                                    | `filename=<filename>` (`<filename>` = `stdout`, `stderr`, `null` or a filename)<br>`mode=[w\|a]` (`w`: write (discarding the content), `a`: append (keeping the content)                                                              |
 
 Parameters are appended to the player name, e.g. `--player alsa:buffer_time=100`. Use `--player <name>:?` to get a list of available options.  
 For some audio backends you can configure the PCM device using the `-s` or `--soundcard` parameter, the device is chosen by index or name. Available PCM devices can be listed with `-l` or `--list`  
-If you are running MPD and Shairport-sync into a soundcard that only supports 48000 sample rate, you can use `--sampleformat <arg>` and the snapclient will resample the audio from shairport-sync, for example, which is 44100 (i.e.  `--sampleformat 48000:16:*`)
+If you are running MPD and Shairport-sync into a soundcard that only supports 48000 sample rate, you can use `--sampleformat <arg>` and the snapclient will resample the audio from shairport-sync, for example, which is 44100 (i.e. `--sampleformat 48000:16:*`)
 
 ## Test
 
@@ -148,7 +148,7 @@ source = file:///home/user/Musik/Some%20wave%20file.wav?name=test
 
 When you are using a Raspberry Pi, you might have to change your audio output to the 3.5mm jack:
 
-``` shell
+```shell
 # The last number is the audio output with 1 being the 3.5 jack, 2 being HDMI and 0 being auto.
 amixer cset numid=3 1
 ```
@@ -237,14 +237,14 @@ This [guide](doc/player_setup.md) shows how to configure different players/audio
 
 Unordered list of features that should make it into the v1.0
 
-- [X] **Remote control** JSON-RPC API to change client latency, volume, zone,...
-- [X] **Android client** JSON-RPC client and Snapclient
-- [X] **Streams** Support multiple streams
-- [X] **Debian packages** prebuild deb packages
-- [X] **Endian** independent code
-- [X] **OpenWrt** port Snapclient to OpenWrt
-- [X] **Hi-Res audio** support (like 96kHz 24bit)
-- [X] **Groups** support multiple Groups of clients ("Zones")
-- [X] **Ports** Snapclient for Windows, Mac OS X,...
+- [x] **Remote control** JSON-RPC API to change client latency, volume, zone,...
+- [x] **Android client** JSON-RPC client and Snapclient
+- [x] **Streams** Support multiple streams
+- [x] **Debian packages** prebuild deb packages
+- [x] **Endian** independent code
+- [x] **OpenWrt** port Snapclient to OpenWrt
+- [x] **Hi-Res audio** support (like 96kHz 24bit)
+- [x] **Groups** support multiple Groups of clients ("Zones")
+- [x] **Ports** Snapclient for Windows, Mac OS X,...
 - [ ] **JSON-RPC** Possibility to add, remove, rename streams
 - [ ] **Protocol specification** Snapcast binary streaming protocol, JSON-RPC protocol
