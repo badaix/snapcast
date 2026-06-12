@@ -176,10 +176,14 @@ process:///<path/to/process>?name=<name>[&wd_timeout=0][&log_stderr=false][&para
 Receives audio from a TCP socket (acting as server)
 
 ```sh
-tcp://<listen IP, e.g. 127.0.0.1>:<port>?name=<name>[&mode=server]
+tcp://<listen IP, e.g. 127.0.0.1>:<port>?name=<name>[&mode=server][&packed_s24le=true]
 ```
 
 default for `port` (if omitted) is 4953, default for `mode` is `server`
+
+`packed_s24le=true` can be used for 24-bit streams (`sampleformat=...:24:...`) if the source sends packed
+`s24le` samples (3 bytes/sample), e.g. ffmpeg. Snapserver will convert these samples to its internal 24-bit
+padded-to-32-bit format.
 
 Mopidy configuration would look like this (running GStreamer in [client mode](https://www.freedesktop.org/software/gstreamer-sdk/data/docs/latest/gst-plugins-base-plugins-0.10/gst-plugins-base-plugins-tcpclientsink.html))
 
@@ -193,7 +197,7 @@ output = audioresample ! audioconvert ! audio/x-raw,rate=48000,channels=2,format
 Receives audio from a TCP socket (acting as client)
 
 ```sh
-tcp://<server IP, e.g. 127.0.0.1>:<port>?name=<name>&mode=client
+tcp://<server IP, e.g. 127.0.0.1>:<port>?name=<name>&mode=client[&packed_s24le=true]
 ```
 
 Mopidy configuration would look like this (running GStreamer in [server mode](https://www.freedesktop.org/software/gstreamer-sdk/data/docs/latest/gst-plugins-base-plugins-0.10/gst-plugins-base-plugins-tcpserversink.html)):

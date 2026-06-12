@@ -25,6 +25,9 @@
 // 3rd party headers
 #include <boost/asio/ip/tcp.hpp>
 
+// standard headers
+#include <vector>
+
 using boost::asio::ip::tcp;
 
 namespace streamreader
@@ -46,10 +49,14 @@ public:
 private:
     void connect() override;
     void disconnect() override;
+    void do_read() override;
     std::unique_ptr<tcp::acceptor> acceptor_;
     std::string host_;
     size_t port_;
     bool is_server_;
+    bool packed_s24le_;
+    size_t packed_payload_size_;
+    std::vector<char> packed_read_buffer_;
     boost::asio::steady_timer reconnect_timer_;
 };
 
