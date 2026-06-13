@@ -24,6 +24,7 @@
 
 // 3rd party headers
 #include <boost/asio/io_context.hpp>
+#include <boost/asio/steady_timer.hpp>
 #include <pipewire/pipewire.h>
 #include <spa/param/audio/format-utils.h>
 #include <spa/param/audio/raw.h>
@@ -68,6 +69,7 @@ private:
     void initPipeWire();
     void uninitPipeWire();
     void processAudio();
+    void scheduleReconnect();
 
     // PipeWire structures
     struct pw_main_loop* pw_main_loop_;
@@ -101,6 +103,13 @@ private:
     // Stream state
     enum pw_stream_state stream_state_;
     bool running_;
+
+    // Diagnostics and gap detection
+    uint32_t process_count_{0};
+    std::chrono::steady_clock::time_point last_process_time_;
+
+    // Reconnection
+    boost::asio::steady_timer reconnect_timer_;
 
     // PipeWire thread
     std::thread pw_thread_;

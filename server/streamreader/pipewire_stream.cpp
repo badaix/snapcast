@@ -72,7 +72,7 @@ spa_audio_format sampleFormatToPipeWire(const SampleFormat& format)
 PipeWireStream::PipeWireStream(PcmStream::Listener* pcmListener, boost::asio::io_context& ioc, const ServerSettings& server_settings, const StreamUri& uri,
                                PcmStream::Source source)
     : PcmStream(pcmListener, ioc, server_settings, uri, source), pw_main_loop_(nullptr), pw_context_(nullptr), pw_core_(nullptr), pw_stream_(nullptr),
-      first_(true), silence_(0us), stream_state_(PW_STREAM_STATE_UNCONNECTED), running_(false)
+      first_(true), silence_(0us), stream_state_(PW_STREAM_STATE_UNCONNECTED), running_(false), reconnect_timer_(strand_)
 {
     // Parse URI parameters
     target_device_ = uri_.getQuery("target", "");
@@ -116,9 +116,23 @@ void PipeWireStream::on_state_changed(void* userdata, enum pw_stream_state old, 
             stream->running_ = false;
             if (stream->pw_main_loop_)
                 pw_main_loop_quit(stream->pw_main_loop_);
+            if (stream->active_)
+            {
+                LOG(INFO, LOG_TAG) << "Stream disconnected unexpectedly, scheduling reconnection\n";
+                boost::asio::post(stream->strand_, [stream]() { stream->scheduleReconnect(); });
+            }
+            break;
+        case PW_STREAM_STATE_PAUSED:
+            LOG(INFO, LOG_TAG) << "Stream paused\n";
             break;
         case PW_STREAM_STATE_STREAMING:
             LOG(INFO, LOG_TAG) << "Stream is now streaming\n";
+            stream->first_ = true;
+            stream->process_count_ = 0;
+            {
+                std::lock_guard<std::mutex> lock(stream->buffer_mutex_);
+                stream->temp_buffer_.clear();
+            }
             break;
         default:
             break;
@@ -179,11 +193,31 @@ void PipeWireStream::processAudio()
         return;
     }
 
+    ++process_count_;
+    auto now = std::chrono::steady_clock::now();
+    auto gap = std::chrono::duration_cast<std::chrono::milliseconds>(now - last_process_time_);
+    last_process_time_ = now;
+
+    bool gap_detected = (process_count_ > 1 && gap > 500ms);
+    if (gap_detected)
+    {
+        LOG(INFO, LOG_TAG) << "processAudio gap of " << gap.count() << "ms detected, resetting stream timing\n";
+        first_ = true;
+    }
+
+    if (process_count_ % 500 == 1)
+    {
+        LOG(DEBUG, LOG_TAG) << "processAudio #" << process_count_ << ": size=" << size << ", state=" << to_string(state_)
+                            << ", first=" << first_ << ", silence=" << silence_.count() << "us\n";
+    }
+
     auto* data = static_cast<uint8_t*>(d->data) + offset;
 
     // Process data in chunks
     {
         std::lock_guard<std::mutex> lock(buffer_mutex_);
+        if (gap_detected)
+            temp_buffer_.clear();
         temp_buffer_.insert(temp_buffer_.end(), data, data + size);
 
         // Process complete chunks
@@ -245,7 +279,46 @@ void PipeWireStream::on_core_error(void* userdata, uint32_t id, int seq, int res
         stream->running_ = false;
         if (stream->pw_main_loop_)
             pw_main_loop_quit(stream->pw_main_loop_);
+        if (stream->active_)
+        {
+            LOG(INFO, LOG_TAG) << "Core disconnected (EPIPE), scheduling reconnection\n";
+            boost::asio::post(stream->strand_, [stream]() { stream->scheduleReconnect(); });
+        }
     }
+}
+
+void PipeWireStream::scheduleReconnect()
+{
+    if (!active_)
+        return;
+
+    reconnect_timer_.expires_after(1s);
+    reconnect_timer_.async_wait([this](const boost::system::error_code& ec)
+    {
+        if (ec || !active_)
+            return;
+
+        LOG(INFO, LOG_TAG) << "Attempting to reconnect PipeWire stream\n";
+
+        if (pw_thread_.joinable())
+            pw_thread_.join();
+
+        uninitPipeWire();
+
+        try
+        {
+            initPipeWire();
+            first_ = true;
+            running_ = true;
+            pw_thread_ = std::thread([this]() { pw_main_loop_run(pw_main_loop_); });
+            LOG(INFO, LOG_TAG) << "PipeWire stream reconnected successfully\n";
+        }
+        catch (const std::exception& e)
+        {
+            LOG(ERROR, LOG_TAG) << "Failed to reconnect: " << e.what() << ", retrying...\n";
+            scheduleReconnect();
+        }
+    });
 }
 
 void PipeWireStream::start()
@@ -264,6 +337,8 @@ void PipeWireStream::start()
 
 void PipeWireStream::cleanup()
 {
+    active_ = false;
+    reconnect_timer_.cancel();
     running_ = false;
 
     if (pw_main_loop_)
@@ -334,6 +409,12 @@ void PipeWireStream::initPipeWire()
     // Set up stream properties
     auto* props = pw_properties_new(PW_KEY_MEDIA_TYPE, "Audio", PW_KEY_MEDIA_CATEGORY, "Capture", PW_KEY_MEDIA_ROLE, "Music", PW_KEY_APP_NAME, "Snapcast",
                                     PW_KEY_MEDIA_CLASS, "Audio/Sink", PW_KEY_NODE_NAME, stream_name_.c_str(), nullptr);
+
+    // Keep the node alive at all times so the session manager doesn't
+    // drop or re-route links after a brief source disconnect (song skip)
+    // or during an extended silence period.
+    pw_properties_set(props, PW_KEY_NODE_PAUSE_ON_IDLE, "false");
+    pw_properties_set(props, "session.suspend-timeout-seconds", "0");
 
     if (!target_device_.empty())
     {
