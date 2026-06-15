@@ -73,6 +73,7 @@ params = {
     'snapcast-host': None,
     'snapcast-port': None,
     'stream': None,
+    'partition': None,
 }
 
 defaults = {
@@ -83,6 +84,7 @@ defaults = {
     'snapcast-host': 'localhost',
     'snapcast-port': 1780,
     'stream': 'default',
+    'partition': None,
 }
 
 # Player.Status
@@ -231,6 +233,7 @@ class MPDWrapper(object):
             self._idling = False
             self._can_idle = False
             self._can_single = False
+            self._can_partition = False
             self._buffer = ''
 
             self.client.connect(
@@ -253,6 +256,8 @@ class MPDWrapper(object):
             # added in 0.15
             if 'single' in commands:
                 self._can_single = True
+            if 'partition' in commands:
+                self._can_partition = True
 
             if self._errors > 0:
                 logger.info('Reconnected to MPD server.')
@@ -287,6 +292,11 @@ class MPDWrapper(object):
             GLib.io_add_watch(sys.stdin, GLib.IO_IN |
                               GLib.IO_HUP, self.io_callback)
 
+            if self._params['partition']:
+                if not self._can_partition:
+                    raise ValueError('server does not support `partition`')
+                self._write_command('partition', [self._params['partition']])
+                self._fetch_object()
             # Reset error counter
             self._errors = 0
 
@@ -800,6 +810,7 @@ Usage: %(progname)s [OPTION]...
      --snapcast-host=ADDR   Set the snapcast server address
      --snapcast-port=PORT   Set the snapcast server port
      --stream=ID            Set the stream id
+     --partition=ID         Set the mpd partition
 
      -h, --help             Show this help message
      -d, --debug            Run in debug mode
@@ -821,7 +832,7 @@ if __name__ == '__main__':
     # Parse command line
     try:
         (opts, args) = getopt.getopt(sys.argv[1:], 'hdjv',
-                                     ['help', 'mpd-host=', 'mpd-port=', 'snapcast-host=', 'snapcast-port=', 'stream=', 'debug', 'version'])
+                                     ['help', 'mpd-host=', 'mpd-port=', 'snapcast-host=', 'snapcast-port=', 'stream=', 'partition=', 'debug', 'version'])
     except getopt.GetoptError as ex:
         (msg, opt) = ex.args
         print("%s: %s" % (sys.argv[0], msg), file=sys.stderr)
@@ -843,6 +854,8 @@ if __name__ == '__main__':
             params['snapcast-port'] = int(arg)
         elif opt in ['--stream']:
             params['stream'] = arg
+        elif opt in ['--partition']:
+            params['partition'] = arg
         elif opt in ['-d', '--debug']:
             log_level = logging.DEBUG
         elif opt in ['-v', '--version']:
