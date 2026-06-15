@@ -30,6 +30,7 @@
 #include <boost/asio/steady_timer.hpp>
 
 // standard headers
+#include <chrono>
 
 
 namespace streamreader
@@ -195,6 +196,9 @@ void AsioStream<ReadStream>::do_read()
 
         if (ec)
         {
+            if (ec == boost::asio::error::operation_aborted)
+                return;
+
             if (lastException_ != ec.message())
             {
                 LOG(ERROR, "AsioStream") << "Error reading message in stream '" << getName() << "': " << ec.message() << ", length: " << length

@@ -25,8 +25,10 @@
 #include "common/str_compat.hpp"
 
 // 3rd party headers
+#include <boost/asio/socket_base.hpp>
 
 // standard headers
+#include <chrono>
 #include <cstdint>
 #include <memory>
 
@@ -69,19 +71,8 @@ void TcpStream::connect()
 
     if (is_server_)
     {
-        acceptor_->async_accept([this, self = shared_from_this()](boost::system::error_code ec, tcp::socket socket)
-        {
-            if (!ec)
-            {
-                LOG(DEBUG, LOG_TAG) << "New client connection\n";
-                stream_ = make_unique<tcp::socket>(std::move(socket));
-                on_connect();
-            }
-            else
-            {
-                LOG(ERROR, LOG_TAG) << "Accept failed: " << ec.message() << "\n";
-            }
-        });
+        if (!accepting_)
+            start_accept();
     }
     else
     {
@@ -107,9 +98,39 @@ void TcpStream::connect()
 void TcpStream::disconnect()
 {
     reconnect_timer_.cancel();
-    if (acceptor_)
+    if (active_ == false && acceptor_)
         acceptor_->cancel();
     AsioStream<tcp::socket>::disconnect();
+}
+
+
+void TcpStream::start_accept()
+{
+    accepting_ = true;
+    acceptor_->async_accept([this, self = shared_from_this()](boost::system::error_code ec, tcp::socket socket)
+    {
+        accepting_ = false;
+        if (!ec)
+        {
+            boost::system::error_code ec;
+            socket.set_option(boost::asio::socket_base::keep_alive(true), ec);
+            socket.set_option(tcp::no_delay(true), ec);
+
+            LOG(NOTICE, LOG_TAG) << "New client connection: " << socket.remote_endpoint().address().to_string() << "\n";
+            stream_ = make_unique<tcp::socket>(std::move(socket));
+            on_connect();
+            start_accept();
+        }
+        else
+        {
+            if (ec != boost::asio::error::operation_aborted)
+            {
+                LOG(ERROR, LOG_TAG) << "Accept failed: " << ec.message() << "\n";
+                // Wait before retrying to avoid busy loop on persistent error
+                wait(reconnect_timer_, 1s, [this, self = shared_from_this()] { start_accept(); });
+            }
+        }
+    });
 }
 
 
