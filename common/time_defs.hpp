@@ -30,6 +30,7 @@
 #ifndef WINDOWS
 #include <sys/time.h>
 #else
+#define NOMINMAX
 #include <Windows.h>
 #include <stdint.h>
 #include <winsock2.h>

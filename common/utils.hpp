@@ -51,6 +51,7 @@
 #include <sys/system_properties.h>
 #endif
 #ifdef WINDOWS
+#define NOMINMAX
 #include <chrono>
 #include <direct.h>
 #include <iphlpapi.h>

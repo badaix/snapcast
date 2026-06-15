@@ -36,5 +36,11 @@ if(ANDROID)
   target_link_libraries(snapcast_test log)
 endif(ANDROID)
 
-target_link_libraries(snapcast_test OpenSSL::Crypto OpenSSL::SSL)
-target_link_libraries(snapcast_test Catch2::Catch2WithMain Catch2::Catch2)
+# Link against the common static library so AixLog (aixlog.cpp) and other common symbols are resolved.
+target_link_libraries(snapcast_test
+    common
+    OpenSSL::Crypto
+    OpenSSL::SSL
+    Catch2::Catch2WithMain
+    Catch2::Catch2
+)
