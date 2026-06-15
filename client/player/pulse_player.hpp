@@ -77,6 +77,8 @@ private:
     std::atomic<int> pa_ready_;
 
     long last_chunk_tick_;
+    /// Disconnect from pulse after no chunks for this long. 0 = disabled.
+    std::chrono::milliseconds idle_threshold_;
 
     pa_buffer_attr bufattr_;
     pa_sample_spec pa_ss_;

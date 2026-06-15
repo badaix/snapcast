@@ -138,14 +138,19 @@ vector<PcmDevice> PulsePlayer::pcm_list(const std::string& parameter)
 
 
 PulsePlayer::PulsePlayer(boost::asio::io_context& io_context, const ClientSettings::Player& settings, std::shared_ptr<Stream> stream)
-    : Player(io_context, settings, std::move(stream)), latency_(BUFFER_TIME), last_chunk_tick_(0), pa_ml_(nullptr), pa_ctx_(nullptr), playstream_(nullptr),
-      proplist_(nullptr), server_(std::nullopt)
+    : Player(io_context, settings, std::move(stream)), latency_(BUFFER_TIME), last_chunk_tick_(0), idle_threshold_(5s), pa_ml_(nullptr), pa_ctx_(nullptr),
+      playstream_(nullptr), proplist_(nullptr), server_(std::nullopt)
 {
     auto params = utils::string::split_pairs_to_container<std::vector<std::string>>(settings.parameter, ',', '=');
     if (params.find("buffer_time") != params.end())
         latency_ = std::chrono::milliseconds(std::max(cpt::stoi(params["buffer_time"].front()), 10));
     if (params.find("server") != params.end())
         server_ = params["server"].front();
+    if (params.find("idle_threshold_ms") != params.end())
+    {
+        idle_threshold_ = std::chrono::milliseconds(std::max(cpt::stoi(params["idle_threshold_ms"].front()), 0));
+        LOG(INFO, LOG_TAG) << "idle_threshold_ms: " << idle_threshold_.count() << " (0 = disabled)\n";
+    }
     properties_[PA_PROP_MEDIA_ROLE] = "music";
     properties_[PA_PROP_APPLICATION_ICON_NAME] = "snapcast";
     if (params.find("property") != params.end())
@@ -349,11 +354,11 @@ void PulsePlayer::writeCallback(pa_stream* stream, size_t nbytes)
     // LOG(TRACE, LOG_TAG) << "writeCallback latency " << usec << " us, frames: " << numFrames << "\n";
     if (!stream_->getPlayerChunkOrSilence(buffer_.data(), std::chrono::microseconds(usec), numFrames))
     {
-        // if we haven't got a chunk for a while, it's time to disconnect from pulse so the sound device
-        // can become idle/suspended.
-        if (chronos::getTickCount() - last_chunk_tick_ > 5000)
+        // if we haven't got a chunk for a while, disconnect from pulse so the sound device
+        // can become idle/suspended. Threshold is configurable via idle_threshold_ms; 0 disables.
+        if (idle_threshold_ > 0s && chronos::getTickCount() - last_chunk_tick_ > idle_threshold_.count())
         {
-            LOG(INFO, LOG_TAG) << "No chunk received for 5000ms, disconnecting from pulse.\n";
+            LOG(INFO, LOG_TAG) << "No chunk received for " << idle_threshold_.count() << "ms, disconnecting from pulse.\n";
             this->disconnect();
             return;
         }

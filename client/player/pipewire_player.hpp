@@ -29,10 +29,13 @@
 #include <pipewire/stream.h>
 
 // standard headers
+#include <atomic>
 #include <chrono>
 #include <cstdio>
 #include <memory>
+#include <mutex>
 #include <optional>
+#include <thread>
 
 namespace player
 {
@@ -71,6 +74,16 @@ private:
     void worker() override;
     bool needsThread() const override;
 
+    /// Spawn the chunk-watcher thread that wakes the stream when audio resumes.
+    /// Called on the main-loop thread when going idle.
+    void startWatcher();
+    /// Stop and join the watcher thread (if running).
+    /// Called on shutdown or when reactivating the stream.
+    void stopWatcher();
+    /// Reactivate the suspended stream. Scheduled on the main-loop thread by the watcher
+    /// (via pw_loop_invoke) when a chunk arrives.
+    void onChunkWakeup();
+
     // PipeWire structures
     struct pw_main_loop* pw_main_loop_;
     struct pw_stream* pw_stream_;
@@ -79,6 +92,17 @@ private:
     struct pw_stream_events stream_events_;
 
     std::optional<std::chrono::milliseconds> node_latency_;
+
+    // Idle suspend: deactivate stream after no chunks for this long. 0 = disabled.
+    std::chrono::milliseconds idle_threshold_;
+    /// Tick count of last received real (non-silence) chunk
+    std::atomic<long> last_chunk_tick_;
+    /// True iff pw_stream_ is currently set_active(true)
+    std::atomic<bool> stream_active_;
+    /// Watcher thread that blocks on Stream::waitForChunk while suspended
+    std::thread watcher_thread_;
+    /// Guards watcher_thread_ join/spawn
+    std::mutex watcher_mutex_;
 };
 
 } // namespace player
