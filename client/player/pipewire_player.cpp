@@ -196,6 +196,18 @@ PipeWirePlayer::PipeWirePlayer(boost::asio::io_context& io_context, const Client
 
     if (params.find("buffer_time") != params.end())
         node_latency_ = std::chrono::milliseconds(std::max(cpt::stoi(params["buffer_time"].front()), 10));
+
+    // Collect custom PipeWire properties (any param that isn't a known snapclient option)
+    for (const auto& [key, values] : params)
+    {
+        if (key == "buffer_time")
+            continue;
+        if (!values.empty())
+        {
+            custom_props_[key] = values.front();
+            LOG(INFO, LOG_TAG) << "Custom PipeWire property: " << key << " = " << values.front() << "\n";
+        }
+    }
 }
 
 
@@ -452,6 +464,13 @@ void PipeWirePlayer::initPipewire()
         // PW_KEY_NODE_NAME, "TODO: Player name or instance id", 
         nullptr);
     // clang-format on
+
+    // Apply custom PipeWire properties from player parameters
+    for (const auto& [key, value] : custom_props_)
+    {
+        LOG(INFO, LOG_TAG) << "Setting custom property: " << key << " = " << value << "\n";
+        pw_properties_set(props, key.c_str(), value.c_str());
+    }
 
     if (node_latency_)
     {

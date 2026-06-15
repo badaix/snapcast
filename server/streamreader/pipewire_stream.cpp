@@ -81,6 +81,15 @@ PipeWireStream::PipeWireStream(PcmStream::Listener* pcmListener, boost::asio::io
     idle_threshold_ = std::chrono::milliseconds(std::max(cpt::stoi(uri_.getQuery("idle_threshold", "100")), 10));
     capture_sink_ = (uri_.getQuery("capture_sink", "false") == "true");
 
+    // Collect custom PipeWire properties (any param that isn't a known stream option)
+    for (const auto& [key, value] : uri_.getQuery())
+    {
+        if (key == "name" || key == "target" || key == "send_silence" || key == "idle_threshold" || key == "capture_sink" || key == "chunk_ms" || key == "sampleformat" || key == "codec" || key == "controlscript" || key == "controlscriptparams" || key == "dryout_ms" || key == "stream_type")
+            continue;
+        custom_props_[key] = value;
+        LOG(INFO, LOG_TAG) << "Custom PipeWire property: " << key << " = " << value << "\n";
+    }
+
     // Initialize PipeWire
     pw_init(nullptr, nullptr);
 }
@@ -347,6 +356,13 @@ void PipeWireStream::initPipeWire()
     if (capture_sink_)
     {
         pw_properties_set(props, "stream.capture.sink", "true");
+    }
+
+    // Apply custom PipeWire properties from stream URI
+    for (const auto& [key, value] : custom_props_)
+    {
+        LOG(INFO, LOG_TAG) << "Setting custom property: " << key << " = " << value << "\n";
+        pw_properties_set(props, key.c_str(), value.c_str());
     }
 
     // Set latency
