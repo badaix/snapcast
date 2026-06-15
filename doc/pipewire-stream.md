@@ -135,6 +135,42 @@ $ cat /etc/modules-load.d/snd_aloop.conf
 snd_aloop
 ```
 
+## MPRIS Metadata and Playback Control
+
+The PipeWire stream can be combined with the `meta_mpris.py` control script to expose the currently playing track's metadata (title, artist, album art, …) in snapWeb and to allow playback control (play/pause/skip) directly from the web UI or any Snapcast client.
+
+`meta_mpris.py` acts as a bridge between the session D-Bus [MPRIS](https://specifications.freedesktop.org/mpris-spec/latest/) interface (used by virtually every Linux music player and browser) and the Snapcast [stream plugin protocol](json_rpc_api/stream_plugin.md). It auto-detects the active MPRIS player and forwards all property changes in real time.
+
+### Dependencies
+
+```bash
+# Fedora/RHEL
+sudo dnf install python3-dbus python3-gobject
+
+# Ubuntu/Debian
+sudo apt install python3-dbus python3-gi
+```
+
+### Configuration
+
+```ini
+[stream]
+source = pipewire://?name=Snapcast&device=&auto_connect=true&controlscript=meta_mpris.py
+```
+
+If you want to lock the script to a specific player instead of letting it auto-detect, pass the `--mpris-name` option via `controlscriptparams`:
+
+```ini
+[stream]
+source = pipewire://?name=Snapcast&device=&auto_connect=true&controlscript=meta_mpris.py&controlscriptparams=--mpris-name=firefox
+```
+
+### Result
+
+snapWeb shows the currently playing track alongside the system MPRIS widget:
+
+![MPRIS control demo – snapWeb and GNOME media controls side by side](MPRIS_control_demo.png)
+
 ## Alternative: Use the `libpipewire-module-snapcast-discover` from PipeWire
 
 An alternative to using the `pipewire-stream` source in Snapcast is to use the `libpipewire-module-snapcast-discover` module from PipeWire. This module allows PipeWire clients to automatically discover and connect to snapserver.
