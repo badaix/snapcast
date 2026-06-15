@@ -127,6 +127,11 @@ else()
     include_directories(${SOXR_INCLUDE_DIRS})
     link_directories(${SOXR_LIBRARY_DIRS})
   endif(SOXR_FOUND)
+
+  # Zero-copy TCP stream session (Linux only - uses MSG_ZEROCOPY and linux/errqueue.h)
+  if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    list(APPEND SERVER_SOURCES stream_session_tcp_coordinated.cpp)
+  endif()
 endif()
 
 if(OPENSSL_FOUND)

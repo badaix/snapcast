@@ -25,6 +25,12 @@
 #include "control_server.hpp"
 #include "server_settings.hpp"
 #include "stream_session.hpp"
+#ifdef __linux__
+#include "stream_session_tcp_coordinated.hpp"
+#else
+// Forward declaration for non-Linux platforms
+class StreamSessionTcpCoordinated;
+#endif
 
 // 3rd party headers
 #include <boost/asio/io_context.hpp>
@@ -76,10 +82,18 @@ public:
     /// @return stream session for @p session
     session_ptr getStreamSession(StreamSession* session) const;
 
+#ifdef __linux__
+    /// Print zerocopy diagnostics for all sessions
+    void printZeroCopyDiagnostics(StreamSessionTcpCoordinated* coordinated_session) const;
+#endif
+
 private:
     void startAccept();
     void handleAccept(tcp::socket socket);
     void cleanup();
+
+    /// Start periodic diagnostics timer
+    void startDiagnosticsTimer();
 
     /// Implementation of StreamMessageReceiver
     void onMessageReceived(const std::shared_ptr<StreamSession>& streamSession, const msg::BaseMessage& baseMessage, char* buffer) override;
@@ -90,6 +104,7 @@ private:
     boost::asio::io_context& io_context_;
     std::vector<acceptor_ptr> acceptor_;
     boost::asio::steady_timer config_timer_;
+    boost::asio::steady_timer diagnostics_timer_;
 
     ServerSettings settings_;
     Queue<std::shared_ptr<msg::BaseMessage>> messages_;

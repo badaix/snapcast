@@ -1,11 +1,13 @@
-ARG VARIANT="42"
+ARG VARIANT="43"
 FROM fedora:${VARIANT}
 
 # [Optional] Uncomment this section to install additional packages.
 RUN dnf -y update \
     && dnf -y install @development-tools gcc-c++ libstdc++-static libatomic cmake ccache ninja-build \
+    uv git nodejs pnpm \
     alsa-lib-devel avahi-devel boost-devel expat-devel flac-devel libvorbis-devel openssl-devel \
     opus-devel pipewire-jack-audio-connection-kit-devel pulseaudio-libs-devel soxr-devel \
+    pipewire-devel \
     && dnf clean all
 
 RUN useradd -rm -d /home/vscode -s /bin/bash -g root -u 1001 vscode
