@@ -97,6 +97,18 @@ void PipeWireStream::on_process(void* userdata)
     stream->processAudio();
 }
 
+int PipeWireStream::on_paused([[maybe_unused]] struct spa_loop *loop,
+                              [[maybe_unused]] bool async,
+                              [[maybe_unused]] uint32_t seq,
+                              [[maybe_unused]] const void *data,
+                              [[maybe_unused]] size_t size,
+                              void *user_data)
+{
+    auto* stream = static_cast<PipeWireStream*>(user_data);
+    stream->paused();
+    return 0;
+}
+
 void PipeWireStream::on_state_changed(void* userdata, enum pw_stream_state old, enum pw_stream_state state, const char* error)
 {
     auto* stream = static_cast<PipeWireStream*>(userdata);
@@ -119,6 +131,12 @@ void PipeWireStream::on_state_changed(void* userdata, enum pw_stream_state old, 
             break;
         case PW_STREAM_STATE_STREAMING:
             LOG(INFO, LOG_TAG) << "Stream is now streaming\n";
+            break;
+        case PW_STREAM_STATE_PAUSED:
+            // Handle paused state on the same thread as processAudio()
+            if (stream->pw_stream_)
+                pw_loop_invoke(pw_stream_get_data_loop(stream->pw_stream_),
+                    on_paused, 0, NULL, 0, false, stream);
             break;
         default:
             break;
@@ -226,6 +244,14 @@ void PipeWireStream::processAudio()
     }
 
     pw_stream_queue_buffer(pw_stream_, b);
+}
+
+void PipeWireStream::paused()
+{
+    if (!running_)
+        return;
+
+    setState(ReaderState::kIdle);
 }
 
 void PipeWireStream::on_core_info(void* userdata, const struct pw_core_info* info)

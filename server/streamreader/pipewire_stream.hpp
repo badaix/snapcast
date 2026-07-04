@@ -60,6 +60,12 @@ protected:
 private:
     // PipeWire callbacks
     static void on_process(void* userdata);
+    static int on_paused(struct spa_loop *loop,
+                         bool async,
+                         uint32_t seq,
+                         const void *data,
+                         size_t size,
+                         void *user_data);
     static void on_state_changed(void* userdata, enum pw_stream_state old, enum pw_stream_state state, const char* error);
     static void on_param_changed(void* userdata, uint32_t id, const struct spa_pod* param);
     static void on_core_info(void* userdata, const struct pw_core_info* info);
@@ -68,6 +74,7 @@ private:
     void initPipeWire();
     void uninitPipeWire();
     void processAudio();
+    void paused();
 
     // PipeWire structures
     struct pw_main_loop* pw_main_loop_;
