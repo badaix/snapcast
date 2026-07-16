@@ -138,8 +138,8 @@ vector<PcmDevice> PulsePlayer::pcm_list(const std::string& parameter)
 
 
 PulsePlayer::PulsePlayer(boost::asio::io_context& io_context, const ClientSettings::Player& settings, std::shared_ptr<Stream> stream)
-    : Player(io_context, settings, std::move(stream)), latency_(BUFFER_TIME), last_chunk_tick_(0), pa_ml_(nullptr), pa_ctx_(nullptr), playstream_(nullptr),
-      proplist_(nullptr), server_(std::nullopt)
+    : Player(io_context, settings, std::move(stream)), latency_(BUFFER_TIME), pa_ready_(0), disconnect_requested_(false), last_chunk_tick_(0), pa_ml_(nullptr),
+      pa_ctx_(nullptr), playstream_(nullptr), proplist_(nullptr), server_(std::nullopt)
 {
     auto params = utils::string::split_pairs_to_container<std::vector<std::string>>(settings.parameter, ',', '=');
     if (params.find("buffer_time") != params.end())
@@ -185,6 +185,10 @@ void PulsePlayer::worker()
     while (active_)
     {
         pa_mainloop_run(pa_ml_, nullptr);
+        teardown();
+
+        if (!active_)
+            break;
 
         // if we are still active, wait for a chunk and attempt to reconnect
         while (active_ && !stream_->waitForChunk(100ms))
@@ -204,7 +208,7 @@ void PulsePlayer::worker()
             catch (const std::exception& e)
             {
                 LOG(ERROR, LOG_TAG) << "Exception while connecting to pulse: " << e.what() << "\n";
-                disconnect();
+                teardown();
                 chronos::sleep(100);
             }
         }
@@ -343,6 +347,9 @@ void PulsePlayer::writeCallback(pa_stream* stream, size_t nbytes)
     int neg = 0;
     pa_stream_get_latency(stream, &usec, &neg);
 
+    if (disconnect_requested_.load())
+        return;
+
     auto numFrames = nbytes / stream_->getFormat().frameSize();
     if (buffer_.size() < nbytes)
         buffer_.resize(nbytes);
@@ -354,7 +361,7 @@ void PulsePlayer::writeCallback(pa_stream* stream, size_t nbytes)
         if (chronos::getTickCount() - last_chunk_tick_ > 5000)
         {
             LOG(INFO, LOG_TAG) << "No chunk received for 5000ms, disconnecting from pulse.\n";
-            this->disconnect();
+            this->requestDisconnect();
             return;
         }
         // LOG(TRACE, LOG_TAG) << "Failed to get chunk. Playing silence.\n";
@@ -372,7 +379,15 @@ void PulsePlayer::start()
 {
     LOG(INFO, LOG_TAG) << "Start\n";
 
-    this->connect();
+    try
+    {
+        this->connect();
+    }
+    catch (...)
+    {
+        teardown();
+        throw;
+    }
     Player::start();
 }
 
@@ -380,6 +395,7 @@ void PulsePlayer::connect()
 {
     std::lock_guard<std::mutex> lock(mutex_);
     LOG(INFO, LOG_TAG) << "Connecting to pulse\n";
+    disconnect_requested_.store(false);
 
     if (settings_.pcm_device.idx == -1)
         throw SnapException("Can't open " + settings_.pcm_device.name + ", error: No such device");
@@ -513,22 +529,50 @@ void PulsePlayer::stop()
 {
     LOG(INFO, LOG_TAG) << "Stop\n";
 
-    this->disconnect();
-    Player::stop();
+    active_ = false;
+    requestDisconnect();
+    if (playerThread_.joinable())
+        playerThread_.join();
+    teardown();
 }
 
-void PulsePlayer::disconnect()
+void PulsePlayer::requestDisconnect()
 {
     std::lock_guard<std::mutex> lock(mutex_);
-    LOG(INFO, LOG_TAG) << "Disconnecting from pulse\n";
+    disconnect_requested_.store(true);
 
     if (pa_ml_ != nullptr)
     {
         pa_mainloop_quit(pa_ml_, 0);
+        pa_mainloop_wakeup(pa_ml_);
+    }
+}
+
+void PulsePlayer::teardown()
+{
+    std::lock_guard<std::mutex> lock(mutex_);
+    LOG(INFO, LOG_TAG) << "Disconnecting from pulse\n";
+
+    disconnect_requested_.store(false);
+    pa_ready_ = 0;
+
+    if (playstream_ != nullptr)
+    {
+        pa_stream_set_state_callback(playstream_, nullptr, nullptr);
+        pa_stream_set_read_callback(playstream_, nullptr, nullptr);
+        pa_stream_set_write_callback(playstream_, nullptr, nullptr);
+        pa_stream_set_underflow_callback(playstream_, nullptr, nullptr);
+        pa_stream_set_overflow_callback(playstream_, nullptr, nullptr);
+
+        pa_stream_disconnect(playstream_);
+        pa_stream_unref(playstream_);
+        playstream_ = nullptr;
     }
 
     if (pa_ctx_ != nullptr)
     {
+        pa_context_set_state_callback(pa_ctx_, nullptr, nullptr);
+        pa_context_set_subscribe_callback(pa_ctx_, nullptr, nullptr);
         pa_context_disconnect(pa_ctx_);
         pa_context_unref(pa_ctx_);
         pa_ctx_ = nullptr;
@@ -538,18 +582,6 @@ void PulsePlayer::disconnect()
     {
         pa_mainloop_free(pa_ml_);
         pa_ml_ = nullptr;
-    }
-
-    if (playstream_ != nullptr)
-    {
-        pa_stream_set_state_callback(playstream_, nullptr, nullptr);
-        pa_stream_set_read_callback(playstream_, nullptr, nullptr);
-        pa_stream_set_underflow_callback(playstream_, nullptr, nullptr);
-        pa_stream_set_overflow_callback(playstream_, nullptr, nullptr);
-
-        pa_stream_disconnect(playstream_);
-        pa_stream_unref(playstream_);
-        playstream_ = nullptr;
     }
 
     if (proplist_ != nullptr)
