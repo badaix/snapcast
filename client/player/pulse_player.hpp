@@ -58,7 +58,8 @@ private:
     void worker() override;
 
     void connect();
-    void disconnect();
+    void requestDisconnect();
+    void teardown();
 
     bool getHardwareVolume(Volume& volume) override;
     void setHardwareVolume(const Volume& volume) override;
@@ -75,6 +76,7 @@ private:
     std::chrono::microseconds latency_;
     int underflows_ = 0;
     std::atomic<int> pa_ready_;
+    std::atomic<bool> disconnect_requested_;
 
     long last_chunk_tick_;
 
