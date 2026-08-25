@@ -24,10 +24,12 @@
 #include "watchdog.hpp"
 
 // 3rd party headers
+#include <boost/asio/steady_timer.hpp>
 
 // standard headers
 #include <memory>
 #include <string>
+#include <vector>
 
 
 namespace bp = boost::process;
@@ -82,6 +84,14 @@ protected:
     std::unique_ptr<Watchdog> watchdog_; ///< the watchdog
     /// called on wd timeout, kills the process
     void onTimeout(std::chrono::milliseconds ms);
+
+    boost::asio::steady_timer reap_timer_; ///< Timer to collect the exit status of a signalled process
+    /// Signalled children whose exit status has not been collected yet
+    std::vector<bp::child> reaping_;
+
+    /// Collect the exit status of the signalled children. @p attempts is the number of runs that already
+    /// happened, children that are still running after a grace period are killed
+    void reapProcesses(size_t attempts);
 };
 
 } // namespace streamreader

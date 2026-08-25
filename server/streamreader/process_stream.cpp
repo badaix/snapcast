@@ -27,7 +27,9 @@
 #include "common/utils/file_utils.hpp"
 
 // standard headers
+#include <algorithm>
 #include <cstdio>
+#include <system_error>
 
 
 using namespace std;
@@ -37,10 +39,15 @@ namespace streamreader
 
 static constexpr auto LOG_TAG = "ProcessStream";
 
+/// Interval between two attempts to collect the exit status of a signalled child
+static constexpr auto REAP_INTERVAL = std::chrono::milliseconds(250);
+/// Number of reap attempts after which a child that is still running is killed
+static constexpr size_t REAP_ATTEMPTS_BEFORE_KILL = 20;
+
 
 ProcessStream::ProcessStream(PcmStream::Listener* pcmListener, boost::asio::io_context& ioc, const ServerSettings& server_settings, const StreamUri& uri,
                              PcmStream::Source source)
-    : AsioStream<stream_descriptor>(pcmListener, ioc, server_settings, uri, source)
+    : AsioStream<stream_descriptor>(pcmListener, ioc, server_settings, uri, source), reap_timer_(strand_)
 {
     params_ = uri_.getQuery("params");
     wd_timeout_sec_ = cpt::stoul(uri_.getQuery("wd_timeout", "0"));
@@ -137,9 +144,43 @@ void ProcessStream::connect()
 
 void ProcessStream::disconnect()
 {
-    if (process_.running())
-        ::kill(-process_.native_handle(), SIGINT);
     AsioStream<stream_descriptor>::disconnect();
+
+    if (process_.valid())
+    {
+        if (process_.running())
+            ::kill(-process_.native_handle(), SIGINT);
+        reaping_.push_back(std::move(process_));
+        reapProcesses(0);
+    }
+}
+
+
+void ProcessStream::reapProcesses(size_t attempts)
+{
+    reaping_.erase(std::remove_if(reaping_.begin(), reaping_.end(), [](bp::child& child)
+    {
+        std::error_code ec;
+        return !child.running(ec);
+    }), reaping_.end());
+
+    if (reaping_.empty())
+        return;
+
+    // Whatever is still there has not honoured the polite signal
+    if (attempts == REAP_ATTEMPTS_BEFORE_KILL)
+    {
+        LOG(INFO, LOG_TAG) << "Stream '" << getName() << "': process did not exit, killing it\n";
+        for (auto& child : reaping_)
+            ::kill(-child.native_handle(), SIGKILL);
+    }
+
+    reap_timer_.expires_after(REAP_INTERVAL);
+    reap_timer_.async_wait([this, me = weak_from_this(), attempts](const boost::system::error_code& ec)
+    {
+        if (auto self = me.lock(); !ec && self)
+            reapProcesses(attempts + 1);
+    });
 }
 
 
