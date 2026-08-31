@@ -73,7 +73,7 @@ void PipeStream::connect()
     }
 
     int pipe_size = -1;
-#if !defined(MACOS) && !defined(FREEBSD)
+#if !defined(MACOS) && !defined(FREEBSD) && !defined(OPENBSD)
     pipe_size = fcntl(fd, F_GETPIPE_SZ);
 #endif
     LOG(TRACE, LOG_TAG) << "Stream: " << name_ << ", connect to pipe: " << uri_.path << ", fd: " << fd << ", pipe size: " << pipe_size << "\n";

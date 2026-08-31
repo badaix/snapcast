@@ -47,7 +47,10 @@ elseif(${CMAKE_SYSTEM_NAME} MATCHES "FreeBSD")
     message(
       FATAL_ERROR
         "Snapclient not yet supported for FreeBSD, use \"-DBUILD_CLIENT=OFF\"")
-  endif()
+    endif()
+  elseif(${CMAKE_SYSTEM_NAME} MATCHES "OpenBSD")
+    
+    set(OPENBSD TRUE)
 elseif(${CMAKE_SYSTEM_NAME} MATCHES "Android")
   set(ANDROID TRUE)
 endif()
@@ -109,7 +112,11 @@ endif()
 option(BUILD_CLIENT "Build Snapclient" ON)
 
 option(BUILD_WITH_SSL "Build with SSL support" ON)
-option(BUILD_WITH_ALSA "Build with ALSA support" ON)
+if( NOT OPENBSD)
+  option(BUILD_WITH_ALSA "Build with ALSA support" ON)
+else()
+  option(BUILD_WITH_ALSA "Build with ALSA support" OFF)
+endif()
 option(BUILD_WITH_FLAC "Build with FLAC support" ON)
 option(BUILD_WITH_VORBIS "Build with VORBIS support" ON)
 option(BUILD_WITH_TREMOR "Build with vorbis using TREMOR" OFF)
@@ -257,11 +264,16 @@ if(NOT WIN32 AND NOT ANDROID)
 
     add_compile_definitions(HAS_DAEMON)
 
-    if(FREEBSD)
-      add_compile_definitions(FREEBSD)
+    if(FREEBSD OR OPENBSD)
+      if (FREEBSD)
+        add_compile_definitions(FREEBSD)
+      elseif(OPENBSD)
+        add_compile_definitions(OPENBSD)
+     endif()
       link_directories("/usr/local/lib")
       list(APPEND INCLUDE_DIRS "/usr/local/include")
     endif()
+    
   endif()
 
   pkg_search_module(SOXR soxr)
