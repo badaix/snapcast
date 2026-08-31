@@ -38,8 +38,14 @@
 #include <string>
 #include <sys/stat.h>
 #include <sys/types.h>
-#if !defined(WINDOWS) && !defined(FREEBSD)
+#if !defined(WINDOWS) && !defined(FREEBSD) && !defined(OPENBSD)
 #include <sys/sysinfo.h>
+#endif
+#ifdef OPENBSD
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <net/if_dl.h>
+#include <ifaddrs.h>
 #endif
 #ifdef MACOS
 #include <IOKit/IOCFPlugIn.h>
@@ -304,7 +310,7 @@ static std::string getMacAddress(int sock)
         {
             if (!(ifr.ifr_flags & IFF_LOOPBACK)) // don't count loopback
             {
-#ifdef MACOS
+#if defined(MACOS) || defined(OPENBSD)
                 /// Dirty Mac version
                 struct ifaddrs *ifap, *ifaptr;
                 unsigned char* ptr;
@@ -330,7 +336,7 @@ static std::string getMacAddress(int sock)
                     freeifaddrs(ifap);
                 }
 #endif
-
+#if !defined(OPENBSD)
 #ifdef FREEBSD
                 if (ioctl(sock, SIOCGIFMAC, &ifr) == 0)
 #else
@@ -353,6 +359,10 @@ static std::string getMacAddress(int sock)
                             return line;
                     }
                 }
+#else
+                success  = 1;
+                break;
+#endif
             }
         }
         else
@@ -367,7 +377,7 @@ static std::string getMacAddress(int sock)
         return "";
 
     char mac[19];
-#ifndef FREEBSD
+#if !defined(FREEBSD) && !defined(OPENBSD)
     sprintf(mac, "%02x:%02x:%02x:%02x:%02x:%02x", (unsigned char)ifr.ifr_hwaddr.sa_data[0], (unsigned char)ifr.ifr_hwaddr.sa_data[1],
             (unsigned char)ifr.ifr_hwaddr.sa_data[2], (unsigned char)ifr.ifr_hwaddr.sa_data[3], (unsigned char)ifr.ifr_hwaddr.sa_data[4],
             (unsigned char)ifr.ifr_hwaddr.sa_data[5]);
