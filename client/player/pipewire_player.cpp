@@ -59,7 +59,7 @@ spa_audio_format sampleFormatToPipeWire(const SampleFormat& format)
     else if (format.bits() == 16)
         return SPA_AUDIO_FORMAT_S16_LE;
     else if ((format.bits() == 24) && (format.sampleSize() == 4))
-        return SPA_AUDIO_FORMAT_S24_LE;
+        return SPA_AUDIO_FORMAT_S24_32_LE;
     else if (format.bits() == 32)
         return SPA_AUDIO_FORMAT_S32_LE;
     else
