@@ -208,6 +208,8 @@ struct ServerSettings
         std::vector<std::string> bind_to_address{{"::"}};
         /// Publish TCP streaming service via mDNS as '_snapcast._tcp'
         bool publish{true};
+        /// Enable Multipath TCP for audio streaming (Linux only, requires kernel support)
+        bool mptcp{false};
     };
 
     /// Stream settings

@@ -206,6 +206,17 @@ if(NOT HAS_CXX11_STRING_SUPPORT)
   add_compile_definitions(NO_CPP11_STRING)
 endif()
 
+include(CheckCXXSourceCompiles)
+# Multipath TCP (MPTCP) is only available on Linux
+check_cxx_source_compiles([=[
+#include <sys/socket.h>
+#include <linux/in.h>
+int main() { return (int)IPPROTO_MPTCP; }
+]=] HAS_MPTCP)
+if(HAS_MPTCP)
+  add_compile_definitions(HAS_MPTCP)
+endif()
+
 if(NOT WIN32 AND NOT ANDROID)
 
   if(MACOSX)

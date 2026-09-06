@@ -27,6 +27,7 @@
 // 3rd party headers
 
 // standard headers
+#include <cstring>
 #include <iostream>
 
 using namespace std;
@@ -182,7 +183,7 @@ session_ptr StreamServer::getStreamSession(const std::string& clientId) const
 
 void StreamServer::startAccept()
 {
-    auto accept_handler = [this](error_code ec, tcp::socket socket)
+    auto accept_handler = [this](error_code ec, auto socket)
     {
         if (!ec)
             handleAccept(std::move(socket));
@@ -192,10 +193,15 @@ void StreamServer::startAccept()
 
     for (auto& acceptor : acceptor_)
         acceptor->async_accept(accept_handler);
+#ifdef HAS_MPTCP
+    for (auto& acceptor : acceptor_mptcp_)
+        acceptor->async_accept(accept_handler);
+#endif
 }
 
 
-void StreamServer::handleAccept(tcp::socket socket)
+template <typename SocketType>
+void StreamServer::handleAccept(SocketType socket)
 {
     try
     {
@@ -209,7 +215,7 @@ void StreamServer::handleAccept(tcp::socket socket)
         socket.set_option(tcp::no_delay(true));
 
         LOG(NOTICE, LOG_TAG) << "StreamServer::NewConnection: " << socket.remote_endpoint().address().to_string() << "\n";
-        shared_ptr<StreamSession> session = make_shared<StreamSessionTcp>(this, settings_, std::move(socket));
+        shared_ptr<StreamSession> session = make_shared<StreamSessionTcp<SocketType>>(this, settings_, std::move(socket));
         addSession(session);
     }
     catch (const std::exception& e)
@@ -226,6 +232,26 @@ void StreamServer::start()
     {
         for (const auto& address : settings_.tcp_stream.bind_to_address)
         {
+#ifdef HAS_MPTCP
+            int mptcp_error = 0;
+            if (settings_.tcp_stream.mptcp && snapcast::net::is_available(&mptcp_error))
+            {
+                try
+                {
+                    LOG(INFO, LOG_TAG) << "Creating MPTCP stream acceptor for address: " << address << ", port: " << settings_.tcp_stream.port << "\n";
+                    acceptor_mptcp_.emplace_back(make_unique<snapcast::net::mptcp::acceptor>(boost::asio::make_strand(io_context_.get_executor()),
+                                                                                             snapcast::net::mptcp::endpoint(boost::asio::ip::make_address(address),
+                                                                                                                            settings_.tcp_stream.port)));
+                    continue;
+                }
+                catch (const boost::system::system_error& e)
+                {
+                    LOG(ERROR, LOG_TAG) << "error creating MPTCP stream acceptor: " << e.what() << ", code: " << e.code() << ", falling back to TCP\n";
+                }
+            }
+            else if (settings_.tcp_stream.mptcp)
+                LOG(WARNING, LOG_TAG) << "MPTCP is not supported (" << std::strerror(mptcp_error) << "), falling back to TCP\n";
+#endif
             try
             {
                 LOG(INFO, LOG_TAG) << "Creating TCP stream acceptor for address: " << address << ", port: " << settings_.tcp_stream.port << "\n";
@@ -248,6 +274,11 @@ void StreamServer::stop()
     for (auto& acceptor : acceptor_)
         acceptor->cancel();
     acceptor_.clear();
+#ifdef HAS_MPTCP
+    for (auto& acceptor : acceptor_mptcp_)
+        acceptor->cancel();
+    acceptor_mptcp_.clear();
+#endif
 
     std::lock_guard<std::recursive_mutex> mlock(sessionsMutex_);
     cleanup();

@@ -22,6 +22,7 @@
 #include "client_settings.hpp"
 #include "common/message/factory.hpp"
 #include "common/message/message.hpp"
+#include "common/mptcp.hpp"
 #include "common/time_defs.hpp"
 
 // 3rd party headers
@@ -207,6 +208,10 @@ protected:
 
 
 /// Plain TCP connection
+/**
+ * @tparam SocketType the stream socket type (tcp_socket or snapcast::net::mptcp::socket)
+ */
+template <typename SocketType>
 class ClientConnectionTcp : public ClientConnection
 {
 public:
@@ -224,7 +229,7 @@ private:
     void write(boost::asio::streambuf& buffer, WriteHandler&& write_handler) override;
 
     /// TCP socket
-    tcp_socket socket_;
+    SocketType socket_;
     /// Receive buffer
     std::vector<char> buffer_;
 };

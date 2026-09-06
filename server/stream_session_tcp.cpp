@@ -21,6 +21,7 @@
 
 // local headers
 #include "common/aixlog.hpp"
+#include "common/mptcp.hpp"
 
 // 3rd party headers
 #include <boost/asio/read.hpp>
@@ -36,32 +37,36 @@ using namespace streamreader;
 static constexpr auto LOG_TAG = "StreamSessionTCP";
 
 
-StreamSessionTcp::StreamSessionTcp(StreamMessageReceiver* receiver, const ServerSettings& server_settings, tcp::socket&& socket)
+template <typename SocketType>
+StreamSessionTcp<SocketType>::StreamSessionTcp(StreamMessageReceiver* receiver, const ServerSettings& server_settings, SocketType&& socket)
     : StreamSession(socket.get_executor(), server_settings, receiver), socket_(std::move(socket))
 {
 }
 
 
-StreamSessionTcp::~StreamSessionTcp()
+template <typename SocketType>
+StreamSessionTcp<SocketType>::~StreamSessionTcp()
 {
     LOG(DEBUG, LOG_TAG) << "~StreamSessionTcp\n";
     stop(); // NOLINT
 }
 
 
-void StreamSessionTcp::start()
+template <typename SocketType>
+void StreamSessionTcp<SocketType>::start()
 {
     readNext();
 }
 
 
-void StreamSessionTcp::stop()
+template <typename SocketType>
+void StreamSessionTcp<SocketType>::stop()
 {
     LOG(DEBUG, LOG_TAG) << "stop\n";
     if (socket_.is_open())
     {
         boost::system::error_code ec;
-        socket_.shutdown(boost::asio::ip::tcp::socket::shutdown_both, ec);
+        socket_.shutdown(SocketType::shutdown_both, ec);
         if (ec)
             LOG(ERROR, LOG_TAG) << "Error in socket shutdown: " << ec.message() << "\n";
         socket_.close(ec);
@@ -72,7 +77,8 @@ void StreamSessionTcp::stop()
 }
 
 
-std::string StreamSessionTcp::getIP()
+template <typename SocketType>
+std::string StreamSessionTcp<SocketType>::getIP()
 {
     try
     {
@@ -85,7 +91,8 @@ std::string StreamSessionTcp::getIP()
 }
 
 
-void StreamSessionTcp::readNext()
+template <typename SocketType>
+void StreamSessionTcp<SocketType>::readNext()
 {
     boost::asio::async_read(socket_, boost::asio::buffer(buffer_, base_msg_size_),
                             [this, self = shared_from_this()](boost::system::error_code ec, std::size_t length) mutable
@@ -135,7 +142,8 @@ void StreamSessionTcp::readNext()
 }
 
 
-void StreamSessionTcp::sendAsync(const shared_const_buffer& buffer, WriteHandler&& handler)
+template <typename SocketType>
+void StreamSessionTcp<SocketType>::sendAsync(const shared_const_buffer& buffer, WriteHandler&& handler)
 {
     boost::asio::async_write(socket_, buffer,
                              [self = shared_from_this(), buffer, handler = std::move(handler)](boost::system::error_code ec, std::size_t length)
@@ -144,3 +152,9 @@ void StreamSessionTcp::sendAsync(const shared_const_buffer& buffer, WriteHandler
             handler(ec, length);
     });
 }
+
+
+template class StreamSessionTcp<tcp::socket>;
+#ifdef HAS_MPTCP
+template class StreamSessionTcp<snapcast::net::mptcp::socket>;
+#endif

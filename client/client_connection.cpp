@@ -21,6 +21,7 @@
 
 // local headers
 #include "common/aixlog.hpp"
+#include "common/mptcp.hpp"
 #include "common/str_compat.hpp"
 
 // 3rd party headers
@@ -38,6 +39,7 @@
 #include <mutex>
 #include <optional>
 #include <string>
+#include <type_traits>
 #include <utility>
 
 
@@ -298,19 +300,22 @@ void ClientConnection::cancelRequests()
 
 ///////////////////////////////////// TCP /////////////////////////////////////
 
-ClientConnectionTcp::ClientConnectionTcp(boost::asio::io_context& io_context, ClientSettings::Server server)
+template <typename SocketType>
+ClientConnectionTcp<SocketType>::ClientConnectionTcp(boost::asio::io_context& io_context, ClientSettings::Server server)
     : ClientConnection(io_context, std::move(server)), socket_(strand_)
 {
     buffer_.resize(base_msg_size_);
 }
 
-ClientConnectionTcp::~ClientConnectionTcp()
+template <typename SocketType>
+ClientConnectionTcp<SocketType>::~ClientConnectionTcp()
 {
     disconnect(); // NOLINT
 }
 
 
-void ClientConnectionTcp::disconnect()
+template <typename SocketType>
+void ClientConnectionTcp<SocketType>::disconnect()
 {
     LOG(DEBUG, LOG_TAG) << "Disconnecting\n";
     if (!socket_.is_open())
@@ -319,7 +324,7 @@ void ClientConnectionTcp::disconnect()
         return;
     }
     boost::system::error_code ec;
-    socket_.shutdown(boost::asio::ip::tcp::socket::shutdown_both, ec);
+    socket_.shutdown(SocketType::shutdown_both, ec);
     if (ec)
         LOG(ERROR, LOG_TAG) << "Error in socket shutdown: " << ec.message() << "\n";
     socket_.close(ec);
@@ -331,7 +336,8 @@ void ClientConnectionTcp::disconnect()
 }
 
 
-std::string ClientConnectionTcp::getMacAddress()
+template <typename SocketType>
+std::string ClientConnectionTcp<SocketType>::getMacAddress()
 {
     std::string mac =
 #ifndef WINDOWS
@@ -346,7 +352,8 @@ std::string ClientConnectionTcp::getMacAddress()
 }
 
 
-void ClientConnectionTcp::getNextMessage(const MessageHandler<msg::BaseMessage>& handler)
+template <typename SocketType>
+void ClientConnectionTcp<SocketType>::getNextMessage(const MessageHandler<msg::BaseMessage>& handler)
 {
     boost::asio::async_read(socket_, boost::asio::buffer(buffer_, base_msg_size_), [this, handler](boost::system::error_code ec, std::size_t length) mutable
     {
@@ -402,18 +409,30 @@ void ClientConnectionTcp::getNextMessage(const MessageHandler<msg::BaseMessage>&
 }
 
 
-boost::system::error_code ClientConnectionTcp::doConnect(boost::asio::ip::basic_endpoint<boost::asio::ip::tcp> endpoint)
+template <typename SocketType>
+boost::system::error_code ClientConnectionTcp<SocketType>::doConnect(boost::asio::ip::basic_endpoint<boost::asio::ip::tcp> endpoint)
 {
     boost::system::error_code ec;
-    socket_.connect(endpoint, ec);
+#ifdef HAS_MPTCP
+    if constexpr (std::is_same_v<SocketType, snapcast::net::mptcp::socket>)
+        socket_.connect(snapcast::net::make_endpoint(endpoint), ec);
+    else
+#endif
+        socket_.connect(endpoint, ec);
     return ec;
 }
 
 
-void ClientConnectionTcp::write(boost::asio::streambuf& buffer, WriteHandler&& write_handler)
+template <typename SocketType>
+void ClientConnectionTcp<SocketType>::write(boost::asio::streambuf& buffer, WriteHandler&& write_handler)
 {
     boost::asio::async_write(socket_, buffer, write_handler);
 }
+
+template class ClientConnectionTcp<tcp_socket>;
+#ifdef HAS_MPTCP
+template class ClientConnectionTcp<snapcast::net::mptcp::socket>;
+#endif
 
 
 ///////////////////////////////// Websockets //////////////////////////////////

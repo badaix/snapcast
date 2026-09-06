@@ -145,6 +145,8 @@ int main(int argc, char* argv[])
         auto stream_bind_to_address = conf.add<Value<string>>("", "tcp-streaming.bind_to_address", "address for the streaming server to listen on",
                                                               settings.tcp_stream.bind_to_address.front(), &settings.tcp_stream.bind_to_address[0]);
         conf.add<Value<bool>>("", "tcp-streaming.publish", "Publish TCP streaming service via mDNS", settings.tcp_stream.publish, &settings.tcp_stream.publish);
+        conf.add<Value<bool>>("", "tcp-streaming.mptcp", "enable Multipath TCP for audio streaming (Linux only)", settings.tcp_stream.mptcp,
+                              &settings.tcp_stream.mptcp);
 
         // stream settings
         conf.add<Value<std::filesystem::path>>("", "stream.plugin_dir", "stream plugin directory", settings.stream.plugin_dir, &settings.stream.plugin_dir);

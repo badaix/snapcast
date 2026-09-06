@@ -182,6 +182,7 @@ int main(int argc, char** argv)
         op.add<Value<std::filesystem::path>>("", "cert-key", "Client private key file (PEM format)", settings.server.certificate_key,
                                              &settings.server.certificate_key);
         op.add<Value<string>>("", "key-password", "Key password (for encrypted private key)", settings.server.key_password, &settings.server.key_password);
+        op.add<Value<bool>>("", "mptcp", "enable Multipath TCP for the server connection (Linux only)", settings.server.mptcp, &settings.server.mptcp);
         auto server_cert_opt =
             op.add<Implicit<std::filesystem::path>>("", "server-cert", "Verify server with CA certificate (PEM format)", "default certificates");
 

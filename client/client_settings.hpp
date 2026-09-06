@@ -72,6 +72,8 @@ struct ClientSettings
 
         /// Server host
         StreamUri uri;
+        /// Enable Multipath TCP for the server connection (Linux only, requires kernel support)
+        bool mptcp{false};
         /// auth info
         std::optional<Auth> auth;
         /// server certificate
