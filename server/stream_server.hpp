@@ -21,6 +21,7 @@
 
 // local headers
 #include "common/message/message.hpp"
+#include "common/mptcp.hpp"
 #include "common/queue.hpp"
 #include "control_server.hpp"
 #include "server_settings.hpp"
@@ -78,7 +79,8 @@ public:
 
 private:
     void startAccept();
-    void handleAccept(tcp::socket socket);
+    template <typename SocketType>
+    void handleAccept(SocketType socket);
     void cleanup();
 
     /// Implementation of StreamMessageReceiver
@@ -89,6 +91,10 @@ private:
     std::vector<std::weak_ptr<StreamSession>> sessions_;
     boost::asio::io_context& io_context_;
     std::vector<acceptor_ptr> acceptor_;
+#ifdef HAS_MPTCP
+    /// MPTCP acceptors, only populated if MPTCP is enabled in the settings
+    std::vector<std::unique_ptr<snapcast::net::mptcp::acceptor>> acceptor_mptcp_;
+#endif
     boost::asio::steady_timer config_timer_;
 
     ServerSettings settings_;

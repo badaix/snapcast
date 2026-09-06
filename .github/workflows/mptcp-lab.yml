@@ -1,0 +1,39 @@
+name: MPTCP failover lab
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  mptcp-lab:
+    # Runs on GitHub-hosted runners by default. To run on self-hosted
+    # runners instead, register them on this repo and set the repository
+    # variable RUNNER_LABEL to their label(s), e.g. RUNNER_LABEL=openwrt
+    runs-on: ${{ vars.RUNNER_LABEL || 'ubuntu-latest' }}
+    timeout-minutes: 60
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake libboost-dev libasound2-dev libavahi-client-dev libflac-dev libogg-dev libvorbis-dev libopus-dev libsoxr-dev libexpat1-dev tcpdump
+
+      - name: Configure
+        run: cmake -S . -B build -DBUILD_TESTS=OFF
+
+      - name: Check MPTCP support
+        run: |
+          grep -q "HAS_MPTCP:INTERNAL=1" build/CMakeCache.txt && echo "HAS_MPTCP detected: yes" || echo "HAS_MPTCP detected: no"
+
+      - name: Build
+        run: cmake --build build --target snapserver snapclient -j$(nproc)
+
+      - name: Run failover lab
+        run: sudo tests/mptcp/lab.sh
+
+      - name: Run optimization sweep
+        # sudo: lab.sh (invoked by optimize.sh) skips the user-namespace
+        # wrapper when running as root - GitHub runners block unshare -Urn
+        run: sudo tests/mptcp/optimize.sh

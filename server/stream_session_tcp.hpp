@@ -35,12 +35,14 @@ using boost::asio::ip::tcp;
  * Endpoint for a connected client.
  * Messages are sent to the client with the "send" method.
  * Received messages from the client are passed to the StreamMessageReceiver callback
+ * @tparam SocketType the stream socket type (boost::asio::ip::tcp::socket or snapcast::net::mptcp::socket)
  */
+template <typename SocketType>
 class StreamSessionTcp : public StreamSession
 {
 public:
     /// ctor. Received message from the client are passed to StreamMessageReceiver
-    StreamSessionTcp(StreamMessageReceiver* receiver, const ServerSettings& server_settings, tcp::socket&& socket);
+    StreamSessionTcp(StreamMessageReceiver* receiver, const ServerSettings& server_settings, SocketType&& socket);
     ~StreamSessionTcp() override;
     void start() override;
     void stop() override;
@@ -53,5 +55,5 @@ protected:
     void sendAsync(const shared_const_buffer& buffer, WriteHandler&& handler) override;
 
 private:
-    tcp::socket socket_;
+    SocketType socket_;
 };
