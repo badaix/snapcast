@@ -65,6 +65,8 @@ private:
     /// free alsa and optionally the mixer
     /// @param uninit_mixer free the mixer
     void uninitAlsa(bool uninit_mixer);
+    bool prepareAlsa();
+    void writeFrames(snd_pcm_sframes_t frames);
     bool getAvailDelay(snd_pcm_sframes_t& avail, snd_pcm_sframes_t& delay);
 
     void initMixer();
@@ -75,6 +77,7 @@ private:
 
     void waitForEvent();
 
+    bool unsigned_8bit_ = false;
     snd_pcm_t* handle_;
     snd_ctl_t* ctl_;
 

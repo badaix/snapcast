@@ -298,7 +298,7 @@ void AlsaPlayer::initAlsa()
     int err;
 
     // Open the PCM device in playback mode
-    if (err = snd_pcm_open(&handle_, settings_.pcm_device.name.c_str(), SND_PCM_STREAM_PLAYBACK, 0); err < 0)
+    if (err = snd_pcm_open(&handle_, settings_.pcm_device.name.c_str(), SND_PCM_STREAM_PLAYBACK, SND_PCM_NONBLOCK); err < 0)
         throw SnapException("Can't open " + settings_.pcm_device.name + ", error: " + snd_strerror(err), err);
 
     // struct snd_pcm_playback_info_t pinfo;
@@ -354,6 +354,7 @@ void AlsaPlayer::initAlsa()
         }
     }
 
+    unsigned_8bit_ = (snd_pcm_format == SND_PCM_FORMAT_U8);
     err = snd_pcm_hw_params_set_format(handle_, params, snd_pcm_format);
     if (err < 0)
     {
@@ -508,6 +509,7 @@ void AlsaPlayer::start()
     catch (const SnapException& e)
     {
         LOG(ERROR, LOG_TAG) << "Exception: " << e.what() << ", code: " << e.code() << "\n";
+        uninitAlsa(true);
         // Accept "Device or ressource busy", the worker loop will retry
         if (e.code() != -EBUSY)
             throw;
@@ -538,6 +540,8 @@ bool AlsaPlayer::needsThread() const
 
 bool AlsaPlayer::getAvailDelay(snd_pcm_sframes_t& avail, snd_pcm_sframes_t& delay)
 {
+    avail = 0;
+    delay = 0;
     int result = snd_pcm_avail_delay(handle_, &avail, &delay);
     if (result < 0)
     {
@@ -565,15 +569,88 @@ bool AlsaPlayer::getAvailDelay(snd_pcm_sframes_t& avail, snd_pcm_sframes_t& dela
 }
 
 
+bool AlsaPlayer::prepareAlsa()
+{
+    int result = snd_pcm_prepare(handle_);
+    if (result < 0)
+    {
+        LOG(ERROR, LOG_TAG) << "Failed to prepare PCM: " << snd_strerror(result) << ". Reopening ALSA.\n";
+        uninitAlsa(true);
+        return false;
+    }
+    return true;
+}
+
+
+void AlsaPlayer::writeFrames(snd_pcm_sframes_t frames)
+{
+    const auto frame_size = stream_->getFormat().frameSize();
+    snd_pcm_sframes_t written = 0;
+    auto last_progress = std::chrono::steady_clock::now();
+    while (active_ && written < frames)
+    {
+        auto result = snd_pcm_writei(handle_, buffer_.data() + written * frame_size, frames - written);
+        if (result > 0)
+        {
+            written += result;
+            last_progress = std::chrono::steady_clock::now();
+            continue;
+        }
+        if (result == -EPIPE || result == -ESTRPIPE)
+        {
+            LOG(WARNING, LOG_TAG) << "PCM interrupted while writing: " << snd_strerror(result) << "\n";
+            prepareAlsa();
+            // Fetch a newly synchronized chunk after resetting the PCM queue.
+            return;
+        }
+        if (result < 0 && result != -EAGAIN && result != -EINTR)
+        {
+            LOG(ERROR, LOG_TAG) << "Can't write to PCM device: " << snd_strerror(result) << "\n";
+            uninitAlsa(true);
+            return;
+        }
+        if (std::chrono::steady_clock::now() - last_progress >= 1s)
+        {
+            LOG(WARNING, LOG_TAG) << "No PCM write progress for 1000ms. Reopening ALSA.\n";
+            uninitAlsa(true);
+            return;
+        }
+        int wait_result = snd_pcm_wait(handle_, 100);
+        if (wait_result < 0 && wait_result != -EINTR)
+        {
+            if (wait_result == -EPIPE || wait_result == -ESTRPIPE)
+                prepareAlsa();
+            else
+                uninitAlsa(true);
+            return;
+        }
+    }
+}
+
+
 void AlsaPlayer::worker()
 {
-    snd_pcm_sframes_t pcm;
     snd_pcm_sframes_t framesDelay;
     snd_pcm_sframes_t framesAvail;
     long lastChunkTick = chronos::getTickCount();
     const SampleFormat& format = stream_->getFormat();
     while (active_)
     {
+        // Check before ALSA waits/errors can bypass stream starvation handling.
+        if (chronos::getTickCount() - lastChunkTick > 5000)
+        {
+            if (handle_ != nullptr)
+            {
+                LOG(NOTICE, LOG_TAG) << "No chunk received for 5000ms. Closing ALSA.\n";
+                uninitAlsa(false);
+            }
+            while (active_ && !stream_->waitForChunk(100ms))
+            {
+            }
+            if (!active_)
+                break;
+            lastChunkTick = chronos::getTickCount();
+        }
         if (handle_ == nullptr)
         {
             try
@@ -586,6 +663,7 @@ void AlsaPlayer::worker()
             catch (const std::exception& e)
             {
                 LOG(ERROR, LOG_TAG) << "Exception in initAlsa: " << e.what() << "\n";
+                uninitAlsa(true);
                 chronos::sleep(100);
             }
             if (handle_ == nullptr)
@@ -593,10 +671,15 @@ void AlsaPlayer::worker()
         }
 
         int wait_result = snd_pcm_wait(handle_, 100);
-        if (wait_result == -EPIPE)
+        if (wait_result == -EPIPE || wait_result == -ESTRPIPE)
         {
             LOG(ERROR, LOG_TAG) << "XRUN while waiting for PCM: " << snd_strerror(wait_result) << "\n";
-            snd_pcm_prepare(handle_);
+            prepareAlsa();
+            continue;
+        }
+        else if (wait_result == -EINTR)
+        {
+            continue;
         }
         else if (wait_result < 0)
         {
@@ -612,7 +695,7 @@ void AlsaPlayer::worker()
         if (!getAvailDelay(framesAvail, framesDelay))
         {
             this_thread::sleep_for(10ms);
-            snd_pcm_prepare(handle_);
+            prepareAlsa();
             continue;
         }
 
@@ -639,37 +722,19 @@ void AlsaPlayer::worker()
             LOG(DEBUG, LOG_TAG) << "Resizing buffer from " << buffer_.size() << " to " << framesAvail * format.frameSize() << "\n";
             buffer_.resize(framesAvail * format.frameSize());
         }
-        if (stream_->getPlayerChunk(buffer_.data(), delay, framesAvail))
+        if (stream_->getPlayerChunkOrSilence(buffer_.data(), delay, framesAvail))
         {
             lastChunkTick = chronos::getTickCount();
             adjustVolume(buffer_.data(), framesAvail);
-            if ((pcm = snd_pcm_writei(handle_, buffer_.data(), framesAvail)) == -EPIPE)
-            {
-                LOG(ERROR, LOG_TAG) << "XRUN while writing to PCM: " << snd_strerror(pcm) << "\n";
-                snd_pcm_prepare(handle_);
-            }
-            else if (pcm < 0)
-            {
-                LOG(ERROR, LOG_TAG) << "ERROR. Can't write to PCM device: " << snd_strerror(pcm) << "\n";
-                uninitAlsa(true);
-            }
         }
-        else
+        // Keep the PCM running across brief gaps; release it after the idle timeout.
+        // ALSA's unsigned 8-bit format represents silence as 0x80, not zero.
+        if (format.bits() == 8 && unsigned_8bit_)
         {
-            LOG(INFO, LOG_TAG) << "Failed to get chunk\n";
-            while (active_ && !stream_->waitForChunk(100ms))
-            {
-                // Log "Waiting for chunk" only every second second
-                static utils::logging::TimeConditional cond(2s);
-                LOG(DEBUG, LOG_TAG) << cond << "Waiting for chunk\n";
-                if ((handle_ != nullptr) && (chronos::getTickCount() - lastChunkTick > 5000))
-                {
-                    LOG(NOTICE, LOG_TAG) << "No chunk received for 5000ms. Closing ALSA.\n";
-                    uninitAlsa(false);
-                    stream_->clearChunks();
-                }
-            }
+            for (size_t i = 0; i < static_cast<size_t>(framesAvail) * format.frameSize(); ++i)
+                buffer_[i] = static_cast<char>(static_cast<unsigned char>(buffer_[i]) ^ 0x80);
         }
+        writeFrames(framesAvail);
     }
 }
 

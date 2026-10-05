@@ -38,3 +38,21 @@ endif(ANDROID)
 
 target_link_libraries(snapcast_test OpenSSL::Crypto OpenSSL::SSL)
 target_link_libraries(snapcast_test Catch2::Catch2WithMain Catch2::Catch2)
+
+# GNU linker wrappers inject ALSA errors around the real null PCM device.
+if(BUILD_CLIENT AND ALSA_FOUND AND CMAKE_SYSTEM_NAME STREQUAL "Linux")
+  add_executable(alsa_player_test alsa_player_test.cpp
+    ${CMAKE_SOURCE_DIR}/client/player/alsa_player.cpp
+    ${CMAKE_SOURCE_DIR}/client/player/player.cpp
+    ${CMAKE_SOURCE_DIR}/client/stream.cpp
+    ${CMAKE_SOURCE_DIR}/client/time_provider.cpp)
+  target_include_directories(alsa_player_test PRIVATE ${CMAKE_SOURCE_DIR}
+    ${CMAKE_SOURCE_DIR}/client ${ALSA_INCLUDE_DIRS} ${Boost_INCLUDE_DIR})
+  target_link_libraries(alsa_player_test PRIVATE common ${ALSA_LIBRARIES}
+    ${CMAKE_THREAD_LIBS_INIT} ${ATOMIC_LIBRARY} Catch2::Catch2WithMain)
+  target_link_options(alsa_player_test PRIVATE
+    -Wl,--wrap=snd_pcm_open -Wl,--wrap=snd_pcm_close
+    -Wl,--wrap=snd_pcm_prepare -Wl,--wrap=snd_pcm_wait
+    -Wl,--wrap=snd_pcm_writei -Wl,--wrap=snd_pcm_hw_params
+    -Wl,--wrap=snd_pcm_hw_params_set_format)
+endif()
