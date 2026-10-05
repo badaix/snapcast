@@ -30,6 +30,9 @@
 #include <boost/asio/steady_timer.hpp>
 
 // standard headers
+#include <chrono>
+#include <cstring>
+#include <vector>
 
 
 namespace streamreader
@@ -82,7 +85,10 @@ protected:
     /// state timer: set stream to idle/playing on timeout
     boost::asio::steady_timer state_timer_;
     /// the stream
-    std::unique_ptr<ReadStream> stream_;
+    std::shared_ptr<ReadStream> stream_;
+    /// Invalidates callbacks belonging to an earlier connection.
+    uint64_t generation_{0};
+    std::shared_ptr<std::vector<char>> read_buffer_;
 
     /// duration of the current silence period
     std::chrono::microseconds silence_{0ms};
@@ -136,9 +142,9 @@ template <typename ReadStream>
 void AsioStream<ReadStream>::check_state(const std::chrono::steady_clock::duration& duration)
 {
     state_timer_.expires_after(duration);
-    state_timer_.async_wait([this, self = shared_from_this(), duration](const boost::system::error_code& ec)
+    state_timer_.async_wait([this, self = shared_from_this(), duration, generation = generation_](const boost::system::error_code& ec)
     {
-        if (!ec)
+        if (!ec && active_ && generation == generation_)
         {
             LOG(INFO, "AsioStream") << "No data since " << std::chrono::duration_cast<std::chrono::milliseconds>(duration).count() << " ms in stream '"
                                     << getName() << "', switching to idle\n";
@@ -159,15 +165,17 @@ void AsioStream<ReadStream>::start()
 template <typename ReadStream>
 void AsioStream<ReadStream>::stop()
 {
-    read_timer_.cancel();
-    disconnect();
     PcmStream::stop();
+    disconnect();
 }
 
 
 template <typename ReadStream>
 void AsioStream<ReadStream>::disconnect()
 {
+    ++generation_;
+    read_timer_.cancel();
+    state_timer_.cancel();
     if (stream_ && stream_->is_open())
         stream_->close();
     setState(ReaderState::kIdle);
@@ -177,6 +185,11 @@ void AsioStream<ReadStream>::disconnect()
 template <typename ReadStream>
 void AsioStream<ReadStream>::on_connect()
 {
+    ++generation_;
+    read_timer_.cancel();
+    state_timer_.cancel();
+    read_buffer_ = std::make_shared<std::vector<char>>(chunk_->payloadSize);
+    silence_ = 0ms;
     first_ = true;
     tvEncodedChunk_ = std::chrono::steady_clock::now();
     do_read();
@@ -186,11 +199,19 @@ void AsioStream<ReadStream>::on_connect()
 template <typename ReadStream>
 void AsioStream<ReadStream>::do_read()
 {
+    if (!active_ || !stream_ || !stream_->is_open())
+        return;
+    const auto generation = generation_;
+    auto stream = stream_;
+    // Each read owns its buffer until its completion, including after replacement.
+    auto buffer = read_buffer_;
     // Reset the silence timer
     check_state(idle_threshold_ + std::chrono::milliseconds(chunk_ms_));
-    boost::asio::async_read(*stream_, boost::asio::buffer(chunk_->payload, chunk_->payloadSize),
-                            [this, self = shared_from_this()](boost::system::error_code ec, std::size_t length) mutable
+    boost::asio::async_read(*stream, boost::asio::buffer(*buffer),
+                            [this, self = shared_from_this(), stream, buffer, generation](boost::system::error_code ec, std::size_t length) mutable
     {
+        if (!active_ || generation != generation_)
+            return;
         state_timer_.cancel();
 
         if (ec)
@@ -202,10 +223,15 @@ void AsioStream<ReadStream>::do_read()
                 lastException_ = ec.message();
             }
             disconnect();
-            wait(read_timer_, 100ms, [this, self = shared_from_this()] { connect(); });
+            wait(read_timer_, 100ms, [this, self = shared_from_this(), generation = generation_]
+            {
+                if (active_ && generation == generation_)
+                    connect();
+            });
             return;
         }
 
+        std::memcpy(chunk_->payload, buffer->data(), length);
         lastException_.clear();
 
         if (isSilent(*chunk_))
@@ -256,8 +282,10 @@ void AsioStream<ReadStream>::do_read()
         if (nextTick_ >= currentTick)
         {
             read_timer_.expires_after(nextTick_ - currentTick);
-            read_timer_.async_wait([this, self = shared_from_this()](const boost::system::error_code& ec)
+            read_timer_.async_wait([this, self = shared_from_this(), generation](const boost::system::error_code& ec)
             {
+                if (!active_ || generation != generation_)
+                    return;
                 if (ec)
                 {
                     LOG(ERROR, "AsioStream") << "Error during async wait in stream '" << getName() << "': " << ec.message() << "\n";

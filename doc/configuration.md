@@ -179,7 +179,16 @@ Receives audio from a TCP socket (acting as server)
 tcp://<listen IP, e.g. 127.0.0.1>:<port>?name=<name>[&mode=server]
 ```
 
-default for `port` (if omitted) is 4953, default for `mode` is `server`
+default for `port` (if omitted) is 4953, default for `mode` is `server`.
+
+The newest connection replaces the previous sender, including when the previous
+sender disappeared without closing its connection.
+
+Both TCP modes enable keepalive by default. `keepalive=<seconds>` sets the idle
+period before probing (default: 20); `keepalive=0` disables probing. On Linux,
+macOS and FreeBSD, probes use a 5-second interval and a count of 3. Other
+platforms retain their system keepalive timings. Keepalive detects unreachable
+peers; it does not disconnect a reachable sender merely because audio is idle.
 
 Mopidy configuration would look like this (running GStreamer in [client mode](https://www.freedesktop.org/software/gstreamer-sdk/data/docs/latest/gst-plugins-base-plugins-0.10/gst-plugins-base-plugins-tcpclientsink.html))
 

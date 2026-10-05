@@ -50,6 +50,10 @@ private:
     std::string host_;
     size_t port_;
     bool is_server_;
+    int keepalive_idle_;
+    void start_accept();
+    void configure_socket(tcp::socket& socket);
+    bool accepting_ = false;
     boost::asio::steady_timer reconnect_timer_;
 };
 
