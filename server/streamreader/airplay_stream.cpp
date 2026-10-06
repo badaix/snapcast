@@ -20,6 +20,7 @@
 #include "airplay_stream.hpp"
 
 // local headers
+#include "airplay_progress.hpp"
 #include "common/aixlog.hpp"
 #include "common/base64.h"
 #include "common/snap_exception.hpp"
@@ -114,9 +115,10 @@ void AirplayStream::createParser()
 
 void AirplayStream::push()
 {
-    // The metadata we collect consists of two parts:
+    // The metadata we collect consists of three parts:
     // (1) ALBUM, ARTIST, TITLE
     // (2) COVER
+    // (3) PROGRESS (track position and duration)
     //
     // This stems from the Airplay protocol, which treats cover art differently from the rest of the metadata.
     //
@@ -131,6 +133,11 @@ void AirplayStream::push()
     // - The ssnc->PICT message is sent (picture contents)
     // - The ssnc->pcen message is sent ("picture end")
     // If no cover art is available, the PICT message's data has a length of 0 *or* none of the messages are sent.
+    //
+    // The process for (3) is different: the ssnc->prgr message is sent on its own (outside of a
+    // mdst/mden bundle) when playback starts or resumes. Its data is "start/current/end", three
+    // RTP timestamps in frames at 44100 frames per second, from which the track's duration and
+    // the current playback position are computed.
     //
     // Here is an example from an older iPad:
     //
@@ -180,12 +187,31 @@ void AirplayStream::push()
         setMetaData(meta_.artist, {data});
     else if (entry_->type == "core" && entry_->code == "minm")
         setMetaData(meta_.title, data);
+    else if (entry_->type == "ssnc" && entry_->code == "prgr")
+    {
+        // prgr = progress: "start/current/end", three RTP timestamps in frames (44100 frames per second), see (3) above.
+        // Progress is not part of a metadata ("mdst" .. "mden") bundle, so the properties are sent out immediately.
+        const std::optional<AirplayProgress> progress = parseAirplayProgress(data);
+        if (progress.has_value())
+        {
+            setMetaData(meta_.duration, progress->duration);
+            position_ = progress->position;
+            Properties properties;
+            properties.metadata = meta_;
+            properties.position = position_;
+            setProperties(properties);
+            metadata_dirty_ = false;
+        }
+        else
+            LOG(WARNING, LOG_TAG) << "Malformed \"prgr\" metadata: " << data << "\n";
+    }
 
     // mden = metadata end, pcen == picture end
     if (metadata_dirty_ && entry_->type == "ssnc" && (entry_->code == "mden" || entry_->code == "pcen"))
     {
         Properties properties;
         properties.metadata = meta_;
+        properties.position = position_;
         setProperties(properties);
         metadata_dirty_ = false;
     }

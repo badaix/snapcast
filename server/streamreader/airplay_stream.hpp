@@ -67,6 +67,8 @@ private:
     /// set whenever metadata_ has changed
     Metadata meta_;
     bool metadata_dirty_;
+    /// last playback position [s], as reported by the "prgr" metadata item
+    std::optional<float> position_;
 #endif
 
     void pipeReadLine();
