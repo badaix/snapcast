@@ -27,10 +27,12 @@
 // #include "server/jwt.hpp"
 #include "server/authinfo.hpp"
 #include "server/server_settings.hpp"
+#include "server/streamreader/airplay_progress.hpp"
 #include "server/streamreader/control_error.hpp"
 #include "server/streamreader/properties.hpp"
 
 // 3rd party headers
+#include <catch2/catch_approx.hpp>
 #include <catch2/catch_test_macros.hpp>
 
 // standard headers
@@ -474,6 +476,43 @@ TEST_CASE("Properties")
     out_json = properties.toJson();
     // std::cout << out_json.dump(4) << "\n";
     REQUIRE(in_json == out_json);
+}
+
+
+TEST_CASE("Airplay progress")
+{
+    using streamreader::parseAirplayProgress;
+
+    // "start/current/end": RTP timestamps in frames at 44100 frames per second
+    auto progress = parseAirplayProgress("2373925818/2373941178/2385081354");
+    REQUIRE(progress.has_value());
+    // (2373941178 - 2373925818) / 44100
+    REQUIRE(progress->position == Catch::Approx(0.348299f));
+    // (2385081354 - 2373925818) / 44100
+    REQUIRE(progress->duration == Catch::Approx(252.959999f));
+
+    // Position is at the start of the play sequence
+    progress = parseAirplayProgress("1000/1000/442000");
+    REQUIRE(progress.has_value());
+    REQUIRE(progress->position == 0.f);
+    REQUIRE(progress->duration == Catch::Approx(10.f));
+
+    // The current play point can lag slightly behind the start of the play sequence
+    progress = parseAirplayProgress("1000/990/442000");
+    REQUIRE(progress.has_value());
+    REQUIRE(progress->position == 0.f);
+
+    // Malformed payloads are rejected
+    REQUIRE(!parseAirplayProgress("").has_value());
+    REQUIRE(!parseAirplayProgress("//").has_value());
+    REQUIRE(!parseAirplayProgress("1000/2000").has_value());
+    REQUIRE(!parseAirplayProgress("1000/2000/3000/4000").has_value());
+    REQUIRE(!parseAirplayProgress("start/current/end").has_value());
+    REQUIRE(!parseAirplayProgress("1000/2000/3000 ").has_value());
+    REQUIRE(!parseAirplayProgress("-1000/2000/3000").has_value());
+    // end <= start: no usable duration
+    REQUIRE(!parseAirplayProgress("3000/2000/1000").has_value());
+    REQUIRE(!parseAirplayProgress("1000/1000/1000").has_value());
 }
 
 
