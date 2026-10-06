@@ -51,6 +51,18 @@ public:
     /// d'tor
     ~PcmChunk() override = default;
 
+    /// copy c'tor
+    PcmChunk(const PcmChunk&) = default;
+
+    /// copy assignment
+    PcmChunk& operator=(const PcmChunk&) = default;
+
+    /// move c'tor
+    PcmChunk(PcmChunk&&) = default;
+
+    /// move assignment
+    PcmChunk& operator=(PcmChunk&&) = default;
+
 #if 0
     template <class Rep, class Period>
     int readFrames(void* outputBuffer, const std::chrono::duration<Rep, Period>& duration)

@@ -40,6 +40,7 @@
 #include "pipe_stream.hpp"
 #include "process_stream.hpp"
 #include "tcp_stream.hpp"
+#include "udp_stream.hpp"
 
 // 3rd party headers
 
@@ -139,6 +140,10 @@ PcmStreamPtr StreamManager::addStream(StreamUri& streamUri, PcmStream::Source so
     else if (streamUri.scheme == "tcp")
     {
         stream = make_shared<TcpStream>(listener, io_context_, settings_, streamUri, source);
+    }
+    else if (streamUri.scheme == "udp")
+    {
+        stream = make_shared<UdpStream>(listener, io_context_, settings_, streamUri, source);
     }
 #ifdef HAS_PIPEWIRE
     else if (streamUri.scheme == "pipewire")
