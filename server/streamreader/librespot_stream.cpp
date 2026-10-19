@@ -198,13 +198,13 @@ void LibrespotStream::onStderrMsg(const std::string& line)
             // LOG(INFO, LOG_TAG) << "(" << getName() << ") " << line << "\n";
         }
 
-        //  [2021-06-04T07:20:47Z INFO  librespot_playback::player] <Tunnel> (310573 ms) loaded
+        //  [2026-10-19T13:20:14Z INFO  librespot_playback::player] <Sugar Man> from <Rodríguez> (229413 ms) loaded
         // 	info!("Track \"{}\" loaded", track.name);
         size_t title_pos = 0;
         size_t ms_pos = 0;
         size_t n = 0;
         if (((title_pos = line.find('<')) != std::string::npos) && ((n = line.find('>', title_pos)) != std::string::npos) &&
-            ((ms_pos = line.find('(', n)) != std::string::npos) && ((n = line.find("ms) loaded", ms_pos)) != std::string::npos))
+            ((ms_pos = line.rfind('(')) != std::string::npos) && (ms_pos > n) && ((n = line.find("ms) loaded", ms_pos)) != std::string::npos))
         {
             title_pos += 1;
             std::string title = line.substr(title_pos, line.find('>', title_pos) - title_pos);
@@ -213,6 +213,15 @@ void LibrespotStream::onStderrMsg(const std::string& line)
             std::string ms = line.substr(ms_pos, n - ms_pos - 1);
             Metadata meta;
             meta.title = title;
+            // Newer librespot versions append the artist: <title> from <artist> (...)
+            size_t artist_pos = line.find(" from <", title_pos + title.size());
+            size_t artist_end = 0;
+            if ((artist_pos != std::string::npos) && ((artist_end = line.rfind('>', ms_pos)) != std::string::npos) && (artist_end > artist_pos + 7))
+            {
+                std::string artist = line.substr(artist_pos + 7, artist_end - artist_pos - 7);
+                LOG(INFO, LOG_TAG) << "artist: <" << artist << ">\n";
+                meta.artist = std::vector<std::string>{artist};
+            }
             meta.duration = cpt::stod(ms) / 1000.;
             meta.art_data = {SPOTIFY_LOGO, "svg"};
             Properties properties;
