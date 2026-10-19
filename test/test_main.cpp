@@ -514,7 +514,7 @@ TEST_CASE("Librespot2")
     size_t title_pos = 0;
     size_t ms_pos = 0;
     if (((title_pos = line.find('<')) != std::string::npos) && ((n = line.find('>', title_pos)) != std::string::npos) &&
-        ((ms_pos = line.find('(', n)) != std::string::npos) && ((n = line.find("ms) loaded", ms_pos)) != std::string::npos))
+        ((ms_pos = line.rfind('(')) != std::string::npos) && (ms_pos > n) && ((n = line.find("ms) loaded", ms_pos)) != std::string::npos))
     {
         title_pos += 1;
         std::string title = line.substr(title_pos, line.find('>', title_pos) - title_pos);
@@ -522,7 +522,28 @@ TEST_CASE("Librespot2")
         ms_pos += 1;
         std::string ms = line.substr(ms_pos, n - ms_pos - 1);
         REQUIRE(ms == "310573");
+        REQUIRE(line.find(" from <", title_pos + title.size()) == std::string::npos);
     }
+
+    // Newer librespot versions include the artist
+    line = "[2026-10-19T13:20:14Z INFO  librespot_playback::player] <Sugar Man> from <Rodríguez> (229413 ms) loaded";
+    bool parsed = false;
+    if (((title_pos = line.find('<')) != std::string::npos) && ((n = line.find('>', title_pos)) != std::string::npos) &&
+        ((ms_pos = line.rfind('(')) != std::string::npos) && (ms_pos > n) && ((n = line.find("ms) loaded", ms_pos)) != std::string::npos))
+    {
+        title_pos += 1;
+        std::string title = line.substr(title_pos, line.find('>', title_pos) - title_pos);
+        REQUIRE(title == "Sugar Man");
+        size_t artist_pos = line.find(" from <", title_pos + title.size());
+        size_t artist_end = line.rfind('>', ms_pos);
+        REQUIRE(artist_pos != std::string::npos);
+        REQUIRE(artist_end != std::string::npos);
+        REQUIRE(line.substr(artist_pos + 7, artist_end - artist_pos - 7) == "Rodríguez");
+        ms_pos += 1;
+        REQUIRE(line.substr(ms_pos, n - ms_pos - 1) == "229413");
+        parsed = true;
+    }
+    REQUIRE(parsed);
 
     line = R"([2021-06-04T07:20:47Z INFO  librespot_playback::player] metadata:{"ARTIST":"artist","TITLE":"title"})";
     if (n = line.find("metadata:"); n != std::string::npos)
