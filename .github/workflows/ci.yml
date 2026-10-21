@@ -152,7 +152,7 @@ jobs:
             -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
             -DCMAKE_EXPORT_COMPILE_COMMANDS=TRUE \
             -DBUILD_WITH_PIPEWIRE=ON \
-            -DCMAKE_CXX_FLAGS="-DCMAKE_CXX_FLAGS=-DJSON_HAS_CPP_14"
+            -DCMAKE_CXX_FLAGS="-DCMAKE_CXX_FLAGS=-DJSON_HAS_CPP_14 -D_GLIBCXX_SANITIZE_VECTOR"
       - name: build
         env:
           # TODO: use environment variable $HOME/.ccache
@@ -160,6 +160,12 @@ jobs:
         run: cmake --build build --parallel 4 --verbose
       - name: unit-test
         run: ./bin/snapcast_test
+      - name: Stream removal regression (ASan)
+        if: matrix.sanitizer == 'asan'
+        env:
+          # This regression checks invalid accesses, not existing shutdown leaks.
+          ASAN_OPTIONS: detect_leaks=0
+        run: python3 test/stream_removal_test.py ./bin/snapserver
 
 
   linux:
