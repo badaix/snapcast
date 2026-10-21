@@ -176,7 +176,7 @@ bool StreamManager::removeStream(const std::string& name)
     {
         (*iter)->stop();
         streams_.erase(iter);
-        LOG(DEBUG, LOG_TAG) << "Found and removed stream '" << (*iter)->getName() << "'\n";
+        LOG(DEBUG, LOG_TAG) << "Found and removed stream '" << name << "'\n";
         return true;
     }
     else
